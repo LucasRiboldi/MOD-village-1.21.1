@@ -100,8 +100,11 @@ final class MineSave {
      * <p><b>Sete desde 2026-09-27</b>, quando cada degrau passou a ter
      * três pistas de três alturas. A terceira pista desloca os índices de
      * toda escada compartilhada e de cada ramal.
+     *
+     * <p><b>Oito desde 2026-10-03</b>, com dois lances de cinco degraus e
+     * salões de 10 x 10 x 3. Toda fronteira anterior muda de significado.
      */
-    private static final int SHAPE_VERSION = 7;
+    private static final int SHAPE_VERSION = 8;
 
     private MineSave() {
     }

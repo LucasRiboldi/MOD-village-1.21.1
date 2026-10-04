@@ -583,6 +583,85 @@ public class CraftingGameTest implements FabricGameTest {
         });
     }
 
+    /**
+     * Ter uma parte das pecas nao encerra a demanda da obra. No playtest de
+     * 2026-10-03 a carpintaria fazia quatro escadas, esperava o construtor
+     * consumir as quatro e so entao fazia o lote seguinte.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock",
+            tickLimit = 300)
+    public void theCarpenterStocksTheWholeRemainingStairDemand(TestContext context) {
+        Fixture fixture = setUpStairDemand(context);
+
+        context.runAtTick(180, () -> {
+            try {
+                int stairs = ColonyChests.countIn(
+                        context.getWorld(), List.of(fixture.chest), Items.OAK_STAIRS);
+
+                context.assertTrue(
+                        stairs == 12,
+                        "a obra pede 12 escadas, mas a carpintaria parou com " + stairs);
+            } finally {
+                fixture.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /** Colonia com quatro escadas prontas e demanda total de doze. */
+    private static Fixture setUpStairDemand(TestContext context) {
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        ChestDepositor.deposit(world, chest, Items.OAK_PLANKS, 64);
+        ChestDepositor.deposit(world, chest, Items.OAK_STAIRS, 4);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+        VillageColonyMod.COLONIES.register(colony);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.CARPENTER);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        List<BlueprintBlock> stairs = new java.util.ArrayList<>();
+
+        for (int index = 0; index < 12; index++) {
+            stairs.add(new BlueprintBlock(
+                    new ColonyPos(index, 0, 0),
+                    MinecraftTypeAdapter.toResourceId(Blocks.OAK_STAIRS)));
+        }
+
+        ConstructionProject project = ConstructionProject.plan(
+                colony.id(),
+                Blueprint.of(ResourceId.vanilla("test_stair_demand"), stairs),
+                chest);
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.CRAFT_WOOD_MATERIAL,
+                TaskPriority.PRODUCTION,
+                ResourceType.OAK_PLANKS,
+                16);
+        task.reserveFor(villager.getUuid());
+        CraftingWork.run(world, colony);
+
+        return new Fixture(
+                colony,
+                task,
+                chest,
+                ColonyFixture.create().owning(colony).owning(villager.getUuid()));
+    }
+
     /** Colônia com lajes e uma obra que pede composteira. */
     private static Fixture setUpComposterWork(TestContext context) {
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());

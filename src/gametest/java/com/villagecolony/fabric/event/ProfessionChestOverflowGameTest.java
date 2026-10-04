@@ -5,13 +5,16 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ProfessionChestOverflow;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.ChestBlock;
 import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.block.enums.ChestType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 
 import java.util.List;
 import java.util.Set;
@@ -20,6 +23,7 @@ public final class ProfessionChestOverflowGameTest implements FabricGameTest {
     private static final BlockPos SOURCE = new BlockPos(2, 2, 2);
     private static final BlockPos COMMUNITY = new BlockPos(4, 2, 2);
     private static final BlockPos OTHER_PROFESSION = new BlockPos(6, 2, 2);
+    private static final BlockPos SOURCE_PAIR = SOURCE.east();
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "profession_chest_overflow")
     public void aFullProfessionChestMovesItsLastTenSlotsToACommunityChest(TestContext context) {
@@ -94,9 +98,43 @@ public final class ProfessionChestOverflowGameTest implements FabricGameTest {
         context.complete();
     }
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "profession_chest_overflow")
+    public void aFullDoubleProfessionChestReservesTheLastTenCombinedSlots(TestContext context) {
+        ChestBlockEntity source = doubleChest(context, SOURCE, SOURCE_PAIR);
+        ChestBlockEntity sourcePair = (ChestBlockEntity) context.getBlockEntity(SOURCE_PAIR);
+        ChestBlockEntity community = chest(context, COMMUNITY);
+        fill(source, Items.COBBLESTONE);
+        fill(sourcePair, Items.COBBLESTONE);
+
+        int moved = ProfessionChestOverflow.relieve(context.getWorld(),
+                List.of(position(context, SOURCE), position(context, SOURCE_PAIR),
+                        position(context, COMMUNITY)),
+                Set.of(position(context, SOURCE)));
+
+        context.assertTrue(moved == 10,
+                "o inventário combinado deveria liberar exatamente dez slots");
+        context.assertTrue(count(source, Items.COBBLESTONE)
+                        + count(sourcePair, Items.COBBLESTONE) == 44,
+                "o baú duplo profissional não manteve os primeiros 44 slots");
+        context.assertTrue(count(community, Items.COBBLESTONE) == 10,
+                "o excedente do baú duplo não chegou ao baú comunitário");
+        context.complete();
+    }
+
     private static ChestBlockEntity chest(TestContext context, BlockPos relative) {
         context.setBlockState(relative, Blocks.CHEST.getDefaultState());
         return (ChestBlockEntity) context.getBlockEntity(relative);
+    }
+
+    private static ChestBlockEntity doubleChest(
+            TestContext context, BlockPos first, BlockPos second) {
+        context.setBlockState(first, Blocks.CHEST.getDefaultState()
+                .with(ChestBlock.FACING, Direction.NORTH)
+                .with(ChestBlock.CHEST_TYPE, ChestType.LEFT));
+        context.setBlockState(second, Blocks.CHEST.getDefaultState()
+                .with(ChestBlock.FACING, Direction.NORTH)
+                .with(ChestBlock.CHEST_TYPE, ChestType.RIGHT));
+        return (ChestBlockEntity) context.getBlockEntity(first);
     }
 
     private static ColonyPos position(TestContext context, BlockPos relative) {

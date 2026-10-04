@@ -2187,6 +2187,52 @@ public class LumberjackGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * Uma floresta densa nao faz a busca gastar o restante do orcamento depois
+     * de encher um lote util do indice. O Spark de 2026-10-03 mostrou a busca
+     * consumindo 62% do tempo do mod mesmo com o lenhador produtivo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_search_index")
+    public void aDenseForestStopsTheSweepAfterAUsefulIndexedBatch(TestContext context) {
+        BlockPos relativeCenter = new BlockPos(8, 2, 8);
+        BlockPos center = context.getAbsolutePos(relativeCenter);
+        int planted = 0;
+
+        TreeScanner.clearAll();
+
+        for (int ring = 1; ring <= 4 && planted < 30; ring++) {
+            for (int dx = -ring; dx <= ring && planted < 30; dx++) {
+                for (int dz = -ring; dz <= ring && planted < 30; dz++) {
+                    if (Math.abs(dx) != ring && Math.abs(dz) != ring) {
+                        continue;
+                    }
+
+                    context.setBlockState(
+                            relativeCenter.add(dx, 0, dz),
+                            net.minecraft.block.Blocks.OAK_LOG.getDefaultState());
+                    planted++;
+                }
+            }
+        }
+
+        int[] accepted = {0};
+
+        BlockPos first = TreeScanner.findNearestLog(
+                context.getWorld(), center, 6, log -> {
+                    accepted[0]++;
+                    return true;
+                }).orElse(null);
+
+        context.assertTrue(first != null, "a floresta densa nao devolveu arvore");
+        context.assertTrue(
+                accepted[0] == 17,
+                "a busca continuou depois de separar 16 proximas arvores: viu "
+                        + accepted[0]);
+
+        TreeScanner.clearAll();
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_search_cursor")
     public void theSearchMovesOutwardAndComesBack(TestContext context) {
         BlockPos base = new BlockPos(4, 2, 4);

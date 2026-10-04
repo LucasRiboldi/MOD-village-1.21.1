@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -48,5 +49,24 @@ class BiomeConstructionSupplyClockTest {
 
         assertFalse(BiomeConstructionSupply.failedProfessionAttempt(colony, Items.BREWING_STAND),
                 "a entrega não reiniciou a contagem de tentativas");
+    }
+
+    @Test
+    void aTreeRequestBecomesEligibleOnlyOnTheTwentiethWaitAndSurvivesSaving() {
+        UUID colony = UUID.randomUUID();
+
+        assertEquals(TreeSpecies.OAK, TreeSpecies.ofConstructionItem(Items.OAK_STAIRS).orElseThrow());
+
+        for (int wait = 1; wait < 20; wait++) {
+            assertFalse(BiomeConstructionSupply.treeWaitReached(colony, TreeSpecies.OAK),
+                    "a muda foi pedida antes da vigesima espera: " + wait);
+        }
+
+        Map<String, Integer> saved = BiomeConstructionSupply.failedProfessionAttempts();
+        BiomeConstructionSupply.clearAll();
+        BiomeConstructionSupply.restoreFailedProfessionAttempts(saved);
+
+        assertTrue(BiomeConstructionSupply.treeWaitReached(colony, TreeSpecies.OAK),
+                "a vigesima espera nao liberou a muda");
     }
 }

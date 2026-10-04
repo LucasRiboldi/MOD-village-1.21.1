@@ -180,7 +180,7 @@ public final class WaitingWork {
     public static void askForWhatTheWorkIsWaitingOn(ServerWorld world, Colony colony) {
         VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
                 .filter(project -> project.state() == ConstructionState.WAITING_RESOURCES)
-                .ifPresent(project -> project.remainingMaterials().keySet()  // a lista inteira (A-3, 10-02)
+                .ifPresent(project -> project.remainingMaterials().keySet()
                         .forEach(wanted -> askTheCraftsmanFor(world, project, wanted)));
     }
 

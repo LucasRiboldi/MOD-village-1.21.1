@@ -2,7 +2,6 @@ package com.villagecolony.client;
 
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.text.Text;
@@ -88,8 +87,6 @@ final class WorldPixelPanelRenderer {
         vertices.vertex(matrix, x, y, 0.0F)
                 .color(255, 255, 255, 255)
                 .texture(u, v)
-                .overlay(OverlayTexture.DEFAULT_UV)
-                .light(0xF000F0)
-                .normal(0.0F, 0.0F, 1.0F);
+                .light(0xF000F0);
     }
 }

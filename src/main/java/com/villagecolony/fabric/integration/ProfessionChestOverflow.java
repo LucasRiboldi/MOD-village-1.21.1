@@ -1,12 +1,14 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.core.type.ColonyPos;
-import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /** Mantém livres os dez slots finais dos baús reservados às profissões. */
@@ -18,35 +20,36 @@ public final class ProfessionChestOverflow {
 
     public static int relieve(ServerWorld world, List<ColonyPos> villageChests,
             Set<ColonyPos> professionChests) {
-        List<ChestBlockEntity> destinations = new ArrayList<>();
+        Map<ColonyPos, ChestInventories.Handle> observed = new LinkedHashMap<>();
         for (ColonyPos chest : villageChests) {
-            if (!professionChests.contains(chest)) {
-                ChestBlockEntity inventory = ChestWithdrawer.chestAt(world, chest);
-                if (inventory != null) {
-                    destinations.add(inventory);
-                }
-            }
+            ChestInventories.at(world, chest)
+                    .ifPresent(handle -> observed.putIfAbsent(handle.key(), handle));
         }
+
+        List<Inventory> destinations = observed.values().stream()
+                .filter(handle -> !handle.isProfession(professionChests))
+                .map(ChestInventories.Handle::inventory)
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
 
         if (destinations.isEmpty()) {
             return 0;
         }
 
         int moved = 0;
-        for (ColonyPos chest : villageChests) {
-            if (!professionChests.contains(chest)) {
+        for (ChestInventories.Handle handle : observed.values()) {
+            if (!handle.isProfession(professionChests)) {
                 continue;
             }
-            ChestBlockEntity source = ChestWithdrawer.chestAt(world, chest);
-            if (source != null && isFull(source)) {
+            Inventory source = handle.inventory();
+            if (isFull(source)) {
                 moved += relieveLastSlots(source, destinations);
             }
         }
         return moved;
     }
 
-    private static int relieveLastSlots(ChestBlockEntity source,
-            List<ChestBlockEntity> destinations) {
+    private static int relieveLastSlots(Inventory source,
+            List<Inventory> destinations) {
         int moved = 0;
         int firstReservedSlot = Math.max(0, source.size() - RESERVED_SLOTS);
 
@@ -57,7 +60,7 @@ public final class ProfessionChestOverflow {
             }
 
             int before = stack.getCount();
-            for (ChestBlockEntity destination : destinations) {
+            for (Inventory destination : destinations) {
                 moveInto(destination, stack);
                 if (stack.isEmpty()) {
                     break;
@@ -74,7 +77,7 @@ public final class ProfessionChestOverflow {
         return moved;
     }
 
-    private static void moveInto(ChestBlockEntity destination, ItemStack source) {
+    private static void moveInto(Inventory destination, ItemStack source) {
         for (int slot = 0; slot < destination.size() && !source.isEmpty(); slot++) {
             ItemStack stored = destination.getStack(slot);
             if (stored.isEmpty() || !ItemStack.areItemsAndComponentsEqual(stored, source)) {
@@ -104,7 +107,7 @@ public final class ProfessionChestOverflow {
         }
     }
 
-    private static boolean isFull(ChestBlockEntity inventory) {
+    private static boolean isFull(Inventory inventory) {
         for (int slot = 0; slot < inventory.size(); slot++) {
             if (inventory.getStack(slot).isEmpty()) {
                 return false;

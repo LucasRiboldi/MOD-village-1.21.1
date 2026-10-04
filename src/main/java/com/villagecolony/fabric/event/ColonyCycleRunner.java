@@ -29,6 +29,8 @@ import com.villagecolony.core.worker.service.HiringLog;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.core.worker.service.VacancyEnforcer;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.brain.WorkHours;
+import com.villagecolony.fabric.brain.WorkRest;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ColonyChestSurvey;
@@ -71,6 +73,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.WorldChunk;
@@ -414,6 +417,13 @@ final class ColonyCycleRunner {
 
     /** Trabalhos já reservados continuam mesmo enquanto uma fotografia termina de ser lida. */
     static void runOngoingWork(ServerWorld world, Colony colony) {
+        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
+            if (world.getEntity(worker.villagerId()) instanceof VillagerEntity villager
+                    && !WorkHours.isWorkTime(world, villager)) {
+                WorkRest.release(villager);
+            }
+        }
+
         LumberjackWork.run(world, colony);
         MinerWork.run(world, colony);
         SmelterWork.run(world, colony);

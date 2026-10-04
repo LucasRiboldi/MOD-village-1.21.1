@@ -1,8 +1,11 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.coordination.WorkClock;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
+import com.villagecolony.core.worker.model.ProfessionType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,6 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SaplingGenerator;
 import net.minecraft.server.world.ServerWorld;
@@ -90,6 +94,8 @@ public final class VillageForest {
      * dezena. O marco só avança após a geração física no mundo.
      */
     public static PopulationPlanting plantForPopulation(ServerWorld world, Colony colony, int livingAdults) {
+        plantWhatTheConstructionRequested(world, colony);
+
         int nextMilestone = colony.forestPopulationMilestone() + 10;
         if (livingAdults < nextMilestone) {
             return PopulationPlanting.NOT_DUE;
@@ -116,6 +122,79 @@ public final class VillageForest {
         NEXT_TRY.remove(colony.id());
         colony.markForestPopulationMilestone(nextMilestone);
         return PopulationPlanting.PLANTED;
+    }
+
+    /** Conta a espera por madeira e, na vigésima passagem, planta uma muda física. */
+    private static void plantWhatTheConstructionRequested(ServerWorld world, Colony colony) {
+        VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
+                .filter(project -> project.state()
+                        == com.villagecolony.core.construction.model.ConstructionState.WAITING_RESOURCES)
+                .ifPresent(project -> {
+                    Set<TreeSpecies> waitingFor = new LinkedHashSet<>();
+                    project.remainingMaterials().keySet().stream()
+                            .map(TreeSpecies::ofConstructionResource)
+                            .flatMap(Optional::stream)
+                            .forEach(waitingFor::add);
+
+                    for (TreeSpecies species : waitingFor) {
+                        if (BiomeConstructionSupply.treeWaitReached(colony.id(), species)
+                                && plantRequestedSapling(world, colony, species)) {
+                            BiomeConstructionSupply.treePlanted(colony.id(), species);
+                        }
+                    }
+                });
+    }
+
+    /**
+     * O fazendeiro planta a muda pedida por uma obra que esperou madeira.
+     *
+     * <p>A muda vem fisicamente dos baús da vila. O anel de 48 a 56 blocos
+     * fica fora das estruturas, mas dentro da busca normal do lenhador. A
+     * árvore não é amadurecida à força: daqui em diante cresce pelas regras
+     * do próprio jogo.
+     */
+    public static boolean plantRequestedSapling(
+            ServerWorld world, Colony colony, TreeSpecies species) {
+
+        if (!WorkClock.isWorkTime(world.getTimeOfDay())) {
+            return false;
+        }
+
+        boolean hasFarmer = VillageColonyMod.WORKERS.ofColony(colony.id()).stream()
+                .anyMatch(worker -> worker.profession().filter(ProfessionType.FARMER::equals).isPresent());
+        if (!hasFarmer) {
+            return false;
+        }
+
+        Optional<BlockPos> site = candidates(
+                colony.center(), colony.id().hashCode() + species.name().hashCode())
+                .stream()
+                .map(candidate -> naturalGroundAt(world, candidate))
+                .flatMap(Optional::stream)
+                .filter(ground -> hasClearCanopy(world, ground))
+                .filter(ground -> species.sapling().getDefaultState().canPlaceAt(world, ground.up()))
+                .findFirst();
+        if (site.isEmpty()) {
+            return false;
+        }
+
+        List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.id(), colony.center());
+        if (ColonyChests.withdraw(world, chests, species.sapling().asItem(), 1) != 1) {
+            return false;
+        }
+
+        BlockPos planted = site.get().up();
+        if (!world.setBlockState(planted, species.sapling().getDefaultState(), Block.NOTIFY_ALL)) {
+            ColonyChests.firstWithRoomFor(world, chests, species.sapling().asItem(), 1)
+                    .ifPresent(chest -> ChestDepositor.deposit(
+                            world, chest, species.sapling().asItem(), 1));
+            return false;
+        }
+
+        VillageColonyMod.LOGGER.info(
+                "Farmer planted a requested {} at {} after the construction waited for wood",
+                species.sapling().asItem(), planted.toShortString());
+        return true;
     }
 
     private static Optional<BlockPos> plantOne(

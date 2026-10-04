@@ -65,3 +65,16 @@ altera cursores persistidos nem incrementa `MineSave.SHAPE_VERSION`.
 
 `MinerGameTest` verifica os dois lampiões, a moldura 5x4 e o vão central 3x3.
 Como antes, quebrar a moldura depois da abertura não autoriza reconstrução.
+
+## Emenda — 2026-10-03: dois lances, salões 10x10x3 e dez rotas
+
+Cada ciclo subterrâneo mantém dez degraus de descida, agora divididos em dois
+lances de cinco. A área comum e a área de cada ramal passam a ser salões de
+10 x 10 x 3 blocos. A passagem útil continua 3 x 3 e `MineFloor` conserva o
+piso com tijolos de pedra quando a escavação abre um vão não planejado.
+
+Uma frente sem progresso tenta dez rotas antes de considerar a boca perdida.
+A seleção continua determinística e retomável: o mundo decide se a rota está
+livre e o cursor apenas ordena as células. Como todos os índices posteriores
+à escada mudam, `MineSave.SHAPE_VERSION` sobe de 7 para 8; saves anteriores
+mantêm boca, orientação e arco, mas reiniciam os cursores.

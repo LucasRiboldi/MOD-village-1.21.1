@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-10-03 (painéis pixelados, marcador, mina, base e varredura no topo; antes, integração de 02-10 e sessão de 02-10, seção
+**Atualizado:** 2026-10-04 (muda solicitada respeita o expediente; 578 GameTests no topo; antes, painéis pixelados, marcador, mina, base e varredura, integração de 02-10 e sessão de 02-10, seção
 abaixo). Estado de 2026-09-28: a obra antecipa a proxima peca artesanal sem
 consumir os troncos brutos que ela mesma ainda exige; o `/vc log` explica a
 saida de trabalhador preso e seu retorno a escala. A evolucao agora inclui
@@ -14,6 +14,20 @@ das profissoes) esta verde; ainda requer validacao no save real.
 
 ## Sessão de 2026-10-03 — painéis, perímetro e mina
 
+- [x] 🔴 Corrigir emissão de vértices dos overlays cliente.
+- [x] 🔴 Tratar baús duplos como inventário único, inclusive na reserva dos
+  dez slots profissionais.
+- [x] 🔴 Fora do horário, interromper navegação de trabalho sem perder HOME
+  nem a tarefa pendente.
+- [x] 🔴 Após 20 esperas por madeira de árvore, plantar fisicamente a muda
+  correspondente longe das estruturas e dentro do alcance do lenhador.
+- [x] 🔴 A muda solicitada não é retirada nem plantada à noite; o recurso
+  físico permanece no baú até o próximo expediente.
+- [x] 🟠 Mina: dois lances, salões 10x10x3, passagem 3x3, dez tentativas e
+  migração de cursor para forma 8.
+- [x] 🟠 Restaurar garantia idempotente de baú junto às camas vanilla.
+- [x] 🟡 Estudar varredura integral de chunks sem ativá-la; alternativas em
+  `docs/research/2026-10-03-alternativas-varredura-recursos.md`.
 - [ ] 🔴 Playtest cliente: cada aldeão mostra o par correto ícone/profissão;
   alternar o texto no Mod Menu preserva o ícone; a moldura tem centro
   transparente, o símbolo fica centralizado acima e a placa da obra mantém
@@ -33,6 +47,16 @@ das profissoes) esta verde; ainda requer validacao no save real.
   baús não profissionais da mesma vila, preservando pilhas e sem descarte.
 - [ ] 🟠 Playtest dos baús: encher um baú profissional e confirmar os dez slots
   livres, inclusive quando há mais de um baú comunitário e quando todos lotam.
+- [x] 🟠 Spark `G7eI22eQt0`: cursor exato da busca de árvores, parada após 16
+  árvores indexadas e carpintaria produzindo até o estoque cobrir a demanda
+  restante da obra. O analisador não confunde mais retirada zero com baú cheio.
+- [ ] 🟠 Repetir Spark no mesmo save: comparar o custo de
+  `TreeScanner.findNearestLog` (era 0,85% do servidor e 62% do mod) e confirmar
+  que as 194 esperas observadas por escada de carvalho deixaram de se repetir.
+- [ ] 🟡 Diagnosticar o batch concorrente `craft_family`: uma rodada de 04-10
+  falhou as asserções opostas do carpinteiro e pedreiro; a repetição imediata
+  passou 578/578. Não reduzir timeout nem enfraquecer os testes sem reprodução
+  determinística da interferência.
 
 ## Integração de 2026-10-02 — políticas de profissão e overlays
 
@@ -67,7 +91,9 @@ escada de madeira na porta elevada, roça acima da rua. **Nada visto em jogo.**
 - [x] 🟠 Regra 48: recolher do chão só o item que falta à obra aberta — feito em 02-10 (`GroundPickup`, `GroundPickupGameTest` confirmado por mutação). Não visto em jogo.
 - [x] 🔴 A-1: meta e executor da tábua concordarem — feito em `7112702` (a obra usa toda a madeira). Falta ver em jogo que o carpinteiro não fecha mais tarefa com 0 peça.
 - [~] 🟠 B-1: ajudante no tempo ocioso — **feita a metade do chão** (recolhe o que a obra espera e guarda no baú mais perto dela). Falta: levar material do baú para perto do construtor.
-- [x] 🟠 A-2: índice de árvores — feito em `8bcb941` (com A-5..A-8). Falta medir em jogo o tempo procurando (era 66%).
+- [x] 🟠 A-2: índice de árvores — feito em `8bcb941` (com A-5..A-8) e refinado
+  em 03-10 com cursor por coluna e lote máximo de 16 árvores. Falta repetir o
+  Spark no save (era 66%; mediu 62% do custo do mod antes do refinamento).
 - [x] 🟠 A-3 (material da obra pedido inteiro) e A-4 (mina nova na borda, longe da água) — feitos em `d15d95d`. Não vistos em jogo.
 - [~] 🟠 B-4: fundidor sem cru — **feito o carvão vegetal** (a obra que pede carvão aceita o vegetal, que sai da tora). Falta: pedra lisa a partir do pedregulho.
 - [x] 🟡 B-5: esperas de mais de 2 min no `/vc log`, com motivo e tempo (`VillageLogPresenter.longWaits`).

@@ -1,6 +1,11 @@
 package com.villagecolony.gametest;
 
 import com.villagecolony.fabric.brain.WorkHours;
+import com.villagecolony.fabric.brain.WorkRest;
+import com.villagecolony.fabric.brain.WorkTargets;
+import net.minecraft.entity.ai.brain.BlockPosLookTarget;
+import net.minecraft.entity.ai.brain.MemoryModuleType;
+import net.minecraft.entity.ai.brain.WalkTarget;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -8,6 +13,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.GlobalPos;
 
 /**
  * O expediente da colônia — a Regra 18.
@@ -117,6 +123,36 @@ public class WorkHoursGameTest implements FabricGameTest {
                 WorkHours.isWorkTime(world, child),
                 "criança não trabalha, e a colônia pôs uma para trabalhar");
 
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_hours")
+    public void restingStopsWorkMovementButKeepsHomeAndThePendingJob(TestContext context) {
+        VillagerEntity villager = adultAt(context);
+        BlockPos home = context.getAbsolutePos(STAND);
+        BlockPos work = home.east(6);
+        BlockPosLookTarget look = new BlockPosLookTarget(work);
+        villager.getBrain().remember(
+                MemoryModuleType.HOME,
+                GlobalPos.create(context.getWorld().getRegistryKey(), home));
+        villager.getBrain().remember(MemoryModuleType.LOOK_TARGET, look);
+        villager.getBrain().remember(MemoryModuleType.WALK_TARGET, new WalkTarget(look, 0.5f, 1));
+        WorkTargets.set(villager.getUuid(), work);
+
+        WorkRest.release(villager);
+
+        context.assertFalse(villager.getBrain()
+                        .getOptionalRegisteredMemory(MemoryModuleType.WALK_TARGET).isPresent(),
+                "a caminhada de trabalho continuou durante o repouso");
+        context.assertFalse(villager.getBrain()
+                        .getOptionalRegisteredMemory(MemoryModuleType.LOOK_TARGET).isPresent(),
+                "o aldeão continuou olhando para o trabalho durante o repouso");
+        context.assertTrue(villager.getBrain()
+                        .getOptionalRegisteredMemory(MemoryModuleType.HOME).isPresent(),
+                "o repouso apagou a memória da cama");
+        context.assertTrue(WorkTargets.of(villager.getUuid()).filter(work::equals).isPresent(),
+                "o repouso apagou a tarefa que deveria ser retomada de manhã");
+        WorkTargets.clear(villager.getUuid());
         context.complete();
     }
 

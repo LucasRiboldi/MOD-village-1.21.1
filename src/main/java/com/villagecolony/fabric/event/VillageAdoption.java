@@ -309,6 +309,7 @@ final class VillageAdoption {
                     && owner.get().reason() != ColonyIdentity.Reason.NEAR_ITS_CENTER) {
                 Colony colony = owner.get().colony();
 
+                VanillaBedChests.ensure(world, candidate.beds());
                 VillagerRegistration.registerVillagers(world, colony, candidate.center());
 
                 if (VillageDetectionHandler.overlapsReported.add(
@@ -352,10 +353,10 @@ final class VillageAdoption {
                 continue;
             }
 
-            if (created && !candidate.beds().isEmpty()) {
-                // Só a primeira adoção recebe esta passagem. A lista é o
-                // cluster exato que acabou de provar a vila, nunca uma
-                // varredura posterior de trabalhador ou de fundação.
+            if (!candidate.beds().isEmpty()) {
+                // Idempotente em toda observação: saves antigos e chunks que
+                // não estavam disponíveis na adoção recuperam o baú ao lado
+                // da cama sem duplicar os que já existem.
                 VanillaBedChests.ensure(world, candidate.beds());
             }
 

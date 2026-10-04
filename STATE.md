@@ -1,4 +1,4 @@
-# STATE — 2026-10-03
+# STATE — 2026-10-04
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -14,6 +14,18 @@
 
 ## 🟡 03-10 — painéis, perímetro, mina e varredura (aguarda playtest)
 
+- Corrigido o formato de vértices dos overlays: moldura e ícone não enviam
+  mais atributos incompatíveis com `RenderLayer.getTextSeeThrough`.
+- Construção esperando madeira por 20 passagens solicita ao fazendeiro o
+  rebento da espécie; ele só planta após retirar fisicamente a muda de um baú,
+  em área segura a 48–56 blocos e alcançável pelo lenhador. Essa retirada e
+  plantio agora respeitam o expediente: à noite a muda permanece no baú.
+- Aldeões largam navegação e alvos de trabalho fora do horário, preservando
+  casa e tarefa. Inventários de baú duplo são tratados como uma unidade.
+- Mina subterrânea: dois lances de cinco degraus, salões 10x10x3, corredor 3x3
+  e dez tentativas antes de abandonar a boca; formato de save 8.
+- Baús das camas vanilla voltam a ser garantidos de forma idempotente em cada
+  observação, recuperando chunks ausentes na adoção.
 - Painéis nativos de pixel art sobre trabalhadores e canteiros: moldura fina
   com centro transparente, texto dentro dela e ícone centralizado acima. A
   obra usa uma moldura única e responsiva para nome e itens faltantes. O Mod
@@ -35,9 +47,18 @@
 - Baú profissional cheio libera seus dez slots finais para baús comunitários
   da mesma vila. Pilhas e componentes são preservados; sem espaço de destino,
   nada sai da origem (ADR-032).
-- Automação: `runGametest --rerun-tasks --no-daemon` confirmou 572/572. Falta
-  o playtest visual e de desempenho no save, inclusive marcador em vila grande
-  e coleta atravessando a borda, além do fluxo real dos baús.
+- O Spark `G7eI22eQt0` manteve 20 TPS (MSPT mediano 9,93; p95 14), mas mostrou
+  `TreeScanner.findNearestLog` em 62% do custo do mod. A busca agora retoma na
+  coluna exata e encerra a passagem ao indexar 16 árvores. A carpintaria
+  fabrica até cobrir a demanda restante da obra, ainda com uma receita por
+  ação; o analisador só chama baú de mineiro cheio diante do aviso real.
+- A rodada de 04-10 confirmou 578/578 GameTests. Uma execução anterior teve
+  duas falhas opostas no batch concorrente `craft_family`; a repetição imediata
+  passou integralmente, portanto a instabilidade ficou registrada para
+  investigação, sem reduzir timeout nem enfraquecer a cobertura.
+- Falta o playtest visual e de desempenho no save, inclusive marcador em vila
+  grande e coleta atravessando a borda, fluxo real dos baús e nova medição do
+  lenhador/carpintaria.
 
 ## 🟡 02-10 — consolidação na `main` (aguarda playtest)
 
@@ -46,9 +67,11 @@
 
 ## Em uma linha
 
-Entrega de 03-10 na branch de desenvolvimento: 1.304 unitários e 572/572
-GameTests; JAR `861C190B…D9EE` instalado. Nada visto em jogo — próximo:
-playtest dos painéis, perímetro, mina, varredura e baús profissionais.
+Entrega de 04-10 na branch de desenvolvimento: 1.308 unitários, 89 Python e
+578/578 GameTests; `build` verde. O JAR instalado é
+`B8A9E15B…64CE7`, idêntico em `build/libs/`, `downloads/` e `mods/`.
+Próximo: playtest dos painéis, perímetro, mina, varredura, baús e ritmo de
+construção.
 
 ## 30-09, noite — playtests 18h e 21h (Spark `YUm45D9Sw4`, `qI5h6MXtDA`)
 

@@ -5,7 +5,7 @@ import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -49,18 +49,10 @@ public final class ChestDepositor {
             return 0;
         }
 
-        BlockPos position = MinecraftTypeAdapter.toBlockPos(chest);
-
-        WorldChunk chunk = world.getChunkManager()
-                .getWorldChunk(position.getX() >> 4, position.getZ() >> 4);
-
-        if (chunk == null) {
-            return amount;
-        }
-
-        if (!(chunk.getBlockEntity(position) instanceof ChestBlockEntity inventory)) {
-            return amount;
-        }
+        Inventory inventory = ChestInventories.at(world, chest)
+                .map(ChestInventories.Handle::inventory)
+                .orElse(null);
+        if (inventory == null) return amount;
 
         int remaining = amount;
 
@@ -80,7 +72,9 @@ public final class ChestDepositor {
      * @return se coube
      */
     public static boolean depositExact(ServerWorld world, ColonyPos chest, ItemStack stack) {
-        ChestBlockEntity inventory = ChestWithdrawer.chestAt(world, chest);
+        Inventory inventory = ChestInventories.at(world, chest)
+                .map(ChestInventories.Handle::inventory)
+                .orElse(null);
 
         if (inventory == null) {
             return false;
@@ -112,18 +106,10 @@ public final class ChestDepositor {
      * é a resposta segura.
      */
     public static int freeSpaceFor(ServerWorld world, ColonyPos chest, Item item) {
-        BlockPos position = MinecraftTypeAdapter.toBlockPos(chest);
-
-        WorldChunk chunk = world.getChunkManager()
-                .getWorldChunk(position.getX() >> 4, position.getZ() >> 4);
-
-        if (chunk == null) {
-            return 0;
-        }
-
-        if (!(chunk.getBlockEntity(position) instanceof ChestBlockEntity inventory)) {
-            return 0;
-        }
+        Inventory inventory = ChestInventories.at(world, chest)
+                .map(ChestInventories.Handle::inventory)
+                .orElse(null);
+        if (inventory == null) return 0;
 
         int room = 0;
 
@@ -154,18 +140,10 @@ public final class ChestDepositor {
      * segue como sempre.
      */
     public static int howFull(ServerWorld world, ColonyPos chest) {
-        BlockPos position = MinecraftTypeAdapter.toBlockPos(chest);
-
-        WorldChunk chunk = world.getChunkManager()
-                .getWorldChunk(position.getX() >> 4, position.getZ() >> 4);
-
-        if (chunk == null) {
-            return 0;
-        }
-
-        if (!(chunk.getBlockEntity(position) instanceof ChestBlockEntity inventory)) {
-            return 0;
-        }
+        Inventory inventory = ChestInventories.at(world, chest)
+                .map(ChestInventories.Handle::inventory)
+                .orElse(null);
+        if (inventory == null) return 0;
 
         if (inventory.size() <= 0) {
             return 0;
@@ -198,18 +176,10 @@ public final class ChestDepositor {
     public static int freeSpaceForGroup(
             ServerWorld world, ColonyPos chest, ResourceGroup group) {
 
-        BlockPos position = MinecraftTypeAdapter.toBlockPos(chest);
-
-        WorldChunk chunk = world.getChunkManager()
-                .getWorldChunk(position.getX() >> 4, position.getZ() >> 4);
-
-        if (chunk == null) {
-            return 0;
-        }
-
-        if (!(chunk.getBlockEntity(position) instanceof ChestBlockEntity inventory)) {
-            return 0;
-        }
+        Inventory inventory = ChestInventories.at(world, chest)
+                .map(ChestInventories.Handle::inventory)
+                .orElse(null);
+        if (inventory == null) return 0;
 
         int room = 0;
 
@@ -258,7 +228,7 @@ public final class ChestDepositor {
      * <p>Antes de abrir slot novo: um baú com sete pilhas de madeira pela
      * metade e um slot livre deve encher as sete, não criar a oitava.
      */
-    private static int fillExistingStacks(ChestBlockEntity inventory, Item item, int amount) {
+    private static int fillExistingStacks(Inventory inventory, Item item, int amount) {
         int remaining = amount;
 
         for (int slot = 0; slot < inventory.size() && remaining > 0; slot++) {
@@ -283,7 +253,7 @@ public final class ChestDepositor {
         return remaining;
     }
 
-    private static int fillEmptySlots(ChestBlockEntity inventory, Item item, int amount) {
+    private static int fillEmptySlots(Inventory inventory, Item item, int amount) {
         int remaining = amount;
 
         for (int slot = 0; slot < inventory.size() && remaining > 0; slot++) {

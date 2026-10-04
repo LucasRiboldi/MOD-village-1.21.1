@@ -6,6 +6,25 @@
 
 # Village Colony — Development Log
 
+## 2026-10-03 — trabalho diurno, madeira solicitada, baús e mina profunda
+
+O renderer dos painéis deixou de enviar overlay e normal para uma camada cujo
+formato aceita posição, cor, textura e luz. Baús duplos passaram a ser lidos e
+movidos como um inventário combinado. Fora do horário, trabalhadores param a
+navegação sem perder HOME ou a tarefa reservada.
+
+Depois de vinte esperas por uma peça derivada de árvore, o fazendeiro tenta
+plantar a muda da espécie pedida a 48–56 blocos, em terreno natural seguro e
+alcançável; a muda sai fisicamente de um baú e é devolvida se o plantio falhar.
+As camas de vila vanilla voltam a receber a garantia idempotente de baú em
+observações posteriores, não apenas no instante da adoção.
+
+A mina passou a dois lances de cinco degraus e salões 10x10x3, mantendo vão
+3x3 e reparo de piso. Dez rotas sem progresso precedem o abandono. A forma 8
+reinicia cursores antigos sem apagar boca, orientação ou arco. A possibilidade
+de escanear chunks inteiros ficou somente no estudo de alternativas de
+03-10; nenhuma leitura integral foi adicionada ao ciclo.
+
 ## 2026-10-03 — painéis, perímetro, boca 5x4 e varredura da vila
 
 Os overlays cliente receberam uma borda de pixel art fina com centro
@@ -10371,3 +10390,55 @@ O JAR `0.3.0` foi copiado de `build/libs/` para `downloads/` e
 `861C190BDAA745F24FF1DB51D3931D580FECE6FE75B6C9D833886B19DC24D9EE`;
 `scripts/release_manifest.py --dry-run` confirmou a igualdade. O playtest no
 save continua obrigatorio para os aspectos visuais, desempenho e fluxo real.
+
+### 2026-10-03 - Otimizacoes guiadas pelo Spark G7eI22eQt0
+
+O perfil manteve 20 TPS, MSPT mediano de 9,93 e p95 de 14, mas atribuiu 0,85%
+do servidor — cerca de 62% do custo do mod — a `TreeScanner.findNearestLog`.
+A busca reiniciava no começo de um anel parcialmente lido e continuava ate o
+orçamento de 1.024 colunas mesmo depois de achar árvores suficientes. Um cursor
+por coluna preserva a mesma ordem quadrada, retoma no ponto exato e encerra a
+passagem depois da primeira árvore devolvida e outras 16 indexadas.
+
+O log também mostrou 194 esperas por escada de carvalho. `CraftingSteps`
+considerava a demanda atendida quando havia uma única peça; agora compara o
+estoque físico com a quantidade restante da planta e fabrica um lote por ação
+até cobri-la. O teste começou com quatro escadas e exige doze no baú. Por fim,
+`miner_chest_full` passou a reconhecer a mensagem real de `MinerHaul`; a linha
+`took 0` isolada não é mais tratada como prova de baú cheio.
+
+As duas regressões foram demonstradas antes das correções: a floresta densa
+continuava além de 17 árvores aceitas e a carpintaria parava no primeiro lote.
+Depois, `test --rerun-tasks --no-daemon` passou em **1.306/1.306**,
+`runGametest --rerun-tasks --no-daemon` passou em **574/574**, os **89** testes
+Python passaram e `build --no-daemon` concluiu. O diagnóstico existente do
+construtor já informa alvo, posição, distância, destino real e piso quando ele
+trava; sem falha reproduzida e sem custo relevante no Spark, a navegação não
+foi alterada. Ainda falta repetir o perfil e observar a obra no save real.
+
+### 2026-10-04 - Muda de emergencia dentro do expediente e validacao completa
+
+O viveiro de emergencia criado depois de vinte esperas por madeira agora usa o
+mesmo expediente dos demais trabalhos. `VillageForest.plantRequestedSapling`
+retorna antes de retirar ou plantar durante a noite, preservando a muda fisica
+no bau ate o proximo turno. O cenario Fabric
+`aFarmerKeepsTheRequestedSaplingInTheChestAtNight` foi escrito primeiro,
+reprovou sem a guarda de horario e passou depois dela.
+
+A rodada de `runGametest --rerun-tasks --no-daemon` registrou inicialmente duas
+falhas opostas no batch concorrente `craft_family`: o carpinteiro produziu a
+alvenaria e o pedreiro nao produziu a sua parte. A repeticao completa imediata
+passou em **578/578** em 1,177 minuto, incluindo a nova cobertura de escadas.
+O comportamento de producao e os timeouts permaneceram intactos; a ocorrencia
+ficou aberta como investigacao de interferencia de fixture concorrente.
+
+`test --rerun-tasks --no-daemon` passou em **1.308/1.308**; os **89** testes
+Python passaram; `build --no-daemon` concluiu. O build ainda informa 50
+violacoes PMD no relatorio nao bloqueante ja configurado pelo projeto. O
+playtest no save continua pendente.
+
+Na publicacao posterior, o JAR `0.3.0` foi copiado com o cliente fechado para
+`downloads/` e `%APPDATA%/.minecraft/mods/`. As tres copias, incluindo
+`build/libs/`, conferem SHA-256
+`B8A9E15BD0E5726FFA70CDFAB65616382166110CAA59FBBCEAECFF9C4BE64CE7`;
+`scripts/release_manifest.py --dry-run` confirmou o manifesto.

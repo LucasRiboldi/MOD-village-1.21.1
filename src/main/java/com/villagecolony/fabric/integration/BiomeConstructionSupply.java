@@ -105,12 +105,26 @@ public final class BiomeConstructionSupply {
      */
     private static final int ATTEMPTS_BEFORE_STOCKING = 3;
 
+    /** Esperas da obra antes de pedir ao fazendeiro uma muda específica. */
+    private static final int TREE_WAITS_BEFORE_PLANTING = 20;
+
     private static final Map<String, Integer> FAILED_PROFESSION_ATTEMPTS = new HashMap<>();
 
     /** A terceira falta da mesma peça sem rota profissional libera o depósito. */
     public static boolean failedProfessionAttempt(UUID colonyId, Item item) {
         return FAILED_PROFESSION_ATTEMPTS.merge(key(colonyId, item), 1, Integer::sum)
                 >= ATTEMPTS_BEFORE_STOCKING;
+    }
+
+    /** A vigésima espera pela madeira desta espécie libera o plantio. */
+    public static boolean treeWaitReached(UUID colonyId, TreeSpecies species) {
+        return FAILED_PROFESSION_ATTEMPTS.merge(treeKey(colonyId, species), 1, Integer::sum)
+                >= TREE_WAITS_BEFORE_PLANTING;
+    }
+
+    /** A muda foi plantada; uma futura falta recomeça na primeira espera. */
+    public static void treePlanted(UUID colonyId, TreeSpecies species) {
+        FAILED_PROFESSION_ATTEMPTS.remove(treeKey(colonyId, species));
     }
 
     /**
@@ -315,6 +329,10 @@ public final class BiomeConstructionSupply {
 
     private static String key(UUID colonyId, Item item) {
         return colonyId + "/" + Registries.ITEM.getId(item);
+    }
+
+    private static String treeKey(UUID colonyId, TreeSpecies species) {
+        return colonyId + "/tree/" + species.name().toLowerCase(java.util.Locale.ROOT);
     }
 
     /** Esquece as tentativas. Chamado ao parar o servidor. */
