@@ -14,6 +14,12 @@
 
 ## 🟡 04-10 — painéis, perímetro, mina e varredura (aguarda playtest)
 
+- Vila nova cria até oito árvores maduras no anel de 48–56 blocos, alternando
+  as espécies do bioma. Folhas naturais não persistentes podem ceder somente
+  dentro da copa gerada; folhas do jogador, blocos de vila, entidades e
+  construções continuam protegidos. A descida da mina recupera um degrau
+  transitável próximo quando o mineiro é deslocado para fora do corredor sob a
+  boca, antes de desistir da tarefa.
 - Corrigido o formato de vértices dos overlays: moldura e ícone não enviam
   mais atributos incompatíveis com `RenderLayer.getTextSeeThrough`.
 - Construção esperando madeira por 20 passagens solicita ao fazendeiro o

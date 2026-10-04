@@ -26,7 +26,7 @@ public class VillageForestGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_forest",
             tickLimit = 100)
-    public void aNewVillageGetsTwoDifferentMatureTrees(TestContext context) {
+    public void aNewVillageGetsEightMatureTreesOfBothSpecies(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos center = context.getAbsolutePos(new BlockPos(8, 1, 8)).add(3000, 0, -3000);
         Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(center.getX(), center.getY(), center.getZ()));
@@ -35,12 +35,35 @@ public class VillageForestGameTest {
 
         int planted = VillageForest.seedInitial(world, colony, TreeSpecies.OAK, TreeSpecies.BIRCH);
 
-        if (planted != 2) {
-            throw new AssertionError("o bosque fundacional plantou " + planted + " arvores, e eram duas");
+        if (planted != 8) {
+            throw new AssertionError("o bosque fundacional plantou " + planted + " arvores, e eram oito");
         }
 
         if (!hasLog(world, center, TreeSpecies.OAK) || !hasLog(world, center, TreeSpecies.BIRCH)) {
             throw new AssertionError("o bosque nao deixou as duas especies de tronco no mundo");
+        }
+
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_forest",
+            tickLimit = 100)
+    public void aNewVillageGetsEightMatureTreesThroughNaturalVegetation(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos center = context.getAbsolutePos(new BlockPos(-8, 1, 8)).add(3_000, 0, 3_000);
+        Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(center.getX(), center.getY(), center.getZ()));
+
+        prepareNaturalRing(world, center);
+        coverNaturalRingWithLeaves(world, center);
+
+        int planted = VillageForest.seedInitial(world, colony, TreeSpecies.OAK, TreeSpecies.BIRCH);
+
+        if (planted != 8) {
+            throw new AssertionError("a vila nova plantou " + planted + " arvores em vez de oito");
+        }
+
+        if (countLogs(world, center) < 8) {
+            throw new AssertionError("o bosque fundacional nao deixou oito arvores maduras no mundo");
         }
 
         context.complete();
@@ -216,6 +239,33 @@ public class VillageForestGameTest {
                 }
             }
         }
+    }
+
+    private static void coverNaturalRingWithLeaves(ServerWorld world, BlockPos center) {
+        for (int x = -56; x <= 56; x++) {
+            for (int z = -56; z <= 56; z++) {
+                int distance = x * x + z * z;
+                if (distance >= 48 * 48 && distance <= 56 * 56) {
+                    world.setBlockState(center.add(x, 0, z).up(), Blocks.OAK_LEAVES.getDefaultState());
+                }
+            }
+        }
+    }
+
+    private static int countLogs(ServerWorld world, BlockPos center) {
+        int logs = 0;
+        for (int x = -56; x <= 56; x++) {
+            for (int z = -56; z <= 56; z++) {
+                for (int y = 1; y <= 16; y++) {
+                    if (world.getBlockState(center.add(x, y, z)).isOf(Blocks.OAK_LOG)
+                            || world.getBlockState(center.add(x, y, z)).isOf(Blocks.BIRCH_LOG)) {
+                        logs++;
+                        break;
+                    }
+                }
+            }
+        }
+        return logs;
     }
 
     private static boolean hasLog(ServerWorld world, BlockPos center, TreeSpecies species) {

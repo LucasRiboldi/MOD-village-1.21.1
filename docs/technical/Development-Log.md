@@ -10556,3 +10556,30 @@ na lista construível e que não são casas. A execução completa de
 `runGametest --rerun-tasks --no-daemon` concluiu em **582/582**. Ainda falta o
 playtest no save para observar o sorteio e a implantação visual em terreno
 real.
+
+### 2026-10-04 - Oito árvores iniciais e retorno de escada
+
+O log do save registrou uma colônia criada com `0 forest trees`: a reserva
+fundacional exigia uma caixa de copa inteiramente vazia, portanto uma copa
+natural já existente transformava todos os candidatos válidos em recusa. A
+vila agora tenta oito árvores maduras no anel de 48–56 blocos e alterna as duas
+espécies do bioma. A preparação aceita e remove apenas folhas naturais que não
+sejam persistentes, dentro da copa da árvore que será gerada; estruturas,
+blocos de entidade, folhas de jogador e peças de vila permanecem protegidos.
+Se o gerador Vanilla falhar, os estados exatos das folhas removidas são
+restaurados.
+
+O mesmo log mostrou o mineiro quatro blocos abaixo da boca tentando caminhar
+diretamente até ela. Quando a perna normal não encontra o corredor porque a
+entidade foi deslocada, ela agora escolhe um piso transitável até oito blocos
+de distância, no máximo um bloco acima e mais próximo da boca. A recuperação
+só vale abaixo da entrada, preservando a regra que impede um aldeão sobre a
+mina de mirar a escada através do chão.
+
+O novo GameTest cobre oito árvores sob folhagem natural; a execução final
+passou 584/584. O teste unitário `MinerLegTest` passou 18/18, incluindo
+recuperação e proteção de superfície. Uma primeira rodada teve falha isolada,
+já conhecida como intermitente, em
+`BuilderGameTest.theBuilderMakesTheDoorTheWorkIsWaitingFor`; a repetição final
+passou integralmente, mas a reprodução determinística dessa instabilidade
+continua pendente.

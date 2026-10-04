@@ -115,6 +115,24 @@ das profissoes) esta verde; ainda requer validacao no save real.
   passou 578/578. Não reduzir timeout nem enfraquecer os testes sem reprodução
   determinística da interferência.
 
+## Sessão de 2026-10-04 — bosque inicial e recuperação da mina
+
+- [x] 🔴 Vila recém-criada tenta oito árvores maduras no anel 48–56, com
+  espécies alternadas do bioma e distância mínima entre elas. Folhagem natural
+  pode ser removida exclusivamente na copa da árvore nova; estruturas e folhas
+  persistentes continuam intocadas.
+- [x] 🔴 Mineiro deslocado abaixo da boca recupera o degrau transitável mais
+  próximo que o aproxima da saída, em vez de mirar a boca através da rocha.
+- [ ] 🔴 Playtest: criar vila em área com copa natural e confirmar oito árvores
+  maduras longe das obras; deslocar o mineiro em uma escada e confirmar que ele
+  retoma a subida sem girar ou abandonar a mina.
+- [ ] 🟡 Reproduzir de forma determinística
+  `BuilderGameTest.theBuilderMakesTheDoorTheWorkIsWaitingFor`, que falhou na
+  rodada completa de 04-10 sem relação com este patch; não reduzir timeout.
+- [ ] 🟡 Atualizar a linha de base do teste de ciclos Fabric por refatoração
+  arquitetural planejada, não por congelamento automático: os ciclos
+  `event/work/integration` e `integration/work` continuam impedindo `build`.
+
 ## Integração de 2026-10-02 — políticas de profissão e overlays
 
 `feature/mod-menu-settings` e `feature/profession-overlays` (feitas sobre a

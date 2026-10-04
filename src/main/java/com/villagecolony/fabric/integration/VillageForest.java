@@ -19,6 +19,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SaplingGenerator;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.WorldChunk;
@@ -54,6 +55,7 @@ public final class VillageForest {
     private static final int CANOPY_HEIGHT = 16;
     private static final int MIN_TREE_DISTANCE = 12;
     private static final int CANDIDATE_ANGLES = 64;
+    private static final int INITIAL_TREE_COUNT = 8;
 
     private VillageForest() {
     }
@@ -67,7 +69,7 @@ public final class VillageForest {
         RESTING
     }
 
-    /** Planta duas árvores maduras distintas para uma vila recém-criada. */
+    /** Planta oito árvores maduras perto das bordas de uma vila recém-criada. */
     public static int seedInitial(ServerWorld world, Colony colony) {
         return VillageBiomes.forestSpeciesAt(world, colony.center())
                 .map(species -> seedInitial(world, colony, species.getFirst(), species.getLast()))
@@ -76,16 +78,14 @@ public final class VillageForest {
 
     /**
      * Variante explícita para a criação da vila e os GameTests. A segunda
-     * espécie é sempre mantida distante da primeira.
+     * espécies são alternadas e mantidas distantes umas das outras.
      */
     public static int seedInitial(ServerWorld world, Colony colony, TreeSpecies first, TreeSpecies second) {
-        if (first == second) {
-            return plantOne(world, colony, first, List.of()).isPresent() ? 1 : 0;
+        List<BlockPos> planted = new ArrayList<>(INITIAL_TREE_COUNT);
+        for (int index = 0; index < INITIAL_TREE_COUNT; index++) {
+            TreeSpecies species = index % 2 == 0 ? first : second;
+            plantOne(world, colony, species, planted).ifPresent(planted::add);
         }
-
-        List<BlockPos> planted = new ArrayList<>(2);
-        plantOne(world, colony, first, planted).ifPresent(planted::add);
-        plantOne(world, colony, second, planted).ifPresent(planted::add);
         return planted.size();
     }
 
@@ -206,9 +206,12 @@ public final class VillageForest {
 
         for (BlockPos candidate : candidates(colony.center(), colony.id().hashCode() + species.name().hashCode())) {
             Optional<BlockPos> ground = naturalGroundAt(world, candidate);
-            if (ground.isEmpty() || tooCloseTo(ground.get(), avoid) || !hasClearCanopy(world, ground.get())) {
+            if (ground.isEmpty()
+                    || tooCloseTo(ground.get(), avoid)
+                    || !hasClearableNaturalCanopy(world, ground.get())) {
                 continue;
             }
+            Map<BlockPos, BlockState> cleared = clearNaturalLeaves(world, ground.get());
             if (generator.get().generate(
                     world,
                     world.getChunkManager().getChunkGenerator(),
@@ -217,6 +220,7 @@ public final class VillageForest {
                     world.getRandom())) {
                 return Optional.of(ground.get().up());
             }
+            restoreLeaves(world, cleared);
         }
         return Optional.empty();
     }
@@ -242,10 +246,12 @@ public final class VillageForest {
             if (state.isAir()) {
                 continue;
             }
+            if (isRemovableNaturalLeaf(world, ground, state)) {
+                continue;
+            }
             if (!LotGround.isNaturalGround(state)
                     || !BlockProtection.mayBreak(world, ground, state)
-                    || BlockProtection.isColonyBuilt(ground)
-                    || !isEmpty(chunk, ground.up())) {
+                    || BlockProtection.isColonyBuilt(ground)) {
                 return Optional.empty();
             }
             return Optional.of(ground);
@@ -269,6 +275,57 @@ public final class VillageForest {
             }
         }
         return true;
+    }
+
+    /** A reserva inicial pode substituir apenas folhas naturais, nunca uma estrutura. */
+    private static boolean hasClearableNaturalCanopy(ServerWorld world, BlockPos ground) {
+        for (int x = -CANOPY_RADIUS; x <= CANOPY_RADIUS; x++) {
+            for (int z = -CANOPY_RADIUS; z <= CANOPY_RADIUS; z++) {
+                for (int y = 1; y <= CANOPY_HEIGHT; y++) {
+                    BlockPos position = ground.add(x, y, z);
+                    WorldChunk chunk = loadedChunk(world, position);
+                    if (chunk == null) {
+                        return false;
+                    }
+                    BlockState state = chunk.getBlockState(position);
+                    if (!isEmpty(chunk, position) && !isRemovableNaturalLeaf(world, position, state)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    private static Map<BlockPos, BlockState> clearNaturalLeaves(ServerWorld world, BlockPos ground) {
+        Map<BlockPos, BlockState> cleared = new HashMap<>();
+        for (int x = -CANOPY_RADIUS; x <= CANOPY_RADIUS; x++) {
+            for (int z = -CANOPY_RADIUS; z <= CANOPY_RADIUS; z++) {
+                for (int y = 1; y <= CANOPY_HEIGHT; y++) {
+                    BlockPos position = ground.add(x, y, z);
+                    WorldChunk chunk = loadedChunk(world, position);
+                    if (chunk != null && isRemovableNaturalLeaf(world, position, chunk.getBlockState(position))) {
+                        BlockState leaf = chunk.getBlockState(position);
+                        world.setBlockState(position, Blocks.AIR.getDefaultState(), Block.NOTIFY_LISTENERS);
+                        cleared.put(position, leaf);
+                    }
+                }
+            }
+        }
+        return cleared;
+    }
+
+    private static void restoreLeaves(ServerWorld world, Map<BlockPos, BlockState> cleared) {
+        for (Map.Entry<BlockPos, BlockState> leaf : cleared.entrySet()) {
+            world.setBlockState(leaf.getKey(), leaf.getValue(), Block.NOTIFY_LISTENERS);
+        }
+    }
+
+    private static boolean isRemovableNaturalLeaf(ServerWorld world, BlockPos position, BlockState state) {
+        return state.isIn(BlockTags.LEAVES)
+                && BlockProtection.mayBreak(world, position, state)
+                && !BlockProtection.isColonyBuilt(position)
+                && !BlockProtection.isVillageOriginal(world, position);
     }
 
     private static boolean isEmpty(WorldChunk chunk, BlockPos position) {
