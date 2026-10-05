@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.event;
 
+import com.villagecolony.fabric.work.WorkerHousingNeeds;
+
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.ClusterRejection;
 import com.villagecolony.core.colony.model.Colony;
@@ -105,6 +107,9 @@ final class VillagerRegistration {
     static void registerVillagers(ServerWorld world, Colony colony, ColonyPos around) {
         VillagerScanner.ScanResult result = VillagerScanner.scan(
                 world, colony, around, VillageColonyMod.WORKERS, VillageColonyMod.STORAGES);
+
+        result.housingNeeded().forEach(workerId -> WorkerHousingNeeds.mark(colony.id(), workerId));
+        result.housingResolved().forEach(workerId -> WorkerHousingNeeds.resolve(colony.id(), workerId));
 
         if (result.registeredWorkers() > 0) {
             VillageColonyMod.LOGGER.info(

@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.event;
 
+import com.villagecolony.fabric.integration.VillageFocus;
+
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.ClusterRejection;
 import com.villagecolony.core.colony.model.Colony;
@@ -370,7 +372,7 @@ public final class VillageDetectionHandler {
 
         // O contorno do lote escolhido — 2026-09-15, pedido do autor. Sai
         // de graça em 19 de cada 20 tiques; ver SiteMarker.EVERY_TICKS.
-        SiteMarker.tick(overworld);
+        SiteMarker.tick(overworld, colonyId -> VillageFocus.isWorking(overworld, colonyId));
 
         tickCounter++;
 

@@ -11,7 +11,6 @@ import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.event.VillageFocus;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.particle.ParticleTypes;
@@ -27,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * O contorno do lote, desenhado no mundo — 2026-09-15.
@@ -127,12 +127,14 @@ public final class SiteMarker {
     }
 
     /**
-     * Desenha o contorno das obras abertas, uma vez por segundo.
+     * Desenha o contorno das obras abertas que o ciclo de eventos informou
+     * como ativas, uma vez por segundo.
      *
-     * <p>Chamada do tique do servidor. Sai de graça na esmagadora maioria
-     * dos tiques — é um contador e uma comparação.
+     * <p>Chamada do tique do servidor, e sai de graça na esmagadora maioria
+     * dos tiques. O critério de expediente pertence a {@code event}; recebê-lo
+     * como argumento mantém esta adaptação de mundo independente do agendador.
      */
-    public static void tick(ServerWorld world) {
+    public static void tick(ServerWorld world, Predicate<UUID> isWorking) {
         if (++tickCounter < EVERY_TICKS) {
             return;
         }
@@ -159,7 +161,7 @@ public final class SiteMarker {
                 continue;
             }
 
-            if (!VillageFocus.isWorking(world, project.colonyId())) {
+            if (!isWorking.test(project.colonyId())) {
                 continue;
             }
 

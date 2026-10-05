@@ -54,6 +54,12 @@
   da mesma vila, priorizando um baú vazio. Pilhas e componentes são preservados;
   sem espaço comunitário, o excedente usa um baú físico no salão completo da
   mina, sem carregar chunk ou usar baú de profissão (ADR-033).
+- A linha de base voltou a compilar sem ciclos Fabric: foco da vila, leitura e
+  orientação de blueprint e adaptação de bioma ficaram em `integration`; eventos
+  aplicam a política de moradia a partir do resultado da varredura. A regra de
+  arquitetura não encontrou ciclos e o teto de 500 linhas voltou a ser atendido
+  após mover o fechamento de corte para `TreeFelling`. A verificação final
+  passou em `build` e em 585/585 GameTests.
 - Spark `8VskZd9AOD` confirmou 20 TPS e mostrou o mineiro alcançando a frente,
   mas abandonando a coleta porque seu baú estava cheio. O transbordo agora é
   tentado no instante do depósito; sem destino, a tarefa volta à fila em vez de

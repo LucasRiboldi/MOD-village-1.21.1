@@ -18,7 +18,7 @@ import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.CraftingLookup;
-import com.villagecolony.fabric.event.VillageFocus;
+import com.villagecolony.fabric.integration.VillageFocus;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Item;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;

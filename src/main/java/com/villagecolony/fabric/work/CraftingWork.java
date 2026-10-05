@@ -5,7 +5,7 @@ import com.villagecolony.VillageColonyMod;
 import net.minecraft.item.Item;
 import net.minecraft.block.Block;
 import com.villagecolony.fabric.integration.ColonySupply;
-import com.villagecolony.fabric.event.VillageFocus;
+import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.construction.model.ConstructionProject;

@@ -1,4 +1,4 @@
-package com.villagecolony.fabric.work;
+package com.villagecolony.fabric.integration;
 
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ResourceId;

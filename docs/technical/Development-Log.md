@@ -10643,3 +10643,25 @@ preexistentes distintas e não determinísticas: uma em
 `CraftingGameTest.theWorkPieceMadeByTheCarpenterStaysInTheChest`. Portanto, a
 suíte completa ainda não é uma evidência de liberação integral e exige
 estabilização separada desses cenários, além do playtest no save.
+
+### 2026-10-04 - Remoção dos ciclos Fabric e teto de arquivo
+
+A linha de base falhava antes de qualquer edição: `ArchitectureRulesTest`
+detectava quatro ciclos entre `event`, `integration` e `work`, e
+`LumberjackWork` tinha 529 linhas, acima do teto de 500. A correção não
+congelou a nova topologia. `VillageFocus`, a leitura/orientação de blueprint e
+a adaptação de areia do deserto passaram a pertencer a `integration`; os
+eventos conservam a política de moradia e a aplicam a partir do resultado da
+varredura. Com isso, infraestrutura não volta a depender de execução de
+trabalho, e trabalho não volta a depender de evento para decidir o foco.
+
+O fechamento de corte foi extraído de `LumberjackWork` para `TreeFelling`.
+O arquivo de referência do ArchUnit foi reduzido a vazio porque os quatro ciclos
+que ele documentava deixaram de existir, e não porque foram aceitos como nova
+linha de base.
+
+Verificação: `./gradlew.bat test --no-daemon` passou com 1.314 testes, zero
+falhas e zero erros; `git diff --check` não encontrou erro de espaço. O build
+final também compilou os GameTests, e a rodada final de
+`./gradlew.bat runGametest --rerun-tasks --no-daemon` passou em 585/585. Não
+houve playtest no save nesta sessão.

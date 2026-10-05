@@ -165,6 +165,23 @@ public final class TreeFelling {
     }
 
     /**
+     * Fecha um plano e devolve sua reserva. Quando todos os troncos já saíram,
+     * recompõe a muda na borda no ritmo do viveiro.
+     *
+     * <p>Os troncos vêm antes da copa no plano. Portanto, terminar uma tarefa
+     * entre o último tronco e a última folha ainda pode repor a árvore sem
+     * plantar sob um tronco que continua de pé.
+     */
+    static void closePlan(ServerWorld world, LumberjackWork.Job job) {
+        if (job.plan != null && job.index >= job.plan.logs()) {
+            TreeHarvester.finish(world, job.plan);
+            LumberjackNursery.plantIfItIsTime(world, job.task.colonyId(), job.center);
+        }
+
+        TreeClaims.unclaim(job.plan);
+    }
+
+    /**
      * Põe no baú do lenhador tudo o que o bloco deu.
      *
      * <p>Tronco, muda, maçã, graveto: o que a tabela de loot der. A

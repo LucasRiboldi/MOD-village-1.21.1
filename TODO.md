@@ -145,9 +145,9 @@ das profissoes) esta verde; ainda requer validacao no save real.
 - [ ] 🟡 Reproduzir de forma determinística
   `BuilderGameTest.theBuilderMakesTheDoorTheWorkIsWaitingFor`, que falhou na
   rodada completa de 04-10 sem relação com este patch; não reduzir timeout.
-- [ ] 🟡 Atualizar a linha de base do teste de ciclos Fabric por refatoração
-  arquitetural planejada, não por congelamento automático: os ciclos
-  `event/work/integration` e `integration/work` continuam impedindo `build`.
+- [x] 🟡 Remover os ciclos Fabric por refatoração arquitetural, sem
+  congelamento automático: `event/work/integration` e `integration/work` não
+  aparecem mais em `ArchitectureRulesTest` (04-10).
 
 ## Integração de 2026-10-02 — políticas de profissão e overlays
 

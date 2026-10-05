@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.integration.DesertSand;
+
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
