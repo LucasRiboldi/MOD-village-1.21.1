@@ -115,12 +115,13 @@
 
 ## Em uma linha
 
-Entrega de 04-10 na branch de desenvolvimento: 1.309 unitários, 89 Python e
-580/580 GameTests; `build` verde. O JAR em `build/libs/` e `downloads/` é
-`47B30CD9…44FD`; a cópia em `mods/` ainda é `B8A9E15B…64CE7` porque o
-cliente Minecraft estava aberto durante a publicação.
-Próximo: fechar o cliente e atualizar `mods/`, depois fazer o playtest dos
-painéis, perímetro, mina, varredura, baús e ritmo de construção.
+Entrega de 04-10 publicada no commit `43f13978`: 1.314 testes unitários e
+585/585 GameTests; `build` verde. O JAR em `build/libs/`, `downloads/` e
+`%APPDATA%/.minecraft/mods/` é
+`EEE5A695C00281E129145E924F9DC3A6E63E40227397F90052FF5E7F5C56DD39` nas
+três cópias. A branch de desenvolvimento está alinhada ao remoto.
+Próximo: fazer o playtest dos painéis, perímetro, mina, varredura, baús e
+ritmo de construção no save real.
 
 ## 30-09, noite — playtests 18h e 21h (Spark `YUm45D9Sw4`, `qI5h6MXtDA`)
 

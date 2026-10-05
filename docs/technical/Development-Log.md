@@ -6,6 +6,23 @@
 
 # Village Colony — Development Log
 
+## 2026-10-04 — publicação do JAR e fechamento da refatoração Fabric
+
+O commit `43f13978` publicou a remoção dos ciclos entre `event`, `integration`
+e `work`, a divisão de `LumberjackWork` abaixo do teto arquitetural e a
+atualização dos testes de arquitetura. A verificação final executou
+`./gradlew.bat test --no-daemon` com 1.314 testes sem falhas, `build` com
+sucesso e `./gradlew.bat runGametest --rerun-tasks --no-daemon` com 585/585
+GameTests aprovados.
+
+O artefato `village-colony-0.3.0.jar` foi copiado de `build/libs/` para
+`downloads/` e `%APPDATA%/.minecraft/mods/` com o cliente fechado. As três
+cópias conferem pelo SHA-256
+`EEE5A695C00281E129145E924F9DC3A6E63E40227397F90052FF5E7F5C56DD39`. O
+build e os testes provam a integração automatizada; a validação dos painéis,
+perímetro, mina, varredura e fluxo de baús no save real permanece listada no
+estado vivo e no roteiro da próxima sessão.
+
 ## 2026-10-04 — fluxo de armazenamento do mineiro e viveiro proporcional
 
 O Spark `8VskZd9AOD` manteve 20 TPS, MSPT mediano de 6,97 ms e p95 de 10,5 ms:

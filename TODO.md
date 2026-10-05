@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-10-04 (terracota colorida passa pelo pedreiro com corante automático e o fundidor antecipa após duas faltas; a camada inferior de roça agora é fundação física; matriz de 161 blocos Vanilla registra 67 sem rota direta; recuo de roça inviável reduzido para um ciclo; antes, muda solicitada respeita o expediente; `barn_majest` e `storage_majest` entram no rodízio de pastor e construtor; 583 GameTests no topo; painéis pixelados, marcador, mina, base e varredura, integração de 02-10 e sessão de 02-10, seção
+**Atualizado:** 2026-10-04 (terracota colorida passa pelo pedreiro com corante automático e o fundidor antecipa após duas faltas; a camada inferior de roça agora é fundação física; matriz de 161 blocos Vanilla registra 67 sem rota direta; recuo de roça inviável reduzido para um ciclo; antes, muda solicitada respeita o expediente; `barn_majest` e `storage_majest` entram no rodízio de pastor e construtor; 585 GameTests na verificação final; painéis pixelados, marcador, mina, base e varredura, integração de 02-10 e sessão de 02-10, seção
 abaixo). Estado de 2026-09-28: a obra antecipa a proxima peca artesanal sem
 consumir os troncos brutos que ela mesma ainda exige; o `/vc log` explica a
 saida de trabalhador preso e seu retorno a escala. A evolucao agora inclui
