@@ -61,9 +61,13 @@ toque produção; duas rodadas `--rerun-tasks` no fim. Cada commit diz o que foi
 | # | Commit | Verificação |
 |---|---|---|
 | 1 | `a385f617` | 2 GameTests, provados por mutação (cada mutação derruba o seu); 612/612 ×2. Falta playtest: matar o processo |
-| 2 | — | **pendente**: regra escrita em `CLAUDE.md`/`AGENTS.md` e PR da integração para a `main` |
-| 3 | (este commit) | fase 1: `MaterialRequest` (core), `MaterialRequests` (registro por obra), `/vc log`; 4+1 unitários, 2 GameTests provados por mutação; 613/613. Fase 2 espera playtest |
+| 2 | `3f70a93e` | regra em `CLAUDE.md` §0.2.1 e `AGENTS.md`; CI em `claude/**` e `integra/**`; integração vai à `main` por PR |
+| 3 | `6589d127` | fase 1: `MaterialRequest` (core), `MaterialRequests` (registro por obra), `/vc log`; 4+1 unitários, 2 GameTests provados por mutação; 613/613. Fase 2 espera playtest |
 | 4 | `0e465515` | `searchRadiusOr` e `ReservationGate`; PIT 87%, 8/8 mutantes mortos; 611/611 |
 | 5 | `00c63763` | `VC_COST` + `scripts/cost_ledger.py`; 11/11 e 95 Python; falta playtest |
 | 6 | `e57ea5a5` | regra em `CLAUDE.md` §0.5 e `AGENTS.md`; 4 textos que mentiam corrigidos |
 | 7 | `54298eea`, `0f64a2fe`, `37a7e4b0`, `0057183a`, `7b090a64`, `583c7db1` | paridade, filtro, auditoria fora, PIT em PR/main, `/test`, fixture; bateria 2,5 min → 46 s |
+
+**Verificação final (06-10, 14:54–15:00):** `build --rerun-tasks`; 1.338 unitários + 1
+propriedade; 95 Python; 613/613 GameTests ×2 `--rerun-tasks`; auditoria 1/1; PIT 87%.
+Tudo o que depende de jogo está listado no `STATE.md`.

@@ -12,6 +12,27 @@
 
 ---
 
+## 🟡 06-10, tarde — ADR-035 aplicada (aguarda playtest)
+
+Os sete pontos da avaliação técnica (`docs/decisions/ADR-035-*`), um commit cada:
+
+1. **Save durante o jogo:** registro copiado em todo `BEFORE_SAVE`; nada depois do fechamento.
+2. **Uma linha por vez:** regra em `CLAUDE.md` §0.2.1 / `AGENTS.md`; CI também em `claude/**` e `integra/**`.
+3. **Pedido de material (fase 1):** `/vc log` diz o que a obra espera, de onde e por quê. Fase 2 espera playtest.
+4. **Decisão no core:** `ProfessionPolicy.searchRadiusOr`, `ReservationGate`.
+5. **Custo por fase:** linha `VC_COST` a cada 10 ciclos; `python scripts/cost_ledger.py`.
+6. **Comentários:** regra em `CLAUDE.md` §0.5; 4 textos que mentiam corrigidos.
+7. **Testes:** `-PgametestOnly=X`, auditoria fora da bateria comum (`-PgametestAudit=only`),
+   PIT só em PR/`main`, `runGametestServer` com `/test`, fixture que monta, `GameTestRegistryTest`.
+
+**Verificado em 06-10 (14:54–15:00):** `build --rerun-tasks` ok; 1.338 unitários + 1 propriedade,
+0 falhas (XML); 95 Python; **613/613 GameTests em duas rodadas `--rerun-tasks`** (27 s de servidor cada);
+auditoria 1/1; PIT 87% (limiar 85). JAR `downloads/village-colony-0.3.0.jar` = `20090AF3…8F95`.
+Intermitentes conhecidas: KF-003 (porta e escadas, 1/10 cada).
+**Playtest obrigatório:** matar o processo Java e reabrir (save); `/vc log` com obra esperando
+peça; `time_ledger.py` e `cost_ledger.py` depois de ≥ 5 min com 1 e com 4 colônias; mina com save
+antigo (SHAPE_VERSION 7→8); painéis com e sem Iris; argila no lago.
+
 ## 🟡 06-10 — linhas Claude e Codex integradas (aguarda playtest)
 
 Branch `integra/linhas-2026-10-06`: `claude/corrigiveis-sem-jogo` + `codex/village-visuals-logistics-mine-sweep`,
