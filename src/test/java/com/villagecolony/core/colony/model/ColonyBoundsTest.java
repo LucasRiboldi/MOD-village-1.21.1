@@ -67,16 +67,45 @@ class ColonyBoundsTest {
         assertEquals(new ColonyPos(30, 64, 30), colony.center());
     }
 
+    /** O jogador visto a cada 20 tiques, como o VillageFocus faz, de {@code from} a {@code to}. */
+    private void stay(long from, long to) {
+        for (long tick = from; tick <= to; tick += 20) {
+            colony.attend(tick);
+        }
+    }
+
+    /** ADR-036 item 11: a vila só trabalha depois de um minuto com o jogador dentro. */
     @Test
-    void attentionLastsFiveMinutesAfterThePlayerLeaves() {
+    void theVillageWorksOnlyAfterAMinuteWithThePlayerInside() {
         assertFalse(colony.isAttended(0), "sem jogador ainda, ninguém trabalha");
 
-        colony.attend(1_000);
+        stay(1_000, 2_180);
+        assertFalse(colony.isAttended(2_180), "59 segundos dentro ainda não bastam");
 
-        assertTrue(colony.isAttended(1_000));
-        assertTrue(colony.isAttended(1_000 + Colony.ATTENTION_TICKS));
-        assertFalse(colony.isAttended(1_000 + Colony.ATTENTION_TICKS + 1),
-                "passados 5 minutos sem jogador dentro, a vila para");
+        stay(2_200, 2_200);
+        assertTrue(colony.isAttended(2_200), "um minuto dentro e a vila trabalha");
+    }
+
+    /** Saiu, parou: não há mais os cinco minutos de sobra. */
+    @Test
+    void theVillageStopsAsSoonAsThePlayerLeaves() {
+        stay(1_000, 3_000);
+
+        assertTrue(colony.isAttended(3_000 + Colony.PRESENCE_GAP_TICKS));
+        assertFalse(colony.isAttended(3_000 + Colony.PRESENCE_GAP_TICKS + 1),
+                "o jogador saiu e a vila continuou trabalhando");
+    }
+
+    /** Quem sai e volta começa o minuto de novo. */
+    @Test
+    void comingBackStartsTheMinuteAgain() {
+        stay(1_000, 3_000);
+        stay(5_000, 5_000);
+
+        assertFalse(colony.isAttended(5_000), "a volta contou o tempo da visita anterior");
+
+        stay(5_020, 6_200);
+        assertTrue(colony.isAttended(6_200));
     }
 
     @Test

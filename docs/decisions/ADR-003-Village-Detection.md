@@ -737,6 +737,10 @@ da manhã de 30-09 (execução em toda colônia `ACTIVE`). A descoberta de vila
 nova continua perto do jogador: a cama de chunk carregado só dispara busca a
 até 64 blocos dele.
 
+> **Emenda 2026-10-06 (ADR-036 item 11):** a colônia trabalha só com o jogador
+> dentro dela **há mais de um minuto**; ao sair, para na hora (acabam os
+> 5 minutos de sobra). `Colony.SETTLE_TICKS`, `Colony.PRESENCE_GAP_TICKS`.
+
 **O que se aceita.** A obra aberta para quando o jogador sai da vila por mais
 de 5 minutos. Colônia ainda não medida usa a régua antiga (64 do centro) até
 a primeira medida, que precisa do chunk do centro carregado.

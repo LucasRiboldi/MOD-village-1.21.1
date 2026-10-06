@@ -120,7 +120,10 @@ public final class SweepCadenceGameTest implements FabricGameTest {
 
         try {
             SweepDeadline.within(0, () -> ConstructionPlanner.plan(world, colony));
-            colony.attend(world.getTime());
+            // Um minuto de presença contínua (ADR-036 item 11).
+            for (long tick = world.getTime() - Colony.SETTLE_TICKS; tick <= world.getTime(); tick += 20) {
+                colony.attend(tick);
+            }
 
             OptionalInt paused = SweepState.sweepPausedAt(colony.id());
 
