@@ -60,10 +60,10 @@ toque produção; duas rodadas `--rerun-tasks` no fim. Cada commit diz o que foi
 
 | # | Commit | Verificação |
 |---|---|---|
-| 1 | — | — |
-| 2 | — | — |
-| 3 | — | — |
-| 4 | — | — |
-| 5 | — | — |
-| 6 | — | — |
-| 7 | — | — |
+| 1 | `a385f617` | 2 GameTests, provados por mutação (cada mutação derruba o seu); 612/612 ×2. Falta playtest: matar o processo |
+| 2 | — | **pendente**: regra escrita em `CLAUDE.md`/`AGENTS.md` e PR da integração para a `main` |
+| 3 | — | **pendente**: fase 1 desenhada (pedido com estado em `core`, gravado nos ramos de `BuilderMaterials.ensureConstructionMaterial`/`hasMaterialForNextBlock`, linha no `/vc log`), não implementada |
+| 4 | `0e465515` | `searchRadiusOr` e `ReservationGate`; PIT 87%, 8/8 mutantes mortos; 611/611 |
+| 5 | `00c63763` | `VC_COST` + `scripts/cost_ledger.py`; 11/11 e 95 Python; falta playtest |
+| 6 | `e57ea5a5` | regra em `CLAUDE.md` §0.5 e `AGENTS.md`; 4 textos que mentiam corrigidos |
+| 7 | `54298eea`, `0f64a2fe`, `37a7e4b0`, `0057183a`, `7b090a64`, `583c7db1` | paridade, filtro, auditoria fora, PIT em PR/main, `/test`, fixture; bateria 2,5 min → 46 s |
