@@ -79,3 +79,11 @@ Preenchido a cada item aplicado.
 
 | # | Commit | Verificação |
 |---|---|---|
+| 3 | este commit | versão 0.3.1; JAR `2C2F849F…3180` em `downloads/` e na pasta `mods` |
+| 4 | `36891a42` | baú de cama em toda casa; 2 GameTests, escada por mutação |
+| 5 | `55ed3b2d` | Regra 25 desfeita; HousePlansTest 27/27 |
+| 6 | `dcaed4ac`, `afce8d76` | 4 tentativas no baú da profissão; 5ª falha ao pôr pula; barreira removida |
+| 8 | `18c1bef5` | estoque do pedreiro; pedido nominal protegido no ciclo |
+| 10 | `a3cbe44e` | vila abandonada para; dispensa provada por mutação |
+| 11 | `1bb32380` | foco com 1 minuto de presença |
+| 12 | fora do repositório | dados do mod apagados do "Novo mundo", backup em `.minecraft/saves-backup` |

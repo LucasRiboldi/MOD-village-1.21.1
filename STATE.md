@@ -1,5 +1,9 @@
 # STATE — 2026-10-06
 
+> **JAR atual: `downloads/village-colony-0.3.1.jar` = `2C2F849F…3180`** (também em
+> `%APPDATA%/.minecraft/mods`). Branch `claude/decisoes-2026-10-06`: ADR-036 itens 4, 5, 6,
+> 8, 10, 11, 12 aplicados; faltam os da lista em `docs/decisions/ADR-036-*`. Nada visto em jogo.
+
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
 >
