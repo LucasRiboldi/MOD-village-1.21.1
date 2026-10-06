@@ -74,3 +74,7 @@ e encalhe no expediente.
 
 Uma correção de fluxo só está provada quando a proporção cai no playtest
 seguinte. O GameTest prova o mecanismo; o `time_ledger` prova o efeito.
+
+No mesmo playtest, rode `python scripts/cost_ledger.py` (linhas `VC_COST`,
+ADR-035 §5): média, p95 e máximo de cada fase do ciclo por faixa de colônias.
+Nenhuma otimização de desempenho começa sem esse número.

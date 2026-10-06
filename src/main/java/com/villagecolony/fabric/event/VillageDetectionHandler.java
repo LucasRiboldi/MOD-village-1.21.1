@@ -419,6 +419,8 @@ public final class VillageDetectionHandler {
         ColonyCycleRunner.runColonyCycles(server.getOverworld(), true);
 
         reportIfSlow(startedAt);
+        CycleCost.sample(System.nanoTime() - startedAt, VillageColonyMod.COLONIES.count())
+                .ifPresent(VillageColonyMod.LOGGER::info);
     }
 
     /**

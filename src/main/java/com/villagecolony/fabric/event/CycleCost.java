@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Onde o ciclo da colônia gasta o tempo dele — P2.1, 2026-09-11.
@@ -166,6 +167,55 @@ final class CycleCost {
                     .append(overlap / NANOS_PER_MILLI)
                     .append(" ms — the numbers above are inflated)");
         }
+
+        return line.toString();
+    }
+
+    /**
+     * De quantos em quantos ciclos sai a linha {@code VC_COST}: 10 ciclos de
+     * 30 s, a mesma janela de 5 min do {@code VC_TIME} — ADR-035 §5.
+     */
+    static final int SAMPLE_EVERY_CYCLES = 10;
+
+    private static final long NANOS_PER_MICRO = 1_000L;
+
+    private static int cyclesSinceSample;
+
+    /**
+     * A linha {@code VC_COST} deste ciclo, quando é a vez dele — ADR-035 §5.
+     *
+     * <p>O aviso de ciclo lento só fala acima de 50 ms; os ciclos comuns, que
+     * dizem como o custo cresce com as colônias, ficavam sem número. Esta
+     * linha sai sempre, de 10 em 10 ciclos, em microssegundos (em milésimos
+     * quase tudo daria zero) e com as fases na ordem fixa do enum, para o
+     * {@code scripts/cost_ledger.py} somar.
+     *
+     * @return a linha, ou vazio quando não é ciclo de amostra
+     */
+    static Optional<String> sample(long totalNanos, int colonies) {
+        if (++cyclesSinceSample < SAMPLE_EVERY_CYCLES) {
+            return Optional.empty();
+        }
+
+        cyclesSinceSample = 0;
+
+        return Optional.of(sampleLine(totalNanos, colonies));
+    }
+
+    /** A linha em si, sem a contagem de ciclos — o que o teste confere. */
+    static String sampleLine(long totalNanos, int colonies) {
+        StringBuilder line = new StringBuilder("VC_COST version=1 colonies=").append(colonies);
+        long named = 0;
+
+        for (Phase phase : Phase.values()) {
+            long nanos = NANOS.getOrDefault(phase, 0L);
+
+            named += nanos;
+            line.append(' ').append(phase.label()).append("_us=").append(nanos / NANOS_PER_MICRO);
+        }
+
+        line.append(" other_us=").append(Math.max(0L, totalNanos - named) / NANOS_PER_MICRO)
+                .append(" total_us=").append(totalNanos / NANOS_PER_MICRO);
 
         return line.toString();
     }
