@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.storage.model.ChestSlotCap;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.type.ColonyPos;
@@ -13,6 +14,8 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.WorldChunk;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,15 +52,15 @@ public final class ChestDepositor {
             return 0;
         }
 
-        Inventory inventory = ChestInventories.at(world, chest)
-                .map(ChestInventories.Handle::inventory)
-                .orElse(null);
-        if (inventory == null) return amount;
+        ChestInventories.Handle handle = ChestInventories.at(world, chest).orElse(null);
+        if (handle == null) return amount;
 
+        Inventory inventory = handle.inventory();
         int remaining = amount;
 
         remaining = fillExistingStacks(inventory, item, remaining);
-        remaining = fillEmptySlots(inventory, item, remaining);
+        remaining = fillEmptySlots(inventory, item, remaining,
+                ChestSlotCap.slotsOpenFor(emptySlots(inventory), slotsHolding(inventory, item), handle.named()));
 
         inventory.markDirty();
 
@@ -72,11 +75,16 @@ public final class ChestDepositor {
      * @return se coube
      */
     public static boolean depositExact(ServerWorld world, ColonyPos chest, ItemStack stack) {
-        Inventory inventory = ChestInventories.at(world, chest)
-                .map(ChestInventories.Handle::inventory)
-                .orElse(null);
+        ChestInventories.Handle handle = ChestInventories.at(world, chest).orElse(null);
 
-        if (inventory == null) {
+        if (handle == null) {
+            return false;
+        }
+
+        Inventory inventory = handle.inventory();
+
+        if (ChestSlotCap.slotsOpenFor(emptySlots(inventory),
+                slotsHolding(inventory, stack.getItem()), handle.named()) <= 0) {
             return false;
         }
 
@@ -106,24 +114,23 @@ public final class ChestDepositor {
      * é a resposta segura.
      */
     public static int freeSpaceFor(ServerWorld world, ColonyPos chest, Item item) {
-        Inventory inventory = ChestInventories.at(world, chest)
-                .map(ChestInventories.Handle::inventory)
-                .orElse(null);
-        if (inventory == null) return 0;
+        ChestInventories.Handle handle = ChestInventories.at(world, chest).orElse(null);
+        if (handle == null) return 0;
 
+        Inventory inventory = handle.inventory();
         int room = 0;
 
         for (int slot = 0; slot < inventory.size(); slot++) {
             ItemStack stack = inventory.getStack(slot);
 
-            if (stack.isEmpty()) {
-                room += item.getDefaultStack().getMaxCount();
-            } else if (stack.isOf(item)) {
+            if (stack.isOf(item)) {
                 room += stack.getMaxCount() - stack.getCount();
             }
         }
 
-        return room;
+        int open = ChestSlotCap.slotsOpenFor(emptySlots(inventory), slotsHolding(inventory, item), handle.named());
+
+        return room + open * item.getDefaultStack().getMaxCount();
     }
 
     /**
@@ -176,24 +183,52 @@ public final class ChestDepositor {
     public static int freeSpaceForGroup(
             ServerWorld world, ColonyPos chest, ResourceGroup group) {
 
-        Inventory inventory = ChestInventories.at(world, chest)
-                .map(ChestInventories.Handle::inventory)
-                .orElse(null);
-        if (inventory == null) return 0;
+        ChestInventories.Handle handle = ChestInventories.at(world, chest).orElse(null);
+        if (handle == null) return 0;
 
+        Inventory inventory = handle.inventory();
+        Map<Item, Integer> slotsPerItem = new HashMap<>();
         int room = 0;
 
         for (int slot = 0; slot < inventory.size(); slot++) {
             ItemStack stack = inventory.getStack(slot);
 
-            if (stack.isEmpty()) {
-                room += emptySlotCapacity();
-            } else if (isOfGroup(stack, group)) {
+            if (!stack.isEmpty() && isOfGroup(stack, group)) {
                 room += stack.getMaxCount() - stack.getCount();
+                slotsPerItem.merge(stack.getItem(), 1, Integer::sum);
             }
         }
 
-        return room;
+        // O teto é por item, e o próximo do grupo pode ser o que já está no
+        // teto: conta-se o pior caso, que nunca promete espaço que não há.
+        int fullest = slotsPerItem.values().stream().mapToInt(Integer::intValue).max().orElse(0);
+        int open = ChestSlotCap.slotsOpenFor(emptySlots(inventory), fullest, handle.named());
+
+        return room + open * emptySlotCapacity();
+    }
+
+    private static int emptySlots(Inventory inventory) {
+        int empty = 0;
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            if (inventory.getStack(slot).isEmpty()) {
+                empty++;
+            }
+        }
+
+        return empty;
+    }
+
+    private static int slotsHolding(Inventory inventory, Item item) {
+        int holding = 0;
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            if (inventory.getStack(slot).isOf(item)) {
+                holding++;
+            }
+        }
+
+        return holding;
     }
 
     /**
@@ -253,10 +288,11 @@ public final class ChestDepositor {
         return remaining;
     }
 
-    private static int fillEmptySlots(Inventory inventory, Item item, int amount) {
+    private static int fillEmptySlots(Inventory inventory, Item item, int amount, int slotsOpen) {
         int remaining = amount;
+        int opened = 0;
 
-        for (int slot = 0; slot < inventory.size() && remaining > 0; slot++) {
+        for (int slot = 0; slot < inventory.size() && remaining > 0 && opened < slotsOpen; slot++) {
             if (!inventory.getStack(slot).isEmpty()) {
                 continue;
             }
@@ -268,6 +304,7 @@ public final class ChestDepositor {
             inventory.setStack(slot, stack);
 
             remaining -= moved;
+            opened++;
         }
 
         return remaining;

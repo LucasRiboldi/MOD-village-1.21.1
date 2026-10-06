@@ -134,7 +134,7 @@ public class ColonyCycleGameTest implements FabricGameTest {
         try {
             context.assertTrue(room > 0, "baú vazio devia ter espaço, tinha " + room);
 
-            ChestDepositor.deposit(world, chestPos, Items.DIRT, room);
+            TestChests.fillEmptySlots(world, chestPos, Items.DIRT);
 
             VillageDetectionHandler.runColonyCycleNow(world);
 

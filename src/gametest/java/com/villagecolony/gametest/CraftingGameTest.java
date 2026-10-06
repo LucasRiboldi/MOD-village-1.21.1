@@ -168,7 +168,7 @@ public class CraftingGameTest implements FabricGameTest {
         Fixture fixture = setUp(context, 64);
 
         // Os vinte e seis slots que sobram, e nada que empilhe com tábua.
-        ChestDepositor.deposit(context.getWorld(), fixture.chest, Items.COBBLESTONE, 26 * 64);
+        TestChests.fillEmptySlots(context.getWorld(), fixture.chest, Items.COBBLESTONE);
 
         context.runAtTick(90, () -> {
             int planks = planksIn(context, fixture.chest);

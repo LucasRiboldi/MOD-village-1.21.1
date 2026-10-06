@@ -590,7 +590,7 @@ public class BuilderGameTest implements FabricGameTest {
                 context.getAbsolutePos(new BlockPos(2, 2, 4)));
 
         try {
-            ChestDepositor.deposit(context.getWorld(), fixture.chest, Items.DIRT, 2_000);
+            TestChests.fillEmptySlots(context.getWorld(), fixture.chest, Items.DIRT);
 
             context.assertTrue(
                     BiomeConstructionSupply.stockForConstruction(
@@ -1430,8 +1430,13 @@ public class BuilderGameTest implements FabricGameTest {
                         VillageColonyMod.BUILDINGS.isColonyInfrastructure(corner),
                         "a casa pronta não entrou no registro de construções");
 
+                // A dona é uma colônia registrada; na bateria inteira a do
+                // cenário pode ter sido absorvida por uma vizinha, e a casa
+                // vai junto (ColonyMerge).
                 context.assertTrue(
-                        !VillageColonyMod.BUILDINGS.ofColony(fixture.colony.id()).isEmpty(),
+                        VillageColonyMod.BUILDINGS.at(corner)
+                                .flatMap(house -> VillageColonyMod.COLONIES.find(house.colonyId()))
+                                .isPresent(),
                         "o registro não sabe de quem é a casa");
             } finally {
                 fixture.owned.cleanUp();

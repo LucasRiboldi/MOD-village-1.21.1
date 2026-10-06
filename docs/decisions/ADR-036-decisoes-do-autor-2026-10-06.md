@@ -84,6 +84,7 @@ Preenchido a cada item aplicado.
 | 5 | `55ed3b2d` | Regra 25 desfeita; HousePlansTest 27/27 |
 | 6 | `dcaed4ac`, `afce8d76` | 4 tentativas no baú da profissão; 5ª falha ao pôr pula; barreira removida |
 | 8 | `18c1bef5` | estoque do pedreiro; pedido nominal protegido no ciclo |
+| 9a | este commit | teto de 3 compartimentos por item no depósito e na leitura; baú nomeado sem teto; 615/615 ×3 |
 | 10 | `a3cbe44e` | vila abandonada para; dispensa provada por mutação |
 | 11 | `1bb32380` | foco com 1 minuto de presença |
 | 12 | fora do repositório | dados do mod apagados do "Novo mundo", backup em `.minecraft/saves-backup` |
