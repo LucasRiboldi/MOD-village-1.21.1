@@ -3,6 +3,7 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.gametest.Arena;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FenceGateBlock;
@@ -42,15 +43,7 @@ public final class PenGolemGameTest implements FabricGameTest {
     private static final int TICKS = 900;
 
     private static void forceChunks(TestContext context, boolean force) {
-        BlockPos low = context.getAbsolutePos(new BlockPos(-1, 0, -1));
-        BlockPos high = context.getAbsolutePos(new BlockPos(11, 0, 11));
-
-        for (int cx = Math.min(low.getX(), high.getX()) >> 4; cx <= Math.max(low.getX(), high.getX()) >> 4; cx++) {
-            for (int cz = Math.min(low.getZ(), high.getZ()) >> 4; cz <= Math.max(low.getZ(), high.getZ()) >> 4;
-                    cz++) {
-                context.getWorld().setChunkForced(cx, cz, force);
-            }
-        }
+        Arena.forceChunks(context, new BlockPos(-1, 0, -1), new BlockPos(11, 0, 11), force);
     }
 
     /** Chão de pedra, ar até y=6, a cerca; e as porteiras pedidas, a leste. */

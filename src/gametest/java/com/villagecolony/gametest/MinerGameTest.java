@@ -1208,11 +1208,7 @@ public class MinerGameTest implements FabricGameTest {
 
     /** Chão sólido, para o aldeão andar e a pedra ter em que assentar. */
     private static void ground(TestContext context) {
-        for (int x = 0; x <= 7; x++) {
-            for (int z = 0; z <= 7; z++) {
-                context.setBlockState(new BlockPos(x, 1, z), Blocks.DIRT.getDefaultState());
-            }
-        }
+        Arena.floor(context, 8, 1, Blocks.DIRT.getDefaultState());
     }
 
     /**

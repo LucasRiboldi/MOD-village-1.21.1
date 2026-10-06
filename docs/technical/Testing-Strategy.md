@@ -304,6 +304,51 @@ Mundo salva e continua
 
 ---
 
+# 10. Como rodar e escrever testes (2026-10-06, ADR-035 §7)
+
+Esta seção é a prática do dia a dia; os números que a justificam estão em
+`docs/audit/TEST-STRATEGY.md` §7.
+
+## Rodar
+
+| Situação | Comando | Tempo medido |
+|---|---|---|
+| Uma classe de unitário | `gradlew test --tests "*Classe*"` | ~30 s (quase tudo é `compileJava`) |
+| Uma família de GameTest | `gradlew runGametest -PgametestOnly=Miner,Lumber` | ~22 s com uma classe |
+| Bateria comum, antes do commit | `gradlew build runGametest` | ~46 s de GameTest |
+| Mexeu em estrutura, catálogo ou suprimento | `gradlew runGametest -PgametestAudit=only` | ~88 s |
+| Tudo junto | `gradlew runGametest -PgametestAudit=include` | ~2 min |
+| Depurar um cenário olhando o mundo | `gradlew runGametestServer`, entrar por `localhost`, `/test run <classe>.<método>` | — |
+| Fechar P0 ou release | bateria ×2 `--rerun-tasks` + auditoria + `pitest` | — |
+
+`-PgametestOnly` casa por trecho do nome simples da classe, sem diferença de
+maiúsculas. O filtro só muda a cópia que vai ao servidor de teste; o
+registro em `src/gametest/resources/fabric.mod.json` continua com tudo, e o
+`GameTestRegistryTest` reprova classe com `@GameTest` fora dele.
+
+O CI roda a bateria comum em todo push; a auditoria e o PIT em PR, na `main`
+e no disparo manual.
+
+## Escrever
+
+- **Onde:** GameTest novo vai em `src/gametest/java/com/villagecolony/gametest/`.
+  Só vai para o pacote da classe testada (`fabric.work`, `fabric.event`…)
+  quando precisa de acesso de pacote — e diz isso no javadoc.
+- **Registrar:** toda classe nova entra em `fabric-gametest` no
+  `fabric.mod.json` do gametest; o `GameTestRegistryTest` cobra.
+- **Montar:** `ColonyFixture.colonyAt(context, centro)` cria, registra e já é
+  dono da colônia; `fixture.equippedWorker(...)` é o padrão para
+  trabalhador. `emptyHandedWorker(...)` só quando o assunto não é tempo de
+  quebra. Sempre `fixture.cleanUp()` no `finally`.
+- **Terreno repetido:** `Arena.forceChunks` e `Arena.floor`. Helper novo só
+  vai para a `Arena` quando já existir idêntico em mais de um teste.
+- **Auditoria de dados** (lê catálogo, NBT, receitas inteiras; não depende de
+  aldeão): entra em `gametestAudits` no `build.gradle`, fora da bateria comum.
+- **Migração:** teste antigo passa para a fixture quando for tocado por outro
+  motivo; nunca em massa.
+
+---
+
 # Final Rule
 
 Uma funcionalidade só existe quando pode ser observada funcionando dentro do Minecraft.

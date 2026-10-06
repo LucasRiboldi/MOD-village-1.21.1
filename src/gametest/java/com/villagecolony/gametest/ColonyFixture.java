@@ -2,6 +2,10 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.work.BuilderWork;
@@ -12,6 +16,9 @@ import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
 import com.villagecolony.fabric.work.SurfaceGatheringWork;
+
+import net.minecraft.test.TestContext;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +43,7 @@ import java.util.UUID;
  * registros do mod são estáticos e compartilhados; quem os usa se limpa
  * pelo identificador.
  */
-final class ColonyFixture {
+public final class ColonyFixture {
 
     private final List<UUID> workers = new ArrayList<>();
 
@@ -45,19 +52,61 @@ final class ColonyFixture {
     private ColonyFixture() {
     }
 
-    static ColonyFixture create() {
+    public static ColonyFixture create() {
         return new ColonyFixture();
     }
 
+    /**
+     * Uma colônia nova com centro no ponto relativo da arena, já registrada e
+     * já deste teste — ADR-035 §7. Substitui o par {@code Colony.create} +
+     * {@code COLONIES.register} + {@code owning} que cada teste repetia.
+     */
+    public static ColonyFixture colonyAt(TestContext context, BlockPos center) {
+        ColonyPos at = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center));
+        Colony colony = Colony.create(UUID.randomUUID(), at);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        return new ColonyFixture().owning(colony);
+    }
+
+    /** A colônia que este teste possui, ou erro se ele não possui nenhuma. */
+    public Colony colony() {
+        if (colony == null) {
+            throw new IllegalStateException("este fixture não possui colônia");
+        }
+
+        return colony;
+    }
+
+    /**
+     * Um trabalhador <b>com a ferramenta</b> desta colônia, já deste teste.
+     * É o padrão: na colônia real todo contratado é equipado no mesmo ciclo.
+     */
+    public Worker equippedWorker(TestContext context, ProfessionType profession, BlockPos at) {
+        Worker worker = TestWorkers.createEquippedWorker(context, colony().id(), profession, at);
+        owning(worker.villagerId());
+
+        return worker;
+    }
+
+    /** O mesmo, de mãos vazias — só quando o assunto não é tempo de quebra. */
+    public Worker emptyHandedWorker(TestContext context, ProfessionType profession, BlockPos at) {
+        Worker worker = TestWorkers.createWorker(context, colony().id(), profession, at);
+        owning(worker.villagerId());
+
+        return worker;
+    }
+
     /** Guarda a colônia deste teste, para removê-la no fim. */
-    ColonyFixture owning(Colony colony) {
+    public ColonyFixture owning(Colony colony) {
         this.colony = colony;
 
         return this;
     }
 
     /** Guarda um trabalhador deste teste. */
-    ColonyFixture owning(UUID workerId) {
+    public ColonyFixture owning(UUID workerId) {
         workers.add(workerId);
 
         return this;
@@ -70,7 +119,7 @@ final class ColonyFixture {
      * trabalhadores e baús pelo identificador de cada um, e o trabalho em
      * curso pelo mesmo caminho que a morte de um aldeão usa.
      */
-    void cleanUp() {
+    public void cleanUp() {
         for (UUID worker : workers) {
             // As seis profissões, na ordem do VillagerLifecycleHandler.
             //

@@ -1,10 +1,7 @@
 package com.villagecolony.fabric.event;
 
-import com.villagecolony.VillageColonyMod;
-import com.villagecolony.core.colony.model.Colony;
-import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.data.save.ColonySavedData;
-import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.gametest.ColonyFixture;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.server.MinecraftServer;
@@ -26,17 +23,15 @@ public final class SaveDuringPlayGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "save_during_play")
     public void anAutosaveCopiesTheColonyIntoTheSave(TestContext context) {
         MinecraftServer server = context.getWorld().getServer();
-        Colony colony = colonyAt(context);
-
-        VillageColonyMod.COLONIES.register(colony);
+        ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(1, 2, 1));
 
         try {
             ServerLifecycleEvents.BEFORE_SAVE.invoker().onBeforeSave(server, false, false);
 
-            context.assertTrue(isSaved(server, colony.id()),
+            context.assertTrue(isSaved(server, fixture.colony().id()),
                     "o salvamento do mundo não copiou a colônia para o save");
         } finally {
-            VillageColonyMod.COLONIES.remove(colony.id());
+            fixture.cleanUp();
         }
 
         context.complete();
@@ -50,28 +45,20 @@ public final class SaveDuringPlayGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "save_during_play")
     public void theSaveThatFollowsTheShutdownCopiesNothing(TestContext context) {
         MinecraftServer server = context.getWorld().getServer();
-        Colony colony = colonyAt(context);
-
-        VillageColonyMod.COLONIES.register(colony);
+        ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(1, 2, 1));
         ServerLifecycleHandler.markStopping(true);
 
         try {
             ServerLifecycleEvents.BEFORE_SAVE.invoker().onBeforeSave(server, false, false);
 
-            context.assertFalse(isSaved(server, colony.id()),
+            context.assertFalse(isSaved(server, fixture.colony().id()),
                     "o salvamento depois do fechamento copiou o registro de novo");
         } finally {
             ServerLifecycleHandler.markStopping(false);
-            VillageColonyMod.COLONIES.remove(colony.id());
+            fixture.cleanUp();
         }
 
         context.complete();
-    }
-
-    private static Colony colonyAt(TestContext context) {
-        ColonyPos center = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(1, 2, 1)));
-
-        return Colony.create(UUID.randomUUID(), center);
     }
 
     private static boolean isSaved(MinecraftServer server, UUID colonyId) {
