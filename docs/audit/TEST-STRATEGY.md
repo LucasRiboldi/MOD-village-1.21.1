@@ -113,3 +113,129 @@ dois tem: `AUTOMATICAMENTE COMPROVADO` ou `AINDA PRECISA DE PLAYTEST`.
    **só depois** de uma rodada verde estável, um arquivo por commit, com
    contagem antes/depois e PIT intacto.
 5. Remover os DELETE-CANDIDATE por último, com aprovação.
+
+---
+
+## 7. Análise de custo e organização — medida em 2026-10-06
+
+**Base:** branch `integra/linhas-2026-10-06` (`852f3a54`). Diferente das seções
+1–6, aqui os números são **medidos**: `build --rerun-tasks --profile`, XML de
+`build/test-results`, os logs das duas rodadas de `runGametest --rerun-tasks`
+(timestamps de cada lote) e as etapas da última execução do CI
+(`gh run view 37465893589`). Nenhum teste foi alterado.
+
+### 7.1 Onde vai o tempo
+
+**Local, `build --rerun-tasks` = 60 s**
+
+| Tarefa | Tempo | Observação |
+|---|---:|---|
+| `compileJava` | 22,3 s | inclui Error Prone + NullAway; parcela de cada um **não medida** |
+| `test` | 21,3 s | 1.325 casos; ver abaixo |
+| `pmdMain` | 7,6 s | só relatório (`ignoreFailures = true`) |
+| `remapSourcesJar` | 7,0 s | empacotamento, irrelevante no ciclo de desenvolvimento |
+| `propertyTest` | 4,1 s | 1 propriedade (sobe o fabric-loader-junit) |
+| `compileTestJava` / `compileGametestJava` | 3,7 / 3,1 s | |
+| `remapJar` / `jacocoTestReport` | 2,9 / 2,3 s | |
+
+**Unitários:** 15,9 s somados nas classes, mas **1.302 dos 1.325 casos levam
+menos de 10 ms**. Duas classes fazem 14,2 s: `ServerMemoryRegistrationTest`
+8,1 s (sobe o `Bootstrap` do Minecraft e inicializa todas as classes do mod) e
+`ArchitectureRulesTest` 6,1 s (importa o classpath no ArchUnit). Parte dos
+8,1 s é o `Bootstrap`, que só 3 testes usam e que a JVM paga uma vez — quanto
+sobraria tirando-o é **SUSPEITO, não medido**.
+
+**Local, `runGametest --rerun-tasks` ≈ 2 min 15 s a 2 min 30 s**
+
+| Fase | Tempo |
+|---|---:|
+| Gradle (compilação, JaCoCo, remap) até o servidor | ≈ 30–45 s |
+| Subida do servidor até o 1º lote | 14–15 s |
+| 292 lotes, 610 testes | 90 s |
+| ↳ **um lote: `construction_supply` (1 teste)** | **64 s (71% dos 90 s)** |
+| ↳ os outros 291 lotes, 609 testes | ≈ 26 s |
+
+O lote é `ConstructionSupplyAuditGameTest.everyBuildableVillageBlockHasABiomeSupplyDecision`:
+lê de uma vez os NBTs de 5 biomas e pergunta o suprimento de cada bloco,
+travando o servidor 64 s. É **auditoria de dados**, não comportamento de
+aldeão, e o resultado só muda quando mudam estruturas, catálogo ou
+`BiomeConstructionSupply`.
+
+**CI, um push ≈ 6 min 30 s**
+
+| Etapa | Tempo |
+|---|---:|
+| Build + unitários | 76 s |
+| GameTests | 115 s |
+| **PIT (mutação, só `core`)** | **165 s (42%)** |
+| resto | ≈ 20 s |
+
+Três das últimas seis execuções da linha Codex falharam em GameTests (04-10 e
+05-10); as duas de hoje passaram. A causa das falhas antigas não foi lida
+(**NÃO CONFIRMADO** se era defeito ou instabilidade).
+
+**Conclusão de tempo:** a bateria **não é lenta pela quantidade**. 609
+GameTests cabem em 26 s e 1.300 unitários em menos de 2 s. O custo está
+concentrado em três pontos: um teste de auditoria (64 s), o PIT no CI
+(165 s) e a falta de filtro, que obriga a rodar tudo para testar uma coisa.
+
+### 7.2 Organização: o que atrapalha quem desenvolve
+
+| ID | Achado | Evidência | Efeito no dia a dia |
+|---|---|---|---|
+| ORG-1 | **Sem filtro de GameTest.** A API desta versão só tem `fabric-api.gametest`, `.command` e `.report-file` | strings de `fabric-gametest-api-v1-2.0.5` | testar uma regra = rodar 610 testes (≈ 2,5 min) |
+| ORG-2 | **Registro manual no `fabric.mod.json`**, sem trava | `MineOverflowStorageGameTest` ficou fora na linha Codex e a contagem "585" não o incluía (achado em 06-10) | teste novo pode nunca rodar, e a bateria diz verde |
+| ORG-3 | **Fixture só limpa, não monta.** `ColonyFixture` tem `create/owning/cleanUp`; cada teste monta a colônia à mão | 127 `COLONIES.register(` em 48 arquivos; `new Colony(` 19× só no `MinerGameTest` | cenário novo = copiar 20–40 linhas de outro teste |
+| ORG-4 | **Trabalhador equipado é exceção.** `TestWorkers.createEquippedWorker` existe, 2 arquivos usam | grep | mede a mão nua, não a profissão (memória `gametest-nao-equipa-trabalhador`) |
+| ORG-5 | **Helpers privados copiados** entre classes | `ground` ×6, `forget` ×5, `forceChunks` ×4, `at` ×4, `cleanUp`/`chest`/`floor`/`pen`/`count`/`setUp` ×3 | a mesma correção em vários lugares |
+| ORG-6 | **Zero parametrização.** 0 `@ParameterizedTest`, 0 `CustomTestProvider` | grep; `CustomTestProvider`, `BeforeBatch` e `AfterBatch` **existem** no 1.21.1 (jar mapeado) | famílias copiadas (copa, terreno do lote, minério) |
+| ORG-7 | **Dois lugares para GameTest.** 74 arquivos em `gametest/`, 31 espalhados em `fabric/event`, `fabric/integration`, `fabric/work`, `fabric/world` | `find` | sem regra de onde pôr o próximo |
+| ORG-8 | **Arquivos-monstro.** `MinerGameTest` 85 testes / 5.890 linhas; `BuildSiteGameTest` 49; `LumberjackGameTest` 44 | `wc` | difícil achar o teste da regra que se está mexendo |
+| ORG-9 | **JaCoCo sempre ligado no `runGametest`** | `build.gradle:219-224` | custo em toda rodada local; parcela **não medida** |
+
+### 7.3 Oportunidades, por ganho ÷ custo
+
+Ganhos medidos onde há número; "estimado" onde não há. Nada implementado.
+
+| ID | Oportunidade | Ganho | Custo | Risco | Vale? |
+|---|---|---|---|---|---|
+| **OP-1** | Tirar `ConstructionSupplyAuditGameTest` da bateria comum: tarefa própria (`runGametestAudit`) que o CI roda **só** quando mudam `structure/`, `catalog/`, `VillageStructures` ou `BiomeConstructionSupply` (filtro `paths`), e antes de release | **−64 s por rodada local (−71% do tempo de teste, ≈ −45% do `runGametest`)**; ≈ −60 s no CI | baixo | perder a auditoria num push que mude o suprimento por outro caminho → filtro de paths amplo + rodar antes de release | **sim, primeiro** |
+| **OP-2** | Teste de paridade `@GameTest` × `fabric.mod.json` (T-05), unitário junto do `ModMetadataTest` | evita o ORG-2, que já aconteceu | muito baixo (ms) | nenhum | **sim, primeiro** |
+| **OP-3** | Filtro próprio: `-PgametestOnly=Miner*` faz o `processGametestResources` gravar só as entradas que casam | rodar uma família em ≈ 1 min em vez de 2,5 min (estimado) | baixo–médio | esquecer de rodar a bateria inteira antes do commit → o CI continua rodando tudo | **sim** |
+| **OP-4** | PIT só em PR e na `main` (ou incremental, com histórico em cache) | ≈ −165 s em cada push de branch | baixo | mutação vista mais tarde | **sim** |
+| OP-5 | Fixture que **monta**: `ColonyFixture.colonyAt(context, …)` registrando e já sendo dona; `TestWorkers` equipado por padrão; helpers comuns (`ground`, `forceChunks`, `forget`) num `Scenario` | menos 20–40 linhas por teste novo; fim do ORG-4 | médio | migrar tudo de uma vez quebra testes estáveis → **só ao tocar no teste** | sim, gradual |
+| OP-6 | Comando `/test` interativo (`-Dfabric-api.gametest.command`) numa configuração de execução de servidor | depurar um cenário olhando o mundo | muito baixo | nenhum | sim |
+| OP-7 | Parametrizar famílias: JUnit `@ParameterizedTest` nos unitários de claims/marks; `CustomTestProvider` nas famílias de GameTest (copa, terreno, minério) | −30% de linhas nesses arquivos (estimado) | médio | teste gerado com nome ruim é difícil de achar quando falha | depois de OP-1..OP-5 |
+| OP-8 | Dividir `MinerGameTest` por assunto (descida, galeria, salão, transbordo, encalhe) | achar o teste da regra | médio | só move código; a contagem tem que bater antes e depois | depois |
+| OP-9 | Regra de pasta: GameTest em `gametest/`, salvo quando precisa de acesso de pacote (aí no pacote da classe testada) | previsibilidade | muito baixo | — | sim, como regra escrita |
+| OP-10 | Medir antes de mexer: Error Prone no `compileJava` e JaCoCo no `runGametest` (com e sem) | decide se vale um modo local rápido | muito baixo | — | sim, só medição |
+
+### 7.4 O que **não** fazer
+
+| Ideia | Por que não |
+|---|---|
+| Apagar GameTests para ganhar tempo | os 609 comuns custam 26 s; o ganho é desprezível e o risco não |
+| Paralelizar os unitários (`maxParallelForks`) | o tempo líquido deles é < 2 s; o resto é custo fixo de 2 classes |
+| Aumentar `tickLimit` ou folgas para tirar instabilidade | já refutado (memória `bateria-gametest-instavel`) |
+| `maxAttempts`/`requiredSuccesses` como regra geral | esconde defeito de mecanismo; só para instabilidade de ambiente provada |
+| Tirar o ArchUnit ou o PIT de vez | são os contratos que mais protegem; mudar **quando** rodam, não **se** rodam |
+| Migração em massa para a fixture nova | quebra testes estáveis sem ganho imediato |
+
+### 7.5 Ciclo de desenvolvimento proposto (depois de OP-1..OP-4)
+
+| Situação | Comando | Tempo |
+|---|---|---|
+| mexeu em `core/` | `gradlew test --tests "*Classe*"` | ≈ 30 s (a maior parte é `compileJava`) |
+| mexeu em `fabric/` | `gradlew runGametest -PgametestOnly=Familia` | ≈ 1 min (estimado) |
+| antes do commit | `gradlew build runGametest` | ≈ 2 min, sem a auditoria |
+| mexeu em estrutura ou suprimento | `gradlew runGametestAudit` | ≈ 1,5 min |
+| fechar P0 ou release | bateria ×2 `--rerun-tasks` + auditoria + PIT | como hoje |
+
+### 7.6 Ordem recomendada
+
+1. **OP-2** (paridade) e **OP-1** (auditoria fora da bateria comum): o maior
+   ganho com o menor risco. Um commit cada.
+2. **OP-4** (PIT no CI) e **OP-3** (filtro local).
+3. **OP-10** (medir Error Prone e JaCoCo): decide se há um modo rápido local.
+4. **OP-9** como regra escrita; **OP-5** gradual, a cada teste tocado.
+5. **OP-7** e **OP-8** só depois de uma bateria estável com a fixture nova.
