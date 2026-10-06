@@ -28,7 +28,7 @@ class MaterialRequestTest {
     void onlyADeliveredRequestLetsTheWorkGoOn() {
         assertTrue(MaterialRequest.start(DOOR, State.DELIVERED, Source.CHEST, 0).delivered());
         assertFalse(MaterialRequest.start(DOOR, State.RESOLVING, Source.PROFESSION, 0).delivered());
-        assertFalse(MaterialRequest.start(DOOR, State.NO_SOLUTION, Source.BARRIER, 0).delivered());
+        assertFalse(MaterialRequest.start(DOOR, State.NO_SOLUTION, Source.NONE, 0).delivered());
     }
 
     @Test
@@ -61,7 +61,6 @@ class MaterialRequestTest {
                 MaterialRequest.start(DOOR, State.RESOLVING, Source.CRAFTSMAN, 0),
                 MaterialRequest.start(DOOR, State.RESOLVING, Source.STOCKED, 0),
                 MaterialRequest.start(DOOR, State.NO_SOLUTION, Source.STOCKED, 0),
-                MaterialRequest.start(DOOR, State.NO_SOLUTION, Source.BARRIER, 0),
                 MaterialRequest.start(DOOR, State.NO_SOLUTION, Source.NONE, 0)}) {
 
             assertNotEquals("", request.reason());

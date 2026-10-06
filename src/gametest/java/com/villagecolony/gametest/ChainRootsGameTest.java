@@ -161,9 +161,8 @@ public class ChainRootsGameTest {
         //
         // Eles eram reais: flor, grama alta, gelo, bola de neve e bambu
         // estão mesmo nas plantas. Mas são <b>decoração</b>, e a obra
-        // <b>não para</b> por elas — o {@code TestBarrier} risca a peça
-        // que não chega e a casa sobe assim mesmo, que é decisão antiga
-        // do projeto.
+        // <b>não para</b> por elas — a peça sem rota aparece no baú na
+        // quarta tentativa (ADR-036 item 6) e a casa sobe assim mesmo.
         //
         // O que trava é o material de <b>parede</b>: pedra, madeira,
         // vidro, cama, porta. Reprovar por decoração faria este teste
@@ -295,8 +294,8 @@ public class ChainRootsGameTest {
      *
      * <p>A distinção que decide se o teste reprova: a obra para por falta
      * de arenito e <b>não</b> para por falta de papoula — a peça
-     * decorativa que não chega é riscada pelo {@code TestBarrier} e a
-     * casa sobe assim mesmo.
+     * decorativa sem rota aparece no baú na quarta tentativa (ADR-036
+     * item 6) e a casa sobe assim mesmo.
      *
      * <p>Pela família do nome, e é o mesmo critério que o
      * {@code CraftingWork.isMasonry} usa para dividir as oficinas.

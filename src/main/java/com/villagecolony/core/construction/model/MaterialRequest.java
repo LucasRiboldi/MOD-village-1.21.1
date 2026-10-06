@@ -46,9 +46,6 @@ public record MaterialRequest(ResourceId material, State state, Source source, l
         /** Aparece no baú da profissão depois de quatro tentativas (ADR-036 item 6). */
         STOCKED,
 
-        /** A barreira de teste pula a peça (Regra 28). */
-        BARRIER,
-
         /** Nenhuma fonte: a peça não tem item conhecido. */
         NONE
     }
@@ -90,7 +87,6 @@ public record MaterialRequest(ResourceId material, State state, Source source, l
                 default -> "uma profissão consegue no bioma; falta entregar";
             };
             case NO_SOLUTION -> switch (source) {
-                case BARRIER -> "a barreira de teste vai pular a peça";
                 case STOCKED -> "sem rota, e o baú do construtor não aceitou a peça";
                 default -> "a peça não tem item que o jogo conheça";
             };
