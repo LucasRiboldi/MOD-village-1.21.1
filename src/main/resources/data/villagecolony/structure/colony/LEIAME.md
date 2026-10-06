@@ -22,6 +22,7 @@ Lista de controle do que existe e do que falta: `CATALOGO.md`, gerado por
 |---|---|---|
 | Casa de um ofício, num estilo | `colony/<estilo>/trade_<oficio>.nbt` | entra na lista de obras **à frente** das casas de ofício do jogo (Regra 49) |
 | Casa de um ofício, todos os estilos | `colony/trade_<oficio>.nbt` | idem, quando não há a do estilo |
+| Modelo nomeado de profissão | `colony/barn_majest.nbt` ou `colony/storage_majest.nbt` | entra no rodízio de obra do pastor ou construtor, respectivamente |
 | Trocar uma estrutura do jogo | `colony/override/<caminho do jogo>.nbt` | a colônia levanta o modelo no lugar daquela estrutura; o nome do jogo continua, e o tipo e o rodízio não mudam |
 
 - **Estilos:** `plains`, `desert`, `savanna`, `taiga`, `snowy`.

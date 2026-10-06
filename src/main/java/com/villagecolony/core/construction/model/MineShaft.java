@@ -8,21 +8,21 @@ import java.util.Objects;
 /**
  * A geometria determinística de um nível da mina.
  *
- * <p>Cada nível abre um caracol de dez degraus, limpa uma área de
- * cinquenta blocos e então libera quatro ramais. Cada ramal desce dez
- * degraus e limpa mais cinquenta blocos. A ordem não usa sorteio de
+ * <p>Cada nível abre dois lances de cinco degraus, limpa um salão de
+ * 10 x 10 x 3 e então libera quatro ramais. Cada ramal desce dez
+ * degraus e limpa outro salão. A ordem não usa sorteio de
  * execução: o cursor salvo sempre volta à mesma posição.
  */
 public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
 
-    /** Quatro curvas formam o caracol. Os lados alternam três e dois degraus. */
-    public static final int HELIX_FLIGHTS = 4;
+    /** Dois lances formam cada ciclo de descida. */
+    public static final int HELIX_FLIGHTS = 2;
 
     /** Quantos degraus o caracol inteiro desce. */
     public static final int DESCENT = 10;
 
     /** Maior lado do caracol, exposto para os testes de largura. */
-    public static final int HELIX_SIDE = 3;
+    public static final int HELIX_SIDE = 5;
 
     /** Altura livre de túneis e áreas de coleta. */
     public static final int HEADROOM = 3;
@@ -39,12 +39,8 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
     /** Blocos da escada inicial compartilhada. */
     public static final int CARVED = DESCENT * STAIR_STEP_BLOCKS;
 
-    /**
-     * Área de exploração comum após o caracol: cinco fileiras de 3 × 3 —
-     * pedido do autor, 2026-10-03, "todo espaço de mina minerada tem 3x3"
-     * (eram cinco de largura por dois de altura, 50 blocos).
-     */
-    public static final int SEARCH_AREA_BLOCKS = 45;
+    /** Salão comum de 10 x 10 colunas por três blocos de altura. */
+    public static final int SEARCH_AREA_BLOCKS = 300;
 
     /** Tudo que os quatro ramais compartilham antes de se separar. */
     public static final int SHARED_BLOCKS = CARVED + SEARCH_AREA_BLOCKS;
@@ -52,14 +48,15 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
     /** Degraus de cada um dos quatro ramais. */
     public static final int ARM_STAIRS = 10;
 
-    /** Blocos de área limpos por ramal: a mesma sala de 3 × 3. */
-    public static final int ARM_AREA_BLOCKS = SEARCH_AREA_BLOCKS;
+    /** Blocos do salão de 10 x 10 x 3 limpo por ramal. */
+    public static final int ARM_AREA_BLOCKS = 300;
 
     /** Total de posições exclusivas de cada ramal. */
     public static final int ARM_BLOCKS = ARM_STAIRS * STAIR_STEP_BLOCKS + ARM_AREA_BLOCKS;
 
-    private static final int SEARCH_WIDTH = 3;
-    private static final int SEARCH_LENGTH = SEARCH_AREA_BLOCKS / (SEARCH_WIDTH * HEADROOM);
+    private static final int SEARCH_WIDTH = 10;
+    private static final int SEARCH_HEIGHT = 3;
+    private static final int SEARCH_LENGTH = SEARCH_AREA_BLOCKS / (SEARCH_WIDTH * SEARCH_HEIGHT);
     private static final int MINEABLE_BOTTOM = -63;
 
     /** A menor altura do piso central que ainda deixa o último ramal acima da rocha-mãe. */
@@ -146,7 +143,7 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
         int remaining = index;
 
         for (int flight = 0; flight < HELIX_FLIGHTS; flight++) {
-            int blocks = flightLength(flight) * STAIR_STEP_BLOCKS;
+            int blocks = flightLength() * STAIR_STEP_BLOCKS;
 
             if (remaining < blocks) {
                 return stair(cornerOf(flight), facingOn(flight), remaining);
@@ -158,8 +155,8 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
         throw new IllegalArgumentException("Helix index outside the shared stair: " + index);
     }
 
-    private static int flightLength(int flight) {
-        return flight % 2 == 0 ? HELIX_SIDE : HELIX_SIDE - 1;
+    private static int flightLength() {
+        return HELIX_SIDE;
     }
 
     private ColonyPos cornerOf(int flight) {
@@ -169,7 +166,7 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
 
         for (int prior = 0; prior < flight; prior++) {
             Side towards = facingOn(prior);
-            int length = flightLength(prior);
+            int length = flightLength();
             x += towards.offsetX() * length;
             z += towards.offsetZ() * length;
             y -= length;
@@ -228,7 +225,7 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
     }
 
     /**
-     * Uma sala de 5 x 5 x 2. A ordem alterna os lados a partir do centro,
+     * Um salão de 10 x 10 x 3. A ordem alterna os lados a partir do centro,
      * variando a área explorada sem perder um caminho físico de volta.
      */
     private ColonyPos search(ColonyPos floor, Side towards, int index) {
@@ -236,15 +233,12 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
             throw new IllegalArgumentException("Search index outside the area: " + index);
         }
 
-        int column = index / HEADROOM;
-        int layer = index % HEADROOM;
+        int column = index / SEARCH_HEIGHT;
+        int layer = index % SEARCH_HEIGHT;
         int row = column / SEARCH_WIDTH;
         int withinRow = column % SEARCH_WIDTH;
-        int offset = switch (withinRow) {
-            case 0 -> 0;
-            case 1 -> 1;
-            default -> -1;
-        };
+        int offset = withinRow == 0 ? 0
+                : (withinRow % 2 == 1 ? (withinRow + 1) / 2 : -withinRow / 2);
         Side sideways = towards.clockwise();
 
         return new ColonyPos(

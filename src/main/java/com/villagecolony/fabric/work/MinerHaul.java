@@ -5,13 +5,19 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
+import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.fabric.integration.ProfessionChestOverflow;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Onde vai o que o mineiro cava — a Regra 30.
@@ -20,8 +26,9 @@ import java.util.List;
  * quinhentas linhas. É uma pergunta inteira e separada de "o que cavar"
  * e "como cavar".
  *
- * <p>Desde 2026-09-15 é um destino só, por decisão do autor: tudo o que o
- * mineiro cava vai diretamente para o seu próprio baú.
+ * <p>Desde 2026-09-15 o destino primário é o baú do próprio mineiro. Quando
+ * ele fica cheio, libera primeiro os dez últimos slots para baús comunitários
+ * da mesma vila; nunca usa o baú de outra profissão.
  */
 final class MinerHaul {
 
@@ -47,8 +54,8 @@ final class MinerHaul {
     }
 
     /**
-     * Guarda o que caiu no baú do mineiro. O excedente fica como item no
-     * mundo, sem contaminar o baú de outro trabalhador.
+     * Guarda o que caiu no baú do mineiro. Se ele encher, tenta liberar os
+     * slots reservados da profissão antes de deixar o excedente no mundo.
      *
      * @param wanted o item que a tarefa pediu, para a conta sair separada
      *     — nulo quando o pedido não vira item deste jogo, e aí o
@@ -57,6 +64,17 @@ final class MinerHaul {
      */
     static Haul deposit(
             ServerWorld world,
+            UUID colonyId,
+            WorkerStorage storage,
+            List<ItemStack> drops,
+            BlockPos dropPosition,
+            Item wanted) {
+        return deposit(world, Optional.of(colonyId), storage, drops, dropPosition, wanted);
+    }
+
+    private static Haul deposit(
+            ServerWorld world,
+            Optional<UUID> colonyId,
             WorkerStorage storage,
             List<ItemStack> drops,
             BlockPos dropPosition,
@@ -98,6 +116,21 @@ final class MinerHaul {
             int leftOver = ChestDepositor.deposit(
                     world, chest, drop.getItem(), drop.getCount());
 
+            if (leftOver > 0 && colonyId.isPresent()) {
+                int relieved = ProfessionChestOverflow.relieve(
+                        world,
+                        colonyId.get(),
+                        ColonyChests.nearestFirst(world, colonyId.get(), chest),
+                        professionChests(colonyId.get()));
+
+                if (relieved > 0) {
+                    leftOver = ChestDepositor.deposit(world, chest, drop.getItem(), leftOver);
+                    VillageColonyMod.LOGGER.info(
+                            "Miner chest at {} released {} items to village storage before retrying {}",
+                            chest, relieved, drop.getItem());
+                }
+            }
+
             stored += drop.getCount() - leftOver;
 
             if (leftOver > 0) {
@@ -122,5 +155,28 @@ final class MinerHaul {
         }
 
         return new Haul(stored, asked);
+    }
+
+    /** Variante sem colônia para a prova isolada do teto por tipo. */
+    static Haul deposit(
+            ServerWorld world,
+            WorkerStorage storage,
+            List<ItemStack> drops,
+            BlockPos dropPosition,
+            Item wanted) {
+        return deposit(world, Optional.empty(), storage, drops, dropPosition, wanted);
+    }
+
+    /** Baús reservados não são destino do transbordo de outro profissional. */
+    private static Set<ColonyPos> professionChests(UUID colonyId) {
+        Set<ColonyPos> chests = new LinkedHashSet<>();
+
+        for (var worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
+            VillageColonyMod.STORAGES.of(worker.villagerId())
+                    .map(WorkerStorage::chestPosition)
+                    .ifPresent(chests::add);
+        }
+
+        return chests;
     }
 }

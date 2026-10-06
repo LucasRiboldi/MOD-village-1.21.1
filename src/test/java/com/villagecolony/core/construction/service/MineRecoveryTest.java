@@ -27,6 +27,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class MineRecoveryTest {
 
+    @Test
+    void tenFailedHallRoutesAreTriedBeforeTheMineMouthIsAbandoned() {
+        assertEquals(10, Mine.HELICES_BEFORE_BLAMING_THE_MOUTH);
+    }
+
     private static Mine freshMine() {
         MineShaft shaft = MineShaft.from(new ColonyPos(0, 60, 0), Side.NORTH);
 

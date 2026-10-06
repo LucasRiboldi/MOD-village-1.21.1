@@ -208,6 +208,14 @@ public enum ResourceType {
     /** Terracota neutra, feita pelo fundidor a partir de bloco de argila. */
     TERRACOTTA(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.SMELTED),
 
+    /**
+     * Terracota vermelha, tingida pelo pedreiro a partir da terracota neutra.
+     *
+     * <p>O corante da receita e componente automatico: a colônia o deposita
+     * fisicamente no baú de trabalho, sem abrir uma tarefa de coleta ou craft.
+     */
+    RED_TERRACOTTA(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
+
     /** O tijolo, que sai da fornalha como o arenito liso. */
     BRICK(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.SMELTED),
 

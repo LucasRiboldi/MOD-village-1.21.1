@@ -134,6 +134,7 @@ public final class MinerHands {
         // Todo recolhimento vai direto para o baú do próprio profissional.
         MinerHaul.Haul haul = MinerHaul.deposit(
                 world,
+                job.task.colonyId(),
                 storage,
                 drops,
                 job.target,
@@ -165,17 +166,18 @@ public final class MinerHands {
         // se vê como a mina sendo cavada para sempre sem render nada.
         //
         // A pedra saiu do mundo e não entrou em lugar nenhum: continuar é
-        // gastar a vez do mineiro e sujar o chão. Encerrar devolve a vez ao
-        // ciclo da colônia, que é quem sabe pedir baú novo — ver a Regra 30 e
-        // MinerHaul.deposit, que já registra o transbordo.
+        // gastar a vez do mineiro e sujar o chão. A tarefa volta para a fila,
+        // com uma pausa curta na coleta mineral. Isso evita registrar uma
+        // conclusão de zero itens e deixa o trabalhador apto a apoiar uma obra
+        // enquanto o armazenamento se recompõe.
         if (haul.stored() == 0 && !drops.isEmpty()) {
             VillageColonyMod.LOGGER.warn(
-                    "Miner {} stops — the stone from {} had nowhere to go,"
-                            + " the chest that serves him is full",
+                    "Miner {} pauses — the stone from {} had nowhere to go,"
+                            + " the chest that serves him is full; task returned to the queue",
                     villager.getUuid().toString().substring(0, 8),
                     job.target.toShortString());
 
-            finishTask(villager.getUuid(), job);
+            waitForStorage(villager.getUuid(), job);
 
             return;
         }
@@ -232,6 +234,19 @@ public final class MinerHands {
                 job.wanted.name().toLowerCase(java.util.Locale.ROOT),
                 job.task.amount());
 
+        release(workerId, job);
+    }
+
+    /**
+     * Devolve uma coleta que perdeu o destino físico sem transformá-la em
+     * trabalho concluído. Não é uma greve: o descanso curto só impede que o
+     * mesmo baú cheio seja tentado em todos os ciclos consecutivos.
+     */
+    private static void waitForStorage(UUID workerId, Job job) {
+        job.task.release();
+        VillageColonyMod.WORKERS.find(workerId)
+                .ifPresent(worker -> worker.rest(job.task.requiredCapability()));
+        MineClaims.stepAside(job.task.colonyId(), workerId);
         release(workerId, job);
     }
 

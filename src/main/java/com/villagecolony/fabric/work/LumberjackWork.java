@@ -11,7 +11,7 @@ import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
-import com.villagecolony.fabric.event.VillageFocus;
+import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.TreeHarvester;
 import com.villagecolony.fabric.integration.TreeScanner;
@@ -239,6 +239,12 @@ public final class LumberjackWork {
         dropClosedJobs();
 
         if (open == 0) {
+            // Sem árvore a cortar, o lenhador recompõe o viveiro da borda
+            // antes de ficar ocioso. A atribuição de construção continua
+            // sendo a alternativa seguinte, em WorkAssignment.
+            if (LumberjackNursery.hasLumberjack(colony.id())) {
+                LumberjackNursery.plantBatchIfItIsTime(world, colony.id(), center);
+            }
             LumberjackReport.reportIdle(colony);
         } else {
             IdleLog.clear(colony.id(), SUBJECT);
@@ -275,7 +281,7 @@ public final class LumberjackWork {
             }
 
             if (!isOngoing(job.task)) {
-                TreeChoice.closePlan(world, job);
+                TreeFelling.closePlan(world, job);
                 entries.remove();
 
                 // O destino morre com a tarefa — ver WorkTargets.clear.
@@ -291,7 +297,7 @@ public final class LumberjackWork {
             }
 
             if (outcome == Outcome.DONE) {
-                TreeChoice.closePlan(world, job);
+                TreeFelling.closePlan(world, job);
                 entries.remove();
             }
         }

@@ -1,9 +1,12 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.type.ResourceId;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
 
 import java.util.Optional;
 
@@ -181,5 +184,35 @@ public enum TreeSpecies {
     /** Se este bloco é tronco de alguma árvore conhecida. */
     public static boolean isLog(BlockState state) {
         return ofLog(state).isPresent();
+    }
+
+    /**
+     * A espécie que fornece uma peça de construção Vanilla.
+     *
+     * <p>O prefixo do registro cobre a família completa da madeira: tronco,
+     * tábua, escada, laje, porta, cerca, placa e suas variantes. As espécies
+     * compostas são comparadas pelo nome inteiro, então {@code dark_oak_*}
+     * não é confundido com {@code oak_*}.
+     */
+    public static Optional<TreeSpecies> ofConstructionItem(Item item) {
+        var id = Registries.ITEM.getId(item);
+        return ofConstructionResource(new ResourceId(id.getNamespace(), id.getPath()));
+    }
+
+    /** A espécie fornecedora de um recurso Vanilla pedido por uma construção. */
+    public static Optional<TreeSpecies> ofConstructionResource(ResourceId resource) {
+        if (!"minecraft".equals(resource.namespace())) {
+            return Optional.empty();
+        }
+
+        String path = resource.path();
+        for (TreeSpecies species : values()) {
+            String prefix = species.name().toLowerCase(java.util.Locale.ROOT) + "_";
+            if (path.startsWith(prefix)) {
+                return Optional.of(species);
+            }
+        }
+
+        return Optional.empty();
     }
 }

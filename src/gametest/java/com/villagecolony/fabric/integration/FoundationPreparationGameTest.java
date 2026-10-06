@@ -17,6 +17,48 @@ import java.util.UUID;
 
 public final class FoundationPreparationGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "foundation_preparation")
+    public void aHouseRemovesOnlyGrassFromItsPlannedBase(TestContext context) {
+        BlockPos origin = new BlockPos(5, 2, 5);
+        context.setBlockState(origin, Blocks.GRASS_BLOCK);
+        context.setBlockState(origin.east(), Blocks.SAND);
+        context.setBlockState(origin.south(), Blocks.STONE);
+        context.setBlockState(origin.south().east(), Blocks.DIRT);
+
+        SitePreparation.clear(context.getWorld(), project(context, origin));
+
+        context.assertTrue(context.getBlockState(origin).isOf(Blocks.DIRT),
+                "a relva sob a base da casa deve virar terra");
+        context.assertTrue(context.getBlockState(origin.east()).isOf(Blocks.SAND),
+                "a preparação removeu areia da base");
+        context.assertTrue(context.getBlockState(origin.south()).isOf(Blocks.STONE),
+                "a preparação removeu pedra da base");
+        context.assertTrue(context.getBlockState(origin.south().east()).isOf(Blocks.DIRT),
+                "a preparação alterou terra da base");
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "foundation_preparation")
+    public void aFarmKeepsGrassInItsPlannedBase(TestContext context) {
+        BlockPos origin = new BlockPos(5, 2, 5);
+        context.setBlockState(origin, Blocks.GRASS_BLOCK);
+
+        Blueprint farm = Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/plains_small_farm_1"),
+                List.of(new BlueprintBlock(
+                        new ColonyPos(0, 0, 0), ResourceId.vanilla("oak_planks"))))
+                .withStreetLayer(0);
+        ConstructionProject project = ConstructionProject.plan(
+                UUID.randomUUID(), farm,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(origin)));
+
+        SitePreparation.clear(context.getWorld(), project);
+
+        context.assertTrue(context.getBlockState(origin).isOf(Blocks.GRASS_BLOCK),
+                "a preparação da plantação removeu a relva");
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "foundation_preparation")
     public void halfSupportedStreetBaseIsFilledWithBiomeGround(TestContext context) {
         BlockPos origin = new BlockPos(5, 1, 5);
         context.setBlockState(origin, Blocks.GRASS_BLOCK);

@@ -7,7 +7,7 @@ import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.work.DesertSand;
+import com.villagecolony.fabric.integration.DesertSand;
 import com.villagecolony.core.type.ColonyPos;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.enums.BedPart;

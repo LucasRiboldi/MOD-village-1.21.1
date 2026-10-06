@@ -345,3 +345,21 @@ dependencia de mundo, Brain, mixin ou persistencia nova.
 casos de reserva durante descanso. Depois da correcao,
 `./gradlew.bat test --tests com.villagecolony.core.coordination.WorkAssignmentTest`
 e `./gradlew.bat runGametest --rerun-tasks` passaram, este ultimo com 419/419.
+
+---
+
+## Emenda de 2026-10-04 — apoio à obra preserva a especialidade
+
+Quando não há tarefa primária elegível, toda profissão produtora e o construtor
+podem reservar `BUILD_STRUCTURE`. Também podem recolher do chão somente o item
+que falta a uma obra aberta. Isso é apoio de evolução da vila, não empréstimo de
+coleta: lenhador não minera, mineiro não corta árvore e nenhuma profissão muda.
+
+Uma coleta que falha por armazenamento físico entra em descanso curto para a
+capacidade original e volta à fila; nesse intervalo a regra de construção pode
+ser escolhida. O transbordo do baú profissional é tentado antes disso e usa
+somente baús comunitários da mesma vila, conforme ADR-032 e ADR-033.
+
+**Verificação:** `WorkAssignmentTest.aProducerCanTakeConstructionWithoutChangingProfession`,
+`WorkAssignmentTest.shepherdCanHelpBuildWhenIdle`, `GroundPickupGameTest` e os
+cenários de transbordo do mineiro.

@@ -4,7 +4,6 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.core.worker.model.ToolType;
-import com.villagecolony.fabric.integration.TreeSpecies;
 import com.villagecolony.core.type.ColonyPos;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
@@ -51,24 +50,6 @@ public final class MinecraftTypeAdapter {
      * carvalho do servidor.
      */
     public static Optional<ResourceType> toResourceType(Item item) {
-        // As madeiras vêm da tabela de espécies, e não de uma segunda
-        // lista aqui: acrescentar uma árvore lá passaria a contar sozinho
-        // no estoque. Duas listas divergiriam no dia em que alguém
-        // lembrasse de uma e esquecesse a outra.
-        for (TreeSpecies species : TreeSpecies.values()) {
-            if (item == species.log().asItem()) {
-                return Optional.of(species.resource());
-            }
-
-            if (item == species.planks().asItem()) {
-                return Optional.of(species.plankResource());
-            }
-
-            if (item == species.strippedLog().asItem()) {
-                return Optional.of(species.strippedResource());
-            }
-        }
-
         if (item == Items.COBBLESTONE) {
             return Optional.of(ResourceType.COBBLESTONE);
         }

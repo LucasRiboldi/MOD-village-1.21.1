@@ -1,6 +1,8 @@
 {
   "text.villagecolony.professions": "Profissões",
   "text.villagecolony.professions.loading": "Carregando políticas do servidor...",
+  "text.villagecolony.overlay.profession_text.on": "Texto do painel de profissão: ligado",
+  "text.villagecolony.overlay.profession_text.off": "Texto do painel de profissão: desligado",
   "text.villagecolony.professions.enabled": "Profissão: ativa",
   "text.villagecolony.professions.disabled": "Profissão: desativada",
   "text.villagecolony.professions.maximum": "Máximo de trabalhadores: %s",

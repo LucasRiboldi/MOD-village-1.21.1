@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.event;
 
+import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.core.coordination.PlanningBudget;
 import com.villagecolony.fabric.integration.SweepDeadline;
 import com.villagecolony.VillageColonyMod;
@@ -18,6 +19,13 @@ import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.core.worker.service.HiringLog;
+import com.villagecolony.core.worker.service.ProfessionAssigner;
+import com.villagecolony.core.worker.service.VacancyEnforcer;
+import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.brain.WorkHours;
+import com.villagecolony.fabric.brain.WorkRest;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ColonyChestSurvey;
@@ -49,6 +57,15 @@ import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.CraftingWork;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.world.poi.PointOfInterestStorage;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
@@ -385,6 +402,13 @@ final class ColonyCycleRunner {
 
     /** Trabalhos já reservados continuam mesmo enquanto uma fotografia termina de ser lida. */
     static void runOngoingWork(ServerWorld world, Colony colony) {
+        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
+            if (world.getEntity(worker.villagerId()) instanceof VillagerEntity villager
+                    && !WorkHours.isWorkTime(world, villager)) {
+                WorkRest.release(villager);
+            }
+        }
+
         LumberjackWork.run(world, colony);
         MinerWork.run(world, colony);
         SmelterWork.run(world, colony);

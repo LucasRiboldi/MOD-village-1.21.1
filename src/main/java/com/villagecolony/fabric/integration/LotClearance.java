@@ -14,8 +14,6 @@ import com.villagecolony.core.coordination.ScanRefusalReason;
 import com.villagecolony.core.coordination.ScanReport;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.work.HousePlans;
-import com.villagecolony.fabric.work.PlanPlacement;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -127,7 +125,7 @@ public final class LotClearance {
             }
 
             Optional<Blueprint> blueprint =
-                    PlanPlacement.blueprintOf(world, pending.colonyId(), pending.blueprint(), pending.origin());
+                    BlueprintPlacement.blueprintOf(world, pending.colonyId(), pending.blueprint(), pending.origin());
 
             if (blueprint.isEmpty()) {
                 continue;

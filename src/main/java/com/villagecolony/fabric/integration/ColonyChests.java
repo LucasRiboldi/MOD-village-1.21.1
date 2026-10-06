@@ -83,6 +83,9 @@ public final class ColonyChests {
         }
 
         addMineMouth(world, colonyId, chests);
+        MineOverflowStorage.existing(world, colonyId)
+                .filter(chest -> !chests.contains(chest))
+                .ifPresent(chests::add);
 
         // <b>Fora da vila é fora de alcance</b> — 2026-10-01, pedido do autor.
         // Com a vila medida, baú fora da caixa não entra na conta da colônia:
@@ -90,8 +93,10 @@ public final class ColonyChests {
         // buscar ou guardar, e o estoque que ninguém alcança não pode fazer a
         // obra achar que tem material. O baú do próprio trabalhador continua
         // dele em ownFirst — só deixa de ser da colônia.
+        Optional<ColonyPos> mineOverflow = MineOverflowStorage.existing(world, colonyId);
         box.ifPresent(village -> chests.removeIf(chest -> {
-            boolean outside = !VillageChests.isInside(village, chest);
+            boolean outside = !VillageChests.isInside(village, chest)
+                    && mineOverflow.filter(chest::equals).isEmpty();
 
             if (outside && OUT_OF_REACH.add(chest)) {
                 VillageColonyMod.LOGGER.info(

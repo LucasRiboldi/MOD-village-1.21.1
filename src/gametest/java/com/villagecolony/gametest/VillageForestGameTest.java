@@ -1,11 +1,19 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.coordination.WorkClock;
+import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.fabric.integration.ChestDepositor;
+import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.TreeSpecies;
 import com.villagecolony.fabric.integration.VillageForest;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.EntityType;
+import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
@@ -18,7 +26,7 @@ public class VillageForestGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_forest",
             tickLimit = 100)
-    public void aNewVillageGetsTwoDifferentMatureTrees(TestContext context) {
+    public void aNewVillageGetsEightMatureTreesOfBothSpecies(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos center = context.getAbsolutePos(new BlockPos(8, 1, 8)).add(3000, 0, -3000);
         Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(center.getX(), center.getY(), center.getZ()));
@@ -27,12 +35,35 @@ public class VillageForestGameTest {
 
         int planted = VillageForest.seedInitial(world, colony, TreeSpecies.OAK, TreeSpecies.BIRCH);
 
-        if (planted != 2) {
-            throw new AssertionError("o bosque fundacional plantou " + planted + " arvores, e eram duas");
+        if (planted != 8) {
+            throw new AssertionError("o bosque fundacional plantou " + planted + " arvores, e eram oito");
         }
 
         if (!hasLog(world, center, TreeSpecies.OAK) || !hasLog(world, center, TreeSpecies.BIRCH)) {
             throw new AssertionError("o bosque nao deixou as duas especies de tronco no mundo");
+        }
+
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_forest",
+            tickLimit = 100)
+    public void aNewVillageGetsEightMatureTreesThroughNaturalVegetation(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos center = context.getAbsolutePos(new BlockPos(-8, 1, 8)).add(3_000, 0, 3_000);
+        Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(center.getX(), center.getY(), center.getZ()));
+
+        prepareNaturalRing(world, center);
+        coverNaturalRingWithLeaves(world, center);
+
+        int planted = VillageForest.seedInitial(world, colony, TreeSpecies.OAK, TreeSpecies.BIRCH);
+
+        if (planted != 8) {
+            throw new AssertionError("a vila nova plantou " + planted + " arvores em vez de oito");
+        }
+
+        if (countLogs(world, center) < 8) {
+            throw new AssertionError("o bosque fundacional nao deixou oito arvores maduras no mundo");
         }
 
         context.complete();
@@ -116,6 +147,69 @@ public class VillageForestGameTest {
         context.complete();
     }
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_forest")
+    public void aFarmerPlantsARequestedSaplingFromARealChest(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos center = context.getAbsolutePos(new BlockPos(-3_000, 1, 3_000));
+        Colony colony = Colony.create(
+                UUID.randomUUID(), new ColonyPos(center.getX(), center.getY(), center.getZ()));
+        BlockPos chest = center.up();
+        UUID farmer = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 2, 1)).getUuid();
+
+        world.setBlockState(chest, Blocks.CHEST.getDefaultState());
+        VillageColonyMod.COLONIES.register(colony);
+        VillageColonyMod.WORKERS.register(farmer, colony.id()).assign(ProfessionType.FARMER);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                farmer, new ColonyPos(chest.getX(), chest.getY(), chest.getZ())));
+        ChestDepositor.deposit(world, new ColonyPos(chest.getX(), chest.getY(), chest.getZ()),
+                Items.OAK_SAPLING, 1);
+        prepareNaturalRing(world, center);
+
+        context.assertTrue(VillageForest.plantRequestedSapling(world, colony, TreeSpecies.OAK),
+                "o fazendeiro nao plantou a muda solicitada pela obra");
+        context.assertTrue(hasSapling(world, center, TreeSpecies.OAK),
+                "a muda solicitada nao existe no anel alcancavel pelo lenhador");
+        context.assertTrue(ChestWithdrawer.countIn(
+                world, new ColonyPos(chest.getX(), chest.getY(), chest.getZ()), Items.OAK_SAPLING) == 0,
+                "o plantio nao consumiu a muda fisica do bau");
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_forest")
+    public void aFarmerKeepsTheRequestedSaplingInTheChestAtNight(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos center = context.getAbsolutePos(new BlockPos(3_000, 1, -3_000));
+        Colony colony = Colony.create(
+                UUID.randomUUID(), new ColonyPos(center.getX(), center.getY(), center.getZ()));
+        BlockPos chest = center.up();
+        UUID farmer = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 2, 1)).getUuid();
+
+        world.setBlockState(chest, Blocks.CHEST.getDefaultState());
+        VillageColonyMod.COLONIES.register(colony);
+        VillageColonyMod.WORKERS.register(farmer, colony.id()).assign(ProfessionType.FARMER);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                farmer, new ColonyPos(chest.getX(), chest.getY(), chest.getZ())));
+        ChestDepositor.deposit(world, new ColonyPos(chest.getX(), chest.getY(), chest.getZ()),
+                Items.OAK_SAPLING, 1);
+        prepareNaturalRing(world, center);
+
+        world.setTimeOfDay(WorkClock.DUSK);
+        context.assertFalse(VillageForest.plantRequestedSapling(world, colony, TreeSpecies.OAK),
+                "o fazendeiro trabalhou durante a noite");
+        context.assertTrue(ChestWithdrawer.countIn(
+                world, new ColonyPos(chest.getX(), chest.getY(), chest.getZ()), Items.OAK_SAPLING) == 1,
+                "a muda saiu do bau durante a noite");
+        context.assertFalse(hasSapling(world, center, TreeSpecies.OAK),
+                "uma muda foi plantada durante a noite");
+
+        world.setTimeOfDay(1_000);
+        context.assertTrue(VillageForest.plantRequestedSapling(world, colony, TreeSpecies.OAK),
+                "o fazendeiro nao retomou o plantio durante o dia");
+        context.assertTrue(hasSapling(world, center, TreeSpecies.OAK),
+                "a muda solicitada nao foi plantada depois do amanhecer");
+        context.complete();
+    }
+
     private static void prepareNaturalRing(ServerWorld world, BlockPos center) {
         for (int x = -56; x <= 56; x++) {
             for (int z = -56; z <= 56; z++) {
@@ -147,6 +241,33 @@ public class VillageForestGameTest {
         }
     }
 
+    private static void coverNaturalRingWithLeaves(ServerWorld world, BlockPos center) {
+        for (int x = -56; x <= 56; x++) {
+            for (int z = -56; z <= 56; z++) {
+                int distance = x * x + z * z;
+                if (distance >= 48 * 48 && distance <= 56 * 56) {
+                    world.setBlockState(center.add(x, 0, z).up(), Blocks.OAK_LEAVES.getDefaultState());
+                }
+            }
+        }
+    }
+
+    private static int countLogs(ServerWorld world, BlockPos center) {
+        int logs = 0;
+        for (int x = -56; x <= 56; x++) {
+            for (int z = -56; z <= 56; z++) {
+                for (int y = 1; y <= 16; y++) {
+                    if (world.getBlockState(center.add(x, y, z)).isOf(Blocks.OAK_LOG)
+                            || world.getBlockState(center.add(x, y, z)).isOf(Blocks.BIRCH_LOG)) {
+                        logs++;
+                        break;
+                    }
+                }
+            }
+        }
+        return logs;
+    }
+
     private static boolean hasLog(ServerWorld world, BlockPos center, TreeSpecies species) {
         for (int x = -62; x <= 62; x++) {
             for (int z = -62; z <= 62; z++) {
@@ -154,6 +275,18 @@ public class VillageForestGameTest {
                     if (world.getBlockState(center.add(x, y, z)).isOf(species.log())) {
                         return true;
                     }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean hasSapling(ServerWorld world, BlockPos center, TreeSpecies species) {
+        for (int x = -56; x <= 56; x++) {
+            for (int z = -56; z <= 56; z++) {
+                if (world.getBlockState(center.add(x, 1, z)).isOf(species.sapling())) {
+                    return true;
                 }
             }
         }

@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import com.villagecolony.core.colony.service.VillageDetector;
 
 import java.util.UUID;
 
@@ -36,8 +37,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class FarmPostponementTest {
 
-    /** Vinte ciclos de colônia, o mesmo fôlego do PatienceClock. */
-    private static final long POSTPONEMENT = 20 * 600;
+    /** Uma rodada basta para a casa ou oficina assumir a vaga da roça inviável. */
+    private static final long POSTPONEMENT = VillageDetector.CYCLE_TICKS;
 
     private final UUID colony = UUID.randomUUID();
 
@@ -62,7 +63,7 @@ class FarmPostponementTest {
                 "a roça não cedeu a vez, e o planejador volta a recusar o mesmo lote");
     }
 
-    /** E segue cedendo enquanto o prazo corre. */
+    /** E segue cedendo somente até a rodada seguinte. */
     @Test
     void itKeepsStandingAsideWhileTheClockRuns() {
         FarmPlans.postpone(colony, 0);
@@ -71,13 +72,12 @@ class FarmPostponementTest {
     }
 
     /**
-     * Mas ela volta, e este é o teste que impede a correção virar outro
-     * defeito.
+     * Na rodada seguinte ela volta a ser elegível. A obra alternativa já teve
+     * uma oportunidade de abrir, sem deixar a vila dez minutos sem projeto.
      *
      * <p>Recuo sem prazo é a roça cancelada para sempre: a vila cresceria
-     * até não caber mais ninguém e nunca plantaria. A cota de um por
-     * quinze aldeões continua de pé — o que mudou é só quando ela é
-     * cobrada.
+     * até não caber mais ninguém e nunca plantaria. A cota da população
+     * continua de pé — o que mudou é só quando ela é cobrada.
      */
     @Test
     void theFarmComesBackAfterTheDeadline() {

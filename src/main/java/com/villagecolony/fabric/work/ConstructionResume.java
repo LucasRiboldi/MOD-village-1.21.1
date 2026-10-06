@@ -1,6 +1,8 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.LotClearance;
+
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
@@ -21,7 +23,6 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.integration.RoadExtension;
 import com.villagecolony.fabric.integration.SweepLog;

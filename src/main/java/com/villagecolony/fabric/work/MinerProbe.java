@@ -1,6 +1,5 @@
 package com.villagecolony.fabric.work;
 
-import com.villagecolony.fabric.integration.SweepState;
 import com.villagecolony.fabric.work.MinerWork.Job;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;

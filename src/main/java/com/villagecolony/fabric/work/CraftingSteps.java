@@ -112,7 +112,13 @@ final class CraftingSteps {
         // chegar inteira.
         boolean masonry = job.task.type() == TaskType.CRAFT_STONE_MATERIAL;
 
-        for (ResourceId wanted : open.get().remainingMaterials().keySet()) {
+        List<ColonyPos> chests =
+                ColonyChests.nearestFirst(world, colony.get().id(), colony.get().center());
+
+        for (Map.Entry<ResourceId, Integer> remaining
+                : open.get().remainingMaterials().entrySet()) {
+            ResourceId wanted = remaining.getKey();
+
             // Cada oficina lavra a sua família — 2026-09-09. Sem esta
             // linha a divisão do fabricante seria só de nome: os dois
             // percorreriam a mesma lista e fariam a mesma peça, e o
@@ -127,17 +133,18 @@ final class CraftingSteps {
                 continue;
             }
 
-            List<ColonyPos> chests =
-                    ColonyChests.nearestFirst(world, colony.get().id(), colony.get().center());
-
-            if (ColonyChests.countIn(world, chests, item.get()) > 0) {
-                // A colônia já tem. Não é o fabricante quem falta.
+            if (ColonyChests.countIn(world, chests, item.get()) >= remaining.getValue()) {
+                // A colônia já cobre toda a demanda restante desta peça.
                 continue;
             }
 
             if (strip(world, colony.get(), wanted, workerId)
-                    || ColonySupply.stock(
-                            world, colony.get().id(), colony.get().center(), item.get())) {
+                    || ColonySupply.stockToward(
+                            world,
+                            colony.get().id(),
+                            colony.get().center(),
+                            item.get(),
+                            remaining.getValue())) {
 
                 return true;
             }

@@ -86,6 +86,7 @@
       "com.villagecolony.gametest.VillageBiomesGameTest",
       "com.villagecolony.gametest.MinerGameTest",
       "com.villagecolony.gametest.MinerOverflowGameTest",
+      "com.villagecolony.gametest.MineOverflowStorageGameTest",
       "com.villagecolony.gametest.SurfaceGatheringGameTest",
       "com.villagecolony.gametest.SmelterGameTest",
       "com.villagecolony.gametest.ShepherdGameTest",
@@ -110,6 +111,7 @@
       "com.villagecolony.fabric.work.BuilderMaterialsGameTest",
       "com.villagecolony.fabric.integration.ColonyChestSurveyGameTest",
       "com.villagecolony.fabric.event.IdleHandsGameTest",
+      "com.villagecolony.fabric.event.ProfessionChestOverflowGameTest",
       "com.villagecolony.fabric.integration.SandNearWaterGameTest"
     ]
   },

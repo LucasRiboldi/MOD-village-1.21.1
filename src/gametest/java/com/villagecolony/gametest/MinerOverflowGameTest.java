@@ -2,11 +2,13 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
+import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
@@ -61,8 +63,11 @@ public class MinerOverflowGameTest implements FabricGameTest {
     /** O baú do mineiro, que este teste enche até não caber um item. */
     private static final BlockPos CHEST = new BlockPos(2, 2, 2);
 
-    /** O baú de outro trabalhador da colônia, vazio. É o transbordo. */
+    /** O baú de outro trabalhador da colônia; jamais recebe o transbordo. */
     private static final BlockPos SPARE = new BlockPos(2, 2, 5);
+
+    /** Baú comunitário vazio que deve receber os dez últimos slots. */
+    private static final BlockPos COMMUNITY = new BlockPos(2, 2, 7);
 
     private static final BlockPos STAND = new BlockPos(4, 2, 4);
 
@@ -218,12 +223,98 @@ public class MinerOverflowGameTest implements FabricGameTest {
                         entity -> true).isEmpty();
 
                 context.assertTrue(itemOnGround, "a pedra saiu do mundo e não foi guardada nem dropada");
+
+                context.assertTrue(
+                        task.state() == TaskState.AVAILABLE,
+                        "uma coleta sem destino físico não pode ser concluída como se tivesse sido entregue");
             } finally {
                 owned.cleanUp();
 
                 MineDigging.restoreMineDistance();
             }
 
+            context.complete();
+        });
+    }
+
+    /**
+     * Antes de cavar e abandonar uma tarefa por baú cheio, o mineiro libera os
+     * dez slots reservados no baú comunitário da própria vila.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_overflow",
+            tickLimit = 400)
+    public void aCommunityChestRelievesTheMinerBeforeTheHaulIsDropped(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        ground(context);
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        context.setBlockState(SPARE, Blocks.CHEST.getDefaultState());
+        context.setBlockState(COMMUNITY, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+        ColonyPos spare = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(SPARE));
+        fillToTheBrim(context, CHEST);
+
+        Block rock = MinecraftTypeAdapter
+                .toBlock(HousePlans.paletteOf(world, chest).stone())
+                .orElseThrow();
+        context.setBlockState(ROCK, rock.getDefaultState());
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+        colony.measure(new VillageBounds(
+                chest.x() - 8, chest.y() - 2, chest.z() - 8,
+                chest.x() + 8, chest.y() + 4, chest.z() + 8));
+        VillageColonyMod.COLONIES.register(colony);
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        Worker miner = TestWorkers.createEquippedWorker(
+                context, colony.id(), ProfessionType.MINER, STAND);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(miner.villagerId(), chest));
+        owned.owning(miner.villagerId());
+
+        Worker neighbour = TestWorkers.createWorker(
+                context, colony.id(), ProfessionType.SMELTER, NEIGHBOUR);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(neighbour.villagerId(), spare));
+        owned.owning(neighbour.villagerId());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.COLLECT_STONE, TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE, 1);
+        task.reserveFor(miner.villagerId());
+
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(STAND));
+        VillageColonyMod.MINES.restore(
+                Mine.restore(colony.id(), MineShaft.from(mouth, Side.NORTH), 0));
+        MineDigging.shortenMineDistanceTo(NEARBY);
+        MinerWork.run(world, colony);
+
+        context.runAtTick(320, () -> {
+            try {
+                ChestBlockEntity community = (ChestBlockEntity) context.getWorld()
+                        .getBlockEntity(context.getAbsolutePos(COMMUNITY));
+                int movedToCommunity = 0;
+                for (int slot = 0; slot < community.size(); slot++) {
+                    if (community.getStack(slot).isOf(Items.DIRT)) {
+                        movedToCommunity += community.getStack(slot).getCount();
+                    }
+                }
+                int keptByMiner = ChestInventoryReader.read(
+                        world, context.getAbsolutePos(CHEST)).amountOfGroup(ResourceGroup.STONE);
+                int contaminatedOtherProfession = ChestInventoryReader.read(
+                        world, context.getAbsolutePos(SPARE)).amountOfGroup(ResourceGroup.STONE);
+
+                context.assertTrue(movedToCommunity >= 10,
+                        "o baú comunitário não recebeu os dez slots liberados do mineiro");
+                context.assertTrue(keptByMiner > 0,
+                        "a pedra não entrou no baú do mineiro após o alívio");
+                context.assertTrue(contaminatedOtherProfession == 0,
+                        "o baú de outra profissão recebeu a pedra do mineiro");
+                context.assertTrue(task.state() == TaskState.COMPLETED,
+                        "a tarefa atendida continuou aberta após o alívio do baú");
+            } finally {
+                owned.cleanUp();
+                MineDigging.restoreMineDistance();
+            }
             context.complete();
         });
     }

@@ -109,12 +109,6 @@ public class MinerGameTest implements FabricGameTest {
      */
     private static final int ARCH_TOP = 4;
 
-    /** Os dois lampiões do arco acesos — um em cima de cada lado (03-10). */
-    private static boolean lampsLit(ServerWorld world, BlockPos mouth, Direction descent) {
-        return MineMouth.lampSpots(mouth, descent).stream()
-                .allMatch(lamp -> world.getBlockState(lamp).isOf(Blocks.LANTERN));
-    }
-
     /**
      * A fronteira gravada: já além de {@link MineShaft#CARVED}, que é
      * onde acabam os dois lances e as duas salas e começa a galeria.
@@ -367,8 +361,9 @@ public class MinerGameTest implements FabricGameTest {
      * não o que saiu da pedra.
      *
      * <p>A pedra saiu do mundo e não entrou em lugar nenhum: continuar é
-     * gastar a vez do mineiro e sujar o chão. Encerrar devolve a vez ao ciclo
-     * da colônia, que é quem sabe pedir baú novo.
+     * gastar a vez do mineiro e sujar o chão. A coleta volta para a fila com
+     * uma pausa curta; assim a colônia pode abrir espaço, e o mineiro não
+     * registra uma entrega que não aconteceu.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_full_chest",
             tickLimit = 400)
@@ -439,9 +434,9 @@ public class MinerGameTest implements FabricGameTest {
         context.runAtTick(320, () -> {
             try {
                 context.assertTrue(
-                        task.state() == TaskState.COMPLETED,
-                        "o mineiro continuou cavando com o baú cheio — a tarefa ficou em "
-                                + task.state() + ", e a pedra vai para o chão a cada passagem");
+                        task.state() == TaskState.AVAILABLE,
+                        "o mineiro concluiu uma coleta sem destino físico — a tarefa ficou em "
+                                + task.state() + " em vez de voltar para a fila");
             } finally {
                 owned.cleanUp();
 
@@ -1342,11 +1337,15 @@ public class MinerGameTest implements FabricGameTest {
                 chest.isPresent(),
                 "a boca da mina voltou a ganhar baú, e o autor mandou retirá-lo");
 
-        // Em cima da verga, e é a única — 2026-09-11. Eram duas: uma
-        // pendurada no vão do arco e outra no chão ao lado do buraco.
+        Direction side = Direction.SOUTH.rotateYClockwise();
+
+        // As duas lanternas ficam sobre as extremidades da verga, sem
+        // reduzir o vão central de três blocos pedido para a passagem.
         context.assertTrue(
-                lampsLit(world, mouth, Direction.SOUTH),
-                "a boca da mina ficou sem os lampiões em cima do arco");
+                world.getBlockState(mouth.offset(side, 2).up(ARCH_TOP + 1)).isOf(Blocks.LANTERN)
+                        && world.getBlockState(mouth.offset(side, -2).up(ARCH_TOP + 1))
+                                .isOf(Blocks.LANTERN),
+                "a boca da mina ficou sem as lanternas nos topos do arco");
 
         context.complete();
     }
@@ -1390,9 +1389,12 @@ public class MinerGameTest implements FabricGameTest {
 
         MineMouth.furnish(world, mouth, Direction.SOUTH, false);
 
+        Direction side = Direction.SOUTH.rotateYClockwise();
         context.assertTrue(
-                lampsLit(world, mouth, Direction.SOUTH),
-                "a boca que já tinha baú ficou sem lanterna para sempre");
+                world.getBlockState(mouth.offset(side, 2).up(ARCH_TOP + 1)).isOf(Blocks.LANTERN)
+                        && world.getBlockState(mouth.offset(side, -2).up(ARCH_TOP + 1))
+                                .isOf(Blocks.LANTERN),
+                "a boca que já tinha baú ficou sem as lanternas para sempre");
 
         // <b>E o baú encostado na boca continua sendo o dela</b>: é o
         // arranjo de toda mina aberta antes de 2026-09-11, e o chestAt
@@ -1711,7 +1713,7 @@ public class MinerGameTest implements FabricGameTest {
             }
         }
 
-        context.assertTrue(lanterns == 1, "a boca ficou com " + lanterns + " lanternas");
+        context.assertTrue(lanterns == 2, "a boca ficou com " + lanterns + " lanternas");
 
         context.complete();
     }
@@ -1764,13 +1766,16 @@ public class MinerGameTest implements FabricGameTest {
                         || world.getBlockState(firstStep.down()).isOf(Blocks.LANTERN),
                 "a mobília ocupou a coluna da descida um abaixo");
 
-        // E a lanterna continua aparecendo, em cima do arco. O baú saiu da
-        // boca em 2026-09-15, por decisão do autor — ver
+        // As lanternas continuam nos dois topos do arco. O baú saiu da boca
+        // em 2026-09-15, por decisão do autor — ver
         // theMineMouthGetsALanternAndNoChest —, então a peça que este caso
         // ainda precisa ver posta no lugar certo é ela.
+        Direction side = Direction.WEST.rotateYClockwise();
         context.assertTrue(
-                lampsLit(world, mouth, Direction.WEST),
-                "a boca ficou sem lanterna");
+                world.getBlockState(mouth.offset(side, 2).up(ARCH_TOP + 1)).isOf(Blocks.LANTERN)
+                        && world.getBlockState(mouth.offset(side, -2).up(ARCH_TOP + 1))
+                                .isOf(Blocks.LANTERN),
+                "a boca ficou sem as lanternas do arco");
 
         context.complete();
     }
@@ -5734,26 +5739,33 @@ public class MinerGameTest implements FabricGameTest {
 
         MineMouth.furnish(world, context.getAbsolutePos(mouth), Direction.NORTH, false);
 
-        // O arco de 03-10: 5 de largura, 4 de altura, vão de 3 × 3 e um lampião
-        // em cima de cada lado. As posições vêm do próprio MineMouth, e o
-        // teste afirma o que está no mundo.
-        BlockPos absolute = context.getAbsolutePos(mouth);
+        Direction side = Direction.NORTH.rotateYClockwise();
 
-        for (BlockPos stone : MineMouth.archStones(absolute, Direction.NORTH)) {
-            context.assertTrue(world.getBlockState(stone).isOf(Blocks.COBBLESTONE),
-                    "o arco ficou sem a pedra em " + stone.toShortString());
-        }
+        context.assertTrue(
+                archBlockAt(context, mouth.offset(side, 2).up()).isOf(Blocks.COBBLESTONE)
+                        && archBlockAt(context, mouth.offset(side.getOpposite(), 2).up())
+                                .isOf(Blocks.COBBLESTONE),
+                "a boca da mina ficou sem os pilares do arco");
 
-        context.assertTrue(lampsLit(world, absolute, Direction.NORTH), "o arco ficou sem os dois lampiões");
+        context.assertTrue(
+                archBlockAt(context, mouth.offset(side, 2).up(ARCH_TOP)).isOf(Blocks.COBBLESTONE)
+                        && archBlockAt(context, mouth.offset(side, -2).up(ARCH_TOP)).isOf(Blocks.COBBLESTONE),
+                "o arco ficou sem a verga por cima da boca");
 
-        // O vão inteiro: as três pistas da escada, da boca até três acima.
-        Direction lanes = Direction.NORTH.rotateYCounterclockwise();
+        context.assertTrue(
+                archBlockAt(context, mouth.offset(side, 2).up(ARCH_TOP + 1)).isOf(Blocks.LANTERN)
+                        && archBlockAt(context, mouth.offset(side, -2).up(ARCH_TOP + 1))
+                                .isOf(Blocks.LANTERN),
+                "o arco ficou sem as lanternas nos topos laterais");
 
-        for (int lane = 0; lane < MineMouth.PASSAGE; lane++) {
-            for (int up = 0; up < ARCH_TOP; up++) {
+        // O vão inteiro: a boca e os três acima dela. É a altura que o
+        // autor pediu, e afirmá-la bloco a bloco é o que impede o arco de
+        // encolher sem ninguém notar.
+        for (int up = 0; up < ARCH_TOP; up++) {
+            for (int across = -1; across <= 1; across++) {
                 context.assertTrue(
-                        archBlockAt(context, mouth.offset(lanes, lane).up(up)).isAir(),
-                        "o arco tapou a passagem de 3 × 3, pista " + lane + ", " + up + " acima da boca");
+                        archBlockAt(context, mouth.offset(side, across).up(up)).isAir(),
+                        "o arco tapou a passagem que ele decora, em " + up + " acima da boca");
             }
         }
 

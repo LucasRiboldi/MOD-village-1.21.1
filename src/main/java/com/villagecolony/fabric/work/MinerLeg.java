@@ -195,6 +195,13 @@ public final class MinerLeg {
             return step;
         }
 
+        BlockPos recovery = villager.getY() < mouth.getY() - 1
+                ? recoveryStepTowardsMouth(villager, mouth, mine.get(), scanned, footing)
+                : null;
+        if (recovery != null) {
+            return recovery;
+        }
+
         // Nenhum passo pelo corredor deste ramal.
         //
         // Alvo lá embaixo: entra-se pela boca. Não se pede à navegação um
@@ -225,6 +232,34 @@ public final class MinerLeg {
         // navegação enxergue. Ele nunca chegou, em nenhuma das oito vezes
         // que tentou naquela sessão.
         return villager.getY() >= mouth.getY() - 1 ? destination : mouth;
+    }
+
+    /**
+     * Retoma a escada quando uma colisão empurrou o mineiro para fora do
+     * corredor, sem apontar a navegação para dentro da rocha.
+     */
+    private static BlockPos recoveryStepTowardsMouth(
+            BlockPos villager, BlockPos mouth, MineArm mine, int scanned, Footing footing) {
+        BlockPos nearest = null;
+        double nearestDistance = Double.MAX_VALUE;
+        double mouthDistance = Math.sqrt(villager.getSquaredDistance(mouth));
+
+        for (int index = 0; index < scanned; index++) {
+            BlockPos candidate = MinerReach.at(mine.shaft().positionAt(index));
+            double distance = Math.sqrt(villager.getSquaredDistance(candidate));
+            if (distance > LEG
+                    || candidate.getY() < villager.getY()
+                    || candidate.getY() > villager.getY() + 1
+                    || Math.sqrt(candidate.getSquaredDistance(mouth)) >= mouthDistance
+                    || !footing.standable(candidate)) {
+                continue;
+            }
+            if (distance < nearestDistance) {
+                nearest = candidate;
+                nearestDistance = distance;
+            }
+        }
+        return nearest;
     }
 
     /**

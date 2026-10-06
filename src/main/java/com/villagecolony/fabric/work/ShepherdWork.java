@@ -15,7 +15,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
-import com.villagecolony.fabric.event.VillageFocus;
+import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;

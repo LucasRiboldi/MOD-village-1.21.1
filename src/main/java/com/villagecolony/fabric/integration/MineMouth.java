@@ -181,52 +181,29 @@ public final class MineMouth {
      * altura de quem passa.
      */
     private static final int ARCH_HIGH = 4;
+    private static final int ARCH_HALF_WIDTH = 2;
 
     /**
-     * O vão do arco: três de largura — a boca e as duas pistas para o lado
-     * em que a escada abre — pedido do autor, 2026-10-03. A escada da mina
-     * abre três pistas no sentido anti-horário da descida
-     * ({@code MineShaft.stair}); o arco as emoldura todas.
-     */
-    public static final int PASSAGE = 3;
-
-    /**
-     * As pedras do arco: dois pilares de três, um em cada lado do vão de três,
-     * e a verga de cinco por cima — 5 de largura, 4 de altura, vão de 3 × 3.
-     */
-    public static java.util.List<BlockPos> archStones(BlockPos mouth, Direction descent) {
-        Direction lanes = descent.rotateYCounterclockwise();
-        BlockPos left = mouth.offset(lanes.getOpposite());
-        BlockPos right = mouth.offset(lanes, PASSAGE);
-        java.util.List<BlockPos> stones = new java.util.ArrayList<>();
-
-        for (int up = 1; up < ARCH_HIGH; up++) {
-            stones.add(left.up(up));
-            stones.add(right.up(up));
-        }
-
-        for (int across = -1; across <= PASSAGE; across++) {
-            stones.add(mouth.offset(lanes, across).up(ARCH_HIGH));
-        }
-
-        return stones;
-    }
-
-    /** Os dois lampiões: um no topo de cada lado do arco. */
-    public static java.util.List<BlockPos> lampSpots(BlockPos mouth, Direction descent) {
-        Direction lanes = descent.rotateYCounterclockwise();
-
-        return java.util.List.of(
-                mouth.offset(lanes.getOpposite()).up(ARCH_HIGH + 1),
-                mouth.offset(lanes, PASSAGE).up(ARCH_HIGH + 1));
-    }
-
-    /**
-     * Se a posição pertence ao arco inicial ou aos lampiões da boca.
+     * Se a posição pertence ao arco inicial ou à lanterna da boca.
      * Essas peças nunca entram na ordem de escavação da própria mina.
      */
     public static boolean isPortalBlock(BlockPos mouth, Direction descent, BlockPos at) {
-        return archStones(mouth, descent).contains(at) || lampSpots(mouth, descent).contains(at);
+        Direction side = descent.rotateYClockwise();
+
+        for (int up = 1; up < ARCH_HIGH; up++) {
+            if (at.equals(mouth.offset(side, ARCH_HALF_WIDTH).up(up))
+                    || at.equals(mouth.offset(side.getOpposite(), ARCH_HALF_WIDTH).up(up))) {
+                return true;
+            }
+        }
+
+        for (int across = -ARCH_HALF_WIDTH; across <= ARCH_HALF_WIDTH; across++) {
+            if (at.equals(mouth.offset(side, across).up(ARCH_HIGH))) {
+                return true;
+            }
+        }
+        return at.equals(mouth.offset(side, ARCH_HALF_WIDTH).up(ARCH_HIGH + 1))
+                || at.equals(mouth.offset(side.getOpposite(), ARCH_HALF_WIDTH).up(ARCH_HIGH + 1));
     }
 
     /**
@@ -258,6 +235,7 @@ public final class MineMouth {
      * <p>Idempotente: com o arco lá, isto não faz nada.
      */
     private static boolean raiseArch(ServerWorld world, BlockPos mouth, Direction descent) {
+        Direction side = descent.rotateYClockwise();
 
         boolean anyStone = false;
 
@@ -267,8 +245,13 @@ public final class MineMouth {
         // deles: a primeira versão deixou a mina sem baú. Daqui para
         // cima não há disputa, e o arco emoldura a entrada na altura em
         // que ela é vista.
-        for (BlockPos stone : archStones(mouth, descent)) {
-            anyStone |= layStone(world, stone);
+        for (int up = 1; up < ARCH_HIGH; up++) {
+            anyStone |= layStone(world, mouth.offset(side, ARCH_HALF_WIDTH).up(up));
+            anyStone |= layStone(world, mouth.offset(side.getOpposite(), ARCH_HALF_WIDTH).up(up));
+        }
+
+        for (int across = -ARCH_HALF_WIDTH; across <= ARCH_HALF_WIDTH; across++) {
+            anyStone |= layStone(world, mouth.offset(side, across).up(ARCH_HIGH));
         }
 
         // <b>A lanterna fica aqui dentro, e é decisão</b> — 2026-09-12. O
@@ -292,8 +275,7 @@ public final class MineMouth {
     }
 
     /**
-     * Os lampiões, de pé sobre o topo de cada lado do arco — um de cada lado
-     * desde 2026-10-03 (era um só, sobre o meio da verga).
+     * A lanterna, de pé sobre o meio da verga.
      *
      * <p><b>Só se a verga existe.</b> O arco nasce incompleto onde a
      * Regra 3 o impede — pilar que teria de derrubar casa não nasce —, e
@@ -305,10 +287,12 @@ public final class MineMouth {
      * mundo — inclusive quando a coisa é a lanterna da passagem anterior.
      */
     private static void lightTheTop(ServerWorld world, BlockPos mouth, Direction descent) {
-        for (BlockPos lamp : lampSpots(mouth, descent)) {
-            BlockPos below = lamp.down();
-
-            if (world.getBlockState(below).isSolidBlock(world, below) && world.getBlockState(lamp).isReplaceable()) {
+        Direction side = descent.rotateYClockwise();
+        for (Direction pillar : new Direction[] {side, side.getOpposite()}) {
+            BlockPos lintel = mouth.offset(pillar, ARCH_HALF_WIDTH).up(ARCH_HIGH);
+            BlockPos lamp = lintel.up();
+            if (world.getBlockState(lintel).isSolidBlock(world, lintel)
+                    && world.getBlockState(lamp).isReplaceable()) {
                 world.setBlockState(lamp, Blocks.LANTERN.getDefaultState(), Block.NOTIFY_ALL);
             }
         }

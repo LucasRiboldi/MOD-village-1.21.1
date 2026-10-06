@@ -2,6 +2,7 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
@@ -20,7 +21,9 @@ import com.villagecolony.fabric.integration.FarthestVillageSector;
 import com.villagecolony.fabric.integration.GrassPatch;
 import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.integration.SandPatch;
+import com.villagecolony.fabric.work.VillageFluidIndex;
 import com.villagecolony.fabric.integration.WorkerEquipment;
+import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.work.SurfaceGatheringWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.BlockState;
@@ -43,6 +46,40 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
 
     private static final BlockPos TARGET = new BlockPos(4, 2, 2);
     private static final Direction FIXTURE_SECTOR = Direction.EAST;
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
+            batchId = "surface_fluid_index", tickLimit = 20)
+    public void villageFluidIndexRecognizesSurfaceWaterAndLava(TestContext context) {
+        BlockPos water = new BlockPos(2, 2, 2);
+        BlockPos lava = new BlockPos(4, 2, 2);
+        BlockPos solid = new BlockPos(6, 2, 2);
+        context.setBlockState(water, Blocks.WATER);
+        context.setBlockState(lava, Blocks.LAVA);
+        context.setBlockState(solid, Blocks.DIRT);
+
+        BlockPos absoluteWater = context.getAbsolutePos(water);
+        BlockPos absoluteLava = context.getAbsolutePos(lava);
+        BlockPos absoluteSolid = context.getAbsolutePos(solid);
+        VillageBounds bounds = new VillageBounds(
+                absoluteWater.getX(), absoluteWater.getY(), absoluteWater.getZ(),
+                absoluteSolid.getX(), absoluteSolid.getY(), absoluteSolid.getZ());
+        UUID colonyId = UUID.randomUUID();
+
+        try {
+            VillageFluidIndex.refresh(context.getWorld(), colonyId, bounds);
+
+            context.assertTrue(VillageFluidIndex.skip(colonyId, bounds, absoluteWater),
+                    "a coluna de água não entrou no índice");
+            context.assertTrue(VillageFluidIndex.skip(colonyId, bounds, absoluteLava),
+                    "a coluna de lava não entrou no índice");
+            context.assertTrue(!VillageFluidIndex.skip(colonyId, bounds, absoluteSolid),
+                    "a coluna sólida entrou no índice de fluidos");
+        } finally {
+            VillageFluidIndex.invalidate(colonyId);
+        }
+
+        context.complete();
+    }
 
     /**
      * De que a recusa do cenário é feita — 2026-09-22.
@@ -118,6 +155,9 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
 
         context.getWorld().setBlockState(center, Blocks.CHEST.getDefaultState());
         Colony colony = Colony.create(colonyId, MinecraftTypeAdapter.toColonyPos(center));
+        colony.measure(new VillageBounds(
+                center.getX() - protectedRadius, center.getY(), center.getZ() - protectedRadius,
+                center.getX() + protectedRadius, center.getY(), center.getZ() + protectedRadius));
         VillageColonyMod.COLONIES.register(colony);
 
         Direction sector = FarthestVillageSector.farthestLoadedSector(
@@ -184,13 +224,24 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
                 int opened = SurfaceGatheringWork.run(world, colony);
                 context.assertTrue(opened == 1, "o coletor não abriu a tarefa reservada: " + task.state());
 
-                for (int tick = 0; tick < 80 && !world.getBlockState(grass).isAir(); tick++) {
+                SurfaceGatheringWork.tick(world);
+                BlockPos selected = WorkTargets.of(villager.getUuid()).orElse(null);
+                context.assertTrue(selected != null,
+                        "a varredura da borda não escolheu nenhuma coluna de grama externa");
+                context.assertTrue(
+                        GrassPatch.in(world, selected, center.getY(), center, sector)
+                                .filter(selected::equals).isPresent(),
+                        "a varredura escolheu grama fora do setor permitido: " + selected);
+                villager.refreshPositionAndAngles(
+                        selected.getX() + 0.5, selected.getY(), selected.getZ() + 2.5, 0.0f, 0.0f);
+
+                for (int tick = 0; tick < 80 && !world.getBlockState(selected).isAir(); tick++) {
                     SurfaceGatheringWork.tick(world);
                 }
 
                 context.assertTrue(
-                        world.getBlockState(grass).isAir(),
-                        "o fundidor não removeu o grass_block do setor externo escolhido");
+                        world.getBlockState(selected).isAir(),
+                        "o fundidor não removeu o grass_block escolhido na borda externa");
                 context.assertTrue(
                         villager.getEquippedStack(EquipmentSlot.MAINHAND).isOf(Items.IRON_SHOVEL),
                         "o fundidor não estava com a pá de ferro do mod");

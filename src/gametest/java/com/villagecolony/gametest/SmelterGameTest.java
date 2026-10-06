@@ -56,7 +56,7 @@ public class SmelterGameTest implements FabricGameTest {
      *
      * <p>No playtest das 02:45 os fundidores pararam 193 vezes sem argila nem
      * areia, soltando e retomando a mesma tarefa. A regra nova: depois de
-     * cinco paradas pelo mesmo pedido, ele funde uma peça de outro item que a
+     * duas paradas pelo mesmo pedido, ele funde uma peça de outro item que a
      * obra aberta vai precisar, e volta a tentar o pedido — sem abandoná-lo.
      *
      * <p>O cenário: pedido de lingote sem ferro cru no baú, areia no baú e uma
@@ -105,10 +105,10 @@ public class SmelterGameTest implements FabricGameTest {
                 4);
 
         try {
-            // Seis rodadas: cinco paradas pelo pedido e a primeira depois
+            // Três rodadas: duas paradas pelo pedido e a primeira depois
             // delas. Cada rodada é o que o ciclo faria — retomar a tarefa se
             // ela voltou à fila e dar vinte tiques de fornalha.
-            for (int round = 0; round < 6; round++) {
+            for (int round = 0; round < 3; round++) {
                 if (!task.isHeld()) {
                     task.reserveFor(villager.getUuid());
                 }
@@ -125,7 +125,7 @@ public class SmelterGameTest implements FabricGameTest {
                     .amountOf(ResourceType.GLASS);
 
             context.assertTrue(glass > 0,
-                    "depois de cinco paradas sem ferro cru o fundidor não fundiu o vidro"
+                    "depois de duas paradas sem ferro cru o fundidor não fundiu o vidro"
                             + " que a obra aberta pede");
             context.assertTrue(task.isHeld(),
                     "o fundidor largou o pedido de lingote em vez de voltar a tentá-lo");

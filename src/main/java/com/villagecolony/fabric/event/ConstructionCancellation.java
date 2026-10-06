@@ -1,4 +1,6 @@
-package com.villagecolony.fabric.integration;
+package com.villagecolony.fabric.event;
+
+import com.villagecolony.fabric.integration.StructureBlueprintReader;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Building;
@@ -12,7 +14,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.HousePlans;
-import com.villagecolony.fabric.work.PlanPlacement;
+import com.villagecolony.fabric.integration.BlueprintPlacement;
 import com.villagecolony.fabric.work.WaitingWork;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
@@ -63,7 +65,7 @@ public final class ConstructionCancellation {
             }
 
             Optional<com.villagecolony.core.construction.model.Blueprint> blueprint =
-                    PlanPlacement.blueprintOf(world, pending.colonyId(), pending.blueprint(), pending.origin());
+                    BlueprintPlacement.blueprintOf(world, pending.colonyId(), pending.blueprint(), pending.origin());
             if (blueprint.isEmpty()) {
                 continue;
             }

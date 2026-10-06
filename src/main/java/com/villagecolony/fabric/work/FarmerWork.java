@@ -14,7 +14,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.data.save.ProfessionPolicySavedData;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
-import com.villagecolony.fabric.event.VillageFocus;
+import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.CropPatch;

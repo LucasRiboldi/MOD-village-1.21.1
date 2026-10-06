@@ -18,7 +18,7 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
-import com.villagecolony.fabric.event.VillageFocus;
+import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.MineFlooding;

@@ -17,10 +17,10 @@ class MineSecondLevelTest {
 
         assertEquals(first.gallery(), second.gallery());
         assertEquals(first.descent(), second.descent());
-        assertEquals(first.positionAt(MineShaft.SHARED_BLOCKS).x(),
-                second.positionAt(MineShaft.SHARED_BLOCKS).x());
-        assertEquals(first.positionAt(MineShaft.SHARED_BLOCKS).z(),
-                second.positionAt(MineShaft.SHARED_BLOCKS).z());
+        assertEquals(MineShaft.DESCENT, first.entry().y() - second.entry().y());
+        assertEquals(MineShaft.DESCENT,
+                Math.abs(first.entry().x() - second.entry().x())
+                        + Math.abs(first.entry().z() - second.entry().z()));
     }
 
     @Test

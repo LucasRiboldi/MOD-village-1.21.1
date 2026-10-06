@@ -45,10 +45,15 @@ public final class ProfessionOverlayRenderer {
             String profession = ClientOverlayState.professionOf(villager.getUuid());
             Vec3d above = villager.getLerpedPos(tickDelta).add(0.0, villager.getHeight() + 0.55, 0.0);
 
+            // O jogador pode esconder o nome e deixar só o ícone (Mod Menu).
+            boolean showText = OverlayPreferences.professionTextVisible();
+
             OverlayDrawing.label(context.camera(), buffers, above,
                     OverlayDrawing.id(OverlaySprites.profession(profession)),
-                    new Text[] {Text.translatable("overlay.profession." + profession.toLowerCase(Locale.ROOT))},
-                    new int[] {0xFFFFFFFF});
+                    showText
+                            ? new Text[] {Text.translatable("overlay.profession." + profession.toLowerCase(Locale.ROOT))}
+                            : new Text[0],
+                    showText ? new int[] {0xFFFFFFFF} : new int[0]);
         }
 
         buffers.draw();

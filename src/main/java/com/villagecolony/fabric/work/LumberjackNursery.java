@@ -52,8 +52,11 @@ public final class LumberjackNursery {
      */
     public static final int BETWEEN_PLANTINGS = 6_000;
 
-    /** Meta de árvores vivas mantidas pelo viveiro de cada vila. */
+    /** Meta-base de árvores vivas mantidas pelo viveiro de cada vila. */
     public static final int TARGET_TREES = 10;
+
+    /** Mínimo adicional de árvores por lenhador ativo na vila. */
+    public static final int MIN_TREES_PER_LUMBERJACK = 5;
 
     /**
      * A que distância do centro o viveiro fica.
@@ -107,7 +110,7 @@ public final class LumberjackNursery {
             return 0;
         }
 
-        int room = Math.min(wanted, TARGET_TREES - countNurseries(world, centre));
+        int room = Math.min(wanted, targetTrees(colonyId) - countNurseries(world, centre));
 
         if (room <= 0) {
             // <b>Cheio também marca a hora</b> — spark de 2026-09-26. Com os
@@ -162,6 +165,36 @@ public final class LumberjackNursery {
      */
     public static int plantBatchIfItIsTime(ServerWorld world, UUID colonyId, BlockPos centre) {
         return plant(world, colonyId, centre, BATCH);
+    }
+
+    /**
+     * Meta da vila: conserva o bosque inicial e sobe para cinco árvores por
+     * lenhador quando a equipe cresce.
+     *
+     * <p>A meta-base também mantém os plantios explícitos e as arenas de teste
+     * estáveis. O despacho automático, por sua vez, só chama o viveiro quando
+     * há ao menos um lenhador registrado em {@link #hasLumberjack(UUID)}.
+     */
+    static int targetTrees(UUID colonyId) {
+        int lumberjacks = (int) VillageColonyMod.WORKERS.ofColony(colonyId).stream()
+                .filter(worker -> worker.profession()
+                        .filter(com.villagecolony.core.worker.model.ProfessionType.LUMBERJACK::equals)
+                        .isPresent())
+                .count();
+
+        return targetTreesFor(lumberjacks);
+    }
+
+    static int targetTreesFor(int lumberjacks) {
+        return Math.max(TARGET_TREES, Math.max(0, lumberjacks) * MIN_TREES_PER_LUMBERJACK);
+    }
+
+    /** Evita a varredura do viveiro em ciclos que não têm lenhador. */
+    static boolean hasLumberjack(UUID colonyId) {
+        return VillageColonyMod.WORKERS.ofColony(colonyId).stream()
+                .anyMatch(worker -> worker.profession()
+                        .filter(com.villagecolony.core.worker.model.ProfessionType.LUMBERJACK::equals)
+                        .isPresent());
     }
 
     /**

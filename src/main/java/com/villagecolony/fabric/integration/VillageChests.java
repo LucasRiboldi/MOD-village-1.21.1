@@ -177,9 +177,9 @@ public final class VillageChests {
                 continue;
             }
 
-            // Os seis baús da BigHouseMOD pertencem aos moradores dela.
+            // Os sete baús da BigHouseMOD pertencem aos moradores dela.
             // Sem este filtro, a casa nova vira estoque público antes que
-            // a fundação termine de registrar os seis trabalhadores.
+            // a fundação termine de registrar os sete trabalhadores.
             if (BigHouseFoundation.containsHouseBlock(pos)) {
                 continue;
             }

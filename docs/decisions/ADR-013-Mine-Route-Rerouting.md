@@ -54,3 +54,27 @@ para 6. `MinerGameTest` verifica que um portal quebrado nao volta e que a boca
 de reposicao fica no lado oposto; a descida real usa o quarto degrau derivado
 da geometria. Em 2026-09-23, `test` passou com 928 testes e
 `runGametest --rerun-tasks` com 417/417. O playtest visual permanece pendente.
+
+## Emenda — 2026-10-03: portal 5x4 e vão 3x3
+
+A moldura da boca passa a medir cinco blocos de largura por quatro de altura,
+com um lampião no topo de cada pilar lateral. O vão útil central permanece
+livre em três blocos de largura por três de altura. A escada e as galerias já
+usavam três blocos de largura na geometria da forma 6; por isso esta emenda não
+altera cursores persistidos nem incrementa `MineSave.SHAPE_VERSION`.
+
+`MinerGameTest` verifica os dois lampiões, a moldura 5x4 e o vão central 3x3.
+Como antes, quebrar a moldura depois da abertura não autoriza reconstrução.
+
+## Emenda — 2026-10-03: dois lances, salões 10x10x3 e dez rotas
+
+Cada ciclo subterrâneo mantém dez degraus de descida, agora divididos em dois
+lances de cinco. A área comum e a área de cada ramal passam a ser salões de
+10 x 10 x 3 blocos. A passagem útil continua 3 x 3 e `MineFloor` conserva o
+piso com tijolos de pedra quando a escavação abre um vão não planejado.
+
+Uma frente sem progresso tenta dez rotas antes de considerar a boca perdida.
+A seleção continua determinística e retomável: o mundo decide se a rota está
+livre e o cursor apenas ordena as células. Como todos os índices posteriores
+à escada mudam, `MineSave.SHAPE_VERSION` sobe de 7 para 8; saves anteriores
+mantêm boca, orientação e arco, mas reiniciam os cursores.

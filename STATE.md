@@ -1,4 +1,4 @@
-# STATE — 2026-10-03
+# STATE — 2026-10-06
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -11,6 +11,122 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 06-10 — linhas Claude e Codex integradas (aguarda playtest)
+
+Branch `integra/linhas-2026-10-06`: `claude/corrigiveis-sem-jogo` + `codex/village-visuals-logistics-mine-sweep`,
+com as decisões da auditoria (`docs/audit/`, ADR-034):
+
+- **D-01 mina:** salões 10x10x3 do Codex (`SHAPE_VERSION 8`); `MineMouthArchTest` (arco do Claude) removido.
+- **D-02 varredura:** `VillageSpiralSweep` + `VillageFluidIndex` (ADR-031); do Claude ficam `LocateFallback`
+  e a exceção da argila (não pula água — o motor do Codex pulava). `FluidColumns` removido; `CropPatch` e
+  `SandGathering` voltam ao comportamento da `main` (sem pular fluidos). **Pendente:** ligar o índice a eles
+  exige tirar `VillageFluidIndex` de `fabric/work` (senão fecha ciclo de pacote).
+- **D-03 painel:** `OverlayDrawing`/`OverlaySprites` do Claude + `OverlayPreferences` do Codex (esconder texto);
+  `PixelPanelLayout`/`WorldPixelPanelRenderer` removidos.
+- `closePlan` só em `TreeFelling`; import em `VillageFocusPlayerGameTest`; comentários "seis" → "sete".
+- **`MineOverflowStorageGameTest` não estava no `fabric.mod.json` do Codex** — registrado, roda pela 1ª vez.
+
+Verificado em 06-10: `build --rerun-tasks` ok; 1.325 unitários + 1 propriedade, 0 falhas (XML);
+92 Python ok; **610/610 GameTests em duas rodadas `--rerun-tasks`** (564 + 24 + 21 + 1). PIT não rodado
+localmente. JAR `downloads/village-colony-0.3.0.jar` = `CA54DA54…3128`. **Nada visto em jogo.**
+Playtest obrigatório: mina com save antigo (SHAPE_VERSION 7→8), painéis com e sem Iris, argila no lago.
+
+## 🟡 04-10 — painéis, perímetro, mina e varredura (aguarda playtest)
+
+- Vila nova cria até oito árvores maduras no anel de 48–56 blocos, alternando
+  as espécies do bioma. Folhas naturais não persistentes podem ceder somente
+  dentro da copa gerada; folhas do jogador, blocos de vila, entidades e
+  construções continuam protegidos. A descida da mina recupera um degrau
+  transitável próximo quando o mineiro é deslocado para fora do corredor sob a
+  boca, antes de desistir da tarefa.
+- Corrigido o formato de vértices dos overlays: moldura e ícone não enviam
+  mais atributos incompatíveis com `RenderLayer.getTextSeeThrough`.
+- Construção esperando madeira por 20 passagens solicita ao fazendeiro o
+  rebento da espécie; ele só planta após retirar fisicamente a muda de um baú,
+  em área segura a 48–56 blocos e alcançável pelo lenhador. Essa retirada e
+  plantio agora respeitam o expediente: à noite a muda permanece no baú.
+- Aldeões largam navegação e alvos de trabalho fora do horário, preservando
+  casa e tarefa. Inventários de baú duplo são tratados como uma unidade.
+- Mina subterrânea: dois lances de cinco degraus, salões 10x10x3, corredor 3x3
+  e dez tentativas antes de abandonar a boca; formato de save 8.
+- Baús das camas vanilla voltam a ser garantidos de forma idempotente em cada
+  observação, recuperando chunks ausentes na adoção.
+- Painéis nativos de pixel art sobre trabalhadores e canteiros: moldura fina
+  com centro transparente, texto dentro dela e ícone centralizado acima. A
+  obra usa uma moldura única e responsiva para nome e itens faltantes. O Mod
+  Menu alterna o texto da profissão durante a sessão, preservando o ícone. A
+  associação usa a profissão e o estado reais do payload, não a posição na
+  lista.
+- `SiteMarker` agora desenha, com partículas de fogo azul, também o perímetro
+  inteiro da caixa atual da vila. A boca da mina virou arco 5x4, dois lampiões
+  e passagem central 3x3; a escada e o túnel já eram 3 blocos de largura.
+- O caminho de retirada de material do construtor já usa `ColonySupply`, que
+  percorre os baús válidos da vila e retira o item físico. A causa observada
+  para espera excessiva era falta de estoque, não uma segunda rota ausente.
+- O preparo converte somente `grass_block` sob a base planejada de obra não
+  agrícola em terra; plantações e os demais pisos ficam intactos.
+- A coleta de superfície agora começa na borda da caixa, converge até o centro
+  e segue por anéis externos sem reler colunas. Um índice transitório e
+  incremental ignora colunas de água/lava já medidas e é invalidado quando a
+  caixa cresce (ADR-031).
+- Baú profissional cheio libera seus dez slots finais para baús comunitários
+  da mesma vila, priorizando um baú vazio. Pilhas e componentes são preservados;
+  sem espaço comunitário, o excedente usa um baú físico no salão completo da
+  mina, sem carregar chunk ou usar baú de profissão (ADR-033).
+- A linha de base voltou a compilar sem ciclos Fabric: foco da vila, leitura e
+  orientação de blueprint e adaptação de bioma ficaram em `integration`; eventos
+  aplicam a política de moradia a partir do resultado da varredura. A regra de
+  arquitetura não encontrou ciclos e o teto de 500 linhas voltou a ser atendido
+  após mover o fechamento de corte para `TreeFelling`. A verificação final
+  passou em `build` e em 585/585 GameTests.
+- Spark `8VskZd9AOD` confirmou 20 TPS e mostrou o mineiro alcançando a frente,
+  mas abandonando a coleta porque seu baú estava cheio. O transbordo agora é
+  tentado no instante do depósito; sem destino, a tarefa volta à fila em vez de
+  concluir com zero itens e o mineiro pode apoiar obra durante o descanso curto.
+  Lenhador sem árvore recompõe o viveiro do anel 48–56 antes do apoio, com meta
+  `max(10, 5 por lenhador)`.
+- Depois de três faltas, terracota colorida não fica presa a uma rota teórica de
+  recoloração: a peça preferida entra fisicamente no baú do construtor. A
+  terceira tentativa continua sendo necessária e as duas primeiras deixam a
+  coleta/fabricação local trabalhar.
+- Terracota vermelha agora é peça do pedreiro, não saída direta da fornalha:
+  a demanda abre `argila -> terracota` para fundidor e coleta. Todo corante
+  Vanilla é ingrediente automático físico no baú de serviço, sem tarefa de
+  coleta ou craft. O fundidor passa a antecipar a cadeia da obra após duas
+  faltas; o lote já usa o índice incremental da rua e aceita lacunas rasas que
+  a fundação pode preencher, sem uma segunda cache concorrente.
+- Colunas de terreno cujo chunk estava descarregado deixam de ser perdidas pelo
+  índice de água/lava: ficam pendentes e são revisitadas incrementalmente quando
+  o chunk carregar. A varredura integral de chunks segue rejeitada por custo;
+  o estudo compara cursor, heightmap e índice por eventos.
+- O Spark `t80rKW8u6q` mostrou que uma roça sem lote ao alcance deixava a vila
+  sem projeto por vinte ciclos, embora houvesse materiais e trabalhadores. O
+  recuo agora dura um ciclo: a casa ou oficina seguinte pode abrir, e a roça
+  continua proibida fora do alcance do fazendeiro.
+- O Spark `G7eI22eQt0` manteve 20 TPS (MSPT mediano 9,93; p95 14), mas mostrou
+  `TreeScanner.findNearestLog` em 62% do custo do mod. A busca agora retoma na
+  coluna exata e encerra a passagem ao indexar 16 árvores. A carpintaria
+  fabrica até cobrir a demanda restante da obra, ainda com uma receita por
+  ação; o analisador só chama baú de mineiro cheio diante do aviso real.
+- A rodada de 04-10 confirmou 583/583 GameTests. Uma execução anterior teve
+  duas falhas opostas no batch concorrente `craft_family`; a repetição imediata
+  passou integralmente, portanto a instabilidade ficou registrada para
+  investigação, sem reduzir timeout nem enfraquecer a cobertura.
+- Roças agora tratam a sua camada física mais baixa como fundação: o construtor
+  assenta o bloco pedido sobre a grama natural, sem mudar a altura especial que
+  acomoda os canteiros e a água. A matriz auditável de 161 blocos dos templates
+  de todas as vilas Vanilla 1.21.1 está em
+  `docs/reports/blocos-vilas-vanilla-1.21.1.xlsx`; 67 ainda não têm rota direta
+  de uma profissão e estão marcados sem inventar suprimento.
+- `barn_majest.nbt` entra no sorteio de oficinas do pastor e
+  `storage_majest.nbt` no do construtor. O celeiro foi compactado ao retirar
+  apenas o solo natural da camada inferior, preservando os cinco blocos
+  funcionais nela presentes; sua nova área é 12x13x15. A rodada completa de
+  GameTests confirmou ambos os NBT reais carregados e associados: 582/582.
+- Falta o playtest visual e de desempenho no save, inclusive marcador em vila
+  grande e coleta atravessando a borda, fluxo real dos baús, nova medição do
+  lenhador/carpintaria e o sorteio das duas oficinas em uma vila real.
 
 ## 🟡 02-10 — consolidação na `main` (aguarda playtest)
 
@@ -57,10 +173,23 @@
 
 ## Em uma linha
 
+Integração de 06-10 (branch `integra/linhas-2026-10-06`): as duas linhas abaixo
+foram juntadas com as decisões D-01..D-05 da auditoria (`docs/audit/`).
+
+**Linha Claude (03-10):**
 03-10: corrigíveis sem jogo em `claude/corrigiveis-sem-jogo`, depois o
 playtest da madrugada e as duas correções dele — 1.295 unitários, 579/579
 GameTests, três mutações mortas. As correções do playtest ainda não foram
 vistas em jogo.
+
+**Linha Codex (04-10):**
+Entrega de 04-10 publicada no commit `43f13978`: 1.314 testes unitários e
+585/585 GameTests; `build` verde. O JAR em `build/libs/`, `downloads/` e
+`%APPDATA%/.minecraft/mods/` é
+`EEE5A695C00281E129145E924F9DC3A6E63E40227397F90052FF5E7F5C56DD39` nas
+três cópias. A branch de desenvolvimento está alinhada ao remoto.
+Próximo: fazer o playtest dos painéis, perímetro, mina, varredura, baús e
+ritmo de construção no save real.
 
 ## 30-09, noite — playtests 18h e 21h (Spark `YUm45D9Sw4`, `qI5h6MXtDA`)
 

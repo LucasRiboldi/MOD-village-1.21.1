@@ -8,7 +8,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkTargets;
-import com.villagecolony.fabric.event.VillageFocus;
+import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import net.minecraft.block.Block;

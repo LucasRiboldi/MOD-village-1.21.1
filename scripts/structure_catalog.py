@@ -24,6 +24,7 @@ OUT = os.path.join(FOLDER, "CATALOGO.md")
 PROFESSIONS = ["MINER", "LUMBERJACK", "MASON", "SMELTER", "CARPENTER", "FARMER", "SHEPHERD", "BUILDER"]
 NAMES = {"MINER": "mineiro", "LUMBERJACK": "lenhador", "MASON": "pedreiro", "SMELTER": "fundidor",
          "CARPENTER": "carpinteiro", "FARMER": "fazendeiro", "SHEPHERD": "pastor", "BUILDER": "construtor"}
+NAMED_PROFESSION_MODELS = {"barn_majest": "SHEPHERD", "storage_majest": "BUILDER"}
 
 # Ofício de cada casa do jogo — ConstructionOrder.WORKSHOPS.
 WORKSHOPS = [("FARMER", ["farm"]), ("SHEPHERD", ["shepherd", "animal_pen"]), ("MASON", ["mason"]),
@@ -96,6 +97,13 @@ def main():
         lines.append(f"| {NAMES[profession]} | `{name}.nbt` | {general} | " + " | ".join(per_style)
                      + f" | {vanilla} |")
 
+    lines += ["", "## Modelos nomeados de profissão", "",
+              "| Arquivo | Profissão | Existe |",
+              "|---|---|---|"]
+    for model, profession in NAMED_PROFESSION_MODELS.items():
+        mark = "✅" if exists("colony/" + model) else "—"
+        lines.append(f"| `{model}.nbt` | {NAMES[profession]} | {mark} |")
+
     total = sum(len(paths) for paths in styles.values())
     modeled = sum(1 for paths in styles.values() for p in paths if exists("colony/override/" + p))
     lines += ["", f"## Estruturas do jogo que a colônia constrói — {total}, {modeled} com modelo do mod", ""]
@@ -115,7 +123,8 @@ def main():
     os.makedirs(FOLDER, exist_ok=True)
     with open(OUT, "w", encoding="utf-8", newline="\n") as out:
         out.write("\n".join(lines))
-    print(f"{OUT}: {total} estruturas do jogo em {len(styles)} estilos, {modeled} com modelo do mod")
+    named = sum(exists("colony/" + model) for model in NAMED_PROFESSION_MODELS)
+    print(f"{OUT}: {total} estruturas do jogo em {len(styles)} estilos, {modeled} com modelo do mod, {named} nomeados")
 
 
 if __name__ == "__main__":
