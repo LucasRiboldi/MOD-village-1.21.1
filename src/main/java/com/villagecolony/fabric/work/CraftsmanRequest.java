@@ -25,6 +25,9 @@ import java.util.Optional;
  */
 public final class CraftsmanRequest {
 
+    /** O alvo nominal que marca o pedido de peça de obra ao artesão. */
+    static final ResourceType NOMINAL = ResourceType.COBBLESTONE;
+
     private CraftsmanRequest() {
     }
 
@@ -105,8 +108,11 @@ public final class CraftsmanRequest {
                 ? TaskType.CRAFT_STONE_MATERIAL
                 : TaskType.CRAFT_WOOD_MATERIAL;
 
+        // Só um pedido de peça de obra por vez — o marcado com o alvo nominal.
+        // Tarefa de estoque do mesmo ofício (ADR-036 item 8) não conta: ela
+        // fazia a peça da obra nunca ser pedida.
         for (Task task : VillageColonyMod.TASKS.ofColony(project.colonyId())) {
-            if (task.type() == type && task.isOpen()) {
+            if (task.type() == type && task.isOpen() && task.targetResource() == NOMINAL) {
                 return false;
             }
         }
@@ -135,7 +141,7 @@ public final class CraftsmanRequest {
                 // Nominal, como na tarefa de obra: o pedido não é de
                 // recurso, e quem acha a peça é CraftingWork lendo a
                 // própria obra. Ver ConstructionPlanner.ensureTask.
-                ResourceType.COBBLESTONE,
+                NOMINAL,
                 1);
 
         VillageColonyMod.LOGGER.info(

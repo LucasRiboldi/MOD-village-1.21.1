@@ -240,6 +240,9 @@ public enum ResourceType {
     SANDSTONE_STAIRS(
             ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
 
+    /** A laje de pedregulho, que o pedreiro mantém em estoque — ADR-036 item 8. */
+    COBBLESTONE_SLAB(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
+
     /** A laje de arenito cru. */
     SANDSTONE_SLAB(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
 

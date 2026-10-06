@@ -1134,8 +1134,11 @@ public class CraftingGameTest implements FabricGameTest {
                     project.state() == ConstructionState.BUILDING,
                     "o caso precisa permanecer construindo, sem esperar material");
             context.assertTrue(
-                    countOf(colony, TaskType.CRAFT_STONE_MATERIAL) == 1,
-                    "a escada ainda nao foi pedida durante a construcao");
+                    pieceRequestsOf(colony) == 1,
+                    "a escada ainda nao foi pedida durante a construcao: "
+                            + VillageColonyMod.TASKS.ofColony(colony.id()).stream()
+                                    .map(task -> task.type() + "/" + task.targetResource() + "/" + task.state())
+                                    .toList());
         } finally {
             owned.cleanUp();
         }
