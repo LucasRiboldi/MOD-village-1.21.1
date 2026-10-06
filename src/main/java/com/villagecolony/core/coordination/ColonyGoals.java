@@ -38,12 +38,9 @@ import java.util.Objects;
  * volume guardado, e "fabricar até encher" transformaria toda a madeira
  * da colônia em tábua e pararia a coleta junto.
  *
- * <p><b>A pedra saiu.</b> Ninguém minera no MVP, e
- * {@code ColonyCycle.typeFor} manda todo recurso NATURAL para
- * {@code COLLECT_WOOD}: a meta de pedra virava uma tarefa de coleta que
- * só o lenhador podia pegar, e ele derrubava árvore para atendê-la.
- * Volta quando existir minerador, e aí com o espaço dos baús pela mesma
- * conta.
+ * <p><b>A pedra tem piso</b>, {@link #STONE_FLOOR}, e o carvão e o ferro,
+ * {@link #MINERAL_FLOOR} (Regras 29 e 30): o minerador os mantém mesmo sem
+ * obra aberta. A história da pedra (fora do MVP até 2026-08-27) está no git.
  */
 public final class ColonyGoals {
 

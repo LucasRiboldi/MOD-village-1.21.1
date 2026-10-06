@@ -21,7 +21,8 @@ Não leia documentos históricos inteiros. Use `rg` para localizar trechos em `D
 
 - Mod Fabric para Minecraft 1.21.1, Java 21. Dependências têm versões fixas; nunca use `latest`, `+` ou SNAPSHOT.
 - `core/` não importa Minecraft, Fabric, `data/` nem outros domínios do core. A exceção entre domínios é `core/coordination`.
-- O mundo é a fonte da verdade: não persista estado que o Minecraft já guarda e não invente recursos sem origem física.
+- O mundo é a fonte da verdade: não persista estado que o Minecraft já guarda. Recurso sem origem física só nos casos aceitos pela ADR-028 e pela ADR-034 (lava nunca).
+- Comentário diz a regra em vigor e cita a fonte (Regra N, ADR-NNN, KF-NNN); a história fica no commit e no ADR. Mudou uma regra? Corrija no mesmo commit todo comentário que a descreve (ADR-035 §6).
 - Nunca use `@Overwrite`. Mixin novo exige ADR; mixins delegam a lógica e não cancelam IA Vanilla.
 - Prefira uma responsabilidade por classe. Arquivos acima de 500 linhas exigem justificativa e divisão por responsabilidade quando apropriado.
 - Código e identificadores em inglês; documentação e Javadoc em português.

@@ -33,12 +33,9 @@ import java.util.UUID;
  * desde a Fase 4 e cada profissão já declarava a sua, mas nada convertia
  * aquilo em item — a regra estava aceita em documento e não acontecia.
  *
- * <p><b>O que isto não é.</b> A ferramenta não muda a velocidade de
- * trabalho. A Regra 2 do autor diz que o trabalhador quebra um bloco no
- * tempo de um jogador <em>com ferramenta de ferro</em>, e é isso que
- * {@code LumberjackWork} usa. Dar-lhe um machado de madeira e passar a
- * medir por ele tornaria a colheita mais lenta do que a regra manda —
- * seria trocar uma regra do autor por uma consequência de implementação.
+ * <p><b>A ferramenta dá a velocidade</b> (Regra 2-e1): o trabalhador começa
+ * com a de ferro e troca por uma melhor que esteja no baú dele
+ * ({@code ToolUpgrade}); o tempo de quebra vem de {@code ActionTool.speedOf}.
  *
  * <p><b>O que o jogador vê: nada, hoje.</b> Verificado no jarro mapeado
  * da 1.21.1 — {@code VillagerResemblingModel} implementa apenas

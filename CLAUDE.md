@@ -78,3 +78,13 @@ seguinte. O GameTest prova o mecanismo; o `time_ledger` prova o efeito.
 No mesmo playtest, rode `python scripts/cost_ledger.py` (linhas `VC_COST`,
 ADR-035 §5): média, p95 e máximo de cada fase do ciclo por faixa de colônias.
 Nenhuma otimização de desempenho começa sem esse número.
+
+### 0.5 Comentário diz a regra, não a história (ADR-035 §6)
+
+- O javadoc diz **o que vale hoje** e cita a fonte: Regra N, ADR-NNN, KF-NNN.
+- Sessão, playtest, número de log e quem pediu ficam no commit e no ADR —
+  o git guarda a história melhor que o comentário, e comentário velho mente.
+- Mudou uma regra? No mesmo commit, `grep` pelo número dela e corrija todo
+  comentário e documento que a descreve.
+- Comentários históricos que já existem não são reescritos em massa: enxugue
+  o do método que você estiver tocando.
