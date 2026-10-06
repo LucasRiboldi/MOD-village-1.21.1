@@ -75,7 +75,12 @@ jobs:
       # continua reprovando o PIT que nem comeca. Ate 2026-09-25 este passo
       # tinha continue-on-error, e o PIT ficou parado do 78e7efc ao 7619b1d
       # com o CI verde.
+      #
+      # Desde 2026-10-06 (ADR-035 7) so em PR, na main e no disparo manual:
+      # eram 165 s, 42% de cada push. Continua reprovando abaixo do limiar;
+      # muda quando roda, nao se roda.
       - name: Run mutation tests (PIT, core)
+        if: github.event_name != 'push' || github.ref == 'refs/heads/main'
         run: ./gradlew pitest
 
       - name: Upload coverage and mutation reports
