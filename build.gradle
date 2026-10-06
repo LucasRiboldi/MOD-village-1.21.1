@@ -214,6 +214,19 @@ loom {
 
             runDir 'build/gametest'
         }
+
+        // Servidor com os GameTests carregados e o comando /test — ADR-035 §7.
+        // Para depurar um cenário olhando o mundo: entre pelo cliente em
+        // localhost e use `/test run <classe>.<metodo>` ou `/test runall`.
+        gametestServer {
+            server()
+            name = 'Game Test Server (/test)'
+            source sourceSets.gametest
+
+            vmArg '-Dfabric-api.gametest.command'
+
+            runDir 'run/gametest-server'
+        }
     }
 }
 
