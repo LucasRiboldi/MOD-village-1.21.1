@@ -4,7 +4,7 @@
 
 **Project Constitution**
 
-Version: **1.1.0**
+Version: **1.2.0** (emendas de 2026-10-06, ADR-034)
 
 Status: **Approved**
 
@@ -113,6 +113,9 @@ The mod extends their behaviour instead of replacing it.
 
 Whenever a villager is not executing a colony task, it immediately returns to its Vanilla routine.
 
+> **Emenda 2026-10-06 (ADR-034, ADR-029):** o aldeão com ofício da colônia
+> não mantém ofício nem comércio Vanilla. O resto da rotina Vanilla continua.
+
 ---
 
 ## 5. Preserve Vanilla Villages
@@ -130,6 +133,10 @@ Villagers never destroy:
 * any block belonging to the generated village.
 
 The original village is protected forever.
+
+> **Emenda 2026-10-06 (ADR-034, Regra 3):** o chão do bioma dentro de peça da
+> vila não é peça da vila — pode virar rua, lote, base de obra e saída do aldeão
+> preso. Todo bloco construído da vila continua intocável.
 
 ---
 
@@ -150,6 +157,9 @@ Every building constructed by villagers originates from Vanilla structure templa
 No replacement structures are created for Vanilla villages.
 
 Buildings are selected from the structure pool matching the village biome.
+
+> **Emenda 2026-10-06 (ADR-034, Regra 27-e3):** os modelos próprios da colônia
+> têm prioridade sobre o catálogo Vanilla quando existem.
 
 ---
 
@@ -172,6 +182,13 @@ Every placed block must originate from collected or crafted resources.
 Every crafted item must consume existing materials.
 
 Nothing appears without an origin.
+
+> **Emenda 2026-10-06 (ADR-034, ADR-028):** esta seção não vale mais como
+> regra absoluta. Podem surgir sem origem: ferramenta inicial, BigHouseMOD e um
+> adulto por cama dela, pedregulho de fuga, peça sem rota no bioma, ingredientes
+> de drop e os caminhos da ADR-028. A lava nunca é assentada; o que tem cadeia
+> na colônia usa a cadeia; tora, pedra, terra, areia, lã e trigo vêm das
+> profissões.
 
 ---
 

@@ -25,6 +25,10 @@ ordem sobre seus seis papéis históricos; a fase de crescimento usa a projeçã
 sobre os sete produtores. Assim Carpinteiro/Fazendeiro continuam fora do piso
 fundacional e Construtor continua fora do crescimento automático.
 
+> **Superado em 2026-10-06 (ADR-034, D-05):** vale o código e a Regra 35 — sete
+> titulares na fundação, com o carpinteiro e sem o agricultor, e o construtor
+> também no crescimento. O resto desta ADR continua valendo.
+
 ## Escopo de raio
 
 - Lenhador, Fazendeiro e Pastor podem receber raio configurável.
