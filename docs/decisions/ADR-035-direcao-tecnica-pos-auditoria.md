@@ -26,7 +26,7 @@ próximo. O número é o da avaliação; a ordem de execução está na tabela.
 |---|---|---|---|
 | 1 | Salvar o estado durante o jogo | `sync` também em `ServerLifecycleEvents.BEFORE_SAVE` (autosave, `/save-all`), nunca depois do `SERVER_STOPPING` | — |
 | 2 | Uma linha de desenvolvimento por vez | regra escrita em `CLAUDE.md` e `AGENTS.md`; a integração de 06-10 vira a única linha | apagar branches antigas fica com o autor |
-| 3 | Pedido de material explícito | **fase 1:** `core` ganha o pedido com estado (`aberto → em resolução → entregue / sem solução`), a fonte que está tentando e o motivo; os caminhos atuais o alimentam; `/vc log` o mostra | **fase 2:** a cadeia de fontes passa a *decidir*. Muda comportamento; espera playtest |
+| 3 | Pedido de material explícito | **fase 1:** `core` ganha o pedido com estado (`em resolução → entregue / sem solução`; o "aberto" do desenho não corresponde a nenhum ramo real e saiu), a fonte que está tentando e o motivo; os caminhos atuais o alimentam; `/vc log` o mostra | **fase 2:** a cadeia de fontes passa a *decidir*. Muda comportamento; espera playtest |
 | 4 | Decisão no `core`, mundo na borda | padrão "ler o mundo numa foto, decidir em código puro", aplicado a casos pequenos e já duplicados | os demais, cada um quando a regra for tocada |
 | 5 | Medir o custo por fase | o detalhamento do ciclo sai a cada N ciclos, não só ≥ 50 ms, e um script o resume | otimizar — só com o número na mão |
 | 6 | Comentário não é diário | regra escrita; corrigidos os comentários que a auditoria achou mentindo | reescrita ampla: não |
@@ -62,7 +62,7 @@ toque produção; duas rodadas `--rerun-tasks` no fim. Cada commit diz o que foi
 |---|---|---|
 | 1 | `a385f617` | 2 GameTests, provados por mutação (cada mutação derruba o seu); 612/612 ×2. Falta playtest: matar o processo |
 | 2 | — | **pendente**: regra escrita em `CLAUDE.md`/`AGENTS.md` e PR da integração para a `main` |
-| 3 | — | **pendente**: fase 1 desenhada (pedido com estado em `core`, gravado nos ramos de `BuilderMaterials.ensureConstructionMaterial`/`hasMaterialForNextBlock`, linha no `/vc log`), não implementada |
+| 3 | (este commit) | fase 1: `MaterialRequest` (core), `MaterialRequests` (registro por obra), `/vc log`; 4+1 unitários, 2 GameTests provados por mutação; 613/613. Fase 2 espera playtest |
 | 4 | `0e465515` | `searchRadiusOr` e `ReservationGate`; PIT 87%, 8/8 mutantes mortos; 611/611 |
 | 5 | `00c63763` | `VC_COST` + `scripts/cost_ledger.py`; 11/11 e 95 Python; falta playtest |
 | 6 | `e57ea5a5` | regra em `CLAUDE.md` §0.5 e `AGENTS.md`; 4 textos que mentiam corrigidos |

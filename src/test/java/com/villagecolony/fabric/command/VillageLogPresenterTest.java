@@ -1,6 +1,8 @@
 package com.villagecolony.fabric.command;
 
 import com.villagecolony.core.construction.model.ConstructionPriority;
+import com.villagecolony.core.construction.model.MaterialRequest;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.telemetry.model.ActivityKind;
 import com.villagecolony.core.telemetry.model.ActivityProfession;
 import com.villagecolony.core.telemetry.model.ActivityState;
@@ -123,5 +125,16 @@ class VillageLogPresenterTest {
 
         org.junit.jupiter.api.Assertions.assertEquals(
                 List.of("[ESPERANDO] Fundidor: nada a fazer no raio inteiro (sand) — há 10 min"), lines);
+    }
+
+    /** O que a obra espera, em uma linha — ADR-035 §3. */
+    @Test
+    void theOpenWorkSaysWhatItWaitsForWhyAndForHowLong() {
+        MaterialRequest request = MaterialRequest.start(new ResourceId("minecraft", "white_terracotta"),
+                MaterialRequest.State.RESOLVING, MaterialRequest.Source.STOCKED, 1_000);
+
+        assertEquals("[OBRA] small_house_1 pede white_terracotta — em resolução: sem rota no bioma;"
+                        + " aparece no baú na terceira tentativa — há 3 min",
+                VillageLogPresenter.materialRequest("village/plains/houses/small_house_1", request, 4_600));
     }
 }
