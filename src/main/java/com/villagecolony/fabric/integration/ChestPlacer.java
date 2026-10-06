@@ -4,6 +4,9 @@ import com.villagecolony.core.type.ServerMemory;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.enums.BlockHalf;
+import net.minecraft.block.LadderBlock;
+import net.minecraft.block.StairsBlock;
 import net.minecraft.block.DoorBlock;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.server.world.ServerWorld;
@@ -104,7 +107,7 @@ public final class ChestPlacer {
         }
 
         for (BlockPos spot : candidates(bed.get())) {
-            if (!structure.contains(spot) || isDoorApproach(world, spot)) {
+            if (!structure.contains(spot) || isDoorApproach(world, spot) || isStairApproach(world, spot)) {
                 continue;
             }
 
@@ -134,7 +137,7 @@ public final class ChestPlacer {
     /** Se este baú é a posição privada e conforme de uma cama vanilla — a mesma regra (b). */
     public static boolean isCompliantVillageBedChest(
             ServerWorld world, BlockPos chest, BlockBox piece) {
-        if (!piece.contains(chest) || isDoorApproach(world, chest)) {
+        if (!piece.contains(chest) || isDoorApproach(world, chest) || isStairApproach(world, chest)) {
             return false;
         }
 
@@ -287,6 +290,43 @@ public final class ChestPlacer {
             }
         }
         return false;
+    }
+
+    /**
+     * Se a posição é por onde se entra ou sai de uma escada — ADR-036 item 4.
+     *
+     * <p>Escada de degrau: o pé é o bloco diante do degrau baixo, e o topo é o
+     * bloco atrás, um nível acima. Escada de mão: o bloco diante dela.
+     */
+    private static boolean isStairApproach(ServerWorld world, BlockPos spot) {
+        for (Direction direction : Direction.Type.HORIZONTAL) {
+            for (int dy = -1; dy <= 1; dy++) {
+                BlockPos at = spot.offset(direction).up(dy);
+                BlockState state = world.getBlockState(at);
+
+                if (state.getBlock() instanceof StairsBlock
+                        && state.get(Properties.BLOCK_HALF) == BlockHalf.BOTTOM) {
+                    Direction facing = state.get(Properties.HORIZONTAL_FACING);
+                    BlockPos foot = at.offset(facing.getOpposite());
+                    BlockPos top = at.offset(facing).up();
+
+                    if (sameColumnNear(foot, spot) || sameColumnNear(top, spot)) {
+                        return true;
+                    }
+                }
+
+                if (state.getBlock() instanceof LadderBlock
+                        && sameColumnNear(at.offset(state.get(Properties.HORIZONTAL_FACING)), spot)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean sameColumnNear(BlockPos a, BlockPos b) {
+        return a.getX() == b.getX() && a.getZ() == b.getZ() && Math.abs(a.getY() - b.getY()) <= 1;
     }
 
     private static boolean isCompliantChest(ServerWorld world, BlockPos spot, Direction opening) {

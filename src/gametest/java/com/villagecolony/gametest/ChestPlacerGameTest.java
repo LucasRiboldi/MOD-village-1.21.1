@@ -1,6 +1,12 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestPlacer;
+import com.villagecolony.fabric.integration.VanillaBedChests;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.enums.BedPart;
@@ -11,7 +17,9 @@ import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * O baú que nasce ao lado da cama — Regra 8, de 2026-08-15.
@@ -405,6 +413,65 @@ public class ChestPlacerGameTest implements FabricGameTest {
         context.assertTrue(context.getWorld().getBlockState(bed.east())
                         .get(Properties.HORIZONTAL_FACING) == Direction.WEST,
                 "o baú encostado devia abrir para longe da parede");
+        context.complete();
+    }
+
+    /**
+     * O baú nunca vai para a frente de uma escada — ADR-036 item 4. O único
+     * lugar livre ao lado da cama é o pé de uma escada que sobe para o sul.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "placer_rule_b")
+    public void theChestIsNeverInFrontOfAStair(TestContext context) {
+        layBed(context);
+
+        BlockBox room = room(context);
+        BlockPos bed = context.getAbsolutePos(BED);
+
+        for (BlockPos taken : new BlockPos[] {bed.north().east(), bed.north().west()}) {
+            context.getWorld().setBlockState(taken, Blocks.STONE.getDefaultState());
+        }
+        // A escada ao sul do lado leste: quem sobe por ela pisa em bed.east().
+        context.getWorld().setBlockState(bed.east().south(), Blocks.OAK_STAIRS.getDefaultState()
+                .with(Properties.HORIZONTAL_FACING, Direction.SOUTH));
+
+        ChestPlacer.Result result = ChestPlacer.placeForOriginalVillageBed(context.getWorld(), bed, room);
+
+        context.assertFalse(context.getWorld().getBlockState(bed.east()).isOf(Blocks.CHEST),
+                "o baú foi posto no pé da escada: " + result.chest().map(BlockPos::toShortString));
+        context.complete();
+    }
+
+    /**
+     * Casa construída pela colônia também ganha o baú da cama, pela mesma
+     * rotina das casas da vila — ADR-036 item 4.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "placer_rule_b")
+    public void aBedInABuiltHouseGetsItsChest(TestContext context) {
+        layBed(context);
+
+        BlockBox room = room(context);
+        BlockPos bed = context.getAbsolutePos(BED);
+        Building house = new Building(UUID.randomUUID(), UUID.randomUUID(),
+                ResourceId.vanilla("village/plains/houses/test_built_house"),
+                new ColonyPos(room.getMinX(), room.getMinY(), room.getMinZ()),
+                new ColonyPos(room.getMaxX(), room.getMaxY(), room.getMaxZ()), true);
+
+        VillageColonyMod.BUILDINGS.register(house);
+
+        try {
+            VanillaBedChests.ensure(context.getWorld(), List.of(MinecraftTypeAdapter.toColonyPos(bed)));
+
+            boolean placed = false;
+            for (Direction side : new Direction[] {Direction.EAST, Direction.WEST}) {
+                placed |= context.getWorld().getBlockState(bed.offset(side)).isOf(Blocks.CHEST)
+                        || context.getWorld().getBlockState(bed.north().offset(side)).isOf(Blocks.CHEST);
+            }
+
+            context.assertTrue(placed, "a cama da casa construída ficou sem baú");
+        } finally {
+            VillageColonyMod.BUILDINGS.removeOfColony(house.colonyId());
+        }
+
         context.complete();
     }
 }
