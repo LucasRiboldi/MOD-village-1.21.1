@@ -31,17 +31,30 @@ import net.minecraft.server.MinecraftServer;
 /**
  * Registra os eventos de ciclo de vida do servidor.
  *
- * <p>Estes são os dois pontos onde o estado da colônia entra e sai da
- * memória. Ver ADR-002 e Save-Data-System.md.
+ * <p>O estado da colônia entra na memória ao iniciar e sai para o saved data
+ * a cada salvamento do mundo e no fechamento. Ver ADR-002 e ADR-035 §1.
  */
 public final class ServerLifecycleHandler {
+
+    /**
+     * Ligado do {@code SERVER_STOPPING} até o próximo {@code SERVER_STARTED}.
+     * O Minecraft salva o mundo depois do fechamento, com os registros já
+     * vazios; copiar nessa hora gravaria o vazio por cima do save (ADR-035 §1).
+     */
+    private static volatile boolean stopping;
 
     private ServerLifecycleHandler() {
     }
 
     public static void register() {
         ServerLifecycleEvents.SERVER_STARTED.register(ServerLifecycleHandler::onServerStarted);
+        ServerLifecycleEvents.BEFORE_SAVE.register(ServerLifecycleHandler::onBeforeSave);
         ServerLifecycleEvents.SERVER_STOPPING.register(ServerLifecycleHandler::onServerStopping);
+    }
+
+    /** Só para o GameTest da proteção do fechamento. */
+    static void markStopping(boolean value) {
+        stopping = value;
     }
 
     /**
@@ -52,6 +65,7 @@ public final class ServerLifecycleHandler {
      * descartou os que não pertencem a nenhuma colônia carregada.
      */
     private static void onServerStarted(MinecraftServer server) {
+        stopping = false;
         VillageColonyMod.COLONIES.clear();
         VillageColonyMod.WORKERS.clear();
         VillageColonyMod.STORAGES.clear();
@@ -192,6 +206,22 @@ public final class ServerLifecycleHandler {
     }
 
     /**
+     * Copia o registro para o saved data a cada salvamento do mundo —
+     * autosave, {@code /save-all} — ADR-035 §1.
+     *
+     * <p>Antes, a cópia só acontecia no fechamento: um crash devolvia as
+     * colônias ao último fechamento normal enquanto os blocos ficavam no
+     * último autosave.
+     */
+    private static void onBeforeSave(MinecraftServer server, boolean flush, boolean force) {
+        if (stopping) {
+            return;
+        }
+
+        copyToSavedData(server);
+    }
+
+    /**
      * Copia o registro para o saved data antes de o mundo fechar.
      *
      * <p>O registro é esvaziado em seguida: o processo pode abrir outro
@@ -199,6 +229,50 @@ public final class ServerLifecycleHandler {
      * para ele.
      */
     private static void onServerStopping(MinecraftServer server) {
+        stopping = true;
+        CopyCounts copied = copyToSavedData(server);
+
+        VillageColonyMod.LOGGER.info(
+                "Saved {} colonies with {} workers, {} buildings, {} mines,"
+                        + " {} road indexes, {} paused sweeps and {} open projects",
+                VillageColonyMod.COLONIES.count(),
+                VillageColonyMod.WORKERS.count(),
+                VillageColonyMod.BUILDINGS.count(),
+                VillageColonyMod.MINES.count(),
+                copied.roads(),
+                copied.sweeps(),
+                copied.projects());
+
+        // A soma da barreira de teste, antes de tudo ser esquecido.
+        // Silêncio aqui é a notícia boa: nenhuma casa precisou dela.
+        TestBarrier.report();
+        ColonyStateLog.report();
+
+        // O que a varredura de lote fez nesta sessão, por colônia. É a
+        // conta que separa "ela reinicia" de "ninguém a chamou".
+        SweepLog.report();
+
+        VillageColonyMod.COLONIES.clear();
+        VillageColonyMod.WORKERS.clear();
+        VillageColonyMod.STORAGES.clear();
+        VillageColonyMod.TASKS.clear();
+        VillageColonyMod.CONSTRUCTIONS.clear();
+        VillageColonyMod.BUILDINGS.clear();
+        VillageColonyMod.MINES.clear();
+        VillageColonyMod.ACTIVITY_TRACES.clear();
+        // Toda memoria de servidor se inscreve sozinha — item 3 da avaliacao,
+        // 2026-09-24. Eram duas listas escritas a mao, e ja tinham divergido;
+        // ver ServerMemory.
+        int forgotten = ServerMemory.resetAll();
+        VillageColonyMod.LOGGER.debug("Server memory reset: {} classes", forgotten);
+    }
+
+    /** Quantos itens a última cópia levou, para o log do fechamento. */
+    private record CopyCounts(int roads, int sweeps, int projects) {
+    }
+
+    /** O registro em memória vira o conteúdo dos dois saved data. */
+    private static CopyCounts copyToSavedData(MinecraftServer server) {
         List<ColonyRoads> roads = SweepPersistence.saved();
         List<ColonySweepCursor> sweeps = SweepPersistence.pausedSweeps();
 
@@ -230,38 +304,6 @@ public final class ServerLifecycleHandler {
                         storage.chestPosition().x(), storage.chestPosition().y(), storage.chestPosition().z()))
                 .toList());
 
-        VillageColonyMod.LOGGER.info(
-                "Saved {} colonies with {} workers, {} buildings, {} mines,"
-                        + " {} road indexes, {} paused sweeps and {} open projects",
-                VillageColonyMod.COLONIES.count(),
-                VillageColonyMod.WORKERS.count(),
-                VillageColonyMod.BUILDINGS.count(),
-                VillageColonyMod.MINES.count(),
-                roads.size(),
-                sweeps.size(),
-                openProjects().size());
-
-        // A soma da barreira de teste, antes de tudo ser esquecido.
-        // Silêncio aqui é a notícia boa: nenhuma casa precisou dela.
-        TestBarrier.report();
-        ColonyStateLog.report();
-
-        // O que a varredura de lote fez nesta sessão, por colônia. É a
-        // conta que separa "ela reinicia" de "ninguém a chamou".
-        SweepLog.report();
-
-        VillageColonyMod.COLONIES.clear();
-        VillageColonyMod.WORKERS.clear();
-        VillageColonyMod.STORAGES.clear();
-        VillageColonyMod.TASKS.clear();
-        VillageColonyMod.CONSTRUCTIONS.clear();
-        VillageColonyMod.BUILDINGS.clear();
-        VillageColonyMod.MINES.clear();
-        VillageColonyMod.ACTIVITY_TRACES.clear();
-        // Toda memoria de servidor se inscreve sozinha — item 3 da avaliacao,
-        // 2026-09-24. Eram duas listas escritas a mao, e ja tinham divergido;
-        // ver ServerMemory.
-        int forgotten = ServerMemory.resetAll();
-        VillageColonyMod.LOGGER.debug("Server memory reset: {} classes", forgotten);
+        return new CopyCounts(roads.size(), sweeps.size(), openProjects().size());
     }
 }
