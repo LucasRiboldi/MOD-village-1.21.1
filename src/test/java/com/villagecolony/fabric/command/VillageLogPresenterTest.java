@@ -134,7 +134,7 @@ class VillageLogPresenterTest {
                 MaterialRequest.State.RESOLVING, MaterialRequest.Source.STOCKED, 1_000);
 
         assertEquals("[OBRA] small_house_1 pede white_terracotta — em resolução: sem rota no bioma;"
-                        + " aparece no baú na terceira tentativa — há 3 min",
+                        + " aparece no baú na quarta tentativa — há 3 min",
                 VillageLogPresenter.materialRequest("village/plains/houses/small_house_1", request, 4_600));
     }
 }

@@ -24,7 +24,7 @@ import java.util.UUID;
  *
  * <p><b>Na terceira, o material aparece</b> — pedido do autor, 2026-10-03:
  * {@link LocateFallback}. O castigo encolheu de 5, 10 e 20 minutos para 1 e
- * 2: com a entrega na terceira busca, o castigo antigo faria a profissão
+ * 2: com a entrega na quarta busca (ADR-036 item 6), o castigo antigo faria a profissão
  * esperar quinze minutos por um material que já se sabia ausente.
  */
 public final class EmptySweeps {

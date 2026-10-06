@@ -124,6 +124,16 @@ public final class BuilderPlacement {
             return true;
         }
 
+        if (!state.canPlaceAt(world, target) && project.failsForTheLastTime(block)) {
+            // Quinta falha ao pôr: a peça é pulada e o erro fica no log — ADR-036 item 6.
+            VillageColonyMod.LOGGER.warn(
+                    "VC_SUPPLY_ERROR version=1 piece={} profession=BUILDER attempts={} reason=placement failed at {}",
+                    block.block(), ConstructionProject.PLACEMENT_FAILURES_BEFORE_SKIP, target.toShortString());
+            project.markPlaced(block);
+
+            return true;
+        }
+
         if (!state.canPlaceAt(world, target)) {
             // Tocha sem parede, porta sem chão. Não é bloco colocado e
             // também não é uma obra que deva acordar outro construtor a

@@ -472,4 +472,19 @@ class ConstructionProjectTest {
         assertEquals(first, project.nextBlock().orElseThrow());
         assertFalse(project.retry(piece), "a mesma peça saiu da espera duas vezes");
     }
+
+    /** A quinta falha ao pôr é a última: a peça é pulada — ADR-036 item 6. */
+    @Test
+    void theFifthFailureToPlaceAPieceIsTheLast() {
+        BlueprintBlock first = block(0, 0, 0, COBBLE);
+        ColonyPos position = project.worldPositionOf(first);
+
+        for (int failure = 1; failure <= 4; failure++) {
+            assertFalse(project.failsForTheLastTime(first), "a falha " + failure + " já pulou a peça");
+            project.defer(first, ConstructionOutcome.skipped(position, SkipReason.UNSUPPORTED), "support-" + failure);
+        }
+
+        assertTrue(project.failsForTheLastTime(first), "a quinta falha devia pular a peça");
+        assertFalse(project.failsForTheLastTime(block(1, 0, 0, COBBLE)), "a contagem é por peça");
+    }
 }

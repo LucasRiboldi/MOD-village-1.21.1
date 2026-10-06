@@ -186,7 +186,7 @@ public final class WaitingWork {
     /**
      * A espera só pode abandonar uma peça que a vila não tem como entregar.
      *
-     * <p>A terceira tentativa já abastece a peça sem rota profissional; por
+     * <p>A quarta tentativa (ADR-036 item 6) já abastece a peça sem rota profissional; por
      * isso o relógio não deve encerrar uma obra que espera, por exemplo, o
      * tronco que o lenhador daquela vila ainda pode recolher. A pergunta é
      * pelo próximo bloco, que é a falta que realmente levou a obra ao estado

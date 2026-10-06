@@ -75,6 +75,7 @@ regra que foi emendada. O corpo de cada regra vive em
 | 49 | A ordem das obras: faltando cama, casa primeiro; não faltando, a casa de cada ofício que ainda não tem; só com todas de pé entram as demais (e a casa volta ao rodízio) | 10-02 | ✅ feita | `ConstructionPriority.WORKSHOP`, `ConstructionTurn`, `ConstructionOrder` (o mineiro ganhou o ferramenteiro; lenhador e construtor não têm casa de ofício no catálogo) |
 | 50 | Toda verificação mede o tempo dos aldeões — trabalhando, andando, bloqueado, ocioso, encalhado — por profissão, e usa a proporção como critério de melhoria e de correção | 10-02 | ✅ feita | `WorkTime` (linha `VC_TIME`), `scripts/time_ledger.py`, `CLAUDE.md` §0.4 |
 | 45 | Os baús da colônia são todos os da vila, e só eles: com a vila medida, todo baú livre dentro da caixa (na janela de altura das camas) conta, de dentro ou de fora de casa; fora da caixa está fora de alcance, mesmo o de trabalhador; baú de trabalhador de qualquer colônia nunca é livre | 10-01 | ✅ feita | `ColonyChests.nearestFirst`, `VillageChests` (`VillageChestReachGameTest`) |
+| 51 | Peça que falta aparece na **4ª** tentativa sem sucesso, no baú da profissão que tentou (coletor; artesão recebe o ingrediente sem rota; construtor se nenhuma profissão faz), com `VC_SUPPLY_ERROR` no log. A peça só é pulada se o construtor falhar **5 vezes ao pô-la** | 10-06 | ✅ feita (ADR-036 item 6) | `LocateFallback`, `BiomeConstructionSupply.ATTEMPTS_BEFORE_STOCKING`, `ConstructionProject.failsForTheLastTime` |
 
 ---
 

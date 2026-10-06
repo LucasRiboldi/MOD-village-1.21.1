@@ -24,6 +24,13 @@ elas** — mas a causa das duas é **NÃO CONFIRMADA**. Próximo passo: rodar
 `-PgametestOnly=Crafting,Builder` repetidas vezes para medir a taxa isolada e
 separar "interferência entre cenários" de "defeito do mecanismo".
 
+**Atualização (mesmo dia, tarde):** numa bateria completa do item 6 da ADR-036
+caíram também `CraftingGameTest.theCarpenterLeavesTheMasonryAlone` e
+`theMasonMakesWhatTheCarpenterSkipped` (lote `craft_family`, já citado na
+memória como instável). As duas baterias seguintes passaram 616/616. E o
+filtro `-PgametestOnly=CraftingGameTest,BuilderGameTest` derruba sempre dois
+testes de fabricação, com ou sem a mudança: esses dependem do resto da bateria.
+
 ---
 
 ## KF-002 — o aldeão de coleta some entre o `spawnEntity` e o tique 1

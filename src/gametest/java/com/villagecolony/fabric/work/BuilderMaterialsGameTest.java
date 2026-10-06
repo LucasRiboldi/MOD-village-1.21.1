@@ -103,7 +103,7 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
         Setup setup = setUp(context, far, Items.GLASS_PANE);
 
         try {
-            for (int attempt = 1; attempt <= 3; attempt++) {
+            for (int attempt = 1; attempt <= 4; attempt++) {
                 BuilderMaterials.hasOrStocksConstructionMaterial(
                         context.getWorld(), setup.project(), Items.GLASS_PANE);
             }
@@ -146,7 +146,7 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
 
     /**
      * O pedido mostra a sequência real de uma peça sem rota — ADR-035 §3: conta
-     * as tentativas e, na terceira, o vidro vai ao baú do carpinteiro e a
+     * as tentativas e, na quarta (ADR-036 item 6), o vidro vai ao baú do carpinteiro e a
      * vidraça passa a esperar o artesão.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
@@ -160,14 +160,15 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
 
             BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project());
             BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project());
-            MaterialRequest third = MaterialRequests.of(setup.project().id()).orElse(null);
+            BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project());
+            MaterialRequest fourth = MaterialRequests.of(setup.project().id()).orElse(null);
 
             context.assertTrue(first != null && first.state() == MaterialRequest.State.RESOLVING
                             && first.source() == MaterialRequest.Source.STOCKED,
                     "na primeira falta a vidraça devia estar contando tentativas: " + first);
-            context.assertTrue(third != null && third.state() == MaterialRequest.State.RESOLVING
-                            && third.source() == MaterialRequest.Source.CRAFTSMAN,
-                    "na terceira a vidraça devia esperar o artesão: " + third);
+            context.assertTrue(fourth != null && fourth.state() == MaterialRequest.State.RESOLVING
+                            && fourth.source() == MaterialRequest.Source.CRAFTSMAN,
+                    "na quarta a vidraça devia esperar o artesão: " + fourth);
         } finally {
             setup.cleanUp();
         }

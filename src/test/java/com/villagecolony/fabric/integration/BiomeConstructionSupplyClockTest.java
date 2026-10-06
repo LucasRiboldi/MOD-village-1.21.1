@@ -31,9 +31,10 @@ class BiomeConstructionSupplyClockTest {
     }
 
     @Test
-    void theThirdFailedProfessionAttemptSurvivesSaving() {
+    void theFourthFailedProfessionAttemptSurvivesSaving() {
         UUID colony = UUID.randomUUID();
 
+        assertFalse(BiomeConstructionSupply.failedProfessionAttempt(colony, Items.BREWING_STAND));
         assertFalse(BiomeConstructionSupply.failedProfessionAttempt(colony, Items.BREWING_STAND));
         assertFalse(BiomeConstructionSupply.failedProfessionAttempt(colony, Items.BREWING_STAND));
 
@@ -43,7 +44,7 @@ class BiomeConstructionSupplyClockTest {
         BiomeConstructionSupply.restoreFailedProfessionAttempts(saved);
 
         assertTrue(BiomeConstructionSupply.failedProfessionAttempt(colony, Items.BREWING_STAND),
-                "a terceira tentativa recomeçou ao carregar o mundo");
+                "a quarta tentativa recomeçou ao carregar o mundo");
 
         BiomeConstructionSupply.routeDelivered(colony, Items.BREWING_STAND);
 

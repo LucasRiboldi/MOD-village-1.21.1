@@ -32,7 +32,7 @@ import java.util.function.BooleanSupplier;
  * <p>A estrutura Vanilla pode pedir qualquer item, inclusive uma peça cuja
  * receita termina no Nether ou em flora que não existe no mundo. A colônia
  * continua produzindo tudo que alguma profissão consegue obter ou fabricar;
- * quando não há essa rota, a terceira tentativa coloca a peça no baú do
+ * quando não há essa rota, a quarta tentativa (ADR-036 item 6) coloca a peça no baú do
  * construtor — de manufatura ou da natureza, desde 2026-10-03. Ingrediente de drop (corante, linha, pó de osso,
  * drop de bicho) conta como rota: ele aparece no baú sem espera
  * ({@link DropIngredients}, 2026-09-30). Se ele estiver ausente ou cheio, usa outro baú livre
@@ -98,12 +98,12 @@ public final class BiomeConstructionSupply {
     }
 
     /**
-     * Quantas tentativas de recolher antes de o ingrediente sem rota aparecer
-     * no baú da profissão — decisão do autor, 2026-09-30. Foi a uma por
-     * algumas horas do mesmo dia; voltou a três, e o que aparece passou a
-     * ser o ingrediente (a linha do tear), e não a peça pronta.
+     * Quantas tentativas sem sucesso antes de o que falta aparecer no baú da
+     * profissão — 4 desde a ADR-036 item 6 (eram 3, decisão de 2026-09-30).
+     * Para peça que um artesão faz, o que aparece é o ingrediente sem rota (a
+     * linha do tear), e não a peça pronta.
      */
-    private static final int ATTEMPTS_BEFORE_STOCKING = 3;
+    public static final int ATTEMPTS_BEFORE_STOCKING = 4;
 
     /** Esperas da obra antes de pedir ao fazendeiro uma muda específica. */
     private static final int TREE_WAITS_BEFORE_PLANTING = 20;
@@ -224,7 +224,7 @@ public final class BiomeConstructionSupply {
             ProfessionType craftsman) {
 
         return stockFor(world, colonyId, near, item, count, craftsman,
-                "after three failed attempts to gather it — no profession can obtain it in this biome");
+                "after four failed attempts to gather it — no profession can obtain it in this biome");
     }
 
     /**
@@ -245,7 +245,7 @@ public final class BiomeConstructionSupply {
             ServerWorld world, UUID colonyId, ColonyPos near, Item item, int count, ProfessionType user) {
 
         return stockFor(world, colonyId, near, item, count, user,
-                "after three searches of the village's reach found none");
+                "after four searches of the village's reach found none");
     }
 
     private static boolean stockFor(
@@ -271,6 +271,7 @@ public final class BiomeConstructionSupply {
         }
 
         VillageColonyMod.LOGGER.info("The colony stocked {} x{} for the {} {}", item, count - have, craftsman, why);
+        logSupplyError(item, craftsman, why);
 
         return true;
     }
@@ -303,7 +304,7 @@ public final class BiomeConstructionSupply {
 
     private static boolean stock(ServerWorld world, List<ColonyPos> chests, Item item) {
         // Natureza também, desde 2026-10-03: quem chega aqui não tem rota no
-        // bioma e falhou três vezes — ver stockAfterEmptySearches.
+        // bioma e falhou quatro vezes (ADR-036 item 6).
         if (ColonyChests.countIn(world, chests, item) > 0) {
             return true;
         }
@@ -322,10 +323,20 @@ public final class BiomeConstructionSupply {
         }
 
         VillageColonyMod.LOGGER.info(
-                "The colony stocked {} for construction after three failed attempts"
+                "The colony stocked {} for construction after four failed attempts"
                         + " — it has no recipe and no profession can obtain it in this biome",
                 item);
+        logSupplyError(item, ProfessionType.BUILDER, "no profession can obtain it in this biome");
         return true;
+    }
+
+    /**
+     * A linha de erro de suprimento — ADR-036 item 6: toda peça que aparece
+     * sem a profissão a ter obtido fica registrada, para o playtest contar.
+     */
+    private static void logSupplyError(Item item, ProfessionType profession, String why) {
+        VillageColonyMod.LOGGER.warn("VC_SUPPLY_ERROR version=1 piece={} profession={} attempts={} reason={}",
+                Registries.ITEM.getId(item), profession, ATTEMPTS_BEFORE_STOCKING, why);
     }
 
     private static String key(UUID colonyId, Item item) {

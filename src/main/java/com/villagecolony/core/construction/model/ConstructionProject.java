@@ -61,6 +61,12 @@ public final class ConstructionProject {
      */
     private final Map<ColonyPos, DeferredPiece> deferred = new LinkedHashMap<>();
 
+    /** Falhas ao pôr antes de a peça ser pulada — ADR-036 item 6. */
+    public static final int PLACEMENT_FAILURES_BEFORE_SKIP = 5;
+
+    /** Quantas vezes cada posição foi adiada nesta sessão (não vai para o save). */
+    private final Map<ColonyPos, Integer> deferrals = new LinkedHashMap<>();
+
     private ConstructionState state;
 
     /** Uma peça parcial e a leitura do mundo que justificou adiá-la. */
@@ -324,6 +330,12 @@ public final class ConstructionProject {
 
         deferred.put(position, new DeferredPiece(
                 position, block.block(), outcome.skipReason(), supportFingerprint));
+        deferrals.merge(position, 1, Integer::sum);
+    }
+
+    /** Se esta falha ao pôr é a quinta: a peça é pulada — ADR-036 item 6. */
+    public boolean failsForTheLastTime(BlueprintBlock block) {
+        return deferrals.getOrDefault(worldPositionOf(block), 0) + 1 >= PLACEMENT_FAILURES_BEFORE_SKIP;
     }
 
     /**

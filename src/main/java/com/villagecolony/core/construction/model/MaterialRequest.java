@@ -43,7 +43,7 @@ public record MaterialRequest(ResourceId material, State state, Source source, l
         /** Um artesão, com os ingredientes sem rota postos no baú dele. */
         CRAFTSMAN,
 
-        /** Aparece no baú do construtor depois de três tentativas (ADR-022, ADR-034). */
+        /** Aparece no baú da profissão depois de quatro tentativas (ADR-036 item 6). */
         STOCKED,
 
         /** A barreira de teste pula a peça (Regra 28). */
@@ -82,11 +82,11 @@ public record MaterialRequest(ResourceId material, State state, Source source, l
     public String reason() {
         return switch (state) {
             case DELIVERED -> source == Source.STOCKED
-                    ? "apareceu no baú depois de três tentativas sem rota"
+                    ? "apareceu no baú depois de quatro tentativas sem rota"
                     : "está no baú da colônia";
             case RESOLVING -> switch (source) {
                 case CRAFTSMAN -> "os ingredientes estão no baú do artesão; falta ele fabricar";
-                case STOCKED -> "sem rota no bioma; aparece no baú na terceira tentativa";
+                case STOCKED -> "sem rota no bioma; aparece no baú na quarta tentativa";
                 default -> "uma profissão consegue no bioma; falta entregar";
             };
             case NO_SOLUTION -> switch (source) {

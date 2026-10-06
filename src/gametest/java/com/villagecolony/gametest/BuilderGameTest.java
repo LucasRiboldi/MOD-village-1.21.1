@@ -636,7 +636,7 @@ public class BuilderGameTest implements FabricGameTest {
      * fundidor; depois de três faltas, a terracota de manufatura atende a obra.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
-    public void aTheoreticalTerracottaRouteFallsBackAfterThreeMisses(TestContext context) {
+    public void aTheoreticalTerracottaRouteFallsBackAfterFourMisses(TestContext context) {
         Fixture fixture = setUp(context, 0, Blueprint.of(
                 ResourceId.vanilla("village/plains/houses/test_white_terracotta"),
                 List.of(new BlueprintBlock(
@@ -644,7 +644,7 @@ public class BuilderGameTest implements FabricGameTest {
                         MinecraftTypeAdapter.toResourceId(Blocks.WHITE_TERRACOTTA)))), 1);
 
         try {
-            for (int attempt = 1; attempt <= 2; attempt++) {
+            for (int attempt = 1; attempt <= 3; attempt++) {
                 context.assertFalse(
                         BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
                         "a terracota apareceu antes da tentativa " + attempt);
@@ -652,7 +652,7 @@ public class BuilderGameTest implements FabricGameTest {
 
             context.assertTrue(
                     BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
-                    "a terceira falta em uma rota teorica nao abasteceu a terracota");
+                    "a quarta falta em uma rota teorica nao abasteceu a terracota");
             context.assertTrue(
                     ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.WHITE_TERRACOTTA) == 1,
                     "a terracota de contingencia nao entrou no bau da obra");
@@ -1893,10 +1893,10 @@ public class BuilderGameTest implements FabricGameTest {
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
     }
 
-    /** A terceira falta sem profissão libera a peça, sem depender de tempo. */
+    /** A quarta falta sem profissão libera a peça, sem depender de tempo (ADR-036 item 6). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_missing_piece",
             tickLimit = 20)
-    public void theThirdMissingPieceAttemptIsSupplied(TestContext context) {
+    public void theFourthMissingPieceAttemptIsSupplied(TestContext context) {
         UUID colonyId = UUID.randomUUID();
 
         try {
@@ -1908,9 +1908,13 @@ public class BuilderGameTest implements FabricGameTest {
                     BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
                     "a segunda falta já liberou a peça");
 
+            context.assertFalse(
+                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    "a terceira falta já liberou a peça");
+
             context.assertTrue(
                     BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
-                    "a terceira falta não liberou a peça");
+                    "a quarta falta não liberou a peça");
 
             BiomeConstructionSupply.routeDelivered(colonyId, Items.BREWING_STAND);
 
