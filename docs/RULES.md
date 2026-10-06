@@ -44,7 +44,7 @@ regra que foi emendada. O corpo de cada regra vive em
 | 22 | O lote é livre no volume | 08-19 | ✅ feita | `BuildSiteScanner.isNothing` |
 | 23 | O que já foi analisado se analisa de novo | 08-19 | ✅ feita | `TreeMarks` (prazos), `RingSweep` |
 | 24 | A vila de planície levanta a casa do jogo | 08-19 | ✅ feita | `VillageStructures` |
-| 25 | A maior planta que couber no lote | 08-20 | ⚠️ inerte | bloqueada pela 28 |
+| 25 | ~~A maior planta que couber no lote~~ | 08-20 | ❌ **desfeita** em 10-06 (ADR-036 item 5) | a ordem das plantas não favorece tamanho (`PlanOrdering.mixed`); a primeira casa continua a menor |
 | 26 | Cadeia de produção, e paleta por bioma | 08-20 | ✅ feita | `ResourceType.production`, `VillagePalette` |
 | 27 | Só o catálogo do jogo, e o construtor aguarda | 08-20 | 🔒 imutável | `VillageStructures`, `MaterialChoice` |
 | 27-e1 | **Emenda 1:** abre para pedra só | 08-26 | ✅ feita | `Substitution.ALTERNATIVE` |
@@ -112,8 +112,8 @@ precisam **concordar**.
 ## Regras revogadas
 
 A regra de arquitetura "a colônia não cria recurso" (`Construction-System.md`,
-sem número nesta tabela) foi **retirada em 2026-09-30** — ADR-028. A 25 está
-**inerte** no registro; a metade da 28 que a travava (só a casa pequena) caiu em 09-09.
+sem número nesta tabela) foi **retirada em 2026-09-30** — ADR-028. A 25 foi
+**desfeita em 2026-10-06** — ADR-036 item 5.
 
 ---
 

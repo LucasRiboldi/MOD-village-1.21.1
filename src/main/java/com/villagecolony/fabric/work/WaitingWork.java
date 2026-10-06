@@ -356,7 +356,7 @@ public final class WaitingWork {
 
         // <b>E a colônia aprende qual planta não conseguiu levantar</b> —
         // 2026-09-12. Sem isto a escolha reoferece a mesma casa no ciclo
-        // seguinte: a Regra 25 é determinística, e a sessão daquele dia
+        // seguinte: a ordem é estável dentro da semente, e a sessão daquele dia
         // mostrou o laço — plains_butcher_shop_2 escolhida duas vezes,
         // vinte ciclos de espera por smooth_stone_slab cada, e o autor
         // dizendo "não vi nenhuma construção nascendo". A laje está a três

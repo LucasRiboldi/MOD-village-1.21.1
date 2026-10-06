@@ -22,6 +22,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
+import java.util.Random;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,39 +41,33 @@ final class PlanOrdering {
     }
 
     /**
-     * A menor planta na frente, enquanto a colônia não tem casa.
+     * As plantas numa ordem que não favorece tamanho — ADR-036 item 5, que
+     * desfez a Regra 25 (a maior que couber).
      *
-     * <p><b>Decisão do autor, 2026-09-15:</b> <i>"dar preferência para a
-     * primeira ser uma casa pequena"</i>.
-     *
-     * <p><b>O que o log de 09-15 mediu:</b> às 20:54:35 a colônia abriu
-     * {@code plains_butcher_shop_2}, de 382 blocos, e sete minutos e meio
-     * depois a obra continuava em <i>"382 blocks left"</i> — nenhum bloco
-     * assentado — segurando a vaga única da colônia:
-     * <i>"no building work: one is already open"</i>. Era a terceira sessão
-     * seguida em que a maior planta do catálogo trava a vila <b>antes de a
-     * primeira casa existir</b>.
-     *
-     * <p><b>A Regra 25 continua valendo, e ganha uma exceção de
-     * arranque.</b> Ela manda levantar a maior planta que couber, e o
-     * motivo dela é real: em 2026-08-20 exigir a casa grande em toda parte
-     * fez a vila parar de crescer, com três cabanas de pé e o raio de 64
-     * varrido sem resposta. Inverter a regra de vez faria a vila virar um
-     * bairro de cabanas e as casas do jogo nunca subirem.
-     *
-     * <p>O que muda é só a <b>primeira</b>: sem nenhuma casa de pé, a
-     * colônia começa pela planta que ela levanta sozinha, sem o jogador
-     * guardar nada em baú — a mesma cabana que a {@link FarmPlans#plansFor} já
-     * descreve como o fim da lista. Levantada essa, a Regra 25 volta
-     * inteira, e a vila cresce como o autor decidiu em 08-20.
-     *
-     * <p><b>Reordena, não encurta.</b> As outras plantas continuam na
-     * lista, atrás da menor: se a pequena não couber naquele lote, a
-     * varredura desce para a seguinte em vez de a colônia ficar sem
-     * resposta. Ver a Regra 25 — a escolha é por lote, não por vila.
-     *
-     * <p><b>Visível ao pacote para o teste</b>, pelo mesmo motivo que
-     * {@link #without}: é decisão, e decisão se afirma sem mundo.
+     * <p>A varredura tenta as pegadas na ordem da lista, então a ordem é a
+     * preferência. Embaralhar a cada chamada mudaria a pegada no meio de uma
+     * varredura pausada; por isso a semente é estável (a colônia e quantas
+     * construções ela tem) e muda só quando uma obra termina. A ordem de
+     * entrada não importa: a lista é ordenada por id antes de embaralhar.
+     */
+    static List<Blueprint> mixed(List<Blueprint> plans, long seed) {
+        List<Blueprint> ordered = new ArrayList<>(plans);
+
+        ordered.sort(Comparator.comparing(plan -> plan.id().toString()));
+        Collections.shuffle(ordered, new Random(seed));
+
+        return List.copyOf(ordered);
+    }
+
+    /** A semente de {@link #mixed} para uma colônia com tantas construções. */
+    static long seedFor(UUID colonyId, int buildings) {
+        return colonyId.getMostSignificantBits() ^ colonyId.getLeastSignificantBits() ^ buildings;
+    }
+
+    /**
+     * A menor planta na frente, enquanto a colônia não tem casa — decisão do
+     * autor, 2026-09-15: a primeira casa é a que a colônia levanta sozinha.
+     * O resto fica na ordem em que chegou. Reordena, não encurta.
      */
     static List<Blueprint> smallestFirst(List<Blueprint> plans, boolean hasNoHouseYet) {
         if (!hasNoHouseYet || plans.size() < 2) {
@@ -79,14 +75,16 @@ final class PlanOrdering {
         }
 
         List<Blueprint> reordered = new ArrayList<>(plans);
+        Blueprint smallest = smallestOf(reordered);
 
-        // A ordem que chega é decrescente pela Regra 25, então a menor é a
-        // última. Invertê-la por inteiro poria a segunda maior em segundo
-        // lugar; o que o autor pediu é a menor NA FRENTE, e o resto como
-        // estava — a Regra 25 intacta atrás dela.
-        reordered.add(0, reordered.remove(reordered.size() - 1));
+        reordered.remove(smallest);
+        reordered.add(0, smallest);
 
         return List.copyOf(reordered);
+    }
+
+    private static Blueprint smallestOf(List<Blueprint> plans) {
+        return plans.stream().min(Comparator.comparingInt(HousePlans::volumeOf)).orElseThrow();
     }
 
     /**
@@ -101,11 +99,8 @@ final class PlanOrdering {
      * jogo continuavam verdes</b>.
      *
      * <p><b>Nunca devolve vazio tendo planta no catálogo.</b> Se todas
-     * estiverem marcadas, vale a menor — a última, porque a ordem é
-     * decrescente pela Regra 25. A alternativa é a vila parar de planejar
-     * por completo, e a Regra 25 existe justamente para isso não acontecer.
-     * Ela vai morrer esperando material de novo, e a linha de desistência
-     * continua dizendo o que falta, que é melhor que silêncio.
+     * estiverem marcadas, vale a menor por volume: a vila não para de
+     * planejar, e a linha de desistência continua dizendo o que falta.
      *
      * <p><b>Visível ao pacote para o teste.</b> {@code HousePlansTest}
      * afirma as duas coisas: que a marcada sai, e que a lista não fica
@@ -121,7 +116,7 @@ final class PlanOrdering {
         }
 
         if (offered.isEmpty() && !plans.isEmpty()) {
-            return List.of(plans.get(plans.size() - 1));
+            return List.of(smallestOf(plans));
         }
 
         return List.copyOf(offered);

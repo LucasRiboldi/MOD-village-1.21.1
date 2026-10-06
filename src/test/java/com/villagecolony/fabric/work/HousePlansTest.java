@@ -82,9 +82,22 @@ class HousePlansTest {
                 finished);
     }
 
-    /** A ordem da Regra 25: da maior para a menor. */
+    /** Uma planta de {@code length} blocos em linha: o volume é o comprimento. */
+    private static Blueprint planOfLength(ResourceId id, int length) {
+        List<BlueprintBlock> blocks = new java.util.ArrayList<>();
+        for (int x = 0; x < length; x++) {
+            blocks.add(new BlueprintBlock(new ColonyPos(x, 0, 0), ResourceId.vanilla("oak_planks")));
+        }
+        return Blueprint.of(id, blocks);
+    }
+
+    private static List<ResourceId> ids(List<Blueprint> plans) {
+        return plans.stream().map(Blueprint::id).toList();
+    }
+
+    /** Três plantas de volumes 3, 2 e 1 — a menor no meio, de propósito. */
     private static List<Blueprint> catalog() {
-        return List.of(plan(BIG), plan(MEDIUM), plan(SMALL));
+        return List.of(planOfLength(BIG, 3), planOfLength(SMALL, 1), planOfLength(MEDIUM, 2));
     }
 
     @Test
@@ -120,9 +133,9 @@ class HousePlansTest {
                 "a planta marcada continuou na lista, e a escolha vai reoferecê-la");
 
         assertEquals(
-                MEDIUM,
+                SMALL,
                 offered.get(0).id(),
-                "a lista não desceu para a planta seguinte");
+                "a lista não desceu para a planta seguinte da ordem recebida");
     }
 
     /**
@@ -144,7 +157,7 @@ class HousePlansTest {
         assertEquals(
                 SMALL,
                 offered.get(0).id(),
-                "a que sobrou não é a menor — a ordem é decrescente, então é a última");
+                "a que sobrou não é a menor por volume (ela está no meio da lista)");
     }
 
     /** Catálogo vazio continua vazio: não há planta a inventar. */
@@ -211,21 +224,32 @@ class HousePlansTest {
                 "a preferência da primeira casa encurtou o catálogo em vez de reordená-lo");
     }
 
-    /**
-     * Com uma casa de pé, a Regra 25 volta a mandar.
-     *
-     * <p>É a metade que protege a decisão de 2026-08-20: a exceção é do
-     * arranque, e não uma inversão. Uma vila que só levantasse cabana
-     * perderia as casas do jogo para sempre.
-     */
+    /** Com uma casa de pé, a ordem que chegou fica como está — ADR-036 item 5. */
     @Test
-    void afterTheFirstHouseTheBiggestPlanLeadsAgain() {
-        List<Blueprint> offered = PlanOrdering.smallestFirst(catalog(), false);
+    void afterTheFirstHouseTheOrderIsLeftAsItCame() {
+        assertEquals(ids(catalog()), ids(PlanOrdering.smallestFirst(catalog(), false)));
+    }
 
-        assertEquals(
-                BIG,
-                offered.get(0).id(),
-                "a Regra 25 não voltou depois de a colônia ter a primeira casa");
+    /** A Regra 25 caiu: a ordem não favorece tamanho, mas é estável por semente. */
+    @Test
+    void theMixedOrderIsStableForASeedAndIgnoresTheIncomingOrder() {
+        List<Blueprint> reversed = List.of(catalog().get(2), catalog().get(1), catalog().get(0));
+
+        assertEquals(ids(PlanOrdering.mixed(catalog(), 7L)), ids(PlanOrdering.mixed(catalog(), 7L)));
+        assertEquals(ids(PlanOrdering.mixed(catalog(), 7L)), ids(PlanOrdering.mixed(reversed, 7L)));
+        assertEquals(Set.copyOf(ids(catalog())), Set.copyOf(ids(PlanOrdering.mixed(catalog(), 7L))));
+    }
+
+    /** Sementes diferentes dão ordens diferentes: nenhum tamanho lidera sempre. */
+    @Test
+    void differentSeedsLetEverySizeLead() {
+        Set<ResourceId> leaders = new java.util.HashSet<>();
+
+        for (long seed = 0; seed < 64; seed++) {
+            leaders.add(PlanOrdering.mixed(catalog(), seed).get(0).id());
+        }
+
+        assertEquals(Set.of(BIG, MEDIUM, SMALL), leaders);
     }
 
     /** Catálogo de uma planta só não tem o que reordenar. */

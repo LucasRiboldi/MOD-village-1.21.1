@@ -26,8 +26,8 @@ final class HouseCatalog {
     /**
      * Quantas plantas a busca de lote experimenta por coluna.
      *
-     * <p>A Regra 25 manda oferecer da maior para a menor, e a Regra 27
-     * deu trinta e seis casas por bioma. Trinta e seis tamanhos por
+     * <p>A Regra 27 deu trinta e seis casas por bioma, e as quatro oferecidas
+     * saem da ordem misturada de {@link PlanOrdering#mixed}. Trinta e seis tamanhos por
      * coluna de estrada seria uma varredura trinta e seis vezes mais
      * cara, e a de hoje já leva dez minutos.
      *
@@ -39,7 +39,7 @@ final class HouseCatalog {
     private static final int PLANS_OFFERED = 4;
 
     /**
-     * O que esta vila pode levantar, da maior planta para a menor.
+     * O que esta vila pode levantar, na ordem de {@link PlanOrdering#mixed}.
      *
      * <p><b>Só o que está no catálogo</b> — a Regra 27, e ela é imutável.
      * Até 2026-08-20 a colônia levantava uma cabana escrita em código,
@@ -59,7 +59,7 @@ final class HouseCatalog {
      * escolha. Ver {@link PlanPlacement#siblingsOf}, que as devolve ao planejador
      * depois de o lote estar achado — custo zero na varredura.
      */
-    static List<Blueprint> catalogPlans(ServerWorld world, String style) {
+    static List<Blueprint> catalogPlans(ServerWorld world, String style, long seed) {
         List<Blueprint> plans = new ArrayList<>();
 
         Set<ColonyPos> sizes = new HashSet<>();
@@ -83,11 +83,10 @@ final class HouseCatalog {
             plans.add(house.get());
         }
 
-        plans.sort(Comparator.comparingInt(HousePlans::volumeOf).reversed());
-
         List<Blueprint> offered = new ArrayList<>();
 
-        for (Blueprint plan : plans) {
+        // Sem preferência de tamanho desde a ADR-036 (Regra 25 desfeita).
+        for (Blueprint plan : PlanOrdering.mixed(plans, seed)) {
             if (!sizes.add(plan.size())) {
                 continue;
             }

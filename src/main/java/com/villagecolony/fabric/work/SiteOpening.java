@@ -65,8 +65,8 @@ final class SiteOpening {
      * recebia uma casa por estilo, e uma lista de um elemento não tem o
      * que deduplicar. Ela nasce junto com o catálogo inteiro.
      *
-     * <p>A ordem se mantém — maior primeiro, que é a Regra 25 —, e é ela
-     * que decide o tamanho do lote. A variedade entra depois, entre as
+     * <p>A ordem se mantém — a de {@code PlanOrdering.mixed}, sem preferência de
+     * tamanho (ADR-036) —, e é ela que decide o tamanho do lote. A variedade entra depois, entre as
      * plantas que empatam nesse tamanho; ver {@link #open}.
      */
     static List<ColonyPos> sizesOf(List<Blueprint> plans) {
@@ -79,8 +79,8 @@ final class SiteOpening {
         // giro — não acharia planta nenhuma para um lote 13×11 quando
         // todas viram 11×13. A vila deixaria de construir em silêncio.
         //
-        // Ambas as orientações entram, e a de origem primeiro: a Regra 25
-        // manda tentar a maior antes, e a ordem da lista é que decide.
+        // Ambas as orientações entram, e a de origem primeiro: a ordem da
+        // lista é que decide.
         List<ColonyPos> sizes = new ArrayList<>();
 
         for (Blueprint plan : plans) {
@@ -143,10 +143,10 @@ final class SiteOpening {
         // do autor, 2026-09-09: <i>"criando uma aleatoriedade simples
         // para todas as construções possíveis do bioma"</i>.
         //
-        // O sorteio não disputa com o "maior primeiro", e é por isso que
+        // O sorteio não disputa com a ordem das plantas, e é por isso que
         // ele mora aqui e não na escolha do lote: quem decide o tamanho é
-        // a varredura, que testa cada coluna da planta maior para a
-        // menor e já devolve o lote com o tamanho que venceu. O que
+        // a varredura, que testa cada coluna na ordem da lista
+        // e já devolve o lote com o tamanho que venceu. O que
         // sobra para sortear são as plantas <b>daquele mesmo tamanho</b>
         // — e em planície são muitas, porque o catálogo do jogo repete a
         // pegada em casas de aparência bem diferente.

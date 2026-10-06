@@ -37,9 +37,9 @@ import java.util.UUID;
  *
  * <p>Três regras do autor moram aqui juntas, e é por isso que elas
  * cabem no mesmo arquivo: a Regra 20 escolhe a madeira pelo bioma, a
- * Regra 24 dá a casa do jogo à planície, e a Regra 25 manda oferecer da
- * maior planta para a menor. A Regra 17 fecha a conta girando a planta
- * para a rua.
+ * Regra 24 dá a casa do jogo à planície, e a ordem das plantas não favorece
+ * tamanho (ADR-036, que desfez a Regra 25). A Regra 17 fecha a conta girando
+ * a planta para a rua.
  */
 public final class HousePlans {
 
@@ -86,7 +86,7 @@ public final class HousePlans {
     }
 
     /**
-     * O que esta colônia sabe levantar, da maior planta para a menor.
+     * O que esta colônia sabe levantar, na ordem de {@link PlanOrdering#mixed}.
      *
      * <p><b>Por que é uma lista desde 2026-08-20.</b> A vila do autor
      * varreu o raio de 64 inteiro sem achar lugar para a casa de
@@ -104,14 +104,12 @@ public final class HousePlans {
      * planície, e a Regra 20 manda a cabana ser da madeira do bioma.
      */
     static List<Blueprint> plansFor(ServerWorld world, Colony colony) {
-        List<Blueprint> plans = HouseCatalog.catalogPlans(world, paletteOf(world, colony.center()).style());
+        List<Blueprint> plans = HouseCatalog.catalogPlans(
+                world, paletteOf(world, colony.center()).style(), seedFor(colony));
 
         // <b>Fora as que esta colônia já tentou e não conseguiu</b> —
-        // 2026-09-12. A ordem da Regra 25 fica intacta; o que muda é que a
-        // lista <b>desce um degrau</b> em vez de reoferecer a casa que
-        // morreu esperando material. É o que o autor pediu — preferir a
-        // planta menor que resolve o gargalo — sem inverter a regra dele,
-        // que faria a vila nunca mais tentar casa grande.
+        // 2026-09-12: a lista não reoferece a casa que morreu esperando
+        // material.
         //
         // A marca é por condição e não por prazo: a planta volta sozinha
         // quando a colônia passar a alcançar o que faltou. Ver
@@ -387,17 +385,17 @@ public final class HousePlans {
 
         if (chosen.isPresent()) {
             List<Blueprint> plans = byType.get(chosen.get());
-            plans.sort(Comparator.comparingInt(HousePlans::volumeOf).reversed());
+            List<Blueprint> mixed = PlanOrdering.mixed(plans, seedFor(colony));
 
             Set<ResourceId> skipped = new HashSet<>();
 
-            for (Blueprint plan : plans) {
+            for (Blueprint plan : mixed) {
                 if (PlanRefusals.skip(world, colony.id(), colony.center(), plan.id())) {
                     skipped.add(plan.id());
                 }
             }
 
-            return PlanOrdering.without(List.copyOf(plans), skipped);
+            return PlanOrdering.without(mixed, skipped);
         }
 
         return List.of();
@@ -459,6 +457,11 @@ public final class HousePlans {
         }
 
         return true;
+    }
+
+    /** A semente da ordem das plantas desta colônia — ADR-036 item 5. */
+    private static long seedFor(Colony colony) {
+        return PlanOrdering.seedFor(colony.id(), VillageColonyMod.BUILDINGS.ofColony(colony.id()).size());
     }
 
     static int volumeOf(Blueprint plan) {

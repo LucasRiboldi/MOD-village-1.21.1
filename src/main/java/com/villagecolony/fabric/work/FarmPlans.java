@@ -50,10 +50,9 @@ import java.util.UUID;
  *       mesma porta. Nenhuma regra nova de espaçamento foi escrita.
  * </ul>
  *
- * <p><b>A menor primeiro</b>, ao contrário das casas. A Regra 25 oferece
- * a casa da maior para a menor porque casa grande é mais moradia; a roça
- * grande no lugar da pequena é só um lote que não coube — e uma roça
- * pequena que nasce alimenta mais que uma grande que nunca cabe.
+ * <p><b>A menor primeiro</b>, ao contrário das casas (cuja ordem não
+ * favorece tamanho desde a ADR-036): uma roça pequena que nasce alimenta
+ * mais que uma grande que nunca cabe.
  */
 public final class FarmPlans {
 

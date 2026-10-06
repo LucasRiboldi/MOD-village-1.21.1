@@ -20,8 +20,8 @@ import java.util.UUID;
 /**
  * A planta que a colônia já tentou e não conseguiu levantar — 2026-09-12.
  *
- * <p><b>O laço que ela corta.</b> A Regra 25 oferece da maior planta para
- * a menor, e a escolha é determinística: a primeira que couber no lote. Na
+ * <p><b>O laço que ela corta.</b> A escolha é estável por semente (ADR-036):
+ * a primeira planta que couber no lote. Na
  * sessão de 2026-09-12 isso virou um laço infinito de obras mortas — a
  * colônia escolheu {@code plains_butcher_shop_2} duas vezes seguidas, ficou
  * vinte ciclos esperando {@code smooth_stone_slab}, desistiu nas duas, e
@@ -41,11 +41,8 @@ import java.util.UUID;
  * quando um relógio mandar. Um fundidor novo, um baú cheio, uma entrega do
  * jogador: qualquer um desfaz a marca.
  *
- * <p><b>Não substitui a Regra 25, desce nela.</b> A ordem continua da maior
- * para a menor; marcar a que falhou faz a lista descer um degrau em vez de
- * reoferecer a mesma casa. É o que o autor pediu — <i>preferir a planta
- * menor que resolve o gargalo</i> — sem trocar a regra dele por uma
- * inversão cega, que faria a vila nunca mais tentar casa grande.
+ * <p><b>Desce um degrau na ordem.</b> Marcar a que falhou faz a lista seguir
+ * para a próxima em vez de reoferecer a mesma casa.
  *
  * <p>Memória de sessão, como o {@code TreeMarks}: o save não leva. Colônia
  * que reabre tenta a casa grande outra vez, gasta um ciclo de paciência e

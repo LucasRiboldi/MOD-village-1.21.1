@@ -157,18 +157,16 @@ public final class BuildSiteScanner {
      * parar de crescer.
      *
      * <p><b>A escolha é por lote, e não por vila.</b> Cada coluna
-     * candidata é testada da maior planta para a menor, e a primeira que
-     * servir vence. Assim a casa grande continua subindo onde há espaço
-     * para ela, em vez de a vila inteira rebaixar o padrão porque um
-     * canto é apertado.
+     * candidata é testada na ordem das plantas recebidas, e a primeira que
+     * servir vence (desde a ADR-036 a ordem não favorece tamanho).
      *
      * <p>Uma varredura só, e o mesmo teto de colunas: as plantas
      * dividem a passagem em vez de cada uma pedir a sua. Coluna que não
      * é estrada é recusada antes de olhar planta nenhuma, que é a
      * esmagadora maioria.
      *
-     * @param plans da maior para a menor. A ordem é de quem chama, e é
-     *     ela que define o que "maior" quer dizer
+     * @param plans na ordem de preferência de quem chama
+     *     ({@code PlanOrdering.mixed})
      */
     public static Optional<Site> find(
             ServerWorld world, UUID colonyId, ColonyPos center, int radius,
