@@ -12,6 +12,8 @@ Não leia documentos históricos inteiros. Use `rg` para localizar trechos em `D
 
 ## Antes de alterar
 
+- **Uma linha por vez** (ADR-035 §2): branch nova a partir da `main` atualizada, de volta por PR. Se outra branch viva toca o mesmo sistema, pare e pergunte ao autor.
+
 - Identifique o problema, o sistema responsável, os arquivos envolvidos e se há decisão arquitetural.
 - Se a mudança exigir decisão não coberta por ADR, pare e peça deliberação; não invente arquitetura.
 - Antes de editar código, rode `./gradlew build` (Windows: `./gradlew.bat build`). Se a linha de base falhar, registre e pare.

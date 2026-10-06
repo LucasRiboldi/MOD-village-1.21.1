@@ -42,12 +42,22 @@ documento errado. Vá para `STATE.md` primeiro.
 
 ### 0.2 Estado em uma linha
 
-**O núcleo do MVP está implementado, com oito funções operacionais, sete
-titulares na `BigHouseMOD` e sete profissões produtoras. Em 2026-09-30, depois
-da revisão das profissões, 1.196 testes unitários e 528 GameTests passaram
-localmente; os playtests do save e a medição dos gargalos de ciclo ainda
-estão pendentes.** O estado vivo e a auditoria estão em
-`STATE.md` e `docs/technical/Auditoria-Entrega-2026-09-28.md`.
+**O núcleo do MVP está implementado: oito profissões, sete titulares na
+`BigHouseMOD`. A auditoria de 2026-10-06 (`docs/audit/`) e a ADR-035 definem
+a direção técnica.** Contagem de testes, JAR e o que espera playtest: só no
+`STATE.md` — número escrito em outro lugar envelhece e mente.
+
+### 0.2.1 Uma linha de desenvolvimento por vez (ADR-035 §2)
+
+- Todo trabalho sai de uma branch criada a partir da `main` atualizada e
+  volta por PR para a `main`. Não se abre branch a partir de outra branch de
+  trabalho, e dois agentes (Claude, Codex) não trabalham em paralelo em
+  branches que tocam o mesmo sistema.
+- Antes de começar: `git fetch` e `git log main..origin/main`. Se há outra
+  branch viva tocando o mesmo sistema, pare e pergunte ao autor qual segue.
+- Por que: em 03-10 e 04-10 duas linhas resolveram os mesmos três pedidos de
+  formas incompatíveis (mina, fluidos, painel) e um GameTest ficou fora do
+  registro; a integração custou um dia (`docs/audit/`, P0-01).
 
 ### 0.3 Não comece criando classes
 
