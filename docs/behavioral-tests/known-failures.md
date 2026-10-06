@@ -5,6 +5,27 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ---
 
+## KF-003 — duas intermitentes de fabricação vistas em 2026-10-06
+
+Branch `integra/linhas-2026-10-06`. Em **10 baterias completas** no dia (612 ou
+611 testes cada), 2 falharam, cada uma num teste diferente, e as repetições
+passaram:
+
+| Teste | Mensagem | Vezes |
+|---|---|---|
+| `BuilderGameTest.theBuilderMakesTheDoorTheWorkIsWaitingFor` | o que sobrou da fabricação tinha de ficar no baú, e ficaram 1 | 1 / 10 |
+| `CraftingGameTest.theCarpenterStocksTheWholeRemainingStairDemand` | a obra pede 12 escadas, mas a carpintaria parou com 8 | 1 / 10 |
+
+A da porta já estava no `TODO.md` desde 02-10 ("1 porta no baú em vez de 2"),
+com suspeita de interferência entre cenários no mundo único. A das escadas é
+nova no registro. As duas falhas aconteceram em rodadas cuja mudança não toca
+fabricação (salvamento e medição de JaCoCo), então **não foram causadas por
+elas** — mas a causa das duas é **NÃO CONFIRMADA**. Próximo passo: rodar
+`-PgametestOnly=Crafting,Builder` repetidas vezes para medir a taxa isolada e
+separar "interferência entre cenários" de "defeito do mecanismo".
+
+---
+
 ## KF-002 — o aldeão de coleta some entre o `spawnEntity` e o tique 1
 
 **ABERTO.** Medido em **2026-09-16**, commit `c76b96b`, mesma máquina, mesma

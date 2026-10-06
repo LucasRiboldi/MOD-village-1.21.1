@@ -130,7 +130,7 @@ dois tem: `AUTOMATICAMENTE COMPROVADO` ou `AINDA PRECISA DE PLAYTEST`.
 
 | Tarefa | Tempo | Observação |
 |---|---:|---|
-| `compileJava` | 22,3 s | inclui Error Prone + NullAway; parcela de cada um **não medida** |
+| `compileJava` | 22,3 s | Error Prone + NullAway ≈ 15 s (70%): medido 22,6 s com × 6,6 s sem, 2 rodadas cada |
 | `test` | 21,3 s | 1.325 casos; ver abaixo |
 | `pmdMain` | 7,6 s | só relatório (`ignoreFailures = true`) |
 | `remapSourcesJar` | 7,0 s | empacotamento, irrelevante no ciclo de desenvolvimento |
@@ -191,7 +191,7 @@ concentrado em três pontos: um teste de auditoria (64 s), o PIT no CI
 | ORG-6 | **Zero parametrização.** 0 `@ParameterizedTest`, 0 `CustomTestProvider` | grep; `CustomTestProvider`, `BeforeBatch` e `AfterBatch` **existem** no 1.21.1 (jar mapeado) | famílias copiadas (copa, terreno do lote, minério) |
 | ORG-7 | **Dois lugares para GameTest.** 74 arquivos em `gametest/`, 31 espalhados em `fabric/event`, `fabric/integration`, `fabric/work`, `fabric/world` | `find` | sem regra de onde pôr o próximo |
 | ORG-8 | **Arquivos-monstro.** `MinerGameTest` 85 testes / 5.890 linhas; `BuildSiteGameTest` 49; `LumberjackGameTest` 44 | `wc` | difícil achar o teste da regra que se está mexendo |
-| ORG-9 | **JaCoCo sempre ligado no `runGametest`** | `build.gradle:219-224` | custo em toda rodada local; parcela **não medida** |
+| ORG-9 | **JaCoCo sempre ligado no `runGametest`** | `build.gradle` | **medido:** ≈ 2,4 s (5%), 49,1 s com × 46,7 s sem — fica ligado |
 
 ### 7.3 Oportunidades, por ganho ÷ custo
 
@@ -239,3 +239,19 @@ Ganhos medidos onde há número; "estimado" onde não há. Nada implementado.
 3. **OP-10** (medir Error Prone e JaCoCo): decide se há um modo rápido local.
 4. **OP-9** como regra escrita; **OP-5** gradual, a cada teste tocado.
 5. **OP-7** e **OP-8** só depois de uma bateria estável com a fixture nova.
+
+### 7.7 Estado em 2026-10-06 (ADR-035 §7)
+
+| ID | Estado | Commit / evidência |
+|---|---|---|
+| OP-1 | ✅ feito | `0f64a2fe` — bateria comum 611/611 em 25 s de servidor; auditoria em passo próprio |
+| OP-2 | ✅ feito | `54298eea` — `GameTestRegistryTest`, provado por mutação; `test` declara os arquivos que lê |
+| OP-3 | ✅ feito | `0f64a2fe` — `-PgametestOnly`; uma família em 22 s |
+| OP-4 | ✅ feito | `37a7e4b0` — PIT em PR, `main` e disparo manual |
+| OP-5 | ✅ iniciado | `7b090a64` — fixture pública que monta; migração só ao tocar |
+| OP-6 | ✅ feito | `0057183a` — `runGametestServer`; o `/test` digitado não foi exercitado |
+| OP-7 | ⏳ depois | parametrização, conforme 7.6 |
+| OP-8 | ⏳ depois | divisão do `MinerGameTest` |
+| OP-9 | ✅ feito | `docs/technical/Testing-Strategy.md` §10 |
+| OP-10 | ✅ medido | Error Prone ≈ 15 s do `compileJava`; JaCoCo ≈ 2,4 s. **Decisão:** nenhum modo local sem Error Prone por enquanto — ele é o `-Werror` do NullAway, e um modo que o pule deixa passar o erro até o CI. Reavaliar se o ciclo de unitário incomodar |
+| — | registrado | KF-003 em `docs/behavioral-tests/known-failures.md`: duas intermitentes de fabricação, 1/10 cada |
