@@ -126,9 +126,8 @@ public final class ShepherdWork {
     }
 
     private static int searchRadius(ServerWorld world) {
-        int configured = ProfessionPolicySavedData.get(world.getServer()).policies()
-                .policyOf(ProfessionType.SHEPHERD).searchRadius();
-        return configured < 0 ? searchRadius : configured;
+        return ProfessionPolicySavedData.get(world.getServer()).policies()
+                .policyOf(ProfessionType.SHEPHERD).searchRadiusOr(searchRadius);
     }
 
     /**

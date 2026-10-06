@@ -167,9 +167,8 @@ public final class FarmerWork {
     }
 
     static int searchRadius(ServerWorld world) {
-        int configured = ProfessionPolicySavedData.get(world.getServer()).policies()
-                .policyOf(ProfessionType.FARMER).searchRadius();
-        return configured < 0 ? searchRadius : configured;
+        return ProfessionPolicySavedData.get(world.getServer()).policies()
+                .policyOf(ProfessionType.FARMER).searchRadiusOr(searchRadius);
     }
 
     /**

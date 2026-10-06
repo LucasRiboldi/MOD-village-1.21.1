@@ -100,9 +100,8 @@ public final class TreeChoice {
     }
 
     private static int searchRadius(ServerWorld world) {
-        int configured = ProfessionPolicySavedData.get(world.getServer()).policies()
-                .policyOf(ProfessionType.LUMBERJACK).searchRadius();
-        return configured < 0 ? LumberjackWork.searchRadius : configured;
+        return ProfessionPolicySavedData.get(world.getServer()).policies()
+                .policyOf(ProfessionType.LUMBERJACK).searchRadiusOr(LumberjackWork.searchRadius);
     }
 
     /**

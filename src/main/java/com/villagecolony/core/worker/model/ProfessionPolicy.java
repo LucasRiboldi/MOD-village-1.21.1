@@ -38,4 +38,13 @@ public record ProfessionPolicy(boolean enabled, int maximumWorkers, int searchRa
     public boolean hasConfiguredRadius() {
         return searchRadius != AUTOMATIC_RADIUS;
     }
+
+    /**
+     * O raio que a profissão usa: o do jogador, ou {@code automatic} quando
+     * ele não configurou (ADR-030). Decisão única para lenhador, fazendeiro e
+     * pastor — ADR-035 §4.
+     */
+    public int searchRadiusOr(int automatic) {
+        return hasConfiguredRadius() ? searchRadius : automatic;
+    }
 }

@@ -13,6 +13,7 @@ import com.villagecolony.core.colony.service.ColonyAbandonment;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.coordination.ColonyCycle;
 import com.villagecolony.core.coordination.ColonyGoals;
+import com.villagecolony.core.coordination.ReservationGate;
 import com.villagecolony.core.coordination.WorkDemand;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
@@ -418,27 +419,27 @@ final class ColonyCycleRunner {
         BuilderWork.run(world, colony);
     }
 
-    /** Recusa obra aberta cujo próximo bloco ainda não possui ponto físico de trabalho. */
+    /**
+     * Responde, lendo o mundo, a trava que {@link ReservationGate} aponta para a
+     * tarefa — ADR-035 §4.
+     *
+     * <p>Atenção: a trava da obra também <b>prepara</b> a fundação quando ela se
+     * qualifica ({@code FoundationPreparation.prepareIfQualified}); não é só
+     * consulta.
+     */
     static boolean canReserveTask(ServerWorld world, UUID colonyId, Task task) {
-        if (task.type() == TaskType.COLLECT_SURFACE_RESOURCE || task.type() == TaskType.COLLECT_SOIL
-                || task.type() == TaskType.COLLECT_WOOL) {
-            // O raio já foi varrido inteiro sem achar — F-1, 2026-10-02; a
-            // lã sem ovelha no raio entrou em 2026-10-03.
-            return !EmptySweeps.isWaiting(colonyId, task.targetResource(), world.getTime());
-        }
-
-        if (task.type() != TaskType.BUILD) {
-            return true;
-        }
-
-        return VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
-                .flatMap(project -> project.nextBlock().map(next ->
-                        BuilderApproach.hasStandingSpotWithinReach(
-                                world,
-                                project,
-                                MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(next)))
-                                && FoundationPreparation.prepareIfQualified(world, project)))
-                .orElse(false);
+        return switch (ReservationGate.of(task.type())) {
+            case NONE -> true;
+            case EMPTY_SWEEP -> !EmptySweeps.isWaiting(colonyId, task.targetResource(), world.getTime());
+            case BUILD_SITE -> VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
+                    .flatMap(project -> project.nextBlock().map(next ->
+                            BuilderApproach.hasStandingSpotWithinReach(
+                                    world,
+                                    project,
+                                    MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(next)))
+                                    && FoundationPreparation.prepareIfQualified(world, project)))
+                    .orElse(false);
+        };
     }
 
     /**
