@@ -75,6 +75,13 @@ dependencies {
 test {
     useJUnitPlatform()
 
+    // Testes que leem arquivos-fonte (registro de GameTest, manifesto, teto
+    // de linhas) — ADR-035 §7. Sem isto o Gradle pula o `test` quando só o
+    // arquivo lido mudou, e a quebra passa verde na máquina local.
+    inputs.dir('src/gametest').withPropertyName('gametestSources').withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir('src/main/resources').withPropertyName('mainResources').withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir('src/main/java').withPropertyName('mainSources').withPathSensitivity(PathSensitivity.RELATIVE)
+
     testLogging {
         events 'passed', 'skipped', 'failed'
     }
