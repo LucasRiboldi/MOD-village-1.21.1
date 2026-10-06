@@ -162,7 +162,9 @@ public final class VillageDetectionHandler {
 
         VillageAdoption.updateLifecycles(world);
 
-        VillageAdoption.detectFromColonyCenters(world);
+        // A sonda mede e adota como em jogo, mas não julga abandono: colônia
+        // de cenário não é vila, e a ADR-036 item 10 desligaria a abandonada.
+        VillageAdoption.detectFromColonyCenters(world, colony -> true, false);
 
         // <b>Sem o filtro de proximidade</b> — 2026-09-15. O gametest não
         // tem jogador no mundo, e a regra de "só trabalha perto de alguém"

@@ -116,7 +116,7 @@ final class ColonyCycleRunner {
      */
     static void runColonyCycles(ServerWorld overworld, boolean onlyNearPlayers) {
         List<Colony> active = List.copyOf(VillageColonyMod.COLONIES.all()).stream()
-                .filter(Colony::isActive)
+                .filter(Colony::canWork)
                 .toList();
 
         // <b>A vez de planejar é repartida</b> — 2026-09-15. O log do autor

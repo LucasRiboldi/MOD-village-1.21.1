@@ -2,6 +2,7 @@ package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.ColonyState;
 import com.villagecolony.core.colony.service.VillageDetector;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -141,11 +142,16 @@ public final class VillageFocus {
      */
     public static boolean isWorking(ServerWorld overworld, UUID colonyId) {
         if (overworld == null || overworld.getPlayers().isEmpty()) {
-            return true;
+            // Sem jogador (GameTest): a vila trabalha, salvo se abandonada
+            // (ADR-036 item 10). O chunk dormente não conta aqui: cenário
+            // distante fica dormente para a sonda e mesmo assim é testado.
+            return VillageColonyMod.COLONIES.find(colonyId)
+                    .map(colony -> colony.state() != ColonyState.ABANDONED)
+                    .orElse(true);
         }
 
         return VillageColonyMod.COLONIES.find(colonyId)
-                .filter(colony -> colony.isActive() && colony.isAttended(overworld.getTime()))
+                .filter(colony -> colony.canWork() && colony.isAttended(overworld.getTime()))
                 .isPresent();
     }
 }

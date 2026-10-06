@@ -417,6 +417,15 @@ public final class Colony {
     }
 
     /**
+     * Se a colônia trabalha: chunk carregado e vila não abandonada —
+     * ADR-036 item 10. A abandonada guarda tudo (baús, construções) e volta a
+     * trabalhar se a sonda achar a vila de novo.
+     */
+    public boolean canWork() {
+        return isActive() && state != ColonyState.ABANDONED;
+    }
+
+    /**
      * Duas colônias são a mesma quando têm o mesmo id.
      *
      * <p>Posição e estado mudam ao longo da vida da colônia; o id não.
