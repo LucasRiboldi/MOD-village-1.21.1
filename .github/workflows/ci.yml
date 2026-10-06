@@ -57,8 +57,18 @@ jobs:
       - name: Build and run unit tests
         run: ./gradlew build --rerun-tasks
 
+      # Sem as auditorias de dados desde 2026-10-06 (ADR-035 7): a bateria
+      # comum caiu de ~90 s para ~25 s de servidor. GameTestRegistryTest
+      # garante que nenhuma classe fica fora do registro.
       - name: Run Fabric gametests
         run: ./gradlew runGametest --rerun-tasks
+
+      # Auditoria de suprimento das estruturas Vanilla: ~64 s de servidor, e
+      # o resultado so muda com estruturas, catalogo ou regra de suprimento.
+      # Roda em PR, na main e no disparo manual; nao em cada push de branch.
+      - name: Run data audits (gametest)
+        if: github.event_name != 'push' || github.ref == 'refs/heads/main'
+        run: ./gradlew runGametest -PgametestAudit=only
 
       # Teste de mutacao do core (PIT). Desde 2026-09-30 reprova abaixo de
       # 85% (mutationThreshold no build.gradle; o placar estava em 88%), e

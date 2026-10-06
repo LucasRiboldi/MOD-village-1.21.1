@@ -244,6 +244,61 @@ tasks.register('jacocoGametestReport', JacocoReport) {
     }
 }
 
+// Seleção de GameTests — ADR-035 §7. O manifesto em src/gametest continua
+// listando tudo (GameTestRegistryTest confere); só a cópia que vai para o
+// servidor de teste é filtrada.
+//
+// -PgametestOnly=Miner,Lumber   só as classes cujo nome contém um dos trechos
+// -PgametestAudit=skip          padrão: as auditorias de dados ficam de fora
+// -PgametestAudit=include       bateria inteira, auditorias junto
+// -PgametestAudit=only          só as auditorias
+//
+// Auditoria é teste de dados que não depende de aldeão e custa caro: a de
+// suprimento ocupava 64 s dos 90 s da bateria (medido em 2026-10-06).
+def gametestAudits = ['com.villagecolony.gametest.ConstructionSupplyAuditGameTest']
+def gametestOnly = providers.gradleProperty('gametestOnly').getOrElse('')
+def gametestAudit = providers.gradleProperty('gametestAudit').getOrElse('skip')
+
+tasks.named('processGametestResources') {
+    inputs.property 'gametestOnly', gametestOnly
+    inputs.property 'gametestAudit', gametestAudit
+    inputs.property 'gametestAudits', gametestAudits
+
+    doLast {
+        if (!(gametestAudit in ['skip', 'include', 'only'])) {
+            throw new GradleException("gametestAudit deve ser skip, include ou only, não '${gametestAudit}'")
+        }
+
+        def manifest = new File(destinationDir, 'fabric.mod.json')
+        def json = new groovy.json.JsonSlurper().parse(manifest, 'UTF-8')
+        List<String> all = json.entrypoints['fabric-gametest']
+        def tokens = gametestOnly.split(',')*.trim().findAll { it }*.toLowerCase()
+
+        def chosen = all.findAll { String type ->
+            boolean audit = type in gametestAudits
+            if (gametestAudit == 'only') {
+                return audit
+            }
+            if (audit && gametestAudit == 'skip') {
+                return false
+            }
+            String simple = type.substring(type.lastIndexOf('.') + 1).toLowerCase()
+            return tokens.isEmpty() || tokens.any { simple.contains(it) }
+        }
+
+        if (chosen.isEmpty()) {
+            throw new GradleException("Nenhuma classe de GameTest casa com gametestOnly='${gametestOnly}'"
+                    + " e gametestAudit='${gametestAudit}'")
+        }
+
+        json.entrypoints['fabric-gametest'] = chosen
+        manifest.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(json)), 'UTF-8')
+        logger.lifecycle("GameTest: ${chosen.size()} de ${all.size()} classes"
+                + (gametestOnly ? " (gametestOnly=${gametestOnly})" : '')
+                + " (gametestAudit=${gametestAudit})")
+    }
+}
+
 processResources {
     inputs.property 'version', project.version
     inputs.property 'fabric_api_version', project.fabric_version
