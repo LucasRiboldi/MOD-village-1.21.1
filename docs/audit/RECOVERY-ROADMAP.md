@@ -43,6 +43,20 @@ P4 ideia futura. Bug e melhoria não se misturam (melhorias no §2).
 | P1-04 | RULE-RECONCILIATION §10 (cada linha cita os dois textos e o código) |
 | P1-05 | `grep -rw ColonyManager src/main/java` → vazio; `Class-Architecture.md` o descreve |
 
+### 1c. Atualização de 2026-10-06 (integração)
+
+- **P0-01: integrado** na branch `integra/linhas-2026-10-06` (`852f3a54`), com
+  D-01..D-03. Verificado: build, 1.325 unitários, 92 Python, 610/610 GameTests
+  em duas rodadas. Falta: PR para a `main` e o playtest (mina com save antigo,
+  painéis com Iris, argila no lago).
+- **Novo, CONFIRMADO:** `MineOverflowStorageGameTest` (linha Codex) nunca esteve
+  no `fabric.mod.json` — a bateria dizia 585 sem ele. Registrado. É a prova de
+  que T-05 (paridade `@GameTest` × registro) vale o custo.
+- **Novo, pendente (P2):** `CropPatch` e `SandGathering` deixaram de pular
+  fluidos (o `FluidColumns` da linha Claude saiu pela D-02). Para ligar o
+  `VillageFluidIndex` a eles, a classe precisa sair de `fabric/work` para
+  `fabric/integration`, senão fecha ciclo de pacote.
+
 ## 2. Melhorias
 
 | ID | Melhoria | Problema | Benefício | Complexidade | Risco | Arquivos | Testes | Vale agora? |
@@ -231,7 +245,8 @@ AUTOMATICAMENTE COMPROVADO | AINDA PRECISA DE PLAYTEST
 ```text
 ETAPA 0  Autor decide D-01..D-05                 ✅ feito em 06-10 (ADR-034)
    ↓
-ETAPA 1  P0-01 Integração: branch integra/A→main, B por cima,
+ETAPA 1  ✅ 06-10 (852f3a54, 610/610 ×2; falta PR na main e playtest)
+         P0-01 Integração: branch integra/A→main, B por cima,
          decisões aplicadas, binários regenerados; bateria ×2   (1 PR)
    ↓
 ETAPA 2  P0-02 Gravação periódica + T-01/T-02                   (1 PR)
