@@ -180,17 +180,17 @@ resolvido nesta auditoria.
 
 | ID | Fonte A | Fonte B | Código | Decisão |
 |---|---|---|---|---|
-| C-01 | Constituição §9 (:168-174): nada surge do nada | ADR-028 + Regra 41: só drops e corantes | cria também ferramenta inicial (`WorkerEquipment:170`), pedregulho da fuga (`ClimbOut:407`), BigHouseMOD (`BigHouseFoundation:34-100`), aldeões (`VillageFoundation:74`), peça sem rota (`BiomeConstructionSupply`) | emendar a Constituição listando as exceções aceitas, ou retirar algumas do código |
+| C-01 | Constituição §9 (:168-174): nada surge do nada | ADR-028 (09-30) **já retirou a regra**, mas a Constituição não foi emendada | cria ferramenta inicial (`WorkerEquipment:170`), pedregulho da fuga (`ClimbOut:407`), BigHouseMOD (`BigHouseFoundation:34-100`), aldeões (`VillageFoundation:74`), peça sem rota (`BiomeConstructionSupply`) | **RESOLVIDO 06-10 (D-04, ADR-034):** os quatro aceitos; Constituição 1.2.0 emendada |
 | C-02 | RULES:43,58 "✅ feita" | — | `BuilderWork.furnish` não existe; código diz "a Regra 21 morreu" | marcar 21/32 como retiradas ou reabrir |
 | C-03 | RULES:47,116 "Regra 25 inerte" | — | `PlanOrdering:56` "continua valendo" | qual vale |
-| C-04 | ADR-030:24-26: carpinteiro fora da fundação, construtor fora do crescimento | ADR-011 emenda + Regra 35 | `FOUNDATION_ORDER` tem CARPENTER; `GROWTH_ORDER` tem BUILDER | qual ADR vence; corrigir a outra |
+| C-04 | ADR-030:24-26: carpinteiro fora da fundação, construtor fora do crescimento | ADR-011 emenda + Regra 35 | `FOUNDATION_ORDER` tem CARPENTER; `GROWTH_ORDER` tem BUILDER | **RESOLVIDO 06-10 (D-05, ADR-034 §5):** vale o código |
 | C-05 | ADR-021:17, ADR-030:24: "seis" titulares | Regra 35 | 7 titulares; comentários ainda dizem "seis" (`VillageChests:~172`, `VillageFoundation:278`) | atualizar ADRs e comentários |
-| C-06 | ADR-011:21,35 + Constituição §4 (:108-114): preservar ofício Vanilla | ADR-029 | ofício Vanilla é removido | emendar a Constituição |
+| C-06 | ADR-011:21,35 + Constituição §4 (:108-114): preservar ofício Vanilla | ADR-029 | ofício Vanilla é removido | **RESOLVIDO 06-10 (ADR-034 §2)** |
 | C-07 | ADR-020 §4: viveiro de agricultor e lenhador | Regra 36: só lenhador | só lenhador | emendar ADR-020 |
 | C-08 | RULES:134: E43 "falta decidir" | ADR-010 emenda 09-23 já decidiu | código segue a ADR | atualizar RULES |
 | C-09 | RULES:29: baú "só de trabalhador" | — | `VanillaBedChests.ensure` cobre cama Vanilla | atualizar RULES |
-| C-10 | Constituição §7 (:146-152): só templates Vanilla | Regra 27-e3, BigHouseMOD | `ColonyModels`, `big_house_mod.nbt` | emendar a Constituição |
-| C-11 | Constituição §5 (:130): nunca qualquer bloco da vila gerada | Regra 3 | `mayDigOut`/`mayBuildOver` liberam chão do bioma | emendar ou restringir |
+| C-10 | Constituição §7 (:146-152): só templates Vanilla | Regra 27-e3, BigHouseMOD | `ColonyModels`, `big_house_mod.nbt` | **RESOLVIDO 06-10 (ADR-034 §4)** |
+| C-11 | Constituição §5 (:130): nunca qualquer bloco da vila gerada | Regra 3 | `mayDigOut`/`mayBuildOver` liberam chão do bioma | **RESOLVIDO 06-10 (ADR-034 §3)** |
 | C-12 | RULES.md:9: "onde o código discordar, a regra está certa" | RULES.md:158: "quando o código divergir, a tabela está errada" | — | escolher uma frase |
 | C-13 | RULES aponta `BuilderWork.furnish`, `BuildSiteScanner.flatGroundAt`, `ColonyHut` | — | inexistente / em `LotLevel` / aposentado | corrigir ponteiros |
 | C-14 | Comentários `ColonyGoals:55-61`, `WorkerEquipment:36-41` | Regras 29/30, 2-e1 | comportamento novo | corrigir comentários |

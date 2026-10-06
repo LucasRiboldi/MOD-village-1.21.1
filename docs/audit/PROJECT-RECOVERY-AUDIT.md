@@ -15,6 +15,7 @@ Documentos desta auditoria (cinco, sem mais):
 | [RULE-RECONCILIATION.md](RULE-RECONCILIATION.md) | regras: intenção × código × evidência, conflitos |
 | [TEST-STRATEGY.md](TEST-STRATEGY.md) | o que os testes protegem, o que sobra, o que falta |
 | [RECOVERY-ROADMAP.md](RECOVERY-ROADMAP.md) | problemas, melhorias, decisões, método, plano |
+| [GUIA-DO-LEIGO.md](GUIA-DO-LEIGO.md) | o mod explicado para quem nunca viu o código (pedido explícito do autor; sexto documento) |
 
 ### Como ler a evidência
 
@@ -217,7 +218,7 @@ Ver [RECOVERY-ROADMAP.md](RECOVERY-ROADMAP.md) §7.
 
 1. P0-01 Linhas paralelas com colisão lógica (mina 7 vs 8, dois índices de fluido, dois painéis).
 2. P0-02 Registro da colônia só gravado no `SERVER_STOPPING`.
-3. P1-04 Constituição §9 contrariada por 5 mecanismos que criam itens do nada.
+3. ~~P1-04 Constituição §9 contrariada por 5 mecanismos que criam itens do nada~~ — resolvido em 06-10 (ADR-034).
 4. P1-03 Nenhum teste de reload real de servidor.
 5. P1-03 Nenhum teste fim-a-fim "vila nova → casa pronta".
 6. P1-01 Ciclo da colônia sem orçamento fora do planejador.
@@ -294,7 +295,39 @@ apaga o cérebro da colônia; (3) mais de 20 correções esperam jogo, e a
 documentação deixa um agente ler 400 arquivos para achar os 10 que valem.
 Não é vermelho: nada disso exige reescrita, e todas as correções são pequenas.
 
-**Próxima ação única recomendada:** o autor toma as **três decisões de fusão**
-(geometria da mina, motor de varredura de fluidos, sistema de painel — ROADMAP
-§4, D-01 a D-03). Sem isso, qualquer correção feita agora cai numa das duas
-linhas e aumenta a divergência.
+**Próxima ação única recomendada:** ~~o autor toma as três decisões de
+fusão~~ — tomadas em 06-10 (D-01 salões, D-02 motor da ADR-031, D-03 painel do
+Claude, D-04 emendas, D-05 código atual). Agora: **integrar as duas linhas na
+`main` aplicando as decisões** (ROADMAP §7, Etapa 1).
+
+---
+
+## Cobertura do pedido (o que foi feito e o que não foi)
+
+Os dois prompts pediam mais do que cabe numa auditoria só de leitura. Esta
+tabela diz, sem arredondar, o que saiu.
+
+| Pedido | Onde está | Situação |
+|---|---|---|
+| Fase 0 — reconhecimento, mapa de diretórios, dependências, versões | SYSTEM-MAP §1-§2 | feito |
+| Fase 1 — inventário com todos os campos | SYSTEM-MAP §4 e §4b | feito; "funcionamento real" por sistema é resumo, não leitura linha a linha |
+| Fase 2 — explicar para leigo | GUIA-DO-LEIGO | feito (complementado em 06-10, depois da pergunta do autor) |
+| Fase 3 — regras por categoria | RULE-RECONCILIATION §1-§8 | feito |
+| Fase 4 — dependências, ciclos, estado global, classes que sabem demais | SYSTEM-MAP §5 | feito |
+| Fase 5 — o que saiu do controle (código e arquitetura) | SYSTEM-MAP §5, §8; ROADMAP §1 | feito; "comentários que contradizem o código" só por amostra (C-14) |
+| Fase 6 — classificar **cada** teste A-G | TEST-STRATEGY §2 | **parcial: por grupo/arquivo**, não teste por teste (são 1.857) |
+| Estratégia e pirâmide de testes | TEST-STRATEGY §3-§6 | feito |
+| Auditoria de performance | SYSTEM-MAP §6 | feito por leitura de código e perfis antigos |
+| **Linha de base nova: 1 × 4 colônias, ms por fase** | — | **NÃO FEITO** — exige playtest com Spark; vira a Etapa 3 do roadmap |
+| Pesquisa externa e alternativas | ROADMAP §5 | feito; MineColonies lido só na wiki, nenhum código de mod lido |
+| Metodologia própria + protocolo para agentes | ROADMAP §6 (Protocolo PASSO) | feito |
+| Árvore de decisão PROBLEMA→…→PRIORIDADE | ROADMAP §4 | **parcial**: completa só para P0-02; os demais em forma de tabela |
+| Opções A-E (manter → reescrever) | ROADMAP §4 | feito |
+| Candidatos à remoção | SYSTEM-MAP §8; ROADMAP §3; TEST-STRATEGY §2 | feito, nada removido |
+| Documentação 01-21 em arquivos separados | — | **consolidada em 6 arquivos** (o segundo prompt limitou a 5 e pediu para não criar dezenas) |
+| Registro de erros com REPRODUÇÃO | ROADMAP §1 e §1b | feito |
+| Classificação de cada documento Markdown | ROADMAP §3 | por grupo; ≈160 arquivos de skill tratados como dois grupos |
+| Conflitos com FONTE A / B / CÓDIGO / DECISÃO | RULE-RECONCILIATION §10 | feito |
+| Matriz de profissões | RULE-RECONCILIATION §1; GUIA §4 | feito |
+| Análise individual das maiores classes com proposta de divisão | SYSTEM-MAP §5 | **parcial**: 5 classes, sem plano de divisão detalhado (de propósito: ROADMAP M-12 recomenda não dividir) |
+| Links quebrados após reorganização | — | não se aplica ainda: nada foi movido |

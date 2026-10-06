@@ -31,6 +31,18 @@ P4 ideia futura. Bug e melhoria não se misturam (melhorias no §2).
 | P3-02 | P3 | PIT só no `core`; sem piso JaCoCo; PMD `ignoreFailures` | eficácia dos testes da camada fabric desconhecida | escolha de custo | `build.gradle:161` | CONFIRMADO | — | — | — | manter; registrar como decisão consciente | — | — |
 | P3-03 | P3 | JAR binário versionado; `Website/` no repo | repo pesado; JAR conflita em toda fusão | — | `downloads/`, `Website/` | CONFIRMADO | — | — | — | JAR em GitHub Releases | baixo | aprovação |
 
+### 1b. Reprodução dos P0/P1
+
+| ID | Como reproduzir |
+|---|---|
+| P0-01 | `git merge-tree --write-tree --name-only claude/corrigiveis-sem-jogo codex/village-visuals-logistics-mine-sweep` → 22 conflitos; após a fusão, `gradlew compileGametestJava` falha em `VillageFocusPlayerGameTest` |
+| P0-02 | abrir um mundo, deixar uma colônia abrir obra/mina, encerrar o processo Java à força (sem "Salvar e sair"), reabrir: `Saved N colonies` não aparece no log e o registro volta ao fechamento anterior. **Não executado.** |
+| P1-01 | playtest com 4 colônias carregadas; ler o breakdown de `Colony cycle took` (só aparece ≥ 50 ms) |
+| P1-02 | vila sem floresta perto + Spark: nós `TreeScanner`/`TreeChoice`/`FarmerNursery` |
+| P1-03 | `grep -rn "save\|reload" src/gametest` — nenhum teste reinicia o servidor |
+| P1-04 | RULE-RECONCILIATION §10 (cada linha cita os dois textos e o código) |
+| P1-05 | `grep -rw ColonyManager src/main/java` → vazio; `Class-Architecture.md` o descreve |
+
 ## 2. Melhorias
 
 | ID | Melhoria | Problema | Benefício | Complexidade | Risco | Arquivos | Testes | Vale agora? |
@@ -70,6 +82,31 @@ P4 ideia futura. Bug e melhoria não se misturam (melhorias no §2).
 | `docs/archive/technical/` | Development-Log, Project-State, Historico-2026-09, Backlog, Auditoria-*, Revisao-*, Project-Audit, Operational-Status, E45/E46, Initial-Setup-Checklist, Codex-Setup |
 | remover do git | `agent/` (duplica `.claude/skills` com conteúdo divergente), `mods/` (vazia) — **só com aprovação** |
 
+**Classificação completa** (frente de documentação, 06-10):
+
+| Documento / grupo | Classe | Motivo |
+|---|---|---|
+| CLAUDE.md, STATE.md, docs/RULES.md, docs/PATTERNS.md | ACTIVE | governam o trabalho |
+| AGENTS.md | ACTIVE (Codex) | duplica o resumo do CLAUDE.md |
+| TODO.md (1.582 linhas) | ACTIVE, inchado | topo com estado de 28-09 |
+| PROJECT_CONSTITUTION.md | ACTIVE | emendado em 06-10 (ADR-034) |
+| README.md, CHANGELOG.md | REFERENCE | README:210 com contagem antiga |
+| docs/decisions/ADR-* | ADR | duas ADR-025 |
+| docs/technical/Plano-de-Correcao, Testing-Strategy, Performance-Rules, Debugging-Strategy, Development-Workflow, Fabric-Version, Profiling-spark, Vanilla-Integration, Village-Economy, village-growth-planner, Profession-Responsibility, Profession-Policies-Assessment | ACTIVE / REFERENCE | — |
+| docs/behavioral-tests/* | REFERENCE | known-failures em uso |
+| docs/proxima-sessao.md | STALE | JAR e contagens de 28-09 |
+| Development-Log, Project-State, Historico-2026-09, Backlog | HISTORICAL | só grep |
+| Auditoria-*, Revisao-*, Project-Audit, Operational-Status, E45/E46, Identidade-da-Vila, Fluidez-* | HISTORICAL | datados |
+| docs/research/*, docs/superpowers/* | HISTORICAL | planos executados |
+| docs/workers-analysis/* | ORPHAN | ninguém aponta |
+| Class-Architecture, Data-Model, Fabric-Implementation-Plan, MVP-Tasks | STALE (enganam) | 29 / 9 / 11 / 4 classes inexistentes |
+| Architecture-Foundation, Construction-System, Development-Roadmap, MVP, Profession-System, Resource-System, Save-Data-System, Simulation-Loop, Storage-System | HISTORICAL | design de agosto |
+| START_PROJECT.md | STALE / DELETE-CANDIDATE | manda ler 20 docs de agosto |
+| AUDIT_REPORT.md | HISTORICAL | auditoria de 14-09 |
+| claude/* | DUPLICATE / STALE | CLAUDE.md antigo em inglês concorre com o da raiz |
+| agent/skills/* | DUPLICATE | cópia divergente de .claude/skills, não é carregada |
+| Initial-Setup-Checklist, Codex-Setup | DELETE-CANDIDATE | setup de agosto; duplica AGENTS.md |
+
 **Correções pontuais:** CLAUDE.md §0.1 remete a "§1 e §2" que não existem;
 contagens em CLAUDE.md:47, TODO.md:12, README.md:210, proxima-sessao.md:8
 (fonte certa: STATE.md); `docs/proxima-sessao.md` reescrito em ≤ 80 linhas.
@@ -94,7 +131,17 @@ Evidência: 29 classes citadas em `Class-Architecture.md` não existem
 **Escolha: A, com B pontual.** O núcleo é puro e testado; nenhuma classe é
 gigante; nenhum problema encontrado exige trocar arquitetura.
 
-### Decisões do autor necessárias (bloqueiam P0-01)
+### Decisões do autor (tomadas em 2026-10-06)
+
+| ID | Decisão do autor | Efeito |
+|---|---|---|
+| D-01 | **salões** (linha B, Codex) | `MineShaft`/`MineMouth`/testes da mina vêm de B; `SHAPE_VERSION 8` |
+| D-02 | **ADR** (motor de B, ADR-031) | `VillageSpiralSweep` + `VillageFluidIndex`; de A ficam `LocateFallback` e a exceção da argila |
+| D-03 | **painel do Claude** (linha A) | `OverlayDrawing`/`OverlaySprites` base; de B entra `OverlayPreferences` (esconder texto) |
+| D-04 | **emendar**; os quatro itens podem surgir do nada | ADR-034; Constituição 1.2.0 (§4, §5, §7, §9) |
+| D-05 | **vale o código atual** | ADR-034 §5; nota de superação na ADR-030 |
+
+### Decisões que estavam pendentes (histórico da pergunta)
 
 | ID | Pergunta | Linha A (Claude) | Linha B (Codex) | Sugestão |
 |---|---|---|---|---|
@@ -182,7 +229,7 @@ AUTOMATICAMENTE COMPROVADO | AINDA PRECISA DE PLAYTEST
 ## 7. Plano de recuperação (ordem real)
 
 ```text
-ETAPA 0  Autor decide D-01..D-05                              (sem código)
+ETAPA 0  Autor decide D-01..D-05                 ✅ feito em 06-10 (ADR-034)
    ↓
 ETAPA 1  P0-01 Integração: branch integra/A→main, B por cima,
          decisões aplicadas, binários regenerados; bateria ×2   (1 PR)

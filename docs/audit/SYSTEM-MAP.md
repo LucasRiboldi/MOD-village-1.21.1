@@ -112,6 +112,33 @@ Complexidade: A alta, M média, B baixa. Estado: ativo salvo indicação.
 | Persistência | `data/save/*` | ver §7 | — | data/save (75) | M |
 | Skills / níveis / XP | — | **NÃO EXISTE** (grep `skill|experience|xp|levelUp` vazio) | — | — | — |
 
+### 4b. Entradas, saídas, dependentes e importância
+
+Complementa a tabela acima com os campos do inventário pedido. "Dependentes" =
+quem quebra se o sistema quebrar. Importância: C crítica, A alta, M média.
+
+| Sistema | Entradas | Saídas | Dependentes | Importância | Problemas conhecidos |
+|---|---|---|---|---|---|
+| Detecção / caixa | POI de cama, entidades aldeão, chunk carregado | `Colony` com centro, caixa, estado | todos os outros | C | caixa só cresce; centro já oscilou (memória `obra-orfa-por-deriva-do-centro`) |
+| Fundação | colônia nova | baús por cama, BigHouseMOD, adultos | contratação, estoque | A | cria recursos sem origem (aceito, ADR-034) |
+| Contratação | adultos, camas, política, demanda de obra | `Worker` com profissão e ferramenta | ciclo, todos os `*Work` | C | roda na adoção/registro, não no ciclo |
+| Tarefas / coordenação | estoque observado, metas, `WorkDemand` | `Task` reservadas | todos os `*Work` | C | — |
+| Recursos / baús | inventário dos baús da caixa | estoque observado, depósito, retirada | metas, fabricação, obra | C | leitura fatiada → estoque defasado até 8 baús/ciclo |
+| Fabricação / fundição | receitas Vanilla, estoque | peças no baú | obra | A | P1 de memória: carpinteiro de 0 peça (A-1) |
+| Blueprints | `.nbt`, catálogo por bioma | `Blueprint` com blocos | planejador, construtor | A | — |
+| Lote / planejador | caixa, ruas, terreno | obra aberta + lote | construtor, ruas | C | só ele tem prazo de tempo |
+| Construtor / reparo | obra, baús | blocos no mundo, `Building` | crescimento da caixa e da população | C | sem teste fim-a-fim (P1-03) |
+| Ruas | índice de ruas, terreno | trechos de caminho | planejador | A | — |
+| Mineração | `Mine`, cursor, terreno | pedra/minério no baú | metas de pedra, fundidor | A | duas geometrias nas linhas paralelas (P0-01, D-01) |
+| Agricultura | lote de roça | comida, pão | população (refeições) | A | roça sem lote trava a vila (memória `roca-sem-lote-trava-a-vila`) |
+| Lenhador | árvores, viveiro | tora | carpinteiro, obra | A | custo de busca (P1-02) |
+| Pastor | ovelhas | lã | camas, obra | M | — |
+| Coleta de superfície | terreno, fluidos | areia, argila, terra | fundidor, obra | M | dois motores nas linhas paralelas (P0-01, D-02) |
+| Movimento / encalhe | posição, terreno | rota, fuga | todos os `*Work` | C | pathfinding Vanilla não medido |
+| Telemetria | estados dos aldeões, custo do ciclo | `VC_TIME`, logs | `time_ledger.py`, análise de playtest | M | custo só logado ≥ 50 ms |
+| Overlays | estado no servidor | painéis no cliente | — | M | dois sistemas nas linhas paralelas (P0-01, D-03) |
+| Persistência | registros em memória | 3 `PersistentState` | recarga do mundo | C | só grava ao fechar (P0-02) |
+
 ## 5. Dependências
 
 **Direção (CONFIRMADO):** `core/` não importa `net.minecraft`, `net.fabricmc`,
