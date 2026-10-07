@@ -34,7 +34,7 @@ implementar.
 | `docs/archive/technical/Development-Log.md` | **histórico.** Só `grep` por data ou símbolo. Nunca inteiro. |
 | `docs/archive/technical/Project-State.md` | **histórico** desde 2026-08-26. Usar `docs/RULES.md` no lugar. |
 | `docs/archive/technical/Backlog.md` | **histórico** desde 2026-08-15. Usar `TODO.md` no lugar. |
-| `TODO.md` | **vivo** — mas 700 linhas. Ler o topo (primeiros 100) e `grep` o resto. |
+| `TODO.md` | **vivo e curto** — só o que está aberto. Histórico em `docs/archive/technical/TODO-ate-2026-10-07.md` (`grep`). |
 | `docs/technical/Plano-de-Correcao.md` | **vivo.** Ler a régua (§1) e o item atual. |
 
 **Regra dura:** se você não sabe o que procura, você está lendo o

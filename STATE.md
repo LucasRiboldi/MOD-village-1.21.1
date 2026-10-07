@@ -1,6 +1,6 @@
 # STATE — 2026-10-07
 
-> **JAR atual: `village-colony-0.3.5.jar` = `5F6BAEFB…0058`** em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.6.jar` = `DAC96728…7DE8`** em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -17,6 +17,10 @@
 ---
 
 ## 🟡 07-10, tarde — ADR-039 aplicada (aguarda playtest)
+
+**0.3.6 (segunda rodada da ADR-039):** produto no baú da profissão; adiantamento segue as peças das
+casas do bioma (pinheiro, acácia, arenito); mineiro não perde o ofício. `TODO.md` reescrito só com o
+aberto (histórico arquivado). `scripts/gametest_battery.py N` para a bateria repetida.
 
 **0.3.5:** as memórias escolhidas (ADR-039 C) vão ao save `villagecolony_memory`: árvores e mudas,
 colunas de coleta, veio e rastro, ramais reservados, vez do adiantamento, coletas do pastor.
