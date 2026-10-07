@@ -309,7 +309,17 @@ public final class MineTrouble {
             return true;
         }
 
-        Optional<BlockPos> mouth = MineSite.mouthOnSide(world, center, opposite);
+        // Dentro da vila, morro e longe da água (ADR-038 P3b), longe da mina velha.
+        Optional<MineEdge.Choice> edge = MineEdge.inside(
+                world, colonyId, center, MinecraftTypeAdapter.toBlockPos(mine.entry()));
+
+        if (edge.isPresent()) {
+            opposite = edge.get().side();
+        }
+
+        Optional<BlockPos> mouth = edge.isPresent()
+                ? Optional.of(edge.get().mouth())
+                : MineSite.mouthOnSide(world, center, opposite);
 
         if (mouth.isEmpty()) {
             return false;

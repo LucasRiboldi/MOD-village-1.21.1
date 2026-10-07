@@ -23,8 +23,9 @@ import java.util.UUID;
  * colônia sai do registro. O mineiro seguinte abre outra, e a boca dela é
  * escolhida aqui.
  *
- * <p><b>Onde.</b> Na borda da caixa medida da vila, a cada {@link #STEP}
- * blocos dos quatro lados, longe da descida travada. Vence a boca mais
+ * <p><b>Onde.</b> De 1 a {@link #INSIDE} blocos para dentro da borda da caixa
+ * medida (ADR-038 P3b), a cada {@link #STEP} blocos dos quatro lados, longe da
+ * descida travada; vence a soma de distância da água e altura de morro. Vence a boca mais
  * distante de qualquer água, até {@link #WATER_LOOK} blocos. A boca passa pelas
  * mesmas regras de sempre ({@code MineSite}: chão firme, água a mais de quatro
  * blocos). Sem caixa medida, ou sem ponto que sirva, a escolha de sempre
@@ -44,9 +45,6 @@ final class MineEdge {
 
     /** A distância mínima da descida travada. */
     static final int AVOID = MineDescent.RADIUS + 8;
-
-    /** Quanto fora da caixa fica a boca: a borda, e não dentro de um quintal. */
-    private static final int OUTSIDE = 2;
 
     record Choice(BlockPos mouth, Side side) {
     }
@@ -80,6 +78,23 @@ final class MineEdge {
             return Optional.empty();
         }
 
+        return inside(world, colonyId, center, avoid);
+    }
+
+    /** Até quantos blocos para dentro da caixa da vila a boca nasce — ADR-038 P3b. */
+    static final int INSIDE = 5;
+
+    /** Até quantos blocos acima do centro o morro conta a favor. */
+    private static final int HILL_CAP = 12;
+
+    /**
+     * A boca da mina dentro da vila — ADR-038 P3b: de 1 a {@link #INSIDE} blocos
+     * para dentro da borda da caixa, preferindo o morro e a distância da água.
+     * Vazio sem caixa medida ou sem ponto que sirva; aí decide a escolha de sempre.
+     *
+     * @param avoid um ponto de que a boca fica longe (a descida travada, a mina velha), ou nulo
+     */
+    static Optional<Choice> inside(ServerWorld world, UUID colonyId, BlockPos center, BlockPos avoid) {
         Optional<VillageBounds> bounds = VillageColonyMod.COLONIES.find(colonyId).flatMap(Colony::bounds);
 
         if (bounds.isEmpty()) {
@@ -88,32 +103,39 @@ final class MineEdge {
 
         VillageBounds box = bounds.get();
         Choice best = null;
-        int bestWater = -1;
+        int bestScore = Integer.MIN_VALUE;
+        int bestWater = 0;
 
-        for (Side side : Side.values()) {
-            boolean alongX = side == Side.NORTH || side == Side.SOUTH;
-            int from = alongX ? box.minX() : box.minZ();
-            int to = alongX ? box.maxX() : box.maxZ();
+        for (int inset : new int[] {1, INSIDE}) {
+            for (Side side : Side.values()) {
+                boolean alongX = side == Side.NORTH || side == Side.SOUTH;
+                int from = (alongX ? box.minX() : box.minZ()) + inset;
+                int to = (alongX ? box.maxX() : box.maxZ()) - inset;
 
-            for (int along = from; along <= to; along += STEP) {
-                int x = alongX ? along : side == Side.WEST ? box.minX() - OUTSIDE : box.maxX() + OUTSIDE;
-                int z = alongX ? (side == Side.NORTH ? box.minZ() - OUTSIDE : box.maxZ() + OUTSIDE) : along;
+                for (int along = from; along <= to; along += STEP) {
+                    int x = alongX ? along : side == Side.WEST ? box.minX() + inset : box.maxX() - inset;
+                    int z = alongX ? (side == Side.NORTH ? box.minZ() + inset : box.maxZ() - inset) : along;
 
-                if (Math.abs(x - avoid.getX()) < AVOID && Math.abs(z - avoid.getZ()) < AVOID) {
-                    continue;
-                }
+                    if (avoid != null && Math.abs(x - avoid.getX()) < AVOID && Math.abs(z - avoid.getZ()) < AVOID) {
+                        continue;
+                    }
 
-                Optional<BlockPos> mouth = MineSite.edgeMouth(world, center, x - center.getX(), z - center.getZ(), side);
+                    Optional<BlockPos> mouth = MineSite.edgeMouth(
+                            world, center, x - center.getX(), z - center.getZ(), side);
 
-                if (mouth.isEmpty()) {
-                    continue;
-                }
+                    if (mouth.isEmpty()) {
+                        continue;
+                    }
 
-                int water = waterDistance(world, mouth.get());
+                    int water = waterDistance(world, mouth.get());
+                    int hill = Math.max(0, Math.min(HILL_CAP, mouth.get().getY() - center.getY()));
+                    int score = water * 4 + hill * 3;
 
-                if (water > bestWater) {
-                    bestWater = water;
-                    best = new Choice(mouth.get(), side);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestWater = water;
+                        best = new Choice(mouth.get(), side);
+                    }
                 }
             }
         }

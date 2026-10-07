@@ -25,4 +25,5 @@
 
 | # | Commit | Verificação |
 |---|---|---|
-| P5a, P5b | este commit | Alívio: qualquer baú da colônia cheio passa 10 compartimentos para outro baú sem profissão. Adiantamento: `AdvanceStock` (core) — 5 de uma peça, depois a seguinte, em ciclo; peça parada 10 ciclos cede a vez; substitui o piso de 16 por peça do pedreiro; o lote do alívio de pedra cai de 64 para 5. 1355 unitários (`AdvanceStockTest`); 632/632 ×2 |
+| P5a, P5b | `93d99530` | Alívio: qualquer baú da colônia cheio passa 10 compartimentos para outro baú sem profissão. Adiantamento: `AdvanceStock` (core) — 5 de uma peça, depois a seguinte, em ciclo; peça parada 10 ciclos cede a vez; substitui o piso de 16 por peça do pedreiro; o lote do alívio de pedra cai de 64 para 5. 1355 unitários (`AdvanceStockTest`); 632/632 ×2 |
+| P3b | este commit | `MineEdge.inside`: com caixa medida, toda boca nova (primeira mina, relocação, fundo esgotado) nasce de 1 a 5 blocos para dentro da borda; vence água longe (×4) + morro acima do centro até 12 (×3). Sem caixa, a escolha de antes. O GameTest não separa morro de água (os dois apontam para o mesmo lado). 633 ×2 (uma com o `craft_family`, KF-003) |
