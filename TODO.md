@@ -1678,10 +1678,10 @@ Comida · água · o fazendeiro (tem enxada e baú desde a Fase 4 e nunca teve c
 
 | | decisão | trava |
 |---|---|---|
-| 1 | **E43 — o descanso de 4 ciclos deve valer sempre?** | Anulado pela 2ª passagem do `takeOneTask`. Decisão de projeto |
-| 2 | **TASK-048 — o que uma colônia ABANDONED deixa de fazer?** | Hoje nada. Ela é marcada e continua sendo simulada |
+| 1 | ~~**E43 — o descanso de 4 ciclos deve valer sempre?**~~ | **Fechado (ADR-036 28):** vale sempre — toda reserva passa por `WorkEligibility.canReserve`; não há 2ª passagem |
+| 2 | ~~**TASK-048 — o que uma colônia ABANDONED deixa de fazer?**~~ | **Fechado (ADR-036 10):** para de trabalhar e solta as profissões |
 | 3 | **TASK-044 — a fusão de vilas** | ADR-007 escrita em 08-21, não implementada |
-| 4 | **TASK-046 — propriedades além de `facing`** | O lado horizontal da ADR-008 entrou em 26-09; eixo, metade e forma ainda pedem decisão e testes próprios |
+| 4 | ~~**TASK-046 — propriedades além de `facing`**~~ | **Fechado (ADR-036 19):** eixo, metade e formato saem na posição da planta (`ShapeStates`) |
 | 6 | **E38 — o baú do trabalhador assoreia** | Dar consumidor ou descarte a vara, maçã e muda. **Decisão de projeto** |
 | 7 | **E45 — como a mina troca de rota no fundo?** | Geometria, boca estável, migração do save e novo GameTest; não há ADR atual |
 

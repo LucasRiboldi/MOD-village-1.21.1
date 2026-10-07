@@ -132,7 +132,6 @@ recusou a pausa e a chuva (18-e1); trocou a ferramenta fixa pela melhor do baú
 
 | # | Pergunta | Trava |
 |---|---|---|
-| E43 | O descanso de 4 ciclos deve valer mesmo quando não há outra tarefa? | anulado pela 2ª passagem do `takeOneTask` |
 | P0.7 | Aceitar pedra como solo de lote? | toca a Regra 3 e a Regra 19 |
 
 ---
