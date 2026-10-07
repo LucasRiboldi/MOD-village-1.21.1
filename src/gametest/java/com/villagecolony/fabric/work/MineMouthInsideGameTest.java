@@ -71,4 +71,14 @@ public class MineMouthInsideGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /** Morro e água pesam cada um por si: com o outro fator igual, cada um decide sozinho (B6). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth_inside", tickLimit = 20)
+    public void hillAndWaterEachCountOnTheirOwn(TestContext context) {
+        context.assertTrue(MineEdge.score(MineEdge.WATER_LOOK, 5) > MineEdge.score(MineEdge.WATER_LOOK, 0),
+                "com a água igual, o morro não pesou");
+        context.assertTrue(MineEdge.score(MineEdge.WATER_LOOK, 0) > MineEdge.score(2, 0),
+                "com o morro igual, a distância da água não pesou");
+        context.complete();
+    }
 }

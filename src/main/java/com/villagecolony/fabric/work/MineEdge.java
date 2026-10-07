@@ -85,7 +85,12 @@ final class MineEdge {
     static final int INSIDE = 5;
 
     /** Até quantos blocos acima do centro o morro conta a favor. */
-    private static final int HILL_CAP = 12;
+    static final int HILL_CAP = 12;
+
+    /** Longe da água pesa 4 por bloco, morro pesa 3 por bloco de altura (até {@link #HILL_CAP}). */
+    static int score(int waterDistance, int hill) {
+        return waterDistance * 4 + hill * 3;
+    }
 
     /**
      * A boca da mina dentro da vila — ADR-038 P3b: de 1 a {@link #INSIDE} blocos
@@ -129,7 +134,7 @@ final class MineEdge {
 
                     int water = waterDistance(world, mouth.get());
                     int hill = Math.max(0, Math.min(HILL_CAP, mouth.get().getY() - center.getY()));
-                    int score = water * 4 + hill * 3;
+                    int score = score(water, hill);
 
                     if (score > bestScore) {
                         bestScore = score;
