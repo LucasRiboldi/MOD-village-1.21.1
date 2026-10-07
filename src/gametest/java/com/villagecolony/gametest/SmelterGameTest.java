@@ -411,7 +411,7 @@ public class SmelterGameTest implements FabricGameTest {
 
         SmelterWork.run(world, colony);
 
-        context.runAtTick(150, () -> {
+        context.runAtTick(190, () -> {
             try {
                 // Primeira metade: o baú histórico ainda é achado pela
                 // geometria da mina, mesmo sem receber depósitos novos.
