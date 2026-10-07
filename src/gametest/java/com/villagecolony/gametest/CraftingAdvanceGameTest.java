@@ -51,6 +51,51 @@ public class CraftingAdvanceGameTest implements FabricGameTest {
                 Items.STONE, ResourceType.STONE_BRICKS, Items.STONE_BRICKS, 5, 8);
     }
 
+    /** A peça vai para o baú da profissão, não para o baú de outro ofício no centro da vila (ADR-038 P3c). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock", tickLimit = 300)
+    public void thePieceGoesToTheProfessionChest(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos freeAt = new BlockPos(2, 2, 5);
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        context.setBlockState(freeAt, Blocks.CHEST.getDefaultState());
+        world.setTimeOfDay(Schedule.WORK_TIME);
+
+        ColonyPos own = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+        ColonyPos free = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(freeAt));
+        ChestDepositor.deposit(world, free, Items.OAK_PLANKS, 64);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(UUID.randomUUID(), free);
+        VillageColonyMod.COLONIES.register(colony);
+        VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id()).assign(ProfessionType.CARPENTER);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), own));
+        UUID farmer = UUID.randomUUID();
+        VillageColonyMod.WORKERS.register(farmer, colony.id()).assign(ProfessionType.FARMER);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(farmer, free));
+        ColonyFixture fixture = ColonyFixture.create().owning(colony).owning(villager.getUuid()).owning(farmer);
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.CRAFT_WOOD_MATERIAL, TaskPriority.PRODUCTION, ResourceType.OAK_STAIRS, 4);
+        task.reserveFor(villager.getUuid());
+        CraftingWork.run(world, colony);
+
+        context.runAtTick(280, () -> {
+            try {
+                int inOwn = ColonyChests.countIn(world, List.of(own), Items.OAK_STAIRS);
+                int inFree = ColonyChests.countIn(world, List.of(free), Items.OAK_STAIRS);
+
+                context.assertTrue(inOwn >= 4 && inFree == 0,
+                        "a escada devia ir ao baú da profissão: profissão " + inOwn + ", baú do fazendeiro " + inFree);
+            } finally {
+                fixture.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
     private static void advance(TestContext context, ProfessionType profession, TaskType type,
             Item material, ResourceType piece, Item pieceItem, int amount, int most) {
         ServerWorld world = context.getWorld();

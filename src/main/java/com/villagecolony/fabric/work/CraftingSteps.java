@@ -141,12 +141,7 @@ final class CraftingSteps {
             }
 
             if (strip(world, colony.get(), wanted, workerId)
-                    || ColonySupply.stockToward(
-                            world,
-                            colony.get().id(),
-                            colony.get().center(),
-                            item.get(),
-                            remaining.getValue())) {
+                    || stockFor(world, colony.get(), workerId, item.get(), remaining.getValue())) {
 
                 return true;
             }
@@ -194,13 +189,22 @@ final class CraftingSteps {
             return Optional.of(false);
         }
 
-        if (!ColonySupply.stockToward(world, colony.get().id(), colony.get().center(), item.get(), job.goalTarget)) {
+        if (!stockFor(world, colony.get(), workerId, item.get(), job.goalTarget)) {
             return Optional.empty();
         }
 
         job.crafted++;
 
         return Optional.of(true);
+    }
+
+    /** Faz a peça com material de toda a vila e a guarda no baú da profissão (ADR-038 P3c). */
+    private static boolean stockFor(ServerWorld world, Colony colony, UUID workerId, Item item, int target) {
+        Optional<ColonyPos> own = VillageColonyMod.STORAGES.of(workerId).map(WorkerStorage::chestPosition);
+
+        return own.isPresent()
+                ? ColonySupply.stockToward(world, colony.id(), colony.center(), item, target, own.get())
+                : ColonySupply.stockToward(world, colony.id(), colony.center(), item, target);
     }
 
     /**
