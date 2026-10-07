@@ -566,7 +566,7 @@ public class CraftingGameTest implements FabricGameTest {
     public void theWorkPieceMadeByTheCarpenterStaysInTheChest(TestContext context) {
         Fixture fixture = setUpComposterWork(context);
 
-        context.runAtTick(120, () -> {
+        context.runAtTick(280, () -> {
             try {
                 int composters = ColonyChests.countIn(
                         context.getWorld(), List.of(fixture.chest), Items.COMPOSTER);
@@ -593,7 +593,7 @@ public class CraftingGameTest implements FabricGameTest {
     public void theCarpenterStocksTheWholeRemainingStairDemand(TestContext context) {
         Fixture fixture = setUpStairDemand(context);
 
-        context.runAtTick(180, () -> {
+        context.runAtTick(280, () -> {
             try {
                 int stairs = ColonyChests.countIn(
                         context.getWorld(), List.of(fixture.chest), Items.OAK_STAIRS);
@@ -795,7 +795,7 @@ public class CraftingGameTest implements FabricGameTest {
         Fixture fixture = setUpMasonry(context, ProfessionType.CARPENTER,
                 TaskType.CRAFT_WOOD_MATERIAL);
 
-        context.runAtTick(120, () -> {
+        context.runAtTick(280, () -> {
             try {
                 context.assertTrue(
                         ColonyChests.countIn(
@@ -829,7 +829,7 @@ public class CraftingGameTest implements FabricGameTest {
         Fixture fixture = setUpMasonry(context, ProfessionType.MASON,
                 TaskType.CRAFT_STONE_MATERIAL);
 
-        context.runAtTick(120, () -> {
+        context.runAtTick(280, () -> {
             try {
                 context.assertTrue(
                         ColonyChests.countIn(

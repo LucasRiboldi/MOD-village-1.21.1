@@ -121,10 +121,23 @@ public final class WorkTime {
                 StrandedWorkers.isStranded(id) || PenEscape.isEscaping(id),
                 !VillageColonyMod.TASKS.assignedTo(id).isEmpty() || GroundPickup.isHelping(id)
                         || ShepherdHerding.isHerding(id),
-                villager.handSwinging,
+                swungSinceLastSample(villager),
                 moved,
                 WorkTargets.of(id).isPresent(),
                 walker.still);
+    }
+
+    /**
+     * Se o aldeão golpeou desde a amostra anterior. O servidor nunca baixa o
+     * braço do aldeão (só o monstro e o jogador chamam {@code tickHandSwing}),
+     * então quem lê o braço também o baixa: sem isso, um golpe valia como
+     * trabalho para sempre e {@code walk} saía 0%.
+     */
+    static boolean swungSinceLastSample(VillagerEntity villager) {
+        boolean swung = villager.handSwinging;
+
+        villager.handSwinging = false;
+        return swung;
     }
 
     /** A regra da classificação, sem o mundo — para o teste. */

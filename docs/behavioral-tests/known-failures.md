@@ -42,6 +42,19 @@ Na mesma noite, uma vez em 5 baterias do item 20: `FarmPlanGameTest.theFirstBuil
 do caminho da reunião) e uma em 3 do item 19: `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted`
 (já no `TODO.md`). Causa **NÃO CONFIRMADA**.
 
+**Atualização (07-10, manhã) — folga de tempo, causa provável, não confirmada.** Os testes caídos
+mediam num tique fixo bem antes do limite: escadas no 180 (a carpintaria faz 1 lote a cada
+20 tiques, e de 4 para 12 são 2 lotes depois de receber a tarefa e chegar), composteira e
+`craft_family` no 120, fundidor da boca no 150. Os quatro passaram a medir perto do limite
+(280 de 300; 190 de 200). No negativo do `craft_family` (o carpinteiro não lavra tijolo) a
+medida tardia é **mais** exigente. Depois disso: **9 baterias seguidas, 638/638**. Com a taxa
+antiga (~1 em 8–10) isso ainda acontece por acaso em ~35% das vezes: **o KF-003 continua aberto**
+até ~30 baterias limpas. `FarmPlanGameTest` não é de tempo (chama o planejador direto) e segue
+sem causa.
+
+**Regra que saiu daqui (A2):** `batchId` novo muda a disposição das arenas da bateria e já
+derrubou `BuildSite` e `Lumberjack`. Teste novo vai para um lote que já existe.
+
 ---
 
 ## KF-002 — o aldeão de coleta some entre o `spawnEntity` e o tique 1
