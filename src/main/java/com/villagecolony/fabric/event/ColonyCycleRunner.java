@@ -406,10 +406,15 @@ final class ColonyCycleRunner {
 
     /** Trabalhos já reservados continuam mesmo enquanto uma fotografia termina de ser lida. */
     static void runOngoingWork(ServerWorld world, Colony colony) {
+        // Fora do expediente solta só quem anda para um alvo do mod. Desempregado,
+        // bebê e quem já vai para a cama seguem o Vanilla — ADR-037 V1.
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
-            if (world.getEntity(worker.villagerId()) instanceof VillagerEntity villager
+            if (worker.profession().isPresent()
+                    && com.villagecolony.fabric.brain.WorkTargets.of(worker.villagerId()).isPresent()
+                    && world.getEntity(worker.villagerId()) instanceof VillagerEntity villager
                     && !WorkHours.isWorkTime(world, villager)) {
                 WorkRest.release(villager);
+                com.villagecolony.fabric.brain.WorkTargets.clear(worker.villagerId());
             }
         }
 
