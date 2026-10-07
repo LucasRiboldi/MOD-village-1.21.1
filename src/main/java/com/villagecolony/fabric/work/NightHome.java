@@ -57,6 +57,12 @@ final class NightHome {
             for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
                 UUID id = worker.villagerId();
 
+                // Quem deitou fecha a porta da casa — ADR-037 V2.
+                if (world.getEntity(id) instanceof VillagerEntity sleeper && sleeper.isSleeping()) {
+                    sleeper.getSleepingPosition()
+                            .ifPresent(bed -> HouseDoors.closeOnce(world, sleeper, bed));
+                }
+
                 if (now < NEXT_CHECK.getOrDefault(id, Long.MIN_VALUE)
                         || !(world.getEntity(id) instanceof VillagerEntity villager)
                         || !villager.isAlive() || villager.isSleeping()) {

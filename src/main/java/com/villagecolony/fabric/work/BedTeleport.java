@@ -115,6 +115,9 @@ final class BedTeleport {
         villager.getNavigation().stop();
         villager.requestTeleport(bed.get().getX() + 0.5, bed.get().getY() + BED_TOP, bed.get().getZ() + 0.5);
 
+        // E fecha a porta da casa — ADR-037 C3.
+        HouseDoors.close(world, villager, bed.get());
+
         if (StrandedWorkers.isStranded(workerId)) {
             StrandedWorkers.release(workerId);
         }
