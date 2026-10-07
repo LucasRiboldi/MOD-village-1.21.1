@@ -1,10 +1,7 @@
 package com.villagecolony.fabric.work;
 
-import com.villagecolony.core.colony.model.Colony;
-import com.villagecolony.core.coordination.GatheringReach;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.VillageColonyMod;
-import com.villagecolony.data.save.ProfessionPolicySavedData;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
@@ -99,11 +96,6 @@ public final class TreeChoice {
     private TreeChoice() {
     }
 
-    private static int searchRadius(ServerWorld world) {
-        return ProfessionPolicySavedData.get(world.getServer()).policies()
-                .policyOf(ProfessionType.LUMBERJACK).searchRadiusOr(LumberjackWork.searchRadius);
-    }
-
     /**
      * Escolhe a próxima árvore, ou encerra a tarefa.
      *
@@ -144,17 +136,21 @@ public final class TreeChoice {
             return LumberjackWork.Outcome.WORKED;
         }
 
+        // Até 10 além da borda, alternando centro e borda — ADR-036 18.
+        ResourceSearches.Plan search = ResourceSearches.current(
+                world, job.task.colonyId(), ProfessionType.LUMBERJACK, job.center,
+                LumberjackWork.searchRadius, LumberjackWork.searchRadius != LumberjackWork.SEARCH_RADIUS);
+
         Optional<BlockPos> tree = TreeScanner.findNearestLog(
                 world,
-                job.center,
-                // Cresce com a vila — N11; ver GatheringReach.
-                GatheringReach.radius(
-                        VillageColonyMod.COLONIES.find(job.task.colonyId())
-                                .map(Colony::observedBeds).orElse(0),
-                        searchRadius(world)),
-                log -> !TreeClaims.isTaken(log)
+                search.origin(),
+                search.radius(),
+                log -> search.inside().test(log)
+                        && !TreeClaims.isTaken(log)
                         && !TreeMarks.isRejected(world, log)
                         && !TreeMarks.isOutOfReach(world, log));
+
+        ResourceSearches.advance(job.task.colonyId(), ProfessionType.LUMBERJACK);
 
         if (tree.isEmpty()) {
             // Nenhuma árvore ao alcance. Não é motivo para encerrar: a

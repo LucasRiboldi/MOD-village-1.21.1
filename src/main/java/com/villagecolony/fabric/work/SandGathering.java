@@ -1,9 +1,7 @@
 package com.villagecolony.fabric.work;
 
-import com.villagecolony.VillageColonyMod;
-import com.villagecolony.core.colony.model.Colony;
-import com.villagecolony.core.coordination.GatheringReach;
 import com.villagecolony.core.coordination.IdleReason;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.integration.MineFlooding;
 import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.integration.SandPatch;
@@ -62,16 +60,6 @@ public final class SandGathering {
         sandRadius = blocks;
     }
 
-    /**
-     * O raio desta vila: cresce com as camas até {@link #sandRadius} — N11.
-     * O raio encurtado dos testes continua sendo o teto.
-     */
-    private static int reach(UUID colonyId) {
-        int beds = VillageColonyMod.COLONIES.find(colonyId).map(Colony::observedBeds).orElse(0);
-
-        return GatheringReach.radius(beds, sandRadius);
-    }
-
     /** Devolve o raio ao valor de jogo. */
     public static void restoreSandRadius() {
         sandRadius = SAND_RADIUS;
@@ -89,10 +77,16 @@ public final class SandGathering {
     public static Optional<BlockPos> nextTarget(
             ServerWorld world, UUID workerId, UUID colonyId, BlockPos center) {
 
+        // Até 10 além da borda, alternando centro e borda — ADR-036 18.
+        ResourceSearches.Plan search = ResourceSearches.current(
+                world, colonyId, ProfessionType.MINER, center, sandRadius, sandRadius != SAND_RADIUS);
+
         Optional<BlockPos> found = RingSweep.around(
                 workerId,
-                center,
-                reach(colonyId),
+                search.origin(),
+                search.radius(),
+                // Fora do limite a coluna nem gasta orçamento.
+                column -> search.inside().test(column),
                 // A areia entra pela mesma porta — E44, 2026-09-10. O
                 // MinerHands.giveUp marca o alvo seja ele pedra ou areia,
                 // e uma duna inalcançável tem exatamente a mesma forma de
@@ -100,6 +94,11 @@ public final class SandGathering {
                 column -> SandPatch.in(world, column, center.getY())
                         .filter(sand -> !MineMarks.isUnreachableAround(world, sand))
                         .filter(sand -> !MineFlooding.holdsBackFluid(world, sand)));
+
+        // A vez só passa com a varredura inteira: a pausada continua de onde parou.
+        if (RingSweep.pausedAt(workerId).isEmpty()) {
+            ResourceSearches.advance(colonyId, ProfessionType.MINER);
+        }
 
         if (found.isEmpty()) {
             // Pelo IdleLog, e não direto no logger: uma varredura de raio
@@ -118,7 +117,7 @@ public final class SandGathering {
                     RingSweep.pausedAt(workerId).isPresent()
                             ? IdleReason.SWEEP_INCOMPLETE
                             : IdleReason.NO_TARGET,
-                    "sand within " + reach(colonyId) + " blocks",
+                    "sand within " + search.radius() + " blocks of " + search.origin().toShortString(),
                     world.getTime());
 
             return Optional.empty();
