@@ -260,9 +260,7 @@ public final class SurfaceGatheringWork {
                         && (!outsideVillage || FarthestVillageSector.isInSector(
                                 job.center, column, job.surfaceSector, protectedRadius));
 
-        Optional<BlockPos> found = VillageSpiralSweep.next(
-                workerId, bounds, job.center.getY(),
-                outerReach(job, bounds, outsideVillage, protectedRadius), worthLooking, column -> {
+        java.util.function.Function<BlockPos, Optional<BlockPos>> probe = column -> {
             if (job.task.targetResource() == ResourceType.SAND) {
                 return SandPatch.in(world, column, job.center.getY())
                         .filter(pos -> BlockProtection.mayBreak(world, pos, world.getBlockState(pos)));
@@ -286,7 +284,14 @@ public final class SurfaceGatheringWork {
                 return ClayPatch.in(world, column, job.center.getY());
             }
             return Optional.empty();
-        });
+        };
+
+        // Primeiro onde já se achou — ADR-038 P7; depois a varredura.
+        Optional<BlockPos> found = SurfaceHits.near(
+                job.task.colonyId(), job.task.targetResource(), worthLooking, probe)
+                .or(() -> VillageSpiralSweep.next(
+                        workerId, bounds, job.center.getY(),
+                        outerReach(job, bounds, outsideVillage, protectedRadius), worthLooking, probe));
 
         if (found.isEmpty()) {
             boolean paused = VillageSpiralSweep.pausedAt(workerId).isPresent();
@@ -316,6 +321,7 @@ public final class SurfaceGatheringWork {
         }
 
         EmptySweeps.found(job.task.colonyId(), job.task.targetResource());
+        SurfaceHits.remember(job.task.colonyId(), job.task.targetResource(), found.get());
         IdleLog.clear(job.task.colonyId(), subject(job));
         job.target = found.get();
         job.progress = 0;
