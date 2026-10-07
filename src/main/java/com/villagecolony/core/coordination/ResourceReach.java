@@ -21,6 +21,9 @@ public final class ResourceReach {
     /** Quanto a busca passa da borda da vila. */
     public static final int EDGE_MARGIN = 10;
 
+    /** Até onde a busca vai quando a de {@link #EDGE_MARGIN} não achou nada — ADR-037 L1. */
+    public static final int WIDE_MARGIN = 20;
+
     private static final Side[] EDGES = {Side.NORTH, Side.EAST, Side.SOUTH, Side.WEST};
 
     /** Uma busca: de onde parte e até que distância dali. */
@@ -32,16 +35,26 @@ public final class ResourceReach {
 
     /** A caixa da vila com a margem de busca. */
     public static VillageBounds limit(VillageBounds box) {
+        return limit(box, EDGE_MARGIN);
+    }
+
+    /** A caixa da vila com uma margem dada. */
+    public static VillageBounds limit(VillageBounds box, int margin) {
         Objects.requireNonNull(box, "box");
 
         return new VillageBounds(
-                box.minX() - EDGE_MARGIN, box.minY(), box.minZ() - EDGE_MARGIN,
-                box.maxX() + EDGE_MARGIN, box.maxY(), box.maxZ() + EDGE_MARGIN);
+                box.minX() - margin, box.minY(), box.minZ() - margin,
+                box.maxX() + margin, box.maxY(), box.maxZ() + margin);
     }
 
     /** Se a coluna está dentro do limite de busca desta vila. */
     public static boolean within(VillageBounds box, int x, int z) {
-        return box.containsColumn(x, z, EDGE_MARGIN);
+        return within(box, x, z, EDGE_MARGIN);
+    }
+
+    /** O mesmo, com uma margem dada. */
+    public static boolean within(VillageBounds box, int x, int z, int margin) {
+        return box.containsColumn(x, z, margin);
     }
 
     /**
@@ -50,7 +63,12 @@ public final class ResourceReach {
      * @param centre o centro da vila; a altura dele vai para a origem
      */
     public static Search search(VillageBounds box, ColonyPos centre, int turn) {
-        VillageBounds limit = limit(box);
+        return search(box, centre, turn, EDGE_MARGIN);
+    }
+
+    /** A busca da vez com uma margem dada. */
+    public static Search search(VillageBounds box, ColonyPos centre, int turn, int margin) {
+        VillageBounds limit = limit(box, margin);
 
         if (Math.floorMod(turn, 2) == 0) {
             int radius = Math.max(

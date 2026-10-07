@@ -41,6 +41,18 @@ public class ResourceSearchesGameTest implements FabricGameTest {
                             && !first.inside().test(centre.add(box.maxX() - centre.getX() + 11, 0, 0)),
                     "o limite não é dez além da borda");
 
+            // Sem árvore, a próxima vai até a borda + 20 (ADR-037 L1); achando, volta.
+            ResourceSearches.found(colony.id(), ProfessionType.LUMBERJACK, false);
+            ResourceSearches.Plan wide = ResourceSearches.current(
+                    context.getWorld(), colony.id(), ProfessionType.LUMBERJACK, centre, 64, false);
+            ResourceSearches.found(colony.id(), ProfessionType.LUMBERJACK, true);
+            ResourceSearches.Plan narrow = ResourceSearches.current(
+                    context.getWorld(), colony.id(), ProfessionType.LUMBERJACK, centre, 64, false);
+            BlockPos twentyOut = centre.add(box.maxX() - centre.getX() + 20, 0, 0);
+
+            context.assertTrue(wide.inside().test(twentyOut) && !narrow.inside().test(twentyOut),
+                    "a busca sem árvore não foi até a borda + 20, ou não voltou depois de achar");
+
             ResourceSearches.Plan shortened = ResourceSearches.current(
                     context.getWorld(), colony.id(), ProfessionType.LUMBERJACK, centre, 8, true);
 
