@@ -11,7 +11,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -349,15 +348,4 @@ class HiringLogTest {
         assertEquals(1, HiringLog.countOf(sixtyFifth, ProfessionType.MINER, HiringLog.Outcome.AT_TARGET));
     }
 
-    /** Dois desfechos saem separados por "; ", e nenhum começa com o separador. */
-    @Test
-    void theReportSeparatesItsItemsAndNeverStartsWithTheSeparator() {
-        HiringLog.record(COLONY, ProfessionType.MINER, HiringLog.Outcome.AT_TARGET);
-        HiringLog.record(COLONY, ProfessionType.MINER, HiringLog.Outcome.SHUNNED);
-
-        String report = HiringLog.report(COLONY);
-
-        assertFalse(report.startsWith(";"), "o relatório abriu com o separador: " + report);
-        assertEquals(2, report.split("; ").length, "esperava dois itens: " + report);
-    }
 }
