@@ -1,8 +1,8 @@
 # STATE — 2026-10-07
 
-> **JAR atual: `village-colony-0.3.3.jar` = `103DE3F9…3734`** em `build/libs/`, `downloads/` (local),
-> `%APPDATA%/.minecraft/mods` e na versão `v0.3.3-alpha` do GitHub. **ADR-036, 037 e 038 na
-> `main`.** Nada da 037 e da 038 visto em jogo. Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md`.
+> **JAR atual: `village-colony-0.3.4.jar` = `614C60B3…EDF5`** em `build/libs/`, `downloads/` (local) e
+> `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
+> Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -15,6 +15,20 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 07-10, tarde — ADR-039 aplicada (aguarda playtest)
+
+Respostas às pendências (`docs/decisions/ADR-039-*`, tabela "Estado"): E1 espera de 1 a 5 min
+depois de busca vazia; E2 animal solto também procria; D1 carpinteiro adianta escada, laje e
+cerca, e a tarefa de fabricação faz a peça pedida (o pedreiro fazia tábua no lugar do tijolo
+adiantado); D2 caminho até a obra longe da rua; D3 ramal novo rumo ao minério que falta;
+F1 pedra como solo (já valia); F2/F3 branches do Codex incorporadas.
+**KF-003 com causa achada:** o tique de teste fundia colônias de cenários vizinhos.
+
+**Verificado em 07-10:** `build` ok; **1.361 unitários**; GameTests **644/644** em 6 baterias
+seguidas, 0 fusões. **Playtest pedido:** carpinteiro com escada/laje/cerca no baú, pedreiro com
+tijolo sem obra pedindo, caminho até obra afastada, mineiro abrindo ramal com minério,
+`time_ledger.py` (o `walk` deve aparecer depois do A3).
 
 ## 🟡 07-10, tarde — ADR-038 aplicada (aguarda playtest)
 

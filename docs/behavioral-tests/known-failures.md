@@ -7,6 +7,13 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ## KF-003 — duas intermitentes de fabricação vistas em 2026-10-06
 
+> **Causa achada em 07-10 (ADR-039 A1, `1e55cb9e`):** o tique do servidor de teste rodava a fusão
+> de colônias a cada 600 tiques, e colônias de cenários vizinhos viravam uma no meio do teste
+> (7 a 11 fusões por bateria). A absorvida perdia a mina (fundidor: `mina=Optional.empty`) e
+> carpinteiro e pedreiro passavam a dividir baús (tijolo no baú do carpinteiro). Depois da
+> correção: 6 baterias seguidas 644/644 com 0 fusões. **Fica aberto até ~30 baterias limpas**;
+> o texto abaixo é o histórico da caça.
+
 Branch `integra/linhas-2026-10-06`. Em **10 baterias completas** no dia (612 ou
 611 testes cada), 2 falharam, cada uma num teste diferente, e as repetições
 passaram:

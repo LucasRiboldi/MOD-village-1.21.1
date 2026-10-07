@@ -130,9 +130,8 @@ recusou a pausa e a chuva (18-e1); trocou a ferramenta fixa pela melhor do baú
 
 ## Regras que faltam decidir
 
-| # | Pergunta | Trava |
-|---|---|---|
-| P0.7 | Aceitar pedra como solo de lote? | toca a Regra 3 e a Regra 19 |
+Nenhuma. A última, P0.7 (pedra como solo de lote), foi aceita pelo autor em 07-10 (ADR-039 F1):
+o código já tratava todo bloco sólido como solo desde 15-09 (`LotGround.isLotGround`).
 
 ---
 
