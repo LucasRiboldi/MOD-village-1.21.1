@@ -28,6 +28,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.state.property.Properties;
+import net.minecraft.state.property.Property;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.CropBlock;
@@ -157,6 +158,29 @@ public final class BlockShaping {
         }
 
         return state.with(Properties.HORIZONTAL_FACING, outward.getOpposite());
+    }
+
+    /**
+     * Eixo, metade e formato na posição da planta — ADR-036 item 19. Propriedade
+     * que o bloco (ou o substituto da Regra 27) não tem, ou valor que ele não
+     * aceita, fica como estava.
+     */
+    static BlockState withPlanStates(BlueprintBlock block, BlockState state) {
+        BlockState shaped = state;
+
+        for (Map.Entry<String, String> planned : block.states().entrySet()) {
+            Property<?> property = shaped.getBlock().getStateManager().getProperty(planned.getKey());
+
+            if (property != null) {
+                shaped = withValue(shaped, property, planned.getValue());
+            }
+        }
+
+        return shaped;
+    }
+
+    private static <T extends Comparable<T>> BlockState withValue(BlockState state, Property<T> property, String value) {
+        return property.parse(value).map(parsed -> state.with(property, parsed)).orElse(state);
     }
 
     /**

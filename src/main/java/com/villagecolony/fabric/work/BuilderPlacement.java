@@ -262,8 +262,9 @@ public final class BuilderPlacement {
     }
 
     /**
-     * O estado que o construtor assenta neste lugar: a direção da planta, a
-     * cama pela cabeceira, e a peça de parede apoiada na parede que existe.
+     * O estado que o construtor assenta neste lugar: eixo, metade e formato
+     * da planta (ADR-036 19), a direção dela, a cama pela cabeceira, e a peça
+     * de parede apoiada na parede que existe.
      */
     static BlockState shaped(
             ServerWorld world,
@@ -272,8 +273,8 @@ public final class BuilderPlacement {
             Block material,
             BlockPos target) {
 
-        BlockState state = BlockShaping.bedFacing(
-                world, target, BlockShaping.facing(project, block, material.getDefaultState()));
+        BlockState planned = BlockShaping.withPlanStates(block, material.getDefaultState());
+        BlockState state = BlockShaping.bedFacing(world, target, BlockShaping.facing(project, block, planned));
 
         return BlockShaping.leanOnAWall(world, target, state);
     }
