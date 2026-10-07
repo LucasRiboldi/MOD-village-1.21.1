@@ -54,4 +54,14 @@ class WorkClockTest {
         assertTrue(WorkClock.isWorkTime(tenDays + 1_000), "décimo dia de manhã");
         assertFalse(WorkClock.isWorkTime(tenDays + 14_000), "décima noite");
     }
+
+    @Test
+    @DisplayName("a hora da cama começa quando o Vanilla manda dormir e vai até o amanhecer")
+    void restTimeIsTheVanillaNight() {
+        assertFalse(WorkClock.isRestTime(WorkClock.DUSK), "a última hora de sol é para voltar");
+        assertFalse(WorkClock.isRestTime(WorkClock.REST - 1), "um tique antes ainda não é cama");
+        assertTrue(WorkClock.isRestTime(WorkClock.REST), "o REST do Vanilla é cama");
+        assertTrue(WorkClock.isRestTime(23_999), "o fim da noite é cama");
+        assertFalse(WorkClock.isRestTime(WorkClock.DAY), "o amanhecer do dia seguinte não é cama");
+    }
 }

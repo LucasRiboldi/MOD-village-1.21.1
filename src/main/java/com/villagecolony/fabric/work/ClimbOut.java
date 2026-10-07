@@ -54,9 +54,9 @@ import java.util.UUID;
  * </ol>
  *
  * <p><b>Nunca desiste.</b> Esgotados os três, recomeça pela escada. Só o que
- * a {@code BlockProtection} protege não é quebrado (Regra 3); um aldeão
- * fechado por todos os lados nisso fica tentando, e o log diz onde, a cada
- * minuto. Nenhum teletransporte (decisão do autor no E47).
+ * a {@code BlockProtection} protege não é quebrado (Regra 3). Cada troca de
+ * jeito é uma tentativa; {@link BedTeleport#STUCK_ATTEMPTS} tentativas sem sair
+ * do lugar levam o aldeão para a cama dele (ADR-036 item 15).
  *
  * <p><b>Os movimentos são dele, não da navegação.</b> Pisar no degrau e
  * entrar no túnel vão pelo controle de movimento; a navegação Vanilla fica
@@ -196,6 +196,10 @@ final class ClimbOut {
             return;
         }
 
+        if (BedTeleport.tooManyAttempts(world, villager, workerId)) {
+            return;
+        }
+
         if (feet.getY() > climb.bestY) {
             climb.upBy.merge(climb.mode, feet.getY() - climb.bestY, Integer::sum);
             climb.bestY = feet.getY();
@@ -260,6 +264,7 @@ final class ClimbOut {
 
     static void forget(UUID workerId) {
         CLIMBS.remove(workerId);
+        BedTeleport.forgetAttempts(workerId);
         MineReturn.forget(workerId);
     }
 
@@ -481,6 +486,7 @@ final class ClimbOut {
         climb.mode = to;
         climb.noGain = 0;
         climb.tunnelWay = null;
+        BedTeleport.attempt(workerId, feet);
     }
 
     private static String describe(ServerWorld world, BlockPos at) {

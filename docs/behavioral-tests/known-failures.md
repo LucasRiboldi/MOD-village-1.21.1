@@ -31,6 +31,13 @@ memória como instável). As duas baterias seguintes passaram 616/616. E o
 filtro `-PgametestOnly=CraftingGameTest,BuilderGameTest` derruba sempre dois
 testes de fabricação, com ou sem a mudança: esses dependem do resto da bateria.
 
+**Atualização (06-10, noite, itens 9 e 15 da ADR-036):** o lote `craft_stock`
+caiu **inteiro** (as escadas, "parou com 4", e `theWorkPieceMadeByTheCarpenterStaysInTheChest`)
+em 2 de ~16 baterias; as outras passaram, e 5 seguidas não reproduziram. A saída
+da carpintaria é o baú próprio, que o teto de 3 compartimentos não aperta neste
+cenário (1 pilha de tábuas e 1 de escadas). Causa **NÃO CONFIRMADA**; a linha de
+base sem as mudanças passou 3/3, amostra pequena demais para descartá-las.
+
 ---
 
 ## KF-002 — o aldeão de coleta some entre o `spawnEntity` e o tique 1

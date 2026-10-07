@@ -103,6 +103,9 @@ public final class StrandedEscape {
             pass(world, workerId);
         }
 
+        // À noite, quem não acha caminho até a cama vai para ela — ADR-036 15.
+        NightHome.pass(world);
+
         // Quem já saiu tampa a escada, um bloco por passagem — N10.
         EscapeBackfill.tick(world);
 
@@ -395,7 +398,7 @@ public final class StrandedEscape {
         }
     }
 
-    private static void forget(UUID workerId) {
+    static void forget(UUID workerId) {
         ClimbOut.forget(workerId);
         WorkTargets.clear(workerId);
     }
