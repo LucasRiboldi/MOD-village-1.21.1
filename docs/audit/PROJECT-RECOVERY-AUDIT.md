@@ -174,7 +174,7 @@ parametrizado. Ver TEST-STRATEGY.
 ## 14. Documentação
 
 ≈400 arquivos `.md`, dos quais ≈10 governam o projeto. `START_PROJECT.md` manda
-ler 20 documentos de agosto (contradiz o CLAUDE.md); `claude/CLAUDE.md` concorre
+ler 20 documentos de agosto (contradiz o CLAUDE.md); `docs/archive/design-2026-08/claude/CLAUDE-antigo.md` concorre
 com o da raiz; `agent/skills` duplica `.claude/skills` com conteúdo divergente;
 CLAUDE.md remete a §1 e §2 que não existem; duas ADR-025. Ver ROADMAP §3.
 

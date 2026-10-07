@@ -20,7 +20,7 @@ A regra e a especificação se contradizem.
 
 ## A regra
 
-`claude/CLAUDE.md §6`:
+`docs/archive/design-2026-08/claude/CLAUDE-antigo.md §6`:
 
 > Modelos nunca devem conhecer:
 >

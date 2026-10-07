@@ -222,7 +222,7 @@ Release: **7,0/10**. CI, build e artefato estão presentes; o CI não deve ser
 considerado liberável enquanto o GameTest obrigatório falhar.
 
 Consulte a lista priorizada de erros, melhorias, inconsistências e conflitos em
-[`docs/technical/Project-Audit-2026-09-21.md`](docs/technical/Project-Audit-2026-09-21.md)
+[`docs/archive/technical/Project-Audit-2026-09-21.md`](docs/archive/technical/Project-Audit-2026-09-21.md)
 e a fila viva em [`TODO.md`](TODO.md).
 
 ## Documentos de entrada
@@ -234,7 +234,7 @@ e a fila viva em [`TODO.md`](TODO.md).
 - [`docs/decisions/`](docs/decisions/): decisões arquiteturais.
 - [`docs/behavioral-tests/`](docs/behavioral-tests/): estratégia e falhas de
   GameTest.
-- [`docs/technical/Project-Audit-2026-09-21.md`](docs/technical/Project-Audit-2026-09-21.md):
+- [`docs/archive/technical/Project-Audit-2026-09-21.md`](docs/archive/technical/Project-Audit-2026-09-21.md):
   auditoria desta varredura.
 
 Licença MIT. Feito para Minecraft 1.21.1 com Fabric.

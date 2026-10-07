@@ -8,7 +8,7 @@ As regras do autor do Village Colony, em tabela. **Fonte única para
 
 Onde o código discordar de uma regra, é a regra que está certa — ou a
 regra que foi emendada. O corpo de cada regra vive em
-`docs/technical/Project-State.md §18`; aqui é o índice.
+`docs/archive/technical/Project-State.md §18`; aqui é o índice.
 
 ---
 
@@ -154,7 +154,7 @@ recusou a pausa e a chuva (18-e1); trocou a ferramenta fixa pela melhor do baú
 ## Onde estão os enunciados completos
 
 Cada regra tem o texto integral (o que o autor disse, na data) em
-`docs/technical/Project-State.md §18`. Aqui é o índice.
+`docs/archive/technical/Project-State.md §18`. Aqui é o índice.
 
 Quando o código divergir da tabela, **a tabela está errada** — atualize
 aqui primeiro, e depois o código.

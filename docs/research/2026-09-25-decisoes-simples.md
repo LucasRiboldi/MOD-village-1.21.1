@@ -47,7 +47,7 @@ B*. Espera sem prazo é trava, mesmo quando o motivo é bom.
 | 9 | Fusão de vilas (ADR-007, nunca implementada) | **Arquivar.** Sem fusão, duas vilas próximas são duas colônias; não trava nada. Reabrir só se o jogo mostrar problema. | nulo |
 | 10 | Orientação dos blocos (ADR-008) | Provavelmente já resolvido (peças de parede e escadas orientadas desde 09). **Confirmar e fechar.** | nulo |
 | 11 | Versões das dependências | **Manter as faixas** no `fabric.mod.json`: é a prática dos mods Fabric, e fixar exato quebra o mod a cada atualização do loader. A regra de "versões fixas" vale para o build (`gradle.properties`), não para o que o jogador instala. | nulo |
-| 12 | 7 documentos que descrevem classes inexistentes | **Mover para `docs/historical/`** com uma linha dizendo o que substituiu cada um. | mínimo |
+| 12 | 7 documentos que descrevem classes inexistentes | **Mover para `docs/archive/design-2026-08/`** com uma linha dizendo o que substituiu cada um. | mínimo |
 | 13 | Ligar os hooks | Só o autor pode. | — |
 
 ### 🟡 Melhoria

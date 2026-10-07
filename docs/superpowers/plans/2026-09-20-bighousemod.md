@@ -74,7 +74,7 @@
 ### Task 4: Documentation, release and verification
 
 **Files:**
-- Modify: `STATE.md`, `TODO.md`, `docs/proxima-sessao.md`, `docs/technical/Development-Log.md`
+- Modify: `STATE.md`, `TODO.md`, `docs/proxima-sessao.md`, `docs/archive/technical/Development-Log.md`
 - Modify: `docs/decisions/ADR-018-village-foundation-contract.md`
 - Update: `downloads/village-colony-0.3.0.jar`
 

@@ -45,7 +45,7 @@
 - Modify: `src/gametest/java/com/villagecolony/gametest/MinerGameTest.java` -- covers the live normal-mine width and miner target behavior.
 - Create: `src/gametest/java/com/villagecolony/gametest/WaterMineAccessGameTest.java` -- builds controlled water fixtures and proves eligibility, sealing and refusal cases.
 - Create: `docs/decisions/ADR-026-water-mine-access.md` -- records the water-only exception and save/world-truth decision.
-- Modify: `STATE.md`, `TODO.md`, `docs/technical/Development-Log.md` -- record implementation and the remaining author playtest.
+- Modify: `STATE.md`, `TODO.md`, `docs/archive/technical/Development-Log.md` -- record implementation and the remaining author playtest.
 
 ### Task 1: Widen the normal MineShaft and migrate saved cursors
 
@@ -232,7 +232,7 @@ git commit -m "P0.8: protect sealed mine access from miners (WaterMineAccessGame
 - Create: `docs/decisions/ADR-026-water-mine-access.md`
 - Modify: `STATE.md`
 - Modify: `TODO.md`
-- Modify: `docs/technical/Development-Log.md`
+- Modify: `docs/archive/technical/Development-Log.md`
 
 **Interfaces:**
 - Produces: the documented water-only exception, shape-7 migration and explicit playtest evidence to collect.
@@ -268,6 +268,6 @@ Expected: one recorded artifact hash. Do not copy to `downloads`, the Minecraft 
 - [ ] **Step 5: Commit documentation only after all checks are green**
 
 ```powershell
-git add docs/decisions/ADR-026-water-mine-access.md STATE.md TODO.md docs/technical/Development-Log.md
+git add docs/decisions/ADR-026-water-mine-access.md STATE.md TODO.md docs/archive/technical/Development-Log.md
 git commit -m "P0.8: document sealed water mine access (runGametest)"
 ```

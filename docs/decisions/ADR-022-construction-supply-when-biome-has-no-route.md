@@ -52,7 +52,7 @@ prova que uma porta de carvalho em planicie nao e materializada.
 ## Emenda N3 - 2026-09-24: equivalente antes da peca pronta
 
 Decisao do autor na revisao de naturalidade
-(`docs/technical/Revisao-Naturalidade-2026-09-24.md`): *"trocar por
+(`docs/archive/technical/Revisao-Naturalidade-2026-09-24.md`): *"trocar por
 equivalente; nao existindo no bioma, dai fazer o item nascer no bau pronto"*.
 
 A regra desta ADR ja consultava a familia inteira antes de criar a peca, mas

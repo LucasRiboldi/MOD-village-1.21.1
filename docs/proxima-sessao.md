@@ -29,7 +29,7 @@ do aviso e da tentativa a cada tick, sem alterar a mina normal ou a rota aquáti
 76-122 ms em ciclos de 91-259 ms. Antes de alterar qualquer profissao, repetir
 o perfil Spark descrito em `docs/technical/Profiling-spark.md`; a proxima
 correcao compara indice incremental de estoque com levantamento fatiado. Ver
-`docs/technical/Auditoria-Entrega-2026-09-28.md` para os criterios e os
+`docs/archive/technical/Auditoria-Entrega-2026-09-28.md` para os criterios e os
 playtests ainda obrigatorios.
 
 **Bau em chunk descarregado:** deixe um bau registrado fora da distancia de

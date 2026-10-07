@@ -8,7 +8,7 @@
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
 >
 > O que já foi resolvido mora em
-> [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md)
+> [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md)
 > e se consulta por `grep`. Ele já passou do teto três vezes (2.277 linhas
 > em 09-19; 659 em 09-24; 348 em 09-30): o texto antigo foi arquivado lá, sem
 > edição. O texto completo de cada correção abaixo está na seção

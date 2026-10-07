@@ -30,4 +30,4 @@
 ## 5. Verificacao e estado vivo
 
 - Rodar testes unitarios, `build` e `runGametest`.
-- Atualizar `STATE.md`, `TODO.md` e `docs/technical/Development-Log.md` com resultados exatos e playtests ainda pendentes.
+- Atualizar `STATE.md`, `TODO.md` e `docs/archive/technical/Development-Log.md` com resultados exatos e playtests ainda pendentes.

@@ -19,7 +19,7 @@ vivo, sem persistir snapshots do mundo.
    após o tick; encaminhar apenas posições cujo estado mudou para a mina e
    para as colônias próximas. Registrar e limpar fila no ciclo de vida.
 4. **Documentação:** anotar elegibilidade e releitura dos baús, atualizar
-   `STATE.md`, `TODO.md` e `docs/technical/Development-Log.md`.
+   `STATE.md`, `TODO.md` e `docs/archive/technical/Development-Log.md`.
 5. **Verificação:** `./gradlew build`, `./gradlew runGametest`; revisar diff e
    parar para validação do usuário antes de iniciar outro lote. A invalidação
    desligada fez somente `invalidatingAfterAPlayerRoadChangeReindexesTheWorld`

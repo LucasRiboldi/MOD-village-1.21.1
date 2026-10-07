@@ -16,7 +16,7 @@
 - Nunca usar `@Overwrite` em mixin.
 - Não persistir dados que o mundo já guarda.
 - Rodar `./gradlew build` antes das mudanças e `./gradlew runGametest` após tocar na camada Fabric.
-- Atualizar `STATE.md`, `TODO.md` e `docs/technical/Development-Log.md` para mudança de comportamento.
+- Atualizar `STATE.md`, `TODO.md` e `docs/archive/technical/Development-Log.md` para mudança de comportamento.
 - Parar após este lote para revisão do autor; mineração e construção são lote posterior.
 
 ---
@@ -51,7 +51,7 @@
 - Modify: `STATE.md`
 - Modify: `TODO.md`
 - Modify: `docs/technical/Plano-de-Correcao.md`
-- Modify: `docs/technical/Development-Log.md`
+- Modify: `docs/archive/technical/Development-Log.md`
 
 - [x] Registrar o resultado como aguardando validação em jogo, sem declarar as profissões corrigidas com base apenas em testes.
 - [x] Atualizar o JAR de distribuição e o JAR do launcher apenas depois dos testes, preservando arquivos locais existentes até a cópia nova estar validada.
