@@ -1,6 +1,6 @@
 # STATE — 2026-10-07
 
-> **JAR atual: `village-colony-0.3.6.jar` = `DAC96728…7DE8`** em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.7.jar` = `10407A73…7DAE`** em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -17,6 +17,9 @@
 ---
 
 ## 🟡 07-10, tarde — ADR-039 aplicada (aguarda playtest)
+
+**0.3.7:** junção e ciclo de vida só na colônia do jogador (opção B); plano de testes aplicado (D2,
+B1, B3–B6 e o arquivo do save, cada um com mutação). 1.362 unitários, 95 Python, 654/654 GameTests.
 
 **0.3.6 (segunda rodada da ADR-039):** produto no baú da profissão; adiantamento segue as peças das
 casas do bioma (pinheiro, acácia, arenito); mineiro não perde o ofício. `TODO.md` reescrito só com o
