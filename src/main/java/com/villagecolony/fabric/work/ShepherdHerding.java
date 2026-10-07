@@ -80,6 +80,41 @@ final class ShepherdHerding {
         NEXT_TRY.clear();
     }
 
+    /**
+     * As coletas em andamento, para o save — ADR-039 C. Sem elas, o animal que
+     * estava na corda ao fechar o mundo voltava preso ao pastor, sem ninguém o levar.
+     */
+    static net.minecraft.nbt.NbtCompound save() {
+        net.minecraft.nbt.NbtCompound nbt = new net.minecraft.nbt.NbtCompound();
+
+        HERDS.forEach((shepherd, herd) -> {
+            net.minecraft.nbt.NbtCompound entry = new net.minecraft.nbt.NbtCompound();
+
+            entry.putUuid("animal", herd.animal);
+            entry.putLong("fence", herd.fence.asLong());
+            entry.putString("phase", herd.phase.name());
+            entry.putLong("since", herd.since);
+            nbt.put(shepherd.toString(), entry);
+        });
+
+        return nbt;
+    }
+
+    static void load(net.minecraft.nbt.NbtCompound nbt) {
+        for (String key : nbt.getKeys()) {
+            UUID shepherd = com.villagecolony.fabric.integration.WorkMemoryKeys.uuid(key);
+            net.minecraft.nbt.NbtCompound entry = nbt.getCompound(key);
+
+            if (shepherd == null || !entry.containsUuid("animal")) {
+                continue;
+            }
+
+            Herd herd = new Herd(entry.getUuid("animal"), BlockPos.fromLong(entry.getLong("fence")), entry.getLong("since"));
+            herd.phase = "LEAD".equals(entry.getString("phase")) ? Phase.LEAD : Phase.FETCH;
+            HERDS.put(shepherd, herd);
+        }
+    }
+
     static boolean isHerding(UUID shepherd) {
         return HERDS.containsKey(shepherd);
     }

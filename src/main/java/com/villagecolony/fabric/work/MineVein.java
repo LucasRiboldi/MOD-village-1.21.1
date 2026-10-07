@@ -55,6 +55,66 @@ final class MineVein {
         TRAILS.clear();
     }
 
+    /**
+     * O veio e o rastro de cada ramal, para o save — ADR-039 C. O ramal é
+     * recriado ao carregar, então a chave é {@code colônia|índice do ramal}.
+     */
+    static net.minecraft.nbt.NbtCompound save() {
+        net.minecraft.nbt.NbtCompound nbt = new net.minecraft.nbt.NbtCompound();
+
+        for (com.villagecolony.core.construction.model.Mine mine : VillageColonyMod.MINES.all()) {
+            for (int index = 0; index < mine.arms().size(); index++) {
+                MineArm arm = mine.arm(index);
+                net.minecraft.nbt.NbtCompound entry = new net.minecraft.nbt.NbtCompound();
+
+                arm.vein().ifPresent(ore -> entry.putLong("vein", MinecraftTypeAdapter.toBlockPos(ore).asLong()));
+                Deque<BlockPos> trail = TRAILS.get(arm);
+
+                if (trail != null && !trail.isEmpty()) {
+                    entry.putLongArray("trail", trail.stream().mapToLong(BlockPos::asLong).toArray());
+                }
+
+                if (!entry.isEmpty()) {
+                    nbt.put(mine.colonyId() + "|" + index, entry);
+                }
+            }
+        }
+
+        return nbt;
+    }
+
+    static void load(net.minecraft.nbt.NbtCompound nbt) {
+        for (String key : nbt.getKeys()) {
+            int bar = key.indexOf('|');
+            java.util.UUID colony = bar > 0
+                    ? com.villagecolony.fabric.integration.WorkMemoryKeys.uuid(key.substring(0, bar)) : null;
+            String tail = bar > 0 ? key.substring(bar + 1) : "";
+            int index = tail.length() == 1 && Character.isDigit(tail.charAt(0)) ? tail.charAt(0) - '0' : -1;
+            Optional<com.villagecolony.core.construction.model.Mine> mine = VillageColonyMod.MINES.of(colony);
+
+            if (index < 0 || mine.isEmpty() || index >= mine.get().arms().size()) {
+                continue;
+            }
+
+            MineArm arm = mine.get().arm(index);
+            net.minecraft.nbt.NbtCompound entry = nbt.getCompound(key);
+
+            if (entry.contains("vein")) {
+                arm.followVein(MinecraftTypeAdapter.toColonyPos(BlockPos.fromLong(entry.getLong("vein"))));
+            }
+
+            Deque<BlockPos> trail = new ArrayDeque<>();
+
+            for (long at : entry.getLongArray("trail")) {
+                trail.addLast(BlockPos.fromLong(at));
+            }
+
+            if (!trail.isEmpty()) {
+                TRAILS.put(arm, trail);
+            }
+        }
+    }
+
     /** Um veio novo, achado pelo túnel: o rastro recomeça. */
     static void startVein(MineArm arm, ColonyPos ore) {
         TRAILS.remove(arm);

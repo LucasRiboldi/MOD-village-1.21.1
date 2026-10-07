@@ -52,6 +52,29 @@ public final class AdvanceStock {
         CURSORS.clear();
     }
 
+    /** A vez de uma fila, como o save a guarda — ADR-039 C. */
+    public record Turn(UUID colonyId, String lane, int index, int target, int stalled) {
+    }
+
+    /** A vez de cada fila, para o save. */
+    public static List<Turn> snapshot() {
+        return CURSORS.entrySet().stream()
+                .map(entry -> new Turn(entry.getKey().colonyId(), entry.getKey().name(),
+                        entry.getValue().index, entry.getValue().target, entry.getValue().stalled))
+                .toList();
+    }
+
+    /** Devolve a vez de cada fila. */
+    public static void restore(List<Turn> turns) {
+        for (Turn turn : turns) {
+            Cursor cursor = new Cursor();
+            cursor.index = turn.index();
+            cursor.target = turn.target();
+            cursor.stalled = turn.stalled();
+            CURSORS.put(new Lane(turn.colonyId(), turn.lane()), cursor);
+        }
+    }
+
     /**
      * Põe nas metas a peça da vez desta colônia.
      *
