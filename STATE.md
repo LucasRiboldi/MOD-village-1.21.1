@@ -1,6 +1,6 @@
 # STATE — 2026-10-07
 
-> **JAR atual: `village-colony-0.3.4.jar` = `614C60B3…EDF5`** em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.5.jar` = `5F6BAEFB…0058`** em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -17,6 +17,10 @@
 ---
 
 ## 🟡 07-10, tarde — ADR-039 aplicada (aguarda playtest)
+
+**0.3.5:** as memórias escolhidas (ADR-039 C) vão ao save `villagecolony_memory`: árvores e mudas,
+colunas de coleta, veio e rastro, ramais reservados, vez do adiantamento, coletas do pastor.
+Provado o vai-e-volta do save (`WorkMemoryGameTest`); **fechar e abrir o mundo ainda não**.
 
 Respostas às pendências (`docs/decisions/ADR-039-*`, tabela "Estado"): E1 espera de 1 a 5 min
 depois de busca vazia; E2 animal solto também procria; D1 carpinteiro adianta escada, laje e

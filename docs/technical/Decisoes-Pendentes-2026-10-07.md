@@ -25,6 +25,10 @@ que se pede ao autor. Nada da 037 e da 038 foi visto em jogo.
 
 ## C. Memórias que se perdem ao fechar o mundo
 
+> **Decidido 07-10 (ADR-039 C, `3bbb8f68`):** vão ao save árvores e mudas, colunas de coleta, veio e
+> rastro, ramais reservados, vez do adiantamento e coletas do pastor. A espera depois de busca
+> vazia continua só em memória.
+
 `VillageTrees` (árvores e mudas), `SurfaceHits` (onde achou recurso), rastro do veio, cursores
 do adiantamento, coletas do pastor em andamento. Todas se reconstroem jogando, mas custam
 busca de novo a cada sessão. **Pede:** decidir se alguma vai para o save.
