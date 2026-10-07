@@ -39,11 +39,27 @@ final class ResourceSearches {
 
     private static final Map<Key, Integer> TURNS = new HashMap<>();
 
+    /** Ofícios cuja última busca não achou nada: buscam até a borda + 20 (ADR-037 L1). */
+    private static final java.util.Set<Key> WIDE = new java.util.HashSet<>();
+
     private ResourceSearches() {
     }
 
     static void clearAll() {
         TURNS.clear();
+        WIDE.clear();
+    }
+
+    /**
+     * O resultado da busca: sem nada, a próxima vai até a borda + 20; achando,
+     * volta à borda + 10.
+     */
+    static void found(UUID colonyId, ProfessionType profession, boolean anything) {
+        if (anything) {
+            WIDE.remove(new Key(colonyId, profession));
+        } else {
+            WIDE.add(new Key(colonyId, profession));
+        }
     }
 
     /**
@@ -70,13 +86,15 @@ final class ResourceSearches {
             return new Plan(centre, radius, pos -> true);
         }
 
+        Key key = new Key(colonyId, profession);
+        int margin = WIDE.contains(key) ? ResourceReach.WIDE_MARGIN : ResourceReach.EDGE_MARGIN;
         ResourceReach.Search search = ResourceReach.search(
-                box.get(), MinecraftTypeAdapter.toColonyPos(centre), TURNS.getOrDefault(new Key(colonyId, profession), 0));
+                box.get(), MinecraftTypeAdapter.toColonyPos(centre), TURNS.getOrDefault(key, 0), margin);
 
         return new Plan(
                 MinecraftTypeAdapter.toBlockPos(search.origin()),
                 search.radius(),
-                pos -> ResourceReach.within(box.get(), pos.getX(), pos.getZ()));
+                pos -> ResourceReach.within(box.get(), pos.getX(), pos.getZ(), margin));
     }
 
     /**

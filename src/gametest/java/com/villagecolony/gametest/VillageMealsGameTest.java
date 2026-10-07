@@ -25,7 +25,7 @@ import java.util.UUID;
  * <p>Sem reposição de mortos, a vila só cresce se os aldeões ficarem
  * dispostos a procriar, e isso no Vanilla é comida no inventário. Os dois
  * casos medem a decisão: com cama sobrando, o baú alimenta até o aldeão
- * ficar disposto; com a vila cheia, o baú fica intocado.
+ * ficar disposto; com a vila cheia, também (ADR-037 R1).
  */
 public class VillageMealsGameTest implements FabricGameTest {
 
@@ -83,16 +83,15 @@ public class VillageMealsGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_meals")
-    public void aFullVillageKeepsItsFoodInTheChest(TestContext context) {
+    public void aFullVillageStillSharesItsFood(TestContext context) {
         Scene scene = scene(context, 1);
 
         try {
             int fed = VillageMeals.serve(context.getWorld(), scene.colony());
 
-            context.assertTrue(fed == 0, "a vila sem cama livre alimentou " + fed);
-            context.assertTrue(scene.chest().getStack(0).getCount() == 3
-                            && scene.chest().getStack(1).getCount() == 12,
-                    "a comida saiu do bau de uma vila sem cama para o bebe");
+            // A reunião doa a comida com cama sobrando ou não — ADR-037 R1.
+            context.assertTrue(fed == 2, "a vila sem cama livre alimentou " + fed + " de 2");
+            context.assertTrue(scene.chest().isEmpty(), "a comida ficou no baú da vila cheia");
         } finally {
             scene.fixture().cleanUp();
         }

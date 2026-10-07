@@ -3453,8 +3453,11 @@ public class MinerGameTest implements FabricGameTest {
                     his.isPresent(),
                     "o primeiro mineiro saiu sem alvo, e sem isso este teste não mede nada");
 
+            // Sem ramal livre ele raspa pedra de superfície, nunca o poço — ADR-037 M1.
+            java.util.Set<ColonyPos> pit = VillageColonyMod.MINES.of(colony.id()).orElseThrow().plannedCells();
+
             context.assertTrue(
-                    hers.isEmpty(),
+                    hers.map(target -> !pit.contains(MinecraftTypeAdapter.toColonyPos(target))).orElse(true),
                     "o segundo mineiro recebeu "
                             + hers.map(BlockPos::toShortString).orElse("")
                             + " — os dois estão cavando o mesmo poço");

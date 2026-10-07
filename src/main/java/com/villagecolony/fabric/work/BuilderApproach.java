@@ -68,6 +68,30 @@ public final class BuilderApproach {
     private BuilderApproach() {
     }
 
+    /** Se há alguém vivo no espaço do bloco: pôr ali o soterraria. */
+    static boolean someoneStandsIn(ServerWorld world, BlockPos target) {
+        return !world.getEntitiesByClass(net.minecraft.entity.LivingEntity.class,
+                new net.minecraft.util.math.Box(target), entity -> entity.isAlive()).isEmpty();
+    }
+
+    /** Quantos blocos em volta da pegada da planta ainda são zona da obra (ADR-037 B1). */
+    static final int ZONE_MARGIN = 4;
+
+    /**
+     * Se o construtor está dentro da zona da obra — ADR-037 B1: dali ele põe
+     * qualquer bloco da planta, sem subir nem ir até o lugar de cada um. A
+     * zona é a pegada da planta mais {@link #ZONE_MARGIN} em volta, em
+     * qualquer altura.
+     */
+    static boolean isInsideZone(ConstructionProject project, Vec3d worker) {
+        int minX = project.origin().x() - ZONE_MARGIN;
+        int minZ = project.origin().z() - ZONE_MARGIN;
+        int maxX = project.origin().x() + project.blueprint().size().x() - 1 + ZONE_MARGIN;
+        int maxZ = project.origin().z() + project.blueprint().size().z() - 1 + ZONE_MARGIN;
+
+        return worker.x >= minX && worker.x < maxX + 1 && worker.z >= minZ && worker.z < maxZ + 1;
+    }
+
     /**
      * Se o construtor alcança este bloco — a Regra 14.
      *

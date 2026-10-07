@@ -284,7 +284,9 @@ public final class BuilderWork {
 
         BlockPos target = MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(next.get()));
 
-        if (!BuilderApproach.isWithinReach(villager.getPos(), target)) {
+        // Dentro da zona da obra ele põe dali mesmo — ADR-037 B1.
+        if (!BuilderApproach.isWithinReach(villager.getPos(), target)
+                && !BuilderApproach.isInsideZone(project, villager.getPos())) {
             // <b>De onde ele está, e não do piso</b> — 2026-09-16. Ver
             // BuilderApproach.footOf: mandar ao piso quem já subiu na obra
             // é mandá-lo para uma queda que a navegação não percorre.
@@ -313,16 +315,9 @@ public final class BuilderWork {
             }
 
             if (job.stall.stuck(world, villager)) {
-                // Parado no mesmo bloco há quinze segundos de expediente —
-                // 2026-09-03. O guarda de baixo cobra dois minutos para
-                // notar o mesmo, e o construtor congelado paga os dois
-                // inteiros com a obra reservada em nome dele.
-                // A desistência passa a contar — 2026-09-10. Só nos dois
-                // guardas de caminhada, e não no "sem material no baú"
-                // logo abaixo: falta de material é problema de
-                // abastecimento da colônia, e tirar o construtor do
-                // ofício por causa dela trocaria a obra parada por
-                // ninguém sabendo construir. Ver WorkerStrikes.
+                // Parado no mesmo bloco há quinze segundos de expediente. A
+                // desistência conta (WorkerStrikes) só nos guardas de caminhada,
+                // nunca na falta de material.
                 WorkerStrikes.gaveUp(workerId, job.task);
 
                 finish(
@@ -362,6 +357,18 @@ public final class BuilderWork {
                                         world, project, villager, target));
 
                 return false;
+            }
+
+            return true;
+        }
+
+        // Ninguém de pé onde o bloco vai: quem estiver ali seria soterrado.
+        if (BuilderApproach.someoneStandsIn(world, target)) {
+            WorkTargets.set(workerId,
+                    BuilderApproach.footOf(world, project, target, villager.getBlockPos()), BuilderApproach.ARRIVAL);
+
+            if (++job.stalled % SET_ASIDE_AFTER == 0 && project.remaining().size() > 1) {
+                setAside(world, project, job, next.get(), target, "someone kept standing where it goes");
             }
 
             return true;

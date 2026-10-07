@@ -22,8 +22,8 @@ import net.minecraft.server.world.ServerWorld;
  */
 public final class FarmerBakery {
 
-    /** Trigo que nunca vira pão. */
-    public static final int WHEAT_RESERVE = 32;
+    /** Trigo que nunca vira pão: o do pastor (ADR-037 C7 c; eram 32). */
+    public static final int WHEAT_RESERVE = 8;
 
     /** Trigos por pão, como na bancada do jogo. */
     public static final int WHEAT_PER_BREAD = 3;

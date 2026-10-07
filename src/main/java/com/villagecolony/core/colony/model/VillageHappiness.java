@@ -8,8 +8,11 @@ package com.villagecolony.core.colony.model;
  *   <li><b>comida por adulto</b>, em pontos de comida do Vanilla guardados nos
  *       baús: {@value #FED} ou mais soma; menos de {@value #HUNGRY} tira;</li>
  *   <li><b>camas sobrando</b>: {@value #ROOMY} ou mais soma; nenhuma tira;</li>
- *   <li><b>obras concluídas</b> pela colônia: pelo menos uma soma.</li>
+ *   <li><b>obras concluídas</b> pela colônia: pelo menos uma soma;</li>
+ *   <li><b>convívio</b>: todos os adultos saíram alimentados da reunião, soma
+ *       (ADR-037 R1).</li>
  * </ul>
+ * A comida conta o trigo: três valem um pão, quatro pontos (ADR-037 C7 b).
  * Soma {@value #HAPPY_AT} ou mais é feliz (mais filhos); {@value #UNHAPPY_AT} ou
  * menos é infeliz (nenhum filho novo).
  *
@@ -32,6 +35,11 @@ public record VillageHappiness(Mood mood, int foodPerAdult, int spareBeds, int f
 
     public static final int UNHAPPY_AT = -1;
 
+    /** Pontos de comida por trigo: três trigos, um pão de quatro pontos (C7 b). */
+    public static int wheatPoints(int wheat) {
+        return Math.max(0, wheat) * 4 / 3;
+    }
+
     public enum Mood { HAPPY, CONTENT, UNHAPPY }
 
     /**
@@ -43,11 +51,22 @@ public record VillageHappiness(Mood mood, int foodPerAdult, int spareBeds, int f
      * @param finishedBuildings obras concluídas pela colônia
      */
     public static VillageHappiness measure(int foodPoints, int adults, int beds, int finishedBuildings) {
+        return measure(foodPoints, adults, beds, finishedBuildings, false);
+    }
+
+    /**
+     * O mesmo, sabendo se a reunião alimentou todos os adultos.
+     *
+     * @param everyoneFed todo adulto tem ao menos {@link #FED} pontos no bolso
+     */
+    public static VillageHappiness measure(
+            int foodPoints, int adults, int beds, int finishedBuildings, boolean everyoneFed) {
         int perAdult = Math.max(0, foodPoints) / Math.max(1, adults);
         int spare = beds - adults;
         int score = (perAdult >= FED ? 1 : perAdult < HUNGRY ? -1 : 0)
                 + (spare >= ROOMY ? 1 : spare <= 0 ? -1 : 0)
-                + (finishedBuildings > 0 ? 1 : 0);
+                + (finishedBuildings > 0 ? 1 : 0)
+                + (everyoneFed && adults > 0 ? 1 : 0);
 
         Mood mood = score >= HAPPY_AT ? Mood.HAPPY : score <= UNHAPPY_AT ? Mood.UNHAPPY : Mood.CONTENT;
 

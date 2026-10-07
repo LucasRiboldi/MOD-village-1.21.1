@@ -137,4 +137,33 @@ public class BedTeleportGameTest implements FabricGameTest {
             context.complete();
         });
     }
+
+    /** O levado para a cama fecha a porta da casa (ADR-037 V2, C3). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "bed_teleport", tickLimit = 100)
+    public void goingToBedClosesTheHouseDoor(TestContext context) {
+        BlockPos bed = placeBed(context, BED);
+        VillagerEntity villager = villagerHomedAt(context, bed);
+        BlockPos near = new BlockPos(BED.getX() + 2, BED.getY(), BED.getZ());
+
+        for (BlockPos door : new BlockPos[] {near}) {
+            context.setBlockState(door, Blocks.OAK_DOOR.getDefaultState()
+                    .with(net.minecraft.block.DoorBlock.OPEN, true)
+                    .with(net.minecraft.block.DoorBlock.HALF, net.minecraft.block.enums.DoubleBlockHalf.LOWER));
+            context.setBlockState(door.up(), Blocks.OAK_DOOR.getDefaultState()
+                    .with(net.minecraft.block.DoorBlock.OPEN, true)
+                    .with(net.minecraft.block.DoorBlock.HALF, net.minecraft.block.enums.DoubleBlockHalf.UPPER));
+        }
+
+        context.waitAndRun(20, () -> {
+            for (int attempt = 0; attempt < BedTeleport.STUCK_ATTEMPTS; attempt++) {
+                BedTeleport.attempt(villager.getUuid(), villager.getBlockPos());
+            }
+
+            context.assertTrue(BedTeleport.tooManyAttempts(context.getWorld(), villager, villager.getUuid()),
+                    "o aldeão não foi levado para a cama");
+            context.assertTrue(!context.getBlockState(near).get(net.minecraft.block.DoorBlock.OPEN),
+                    "a porta da casa ficou aberta");
+            context.complete();
+        });
+    }
 }

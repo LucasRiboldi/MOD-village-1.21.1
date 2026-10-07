@@ -16,7 +16,7 @@ import net.minecraft.util.math.Box;
 import java.util.List;
 import java.util.UUID;
 
-/** O teto de 256 por tipo no baú do mineiro — decisão do autor, 2026-09-30. */
+/** O teto por tipo no baú do mineiro: três compartimentos de 64 (ADR-037 C2). */
 public class MinerHaulCapGameTest implements FabricGameTest {
 
     private static final BlockPos CHEST = new BlockPos(2, 1, 2);
@@ -26,7 +26,7 @@ public class MinerHaulCapGameTest implements FabricGameTest {
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
         ChestBlockEntity chest = (ChestBlockEntity) context.getBlockEntity(CHEST);
 
-        for (int slot = 0; slot < 4; slot++) {
+        for (int slot = 0; slot < 3; slot++) {
             chest.setStack(slot, new ItemStack(Items.GRANITE, 64));
         }
 

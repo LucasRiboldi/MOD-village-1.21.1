@@ -65,10 +65,28 @@ public final class VillageMood {
             food += ColonyChests.countIn(world, chests, value.getKey()) * value.getValue();
         }
 
+        food += VillageHappiness.wheatPoints(ColonyChests.countIn(world, chests, Items.WHEAT));
+
+        // A comida já doada conta, e todos alimentados é o convívio — ADR-037 R1.
+        int adultsSeen = 0;
+        int fed = 0;
+
+        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
+            if (world.getEntity(worker.villagerId()) instanceof VillagerEntity villager
+                    && villager.isAlive() && !villager.isBaby()) {
+                int pocket = pocketFood(villager.getInventory());
+
+                food += pocket;
+                adultsSeen++;
+                fed += pocket >= VillageHappiness.FED ? 1 : 0;
+            }
+        }
+
         int finished = (int) VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()
                 .filter(Building::finished).count();
         VillageHappiness happiness = VillageHappiness.measure(
-                food, VillagerScanner.livingAdultPopulation(world, colony), colony.observedBeds(), finished);
+                food, VillagerScanner.livingAdultPopulation(world, colony), colony.observedBeds(), finished,
+                adultsSeen > 0 && fed == adultsSeen);
         VillageHappiness before = LAST.put(colony.id(), happiness);
 
         if (before == null || before.mood() != happiness.mood()) {

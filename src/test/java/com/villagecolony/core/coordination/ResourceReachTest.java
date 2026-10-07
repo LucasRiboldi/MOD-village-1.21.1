@@ -53,4 +53,11 @@ class ResourceReachTest {
         assertEquals(CENTRE, ResourceReach.search(BOX, CENTRE, 2).origin());
         assertEquals(CENTRE, ResourceReach.search(BOX, CENTRE, 4).origin());
     }
+
+    @Test
+    void theWideSearchGoesTwentyPastTheEdge() {
+        assertTrue(ResourceReach.within(BOX, 50, 0, ResourceReach.WIDE_MARGIN));
+        assertFalse(ResourceReach.within(BOX, 51, 0, ResourceReach.WIDE_MARGIN));
+        assertEquals(50, ResourceReach.search(BOX, CENTRE, 0, ResourceReach.WIDE_MARGIN).radius());
+    }
 }

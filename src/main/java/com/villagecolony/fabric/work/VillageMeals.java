@@ -39,8 +39,10 @@ import java.util.UUID;
  * ({@link WorkClock#DUSK}), que é quando a agenda Vanilla põe o aldeão à
  * toa até a hora de dormir — e é na hora à toa que ele procria.
  *
- * <p><b>Só com cama sobrando.</b> Com a vila cheia a procriação não
- * aconteceria, e a comida sairia do baú para nada.
+ * <p><b>É a reunião da vila</b> — ADR-037 R1: a comida de qualquer baú é
+ * doada a cada adulto até {@link #BREEDING_FOOD} pontos, com cama sobrando ou
+ * não, e antes o fazendeiro assa o trigo guardado ({@link FarmerBakery}).
+ * Todos alimentados é o convívio que a felicidade conta ({@link VillageMood}).
  */
 public final class VillageMeals {
 
@@ -106,8 +108,12 @@ public final class VillageMeals {
         int living = world.getEntitiesByClass(
                 VillagerEntity.class, area, VillagerEntity::isAlive).size();
 
-        if (living >= colony.observedBeds()) {
-            return 0;
+        // O fazendeiro assa o trigo guardado antes da ceia — ADR-037 C7 c.
+        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
+            if (worker.profession().filter(com.villagecolony.core.worker.model.ProfessionType.FARMER::equals).isPresent()) {
+                VillageColonyMod.STORAGES.of(worker.villagerId())
+                        .ifPresent(storage -> FarmerBakery.bakeSurplus(world, storage.chestPosition()));
+            }
         }
 
         List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.id(), colony.center());

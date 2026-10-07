@@ -151,6 +151,7 @@ public final class TreeChoice {
                         && !TreeMarks.isOutOfReach(world, log));
 
         ResourceSearches.advance(job.task.colonyId(), ProfessionType.LUMBERJACK);
+        ResourceSearches.found(job.task.colonyId(), ProfessionType.LUMBERJACK, tree.isPresent());
 
         if (tree.isEmpty()) {
             // Nenhuma árvore ao alcance. Não é motivo para encerrar: a

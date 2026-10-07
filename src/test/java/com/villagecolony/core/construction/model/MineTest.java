@@ -54,6 +54,10 @@ class MineTest {
         Mine mine = opened();
         int before = mine.shaft().positionAt(MineShaft.CARVED).y();
 
+        for (int index = 0; index < MineShaft.SHARED_BLOCKS; index++) {
+            mine.arm(0).nextPosition();
+        }
+
         mine.arm(0).finish();
 
         assertEquals(Mine.LevelAdvance.DEEPENED, mine.advanceIfEveryOpenArmIsDone());
@@ -193,5 +197,18 @@ class MineTest {
         assertTrue(cells.contains(new ColonyPos(105, 55, 206)), "o ramal do sul");
         assertTrue(cells.contains(new ColonyPos(94, 55, 195)), "o ramal do oeste");
         assertTrue(cells.contains(new ColonyPos(100, 64, 199)), "o caracol comum");
+    }
+
+    /** A escada que fecha antes do salão não é nível feito: a mina não desce (ADR-037 M1). */
+    @Test
+    void aStairClosedBeforeTheHallDoesNotDeepen() {
+        Mine mine = opened();
+        MineShaft before = mine.shaft();
+
+        mine.arm(0).nextPosition();
+        mine.arm(0).finish();
+
+        assertEquals(Mine.LevelAdvance.BLOCKED, mine.advanceIfEveryOpenArmIsDone());
+        assertEquals(before, mine.shaft(), "a mina desceu sem ter cavado a escada");
     }
 }
