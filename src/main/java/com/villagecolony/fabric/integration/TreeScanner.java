@@ -44,7 +44,7 @@ public final class TreeScanner {
      *
      * <p>A busca é em espiral a partir do centro, então parar no teto
      * significa "não achei perto", não "não achei". O ciclo seguinte
-     * continua de onde este parou — ver {@link #NEXT_RING}.
+     * continua de onde este parou — ver {@link #NEXT_CURSOR}.
      */
     private static final int MAX_COLUMNS = 1024;
 
@@ -60,14 +60,15 @@ public final class TreeScanner {
      *
      * <p>Guardar onde parou faz o alcance crescer com o tempo sem custar
      * mais por ciclo: cada busca paga as mesmas mil colunas, e o anel
-     * seguinte é problema do ciclo seguinte. Achar zera o cursor — a
-     * árvore encontrada sai do mundo, e a próxima procura recomeça de
-     * perto, que é onde o trabalhador prefere trabalhar.
+     * seguinte é problema do ciclo seguinte. O cursor guarda a coluna
+     * exata, inclusive no meio de um anel, para a passagem seguinte não
+     * pagar novamente por colunas que acabou de ler.
      *
      * <p>Em memória e descartável. Perder isto ao reiniciar custa alguns
      * ciclos de busca perto do centro, e nada mais.
      */
-    private static final java.util.Map<BlockPos, Integer> NEXT_RING = new java.util.HashMap<>();
+    private static final java.util.Map<BlockPos, TreeScanCursor> NEXT_CURSOR =
+            new java.util.HashMap<>();
 
     /**
      * As árvores que a varredura já achou e ainda não deu a ninguém, por centro
@@ -78,8 +79,8 @@ public final class TreeScanner {
      */
     private static final java.util.Map<BlockPos, java.util.ArrayDeque<BlockPos>> INDEX = new java.util.HashMap<>();
 
-    /** Quantas árvores o índice guarda por centro. */
-    private static final int MAX_INDEX = 256;
+    /** Quantas árvores seguintes justificam encerrar cedo uma passagem. */
+    private static final int INDEX_BATCH = 16;
 
     /**
      * Quantos blocos acima e abaixo da superfície se procura tronco.
@@ -140,72 +141,51 @@ public final class TreeScanner {
 
         int columns = 0;
         BlockPos first = null;
+        TreeScanCursor cursor = NEXT_CURSOR.getOrDefault(center, TreeScanCursor.start());
 
-        int startRing = NEXT_RING.getOrDefault(center, 0);
-
-        if (startRing > radius) {
-            startRing = 0;
+        if (cursor.ring() > radius) {
+            cursor = TreeScanCursor.start();
         }
 
-        for (int ring = startRing; ring <= radius; ring++) {
-            for (int dx = -ring; dx <= ring; dx++) {
-                for (int dz = -ring; dz <= ring; dz++) {
+        while (cursor.ring() <= radius && columns < MAX_COLUMNS) {
+            TreeScanCursor.Offset offset = cursor.offset();
+            cursor = cursor.advance();
+            columns++;
 
-                    // Só a casca do anel: o miolo já foi visto nos anéis
-                    // anteriores. O salto pula o miolo inteiro em vez de
-                    // percorrê-lo descartando — a primeira versão
-                    // iterava mais de um milhão de posições para olhar
-                    // quatro mil colunas.
-                    if (Math.abs(dx) != ring && Math.abs(dz) != ring) {
-                        dz = ring - 1;
+            Optional<BlockPos> log = logInColumn(
+                    world, center.getX() + offset.dx(), center.getZ() + offset.dz());
 
-                        continue;
-                    }
-
-                    if (++columns > MAX_COLUMNS) {
-                        if (first != null) {
-                            // Achou e gastou o orçamento guardando as outras:
-                            // a próxima varredura segue daqui — A-2.
-                            NEXT_RING.put(center.toImmutable(), ring);
-
-                            return Optional.of(first);
-                        }
-
-                        // Recomeça neste anel, e não no seguinte: ele
-                        // ficou pela metade. Reolhar a primeira metade
-                        // custa colunas que já custariam de qualquer
-                        // forma, e é mais barato que guardar em que
-                        // ponto do anel a busca estava.
-                        NEXT_RING.put(center.toImmutable(), ring);
-
-                        return Optional.empty();
-                    }
-
-                    Optional<BlockPos> log = logInColumn(
-                            world, center.getX() + dx, center.getZ() + dz);
-
-                    if (log.isPresent() && accepts.test(log.get())) {
-                        // A mais perto vai agora; as outras do orçamento vão
-                        // para o índice, na ordem dos anéis — A-2.
-                        if (first == null) {
-                            first = log.get();
-                        } else {
-                            java.util.ArrayDeque<BlockPos> index =
-                                    INDEX.computeIfAbsent(center.toImmutable(), c -> new java.util.ArrayDeque<>());
-
-                            if (index.size() < MAX_INDEX) {
-                                index.addLast(log.get());
-                            }
-                        }
-                    }
-                }
+            if (log.isEmpty() || !accepts.test(log.get())) {
+                continue;
             }
+
+            if (first == null) {
+                first = log.get();
+                continue;
+            }
+
+            java.util.ArrayDeque<BlockPos> index =
+                    INDEX.computeIfAbsent(center.toImmutable(), c -> new java.util.ArrayDeque<>());
+
+            index.addLast(log.get());
+
+            if (index.size() >= INDEX_BATCH) {
+                NEXT_CURSOR.put(center.toImmutable(), cursor);
+
+                return Optional.of(first);
+            }
+        }
+
+        if (cursor.ring() <= radius) {
+            NEXT_CURSOR.put(center.toImmutable(), cursor);
+
+            return Optional.ofNullable(first);
         }
 
         // Varreu até a borda do raio. Recomeçar do centro é o certo: a
         // floresta cresce, e a muda replantada perto volta a ser árvore antes
         // de a busca dar a volta inteira de novo.
-        NEXT_RING.remove(center);
+        NEXT_CURSOR.remove(center);
 
         return Optional.ofNullable(first);
     }
@@ -219,7 +199,7 @@ public final class TreeScanner {
 
     /** Esquece os cursores, junto com o resto do estado em memória. */
     public static void clearAll() {
-        NEXT_RING.clear();
+        NEXT_CURSOR.clear();
         INDEX.clear();
     }
 

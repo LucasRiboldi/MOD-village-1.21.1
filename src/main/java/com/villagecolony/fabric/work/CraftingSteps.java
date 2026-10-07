@@ -34,7 +34,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -113,7 +112,13 @@ final class CraftingSteps {
         // chegar inteira.
         boolean masonry = job.task.type() == TaskType.CRAFT_STONE_MATERIAL;
 
-        for (ResourceId wanted : open.get().remainingMaterials().keySet()) {
+        List<ColonyPos> chests =
+                ColonyChests.nearestFirst(world, colony.get().id(), colony.get().center());
+
+        for (Map.Entry<ResourceId, Integer> remaining
+                : open.get().remainingMaterials().entrySet()) {
+            ResourceId wanted = remaining.getKey();
+
             // Cada oficina lavra a sua família — 2026-09-09. Sem esta
             // linha a divisão do fabricante seria só de nome: os dois
             // percorreriam a mesma lista e fariam a mesma peça, e o
@@ -128,17 +133,18 @@ final class CraftingSteps {
                 continue;
             }
 
-            List<ColonyPos> chests =
-                    ColonyChests.nearestFirst(world, colony.get().id(), colony.get().center());
-
-            if (ColonyChests.countIn(world, chests, item.get()) > 0) {
-                // A colônia já tem. Não é o fabricante quem falta.
+            if (ColonyChests.countIn(world, chests, item.get()) >= remaining.getValue()) {
+                // A colônia já cobre toda a demanda restante desta peça.
                 continue;
             }
 
             if (strip(world, colony.get(), wanted, workerId)
-                    || ColonySupply.stock(
-                            world, colony.get().id(), colony.get().center(), item.get())) {
+                    || ColonySupply.stockToward(
+                            world,
+                            colony.get().id(),
+                            colony.get().center(),
+                            item.get(),
+                            remaining.getValue())) {
 
                 return true;
             }
@@ -383,14 +389,16 @@ final class CraftingSteps {
      * e o pior caso é a colônia guardar tora a mais.
      */
     static boolean halfTheWoodMayStillBeConverted(ServerWorld world, UUID colonyId) {
-        List<UUID> workerIds = new ArrayList<>();
-
-        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
-            workerIds.add(worker.villagerId());
-        }
-
-        ResourceTally owned =
-                ChestInventoryReader.readAll(world, workerIds, VillageColonyMod.STORAGES);
+        // <b>Os mesmos baús da meta</b> — playtest de 2026-10-03. A meta lê
+        // todos os baús da vila (VillageInventoryObserver, Regra 45) e este
+        // portão lia só os de trabalhador: tora num baú sem dono abria tarefa
+        // de tábua que o carpinteiro fechava com 0 peça — 12 vezes em meia
+        // hora, e 603 linhas de "stays in logs" desde 30-09. A tora também
+        // sai de qualquer baú da vila (convertOne), então é esta a conta.
+        ResourceTally owned = VillageColonyMod.COLONIES.find(colonyId)
+                .map(colony -> ChestInventoryReader.survey(
+                        world, ColonyChests.nearestFirst(world, colonyId, colony.center())).resources().total())
+                .orElseGet(ResourceTally::empty);
 
         Map<ResourceId, Integer> stillNeeded = VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
                 .map(ConstructionProject::remainingMaterials)

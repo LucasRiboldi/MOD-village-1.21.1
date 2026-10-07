@@ -1,5 +1,6 @@
 package com.villagecolony.client.modmenu;
 
+import com.villagecolony.client.OverlayPreferences;
 import com.villagecolony.client.network.ClientProfessionPolicies;
 import com.villagecolony.core.worker.model.ProfessionPolicySet;
 import com.villagecolony.core.worker.model.ProfessionType;
@@ -39,6 +40,11 @@ final class ProfessionMenuScreen extends Screen {
         if (renderedPolicies == null) return;
         int left = width / 2 - 100;
         int top = 48;
+        addDrawableChild(ButtonWidget.builder(overlayLabel(), button -> {
+            OverlayPreferences.toggleProfessionTextVisible();
+            button.setMessage(overlayLabel());
+        }).dimensions(left, top, 200, 20).build());
+        top += 24;
         int index = 0;
         for (ProfessionType type : ProfessionType.values()) {
             addDrawableChild(ButtonWidget.builder(professionName(type), button ->
@@ -62,5 +68,11 @@ final class ProfessionMenuScreen extends Screen {
 
     static Text professionName(ProfessionType type) {
         return Text.translatable("text.villagecolony.profession." + type.name().toLowerCase(Locale.ROOT));
+    }
+
+    private static Text overlayLabel() {
+        return Text.translatable(OverlayPreferences.professionTextVisible()
+                ? "text.villagecolony.overlay.profession_text.on"
+                : "text.villagecolony.overlay.profession_text.off");
     }
 }

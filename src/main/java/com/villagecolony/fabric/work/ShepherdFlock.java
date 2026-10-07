@@ -44,7 +44,7 @@ public final class ShepherdFlock {
     }
 
     /** Ovelhas adultas que a vila mantém. */
-    static final int FLOCK_TARGET = 12;
+    public static final int FLOCK_TARGET = 12;
 
     /** Tiques entre um par e o seguinte — cinco minutos. */
     static final int BETWEEN_PAIRS = 6_000;

@@ -96,3 +96,16 @@ scanner pode abrir a obra na nova cota.
 e `lessThanHalfOfTheStreetBaseIsRejected` cobrem o limiar e a escrita fisica.
 `runGametest --rerun-tasks --no-daemon` passou em 498/498; falta a confirmacao
 visual no save do autor.
+
+## Emenda — 2026-10-03: relva sob a base da obra
+
+No preparo de uma construção não agrícola, somente posições que a planta
+classifica como base podem converter `minecraft:grass_block` em
+`minecraft:dirt`. A conversão mantém apoio físico e não cava, nivela ou cria
+material. Terra, areia, pedra, fluidos e blocos fora da base permanecem como
+estão. Plantas agrícolas são excluídas integralmente porque seu terreno faz
+parte do desenho funcional.
+
+`FoundationPreparationGameTest` reproduziu primeiro a relva que permanecia sob
+a casa e depois confirmou a conversão restrita. O cenário agrícola confirma
+que a mesma posição continua como relva.

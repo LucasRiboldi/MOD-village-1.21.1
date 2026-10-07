@@ -5,6 +5,7 @@ import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
@@ -54,7 +55,7 @@ public final class ChestWithdrawer {
             return 0;
         }
 
-        ChestBlockEntity inventory = chestAt(world, chest);
+        Inventory inventory = inventoryAt(world, chest);
 
         if (inventory == null) {
             return 0;
@@ -81,7 +82,7 @@ public final class ChestWithdrawer {
      * dormir no mesmo ciclo.
      */
     public static int countIn(ServerWorld world, ColonyPos chest, Item item) {
-        ChestBlockEntity inventory = chestAt(world, chest);
+        Inventory inventory = inventoryAt(world, chest);
 
         if (inventory == null) {
             return 0;
@@ -121,7 +122,7 @@ public final class ChestWithdrawer {
             return List.of();
         }
 
-        ChestBlockEntity inventory = chestAt(world, chest);
+        Inventory inventory = inventoryAt(world, chest);
 
         if (inventory == null) {
             return List.of();
@@ -145,7 +146,7 @@ public final class ChestWithdrawer {
      * um grupo precisa saber de que espécie era cada peça.
      */
     private static int takeFrom(
-            ChestBlockEntity inventory,
+            Inventory inventory,
             java.util.function.Predicate<ItemStack> accepts,
             int amount,
             List<ItemStack> taken) {
@@ -211,7 +212,7 @@ public final class ChestWithdrawer {
      * a lisa e pôr a encantada na mão: a encantada ficava duplicada.
      */
     static int takeExact(ServerWorld world, ColonyPos chest, ItemStack wanted) {
-        ChestBlockEntity inventory = chestAt(world, chest);
+        Inventory inventory = inventoryAt(world, chest);
 
         if (inventory == null) {
             return 0;
@@ -253,7 +254,7 @@ public final class ChestWithdrawer {
      * @return quantas tirou: 1 ou 0
      */
     static int takeOne(ServerWorld world, ColonyPos chest, Item item) {
-        ChestBlockEntity inventory = chestAt(world, chest);
+        Inventory inventory = inventoryAt(world, chest);
 
         if (inventory == null) {
             return 0;
@@ -292,7 +293,7 @@ public final class ChestWithdrawer {
      * jogador pela porta dos fundos.
      */
     public static Optional<Item> seedIn(ServerWorld world, ColonyPos chest) {
-        ChestBlockEntity inventory = chestAt(world, chest);
+        Inventory inventory = inventoryAt(world, chest);
 
         if (inventory == null) {
             return Optional.empty();
@@ -345,5 +346,11 @@ public final class ChestWithdrawer {
         return chunk.getBlockEntity(position) instanceof ChestBlockEntity inventory
                 ? inventory
                 : null;
+    }
+
+    private static Inventory inventoryAt(ServerWorld world, ColonyPos chest) {
+        return ChestInventories.at(world, chest)
+                .map(ChestInventories.Handle::inventory)
+                .orElse(null);
     }
 }

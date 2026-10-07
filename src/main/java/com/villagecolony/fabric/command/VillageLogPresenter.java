@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.command;
 
 import com.villagecolony.core.construction.model.ConstructionPriority;
+import com.villagecolony.core.construction.model.MaterialRequest;
 import com.villagecolony.core.telemetry.model.ActivityProfession;
 import com.villagecolony.core.telemetry.model.ActivityState;
 import com.villagecolony.core.telemetry.model.ActivityTrace;
@@ -70,6 +71,25 @@ final class VillageLogPresenter {
 
     /** Quantas esperas o /vc log mostra. */
     static final int WAIT_LIMIT = 6;
+
+    /**
+     * O que a obra aberta espera agora, e por quê — ADR-035 §3.
+     *
+     * @param building o nome da planta, como {@code village/plains/houses/small_house_1}
+     * @param nowTick o tique atual do mundo
+     */
+    static String materialRequest(String building, MaterialRequest request, long nowTick) {
+        long seconds = request.waitingTicks(nowTick) / 20;
+        String elapsed = seconds >= 120 ? (seconds / 60) + " min" : seconds + " s";
+        String state = switch (request.state()) {
+            case RESOLVING -> "em resolução";
+            case DELIVERED -> "entregue";
+            case NO_SOLUTION -> "sem solução";
+        };
+
+        return "[OBRA] " + building.substring(building.lastIndexOf('/') + 1) + " pede "
+                + request.material().path() + " — " + state + ": " + request.reason() + " — há " + elapsed;
+    }
 
     /**
      * As esperas de mais de dois minutos, com motivo e tempo — B-5, 2026-10-02:

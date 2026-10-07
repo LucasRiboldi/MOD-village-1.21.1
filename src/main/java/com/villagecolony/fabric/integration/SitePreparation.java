@@ -1,6 +1,9 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.BlueprintKind;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.type.ColonyPos;
 import net.minecraft.block.Block;
@@ -48,7 +51,7 @@ public final class SitePreparation {
      * save — o jogador pode ter plantado alguma coisa entre uma sessão e
      * outra, e a Regra 23 diz que o que já foi olhado se olha de novo.
      *
-     * @return quantos blocos foram tirados
+     * @return quantos blocos foram limpos ou convertidos
      */
     public static int clear(ServerWorld world, ConstructionProject project) {
         ColonyPos origin = project.origin();
@@ -71,15 +74,56 @@ public final class SitePreparation {
             }
         }
 
+        cleared += removeGrassFromHouseBase(world, project);
+
         if (cleared > 0) {
             VillageColonyMod.LOGGER.info(
-                    "Project {} cleared {} plants off the site at {}",
+                    "Project {} cleared {} blocks off the site at {}",
                     project.id(),
                     cleared,
                     origin);
         }
 
         return cleared;
+    }
+
+    /**
+     * Tira somente a relva que a base de uma construção comum substituirá.
+     *
+     * <p>Ela vira terra em vez de ar: a fundação continua apoiada, mas a
+     * camada verde não fica enterrada sob a obra. Areia, pedra, terra,
+     * líquidos e qualquer posição fora da base planejada permanecem como
+     * estavam. Plantações são excluídas porque o relevo e a água fazem parte
+     * do desenho funcional delas.
+     */
+    private static int removeGrassFromHouseBase(ServerWorld world, ConstructionProject project) {
+        Blueprint blueprint = project.blueprint();
+
+        if (BlueprintKind.isFarm(blueprint.id())) {
+            return 0;
+        }
+
+        int converted = 0;
+
+        for (BlueprintBlock block : blueprint.blocks()) {
+            if (!blueprint.isBase(block)) {
+                continue;
+            }
+
+            ColonyPos offset = block.offset();
+            ColonyPos origin = project.origin();
+            BlockPos at = new BlockPos(
+                    origin.x() + offset.x(),
+                    origin.y() + offset.y(),
+                    origin.z() + offset.z());
+
+            if (world.getBlockState(at).isOf(Blocks.GRASS_BLOCK)) {
+                world.setBlockState(at, Blocks.DIRT.getDefaultState(), Block.NOTIFY_ALL);
+                converted++;
+            }
+        }
+
+        return converted;
     }
 
     /**

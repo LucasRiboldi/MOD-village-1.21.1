@@ -1,4 +1,4 @@
-package com.villagecolony.fabric.event;
+package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
@@ -33,7 +33,7 @@ import java.util.UUID;
 public final class VillageFocus {
 
     /** De quanto em quanto tempo conferir quem está dentro de qual vila. */
-    static final int EVERY_TICKS = 20;
+    public static final int EVERY_TICKS = 20;
 
     private VillageFocus() {
     }
@@ -42,7 +42,7 @@ public final class VillageFocus {
      * Marca as vilas com jogador dentro, e diz no log quando uma começa ou
      * para de trabalhar.
      */
-    static void attend(ServerWorld overworld) {
+    public static void attend(ServerWorld overworld) {
         long now = overworld.getTime();
 
         for (Colony colony : VillageColonyMod.COLONIES.all()) {
@@ -67,7 +67,7 @@ public final class VillageFocus {
     }
 
     /** Se há jogador dentro da vila — a caixa, ou o raio antigo se ainda não medida. */
-    static boolean hasAPlayerInside(ServerWorld overworld, Colony colony) {
+    public static boolean hasAPlayerInside(ServerWorld overworld, Colony colony) {
         for (ServerPlayerEntity player : overworld.getPlayers()) {
             if (isInside(colony, player.getBlockX(), player.getBlockZ())) {
                 return true;
@@ -77,7 +77,7 @@ public final class VillageFocus {
         return false;
     }
 
-    static boolean isInside(Colony colony, int x, int z) {
+    public static boolean isInside(Colony colony, int x, int z) {
         if (colony.bounds().isPresent()) {
             return colony.bounds().get().containsColumn(x, z);
         }
@@ -90,7 +90,7 @@ public final class VillageFocus {
     }
 
     /** As colônias que trabalham agora: ativas e com jogador dentro há até 5 minutos. */
-    static Set<UUID> attended(ServerWorld overworld, List<Colony> active) {
+    public static Set<UUID> attended(ServerWorld overworld, List<Colony> active) {
         if (overworld.getPlayers().isEmpty()) {
             return Set.of();
         }
@@ -108,17 +108,17 @@ public final class VillageFocus {
     }
 
     /** Um ciclo de jogo: toda colônia atendida pode planejar. */
-    static List<UUID> planners(List<Colony> active, Set<UUID> present) {
+    public static List<UUID> planners(List<Colony> active, Set<UUID> present) {
         return active.stream().map(Colony::id).filter(present::contains).toList();
     }
 
     /** Se a sonda de detecção roda nesta colônia. */
-    static boolean isAnalyzed(ServerWorld overworld, Colony colony) {
+    public static boolean isAnalyzed(ServerWorld overworld, Colony colony) {
         return colony.isAttended(overworld.getTime());
     }
 
     /** Se há jogador dentro do raio de vila de uma posição ainda não adotada — a descoberta. */
-    static boolean isNearAPlayer(ServerWorld overworld, BlockPos position) {
+    public static boolean isNearAPlayer(ServerWorld overworld, BlockPos position) {
         int radius = VillageDetector.SEARCH_RADIUS;
 
         for (ServerPlayerEntity player : overworld.getPlayers()) {

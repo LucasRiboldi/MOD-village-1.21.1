@@ -5,9 +5,6 @@ import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.type.ResourceType;
 
-import com.villagecolony.core.type.Production;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -41,12 +38,9 @@ import java.util.Objects;
  * volume guardado, e "fabricar até encher" transformaria toda a madeira
  * da colônia em tábua e pararia a coleta junto.
  *
- * <p><b>A pedra saiu.</b> Ninguém minera no MVP, e
- * {@code ColonyCycle.typeFor} manda todo recurso NATURAL para
- * {@code COLLECT_WOOD}: a meta de pedra virava uma tarefa de coleta que
- * só o lenhador podia pegar, e ele derrubava árvore para atendê-la.
- * Volta quando existir minerador, e aí com o espaço dos baús pela mesma
- * conta.
+ * <p><b>A pedra tem piso</b>, {@link #STONE_FLOOR}, e o carvão e o ferro,
+ * {@link #MINERAL_FLOOR} (Regras 29 e 30): o minerador os mantém mesmo sem
+ * obra aberta. A história da pedra (fora do MVP até 2026-08-27) está no git.
  */
 public final class ColonyGoals {
 
@@ -488,41 +482,7 @@ public final class ColonyGoals {
             }
         });
 
-        for (ResourceType made : StockRules.everythingTheFurnaceMakes()) {
-            int asked = work.smelted().getOrDefault(made, 0);
-            boolean chained = StockRules.rawOf(made)
-                    .map(raw -> goals.containsKey(raw) || owned.amountOf(raw) > 0)
-                    .orElse(true);
-
-            if (chained) {
-                goals.put(made, Math.max(SMELTED_FLOOR, asked));
-            } else if (asked > 0) {
-                goals.put(made, asked);
-            }
-        }
-
-        // E o que a obra pede e a fornalha NÃO faz — um material cuja
-        // produção declarada mudou, ou que chegou por datapack — continua
-        // entrando pela lista da obra. O laço acima cobre o catálogo do
-        // jogo; esta linha cobre o que a obra sabe e ele não.
-        work.smelted().forEach((made, amount) -> {
-            if (amount > 0 && !goals.containsKey(made)) {
-                goals.put(made, amount);
-            }
-        });
-
-        // O ferro do lampião — 2026-08-21, e com o passo do meio de volta:
-        // o lingote é da fornalha, e o cru é da mina. Sem as duas metas o
-        // fundidor sabia fundir ferro e nenhuma tarefa lhe chegava.
-        if (work.iron() > 0) {
-            goals.put(ResourceType.IRON_INGOT, work.iron());
-
-            int ingotsMissing = work.iron() - owned.amountOf(ResourceType.IRON_INGOT);
-
-            goals.put(ResourceType.RAW_IRON, MINERAL_FLOOR + Math.max(0, ingotsMissing));
-        } else {
-            goals.put(ResourceType.RAW_IRON, MINERAL_FLOOR);
-        }
+        FurnaceGoals.addTo(goals, owned, work);
 
         return Map.copyOf(goals);
     }

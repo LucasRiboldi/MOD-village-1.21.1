@@ -43,7 +43,7 @@ import java.util.UUID;
  * ali a mão está vazia por desenho. O lugar de exigir ferramenta é o
  * teste que depende dela, e é o que esta classe dá.
  */
-final class TestWorkers {
+public final class TestWorkers {
 
     private TestWorkers() {
     }
@@ -56,7 +56,7 @@ final class TestWorkers {
      * quebra: reserva de baú, escolha de alvo, contagem de tarefa,
      * persistência, nome, ociosidade.
      */
-    static Worker createWorker(
+    public static Worker createWorker(
             TestContext context, UUID colonyId, ProfessionType profession, BlockPos at) {
 
         VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, at);
@@ -84,7 +84,7 @@ final class TestWorkers {
      * força: assim o teste exercita a mesma escolha de ferramenta que a
      * colônia faz em jogo, inclusive a troca pela melhor do baú.
      */
-    static Worker createEquippedWorker(
+    public static Worker createEquippedWorker(
             TestContext context, UUID colonyId, ProfessionType profession, BlockPos at) {
 
         Worker worker = createWorker(context, colonyId, profession, at);

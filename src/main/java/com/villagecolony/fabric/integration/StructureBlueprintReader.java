@@ -7,7 +7,7 @@ import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.work.DesertSand;
+import com.villagecolony.fabric.integration.DesertSand;
 import com.villagecolony.core.type.ColonyPos;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.enums.BedPart;
@@ -21,7 +21,6 @@ import net.minecraft.structure.StructureTemplate;
 import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -103,7 +102,7 @@ public final class StructureBlueprintReader {
      * formato de {@code NbtHelper.fromBlockState}, o mesmo que o bloco
      * de estrutura grava.
      */
-    private static final String BLOCK_NAME_KEY = "Name";
+    static final String BLOCK_NAME_KEY = "Name";
 
     /**
      * A chave das propriedades dentro de uma entrada da paleta.
@@ -116,7 +115,7 @@ public final class StructureBlueprintReader {
      * <em>esta entrada é a metade de cima de um bloco de duas partes?</em>
      * Ver {@link #isSecondHalf}.
      */
-    private static final String PROPERTIES_KEY = "Properties";
+    static final String PROPERTIES_KEY = "Properties";
 
     /**
      * A chave dos dados de bloco de uma entrada de {@code blocks}.
@@ -262,81 +261,10 @@ public final class StructureBlueprintReader {
         Blueprint blueprint = Blueprint.of(structure, DesertSand.baked(structure, blocks));
 
         // <b>E a altura da rua</b> — sessão de jogo de 2026-09-26. Ver
-        // Blueprint.withStreetLayer e streetLayerOf.
-        OptionalInt street = streetLayerOf(template.get(), blocks);
+        // Blueprint.withStreetLayer e StreetLayer.of.
+        OptionalInt street = StreetLayer.of(template.get(), blocks);
 
         return Optional.of(street.isPresent() ? blueprint.withStreetLayer(street.getAsInt()) : blueprint);
-    }
-
-    /**
-     * A camada que fica na altura da rua — 2026-09-26.
-     *
-     * <p><b>A porta manda.</b> O pedido do autor é "o chão e a porta na altura
-     * da rua": a camada da rua é aquela em que se pisa ao entrar, uma abaixo da
-     * porta mais baixa. A primeira versão lia o encaixe (jigsaw) voltado para a
-     * rua, e a bateria mostrou que ele não é régua: na
-     * {@code plains_shepherds_house_1} e na {@code plains_big_house_1} ele está
-     * no andar da porta, e no {@code plains_temple_4} a porta está na camada 0
-     * — o piso do templo fica abaixo da planta, e o templo continua como
-     * sempre foi.
-     *
-     * <p>Planta sem porta — roça, curral, praça — usa o encaixe de rua
-     * ({@code west_up}; os de decoração apontam para cima, {@code up_north}).
-     *
-     * @return vazio quando não há camada da rua dentro da planta: sem porta nem
-     *     encaixe (a BigHouseMOD, as plantas de teste), ou porta na camada 0
-     */
-    static OptionalInt streetLayerOf(StructureTemplate template, List<BlueprintBlock> blocks) {
-        OptionalInt door = blocks.stream()
-                .filter(block -> block.block().path().endsWith("_door"))
-                .mapToInt(block -> block.offset().y())
-                .min();
-
-        if (door.isPresent()) {
-            return door.getAsInt() >= 1 ? OptionalInt.of(door.getAsInt() - 1) : OptionalInt.empty();
-        }
-
-        return streetConnectorLayerOf(template);
-    }
-
-    /** A camada do encaixe voltado para a rua, para a planta sem porta. */
-    private static OptionalInt streetConnectorLayerOf(StructureTemplate template) {
-        NbtCompound nbt = template.writeNbt(new NbtCompound());
-
-        NbtList palette = nbt.getList(StructureTemplate.PALETTE_KEY, NbtElement.COMPOUND_TYPE);
-        NbtList entries = nbt.getList(StructureTemplate.BLOCKS_KEY, NbtElement.COMPOUND_TYPE);
-
-        OptionalInt lowest = OptionalInt.empty();
-
-        for (int i = 0; i < entries.size(); i++) {
-            NbtCompound entry = entries.getCompound(i);
-            int index = entry.getInt(StructureTemplate.BLOCKS_STATE_KEY);
-
-            if (index < 0 || index >= palette.size()) {
-                continue;
-            }
-
-            NbtCompound state = palette.getCompound(index);
-
-            if (!isJigsaw(ResourceId.parse(state.getString(BLOCK_NAME_KEY)))
-                    || !facesSideways(state.getCompound(PROPERTIES_KEY).getString("orientation"))) {
-                continue;
-            }
-
-            int layer = offsetOf(entry).y();
-
-            if (lowest.isEmpty() || layer < lowest.getAsInt()) {
-                lowest = OptionalInt.of(layer);
-            }
-        }
-
-        return lowest;
-    }
-
-    /** {@code west_up} sim, {@code up_north} não: a frente do encaixe aponta para o lado. */
-    private static boolean facesSideways(String orientation) {
-        return orientation.startsWith("north_") || orientation.startsWith("south_")
-                || orientation.startsWith("east_") || orientation.startsWith("west_");
     }
 
     /**
@@ -455,7 +383,7 @@ public final class StructureBlueprintReader {
     }
 
     /** A posição relativa de uma entrada, que vem como lista de três ints. */
-    private static ColonyPos offsetOf(NbtCompound entry) {
+    static ColonyPos offsetOf(NbtCompound entry) {
         NbtList pos = entry.getList(StructureTemplate.BLOCKS_POS_KEY, NbtElement.INT_TYPE);
 
         return new ColonyPos(pos.getInt(0), pos.getInt(1), pos.getInt(2));
@@ -488,7 +416,7 @@ public final class StructureBlueprintReader {
      * bloco — o {@code final_state} —, e é esse bloco que a vila gerada
      * tem no lugar dele.
      */
-    private static boolean isJigsaw(ResourceId name) {
+    static boolean isJigsaw(ResourceId name) {
         return name.equals(MinecraftTypeAdapter.toResourceId(Blocks.JIGSAW));
     }
 

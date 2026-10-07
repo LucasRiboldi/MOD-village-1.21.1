@@ -1,6 +1,5 @@
 package com.villagecolony.fabric.work;
 
-import com.villagecolony.fabric.integration.LotGround;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;

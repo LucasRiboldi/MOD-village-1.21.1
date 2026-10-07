@@ -6,6 +6,130 @@
 
 # Village Colony — Development Log
 
+## 2026-10-04 — publicação do JAR e fechamento da refatoração Fabric
+
+O commit `43f13978` publicou a remoção dos ciclos entre `event`, `integration`
+e `work`, a divisão de `LumberjackWork` abaixo do teto arquitetural e a
+atualização dos testes de arquitetura. A verificação final executou
+`./gradlew.bat test --no-daemon` com 1.314 testes sem falhas, `build` com
+sucesso e `./gradlew.bat runGametest --rerun-tasks --no-daemon` com 585/585
+GameTests aprovados.
+
+O artefato `village-colony-0.3.0.jar` foi copiado de `build/libs/` para
+`downloads/` e `%APPDATA%/.minecraft/mods/` com o cliente fechado. As três
+cópias conferem pelo SHA-256
+`EEE5A695C00281E129145E924F9DC3A6E63E40227397F90052FF5E7F5C56DD39`. O
+build e os testes provam a integração automatizada; a validação dos painéis,
+perímetro, mina, varredura e fluxo de baús no save real permanece listada no
+estado vivo e no roteiro da próxima sessão.
+
+## 2026-10-04 — fluxo de armazenamento do mineiro e viveiro proporcional
+
+O Spark `8VskZd9AOD` manteve 20 TPS, MSPT mediano de 6,97 ms e p95 de 10,5 ms:
+não houve congelamento global. O mineiro alcançou a boca e a frente, quebrou
+blocos, mas o depósito encontrou baú cheio e encerrava a tarefa como concluída
+com zero itens. `MinerHaul` agora pede o transbordo dos dez slots reservados no
+mesmo instante do depósito, apenas para baús comunitários. Se ainda não houver
+destino físico, a tarefa volta a `AVAILABLE` e a coleta mineral descansa por
+poucos ciclos; ela não produz mais uma conclusão falsa e o mineiro pode apoiar
+uma obra nesse período.
+
+O perfil também mostrou lenhador que concluiu uma árvore e passou a procurar
+outra. O viveiro do anel 48–56 é acionado antes da ociosidade e sua meta é
+`max(10, 5 por lenhador)`. A chamada automática exige lenhador registrado para
+evitar varreduras caras em vilas sem essa profissão.
+
+TDD: o cenário sem baú comunitário passou a exigir tarefa disponível, e o novo
+cenário com baú comunitário exige a transferência de pelo menos dez itens, a
+entrega da pedra e a preservação do baú de outra profissão. O teste unitário do
+alvo do viveiro passou. `runGametest --rerun-tasks --no-daemon` concluiu 584 de
+585 obrigatórios; a única falha foi
+`SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted`, já existente e
+fora desta alteração. Falta playtest no save para percurso da mina, transbordo e
+plantio da borda.
+
+## 2026-10-04 — terracota colorida, corantes automáticos e fundidor antecipado
+
+A terracota vermelha deixou de ser tratada como saída direta da fornalha. Ela é
+uma peça do pedreiro cuja receita Vanilla pede terracota neutra e corante; o
+planejamento agora abre somente a cadeia física `argila -> terracota`, para
+coleta e fundição. `DyeItem` já era classificado como ingrediente automático
+em `DropIngredients`; a cobertura foi ampliada para cores distintas, garantindo
+que qualquer corante Vanilla entre fisicamente no baú de serviço sem tarefa de
+coleta ou craft.
+
+O fundidor passa a antecipar materiais da obra após duas faltas, em vez de
+cinco, preservando a reserva e a contagem física de materiais. A revisão do
+seletor de lote confirmou que `RoadIndex` já pagina candidatos e que a política
+de fundação aceita lacunas rasas preenchíveis. Não foi criada uma segunda cache
+de terreno, que duplicaria estado sem ganho observado no Spark.
+
+O teste de responsabilidade de profissões falhou antes da reclassificação; o
+teste de fallback do fundidor falhou antes do limiar novo. Depois da correção,
+os testes unitários direcionados passaram e `runGametest --rerun-tasks`
+concluiu 583/583 testes obrigatórios. Falta somente o playtest no save real.
+
+## 2026-10-03 — trabalho diurno, madeira solicitada, baús e mina profunda
+
+O renderer dos painéis deixou de enviar overlay e normal para uma camada cujo
+formato aceita posição, cor, textura e luz. Baús duplos passaram a ser lidos e
+movidos como um inventário combinado. Fora do horário, trabalhadores param a
+navegação sem perder HOME ou a tarefa reservada.
+
+Depois de vinte esperas por uma peça derivada de árvore, o fazendeiro tenta
+plantar a muda da espécie pedida a 48–56 blocos, em terreno natural seguro e
+alcançável; a muda sai fisicamente de um baú e é devolvida se o plantio falhar.
+As camas de vila vanilla voltam a receber a garantia idempotente de baú em
+observações posteriores, não apenas no instante da adoção.
+
+A mina passou a dois lances de cinco degraus e salões 10x10x3, mantendo vão
+3x3 e reparo de piso. Dez rotas sem progresso precedem o abandono. A forma 8
+reinicia cursores antigos sem apagar boca, orientação ou arco. A possibilidade
+de escanear chunks inteiros ficou somente no estudo de alternativas de
+03-10; nenhuma leitura integral foi adicionada ao ciclo.
+
+## 2026-10-03 — painéis, perímetro, boca 5x4 e varredura da vila
+
+Os overlays cliente receberam uma borda de pixel art fina com centro
+transparente, escalonada em nove partes para preservar os detalhes. A moldura
+fica na altura do nome e o ícone é centralizado acima; a obra usa uma só
+moldura responsiva para título e materiais faltantes. A escolha do ícone passou
+a usar a chave canônica da profissão ou o estado real da obra, evitando o
+desencontro que vinha de associações visuais implícitas. O Mod Menu ganhou a
+alternância de texto da profissão para a sessão; quando desligada, fica somente
+o ícone.
+
+O `SiteMarker` passou a marcar a caixa atual da vila com fogo azul, separado
+do contorno da obra. A boca da mina agora respeita arco 5x4, lampiões nos dois
+extremos superiores e vão central 3x3; os cenários legados foram corrigidos
+para verificarem os dois lampiões. A rota de suprimento do construtor foi
+revisada: `BuilderMaterials` já retira fisicamente de qualquer baú válido da
+vila por `ColonySupply`; o Spark anterior atribuía a espera a falta de estoque.
+
+O preparo da obra ganhou uma regra estreita: somente `grass_block` sob uma
+posição de base de planta não agrícola vira terra. O GameTest da casa falhou
+antes da correção; um segundo cenário preserva a relva da plantação. A
+elegibilidade de lote e o preenchimento de lacunas continuam inalterados.
+
+`VillageSpiralSweep` passou a dirigir somente a coleta de superfície. Ele
+percorre a borda da caixa para dentro, continua por anéis externos e mantém a
+próxima coluna por trabalhador. `VillageFluidIndex` mede água/lava em parcelas
+de 1.024 colunas carregadas, existe só em memória e é invalidado no crescimento
+real da caixa. ADR-031 registra os contratos e limites.
+
+`ProfessionChestOverflow` reserva capacidade quando um baú profissional fica
+sem slots: o conteúdo dos dez slots finais é transferido para baús comunitários
+da mesma vila, primeiro completando pilhas compatíveis e depois ocupando vagas.
+Outra profissão nunca serve de destino, uma origem de outra vila não entra no
+ciclo e nenhum item é removido quando falta espaço. ADR-032 registra a política.
+
+`PixelPanelLayoutTest` foi escrito antes do painel; os testes da espiral e do
+índice também falharam por ausência antes da implementação. Para os baús, a
+primeira execução concluiu 571 testes com exatamente os dois cenários de
+transferência vermelhos; depois da implementação, a integração final concluiu
+572/572 GameTests obrigatórios. Isso não substitui o playtest visual, de
+desempenho e de inventário no save.
+
 ## 2026-10-02 — Overlays cliente: profissão e canteiro
 
 Foi criado um caminho visual opcional para clientes Fabric, sem substituir a
@@ -10313,3 +10437,279 @@ conferiram SHA-256
   com SHA-256 `AB7626919BF87DA9B7916504617706E1E0EC52341E86F6F84C85E4EEB9F99FFA`
   em `build/libs/`, `downloads/` e `.minecraft/mods`.
 - **Nao verificado em jogo.** PIT e javadoc nao rodados.
+
+### 2026-10-03 - Corrigiveis sem acesso ao jogo
+
+Branch `claude/corrigiveis-sem-jogo`, a partir da `main` de 02-10. Doze frentes
+da revisao dos pontos criticos, importantes, pela metade e dividas:
+
+- Documentos: os sete planos iniciais em `docs/historical/`; oito itens do
+  TODO que o codigo ja tinha resolvido marcados com a referencia.
+- `verdict.py`: itens de 30-09 a 02-10, `.log.gz` do dia, teste das frases no
+  CI; o servidor escreve a mudanca de regra de profissao.
+- B-4: degrau de fornalha (pedra lisa -> pedra -> pedregulho).
+- §8-A: `PenEntryLog`. O GameTest do golem pegou a leitura de memoria nao
+  registrada, que derrubaria o servidor.
+- §9b: `ColonyPieces` e `StrandedNotice`.
+- §7-A: `LotSeeking` separado do planejador e `SweepCadence`.
+- Pastor: os tres "nao" do rebanho.
+- Oito arquivos acima de 500 linhas divididos; o recongelamento do ArchUnit
+  engoliu uma regra alem dos ciclos (RoadRefusals sem ServerMemory) e foi
+  corrigido no codigo.
+- JaCoCo na bateria de jogo: `fabric/work` 83%, `integration` 84%.
+- GameTest com `FakePlayer`.
+
+Cada comportamento novo tem GameTest confirmado por mutacao. Ficaram de fora,
+com o motivo no TODO: B-1 (levar material ao construtor nao adianta a obra
+enquanto o construtor tira de qualquer bau sem andar - decisao do autor) e o
+resto do F13 (medir antes de cachear o espaco do bau do oficio).
+
+Verificado: `test --rerun-tasks` 1295/1295; 91 testes Python;
+`runGametest --rerun-tasks` 575/575 em duas rodadas; `build`. JAR com
+SHA-256 `923D9769872295F99F5B160ACAFF39695174C9D418CCFAD32C73E8BEDC2940C0` em
+`build/libs/`, `downloads/` e `.minecraft/mods`. **Nao verificado em jogo.**
+
+### 2026-10-03 - Publicacao dos paineis, perimetro, mina, varredura e baus
+
+A entrega conjunta foi verificada com `./gradlew.bat test --no-daemon`
+(**1.304/1.304**), `./gradlew.bat runGametest --rerun-tasks --no-daemon`
+(**572/572**) e `./gradlew.bat build --no-daemon`. O lote Fabric
+`profession_chest_overflow` passou nos quatro cenarios: transferencia dos dez
+slots finais, exclusao de outro bau profissional, ausencia de destino e
+isolamento entre vilas.
+
+O JAR `0.3.0` foi copiado de `build/libs/` para `downloads/` e
+`%APPDATA%/.minecraft/mods/` com o cliente fechado. As tres copias medem
+3.143.740 bytes e conferem SHA-256
+`861C190BDAA745F24FF1DB51D3931D580FECE6FE75B6C9D833886B19DC24D9EE`;
+`scripts/release_manifest.py --dry-run` confirmou a igualdade. O playtest no
+save continua obrigatorio para os aspectos visuais, desempenho e fluxo real.
+
+### 2026-10-03 - Otimizacoes guiadas pelo Spark G7eI22eQt0
+
+O perfil manteve 20 TPS, MSPT mediano de 9,93 e p95 de 14, mas atribuiu 0,85%
+do servidor — cerca de 62% do custo do mod — a `TreeScanner.findNearestLog`.
+A busca reiniciava no começo de um anel parcialmente lido e continuava ate o
+orçamento de 1.024 colunas mesmo depois de achar árvores suficientes. Um cursor
+por coluna preserva a mesma ordem quadrada, retoma no ponto exato e encerra a
+passagem depois da primeira árvore devolvida e outras 16 indexadas.
+
+O log também mostrou 194 esperas por escada de carvalho. `CraftingSteps`
+considerava a demanda atendida quando havia uma única peça; agora compara o
+estoque físico com a quantidade restante da planta e fabrica um lote por ação
+até cobri-la. O teste começou com quatro escadas e exige doze no baú. Por fim,
+`miner_chest_full` passou a reconhecer a mensagem real de `MinerHaul`; a linha
+`took 0` isolada não é mais tratada como prova de baú cheio.
+
+As duas regressões foram demonstradas antes das correções: a floresta densa
+continuava além de 17 árvores aceitas e a carpintaria parava no primeiro lote.
+Depois, `test --rerun-tasks --no-daemon` passou em **1.306/1.306**,
+`runGametest --rerun-tasks --no-daemon` passou em **574/574**, os **89** testes
+Python passaram e `build --no-daemon` concluiu. O diagnóstico existente do
+construtor já informa alvo, posição, distância, destino real e piso quando ele
+trava; sem falha reproduzida e sem custo relevante no Spark, a navegação não
+foi alterada. Ainda falta repetir o perfil e observar a obra no save real.
+
+### 2026-10-04 - Muda de emergencia dentro do expediente e validacao completa
+
+O viveiro de emergencia criado depois de vinte esperas por madeira agora usa o
+mesmo expediente dos demais trabalhos. `VillageForest.plantRequestedSapling`
+retorna antes de retirar ou plantar durante a noite, preservando a muda fisica
+no bau ate o proximo turno. O cenario Fabric
+`aFarmerKeepsTheRequestedSaplingInTheChestAtNight` foi escrito primeiro,
+reprovou sem a guarda de horario e passou depois dela.
+
+A rodada de `runGametest --rerun-tasks --no-daemon` registrou inicialmente duas
+falhas opostas no batch concorrente `craft_family`: o carpinteiro produziu a
+alvenaria e o pedreiro nao produziu a sua parte. A repeticao completa imediata
+passou em **578/578** em 1,177 minuto, incluindo a nova cobertura de escadas.
+O comportamento de producao e os timeouts permaneceram intactos; a ocorrencia
+ficou aberta como investigacao de interferencia de fixture concorrente.
+
+`test --rerun-tasks --no-daemon` passou em **1.308/1.308**; os **89** testes
+Python passaram; `build --no-daemon` concluiu. O build ainda informa 50
+violacoes PMD no relatorio nao bloqueante ja configurado pelo projeto. O
+playtest no save continua pendente.
+
+Na publicacao posterior, o JAR `0.3.0` foi copiado com o cliente fechado para
+`downloads/` e `%APPDATA%/.minecraft/mods/`. As tres copias, incluindo
+`build/libs/`, conferem SHA-256
+`B8A9E15BD0E5726FFA70CDFAB65616382166110CAA59FBBCEAECFF9C4BE64CE7`;
+`scripts/release_manifest.py --dry-run` confirmou o manifesto.
+
+### 2026-10-04 - Terracota, transbordo comunitario e leitura pendente de terreno
+
+O cenário novo `BuilderGameTest.aTheoreticalTerracottaRouteFallsBackAfterThreeMisses`
+reproduziu a espera infinita de terracota colorida: uma receita de recoloração
+e as alternativas da família faziam a rota parecer disponível mesmo sem peça
+física chegar à obra. Depois de duas tentativas sem alterar o fluxo local, a
+terceira coloca a terracota preferida no baú que atende o construtor. A primeira
+rodada completa registrou exatamente essa falha; depois da correção localizada à
+família de terracota, a repetição passou.
+
+O alívio dos dez slots finais passou a procurar primeiro baú comunitário vazio
+e só depois baús comunitários parcialmente ocupados. A ADR-033 permite, se nada
+couber, um único baú físico no salão comum já inteiramente aberto da mina; ele
+não ocupa escada/corredor, não carrega chunk e só aparece em posição com piso
+sólido. `MineOverflowStorageGameTest` cobre a posição, e
+`ProfessionChestOverflowGameTest` cobre a prioridade do baú vazio. O próximo
+nível só recebe outro depósito quando for aberto naturalmente.
+
+Também foi corrigido o índice transitório de fluidos: coluna de chunk ainda
+descarregado fica pendente, em vez de avançar para sempre sem ser lida. O estudo
+de varredura registra que `site_sweep_budget_exhausted` é do scanner de lote de
+obra, não a coleta de recursos; leitura integral de chunks continua recusada até
+perfil justificar seu custo.
+
+Verificação desta sessão: `test --rerun-tasks --no-daemon` com **1.309/1.309**
+e `runGametest --rerun-tasks --no-daemon` com **580/580**. Ainda falta o
+playtest do save para confirmar obra de terracota, prioridade entre baús reais e
+criação no segundo nível da mina.
+
+### 2026-10-04 - Obra adiada por roça sem alcance
+
+O Spark `t80rKW8u6q` e o log local não mostraram parada do planejador: uma obra
+foi concluída, elevando os edifícios salvos de 11 para 12. A obra seguinte não
+abria porque o único lote elegível era usado pela demanda de roça, mas ficava
+fora do alcance do fazendeiro. `FarmPlans` marcava a roça como adiada por vinte
+ciclos, deixando a vila sem projeto durante cerca de dez minutos, apesar de
+estoque e trabalhadores livres.
+
+O recuo agora dura um único `VillageDetector.CYCLE_TICKS`. Assim, a próxima
+rodada pode abrir casa ou oficina, enquanto a roça segue proibida fora de
+`FarmerWork.reach()`. `FarmPostponementTest` foi alterado primeiro para exigir
+o retorno no tick 600; falhou com a janela antiga e passou após a correção. O
+playtest ainda deve confirmar uma obra visível no ciclo posterior à recusa.
+
+Publicação: `build --no-daemon` concluiu em verde e produziu o JAR SHA-256
+`47B30CD9E662C5C4BE79F090ED5FB886792A218B259FC26BD0360D39ADFC44FD`, copiado
+para `downloads/`. O cliente Minecraft estava aberto, portanto a instalação em
+`%APPDATA%/.minecraft/mods/` foi preservada no JAR anterior; a troca deve ser
+feita com o cliente fechado.
+
+### 2026-10-04 - Fundação física da roça e matriz de blocos Vanilla
+
+`Blueprint.isBase` reconhecia somente a camada de rua. Isso excluía as roças,
+que deliberadamente não têm essa camada para deixar canteiros e água um bloco
+acima da rua. Quando a primeira peça da roça encontrava grama, ela era tratada
+como obstáculo e riscada como concluída em vez de ser assentada.
+
+O GameTest `BuilderGameTest.aFarmFoundationReplacesNaturalGround` foi escrito
+antes da alteração e falhou como esperado: a terra da planta não substituía a
+grama. A planta agora marca apenas sua menor camada real como base física; casas
+e demais plantas continuam usando a camada de rua. A repetição completa passou
+em **581/581** GameTests.
+
+Também foi criado `scripts/export_vanilla_village_block_routes.py`, que lê os
+templates NBT distribuídos no JAR Vanilla 1.21.1 e cruza cada bloco usado com
+`ResourceType`. A saída `docs/reports/blocos-vilas-vanilla-1.21.1.xlsx` possui
+as duas colunas solicitadas e 161 blocos distintos. Sessenta e sete não têm
+profissão com rota direta e foram mantidos explicitamente assim, sem declarar
+uma geração de item que o mundo não oferece.
+
+### 2026-10-04 - Celeiro e depósito no rodízio profissional
+
+Os modelos externos foram incorporados em identificadores válidos de recurso:
+`colony/barn_majest` pertence explicitamente ao pastor e
+`colony/storage_majest` ao construtor. `ColonyModels` os acrescenta antes dos
+modelos genéricos de ofício e `ConstructionOrder` reutiliza essa classificação
+para que não sejam tratados como casas. Assim, ambos entram no sorteio regular
+de oficina da profissão respectiva.
+
+O celeiro original tinha 20x13x29 e 580 blocos naturais no piso. Esses blocos
+de grama, terra, caminho, cascalho e terra grossa foram removidos; barril,
+funis e fardos de feno na mesma camada foram preservados. Os blocos restantes
+foram transladados para a origem, resultando em uma planta de 12x13x15 com 818
+blocos e sem entidade persistida no template.
+
+`ConstructionOrderTest` foi escrito primeiro e falhou sem o mapeamento, pois
+os dois modelos retornavam profissão vazia. Depois da associação, o teste
+unitário passou. O cenário Fabric carrega os dois NBT reais, confirma que estão
+na lista construível e que não são casas. A execução completa de
+`runGametest --rerun-tasks --no-daemon` concluiu em **582/582**. Ainda falta o
+playtest no save para observar o sorteio e a implantação visual em terreno
+real.
+
+### 2026-10-04 - Oito árvores iniciais e retorno de escada
+
+O log do save registrou uma colônia criada com `0 forest trees`: a reserva
+fundacional exigia uma caixa de copa inteiramente vazia, portanto uma copa
+natural já existente transformava todos os candidatos válidos em recusa. A
+vila agora tenta oito árvores maduras no anel de 48–56 blocos e alterna as duas
+espécies do bioma. A preparação aceita e remove apenas folhas naturais que não
+sejam persistentes, dentro da copa da árvore que será gerada; estruturas,
+blocos de entidade, folhas de jogador e peças de vila permanecem protegidos.
+Se o gerador Vanilla falhar, os estados exatos das folhas removidas são
+restaurados.
+
+O mesmo log mostrou o mineiro quatro blocos abaixo da boca tentando caminhar
+diretamente até ela. Quando a perna normal não encontra o corredor porque a
+entidade foi deslocada, ela agora escolhe um piso transitável até oito blocos
+de distância, no máximo um bloco acima e mais próximo da boca. A recuperação
+só vale abaixo da entrada, preservando a regra que impede um aldeão sobre a
+mina de mirar a escada através do chão.
+
+O novo GameTest cobre oito árvores sob folhagem natural; a execução final
+passou 584/584. O teste unitário `MinerLegTest` passou 18/18, incluindo
+recuperação e proteção de superfície. Uma primeira rodada teve falha isolada,
+já conhecida como intermitente, em
+`BuilderGameTest.theBuilderMakesTheDoorTheWorkIsWaitingFor`; a repetição final
+passou integralmente, mas a reprodução determinística dessa instabilidade
+continua pendente.
+
+### 2026-10-04 - Armazenamento do mineiro, viveiro proporcional e apoio à obra
+
+O perfil Spark `8VskZd9AOD` confirmou TPS 20 e MSPT mediano de 6,97 ms: o
+comportamento observado não era uma parada global do servidor. O mineiro chegou
+à frente de mineração, extraiu blocos e, em seguida, encerrou a coleta com zero
+itens quando o seu baú estava cheio. A causa era o encerramento artificial da
+tarefa depois de uma tentativa de depósito sem destino.
+
+`MinerHaul` agora tenta o depósito normal e, somente quando necessário, alivia
+o baú profissional para armazenamento comunitário da mesma vila antes de
+repetir o depósito. Caso nenhum destino possa receber a carga, `MinerHands` não
+marca a tarefa como concluída: devolve-a à fila, aplica a espera curta já usada
+para coleta mineral e libera o trabalhador para as atividades secundárias
+permitidas. A navegação da mina continua na escada e nos corredores físicos;
+os reparos locais de piso, iluminação e troca de frente seguem como recuperação
+pontual, sem substituir a navegação Vanilla.
+
+O viveiro do lenhador mantém o patamar inicial de dez árvores e passa a usar
+`max(10, 5 por lenhador)`, com plantio nos anéis de borda protegidos de 48--56
+blocos. A manutenção automática só roda para colônias que realmente possuem
+lenhador, evitando varredura recorrente em vilas sem essa profissão. Quando
+não há corte nem reposição pendentes, o lenhador pode reservar construção; a
+mesma ajuda de construção e o recolhimento de itens no chão que faltam à obra
+permanecem disponíveis a todas as profissões ociosas, sem trocar a especialidade
+de coleta de cada uma.
+
+O teste unitário de meta do viveiro e a bateria direcionada de despacho passaram.
+Duas execuções integrais de `runGametest --rerun-tasks --no-daemon` mantiveram
+verdes os cenários alterados, mas ambas encerraram em 584/585 por falhas
+preexistentes distintas e não determinísticas: uma em
+`SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted` e outra em
+`CraftingGameTest.theWorkPieceMadeByTheCarpenterStaysInTheChest`. Portanto, a
+suíte completa ainda não é uma evidência de liberação integral e exige
+estabilização separada desses cenários, além do playtest no save.
+
+### 2026-10-04 - Remoção dos ciclos Fabric e teto de arquivo
+
+A linha de base falhava antes de qualquer edição: `ArchitectureRulesTest`
+detectava quatro ciclos entre `event`, `integration` e `work`, e
+`LumberjackWork` tinha 529 linhas, acima do teto de 500. A correção não
+congelou a nova topologia. `VillageFocus`, a leitura/orientação de blueprint e
+a adaptação de areia do deserto passaram a pertencer a `integration`; os
+eventos conservam a política de moradia e a aplicam a partir do resultado da
+varredura. Com isso, infraestrutura não volta a depender de execução de
+trabalho, e trabalho não volta a depender de evento para decidir o foco.
+
+O fechamento de corte foi extraído de `LumberjackWork` para `TreeFelling`.
+O arquivo de referência do ArchUnit foi reduzido a vazio porque os quatro ciclos
+que ele documentava deixaram de existir, e não porque foram aceitos como nova
+linha de base.
+
+Verificação: `./gradlew.bat test --no-daemon` passou com 1.314 testes, zero
+falhas e zero erros; `git diff --check` não encontrou erro de espaço. O build
+final também compilou os GameTests, e a rodada final de
+`./gradlew.bat runGametest --rerun-tasks --no-daemon` passou em 585/585. Não
+houve playtest no save nesta sessão.

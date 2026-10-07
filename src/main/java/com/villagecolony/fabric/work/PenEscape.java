@@ -214,7 +214,8 @@ public final class PenEscape {
             return false;
         }
 
-        SEEN_FREE.remove(id);
+        // Para onde ia, antes de a fuga trocar o destino — estudo de 01-10, §8-A.
+        PenEntryLog.record(world, villager, who(villager), feet, SEEN_FREE.remove(id));
 
         Escape escape = new Escape(pen.reach(), exits, world.getTime());
         ESCAPES.put(id, escape);

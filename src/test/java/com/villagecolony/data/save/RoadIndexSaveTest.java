@@ -7,6 +7,7 @@ import com.villagecolony.core.colony.model.ColonyState;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.SweepPersistence;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -200,7 +201,7 @@ class RoadIndexSaveTest {
 
         BuildSiteScanner.clearAll();
 
-        BuildSiteScanner.restore(roadsOf(
+        SweepPersistence.restore(roadsOf(
                 colonyId,
                 ColonyRoads.column(120, -340),
                 ColonyRoads.column(-7, 12)));
@@ -213,7 +214,7 @@ class RoadIndexSaveTest {
                 List.of(),
                 List.of(),
                 List.of(),
-                BuildSiteScanner.saved());
+                SweepPersistence.saved());
 
         List<ColonyRoads> read = roundTrip(data).roads();
 
@@ -221,13 +222,13 @@ class RoadIndexSaveTest {
 
         assertTrue(RoadIndex.roadIndexSize(colonyId).isEmpty());
 
-        read.forEach(BuildSiteScanner::restore);
+        read.forEach(SweepPersistence::restore);
 
         assertFalse(RoadIndex.roadIndexSize(colonyId).isEmpty());
         assertEquals(2, RoadIndex.roadIndexSize(colonyId).getAsInt());
         assertEquals(
                 List.of(ColonyRoads.column(120, -340), ColonyRoads.column(-7, 12)),
-                BuildSiteScanner.saved().get(0).columns());
+                SweepPersistence.saved().get(0).columns());
 
         BuildSiteScanner.clearAll();
     }

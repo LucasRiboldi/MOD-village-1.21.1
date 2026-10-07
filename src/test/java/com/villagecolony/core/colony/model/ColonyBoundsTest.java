@@ -27,7 +27,9 @@ class ColonyBoundsTest {
         assertTrue(colony.measure(HUNDRED));
 
         assertEquals(new ColonyPos(50, 64, 50), colony.center(), "a altura do centro fica a de antes");
-        assertEquals(HUNDRED, colony.bounds().orElseThrow());
+        // 100 de lado é par: ganha uma linha para o centro ser um bloco só — 2026-10-03.
+        assertEquals(HUNDRED.centered(), colony.bounds().orElseThrow());
+        assertEquals(101, colony.bounds().orElseThrow().sizeX());
     }
 
     @Test

@@ -93,6 +93,15 @@ public final class VillageLogCommand {
             source.sendFeedback(() -> statusText(entry), false);
         }
 
+        // O que a obra aberta espera, e por quê — ADR-035 §3.
+        VillageColonyMod.CONSTRUCTIONS.openOf(nearby.id()).ifPresent(project ->
+                com.villagecolony.fabric.work.MaterialRequests.of(project.id()).ifPresent(request -> {
+                    String line = VillageLogPresenter.materialRequest(
+                            project.blueprint().id().path(), request, source.getWorld().getTime());
+                    source.sendFeedback(() -> Text.literal(line).formatted(
+                            request.delivered() ? Formatting.GRAY : Formatting.YELLOW), false);
+                }));
+
         // As esperas longas, com o motivo e o tempo — B-5, 2026-10-02.
         List<String> waits = VillageLogPresenter.longWaits(
                 com.villagecolony.fabric.work.IdleLog.waitingOf(nearby.id()), System.currentTimeMillis());

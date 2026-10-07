@@ -7,7 +7,7 @@ import com.villagecolony.core.coordination.WorkClock;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.event.VillageFocus;
+import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.fabric.integration.ColonyChests;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.VillagerEntity;

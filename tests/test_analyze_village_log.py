@@ -121,6 +121,7 @@ class AnalyzeVillageLogTest(unittest.TestCase):
                     "[03:12:00] [Server thread/WARN]: Can't keep up! Is the server overloaded? Running 2034ms or 40 ticks behind",
                     "[03:13:00] [Server thread/ERROR]: Something broke",
                     "[03:14:00] [Server thread/INFO]: Miner 77aa took 0 from -10, 40, 5 — 12 this task",
+                    "[03:15:00] [Server thread/WARN]: Miner chest at -10, 40, 5 is full — dropped 1 of minecraft:cobblestone at the work site",
                 ]
             )
         )
@@ -131,6 +132,13 @@ class AnalyzeVillageLogTest(unittest.TestCase):
         self.assertEqual(1, summary["server_overloaded"].occurrences)
         self.assertEqual(1, summary["log_error_line"].occurrences)
         self.assertEqual(1, summary["miner_chest_full"].occurrences)
+
+    def test_zero_item_haul_does_not_mean_the_miner_chest_is_full(self) -> None:
+        summary = analyze_village_log.analyze_text(
+            "[03:14:00] [Server thread/INFO]: Miner 77aa took 0 from -10, 40, 5 — 12 this task"
+        )
+
+        self.assertEqual(0, summary["miner_chest_full"].occurrences)
 
     def test_ranks_the_pieces_the_builds_waited_for(self) -> None:
         text = "\n".join(

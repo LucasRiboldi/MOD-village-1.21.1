@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-10-02 (integração de 02-10 e sessão de 02-10 no topo; antes, divergências entre documentos e código, seção
+**Atualizado:** 2026-10-04 (terracota colorida passa pelo pedreiro com corante automático e o fundidor antecipa após duas faltas; a camada inferior de roça agora é fundação física; matriz de 161 blocos Vanilla registra 67 sem rota direta; recuo de roça inviável reduzido para um ciclo; antes, muda solicitada respeita o expediente; `barn_majest` e `storage_majest` entram no rodízio de pastor e construtor; 585 GameTests na verificação final; painéis pixelados, marcador, mina, base e varredura, integração de 02-10 e sessão de 02-10, seção
 abaixo). Estado de 2026-09-28: a obra antecipa a proxima peca artesanal sem
 consumir os troncos brutos que ela mesma ainda exige; o `/vc log` explica a
 saida de trabalhador preso e seu retorno a escala. A evolucao agora inclui
@@ -11,6 +11,186 @@ mina, vila fundada em agua tenta acesso selado para uma saida natural 8x8 antes
 da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
 A bateria de 1.196 testes unitarios e 528 GameTests (30-09, depois da revisao
 das profissoes) esta verde; ainda requer validacao no save real.
+
+## Playtest de 2026-10-03, manhã (Spark `uBD27Q4L35`) — feito sem jogo
+
+- [x] 🔴 Ícones trocados: os arquivos de textura tinham os nomes errados; renomeados pelo conteúdo.
+- [x] 🟠 Placa com fundo em pixel art (nove partes, estica com o texto), ícone à esquerda, texto à direita.
+- [x] 🔴 Área da vila marcada com partículas verdes (`VillageMarker`).
+- [x] 🔴 Base das obras: só a grama fica como chão; plantação constrói a base inteira.
+- [x] 🔴 Gargalos da obra: tentativas em paralelo para todas as peças que faltam; obra só com peça sem apoio sai em 1 min.
+- [x] 🟠 Mina: arco 5 × 4 com dois lampiões, vão 3 × 3; salas 3 × 3.
+- [x] 🟠 Água e lava lidas uma vez são puladas nas buscas (`FluidColumns`) — **sem teste**.
+- [ ] 🔴 Playtest de tudo acima.
+- [ ] 🟠 Decisão: varredura das bordas para o centro — `docs/research/2026-10-03-varredura-das-bordas.md`.
+- [ ] 🟠 Obra com um construtor só por vez (`1 working`): estudar dois construtores na mesma obra.
+- [ ] 🟡 Testes pendentes: `FluidColumns`, atalho "bloco já no lugar", `VillageMarker` em jogo.
+
+## Medida da vila — ADR-003 Emenda 8 (2026-10-03)
+
+- [x] 🔴 Partida pelas peças da vila gerada; 15 em volta das obras; só o lado que passa avança; lados ímpares.
+- [x] 🔴 Rua: corrente de 10 caminhos fora, encostada num de dentro, empurra o lado (`RoadSpill`).
+- [ ] 🔴 Playtest: `measured at` com 143 × 117 na vila do autor; `grew to … by a road of N path blocks`.
+- [ ] 🟡 A medida pelas peças (`GeneratedVillages`) não tem GameTest: precisa de vila gerada na arena.
+
+## Revisão de 2026-10-03 — paradas por profissão (`docs/research/2026-10-03-paradas-por-profissao.md`)
+
+- [x] 🔴 Material que a busca não acha 3 vezes aparece no baú de quem o usa (`LocateFallback`), natureza inclusive — pedido do autor.
+- [x] 🔴 Pastor segurava a tarefa de lã sem ovelha no raio, calado (`EmptyFlock`).
+- [x] 🔴 Carpinteiro fechava tarefa com 0 peça: portão lia só baús de trabalhador (A-1 de volta).
+- [x] 🟠 Arte em pixel dos overlays nunca era desenhada — ícones de profissão e de obra, no `LAST`.
+- [x] 🟡 Fundidor repetia a mesma parada a cada segundo (`StopLog`).
+- [ ] 🔴 **Decisão:** aldeões sem ofício ficam 100% parados — a cota da ADR-011 dá 8 vagas a cada 15 adultos. Opções: vagas para todos, ou ociosos como ajudantes.
+- [ ] 🔴 Playtest: ver os ícones (com e sem shaders), `the colony stocked … after three searches`, `Shepherd … found no sheep`, nenhum `0 pieces made`.
+- [ ] 🟠 Obra para inteira por uma peça sem material (33×): adiar só a peça e seguir com as outras.
+- [ ] 🟠 Minerador: 52 saíram do ofício por desistências que são encalhe da mina, não culpa deles.
+- [ ] 🟠 **Decisão:** pedreiro 67% ocioso — pré-fabricar pedra da próxima casa ou ajudar na obra.
+- [ ] 🟡 Fazendeiro: varredura da roça não fecha no prazo (134×).
+- [ ] 🟡 O castigo de reserva da lã (`canReserveTask` com `COLLECT_WOOL`) não tem teste próprio.
+
+## Playtest de 2026-10-03, madrugada (Spark `r6nErbWNSL`)
+
+- [x] 🔴 Construtor parado fora da casa fechada (6× `has not moved a block`, dezenas de `sets … aside`) — `UnreachableSpots`.
+- [x] 🟠 Vidraça esperando 6 min por areia que o raio não tem — `TestBarrier.nothingToWaitFor`.
+- [ ] 🔴 Playtest: `gives up standing at` aparece e o construtor de fora some do `has not moved a block`.
+- [x] 🟡 Fundidor repetindo a parada — feito (`StopLog`).
+- [x] ~~Vidraça riscada na hora sem areia~~ — retirado: a regra das 3 buscas faz a areia aparecer.
+## Sessão de 2026-10-03 — painéis, perímetro e mina
+
+## Sessão de 2026-10-04 — fluxo de mina e viveiro proporcional
+
+- [x] 🔴 Spark `8VskZd9AOD`: baú cheio do mineiro aciona transbordo imediato
+  antes da desistência; se não houver destino físico, a coleta fica disponível
+  e não é concluída com entrega zero.
+- [x] 🟠 Lenhador sem árvore inicia lote de viveiro no anel 48–56 antes de
+  ficar ocioso; a meta é `max(10, 5 por lenhador)` e a varredura não roda sem
+  lenhador registrado.
+- [x] 🟠 Apoio de obra permanece disponível a produtor ocioso ou com coleta em
+  descanso, sem cruzar coleta de madeira e mineração (ADR-010).
+- [ ] 🔴 Playtest: encher o baú de mineiro, confirmar a transferência para baú
+  comunitário e que a tarefa reaparece sem a mensagem falsa de entrega zero;
+  depois observar o mineiro apoiar uma obra enquanto espera.
+- [ ] 🟠 Playtest: deixar o lenhador sem árvores e confirmar plantio longe das
+  estruturas na borda, até a meta de cinco árvores por lenhador.
+
+## Sessão de 2026-10-04 — suprimento de obra, overflow e varredura
+
+## Sessão de 2026-10-04 — cadeia colorida e antecipação do fundidor
+
+- [x] 🔴 Terracota vermelha pertence ao pedreiro e abre a cadeia física
+  `argila -> terracota -> terracota vermelha`; a receita Vanilla continua a
+  definir rendimento e ingredientes.
+- [x] 🔴 Todo `DyeItem` Vanilla é fornecido automaticamente no baú de serviço
+  quando uma receita o pede, sem criar tarefa de colher ou fabricar corante.
+- [x] 🟠 Fundidor antecipa a demanda de obra depois de duas faltas por matéria
+  prima, mantendo o material físico e a tarefa reservada.
+- [x] 🟠 A revisão do seletor de lote manteve o índice incremental já existente:
+  ele evita recandidatos de rua e aceita lacunas rasas preenchíveis pela
+  fundação. Não foi adicionada cache paralela sem ganho medido.
+- [ ] 🟠 Playtest: abrir uma obra de terracota colorida e confirmar a entrada
+  automática do corante, a coleta de argila, a queima de terracota e a ação do
+  pedreiro no save real.
+
+## Sessão de 2026-10-04 — oficinas nomeadas no sorteio
+
+- [x] 🟠 `barn_majest.nbt` passa a ser oficina sorteável do pastor e
+  `storage_majest.nbt` a do construtor, pela mesma seleção que atende os demais
+  modelos profissionais.
+- [x] 🟠 Retirar do celeiro somente a camada de solo natural, reduzindo sua
+  área para 12x13x15 e mantendo os blocos funcionais na base.
+- [ ] 🟠 Playtest: observar celeiro do pastor e depósito do construtor nascerem
+  em vila real com lote suficiente; confirmar que a nova pegada do celeiro não
+  cria terreno flutuante.
+
+- [x] 🔴 Roça: a camada inferior pedida pela planta substitui terreno natural e
+  é construída fisicamente, mantendo os canteiros e a água na altura especial.
+- [ ] 🟠 Playtest: criar uma roça sobre grama e confirmar a fundação completa,
+  o canal de água e os canteiros sem blocos apenas riscados como concluídos.
+- [ ] 🟡 Definir rotas físicas para os 67 blocos de vila Vanilla sem profissão
+  adquirente, listados em `docs/reports/blocos-vilas-vanilla-1.21.1.xlsx`.
+
+- [x] 🔴 Spark `t80rKW8u6q`: uma roça cujo único lote estava fora do alcance
+  bloqueava todos os projetos por vinte ciclos. Ela agora cede somente uma
+  rodada para casa/oficina, preservando a recusa da roça inalcançável.
+- [ ] 🟠 Playtest: depois de uma roça sem lote ao alcance, observar uma
+  casa/oficina surgir no ciclo seguinte e confirmar que a roça não nasce fora
+  do alcance do fazendeiro.
+
+- [x] 🔴 Obra que falha três vezes para obter material sem rota física imediata,
+  inclusive terracota branca de rota teórica de fundição, recebe o bloco final
+  fisicamente no baú do construtor.
+- [x] 🟠 Baú profissional cheio prioriza baú comunitário vazio, depois os
+  demais comunitários; sem espaço, usa um baú físico no salão completo da mina
+  (ADR-033), sem transferir a outra profissão.
+- [x] 🟠 Índice de água/lava volta a tentar colunas que estavam em chunk
+  descarregado, sem varredura integral de chunks.
+- [ ] 🟠 Playtest: três falhas de terracota branca retomam a obra com o item no
+  baú do construtor; confirmar também a prioridade de baú vazio e o baú do salão
+  de mina sem espaço comunitário.
+- [ ] 🟡 Medir no próximo Spark leituras/candidatos/falhas da coleta por
+  profissão antes de considerar heightmap ou índice por eventos.
+
+- [x] 🔴 Corrigir emissão de vértices dos overlays cliente.
+- [x] 🔴 Tratar baús duplos como inventário único, inclusive na reserva dos
+  dez slots profissionais.
+- [x] 🔴 Fora do horário, interromper navegação de trabalho sem perder HOME
+  nem a tarefa pendente.
+- [x] 🔴 Após 20 esperas por madeira de árvore, plantar fisicamente a muda
+  correspondente longe das estruturas e dentro do alcance do lenhador.
+- [x] 🔴 A muda solicitada não é retirada nem plantada à noite; o recurso
+  físico permanece no baú até o próximo expediente.
+- [x] 🟠 Mina: dois lances, salões 10x10x3, passagem 3x3, dez tentativas e
+  migração de cursor para forma 8.
+- [x] 🟠 Restaurar garantia idempotente de baú junto às camas vanilla.
+- [x] 🟡 Estudar varredura integral de chunks sem ativá-la; alternativas em
+  `docs/research/2026-10-03-alternativas-varredura-recursos.md`.
+- [ ] 🔴 Playtest cliente: cada aldeão mostra o par correto ícone/profissão;
+  alternar o texto no Mod Menu preserva o ícone; a moldura tem centro
+  transparente, o símbolo fica centralizado acima e a placa da obra mantém
+  nome e itens faltantes dentro de uma moldura responsiva.
+- [ ] 🔴 Playtest do perímetro: os fogos azuis mostram a caixa da vila sem
+  confundir com o contorno da obra, inclusive no limite de uma vila grande.
+- [ ] 🟠 Playtest da mina: arco 5x4, dois lampiões e passagem/escada 3x3 sem
+  bloquear a ida ou volta do mineiro.
+- [x] 🔴 ADR e implementação: separar a varredura de recursos da agricultura,
+  iniciar na borda, convergir em espiral, expandir para fora sem revisita e
+  invalidar/recriar um índice de superfície de água/lava ao crescer a vila.
+- [x] 🔴 ADR e implementação: definir e testar a remoção de base apenas de
+  `grass_block` em obra não agrícola, sem alterar fundação de plantação.
+- [ ] 🟠 Playtest da coleta: encontrar recurso além da caixa sem reler água ou
+  lava medida; observar custo da reconstrução quando a vila crescer.
+- [x] 🟠 Baú profissional cheio: mover fisicamente os dez slots finais para
+  baús não profissionais da mesma vila, preservando pilhas e sem descarte.
+- [ ] 🟠 Playtest dos baús: encher um baú profissional e confirmar os dez slots
+  livres, inclusive quando há mais de um baú comunitário e quando todos lotam.
+- [x] 🟠 Spark `G7eI22eQt0`: cursor exato da busca de árvores, parada após 16
+  árvores indexadas e carpintaria produzindo até o estoque cobrir a demanda
+  restante da obra. O analisador não confunde mais retirada zero com baú cheio.
+- [ ] 🟠 Repetir Spark no mesmo save: comparar o custo de
+  `TreeScanner.findNearestLog` (era 0,85% do servidor e 62% do mod) e confirmar
+  que as 194 esperas observadas por escada de carvalho deixaram de se repetir.
+- [ ] 🟡 Diagnosticar o batch concorrente `craft_family`: uma rodada de 04-10
+  falhou as asserções opostas do carpinteiro e pedreiro; a repetição imediata
+  passou 578/578. Não reduzir timeout nem enfraquecer os testes sem reprodução
+  determinística da interferência.
+
+## Sessão de 2026-10-04 — bosque inicial e recuperação da mina
+
+- [x] 🔴 Vila recém-criada tenta oito árvores maduras no anel 48–56, com
+  espécies alternadas do bioma e distância mínima entre elas. Folhagem natural
+  pode ser removida exclusivamente na copa da árvore nova; estruturas e folhas
+  persistentes continuam intocadas.
+- [x] 🔴 Mineiro deslocado abaixo da boca recupera o degrau transitável mais
+  próximo que o aproxima da saída, em vez de mirar a boca através da rocha.
+- [ ] 🔴 Playtest: criar vila em área com copa natural e confirmar oito árvores
+  maduras longe das obras; deslocar o mineiro em uma escada e confirmar que ele
+  retoma a subida sem girar ou abandonar a mina.
+- [ ] 🟡 Reproduzir de forma determinística
+  `BuilderGameTest.theBuilderMakesTheDoorTheWorkIsWaitingFor`, que falhou na
+  rodada completa de 04-10 sem relação com este patch; não reduzir timeout.
+- [x] 🟡 Remover os ciclos Fabric por refatoração arquitetural, sem
+  congelamento automático: `event/work/integration` e `integration/work` não
+  aparecem mais em `ArchitectureRulesTest` (04-10).
 
 ## Integração de 2026-10-02 — políticas de profissão e overlays
 
@@ -44,12 +224,14 @@ escada de madeira na porta elevada, roça acima da rua. **Nada visto em jogo.**
 - [x] 🟠 Regras 2-e1/37-e1 (ferramenta melhor do baú, com Eficiência e encantamento), 49 (ordem das obras: cama → casa do ofício → demais) e 50 (tempo dos aldeões, `VC_TIME` + `scripts/time_ledger.py`) — 02-10.
 - [x] 🟠 Regra 48: recolher do chão só o item que falta à obra aberta — feito em 02-10 (`GroundPickup`, `GroundPickupGameTest` confirmado por mutação). Não visto em jogo.
 - [x] 🔴 A-1: meta e executor da tábua concordarem — feito em `7112702` (a obra usa toda a madeira). Falta ver em jogo que o carpinteiro não fecha mais tarefa com 0 peça.
-- [~] 🟠 B-1: ajudante no tempo ocioso — **feita a metade do chão** (recolhe o que a obra espera e guarda no baú mais perto dela). Falta: levar material do baú para perto do construtor.
-- [x] 🟠 A-2: índice de árvores — feito em `8bcb941` (com A-5..A-8). Falta medir em jogo o tempo procurando (era 66%).
+- [~] 🟠 B-1: ajudante no tempo ocioso — **feita a metade do chão** (recolhe o que a obra espera e guarda no baú mais perto dela). A outra metade, levar material do baú para perto do construtor, **aguarda decisão do autor** (revisto em 02-10): o construtor tira o material de qualquer baú da colônia sem andar (`ColonySupply.take`), então carregar para perto dele não adianta um bloco da obra — seria só visual. Faz sentido se o construtor passar a ir ao baú.
+- [x] 🟠 A-2: índice de árvores — feito em `8bcb941` (com A-5..A-8) e refinado
+  em 03-10 com cursor por coluna e lote máximo de 16 árvores. Falta repetir o
+  Spark no save (era 66%; mediu 62% do custo do mod antes do refinamento).
 - [x] 🟠 A-3 (material da obra pedido inteiro) e A-4 (mina nova na borda, longe da água) — feitos em `d15d95d`. Não vistos em jogo.
-- [~] 🟠 B-4: fundidor sem cru — **feito o carvão vegetal** (a obra que pede carvão aceita o vegetal, que sai da tora). Falta: pedra lisa a partir do pedregulho.
+- [x] 🟠 B-4: fundidor sem cru — carvão vegetal (a obra que pede carvão aceita o vegetal, que sai da tora) e, em 02-10, o degrau de fornalha: a obra que pede pedra lisa põe a pedra na lista, e a pedra sai do pedregulho (`SmelterFallbackGameTest`, confirmado por mutação). Não visto em jogo.
 - [x] 🟡 B-5: esperas de mais de 2 min no `/vc log`, com motivo e tempo (`VillageLogPresenter.longWaits`).
-- [ ] 🟡 Bateria: dois intermitentes vistos em 02-10, uma vez cada em 8 rodadas — `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted` (a mina sumiu no tique 150) e `BuilderGameTest.theBuilderMakesTheDoorTheWorkIsWaitingFor` (1 porta no baú em vez de 2). Suspeita: interferência entre cenários no mundo único.
+- [ ] 🟡 Bateria: dois intermitentes vistos em 02-10, uma vez cada em 8 rodadas — `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted` (a mina sumiu no tique 150) e `BuilderGameTest.theBuilderMakesTheDoorTheWorkIsWaitingFor` (1 porta no baú em vez de 2). Suspeita: interferência entre cenários no mundo único. **02-10, noite:** o do fundidor caiu 2 vezes em 6 rodadas ("a leitura histórica não chegou ao baú do cenário") — mais que 1 em 8; investigar. **Pista:** as três quedas de 02-10 à noite foram em rodadas sem `--rerun-tasks`; todas as rodadas com `--rerun-tasks` passaram. Em 03-10, 00:45, o `GroundPickupGameTest` caiu uma vez numa rodada de mutação que não passa pelo código dele (1 em ~14 rodadas).
 - [ ] 🟡 Decisões do autor do estudo de profissões: Regra 28 (casa do ofício), Regra 18 (pausa/chuva), felicidade (R-3), fornalha real (V-2).
 
 ## Sessão de 2026-10-01 — pendências (`docs/research/2026-10-01-solucoes-das-pendencias.md`)
@@ -60,11 +242,11 @@ ADR-003 Emenda 7 (busca de lote sem teto). **Nada visto em jogo.** Opções e
 recomendação de cada item no estudo.
 
 - [ ] 🔴 Playtest com as linhas do estudo §A (curral, escalada, baús, crescimento, revisão 30-09).
-- [ ] 🔴 Script de conferência do log (`scripts/playtest_check.py`, estudo §A-B).
+- [x] 🔴 Script de conferência do log (estudo §A-B) — feito em 02-10 no `scripts/verdict.py`, que já existia: 12 itens novos (30-09 a 02-10), lê os `.log.gz` do dia e o teste das frases roda no CI (`tests/test_verdict_session.py`). Uso: `python scripts/verdict.py`.
 - [ ] 🟠 Limpar o save ou usar mundo novo (estudo §6).
-- [ ] 🟠 Vila grande cresce devagar: cadência da varredura (estudo §7-A).
-- [ ] 🟠 Instrumentar a entrada no curral antes de prevenir (estudo §8-A).
-- [ ] 🟠 Escalada: bloco criado sem material; quebrar só bloco da colônia; avisar o jogador (estudo §9).
+- [x] 🟠 Vila grande cresce devagar: cadência da varredura (estudo §7-A) — feito em 02-10: `SweepCadence` dá à vila com jogador dentro uma passagem extra por segundo, só para continuar a varredura em curso, com o mesmo `LotSeeking.seek` e o mesmo prazo de 15 ms do ciclo (sem reparo, sem obra aberta). `SweepCadenceGameTest` confirmado por mutação. **Medir no Spark** o custo por segundo e o tempo em `looking for a lot`.
+- [x] 🟠 Instrumentar a entrada no curral antes de prevenir (estudo §8-A) — feito em 02-10: `PenEntryLog` escreve `entered a pen at … — path to …, work target …, walk target …, task …; last seen free at …`, e o `verdict.py` conta. Com o próximo playtest decide-se entre B (memória de curral) e C/D.
+- [x] 🟠 Escalada (estudo §9): bloco criado sem material já era o A-5 (`ClimbOut.place` cria pedregulho); em 02-10, fechado por blocos protegidos ele atravessa **só a peça da planta da colônia** (`ColonyPieces`, o reparo reconstrói; bloco do jogador e vila original intocáveis) e, sem saída nem assim, avisa os jogadores no chat a cada 5 min (`StrandedNotice`). `ClimbOutPiecesGameTest` confirmado por mutação. Teletransporte segue vetado. Não visto em jogo.
 - [ ] 🟠 Spark: lenhador (73% do mod), varredura de baús da caixa, F13 (estudo §10).
 - [ ] 🟡 Decisões do autor: combustível/viveiro, Regra 45 fora de casa, teletransporte de último recurso.
 - [ ] 🟡 PR desta branch depois do playtest (estudo §12).
@@ -119,7 +301,10 @@ documento; ordem recomendada na §7 dele.
   (ADR-007 com emenda §6, `daa5d31`); sem GameTest do critério da vila gerada.
 - [ ] 🟠 F13 - **Parcial** (`e00ee15`): baús no máximo 1×/min, bosque espera
   6.000 tiques, fase `population` no log. Falta: `minersRoom`/`roomOf` releem
-  baús a cada ciclo; medir em jogo.
+  baús a cada ciclo; **medir antes de mexer** (revisto em 02-10): são três
+  leituras por ciclo de 30 s, só dos baús de mineiro, pastor e fazendeiro, e
+  guardá-las por 60 s deixaria o ofício trabalhar com o baú já cheio — o
+  defeito de `bau-cheio-destroi`. Só com o Spark mostrando custo.
 - [ ] 🟡 F7 - Busca do fazendeiro não fecha: 26 `SWEEP_INCOMPLETE`.
 - [ ] 🟡 F8 - Tingimento tenta as 16 cores de vidraça.
 - [ ] 🟡 F9 - Carpinteiro para em lotes de 2–9 peças pela reserva de tora.
@@ -186,11 +371,12 @@ verificado.
   took` com várias vilas carregadas (risco R1: mais ciclos por tique).
 - [ ] P2 - Sem GameTest com jogador real para as duas regras (planejar perto,
   executar onde simula); a arena não cria jogador.
-- [ ] P2 - **Oito arquivos de produção acima de 500 linhas** (contagem
+- [x] P2 - **Oito arquivos de produção acima de 500 linhas** (contagem
   `wc -l`), contra a afirmação de 24-09 e da auditoria de 28-09 de que não
   havia nenhum: `StructureBlueprintReader` 568, `HousePlans` 563,
   `BuildSiteScanner` 544, `LumberjackWork` 518, `ColonyGoals` 514,
   `RoadExtension` 516 (510 antes do `PavingRefusals`), `WaitingWork` 507, `ColonySavedData` 503.
+  **Feito em 02-10:** `ColonyGoals` (→ `FurnaceGoals`), `ColonySavedData` (→ `ColonySaveReader.readColonies`), `BuildSiteScanner` (→ `SweepPersistence`), `RoadExtension` (→ `RoadRefusals`), `StructureBlueprintReader` (→ `StreetLayer`), `HousePlans` (→ `HouseCatalog`), `LumberjackWork` (→ `TreeChoice.closePlan`), `WaitingWork` (→ `CraftsmanRequest`); texto movido sem mudança, lista congelada vazia.
 - [x] **Error Prone zerado:** o commit `60c2b3d` zerou os 25 avisos. O log do
   CI do PR #4 não tem nenhuma linha `warning: [`. Os itens abaixo que
   ainda os listavam foram fechados.
@@ -409,8 +595,11 @@ resultado real contra ele.
   source set de teste; produção permanece pausada sem jogador. A fixture de
   fuga passou a registrar seu trabalhador, como ocorre em jogo. Rodada final:
   `runGametest --rerun-tasks` 480/480.
-- [ ] 🟠 **P1 - GameTest de jogador presente e distante:** validar a regra de
+- [x] 🟠 **P1 - GameTest de jogador presente e distante:** validar a regra de
   pausa sem usar a exceção de chamadas diretas que os testes atuais usam.
+  **02-10:** o `FakePlayer` do Fabric entra no mundo; `VillageFocusPlayerGameTest`
+  e `SweepCadenceGameTest.theSecondTickPassRunsOnlyWithAPlayerInside`, os dois
+  confirmados por mutação.
 - [x] `/vc log`: menu de chat simples da vila próxima, baseado no
   `ActivityTrace`; `VillageLogPresenterTest` cobre vazio, espera e travamento.
 - [x] 🟡 Corrigir os 25 avisos Error Prone atuais (`60c2b3d`; zero no CI de
@@ -483,12 +672,12 @@ Não recomendados:
   passagem da porta livre. `ColonyDetectionGameTest`, `VillageFoundationGameTest`
   e `ChestSpawnerGameTest` falharam contra a regra antiga; rodada completa:
   480/480. ⬜ conferir no mesmo save.
-- [ ] 🔴 **Lote que não cresce** (68,5% das recusas por rua reservada, pontas de
+- [~] 🔴 **Lote que não cresce** *(02-10: atacado pela Emenda 7, a rua que cresce `a71b4dab` e o lote que desliza `560d5468`; falta medir no log)* (68,5% das recusas por rua reservada, pontas de
   rua que não calçam): medir as pontas, aceitar lote a 1–2 blocos da rua, contar
   recusa por lote. Ver `docs/research/2026-09-26-sessao-longa.md` §7.1.
 - [ ] 🟠 **Decisão do autor:** obra largada sem nenhum bloco deve liberar o lote?
   Hoje três GameTests garantem que não (contra sobreposição).
-- [ ] 🟠 Pedreiro e carpinteiro contínuos; aldeão ocioso preso abaixo do chão.
+- [x] 🟠 Pedreiro e carpinteiro contínuos; aldeão ocioso preso abaixo do chão — feito em `61de6dd4` (profissões contínuas) e no E47 (`ClimbOut`, `MineReturn`).
 - [x] 🔴 **Casa na altura da rua, sem terra na base** (26-09, pedido do
   autor) — `StreetLevelGameTest` (4), `BlueprintStreetLayerTest` (6) e
   `oneBlockOffTheRoadLevelDoesNotBecomeAnUnsupportedLot`. Todo o lote agora
@@ -515,7 +704,7 @@ Não recomendados:
   último recurso com prazo (voltar ao baú). **Aguarda o autor.**
 - [ ] 🟠 **Decisões em aberto com resposta simples proposta** (25-09): ver
   `docs/research/2026-09-25-decisoes-simples.md` §2-§3.
-- [ ] 🔴 **E44/E45 com evidência nova:** o mineiro volta a cada sessão à
+- [~] 🔴 **E44/E45 com evidência nova** *(02-10: a recusa já vai para o save em `WorkMarksSavedData.mineRefusals`, e o encalhado não desiste mais — `ClimbOut`; falta ver em jogo)*: o mineiro volta a cada sessão à
   mesma pedra inalcançável (553, 39, 158), desiste, fica preso a y=41 e o
   `StrandedEscape` desiste ("no natural, dry way up"); ele fica fora da escala
   até alguém o soltar. A `MineMarks.refuse` não vai para o save. Próximo
@@ -550,7 +739,7 @@ Não recomendados:
 As recomendações, cada uma com um aceite que a próxima avaliação mede
 (metodologia em `docs/technical/avaliacao/METODOLOGIA.md`):
 
-- [ ] 🔴 **R1**: atacar o custo do ciclo. **C13 de 1 para ≥3.** Medido no log de
+- [~] 🔴 **R1** *(implementado em `a119c2ab`: só a vila foco planeja, prazo de 15 ms e cota ajustável; falta medir em jogo)*: atacar o custo do ciclo. **C13 de 1 para ≥3.** Medido no log de
   24-09 (196 ciclos lentos): o **planejador é 91% do custo** (49,9 s de 54,7 s;
   média 255 ms, máx 554 ms), a detecção 8%, e baús, ofícios e atribuição
   somam menos de 1%. A causa: `PlannerTurns.PER_CYCLE = 8`, com 8 colônias
@@ -670,12 +859,12 @@ automatizado; nenhum foi visto em jogo.
 - [x] 🔴 **N1**: fundação uma vez, 1 aldeão por cama da BigHouseMOD, sem
   reposição; `VillageMeals` para a procriação (`fc9d9b8`). ⬜ ver em jogo
   um filhote nascer e ganhar ofício.
-- [~] 🔴 **N2**: recusado pelo autor; a BigHouseMOD fica.
+- [x] 🔴 **N2**: recusado pelo autor; a BigHouseMOD fica.
 - [x] 🔴 **N3**: equivalente antes da peça pronta, 119 → 102 automáticas (`bd7072e`).
-- [~] 🔴 **N4**: fica como está por ora (decisão do autor).
+- [x] 🔴 **N4**: fica como está por ora (decisão do autor).
 - [x] 🟠 **N5**: a rua já era `dirt_path` desde o P0.7; nada a fazer.
 - [x] 🟠 **N6/N7**: ficam ligados; placa em topo + 5 (`8e78fa7`). ⬜ ver a leitura em jogo.
-- [~] 🟠 **N8**: recusado; o viveiro fica em `rooted_dirt`.
+- [x] 🟠 **N8**: recusado; o viveiro fica em `rooted_dirt`.
 - [x] 🟡 **N9**: casa → oficina de ofício → o que sobrou (`4590e4c`).
 - [x] 🟡 **N10**: tampão da escada da fuga (`553faaa`).
 - [x] 🟡 **N11**: alcance 24 + 2 por cama (`74a273a`).
@@ -890,7 +1079,7 @@ com código e testes locais das validações que continuam dependendo de um save
 - [x] Residual de `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted`: não repetiu na rodada completa de 21-09; manter a fixture em observação antes de alterar a coleta do fundidor.
 - [x] 🔴 **P0.8 — fundação absoluta da vila:** toda vila detectada cria a `BigHouseMOD`, cópia editada da big house Vanilla sem móveis/decorações, com seis camas e seis baús distintos. Os seis titulares (`MINER`, `LUMBERJACK`, `MASON`, `SMELTER`, `SHEPHERD` e `BUILDER`) recebem adulto, cama `HOME` e baú dentro dela; `FARMER` e `CARPENTER` continuam profissões ativas, mas sem cama/baú fundacionais na casa, e entram normalmente no crescimento. A Vanilla permanece intacta. `VillageFoundationGameTest` passou.
 - [ ] Playtest P0.8: entrar em um save com vila recém-detectada e confirmar a `BigHouseMOD`, os seis aldeões, suas camas, seus baús e a ausência de sobreposição com estruturas existentes.
-- [ ] 🔴 **E42 — impasse entre profissões:** criar o GameTest da roça fora do alcance do fazendeiro, com duas passagens do planejador, e corrigir a fila se a segunda passagem não abrir o projeto de casa.
+- [x] 🔴 **E42 — impasse entre profissões:** feito em `5e1d2990` — o impasse estava em `ConstructionPlanner.plan` (a recusa do lote fora do alcance encerrava a passagem); GameTest confirmado por mutação.
 - [x] 🟠 **E43 — descanso respeitado:** a decisao 1A torna uma capacidade em descanso inelegivel para toda reserva de `WorkAssignment`; `WorkAssignmentTest` falhou antes da retirada do fallback e `ColonyCycleGameTest.aRestingMinerLeavesTheStoneTaskAvailable` protege o registro usado em jogo. A rodada completa passou com 419/419.
 - [ ] Playtest E43: com o JAR desta entrega, provocar uma desistência do mineiro e confirmar que `COLLECT_STONE` fica disponivel pelos quatro ciclos de descanso antes de nova reserva.
 - [x] 🟠 **P1.1 — trabalhador ocioso sem `COLLECT_STONE` ou `CRAFT_WOOD`:** `CraftingGameTest.theCycleOpensTheCraftingTaskByItself` cobre `CRAFT_WOOD`; `MinerGameTest.theCycleAssignsStoneToTheMinerAndItReachesTheChest` parte de um mineiro ocioso e prova pedido, reserva para o oficio correto e entrega no bau, sem tarefa criada pelo cenario. A bateria passou com 414/414.
@@ -986,11 +1175,11 @@ Inventário em
 
 **Decisões do autor, pendentes** (o pedido foi sinalizar para decidir depois):
 
-- [ ] 🔴 Destino de `Class-Architecture.md`, `Fabric-Implementation-Plan.md`, `Data-Model.md` — descrevem `ColonyManager`, `TaskManager`, `BuildingStatus` e outras classes que **nunca existiram**. Recomendado: `docs/historical/`.
-- [ ] 🟠 Destino de `MVP.md`, `MVP-Tasks.md`, `START_PROJECT.md`, `Development-Roadmap.md` — planos concluídos ou superados
-- [ ] 🟠 **`STATE.md` tem 1.193 linhas** contra o teto de 150 que ele mesmo declara. Precisa de poda. *(30-09: 338 linhas; ver a auditoria de 28-09.)*
+- [x] 🔴 Destino de `Class-Architecture.md`, `Fabric-Implementation-Plan.md`, `Data-Model.md` — descrevem `ColonyManager`, `TaskManager`, `BuildingStatus` e outras classes que **nunca existiram**. Recomendado: `docs/historical/`. **Feito em 02-10.**
+- [x] 🟠 Destino de `MVP.md`, `MVP-Tasks.md`, `START_PROJECT.md`, `Development-Roadmap.md` — planos concluídos ou superados — movidos para `docs/historical/` em 02-10.
+- [x] 🟠 **`STATE.md` tem 1.193 linhas** contra o teto de 150 que ele mesmo declara. Precisa de poda. *(30-09: 338 linhas; ver a auditoria de 28-09.)* **02-10: 149 linhas.**
 - [x] 🟠 `ConstructionService.forget` sem chamador em `src/main` — confirmar se é gancho ou resto *(30-09: chamado por `ConstructionCancellation`)*
-- [ ] 🟠 **Pastor tem 2 gametests; mineiro tem 79.** As profissões calmas são as menos protegidas, não as mais sólidas.
+- [x] 🟠 **Pastor tem 2 gametests; mineiro tem 79.** As profissões calmas são as menos protegidas, não as mais sólidas. **02-10:** `ShepherdFlockGameTest` cobre os três "não" do rebanho (cheio, trigo insuficiente devolvido ao baú, sem pastor), confirmado por mutação; o caminho feliz já estava em `ProfessionReviewGameTest`.
 - [ ] 🟠 Playtest que exercite **fundidor** e **pastor**
 
 ---
@@ -1076,7 +1265,7 @@ caindo em `NOT_NATURAL_GROUND` adiante. Quem passa a poder virar lote é o
 calçamento de **gravel e terracotta** — quanto disso existe na vila do
 playtest, ninguém mediu ainda. **O efeito pode ser bem menor que os 54,8%.**
 
-- [ ] 🟠 **A vila também não estende estrada** — `none of the road ends this colony can see may be paved`, 23 tentativas na sessão de 42 min. Sem lote a regra manda crescer a rua, e a rua não cresce: é um círculo fechado, e vale investigação própria.
+- [x] 🟠 **A vila também não estende estrada** — `none of the road ends this colony can see may be paved`, 23 tentativas na sessão de 42 min. Sem lote a regra manda crescer a rua, e a rua não cresce: é um círculo fechado, e vale investigação própria. **Resolvido:** a rua cresce para fora da vila (`a71b4dab`), a ponta segue caminho existente (`182a1f5e`) e a ponta recusada diz o motivo (`914b6572`).
 
 ---
 
@@ -1159,7 +1348,7 @@ maior que cabe), e não por necessidade da vila.
 ## 🟠 Achados de fundo do playtest de 21:41
 
 - [ ] 🟠 **36 colônias ativas**, `Colony cycle took` até **486 ms** — 40 ciclos acima de um tique do servidor. O custo do ciclo cresce com o número de colônias, e o playtest carrega muito mais que os cenários de teste.
-- [ ] 🟠 **Só uma colônia planeja** (`9da5460c`); as outras 35 dão `assigned 0 tasks (0 open)`. Conferir se é esperado — é o padrão de `roca-sem-lote-trava-a-vila`.
+- [x] 🟠 **Só uma colônia planeja** (`9da5460c`); as outras 35 dão `assigned 0 tasks (0 open)`. Conferir se é esperado — é o padrão de `roca-sem-lote-trava-a-vila`. **Hoje é regra:** só a vila foco planeja (`a119c2ab`).
 
 ---
 

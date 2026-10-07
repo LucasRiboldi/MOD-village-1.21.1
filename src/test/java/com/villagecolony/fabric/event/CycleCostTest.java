@@ -213,4 +213,44 @@ class CycleCostTest {
         assertTrue(line.contains("chests 0 ms"), line);
         assertEquals(10, otherIn(line));
     }
+
+    /**
+     * A linha de máquina traz toda fase, na ordem fixa, em microssegundos —
+     * ADR-035 §5. Fase sem custo sai com zero, para o script não ter de
+     * adivinhar se ela faltou ou não custou.
+     */
+    @Test
+    void theSampleLineListsEveryPhaseInMicroseconds() {
+        long now = System.nanoTime();
+
+        CycleCost.since(CycleCost.Phase.PLANNER, now - ms(3));
+        CycleCost.since(CycleCost.Phase.CHESTS, now - 250_000L);
+
+        String line = CycleCost.sampleLine(ms(4), 2);
+
+        assertTrue(line.startsWith("VC_COST version=1 colonies=2 detect_us=0 lifecycle_us=0"
+                + " population_us=0 chests_us="), line);
+        assertTrue(line.contains(" assign_us=0 workers_us=0 other_us="), line);
+        assertTrue(line.endsWith(" total_us=4000"), line);
+
+        Matcher planner = Pattern.compile("planner_us=(\\d+)").matcher(line);
+        assertTrue(planner.find(), line);
+        assertTrue(Long.parseLong(planner.group(1)) >= 3000, line);
+    }
+
+    /** A amostra sai de 10 em 10 ciclos, e só então. */
+    @Test
+    void theSampleComesOutOnceEveryTenCycles() {
+        // Alinha a contagem, que é estática e pode vir de outro teste.
+        int guard = 0;
+        while (CycleCost.sample(ms(1), 1).isEmpty()) {
+            assertTrue(++guard <= CycleCost.SAMPLE_EVERY_CYCLES, "a amostra nunca saiu");
+        }
+
+        for (int cycle = 1; cycle < CycleCost.SAMPLE_EVERY_CYCLES; cycle++) {
+            assertTrue(CycleCost.sample(ms(1), 1).isEmpty(), "amostra antes da hora no ciclo " + cycle);
+        }
+
+        assertTrue(CycleCost.sample(ms(1), 1).isPresent(), "a décima amostra não saiu");
+    }
 }

@@ -33,8 +33,8 @@ class ConstructionPlannerReachTest {
 
     @Test
     void aTypicalVillageSearchesPastTheOld64() {
-        // 144 de lado: metade da diagonal é 101,8 — os cantos, mais 12.
-        assertEquals(114, ConstructionPlanner.reachOf(square(144)));
+        // 144 de lado: metade da diagonal é 101,8 — os cantos, mais 15.
+        assertEquals(117, ConstructionPlanner.reachOf(square(144)));
     }
 
     @Test
@@ -76,7 +76,8 @@ class ConstructionPlannerReachTest {
         measured.measure(square(144));
 
         assertEquals(VillageDetector.SEARCH_RADIUS, ConstructionPlanner.searchRadius(unmeasured));
-        assertEquals(114, ConstructionPlanner.searchRadius(measured));
+        // Medida, a caixa de 144 vira 145 (centro num bloco só): 102,5 + 15.
+        assertEquals(118, ConstructionPlanner.searchRadius(measured));
     }
 
     @Test

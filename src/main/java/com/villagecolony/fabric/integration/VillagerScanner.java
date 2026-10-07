@@ -118,6 +118,8 @@ public final class VillagerScanner {
 
         Set<UUID> employable = new HashSet<>();
         Set<UUID> equippable = new HashSet<>();
+        Set<UUID> housingNeeded = new HashSet<>();
+        Set<UUID> housingResolved = new HashSet<>();
         int adultPopulation = 0;
 
         // Os baús distintos que os candidatos conseguiriam, e não os
@@ -202,13 +204,18 @@ public final class VillagerScanner {
                 // tarefa.
                 if (claimed.isEmpty() && !storages.hasStorage(villager.getUuid()) && chestsToSpawn > 0) {
                     chestsToSpawn--;
-                    claimed = ChestSpawner.ensureChest(
+                    ChestSpawner.ChestAttempt attempt = ChestSpawner.ensureChestAttempt(
                             world, villager, storages, colony.id(),
                             professionOf(workers, villager.getUuid()).map(Object::toString).orElse("worker"));
+                    claimed = attempt.storage();
+                    if (attempt.needsHousing()) {
+                        housingNeeded.add(villager.getUuid());
+                    }
                 }
 
                 if (claimed.isPresent()) {
                     storagesFound++;
+                    housingResolved.add(villager.getUuid());
 
                     announce(workers, villager.getUuid(), claimed.get());
                 }
@@ -221,7 +228,9 @@ public final class VillagerScanner {
                 adultPopulation,
                 Set.copyOf(employable),
                 Set.copyOf(equippable),
-                Set.copyOf(freeChests));
+                Set.copyOf(freeChests),
+                Set.copyOf(housingNeeded),
+                Set.copyOf(housingResolved));
     }
 
     /** Baús nascidos por passagem de varredura — ver ChestSpawner. */
@@ -346,7 +355,27 @@ public final class VillagerScanner {
             int adultPopulation,
             Set<UUID> employable,
             Set<UUID> equippable,
-            Set<ColonyPos> freeChests) {
+            Set<ColonyPos> freeChests,
+            Set<UUID> housingNeeded,
+            Set<UUID> housingResolved) {
+
+        public ScanResult(
+                int registeredWorkers,
+                int registeredStorages,
+                int adultPopulation,
+                Set<UUID> employable,
+                Set<UUID> equippable,
+                Set<ColonyPos> freeChests) {
+            this(
+                    registeredWorkers,
+                    registeredStorages,
+                    adultPopulation,
+                    employable,
+                    equippable,
+                    freeChests,
+                    Set.of(),
+                    Set.of());
+        }
 
         public boolean changedNothing() {
             return registeredWorkers == 0 && registeredStorages == 0;

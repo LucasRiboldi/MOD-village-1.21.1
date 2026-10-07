@@ -1,0 +1,73 @@
+# ADR-035 — Direção técnica depois da auditoria
+
+**Status:** Accepted
+**Date:** 2026-10-06
+**Decision Type:** Architecture / Process
+**Origem:** avaliação técnica de 2026-10-06 (sete pontos), pedida e aprovada
+pelo autor: *"Aplique todos os 7 pontos listados, não modifique o que listou
+para não modificar, aplique ADR nova, faça tudo devagar e devidamente
+estruturado"*. Base: `docs/audit/`.
+
+## Contexto
+
+A auditoria de 2026-10-06 achou uma base sólida (núcleo puro, dois mixins, CI
+bloqueante, planejador com orçamento) e quatro fontes de fragilidade: o
+registro da colônia só ia ao disco no fechamento, o trabalho correu em duas
+linhas paralelas, a espera de material cresceu por casos especiais sem um
+conceito próprio, e a lógica de decisão mora na camada `fabric/`, que só
+GameTest alcança.
+
+## Decisão
+
+Sete pontos, aplicados **um por commit**, cada um verificado antes do
+próximo. O número é o da avaliação; a ordem de execução está na tabela.
+
+| # | Ponto | O que entra agora | O que fica para depois |
+|---|---|---|---|
+| 1 | Salvar o estado durante o jogo | `sync` também em `ServerLifecycleEvents.BEFORE_SAVE` (autosave, `/save-all`), nunca depois do `SERVER_STOPPING` | — |
+| 2 | Uma linha de desenvolvimento por vez | regra escrita em `CLAUDE.md` e `AGENTS.md`; a integração de 06-10 vira a única linha | apagar branches antigas fica com o autor |
+| 3 | Pedido de material explícito | **fase 1:** `core` ganha o pedido com estado (`em resolução → entregue / sem solução`; o "aberto" do desenho não corresponde a nenhum ramo real e saiu), a fonte que está tentando e o motivo; os caminhos atuais o alimentam; `/vc log` o mostra | **fase 2:** a cadeia de fontes passa a *decidir*. Muda comportamento; espera playtest |
+| 4 | Decisão no `core`, mundo na borda | padrão "ler o mundo numa foto, decidir em código puro", aplicado a casos pequenos e já duplicados | os demais, cada um quando a regra for tocada |
+| 5 | Medir o custo por fase | o detalhamento do ciclo sai a cada N ciclos, não só ≥ 50 ms, e um script o resume | otimizar — só com o número na mão |
+| 6 | Comentário não é diário | regra escrita; corrigidos os comentários que a auditoria achou mentindo | reescrita ampla: não |
+| 7 | Testes | paridade do registro, auditoria fora da bateria comum, PIT em PR/`main`, filtro de GameTest, `/test`, fixture que monta, regra de pasta | parametrização e divisão do `MinerGameTest` |
+
+### Fora de alcance (não muda)
+
+A separação `core` × Fabric e suas regras ArchUnit; os dois mixins sem
+`@Overwrite`; o planejador central; os oito serviços estáticos e o
+`ServerMemory`; a colônia trabalhar só com jogador por perto; `ColonyGoals`,
+`StockRules`, `PlanningBudget`, `SweepDeadline`; o formato do save e o
+`SaveMigration`; o CI bloqueante; `ClimbOut`, `PenEscape`, `MineReturn`; as
+versões de Minecraft/Fabric/Loom; nenhum GameTest é apagado.
+
+### Como cada ponto é provado
+
+Teste mais específico primeiro; bateria completa ao fim de cada ponto que
+toque produção; duas rodadas `--rerun-tasks` no fim. Cada commit diz o que foi
+**comprovado automaticamente** e o que **ainda precisa de playtest**.
+
+## Consequências
+
+- O crash deixa de apagar o cérebro da colônia (ponto 1) — comprovável por
+  GameTest no mecanismo; no jogo, só matando o processo.
+- A fase 1 do ponto 3 não muda o que a vila faz: só torna visível por que a
+  obra espera. A fase 2 depende do que o playtest mostrar.
+- Ponto 4 é deliberadamente lento: cada extração vem com teste unitário e sem
+  mudar comportamento.
+
+## Estado
+
+| # | Commit | Verificação |
+|---|---|---|
+| 1 | `a385f617` | 2 GameTests, provados por mutação (cada mutação derruba o seu); 612/612 ×2. Falta playtest: matar o processo |
+| 2 | `3f70a93e` | regra em `CLAUDE.md` §0.2.1 e `AGENTS.md`; CI em `claude/**` e `integra/**`; integração vai à `main` por PR |
+| 3 | `6589d127` | fase 1: `MaterialRequest` (core), `MaterialRequests` (registro por obra), `/vc log`; 4+1 unitários, 2 GameTests provados por mutação; 613/613. Fase 2 espera playtest |
+| 4 | `0e465515` | `searchRadiusOr` e `ReservationGate`; PIT 87%, 8/8 mutantes mortos; 611/611 |
+| 5 | `00c63763` | `VC_COST` + `scripts/cost_ledger.py`; 11/11 e 95 Python; falta playtest |
+| 6 | `e57ea5a5` | regra em `CLAUDE.md` §0.5 e `AGENTS.md`; 4 textos que mentiam corrigidos |
+| 7 | `54298eea`, `0f64a2fe`, `37a7e4b0`, `0057183a`, `7b090a64`, `583c7db1` | paridade, filtro, auditoria fora, PIT em PR/main, `/test`, fixture; bateria 2,5 min → 46 s |
+
+**Verificação final (06-10, 14:54–15:00):** `build --rerun-tasks`; 1.338 unitários + 1
+propriedade; 95 Python; 613/613 GameTests ×2 `--rerun-tasks`; auditoria 1/1; PIT 87%.
+Tudo o que depende de jogo está listado no `STATE.md`.

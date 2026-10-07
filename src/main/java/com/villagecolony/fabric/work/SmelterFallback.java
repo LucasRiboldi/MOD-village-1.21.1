@@ -47,7 +47,7 @@ final class SmelterFallback {
     }
 
     /** Paradas seguidas pelo mesmo pedido antes de trabalhar para a obra. */
-    static final int MISSES_BEFORE_FALLBACK = 5;
+    static final int MISSES_BEFORE_FALLBACK = 2;
 
     /** Paradas por tarefa, pelo id dela: a tarefa sai e volta da fila. */
     private static final Map<UUID, Integer> MISSES = new HashMap<>();
@@ -118,7 +118,7 @@ final class SmelterFallback {
     }
 
     /** O item de fornalha de cada material, ou do ingrediente dele. */
-    private static void addSmeltedFrom(
+    static void addSmeltedFrom(
             ServerWorld world, Collection<ResourceId> materials, Set<Item> into) {
 
         for (ResourceId material : materials) {
@@ -129,7 +129,7 @@ final class SmelterFallback {
             }
 
             if (isSmelted(world, item.get())) {
-                addWithCharcoal(item.get(), into);
+                addSmelted(world, item.get(), into);
 
                 continue;
             }
@@ -137,10 +137,28 @@ final class SmelterFallback {
             CraftingLookup.billFor(world, item.get(), any -> true).ifPresent(bill -> {
                 for (Item ingredient : bill.ingredients().keySet()) {
                     if (isSmelted(world, ingredient)) {
-                        addWithCharcoal(ingredient, into);
+                        addSmelted(world, ingredient, into);
                     }
                 }
             });
+        }
+    }
+
+    /**
+     * O item e, logo atrás, o degrau de fornalha que vem antes dele — B-4,
+     * 2026-10-02: a pedra lisa sai da pedra, e a pedra sai do pedregulho. Sem
+     * este degrau a obra que pede pedra lisa deixava o fundidor parado com o
+     * baú cheio de pedregulho, porque o cru da pedra lisa é a pedra, e pedra
+     * ninguém trazia. Um degrau só: a pedra entra na lista, e o pedregulho
+     * dela é cru comum.
+     */
+    private static void addSmelted(ServerWorld world, Item item, Set<Item> into) {
+        addWithCharcoal(item, into);
+
+        for (Item input : CraftingLookup.smeltingInputsFor(world, item)) {
+            if (isSmelted(world, input)) {
+                addWithCharcoal(input, into);
+            }
         }
     }
 

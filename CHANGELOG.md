@@ -9,6 +9,116 @@ entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
 2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
 e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
+## [0.3.0] — publicação de 2026-10-03, fim da tarde (playtest da manhã)
+
+**Ainda não visto em jogo; a última parte não foi testada** (pedido do autor). JAR SHA-256 `D4FFE0FC…7C99`.
+
+### Corrigido
+
+- Ícones de profissão e de obra trocados: os arquivos de textura estavam com
+  os nomes errados.
+- Obra parada por peça sem rota uma de cada vez: as tentativas contam para
+  todas as peças que faltam no mesmo ciclo.
+- Obra com só peças sem apoio sobrando esperava 10 min; agora 1 min.
+
+### Adicionado
+
+- Placa com fundo em pixel art, ícone à esquerda e texto à direita.
+- Área da vila marcada com partículas verdes perto do jogador.
+- Água e lava lidas uma vez ficam de fora das buscas seguintes (sem teste).
+
+### Alterado
+
+- Base das obras: só a grama fica como chão; a plantação constrói a base
+  inteira; bloco que já está no lugar conta como assentado.
+- Mina: arco de 5 × 4 com um lampião de cada lado e vão de 3 × 3; salas de
+  busca de 3 × 3.
+
+## [0.3.0] — publicação de 2026-10-03, tarde (medida da vila)
+
+**Ainda não visto em jogo.** JAR SHA-256 `00658B2C…92E4`.
+
+### Alterado
+
+- **Medida da vila (ADR-003 Emenda 8):** parte das peças da vila gerada, sem
+  a folga de 12 do jogo; 15 blocos em volta de cada obra; só o lado que a obra
+  passa avança; lados ímpares, para o centro ser um bloco só.
+- **Rua faz a vila crescer só com 10 caminhos conectados fora dela**,
+  encostados num caminho de dentro — de quem quer que seja, colônia ou
+  jogador. Antes, cada bloco que a colônia assentava empurrava a borda.
+- Saves antigos têm a vila medida de novo na primeira visita.
+
+## [0.3.0] — publicação de 2026-10-03, manhã (revisão das profissões)
+
+**Ainda não visto em jogo.** JAR SHA-256 `368A4C4F…FD65`. Relatório em
+`docs/research/2026-10-03-paradas-por-profissao.md`.
+
+### Adicionado
+
+- **Arte em pixel nos overlays:** ícone de profissão sobre o aldeão e de
+  estado sobre a obra, desenhados no `WorldRenderEvents.LAST` com buffer
+  próprio (o cliente com shaders do Iris não mostrava nada).
+- **Material que não se acha aparece:** três buscas vazias do alcance da vila
+  põem o material no baú de quem o usa (fundidor para areia, argila e cacto;
+  construtor para o resto). Vale para material da natureza — revê a decisão
+  de 26-09. O castigo entre buscas caiu de 5/10/20 min para 1/2/4 min.
+
+### Corrigido
+
+- Pastor sem ovelha com lã no raio segurava a tarefa calado; agora solta e,
+  na 3ª busca, a lã aparece.
+- Carpinteiro fechava tarefa de tábua com 0 peça: lia só os baús de
+  trabalhador, e a meta todos os da vila.
+- Fundidor repetia `stopped — none of … had sand` a cada segundo.
+
+### Retirado
+
+- O atalho que riscava a vidraça na primeira busca vazia de areia (da
+  publicação das 02h): com a areia aparecendo, a casa não perde a janela.
+
+## [0.3.0] — publicação de 2026-10-03, 02h (playtest da madrugada)
+
+Correções do playtest de 01:02–01:32 (Spark `r6nErbWNSL`: TPS 20, mod em
+1,9% do tick). **Ainda não vistas em jogo.** JAR SHA-256 `D2374106…0615`.
+
+### Corrigido
+
+- **Construtor parado fora da casa fechada:** o lugar de pé que a navegação
+  Vanilla marca como inalcançável (`CANT_REACH_WALK_TARGET_SINCE`) é riscado
+  em 1 s e ele vai a outro lado; sem nenhum lado alcançável, a peça vai para
+  o fim da fila na hora. Antes: 300 tiques parado ou 200 por peça.
+- **Vidraça esperando areia que o mundo não tem:** com a varredura de areia
+  vazia e nenhum vidro no baú, a barreira da Regra 28 risca a vidraça sem a
+  carência de 2,5 min.
+
+## [0.3.0] — publicação de 2026-10-03 (corrigíveis sem jogo)
+
+JAR do commit dos corrigíveis, SHA-256 `923D9769…40C0`, em `downloads/` e em
+`.minecraft/mods` (três cópias conferidas). **Nada desta lista foi visto em
+jogo.**
+
+### Adicionado
+
+- **Busca de lote mais rápida na vila com jogador dentro** (estudo de 01-10,
+  §7-A): uma passagem extra por segundo continua a varredura em curso, com o
+  mesmo prazo de 15 ms do ciclo.
+- **Encalhado fechado por blocos protegidos** atravessa só a peça da planta
+  da própria colônia (o reparo a reconstrói) e, sem saída nem assim, avisa os
+  jogadores no chat a cada 5 minutos. Teletransporte continua vetado.
+- **Fundidor sem cru** desce um degrau da fornalha: a obra que pede pedra lisa
+  põe a pedra na lista, e a pedra sai do pedregulho.
+- **Linhas novas no log:** para onde o aldeão ia quando entrou no curral
+  (`entered a pen`) e quem mudou as regras de profissão
+  (`Profession policy changed by`).
+- `scripts/verdict.py` com os itens de 30-09 a 02-10, lendo também os
+  `.log.gz` do dia.
+
+### Mudado
+
+- Nenhum arquivo de produção passa de 500 linhas (oito divididos, texto
+  movido sem mudança).
+- Cobertura JaCoCo da bateria de jogo em `build/reports/jacoco/gametest`.
+
 ## [0.3.0] — publicação de 2026-10-02 (consolidação)
 
 JAR do commit da consolidação de 02-10, SHA-256 `AB762691…9FFA`, em

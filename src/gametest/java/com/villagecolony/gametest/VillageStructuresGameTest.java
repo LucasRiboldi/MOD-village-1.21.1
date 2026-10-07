@@ -425,6 +425,7 @@ public class VillageStructuresGameTest implements FabricGameTest {
 
         for (String style : STYLES) {
             Set<String> actual = VillageStructures.buildableFor(style).stream()
+                    .filter(id -> ResourceId.VANILLA.equals(id.namespace()))
                     .map(ResourceId::path)
                     .collect(java.util.stream.Collectors.toSet());
             context.assertTrue(

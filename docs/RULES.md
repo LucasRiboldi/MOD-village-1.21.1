@@ -38,9 +38,9 @@ regra que foi emendada. O corpo de cada regra vive em
 | 17 | A casa com uma lateral na estrada | 08-19 | ✅ feita | `Blueprint.doorSide`, `rotated` |
 | 18 | O dia inteiro é expediente | 08-19 | ✅ feita | `WorkClock`, `WorkHours` |
 | 18-e1 | **Emenda 1:** ninguém para de trabalhar por chuva, e não há pausa ao meio-dia (R-6 e R-7 do estudo de 10-02 recusadas) | 10-02 | ✅ é o que já acontece | `WorkHours` não olha o tempo |
-| 19 | O lote fica no nível da estrada | 08-19 | ✅ feita | `BuildSiteScanner.flatGroundAt` |
+| 19 | O lote fica no nível da estrada | 08-19 | ✅ feita | `LotLevel.flatGroundAt` |
 | 20 | Cada vila constrói no estilo do bioma | 08-19 | ✅ feita | `VillagePalette`, `VillageBiomesGameTest` |
-| 21 | Toda casa nasce com cama, baú e lampião | 08-19 | ✅ feita | `BuilderWork.furnish` |
+| 21 | Toda casa nasce com cama, baú e lampião | 08-19 | ⚠️ a decidir (C-02 da auditoria) | `BuilderWork.furnish` **não existe**; o código diz que a regra morreu e a cama vem da planta (`TestBarrier`, `WorkMaterials`) |
 | 22 | O lote é livre no volume | 08-19 | ✅ feita | `BuildSiteScanner.isNothing` |
 | 23 | O que já foi analisado se analisa de novo | 08-19 | ✅ feita | `TreeMarks` (prazos), `RingSweep` |
 | 24 | A vila de planície levanta a casa do jogo | 08-19 | ✅ feita | `VillageStructures` |
@@ -55,7 +55,7 @@ regra que foi emendada. O corpo de cada regra vive em
 | 30 | O mineiro recolhe tudo, e a boca tem endereço | 08-22 | ✅ feita | `MineMouth`, `MinerHaul` |
 | 30-e1 | **Emenda 1:** manter piso de carvão e ferro bruto mesmo sem obra ativa | 09-14 | ✅ feita | `ColonyGoals.MINERAL_FLOOR` |
 | 31 | O fazendeiro planta o que tem e colhe o que está pronto | 08-26 | ✅ feita | `FarmerWork`, `CropPatch` |
-| 32 | Móveis e cama entram depois da casa pronta | 08-29 | ✅ feita | `BuilderWork.furnish` (segunda passada) |
+| 32 | Móveis e cama entram depois da casa pronta | 08-29 | ⚠️ a decidir (C-02 da auditoria) | `BuilderWork.furnish` **não existe**; a segunda passada saiu com a Regra 21 (`TestBarrier`) |
 | 33 | Pedido de commit+push também atualiza o JAR local | 09-14 | ✅ registrada | `build/libs/` → `downloads/` → `%APPDATA%/.minecraft/mods/`; conferir SHA-256 |
 | 34 | A lava nunca surge automática | 09-30 | ✅ feita | `BlockShaping.isNeverPlaced`, `BuilderPlacement.placeOne` |
 | 35 | Carpinteiro titular na BigHouseMOD, cama e baú à direita da porta, corredor livre até a escada | 09-30 | ✅ feita | `FOUNDATION_ORDER`, `big_house_mod.nbt` |

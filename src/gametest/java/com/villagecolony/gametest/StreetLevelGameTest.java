@@ -92,12 +92,13 @@ public class StreetLevelGameTest implements FabricGameTest {
     }
 
     /**
-     * A obra aberta num lote de grama: a porta fica um acima do chão, e nenhuma
-     * terra — nem a fundação da camada 0, nem a do quintal na camada da rua —
-     * sobra para construir.
+     * A obra aberta num lote de grama: a porta fica um acima do chão, a grama
+     * da base é o chão, e a terra da fundação é construída — autor,
+     * 2026-10-03: <i>"retirar as bases das obras que forem exclusivamente
+     * grama"</i>. Até então toda terra da base contava como chão.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "street_level_lot", tickLimit = 40)
-    public void aHouseOpenedOnGrassHasItsDoorAtStreetHeightAndNoDirtToBuild(TestContext context) {
+    public void aHouseOpenedOnGrassHasItsDoorAtStreetHeightAndOnlyGrassIsLeftToTheGround(TestContext context) {
         Blueprint plan = read(context, "plains_small_house_5");
 
         BlockPos corner = context.getAbsolutePos(new BlockPos(0, 1, 0)).add(0, 0, 40);
@@ -114,7 +115,7 @@ public class StreetLevelGameTest implements FabricGameTest {
         ColonyPos floor = new ColonyPos(corner.getX(), ground + 1, corner.getZ());
         ConstructionProject project = ConstructionProject.plan(UUID.randomUUID(), plan, plan.originFor(floor));
 
-        int held = BuriedPieces.markHeldByTheGround(context.getWorld(), project);
+        BuriedPieces.markHeldByTheGround(context.getWorld(), project);
 
         int doorY = plan.blocks().stream()
                 .filter(block -> block.block().path().endsWith("_door"))
@@ -123,18 +124,18 @@ public class StreetLevelGameTest implements FabricGameTest {
 
         context.assertTrue(doorY == ground + 1,
                 "a porta devia ficar em " + (ground + 1) + " (um acima do chão), ficou em " + doorY);
-        context.assertTrue(held > 0, "nenhuma peça foi reconhecida como chão");
+
+        boolean dirtToBuild = false;
 
         for (BlueprintBlock left : project.remaining()) {
             String name = left.block().path();
 
-            context.assertFalse(left.offset().y() < plan.streetLayer(),
-                    "sobrou fundação enterrada para construir: " + name + " em " + left.offset());
-            context.assertFalse(left.offset().y() == plan.streetLayer()
-                            && (name.equals("dirt") || name.equals("grass_block")),
-                    "sobrou terra na altura da rua para construir em " + left.offset());
+            context.assertFalse(plan.isBase(left) && name.equals("grass_block"),
+                    "a grama da base é o chão e não devia sobrar para construir: " + left.offset());
+            dirtToBuild |= plan.isBase(left) && name.equals("dirt");
         }
 
+        context.assertTrue(dirtToBuild, "a terra da fundação devia ser construída pela regra de 03-10");
         context.complete();
     }
 

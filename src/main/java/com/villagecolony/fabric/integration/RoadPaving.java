@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.fabric.world.RoadSpill;
+import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.coordination.VillageGrowth;
 import com.villagecolony.core.colony.service.VillageDetector;
@@ -29,7 +31,7 @@ import java.util.UUID;
  * máximo, e responde para que lado uma rua termina. Os comentários vieram
  * junto sem mudança.
  */
-final class RoadPaving {
+public final class RoadPaving {
 
     private RoadPaving() {
     }
@@ -107,7 +109,7 @@ final class RoadPaving {
             if (refusal.isPresent()) {
                 refusals.record(refusal.get());
 
-                return grown(colonyId, laid);
+                return grown(world, colonyId, laid);
             }
 
             // A planta em cima sai junto: rua não tem grama por cima.
@@ -128,18 +130,35 @@ final class RoadPaving {
             laid.add(MinecraftTypeAdapter.toColonyPos(at));
         }
 
-        return grown(colonyId, laid);
+        return grown(world, colonyId, laid);
     }
 
     /**
-     * A rua assentada faz a vila crescer até ela — ADR-003 Emenda 6: um bloco
-     * de rua fora da caixa passa a fazer parte da vila.
+     * A rua assentada pode fazer a vila crescer — revisto pelo autor em
+     * 2026-10-03: só a corrente de {@link RoadSpill#MIN_CHAIN} caminhos
+     * conectados fora da caixa, encostada num caminho de dentro, empurra o
+     * lado. Ver {@link #growByRoads}.
      */
-    private static List<ColonyPos> grown(UUID colonyId, List<ColonyPos> laid) {
-        VillageColonyMod.reportGrowth(
-                colonyId, VillageGrowth.byRoad(VillageColonyMod.COLONIES, colonyId, laid), "a road");
+    private static List<ColonyPos> grown(ServerWorld world, UUID colonyId, List<ColonyPos> laid) {
+        growByRoads(world, colonyId);
 
         return laid;
+    }
+
+    /**
+     * A vila cresce até as correntes de caminho que saem dela — da colônia ou
+     * do jogador. Roda depois de cada calçamento e a cada ciclo da colônia.
+     */
+    public static void growByRoads(ServerWorld world, UUID colonyId) {
+        VillageColonyMod.COLONIES.find(colonyId)
+                .flatMap(Colony::bounds)
+                .map(box -> RoadSpill.outsideChains(world, box).stream()
+                        .map(MinecraftTypeAdapter::toColonyPos)
+                        .toList())
+                .filter(chain -> !chain.isEmpty())
+                .ifPresent(chain -> VillageColonyMod.reportGrowth(
+                        colonyId, VillageGrowth.byRoad(VillageColonyMod.COLONIES, colonyId, chain),
+                        "a road of " + chain.size() + " path blocks outside it"));
     }
 
     /**

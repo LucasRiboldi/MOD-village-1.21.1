@@ -48,23 +48,28 @@ public final class Blueprint {
      */
     private final int streetLayer;
 
+    /** A camada mais baixa que a planta efetivamente pede. */
+    private final int lowestBlockLayer;
+
     /** Planta sem encaixe de rua: a do próprio mod, a de teste. */
     public static final int NO_STREET_LAYER = -1;
 
     /**
-     * O que, na altura da rua, já é o chão — terra, grama, areia, neve. A
-     * planta do jogo grava o quintal com o terreno em volta; construí-lo seria
-     * erguer uma camada de terra por cima da terra.
+     * O que, na altura da rua, já é o chão: só a grama desde 2026-10-03 (era
+     * terra, grama, areia, neve). A planta do jogo grava o quintal com o
+     * terreno em volta.
      */
-    private static final java.util.Set<String> GROUND = java.util.Set.of(
-            "dirt", "grass_block", "coarse_dirt", "podzol", "mycelium", "rooted_dirt",
-            "sand", "red_sand", "snow", "snow_block", "mud");
+    private static final String GRASS = "grass_block";
 
     private Blueprint(ResourceId id, List<BlueprintBlock> blocks, ColonyPos size, int streetLayer) {
         this.id = id;
         this.blocks = blocks;
         this.size = size;
         this.streetLayer = streetLayer;
+        this.lowestBlockLayer = blocks.stream()
+                .mapToInt(block -> block.offset().y())
+                .min()
+                .orElseThrow();
     }
 
     /**
@@ -137,16 +142,37 @@ public final class Blueprint {
      * planta (pedregulho, tábua, tora abaixo da rua) é construída enterrada,
      * no lugar do terreno. Até então toda peça abaixo da rua contava como
      * chão; agora só o solo conta.
+     *
+     * <p><b>Só a grama, e nunca em plantação</b> — autor, 2026-10-03: <i>"retirar
+     * as bases das obras que forem exclusivamente grama (não aplicar na
+     * construção de plantações)"</i>. Terra, areia e neve da base passam a ser
+     * construídas; a roça constrói a base inteira.
      */
     public boolean isBuried(BlueprintBlock block) {
         return hasStreetLayer()
                 && block.offset().y() <= streetLayer
-                && GROUND.contains(block.block().path());
+                && GRASS.equals(block.block().path())
+                && !isPlantation();
     }
 
-    /** Se esta peça é da base: da camada da rua para baixo. */
+    /** Se a planta é de plantação — a roça das vilas ({@code *_farm_*}). */
+    public boolean isPlantation() {
+        return id.path().contains("farm");
+    }
+
+    /**
+     * Se esta peça é da base que deve ocupar o lugar do terreno natural.
+     *
+     * <p>Casas usam a camada da rua. A roça é a exceção deliberada: ela fica
+     * acima da rua para caber água, mas a camada mais baixa que pede continua
+     * sendo fundação física, não terreno a ser riscado como concluído.
+     */
     public boolean isBase(BlueprintBlock block) {
-        return hasStreetLayer() && block.offset().y() <= streetLayer;
+        if (hasStreetLayer()) {
+            return block.offset().y() <= streetLayer;
+        }
+
+        return BlueprintKind.isFarm(id) && block.offset().y() == lowestBlockLayer;
     }
 
     /**

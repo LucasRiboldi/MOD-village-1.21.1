@@ -181,6 +181,7 @@ public final class MineMouth {
      * altura de quem passa.
      */
     private static final int ARCH_HIGH = 4;
+    private static final int ARCH_HALF_WIDTH = 2;
 
     /**
      * Se a posição pertence ao arco inicial ou à lanterna da boca.
@@ -190,16 +191,19 @@ public final class MineMouth {
         Direction side = descent.rotateYClockwise();
 
         for (int up = 1; up < ARCH_HIGH; up++) {
-            if (at.equals(mouth.offset(side).up(up))
-                    || at.equals(mouth.offset(side.getOpposite()).up(up))) {
+            if (at.equals(mouth.offset(side, ARCH_HALF_WIDTH).up(up))
+                    || at.equals(mouth.offset(side.getOpposite(), ARCH_HALF_WIDTH).up(up))) {
                 return true;
             }
         }
 
-        return at.equals(mouth.offset(side).up(ARCH_HIGH))
-                || at.equals(mouth.up(ARCH_HIGH))
-                || at.equals(mouth.offset(side.getOpposite()).up(ARCH_HIGH))
-                || at.equals(mouth.up(ARCH_HIGH + 1));
+        for (int across = -ARCH_HALF_WIDTH; across <= ARCH_HALF_WIDTH; across++) {
+            if (at.equals(mouth.offset(side, across).up(ARCH_HIGH))) {
+                return true;
+            }
+        }
+        return at.equals(mouth.offset(side, ARCH_HALF_WIDTH).up(ARCH_HIGH + 1))
+                || at.equals(mouth.offset(side.getOpposite(), ARCH_HALF_WIDTH).up(ARCH_HIGH + 1));
     }
 
     /**
@@ -242,13 +246,13 @@ public final class MineMouth {
         // cima não há disputa, e o arco emoldura a entrada na altura em
         // que ela é vista.
         for (int up = 1; up < ARCH_HIGH; up++) {
-            anyStone |= layStone(world, mouth.offset(side).up(up));
-            anyStone |= layStone(world, mouth.offset(side.getOpposite()).up(up));
+            anyStone |= layStone(world, mouth.offset(side, ARCH_HALF_WIDTH).up(up));
+            anyStone |= layStone(world, mouth.offset(side.getOpposite(), ARCH_HALF_WIDTH).up(up));
         }
 
-        anyStone |= layStone(world, mouth.offset(side).up(ARCH_HIGH));
-        anyStone |= layStone(world, mouth.up(ARCH_HIGH));
-        anyStone |= layStone(world, mouth.offset(side.getOpposite()).up(ARCH_HIGH));
+        for (int across = -ARCH_HALF_WIDTH; across <= ARCH_HALF_WIDTH; across++) {
+            anyStone |= layStone(world, mouth.offset(side, across).up(ARCH_HIGH));
+        }
 
         // <b>A lanterna fica aqui dentro, e é decisão</b> — 2026-09-12. O
         // {@code gauntlet-verifier} pediu para tirá-la deste portão,
@@ -265,7 +269,7 @@ public final class MineMouth {
         // sessão inteira existe para aprender. Entre uma boca sem luz num
         // caso raro e uma lanterna que o jogador não consegue remover, o
         // pedido do autor decide.
-        lightTheTop(world, mouth);
+        lightTheTop(world, mouth, descent);
 
         return anyStone;
     }
@@ -282,16 +286,15 @@ public final class MineMouth {
      * substituível já tem alguma coisa, e o mod não discorda do dono do
      * mundo — inclusive quando a coisa é a lanterna da passagem anterior.
      */
-    private static void lightTheTop(ServerWorld world, BlockPos mouth) {
-        BlockPos lintel = mouth.up(ARCH_HIGH);
-        BlockPos lamp = lintel.up();
-
-        if (!world.getBlockState(lintel).isSolidBlock(world, lintel)) {
-            return;
-        }
-
-        if (world.getBlockState(lamp).isReplaceable()) {
-            world.setBlockState(lamp, Blocks.LANTERN.getDefaultState(), Block.NOTIFY_ALL);
+    private static void lightTheTop(ServerWorld world, BlockPos mouth, Direction descent) {
+        Direction side = descent.rotateYClockwise();
+        for (Direction pillar : new Direction[] {side, side.getOpposite()}) {
+            BlockPos lintel = mouth.offset(pillar, ARCH_HALF_WIDTH).up(ARCH_HIGH);
+            BlockPos lamp = lintel.up();
+            if (world.getBlockState(lintel).isSolidBlock(world, lintel)
+                    && world.getBlockState(lamp).isReplaceable()) {
+                world.setBlockState(lamp, Blocks.LANTERN.getDefaultState(), Block.NOTIFY_ALL);
+            }
         }
     }
 

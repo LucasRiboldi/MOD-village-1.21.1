@@ -9,6 +9,7 @@ import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.ColonySweepCursor;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.SweepPersistence;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -184,7 +185,7 @@ class SweepCursorSaveTest {
 
         BuildSiteScanner.clearAll();
 
-        BuildSiteScanner.restore(new ColonySweepCursor(
+        SweepPersistence.restore(new ColonySweepCursor(
                 colonyId, CENTER, 40, 137, List.of(ColonyRoads.column(772, 898))));
 
         ColonySavedData data = empty();
@@ -192,7 +193,7 @@ class SweepCursorSaveTest {
         data.sync(
                 List.of(colonyAt(colonyId)),
                 List.of(), List.of(), List.of(), List.of(), List.of(),
-                BuildSiteScanner.pausedSweeps());
+                SweepPersistence.pausedSweeps());
 
         List<ColonySweepCursor> read = roundTrip(data).sweeps();
 
@@ -200,7 +201,7 @@ class SweepCursorSaveTest {
 
         assertTrue(SweepState.sweepPausedAt(colonyId).isEmpty());
 
-        read.forEach(BuildSiteScanner::restore);
+        read.forEach(SweepPersistence::restore);
 
         assertEquals(40, SweepState.sweepPausedAt(colonyId).getAsInt());
 
@@ -228,7 +229,7 @@ class SweepCursorSaveTest {
 
         BuildSiteScanner.clearAll();
 
-        BuildSiteScanner.restore(new ColonySweepCursor(
+        SweepPersistence.restore(new ColonySweepCursor(
                 colonyId, CENTER, 40, 137,
                 List.of(ColonyRoads.column(772, 898), ColonyRoads.column(773, 898))));
 
@@ -237,7 +238,7 @@ class SweepCursorSaveTest {
                 "meia volta virou índice, e ele mente sobre ter visto o raio inteiro");
 
         // Mas a memória está lá: ela sai de novo com o cursor.
-        assertEquals(2, BuildSiteScanner.pausedSweeps().get(0).found().size());
+        assertEquals(2, SweepPersistence.pausedSweeps().get(0).found().size());
 
         BuildSiteScanner.clearAll();
     }

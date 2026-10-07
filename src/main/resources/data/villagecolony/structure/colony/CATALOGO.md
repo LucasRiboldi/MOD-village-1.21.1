@@ -23,6 +23,13 @@ colônia vem antes das do jogo (Regra 49).
 | pastor | `trade_shepherd.nbt` | — | — | — | — | — | — | shepherd, animal_pen |
 | construtor | `trade_builder.nbt` | — | — | — | — | — | — | nenhuma |
 
+## Modelos nomeados de profissão
+
+| Arquivo | Profissão | Existe |
+|---|---|---|
+| `barn_majest.nbt` | pastor | ✅ |
+| `storage_majest.nbt` | construtor | ✅ |
+
 ## Estruturas do jogo que a colônia constrói — 143, 0 com modelo do mod
 
 ### plains (34)

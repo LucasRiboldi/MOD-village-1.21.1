@@ -580,6 +580,20 @@ class MinerLegTest {
                 "o mineiro de areia recebeu a duna crua do fundo da galeria");
     }
 
+    @Test
+    void aMinerKnockedBesideTheStaircaseTakesANearbyStepBackToTheMouth() {
+        BlockPos besideThePassage = new BlockPos(728, 59, 895);
+
+        BlockPos leg = MinerLeg.legTowards(
+                besideThePassage, DEEP, mine(200), world(at -> true, dugStaircase()));
+
+        assertTrue(leg.getY() >= besideThePassage.getY(), "a recuperacao pediu que o mineiro descesse");
+        assertTrue(
+                leg.getSquaredDistance(MOUTH_BLOCK) < besideThePassage.getSquaredDistance(MOUTH_BLOCK),
+                "a recuperacao nao aproximou o mineiro da boca: " + leg.toShortString());
+        assertNotEquals(MOUTH_BLOCK, leg, "a perna longa repetiria a subida que a navegacao nao cumpre");
+    }
+
     /**
      * Pedra de outro ramal também se alcança saindo.
      *

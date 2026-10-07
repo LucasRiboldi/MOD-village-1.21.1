@@ -1,8 +1,11 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.coordination.WorkClock;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
+import com.villagecolony.core.worker.model.ProfessionType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,8 +16,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SaplingGenerator;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.WorldChunk;
@@ -50,6 +55,7 @@ public final class VillageForest {
     private static final int CANOPY_HEIGHT = 16;
     private static final int MIN_TREE_DISTANCE = 12;
     private static final int CANDIDATE_ANGLES = 64;
+    private static final int INITIAL_TREE_COUNT = 8;
 
     private VillageForest() {
     }
@@ -63,7 +69,7 @@ public final class VillageForest {
         RESTING
     }
 
-    /** Planta duas árvores maduras distintas para uma vila recém-criada. */
+    /** Planta oito árvores maduras perto das bordas de uma vila recém-criada. */
     public static int seedInitial(ServerWorld world, Colony colony) {
         return VillageBiomes.forestSpeciesAt(world, colony.center())
                 .map(species -> seedInitial(world, colony, species.getFirst(), species.getLast()))
@@ -72,16 +78,14 @@ public final class VillageForest {
 
     /**
      * Variante explícita para a criação da vila e os GameTests. A segunda
-     * espécie é sempre mantida distante da primeira.
+     * espécies são alternadas e mantidas distantes umas das outras.
      */
     public static int seedInitial(ServerWorld world, Colony colony, TreeSpecies first, TreeSpecies second) {
-        if (first == second) {
-            return plantOne(world, colony, first, List.of()).isPresent() ? 1 : 0;
+        List<BlockPos> planted = new ArrayList<>(INITIAL_TREE_COUNT);
+        for (int index = 0; index < INITIAL_TREE_COUNT; index++) {
+            TreeSpecies species = index % 2 == 0 ? first : second;
+            plantOne(world, colony, species, planted).ifPresent(planted::add);
         }
-
-        List<BlockPos> planted = new ArrayList<>(2);
-        plantOne(world, colony, first, planted).ifPresent(planted::add);
-        plantOne(world, colony, second, planted).ifPresent(planted::add);
         return planted.size();
     }
 
@@ -90,6 +94,8 @@ public final class VillageForest {
      * dezena. O marco só avança após a geração física no mundo.
      */
     public static PopulationPlanting plantForPopulation(ServerWorld world, Colony colony, int livingAdults) {
+        plantWhatTheConstructionRequested(world, colony);
+
         int nextMilestone = colony.forestPopulationMilestone() + 10;
         if (livingAdults < nextMilestone) {
             return PopulationPlanting.NOT_DUE;
@@ -118,6 +124,79 @@ public final class VillageForest {
         return PopulationPlanting.PLANTED;
     }
 
+    /** Conta a espera por madeira e, na vigésima passagem, planta uma muda física. */
+    private static void plantWhatTheConstructionRequested(ServerWorld world, Colony colony) {
+        VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
+                .filter(project -> project.state()
+                        == com.villagecolony.core.construction.model.ConstructionState.WAITING_RESOURCES)
+                .ifPresent(project -> {
+                    Set<TreeSpecies> waitingFor = new LinkedHashSet<>();
+                    project.remainingMaterials().keySet().stream()
+                            .map(TreeSpecies::ofConstructionResource)
+                            .flatMap(Optional::stream)
+                            .forEach(waitingFor::add);
+
+                    for (TreeSpecies species : waitingFor) {
+                        if (BiomeConstructionSupply.treeWaitReached(colony.id(), species)
+                                && plantRequestedSapling(world, colony, species)) {
+                            BiomeConstructionSupply.treePlanted(colony.id(), species);
+                        }
+                    }
+                });
+    }
+
+    /**
+     * O fazendeiro planta a muda pedida por uma obra que esperou madeira.
+     *
+     * <p>A muda vem fisicamente dos baús da vila. O anel de 48 a 56 blocos
+     * fica fora das estruturas, mas dentro da busca normal do lenhador. A
+     * árvore não é amadurecida à força: daqui em diante cresce pelas regras
+     * do próprio jogo.
+     */
+    public static boolean plantRequestedSapling(
+            ServerWorld world, Colony colony, TreeSpecies species) {
+
+        if (!WorkClock.isWorkTime(world.getTimeOfDay())) {
+            return false;
+        }
+
+        boolean hasFarmer = VillageColonyMod.WORKERS.ofColony(colony.id()).stream()
+                .anyMatch(worker -> worker.profession().filter(ProfessionType.FARMER::equals).isPresent());
+        if (!hasFarmer) {
+            return false;
+        }
+
+        Optional<BlockPos> site = candidates(
+                colony.center(), colony.id().hashCode() + species.name().hashCode())
+                .stream()
+                .map(candidate -> naturalGroundAt(world, candidate))
+                .flatMap(Optional::stream)
+                .filter(ground -> hasClearCanopy(world, ground))
+                .filter(ground -> species.sapling().getDefaultState().canPlaceAt(world, ground.up()))
+                .findFirst();
+        if (site.isEmpty()) {
+            return false;
+        }
+
+        List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.id(), colony.center());
+        if (ColonyChests.withdraw(world, chests, species.sapling().asItem(), 1) != 1) {
+            return false;
+        }
+
+        BlockPos planted = site.get().up();
+        if (!world.setBlockState(planted, species.sapling().getDefaultState(), Block.NOTIFY_ALL)) {
+            ColonyChests.firstWithRoomFor(world, chests, species.sapling().asItem(), 1)
+                    .ifPresent(chest -> ChestDepositor.deposit(
+                            world, chest, species.sapling().asItem(), 1));
+            return false;
+        }
+
+        VillageColonyMod.LOGGER.info(
+                "Farmer planted a requested {} at {} after the construction waited for wood",
+                species.sapling().asItem(), planted.toShortString());
+        return true;
+    }
+
     private static Optional<BlockPos> plantOne(
             ServerWorld world, Colony colony, TreeSpecies species, List<BlockPos> avoid) {
         Optional<SaplingGenerator> generator = generatorFor(species);
@@ -127,9 +206,12 @@ public final class VillageForest {
 
         for (BlockPos candidate : candidates(colony.center(), colony.id().hashCode() + species.name().hashCode())) {
             Optional<BlockPos> ground = naturalGroundAt(world, candidate);
-            if (ground.isEmpty() || tooCloseTo(ground.get(), avoid) || !hasClearCanopy(world, ground.get())) {
+            if (ground.isEmpty()
+                    || tooCloseTo(ground.get(), avoid)
+                    || !hasClearableNaturalCanopy(world, ground.get())) {
                 continue;
             }
+            Map<BlockPos, BlockState> cleared = clearNaturalLeaves(world, ground.get());
             if (generator.get().generate(
                     world,
                     world.getChunkManager().getChunkGenerator(),
@@ -138,6 +220,7 @@ public final class VillageForest {
                     world.getRandom())) {
                 return Optional.of(ground.get().up());
             }
+            restoreLeaves(world, cleared);
         }
         return Optional.empty();
     }
@@ -163,10 +246,12 @@ public final class VillageForest {
             if (state.isAir()) {
                 continue;
             }
+            if (isRemovableNaturalLeaf(world, ground, state)) {
+                continue;
+            }
             if (!LotGround.isNaturalGround(state)
                     || !BlockProtection.mayBreak(world, ground, state)
-                    || BlockProtection.isColonyBuilt(ground)
-                    || !isEmpty(chunk, ground.up())) {
+                    || BlockProtection.isColonyBuilt(ground)) {
                 return Optional.empty();
             }
             return Optional.of(ground);
@@ -190,6 +275,57 @@ public final class VillageForest {
             }
         }
         return true;
+    }
+
+    /** A reserva inicial pode substituir apenas folhas naturais, nunca uma estrutura. */
+    private static boolean hasClearableNaturalCanopy(ServerWorld world, BlockPos ground) {
+        for (int x = -CANOPY_RADIUS; x <= CANOPY_RADIUS; x++) {
+            for (int z = -CANOPY_RADIUS; z <= CANOPY_RADIUS; z++) {
+                for (int y = 1; y <= CANOPY_HEIGHT; y++) {
+                    BlockPos position = ground.add(x, y, z);
+                    WorldChunk chunk = loadedChunk(world, position);
+                    if (chunk == null) {
+                        return false;
+                    }
+                    BlockState state = chunk.getBlockState(position);
+                    if (!isEmpty(chunk, position) && !isRemovableNaturalLeaf(world, position, state)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    private static Map<BlockPos, BlockState> clearNaturalLeaves(ServerWorld world, BlockPos ground) {
+        Map<BlockPos, BlockState> cleared = new HashMap<>();
+        for (int x = -CANOPY_RADIUS; x <= CANOPY_RADIUS; x++) {
+            for (int z = -CANOPY_RADIUS; z <= CANOPY_RADIUS; z++) {
+                for (int y = 1; y <= CANOPY_HEIGHT; y++) {
+                    BlockPos position = ground.add(x, y, z);
+                    WorldChunk chunk = loadedChunk(world, position);
+                    if (chunk != null && isRemovableNaturalLeaf(world, position, chunk.getBlockState(position))) {
+                        BlockState leaf = chunk.getBlockState(position);
+                        world.setBlockState(position, Blocks.AIR.getDefaultState(), Block.NOTIFY_LISTENERS);
+                        cleared.put(position, leaf);
+                    }
+                }
+            }
+        }
+        return cleared;
+    }
+
+    private static void restoreLeaves(ServerWorld world, Map<BlockPos, BlockState> cleared) {
+        for (Map.Entry<BlockPos, BlockState> leaf : cleared.entrySet()) {
+            world.setBlockState(leaf.getKey(), leaf.getValue(), Block.NOTIFY_LISTENERS);
+        }
+    }
+
+    private static boolean isRemovableNaturalLeaf(ServerWorld world, BlockPos position, BlockState state) {
+        return state.isIn(BlockTags.LEAVES)
+                && BlockProtection.mayBreak(world, position, state)
+                && !BlockProtection.isColonyBuilt(position)
+                && !BlockProtection.isVillageOriginal(world, position);
     }
 
     private static boolean isEmpty(WorldChunk chunk, BlockPos position) {

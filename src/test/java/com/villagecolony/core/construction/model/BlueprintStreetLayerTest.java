@@ -59,7 +59,7 @@ class BlueprintStreetLayerTest {
     void theFoundationBelowTheStreetAndTheSoilOnItAreBuried() {
         Blueprint house = smallHouseFive();
 
-        assertTrue(house.isBuried(house.blocks().get(0)), "terra abaixo da rua");
+        assertFalse(house.isBuried(house.blocks().get(0)), "terra abaixo da rua é construída desde 03-10");
         assertTrue(house.isBuried(house.blocks().get(4)), "grama na altura da rua");
         assertFalse(house.isBuried(house.blocks().get(2)), "o pedregulho do piso é construído");
         assertFalse(house.isBuried(house.blocks().get(3)), "a tábua do piso é construída");
@@ -79,7 +79,7 @@ class BlueprintStreetLayerTest {
                 new BlueprintBlock(new ColonyPos(0, 2, 0), DOOR))).withStreetLayer(1);
 
         assertFalse(plan.isBuried(plan.blocks().get(0)), "o pedregulho da base é construído");
-        assertTrue(plan.isBuried(plan.blocks().get(1)), "a terra da base é o terreno");
+        assertFalse(plan.isBuried(plan.blocks().get(1)), "a terra da base é construída — só a grama fica (03-10)");
         assertTrue(plan.isBase(plan.blocks().get(0)), "abaixo da rua é base");
         assertTrue(plan.isBase(plan.blocks().get(2)), "a camada da rua é base");
         assertFalse(plan.isBase(plan.blocks().get(3)), "a porta não é base");
@@ -117,20 +117,28 @@ class BlueprintStreetLayerTest {
     }
 
     @Test
-    void everyGroundBlockOfTheBiomesCountsAsSoil() {
-        for (String soil : List.of("dirt", "grass_block", "coarse_dirt", "podzol", "mycelium",
-                "rooted_dirt", "sand", "red_sand", "snow", "snow_block", "mud")) {
-            Blueprint plan = Blueprint.of(ResourceId.vanilla("x"), List.of(
-                    new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla(soil)))).withStreetLayer(0);
+    void onlyGrassIsLeftToTheGround() {
+        Blueprint grass = Blueprint.of(ResourceId.vanilla("x"), List.of(
+                new BlueprintBlock(new ColonyPos(0, 0, 0), GRASS))).withStreetLayer(0);
 
-            assertTrue(plan.isBuried(plan.blocks().get(0)), soil + " na altura da rua devia ser o chão");
-        }
+        assertTrue(grass.isBuried(grass.blocks().get(0)), "grama na altura da rua é o chão");
 
-        for (String built : List.of("dirt_path", "farmland", "gravel", "cobblestone", "oak_stairs")) {
+        for (String built : List.of("dirt", "coarse_dirt", "podzol", "sand", "red_sand", "snow_block", "mud",
+                "dirt_path", "farmland", "gravel", "cobblestone", "oak_stairs")) {
             Blueprint plan = Blueprint.of(ResourceId.vanilla("x"), List.of(
                     new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla(built)))).withStreetLayer(0);
 
             assertFalse(plan.isBuried(plan.blocks().get(0)), built + " na altura da rua é construído");
         }
+    }
+
+    /** A plantação constrói a base inteira, grama inclusive — autor, 2026-10-03. */
+    @Test
+    void aPlantationBuildsItsWholeBase() {
+        Blueprint farm = Blueprint.of(ResourceId.vanilla("village/plains/houses/plains_small_farm_1"), List.of(
+                new BlueprintBlock(new ColonyPos(0, 0, 0), GRASS))).withStreetLayer(0);
+
+        assertTrue(farm.isPlantation());
+        assertFalse(farm.isBuried(farm.blocks().get(0)), "na roça até a grama da base é construída");
     }
 }

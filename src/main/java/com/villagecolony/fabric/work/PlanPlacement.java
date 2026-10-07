@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
-import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.BlueprintPlacement;
+
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
@@ -10,8 +11,6 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.core.worker.model.ProfessionType;
-import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.VillageStructures;
 import com.villagecolony.fabric.integration.VillageBiomes;
@@ -45,8 +44,8 @@ public final class PlanPlacement {
      * As casas desta vila com a mesma pegada de uma planta — 2026-09-18.
      *
      * <p><b>O defeito que ela fecha:</b> a vila levantava sempre a mesma
-     * estrutura. De 36 peças de planície, {@link HousePlans#catalogPlans} entrega
-     * 4 ao planejador — uma por pegada, cortada em {@link HousePlans#PLANS_OFFERED}
+     * estrutura. De 36 peças de planície, {@link HouseCatalog#catalogPlans} entrega
+     * 4 ao planejador — uma por pegada, cortada em {@link HouseCatalog#PLANS_OFFERED}
      * —, e ele levanta a {@code get(0)}. As oito {@code small_house} do
      * jogo colapsavam em <b>uma</b>, e a escolhida era a mesma em toda
      * passagem, toda sessão, toda vila do mesmo bioma.
@@ -141,13 +140,7 @@ public final class PlanPlacement {
      */
     public static Optional<Blueprint> blueprintOf(
             ServerWorld world, UUID colonyId, ResourceId id, ColonyPos origin) {
-
-        // Planta lida de arquivo: ela volta como o arquivo a gravou, e
-        // precisa ser virada de novo para a rua. Sem isto a obra que
-        // volta do save mede o mundo com a planta na orientação errada,
-        // conclui que nada está de pé e reconstrói por cima, torto.
-        return StructureBlueprintReader.read(world, id)
-                .map(house -> turnedToTheRoad(house, roadSideOf(world, colonyId, origin, house)));
+        return BlueprintPlacement.blueprintOf(world, colonyId, id, origin);
     }
 
     /**
@@ -159,8 +152,6 @@ public final class PlanPlacement {
      * caminho —, fica o norte, que é onde a planta antiga punha a porta.
      */
     static Side roadSideOf(ServerWorld world, UUID colonyId, ColonyPos origin, Blueprint house) {
-        return RoadIndex.roadSideOf(world, colonyId, origin, house.size())
-                .map(MinecraftTypeAdapter::toSide)
-                .orElse(Side.NORTH);
+        return BlueprintPlacement.roadSideOf(world, colonyId, origin, house);
     }
 }

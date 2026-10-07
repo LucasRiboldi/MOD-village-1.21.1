@@ -8,7 +8,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkTargets;
-import com.villagecolony.fabric.event.VillageFocus;
+import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import net.minecraft.block.Block;
@@ -94,6 +94,10 @@ public final class StrandedEscape {
 
         // Quem está à toa recolhe do chão o que a obra espera — B-1, Regra 48.
         GroundPickup.pass(world);
+
+        // A vila com jogador dentro não espera o ciclo para continuar a busca
+        // de lote — estudo de 01-10, §7-A. Ver SweepCadence.
+        SweepCadence.pass(world);
 
         for (UUID workerId : StrandedWorkers.all()) {
             pass(world, workerId);

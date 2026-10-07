@@ -97,7 +97,7 @@ SIGNATURES = (
         "miner_chest_full",
         "MinerHaul / ChestDepositor",
         "mineiro cavou e nada entrou no bau (bau cheio)",
-        re.compile(r"\bMiner \S+ took 0 from\b", re.IGNORECASE),
+        re.compile(r"\bMiner chest at .+ is full\b", re.IGNORECASE),
     ),
     Signature(
         "cycle_over_tick",

@@ -56,7 +56,7 @@ Colony 020ad427 — no collect_stone work: no worker in the village
 | **Fazendeiro** | enxada de ferro | `MAINTAIN_FOOD`, `COLLECT_SOIL` | `FARMED`, `SOIL_GATHERED` | trigo, cenoura, batata, beterraba, terra; faz pão do trigo acima de 32 (desde 09-30) |
 | **Carpinteiro** | nenhuma | `CRAFT_WOOD` | `CRAFTED_WOOD` | as 8 tábuas, os troncos descascados e **toda peça de obra que não é alvenaria** (vidraça, tear, cama, lampião, tocha) |
 | **Pedreiro** | nenhuma | `CRAFT_STONE` | `CRAFTED_STONE` | tijolo de pedra, peças de arenito, laje de pedra lisa, vaso |
-| **Fundidor** | pá de ferro com Toque Suave I | `SMELT_ITEMS`, `COLLECT_SURFACE_RESOURCE` | `SMELTED`, `SURFACE_GATHERED` | areia, `grass_block`, cacto e argila pedidos por obra; vidro, lingote, arenito liso, pedra, pedra lisa, terracota, tijolo |
+| **Fundidor** | pá de ferro com Toque Suave I | `SMELT_ITEMS`, `COLLECT_SURFACE_RESOURCE` | `SMELTED`, `SURFACE_GATHERED` | areia, `grass_block`, cacto e argila pedidos por obra; vidro, lingote, arenito liso, pedra, pedra lisa, terracota de todas as cores, tijolo |
 | **Construtor** | nenhuma | `BUILD_STRUCTURE` | — *(consome, não produz)* | — |
 
 **Ferramenta de 2026-09-30:** a coluna acima é a ferramenta que o aldeão

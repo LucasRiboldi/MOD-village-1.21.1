@@ -95,6 +95,7 @@ class ProductionTest {
         assertEquals(Production.SURFACE_GATHERED, ResourceType.SAND.production());
         assertEquals(Production.SURFACE_GATHERED, ResourceType.GRASS_BLOCK.production());
         assertEquals(Production.SOIL_GATHERED, ResourceType.DIRT.production());
+        assertEquals(Production.CRAFTED_STONE, ResourceType.RED_TERRACOTTA.production());
     }
 
     /**

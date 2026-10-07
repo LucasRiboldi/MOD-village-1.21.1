@@ -20,7 +20,7 @@ import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
-import com.villagecolony.fabric.event.VillageFocus;
+import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.ColonySupply;
@@ -131,6 +131,9 @@ public final class BuilderWork {
          * alvo</b> e nunca pergunta se o aldeão andou. Ver {@link WorkStall}.
          */
         final WorkStall stall = new WorkStall();
+
+        /** Lugares de pé que a navegação recusou nesta tarefa — 2026-10-03. */
+        final UnreachableSpots unreachable = new UnreachableSpots();
 
         private Job(Task task, UUID projectId) {
             this.task = task;
@@ -285,10 +288,29 @@ public final class BuilderWork {
             // <b>De onde ele está, e não do piso</b> — 2026-09-16. Ver
             // BuilderApproach.footOf: mandar ao piso quem já subiu na obra
             // é mandá-lo para uma queda que a navegação não percorre.
-            WorkTargets.set(
-                    workerId,
-                    BuilderApproach.footOf(world, project, target, villager.getBlockPos()),
-                    BuilderApproach.ARRIVAL);
+            Optional<BlockPos> foot = BuilderApproach.footOf(
+                    world, project, target, villager.getBlockPos(), job.unreachable.spots());
+
+            // Todo lugar de pé no alcance já foi recusado pela navegação: a
+            // peça vai para o fim da fila agora, e não em duzentos tiques.
+            if (foot.isEmpty() && project.remaining().size() > 1) {
+                setAside(world, project, job, next.get(), target, "no place to stand within reach can be walked to");
+
+                return true;
+            }
+
+            BlockPos spot = foot.orElseGet(
+                    () -> BuilderApproach.footOf(world, project, target, villager.getBlockPos()));
+
+            WorkTargets.set(workerId, spot, BuilderApproach.ARRIVAL);
+
+            if (job.unreachable.gaveUp(world, villager, spot)) {
+                VillageColonyMod.LOGGER.info("Builder {} gives up standing at {} for {} — the path does not"
+                        + " reach it; it tries another side", workerId, spot.toShortString(), target.toShortString());
+                job.stall.reset();
+
+                return true;
+            }
 
             if (job.stall.stuck(world, villager)) {
                 // Parado no mesmo bloco há quinze segundos de expediente —
@@ -319,12 +341,8 @@ public final class BuilderWork {
             // próxima — A-6, 2026-10-02. Antes ele insistia até o STALL_LIMIT
             // (dois minutos) e largava a obra inteira.
             if (++job.stalled % SET_ASIDE_AFTER == 0 && project.remaining().size() > 1) {
-                project.defer(next.get(), ConstructionOutcome.skipped(project.worldPositionOf(next.get()),
-                        SkipReason.UNREACHABLE), BuilderPlacement.supportFingerprint(world, target));
-                VillageColonyMod.LOGGER.info("Project {} sets {} at {} aside — the builder walked {} ticks"
-                        + " without reaching it; it goes on with the next piece",
-                        project.id(), next.get().block(), target.toShortString(), job.stalled);
-                job.stalled = 0;
+                setAside(world, project, job, next.get(), target,
+                        "the builder walked " + job.stalled + " ticks without reaching it");
 
                 return true;
             }
@@ -359,6 +377,18 @@ public final class BuilderWork {
         job.progress = 0;
 
         return BuilderPlacement.placeOne(world, project, job, workerId, next.get(), target);
+    }
+
+    /** A peça que não se alcança vai para o fim da fila, e a obra segue pela próxima — A-6. */
+    private static void setAside(
+            ServerWorld world, ConstructionProject project, Job job, BlueprintBlock piece, BlockPos target,
+            String why) {
+
+        project.defer(piece, ConstructionOutcome.skipped(project.worldPositionOf(piece), SkipReason.UNREACHABLE),
+                BuilderPlacement.supportFingerprint(world, target));
+        VillageColonyMod.LOGGER.info("Project {} sets {} at {} aside — {}; it goes on with the next piece",
+                project.id(), piece.block(), target.toShortString(), why);
+        job.stalled = 0;
     }
 
     /**

@@ -9,6 +9,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.SweepPersistence;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.integration.RoadExtension;
 import com.villagecolony.fabric.integration.PavingRefusals;
@@ -519,7 +520,7 @@ public class RoadExtensionGameTest implements FabricGameTest {
                 .map(context::getAbsolutePos)
                 .map(pos -> ColonyRoads.column(pos.getX(), pos.getZ()))
                 .toList();
-        BuildSiteScanner.restore(new ColonyRoads(
+        SweepPersistence.restore(new ColonyRoads(
                 colony,
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
                 columns));

@@ -215,7 +215,9 @@ public final class Colony {
     public boolean measure(VillageBounds measured) {
         Objects.requireNonNull(measured, "measured");
 
-        VillageBounds next = bounds == null ? measured : bounds.union(measured);
+        // Só o lado que a medida passa avança, e o centro fica num bloco só —
+        // 2026-10-03, ver VillageBounds.grownBy.
+        VillageBounds next = bounds == null ? measured.centered() : bounds.grownBy(measured);
 
         if (next.equals(bounds)) {
             return false;

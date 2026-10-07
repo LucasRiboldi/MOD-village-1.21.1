@@ -91,6 +91,24 @@ public final class ColonySupply {
     }
 
     /**
+     * Aproxima o estoque de uma quantidade pedida, fabricando no máximo
+     * uma receita nesta passagem.
+     *
+     * <p>Uma obra pode pedir várias peças iguais. {@link #stock} responde
+     * apenas se já existe uma, então a carpintaria alternava entre fabricar
+     * um lote e esperar o construtor consumir esse lote. Aqui a quantidade
+     * da planta é o alvo, mas o ritmo continua sendo uma ação por ciclo.
+     */
+    public static boolean stockToward(
+            ServerWorld world, UUID colonyId, ColonyPos near, Item item, int target) {
+
+        List<ColonyPos> chests = ColonyChests.nearestFirst(world, colonyId, near);
+
+        return ColonyChests.countIn(world, chests, item) >= target
+                || craft(world, chests, item);
+    }
+
+    /**
      * A colônia tem, ou consegue fazer, este item? Sem tirar nada.
      *
      * <p>Precisa concordar com {@link #take}: uma que dissesse "tem" e

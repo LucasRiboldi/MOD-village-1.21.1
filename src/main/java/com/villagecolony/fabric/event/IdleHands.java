@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.event;
 
+import com.villagecolony.fabric.integration.VillageFocus;
+
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.WorkAssignment;

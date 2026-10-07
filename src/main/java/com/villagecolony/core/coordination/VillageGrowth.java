@@ -7,6 +7,7 @@ import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.type.ColonyPos;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,17 +46,20 @@ public final class VillageGrowth {
 
         Objects.requireNonNull(laid, "laid");
 
-        Optional<VillageBounds> grown = Optional.empty();
-
-        for (ColonyPos block : laid) {
-            Optional<VillageBounds> step = grow(colonies, colonyId, VillageBounds.block(block));
-
-            if (step.isPresent()) {
-                grown = step;
-            }
+        if (laid.isEmpty()) {
+            return Optional.empty();
         }
 
-        return grown;
+        // Uma vez só, pela caixa da corrente inteira: bloco a bloco, o acerto
+        // de lado ímpar (VillageBounds.grownBy) somaria uma linha por passo.
+        Iterator<ColonyPos> blocks = laid.iterator();
+        VillageBounds chain = VillageBounds.block(blocks.next());
+
+        while (blocks.hasNext()) {
+            chain = chain.union(VillageBounds.block(blocks.next()));
+        }
+
+        return grow(colonies, colonyId, chain);
     }
 
     private static Optional<VillageBounds> grow(

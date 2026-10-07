@@ -9,6 +9,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Como o construtor chega ao bloco.
@@ -135,12 +136,32 @@ public final class BuilderApproach {
     static BlockPos footOf(
             ServerWorld world, ConstructionProject project, BlockPos target, BlockPos worker) {
 
+        return footOf(world, project, target, worker, Set.of()).orElseThrow();
+    }
+
+    /**
+     * O mesmo, sem os lugares que a navegação já recusou — 2026-10-03.
+     *
+     * <p>Vazio quando há lugar de pé no alcance e <b>todos</b> foram
+     * recusados: a peça não se alcança daqui, e esperar o guarda de
+     * trezentos tiques para descobrir isso é o desperdício que o
+     * {@link UnreachableSpots} corrige.
+     */
+    static Optional<BlockPos> footOf(
+            ServerWorld world, ConstructionProject project, BlockPos target, BlockPos worker,
+            Set<BlockPos> refused) {
+
         BlockPos floor = new BlockPos(target.getX(), project.origin().y(), target.getZ());
-        BlockPos ground = standingSpotWithinReach(world, floor, worker)
-                .orElseGet(() -> standingSpotNear(world, floor).orElse(floor));
+        Optional<BlockPos> near = standingSpotWithinReach(world, floor, worker, refused);
+
+        if (near.isEmpty() && !refused.isEmpty() && hasStandingSpotWithinReach(world, project, target)) {
+            return Optional.empty();
+        }
+
+        BlockPos ground = near.orElseGet(() -> standingSpotNear(world, floor).orElse(floor));
 
         if (ClimbLimit.reachableFrom(worker.getY(), ground.getY())) {
-            return ground;
+            return Optional.of(ground);
         }
 
         // Longe demais na vertical: o destino é o patamar que ele alcança,
@@ -151,7 +172,7 @@ public final class BuilderApproach {
                 ClimbLimit.landingBetween(worker.getY(), ground.getY()),
                 ground.getZ());
 
-        return standingSpotNear(world, landing).orElse(landing);
+        return Optional.of(standingSpotNear(world, landing).orElse(landing));
     }
 
     /**
@@ -170,7 +191,7 @@ public final class BuilderApproach {
      * borda da busca, e na borda do alcance o corpo dele ficava fora.
      */
     private static Optional<BlockPos> standingSpotWithinReach(
-            ServerWorld world, BlockPos floor, BlockPos worker) {
+            ServerWorld world, BlockPos floor, BlockPos worker, Set<BlockPos> refused) {
 
         BlockPos closest = null;
         double closestDistance = Double.MAX_VALUE;
@@ -183,7 +204,7 @@ public final class BuilderApproach {
 
                 Optional<BlockPos> candidate = standingSpotNear(world, floor.add(dx, 0, dz));
 
-                if (candidate.isEmpty()) {
+                if (candidate.isEmpty() || refused.contains(candidate.get())) {
                     continue;
                 }
 

@@ -15,15 +15,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/** Completa as camas físicas da vila vanilla uma única vez, na adoção. */
+/** Completa de forma idempotente as camas físicas da vila vanilla observada. */
 public final class VanillaBedChests {
 
     private VanillaBedChests() {
     }
 
     /**
-     * Não tenta novamente depois: a adoção de uma nova colônia é o único
-     * chamador. A lista vem do mesmo cluster de POIs que qualificou a vila.
+     * A lista vem do mesmo cluster de POIs que qualificou a vila. Chamadas
+     * posteriores reparam observações parciais e apenas reconhecem os baús
+     * que já foram colocados corretamente.
      */
     public static void ensure(ServerWorld world, List<ColonyPos> observedBeds) {
         Set<BlockPos> seen = new HashSet<>();
@@ -67,9 +68,10 @@ public final class VanillaBedChests {
     }
 
     private static void log(ChestPlacer.Outcome outcome) {
-        VillageColonyMod.LOGGER.info("VC_VILLAGE_BED_CHEST outcome={} reason={}",
-                outcome == ChestPlacer.Outcome.PLACED ? "CREATED"
-                        : outcome == ChestPlacer.Outcome.ALREADY_PRESENT ? "PRESENT" : "SKIPPED",
-                outcome);
+        if (outcome == ChestPlacer.Outcome.PLACED) {
+            VillageColonyMod.LOGGER.info("VC_VILLAGE_BED_CHEST outcome=CREATED reason={}", outcome);
+        } else if (outcome != ChestPlacer.Outcome.ALREADY_PRESENT) {
+            VillageColonyMod.LOGGER.debug("VC_VILLAGE_BED_CHEST outcome=SKIPPED reason={}", outcome);
+        }
     }
 }

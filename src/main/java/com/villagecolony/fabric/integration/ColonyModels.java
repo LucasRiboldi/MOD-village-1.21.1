@@ -54,6 +54,11 @@ public final class ColonyModels {
 
     private static final String TRADE = "trade_";
 
+    /** Modelos nomeados que entram no rodízio de uma profissão específica. */
+    private static final Map<String, ProfessionType> NAMED_PROFESSION_MODELS = Map.of(
+            "barn_majest", ProfessionType.SHEPHERD,
+            "storage_majest", ProfessionType.BUILDER);
+
     private static final Map<String, Boolean> EXISTS = new HashMap<>();
 
     /** Modelos de mentira, só para o teste: caminho do modelo → estrutura real. */
@@ -101,6 +106,8 @@ public final class ColonyModels {
         List<ResourceId> found = new ArrayList<>();
 
         for (ProfessionType profession : ProfessionType.values()) {
+            namedModelsFor(profession).forEach(model -> find(FOLDER + "/" + model).ifPresent(found::add));
+
             String name = TRADE + profession.name().toLowerCase(Locale.ROOT);
 
             find(FOLDER + "/" + style + "/" + name)
@@ -111,6 +118,13 @@ public final class ColonyModels {
         return List.copyOf(found);
     }
 
+    private static List<String> namedModelsFor(ProfessionType profession) {
+        return NAMED_PROFESSION_MODELS.entrySet().stream()
+                .filter(entry -> entry.getValue() == profession)
+                .map(Map.Entry::getKey)
+                .toList();
+    }
+
     /** De que ofício é esta casa da colônia; vazio para o que não é casa de ofício dela. */
     public static Optional<ProfessionType> professionOf(ResourceId id) {
         if (!isColonyModel(id)) {
@@ -118,6 +132,13 @@ public final class ColonyModels {
         }
 
         String path = id.path();
+        String named = path.substring((FOLDER + "/").length());
+        ProfessionType profession = NAMED_PROFESSION_MODELS.get(named);
+
+        if (profession != null) {
+            return Optional.of(profession);
+        }
+
         int at = path.lastIndexOf(TRADE);
 
         if (at < 0) {

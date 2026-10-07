@@ -468,33 +468,7 @@ public final class ColonySavedData extends PersistentState {
         // só normaliza o NBT para a forma que os leitores abaixo esperam.
         NbtCompound nbt = SaveMigration.migrate(rawNbt);
 
-        NbtList list = nbt.getList(COLONIES, NbtElement.COMPOUND_TYPE);
-
-        for (int i = 0; i < list.size(); i++) {
-            NbtCompound entry = list.getCompound(i);
-
-            if (!entry.containsUuid(ID)) {
-                continue;
-            }
-
-            UUID id = entry.getUuid(ID);
-
-            ColonyPos center = new ColonyPos(
-                    entry.getInt(CENTER_X),
-                    entry.getInt(CENTER_Y),
-                    entry.getInt(CENTER_Z));
-
-            Colony colony = Colony.restore(id, center, ColonySaveReader.readState(entry), ColonyLifecycle.DORMANT);
-
-            // Save antigo não tem o campo; getInt devolve 0, que apenas
-            // faz a primeira detecção da sessão valer. Autocorrige.
-            colony.observe(center, entry.getInt(OBSERVED_BEDS));
-            colony.markForestPopulationMilestone(entry.getInt(FOREST_POPULATION_MILESTONE));
-            VillageBoundsSave.read(entry, colony);
-
-            data.colonies.add(colony);
-        }
-
+        ColonySaveReader.readColonies(nbt, data);
         ColonySaveReader.readWorkers(nbt, data);
         ColonySaveReader.readConstruction(nbt, data);
 

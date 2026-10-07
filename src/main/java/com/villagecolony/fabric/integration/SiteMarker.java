@@ -6,11 +6,11 @@ import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.model.SiteLabel;
 import com.villagecolony.core.construction.model.SiteOutline;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.event.VillageFocus;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.particle.ParticleTypes;
@@ -19,12 +19,14 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.world.Heightmap;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * O contorno do lote, desenhado no mundo — 2026-09-15.
@@ -125,12 +127,14 @@ public final class SiteMarker {
     }
 
     /**
-     * Desenha o contorno das obras abertas, uma vez por segundo.
+     * Desenha o contorno das obras abertas que o ciclo de eventos informou
+     * como ativas, uma vez por segundo.
      *
-     * <p>Chamada do tique do servidor. Sai de graça na esmagadora maioria
-     * dos tiques — é um contador e uma comparação.
+     * <p>Chamada do tique do servidor, e sai de graça na esmagadora maioria
+     * dos tiques. O critério de expediente pertence a {@code event}; recebê-lo
+     * como argumento mantém esta adaptação de mundo independente do agendador.
      */
-    public static void tick(ServerWorld world) {
+    public static void tick(ServerWorld world, Predicate<UUID> isWorking) {
         if (++tickCounter < EVERY_TICKS) {
             return;
         }
@@ -148,16 +152,38 @@ public final class SiteMarker {
             return;
         }
 
+        for (var colony : VillageColonyMod.COLONIES.all()) {
+            colony.bounds().ifPresent(bounds -> drawVillageBounds(world, bounds));
+        }
+
         for (ConstructionProject project : VillageColonyMod.CONSTRUCTIONS.all()) {
             if (!project.state().isOpen()) {
                 continue;
             }
 
-            if (!VillageFocus.isWorking(world, project.colonyId())) {
+            if (!isWorking.test(project.colonyId())) {
                 continue;
             }
 
             draw(world, project);
+        }
+    }
+
+    /** Marca o perímetro medido da vila com a mesma linguagem visual da obra. */
+    private static void drawVillageBounds(ServerWorld world, VillageBounds bounds) {
+        ColonyPos origin = new ColonyPos(bounds.minX(), bounds.minY(), bounds.minZ());
+        ColonyPos center = new ColonyPos((bounds.minX() + bounds.maxX()) / 2,
+                bounds.minY(), (bounds.minZ() + bounds.maxZ()) / 2);
+        if (noPlayerNear(world, center)) {
+            return;
+        }
+
+        List<ColonyPos> border = SiteOutline.of(origin,
+                new ColonyPos(bounds.maxX(), bounds.minY(), bounds.maxZ()));
+        for (ColonyPos at : border) {
+            int y = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, at.x(), at.z());
+            world.spawnParticles(ParticleTypes.SOUL_FIRE_FLAME, at.x() + 0.5, y + 0.1, at.z() + 0.5,
+                    1, 0.0, 0.0, 0.0, 0.0);
         }
     }
 

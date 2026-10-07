@@ -18,9 +18,14 @@ import java.util.UUID;
  * só repete a resposta.
  *
  * <p><b>O que muda.</b> A varredura completa e vazia solta a tarefa e põe o
- * recurso de castigo na colônia: 5 minutos, depois 10, depois 20 enquanto
- * continuar vazio. Enquanto dura, a tarefa fica aberta e ninguém a reserva —
- * o trabalhador vai fazer outra coisa. Achar o recurso zera a contagem.
+ * recurso de castigo na colônia. Enquanto dura, a tarefa fica aberta e
+ * ninguém a reserva — o trabalhador vai fazer outra coisa. Achar o recurso
+ * zera a contagem.
+ *
+ * <p><b>Na terceira, o material aparece</b> — pedido do autor, 2026-10-03:
+ * {@link LocateFallback}. O castigo encolheu de 5, 10 e 20 minutos para 1 e
+ * 2: com a entrega na terceira busca, o castigo antigo faria a profissão
+ * esperar quinze minutos por um material que já se sabia ausente.
  */
 public final class EmptySweeps {
 
@@ -28,10 +33,10 @@ public final class EmptySweeps {
         ServerMemory.register(EmptySweeps.class, EmptySweeps::clearAll);
     }
 
-    /** O primeiro castigo: cinco minutos. */
-    static final int BASE = 6_000;
+    /** O primeiro castigo: um minuto. */
+    static final int BASE = 1_200;
 
-    /** Quantas vezes o castigo dobra: 5, 10, 20 minutos. */
+    /** Quantas vezes o castigo dobra: 1, 2, 4 minutos. */
     private static final int MAX_DOUBLINGS = 2;
 
     private record Key(UUID colonyId, ResourceType resource) {
@@ -49,8 +54,12 @@ public final class EmptySweeps {
         return count <= 0 ? 0 : (long) BASE << Math.min(count - 1, MAX_DOUBLINGS);
     }
 
-    /** Uma varredura completa não achou {@code resource} no raio da colônia. */
-    static void foundNothing(UUID colonyId, ResourceType resource, long now) {
+    /**
+     * Uma varredura completa não achou {@code resource} no raio da colônia.
+     *
+     * @return quantas varreduras seguidas não acharam, contando esta
+     */
+    static int foundNothing(UUID colonyId, ResourceType resource, long now) {
         Key key = new Key(colonyId, resource);
         Mark before = MARKS.get(key);
         Mark mark = new Mark(now, before == null ? 1 : before.count() + 1);
@@ -60,6 +69,8 @@ public final class EmptySweeps {
         VillageColonyMod.LOGGER.info(
                 "Colony {} has no {} anywhere in the radius — {} empty sweeps in a row; nobody looks again for {} ticks",
                 colonyId, resource.name().toLowerCase(java.util.Locale.ROOT), mark.count(), memoryFor(mark.count()));
+
+        return mark.count();
     }
 
     /** Achou: a próxima varredura vazia volta ao primeiro castigo. */

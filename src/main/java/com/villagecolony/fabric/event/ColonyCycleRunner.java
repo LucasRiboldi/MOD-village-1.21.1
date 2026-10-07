@@ -1,24 +1,20 @@
 package com.villagecolony.fabric.event;
 
+import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.core.coordination.PlanningBudget;
 import com.villagecolony.fabric.integration.SweepDeadline;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.integration.FurnaceReach;
 import com.villagecolony.core.coordination.StandingWork;
-import com.villagecolony.core.colony.model.ClusterRejection;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.IdleReason;
-import com.villagecolony.core.colony.model.ColonyLifecycle;
-import com.villagecolony.core.colony.model.ColonyState;
-import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.colony.service.ColonyAbandonment;
-import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.coordination.ColonyCycle;
 import com.villagecolony.core.coordination.ColonyGoals;
+import com.villagecolony.core.coordination.ReservationGate;
 import com.villagecolony.core.coordination.WorkDemand;
-import com.villagecolony.core.resource.model.ColonyResources;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.task.model.TaskType;
@@ -29,31 +25,27 @@ import com.villagecolony.core.worker.service.HiringLog;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.core.worker.service.VacancyEnforcer;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.brain.WorkHours;
+import com.villagecolony.fabric.brain.WorkRest;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ColonyChestSurvey;
 import com.villagecolony.fabric.integration.WarehouseHealthLog;
 import com.villagecolony.fabric.integration.FoundationPreparation;
-import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.fabric.integration.RoadPaving;
 import com.villagecolony.fabric.integration.SiteMarker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageBiomes;
-import com.villagecolony.fabric.integration.VillageScanner;
-import com.villagecolony.fabric.integration.VillageFoundation;
 import com.villagecolony.fabric.integration.VillageForest;
-import com.villagecolony.fabric.integration.VanillaBedChests;
-import com.villagecolony.fabric.integration.BigHouseFoundation;
 import com.villagecolony.fabric.integration.VillagerScanner;
-import com.villagecolony.fabric.integration.WorkerEquipment;
-import com.villagecolony.fabric.integration.WorkerNameplate;
 import com.villagecolony.fabric.work.IdleLog;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.FarmerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
 import com.villagecolony.fabric.work.SurfaceGatheringWork;
-import com.villagecolony.fabric.work.WaitingWork;
+import com.villagecolony.fabric.work.CraftsmanRequest;
 import com.villagecolony.fabric.work.ChestRelief;
 import com.villagecolony.fabric.work.WorkMaterials;
 import com.villagecolony.fabric.work.HousePlans;
@@ -61,16 +53,12 @@ import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.BuilderApproach;
 import com.villagecolony.fabric.work.EmptySweeps;
-import com.villagecolony.fabric.work.StrandedEscape;
-import com.villagecolony.fabric.work.VillageMeals;
 import com.villagecolony.fabric.work.ConstructionDemand;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.CraftingWork;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.Blocks;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.WorldChunk;
@@ -82,12 +70,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.Set;
 import java.util.stream.Collectors;
-import net.minecraft.world.poi.PointOfInterestTypes;
 
 /**
  * O ciclo de cada colônia: quais rodam (só perto de um jogador), o que cada ofício faz nele e o relatório de mãos — separado de
@@ -204,6 +190,9 @@ final class ColonyCycleRunner {
                     colony.id(),
                     colony.forestPopulationMilestone() + 10);
         }
+
+        // A rua do jogador também faz a vila crescer — 2026-10-03, RoadSpill.
+        RoadPaving.growByRoads(overworld, colony.id());
 
         mark = CycleCost.since(CycleCost.Phase.POPULATION, mark);
 
@@ -404,8 +393,8 @@ final class ColonyCycleRunner {
         // roda para as colônias da vez no rodízio — oito por ciclo desde
         // 2026-09-15 —, e uma obra parada esperando escada não pode
         // depender de sorteio para ser destravada. Ver
-        // WaitingWork.askTheCraftsmanFor.
-        WaitingWork.askForWhatTheWorkIsWaitingOn(overworld, colony);
+        // CraftsmanRequest.askTheCraftsmanFor.
+        CraftsmanRequest.askForWhatTheWorkIsWaitingOn(overworld, colony);
 
         CraftingWork.run(overworld, colony);
 
@@ -414,6 +403,13 @@ final class ColonyCycleRunner {
 
     /** Trabalhos já reservados continuam mesmo enquanto uma fotografia termina de ser lida. */
     static void runOngoingWork(ServerWorld world, Colony colony) {
+        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
+            if (world.getEntity(worker.villagerId()) instanceof VillagerEntity villager
+                    && !WorkHours.isWorkTime(world, villager)) {
+                WorkRest.release(villager);
+            }
+        }
+
         LumberjackWork.run(world, colony);
         MinerWork.run(world, colony);
         SmelterWork.run(world, colony);
@@ -423,25 +419,27 @@ final class ColonyCycleRunner {
         BuilderWork.run(world, colony);
     }
 
-    /** Recusa obra aberta cujo próximo bloco ainda não possui ponto físico de trabalho. */
+    /**
+     * Responde, lendo o mundo, a trava que {@link ReservationGate} aponta para a
+     * tarefa — ADR-035 §4.
+     *
+     * <p>Atenção: a trava da obra também <b>prepara</b> a fundação quando ela se
+     * qualifica ({@code FoundationPreparation.prepareIfQualified}); não é só
+     * consulta.
+     */
     static boolean canReserveTask(ServerWorld world, UUID colonyId, Task task) {
-        if (task.type() == TaskType.COLLECT_SURFACE_RESOURCE || task.type() == TaskType.COLLECT_SOIL) {
-            // O raio já foi varrido inteiro sem achar — F-1, 2026-10-02.
-            return !EmptySweeps.isWaiting(colonyId, task.targetResource(), world.getTime());
-        }
-
-        if (task.type() != TaskType.BUILD) {
-            return true;
-        }
-
-        return VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
-                .flatMap(project -> project.nextBlock().map(next ->
-                        BuilderApproach.hasStandingSpotWithinReach(
-                                world,
-                                project,
-                                MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(next)))
-                                && FoundationPreparation.prepareIfQualified(world, project)))
-                .orElse(false);
+        return switch (ReservationGate.of(task.type())) {
+            case NONE -> true;
+            case EMPTY_SWEEP -> !EmptySweeps.isWaiting(colonyId, task.targetResource(), world.getTime());
+            case BUILD_SITE -> VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
+                    .flatMap(project -> project.nextBlock().map(next ->
+                            BuilderApproach.hasStandingSpotWithinReach(
+                                    world,
+                                    project,
+                                    MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(next)))
+                                    && FoundationPreparation.prepareIfQualified(world, project)))
+                    .orElse(false);
+        };
     }
 
     /**

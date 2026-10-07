@@ -58,6 +58,32 @@ public final class ProfessionPolicySet {
         return hiringOrder;
     }
 
+    /**
+     * A política em uma linha, na ordem de contratação — para o log do
+     * servidor quando um operador a muda (2026-10-02): sem ela, o playtest do
+     * Mod Menu não tinha frase que provasse a mudança.
+     *
+     * <p>Exemplo: {@code MINER, LUMBERJACK max 2, MASON off, FARMER radius 48}.
+     */
+    public String summary() {
+        List<String> parts = new ArrayList<>();
+        for (ProfessionType type : hiringOrder) {
+            ProfessionPolicy policy = policyOf(type);
+            StringBuilder part = new StringBuilder(type.name());
+            if (!policy.enabled()) {
+                part.append(" off");
+            }
+            if (policy.limitsWorkers()) {
+                part.append(" max ").append(policy.maximumWorkers());
+            }
+            if (policy.hasConfiguredRadius()) {
+                part.append(" radius ").append(policy.searchRadius());
+            }
+            parts.add(part.toString());
+        }
+        return String.join(", ", parts);
+    }
+
     /** Só estes trabalhos procuram alvos no mundo por um raio configurável. */
     public static boolean supportsSearchRadius(ProfessionType type) {
         return switch (Objects.requireNonNull(type, "type")) {

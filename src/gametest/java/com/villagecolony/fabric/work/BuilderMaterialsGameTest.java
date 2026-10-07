@@ -5,6 +5,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.construction.model.MaterialRequest;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
@@ -15,7 +16,9 @@ import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.SandNearWater;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
@@ -35,6 +38,30 @@ import java.util.UUID;
  * não aparece: aparece o que falta para o artesão fazê-la.
  */
 public final class BuilderMaterialsGameTest implements FabricGameTest {
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
+    public void theBuilderTakesTheNeededBlockFromAnotherVillageChest(TestContext context) {
+        Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.OAK_PLANKS);
+
+        try {
+            Inventory carpenterChest = (Inventory) context.getWorld().getBlockEntity(
+                    MinecraftTypeAdapter.toBlockPos(setup.carpenterChest()));
+            carpenterChest.setStack(0, new ItemStack(Items.OAK_PLANKS, 2));
+
+            context.assertTrue(BuilderMaterials.takeMaterial(
+                            context.getWorld(), setup.project(), Blocks.OAK_PLANKS)
+                            .filter(Items.OAK_PLANKS::equals).isPresent(),
+                    "o construtor não retirou a tábua do baú remoto da vila");
+            context.assertTrue(count(context, setup.carpenterChest(), Items.OAK_PLANKS) == 1,
+                    "a retirada não consumiu exatamente uma tábua do baú remoto");
+            context.assertTrue(count(context, setup.builderChest(), Items.OAK_PLANKS) == 0,
+                    "a tábua apareceu no baú do construtor em vez de ser entregue fisicamente");
+        } finally {
+            setup.cleanUp();
+        }
+
+        context.complete();
+    }
 
     /**
      * <b>A linha deixou de esperar três tentativas</b> — 2026-09-30. Ela é
@@ -86,6 +113,61 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
                             + count(context, setup.carpenterChest(), Items.GLASS));
             context.assertTrue(count(context, setup.carpenterChest(), Items.SAND) == 0,
                     "a areia, que é natural, apareceu do nada");
+        } finally {
+            setup.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /** A peça no baú fica registrada como entregue pelo baú — ADR-035 §3. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
+    public void aPieceInTheChestIsRecordedAsDeliveredByTheChest(TestContext context) {
+        Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.OAK_PLANKS);
+
+        try {
+            Inventory carpenterChest = (Inventory) context.getWorld().getBlockEntity(
+                    MinecraftTypeAdapter.toBlockPos(setup.carpenterChest()));
+            carpenterChest.setStack(0, new ItemStack(Items.OAK_PLANKS, 2));
+
+            boolean has = BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project());
+            MaterialRequest request = MaterialRequests.of(setup.project().id()).orElse(null);
+
+            context.assertTrue(has && request != null
+                            && request.state() == MaterialRequest.State.DELIVERED
+                            && request.source() == MaterialRequest.Source.CHEST,
+                    "a tábua no baú devia ficar registrada como entregue pelo baú: " + request);
+        } finally {
+            setup.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * O pedido mostra a sequência real de uma peça sem rota — ADR-035 §3: conta
+     * as tentativas e, na terceira, o vidro vai ao baú do carpinteiro e a
+     * vidraça passa a esperar o artesão.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
+    public void aPaneWithoutABeachShowsTheAttemptsAndThenTheCraftsman(TestContext context) {
+        BlockPos far = context.getAbsolutePos(new BlockPos(2, 2, 2)).add(-3_000, 0, -3_000);
+        Setup setup = setUp(context, far, Items.GLASS_PANE);
+
+        try {
+            BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project());
+            MaterialRequest first = MaterialRequests.of(setup.project().id()).orElse(null);
+
+            BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project());
+            BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project());
+            MaterialRequest third = MaterialRequests.of(setup.project().id()).orElse(null);
+
+            context.assertTrue(first != null && first.state() == MaterialRequest.State.RESOLVING
+                            && first.source() == MaterialRequest.Source.STOCKED,
+                    "na primeira falta a vidraça devia estar contando tentativas: " + first);
+            context.assertTrue(third != null && third.state() == MaterialRequest.State.RESOLVING
+                            && third.source() == MaterialRequest.Source.CRAFTSMAN,
+                    "na terceira a vidraça devia esperar o artesão: " + third);
         } finally {
             setup.cleanUp();
         }

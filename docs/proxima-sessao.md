@@ -1,5 +1,17 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
+**Atualização de 2026-10-04 — JAR `EEE5A695...6DD39`, commit `43f13978`.** O
+JAR com os painéis transparentes, perímetro da vila, boca e passagem da mina
+ampliadas, varredura em espiral, reserva dos dez slots finais dos baús
+profissionais, transbordo imediato do mineiro, viveiro proporcional e a
+refatoração que remove ciclos Fabric está em `downloads/` e em
+`%APPDATA%/.minecraft/mods/`. As três cópias conferem pelo SHA-256
+`EEE5A695C00281E129145E924F9DC3A6E63E40227397F90052FF5E7F5C56DD39`.
+`build`, 1.314 testes unitários e a execução integral de **585/585 GameTests**
+passaram. Falta confirmar no save o mineiro com baú cheio, o plantio nas
+bordas e o apoio à obra, além da escala dos painéis, do perímetro e da
+varredura em vila grande.
+
 **Atualizacao de 2026-09-28 - JAR `B1C516AD...A38C2F5`.** Este e o JAR instalado
 em `downloads/` e `%APPDATA%/.minecraft/mods/`; as tres copias conferem com
 `build/libs/` pelo SHA-256

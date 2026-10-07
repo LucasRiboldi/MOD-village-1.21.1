@@ -368,12 +368,11 @@ public final class Mine {
     /**
      * Quantas hélices a mina tenta antes de culpar a boca — E45.
      *
-     * <p>Quatro, que é o número de rumos que {@link MineShaft#rerouted()}
-     * percorre antes de voltar ao primeiro: girar uma quinta vez seria
-     * reofertar a escada que já falhou. Esgotadas as quatro, o
-     * impedimento não é o rumo — é a boca.
+     * <p>Dez, conforme a regra dos salões: antes de abandonar a boca, a
+     * recuperação tenta dez partidas de descida. Os rumos se repetem, mas
+     * cada tentativa volta a avaliar o salão físico, que pode ter mudado.
      */
-    public static final int HELICES_BEFORE_BLAMING_THE_MOUTH = MineShaft.HELIX_FLIGHTS;
+    public static final int HELICES_BEFORE_BLAMING_THE_MOUTH = 10;
 
     /**
      * Quantas voltas sem picareta bastam para desconfiar do desenho.

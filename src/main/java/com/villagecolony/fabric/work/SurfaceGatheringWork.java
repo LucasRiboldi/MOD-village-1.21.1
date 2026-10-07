@@ -4,6 +4,7 @@ import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.coordination.GatheringReach;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
@@ -14,7 +15,7 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
-import com.villagecolony.fabric.event.VillageFocus;
+import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.ActionTool;
 import com.villagecolony.fabric.integration.BlockBreakTime;
@@ -22,7 +23,6 @@ import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.DirtPatch;
 import com.villagecolony.fabric.integration.FarthestVillageSector;
 import com.villagecolony.fabric.integration.GrassPatch;
-import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.integration.CactusPatch;
 import com.villagecolony.fabric.integration.ClayPatch;
 import com.villagecolony.fabric.integration.SandPatch;
@@ -100,7 +100,7 @@ public final class SurfaceGatheringWork {
                     return current;
                 }
 
-                RingSweep.forget(worker, RingSweep.Scan.SURFACE);
+                VillageSpiralSweep.forget(worker);
                 Direction sector = FarthestVillageSector.farthestLoadedSector(world, center, colony.id());
                 return new Job(task, center, sector);
             });
@@ -134,7 +134,7 @@ public final class SurfaceGatheringWork {
 
             if (!isOngoing(job.task)) {
                 WorkTargets.clear(entry.getKey());
-                RingSweep.forget(entry.getKey(), RingSweep.Scan.SURFACE);
+                VillageSpiralSweep.forget(entry.getKey());
                 iterator.remove();
             } else if (job.target == null) {
                 searching.add(entry.getKey());
@@ -142,7 +142,7 @@ public final class SurfaceGatheringWork {
                 step(world, entry.getKey(), job, false);
                 if (!isOngoing(job.task)) {
                     WorkTargets.clear(entry.getKey());
-                    RingSweep.forget(entry.getKey(), RingSweep.Scan.SURFACE);
+                    VillageSpiralSweep.forget(entry.getKey());
                     iterator.remove();
                 }
             }
@@ -238,27 +238,33 @@ public final class SurfaceGatheringWork {
         // nunca deve raspar o terreno já ocupado pela vila.
         boolean outsideVillage = isOutsideVillage(job.task.targetResource());
         int protectedRadius = protectedRadius(job.task.targetResource());
-        BlockPos searchCenter = outsideVillage
-                ? job.center.offset(job.surfaceSector, protectedRadius + 1)
-                : job.center;
-        // <b>A coluna fora do setor sai de graça</b> — 2026-09-16. A busca
-        // de terra e grama é um cone de 90° fora da vila, e a varredura é
-        // um círculo: das 9.409 colunas de um raio 48, só um quarto servia,
-        // e as outras gastavam orçamento para serem descartadas dentro do
-        // teste. O log de 01:19 registrou 24 de 26 ciclos em "still
+        VillageBounds bounds = VillageColonyMod.COLONIES.find(job.task.colonyId())
+                .flatMap(Colony::bounds)
+                .orElseGet(() -> VillageBounds.block(MinecraftTypeAdapter.toColonyPos(job.center)));
+        VillageFluidIndex.refresh(world, job.task.colonyId(), bounds);
+        // <b>A coluna fora do setor sai de graça</b> — 2026-09-16. Terra e
+        // grama continuam restritas ao setor externo escolhido. A varredura
+        // agora acompanha os retângulos da vila, da borda para dentro e
+        // depois para fora; colunas fora do setor não gastam orçamento de
+        // leitura. O log de 01:19 havia registrado 24 de 26 ciclos em "still
         // sweeping — the budget ran out — dirt", com as obras esperando
         // terra 93 vezes na semana.
         //
         // A pergunta é a mesma que o DirtPatch e o GrassPatch já faziam lá
         // dentro; o que muda é a hora — antes do orçamento, e sem tocar o
-        // mundo. Ver RingSweep.around com filtro.
-        java.util.function.Predicate<BlockPos> worthLooking = outsideVillage
-                ? column -> FarthestVillageSector.isInSector(
-                        job.center, column, job.surfaceSector, protectedRadius)
-                : column -> true;
+        // mundo. O índice de fluidos também é só uma consulta em memória
+        // aqui; a reconstrução incremental aconteceu acima.
+        // A argila não pula água: ela mora no fundo do lago — 2026-10-03.
+        boolean clay = job.task.targetResource() == ResourceType.CLAY_BALL
+                || job.task.targetResource() == ResourceType.CLAY;
+        java.util.function.Predicate<BlockPos> worthLooking = column ->
+                (clay || !VillageFluidIndex.skip(job.task.colonyId(), bounds, column))
+                        && (!outsideVillage || FarthestVillageSector.isInSector(
+                                job.center, column, job.surfaceSector, protectedRadius));
 
-        Optional<BlockPos> found = RingSweep.around(
-                workerId, RingSweep.Scan.SURFACE, searchCenter, reach(job, outsideVillage), worthLooking, column -> {
+        Optional<BlockPos> found = VillageSpiralSweep.next(
+                workerId, bounds, job.center.getY(),
+                outerReach(job, bounds, outsideVillage, protectedRadius), worthLooking, column -> {
             if (job.task.targetResource() == ResourceType.SAND) {
                 return SandPatch.in(world, column, job.center.getY())
                         .filter(pos -> BlockProtection.mayBreak(world, pos, world.getBlockState(pos)));
@@ -285,7 +291,7 @@ public final class SurfaceGatheringWork {
         });
 
         if (found.isEmpty()) {
-            boolean paused = RingSweep.pausedAt(workerId, RingSweep.Scan.SURFACE).isPresent();
+            boolean paused = VillageSpiralSweep.pausedAt(workerId).isPresent();
 
             IdleLog.recordAt(
                     job.task.colonyId(), subject(job),
@@ -294,8 +300,19 @@ public final class SurfaceGatheringWork {
 
             if (!paused) {
                 // O raio inteiro, e nada: solta a tarefa e espera — F-1. Ver EmptySweeps.
-                EmptySweeps.foundNothing(job.task.colonyId(), job.task.targetResource(), world.getTime());
-                finish(job, workerId, "nothing in the whole radius");
+                // Na terceira vez o material aparece no baú de quem o usa — 2026-10-03.
+                int empty = EmptySweeps.foundNothing(job.task.colonyId(), job.task.targetResource(), world.getTime());
+
+                boolean stocked = LocateFallback.afterEmptySearch(world, job.task, empty);
+
+                finish(job, workerId, stocked
+                        ? "nothing in the whole radius — " + LocateFallback.ATTEMPTS + " searches came up empty,"
+                                + " so it was stocked instead"
+                        : "nothing in the whole radius");
+
+                if (stocked) {
+                    job.task.cancel();
+                }
             }
             return true;
         }
@@ -397,7 +414,7 @@ public final class SurfaceGatheringWork {
             job.task.release();
         }
         WorkTargets.clear(workerId);
-        RingSweep.forget(workerId, RingSweep.Scan.SURFACE);
+        VillageSpiralSweep.forget(workerId);
         job.target = null;
     }
 
@@ -424,6 +441,32 @@ public final class SurfaceGatheringWork {
                 : FarthestVillageSector.PROTECTED_RADIUS;
     }
 
+    /**
+     * Quantos anéis além da borda atual ainda cobrem o alcance anterior.
+     *
+     * <p>Para recursos protegidos, a borda pode estar antes ou depois do
+     * raio seguro. A conta preserva o extremo externo antigo no setor
+     * escolhido, sem ampliar por acidente uma vila já grande.
+     */
+    private static int outerReach(
+            Job job, VillageBounds bounds, boolean outsideVillage, int protectedRadius) {
+
+        int normalReach = reach(job, outsideVillage);
+        if (!outsideVillage) {
+            return normalReach;
+        }
+
+        int edgeDistance = switch (job.surfaceSector) {
+            case EAST -> bounds.maxX() - job.center.getX();
+            case WEST -> job.center.getX() - bounds.minX();
+            case SOUTH -> bounds.maxZ() - job.center.getZ();
+            case NORTH -> job.center.getZ() - bounds.minZ();
+            default -> 0;
+        };
+
+        return Math.max(0, protectedRadius + 1 + normalReach - Math.max(0, edgeDistance));
+    }
+
     private static String subject(Job job) {
         return job.task.type() == TaskType.COLLECT_SOIL ? "farmer soil" : "smelter surface";
     }
@@ -436,14 +479,14 @@ public final class SurfaceGatheringWork {
         Job job = JOBS.remove(workerId);
         if (job != null) {
             WorkTargets.clear(workerId);
-            RingSweep.forget(workerId, RingSweep.Scan.SURFACE);
+            VillageSpiralSweep.forget(workerId);
         }
     }
 
     public static void clearAll() {
         for (UUID workerId : JOBS.keySet()) {
             WorkTargets.clear(workerId);
-            RingSweep.forget(workerId, RingSweep.Scan.SURFACE);
+            VillageSpiralSweep.forget(workerId);
         }
         JOBS.clear();
         lastSearchWorker = null;

@@ -6,7 +6,6 @@ import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.work.WorkerHousingNeeds;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -62,10 +61,19 @@ public final class ChestSpawner {
             StorageRegistry storages,
             UUID colonyId,
             String profession) {
+        return ensureChestAttempt(world, villager, storages, colonyId, profession).storage();
+    }
+
+    static ChestAttempt ensureChestAttempt(
+            ServerWorld world,
+            VillagerEntity villager,
+            StorageRegistry storages,
+            UUID colonyId,
+            String profession) {
 
         if (storages.hasStorage(villager.getUuid())) {
-            housingResolved(colonyId, villager.getUuid());
-            return storages.of(villager.getUuid());
+            WARNED.remove(villager.getUuid());
+            return ChestAttempt.found(storages.of(villager.getUuid()));
         }
 
         Optional<BlockPos> bed = villager.getBrain()
@@ -80,27 +88,26 @@ public final class ChestSpawner {
         }
 
         if (chest.isEmpty()) {
-            WorkerHousingNeeds.mark(colonyId, villager.getUuid());
             if (WARNED.add(villager.getUuid())) {
                 VillageColonyMod.LOGGER.warn(
                         "{} {} has no safe home and chest — housing is now a colony priority",
                         profession, villager.getUuid().toString().substring(0, 8));
             }
 
-            return Optional.empty();
+            return ChestAttempt.withoutSafeHome();
         }
 
         WorkerStorage storage = WorkerStorage.of(
                 villager.getUuid(), MinecraftTypeAdapter.toColonyPos(chest.get()));
         storages.register(storage);
-        housingResolved(colonyId, villager.getUuid());
+        WARNED.remove(villager.getUuid());
 
         VillageColonyMod.LOGGER.info(
                 "{} {} got a chest of its own at {}, {}",
                 profession, villager.getUuid().toString().substring(0, 8),
                 chest.get().toShortString(), "beside its bed inside its structure");
 
-        return Optional.of(storage);
+        return ChestAttempt.found(Optional.of(storage));
     }
 
     private static Optional<BlockPos> placeBesideBedInStructure(
@@ -156,11 +163,6 @@ public final class ChestSpawner {
         return chest;
     }
 
-    private static void housingResolved(UUID colonyId, UUID workerId) {
-        WorkerHousingNeeds.resolve(colonyId, workerId);
-        WARNED.remove(workerId);
-    }
-
     public static void clearAll() {
         WARNED.clear();
     }
@@ -168,6 +170,17 @@ public final class ChestSpawner {
     /** Esquece somente o controle derivado de aviso deste trabalhador. */
     public static void forget(UUID workerId) {
         WARNED.remove(workerId);
+    }
+
+    /** Resultado da tentativa; a politica de moradia pertence ao chamador de evento. */
+    public record ChestAttempt(Optional<WorkerStorage> storage, boolean needsHousing) {
+        private static ChestAttempt found(Optional<WorkerStorage> storage) {
+            return new ChestAttempt(storage, false);
+        }
+
+        private static ChestAttempt withoutSafeHome() {
+            return new ChestAttempt(Optional.empty(), true);
+        }
     }
 
     private record BedInStructure(BlockPos foot, BlockBox structure) {

@@ -3,7 +3,6 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
-import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
@@ -12,7 +11,7 @@ import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
-import com.villagecolony.fabric.event.VillageFocus;
+import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.TreeHarvester;
 import com.villagecolony.fabric.integration.TreeScanner;
@@ -240,6 +239,12 @@ public final class LumberjackWork {
         dropClosedJobs();
 
         if (open == 0) {
+            // Sem árvore a cortar, o lenhador recompõe o viveiro da borda
+            // antes de ficar ocioso. A atribuição de construção continua
+            // sendo a alternativa seguinte, em WorkAssignment.
+            if (LumberjackNursery.hasLumberjack(colony.id())) {
+                LumberjackNursery.plantBatchIfItIsTime(world, colony.id(), center);
+            }
             LumberjackReport.reportIdle(colony);
         } else {
             IdleLog.clear(colony.id(), SUBJECT);
@@ -276,7 +281,7 @@ public final class LumberjackWork {
             }
 
             if (!isOngoing(job.task)) {
-                closePlan(world, job);
+                TreeFelling.closePlan(world, job);
                 entries.remove();
 
                 // O destino morre com a tarefa — ver WorkTargets.clear.
@@ -292,7 +297,7 @@ public final class LumberjackWork {
             }
 
             if (outcome == Outcome.DONE) {
-                closePlan(world, job);
+                TreeFelling.closePlan(world, job);
                 entries.remove();
             }
         }
@@ -419,53 +424,6 @@ public final class LumberjackWork {
 
             return true;
         });
-    }
-
-    /**
-     * Devolve os troncos que este plano tinha reservado.
-     *
-     * <p>Chamado em toda saída — árvore terminada, tarefa encerrada,
-     * trabalhador morto. Uma reserva esquecida é uma árvore que ninguém
-     * mais pode cortar até o servidor reiniciar.
-     *
-     * Encerra o plano de um trabalho que acaba agora.
-     *
-     * <p>A regra do autor, de 2026-08-15: <b>o lenhador sempre planta no
-     * lugar onde cortou.</b> Até aqui o replantio morava só em
-     * {@link TreeChoice#startNextTree}, e acontecia quando o lenhador ia procurar a
-     * árvore seguinte. Quem derrubasse uma árvore e perdesse o trabalho
-     * antes disso deixava o toco sem muda, para sempre — e há três formas
-     * de perdê-lo no mesmo tick: a tarefa cancelada, o baú que sumiu do
-     * registro e o guarda de travamento.
-     *
-     * <p>Nenhuma delas é rara o bastante para deixar buraco na floresta,
-     * e nenhuma delas aparecia: {@code unclaim} soltava o tronco
-     * reservado e ia embora calado.
-     *
-     * <p>A conta é a dos <b>troncos</b>, e não a do plano inteiro.
-     * {@code plan.blocks()} traz os troncos primeiro e a copa depois, e
-     * quem manda na muda é o tronco: derrubado o último, o lugar onde a
-     * árvore estava é chão livre, e a regra do autor diz para plantar.
-     * Esperar a copa acabar deixaria sem muda justamente o trabalho
-     * interrompido entre o último tronco e a última folha — que é a
-     * janela onde este método existe para agir.
-     *
-     * <p>Com tronco de pé não se planta: a árvore ainda está ali, a muda
-     * ficaria debaixo dela, e é a mesma recusa que
-     * {@code TreeHarvester.finish} faz pelo outro caminho. Ela desce na
-     * passagem seguinte e a muda entra com ela.
-     */
-    private static void closePlan(ServerWorld world, Job job) {
-        if (job.plan != null && job.index >= job.plan.logs()) {
-            TreeHarvester.finish(world, job.plan);
-
-            // O viveiro da borda é dele desde 2026-09-30 — decisão do
-            // autor, que o tirou do fazendeiro. Depois de cada árvore
-            // inteira, uma muda nova na borda, no ritmo do viveiro.
-            LumberjackNursery.plantIfItIsTime(world, job.task.colonyId(), job.center);
-        }
-
-        TreeClaims.unclaim(job.plan);
     }
 
     /**

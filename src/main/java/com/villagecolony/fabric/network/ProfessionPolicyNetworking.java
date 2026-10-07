@@ -38,6 +38,8 @@ public final class ProfessionPolicyNetworking {
         }
         ProfessionPolicySavedData savedData = ProfessionPolicySavedData.get(player.getServer());
         savedData.replace(payload.policies());
+        VillageColonyMod.LOGGER.info("Profession policy changed by {} — {}",
+                player.getGameProfile().getName(), payload.policies().summary());
         for (ServerPlayerEntity target : player.getServer().getPlayerManager().getPlayerList()) {
             sendSnapshot(target);
         }

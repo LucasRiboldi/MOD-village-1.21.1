@@ -1,6 +1,8 @@
 {
   "text.villagecolony.professions": "Professions",
   "text.villagecolony.professions.loading": "Loading server policies...",
+  "text.villagecolony.overlay.profession_text.on": "Profession panel text: on",
+  "text.villagecolony.overlay.profession_text.off": "Profession panel text: off",
   "text.villagecolony.professions.enabled": "Profession: enabled",
   "text.villagecolony.professions.disabled": "Profession: disabled",
   "text.villagecolony.professions.maximum": "Maximum workers: %s",

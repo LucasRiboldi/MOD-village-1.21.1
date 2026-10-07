@@ -9,6 +9,8 @@ import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.model.ConstructionOutcome;
+import com.villagecolony.core.construction.model.MaterialRequest.Source;
+import com.villagecolony.core.construction.model.MaterialRequest.State;
 import com.villagecolony.core.construction.model.SkipReason;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
@@ -44,6 +46,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -55,6 +58,14 @@ import java.util.UUID;
  * antes) encontram o construtor. Os comentários vieram junto sem mudança.
  */
 public final class BuilderMaterials {
+    private static final Set<Item> TERRACOTTA = Set.of(
+            Items.TERRACOTTA,
+            Items.WHITE_TERRACOTTA, Items.ORANGE_TERRACOTTA, Items.MAGENTA_TERRACOTTA,
+            Items.LIGHT_BLUE_TERRACOTTA, Items.YELLOW_TERRACOTTA, Items.LIME_TERRACOTTA,
+            Items.PINK_TERRACOTTA, Items.GRAY_TERRACOTTA, Items.LIGHT_GRAY_TERRACOTTA,
+            Items.CYAN_TERRACOTTA, Items.PURPLE_TERRACOTTA, Items.BLUE_TERRACOTTA,
+            Items.BROWN_TERRACOTTA, Items.GREEN_TERRACOTTA, Items.RED_TERRACOTTA,
+            Items.BLACK_TERRACOTTA);
 
     private BuilderMaterials() {
     }
@@ -104,14 +115,17 @@ public final class BuilderMaterials {
 
         if (next.isEmpty()) {
             // Nada a pôr: a obra acabou e quem a fecha é o construtor.
+            MaterialRequests.clear(project.id());
             return true;
         }
 
-        Optional<Block> material = MinecraftTypeAdapter.toBlock(next.get().block());
+        ResourceId piece = next.get().block();
+        Optional<Block> material = MinecraftTypeAdapter.toBlock(piece);
 
         if (material.isEmpty()) {
             // Bloco que este jogo não conhece. BuilderPlacement.placeOne o risca e segue,
             // então acordar a obra é o certo — ela não vai travar nele.
+            MaterialRequests.record(project.id(), piece, State.NO_SOLUTION, Source.NONE, world.getTime());
             return true;
         }
 
@@ -119,10 +133,12 @@ public final class BuilderMaterials {
                 || BlockShaping.isNeverPlaced(material.get().getDefaultState())) {
             // Estes blocos são formados no local ou não têm item próprio;
             // por isso não podem deixar a obra esperando por estoque.
+            MaterialRequests.clear(project.id());
             return true;
         }
 
-        if (TestBarrier.willStrike(world.getTime(), project.id(), next.get().block())) {
+        if (TestBarrier.willStrike(world.getTime(), project.id(), piece)) {
+            MaterialRequests.record(project.id(), piece, State.NO_SOLUTION, Source.BARRIER, world.getTime());
             // Peça que a barreira risca nunca segura a obra: quando o
             // construtor chegar nela vai passar por cima, então dizer
             // "tem" aqui é dizer a verdade sobre o que vai acontecer.
@@ -151,14 +167,65 @@ public final class BuilderMaterials {
             if (ColonySupply.canProvide(
                     world, project.colonyId(), project.origin(), candidate)) {
 
+                MaterialRequests.record(project.id(), piece, State.DELIVERED, Source.CHEST, world.getTime());
                 return true;
             }
         }
 
-        return ensureConstructionMaterial(world, project, MaterialChoice.forBlock(material.get()));
+        // O pedido da próxima peça fica registrado com o motivo — ADR-035 §3.
+        // Só aqui: o prepareAhead pergunta por peças futuras e não pode
+        // sobrescrever o que a obra espera agora.
+        Supply supply = supply(world, project, MaterialChoice.forBlock(material.get()));
+        MaterialRequests.record(project.id(), piece, supply.state(), supply.source(), world.getTime());
+
+        return supply.state() == State.DELIVERED;
     }
 
-    /** Mantém no baú a peça que nenhuma profissão consegue produzir. */
+    /** Quantas peças diferentes, além da próxima, contam tentativa por ciclo. */
+    static final int AHEAD = 8;
+
+    /**
+     * As tentativas contam para as peças que faltam, não só para a próxima —
+     * playtest de 2026-10-03.
+     *
+     * <p>A obra parava numa peça sem rota (papoula), esperava as três
+     * tentativas, e só então batia na seguinte (grama, cerca, dente-de-leão,
+     * terracota): um minuto cada, em fila. Aqui cada peça que falta ganha sua
+     * tentativa no mesmo ciclo, e as que não têm rota aparecem juntas. A
+     * próxima peça fica de fora: quem conta a dela é
+     * {@link #hasMaterialForNextBlock}, e contar duas vezes encurtaria a espera.
+     */
+    static void prepareAhead(ServerWorld world, ConstructionProject project) {
+        Optional<ResourceId> next = project.nextBlock().map(BlueprintBlock::block);
+        int asked = 0;
+
+        for (ResourceId id : project.remainingMaterials().keySet()) {
+            if (asked >= AHEAD) {
+                return;
+            }
+
+            Optional<Block> block = MinecraftTypeAdapter.toBlock(id);
+
+            if (next.filter(id::equals).isPresent() || block.isEmpty()
+                    || BlockShaping.isShapedFromTheGround(block.get().getDefaultState())
+                    || BlockShaping.isNeverPlaced(block.get().getDefaultState())
+                    || TestBarrier.chainFor(id).isPresent()) {
+                continue;
+            }
+
+            List<Item> choices = MaterialChoice.forBlock(block.get());
+
+            if (choices.stream().anyMatch(item ->
+                    ColonySupply.canProvide(world, project.colonyId(), project.origin(), item))) {
+                continue;
+            }
+
+            asked++;
+            ensureConstructionMaterial(world, project, choices);
+        }
+    }
+
+    /** Mantém a obra abastecida quando a rota local não chega a entregar a peça. */
     static boolean hasOrStocksConstructionMaterial(
             ServerWorld world, ConstructionProject project, Item item) {
 
@@ -173,39 +240,72 @@ public final class BuilderMaterials {
     }
 
     /**
-     * Alternativas locais sempre ganham. Sem rota no bioma, três tentativas
-     * de recolher autorizam o ingrediente sem rota a aparecer no baú do
-     * artesão, que fabrica a peça — decisão do autor, 2026-09-30. Só a peça
-     * sem receita nenhuma aparece ela mesma, pela regra de 26-09.
+     * Alternativas locais sempre ganham. Três faltas da mesma peça distinguem
+     * uma rota que de fato entregou de uma rota apenas teórica. Receita de
+     * bancada continua recebendo seus ingredientes ausentes; peça de fornalha
+     * ou sem receita aparece no baú da obra quando a rota não chegou.
      */
     static boolean ensureConstructionMaterial(
             ServerWorld world, ConstructionProject project, List<Item> choices) {
 
+        return supply(world, project, choices).state() == State.DELIVERED;
+    }
+
+    /** O estado e a fonte de uma decisão de suprimento — ADR-035 §3. */
+    private record Supply(State state, Source source) {
+    }
+
+    private static final Supply NO_ITEM = new Supply(State.NO_SOLUTION, Source.NONE);
+
+    private static final Supply BY_PROFESSION = new Supply(State.RESOLVING, Source.PROFESSION);
+
+    private static final Supply COUNTING_TO_STOCK = new Supply(State.RESOLVING, Source.STOCKED);
+
+    /**
+     * A mesma decisão de sempre, agora dizendo por quê: só {@code DELIVERED}
+     * deixa a obra seguir, como o {@code true} de antes.
+     */
+    private static Supply supply(ServerWorld world, ConstructionProject project, List<Item> choices) {
         if (choices.isEmpty()) {
-            return false;
+            return NO_ITEM;
         }
 
         Item preferred = choices.getFirst();
 
-        // <b>Rota no mundo, e não na receita</b> — F6, 2026-09-30. A
-        // pergunta não olhava o bioma: vidraça dava "tem rota" porque areia
-        // é um recurso, e na planície a areia não tem coleta. A peça nunca
-        // era entregue e ninguém ia buscar areia — 4 min 17 s de obra parada
-        // no playtest daquele dia.
-        if (choices.stream().anyMatch(candidate ->
-                BiomeConstructionSupply.hasRouteInBiome(world, project.colonyId(), candidate))) {
-            return false;
+        boolean terracotta = isTerracotta(preferred);
+        boolean routeExists = choices.stream().anyMatch(candidate ->
+                BiomeConstructionSupply.hasRouteInBiome(world, project.colonyId(), candidate));
+
+        if (!terracotta && routeExists) {
+            return BY_PROFESSION;
         }
 
         if (!BiomeConstructionSupply.failedProfessionAttempt(project.colonyId(), preferred)) {
-            return false;
+            // Sem rota no bioma (ou terracota de rota só teórica): conta a
+            // tentativa; na terceira a peça aparece no baú.
+            return COUNTING_TO_STOCK;
         }
 
+        // A família de terracota colorida parece ter rota por receita de
+        // recoloração, mas isto não prova que o corante e a terracota neutra
+        // chegaram a um artesão. Três faltas do bloco concreto encerram essa
+        // rota apenas teórica sem alterar a prioridade das alternativas nas
+        // duas primeiras tentativas.
         Optional<CraftingLookup.Bill> bill = CraftingLookup.billFor(world, preferred, any -> true);
 
-        if (bill.isEmpty()) {
+        // A rota do bioma e a entrega são fatos diferentes. Terracota, por
+        // exemplo, pode ter argila em teoria, mas a coleta pode nunca chegar
+        // ao baú da obra. Depois da terceira falta, uma peça de manufatura
+        // sem receita de bancada deixa de travar a construção.
+        if (terracotta || bill.isEmpty()) {
             return BiomeConstructionSupply.stockForConstruction(
-                    world, project.colonyId(), project.origin(), preferred);
+                    world, project.colonyId(), project.origin(), preferred)
+                    ? new Supply(State.DELIVERED, Source.STOCKED)
+                    : new Supply(State.NO_SOLUTION, Source.STOCKED);
+        }
+
+        if (routeExists) {
+            return BY_PROFESSION;
         }
 
         // O tear pede linha: as linhas aparecem no baú do carpinteiro, e ele
@@ -224,7 +324,11 @@ public final class BuilderMaterials {
             }
         }
 
-        return false;
+        return new Supply(State.RESOLVING, Source.CRAFTSMAN);
+    }
+
+    private static boolean isTerracotta(Item item) {
+        return TERRACOTTA.contains(item);
     }
 
     /**
