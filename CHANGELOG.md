@@ -6,8 +6,8 @@ Mudanças que chegam ao JAR ou à forma de verificar o mod. O formato segue o
 A versão continua **0.3.0 alpha**: o mesmo número é republicado a cada
 entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
 (ver `STATE.md` e `scripts/release_manifest.py`). O histórico anterior a
-2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
-e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
+2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
+e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
 ## [0.3.0] — publicação de 2026-10-03, fim da tarde (playtest da manhã)
 
@@ -124,7 +124,7 @@ jogo.**
 JAR do commit da consolidação de 02-10, SHA-256 `AB762691…9FFA`, em
 `downloads/` e em `.minecraft/mods` (três hashes conferidos). Junta tudo o que
 saiu de 26-09 a 02-10; o detalhe de cada item está no
-[`Development-Log.md`](docs/technical/Development-Log.md) e no `TODO.md`.
+[`Development-Log.md`](docs/archive/technical/Development-Log.md) e no `TODO.md`.
 **Nada desta lista foi visto em jogo depois da consolidação.**
 
 ### Adicionado

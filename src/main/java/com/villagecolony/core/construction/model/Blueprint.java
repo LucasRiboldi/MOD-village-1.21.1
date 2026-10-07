@@ -310,7 +310,8 @@ public final class Blueprint {
                     new ColonyPos(x, at.y(), z),
                     block.block(),
                     block.furniture(),
-                    block.facing().map(side -> turned(side, turns))));
+                    block.facing().map(side -> turned(side, turns)),
+                    ShapeStates.turned(block.states(), turns)));
         }
 
         return new Blueprint(id, List.copyOf(turned), sizeOf(turned), streetLayer);

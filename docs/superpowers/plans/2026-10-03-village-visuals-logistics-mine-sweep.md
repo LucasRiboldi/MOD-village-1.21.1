@@ -394,7 +394,7 @@ Run: `git add src/main/java/com/villagecolony/fabric/integration/VillageFluidInd
 - Modify: `docs/decisions/ADR-017-lot-ground-and-road-area.md`
 - Modify: `STATE.md`
 - Modify: `TODO.md`
-- Modify: `docs/technical/Development-Log.md`
+- Modify: `docs/archive/technical/Development-Log.md`
 
 - [ ] **Step 1: Record the final contracts.**
 
@@ -424,7 +424,7 @@ Verify role icons/names toggle, responsive construction text, expansion marker, 
 
 - [ ] **Step 5: Update live status and commit.**
 
-Record dates/counts only after commands succeed. Close only verified backlog items and leave save playtest pending until observed. Run: `git add docs/decisions STATE.md TODO.md docs/technical/Development-Log.md; git commit -m "P0.6: registrar verificacao das melhorias da vila (build e GameTests)"`
+Record dates/counts only after commands succeed. Close only verified backlog items and leave save playtest pending until observed. Run: `git add docs/decisions STATE.md TODO.md docs/archive/technical/Development-Log.md; git commit -m "P0.6: registrar verificacao das melhorias da vila (build e GameTests)"`
 
 ## Self-Review
 

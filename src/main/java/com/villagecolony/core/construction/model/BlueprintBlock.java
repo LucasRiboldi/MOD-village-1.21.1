@@ -4,6 +4,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.Side;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -14,15 +15,22 @@ import java.util.Optional;
  * ao mesmo {@link Blueprint} servir para toda casa que a colônia
  * levantar. Somar a origem escolhida é trabalho de quem executa a obra.
  *
- * <p>Guarda o bloco por nome ({@link ResourceId}) e somente a parte fechada do
- * estado aprovada pela ADR-008: um dos quatro lados horizontais. Eixo, metade,
- * formato e demais propriedades continuam pertencendo ao Minecraft.
+ * <p>Guarda o bloco por nome ({@link ResourceId}), um dos quatro lados
+ * horizontais (ADR-008) e, desde a ADR-036 item 19, eixo, metade e formato
+ * ({@link ShapeStates}). As demais propriedades continuam do Minecraft.
  *
  * @param offset posição relativa à origem do projeto
  * @param block o bloco a colocar ali
+ * @param states eixo, metade e formato que a planta pede ({@link ShapeStates})
  */
 public record BlueprintBlock(
-        ColonyPos offset, ResourceId block, boolean furniture, Optional<Side> facing) {
+        ColonyPos offset, ResourceId block, boolean furniture, Optional<Side> facing,
+        Map<String, String> states) {
+
+    /** Sem eixo, metade nem formato declarados. */
+    public BlueprintBlock(ColonyPos offset, ResourceId block, boolean furniture, Optional<Side> facing) {
+        this(offset, block, furniture, facing, Map.of());
+    }
 
     /** Compatibilidade para plantas que nao declaram orientacao. */
     public BlueprintBlock(ColonyPos offset, ResourceId block, boolean furniture) {
@@ -61,5 +69,6 @@ public record BlueprintBlock(
         Objects.requireNonNull(offset, "offset");
         Objects.requireNonNull(block, "block");
         Objects.requireNonNull(facing, "facing");
+        states = Map.copyOf(Objects.requireNonNull(states, "states"));
     }
 }

@@ -93,8 +93,8 @@ public final class ColonySavedData extends PersistentState {
      * data não guardava o campo, e nele a esmagadora maioria das
      * construções É casa levantada — o registro só passou a receber obra
      * abandonada em 09-12, com o {@code PatienceClock}. Ler as antigas como
-     * inacabadas faria toda vila já construída voltar a preferir a planta
-     * pequena, que é o oposto da Regra 25.
+     * inacabadas faria toda vila já construída voltar à regra da primeira
+     * casa, a menor ({@code PlanOrdering.smallestFirst}).
      *
      * <p>O preço é a obra abandonada de um save antigo continuar contando
      * como casa naquela colônia. É um erro que se apaga sozinho na primeira

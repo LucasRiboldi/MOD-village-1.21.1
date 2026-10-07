@@ -45,4 +45,12 @@ public final class WorkClock {
     public static boolean isWorkTime(long timeOfDay) {
         return Math.floorMod(timeOfDay, DAY) < DUSK;
     }
+
+    /** O tique em que o Vanilla manda o aldeão dormir (atividade REST). */
+    public static final int REST = 12_000;
+
+    /** É hora de estar na cama — a noite do ADR-036 item 15. */
+    public static boolean isRestTime(long timeOfDay) {
+        return Math.floorMod(timeOfDay, DAY) >= REST;
+    }
 }

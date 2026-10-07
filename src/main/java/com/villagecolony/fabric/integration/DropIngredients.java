@@ -16,7 +16,7 @@ import java.util.Set;
  * esperava corante (o F8) e a cama colorida nunca saía. A regra "a colônia
  * não cria recurso" foi retirada no mesmo dia (ADR-028).
  *
- * <p>Não espera as três tentativas da peça sem rota: quando a receita do
+ * <p>Não espera as quatro tentativas da peça sem rota: quando a receita do
  * artesão pede um destes e o baú não tem, a quantidade que falta aparece
  * no baú na hora e o artesão fabrica.
  */

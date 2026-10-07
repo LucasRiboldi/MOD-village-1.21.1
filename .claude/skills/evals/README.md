@@ -2,7 +2,7 @@
 
 > Escopo: este arquivo documenta somente o aparato de avaliação das skills.
 > Ele não é fonte de regras do mod nem substitui o manual em `README.md` ou a
-> auditoria em `docs/technical/Project-Audit-2026-09-21.md`.
+> auditoria em `docs/archive/technical/Project-Audit-2026-09-21.md`.
 
 Os resultados da última avaliação estão em `../AVALIACAO.md`. Este diretório
 guarda o **aparato**, para que a próxima medição seja comparável em vez de

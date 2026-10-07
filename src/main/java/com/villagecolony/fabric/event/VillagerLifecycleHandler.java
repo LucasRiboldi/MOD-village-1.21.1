@@ -1,6 +1,9 @@
 package com.villagecolony.fabric.event;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.ColonyState;
+import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestSpawner;
 import com.villagecolony.fabric.integration.ChestMarker;
@@ -19,6 +22,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -92,6 +96,32 @@ public final class VillagerLifecycleHandler {
 
             forget(villager.getUuid(), "was converted");
         }
+    }
+
+    /** Na passagem para abandonada, solta os trabalhadores — ADR-036 item 10. */
+    static void dismissIfAbandoned(Colony colony, ColonyState was, ColonyState now) {
+        if (now == ColonyState.ABANDONED && was != ColonyState.ABANDONED) {
+            VillageColonyMod.LOGGER.info(
+                    "Colony {} stops working — {} workers dismissed; chests and buildings stay",
+                    colony.id(), dismissColony(colony.id()));
+        }
+    }
+
+    /**
+     * Solta todos os trabalhadores de uma colônia abandonada — ADR-036 item
+     * 10: as profissões se desativam e os aldeões voltam a ser comuns; os
+     * baús e as construções ficam como estão.
+     *
+     * @return quantos foram soltos
+     */
+    static int dismissColony(UUID colonyId) {
+        List<UUID> workers = VillageColonyMod.WORKERS.ofColony(colonyId).stream()
+                .map(Worker::villagerId)
+                .toList();
+
+        workers.forEach(villagerId -> forget(villagerId, "left the abandoned colony " + colonyId));
+
+        return workers.size();
     }
 
     /**

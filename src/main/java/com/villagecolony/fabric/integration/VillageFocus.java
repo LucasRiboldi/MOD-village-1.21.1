@@ -2,6 +2,7 @@ package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.ColonyState;
 import com.villagecolony.core.colony.service.VillageDetector;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -15,13 +16,11 @@ import java.util.UUID;
 /**
  * Onde a simulação gasta o processamento — a vila em que o jogador está.
  *
- * <p><b>Decisão do autor, 2026-09-30 (ADR-003 Emenda 6).</b> A referência é
- * só a medida da vila: uma colônia trabalha enquanto há jogador <b>dentro da
- * caixa dela</b>, e por {@link Colony#ATTENTION_TICKS} (5 minutos) depois que
- * ele sai. Fora disso nada roda — nem planejar, nem detectar, nem os ofícios,
- * a refeição, a fuga ou a placa — e a vila não gasta processamento. Isto
- * desfaz a decisão da manhã de 30-09, que deixava a obra aberta continuar com
- * o jogador longe.
+ * <p><b>ADR-003 Emenda 6 e ADR-036 item 11.</b> Uma colônia trabalha só com
+ * o jogador <b>dentro da caixa dela há mais de um minuto</b>
+ * ({@link Colony#SETTLE_TICKS}); saiu, parou. Fora disso nada roda — nem
+ * planejar, nem detectar, nem os ofícios, a refeição, a fuga ou a placa — e a
+ * vila não gasta processamento.
  *
  * <p>Colônia ainda não medida (save antigo, chunk do centro descarregado)
  * usa a régua de antes, jogador a até {@link VillageDetector#SEARCH_RADIUS}
@@ -51,16 +50,16 @@ public final class VillageFocus {
             if (hasAPlayerInside(overworld, colony)) {
                 colony.attend(now);
 
-                if (!wasAttended) {
+                if (!wasAttended && colony.isAttended(now)) {
                     VillageColonyMod.LOGGER.info(
-                            "Colony {} is attended — a player is inside the village {}",
+                            "Colony {} is attended — a player has been inside the village {} for a minute",
                             colony.id(),
                             colony.bounds().map(Object::toString).orElse("(not measured yet)"));
                 }
             } else if (colony.stoppedWithin(now, EVERY_TICKS)) {
                 VillageColonyMod.LOGGER.info(
-                        "Colony {} rests — no player inside the village for 5 minutes;"
-                                + " no automatic work until one comes back",
+                        "Colony {} rests — the player left the village;"
+                                + " no automatic work until one stays inside for a minute",
                         colony.id());
             }
         }
@@ -143,11 +142,16 @@ public final class VillageFocus {
      */
     public static boolean isWorking(ServerWorld overworld, UUID colonyId) {
         if (overworld == null || overworld.getPlayers().isEmpty()) {
-            return true;
+            // Sem jogador (GameTest): a vila trabalha, salvo se abandonada
+            // (ADR-036 item 10). O chunk dormente não conta aqui: cenário
+            // distante fica dormente para a sonda e mesmo assim é testado.
+            return VillageColonyMod.COLONIES.find(colonyId)
+                    .map(colony -> colony.state() != ColonyState.ABANDONED)
+                    .orElse(true);
         }
 
         return VillageColonyMod.COLONIES.find(colonyId)
-                .filter(colony -> colony.isActive() && colony.isAttended(overworld.getTime()))
+                .filter(colony -> colony.canWork() && colony.isAttended(overworld.getTime()))
                 .isPresent();
     }
 }

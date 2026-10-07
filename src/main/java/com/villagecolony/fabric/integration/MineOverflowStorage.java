@@ -68,6 +68,11 @@ public final class MineOverflowStorage {
     }
 
     static Optional<ColonyPos> completedHallStorage(Mine mine) {
+        // A rampa do fundo (ADR-036 17) não tem salão: o índice cairia num degrau.
+        if (mine.shaft().isRamp()) {
+            return Optional.empty();
+        }
+
         for (MineArm arm : mine.arms()) {
             if (arm.cut() > HALL_STORAGE_INDEX) {
                 return Optional.of(arm.shaft().positionAt(HALL_STORAGE_INDEX));

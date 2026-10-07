@@ -68,7 +68,7 @@ playtest no save do autor continua pendente.
 ## Emenda N1 - 2026-09-24: sem reposicao de mortos
 
 Decisao do autor na revisao de naturalidade
-(`docs/technical/Revisao-Naturalidade-2026-09-24.md`). Substitui o item 6 da
+(`docs/archive/technical/Revisao-Naturalidade-2026-09-24.md`). Substitui o item 6 da
 Decisao e ajusta os itens 1 e 5.
 
 1. A fundacao povoa a vila **uma vez**. Ela roda quando a colonia nasce ou

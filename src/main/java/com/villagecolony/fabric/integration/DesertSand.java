@@ -91,7 +91,7 @@ public final class DesertSand {
                     }
 
                     return new BlueprintBlock(
-                            block.offset(), baked, block.furniture(), block.facing());
+                            block.offset(), baked, block.furniture(), block.facing(), block.states());
                 })
                 .toList();
     }

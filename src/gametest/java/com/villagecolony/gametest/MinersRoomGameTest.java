@@ -52,8 +52,9 @@ public class MinersRoomGameTest implements FabricGameTest {
 
             int room = ColonyChests.minersRoom(context.getWorld(), colony.id());
 
-            context.assertTrue(room == 27 * 64,
-                    "esperava o baú vazio do mineiro (27 x 64), e o espaço deu " + room);
+            // Três compartimentos por item (ADR-036 9).
+            context.assertTrue(room == 3 * 64,
+                    "esperava o baú vazio do mineiro (3 x 64), e o espaço deu " + room);
         } finally {
             owned.cleanUp();
         }

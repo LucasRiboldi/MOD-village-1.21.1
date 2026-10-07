@@ -87,6 +87,20 @@ class MineSaveTest {
         assertEquals(437, back.arm(0).cut());
     }
 
+    /** A rampa de subida do fundo atravessa o save (ADR-036 17). */
+    @Test
+    void theRampSurvivesTheRoundTrip() {
+        UUID colonyId = UUID.randomUUID();
+        Mine mine = Mine.open(colonyId, MineShaft.from(MOUTH, Side.EAST));
+
+        mine.climbOut(new ColonyPos(40, -40, -8), Side.SOUTH, 33);
+
+        Mine back = roundTrip(savedWith(colonyAt(colonyId), mine)).mines().get(0);
+
+        assertEquals(mine.shaft(), back.shaft());
+        assertEquals(33, back.shaft().ascent());
+    }
+
     /**
      * O arco erguido continua erguido depois do disco — 2026-09-11.
      *

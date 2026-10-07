@@ -116,7 +116,7 @@ final class ColonyCycleRunner {
      */
     static void runColonyCycles(ServerWorld overworld, boolean onlyNearPlayers) {
         List<Colony> active = List.copyOf(VillageColonyMod.COLONIES.all()).stream()
-                .filter(Colony::isActive)
+                .filter(Colony::canWork)
                 .toList();
 
         // <b>A vez de planejar é repartida</b> — 2026-09-15. O log do autor
@@ -193,6 +193,9 @@ final class ColonyCycleRunner {
 
         // A rua do jogador também faz a vila crescer — 2026-10-03, RoadSpill.
         RoadPaving.growByRoads(overworld, colony.id());
+
+        // A reunião mede a felicidade e decide os filhos — ADR-036 20.
+        com.villagecolony.fabric.work.VillageMood.meet(overworld, colony);
 
         mark = CycleCost.since(CycleCost.Phase.POPULATION, mark);
 

@@ -10,6 +10,7 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.core.task.service.TaskService;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.ProfessionType;
@@ -39,7 +40,7 @@ public final class LocateFallbackGameTest implements FabricGameTest {
     private static final BlockPos BUILDER_CHEST = new BlockPos(5, 2, 2);
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "locate_fallback")
-    public void theThirdEmptySearchStocksTheSmeltersSand(TestContext context) {
+    public void theFourthEmptySearchStocksTheSmeltersSand(TestContext context) {
         ServerWorld world = context.getWorld();
         Scene scene = Scene.of(context);
 
@@ -47,15 +48,15 @@ public final class LocateFallbackGameTest implements FabricGameTest {
             Task task = VillageColonyMod.TASKS.create(scene.colony.id(), TaskType.COLLECT_SURFACE_RESOURCE,
                     TaskPriority.PRODUCTION, ResourceType.SAND, 8);
 
-            context.assertFalse(LocateFallback.afterEmptySearch(world, task, 2),
-                    "na segunda busca vazia o aldeão ainda procura");
+            context.assertFalse(LocateFallback.afterEmptySearch(world, task, 3),
+                    "na terceira busca vazia o aldeão ainda procura (ADR-036 item 6)");
             context.assertTrue(ChestWithdrawer.countIn(world, scene.smelterChest, Items.SAND) == 0,
-                    "areia apareceu antes da terceira busca");
+                    "areia apareceu antes da quarta busca");
 
             EmptySweeps.foundNothing(scene.colony.id(), ResourceType.SAND, world.getTime());
 
-            context.assertTrue(LocateFallback.afterEmptySearch(world, task, 3),
-                    "na terceira busca vazia a areia devia aparecer");
+            context.assertTrue(LocateFallback.afterEmptySearch(world, task, 4),
+                    "na quarta busca vazia a areia devia aparecer");
             context.assertTrue(ChestWithdrawer.countIn(world, scene.smelterChest, Items.SAND) == 8,
                     "a areia devia estar no baú do fundidor, oito como a tarefa pedia; tem "
                             + ChestWithdrawer.countIn(world, scene.smelterChest, Items.SAND));
@@ -71,14 +72,19 @@ public final class LocateFallbackGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "locate_fallback")
-    public void whatTheFurnaceDoesNotTakeGoesToTheBuilder(TestContext context) {
-        ServerWorld world = context.getWorld();
+    public void theMaterialGoesToTheChestOfWhoSearched(TestContext context) {
+        UUID colony = UUID.randomUUID();
+        TaskService tasks = new TaskService();
+        Task sand = tasks.create(colony, TaskType.COLLECT_SURFACE_RESOURCE,
+                TaskPriority.PRODUCTION, ResourceType.SAND, 1);
+        Task dirt = tasks.create(colony, TaskType.COLLECT_SOIL,
+                TaskPriority.PRODUCTION, ResourceType.DIRT, 1);
+        Task wool = tasks.create(colony, TaskType.COLLECT_WOOL,
+                TaskPriority.PRODUCTION, ResourceType.WHITE_WOOL, 1);
 
-        context.assertTrue(LocateFallback.userOf(world, Items.SAND) == ProfessionType.SMELTER, "areia vira vidro");
-        context.assertTrue(LocateFallback.userOf(world, Items.CLAY_BALL) == ProfessionType.SMELTER,
-                "argila vira tijolo");
-        context.assertTrue(LocateFallback.userOf(world, Items.DIRT) == ProfessionType.BUILDER,
-                "terra é bloco de obra");
+        context.assertTrue(LocateFallback.gathererOf(sand) == ProfessionType.SMELTER, "areia é do fundidor");
+        context.assertTrue(LocateFallback.gathererOf(dirt) == ProfessionType.FARMER, "terra é do fazendeiro");
+        context.assertTrue(LocateFallback.gathererOf(wool) == ProfessionType.SHEPHERD, "lã é do pastor");
         context.complete();
     }
 
@@ -94,7 +100,7 @@ public final class LocateFallbackGameTest implements FabricGameTest {
         try {
             context.assertTrue(BiomeConstructionSupply.stockForConstruction(
                             world, scene.colony.id(), scene.builderChest, Items.CACTUS),
-                    "a peça da natureza sem rota devia aparecer depois das três tentativas");
+                    "a peça da natureza sem rota devia aparecer depois das quatro tentativas");
             context.assertTrue(ChestWithdrawer.countIn(world, scene.builderChest, Items.CACTUS) == 1,
                     "o cacto devia estar no baú do construtor");
         } finally {
@@ -109,7 +115,7 @@ public final class LocateFallbackGameTest implements FabricGameTest {
      * aparece — playtest de 2026-10-03, meia hora segurando a tarefa calado.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "locate_fallback")
-    public void aShepherdWithNoWoollySheepLetsGoAndTheThirdSearchStocksWool(TestContext context) {
+    public void aShepherdWithNoWoollySheepLetsGoAndTheFourthSearchStocksWool(TestContext context) {
         ServerWorld world = context.getWorld();
         Scene scene = Scene.of(context);
         UUID shepherd = UUID.randomUUID();
@@ -118,7 +124,7 @@ public final class LocateFallbackGameTest implements FabricGameTest {
             Task task = VillageColonyMod.TASKS.create(scene.colony.id(), TaskType.COLLECT_WOOL,
                     TaskPriority.PRODUCTION, ResourceType.WHITE_WOOL, 4);
 
-            for (int search = 1; search <= 2; search++) {
+            for (int search = 1; search <= 3; search++) {
                 task.reserveFor(shepherd);
                 EmptyFlock.endSearch(world, task, shepherd, 32);
 
@@ -132,8 +138,10 @@ public final class LocateFallbackGameTest implements FabricGameTest {
             task.reserveFor(shepherd);
             EmptyFlock.endSearch(world, task, shepherd, 32);
 
-            context.assertTrue(ChestWithdrawer.countIn(world, scene.builderChest, Items.WHITE_WOOL) == 4,
-                    "na terceira busca vazia as quatro lãs deviam aparecer no baú");
+            int wool = ChestWithdrawer.countIn(world, scene.builderChest, Items.WHITE_WOOL)
+                    + ChestWithdrawer.countIn(world, scene.smelterChest, Items.WHITE_WOOL);
+            context.assertTrue(wool == 4,
+                    "na quarta busca vazia as quatro lãs deviam aparecer num baú da vila: " + wool);
             context.assertFalse(task.isOpen(), "entregue a lã, a tarefa de tosquia acaba");
         } finally {
             EmptySweeps.found(scene.colony.id(), ResourceType.WHITE_WOOL);
@@ -160,12 +168,12 @@ public final class LocateFallbackGameTest implements FabricGameTest {
                             new BlueprintBlock(new ColonyPos(1, 0, 0), ResourceId.vanilla("poppy")))),
                     new ColonyPos(scene.builderChest.x(), scene.builderChest.y() + 3, scene.builderChest.z()));
 
-            for (int cycle = 1; cycle <= 3; cycle++) {
+            for (int cycle = 1; cycle <= 4; cycle++) {
                 BuilderMaterials.prepareAhead(world, project);
             }
 
             context.assertTrue(ChestWithdrawer.countIn(world, scene.builderChest, Items.POPPY) == 1,
-                    "a papoula, segunda da lista, devia aparecer depois de três ciclos sem ser a próxima peça");
+                    "a papoula, segunda da lista, devia aparecer depois de quatro ciclos sem ser a próxima peça");
         } finally {
             BiomeConstructionSupply.routeDelivered(scene.colony.id(), Items.POPPY);
             scene.forget();

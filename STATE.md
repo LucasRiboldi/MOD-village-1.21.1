@@ -1,16 +1,39 @@
 # STATE — 2026-10-06
 
+> **JAR atual: `village-colony-0.3.1.jar` = `278086C5…0673`** em `build/libs/`, na cópia local
+> `downloads/` (fora do git desde o item 26) e em `%APPDATA%/.minecraft/mods`. Branch
+> `claude/decisoes-2026-10-06`: **ADR-036 aplicada inteira**; nada visto em jogo.
+
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
 >
 > O que já foi resolvido mora em
-> [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md)
+> [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md)
 > e se consulta por `grep`. Ele já passou do teto três vezes (2.277 linhas
 > em 09-19; 659 em 09-24; 348 em 09-30): o texto antigo foi arquivado lá, sem
 > edição. O texto completo de cada correção abaixo está na seção
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 06-10, noite — ADR-036 aplicada (aguarda playtest)
+
+As decisões do autor de 06-10 (`docs/decisions/ADR-036-*`, tabela "Estado" com commit e
+verificação de cada uma): 4 baú de cama, 5 Regra 25 desfeita, 6 peça na 4ª tentativa,
+8 estoque do pedreiro, **9** teto de 3 compartimentos por item e `storage_majest` sem baú livre,
+10 vila abandonada para, 11 foco com 1 minuto, **15** preso vai para a cama, **17** rampa no fundo
+da mina, **18** busca até 10 além da borda (centro/borda), **19** eixo/metade/formato da planta,
+**20** felicidade decide os filhos, **23** veio inteiro, 24–27 arrumação (docs em `docs/archive/`,
+`agent/` apagado, site e JAR fora do git, testes de texto apagados), 28 E43 fechado.
+
+**Verificado em 06-10 (22:51):** `build --rerun-tasks` ok; **1.348 unitários**, 0 falhas (XML);
+95 Python; PIT 86% (limiar 85); GameTests **627** — a última rodada de cada item passou, e em ~30
+baterias completas da noite caíram testes já intermitentes — KF-003 (escadas) 3 vezes, fundidor
+e FarmPlan 1 vez cada; ver `docs/behavioral-tests/known-failures.md`.
+**Limiares que o agente escolheu e o autor revisa:** felicidade (item 20) e teto da rampa.
+**Playtest obrigatório:** baú cheio → 10 últimos para baú livre e `storage_majest`; aldeão preso
+indo para a cama à noite; mina chegando ao fundo; casa com tronco deitado e laje de cima;
+`/vc log` com a linha Felicidade; `time_ledger.py` e `cost_ledger.py` com 1 e 4 colônias.
 
 ## 🟡 06-10, tarde — ADR-035 aplicada (aguarda playtest)
 

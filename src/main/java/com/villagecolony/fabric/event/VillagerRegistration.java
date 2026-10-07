@@ -105,6 +105,11 @@ final class VillagerRegistration {
      * aldeões a cada ciclo é o caso comum e deve ser silencioso.
      */
     static void registerVillagers(ServerWorld world, Colony colony, ColonyPos around) {
+        // Vila abandonada não contrata — ADR-036 item 10.
+        if (colony.state() == ColonyState.ABANDONED) {
+            return;
+        }
+
         VillagerScanner.ScanResult result = VillagerScanner.scan(
                 world, colony, around, VillageColonyMod.WORKERS, VillageColonyMod.STORAGES);
 

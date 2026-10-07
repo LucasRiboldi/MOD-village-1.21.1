@@ -34,6 +34,9 @@ sem plantar indefinidamente uma muda a cada passagem de trabalho.
    enraizada sob a muda e percorre primeiro o anel mais distante acessível,
    recuando somente quando a borda está ocupada.
 
+   > **Emenda 2026-10-06 (ADR-036 item 31, Regra 36):** o viveiro é **só do
+   > lenhador**; o agricultor não o dispara.
+
 ## Consequências
 
 - Uma obra parcialmente construída não é apagada nem duplicada durante o

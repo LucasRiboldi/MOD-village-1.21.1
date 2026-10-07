@@ -22,8 +22,7 @@ import java.util.List;
  * que muda é a <b>ordem do sorteio</b> — entre duas plantas que cabem no
  * mesmo lote, a que pede menos do que falta vem primeiro.
  *
- * <p>É o mesmo princípio da Regra 25, que já manda a maior primeiro: a
- * escolha entre plantas equivalentes é do projeto, e aqui ela passa a
+ * <p>A escolha entre plantas equivalentes é do projeto, e aqui ela passa a
  * olhar o estoque além da pegada.
  *
  * <p><b>Por que ordenar em vez de filtrar.</b> Filtrar travaria a vila
@@ -76,7 +75,7 @@ public final class PlanAffordability {
      * As plantas do sorteio, da mais barata para a mais cara em escasso.
      *
      * <p>Estável: plantas com a mesma conta ficam na ordem em que
-     * chegaram, e a Regra 25 continua mandando dentro do empate.
+     * chegaram.
      *
      * <p>Devolve a <b>mesma lista</b> quando nenhuma planta pede material
      * escasso, para o caso comum não pagar cópia nenhuma.

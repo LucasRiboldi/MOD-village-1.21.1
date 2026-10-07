@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -32,41 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * testes de jogo continuavam verdes.
  */
 class DrawnFromTest {
-
-    /**
-     * Sorteio de verdade diz o número, para a conta ser conferível.
-     *
-     * <p>É o que responde a ambiguidade do playtest: com "8 of that
-     * footprint" no log, ninguém precisa inferir se houve irmã.
-     */
-    @Test
-    void aRealDrawSaysHowManyCompeted() {
-        assertEquals("8 of that footprint", SiteOpening.drawnFrom(8));
-
-        assertEquals("2 of that footprint", SiteOpening.drawnFrom(2));
-    }
-
-    /**
-     * Uma planta só é sorteio de uma, e a linha não esconde isso.
-     *
-     * <p>Este é o estado <b>antes</b> da correção de 09-18 — a vila
-     * levantando sempre a mesma casa. Se ele voltar, o log passa a dizê-lo
-     * em vez de parecer variedade.
-     */
-    @Test
-    void aSingleCandidateIsStillReportedAsOne() {
-        assertEquals("1 of that footprint", SiteOpening.drawnFrom(1));
-    }
-
-    /** Lista vazia recusa a obra; nao existe planta de reserva fora do lote. */
-    @Test
-    void anEmptyListReportsThatNoPlanMatchedTheLot() {
-        String said = SiteOpening.drawnFrom(0);
-
-        assertTrue(said.contains("no plan matched"), "a recusa do lote nao se identificou: " + said);
-
-        assertTrue(!said.startsWith("0"), "a recusa saiu como sorteio de zero: " + said);
-    }
 
     /** Um lote nunca pode receber a planta oferecida se ela nao couber nele. */
     @Test

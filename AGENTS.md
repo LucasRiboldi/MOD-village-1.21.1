@@ -8,7 +8,7 @@
 2. Leia `CLAUDE.md` e use `docs/PATTERNS.md` na seção correspondente ao sintoma.
 3. Consulte a ADR ou o documento do subsistema que será alterado.
 
-Não leia documentos históricos inteiros. Use `rg` para localizar trechos em `Development-Log.md`, `Project-State.md` e `Backlog.md`. Em `TODO.md`, leia o topo (100 linhas) e pesquise o item específico.
+Não leia documentos históricos inteiros. Use `rg` para localizar trechos em `docs/archive/technical/` (`Development-Log.md`, `Project-State.md`, `Backlog.md`). Em `TODO.md`, leia o topo (100 linhas) e pesquise o item específico.
 
 ## Antes de alterar
 
@@ -34,8 +34,8 @@ Não leia documentos históricos inteiros. Use `rg` para localizar trechos em `D
 - `./gradlew test`: unitários; `./gradlew runGametest`: testes Fabric no servidor.
 - Alterações em `fabric/` exigem GameTests. Teste verde não substitui evidência em jogo; declare explicitamente o que ainda depende do playtest do autor.
 - Teste novo deve demonstrar a falha antes da correção. Rode os testes proporcionais ao escopo e relate exatamente o que foi executado.
-- Atualize `STATE.md` quando o estado vivo mudar, `TODO.md` quando uma pendência abrir/fechar e `docs/technical/Development-Log.md` para registrar uma sessão de implementação. Decisão arquitetural nova também exige ADR.
-- Cada commit deve conter uma tarefa. Formato: `P0.x: descrição (teste que prova)`. O JAR em `downloads/` é atualizado manualmente conforme `docs/proxima-sessao.md`.
+- Atualize `STATE.md` quando o estado vivo mudar, `TODO.md` quando uma pendência abrir/fechar e `docs/archive/technical/Development-Log.md` para registrar uma sessão de implementação. Decisão arquitetural nova também exige ADR.
+- Cada commit deve conter uma tarefa. Formato: `P0.x: descrição (teste que prova)`. O JAR fica fora do git (ADR-036 item 26): `downloads/` é cópia local, e a versão publicada vai para a página de versões do GitHub.
 
 ## Skills
 

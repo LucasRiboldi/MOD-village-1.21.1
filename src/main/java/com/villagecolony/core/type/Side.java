@@ -87,4 +87,25 @@ public enum Side {
             case WEST -> EAST;
         };
     }
+
+    /**
+     * O lado que aponta de {@code from} para {@code to} pelo eixo de maior
+     * distância — o rumo "para longe" de {@code from}.
+     *
+     * @param fallback quando os dois estão na mesma coluna
+     */
+    public static Side awayFrom(ColonyPos from, ColonyPos to, Side fallback) {
+        int dx = to.x() - from.x();
+        int dz = to.z() - from.z();
+
+        if (dx == 0 && dz == 0) {
+            return fallback;
+        }
+
+        if (Math.abs(dx) >= Math.abs(dz)) {
+            return dx > 0 ? EAST : WEST;
+        }
+
+        return dz > 0 ? SOUTH : NORTH;
+    }
 }

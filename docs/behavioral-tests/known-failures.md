@@ -24,6 +24,24 @@ elas** — mas a causa das duas é **NÃO CONFIRMADA**. Próximo passo: rodar
 `-PgametestOnly=Crafting,Builder` repetidas vezes para medir a taxa isolada e
 separar "interferência entre cenários" de "defeito do mecanismo".
 
+**Atualização (mesmo dia, tarde):** numa bateria completa do item 6 da ADR-036
+caíram também `CraftingGameTest.theCarpenterLeavesTheMasonryAlone` e
+`theMasonMakesWhatTheCarpenterSkipped` (lote `craft_family`, já citado na
+memória como instável). As duas baterias seguintes passaram 616/616. E o
+filtro `-PgametestOnly=CraftingGameTest,BuilderGameTest` derruba sempre dois
+testes de fabricação, com ou sem a mudança: esses dependem do resto da bateria.
+
+**Atualização (06-10, noite, itens 9 e 15 da ADR-036):** o lote `craft_stock`
+caiu **inteiro** (as escadas, "parou com 4", e `theWorkPieceMadeByTheCarpenterStaysInTheChest`)
+em 2 de ~16 baterias; as outras passaram, e 5 seguidas não reproduziram. A saída
+da carpintaria é o baú próprio, que o teto de 3 compartimentos não aperta neste
+cenário (1 pilha de tábuas e 1 de escadas). Causa **NÃO CONFIRMADA**; a linha de
+base sem as mudanças passou 3/3, amostra pequena demais para descartá-las.
+Na mesma noite, uma vez em 5 baterias do item 20: `FarmPlanGameTest.theFirstBuildOfAVillageIsAlwaysAHouse`
+("a primeira passagem não abriu obra nenhuma"; chama o planejador direto, fora
+do caminho da reunião) e uma em 3 do item 19: `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted`
+(já no `TODO.md`). Causa **NÃO CONFIRMADA**.
+
 ---
 
 ## KF-002 — o aldeão de coleta some entre o `spawnEntity` e o tique 1

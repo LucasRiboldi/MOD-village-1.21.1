@@ -8,7 +8,7 @@ As regras do autor do Village Colony, em tabela. **Fonte única para
 
 Onde o código discordar de uma regra, é a regra que está certa — ou a
 regra que foi emendada. O corpo de cada regra vive em
-`docs/technical/Project-State.md §18`; aqui é o índice.
+`docs/archive/technical/Project-State.md §18`; aqui é o índice.
 
 ---
 
@@ -26,7 +26,7 @@ regra que foi emendada. O corpo de cada regra vive em
 | 5-e1 | **Emenda 1:** a obra usa todos os recursos de todos os baús — a tora vira a tábua que a obra pede, além da metade; a reserva de metade em tora vale só para os outros ofícios. A meta e o fabricante fazem a mesma conta | 10-02 | ✅ feita | `StockRules.logsThatMayBeConverted`, `WorkDemand.rawLogs` |
 | 6 | Estrada primeiro, casa ligada a ela | 08-14 | ✅ feita | `RoadExtension`, `BuildSiteScanner` |
 | 7 | O lenhador planta onde cortou | 08-15 | ✅ feita | `LumberjackWork.closePlan` |
-| 8 | Um baú ao lado de cada cama | 08-15 | ⚠️ metade | `ChestPlacer` (só para trabalhador) |
+| 8 | Um baú ao lado de cada cama — **em toda casa** (da vila e construída), encostado na parede, nunca diante de porta ou escada (ADR-036 item 4) | 08-15, 10-06 | ✅ feita | `ChestPlacer` (porta, escada, parede), `VanillaBedChests.ensure` (vila e casas da colônia) |
 | 9 | Subir e descer para alcançar, e poder voltar | 08-15 | ✅ feita | `BuilderApproach`, `TreeMarks` |
 | 10 | O construtor fabrica o que a expansão pede | 08-15 | ✅ feita | `CraftingLookup.billFor`, `ColonyChests` |
 | 11 | Uma de cada profissão em cada vila | 08-15 | ✅ feita | `ProfessionAssigner`, `ProfessionFloorTest` |
@@ -44,13 +44,13 @@ regra que foi emendada. O corpo de cada regra vive em
 | 22 | O lote é livre no volume | 08-19 | ✅ feita | `BuildSiteScanner.isNothing` |
 | 23 | O que já foi analisado se analisa de novo | 08-19 | ✅ feita | `TreeMarks` (prazos), `RingSweep` |
 | 24 | A vila de planície levanta a casa do jogo | 08-19 | ✅ feita | `VillageStructures` |
-| 25 | A maior planta que couber no lote | 08-20 | ⚠️ inerte | bloqueada pela 28 |
+| 25 | ~~A maior planta que couber no lote~~ | 08-20 | ❌ **desfeita** em 10-06 (ADR-036 item 5) | a ordem das plantas não favorece tamanho (`PlanOrdering.mixed`); a primeira casa continua a menor |
 | 26 | Cadeia de produção, e paleta por bioma | 08-20 | ✅ feita | `ResourceType.production`, `VillagePalette` |
 | 27 | Só o catálogo do jogo, e o construtor aguarda | 08-20 | 🔒 imutável | `VillageStructures`, `MaterialChoice` |
 | 27-e1 | **Emenda 1:** abre para pedra só | 08-26 | ✅ feita | `Substitution.ALTERNATIVE` |
 | 27-e2 | **Emenda 2:** e para a madeira junto | 08-26 | ✅ feita | `MaterialChoice.INTERCHANGEABLE_IN_THE_WALL` |
 | 27-e3 | **Emenda 3:** os modelos próprios da colônia (`data/villagecolony/structure/colony/`, `.nbt`) têm prioridade sobre a estrutura do jogo quando existem — casa de cada ofício e troca de estrutura; sem modelo, vale o catálogo do jogo | 10-02 | ✅ feita | `ColonyModels`, `CATALOGO.md` (`scripts/structure_catalog.py`) |
-| 28 | Barreira de teste: casa pequena, mobília dispensada | 08-20 | ⚠️ **provisória, só a metade da peça** | a casa pequena caiu em 09-09; resta a peça dispensada (`TestBarrier`) |
+| 28 | ~~Barreira de teste: casa pequena, mobília dispensada~~ | 08-20 | ❌ **retirada** em 10-06 (ADR-036 item 6) | peça que falta não é mais riscada: aparece na 4ª tentativa (Regra 51); só a 5ª falha ao pôr pula a peça |
 | 29 | A mina em escada, duas salas, galeria sem fim | 08-20 | ✅ feita | `MineShaft` |
 | 30 | O mineiro recolhe tudo, e a boca tem endereço | 08-22 | ✅ feita | `MineMouth`, `MinerHaul` |
 | 30-e1 | **Emenda 1:** manter piso de carvão e ferro bruto mesmo sem obra ativa | 09-14 | ✅ feita | `ColonyGoals.MINERAL_FLOOR` |
@@ -75,6 +75,7 @@ regra que foi emendada. O corpo de cada regra vive em
 | 49 | A ordem das obras: faltando cama, casa primeiro; não faltando, a casa de cada ofício que ainda não tem; só com todas de pé entram as demais (e a casa volta ao rodízio) | 10-02 | ✅ feita | `ConstructionPriority.WORKSHOP`, `ConstructionTurn`, `ConstructionOrder` (o mineiro ganhou o ferramenteiro; lenhador e construtor não têm casa de ofício no catálogo) |
 | 50 | Toda verificação mede o tempo dos aldeões — trabalhando, andando, bloqueado, ocioso, encalhado — por profissão, e usa a proporção como critério de melhoria e de correção | 10-02 | ✅ feita | `WorkTime` (linha `VC_TIME`), `scripts/time_ledger.py`, `CLAUDE.md` §0.4 |
 | 45 | Os baús da colônia são todos os da vila, e só eles: com a vila medida, todo baú livre dentro da caixa (na janela de altura das camas) conta, de dentro ou de fora de casa; fora da caixa está fora de alcance, mesmo o de trabalhador; baú de trabalhador de qualquer colônia nunca é livre | 10-01 | ✅ feita | `ColonyChests.nearestFirst`, `VillageChests` (`VillageChestReachGameTest`) |
+| 51 | Peça que falta aparece na **4ª** tentativa sem sucesso, no baú da profissão que tentou (coletor; artesão recebe o ingrediente sem rota; construtor se nenhuma profissão faz), com `VC_SUPPLY_ERROR` no log. A peça só é pulada se o construtor falhar **5 vezes ao pô-la** | 10-06 | ✅ feita (ADR-036 item 6) | `LocateFallback`, `BiomeConstructionSupply.ATTEMPTS_BEFORE_STOCKING`, `ConstructionProject.failsForTheLastTime` |
 
 ---
 
@@ -84,7 +85,7 @@ Regras que o autor declarou **temporárias** e vão sair.
 
 | # | Enunciado | Por que existe | O que destrava a saída |
 |---|---|---|---|
-| 28 | Barreira de teste: ~~só `plains_small_house_1`~~ (caiu em 09-09) e peça dispensada | Tornar as sessões comparáveis entre si | O planejador saber desistir de um objetivo (P1.1) |
+| 28 | ~~Barreira de teste~~ (**retirada em 10-06**, ADR-036 item 6): ~~só `plains_small_house_1`~~ (caiu em 09-09) e peça dispensada | Tornar as sessões comparáveis entre si | O planejador saber desistir de um objetivo (P1.1) |
 
 **Enquanto a metade que resta valer:**
 - A casa sobe com peças da barreira (playtest de 02-10: 16 de 69).
@@ -112,8 +113,8 @@ precisam **concordar**.
 ## Regras revogadas
 
 A regra de arquitetura "a colônia não cria recurso" (`Construction-System.md`,
-sem número nesta tabela) foi **retirada em 2026-09-30** — ADR-028. A 25 está
-**inerte** no registro; a metade da 28 que a travava (só a casa pequena) caiu em 09-09.
+sem número nesta tabela) foi **retirada em 2026-09-30** — ADR-028. A 25 foi
+**desfeita em 2026-10-06** — ADR-036 item 5.
 
 ---
 
@@ -131,7 +132,6 @@ recusou a pausa e a chuva (18-e1); trocou a ferramenta fixa pela melhor do baú
 
 | # | Pergunta | Trava |
 |---|---|---|
-| E43 | O descanso de 4 ciclos deve valer mesmo quando não há outra tarefa? | anulado pela 2ª passagem do `takeOneTask` |
 | P0.7 | Aceitar pedra como solo de lote? | toca a Regra 3 e a Regra 19 |
 
 ---
@@ -153,7 +153,7 @@ recusou a pausa e a chuva (18-e1); trocou a ferramenta fixa pela melhor do baú
 ## Onde estão os enunciados completos
 
 Cada regra tem o texto integral (o que o autor disse, na data) em
-`docs/technical/Project-State.md §18`. Aqui é o índice.
+`docs/archive/technical/Project-State.md §18`. Aqui é o índice.
 
 Quando o código divergir da tabela, **a tabela está errada** — atualize
 aqui primeiro, e depois o código.

@@ -505,6 +505,26 @@ class ColonyCycleTest {
     }
 
     /**
+     * O pedido de peça de obra ao artesão leva alvo nominal (pedregulho, que é
+     * minerado, não fabricado). Estoque de pedregulho não o cancela — ADR-036
+     * item 8: com as tarefas de estoque do pedreiro na fila, ele ficava
+     * disponível e era cancelado na mesma passada em que nascia.
+     */
+    @Test
+    void aWorkPieceRequestToTheCraftsmanIsNotCancelledByItsNominalStock() {
+        workers.register(UUID.randomUUID(), COLONY).assign(ProfessionType.MASON);
+
+        Task piece = tasks.create(COLONY, TaskType.CRAFT_STONE_MATERIAL,
+                com.villagecolony.core.task.model.TaskPriority.CONSTRUCTION_MATERIAL, ResourceType.COBBLESTONE, 1);
+
+        // Meta só de madeira: o pedregulho não está em falta nenhuma.
+        ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers, worker -> false);
+
+        assertEquals(TaskState.AVAILABLE, piece.state(),
+                "o ciclo cancelou o pedido da peça da obra por causa do estoque de pedregulho");
+    }
+
+    /**
      * E ela não pode ocupar a vaga de um pedido de verdade: contada como
      * pedido de tábua, faria a colônia deixar de fabricar exatamente o
      * que a obra consome.

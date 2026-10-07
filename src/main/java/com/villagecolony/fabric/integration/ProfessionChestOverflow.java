@@ -1,11 +1,14 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.storage.model.ChestSlotCap;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ServerMemory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,11 +16,32 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-/** Mantém livres os dez slots finais dos baús reservados às profissões. */
+/**
+ * Mantém livres os dez slots finais dos baús reservados às profissões — ADR-036
+ * item 9: baú de profissão lotado manda os dez últimos compartimentos para um
+ * baú da vila sem profissão; sem baú livre, a colônia fica marcada
+ * ({@link #needsStorage}) e a próxima obra é o {@code storage_majest}.
+ */
 public final class ProfessionChestOverflow {
     private static final int RESERVED_SLOTS = 10;
 
+    static {
+        ServerMemory.register(ProfessionChestOverflow.class, ProfessionChestOverflow::clearAll);
+    }
+
+    /** Colônias com baú de profissão lotado e nenhum baú livre que o aliviasse. */
+    private static final Set<UUID> NEEDS_STORAGE = new HashSet<>();
+
     private ProfessionChestOverflow() {
+    }
+
+    public static void clearAll() {
+        NEEDS_STORAGE.clear();
+    }
+
+    /** Se, no último alívio, faltou baú livre na vila desta colônia. */
+    public static boolean needsStorage(UUID colonyId) {
+        return NEEDS_STORAGE.contains(colonyId);
     }
 
     public static int relieve(ServerWorld world, List<ColonyPos> villageChests,
@@ -54,6 +78,7 @@ public final class ProfessionChestOverflow {
         community.stream().filter(inventory -> !isEmpty(inventory)).forEach(destinations::add);
 
         int moved = 0;
+        boolean saturated = false;
         for (ChestInventories.Handle handle : observed.values()) {
             if (!handle.isProfession(professionChests)) {
                 continue;
@@ -61,6 +86,7 @@ public final class ProfessionChestOverflow {
             Inventory source = handle.inventory();
             if (isFull(source)) {
                 moved += relieveLastSlots(source, destinations);
+                saturated |= hasReservedItems(source);
                 if (hasReservedItems(source) && colonyId.isPresent()) {
                     Optional<Inventory> storage = MineOverflowStorage.ensure(world, colonyId.get())
                             .flatMap(chest -> ChestInventories.at(world, chest))
@@ -71,6 +97,15 @@ public final class ProfessionChestOverflow {
                 }
             }
         }
+
+        if (colonyId.isPresent()) {
+            if (saturated) {
+                NEEDS_STORAGE.add(colonyId.get());
+            } else {
+                NEEDS_STORAGE.remove(colonyId.get());
+            }
+        }
+
         return moved;
     }
 
@@ -119,7 +154,16 @@ public final class ProfessionChestOverflow {
             }
         }
 
-        for (int slot = 0; slot < destination.size() && !source.isEmpty(); slot++) {
+        // Teto de compartimentos por item também no destino (ADR-036 9).
+        int holding = 0;
+        for (int slot = 0; slot < destination.size(); slot++) {
+            if (destination.getStack(slot).isOf(source.getItem())) {
+                holding++;
+            }
+        }
+
+        for (int slot = 0; slot < destination.size() && !source.isEmpty()
+                && holding < ChestSlotCap.MAX_SLOTS_PER_ITEM; slot++) {
             if (!destination.getStack(slot).isEmpty()) {
                 continue;
             }
@@ -130,6 +174,7 @@ public final class ProfessionChestOverflow {
             destination.setStack(slot, inserted);
             source.decrement(amount);
             destination.markDirty();
+            holding++;
         }
     }
 

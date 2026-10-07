@@ -1940,6 +1940,49 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * O veio inteiro — ADR-036 item 23: acabado um galho, o mineiro volta pelo
+     * rastro e cava o outro. Antes, o galho de trás ficava na parede.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_vein",
+            tickLimit = 20)
+    public void aForkedVeinIsDugToTheEnd(TestContext context) {
+        BlockPos taken = new BlockPos(2, 3, 2);
+
+        Colony colony = mineOwner(context);
+
+        context.setBlockState(taken.north(), Blocks.COPPER_ORE.getDefaultState());
+        context.setBlockState(taken.south(), Blocks.COPPER_ORE.getDefaultState());
+        context.setBlockState(taken.up(), Blocks.STONE.getDefaultState());
+
+        VillageColonyMod.MINES.of(colony.id()).orElseThrow()
+                .arm(0)
+                .followVein(MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(taken)));
+
+        UUID miner = UUID.randomUUID();
+        Optional<BlockPos> first = MineDigging.nextTarget(
+                context.getWorld(), miner, colony.id(), context.getAbsolutePos(ROCK));
+
+        context.assertTrue(first.isPresent()
+                        && (first.get().equals(context.getAbsolutePos(taken.north()))
+                                || first.get().equals(context.getAbsolutePos(taken.south()))),
+                "o primeiro galho do veio não foi servido: " + first);
+
+        // O mineiro cavou o primeiro galho; o outro continua na parede.
+        context.getWorld().setBlockState(first.get(), Blocks.AIR.getDefaultState());
+
+        BlockPos other = first.get().equals(context.getAbsolutePos(taken.north()))
+                ? context.getAbsolutePos(taken.south())
+                : context.getAbsolutePos(taken.north());
+        Optional<BlockPos> second = MineDigging.nextTarget(
+                context.getWorld(), miner, colony.id(), context.getAbsolutePos(ROCK));
+
+        context.assertTrue(second.isPresent() && second.get().equals(other),
+                "acabado um galho, o outro ficou na parede: serviu " + second + " em vez de " + other);
+
+        context.complete();
+    }
+
+    /**
      * Todo tipo de minério — decisão do autor, 2026-08-27.
      *
      * <p>A frase dele: <i>"ele deve minerar todo tipo de minério"</i>.

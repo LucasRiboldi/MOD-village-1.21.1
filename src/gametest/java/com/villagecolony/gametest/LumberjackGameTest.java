@@ -42,6 +42,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.brain.Schedule;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
@@ -1131,6 +1132,16 @@ public class LumberjackGameTest implements FabricGameTest {
         ServerWorld world = context.getWorld();
         ColonyPos chestPos = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest));
 
+        // O teto de três compartimentos por item (ADR-036 9) só aparece com
+        // menos de três vazios: deixa-se três, e o diamante ocupa um.
+        if (!(world.getBlockEntity(context.getAbsolutePos(chest)) instanceof ChestBlockEntity block)) {
+            throw new AssertionError("o baú do cenário não existe");
+        }
+
+        for (int slot = 0; slot < block.size() - 3; slot++) {
+            block.setStack(slot, new ItemStack(Items.DIRT, 64));
+        }
+
         int empty = ChestDepositor.freeSpaceForGroup(world, chestPos, ResourceGroup.WOOD);
 
         ChestDepositor.deposit(world, chestPos, Items.DIAMOND, 1);
@@ -1138,7 +1149,7 @@ public class LumberjackGameTest implements FabricGameTest {
         int afterDiamond = ChestDepositor.freeSpaceForGroup(world, chestPos, ResourceGroup.WOOD);
 
         context.assertTrue(
-                afterDiamond == empty - 64,
+                empty == 3 * 64 && afterDiamond == empty - 64,
                 "o slot do jogador continuou contando como espaço: " + afterDiamond);
 
         context.complete();
@@ -2315,7 +2326,7 @@ public class LumberjackGameTest implements FabricGameTest {
 
         // Vinte e sete slots de vara: o assoreamento da sessão, no ponto
         // em que ele mata o lenhador.
-        ChestDepositor.deposit(world, ownChest, Items.STICK, 27 * 64);
+        TestChests.fillEmptySlots(world, ownChest, Items.STICK);
 
         context.assertTrue(
                 ChestDepositor.freeSpaceForGroup(world, ownChest, ResourceGroup.WOOD) == 0,
@@ -2407,7 +2418,7 @@ public class LumberjackGameTest implements FabricGameTest {
         ColonyPos fullChest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(full));
         ColonyPos freeChest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(free));
 
-        ChestDepositor.deposit(world, fullChest, Items.STICK, 27 * 64);
+        TestChests.fillEmptySlots(world, fullChest, Items.STICK);
 
         int leftOver = ColonyChests.deposit(
                 world, List.of(fullChest, freeChest), Items.OAK_LOG, 10);

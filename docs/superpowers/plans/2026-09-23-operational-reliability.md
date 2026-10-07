@@ -20,7 +20,7 @@
 - A player-removed portal, arch, lantern, stair, or mine branch is never reconstructed.
 - Save migrations are one-time and idempotent; traces are bounded at exactly 16,384 events per colony.
 - Every production change begins with a focused failing test. Every Fabric change adds a GameTest.
-- Update `STATE.md`, `TODO.md`, and `docs/technical/Development-Log.md` with verified evidence only.
+- Update `STATE.md`, `TODO.md`, and `docs/archive/technical/Development-Log.md` with verified evidence only.
 
 ## Review Focus
 
@@ -826,7 +826,7 @@ git commit -m "P1.12: relatar endurance reproduzivel (EnduranceReportTest)"
 - Modify: `src/main/java/com/villagecolony/fabric/integration/ConstructionCancellation.java`
 - Modify: `src/main/java/com/villagecolony/fabric/work/WaitingWork.java`
 - Test: `src/test/java/com/villagecolony/core/construction/service/ConstructionServiceTest.java`
-- Modify: `STATE.md`, `TODO.md`, `docs/technical/Development-Log.md`, and `docs/proxima-sessao.md`
+- Modify: `STATE.md`, `TODO.md`, `docs/archive/technical/Development-Log.md`, and `docs/proxima-sessao.md`
 
 **Interfaces:**
 - Produces: `release_manifest.py --dry-run --jar <path> --downloads <path> --mods <path>`, nonzero on mismatch.
@@ -884,14 +884,14 @@ Expected: full automated tests pass; dry-run fails until all three intentionally
 - [ ] **Step 5: Commit.**
 
 ```powershell
-git add scripts/release_manifest.py src/main/java/com/villagecolony/core/construction/service/RemovalAudit.java src/main/java/com/villagecolony/core/construction/service/ConstructionService.java src/main/java/com/villagecolony/fabric/integration/ConstructionCancellation.java src/main/java/com/villagecolony/fabric/work/WaitingWork.java src/test/java/com/villagecolony/core/construction/service/ConstructionServiceTest.java STATE.md TODO.md docs/technical/Development-Log.md docs/proxima-sessao.md
+git add scripts/release_manifest.py src/main/java/com/villagecolony/core/construction/service/RemovalAudit.java src/main/java/com/villagecolony/core/construction/service/ConstructionService.java src/main/java/com/villagecolony/fabric/integration/ConstructionCancellation.java src/main/java/com/villagecolony/fabric/work/WaitingWork.java src/test/java/com/villagecolony/core/construction/service/ConstructionServiceTest.java STATE.md TODO.md docs/archive/technical/Development-Log.md docs/proxima-sessao.md
 git commit -m "P1.13: auditar release e exclusao de obra (ConstructionServiceTest)"
 ```
 
 ## Task 14: Full Verification, Save Playtests, and Release Handoff
 
 **Files:**
-- Modify: `STATE.md`, `TODO.md`, `docs/technical/Development-Log.md`, and `docs/proxima-sessao.md`
+- Modify: `STATE.md`, `TODO.md`, `docs/archive/technical/Development-Log.md`, and `docs/proxima-sessao.md`
 - Modify: `downloads/village-colony-0.3.0.jar` only after every automated check is green
 
 **Interfaces:**
@@ -935,7 +935,7 @@ Expected: zero exit and manifest values matching final commit and artifacts.
 - [ ] **Step 5: Record verified facts, publish, and report evidence boundaries.**
 
 ```powershell
-git add STATE.md TODO.md docs/technical/Development-Log.md docs/proxima-sessao.md downloads/village-colony-0.3.0.jar
+git add STATE.md TODO.md docs/archive/technical/Development-Log.md docs/proxima-sessao.md downloads/village-colony-0.3.0.jar
 git commit -m "P1.14: publicar confiabilidade operacional (build e runGametest)"
 git push
 ```

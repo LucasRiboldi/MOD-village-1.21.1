@@ -168,7 +168,7 @@ public class CraftingGameTest implements FabricGameTest {
         Fixture fixture = setUp(context, 64);
 
         // Os vinte e seis slots que sobram, e nada que empilhe com tábua.
-        ChestDepositor.deposit(context.getWorld(), fixture.chest, Items.COBBLESTONE, 26 * 64);
+        TestChests.fillEmptySlots(context.getWorld(), fixture.chest, Items.COBBLESTONE);
 
         context.runAtTick(90, () -> {
             int planks = planksIn(context, fixture.chest);
@@ -1061,20 +1061,26 @@ public class CraftingGameTest implements FabricGameTest {
 
             VillageDetectionHandler.runCycleNow(world, context.getAbsolutePos(stand));
 
+            // Conta o pedido da peça que a obra espera (tarefa nominal, alvo
+            // COBBLESTONE — ver CraftsmanRequest). Outras peças de pedra que o
+            // planejador pede para a paleta da vila são pedidos legítimos e
+            // diferentes; desde a ADR-036 item 10 a colônia de cenário não é
+            // mais julgada abandonada e planeja como em jogo.
             context.assertTrue(
-                    countOf(colony, TaskType.CRAFT_STONE_MATERIAL) == 1,
+                    pieceRequestsOf(colony) == 1,
                     "a obra esperava uma escada que ninguém fazia, e o ciclo abriu "
-                            + countOf(colony, TaskType.CRAFT_STONE_MATERIAL)
-                            + " tarefa(s) de pedreiro");
+                            + pieceRequestsOf(colony) + " pedido(s) dela: "
+                            + VillageColonyMod.TASKS.ofColony(colony.id()).stream()
+                                    .map(task -> task.type() + "/" + task.targetResource() + "/" + task.priority())
+                                    .toList());
 
             // E não uma por ciclo: a obra fica em espera muitos ciclos, e
             // um pedido a cada um encheria a fila com a mesma peça.
             VillageDetectionHandler.runCycleNow(world, context.getAbsolutePos(stand));
 
             context.assertTrue(
-                    countOf(colony, TaskType.CRAFT_STONE_MATERIAL) == 1,
-                    "o segundo ciclo abriu tarefa repetida: "
-                            + countOf(colony, TaskType.CRAFT_STONE_MATERIAL));
+                    pieceRequestsOf(colony) == 1,
+                    "o segundo ciclo abriu pedido repetido: " + pieceRequestsOf(colony));
         } finally {
             owned.cleanUp();
         }
@@ -1128,13 +1134,30 @@ public class CraftingGameTest implements FabricGameTest {
                     project.state() == ConstructionState.BUILDING,
                     "o caso precisa permanecer construindo, sem esperar material");
             context.assertTrue(
-                    countOf(colony, TaskType.CRAFT_STONE_MATERIAL) == 1,
-                    "a escada ainda nao foi pedida durante a construcao");
+                    pieceRequestsOf(colony) == 1,
+                    "a escada ainda nao foi pedida durante a construcao: "
+                            + VillageColonyMod.TASKS.ofColony(colony.id()).stream()
+                                    .map(task -> task.type() + "/" + task.targetResource() + "/" + task.state())
+                                    .toList());
         } finally {
             owned.cleanUp();
         }
 
         context.complete();
+    }
+
+    /** Pedidos abertos ao pedreiro pela peça da obra (alvo nominal COBBLESTONE). */
+    private static int pieceRequestsOf(Colony colony) {
+        int found = 0;
+
+        for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
+            if (task.type() == TaskType.CRAFT_STONE_MATERIAL && task.isOpen()
+                    && task.targetResource() == ResourceType.COBBLESTONE) {
+                found++;
+            }
+        }
+
+        return found;
     }
 
     private static int countOf(Colony colony, TaskType type) {

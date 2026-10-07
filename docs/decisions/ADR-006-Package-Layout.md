@@ -284,7 +284,7 @@ Separado de `mixin` porque mixin não contém lógica.
 
 # 6. Regra de dependência
 
-Permanece conforme `claude/CLAUDE.md §6`.
+Permanece conforme `docs/archive/design-2026-08/claude/CLAUDE-antigo.md §6`.
 
 Permitido:
 

@@ -28,7 +28,6 @@ import com.villagecolony.fabric.work.BlockShaping;
 import com.villagecolony.fabric.work.BuilderMaterials;
 import com.villagecolony.fabric.work.MaterialChoice;
 import com.villagecolony.fabric.work.ConstructionPlanner;
-import com.villagecolony.fabric.work.TestBarrier;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -591,7 +590,7 @@ public class BuilderGameTest implements FabricGameTest {
                 context.getAbsolutePos(new BlockPos(2, 2, 4)));
 
         try {
-            ChestDepositor.deposit(context.getWorld(), fixture.chest, Items.DIRT, 2_000);
+            TestChests.fillEmptySlots(context.getWorld(), fixture.chest, Items.DIRT);
 
             context.assertTrue(
                     BiomeConstructionSupply.stockForConstruction(
@@ -636,7 +635,7 @@ public class BuilderGameTest implements FabricGameTest {
      * fundidor; depois de três faltas, a terracota de manufatura atende a obra.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
-    public void aTheoreticalTerracottaRouteFallsBackAfterThreeMisses(TestContext context) {
+    public void aTheoreticalTerracottaRouteFallsBackAfterFourMisses(TestContext context) {
         Fixture fixture = setUp(context, 0, Blueprint.of(
                 ResourceId.vanilla("village/plains/houses/test_white_terracotta"),
                 List.of(new BlueprintBlock(
@@ -644,7 +643,7 @@ public class BuilderGameTest implements FabricGameTest {
                         MinecraftTypeAdapter.toResourceId(Blocks.WHITE_TERRACOTTA)))), 1);
 
         try {
-            for (int attempt = 1; attempt <= 2; attempt++) {
+            for (int attempt = 1; attempt <= 3; attempt++) {
                 context.assertFalse(
                         BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
                         "a terracota apareceu antes da tentativa " + attempt);
@@ -652,7 +651,7 @@ public class BuilderGameTest implements FabricGameTest {
 
             context.assertTrue(
                     BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
-                    "a terceira falta em uma rota teorica nao abasteceu a terracota");
+                    "a quarta falta em uma rota teorica nao abasteceu a terracota");
             context.assertTrue(
                     ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.WHITE_TERRACOTTA) == 1,
                     "a terracota de contingencia nao entrou no bau da obra");
@@ -1404,52 +1403,6 @@ public class BuilderGameTest implements FabricGameTest {
     }
 
     /**
-     * A barreira conta a peça que o construtor assentou de verdade — E31.
-     *
-     * <p><b>O teste unitário prova a conta; este prova o fio.</b> O
-     * veredito só deixa de mentir se {@code laidOne} for chamado de onde
-     * o bloco encosta no mundo, e nenhuma leitura de código garante
-     * isso. Aqui a parede sobe, e o veredito tem de sair de
-     * {@code NOTHING_BUILT} sozinho.
-     *
-     * <p>Tábua não é peça da barreira: numa parede de tábuas nada é
-     * riscado, e é por isso que o veredito esperado é a notícia boa —
-     * a única forma dela que continua valendo.
-     *
-     * <p>Batch próprio, e limpeza nas duas pontas: a soma da barreira é
-     * da sessão inteira, e uma casa levantada em outro teste entraria
-     * nesta conta.
-     */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_barrier_tally",
-            tickLimit = 300)
-    public void theBarrierCountsThePiecesTheBuilderActuallyLays(TestContext context) {
-        TestBarrier.clearAll();
-
-        context.assertTrue(
-                TestBarrier.verdict() == TestBarrier.Verdict.NOTHING_BUILT,
-                "a soma zerada já se dizia construída: " + TestBarrier.verdict());
-
-        Fixture fixture = setUp(context, 8);
-
-        context.runAtTick(90, () -> {
-            try {
-                context.assertTrue(
-                        isPlanks(context, SITE),
-                        "a parede não subiu, e sem parede este teste não mede nada");
-
-                context.assertTrue(
-                        TestBarrier.verdict() == TestBarrier.Verdict.COVERED_FOR_NOTHING,
-                        "a parede subiu e o veredito ficou em " + TestBarrier.verdict());
-            } finally {
-                TestBarrier.clearAll();
-                fixture.owned.cleanUp();
-            }
-
-            context.complete();
-        });
-    }
-
-    /**
      * A casa pronta vira infraestrutura da colônia — TASK-036 e 037.
      *
      * <p>É o registro de que a fusão de vilas depende, e o que dá sentido
@@ -1477,8 +1430,13 @@ public class BuilderGameTest implements FabricGameTest {
                         VillageColonyMod.BUILDINGS.isColonyInfrastructure(corner),
                         "a casa pronta não entrou no registro de construções");
 
+                // A dona é uma colônia registrada; na bateria inteira a do
+                // cenário pode ter sido absorvida por uma vizinha, e a casa
+                // vai junto (ColonyMerge).
                 context.assertTrue(
-                        !VillageColonyMod.BUILDINGS.ofColony(fixture.colony.id()).isEmpty(),
+                        VillageColonyMod.BUILDINGS.at(corner)
+                                .flatMap(house -> VillageColonyMod.COLONIES.find(house.colonyId()))
+                                .isPresent(),
                         "o registro não sabe de quem é a casa");
             } finally {
                 fixture.owned.cleanUp();
@@ -1893,10 +1851,10 @@ public class BuilderGameTest implements FabricGameTest {
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
     }
 
-    /** A terceira falta sem profissão libera a peça, sem depender de tempo. */
+    /** A quarta falta sem profissão libera a peça, sem depender de tempo (ADR-036 item 6). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_missing_piece",
             tickLimit = 20)
-    public void theThirdMissingPieceAttemptIsSupplied(TestContext context) {
+    public void theFourthMissingPieceAttemptIsSupplied(TestContext context) {
         UUID colonyId = UUID.randomUUID();
 
         try {
@@ -1908,9 +1866,13 @@ public class BuilderGameTest implements FabricGameTest {
                     BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
                     "a segunda falta já liberou a peça");
 
+            context.assertFalse(
+                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    "a terceira falta já liberou a peça");
+
             context.assertTrue(
                     BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
-                    "a terceira falta não liberou a peça");
+                    "a quarta falta não liberou a peça");
 
             BiomeConstructionSupply.routeDelivered(colonyId, Items.BREWING_STAND);
 

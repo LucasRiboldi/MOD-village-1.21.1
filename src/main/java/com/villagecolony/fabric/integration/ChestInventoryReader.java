@@ -5,11 +5,14 @@ import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.storage.model.ChestSlotCap;
+import com.villagecolony.core.storage.model.VillageChestRule;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
@@ -18,6 +21,7 @@ import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,14 +103,14 @@ public final class ChestInventoryReader {
         Map<ResourceType, Integer> counts = new EnumMap<>(ResourceType.class);
         Map<ResourceId, Integer> idCounts = new LinkedHashMap<>();
         Map<ResourceGroup, Integer> freeSpace = emptyCapacityFor(capacityGroups);
+        Map<ResourceGroup, Map<Item, Integer>> slotsPerItem = new EnumMap<>(ResourceGroup.class);
+        int emptySlots = 0;
 
         for (int slot = 0; slot < chest.size(); slot++) {
             ItemStack stack = chest.getStack(slot);
 
             if (stack.isEmpty()) {
-                for (Map.Entry<ResourceGroup, Integer> entry : freeSpace.entrySet()) {
-                    entry.setValue(entry.getValue() + emptySlotCapacity());
-                }
+                emptySlots++;
                 continue;
             }
 
@@ -121,8 +125,23 @@ public final class ChestInventoryReader {
                             type.group(),
                             stack.getMaxCount() - stack.getCount(),
                             Integer::sum);
+                    slotsPerItem.computeIfAbsent(type.group(), group -> new HashMap<>())
+                            .merge(stack.getItem(), 1, Integer::sum);
                 }
             });
+        }
+
+        // ADR-036 9: o vazio só conta até o teto de compartimentos por item,
+        // pelo item do grupo mais perto dele — o mesmo pior caso do ChestDepositor.
+        boolean named = chest.getCustomName() != null
+                && !VillageChestRule.mayTake(Optional.of(chest.getCustomName().getString()));
+
+        for (Map.Entry<ResourceGroup, Integer> entry : freeSpace.entrySet()) {
+            int fullest = slotsPerItem.getOrDefault(entry.getKey(), Map.of()).values().stream()
+                    .mapToInt(Integer::intValue).max().orElse(0);
+            int open = ChestSlotCap.slotsOpenFor(emptySlots, fullest, named);
+
+            entry.setValue(entry.getValue() + open * emptySlotCapacity());
         }
 
         return new ChestContents(ResourceTally.of(counts, idCounts), freeSpace);

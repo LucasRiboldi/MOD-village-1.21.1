@@ -186,10 +186,28 @@ public final class ColonyCycle {
                 continue;
             }
 
+            if (isWorkPieceRequest(task)) {
+                // O pedido de peça de obra ao artesão leva alvo nominal, e não
+                // é o estoque daquele alvo que o satisfaz — ADR-036 item 8.
+                continue;
+            }
+
             if (!missing.containsKey(task.targetResource())) {
                 task.cancel();
             }
         }
+    }
+
+    /**
+     * Pedido de fabricação cujo alvo não é fabricado só pode ser o pedido
+     * nominal de peça de obra ({@code CraftsmanRequest}): quem acha a peça é
+     * o artesão lendo a própria obra.
+     */
+    static boolean isWorkPieceRequest(Task task) {
+        boolean crafting = task.type() == TaskType.CRAFT_STONE_MATERIAL
+                || task.type() == TaskType.CRAFT_WOOD_MATERIAL;
+
+        return crafting && typeFor(task.targetResource()) != task.type();
     }
 
     /**

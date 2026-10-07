@@ -6,6 +6,7 @@ import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.construction.service.MineRecovery;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.core.coordination.IdleReason;
@@ -19,6 +20,9 @@ import com.villagecolony.fabric.integration.StonePatch;
 import net.minecraft.block.BlockState;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.IdentityHashMap;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
@@ -30,7 +34,38 @@ import java.util.UUID;
  */
 final class MineVein {
 
+    static {
+        ServerMemory.register(MineVein.class, MineVein::clearAll);
+    }
+
+    /** Quantos minérios já cavados o rastro do veio lembra, por ramal. */
+    static final int TRAIL_MAX = 256;
+
+    /**
+     * O rastro do veio de cada ramal — ADR-036 item 23, o veio inteiro: quando
+     * o último minério não tem vizinho, volta-se pelo rastro atrás das
+     * ramificações. Em memória, como o veio.
+     */
+    private static final IdentityHashMap<MineArm, Deque<BlockPos>> TRAILS = new IdentityHashMap<>();
+
     private MineVein() {
+    }
+
+    static void clearAll() {
+        TRAILS.clear();
+    }
+
+    /** Um veio novo, achado pelo túnel: o rastro recomeça. */
+    static void startVein(MineArm arm, ColonyPos ore) {
+        TRAILS.remove(arm);
+        arm.followVein(ore);
+    }
+
+    private static Optional<BlockPos> exhausted(MineArm arm) {
+        arm.veinExhausted();
+        TRAILS.remove(arm);
+
+        return Optional.empty();
     }
 
     /**
@@ -109,11 +144,17 @@ final class MineVein {
         }
 
         Optional<BlockPos> more = OreVein.beside(world, from.get());
+        Deque<BlockPos> trail = TRAILS.get(arm);
+
+        // O veio inteiro — ADR-036 23: sem vizinho aqui, a ramificação que
+        // ficou para trás.
+        while (more.isEmpty() && trail != null && !trail.isEmpty()) {
+            from = Optional.of(trail.pop());
+            more = OreVein.beside(world, from.get());
+        }
 
         if (more.isEmpty()) {
-            arm.veinExhausted();
-
-            return Optional.empty();
+            return exhausted(arm);
         }
 
         // A mesma guarda do MineCuts.nextCut, e aqui ela é a que fecha o laço —
@@ -142,9 +183,7 @@ final class MineVein {
                 || nowhereToStand(world, more.get())
                 || MineFlooding.holdsBackFluid(world, more.get())
                 || MineMarks.isUnreachableAround(world, more.get())) {
-            arm.veinExhausted();
-
-            return Optional.empty();
+            return exhausted(arm);
         }
 
         if (more.get().getY() < from.get().getY()) {
@@ -154,9 +193,7 @@ final class MineVein {
                 // Sem degrau possível não se desce. A colônia prefere
                 // perder o minério a perder o mineiro — a escada volta a
                 // mandar, e ela é subível por construção.
-                arm.veinExhausted();
-
-                return Optional.empty();
+                return exhausted(arm);
             }
 
             if (!step.get().equals(from.get())) {
@@ -165,15 +202,21 @@ final class MineVein {
                 // minério travaria — 2026-09-03.
                 if (nowhereToStand(world, step.get())
                         || MineFlooding.holdsBackFluid(world, step.get())) {
-                    arm.veinExhausted();
-
-                    return Optional.empty();
+                    return exhausted(arm);
                 }
 
                 // O degrau primeiro, e o veio NÃO avança: a passagem
                 // seguinte acha o mesmo minério com a saída pronta.
                 return step;
             }
+        }
+
+        Deque<BlockPos> path = TRAILS.computeIfAbsent(arm, ignored -> new ArrayDeque<>());
+
+        path.push(from.get().toImmutable());
+
+        if (path.size() > TRAIL_MAX) {
+            path.removeLast();
         }
 
         arm.followVein(MinecraftTypeAdapter.toColonyPos(more.get()));

@@ -24,7 +24,6 @@ import com.villagecolony.fabric.work.MineReturn;
 import com.villagecolony.fabric.integration.BiomeConstructionSupply;
 import com.villagecolony.fabric.integration.SweepPersistence;
 import com.villagecolony.fabric.integration.SweepLog;
-import com.villagecolony.fabric.work.TestBarrier;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
 
@@ -243,9 +242,6 @@ public final class ServerLifecycleHandler {
                 copied.sweeps(),
                 copied.projects());
 
-        // A soma da barreira de teste, antes de tudo ser esquecido.
-        // Silêncio aqui é a notícia boa: nenhuma casa precisou dela.
-        TestBarrier.report();
         ColonyStateLog.report();
 
         // O que a varredura de lote fez nesta sessão, por colônia. É a

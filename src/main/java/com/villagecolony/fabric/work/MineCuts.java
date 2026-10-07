@@ -247,7 +247,7 @@ public final class MineCuts {
                 return Optional.of(at);
             }
 
-            arm.followVein(MinecraftTypeAdapter.toColonyPos(ore.get()));
+            MineVein.startVein(arm, MinecraftTypeAdapter.toColonyPos(ore.get()));
 
             if (!ore.get().equals(at)) {
                 // A posição do túnel não foi cavada, e não pode ser

@@ -1,7 +1,6 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.type.ServerMemory;
-import com.villagecolony.core.coordination.GatheringReach;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
@@ -226,10 +225,9 @@ public final class SurfaceGatheringWork {
             return SEARCH_RADIUS;
         }
 
-        int beds = VillageColonyMod.COLONIES.find(job.task.colonyId())
-                .map(Colony::observedBeds).orElse(0);
-
-        return GatheringReach.radius(beds, SEARCH_RADIUS);
+        // A varredura daqui já percorre a caixa da borda para dentro
+        // (VillageSpiralSweep); só o alcance vem da ADR-036 18.
+        return ResourceSearches.villageReach(job.task.colonyId(), job.center, SEARCH_RADIUS);
     }
 
     private static boolean findTarget(ServerWorld world, UUID workerId, Job job) {

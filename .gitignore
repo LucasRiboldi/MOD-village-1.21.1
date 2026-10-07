@@ -103,3 +103,7 @@ graphify-out/
 
 # Cache local do jqwik (2026-09-30)
 .jqwik-database
+
+# Fora do repositório (ADR-036 item 26): o site e o JAR. O JAR vai para a página de versões do GitHub.
+/Website/
+/downloads/

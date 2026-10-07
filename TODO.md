@@ -251,7 +251,7 @@ recomendação de cada item no estudo.
 - [ ] 🟡 Decisões do autor: combustível/viveiro, Regra 45 fora de casa, teletransporte de último recurso.
 - [ ] 🟡 PR desta branch depois do playtest (estudo §12).
 
-## Revisão das profissões - 2026-09-30 (`docs/technical/Revisao-Profissoes-2026-09-30.md`)
+## Revisão das profissões - 2026-09-30 (`docs/archive/technical/Revisao-Profissoes-2026-09-30.md`)
 
 Decisões do autor sobre a varredura das profissões. Código em `ef84143`;
 1.196 unitários e 528 GameTests verdes. **Nada visto em jogo.**
@@ -851,7 +851,7 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
 - [x] **12. Analisador de log** com 19 assinaturas e as peças mais
   esperadas (`99e1ac0`).
 
-## Revisão de naturalidade 2026-09-24 (docs/technical/Revisao-Naturalidade-2026-09-24.md)
+## Revisão de naturalidade 2026-09-24 (docs/archive/technical/Revisao-Naturalidade-2026-09-24.md)
 
 Decisão do autor aplicada no mesmo dia. Todos os itens têm teste
 automatizado; nenhum foi visto em jogo.
@@ -1000,7 +1000,7 @@ automatizado; nenhum foi visto em jogo.
 
 **Atualizado:** 2026-09-24, peca de construcao sem apoio mantida pendente.
 
-**Auditoria técnica:** [`docs/technical/Project-Audit-2026-09-21.md`](docs/technical/Project-Audit-2026-09-21.md).
+**Auditoria técnica:** [`docs/archive/technical/Project-Audit-2026-09-21.md`](docs/archive/technical/Project-Audit-2026-09-21.md).
 Nesta sessao: uma obra que pede uma peca sem rota fisica no bioma recebe a peca
 final no bau que atende o construtor. A verificacao percorre receitas Vanilla;
 alternativas e cadeias locais, como `argila -> fornalha -> terracota`, continuam
@@ -1048,7 +1048,7 @@ testes Python da auditoria passaram nesta sessao.
 
 O relatorio atual, incluindo responsabilidades, fluxo de obra, suprimento por
 bioma e estatistica do `latest.log`, esta em
-[`docs/technical/Operational-Status-2026-09-22.md`](docs/technical/Operational-Status-2026-09-22.md).
+[`docs/archive/technical/Operational-Status-2026-09-22.md`](docs/archive/technical/Operational-Status-2026-09-22.md).
 Ordem canonica desta sessao: P0 fechar os GameTests residuais; P1 reproduzir as
 repeticoes medidas de mina/obra/atribuicao; P2 reduzir a leitura repetida de
 baus e medir o resultado em save; P3 endurance. Nao tratar contagem de log
@@ -1062,7 +1062,7 @@ com código e testes locais das validações que continuam dependendo de um save
 - [x] **Criador encerrado:** `SHEPHERD` assume vagas, fundação, tarefas, nome e baú do antigo `BREEDER`; saves antigos são migrados na leitura. Unitarios e GameTests de nome, bau, fundacao e trabalho do Pastor passaram.
 - [x] **Cadeia da terracota da obra:** a peca exata continua preferida, mas a tag Vanilla de terracotas pode substitui-la; `CLAY` alimenta a fornalha para terracota neutra. O `CARPENTER` ainda fabrica o fermentador pela receita Vanilla quando houver haste e pedregulho. So na ausencia de toda rota profissional a politica de suprimento pode entregar a peca final.
 - [x] **Suprimento de obra sem rota profissional:** a construcao consulta sua familia de alternativas e a arvore de receitas Vanilla. Se nenhuma profissao puder recolher ou fabricar nenhuma alternativa, a terceira tentativa libera a peca preferida de manufatura; se houver rota, ela permanece tarefa dos oficios. O contador sobrevive ao save. O baú do construtor e prioritario e, se ausente ou cheio, outro bau livre da colonia recebe a peca. `BuilderGameTest` cobre tres tentativas, fermentador sem haste de blaze, porta de carvalho e fallback de bau cheio.
-- [x] **Inventario por bioma das plantas construtiveis:** `ConstructionSupplyAuditGameTest` le todos os 143 NBTs permitidos e registra, por estilo, as estruturas, recursos por rota local, itens automaticos e blocos formados no local. O resultado versionado esta em `docs/technical/Auditoria-2026-09-22-Suprimento-Estruturas-Vanilla.md`.
+- [x] **Inventario por bioma das plantas construtiveis:** `ConstructionSupplyAuditGameTest` le todos os 143 NBTs permitidos e registra, por estilo, as estruturas, recursos por rota local, itens automaticos e blocos formados no local. O resultado versionado esta em `docs/archive/technical/Auditoria-2026-09-22-Suprimento-Estruturas-Vanilla.md`.
 - [x] **P2.1 — leitura de baus do ciclo:** estoque, capacidade de `WOOD` e capacidade de `PLANKS` agora saem da mesma fotografia por ciclo; a varredura continua sem carregar chunks. `StorageGameTest.theSurveyKeepsCapacityForWoodAndPlanks` compara slots vazios, pilhas parciais e item do jogador com a regra de deposito anterior.
 - [ ] **Medir P2.1 no save:** confirmar, pela linha `Colony cycle took`, se o ciclo que mediu 112 ms fica abaixo de 50 ms. O teste automatizado prova equivalencia funcional, nao milissegundos de uma maquina real.
 - [ ] Playtest da migração: abrir save antigo, confirmar Pastor sobre a cabeça, tesoura no baú e continuidade das tarefas; testar Tocha das Almas dentro de uma obra real e observar liberação da fila, sem esperar demolição.
@@ -1170,13 +1170,13 @@ tábuas, 1.686 toras, 69 pedregulhos. É o laço fechado que
 ## 🟠 Revisão completa de 2026-09-17 — o que ficou sinalizado
 
 Inventário em
-[`docs/technical/Revisao-2026-09-17.md`](docs/technical/Revisao-2026-09-17.md).
+[`docs/archive/technical/Revisao-2026-09-17.md`](docs/archive/technical/Revisao-2026-09-17.md).
 **391 arquivos `.md`, 40.838 linhas, 23 documentos parados desde 08-08.**
 
 **Decisões do autor, pendentes** (o pedido foi sinalizar para decidir depois):
 
-- [x] 🔴 Destino de `Class-Architecture.md`, `Fabric-Implementation-Plan.md`, `Data-Model.md` — descrevem `ColonyManager`, `TaskManager`, `BuildingStatus` e outras classes que **nunca existiram**. Recomendado: `docs/historical/`. **Feito em 02-10.**
-- [x] 🟠 Destino de `MVP.md`, `MVP-Tasks.md`, `START_PROJECT.md`, `Development-Roadmap.md` — planos concluídos ou superados — movidos para `docs/historical/` em 02-10.
+- [x] 🔴 Destino de `Class-Architecture.md`, `Fabric-Implementation-Plan.md`, `Data-Model.md` — descrevem `ColonyManager`, `TaskManager`, `BuildingStatus` e outras classes que **nunca existiram**. Recomendado: `docs/archive/design-2026-08/`. **Feito em 02-10.**
+- [x] 🟠 Destino de `MVP.md`, `MVP-Tasks.md`, `START_PROJECT.md`, `Development-Roadmap.md` — planos concluídos ou superados — movidos para `docs/archive/design-2026-08/` em 02-10.
 - [x] 🟠 **`STATE.md` tem 1.193 linhas** contra o teto de 150 que ele mesmo declara. Precisa de poda. *(30-09: 338 linhas; ver a auditoria de 28-09.)* **02-10: 149 linhas.**
 - [x] 🟠 `ConstructionService.forget` sem chamador em `src/main` — confirmar se é gancho ou resto *(30-09: chamado por `ConstructionCancellation`)*
 - [x] 🟠 **Pastor tem 2 gametests; mineiro tem 79.** As profissões calmas são as menos protegidas, não as mais sólidas. **02-10:** `ShepherdFlockGameTest` cobre os três "não" do rebanho (cheio, trigo insuficiente devolvido ao baú, sem pastor), confirmado por mutação; o caminho feliz já estava em `ProfessionReviewGameTest`.
@@ -1284,7 +1284,7 @@ Reproduzido no playtest de 21:41–22:12: 17.518 recusas em 31 min, 10/s,
 **nunca é alcançado**. O laço é a **mesma passagem repetida**: o braço fecha
 em 8 recusas dentro de um orçamento de 64, `claimArm` o solta, e a passagem
 seguinte o reocupa no mesmo `cut`. Detalhe em
-[`docs/technical/E45-mina-presa-na-boca.md`](docs/technical/E45-mina-presa-na-boca.md).
+[`docs/archive/technical/E45-mina-presa-na-boca.md`](docs/archive/technical/E45-mina-presa-na-boca.md).
 **Nada foi alterado no código.** Ordem revisada:
 
 - [x] ✅ **C4 + C2** — **corrigidos em 09-16. Decisão do autor: (b) com (a) como escalada.** `Mine.turnsWithoutAPickaxe` conta as voltas sem pedra, mora na mina (o braço é solto a cada passagem) e **só a picareta zera**. Cheias 3 voltas → gira a hélice com o `rerouted()` existente; esgotadas as 4 → boca nova; sem boca melhor → `exposedStone`. **6 testes novos**, e o principal fecha e reinicia os ramais exigindo que a conta sobreviva. **Verificado:** build + 902 unitários (0 falhas) + 335 GameTests em 4/5. ⚠️ sem playtest.
@@ -1309,7 +1309,7 @@ estavam fora das **duas** réguas. É o **índice de ruas sem teto de raio**:
 `remember` acrescenta qualquer rua nova. A vila calçou estrada 31 vezes, e o
 lote passou a nascer de onde a estrada chegou. Prova: `40 answered by the
 index — 0 by drift`, do `SweepLog`. Detalhe em
-[`docs/technical/E46-obra-nasce-condenada.md`](docs/technical/E46-obra-nasce-condenada.md).
+[`docs/archive/technical/E46-obra-nasce-condenada.md`](docs/archive/technical/E46-obra-nasce-condenada.md).
 
 **É independente do E45** — corrigir o mineiro sozinho não faz a vila
 construir.
@@ -1421,7 +1421,7 @@ unitários, Python, `build`, `runGametest`, artefato do jar e relatórios
 em falha. O `fabric.mod.json` agora exige a Fabric API da matriz por
 expansão do Gradle, e `ModMetadataTest` impede o curinga de voltar.
 Registro completo em
-[`docs/technical/Auditoria-2026-09-12.md`](docs/technical/Auditoria-2026-09-12.md).
+[`docs/archive/technical/Auditoria-2026-09-12.md`](docs/archive/technical/Auditoria-2026-09-12.md).
 
 ---
 
@@ -1572,7 +1572,7 @@ Um por vez, teste antes de seguir.
 
 | | erro | estado |
 |---|---|---|
-| **E47** | **Trabalhador cai/fica preso longe do lote e nunca se recupera — visto em jogo 24-09, sessão de ~6h30.** `Builder 4b8df153` ficou parado em `-202, 62, -937` de **03:10 a 06:47** (97 linhas de `walking for N ticks without reaching the block`, subindo até 2400 e disparando o guarda de travamento repetidas vezes), sempre reatribuído à mesma obra em `y=72`, ~45-47 blocos de distância horizontal. `ClimbLimit`/`BuilderApproach.footOf` (correção de 09-16) só resolve diferença **vertical** de até 2 blocos quando o construtor está **na mesma coluna aproximada da obra** (em cima dela, descendo); não cobre um trabalhador preso **longe** — provavelmente dentro de depressão/ravina/caverna de superfície que a navegação Vanilla não atravessa sozinha para voltar. O guarda de 2400 ticks devolve a tarefa, mas o trabalhador continua fisicamente preso e é reatribuído à mesma armadilha. **Consequência observada:** nenhuma casa foi construída em ~6h30 de jogo (zero `house is up` no log inteiro, 5 colônias). Ver `docs/technical/Development-Log.md` para o diagnóstico completo. **Corrigido em código 24-09 (`e02fbf8`), decisão do autor:** dois congelamentos do `WorkStall` no mesmo ponto marcam o encalhado (`StrandedWorkers`); ele sai da escala em qualquer capacidade (`Worker.strand`, `WorkEligibility`) e cava uma escada de um bloco rumo ao centro da vila (`StrandedEscape`) — só terreno natural, via `BlockProtection`, sem abrir água nem deixar areia sobre a cabeça, entulho para o baú dele. `StrandedEscapeGameTest` 3/3. **Pendente:** teto de distância para "dar uma mão" (só chamar quem está perto da obra); origem das armadilhas não confirmada — nenhum código do mod cavou naqueles pontos, parecem terreno natural. | ✅ código e GameTest; ⬜ validar em jogo (procurar `is stranded at` / `dug a step` / `is out at`) |
+| **E47** | **Trabalhador cai/fica preso longe do lote e nunca se recupera — visto em jogo 24-09, sessão de ~6h30.** `Builder 4b8df153` ficou parado em `-202, 62, -937` de **03:10 a 06:47** (97 linhas de `walking for N ticks without reaching the block`, subindo até 2400 e disparando o guarda de travamento repetidas vezes), sempre reatribuído à mesma obra em `y=72`, ~45-47 blocos de distância horizontal. `ClimbLimit`/`BuilderApproach.footOf` (correção de 09-16) só resolve diferença **vertical** de até 2 blocos quando o construtor está **na mesma coluna aproximada da obra** (em cima dela, descendo); não cobre um trabalhador preso **longe** — provavelmente dentro de depressão/ravina/caverna de superfície que a navegação Vanilla não atravessa sozinha para voltar. O guarda de 2400 ticks devolve a tarefa, mas o trabalhador continua fisicamente preso e é reatribuído à mesma armadilha. **Consequência observada:** nenhuma casa foi construída em ~6h30 de jogo (zero `house is up` no log inteiro, 5 colônias). Ver `docs/archive/technical/Development-Log.md` para o diagnóstico completo. **Corrigido em código 24-09 (`e02fbf8`), decisão do autor:** dois congelamentos do `WorkStall` no mesmo ponto marcam o encalhado (`StrandedWorkers`); ele sai da escala em qualquer capacidade (`Worker.strand`, `WorkEligibility`) e cava uma escada de um bloco rumo ao centro da vila (`StrandedEscape`) — só terreno natural, via `BlockProtection`, sem abrir água nem deixar areia sobre a cabeça, entulho para o baú dele. `StrandedEscapeGameTest` 3/3. **Pendente:** teto de distância para "dar uma mão" (só chamar quem está perto da obra); origem das armadilhas não confirmada — nenhum código do mod cavou naqueles pontos, parecem terreno natural. | ✅ código e GameTest; ⬜ validar em jogo (procurar `is stranded at` / `dug a step` / `is out at`) |
 | **E48** | **Alternância casa→infraestrutura nunca escolhe casa nesta sessão.** Colônia `78fa1bb4` planejou 5 posições distintas ao longo da sessão, **todas `plains_temple_4`** (nenhuma casa). `HousePlans.nextConstructionIsHouse` só considera obra **terminada** (`Building.finished()`); como o E47 acima impede qualquer obra de terminar, a alternância nunca chega a alternar — ela está correta no código, mas nunca é exercitada porque a causa raiz (E47) trava toda conclusão de obra antes. **Correção do diagnóstico, mesma data: o E48 tinha causa própria, não dependia só do E47.** O templo foi abandonado 13 vezes pelo caminho `lets go of` (`blamePlan=false`), e `lastFinished`/`lastNonHouseType` ignoravam obra abandonada — a vez nunca voltava à casa e o templo nunca era excluído. **Corrigido em código 24-09 (`03ea6fb`), decisão do autor:** obra abandonada conta no rodízio, e com mais adultos do que camas a próxima obra é casa. A política posterior de 27-09 passa a tratar zero camas como déficit real e exige cama na planta oferecida. `HouseRotationGameTest`: com a regra desligada por mutação, abriu `plains_temple_4` — o mesmo do jogo. | ✅ código e GameTest; ⬜ validar em jogo (procurar `house is up`) |
 | **E44** | A escada de recusas já existe em `MineMarks` e é consultada pela mineração e pela fronteira da galeria; há unitários e GameTests. O playtest ainda observou o mineiro parado, então a integração completa segue **sem validação em jogo**. Não reabrir a decisão original sem reproduzir um defeito residual. | ⬜ validar em jogo |
 | **E43** | A decisao 1A foi implementada: `WorkEligibility` impede reserva de capacidade em descanso e removeu o fallback que devolvia `COLLECT_STONE` no ciclo seguinte. `WorkAssignmentTest` teve fase vermelha, e `ColonyCycleGameTest.aRestingMinerLeavesTheStoneTaskAvailable` passou na bateria 419/419. | ✅ codigo e GameTest; ⬜ validar em save |
@@ -1678,10 +1678,10 @@ Comida · água · o fazendeiro (tem enxada e baú desde a Fase 4 e nunca teve c
 
 | | decisão | trava |
 |---|---|---|
-| 1 | **E43 — o descanso de 4 ciclos deve valer sempre?** | Anulado pela 2ª passagem do `takeOneTask`. Decisão de projeto |
-| 2 | **TASK-048 — o que uma colônia ABANDONED deixa de fazer?** | Hoje nada. Ela é marcada e continua sendo simulada |
+| 1 | ~~**E43 — o descanso de 4 ciclos deve valer sempre?**~~ | **Fechado (ADR-036 28):** vale sempre — toda reserva passa por `WorkEligibility.canReserve`; não há 2ª passagem |
+| 2 | ~~**TASK-048 — o que uma colônia ABANDONED deixa de fazer?**~~ | **Fechado (ADR-036 10):** para de trabalhar e solta as profissões |
 | 3 | **TASK-044 — a fusão de vilas** | ADR-007 escrita em 08-21, não implementada |
-| 4 | **TASK-046 — propriedades além de `facing`** | O lado horizontal da ADR-008 entrou em 26-09; eixo, metade e forma ainda pedem decisão e testes próprios |
+| 4 | ~~**TASK-046 — propriedades além de `facing`**~~ | **Fechado (ADR-036 19):** eixo, metade e formato saem na posição da planta (`ShapeStates`) |
 | 6 | **E38 — o baú do trabalhador assoreia** | Dar consumidor ou descarte a vara, maçã e muda. **Decisão de projeto** |
 | 7 | **E45 — como a mina troca de rota no fundo?** | Geometria, boca estável, migração do save e novo GameTest; não há ADR atual |
 
@@ -1754,7 +1754,7 @@ Em ordem do que mais precisa ser visto.
 - **Estado vivo:** [`STATE.md`](STATE.md)
 - **Assinaturas de defeito:** [`docs/PATTERNS.md`](docs/PATTERNS.md)
 - **Regras do autor:** [`docs/RULES.md`](docs/RULES.md)
-- **Estado detalhado (histórico):** [`docs/technical/Project-State.md`](docs/technical/Project-State.md)
+- **Estado detalhado (histórico):** [`docs/archive/technical/Project-State.md`](docs/archive/technical/Project-State.md)
 - **Próxima sessão de jogo:** [`docs/proxima-sessao.md`](docs/proxima-sessao.md)
 - **Responsabilidade das profissões:** [`docs/technical/Profession-Responsibility.md`](docs/technical/Profession-Responsibility.md)
 - **Regressões catalogadas:** [`docs/behavioral-tests/REGRESSION-HISTORY.md`](docs/behavioral-tests/REGRESSION-HISTORY.md)

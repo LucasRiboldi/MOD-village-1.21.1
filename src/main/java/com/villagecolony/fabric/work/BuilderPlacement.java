@@ -124,6 +124,16 @@ public final class BuilderPlacement {
             return true;
         }
 
+        if (!state.canPlaceAt(world, target) && project.failsForTheLastTime(block)) {
+            // Quinta falha ao pôr: a peça é pulada e o erro fica no log — ADR-036 item 6.
+            VillageColonyMod.LOGGER.warn(
+                    "VC_SUPPLY_ERROR version=1 piece={} profession=BUILDER attempts={} reason=placement failed at {}",
+                    block.block(), ConstructionProject.PLACEMENT_FAILURES_BEFORE_SKIP, target.toShortString());
+            project.markPlaced(block);
+
+            return true;
+        }
+
         if (!state.canPlaceAt(world, target)) {
             // Tocha sem parede, porta sem chão. Não é bloco colocado e
             // também não é uma obra que deva acordar outro construtor a
@@ -176,48 +186,9 @@ public final class BuilderPlacement {
         Optional<Item> taken = BuilderMaterials.takeMaterial(world, project, material.get());
 
         if (taken.isEmpty()) {
-            Optional<String> chain = TestBarrier.chainFor(block.block());
-
-            // <b>A barreira espera antes de riscar</b> — 2026-09-09. A
-            // carência está em TestBarrier, e o que ela corrige é um
-            // grito falso: 24 stripped_oak_log riscados na sessão de
-            // 09-06 com cinquenta toras no baú, porque o construtor
-            // riscava no mesmo tique em que via a falta e o fabricante
-            // nunca teve o ciclo de descascar.
-            //
-            // Só o construtor começa a contar, e é por isso que a
-            // chamada mora aqui: quem tentou tirar do baú foi ele.
-            if (chain.isPresent()
-                    && TestBarrier.graceExpired(
-                            world.getTime(), project.id(), block.block())) {
-
-                // <b>Barreira de teste</b> — a Regra 28, provisória por
-                // declaração do autor: o bloco é riscado, e a casa fica
-                // sem ele.
-                //
-                // Ela grita desde 2026-08-21, e o porquê está em
-                // TestBarrier: a cadeia de cada uma das sete peças
-                // fechou, e peça riscada deixou de ser o esperado para
-                // virar notícia.
-                TestBarrier.skip(project.id(), block.block(), chain.get());
-
-                project.markPlaced(block);
-
-                return true;
-            }
-
-            // Fora dessas quatro, <b>o construtor aguarda o bloco
-            // específico de que precisa</b> — a Regra 27, aberta para
-            // pedra em 2026-08-26 e inteira no resto.
-            //
-            // E a peça da barreira dentro da carência passa por aqui
-            // também, de propósito: enquanto a barreira ainda espera,
-            // ela é peça como qualquer outra e a Regra 27 vale inteira
-            // para ela.
-            //
-            // O que impede a colônia de morrer esperando é o
-            // PatienceClock: a obra sai da frente depois de vinte ciclos,
-            // então a espera é do construtor e não da vila.
+            // Falta não pula a peça: o construtor aguarda, e o suprimento a faz
+            // aparecer na quarta tentativa (ADR-036 item 6; a barreira de teste,
+            // Regra 28, saiu). Só a quinta falha ao pôr pula a peça.
             BuilderMaterials.waitForResources(project, job, workerId, block);
 
             return false;
@@ -249,8 +220,6 @@ public final class BuilderPlacement {
         // quatro saídas de placeOne riscam o bloco, e riscado não é
         // assentado. Sem este número o relatório da sessão absolvia a
         // Regra 28 sem ter tido o que medir — o E31.
-        TestBarrier.laidOne();
-
         return true;
     }
 
@@ -293,8 +262,9 @@ public final class BuilderPlacement {
     }
 
     /**
-     * O estado que o construtor assenta neste lugar: a direção da planta, a
-     * cama pela cabeceira, e a peça de parede apoiada na parede que existe.
+     * O estado que o construtor assenta neste lugar: eixo, metade e formato
+     * da planta (ADR-036 19), a direção dela, a cama pela cabeceira, e a peça
+     * de parede apoiada na parede que existe.
      */
     static BlockState shaped(
             ServerWorld world,
@@ -303,8 +273,8 @@ public final class BuilderPlacement {
             Block material,
             BlockPos target) {
 
-        BlockState state = BlockShaping.bedFacing(
-                world, target, BlockShaping.facing(project, block, material.getDefaultState()));
+        BlockState planned = BlockShaping.withPlanStates(block, material.getDefaultState());
+        BlockState state = BlockShaping.bedFacing(world, target, BlockShaping.facing(project, block, planned));
 
         return BlockShaping.leanOnAWall(world, target, state);
     }

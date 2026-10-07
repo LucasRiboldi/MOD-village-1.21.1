@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.command;
 
+import com.villagecolony.core.colony.model.VillageHappiness;
 import com.villagecolony.core.construction.model.ConstructionPriority;
 import com.villagecolony.core.construction.model.MaterialRequest;
 import com.villagecolony.core.telemetry.model.ActivityProfession;
@@ -153,6 +154,18 @@ final class VillageLogPresenter {
                     "Próxima obra: infraestrutura; as camas já atendem os moradores.";
             case ROTATION_HOUSE -> "Próxima obra: moradia; o rodízio voltou para casas.";
         };
+    }
+
+    /** A felicidade da última reunião — ADR-036 item 20. */
+    static String happiness(VillageHappiness happiness) {
+        String mood = switch (happiness.mood()) {
+            case HAPPY -> "feliz (mais filhos)";
+            case CONTENT -> "satisfeita";
+            case UNHAPPY -> "infeliz (nenhum filho novo)";
+        };
+
+        return "Felicidade: " + mood + " — " + happiness.foodPerAdult() + " de comida por adulto, "
+                + happiness.spareBeds() + " camas sobrando, " + happiness.finishedBuildings() + " obras concluídas.";
     }
 
     private static String describe(ActivityTraceEvent event) {

@@ -42,9 +42,14 @@ public final class VillageFocusPlayerGameTest implements FabricGameTest {
 
             context.assertTrue(world.getPlayers().contains(player), "o jogador de teste não entrou no mundo");
 
-            VillageFocus.attend(world);
-
+            // O jogador já estava dentro há um minuto (ADR-036 item 11): a
+            // presença contínua é marcada a cada 20 tiques, como o foco faz.
             long now = world.getTime();
+            for (long tick = now - Colony.SETTLE_TICKS; tick < now; tick += 20) {
+                near.attend(tick);
+            }
+
+            VillageFocus.attend(world);
 
             context.assertTrue(near.isAttended(now), "jogador dentro da vila e ela não ficou atendida");
             context.assertFalse(far.isAttended(now), "a vila a 2.000 blocos ficou atendida sem jogador dentro");

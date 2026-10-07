@@ -137,29 +137,6 @@ public final class BuilderMaterials {
             return true;
         }
 
-        if (TestBarrier.willStrike(world.getTime(), project.id(), piece)) {
-            MaterialRequests.record(project.id(), piece, State.NO_SOLUTION, Source.BARRIER, world.getTime());
-            // Peça que a barreira risca nunca segura a obra: quando o
-            // construtor chegar nela vai passar por cima, então dizer
-            // "tem" aqui é dizer a verdade sobre o que vai acontecer.
-            //
-            // <b>Era {@code furniture()} até 2026-08-21</b>, e virou isto
-            // no dia em que cama e lampião saíram da barreira. As duas
-            // perguntas coincidiam enquanto a Regra 21 vivia; deixar a
-            // antiga poria a obra a acordar dizendo que tem a cama,
-            // tentar, falhar e dormir de novo — todo ciclo, para sempre.
-            //
-            // <b>E era {@code chainFor} até 2026-09-09</b>, que respondia
-            // "tem" desde a primeira falta. Com a carência isso passou a
-            // ser mentira durante cinco ciclos: a obra acordaria, o
-            // construtor esperaria, e ela dormiria de novo — o mesmo laço
-            // do parágrafo acima, pela porta nova. Agora a pergunta é
-            // sobre a peça <b>de que a barreira já desistiu</b>; a que
-            // ela ainda espera cai no teste de material logo abaixo e
-            // segura a obra, que é o que faz a colônia ir produzi-la.
-            return true;
-        }
-
         // A mesma lista de takeMaterial, e por obrigação: uma pergunta
         // que dissesse "tem" e uma retirada que não achasse poriam a obra
         // a acordar e voltar a dormir todo ciclo.
@@ -208,8 +185,7 @@ public final class BuilderMaterials {
 
             if (next.filter(id::equals).isPresent() || block.isEmpty()
                     || BlockShaping.isShapedFromTheGround(block.get().getDefaultState())
-                    || BlockShaping.isNeverPlaced(block.get().getDefaultState())
-                    || TestBarrier.chainFor(id).isPresent()) {
+                    || BlockShaping.isNeverPlaced(block.get().getDefaultState())) {
                 continue;
             }
 

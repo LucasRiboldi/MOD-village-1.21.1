@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.storage.model.VillageChestRule;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import java.util.LinkedHashSet;
@@ -7,6 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ChestBlock;
+import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.block.enums.ChestType;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.server.world.ServerWorld;
@@ -49,10 +51,27 @@ final class ChestInventories {
             members.add(MinecraftTypeAdapter.toColonyPos(neighbor));
         }
 
-        return Optional.of(new Handle(inventory, Set.copyOf(members)));
+        return Optional.of(new Handle(inventory, Set.copyOf(members), isNamed(world, members)));
     }
 
-    record Handle(Inventory inventory, Set<ColonyPos> members) {
+    /** Se o jogador nomeou alguma metade do baú ({@link VillageChestRule}). */
+    private static boolean isNamed(ServerWorld world, Set<ColonyPos> members) {
+        for (ColonyPos member : members) {
+            BlockPos pos = MinecraftTypeAdapter.toBlockPos(member);
+            WorldChunk chunk = world.getChunkManager().getWorldChunk(pos.getX() >> 4, pos.getZ() >> 4);
+
+            if (chunk != null
+                    && chunk.getBlockEntity(pos) instanceof ChestBlockEntity chest
+                    && chest.getCustomName() != null
+                    && !VillageChestRule.mayTake(Optional.of(chest.getCustomName().getString()))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    record Handle(Inventory inventory, Set<ColonyPos> members, boolean named) {
         boolean isProfession(Set<ColonyPos> professionChests) {
             return members.stream().anyMatch(professionChests::contains);
         }

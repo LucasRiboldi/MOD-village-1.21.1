@@ -322,7 +322,11 @@ Esta seção é a prática do dia a dia; os números que a justificam estão em
 | Fechar P0 ou release | bateria ×2 `--rerun-tasks` + auditoria + `pitest` | — |
 
 `-PgametestOnly` casa por trecho do nome simples da classe, sem diferença de
-maiúsculas. O filtro só muda a cópia que vai ao servidor de teste; o
+maiúsculas. **Limite conhecido:** alguns testes de fabricação dependem do
+contexto da bateria inteira — `-PgametestOnly=CraftingGameTest,BuilderGameTest`
+derruba `theWorkAsksForItsUncataloguedPieceBeforeWaiting` e
+`theCycleOpensTheCraftingTaskByItself` mesmo sem mudança nenhuma (medido em
+2026-10-06 no commit `36891a42`). Para fechar um item, vale a bateria comum. O filtro só muda a cópia que vai ao servidor de teste; o
 registro em `src/gametest/resources/fabric.mod.json` continua com tudo, e o
 `GameTestRegistryTest` reprova classe com `@GameTest` fora dele.
 

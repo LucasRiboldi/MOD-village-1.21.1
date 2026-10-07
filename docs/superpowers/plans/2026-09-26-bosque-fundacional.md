@@ -16,7 +16,7 @@
 - `core/` must not import Minecraft, Fabric, `data/`, or Fabric integration.
 - Generate only on natural ground in loaded chunks and never overwrite an occupied canopy, structure, chest, or persistent leaf.
 - Persist only the completed population milestone; failed placements leave it unchanged for later retry.
-- Update STATE.md, TODO.md and docs/technical/Development-Log.md with actual verification evidence.
+- Update STATE.md, TODO.md and docs/archive/technical/Development-Log.md with actual verification evidence.
 - Keep unrelated working-tree changes out of commits.
 
 ## Review Focus
@@ -128,7 +128,7 @@ Expected: all commands pass; report GameTest count exactly.
 **Files:**
 - Modify: `STATE.md`
 - Modify: `TODO.md`
-- Modify: `docs/technical/Development-Log.md`
+- Modify: `docs/archive/technical/Development-Log.md`
 
 **Interfaces:**
 - Consumes: actual final test output and playtest status.

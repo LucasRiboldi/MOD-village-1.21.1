@@ -186,7 +186,7 @@ public final class WaitingWork {
     /**
      * A espera só pode abandonar uma peça que a vila não tem como entregar.
      *
-     * <p>A terceira tentativa já abastece a peça sem rota profissional; por
+     * <p>A quarta tentativa (ADR-036 item 6) já abastece a peça sem rota profissional; por
      * isso o relógio não deve encerrar uma obra que espera, por exemplo, o
      * tronco que o lenhador daquela vila ainda pode recolher. A pergunta é
      * pelo próximo bloco, que é a falta que realmente levou a obra ao estado
@@ -356,7 +356,7 @@ public final class WaitingWork {
 
         // <b>E a colônia aprende qual planta não conseguiu levantar</b> —
         // 2026-09-12. Sem isto a escolha reoferece a mesma casa no ciclo
-        // seguinte: a Regra 25 é determinística, e a sessão daquele dia
+        // seguinte: a ordem é estável dentro da semente, e a sessão daquele dia
         // mostrou o laço — plains_butcher_shop_2 escolhida duas vezes,
         // vinte ciclos de espera por smooth_stone_slab cada, e o autor
         // dizendo "não vi nenhuma construção nascendo". A laje está a três

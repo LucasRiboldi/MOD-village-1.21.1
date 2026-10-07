@@ -92,8 +92,14 @@ public final class Colony {
      */
     private @Nullable VillageBounds bounds;
 
-    /** O último tique com jogador dentro da caixa; {@code -1} nunca. Não vai para o save. */
-    private long attendedAt = -1;
+    /** Marca de "nunca": nenhum tique real chega a ela, nem o negativo de um teste. */
+    private static final long NEVER = Long.MIN_VALUE;
+
+    /** O último tique com jogador dentro da caixa. Não vai para o save. */
+    private long attendedAt = NEVER;
+
+    /** O tique em que a presença atual começou. Não vai para o save. */
+    private long arrivedAt = NEVER;
 
     private Colony(UUID id, ColonyPos center, ColonyState state, ColonyLifecycle lifecycle) {
         this.id = id;
@@ -198,8 +204,14 @@ public final class Colony {
     }
 
 
-    /** Quanto a vila continua trabalhando depois que o jogador sai: 5 minutos. */
-    public static final long ATTENTION_TICKS = 6_000;
+    /** Quanto tempo o jogador fica dentro antes de a vila trabalhar: 1 minuto (ADR-036 item 11). */
+    public static final long SETTLE_TICKS = 1_200;
+
+    /**
+     * A folga entre duas checagens de presença (o foco olha a cada 20 tiques):
+     * ausência maior que isto é saída, e a próxima entrada recomeça o minuto.
+     */
+    public static final long PRESENCE_GAP_TICKS = 40;
 
     /** A caixa da vila, quando já foi medida. */
     public Optional<VillageBounds> bounds() {
@@ -243,15 +255,24 @@ public final class Colony {
 
     /** Um jogador está dentro da vila neste tique. */
     public void attend(long now) {
+        if (!isPresent(now)) {
+            arrivedAt = now;
+        }
+
         attendedAt = now;
     }
 
     /**
-     * Se a vila trabalha neste tique: jogador dentro dela agora ou há no
-     * máximo {@link #ATTENTION_TICKS} — decisão do autor, 2026-09-30.
+     * Se a vila trabalha neste tique: o jogador está dentro dela agora e
+     * chegou há pelo menos {@link #SETTLE_TICKS} — ADR-036 item 11. Saiu,
+     * parou.
      */
     public boolean isAttended(long now) {
-        return attendedAt >= 0 && now >= attendedAt && now - attendedAt <= ATTENTION_TICKS;
+        return isPresent(now) && now - arrivedAt >= SETTLE_TICKS;
+    }
+
+    private boolean isPresent(long now) {
+        return attendedAt != NEVER && now >= attendedAt && now - attendedAt <= PRESENCE_GAP_TICKS;
     }
 
     /**
@@ -261,7 +282,8 @@ public final class Colony {
     public boolean stoppedWithin(long now, long step) {
         long since = now - attendedAt;
 
-        return attendedAt >= 0 && since > ATTENTION_TICKS && since <= ATTENTION_TICKS + step;
+        return attendedAt != NEVER && arrivedAt != NEVER && attendedAt - arrivedAt >= SETTLE_TICKS
+                && since > PRESENCE_GAP_TICKS && since <= PRESENCE_GAP_TICKS + step;
     }
 
     /**
@@ -392,6 +414,15 @@ public final class Colony {
     /** Atalho de leitura para o loop de simulação. Ver ADR-002. */
     public boolean isActive() {
         return lifecycle == ColonyLifecycle.ACTIVE;
+    }
+
+    /**
+     * Se a colônia trabalha: chunk carregado e vila não abandonada —
+     * ADR-036 item 10. A abandonada guarda tudo (baús, construções) e volta a
+     * trabalhar se a sonda achar a vila de novo.
+     */
+    public boolean canWork() {
+        return isActive() && state != ColonyState.ABANDONED;
     }
 
     /**

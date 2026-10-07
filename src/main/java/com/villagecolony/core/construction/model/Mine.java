@@ -1,6 +1,7 @@
 package com.villagecolony.core.construction.model;
 
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.Side;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -256,7 +257,7 @@ public final class Mine {
      * isso, e foi ele quem pegou o defeito.
      */
     public int branchesOpenNow() {
-        return !arms.get(0).isDone() && arms.get(0).cut() >= MineShaft.SHARED_BLOCKS
+        return !shaft.isRamp() && !arms.get(0).isDone() && arms.get(0).cut() >= MineShaft.SHARED_BLOCKS
                 ? ARMS
                 : 1;
     }
@@ -287,22 +288,11 @@ public final class Mine {
     }
 
     /**
-     * Fechados os quatro ramais, a mina desce um nível.
-     *
-     * <p><b>É a regra de antes, e ela não mudou de conteúdo.</b> Quatro
-     * curvas fechavam o nível e a galeria descia; agora são quatro ramais
-     * fechados. O que mudou é que os quatro podem ser fechados por
-     * quatro aldeões ao mesmo tempo, em vez de um só, quatro vezes.
-     *
-     * <p>Por que isso importa: a sessão de 2026-09-02 trabalhou em
-     * {@code y=44}, e o pico do diamante em 1.21 é {@code y=-59}. Uma
-     * mina que não desce não tem como achar minério melhor.
+     * Fechados os quatro ramais, a mina desce um nível; no fundo do mundo,
+     * ou ao fim da rampa, devolve {@code EXHAUSTED}.
      *
      * <p>Os cursores voltam a zero porque o poço do nível novo ainda não
-     * foi cavado — são duas descidas e duas salas antes de a galeria
-     * começar.
-     *
-     * @return se desceu agora
+     * foi cavado.
      */
     public LevelAdvance advanceIfEveryArmIsDone() {
         if (!everyArmIsDone()) {
@@ -313,7 +303,21 @@ public final class Mine {
             return LevelAdvance.EXHAUSTED;
         }
 
-        shaft = shaft.deepened();
+        restartArmsOn(shaft.deepened());
+
+        return LevelAdvance.DEEPENED;
+    }
+
+    /**
+     * No fundo, a mina vira rampa — ADR-036 item 17: sobe {@code steps}
+     * degraus a partir de {@code floor}, rumo a {@code away}, com um ramal só.
+     */
+    public void climbOut(ColonyPos floor, Side away, int steps) {
+        restartArmsOn(MineShaft.ramp(floor, away, steps));
+    }
+
+    private void restartArmsOn(MineShaft next) {
+        shaft = next;
 
         MineShaft heading = shaft;
 
@@ -322,8 +326,6 @@ public final class Mine {
 
             heading = heading.turned();
         }
-
-        return LevelAdvance.DEEPENED;
     }
 
     /**
