@@ -1,0 +1,33 @@
+# ADR-037 — Decisões do autor depois do playtest de 2026-10-07
+
+**Status:** Accepted
+**Date:** 2026-10-07
+**Decision Type:** Gameplay
+**Origem:** o primeiro playtest do JAR 0.3.1 (log de 06-10 23:41 a 07-10 00:43, Spark
+`QK8BBjPGXr`) e a resposta do autor à lista de defeitos, melhorias e conflitos C1–C8 da ADR-036.
+
+## Decisões
+
+| # | Decisão |
+|---|---|
+| F1 | Nascem **5 árvores nas bordas da vila para cada 10 aldeões**, longe das estruturas |
+| F2 | Para cada **5 aldeões**, uma **árvore natural** da espécie que a obra pede, perto das bordas e longe das estruturas |
+| F3 | Capim, flor e samambaia não impedem o plantio (o defeito que deu 0 árvores na fundação) |
+| M1 | A mina não prende ninguém e se anda nela sem travar; o mineiro não fica ocioso; caminhos de mineração mais úteis e persistentes. Cada aldeão de profissão é independente, com sua rotina |
+| R1 | Na reunião da vila, a comida de qualquer baú é doada e comida pelos aldeões; o convívio os deixa felizes. A felicidade conta o trigo como comida, e o fazendeiro assa pão com o trigo guardado (C7 b e c) |
+| V1 | Desempregado age como no Vanilla |
+| V2 | Todo aldeão, ao ir dormir, fecha a porta da casa; o teletransportado para a cama também (C3) |
+| B1 | O construtor põe bloco de qualquer lugar dentro da zona da obra, sem subir ou ir até cada bloco (resolve também as toras inalcançáveis, M4) |
+| L1 | Lenhador busca até a borda + 10; sem alvo, até a borda + 20 (M2) |
+| M3 | O alívio do baú cheio fica |
+| C1 | Só o `storage_majest`: sai o armazém de emergência no salão da mina |
+| C2 | Teto de 3 compartimentos de 64 por item vale para todo baú, o do mineiro inclusive (sai o teto de 256 por tipo) |
+| C4 | Fica a forma mais completa (eixo, metade, formato) |
+| C5 | O mais simples: fica como está |
+| C6 | Fica como está; pesquisar melhorias eficientes |
+
+## Estado
+
+| # | Commit | Verificação |
+|---|---|---|
+| F1–F3 | este commit | `ForestQuota` (core): fundação 5 × (aldeões ÷ 10), mínimo 5; mais 5 a cada dezena; obra esperando madeira ganha 1 árvore natural madura a cada 5 aldeões (sem muda do baú, sem fazendeiro). `VillageForest`: chão pelo mapa de altura, contorno de 4 a 10 blocos fora da caixa (sem caixa, o anel de 48–56), nenhuma estrutura no quadrado 11×11 nem rente ao chão; capim, flor, samambaia e neve fina são limpos; busca que falha espera 5 min (fim dos picos de 100 ms). GameTest do capim (era 0 de 8) e da borda; 628/628 ×3 |
