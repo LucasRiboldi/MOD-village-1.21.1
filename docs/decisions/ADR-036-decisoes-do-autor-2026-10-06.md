@@ -79,6 +79,8 @@ Preenchido a cada item aplicado.
 
 | # | Commit | Verificação |
 |---|---|---|
+| 1 | `454ab29d` | PR #9 juntado na `main` pelo autor; o #10 (esta ADR) em seguida, `1a77332a`; CI verde nos dois |
+| 2 | fora do código | apagadas, remotas e locais, as branches inteiras na `main` (`claude/auditoria-recuperacao`, `claude/corrigiveis-sem-jogo`, `claude/decisoes-2026-10-06`, `codex/village-visuals-logistics-mine-sweep`, `integra/linhas-2026-10-06` e duas de worktree). Ficam `codex/bighousemod` e a branch local do worktree do Codex |
 | 3 | `53a637d1` | versão 0.3.1; JAR `2C2F849F…3180` em `downloads/` e na pasta `mods` |
 | 4 | `36891a42` | baú de cama em toda casa; 2 GameTests, escada por mutação |
 | 5 | `55ed3b2d` | Regra 25 desfeita; HousePlansTest 27/27 |
@@ -115,5 +117,5 @@ Achados ao aplicar os itens; cada um ficou como descrito, até o autor dizer o c
 | C5 | Rampa do item 17 × leituras pela boca da mina | na rampa, o baú antigo da boca e o armazém de emergência saem da conta da colônia (o conteúdo fica no mundo) |
 | C6 | Item 18 × varredura de superfície da linha Codex (já anda pela caixa) | na superfície só o alcance mudou; a alternância centro/borda vale para lenhador e areia |
 | C7 | Item 20 não deu limiares | o agente escolheu (12/4 pontos de comida, 2 camas, 1 obra; soma ≥2 / ≤−1) — revisar |
-| C8 | Item 26 × nada desta branch visto em jogo | a versão `v0.3.1` foi criada como rascunho; publicar é do autor |
-| C9 | Itens 1 e 2 (merge do PR #9, apagar branches) | continuam com o autor: o modo automático não faz merge sem revisão |
+| C8 | Item 26 × nada desta branch visto em jogo | a versão `v0.3.1-alpha` foi publicada como pré-lançamento, a pedido do autor ("merge total") |
+| C9 | Itens 1 e 2 (merge do PR #9, apagar branches) | feitos: ver a tabela Estado |

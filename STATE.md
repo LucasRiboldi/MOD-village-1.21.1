@@ -1,8 +1,9 @@
 # STATE — 2026-10-06
 
 > **JAR atual: `village-colony-0.3.1.jar` = `278086C5…0673`** em `build/libs/`, na cópia local
-> `downloads/` (fora do git desde o item 26) e em `%APPDATA%/.minecraft/mods`. Branch
-> `claude/decisoes-2026-10-06`: **ADR-036 aplicada inteira**; nada visto em jogo.
+> `downloads/` (fora do git desde o item 26), em `%APPDATA%/.minecraft/mods` e na versão
+> `v0.3.1-alpha` do GitHub. **Tudo na `main`** (PR #9 e #10 juntados; `main` = 627/627 GameTests,
+> 1.348 unitários). Únicas branches vivas: `main` e `codex/bighousemod`. Nada visto em jogo.
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
