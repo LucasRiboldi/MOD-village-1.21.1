@@ -50,6 +50,20 @@ public final class AdvanceStock {
 
     public static void clearAll() {
         CURSORS.clear();
+        VILLAGE_PIECES.clear();
+    }
+
+    /** As peças que as plantas da vila usam, por fila — ADR-039 item 4. */
+    private static final Map<Lane, List<ResourceType>> VILLAGE_PIECES = new HashMap<>();
+
+    /** Anota as peças que as estruturas desta vila pedem, para esta fila. */
+    public static void piecesOfTheVillage(UUID colonyId, String lane, List<ResourceType> pieces) {
+        VILLAGE_PIECES.put(new Lane(colonyId, lane), List.copyOf(pieces));
+    }
+
+    /** As peças da vila para esta fila, ou {@code fallback} enquanto as plantas não foram lidas. */
+    public static List<ResourceType> piecesFor(UUID colonyId, String lane, List<ResourceType> fallback) {
+        return VILLAGE_PIECES.getOrDefault(new Lane(colonyId, lane), fallback);
     }
 
     /** A vez de uma fila, como o save a guarda — ADR-039 C. */

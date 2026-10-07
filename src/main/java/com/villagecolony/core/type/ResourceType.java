@@ -260,6 +260,19 @@ public enum ResourceType {
 
     OAK_FENCE(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_WOOD),
 
+    /** As mesmas peças nas madeiras das vilas de taiga e de savana — ADR-039 item 4. */
+    SPRUCE_STAIRS(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_WOOD),
+
+    SPRUCE_SLAB(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_WOOD),
+
+    SPRUCE_FENCE(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_WOOD),
+
+    ACACIA_STAIRS(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_WOOD),
+
+    ACACIA_SLAB(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_WOOD),
+
+    ACACIA_FENCE(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_WOOD),
+
     /**
      * A viga descascada, e a razão de ela existir — 2026-09-10.
      *

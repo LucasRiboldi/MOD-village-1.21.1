@@ -20,6 +20,7 @@ import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -46,6 +47,10 @@ public final class MasonStockGameTest implements FabricGameTest {
 
         try {
             VillageDetectionHandler.runCycleNow(context.getWorld(), context.getAbsolutePos(CHEST));
+
+            // E as peças que as plantas da vila usam — ADR-039 item 4.
+            pieces.addAll(com.villagecolony.core.coordination.AdvanceStock.piecesFor(
+                    fixture.colony().id(), "mason", List.of()));
 
             boolean asked = false;
             for (Task task : VillageColonyMod.TASKS.ofColony(fixture.colony().id())) {
