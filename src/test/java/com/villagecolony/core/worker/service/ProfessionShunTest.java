@@ -109,9 +109,9 @@ class ProfessionShunTest {
     void oneGiveUpIsNotEnoughToLeaveTheTrade() {
         Worker worker = aWorker();
 
-        worker.assign(ProfessionType.MINER);
+        worker.assign(ProfessionType.LUMBERJACK);
 
-        worker.rest(Capability.COLLECT_STONE);
+        worker.rest(Capability.COLLECT_WOOD);
 
         assertTrue(worker.hasProfession(), "ele largou o ofício no primeiro tropeço");
     }
@@ -125,17 +125,17 @@ class ProfessionShunTest {
     void threeGiveUpsInTheWindowLeaveTheTrade() {
         Worker worker = aWorker();
 
-        worker.assign(ProfessionType.MINER);
+        worker.assign(ProfessionType.LUMBERJACK);
 
-        worker.rest(Capability.COLLECT_STONE);
-        worker.rest(Capability.COLLECT_STONE);
-        worker.rest(Capability.COLLECT_STONE);
+        worker.rest(Capability.COLLECT_WOOD);
+        worker.rest(Capability.COLLECT_WOOD);
+        worker.rest(Capability.COLLECT_WOOD);
 
         assertFalse(
                 worker.hasProfession(),
                 "ele teimou três vezes e continuou no mesmo ofício");
 
-        assertTrue(worker.isShunning(ProfessionType.MINER));
+        assertTrue(worker.isShunning(ProfessionType.LUMBERJACK));
     }
 
     /**
@@ -147,10 +147,10 @@ class ProfessionShunTest {
     void giveUpsSpreadOutDoNotAddUp() {
         Worker worker = aWorker();
 
-        worker.assign(ProfessionType.MINER);
+        worker.assign(ProfessionType.LUMBERJACK);
 
         for (int i = 0; i < 3; i++) {
-            worker.rest(Capability.COLLECT_STONE);
+            worker.rest(Capability.COLLECT_WOOD);
 
             cyclesGoBy(worker, 3 * Worker.REST_CYCLES);
         }
@@ -165,13 +165,13 @@ class ProfessionShunTest {
     void strikesAreCountedPerCapability() {
         Worker worker = aWorker();
 
-        worker.assign(ProfessionType.MINER);
+        worker.assign(ProfessionType.LUMBERJACK);
 
-        worker.rest(Capability.COLLECT_STONE);
         worker.rest(Capability.COLLECT_WOOD);
         worker.rest(Capability.COLLECT_STONE);
+        worker.rest(Capability.COLLECT_WOOD);
 
-        assertEquals(2, worker.strikesOn(Capability.COLLECT_STONE));
+        assertEquals(2, worker.strikesOn(Capability.COLLECT_WOOD));
         assertTrue(worker.hasProfession());
     }
 
@@ -179,7 +179,7 @@ class ProfessionShunTest {
     void givingUpTheProfessionLeavesTheWorkerWithoutOne() {
         Worker worker = aWorker();
 
-        worker.assign(ProfessionType.MINER);
+        worker.assign(ProfessionType.LUMBERJACK);
 
         worker.giveUpProfession();
 
@@ -190,11 +190,11 @@ class ProfessionShunTest {
     void theAbandonedProfessionIsShunned() {
         Worker worker = aWorker();
 
-        worker.assign(ProfessionType.MINER);
+        worker.assign(ProfessionType.LUMBERJACK);
 
         worker.giveUpProfession();
 
-        assertTrue(worker.isShunning(ProfessionType.MINER));
+        assertTrue(worker.isShunning(ProfessionType.LUMBERJACK));
     }
 
     /** E só ele: desistir da mina não fecha a roça. */
@@ -202,7 +202,7 @@ class ProfessionShunTest {
     void theOthersAreStillOpenToHim() {
         Worker worker = aWorker();
 
-        worker.assign(ProfessionType.MINER);
+        worker.assign(ProfessionType.LUMBERJACK);
 
         worker.giveUpProfession();
 
@@ -228,22 +228,22 @@ class ProfessionShunTest {
      * largá-lo é o que o tornou o mais escasso.
      */
     @Test
-    void theMinerWhoGaveUpIsNotHiredBackAsAMiner() {
+    void theLumberjackWhoGaveUpIsNotHiredBackAsALumberjack() {
         // Todo o resto no teto: a mina é a única vaga da colônia, e é
         // exatamente o estado que devolver o posto produz — ele abriu a
         // própria vaga e virou o mais escasso.
-        fillEveryProfessionExcept(ProfessionType.MINER);
+        fillEveryProfessionExcept(ProfessionType.LUMBERJACK);
 
         Worker worker = aWorker();
 
-        worker.assign(ProfessionType.MINER);
+        worker.assign(ProfessionType.LUMBERJACK);
 
         worker.giveUpProfession();
 
         ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
         assertNotEquals(
-                ProfessionType.MINER,
+                ProfessionType.LUMBERJACK,
                 worker.profession().orElse(null),
                 "ele voltou para o mesmo ramal que o travou — a reavaliação"
                         + " não fez nada além de escrever no save");
@@ -264,14 +264,14 @@ class ProfessionShunTest {
      */
     @Test
     void heIsHiredIntoSomethingElseInstead() {
-        fillEveryProfessionExcept(ProfessionType.MINER, ProfessionType.FARMER);
+        fillEveryProfessionExcept(ProfessionType.LUMBERJACK, ProfessionType.FARMER);
 
         aWorker().assign(ProfessionType.FARMER);
         aWorker().assign(ProfessionType.BUILDER);
 
         Worker worker = aWorker();
 
-        worker.assign(ProfessionType.MINER);
+        worker.assign(ProfessionType.LUMBERJACK);
 
         worker.giveUpProfession();
 
@@ -298,14 +298,14 @@ class ProfessionShunTest {
      */
     @Test
     void heIsNotHiredIntoTheNextTradeInTheSameCycle() {
-        fillEveryProfessionExcept(ProfessionType.MINER, ProfessionType.FARMER);
+        fillEveryProfessionExcept(ProfessionType.LUMBERJACK, ProfessionType.FARMER);
 
         aWorker().assign(ProfessionType.FARMER);
         aWorker().assign(ProfessionType.BUILDER);
 
         Worker worker = aWorker();
 
-        worker.assign(ProfessionType.MINER);
+        worker.assign(ProfessionType.LUMBERJACK);
 
         worker.giveUpProfession();
 
@@ -326,13 +326,13 @@ class ProfessionShunTest {
     void thePunishmentEndsAndTheProfessionComesBack() {
         Worker worker = aWorker();
 
-        worker.assign(ProfessionType.MINER);
+        worker.assign(ProfessionType.LUMBERJACK);
 
         worker.giveUpProfession();
 
         cyclesGoBy(worker, Worker.SHUN_CYCLES);
 
-        assertFalse(worker.isShunning(ProfessionType.MINER));
+        assertFalse(worker.isShunning(ProfessionType.LUMBERJACK));
     }
 
     /**
@@ -345,18 +345,18 @@ class ProfessionShunTest {
     void theSecondGiveUpLastsLongerThanTheFirst() {
         Worker worker = aWorker();
 
-        worker.assign(ProfessionType.MINER);
+        worker.assign(ProfessionType.LUMBERJACK);
         worker.giveUpProfession();
 
         cyclesGoBy(worker, Worker.SHUN_CYCLES);
 
-        worker.assign(ProfessionType.MINER);
+        worker.assign(ProfessionType.LUMBERJACK);
         worker.giveUpProfession();
 
         cyclesGoBy(worker, Worker.SHUN_CYCLES);
 
         assertTrue(
-                worker.isShunning(ProfessionType.MINER),
+                worker.isShunning(ProfessionType.LUMBERJACK),
                 "a segunda desistência venceu no mesmo prazo da primeira");
     }
 
@@ -409,5 +409,20 @@ class ProfessionShunTest {
         assertTrue(
                 worker.hasProfession(),
                 "vencidos os castigos, ele volta a ser contratável");
+    }
+
+    /** O mineiro não perde o ofício por desistência: o encalhe é da mina (ADR-039 item 6). */
+    @Test
+    void theMinerKeepsHisTradeAfterGivingUp() {
+        Worker worker = aWorker();
+        worker.assign(ProfessionType.MINER);
+
+        worker.rest(Capability.COLLECT_STONE);
+        worker.rest(Capability.COLLECT_STONE);
+        worker.rest(Capability.COLLECT_STONE);
+        worker.giveUpProfession();
+
+        assertEquals(java.util.Optional.of(ProfessionType.MINER), worker.profession(), "o mineiro largou o ofício");
+        assertFalse(worker.isShunning(ProfessionType.MINER), "o mineiro ganhou castigo no próprio ofício");
     }
 }

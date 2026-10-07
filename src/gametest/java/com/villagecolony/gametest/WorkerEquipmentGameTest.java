@@ -870,23 +870,23 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
         VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
 
         Worker worker = Worker.restore(
-                villager.getUuid(), UUID.randomUUID(), ProfessionType.MINER);
+                villager.getUuid(), UUID.randomUUID(), ProfessionType.LUMBERJACK);
 
         WorkerNameplate.label(context.getWorld(), List.of(worker));
 
         context.assertTrue(
                 villager.getCustomName() != null,
-                "a montagem falhou: o mineiro tinha de ter nome");
+                "a montagem falhou: o lenhador tinha de ter nome");
 
         // Ele larga o ofício — é o que o WorkerStrikes faz depois de três
-        // desistências na mesma capacidade.
+        // desistências na mesma capacidade. Lenhador: o mineiro não larga (ADR-039 item 6).
         worker.giveUpProfession();
 
         WorkerNameplate.label(context.getWorld(), List.of(worker));
 
         context.assertTrue(
                 villager.getCustomName() == null,
-                "o aldeão sem profissão continuou com a plaquinha de mineiro: "
+                "o aldeão sem profissão continuou com a plaquinha de lenhador: "
                         + villager.getCustomName());
 
         villager.discard();

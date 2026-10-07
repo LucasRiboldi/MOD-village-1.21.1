@@ -62,7 +62,8 @@ class HiringLogTest {
     void theCandidateBetweenTradesIsSaidSo() {
         Worker candidate = idle();
 
-        candidate.assign(ProfessionType.MINER);
+        // Lenhador: o mineiro não larga o ofício (ADR-039 item 6).
+        candidate.assign(ProfessionType.LUMBERJACK);
         candidate.giveUpProfession();
 
         ProfessionAssigner.vacancyFor(candidate, List.of(candidate), 7);
@@ -157,18 +158,19 @@ class HiringLogTest {
     void theShunnedCandidateIsToldApartFromAFullColony() {
         Worker candidate = idle();
 
-        gaveUpAndWaited(candidate, ProfessionType.MINER);
+        // Com um mineiro já contratado, a primeira vaga é a do lenhador que ele largou.
+        gaveUpAndWaited(candidate, ProfessionType.LUMBERJACK);
 
-        ProfessionAssigner.vacancyFor(candidate, List.of(candidate), 7);
+        ProfessionAssigner.vacancyFor(candidate, List.of(hired(ProfessionType.MINER), candidate), 7);
 
         assertEquals(
                 1,
-                HiringLog.countOf(COLONY, ProfessionType.MINER, HiringLog.Outcome.SHUNNED),
+                HiringLog.countOf(COLONY, ProfessionType.LUMBERJACK, HiringLog.Outcome.SHUNNED),
                 "o castigo do candidato não foi registrado");
 
         assertEquals(
                 0,
-                HiringLog.countOf(COLONY, ProfessionType.MINER, HiringLog.Outcome.AT_TARGET),
+                HiringLog.countOf(COLONY, ProfessionType.LUMBERJACK, HiringLog.Outcome.AT_TARGET),
                 "castigo foi contado como 'no alvo', e os dois pedem consertos opostos");
     }
 
@@ -190,19 +192,19 @@ class HiringLogTest {
     void theSameCaseNeverYieldsBothOutcomes() {
         Worker shunned = idle();
 
-        gaveUpAndWaited(shunned, ProfessionType.MINER);
+        gaveUpAndWaited(shunned, ProfessionType.LUMBERJACK);
 
-        ProfessionAssigner.vacancyFor(shunned, List.of(shunned), 7);
+        ProfessionAssigner.vacancyFor(shunned, List.of(hired(ProfessionType.MINER), shunned), 7);
 
         int punished =
-                HiringLog.countOf(COLONY, ProfessionType.MINER, HiringLog.Outcome.SHUNNED);
+                HiringLog.countOf(COLONY, ProfessionType.LUMBERJACK, HiringLog.Outcome.SHUNNED);
 
         int atTarget =
-                HiringLog.countOf(COLONY, ProfessionType.MINER, HiringLog.Outcome.AT_TARGET);
+                HiringLog.countOf(COLONY, ProfessionType.LUMBERJACK, HiringLog.Outcome.AT_TARGET);
 
         assertEquals(1, punished, "o candidato de castigo não foi contado como tal");
 
-        // A vaga do mineiro ESTÁ aberta — sete adultos, ninguém empregado.
+        // A vaga do lenhador ESTÁ aberta — sete adultos, ninguém empregado.
         // Contá-la como "no alvo" é a colisão que este teste existe para
         // impedir, e mandaria o conserto para a conta da população em vez
         // de para o castigo.
@@ -270,28 +272,25 @@ class HiringLogTest {
     }
 
     /**
-     * Fundação completa (sete, com o carpinteiro desde 2026-09-30) e
-     * dezesseis adultos: abrem o segundo mineiro e o fazendeiro. O
-     * candidato largou a mineração, então o castigo é dito e o fazendeiro,
-     * que vem depois na ordem, é preenchido.
+     * Fundação completa e dezesseis adultos: abrem o segundo mineiro e o
+     * fazendeiro. Quem largou a lenha (o mineiro não larga o ofício, ADR-039
+     * item 6) fica com o primeiro da ordem, o segundo mineiro.
      */
     @Test
-    void pastTheFoundationTheShunIsSaidAndTheNextTradeIsFilled() {
+    void pastTheFoundationTheFormerLumberjackFillsTheSecondMiner() {
         Worker candidate = idle();
 
-        gaveUpAndWaited(candidate, ProfessionType.MINER);
+        gaveUpAndWaited(candidate, ProfessionType.LUMBERJACK);
 
         List<Worker> colony = new ArrayList<>(foundationFilled());
         colony.add(candidate);
 
         assertEquals(
-                Optional.of(ProfessionType.FARMER),
+                Optional.of(ProfessionType.MINER),
                 ProfessionAssigner.vacancyFor(candidate, colony, 16));
 
         assertEquals(1, HiringLog.countOf(
-                COLONY, ProfessionType.MINER, HiringLog.Outcome.SHUNNED));
-        assertEquals(1, HiringLog.countOf(
-                COLONY, ProfessionType.FARMER, HiringLog.Outcome.FILLED));
+                COLONY, ProfessionType.MINER, HiringLog.Outcome.FILLED));
     }
 
     /** Todos no alvo: o "sem vaga" é dito, e não calado. */
