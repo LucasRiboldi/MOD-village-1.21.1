@@ -7,14 +7,13 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.0%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.1%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
-Download: [village-colony-0.3.0.jar](downloads/village-colony-0.3.0.jar?raw=1)
-
-SHA-256 do JAR publicado nesta árvore:
-`923D9769872295F99F5B160ACAFF39695174C9D418CCFAD32C73E8BEDC2940C0`.
+Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases)
+do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
+SHA-256 do JAR na descrição.
 
 ## O que o mod faz
 
