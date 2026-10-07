@@ -210,7 +210,7 @@ de estrada sao `dirt_path`, `gravel` e `terracotta`, mas so bloqueiam quando
 pertencem a `ROAD_AREA`. O footprint inteiro e recusado ao tocar estrada,
 protecao ou construcao existente. `build` e 327/327 GameTests passaram; o JAR
 foi atualizado na entrega P0.7 e o artefato atual e registrado em
-`docs/proxima-sessao.md`. Ver ADR-017.
+`docs/archive/technical/proxima-sessao-2026-10-04.md`. Ver ADR-017.
 
 
 ## P1 — Estabilizar comportamento

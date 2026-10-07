@@ -1,3 +1,5 @@
+> **HISTÓRICO** — arquivado em 2026-10-07. O roteiro do próximo playtest está no `STATE.md`.
+
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
 **Atualização de 2026-10-04 — JAR `EEE5A695...6DD39`, commit `43f13978`.** O

@@ -32,7 +32,7 @@ regra que foi emendada. O corpo de cada regra vive em
 | 11 | Uma de cada profissão em cada vila | 08-15 | ✅ feita | `ProfessionAssigner`, `ProfessionFloorTest` |
 | 12 | O centro fica em bloco que existe | 08-15 | ✅ feita | `VillageDetector.evaluate` |
 | 13 | A obra é uma que a colônia consiga fazer | 08-15 | ✅ feita | `ColonyHut` (aposentada pela 27) |
-| 14 | O construtor alcança o alto da obra | 08-18 | ✅ feita | `BuilderWork.isWithinReach` |
+| 14 | O construtor alcança o alto da obra — desde a ADR-037 B1, de qualquer lugar da zona da obra (pegada + 4) | 08-18 | ✅ feita | `BuilderApproach.isWithinReach`, `BuilderApproach.isInsideZone` |
 | 15 | A estrada cresce com a vila | 08-18 | ✅ feita | `RoadExtension` |
 | 16 | Cada casa com espaço em volta | 08-18 | ⚠️ parcial | volume no `BuildSiteScanner` |
 | 17 | A casa com uma lateral na estrada | 08-19 | ✅ feita | `Blueprint.doorSide`, `rotated` |

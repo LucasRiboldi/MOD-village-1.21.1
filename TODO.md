@@ -584,7 +584,7 @@ ja coberta antes da sessao). Task 14 (verificacao + playtests): a parte
 automatizada fechou verde — `gradlew test` 992/992, `gradlew build`
 sucesso, `runGametest --rerun-tasks` 423/423 GAME TESTS COMPLETE. O JAR
 0.3.0 foi publicado por decisao do autor antes dos playtests confirmarem
-(ver `docs/proxima-sessao.md`); este playtest de 24-09 e o primeiro
+(ver `docs/archive/technical/proxima-sessao-2026-10-04.md`); este playtest de 24-09 e o primeiro
 resultado real contra ele.
 
 ## Auditoria de simulação e menu de diagnóstico - 2026-09-26
@@ -996,7 +996,7 @@ automatizado; nenhum foi visto em jogo.
   observed user confirmation") e do que esta mesma entrega recomendava
   horas antes; registrado aqui para honestidade, nao como o caminho
   normal. Os cinco itens de playtest continuam sem confirmacao e devem
-  ser verificados assim que possivel — ver `docs/proxima-sessao.md`.
+  ser verificados assim que possivel — ver `docs/archive/technical/proxima-sessao-2026-10-04.md`.
 
 **Atualizado:** 2026-09-24, peca de construcao sem apoio mantida pendente.
 
@@ -1755,7 +1755,7 @@ Em ordem do que mais precisa ser visto.
 - **Assinaturas de defeito:** [`docs/PATTERNS.md`](docs/PATTERNS.md)
 - **Regras do autor:** [`docs/RULES.md`](docs/RULES.md)
 - **Estado detalhado (histórico):** [`docs/archive/technical/Project-State.md`](docs/archive/technical/Project-State.md)
-- **Próxima sessão de jogo:** [`docs/proxima-sessao.md`](docs/proxima-sessao.md)
+- **Próxima sessão de jogo:** [`docs/archive/technical/proxima-sessao-2026-10-04.md`](docs/archive/technical/proxima-sessao-2026-10-04.md)
 - **Responsabilidade das profissões:** [`docs/technical/Profession-Responsibility.md`](docs/technical/Profession-Responsibility.md)
 - **Regressões catalogadas:** [`docs/behavioral-tests/REGRESSION-HISTORY.md`](docs/behavioral-tests/REGRESSION-HISTORY.md)
 - **Falhas conhecidas:** [`docs/behavioral-tests/known-failures.md`](docs/behavioral-tests/known-failures.md)
