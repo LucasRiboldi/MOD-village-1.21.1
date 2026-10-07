@@ -420,9 +420,12 @@ public class SmelterGameTest implements FabricGameTest {
                         .flatMap(entry -> MineMouth.chestAt(world, entry))
                         .orElse(null);
 
+                // A mensagem diz o que foi visto: o KF-003 ainda não tem causa.
                 context.assertTrue(
                         context.getAbsolutePos(mouthChest).equals(reached),
-                        "a leitura histórica não chegou ao baú do cenário");
+                        "a leitura histórica não chegou ao baú do cenário: mina="
+                                + VillageColonyMod.MINES.of(colony.id()).map(mine -> mine.shaft().entry())
+                                + ", baú achado=" + reached);
 
                 // Segunda metade: a colônia o enxerga, pela mesma lista
                 // que o ciclo usa. Montar uma lista à parte aqui faria o
