@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.WorldChunk;
@@ -149,6 +150,49 @@ public final class VillageTrees {
         }
 
         set.add(at.toImmutable());
+    }
+
+    /** As árvores e mudas conhecidas, para o save — ADR-039 C. */
+    public static NbtCompound save() {
+        NbtCompound nbt = new NbtCompound();
+
+        TREES.forEach((colony, set) -> entry(nbt, colony).putLongArray("trees", pack(set)));
+        SAPLINGS.forEach((colony, set) -> entry(nbt, colony).putLongArray("saplings", pack(set)));
+
+        return nbt;
+    }
+
+    /** Devolve o que o save guardou. */
+    public static void load(NbtCompound nbt) {
+        for (String key : nbt.getKeys()) {
+            UUID colony = WorkMemoryKeys.uuid(key);
+
+            if (colony == null) {
+                continue;
+            }
+
+            for (long at : nbt.getCompound(key).getLongArray("trees")) {
+                add(TREES, colony, BlockPos.fromLong(at));
+            }
+
+            for (long at : nbt.getCompound(key).getLongArray("saplings")) {
+                add(SAPLINGS, colony, BlockPos.fromLong(at));
+            }
+        }
+    }
+
+    private static NbtCompound entry(NbtCompound nbt, UUID colony) {
+        String key = colony.toString();
+
+        if (!nbt.contains(key)) {
+            nbt.put(key, new NbtCompound());
+        }
+
+        return nbt.getCompound(key);
+    }
+
+    private static long[] pack(Set<BlockPos> set) {
+        return set.stream().mapToLong(BlockPos::asLong).toArray();
     }
 
     /** Para o teste: a colônia em forma de posição. */

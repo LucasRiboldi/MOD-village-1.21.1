@@ -93,6 +93,46 @@ public final class MineClaims {
     private MineClaims() {
     }
 
+    /** Quem cava cada ramal, para o save — ADR-039 C. */
+    static net.minecraft.nbt.NbtCompound save() {
+        net.minecraft.nbt.NbtCompound nbt = new net.minecraft.nbt.NbtCompound();
+
+        DIGGERS.forEach((colony, taken) -> {
+            net.minecraft.nbt.NbtCompound arms = new net.minecraft.nbt.NbtCompound();
+
+            for (int index = 0; index < taken.length; index++) {
+                if (taken[index] != null) {
+                    arms.putUuid(Integer.toString(index), taken[index]);
+                }
+            }
+
+            nbt.put(colony.toString(), arms);
+        });
+
+        return nbt;
+    }
+
+    static void load(net.minecraft.nbt.NbtCompound nbt) {
+        for (String key : nbt.getKeys()) {
+            UUID colony = com.villagecolony.fabric.integration.WorkMemoryKeys.uuid(key);
+
+            if (colony == null) {
+                continue;
+            }
+
+            UUID[] taken = new UUID[Mine.ARMS];
+            net.minecraft.nbt.NbtCompound arms = nbt.getCompound(key);
+
+            for (int index = 0; index < taken.length; index++) {
+                if (arms.containsUuid(Integer.toString(index))) {
+                    taken[index] = arms.getUuid(Integer.toString(index));
+                }
+            }
+
+            DIGGERS.put(colony, taken);
+        }
+    }
+
     /**
      * Se este mineiro pode cavar a mina desta colônia agora.
      *

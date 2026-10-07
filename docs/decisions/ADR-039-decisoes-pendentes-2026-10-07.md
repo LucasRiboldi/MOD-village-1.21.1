@@ -10,7 +10,7 @@
 | # | Decisão |
 |---|---|
 | A1 | Buscar alternativas de correção para os testes intermitentes (KF-003) |
-| C | Listar as memórias que podem ir para o save, para o autor escolher |
+| C | Listar as memórias que podem ir para o save, para o autor escolher. **Escolha:** 1 árvores e mudas, 2 colunas de coleta, 3 veio e rastro, 4 ramais reservados, 5 vez do adiantamento, 7 coletas do pastor; a 6 (espera depois de busca vazia) fica fora |
 | D1 | Carpinteiro adianta peças |
 | D2 | Construtor calça o caminho até a obra |
 | D3 | Ramais rumo ao minério que a vila precisa |
@@ -36,6 +36,7 @@
 | F2 | `da5a1cb0`, `1a31ae07` | O `Barn_Majest.nbt` da branch (diferente do em uso) foi para `docs/archive/structures/`; o `Storage_Majest.nbt` era idêntico. A branch entrou na história por merge sem trazer os arquivos: nome com maiúscula não vale no jogo e colide no Windows | — |
 | F3 | — | `codex/village-visuals-logistics-mine-sweep` já estava inteira na `main` (0 commits à frente) | — |
 | E3, E4 | — | Confirmados: nada muda | — |
+| C | `3bbb8f68` | Arquivo `villagecolony_memory` (`WorkMemorySavedData`), uma seção por memória escolhida, montado e lido por `WorkMemory`; lido depois das minas | `WorkMemoryGameTest`, mutação pega. **Não verificado:** fechar e abrir um mundo de verdade |
 
 ## Números do agente (para revisar)
 

@@ -2,6 +2,8 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.ServerMemory;
+import com.villagecolony.fabric.integration.WorkMemoryKeys;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.HashMap;
@@ -38,6 +40,37 @@ final class SurfaceHits {
 
     static void clearAll() {
         HITS.clear();
+    }
+
+    /** As colunas lembradas, para o save — ADR-039 C. Chave {@code colônia|RECURSO}. */
+    static NbtCompound save() {
+        NbtCompound nbt = new NbtCompound();
+
+        HITS.forEach((key, columns) -> nbt.putLongArray(key.colonyId() + "|" + key.resource().name(),
+                columns.stream().mapToLong(BlockPos::asLong).toArray()));
+
+        return nbt;
+    }
+
+    static void load(NbtCompound nbt) {
+        for (String key : nbt.getKeys()) {
+            int bar = key.indexOf('|');
+            UUID colony = bar > 0 ? WorkMemoryKeys.uuid(key.substring(0, bar)) : null;
+
+            if (colony == null) {
+                continue;
+            }
+
+            try {
+                ResourceType resource = ResourceType.valueOf(key.substring(bar + 1));
+
+                for (long at : nbt.getLongArray(key)) {
+                    remember(colony, resource, BlockPos.fromLong(at));
+                }
+            } catch (IllegalArgumentException gone) {
+                // Recurso que deixou de existir numa versão nova: a coluna fica de fora.
+            }
+        }
     }
 
     /** Achou o recurso nesta posição: a coluna dela entra na memória. */

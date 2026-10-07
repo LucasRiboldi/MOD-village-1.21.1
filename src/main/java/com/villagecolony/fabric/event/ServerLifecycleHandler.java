@@ -137,6 +137,11 @@ public final class ServerLifecycleHandler {
             VillageColonyMod.MINES.restore(mine);
         }
 
+        // As memórias de trabalho escolhidas pelo autor — ADR-039 C. Depois das
+        // minas: o veio e o rastro voltam presos ao ramal de cada uma.
+        com.villagecolony.fabric.work.WorkMemory.load(
+                com.villagecolony.data.save.WorkMemorySavedData.get(server).memory());
+
         // E o traço de atividade de cada colônia — decisão 7B,
         // 2026-09-24. newestFirst() devolve do mais novo para o mais
         // velho; restore() espera essa mesma ordem para reconstruir o
@@ -299,6 +304,9 @@ public final class ServerLifecycleHandler {
                         storage.workerId(),
                         storage.chestPosition().x(), storage.chestPosition().y(), storage.chestPosition().z()))
                 .toList());
+
+        com.villagecolony.data.save.WorkMemorySavedData.get(server)
+                .sync(com.villagecolony.fabric.work.WorkMemory.save());
 
         return new CopyCounts(roads.size(), sweeps.size(), openProjects().size());
     }
