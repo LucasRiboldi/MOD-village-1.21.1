@@ -34,6 +34,7 @@
       "com.villagecolony.fabric.work.MineOreHeadingGameTest",
       "com.villagecolony.fabric.work.WorkMemoryGameTest",
       "com.villagecolony.fabric.work.BiomePiecesGameTest",
+      "com.villagecolony.fabric.work.MineSurfaceGameTest",
       "com.villagecolony.gametest.ProfessionReviewGameTest",
       "com.villagecolony.fabric.work.MinerHaulCapGameTest",
       "com.villagecolony.gametest.VillageForestGameTest",
