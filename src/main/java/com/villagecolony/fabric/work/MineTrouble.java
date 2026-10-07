@@ -232,14 +232,45 @@ public final class MineTrouble {
     }
 
     /**
+     * No fundo do mundo a mina não para: anda para longe do centro da vila e
+     * sobe em rampa até a altura do centro — ADR-036 item 17.
+     *
+     * @return se virou rampa; a rampa já feita, ou sem altura para subir, não
+     */
+    public static boolean climbOutAtBottom(UUID colonyId, Mine mine, BlockPos center) {
+        if (mine.shaft().isRamp()) {
+            return false;
+        }
+
+        ColonyPos floor = mine.shaft().hallFloor();
+        int steps = Math.min(MAX_RAMP_STEPS, center.getY() - floor.y());
+
+        if (steps <= 0) {
+            return false;
+        }
+
+        Side away = Side.awayFrom(MinecraftTypeAdapter.toColonyPos(center), floor, mine.shaft().descent());
+
+        mine.climbOut(floor, away, steps);
+
+        VillageColonyMod.LOGGER.info("Mine {} reached the world bottom and climbs out {} — a ramp of {} steps from {}",
+                colonyId, away, steps, MinecraftTypeAdapter.toBlockPos(floor).toShortString());
+
+        return true;
+    }
+
+    /** O teto da rampa: a altura do mundo inteiro, de rocha-mãe ao céu. */
+    static final int MAX_RAMP_STEPS = 384;
+
+    /**
      * O fundo não reaproveita a mesma abertura: em vila fundada na água,
      * tenta antes a descida selada; nos demais casos o ciclo começa no lado
-     * oposto da vila.
+     * oposto da vila — ou, depois da rampa, no lado para onde ela subiu.
      */
     public static boolean abandonAtBottom(
             ServerWorld world, UUID colonyId, Mine mine, BlockPos center) {
 
-        Side opposite = mine.shaft().descent().opposite();
+        Side opposite = mine.shaft().isRamp() ? mine.shaft().descent() : mine.shaft().descent().opposite();
 
         Optional<WaterMineAccess.Route> waterAccess = WaterMineAccess.find(world, center, opposite);
         if (waterAccess.isPresent() && waterAccess.get().place(world)) {

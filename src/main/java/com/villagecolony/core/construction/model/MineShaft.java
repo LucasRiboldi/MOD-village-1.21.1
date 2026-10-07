@@ -12,8 +12,13 @@ import java.util.Objects;
  * 10 x 10 x 3 e então libera quatro ramais. Cada ramal desce dez
  * degraus e limpa outro salão. A ordem não usa sorteio de
  * execução: o cursor salvo sempre volta à mesma posição.
+ *
+ * <p><b>A rampa</b> ({@code ascent > 0}) é o fim da mina no fundo do mundo —
+ * ADR-036 item 17: a partir do piso do salão ({@code entry}), {@code ascent}
+ * degraus de três pistas por três alturas, um para a frente e um para cima,
+ * no rumo {@code descent} (para longe do centro da vila). Um ramal só.
  */
-public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
+public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent) {
 
     /** Dois lances formam cada ciclo de descida. */
     public static final int HELIX_FLIGHTS = 2;
@@ -66,6 +71,33 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
         Objects.requireNonNull(entry, "entry");
         Objects.requireNonNull(descent, "descent");
         Objects.requireNonNull(gallery, "gallery");
+
+        if (ascent < 0) {
+            throw new IllegalArgumentException("Ascent must be non-negative: " + ascent);
+        }
+    }
+
+    /** Um nível que desce. */
+    public MineShaft(ColonyPos entry, Side descent, Side gallery) {
+        this(entry, descent, gallery, 0);
+    }
+
+    /** A rampa de {@code steps} degraus que sobe do piso {@code floor} rumo a {@code away}. */
+    public static MineShaft ramp(ColonyPos floor, Side away, int steps) {
+        if (steps <= 0) {
+            throw new IllegalArgumentException("A ramp needs at least one step: " + steps);
+        }
+
+        return new MineShaft(floor, away, away, steps);
+    }
+
+    public boolean isRamp() {
+        return ascent > 0;
+    }
+
+    /** O piso do salão deste nível, de onde a rampa do fundo parte. */
+    public ColonyPos hallFloor() {
+        return isRamp() ? entry : levelFloor();
     }
 
     /** Abre a escada e posiciona o primeiro ramal à direita da entrada. */
@@ -75,12 +107,12 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
 
     /** A mesma escada, com o próximo ramal em sentido horário. */
     public MineShaft turned() {
-        return new MineShaft(entry, descent, gallery.clockwise());
+        return new MineShaft(entry, descent, gallery.clockwise(), ascent);
     }
 
     /** Tenta a mesma boca com o caracol orientado para o próximo lado. */
     public MineShaft rerouted() {
-        return from(entry, descent.clockwise());
+        return isRamp() ? ramp(entry, descent.clockwise(), ascent) : from(entry, descent.clockwise());
     }
 
     /** O próximo nível começa no piso central desta escada. */
@@ -90,13 +122,17 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
 
     /** Não propõe posições abaixo da faixa minerável do mundo. */
     public boolean mayDeepen() {
-        return deepened().lowestPlannedY() >= MINEABLE_BOTTOM;
+        return !isRamp() && deepened().lowestPlannedY() >= MINEABLE_BOTTOM;
     }
 
     /** A posição da ordem de escavação. */
     public ColonyPos positionAt(int index) {
         if (index < 0) {
             throw new IllegalArgumentException("Index must be non-negative: " + index);
+        }
+
+        if (isRamp()) {
+            return rampCell(index);
         }
 
         if (index < CARVED) {
@@ -126,8 +162,9 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
      */
     public java.util.Set<ColonyPos> plannedCells() {
         java.util.Set<ColonyPos> cells = new java.util.HashSet<>();
+        int planned = isRamp() ? ascent * STAIR_STEP_BLOCKS : SHARED_BLOCKS + ARM_BLOCKS;
 
-        for (int index = 0; index < SHARED_BLOCKS + ARM_BLOCKS; index++) {
+        for (int index = 0; index < planned; index++) {
             cells.add(positionAt(index));
         }
 
@@ -136,7 +173,21 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
 
     /** Cada ramal tem exatamente sua escada e sua área finitas. */
     public boolean beyondTheArm(int index) {
-        return index >= SHARED_BLOCKS + ARM_BLOCKS;
+        return index >= (isRamp() ? ascent * STAIR_STEP_BLOCKS : SHARED_BLOCKS + ARM_BLOCKS);
+    }
+
+    /** O degrau da rampa: pés em {@code entry.y + degrau}, um à frente por degrau. */
+    private ColonyPos rampCell(int index) {
+        int step = index / STAIR_STEP_BLOCKS + 1;
+        int within = index % STAIR_STEP_BLOCKS;
+        int lane = within / STAIR_HEADROOM;
+        int layer = within % STAIR_HEADROOM;
+        Side sideways = descent.clockwise().opposite();
+
+        return new ColonyPos(
+                entry.x() + descent.offsetX() * step + sideways.offsetX() * lane,
+                entry.y() + step + layer,
+                entry.z() + descent.offsetZ() * step + sideways.offsetZ() * lane);
     }
 
     private ColonyPos helix(int index) {

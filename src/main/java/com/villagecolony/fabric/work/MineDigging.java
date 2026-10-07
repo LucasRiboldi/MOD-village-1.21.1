@@ -171,6 +171,12 @@ public final class MineDigging {
             }
 
             if (advance == Mine.LevelAdvance.EXHAUSTED) {
+                if (MineTrouble.climbOutAtBottom(colonyId, mine.get(), center)) {
+                    IdleLog.clear(colonyId, ARM_SUBJECT);
+
+                    return Optional.empty();
+                }
+
                 if (!MineBottomRetry.isDue(colonyId, world.getTime())) {
                     return Optional.empty();
                 }

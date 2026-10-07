@@ -66,6 +66,12 @@ final class MineSave {
     private static final String ARCH = "arch";
 
     /**
+     * Degraus da rampa do fundo — ADR-036 item 17. Ausente é zero, a mina que
+     * desce: a geometria da descida não muda, e o {@code SHAPE_VERSION} fica.
+     */
+    private static final String ASCENT = "ascent";
+
+    /**
      * Qual geometria de mina escreveu esta fronteira — 2026-08-27.
      *
      * <p>{@code cut} é um indice na ordem de cavar do {@code MineShaft},
@@ -127,6 +133,7 @@ final class MineSave {
             entry.putIntArray(CUTS, cuts);
             entry.putInt(SHAPE, SHAPE_VERSION);
             entry.putBoolean(ARCH, mine.archRaised());
+            entry.putInt(ASCENT, mine.shaft().ascent());
 
             list.add(entry);
         }
@@ -209,7 +216,7 @@ final class MineSave {
 
             Mine mine = Mine.restore(
                     colonyId,
-                    new MineShaft(entrance, descent.get(), gallery.get()),
+                    new MineShaft(entrance, descent.get(), gallery.get(), Math.max(0, entry.getInt(ASCENT))),
                     cuts);
 
             // Sem chave, getBoolean devolve falso e a abertura permanece

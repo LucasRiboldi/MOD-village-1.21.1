@@ -15,6 +15,7 @@
       "com.villagecolony.gametest.ChestSlotCapGameTest",
       "com.villagecolony.fabric.work.StoragePriorityGameTest",
       "com.villagecolony.fabric.work.BedTeleportGameTest",
+      "com.villagecolony.fabric.work.MineRampGameTest",
       "com.villagecolony.gametest.ProfessionReviewGameTest",
       "com.villagecolony.fabric.work.MinerHaulCapGameTest",
       "com.villagecolony.gametest.VillageForestGameTest",
