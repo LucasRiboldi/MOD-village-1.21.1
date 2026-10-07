@@ -141,6 +141,26 @@ public final class ProfessionChestOverflowGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** O destino também obedece ao teto de três compartimentos por item (ADR-036 9). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "profession_chest_overflow")
+    public void theCommunityChestTakesAtMostThreeSlotsOfOneItem(TestContext context) {
+        ChestBlockEntity source = chest(context, SOURCE);
+        ChestBlockEntity community = chest(context, COMMUNITY);
+        for (int slot = 0; slot < source.size(); slot++) {
+            source.setStack(slot, new ItemStack(Items.COBBLESTONE, 64));
+        }
+
+        int moved = ProfessionChestOverflow.relieve(context.getWorld(),
+                List.of(position(context, SOURCE), position(context, COMMUNITY)),
+                Set.of(position(context, SOURCE)));
+
+        context.assertTrue(moved == 3 * 64,
+                "moveu " + moved + "; o baú comunitário só abre 3 compartimentos de pedregulho");
+        context.assertTrue(count(community, Items.COBBLESTONE) == 3 * 64,
+                "o baú comunitário ficou com " + count(community, Items.COBBLESTONE));
+        context.complete();
+    }
+
     private static ChestBlockEntity chest(TestContext context, BlockPos relative) {
         context.setBlockState(relative, Blocks.CHEST.getDefaultState());
         return (ChestBlockEntity) context.getBlockEntity(relative);

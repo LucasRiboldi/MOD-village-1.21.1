@@ -85,6 +85,7 @@ Preenchido a cada item aplicado.
 | 6 | `dcaed4ac`, `afce8d76` | 4 tentativas no baú da profissão; 5ª falha ao pôr pula; barreira removida |
 | 8 | `18c1bef5` | estoque do pedreiro; pedido nominal protegido no ciclo |
 | 9a | este commit | teto de 3 compartimentos por item no depósito e na leitura; baú nomeado sem teto; 615/615 ×3 |
+| 9b/9c | este commit | alívio dos 10 últimos compartimentos respeita o teto no destino; sem baú livre a colônia fica marcada e a próxima obra é o `storage_majest` (prova por mutação); 617/617 ×3. Conflitos para o item 7: o armazém de emergência da mina (Codex) continua como socorro até o armazém subir; o teto de 256 por tipo do mineiro (`MinerHaul.TYPE_CAP`, 4 compartimentos) fica abaixo do novo teto de 3 compartimentos e na prática vale 192 |
 | 10 | `a3cbe44e` | vila abandonada para; dispensa provada por mutação |
 | 11 | `1bb32380` | foco com 1 minuto de presença |
 | 12 | fora do repositório | dados do mod apagados do "Novo mundo", backup em `.minecraft/saves-backup` |

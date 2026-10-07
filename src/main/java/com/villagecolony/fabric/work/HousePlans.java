@@ -10,6 +10,7 @@ import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.fabric.integration.ProfessionChestOverflow;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.VillageStructures;
 import com.villagecolony.fabric.integration.VillageBiomes;
@@ -273,6 +274,14 @@ public final class HousePlans {
 
         int beds = effectiveBedsForPriority(colony.id(), adults, colony.observedBeds());
         String previous = lastNonHouseType(buildings).orElse("");
+
+        // Sem baú livre na vila, o armazém vem antes de tudo — ADR-036 9.
+        if (ProfessionChestOverflow.needsStorage(colony.id())) {
+            List<Blueprint> storage = StoragePlans.forColony(world, colony, buildings);
+            if (!storage.isEmpty()) {
+                return storage;
+            }
+        }
 
         // A casa do ofício que falta, sem falta de cama — Regra 49. Sem planta
         // de oficina possível agora, o rodízio de sempre segue.
