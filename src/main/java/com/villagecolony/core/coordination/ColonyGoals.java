@@ -431,10 +431,13 @@ public final class ColonyGoals {
                 stoneRoom > 0 ? owned.amountOfGroup(stone.group()) + stoneRoom : 0));
 
         // O pedreiro não fica parado (ADR-036 8), cinco de cada peça por vez (ADR-038 P5b).
-        AdvanceStock.addTo(goals, colony.id(), MasonStock.piecesFor(stone), owned::amountOf);
-        // O fundidor e o carpinteiro também, cada um no seu ciclo — ADR-038 P2a, ADR-039 D1.
-        AdvanceStock.addTo(goals, colony.id(), "smelter", AdvanceStock.SMELTER_PIECES, owned::amountOf);
-        AdvanceStock.addTo(goals, colony.id(), "carpenter", AdvanceStock.CARPENTER_PIECES, owned::amountOf);
+        AdvanceStock.addTo(goals, colony.id(),
+                AdvanceStock.piecesFor(colony.id(), "mason", MasonStock.piecesFor(stone)), owned::amountOf);
+        // O fundidor e o carpinteiro também, cada um no seu ciclo, com as peças do bioma (ADR-039 4).
+        for (String lane : java.util.List.of("smelter", "carpenter")) {
+            AdvanceStock.addTo(goals, colony.id(), lane, AdvanceStock.piecesFor(colony.id(), lane,
+                    lane.equals("smelter") ? AdvanceStock.SMELTER_PIECES : AdvanceStock.CARPENTER_PIECES), owned::amountOf);
+        }
 
         // A despensa — 2026-08-27, e por cama desde 2026-09-05. Qualquer
         // lavoura conta, pelo grupo. O piso continua valendo para a

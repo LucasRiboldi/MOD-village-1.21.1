@@ -109,6 +109,23 @@ public final class ColonySupply {
     }
 
     /**
+     * O mesmo, com o produto indo para {@code output} — ADR-038 P3c: carpinteiro
+     * e pedreiro usam material de todos os baús da vila e guardam o que fazem no
+     * baú da profissão. Cheio, o produto vai ao baú da vila com lugar.
+     */
+    public static boolean stockToward(
+            ServerWorld world, UUID colonyId, ColonyPos near, Item item, int target, ColonyPos output) {
+
+        List<ColonyPos> chests = new java.util.ArrayList<>(ColonyChests.nearestFirst(world, colonyId, near));
+
+        chests.remove(output);
+        chests.add(0, output);
+
+        return ColonyChests.countIn(world, chests, item) >= target
+                || craft(world, chests, item);
+    }
+
+    /**
      * A colônia tem, ou consegue fazer, este item? Sem tirar nada.
      *
      * <p>Precisa concordar com {@link #take}: uma que dissesse "tem" e

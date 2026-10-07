@@ -268,25 +268,25 @@ class WorkerTest {
     @Test
     void theTallyOfAbandonedTradesRemembersFor128Cycles() {
         Worker within = Worker.register(VILLAGER, COLONY);
-        within.assign(ProfessionType.MINER);
+        within.assign(ProfessionType.LUMBERJACK);
         within.giveUpProfession();
         cycles(within, 127);
-        within.assign(ProfessionType.MINER);
+        within.assign(ProfessionType.LUMBERJACK);
         within.giveUpProfession();
         cycles(within, Worker.SHUN_CYCLES);
 
-        assertTrue(within.isShunning(ProfessionType.MINER),
+        assertTrue(within.isShunning(ProfessionType.LUMBERJACK),
                 "a segunda desistência na janela devia dobrar o castigo");
 
         Worker after = Worker.register(UUID.randomUUID(), COLONY);
-        after.assign(ProfessionType.MINER);
+        after.assign(ProfessionType.LUMBERJACK);
         after.giveUpProfession();
         cycles(after, 128);
-        after.assign(ProfessionType.MINER);
+        after.assign(ProfessionType.LUMBERJACK);
         after.giveUpProfession();
         cycles(after, Worker.SHUN_CYCLES);
 
-        assertFalse(after.isShunning(ProfessionType.MINER),
+        assertFalse(after.isShunning(ProfessionType.LUMBERJACK),
                 "passada a janela, a contagem recomeça e o castigo é o de base");
     }
 

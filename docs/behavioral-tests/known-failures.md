@@ -5,6 +5,12 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ---
 
+## KF-004 — `LumberjackGameTest.theStallGuardReturnsTheTaskAndForgetsTheTree` caiu uma vez
+
+**ABERTO.** 07-10, tarde: 1 queda em ~6 baterias ("o guarda devolveu a tarefa e não esqueceu a
+árvore"), nas outras passou; a mudança da hora (mineiro não larga o ofício) não toca o lenhador.
+Medir com o script antes de investigar.
+
 ## KF-003 — duas intermitentes de fabricação vistas em 2026-10-06
 
 > **Causa achada em 07-10 (ADR-039 A1, `1e55cb9e`):** o tique do servidor de teste rodava a fusão
@@ -65,6 +71,10 @@ derrubou `BuildSite` e `Lumberjack`. Teste novo vai para um lote que já existe.
 ---
 
 ## KF-002 — o aldeão de coleta some entre o `spawnEntity` e o tique 1
+
+> **07-10:** não reapareceu em ~27 baterias. Causa provável: o cenário fica a 65–97 blocos da
+> arena, em terreno sorteado. Correção recomendada na ADR-039 (item 2): cenário dentro da arena.
+> Medir com `python scripts/gametest_battery.py 30`.
 
 **ABERTO.** Medido em **2026-09-16**, commit `c76b96b`, mesma máquina, mesma
 sessão.

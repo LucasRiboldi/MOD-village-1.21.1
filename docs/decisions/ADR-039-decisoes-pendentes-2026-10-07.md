@@ -43,3 +43,34 @@
 `MineOreHeading.COAL_WANTED = 32`, `IRON_WANTED = 16`, `KEEP_TICKS = 200`; `WorkPath.STEPS_PER_CYCLE = 4`,
 `MAX_GAP = 24`; `AdvanceStock.CARPENTER_PIECES` só de carvalho (vila de outra madeira cede a vez
 pela paciência do adiantamento).
+
+## Segunda rodada (07-10, tarde)
+
+| # | Decisão do autor | Commit | Verificado |
+|---|---|---|---|
+| 1 | Não existe profissão "artesão" (era o nome do agente para carpinteiro e pedreiro). A P3c vale: o produto vai para o **baú da profissão** de quem fez | `5c2e964a` | `thePieceGoesToTheProfessionChest`, mutação pega |
+| 4 | **Toda profissão se adequa ao bioma.** O adiantamento de carpinteiro, pedreiro e fundidor segue as peças das casas do estilo da vila (`BiomePieces`), mais usadas primeiro; pinheiro e acácia ganham escada, laje e cerca | `b99fe1d4` | `BiomePiecesGameTest`, mutação pega |
+| 5 | Peça sem rota e sem baú: depois de algumas tentativas aparece no baú de quem precisa | — | já em vigor (`BiomeConstructionSupply`, 4 tentativas, baú do construtor) |
+| 6 | O mineiro **não perde o ofício** | `2a779c9e` | `theMinerKeepsHisTradeAfterGivingUp`, mutação pega |
+| 7 | O que é antigo fica antigo; as mudanças valem daqui para frente | — | casas antigas sem piso não são refeitas |
+
+### Item 2 — KF-002
+
+O cenário de coleta é montado a 65–97 blocos da arena, numa direção sorteada, em terreno gerado
+que ninguém controla; em 22-09 três hipóteses de carregamento de chunk foram refutadas. Não
+reapareceu em ~27 baterias de 07-10. Recomendação: montar o cenário **dentro da arena**, com o
+raio protegido encurtado por gancho de teste. Fica aberto até a bateria repetida confirmar.
+
+### Item 3 — o tique do servidor de teste, com foco na colônia local do jogador
+
+Depois de `1e55cb9e`, o ciclo de 600 tiques no servidor de teste só faz uma coisa com as colônias
+dos cenários: marca ativa/dormente pelo chunk do centro (`updateLifecycles`). Detecção, ciclo da
+colônia e planejamento já exigem jogador por perto (Emenda 6), e no teste não há jogador.
+
+| Alternativa | O que muda | Prós | Contras |
+|---|---|---|---|
+| **A. Como está** | fusão desligada só no teste | já medido: 0 fusões, baterias limpas | em jogo, colônias longe do jogador ainda se fundem e mudam de estado |
+| **B. Tudo pela colônia do jogador (recomendada)** | fusão e ciclo de vida só para colônias atendidas (jogador dentro da caixa ou há até 5 min) | uma regra só para jogo e teste; custo menor; nada muda numa vila que o jogador não vê | duas vilas distantes que crescem até se tocar só se fundem quando o jogador passar por lá |
+| **C. Teste sem ciclo** | o tique de teste roda só o trabalho por tique; quem precisa do ciclo chama `runCycleNow` | isolamento total dos cenários | não muda nada em jogo |
+
+**Pede:** escolher entre A, B e C (B cobre o teste sem regra especial para ele).

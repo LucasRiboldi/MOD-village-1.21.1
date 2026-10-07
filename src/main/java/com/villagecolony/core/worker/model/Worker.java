@@ -267,11 +267,11 @@ public final class Worker {
      * passagens da distribuição em vez de tiques — o Core não conhece
      * {@code world.getTime()} (ADR-005).
      *
-     * <p>Silencioso para quem não tem ofício: um aldeão sem função
-     * chamado por engano não deve ganhar castigo por isso.
+     * <p>Silencioso para quem não tem ofício, e para o mineiro: o encalhe é
+     * da mina, não dele, e ele não perde o ofício (ADR-039 item 6).
      */
     public void giveUpProfession() {
-        if (profession == null) {
+        if (profession == null || profession == ProfessionType.MINER) {
             return;
         }
 

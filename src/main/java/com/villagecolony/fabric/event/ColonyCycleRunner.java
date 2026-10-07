@@ -294,6 +294,7 @@ final class ColonyCycleRunner {
         // deserto é arenito; perguntar por pedregulho daria zero, e a
         // vila voltaria a não construir por falta de meta.
         VillagePalette palette = HousePlans.paletteOf(overworld, colony.center());
+        com.villagecolony.fabric.work.BiomePieces.refresh(overworld, colony); // ADR-039 item 4
 
         ResourceType stone = MinecraftTypeAdapter.toBlock(palette.stone())
                 .flatMap(block -> MinecraftTypeAdapter.toResourceType(block.asItem()))
