@@ -24,11 +24,13 @@ class EmptySweepsTest {
     }
 
     @Test
-    void theWaitIsOneThenTwoThenFourMinutes() {
+    void theWaitGrowsOneMinuteAtATimeUpToFive() {
         assertEquals(1_200, EmptySweeps.memoryFor(1));
         assertEquals(2_400, EmptySweeps.memoryFor(2));
-        assertEquals(4_800, EmptySweeps.memoryFor(3));
-        assertEquals(4_800, EmptySweeps.memoryFor(9), "o castigo para de crescer em quatro minutos");
+        assertEquals(3_600, EmptySweeps.memoryFor(3));
+        assertEquals(4_800, EmptySweeps.memoryFor(4));
+        assertEquals(6_000, EmptySweeps.memoryFor(5));
+        assertEquals(6_000, EmptySweeps.memoryFor(9), "o castigo para de crescer em cinco minutos");
     }
 
     @Test
