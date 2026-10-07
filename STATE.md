@@ -1,9 +1,8 @@
-# STATE — 2026-10-06
+# STATE — 2026-10-07
 
-> **JAR atual: `village-colony-0.3.1.jar` = `278086C5…0673`** em `build/libs/`, na cópia local
-> `downloads/` (fora do git desde o item 26), em `%APPDATA%/.minecraft/mods` e na versão
-> `v0.3.1-alpha` do GitHub. **Tudo na `main`** (PR #9 e #10 juntados; `main` = 627/627 GameTests,
-> 1.348 unitários). Únicas branches vivas: `main` e `codex/bighousemod`. Nada visto em jogo.
+> **JAR atual: `village-colony-0.3.2.jar` = `8DD2EF29…A4FD`** em `build/libs/`, `downloads/` (local)
+> e `%APPDATA%/.minecraft/mods` (o 0.3.1 saiu de lá). Branch `claude/decisoes-2026-10-07`:
+> **ADR-037 aplicada** (decisões do playtest de 07-10). Nada dela visto em jogo.
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -16,6 +15,29 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 07-10 — playtest do 0.3.1 e ADR-037 aplicada (aguarda playtest)
+
+**Playtest de 06-10 23:41 → 07-10 00:43** (Spark `QK8BBjPGXr`: TPS 20, mod 2,7%): as duas vilas
+nasceram com 0 árvores (capim barrava o plantio — provado por GameTest); lenhador vivendo de
+7 replantios; a mina desceu 5 níveis num segundo; comida 1 ponto por adulto; picos de 100 ms
+da busca de lugar para árvore.
+
+**ADR-037, um commit por decisão:** F1–F3 floresta (5 por dezena, árvore natural para a obra,
+capim não barra), C1 só `storage_majest`, C2 teto 3×64 também no mineiro, B1 construtor põe de
+qualquer lugar da zona da obra, L1 lenhador até borda + 20 sem árvore, M1 cascata da mina
+corrigida e mineiro sem ramal raspa a superfície, R1/C7 reunião doa a comida e o trigo conta,
+V1 desempregado e bebê seguem o Vanilla (o mod apagava a caminhada deles à noite), V2/C3 porta
+fechada ao dormir.
+
+**Verificado em 07-10:** `clean build` ok; **1.355 unitários**, 0 falhas; 95 Python; GameTests
+**631/631** nas duas últimas rodadas (em ~20 baterias do dia, KF-003 caiu 2 vezes).
+**Não provado por teste:** a exclusão das células do poço na raspagem de superfície; o limite
+de 6 blocos das portas.
+**Plano para o ócio:** `docs/technical/Plano-Atividades-2026-10-07.md` (P1–P7, espera o autor).
+**Playtest pedido:** vila nova (contar árvores na fundação), mina por ≥ 20 min, obra com tora,
+noite (portas, desempregados indo para a cama), `/vc log` Felicidade, `time_ledger.py` e
+`cost_ledger.py`.
 
 ## 🟡 06-10, noite — ADR-036 aplicada (aguarda playtest)
 
