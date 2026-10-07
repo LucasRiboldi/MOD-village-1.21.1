@@ -194,6 +194,9 @@ final class ColonyCycleRunner {
         // A rua do jogador também faz a vila crescer — 2026-10-03, RoadSpill.
         RoadPaving.growByRoads(overworld, colony.id());
 
+        // A reunião mede a felicidade e decide os filhos — ADR-036 20.
+        com.villagecolony.fabric.work.VillageMood.meet(overworld, colony);
+
         mark = CycleCost.since(CycleCost.Phase.POPULATION, mark);
 
         // <b>Uma lista, e os três consumidores dela</b> — P0.3, 2026-09-11.

@@ -18,6 +18,7 @@
       "com.villagecolony.fabric.work.MineRampGameTest",
       "com.villagecolony.fabric.work.ResourceSearchesGameTest",
       "com.villagecolony.fabric.work.PlanStatesGameTest",
+      "com.villagecolony.fabric.work.VillageMoodGameTest",
       "com.villagecolony.gametest.ProfessionReviewGameTest",
       "com.villagecolony.fabric.work.MinerHaulCapGameTest",
       "com.villagecolony.gametest.VillageForestGameTest",

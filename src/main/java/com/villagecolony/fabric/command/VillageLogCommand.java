@@ -84,6 +84,14 @@ public final class VillageLogCommand {
         source.sendFeedback(
                 () -> Text.literal(constructionPriority).formatted(Formatting.YELLOW),
                 false);
+
+        // A felicidade da última reunião — ADR-036 20.
+        com.villagecolony.fabric.work.VillageMood.of(nearby.id()).ifPresent(happiness -> {
+            String line = VillageLogPresenter.happiness(happiness);
+            source.sendFeedback(() -> Text.literal(line).formatted(
+                    happiness.mood() == com.villagecolony.core.colony.model.VillageHappiness.Mood.UNHAPPY
+                            ? Formatting.RED : Formatting.GREEN), false);
+        });
         source.sendFeedback(
                 () -> Text.literal("Atividades mais recentes:").formatted(Formatting.WHITE),
                 false);

@@ -137,4 +137,14 @@ class VillageLogPresenterTest {
                         + " aparece no baú na quarta tentativa — há 3 min",
                 VillageLogPresenter.materialRequest("village/plains/houses/small_house_1", request, 4_600));
     }
+
+    @org.junit.jupiter.api.Test
+    void theHappinessLineSaysTheMoodAndTheThreeMeasures() {
+        String line = VillageLogPresenter.happiness(
+                com.villagecolony.core.colony.model.VillageHappiness.measure(10 * 12, 10, 12, 3));
+
+        org.junit.jupiter.api.Assertions.assertEquals(
+                "Felicidade: feliz (mais filhos) — 12 de comida por adulto, 2 camas sobrando, 3 obras concluídas.",
+                line);
+    }
 }

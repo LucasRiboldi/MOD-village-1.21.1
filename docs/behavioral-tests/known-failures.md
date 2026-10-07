@@ -37,6 +37,10 @@ em 2 de ~16 baterias; as outras passaram, e 5 seguidas não reproduziram. A saí
 da carpintaria é o baú próprio, que o teto de 3 compartimentos não aperta neste
 cenário (1 pilha de tábuas e 1 de escadas). Causa **NÃO CONFIRMADA**; a linha de
 base sem as mudanças passou 3/3, amostra pequena demais para descartá-las.
+Na mesma noite, uma vez em 5 baterias do item 20: `FarmPlanGameTest.theFirstBuildOfAVillageIsAlwaysAHouse`
+("a primeira passagem não abriu obra nenhuma"; chama o planejador direto, fora
+do caminho da reunião) e uma em 3 do item 19: `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted`
+(já no `TODO.md`). Causa **NÃO CONFIRMADA**.
 
 ---
 
