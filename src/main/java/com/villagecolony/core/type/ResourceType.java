@@ -253,6 +253,13 @@ public enum ResourceType {
     CHISELED_SANDSTONE(
             ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
 
+    /** As peças de madeira que o carpinteiro adianta — ADR-039 D1. */
+    OAK_STAIRS(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_WOOD),
+
+    OAK_SLAB(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_WOOD),
+
+    OAK_FENCE(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_WOOD),
+
     /**
      * A viga descascada, e a razão de ela existir — 2026-09-10.
      *

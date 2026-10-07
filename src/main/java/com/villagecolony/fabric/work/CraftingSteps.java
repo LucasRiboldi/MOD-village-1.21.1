@@ -21,6 +21,8 @@ import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
+import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.type.Production;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
@@ -151,6 +153,54 @@ final class CraftingSteps {
         }
 
         return false;
+    }
+
+    /**
+     * A peça da própria tarefa, quando a obra não pede nada — ADR-039 D1. A meta
+     * de adiantamento pede escada, laje, tijolo; sem este passo a tarefa caía na
+     * conversão de tora em tábua e a peça nunca saía. O alvo fica fixo desde a
+     * primeira passagem (estoque mais a quantidade da tarefa): entre um ciclo e
+     * outro ela não passa da meta.
+     *
+     * @return vazio quando a tarefa é de tábua, tora ou viga (segue o caminho
+     *     antigo); senão, se a peça foi feita ou já está no alvo
+     */
+    static Optional<Boolean> produceForGoal(ServerWorld world, Job job, UUID workerId) {
+        ResourceType piece = job.task.targetResource();
+        boolean crafted = piece.production() == Production.CRAFTED_WOOD
+                || piece.production() == Production.CRAFTED_STONE;
+
+        if (!crafted || piece.group() == ResourceGroup.PLANKS || piece.group() == ResourceGroup.STRIPPED) {
+            return Optional.empty();
+        }
+
+        Optional<Colony> colony = VillageColonyMod.COLONIES.find(job.task.colonyId());
+        Optional<Item> item = MinecraftTypeAdapter.toItem(piece);
+
+        if (colony.isEmpty() || item.isEmpty()) {
+            return Optional.empty();
+        }
+
+        List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.get().id(), colony.get().center());
+        int have = ColonyChests.countIn(world, chests, item.get());
+
+        if (job.goalTarget < 0) {
+            job.goalTarget = have + job.task.amount();
+        }
+
+        if (have >= job.goalTarget) {
+            CraftingWork.finish(job, workerId, "made the " + piece.name().toLowerCase(java.util.Locale.ROOT) + " it was asked");
+
+            return Optional.of(false);
+        }
+
+        if (!ColonySupply.stockToward(world, colony.get().id(), colony.get().center(), item.get(), job.goalTarget)) {
+            return Optional.empty();
+        }
+
+        job.crafted++;
+
+        return Optional.of(true);
     }
 
     /**

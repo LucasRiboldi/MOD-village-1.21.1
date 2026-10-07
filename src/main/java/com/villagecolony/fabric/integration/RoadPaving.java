@@ -167,7 +167,7 @@ public final class RoadPaving {
      * <p>As quatro perguntas de antes, na mesma ordem, agora com nome: a
      * primeira que disser não é a que o registro conta.
      */
-    private static Optional<String> refusalAt(ServerWorld world, BlockPos at, BlockState state) {
+    static Optional<String> refusalAt(ServerWorld world, BlockPos at, BlockState state) {
         // <b>O chão do bioma não é peça de vila</b> — pedido do autor,
         // 2026-09-30: estradas nascem para fora da vila. A caixa da peça de
         // rua inclui a grama em volta do caminho, e no playtest das 02:45 era

@@ -68,10 +68,10 @@ public final class MaterialChoice {
 
         Optional<ResourceType> resource = MinecraftTypeAdapter.toResourceType(exact);
 
-        if (resource.isEmpty()) {
-            // Bloco que a colônia não conta — escada, porta, vidraça. Não
-            // há substituição declarada para o que não é recurso, e é
-            // pela família de madeira que ela chega aqui.
+        // Bloco que a colônia não conta — porta, vidraça —, e as peças de madeira
+        // que ela conta só para adiantar (ADR-039 D1): a troca é pela família de
+        // madeira, não por grupo de recurso.
+        if (resource.isEmpty() || isWoodPiece(resource.get())) {
             return samePieceInAnotherVariant(exact, order);
         }
 
@@ -96,6 +96,11 @@ public final class MaterialChoice {
         EquivalentPieces.addFamily(exact, order);
 
         return List.copyOf(order);
+    }
+
+    private static boolean isWoodPiece(ResourceType resource) {
+        return resource.production() == com.villagecolony.core.type.Production.CRAFTED_WOOD
+                && resource.group() == com.villagecolony.core.type.ResourceGroup.NONE;
     }
 
     /**

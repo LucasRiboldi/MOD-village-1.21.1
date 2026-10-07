@@ -41,6 +41,10 @@ public final class AdvanceStock {
     /** As peças que cada ofício adianta sem tarefa — ADR-038 P2a. */
     public static final List<ResourceType> SMELTER_PIECES = List.of(ResourceType.GLASS, ResourceType.SMOOTH_STONE);
 
+    /** As do carpinteiro — ADR-039 D1: escada, laje e cerca; a viga descascada não, ela gasta a tora da obra. */
+    public static final List<ResourceType> CARPENTER_PIECES =
+            List.of(ResourceType.OAK_STAIRS, ResourceType.OAK_SLAB, ResourceType.OAK_FENCE);
+
     private AdvanceStock() {
     }
 

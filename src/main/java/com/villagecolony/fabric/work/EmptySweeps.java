@@ -23,9 +23,9 @@ import java.util.UUID;
  * zera a contagem.
  *
  * <p><b>Na terceira, o material aparece</b> — pedido do autor, 2026-10-03:
- * {@link LocateFallback}. O castigo encolheu de 5, 10 e 20 minutos para 1 e
- * 2: com a entrega na quarta busca (ADR-036 item 6), o castigo antigo faria a profissão
- * esperar quinze minutos por um material que já se sabia ausente.
+ * {@link LocateFallback}. O castigo cresce em partes, um minuto por varredura
+ * vazia, até {@link #MAX_STEPS} minutos (ADR-039 E1): a P7 pediu 5 minutos, e a
+ * entrega na quarta busca (ADR-036 item 6) não pode esperar 5 minutos já na primeira.
  */
 public final class EmptySweeps {
 
@@ -36,8 +36,8 @@ public final class EmptySweeps {
     /** O primeiro castigo: um minuto. */
     static final int BASE = 1_200;
 
-    /** Quantas vezes o castigo dobra: 1, 2, 4 minutos. */
-    private static final int MAX_DOUBLINGS = 2;
+    /** Até quantos minutos o castigo cresce: 1, 2, 3, 4, 5. */
+    static final int MAX_STEPS = 5;
 
     private record Key(UUID colonyId, ResourceType resource) {
     }
@@ -51,7 +51,7 @@ public final class EmptySweeps {
     }
 
     static long memoryFor(int count) {
-        return count <= 0 ? 0 : (long) BASE << Math.min(count - 1, MAX_DOUBLINGS);
+        return count <= 0 ? 0 : (long) BASE * Math.min(count, MAX_STEPS);
     }
 
     /**

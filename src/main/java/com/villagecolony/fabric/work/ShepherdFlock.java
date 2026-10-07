@@ -23,10 +23,11 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * O pastor cuida do rebanho — ADR-038 P2c: alimenta para procriar, um par por
- * espécie a cada {@link #BETWEEN_PAIRS}, todo animal criável amarrado em cerca
- * ou dentro de curral, com a comida que ele aceita, tirada de qualquer baú da
- * vila. Até {@link #FLOCK_TARGET} adultos de cada espécie: o rebanho tem teto.
+ * O pastor cuida do rebanho — ADR-038 P2c e ADR-039 E2: alimenta para procriar,
+ * um par por espécie a cada {@link #BETWEEN_PAIRS}, com a comida que ele aceita,
+ * tirada de qualquer baú da vila. O animal solto também come; a coleta
+ * ({@code ShepherdHerding}) o traz para a cerca depois. Até {@link #FLOCK_TARGET}
+ * adultos de cada espécie: o rebanho tem teto.
  */
 public final class ShepherdFlock {
 
@@ -102,7 +103,7 @@ public final class ShepherdFlock {
 
         List<AnimalEntity> ready = new ArrayList<>();
         for (AnimalEntity animal : adults) {
-            if (animal.getBreedingAge() == 0 && !animal.isInLove() && isKept(world, animal)) {
+            if (animal.getBreedingAge() == 0 && !animal.isInLove()) {
                 ready.add(animal);
             }
             if (ready.size() == 2) {

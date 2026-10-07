@@ -326,7 +326,7 @@ public final class VillageDetectionHandler {
             VillageFocus.attend(overworld);
         }
 
-        tickActiveServer(server);
+        tickActiveServer(server, true);
 
         // Quem ficou livre não espera o ciclo de 30 s — F10, 2026-09-30.
         if (server.getTicks() % IdleHands.EVERY_TICKS == 0) {
@@ -343,10 +343,12 @@ public final class VillageDetectionHandler {
      * a porta de produção que pausa uma colônia sem jogador por perto.
      */
     public static void tickGameTestServer(net.minecraft.server.MinecraftServer server) {
-        tickActiveServer(server);
+        // Sem fusão: as arenas da bateria ficam lado a lado, e o ciclo fundia colônias de
+        // testes diferentes no meio deles (a causa do KF-003). O teste da fusão chama o gatilho.
+        tickActiveServer(server, false);
     }
 
-    private static void tickActiveServer(net.minecraft.server.MinecraftServer server) {
+    private static void tickActiveServer(net.minecraft.server.MinecraftServer server, boolean merge) {
         ServerWorld overworld = server.getOverworld();
 
         drainOnePending(overworld);
@@ -413,7 +415,9 @@ public final class VillageDetectionHandler {
         // decidir o ciclo — ADR-007, 2026-09-30. Só neste caminho de jogo:
         // as arenas da bateria ficam lado a lado, e fundiriam colônias de
         // testes diferentes. O GameTest da fusão chama o gatilho direto.
-        ColonyMergeTrigger.mergeTouchingColonies(server.getOverworld());
+        if (merge) {
+            ColonyMergeTrigger.mergeTouchingColonies(server.getOverworld());
+        }
 
         CycleCost.since(CycleCost.Phase.DETECT, mark);
 

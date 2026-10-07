@@ -7,7 +7,7 @@ que se pede ao autor. Nada da 037 e da 038 foi visto em jogo.
 
 | # | O quê | Evidência | Pede |
 |---|---|---|---|
-| A1 | **Testes intermitentes da bateria** (KF-003): carpintaria `craft_stock` e `craft_family`, fundidor da boca da mina, `FarmPlanGameTest` | **07-10 manhã:** os de fabricação e o do fundidor mediam num tique fixo cedo demais; passaram a medir perto do limite e 9 baterias seguidas deram 638/638. Ainda não prova (9 limpas por acaso ≈ 35%); `FarmPlan` sem causa | repetir até ~30 baterias limpas antes de fechar |
+| A1 | **Causa achada 07-10 tarde (ADR-039):** o tique de teste fundia colônias de cenários vizinhos; corrigido, 6 baterias 644/644 com 0 fusões. Histórico: **Testes intermitentes da bateria** (KF-003): carpintaria `craft_stock` e `craft_family`, fundidor da boca da mina, `FarmPlanGameTest` | **07-10 manhã:** os de fabricação e o do fundidor mediam num tique fixo cedo demais; passaram a medir perto do limite e 9 baterias seguidas deram 638/638. Ainda não prova (9 limpas por acaso ≈ 35%); `FarmPlan` sem causa | repetir até ~30 baterias limpas antes de fechar |
 | A2 | **A ordem da bateria derruba testes de outras classes**: criar um lote (`batchId`) novo mudou a disposição das arenas | virou regra no `known-failures.md`: teste novo vai para lote existente | — |
 | A3 | ~~`walk` = 0% no `time_ledger`~~ **corrigido 07-10:** o servidor nunca baixa o braço do aldeão, então um golpe contava trabalho para sempre | `WorkTime.swungSinceLastSample`, provado por mutação | conferir no próximo playtest que `walk` aparece |
 | A4 | Picos de 100 ms por tique do playtest de 07-10 | corrigidos (F1–F3), **não confirmados em jogo** | playtest |
