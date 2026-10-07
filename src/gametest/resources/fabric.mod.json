@@ -23,6 +23,7 @@
       "com.villagecolony.fabric.event.OffHoursReleaseGameTest",
       "com.villagecolony.fabric.work.MineMouthInsideGameTest",
       "com.villagecolony.fabric.integration.VillageTreesGameTest",
+      "com.villagecolony.fabric.work.CraftStationGameTest",
       "com.villagecolony.gametest.ProfessionReviewGameTest",
       "com.villagecolony.fabric.work.MinerHaulCapGameTest",
       "com.villagecolony.gametest.VillageForestGameTest",
