@@ -33,7 +33,13 @@ public final class AdvanceStock {
         int stalled;
     }
 
-    private static final Map<UUID, Cursor> CURSORS = new HashMap<>();
+    private record Lane(UUID colonyId, String name) {
+    }
+
+    private static final Map<Lane, Cursor> CURSORS = new HashMap<>();
+
+    /** As peças que cada ofício adianta sem tarefa — ADR-038 P2a. */
+    public static final List<ResourceType> SMELTER_PIECES = List.of(ResourceType.GLASS, ResourceType.SMOOTH_STONE);
 
     private AdvanceStock() {
     }
@@ -52,17 +58,25 @@ public final class AdvanceStock {
     public static java.util.Optional<ResourceType> addTo(
             Map<ResourceType, Integer> goals, UUID colonyId, List<ResourceType> pieces,
             ToIntFunction<ResourceType> stock) {
+        return addTo(goals, colonyId, "mason", pieces, stock);
+    }
+
+    /** O mesmo, numa fila própria: cada ofício tem o seu ciclo. */
+    public static java.util.Optional<ResourceType> addTo(
+            Map<ResourceType, Integer> goals, UUID colonyId, String lane, List<ResourceType> pieces,
+            ToIntFunction<ResourceType> stock) {
         if (pieces.isEmpty()) {
             return java.util.Optional.empty();
         }
 
-        Cursor cursor = CURSORS.get(colonyId);
+        Lane key = new Lane(colonyId, lane);
+        Cursor cursor = CURSORS.get(key);
 
         if (cursor == null) {
             cursor = new Cursor();
             cursor.index = 0;
             cursor.target = stock.applyAsInt(pieces.get(0)) + BATCH;
-            CURSORS.put(colonyId, cursor);
+            CURSORS.put(key, cursor);
         }
 
         cursor.index = Math.floorMod(cursor.index, pieces.size());

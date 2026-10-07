@@ -58,4 +58,16 @@ class AdvanceStockTest {
 
         assertEquals(5, goals.get(ResourceType.STONE_BRICKS), "a peça sem material prendeu o ciclo");
     }
+
+    @Test
+    void eachTradeHasItsOwnCycle() {
+        UUID colony = UUID.randomUUID();
+        Map<ResourceType, Integer> goals = new HashMap<>();
+
+        AdvanceStock.addTo(goals, colony, PIECES, type -> 0);
+        AdvanceStock.addTo(goals, colony, "smelter", AdvanceStock.SMELTER_PIECES, type -> 0);
+
+        assertEquals(5, goals.get(ResourceType.COBBLESTONE_SLAB));
+        assertEquals(5, goals.get(ResourceType.GLASS), "a fila do fundidor não andou junto com a do pedreiro");
+    }
 }

@@ -634,7 +634,8 @@ class ColonyGoalsTest {
         Map<ResourceType, Integer> goal = withGlassDemand(
                 ResourceTally.of(new EnumMap<>(ResourceType.class)), 0);
 
-        assertFalse(goal.containsKey(ResourceType.GLASS));
+        // Sem janela na obra, o vidro é só o adiantamento do fundidor — ADR-038 P2a.
+        assertEquals(AdvanceStock.BATCH, goal.get(ResourceType.GLASS));
         assertFalse(goal.containsKey(ResourceType.SAND));
     }
 
@@ -890,8 +891,10 @@ class ColonyGoalsTest {
     void aSmeltedMaterialOutsideTheCatalogueComesFromTheWork() {
         assertEquals(5, goalFor(work(0, 0, Map.of(ResourceType.GLASS, 5), Map.of()))
                 .get(ResourceType.GLASS));
-        assertFalse(goalFor(work(0, 0, Map.of(ResourceType.GLASS, 0), Map.of()))
-                .containsKey(ResourceType.GLASS));
+        // Sem pedido, o adiantamento do fundidor, cinco — ADR-038 P2a.
+        AdvanceStock.clearAll();
+        assertEquals(AdvanceStock.BATCH, goalFor(work(0, 0, Map.of(ResourceType.GLASS, 0), Map.of()))
+                .get(ResourceType.GLASS));
     }
 
     /** Obra pequena não abaixa o piso do que o catálogo da fornalha já pede. */
