@@ -29,6 +29,7 @@
       "com.villagecolony.fabric.work.WorkTimeSwingGameTest",
       "com.villagecolony.fabric.work.HouseDoorsGameTest",
       "com.villagecolony.fabric.work.ShepherdLooseFlockGameTest",
+      "com.villagecolony.gametest.CraftingAdvanceGameTest",
       "com.villagecolony.gametest.ProfessionReviewGameTest",
       "com.villagecolony.fabric.work.MinerHaulCapGameTest",
       "com.villagecolony.gametest.VillageForestGameTest",

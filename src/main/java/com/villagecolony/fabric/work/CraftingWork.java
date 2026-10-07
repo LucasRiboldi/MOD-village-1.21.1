@@ -139,6 +139,9 @@ public final class CraftingWork {
         /** Quantas peças esta tarefa já rendeu. */
         int crafted;
 
+        /** Até quanto a peça da tarefa vai, fixado na primeira passagem; -1 antes dela. */
+        int goalTarget = -1;
+
         /**
          * Ticks de horário de trabalho andando sem chegar ao baú.
          *
@@ -378,6 +381,12 @@ public final class CraftingWork {
         // que a obra esteja esperando.
         if (CraftingSteps.produceForWork(world, job, villager.getUuid())) {
             return true;
+        }
+
+        Optional<Boolean> forGoal = CraftingSteps.produceForGoal(world, job, villager.getUuid());
+
+        if (forGoal.isPresent()) {
+            return forGoal.get();
         }
 
         return CraftingSteps.convertOne(world, job, villager.getUuid());

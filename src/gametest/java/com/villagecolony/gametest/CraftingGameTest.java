@@ -361,15 +361,16 @@ public class CraftingGameTest implements FabricGameTest {
 
         int crafting = 0;
 
+        // A de tábua; a do adiantamento do carpinteiro (ADR-039 D1) é outra meta.
         for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
-            if (task.type() == TaskType.CRAFT_WOOD_MATERIAL) {
+            if (task.type() == TaskType.CRAFT_WOOD_MATERIAL && task.targetResource() == ResourceType.OAK_PLANKS) {
                 crafting++;
             }
         }
 
         context.assertTrue(
                 crafting == 1,
-                "o ciclo devia ter aberto uma tarefa de fabricação, abriu " + crafting);
+                "o ciclo devia ter aberto uma tarefa de tábua, abriu " + crafting);
 
         context.runAtTick(90, () -> {
             try {
