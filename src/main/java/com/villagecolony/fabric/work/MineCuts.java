@@ -130,6 +130,15 @@ public final class MineCuts {
             }
 
             if (MineVein.nowhereToStand(world, at)) {
+                // Abre o lugar de pé ao lado e volta a esta pedra — ADR-038 P6.
+                Optional<BlockPos> room = MineVein.roomBeside(world, mine, at);
+
+                if (room.isPresent()) {
+                    arm.holdPosition();
+
+                    return room;
+                }
+
                 // <b>Emparedada: não há vizinho onde um aldeão caiba</b> —
                 // 2026-09-02. O approachTo devolve a própria pedra quando
                 // não acha lugar de ficar de pé, e o javadoc dele
