@@ -290,4 +290,30 @@ final class MineVein {
     static boolean nowhereToStand(ServerWorld world, BlockPos at) {
         return MinerApproach.approachTo(world, at).equals(at);
     }
+
+    /**
+     * A pedra ao lado de uma emparedada que o mineiro alcança: cavada, ela abre
+     * lugar de pé para a outra — ADR-038 P6, degrau em vez de encerrar o ramal.
+     */
+    static Optional<BlockPos> roomBeside(ServerWorld world, Mine mine, BlockPos walled) {
+        for (net.minecraft.util.math.Direction way : net.minecraft.util.math.Direction.Type.HORIZONTAL) {
+            BlockPos beside = walled.offset(way);
+
+            // Os pés e depois a cabeça: o lugar de pé precisa de dois de altura.
+            for (BlockPos open : new BlockPos[] {beside, beside.up()}) {
+                if (MineRock.isDiggableRock(world, mine, open)
+                        && !MineFlooding.holdsBackFluid(world, open)
+                        && !MineMarks.isOutOfReach(world, open)
+                        && !nowhereToStand(world, open)) {
+                    return Optional.of(open.toImmutable());
+                }
+
+                if (!world.getBlockState(open).isAir()) {
+                    break;
+                }
+            }
+        }
+
+        return Optional.empty();
+    }
 }

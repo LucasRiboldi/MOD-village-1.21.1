@@ -92,6 +92,12 @@ public class ProfessionReviewGameTest implements FabricGameTest {
 
         SheepEntity first = context.spawnEntity(EntityType.SHEEP, new BlockPos(4, 1, 4));
         SheepEntity second = context.spawnEntity(EntityType.SHEEP, new BlockPos(5, 1, 4));
+        // O rebanho é o que está amarrado ou em curral (ADR-038 P2c).
+        context.setBlockState(new BlockPos(4, 1, 6), net.minecraft.block.Blocks.OAK_FENCE.getDefaultState());
+        for (SheepEntity sheep : new SheepEntity[] {first, second}) {
+            sheep.attachLeash(net.minecraft.entity.decoration.LeashKnotEntity.getOrCreate(
+                    context.getWorld(), context.getAbsolutePos(new BlockPos(4, 1, 6))), true);
+        }
         ShepherdFlock.clearAll();
 
         try {

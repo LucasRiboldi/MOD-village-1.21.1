@@ -133,6 +133,7 @@ public final class LumberjackNursery {
             }
 
             planted++;
+            com.villagecolony.fabric.integration.VillageTrees.rememberSapling(colonyId, spot.get().up());
 
             VillageColonyMod.LOGGER.info(
                     "Colony {} — the lumberjack planted {} on rooted dirt at {}, at the village edge",

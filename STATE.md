@@ -1,8 +1,8 @@
 # STATE — 2026-10-07
 
-> **JAR atual: `village-colony-0.3.2.jar` = `8DD2EF29…A4FD`** em `build/libs/`, `downloads/` (local)
-> e `%APPDATA%/.minecraft/mods` (o 0.3.1 saiu de lá). Branch `claude/decisoes-2026-10-07`:
-> **ADR-037 aplicada** (decisões do playtest de 07-10). Nada dela visto em jogo.
+> **JAR atual: `village-colony-0.3.3.jar` = `103DE3F9…3734`** em `build/libs/`, `downloads/` (local),
+> `%APPDATA%/.minecraft/mods` e na versão `v0.3.3-alpha` do GitHub. **ADR-036, 037 e 038 na
+> `main`.** Nada da 037 e da 038 visto em jogo. Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md`.
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -15,6 +15,21 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 07-10, tarde — ADR-038 aplicada (aguarda playtest)
+
+Rotinas e trajetos (`docs/decisions/ADR-038-*`): P5 todo baú cheio alivia e adiantamento de 5 em 5
+por peça; P3b boca da mina até 5 dentro da vila, no morro e longe da água; P3a memória de árvores
+e mudas do lenhador; P3c artesão diante da bancada ou do sino; P2b/P2c pastor coleta animais na
+corda e cuida dos amarrados e cercados; P1 ofício parado cede vaga; P2a fundidor adianta vidro e
+pedra lisa; P6 mina abre lugar de pé ao lado da pedra emparedada; P7 coleta começa onde já achou.
+**Pela metade:** carpinteiro adiantando, construtor calçando caminho, ramais rumo ao minério,
+galerias no save.
+
+**Verificado em 07-10:** `clean build` ok; **1.361 unitários**, 0 falhas; 95 Python; PIT acima de
+85% (força 92%); GameTests **637/637** nas duas últimas rodadas de cada item.
+**Playtest pedido:** pastor trazendo animais (precisa de cerca perto da cama), lenhador sem ir a
+muda, mina nova dentro da vila, artesãos na bancada, `time_ledger.py` (ver P4: `walk` = 0%).
 
 ## 🟡 07-10 — playtest do 0.3.1 e ADR-037 aplicada (aguarda playtest)
 
@@ -307,7 +322,7 @@ Cada item tem teste que falhou antes da correção. Nenhum foi visto em jogo.
 
 ## O que o próximo jogo precisa mostrar
 
-O roteiro completo está em [`docs/proxima-sessao.md`](docs/proxima-sessao.md).
+O roteiro completo está em [`docs/archive/technical/proxima-sessao-2026-10-04.md`](docs/archive/technical/proxima-sessao-2026-10-04.md).
 Em ordem:
 
 | # | Item | Sinal no log |

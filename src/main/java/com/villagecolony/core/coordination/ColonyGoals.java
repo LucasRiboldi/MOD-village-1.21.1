@@ -430,8 +430,11 @@ public final class ColonyGoals {
                 Math.max(stoneForWork, STONE_FLOOR),
                 stoneRoom > 0 ? owned.amountOfGroup(stone.group()) + stoneRoom : 0));
 
-        // O pedreiro não fica parado — ADR-036 item 8.
-        MasonStock.addTo(goals, stone);
+        // O pedreiro não fica parado (ADR-036 8), cinco de cada peça por vez (ADR-038 P5b).
+        AdvanceStock.addTo(goals, colony.id(), MasonStock.piecesFor(stone), owned::amountOf);
+        // O fundidor também, no seu ciclo — ADR-038 P2a. O carpinteiro não: a
+        // tora que ele adiantaria é a que a obra espera (o gargalo do playtest).
+        AdvanceStock.addTo(goals, colony.id(), "smelter", AdvanceStock.SMELTER_PIECES, owned::amountOf);
 
         // A despensa — 2026-08-27, e por cama desde 2026-09-05. Qualquer
         // lavoura conta, pelo grupo. O piso continua valendo para a

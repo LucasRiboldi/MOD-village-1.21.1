@@ -284,7 +284,9 @@ public final class CraftingWork {
             return true;
         }
 
-        BlockPos chest = MinecraftTypeAdapter.toBlockPos(storage.get().chestPosition());
+        // Diante da bancada, ou em volta do sino — ADR-038 P3c.
+        BlockPos chest = CraftStation.spotFor(
+                world, workerId, MinecraftTypeAdapter.toBlockPos(storage.get().chestPosition()));
 
         if (!villager.getBlockPos().isWithinDistance(chest, REACH)) {
             WorkTargets.set(workerId, chest);

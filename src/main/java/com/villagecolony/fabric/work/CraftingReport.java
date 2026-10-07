@@ -155,11 +155,12 @@ final class CraftingReport {
             return "no chest, " + clock + " (" + job.crafted + " pieces so far)";
         }
 
-        BlockPos chest = MinecraftTypeAdapter.toBlockPos(storage.get().chestPosition());
+        BlockPos chest = CraftStation.spotFor(
+                world, workerId, MinecraftTypeAdapter.toBlockPos(storage.get().chestPosition()));
 
         int distance = (int) Math.sqrt(villager.getBlockPos().getSquaredDistance(chest));
 
-        return (distance <= CraftingWork.REACH ? "at the chest" : "walking to the chest, " + distance
+        return (distance <= CraftingWork.REACH ? "at the workstation" : "walking to the workstation, " + distance
                 + " blocks away")
                 + ", " + clock
                 + ", " + job.progress + "/" + CraftingWork.TICKS_PER_PIECE + " ticks"

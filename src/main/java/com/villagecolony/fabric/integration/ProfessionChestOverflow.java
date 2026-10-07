@@ -17,9 +17,9 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Mantém livres os dez slots finais dos baús reservados às profissões — ADR-036
- * item 9: baú de profissão lotado manda os dez últimos compartimentos para um
- * baú da vila sem profissão; sem baú livre, a colônia fica marcada
+ * Mantém livres os dez slots finais dos baús da colônia — ADR-036 item 9 e
+ * ADR-038 P5a: baú lotado (de profissão ou não) manda os dez últimos
+ * compartimentos para outro baú da vila sem profissão; sem baú livre, a colônia fica marcada
  * ({@link #needsStorage}) e a próxima obra é o {@code storage_majest}.
  */
 public final class ProfessionChestOverflow {
@@ -79,13 +79,15 @@ public final class ProfessionChestOverflow {
 
         int moved = 0;
         boolean saturated = false;
+        // Qualquer baú da colônia cheio alivia, não só o da profissão — ADR-038 P5a.
+        // O destino é sempre um baú sem profissão, e nunca o próprio.
         for (ChestInventories.Handle handle : observed.values()) {
-            if (!handle.isProfession(professionChests)) {
-                continue;
-            }
             Inventory source = handle.inventory();
             if (isFull(source)) {
-                moved += relieveLastSlots(source, destinations);
+                List<Inventory> elsewhere = destinations.stream()
+                        .filter(destination -> destination != source)
+                        .toList();
+                moved += relieveLastSlots(source, elsewhere);
                 saturated |= hasReservedItems(source);
             }
         }

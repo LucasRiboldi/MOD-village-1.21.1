@@ -211,6 +211,7 @@ public final class VillageForest {
                     ground.get().up(),
                     Blocks.AIR.getDefaultState(),
                     world.getRandom())) {
+                VillageTrees.rememberTree(colony.id(), ground.get().up());
                 return Optional.of(ground.get().up());
             }
             restore(world, cleared);

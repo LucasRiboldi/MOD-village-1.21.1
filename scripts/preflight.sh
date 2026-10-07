@@ -205,7 +205,6 @@ check_doc "STATE.md"
 check_doc "docs/PATTERNS.md"
 check_doc "docs/RULES.md"
 check_doc "docs/technical/Plano-de-Correcao.md"
-check_doc "docs/proxima-sessao.md"
 check_doc "PROJECT_CONSTITUTION.md"
 
 # ============================================================

@@ -59,7 +59,7 @@ public final class ChestRelief {
      * fabricando pedra que ninguém pediu — a meta real continua sendo a
      * da obra, que manda quando existe.
      */
-    public static final int RELIEF_BATCH = 64;
+    public static final int RELIEF_BATCH = com.villagecolony.core.coordination.AdvanceStock.BATCH;
 
     private ChestRelief() {
     }

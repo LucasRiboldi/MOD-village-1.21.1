@@ -141,14 +141,20 @@ public final class TreeChoice {
                 world, job.task.colonyId(), ProfessionType.LUMBERJACK, job.center,
                 LumberjackWork.searchRadius, LumberjackWork.searchRadius != LumberjackWork.SEARCH_RADIUS);
 
-        Optional<BlockPos> tree = TreeScanner.findNearestLog(
-                world,
-                search.origin(),
-                search.radius(),
-                log -> search.inside().test(log)
-                        && !TreeClaims.isTaken(log)
-                        && !TreeMarks.isRejected(world, log)
-                        && !TreeMarks.isOutOfReach(world, log));
+        java.util.function.Predicate<BlockPos> usable = log -> search.inside().test(log)
+                && !TreeClaims.isTaken(log)
+                && !TreeMarks.isRejected(world, log)
+                && !TreeMarks.isOutOfReach(world, log);
+
+        // Primeiro a árvore conhecida mais perto dele; só sem nenhuma, a varredura — ADR-038 P3a.
+        Optional<BlockPos> tree = com.villagecolony.fabric.integration.VillageTrees.nearest(
+                world, job.task.colonyId(), villager.getBlockPos(), usable);
+
+        if (tree.isEmpty()) {
+            tree = TreeScanner.findNearestLog(world, search.origin(), search.radius(), usable);
+            tree.ifPresent(found -> com.villagecolony.fabric.integration.VillageTrees.rememberTree(
+                    job.task.colonyId(), found));
+        }
 
         ResourceSearches.advance(job.task.colonyId(), ProfessionType.LUMBERJACK);
         ResourceSearches.found(job.task.colonyId(), ProfessionType.LUMBERJACK, tree.isPresent());
