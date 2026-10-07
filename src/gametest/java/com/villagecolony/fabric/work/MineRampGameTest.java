@@ -34,6 +34,9 @@ public class MineRampGameTest implements FabricGameTest {
         try {
             context.assertTrue(!mine.shaft().mayDeepen(), "o cenário precisa de uma mina no fundo");
 
+            // O nível foi cavado até o salão, e os ramais acabaram.
+            mine.arm(0).reopenFrom(MineShaft.SHARED_BLOCKS);
+
             for (MineArm arm : mine.arms()) {
                 arm.finish();
             }

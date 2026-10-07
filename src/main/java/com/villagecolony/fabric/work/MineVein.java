@@ -84,6 +84,12 @@ final class MineVein {
      */
     static Optional<BlockPos> exposedStone(
             ServerWorld world, UUID workerId, UUID colonyId, BlockPos center) {
+        return exposedStone(world, workerId, colonyId, center, java.util.Set.of());
+    }
+
+    /** O mesmo, fora das células que a mina planeja cavar — quem espera ramal não invade o poço. */
+    static Optional<BlockPos> exposedStone(
+            ServerWorld world, UUID workerId, UUID colonyId, BlockPos center, java.util.Set<ColonyPos> mineCells) {
 
         Optional<BlockPos> found = RingSweep.around(
                 workerId,
@@ -97,6 +103,7 @@ final class MineVein {
                 // inteiro numa colônia sem boca de mina — mesmo alvo,
                 // mesma desistência, todo ciclo.
                 column -> StonePatch.in(world, column, center.getY())
+                        .filter(stone -> !mineCells.contains(MinecraftTypeAdapter.toColonyPos(stone)))
                         .filter(stone -> !MineMarks.isUnreachableAround(world, stone))
                         .filter(stone -> !MineFlooding.holdsBackFluid(world, stone)));
 

@@ -170,7 +170,14 @@ public final class MineDigging {
                 return Optional.empty();
             }
 
-            if (advance == Mine.LevelAdvance.EXHAUSTED) {
+            // Escada fechada antes do salão: gira a escada, não desce — ADR-037 M1.
+            if (advance == Mine.LevelAdvance.BLOCKED && !mine.get().mouthIsHopeless()) {
+                MineTrouble.rerouteBlockedStair(colonyId, mine.get());
+
+                return Optional.empty();
+            }
+
+            if (advance == Mine.LevelAdvance.EXHAUSTED || advance == Mine.LevelAdvance.BLOCKED) {
                 if (MineTrouble.climbOutAtBottom(colonyId, mine.get(), center)) {
                     IdleLog.clear(colonyId, ARM_SUBJECT);
 
@@ -219,23 +226,10 @@ public final class MineDigging {
                             + MineClaims.diggersIn(colonyId) + " digger(s) in "
                             + mine.get().branchesOpenNow() + " open branch(es)");
 
-            // <b>A escada é de um só</b> — 2026-08-28. O cursor da
-            // galeria mora no Mine e é um; dois mineiros perguntando na
-            // mesma passagem recebiam a mesma posição, andavam para o
-            // mesmo bloco, e escreviam "could not reach the stone" no
-            // mesmo tique. Esse aviso recua o cursor, e ele recuava duas
-            // vezes por um bloco.
-            //
-            // Quem não achou ramal livre fica sem alvo, e não em alvo
-            // errado: ele volta a perguntar na passagem seguinte, e herda
-            // um ramal no ciclo em que algum dono largar o trabalho. Ver
-            // MineClaims.
-            //
-            // <b>São quatro ramais desde 2026-09-04</b>, e não uma escada
-            // só: o "waiting for the shaft" que a sessão daquele dia
-            // mostrou por trinta e sete minutos passa a valer só a partir
-            // do quinto mineiro da colônia.
-            return Optional.empty();
+            // Cada ramal é de um mineiro só (MineClaims). Quem não achou ramal
+            // livre não fica parado: raspa a pedra exposta em volta da vila
+            // até um ramal abrir — ADR-037 M1, cada profissional com sua rotina.
+            return MineVein.exposedStone(world, workerId, colonyId, center, mine.get().plannedCells());
         }
 
         MineArm arm = mine.get().arm(claimed.getAsInt());

@@ -232,6 +232,23 @@ public final class MineTrouble {
     }
 
     /**
+     * A escada do nível fechou antes do salão — ADR-037 M1: gira a hélice em
+     * vez de contar o nível como feito. Esgotadas as hélices, quem chama trata
+     * como fundo.
+     */
+    public static void rerouteBlockedStair(UUID colonyId, Mine mine) {
+        MineShaft before = mine.shaft();
+
+        mine.reroute();
+
+        VillageColonyMod.LOGGER.info(
+                "Mine {} closed its stair before the hall — turning the helix from {} to {} (helix {} of {})"
+                        + " instead of going one level deeper",
+                colonyId.toString().substring(0, 8), before.descent(), mine.shaft().descent(),
+                mine.helicesTried(), Mine.HELICES_BEFORE_BLAMING_THE_MOUTH);
+    }
+
+    /**
      * No fundo do mundo a mina não para: anda para longe do centro da vila e
      * sobe em rampa até a altura do centro — ADR-036 item 17.
      *

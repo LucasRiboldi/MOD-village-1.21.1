@@ -329,16 +329,16 @@ public final class Mine {
     }
 
     /**
-     * Desce quando tudo que a reserva pode entregar agora terminou.
-     *
-     * <p>No poço partilhado, os ramais ainda fechados são só outras
-     * vistas da mesma escada. Encerrá-los junto evita o limbo em que só
-     * o ramal zero está aberto, ele acabou, e os outros ainda não podem
-     * receber mineiro.
+     * Desce quando tudo que a reserva pode entregar agora terminou; ramal zero fechado
+     * antes do salão é escada não cavada: {@code BLOCKED}, não nível feito (ADR-037 M1).
      */
     public LevelAdvance advanceIfEveryOpenArmIsDone() {
         if (!everyOpenArmIsDone()) {
             return LevelAdvance.WAITING;
+        }
+
+        if (!shaft.isRamp() && arms.get(0).cut() < MineShaft.SHARED_BLOCKS) {
+            return LevelAdvance.BLOCKED;
         }
 
         if (!everyArmIsDone()) {
@@ -364,7 +364,9 @@ public final class Mine {
     public enum LevelAdvance {
         WAITING,
         DEEPENED,
-        EXHAUSTED
+        EXHAUSTED,
+        /** A escada do nível fechou sem chegar ao salão. */
+        BLOCKED
     }
 
     /**
