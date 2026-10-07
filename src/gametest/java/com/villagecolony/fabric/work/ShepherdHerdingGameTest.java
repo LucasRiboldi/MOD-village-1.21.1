@@ -65,4 +65,58 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
             context.complete();
         });
     }
+
+    /**
+     * O pastor anda até a vaca, volta andando com ela na corda e a amarra (B5): sem teletransporte,
+     * pela navegação do jogo, com o tique do servidor rodando a coleta.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herding", tickLimit = 600)
+    public void theShepherdWalksTheCowToTheFence(TestContext context) {
+        for (int x = 0; x <= 7; x++) {
+            for (int z = 0; z <= 7; z++) {
+                context.setBlockState(new BlockPos(x, 0, z), Blocks.STONE.getDefaultState());
+            }
+        }
+
+        ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(4, 1, 4));
+        // Cantos opostos: a 7 da cerca a vaca não conta como "em curral" (a arena é fechada).
+        BlockPos fence = new BlockPos(0, 1, 0);
+        context.setBlockState(fence, Blocks.OAK_FENCE.getDefaultState());
+        VillagerEntity shepherd = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 1, 2));
+        CowEntity cow = context.spawnEntity(EntityType.COW, new BlockPos(7, 1, 7));
+        cow.setAiDisabled(true);
+        context.getWorld().setTimeOfDay(1_000);
+
+        context.waitAndRun(5, () -> {
+            fixture.owning(shepherd.getUuid());
+            VillageColonyMod.WORKERS.register(shepherd.getUuid(), fixture.colony().id())
+                    .assign(ProfessionType.SHEPHERD);
+            ShepherdHerding.plan(context.getWorld(), fixture.colony(), id -> false);
+            context.assertTrue(ShepherdHerding.isHerding(shepherd.getUuid()), "o pastor não começou a coleta");
+        });
+
+        StringBuilder trace = new StringBuilder();
+
+        for (int tick = 50; tick <= 550; tick += 50) {
+            int at = tick;
+            context.runAtTick(at, () -> trace.append(' ').append(at).append(':')
+                    .append(ShepherdHerding.phaseOf(shepherd.getUuid()).map(Enum::name).orElse("-"))
+                    .append('@').append(context.getRelativePos(shepherd.getBlockPos()).toShortString())
+                    .append(cow.isLeashed() ? "+corda" : ""));
+        }
+
+        context.runAtTick(560, () -> {
+            try {
+                context.assertTrue(cow.getLeashHolder() instanceof LeashKnotEntity knot
+                                && knot.getAttachedBlockPos().equals(context.getAbsolutePos(fence)),
+                        "andando, o pastor não amarrou a vaca na cerca: corda=" + cow.getLeashHolder()
+                                + ", fase=" + ShepherdHerding.phaseOf(shepherd.getUuid())
+                                + ", trajeto" + trace);
+            } finally {
+                fixture.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
 }
