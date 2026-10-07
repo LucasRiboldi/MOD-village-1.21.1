@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.storage.model.ChestSlotCap;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.storage.model.WorkerStorage;
@@ -32,8 +33,11 @@ import java.util.UUID;
  */
 final class MinerHaul {
 
-    /** Quantos de cada tipo, fora o pedido, o baú do mineiro guarda. */
-    static final int TYPE_CAP = 256;
+    /**
+     * Quantos de cada tipo, fora o pedido, o baú do mineiro guarda: os três
+     * compartimentos de 64 de todo baú da colônia (ADR-036 9, ADR-037 C2).
+     */
+    static final int TYPE_CAP = ChestSlotCap.MAX_SLOTS_PER_ITEM * 64;
 
     private MinerHaul() {
     }
@@ -90,12 +94,8 @@ final class MinerHaul {
             int before = stored;
 
             if (!isAsked) {
-                // <b>Teto de 256 por tipo</b> — decisão do autor,
-                // 2026-09-30. Granito, diorito, andesito, cascalho e o
-                // resto que a galeria solta enchiam o baú sem receita que
-                // os consumisse. Passado o teto, o mineiro deixa de
-                // recolher aquele tipo: o bloco sai da galeria e o drop
-                // não é guardado. O que a tarefa pediu não tem teto.
+                // Teto por tipo (TYPE_CAP): passado ele, o bloco sai da
+                // galeria e o drop não é guardado. O pedido só tem o teto do baú.
                 int room = Math.max(0, TYPE_CAP
                         - ChestWithdrawer.countIn(world, chest, drop.getItem()));
 

@@ -87,14 +87,6 @@ public final class ProfessionChestOverflow {
             if (isFull(source)) {
                 moved += relieveLastSlots(source, destinations);
                 saturated |= hasReservedItems(source);
-                if (hasReservedItems(source) && colonyId.isPresent()) {
-                    Optional<Inventory> storage = MineOverflowStorage.ensure(world, colonyId.get())
-                            .flatMap(chest -> ChestInventories.at(world, chest))
-                            .map(ChestInventories.Handle::inventory);
-                    if (storage.isPresent()) {
-                        moved += relieveLastSlots(source, List.of(storage.get()));
-                    }
-                }
             }
         }
 

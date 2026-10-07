@@ -96,7 +96,6 @@
       "com.villagecolony.gametest.VillageBiomesGameTest",
       "com.villagecolony.gametest.MinerGameTest",
       "com.villagecolony.gametest.MinerOverflowGameTest",
-      "com.villagecolony.gametest.MineOverflowStorageGameTest",
       "com.villagecolony.gametest.SurfaceGatheringGameTest",
       "com.villagecolony.gametest.SmelterGameTest",
       "com.villagecolony.gametest.ShepherdGameTest",
