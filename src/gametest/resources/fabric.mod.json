@@ -24,6 +24,7 @@
       "com.villagecolony.fabric.work.MineMouthInsideGameTest",
       "com.villagecolony.fabric.integration.VillageTreesGameTest",
       "com.villagecolony.fabric.work.CraftStationGameTest",
+      "com.villagecolony.fabric.work.ShepherdHerdingGameTest",
       "com.villagecolony.gametest.ProfessionReviewGameTest",
       "com.villagecolony.fabric.work.MinerHaulCapGameTest",
       "com.villagecolony.gametest.VillageForestGameTest",

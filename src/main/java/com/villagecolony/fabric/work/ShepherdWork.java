@@ -173,8 +173,9 @@ public final class ShepherdWork {
             IdleLog.clear(colony.id(), SUBJECT);
         }
 
-        // Cuidar do rebanho, com ou sem tosquia pedida — 2026-09-30.
+        // Cuidar do rebanho e, sem tosquia, coletar animais — ADR-038 P2b, P2c.
         ShepherdFlock.tend(world, colony);
+        ShepherdHerding.plan(world, colony, JOBS::containsKey);
 
         return open;
     }
@@ -195,6 +196,8 @@ public final class ShepherdWork {
 
     /** Um tique de trabalho para cada pastor com ovelha em vista. */
     public static void tick(ServerWorld world) {
+        ShepherdHerding.tick(world);
+
         if (JOBS.isEmpty()) {
             return;
         }

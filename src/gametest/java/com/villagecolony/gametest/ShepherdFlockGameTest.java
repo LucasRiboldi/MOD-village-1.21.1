@@ -32,13 +32,23 @@ public class ShepherdFlockGameTest implements FabricGameTest {
 
     private static final BlockPos CHEST = new BlockPos(2, 1, 2);
 
+    private static final BlockPos FENCE = new BlockPos(4, 1, 6);
+
+    /** A ovelha amarrada no poste da cena. */
+    private static net.minecraft.entity.passive.SheepEntity tied(TestContext context, BlockPos at) {
+        net.minecraft.entity.passive.SheepEntity sheep = context.spawnEntity(EntityType.SHEEP, at);
+        sheep.attachLeash(net.minecraft.entity.decoration.LeashKnotEntity.getOrCreate(
+                context.getWorld(), context.getAbsolutePos(FENCE)), true);
+        return sheep;
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "flock_full")
     public void aFullFlockEatsNoWheat(TestContext context) {
         Scene scene = new Scene(context, 4, true);
         List<SheepEntity> flock = new ArrayList<>();
 
         for (int i = 0; i < ShepherdFlock.FLOCK_TARGET; i++) {
-            flock.add(context.spawnEntity(EntityType.SHEEP, new BlockPos(3 + i % 4, 1, 4 + i / 4)));
+            flock.add(tied(context, new BlockPos(3 + i % 4, 1, 4 + i / 4)));
         }
 
         try {
@@ -56,8 +66,8 @@ public class ShepherdFlockGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "flock_one_wheat")
     public void oneWheatGoesBackToTheChest(TestContext context) {
         Scene scene = new Scene(context, 1, true);
-        SheepEntity first = context.spawnEntity(EntityType.SHEEP, new BlockPos(4, 1, 4));
-        SheepEntity second = context.spawnEntity(EntityType.SHEEP, new BlockPos(5, 1, 4));
+        SheepEntity first = tied(context, new BlockPos(4, 1, 4));
+        SheepEntity second = tied(context, new BlockPos(5, 1, 4));
 
         try {
             context.assertFalse(ShepherdFlock.tend(context.getWorld(), scene.colony),
@@ -75,8 +85,8 @@ public class ShepherdFlockGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "flock_no_shepherd")
     public void noShepherdNoBreeding(TestContext context) {
         Scene scene = new Scene(context, 4, false);
-        SheepEntity first = context.spawnEntity(EntityType.SHEEP, new BlockPos(4, 1, 4));
-        SheepEntity second = context.spawnEntity(EntityType.SHEEP, new BlockPos(5, 1, 4));
+        SheepEntity first = tied(context, new BlockPos(4, 1, 4));
+        SheepEntity second = tied(context, new BlockPos(5, 1, 4));
 
         try {
             context.assertFalse(ShepherdFlock.tend(context.getWorld(), scene.colony),
@@ -101,6 +111,8 @@ public class ShepherdFlockGameTest implements FabricGameTest {
 
         Scene(TestContext context, int wheat, boolean shepherd) {
             context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+            // Um poste de cerca: o rebanho é o que está amarrado ou em curral (ADR-038 P2c).
+            context.setBlockState(FENCE, Blocks.OAK_FENCE.getDefaultState());
             chest = (ChestBlockEntity) context.getBlockEntity(CHEST);
             chest.setStack(0, new ItemStack(Items.WHEAT, wheat));
 
