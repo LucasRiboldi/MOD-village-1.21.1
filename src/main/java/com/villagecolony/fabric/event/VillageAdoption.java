@@ -188,7 +188,16 @@ final class VillageAdoption {
      * lá, porque o único bioma aceito é PLAINS.
      */
     static void updateLifecycles(ServerWorld overworld) {
+        updateLifecycles(overworld, colony -> true);
+    }
+
+    /** O mesmo, só para as colônias atendidas — ADR-039 item 3, opção B. */
+    static void updateLifecycles(ServerWorld overworld, java.util.function.Predicate<java.util.UUID> attended) {
         for (Colony colony : VillageColonyMod.COLONIES.all()) {
+            if (!attended.test(colony.id())) {
+                continue;
+            }
+
             ChunkPos chunk = new ChunkPos(MinecraftTypeAdapter.toBlockPos(colony.center()));
 
             ColonyLifecycle current = overworld.shouldTick(chunk)

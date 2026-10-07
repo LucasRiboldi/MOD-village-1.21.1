@@ -326,7 +326,7 @@ public final class VillageDetectionHandler {
             VillageFocus.attend(overworld);
         }
 
-        tickActiveServer(server, true);
+        tickActiveServer(server);
 
         // Quem ficou livre não espera o ciclo de 30 s — F10, 2026-09-30.
         if (server.getTicks() % IdleHands.EVERY_TICKS == 0) {
@@ -343,12 +343,10 @@ public final class VillageDetectionHandler {
      * a porta de produção que pausa uma colônia sem jogador por perto.
      */
     public static void tickGameTestServer(net.minecraft.server.MinecraftServer server) {
-        // Sem fusão: as arenas da bateria ficam lado a lado, e o ciclo fundia colônias de
-        // testes diferentes no meio deles (a causa do KF-003). O teste da fusão chama o gatilho.
-        tickActiveServer(server, false);
+        tickActiveServer(server);
     }
 
-    private static void tickActiveServer(net.minecraft.server.MinecraftServer server, boolean merge) {
+    private static void tickActiveServer(net.minecraft.server.MinecraftServer server) {
         ServerWorld overworld = server.getOverworld();
 
         drainOnePending(overworld);
@@ -404,7 +402,12 @@ public final class VillageDetectionHandler {
 
         mark = CycleCost.since(CycleCost.Phase.DETECT, mark);
 
-        VillageAdoption.updateLifecycles(server.getOverworld());
+        // Junção e ciclo de vida só na colônia do jogador — ADR-039 item 3, opção B. No servidor
+        // de teste não há jogador, e as colônias dos cenários não se juntam (a causa do KF-003).
+        java.util.Set<java.util.UUID> attended = VillageFocus.attended(server.getOverworld(),
+                List.copyOf(VillageColonyMod.COLONIES.all()));
+
+        VillageAdoption.updateLifecycles(server.getOverworld(), attended::contains);
 
         mark = CycleCost.since(CycleCost.Phase.LIFECYCLE, mark);
 
@@ -415,9 +418,7 @@ public final class VillageDetectionHandler {
         // decidir o ciclo — ADR-007, 2026-09-30. Só neste caminho de jogo:
         // as arenas da bateria ficam lado a lado, e fundiriam colônias de
         // testes diferentes. O GameTest da fusão chama o gatilho direto.
-        if (merge) {
-            ColonyMergeTrigger.mergeTouchingColonies(server.getOverworld());
-        }
+        ColonyMergeTrigger.mergeTouchingColonies(server.getOverworld(), attended::contains);
 
         CycleCost.since(CycleCost.Phase.DETECT, mark);
 
