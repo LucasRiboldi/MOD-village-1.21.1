@@ -183,7 +183,7 @@ public final class WorkTime {
     }
 
     /** Ofício parado cede uma pessoa — ADR-038 P1, regra em {@link IdleYield}. */
-    private static void yieldIdleTrades(UUID colonyId, Map<String, EnumMap<State, Integer>> window) {
+    static void yieldIdleTrades(UUID colonyId, Map<String, EnumMap<State, Integer>> window) {
         for (Map.Entry<String, EnumMap<State, Integer>> trade : window.entrySet()) {
             if ("NONE".equals(trade.getKey())) {
                 continue;
