@@ -127,6 +127,7 @@ final class TreeReplanting {
         }
 
         world.setBlockState(base, sapling);
+        VillageTrees.rememberSaplingNear(base);
 
         VillageColonyMod.LOGGER.info(
                 "Planted a {} sapling at {}", species, base.toShortString());
