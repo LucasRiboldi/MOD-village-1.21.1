@@ -59,13 +59,13 @@ public class ProfessionReviewGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "review_bakery")
     public void theFarmerBakesOnlyTheWheatAboveTheReserve(TestContext context) {
         ChestBlockEntity chest = chest(context);
-        chest.setStack(0, new ItemStack(Items.WHEAT, 50));
+        chest.setStack(0, new ItemStack(Items.WHEAT, 26));
         ColonyPos at = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
 
         int baked = FarmerBakery.bakeSurplus(context.getWorld(), at);
 
         context.assertTrue(baked == 6,
-                "assou " + baked + " paes, esperado 6 (18 trigos acima de 32)");
+                "assou " + baked + " paes, esperado 6 (18 trigos acima da reserva de 8)");
         context.assertTrue(count(chest, Items.BREAD) == 6, "o pao nao entrou no bau");
         context.assertTrue(count(chest, Items.WHEAT) == FarmerBakery.WHEAT_RESERVE,
                 "a reserva de trigo virou " + count(chest, Items.WHEAT));

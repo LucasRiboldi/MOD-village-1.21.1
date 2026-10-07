@@ -37,4 +37,17 @@ class VillageHappinessTest {
     void aVillageWithNoAdultsDoesNotDivideByZero() {
         assertEquals(30, VillageHappiness.measure(30, 0, 2, 0).foodPerAdult());
     }
+
+    @Test
+    void aSupperThatFedEveryoneMakesTheVillageHappier() {
+        assertEquals(CONTENT, VillageHappiness.measure(12 * 4, 4, 4, 1, false).mood());
+        assertEquals(HAPPY, VillageHappiness.measure(12 * 4, 4, 4, 1, true).mood(),
+                "o convívio da reunião soma");
+    }
+
+    @Test
+    void threeWheatAreWorthABread() {
+        assertEquals(4, VillageHappiness.wheatPoints(3));
+        assertEquals(8, VillageHappiness.wheatPoints(6));
+    }
 }
