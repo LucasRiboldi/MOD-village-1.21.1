@@ -161,6 +161,21 @@ public final class ProfessionChestOverflowGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Um baú sem profissão cheio também alivia, para outro baú sem profissão (ADR-038 P5a). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "profession_chest_overflow")
+    public void aFullCommunityChestRelievesIntoAnother(TestContext context) {
+        ChestBlockEntity full = chest(context, SOURCE);
+        ChestBlockEntity other = chest(context, COMMUNITY);
+        fill(full, Items.COBBLESTONE);
+
+        int moved = ProfessionChestOverflow.relieve(context.getWorld(),
+                List.of(position(context, SOURCE), position(context, COMMUNITY)), Set.of());
+
+        context.assertTrue(moved == 10, "o baú comunitário cheio moveu " + moved + " de 10");
+        context.assertTrue(count(other, Items.COBBLESTONE) == 10, "o outro baú não recebeu o excesso");
+        context.complete();
+    }
+
     private static ChestBlockEntity chest(TestContext context, BlockPos relative) {
         context.setBlockState(relative, Blocks.CHEST.getDefaultState());
         return (ChestBlockEntity) context.getBlockEntity(relative);

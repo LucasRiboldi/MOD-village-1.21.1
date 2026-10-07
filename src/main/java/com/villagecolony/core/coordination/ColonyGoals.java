@@ -430,8 +430,8 @@ public final class ColonyGoals {
                 Math.max(stoneForWork, STONE_FLOOR),
                 stoneRoom > 0 ? owned.amountOfGroup(stone.group()) + stoneRoom : 0));
 
-        // O pedreiro não fica parado — ADR-036 item 8.
-        MasonStock.addTo(goals, stone);
+        // O pedreiro não fica parado (ADR-036 8), cinco de cada peça por vez (ADR-038 P5b).
+        AdvanceStock.addTo(goals, colony.id(), MasonStock.piecesFor(stone), owned::amountOf);
 
         // A despensa — 2026-08-27, e por cama desde 2026-09-05. Qualquer
         // lavoura conta, pelo grupo. O piso continua valendo para a

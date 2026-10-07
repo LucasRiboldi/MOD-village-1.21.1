@@ -35,24 +35,4 @@ class MasonStockTest {
             }
         }
     }
-
-    @Test
-    void theFloorIsAddedWithoutLoweringABiggerGoal() {
-        Map<ResourceType, Integer> goals = new EnumMap<>(ResourceType.class);
-        goals.put(ResourceType.STONE_BRICKS, 40);
-
-        MasonStock.addTo(goals, ResourceType.COBBLESTONE);
-
-        assertEquals(40, goals.get(ResourceType.STONE_BRICKS), "a meta maior da obra foi rebaixada");
-        assertEquals(MasonStock.FLOOR, goals.get(ResourceType.COBBLESTONE_SLAB));
-    }
-
-    @Test
-    void aStoneWithoutPiecesAddsNothing() {
-        Map<ResourceType, Integer> goals = new EnumMap<>(ResourceType.class);
-
-        MasonStock.addTo(goals, ResourceType.WHEAT);
-
-        assertTrue(goals.isEmpty());
-    }
 }

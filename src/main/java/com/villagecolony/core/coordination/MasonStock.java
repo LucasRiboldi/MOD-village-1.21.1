@@ -6,9 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * O pedreiro não fica parado: sem pedido de obra, ele mantém um estoque das
- * peças da pedra da vila — ADR-036 item 8, como a tábua faz com o
- * carpinteiro.
+ * As peças da pedra da vila que o pedreiro adianta sem pedido de obra — ADR-036
+ * item 8; cinco de cada por vez, em ciclo ({@link AdvanceStock}, ADR-038 P5b).
  *
  * <p>Pedregulho (planície): laje de pedregulho e tijolo de pedra. A escada de
  * pedregulho fica de fora de propósito: ela não é recurso acompanhado, e
@@ -16,9 +15,6 @@ import java.util.Map;
  * (deserto): escada, laje e arenito lavrado.
  */
 public final class MasonStock {
-
-    /** O mínimo de cada peça no baú. */
-    public static final int FLOOR = 16;
 
     private static final Map<ResourceType, List<ResourceType>> PIECES = Map.of(
             ResourceType.COBBLESTONE, List.of(ResourceType.COBBLESTONE_SLAB, ResourceType.STONE_BRICKS),
@@ -31,12 +27,5 @@ public final class MasonStock {
     /** As peças que o pedreiro mantém para a pedra desta vila. */
     public static List<ResourceType> piecesFor(ResourceType villageStone) {
         return PIECES.getOrDefault(villageStone, List.of());
-    }
-
-    /** Põe o piso de cada peça nas metas, sem rebaixar uma meta maior que a obra já pôs. */
-    public static void addTo(Map<ResourceType, Integer> goals, ResourceType villageStone) {
-        for (ResourceType piece : piecesFor(villageStone)) {
-            goals.merge(piece, FLOOR, Math::max);
-        }
     }
 }
