@@ -31,6 +31,7 @@
       "com.villagecolony.fabric.work.ShepherdLooseFlockGameTest",
       "com.villagecolony.gametest.CraftingAdvanceGameTest",
       "com.villagecolony.fabric.integration.WorkPathGameTest",
+      "com.villagecolony.fabric.work.MineOreHeadingGameTest",
       "com.villagecolony.gametest.ProfessionReviewGameTest",
       "com.villagecolony.fabric.work.MinerHaulCapGameTest",
       "com.villagecolony.gametest.VillageForestGameTest",

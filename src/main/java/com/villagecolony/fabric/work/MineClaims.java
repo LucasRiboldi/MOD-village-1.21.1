@@ -130,6 +130,12 @@ public final class MineClaims {
      */
     static OptionalInt claimArm(
             UUID colonyId, UUID workerId, int usable, IntPredicate open) {
+        return claimArm(colonyId, workerId, usable, open, new int[] {0, 1, 2, 3});
+    }
+
+    /** O mesmo, oferecendo os ramais livres nesta ordem — ADR-039 D3, ver {@link MineOreHeading}. */
+    static OptionalInt claimArm(
+            UUID colonyId, UUID workerId, int usable, IntPredicate open, int[] order) {
 
         UUID[] taken = DIGGERS.computeIfAbsent(colonyId, id -> new UUID[Mine.ARMS]);
 
@@ -161,8 +167,8 @@ public final class MineClaims {
         // <b>Só os ramais que já podem ser repartidos</b>: enquanto o
         // poço não está aberto, o único é o primeiro. Ver
         // Mine.branchesOpenNow.
-        for (int index = 0; index < Math.min(usable, taken.length); index++) {
-            if (taken[index] == null && open.test(index)) {
+        for (int index : order) {
+            if (index < Math.min(usable, taken.length) && taken[index] == null && open.test(index)) {
                 taken[index] = workerId;
 
                 return OptionalInt.of(index);

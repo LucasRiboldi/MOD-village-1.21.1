@@ -145,11 +145,14 @@ public final class MineDigging {
 
         IdleLog.clear(colonyId, SURFACE_SUBJECT);
 
+        // O ramal novo vai para o minério que a vila precisa — ADR-039 D3.
+        int[] order = MineClaims.armAlreadyHeld(colonyId, workerId).isPresent()
+                ? new int[] {0, 1, 2, 3}
+                : VillageColonyMod.COLONIES.find(colonyId)
+                        .map(colony -> MineOreHeading.order(world, colony, mine.get()))
+                        .orElse(new int[] {0, 1, 2, 3});
         OptionalInt claimed = MineClaims.claimArm(
-                colonyId,
-                workerId,
-                mine.get().branchesOpenNow(),
-                index -> !mine.get().arm(index).isDone());
+                colonyId, workerId, mine.get().branchesOpenNow(), index -> !mine.get().arm(index).isDone(), order);
 
         if (claimed.isEmpty()) {
             // <b>Nenhum ramal aceita picareta agora</b>: ou os abertos
