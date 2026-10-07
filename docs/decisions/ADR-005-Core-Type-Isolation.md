@@ -284,3 +284,16 @@ Passa a ser executável como escrito.
 O Core não deve saber que o Minecraft existe.
 
 Se souber, ele não é um Core — é um plugin.
+
+---
+
+## Emenda — 2026-10-06 (ADR-036, item 19)
+
+A planta passa a carregar, além do lado horizontal da ADR-008, **eixo, metade e
+formato** do bloco (`ShapeStates`, em `core/construction/model`). Entram como
+**texto** — o nome e o valor da propriedade como o arquivo os escreveu
+(`axis=x`, `half=top`, `type=top`, `shape=outer_left`) — e o Core não os
+interpreta além de filtrar quais passam e trocar `x`↔`z` no giro de 90°. Quem
+os converte em estado de bloco é o Fabric (`BlockShaping.withPlanStates`). O
+Core continua sem tipo nenhum do Minecraft.
+
