@@ -1,6 +1,6 @@
 # STATE — 2026-10-08
 
-> **JAR atual: `village-colony-0.3.16.jar` = `A3874251…1C6A`** (feno no baú, bosque, pastor ajudante; ver abaixo) em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.17.jar` = `83016B40…2DF6`** (descida do mineiro pela altura; ver abaixo) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,14 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🔴 08-10, 15:14–15:53 — playtest da 0.3.16 (0.3.17)
+
+Relatório: `docs/reports/Playtest-2026-10-08-tarde-2.md` (Spark 3Oy2cLrBoT: mod 2,5%). Bosque,
+pastor ajudante e feno funcionaram; obra de 429 a 99 peças em 12 min, depois parada 20 min em
+lampião/corrente (ferro). Mineiro descia mas voltava: corrigido — na escada a próxima entrada é a
+primeira abaixo dele, superfície em cima da mina vai à boca, descida sem orçamento de caminhada.
+**Verificado:** build ok, 1.380 unitários, 678/678; mutações pegas. **Não visto em jogo.**
 
 ## 🔴 08-10 — feno, bosque e pastor ajudante (0.3.16)
 

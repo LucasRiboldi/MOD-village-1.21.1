@@ -6,6 +6,12 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Playtest da 0.3.17
+
+- [ ] Mineiro chega ao nível da pedra (y 38) e `MINED` > 0; ferro chega ao fundidor e ao lampião.
+- [ ] **Decisão do autor:** se o ferro ainda não vier, lampião e corrente entram na lista do feno?
+- [ ] `GroundPickupGameTest` cai só nas rodadas de mutação — investigar.
+
 ## 🔴 Playtest da 0.3.16
 
 - [ ] Fardo de feno no baú do construtor depois de três faltas (`stocked minecraft:hay_block`).
