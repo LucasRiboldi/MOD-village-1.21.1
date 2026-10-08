@@ -148,6 +148,17 @@ final class MinerSteps {
                 }
             }
 
+            // Fora da mina, primeiro a boca de superfície e a descida nível por
+            // nível; só no nível da pedra vale a perna de sempre (MineEntrance).
+            // Na descida o prazo de aproximação não corre: ir até a boca pode
+            // afastá-lo da pedra. O guarda de imobilidade continua valendo.
+            Optional<BlockPos> down = MineEntrance.legDown(
+                    world, job.task.colonyId(), villager.getBlockPos(), job.target);
+
+            if (down.isPresent()) {
+                job.lease.reset();
+            }
+
             // E se ele saiu do lugar — 2026-09-03. Ver WorkStall, que faz
             // a pergunta do expediente por conta própria.
             if (job.stall.stuck(world, villager)) {
@@ -228,6 +239,12 @@ final class MinerSteps {
                 // MineDigging.armToWalk: os dois deixaram de ser o mesmo
                 // quando a mina ganhou quatro rumos, e a tarefa de areia
                 // nunca reservou rumo nenhum.
+                if (down.isPresent()) {
+                    WorkTargets.set(workerId, down.get(), MinerReach.ARRIVAL);
+
+                    return false;
+                }
+
                 Optional<MineArm> corridor =
                         MineDigging.armToWalk(
                                 job.task.colonyId(), workerId, villager.getBlockPos());

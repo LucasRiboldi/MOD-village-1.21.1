@@ -454,6 +454,9 @@ public final class MineDigging {
                 colonyId,
                 MineShaft.from(MinecraftTypeAdapter.toColonyPos(mouth.get()), descent));
 
+        // A boca de superfície fica na memória: o nível desce, a entrada não (MineEntrance).
+        MineEntrance.opened(colonyId, opened.entry());
+
         VillageColonyMod.LOGGER.info(
                 "Miner {} opens a mine at {} - a {} step spiral then four {} step branches",
                 workerId,
