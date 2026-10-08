@@ -174,6 +174,7 @@ public final class Task {
 
         this.executorId = workerId;
         this.state = TaskState.RESERVED;
+        TaskTransitions.moved(this, TaskState.AVAILABLE, TaskState.RESERVED, workerId);
     }
 
     /** O trabalhador chegou e começou. */
@@ -181,6 +182,7 @@ public final class Task {
         require(TaskState.RESERVED, "start");
 
         this.state = TaskState.EXECUTING;
+        TaskTransitions.moved(this, TaskState.RESERVED, TaskState.EXECUTING, executorId);
     }
 
     /** Terminou. A colônia reavalia depois disto — §8 e §9. */
@@ -188,6 +190,7 @@ public final class Task {
         require(TaskState.EXECUTING, "complete");
 
         this.state = TaskState.COMPLETED;
+        TaskTransitions.moved(this, TaskState.EXECUTING, TaskState.COMPLETED, executorId);
     }
 
     /**
@@ -222,8 +225,11 @@ public final class Task {
                     "Cannot release a task that is " + state + ": " + id);
         }
 
+        @Nullable UUID had = executorId;
+        TaskState from = state;
         this.executorId = null;
         this.state = TaskState.AVAILABLE;
+        TaskTransitions.moved(this, from, TaskState.AVAILABLE, had);
     }
 
     /**
@@ -242,8 +248,11 @@ public final class Task {
             throw new IllegalStateException("Cannot cancel a completed task: " + id);
         }
 
+        @Nullable UUID had = executorId;
+        TaskState from = state;
         this.executorId = null;
         this.state = TaskState.CANCELLED;
+        TaskTransitions.moved(this, from, TaskState.CANCELLED, had);
     }
 
     public boolean belongsTo(UUID colonyId) {

@@ -116,6 +116,7 @@ public final class StrandedWorkers {
                     workerId.toString().substring(0, 8),
                     where.toShortString(),
                     why);
+            ActionJournal.action(workerId, "STRANDED", "", 0, where, why);
 
             return true;
         }).orElse(false);

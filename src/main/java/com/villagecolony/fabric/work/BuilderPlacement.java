@@ -191,6 +191,7 @@ public final class BuilderPlacement {
             // funil). Volta quando o material chega (reconsiderDeferredPieces).
             if (project.hasAnotherPieceThan(block)) {
                 project.deferForMaterial(block);
+                ActionJournal.action(workerId, "SET_ASIDE", block.block().path(), 1, target, "no material");
 
                 VillageColonyMod.LOGGER.info(
                         "Project {} sets {} at {} aside — not in the colony chests yet; it goes on"
@@ -220,6 +221,7 @@ public final class BuilderPlacement {
         BlockShaping.placeSecondHalf(world, target, placed);
 
         project.markPlaced(block);
+        ActionJournal.action(workerId, "PLACED", block.block().path(), 1, target, "");
 
         job.placed++;
 

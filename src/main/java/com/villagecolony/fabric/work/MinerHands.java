@@ -151,6 +151,7 @@ public final class MinerHands {
                 haul.stored(),
                 job.target.toShortString(),
                 job.collected);
+        ActionJournal.action(villager.getUuid(), "MINED", job.task.targetResource().name(), haul.stored(), job.target, "");
 
         if (job.toward >= job.task.amount()) {
             finishTask(villager.getUuid(), job);
@@ -285,6 +286,7 @@ public final class MinerHands {
                 world.getEntity(workerId) instanceof VillagerEntity villager
                         ? MinerReport.whyNotReached(world, villager, job.target)
                         : "the miner left the world");
+        ActionJournal.action(workerId, "GAVE_UP", "stone", 0, job.target, why);
 
         job.task.release();
 

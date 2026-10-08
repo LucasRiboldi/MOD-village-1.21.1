@@ -468,9 +468,9 @@ public final class SmelterWork {
         }
 
         job.smelted += made.getCount() - leftOver;
-
         VillageColonyMod.LOGGER.info(
                 "Smelter {} made {} out of {} — {} this task", workerId, made.getItem(), raw.getItem(), job.smelted);
+        ActionJournal.action(workerId, "SMELTED", ActionJournal.idOf(made.getItem()), made.getCount() - leftOver, null, "");
         WorkerStrikes.worked(workerId, job.task);
         if (world.getEntity(workerId) instanceof VillagerEntity smelter) { smelter.swingHand(Hand.MAIN_HAND); }
 

@@ -365,6 +365,7 @@ public final class ShepherdWork {
                 dropped - leftOver,
                 wool,
                 job.collected);
+        ActionJournal.action(villager.getUuid(), "SHEARED", ActionJournal.idOf(wool), dropped - leftOver, null, "");
         WorkerStrikes.worked(villager.getUuid(), job.task);
 
         release(villager.getUuid(), job);

@@ -188,6 +188,7 @@ public class VillageColonyMod implements ModInitializer {
         PayloadTypeRegistry.playS2C().register(OverlaySnapshotPayload.ID, OverlaySnapshotPayload.CODEC);
         OverlaySync.register();
         ServerLifecycleHandler.register();
+        com.villagecolony.fabric.work.ActionJournal.register();
         PlayerWorldChangeHandler.register();
         VillageDetectionHandler.register();
         VillagerLifecycleHandler.register();

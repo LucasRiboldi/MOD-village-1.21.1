@@ -214,6 +214,7 @@ final class FarmerChores {
                 job.target.toShortString(),
                 job.collected,
                 replanted ? "replanted" : "nothing left to replant");
+        ActionJournal.action(villager.getUuid(), "HARVESTED", "crop", took, job.target, "");
         WorkerStrikes.worked(villager.getUuid(), job.task);
 
         FarmerWork.release(villager.getUuid(), job);

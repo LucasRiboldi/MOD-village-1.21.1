@@ -1,6 +1,6 @@
 # STATE — 2026-10-08
 
-> **JAR atual: `village-colony-0.3.10.jar` = `C32C43E3…43B1`** (ferro do funil + overlay; ver abaixo) em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.11.jar` = `C9D15A14…8608`** (ferro do funil + overlay; ver abaixo) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,18 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟢 08-10 — diário de ações (0.3.11)
+
+Pedido do autor: registrar todas as ações de todas as profissões. Cada passo de tarefa
+(`TaskTransitions`, observador no núcleo, sem Minecraft) e cada ação concreta (PLACED, SET_ASIDE,
+MINED, GAVE_UP, FELLED_TREE, SMELTED, HARVESTED, SHEARED, CRAFTED, STRANDED, UNSTRANDED) vira uma
+linha JSON em `logs/villagecolony-actions-<sessão>.jsonl` (`ActionJournal`, lote a cada 10 s;
+`-Dvillagecolony.actions=false` desliga). **Depois de todo playtest:**
+`python scripts/action_report.py` — por profissão: tarefas pegas/feitas/soltas, conclusão,
+mediana, ações por minuto; por aldeão: o que mais soltou.
+**Verificado:** build ok, 1.370 unitários, 3 de Python novos, GameTests 661/661; a bateria gerou
+1.130 linhas e o relatório as leu. **Não visto em jogo.**
 
 ## 🔴 08-10 — obra segue sem a peça que falta; nome dentro do painel (0.3.10)
 

@@ -128,6 +128,7 @@ public final class TreeChoice {
                     job.plan.logs(),
                     job.plan.leaves(),
                     job.collected);
+            ActionJournal.action(villager.getUuid(), "FELLED_TREE", "log", job.plan.logs(), job.plan.base(), "");
 
             job.plan = null;
         }

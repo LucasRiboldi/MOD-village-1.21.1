@@ -150,6 +150,7 @@ public final class StrandedEscape {
                     workerId.toString().substring(0, 8),
                     feet.toShortString(),
                     StrandedWorkers.stepsDug(workerId));
+            ActionJournal.action(workerId, "UNSTRANDED", "", StrandedWorkers.stepsDug(workerId), feet, "");
 
             StrandedWorkers.release(workerId);
             ClimbOut.finish(world, villager, workerId);
