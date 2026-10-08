@@ -6,6 +6,17 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Do playtest de 08-10 (`docs/reports/Playtest-2026-10-08.md`)
+
+- [ ] Em jogo: obra com funil faz o mineiro pedir `raw_iron` (linha `miners:` com `wants raw_iron`).
+- [ ] **Mineiro preso a pedra cujo lugar de pé a galeria não alcança** (3 pedras em 10 min).
+- [ ] **Segundo mineiro sem alvo**; `MinerReport` diz "waiting for a branch" com ramais livres.
+- [ ] **Decisão:** a obra espera parada pela peça em resolução (ADR-036 item 6) ou a adia e segue?
+- [ ] Chat `[OBRA] … em resolução: uma profissão consegue` sem nenhuma profissão com o pedido.
+- [ ] Varredura do fazendeiro termina sem resposta (`budget ran out`), 60% de espera.
+- [ ] Pastor: `found no sheep with wool` devolve a tarefa sem fim.
+- [ ] Overlay em jogo: ícones lisos legíveis, painel da obra logo acima da placa.
+
 ## 🔴 Playtest da obra destravada (08-10)
 
 Playtest de 07-10 noite: obra "AVAILABLE with nobody" 37 min, construtor 100% ocioso. Corrigido na

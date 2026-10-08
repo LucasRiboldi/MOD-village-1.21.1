@@ -289,6 +289,39 @@ public class WorkMaterialsGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * O funil pede cinco lingotes e a meta de ferro os conta — playtest de
+     * 2026-10-08: a meta só olhava o lampião, o celeiro esperou o funil e o
+     * mineiro nunca recebeu pedido de minério de ferro.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
+            tickLimit = 20)
+    public void aHopperInTheWorkAsksForFiveIngots(TestContext context) {
+        ServerWorld world = context.getWorld();
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(HERE));
+        Colony colony = Colony.create(UUID.randomUUID(), origin);
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+        VillageColonyMod.COLONIES.register(colony);
+
+        Blueprint plan = Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/hopper_test"),
+                List.of(new BlueprintBlock(
+                        new ColonyPos(0, 0, 0), MinecraftTypeAdapter.toResourceId(Blocks.HOPPER))));
+        ConstructionProject project = ConstructionProject.plan(colony.id(), plan, origin);
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        try {
+            int ingots = WorkMaterials.iron(world, colony);
+            context.assertTrue(ingots == 5, "um funil devia pedir cinco lingotes, pediu " + ingots);
+        } finally {
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
     private static int lanternsCost(ServerWorld world, int lanterns) {
         return WorkMaterials.through(
                 world, WorkMaterials.LANTERN, ResourceType.IRON_INGOT, lanterns);

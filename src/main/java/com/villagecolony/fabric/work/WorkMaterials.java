@@ -101,7 +101,7 @@ public final class WorkMaterials {
     }
 
     /**
-     * O lingote que os lampiões da obra vão custar — 2026-08-21.
+     * O lingote que as peças da obra vão custar — lampião, funil, barra.
      *
      * <p><b>Dois degraus, e é o caso que os pediu.</b> O lampião não pede
      * lingote: pede oito <b>pepitas</b>, e a pepita é que sai do lingote,
@@ -114,9 +114,18 @@ public final class WorkMaterials {
      * aberta, do mesmo jeito que ela já sabia do vidro e do carvão.
      */
     public static int iron(ServerWorld world, Colony colony) {
-        int lanterns = ConstructionDemand.materialNeededBy(LANTERN, colony);
+        int ingots = 0;
 
-        return through(world, LANTERN, ResourceType.IRON_INGOT, lanterns);
+        // Toda peça da obra cuja receita leva lingote, e não só o lampião: o
+        // funil do celeiro pedia cinco e a meta de ferro dava zero — o
+        // fundidor esperava minério que ninguém mandava cavar (playtest de
+        // 2026-10-08).
+        for (Map.Entry<ResourceId, Integer> entry
+                : ConstructionDemand.materialsNeededBy(colony).entrySet()) {
+            ingots += through(world, entry.getKey(), ResourceType.IRON_INGOT, entry.getValue());
+        }
+
+        return ingots;
     }
 
     /**

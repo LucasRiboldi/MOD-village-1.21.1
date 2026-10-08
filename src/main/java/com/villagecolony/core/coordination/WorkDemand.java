@@ -100,8 +100,15 @@ public record WorkDemand(
         add(materials, ResourceType.WHITE_WOOL, wool);
         add(materials, ResourceType.GLASS, glass);
         add(materials, ResourceType.COAL, coal);
-        add(materials, ResourceType.IRON_INGOT, iron);
         smelted.forEach((type, amount) -> add(materials, type, amount));
+        // O lingote também chega pela receita assada da peça (smelted): o maior
+        // dos dois, nunca a soma. E o minério dele é material da obra — sem
+        // isto o mineiro só via a pedra, de prioridade maior, e o ferro do
+        // funil nunca era cavado.
+        if (iron > 0) {
+            materials.merge(ResourceType.IRON_INGOT, iron, Math::max);
+            add(materials, ResourceType.RAW_IRON, iron);
+        }
         surfaceGathered.forEach((type, amount) -> add(materials, type, amount));
         return Map.copyOf(materials);
     }

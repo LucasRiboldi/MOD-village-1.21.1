@@ -1,6 +1,6 @@
 # STATE — 2026-10-08
 
-> **JAR atual: `village-colony-0.3.8.jar` = `413300B9…3D25`** (obra destravada + opção B) em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.9.jar` = `3CB71E9C…6337`** (ferro do funil + overlay; ver abaixo) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,20 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🔴 08-10, madrugada — playtest do 0.3.8: funil, mineiros, overlay
+
+Relatório completo: `docs/reports/Playtest-2026-10-08.md`. A correção da obra funcionou (a casa sem
+base saiu do save). O celeiro parou em 817 blocos esperando **um funil**: a meta de ferro só via
+lampião e o minério de ferro nunca virava material de obra, então o mineiro só cavava pedra.
+**Corrigido (0.3.9):** `WorkMaterials.iron` conta toda peça com lingote na receita;
+`WorkDemand.constructionMaterials` inclui `RAW_IRON`. Overlay: ícones lisos de 64 px; painel da obra
+logo acima da placa.
+
+**Verificado:** `build` ok, 1.364 unitários, GameTests 659/659; mutações das duas correções do ferro
+pegas ("pediu 0"). **Não visto em jogo.** **Abertos:** mineiro preso a pedra de pé inalcançável;
+segundo mineiro sem alvo com o relatório "waiting for a branch"; varredura do fazendeiro sem fim;
+pastor sem ovelha com lã; construtor parado pela peça em resolução (decisão ADR-036 item 6).
 
 ## 🔴 08-10 — obra sem construtor: corrigido (aguarda playtest)
 
