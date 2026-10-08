@@ -222,6 +222,7 @@ public final class BuilderPlacement {
 
         project.markPlaced(block);
         ActionJournal.action(workerId, "PLACED", block.block().path(), 1, target, "");
+        BuildHelper.placed(workerId);
 
         job.placed++;
 

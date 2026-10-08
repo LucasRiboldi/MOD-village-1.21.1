@@ -32,7 +32,12 @@ import java.util.UUID;
  * {@link BuilderWork} abre trabalho para toda tarefa de obra com executor — os dois
  * põem peças da mesma obra, cada um a próxima da fila. Só ajuda com o construtor
  * trabalhando e obra que ainda tenha {@link #MIN_REMAINING} peças; um ajudante por
- * colônia. <b>O ofício vem primeiro:</b> pedido de lã na fila e ele larga a obra.
+ * colônia.
+ *
+ * <p><b>Ajuda que conta:</b> depois de entrar, ele põe pelo menos {@link #MIN_PLACED}
+ * blocos — ou a obra acaba — antes de voltar ao rebanho, mesmo com pedido de lã na
+ * fila (pedido do autor, 2026-10-08: no playtest ele saía depois de 8 e 21 segundos).
+ * Se a obra o soltar antes disso, a vaga volta para ele, até {@link #MAX_RETURNS} vezes.
  */
 public final class BuildHelper {
 
@@ -45,6 +50,18 @@ public final class BuildHelper {
 
     /** Tarefa de ajudante → o ajudante. */
     private static final Map<UUID, UUID> HELPERS = new HashMap<>();
+
+    /** Blocos que ele põe antes de poder voltar ao rebanho. */
+    static final int MIN_PLACED = 10;
+
+    /** Quantas vezes a vaga volta para ele quando a obra o solta antes disso. */
+    static final int MAX_RETURNS = 3;
+
+    /** Ajudante → blocos postos nesta ajuda. */
+    private static final Map<UUID, Integer> PLACED = new HashMap<>();
+
+    /** Ajudante → quantas vezes a vaga voltou para ele. */
+    private static final Map<UUID, Integer> RETURNS = new HashMap<>();
 
     private BuildHelper() {
     }
@@ -60,6 +77,8 @@ public final class BuildHelper {
             Optional<Task> task = VillageColonyMod.TASKS.find(entry.getKey());
 
             if (task.isEmpty() || !task.get().isOpen()) {
+                // A obra acabou (ou a vaga fechou): a ajuda termina aqui.
+                forgetHelper(entry.getValue());
                 it.remove();
                 continue;
             }
@@ -68,15 +87,30 @@ public final class BuildHelper {
                 continue;
             }
 
-            // Solta pela obra (passo travado, peça sem apoio) ou chamado pela lã: a
-            // tarefa de ajudante não fica na fila para outro pegar.
-            if (task.get().state() == TaskState.AVAILABLE || woolWaiting) {
+            UUID helper = entry.getValue();
+            int placed = PLACED.getOrDefault(helper, 0);
+            boolean didHisPart = placed >= MIN_PLACED;
+
+            // Solta pela obra antes dos dez: a vaga volta para ele (até MAX_RETURNS).
+            if (task.get().state() == TaskState.AVAILABLE && !didHisPart
+                    && RETURNS.getOrDefault(helper, 0) < MAX_RETURNS) {
+                RETURNS.merge(helper, 1, Integer::sum);
+                task.get().reserveFor(helper);
+                continue;
+            }
+
+            // Solta pela obra de vez, ou chamado pela lã depois de fazer a parte dele:
+            // a tarefa de ajudante não fica na fila para outro pegar.
+            boolean released = task.get().state() == TaskState.AVAILABLE;
+
+            if (released || (woolWaiting && didHisPart)) {
                 task.get().cancel();
                 it.remove();
+                forgetHelper(helper);
 
-                VillageColonyMod.LOGGER.info("Shepherd {} leaves the build — {}",
-                        entry.getValue().toString().substring(0, 8),
-                        woolWaiting ? "the flock needs shearing" : "the helping hand was released");
+                VillageColonyMod.LOGGER.info("Shepherd {} leaves the build after {} blocks — {}",
+                        helper.toString().substring(0, 8), placed,
+                        released ? "the helping hand was released" : "the flock needs shearing");
             }
         }
 
@@ -110,6 +144,8 @@ public final class BuildHelper {
 
             help.reserveFor(id);
             HELPERS.put(help.id(), id);
+            PLACED.put(id, 0);
+            RETURNS.put(id, 0);
 
             VillageColonyMod.LOGGER.info(
                     "Shepherd {} lends a hand at the build of {} — {} pieces left",
@@ -118,6 +154,21 @@ public final class BuildHelper {
 
             return;
         }
+    }
+
+    /** Um bloco posto na obra por este aldeão; conta se ele é ajudante. */
+    static void placed(UUID workerId) {
+        PLACED.computeIfPresent(workerId, (helper, count) -> count + 1);
+    }
+
+    /** Quantos blocos o ajudante já pôs nesta ajuda. */
+    static int placedBy(UUID helper) {
+        return PLACED.getOrDefault(helper, 0);
+    }
+
+    private static void forgetHelper(UUID helper) {
+        PLACED.remove(helper);
+        RETURNS.remove(helper);
     }
 
     /** Se este aldeão está ajudando numa obra. */
@@ -143,5 +194,7 @@ public final class BuildHelper {
 
     public static void clearAll() {
         HELPERS.clear();
+        PLACED.clear();
+        RETURNS.clear();
     }
 }

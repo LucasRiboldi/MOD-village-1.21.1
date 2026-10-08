@@ -28,7 +28,8 @@ import java.util.UUID;
 
 /**
  * Pedido do autor de 2026-10-08: o pastor sem lã a tosquiar ajuda o construtor a
- * pôr blocos; com pedido de lã na fila, volta ao rebanho.
+ * pôr blocos; põe pelo menos dez (ou a obra acaba) e, com pedido de lã na fila,
+ * volta ao rebanho.
  */
 public class BuildHelperGameTest implements FabricGameTest {
 
@@ -77,14 +78,33 @@ public class BuildHelperGameTest implements FabricGameTest {
                                     .anyMatch(task -> task.type() == TaskType.BUILD),
                     "o pastor ocioso não ganhou a vaga de ajudante na obra");
 
+            // A obra o solta antes dos dez blocos: a vaga volta para ele.
+            Task help = VillageColonyMod.TASKS.assignedTo(shepherd).getFirst();
+
+            help.release();
+            BuildHelper.lendAHand(context.getWorld(), colony);
+
+            context.assertTrue(help.executor().map(shepherd::equals).orElse(false),
+                    "solto pela obra antes dos dez blocos, a vaga não voltou para ele");
+
             VillageColonyMod.TASKS.create(colony.id(), TaskType.COLLECT_WOOL, TaskPriority.PRODUCTION,
                     ResourceType.WHITE_WOOL, 4);
+
+            // Com lã na fila e nenhum bloco posto, ele fica: a ajuda conta dez.
+            BuildHelper.lendAHand(context.getWorld(), colony);
+
+            context.assertTrue(BuildHelper.isHelping(shepherd),
+                    "com pedido de lã ele largou a obra antes de pôr dez blocos");
+
+            for (int block = 0; block < BuildHelper.MIN_PLACED; block++) {
+                BuildHelper.placed(shepherd);
+            }
 
             BuildHelper.lendAHand(context.getWorld(), colony);
 
             context.assertTrue(!BuildHelper.isHelping(shepherd)
                             && VillageColonyMod.TASKS.assignedTo(shepherd).isEmpty(),
-                    "com pedido de lã na fila o pastor continuou na obra");
+                    "depois de dez blocos, com pedido de lã na fila, o pastor continuou na obra");
         } finally {
             VillageColonyMod.TASKS.ofColony(colony.id()).forEach(task -> VillageColonyMod.TASKS.remove(task.id()));
             VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
