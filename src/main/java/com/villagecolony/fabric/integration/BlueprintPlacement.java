@@ -19,6 +19,7 @@ public final class BlueprintPlacement {
     public static Optional<Blueprint> blueprintOf(
             ServerWorld world, UUID colonyId, ResourceId id, ColonyPos origin) {
         return StructureBlueprintReader.read(world, id)
+                .map(FarmBlueprint::asBuilt)
                 .map(blueprint -> blueprint.doorSide()
                         .map(door -> blueprint.rotated(
                                 door.turnsTo(roadSideOf(world, colonyId, origin, blueprint))))

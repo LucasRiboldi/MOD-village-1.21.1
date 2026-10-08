@@ -305,6 +305,10 @@ public class FoundationRepairGameTest implements FabricGameTest {
                     new ColonyPos(origin.x() + 32, origin.y(), origin.z()),
                     new ColonyPos(origin.x() + 35, origin.y() + 4, origin.z() + 35), true));
 
+            // A base apoiada, para o reparo abrir: sem apoio o lote é solto
+            // (ver anAbandonedHouseWithNoBaseFreesItsLot).
+            supportBase(context, blueprint, origin);
+
             Optional<ConstructionProject> first =
                     BuildingRepairPlanner.open(context.getWorld(), colony);
 
@@ -330,6 +334,107 @@ public class FoundationRepairGameTest implements FabricGameTest {
         }
 
         context.complete();
+    }
+
+    /**
+     * Casa abandonada sem um bloco de pé, num lote cuja base a trava recusa,
+     * solta o lote em vez de virar obra que ninguém pega — playtest de
+     * 2026-10-07: a {@code plains_small_house_2} voltou pelo reparo um acima
+     * do chão e ficou "AVAILABLE with nobody" até a sessão acabar.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "foundation_repair")
+    public void anAbandonedHouseWithNoBaseFreesItsLot(TestContext context) {
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(1, 4, 1)));
+        Colony colony = Colony.create(UUID.randomUUID(), origin);
+        Building abandoned = abandonedHouse(context, colony, origin);
+
+        try {
+            VillageColonyMod.BUILDINGS.register(abandoned);
+            VillageColonyMod.BUILDINGS.register(previousNonHouse(colony, origin));
+
+            context.assertTrue(BuildingRepairPlanner.open(context.getWorld(), colony).isEmpty(),
+                    "a casa abandonada sem base virou obra de reparo");
+            context.assertTrue(VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()
+                            .noneMatch(building -> building.id().equals(abandoned.id())),
+                    "o lote da casa abandonada sem base continuou reservado");
+        } finally {
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
+            VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
+        }
+
+        context.complete();
+    }
+
+    /** O mesmo na retomada do save: a obra intocada sem base sai e solta o lote. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "foundation_repair")
+    public void aSavedUntouchedHouseWithNoBaseIsDroppedAndFreesItsLot(TestContext context) {
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(1, 4, 1)));
+        Colony colony = Colony.create(UUID.randomUUID(), origin);
+        Building abandoned = abandonedHouse(context, colony, origin);
+
+        try {
+            VillageColonyMod.BUILDINGS.register(abandoned);
+            VillageColonyMod.BUILDINGS.register(previousNonHouse(colony, origin));
+            VillageColonyMod.CONSTRUCTIONS.registerPending(new ConstructionService.Pending(
+                    UUID.randomUUID(), colony.id(), StructureBlueprintReader.SMALL_HOUSE,
+                    origin, ConstructionState.BUILDING));
+
+            ConstructionResume.resume(context.getWorld(), colony);
+
+            context.assertTrue(VillageColonyMod.CONSTRUCTIONS.pendingOf(colony.id()).isEmpty(),
+                    "a obra salva sem base continuou pendente");
+            context.assertTrue(VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isEmpty(),
+                    "a obra salva sem base voltou aberta");
+            context.assertTrue(VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()
+                            .noneMatch(building -> building.id().equals(abandoned.id())),
+                    "a retomada largou a obra mas o lote continuou reservado");
+        } finally {
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
+            VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
+        }
+
+        context.complete();
+    }
+
+    private static Building abandonedHouse(TestContext context, Colony colony, ColonyPos origin) {
+        ColonyPos size = StructureBlueprintReader.read(
+                context.getWorld(), StructureBlueprintReader.SMALL_HOUSE)
+                .orElseThrow(() -> new AssertionError("planta da casa profissional ausente"))
+                .size();
+
+        return new Building(
+                UUID.randomUUID(), colony.id(), StructureBlueprintReader.SMALL_HOUSE,
+                origin, new ColonyPos(
+                        origin.x() + size.x() - 1,
+                        origin.y() + size.y() - 1,
+                        origin.z() + size.z() - 1), false);
+    }
+
+    /** Uma roça pronta longe dali: a última obra tentada não foi casa, então é a vez dela. */
+    private static Building previousNonHouse(Colony colony, ColonyPos origin) {
+        return new Building(
+                UUID.randomUUID(), colony.id(),
+                ResourceId.vanilla("village/plains/houses/plains_large_farm_1"),
+                new ColonyPos(origin.x() + 32, origin.y(), origin.z()),
+                new ColonyPos(origin.x() + 35, origin.y() + 4, origin.z() + 35), true);
+    }
+
+    /** Vidro na cota da rua da planta, em toda a pegada: a base apoiada. */
+    private static void supportBase(TestContext context, ResourceId id, ColonyPos origin) {
+        com.villagecolony.core.construction.model.Blueprint plan = PlanPlacement.blueprintOf(
+                context.getWorld(), UUID.randomUUID(), id, origin)
+                .orElseThrow(() -> new AssertionError(id + " ausente"));
+        int roadY = origin.y() + Math.max(0, plan.streetLayer());
+
+        for (int dx = 0; dx < plan.size().x(); dx++) {
+            for (int dz = 0; dz < plan.size().z(); dz++) {
+                context.getWorld().setBlockState(
+                        new BlockPos(origin.x() + dx, roadY, origin.z() + dz),
+                        net.minecraft.block.Blocks.GLASS.getDefaultState());
+            }
+        }
     }
 
     private static Building foundation(TestContext context, Colony colony, ColonyPos origin) {

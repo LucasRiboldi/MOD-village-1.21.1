@@ -179,6 +179,8 @@ public final class BuilderWork {
                             : " by " + executor.get().toString().substring(0, 8));
 
             if (executor.isEmpty()) {
+                // Sem executor, a linha diz o que a trava de reserva recusa.
+                BuildSiteGate.refusal(world, project.get()).ifPresent(why -> queue.append(", refused: ").append(why));
                 continue;
             }
 

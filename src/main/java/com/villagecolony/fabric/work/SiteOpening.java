@@ -232,6 +232,19 @@ final class SiteOpening {
         ConstructionProject project = ConstructionProject.plan(
                 colony.id(), facingTheRoad, facingTheRoad.originFor(site.origin()));
 
+        // O lote aprovado tem de passar na trava que vai reservar a obra: se
+        // as duas réguas discordarem, a obra nasceria sem ninguém que a pegue
+        // (playtest de 2026-10-07). Ver BuildSiteGate.
+        Optional<String> unbuildable =
+                com.villagecolony.fabric.integration.FoundationPreparation.refusal(world, project);
+
+        if (unbuildable.isPresent()) {
+            VillageColonyMod.LOGGER.warn(
+                    "Refused construction for colony {}: {} at {} passed the lot scan but {}",
+                    colony.id(), facingTheRoad.id(), project.origin(), unbuildable.get());
+            return Optional.empty();
+        }
+
         VillageColonyMod.CONSTRUCTIONS.register(project);
 
         // Lote um acima da rua: a porta não pode ficar dois degraus acima de

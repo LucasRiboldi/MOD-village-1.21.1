@@ -223,6 +223,33 @@ public final class FoundationPreparationGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * A obra um acima de chão plano não se qualifica, e a recusa diz por quê —
+     * o lote do playtest de 2026-10-07: base em y70 sobre grama em y69, a obra
+     * "AVAILABLE with nobody" por 37 minutos sem uma linha de causa.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "foundation_preparation")
+    public void aBaseOneAboveFlatGroundIsRefusedWithItsReason(TestContext context) {
+        BlockPos ground = new BlockPos(5, 1, 5);
+        for (BlockPos column : List.of(ground, ground.east(), ground.south(), ground.south().east())) {
+            context.setBlockState(column, Blocks.GRASS_BLOCK);
+            context.setBlockState(column.up(), Blocks.AIR);
+        }
+
+        ConstructionProject oneAbove = project(context, ground.up());
+
+        java.util.Optional<String> refusal = FoundationPreparation.refusal(context.getWorld(), oneAbove);
+        context.assertTrue(refusal.isPresent() && refusal.get().contains("0 of 4"),
+                "a base um acima do chão plano devia ser recusada por falta de apoio, veio " + refusal);
+        context.assertFalse(FoundationPreparation.prepareIfQualified(context.getWorld(), oneAbove),
+                "a preparação aceitou a base sem apoio");
+        context.assertTrue(context.getBlockState(ground.up()).isAir(),
+                "a preparação recusada aterrou a base");
+        context.assertTrue(FoundationPreparation.refusal(context.getWorld(), project(context, ground)).isEmpty(),
+                "a base na altura do chão foi recusada");
+        context.complete();
+    }
+
     private static ConstructionProject project(TestContext context, BlockPos relativeOrigin) {
         Blueprint blueprint = Blueprint.of(ResourceId.vanilla("foundation_preparation"), List.of(
                 new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("cobblestone")),

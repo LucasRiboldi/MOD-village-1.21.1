@@ -1,4 +1,4 @@
-# STATE — 2026-10-07
+# STATE — 2026-10-08
 
 > **JAR atual: `village-colony-0.3.6.jar` = `DAC96728…7DE8`** em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
@@ -15,6 +15,25 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🔴 08-10 — obra sem construtor: corrigido (aguarda playtest)
+
+**Playtest de 07-10 22:33→23:13 (0.3.7, Spark `bpHFsttvlp`: TPS 20, MSPT ~12 ms, picos 100–190 ms):**
+nenhuma obra subiu. `builders: 0 working … AVAILABLE with nobody` a sessão inteira; BUILDER 100% ocioso.
+Causa: a roça retomada do save era relida **com o trigo e a camada da rua** (91 peças; planejada
+sem eles, 64), e a trava de reserva media a fundação em y70, só ar sobre chão em y69 → apoio 0% →
+recusa muda. Depois a colônia desistiu e o reparo adotou a `plains_small_house_2` abandonada no
+mesmo estado (lote de 06-10 um acima do chão, 0 blocos de pé).
+
+**Correções (branch `claude/obra-lote-e-trava`):** `FarmBlueprint.asBuilt` — a roça relida
+(retomada, reparo, peças) é a mesma planejada; `BuildSiteGate` + `FoundationPreparation.refusal` —
+a linha `builders:` diz `refused: <motivo>`; reparo e retomada soltam o lote de obra com 0 blocos
+de pé cuja base a trava recusa; o planejamento recusa, com log, lote que a trava recusaria.
+
+**Verificado em 08-10:** `build` ok (unitários verdes, inclui o teto de 500 linhas); GameTests
+**651/651**. Mutações: desligar cada correção derruba o teste dela (4 de 4; a da roça mostra
+"91 peças, planejada 64"). **Não visto em jogo.** **Playtest pedido:** ver `TODO.md` §🔴 obra.
+Restam do playtest: lenhador 23% bloqueado, fundidor 94% e pedreiro 65% sem trabalhar.
 
 ## 🟡 07-10, tarde — ADR-039 aplicada (aguarda playtest)
 

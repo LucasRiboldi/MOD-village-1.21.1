@@ -1,10 +1,22 @@
 # TODO
 
-**Atualizado:** 2026-10-07. Só o que está **aberto**. O histórico até hoje está em
+**Atualizado:** 2026-10-08. Só o que está **aberto**. O histórico até hoje está em
 `docs/archive/technical/TODO-ate-2026-10-07.md` (consultar por `grep`, nunca inteiro).
 Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
+
+## 🔴 Playtest da obra destravada (08-10)
+
+Playtest de 07-10 noite: obra "AVAILABLE with nobody" 37 min, construtor 100% ocioso. Corrigido na
+branch `claude/obra-lote-e-trava` (ver `STATE.md`).
+
+- [ ] A roça retomada do save é reservada e sobe (o log não pede mais `wheat` ao carpinteiro).
+- [ ] Nenhuma linha `builders: … AVAILABLE with nobody` por mais de um ciclo sem `refused:` ao lado;
+      se aparecer `refused:`, o motivo dela decide o próximo passo.
+- [ ] No save "Novo mundo": `frees the lot of the abandoned plains_small_house_2` ou
+      `drops the saved …` aparece uma vez e a vila planeja obra nova.
+- [ ] `time_ledger.py`: BUILDER com `work` > 0.
 
 ## 🔴 Playtest da 0.3.5
 

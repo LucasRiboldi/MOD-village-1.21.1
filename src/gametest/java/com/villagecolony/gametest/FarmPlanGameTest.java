@@ -154,6 +154,41 @@ public class FarmPlanGameTest implements FabricGameTest {
     }
 
     /**
+     * A roça relida do save é a mesma que foi planejada — playtest de
+     * 2026-10-07: retomada, ela voltava com o trigo (91 peças contra 64) e com
+     * a camada da rua, a trava media a fundação no ar e nenhum construtor a
+     * reservava. Reparo e peças da colônia releem pelo mesmo caminho.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farm_plan")
+    public void aReReadFarmIsTheFarmThatWasPlanned(TestContext context) {
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(
+                        context.getAbsolutePos(new BlockPos(1, 2, 1))));
+
+        List<Blueprint> plans = FarmPlans.plansFor(context.getWorld(), colony);
+
+        context.assertTrue(!plans.isEmpty(), "a colônia não recebeu planta de roça nenhuma");
+
+        for (Blueprint planned : plans) {
+            Blueprint reRead = PlanPlacement.blueprintOf(
+                    context.getWorld(), colony.id(), planned.id(),
+                    MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(1, 2, 1))))
+                    .orElseThrow(() -> new AssertionError(planned.id() + " não foi relida"));
+
+            context.assertTrue(reRead.blockCount() == planned.blockCount(),
+                    planned.id() + " relida tem " + reRead.blockCount() + " peças, planejada "
+                            + planned.blockCount());
+            context.assertFalse(reRead.hasStreetLayer(),
+                    planned.id() + " relida voltou com a camada da rua");
+            context.assertTrue(reRead.blocks().stream().noneMatch(FarmPlanGameTest::isCrop),
+                    planned.id() + " relida voltou com lavoura");
+        }
+
+        context.complete();
+    }
+
+    /**
      * <b>A roça nasce dentro da vila, e não na ponta da estrada</b> —
      * 2026-09-05, visto em jogo.
      *

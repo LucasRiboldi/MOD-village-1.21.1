@@ -7,13 +7,11 @@ import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintKind;
-import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.integration.ColonyModels;
-import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.FarmBlueprint;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.VillageStructures;
-import net.minecraft.block.CropBlock;
 import net.minecraft.server.world.ServerWorld;
 
 import java.util.ArrayList;
@@ -195,49 +193,9 @@ public final class FarmPlans {
         return List.copyOf(plans);
     }
 
-    /**
-     * A mesma roça, sem a lavoura plantada — 2026-09-05.
-     *
-     * <p><b>A obra faz o canteiro; quem planta é o fazendeiro.</b> É a
-     * divisão que o autor descreveu, e ela também resolve um problema
-     * prático: a lavoura da planta é trigo, cenoura, batata e beterraba,
-     * e cobrá-las do baú faria a roça parar esperando semente que a
-     * colônia talvez não tenha — a obra parada esperando material é o
-     * defeito de 09-04, e não vale repeti-lo para plantar.
-     *
-     * <p>O canteiro sai arado e vazio, que é exatamente o alvo do ofício
-     * {@code SOW}: na passagem seguinte o fazendeiro semeia o que houver
-     * no baú dele, e daí em diante colhe e replanta.
-     */
+    /** A roça sem a lavoura — ver {@link FarmBlueprint#withoutTheCrops}. */
     static Blueprint withoutTheCrops(Blueprint farm) {
-        List<BlueprintBlock> kept = new ArrayList<>();
-
-        for (BlueprintBlock block : farm.blocks()) {
-            if (!isCrop(block.block())) {
-                kept.add(block);
-            }
-        }
-
-        // <b>A roça fica acima da rua</b> — pedido do autor, 2026-10-02: <i>"a
-        // base da plantação exclusivamente não pode ficar na altura da rua,
-        // porque precisa da altura para receber a água"</i>. Sem a camada da
-        // rua, a planta volta à origem de sempre: a camada da lavoura e do
-        // canal assenta um acima do chão. As casas continuam na rua.
-        return Blueprint.of(farm.id(), kept);
-    }
-
-    /**
-     * Se este bloco é lavoura.
-     *
-     * <p>Pergunta ao bloco, e não a uma lista de nomes: {@code CropBlock}
-     * é a resposta do próprio jogo, e vale para trigo, cenoura, batata,
-     * beterraba e para o que um datapack plantar depois. É a mesma
-     * escolha que o {@code CropPatch} faz desde 2026-08-27.
-     */
-    private static boolean isCrop(ResourceId block) {
-        return MinecraftTypeAdapter.toBlock(block)
-                .map(found -> found instanceof CropBlock)
-                .orElse(false);
+        return FarmBlueprint.withoutTheCrops(farm);
     }
 
     private static int volumeOf(Blueprint plan) {

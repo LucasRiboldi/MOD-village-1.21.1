@@ -27,6 +27,7 @@ import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.integration.RoadExtension;
 import com.villagecolony.fabric.integration.SweepLog;
 import com.villagecolony.fabric.integration.SitePreparation;
+import com.villagecolony.fabric.integration.FoundationPreparation;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import net.minecraft.block.Block;
 import net.minecraft.server.world.ServerWorld;
@@ -168,6 +169,31 @@ final class ConstructionResume {
 
                 standing++;
             }
+        }
+
+        // <b>Obra intocada num lote cuja base a trava recusa é largada</b> —
+        // playtest de 2026-10-07: retomada assim, ficava "AVAILABLE with
+        // nobody" até o guarda de progresso desistir dela, e a casa
+        // abandonada que guardava o lote voltava pelo reparo no mesmo
+        // estado. Com zero blocos de pé nada se perde; o lote é solto.
+        Optional<String> unbuildable = standing == 0
+                ? FoundationPreparation.refusal(world, project)
+                : Optional.empty();
+
+        if (unbuildable.isPresent()) {
+            VillageColonyMod.LOGGER.warn(
+                    "Colony {} drops the saved {} at {} — no block of it stands and {}",
+                    colony.id(), project.blueprint().id(), project.origin(), unbuildable.get());
+
+            buildings.stream()
+                    .filter(building -> !building.finished()
+                            && building.blueprint().equals(saved.blueprint())
+                            && building.min().equals(saved.origin()))
+                    .forEach(building -> VillageColonyMod.BUILDINGS.remove(building.id()));
+
+            VillageColonyMod.CONSTRUCTIONS.dropPending(colony.id());
+
+            return;
         }
 
         // <b>Obra gravada em cima de outra construção é largada</b> —

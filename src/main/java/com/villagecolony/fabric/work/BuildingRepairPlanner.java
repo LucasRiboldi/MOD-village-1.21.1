@@ -9,6 +9,7 @@ import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.FoundationPreparation;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import net.minecraft.block.Block;
 import net.minecraft.server.world.ServerWorld;
@@ -119,6 +120,25 @@ final class BuildingRepairPlanner {
 
             ConstructionProject repair = ConstructionProject.repair(
                     colony.id(), blueprint.get(), building.min(), standing);
+
+            // Obra abandonada sem um bloco de pé, num lote cuja base a trava de
+            // reserva recusa: nenhum construtor a pegaria, e a vaga única de
+            // obra ficaria presa a ela. Nada se perde ao soltar o lote
+            // (playtest de 2026-10-07).
+            Optional<String> unbuildable = standing.isEmpty()
+                    ? FoundationPreparation.refusal(world, repair)
+                    : Optional.empty();
+
+            if (unbuildable.isPresent()) {
+                VillageColonyMod.BUILDINGS.remove(building.id());
+
+                VillageColonyMod.LOGGER.warn(
+                        "Colony {} frees the lot of the abandoned {} at {} — no block of it"
+                                + " stands and {}",
+                        colony.id(), building.blueprint(), building.min(), unbuildable.get());
+
+                continue;
+            }
 
             VillageColonyMod.CONSTRUCTIONS.register(repair);
             ACTIVE.put(colony.id(), new Attempt(repair.id(), building.id(), standing.size()));
