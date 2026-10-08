@@ -271,6 +271,26 @@ public final class MinerHands {
     }
 
     /**
+     * Larga a pedra sem posição de trabalho que ele alcance — E1, 2026-10-08. Não é
+     * desistência: a tarefa fica com ele e não conta para o descanso do ofício; a pedra
+     * ganha a marca temporária e o cursor a pula, e a passagem seguinte escolhe outra.
+     */
+    static void passOver(ServerWorld world, UUID workerId, Job job, MiningTarget.Rejection why) {
+        VillageColonyMod.LOGGER.info(
+                "Miner {} passes over the stone at {} — no work position it can reach ({})",
+                workerId.toString().substring(0, 8), job.target.toShortString(), why);
+        ActionJournal.action(workerId, "TARGET_REJECTED", "stone", 0, job.target, why.name());
+
+        MineMarks.refuse(world, job.target);
+        MineTrouble.couldNotReach(job.task.colonyId(), job.target);
+
+        job.target = null;
+        job.approach = null;
+        job.judged = false;
+        WorkTargets.clear(workerId);
+    }
+
+    /**
      * Devolve a tarefa quando o mineiro não chega à pedra.
      *
      * <p>O cursor da busca é esquecido junto: sem isso a passagem

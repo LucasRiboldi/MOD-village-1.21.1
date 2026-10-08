@@ -131,6 +131,7 @@
       "com.villagecolony.fabric.integration.BigHouseFoundationGameTest",
       "com.villagecolony.fabric.integration.FoundationPreparationGameTest",
       "com.villagecolony.fabric.work.FoundationRepairGameTest",
+      "com.villagecolony.fabric.work.MiningTargetGameTest",
       "com.villagecolony.fabric.work.WallPieceGameTest",
       "com.villagecolony.fabric.integration.ConstructionCancellationGameTest",
       "com.villagecolony.fabric.integration.TreeReplantingGameTest",

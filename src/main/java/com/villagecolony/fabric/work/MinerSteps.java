@@ -133,6 +133,21 @@ final class MinerSteps {
                 job.stalled++;
             }
 
+            // Chegou perto: a posição de trabalho é conferida uma vez, de onde ele
+            // está, antes de gastar os 400 tiques do prazo nela — E1.
+            if (!job.judged && MiningTarget.isNear(villager.getBlockPos(), job.target)) {
+                job.judged = true;
+
+                MiningTarget.Verdict verdict =
+                        MiningTarget.judge(world, job.target, villager.getBlockPos());
+
+                if (!verdict.eligible()) {
+                    MinerHands.passOver(world, workerId, job, verdict.rejection());
+
+                    return false;
+                }
+            }
+
             // E se ele saiu do lugar — 2026-09-03. Ver WorkStall, que faz
             // a pergunta do expediente por conta própria.
             if (job.stall.stuck(world, villager)) {
@@ -346,7 +361,20 @@ final class MinerSteps {
         }
 
         job.target = found.get();
-        job.approach = MinerApproach.approachTo(world, job.target, villager.getBlockPos());
+
+        // Alvo só com posição de trabalho válida e alcançável — E1, ver MiningTarget.
+        MiningTarget.Verdict verdict = MiningTarget.judge(world, job.target, villager.getBlockPos());
+
+        if (!verdict.eligible()) {
+            MinerHands.passOver(world, workerId, job, verdict.rejection());
+
+            return true;
+        }
+
+        job.judged = MiningTarget.isNear(villager.getBlockPos(), job.target);
+        job.approach = verdict.workPosition() != null
+                ? verdict.workPosition()
+                : MinerApproach.approachTo(world, job.target, villager.getBlockPos());
         job.progress = 0;
         job.required = 0;
         job.stalled = 0;

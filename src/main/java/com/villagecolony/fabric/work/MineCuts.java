@@ -43,6 +43,10 @@ public final class MineCuts {
             ServerWorld world, UUID workerId, Mine mine, MineArm arm) {
         MineFrontier.findTheFrontier(world, mine, arm);
 
+        // De onde ele vem: a pedra só serve se tiver lugar de pé que ele alcance (E1).
+        net.minecraft.entity.Entity body = world.getEntity(workerId);
+        BlockPos miner = body != null ? body.getBlockPos() : null;
+
         for (int look = 0; look < MineDigging.CUTS_PER_SEARCH; look++) {
             if (arm.reachedTheEndOfTheArm()) {
                 // <b>O teto de raio do autor</b> — 2026-09-04: "o mineiro
@@ -162,7 +166,13 @@ public final class MineCuts {
                 continue;
             }
 
-            if (MineMarks.isOutOfReach(world, at)) {
+            // <b>Lugar de pé só acima do degrau dele, e ele ao lado</b> — E1,
+            // 2026-10-08: caverna embaixo da galeria, o único lugar de pé em cima
+            // da rocha. Vai pela porta da pedra inalcançável, que conta para a curva.
+            boolean tooHigh = MiningTarget.quick(world, at, miner).rejection()
+                    == MiningTarget.Rejection.TOO_HIGH;
+
+            if (tooHigh || MineMarks.isOutOfReach(world, at)) {
                 // <b>Já cobrou o preço e não foi alcançada</b> — E44,
                 // 2026-09-10. Um mineiro andou os 2.400 tiques de
                 // expediente até aqui e não chegou; enquanto o prazo

@@ -183,6 +183,9 @@ public final class MinerWork {
          */
         BlockPos approach;
 
+        /** Se a posição de trabalho já foi conferida de perto — E1, ver MiningTarget. */
+        boolean judged;
+
         int progress;
 
         int required;
