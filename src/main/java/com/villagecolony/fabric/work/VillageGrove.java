@@ -39,6 +39,10 @@ import java.util.UUID;
  * {@link #CLEARANCE} de folga, e a rua — o lote novo nasce ao lado da rua, então a
  * muda fica a {@link #ROAD_CLEARANCE} dela —, e as outras mudas do bosque a
  * {@link #SPACING}. Mantém {@link #SIZE} vivas: a cortada é reposta.
+ *
+ * <p><b>E cresce logo</b> (A8): a cada conferência, uma farinha de osso em cada muda
+ * do bosque — do baú da colônia se houver, senão ela aparece, como todo ingrediente
+ * de drop (decisão do autor de 2026-09-30, {@code DropIngredients}).
  */
 public final class VillageGrove {
 
@@ -46,8 +50,8 @@ public final class VillageGrove {
         ServerMemory.register(VillageGrove.class, VillageGrove::clearAll);
     }
 
-    /** Quantas mudas o bosque tem. */
-    public static final int SIZE = 3;
+    /** Quantas mudas o bosque tem — eram 3; o autor pediu mais (A8, 2026-10-08). */
+    public static final int SIZE = 6;
 
     /** A distância mínima e máxima da borda da vila. */
     static final int NEAR = 4;
@@ -125,7 +129,42 @@ public final class VillageGrove {
                     spot.get().toShortString(), grove.size(), SIZE);
         }
 
+        fertilize(world, colony, grove);
+
         return planted;
+    }
+
+    /** Uma farinha de osso em cada muda do bosque. */
+    private static void fertilize(ServerWorld world, Colony colony, List<BlockPos> grove) {
+        java.util.List<ColonyPos> chests = null;
+
+        for (BlockPos ground : grove) {
+            BlockPos sapling = ground.up();
+            net.minecraft.block.BlockState state = world.getBlockState(sapling);
+
+            if (!(state.getBlock() instanceof net.minecraft.block.Fertilizable plant)
+                    || !state.isIn(BlockTags.SAPLINGS)
+                    || !plant.isFertilizable(world, sapling, state)) {
+                continue;
+            }
+
+            if (chests == null) {
+                chests = com.villagecolony.fabric.integration.ColonyChests.nearestFirst(
+                        world, colony.id(), colony.center());
+            }
+
+            if (com.villagecolony.fabric.integration.ColonyChests.countIn(
+                    world, chests, net.minecraft.item.Items.BONE_MEAL) > 0) {
+                com.villagecolony.fabric.integration.ColonyChests.withdraw(
+                        world, chests, net.minecraft.item.Items.BONE_MEAL, 1);
+            }
+
+            if (plant.canGrow(world, world.getRandom(), sapling, state)) {
+                plant.grow(world, world.getRandom(), sapling, state);
+            }
+
+            world.syncWorldEvent(net.minecraft.world.WorldEvents.BONE_MEAL_USED, sapling, 15);
+        }
     }
 
     /** As mudas de agora, para o teste. */
@@ -238,12 +277,19 @@ public final class VillageGrove {
         return found;
     }
 
-    /** Terra de viveiro com muda ou tronco em cima. */
+    /**
+     * Muda de pé na terra de viveiro, ou árvore crescida no lugar dela — a árvore, ao
+     * crescer, pode trocar a terra de viveiro por terra comum, e sem isto o bosque a
+     * deixaria de contar e plantaria outra, crescendo sem teto.
+     */
     private static boolean alive(ServerWorld world, BlockPos ground) {
-        return world.getChunkManager().getWorldChunk(ground.getX() >> 4, ground.getZ() >> 4) != null
-                && world.getBlockState(ground).isOf(TreeNursery.BED)
-                && (world.getBlockState(ground.up()).isIn(BlockTags.SAPLINGS)
-                        || world.getBlockState(ground.up()).isIn(BlockTags.LOGS));
+        if (world.getChunkManager().getWorldChunk(ground.getX() >> 4, ground.getZ() >> 4) == null) {
+            return false;
+        }
+
+        return world.getBlockState(ground.up()).isIn(BlockTags.LOGS)
+                || (world.getBlockState(ground).isOf(TreeNursery.BED)
+                        && world.getBlockState(ground.up()).isIn(BlockTags.SAPLINGS));
     }
 
     /** O chão nesta coluna, perto da altura da vila; chunk só se carregado. */

@@ -412,6 +412,17 @@ public final class TreeChoice {
     static void walkTo(ServerWorld world, VillagerEntity villager, BlockPos tree) {
         BlockPos stand = approachTo(world, tree);
 
+        // Árvore longe: por pernas (A7, pedido do autor de 2026-10-08). A navegação
+        // Vanilla não traça caminho de 50–130 blocos e para no meio — o lenhador
+        // ficou 31% bloqueado. O mineiro já anda assim.
+        Optional<BlockPos> leg = WalkLegs.towards(world, villager.getBlockPos(), stand);
+
+        if (leg.isPresent()) {
+            WorkTargets.set(villager.getUuid(), leg.get(), 2);
+
+            return;
+        }
+
         if (stand.equals(tree)) {
             WorkTargets.set(villager.getUuid(), tree);
 

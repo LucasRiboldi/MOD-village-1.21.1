@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Pedido do autor de 2026-10-08: o lenhador planta três mudas perto da vila, onde
+ * Pedido do autor de 2026-10-08: o lenhador planta seis mudas perto da vila, onde
  * não atrapalham obra futura — fora da caixa da vila, longe da rua (o lote novo
  * nasce ao lado dela) e afastadas entre si.
  *
@@ -61,16 +61,18 @@ public class VillageGroveGameTest implements FabricGameTest {
             int planted = VillageGrove.tendNow(world, colony);
             List<BlockPos> grove = VillageGrove.of(colony.id());
 
-            context.assertTrue(planted == VillageGrove.SIZE && grove.size() == VillageGrove.SIZE,
-                    "o bosque não ficou com três mudas: " + planted + " " + grove);
+            context.assertTrue(planted == 6 && grove.size() == 6,
+                    "o bosque não ficou com seis mudas: " + planted + " " + grove);
 
             for (BlockPos spot : grove) {
                 context.assertTrue(!box.containsColumn(spot.getX(), spot.getZ(), VillageGrove.NEAR - 1),
                         "uma muda nasceu dentro da vila: " + spot);
                 context.assertTrue(Math.abs(spot.getX() - pathX) >= VillageGrove.ROAD_CLEARANCE,
                         "uma muda nasceu ao lado da rua, onde os lotes nascem: " + spot);
-                context.assertTrue(world.getBlockState(spot.up()).isIn(net.minecraft.registry.tag.BlockTags.SAPLINGS),
-                        "não há muda em " + spot);
+                // A farinha de osso pode já ter feito a muda virar árvore.
+                context.assertTrue(world.getBlockState(spot.up()).isIn(net.minecraft.registry.tag.BlockTags.SAPLINGS)
+                                || world.getBlockState(spot.up()).isIn(net.minecraft.registry.tag.BlockTags.LOGS),
+                        "não há muda nem árvore em " + spot);
 
                 for (BlockPos other : grove) {
                     context.assertTrue(other.equals(spot)
@@ -80,11 +82,13 @@ public class VillageGroveGameTest implements FabricGameTest {
             }
 
             context.assertTrue(VillageGrove.tendNow(world, colony) == 0,
-                    "com três de pé o lenhador plantou mais");
+                    "com o bosque cheio o lenhador plantou mais");
         } finally {
             for (int x = -9; x <= 15; x++) {
                 for (int z = -9; z <= 15; z++) {
-                    world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y + 1, z)), Blocks.AIR.getDefaultState());
+                    for (int up = 1; up <= 10; up++) {
+                        world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y + up, z)), Blocks.AIR.getDefaultState());
+                    }
                     world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y, z)), Blocks.AIR.getDefaultState());
                 }
             }
