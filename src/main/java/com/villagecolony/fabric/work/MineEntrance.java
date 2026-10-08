@@ -149,28 +149,56 @@ public final class MineEntrance {
             return Optional.empty();
         }
 
-        // O progresso é a entrada mais funda a que ele já chegou: dali, a seguinte.
-        // Chegar é estar a até ARRIVE blocos em cada eixo — a entrada de um nível fica
-        // dois acima do chão onde o aldeão para, e a régua de distância exata o fazia
-        // ir e voltar entre a boca e o primeiro lance (playtest de 08-10, 12:14–12:30).
-        for (int index = route.size() - 2; index >= 0; index--) {
-            if (arrived(miner, route.get(index))) {
-                return Optional.of(footing(world, route.get(index + 1)));
-            }
+        BlockPos surface = route.getFirst();
+
+        // Fora da escada (na superfície, ou longe da mina): primeiro a boca, e da
+        // boca o primeiro lance.
+        if (!nearTheShaft(world, miner, route)) {
+            return Optional.of(footing(world, arrived(miner, surface) ? route.get(1) : surface));
         }
 
-        // Em nenhuma entrada: dentro da escada, a mais perto; fora dela, a boca.
-        int nearest = 0;
-
+        // Na escada, o progresso é a altura: a entrada seguinte é a primeira abaixo
+        // dele. A régua anterior ("a entrada mais perto") puxava de volta para cima
+        // quem já tinha passado de uma entrada — três abaixo e quatro ao lado dela, e
+        // aldeão sobe um (playtest de 08-10, 15:31–15:46).
         for (int index = 1; index < route.size(); index++) {
-            if (miner.getSquaredDistance(route.get(index)) < miner.getSquaredDistance(route.get(nearest))) {
-                nearest = index;
+            if (route.get(index).getY() < miner.getY() - 1) {
+                return Optional.of(footing(world, route.get(index)));
             }
         }
 
-        boolean outside = miner.getY() >= route.getFirst().getY() - ARRIVE;
+        return Optional.of(footing(world, route.getLast()));
+    }
 
-        return Optional.of(footing(world, outside ? route.getFirst() : route.get(nearest)));
+    /**
+     * Na escada da mina: logo abaixo da boca (o primeiro lance, que pode ser a céu
+     * aberto), ou debaixo da terra perto de alguma entrada. Quem está na superfície
+     * em cima da mina não conta — mandá-lo à entrada enterrada embaixo dele foi o
+     * defeito de 08-10 de manhã.
+     */
+    private static boolean nearTheShaft(ServerWorld world, BlockPos miner, List<BlockPos> route) {
+        BlockPos mouth = route.getFirst();
+
+        if (miner.getY() <= mouth.getY() - 2
+                && Math.abs(miner.getX() - mouth.getX()) <= IN_LEVEL / 2
+                && Math.abs(miner.getZ() - mouth.getZ()) <= IN_LEVEL / 2) {
+            return true;
+        }
+
+        if (world.getChunkManager().getWorldChunk(miner.getX() >> 4, miner.getZ() >> 4) == null
+                || miner.getY() >= world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES,
+                        miner.getX(), miner.getZ()) - 2) {
+            return false;
+        }
+
+        for (BlockPos entry : route) {
+            if (Math.abs(miner.getX() - entry.getX()) <= IN_LEVEL / 2
+                    && Math.abs(miner.getZ() - entry.getZ()) <= IN_LEVEL / 2) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Chegou à entrada: a até {@link #ARRIVE} blocos em cada eixo. */

@@ -79,6 +79,20 @@ public class MineEntranceGameTest implements FabricGameTest {
             context.assertTrue(third.map(nowAt::equals).orElse(false),
                     "dois abaixo e três ao lado da entrada ele não seguiu para o nível seguinte: " + third);
 
+            // Playtest de 08-10, 15:29: três abaixo e quatro ao lado da boca, na escada,
+            // ele era mandado de volta à boca. Ele já desceu: a seguinte é o nível 1.
+            Optional<BlockPos> onTheStairs = MineEntrance.legDown(
+                    world, colonyId, MinecraftTypeAdapter.toBlockPos(mouth).add(0, -3, 4), stone);
+
+            context.assertTrue(onTheStairs.map(middleAt::equals).orElse(false),
+                    "logo abaixo da boca, na escada, ele não desceu: " + onTheStairs);
+
+            // Na superfície em cima da mina (08-10 de manhã): não é escada — vai à boca.
+            Optional<BlockPos> above = MineEntrance.legDown(world, colonyId, nowAt.up(28), stone);
+
+            context.assertTrue(above.map(MinecraftTypeAdapter.toBlockPos(mouth)::equals).orElse(false),
+                    "em cima da mina, na superfície, ele não foi à boca: " + above);
+
             context.assertTrue(MineEntrance.legDown(world, colonyId, nowAt, stone).isEmpty(),
                     "no nível da pedra a descida ainda mandava nele");
         } finally {

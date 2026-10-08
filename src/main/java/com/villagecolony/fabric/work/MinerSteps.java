@@ -157,6 +157,10 @@ final class MinerSteps {
 
             if (down.isPresent()) {
                 job.lease.reset();
+
+                // Nem o orçamento de caminhada: a descida inteira (vila, boca, três
+                // níveis) passava dos 2.400 tiques (playtest de 08-10, 15:28–15:46).
+                job.stalled = 0;
             }
 
             // E se ele saiu do lugar — 2026-09-03. Ver WorkStall, que faz
