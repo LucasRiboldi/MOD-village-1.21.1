@@ -85,3 +85,29 @@ No expediente, **ocioso + bloqueado ≤ 15%** por profissão, medido pelo `time_
 A1 (defeito, uma linha) → A3 (ajuda na obra para todo ofício ocioso, regra comum) → A2 (fundidor) →
 A9 (fazendeiro) → A7/A8 (lenhador) → A4 (construtor) → A6 (pastor). Depois, a Regra 51 entra no
 `time_ledger.py` como veredito, e o playtest seguinte prova o efeito.
+
+## Feito em 0.3.19 (escolha do autor)
+
+- **Regra 51** no `time_ledger.py` (veredito `REGRA 51 (N% ocioso+bloqueado)` e `ESPERA (N%)`) e no
+  `CLAUDE.md` §0.4.
+- **A7** caminhada por pernas (`WalkLegs`, 24 blocos na superfície) para o lenhador.
+- **A8** bosque de 6 mudas com farinha de osso a cada conferência (`VillageGrove`).
+- **A4** do jeito do autor: o construtor sem obra calça a rua — grama ou terra no meio do caminho
+  vira caminho (`BuilderPaving`); conta como trabalho no `time_ledger`.
+
+## Novas alternativas para escolher
+
+| # | Profissão | Alternativa |
+|---|---|---|
+| A1 | Carpinteiro, pedreiro | **Defeito:** a entrega entre ciclos não liga o `CraftingWork`; espera de até 30 s por tarefa (51–52%). Uma linha. |
+| A3 | Todos os produtores | Ajudar a obra aberta no tempo livre (o pastor já faz; vale para fundidor, fazendeiro, lenhador, mineiro sem ramal), com os 10 blocos mínimos. |
+| A2 | Fundidor | Fundir sobra que a obra usa: pedregulho → pedra, pedra → pedra lisa, tronco → carvão vegetal quando o carvão está baixo. |
+| B1 | Fundidor | Recolher areia e argila no tempo livre para estoque (até um teto), não só por pedido. |
+| A9 | Fazendeiro | Arar e semear canteiro novo ao lado da roça quando houver semente, até um teto. |
+| B2 | Fazendeiro | Farinha de osso na lavoura verde para o trigo amadurecer antes (feno e comida). |
+| A6 | Pastor | Manutenção do rebanho: levar animais soltos ao curral, procriar até o teto, lã de reserva até um teto. |
+| B3 | Pastor | Ajudar o fazendeiro a colher quando há maduro e o fazendeiro está longe. |
+| B4 | Construtor | Preparar o lote da próxima obra (limpar o canteiro, aterrar a base) enquanto espera material. |
+| B5 | Mineiro | Sem ramal livre: abrir o poço do nível seguinte, ou raspar pedra exposta perto da vila (já existe; dar prioridade). |
+| A10 | Sem ofício (9) | Entram na cadeia como ajudantes de obra, sem criar profissão (M3). |
+| B6 | Geral | Carregador: levar o que a obra pede dos baús profissionais ao baú da obra (o construtor anda menos). |
