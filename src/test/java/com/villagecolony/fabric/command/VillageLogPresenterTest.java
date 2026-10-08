@@ -147,4 +147,14 @@ class VillageLogPresenterTest {
                 "Felicidade: feliz (mais filhos) — 12 de comida por adulto, 2 camas sobrando, 3 obras concluídas.",
                 line);
     }
+
+    /** O alcance a pé da vila — M2, 2026-10-08. */
+    @Test
+    void theReachLineNamesWhatIsOutOfReach() {
+        assertEquals("[ALCANCE] 2 de 4 lugares a pé desde o centro da vila;"
+                        + " fora: baú 1,70,2, boca da mina -775,68,-922",
+                VillageLogPresenter.reach(2, 4, List.of("chest 1,70,2", "mine entrance -775,68,-922")));
+        assertEquals("[ALCANCE] 3 de 3 lugares a pé desde o centro da vila",
+                VillageLogPresenter.reach(3, 3, List.of()));
+    }
 }

@@ -93,6 +93,28 @@ final class VillageLogPresenter {
     }
 
     /**
+     * O alcance a pé desde o centro da vila — M2, 2026-10-08: "[ALCANCE] 31 de 34
+     * lugares a pé desde o centro; fora: baú -7,70,-8, boca da mina ...".
+     */
+    static String reach(int reached, int places, List<String> unreached) {
+        String line = "[ALCANCE] " + reached + " de " + places + " lugares a pé desde o centro da vila";
+
+        if (unreached.isEmpty()) {
+            return line;
+        }
+
+        List<String> named = unreached.stream()
+                .map(place -> place.replace("chest ", "baú ")
+                        .replace("mine entrance ", "boca da mina ")
+                        .replace("build site ", "lote da obra "))
+                .limit(5)
+                .toList();
+
+        return line + "; fora: " + String.join(", ", named)
+                + (unreached.size() > named.size() ? " e mais " + (unreached.size() - named.size()) : "");
+    }
+
+    /**
      * As esperas de mais de dois minutos, com motivo e tempo — B-5, 2026-10-02:
      * <i>"[ESPERANDO] Fundidor: nada no raio inteiro (sand) — há 12 min"</i>.
      */

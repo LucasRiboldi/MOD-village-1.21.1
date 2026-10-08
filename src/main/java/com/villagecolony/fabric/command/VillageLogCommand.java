@@ -125,6 +125,13 @@ public final class VillageLogCommand {
                     }
                 }));
 
+        // O alcance a pé desde o centro da vila — M2, 2026-10-08. Ver ReachMap.
+        com.villagecolony.fabric.work.ReachMap.of(nearby.id()).ifPresent(reach -> {
+            String line = VillageLogPresenter.reach(reach.reached(), reach.places(), reach.unreached());
+            source.sendFeedback(() -> Text.literal(line).formatted(
+                    reach.unreached().isEmpty() ? Formatting.GRAY : Formatting.YELLOW), false);
+        });
+
         // As esperas longas, com o motivo e o tempo — B-5, 2026-10-02.
         List<String> waits = VillageLogPresenter.longWaits(
                 com.villagecolony.fabric.work.IdleLog.waitingOf(nearby.id()), System.currentTimeMillis());

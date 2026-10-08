@@ -189,6 +189,7 @@ public class VillageColonyMod implements ModInitializer {
         OverlaySync.register();
         ServerLifecycleHandler.register();
         com.villagecolony.fabric.work.ActionJournal.register();
+        com.villagecolony.fabric.work.ReachMap.register();
         PlayerWorldChangeHandler.register();
         VillageDetectionHandler.register();
         VillagerLifecycleHandler.register();
