@@ -62,10 +62,13 @@ public final class BuilderMaterials {
      * Peças de rota só teórica: depois de três faltas aparecem no baú do construtor,
      * mesmo com a cadeia existindo no papel. A terracota (argila que nunca chega) e o
      * fardo de feno — pedido do autor, 2026-10-08: a obra pôs o fardo de lado 93 vezes
-     * em 22 min, cada um custa nove trigos e a roça não dava conta.
+     * em 22 min, cada um custa nove trigos e a roça não dava conta. Lampião e
+     * corrente também (mesmo pedido, depois): ferro do mineiro, e a obra ficou 20 min
+     * parada nas últimas 99 peças, todas lampião e corrente.
      */
     private static final Set<Item> STOCKED_AFTER_MISSES = Set.of(
             Items.HAY_BLOCK,
+            Items.LANTERN, Items.SOUL_LANTERN, Items.CHAIN,
             Items.TERRACOTTA,
             Items.WHITE_TERRACOTTA, Items.ORANGE_TERRACOTTA, Items.MAGENTA_TERRACOTTA,
             Items.LIGHT_BLUE_TERRACOTTA, Items.YELLOW_TERRACOTTA, Items.LIME_TERRACOTTA,

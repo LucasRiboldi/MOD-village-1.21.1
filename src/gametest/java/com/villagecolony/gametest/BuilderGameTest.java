@@ -629,6 +629,36 @@ public class BuilderGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Lampião e corrente entram na mesma regra — pedido do autor, 2026-10-08. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
+    public void theLanternAppearsInTheBuildersChestAfterFourMisses(TestContext context) {
+        Fixture fixture = setUp(context, 0, Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/test_lantern"),
+                List.of(new BlueprintBlock(
+                        new ColonyPos(0, 0, 0),
+                        MinecraftTypeAdapter.toResourceId(Blocks.LANTERN)))), 1);
+
+        try {
+            for (int attempt = 1; attempt <= 3; attempt++) {
+                context.assertFalse(
+                        BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                        "o lampião apareceu antes da tentativa " + attempt);
+            }
+
+            context.assertTrue(
+                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                    "a quarta falta não abasteceu o lampião");
+            context.assertTrue(
+                    ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.LANTERN) == 1,
+                    "o lampião de contingência não entrou no baú da obra");
+        } finally {
+            fixture.owned.cleanUp();
+            BiomeConstructionSupply.routeDelivered(fixture.colony.id(), Items.LANTERN);
+        }
+
+        context.complete();
+    }
+
     /**
      * O fardo de feno entra na mesma regra — pedido do autor, 2026-10-08: a obra
      * pôs o fardo de lado 93 vezes em 22 min, nove trigos cada, com a roça pequena.
