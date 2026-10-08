@@ -110,11 +110,19 @@ public final class MinerReport {
         Optional<UUID> digger = MineClaims.otherDiggerIn(job.task.colonyId(), workerId);
 
         if (digger.isPresent()) {
-            // <b>Quatro ramais desde 2026-09-04</b>, e por isso a linha
-            // diz quantos: esperar com um ocupado é fila, esperar com os
-            // quatro ocupados é a geometria da mina no teto dela.
-            return "waiting for a branch — " + MineClaims.diggersIn(job.task.colonyId())
-                    + " of " + Mine.ARMS + " taken, " + shortId(digger.get()) + " in one";
+            // <b>Os ramais abertos agora, e não os quatro</b> — E2, 2026-10-08:
+            // com a escada ainda num ramal só a linha dizia "1 of 4 taken", e o
+            // segundo mineiro parecia esperar com três livres. Ver MineBranch.
+            Optional<Mine> mine = VillageColonyMod.MINES.of(job.task.colonyId());
+            int open = mine.map(Mine::branchesOpenNow).orElse(Mine.ARMS);
+            String states = mine.map(found -> " — " + MineClaims.branches(job.task.colonyId(), found))
+                    .orElse("");
+
+            return open < Mine.ARMS
+                    ? "waiting for a branch — the shaft is one branch until the gallery starts, "
+                            + shortId(digger.get()) + " has it" + states
+                    : "waiting for a branch — " + MineClaims.diggersIn(job.task.colonyId())
+                            + " of " + open + " open taken" + states;
         }
 
         return "looking for stone";

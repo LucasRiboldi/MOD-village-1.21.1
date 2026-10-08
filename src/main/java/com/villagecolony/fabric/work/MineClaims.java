@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.construction.model.Mine;
+import com.villagecolony.core.construction.model.MineBranch;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -355,6 +356,47 @@ public final class MineClaims {
         }
 
         return Arrays.stream(taken).filter(digger -> digger != null).findFirst();
+    }
+
+    /**
+     * O estado de cada ramal, numa frase — E2: "0 reserved by cc99a53b, 1-3 not open yet".
+     * Ramais seguidos no mesmo estado viram um intervalo.
+     */
+    public static String branches(UUID colonyId, Mine mine) {
+        UUID[] taken = DIGGERS.get(colonyId);
+        String[] states = new String[Mine.ARMS];
+
+        for (int index = 0; index < Mine.ARMS; index++) {
+            states[index] = describe(mine, index, taken == null ? null : taken[index]);
+        }
+
+        StringBuilder text = new StringBuilder("branches ");
+        int from = 0;
+
+        for (int index = 1; index <= Mine.ARMS; index++) {
+            if (index < Mine.ARMS && states[index].equals(states[from])) {
+                continue;
+            }
+
+            text.append(from == index - 1 ? String.valueOf(from) : from + "-" + (index - 1))
+                    .append(' ').append(states[from]).append(index < Mine.ARMS ? ", " : "");
+            from = index;
+        }
+
+        return text.toString();
+    }
+
+    private static String describe(
+            Mine mine, int index,
+            @org.jspecify.annotations.Nullable UUID holder) {
+
+        if (holder != null && MineBranch.of(mine, index, true)
+                == MineBranch.RESERVED) {
+            return "reserved by " + holder.toString().substring(0, 8);
+        }
+
+        return MineBranch.of(mine, index, holder != null).name()
+                .toLowerCase(java.util.Locale.ROOT).replace('_', ' ');
     }
 
     /** Quantos mineiros estão nos ramais desta colônia. */
