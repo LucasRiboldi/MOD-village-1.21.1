@@ -131,7 +131,7 @@ outra, ou busca uma resolução alternativa para a primeira — nunca fica giran
 
 | # | Decisão do autor | O que fica registrado |
 |---|---|---|
-| M2 | **`VC_REACH` antes de criar o nivelador** | BFS do sino com degrau ≤ 1 (plano em `2026-10-08-nivelamento-do-solo-da-vila.md`, fase 1). É **diagnóstico global**; a navegação Vanilla continua resolvendo a rota individual. Deve responder: roça isolada, mina sem entrada ligada à vila (o E2 de 08-10: boca em y38 numa caverna, mineiro em y65), baú que ninguém alcança, obra que o construtor não alcança, estação de trabalho fora da rede. |
+| M2 | **`VC_REACH` antes de criar o nivelador** — ✅ fase 1 feita em 0.3.14 (`ReachMap`) | BFS do sino com degrau ≤ 1 (plano em `2026-10-08-nivelamento-do-solo-da-vila.md`, fase 1). É **diagnóstico global**; a navegação Vanilla continua resolvendo a rota individual. Deve responder: roça isolada, mina sem entrada ligada à vila (o E2 de 08-10: boca em y38 numa caverna, mineiro em y65), baú que ninguém alcança, obra que o construtor não alcança, estação de trabalho fora da rede. |
 | M3 | **Não criar profissão só por ociosidade** | 9 desempregados não provam falta de profissão: pode ser falta de demanda, demanda bloqueada, capacidade maior que o consumo, ou espera do ciclo. Só criar o nivelador com dados de demanda recorrente de manutenção do terreno. Alternativa a investigar antes: um carregador (logística entre baús), que ataca vários gargalos de uma vez. |
 | M4 | **Investigar, não otimizar o mod ainda** | O pico de 420 ms do Spark não é do mod (3,2% da thread). Correlacionar com autosave, geração de chunk, GC e outro mod; só mexer se o ciclo do mod coincidir com o pico (`cost_ledger.py`). |
 | M5 | **Depois do E5** | A cadeia no painel da obra e o motivo do mineiro no painel dele ("procurando alvo: 31 candidatos, 12 NO_PATH, 8 TOO_HIGH"). O overlay não pode reconstruir o que o sistema ainda não representa. |
@@ -179,3 +179,11 @@ outra, ou busca uma resolução alternativa para a primeira — nunca fica giran
 Playtest da 0.3.12 com `time_ledger.py`, `action_report.py` (motivos) e `/vc log` (cadeia) →
 E1 alternativo (pôr chão onde falta), se os `TARGET_REJECTED` forem muitos → M2 (só medir) →
 ADR do ciclo comum de tarefa, se o autor quiser.
+
+## 0.3.14 — pedidos do autor depois do playtest de 08-10 tarde
+
+- **Mineiro pela boca de superfície** (`MineEntrance`) — resolve o "mina com entrada que não liga
+  à vila": a entrada certa existia, o mineiro é que mirava a do nível de agora, enterrada.
+- **Lenhador por faixas** (`VillageZone`): centro → intermediária → borda → um pouco fora.
+- **M2 fase 1** (`ReachMap`, `VC_REACH`, `[ALCANCE]`).
+- **`/vc log`**: sem "já há uma aberta" nas esperas; espera da coleta apagada ao estocar.

@@ -6,6 +6,14 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Playtest da 0.3.14
+
+- [ ] Mineiro na superfície: `walking to` a boca de superfície (-775, 68, -922 no "Novo mundo"),
+      depois as entradas dos níveis; linha `the surface entrance is remembered at …` uma vez.
+- [ ] Lenhador: as árvores cortadas começam pelo centro da vila; `time_ledger` com `blocked` abaixo de 49%.
+- [ ] `VC_REACH` no log e `[ALCANCE]` no `/vc log`; conferir se os lugares "fora" são mesmo inalcançáveis.
+- [ ] `/vc log` sem "Obra: já há uma aberta" e sem argila "ainda procurando" depois de estocada.
+
 ## 🔴 Playtest da 0.3.13 (`docs/reports/Playtest-2026-10-08-tarde.md`)
 
 - [ ] `action_report.py`: SMELTER sem roda (pegas ≈ feitas); sem minério, "no smelter work".
@@ -15,9 +23,6 @@ Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
 ## 🟠 Vistos no playtest de 08-10 tarde e não corrigidos
 
-- [ ] Lenhador 49% "blocked": árvores a 58–134 blocos; a navegação para e recomeça. Viveiro perto
-      da vila ou teto de distância.
-- [ ] `/vc log` mostra "smelter surface: ainda procurando (clay_ball)" depois de a argila ser estocada.
 - [ ] Bateria: a detecção de vila funda colônia com aldeões de outro GameTest (tarefa aberta).
 
 ## 🔴 Playtest da 0.3.12 (crash da retomada e E1–E7 — `docs/research/2026-10-08-erros-atuais-e-correcoes.md`)
@@ -47,7 +52,7 @@ Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
 ## 🟢 Esperam, com a informação no doc de erros (decisões do autor, 08-10)
 
-- [ ] M2 `VC_REACH` (BFS do sino, degrau ≤ 1) **antes** de criar o nivelador.
+- [x] M2 fase 1 (`ReachMap`, `VC_REACH`) — 0.3.14; as fases 2–4 do nivelador esperam o número dele.
 - [ ] M3 não criar profissão só por ociosidade; investigar carregador antes.
 - [ ] M4 pico de 420 ms: correlacionar, não otimizar.
 - [ ] M5 cadeia e motivos no overlay, depois do E5.

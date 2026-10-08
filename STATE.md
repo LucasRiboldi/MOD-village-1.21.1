@@ -1,6 +1,6 @@
 # STATE — 2026-10-08
 
-> **JAR atual: `village-colony-0.3.13.jar` = `FC7B2981…34BF`** (playtest de 08-10 tarde; ver abaixo) em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.14.jar` = `1BDF5DA2…70F9`** (mineiro pela boca, lenhador por faixas, M2; ver abaixo) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,23 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🔴 08-10 — pedidos do autor depois do playtest (0.3.14)
+
+- **Mineiro pela boca de superfície** (`MineEntrance`): a mina desce e a "boca" virava a entrada
+  do nível de agora, 30 blocos dentro da rocha. A boca de superfície fica na memória (guardada ao
+  abrir, deduzida subindo os níveis nas minas antigas); fora da mina ele vai até ela e desce nível
+  por nível, e só no nível da pedra começa a tarefa. Na descida o prazo de aproximação não corre.
+- **Lenhador por faixas** (`VillageZone`): centro da vila → intermediária → borda → um pouco fora
+  (borda + 10, + 20 depois de busca vazia). Substitui, para o lenhador, o rodízio centro ↔ borda
+  do ADR-036 item 18.
+- **M2, fase 1** (`ReachMap`): busca a pé do centro, degrau ≤ 1, fatiada; linha `VC_REACH` e
+  `[ALCANCE]` no `/vc log` com os baús, a boca da mina e o lote da obra fora do alcance. Só mede.
+- **`/vc log`**: "já há uma aberta" não é mais espera; a espera da coleta some quando o material
+  é estocado.
+**Verificado:** build ok, 1.379 unitários, 100 de Python, GameTests 675/675; mutação pega nas
+quatro (o `GroundPickupGameTest` caiu só na rodada de mutação — provável instabilidade).
+**Não visto em jogo.**
 
 ## 🔴 08-10, 10:01–10:17 — playtest da 0.3.12 e correções (0.3.13)
 
