@@ -55,6 +55,39 @@ public final class ColonyMergeTriggerGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Sem jogador por perto, nem colônias encostadas se juntam (ADR-039 item 3, opção B). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_merge")
+    public void onlyTheAttendedColonyMerges(TestContext context) {
+        BlockPos base = context.getAbsolutePos(new BlockPos(1, 1, 1));
+        Colony west = Colony.create(UUID.randomUUID(), at(base, -30));
+        Colony east = Colony.create(UUID.randomUUID(), at(base, 30));
+        VillageColonyMod.COLONIES.register(west);
+        VillageColonyMod.COLONIES.register(east);
+
+        try {
+            VillageColonyMod.BUILDINGS.register(new Building(UUID.randomUUID(), west.id(),
+                    ResourceId.vanilla("hut"), at(base, 0), at(base, 3)));
+            VillageColonyMod.BUILDINGS.register(new Building(UUID.randomUUID(), east.id(),
+                    ResourceId.vanilla("hut"), at(base, 4), at(base, 7)));
+
+            int unseen = ColonyMergeTrigger.mergeTouchingColonies(context.getWorld(), id -> false);
+
+            context.assertTrue(unseen == 0 && VillageColonyMod.COLONIES.find(west.id()).isPresent()
+                            && VillageColonyMod.COLONIES.find(east.id()).isPresent(),
+                    "sem jogador, as colônias encostadas se juntaram");
+
+            int seen = ColonyMergeTrigger.mergeTouchingColonies(context.getWorld(), west.id()::equals);
+
+            context.assertTrue(seen >= 1 && (VillageColonyMod.COLONIES.find(west.id()).isEmpty()
+                            || VillageColonyMod.COLONIES.find(east.id()).isEmpty()),
+                    "com o jogador numa delas, as colônias encostadas não se juntaram");
+        } finally {
+            cleanUp(west, east);
+        }
+
+        context.complete();
+    }
+
     /** Longe, sem casa encostada e sem vila gerada em comum: continuam duas. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_merge")
     public void coloniesApartStayApart(TestContext context) {

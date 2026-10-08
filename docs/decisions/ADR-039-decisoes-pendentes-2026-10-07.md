@@ -74,3 +74,10 @@ colônia e planejamento já exigem jogador por perto (Emenda 6), e no teste não
 | **C. Teste sem ciclo** | o tique de teste roda só o trabalho por tique; quem precisa do ciclo chama `runCycleNow` | isolamento total dos cenários | não muda nada em jogo |
 
 **Pede:** escolher entre A, B e C (B cobre o teste sem regra especial para ele).
+
+## Terceira rodada (07-10, fim da tarde)
+
+| # | Decisão do autor | Commit | Verificado |
+|---|---|---|---|
+| 3 | **Opção B:** junção e ciclo de vida só na colônia atendida; sai a exceção do tique de teste | `2d509553` | `onlyTheAttendedColonyMerges`; filtro anulado devolve 17 junções à bateria |
+| Plano de testes | D2 (o teste passava pela barreira da arena, não pela regra), B1, B3, B4, B5 (pastor andando de verdade), B6 (o teste antigo do morro não provava o morro), arquivo do save | `1e0406b3` … último | cada um com a mutação que o derruba |

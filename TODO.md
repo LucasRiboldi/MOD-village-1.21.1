@@ -42,24 +42,21 @@ e `python scripts/cost_ledger.py` no `latest.log`, e Spark.
       `python scripts/gametest_battery.py 30` limpo; até agora 7 + 6 limpas.
 - [ ] **`lumber_stall_guard`** caiu 1 vez em ~6 baterias de 07-10 (tarde), sem relação com a mudança
       da hora. Medir com o script antes de investigar.
-- [ ] **Tique do servidor de teste** ainda roda o ciclo de vida das colônias (`updateLifecycles`).
-      Ver decisão abaixo (item 3 de 07-10).
 
-## 🟠 Plano: testes que não provam o que deveriam
+## Regra de teste
 
-Regra (vale para todo teste novo ou alterado): **o commit diz a mutação feita e que o teste caiu
-com ela**. Teste que passa com a regra desligada não entra como prova.
+Todo teste novo ou alterado: **o commit diz a mutação feita e que o teste caiu com ela**. Teste que
+passa com a regra desligada não entra como prova. Cenário fora da arena de 8x8 bate na barreira da
+borda (ela já fez um teste passar sem medir nada, o D2).
 
-- [ ] **D2 (caminho até a obra):** a mutação da parada na borda sobreviveu. Achar a segunda guarda
-      (desligar as duas e ver qual segura) e montar o cenário que só a primeira segura.
-- [ ] **B1:** mineiro da superfície não invade o poço (a mutação sobreviveu em 07-10).
-- [ ] **B3:** carpinteiro/pedreiro em volta do sino sem bancada (sino de outra arena interfere: montar
-      com bancada ausente e sino a 3 blocos, conferir `CraftStation.spotFor`).
-- [ ] **B4:** ofício parado cede vaga — testar o gancho em `WorkTime`, não só `IdleYield`.
-- [ ] **B5:** pastor **andando** com o animal na corda (hoje o teste teleporta o pastor).
-- [ ] **B6:** boca da mina prefere morro separado de água.
-- [ ] **Save de verdade:** `WorkMemorySavedData` gravado e relido pelo NBT (hoje só o conteúdo
-      `WorkMemory` é provado); fechar/abrir mundo fica no playtest.
+Plano de 07-10 aplicado: D2, B1, B3, B4, B5, B6 e o arquivo do save provados por mutação (ADR-039).
+Falta só fechar e abrir um mundo de verdade (playtest).
+
+## 🟡 Bioma (regra do autor: toda profissão se adequa ao bioma)
+
+- [x] Carpinteiro, pedreiro e fundidor: peças das casas do bioma (`BiomePieces`).
+- [x] Lenhador: espécies do bioma (floresta da vila, ADR-037); mineiro e coleta: o que o chão dá.
+- [ ] Fazendeiro e pastor: hoje iguais em todo bioma — levantar o que a vila Vanilla de cada bioma cultiva e cria.
 
 ## 🟡 Estrutura
 
@@ -70,7 +67,6 @@ com ela**. Teste que passa com a regra desligada não entra como prova.
 
 ## Decisões do autor que faltam
 
-- [ ] **Tique do servidor de teste** (item 3 de 07-10): alternativas em `docs/decisions/ADR-039-*`.
 - [ ] Aldeões sem ofício 100% parados (cota da ADR-011): vagas para todos, ou ajudantes?
 - [ ] Dois construtores na mesma obra.
 - [ ] E5/E6: limites da felicidade e do rebanho (números do agente). E7: texto da Regra 33.

@@ -56,11 +56,19 @@ final class ColonyMergeTrigger {
      * @return quantas fusões houve
      */
     static int mergeTouchingColonies(ServerWorld world) {
+        return mergeTouchingColonies(world, colony -> true);
+    }
+
+    /**
+     * O mesmo, só para pares em que uma das duas é atendida — ADR-039 item 3,
+     * opção B: nada muda numa vila que o jogador não vê.
+     */
+    static int mergeTouchingColonies(ServerWorld world, java.util.function.Predicate<UUID> attended) {
         int merged = 0;
 
-        for (Optional<ColonyMerge.Result> result = mergeOnePair(world);
+        for (Optional<ColonyMerge.Result> result = mergeOnePair(world, attended);
                 result.isPresent();
-                result = mergeOnePair(world)) {
+                result = mergeOnePair(world, attended)) {
             ColonyMerge.Result done = result.get();
 
             VillageColonyMod.LOGGER.info(
@@ -77,7 +85,7 @@ final class ColonyMergeTrigger {
         return merged;
     }
 
-    private static Optional<ColonyMerge.Result> mergeOnePair(ServerWorld world) {
+    private static Optional<ColonyMerge.Result> mergeOnePair(ServerWorld world, java.util.function.Predicate<UUID> attended) {
         List<Colony> colonies = new ArrayList<>(VillageColonyMod.COLONIES.all());
 
         for (int i = 0; i < colonies.size(); i++) {
@@ -85,7 +93,7 @@ final class ColonyMergeTrigger {
                 Colony a = colonies.get(i);
                 Colony b = colonies.get(j);
 
-                if (shouldMerge(world, a, b)) {
+                if ((attended.test(a.id()) || attended.test(b.id())) && shouldMerge(world, a, b)) {
                     return Optional.of(ColonyMerge.merge(
                             a, b,
                             VillageColonyMod.COLONIES,

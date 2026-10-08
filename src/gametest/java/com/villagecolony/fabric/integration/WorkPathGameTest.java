@@ -27,18 +27,19 @@ public class WorkPathGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_hours", tickLimit = 20)
     public void aPathIsPavedFromTheRoadToTheEdgeOfTheLot(TestContext context) {
-        for (int x = 0; x <= 12; x++) {
-            for (int z = 0; z <= 8; z++) {
+        // Tudo dentro da arena de 8x8: na borda dela há barreira, e a barreira recusa o calçamento.
+        for (int x = 0; x <= 7; x++) {
+            for (int z = 0; z <= 7; z++) {
                 context.setBlockState(new BlockPos(x, 1, z), Blocks.GRASS_BLOCK.getDefaultState());
             }
         }
 
-        BlockPos road = new BlockPos(1, 1, 4);
+        BlockPos road = new BlockPos(0, 1, 4);
         context.setBlockState(road, Blocks.DIRT_PATH.getDefaultState());
 
         BlockPos absoluteRoad = context.getAbsolutePos(road);
-        // O lote: 4x4 de x 8 a 11 e z 3 a 6, com o piso no y 2.
-        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(8, 2, 3)));
+        // O lote: 2x2 de x 6 a 7 e z 3 a 4, com o piso no y 2.
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(6, 2, 3)));
         UUID colonyId = UUID.randomUUID();
         Colony colony = Colony.create(colonyId, origin);
         VillageColonyMod.COLONIES.register(colony);
@@ -49,9 +50,11 @@ public class WorkPathGameTest implements FabricGameTest {
 
         List<BlueprintBlock> blocks = new ArrayList<>();
 
-        for (int x = 0; x < 4; x++) {
-            for (int z = 0; z < 4; z++) {
-                blocks.add(new BlueprintBlock(new ColonyPos(x, 0, z), MinecraftTypeAdapter.toResourceId(Blocks.OAK_PLANKS)));
+        for (int x = 0; x < 2; x++) {
+            for (int z = 0; z < 2; z++) {
+                // Um acima do piso: a caixa da obra aberta (que a proteção recusa) não cobre a altura do
+                // caminho, e só a parada na borda do lote segura o calçamento.
+                blocks.add(new BlueprintBlock(new ColonyPos(x, 1, z), MinecraftTypeAdapter.toResourceId(Blocks.OAK_PLANKS)));
             }
         }
 
@@ -66,13 +69,13 @@ public class WorkPathGameTest implements FabricGameTest {
             int second = WorkPath.paveToward(context.getWorld(), colonyId);
 
             context.assertTrue(first == WorkPath.STEPS_PER_CYCLE, "o primeiro ciclo calçou " + first);
-            context.assertTrue(second == 2, "do x 2 ao 7 são 6 blocos; o segundo ciclo calçou " + second);
+            context.assertTrue(second == 1, "do x 1 ao 5 são 5 blocos; o segundo ciclo calçou " + second);
 
-            for (int x = 2; x <= 7; x++) {
+            for (int x = 1; x <= 5; x++) {
                 context.expectBlock(Blocks.DIRT_PATH, new BlockPos(x, 1, 4));
             }
 
-            context.expectBlock(Blocks.GRASS_BLOCK, new BlockPos(8, 1, 4));
+            context.expectBlock(Blocks.GRASS_BLOCK, new BlockPos(6, 1, 4));
             context.assertTrue(WorkPath.paveToward(context.getWorld(), colonyId) == 0,
                     "o caminho encostou no lote e continuou calçando");
         } finally {
