@@ -84,7 +84,7 @@ public record MaterialRequest(ResourceId material, State state, Source source, l
             case RESOLVING -> switch (source) {
                 case CRAFTSMAN -> "os ingredientes estão no baú do artesão; falta ele fabricar";
                 case STOCKED -> "sem rota no bioma; aparece no baú na quarta tentativa";
-                default -> "uma profissão consegue no bioma; falta entregar";
+                default -> "há rota no bioma e ainda não chegou ao baú — a cadeia diz qual elo falta";
             };
             case NO_SOLUTION -> switch (source) {
                 case STOCKED -> "sem rota, e o baú do construtor não aceitou a peça";

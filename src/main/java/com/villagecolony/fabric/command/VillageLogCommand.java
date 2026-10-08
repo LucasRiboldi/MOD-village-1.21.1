@@ -108,6 +108,21 @@ public final class VillageLogCommand {
                             project.blueprint().id().path(), request, source.getWorld().getTime());
                     source.sendFeedback(() -> Text.literal(line).formatted(
                             request.delivered() ? Formatting.GRAY : Formatting.YELLOW), false);
+
+                    // E a cadeia que traz a peça, elo por elo — E5. Ver ProductionChain.
+                    if (!request.delivered()) {
+                        net.minecraft.registry.Registries.ITEM.getOrEmpty(
+                                        com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toIdentifier(
+                                                request.material()))
+                                .ifPresent(item -> {
+                                    String chain = "[CADEIA] " + com.villagecolony.fabric.work.ProductionChain.describe(
+                                            com.villagecolony.fabric.work.ProductionChain.of(
+                                                    source.getWorld(), nearby.id(), item,
+                                                    com.villagecolony.fabric.integration.ColonyChests.nearestFirst(
+                                                            source.getWorld(), nearby.id(), project.origin())));
+                                    source.sendFeedback(() -> Text.literal(chain).formatted(Formatting.GOLD), false);
+                                });
+                    }
                 }));
 
         // As esperas longas, com o motivo e o tempo — B-5, 2026-10-02.
