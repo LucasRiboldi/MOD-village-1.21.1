@@ -6,7 +6,9 @@ Uso:
 
 Por profissão: tarefas pegas, terminadas, soltas e canceladas; taxa de conclusão; duração mediana de
 uma tarefa terminada; ações concretas (bloco posto, pedra, árvore, peça, colheita, tosquia) por
-minuto de jogo; encalhes. Por aldeão: o mesmo, e o que mais o fez soltar a tarefa.
+minuto de jogo; encalhes. Por aldeão: o mesmo, e o que mais o fez soltar a tarefa. E os motivos
+de recusa e desistência (TARGET_REJECTED, GAVE_UP, SET_ASIDE, STRANDED), que dizem por que uma
+profissão não está trabalhando — M1, a peça central do diagnóstico (2026-10-08).
 """
 from __future__ import annotations
 
@@ -19,6 +21,7 @@ from collections import Counter, defaultdict
 
 TASK_EVENTS = ("TASK_TAKEN", "TASK_STARTED", "TASK_DONE", "TASK_RELEASED", "TASK_CANCELLED")
 TICKS_PER_MINUTE = 1200
+REASON_ACTIONS = ("TARGET_REJECTED", "GAVE_UP", "SET_ASIDE", "STRANDED")
 
 
 def newest_journal():
@@ -41,10 +44,21 @@ def parse(text_lines):
     return records
 
 
+def reason_of(detail):
+    """O motivo sem os números que mudam a cada linha (distâncias, tiques)."""
+    words = []
+    for word in detail.split():
+        stripped = word.strip(",.()")
+        if stripped and stripped.replace(".", "").replace(",", "").replace("-", "").isdigit():
+            word = word.replace(stripped, "N")
+        words.append(word)
+    return " ".join(words)[:90] or "-"
+
+
 def summarize(records):
     """{profissão: {...}} e {aldeão: {...}} com as contagens e medianas."""
     by_prof = defaultdict(lambda: {"events": Counter(), "actions": Counter(), "amount": Counter(),
-                                   "done_ticks": [], "workers": set()})
+                                   "done_ticks": [], "workers": set(), "reasons": Counter()})
     by_worker = defaultdict(lambda: {"prof": "", "events": Counter(), "actions": Counter(),
                                      "released_tasks": Counter()})
     first = min((r.get("t", 0) for r in records), default=0)
@@ -65,6 +79,8 @@ def summarize(records):
         else:
             p["actions"][action] += 1
             p["amount"][action] += r.get("n", 1)
+            if action in REASON_ACTIONS:
+                p["reasons"][action + ": " + reason_of(r.get("detail", ""))] += 1
             w["actions"][action] += 1
 
     minutes = max(1e-9, (last - first) / TICKS_PER_MINUTE)
@@ -94,6 +110,12 @@ def render(by_prof, by_worker, minutes):
         acts = ", ".join(f"{k} {v}" for k, v in w["actions"].most_common(3))
         out.append(f"  {worker} {w['prof']:<10} feitas {w['events']['TASK_DONE']:>3}, "
                    f"soltas {w['events']['TASK_RELEASED']:>3}  {acts}{'  | soltou: ' + why if why else ''}")
+    reasons = [(prof, r, n) for prof in sorted(by_prof) for r, n in by_prof[prof]["reasons"].most_common(5)]
+    if reasons:
+        out.append("")
+        out.append("Motivos de recusa e desistência (os mais frequentes por profissão):")
+        for prof, reason, n in reasons:
+            out.append(f"  {prof:<10} {n:>4}× {reason}")
     return "\n".join(out)
 
 

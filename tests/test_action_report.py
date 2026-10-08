@@ -18,6 +18,10 @@ LINES = [
     '"task":"BUILD","what":"oak_planks","n":1}',
     '{"t":2400,"colony":"33a6b9c4","worker":"9353ad2c","prof":"BUILDER","action":"TASK_DONE",'
     '"task":"BUILD","what":"oak_planks","n":1,"ticks":1100}',
+    '{"t":1250,"colony":"33a6b9c4","worker":"cc99a53b","prof":"MINER","action":"TARGET_REJECTED",'
+    '"what":"stone","x":-751,"y":31,"z":-942,"detail":"TOO_HIGH"}',
+    '{"t":1260,"colony":"33a6b9c4","worker":"cc99a53b","prof":"MINER","action":"TARGET_REJECTED",'
+    '"what":"stone","x":-750,"y":31,"z":-942,"detail":"TOO_HIGH"}',
     '{"t":2400,"colony":"33a6b9c4","worker":"9353ad2c","prof":"BUILDER","action":"PLA',
 ]
 
@@ -25,7 +29,7 @@ LINES = [
 class ActionReportTest(unittest.TestCase):
 
     def test_a_broken_last_line_is_skipped(self):
-        self.assertEqual(5, len(action_report.parse(LINES)))
+        self.assertEqual(7, len(action_report.parse(LINES)))
 
     def test_counts_tasks_and_actions_per_profession(self):
         by_prof, by_worker, minutes = action_report.summarize(action_report.parse(LINES))
@@ -35,6 +39,17 @@ class ActionReportTest(unittest.TestCase):
         self.assertEqual(3, by_prof["MINER"]["amount"]["MINED"])
         self.assertEqual([1100], by_prof["BUILDER"]["done_ticks"])
         self.assertEqual(1, by_worker["cc99a53b"]["released_tasks"]["COLLECT_STONE cobblestone"])
+
+    def test_the_rejection_reasons_are_counted_per_profession(self):
+        by_prof, _, _ = action_report.summarize(action_report.parse(LINES))
+
+        self.assertEqual(2, by_prof["MINER"]["reasons"]["TARGET_REJECTED: TOO_HIGH"])
+        text = action_report.render(*action_report.summarize(action_report.parse(LINES)))
+        self.assertIn("2× TARGET_REJECTED: TOO_HIGH", text)
+
+    def test_numbers_inside_a_reason_do_not_split_it(self):
+        self.assertEqual(action_report.reason_of("it got no closer than 6,9 blocks in 400 ticks"),
+                         action_report.reason_of("it got no closer than 7,4 blocks in 400 ticks"))
 
     def test_the_report_names_the_completion_rate(self):
         text = action_report.render(*action_report.summarize(action_report.parse(LINES)))
