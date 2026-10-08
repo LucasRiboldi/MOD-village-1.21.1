@@ -324,9 +324,9 @@ public final class BiomeConstructionSupply {
 
         VillageColonyMod.LOGGER.info(
                 "The colony stocked {} for construction after four failed attempts"
-                        + " — it has no recipe and no profession can obtain it in this biome",
+                        + " — no route delivered it (none in this biome, or one only on paper)",
                 item);
-        logSupplyError(item, ProfessionType.BUILDER, "no profession can obtain it in this biome");
+        logSupplyError(item, ProfessionType.BUILDER, "no route delivered it");
         return true;
     }
 
