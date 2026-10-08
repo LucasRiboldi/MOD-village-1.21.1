@@ -147,14 +147,23 @@ public final class TreeChoice {
                 && !TreeMarks.isRejected(world, log)
                 && !TreeMarks.isOutOfReach(world, log);
 
-        // Primeiro a árvore conhecida mais perto dele; só sem nenhuma, a varredura — ADR-038 P3a.
-        Optional<BlockPos> tree = com.villagecolony.fabric.integration.VillageTrees.nearest(
-                world, job.task.colonyId(), villager.getBlockPos(), usable);
+        Optional<com.villagecolony.core.colony.model.VillageBounds> zoned = ResourceSearches.zonedBox(
+                world, job.task.colonyId(), ProfessionType.LUMBERJACK,
+                LumberjackWork.searchRadius != LumberjackWork.SEARCH_RADIUS);
+        Optional<BlockPos> tree;
 
-        if (tree.isEmpty()) {
-            tree = TreeScanner.findNearestLog(world, search.origin(), search.radius(), usable);
-            tree.ifPresent(found -> com.villagecolony.fabric.integration.VillageTrees.rememberTree(
-                    job.task.colonyId(), found));
+        if (zoned.isPresent()) {
+            tree = byZone(world, job, villager, zoned.get());
+        } else {
+            // Primeiro a árvore conhecida mais perto dele; só sem nenhuma, a varredura — ADR-038 P3a.
+            tree = com.villagecolony.fabric.integration.VillageTrees.nearest(
+                    world, job.task.colonyId(), villager.getBlockPos(), usable);
+
+            if (tree.isEmpty()) {
+                tree = TreeScanner.findNearestLog(world, search.origin(), search.radius(), usable);
+                tree.ifPresent(found -> com.villagecolony.fabric.integration.VillageTrees.rememberTree(
+                        job.task.colonyId(), found));
+            }
         }
 
         ResourceSearches.advance(job.task.colonyId(), ProfessionType.LUMBERJACK);
@@ -239,6 +248,41 @@ public final class TreeChoice {
     }
 
     /**
+     * Do centro da vila para a borda, e só então um pouco fora — pedido do autor,
+     * 2026-10-08 ({@link com.villagecolony.core.coordination.VillageZone}). Entre as
+     * conhecidas vale a faixa mais de dentro e, nela, a mais perto dele; sem
+     * conhecida, a varredura parte do centro da caixa, e a primeira que ela acha é
+     * a mais central. Substitui o rodízio centro ↔ borda do ADR-036 item 18 para o
+     * lenhador: com ele, árvore a 134 blocos ganhava da que estava na praça.
+     */
+    static Optional<BlockPos> byZone(ServerWorld world, LumberjackWork.Job job, VillagerEntity villager,
+            com.villagecolony.core.colony.model.VillageBounds box) {
+
+        int margin = ResourceSearches.marginOf(job.task.colonyId(), ProfessionType.LUMBERJACK);
+        java.util.function.ToIntFunction<BlockPos> zone = log -> com.villagecolony.core.coordination.VillageZone
+                .of(box, log.getX(), log.getZ(), margin).rank();
+        java.util.function.Predicate<BlockPos> usable = log -> com.villagecolony.core.coordination.VillageZone
+                        .of(box, log.getX(), log.getZ(), margin).withinReach()
+                && !TreeClaims.isTaken(log)
+                && !TreeMarks.isRejected(world, log)
+                && !TreeMarks.isOutOfReach(world, log);
+
+        Optional<BlockPos> tree = com.villagecolony.fabric.integration.VillageTrees.nearest(
+                world, job.task.colonyId(), villager.getBlockPos(), usable, zone);
+
+        if (tree.isEmpty()) {
+            BlockPos centre = new BlockPos(box.centerX(), job.center.getY(), box.centerZ());
+            int radius = Math.max(box.sizeX(), box.sizeZ()) / 2 + margin;
+
+            tree = TreeScanner.findNearestLog(world, centre, radius, usable);
+            tree.ifPresent(found -> com.villagecolony.fabric.integration.VillageTrees.rememberTree(
+                    job.task.colonyId(), found));
+        }
+
+        return tree;
+    }
+
+    /**
      * Ele parou de andar, e há quantos tiques — o guarda de imobilidade.
      *
      * <p>Método, e não string montada no lugar da chamada, pelo motivo
@@ -247,6 +291,7 @@ public final class TreeChoice {
      * Aqui o que se afirma é justamente que o <b>número é o contador</b>,
      * e não a constante.
      */
+
     static String motionless(int ticks) {
         return "has not moved a block in " + ticks + " work ticks";
     }

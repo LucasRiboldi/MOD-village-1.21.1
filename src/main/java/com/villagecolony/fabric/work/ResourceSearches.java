@@ -112,6 +112,29 @@ final class ResourceSearches {
         return GatheringReach.radius(colony.map(Colony::observedBeds).orElse(0), ceiling);
     }
 
+    /**
+     * A caixa da vila quando a busca vai por faixas, do centro para a borda (o
+     * lenhador, pedido do autor de 2026-10-08) — vazio nas mesmas exceções de
+     * {@link #current}: vila sem caixa, raio do jogador ou raio encurtado pelos testes.
+     */
+    static Optional<VillageBounds> zonedBox(
+            ServerWorld world, UUID colonyId, ProfessionType profession, boolean shortened) {
+
+        boolean chosenByPlayer = ProfessionPolicySavedData.get(world.getServer()).policies()
+                .policyOf(profession).hasConfiguredRadius();
+
+        if (shortened || chosenByPlayer) {
+            return Optional.empty();
+        }
+
+        return VillageColonyMod.COLONIES.find(colonyId).flatMap(Colony::bounds);
+    }
+
+    /** O "um pouco fora" deste ofício: a borda + 10, ou + 20 depois de uma busca vazia. */
+    static int marginOf(UUID colonyId, ProfessionType profession) {
+        return WIDE.contains(new Key(colonyId, profession)) ? ResourceReach.WIDE_MARGIN : ResourceReach.EDGE_MARGIN;
+    }
+
     /** A próxima busca deste ofício parte do outro lado (centro ↔ borda). */
     static void advance(UUID colonyId, ProfessionType profession) {
         TURNS.merge(new Key(colonyId, profession), 1, Integer::sum);
