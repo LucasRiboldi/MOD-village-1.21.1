@@ -64,11 +64,13 @@ public final class BuilderMaterials {
      * fardo de feno — pedido do autor, 2026-10-08: a obra pôs o fardo de lado 93 vezes
      * em 22 min, cada um custa nove trigos e a roça não dava conta. Lampião e
      * corrente também (mesmo pedido, depois): ferro do mineiro, e a obra ficou 20 min
-     * parada nas últimas 99 peças, todas lampião e corrente.
+     * parada nas últimas 99 peças, todas lampião e corrente. Funil e trilho pelo
+     * mesmo motivo, e o vaso pela argila: o celeiro ficou 40 min parado num funil.
      */
     private static final Set<Item> STOCKED_AFTER_MISSES = Set.of(
             Items.HAY_BLOCK,
             Items.LANTERN, Items.SOUL_LANTERN, Items.CHAIN,
+            Items.HOPPER, Items.RAIL, Items.FLOWER_POT,
             Items.TERRACOTTA,
             Items.WHITE_TERRACOTTA, Items.ORANGE_TERRACOTTA, Items.MAGENTA_TERRACOTTA,
             Items.LIGHT_BLUE_TERRACOTTA, Items.YELLOW_TERRACOTTA, Items.LIME_TERRACOTTA,

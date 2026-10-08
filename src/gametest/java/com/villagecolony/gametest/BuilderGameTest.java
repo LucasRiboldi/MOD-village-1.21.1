@@ -660,6 +660,39 @@ public class BuilderGameTest implements FabricGameTest {
     }
 
     /**
+     * O funil também, embora tenha receita de bancada: cinco lingotes que o
+     * mineiro não achou em 37 min de mina, e o celeiro parado 40 min nele.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
+    public void theHopperAppearsInTheBuildersChestAfterFourMisses(TestContext context) {
+        Fixture fixture = setUp(context, 0, Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/test_hopper"),
+                List.of(new BlueprintBlock(
+                        new ColonyPos(0, 0, 0),
+                        MinecraftTypeAdapter.toResourceId(Blocks.HOPPER)))), 1);
+
+        try {
+            for (int attempt = 1; attempt <= 3; attempt++) {
+                context.assertFalse(
+                        BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                        "o funil apareceu antes da tentativa " + attempt);
+            }
+
+            context.assertTrue(
+                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                    "a quarta falta não abasteceu o funil");
+            context.assertTrue(
+                    ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.HOPPER) == 1,
+                    "o funil de contingência não entrou no baú da obra");
+        } finally {
+            fixture.owned.cleanUp();
+            BiomeConstructionSupply.routeDelivered(fixture.colony.id(), Items.HOPPER);
+        }
+
+        context.complete();
+    }
+
+    /**
      * O fardo de feno entra na mesma regra — pedido do autor, 2026-10-08: a obra
      * pôs o fardo de lado 93 vezes em 22 min, nove trigos cada, com a roça pequena.
      */
