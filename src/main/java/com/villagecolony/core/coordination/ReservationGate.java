@@ -21,12 +21,19 @@ public enum ReservationGate {
     EMPTY_SWEEP,
 
     /** A obra só é reservada com ponto de apoio ao alcance do próximo bloco. */
-    BUILD_SITE;
+    BUILD_SITE,
+
+    /**
+     * Fundir só é reservado com o cru num baú da colônia — playtest de 2026-10-08:
+     * sem minério, o fundidor pegou e soltou a tarefa de lingote 191 vezes em 12 min.
+     */
+    SMELT_INPUT;
 
     public static ReservationGate of(TaskType type) {
         return switch (type) {
             case COLLECT_SURFACE_RESOURCE, COLLECT_SOIL, COLLECT_WOOL -> EMPTY_SWEEP;
             case BUILD -> BUILD_SITE;
+            case SMELT_MATERIAL -> SMELT_INPUT;
             default -> NONE;
         };
     }

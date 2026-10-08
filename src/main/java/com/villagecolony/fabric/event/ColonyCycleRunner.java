@@ -448,6 +448,8 @@ final class ColonyCycleRunner {
             case BUILD_SITE -> VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
                     .map(project -> BuildSiteGate.admits(world, project))
                     .orElse(false);
+            case SMELT_INPUT -> com.villagecolony.fabric.work.SmeltInput.inChests(
+                    world, colonyId, task.targetResource());
         };
     }
 

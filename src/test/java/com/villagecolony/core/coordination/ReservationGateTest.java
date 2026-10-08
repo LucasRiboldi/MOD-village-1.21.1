@@ -30,9 +30,14 @@ class ReservationGateTest {
     }
 
     @Test
+    void smeltingWaitsForTheRawInAChest() {
+        assertEquals(ReservationGate.SMELT_INPUT, ReservationGate.of(TaskType.SMELT_MATERIAL));
+    }
+
+    @Test
     void everyOtherTaskHasNoGate() {
         for (TaskType type : TaskType.values()) {
-            if (type != TaskType.BUILD && !SWEPT.contains(type)) {
+            if (type != TaskType.BUILD && type != TaskType.SMELT_MATERIAL && !SWEPT.contains(type)) {
                 assertEquals(ReservationGate.NONE, ReservationGate.of(type), type.name());
             }
         }
