@@ -147,7 +147,12 @@ final class ColonyCycleRunner {
                 continue;
             }
 
-            runCycleOf(overworld, colony, planners.contains(colony.id()));
+            // Erro de uma colônia perde o ciclo dela, nunca o mundo do jogador.
+            try {
+                runCycleOf(overworld, colony, planners.contains(colony.id()));
+            } catch (RuntimeException failure) {
+                VillageColonyMod.LOGGER.error("Colony {} cycle failed — skipped", colony.id(), failure);
+            }
         }
 
         if (onlyNearPlayers) {

@@ -398,6 +398,58 @@ public class FoundationRepairGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * A obra do save não entra por cima de uma que já abriu — crash de 07-10 e
+     * 08-10: a passagem extra da busca de lote abriu o celeiro antes do ciclo
+     * retomar a obra salva, e o registro derrubou o servidor.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "foundation_repair")
+    public void aSavedProjectNeverOpensOnTopOfAnOpenOne(TestContext context) {
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(1, 4, 1)));
+        Colony colony = Colony.create(UUID.randomUUID(), origin);
+        ConstructionProject open = ConstructionProject.plan(colony.id(),
+                PlanPlacement.blueprintOf(context.getWorld(), colony.id(),
+                                StructureBlueprintReader.SMALL_HOUSE, origin)
+                        .orElseThrow(() -> new AssertionError("planta da casa ausente")),
+                origin);
+
+        // A salva com um bloco de pé: sem ele a retomada a largaria antes do
+        // registro (sem base), e o teste não mediria nada.
+        ColonyPos savedAt = new ColonyPos(origin.x() + 40, origin.y(), origin.z());
+        BlueprintBlock piece = PlanPlacement.blueprintOf(
+                        context.getWorld(), colony.id(), StructureBlueprintReader.SMALL_HOUSE, savedAt)
+                .orElseThrow().blocks().stream()
+                .filter(block -> MinecraftTypeAdapter.toBlock(block.block()).isPresent())
+                .findFirst().orElseThrow();
+        BlockPos pieceAt = new BlockPos(savedAt.x() + piece.offset().x(),
+                savedAt.y() + piece.offset().y(), savedAt.z() + piece.offset().z());
+        BlockState before = context.getWorld().getBlockState(pieceAt);
+
+        try {
+            context.getWorld().setBlockState(pieceAt,
+                    MinecraftTypeAdapter.toBlock(piece.block()).orElseThrow().getDefaultState());
+            VillageColonyMod.CONSTRUCTIONS.register(open);
+            VillageColonyMod.CONSTRUCTIONS.registerPending(new ConstructionService.Pending(
+                    UUID.randomUUID(), colony.id(), StructureBlueprintReader.SMALL_HOUSE,
+                    savedAt, ConstructionState.BUILDING));
+
+            ConstructionResume.resume(context.getWorld(), colony);
+
+            context.assertTrue(VillageColonyMod.CONSTRUCTIONS.pendingOf(colony.id()).isEmpty(),
+                    "a obra salva continuou pendente com outra aberta");
+            context.assertTrue(VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
+                            .map(project -> project.id().equals(open.id())).orElse(false),
+                    "a obra aberta foi trocada pela salva");
+        } finally {
+            context.getWorld().setBlockState(pieceAt, before);
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
+            VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
+        }
+
+        context.complete();
+    }
+
     private static Building abandonedHouse(TestContext context, Colony colony, ColonyPos origin) {
         ColonyPos size = StructureBlueprintReader.read(
                 context.getWorld(), StructureBlueprintReader.SMALL_HOUSE)

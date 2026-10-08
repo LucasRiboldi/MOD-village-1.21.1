@@ -245,6 +245,16 @@ final class SiteOpening {
             return Optional.empty();
         }
 
+        // A vaga de obra é única, e a obra do save que ainda não renasceu
+        // também a ocupa: quem chega aqui sem passar pela retomada não abre.
+        if (VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isPresent()
+                || VillageColonyMod.CONSTRUCTIONS.pendingOf(colony.id()).isPresent()) {
+            VillageColonyMod.LOGGER.warn(
+                    "Refused construction for colony {}: a project is already open or waits to resume",
+                    colony.id());
+            return Optional.empty();
+        }
+
         VillageColonyMod.CONSTRUCTIONS.register(project);
 
         // Lote um acima da rua: a porta não pode ficar dois degraus acima de

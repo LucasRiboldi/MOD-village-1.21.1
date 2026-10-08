@@ -56,7 +56,10 @@ final class SweepCadence {
      * @return se houve passagem
      */
     static boolean passFor(ServerWorld world, Colony colony) {
+        // A obra que o save trouxe também ocupa a vaga: ela renasce no
+        // planejador do ciclo, e abrir lote antes disso dava duas obras.
         if (VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isPresent()
+                || VillageColonyMod.CONSTRUCTIONS.pendingOf(colony.id()).isPresent()
                 || !SweepState.stillLookingForALot(colony.id())
                 || RoadExtension.isGrowing(colony.id())
                 || !ColonyAbandonment.plansConstruction(colony)) {

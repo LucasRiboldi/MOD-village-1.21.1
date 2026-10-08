@@ -84,6 +84,18 @@ final class ConstructionResume {
 
         ConstructionService.Pending saved = pending.get();
 
+        // <b>A vaga de obra é única</b>: se outra já abriu (a passagem extra da
+        // busca de lote, antes deste ciclo), a salva não entra por cima — o
+        // registro recusaria e derrubaria o servidor (crash de 07-10 e 08-10).
+        // A casa pela metade fica no mundo; o reparo a devolve pelo registro.
+        if (VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isPresent()) {
+            VillageColonyMod.LOGGER.warn(
+                    "Colony {} drops the saved {} at {} — another project is already open",
+                    colony.id(), saved.blueprint(), saved.origin());
+            VillageColonyMod.CONSTRUCTIONS.dropPending(colony.id());
+            return;
+        }
+
         List<Building> buildings = VillageColonyMod.BUILDINGS.ofColony(colony.id());
 
         // Construção concluída não volta pelo save. Versões anteriores só
