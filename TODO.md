@@ -6,6 +6,20 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Playtest da 0.3.13 (`docs/reports/Playtest-2026-10-08-tarde.md`)
+
+- [ ] `action_report.py`: SMELTER sem roda (pegas ≈ feitas); sem minério, "no smelter work".
+- [ ] Mineiro sem `pauses — … chest … is full` enquanto o baú tem espaço; conclusão acima de 0%.
+- [ ] Mineiro sem ficar parado no próprio lugar "walking to" a posição em que está.
+- [ ] `CRAFTED` com o item no diário.
+
+## 🟠 Vistos no playtest de 08-10 tarde e não corrigidos
+
+- [ ] Lenhador 49% "blocked": árvores a 58–134 blocos; a navegação para e recomeça. Viveiro perto
+      da vila ou teto de distância.
+- [ ] `/vc log` mostra "smelter surface: ainda procurando (clay_ball)" depois de a argila ser estocada.
+- [ ] Bateria: a detecção de vila funda colônia com aldeões de outro GameTest (tarefa aberta).
+
 ## 🔴 Playtest da 0.3.12 (crash da retomada e E1–E7 — `docs/research/2026-10-08-erros-atuais-e-correcoes.md`)
 
 - [ ] Carregar o save "Novo mundo" com obra pendente e jogador na vila: sem crash; se aparecer

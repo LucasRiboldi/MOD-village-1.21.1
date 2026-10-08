@@ -1,6 +1,6 @@
 # STATE — 2026-10-08
 
-> **JAR atual: `village-colony-0.3.12.jar` = `6DEF8E1F…1352`** (crash da retomada + E1–E7; ver abaixo) em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.13.jar` = `FC7B2981…34BF`** (playtest de 08-10 tarde; ver abaixo) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,20 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🔴 08-10, 10:01–10:17 — playtest da 0.3.12 e correções (0.3.13)
+
+Relatório: `docs/reports/Playtest-2026-10-08-tarde.md`. Sem crash; E3 e E7 funcionaram em jogo.
+Corrigido: **fundidor em roda** (191 pegas e 191 soltas da tarefa de lingote sem minério — trava
+de reserva `SMELT_INPUT`/`SmeltInput`, que mantém o plano B de fundir para a obra); **mineiro
+pausado por "baú cheio" com espaço** (pedra acima do teto por tipo, descartada de propósito,
+contava como baú cheio — `Haul.spilled`); **regressão do E1** (a busca a pé devolvia o lugar de
+pé mais perto do mineiro, na borda do braço — agora o mais perto da pedra); `CRAFTED` sem item.
+Bateria: o teste do lenhador caía porque a detecção de vila fundava colônia com aldeões de outro
+teste e punha a BigHouseMOD ao lado da arena — árvore subida 40 blocos; causa aberta como tarefa.
+**Verificado:** build ok, 1.374 unitários, GameTests 672/672; mutação pega nas três correções.
+**Não visto em jogo.** Aberto: lenhador 49% "blocked" (árvores a 58–134 blocos), mina com
+entrada que não liga à superfície (M2), espera de argila que não se apaga no `/vc log`.
 
 ## 🔴 08-10, tarde — crash da retomada e E1–E7 (0.3.12)
 
