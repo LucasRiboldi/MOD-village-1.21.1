@@ -158,6 +158,14 @@ public final class BuilderMaterials {
         return supply.state() == State.DELIVERED;
     }
 
+    /** Se algum baú da colônia já tem o material desta peça — só pergunta, não tira. */
+    static boolean isInTheChests(ServerWorld world, ConstructionProject project, ResourceId piece) {
+        return MinecraftTypeAdapter.toBlock(piece)
+                .map(block -> MaterialChoice.forBlock(block).stream().anyMatch(item ->
+                        ColonySupply.canProvide(world, project.colonyId(), project.origin(), item)))
+                .orElse(false);
+    }
+
     /** Quantas peças diferentes, além da próxima, contam tentativa por ciclo. */
     static final int AHEAD = 8;
 

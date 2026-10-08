@@ -333,15 +333,27 @@ public final class ConstructionProject {
         deferrals.merge(position, 1, Integer::sum);
     }
 
+    /** Peça de lado esperando material ({@link SkipReason}); não conta como falha ao pôr. */
+    public void deferForMaterial(BlueprintBlock block) {
+        if (!remaining.contains(Objects.requireNonNull(block, "block"))) {
+            throw new IllegalArgumentException("Cannot defer a block outside the remaining project");
+        }
+        ColonyPos position = worldPositionOf(block);
+        deferred.put(position, new DeferredPiece(position, block.block(), SkipReason.WAITING_MATERIAL, "material"));
+    }
+
+    /** Se há outra peça a pôr além desta, fora as que esperam de lado. */
+    public boolean hasAnotherPieceThan(BlueprintBlock block) {
+        return remaining.stream().anyMatch(other -> !other.equals(block)
+                && !deferred.containsKey(worldPositionOf(other)));
+    }
+
     /** Se esta falha ao pôr é a quinta: a peça é pulada — ADR-036 item 6. */
     public boolean failsForTheLastTime(BlueprintBlock block) {
         return deferrals.getOrDefault(worldPositionOf(block), 0) + 1 >= PLACEMENT_FAILURES_BEFORE_SKIP;
     }
 
-    /**
-     * Recoloca a peça na fila quando a leitura de apoio não é mais a que
-     * falhou. Sem mudança, a tentativa continua adiada.
-     */
+    /** Recoloca a peça na fila quando a leitura de apoio não é mais a que falhou. */
     public boolean retryIfSupportChanged(DeferredPiece piece, String supportFingerprint) {
         Objects.requireNonNull(piece, "piece");
         Objects.requireNonNull(supportFingerprint, "supportFingerprint");
@@ -360,14 +372,8 @@ public final class ConstructionProject {
     }
 
     /**
-     * Recoloca a peça na fila porque ela já pode ser assentada — 2026-09-25.
-     *
-     * <p>A outra porta, {@link #retryIfSupportChanged}, só abre quando a
-     * vizinhança muda. Não basta quando o que mudou foi a <b>regra</b> de
-     * assentar: as nove peças do templo de 25-09 foram adiadas por uma versão
-     * que não sabia apoiar a peça de parede na parede que existe, e a
-     * vizinhança delas nunca ia mudar. Quem decide que a peça cabe agora é a
-     * camada que conhece o mundo.
+     * Recoloca a peça na fila porque quem conhece o mundo decidiu que ela já
+     * pode ser assentada (a regra de apoio mudou, ou o material chegou).
      *
      * @return se a peça estava adiada e saiu da espera
      */

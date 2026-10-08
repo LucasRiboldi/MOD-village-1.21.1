@@ -89,7 +89,10 @@ final class OverlayDrawing {
 
         matrices.translate(relative.x, relative.y, relative.z);
         matrices.multiply(camera.getRotation());
-        matrices.scale(-SCALE, -SCALE, SCALE);
+        // A mesma escala da plaquinha Vanilla (EntityRenderer.renderLabelIfPresent).
+        // Com o x negativo o painel saía espelhado e o texto, de face única,
+        // ficava de costas para a câmera e não aparecia.
+        matrices.scale(SCALE, -SCALE, SCALE);
 
         Matrix4f matrix = matrices.peek().getPositionMatrix();
 
@@ -128,7 +131,7 @@ final class OverlayDrawing {
         }
     }
 
-    /** Um quadrado texturizado, nas duas faces: a escala negativa vira a frente. */
+    /** Um quadrado texturizado, nas duas faces: visível de qualquer lado. */
     private static void quad(VertexConsumer buffer, Matrix4f matrix, float x0, float y0, float x1, float y1,
             float u0, float v0, float u1, float v1) {
         vertex(buffer, matrix, x0, y1, u0, v1);

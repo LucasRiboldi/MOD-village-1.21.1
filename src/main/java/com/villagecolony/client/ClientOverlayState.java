@@ -28,6 +28,14 @@ public final class ClientOverlayState {
         return professions.get(id);
     }
 
+    /**
+     * Se o painel da profissão desenha o nome deste aldeão — e então a
+     * plaquinha Vanilla sobre a cabeça dele não é desenhada.
+     */
+    public static boolean drawsNameOf(UUID id) {
+        return professions.containsKey(id) && OverlayPreferences.professionTextVisible();
+    }
+
     public static Iterable<OverlaySnapshotPayload.ConstructionEntry> constructions() {
         return constructions.values();
     }

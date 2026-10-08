@@ -1,6 +1,6 @@
 # STATE — 2026-10-08
 
-> **JAR atual: `village-colony-0.3.9.jar` = `3CB71E9C…6337`** (ferro do funil + overlay; ver abaixo) em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.10.jar` = `C32C43E3…43B1`** (ferro do funil + overlay; ver abaixo) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,19 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🔴 08-10 — obra segue sem a peça que falta; nome dentro do painel (0.3.10)
+
+Decisões do autor (08-10): **(1)** peça sem material fica de lado (`SkipReason.WAITING_MATERIAL`)
+e a obra segue pelas outras; volta quando o material chega ou quando não sobra mais nada — revê
+o ADR-036 item 6 só para falta de material (falha ao pôr continua pulando na quinta).
+**(2)** o nome da profissão vai dentro do fundo do painel: o painel era espelhado
+(`scale(-x)`) e o texto, de face única, ficava de costas e sumia; agora usa a escala da
+plaquinha Vanilla, e um mixin de cliente esconde a plaquinha do aldeão que tem painel.
+**Verificado:** build ok, 1.367 unitários, GameTests 660/660; mutações pegas
+(`theBuilderGoesOnPastAPieceWithoutMaterial`, `waitingForMaterialIsNeverAFailureToPlace`).
+**Não verificado:** o mixin de cliente (`WorkerNameplateMixin`) e o desenho do painel só se veem
+no cliente — nenhum GameTest roda o cliente.
 
 ## 🔴 08-10, madrugada — playtest do 0.3.8: funil, mineiros, overlay
 

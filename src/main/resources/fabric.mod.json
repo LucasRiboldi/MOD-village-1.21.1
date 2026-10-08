@@ -27,7 +27,11 @@
     ]
   },
   "mixins": [
-    "villagecolony.mixins.json"
+    "villagecolony.mixins.json",
+    {
+      "config": "villagecolony.client.mixins.json",
+      "environment": "client"
+    }
   ],
   "depends": {
     "fabricloader": ">=0.16.0",

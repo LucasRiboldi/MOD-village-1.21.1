@@ -186,9 +186,22 @@ public final class BuilderPlacement {
         Optional<Item> taken = BuilderMaterials.takeMaterial(world, project, material.get());
 
         if (taken.isEmpty()) {
-            // Falta não pula a peça: o construtor aguarda, e o suprimento a faz
-            // aparecer na quarta tentativa (ADR-036 item 6; a barreira de teste,
-            // Regra 28, saiu). Só a quinta falha ao pôr pula a peça.
+            // Falta de material: a peça espera de lado e a obra segue pelas
+            // outras (autor, 2026-10-08 — o celeiro parou 817 blocos por um
+            // funil). Volta quando o material chega (reconsiderDeferredPieces).
+            if (project.hasAnotherPieceThan(block)) {
+                project.deferForMaterial(block);
+
+                VillageColonyMod.LOGGER.info(
+                        "Project {} sets {} at {} aside — not in the colony chests yet; it goes on"
+                                + " with the next piece",
+                        project.id(), block.block(), target.toShortString());
+
+                return true;
+            }
+
+            // Era a última: o construtor aguarda, e o suprimento a faz aparecer
+            // na quarta tentativa (ADR-036 item 6).
             BuilderMaterials.waitForResources(project, job, workerId, block);
 
             return false;
@@ -233,8 +246,23 @@ public final class BuilderPlacement {
      * core.
      */
     public static void reconsiderDeferredPieces(ServerWorld world, ConstructionProject project) {
+        // Sem mais nada a pôr, as peças que esperam material voltam todas: a
+        // obra passa a esperar por elas como antes.
+        boolean nothingElse = project.nextBlock().isEmpty();
+
         for (ConstructionProject.DeferredPiece piece : project.deferredPieces()) {
             BlockPos target = MinecraftTypeAdapter.toBlockPos(piece.position());
+
+            if (piece.reason() == SkipReason.WAITING_MATERIAL) {
+                if ((nothingElse || BuilderMaterials.isInTheChests(world, project, piece.block()))
+                        && project.retry(piece)) {
+                    VillageColonyMod.LOGGER.info("Project {} retries {} at {} — {}",
+                            project.id(), piece.block(), target.toShortString(),
+                            nothingElse ? "nothing else is left to place" : "the material arrived");
+                }
+
+                continue;
+            }
 
             if (project.retryIfSupportChanged(piece, supportFingerprint(world, target))) {
                 VillageColonyMod.LOGGER.info(
