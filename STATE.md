@@ -1,6 +1,6 @@
 # STATE — 2026-10-08
 
-> **JAR atual: `village-colony-0.3.18.jar` = `1D234D83…9A4C`** (lampião/corrente no baú, ajuda de 10 blocos; ver abaixo) em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.19.jar` = `E822D592…924C`** (Regra 51, lenhador por pernas, bosque de 6, construtor calça a rua; ver abaixo) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,15 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🔴 08-10 — Regra 51 e o tempo ocioso (0.3.19)
+
+Análise: `docs/research/2026-10-08-tempo-ocioso.md`. **Regra 51** (autor): ocioso + bloqueado ≤ 15%
+por profissão, no `time_ledger.py` e no `CLAUDE.md`. Feito por escolha do autor: lenhador por pernas
+(`WalkLegs`), bosque de 6 mudas com farinha de osso, construtor sem obra calça a grama no meio do
+caminho (`BuilderPaving`, conta como trabalho). **Pendente de escolha:** A1 (fabricante espera até
+30 s por tarefa — defeito), A2, A3, A6, A9, A10, B1–B6. **Verificado:** build ok, 1.380 unitários,
+104 de Python, 681/681; mutações pegas. **Não visto em jogo.**
 
 ## 🔴 08-10 — lampião e corrente no baú; ajuda do pastor conta 10 blocos (0.3.18)
 

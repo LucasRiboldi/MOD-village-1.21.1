@@ -6,6 +6,12 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Playtest da 0.3.19 (Regra 51)
+
+- [ ] `time_ledger.py` sem `REGRA 51` no lenhador (pernas + bosque de 6) e no construtor (calçamento).
+- [ ] `Builder … paved the path at …` com a obra esperando; `PAVED` no `action_report`.
+- [ ] **Escolha do autor:** A1, A2, A3, A6, A9, A10, B1–B6 (`docs/research/2026-10-08-tempo-ocioso.md`).
+
 ## 🔴 Playtest da 0.3.17
 
 - [ ] Mineiro chega ao nível da pedra (y 38) e `MINED` > 0; ferro chega ao fundidor e ao lampião.
