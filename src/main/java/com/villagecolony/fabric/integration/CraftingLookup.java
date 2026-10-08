@@ -37,7 +37,19 @@ import java.util.function.Predicate;
  */
 public final class CraftingLookup {
 
+    static {
+        com.villagecolony.core.type.ServerMemory.register(CraftingLookup.class, CraftingLookup::clearAll);
+    }
+
+    /** "feito>ingrediente" → se o ingrediente é a forma guardada do feito. As receitas mudam com o servidor. */
+    private static final Map<String, Boolean> STORAGE_FORMS = new java.util.HashMap<>();
+
     private CraftingLookup() {
+    }
+
+    /** Esquece o que aprendeu das receitas. Chamado ao parar o servidor. */
+    public static void clearAll() {
+        STORAGE_FORMS.clear();
     }
 
     /**
@@ -205,6 +217,41 @@ public final class CraftingLookup {
         }
 
         return cutFor(world, target, available);
+    }
+
+    /**
+     * Se {@code ingredient} é só outra forma de guardar {@code made} — E6, regra do
+     * autor de 2026-10-08: compactar e descompactar armazenamento (bloco de ferro ↔
+     * lingote, pepita ↔ lingote, fardo ↔ trigo) não é rota de produção. É, quando
+     * o próprio {@code ingredient} sai na bancada só de {@code made}.
+     *
+     * <p>Quem desce a receita para <b>fazer</b> o que falta usa isto como filtro; o
+     * que já está guardado no baú continua podendo ser desfeito.
+     */
+    public static boolean isStorageForm(ServerWorld world, Item made, Item ingredient) {
+        if (made == ingredient) {
+            return false;
+        }
+
+        return STORAGE_FORMS.computeIfAbsent(
+                Registries.ITEM.getId(made) + ">" + Registries.ITEM.getId(ingredient),
+                key -> {
+                    for (RecipeEntry<CraftingRecipe> entry
+                            : world.getRecipeManager().listAllOfType(RecipeType.CRAFTING)) {
+
+                        if (entry.value().getResult(world.getRegistryManager()).isOf(ingredient)
+                                && resolve(entry.value(), item -> item == made).isPresent()) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                });
+    }
+
+    /** O filtro de quem fabrica {@code made}: tudo, menos a forma guardada dele. */
+    public static Predicate<Item> producing(ServerWorld world, Item made) {
+        return ingredient -> !isStorageForm(world, made, ingredient);
     }
 
     /** Traduz a receita para nomes e pergunta ao {@link RecolorRecipes}. */

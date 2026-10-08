@@ -78,8 +78,9 @@ public final class CraftReasons {
         //
         // A pergunta certa é ao livro <b>sem</b> filtro: se ele responde,
         // a receita existe e o que falta é material.
+        // Sem a forma guardada (E6): "needs iron_block" para o lingote não é motivo.
         Optional<CraftingLookup.Bill> anyRecipe =
-                CraftingLookup.billFor(world, item, anything -> true);
+                CraftingLookup.billFor(world, item, CraftingLookup.producing(world, item));
 
         String why;
 

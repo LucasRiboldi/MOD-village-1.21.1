@@ -233,8 +233,10 @@ public final class ColonySupply {
     private static boolean makeWhatIsMissing(
             ServerWorld world, List<ColonyPos> chests, Item item, int depth) {
 
+        // Fazer o que falta não passa pela forma guardada — E6: fazer o bloco de
+        // ferro para desfazê-lo em lingote pedia os mesmos nove lingotes.
         Optional<CraftingLookup.Bill> recipe =
-                CraftingLookup.billFor(world, item, anything -> true);
+                CraftingLookup.billFor(world, item, CraftingLookup.producing(world, item));
 
         if (recipe.isEmpty()) {
             return false;
