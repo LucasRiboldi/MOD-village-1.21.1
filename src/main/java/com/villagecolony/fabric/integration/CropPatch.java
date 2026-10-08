@@ -62,6 +62,24 @@ public final class CropPatch {
     /** Quantas células de roça cada colônia lembra. */
     private static final int MAX_KNOWN = 4_096;
 
+    /**
+     * Quantas células conhecidas uma passagem olha — E3, 2026-10-08: cursor
+     * incremental sobre a roça conhecida, em vez de revarrer o raio inteiro.
+     */
+    static final int KNOWN_PER_PASS = 512;
+
+    /** De quanto em quanto tempo a varredura do raio volta, para achar roça nova: 2 min. */
+    static final long EXPANSION_EVERY = 2_400;
+
+    /** Onde a volta pela roça conhecida parou, por colônia. */
+    private static final Map<UUID, Integer> KNOWN_CURSOR = new HashMap<>();
+
+    /** O primeiro canteiro vazio visto na volta em curso pela roça conhecida. */
+    private static final Map<UUID, BlockPos> LAP_PLOT = new HashMap<>();
+
+    /** Quando a varredura do raio fechou pela última vez, por colônia. */
+    private static final Map<UUID, Long> LAST_EXPANSION = new HashMap<>();
+
     private CropPatch() {
     }
 
@@ -106,26 +124,9 @@ public final class CropPatch {
      * tudo, então achá-la encerra a busca na hora; sem ela, a varredura
      * segue até o orçamento de colunas da passagem acabar.
      *
-     * <p><b>E ela retoma de onde parou</b> — P1.5, 2026-09-11. Antes
-     * disto a espiral era escrita aqui à mão, com orçamento de 2.048
-     * colunas e <b>sem cursor</b>: toda passagem recomeçava do centro, e
-     * o quadrado de raio 32 tem <b>4.225 colunas</b>. A varredura fechava
-     * o anel 22 (45² = 2.025 colunas) e abortava no 23 — <b>48% da área
-     * prometida</b>, sempre a mesma metade, para sempre.
-     *
-     * <p>Isso não era só desperdício. O {@code ConstructionPlanner} abre
-     * roça até {@code FarmerWork.reach()} do centro, que valia 32 — então
-     * <b>uma roça que a própria colônia mandou construir entre 23 e 32
-     * blocos era invisível ao fazendeiro dela</b>. É o defeito da roça a
-     * 105 blocos de 2026-09-05 de novo, em escala menor e por dentro: as
-     * duas medidas concordavam no nome e discordavam no efeito.
-     *
-     * <p>O conserto não foi aumentar o teto — isso multiplicaria por dois
-     * o custo da passagem justamente no caso comum, com o ciclo da
-     * colônia já em 112 ms. Foi passar a espiral para o
-     * {@link RingSweep}, que guarda anel <b>e coluna</b> por dono e já
-     * carrega as três lições que as outras três espirais do projeto
-     * aprenderam uma por vez. Esta era a quarta escrita à mão.
+     * <p><b>E ela retoma de onde parou</b> (P1.5): a espiral é a do
+     * {@link RingSweep}, com cursor por dono; antes, toda passagem recomeçava do
+     * centro e nunca passava do anel 22 do raio 32.
      *
      * <p>Chunk fora de memória é pulado sem forçar carregamento — ADR-002.
      *
@@ -143,8 +144,15 @@ public final class CropPatch {
         // varreduras — é a razão de este método existir.
         BlockPos remembered = rememberedEmptyPlot(world, colonyId, center, radius);
 
-        // A roça conhecida primeiro — A-8. Achou maduro nela: sem varrer o raio.
-        Optional<Field> known = fromKnownFarmland(world, colonyId, remembered);
+        // A roça conhecida primeiro — A-8 e E3. Ela responde sozinha (maduro,
+        // canteiro vazio, ou "nada" com a volta completa); o raio só é varrido
+        // quando ela está vazia ou quando a expansão periódica vence.
+        boolean expansionDue = world.getTime() - LAST_EXPANSION.getOrDefault(colonyId, Long.MIN_VALUE / 2)
+                >= EXPANSION_EVERY;
+        boolean sweeping = RingSweep.pausedAt(colonyId, RingSweep.Scan.FARMING).isPresent();
+        Optional<Field> known = expansionDue && sweeping
+                ? Optional.empty()
+                : fromKnownFarmland(world, colonyId, remembered, expansionDue);
 
         if (known.isPresent()) {
             return known.get();
@@ -183,6 +191,10 @@ public final class CropPatch {
 
         boolean incomplete = RingSweep.pausedAt(colonyId, RingSweep.Scan.FARMING).isPresent();
 
+        if (!incomplete) {
+            LAST_EXPANSION.put(colonyId, world.getTime());
+        }
+
         if (ripe.isPresent() || !incomplete || plot[0] == null) {
             EMPTY_PLOTS.remove(colonyId);
         } else {
@@ -193,20 +205,40 @@ public final class CropPatch {
     }
 
     /**
-     * O trabalho que a roça conhecida já tem: o primeiro maduro dela, e um
-     * canteiro vazio. Célula que deixou de ser terra arada sai da lista.
+     * O trabalho que a roça conhecida já tem — E3: cursor incremental, no máximo
+     * {@link #KNOWN_PER_PASS} células por passagem. Maduro encerra na hora; no fim
+     * da volta vale o primeiro canteiro vazio, ou "nada" (volta completa, sem
+     * varrer o raio) — a não ser que a expansão periódica tenha vencido, e então o
+     * raio é varrido para achar roça nova. Célula que deixou de ser terra arada sai.
+     *
+     * @return vazio quando o raio precisa ser varrido
      */
-    private static Optional<Field> fromKnownFarmland(ServerWorld world, UUID colonyId, BlockPos remembered) {
+    private static Optional<Field> fromKnownFarmland(
+            ServerWorld world, UUID colonyId, BlockPos remembered, boolean expansionDue) {
+
         java.util.LinkedHashSet<BlockPos> cells = KNOWN.get(colonyId);
 
         if (cells == null || cells.isEmpty()) {
             return Optional.empty();
         }
 
-        BlockPos plot = remembered;
+        int start = KNOWN_CURSOR.getOrDefault(colonyId, 0);
+        int index = 0;
+        int looked = 0;
 
-        for (java.util.Iterator<BlockPos> it = cells.iterator(); it.hasNext(); ) {
+        for (java.util.Iterator<BlockPos> it = cells.iterator(); it.hasNext(); index++) {
             BlockPos cell = it.next();
+
+            if (index < start) {
+                continue;
+            }
+
+            if (looked++ >= KNOWN_PER_PASS) {
+                KNOWN_CURSOR.put(colonyId, index);
+
+                return Optional.of(new Field(null, null, true));
+            }
+
             WorldChunk chunk = loadedChunk(world, cell);
 
             if (chunk == null) {
@@ -215,19 +247,34 @@ public final class CropPatch {
 
             if (!isFarmland(chunk.getBlockState(cell))) {
                 it.remove();
+                index--;
                 continue;
             }
 
             if (isRipe(chunk.getBlockState(cell.up()))) {
-                return Optional.of(new Field(cell.up().toImmutable(), plot, false));
+                KNOWN_CURSOR.put(colonyId, index);
+
+                return Optional.of(new Field(cell.up().toImmutable(), LAP_PLOT.get(colonyId), false));
             }
 
-            if (plot == null && chunk.getBlockState(cell.up()).isAir()) {
-                plot = cell;
+            if (!LAP_PLOT.containsKey(colonyId) && chunk.getBlockState(cell.up()).isAir()) {
+                LAP_PLOT.put(colonyId, cell.toImmutable());
             }
         }
 
-        return Optional.empty();
+        // A volta fechou.
+        KNOWN_CURSOR.remove(colonyId);
+        BlockPos plot = LAP_PLOT.remove(colonyId);
+
+        if (plot == null) {
+            plot = remembered;
+        }
+
+        if (plot == null && expansionDue) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new Field(null, plot, false));
     }
 
     private static void learn(UUID colonyId, BlockPos farmland) {
@@ -289,12 +336,18 @@ public final class CropPatch {
     public static void forget(UUID colonyId) {
         EMPTY_PLOTS.remove(colonyId);
         KNOWN.remove(colonyId);
+        KNOWN_CURSOR.remove(colonyId);
+        LAP_PLOT.remove(colonyId);
+        LAST_EXPANSION.remove(colonyId);
     }
 
     /** Esquece todos os canteiros lembrados. Chamado ao descarregar. */
     public static void clearAll() {
         EMPTY_PLOTS.clear();
         KNOWN.clear();
+        KNOWN_CURSOR.clear();
+        LAP_PLOT.clear();
+        LAST_EXPANSION.clear();
     }
 
     /**
