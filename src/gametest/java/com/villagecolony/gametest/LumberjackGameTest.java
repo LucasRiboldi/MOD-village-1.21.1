@@ -152,7 +152,11 @@ public class LumberjackGameTest implements FabricGameTest {
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_tall_tree")
     public void thePlanTakesTheWholeTrunk(TestContext context) {
-        BlockPos base = new BlockPos(3, 2, 3);
+        // Quarenta acima do piso: a detecção de vila funda colônia com os aldeões
+        // de outros testes e põe a BigHouseMOD ao lado, e a caixa dela protege o
+        // tronco pela Regra 3 (bateria de 2026-10-08, 672 testes). Lá em cima não
+        // há casa de ninguém.
+        BlockPos base = new BlockPos(3, 42, 3);
 
         // Seis troncos e a copa no alto — mais alto que o teto que havia.
         context.setBlockState(base.down(), Blocks.DIRT.getDefaultState());
@@ -169,7 +173,8 @@ public class LumberjackGameTest implements FabricGameTest {
 
         context.assertTrue(
                 !plan.isEmpty(),
-                "o tronco tem copa viva no alto e foi recusado como 'não é árvore'");
+                "o tronco tem copa viva no alto e foi recusado como 'não é árvore' — "
+                        + whyProtected(context, base));
 
         context.assertTrue(
                 plan.logs() == 6,
@@ -2501,5 +2506,26 @@ public class LumberjackGameTest implements FabricGameTest {
         TreeMarks.forgetUnreachable();
 
         context.complete();
+    }
+
+    /** Qual regra protege o tronco, quando o plano vem vazio: outro teste pode ter deixado obra ou casa ali. */
+    private static String whyProtected(TestContext context, BlockPos base) {
+        BlockPos at = context.getAbsolutePos(base);
+        ColonyPos pos = MinecraftTypeAdapter.toColonyPos(at);
+
+        return "colonyBuilt=" + com.villagecolony.fabric.integration.BlockProtection.isColonyBuilt(at)
+                + " infrastructure=" + VillageColonyMod.BUILDINGS.isColonyInfrastructure(pos)
+                + " villageOriginal=" + com.villagecolony.fabric.integration.BlockProtection.isVillageOriginal(
+                        context.getWorld(), at)
+                + " openSites=" + VillageColonyMod.CONSTRUCTIONS.all().stream()
+                        .filter(project -> project.state().isOpen()
+                                && Building.of(project).contains(pos))
+                        .map(project -> project.blueprint().id().path() + "@" + project.origin())
+                        .toList()
+                + " buildings=" + VillageColonyMod.BUILDINGS.all().stream()
+                        .filter(building -> building.contains(pos))
+                        .map(building -> building.blueprint().path() + "@" + building.min()
+                                + " colony " + building.colonyId().toString().substring(0, 8))
+                        .toList();
     }
 }

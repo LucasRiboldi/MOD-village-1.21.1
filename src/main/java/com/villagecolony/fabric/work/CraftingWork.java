@@ -460,7 +460,7 @@ public final class CraftingWork {
                 workerId,
                 job.crafted,
                 why);
-        ActionJournal.action(workerId, "CRAFTED", "", job.crafted, null, why);
+        ActionJournal.action(workerId, "CRAFTED", job.task.targetResource().name(), job.crafted, null, why);
     }
 
     /** Esquece o trabalho de um trabalhador que deixou de existir. */
