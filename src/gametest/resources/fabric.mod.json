@@ -132,6 +132,8 @@
       "com.villagecolony.fabric.integration.FoundationPreparationGameTest",
       "com.villagecolony.fabric.work.FoundationRepairGameTest",
       "com.villagecolony.fabric.work.MiningTargetGameTest",
+      "com.villagecolony.fabric.work.BuildHelperGameTest",
+      "com.villagecolony.fabric.work.VillageGroveGameTest",
       "com.villagecolony.fabric.work.ReachMapGameTest",
       "com.villagecolony.fabric.work.MineEntranceGameTest",
       "com.villagecolony.gametest.SmeltInputGameTest",

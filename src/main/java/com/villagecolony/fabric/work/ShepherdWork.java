@@ -175,7 +175,10 @@ public final class ShepherdWork {
 
         // Cuidar do rebanho e, sem tosquia, coletar animais — ADR-038 P2b, P2c.
         ShepherdFlock.tend(world, colony);
-        ShepherdHerding.plan(world, colony, JOBS::containsKey);
+        ShepherdHerding.plan(world, colony, id -> JOBS.containsKey(id) || BuildHelper.isHelping(id));
+
+        // Sem lã a tosquiar, ele ajuda o construtor (pedido do autor, 2026-10-08).
+        BuildHelper.lendAHand(world, colony);
 
         return open;
     }
