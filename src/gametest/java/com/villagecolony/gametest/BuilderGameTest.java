@@ -630,6 +630,39 @@ public class BuilderGameTest implements FabricGameTest {
     }
 
     /**
+     * O fardo de feno entra na mesma regra — pedido do autor, 2026-10-08: a obra
+     * pôs o fardo de lado 93 vezes em 22 min, nove trigos cada, com a roça pequena.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
+    public void theHayBlockAppearsInTheBuildersChestAfterFourMisses(TestContext context) {
+        Fixture fixture = setUp(context, 0, Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/test_hay_block"),
+                List.of(new BlueprintBlock(
+                        new ColonyPos(0, 0, 0),
+                        MinecraftTypeAdapter.toResourceId(Blocks.HAY_BLOCK)))), 1);
+
+        try {
+            for (int attempt = 1; attempt <= 3; attempt++) {
+                context.assertFalse(
+                        BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                        "o fardo apareceu antes da tentativa " + attempt);
+            }
+
+            context.assertTrue(
+                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                    "a quarta falta não abasteceu o fardo de feno");
+            context.assertTrue(
+                    ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.HAY_BLOCK) == 1,
+                    "o fardo de contingência não entrou no baú da obra");
+        } finally {
+            fixture.owned.cleanUp();
+            BiomeConstructionSupply.routeDelivered(fixture.colony.id(), Items.HAY_BLOCK);
+        }
+
+        context.complete();
+    }
+
+    /**
      * Uma rota apenas teórica não pode prender a obra para sempre. Argila
      * costuma existir fora da vila, mas ainda pode não ser alcançável pelo
      * fundidor; depois de três faltas, a terracota de manufatura atende a obra.

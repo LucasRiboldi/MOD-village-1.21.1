@@ -58,7 +58,14 @@ import java.util.UUID;
  * antes) encontram o construtor. Os comentários vieram junto sem mudança.
  */
 public final class BuilderMaterials {
-    private static final Set<Item> TERRACOTTA = Set.of(
+    /**
+     * Peças de rota só teórica: depois de três faltas aparecem no baú do construtor,
+     * mesmo com a cadeia existindo no papel. A terracota (argila que nunca chega) e o
+     * fardo de feno — pedido do autor, 2026-10-08: a obra pôs o fardo de lado 93 vezes
+     * em 22 min, cada um custa nove trigos e a roça não dava conta.
+     */
+    private static final Set<Item> STOCKED_AFTER_MISSES = Set.of(
+            Items.HAY_BLOCK,
             Items.TERRACOTTA,
             Items.WHITE_TERRACOTTA, Items.ORANGE_TERRACOTTA, Items.MAGENTA_TERRACOTTA,
             Items.LIGHT_BLUE_TERRACOTTA, Items.YELLOW_TERRACOTTA, Items.LIME_TERRACOTTA,
@@ -256,7 +263,7 @@ public final class BuilderMaterials {
 
         Item preferred = choices.getFirst();
 
-        boolean terracotta = isTerracotta(preferred);
+        boolean terracotta = isStockedAfterMisses(preferred);
         boolean routeExists = choices.stream().anyMatch(candidate ->
                 BiomeConstructionSupply.hasRouteInBiome(world, project.colonyId(), candidate));
 
@@ -311,8 +318,8 @@ public final class BuilderMaterials {
         return new Supply(State.RESOLVING, Source.CRAFTSMAN);
     }
 
-    private static boolean isTerracotta(Item item) {
-        return TERRACOTTA.contains(item);
+    static boolean isStockedAfterMisses(Item item) {
+        return STOCKED_AFTER_MISSES.contains(item);
     }
 
     /**
