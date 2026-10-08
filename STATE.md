@@ -26,8 +26,11 @@ o ADR-036 item 6 só para falta de material (falha ao pôr continua pulando na q
 plaquinha Vanilla, e um mixin de cliente esconde a plaquinha do aldeão que tem painel.
 **Verificado:** build ok, 1.367 unitários, GameTests 660/660; mutações pegas
 (`theBuilderGoesOnPastAPieceWithoutMaterial`, `waitingForMaterialIsNeverAFailureToPlace`).
-**Não verificado:** o mixin de cliente (`WorkerNameplateMixin`) e o desenho do painel só se veem
-no cliente — nenhum GameTest roda o cliente.
+`runClient` carregou até os atlas sem exceção de mixin. **Não visto em jogo:** o painel desenhado
+e a plaquinha escondida.
+Pesquisas de 08-10: `docs/research/2026-10-08-erros-atuais-e-correcoes.md` (E1–E7, ordem
+sugerida) e `docs/research/2026-10-08-nivelamento-do-solo-da-vila.md` (plano do nivelador, 5
+perguntas ao autor).
 
 ## 🔴 08-10, madrugada — playtest do 0.3.8: funil, mineiros, overlay
 
