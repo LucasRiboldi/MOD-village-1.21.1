@@ -72,6 +72,13 @@ public class MineEntranceGameTest implements FabricGameTest {
             context.assertTrue(second.map(middleAt::equals).orElse(false),
                     "na boca ele não desceu para o nível seguinte: " + second);
 
+            // Playtest de 08-10: ele para dois abaixo e três ao lado da entrada (ela é o
+            // alto do primeiro degrau). Isso é ter chegado: segue para o nível seguinte.
+            Optional<BlockPos> third = MineEntrance.legDown(world, colonyId, middleAt.add(0, -2, 3), stone);
+
+            context.assertTrue(third.map(nowAt::equals).orElse(false),
+                    "dois abaixo e três ao lado da entrada ele não seguiu para o nível seguinte: " + third);
+
             context.assertTrue(MineEntrance.legDown(world, colonyId, nowAt, stone).isEmpty(),
                     "no nível da pedra a descida ainda mandava nele");
         } finally {

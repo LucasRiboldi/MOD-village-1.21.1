@@ -149,14 +149,17 @@ public final class MineEntrance {
             return Optional.empty();
         }
 
-        BlockPos surface = route.getFirst();
-
-        // Na superfície: primeiro a boca. Chegou nela: o primeiro lance para baixo.
-        if (miner.getY() >= surface.getY() - 2) {
-            return Optional.of(within(miner, surface) ? route.get(1) : surface);
+        // O progresso é a entrada mais funda a que ele já chegou: dali, a seguinte.
+        // Chegar é estar a até ARRIVE blocos em cada eixo — a entrada de um nível fica
+        // dois acima do chão onde o aldeão para, e a régua de distância exata o fazia
+        // ir e voltar entre a boca e o primeiro lance (playtest de 08-10, 12:14–12:30).
+        for (int index = route.size() - 2; index >= 0; index--) {
+            if (arrived(miner, route.get(index))) {
+                return Optional.of(footing(world, route.get(index + 1)));
+            }
         }
 
-        // Já dentro: a entrada mais perto, ou a seguinte se ele está nela.
+        // Em nenhuma entrada: dentro da escada, a mais perto; fora dela, a boca.
         int nearest = 0;
 
         for (int index = 1; index < route.size(); index++) {
@@ -165,9 +168,44 @@ public final class MineEntrance {
             }
         }
 
-        return Optional.of(within(miner, route.get(nearest))
-                ? route.get(Math.min(nearest + 1, route.size() - 1))
-                : route.get(nearest));
+        boolean outside = miner.getY() >= route.getFirst().getY() - ARRIVE;
+
+        return Optional.of(footing(world, outside ? route.getFirst() : route.get(nearest)));
+    }
+
+    /** Chegou à entrada: a até {@link #ARRIVE} blocos em cada eixo. */
+    static boolean arrived(BlockPos miner, BlockPos entry) {
+        return Math.abs(miner.getX() - entry.getX()) <= ARRIVE
+                && Math.abs(miner.getY() - entry.getY()) <= ARRIVE
+                && Math.abs(miner.getZ() - entry.getZ()) <= ARRIVE;
+    }
+
+    /**
+     * O lugar de pé da entrada: ela própria, se cabe um aldeão, ou o mais perto dela
+     * a até dois blocos de lado e três abaixo — a escada desce, e a entrada do nível é
+     * o alto do primeiro degrau. Sem nenhum, a própria entrada.
+     */
+    private static BlockPos footing(ServerWorld world, BlockPos entry) {
+        for (int dy = 0; dy >= -3; dy--) {
+            for (int radius = 0; radius <= 2; radius++) {
+                for (int dx = -radius; dx <= radius; dx++) {
+                    for (int dz = -radius; dz <= radius; dz++) {
+                        if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
+                            continue;
+                        }
+
+                        BlockPos at = entry.add(dx, dy, dz);
+
+                        if (world.getChunkManager().getWorldChunk(at.getX() >> 4, at.getZ() >> 4) != null
+                                && BuilderApproach.standable(world, at)) {
+                            return at;
+                        }
+                    }
+                }
+            }
+        }
+
+        return entry;
     }
 
     /** No nível de agora: perto da entrada dele na horizontal e não acima dela. */
@@ -175,10 +213,6 @@ public final class MineEntrance {
         return Math.abs(at.getX() - levelEntry.getX()) <= IN_LEVEL
                 && Math.abs(at.getZ() - levelEntry.getZ()) <= IN_LEVEL
                 && at.getY() <= levelEntry.getY() + 2;
-    }
-
-    private static boolean within(BlockPos miner, BlockPos spot) {
-        return miner.getSquaredDistance(spot) <= ARRIVE * ARRIVE;
     }
 
     /** O deslocamento de um nível para o seguinte; só depende do sentido de descida. */
