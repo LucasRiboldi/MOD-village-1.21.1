@@ -1,6 +1,6 @@
 # STATE — 2026-10-08
 
-> **JAR atual: `village-colony-0.3.14.jar` = `1BDF5DA2…70F9`** (mineiro pela boca, lenhador por faixas, M2; ver abaixo) em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.15.jar` = `0A3174FE…AD94`** (descida do mineiro; ver abaixo) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,16 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🔴 08-10, 12:11–12:36 — playtest da 0.3.14 (0.3.15)
+
+Relatório: `docs/reports/Playtest-2026-10-08-meio-dia.md` (Spark bal0IJeOGc: mod 2,1%). Boca de
+superfície deduzida certo, fundidor sem roda, M2 36/36. **Mineiro com 0 pedras:** ia e voltava
+entre a boca e o primeiro lance (chegada medida em linha reta, e a entrada fica dois acima do chão)
+— corrigido: chegar é a até 3 em cada eixo, vale a entrada mais funda alcançada, destino no lugar de
+pé. `/vc log` juntou a espera repetida do fundidor. **Verificado:** build ok, 1.380 unitários,
+675/675; mutação pega nas duas. Aberto: feno (obra esperou hay_block 93×; o fazendeiro colhe pouco),
+lenhador sem árvore no miolo da vila (viveiro).
 
 ## 🔴 08-10 — pedidos do autor depois do playtest (0.3.14)
 

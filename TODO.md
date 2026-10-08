@@ -6,6 +6,12 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Playtest da 0.3.15
+
+- [ ] Mineiro desce até o nível da pedra (linhas `miners:` com y caindo 68 → 58 → 48 → 38) e MINED > 0.
+- [ ] **Feno da obra:** hay_block deixado de lado 93× — trigo é o gargalo (roça pequena, fazendeiro 0%).
+- [ ] **Lenhador:** viveiro perto da vila (nenhuma árvore no miolo; todas a 48–107 blocos).
+
 ## 🔴 Playtest da 0.3.14
 
 - [ ] Mineiro na superfície: `walking to` a boca de superfície (-775, 68, -922 no "Novo mundo"),
