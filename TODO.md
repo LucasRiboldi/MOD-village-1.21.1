@@ -6,16 +6,37 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
-## 🔴 Do playtest de 08-10 (`docs/reports/Playtest-2026-10-08.md`)
+## 🔴 Playtest da 0.3.12 (crash da retomada e E1–E7 — `docs/research/2026-10-08-erros-atuais-e-correcoes.md`)
 
-- [ ] Em jogo: obra com funil faz o mineiro pedir `raw_iron` (linha `miners:` com `wants raw_iron`).
-- [ ] **Mineiro preso a pedra cujo lugar de pé a galeria não alcança** (3 pedras em 10 min).
-- [ ] **Segundo mineiro sem alvo**; `MinerReport` diz "waiting for a branch" com ramais livres.
-- [ ] **Decisão:** a obra espera parada pela peça em resolução (ADR-036 item 6) ou a adia e segue?
-- [ ] Chat `[OBRA] … em resolução: uma profissão consegue` sem nenhuma profissão com o pedido.
-- [ ] Varredura do fazendeiro termina sem resposta (`budget ran out`), 60% de espera.
-- [ ] Pastor: `found no sheep with wool` devolve a tarefa sem fim.
-- [ ] Overlay em jogo: ícones lisos legíveis, painel da obra logo acima da placa.
+- [ ] Carregar o save "Novo mundo" com obra pendente e jogador na vila: sem crash; se aparecer
+      `drops the saved … another project is already open`, uma vez só.
+- [ ] Mineiro: linhas `passes over the stone … (TOO_HIGH|NO_PATH|NO_STANDING_POSITION)` em vez de
+      400 tiques andando; `action_report.py` mostra `TARGET_REJECTED` por motivo; conclusão do
+      mineiro acima dos 24% da bateria.
+- [ ] Relatório do segundo mineiro: `branches 0 reserved by …, 1-3 not open yet` enquanto a escada abre.
+- [ ] Fazendeiro sem `still sweeping — the budget ran out` com a roça plantada; `wait` abaixo de 60%.
+- [ ] `/vc log` com obra esperando: linha `[CADEIA] … — falta: …` nomeando o elo certo.
+- [ ] Sem `could not make iron_ingot — needs iron_block` nem `wheat — needs hay_block`.
+- [ ] Pastor: `no wool and the flock is full` com 12 ovelhas; par de ovelhas posto com menos.
+- [ ] Em jogo: obra com funil faz o mineiro pedir `raw_iron`; overlay com ícones lisos e painel da
+      obra sobre a placa (pendentes da 0.3.9–0.3.11).
+
+## 🟠 Abertos depois da 0.3.12
+
+- [ ] **E1 alternativo:** quando a recusa é por chão que falta (caverna sob a galeria), pôr
+      pedregulho para criar o lugar de pé (MineColonies tapa caverna/água/lava). Decidir pelo número
+      de `TARGET_REJECTED` do playtest.
+- [ ] **Mina com entrada que não liga à vila** (08-10: boca em y38 numa caverna, mineiro em y65 sem
+      caminho) — medir com o M2.
+- [ ] **ADR do ciclo comum de tarefa** (Candidate → Eligibility → Executability → Assignment →
+      Execution → Outcome → Recovery), sugerido no arquivo do autor — decisão do autor.
+
+## 🟢 Esperam, com a informação no doc de erros (decisões do autor, 08-10)
+
+- [ ] M2 `VC_REACH` (BFS do sino, degrau ≤ 1) **antes** de criar o nivelador.
+- [ ] M3 não criar profissão só por ociosidade; investigar carregador antes.
+- [ ] M4 pico de 420 ms: correlacionar, não otimizar.
+- [ ] M5 cadeia e motivos no overlay, depois do E5.
 
 ## 🔴 Playtest da obra destravada (08-10)
 

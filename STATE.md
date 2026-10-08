@@ -1,6 +1,6 @@
 # STATE — 2026-10-08
 
-> **JAR atual: `village-colony-0.3.11.jar` = `C9D15A14…8608`** (ferro do funil + overlay; ver abaixo) em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.12.jar` = `6DEF8E1F…1352`** (crash da retomada + E1–E7; ver abaixo) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,24 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🔴 08-10, tarde — crash da retomada e E1–E7 (0.3.12)
+
+**Crash** (07-10 22:32 e 08-10 09:13, o mesmo): `Colony already has an open project` ao retomar
+obra do save — a passagem extra da busca de lote (`SweepCadence`) abria obra antes de a obra
+salva renascer. Obra pendente agora ocupa a vaga única; a retomada com obra aberta larga a salva;
+exceção no ciclo de uma colônia perde o ciclo dela, nunca o mundo. Decisões do autor por item e
+avaliação do arquivo dele: `docs/research/2026-10-08-erros-atuais-e-correcoes.md`.
+- **E1** pedra só vira alvo com posição de trabalho alcançável (`MiningTarget`, geometria + busca
+  local; `TARGET_REJECTED` no diário). **E2** estado explícito de cada ramal (`MineBranch`) e
+  relatório honesto. **E3** roça conhecida responde sozinha (cursor + expansão a cada 2 min).
+  **E5** `[CADEIA]` no `/vc log` (`ProductionChain`). **E6** forma guardada não é rota
+  (`CraftingLookup.isStorageForm`). **E7** pastor procria ovelha só sob déficit (< 12).
+  **M1** `action_report.py` lista os motivos de recusa e desistência.
+- **Toda análise de Spark mostra também o `action_report.py`** (regra do autor, 08-10).
+**Verificado:** build ok, 1.373 unitários, 100 de Python, GameTests 669/669; mutação pega em
+cada correção (crash, E1, E2, E3, E5, E6, E7). **Não visto em jogo.** Aberto: E1 alternativo (pôr chão onde falta, como o MineColonies);
+mina com entrada que não liga à vila (medir com o M2).
 
 ## 🟢 08-10 — diário de ações (0.3.11)
 

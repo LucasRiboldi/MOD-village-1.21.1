@@ -89,6 +89,8 @@ No mesmo playtest, rode `python scripts/action_report.py` (o diário de ações 
 `python scripts/cost_ledger.py` (linhas `VC_COST`,
 ADR-035 §5): média, p95 e máximo de cada fase do ciclo por faixa de colônias.
 Nenhuma otimização de desempenho começa sem esse número.
+Toda análise de Spark mostra ao autor também a saída do `action_report.py`, com os motivos de
+recusa e desistência por profissão (pedido do autor, 2026-10-08).
 
 ### 0.5 Comentário diz a regra, não a história (ADR-035 §6)
 
