@@ -33,7 +33,7 @@ public record OverlaySnapshotPayload(
         for (int index = 0; index < constructionSize; index++) {
             constructions.add(new ConstructionEntry(
                     buffer.readUuid(), buffer.readString(), buffer.readString(),
-                    buffer.readInt(), buffer.readInt(), buffer.readInt(),
+                    buffer.readDouble(), buffer.readDouble(), buffer.readDouble(),
                     buffer.readVarInt(), buffer.readVarInt(), buffer.readString()));
         }
         return new OverlaySnapshotPayload(workers, constructions);
@@ -50,9 +50,9 @@ public record OverlaySnapshotPayload(
             buffer.writeUuid(construction.id());
             buffer.writeString(construction.blueprint());
             buffer.writeString(construction.state());
-            buffer.writeInt(construction.x());
-            buffer.writeInt(construction.y());
-            buffer.writeInt(construction.z());
+            buffer.writeDouble(construction.x());
+            buffer.writeDouble(construction.y());
+            buffer.writeDouble(construction.z());
             buffer.writeVarInt(construction.placed());
             buffer.writeVarInt(construction.total());
             buffer.writeString(construction.missingMaterial());
@@ -68,9 +68,9 @@ public record OverlaySnapshotPayload(
     public record WorkerEntry(UUID id, String profession) {
     }
 
-    /** Uma obra aberta, compactada para o HUD de mundo do cliente. */
+    /** Uma obra aberta, compactada para o HUD de mundo do cliente; x, y, z são os da placa da obra. */
     public record ConstructionEntry(
-            UUID id, String blueprint, String state, int x, int y, int z,
+            UUID id, String blueprint, String state, double x, double y, double z,
             int placed, int total, String missingMaterial) {
     }
 }

@@ -53,9 +53,11 @@ public final class OverlaySync {
                         entry.getValue() - stock.getOrDefault(entry.getKey(), 0)))
                 .findFirst().orElse("");
         int total = project.blueprint().blockCount();
+        double[] sign = com.villagecolony.fabric.integration.SiteMarker.signAt(
+                project.origin(), project.blueprint().size());
         return new OverlaySnapshotPayload.ConstructionEntry(project.id(),
                 project.blueprint().id().toString(), project.state().name(),
-                project.origin().x(), project.origin().y(), project.origin().z(),
+                sign[0], sign[1], sign[2],
                 total - project.remainingCount(), total, missing);
     }
 }
