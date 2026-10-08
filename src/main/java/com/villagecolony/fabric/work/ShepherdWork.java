@@ -84,6 +84,9 @@ public final class ShepherdWork {
 
         private final BlockPos center;
 
+        /** Onde ele procura ovelha com lã — {@link ShepherdFlock#shearingArea}. */
+        private final Box area;
+
         /** A ovelha de agora. Nulo entre uma e a próxima. */
         private UUID sheep;
 
@@ -102,9 +105,10 @@ public final class ShepherdWork {
          */
         final WorkStall stall = new WorkStall();
 
-        private Job(Task task, BlockPos center) {
+        private Job(Task task, BlockPos center, Box area) {
             this.task = task;
             this.center = center;
+            this.area = area;
         }
     }
 
@@ -151,7 +155,8 @@ public final class ShepherdWork {
                 continue;
             }
 
-            JOBS.computeIfAbsent(executor.get(), worker -> new Job(task, center));
+            JOBS.computeIfAbsent(executor.get(), worker -> new Job(task, center,
+                    ShepherdFlock.shearingArea(colony, center, searchRadius(world))));
 
             open++;
         }
@@ -283,10 +288,8 @@ public final class ShepherdWork {
 
     /** A ovelha mais próxima que ainda tem lã. */
     private static void findSheep(ServerWorld world, UUID workerId, Job job) {
-        Box around = new Box(job.center).expand(searchRadius(world));
-
         List<SheepEntity> flock = world.getEntitiesByClass(
-                SheepEntity.class, around, ShepherdWork::isWoolly);
+                SheepEntity.class, job.area, ShepherdWork::isWoolly);
 
         if (flock.isEmpty()) {
             noWoollySheep(world, workerId, job);

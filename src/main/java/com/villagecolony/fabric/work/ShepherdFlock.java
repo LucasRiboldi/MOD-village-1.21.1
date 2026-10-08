@@ -117,6 +117,21 @@ public final class ShepherdFlock {
         return pairOf(world, colony, EntityType.SHEEP, area, chests);
     }
 
+    /**
+     * Onde o pastor procura ovelha com lã: o raio dele e, com a vila medida,
+     * a mesma área em que o rebanho é contado.
+     *
+     * <p>Só o raio em volta do centro deixava o curral de fora: na colônia
+     * 33a6b9c4 a cerca fica 43 blocos ao norte do centro, o rebanho contava
+     * 16 ovelhas "cheio" e o pastor dizia "nenhuma com lã em 32 blocos" com
+     * 10 delas lanudas no curral.
+     */
+    static Box shearingArea(Colony colony, BlockPos center, int radius) {
+        Box around = new Box(center).expand(radius);
+
+        return colony.bounds().isPresent() ? around.union(areaOf(colony)) : around;
+    }
+
     private static Box areaOf(Colony colony) {
         BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
 
