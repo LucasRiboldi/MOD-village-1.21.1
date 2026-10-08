@@ -13,6 +13,11 @@ Sem argumento, lê ``latest.log`` da instalação de teste
 Critério (Regra 50): profissão com mais de 40% do expediente sem trabalhar
 (esperando + bloqueado + ocioso + encalhado) pede melhoria de fluxo; com mais
 de 10% bloqueado + encalhado, pede correção de travamento.
+
+Regra 51 (decisão do autor, 2026-10-08): ocioso + bloqueado + encalhado acima de
+15% reprova a profissão — quem fica sem tarefa tem de entrar na cadeia de
+alternativas (ver docs/research/2026-10-08-tempo-ocioso.md). A espera fica fora da
+conta, e acima de 40% vira alerta. Quem não tem ofício (NONE) fica fora da regra.
 """
 
 import gzip
@@ -27,6 +32,25 @@ STATES = ("work", "walk", "wait", "blocked", "idle", "stranded")
 
 FLOW_LIMIT = 40
 STALL_LIMIT = 10
+RULE_51_LIMIT = 15
+WAIT_ALERT = 40
+
+
+def verdict(profession, pct):
+    """As frases do veredito desta profissão, a partir das porcentagens de cada estado."""
+    idle_share = pct["wait"] + pct["blocked"] + pct["idle"] + pct["stranded"]
+    stall_share = pct["blocked"] + pct["stranded"]
+    rule_51 = pct["idle"] + pct["blocked"] + pct["stranded"]
+    said = []
+    if profession != "NONE" and rule_51 > RULE_51_LIMIT:
+        said.append(f"REGRA 51 ({rule_51:.0f}% ocioso+bloqueado)")
+    if profession != "NONE" and pct["wait"] > WAIT_ALERT:
+        said.append(f"ESPERA ({pct['wait']:.0f}%)")
+    if stall_share > STALL_LIMIT:
+        said.append(f"TRAVAMENTO ({stall_share:.0f}% bloqueado+encalhado)")
+    if idle_share > FLOW_LIMIT:
+        said.append(f"FLUXO ({idle_share:.0f}% sem trabalhar)")
+    return said
 
 
 def lines(path):
@@ -65,15 +89,9 @@ def main(paths):
         row = seconds[profession]
         total = row["total"] or 1
         pct = {s: 100 * row[s] / total for s in STATES}
-        idle_share = pct["wait"] + pct["blocked"] + pct["idle"] + pct["stranded"]
-        stall_share = pct["blocked"] + pct["stranded"]
-        verdict = []
-        if stall_share > STALL_LIMIT:
-            verdict.append(f"TRAVAMENTO ({stall_share:.0f}% bloqueado+encalhado)")
-        if idle_share > FLOW_LIMIT:
-            verdict.append(f"FLUXO ({idle_share:.0f}% sem trabalhar)")
+        said = verdict(profession, pct)
         print(f"{profession:<12}{row['total']:>9.0f}" + "".join(f"{pct[s]:>9.0f}%" for s in STATES)
-              + "   " + ("; ".join(verdict) or "ok"))
+              + "   " + ("; ".join(said) or "ok"))
 
     return 0
 

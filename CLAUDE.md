@@ -82,6 +82,12 @@ e encalhe no expediente.
   da profissão pede melhoria.
 - **Mais de 10% bloqueado + encalhado:** há travamento a corrigir.
 
+- **Regra 51 (autor, 2026-10-08): ocioso + bloqueado + encalhado ≤ 15%** por
+  profissão no expediente (sem ofício fica fora). Quem fica sem tarefa entra na
+  cadeia de alternativas: tarefa do ofício → manutenção do ofício → ajudar a obra
+  → recolher do chão. Espera acima de 40% é alerta. Análise e alternativas:
+  `docs/research/2026-10-08-tempo-ocioso.md`.
+
 Uma correção de fluxo só está provada quando a proporção cai no playtest
 seguinte. O GameTest prova o mecanismo; o `time_ledger` prova o efeito.
 
