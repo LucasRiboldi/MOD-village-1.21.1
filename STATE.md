@@ -1,6 +1,6 @@
 # STATE — 2026-10-08
 
-> **JAR atual: `village-colony-0.3.15.jar` = `0A3174FE…AD94`** (descida do mineiro; ver abaixo) em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.16.jar` = `A3874251…1C6A`** (feno no baú, bosque, pastor ajudante; ver abaixo) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,20 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🔴 08-10 — feno, bosque e pastor ajudante (0.3.16)
+
+Pedidos do autor depois do playtest das 12:11:
+- **Feno no baú do construtor:** `hay_block` entra na lista de rota só teórica (com a terracota):
+  depois de três faltas aparece no baú da obra.
+- **Bosque de 3 mudas perto da vila** (`VillageGrove`): fora da caixa da vila, 4–10 da borda, do
+  lado do baú do lenhador; longe de casa/obra (4), da rua (6, onde os lotes nascem) e entre si (5);
+  a cortada é reposta.
+- **Pastor ajudante** (`BuildHelper`): sem tarefa, com o construtor trabalhando e obra com 8+ peças,
+  ganha uma segunda tarefa de obra e põe blocos junto; pedido de lã na fila e ele volta ao rebanho.
+**Verificado:** build ok, 1.380 unitários, 678/678; mutação pega nas três (a do bosque só depois de
+mover a rua do teste para o lado por onde a busca começa — a primeira versão não media nada).
+**Não visto em jogo.**
 
 ## 🔴 08-10, 12:11–12:36 — playtest da 0.3.14 (0.3.15)
 

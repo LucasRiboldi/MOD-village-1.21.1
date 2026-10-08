@@ -6,11 +6,16 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Playtest da 0.3.16
+
+- [ ] Fardo de feno no baú do construtor depois de três faltas (`stocked minecraft:hay_block`).
+- [ ] `planted … near the village at … (grove k of 3)` três vezes, fora da vila e longe das ruas.
+- [ ] `Shepherd … lends a hand at the build` e `leaves the build — the flock needs shearing`;
+      `time_ledger` com o pastor menos ocioso; a obra pondo mais blocos por minuto.
+
 ## 🔴 Playtest da 0.3.15
 
 - [ ] Mineiro desce até o nível da pedra (linhas `miners:` com y caindo 68 → 58 → 48 → 38) e MINED > 0.
-- [ ] **Feno da obra:** hay_block deixado de lado 93× — trigo é o gargalo (roça pequena, fazendeiro 0%).
-- [ ] **Lenhador:** viveiro perto da vila (nenhuma árvore no miolo; todas a 48–107 blocos).
 
 ## 🔴 Playtest da 0.3.14
 
