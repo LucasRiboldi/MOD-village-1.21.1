@@ -1,6 +1,6 @@
 # STATE — 2026-10-08
 
-> **JAR atual: `village-colony-0.3.19.jar` = `E822D592…924C`** (Regra 51, lenhador por pernas, bosque de 6, construtor calça a rua; ver abaixo) em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.20.jar` = `6D338B38…D199`** (celeiro no chão, pastor acha o curral, funil no baú; ver abaixo) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,19 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🔴 08-10, 18:19–19:10 — playtest da 0.3.19 (0.3.20)
+
+Relatório: `docs/reports/Playtest-2026-10-08-noite.md` (Spark D66XrVOZl4: mod 1,4%, TPS 20). Calçamento,
+lampião/corrente no baú e bosque de 6 vistos em jogo. Celeiro parado 40 min num funil; nenhuma profissão
+na Regra 51. Corrigido:
+- **Celeiro um acima do chão** (`StreetLayer.sunkenBase`): planta sem porta nem encaixe com camada 0
+  esparsa tem a rua nela. Os lenhadores encalhavam na beira dele. O celeiro já aberto no save não muda.
+- **Pastor não achava o curral** (`ShepherdFlock.shearingArea`): busca de lã = raio + área do rebanho.
+- **Funil, trilho e vaso** na lista que aparece no baú da obra depois das faltas.
+**Verificado:** build ok, 1.387 unitários, 683/683; as três mutações pegas. **Não visto em jogo.**
+**Aberto:** a mina não cruza ferro (0 de 21 em 37 min, medido no save); mineiro cc99a53b na mesma pedra
+da manhã; lenhador parado pune a árvore; A1 e ADR-036 item 6 esperam escolha.
 
 ## 🔴 08-10 — Regra 51 e o tempo ocioso (0.3.19)
 

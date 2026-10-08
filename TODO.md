@@ -6,16 +6,29 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Playtest da 0.3.20 (celeiro, pastor, funil)
+
+- [ ] Celeiro novo com as paredes no nível da grama (sem vão de um bloco) e sem `STRANDED` na beira dele.
+- [ ] Pastor tosquia no curral: `sheared` frequente e menos `found no sheep with wool`; SHEPHERD fora da Regra 51.
+- [ ] `stocked minecraft:hopper` depois das faltas, e a obra termina.
+
+## 🟠 Abertos no playtest de 08-10 noite
+
+- [ ] Mina que acha ferro: a escada não cruza minério (0 de 21 em 37 min; 977 minérios na área). Decisão de desenho.
+- [ ] Mineiro cc99a53b volta à pedra −751 31 −942 (lugar de pé fora da galeria) — item 2 do relatório da manhã.
+- [ ] Lenhador que não sai do lugar marca a árvore como inalcançável (três lenhadores, uma árvore, 34 min).
+
 ## 🔴 Playtest da 0.3.19 (Regra 51)
 
 - [ ] `time_ledger.py` sem `REGRA 51` no lenhador (pernas + bosque de 6) e no construtor (calçamento).
-- [ ] `Builder … paved the path at …` com a obra esperando; `PAVED` no `action_report`.
+- [x] `Builder … paved the path at …` com a obra esperando; `PAVED` no `action_report` (64, playtest 08-10 noite).
 - [ ] **Escolha do autor:** A1, A2, A3, A6, A9, A10, B1–B6 (`docs/research/2026-10-08-tempo-ocioso.md`).
 
 ## 🔴 Playtest da 0.3.17
 
 - [ ] Mineiro chega ao nível da pedra (y 38) e `MINED` > 0; ferro chega ao fundidor e ao lampião.
-- [ ] Lampião/corrente no baú da obra depois de três faltas; `Shepherd … leaves the build after N blocks` com N ≥ 10.
+- [x] Lampião/corrente no baú da obra depois das faltas (08-10 noite, 18:21–18:23).
+- [ ] `Shepherd … leaves the build after N blocks` com N ≥ 10.
 - [ ] `GroundPickupGameTest` cai só nas rodadas de mutação — investigar.
 
 ## 🔴 Playtest da 0.3.16
