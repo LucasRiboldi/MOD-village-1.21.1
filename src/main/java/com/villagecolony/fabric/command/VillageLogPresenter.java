@@ -120,11 +120,16 @@ final class VillageLogPresenter {
      */
     static List<String> longWaits(List<com.villagecolony.fabric.work.IdleLog.Waiting> waits, long nowMillis) {
         List<String> lines = new ArrayList<>();
+        // Dois assuntos com o mesmo nome e o mesmo motivo são uma espera só: o
+        // fundidor saía duas vezes "sem tarefa aberta" (playtest de 08-10). Vale a
+        // mais antiga, que vem primeiro.
+        java.util.Set<String> said = new java.util.HashSet<>();
 
         for (com.villagecolony.fabric.work.IdleLog.Waiting wait : waits) {
             long minutes = (nowMillis - wait.sinceMillis()) / 60_000;
 
-            if (nowMillis - wait.sinceMillis() < LONG_WAIT_MILLIS || lines.size() >= WAIT_LIMIT) {
+            if (nowMillis - wait.sinceMillis() < LONG_WAIT_MILLIS || lines.size() >= WAIT_LIMIT
+                    || !said.add(subjectName(wait.subject()) + "|" + wait.reason())) {
                 continue;
             }
 

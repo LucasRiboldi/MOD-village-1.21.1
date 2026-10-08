@@ -157,4 +157,18 @@ class VillageLogPresenterTest {
         assertEquals("[ALCANCE] 3 de 3 lugares a pé desde o centro da vila",
                 VillageLogPresenter.reach(3, 3, List.of()));
     }
+
+    /** O mesmo ofício esperando pelo mesmo motivo sai uma vez — 2026-10-08. */
+    @Test
+    void theSameProfessionWaitingForTheSameReasonIsOneLine() {
+        long now = 30 * 60_000L;
+        List<String> lines = VillageLogPresenter.longWaits(List.of(
+                new com.villagecolony.fabric.work.IdleLog.Waiting(
+                        "smelter", com.villagecolony.core.coordination.IdleReason.NO_TASK, "", 0),
+                new com.villagecolony.fabric.work.IdleLog.Waiting(
+                        "surface gathering", com.villagecolony.core.coordination.IdleReason.NO_TASK,
+                        "3 able to smelt", 60_000)), now);
+
+        assertEquals(1, lines.size(), lines.toString());
+    }
 }
