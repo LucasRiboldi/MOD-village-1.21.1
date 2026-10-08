@@ -33,9 +33,11 @@ final class StreetLayer {
      *
      * <p>Planta sem porta — roça, curral, praça — usa o encaixe de rua
      * ({@code west_up}; os de decoração apontam para cima, {@code up_north}).
+     * Sem porta e sem encaixe, vale a {@link #sunkenBase camada 0 esparsa}.
      *
-     * @return vazio quando não há camada da rua dentro da planta: sem porta nem
-     *     encaixe (a BigHouseMOD, as plantas de teste), ou porta na camada 0
+     * @return vazio quando não há camada da rua dentro da planta: sem porta,
+     *     encaixe nem base enterrada (a BigHouseMOD, as plantas de teste), ou
+     *     porta na camada 0
      */
     static OptionalInt of(StructureTemplate template, List<BlueprintBlock> blocks) {
         OptionalInt door = blocks.stream()
@@ -47,7 +49,27 @@ final class StreetLayer {
             return door.getAsInt() >= 1 ? OptionalInt.of(door.getAsInt() - 1) : OptionalInt.empty();
         }
 
-        return streetConnectorLayerOf(template);
+        OptionalInt connector = streetConnectorLayerOf(template);
+
+        return connector.isPresent() ? connector : sunkenBase(blocks);
+    }
+
+    /**
+     * A camada 0 que é subterrânea: menos peças que metade da camada 1.
+     *
+     * <p>O {@code barn_majest} tem 5 peças na camada 0 (funis e feno debaixo
+     * do piso) e 85 na 1, onde as paredes começam. Posta um acima do chão, a
+     * obra ficava suspensa com um vão de um bloco sob as paredes e os alçapões
+     * na altura da cabeça, e os lenhadores encalhavam junto dela. Com a rua na
+     * camada 0, a camada 0 vai no chão e as paredes saem do nível de andar.
+     *
+     * @return a camada 0, ou vazio quando ela é piso de verdade
+     */
+    static OptionalInt sunkenBase(List<BlueprintBlock> blocks) {
+        long bottom = blocks.stream().filter(block -> block.offset().y() == 0).count();
+        long above = blocks.stream().filter(block -> block.offset().y() == 1).count();
+
+        return bottom * 2 < above ? OptionalInt.of(0) : OptionalInt.empty();
     }
 
     /** A camada do encaixe voltado para a rua, para a planta sem porta. */

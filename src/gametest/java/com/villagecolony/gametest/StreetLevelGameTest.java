@@ -92,6 +92,24 @@ public class StreetLevelGameTest implements FabricGameTest {
     }
 
     /**
+     * O celeiro não tem porta nem encaixe, e a camada 0 dele está debaixo do
+     * piso: a rua fica na camada 0, e as paredes saem do nível de andar.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "street_level", tickLimit = 20)
+    public void theBarnStandsOnTheGroundAndNotOneAboveIt(TestContext context) {
+        Blueprint barn = StructureBlueprintReader.read(context.getWorld(),
+                new ResourceId("villagecolony", "colony/barn_majest")).orElseThrow();
+        Blueprint storage = StructureBlueprintReader.read(context.getWorld(),
+                new ResourceId("villagecolony", "colony/storage_majest")).orElseThrow();
+
+        context.assertTrue(barn.hasStreetLayer() && barn.streetLayer() == 0,
+                "o celeiro devia ter a rua na camada 0 (a camada 0 é debaixo do piso)");
+        context.assertFalse(storage.hasStreetLayer(),
+                "o depósito tem piso cheio na camada 0 e não pode mudar de altura");
+        context.complete();
+    }
+
+    /**
      * A obra aberta num lote de grama: a porta fica um acima do chão, a grama
      * da base é o chão, e a terra da fundação é construída — autor,
      * 2026-10-03: <i>"retirar as bases das obras que forem exclusivamente
