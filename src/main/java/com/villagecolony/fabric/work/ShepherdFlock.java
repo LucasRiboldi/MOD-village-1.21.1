@@ -77,11 +77,7 @@ public final class ShepherdFlock {
 
         LAST.put(colony.id(), now);
 
-        BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
-        Box area = colony.bounds()
-                .map(box -> new Box(box.minX() - 10, box.minY() - 8, box.minZ() - 10,
-                        box.maxX() + 11, box.maxY() + 8, box.maxZ() + 11))
-                .orElseGet(() -> new Box(center).expand(RADIUS));
+        Box area = areaOf(colony);
         List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.id(), colony.center());
         boolean paired = false;
 
@@ -90,6 +86,44 @@ public final class ShepherdFlock {
         }
 
         return paired;
+    }
+
+    /**
+     * A lã faltou e nenhuma ovelha tem lã — E7, decisão do autor de 2026-10-08: só
+     * procria sob <b>déficit real</b> do rebanho. Abaixo de {@link #FLOCK_TARGET}
+     * ovelhas adultas, um par sai agora, fora do relógio de {@link #BETWEEN_PAIRS};
+     * com o rebanho cheio, a lã volta pelo pasto e não se cria nada.
+     *
+     * @return se um par de ovelhas foi posto para procriar
+     */
+    static boolean breedForWool(ServerWorld world, UUID colonyId) {
+        return VillageColonyMod.COLONIES.find(colonyId)
+                .map(colony -> breedForWool(world, colony, areaOf(colony),
+                        ColonyChests.nearestFirst(world, colony.id(), colony.center())))
+                .orElse(false);
+    }
+
+    static boolean breedForWool(ServerWorld world, Colony colony, Box area, List<ColonyPos> chests) {
+        int sheep = world.getEntitiesByType(EntityType.SHEEP, area,
+                animal -> animal.isAlive() && !animal.isBaby()).size();
+
+        if (sheep >= FLOCK_TARGET) {
+            VillageColonyMod.LOGGER.info(
+                    "Colony {} — no wool and the flock is full ({} sheep): the wool grows back on its own",
+                    colony.id().toString().substring(0, 8), sheep);
+            return false;
+        }
+
+        return pairOf(world, colony, EntityType.SHEEP, area, chests);
+    }
+
+    private static Box areaOf(Colony colony) {
+        BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
+
+        return colony.bounds()
+                .map(box -> new Box(box.minX() - 10, box.minY() - 8, box.minZ() - 10,
+                        box.maxX() + 11, box.maxY() + 8, box.maxZ() + 11))
+                .orElseGet(() -> new Box(center).expand(RADIUS));
     }
 
     private static boolean pairOf(ServerWorld world, Colony colony, EntityType<? extends AnimalEntity> species,

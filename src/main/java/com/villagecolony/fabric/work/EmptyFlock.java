@@ -26,6 +26,9 @@ final class EmptyFlock {
 
     /** Fecha a busca vazia: conta, talvez estoca, e solta ou cancela a tarefa. */
     static void endSearch(ServerWorld world, Task task, UUID workerId, int radius) {
+        // Antes de esperar, o rebanho em déficit cresce — E7.
+        ShepherdFlock.breedForWool(world, task.colonyId());
+
         int empty = EmptySweeps.foundNothing(task.colonyId(), task.targetResource(), world.getTime());
         boolean stocked = LocateFallback.afterEmptySearch(world, task, empty);
 
