@@ -42,6 +42,11 @@ final class MinerHaul {
     private MinerHaul() {
     }
 
+    /** O baú cheio de verdade: nada entrou e algo ficou no chão. É o único caso que pausa o mineiro. */
+    static boolean chestIsFull(Haul haul) {
+        return haul.stored() == 0 && haul.spilled() > 0;
+    }
+
     /**
      * O que entrou no baú, e quanto disso era o que a tarefa pediu.
      *
@@ -53,8 +58,12 @@ final class MinerHaul {
      *
      * @param stored tudo o que coube no baú, de qualquer item
      * @param wanted quanto disso era o recurso que a tarefa pediu
+     * @param spilled o que não coube e ficou no chão — o baú cheio de verdade. O
+     *     que passou do {@link #TYPE_CAP} sai da galeria de propósito e não conta
+     *     aqui: confundir os dois pausava o mineiro que cava pedra atrás de
+     *     minério (playtest de 2026-10-08, "chest is full" com o baú com espaço)
      */
-    record Haul(int stored, int wanted) {
+    record Haul(int stored, int wanted, int spilled) {
     }
 
     /**
@@ -88,6 +97,7 @@ final class MinerHaul {
 
         int stored = 0;
         int asked = 0;
+        int spilled = 0;
 
         for (ItemStack drop : drops) {
             boolean isAsked = wanted != null && drop.isOf(wanted);
@@ -133,6 +143,8 @@ final class MinerHaul {
 
             stored += drop.getCount() - leftOver;
 
+            spilled += leftOver;
+
             if (leftOver > 0) {
                 world.spawnEntity(new ItemEntity(
                         world,
@@ -154,7 +166,7 @@ final class MinerHaul {
             }
         }
 
-        return new Haul(stored, asked);
+        return new Haul(stored, asked, spilled);
     }
 
     /** Variante sem colônia para a prova isolada do teto por tipo. */

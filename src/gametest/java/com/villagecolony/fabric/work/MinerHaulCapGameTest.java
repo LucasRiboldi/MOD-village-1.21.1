@@ -60,4 +60,44 @@ public class MinerHaulCapGameTest implements FabricGameTest {
                 "o granito excedente virou item no chao");
         context.complete();
     }
+
+    /**
+     * Pedra acima do teto não é baú cheio — playtest de 2026-10-08: o mineiro atrás de
+     * minério pausava com "the chest that serves him is full" e o baú com espaço.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_haul_cap")
+    public void stoneAboveTheCapDoesNotPauseTheMiner(TestContext context) {
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        ChestBlockEntity chest = (ChestBlockEntity) context.getBlockEntity(CHEST);
+
+        for (int slot = 0; slot < 3; slot++) {
+            chest.setStack(slot, new ItemStack(Items.COBBLESTONE, 64));
+        }
+
+        WorkerStorage storage = WorkerStorage.of(
+                UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST)));
+
+        MinerHaul.Haul capped = MinerHaul.deposit(
+                context.getWorld(), storage, List.of(new ItemStack(Items.COBBLESTONE, 1)),
+                context.getAbsolutePos(new BlockPos(4, 1, 4)), Items.RAW_IRON);
+
+        context.assertTrue(capped.stored() == 0 && !MinerHaul.chestIsFull(capped),
+                "pedra acima do teto pausou o mineiro: " + capped);
+
+        // Controle: baú sem um slot livre, e o pedido não cabe — aí é cheio.
+        for (int slot = 0; slot < chest.size(); slot++) {
+            chest.setStack(slot, new ItemStack(Items.DIRT, 64));
+        }
+
+        MinerHaul.Haul full = MinerHaul.deposit(
+                context.getWorld(), storage, List.of(new ItemStack(Items.RAW_IRON, 1)),
+                context.getAbsolutePos(new BlockPos(4, 1, 4)), Items.RAW_IRON);
+
+        context.assertTrue(MinerHaul.chestIsFull(full), "o baú cheio de verdade não pausou: " + full);
+
+        context.getWorld().getEntitiesByClass(ItemEntity.class,
+                new Box(context.getAbsolutePos(BlockPos.ORIGIN)).expand(8), entity -> true)
+                .forEach(ItemEntity::discard);
+        context.complete();
+    }
 }

@@ -171,7 +171,9 @@ public final class MinerHands {
         // com uma pausa curta na coleta mineral. Isso evita registrar uma
         // conclusão de zero itens e deixa o trabalhador apto a apoiar uma obra
         // enquanto o armazenamento se recompõe.
-        if (haul.stored() == 0 && !drops.isEmpty()) {
+        // Só o baú cheio de verdade pausa: pedra acima do teto por tipo sai da
+        // galeria de propósito, e o mineiro segue atrás do minério.
+        if (MinerHaul.chestIsFull(haul)) {
             VillageColonyMod.LOGGER.warn(
                     "Miner {} pauses — the stone from {} had nowhere to go,"
                             + " the chest that serves him is full; task returned to the queue",
