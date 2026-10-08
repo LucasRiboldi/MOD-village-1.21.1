@@ -1,6 +1,6 @@
 # STATE — 2026-10-08
 
-> **JAR atual: `village-colony-0.3.17.jar` = `83016B40…2DF6`** (descida do mineiro pela altura; ver abaixo) em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.18.jar` = `1D234D83…9A4C`** (lampião/corrente no baú, ajuda de 10 blocos; ver abaixo) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,13 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🔴 08-10 — lampião e corrente no baú; ajuda do pastor conta 10 blocos (0.3.18)
+
+Pedidos do autor: lampião, lampião de alma e corrente entram na lista do feno (aparecem no baú do
+construtor depois de três faltas). O pastor ajudante põe pelo menos 10 blocos — ou a obra acaba —
+antes de voltar ao rebanho, mesmo com lã na fila; se a obra o soltar antes, a vaga volta para ele
+(até 3 vezes). **Verificado:** build ok, 1.380 unitários, 679/679; mutações pegas. **Não visto em jogo.**
 
 ## 🔴 08-10, 15:14–15:53 — playtest da 0.3.16 (0.3.17)
 
