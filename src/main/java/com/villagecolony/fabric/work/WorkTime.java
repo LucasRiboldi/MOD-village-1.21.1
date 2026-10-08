@@ -120,6 +120,7 @@ public final class WorkTime {
         return classify(
                 StrandedWorkers.isStranded(id) || PenEscape.isEscaping(id),
                 !VillageColonyMod.TASKS.assignedTo(id).isEmpty() || GroundPickup.isHelping(id)
+                        || BuilderPaving.isPaving(id)
                         || ShepherdHerding.isHerding(id),
                 swungSinceLastSample(villager),
                 moved,
