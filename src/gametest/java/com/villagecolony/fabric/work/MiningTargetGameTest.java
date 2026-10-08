@@ -11,6 +11,8 @@ import net.minecraft.util.math.BlockPos;
  * E1, playtest de 2026-10-08: a pedra só vira alvo com posição de trabalho que o
  * mineiro alcance. O cenário é o da caverna embaixo da galeria — a pedra no alto de
  * um pilar, com o único lugar de pé em cima dela, dois acima do mineiro.
+ *
+ * <p>Um lote por caso, e o cenário fica dentro da arena.
  */
 public class MiningTargetGameTest implements FabricGameTest {
 
@@ -18,7 +20,7 @@ public class MiningTargetGameTest implements FabricGameTest {
     public void aStoneWhoseOnlyFootholdIsTooHighIsRefused(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos stone = pillarScene(context, false);
-        BlockPos miner = context.getAbsolutePos(new BlockPos(1, 11, 0));
+        BlockPos miner = context.getAbsolutePos(new BlockPos(1, 41, 1));
 
         MiningTarget.Verdict verdict = MiningTarget.judge(world, stone, miner);
 
@@ -28,11 +30,11 @@ public class MiningTargetGameTest implements FabricGameTest {
     }
 
     /** Controle: com chão até o pé do pilar, a mesma pedra serve, e o lugar é o de baixo. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mining_target")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mining_target_floor")
     public void theSameStoneWithAFloorBesideItIsATarget(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos stone = pillarScene(context, true);
-        BlockPos miner = context.getAbsolutePos(new BlockPos(1, 11, 0));
+        BlockPos miner = context.getAbsolutePos(new BlockPos(1, 41, 1));
 
         MiningTarget.Verdict verdict = MiningTarget.judge(world, stone, miner);
 
@@ -44,15 +46,36 @@ public class MiningTargetGameTest implements FabricGameTest {
     }
 
     /**
-     * Ar em volta, vidro sob o mineiro em x 0..1 (ou 0..5 com {@code floor}), e um
-     * pilar de pedra em x 6, y 8..12. Devolve o topo do pilar, que é a pedra.
+     * O lugar escolhido é o mais perto da pedra entre os que ele alcança, e não o
+     * primeiro da busca — playtest de 08-10: o mineiro já estava num lugar de pé na
+     * borda do braço (3,9 pela conta do bloco, 4,1 pela posição real), "chegou" sem
+     * alcançar e ficou parado até desistir.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mining_target_nearest")
+    public void theWorkPositionIsTheReachedSpotNearestTheStone(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos stone = pillarScene(context, true);
+        BlockPos miner = context.getAbsolutePos(new BlockPos(3, 41, 1));
+
+        MiningTarget.Verdict verdict = MiningTarget.judge(world, stone, miner);
+
+        context.assertTrue(context.getAbsolutePos(new BlockPos(5, 41, 1)).equals(verdict.workPosition()),
+                "a posição de trabalho não é a mais perto da pedra: " + verdict);
+        context.complete();
+    }
+
+    /**
+     * Trinta acima do piso, onde nenhuma arena tem bloco (um bloco do vizinho em
+     * z -1 virava lugar de pé): ar dentro da arena, vidro sob o mineiro em x 0..1
+     * (ou 0..5 com {@code floor}) e um pilar de pedra em x 6, y 38..42, na linha
+     * z 1. Devolve o topo do pilar, que é a pedra.
      */
     private static BlockPos pillarScene(TestContext context, boolean floor) {
         ServerWorld world = context.getWorld();
 
-        for (int x = -2; x <= 10; x++) {
-            for (int y = 6; y <= 16; y++) {
-                for (int z = -3; z <= 3; z++) {
+        for (int x = 0; x <= 7; x++) {
+            for (int y = 36; y <= 46; y++) {
+                for (int z = 0; z <= 2; z++) {
                     world.setBlockState(context.getAbsolutePos(new BlockPos(x, y, z)),
                             Blocks.AIR.getDefaultState());
                 }
@@ -60,15 +83,15 @@ public class MiningTargetGameTest implements FabricGameTest {
         }
 
         for (int x = 0; x <= (floor ? 5 : 1); x++) {
-            world.setBlockState(context.getAbsolutePos(new BlockPos(x, 10, 0)),
+            world.setBlockState(context.getAbsolutePos(new BlockPos(x, 40, 1)),
                     Blocks.GLASS.getDefaultState());
         }
 
-        for (int y = 8; y <= 12; y++) {
-            world.setBlockState(context.getAbsolutePos(new BlockPos(6, y, 0)),
+        for (int y = 38; y <= 42; y++) {
+            world.setBlockState(context.getAbsolutePos(new BlockPos(6, y, 1)),
                     Blocks.STONE.getDefaultState());
         }
 
-        return context.getAbsolutePos(new BlockPos(6, 12, 0));
+        return context.getAbsolutePos(new BlockPos(6, 42, 1));
     }
 }

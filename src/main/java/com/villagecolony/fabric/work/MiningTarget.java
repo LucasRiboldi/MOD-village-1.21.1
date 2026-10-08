@@ -135,12 +135,13 @@ public final class MiningTarget {
         seen.add(start);
 
         boolean open = false;
+        Set<BlockPos> reached = new HashSet<>();
 
         while (!frontier.isEmpty()) {
             BlockPos at = frontier.poll();
 
             if (spots.contains(at)) {
-                return Verdict.at(at);
+                reached.add(at);
             }
 
             if (seen.size() > SEARCH_BUDGET) {
@@ -171,6 +172,15 @@ public final class MiningTarget {
 
                     break;
                 }
+            }
+        }
+
+        // O lugar que ele alcança e que fica mais perto da pedra — a ordem dos
+        // deslocamentos. O primeiro que a busca visitava era o mais perto DELE: na
+        // borda do braço, e ele "chegava" sem alcançar (playtest de 08-10, 4,1 blocos).
+        for (BlockPos spot : spots) {
+            if (reached.contains(spot)) {
+                return Verdict.at(spot);
             }
         }
 
