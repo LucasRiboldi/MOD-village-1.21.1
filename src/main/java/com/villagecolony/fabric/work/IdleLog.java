@@ -179,10 +179,17 @@ public final class IdleLog {
         record(colonyId, subject, reason, "");
     }
 
-    /** As esperas em curso desta colônia, da mais longa à mais curta — B-5. */
+    /**
+     * As esperas em curso desta colônia, da mais longa à mais curta — B-5.
+     *
+     * <p>"Já há uma aberta" não é espera: a obra está aberta e o construtor nela. O
+     * {@code /vc log} de 2026-10-08 dizia "[ESPERANDO] Obra: já há uma aberta — há 12
+     * min" com a obra subindo.
+     */
     public static java.util.List<Waiting> waitingOf(UUID colonyId) {
         return WAITING.entrySet().stream()
                 .filter(entry -> entry.getKey().colonyId().equals(colonyId))
+                .filter(entry -> entry.getValue().reason() != IdleReason.ALREADY_OPEN)
                 .map(Map.Entry::getValue)
                 .sorted(java.util.Comparator.comparingLong(Waiting::sinceMillis))
                 .toList();

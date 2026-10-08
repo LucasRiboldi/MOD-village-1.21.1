@@ -315,6 +315,7 @@ public final class SurfaceGatheringWork {
 
                 if (stocked) {
                     job.task.cancel();
+                    IdleLog.clear(job.task.colonyId(), subject(job)); // estocado: nada a esperar (08-10)
                 }
             }
             return true;

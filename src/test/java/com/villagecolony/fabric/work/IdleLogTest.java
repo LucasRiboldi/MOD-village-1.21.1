@@ -275,4 +275,14 @@ class IdleLogTest {
                 captured.lines.size(),
                 "quem pergunta uma vez por ciclo foi calado pelo amortecedor");
     }
+
+    /** "Já há uma aberta" é obra em andamento, não espera — o /vc log de 2026-10-08 a listava. */
+    @Test
+    void anOpenBuildIsNotListedAsAWait() {
+        IdleLog.record(colony, "construction", IdleReason.ALREADY_OPEN, "");
+        IdleLog.record(colony, SUBJECT, IdleReason.NO_TASK, "");
+
+        assertEquals(List.of(SUBJECT),
+                IdleLog.waitingOf(colony).stream().map(IdleLog.Waiting::subject).toList());
+    }
 }
