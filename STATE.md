@@ -1,6 +1,6 @@
 # STATE — 2026-10-08
 
-> **JAR atual: `village-colony-0.3.7.jar` = `10407A73…7DAE`** em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.8.jar` = `413300B9…3D25`** (obra destravada + opção B) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
