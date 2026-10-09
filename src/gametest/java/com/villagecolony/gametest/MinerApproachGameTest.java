@@ -136,6 +136,49 @@ public class MinerApproachGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * A descida longa também precisa ser vencida por patamar.
+     *
+     * <p>Playtest de 2026-10-09: o mineiro recebeu uma perna em
+     * {@code y=34} estando em {@code y=46}. Como ele oscilava entre
+     * blocos próximos, o guarda de imobilidade não via uma parada limpa e
+     * o ramal ficava reservado enquanto os outros mineiros esperavam.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_approach")
+    public void aDeepLegStopsAtTheNextSafeLanding(TestContext context) {
+        BlockPos workerLocal = new BlockPos(5, 6, 3);
+        BlockPos landingLocal = new BlockPos(5, 5, 4);
+        BlockPos deepLegLocal = new BlockPos(5, 1, 6);
+
+        standable(context, workerLocal);
+        standable(context, landingLocal);
+        standable(context, deepLegLocal);
+
+        BlockPos worker = context.getAbsolutePos(workerLocal);
+        BlockPos landing = context.getAbsolutePos(landingLocal);
+        BlockPos deepLeg = context.getAbsolutePos(deepLegLocal);
+
+        BlockPos target = MinerApproach.climbableWalkTarget(
+                context.getWorld(), worker, deepLeg);
+
+        context.assertTrue(
+                target.equals(landing),
+                "a perna profunda foi entregue como " + target.toShortString()
+                        + ", mas havia patamar seguro em " + landing.toShortString());
+        context.assertTrue(
+                worker.getY() - target.getY() <= MinerWork.CLIMB,
+                "a descida pulou " + (worker.getY() - target.getY())
+                        + " blocos; aldeão só vence " + MinerWork.CLIMB);
+
+        context.complete();
+    }
+
+    private static void standable(TestContext context, BlockPos feet) {
+        context.setBlockState(feet.down(), Blocks.STONE.getDefaultState());
+        context.setBlockState(feet, Blocks.AIR.getDefaultState());
+        context.setBlockState(feet.up(), Blocks.AIR.getDefaultState());
+    }
+
     private static void floor(TestContext context) {
         for (int x = 0; x <= 7; x++) {
             for (int z = 0; z <= 7; z++) {

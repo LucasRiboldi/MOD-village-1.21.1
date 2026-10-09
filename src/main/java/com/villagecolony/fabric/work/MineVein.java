@@ -41,6 +41,9 @@ final class MineVein {
     /** Quantos minérios já cavados o rastro do veio lembra, por ramal. */
     static final int TRAIL_MAX = 256;
 
+    /** Uma busca vazia inteira por pedra exposta descansa antes de repetir. */
+    private static final int EMPTY_SURFACE_COOLDOWN = 100;
+
     /**
      * O rastro do veio de cada ramal — ADR-036 item 23, o veio inteiro: quando
      * o último minério não tem vizinho, volta-se pelo rastro atrás das
@@ -151,10 +154,12 @@ final class MineVein {
     static Optional<BlockPos> exposedStone(
             ServerWorld world, UUID workerId, UUID colonyId, BlockPos center, java.util.Set<ColonyPos> mineCells) {
 
-        Optional<BlockPos> found = RingSweep.around(
+        Optional<BlockPos> found = RingSweep.aroundWithCooldown(
                 workerId,
+                RingSweep.Scan.GENERAL,
                 center,
                 MineDigging.surfaceRadius,
+                column -> true,
                 // <b>E a marca vale aqui também</b> — E44, 2026-09-10, e
                 // este era o buraco que o verificador achou: o giveUp
                 // marca TODA pedra largada, inclusive a de superfície,
@@ -165,7 +170,9 @@ final class MineVein {
                 column -> StonePatch.in(world, column, center.getY())
                         .filter(stone -> !mineCells.contains(MinecraftTypeAdapter.toColonyPos(stone)))
                         .filter(stone -> !MineMarks.isUnreachableAround(world, stone))
-                        .filter(stone -> !MineFlooding.holdsBackFluid(world, stone)));
+                        .filter(stone -> !MineFlooding.holdsBackFluid(world, stone)),
+                world.getTime(),
+                EMPTY_SURFACE_COOLDOWN);
 
         if (found.isEmpty()) {
             // Pelo recordAt, como a areia — 2026-09-11. Este é o irmão

@@ -68,6 +68,22 @@ public final class BiomeConstructionSupply {
                 .orElse(false);
     }
 
+    /** A rota explicita da peça, para log e auditoria das dependencias da obra. */
+    public static SupplyRoute routeInBiome(ServerWorld world, UUID colonyId, Item item) {
+        return VillageColonyMod.COLONIES.find(colonyId)
+                .flatMap(colony -> {
+                    BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
+                    BooleanSupplier sandNearWater = () -> SandNearWater.around(
+                            world, colonyId, center,
+                            com.villagecolony.core.coordination.GatheringReach.radius(
+                                    colony.observedBeds(), SandNearWater.RADIUS));
+
+                    return world.getBiome(center).getKey()
+                            .map(biome -> SupplyRoutes.inBiome(world, biome, item, sandNearWater));
+                })
+                .orElseGet(() -> SupplyRoute.unavailable(item, SupplySource.NO_COLONY, List.of()));
+    }
+
     /**
      * A mesma pergunta, para um bioma explicito.
      *
@@ -393,6 +409,18 @@ public final class BiomeConstructionSupply {
         } finally {
             visiting.remove(item);
         }
+    }
+
+    static Optional<SupplySource> directSourceInBiome(
+            RegistryKey<Biome> biome, Item item, BooleanSupplier sandNearWater) {
+
+        if (DropIngredients.isAutomatic(item)) {
+            return Optional.of(SupplySource.AUTOMATIC_DROP);
+        }
+
+        return MinecraftTypeAdapter.toResourceType(item)
+                .filter(resource -> isDirectBiomeResource(biome, resource, sandNearWater))
+                .map(resource -> SupplySource.BIOME_RESOURCE);
     }
 
     private static boolean isDirectBiomeResource(

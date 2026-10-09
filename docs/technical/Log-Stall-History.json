@@ -7149,6 +7149,602 @@
       "waited_items": {
         "minecraft:oak_planks": 42
       }
+    },
+    {
+      "source_name": "latest.log",
+      "sha256": "afe0eca076c4d5e50336cf2c8a9c3a7d661a0837b89b39fbbc954eaaa8c4321a",
+      "bytes": 1353338,
+      "modified_at": "2026-10-09T03:29:14.076929+00:00",
+      "started_at": "00:00:13",
+      "ended_at": "00:29:14",
+      "lines": 8512,
+      "observations": {
+        "miner_no_branch_work": {
+          "where": "MineClaims / MinerWork",
+          "meaning": "mineiro sem frente de escavacao disponivel",
+          "occurrences": 8,
+          "loop_candidate": true
+        },
+        "miner_no_standing_room": {
+          "where": "MineDigging",
+          "meaning": "mina encontrou pedra sem patamar seguro para continuar",
+          "occurrences": 2,
+          "loop_candidate": false
+        },
+        "construction_waiting_resources": {
+          "where": "BuilderWork / WaitingWork",
+          "meaning": "obra aguarda recurso",
+          "occurrences": 22,
+          "loop_candidate": true
+        },
+        "builder_pathing_stalled": {
+          "where": "BuilderApproach / BuilderWork",
+          "meaning": "construtor caminha sem alcancar o proximo bloco",
+          "occurrences": 55,
+          "loop_candidate": true
+        },
+        "surface_worker_unreachable": {
+          "where": "SurfaceGatheringWork",
+          "meaning": "coletor de superficie nao alcancou o alvo",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "missing_profession": {
+          "where": "ColonyCycle / ProductionHands",
+          "meaning": "pedido sem aldeao capaz na vila",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "site_sweep_budget_exhausted": {
+          "where": "RingSweep / BuildSiteScanner",
+          "meaning": "varredura de lote ou alvo terminou a passagem sem resposta",
+          "occurrences": 24,
+          "loop_candidate": true
+        },
+        "site_sweep_restarted": {
+          "where": "SweepLog / BuildSiteScanner",
+          "meaning": "cursor de varredura reiniciou antes de concluir uma volta",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "worker_stranded": {
+          "where": "WorkStall / StrandedWorkers",
+          "meaning": "trabalhador congelou duas vezes no mesmo ponto (E47)",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "stranded_cannot_dig_out": {
+          "where": "StrandedEscape",
+          "meaning": "encalhado sem rumo seguro para cavar a saida",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "construction_let_go": {
+          "where": "ConstructionPlanner / WaitingWork",
+          "meaning": "colonia largou uma obra aberta",
+          "occurrences": 1,
+          "loop_candidate": false
+        },
+        "miner_chest_full": {
+          "where": "MinerHaul / ChestDepositor",
+          "meaning": "mineiro cavou e nada entrou no bau (bau cheio)",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "cycle_over_tick": {
+          "where": "VillageDetectionHandler",
+          "meaning": "ciclo da colonia levou mais que um tique do servidor",
+          "occurrences": 7,
+          "loop_candidate": true
+        },
+        "server_overloaded": {
+          "where": "Minecraft (servidor)",
+          "meaning": "servidor atrasado: Can't keep up",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "log_error_line": {
+          "where": "qualquer (nivel ERROR)",
+          "meaning": "linha de log em nivel ERROR",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "house_finished": {
+          "where": "BuilderWork",
+          "meaning": "casa concluida",
+          "occurrences": 1,
+          "loop_candidate": false
+        },
+        "stranded_freed": {
+          "where": "StrandedEscape",
+          "meaning": "encalhado saiu cavando (E47)",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "stairs_backfilled": {
+          "where": "EscapeBackfill",
+          "meaning": "escada da fuga tampada (N10)",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "supper_shared": {
+          "where": "VillageMeals",
+          "meaning": "comida dividida para a procriacao (N1)",
+          "occurrences": 0,
+          "loop_candidate": false
+        }
+      },
+      "activities": [
+        {
+          "profession": "BUILDER",
+          "activity": "BUILDING",
+          "outcome": "RECOVERED",
+          "reason": "ALREADY_OPEN",
+          "occurrences": 1
+        },
+        {
+          "profession": "BUILDER",
+          "activity": "BUILDING",
+          "outcome": "RECOVERED",
+          "reason": "SWEEP_INCOMPLETE",
+          "occurrences": 7
+        },
+        {
+          "profession": "BUILDER",
+          "activity": "BUILDING",
+          "outcome": "WAITING",
+          "reason": "ALREADY_OPEN",
+          "occurrences": 4
+        },
+        {
+          "profession": "BUILDER",
+          "activity": "BUILDING",
+          "outcome": "WAITING",
+          "reason": "NO_TARGET",
+          "occurrences": 1
+        },
+        {
+          "profession": "BUILDER",
+          "activity": "BUILDING",
+          "outcome": "WAITING",
+          "reason": "SWEEP_INCOMPLETE",
+          "occurrences": 7
+        },
+        {
+          "profession": "FARMER",
+          "activity": "FARMING",
+          "outcome": "RECOVERED",
+          "reason": "NO_TARGET",
+          "occurrences": 30
+        },
+        {
+          "profession": "FARMER",
+          "activity": "FARMING",
+          "outcome": "RECOVERED",
+          "reason": "NO_TASK",
+          "occurrences": 1
+        },
+        {
+          "profession": "FARMER",
+          "activity": "FARMING",
+          "outcome": "RECOVERED",
+          "reason": "SWEEP_INCOMPLETE",
+          "occurrences": 1
+        },
+        {
+          "profession": "FARMER",
+          "activity": "FARMING",
+          "outcome": "WAITING",
+          "reason": "NO_TARGET",
+          "occurrences": 4
+        },
+        {
+          "profession": "FARMER",
+          "activity": "FARMING",
+          "outcome": "WAITING",
+          "reason": "NO_TASK",
+          "occurrences": 1
+        },
+        {
+          "profession": "FARMER",
+          "activity": "FARMING",
+          "outcome": "WAITING",
+          "reason": "SWEEP_INCOMPLETE",
+          "occurrences": 6
+        },
+        {
+          "profession": "FARMER",
+          "activity": "MAINTAIN_FOOD",
+          "outcome": "ABANDONED",
+          "reason": "WORK_STALLED",
+          "occurrences": 4
+        },
+        {
+          "profession": "FARMER",
+          "activity": "MAINTAIN_FOOD",
+          "outcome": "ERROR",
+          "reason": "WORK_STALLED",
+          "occurrences": 4
+        },
+        {
+          "profession": "LUMBERJACK",
+          "activity": "COLLECT_WOOD",
+          "outcome": "ABANDONED",
+          "reason": "WORK_STALLED",
+          "occurrences": 1
+        },
+        {
+          "profession": "LUMBERJACK",
+          "activity": "COLLECT_WOOD",
+          "outcome": "ERROR",
+          "reason": "WORK_STALLED",
+          "occurrences": 1
+        },
+        {
+          "profession": "MINER",
+          "activity": "COLLECT_STONE",
+          "outcome": "ABANDONED",
+          "reason": "WORK_STALLED",
+          "occurrences": 8
+        },
+        {
+          "profession": "MINER",
+          "activity": "COLLECT_STONE",
+          "outcome": "ERROR",
+          "reason": "WORK_STALLED",
+          "occurrences": 8
+        },
+        {
+          "profession": "MINER",
+          "activity": "MINING",
+          "outcome": "RECOVERED",
+          "reason": "NO_TARGET",
+          "occurrences": 23
+        },
+        {
+          "profession": "MINER",
+          "activity": "MINING",
+          "outcome": "RECOVERED",
+          "reason": "NO_TASK",
+          "occurrences": 9
+        },
+        {
+          "profession": "MINER",
+          "activity": "MINING",
+          "outcome": "RECOVERED",
+          "reason": "SWEEP_INCOMPLETE",
+          "occurrences": 26
+        },
+        {
+          "profession": "MINER",
+          "activity": "MINING",
+          "outcome": "WAITING",
+          "reason": "NO_TARGET",
+          "occurrences": 21
+        },
+        {
+          "profession": "MINER",
+          "activity": "MINING",
+          "outcome": "WAITING",
+          "reason": "NO_TASK",
+          "occurrences": 9
+        },
+        {
+          "profession": "MINER",
+          "activity": "MINING",
+          "outcome": "WAITING",
+          "reason": "SWEEP_INCOMPLETE",
+          "occurrences": 11
+        },
+        {
+          "profession": "SHEPHERD",
+          "activity": "SHEPHERDING",
+          "outcome": "RECOVERED",
+          "reason": "NO_TASK",
+          "occurrences": 1
+        },
+        {
+          "profession": "SHEPHERD",
+          "activity": "SHEPHERDING",
+          "outcome": "WAITING",
+          "reason": "NO_TASK",
+          "occurrences": 2
+        },
+        {
+          "profession": "SMELTER",
+          "activity": "SMELTING",
+          "outcome": "RECOVERED",
+          "reason": "NO_TASK",
+          "occurrences": 24
+        },
+        {
+          "profession": "SMELTER",
+          "activity": "SMELTING",
+          "outcome": "WAITING",
+          "reason": "NO_TASK",
+          "occurrences": 24
+        }
+      ],
+      "waited_items": {
+        "minecraft:flower_pot": 22
+      }
+    },
+    {
+      "source_name": "latest.log",
+      "sha256": "c42e9f91676d3aaed09db710cb11b6485c92077c25fc18bccc5f39c4980cdef6",
+      "bytes": 5060144,
+      "modified_at": "2026-10-09T22:16:03.125997+00:00",
+      "started_at": "16:16:43",
+      "ended_at": "19:16:03",
+      "lines": 20921,
+      "observations": {
+        "miner_no_branch_work": {
+          "where": "MineClaims / MinerWork",
+          "meaning": "mineiro sem frente de escavacao disponivel",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "miner_no_standing_room": {
+          "where": "MineDigging",
+          "meaning": "mina encontrou pedra sem patamar seguro para continuar",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "construction_waiting_resources": {
+          "where": "BuilderWork / WaitingWork",
+          "meaning": "obra aguarda recurso",
+          "occurrences": 2022,
+          "loop_candidate": true
+        },
+        "builder_pathing_stalled": {
+          "where": "BuilderApproach / BuilderWork",
+          "meaning": "construtor caminha sem alcancar o proximo bloco",
+          "occurrences": 10,
+          "loop_candidate": true
+        },
+        "surface_worker_unreachable": {
+          "where": "SurfaceGatheringWork",
+          "meaning": "coletor de superficie nao alcancou o alvo",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "missing_profession": {
+          "where": "ColonyCycle / ProductionHands",
+          "meaning": "pedido sem aldeao capaz na vila",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "site_sweep_budget_exhausted": {
+          "where": "RingSweep / BuildSiteScanner",
+          "meaning": "varredura de lote ou alvo terminou a passagem sem resposta",
+          "occurrences": 28,
+          "loop_candidate": true
+        },
+        "site_sweep_restarted": {
+          "where": "SweepLog / BuildSiteScanner",
+          "meaning": "cursor de varredura reiniciou antes de concluir uma volta",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "worker_stranded": {
+          "where": "WorkStall / StrandedWorkers",
+          "meaning": "trabalhador congelou duas vezes no mesmo ponto (E47)",
+          "occurrences": 3,
+          "loop_candidate": true
+        },
+        "stranded_cannot_dig_out": {
+          "where": "StrandedEscape",
+          "meaning": "encalhado sem rumo seguro para cavar a saida",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "construction_let_go": {
+          "where": "ConstructionPlanner / WaitingWork",
+          "meaning": "colonia largou uma obra aberta",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "miner_chest_full": {
+          "where": "MinerHaul / ChestDepositor",
+          "meaning": "mineiro cavou e nada entrou no bau (bau cheio)",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "cycle_over_tick": {
+          "where": "VillageDetectionHandler",
+          "meaning": "ciclo da colonia levou mais que um tique do servidor",
+          "occurrences": 3,
+          "loop_candidate": true
+        },
+        "server_overloaded": {
+          "where": "Minecraft (servidor)",
+          "meaning": "servidor atrasado: Can't keep up",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "log_error_line": {
+          "where": "qualquer (nivel ERROR)",
+          "meaning": "linha de log em nivel ERROR",
+          "occurrences": 3,
+          "loop_candidate": true
+        },
+        "house_finished": {
+          "where": "BuilderWork",
+          "meaning": "casa concluida",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "stranded_freed": {
+          "where": "StrandedEscape",
+          "meaning": "encalhado saiu cavando (E47)",
+          "occurrences": 3,
+          "loop_candidate": false
+        },
+        "stairs_backfilled": {
+          "where": "EscapeBackfill",
+          "meaning": "escada da fuga tampada (N10)",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "supper_shared": {
+          "where": "VillageMeals",
+          "meaning": "comida dividida para a procriacao (N1)",
+          "occurrences": 9,
+          "loop_candidate": false
+        }
+      },
+      "activities": [
+        {
+          "profession": "BUILDER",
+          "activity": "BUILDING",
+          "outcome": "WAITING",
+          "reason": "ALREADY_OPEN",
+          "occurrences": 1
+        },
+        {
+          "profession": "FARMER",
+          "activity": "FARMING",
+          "outcome": "RECOVERED",
+          "reason": "NO_TARGET",
+          "occurrences": 78
+        },
+        {
+          "profession": "FARMER",
+          "activity": "FARMING",
+          "outcome": "RECOVERED",
+          "reason": "NO_TASK",
+          "occurrences": 6
+        },
+        {
+          "profession": "FARMER",
+          "activity": "FARMING",
+          "outcome": "RECOVERED",
+          "reason": "SWEEP_INCOMPLETE",
+          "occurrences": 1
+        },
+        {
+          "profession": "FARMER",
+          "activity": "FARMING",
+          "outcome": "WAITING",
+          "reason": "NO_TARGET",
+          "occurrences": 31
+        },
+        {
+          "profession": "FARMER",
+          "activity": "FARMING",
+          "outcome": "WAITING",
+          "reason": "NO_TASK",
+          "occurrences": 6
+        },
+        {
+          "profession": "FARMER",
+          "activity": "FARMING",
+          "outcome": "WAITING",
+          "reason": "SWEEP_INCOMPLETE",
+          "occurrences": 26
+        },
+        {
+          "profession": "FARMER",
+          "activity": "MAINTAIN_FOOD",
+          "outcome": "ABANDONED",
+          "reason": "WORK_STALLED",
+          "occurrences": 16
+        },
+        {
+          "profession": "FARMER",
+          "activity": "MAINTAIN_FOOD",
+          "outcome": "ERROR",
+          "reason": "WORK_STALLED",
+          "occurrences": 16
+        },
+        {
+          "profession": "LUMBERJACK",
+          "activity": "COLLECT_WOOD",
+          "outcome": "ABANDONED",
+          "reason": "WORK_STALLED",
+          "occurrences": 7
+        },
+        {
+          "profession": "LUMBERJACK",
+          "activity": "COLLECT_WOOD",
+          "outcome": "ERROR",
+          "reason": "WORK_STALLED",
+          "occurrences": 7
+        },
+        {
+          "profession": "MINER",
+          "activity": "COLLECT_STONE",
+          "outcome": "ABANDONED",
+          "reason": "WORK_STALLED",
+          "occurrences": 1
+        },
+        {
+          "profession": "MINER",
+          "activity": "COLLECT_STONE",
+          "outcome": "ERROR",
+          "reason": "WORK_STALLED",
+          "occurrences": 1
+        },
+        {
+          "profession": "MINER",
+          "activity": "MINING",
+          "outcome": "RECOVERED",
+          "reason": "NO_TARGET",
+          "occurrences": 1
+        },
+        {
+          "profession": "MINER",
+          "activity": "MINING",
+          "outcome": "RECOVERED",
+          "reason": "NO_TASK",
+          "occurrences": 3
+        },
+        {
+          "profession": "MINER",
+          "activity": "MINING",
+          "outcome": "WAITING",
+          "reason": "NO_TASK",
+          "occurrences": 4
+        },
+        {
+          "profession": "MINER",
+          "activity": "MINING",
+          "outcome": "WAITING",
+          "reason": "SWEEP_INCOMPLETE",
+          "occurrences": 2
+        },
+        {
+          "profession": "SHEPHERD",
+          "activity": "SHEPHERDING",
+          "outcome": "RECOVERED",
+          "reason": "NO_TASK",
+          "occurrences": 10
+        },
+        {
+          "profession": "SHEPHERD",
+          "activity": "SHEPHERDING",
+          "outcome": "WAITING",
+          "reason": "NO_TASK",
+          "occurrences": 10
+        },
+        {
+          "profession": "SMELTER",
+          "activity": "SMELTING",
+          "outcome": "RECOVERED",
+          "reason": "NO_TASK",
+          "occurrences": 174
+        },
+        {
+          "profession": "SMELTER",
+          "activity": "SMELTING",
+          "outcome": "WAITING",
+          "reason": "NO_TASK",
+          "occurrences": 175
+        }
+      ],
+      "waited_items": {
+        "minecraft:stonecutter": 2022
+      }
     }
   ]
 }

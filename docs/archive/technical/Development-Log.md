@@ -10715,3 +10715,60 @@ falhas e zero erros; `git diff --check` não encontrou erro de espaço. O build
 final também compilou os GameTests, e a rodada final de
 `./gradlew.bat runGametest --rerun-tasks --no-daemon` passou em 585/585. Não
 houve playtest no save nesta sessão.
+
+### 2026-10-09 - Remoção do barn_majest do sorteio de obras
+
+O playtest mostrou `barn_majest` sendo construído apesar da decisão de removê-lo
+das possibilidades automáticas. A causa era o mapa explícito de modelos nomeados
+em `ColonyModels`: enquanto o arquivo existisse no jar e estivesse associado ao
+pastor, `VillageStructures.buildableFor` o inseria antes das estruturas Vanilla.
+
+O teste unitário `ConstructionOrderTest.retiredBarnDoesNotEnterTheConstructionCatalog`
+foi escrito primeiro e falhou com a regra antiga. A correção deixa apenas
+`storage_majest` como modelo nomeado de profissão, mantém o arquivo do celeiro
+como recurso inerte e atualiza o catálogo/documentação para que o gerador não
+reintroduza o item no sorteio.
+
+### 2026-10-09 - Fluxo de profissão, grafo de suprimento e waypoint de obra
+
+As melhorias 3, 4 e 6 do levantamento foram aplicadas em código na branch
+`codex/fluxo-grafo-waypoints`. A varredura incremental agora também tem uma
+variante com respiro após volta vazia completa; o mineiro usa essa entrada na
+busca de pedra exposta, evitando repetir uma varredura inteira a cada ciclo
+quando o terreno ao redor não oferece novo alvo.
+
+A decisão de viabilidade de material ganhou um grafo explícito de rota:
+recurso direto do bioma, queda automática aceita pela regra de obra, fabricação,
+fundição, ciclo, limite de profundidade ou ausência de rota. O primeiro uso
+fica exposto por `BiomeConstructionSupply.routeInBiome`, com GameTest cobrindo
+o caso de tábuas que dependem de tora disponível no bioma.
+
+O caminho até lote afastado passou a escolher a coluna de rua no índice central
+`ColonyRoads`, e não em cálculo isolado de `WorkPath`; o mesmo índice agora
+oferece waypoint horizontal para futuras decisões de navegação. A validação
+final desta sessão passou em unitários focados, `runGametest --rerun-tasks`
+com 648/648 e `build --no-daemon`. O playtest no save real segue pendente.
+
+### 2026-10-09 - Descida longa do mineiro segurando o ramal
+
+O playtest com Spark `GqK0MLwvTw` não indicou gargalo de TPS: a evidência local
+veio do `latest.log` e dos ledgers. O construtor estava parado em
+`WAITING_RESOURCES` por `minecraft:stonecutter`; o fundidor registrava que não
+havia `iron_ore`, `deepslate_iron_ore` nem `raw_iron` em 50 baús; e os mineiros
+apareciam presos na cadeia do `raw_iron`. Um mineiro segurava o único ramal
+aberto e recebia caminhada de `y=46` para `y=34`, enquanto os demais esperavam a
+abertura dos ramais seguintes.
+
+A correção ficou em `MinerApproach.climbableWalkTarget`: a mesma proteção que já
+partia uma perna alta demais em patamar alcançável agora também trata a descida
+profunda. Se a perna estiver mais de um bloco abaixo do aldeão, a navegação
+recebe o próximo patamar pisável que o aproxima do destino; se não houver
+patamar seguro, o comportamento antigo continua como fallback.
+
+O GameTest `MinerApproachGameTest.aDeepLegStopsAtTheNextSafeLanding` foi escrito
+primeiro e falhou com a regra antiga, entregando a perna profunda direta apesar
+do patamar seguro. Depois do patch, a bateria completa passou em
+`runGametest --rerun-tasks --no-daemon` com 649/649, e `build --no-daemon`
+também passou. Falta confirmar no save real se a cadeia `raw_iron -> fundidor ->
+stonecutter -> construtor` volta a andar e se o fundidor fica abaixo de 15% de
+ociosidade.

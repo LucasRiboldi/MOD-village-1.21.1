@@ -14,6 +14,8 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BiomeConstructionSupply;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.SandNearWater;
+import com.villagecolony.fabric.integration.SupplyRoute;
+import com.villagecolony.fabric.integration.SupplySource;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.inventory.Inventory;
@@ -89,6 +91,28 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
             context.assertTrue(count(context, setup.builderChest(), Items.LOOM) == 0
                             && count(context, setup.carpenterChest(), Items.LOOM) == 0,
                     "o tear apareceu pronto; quem o faz e o carpinteiro");
+        } finally {
+            setup.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /** O diagnostico de suprimento mostra a cadeia que a obra vai depender. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
+    public void theSupplyRouteExplainsCraftingDependencies(TestContext context) {
+        Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.OAK_PLANKS);
+
+        try {
+            SupplyRoute route = BiomeConstructionSupply.routeInBiome(
+                    context.getWorld(), setup.project().colonyId(), Items.OAK_PLANKS);
+
+            context.assertTrue(route.available(), "tabua de carvalho devia ter rota no bioma");
+            context.assertTrue(route.source() == SupplySource.CRAFTING,
+                    "a rota devia explicar que a tabua vem de receita: " + route);
+            context.assertTrue(route.inputs().stream().anyMatch(input -> input.item().equals(Items.OAK_LOG)
+                            && input.source() == SupplySource.BIOME_RESOURCE),
+                    "a rota devia mostrar a tora local como dependencia: " + route);
         } finally {
             setup.cleanUp();
         }

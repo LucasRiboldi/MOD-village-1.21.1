@@ -5,6 +5,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.integration.ColonyModels;
+import com.villagecolony.fabric.integration.VillageStructures;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -81,14 +82,16 @@ class ConstructionOrderTest {
     }
 
     @Test
-    void namedColonyModelsBelongToTheirRequestedProfessions() {
+    void retiredBarnDoesNotEnterTheConstructionCatalog() {
         ResourceId barn = ResourceId.parse("villagecolony:colony/barn_majest");
         ResourceId storage = ResourceId.parse("villagecolony:colony/storage_majest");
 
-        assertEquals(Optional.of(ProfessionType.SHEPHERD), ColonyModels.professionOf(barn));
+        assertEquals(Optional.empty(), ColonyModels.professionOf(barn));
         assertEquals(Optional.of(ProfessionType.BUILDER), ColonyModels.professionOf(storage));
-        assertEquals(Optional.of(ProfessionType.SHEPHERD), ConstructionOrder.professionOf(barn));
+        assertEquals(Optional.empty(), ConstructionOrder.professionOf(barn));
         assertEquals(Optional.of(ProfessionType.BUILDER), ConstructionOrder.professionOf(storage));
+        assertFalse(VillageStructures.buildableFor("plains").contains(barn));
+        assertTrue(VillageStructures.buildableFor("plains").contains(storage));
     }
 
     @Test

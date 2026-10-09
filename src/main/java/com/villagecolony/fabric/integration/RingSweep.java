@@ -54,6 +54,9 @@ public final class RingSweep {
      */
     private static final Map<SweepKey, Sweep> NEXT_RING = new HashMap<>();
 
+    /** Voltas completas e vazias que ainda estao respirando antes de repetir. */
+    private static final Map<SweepKey, Long> EMPTY_UNTIL = new HashMap<>();
+
     /**
      * A pergunta que possui o cursor.
      *
@@ -88,6 +91,7 @@ public final class RingSweep {
     /** Esquece os cursores. Chamado ao parar o servidor. */
     public static void clearAll() {
         NEXT_RING.clear();
+        EMPTY_UNTIL.clear();
     }
 
     /**
@@ -216,6 +220,35 @@ public final class RingSweep {
         return Optional.empty();
     }
 
+    /** A mesma varredura, mas uma volta completa e vazia recebe respiro (Regra 23). */
+    public static <T> Optional<T> aroundWithCooldown(
+            UUID owner,
+            Scan scan,
+            BlockPos center,
+            int radius,
+            java.util.function.Predicate<BlockPos> worth,
+            Function<BlockPos, Optional<T>> test,
+            long now,
+            long cooldownTicks) {
+
+        SweepKey key = new SweepKey(owner, scan);
+        Long until = EMPTY_UNTIL.get(key);
+
+        if (until != null && now < until && !NEXT_RING.containsKey(key)) {
+            return Optional.empty();
+        }
+
+        Optional<T> found = around(owner, scan, center, radius, worth, test);
+
+        if (found.isPresent()) {
+            EMPTY_UNTIL.remove(key);
+        } else if (!NEXT_RING.containsKey(key)) {
+            EMPTY_UNTIL.put(key, now + cooldownTicks);
+        }
+
+        return found;
+    }
+
     /** Em que anel a busca deste dono parou por falta de orçamento. */
     public static Optional<Integer> pausedAt(UUID owner) {
         return pausedAt(owner, Scan.GENERAL);
@@ -233,6 +266,8 @@ public final class RingSweep {
 
     /** Esquece o cursor de um subsistema de um dono só. */
     public static void forget(UUID owner, Scan scan) {
-        NEXT_RING.remove(new SweepKey(owner, scan));
+        SweepKey key = new SweepKey(owner, scan);
+        NEXT_RING.remove(key);
+        EMPTY_UNTIL.remove(key);
     }
 }

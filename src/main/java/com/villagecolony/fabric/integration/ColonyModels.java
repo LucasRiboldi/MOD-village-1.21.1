@@ -56,7 +56,6 @@ public final class ColonyModels {
 
     /** Modelos nomeados que entram no rodízio de uma profissão específica. */
     private static final Map<String, ProfessionType> NAMED_PROFESSION_MODELS = Map.of(
-            "barn_majest", ProfessionType.SHEPHERD,
             "storage_majest", ProfessionType.BUILDER);
 
     private static final Map<String, Boolean> EXISTS = new HashMap<>();

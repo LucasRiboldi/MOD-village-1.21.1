@@ -109,6 +109,32 @@ public record ColonyRoads(UUID colonyId, ColonyPos from, List<Long> columns) {
         return nearest == Integer.MAX_VALUE ? OptionalInt.empty() : OptionalInt.of(nearest);
     }
 
+    /** A coluna calçada mais perto de um lote, limitada ao salto aceito pelo caminho (ADR-039 D2). */
+    public Optional<Long> nearestRoadColumnTo(ColonyPos origin, ColonyPos size, int maxGap) {
+        Objects.requireNonNull(origin, "origin");
+        Objects.requireNonNull(size, "size");
+
+        Long best = null;
+        int bestGap = maxGap + 1;
+
+        for (long column : columns) {
+            int gap = gapToRectangle(xOf(column), zOf(column), origin, size);
+
+            if (gap > 0 && gap < bestGap) {
+                bestGap = gap;
+                best = column;
+            }
+        }
+
+        return Optional.ofNullable(best);
+    }
+
+    /** O waypoint horizontal para sair da rua e caminhar ate a obra (ADR-039 D2). */
+    public Optional<ColonyPos> roadWaypointTo(ColonyPos origin, ColonyPos size, int maxGap) {
+        return nearestRoadColumnTo(origin, size, maxGap)
+                .map(column -> new ColonyPos(xOf(column), origin.y(), zOf(column)));
+    }
+
     /**
      * O mesmo índice, medido de um centro novo — 2026-09-17.
      *
@@ -153,5 +179,13 @@ public record ColonyRoads(UUID colonyId, ColonyPos from, List<Long> columns) {
         return kept.isEmpty()
                 ? Optional.empty()
                 : Optional.of(new ColonyRoads(colonyId, centre, kept));
+    }
+
+    private static int gapToRectangle(int x, int z, ColonyPos origin, ColonyPos size) {
+        return gap(x, origin.x(), size.x()) + gap(z, origin.z(), size.z());
+    }
+
+    private static int gap(int coordinate, int origin, int size) {
+        return Math.max(0, Math.max(origin - coordinate, coordinate - (origin + size - 1)));
     }
 }

@@ -1,12 +1,12 @@
 # TODO
 
-**Atualizado:** 2026-10-07. Só o que está **aberto**. O histórico até hoje está em
+**Atualizado:** 2026-10-09. Só o que está **aberto**. O histórico até hoje está em
 `docs/archive/technical/TODO-ate-2026-10-07.md` (consultar por `grep`, nunca inteiro).
 Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
-## 🔴 Playtest da 0.3.5
+## 🔴 Playtest da 0.3.7
 
 Nada das ADR-037, 038 e 039 foi visto em jogo. Rodar depois: `python scripts/time_ledger.py`
 e `python scripts/cost_ledger.py` no `latest.log`, e Spark.
@@ -16,6 +16,8 @@ e `python scripts/cost_ledger.py` no `latest.log`, e Spark.
       das casas da vila; fundidor com vidro e a pedra lisa que as casas usam.
 - [ ] Peça feita entra no **baú da profissão** de quem fez, não no do vizinho.
 - [ ] Mineiro encalhado **continua mineiro**; ramal novo abre para o minério que falta.
+- [ ] Fundidor fica abaixo de 15% de ociosidade quando houver minério no fluxo; no playtest
+      `GqK0MLwvTw`, a causa provável foi o mineiro preso numa descida longa e segurando o único ramal.
 - [ ] Caminho calçado até obra afastada da rua.
 - [ ] Fechar e abrir o mundo: lenhador vai direto à árvore conhecida; mineiro volta ao ramal e ao veio;
       animal na corda continua sendo levado à cerca.

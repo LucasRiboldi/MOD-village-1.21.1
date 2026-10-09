@@ -1,6 +1,6 @@
-# STATE — 2026-10-07
+# STATE — 2026-10-09
 
-> **JAR atual: `village-colony-0.3.6.jar` = `DAC96728…7DE8`** em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.7.jar` = `629358BA…F80F7`** em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,27 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 09-10 — playtest Spark GqK0MLwvTw e descida do mineiro
+
+Spark `GqK0MLwvTw`: TPS estável em 20; custo do ciclo da colônia saudável (`cost_ledger` ~10,6 ms
+médio, p95 ~12,9 ms). O gargalo visto no save foi de fluxo: construtor esperando `stonecutter`,
+fundidor sem `iron_ore`/`raw_iron`, e mineiros presos na abertura da mina. O log mostrou o mineiro
+com alvo de `raw_iron` recebendo caminhada de `y=46` para `y=34`, segurando o único ramal enquanto
+os outros esperavam.
+
+Correção 0.3.7: `MinerApproach.climbableWalkTarget` agora quebra descida longa em patamar seguro,
+simétrica ao limite de subida. Regressão nova falhou antes do patch e passou depois. Verificado com
+`runGametest --rerun-tasks --no-daemon` **649/649** e `build --no-daemon`. **Ainda falta playtest
+no save real** para confirmar queda do tempo ocioso do fundidor e retomada da cadeia do
+`stonecutter`.
+
+## 🟡 09-10 — fluxo de profissão, suprimento e caminho (branch local)
+
+Implementadas as melhorias 3, 4 e 6 da pesquisa na branch `codex/fluxo-grafo-waypoints`: varredura
+vazia com respiro para o mineiro, grafo explícito de rota de suprimento da obra e waypoint de rua
+mais próxima para calçar caminho até lote afastado. Verificado localmente com build de linha de base,
+unitários focados, GameTests 648/648 e build final. **Ainda falta playtest no save real.**
 
 ## 🟡 07-10, tarde — ADR-039 aplicada (aguarda playtest)
 
@@ -223,11 +244,10 @@ Playtest obrigatório: mina com save antigo (SHAPE_VERSION 7→8), painéis com 
   de todas as vilas Vanilla 1.21.1 está em
   `docs/reports/blocos-vilas-vanilla-1.21.1.xlsx`; 67 ainda não têm rota direta
   de uma profissão e estão marcados sem inventar suprimento.
-- `barn_majest.nbt` entra no sorteio de oficinas do pastor e
-  `storage_majest.nbt` no do construtor. O celeiro foi compactado ao retirar
-  apenas o solo natural da camada inferior, preservando os cinco blocos
-  funcionais nela presentes; sua nova área é 12x13x15. A rodada completa de
-  GameTests confirmou ambos os NBT reais carregados e associados: 582/582.
+- `barn_majest.nbt` foi retirado do sorteio de obras; ele não pertence mais ao
+  pastor nem entra em `VillageStructures.buildableFor`. `storage_majest.nbt`
+  permanece no sorteio do construtor. O celeiro segue como arquivo de recurso,
+  mas não é uma possibilidade de construção automática.
 - Falta o playtest visual e de desempenho no save, inclusive marcador em vila
   grande e coleta atravessando a borda, fluxo real dos baús, nova medição do
   lenhador/carpintaria e o sorteio das duas oficinas em uma vila real.
