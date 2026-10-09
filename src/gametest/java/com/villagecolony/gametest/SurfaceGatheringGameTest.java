@@ -438,7 +438,9 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
                 int opened = SurfaceGatheringWork.run(world, colony);
                 context.assertTrue(opened == 1, "o coletor não abriu a tarefa reservada: " + task.state());
 
-                SurfaceGatheringWork.tick(world);
+                for (int tick = 0; tick < 4 && WorkTargets.of(villager.getUuid()).isEmpty(); tick++) {
+                    SurfaceGatheringWork.tick(world);
+                }
                 BlockPos selected = WorkTargets.of(villager.getUuid()).orElse(null);
                 context.assertTrue(selected != null,
                         "a varredura da borda não escolheu nenhuma coluna de terra externa");

@@ -10775,3 +10775,24 @@ Publicação local: versão elevada para `0.3.21`; `village-colony-0.3.21.jar`
 gerado em `build/libs/`, copiado para `downloads/` e instalado em
 `%APPDATA%/.minecraft/mods`. SHA-256 das três cópias:
 `A0C87BEEDAC7927CA4BC2C61F87B7E58F7FB540A562224AEC8DF24E0F58926FC`.
+
+### 2026-10-09 - Fluxo de profissão, grafo de suprimento e waypoint de obra
+
+As melhorias 3, 4 e 6 do levantamento foram reaplicadas sobre
+`claude/obra-lote-e-trava`, preservando a linha que já removeu `barn_majest`
+do rodízio e elevou o jar local para 0.3.22. A varredura incremental ganhou
+uma variante com respiro após volta vazia completa; o mineiro usa essa entrada
+na busca de pedra exposta, evitando repetir uma varredura inteira a cada ciclo
+quando o terreno ao redor não oferece novo alvo.
+
+A decisão de viabilidade de material ganhou um grafo explícito de rota:
+recurso direto do bioma, queda automática aceita pela regra de obra, fabricação,
+fundição, ciclo, limite de profundidade ou ausência de rota. O primeiro uso
+fica exposto por `BiomeConstructionSupply.routeInBiome`, com GameTest cobrindo
+o caso de tábuas que dependem de tora disponível no bioma.
+
+O caminho até lote afastado passou a escolher a coluna de rua no índice central
+`ColonyRoads`, e não em cálculo isolado de `WorkPath`; o mesmo índice agora
+oferece waypoint horizontal para futuras decisões de navegação. A validação
+automática deve ser refeita nesta árvore antes de publicar; o playtest no save
+real segue pendente.

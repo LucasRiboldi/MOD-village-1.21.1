@@ -16,6 +16,13 @@
 
 ---
 
+## 🟡 09-10 — fluxo de profissão, suprimento e caminho (branch local)
+
+Baseado em `claude/obra-lote-e-trava`/0.3.22 para evitar conflito com a remoção do `barn_majest`.
+Implementadas as melhorias 3, 4 e 6 da pesquisa: varredura vazia com respiro para o mineiro, grafo
+explícito de rota de suprimento da obra e waypoint de rua mais próxima para calçar caminho até lote
+afastado. **Ainda falta playtest no save real.**
+
 ## 🟡 09-10 — barn_majest fora do rodízio de obras (0.3.22 aguarda playtest)
 
 Playtest/Spark `9CJSHC5a77`: o jogo ainda estava em `villagecolony 0.3.21`. TPS 20,00/20,00/20,00
