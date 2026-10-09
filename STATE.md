@@ -1,6 +1,6 @@
 # STATE — 2026-10-09
 
-> **JAR atual: `village-colony-0.3.22.jar` = `7D69667E…C9C1C5F`** (barn_majest fora do rodízio; ver abaixo) em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.22.jar` = `CFBF5AE0…65AE469E`** (baú do fundidor e Regra 51 do fundidor; ver abaixo) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,25 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 09-10 — clay_ball no baú do fundidor e limite de ócio de 15% (0.3.22 aguarda playtest)
+
+Spark/log `ZdApFC1pzI`: o save rodava `villagecolony 0.3.22`. A amostra recente manteve TPS
+20 em 1 e 5 minutos, com queda histórica em 15 minutos; o log mostrou o fundidor com 75% de
+ócio e `/vc log` ainda procurando `clay_ball` por 55 minutos enquanto havia `CLAY_BALL=1`
+em outro baú da colônia.
+
+Correção: o suprimento depois de buscas vazias agora satisfaz primeiro o baú da profissão que
+precisa do item. Se o item existe em outro baú comunitário, isso não bloqueia mais a cópia para
+o baú do fundidor. O `IdleYield` também passou a seguir a Regra 51: duas janelas com ócio acima
+de 15% fazem o ofício ceder uma pessoa; 15% exato não cede.
+
+**Verificado:** `FileSizeRuleTest` ok; `IdleYieldTest` focado ok; `./gradlew.bat runGametest
+--rerun-tasks --no-daemon` ok, **688/688**; `./gradlew.bat build --no-daemon` ok. JAR 0.3.22
+copiado para `downloads/` e `%APPDATA%/.minecraft/mods`, SHA-256
+`CFBF5AE0F79AA3A74EC7996EFD4176B4CD7C5D03B6EB06CEE02A24E265AE469E`.
+**Pendente:** playtest confirmar `clay_ball` no baú do SMELTER e `time_ledger.py` sem fundidor
+acima de 15% de ócio.
 
 ## 🟡 09-10 — fluxo de profissão, suprimento e caminho (branch local)
 

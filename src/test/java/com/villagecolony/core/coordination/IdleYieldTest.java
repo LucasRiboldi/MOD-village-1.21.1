@@ -21,19 +21,28 @@ class IdleYieldTest {
     void twoIdleWindowsInARowYieldOnePerson() {
         UUID colony = UUID.randomUUID();
 
-        assertFalse(IdleYield.observe(colony, ProfessionType.SMELTER, 86, 3), "uma janela só não basta");
-        assertTrue(IdleYield.observe(colony, ProfessionType.SMELTER, 80, 3), "duas janelas paradas não cederam");
-        assertFalse(IdleYield.observe(colony, ProfessionType.SMELTER, 80, 2), "a conta não recomeçou depois de ceder");
+        assertFalse(IdleYield.observe(colony, ProfessionType.SMELTER, 16, 3), "uma janela só não basta");
+        assertTrue(IdleYield.observe(colony, ProfessionType.SMELTER, 16, 3), "duas janelas paradas não cederam");
+        assertFalse(IdleYield.observe(colony, ProfessionType.SMELTER, 16, 2), "a conta não recomeçou depois de ceder");
     }
 
     @Test
     void aBusyWindowBreaksTheStreak() {
         UUID colony = UUID.randomUUID();
 
-        IdleYield.observe(colony, ProfessionType.SMELTER, 86, 3);
-        IdleYield.observe(colony, ProfessionType.SMELTER, 30, 3);
+        IdleYield.observe(colony, ProfessionType.SMELTER, 16, 3);
+        IdleYield.observe(colony, ProfessionType.SMELTER, 15, 3);
 
-        assertFalse(IdleYield.observe(colony, ProfessionType.SMELTER, 86, 3));
+        assertFalse(IdleYield.observe(colony, ProfessionType.SMELTER, 16, 3));
+    }
+
+    @Test
+    void fifteenPercentIdleDoesNotYield() {
+        UUID colony = UUID.randomUUID();
+
+        IdleYield.observe(colony, ProfessionType.SMELTER, 15, 3);
+
+        assertFalse(IdleYield.observe(colony, ProfessionType.SMELTER, 15, 3));
     }
 
     @Test

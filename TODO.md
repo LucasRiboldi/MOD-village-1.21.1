@@ -18,6 +18,8 @@ Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 ## 🔴 Playtest da 0.3.22 / 0.3.20 (celeiro, pastor, funil)
 
 - [ ] Próxima obra nova no JAR 0.3.22 não deve abrir `colony/barn_majest`; o modelo saiu do rodízio em 09-10.
+- [ ] `clay_ball` aparece no baú do SMELTER depois das buscas vazias, mesmo se já existir em outro baú.
+- [ ] `time_ledger.py`: SMELTER sem passar de 15% ocioso nas janelas da Regra 51.
 - [ ] Pastor tosquia no curral: `sheared` frequente e menos `found no sheep with wool`; SHEPHERD fora da Regra 51.
 - [ ] `stocked minecraft:hopper` depois das faltas, e a obra termina.
 

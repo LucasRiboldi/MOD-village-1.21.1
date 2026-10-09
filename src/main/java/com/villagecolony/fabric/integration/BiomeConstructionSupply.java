@@ -267,54 +267,61 @@ public final class BiomeConstructionSupply {
     private static boolean stockFor(
             ServerWorld world, UUID colonyId, ColonyPos near, Item item, int count, ProfessionType craftsman,
             String why) {
-
+        List<ColonyPos> professionChests = professionChestsOf(colonyId, craftsman);
+        int professionHave = ColonyChests.countIn(world, professionChests, item);
+        if (professionHave >= count) {
+            return true;
+        }
+        if (!professionChests.isEmpty()) {
+            int missing = count - professionHave;
+            Optional<ColonyPos> professionChest = ColonyChests.firstWithRoomFor(world, professionChests, item, missing);
+            if (professionChest.isPresent()
+                    && ChestDepositor.deposit(world, professionChest.get(), item, missing) == 0) {
+                VillageColonyMod.LOGGER.info("The colony stocked {} x{} for the {} {}", item, missing, craftsman, why);
+                logSupplyError(item, craftsman, why);
+                return true;
+            }
+        }
         List<ColonyPos> chests = chestsOf(world, colonyId, near, craftsman);
         int have = ColonyChests.countIn(world, chests, item);
-
         if (have >= count) {
             return true;
         }
-
         Optional<ColonyPos> chest = ColonyChests.firstWithRoomFor(world, chests, item, count - have);
-
         if (chest.isEmpty()
                 || ChestDepositor.deposit(world, chest.get(), item, count - have) != 0) {
             VillageColonyMod.LOGGER.info(
                     "The colony could stock {} for the {} but every colony chest is full",
                     item, craftsman);
-
             return false;
         }
-
         VillageColonyMod.LOGGER.info("The colony stocked {} x{} for the {} {}", item, count - have, craftsman, why);
         logSupplyError(item, craftsman, why);
-
         return true;
     }
 
-    /** Os baús da profissão primeiro, depois os outros baús da colônia. */
     private static List<ColonyPos> chestsOf(
             ServerWorld world, UUID colonyId, ColonyPos near, ProfessionType profession) {
-
-        List<ColonyPos> chests = new ArrayList<>();
-
-        for (var worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
-            if (worker.profession().filter(profession::equals).isEmpty()) {
-                continue;
-            }
-
-            VillageColonyMod.STORAGES.of(worker.villagerId())
-                    .map(WorkerStorage::chestPosition)
-                    .filter(chest -> !chests.contains(chest))
-                    .ifPresent(chests::add);
-        }
-
+        List<ColonyPos> chests = professionChestsOf(colonyId, profession);
         for (ColonyPos chest : ColonyChests.nearestFirst(world, colonyId, near)) {
             if (!chests.contains(chest)) {
                 chests.add(chest);
             }
         }
+        return chests;
+    }
 
+    private static List<ColonyPos> professionChestsOf(UUID colonyId, ProfessionType profession) {
+        List<ColonyPos> chests = new ArrayList<>();
+        for (var worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
+            if (worker.profession().filter(profession::equals).isEmpty()) {
+                continue;
+            }
+            VillageColonyMod.STORAGES.of(worker.villagerId())
+                    .map(WorkerStorage::chestPosition)
+                    .filter(chest -> !chests.contains(chest))
+                    .ifPresent(chests::add);
+        }
         return chests;
     }
 

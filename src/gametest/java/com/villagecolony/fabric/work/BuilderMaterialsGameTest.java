@@ -200,6 +200,30 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** A busca vazia deve abastecer o baú da profissão que procurou o recurso. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
+    public void emptySurfaceSearchStocksTheSmelterChestEvenWhenAnotherChestHasClay(TestContext context) {
+        SurfaceSupplySetup setup = setUpSurfaceSupply(context, context.getAbsolutePos(new BlockPos(2, 2, 2)));
+
+        try {
+            Inventory otherChest = (Inventory) context.getWorld().getBlockEntity(
+                    MinecraftTypeAdapter.toBlockPos(setup.otherChest()));
+            otherChest.setStack(0, new ItemStack(Items.CLAY_BALL, 1));
+
+            context.assertTrue(BiomeConstructionSupply.stockAfterEmptySearches(
+                            context.getWorld(), setup.colony().id(), setup.colony().center(),
+                            Items.CLAY_BALL, 1, ProfessionType.SMELTER),
+                    "a busca vazia devia abastecer o baú do fundidor");
+
+            context.assertTrue(count(context, setup.smelterChest(), Items.CLAY_BALL) == 1,
+                    "o clay ball já existia na colônia, mas não apareceu no baú do fundidor");
+        } finally {
+            setup.cleanUp();
+        }
+
+        context.complete();
+    }
+
     private record Setup(Colony colony, UUID builder, UUID carpenter, ColonyPos builderChest,
             ColonyPos carpenterChest, ConstructionProject project, Item piece) {
 
@@ -210,6 +234,18 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
             VillageColonyMod.STORAGES.remove(carpenter);
             VillageColonyMod.WORKERS.remove(builder);
             VillageColonyMod.WORKERS.remove(carpenter);
+            VillageColonyMod.COLONIES.remove(colony.id());
+        }
+    }
+
+    private record SurfaceSupplySetup(Colony colony, UUID smelter, UUID builder,
+            ColonyPos smelterChest, ColonyPos otherChest) {
+
+        void cleanUp() {
+            VillageColonyMod.STORAGES.remove(smelter);
+            VillageColonyMod.STORAGES.remove(builder);
+            VillageColonyMod.WORKERS.remove(smelter);
+            VillageColonyMod.WORKERS.remove(builder);
             VillageColonyMod.COLONIES.remove(colony.id());
         }
     }
@@ -240,6 +276,28 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
                 builderChest);
 
         return new Setup(colony, builder, carpenter, builderChest, carpenterChest, project, piece);
+    }
+
+    private static SurfaceSupplySetup setUpSurfaceSupply(TestContext context, BlockPos at) {
+        ServerWorld world = context.getWorld();
+        BlockPos smelterAt = at;
+        BlockPos otherAt = at.east(3);
+        world.setBlockState(smelterAt, Blocks.CHEST.getDefaultState());
+        world.setBlockState(otherAt, Blocks.CHEST.getDefaultState());
+        ColonyPos smelterChest = MinecraftTypeAdapter.toColonyPos(smelterAt);
+        ColonyPos otherChest = MinecraftTypeAdapter.toColonyPos(otherAt);
+
+        Colony colony = Colony.create(UUID.randomUUID(), smelterChest);
+        UUID smelter = UUID.randomUUID();
+        UUID builder = UUID.randomUUID();
+
+        VillageColonyMod.COLONIES.register(colony);
+        VillageColonyMod.WORKERS.register(smelter, colony.id()).assign(ProfessionType.SMELTER);
+        VillageColonyMod.WORKERS.register(builder, colony.id()).assign(ProfessionType.BUILDER);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(smelter, smelterChest));
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(builder, otherChest));
+
+        return new SurfaceSupplySetup(colony, smelter, builder, smelterChest, otherChest);
     }
 
     private static int count(TestContext context, ColonyPos chest, Item item) {

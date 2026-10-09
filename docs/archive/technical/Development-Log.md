@@ -8,6 +8,29 @@
 
 # Village Colony — Development Log
 
+## 2026-10-09 — baú do fundidor recebe clay_ball e ócio segue 15%
+
+O Spark `ZdApFC1pzI` vinha de `villagecolony 0.3.22`. Na janela recente, TPS e MSPT não
+apontaram congelamento global; o log local apontou o problema de fluxo: o fundidor ficou
+75% ocioso e `/vc log` ainda dizia que o ofício procurava `clay_ball` havia 55 minutos,
+enquanto o inventário da colônia já tinha `CLAY_BALL=1` em outro baú.
+
+A causa era o suprimento automático contando todos os baús da colônia antes de olhar o
+baú do ofício. Assim, um único `clay_ball` em qualquer baú encerrava a tentativa e o baú
+do fundidor continuava vazio. `BiomeConstructionSupply.stockFor` agora satisfaz primeiro
+os baús da profissão que precisa do item; só depois cai no comportamento de baú comunitário.
+O `IdleYield` também mudou para a Regra 51: mais de 15% de ócio em duas janelas faz a
+profissão ceder uma pessoa, mantendo 15% exato como limite que não dispara.
+
+TDD: o GameTest novo falhou antes da correção quando havia `clay_ball` em outro baú e
+o SMELTER continuava sem item; depois passou. O unitário do `IdleYield` também falhou
+com o limite antigo de 60% e passou com 15%. Verificação final: `FileSizeRuleTest`,
+`IdleYieldTest`, `./gradlew.bat runGametest --rerun-tasks --no-daemon` com 688/688 e
+`./gradlew.bat build --no-daemon` verdes. O JAR `village-colony-0.3.22.jar` foi copiado
+para `build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods` com SHA-256
+`CFBF5AE0F79AA3A74EC7996EFD4176B4CD7C5D03B6EB06CEE02A24E265AE469E`. Falta validação no
+save real para confirmar o `time_ledger.py` do fundidor.
+
 ## 2026-10-09 — barn_majest fora do rodízio de construções
 
 O Spark `9CJSHC5a77` do save ainda rodava `villagecolony 0.3.21`; por isso o
