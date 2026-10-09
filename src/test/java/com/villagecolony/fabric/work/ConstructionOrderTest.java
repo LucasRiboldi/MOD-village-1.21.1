@@ -81,14 +81,16 @@ class ConstructionOrderTest {
     }
 
     @Test
-    void namedColonyModelsBelongToTheirRequestedProfessions() {
+    void onlyStorageNamedModelBelongsToItsRequestedProfession() {
         ResourceId barn = ResourceId.parse("villagecolony:colony/barn_majest");
         ResourceId storage = ResourceId.parse("villagecolony:colony/storage_majest");
 
-        assertEquals(Optional.of(ProfessionType.SHEPHERD), ColonyModels.professionOf(barn));
+        assertEquals(Optional.empty(), ColonyModels.professionOf(barn));
         assertEquals(Optional.of(ProfessionType.BUILDER), ColonyModels.professionOf(storage));
-        assertEquals(Optional.of(ProfessionType.SHEPHERD), ConstructionOrder.professionOf(barn));
+        assertEquals(Optional.empty(), ConstructionOrder.professionOf(barn));
         assertEquals(Optional.of(ProfessionType.BUILDER), ConstructionOrder.professionOf(storage));
+        assertFalse(HousePlans.isHouse(barn));
+        assertFalse(HousePlans.isHouse(storage));
     }
 
     @Test

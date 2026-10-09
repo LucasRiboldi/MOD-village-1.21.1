@@ -438,15 +438,30 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
                 int opened = SurfaceGatheringWork.run(world, colony);
                 context.assertTrue(opened == 1, "o coletor não abriu a tarefa reservada: " + task.state());
 
-                for (int tick = 0; tick < 120 && !world.getBlockState(dirt).isAir(); tick++) {
+                SurfaceGatheringWork.tick(world);
+                BlockPos selected = WorkTargets.of(villager.getUuid()).orElse(null);
+                context.assertTrue(selected != null,
+                        "a varredura da borda não escolheu nenhuma coluna de terra externa");
+                context.assertTrue(
+                        DirtPatch.in(world, selected, center.getY(), center, sector)
+                                .filter(selected::equals).isPresent(),
+                        "a varredura escolheu terra fora do setor permitido: " + selected);
+                context.assertTrue(
+                        FarthestVillageSector.isInSector(
+                                center, selected, sector, FarthestVillageSector.SOIL_PROTECTED_RADIUS),
+                        "a varredura invadiu o raio protegido ampliado da terra: " + selected);
+                villager.refreshPositionAndAngles(
+                        selected.getX() + 0.5, selected.getY(), selected.getZ() + 2.5, 0.0f, 0.0f);
+
+                for (int tick = 0; tick < 120 && !world.getBlockState(selected).isAir(); tick++) {
                     SurfaceGatheringWork.tick(world);
                 }
 
                 context.assertTrue(world.getBlockState(near).isOf(Blocks.DIRT),
                         "a coleta de terra invadiu o raio protegido ampliado da vila");
                 context.assertTrue(
-                        world.getBlockState(dirt).isAir(),
-                        "o fazendeiro não removeu a terra do setor externo escolhido");
+                        world.getBlockState(selected).isAir(),
+                        "o fazendeiro não removeu a terra escolhida no setor externo");
                 context.assertTrue(
                         villager.getEquippedStack(EquipmentSlot.MAINHAND).isOf(Items.IRON_HOE),
                         "o fazendeiro não estava com a enxada de ferro do mod");

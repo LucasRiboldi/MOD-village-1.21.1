@@ -10,6 +10,7 @@ import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.fabric.integration.ColonyModels;
 import com.villagecolony.fabric.integration.ProfessionChestOverflow;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.VillageStructures;
@@ -465,12 +466,12 @@ public final class HousePlans {
 
     /** Se esta peça é casa de morar, e não cerca, poço ou templo. */
     public static boolean isDwelling(ResourceId id) {
+        if (ColonyModels.isColonyModel(id) && ColonyModels.professionOf(id).isEmpty()) return false;
         for (String other : NON_DWELLING_TYPES) {
             if (id.path().contains(other)) {
                 return false;
             }
         }
-
         return true;
     }
 
@@ -495,5 +496,4 @@ public final class HousePlans {
         return VillageBiomes.paletteAt(world, where)
                 .orElseGet(() -> VillagePalette.ofWood("plains"));
     }
-
 }

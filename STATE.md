@@ -1,6 +1,6 @@
-# STATE — 2026-10-08
+# STATE — 2026-10-09
 
-> **JAR atual: `village-colony-0.3.21.jar` = `A0C87BEE…926FC`** (Regra 52: uma roça por fazendeiro; ver abaixo) em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.22.jar` = `7D69667E…C9C1C5F`** (barn_majest fora do rodízio; ver abaixo) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,25 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 09-10 — barn_majest fora do rodízio de obras (0.3.22 aguarda playtest)
+
+Playtest/Spark `9CJSHC5a77`: o jogo ainda estava em `villagecolony 0.3.21`. TPS 20,00/20,00/20,00
+e MSPT p95 17,30 ms em 1 min / 15,65 ms em 5 min; não indica travamento global. Havia 495 entidades
+no overworld, com 64 itens soltos e 27 aldeões.
+
+Pedido do autor: tirar `barn_majest` da lista de construções. O modelo deixou de ser um modelo
+nomeado de profissão do pastor; `storage_majest` continua como modelo nomeado do construtor.
+O arquivo `barn_majest.nbt` permanece no jar como recurso de estrutura, mas novas obras não devem
+mais escolhê-lo pelo catálogo/rodízio e ele não conta como moradia por inferência de nome.
+
+**Verificado:** `ConstructionOrderTest` focado ok; `./gradlew.bat build --no-daemon` ok;
+`./gradlew.bat runGametest --rerun-tasks --no-daemon` ok, **686/686**. A falha antiga de
+`surfacegatheringgametest.farmergathersdirtoutsidethesoilprotectedradius` era fixture: a varredura
+por setor escolhe uma coluna válida, não necessariamente a primeira terra plantada pelo teste.
+JAR 0.3.22 copiado para `downloads/` e `%APPDATA%/.minecraft/mods`; o JAR 0.3.21 local foi renomeado
+para `.jar.disabled` para evitar carga duplicada. **Pendente:** playtest confirmar que a próxima obra
+não abre `colony/barn_majest`.
 
 ## 🟡 08-10, noite — Regra 52 aplicada (aguarda playtest)
 

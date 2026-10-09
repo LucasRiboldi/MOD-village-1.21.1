@@ -8,6 +8,36 @@
 
 # Village Colony — Development Log
 
+## 2026-10-09 — barn_majest fora do rodízio de construções
+
+O Spark `9CJSHC5a77` do save ainda rodava `villagecolony 0.3.21`; por isso o
+celeiro visto em jogo pertence ao JAR anterior. A amostra manteve TPS 20,00 e
+MSPT p95 abaixo de 18 ms em 1 minuto e 16 ms em 5 minutos; havia 495 entidades
+no overworld, com 64 itens soltos e 27 aldeões. A leitura não aponta
+congelamento global nessa amostra.
+
+Por pedido do autor, `barn_majest` deixou de ser modelo nomeado do pastor em
+`ColonyModels.NAMED_PROFESSION_MODELS`. Com isso ele não entra mais em
+`VillageStructures.buildableFor`, nem recebe profissão em `ConstructionOrder`.
+`HousePlans` também deixou de tratar modelo solto em `colony/` como moradia por
+inferência de nome. `storage_majest` continua como modelo nomeado do construtor.
+O `CATALOGO.md` foi regenerado pelo `scripts/structure_catalog.py`, agora com
+apenas um modelo nomeado de profissão.
+
+Verificação: `ConstructionOrderTest` focado passou, `./gradlew.bat build --no-daemon`
+passou e o GameTest `ColonyModelsGameTest` deixou de falhar. A bateria completa
+`./gradlew.bat runGametest --rerun-tasks --no-daemon` passou com 686/686 depois
+de corrigir a fixture de
+`surfacegatheringgametest.farmergathersdirtoutsidethesoilprotectedradius`: a
+varredura de setor escolhe uma coluna válida de terra, não necessariamente a
+primeira coluna plantada pelo teste.
+
+O JAR `village-colony-0.3.22.jar` foi copiado para `build/libs/`, `downloads/`
+e `%APPDATA%/.minecraft/mods` com SHA-256
+`7D69667E118C19CB056DCA9ACB5155AB45948F04A769C7611E892F8B9C9C1C5F`. O JAR
+local da 0.3.21 foi renomeado para `.jar.disabled` na pasta de mods para evitar
+duas versões carregáveis do mesmo mod.
+
 ## 2026-10-04 — publicação do JAR e fechamento da refatoração Fabric
 
 O commit `43f13978` publicou a remoção dos ciclos entre `event`, `integration`

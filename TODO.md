@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-10-08. Só o que está **aberto**. O histórico até hoje está em
+**Atualizado:** 2026-10-09. Só o que está **aberto**. O histórico até hoje está em
 `docs/archive/technical/TODO-ate-2026-10-07.md` (consultar por `grep`, nunca inteiro).
 Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
@@ -15,9 +15,9 @@ Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
       varrer a vila inteira.
 - [ ] Fechar e abrir o mundo preserva a posse da roça (`WorkMemory`).
 
-## 🔴 Playtest da 0.3.20 (celeiro, pastor, funil)
+## 🔴 Playtest da 0.3.22 / 0.3.20 (celeiro, pastor, funil)
 
-- [ ] Celeiro novo com as paredes no nível da grama (sem vão de um bloco) e sem `STRANDED` na beira dele.
+- [ ] Próxima obra nova no JAR 0.3.22 não deve abrir `colony/barn_majest`; o modelo saiu do rodízio em 09-10.
 - [ ] Pastor tosquia no curral: `sheared` frequente e menos `found no sheep with wool`; SHEPHERD fora da Regra 51.
 - [ ] `stocked minecraft:hopper` depois das faltas, e a obra termina.
 

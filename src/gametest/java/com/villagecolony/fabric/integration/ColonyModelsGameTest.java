@@ -79,16 +79,16 @@ public final class ColonyModelsGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_models", tickLimit = 20)
-    public void namedColonyModelsJoinTheirProfessionConstructionDraw(TestContext context) {
+    public void storageModelJoinsTheBuilderConstructionDrawButBarnDoesNot(TestContext context) {
         ResourceId barn = new ResourceId("villagecolony", "colony/barn_majest");
         ResourceId storage = new ResourceId("villagecolony", "colony/storage_majest");
 
-        context.assertTrue(VillageStructures.buildableFor("plains").contains(barn),
-                "o celeiro não entrou nas obras possíveis");
+        context.assertFalse(VillageStructures.buildableFor("plains").contains(barn),
+                "o celeiro não deve mais entrar nas obras possíveis");
         context.assertTrue(VillageStructures.buildableFor("plains").contains(storage),
                 "o depósito não entrou nas obras possíveis");
-        context.assertTrue(ColonyModels.professionOf(barn).equals(Optional.of(ProfessionType.SHEPHERD)),
-                "o celeiro devia pertencer ao pastor");
+        context.assertTrue(ColonyModels.professionOf(barn).isEmpty(),
+                "o celeiro não deve mais pertencer a uma profissão");
         context.assertTrue(ColonyModels.professionOf(storage).equals(Optional.of(ProfessionType.BUILDER)),
                 "o depósito devia pertencer ao construtor");
         context.assertFalse(HousePlans.isHouse(barn), "o celeiro não pode disputar a vez de moradia");

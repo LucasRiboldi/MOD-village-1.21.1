@@ -24,7 +24,7 @@ OUT = os.path.join(FOLDER, "CATALOGO.md")
 PROFESSIONS = ["MINER", "LUMBERJACK", "MASON", "SMELTER", "CARPENTER", "FARMER", "SHEPHERD", "BUILDER"]
 NAMES = {"MINER": "mineiro", "LUMBERJACK": "lenhador", "MASON": "pedreiro", "SMELTER": "fundidor",
          "CARPENTER": "carpinteiro", "FARMER": "fazendeiro", "SHEPHERD": "pastor", "BUILDER": "construtor"}
-NAMED_PROFESSION_MODELS = {"barn_majest": "SHEPHERD", "storage_majest": "BUILDER"}
+NAMED_PROFESSION_MODELS = {"storage_majest": "BUILDER"}
 
 # Ofício de cada casa do jogo — ConstructionOrder.WORKSHOPS.
 WORKSHOPS = [("FARMER", ["farm"]), ("SHEPHERD", ["shepherd", "animal_pen"]), ("MASON", ["mason"]),

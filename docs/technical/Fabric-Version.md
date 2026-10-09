@@ -224,7 +224,7 @@ minecraft_version=1.21.1
 yarn_mappings=1.21.1+build.3
 loader_version=0.19.3
 fabric_version=0.116.15+1.21.1
-mod_version=0.3.21
+mod_version=0.3.22
 ```
 
 E o wrapper em:
