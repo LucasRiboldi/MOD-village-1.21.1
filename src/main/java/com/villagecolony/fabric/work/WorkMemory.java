@@ -32,6 +32,7 @@ public final class WorkMemory {
         nbt.put("arms", MineClaims.save());
         nbt.put("advance", advance());
         nbt.put("herds", ShepherdHerding.save());
+        nbt.put("farms", FarmOwners.save());
 
         return nbt;
     }
@@ -44,6 +45,7 @@ public final class WorkMemory {
         MineClaims.load(nbt.getCompound("arms"));
         AdvanceStock.restore(turns(nbt.getList("advance", NbtElement.COMPOUND_TYPE)));
         ShepherdHerding.load(nbt.getCompound("herds"));
+        FarmOwners.load(nbt.getCompound("farms"));
     }
 
     private static NbtList advance() {

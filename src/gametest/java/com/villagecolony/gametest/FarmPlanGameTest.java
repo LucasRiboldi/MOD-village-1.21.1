@@ -18,6 +18,7 @@ import com.villagecolony.fabric.integration.SweepPersistence;
 import com.villagecolony.fabric.integration.VillageInventoryObserver;
 import com.villagecolony.fabric.integration.VillageStructures;
 import com.villagecolony.fabric.work.ConstructionDemand;
+import com.villagecolony.fabric.work.ColonyFarms;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.FarmPlans;
 import com.villagecolony.fabric.work.FarmerWork;
@@ -47,6 +48,9 @@ import java.util.UUID;
  * catorze blocos de vila.
  */
 public class FarmPlanGameTest implements FabricGameTest {
+
+    /** A gente dos cenários de rodízio: vinte camas e vinte aldeões. */
+    private static final int POPULATION = 20;
 
     /**
      * O raio do chão que o cenário do impasse calça — folgado o
@@ -237,21 +241,12 @@ public class FarmPlanGameTest implements FabricGameTest {
     }
 
     /**
-     * <b>Uma roça a cada quinze aldeões</b> — decisão do autor,
-     * 2026-09-05: <i>"a quantidade de espaços de plantação deve [ser]
-     * 1/15 avos da quantidade de aldeões"</i>.
-     *
-     * <p><b>O que ela fecha.</b> O pedido de roça vinha do fazendeiro —
-     * <i>varri o raio e não achei campo</i> —, e um pedido assim não tem
-     * teto: a sessão das 21:17 levantou <b>duas roças em quatro
-     * minutos</b>, porque a primeira nasceu longe demais para ele ver e o
-     * pedido nunca se fechava.
-     *
-     * <p>Divisão inteira, que é a frase ao pé da letra: catorze aldeões
-     * não pedem roça nenhuma, quinze pedem a primeira.
+     * <b>Uma roça por fazendeiro</b> — Regra 52 (autor, 2026-10-08): <i>"cada
+     * fazendeiro deve ter uma fazenda"</i>. Era uma a cada vinte aldeões, e a
+     * conta não sabia quantos fazendeiros havia.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farm_quota")
-    public void oneFarmForEveryFifteenVillagers(TestContext context) {
+    public void oneFarmForEveryFarmer(TestContext context) {
         Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(0, 64, 0));
 
         VillageColonyMod.COLONIES.register(colony);
@@ -259,30 +254,38 @@ public class FarmPlanGameTest implements FabricGameTest {
         ColonyFixture owned = ColonyFixture.create().owning(colony);
 
         try {
-            context.assertFalse(
-                    FarmPlans.owedToThePopulation(colony.id()),
-                    "uma vila sem aldeão nenhum pediu roça");
-
-            for (int villager = 0; villager < FarmPlans.VILLAGERS_PER_FARM - 1; villager++) {
+            for (int villager = 0; villager < POPULATION; villager++) {
                 UUID id = UUID.randomUUID();
 
                 VillageColonyMod.WORKERS.register(id, colony.id());
                 owned.owning(id);
             }
 
-            context.assertFalse(
-                    FarmPlans.owedToThePopulation(colony.id()),
-                    "catorze aldeões já pediram roça — a cota é de quinze");
+            context.assertFalse(ColonyFarms.owedToTheFarmers(context.getWorld(), colony),
+                    "vinte aldeões sem fazendeiro pediram roça");
 
-            UUID last = UUID.randomUUID();
+            UUID first = UUID.randomUUID();
+            VillageColonyMod.WORKERS.register(first, colony.id()).assign(ProfessionType.FARMER);
+            owned.owning(first);
 
-            VillageColonyMod.WORKERS.register(last, colony.id());
-            owned.owning(last);
+            context.assertTrue(ColonyFarms.owedToTheFarmers(context.getWorld(), colony),
+                    "um fazendeiro sem roça, e a colônia não pediu a dele");
 
-            context.assertTrue(
-                    FarmPlans.owedToThePopulation(colony.id()),
-                    "quinze aldeões e nenhuma roça, e a colônia não pediu a primeira");
+            VillageColonyMod.BUILDINGS.register(new Building(UUID.randomUUID(), colony.id(),
+                    ResourceId.vanilla("village/plains/houses/plains_small_farm_1"),
+                    new ColonyPos(10, 64, 10), new ColonyPos(18, 66, 22)));
+
+            context.assertFalse(ColonyFarms.owedToTheFarmers(context.getWorld(), colony),
+                    "o fazendeiro tem roça e a colônia pediu outra");
+
+            UUID second = UUID.randomUUID();
+            VillageColonyMod.WORKERS.register(second, colony.id()).assign(ProfessionType.FARMER);
+            owned.owning(second);
+
+            context.assertTrue(ColonyFarms.owedToTheFarmers(context.getWorld(), colony),
+                    "dois fazendeiros e uma roça, e a colônia não pediu a segunda");
         } finally {
+            VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
             owned.cleanUp();
         }
 
@@ -329,17 +332,21 @@ public class FarmPlanGameTest implements FabricGameTest {
 
             owned.owning(builderId);
 
-            for (int villager = 1; villager < FarmPlans.VILLAGERS_PER_FARM; villager++) {
+            for (int villager = 1; villager < POPULATION; villager++) {
                 UUID id = UUID.randomUUID();
 
-                VillageColonyMod.WORKERS.register(id, colony.id());
+                // Um fazendeiro sem roça: a roça só entra no rodízio por ele — Regra 52.
+                var worker = VillageColonyMod.WORKERS.register(id, colony.id());
+                if (villager == 1) {
+                    worker.assign(ProfessionType.FARMER);
+                }
                 owned.owning(id);
             }
 
             // O cenário mede o rodízio, não uma vila sem capacidade de
             // moradia. A observação completa devolve a condição equivalente
             // a vinte camas que o detector já confirmou no mundo.
-            colony.observe(colony.center(), FarmPlans.VILLAGERS_PER_FARM, true);
+            colony.observe(colony.center(), POPULATION, true);
 
             // A vila já ergueu a primeira casa, e ela está <b>de pé no
             // mundo</b> — 2026-09-22.
@@ -469,17 +476,21 @@ public class FarmPlanGameTest implements FabricGameTest {
 
             owned.owning(builderId);
 
-            for (int villager = 1; villager < FarmPlans.VILLAGERS_PER_FARM; villager++) {
+            for (int villager = 1; villager < POPULATION; villager++) {
                 UUID id = UUID.randomUUID();
 
-                VillageColonyMod.WORKERS.register(id, colony.id());
+                // Um fazendeiro sem roça: a roça só entra no rodízio por ele — Regra 52.
+                var worker = VillageColonyMod.WORKERS.register(id, colony.id());
+                if (villager == 1) {
+                    worker.assign(ProfessionType.FARMER);
+                }
                 owned.owning(id);
             }
 
             // Sem esta observação, vinte adultos e zero camas devem abrir
             // uma casa. Este teste precisa da condição oposta para exercitar
             // somente a invariância da observação de inventário.
-            colony.observe(colony.center(), FarmPlans.VILLAGERS_PER_FARM, true);
+            colony.observe(colony.center(), POPULATION, true);
 
             ResourceId houseId =
                     ResourceId.vanilla("village/plains/houses/plains_small_house_1");
@@ -564,10 +575,9 @@ public class FarmPlanGameTest implements FabricGameTest {
      * construção deve ser uma casa, depois variantes mais úteis para a
      * vila"</i>.
      *
-     * <p>Sem a guarda a roça passava na frente: a cota é por população —
-     * um campo a cada {@code VILLAGERS_PER_FARM} aldeões —, e uma vila
-     * que nasce com gente bastante abria a roça <b>antes da primeira
-     * casa</b>, gastando a obra mais cara de conseguir no que não abriga
+     * <p>Sem a guarda a roça passava na frente: a cota de roça (uma por
+     * fazendeiro, Regra 52) abre cedo, e uma vila que nasce com fazendeiro
+     * abria a roça <b>antes da primeira casa</b>, gastando a obra mais cara de conseguir no que não abriga
      * ninguém.
      *
      * <p>É o cenário irmão do {@code theHouseGoesUpAfterTheFarmStepsAside},
@@ -611,18 +621,22 @@ public class FarmPlanGameTest implements FabricGameTest {
 
             owned.owning(builderId);
 
-            for (int villager = 1; villager < FarmPlans.VILLAGERS_PER_FARM; villager++) {
+            for (int villager = 1; villager < POPULATION; villager++) {
                 UUID id = UUID.randomUUID();
 
                 VillageColonyMod.WORKERS.register(id, colony.id());
                 owned.owning(id);
             }
 
-            // A cota de roça ESTÁ aberta, e é isso que dá valor ao
-            // cenário: sem ela a casa sairia por falta de alternativa, e
-            // o teste ficaria verde sem medir a regra.
+            // A cota de roça ESTÁ aberta (um fazendeiro sem roça), e é isso
+            // que dá valor ao cenário: sem ela a casa sairia por falta de
+            // alternativa, e o teste ficaria verde sem medir a regra.
+            UUID farmerId = UUID.randomUUID();
+            VillageColonyMod.WORKERS.register(farmerId, colony.id()).assign(ProfessionType.FARMER);
+            owned.owning(farmerId);
+
             context.assertTrue(
-                    FarmPlans.owedToThePopulation(colony.id()),
+                    ColonyFarms.owedToTheFarmers(context.getWorld(), colony),
                     "o cenário não pediu roça — sem isso a casa sai por falta de"
                             + " alternativa e a regra não é medida");
 

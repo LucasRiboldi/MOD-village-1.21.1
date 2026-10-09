@@ -1,10 +1,8 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.type.ServerMemory;
-import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
-import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintKind;
 import com.villagecolony.core.type.ResourceId;
@@ -61,56 +59,13 @@ public final class FarmPlans {
     /** As plantas lidas, por id. Ler um template não é barato. */
     private static final Map<ResourceId, Optional<Blueprint>> READ = new HashMap<>();
 
-    /**
-     * Quantos aldeões cada roça alimenta — decisão do autor, 2026-09-05,
-     * <b>revista por ele em 2026-09-10</b>: <i>"a vila deve ter uma
-     * plantacao a cada 20 aldoes na vila"</i>. Eram quinze, e a sessão
-     * das 22:57 mostrou lavoura demais para o tamanho da vila.
-     *
-     * <p>O pedido original de 09-05 era <i>"1/15 avos da quantidade de
-     * aldeões"</i>; a forma da regra não mudou, só o divisor.
-     *
-     * <p><b>O que ela substitui é o defeito da véspera.</b> O pedido de
-     * roça vinha do fazendeiro — <i>varri o raio e não achei campo</i> —,
-     * e um pedido assim não tem teto: enquanto ele não achasse lavoura a
-     * colônia levantava roça, e a sessão das 21:17 mostrou <b>duas em
-     * quatro minutos</b>, a caminho de encher o mapa. Uma cota fecha
-     * isso por construção — quinze aldeões, uma roça, e ponto.
-     *
-     * <p>E ela é a medida certa por outra razão: roça existe para
-     * alimentar gente, então quem manda no tamanho da lavoura é o tamanho
-     * da vila, e não o humor da varredura do fazendeiro.
+    /*
+     * Quantas roças a vila levanta: uma por fazendeiro, contando as que a vila
+     * gerada já tinha — Regra 52 (autor, 2026-10-08). Era uma a cada vinte
+     * aldeões, e a conta não sabia quantos fazendeiros havia. Ver ColonyFarms.
      */
-    public static final int VILLAGERS_PER_FARM = 20;
 
     private FarmPlans() {
-    }
-
-    /**
-     * Se esta colônia ainda deve uma roça à própria população.
-     *
-     * <p>Divisão inteira, que é a frase do autor ao pé da letra:
-     * dezenove aldeões não pedem roça nenhuma, vinte pedem a primeira, e
-     * a segunda só com quarenta.
-     *
-     * <p><b>Conta as roças que a colônia levantou</b>, e não as que a
-     * vila já tinha. É o que o {@code BuildingRegistry} sabe responder
-     * sem varrer o mundo — e erra para o lado seguro: uma vila que nasceu
-     * com roça ganha um pouco mais de lavoura do que a conta pede, e
-     * lavoura a mais é comida a mais.
-     */
-    public static boolean owedToThePopulation(UUID colonyId) {
-        int villagers = VillageColonyMod.WORKERS.countOfColony(colonyId);
-
-        int built = 0;
-
-        for (Building building : VillageColonyMod.BUILDINGS.ofColony(colonyId)) {
-            if (isFarm(building.blueprint())) {
-                built++;
-            }
-        }
-
-        return built < villagers / VILLAGERS_PER_FARM;
     }
 
     /**

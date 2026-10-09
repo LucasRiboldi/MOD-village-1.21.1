@@ -44,7 +44,7 @@ public class HouseRotationGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "house_rotation_beds")
     public void missingBedsOpenAHouseEvenWhenTheTurnIsAnotherType(TestContext context) {
-        ResourceId opened = openAfterAHouse(context, BEDS);
+        ResourceId opened = openAfterAHouse(context, BEDS, true);
 
         context.assertTrue(
                 HousePlans.isHouse(opened),
@@ -60,10 +60,10 @@ public class HouseRotationGameTest implements FabricGameTest {
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "house_rotation_trade")
     public void theTurnAfterAHouseGoesToATradesWorkshop(TestContext context) {
-        ResourceId opened = openAfterAHouse(context, 40);
+        ResourceId opened = openAfterAHouse(context, 40, true);
 
-        // A roça é a oficina do primeiro ofício da ordem (o fazendeiro), e
-        // nenhuma obra da colônia é roça: é ela que a vez tem de abrir.
+        // A roça é a oficina do primeiro ofício da ordem (o fazendeiro), e o
+        // fazendeiro não tem roça (Regra 52): é ela que a vez tem de abrir.
         context.assertTrue(
                 opened.path().contains("farm"),
                 "a vez era da oficina do fazendeiro, e a colônia abriu " + opened);
@@ -71,8 +71,20 @@ public class HouseRotationGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Sem fazendeiro, ninguém deve roça e a vez vai para outra oficina — Regra 52. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "house_rotation_trade")
+    public void withoutAFarmerTheTurnSkipsTheFarm(TestContext context) {
+        ResourceId opened = openAfterAHouse(context, 40, false);
+
+        context.assertFalse(
+                opened.path().contains("farm"),
+                "nenhum fazendeiro, e a colônia abriu a roça " + opened);
+
+        context.complete();
+    }
+
     /** Uma casa de pé, a vez é de outro tipo; devolve o que a colônia abriu. */
-    private static ResourceId openAfterAHouse(TestContext context, int beds) {
+    private static ResourceId openAfterAHouse(TestContext context, int beds, boolean farmer) {
         BlockPos center = new BlockPos(16, 1, 16);
 
         for (int dx = -SCAN_RADIUS; dx <= SCAN_RADIUS; dx++) {
@@ -109,7 +121,11 @@ public class HouseRotationGameTest implements FabricGameTest {
             for (int villager = 1; villager < ADULTS; villager++) {
                 UUID id = UUID.randomUUID();
 
-                VillageColonyMod.WORKERS.register(id, colony.id());
+                // Um fazendeiro sem roça: a roça só entra no rodízio por ele — Regra 52.
+                var worker = VillageColonyMod.WORKERS.register(id, colony.id());
+                if (farmer && villager == 1) {
+                    worker.assign(ProfessionType.FARMER);
+                }
                 owned.owning(id);
             }
 

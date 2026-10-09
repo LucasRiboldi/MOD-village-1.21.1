@@ -59,6 +59,11 @@ final class FarmerChores {
 
         UUID colonyId = job.task.colonyId();
 
+        // A roça dele primeiro — Regra 52. Sem trabalho nela, ajuda na vila.
+        if (fromOwnFarm(world, workerId, job, storage)) {
+            return;
+        }
+
         // <b>Volta inteira sem nada compra silêncio</b> — P1.5, 2026-09-11.
         // O motivo já foi dito quando a volta fechou; aqui não se fala de
         // novo, senão o descanso vira a enxurrada que ele evita. Ver
@@ -140,6 +145,35 @@ final class FarmerChores {
         // ele mede: andei demais até ESTE alvo.
 
         WorkTargets.set(workerId, job.target);
+    }
+
+    /** O trabalho na roça deste fazendeiro, se ele tem roça e ela tem trabalho. */
+    private static boolean fromOwnFarm(
+            ServerWorld world, UUID workerId, Job job, WorkerStorage storage) {
+
+        if (world.getTime() < job.ownFarmQuietUntil) {
+            return false;
+        }
+
+        Optional<OwnFarm.Found> found = FarmOwners.farmOf(workerId).flatMap(farm -> OwnFarm.work(
+                world, farm, ChestWithdrawer.seedIn(world, storage.chestPosition()).isPresent()));
+
+        if (found.isEmpty()) {
+            job.ownFarmQuietUntil = world.getTime() + OwnFarm.QUIET_TICKS;
+
+            return false;
+        }
+
+        FieldRest.thereIsWorkAgain(job.task.colonyId());
+        IdleLog.clear(job.task.colonyId(), FarmerWork.SUBJECT);
+
+        job.target = found.get().at();
+        job.chore = found.get().chore();
+        job.stalled = 0;
+
+        WorkTargets.set(workerId, job.target);
+
+        return true;
     }
 
     /**

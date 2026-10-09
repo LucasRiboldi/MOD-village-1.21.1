@@ -48,6 +48,7 @@
       "com.villagecolony.gametest.VolumeSampleGameTest",
       "com.villagecolony.gametest.FarmerGameTest",
       "com.villagecolony.gametest.FarmPlanGameTest",
+      "com.villagecolony.gametest.OwnFarmGameTest",
       "com.villagecolony.gametest.HouseRotationGameTest",
       "com.villagecolony.gametest.StrandedEscapeGameTest",
       "com.villagecolony.gametest.VillageMealsGameTest",

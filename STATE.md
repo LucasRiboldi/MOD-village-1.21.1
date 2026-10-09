@@ -1,6 +1,6 @@
 # STATE — 2026-10-08
 
-> **JAR atual: `village-colony-0.3.20.jar` = `6D338B38…D199`** (celeiro no chão, pastor acha o curral, funil no baú; ver abaixo) em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.21.jar` = `A0C87BEE…926FC`** (Regra 52: uma roça por fazendeiro; ver abaixo) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,17 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 08-10, noite — Regra 52 aplicada (aguarda playtest)
+
+Autor: cada fazendeiro deve ter uma roça. A conta de roça deixou de ser por população e passou a
+ser uma por fazendeiro, contando roças Vanilla da vila, roças construídas e roça em obra para não
+abrir duplicata. Roças de pé recebem dono (`FarmOwners`) e o fazendeiro trabalha a própria roça
+primeiro; sem trabalho nela, volta ao fluxo normal da vila. A posse entra em `WorkMemory`.
+
+**Verificado:** `./gradlew.bat clean build --no-daemon` ok; `FarmOwnersTest` focado ok;
+`./gradlew.bat runGametest --rerun-tasks --no-daemon` **686/686** com `villagecolony 0.3.21`.
+JAR copiado para `downloads/` e `%APPDATA%/.minecraft/mods`. **Não visto em jogo.**
 
 ## 🔴 08-10, 18:19–19:10 — playtest da 0.3.19 (0.3.20)
 

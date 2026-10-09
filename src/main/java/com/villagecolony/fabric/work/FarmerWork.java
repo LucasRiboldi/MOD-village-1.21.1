@@ -125,6 +125,9 @@ public final class FarmerWork {
 
         int stalled;
 
+        /** Até quando a roça dele fica sem ser relida — {@link OwnFarm#QUIET_TICKS}. */
+        long ownFarmQuietUntil;
+
         /**
          * Se ele saiu do lugar, e há quanto tempo não sai — 2026-09-03.
          *
@@ -178,6 +181,9 @@ public final class FarmerWork {
      */
     public static int run(ServerWorld world, Colony colony) {
         dropClosedJobs();
+
+        // Cada fazendeiro com a sua roça — Regra 52.
+        FarmOwners.assign(world, colony);
 
         int working = 0;
 

@@ -359,6 +359,10 @@ public final class HousePlans {
         Map<String, List<Blueprint>> byType = new LinkedHashMap<>();
         boolean farmPostponed = FarmPlans.postponed(colony.id(), world.getTime());
 
+        // Uma roça por fazendeiro, contando as da vila — Regra 52. Sem fazendeiro
+        // sem roça, a roça sai do rodízio; com, ela vem antes das outras.
+        boolean farmOwed = ColonyFarms.owedToTheFarmers(world, colony);
+
         // A lâmpada Vanilla fica na raiz de `village/<style>/`, fora de
         // `houses/`; as demais oficinas e roças continuam na pasta de lotes.
         for (ResourceId id : VillageStructures.buildableFor(style)) {
@@ -366,7 +370,7 @@ public final class HousePlans {
 
             if ("house".equals(type)
                     || type.equals(previousType)
-                    || ("farm".equals(type) && farmPostponed)) {
+                    || ("farm".equals(type) && (farmPostponed || !farmOwed))) {
                 continue;
             }
 
@@ -389,8 +393,10 @@ public final class HousePlans {
         byType.forEach((type, plans) -> professionOfType.put(
                 type, ConstructionOrder.professionOf(plans.get(0).id())));
 
-        Optional<String> chosen = ConstructionOrder.nextType(
-                buildings, byType.keySet(), professionOfType, HousePlans::constructionType);
+        Optional<String> chosen = farmOwed && byType.containsKey("farm")
+                ? Optional.of("farm")
+                : ConstructionOrder.nextType(
+                        buildings, byType.keySet(), professionOfType, HousePlans::constructionType);
 
         if (chosen.isPresent()) {
             List<Blueprint> plans = byType.get(chosen.get());

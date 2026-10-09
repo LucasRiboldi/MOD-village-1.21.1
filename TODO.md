@@ -6,6 +6,15 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🟡 Playtest da 0.3.21 (Regra 52: roça por fazendeiro)
+
+- [ ] Com dois fazendeiros, a vila mantém ou constrói duas roças; com uma roça só, abre outra antes
+      da próxima oficina não prioritária.
+- [ ] Roça Vanilla já existente conta como roça da colônia e recebe dono.
+- [ ] Cada fazendeiro prioriza a própria roça: colhe trigo maduro ou semeia canteiro vazio antes de
+      varrer a vila inteira.
+- [ ] Fechar e abrir o mundo preserva a posse da roça (`WorkMemory`).
+
 ## 🔴 Playtest da 0.3.20 (celeiro, pastor, funil)
 
 - [ ] Celeiro novo com as paredes no nível da grama (sem vão de um bloco) e sem `STRANDED` na beira dele.

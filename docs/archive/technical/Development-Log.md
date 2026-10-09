@@ -10715,3 +10715,33 @@ falhas e zero erros; `git diff --check` não encontrou erro de espaço. O build
 final também compilou os GameTests, e a rodada final de
 `./gradlew.bat runGametest --rerun-tasks --no-daemon` passou em 585/585. Não
 houve playtest no save nesta sessão.
+
+### 2026-10-08 - Regra 52: uma roça por fazendeiro
+
+A regra de abrir roça por população foi substituída pela regra do autor: cada
+fazendeiro tem uma roça. `ColonyFarms` conta, juntas, as roças Vanilla da vila,
+as roças já construídas pela colônia e a roça em obra, para impedir duplicata
+enquanto a construção ainda está aberta. `VillageFarms` lê as peças de vila por
+estrutura carregada, sem forçar chunk novo, e usa a planta da peça para contar
+somente roças.
+
+`FarmOwners` entrega uma roça de pé para cada fazendeiro, mantendo o dono
+enquanto o ofício e a roça sobrevivem, e grava essa posse em `WorkMemory`. No
+ciclo do fazendeiro, a própria roça vem antes da varredura comum: trigo maduro
+é colhido e canteiro vazio é semeado se há semente no baú; sem trabalho nela,
+o fazendeiro volta a ajudar a vila normalmente.
+
+Cobertura: os testes unitários cobrem a conta da Regra 52, pareamento por baú,
+manutenção do dono antigo, liberação de roça removida e round-trip NBT da posse.
+Os GameTests cobrem a troca da cota, a roça entrando no rodízio só quando há
+fazendeiro, a roça Vanilla lida pela peça de estrutura e o fazendeiro colhendo
+a própria roça fora da varredura curta da vila. Verificação: `./gradlew.bat
+build`, teste focado de `FarmOwnersTest` e `./gradlew.bat runGametest
+--rerun-tasks --no-daemon` passaram; a rodada completa fechou em **686/686
+GameTests**. Falta playtest no save para observar a posse e a retomada após
+fechar e abrir o mundo.
+
+Publicação local: versão elevada para `0.3.21`; `village-colony-0.3.21.jar`
+gerado em `build/libs/`, copiado para `downloads/` e instalado em
+`%APPDATA%/.minecraft/mods`. SHA-256 das três cópias:
+`A0C87BEEDAC7927CA4BC2C61F87B7E58F7FB540A562224AEC8DF24E0F58926FC`.
