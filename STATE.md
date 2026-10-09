@@ -1,6 +1,6 @@
 # STATE — 2026-10-09
 
-> **JAR atual: `village-colony-0.3.22.jar` = `CFBF5AE0…65AE469E`** (baú do fundidor e Regra 51 do fundidor; ver abaixo) em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.23.jar` = `8316B8764D64E0A96B641FAD168155F7555AC79D148F23BB9E29A6E8276F6EB6`** (retomada bloqueia `barn_majest` aposentado; argila pede lote completo de receita) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,26 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 09-10 — Spark YqPmvdbbpZ: barn pendente e argila insuficiente (0.3.23 aguarda playtest)
+
+Spark/log `YqPmvdbbpZ`: TPS sustentado perto de 20 e MSPT médio baixo, sem congelamento global.
+O log local mostrou gargalos de fluxo: 32 tentativas de construtor sem alcançar bloco, 6 ciclos acima
+de um tique, SMELTER com 62% de ócio e a obra retomando `villagecolony:colony/barn_majest` salva
+mesmo depois de ele sair das possibilidades novas.
+
+Correção: `ConstructionResume` agora descarta modelo de colônia sem profissão antes de reabrir a obra,
+mesmo se já houver blocos de pé. A divisão de falta em `ColonyCycle` passou a arredondar para cima:
+4 `clay_ball` com 3 fundidores abre tarefas de 2, cobrindo a receita inteira em vez de abastecer só
+1 bola e deixar o fundidor parado.
+
+**Verificado:** o unitário novo falhou antes com tarefa de 1 e passou depois; o GameTest novo falhou
+antes porque `barn_majest` reabria e passou depois. `./gradlew.bat runGametest --rerun-tasks --no-daemon`
+ok, **689/689**. `./gradlew.bat build --no-daemon` ok; JAR 0.3.23 copiado para `downloads/` e
+`%APPDATA%/.minecraft/mods`, com 0.3.22 renomeado para `.jar.disabled`, SHA-256
+`8316B8764D64E0A96B641FAD168155F7555AC79D148F23BB9E29A6E8276F6EB6`. **Pendente:** playtest no save real
+confirmar ausência de `barn_majest` retomado, `CLAY_BALL>=4` no baú do SMELTER e `time_ledger.py`
+com SMELTER fora da Regra 51.
 
 ## 🟡 09-10 — clay_ball no baú do fundidor e limite de ócio de 15% (0.3.22 aguarda playtest)
 

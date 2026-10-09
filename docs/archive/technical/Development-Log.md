@@ -8,6 +8,33 @@
 
 # Village Colony — Development Log
 
+## 2026-10-09 — retomada ignora barn_majest aposentado e argila cobre receita
+
+O Spark `YqPmvdbbpZ` não indicou congelamento sustentado: TPS perto de 20 e MSPT médio baixo. O log
+local apontou fluxo ruim em vez de queda global: 32 eventos de construtor tentando alcançar bloco,
+6 ciclos acima de um tique, SMELTER 62% ocioso e retomada de `villagecolony:colony/barn_majest`
+salvo no mundo. O mesmo trecho mostrou `CLAY_BALL=1`, `CLAY=3` e a cadeia de fabricação dizendo
+que `minecraft:clay` precisava de 4 `minecraft:clay_ball` e só tinha 1.
+
+A causa do fundidor era a divisão inteira em `ColonyCycle.requestMissing`: uma falta de 4 bolas
+repartida por 3 fundidores virava três tarefas de 1. O fallback então estocava exatamente 1 bola
+no baú do ofício, quantidade insuficiente para a receita de argila. A divisão agora arredonda para
+cima, de modo que as tarefas abertas cobrem a falta inteira mesmo quando o número de trabalhadores
+não divide a receita.
+
+A causa do barn era outra: ele saiu do catálogo novo, mas `ConstructionResume` reconstruía projeto
+salvo direto pelo id da planta e protegia qualquer obra com bloco de pé. A retomada agora descarta
+modelo de colônia sem profissão antes de reabrir o projeto; isso bloqueia `colony/barn_majest`
+salvo sem depender de zero blocos no mundo.
+
+TDD: `ColonyCycleTest.aSmallSurfaceDeficitIsRoundedUpAcrossWorkers` falhou antes porque as tarefas
+saíam com quantidade 1 e passou depois com quantidade 2. O GameTest
+`ConstructionResumeGameTest.aSavedRetiredColonyModelIsDroppedEvenWhenItHasStandingBlocks` falhou
+antes porque o barn reabria, e depois a bateria completa passou com 689/689 em
+`./gradlew.bat runGametest --rerun-tasks --no-daemon`. Falta o playtest do autor confirmar no save
+real que o pending de barn cai, que o baú do SMELTER recebe lote suficiente de `clay_ball` e que o
+SMELTER sai da Regra 51.
+
 ## 2026-10-09 — baú do fundidor recebe clay_ball e ócio segue 15%
 
 O Spark `ZdApFC1pzI` vinha de `villagecolony 0.3.22`. Na janela recente, TPS e MSPT não

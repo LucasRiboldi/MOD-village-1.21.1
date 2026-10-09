@@ -56,6 +56,9 @@ public class ConstructionResumeGameTest implements FabricGameTest {
             com.villagecolony.core.type.ResourceId.vanilla(
                     "village/plains/houses/plains_small_house_2");
 
+    private static final com.villagecolony.core.type.ResourceId BARN_MAJEST =
+            new com.villagecolony.core.type.ResourceId("villagecolony", "colony/barn_majest");
+
     /** Alto o bastante para o projeto cair sobre puro ar. */
     private static final BlockPos ORIGIN = new BlockPos(1, 4, 1);
 
@@ -170,6 +173,62 @@ public class ConstructionResumeGameTest implements FabricGameTest {
             context.assertTrue(
                     VillageColonyMod.CONSTRUCTIONS.pendingOf(colony.id()).isEmpty(),
                     "a obra de estrutura inexistente continua tentando renascer");
+        } finally {
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Planta de colônia aposentada não volta pelo save.
+     *
+     * <p>O {@code barn_majest} saiu da lista de possibilidades: ele já não é
+     * casa de profissão nem alvo de moradia. No save real de 2026-10-09 ele
+     * continuou sendo retomado porque já tinha blocos de pé, bypassando o
+     * catálogo novo e segurando os construtores numa obra removida.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "resume_retired_model")
+    public void aSavedRetiredColonyModelIsDroppedEvenWhenItHasStandingBlocks(TestContext context) {
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ORIGIN));
+        Colony colony = Colony.create(UUID.randomUUID(), origin);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        Blueprint barn = PlanPlacement.blueprintOf(context.getWorld(), colony.id(), BARN_MAJEST, origin)
+                .orElseThrow(() -> new AssertionError("o jogo não devolveu o barn_majest"));
+
+        BlueprintBlock first = barn.blocks().get(0);
+        Block material = MinecraftTypeAdapter.toBlock(first.block())
+                .orElseThrow(() -> new AssertionError("bloco desconhecido: " + first.block()));
+        ColonyPos where = new ColonyPos(
+                origin.x() + first.offset().x(),
+                origin.y() + first.offset().y(),
+                origin.z() + first.offset().z());
+
+        context.getWorld().setBlockState(
+                MinecraftTypeAdapter.toBlockPos(where), material.getDefaultState());
+
+        VillageColonyMod.CONSTRUCTIONS.registerPending(new ConstructionService.Pending(
+                UUID.randomUUID(),
+                colony.id(),
+                BARN_MAJEST,
+                origin,
+                ConstructionState.BUILDING));
+
+        ConstructionPlanner.plan(context.getWorld(), colony);
+
+        try {
+            context.assertTrue(
+                    VillageColonyMod.CONSTRUCTIONS.pendingOf(colony.id()).isEmpty(),
+                    "o barn_majest aposentado continuou pendente");
+            context.assertTrue(
+                    VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
+                            .map(open -> !open.blueprint().id().equals(BARN_MAJEST))
+                            .orElse(true),
+                    "o barn_majest aposentado voltou a abrir");
         } finally {
             owned.cleanUp();
         }

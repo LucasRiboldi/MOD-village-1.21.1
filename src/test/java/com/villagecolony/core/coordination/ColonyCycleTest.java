@@ -57,6 +57,10 @@ class ColonyCycleTest {
         workers.register(UUID.randomUUID(), COLONY).assign(ProfessionType.FARMER);
     }
 
+    private void smelter() {
+        workers.register(UUID.randomUUID(), COLONY).assign(ProfessionType.SMELTER);
+    }
+
     private static ResourceTally owning(int logs) {
         return ResourceTally.of(Map.of(ResourceType.OAK_LOG, logs));
     }
@@ -391,6 +395,33 @@ class ColonyCycleTest {
 
         for (Task task : tasks.ofColony(COLONY)) {
             assertEquals(30, task.amount(), "esperava metade dos 60 que faltam");
+        }
+    }
+
+    /**
+     * A divisão da falta não pode arredondar para baixo.
+     *
+     * <p>Playtest de 2026-10-09: a obra precisava fabricar argila, a receita
+     * exigia quatro bolas, mas três fundidores abriram tarefas de uma só bola.
+     * O fallback colocou uma bola no baú do fundidor, {@code makeWhatIsMissing}
+     * voltou a dizer "precisa de 4 e tem 1", e o fundidor passou mais de 15%
+     * do tempo ocioso.
+     */
+    @Test
+    void aSmallSurfaceDeficitIsRoundedUpAcrossWorkers() {
+        smelter();
+        smelter();
+        smelter();
+
+        ColonyCycle.run(
+                COLONY,
+                ResourceTally.empty(),
+                Map.of(ResourceType.CLAY_BALL, 4),
+                tasks,
+                workers);
+
+        for (Task task : tasks.ofColony(COLONY)) {
+            assertEquals(2, task.amount(), "quatro bolas em tres maos precisam cobrir a receita inteira");
         }
     }
 

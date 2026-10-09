@@ -230,12 +230,11 @@ public final class ColonyCycle {
      * <p>E não é um por ciclo: uma colônia com falta permanente
      * acumularia uma tarefa por ciclo até a fila crescer sem limite.
      *
-     * <p>A quantidade é a falta repartida entre os pedidos abertos. É uma
-     * divisão de fachada e vale dizer por quê: quem de fato encerra o
-     * trabalho é o espaço no baú <em>daquele</em> trabalhador, conferido
-     * a cada árvore por {@code LumberjackWork}. O número na tarefa serve
-     * para o log e para o dia em que houver recurso cuja coleta não passe
-     * por baú próprio.
+     * <p>A quantidade é a falta repartida entre os pedidos abertos, com
+     * teto para cima. A sobra é menor que uma mão de trabalho, e faltar
+     * uma unidade é pior: em 2026-10-09 a argila da obra precisava de 4
+     * bolas, três fundidores abriram pedidos de 1 por arredondamento para
+     * baixo, e o fallback encheu só um quarto da receita.
      *
      * <p>Um pedido já aberto não é reescrito quando a falta cresce —
      * mexer no alvo de uma tarefa que alguém pode estar executando é
@@ -283,7 +282,7 @@ public final class ColonyCycle {
             }
 
             int open = countOpenRequestsFor(colonyId, resource, tasks);
-            int share = Math.max(1, entry.getValue() / hands);
+            int share = Math.max(1, (entry.getValue() + hands - 1) / hands);
             int workDeficit = Math.max(0,
                     constructionMaterials.getOrDefault(resource, 0) - owned.amountOf(resource));
             int constructionHands = Math.min(hands, (workDeficit + share - 1) / share);
