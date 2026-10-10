@@ -37,6 +37,17 @@ primeiro bloco não tem ponto físico imediato; rodar depois:
       animal na corda continua sendo levado à cerca.
 - [ ] Pastor trazendo animal solto até a cerca perto da cama; ovelha solta também procria.
 
+## 🟠 Fluxo físico de materiais da obra
+
+- [ ] Conectar `PHYSICAL_BLOCK` à demanda priorizada de mineiro/lenhador e à entrega no baú que
+      atende a obra; até agora a rota impede o fallback, mas ainda não cria a tarefa de coleta.
+- [ ] Conciliar demanda da obra, reserva de tarefa, estoque em baú e entrega para que uma reserva
+      sem retirada não impeça outra profissão de atender a peça.
+- [ ] Remover o ciclo de reserva/liberação do fundidor quando faltam insumo ou combustível, mantendo
+      alternativa de construção produtiva enquanto espera.
+- [ ] Registrar origem da peça colocada (`STOCK`, entrega, produção, fallback) e comparar o próximo
+      playtest com os 334 abastecimentos instantâneos observados na sessão anterior.
+
 ## 🟠 Erros abertos
 
 - [ ] **KF-002** (aldeão de coleta some no tique 1): não reapareceu em ~27 baterias de 07-10.

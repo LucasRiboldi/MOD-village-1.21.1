@@ -181,6 +181,21 @@ public enum TreeSpecies {
         return Optional.empty();
     }
 
+    /** A espécie da copa, quando a folha pertence a uma árvore conhecida. */
+    public static Optional<TreeSpecies> ofLeaves(BlockState state) {
+        if (state == null) {
+            return Optional.empty();
+        }
+
+        for (TreeSpecies species : values()) {
+            if (state.isOf(species.leaves)) {
+                return Optional.of(species);
+            }
+        }
+
+        return Optional.empty();
+    }
+
     /** Se este bloco é tronco de alguma árvore conhecida. */
     public static boolean isLog(BlockState state) {
         return ofLog(state).isPresent();

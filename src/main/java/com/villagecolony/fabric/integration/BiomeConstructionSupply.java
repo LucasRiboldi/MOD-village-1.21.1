@@ -9,9 +9,13 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.Biome;
@@ -376,16 +380,8 @@ public final class BiomeConstructionSupply {
             return false;
         }
 
-        // Corante, linha, pó de osso e drop de bicho sempre têm rota: eles
-        // aparecem no baú — 2026-09-30, ver DropIngredients.
-        if (DropIngredients.isAutomatic(item)) {
-            return true;
-        }
-
         try {
-            Optional<ResourceType> resource = MinecraftTypeAdapter.toResourceType(item);
-
-            if (resource.isPresent() && isDirectBiomeResource(biome, resource.get(), sandNearWater)) {
+            if (directSourceInBiome(biome, item, sandNearWater).isPresent()) {
                 return true;
             }
 
@@ -418,9 +414,43 @@ public final class BiomeConstructionSupply {
             return Optional.of(SupplySource.AUTOMATIC_DROP);
         }
 
-        return MinecraftTypeAdapter.toResourceType(item)
-                .filter(resource -> isDirectBiomeResource(biome, resource, sandNearWater))
-                .map(resource -> SupplySource.BIOME_RESOURCE);
+        Optional<ResourceType> resource = MinecraftTypeAdapter.toResourceType(item);
+        if (resource.filter(type -> isDirectBiomeResource(biome, type, sandNearWater)).isPresent()) {
+            return Optional.of(SupplySource.BIOME_RESOURCE);
+        }
+
+        // Recurso conhecido mantém a política específica da profissão. Por
+        // exemplo, areia fora de água não vira rota só por ser um bloco físico.
+        if (resource.isPresent()) {
+            return Optional.empty();
+        }
+
+        return isPhysicalConstructionBlock(biome, item)
+                ? Optional.of(SupplySource.PHYSICAL_BLOCK)
+                : Optional.empty();
+    }
+
+    /**
+     * Blocos naturais que uma profissão pode buscar mesmo sem caber no
+     * catálogo {@link ResourceType}. A espécie da folha continua limitada ao
+     * bosque que a vila mantém: uma rota só existe quando ela é alcançável.
+     */
+    private static boolean isPhysicalConstructionBlock(RegistryKey<Biome> biome, Item item) {
+        BlockState state = Block.getBlockFromItem(item).getDefaultState();
+
+        if (state.isIn(BlockTags.DIRT)
+                || state.isIn(BlockTags.SAND)
+                || state.isIn(BlockTags.BASE_STONE_OVERWORLD)
+                || state.isOf(Blocks.GRAVEL)
+                || state.isOf(Blocks.CLAY)
+                || state.isOf(Blocks.CALCITE)) {
+            return true;
+        }
+
+        return TreeSpecies.ofLeaves(state)
+                .flatMap(species -> VillageBiomes.forestSpeciesFor(biome)
+                        .filter(forest -> forest.contains(species)))
+                .isPresent();
     }
 
     private static boolean isDirectBiomeResource(

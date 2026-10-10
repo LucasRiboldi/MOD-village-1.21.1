@@ -120,6 +120,27 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * Calcita e folhas existem fisicamente no mundo, embora não tenham um
+     * {@code ResourceType}. A obra deve deixá-las para a coleta antes de
+     * considerar o abastecimento terminal (ADR-022).
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
+    public void unmappedNaturalBlocksKeepAPhysicalRouteBeforeFallback(TestContext context) {
+        Setup calcite = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.CALCITE);
+        Setup leaves = setUp(context, context.getAbsolutePos(new BlockPos(8, 2, 2)), Items.OAK_LEAVES);
+
+        try {
+            assertPhysicalRouteWithoutFallback(context, calcite, Items.CALCITE);
+            assertPhysicalRouteWithoutFallback(context, leaves, Items.OAK_LEAVES);
+        } finally {
+            calcite.cleanUp();
+            leaves.cleanUp();
+        }
+
+        context.complete();
+    }
+
     /** Longe das praias das outras arenas: sem areia, o vidro aparece para a vidraça. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
     public void theGlassForAPaneAppearsInTheCarpenterChestWithoutABeach(TestContext context) {
@@ -244,5 +265,21 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
 
     private static int count(TestContext context, ColonyPos chest, Item item) {
         return ColonyChests.countIn(context.getWorld(), List.of(chest), item);
+    }
+
+    private static void assertPhysicalRouteWithoutFallback(TestContext context, Setup setup, Item item) {
+        SupplyRoute route = BiomeConstructionSupply.routeInBiome(
+                context.getWorld(), setup.project().colonyId(), item);
+        context.assertTrue(route.available() && route.source() == SupplySource.PHYSICAL_BLOCK,
+                item + " devia ter rota fisica, sem ResourceType: " + route);
+
+        for (int attempt = 1; attempt <= 4; attempt++) {
+            context.assertFalse(BuilderMaterials.hasOrStocksConstructionMaterial(
+                            context.getWorld(), setup.project(), item),
+                    item + " nao devia aparecer no bau na tentativa " + attempt);
+        }
+
+        context.assertTrue(count(context, setup.builderChest(), item) == 0,
+                item + " apareceu instantaneamente apesar de existir rota fisica");
     }
 }

@@ -10922,3 +10922,25 @@ ficou travado pelo processo do jogo e precisa sair da pasta ativa antes do próx
 playtest. O log do playtest não tinha linhas `VC_TIME`/`VC_COST`, então os
 percentuais de ociosidade não foram calculáveis nessa amostra; ele ainda registrou
 fundidor em `NO_TASK` e mineiro em `WORK_STALLED`.
+
+### 2026-10-10 - Rota física para materiais de construção sem ResourceType
+
+A auditoria do playtest identificou calcita e folhas entre as peças inseridas
+instantaneamente na obra. Elas existem no mundo, mas não possuem `ResourceType`,
+então a rota de suprimento as tratava como impossíveis e acionava o fallback
+terminal depois de quatro faltas.
+
+Foi adicionado `SupplySource.PHYSICAL_BLOCK`. A rota agora reconhece terreno,
+pedra-base, calcita e folhas de uma espécie que o bosque local mantém, sem
+confundir recursos já catalogados: areia sem água, por exemplo, ainda obedece à
+regra de alcance anterior. `TreeSpecies.ofLeaves` preserva a correspondência
+entre folha e espécie alcançável.
+
+O novo GameTest `unmappedNaturalBlocksKeepAPhysicalRouteBeforeFallback` falhou
+antes do patch porque `PHYSICAL_BLOCK` não existia e, numa primeira versão ampla,
+também revelou que areia fora de água não podia ser promovida por tag genérica.
+Depois de restringir a origem física a itens sem `ResourceType`,
+`compileGametestJava --no-daemon` passou e `runGametest --rerun-tasks --no-daemon`
+passou com **652/652 em 47,56 s**. A entrega profissional efetiva e a telemetria
+de proveniência continuam nas próximas tarefas; este passo só impede o fallback
+indevido e descreve a rota corretamente.

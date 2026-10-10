@@ -19,6 +19,23 @@
 
 ---
 
+## 🟡 10-10 — rota física de materiais de construção sem catálogo
+
+O primeiro passo da opção B separa blocos físicos naturais que não têm
+`ResourceType` da criação terminal no baú. Calcita e folhas da espécie que o
+bosque da vila consegue manter agora recebem `PHYSICAL_BLOCK`: a obra os deixa
+na rota profissional, em vez de contabilizar quatro faltas e inseri-los
+instantaneamente. Recursos já catalogados mantêm as próprias regras: por
+exemplo, areia distante de água continua sem rota no bioma, portanto não é
+mascarada pela tag de bloco.
+
+O GameTest novo exige que calcita e folhas de carvalho não apareçam no baú do
+construtor após quatro consultas. Ele falhou antes da origem física existir e
+passou depois. Verificação atual: `compileGametestJava --no-daemon` e
+`runGametest --rerun-tasks --no-daemon`, **652/652 em 47,56 s**. Ainda falta a
+próxima etapa: colocar essa demanda explícita nas filas de mineiro/lenhador,
+medir sua entrega e confirmar no save real que as peças chegam fisicamente.
+
 ## 🟡 10-10 — overlay com camada fixa e obra reservável
 
 Playtest com Spark `vuUv6PZC5d`/log atual: o JAR carregado era 0.3.11. O `latest.log`
