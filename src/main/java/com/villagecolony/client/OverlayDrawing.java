@@ -13,8 +13,8 @@ import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 
 /**
- * Uma placa virada para a câmera: fundo em pixel art, ícone à esquerda e o
- * texto à direita — pedido do autor, 2026-10-03.
+ * Uma placa virada para a câmera: ícone em pixel art acima, fundo atrás do
+ * texto e o nome dentro da moldura — pedido do autor, 2026-10-03.
  *
  * <p><b>O fundo acompanha o texto.</b> A moldura de 16 × 16 é cortada em nove
  * partes: os cantos ficam do tamanho deles e o meio estica, então a placa
@@ -28,15 +28,6 @@ final class OverlayDrawing {
 
     /** Tamanho de uma unidade de texto no mundo: 40 unidades por bloco. */
     static final float SCALE = 0.025F;
-
-    /** Lado do ícone, em unidades de texto. */
-    private static final float ICON = 16.0F;
-
-    /** Folga entre a borda do fundo e o conteúdo. */
-    private static final float PAD = 4.0F;
-
-    /** Espaço entre o ícone e o texto. */
-    private static final float GAP = 4.0F;
 
     /** A moldura: 16 × 16, conteúdo entre x 1..14 e y 2..12, borda de 2. */
     private static final float TEXTURE = 16.0F;
@@ -71,18 +62,14 @@ final class OverlayDrawing {
 
         TextRenderer text = MinecraftClient.getInstance().textRenderer;
         float lineHeight = text.fontHeight + 1;
-        float textWidth = 0;
+        float[] textWidths = new float[lines.length];
 
-        for (Text line : lines) {
-            textWidth = Math.max(textWidth, text.getWidth(line));
+        for (int i = 0; i < lines.length; i++) {
+            textWidths[i] = text.getWidth(lines[i]);
         }
 
-        float textHeight = lines.length * lineHeight - 1;
-        float contentHeight = Math.max(ICON, textHeight);
-        float width = PAD + ICON + GAP + textWidth + PAD;
-        float height = PAD + contentHeight + PAD;
-        float left = -width / 2;
-        float top = -height;
+        PixelPanelLayout layout = PixelPanelLayout.withText(textWidths, lineHeight);
+        float left = -layout.width() / 2.0F;
 
         Vec3d relative = at.subtract(camera.getPos());
         MatrixStack matrices = new MatrixStack();
@@ -93,20 +80,20 @@ final class OverlayDrawing {
 
         Matrix4f matrix = matrices.peek().getPositionMatrix();
 
-        panel(buffers.getBuffer(RenderLayer.getTextSeeThrough(OverlayDrawing.id(PANEL))), matrix,
-                left, top, left + width, top + height);
-        buffers.draw();
+        if (layout.hasFrame()) {
+            panel(buffers.getBuffer(RenderLayer.getTextSeeThrough(OverlayDrawing.id(PANEL))), matrix,
+                    left + layout.frameLeft(), layout.frameTop(),
+                    left + layout.frameRight(), layout.frameBottom());
+            buffers.draw();
+        }
 
-        // O ícone no alto, à esquerda.
         quad(buffers.getBuffer(RenderLayer.getTextSeeThrough(icon)), matrix,
-                left + PAD, top + PAD, left + PAD + ICON, top + PAD + ICON, 0, 0, 1, 1);
+                left + layout.iconLeft(), layout.iconTop(),
+                left + layout.iconRight(), layout.iconBottom(), 0, 0, 1, 1);
         buffers.draw();
-
-        // O texto à direita; uma linha só fica no meio da altura do ícone.
-        float textTop = top + PAD + Math.max(0, (contentHeight - textHeight) / 2);
 
         for (int i = 0; i < lines.length; i++) {
-            text.draw(lines[i], left + PAD + ICON + GAP, textTop + i * lineHeight, colors[i], true, matrix,
+            text.draw(lines[i], left + layout.textLeft(i), layout.textTop() + i * lineHeight, colors[i], true, matrix,
                     buffers, TextRenderer.TextLayerType.SEE_THROUGH, 0, FULL_BRIGHT);
         }
 

@@ -8,6 +8,31 @@
 
 # Village Colony — Development Log
 
+## 2026-10-10 — painel de profissão dentro da moldura
+
+O playtest curto do `latest.log` não registrou erro do overlay: os erros eram de
+mods de cliente/resource pack, com dois ciclos de colônia acima de um tique e
+seis linhas de construtor caminhando sem alcançar o alvo. `time_ledger.py` e
+`cost_ledger.py` não encontraram linhas porque a sessão não abriu janela
+suficiente ou ainda não escreveu esses eventos.
+
+A regressão visual do painel de profissão estava no layout: depois da fusão das
+linhas, o desenho mantinha a moldura responsiva, mas voltou a compor ícone e
+texto lado a lado. A decisão viva da ADR-025 pedia outro contrato: a moldura
+fica na altura do nome, contém o texto, e o ícone fica centralizado acima.
+`PixelPanelLayout` foi reintroduzido só como geometria pura, mantendo o
+`OverlayDrawing` atual e seus buffers. O teste novo falhou primeiro por ausência
+da classe e depois passou cobrindo nome dentro do background, modo sem texto e
+painel de obra com duas linhas.
+
+Evidência automatizada: `PixelPanelLayoutTest` e a suíte `com.villagecolony.client.*`
+passaram, assim como `build --no-daemon` e `runGametest --rerun-tasks --no-daemon`
+com 649/649 testes em 33,02 s. O JAR 0.3.8 foi copiado para `downloads/` e
+`%APPDATA%/.minecraft/mods/` com SHA-256
+`317647772FDCC555C948578F775BA41B60D9FC916C5381031D68249ECD0944ED`. Falta a
+confirmação visual no save real, porque teste unitário não renderiza o painel no
+cliente.
+
 ## 2026-10-04 — publicação do JAR e fechamento da refatoração Fabric
 
 O commit `43f13978` publicou a remoção dos ciclos entre `event`, `integration`

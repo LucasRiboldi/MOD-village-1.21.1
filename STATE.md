@@ -1,6 +1,6 @@
-# STATE — 2026-10-09
+# STATE — 2026-10-10
 
-> **JAR atual: `village-colony-0.3.7.jar` = `629358BA…F80F7`** em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.8.jar` = `31764777…D0944ED`** em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,21 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 10-10 — log curto e painel de profissão
+
+Playtest em `latest.log` (22:13:38–22:16:01): 900 linhas; sem erro do overlay. O analisador marcou
+6 linhas de `builder_pathing_stalled`, 2 ciclos acima de um tique (pior 388 ms), 3 `ERROR` de mods
+de cliente/resource pack e nenhum `VC_TIME`/`VC_COST` (sessão curta ou sem janela suficiente).
+
+Correção 0.3.8: `OverlayDrawing` voltou a usar um layout explícito para o painel pixelado: a moldura
+é dimensionada pelo texto, o nome fica dentro do background e o ícone da profissão fica centralizado
+acima. `PixelPanelLayoutTest` cobre nome de uma linha, construção de duas linhas e o modo sem texto.
+Verificado com `test --tests com.villagecolony.client.*`, `build --no-daemon`,
+`runGametest --rerun-tasks --no-daemon` **649/649 em 33,02 s** e JAR
+`317647772FDCC555C948578F775BA41B60D9FC916C5381031D68249ECD0944ED` copiado para `downloads/`
+e `%APPDATA%/.minecraft/mods/`. **Ainda falta playtest visual** no cliente com a 0.3.8 para
+confirmar o desenho em jogo.
 
 ## 🟡 09-10 — playtest Spark GqK0MLwvTw e descida do mineiro
 

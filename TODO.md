@@ -6,11 +6,12 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
-## 🔴 Playtest da 0.3.7
+## 🔴 Playtest da 0.3.8
 
 Nada das ADR-037, 038 e 039 foi visto em jogo. Rodar depois: `python scripts/time_ledger.py`
 e `python scripts/cost_ledger.py` no `latest.log`, e Spark.
 
+- [ ] Painel da profissão: nome dentro da moldura do background e ícone centralizado acima.
 - [ ] `walk` aparece no `time_ledger` (A3: o braço do aldeão agora desce).
 - [ ] Carpinteiro com escada/laje/cerca **da madeira do bioma** no baú dele; pedreiro com as peças
       das casas da vila; fundidor com vidro e a pedra lisa que as casas usam.
