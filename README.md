@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.7%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.23%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -40,9 +40,10 @@ SHA-256 do JAR na descrição.
   obra, com o primeiro material que falta; o cliente Vanilla continua vendo as
   placas.
 
-O mod é alpha. A bateria automática está verde (unitários, GameTests e
-mutação), mas vários fluxos só se confirmam em playtest num save, e as
-entregas desde 2026-09-24 ainda não foram vistas em jogo. O que mudou em cada
+O mod é alpha. Na integração 0.3.23, os testes unitários e o empacotamento
+passaram; os GameTests foram pulados por instrução do autor. Vários fluxos só
+se confirmam em playtest num save, e as entregas desde 2026-09-24 ainda não
+foram vistas em jogo. O que mudou em cada
 publicação está no [`CHANGELOG.md`](CHANGELOG.md); a avaliação técnica mais
 recente, em
 [`docs/technical/avaliacao/`](docs/technical/avaliacao/).
@@ -168,6 +169,21 @@ nível 2.
 Use um mundo de teste: o mod corta árvores, minera e coloca blocos no mundo.
 
 ## Desenvolvimento e verificação
+
+### Skills do projeto
+
+Os perfis de trabalho e as skills utilizadas neste repositório estão em
+`AGENTS.md`. A matriz operacional é:
+
+- `fabric-development` e `minecraft-modding` para código Fabric e integração
+  com Minecraft 1.21.1.
+- `minecraft-villager-systems` e `minecraft-code-research` para profissão,
+  rotina, caminho, estoque e diagnóstico de aldeões.
+- `minecraft-testing` para testes unitários e GameTests.
+- `minecraft-ci-release` para CI, versionamento, artefatos e publicação.
+
+Os perfis Codex são `village-quick` (consulta), `village-audit` (diagnóstico),
+`village-dev` (implementação comum) e `village-max` (mudança entre subsistemas).
 
 ```powershell
 ./gradlew.bat test

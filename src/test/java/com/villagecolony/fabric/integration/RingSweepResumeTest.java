@@ -204,6 +204,30 @@ class RingSweepResumeTest {
                 "a coleta concluida deixou cursor para tras");
     }
 
+    /** Uma volta completa e vazia deve respirar antes de revarrer o mesmo chão. */
+    @Test
+    void anEmptyCompletedSweepWaitsForItsCooldownBeforeStartingOver() {
+        Optional<BlockPos> first = RingSweep.aroundWithCooldown(
+                owner, RingSweep.Scan.SURFACE, CENTER, 1,
+                column -> true, this::nothingAt, 10, 20);
+
+        assertTrue(first.isEmpty(), "o caso so procura uma area vazia");
+        assertEquals(9, looked.size(), "raio 1 inteiro tinha de ser examinado uma vez");
+
+        Optional<BlockPos> cooling = RingSweep.aroundWithCooldown(
+                owner, RingSweep.Scan.SURFACE, CENTER, 1,
+                column -> true, this::nothingAt, 11, 20);
+
+        assertTrue(cooling.isEmpty(), "o respiro tambem responde vazio");
+        assertEquals(9, looked.size(), "a mesma area vazia foi revarrida durante o respiro");
+
+        RingSweep.aroundWithCooldown(
+                owner, RingSweep.Scan.SURFACE, CENTER, 1,
+                column -> true, this::nothingAt, 30, 20);
+
+        assertEquals(18, looked.size(), "depois do prazo a busca precisa poder olhar de novo");
+    }
+
     /**
      * <b>E é isto que o {@code CropPatch} fazia:</b> varrer sempre do
      * zero, e nunca chegar lá.

@@ -50,27 +50,9 @@ public final class WorkPath {
         }
 
         return RoadIndex.roadsOf(colonyId)
-                .flatMap(roads -> nearestColumn(roads.columns(), origin, size))
+                .flatMap(roads -> roads.nearestRoadColumnTo(origin, size, MAX_GAP))
                 .map(column -> pave(world, colonyId, column, origin, size))
                 .orElse(0);
-    }
-
-    /** A coluna de rua mais perto do retângulo do lote, até {@link #MAX_GAP}. */
-    static Optional<Long> nearestColumn(Iterable<Long> columns, ColonyPos origin, ColonyPos size) {
-        Long best = null;
-        int bestGap = MAX_GAP + 1;
-
-        for (long column : columns) {
-            int gap = gapX(ColonyRoads.xOf(column), origin, size)
-                    + gapZ(ColonyRoads.zOf(column), origin, size);
-
-            if (gap > 0 && gap < bestGap) {
-                bestGap = gap;
-                best = column;
-            }
-        }
-
-        return Optional.ofNullable(best);
     }
 
     private static int pave(ServerWorld world, UUID colonyId, long column, ColonyPos origin, ColonyPos size) {

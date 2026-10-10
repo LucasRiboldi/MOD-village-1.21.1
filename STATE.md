@@ -1,7 +1,8 @@
 # STATE — 2026-10-10
 
-> **JAR atual: `village-colony-0.3.22.jar` = `7D69667E…C9C1C5F`** (barn_majest fora do rodízio; ver abaixo) em `build/libs/`, `downloads/` (local) e
-> `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
+> **JAR atual: `village-colony-0.3.23.jar`** =
+> `6067E01A6B553F4D5CD2BAFA062E24713F7C32CD6B77F64E77022AA24A866661`.
+> Unitários e empacotamento passaram; por instrução do autor, os GameTests não foram executados nesta publicação. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
@@ -15,6 +16,22 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 10-10 — integração 0.3.23 de obra, fundidor e mina
+
+As correções recentes foram reconciliadas sobre a `main` 0.3.22, preservando a
+proteção de lote: o grafo de suprimento explica a cadeia de uma peça da obra,
+o baú da profissão recebe primeiro o recurso de que precisa e a divisão de
+demanda arredonda para cima quando há vários trabalhadores. Assim, quatro
+`clay_ball` para três fundidores geram trabalho suficiente para a receita em
+vez de três tarefas insuficientes.
+
+Uma pendência salva de `colony/barn_majest` agora é descartada mesmo quando
+restaram blocos no mundo. A busca de pedra exposta da mina recebe intervalo
+de respiro depois de uma varredura vazia e o caminho da obra usa a rua mais
+próxima como waypoint. `test --rerun-tasks --no-daemon` e `remapJar` passaram;
+os GameTests foram pulados por instrução do autor. O playtest em save real
+ainda é obrigatório antes de encerrar estes itens.
 
 ## 🟡 10-10 — obra não libera lote antes da cadeia recurso → rota → baú
 

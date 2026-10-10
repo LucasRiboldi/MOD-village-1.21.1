@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Ofício parado cede vaga — ADR-038 P1: mais de {@link #IDLE_SHARE}% de ócio
+ * Ofício parado cede vaga — ADR-038 P1 e Regra 51: mais de {@link #IDLE_SHARE}% de ócio
  * em {@link #WINDOWS} janelas seguidas do {@code WorkTime}, com pelo menos
  * {@link #MIN_WORKERS} pessoas, e o ofício solta uma. Quem sai fica sem
  * ofício e a contratação por demanda o leva aonde a obra espera.
@@ -19,7 +19,7 @@ public final class IdleYield {
         ServerMemory.register(IdleYield.class, IdleYield::clearAll);
     }
 
-    public static final int IDLE_SHARE = 60;
+    public static final int IDLE_SHARE = 15;
 
     public static final int WINDOWS = 2;
 

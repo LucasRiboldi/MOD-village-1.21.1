@@ -8,6 +8,7 @@ Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
 ## 🟡 Playtest do patch local 10-10 (obra/mina/baú)
 
+- [ ] Executar a bateria completa de GameTests da 0.3.23 (pulada no fechamento por instrução do autor).
 - [ ] Obra em `WAITING_RESOURCES` não libera o lote antes de retentar blocos correspondentes,
       rotas de profissão e baú próximo do construtor.
 - [ ] Depois de quatro tentativas sem entrega real, o bloco faltante aparece em baú livre perto da obra
@@ -24,9 +25,11 @@ Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
       varrer a vila inteira.
 - [ ] Fechar e abrir o mundo preserva a posse da roça (`WorkMemory`).
 
-## 🔴 Playtest da 0.3.22 / 0.3.20 (celeiro, pastor, funil)
+## 🔴 Playtest da 0.3.23 / 0.3.20 (celeiro, pastor, funil)
 
-- [ ] Próxima obra nova no JAR 0.3.22 não deve abrir `colony/barn_majest`; o modelo saiu do rodízio em 09-10.
+- [ ] Próxima carga no JAR 0.3.23 deve descartar pendência salva de `colony/barn_majest` e não abrir nova obra desse modelo.
+- [ ] `clay_ball` aparece no baú do SMELTER em lote mínimo de receita (4), mesmo com vários fundidores.
+- [ ] `time_ledger.py`: SMELTER sem passar de 15% ocioso nas janelas da Regra 51.
 - [ ] Pastor tosquia no curral: `sheared` frequente e menos `found no sheep with wool`; SHEPHERD fora da Regra 51.
 - [ ] `stocked minecraft:hopper` depois das faltas, e a obra termina.
 

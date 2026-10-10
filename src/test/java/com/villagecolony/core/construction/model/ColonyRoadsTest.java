@@ -75,6 +75,25 @@ class ColonyRoadsTest {
                 roads.blocksToTheNearestRoad(new ColonyPos(12, 64, 10)));
     }
 
+    /** A mesma escolha de rua serve como waypoint para abrir caminho ate a obra. */
+    @Test
+    void theNearestRoadColumnToALotBecomesTheWorkPathWaypoint() {
+        ColonyRoads roads = roadsAt(
+                ColonyRoads.column(0, 0),
+                ColonyRoads.column(20, 4),
+                ColonyRoads.column(90, 90));
+
+        Optional<Long> column = roads.nearestRoadColumnTo(
+                new ColonyPos(24, 64, 3),
+                new ColonyPos(4, 4, 4),
+                24);
+
+        assertEquals(Optional.of(ColonyRoads.column(20, 4)), column);
+        assertEquals(
+                Optional.of(new ColonyPos(20, 64, 4)),
+                roads.roadWaypointTo(new ColonyPos(24, 64, 3), new ColonyPos(4, 4, 4), 24));
+    }
+
     /**
      * A régua é o quadrado, como no resto do projeto.
      *

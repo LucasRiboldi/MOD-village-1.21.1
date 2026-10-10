@@ -8,6 +8,25 @@
 
 # Village Colony — Development Log
 
+## 2026-10-10 — unificação da linha 0.3.23
+
+A `main` 0.3.22 recebeu por reconciliação as correções de fluxo que dividiam a
+linha recente: rota auditável de suprimento, preferência pelo baú da profissão,
+arredondamento de demanda de receita, descarte de obra salva com
+`barn_majest`, respiro de varredura vazia na mina e waypoint de rua para a
+obra. A proteção de lote e a cadeia recurso → rota → baú já presente na
+`main` foram mantidas; relatórios Spark de sessões diferentes permaneceram
+separados no histórico para não combinar contagens incompatíveis.
+
+Foram trazidos testes para a cadeia de receita de madeira, o abastecimento do
+baú do fundidor, a retomada de modelo aposentado, o arredondamento de demanda,
+o limite de ócio e o respiro de varredura. `./gradlew.bat test --rerun-tasks
+--no-daemon` e `./gradlew.bat remapJar --rerun-tasks --no-daemon` passaram; o
+JAR `village-colony-0.3.23.jar` tem SHA-256
+`6067E01A6B553F4D5CD2BAFA062E24713F7C32CD6B77F64E77022AA24A866661`.
+Por instrução expressa do autor, os GameTests não foram executados nesta
+publicação. O playtest em save real permanece pendente.
+
 ## 2026-10-10 — cadeia de resgate da obra e mina mais maleável
 
 Pedido do autor: `WaitingWork` não pode liberar a obra antes de tentar

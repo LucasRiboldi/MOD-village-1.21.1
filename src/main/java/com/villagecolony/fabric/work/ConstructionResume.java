@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.ColonyModels;
 import com.villagecolony.fabric.integration.LotClearance;
 
 import com.villagecolony.VillageColonyMod;
@@ -91,6 +92,18 @@ final class ConstructionResume {
         if (VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isPresent()) {
             VillageColonyMod.LOGGER.warn(
                     "Colony {} drops the saved {} at {} — another project is already open",
+                    colony.id(), saved.blueprint(), saved.origin());
+            VillageColonyMod.CONSTRUCTIONS.dropPending(colony.id());
+            return;
+        }
+
+        // Regra 49/27-e3: modelo de colônia sem profissão saiu do catálogo de
+        // obras. Não pode voltar pelo save só porque uma versão anterior já
+        // tinha assentado blocos: visto em jogo em 2026-10-09 com
+        // `colony/barn_majest`.
+        if (isRetiredColonyModel(saved.blueprint())) {
+            VillageColonyMod.LOGGER.warn(
+                    "Colony {} drops the saved {} at {} — the colony model is retired",
                     colony.id(), saved.blueprint(), saved.origin());
             VillageColonyMod.CONSTRUCTIONS.dropPending(colony.id());
             return;
@@ -284,5 +297,9 @@ final class ConstructionResume {
                 project.origin(),
                 standing,
                 project.remainingCount());
+    }
+
+    private static boolean isRetiredColonyModel(ResourceId id) {
+        return ColonyModels.isColonyModel(id) && ColonyModels.professionOf(id).isEmpty();
     }
 }
