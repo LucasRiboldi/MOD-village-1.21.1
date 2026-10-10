@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.6%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.12%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -41,8 +41,8 @@ SHA-256 do JAR na descrição.
   placas.
 
 O mod é alpha. A bateria automática está verde (unitários, GameTests e
-mutação), mas vários fluxos só se confirmam em playtest num save, e as
-entregas desde 2026-09-24 ainda não foram vistas em jogo. O que mudou em cada
+ferramentas de apoio), mas vários fluxos só se confirmam em playtest num save.
+O que mudou em cada
 publicação está no [`CHANGELOG.md`](CHANGELOG.md); a avaliação técnica mais
 recente, em
 [`docs/technical/avaliacao/`](docs/technical/avaliacao/).
@@ -169,6 +169,20 @@ Use um mundo de teste: o mod corta árvores, minera e coloca blocos no mundo.
 
 ## Desenvolvimento e verificação
 
+### Perfis e skills do projeto
+
+Os perfis locais do Codex são `village-quick` (consulta), `village-audit`
+(diagnóstico), `village-dev` (implementação comum) e `village-max` (defeitos
+entre subsistemas). As skills previstas pelo projeto, quando disponíveis no
+ambiente, são:
+
+- `fabric-development`: integração Fabric e ciclo de jogo.
+- `minecraft-modding`: código do mod e APIs de Minecraft.
+- `minecraft-villager-systems`: profissões, aldeões e fluxos de trabalho.
+- `minecraft-code-research`: investigação de código, logs e regressões.
+- `minecraft-testing`: testes unitários e GameTests Fabric.
+- `minecraft-ci-release`: CI, versões, artefatos e publicação.
+
 ```powershell
 ./gradlew.bat test
 ./gradlew.bat build
@@ -184,12 +198,12 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 `runGametest` gera `build/reports/jacoco/gametest/html` (bateria de jogo, que
 é quem exercita a camada `fabric`).
 
-Verificação de 2026-10-03 (corrigíveis sem jogo):
+Verificação de 2026-10-10 (ramo `codex/fluxo-grafo-waypoints`):
 
-- 1295 testes unitários: aprovados (`test --rerun-tasks`).
-- 91 testes Python: aprovados.
-- 575 GameTests: todos aprovados, em duas rodadas seguidas com `--rerun-tasks`.
-- `./gradlew build`: passa.
+- 1368 testes unitários: aprovados (`test --rerun-tasks --no-daemon`).
+- 96 testes Python: aprovados.
+- 654 GameTests: todos aprovados (`runGametest --rerun-tasks --no-daemon`).
+- `./gradlew.bat build --rerun-tasks --no-daemon`: aprovado.
 
 A mutação (PIT, pacote `core`) e o `javadoc` não foram rodados nesta
 verificação; a última medida é a de 2026-09-25: 1151 de 1312 mutações mortas

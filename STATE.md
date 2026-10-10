@@ -1,11 +1,13 @@
 # STATE — 2026-10-10
 
-> **JAR atual: `village-colony-0.3.12.jar` = `B812F7B2A46FB3E3B3CAF781B35D1123BE9570F25698EC3823A06E61FF8AB003`** em
-> `build/libs/`, `downloads/` (local) e `%APPDATA%/.minecraft/mods`. Atenção: o
-> `village-colony-0.3.11.jar` ainda ficou travado pelo processo do jogo na pasta ativa de mods;
-> fechar o Minecraft e arquivar/remover esse JAR antes do próximo teste. **ADR-036 a 039 na `main`.**
-> Nada da 037, 038 e 039 visto em jogo.
-> Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
+> **Status: pronto para playtest.** A validação automática está verde: 1368
+> unitários, 96 testes Python, 654 GameTests e `build` completo. O JAR 0.3.12
+> em `build/libs/` e `downloads/` tem SHA-256
+> `7094E2D62FB654D016A94131BF5FA6A6B64720681B3E0E862BFC5B3A3F1646E1`.
+> A instalação ativa preserva o JAR 0.3.22 em `%APPDATA%/.minecraft/mods` para
+> não sofrer downgrade. As ADR-036 a 040 estão na linha de trabalho. As
+> confirmações visuais e de fluxo em save real continuam abertas no `TODO.md`;
+> não foram inferidas dos testes automáticos.
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -47,25 +49,25 @@ tests.test_analyze_village_log` passou 11/11 e a bateria Python passou 96/96.
 O próximo save deve gerar o relatório para comparar cada fallback com as 334
 injeções registradas antes desta etapa.
 
-## 🟡 10-10 — despacho, e não rota teórica, passa a governar o fallback
+## 🟡 10-10 — despacho executável, e não rota teórica, governa o fallback
 
-A ADR-040 agora separa demanda real de consulta: `ConstructionSupplyDispatches`
-renova a peça ativa somente uma vez por ciclo, dá prioridade às tarefas abertas
-de cada recurso da rota e não persiste esse relógio. O construtor, a placa e o
-overlay só observam a demanda; quatro consultas não avançam a contingência.
-Entrega física em um baú que atende a obra zera o registro. Após quatro ciclos
-sem entrega, a peça sem receita vai ao baú do construtor; receita com insumo sem
-rota abastece antes o baú do artesão.
+A ADR-040 agora separa demanda real de rota teórica:
+`ConstructionSupplyDispatches` dá prioridade à rota antes da distribuição e só
+renova a peça ativa depois que o ciclo abriu uma tarefa de recurso executável.
+Construtor, placa, overlay e rota sem tarefa não avançam a contingência. Entrega
+física em um baú que atende a obra zera o registro. Após quatro ciclos com
+tarefa aberta e sem entrega, a peça sem receita vai ao baú do construtor; receita
+com insumo sem rota abastece antes o baú do artesão.
 
 O contador legado foi removido de `BiomeConstructionSupply` e dos dados salvos:
 só a espera de muda continua persistente. Assim um mundo reaberto nunca herda
 tentativas de fallback de uma obra anterior; o próximo ciclo reavalia a demanda
 física e suas rotas.
 
-O GameTest separa quatro consultas de quatro despachos e a bateria integral
-`runGametest --rerun-tasks --no-daemon` passou 653/653 em 50,87 s. Falta medir
-no save quantos `VC_SUPPLY_ERROR` restam e se as prioridades chegaram aos
-trabalhadores antes de qualquer fallback terminal.
+O GameTest separa quatro ciclos sem tarefa de quatro despachos executáveis; a
+bateria integral `runGametest --rerun-tasks --no-daemon` passou 654/654 em
+32,73 s. Falta medir no save quantos `VC_SUPPLY_ERROR` restam e se as prioridades
+chegaram aos trabalhadores antes de qualquer fallback terminal.
 
 ## 🟡 10-10 — calcita entra na cadeia real do mineiro
 

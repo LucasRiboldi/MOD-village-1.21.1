@@ -55,7 +55,7 @@ primeiro bloco não tem ponto físico imediato; rodar depois:
       com os 334 abastecimentos instantâneos da sessão anterior.
 - [x] Implementar a ADR-040: quatro despachos executáveis sem entrega física acionam o fallback;
       consulta do construtor e reserva de tarefa não contam, e a entrega no baú zera o relógio.
-      `BuilderMaterialsGameTest` e GameTests 653/653; medir no save a entrega profissional e
+      `BuilderMaterialsGameTest` e GameTests 654/654; medir no save a entrega profissional e
       cada fallback terminal antes de reduzir a política.
 
 ## 🟠 Erros abertos
@@ -88,10 +88,10 @@ com ela**. Teste que passa com a regra desligada não entra como prova.
 
 ## 🟡 Estrutura
 
-- [ ] `ColonyGoals` está com 506 linhas e bloqueia `FileSizeRuleTest`; dividir antes da próxima
-      mudança nele. Outros seis arquivos de produção estão em 497–500 linhas (`SmelterWork`,
+- [ ] Outros seis arquivos de produção estão em 497–500 linhas (`SmelterWork`,
       `Mine`, `ClimbOut`, `SurfaceGatheringWork`, `Worker`, `BuilderWork`) e devem ser divididos
-      antes da próxima mudança neles.
+      antes da próxima mudança neles. `ColonyGoals` foi reduzido a 500 linhas com a extração de
+      `AdvanceConstructionStock`; `FileSizeRuleTest` voltou a passar.
 - [ ] Branch local do worktree do Codex (`codex/village-visuals-logistics-mine-sweep`): já toda na
       `main`; remover o worktree.
 

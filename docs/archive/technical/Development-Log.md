@@ -11041,3 +11041,24 @@ despachos distintos abastecem o baú do construtor. `LocateFallbackGameTest` foi
 ajustado para a peça futura não gastar esse relógio. A bateria integral
 `runGametest --rerun-tasks --no-daemon` passou **653/653 em 50,87 s**. Falta o
 playtest de save para medir as entregas reais e os eventos `VC_SUPPLY_ERROR`.
+
+### 2026-10-10 - Fallback só avança depois de tarefa executável
+
+A revisão final da ADR-040 encontrou uma lacuna: priorizar uma rota antes da
+distribuição não prova que alguma profissão recebeu uma tarefa capaz de cumpri-la.
+Contar esse ciclo ainda permitiria que uma rota meramente declarada chegasse ao
+fallback terminal.
+
+`ConstructionSupplyDispatches` passou a separar prioridade e renovação. O
+`ColonyCycleRunner` prioriza a rota antes de `ColonyCycle.run`, e depois dele só
+renova a tentativa quando existe uma tarefa aberta de recurso para algum item da
+rota. O GameTest novo mantém quatro ciclos sem tarefa sem acionar a contingência,
+abre a tarefa de tábuas e então prova que quatro despachos reais habilitam o
+fallback.
+
+Para manter a regra arquitetural de tamanho, a reserva antecipada de pedreiro,
+fundidor e carpinteiro saiu de `ColonyGoals` para `AdvanceConstructionStock`.
+Não há alteração de política de metas. Verificação desta sessão: 1368 testes
+unitários, 96 testes Python, 654/654 GameTests em 32,73 s e `build` completo,
+tudo aprovado. A entrega e os eventos no save real continuam pendentes de
+playtest.
