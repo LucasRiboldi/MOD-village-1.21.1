@@ -271,11 +271,15 @@ public final class WaitingWork {
                 left,
                 stalled);
 
-        BUILDING_SINCE.remove(project.id());
+        if (onlyUnsupported) {
+            finishUnsupportedRemainder(colony, project);
+        } else {
+            BUILDING_SINCE.remove(project.id());
 
-        // A planta não leva a culpa: não faltou material, a obra não
-        // andou. Mesmo argumento do lote fora de alcance.
-        giveUp(colony, project, false);
+            // A planta não leva a culpa: não faltou material, a obra não
+            // andou. Mesmo argumento do lote fora de alcance.
+            giveUp(colony, project, false);
+        }
 
         return true;
     }
@@ -375,16 +379,7 @@ public final class WaitingWork {
 
         VillageColonyMod.CONSTRUCTIONS.forget(project.id(), RemovalAudit.patienceAbandonment());
 
-        // A vaga de obra é única; suas tarefas não podem sobreviver ao projeto.
-        for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
-            if (task.type() == TaskType.BUILD && task.isOpen()) {
-                task.executor().ifPresent(worker -> {
-                    BuilderWork.forget(worker);
-                    WorkTargets.clear(worker);
-                });
-                task.cancel();
-            }
-        }
+        cancelBuildTasks(colony);
 
         VillageColonyMod.LOGGER.info(
                 "Colony {} gives up on {} at {} — {} blocks remain."
@@ -395,5 +390,54 @@ public final class WaitingWork {
                 project.remainingCount());
 
         IdleLog.clear(colony.id(), SUBJECT);
+    }
+
+    /**
+     * Fecha uma obra quando todas as peças restantes estão adiadas por falta de apoio.
+     *
+     * <p>O log chama isso de "sem apoio": a peça existe na planta, mas o bloco
+     * que a sustentaria não está no mundo. Reabrir a construção nesse caso só
+     * repete a mesma tentativa física e segura a vaga única. O mundo fica como
+     * fonte da verdade: o que está de pé vira infraestrutura e o resto fica fora
+     * dela, em vez de prender a vila.
+     */
+    private static void finishUnsupportedRemainder(Colony colony, ConstructionProject project) {
+        WAITING_SINCE.remove(project.id());
+        BUILDING_SINCE.remove(project.id());
+
+        if (project.state() == ConstructionState.WAITING_RESOURCES) {
+            project.moveTo(ConstructionState.BUILDING);
+        }
+
+        if (project.state() == ConstructionState.BUILDING) {
+            project.moveTo(ConstructionState.COMPLETED);
+        }
+
+        VillageColonyMod.BUILDINGS.registerOrMerge(Building.of(project, true));
+        VillageColonyMod.CONSTRUCTIONS.forget(project.id(), RemovalAudit.completedProjectPurge());
+        cancelBuildTasks(colony);
+
+        VillageColonyMod.LOGGER.info(
+                "Colony {} finishes {} at {} without {} unsupported pieces —"
+                        + " the built volume is infrastructure and the build slot is free",
+                colony.id(),
+                project.blueprint().id(),
+                project.origin(),
+                project.remainingCount());
+
+        IdleLog.clear(colony.id(), SUBJECT);
+    }
+
+    /** A vaga de obra é única; suas tarefas não podem sobreviver ao projeto. */
+    private static void cancelBuildTasks(Colony colony) {
+        for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
+            if (task.type() == TaskType.BUILD && task.isOpen()) {
+                task.executor().ifPresent(worker -> {
+                    BuilderWork.forget(worker);
+                    WorkTargets.clear(worker);
+                });
+                task.cancel();
+            }
+        }
     }
 }

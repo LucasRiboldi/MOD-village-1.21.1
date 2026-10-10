@@ -24,17 +24,14 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.test.GameTest;
 import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.registry.RegistryKeys;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -729,18 +726,16 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
     }
 
     /**
-     * <b>Cada profissão tem a sua cor</b> — decisão do autor, 2026-09-05:
-     * <i>"coloque um nome colorido para cada profissão"</i>.
+     * <b>A profissão aparece no overlay, não no nome Vanilla.</b>
      *
-     * <p>Duas afirmações, e a segunda é a que faz a primeira valer alguma
-     * coisa: a cor existe, e as sete são <b>distintas</b>. Nome colorido
-     * que se confunde com o do vizinho não diz profissão nenhuma.
+     * <p>Em 2026-10-10 o autor voltou ao jogo e viu "Fundidor" solto acima do
+     * aldeão. O overlay pixelado já tem o texto e o ícone; manter o mesmo texto
+     * em {@code customName} faz o render Vanilla escapar do background quando o
+     * jogador mira no aldeão.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_colour",
             tickLimit = 20)
-    public void everyProfessionWearsItsOwnColour(TestContext context) {
-        Set<TextColor> colours = new HashSet<>();
-
+    public void everyProfessionLeavesTheVanillaNameplateEmpty(TestContext context) {
         for (ProfessionType profession : ProfessionAssigner.PRODUCER_ORDER) {
             VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
 
@@ -748,17 +743,10 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
 
             WorkerNameplate.label(context.getWorld(), List.of(worker));
 
-            Text name = villager.getCustomName();
-
-            context.assertTrue(name != null, profession + " ficou sem nome");
-
-            TextColor colour = name.getStyle().getColor();
-
-            context.assertTrue(colour != null, profession + " ficou com o nome sem cor");
-
-            context.assertTrue(
-                    colours.add(colour),
-                    profession + " repetiu a cor de outra profissão: " + colour);
+            context.assertTrue(villager.getCustomName() == null,
+                    profession + " gravou nome Vanilla fora do overlay: " + villager.getCustomName());
+            context.assertTrue(!villager.isCustomNameVisible(),
+                    profession + " deixou o nome Vanilla visível acima do aldeão");
 
             villager.discard();
         }
@@ -768,7 +756,7 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_colour",
             tickLimit = 20)
-    public void oldBreederNameplateBecomesShepherd(TestContext context) {
+    public void oldBreederNameplateIsClearedForTheOverlay(TestContext context) {
         VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
         villager.setCustomName(Text.literal("Criador"));
         Worker worker = Worker.restore(
@@ -776,16 +764,15 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
 
         WorkerNameplate.label(context.getWorld(), List.of(worker));
 
-        context.assertTrue(villager.getCustomName() != null
-                        && "Pastor".equals(villager.getCustomName().getString()),
-                "o nome antigo não foi atualizado para Pastor");
+        context.assertTrue(villager.getCustomName() == null,
+                "o nome antigo continuou renderizavel fora do overlay: " + villager.getCustomName());
         villager.discard();
         context.complete();
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_colour",
             tickLimit = 20)
-    public void colonyProfessionNameIsStoredButNotForcedVisible(TestContext context) {
+    public void colonyProfessionNameIsOnlyInTheOverlay(TestContext context) {
         VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
         Worker worker = Worker.restore(
                 villager.getUuid(), UUID.randomUUID(), ProfessionType.CARPENTER);
@@ -793,9 +780,8 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
         WorkerNameplate.label(context.getWorld(), List.of(worker));
 
         context.assertTrue(
-                villager.getCustomName() != null
-                        && "Carpinteiro".equals(villager.getCustomName().getString()),
-                "a profissao precisa continuar armazenada para fallback e reconhecimento");
+                villager.getCustomName() == null,
+                "a profissao deve ficar no overlay, nao em customName Vanilla");
         context.assertTrue(
                 !villager.isCustomNameVisible(),
                 "o nome da profissao nao pode renderizar fora do overlay pixelado");
@@ -893,7 +879,7 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
         Worker worker = Worker.restore(
                 villager.getUuid(), UUID.randomUUID(), ProfessionType.LUMBERJACK);
 
-        WorkerNameplate.label(context.getWorld(), List.of(worker));
+        villager.setCustomName(Text.literal("Lenhador"));
 
         context.assertTrue(
                 villager.getCustomName() != null,
@@ -947,20 +933,18 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
     }
 
     /**
-     * E o nome que a colônia já tinha escrito <b>ganha</b> a cor.
+     * E o nome que a colônia já tinha escrito sai do aldeão.
      *
-     * <p>O rótulo só era posto quando não havia nenhum, então numa vila
-     * já batizada — que é toda vila em curso — a cor não apareceria em
-     * ninguém: o autor veria a mudança não acontecer. A pergunta é a
-     * mesma do {@code isProfessionTool}: <i>este nome é dos que a colônia
-     * põe?</i>
+     * <p>O texto continua sendo reconhecido como rótulo antigo do mod, mas a
+     * correção atual não o pinta: ela remove o fallback Vanilla para que o
+     * texto fique apenas dentro do overlay com background.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_colour",
             tickLimit = 20)
-    public void theNameTheColonyAlreadyWroteGetsPainted(TestContext context) {
+    public void theNameTheColonyAlreadyWroteGetsCleared(TestContext context) {
         VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
 
-        // O rótulo de antes da cor: o texto certo, sem estilo nenhum.
+        // O rótulo antigo que o próprio mod escreveu.
         villager.setCustomName(Text.literal("Mineiro"));
 
         Worker worker = Worker.restore(
@@ -969,8 +953,8 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
         WorkerNameplate.label(context.getWorld(), List.of(worker));
 
         context.assertTrue(
-                villager.getCustomName().getStyle().getColor() != null,
-                "o nome que a colônia já tinha escrito continuou sem cor");
+                villager.getCustomName() == null,
+                "o nome que a colônia já tinha escrito continuou fora do overlay");
 
         context.complete();
     }

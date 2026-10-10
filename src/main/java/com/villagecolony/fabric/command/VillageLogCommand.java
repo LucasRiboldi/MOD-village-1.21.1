@@ -7,6 +7,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.telemetry.model.ActivityTrace;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.fabric.work.HousePlans;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.server.command.CommandManager;
@@ -53,14 +54,13 @@ public final class VillageLogCommand {
             return 1;
         }
 
-        Optional<Colony> colony = VillageColonyMod.COLONIES.findNearest(
-                new ColonyPos(player.getBlockX(), player.getBlockY(), player.getBlockZ()),
-                VillageDetector.SEARCH_RADIUS);
+        ColonyPos playerPos = new ColonyPos(player.getBlockX(), player.getBlockY(), player.getBlockZ());
+        Optional<Colony> colony = villageAtPlayerColumn(player, playerPos);
 
-        if (colony.isEmpty() || !colony.get().isActive()) {
+        if (colony.isEmpty()) {
             source.sendFeedback(
                     () -> Text.literal("Village Colony: nenhuma vila ativa está perto de você. "
-                                    + "Uma vila só trabalha enquanto o jogo simula a região dela.")
+                                    + "A busca ignora altura, então subir ou descer dentro da vila continua contando.")
                             .formatted(Formatting.YELLOW),
                     false);
             return 1;
@@ -76,7 +76,7 @@ public final class VillageLogCommand {
                         .formatted(Formatting.AQUA, Formatting.BOLD),
                 false);
         source.sendFeedback(
-                () -> Text.literal("Colônia ativa perto de você | " + workers + " profissionais registrados")
+                () -> Text.literal(villageStatusLine(nearby, workers))
                         .formatted(Formatting.GRAY),
                 false);
         String constructionPriority = VillageLogPresenter.constructionPriority(
@@ -131,6 +131,25 @@ public final class VillageLogCommand {
         }
 
         return 1;
+    }
+
+    static Optional<Colony> villageAtPlayerColumn(ServerPlayerEntity player, ColonyPos playerPos) {
+        Optional<Colony> insideMeasuredVillage = VillageColonyMod.COLONIES.all().stream()
+                .filter(colony -> VillageFocus.isInside(colony, player.getBlockX(), player.getBlockZ()))
+                .min((left, right) -> Long.compare(
+                        playerPos.horizontalDistanceSquared(left.center()),
+                        playerPos.horizontalDistanceSquared(right.center())));
+
+        return insideMeasuredVillage.or(() ->
+                VillageColonyMod.COLONIES.findNearest(playerPos, VillageDetector.SEARCH_RADIUS));
+    }
+
+    private static String villageStatusLine(Colony colony, int workers) {
+        String state = colony.isActive()
+                ? "Colônia ativa"
+                : "Colônia encontrada nesta coluna, mas a região ainda não está ativa";
+
+        return state + " | " + workers + " profissionais registrados";
     }
 
     private static Text statusText(String entry) {

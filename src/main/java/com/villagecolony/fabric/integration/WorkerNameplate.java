@@ -7,12 +7,11 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 
 import java.util.Collection;
 
 /**
- * Mantém o nome da profissão no aldeão sem forçar a plaquinha Vanilla.
+ * Limpa nomes antigos de profissão para o overlay ocupar sozinho esse lugar.
  *
  * <p>A colônia atribui função, e até aqui isso era invisível: dois
  * aldeões idênticos, um lenhador e um fazendeiro, e nada no mundo dizia
@@ -24,10 +23,10 @@ import java.util.Collection;
  * renderização, sincronização por rede e ADR nova — o mod deixaria de
  * funcionar só no servidor.
  *
- * <p>Texto literal, e não {@code Text.translatable}: o valor ainda fica
- * armazenado no aldeão para reconhecimento e fallback. Quem tem o mod vê a
- * placa pixelada do cliente; a plaquinha Vanilla fica desligada para não
- * renderizar o nome fora do background do overlay.
+ * <p>A profissão não mora mais no {@code customName}: quem tem o mod vê a
+ * placa pixelada do cliente, com o texto dentro do fundo e o ícone à direita.
+ * Este serviço ficou só como faxina de saves antigos, para tirar nomes que a
+ * colônia escreveu antes dessa decisão sem apagar nome dado pelo jogador.
  */
 public final class WorkerNameplate {
 
@@ -35,7 +34,7 @@ public final class WorkerNameplate {
     }
 
     /**
-     * Nomeia os trabalhadores desta colônia que ainda não têm nome.
+     * Remove dos trabalhadores os nomes de profissão escritos pelo mod.
      *
      * <p>Nunca sobrescreve nome que já existe. Aldeão batizado com
      * etiqueta pelo jogador continua com o nome que ele deu — o mod não
@@ -64,7 +63,7 @@ public final class WorkerNameplate {
      * quem, e um nome que mente é pior que nome nenhum: ele faz procurar
      * defeito no mineiro que não existe mais.
      *
-     * @return quantos nomes foram postos ou tirados agora
+     * @return quantos nomes foram tirados ou escondidos agora
      */
     public static int label(ServerWorld world, Collection<Worker> workers) {
         int labelled = 0;
@@ -83,33 +82,19 @@ public final class WorkerNameplate {
                 continue;
             }
 
-            if (worker.profession().isEmpty()) {
-                if (current != null) {
-                    // A plaquinha era de um ofício que ele não tem mais.
-                    villager.setCustomName(null);
-                    villager.setCustomNameVisible(false);
-
-                    labelled++;
-                }
-
+            if (current != null) {
+                // A profissão agora pertence ao overlay. O nome Vanilla só
+                // conserva nomes do jogador; rótulos antigos do mod somem.
+                villager.setCustomName(null);
+                villager.setCustomNameVisible(false);
+                labelled++;
                 continue;
             }
 
-            Text label = labelFor(worker.profession().get());
-
-            if (current != null && current.getString().equals(label.getString())
-                    && sameColour(current, label)
-                    && !villager.isCustomNameVisible()) {
-
-                // Já está certo, e reescrevê-lo toda passagem seria mexer
-                // no nome de um aldeão trinta vezes por minuto.
-                continue;
+            if (villager.isCustomNameVisible()) {
+                villager.setCustomNameVisible(false);
+                labelled++;
             }
-
-            villager.setCustomName(label);
-            villager.setCustomNameVisible(false);
-
-            labelled++;
         }
 
         return labelled;
@@ -157,28 +142,12 @@ public final class WorkerNameplate {
         }
 
         for (ProfessionType profession : ProfessionType.values()) {
-            if (labelFor(profession).getString().equals(written)) {
+            if (nameFor(profession).equals(written)) {
                 return true;
             }
         }
 
         return false;
-    }
-
-    /** Se os dois já estão da mesma cor. */
-    private static boolean sameColour(Text current, Text label) {
-        return java.util.Objects.equals(
-                current.getStyle().getColor(), label.getStyle().getColor());
-    }
-
-    /**
-     * O nome que vai aparecer.
-     *
-     * <p>Em português porque é a língua do jogo do autor, e porque texto
-     * literal não passa pelo sistema de tradução — ver a nota da classe.
-     */
-    private static Text labelFor(ProfessionType profession) {
-        return Text.literal(nameFor(profession)).formatted(colourOf(profession));
     }
 
     private static String nameFor(ProfessionType profession) {
@@ -191,37 +160,6 @@ public final class WorkerNameplate {
             case MASON -> "Pedreiro";
             case FARMER -> "Fazendeiro";
             case BUILDER -> "Construtor";
-        };
-    }
-
-    /**
-     * A cor de cada profissão — decisão do autor, 2026-09-05: <i>"coloque
-     * um nome colorido para cada profissão"</i>.
-     *
-     * <p>Cada uma puxa do material que ela traz, porque é o que o jogador
-     * já associa a ela sem precisar decorar tabela: folha para quem corta
-     * árvore, pedra para quem cava, lã para quem tosquia, fogo para quem
-     * funde, tábua para quem fabrica, lavoura para quem planta.
-     *
-     * <p>O construtor é o único sem material próprio — ele assenta o dos
-     * outros —, e por isso fica com a cor que sobra e não se confunde com
-     * nenhuma das seis.
-     *
-     * <p><b>Sete cores distintas, e é o requisito.</b> Nome colorido que
-     * se confunde com o do vizinho não diz profissão nenhuma: as duas
-     * verdes são clara e escura, e as duas quentes são vermelho e
-     * dourado.
-     */
-    private static Formatting colourOf(ProfessionType profession) {
-        return switch (profession) {
-            case LUMBERJACK -> Formatting.DARK_GREEN;
-            case MINER -> Formatting.GRAY;
-            case SHEPHERD -> Formatting.WHITE;
-            case SMELTER -> Formatting.RED;
-            case CARPENTER -> Formatting.GOLD;
-            case MASON -> Formatting.DARK_PURPLE;
-            case FARMER -> Formatting.YELLOW;
-            case BUILDER -> Formatting.AQUA;
         };
     }
 }

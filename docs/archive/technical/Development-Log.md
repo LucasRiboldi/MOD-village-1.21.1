@@ -10857,3 +10857,35 @@ e `runGametest --rerun-tasks --no-daemon` com 650/650. O JAR
 `village-colony-0.3.9.jar` foi copiado para `downloads/` e
 `%APPDATA%/.minecraft/mods/` com SHA-256
 `D2ED5E9447C42F49DF2ADB6C3C4BEDFF3E8D3235CB62AC43EB6186F43A907754`.
+
+### 2026-10-10 - Nameplate Vanilla removido e obra sem apoio liberando a fila
+
+O playtest com Spark `tSjvmMbtxH` rodava o JAR 0.3.10. O perfil não indicou
+congelamento permanente, mas o `latest.log` mostrou travas de fluxo: obras em
+`BUILDING` sem tarefa porque todas as peças restantes estavam adiadas por falta
+de apoio, construtor parado com lote aberto e fundidor sem tarefa aberta. O
+`time_ledger` marcou construtor 76% ocioso e 16% bloqueado; fundidor 93%
+ocioso; mineiro 40% ocioso e 23% esperando.
+
+Foram escritos GameTests de regressão antes do patch. Quatro cenários de
+`WorkerEquipmentGameTest` passaram a exigir que rótulos de profissão do mod
+sejam removidos do `customName`, preservando nomes dados pelo jogador. O
+`BuildProgressGameTest.aFullyDeferredProjectFinishesInsteadOfReopeningForever`
+passou a exigir que obra com todos os blocos restantes adiados por `NO_SUPPORT`
+seja registrada como infraestrutura finalizada, não como obra abandonada que
+pode reabrir para sempre. A bateria falhou primeiro nesses cinco pontos.
+
+A correção 0.3.11 deixa `WorkerNameplate` apenas como limpeza de legado: a
+profissão não é mais gravada no aldeão, então o texto aparece somente dentro do
+overlay cliente, com o símbolo à direita. Em `WaitingWork`, quando a obra só
+tem peças sem apoio por dois ciclos, ela é movida para `COMPLETED`, registrada
+como infraestrutura, remove o projeto aberto e cancela tarefas de build órfãs.
+O comando `/vc log` agora procura primeiro uma vila na coluna X/Z do jogador,
+ignorando altura, e mostra vila encontrada mesmo quando a região ainda não está
+ativa.
+
+Verificação: `test --no-daemon`, `runGametest --rerun-tasks --no-daemon` com
+650/650 em 32,67 s, e `build --no-daemon` passaram. O JAR
+`village-colony-0.3.11.jar` foi copiado para `downloads/` e
+`%APPDATA%/.minecraft/mods/` com SHA-256
+`28AB21E3573932CB560A37AB6586409020B8C776649CE3FA6C25D4062071B855`.

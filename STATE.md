@@ -1,6 +1,6 @@
 # STATE — 2026-10-10
 
-> **JAR atual: `village-colony-0.3.10.jar` = `595E8FAE09C275EEEE20B840B674CA3EB2B80998B63A5FB2682355FB399BF709`** em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.11.jar` = `28AB21E3573932CB560A37AB6586409020B8C776649CE3FA6C25D4062071B855`** em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,35 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 10-10 — overlay sem nameplate Vanilla e obra sem apoio não trava a fila
+
+Playtest com Spark `tSjvmMbtxH`: o JAR carregado era 0.3.10. TPS ~20 no último minuto,
+14,33 nos 5 min e 17,67 nos 15 min; MSPT médio ~20 ms no último minuto, p95 ~29 ms e pico
+de 343 ms nos 5 min. Não é congelamento contínuo, mas o log mostrou travas de fluxo: 34
+`builder_pathing_stalled`, 16 `construction_waiting_resources`, 7 ciclos de varredura esgotados
+e 4 ciclos acima de um tique. O ledgers marcou construtor 76% ocioso e 16% bloqueado; fundidor
+93% ocioso; mineiro 40% ocioso e 23% esperando.
+
+Causa direta: ainda havia nameplate Vanilla (`Fundidor`) porque o servidor gravava a profissão no
+`customName`; e a obra podia ficar aberta só com peças adiadas por `NO_SUPPORT`, sem `nextBlock`,
+segurando a vaga única e impedindo novas varreduras. "Sem apoio" significa que a peça existe na
+planta, mas o bloco físico que a sustentaria não está no mundo; isso não deve travar crescimento.
+
+Correção 0.3.11: `WorkerNameplate` não grava mais profissão no aldeão e só limpa rótulos antigos
+do mod, preservando nomes dados pelo jogador. A profissão fica apenas no overlay cliente, dentro da
+moldura com símbolo à direita. Obra que fica só com peças sem apoio por dois ciclos vira
+infraestrutura finalizada com o volume já construído, cancela tarefas de build órfãs e libera a vaga
+para a vila crescer. `/vc log` agora encontra a vila pela coluna X/Z, ignorando altura, antes de
+reclamar que não há vila ativa perto; se a região estiver dormente, mostra a vila encontrada em vez
+de negar a presença do jogador.
+
+Verificado com regressão primeiro: os novos GameTests falharam antes do patch em
+`WorkerEquipmentGameTest.*nameplate*` e
+`BuildProgressGameTest.aFullyDeferredProjectFinishesInsteadOfReopeningForever`. Depois passaram
+`test --no-daemon`, `runGametest --rerun-tasks --no-daemon` **650/650 em 32,67 s** e
+`build --no-daemon`. JAR 0.3.11 copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; 0.3.10
+foi arquivado fora da pasta ativa de mods. Falta o playtest visual no cliente com a 0.3.11.
 
 ## 🟡 10-10 — overlay nítido, obra sobre a placa e Spark `vuUv6PZC5d`
 

@@ -146,9 +146,9 @@ public class BuildProgressGameTest implements FabricGameTest {
         });
     }
 
-    /** Uma obra sem nenhuma peca colocavel cede a fila depois da paciencia. */
+    /** Uma obra sem nenhuma peca colocavel fecha pronta e nao vira reparo infinito. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress")
-    public void aDeferredPieceIsNotAbandonedByTheProgressClock(TestContext context) {
+    public void aFullyDeferredProjectFinishesInsteadOfReopeningForever(TestContext context) {
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ORIGIN));
         Colony colony = Colony.create(UUID.randomUUID(), origin);
         BlueprintBlock torch = new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("torch"));
@@ -180,11 +180,14 @@ public class BuildProgressGameTest implements FabricGameTest {
 
             context.assertTrue(
                     WaitingWork.giveUpIfStalled(context.getWorld(), colony, project),
-                    "a obra totalmente adiada segurou a fila depois da janela de paciencia");
+                    "a obra totalmente adiada segurou a fila depois da janela curta de sem apoio");
             context.assertTrue(VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isEmpty(),
-                    "a obra totalmente adiada continuou ativa depois de ceder a fila");
+                    "a obra totalmente adiada continuou ativa depois de fechar");
             context.assertTrue(VillageColonyMod.BUILDINGS.isColonyInfrastructure(origin),
-                    "a obra parcial sumiu em vez de preservar o lote contra sobreposicao");
+                    "a obra fechada sumiu em vez de preservar o lote contra sobreposicao");
+            context.assertTrue(VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()
+                            .anyMatch(building -> building.finished() && building.contains(origin)),
+                    "a obra visualmente pronta ficou marcada como abandonada e vai reabrir no reparo");
         } finally {
             clock.setTime(time);
             clock.setTimeOfDay(day);
