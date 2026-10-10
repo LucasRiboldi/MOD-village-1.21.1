@@ -53,9 +53,8 @@ primeiro bloco não tem ponto físico imediato; rodar depois:
 - [x] Registrar no relatório cada fallback terminal (`VC_SUPPLY_ERROR`) por peça, profissão e
       tentativas; `test_analyze_village_log` 11/11 e Python 96/96. Comparar o próximo playtest
       com os 334 abastecimentos instantâneos da sessão anterior.
-- [ ] Definir em ADR a proveniência completa da peça colocada (`STOCK`, entrega, produção,
-      fallback): o `MaterialRequests` atual é observacional (ADR-035 §3 fase 1), e não pode virar
-      autoridade de estoque sem a decisão da fase 2.
+- [ ] Implementar a ADR-040: quatro despachos executáveis sem entrega física acionam o fallback;
+      consulta do construtor e reserva de tarefa não contam, e a entrega no baú zera o relógio.
 
 ## 🟠 Erros abertos
 

@@ -8,6 +8,19 @@
 
 # Village Colony — Development Log
 
+## 2026-10-10 — ADR-040 fecha a fase decisoria do pedido de material
+
+A opcao B aprovada pelo autor exigia que fallback terminal viesse depois de
+tentativas reais, nao depois de quatro leituras nem depois de uma rota apenas
+teorica. A ADR-040 define o contrato: o ciclo da colonia conta despachos
+executaveis, a entrega fisica em bau zera o contador e quatro despachos sem
+entrega usam o caminho terminal ja autorizado. Ela tambem proibe atribuir uma
+pilha anonima de bau a uma profissao sem evento de deposito observavel.
+
+A decisao ainda nao e implementacao: o proximo commit deve montar GameTest que
+separe consulta do construtor, despacho e entrega antes de alterar a cadeia de
+trabalho.
+
 ## 2026-10-10 — relatório distingue fallback comprovado de estoque físico
 
 O log já continha `VC_SUPPLY_ERROR` em cada injeção terminal de material, mas o

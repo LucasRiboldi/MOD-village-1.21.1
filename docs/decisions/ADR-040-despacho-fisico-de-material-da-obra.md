@@ -1,0 +1,59 @@
+# ADR-040 - Despacho fisico de material da obra
+
+**Status:** Aceita
+**Data:** 2026-10-10
+**Decision Type:** Gameplay + Architecture
+**Origem:** opcao B escolhida pelo autor para reduzir material instantaneo,
+eliminar esperas por rotas apenas teoricas e manter a obra fluida.
+**Amends:** ADR-035 secao 3, fase 2; ADR-022; ADR-036 item 6.
+
+## Contexto
+
+`MaterialRequest` tornou visivel a proxima peca que a obra espera, mas ficou
+expressamente observacional na fase 1 da ADR-035. O suprimento ainda decide por
+`hasRouteInBiome`: quando a resposta e verdadeira, a obra espera uma profissao
+indefinidamente, mesmo se nenhum trabalho executavel foi despachado ou nenhum
+item chegou a um bau que a atende. O playtest registrou 334 insercoes terminais
+nessa area e uma obra pode ficar parada pelo caso oposto: uma rota teorica que
+nunca entrega.
+
+## Decisao
+
+1. Cada proxima peca ausente de uma obra aberta tera um registro efemero de
+   despacho, indexado por projeto e item. Ele nao duplica inventario nem e
+   salvo: o mundo e os baus continuam sendo a fonte da verdade.
+2. Uma tentativa conta somente quando o ciclo da colonia abriu ou renovou uma
+   demanda executavel para a cadeia da peca. Consultas repetidas do construtor
+   e reservas de tarefa nao contam.
+3. Entre duas tentativas, a cadeia so e considerada entregue quando a peca ou
+   uma alternativa aceita aparece fisicamente em um bau que atende a obra.
+   Esse evento zera a contagem. A aparicao por jogador tambem e entrega fisica,
+   mas nao recebe atribuicao de profissao sem evento de deposito comprovado.
+4. Apos quatro tentativas despachadas sem entrega, a peca terminal ou o
+   ingrediente sem rota e depositado pelo caminho ja definido na ADR-036 item
+   6, no bau da profissao que a usa; se nao houver oficio produtor, no bau que
+   atende o construtor. A linha `VC_SUPPLY_ERROR` permanece obrigatoria.
+5. `SupplyRoutes` continua explicando a cadeia, mas deixa de ser prova de
+   entrega. Uma rota sem executor nao pode impedir o contador de fallback.
+6. A telemetria separa `STOCK` observado, entrega profissional com evento de
+   deposito e `FALLBACK` terminal. Nao e permitido inferir profissao de uma
+   pilha anonima ja presente no bau.
+
+## Consequencias
+
+- Uma obra nao materializa a peca na primeira leitura: quatro ciclos reais de
+  demanda preservam a prioridade da producao e coleta locais.
+- Uma rota que nunca se transforma em trabalho ou entrega deixa de ocupar a
+  obra indefinidamente.
+- A implementacao deve ligar o registro ao ciclo que cria as demandas e ao
+  deposito fisico, e nao a `BuilderMaterials.hasMaterialForNextBlock`.
+- A regra nao altera folhas: a decisao de nao colher a copa permanece, e elas
+  alcancam o fallback somente depois das quatro tentativas da cadeia aplicavel.
+
+## Verificacao
+
+Um GameTest deve provar que quatro consultas do construtor sem novo despacho
+nao esgotam a tolerancia; quatro ciclos com demanda executavel e sem entrega
+abastecem o destino correto; e um deposito fisico antes do quarto ciclo zera a
+contagem. O proximo save deve confirmar a queda de `VC_SUPPLY_ERROR`, a
+progressao da obra e os percentuais de `time_ledger.py`.

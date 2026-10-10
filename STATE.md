@@ -47,6 +47,14 @@ tests.test_analyze_village_log` passou 11/11 e a bateria Python passou 96/96.
 O próximo save deve gerar o relatório para comparar cada fallback com as 334
 injeções registradas antes desta etapa.
 
+## 🟡 10-10 — despacho, e não rota teórica, passa a governar o fallback
+
+A ADR-040 fecha a fase 2 prevista na ADR-035: quatro despachos executáveis sem
+entrega física devem acionar o fallback terminal. Consulta repetida do
+construtor e reserva de tarefa não contam; uma peça que chega a um baú que atende
+a obra zera a contagem. A implementação ainda está aberta e precisa de GameTest
+que separe consulta, despacho e entrega antes de mudar `BuilderMaterials`.
+
 ## 🟡 10-10 — calcita entra na cadeia real do mineiro
 
 A primeira tentativa da opção B tratava blocos naturais sem `ResourceType` como
