@@ -10964,3 +10964,24 @@ primeiro e falhou porque `CALCITE` não existia. Depois passaram o teste focal,
 `compileGametestJava --no-daemon` e `runGametest --rerun-tasks --no-daemon` com
 **652/652 em 45,19 s**. A entrega no save real ainda é obrigatória antes de
 considerar reduzidas as inserções instantâneas.
+
+### 2026-10-10 - Fundidor conserva a reserva durante falta transitória
+
+O log de playtest mostrou 882 liberações de tarefa para apenas quatro itens
+fundidos. A causa foi direta: ao não encontrar o cru, `SmelterWork` chamava
+`Task.release()`. O ciclo retomava a mesma tarefa, repetia a busca vazia e
+produzia o pico de paradas observado, mesmo havendo trabalho alternativo de
+obra.
+
+O GameTest `withoutTheRawMaterialTheSmelterWorksForTheOpenBuild` foi ajustado
+primeiro para reservar uma única tarefa através de três consultas. Ele falhou
+antes do patch porque o fundidor a soltava na primeira falta e não chegava ao
+vidro alternativo. A correção mantém o `Job` reservado para falta transitória,
+usa `StopLog` para registrar a espera sem spam e só libera nos erros definitivos
+de receita ou armazenamento. Depois de duas faltas, continua usando a seleção
+existente de item alternativo para obra/planta e volta a testar o pedido inicial.
+
+O teste focal `runGametest -PgametestOnly=SmelterGameTest --rerun-tasks
+--no-daemon` passou com 5/5. A verificação integral
+`runGametest --rerun-tasks --no-daemon` passou com 652/652 em 50,74 s. O próximo
+playtest continua necessário para confirmar no save a redução de ociosidade.

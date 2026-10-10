@@ -29,13 +29,12 @@ import java.util.UUID;
  * O que o fundidor faz enquanto o pedido não tem matéria-prima — F2 e pedido
  * do autor, 2026-09-30.
  *
- * <p>No playtest das 02:45 os fundidores pararam 193 vezes sem argila nem
- * areia: soltavam a tarefa, a pegavam de volta no ciclo seguinte e paravam de
- * novo, sem nunca produzir nada. A regra do autor: depois de
- * {@link #MISSES_BEFORE_FALLBACK} paradas pelo mesmo pedido, o fundidor funde
- * uma peça de outro item que a obra aberta vai precisar — ou, sem obra
- * aberta, que as plantas da vila vão precisar — e volta a tentar o pedido,
- * sem abandoná-lo.
+ * <p>Quando falta argila ou areia, a tarefa permanece com o fundidor para não
+ * voltar à fila sem nenhuma produção. Depois de
+ * {@link #MISSES_BEFORE_FALLBACK} faltas pelo mesmo pedido, o fundidor funde
+ * uma peça de outro item que a obra aberta vai precisar — ou, sem obra aberta,
+ * que as plantas da vila vão precisar — e volta a tentar o pedido, sem
+ * abandoná-lo.
  *
  * <p>"Vai precisar" desce um degrau da receita: a vidraça não sai da
  * fornalha, mas o vidro dela sai, e é ele que conta.
@@ -49,7 +48,7 @@ final class SmelterFallback {
     /** Paradas seguidas pelo mesmo pedido antes de trabalhar para a obra. */
     static final int MISSES_BEFORE_FALLBACK = 2;
 
-    /** Paradas por tarefa, pelo id dela: a tarefa sai e volta da fila. */
+    /** Faltas seguidas por tarefa, pelo id dela. */
     private static final Map<UUID, Integer> MISSES = new HashMap<>();
 
     /** A lista de cada colônia vale um ciclo: montá-la percorre receitas. */
@@ -61,7 +60,7 @@ final class SmelterFallback {
     private SmelterFallback() {
     }
 
-    /** Mais uma parada por falta de matéria-prima; devolve quantas já são. */
+    /** Mais uma falta de matéria-prima; devolve quantas já são. */
     static int missed(UUID taskId) {
         return MISSES.merge(taskId, 1, Integer::sum);
     }
@@ -79,7 +78,7 @@ final class SmelterFallback {
                 .orElse(true));
     }
 
-    /** Se já é hora de trabalhar para a obra em vez de soltar o pedido. */
+    /** Se já é hora de trabalhar para a obra enquanto o pedido espera. */
     static boolean isDue(UUID taskId) {
         return MISSES.getOrDefault(taskId, 0) >= MISSES_BEFORE_FALLBACK;
     }

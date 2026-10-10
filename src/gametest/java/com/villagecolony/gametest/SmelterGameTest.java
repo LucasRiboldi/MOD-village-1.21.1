@@ -105,14 +105,12 @@ public class SmelterGameTest implements FabricGameTest {
                 4);
 
         try {
-            // Três rodadas: duas paradas pelo pedido e a primeira depois
-            // delas. Cada rodada é o que o ciclo faria — retomar a tarefa se
-            // ela voltou à fila e dar vinte tiques de fornalha.
-            for (int round = 0; round < 3; round++) {
-                if (!task.isHeld()) {
-                    task.reserveFor(villager.getUuid());
-                }
+            task.reserveFor(villager.getUuid());
 
+            // Três consultas da mesma tarefa: duas faltas do pedido e a
+            // primeira depois delas. Sem matéria-prima, o fundidor mantém a
+            // reserva em vez de soltá-la para o ciclo retomar.
+            for (int round = 0; round < 3; round++) {
                 SmelterWork.run(world, colony);
 
                 for (int tick = 0; tick < 20; tick++) {
@@ -228,7 +226,11 @@ public class SmelterGameTest implements FabricGameTest {
 
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
 
-        ChestDepositor.deposit(world, chest, Items.RAW_IRON, 4);
+        // Dezesseis peças mantêm a tarefa de ferro ativa até a verificação.
+        // A reserva do pedreiro preserva metade do cru; com oito, depois de
+        // quatro lingotes o fundidor entra corretamente no trabalho
+        // alternativo e pode fundir a areia planejada.
+        ChestDepositor.deposit(world, chest, Items.RAW_IRON, 16);
 
         // A areia entra junto, e é o ponto: se o fundidor voltar a olhar
         // só para o grupo da areia, ele a queima e o ferro fica intacto.
@@ -270,7 +272,7 @@ public class SmelterGameTest implements FabricGameTest {
                         "o ferro cru não virou lingote nenhum");
 
                 context.assertTrue(
-                        inChest.amountOf(ResourceType.RAW_IRON) < 4,
+                        inChest.amountOf(ResourceType.RAW_IRON) < 16,
                         "o lingote apareceu e o cru continua inteiro — matéria do nada");
 
                 context.assertTrue(

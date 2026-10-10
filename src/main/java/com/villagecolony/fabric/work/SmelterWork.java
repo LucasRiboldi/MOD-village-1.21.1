@@ -249,11 +249,10 @@ public final class SmelterWork {
             return pending.get();
         }
 
-        // <b>Duas paradas pelo mesmo pedido, e ele trabalha para a obra</b>
-        // — F2 e pedido do autor, 2026-09-30. Soltar e retomar a tarefa sem
-        // produzir nada foram 193 paradas numa sessão. Uma peça de outro item
-        // que as obras vão usar, e o passo seguinte tenta o pedido de novo:
-        // a tarefa continua com ele. Ver SmelterFallback.
+        // <b>Duas faltas pelo mesmo pedido, e ele trabalha para a obra</b>
+        // — F2 e pedido do autor, 2026-09-30. Uma peça de outro item que as
+        // obras vão usar, e o passo seguinte tenta o pedido de novo: a tarefa
+        // continua com ele. Ver SmelterFallback.
         int misses = SmelterFallback.missed(job.task.id());
 
         if (SmelterFallback.isDue(job.task.id())) {
@@ -265,21 +264,16 @@ public final class SmelterWork {
             }
         }
 
-        // <b>O motivo passa a dizer o que ele mediu</b> — P0.3, 2026-09-11.
-        // A frase era só "nothing in the colony chests to smelt", e com
-        // ela "não há baú nenhum registrado", "há seis e estão vazios" e
-        // "há seis e nenhum tem ferro cru" saíam idênticas. Na sessão de
-        // 09-04 ela saiu 34 vezes e não disse qual das três era.
-        //
-        // Nenhum baú é caso à parte, e de propósito: essa é a única das
-        // três em que o fundidor não é o assunto.
-        finish(job, workerId, lookedButFound(searched.size(), names(raws))
+        // A espera por cru é transitória: manter a reserva impede que o
+        // próximo ciclo reapresente a mesma tarefa sem produzir. StopLog
+        // registra a transição e limita repetições enquanto o pedido espera.
+        StopLog.stopped("Smelter", workerId, lookedButFound(searched.size(), names(raws))
                 + (SmelterFallback.isDue(job.task.id())
                         ? " — and nothing the village builds need could be smelted either"
                         : " (" + misses + " of " + SmelterFallback.MISSES_BEFORE_FALLBACK
                                 + " before working for the builds)"));
 
-        return false;
+        return true;
     }
 
     /**

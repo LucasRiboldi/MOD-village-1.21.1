@@ -19,6 +19,21 @@
 
 ---
 
+## 🟡 10-10 — fundidor mantém a tarefa enquanto espera matéria-prima
+
+O diagnóstico do playtest anterior encontrou 882 liberações de tarefa para quatro
+itens fundidos: quando não encontrava o cru pedido, `SmelterWork` soltava a
+reserva e o ciclo seguinte retomava a mesma tarefa sem produzir. Agora a falta
+transitória registra a espera e conserva o `Job`; após duas faltas, o fundidor
+funde uma peça útil para obra/planta aberta e volta a tentar o pedido original.
+Erros definitivos de receita, baú ou espaço continuam encerrando a tarefa.
+
+O GameTest novo mantém uma única reserva durante duas faltas de ferro cru e
+exige vidro da obra aberta sem abandonar o pedido. A suíte focal passou 5/5 e a
+bateria integral `runGametest --rerun-tasks --no-daemon` passou 652/652 em
+50,74 s. A medição do próximo save ainda deve confirmar menos liberações e
+ociosidade abaixo de 15% quando houver cadeia física de minério até os baús.
+
 ## 🟡 10-10 — calcita entra na cadeia real do mineiro
 
 A primeira tentativa da opção B tratava blocos naturais sem `ResourceType` como

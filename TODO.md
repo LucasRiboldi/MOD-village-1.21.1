@@ -46,8 +46,10 @@ primeiro bloco não tem ponto físico imediato; rodar depois:
       permanecem fora da coleta do lenhador pela regra de preservar a copa.
 - [ ] Conciliar demanda da obra, reserva de tarefa, estoque em baú e entrega para que uma reserva
       sem retirada não impeça outra profissão de atender a peça.
-- [ ] Remover o ciclo de reserva/liberação do fundidor quando faltam insumo ou combustível, mantendo
-      alternativa de construção produtiva enquanto espera.
+- [x] Remover o ciclo de reserva/liberação do fundidor quando falta insumo, mantendo
+      alternativa de construção produtiva enquanto espera. `SmelterGameTest` 5/5 e
+      GameTests 652/652; confirmar no próximo save a redução de liberações e a
+      ociosidade abaixo de 15%.
 - [ ] Registrar origem da peça colocada (`STOCK`, entrega, produção, fallback) e comparar o próximo
       playtest com os 334 abastecimentos instantâneos observados na sessão anterior.
 
