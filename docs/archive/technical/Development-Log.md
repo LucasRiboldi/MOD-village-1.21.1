@@ -10889,3 +10889,36 @@ Verificação: `test --no-daemon`, `runGametest --rerun-tasks --no-daemon` com
 `village-colony-0.3.11.jar` foi copiado para `downloads/` e
 `%APPDATA%/.minecraft/mods/` com SHA-256
 `28AB21E3573932CB560A37AB6586409020B8C776649CE3FA6C25D4062071B855`.
+
+### 2026-10-10 - Overlay em camada e reserva da obra aberta
+
+O playtest com o JAR 0.3.11 ainda mostrava o nome da profissão fora do painel
+esperado. O `latest.log` também mostrou uma obra aberta com 91 blocos restantes
+em `BUILDING`, mas com `builders: 0 working ... AVAILABLE with nobody`; a vila
+registrou `WAITING/ALREADY_OPEN`, então a fila tinha tarefa aberta, mas nenhum
+construtor conseguia reservá-la.
+
+A correção do overlay separou a profundidade da moldura, do símbolo e do texto.
+Assim o fundo não disputa mais a mesma camada com os elementos visíveis: o nome
+fica à esquerda e o símbolo à direita, ambos à frente do background. O teste
+`PixelPanelLayoutTest.professionTextAndIconAreDrawnInFrontOfTheBackground` foi
+escrito primeiro e falhou até esses campos de camada existirem.
+
+A correção da obra removeu a exigência de ponto de apoio/posição do portão de
+reserva em `ColonyCycleRunner.canReserveTask`. A reserva agora aceita obra
+aberta com próximo bloco e fundação qualificada; quem decide caminhar, adiar
+peça sem apoio ou seguir construindo é o `BuilderWork`, que possui o contexto
+físico completo. O GameTest
+`ColonyCycleRunnerGameTest.anOpenBuildTaskCanBeReservedEvenWhenTheFirstPieceHasNoStandingSpot`
+cobre o caso visto no log: primeiro bloco sem posição de trabalho não pode
+deixar a obra `AVAILABLE with nobody`.
+
+Verificação final: `test --no-daemon` passou, `runGametest --rerun-tasks --no-daemon`
+passou com 651/651 em 34,86 s, e `build --no-daemon` passou. O JAR
+`village-colony-0.3.12.jar` foi copiado para `downloads/` e para
+`%APPDATA%/.minecraft/mods/` com SHA-256
+`B812F7B2A46FB3E3B3CAF781B35D1123BE9570F25698EC3823A06E61FF8AB003`. O JAR 0.3.11
+ficou travado pelo processo do jogo e precisa sair da pasta ativa antes do próximo
+playtest. O log do playtest não tinha linhas `VC_TIME`/`VC_COST`, então os
+percentuais de ociosidade não foram calculáveis nessa amostra; ele ainda registrou
+fundidor em `NO_TASK` e mineiro em `WORK_STALLED`.

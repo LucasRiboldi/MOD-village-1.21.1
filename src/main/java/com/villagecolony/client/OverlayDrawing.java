@@ -46,6 +46,11 @@ final class OverlayDrawing {
 
     private static final int FULL_BRIGHT = 0xF000F0;
 
+    /** Camadas separadas para o fundo nunca cobrir texto ou símbolo. */
+    static final float PANEL_Z = 0.0F;
+    static final float ICON_Z = 0.01F;
+    static final float TEXT_Z = 0.02F;
+
     private OverlayDrawing() {
     }
 
@@ -81,21 +86,24 @@ final class OverlayDrawing {
         matrices.scale(-SCALE, -SCALE, SCALE);
 
         Matrix4f matrix = matrices.peek().getPositionMatrix();
+        Matrix4f panelMatrix = new Matrix4f(matrix).translate(0.0F, 0.0F, PANEL_Z);
+        Matrix4f iconMatrix = new Matrix4f(matrix).translate(0.0F, 0.0F, ICON_Z);
+        Matrix4f textMatrix = new Matrix4f(matrix).translate(0.0F, 0.0F, TEXT_Z);
 
         if (layout.hasFrame()) {
-            panel(buffers.getBuffer(RenderLayer.getTextSeeThrough(OverlayDrawing.id(PANEL))), matrix,
+            panel(buffers.getBuffer(RenderLayer.getTextSeeThrough(OverlayDrawing.id(PANEL))), panelMatrix,
                     left + layout.frameLeft(), layout.frameTop(),
                     left + layout.frameRight(), layout.frameBottom());
             buffers.draw();
         }
 
-        quad(buffers.getBuffer(RenderLayer.getTextSeeThrough(icon)), matrix,
+        quad(buffers.getBuffer(RenderLayer.getTextSeeThrough(icon)), iconMatrix,
                 left + layout.iconLeft(), layout.iconTop(),
                 left + layout.iconRight(), layout.iconBottom(), 0, 0, 1, 1);
         buffers.draw();
 
         for (int i = 0; i < lines.length; i++) {
-            text.draw(lines[i], left + layout.textLeft(i), layout.textTop() + i * lineHeight, colors[i], true, matrix,
+            text.draw(lines[i], left + layout.textLeft(i), layout.textTop() + i * lineHeight, colors[i], true, textMatrix,
                     buffers, TextRenderer.TextLayerType.SEE_THROUGH, 0, FULL_BRIGHT);
         }
 

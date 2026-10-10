@@ -1,7 +1,10 @@
 # STATE — 2026-10-10
 
-> **JAR atual: `village-colony-0.3.11.jar` = `28AB21E3573932CB560A37AB6586409020B8C776649CE3FA6C25D4062071B855`** em `build/libs/`, `downloads/` (local) e
-> `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
+> **JAR atual: `village-colony-0.3.12.jar` = `B812F7B2A46FB3E3B3CAF781B35D1123BE9570F25698EC3823A06E61FF8AB003`** em
+> `build/libs/`, `downloads/` (local) e `%APPDATA%/.minecraft/mods`. Atenção: o
+> `village-colony-0.3.11.jar` ainda ficou travado pelo processo do jogo na pasta ativa de mods;
+> fechar o Minecraft e arquivar/remover esse JAR antes do próximo teste. **ADR-036 a 039 na `main`.**
+> Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
@@ -15,6 +18,35 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 10-10 — overlay com camada fixa e obra reservável
+
+Playtest com Spark `vuUv6PZC5d`/log atual: o JAR carregado era 0.3.11. O `latest.log`
+mostrou 2 ciclos acima de um tique, pior ciclo de 339 ms, sem `Can't keep up`. A vila
+carregou 49 trabalhadores, 9 prédios, 1 mina e 1 projeto a retomar. A obra abriu com
+91 blocos restantes, mas ficou como `builders: 0 working ... AVAILABLE with nobody`;
+o construtor registrou `WAITING/ALREADY_OPEN`. Sem linhas `VC_TIME`/`VC_COST`, os ledgers
+não conseguiram calcular percentual de ociosidade desse playtest. O fundidor teve
+7 esperas `NO_TASK`; o mineiro abandonou duas coletas por `WORK_STALLED`.
+
+Causa direta: o overlay ainda podia sofrer disputa visual de profundidade entre moldura,
+símbolo e texto, fazendo o nome não aparecer dentro do painel. Na obra, a reserva da tarefa
+de `BUILD_SITE` exigia ponto físico de trabalho antes do construtor assumir a tarefa; quando
+o primeiro bloco não tinha ponto ao alcance, a tarefa ficava aberta e disponível, mas sem
+trabalhador.
+
+Correção 0.3.12: o desenho do overlay usa camadas separadas para fundo, símbolo e texto,
+garantindo nome da profissão à esquerda e símbolo à direita na frente da mesma moldura.
+A reserva de obra agora só exige projeto aberto com próximo bloco e preparação qualificada;
+o diagnóstico físico de posição/suporte volta para o `BuilderWork`, que tem a rotina própria
+de caminhar, adiar peça sem apoio ou continuar a construção.
+
+Verificado com regressão primeiro: `PixelPanelLayoutTest.professionTextAndIconAreDrawnInFrontOfTheBackground`
+falhou antes dos campos de camada; `ColonyCycleRunnerGameTest.anOpenBuildTaskCanBeReservedEvenWhenTheFirstPieceHasNoStandingSpot`
+cobre a fila `AVAILABLE with nobody`. Depois passaram `test --no-daemon` e
+`runGametest --rerun-tasks --no-daemon` **651/651 em 34,86 s**; `build --no-daemon`
+também passou. JAR 0.3.12 copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`, mas
+o 0.3.11 ficou travado pelo jogo aberto. Falta confirmar visualmente no save real.
 
 ## 🟡 10-10 — overlay sem nameplate Vanilla e obra sem apoio não trava a fila
 

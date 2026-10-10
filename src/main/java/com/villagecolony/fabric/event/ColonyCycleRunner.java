@@ -51,7 +51,6 @@ import com.villagecolony.fabric.work.WorkMaterials;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.BuilderWork;
-import com.villagecolony.fabric.work.BuilderApproach;
 import com.villagecolony.fabric.work.EmptySweeps;
 import com.villagecolony.fabric.work.ConstructionDemand;
 import com.villagecolony.fabric.work.ConstructionPlanner;
@@ -442,12 +441,8 @@ final class ColonyCycleRunner {
             case NONE -> true;
             case EMPTY_SWEEP -> !EmptySweeps.isWaiting(colonyId, task.targetResource(), world.getTime());
             case BUILD_SITE -> VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
-                    .flatMap(project -> project.nextBlock().map(next ->
-                            BuilderApproach.hasStandingSpotWithinReach(
-                                    world,
-                                    project,
-                                    MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(next)))
-                                    && FoundationPreparation.prepareIfQualified(world, project)))
+                    .filter(project -> project.nextBlock().isPresent())
+                    .map(project -> FoundationPreparation.prepareIfQualified(world, project))
                     .orElse(false);
         };
     }

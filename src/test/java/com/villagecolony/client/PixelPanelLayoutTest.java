@@ -49,4 +49,12 @@ class PixelPanelLayoutTest {
                 + PixelPanelLayout.ICON_SIZE
                 + 2.0F * PixelPanelLayout.PADDING);
     }
+
+    @Test
+    void professionTextAndIconAreDrawnInFrontOfTheBackground() {
+        assertTrue(OverlayDrawing.PANEL_Z < OverlayDrawing.ICON_Z,
+                "o simbolo precisa ficar na frente da moldura");
+        assertTrue(OverlayDrawing.ICON_Z < OverlayDrawing.TEXT_Z,
+                "o nome da profissao precisa ficar na frente do simbolo e da moldura");
+    }
 }

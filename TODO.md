@@ -6,21 +6,22 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
-## 🔴 Playtest da 0.3.11
+## 🔴 Playtest da 0.3.12
 
-Nada das ADR-037, 038 e 039 foi confirmado visualmente no save real. A 0.3.11 corrige a moldura do
-overlay, remove o nameplate Vanilla e libera obra travada só por peça sem apoio; rodar depois:
+Nada das ADR-037, 038 e 039 foi confirmado visualmente no save real. A 0.3.12 corrige a camada do
+overlay, remove o nameplate Vanilla e deixa a obra ser assumida pelo construtor mesmo quando o
+primeiro bloco não tem ponto físico imediato; rodar depois:
 `python scripts/time_ledger.py` e
 `python scripts/cost_ledger.py` no `latest.log`, e Spark.
 
-- [ ] Painel da profissão 0.3.11: nome à esquerda e símbolo simples à direita dentro da mesma
+- [ ] Painel da profissão 0.3.12: nome à esquerda e símbolo simples à direita dentro da mesma
       moldura nítida; sem nameplate Vanilla fora do background.
-- [ ] Overlay da obra 0.3.11: painel aparece no mesmo lugar da placa de obra e atualiza o texto.
+- [ ] Overlay da obra 0.3.12: painel aparece no mesmo lugar da placa de obra e atualiza o texto.
 - [ ] Crescimento natural depois da obra atual: no playtest `vuUv6PZC5d`, a vila tinha uma obra
       aberta em `-750,68,-893` esperando `minecraft:stonecutter`; 9 ciclos não varreram lotes porque
       uma build estava aberta.
-- [ ] Obra sem apoio 0.3.11: se só sobrarem peças sem suporte físico, ela fecha como infraestrutura
-      parcial e libera a próxima construção, em vez de reabrir indefinidamente.
+- [ ] Obra 0.3.12: confirmar no save que tarefa aberta deixa de ficar `AVAILABLE with nobody` e que
+      o construtor assume/diagnostica a peça pelo `BuilderWork`.
 - [ ] `/vc log` dentro da vila em qualquer altura: a busca deve contar a coluna X/Z da vila e só
       avisar região dormente quando a vila existir mas ainda não estiver simulando.
 - [ ] `walk` aparece no `time_ledger` (A3: o braço do aldeão agora desce).
