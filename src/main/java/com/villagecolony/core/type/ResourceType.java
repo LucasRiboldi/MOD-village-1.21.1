@@ -57,6 +57,9 @@ public enum ResourceType {
     /** A pedra da vila de deserto, e a parede dela — 2026-08-20. */
     SANDSTONE(ResourceCategory.NATURAL, ResourceGroup.STONE, Production.MINED),
 
+    /** Calcita natural pedida diretamente por algumas estruturas. */
+    CALCITE(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.MINED),
+
     /** O que o fundidor recebe para dar vidro. */
     SAND(ResourceCategory.NATURAL, ResourceGroup.SAND, Production.SURFACE_GATHERED),
 

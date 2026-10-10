@@ -491,6 +491,14 @@ public final class ColonyGoals {
             }
         });
 
+        // Mineral fora da paleta (por exemplo, calcita) precisa de meta
+        // nominal: pedra comum no baú não substitui a peça exata da obra.
+        work.mined().forEach((mined, amount) -> {
+            if (amount > 0) {
+                goals.put(mined, amount);
+            }
+        });
+
         FurnaceGoals.addTo(goals, owned, work);
 
         return Map.copyOf(goals);

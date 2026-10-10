@@ -3,7 +3,6 @@ package com.villagecolony.fabric.integration;
 /** Origem auditavel de uma peca pedida pela construcao. */
 public enum SupplySource {
     BIOME_RESOURCE,
-    PHYSICAL_BLOCK,
     AUTOMATIC_DROP,
     CRAFTING,
     SMELTING,

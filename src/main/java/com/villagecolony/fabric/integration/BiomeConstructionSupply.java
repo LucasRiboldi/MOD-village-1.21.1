@@ -425,32 +425,7 @@ public final class BiomeConstructionSupply {
             return Optional.empty();
         }
 
-        return isPhysicalConstructionBlock(biome, item)
-                ? Optional.of(SupplySource.PHYSICAL_BLOCK)
-                : Optional.empty();
-    }
-
-    /**
-     * Blocos naturais que uma profissão pode buscar mesmo sem caber no
-     * catálogo {@link ResourceType}. A espécie da folha continua limitada ao
-     * bosque que a vila mantém: uma rota só existe quando ela é alcançável.
-     */
-    private static boolean isPhysicalConstructionBlock(RegistryKey<Biome> biome, Item item) {
-        BlockState state = Block.getBlockFromItem(item).getDefaultState();
-
-        if (state.isIn(BlockTags.DIRT)
-                || state.isIn(BlockTags.SAND)
-                || state.isIn(BlockTags.BASE_STONE_OVERWORLD)
-                || state.isOf(Blocks.GRAVEL)
-                || state.isOf(Blocks.CLAY)
-                || state.isOf(Blocks.CALCITE)) {
-            return true;
-        }
-
-        return TreeSpecies.ofLeaves(state)
-                .flatMap(species -> VillageBiomes.forestSpeciesFor(biome)
-                        .filter(forest -> forest.contains(species)))
-                .isPresent();
+        return Optional.empty();
     }
 
     private static boolean isDirectBiomeResource(
@@ -482,7 +457,9 @@ public final class BiomeConstructionSupply {
     }
 
     private static boolean isMineResource(RegistryKey<Biome> biome, ResourceType resource) {
-        if (resource == ResourceType.COAL || resource == ResourceType.RAW_IRON) {
+        if (resource == ResourceType.COAL
+                || resource == ResourceType.RAW_IRON
+                || resource == ResourceType.CALCITE) {
             return true;
         }
 

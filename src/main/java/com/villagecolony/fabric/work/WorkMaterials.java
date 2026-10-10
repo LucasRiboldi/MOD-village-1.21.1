@@ -276,6 +276,22 @@ public final class WorkMaterials {
         return wanted;
     }
 
+    /** Minerais exatos que a obra pede fora da pedra-padrão da paleta. */
+    public static Map<ResourceType, Integer> minedNeeds(Colony colony) {
+        Map<ResourceType, Integer> wanted = new LinkedHashMap<>();
+
+        for (Map.Entry<ResourceId, Integer> entry
+                : ConstructionDemand.materialsNeededBy(colony).entrySet()) {
+            MinecraftTypeAdapter.toBlock(entry.getKey())
+                    .flatMap(WorkMaterials::firstKnownAlternative)
+                    .filter(type -> type.production() == Production.MINED)
+                    .filter(type -> type.group() == ResourceGroup.NONE)
+                    .ifPresent(type -> wanted.merge(type, entry.getValue(), Integer::sum));
+        }
+
+        return wanted;
+    }
+
     /** O primeiro item conhecido entre as alternativas materiais da obra. */
     static Optional<ResourceType> firstKnownAlternative(Block block) {
         for (Item candidate : MaterialChoice.forBlock(block)) {

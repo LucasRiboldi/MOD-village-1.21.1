@@ -328,6 +328,7 @@ final class ColonyCycleRunner {
                 WorkMaterials.iron(overworld, colony),
                 WorkMaterials.smeltedNeeds(overworld, colony),
                 WorkMaterials.surfaceGatheredNeeds(overworld, colony),
+                WorkMaterials.minedNeeds(colony),
                 // A tora que a obra pede bruta: a meta não a conta como tábua (A-1).
                 ConstructionDemand.rawWoodNeededBy(colony));
 

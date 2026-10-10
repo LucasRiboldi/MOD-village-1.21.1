@@ -19,22 +19,22 @@
 
 ---
 
-## 🟡 10-10 — rota física de materiais de construção sem catálogo
+## 🟡 10-10 — calcita entra na cadeia real do mineiro
 
-O primeiro passo da opção B separa blocos físicos naturais que não têm
-`ResourceType` da criação terminal no baú. Calcita e folhas da espécie que o
-bosque da vila consegue manter agora recebem `PHYSICAL_BLOCK`: a obra os deixa
-na rota profissional, em vez de contabilizar quatro faltas e inseri-los
-instantaneamente. Recursos já catalogados mantêm as próprias regras: por
-exemplo, areia distante de água continua sem rota no bioma, portanto não é
-mascarada pela tag de bloco.
+A primeira tentativa da opção B tratava blocos naturais sem `ResourceType` como
+uma rota física genérica. A revisão mostrou que isto era incorreto: declarar uma
+rota sem uma tarefa capaz de executá-la faria a obra esperar indefinidamente.
+Folhas continuam fora da coleta do lenhador por decisão vigente; portanto, quando
+uma planta pedir folhas, elas seguem para o fallback terminal depois das tentativas.
 
-O GameTest novo exige que calcita e folhas de carvalho não apareçam no baú do
-construtor após quatro consultas. Ele falhou antes da origem física existir e
-passou depois. Verificação atual: `compileGametestJava --no-daemon` e
-`runGametest --rerun-tasks --no-daemon`, **652/652 em 47,56 s**. Ainda falta a
-próxima etapa: colocar essa demanda explícita nas filas de mineiro/lenhador,
-medir sua entrega e confirmar no save real que as peças chegam fisicamente.
+Calcita, que apareceu 63 vezes no abastecimento instantâneo do playtest, agora é
+`ResourceType.CALCITE` com produção `MINED`. `WorkMaterials` a extrai da obra,
+`WorkDemand` a carrega nominalmente e `ColonyGoals` abre a tarefa do mineiro;
+pedregulho armazenado não a substitui. A rota no bioma é `BIOME_RESOURCE` e não
+um rótulo genérico. O teste novo falhou antes do recurso existir e passou depois;
+verificação: `ColonyGoalsTest`, `compileGametestJava` e `runGametest` **652/652
+em 45,19 s**. Ainda falta medir entrega no save real e transformar outras peças
+sem catálogo em cadeias executáveis, uma por profissão.
 
 ## 🟡 10-10 — overlay com camada fixa e obra reservável
 

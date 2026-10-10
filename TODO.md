@@ -39,8 +39,11 @@ primeiro bloco não tem ponto físico imediato; rodar depois:
 
 ## 🟠 Fluxo físico de materiais da obra
 
-- [ ] Conectar `PHYSICAL_BLOCK` à demanda priorizada de mineiro/lenhador e à entrega no baú que
-      atende a obra; até agora a rota impede o fallback, mas ainda não cria a tarefa de coleta.
+- [ ] Medir no save real a entrega de `CALCITE` pelo mineiro e comparar contra as 63 inserções
+      instantâneas registradas; rota declarada e meta nominal não substituem a confirmação de entrega.
+- [ ] Para cada bloco sem catálogo, criar primeiro uma cadeia executável de profissão ou mantê-lo no
+      fallback terminal. Não voltar a declarar uma rota genérica sem trabalhador que a cumpra; folhas
+      permanecem fora da coleta do lenhador pela regra de preservar a copa.
 - [ ] Conciliar demanda da obra, reserva de tarefa, estoque em baú e entrega para que uma reserva
       sem retirada não impeça outra profissão de atender a peça.
 - [ ] Remover o ciclo de reserva/liberação do fundidor quando faltam insumo ou combustível, mantendo

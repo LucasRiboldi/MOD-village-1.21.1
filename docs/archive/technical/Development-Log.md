@@ -10944,3 +10944,23 @@ Depois de restringir a origem física a itens sem `ResourceType`,
 passou com **652/652 em 47,56 s**. A entrega profissional efetiva e a telemetria
 de proveniência continuam nas próximas tarefas; este passo só impede o fallback
 indevido e descreve a rota corretamente.
+
+### 2026-10-10 - Calcita passa da rota teórica para a meta do mineiro
+
+A revisão imediata do passo anterior encontrou uma violação da própria regra de
+fluxo: `PHYSICAL_BLOCK` declarava calcita e folhas como atendíveis, mas não havia
+tarefa genérica que levasse esses itens até a obra. A consequência possível era
+uma obra esperar por uma rota apenas declarada. A classificação ampla foi retirada;
+folhas permanecem fora do lenhador, conforme a regra de preservar a copa.
+
+Calcita recebeu `ResourceType.CALCITE` com produção `MINED`. A demanda da obra
+agora a percorre por `WorkMaterials.minedNeeds`, `WorkDemand` e `ColonyGoals`,
+abrindo uma meta nominal do mineiro sem aceitar pedregulho como substituto. A
+rota de suprimento passa a ser `BIOME_RESOURCE`, que corresponde ao trabalho que
+o sistema sabe atribuir.
+
+O teste `ColonyGoalsTest.constructionCalciteCreatesItsOwnMiningGoal` foi escrito
+primeiro e falhou porque `CALCITE` não existia. Depois passaram o teste focal,
+`compileGametestJava --no-daemon` e `runGametest --rerun-tasks --no-daemon` com
+**652/652 em 45,19 s**. A entrega no save real ainda é obrigatória antes de
+considerar reduzidas as inserções instantâneas.

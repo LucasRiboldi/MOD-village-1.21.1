@@ -121,21 +121,17 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
     }
 
     /**
-     * Calcita e folhas existem fisicamente no mundo, embora não tenham um
-     * {@code ResourceType}. A obra deve deixá-las para a coleta antes de
-     * considerar o abastecimento terminal (ADR-022).
+     * Calcita tem rota física de mineração antes do abastecimento terminal
+     * (ADR-022). Folha não entra: a regra do lenhador é não colhê-la.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
-    public void unmappedNaturalBlocksKeepAPhysicalRouteBeforeFallback(TestContext context) {
+    public void calciteKeepsAMiningRouteBeforeFallback(TestContext context) {
         Setup calcite = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.CALCITE);
-        Setup leaves = setUp(context, context.getAbsolutePos(new BlockPos(8, 2, 2)), Items.OAK_LEAVES);
 
         try {
-            assertPhysicalRouteWithoutFallback(context, calcite, Items.CALCITE);
-            assertPhysicalRouteWithoutFallback(context, leaves, Items.OAK_LEAVES);
+            assertMiningRouteWithoutFallback(context, calcite, Items.CALCITE);
         } finally {
             calcite.cleanUp();
-            leaves.cleanUp();
         }
 
         context.complete();
@@ -267,11 +263,11 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
         return ColonyChests.countIn(context.getWorld(), List.of(chest), item);
     }
 
-    private static void assertPhysicalRouteWithoutFallback(TestContext context, Setup setup, Item item) {
+    private static void assertMiningRouteWithoutFallback(TestContext context, Setup setup, Item item) {
         SupplyRoute route = BiomeConstructionSupply.routeInBiome(
                 context.getWorld(), setup.project().colonyId(), item);
-        context.assertTrue(route.available() && route.source() == SupplySource.PHYSICAL_BLOCK,
-                item + " devia ter rota fisica, sem ResourceType: " + route);
+        context.assertTrue(route.available() && route.source() == SupplySource.BIOME_RESOURCE,
+                item + " devia ter rota de mineracao: " + route);
 
         for (int attempt = 1; attempt <= 4; attempt++) {
             context.assertFalse(BuilderMaterials.hasOrStocksConstructionMaterial(
