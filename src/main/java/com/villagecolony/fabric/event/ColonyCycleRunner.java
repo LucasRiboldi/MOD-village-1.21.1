@@ -344,10 +344,8 @@ final class ColonyCycleRunner {
         // ser a cara, e agora ela responde por si.
         mark = CycleCost.since(CycleCost.Phase.PLANNER, mark);
 
-        // A peça que espera renova a demanda uma vez no ciclo, antes da
-        // distribuição. O construtor e a placa apenas observam esse estado.
-        // Regra 40, ADR-040.
-        ConstructionSupplyDispatches.renewForCycle(overworld, colony);
+        // A obra eleva primeiro a prioridade da rota que destrava sua fila. Regra 40, ADR-040.
+        ConstructionSupplyDispatches.prioritizeForCycle(overworld, colony);
 
         int assigned = ColonyCycle.run(
                 colony.id(),
@@ -370,6 +368,10 @@ final class ColonyCycleRunner {
                 (resource, type, hands) -> reportHands(colony.id(), resource, type, hands),
                 work.constructionMaterials(),
                 (worker, task) -> canReserveTask(overworld, colony.id(), task));
+
+        // Só depois do ciclo sabemos que a rota produziu tarefa aberta; uma rota apenas possível
+        // não pode gastar o prazo nem materializar recurso cedo demais. Regra 40, ADR-040.
+        ConstructionSupplyDispatches.renewForCycle(overworld, colony);
 
         // Sem o `if (assigned > 0)` que estava aqui. A linha calava
         // exatamente quando havia algo a dizer: distribuição parada é
@@ -483,7 +485,6 @@ final class ColonyCycleRunner {
             UUID colonyId, ResourceType resource, TaskType type, int hands) {
 
         String subject = type.name().toLowerCase(Locale.ROOT);
-
         if (hands == 0) {
             IdleLog.record(
                     colonyId,
@@ -493,7 +494,6 @@ final class ColonyCycleRunner {
 
             return;
         }
-
         IdleLog.clear(colonyId, subject);
     }
 }

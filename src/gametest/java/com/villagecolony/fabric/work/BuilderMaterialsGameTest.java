@@ -5,10 +5,14 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.model.MaterialRequest;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.task.model.TaskPriority;
+import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BiomeConstructionSupply;
@@ -265,6 +269,52 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
             context.assertTrue(count(context, setup.builderChest(), Items.WHITE_TERRACOTTA) == 1,
                     "a contingência terminal não entrou no baú do construtor");
         } finally {
+            setup.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Uma rota explicada pelo livro de receitas ainda nao e trabalho. Quatro
+     * leituras do ciclo sem uma tarefa da cadeia nao podem materializar a
+     * peca; a contagem comeca quando a colonia efetivamente abriu o pedido.
+     * Regra 40, ADR-040.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
+    public void dispatchCountsOnlyAfterTheSupplyChainHasAnOpenTask(TestContext context) {
+        Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.OAK_PLANKS);
+
+        try {
+            setup.project().moveTo(ConstructionState.PREPARING);
+            setup.project().moveTo(ConstructionState.BUILDING);
+            setup.project().moveTo(ConstructionState.WAITING_RESOURCES);
+            VillageColonyMod.CONSTRUCTIONS.register(setup.project());
+
+            for (int cycle = 1; cycle <= 4; cycle++) {
+                ConstructionSupplyDispatches.renewForCycle(context.getWorld(), setup.colony());
+            }
+
+            context.assertFalse(ConstructionSupplyDispatches.fallbackDue(
+                            setup.project().id(), Items.OAK_PLANKS),
+                    "a rota sem tarefa aberta gastou os despachos da obra");
+
+            VillageColonyMod.TASKS.create(setup.colony().id(), TaskType.CRAFT_WOOD_MATERIAL,
+                    TaskPriority.PRODUCTION, ResourceType.OAK_PLANKS, 1);
+
+            ConstructionSupplyDispatches.renewForCycle(context.getWorld(), setup.colony());
+            long tick = context.getWorld().getTime();
+            for (int cycle = 1; cycle <= 3; cycle++) {
+                ConstructionSupplyDispatches.recordCycleDispatch(
+                        setup.project().id(), Items.OAK_PLANKS, tick + cycle);
+            }
+
+            context.assertTrue(ConstructionSupplyDispatches.fallbackDue(
+                            setup.project().id(), Items.OAK_PLANKS),
+                    "quatro ciclos com trabalho aberto nao registraram o despacho");
+        } finally {
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(setup.colony().id());
+            VillageColonyMod.TASKS.clear();
             setup.cleanUp();
         }
 

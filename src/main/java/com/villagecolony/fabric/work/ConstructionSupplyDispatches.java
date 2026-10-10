@@ -78,16 +78,23 @@ public final class ConstructionSupplyDispatches {
         BY_PROJECT.put(projectId, new Dispatch(item, attempts, cycleTick));
     }
 
-    /**
-     * Renova a demanda da obra aberta e torna urgentes as tarefas disponíveis
-     * de todos os recursos que aparecem na rota. O construtor só consulta este
-     * resultado; ele não cria tentativas. Regra 40, ADR-040.
-     */
-    public static void renewForCycle(ServerWorld world, Colony colony) {
+    /** Torna urgentes, antes da distribuição, as tarefas disponíveis da rota da obra. */
+    public static void prioritizeForCycle(ServerWorld world, Colony colony) {
         currentNeed(world, colony).ifPresent(need -> {
             prioritizeRoute(colony.id(), need.route());
-            recordCycleDispatch(need.project().id(), need.item(), world.getTime());
         });
+    }
+
+    /**
+     * Registra somente o ciclo que deixou uma tarefa executável aberta para a
+     * rota. Consultas da obra e uma rota teórica sem executor não gastam o
+     * prazo do suprimento terminal. Regra 40, ADR-040.
+     */
+    public static void renewForCycle(ServerWorld world, Colony colony) {
+        currentNeed(world, colony)
+                .filter(need -> hasOpenSupplyTask(colony.id(), need.route()))
+                .ifPresent(need -> recordCycleDispatch(
+                        need.project().id(), need.item(), world.getTime()));
     }
 
     private static Optional<Need> currentNeed(ServerWorld world, Colony colony) {
@@ -123,6 +130,16 @@ public final class ConstructionSupplyDispatches {
         VillageColonyMod.TASKS.availableFor(colonyId).stream()
                 .filter(task -> resources.contains(task.targetResource()))
                 .forEach(task -> task.reprioritize(TaskPriority.CONSTRUCTION_MATERIAL));
+    }
+
+    private static boolean hasOpenSupplyTask(UUID colonyId, SupplyRoute route) {
+        Set<ResourceType> resources = new HashSet<>();
+        collectResources(route, resources);
+
+        return VillageColonyMod.TASKS.ofColony(colonyId).stream().anyMatch(task ->
+                task.isOpen()
+                        && task.type().isResourceRequest()
+                        && resources.contains(task.targetResource()));
     }
 
     private static void collectResources(SupplyRoute route, Set<ResourceType> resources) {
