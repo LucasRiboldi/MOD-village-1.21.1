@@ -357,25 +357,24 @@ final class MinerSteps {
                 .map(Mine::branchesOpenNow)
                 .orElse(Mine.ARMS);
 
-        if (!sand && MineClaims.heldByOther(colonyId, workerId, branches)) {
-            // <b>Recusa não é busca</b> — 2026-09-04. Quem é barrado no
-            // portão da escada não varre coluna nenhuma, e cobrar do
-            // orçamento o que não gastou foi o impasse daquele dia: o
-            // barrado vinha antes no mapa, levava a única busca do tique,
-            // e o dono ficava sem a passagem em que soltaria a mina por
-            // não achar pedra — a saída de 2026-09-02, que nunca chegava
-            // a rodar. Vinte e cinco minutos assim, uma pedra na colônia,
-            // e os dois guardas de travamento em zero porque ninguém
-            // andava para lugar nenhum.
-            //
-            // A areia não passa por aqui: ela não usa a escada, e o
-            // dono dela é o cursor de cada mineiro.
-            return false;
-        }
+        Optional<BlockPos> found;
 
-        Optional<BlockPos> found = sand
-                ? SandGathering.nextTarget(world, workerId, colonyId, job.center)
-                : MineDigging.nextTarget(world, workerId, colonyId, job.center);
+        if (!sand && MineClaims.heldByOther(colonyId, workerId, branches)) {
+            // O ramal continua exclusivo, mas o mineiro barrado não fica
+            // parado: ele raspa pedra exposta fora das células planejadas
+            // da mina aberta, criando caminho de coleta enquanto espera.
+            // Se nada aparecer, a recusa continua não sendo busca; o dono
+            // ainda precisa da passagem para soltar ou avançar o ramal.
+            found = MineDigging.exposedStoneFallback(world, workerId, colonyId, job.center);
+
+            if (found.isEmpty()) {
+                return false;
+            }
+        } else {
+            found = sand
+                    ? SandGathering.nextTarget(world, workerId, colonyId, job.center)
+                    : MineDigging.nextTarget(world, workerId, colonyId, job.center);
+        }
 
         if (found.isEmpty()) {
             return true;

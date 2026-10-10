@@ -335,18 +335,37 @@ public final class MinerWork {
             return;
         }
 
+        if (trySearch(world, searchCandidates, true)) {
+            return;
+        }
+
+        trySearch(world, searchCandidates, false);
+    }
+
+    private static boolean trySearch(ServerWorld world, List<UUID> searchCandidates, boolean heldArmOnly) {
         int start = searchStartIndex(searchCandidates, lastSearchWorker);
 
         for (int offset = 0; offset < searchCandidates.size(); offset++) {
             UUID workerId = searchCandidates.get((start + offset) % searchCandidates.size());
             Job job = JOBS.get(workerId);
 
-            if (job != null && MinerSteps.step(world, workerId, job, SEARCHES_PER_TICK > 0)) {
+            if (job == null || heldArmOnly != hasHeldArm(job, workerId)) {
+                continue;
+            }
+
+            if (MinerSteps.step(world, workerId, job, SEARCHES_PER_TICK > 0)) {
                 lastSearchWorker = workerId;
 
-                return;
+                return true;
             }
         }
+
+        return false;
+    }
+
+    private static boolean hasHeldArm(Job job, UUID workerId) {
+        return job.task.targetResource().group() != ResourceGroup.SAND
+                && MineClaims.armAlreadyHeld(job.task.colonyId(), workerId).isPresent();
     }
 
     /** Índice do próximo candidato depois do mineiro que consumiu a busca. */

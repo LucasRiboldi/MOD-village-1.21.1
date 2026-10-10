@@ -94,7 +94,7 @@ public final class BiomeConstructionSupply {
             return false;
         }
 
-        return stock(world, colonyId, near, item);
+        return stockForConstruction(world, colonyId, near, item);
     }
 
     /**
@@ -110,7 +110,7 @@ public final class BiomeConstructionSupply {
 
     private static final Map<String, Integer> FAILED_PROFESSION_ATTEMPTS = new HashMap<>();
 
-    /** A terceira falta da mesma peça sem rota profissional libera o depósito. */
+    /** A quarta falta da mesma peça sem rota profissional libera o depósito. */
     public static boolean failedProfessionAttempt(UUID colonyId, Item item) {
         return FAILED_PROFESSION_ATTEMPTS.merge(key(colonyId, item), 1, Integer::sum)
                 >= ATTEMPTS_BEFORE_STOCKING;
@@ -228,16 +228,16 @@ public final class BiomeConstructionSupply {
     }
 
     /**
-     * O material que a busca não achou três vezes aparece no baú de quem o
+     * O material que a busca não achou quatro vezes aparece no baú de quem o
      * usa — pedido do autor, 2026-10-03.
      *
-     * <p><i>"Se não há material necessário depois de 3 tentativas de
+     * <p><i>"Se não há material necessário depois de tentativas repetidas de
      * localizá-lo, o material necessário deve aparecer no baú da profissão
      * que precisou dele; se for localizado no bioma alcançável da vila, o
      * aldeão vai buscá-lo."</i> Vale também para o material da natureza, e é
      * o que revê a decisão de 26-09: ela recusava natureza porque a regra
      * fabricava tora e terra que a profissão <b>achava</b>. Aqui só chega o
-     * que a busca no mundo, de verdade, não achou três vezes seguidas.
+     * que a busca no mundo, de verdade, não achou quatro vezes seguidas.
      *
      * @return se o baú já tem, ou passou a ter, a quantidade pedida
      */

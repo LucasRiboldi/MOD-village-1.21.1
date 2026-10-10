@@ -8,6 +8,34 @@
 
 # Village Colony — Development Log
 
+## 2026-10-10 — cadeia de resgate da obra e mina mais maleável
+
+Pedido do autor: `WaitingWork` não pode liberar a obra antes de tentar
+substituição por blocos correspondentes, prioridade de rota das profissões e,
+se a cadeia continuar sem resolver, estoque do bloco faltante em baú livre perto
+da obra. A obra em `WAITING_RESOURCES` passou a voltar para `BUILDING` assim que
+há material para o próximo bloco e, quando ainda não há, fica esperando sem
+abandonar o lote. Peças sem apoio também deixam de ser desistência: são
+reconsideradas e continuam visíveis para coleta e pedidos de recurso.
+
+`BuilderMaterials` agora trata a rota "só no papel" como tentativa real: as
+três primeiras esperas dão chance à profissão que deveria produzir ou buscar o
+recurso; a quarta falha estoca a peça no baú do construtor próximo da obra.
+`BiomeConstructionSupply.stockIfUnobtainable` foi alinhado para usar esse mesmo
+destino físico da obra, em vez de cair num estoque genérico da profissão.
+
+Na mina, a busca dá prioridade ao mineiro que já segura o braço aberto antes de
+permitir que outro consuma o orçamento global. Se um trabalhador fica barrado
+por uma boca/ramal ainda em uso, ele pode catar pedra exposta da mina aberta
+mais próxima como apoio, sem roubar o avanço do dono. A areia deixou de herdar
+marcação de beco sem saída de pedra próxima: para areia, só a recusa exata do
+bloco ou descida bloqueada contam.
+
+Verificação: baseline `./gradlew.bat build --no-daemon` passou antes das
+edições. Depois da implementação, passaram `./gradlew.bat test --no-daemon` e
+`./gradlew.bat runGametest "-PgametestOnly=BuildProgress,BuilderMaterials,GroundPickup,MineSurface,Miner" "-PgametestAudit=skip" --no-daemon`,
+com 116/116 GameTests obrigatórios. Falta publicar JAR e confirmar no save real.
+
 ## 2026-10-09 — barn_majest fora do rodízio de construções
 
 O Spark `9CJSHC5a77` do save ainda rodava `villagecolony 0.3.21`; por isso o

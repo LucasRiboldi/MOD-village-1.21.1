@@ -1,8 +1,8 @@
 # Estatistica de travamentos e repeticoes
 
-**Gerado em:** 2026-10-05 00:07 UTC
+**Gerado em:** 2026-10-10 12:29 UTC
 **Log analisado:** `latest.log`
-**Sessoes no historico:** 29
+**Sessoes no historico:** 30
 **Limiar de candidato a loop:** 3 ocorrencias na mesma sessao
 
 Este relatorio le diagnosticos que o mod ja escreve. Ele nao e um veredito de
@@ -17,19 +17,19 @@ guarda UUIDs, coordenadas ou linhas cruas do mundo do jogador.
 |---|---|---:|---|
 | `miner_no_branch_work` | MineClaims / MinerWork | 0 | observado |
 | `miner_no_standing_room` | MineDigging | 0 | observado |
-| `construction_waiting_resources` | BuilderWork / WaitingWork | 42 | candidato a loop |
-| `builder_pathing_stalled` | BuilderApproach / BuilderWork | 0 | observado |
-| `surface_worker_unreachable` | SurfaceGatheringWork | 13 | candidato a loop |
+| `construction_waiting_resources` | BuilderWork / WaitingWork | 222 | candidato a loop |
+| `builder_pathing_stalled` | BuilderApproach / BuilderWork | 21 | candidato a loop |
+| `surface_worker_unreachable` | SurfaceGatheringWork | 0 | observado |
 | `missing_profession` | ColonyCycle / ProductionHands | 0 | observado |
-| `site_sweep_budget_exhausted` | RingSweep / BuildSiteScanner | 15 | candidato a loop |
+| `site_sweep_budget_exhausted` | RingSweep / BuildSiteScanner | 7 | candidato a loop |
 | `site_sweep_restarted` | SweepLog / BuildSiteScanner | 0 | observado |
 | `worker_stranded` | WorkStall / StrandedWorkers | 0 | observado |
 | `stranded_cannot_dig_out` | StrandedEscape | 0 | observado |
 | `construction_let_go` | ConstructionPlanner / WaitingWork | 0 | observado |
 | `miner_chest_full` | MinerHaul / ChestDepositor | 0 | observado |
-| `cycle_over_tick` | VillageDetectionHandler | 13 | candidato a loop |
+| `cycle_over_tick` | VillageDetectionHandler | 60 | candidato a loop |
 | `server_overloaded` | Minecraft (servidor) | 0 | observado |
-| `log_error_line` | qualquer (nivel ERROR) | 2 | observado |
+| `log_error_line` | qualquer (nivel ERROR) | 3 | candidato a loop |
 | `house_finished` | BuilderWork | 0 | progresso |
 | `stranded_freed` | StrandedEscape | 0 | progresso |
 | `stairs_backfilled` | EscapeBackfill | 0 | progresso |
@@ -39,33 +39,38 @@ guarda UUIDs, coordenadas ou linhas cruas do mundo do jogador.
 
 | Profissao | Atividade | Resultado | Motivo | Ocorrencias |
 |---|---|---|---|---:|
+| `BUILDER` | `BUILDING` | `RECOVERED` | `SWEEP_INCOMPLETE` | 1 |
 | `BUILDER` | `BUILDING` | `WAITING` | `ALREADY_OPEN` | 1 |
-| `FARMER` | `FARMING` | `RECOVERED` | `NO_TARGET` | 3 |
-| `FARMER` | `FARMING` | `RECOVERED` | `SWEEP_INCOMPLETE` | 2 |
-| `FARMER` | `FARMING` | `WAITING` | `SWEEP_INCOMPLETE` | 4 |
-| `MASON` | `CRAFTING` | `WAITING` | `NO_TASK` | 1 |
-| `MINER` | `COLLECT_STONE` | `ABANDONED` | `WORK_STALLED` | 2 |
-| `MINER` | `COLLECT_STONE` | `ERROR` | `WORK_STALLED` | 2 |
-| `MINER` | `MINING` | `RECOVERED` | `NO_TASK` | 11 |
-| `MINER` | `MINING` | `RECOVERED` | `SWEEP_INCOMPLETE` | 13 |
-| `MINER` | `MINING` | `WAITING` | `NO_TASK` | 11 |
-| `MINER` | `MINING` | `WAITING` | `SWEEP_INCOMPLETE` | 11 |
-| `SHEPHERD` | `SHEPHERDING` | `WAITING` | `NO_TASK` | 1 |
-| `SMELTER` | `SMELTING` | `RECOVERED` | `NO_TASK` | 6 |
-| `SMELTER` | `SMELTING` | `WAITING` | `NO_TASK` | 7 |
+| `BUILDER` | `BUILDING` | `WAITING` | `SWEEP_INCOMPLETE` | 1 |
+| `FARMER` | `FARMING` | `RECOVERED` | `NO_TARGET` | 14 |
+| `FARMER` | `FARMING` | `RECOVERED` | `NO_TASK` | 1 |
+| `FARMER` | `FARMING` | `RECOVERED` | `SWEEP_INCOMPLETE` | 1 |
+| `FARMER` | `FARMING` | `WAITING` | `NO_TARGET` | 8 |
+| `FARMER` | `FARMING` | `WAITING` | `NO_TASK` | 1 |
+| `FARMER` | `FARMING` | `WAITING` | `SWEEP_INCOMPLETE` | 3 |
+| `FARMER` | `MAINTAIN_FOOD` | `ABANDONED` | `WORK_STALLED` | 2 |
+| `FARMER` | `MAINTAIN_FOOD` | `ERROR` | `WORK_STALLED` | 2 |
+| `MINER` | `MINING` | `RECOVERED` | `NO_TASK` | 3 |
+| `MINER` | `MINING` | `WAITING` | `NO_TASK` | 4 |
+| `MINER` | `MINING` | `WAITING` | `SWEEP_INCOMPLETE` | 3 |
+| `SHEPHERD` | `COLLECT_WOOL` | `ABANDONED` | `WORK_STALLED` | 1 |
+| `SHEPHERD` | `COLLECT_WOOL` | `ERROR` | `WORK_STALLED` | 1 |
+| `SMELTER` | `SMELTING` | `RECOVERED` | `NO_TASK` | 31 |
+| `SMELTER` | `SMELTING` | `WAITING` | `NO_TASK` | 31 |
 
 ## Pecas que as obras mais esperaram
 
 | Peca | Linhas `waiting for` |
 |---|---:|
-| `minecraft:oak_planks` | 42 |
+| `minecraft:cobblestone` | 222 |
 
 ## Candidatos a investigacao
 
-- `construction_waiting_resources`: 42 ocorrencias em BuilderWork / WaitingWork.
-- `surface_worker_unreachable`: 13 ocorrencias em SurfaceGatheringWork.
-- `site_sweep_budget_exhausted`: 15 ocorrencias em RingSweep / BuildSiteScanner.
-- `cycle_over_tick`: 13 ocorrencias em VillageDetectionHandler.
+- `construction_waiting_resources`: 222 ocorrencias em BuilderWork / WaitingWork.
+- `builder_pathing_stalled`: 21 ocorrencias em BuilderApproach / BuilderWork.
+- `site_sweep_budget_exhausted`: 7 ocorrencias em RingSweep / BuildSiteScanner.
+- `cycle_over_tick`: 60 ocorrencias em VillageDetectionHandler.
+- `log_error_line`: 3 ocorrencias em qualquer (nivel ERROR).
 
 ## Acumulado do historico
 
@@ -73,23 +78,23 @@ guarda UUIDs, coordenadas ou linhas cruas do mundo do jogador.
 |---|---:|
 | `miner_no_branch_work` | 6386 |
 | `miner_no_standing_room` | 25 |
-| `construction_waiting_resources` | 1820 |
-| `builder_pathing_stalled` | 278 |
+| `construction_waiting_resources` | 2042 |
+| `builder_pathing_stalled` | 299 |
 | `surface_worker_unreachable` | 37 |
 | `missing_profession` | 110 |
-| `site_sweep_budget_exhausted` | 619 |
+| `site_sweep_budget_exhausted` | 626 |
 | `site_sweep_restarted` | 1 |
 | `worker_stranded` | 38 |
 | `stranded_cannot_dig_out` | 5 |
 | `construction_let_go` | 15 |
 | `miner_chest_full` | 270 |
-| `cycle_over_tick` | 447 |
+| `cycle_over_tick` | 507 |
 | `server_overloaded` | 22 |
-| `log_error_line` | 52 |
+| `log_error_line` | 55 |
 | `house_finished` | 6 |
 | `stranded_freed` | 34 |
 | `stairs_backfilled` | 11 |
-| `supper_shared` | 9 |
+| `supper_shared` | 10 |
 
 ## Proximo passo tecnico
 

@@ -1,17 +1,20 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.coordination.PatienceClock;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** A obra com só peça sem apoio sobrando sai da frente em um minuto — playtest de 2026-10-03, 18 min parada. */
+/** A obra com peça sem apoio tenta se recompor antes de ceder o lote. */
 class WaitingWorkPatienceTest {
 
     @Test
-    void onlyUnsupportedPiecesWaitOneMinute() {
-        assertFalse(WaitingWork.ranOutOfPatience(true, WaitingWork.UNSUPPORTED_PATIENCE - 1));
-        assertTrue(WaitingWork.ranOutOfPatience(true, WaitingWork.UNSUPPORTED_PATIENCE));
+    void onlyUnsupportedPiecesKeepTheFullRescueWindow() {
+        assertFalse(WaitingWork.ranOutOfPatience(true, WaitingWork.UNSUPPORTED_PATIENCE),
+                "peça sem apoio não pode liberar a obra antes da revisão de apoio e suprimento");
+        assertFalse(WaitingWork.ranOutOfPatience(true, PatienceClock.TICKS - 1));
+        assertTrue(WaitingWork.ranOutOfPatience(true, PatienceClock.TICKS));
     }
 
     @Test

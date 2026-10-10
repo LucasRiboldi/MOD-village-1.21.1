@@ -87,12 +87,11 @@ public final class SandGathering {
                 search.radius(),
                 // Fora do limite a coluna nem gasta orçamento.
                 column -> search.inside().test(column),
-                // A areia entra pela mesma porta — E44, 2026-09-10. O
-                // MinerHands.giveUp marca o alvo seja ele pedra ou areia,
-                // e uma duna inalcançável tem exatamente a mesma forma de
-                // laço. Ver MineMarks.
+                // A areia respeita a marca do bloco, mas não o beco da
+                // galeria: recusa de rocha vizinha não prova que a praia ao
+                // lado seja inalcançável.
                 column -> SandPatch.in(world, column, center.getY())
-                        .filter(sand -> !MineMarks.isUnreachableAround(world, sand))
+                        .filter(sand -> !MineMarks.isOutOfReach(world, sand))
                         .filter(sand -> !MineFlooding.holdsBackFluid(world, sand)));
 
         // A vez só passa com a varredura inteira: a pausada continua de onde parou.

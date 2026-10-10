@@ -14,8 +14,6 @@ import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkTargets;
-import com.villagecolony.fabric.integration.BiomeConstructionSupply;
-import net.minecraft.block.Block;
 import net.minecraft.server.world.ServerWorld;
 
 import java.util.HashMap;
@@ -133,27 +131,14 @@ public final class WaitingWork {
     }
 
     /**
-     * A obra que esperou material tempo demais sai da frente.
+     * A obra que esperou material tempo demais tenta se resgatar sem sair da fila.
      *
      * <p><b>O buraco que isto fecha.</b> Quem planeja não abre obra nova
      * enquanto houver uma aberta, e nada tirava da frente uma obra
-     * parada em {@code WAITING_RESOURCES}. A casa de planície pede 43
-     * pedregulhos que a colônia não minera; sem o jogador guardá-los num
-     * baú, a vila parava de crescer <b>para sempre</b>. O lenhador já
-     * tinha o guarda de travamento desde a Regra 9; a obra não tinha
-     * nada equivalente, e a diferença nunca foi deliberada.
-     *
-     * <p><b>A casa pela metade fica de pé, e o lote fica tomado.</b> Ela
-     * é do jogador agora — derrubá-la seria a Regra 3 ao contrário. E a
-     * caixa vai para o registro de construções antes de a obra sumir,
-     * senão o lote voltaria a parecer livre e a colônia planejaria por
-     * cima do que ela mesma levantou.
-     *
-     * <p><b>O que isto custa, dito por inteiro:</b> a obra não volta no
-     * mesmo instante. O registro preserva o que já foi levantado e a
-     * varredura cíclica tenta completar os blocos ausentes em um ciclo
-     * posterior. Se uma tentativa não avançar, ela cede uma passagem para
-     * a vila continuar e só então pode ser tentada novamente.
+     * parada em {@code WAITING_RESOURCES}. A decisão atual é mais estrita:
+     * antes de liberar uma obra, a colônia precisa tentar substitutos de
+     * material, manter a rota profissional priorizada e, depois das tentativas
+     * previstas pela ADR-036 item 6, abastecer o baú que atende o construtor.
      *
      * @return se a obra foi abandonada agora
      */
@@ -174,33 +159,18 @@ public final class WaitingWork {
             return false;
         }
 
-        if (awaitsLocalProfessionDelivery(world, project)) {
+        if (BuilderMaterials.hasMaterialForNextBlock(world, project)) {
+            WAITING_SINCE.remove(project.id());
+            project.moveTo(ConstructionState.BUILDING);
+
+            VillageColonyMod.LOGGER.info(
+                    "Project {} recovered the material it was waiting for — back to building",
+                    project.id());
+
             return false;
         }
 
-        giveUp(colony, project);
-
-        return true;
-    }
-
-    /**
-     * A espera só pode abandonar uma peça que a vila não tem como entregar.
-     *
-     * <p>A quarta tentativa (ADR-036 item 6) já abastece a peça sem rota profissional; por
-     * isso o relógio não deve encerrar uma obra que espera, por exemplo, o
-     * tronco que o lenhador daquela vila ainda pode recolher. A pergunta é
-     * pelo próximo bloco, que é a falta que realmente levou a obra ao estado
-     * de espera, e pelo bioma da própria colônia.
-     */
-    private static boolean awaitsLocalProfessionDelivery(
-            ServerWorld world, ConstructionProject project) {
-
-        return project.nextBlock()
-                .flatMap(next -> MinecraftTypeAdapter.toBlock(next.block()))
-                .map(Block::asItem)
-                .map(item -> BiomeConstructionSupply.hasRouteInBiome(
-                        world, project.colonyId(), item))
-                .orElse(false);
+        return false;
     }
 
     /**
@@ -262,6 +232,19 @@ public final class WaitingWork {
             return false;
         }
 
+        if (onlyUnsupported) {
+            BuilderPlacement.reconsiderDeferredPieces(world, project);
+            BUILDING_SINCE.put(project.id(), new Progress(left, now, timeOfDay, 0));
+
+            VillageColonyMod.LOGGER.info(
+                    "Project {} keeps waiting at {} — only deferred pieces remain, so support and material rescue"
+                            + " keep priority before the lot can be released",
+                    project.id(),
+                    project.origin());
+
+            return false;
+        }
+
         VillageColonyMod.LOGGER.info(
                 "Colony {} lets go of {} at {} — it has been at {} pieces for {} work ticks"
                         + " and placed none. The half-built house and its lot stay taken",
@@ -280,20 +263,19 @@ public final class WaitingWork {
         return true;
     }
 
-    /** A espera quando só sobram peças sem apoio: dois ciclos, um minuto. */
+    /** Janela histórica curta; mantida para o teste garantir que ela não libera mais a obra. */
     static final long UNSUPPORTED_PATIENCE = 2L * VillageDetector.CYCLE_TICKS;
 
     /**
      * Se a obra parada já esperou o bastante.
      *
-     * <p><b>Só peça sem apoio sobrando espera um minuto, e não dez</b> —
-     * playtest de 2026-10-03: a casa do pastor ficou 18 minutos em 4 peças
-     * que nada segurava, e só o relógio de dez minutos a largou. Peça sem
-     * apoio é revista a cada ciclo; dois ciclos sem mudança bastam para saber
-     * que esperar não a põe de pé.
+     * <p>Peça sem apoio usa a mesma janela longa: ela pode depender de outra
+     * peça que foi adiada por material, de substituição, ou do baú do construtor
+     * receber a falta. O relógio curto de dois ciclos continua registrado acima
+     * para evitar regressão ao abandono prematuro.
      */
     static boolean ranOutOfPatience(boolean onlyUnsupported, long stalled) {
-        return onlyUnsupported ? stalled >= UNSUPPORTED_PATIENCE : PatienceClock.ranOut(0, stalled);
+        return PatienceClock.ranOut(0, stalled);
     }
 
     /** Desconta noites completas e parciais entre duas leituras do planejador. */

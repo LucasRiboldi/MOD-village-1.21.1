@@ -140,7 +140,7 @@ public final class MineDigging {
             // A boca não pôde nascer. Em vez de a colônia ficar sem a
             // única fonte de pedra que tem, ela raspa o que estiver
             // exposto em volta — ver MineVein.exposedStone.
-            return MineVein.exposedStone(world, workerId, colonyId, center);
+            return exposedStoneFallback(world, workerId, colonyId, center);
         }
 
         IdleLog.clear(colonyId, SURFACE_SUBJECT);
@@ -232,7 +232,7 @@ public final class MineDigging {
             // Cada ramal é de um mineiro só (MineClaims). Quem não achou ramal
             // livre não fica parado: raspa a pedra exposta em volta da vila
             // até um ramal abrir — ADR-037 M1, cada profissional com sua rotina.
-            return MineVein.exposedStone(world, workerId, colonyId, center, mine.get().plannedCells());
+            return exposedStoneFallback(world, workerId, colonyId, center);
         }
 
         MineArm arm = mine.get().arm(claimed.getAsInt());
@@ -274,6 +274,15 @@ public final class MineDigging {
         }
 
         return found;
+    }
+
+    /** Pedra exposta sem invadir as células planejadas da mina aberta mais próxima da colônia. */
+    static Optional<BlockPos> exposedStoneFallback(
+            ServerWorld world, UUID workerId, UUID colonyId, BlockPos center) {
+
+        return VillageColonyMod.MINES.of(colonyId)
+                .map(mine -> MineVein.exposedStone(world, workerId, colonyId, center, mine.plannedCells()))
+                .orElseGet(() -> MineVein.exposedStone(world, workerId, colonyId, center));
     }
 
 

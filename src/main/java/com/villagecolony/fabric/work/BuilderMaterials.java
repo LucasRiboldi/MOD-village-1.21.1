@@ -59,7 +59,7 @@ import java.util.UUID;
  */
 public final class BuilderMaterials {
     /**
-     * Peças de rota só teórica: depois de três faltas aparecem no baú do construtor,
+     * Peças de rota só teórica: depois de quatro faltas aparecem no baú do construtor,
      * mesmo com a cadeia existindo no papel. A terracota (argila que nunca chega) e o
      * fardo de feno — pedido do autor, 2026-10-08: a obra pôs o fardo de lado 93 vezes
      * em 22 min, cada um custa nove trigos e a roça não dava conta. Lampião e
@@ -185,7 +185,7 @@ public final class BuilderMaterials {
      * As tentativas contam para as peças que faltam, não só para a próxima —
      * playtest de 2026-10-03.
      *
-     * <p>A obra parava numa peça sem rota (papoula), esperava as três
+     * <p>A obra parava numa peça sem rota (papoula), esperava as quatro
      * tentativas, e só então batia na seguinte (grama, cerca, dente-de-leão,
      * terracota): um minuto cada, em fila. Aqui cada peça que falta ganha sua
      * tentativa no mesmo ciclo, e as que não têm rota aparecem juntas. A
@@ -236,7 +236,7 @@ public final class BuilderMaterials {
     }
 
     /**
-     * Alternativas locais sempre ganham. Três faltas da mesma peça distinguem
+     * Alternativas locais sempre ganham. Quatro faltas da mesma peça distinguem
      * uma rota que de fato entregou de uma rota apenas teórica. Receita de
      * bancada continua recebendo seus ingredientes ausentes; peça de fornalha
      * ou sem receita aparece no baú da obra quando a rota não chegou.
@@ -268,40 +268,33 @@ public final class BuilderMaterials {
 
         Item preferred = choices.getFirst();
 
-        boolean terracotta = isStockedAfterMisses(preferred);
+        boolean stockAfterMisses = isStockedAfterMisses(preferred);
         boolean routeExists = choices.stream().anyMatch(candidate ->
                 BiomeConstructionSupply.hasRouteInBiome(world, project.colonyId(), candidate));
 
-        if (!terracotta && routeExists) {
-            return BY_PROFESSION;
-        }
-
         if (!BiomeConstructionSupply.failedProfessionAttempt(project.colonyId(), preferred)) {
-            // Sem rota no bioma (ou terracota de rota só teórica): conta a
-            // tentativa; na terceira a peça aparece no baú.
-            return COUNTING_TO_STOCK;
+            // A rota de profissão continua prioritária, mas a falta também
+            // conta: rota no papel que nunca entrega vira baú do construtor
+            // na quarta espera, antes de a obra poder ceder o lote.
+            return routeExists ? BY_PROFESSION : COUNTING_TO_STOCK;
         }
 
         // A família de terracota colorida parece ter rota por receita de
         // recoloração, mas isto não prova que o corante e a terracota neutra
-        // chegaram a um artesão. Três faltas do bloco concreto encerram essa
+        // chegaram a um artesão. Quatro faltas do bloco concreto encerram essa
         // rota apenas teórica sem alterar a prioridade das alternativas nas
-        // duas primeiras tentativas.
+        // primeiras três tentativas.
         Optional<CraftingLookup.Bill> bill = CraftingLookup.billFor(world, preferred, any -> true);
 
         // A rota do bioma e a entrega são fatos diferentes. Terracota, por
         // exemplo, pode ter argila em teoria, mas a coleta pode nunca chegar
-        // ao baú da obra. Depois da terceira falta, uma peça de manufatura
+        // ao baú da obra. Depois da quarta falta, uma peça de manufatura
         // sem receita de bancada deixa de travar a construção.
-        if (terracotta || bill.isEmpty()) {
+        if (stockAfterMisses || routeExists || bill.isEmpty()) {
             return BiomeConstructionSupply.stockForConstruction(
                     world, project.colonyId(), project.origin(), preferred)
                     ? new Supply(State.DELIVERED, Source.STOCKED)
                     : new Supply(State.NO_SOLUTION, Source.STOCKED);
-        }
-
-        if (routeExists) {
-            return BY_PROFESSION;
         }
 
         // O tear pede linha: as linhas aparecem no baú do carpinteiro, e ele

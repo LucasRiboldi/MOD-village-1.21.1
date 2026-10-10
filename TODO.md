@@ -1,10 +1,19 @@
 # TODO
 
-**Atualizado:** 2026-10-09. Só o que está **aberto**. O histórico até hoje está em
+**Atualizado:** 2026-10-10. Só o que está **aberto**. O histórico até hoje está em
 `docs/archive/technical/TODO-ate-2026-10-07.md` (consultar por `grep`, nunca inteiro).
 Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
+
+## 🟡 Playtest do patch local 10-10 (obra/mina/baú)
+
+- [ ] Obra em `WAITING_RESOURCES` não libera o lote antes de retentar blocos correspondentes,
+      rotas de profissão e baú próximo do construtor.
+- [ ] Depois de quatro tentativas sem entrega real, o bloco faltante aparece em baú livre perto da obra
+      e o construtor retoma com esse item.
+- [ ] Mineiro em mina aberta usa a boca/galeria mais próxima sem roubar a busca do dono do ramal.
+- [ ] Recurso novo não recolhido antes entra na rota de busca quando aparece como peça adiada da obra.
 
 ## 🟡 Playtest da 0.3.21 (Regra 52: roça por fazendeiro)
 

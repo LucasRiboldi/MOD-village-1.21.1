@@ -215,14 +215,22 @@ public final class GroundPickup {
         Set<Item> items = new HashSet<>();
 
         for (ResourceId material : project.remainingMaterials().keySet()) {
-            Item item = Registries.ITEM.get(Identifier.of(material.namespace(), material.path()));
+            addKnownItem(items, material);
+        }
 
-            if (item != Items.AIR) {
-                items.add(item);
-            }
+        for (ConstructionProject.DeferredPiece piece : project.deferredPieces()) {
+            addKnownItem(items, piece.block());
         }
 
         return items;
+    }
+
+    private static void addKnownItem(Set<Item> items, ResourceId material) {
+        Item item = Registries.ITEM.get(Identifier.of(material.namespace(), material.path()));
+
+        if (item != Items.AIR) {
+            items.add(item);
+        }
     }
 
     private static Box searchBox(Colony colony, ConstructionProject project) {

@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * O ingrediente sem rota aparece no baú do artesão depois de três tentativas
+ * O ingrediente sem rota aparece no baú do artesão depois de quatro tentativas
  * de recolher — decisão do autor, 2026-09-30. Ingrediente de drop (linha,
  * corante) não espera: tem rota sempre (DropIngredients).
  *
@@ -64,10 +64,10 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
     }
 
     /**
-     * <b>A linha deixou de esperar três tentativas</b> — 2026-09-30. Ela é
+     * <b>A linha deixou de esperar quatro tentativas</b> — 2026-09-30. Ela é
      * ingrediente de drop ({@code DropIngredients}): tem rota sempre, e
-     * aparece no baú quando o carpinteiro fabrica o tear. O caminho das três
-     * tentativas, que é o da peça sem rota, não conjura nada para o tear.
+     * aparece no baú quando o carpinteiro fabrica o tear. As primeiras três
+     * esperas ainda não conjuram nada para o tear.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
     public void theStringOfALoomHasARouteAndIsNotStockedByTheAttempts(TestContext context) {
@@ -84,7 +84,7 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
             }
 
             context.assertTrue(count(context, setup.carpenterChest(), Items.STRING) == 0,
-                    "a linha foi conjurada pelo caminho das tres tentativas");
+                    "a linha foi conjurada antes da quarta espera");
 
             context.assertTrue(count(context, setup.builderChest(), Items.LOOM) == 0
                             && count(context, setup.carpenterChest(), Items.LOOM) == 0,
@@ -113,6 +113,45 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
                             + count(context, setup.carpenterChest(), Items.GLASS));
             context.assertTrue(count(context, setup.carpenterChest(), Items.SAND) == 0,
                     "a areia, que é natural, apareceu do nada");
+        } finally {
+            setup.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Rota no papel não basta: se a profissão não entregou depois de quatro
+     * esperas, a peça que trava a obra aparece no baú do construtor.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
+    public void aProfessionRouteThatDoesNotDeliverFallsBackToTheBuilderChest(TestContext context) {
+        Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.OAK_PLANKS);
+
+        try {
+            context.assertTrue(BiomeConstructionSupply.hasRouteInBiome(
+                            context.getWorld(), setup.project().colonyId(), Items.OAK_PLANKS),
+                    "a tábua deveria ter rota local para testar a rota só no papel");
+
+            for (int attempt = 1; attempt <= 3; attempt++) {
+                context.assertFalse(BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project()),
+                        "a rota profissional foi contornada antes da quarta espera: " + attempt);
+
+                MaterialRequest request = MaterialRequests.of(setup.project().id()).orElse(null);
+                context.assertTrue(request != null && request.state() == MaterialRequest.State.RESOLVING
+                                && request.source() == MaterialRequest.Source.PROFESSION,
+                        "a falta deveria continuar priorizando a profissão antes da quarta espera: " + request);
+            }
+
+            context.assertTrue(BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project()),
+                    "a quarta falta da rota só no papel não abasteceu o construtor");
+            context.assertTrue(count(context, setup.builderChest(), Items.OAK_PLANKS) == 1,
+                    "a peça faltante não apareceu no baú do construtor");
+
+            MaterialRequest fourth = MaterialRequests.of(setup.project().id()).orElse(null);
+            context.assertTrue(fourth != null && fourth.state() == MaterialRequest.State.DELIVERED
+                            && fourth.source() == MaterialRequest.Source.STOCKED,
+                    "a quarta falta deveria ficar registrada como estoque de resgate: " + fourth);
         } finally {
             setup.cleanUp();
         }

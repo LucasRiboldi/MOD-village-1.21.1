@@ -1,4 +1,4 @@
-# STATE — 2026-10-09
+# STATE — 2026-10-10
 
 > **JAR atual: `village-colony-0.3.22.jar` = `7D69667E…C9C1C5F`** (barn_majest fora do rodízio; ver abaixo) em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
@@ -15,6 +15,25 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 10-10 — obra não libera lote antes da cadeia recurso → rota → baú
+
+Patch local na `claude/obra-lote-e-trava`, ainda sem JAR publicado nem playtest no save. A obra em
+`WAITING_RESOURCES` não abandona mais o lote só por paciência: antes retenta blocos correspondentes,
+mantém peças sem apoio na lista de busca, deixa as profissões tentarem entregar a peça e, depois de
+quatro tentativas sem entrega real, estoca o bloco faltante em baú livre perto da obra para o
+construtor usar. O fallback antigo que criava recurso genérico agora prioriza o baú do construtor.
+
+Mineiro: quando um ramal/boca aberta bloqueia outro mineiro, quem já segura o braço da mina recebe
+a busca primeiro; os demais usam pedra exposta da mina aberta mais próxima como apoio, sem gastar a
+busca do dono. Areia deixou de herdar marca de beco sem saída de pedra ao lado, respeitando apenas
+a recusa exata do próprio bloco. Itens de peças adiadas também entram na coleta de chão.
+
+**Verificado:** baseline `./gradlew.bat build --no-daemon` ok antes das edições; depois das edições,
+`./gradlew.bat test --no-daemon` ok e
+`./gradlew.bat runGametest "-PgametestOnly=BuildProgress,BuilderMaterials,GroundPickup,MineSurface,Miner" "-PgametestAudit=skip" --no-daemon`
+ok, **116/116**. **Pendente:** build/JAR final e playtest no save real para confirmar que a obra
+parada retoma sem liberar lote e que o baú próximo recebe o bloco faltante quando a cadeia falha.
 
 ## 🟡 09-10 — barn_majest fora do rodízio de obras (0.3.22 aguarda playtest)
 
