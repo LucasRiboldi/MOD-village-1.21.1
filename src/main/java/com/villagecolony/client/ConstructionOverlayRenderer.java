@@ -10,12 +10,16 @@ import net.minecraft.util.math.Vec3d;
 
 import java.util.Locale;
 
-/** Ícone do estado, progresso e o primeiro material faltante sobre o lote. */
+/** Ícone do estado, progresso e o primeiro material faltante, logo acima da placa da obra. */
 public final class ConstructionOverlayRenderer {
 
     private static final double MAX_DISTANCE = 64.0;
     private static final double MAX_DISTANCE_SQUARED = MAX_DISTANCE * MAX_DISTANCE;
-    private static final int LABEL_ABOVE_ORIGIN = 7;
+    /**
+     * Do pé da placa até logo acima do nome dela: o nome do suporte de armadura
+     * fica a 2,475 do pé, e a linha de texto ocupa uns 0,25.
+     */
+    private static final double ABOVE_SIGN = 2.8;
 
     private ConstructionOverlayRenderer() {
     }
@@ -35,8 +39,8 @@ public final class ConstructionOverlayRenderer {
         VertexConsumerProvider.Immediate buffers = OverlayDrawing.buffers();
 
         for (OverlaySnapshotPayload.ConstructionEntry construction : ClientOverlayState.constructions()) {
-            Vec3d position = new Vec3d(construction.x() + 0.5,
-                    construction.y() + LABEL_ABOVE_ORIGIN, construction.z() + 0.5);
+            // Logo acima da placa da obra, centrado nela.
+            Vec3d position = new Vec3d(construction.x(), construction.y() + ABOVE_SIGN, construction.z());
 
             if (position.squaredDistanceTo(camera) > MAX_DISTANCE_SQUARED) {
                 continue;

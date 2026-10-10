@@ -6,20 +6,26 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
-## 🔴 Playtest da 0.3.9
+## 🔴 Playtest da 0.3.10
 
-Nada das ADR-037, 038 e 039 foi visto em jogo. Rodar depois: `python scripts/time_ledger.py`
-e `python scripts/cost_ledger.py` no `latest.log`, e Spark.
+Nada das ADR-037, 038 e 039 foi confirmado visualmente no save real. A 0.3.10 corrige a moldura do
+overlay e a âncora da obra; rodar depois: `python scripts/time_ledger.py` e
+`python scripts/cost_ledger.py` no `latest.log`, e Spark.
 
-- [ ] Painel da profissão: nome e ícone dentro da mesma moldura; sem nameplate Vanilla fora do
-      background.
+- [ ] Painel da profissão 0.3.10: nome à esquerda e símbolo simples à direita dentro da mesma
+      moldura nítida; sem nameplate Vanilla fora do background.
+- [ ] Overlay da obra 0.3.10: painel aparece no mesmo lugar da placa de obra e atualiza o texto.
+- [ ] Crescimento natural depois da obra atual: no playtest `vuUv6PZC5d`, a vila tinha uma obra
+      aberta em `-750,68,-893` esperando `minecraft:stonecutter`; 9 ciclos não varreram lotes porque
+      uma build estava aberta.
 - [ ] `walk` aparece no `time_ledger` (A3: o braço do aldeão agora desce).
 - [ ] Carpinteiro com escada/laje/cerca **da madeira do bioma** no baú dele; pedreiro com as peças
       das casas da vila; fundidor com vidro e a pedra lisa que as casas usam.
 - [ ] Peça feita entra no **baú da profissão** de quem fez, não no do vizinho.
 - [ ] Mineiro encalhado **continua mineiro**; ramal novo abre para o minério que falta.
 - [ ] Fundidor fica abaixo de 15% de ociosidade quando houver minério no fluxo; no playtest
-      `GqK0MLwvTw`, a causa provável foi o mineiro preso numa descida longa e segurando o único ramal.
+      `vuUv6PZC5d`, ele ficou 89% ocioso e 95% sem trabalhar, com o mineiro mirando minério
+      profundo/distante e a cadeia da obra parada em `stonecutter`.
 - [ ] Caminho calçado até obra afastada da rua.
 - [ ] Fechar e abrir o mundo: lenhador vai direto à árvore conhecida; mineiro volta ao ramal e ao veio;
       animal na corda continua sendo levado à cerca.

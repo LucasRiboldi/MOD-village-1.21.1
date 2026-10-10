@@ -13,12 +13,12 @@ import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 
 /**
- * Uma placa virada para a câmera: texto à esquerda e ícone em pixel art à
+ * Uma placa virada para a câmera: texto à esquerda e símbolo simples à
  * direita, ambos dentro da mesma moldura — pedido do autor, 2026-10-03.
  *
- * <p><b>O fundo acompanha o texto.</b> A moldura de 16 × 16 é cortada em nove
- * partes: os cantos ficam do tamanho deles e o meio estica, então a placa
- * cresce e encolhe com o texto da obra sem deformar a borda.
+ * <p><b>O fundo acompanha o texto.</b> A moldura de 64 × 32 é cortada em nove
+ * partes: os cantos ficam nítidos e o meio estica, então a placa cresce e
+ * encolhe com o texto da obra sem deformar a borda.
  *
  * <p><b>Desenhado no {@code WorldRenderEvents.LAST}, com buffer próprio</b>,
  * e descarregado placa a placa: sem profundidade, quem é desenhado depois
@@ -29,13 +29,15 @@ final class OverlayDrawing {
     /** Tamanho de uma unidade de texto no mundo: 40 unidades por bloco. */
     static final float SCALE = 0.025F;
 
-    /** A moldura: 16 × 16, conteúdo entre x 1..14 e y 2..12, borda de 2. */
-    private static final float TEXTURE = 16.0F;
-    private static final float FRAME_MIN_U = 1;
-    private static final float FRAME_MAX_U = 15;
-    private static final float FRAME_MIN_V = 2;
-    private static final float FRAME_MAX_V = 13;
-    private static final float BORDER = 2;
+    /** A moldura nítida: 64 × 32, com borda de madeira e metal nos cantos. */
+    private static final float TEXTURE_WIDTH = 64.0F;
+    private static final float TEXTURE_HEIGHT = 32.0F;
+    private static final float FRAME_MIN_U = 0;
+    private static final float FRAME_MAX_U = 64;
+    private static final float FRAME_MIN_V = 0;
+    private static final float FRAME_MAX_V = 32;
+    private static final float BORDER_U = 8;
+    private static final float BORDER_V = 8;
 
     /** A borda desenhada, em unidades de texto. */
     private static final float BORDER_DRAWN = 3.0F;
@@ -104,13 +106,14 @@ final class OverlayDrawing {
     private static void panel(VertexConsumer buffer, Matrix4f matrix, float x0, float y0, float x1, float y1) {
         float[] xs = {x0, x0 + BORDER_DRAWN, x1 - BORDER_DRAWN, x1};
         float[] ys = {y0, y0 + BORDER_DRAWN, y1 - BORDER_DRAWN, y1};
-        float[] us = {FRAME_MIN_U, FRAME_MIN_U + BORDER, FRAME_MAX_U - BORDER, FRAME_MAX_U};
-        float[] vs = {FRAME_MIN_V, FRAME_MIN_V + BORDER, FRAME_MAX_V - BORDER, FRAME_MAX_V};
+        float[] us = {FRAME_MIN_U, FRAME_MIN_U + BORDER_U, FRAME_MAX_U - BORDER_U, FRAME_MAX_U};
+        float[] vs = {FRAME_MIN_V, FRAME_MIN_V + BORDER_V, FRAME_MAX_V - BORDER_V, FRAME_MAX_V};
 
         for (int col = 0; col < 3; col++) {
             for (int row = 0; row < 3; row++) {
                 quad(buffer, matrix, xs[col], ys[row], xs[col + 1], ys[row + 1],
-                        us[col] / TEXTURE, vs[row] / TEXTURE, us[col + 1] / TEXTURE, vs[row + 1] / TEXTURE);
+                        us[col] / TEXTURE_WIDTH, vs[row] / TEXTURE_HEIGHT,
+                        us[col + 1] / TEXTURE_WIDTH, vs[row + 1] / TEXTURE_HEIGHT);
             }
         }
     }

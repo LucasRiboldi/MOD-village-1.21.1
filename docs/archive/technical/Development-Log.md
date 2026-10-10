@@ -8,6 +8,35 @@
 
 # Village Colony — Development Log
 
+## 2026-10-10 — overlay nítido, obra na placa e diagnóstico do Spark `vuUv6PZC5d`
+
+O Spark do playtest com a 0.3.9 indicou TPS normal no último minuto e queda de janela nos 5/15 min,
+com MSPT médio baixo; o problema principal não parece travamento contínuo do servidor, mas fila de
+fluxo. O log mostrou 51 esperas de recurso de obra, 3 travas de caminho do construtor, pior ciclo de
+colônia em 331 ms e uma obra aberta em `ColonyPos[x=-750,y=68,z=-893]` esperando
+`minecraft:stonecutter`. Como havia uma obra aberta, o planejador não varreu novos lotes em 9 ciclos;
+isso explica as zonas limpas não gerarem construção naquela sessão.
+
+O `time_ledger.py` apontou fluxo ruim em quase todas as profissões: construtor 95% ocioso, pedreiro
+44% ocioso, pastor 80% ocioso, mineiro sem trabalho efetivo e 41% esperando, e fundidor 89% ocioso
+com 95% do tempo sem trabalhar. O mineiro estava preso entre a boca da mina e minério profundo/distante
+perto de `-735,8,-944`; o fundidor ficou sem entrada material e a obra segurou o crescimento natural
+por causa do `stonecutter`.
+
+Correção publicada como 0.3.10: o overlay de profissão passou a sempre renderizar o nome dentro da
+moldura, sem preferência que esconda texto; a moldura foi refeita como textura 64×32 mais nítida, com
+nome à esquerda e símbolo simples à direita; os ícones das oito profissões voltaram a versões simples
+e não pixeladas. O overlay de obra voltou a usar a posição da placa visível via `SiteMarker.signAt`,
+e `OverlaySnapshotPayload.ConstructionEntry` passou a transportar coordenadas `double` para evitar
+deslocamento até a origem da blueprint.
+
+Evidência automatizada: `test --tests "com.villagecolony.client.*" --tests
+"com.villagecolony.fabric.integration.SiteMarkerHeightTest"` passou, `build --no-daemon` passou e
+`runGametest --rerun-tasks --no-daemon` concluiu 650/650 GameTests em 47,93 s. O JAR 0.3.10 foi
+copiado para `downloads/` e `%APPDATA%/.minecraft/mods/` com SHA-256
+`595E8FAE09C275EEEE20B840B674CA3EB2B80998B63A5FB2682355FB399BF709`; a 0.3.9 foi arquivada fora da
+pasta de mods. Falta validação visual no save real com a 0.3.10.
+
 ## 2026-10-10 — painel de profissão dentro da moldura
 
 O playtest curto do `latest.log` não registrou erro do overlay: os erros eram de

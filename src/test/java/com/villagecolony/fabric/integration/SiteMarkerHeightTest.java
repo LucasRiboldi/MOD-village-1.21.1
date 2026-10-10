@@ -16,4 +16,13 @@ class SiteMarkerHeightTest {
         assertEquals(64 + 18 + 5, SiteMarker.labelY(origin, new ColonyPos(9, 18, 9)));
         assertEquals(64 + 5 + 5, SiteMarker.labelY(origin, new ColonyPos(7, 5, 7)));
     }
+
+    @Test
+    void theOverlayAnchorMatchesTheVisibleConstructionSign() {
+        double[] sign = SiteMarker.signAt(new ColonyPos(100, 64, -20), new ColonyPos(9, 18, 9));
+
+        assertEquals(104.5, sign[0]);
+        assertEquals(87.0, sign[1]);
+        assertEquals(-15.5, sign[2]);
+    }
 }

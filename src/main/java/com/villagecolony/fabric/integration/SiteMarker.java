@@ -276,13 +276,9 @@ public final class SiteMarker {
                 project.nextBlock().map(block -> block.block()),
                 project.deferredPieces().size());
 
-        // O centro do lote, cinco blocos acima do topo da planta — N7,
-        // 2026-09-24; ver LABEL_ABOVE_TOP.
-        double x = origin.x() + size.x() / 2.0;
-        double y = labelY(origin, size);
-        double z = origin.z() + size.z() / 2.0;
+        double[] at = signAt(origin, size);
 
-        ArmorStandEntity sign = findSign(world, project, x, y, z);
+        ArmorStandEntity sign = findSign(world, project, at[0], at[1], at[2]);
 
         if (sign == null) {
             return;
@@ -365,6 +361,18 @@ public final class SiteMarker {
         }
 
         return raiseSign(world, project, x, y, z);
+    }
+
+    /**
+     * Onde a placa fica: o centro do lote, {@link #LABEL_ABOVE_TOP} acima do
+     * topo da planta (N7, 2026-09-24). O painel do cliente se alinha a ela.
+     */
+    public static double[] signAt(ColonyPos origin, ColonyPos size) {
+        return new double[] {
+            origin.x() + size.x() / 2.0,
+            labelY(origin, size),
+            origin.z() + size.z() / 2.0
+        };
     }
 
     /** A altura da placa: o topo da planta mais {@link #LABEL_ABOVE_TOP}. */

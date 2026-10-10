@@ -3,7 +3,7 @@ package com.villagecolony.client;
 import java.util.Locale;
 
 /**
- * Qual arte em pixel cada overlay usa — os arquivos de
+ * Qual símbolo cada overlay usa — os arquivos de
  * {@code assets/villagecolony/textures/gui/overlays/}.
  *
  * <p><b>Por que existe.</b> As quatorze texturas entraram em c40d4a1f

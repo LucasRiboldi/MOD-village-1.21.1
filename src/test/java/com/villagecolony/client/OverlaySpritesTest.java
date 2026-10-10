@@ -11,15 +11,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Cada ícone que o overlay pede existe nos recursos — o autor não viu a arte
- * em pixel em 2026-10-03 porque nenhum código a usava.
+ * Cada símbolo que o overlay pede existe nos recursos — o autor não viu a arte
+ * em 2026-10-03 porque nenhum código a usava.
  */
 class OverlaySpritesTest {
 
     private static final Path ASSETS = Path.of("src/main/resources/assets", OverlaySprites.NAMESPACE);
 
     @Test
-    void everyProfessionHasItsPixelArt() {
+    void everyProfessionHasItsSimpleSymbol() {
         for (ProfessionType profession : ProfessionType.values()) {
             Path icon = ASSETS.resolve(OverlaySprites.profession(profession.name()));
 
@@ -28,7 +28,7 @@ class OverlaySpritesTest {
     }
 
     @Test
-    void everyConstructionStateHasItsPixelArt() {
+    void everyConstructionStateHasItsSymbol() {
         for (ConstructionState state : ConstructionState.values()) {
             for (String missing : new String[] {"", "minecraft:glass_pane 4"}) {
                 Path icon = ASSETS.resolve(OverlaySprites.construction(state.name(), missing));

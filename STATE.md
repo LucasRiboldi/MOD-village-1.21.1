@@ -1,6 +1,6 @@
 # STATE — 2026-10-10
 
-> **JAR atual: `village-colony-0.3.9.jar` = `D2ED5E94…A907754`** em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.10.jar` = `595E8FAE09C275EEEE20B840B674CA3EB2B80998B63A5FB2682355FB399BF709`** em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,36 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 10-10 — overlay nítido, obra sobre a placa e Spark `vuUv6PZC5d`
+
+O playtest com a 0.3.9 ainda mostrou a profissão fora da moldura e nenhuma obra nova nascendo.
+Spark `vuUv6PZC5d`: TPS ~20 no último minuto, 14,7 nos 5 min e 17,8 nos 15 min; MSPT médio ~14 ms,
+p95 ~20,7 ms e máximo 65 ms. Não é congelamento contínuo, mas há travas de fluxo. O `latest.log`
+registrou 51 `construction_waiting_resources`, 3 `builder_pathing_stalled`, pior ciclo de colônia em
+331 ms e uma obra aberta em `ColonyPos[x=-750,y=68,z=-893]` esperando `minecraft:stonecutter`.
+Enquanto essa obra está aberta, o planejador não procura novos lotes: 9 ciclos sequer pediram varredura
+de lote. Logo, as zonas limpas ainda podem estar boas; elas ficaram fora da fila porque a obra atual
+segurou o crescimento.
+
+Relatório de tempo por profissão na janela do log: construtor 95% ocioso; carpinteiro 19% trabalho,
+35% espera e 22% ocioso; agricultor 3% trabalho, 29% espera e 22% ocioso; lenhador ok, 25% trabalho e
+51% caminhada; pedreiro 14% trabalho, 25% espera e 44% ocioso; mineiro 0% trabalho, 41% espera e 22%
+ocioso; pastor 80% ocioso; fundidor 0% trabalho, 89% ocioso e 95% sem trabalhar. O mineiro estava
+mirando minério profundo/distante perto de `-735,8,-944`, alternando caminhada até a boca e alvo fora
+de alcance; o fundidor ficou faminto por material.
+
+Correção 0.3.10: o overlay de profissão não tem mais modo oculto, sempre recebe o nome da profissão,
+e a moldura foi refeita em textura 64×32 mais nítida com o nome à esquerda e o símbolo simples à
+direita. Os símbolos das oito profissões voltaram a versões simples/suaves. O overlay de obra voltou
+a ser ancorado na placa visível (`SiteMarker.signAt`) e o pacote agora carrega coordenadas `double`
+para manter o painel no mesmo lugar da placa.
+
+Verificado com `test --tests "com.villagecolony.client.*" --tests
+"com.villagecolony.fabric.integration.SiteMarkerHeightTest"`, `build --no-daemon` e
+`runGametest --rerun-tasks --no-daemon` **650/650 em 47,93 s**. JAR 0.3.10 copiado para `downloads/`
+e `%APPDATA%/.minecraft/mods/`; a 0.3.9 foi arquivada fora da pasta de mods. Falta o playtest visual
+no cliente com a 0.3.10 para confirmar a moldura e a âncora da obra no save real.
 
 ## 🟡 10-10 — painel de profissão dentro da moldura
 
