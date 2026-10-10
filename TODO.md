@@ -1,17 +1,18 @@
 # TODO
 
-**Atualizado:** 2026-10-09. Só o que está **aberto**. O histórico até hoje está em
+**Atualizado:** 2026-10-10. Só o que está **aberto**. O histórico até hoje está em
 `docs/archive/technical/TODO-ate-2026-10-07.md` (consultar por `grep`, nunca inteiro).
 Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
-## 🔴 Playtest da 0.3.8
+## 🔴 Playtest da 0.3.9
 
 Nada das ADR-037, 038 e 039 foi visto em jogo. Rodar depois: `python scripts/time_ledger.py`
 e `python scripts/cost_ledger.py` no `latest.log`, e Spark.
 
-- [ ] Painel da profissão: nome dentro da moldura do background e ícone centralizado acima.
+- [ ] Painel da profissão: nome e ícone dentro da mesma moldura; sem nameplate Vanilla fora do
+      background.
 - [ ] `walk` aparece no `time_ledger` (A3: o braço do aldeão agora desce).
 - [ ] Carpinteiro com escada/laje/cerca **da madeira do bioma** no baú dele; pedreiro com as peças
       das casas da vila; fundidor com vidro e a pedra lisa que as casas usam.

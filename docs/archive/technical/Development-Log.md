@@ -10797,3 +10797,34 @@ do patamar seguro. Depois do patch, a bateria completa passou em
 também passou. Falta confirmar no save real se a cadeia `raw_iron -> fundidor ->
 stonecutter -> construtor` volta a andar e se o fundidor fica abaixo de 15% de
 ociosidade.
+
+### 2026-10-10 - Profissão dentro do painel pixelado
+
+O playtest mostrou a profissão ainda fora do background: a imagem exibia um
+painel pixelado vazio e o nome `Fundidor` em vermelho abaixo dele. A investigação
+separou as duas fontes visuais: o painel era do overlay cliente, enquanto o texto
+vermelho vinha do `WorkerNameplate` server-side, que ainda gravava a profissão
+como custom name visível do aldeão.
+
+Foram escritos dois testes de regressão antes da correção. `PixelPanelLayoutTest`
+passou a exigir texto e ícone dentro da mesma moldura, e falhou com o layout
+antigo que colocava o ícone fora do background. O GameTest
+`WorkerEquipmentGameTest.colonyProfessionNameIsStoredButNotForcedVisible` passou
+a exigir que `Carpinteiro` continue armazenado no aldeão sem renderizar o
+nameplate Vanilla, e falhou com `setCustomNameVisible(true)`.
+
+A correção 0.3.9 usa uma placa única: texto à esquerda, ícone à direita e ambos
+dentro da moldura pixelada, seguindo o modelo visual enviado pelo autor. O
+`WorkerNameplate` continua gravando o nome da profissão para reconhecimento e
+fallback, mas deixa `customNameVisible` falso, inclusive ao normalizar saves que
+já tinham o nome antigo escrito. Falta confirmar visualmente no save real com o
+JAR publicado.
+
+Verificação: `PixelPanelLayoutTest` falhou antes do patch e passou depois;
+`runGametest -PgametestOnly=WorkerEquipmentGameTest --rerun-tasks --no-daemon`
+falhou antes do patch no novo GameTest e passou depois com 24/24. A validação
+final passou em `test --tests com.villagecolony.client.*`, `build --no-daemon`
+e `runGametest --rerun-tasks --no-daemon` com 650/650. O JAR
+`village-colony-0.3.9.jar` foi copiado para `downloads/` e
+`%APPDATA%/.minecraft/mods/` com SHA-256
+`D2ED5E9447C42F49DF2ADB6C3C4BEDFF3E8D3235CB62AC43EB6186F43A907754`.

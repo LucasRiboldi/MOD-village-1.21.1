@@ -12,7 +12,7 @@ import net.minecraft.util.Formatting;
 import java.util.Collection;
 
 /**
- * Põe o nome da profissão sobre a cabeça do trabalhador.
+ * Mantém o nome da profissão no aldeão sem forçar a plaquinha Vanilla.
  *
  * <p>A colônia atribui função, e até aqui isso era invisível: dois
  * aldeões idênticos, um lenhador e um fazendeiro, e nada no mundo dizia
@@ -24,10 +24,10 @@ import java.util.Collection;
  * renderização, sincronização por rede e ADR nova — o mod deixaria de
  * funcionar só no servidor.
  *
- * <p>Texto literal, e não {@code Text.translatable}: o mod roda no
- * servidor e o cliente pode ser Vanilla puro. Chave de tradução chegaria
- * como {@code villagecolony.profession.lumberjack} na tela de quem não
- * tem o mod instalado.
+ * <p>Texto literal, e não {@code Text.translatable}: o valor ainda fica
+ * armazenado no aldeão para reconhecimento e fallback. Quem tem o mod vê a
+ * placa pixelada do cliente; a plaquinha Vanilla fica desligada para não
+ * renderizar o nome fora do background do overlay.
  */
 public final class WorkerNameplate {
 
@@ -98,7 +98,8 @@ public final class WorkerNameplate {
             Text label = labelFor(worker.profession().get());
 
             if (current != null && current.getString().equals(label.getString())
-                    && sameColour(current, label)) {
+                    && sameColour(current, label)
+                    && !villager.isCustomNameVisible()) {
 
                 // Já está certo, e reescrevê-lo toda passagem seria mexer
                 // no nome de um aldeão trinta vezes por minuto.
@@ -106,7 +107,7 @@ public final class WorkerNameplate {
             }
 
             villager.setCustomName(label);
-            villager.setCustomNameVisible(true);
+            villager.setCustomNameVisible(false);
 
             labelled++;
         }

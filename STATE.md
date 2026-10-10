@@ -1,6 +1,6 @@
 # STATE — 2026-10-10
 
-> **JAR atual: `village-colony-0.3.8.jar` = `31764777…D0944ED`** em `build/libs/`, `downloads/` (local) e
+> **JAR atual: `village-colony-0.3.9.jar` = `D2ED5E94…A907754`** em `build/libs/`, `downloads/` (local) e
 > `%APPDATA%/.minecraft/mods`. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
 > Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
 
@@ -15,6 +15,28 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 10-10 — painel de profissão dentro da moldura
+
+A imagem do playtest mostrou dois overlays separados: o painel pixelado sem o texto e, abaixo dele,
+o nameplate Vanilla vermelho (`Fundidor`) fora do background. A causa não estava no log; era a
+combinação de `OverlayDrawing` com `WorkerNameplate`: o cliente desenhava a moldura própria, mas o
+servidor ainda forçava `setCustomNameVisible(true)` para a profissão.
+
+Correção 0.3.9: `PixelPanelLayout` voltou a montar uma placa única, com texto à esquerda e ícone à
+direita dentro da mesma moldura, no estilo do modelo `Carpinteiro` enviado como referência.
+`WorkerNameplate` continua armazenando o nome da profissão no aldeão para reconhecimento/fallback,
+mas não força mais o nameplate Vanilla visível; saves antigos que já tinham a profissão gravada
+também são regravados sem visibilidade quando o ciclo passar pelo trabalhador.
+
+Verificado com regressão primeiro: `PixelPanelLayoutTest` falhou com o layout antigo e
+passou depois; `WorkerEquipmentGameTest.colonyProfessionNameIsStoredButNotForcedVisible` falhou
+com o nameplate Vanilla ativo e passou depois em `runGametest -PgametestOnly=WorkerEquipmentGameTest`
+com 24/24. Depois passaram `test --tests com.villagecolony.client.*`, `build --no-daemon` e
+`runGametest --rerun-tasks --no-daemon` **650/650 em 30,80 s**. JAR
+`D2ED5E9447C42F49DF2ADB6C3C4BEDFF3E8D3235CB62AC43EB6186F43A907754` copiado para
+`downloads/` e `%APPDATA%/.minecraft/mods/`; a 0.3.8 foi arquivada fora da pasta de mods. Falta o
+playtest visual no cliente com a 0.3.9.
 
 ## 🟡 10-10 — log curto e painel de profissão
 

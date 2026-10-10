@@ -3,9 +3,9 @@ package com.villagecolony.client;
 /**
  * Geometria da moldura pixelada do overlay.
  *
- * <p>ADR-025: no painel de profissão, a moldura pertence ao texto e o ícone
- * fica centralizado acima dela. Assim o nome traduzido não disputa largura com
- * o sprite e sempre cabe dentro do background.
+ * <p>ADR-025: no painel de profissão, a moldura pertence ao texto e ao ícone.
+ * O nome fica à esquerda e o sprite à direita, sempre dentro do mesmo
+ * background, para não recriar a plaquinha Vanilla fora da moldura.
  */
 record PixelPanelLayout(
         float width,
@@ -45,23 +45,25 @@ record PixelPanelLayout(
         }
 
         float textHeight = textWidths.length * lineHeight - 1.0F;
-        float frameWidth = Math.max(MIN_FRAME_WIDTH, widest + 2.0F * PADDING);
-        float frameHeight = textHeight + 2.0F * PADDING;
-        float width = Math.max(frameWidth, ICON_SIZE);
-        float height = ICON_SIZE + GAP + frameHeight;
-        float frameLeft = (width - frameWidth) / 2.0F;
+        float contentHeight = Math.max(ICON_SIZE, textHeight);
+        float frameWidth = Math.max(
+                MIN_FRAME_WIDTH,
+                widest + GAP + ICON_SIZE + 2.0F * PADDING);
+        float frameHeight = contentHeight + 2.0F * PADDING;
+        float width = frameWidth;
+        float height = frameHeight;
+        float frameLeft = 0.0F;
         float frameTop = -frameHeight;
-        float iconLeft = (width - ICON_SIZE) / 2.0F;
-        float iconTop = frameTop - GAP - ICON_SIZE;
-        float firstTextLeft = centeredText(frameLeft, frameWidth, textWidths[0]);
-        float secondTextLeft = textWidths.length > 1
-                ? centeredText(frameLeft, frameWidth, textWidths[1])
-                : firstTextLeft;
+        float iconLeft = frameLeft + frameWidth - PADDING - ICON_SIZE;
+        float iconTop = frameTop + PADDING + (contentHeight - ICON_SIZE) / 2.0F;
+        float firstTextLeft = frameLeft + PADDING;
+        float secondTextLeft = firstTextLeft;
+        float textTop = frameTop + PADDING + (contentHeight - textHeight) / 2.0F;
 
         return new PixelPanelLayout(width, height,
                 iconLeft, iconTop,
                 frameLeft, frameTop, frameWidth, frameHeight,
-                firstTextLeft, secondTextLeft, frameTop + PADDING, true);
+                firstTextLeft, secondTextLeft, textTop, true);
     }
 
     float iconRight() {
@@ -84,7 +86,4 @@ record PixelPanelLayout(
         return line == 0 ? firstTextLeft : secondTextLeft;
     }
 
-    private static float centeredText(float frameLeft, float frameWidth, float textWidth) {
-        return frameLeft + (frameWidth - textWidth) / 2.0F;
-    }
 }

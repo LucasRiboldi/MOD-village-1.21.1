@@ -783,6 +783,27 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
         context.complete();
     }
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_colour",
+            tickLimit = 20)
+    public void colonyProfessionNameIsStoredButNotForcedVisible(TestContext context) {
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+        Worker worker = Worker.restore(
+                villager.getUuid(), UUID.randomUUID(), ProfessionType.CARPENTER);
+
+        WorkerNameplate.label(context.getWorld(), List.of(worker));
+
+        context.assertTrue(
+                villager.getCustomName() != null
+                        && "Carpinteiro".equals(villager.getCustomName().getString()),
+                "a profissao precisa continuar armazenada para fallback e reconhecimento");
+        context.assertTrue(
+                !villager.isCustomNameVisible(),
+                "o nome da profissao nao pode renderizar fora do overlay pixelado");
+
+        villager.discard();
+        context.complete();
+    }
+
     /**
      * <b>Os dois jeitos de pôr trabalhador na arena não são o mesmo</b>
      * — P1.12, 2026-09-11.

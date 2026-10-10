@@ -13,8 +13,8 @@ import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 
 /**
- * Uma placa virada para a câmera: ícone em pixel art acima, fundo atrás do
- * texto e o nome dentro da moldura — pedido do autor, 2026-10-03.
+ * Uma placa virada para a câmera: texto à esquerda e ícone em pixel art à
+ * direita, ambos dentro da mesma moldura — pedido do autor, 2026-10-03.
  *
  * <p><b>O fundo acompanha o texto.</b> A moldura de 16 × 16 é cortada em nove
  * partes: os cantos ficam do tamanho deles e o meio estica, então a placa
