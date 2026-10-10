@@ -8,6 +8,22 @@
 
 # Village Colony — Development Log
 
+## 2026-10-10 — relatório distingue fallback comprovado de estoque físico
+
+O log já continha `VC_SUPPLY_ERROR` em cada injeção terminal de material, mas o
+analisador só o tratava como uma assinatura genérica. `analyze_village_log.py`
+agora agrupa essas linhas por peça, profissão atendida e tentativas e mostra a
+tabela “Fallback terminal de materiais” no relatório. Ele não atribui uma peça
+retirada de baú a uma profissão: uma pilha física preexistente não carrega prova
+de qual aldeão a depositou, e chamá-la de entrega seria uma medição falsa.
+
+O histórico de sessões passou do esquema 2 para o 3, acrescentando listas vazias
+às sessões antigas. TDD: o teste novo falhou pela ausência de
+`analyze_supply_fallbacks`, passou após a implementação; `test_analyze_village_log`
+passou 11/11 e `python -m unittest discover -s tests` passou 96/96. O próximo
+playtest deve rodar o relatório para confrontar os fallbacks contra a linha de
+base de 334 inserções.
+
 ## 2026-10-10 — overlay nítido, obra na placa e diagnóstico do Spark `vuUv6PZC5d`
 
 O Spark do playtest com a 0.3.9 indicou TPS normal no último minuto e queda de janela nos 5/15 min,

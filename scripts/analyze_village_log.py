@@ -61,10 +61,25 @@ class ActivityObservation:
     occurrences: int
 
 
+@dataclass(frozen=True)
+class SupplyFallbackObservation:
+    """Contagem anonimizada de material injetado como ultimo recurso."""
+
+    piece: str
+    profession: str
+    attempts: int
+    occurrences: int
+
+
 ACTIVITY_PATTERN = re.compile(
     r"\bVC_ACTIVITY\s+version=1\s+profession=(?P<profession>[A-Z_]+)"
     r"\s+activity=(?P<activity>[A-Z_]+)\s+outcome=(?P<outcome>[A-Z_]+)"
     r"\s+reason=(?P<reason>[A-Z_]+)\b"
+)
+
+SUPPLY_FALLBACK_PATTERN = re.compile(
+    r"\bVC_SUPPLY_ERROR\s+version=1\s+piece=(?P<piece>\S+)"
+    r"\s+profession=(?P<profession>[A-Z_]+)\s+attempts=(?P<attempts>\d+)\b"
 )
 
 
@@ -108,6 +123,23 @@ def analyze_activities(text: str) -> dict[tuple[str, str, str, str], ActivityObs
 
     return {
         key: ActivityObservation(*key, occurrences)
+        for key, occurrences in sorted(counts.items())
+    }
+
+
+def analyze_supply_fallbacks(text: str) -> dict[tuple[str, str, int], SupplyFallbackObservation]:
+    """Conta apenas as pecas que entraram sem entrega fisica comprovada."""
+    counts: dict[tuple[str, str, int], int] = {}
+    for matched in SUPPLY_FALLBACK_PATTERN.finditer(text):
+        key = (
+            matched.group("piece"),
+            matched.group("profession"),
+            int(matched.group("attempts")),
+        )
+        counts[key] = counts.get(key, 0) + 1
+
+    return {
+        key: SupplyFallbackObservation(*key, occurrences)
         for key, occurrences in sorted(counts.items())
     }
 
@@ -163,23 +195,41 @@ def activity_data(observations: Iterable[ActivityObservation]) -> list[dict[str,
     ]
 
 
+def supply_fallback_data(observations: Iterable[SupplyFallbackObservation]) -> list[dict[str, object]]:
+    """Converte os fallbacks para o formato versionado do historico."""
+    return [
+        {
+            "piece": item.piece,
+            "profession": item.profession,
+            "attempts": item.attempts,
+            "occurrences": item.occurrences,
+        }
+        for item in sorted(
+            observations,
+            key=lambda item: (item.piece, item.profession, item.attempts),
+        )
+    ]
+
+
 def read_history(path: Path) -> dict[str, object]:
     if not path.is_file():
-        return {"schema": 2, "sessions": []}
+        return {"schema": 3, "sessions": []}
 
     loaded = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(loaded.get("sessions"), list):
         raise ValueError(f"Unsupported stall history format: {path}")
-    if loaded.get("schema") == 1:
+    if loaded.get("schema") in (1, 2):
         sessions = []
         for session in loaded["sessions"]:
             if not isinstance(session, dict):
                 raise ValueError(f"Unsupported stall history format: {path}")
             migrated = dict(session)
-            migrated["activities"] = []
+            if loaded.get("schema") == 1:
+                migrated["activities"] = []
+            migrated["supply_fallbacks"] = []
             sessions.append(migrated)
-        return {"schema": 2, "sessions": sessions}
-    if loaded.get("schema") != 2:
+        return {"schema": 3, "sessions": sessions}
+    if loaded.get("schema") != 3:
         raise ValueError(f"Unsupported stall history format: {path}")
     return loaded
 
@@ -189,7 +239,8 @@ def update_history(
         log_path: Path,
         text: str,
         observations: dict[str, Observation],
-        activities: dict[tuple[str, str, str, str], ActivityObservation]) -> dict[str, object]:
+        activities: dict[tuple[str, str, str, str], ActivityObservation],
+        supply_fallbacks: dict[tuple[str, str, int], SupplyFallbackObservation]) -> dict[str, object]:
     """Substitui a mesma sessao pelo hash, sem guardar texto ou coordenadas."""
     started_at, ended_at = timestamps(text)
     digest = hashlib.sha256(log_path.read_bytes()).hexdigest()
@@ -204,6 +255,7 @@ def update_history(
         "lines": len(text.splitlines()),
         "observations": observation_data(observations.values()),
         "activities": activity_data(activities.values()),
+        "supply_fallbacks": supply_fallback_data(supply_fallbacks.values()),
         "waited_items": analyze_waited_items(text),
     }
     old_sessions = history["sessions"]
@@ -269,6 +321,16 @@ def render_report(log_path: Path, history: dict[str, object], loop_threshold: in
         if isinstance(item, dict)
     ) or "| Nenhuma transicao VC_ACTIVITY observada | - | - | - | 0 |"
 
+    supply_fallbacks = latest.get("supply_fallbacks", [])
+    if not isinstance(supply_fallbacks, list):
+        supply_fallbacks = []
+    supply_fallback_rows = "\n".join(
+        f"| `{item.get('piece', 'INVALID')}` | `{item.get('profession', 'INVALID')}` | "
+        f"{item.get('attempts', 0)} | {item.get('occurrences', 0)} |"
+        for item in supply_fallbacks
+        if isinstance(item, dict)
+    ) or "| Nenhum fallback terminal registrado | - | - | 0 |"
+
     waited = latest.get("waited_items", {})
     waited_rows = "\n".join(
         f"| `{item}` | {count} |" for item, count in waited.items()
@@ -298,6 +360,16 @@ guarda UUIDs, coordenadas ou linhas cruas do mundo do jogador.
 | Profissao | Atividade | Resultado | Motivo | Ocorrencias |
 |---|---|---|---|---:|
 {activity_rows}
+
+## Fallback terminal de materiais
+
+Estes sao os blocos comprovadamente inseridos sem entrega fisica. Pecas tiradas
+de baus existentes ficam fora desta tabela: o log nao atribui uma pilha a uma
+profissao sem evidencia de origem.
+
+| Peca | Profissao atendida | Tentativas | Insercoes |
+|---|---|---:|---:|
+{supply_fallback_rows}
 
 ## Pecas que as obras mais esperaram
 
@@ -404,7 +476,9 @@ def main() -> int:
     text = read_log(log_path)
     observations = analyze_text(text, args.min_loop)
     activities = analyze_activities(text)
-    history = update_history(read_history(args.history), log_path, text, observations, activities)
+    supply_fallbacks = analyze_supply_fallbacks(text)
+    history = update_history(
+        read_history(args.history), log_path, text, observations, activities, supply_fallbacks)
     args.history.parent.mkdir(parents=True, exist_ok=True)
     args.history.write_text(json.dumps(history, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
     args.report.parent.mkdir(parents=True, exist_ok=True)

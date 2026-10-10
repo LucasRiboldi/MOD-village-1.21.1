@@ -34,6 +34,19 @@ bateria integral `runGametest --rerun-tasks --no-daemon` passou 652/652 em
 50,74 s. A medição do próximo save ainda deve confirmar menos liberações e
 ociosidade abaixo de 15% quando houver cadeia física de minério até os baús.
 
+## 🟡 10-10 — fallback de obra fica mensurável no relatório de logs
+
+O analisador de `latest.log` agora consolida `VC_SUPPLY_ERROR` por peça,
+profissão atendida e número de tentativas. A tabela conta somente injeções
+terminais comprovadas; peças retiradas de baús permanecem como estoque físico,
+pois o log não prova, por si só, qual profissão depositou uma pilha já presente.
+O histórico foi migrado para o esquema 3 sem inventar eventos em sessões antigas.
+
+O teste novo cobre duas inserções de calcita e uma de vidro; `python -m unittest
+tests.test_analyze_village_log` passou 11/11 e a bateria Python passou 96/96.
+O próximo save deve gerar o relatório para comparar cada fallback com as 334
+injeções registradas antes desta etapa.
+
 ## 🟡 10-10 — calcita entra na cadeia real do mineiro
 
 A primeira tentativa da opção B tratava blocos naturais sem `ResourceType` como

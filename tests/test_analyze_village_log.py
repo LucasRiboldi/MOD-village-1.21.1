@@ -58,6 +58,21 @@ class AnalyzeVillageLogTest(unittest.TestCase):
         self.assertEqual(1, activities[("BUILDER", "BUILDING", "ERROR", "WORK_STALLED")].occurrences)
         self.assertEqual(1, activities[("BUILDER", "BUILDING", "ABANDONED", "WORK_STALLED")].occurrences)
 
+    def test_counts_terminal_construction_fallbacks_by_piece_and_profession(self) -> None:
+        fallbacks = analyze_village_log.analyze_supply_fallbacks(
+            "\n".join(
+                [
+                    "[00:00:01] [Server thread/WARN]: VC_SUPPLY_ERROR version=1 piece=minecraft:calcite profession=BUILDER attempts=4 reason=no profession can obtain it in this biome",
+                    "[00:00:02] [Server thread/WARN]: VC_SUPPLY_ERROR version=1 piece=minecraft:calcite profession=BUILDER attempts=4 reason=no profession can obtain it in this biome",
+                    "[00:00:03] [Server thread/WARN]: VC_SUPPLY_ERROR version=1 piece=minecraft:glass profession=SMELTER attempts=4 reason=after four searches",
+                    "[00:00:04] [Server thread/INFO]: Project finished without a fallback",
+                ]
+            )
+        )
+
+        self.assertEqual(2, fallbacks[("minecraft:calcite", "BUILDER", 4)].occurrences)
+        self.assertEqual(1, fallbacks[("minecraft:glass", "SMELTER", 4)].occurrences)
+
     def test_migrates_stall_history_without_inventing_old_activities(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "history.json"
@@ -65,8 +80,9 @@ class AnalyzeVillageLogTest(unittest.TestCase):
 
             history = analyze_village_log.read_history(path)
 
-        self.assertEqual(2, history["schema"])
+        self.assertEqual(3, history["schema"])
         self.assertEqual([], history["sessions"][0]["activities"])
+        self.assertEqual([], history["sessions"][0]["supply_fallbacks"])
 
     def test_counts_known_stalls_and_marks_only_repetition_as_loop(self) -> None:
         summary = analyze_village_log.analyze_text(

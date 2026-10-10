@@ -50,8 +50,12 @@ primeiro bloco não tem ponto físico imediato; rodar depois:
       alternativa de construção produtiva enquanto espera. `SmelterGameTest` 5/5 e
       GameTests 652/652; confirmar no próximo save a redução de liberações e a
       ociosidade abaixo de 15%.
-- [ ] Registrar origem da peça colocada (`STOCK`, entrega, produção, fallback) e comparar o próximo
-      playtest com os 334 abastecimentos instantâneos observados na sessão anterior.
+- [x] Registrar no relatório cada fallback terminal (`VC_SUPPLY_ERROR`) por peça, profissão e
+      tentativas; `test_analyze_village_log` 11/11 e Python 96/96. Comparar o próximo playtest
+      com os 334 abastecimentos instantâneos da sessão anterior.
+- [ ] Definir em ADR a proveniência completa da peça colocada (`STOCK`, entrega, produção,
+      fallback): o `MaterialRequests` atual é observacional (ADR-035 §3 fase 1), e não pode virar
+      autoridade de estoque sem a decisão da fase 2.
 
 ## 🟠 Erros abertos
 
