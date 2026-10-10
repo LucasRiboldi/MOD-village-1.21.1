@@ -11014,3 +11014,30 @@ O teste focal `runGametest -PgametestOnly=SmelterGameTest --rerun-tasks
 --no-daemon` passou com 5/5. A verificação integral
 `runGametest --rerun-tasks --no-daemon` passou com 652/652 em 50,74 s. O próximo
 playtest continua necessário para confirmar no save a redução de ociosidade.
+
+### 2026-10-10 - Contingência da obra conta ciclos, não consultas
+
+O fallback de material contava cada chamada de `BuilderMaterials`, portanto o
+overlay, o planejador e o construtor podiam consumir as quatro tentativas sem que
+uma profissão tivesse recebido quatro ciclos para entregar. A nova classe
+`ConstructionSupplyDispatches` mantém esse relógio apenas em memória, por obra
+e item, e o renova uma vez no `ColonyCycleRunner`. A rota de suprimento também
+promove as tarefas abertas de seus recursos a `CONSTRUCTION_MATERIAL` antes da
+distribuição.
+
+`BuilderMaterials` deixou de incrementar tentativas. Ele zera o registro quando
+o item físico aparece em baú atendendo a obra e, depois de quatro renovações,
+primeiro abastece os ingredientes sem rota no baú do artesão; só então insere a
+peça final quando a cadeia não pode avançar. Peças futuras apenas são preparadas:
+não consomem nem disparam a contingência antes de se tornarem a próxima peça.
+
+O contador antigo foi removido de `BiomeConstructionSupply` e deixou de ser
+salvo em `WorkMarksSavedData`; a persistência desse campo continua somente para
+as esperas de muda. Isso impede que tentativas antigas de uma obra sobrevivam a
+um novo servidor e decidam material sem um novo ciclo da colônia.
+
+O teste novo prova que quatro consultas não abastecem terracota e que quatro
+despachos distintos abastecem o baú do construtor. `LocateFallbackGameTest` foi
+ajustado para a peça futura não gastar esse relógio. A bateria integral
+`runGametest --rerun-tasks --no-daemon` passou **653/653 em 50,87 s**. Falta o
+playtest de save para medir as entregas reais e os eventos `VC_SUPPLY_ERROR`.

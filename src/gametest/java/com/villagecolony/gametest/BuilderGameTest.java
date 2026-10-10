@@ -28,6 +28,7 @@ import com.villagecolony.fabric.work.BlockShaping;
 import com.villagecolony.fabric.work.BuilderMaterials;
 import com.villagecolony.fabric.work.MaterialChoice;
 import com.villagecolony.fabric.work.ConstructionPlanner;
+import com.villagecolony.fabric.work.ConstructionSupplyDispatches;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -576,7 +577,7 @@ public class BuilderGameTest implements FabricGameTest {
                     "o fermentador não entrou no baú");
         } finally {
             fixture.owned.cleanUp();
-            BiomeConstructionSupply.routeDelivered(fixture.colony.id(), Items.BREWING_STAND);
+            ConstructionSupplyDispatches.delivered(fixture.project.id(), Items.BREWING_STAND);
         }
 
         context.complete();
@@ -649,6 +650,11 @@ public class BuilderGameTest implements FabricGameTest {
                         "a terracota apareceu antes da tentativa " + attempt);
             }
 
+            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+                ConstructionSupplyDispatches.recordCycleDispatch(
+                        fixture.project.id(), Items.WHITE_TERRACOTTA, dispatch);
+            }
+
             context.assertTrue(
                     BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
                     "a quarta falta em uma rota teorica nao abasteceu a terracota");
@@ -657,7 +663,7 @@ public class BuilderGameTest implements FabricGameTest {
                     "a terracota de contingencia nao entrou no bau da obra");
         } finally {
             fixture.owned.cleanUp();
-            BiomeConstructionSupply.routeDelivered(fixture.colony.id(), Items.WHITE_TERRACOTTA);
+            ConstructionSupplyDispatches.delivered(fixture.project.id(), Items.WHITE_TERRACOTTA);
         }
 
         context.complete();
@@ -1851,36 +1857,40 @@ public class BuilderGameTest implements FabricGameTest {
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
     }
 
-    /** A quarta falta sem profissão libera a peça, sem depender de tempo (ADR-036 item 6). */
+    /** Quatro despachos de ciclos diferentes liberam a contingência (ADR-040). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_missing_piece",
             tickLimit = 20)
     public void theFourthMissingPieceAttemptIsSupplied(TestContext context) {
-        UUID colonyId = UUID.randomUUID();
+        UUID projectId = UUID.randomUUID();
 
         try {
+            ConstructionSupplyDispatches.recordCycleDispatch(projectId, Items.BREWING_STAND, 1);
             context.assertFalse(
-                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    ConstructionSupplyDispatches.fallbackDue(projectId, Items.BREWING_STAND),
                     "a primeira falta já liberou a peça");
 
+            ConstructionSupplyDispatches.recordCycleDispatch(projectId, Items.BREWING_STAND, 2);
             context.assertFalse(
-                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    ConstructionSupplyDispatches.fallbackDue(projectId, Items.BREWING_STAND),
                     "a segunda falta já liberou a peça");
 
+            ConstructionSupplyDispatches.recordCycleDispatch(projectId, Items.BREWING_STAND, 3);
             context.assertFalse(
-                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    ConstructionSupplyDispatches.fallbackDue(projectId, Items.BREWING_STAND),
                     "a terceira falta já liberou a peça");
 
+            ConstructionSupplyDispatches.recordCycleDispatch(projectId, Items.BREWING_STAND, 4);
             context.assertTrue(
-                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    ConstructionSupplyDispatches.fallbackDue(projectId, Items.BREWING_STAND),
                     "a quarta falta não liberou a peça");
 
-            BiomeConstructionSupply.routeDelivered(colonyId, Items.BREWING_STAND);
+            ConstructionSupplyDispatches.delivered(projectId, Items.BREWING_STAND);
 
             context.assertFalse(
-                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    ConstructionSupplyDispatches.fallbackDue(projectId, Items.BREWING_STAND),
                     "a entrega não reiniciou as tentativas daquela peça");
         } finally {
-            BiomeConstructionSupply.routeDelivered(colonyId, Items.BREWING_STAND);
+            ConstructionSupplyDispatches.delivered(projectId, Items.BREWING_STAND);
         }
 
         context.complete();

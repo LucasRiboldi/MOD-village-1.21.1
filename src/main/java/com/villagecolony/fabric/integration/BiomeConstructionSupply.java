@@ -36,7 +36,7 @@ import java.util.function.BooleanSupplier;
  * <p>A estrutura Vanilla pode pedir qualquer item, inclusive uma peça cuja
  * receita termina no Nether ou em flora que não existe no mundo. A colônia
  * continua produzindo tudo que alguma profissão consegue obter ou fabricar;
- * quando não há essa rota, a quarta tentativa (ADR-036 item 6) coloca a peça no baú do
+ * quando não há essa rota, o quarto despacho (ADR-040) coloca a peça no baú do
  * construtor — de manufatura ou da natureza, desde 2026-10-03. Ingrediente de drop (corante, linha, pó de osso,
  * drop de bicho) conta como rota: ele aparece no baú sem espera
  * ({@link DropIngredients}, 2026-09-30). Se ele estiver ausente ou cheio, usa outro baú livre
@@ -118,8 +118,8 @@ public final class BiomeConstructionSupply {
     }
 
     /**
-     * Quantas tentativas sem sucesso antes de o que falta aparecer no baú da
-     * profissão — 4 desde a ADR-036 item 6 (eram 3, decisão de 2026-09-30).
+     * Quantos despachos sem entrega antes de o que falta aparecer no baú da
+     * profissão — 4, Regra 40 e ADR-040 (eram 3, decisão de 2026-09-30).
      * Para peça que um artesão faz, o que aparece é o ingrediente sem rota (a
      * linha do tear), e não a peça pronta.
      */
@@ -128,40 +128,31 @@ public final class BiomeConstructionSupply {
     /** Esperas da obra antes de pedir ao fazendeiro uma muda específica. */
     private static final int TREE_WAITS_BEFORE_PLANTING = 20;
 
-    private static final Map<String, Integer> FAILED_PROFESSION_ATTEMPTS = new HashMap<>();
-
-    /** A terceira falta da mesma peça sem rota profissional libera o depósito. */
-    public static boolean failedProfessionAttempt(UUID colonyId, Item item) {
-        return FAILED_PROFESSION_ATTEMPTS.merge(key(colonyId, item), 1, Integer::sum)
-                >= ATTEMPTS_BEFORE_STOCKING;
-    }
+    private static final Map<String, Integer> TREE_WAIT_ATTEMPTS = new HashMap<>();
 
     /** A vigésima espera pela madeira desta espécie libera o plantio. */
     public static boolean treeWaitReached(UUID colonyId, TreeSpecies species) {
-        return FAILED_PROFESSION_ATTEMPTS.merge(treeKey(colonyId, species), 1, Integer::sum)
+        return TREE_WAIT_ATTEMPTS.merge(treeKey(colonyId, species), 1, Integer::sum)
                 >= TREE_WAITS_BEFORE_PLANTING;
     }
 
     /** A muda foi plantada; uma futura falta recomeça na primeira espera. */
     public static void treePlanted(UUID colonyId, TreeSpecies species) {
-        FAILED_PROFESSION_ATTEMPTS.remove(treeKey(colonyId, species));
+        TREE_WAIT_ATTEMPTS.remove(treeKey(colonyId, species));
     }
 
-    /**
-     * Tentativas sem rota profissional em curso, para o save.
-     */
-    public static Map<String, Integer> failedProfessionAttempts() {
-        return Map.copyOf(FAILED_PROFESSION_ATTEMPTS);
+    /** Esperas de muda em curso, para o save. */
+    public static Map<String, Integer> treeWaitAttempts() {
+        return Map.copyOf(TREE_WAIT_ATTEMPTS);
     }
 
-    /** Devolve as tentativas lidas do save. */
-    public static void restoreFailedProfessionAttempts(Map<String, Integer> saved) {
-        FAILED_PROFESSION_ATTEMPTS.putAll(saved);
-    }
-
-    /** A rota entregou: a contagem daquela peça recomeça. */
-    public static void routeDelivered(UUID colonyId, Item item) {
-        FAILED_PROFESSION_ATTEMPTS.remove(key(colonyId, item));
+    /** Devolve as esperas de muda lidas do save. */
+    public static void restoreTreeWaitAttempts(Map<String, Integer> saved) {
+        saved.forEach((key, value) -> {
+            if (key.contains("/tree/")) {
+                TREE_WAIT_ATTEMPTS.put(key, value);
+            }
+        });
     }
 
     /**
@@ -359,17 +350,13 @@ public final class BiomeConstructionSupply {
                 Registries.ITEM.getId(item), profession, ATTEMPTS_BEFORE_STOCKING, why);
     }
 
-    private static String key(UUID colonyId, Item item) {
-        return colonyId + "/" + Registries.ITEM.getId(item);
-    }
-
     private static String treeKey(UUID colonyId, TreeSpecies species) {
         return colonyId + "/tree/" + species.name().toLowerCase(java.util.Locale.ROOT);
     }
 
-    /** Esquece as tentativas. Chamado ao parar o servidor. */
+    /** Esquece as esperas de muda. Chamado ao parar o servidor. */
     public static void clearAll() {
-        FAILED_PROFESSION_ATTEMPTS.clear();
+        TREE_WAIT_ATTEMPTS.clear();
     }
 
     private static boolean hasRouteInBiome(

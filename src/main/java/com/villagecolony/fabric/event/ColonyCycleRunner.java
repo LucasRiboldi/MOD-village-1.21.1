@@ -53,6 +53,7 @@ import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.EmptySweeps;
 import com.villagecolony.fabric.work.ConstructionDemand;
+import com.villagecolony.fabric.work.ConstructionSupplyDispatches;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.CraftingWork;
 import net.minecraft.block.Blocks;
@@ -342,6 +343,11 @@ final class ColonyCycleRunner {
         // a conta do que a construção pede. É a fase que o plano suspeita
         // ser a cara, e agora ela responde por si.
         mark = CycleCost.since(CycleCost.Phase.PLANNER, mark);
+
+        // A peça que espera renova a demanda uma vez no ciclo, antes da
+        // distribuição. O construtor e a placa apenas observam esse estado.
+        // Regra 40, ADR-040.
+        ConstructionSupplyDispatches.renewForCycle(overworld, colony);
 
         int assigned = ColonyCycle.run(
                 colony.id(),

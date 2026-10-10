@@ -144,6 +144,7 @@ public final class BuilderMaterials {
             if (ColonySupply.canProvide(
                     world, project.colonyId(), project.origin(), candidate)) {
 
+                ConstructionSupplyDispatches.delivered(project.id(), candidate);
                 MaterialRequests.record(project.id(), piece, State.DELIVERED, Source.CHEST, world.getTime());
                 return true;
             }
@@ -158,19 +159,13 @@ public final class BuilderMaterials {
         return supply.state() == State.DELIVERED;
     }
 
-    /** Quantas peças diferentes, além da próxima, contam tentativa por ciclo. */
+    /** Quantas peças diferentes, além da próxima, recebem prévio planejamento de estoque. */
     static final int AHEAD = 8;
 
     /**
-     * As tentativas contam para as peças que faltam, não só para a próxima —
-     * playtest de 2026-10-03.
-     *
-     * <p>A obra parava numa peça sem rota (papoula), esperava as três
-     * tentativas, e só então batia na seguinte (grama, cerca, dente-de-leão,
-     * terracota): um minuto cada, em fila. Aqui cada peça que falta ganha sua
-     * tentativa no mesmo ciclo, e as que não têm rota aparecem juntas. A
-     * próxima peça fica de fora: quem conta a dela é
-     * {@link #hasMaterialForNextBlock}, e contar duas vezes encurtaria a espera.
+     * Antecipa ingredientes de peças futuras sem gastar a contingência delas.
+     * Só o despachante do próximo bloco, executado uma vez por ciclo, pode
+     * renovar a falta — Regra 40, ADR-040.
      */
     static void prepareAhead(ServerWorld world, ConstructionProject project) {
         Optional<ResourceId> next = project.nextBlock().map(BlueprintBlock::block);
@@ -206,8 +201,8 @@ public final class BuilderMaterials {
             ServerWorld world, ConstructionProject project, Item item) {
 
         if (ColonySupply.canProvide(world, project.colonyId(), project.origin(), item)) {
-            // O ofício entregou: uma falta futura volta à primeira tentativa.
-            BiomeConstructionSupply.routeDelivered(project.colonyId(), item);
+            // Uma entrega física (inclusive do jogador) encerra esta demanda.
+            ConstructionSupplyDispatches.delivered(project.id(), item);
 
             return true;
         }
@@ -216,8 +211,8 @@ public final class BuilderMaterials {
     }
 
     /**
-     * Alternativas locais sempre ganham. Três faltas da mesma peça distinguem
-     * uma rota que de fato entregou de uma rota apenas teórica. Receita de
+     * Alternativas locais sempre ganham. Quatro despachos de ciclos distintos
+     * distinguem uma rota que de fato entregou de uma rota apenas teórica. Receita de
      * bancada continua recebendo seus ingredientes ausentes; peça de fornalha
      * ou sem receita aparece no baú da obra quando a rota não chegou.
      */
@@ -252,55 +247,60 @@ public final class BuilderMaterials {
         boolean routeExists = choices.stream().anyMatch(candidate ->
                 BiomeConstructionSupply.hasRouteInBiome(world, project.colonyId(), candidate));
 
-        if (!terracotta && routeExists) {
-            return BY_PROFESSION;
-        }
+        if (!ConstructionSupplyDispatches.fallbackDue(project.id(), preferred)) {
+            // A tentativa é renovada pelo ciclo da colônia, não por esta
+            // consulta. Enquanto ela ainda está aberta, a profissão recebe a
+            // chance de entregar antes de qualquer bloco aparecer do nada.
+            if (routeExists) {
+                return BY_PROFESSION;
+            }
 
-        if (!BiomeConstructionSupply.failedProfessionAttempt(project.colonyId(), preferred)) {
-            // Sem rota no bioma (ou terracota de rota só teórica): conta a
-            // tentativa; na terceira a peça aparece no baú.
             return COUNTING_TO_STOCK;
         }
 
-        // A família de terracota colorida parece ter rota por receita de
-        // recoloração, mas isto não prova que o corante e a terracota neutra
-        // chegaram a um artesão. Três faltas do bloco concreto encerram essa
-        // rota apenas teórica sem alterar a prioridade das alternativas nas
-        // duas primeiras tentativas.
-        Optional<CraftingLookup.Bill> bill = CraftingLookup.billFor(world, preferred, any -> true);
-
-        // A rota do bioma e a entrega são fatos diferentes. Terracota, por
-        // exemplo, pode ter argila em teoria, mas a coleta pode nunca chegar
-        // ao baú da obra. Depois da terceira falta, uma peça de manufatura
-        // sem receita de bancada deixa de travar a construção.
-        if (terracotta || bill.isEmpty()) {
+        if (terracotta) {
             return BiomeConstructionSupply.stockForConstruction(
                     world, project.colonyId(), project.origin(), preferred)
                     ? new Supply(State.DELIVERED, Source.STOCKED)
                     : new Supply(State.NO_SOLUTION, Source.STOCKED);
         }
 
-        if (routeExists) {
-            return BY_PROFESSION;
+        Optional<CraftingLookup.Bill> bill = CraftingLookup.billFor(world, preferred, any -> true);
+
+        if (bill.isEmpty()) {
+            return BiomeConstructionSupply.stockForConstruction(
+                    world, project.colonyId(), project.origin(), preferred)
+                    ? new Supply(State.DELIVERED, Source.STOCKED)
+                    : new Supply(State.NO_SOLUTION, Source.STOCKED);
         }
 
         // O tear pede linha: as linhas aparecem no baú do carpinteiro, e ele
-        // faz o tear. A peça ainda não está no baú, então a obra espera.
+        // faz o tear. Primeiro despachamos todo ingrediente sem rota local.
         ProfessionType craftsman = CraftingWork.isMasonry(MinecraftTypeAdapter.toResourceId(preferred))
                 ? ProfessionType.MASON
                 : ProfessionType.CARPENTER;
+        boolean stockedIngredient = false;
 
         for (Map.Entry<Item, Integer> ingredient : bill.get().ingredients().entrySet()) {
             if (!BiomeConstructionSupply.hasRouteInBiome(
                     world, project.colonyId(), ingredient.getKey())) {
 
-                BiomeConstructionSupply.stockForCraftsman(
+                stockedIngredient |= BiomeConstructionSupply.stockForCraftsman(
                         world, project.colonyId(), project.origin(),
                         ingredient.getKey(), ingredient.getValue(), craftsman);
             }
         }
 
-        return new Supply(State.RESOLVING, Source.CRAFTSMAN);
+        if (stockedIngredient) {
+            return new Supply(State.RESOLVING, Source.CRAFTSMAN);
+        }
+
+        // Depois de quatro ciclos sem entrega, uma rota que só existe no
+        // papel não mantém a obra presa: a peça final atende o construtor.
+        return BiomeConstructionSupply.stockForConstruction(
+                world, project.colonyId(), project.origin(), preferred)
+                ? new Supply(State.DELIVERED, Source.STOCKED)
+                : new Supply(State.NO_SOLUTION, Source.STOCKED);
     }
 
     private static boolean isTerracotta(Item item) {

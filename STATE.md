@@ -49,11 +49,23 @@ injeções registradas antes desta etapa.
 
 ## 🟡 10-10 — despacho, e não rota teórica, passa a governar o fallback
 
-A ADR-040 fecha a fase 2 prevista na ADR-035: quatro despachos executáveis sem
-entrega física devem acionar o fallback terminal. Consulta repetida do
-construtor e reserva de tarefa não contam; uma peça que chega a um baú que atende
-a obra zera a contagem. A implementação ainda está aberta e precisa de GameTest
-que separe consulta, despacho e entrega antes de mudar `BuilderMaterials`.
+A ADR-040 agora separa demanda real de consulta: `ConstructionSupplyDispatches`
+renova a peça ativa somente uma vez por ciclo, dá prioridade às tarefas abertas
+de cada recurso da rota e não persiste esse relógio. O construtor, a placa e o
+overlay só observam a demanda; quatro consultas não avançam a contingência.
+Entrega física em um baú que atende a obra zera o registro. Após quatro ciclos
+sem entrega, a peça sem receita vai ao baú do construtor; receita com insumo sem
+rota abastece antes o baú do artesão.
+
+O contador legado foi removido de `BiomeConstructionSupply` e dos dados salvos:
+só a espera de muda continua persistente. Assim um mundo reaberto nunca herda
+tentativas de fallback de uma obra anterior; o próximo ciclo reavalia a demanda
+física e suas rotas.
+
+O GameTest separa quatro consultas de quatro despachos e a bateria integral
+`runGametest --rerun-tasks --no-daemon` passou 653/653 em 50,87 s. Falta medir
+no save quantos `VC_SUPPLY_ERROR` restam e se as prioridades chegaram aos
+trabalhadores antes de qualquer fallback terminal.
 
 ## 🟡 10-10 — calcita entra na cadeia real do mineiro
 

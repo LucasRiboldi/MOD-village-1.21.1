@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * O ingrediente sem rota aparece no baú do artesão depois de três tentativas
- * de recolher — decisão do autor, 2026-09-30. Ingrediente de drop (linha,
+ * O ingrediente sem rota aparece no baú do artesão depois de quatro despachos
+ * de ciclo — Regra 40, ADR-040. Ingrediente de drop (linha,
  * corante) não espera: tem rota sempre (DropIngredients).
  *
  * <p>No playtest das 02:45 a casa do pastor esperou 7 min 45 s pelo tear (a
@@ -66,10 +66,10 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
     }
 
     /**
-     * <b>A linha deixou de esperar três tentativas</b> — 2026-09-30. Ela é
+     * <b>A linha não consome quatro despachos</b> — 2026-09-30. Ela é
      * ingrediente de drop ({@code DropIngredients}): tem rota sempre, e
-     * aparece no baú quando o carpinteiro fabrica o tear. O caminho das três
-     * tentativas, que é o da peça sem rota, não conjura nada para o tear.
+     * aparece no baú quando o carpinteiro fabrica o tear. O caminho dos quatro
+     * despachos, que é o da peça sem rota, não conjura nada para o tear.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
     public void theStringOfALoomHasARouteAndIsNotStockedByTheAttempts(TestContext context) {
@@ -149,6 +149,14 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
                         context.getWorld(), setup.project(), Items.GLASS_PANE);
             }
 
+            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+                ConstructionSupplyDispatches.recordCycleDispatch(
+                        setup.project().id(), Items.GLASS_PANE, dispatch);
+            }
+
+            BuilderMaterials.hasOrStocksConstructionMaterial(
+                    context.getWorld(), setup.project(), Items.GLASS_PANE);
+
             context.assertTrue(count(context, setup.carpenterChest(), Items.GLASS) == 6,
                     "o vidro da vidraça não apareceu no baú do carpinteiro: "
                             + count(context, setup.carpenterChest(), Items.GLASS));
@@ -167,6 +175,11 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
         Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.OAK_PLANKS);
 
         try {
+            for (int dispatch = 1; dispatch <= 3; dispatch++) {
+                ConstructionSupplyDispatches.recordCycleDispatch(
+                        setup.project().id(), Items.OAK_PLANKS, dispatch);
+            }
+
             Inventory carpenterChest = (Inventory) context.getWorld().getBlockEntity(
                     MinecraftTypeAdapter.toBlockPos(setup.carpenterChest()));
             carpenterChest.setStack(0, new ItemStack(Items.OAK_PLANKS, 2));
@@ -178,6 +191,10 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
                             && request.state() == MaterialRequest.State.DELIVERED
                             && request.source() == MaterialRequest.Source.CHEST,
                     "a tábua no baú devia ficar registrada como entregue pelo baú: " + request);
+
+            ConstructionSupplyDispatches.recordCycleDispatch(setup.project().id(), Items.OAK_PLANKS, 4);
+            context.assertFalse(ConstructionSupplyDispatches.fallbackDue(setup.project().id(), Items.OAK_PLANKS),
+                    "a entrega física no baú não reiniciou os despachos da obra");
         } finally {
             setup.cleanUp();
         }
@@ -202,6 +219,13 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
             BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project());
             BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project());
             BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project());
+
+            for (int attempt = 1; attempt <= 4; attempt++) {
+                ConstructionSupplyDispatches.recordCycleDispatch(
+                        setup.project().id(), Items.GLASS_PANE, attempt);
+            }
+
+            BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project());
             MaterialRequest fourth = MaterialRequests.of(setup.project().id()).orElse(null);
 
             context.assertTrue(first != null && first.state() == MaterialRequest.State.RESOLVING
@@ -217,11 +241,41 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Consultar o baú não equivale a abrir quatro trabalhos na colônia. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
+    public void onlyCycleDispatchesSpendConstructionFallbackAttempts(TestContext context) {
+        Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.WHITE_TERRACOTTA);
+
+        try {
+            for (int query = 1; query <= 4; query++) {
+                context.assertFalse(BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project()),
+                        "a consulta " + query + " do construtor gastou uma tentativa de despacho");
+            }
+
+            context.assertTrue(count(context, setup.builderChest(), Items.WHITE_TERRACOTTA) == 0,
+                    "a terracota apareceu sem quatro despachos do ciclo");
+
+            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+                ConstructionSupplyDispatches.recordCycleDispatch(
+                        setup.project().id(), Items.WHITE_TERRACOTTA, dispatch);
+            }
+
+            context.assertTrue(BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project()),
+                    "quatro despachos distintos não liberaram a contingência terminal");
+            context.assertTrue(count(context, setup.builderChest(), Items.WHITE_TERRACOTTA) == 1,
+                    "a contingência terminal não entrou no baú do construtor");
+        } finally {
+            setup.cleanUp();
+        }
+
+        context.complete();
+    }
+
     private record Setup(Colony colony, UUID builder, UUID carpenter, ColonyPos builderChest,
             ColonyPos carpenterChest, ConstructionProject project, Item piece) {
 
         void cleanUp() {
-            BiomeConstructionSupply.routeDelivered(colony.id(), piece);
+            ConstructionSupplyDispatches.delivered(project.id(), piece);
             SandNearWater.clearAll();
             VillageColonyMod.STORAGES.remove(builder);
             VillageColonyMod.STORAGES.remove(carpenter);
