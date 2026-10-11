@@ -1,12 +1,11 @@
 # STATE — 2026-10-11
 
-> **JAR instalado: `village-colony-0.3.24.jar`** (commit `0af32d84`, 11-10) =
-> `C553E735AC09A7CEDE0FE6547DDD2513EEA56422298DF3D6634EF4FC35A25E8F`, igual em `build/libs`,
-> `downloads/` e `.minecraft/mods` (`release_manifest.py`); a 0.3.23 ficou como `.jar.disabled`.
-> Traz a linha Codex integrada e as correções do roteiro de 10-10. **Ainda não jogada.**
+> **JAR instalado: `village-colony-0.3.24.jar`** = `C553E735AC09A7CEDE0FE6547DDD2513EEA56422298DF3D6634EF4FC35A25E8F`,
+> igual em `build/libs`, `downloads/` e `.minecraft/mods`; o JAR gerado da `main` em `38015460` é
+> idêntico. **Jogado em 11-10 (10:04–11:44, mundo novo).**
 >
-> **Última verificação (`claude/correcoes-fase5-6-higiene`, 11-10):** 1445 unitários; 705/705
-> GameTests em **8 rodadas seguidas** (AUD-21); 112 testes Python. PIT 1820/2112 (86,17%) em `e71607dd`.
+> **Última verificação (`main` em `38015460`, 11-10, depois do merge das PRs #20–#25):** 1446
+> unitários e de propriedade (`--rerun-tasks`, 0 falhas); 705/705 GameTests (1 rodada); 112 testes Python. PIT 1820/2112 (86,17%) em `e71607dd`.
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.** Se passar de 150 linhas, algo
 > está errado: P0 não está fechando. O que já foi resolvido mora em
@@ -16,45 +15,35 @@
 
 ---
 
-## 🔴 P0 — AUD-01: a cadeia de produção para na mina
+## 🔴 P0 — Autossuficiência: a vila fabrica o que ninguém pediu e falta o que a obra pede
 
-A Regra 51 reprovou nas duas sessões de 10-10 (0.3.22: SMELTER 86%, BUILDER 68%, MINER 21%;
-0.3.23: SMELTER 91%, BUILDER 92%, MINER 17%). O fundidor pegou 311 tarefas e soltou 311.
-A raiz é a mina: **zero mineração**. O fundidor e o construtor param por falta de material.
+Playtest 0.3.24 de 11-10 (`time_ledger`, `action_report`, Spark `3Q6g9MrO1o`). A mina voltou:
+**1022 blocos, 11/min**, um nível descido; o fundidor saiu da roda (2 pegas, 0 soltas); TPS 20.
+Mas a Regra 51 reprova em seis ofícios (BUILDER 81%, SHEPHERD 68%, MINER 43%, LUMBERJACK 29%,
+MASON 22%, CARPENTER 16%), e **58 pedregulhos e 16 vidraças surgiram sozinhos** pela regra da
+4ª tentativa.
 
-Diagnóstico de 11-10, a partir de três sessões, do save NBT e das regiões Anvil (roteiro 2.2):
+Raiz principal: a produção antecipada (`AdvanceStock`) não tem teto. No fim havia 318 lajes de
+pedregulho, 282 de pedra lisa e 356 escadas de carvalho, com 15 pedregulhos no baú; a obra deixou
+pedregulho de lado 252 vezes. Areia: nenhuma coletada. Análise, alternativas e a escolha do autor
+(P1–P9): [`docs/research/2026-10-11-autossuficiencia-e-ocio.md`](docs/research/2026-10-11-autossuficiencia-e-ocio.md).
 
-1. O mineiro dono do único ramal ia e voltava numa descida até um patamar de pedra maciça.
-   Na descida, o `MinerSteps` zerava os dois prazos a cada tique, então nenhum guarda
-   disparava. Os outros três mineiros ficavam barrados ("no mine mouth" é a frase do barrado).
-2. O patamar era de pedra porque a rota estava errada, não porque a mina não existisse. Os
-   cinco níveis foram cavados descendo NORTH a partir da boca (−768, 66, −923). O giro da
-   escada (ADR-037 M1) trocou o rumo para EAST, e o `MineEntrance` deduzia todos os níveis
-   de cima pelo rumo de agora: a boca deduzida ficava 50 blocos ao sul.
-
-| Correção | Commit | Prova | Em jogo |
-|---|---|---|---|
-| RC1: a descida tem prazo próprio (60 s sem chegar mais perto nem descer mais fundo) | `08b0c34f` | `MineDescentLeaseGameTest`, `MineLeaseTest`, mutações | ⬜ |
-| RC2: a rota segue a escada cavada; a cadeia de entradas é guardada e sobrevive ao giro | `36d3946b` | `MineEntranceGameTest` (+2, reprovam no código antigo), mutações; regra simulada no save real | ⬜ |
-| 2.3: a regra do ócio cede vaga por ocioso + bloqueado + encalhado (ADR-041 #3) | `da43ef34` | `IdleYieldGameTest` | ⬜ |
-
-**Aceite (roteiro 2.5):** playtest de 60 min com o JAR novo; `time_ledger` com ocioso +
-bloqueado + encalhado ≤ 15% por ofício; fundidor com soltas/pegas < 10% no `action_report`.
-
-## PRs abertas (empilhadas; nenhuma na `main`)
-
-| PR | Branch | Conteúdo |
+| Correção anterior (roteiro 10-10) | Commit | Em jogo (11-10) |
 |---|---|---|
-| #20 | `claude/auditoria-tecnica-2026-10-10` | auditoria D1–D12, `scripts/audit/`, roteiro, ADR-041 |
-| #21 | `claude/integra-fluxo-grafo-waypoints` | AUD-05: linha Codex integrada, 0.3.24 |
-| #22 | `claude/correcoes-fase1-save` | AUD-02/03: o save não perde colônias por entrada ruim |
-| #23 | `claude/correcoes-fase3-testes` | AUD-06/07/11: rede de testes |
-| #24 | `claude/correcoes-fase2-cadeia` | AUD-25, regra do ócio, AUD-19 (`/vc log`), RC1 e RC2 do mineiro |
+| RC1: prazo da descida da mina | `08b0c34f` | ✅ mina produziu; "the way down got no closer" nunca precisou sair |
+| RC2: a rota segue a escada cavada | `36d3946b` | ⬜ mundo novo; o save antigo não foi aberto |
+| 2.3: regra do ócio cede vaga | `da43ef34` | ⬜ não visto (titular único nunca cede) |
 
-A ordem de merge é a da pilha: #20 primeiro. Cada uma aponta para a anterior.
+**Aceite da autossuficiência:** playtest de 60 min com tudo implementado; Regra 51 ≤ 15% por
+ofício; `VC_SUPPLY_ERROR` perto de zero; nenhuma peça antecipada acima do que a próxima obra pede.
 
-**Sessão em curso:** `claude/correcoes-fase5-6-higiene` (sobre a #24): AUD-08, 11 (rede), 12, 13,
-14, 21, 22 e 23 feitos. Restam sem jogo: AUD-15, 20, 10 e 09 (Fase 5).
+## Branches
+
+Pilha #20–#25 **na `main`** desde 11-10 (`38015460`), com merge commit; as branches dela
+continuam no remoto (apagar é decisão do autor, AUD-24).
+
+**Sessão em curso:** `claude/autossuficiencia` (da `main`): P1–P9 e as correções sem escolha, tudo
+antes do playtest (decisão do autor).
 
 ## O que o próximo jogo precisa mostrar
 
