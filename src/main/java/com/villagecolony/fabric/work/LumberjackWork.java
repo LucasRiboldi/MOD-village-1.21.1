@@ -193,6 +193,13 @@ public final class LumberjackWork {
          */
         final WorkStall stall = new WorkStall();
 
+        /** O desvio em curso, e quantos esta árvore já teve — P7b. Ver {@link LumberjackDetours}. */
+        DetourWalker detour;
+
+        int detours;
+
+        BlockPos detourTree;
+
         Job(Task task, BlockPos center) {
             this.task = task;
             this.center = center;
@@ -372,9 +379,17 @@ public final class LumberjackWork {
         // Parado no mesmo bloco há quinze segundos de expediente —
         // 2026-09-03. O guarda de baixo cobra dois minutos para notar o
         // mesmo. Ver WorkStall.
+        if (LumberjackDetours.tick(world, villager, job, storage.get())) {
+            return Outcome.WORKED;
+        }
+
         if (job.stall.stuck(world, villager)) {
-            return TreeChoice.giveUp(world, job, workerId,
-                    TreeChoice.reasonFor(true, job.stall.ticks(), job.stalled));
+            String why = TreeChoice.reasonFor(true, job.stall.ticks(), job.stalled);
+
+            // Um desvio antes de largar a árvore (P7b).
+            return LumberjackDetours.tryDetour(world, villager, job, why)
+                    ? Outcome.WORKED
+                    : TreeChoice.giveUp(world, job, workerId, why);
         }
 
         if (WorkHours.isWorkTime(world, villager) && ++job.stalled > TreeChoice.stallLimit) {
