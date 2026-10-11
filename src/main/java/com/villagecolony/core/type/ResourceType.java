@@ -208,6 +208,25 @@ public enum ResourceType {
     /** O bloco de argila que o fundidor assa em terracota. */
     CLAY(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SURFACE_GATHERED),
 
+    /**
+     * Plantas que as casas da vila pedem (flor, grama, samambaia, bambu, cana): o
+     * fazendeiro as colhe em volta da vila e replanta — regra do autor, 2026-10-11
+     * ({@code PlantPatch}). Antes eram itens "do mundo", sem dono.
+     */
+    POPPY(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SOIL_GATHERED),
+    DANDELION(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SOIL_GATHERED),
+    CORNFLOWER(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SOIL_GATHERED),
+    RED_TULIP(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SOIL_GATHERED),
+    OXEYE_DAISY(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SOIL_GATHERED),
+    SHORT_GRASS(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SOIL_GATHERED),
+    FERN(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SOIL_GATHERED),
+    BAMBOO(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SOIL_GATHERED),
+    SUGAR_CANE(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SOIL_GATHERED),
+
+    /** Gelo e neve: o fundidor os recolhe como a areia — regra do autor, 2026-10-11. */
+    ICE(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SURFACE_GATHERED),
+    SNOWBALL(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SURFACE_GATHERED),
+
     /** Terracota neutra, feita pelo fundidor a partir de bloco de argila. */
     TERRACOTTA(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.SMELTED),
 

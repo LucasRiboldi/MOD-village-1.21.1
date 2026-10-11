@@ -475,6 +475,8 @@ public final class BiomeConstructionSupply {
         return switch (resource) {
             case CACTUS, SAND -> isDesert(biome);
             case GRASS_BLOCK, CLAY_BALL, CLAY -> !isDesert(biome);
+            case ICE, SNOWBALL -> VillageBiomes.paletteFor(biome).map(VillagePalette::style)
+                    .filter("snowy"::equals).isPresent();
             default -> false;
         };
     }
