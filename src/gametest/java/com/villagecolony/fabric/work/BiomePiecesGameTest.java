@@ -39,6 +39,34 @@ public class BiomePiecesGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * O teto do adiantamento é a maior casa do estilo mais o que a obra aberta
+     * ainda pede (P1, 2026-10-11): a próxima casa é sorteada, e a maior cobre
+     * qualquer uma.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_hours", tickLimit = 20)
+    public void theCeilingIsTheLargestHousePlusTheOpenBuild(TestContext context) {
+        List<BlueprintBlock> small = new ArrayList<>();
+        add(small, "oak_stairs", 4);
+        add(small, "cobblestone_slab", 6);
+
+        List<BlueprintBlock> large = new ArrayList<>();
+        add(large, "oak_stairs", 10);
+
+        Map<ResourceType, Integer> largest = BiomePieces.largestUse(List.of(
+                Blueprint.of(ResourceId.vanilla("test_small"), small),
+                Blueprint.of(ResourceId.vanilla("test_large"), large)));
+
+        Map<ResourceType, Integer> ceilings = BiomePieces.ceilings(largest,
+                Map.of(ResourceId.vanilla("oak_stairs"), 3, ResourceId.vanilla("glass_pane"), 2));
+
+        context.assertTrue(Integer.valueOf(13).equals(ceilings.get(ResourceType.OAK_STAIRS)),
+                "escada: a maior casa (10) mais a obra aberta (3), e não a soma das casas: " + ceilings);
+        context.assertTrue(Integer.valueOf(6).equals(ceilings.get(ResourceType.COBBLESTONE_SLAB)),
+                "laje: só a casa que a usa: " + ceilings);
+        context.complete();
+    }
+
     private static void add(List<BlueprintBlock> blocks, String block, int count) {
         for (int i = 0; i < count; i++) {
             blocks.add(new BlueprintBlock(new ColonyPos(blocks.size(), 0, 0), ResourceId.vanilla(block), false, Optional.empty()));
