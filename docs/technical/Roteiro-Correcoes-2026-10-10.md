@@ -123,6 +123,26 @@ mineiro sem boca de mina  →  sem pedra, sem ferro  →  fundidor sem cru  → 
 | Por que antes | sem isto, o playtest de 2.2 repete a investigação por cruzamento de log |
 
 ### 2.2 — O mineiro não acha a boca da mina
+
+> **Diagnóstico de 11-10 (três sessões: 0.3.22 manhã, 0.3.23 noite, 0.3.23 madrugada) — a
+> hipótese abaixo caiu.** "no mine mouth" é a frase da busca de superfície do mineiro
+> **barrado**, não falta de mina. O que acontece:
+> 1. o mineiro `2f3facba` segura o **único ramal repartível** ("the shaft is one branch until
+>    the gallery starts"; save: `villagecolony_memory.dat`, `arms` → ramal 0);
+> 2. o alvo dele é o nível da mina, (−742, 16, −949); a rota passa pela boca lembrada
+>    (−768, 66, −973) e manda ao patamar (−763, 56, −968), que é **pedra maciça** no mundo
+>    salvo (lido do `r.-2.-2.mca`); a mina guardada está 5 níveis abaixo da boca, a marca do
+>    defeito "a mina desce 5 níveis num segundo" (07-10);
+> 3. ele vai e volta entre a boca e o patamar a sessão inteira; enquanto há perna de descida,
+>    `MinerSteps.java:153–161` **zera o prazo de aproximação e o de caminhada a cada tique**, e
+>    o guarda de imobilidade não pega quem anda — **nenhum guarda dispara**, o ramal nunca é solto;
+> 4. os outros três ficam barrados e raspam superfície vazia: **zero mineração**; sem pedra e
+>    ferro, o fundidor e o construtor param.
+>
+> **Correção (RC1):** prazo próprio para a descida, em vez de nenhum — ao estourar, o caminho
+> de desistência que já existe solta a tarefa e o ramal. **Aberto (RC2):** por que os níveis
+> guardados não existem no mundo; a recuperação de mina nova na borda (`MineEdge.relocate`)
+> não roda quando ele para na superfície (`StrandedEscape.isOut`).
 | | |
 |---|---|
 | Problema | a colônia tem `Mine` registrada (`Mine … the surface entrance is remembered at …`), mas o mineiro cai na busca de pedra de superfície (`MineVein.java:184-191`), cuja varredura em anéis esgota o orçamento a cada passagem: `no mine mouth, and no exposed stone … the budget ran out before an answer` |
