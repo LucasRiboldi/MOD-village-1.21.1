@@ -182,7 +182,7 @@ public final class ShepherdWork {
         ShepherdFlock.tend(world, colony);
         ShepherdHerding.plan(world, colony, id -> JOBS.containsKey(id) || BuildHelper.isHelping(id));
 
-        // Sem lã a tosquiar, ele ajuda o construtor (pedido do autor, 2026-10-08).
+        // Quem está sem tarefa (pastor, carpinteiro, pedreiro) ajuda o construtor — BuildHelper.
         BuildHelper.lendAHand(world, colony);
 
         return open;

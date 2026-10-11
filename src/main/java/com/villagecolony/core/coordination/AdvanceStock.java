@@ -77,7 +77,8 @@ public final class AdvanceStock {
     private static ToIntFunction<ResourceType> ceilingOf(UUID colonyId) {
         Map<ResourceType, Integer> known = CEILINGS.get(colonyId);
 
-        return known == null ? type -> Integer.MAX_VALUE : type -> known.getOrDefault(type, 0);
+        // E nunca acima do teto geral (StockCeiling): o adiantamento não é pedido da obra.
+        return known == null ? StockCeiling::base : type -> Math.min(known.getOrDefault(type, 0), StockCeiling.base(type));
     }
 
     /** As peças da vila para esta fila, ou {@code fallback} enquanto as plantas não foram lidas. */

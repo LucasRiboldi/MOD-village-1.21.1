@@ -153,7 +153,9 @@ public final class ColonyCycle {
         Objects.requireNonNull(hasStorage, "hasStorage");
         Objects.requireNonNull(canReserveTask, "canReserveTask");
 
-        Map<ResourceType, Integer> missing = ResourceDemand.deficit(goal, owned);
+        // O teto geral do estoque: 64 fabricados, 256 crus, ou o que a obra pede.
+        Map<ResourceType, Integer> missing =
+                ResourceDemand.deficit(StockCeiling.cap(goal, constructionMaterials), owned);
 
         // Para quem concluir um pedido antes do próximo ciclo — F-2.
         LastShortage.measured(colonyId, missing.keySet());
