@@ -126,14 +126,13 @@ public final class BiomeConstructionSupply {
     public static final int ATTEMPTS_BEFORE_STOCKING = 4;
 
     /**
-     * Ciclos com a rota da obra aberta e sem entrega antes de a peça aparecer —
-     * P9, último recurso (escolha do autor, 2026-10-11). O ciclo só conta quando
-     * a rota tem tarefa aberta (ADR-040 §2), então são 10 ciclos (5 min) de uma
-     * profissão trabalhando sem entregar uma unidade. No playtest de 11-10 a mina
-     * entregava ~13 pedregulhos por minuto: 5 minutos sem nenhum é rota que não
-     * entrega. A busca vazia ({@code LocateFallback}) segue com {@link #ATTEMPTS_BEFORE_STOCKING}.
+     * Ciclos com a rota da obra aberta e sem entrega antes de a peça aparecer no
+     * baú do construtor — regra do autor, 2026-10-11 (depois do playtest da
+     * 0.3.25): se em um minuto nenhuma rota avançou, o bloco surge. São 2 ciclos
+     * de 30 s; o ciclo só conta com tarefa de rota aberta (ADR-040 §2). A busca
+     * vazia ({@code LocateFallback}) segue com {@link #ATTEMPTS_BEFORE_STOCKING}.
      */
-    public static final int DISPATCHES_BEFORE_STOCKING = 10;
+    public static final int DISPATCHES_BEFORE_STOCKING = 2;
 
     /** Esperas da obra antes de pedir ao fazendeiro uma muda específica. */
     private static final int TREE_WAITS_BEFORE_PLANTING = 20;

@@ -92,6 +92,37 @@ public class CrusherGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** A obra parada esperando vidraça, sem areia nos baús, chama o britador (regra do autor, 2026-10-11). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "crusher", tickLimit = 20)
+    public void aBuildWaitingForGlassCallsTheCrusherWhenNoSandIsStored(TestContext context) {
+        UUID worker = UUID.randomUUID();
+        ColonyPos chest = chestWith(context, 4);
+        Colony colony = colonyWith(chest, worker);
+        ConstructionProject project = ConstructionProject.plan(colony.id(),
+                Blueprint.of(ResourceId.vanilla("test_window"),
+                        List.of(new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("glass_pane")))),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(4, 2, 4))));
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        try {
+            VillageColonyMod.CONSTRUCTIONS.register(project);
+
+            context.assertTrue(Crusher.buildWaitsForGlass(context.getWorld(), colony),
+                    "a obra espera vidraça e não há areia: o britador devia ser chamado");
+
+            ChestDepositor.deposit(context.getWorld(), chest, Items.SAND, 1);
+
+            context.assertFalse(Crusher.buildWaitsForGlass(context.getWorld(), colony),
+                    "com areia no baú, o fundidor dá conta sem o britador");
+        } finally {
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
+            forget(colony, worker);
+        }
+
+        context.complete();
+    }
+
     private static ColonyPos chestWith(TestContext context, int cobblestone) {
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));

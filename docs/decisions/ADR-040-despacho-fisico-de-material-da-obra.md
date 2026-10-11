@@ -29,8 +29,8 @@ nunca entrega.
    uma alternativa aceita aparece fisicamente em um bau que atende a obra.
    Esse evento zera a contagem. A aparicao por jogador tambem e entrega fisica,
    mas nao recebe atribuicao de profissao sem evento de deposito comprovado.
-4. Apos quatro tentativas despachadas sem entrega (dez desde a emenda de
-   2026-10-11, abaixo), a peca terminal ou o
+4. Apos quatro tentativas despachadas sem entrega (duas, um minuto, desde a
+   segunda emenda de 2026-10-11, abaixo), a peca terminal ou o
    ingrediente sem rota e depositado pelo caminho ja definido na ADR-036 item
    6, no bau da profissao que a usa; se nao houver oficio produtor, no bau que
    atende o construtor. A linha `VC_SUPPLY_ERROR` permanece obrigatoria.
@@ -67,3 +67,9 @@ passa de quatro para dez ciclos com tarefa de rota aberta e sem entrega
 Medida que o sustenta: no playtest de 11-10 a mina entregava ~13 pedregulhos
 por minuto; 5 minutos sem uma unidade e rota que nao entrega. A busca vazia de
 recurso natural (`LocateFallback`) continua com quatro.
+
+## Segunda emenda de 2026-10-11 (depois do playtest da 0.3.25)
+
+Regra do autor: se em um minuto nenhuma rota avancou em conseguir o bloco, ele
+surge no bau do construtor. O prazo passa a dois ciclos (`DISPATCHES_BEFORE_STOCKING
+= 2`), revertendo os dez da primeira emenda.

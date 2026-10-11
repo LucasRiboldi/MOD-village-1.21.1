@@ -45,8 +45,13 @@ public final class Crusher {
     public static void askTheMason(ServerWorld world, Colony colony) {
         UUID colonyId = colony.id();
 
+        // A busca vazia, ou a obra parada esperando vidro sem areia nos baús —
+        // regra do autor de 2026-10-11: o britador não espera a busca terminar.
+        boolean noSandInReach = EmptySweeps.sweptEmpty(colonyId, ResourceType.SAND)
+                || buildWaitsForGlass(world, colony);
+
         if (!LastShortage.stillMissing(colonyId, ResourceType.SAND)
-                || !EmptySweeps.sweptEmpty(colonyId, ResourceType.SAND)
+                || !noSandInReach
                 || WorkAssignment.countCapableOf(
                         colonyId, TaskType.CRAFT_STONE_MATERIAL.required(), VillageColonyMod.WORKERS) == 0
                 || !canCrush(world, colony)) {
@@ -66,6 +71,17 @@ public final class Crusher {
         VillageColonyMod.LOGGER.info(
                 "Colony {} has no sand in reach — the mason crushes {} out of stone, {} to 1 a step",
                 colonyId, ORDER, RATIO);
+    }
+
+    /** A obra aberta espera vidro (bloco ou vidraça) e não há areia em baú nenhum da colônia. */
+    static boolean buildWaitsForGlass(ServerWorld world, Colony colony) {
+        boolean wantsGlass = VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
+                .map(project -> project.remainingMaterials().keySet().stream()
+                        .anyMatch(id -> id.path().contains("glass")))
+                .orElse(false);
+
+        return wantsGlass && ColonyChests.countIn(world,
+                ColonyChests.nearestFirst(world, colony.id(), colony.center()), Items.SAND) == 0;
     }
 
     /** Se a colônia tem cascalho ou pedregulho acima da reserva da obra para moer. */

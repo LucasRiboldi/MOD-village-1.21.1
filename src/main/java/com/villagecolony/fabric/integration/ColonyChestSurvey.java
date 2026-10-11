@@ -21,9 +21,8 @@ import java.util.UUID;
  *
  * <p>O estado é somente o cursor de leitura e os resultados já lidos da
  * rodada atual; ele não é estoque virtual e nunca vai ao disco. Enquanto
- * a rodada não fecha, o chamador recebe uma {@code ChestSurvey} parcial
- * formada somente pelos baús já observados; a integração pode usá-la sem
- * inferir conteúdo dos baús ainda pendentes.
+ * a rodada não fecha, o chamador recebe a última fotografia completa; só na
+ * primeira rodada, sem nenhuma completa ainda, recebe a parcial.
  */
 public final class ColonyChestSurvey {
 
@@ -109,9 +108,15 @@ public final class ColonyChestSurvey {
         if (pending == 0) {
             ROUNDS.remove(colonyId);
             COMPLETED.put(colonyId, new Completed(knownChests, groups, result, world.getTime()));
+
+            return result;
         }
 
-        return result;
+        // Rodada aberta: a decisão usa a última fotografia completa (escolha do
+        // autor, 2026-10-11). A parcial fazia a meta ver falta onde só havia baú
+        // ainda não relido: no playtest da 0.3.25 o pedreiro fez laje lisa com
+        // 330 no baú. Sem fotografia completa ainda (a primeira rodada), vale a parcial.
+        return done != null ? done.survey() : result;
     }
 
     /** Esquece uma rodada interrompida pela remoção ou troca de estado da colônia. */

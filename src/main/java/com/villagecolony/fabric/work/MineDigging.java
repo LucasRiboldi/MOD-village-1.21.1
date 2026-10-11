@@ -415,9 +415,8 @@ public final class MineDigging {
 
         Side descent = MineCuts.sideOf(colonyId);
 
-        // A descida da mina anterior travou: a nova nasce na borda, longe da água (A-4).
-        Optional<MineEdge.Choice> edge = MineEdge.relocation(world, colonyId, center)
-                .or(() -> MineEdge.inside(world, colonyId, center, null));
+        // A boca nasce dentro da caixa, longe da água (ADR-038 P3b).
+        Optional<MineEdge.Choice> edge = MineEdge.inside(world, colonyId, center, null);
 
         if (edge.isPresent()) {
             descent = edge.get().side();

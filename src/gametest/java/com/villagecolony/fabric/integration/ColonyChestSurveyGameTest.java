@@ -53,4 +53,45 @@ public final class ColonyChestSurveyGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * Rodada aberta decide com a última fotografia completa — escolha do autor,
+     * 2026-10-11. Nove baús com uma tábua cada; um décimo baú entra e abre uma
+     * rodada nova. A parcial dela via 8 tábuas (8 baús relidos) e a meta enxergava
+     * falta; a decisão tem de ver as 9 da última leitura completa.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "chest_survey")
+    public void anOpenRoundDecidesWithTheLastCompleteSurvey(TestContext context) {
+        UUID colony = UUID.randomUUID();
+        java.util.List<ColonyPos> chests = new java.util.ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+            BlockPos at = new BlockPos(i % 5, 2, i / 5 * 2);
+            context.setBlockState(at, Blocks.CHEST.getDefaultState());
+            ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(at));
+            ChestDepositor.deposit(context.getWorld(), chest, Items.OAK_PLANKS, 1);
+            chests.add(chest);
+        }
+
+        try {
+            List<ColonyPos> nine = List.copyOf(chests.subList(0, 9));
+
+            ColonyChestSurvey.advance(context.getWorld(), colony, nine, ResourceGroup.PLANKS);
+            ChestInventoryReader.ChestSurvey complete =
+                    ColonyChestSurvey.advance(context.getWorld(), colony, nine, ResourceGroup.PLANKS);
+
+            ChestInventoryReader.ChestSurvey whileOpen =
+                    ColonyChestSurvey.advance(context.getWorld(), colony, List.copyOf(chests), ResourceGroup.PLANKS);
+
+            context.assertTrue(complete.resources().amountOf(ResourceType.OAK_PLANKS) == 9,
+                    "a primeira rodada não fechou com as nove tábuas");
+            context.assertTrue(whileOpen.resources().amountOf(ResourceType.OAK_PLANKS) == 9,
+                    "a rodada aberta decidiu com a parcial: "
+                            + whileOpen.resources().amountOf(ResourceType.OAK_PLANKS) + " tábuas");
+        } finally {
+            ColonyChestSurvey.forget(colony);
+        }
+
+        context.complete();
+    }
 }

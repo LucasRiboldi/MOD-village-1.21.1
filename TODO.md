@@ -68,7 +68,7 @@ Scripts: `scripts/audit/check-*.sh`.
       e 690/690 no CI de `b290ed10`.
 - [ ] Obra em `WAITING_RESOURCES` não libera o lote antes de retentar blocos correspondentes,
       rotas de profissão e baú próximo do construtor.
-- [ ] Depois de dez ciclos sem entrega real (P9, eram quatro), o bloco faltante aparece em baú livre perto da obra
+- [ ] Depois de um minuto (2 ciclos) sem entrega real (regra de 11-10), o bloco faltante aparece em baú livre perto da obra
       e o construtor retoma com esse item.
 - [ ] Mineiro em mina aberta usa a boca/galeria mais próxima sem roubar a busca do dono do ramal.
 - [ ] Recurso novo não recolhido antes entra na rota de busca quando aparece como peça adiada da obra.

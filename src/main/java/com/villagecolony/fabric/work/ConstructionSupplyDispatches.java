@@ -48,7 +48,7 @@ public final class ConstructionSupplyDispatches {
     private ConstructionSupplyDispatches() {
     }
 
-    /** A décima renovação sem entrega permite o suprimento terminal (P9, último recurso). */
+    /** Um minuto de renovações sem entrega permite o suprimento terminal (regra do autor, 2026-10-11). */
     public static boolean fallbackDue(UUID projectId, Item item) {
         Dispatch dispatch = BY_PROJECT.get(projectId);
         return dispatch != null

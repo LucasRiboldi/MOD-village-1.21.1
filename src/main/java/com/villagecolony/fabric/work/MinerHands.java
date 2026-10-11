@@ -323,12 +323,13 @@ public final class MinerHands {
         MineMarks.refuse(world, job.target);
 
         // E o ponto onde ele parou, se é uma descida — F-1, 2026-10-02. Ver
-        // MineDescent: a pedra muda, o ponto onde a descida trava não.
+        // MineDescent: a pedra muda, o ponto onde a descida trava não. A mina não
+        // fecha por isso (regra do autor, 2026-10-11): o ponto fica de castigo e o
+        // mineiro cava outro caminho. Fechar a mina por uma descida travada fechou,
+        // no playtest da 0.3.25, a mina boa por um buraco a 90 blocos dela.
         if (world.getEntity(workerId) instanceof VillagerEntity stuck
                 && !StrandedEscape.isOut(world, stuck.getBlockPos())) {
-            if (MineDescent.stoppedAt(world.getTime(), stuck.getBlockPos(), job.target)) {
-                MineEdge.relocate(job.task.colonyId(), stuck.getBlockPos()); // A-4: mina nova na borda
-            }
+            MineDescent.stoppedAt(world.getTime(), stuck.getBlockPos(), job.target);
         }
 
         // A posição volta para o cursor da galeria — 2026-08-27. Sem
