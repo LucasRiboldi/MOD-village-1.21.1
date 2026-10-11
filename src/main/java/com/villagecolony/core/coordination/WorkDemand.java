@@ -42,6 +42,7 @@ public record WorkDemand(
         int iron,
         Map<ResourceType, Integer> smelted,
         Map<ResourceType, Integer> surfaceGathered,
+        Map<ResourceType, Integer> mined,
         int rawLogs) {
 
     /** O mesmo, sem tora bruta pedida pela obra. */
@@ -54,8 +55,23 @@ public record WorkDemand(
             int coal,
             int iron,
             Map<ResourceType, Integer> smelted,
+            Map<ResourceType, Integer> surfaceGathered,
+            Map<ResourceType, Integer> mined) {
+        this(planks, stone, stoneAmount, wool, glass, coal, iron, smelted, surfaceGathered, mined, 0);
+    }
+
+    /** O mesmo, sem minerais específicos pedidos diretamente pela obra. */
+    public WorkDemand(
+            int planks,
+            ResourceType stone,
+            int stoneAmount,
+            int wool,
+            int glass,
+            int coal,
+            int iron,
+            Map<ResourceType, Integer> smelted,
             Map<ResourceType, Integer> surfaceGathered) {
-        this(planks, stone, stoneAmount, wool, glass, coal, iron, smelted, surfaceGathered, 0);
+        this(planks, stone, stoneAmount, wool, glass, coal, iron, smelted, surfaceGathered, Map.of(), 0);
     }
 
     public WorkDemand {
@@ -65,6 +81,8 @@ public record WorkDemand(
         smelted = Map.copyOf(smelted);
         Objects.requireNonNull(surfaceGathered, "surfaceGathered");
         surfaceGathered = Map.copyOf(surfaceGathered);
+        Objects.requireNonNull(mined, "mined");
+        mined = Map.copyOf(mined);
 
         refuseNegative(planks, "plank");
         refuseNegative(stoneAmount, "stone");
@@ -84,12 +102,27 @@ public record WorkDemand(
             int coal,
             int iron,
             Map<ResourceType, Integer> smelted) {
-        this(planks, stone, stoneAmount, wool, glass, coal, iron, smelted, Map.of(), 0);
+        this(planks, stone, stoneAmount, wool, glass, coal, iron, smelted, Map.of(), Map.of(), 0);
+    }
+
+    /** O mesmo, sem minerais específicos pedidos diretamente pela obra. */
+    public WorkDemand(
+            int planks,
+            ResourceType stone,
+            int stoneAmount,
+            int wool,
+            int glass,
+            int coal,
+            int iron,
+            Map<ResourceType, Integer> smelted,
+            Map<ResourceType, Integer> surfaceGathered,
+            int rawLogs) {
+        this(planks, stone, stoneAmount, wool, glass, coal, iron, smelted, surfaceGathered, Map.of(), rawLogs);
     }
 
     /** Nenhuma obra aberta: a colônia decide pela Regra 1 e nada mais. */
     public static WorkDemand none() {
-        return new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 0, Map.of(), Map.of(), 0);
+        return new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 0, Map.of(), Map.of(), Map.of(), 0);
     }
 
     /** Materiais que destravam a obra e devem preceder produção de reserva. */
@@ -110,6 +143,7 @@ public record WorkDemand(
             add(materials, ResourceType.RAW_IRON, iron);
         }
         surfaceGathered.forEach((type, amount) -> add(materials, type, amount));
+        mined.forEach((type, amount) -> add(materials, type, amount));
         return Map.copyOf(materials);
     }
 

@@ -10,11 +10,10 @@ import java.util.UUID;
 /**
  * A linha de parada, sem repetir a mesma frase a cada segundo — 2026-10-03.
  *
- * <p>Desde 30-09 o fundidor escreveu {@code stopped — none of 12 colony chests
- * had minecraft:sand} 6.391 vezes: ele reserva, não acha o cru, solta, e o
- * ciclo seguinte repete. A frase só diz algo novo quando o motivo muda, e é
- * então que ela sai — junto com quantas vezes a anterior se repetiu. A cada
- * cem repetições ela sai de novo, para a parada longa continuar visível.
+ * <p>Faltas transitórias podem reaparecer a cada verificação de trabalho. A
+ * frase só diz algo novo quando o motivo muda e, nesse caso, também informa
+ * quantas vezes a anterior se repetiu. A cada cem repetições ela sai de novo,
+ * para a parada longa continuar visível.
  */
 final class StopLog {
 

@@ -341,7 +341,7 @@ public class WorkMaterialsGameTest implements FabricGameTest {
      * para {@code white_bed}, e uma delas é tingir uma cama preta: o
      * livro devolveu essa, e a conta de lã deu zero. Zero aqui é o
      * pastor sem tarefa e a casa sem cama, em silêncio. Ver
-     * {@code WorkMaterials.sameFamily}.
+     * {@code ItemFamily.same}.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
             tickLimit = 20)

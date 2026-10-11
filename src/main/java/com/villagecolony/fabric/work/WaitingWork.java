@@ -357,16 +357,7 @@ public final class WaitingWork {
 
         VillageColonyMod.CONSTRUCTIONS.forget(project.id(), RemovalAudit.patienceAbandonment());
 
-        // A vaga de obra é única; suas tarefas não podem sobreviver ao projeto.
-        for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
-            if (task.type() == TaskType.BUILD && task.isOpen()) {
-                task.executor().ifPresent(worker -> {
-                    BuilderWork.forget(worker);
-                    WorkTargets.clear(worker);
-                });
-                task.cancel();
-            }
-        }
+        cancelBuildTasks(colony);
 
         VillageColonyMod.LOGGER.info(
                 "Colony {} gives up on {} at {} — {} blocks remain."
@@ -377,5 +368,17 @@ public final class WaitingWork {
                 project.remainingCount());
 
         IdleLog.clear(colony.id(), SUBJECT);
+    }
+    /** A vaga de obra é única; suas tarefas não podem sobreviver ao projeto. */
+    private static void cancelBuildTasks(Colony colony) {
+        for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
+            if (task.type() == TaskType.BUILD && task.isOpen()) {
+                task.executor().ifPresent(worker -> {
+                    BuilderWork.forget(worker);
+                    WorkTargets.clear(worker);
+                });
+                task.cancel();
+            }
+        }
     }
 }

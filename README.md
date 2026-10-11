@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.23%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.24%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -37,8 +37,9 @@ SHA-256 do JAR na descrição.
   (opcional): ativar ou desativar a profissão, limite de trabalhadores, raio de
   busca do lenhador, fazendeiro e pastor, e ordem de contratação (ADR-030).
 - Com o mod no cliente, mostra a profissão sobre o aldeão e o progresso da
-  obra, com o primeiro material que falta; o cliente Vanilla continua vendo as
-  placas.
+  obra, com o primeiro material que falta. Sem o mod no cliente, a profissão
+  não aparece: desde 2026-10-10 (P0.8) o servidor não escreve mais o nome da
+  profissão no aldeão.
 
 O mod é alpha. A 0.3.23 passou na bateria automática completa (auditoria de
 2026-10-10), mas o último playtest, ainda com a 0.3.22, reprovou a Regra 51
@@ -205,15 +206,18 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 `runGametest` gera `build/reports/jacoco/gametest/html` (bateria de jogo, que
 é quem exercita a camada `fabric`).
 
-Verificação de 2026-10-10 (auditoria técnica, commit `b290ed10`), rodada e
+Verificação de 2026-10-10 (0.3.24, linha Codex integrada à `main`), rodada e
 não copiada:
 
-- 1398 testes unitários: aprovados (`test --rerun-tasks`).
-- 104 testes Python: aprovados.
-- 690 GameTests: todos aprovados em três rodadas seguidas com `--rerun-tasks`,
-  mais uma com Fabric API 0.116.17 e Loader 0.19.5, e no CI.
-- Mutação (PIT, pacote `core`): 1804 de 2106 mutações mortas (85,66%, limiar
-  85%), força de teste 91,5%.
+- 1402 testes unitários: aprovados (`build --rerun-tasks`, com propriedades,
+  ArchUnit, Error Prone e PMD).
+- 105 testes Python: aprovados.
+- 696 GameTests: todos aprovados em três rodadas seguidas com `--rerun-tasks`.
+- Mutação (PIT, pacote `core`): 1807 de 2112 mutações mortas (85,56%, limiar
+  85%), força de teste 91%.
+
+A 0.3.23 (auditoria, `b290ed10`) também passou com 690/690 com Fabric API
+0.116.17 e Loader 0.19.5.
 
 Para refazer: `scripts/audit/check-tests-green.sh --runs 3` e
 `scripts/audit/check-mutation-threshold.sh --run` (ver

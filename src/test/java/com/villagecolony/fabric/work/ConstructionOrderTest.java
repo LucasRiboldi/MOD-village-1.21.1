@@ -5,6 +5,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.integration.ColonyModels;
+import com.villagecolony.fabric.integration.VillageStructures;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -91,6 +92,8 @@ class ConstructionOrderTest {
         assertEquals(Optional.of(ProfessionType.BUILDER), ConstructionOrder.professionOf(storage));
         assertFalse(HousePlans.isHouse(barn));
         assertFalse(HousePlans.isHouse(storage));
+        assertFalse(VillageStructures.buildableFor("plains").contains(barn));
+        assertTrue(VillageStructures.buildableFor("plains").contains(storage));
     }
 
     @Test
