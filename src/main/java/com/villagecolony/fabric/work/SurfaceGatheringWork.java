@@ -289,7 +289,7 @@ public final class SurfaceGatheringWork {
 
         // Primeiro onde já se achou — ADR-038 P7; depois a varredura.
         Optional<BlockPos> found = SurfaceHits.near(
-                job.task.colonyId(), job.task.targetResource(), worthLooking, probe)
+                job.task.colonyId(), job.task.targetResource(), job.center, worthLooking, probe)
                 .or(() -> VillageSpiralSweep.next(
                         workerId, bounds, job.center.getY(),
                         outerReach(job, bounds, outsideVillage, protectedRadius), worthLooking, probe));

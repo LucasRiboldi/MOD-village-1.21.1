@@ -6,9 +6,12 @@ import com.villagecolony.fabric.integration.WorkMemoryKeys;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -18,9 +21,10 @@ import java.util.function.Predicate;
 
 /**
  * Onde a coleta de superfície já achou o recurso — ADR-038 P7: a busca
- * seguinte começa por essas colunas e pelas oito em volta de cada uma, antes
- * da varredura. Coluna que não dá mais nada sai da memória. Até
- * {@link #MAX_COLUMNS} colunas por colônia e recurso, em memória.
+ * seguinte começa por essas colunas, da mais perto da vila para a mais longe, e
+ * pela mancha em volta de cada uma ({@link #PATCH_RADIUS}), antes da varredura —
+ * "lembrar a mancha de areia", regra do autor de 2026-10-11. Coluna sem nada em
+ * volta sai da memória. Até {@link #MAX_COLUMNS} colunas por colônia e recurso.
  */
 final class SurfaceHits {
 
@@ -29,6 +33,9 @@ final class SurfaceHits {
     }
 
     static final int MAX_COLUMNS = 32;
+
+    /** Até quantos blocos em volta de uma coluna lembrada a mancha é procurada. */
+    static final int PATCH_RADIUS = 3;
 
     private record Key(UUID colonyId, ResourceType resource) {
     }
@@ -89,10 +96,11 @@ final class SurfaceHits {
     }
 
     /**
-     * O recurso numa coluna lembrada ou vizinha dela, perguntando a {@code probe}
-     * (a mesma pergunta da varredura); a coluna lembrada que não dá nada é esquecida.
+     * O recurso numa coluna lembrada ou na mancha em volta dela, perguntando a
+     * {@code probe} (a mesma pergunta da varredura), a partir da coluna mais
+     * perto de {@code from}; a coluna sem nada em volta é esquecida.
      */
-    static Optional<BlockPos> near(UUID colonyId, ResourceType resource,
+    static Optional<BlockPos> near(UUID colonyId, ResourceType resource, BlockPos from,
             Predicate<BlockPos> worth, Function<BlockPos, Optional<BlockPos>> probe) {
         Set<BlockPos> columns = HITS.get(new Key(colonyId, resource));
 
@@ -100,29 +108,41 @@ final class SurfaceHits {
             return Optional.empty();
         }
 
-        for (Iterator<BlockPos> it = columns.iterator(); it.hasNext(); ) {
-            BlockPos column = it.next();
+        List<BlockPos> nearestFirst = columns.stream()
+                .sorted(Comparator.comparingLong(column -> flatDistance(column, from)))
+                .toList();
+        Set<BlockPos> asked = new HashSet<>();
 
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dz = -1; dz <= 1; dz++) {
-                    BlockPos at = column.add(dx, 0, dz);
+        for (BlockPos column : nearestFirst) {
+            for (int ring = 0; ring <= PATCH_RADIUS; ring++) {
+                for (int dx = -ring; dx <= ring; dx++) {
+                    for (int dz = -ring; dz <= ring; dz++) {
+                        BlockPos at = column.add(dx, 0, dz);
 
-                    if (!worth.test(at)) {
-                        continue;
-                    }
+                        if (Math.max(Math.abs(dx), Math.abs(dz)) != ring || !asked.add(at) || !worth.test(at)) {
+                            continue;
+                        }
 
-                    Optional<BlockPos> found = probe.apply(at);
+                        Optional<BlockPos> found = probe.apply(at);
 
-                    if (found.isPresent()) {
-                        return found;
+                        if (found.isPresent()) {
+                            return found;
+                        }
                     }
                 }
             }
 
             // Nada nela nem em volta: a coluna sai da memória.
-            it.remove();
+            columns.remove(column);
         }
 
         return Optional.empty();
+    }
+
+    private static long flatDistance(BlockPos column, BlockPos from) {
+        long dx = (long) column.getX() - from.getX();
+        long dz = (long) column.getZ() - from.getZ();
+
+        return dx * dx + dz * dz;
     }
 }

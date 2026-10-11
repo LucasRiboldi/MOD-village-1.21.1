@@ -7,8 +7,14 @@ import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.storage.model.WorkerStorage;
+import com.villagecolony.core.task.model.Task;
+import com.villagecolony.core.task.model.TaskPriority;
+import com.villagecolony.core.task.model.TaskState;
+import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ColonyChests;
@@ -118,6 +124,39 @@ public class CrusherGameTest implements FabricGameTest {
         } finally {
             VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
             forget(colony, worker);
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Com o britador dando conta, o fundidor sem areia solta a fornalha e não sai
+     * atrás de areia na natureza — regra do autor, 2026-10-11.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "crusher", tickLimit = 20)
+    public void withTheCrusherCoveringTheSmelterHelpsElsewhere(TestContext context) {
+        UUID mason = UUID.randomUUID();
+        UUID smelter = UUID.randomUUID();
+        ColonyPos chest = chestWith(context, 8);
+        Colony colony = colonyWith(chest, mason);
+        Task glass = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.SMELT_MATERIAL, TaskPriority.CONSTRUCTION_MATERIAL, ResourceType.GLASS, 6);
+
+        try {
+            context.assertFalse(Crusher.covers(context.getWorld(), colony), "sem pedreiro o britador não dá conta");
+
+            VillageColonyMod.WORKERS.find(mason).orElseThrow().assign(ProfessionType.MASON);
+            context.assertTrue(Crusher.covers(context.getWorld(), colony), "com pedreiro e pedra, o britador dá conta");
+
+            glass.reserveFor(smelter);
+            context.assertTrue(SmelterGathers.handOff(context.getWorld(), smelter, glass, List.of(Items.SAND)),
+                    "o fundidor devia soltar a fornalha parada");
+            context.assertTrue(glass.state() == TaskState.AVAILABLE, "o vidro não voltou à fila: " + glass.state());
+            context.assertTrue(VillageColonyMod.TASKS.assignedTo(smelter).isEmpty(),
+                    "com o britador dando conta, o fundidor não devia ir buscar areia");
+        } finally {
+            VillageColonyMod.TASKS.ofColony(colony.id()).forEach(task -> VillageColonyMod.TASKS.remove(task.id()));
+            forget(colony, mason);
         }
 
         context.complete();

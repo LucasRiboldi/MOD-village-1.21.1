@@ -468,7 +468,8 @@ final class ColonyCycleRunner {
     static boolean canReserveTask(ServerWorld world, UUID colonyId, @Nullable Worker worker, Task task) {
         return switch (ReservationGate.of(task.type())) {
             case NONE -> true;
-            case EMPTY_SWEEP -> !EmptySweeps.isWaiting(colonyId, task.targetResource(), world.getTime());
+            case EMPTY_SWEEP -> !EmptySweeps.isWaiting(colonyId, task.targetResource(), world.getTime())
+                    && !crusherCovers(world, colonyId, task);
             case BUILD_SITE -> VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
                     .map(project -> (worker == null
                             || com.villagecolony.fabric.work.HelperReach.mayTake(world, worker, project))
@@ -477,5 +478,13 @@ final class ColonyCycleRunner {
             case SMELT_INPUT -> com.villagecolony.fabric.work.SmeltInput.inChests(
                     world, colonyId, task.targetResource());
         };
+    }
+
+    /** Areia da natureza fica parada enquanto o britador dá conta — regra do autor, 2026-10-11. */
+    private static boolean crusherCovers(ServerWorld world, UUID colonyId, Task task) {
+        return task.type() == TaskType.COLLECT_SURFACE_RESOURCE && task.targetResource() == ResourceType.SAND
+                && VillageColonyMod.COLONIES.find(colonyId)
+                        .map(colony -> com.villagecolony.fabric.work.Crusher.covers(world, colony))
+                        .orElse(false);
     }
 }

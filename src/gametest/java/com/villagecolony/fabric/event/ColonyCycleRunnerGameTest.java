@@ -7,15 +7,19 @@ import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.service.RemovalAudit;
+import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.ChestDepositor;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
+import net.minecraft.item.Items;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
@@ -64,6 +68,39 @@ public class ColonyCycleRunnerGameTest implements FabricGameTest {
         VillageColonyMod.CONSTRUCTIONS.forget(project.id(), RemovalAudit.playerCancellation());
         VillageColonyMod.TASKS.remove(task.id());
         VillageColonyMod.COLONIES.remove(colony.id());
+        context.complete();
+    }
+
+    /** Areia da natureza fica parada enquanto o britador dá conta — regra do autor, 2026-10-11. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "crusher", tickLimit = 20)
+    public void naturalSandWaitsWhileTheCrusherCovers(TestContext context) {
+        BlockPos chestAt = new BlockPos(1, 2, 1);
+        context.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chestAt));
+        ChestDepositor.deposit(context.getWorld(), chest, Items.COBBLESTONE, 8);
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+        UUID mason = UUID.randomUUID();
+        VillageColonyMod.COLONIES.register(colony);
+        VillageColonyMod.WORKERS.register(mason, colony.id()).assign(ProfessionType.MASON);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(mason, chest));
+        Task sand = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.COLLECT_SURFACE_RESOURCE, TaskPriority.CONSTRUCTION_MATERIAL, ResourceType.SAND, 8);
+        Task dirt = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.COLLECT_SURFACE_RESOURCE, TaskPriority.CONSTRUCTION_MATERIAL, ResourceType.DIRT, 8);
+
+        try {
+            context.assertFalse(ColonyCycleRunner.canReserveTask(context.getWorld(), colony.id(), sand),
+                    "com pedreiro e pedra, ninguém devia sair atrás de areia");
+            context.assertTrue(ColonyCycleRunner.canReserveTask(context.getWorld(), colony.id(), dirt),
+                    "a terra não tem britador: a coleta segue");
+        } finally {
+            VillageColonyMod.TASKS.remove(sand.id());
+            VillageColonyMod.TASKS.remove(dirt.id());
+            VillageColonyMod.STORAGES.remove(mason);
+            VillageColonyMod.WORKERS.remove(mason);
+            VillageColonyMod.COLONIES.remove(colony.id());
+        }
+
         context.complete();
     }
 

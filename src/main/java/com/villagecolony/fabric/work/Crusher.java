@@ -21,7 +21,7 @@ import java.util.UUID;
 /**
  * O britador do pedreiro — P2c, autossuficiência, 2026-10-11 (escolha do autor).
  *
- * <p>Quando a areia falta e a busca na natureza voltou vazia, o pedreiro mói
+ * <p>Quando a areia falta, o pedreiro mói
  * pedregulho em cascalho e cascalho em areia, dois para um em cada passo (a
  * proporção do britador do MineColonies). É uma rota de produção que a vila
  * sustenta em qualquer bioma: a mina traz o pedregulho. Ele não mói o
@@ -39,22 +39,19 @@ public final class Crusher {
     }
 
     /**
-     * Abre o pedido de areia ao pedreiro: a falta foi medida, a varredura da
-     * natureza voltou vazia, há pedreiro e há pedra para moer.
+     * Abre o pedido de areia ao pedreiro: falta areia (medida, ou a obra parada
+     * esperando vidro), há pedreiro e há pedra para moer.
+     *
+     * <p><b>O britador vem primeiro</b> — regra do autor, 2026-10-11: no
+     * playtest da 0.3.26 o fundidor andava cem blocos por seis areias enquanto o
+     * pedreiro moía oito sem sair do lugar. A coleta de areia na natureza só
+     * fica para quando não há pedra a moer ({@link #covers}).
      */
     public static void askTheMason(ServerWorld world, Colony colony) {
         UUID colonyId = colony.id();
 
-        // A busca vazia, ou a obra parada esperando vidro sem areia nos baús —
-        // regra do autor de 2026-10-11: o britador não espera a busca terminar.
-        boolean noSandInReach = EmptySweeps.sweptEmpty(colonyId, ResourceType.SAND)
-                || buildWaitsForGlass(world, colony);
-
-        if (!LastShortage.stillMissing(colonyId, ResourceType.SAND)
-                || !noSandInReach
-                || WorkAssignment.countCapableOf(
-                        colonyId, TaskType.CRAFT_STONE_MATERIAL.required(), VillageColonyMod.WORKERS) == 0
-                || !canCrush(world, colony)) {
+        if (!(LastShortage.stillMissing(colonyId, ResourceType.SAND) || buildWaitsForGlass(world, colony))
+                || !covers(world, colony)) {
             return;
         }
 
@@ -82,6 +79,18 @@ public final class Crusher {
 
         return wantsGlass && ColonyChests.countIn(world,
                 ColonyChests.nearestFirst(world, colony.id(), colony.center()), Items.SAND) == 0;
+    }
+
+    /**
+     * Se o britador dá conta da areia: há pedreiro na colônia e pedra acima da
+     * reserva da obra para moer. Enquanto der, ninguém sai atrás de areia na
+     * natureza (trava EMPTY_SWEEP do ciclo) e o fundidor sem areia vai ajudar
+     * outro ofício ({@link SmelterGathers}).
+     */
+    public static boolean covers(ServerWorld world, Colony colony) {
+        return WorkAssignment.countCapableOf(
+                        colony.id(), TaskType.CRAFT_STONE_MATERIAL.required(), VillageColonyMod.WORKERS) > 0
+                && canCrush(world, colony);
     }
 
     /** Se a colônia tem cascalho ou pedregulho acima da reserva da obra para moer. */

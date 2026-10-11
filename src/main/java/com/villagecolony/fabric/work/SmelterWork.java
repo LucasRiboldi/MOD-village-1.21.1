@@ -264,9 +264,8 @@ public final class SmelterWork {
             }
         }
 
-        // Nada para a obra também, e o cru é de superfície (areia): ele mesmo
-        // vai buscá-lo, em vez de segurar a fornalha parada (SmelterGathers).
-        if (SmelterFallback.isDue(job.task.id()) && SmelterGathers.handOff(workerId, job.task, raws)) {
+        // Nada para a obra também: solta a fornalha parada (SmelterGathers).
+        if (SmelterFallback.isDue(job.task.id()) && SmelterGathers.handOff(world, workerId, job.task, raws)) {
             return false;
         }
 

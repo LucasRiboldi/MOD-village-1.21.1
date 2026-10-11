@@ -28,12 +28,12 @@ public class SmelterGathersGameTest implements FabricGameTest {
 
         try {
             stone.reserveFor(smelter);
-            context.assertFalse(SmelterGathers.handOff(smelter, stone, List.of(Items.COBBLESTONE)),
+            context.assertFalse(SmelterGathers.handOff(context.getWorld(), smelter, stone, List.of(Items.COBBLESTONE)),
                     "pedregulho não se recolhe na superfície: a fundição de pedra devia seguir com ele");
             stone.release("teste");
 
             glass.reserveFor(smelter);
-            context.assertTrue(SmelterGathers.handOff(smelter, glass, List.of(Items.SAND, Items.RED_SAND)),
+            context.assertTrue(SmelterGathers.handOff(context.getWorld(), smelter, glass, List.of(Items.SAND, Items.RED_SAND)),
                     "sem areia, o fundidor devia soltar o vidro e ir buscá-la");
             context.assertTrue(glass.state() == TaskState.AVAILABLE, "o vidro não voltou à fila: " + glass.state());
             context.assertTrue(VillageColonyMod.TASKS.assignedTo(smelter).stream().anyMatch(task ->
