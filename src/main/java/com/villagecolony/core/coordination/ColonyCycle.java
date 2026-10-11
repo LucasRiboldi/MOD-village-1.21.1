@@ -205,7 +205,7 @@ public final class ColonyCycle {
      * nominal de peça de obra ({@code CraftsmanRequest}): quem acha a peça é
      * o artesão lendo a própria obra.
      */
-    static boolean isWorkPieceRequest(Task task) {
+    public static boolean isWorkPieceRequest(Task task) {
         boolean crafting = CraftFamily.isCrafting(task.type());
 
         return crafting && typeFor(task.targetResource()) != task.type();

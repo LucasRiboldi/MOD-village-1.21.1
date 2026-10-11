@@ -421,6 +421,7 @@ final class ColonyCycleRunner {
         // CraftsmanRequest.askTheCraftsmanFor.
         CraftsmanRequest.askForWhatTheWorkIsWaitingOn(overworld, colony);
 
+        com.villagecolony.fabric.work.ItemStock.openOrders(overworld, colony); // um pouco de tudo (11-10)
         CraftingWork.run(overworld, colony);
 
         CycleCost.since(CycleCost.Phase.WORKERS, mark);

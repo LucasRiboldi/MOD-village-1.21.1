@@ -39,7 +39,10 @@ final class TaskChain {
 
     /** O pedido {@code done} acabou de ser concluído. */
     static void next(Task done) {
+        // O pedido nominal (peça de obra, ordem de estoque) não se encadeia: o alvo
+        // dele não é o que falta, e encadear punha o carpinteiro a converter tábua.
         if (!done.type().isResourceRequest()
+                || com.villagecolony.core.coordination.ColonyCycle.isWorkPieceRequest(done)
                 || !LastShortage.stillMissing(done.colonyId(), done.targetResource())) {
             return;
         }

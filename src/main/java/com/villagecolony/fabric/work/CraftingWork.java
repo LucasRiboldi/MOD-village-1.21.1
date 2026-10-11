@@ -334,6 +334,13 @@ public final class CraftingWork {
             return true;
         }
 
+        // Um pouco de tudo no estoque — ItemStock, regra do autor de 2026-10-11.
+        Optional<Boolean> forStock = ItemStock.step(world, job, villager.getUuid());
+
+        if (forStock.isPresent()) {
+            return forStock.get();
+        }
+
         Optional<Boolean> forGoal = CraftingSteps.produceForGoal(world, job, villager.getUuid());
 
         if (forGoal.isPresent()) {
