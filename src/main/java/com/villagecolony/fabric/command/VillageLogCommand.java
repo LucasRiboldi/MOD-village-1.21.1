@@ -132,6 +132,17 @@ public final class VillageLogCommand {
                     reach.unreached().isEmpty() ? Formatting.GRAY : Formatting.YELLOW), false);
         });
 
+        // O tempo de cada ofício na última janela de cinco minutos, com a regra
+        // do ócio — ADR-041 #4. O comando continua aberto a todo jogador.
+        source.sendFeedback(() -> Text.literal("Tempo dos ofícios (última janela de 5 min):")
+                .formatted(Formatting.WHITE), false);
+
+        for (String line : VillageLogPresenter.tradeTime(
+                com.villagecolony.fabric.work.WorkTime.lastWindowOf(nearby.id()))) {
+            source.sendFeedback(() -> Text.literal(line).formatted(
+                    line.contains("regra do ócio") ? Formatting.YELLOW : Formatting.GRAY), false);
+        }
+
         // As esperas longas, com o motivo e o tempo — B-5, 2026-10-02.
         List<String> waits = VillageLogPresenter.longWaits(
                 com.villagecolony.fabric.work.IdleLog.waitingOf(nearby.id()), System.currentTimeMillis());

@@ -69,6 +69,7 @@
       "com.villagecolony.fabric.event.VillageFocusPlayerGameTest",
       "com.villagecolony.fabric.event.SaveDuringPlayGameTest",
       "com.villagecolony.fabric.network.ProfessionPolicyPermissionGameTest",
+      "com.villagecolony.fabric.command.VillageLogCommandGameTest",
       "com.villagecolony.fabric.event.AbandonedColonyGameTest",
       "com.villagecolony.gametest.MasonStockGameTest",
       "com.villagecolony.gametest.StorageGameTest",

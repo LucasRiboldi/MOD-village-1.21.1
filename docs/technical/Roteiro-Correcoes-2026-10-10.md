@@ -277,4 +277,5 @@ coluna "em jogo" é a que a régua cobra.
 | AUD-01 aceite | ⬜ | ⬜ 0.3.22 e 0.3.23 reprovadas |
 | AUD-04 | ⬜ medir | ⬜ 67 ms (0.3.22) · 27,7 ms (0.3.23) |
 | AUD-13 | ⬜ | ⬜ |
+| AUD-19 | ✅ `/vc log` com o tempo dos ofícios e a regra do ócio; `VillageLogCommandGameTest` executa o comando como jogador sem op | — |
 | Fase 5 e Fase 6 | ⬜ | — |
