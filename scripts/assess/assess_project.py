@@ -178,13 +178,32 @@ def source_metrics() -> dict:
     }
 
 
+def todo_counts(todo: str) -> tuple[int, int]:
+    """Itens abertos e, deles, os críticos (régua v2).
+
+    Crítico é o item com 🔴 na própria linha ou sob um título de seção com 🔴:
+    o TODO.md marca a prioridade no título. Na régua v1 só a linha contava, e
+    41 itens de seções 🔴 davam "zero crítico" (AUD-07).
+    """
+    open_items = critical = 0
+    red_section = False
+    for line in todo.splitlines():
+        if line.startswith('#'):
+            red_section = '🔴' in line
+        elif re.match(r'^\s*- \[ \]', line):
+            open_items += 1
+            if red_section or '🔴' in line:
+                critical += 1
+    return open_items, critical
+
+
 def records() -> dict:
     todo = (ROOT / 'TODO.md').read_text(encoding='utf-8', errors='replace')
-    open_items = re.findall(r'^\s*- \[ \]\s*(\S+)', todo, re.M)
+    open_items, critical = todo_counts(todo)
     return {'adrs': len(glob.glob(str(ROOT / 'docs/decisions/ADR-*.md'))),
             'docs_md': len(glob.glob(str(ROOT / 'docs/**/*.md'), recursive=True)),
-            'todo_open': len(open_items),
-            'todo_open_critical': sum(1 for i in open_items if '🔴' in i),
+            'todo_open': open_items,
+            'todo_open_critical': critical,
             'todo_done': len(re.findall(r'^\s*- \[x\]', todo, re.M)),
             'has_readme': (ROOT / 'README.md').exists(),
             'ci_workflow': (ROOT / '.github/workflows/ci.yml').exists()}
@@ -264,6 +283,9 @@ def compare(a: Path, b: Path) -> str:
 
 
 def main() -> int:
+    # O scorecard tem emoji, e o console do Windows é cp1252 (AUD-07).
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--run', action='store_true', help='roda build, pitest e runGametest antes de medir')
     p.add_argument('--gametest-runs', type=int, default=1)

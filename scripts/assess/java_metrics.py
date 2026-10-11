@@ -81,6 +81,11 @@ def layer_of(path: str) -> str:
     return 'root'
 
 
+def physical_lines(text: str) -> int:
+    """Linhas como o `wc -l` e o gauntlet_checks.py contam: o \n final não é linha a mais (régua v2)."""
+    return len(text.splitlines())
+
+
 def analyze_file(path: Path, root: Path) -> FileMetrics:
     text = path.read_text(encoding='utf-8', errors='replace')
     code = strip_code(text)
@@ -89,7 +94,7 @@ def analyze_file(path: Path, root: Path) -> FileMetrics:
     n_code = sum(1 for l in code_lines if l.strip())
     n_comment = sum(1 for raw, c in zip(raw_lines, code_lines) if raw.strip() and not c.strip())
     rel = str(path.relative_to(root)).replace('\\', '/')
-    fm = FileMetrics(rel, layer_of(rel), len(raw_lines), n_code, n_comment)
+    fm = FileMetrics(rel, layer_of(rel), physical_lines(text), n_code, n_comment)
     fm.imports = re.findall(r'^import\s+(?:static\s+)?([\w.]+)', text, re.M)
 
     # Estado estatico mutavel: campo static nao-final, ou static final de

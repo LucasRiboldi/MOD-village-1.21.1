@@ -1,6 +1,6 @@
 # Metodologia de avaliação técnica — Village Colony
 
-**Versão da régua:** 1 (2026-09-24) · **Coletor:** `scripts/assess/assess_project.py`
+**Versão da régua:** 2 (2026-10-10) · **Coletor:** `scripts/assess/assess_project.py`
 · **Régua em código:** `scripts/assess/rubric.py` · **Teste da régua:**
 `tests/test_assess_rubric.py`
 
@@ -53,7 +53,8 @@ Nota de 0 a 4: a primeira faixa atingida vale.
 
 | # | Critério | Fórmula e fonte | 4 | 3 | 2 | 1 | 0 |
 |---|---|---|---|---|---|---|---|
-| C01 | Arquivos > 500 linhas | % dos `.java` de `src/main` acima de 500 linhas físicas | 0% | ≤2% | ≤5% | ≤10% | >10% |
+| C01 | Arquivos > 500 linhas | % dos `.java` de `src/main` acima de 500 linhas físicas, contadas como o `wc -l` (o `
+` final não é linha) | 0% | ≤2% | ≤5% | ≤10% | >10% |
 | C02 | Tamanho de método | p90 das **linhas de código** por método (sem comentário e branco) | ≤20 | ≤35 | ≤50 | ≤80 | >80 |
 | C03 | Complexidade ciclomática | % de métodos com CC > 10; se CC máx > 50, teto 2 | ≤3% | ≤6% | ≤10% | ≤15% | >15% |
 | C04 | Regra de camadas | imports de `net.minecraft`, `net.fabricmc`, `fabric` ou `data` dentro de `core` | 0 | 0 | ≤2 | ≤5 | >5 |
@@ -66,7 +67,7 @@ Nota de 0 a 4: a primeira faixa atingida vale.
 | C11 | Densidade de comentário | linhas de comentário ÷ linhas de código (abaixo de 0,15 vale 1) | ≤0,6 | ≤1,0 | ≤1,5 | ≤2,5 | — |
 | C12 | Práticas automatizadas | quantas de 7: CI, unitário no CI, jogo no CI, análise estática, mutação, cobertura, hook de commit | 7 | 6 | 5 | 4 | <4 |
 | C13 | Desempenho em jogo | linhas `Colony cycle took N ms — longer than a server tick` por hora da última sessão analisada | 0 | ≤5 | ≤15 | ≤40 | >40 |
-| C14 | Dívida crítica | itens `- [ ] 🔴` abertos no `TODO.md` | 0 | ≤2 | ≤5 | ≤10 | >10 |
+| C14 | Dívida crítica | itens `- [ ]` abertos no `TODO.md` com 🔴 na linha **ou sob um título de seção com 🔴** | 0 | ≤2 | ≤5 | ≤10 | >10 |
 
 **Por que cada limiar.**
 - **C01:** 500 linhas é a regra do projeto (`CLAUDE.md`).
@@ -190,3 +191,5 @@ Cada item recebe uma destas quatro notas, e cada nota vem com evidência:
 | Versão | Data | Mudança |
 |---|---|---|
 | 1 | 2026-09-24 | Primeira régua: 14 critérios, 10 dimensões, conceito A–E. |
+| 2 | 2026-10-10 | AUD-07. C01 contava o `
+` final como linha (arquivo de 500 virava 501). C14 só via 🔴 na linha do item, e o `TODO.md` marca a prioridade no título da seção. Recalculadas: `17613fa` 3,21 → **3,14** (C14 2 → 1); `b290ed10` 3,36 → **3,14** (C01 3 → 4, C14 4 → 0). A melhora de +0,15 que a v1 mostrava entre as duas era erro de medida. |

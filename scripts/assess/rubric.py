@@ -8,7 +8,7 @@ regua") e aumente RUBRIC_VERSION.
 
 from __future__ import annotations
 
-RUBRIC_VERSION = 1
+RUBRIC_VERSION = 2
 
 
 def ladder(value, steps, higher_is_better=True):

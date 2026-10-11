@@ -19,12 +19,13 @@ Scripts: `scripts/audit/check-*.sh`.
 - [x] 🟠 **AUD-03** `saveVersion` gravado no save (`SaveMigration.stamp`, `11bd4799`).
 - [x] 🟠 **AUD-05** `codex/fluxo-grafo-waypoints` integrada (ADR-041 #2) na `claude/integra-fluxo-grafo-waypoints`,
       0.3.24: 1402 unitários, 696/696 GameTests × 3, PIT 85,56%. Falta: PR na `main` e playtest.
-- [ ] 🟠 **AUD-06** Asserções em `WorkDemandTest` para `constructionMaterials` (10 mutantes sobreviventes; PIT com folga de 13).
-- [ ] 🟡 **AUD-07** Régua de avaliação: C14 cego às seções 🔴, C01 conta uma linha a mais, quebra em cp1252 (régua v2).
+- [x] 🟠 **AUD-06** `WorkDemandTest` fixa cada material da obra: `WorkDemand` 20/20 mutantes mortos; PIT 86,17%, folga 24.
+- [x] 🟡 **AUD-07** Régua v2: C14 conta seções 🔴, C01 conta como o `wc -l`, sem quebra em cp1252. Recalculadas: 3,14 e 3,14.
 - [ ] 🟡 **AUD-08** `STATE.md` com 663 linhas (teto 150): arquivar seções fechadas de 02-10 a 08-10.
 - [ ] 🟡 **AUD-09** Ciclo raiz ↔ `fabric.*` por `VillageColonyMod` como localizador global.
 - [ ] 🟡 **AUD-10** 181 estáticos mutáveis; config estática não-final (`MineLease`, `TreeChoice`, `MinerDetours`, `FarmerWork`). A regra ArchUnit já existe congelada: esvaziar o congelado.
-- [ ] 🟡 **AUD-11** Testes de `ProfessionPolicyNetworking`/codec/SavedData; cobertura de `fabric.network` e `fabric.command`.
+- [ ] 🟡 **AUD-11** Parcial: codec, save da política e porta de permissão com teste (mutação conferida); `fabric.network`
+      0 → 42% (unitário) e 20 → 46% (bateria), abaixo dos 60%. Falta: receptores por lambda e `fabric.command` (vai com o AUD-19).
 - [ ] 🟡 **AUD-12** Avisar quando outro mod tirar a tarefa da colônia do `Brain`; `suggests: modmenu` e `breaks` no `fabric.mod.json`.
 - [ ] 🟡 **AUD-04** Ciclo p95 67 ms na 0.3.22, 27,7 ms na 0.3.23: medir de novo (≥ 20 amostras) antes de otimizar.
 - [ ] 🟡 **AUD-25** Diário de ações sem o motivo de `TASK_RELEASED` (grava só o estado).

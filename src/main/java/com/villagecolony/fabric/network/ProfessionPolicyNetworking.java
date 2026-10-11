@@ -29,7 +29,8 @@ public final class ProfessionPolicyNetworking {
                 context.server().execute(() -> applyUpdate(context.player(), payload)));
     }
 
-    private static void applyUpdate(ServerPlayerEntity player, ProfessionPolicyUpdatePayload payload) {
+    /** A porta da permissão; visível no pacote só para o GameTest que a prova (AUD-11). */
+    static void applyUpdate(ServerPlayerEntity player, ProfessionPolicyUpdatePayload payload) {
         if (!player.hasPermissionLevel(POLICY_PERMISSION_LEVEL)) {
             VillageColonyMod.LOGGER.warn("[Village Colony] Ignored profession policy update from {} without permission",
                     player.getGameProfile().getName());

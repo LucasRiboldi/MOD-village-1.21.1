@@ -266,9 +266,9 @@ coluna "em jogo" é a que a régua cobra.
 | 0.3 regra do ócio | ✅ decidida: abrangente (ADR-041 #3) | — |
 | AUD-03 | ✅ `11bd4799` — `SaveMigration.stamp` no `writeNbt`; mutação conferida | — |
 | AUD-02 | ✅ leitura por entrada e por seção, versão negativa = 0, `toBlock` sem lançar; `ColonySaveFuzzTest` 13/13, `WorkMemoryLoadTest`; mutação conferida | — |
-| AUD-06 | ⬜ | — |
-| AUD-07 | ⬜ | — |
-| AUD-11 | ⬜ | — |
+| AUD-06 | ✅ `WorkDemand` 20/20 mutantes mortos; PIT 1820/2112 (86,17%), folga 24 | — |
+| AUD-07 | ✅ régua v2; `tests/test_assess_counts.py`; 17613fa e b290ed10 recalculadas: 3,14 e 3,14 | — |
+| AUD-11 | ⚠️ parcial: codec, save e permissão testados (mutação conferida); `fabric.network` 42% / 46%, abaixo dos 60%; ordem ruim no save não apaga mais as regras do Mod Menu | — |
 | AUD-21 | ⬜ | — |
 | AUD-25 | ⬜ | ⬜ |
 | 2.2 mineiro | ⬜ | ⬜ |
