@@ -1,0 +1,52 @@
+// Init script da auditoria: aplica SpotBugs e Checkstyle por fora, sem tocar
+// no build.gradle. Só relatório: nada aqui reprova o build.
+//
+//   ./gradlew.bat -I scripts/audit/static-extra.init.gradle spotbugsMain checkstyleMain --no-daemon
+//
+// Relatórios: build/reports/spotbugs/main.xml e build/reports/checkstyle/main.xml.
+
+initscript {
+    repositories {
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath 'com.github.spotbugs.snom:spotbugs-gradle-plugin:6.5.12'
+    }
+}
+
+allprojects {
+    afterEvaluate { project ->
+        if (!project.plugins.hasPlugin('java')) {
+            return
+        }
+        project.apply plugin: com.github.spotbugs.snom.SpotBugsPlugin
+        project.apply plugin: 'checkstyle'
+
+        project.spotbugs {
+            ignoreFailures = true
+            effort = com.github.spotbugs.snom.Effort.valueOf('MAX')
+            reportLevel = com.github.spotbugs.snom.Confidence.valueOf('MEDIUM')
+        }
+        project.tasks.matching { it.name.startsWith('spotbugs') && it.name != 'spotbugsMain' }.configureEach {
+            enabled = false
+        }
+        project.tasks.matching { it.name == 'spotbugsMain' }.configureEach {
+            reports {
+                xml { required = true }
+                html { required = true }
+            }
+        }
+
+        project.checkstyle {
+            toolVersion = '10.26.1'
+            ignoreFailures = true
+            maxWarnings = Integer.MAX_VALUE
+            config = project.resources.text.fromArchiveEntry(
+                    project.configurations.checkstyle.filter { it.name.startsWith('checkstyle-') },
+                    'sun_checks.xml')
+        }
+        project.tasks.matching { it.name.startsWith('checkstyle') && it.name != 'checkstyleMain' }.configureEach {
+            enabled = false
+        }
+    }
+}

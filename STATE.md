@@ -2,8 +2,10 @@
 
 > **JAR atual: `village-colony-0.3.23.jar`** =
 > `6067E01A6B553F4D5CD2BAFA062E24713F7C32CD6B77F64E77022AA24A866661`.
-> Unitários e empacotamento passaram; por instrução do autor, os GameTests não foram executados nesta publicação. **ADR-036 a 039 na `main`.** Nada da 037, 038 e 039 visto em jogo.
-> Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md` e a ADR-039.
+> Unitários e empacotamento passaram na publicação; a auditoria de 10-10 rodou depois a bateria
+> sobre `b290ed10`: **1398 unitários, 690/690 GameTests × 3 (+1 com Fabric API 0.116.17), PIT 85,66%**.
+> **ADR-036 a 039 na `main`** (a ADR-040 só existe na `codex/fluxo-grafo-waypoints`). Nada da 037, 038 e 039 visto em jogo.
+> Pendências: `docs/technical/Decisoes-Pendentes-2026-10-07.md`, a ADR-039 e a fila AUD do `TODO.md`.
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -16,6 +18,25 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🔴 10-10, noite — auditoria técnica (branch `claude/auditoria-tecnica-2026-10-10`, sem commit)
+
+Resumo: `docs/technical/avaliacao/EXECUTIVE-SUMMARY.md` (6,8/10; régua B 3,36, ou 3,14 corrigida).
+Fila AUD-01…24 no `TODO.md`. O que pede ação antes de código novo:
+
+- **AUD-01 (P0), Regra 51 em jogo.** O playtest de 10-10, 10:45–11:51, ainda com a **0.3.22**,
+  reprovou SMELTER 86%, BUILDER 68%, MINER 21% e FARMER 16%; o fundidor pegou 883 tarefas e
+  soltou 882. A sessão **0.3.23** (21:24–22:06) também reprova: SMELTER 91%, BUILDER 92%, MINER 17%;
+  fundidor com 311 pegas e 0 feitas. A raiz é o mineiro sem boca de mina (`no mine mouth`, 115× e 50×).
+  A correção do fundidor (`cd7ca2c8`) e a ADR-040 estão só na linha Codex. Roteiro:
+  `docs/technical/Roteiro-Correcoes-2026-10-10.md`.
+- **AUD-05, linha Codex paralela.** `codex/fluxo-grafo-waypoints` tem 14 commits e a ADR-040 fora
+  da `main` (worktree ativo). Decidir integrar ou encerrar (ADR-035 §2).
+- **AUD-02/03, save.** Exceção na leitura faz o Vanilla gravar estado vazio por cima (bytecode
+  conferido); `saveVersion` não vai para o disco.
+- **AUD-04, ciclo p95 67 ms** na 0.3.22, mas 27,7 ms na 0.3.23: medir de novo antes de otimizar.
+
+**Não verificado:** Spark, nível 4 do modsmith (pack com outro mod de aldeão), 8 rodadas da bateria.
 
 ## 🟡 10-10 — integração 0.3.23 de obra, fundidor e mina
 

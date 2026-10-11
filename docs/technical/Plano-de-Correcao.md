@@ -4,6 +4,10 @@
 2026-09-11, sobre o commit base `9385db6`, para que a execução não dependa
 de ninguém lembrar do que foi combinado.
 
+> **Roteiro seguinte:** os achados da auditoria de 2026-10-10 (AUD-01…AUD-25) estão
+> ordenados em [`Roteiro-Correcoes-2026-10-10.md`](Roteiro-Correcoes-2026-10-10.md).
+> Os itens deste plano continuam valendo.
+
 Este arquivo é o **roteiro**; a lista canônica do estado continua sendo o
 [`TODO.md`](../../TODO.md). Onde os dois discordarem sobre *o que já foi
 feito*, vale o TODO; sobre *o que fazer e em que ordem*, vale este.

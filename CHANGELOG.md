@@ -3,11 +3,37 @@
 Mudanças que chegam ao JAR ou à forma de verificar o mod. O formato segue o
 [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
-A versão continua **0.3.0 alpha**: o mesmo número é republicado a cada
-entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
-(ver `STATE.md` e `scripts/release_manifest.py`). O histórico anterior a
+Até 03-10 a versão ficou em **0.3.0 alpha**, republicada a cada entrega. Desde
+então cada JAR ganha número próprio (0.3.1 a 0.3.23 até 10-10); essas versões
+**ainda não têm entrada aqui** (AUD-14 no `TODO.md`), e o que separa cada uma é
+o commit e o SHA-256 do JAR no `STATE.md` (`scripts/release_manifest.py`). O histórico anterior a
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
+
+## [Não publicado] — auditoria técnica de 2026-10-10
+
+Nada muda no JAR: a auditoria não alterou código de produção.
+
+### Adicionado
+- `scripts/audit/`: oito verificações reprodutíveis (`check-architecture`, `check-tests-green`,
+  `check-mutation-threshold`, `check-coverage`, `check-docs-drift`, `check-mixin-safety`,
+  `check-nbt-migration`, `check-tick-budget`), as sondas de fuzzing de NBT e as propriedades
+  do planejador de desvio (`scripts/audit/probes/`), e um init script de SpotBugs/Checkstyle.
+- Skills de auditoria em `.claude/skills/`: `modpack-modsmith` (rdl7999-hub, MIT),
+  `java-architecture-review`, `java-static-analysis`, `minecraft-performance-profiling`,
+  `fabric-persistence-migration`, `git-workflow-audit`.
+- `docs/technical/avaliacao/`: D01–D12, `ACTION-QUEUE.md`, `EXECUTIVE-SUMMARY.md`,
+  `agent-setup.md`, avaliação da régua `2026-10-11-b290ed10/`; retrato em
+  `docs/archive/technical/Project-Audit-2026-10-10.md`.
+- `docs/technical/Roteiro-Correcoes-2026-10-10.md`: roteiro em sete fases (0–6) para os
+  achados AUD-01…AUD-25, validado contra o código e as sessões 0.3.22 e 0.3.23 de 10-10.
+
+### Verificado nesta sessão
+- 1398 unitários; 690/690 GameTests × 3 rodadas, mais 1 com Fabric API 0.116.17 e Loader 0.19.5;
+  104 testes Python; PIT 1804/2106 (85,66%).
+
+### Corrigido (documentação)
+- README com as contagens de 03-10 e a frase "GameTests pulados" na 0.3.23.
 
 ## [0.3.0] — publicação de 2026-10-03, fim da tarde (playtest da manhã)
 

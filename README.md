@@ -40,10 +40,10 @@ SHA-256 do JAR na descrição.
   obra, com o primeiro material que falta; o cliente Vanilla continua vendo as
   placas.
 
-O mod é alpha. Na integração 0.3.23, os testes unitários e o empacotamento
-passaram; os GameTests foram pulados por instrução do autor. Vários fluxos só
-se confirmam em playtest num save, e as entregas desde 2026-09-24 ainda não
-foram vistas em jogo. O que mudou em cada
+O mod é alpha. A 0.3.23 passou na bateria automática completa (auditoria de
+2026-10-10), mas o último playtest, ainda com a 0.3.22, reprovou a Regra 51
+em 4 dos 8 ofícios, e várias entregas desde 2026-09-24 ainda não foram vistas
+em jogo. O que mudou em cada
 publicação está no [`CHANGELOG.md`](CHANGELOG.md); a avaliação técnica mais
 recente, em
 [`docs/technical/avaliacao/`](docs/technical/avaliacao/).
@@ -181,6 +181,11 @@ Os perfis de trabalho e as skills utilizadas neste repositório estão em
   rotina, caminho, estoque e diagnóstico de aldeões.
 - `minecraft-testing` para testes unitários e GameTests.
 - `minecraft-ci-release` para CI, versionamento, artefatos e publicação.
+- Auditoria (2026-10-10): `modpack-modsmith` (convivência com o pack e a escada
+  de testes do `probar.py`), `java-architecture-review`, `java-static-analysis`,
+  `minecraft-performance-profiling`, `fabric-persistence-migration` e
+  `git-workflow-audit`. Origem e uso em
+  [`docs/technical/avaliacao/agent-setup.md`](docs/technical/avaliacao/agent-setup.md).
 
 Os perfis Codex são `village-quick` (consulta), `village-audit` (diagnóstico),
 `village-dev` (implementação comum) e `village-max` (mudança entre subsistemas).
@@ -200,45 +205,37 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 `runGametest` gera `build/reports/jacoco/gametest/html` (bateria de jogo, que
 é quem exercita a camada `fabric`).
 
-Verificação de 2026-10-03 (corrigíveis sem jogo):
+Verificação de 2026-10-10 (auditoria técnica, commit `b290ed10`), rodada e
+não copiada:
 
-- 1295 testes unitários: aprovados (`test --rerun-tasks`).
-- 91 testes Python: aprovados.
-- 575 GameTests: todos aprovados, em duas rodadas seguidas com `--rerun-tasks`.
-- `./gradlew build`: passa.
+- 1398 testes unitários: aprovados (`test --rerun-tasks`).
+- 104 testes Python: aprovados.
+- 690 GameTests: todos aprovados em três rodadas seguidas com `--rerun-tasks`,
+  mais uma com Fabric API 0.116.17 e Loader 0.19.5, e no CI.
+- Mutação (PIT, pacote `core`): 1804 de 2106 mutações mortas (85,66%, limiar
+  85%), força de teste 91,5%.
 
-A mutação (PIT, pacote `core`) e o `javadoc` não foram rodados nesta
-verificação; a última medida é a de 2026-09-25: 1151 de 1312 mutações mortas
-(87,7%), força de teste 95%.
+Para refazer: `scripts/audit/check-tests-green.sh --runs 3` e
+`scripts/audit/check-mutation-threshold.sh --run` (ver
+[`scripts/audit/README.md`](scripts/audit/README.md)).
 
 ## Estado e nota da auditoria
 
-A nota abaixo é da auditoria de 2026-09-21 e ficou como registro. A GameTest
-que falhava então foi corrigida, e a avaliação posterior está em
-[`docs/technical/avaliacao/`](docs/technical/avaliacao/).
+Auditoria técnica de 2026-10-10: nota global **6,9/10** (12 dimensões); pela
+régua reprodutível da [`METODOLOGIA`](docs/technical/avaliacao/METODOLOGIA.md),
+conceito **B**. Resumo, riscos e ganhos rápidos em
+[`EXECUTIVE-SUMMARY.md`](docs/technical/avaliacao/EXECUTIVE-SUMMARY.md); fila
+priorizada em [`ACTION-QUEUE.md`](docs/technical/avaliacao/ACTION-QUEUE.md) e no
+[`TODO.md`](TODO.md).
 
-Nota técnica global daquela varredura: **7,0/10**.
-
-Arquitetura e isolamento: **8,0/10**. A separação `core`/`fabric` é protegida
-por teste e o grafo atualizado não encontrou ciclos de importação.
-
-Funcionalidade: **7,0/10**. O ciclo de vila, fundação, mineração, viveiro,
-seleção segura de lotes e reparo existem, mas a alternância de obras ainda tem
-uma regressão reproduzível.
-
-Testes: **7,0/10**. Há 960 unitários e 397 GameTests, porém a bateria não está
-verde e existe uma instabilidade histórica de spawn do fundidor.
-
-Manutenção e documentação: **6,0/10**. Os documentos principais foram
-alinhados nesta auditoria, mas há arquivos Java grandes, documentos históricos
-com nomenclatura antiga e uma política de versões que merece decisão.
-
-Release: **7,0/10**. CI, build e artefato estão presentes; o CI não deve ser
-considerado liberável enquanto o GameTest obrigatório falhar.
-
-Consulte a lista priorizada de erros, melhorias, inconsistências e conflitos em
-[`docs/archive/technical/Project-Audit-2026-09-21.md`](docs/archive/technical/Project-Audit-2026-09-21.md)
-e a fila viva em [`TODO.md`](TODO.md).
+Os maiores riscos medidos: a Regra 51 reprovada em jogo (P0), um save com uma
+entrada malformada que faz o mundo abrir sem colônias (P1) e o ciclo da colônia
+sem versão gravada (P1). A regressão de alternância de obras citada pela
+auditoria de 2026-09-21 não se reproduz mais na bateria: o teste dela passa,
+mas falta a prova em jogo. O retrato de 09-21 está em
+[`docs/archive/technical/Project-Audit-2026-09-21.md`](docs/archive/technical/Project-Audit-2026-09-21.md),
+e o de 10-10 em
+[`docs/archive/technical/Project-Audit-2026-10-10.md`](docs/archive/technical/Project-Audit-2026-10-10.md).
 
 ## Documentos de entrada
 
@@ -249,7 +246,7 @@ e a fila viva em [`TODO.md`](TODO.md).
 - [`docs/decisions/`](docs/decisions/): decisões arquiteturais.
 - [`docs/behavioral-tests/`](docs/behavioral-tests/): estratégia e falhas de
   GameTest.
-- [`docs/archive/technical/Project-Audit-2026-09-21.md`](docs/archive/technical/Project-Audit-2026-09-21.md):
-  auditoria desta varredura.
+- [`docs/technical/avaliacao/`](docs/technical/avaliacao/): auditoria técnica
+  atual e avaliações pela régua.
 
 Licença MIT. Feito para Minecraft 1.21.1 com Fabric.
