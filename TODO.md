@@ -24,18 +24,18 @@ Scripts: `scripts/audit/check-*.sh`.
       0.3.24: 1402 unitários, 696/696 GameTests × 3, PIT 85,56%. Falta: PR na `main` e playtest.
 - [x] 🟠 **AUD-06** `WorkDemandTest` fixa cada material da obra: `WorkDemand` 20/20 mutantes mortos; PIT 86,17%, folga 24.
 - [x] 🟡 **AUD-07** Régua v2: C14 conta seções 🔴, C01 conta como o `wc -l`, sem quebra em cp1252. Recalculadas: 3,14 e 3,14.
-- [ ] 🟡 **AUD-08** `STATE.md` com 663 linhas (teto 150): arquivar seções fechadas de 02-10 a 08-10.
+- [x] 🟡 **AUD-08** `STATE.md` reescrito em 11-10 (709 → 111 linhas); o texto antigo, sem edição, em `docs/archive/technical/Historico-2026-10.md`.
 - [ ] 🟡 **AUD-09** Ciclo raiz ↔ `fabric.*` por `VillageColonyMod` como localizador global.
 - [ ] 🟡 **AUD-10** 181 estáticos mutáveis; config estática não-final (`MineLease`, `TreeChoice`, `MinerDetours`, `FarmerWork`). A regra ArchUnit já existe congelada: esvaziar o congelado.
-- [ ] 🟡 **AUD-11** Parcial: codec, save da política e porta de permissão com teste (mutação conferida); `fabric.network`
-      0 → 42% (unitário) e 20 → 46% (bateria), abaixo dos 60%. `fabric.command` 2 → 27% (bateria) com o
-      `VillageLogCommandGameTest`. Falta: receptores por lambda e o resto do `/vc log`.
-- [ ] 🟡 **AUD-12** Avisar quando outro mod tirar a tarefa da colônia do `Brain`; `suggests: modmenu` e `breaks` no `fabric.mod.json`.
+- [ ] 🟡 **AUD-11** `fabric.network` com 67% de linhas no unitário (meta de 60% batida em 11-10): codec, os três
+      pacotes pelo fio (`ProfessionPolicyPayloadsTest`), save da política e porta de permissão, com mutação conferida.
+      Falta: `fabric.command` em 27% (bateria) e o cliente em 0%; receptores por lambda e o resto do `/vc log`.
+- [x] 🟡 **AUD-12** Aviso quando outro mod tira a tarefa da colônia do `Brain` (`BrainHeartbeat`, `BrainHeartbeatGameTest`); `suggests: modmenu`. `breaks` fica para quando houver mod testado (nível 4 do modsmith).
 - [ ] 🟡 **AUD-04** Ciclo p95 67 ms na 0.3.22, 27,7 ms na 0.3.23: medir de novo (≥ 20 amostras) antes de otimizar.
 - [x] 🟡 **AUD-25** `TASK_RELEASED` grava o motivo (`Task.release(why)` nas 15 solturas das profissões) e o
       `action_report.py` agrupa as solturas por motivo.
-- [ ] 🟡 **AUD-13** Alternância de obras: o teste passa; atualizar `docs/behavioral-tests/README.md` e provar em jogo.
-- [ ] 🟢 **AUD-14** CHANGELOG sem entradas de 0.3.1 a 0.3.23.
+- [ ] 🟡 **AUD-13** Alternância de obras: `docs/behavioral-tests/README.md` atualizado (11-10); falta provar em jogo.
+- [x] 🟢 **AUD-14** CHANGELOG com 0.3.1 a 0.3.23, reconstruídas do commit que trocou a versão (11-10).
 - [ ] 🟢 **AUD-15** 848 imports não usados (`RemoveUnusedImports` no Error Prone).
 - [ ] 🟢 **AUD-16** Cache de `CraftingLookup.listAllOfType`, se o Spark mostrar.
 - [x] 🟢 **AUD-17** `/vc log` continua aberto (ADR-041 #4).
@@ -43,9 +43,9 @@ Scripts: `scripts/audit/check-*.sh`.
 - [x] 🟡 **AUD-19** `/vc log` mostra a última janela do `WorkTime` por ofício e marca a regra do ócio (ADR-041 #4).
 - [ ] 🟢 **AUD-26** **Escolha do autor:** número da regra do ócio (colide com a Regra 51 do `docs/RULES.md`).
 - [ ] 🟢 **AUD-20** Dividir as 15 classes em 488–500 linhas antes da próxima mudança nelas.
-- [ ] 🟢 **AUD-21** `check-tests-green.sh --runs 8` antes de declarar a intermitência curada.
-- [ ] 🟢 **AUD-22** Semente em `BigHouseFoundation.java:79` (`Random.create()`).
-- [ ] 🟢 **AUD-23** Javadoc "o único mixin do mod" em `VillagerEntityMixin.java:14`.
+- [x] 🟢 **AUD-21** 8 rodadas em 11-10: a primeira série teve 2 falhas do `FreeChestCountGameTest` (aldeões dos vizinhos no raio de 64), corrigido; a série final deu 8/8, 705/705.
+- [x] 🟢 **AUD-22** A fundação usa a semente do mundo e do lugar. Sem teste: a planta não tem processador nem baú com loot, então hoje a semente não muda nada observável.
+- [x] 🟢 **AUD-23** Javadoc de `VillagerEntityMixin` não diz mais "o único mixin" (são três).
 - [ ] 🟢 **AUD-24** **Escolha do autor:** apagar as 7 branches já contidas na `main`.
 
 ## 🟡 Playtest do patch local 10-10 (obra/mina/baú)

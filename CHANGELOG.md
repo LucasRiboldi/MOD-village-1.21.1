@@ -4,9 +4,10 @@ Mudanças que chegam ao JAR ou à forma de verificar o mod. O formato segue o
 [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 Até 03-10 a versão ficou em **0.3.0 alpha**, republicada a cada entrega. Desde
-então cada JAR ganha número próprio (0.3.1 a 0.3.23 até 10-10); essas versões
-**ainda não têm entrada aqui** (AUD-14 no `TODO.md`), e o que separa cada uma é
-o commit e o SHA-256 do JAR no `STATE.md` (`scripts/release_manifest.py`). O histórico anterior a
+então cada JAR ganha número próprio. As entradas de 0.3.1 a 0.3.23 foram
+reconstruídas em 11-10 (AUD-14) a partir do commit que trocou a versão, citado
+em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.md`
+(`docs/archive/technical/Historico-2026-10.md`, `scripts/release_manifest.py`). O histórico anterior a
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
@@ -24,6 +25,9 @@ Nada disto foi visto em jogo; o aceite é o playtest da Fase 2.5 do roteiro.
 - Save: uma entrada malformada é descartada com aviso, em vez de apagar todas as colônias (AUD-02);
   o save grava a versão do esquema (AUD-03).
 - Regras de profissão do Mod Menu: ordem ruim no save não apaga mais as regras (AUD-11).
+- Bateria: `FreeChestCountGameTest` contava os aldeões dos testes vizinhos, que a varredura de 64 blocos
+  alcança no mundo compartilhado (2 falhas em 8 rodadas em 11-10); agora conta só os da própria arena,
+  com mutação conferida (AUD-21).
 
 ### Mudado
 - A regra do ócio cede vaga pela soma ocioso + bloqueado + encalhado, a mesma do `time_ledger`
@@ -31,6 +35,9 @@ Nada disto foi visto em jogo; o aceite é o playtest da Fase 2.5 do roteiro.
 - `/vc log` aberto a qualquer jogador, com o tempo de cada ofício na última janela e a regra do
   ócio (AUD-19).
 - O diário de ações grava o motivo de cada tarefa solta; `action_report.py` agrupa por motivo (AUD-25).
+- O ciclo avisa, uma vez por aldeão, o trabalhador cujo `Brain` não roda a tarefa da colônia há 10 s,
+  sinal de outro mod que trocou a IA do aldeão (AUD-12). `fabric.mod.json` sugere o Mod Menu.
+- A fundação BigHouseMOD é colocada com a semente do mundo e do lugar (AUD-22).
 
 ### Verificado
 - Na RC2: 1442 unitários, 704/704 GameTests em 3 rodadas. PIT não roda: as mudanças são todas em `fabric`.
@@ -50,6 +57,10 @@ Nada disto foi visto em jogo; o aceite é o playtest da Fase 2.5 do roteiro.
 
 ### Verificado
 - 1402 unitários, 696/696 GameTests em 3 rodadas, 105 Python, PIT 1807/2112 (85,56%). Nada visto em jogo.
+
+### Atenção
+- A linha Codex numerou de novo 0.3.7 a 0.3.12 em 09-10 e 10-10 (P0.7, P0.8). Esses números não
+  são os das entradas abaixo; o que eles trouxeram entrou aqui, na 0.3.24.
 
 ## [Não publicado] — auditoria técnica de 2026-10-10
 
@@ -75,6 +86,111 @@ Nada muda no JAR: a auditoria não alterou código de produção.
 
 ### Corrigido (documentação)
 - README com as contagens de 03-10 e a frase "GameTests pulados" na 0.3.23.
+
+## [0.3.23] — 2026-10-09 (`fa48cf2c`)
+- Obra: fluxos de profissão mais flexíveis (P0.54); a pendência salva de `barn_majest` é descartada
+  e a argila é completada (P0.56).
+- Fundidor: suprimento corrigido (P0.55). Em jogo, na noite de 10-10, o fundidor ainda soltou 311
+  de 311 tarefas (AUD-01).
+
+## [0.3.22] — 2026-10-09 (`3c4a30fb`)
+- `barn_majest` sai do rodízio de obras (P0.53).
+- O JAR jogado na manhã de 10-10 foi regerado a partir de uma árvore sem commit; não dá para provar
+  o que ele trazia (auditoria de 10-10, D2).
+
+## [0.3.21] — 2026-10-08 (`ed92b94f`)
+- Regra 52: uma roça por fazendeiro, com dono (P0.52).
+
+## [0.3.20] — 2026-10-08 (`90da1e68`)
+- Funil, trilho e vaso aparecem no baú do construtor depois das faltas.
+- O pastor procura ovelha com lã onde o rebanho é contado.
+- Planta com camada 0 subterrânea assenta no chão.
+
+## [0.3.19] — 2026-10-08 (`2486cb04`)
+- Regra 51 no `time_ledger`: ocioso + bloqueado ≤ 15% por profissão.
+- Construtor sem obra calça a grama no meio dos caminhos.
+- Lenhador: árvore longe por pernas de 24 blocos; bosque de 6 mudas com farinha de osso.
+
+## [0.3.18] — 2026-10-08 (`1a0fc2dd`)
+- Lampião e corrente aparecem no baú do construtor depois de três faltas.
+- A ajuda do pastor na obra conta pelo menos 10 blocos antes de ele voltar ao rebanho.
+
+## [0.3.17] — 2026-10-08 (`00996e0b`)
+- Mineiro: na escada, a próxima entrada é a primeira abaixo dele; a descida não gasta o orçamento
+  de caminhada.
+- Peça estocada para a obra não diz mais "no recipe" no log.
+
+## [0.3.16] — 2026-10-08 (`103a556c`)
+- Fardo de feno no baú do construtor depois de três faltas.
+- Bosque de três mudas perto da vila, longe de onde ela vai construir.
+- No tempo livre, o pastor ajuda o construtor a pôr blocos.
+
+## [0.3.15] — 2026-10-08 (`1c6c6194`)
+- Mineiro: a descida conta a chegada por eixo e mira o lugar de pé da entrada.
+- `/vc log`: a mesma profissão esperando pelo mesmo motivo aparece uma vez.
+
+## [0.3.14] — 2026-10-08 (`0f604e5c`)
+- O mineiro guarda a boca de superfície da mina, vai até ela e desce nível por nível (`MineEntrance`).
+- Lenhador: árvores do centro da vila primeiro, depois as intermediárias, a borda e um pouco fora.
+- M2: mapa de alcance a pé da vila (`VC_REACH`, `[ALCANCE]` no `/vc log`).
+
+## [0.3.13] — 2026-10-08 (`4562278b`)
+- Fundidor: o pedido de fundir só sai com o cru num baú (`SMELT_INPUT`).
+- Mineiro: o E1 escolhe o lugar alcançado mais perto da pedra; pedra acima do teto por tipo não é
+  mais tratada como baú cheio.
+
+## [0.3.12] — 2026-10-08 (`02f84a62`)
+- Crash "Colony already has an open project" ao retomar obra do save.
+- E1–E7: pedra só vira alvo com posição de trabalho alcançável; estado explícito de cada ramal; a
+  roça conhecida responde sozinha; forma guardada não é rota de produção; o pastor procria só sob
+  déficit do rebanho; `[CADEIA]` no `/vc log`; motivos de recusa no `action_report`.
+
+## [0.3.11] — 2026-10-08 (`f6ac1a91`)
+- Diário de ações em JSONL por aldeão (`logs/villagecolony-actions-*.jsonl`) e
+  `scripts/action_report.py`.
+
+## [0.3.10] — 2026-10-08 (`4adb6f6d`)
+- A peça sem material fica de lado e a obra segue.
+- Overlay: nome da profissão dentro do painel, ícones lisos, painel da obra sobre a placa.
+
+## [0.3.9] — 2026-10-08 (`2d9b3451`)
+- O funil pede minério de ferro, e o minério é material da obra.
+
+## [0.3.8] — 2026-10-08 (`3696cead`)
+- Obra destravada: a roça relida é a planejada, e a trava de reserva diz o que recusa.
+
+## [0.3.7] — 2026-10-07 (`d1821292`)
+- Junção e ciclo de vida só na colônia do jogador (ADR-039 item 3, opção B).
+- Testes B1–B6 e D2 do plano de testes de 07-10.
+
+## [0.3.6] — 2026-10-07 (`51221f01`)
+- Carpinteiro, pedreiro e fundidor adiantam as peças das casas do bioma (ADR-039 item 4).
+- O mineiro não perde o ofício por desistência (ADR-039 item 6).
+- Carpinteiro e pedreiro guardam o que fazem no baú da profissão (ADR-038 P3c).
+
+## [0.3.5] — 2026-10-07 (`fe32cfc6`)
+- Memórias de trabalho escolhidas pelo autor vão ao save (ADR-039 C).
+
+## [0.3.4] — 2026-10-07 (`54de4db6`)
+- ADR-039: o tique do servidor de teste não funde mais colônias (KF-003); ramal novo vai para o
+  minério que a vila precisa; caminho da rua até a obra longe dela; carpinteiro adianta escada, laje
+  e cerca; busca vazia espera de 1 a 5 minutos; a `codex/bighousemod` foi incorporada.
+
+## [0.3.3] — 2026-10-07 (`e684a3ad`)
+- ADR-038: ofício parado cede vaga para onde a vila precisa; memória das árvores e mudas da vila;
+  o pastor cuida de animal na corda ou em curral; o fundidor adianta vidro e pedra lisa; pedra sem
+  lugar de pé ganha o lugar cavado ao lado.
+
+## [0.3.2] — 2026-10-07 (`f6e32557`)
+- ADR-037: escada fechada antes do salão não conta como nível (M1); quem vai dormir fecha a porta;
+  a reunião doa a comida dos baús; o lenhador busca até a borda + 20; o construtor põe bloco de
+  qualquer lugar da zona da obra.
+
+## [0.3.1] — 2026-10-06 (`53a637d1`)
+- ADR-036 até o item 12: a peça aparece na 4ª tentativa no baú da profissão; baú da cama em toda
+  casa; vila abandonada solta as profissões; a vila só trabalha com o jogador dentro há mais de um
+  minuto; Regra 25 desfeita.
+- A faixa inclui a ADR-035 e a integração das linhas Claude e Codex de 06-10 (328 commits desde a 0.3.0).
 
 ## [0.3.0] — publicação de 2026-10-03, fim da tarde (playtest da manhã)
 

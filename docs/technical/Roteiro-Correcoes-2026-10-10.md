@@ -313,14 +313,19 @@ coluna "em jogo" é a que a régua cobra.
 | AUD-02 | ✅ leitura por entrada e por seção, versão negativa = 0, `toBlock` sem lançar; `ColonySaveFuzzTest` 13/13, `WorkMemoryLoadTest`; mutação conferida | — |
 | AUD-06 | ✅ `WorkDemand` 20/20 mutantes mortos; PIT 1820/2112 (86,17%), folga 24 | — |
 | AUD-07 | ✅ régua v2; `tests/test_assess_counts.py`; 17613fa e b290ed10 recalculadas: 3,14 e 3,14 | — |
-| AUD-11 | ⚠️ parcial: codec, save e permissão testados (mutação conferida); `fabric.network` 42% / 46%, abaixo dos 60%; ordem ruim no save não apaga mais as regras do Mod Menu | — |
-| AUD-21 | ⬜ | — |
+| AUD-11 | ⚠️ `fabric.network` 67% de linhas no unitário (meta 60% batida; `ProfessionPolicyPayloadsTest` com mutação); falta `fabric.command` (27%) e o cliente (0%) | — |
+| AUD-21 | ✅ 8/8 rodadas, 705/705, depois de corrigir o `FreeChestCountGameTest` (2/8 falhas na primeira série) | — |
 | AUD-25 | ✅ motivo no `TASK_RELEASED`; `action_report` agrupa por motivo; mutação conferida | ⬜ |
 | 2.2 mineiro | ✅ RC1 prazo da descida (`MineDescentLeaseGameTest`); RC2 rota pela escada cavada, não pelo rumo de agora (`MineEntranceGameTest` +2); mutações conferidas; 1442 unitários, 704/704 GameTests × 3 | ⬜ |
 | 2.3 IdleYield | ✅ regra abrangente (`WorkTime.idleRuleShare`); log de saída só quando o aldeão sai (mineiro nunca sai); mutação conferida | ⬜ |
 | 2.4 fundidor | ⬜ (código na linha Codex) | ⬜ |
 | AUD-01 aceite | ⬜ | ⬜ 0.3.22 e 0.3.23 reprovadas |
 | AUD-04 | ⬜ medir | ⬜ 67 ms (0.3.22) · 27,7 ms (0.3.23) |
-| AUD-13 | ⬜ | ⬜ |
+| AUD-13 | ✅ `behavioral-tests/README.md` sem as falhas de 09-22, que passam | ⬜ quatro obras seguidas |
+| AUD-12 | ✅ `BrainHeartbeat` avisa o trabalhador sem a tarefa no `Brain`; `suggests: modmenu`; `BrainHeartbeatGameTest`, duas mutações | — |
+| AUD-22 | ✅ semente do mundo e do lugar; sem efeito observável hoje, sem teste | — |
+| AUD-08 | ✅ `STATE.md` 709 → 111 linhas; o antigo, sem edição, em `Historico-2026-10.md` | — |
+| AUD-23 | ✅ javadoc corrigido; aponta os dois `mixins.json` | — |
+| AUD-14 | ✅ CHANGELOG 0.3.1–0.3.23 a partir dos commits de versão; aviso da numeração repetida na linha Codex | — |
 | AUD-19 | ✅ `/vc log` com o tempo dos ofícios e a regra do ócio; `VillageLogCommandGameTest` executa o comando como jogador sem op | — |
 | Fase 5 e Fase 6 | ⬜ | — |

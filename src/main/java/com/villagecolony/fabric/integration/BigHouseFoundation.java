@@ -76,7 +76,8 @@ public final class BigHouseFoundation {
                 placedAt,
                 placedAt,
                 placement,
-                Random.create(),
+                // Semente do mundo e do lugar: a mesma fundação sai igual no mesmo mundo (AUD-22).
+                Random.create(world.getSeed() ^ placedAt.asLong()),
                 Block.NOTIFY_ALL)) {
             VillageColonyMod.LOGGER.warn(
                     "Colony {} could not place BigHouseMOD at {}",

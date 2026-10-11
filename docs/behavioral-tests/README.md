@@ -4,26 +4,26 @@ Esta pasta documenta a rede de segurança do Village Colony: o aldeão deve
 continuar trabalhando depois de uma alteração, e a vila deve preservar as
 regras de construção, recursos e persistência.
 
-## Evidencia atual de 2026-09-22
+## Evidência atual
 
-| Suíte | Comando | Resultado |
-|---|---|---|
-| Unitários Java | `./gradlew.bat test --rerun-tasks` | 966 testes, 103 suítes, 0 falhas |
-| Testes Python | `python -m unittest discover -s tests` | 76 testes, 0 falhas |
-| Fabric GameTests | `./gradlew.bat runGametest --rerun-tasks` | 410 testes, 408 aprovados, 2 falhas |
+A contagem do dia está no `STATE.md` (número escrito aqui envelhece). Para
+refazer: `scripts/audit/check-tests-green.sh --runs N`.
 
-Falhas obrigatorias atuais:
-`FarmPlanGameTest.thenextturnafterahouseisnonresidential` e
-`SurfaceGatheringGameTest.farmerGathersDirtOutsideTheSoilProtectedRadius`.
-Elas impedem chamar a bateria completa de verde. A primeira deve ser
-reproduzida com uma fixture de vila isolada antes de alterar `HousePlans`; a
-segunda precisa estabilizar o registro da entidade no `ServerWorld` antes de
-alterar coleta ou timeout.
+As duas falhas obrigatórias de 2026-09-22 passam desde então:
+
+- **Alternância de obras** (`FarmPlanGameTest.theNextTurnAfterAHouseIsNonResidential`,
+  e o cenário dela em `HouseRotationGameTest`): passou nas 5 rodadas da auditoria
+  de 10-10 e em todas as baterias seguintes. **Falta a prova em jogo**: quatro
+  obras seguidas na mesma colônia, `grep "opened"` no log (AUD-13; item 6 do
+  `STATE.md`, "O que o próximo jogo precisa mostrar").
+- **`SurfaceGatheringGameTest.farmerGathersDirtOutsideTheSoilProtectedRadius`**:
+  era fixture. A varredura por setor escolhe uma coluna válida, não
+  necessariamente a primeira terra plantada pelo teste (corrigido em 09-10).
 
 Há também uma falha histórica intermitente documentada em
 [`known-failures.md`](known-failures.md): perda de uma entidade criada fora da
-arena entre `spawnEntity` e o primeiro tick. Ela não deve ser confundida com a
-falha atual de alternância.
+arena entre `spawnEntity` e o primeiro tick. A taxa histórica era de cerca de
+1 falha a cada 8 rodadas (AUD-21).
 
 ## Arquitetura coberta
 
