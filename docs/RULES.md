@@ -104,6 +104,7 @@ Regras que o autor declarou **temporárias** e vão sair.
 | 1, 5 | Emenda (10-11) | **Teto geral do estoque:** nenhuma meta passa de 64 para bloco fabricado (bancada ou fornalha) nem de 256 para bloco cru, a não ser o que a obra aberta ainda pede (`StockCeiling`). Artesão sem tarefa ajuda a obra (`BuildHelper`) |
 | 7 | Emenda (10-11) | A árvore cortada longe do bosque não é replantada lá: a muda vai para o bosque perto do baú do lenhador, que cresce até o dobro (`VillageGrove.takesTheSapling`) |
 | 31 | Emenda (10-11) | Com nada maduro e nenhum canteiro vazio, o fazendeiro ara a terra **ao lado da roça existente**, com água a até 4 blocos, longe da rua e de obra, com semente nos baús (`FarmerTill`). Arar em qualquer lugar continua proibido |
+| 26 | Emenda (10-11) | **Divisão por material:** madeira → carpinteiro; pedra, barro, terracota, fornalha → pedreiro; metal, vidro, gelo, neve → fundidor; tecido e corante → pastor; papel, livro, farinha de osso, feno → fazendeiro (`CraftFamily`). Carpinteiro e fundidor guardam 8 de cada item das plantas (`ItemStock`); flores, grama, bambu, cana (fazendeiro) e gelo, neve (fundidor) têm coleta (`PlantPatch`) |
 | 29 | Emenda (10-11) | Aberta a escada, os ramais 1 a 3 abrem já e pulam a sala comum, que fica com o ramal zero (`Mine.skipTheSharedHall`) |
 
 **As emendas nasceram do mesmo defeito:** a conta e o construtor

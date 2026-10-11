@@ -11,6 +11,27 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.28] — cobertura de blocos por profissão (2026-10-11, JAR local, não jogado)
+
+Pedido do autor: todo bloco das estruturas da vila, e todo bloco que os produz, com
+ofício responsável. Análise e contagens: `docs/research/2026-10-11-cobertura-de-blocos.md`.
+
+### Mudado
+- As peças fabricadas vão ao ofício do material: madeira ao carpinteiro; pedra, barro,
+  terracota e fornalha ao pedreiro; metal, vidro, gelo e neve ao fundidor; lã colorida,
+  tapete, cama e corante ao pastor; papel, livro, farinha de osso e feno ao fazendeiro.
+  O carpinteiro tinha 103 dos 187 itens; agora tem 42.
+
+### Novo
+- Carpinteiro e fundidor guardam 8 de cada item das plantas da vila e dos ingredientes
+  deles, em rodízio, com a obra na frente.
+- O fazendeiro colhe flores, grama, samambaia, bambu e cana e replanta; o fundidor
+  recolhe gelo e neve.
+
+### Corrigido
+- O pedido nominal de peça não é mais encadeado como falta de recurso (o log mostrava
+  "chained CRAFT_WOOD_MATERIAL for COBBLESTONE" e o carpinteiro convertia tábua à toa).
+
 ## [0.3.27] — depois do playtest da 0.3.26 (2026-10-11, JAR local, não jogado)
 
 Playtest de 6 min (Spark `HGyazYR1VW`): TPS 20, mod 2,5%; a vila ficou 3 min presa numa

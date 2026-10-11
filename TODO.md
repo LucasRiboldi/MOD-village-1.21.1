@@ -8,6 +8,11 @@ Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
 ## 🔴 Autossuficiência 11-10 (`claude/autossuficiencia`; `docs/research/2026-10-11-autossuficiencia-e-ocio.md`)
 
+- [ ] **Playtest da 0.3.28 (cobertura de blocos):** `asks the carpenter to stock`/`smelter workshop`,
+      `stocked 8 of`; pastor e fazendeiro fazendo peça de bancada sem largar a coleta; `gathered N POPPY`
+      etc. Medir se o estoque de 8 gasta madeira antes da obra (`docs/research/2026-10-11-cobertura-de-blocos.md`).
+- [ ] 🟡 Itens fundidos sem `ResourceType` (terracota esmaltada) fora do estoque de 8; `coal` cai no
+      carpinteiro pela receita do bloco de carvão (inofensivo).
 - [ ] **Playtest longo da 0.3.27 (30–60 min)**; a 0.3.26 só teve 6 min (uma janela VC_TIME, caída na trava
       da vidraça). Aceite: Regra 51 ≤ 15% por ofício; `VC_SUPPLY_ERROR` perto de zero; nada acima de 64
       fabricado / 256 cru sem obra pedindo; areia pelo britador; `lends a hand` de carpinteiro e pedreiro;
