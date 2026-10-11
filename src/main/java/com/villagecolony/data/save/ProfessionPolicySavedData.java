@@ -12,6 +12,7 @@ import net.minecraft.world.PersistentState;
 
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 /** Políticas de profissão pertencentes ao Overworld, separadas das colônias. */
 public final class ProfessionPolicySavedData extends PersistentState {
@@ -88,13 +89,21 @@ public final class ProfessionPolicySavedData extends PersistentState {
         }
         List<ProfessionType> order = nbt.getList(ORDER, NbtElement.STRING_TYPE).stream()
                 .map(element -> parseType(element.asString())).flatMap(java.util.Optional::stream).toList();
-        try {
-            data.policies = new ProfessionPolicySet(read,
-                    order.isEmpty() ? ProfessionPolicySet.defaults().hiringOrder() : order);
-        } catch (IllegalArgumentException ignored) {
-            data.policies = ProfessionPolicySet.defaults();
-        }
+        // Ordem estragada volta ao padrão sem levar junto as regras de cada
+        // profissão, que o jogador configurou no Mod Menu — AUD-11.
+        data.policies = policySet(read, order)
+                .or(() -> policySet(read, ProfessionPolicySet.defaults().hiringOrder()))
+                .orElseGet(ProfessionPolicySet::defaults);
         return data;
+    }
+
+    private static java.util.Optional<ProfessionPolicySet> policySet(
+            Map<ProfessionType, ProfessionPolicy> policies, List<ProfessionType> order) {
+        try {
+            return java.util.Optional.of(new ProfessionPolicySet(policies, order));
+        } catch (IllegalArgumentException ignored) {
+            return java.util.Optional.empty();
+        }
     }
 
     private static java.util.Optional<ProfessionType> parseType(String value) {

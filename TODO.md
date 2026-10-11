@@ -24,7 +24,8 @@ Scripts: `scripts/audit/check-*.sh`.
 - [ ] 🟡 **AUD-08** `STATE.md` com 663 linhas (teto 150): arquivar seções fechadas de 02-10 a 08-10.
 - [ ] 🟡 **AUD-09** Ciclo raiz ↔ `fabric.*` por `VillageColonyMod` como localizador global.
 - [ ] 🟡 **AUD-10** 181 estáticos mutáveis; config estática não-final (`MineLease`, `TreeChoice`, `MinerDetours`, `FarmerWork`). A regra ArchUnit já existe congelada: esvaziar o congelado.
-- [ ] 🟡 **AUD-11** Testes de `ProfessionPolicyNetworking`/codec/SavedData; cobertura de `fabric.network` e `fabric.command`.
+- [ ] 🟡 **AUD-11** Parcial: codec, save da política e porta de permissão com teste (mutação conferida); `fabric.network`
+      0 → 42% (unitário) e 20 → 46% (bateria), abaixo dos 60%. Falta: receptores por lambda e `fabric.command` (vai com o AUD-19).
 - [ ] 🟡 **AUD-12** Avisar quando outro mod tirar a tarefa da colônia do `Brain`; `suggests: modmenu` e `breaks` no `fabric.mod.json`.
 - [ ] 🟡 **AUD-04** Ciclo p95 67 ms na 0.3.22, 27,7 ms na 0.3.23: medir de novo (≥ 20 amostras) antes de otimizar.
 - [ ] 🟡 **AUD-25** Diário de ações sem o motivo de `TASK_RELEASED` (grava só o estado).
