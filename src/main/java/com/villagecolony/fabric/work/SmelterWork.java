@@ -290,8 +290,10 @@ public final class SmelterWork {
         // conta é da colônia inteira e não depende do baú: sai uma vez por
         // cru, fora do laço dos baús. Dentro dele custava baús² leituras por
         // peça, 72% do tempo do mod no Spark de 11-10.
+        Optional<Colony> colony = VillageColonyMod.COLONIES.find(job.task.colonyId());
         List<Item> allowed = raws.stream()
-                .filter(raw -> mayStillSmelt(world, searched, raw, product))
+                .filter(raw -> mayStillSmelt(world, searched, raw, product,
+                        colony.map(open -> BuildReserve.buildNeedOf(open, raw)).orElse(0)))
                 .toList();
 
         for (ColonyPos chest : searched) {
@@ -356,13 +358,14 @@ public final class SmelterWork {
      * existir ou não conforme a ordem da varredura.
      */
     private static boolean mayStillSmelt(
-            ServerWorld world, List<ColonyPos> chests, Item raw, Item processed) {
+            ServerWorld world, List<ColonyPos> chests, Item raw, Item processed, int buildNeed) {
 
         int rawCount = ColonyChests.countIn(world, chests, raw);
 
         int madeCount = ColonyChests.countIn(world, chests, processed);
 
-        return StockRules.rawThatMayBeSmelted(rawCount, madeCount) > 0;
+        // E o que a obra aberta ainda vai pôr do cru fica fora da fornalha (P3b).
+        return Math.min(StockRules.rawThatMayBeSmelted(rawCount, madeCount), rawCount - buildNeed) > 0;
     }
 
     /**

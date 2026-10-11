@@ -59,6 +59,14 @@ class EquivalentPiecesTest {
     void aWorkstationHasNoEquivalentAndStillComesReadyMade() {
         assertEquals(List.of(), EquivalentPieces.familyOf("lectern"));
         assertEquals(List.of(), EquivalentPieces.familyOf("oak_stairs"));
-        assertEquals(List.of(), EquivalentPieces.familyOf("cobblestone"));
+    }
+
+    @Test
+    void plainCobblestoneTakesTheRocksTheMineBringsUp() {
+        // P3a (autossuficiência, 2026-10-11): o mineiro cava andesito, granito e
+        // diorito junto com o pedregulho; sem pedregulho no baú, a parede usa
+        // essas rochas em vez de a colônia criar pedregulho do nada.
+        assertEquals(List.of("andesite", "granite", "diorite"),
+                EquivalentPieces.familyOf("cobblestone"));
     }
 }

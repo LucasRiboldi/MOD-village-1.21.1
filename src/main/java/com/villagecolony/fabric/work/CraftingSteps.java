@@ -189,6 +189,14 @@ final class CraftingSteps {
             return Optional.of(false);
         }
 
+        Optional<Item> reserved = BuildReserve.takenFromTheBuild(world, colony.get(), chests, item.get());
+
+        if (reserved.isPresent()) {
+            CraftingWork.finish(job, workerId, "the open build still needs the " + reserved.get());
+
+            return Optional.of(false);
+        }
+
         if (!stockFor(world, colony.get(), workerId, item.get(), job.goalTarget)) {
             return Optional.empty();
         }
