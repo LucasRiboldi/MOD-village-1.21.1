@@ -138,8 +138,8 @@ public class FreeChestCountGameTest implements FabricGameTest {
 
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
 
-        housed(context, new BlockPos(1, 2, 2));
-        housed(context, new BlockPos(2, 2, 2));
+        VillagerEntity first = housed(context, new BlockPos(1, 2, 2));
+        VillagerEntity second = housed(context, new BlockPos(2, 2, 2));
 
         WorkerService workers = new WorkerService();
         StorageRegistry storages = new StorageRegistry();
@@ -156,15 +156,23 @@ public class FreeChestCountGameTest implements FabricGameTest {
         VillagerScanner.ScanResult result =
                 VillagerScanner.scan(world, colony, workers, storages);
 
+        // A varredura olha 64 blocos e a bateria roda testes ao mesmo tempo no
+        // mesmo mundo: só os aldeões e os baús desta arena contam aqui.
         context.assertTrue(
-                result.equippable().size() == 2,
+                result.equippable().contains(first.getUuid())
+                        && result.equippable().contains(second.getUuid()),
                 "os dois aldeões deviam ser candidatos, e vieram "
-                        + result.equippable().size());
+                        + result.equippable());
+
+        BlockPos bed = context.getAbsolutePos(BED);
+        long ours = result.freeChests().stream()
+                .filter(chest -> MinecraftTypeAdapter.toBlockPos(chest).isWithinDistance(bed, 8))
+                .count();
 
         context.assertTrue(
-                result.freeChests().size() == 1,
-                "a varredura contou " + result.freeChests().size()
-                        + " baús livres para um baú só — a colônia vai"
+                ours == 1,
+                "a varredura contou " + ours
+                        + " baús livres nesta arena para um baú só — a colônia vai"
                         + " dispensar dois trabalhadores para uma vaga");
 
         context.complete();
