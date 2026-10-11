@@ -10,11 +10,13 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.CropPatch;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -84,8 +86,9 @@ final class FarmerChores {
             // constante inventada. Os dois trabalhos gastam semente, e a
             // semente só sobra quando a colheita sobra: a roça cresce no
             // ritmo em que a lavoura paga por ela, e para de crescer
-            // quando o baú seca.
-            if (ChestWithdrawer.seedIn(world, storage.chestPosition()).isPresent()) {
+            // quando o baú seca. A semente vale de qualquer baú da colônia,
+            // o dele primeiro (seedChest).
+            if (seedChest(world, colonyId, storage.chestPosition()).isPresent()) {
                 found = field.emptyPlot();
                 chore = Chore.SOW;
             }
@@ -156,7 +159,8 @@ final class FarmerChores {
         }
 
         Optional<OwnFarm.Found> found = FarmOwners.farmOf(workerId).flatMap(farm -> OwnFarm.work(
-                world, farm, ChestWithdrawer.seedIn(world, storage.chestPosition()).isPresent()));
+                world, farm,
+                seedChest(world, job.task.colonyId(), storage.chestPosition()).isPresent()));
 
         if (found.isEmpty()) {
             job.ownFarmQuietUntil = world.getTime() + OwnFarm.QUIET_TICKS;
@@ -177,6 +181,25 @@ final class FarmerChores {
     }
 
     /**
+     * O baú com semente: o do fazendeiro primeiro, depois os da colônia pela
+     * distância. A semente que a colheita ou o {@code GroundPickup} deixou em
+     * outro baú da colônia também planta.
+     */
+    static Optional<ColonyPos> seedChest(ServerWorld world, UUID colonyId, ColonyPos own) {
+        if (ChestWithdrawer.seedIn(world, own).isPresent()) {
+            return Optional.of(own);
+        }
+
+        for (ColonyPos chest : ColonyChests.nearestFirst(world, colonyId, own)) {
+            if (ChestWithdrawer.seedIn(world, chest).isPresent()) {
+                return Optional.of(chest);
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /**
      * Planta a semente do baú no canteiro — 2026-09-05.
      *
      * <p><b>A semente sai antes de a muda entrar, e volta se não
@@ -186,10 +209,10 @@ final class FarmerChores {
     static void sow(
             ServerWorld world, VillagerEntity villager, Job job, WorkerStorage storage) {
 
-        Optional<Item> seed = ChestWithdrawer.seedIn(world, storage.chestPosition());
+        Optional<ColonyPos> chest = seedChest(world, job.task.colonyId(), storage.chestPosition());
+        Optional<Item> seed = chest.flatMap(at -> ChestWithdrawer.seedIn(world, at));
 
-        if (seed.isEmpty()
-                || !ChestWithdrawer.takeSeed(world, storage.chestPosition(), seed.get())) {
+        if (seed.isEmpty() || !ChestWithdrawer.takeSeed(world, chest.get(), seed.get())) {
 
             FarmerWork.release(villager.getUuid(), job);
 
@@ -206,7 +229,7 @@ final class FarmerChores {
                     job.target.toShortString());
             WorkerStrikes.worked(villager.getUuid(), job.task);
         } else {
-            ChestDepositor.deposit(world, storage.chestPosition(), seed.get(), 1);
+            ChestDepositor.deposit(world, chest.get(), seed.get(), 1);
         }
 
         FarmerWork.release(villager.getUuid(), job);

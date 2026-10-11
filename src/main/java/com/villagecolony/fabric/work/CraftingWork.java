@@ -451,7 +451,7 @@ public final class CraftingWork {
 
         job.task.complete();
         WorkerStrikes.worked(workerId, job.task);
-        TaskChain.next(job.task);
+        TaskChain.nextAfter(job.task, job.crafted);
 
         WorkTargets.clear(workerId);
 

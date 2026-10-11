@@ -16,7 +16,6 @@ import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.fabric.integration.ChestDepositor;
-import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.CropPatch;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -340,7 +339,7 @@ public final class FarmerWork {
         return switch (job.chore) {
             case HARVEST -> CropPatch.isRipe(world.getBlockState(job.target));
             case SOW -> CropPatch.isEmptyPlot(world, job.target)
-                    && ChestWithdrawer.seedIn(world, storage.chestPosition()).isPresent();
+                    && FarmerChores.seedChest(world, job.task.colonyId(), storage.chestPosition()).isPresent();
         };
     }
 

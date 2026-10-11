@@ -97,4 +97,23 @@ class TaskChainTest {
 
         assertEquals(0, VillageColonyMod.TASKS.availableFor(COLONY).size());
     }
+
+    @Test
+    void aRequestThatEndedWithNothingMadeIsNotChained() {
+        LastShortage.measured(COLONY, Set.of(ResourceType.OAK_LOG));
+
+        TaskChain.nextAfter(doneWood(), 0);
+
+        assertEquals(0, waitingWood(),
+                "o pedido parou sem fazer nada: reabrir o mesmo repetiria o mesmo bloqueio");
+    }
+
+    @Test
+    void aRequestThatMadeSomethingIsChainedAsBefore() {
+        LastShortage.measured(COLONY, Set.of(ResourceType.OAK_LOG));
+
+        TaskChain.nextAfter(doneWood(), 4);
+
+        assertEquals(1, waitingWood());
+    }
 }

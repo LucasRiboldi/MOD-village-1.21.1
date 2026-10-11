@@ -286,19 +286,16 @@ public final class SmelterWork {
             ServerWorld world, List<ColonyPos> searched, List<Item> raws, Item product,
             ColonyPos output, Job job, UUID workerId) {
 
-        for (ColonyPos chest : searched) {
-            for (Item raw : raws) {
-                // <b>Metade do cru fica para o pedreiro</b> — 2026-09-19,
-                // por simetria com a reserva de tronco de 09-05.
-                //
-                // A sessão de 17:15 parou 39 vezes esperando
-                // cut_sandstone com <b>139 arenitos LISOS e zero cru</b>:
-                // o fundidor assou o estoque inteiro, e o arenito
-                // cortado sai do cru. Ver StockRules.rawToKeep.
-                if (!mayStillSmelt(world, searched, raw, product)) {
-                    continue;
-                }
+        // <b>Metade do cru fica para o pedreiro</b> (StockRules.rawToKeep). A
+        // conta é da colônia inteira e não depende do baú: sai uma vez por
+        // cru, fora do laço dos baús. Dentro dele custava baús² leituras por
+        // peça, 72% do tempo do mod no Spark de 11-10.
+        List<Item> allowed = raws.stream()
+                .filter(raw -> mayStillSmelt(world, searched, raw, product))
+                .toList();
 
+        for (ColonyPos chest : searched) {
+            for (Item raw : allowed) {
                 if (ChestWithdrawer.withdraw(world, chest, raw, 1) == 0) {
                     continue;
                 }

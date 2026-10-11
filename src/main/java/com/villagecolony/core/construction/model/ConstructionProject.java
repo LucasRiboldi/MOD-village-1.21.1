@@ -268,26 +268,21 @@ public final class ConstructionProject {
         Map<ResourceId, Integer> tally = new LinkedHashMap<>();
 
         for (BlueprintBlock block : remaining) {
-            if (deferred.containsKey(worldPositionOf(block))) {
+            DeferredPiece aside = deferred.get(worldPositionOf(block));
+
+            // A peça adiada por apoio ou alcance não gera demanda (ADR-023). A
+            // que espera material gera: é ela que a colônia precisa produzir, e
+            // sem ela a falta de vidraça zerava a meta de vidro e de areia.
+            if (aside != null && aside.reason() != SkipReason.WAITING_MATERIAL) {
                 continue;
             }
 
             tally.merge(block.block(), 1, Integer::sum);
         }
 
-        // <b>E a ordem da planta chega inteira a quem pergunta</b> —
-        // 2026-09-09. Era {@code Map.copyOf}, que devolve mapa imutável
-        // <b>sem ordem</b> — e embaralhado a cada execução da máquina
-        // virtual. O {@code LinkedHashMap} acima existia para nada: a
-        // última linha jogava fora a ordem que ele guardava.
-        //
-        // Quem pagou foi o fabricante. {@code CraftingWork} percorre
-        // este mapa e para no primeiro material que consegue produzir,
-        // então a ordem <b>é</b> a prioridade dele — e ela era sorteada.
-        // A sessão de 09-09 mediu o preço: treze lotes de escada, sete
-        // de tábua, e <b>zero troncos descascados</b> com 59 toras no
-        // baú, porque descascar nunca ganhava a vez. As dezesseis peças
-        // riscadas pela barreira naquela casa saíram daqui.
+        // A ordem da planta é contrato: o CraftingWork para no primeiro material
+        // que consegue produzir, então ela é a prioridade dele. Map.copyOf a
+        // embaralhava a cada execução (sessão de 2026-09-09).
         return Collections.unmodifiableMap(tally);
     }
 
