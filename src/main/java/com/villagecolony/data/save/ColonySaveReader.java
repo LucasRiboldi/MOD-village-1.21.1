@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A leitura do save, peça por peça: obras, construções, trabalhadores e
@@ -44,6 +46,8 @@ import java.util.UUID;
  * mudança.
  */
 final class ColonySaveReader {
+
+    private static final Logger LOG = LoggerFactory.getLogger("villagecolony");
 
     private ColonySaveReader() {
     }
@@ -67,36 +71,18 @@ final class ColonySaveReader {
             knownColonies.add(colony.id());
         }
 
-        data.mines.addAll(MineSave.read(nbt, knownColonies));
-        data.roads.addAll(RoadIndexSave.read(nbt, knownColonies));
-        data.sweeps.addAll(SweepCursorSave.read(nbt, knownColonies));
-        data.activityTraces.putAll(ActivityTraceSave.read(nbt, knownColonies));
+        readSection("mines", () -> data.mines.addAll(MineSave.read(nbt, knownColonies)));
+        readSection("roads", () -> data.roads.addAll(RoadIndexSave.read(nbt, knownColonies)));
+        readSection("sweeps", () -> data.sweeps.addAll(SweepCursorSave.read(nbt, knownColonies)));
+        readSection("activityTraces",
+                () -> data.activityTraces.putAll(ActivityTraceSave.read(nbt, knownColonies)));
 
         NbtList projectList = nbt.getList(PROJECTS, NbtElement.COMPOUND_TYPE);
 
         for (int i = 0; i < projectList.size(); i++) {
             NbtCompound entry = projectList.getCompound(i);
 
-            if (!entry.containsUuid(ID) || !entry.containsUuid(COLONY_ID)) {
-                continue;
-            }
-
-            UUID colonyId = entry.getUuid(COLONY_ID);
-
-            if (!knownColonies.contains(colonyId)) {
-                continue;
-            }
-
-            data.projects.add(new ConstructionService.Pending(
-                    entry.getUuid(ID),
-                    colonyId,
-                    ResourceId.parse(entry.getString(BLUEPRINT)),
-                    new ColonyPos(
-                            entry.getInt(ORIGIN_X),
-                            entry.getInt(ORIGIN_Y),
-                            entry.getInt(ORIGIN_Z)),
-                    readConstructionState(entry),
-                    readDeferredPieces(entry)));
+            readEntry(PROJECTS, i, () -> readProject(entry, knownColonies, data));
         }
 
         NbtList buildingList = nbt.getList(BUILDINGS, NbtElement.COMPOUND_TYPE);
@@ -104,25 +90,76 @@ final class ColonySaveReader {
         for (int i = 0; i < buildingList.size(); i++) {
             NbtCompound entry = buildingList.getCompound(i);
 
-            if (!entry.containsUuid(ID) || !entry.containsUuid(COLONY_ID)) {
-                continue;
-            }
+            readEntry(BUILDINGS, i, () -> readBuilding(entry, knownColonies, data));
+        }
+    }
 
-            UUID colonyId = entry.getUuid(COLONY_ID);
+    private static void readProject(NbtCompound entry, Set<UUID> knownColonies, ColonySavedData data) {
+        if (!entry.containsUuid(ID) || !entry.containsUuid(COLONY_ID)) {
+            return;
+        }
 
-            if (!knownColonies.contains(colonyId)) {
-                continue;
-            }
+        UUID colonyId = entry.getUuid(COLONY_ID);
 
-            ResourceId blueprint = ResourceId.parse(entry.getString(BLUEPRINT));
+        if (!knownColonies.contains(colonyId)) {
+            return;
+        }
 
-            data.buildings.add(new Building(
-                    entry.getUuid(ID),
-                    colonyId,
-                    blueprint,
-                    new ColonyPos(entry.getInt(MIN_X), entry.getInt(MIN_Y), entry.getInt(MIN_Z)),
-                    new ColonyPos(entry.getInt(MAX_X), entry.getInt(MAX_Y), entry.getInt(MAX_Z)),
-                    !entry.contains(FINISHED) || entry.getBoolean(FINISHED)));
+        data.projects.add(new ConstructionService.Pending(
+                entry.getUuid(ID),
+                colonyId,
+                ResourceId.parse(entry.getString(BLUEPRINT)),
+                new ColonyPos(
+                        entry.getInt(ORIGIN_X),
+                        entry.getInt(ORIGIN_Y),
+                        entry.getInt(ORIGIN_Z)),
+                readConstructionState(entry),
+                readDeferredPieces(entry)));
+    }
+
+    private static void readBuilding(NbtCompound entry, Set<UUID> knownColonies, ColonySavedData data) {
+        if (!entry.containsUuid(ID) || !entry.containsUuid(COLONY_ID)) {
+            return;
+        }
+
+        UUID colonyId = entry.getUuid(COLONY_ID);
+
+        if (!knownColonies.contains(colonyId)) {
+            return;
+        }
+
+        data.buildings.add(new Building(
+                entry.getUuid(ID),
+                colonyId,
+                ResourceId.parse(entry.getString(BLUEPRINT)),
+                new ColonyPos(entry.getInt(MIN_X), entry.getInt(MIN_Y), entry.getInt(MIN_Z)),
+                new ColonyPos(entry.getInt(MAX_X), entry.getInt(MAX_Y), entry.getInt(MAX_Z)),
+                !entry.contains(FINISHED) || entry.getBoolean(FINISHED)));
+    }
+
+    /**
+     * Uma entrada malformada é descartada com aviso e não derruba o save — AUD-02.
+     *
+     * <p>Uma exceção que escapasse daqui não ficaria nesta entrada: o
+     * {@code PersistentStateManager} do Minecraft registra "Error loading saved
+     * data", cria um estado vazio e o grava por cima do arquivo no próximo
+     * salvamento, e todas as colônias somem em silêncio. É o princípio de
+     * {@link #readState} e {@link #readProfession}, estendido a qualquer campo.
+     */
+    static void readEntry(String list, int index, Runnable read) {
+        try {
+            read.run();
+        } catch (RuntimeException e) {
+            LOG.warn("Village Colony save: skipped {} entry {} — {}", list, index, e.toString());
+        }
+    }
+
+    /** O mesmo para uma seção inteira lida por outro leitor (mina, ruas, varredura, traço). */
+    static void readSection(String section, Runnable read) {
+        try {
+            read.run();
+        } catch (RuntimeException e) {
+            LOG.warn("Village Colony save: skipped the {} section — {}", section, e.toString());
         }
     }
 
@@ -153,14 +190,14 @@ final class ColonySaveReader {
                 continue;
             }
 
-            pieces.add(new ConstructionProject.DeferredPiece(
+            readEntry(DEFERRED_PIECES, i, () -> pieces.add(new ConstructionProject.DeferredPiece(
                     new ColonyPos(
                             entry.getInt(POSITION_X),
                             entry.getInt(POSITION_Y),
                             entry.getInt(POSITION_Z)),
                     ResourceId.parse(entry.getString(DEFERRED_BLOCK)),
                     reason,
-                    fingerprint));
+                    fingerprint)));
         }
 
         return pieces;
@@ -203,27 +240,31 @@ final class ColonySaveReader {
         for (int i = 0; i < list.size(); i++) {
             NbtCompound entry = list.getCompound(i);
 
-            if (!entry.containsUuid(ID)) {
-                continue;
-            }
-
-            UUID id = entry.getUuid(ID);
-
-            ColonyPos center = new ColonyPos(
-                    entry.getInt(CENTER_X),
-                    entry.getInt(CENTER_Y),
-                    entry.getInt(CENTER_Z));
-
-            Colony colony = Colony.restore(id, center, ColonySaveReader.readState(entry), ColonyLifecycle.DORMANT);
-
-            // Save antigo não tem o campo; getInt devolve 0, que apenas
-            // faz a primeira detecção da sessão valer. Autocorrige.
-            colony.observe(center, entry.getInt(OBSERVED_BEDS));
-            colony.markForestPopulationMilestone(entry.getInt(FOREST_POPULATION_MILESTONE));
-            VillageBoundsSave.read(entry, colony);
-
-            data.colonies.add(colony);
+            readEntry(COLONIES, i, () -> readColony(entry, data));
         }
+    }
+
+    private static void readColony(NbtCompound entry, ColonySavedData data) {
+        if (!entry.containsUuid(ID)) {
+            return;
+        }
+
+        UUID id = entry.getUuid(ID);
+
+        ColonyPos center = new ColonyPos(
+                entry.getInt(CENTER_X),
+                entry.getInt(CENTER_Y),
+                entry.getInt(CENTER_Z));
+
+        Colony colony = Colony.restore(id, center, ColonySaveReader.readState(entry), ColonyLifecycle.DORMANT);
+
+        // Save antigo não tem o campo; getInt devolve 0, que apenas
+        // faz a primeira detecção da sessão valer. Autocorrige.
+        colony.observe(center, entry.getInt(OBSERVED_BEDS));
+        colony.markForestPopulationMilestone(entry.getInt(FOREST_POPULATION_MILESTONE));
+        VillageBoundsSave.read(entry, colony);
+
+        data.colonies.add(colony);
     }
 
     /**
@@ -251,21 +292,25 @@ final class ColonySaveReader {
         for (int i = 0; i < list.size(); i++) {
             NbtCompound entry = list.getCompound(i);
 
-            if (!entry.containsUuid(VILLAGER_ID) || !entry.containsUuid(COLONY_ID)) {
-                continue;
-            }
-
-            UUID colonyId = entry.getUuid(COLONY_ID);
-
-            if (!knownColonies.contains(colonyId)) {
-                continue;
-            }
-
-            data.workers.add(Worker.restore(
-                    entry.getUuid(VILLAGER_ID),
-                    colonyId,
-                    readProfession(entry)));
+            readEntry(WORKERS, i, () -> readWorker(entry, knownColonies, data));
         }
+    }
+
+    private static void readWorker(NbtCompound entry, Set<UUID> knownColonies, ColonySavedData data) {
+        if (!entry.containsUuid(VILLAGER_ID) || !entry.containsUuid(COLONY_ID)) {
+            return;
+        }
+
+        UUID colonyId = entry.getUuid(COLONY_ID);
+
+        if (!knownColonies.contains(colonyId)) {
+            return;
+        }
+
+        data.workers.add(Worker.restore(
+                entry.getUuid(VILLAGER_ID),
+                colonyId,
+                readProfession(entry)));
     }
 
     /**

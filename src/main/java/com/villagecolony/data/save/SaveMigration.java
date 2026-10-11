@@ -62,7 +62,9 @@ public final class SaveMigration {
     public static NbtCompound migrate(NbtCompound source) {
         NbtCompound target = source.copy();
 
-        int from = target.getInt(SAVE_VERSION);
+        // Versão negativa só vem de save editado ou corrompido: é tratada como
+        // o save mais antigo, e não derruba a leitura — AUD-02.
+        int from = Math.max(0, target.getInt(SAVE_VERSION));
 
         for (int v = from; v < CURRENT; v++) {
             apply(v, target);
@@ -73,6 +75,16 @@ public final class SaveMigration {
         }
 
         return target;
+    }
+
+    /**
+     * Grava a versão atual no save que vai para o disco — AUD-03.
+     *
+     * <p>{@link #migrate} só anota a versão na cópia que os leitores usam; sem
+     * esta gravação, todo carregamento voltaria a parecer v0.
+     */
+    static void stamp(NbtCompound nbt) {
+        nbt.putInt(SAVE_VERSION, CURRENT);
     }
 
     /** Aplica a transformação que leva da versão {@code fromVersion} à seguinte. */

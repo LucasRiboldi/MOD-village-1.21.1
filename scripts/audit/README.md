@@ -28,6 +28,7 @@ Windows e em Linux. Exigem JDK 21: `JAVA_HOME`, que por padrão aponta para
 
 Testes da auditoria que **não** fazem parte da bateria: o
 `check-nbt-migration.sh` os copia para `src/test/java/com/villagecolony/audit/`,
-roda e remove a pasta na saída (`trap`), mesmo em falha. Em 2026-10-10, o
-`NbtFuzzProbeTest` falhou de propósito em 6 de 12 casos (AUD-02). Quando o leitor
-do save for corrigido, a sonda deve ir para `src/test` como teste comum.
+roda e remove a pasta na saída (`trap`), mesmo em falha. Hoje há só as
+propriedades do planejador de desvio (`PathPlannerProperties`). A sonda de NBT
+malformado, que falhava em 6 de 12 casos em 10-10, virou o `ColonySaveFuzzTest`
+da bateria quando o AUD-02 foi corrigido.

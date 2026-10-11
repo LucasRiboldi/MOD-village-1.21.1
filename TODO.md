@@ -14,9 +14,9 @@ Scripts: `scripts/audit/check-*.sh`.
 
 - [ ] 🔴 **AUD-01** Regra 51 reprovada nas duas sessões de 10-10 (0.3.23: SMELTER 91%, BUILDER 92%, MINER 17%;
       fundidor 311/311 soltas). Raiz: mineiro sem boca de mina (`no mine mouth`, 50×). Roteiro: `docs/technical/Roteiro-Correcoes-2026-10-10.md`.
-- [ ] 🟠 **AUD-02** Save malformado apaga todas as colônias (o Vanilla cria estado vazio e o grava):
-      `try/catch` por entrada em `ColonySaveReader`; promover `scripts/audit/probes/NbtFuzzProbeTest`.
-- [ ] 🟠 **AUD-03** Gravar `saveVersion` no `ColonySavedData.writeNbt` (hoje a v0→v1 roda a cada carga).
+- [x] 🟠 **AUD-02** Save malformado não apaga mais as colônias: entrada ruim é descartada com aviso
+      (`ColonySaveReader.readEntry`), versão negativa vira 0, `toBlock` não lança. `ColonySaveFuzzTest` 13/13.
+- [x] 🟠 **AUD-03** `saveVersion` gravado no save (`SaveMigration.stamp`, `11bd4799`).
 - [x] 🟠 **AUD-05** `codex/fluxo-grafo-waypoints` integrada (ADR-041 #2) na `claude/integra-fluxo-grafo-waypoints`,
       0.3.24: 1402 unitários, 696/696 GameTests × 3, PIT 85,56%. Falta: PR na `main` e playtest.
 - [ ] 🟠 **AUD-06** Asserções em `WorkDemandTest` para `constructionMaterials` (10 mutantes sobreviventes; PIT com folga de 13).
