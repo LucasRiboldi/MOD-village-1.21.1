@@ -272,7 +272,7 @@ coluna "em jogo" é a que a régua cobra.
 | AUD-21 | ⬜ | — |
 | AUD-25 | ✅ motivo no `TASK_RELEASED`; `action_report` agrupa por motivo; mutação conferida | ⬜ |
 | 2.2 mineiro | ⬜ | ⬜ |
-| 2.3 IdleYield | ⬜ | ⬜ |
+| 2.3 IdleYield | ✅ regra abrangente (`WorkTime.idleRuleShare`); log de saída só quando o aldeão sai (mineiro nunca sai); mutação conferida | ⬜ |
 | 2.4 fundidor | ⬜ (código na linha Codex) | ⬜ |
 | AUD-01 aceite | ⬜ | ⬜ 0.3.22 e 0.3.23 reprovadas |
 | AUD-04 | ⬜ medir | ⬜ 67 ms (0.3.22) · 27,7 ms (0.3.23) |

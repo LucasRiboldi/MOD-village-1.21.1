@@ -50,4 +50,37 @@ public class IdleYieldGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /** Bloqueado também conta: a regra do ócio é a abrangente — ADR-041 #3. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_hours", tickLimit = 20)
+    public void aBlockedTradeAlsoGivesUpOneWorker(TestContext context) {
+        ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(1, 1, 1));
+        UUID colony = fixture.colony().id();
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+
+        try {
+            fixture.owning(first).owning(second);
+            VillageColonyMod.WORKERS.register(first, colony).assign(ProfessionType.SMELTER);
+            VillageColonyMod.WORKERS.register(second, colony).assign(ProfessionType.SMELTER);
+
+            EnumMap<WorkTime.State, Integer> blocked = new EnumMap<>(WorkTime.State.class);
+            blocked.put(WorkTime.State.BLOCKED, 100);
+
+            for (int window = 0; window < IdleYield.WINDOWS; window++) {
+                WorkTime.yieldIdleTrades(colony, Map.of("SMELTER", blocked));
+            }
+
+            List<Worker> stayed = VillageColonyMod.WORKERS.ofColony(colony).stream()
+                    .filter(worker -> worker.profession().filter(ProfessionType.SMELTER::equals).isPresent())
+                    .toList();
+
+            context.assertTrue(stayed.size() == 1,
+                    "duas janelas 100% bloqueadas e o ofício ficou com " + stayed.size() + " fundidores");
+        } finally {
+            fixture.cleanUp();
+        }
+
+        context.complete();
+    }
 }

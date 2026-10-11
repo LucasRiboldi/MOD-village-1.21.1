@@ -40,5 +40,5 @@ Não respondido, e portanto não feito: apagar as 7 branches já contidas na `ma
 |---|---|---|---|
 | 1 | `c5e80783` | auditoria e roteiro commitados; PR #20 | 1398 unitários, 690/690 × 3 |
 | 2 | branch `claude/integra-fluxo-grafo-waypoints` | merge de três vias; 16 conflitos resolvidos e 3 defeitos silenciosos do merge corrigidos (STATE, 10-10 noite) | 1402 unitários, 696/696 GameTests × 3, PIT 85,56% |
-| 3 | — | — | — |
+| 3 | branch `claude/correcoes-fase2-cadeia` | `IdleYield` recebe ocioso + bloqueado + encalhado (`WorkTime.idleRuleShare`) | `WorkTimeTest`, `IdleYieldGameTest.aBlockedTradeAlsoGivesUpOneWorker`; 700/700 GameTests |
 | 4 | — | — | — |
