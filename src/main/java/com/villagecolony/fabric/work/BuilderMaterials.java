@@ -93,14 +93,14 @@ public final class BuilderMaterials {
     static Optional<Item> takeMaterial(
             ServerWorld world, ConstructionProject project, Block wanted) {
 
-        for (Item candidate : MaterialChoice.forBlock(wanted)) {
+        for (Item candidate : WindowEquivalent.choicesFor(world, project, wanted)) {
             if (ColonySupply.take(world, project.colonyId(), project.origin(), candidate)) {
                 return Optional.of(candidate);
             }
         }
 
-        if (ensureConstructionMaterial(world, project, MaterialChoice.forBlock(wanted))) {
-            for (Item candidate : MaterialChoice.forBlock(wanted)) {
+        if (ensureConstructionMaterial(world, project, WindowEquivalent.choicesFor(world, project, wanted))) {
+            for (Item candidate : WindowEquivalent.choicesFor(world, project, wanted)) {
                 if (ColonySupply.take(world, project.colonyId(), project.origin(), candidate)) {
                     return Optional.of(candidate);
                 }
@@ -152,7 +152,7 @@ public final class BuilderMaterials {
         // A mesma lista de takeMaterial, e por obrigação: uma pergunta
         // que dissesse "tem" e uma retirada que não achasse poriam a obra
         // a acordar e voltar a dormir todo ciclo.
-        for (Item candidate : MaterialChoice.forBlock(material.get())) {
+        for (Item candidate : WindowEquivalent.choicesFor(world, project, material.get())) {
             if (ColonySupply.canProvide(
                     world, project.colonyId(), project.origin(), candidate)) {
 
@@ -165,7 +165,7 @@ public final class BuilderMaterials {
         // O pedido da próxima peça fica registrado com o motivo — ADR-035 §3.
         // Só aqui: o prepareAhead pergunta por peças futuras e não pode
         // sobrescrever o que a obra espera agora.
-        Supply supply = supply(world, project, MaterialChoice.forBlock(material.get()));
+        Supply supply = supply(world, project, WindowEquivalent.choicesFor(world, project, material.get()));
         MaterialRequests.record(project.id(), piece, supply.state(), supply.source(), world.getTime());
 
         return supply.state() == State.DELIVERED;
@@ -174,7 +174,7 @@ public final class BuilderMaterials {
     /** Se algum baú da colônia já tem o material desta peça — só pergunta, não tira. */
     static boolean isInTheChests(ServerWorld world, ConstructionProject project, ResourceId piece) {
         return MinecraftTypeAdapter.toBlock(piece)
-                .map(block -> MaterialChoice.forBlock(block).stream().anyMatch(item ->
+                .map(block -> WindowEquivalent.choicesFor(world, project, block).stream().anyMatch(item ->
                         ColonySupply.canProvide(world, project.colonyId(), project.origin(), item)))
                 .orElse(false);
     }
@@ -204,7 +204,7 @@ public final class BuilderMaterials {
                 continue;
             }
 
-            List<Item> choices = MaterialChoice.forBlock(block.get());
+            List<Item> choices = WindowEquivalent.choicesFor(world, project, block.get());
 
             if (choices.stream().anyMatch(item ->
                     ColonySupply.canProvide(world, project.colonyId(), project.origin(), item))) {

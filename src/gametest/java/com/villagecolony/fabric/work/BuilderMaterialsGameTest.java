@@ -251,12 +251,13 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
     }
 
     /**
-     * O pedido mostra a sequência real de uma peça sem rota — ADR-035 §3: conta
-     * as tentativas e, na quarta (ADR-036 item 6), o vidro vai ao baú do carpinteiro e a
-     * vidraça passa a esperar o artesão.
+     * Vidraça sem praia e sem britador — P2d, 2026-10-11 (substitui a regra de
+     * ADR-036 item 6 para a vidraça): o vidro não tem rota, a janela vira cerca
+     * de madeira, que o carpinteiro faz. O pedido segue pela profissão do começo
+     * ao fim, e o vidro não aparece no baú.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
-    public void aPaneWithoutABeachShowsTheAttemptsAndThenTheCraftsman(TestContext context) {
+    public void aPaneWithoutABeachAsksTheCarpenterForAFence(TestContext context) {
         BlockPos far = context.getAbsolutePos(new BlockPos(2, 2, 2)).add(-3_000, 0, -3_000);
         Setup setup = setUp(context, far, Items.GLASS_PANE);
 
@@ -277,11 +278,11 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
             MaterialRequest fourth = MaterialRequests.of(setup.project().id()).orElse(null);
 
             context.assertTrue(first != null && first.state() == MaterialRequest.State.RESOLVING
-                            && first.source() == MaterialRequest.Source.STOCKED,
-                    "na primeira falta a vidraça devia estar contando tentativas: " + first);
+                            && first.source() == MaterialRequest.Source.PROFESSION,
+                    "sem rota de vidro a janela devia pedir a cerca ao carpinteiro: " + first);
             context.assertTrue(fourth != null && fourth.state() == MaterialRequest.State.RESOLVING
-                            && fourth.source() == MaterialRequest.Source.CRAFTSMAN,
-                    "na quarta a vidraça devia esperar o artesão: " + fourth);
+                            && fourth.source() == MaterialRequest.Source.PROFESSION,
+                    "as quatro tentativas de vidraça não podem criá-la do nada: " + fourth);
         } finally {
             setup.cleanUp();
         }

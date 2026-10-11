@@ -1,7 +1,10 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.task.model.Task;
+import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.Profession;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.service.ProfessionRegistry;
@@ -38,6 +41,16 @@ final class LocateFallback {
      */
     static boolean afterEmptySearch(ServerWorld world, Task task, int empty) {
         if (empty < ATTEMPTS) {
+            return false;
+        }
+
+        // A areia tem rota de produção — o britador do pedreiro (P2c). Enquanto
+        // houver pedreiro e pedra para moer, ela não aparece do nada.
+        if (task.targetResource() == ResourceType.SAND
+                && WorkAssignment.countCapableOf(task.colonyId(),
+                        TaskType.CRAFT_STONE_MATERIAL.required(), VillageColonyMod.WORKERS) > 0
+                && VillageColonyMod.COLONIES.find(task.colonyId())
+                        .map(colony -> Crusher.canCrush(world, colony)).orElse(false)) {
             return false;
         }
 

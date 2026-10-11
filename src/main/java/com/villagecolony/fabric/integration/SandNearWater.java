@@ -2,12 +2,10 @@ package com.villagecolony.fabric.integration;
 
 import com.villagecolony.core.type.ServerMemory;
 import net.minecraft.block.BlockState;
-import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.registry.tag.FluidTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.world.Heightmap;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -72,36 +70,19 @@ public final class SandNearWater {
                     continue;
                 }
 
-                BlockPos surface = surfaceAt(world, x, z);
-
-                if (surface != null
-                        && world.getBlockState(surface).isIn(BlockTags.SAND)
-                        && besideWater(world, surface)) {
+                // A mesma sonda da busca (SandPatch: exposta, fora da Regra 3, na
+                // janela de altura da vila) — P2a, 2026-10-11. Com sondas
+                // diferentes a rota existia só no papel: esta via areia que a
+                // busca recusava, e a vila esperava vidro que ninguém trazia.
+                if (SandPatch.in(world, new BlockPos(x, center.getY(), z), center.getY())
+                        .filter(sand -> besideWater(world, sand))
+                        .isPresent()) {
                     return true;
                 }
             }
         }
 
         return false;
-    }
-
-    /** Quantos blocos descer do topo, passando por ar, planta e barreira. */
-    private static final int LOOK_DOWN = 12;
-
-    /** O primeiro bloco de verdade da coluna, descendo do topo. */
-    private static BlockPos surfaceAt(ServerWorld world, int x, int z) {
-        int top = world.getTopY(Heightmap.Type.WORLD_SURFACE, x, z) - 1;
-
-        for (int y = top; y > top - LOOK_DOWN; y--) {
-            BlockPos at = new BlockPos(x, y, z);
-            BlockState state = world.getBlockState(at);
-
-            if (!LotGround.isNothing(state) && !state.isOf(net.minecraft.block.Blocks.BARRIER)) {
-                return at;
-            }
-        }
-
-        return null;
     }
 
     /** Água ao lado da areia, no mesmo nível ou um abaixo. */

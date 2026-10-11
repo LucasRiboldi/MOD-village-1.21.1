@@ -377,6 +377,9 @@ final class ColonyCycleRunner {
         // não pode gastar o prazo nem materializar recurso cedo demais. Regra 40, ADR-040.
         ConstructionSupplyDispatches.renewForCycle(overworld, colony);
 
+        // Areia sem natureza ao alcance: o pedreiro mói pedra (P2c).
+        com.villagecolony.fabric.work.Crusher.askTheMason(overworld, colony);
+
         // Sem o `if (assigned > 0)` que estava aqui. A linha calava
         // exatamente quando havia algo a dizer: distribuição parada é
         // `assigned == 0`, e era então que a contagem de tarefas abertas

@@ -19,6 +19,7 @@ import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
+import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
@@ -373,6 +374,11 @@ public final class CraftingWork {
         }
 
         job.progress = 0;
+
+        // O pedido de areia ao pedreiro é o britador — P2c, 2026-10-11.
+        if (job.task.targetResource() == ResourceType.SAND) {
+            return Crusher.step(world, job, villager.getUuid(), storage.chestPosition());
+        }
 
         // O que a obra pede vem primeiro — 2026-08-20. Enquanto o
         // fabricante só sabia fazer tábua, a casa parava em qualquer

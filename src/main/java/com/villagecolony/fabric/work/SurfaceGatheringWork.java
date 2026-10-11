@@ -100,7 +100,8 @@ public final class SurfaceGatheringWork {
                 }
 
                 VillageSpiralSweep.forget(worker);
-                Direction sector = FarthestVillageSector.farthestLoadedSector(world, center, colony.id());
+                Direction sector = EmptySweeps.turnedFrom(FarthestVillageSector.farthestLoadedSector(
+                        world, center, colony.id()), colony.id(), task.targetResource());
                 return new Job(task, center, sector);
             });
             open++;

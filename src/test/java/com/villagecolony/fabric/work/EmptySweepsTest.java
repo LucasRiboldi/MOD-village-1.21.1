@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.type.ResourceType;
+import net.minecraft.util.math.Direction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -57,5 +58,24 @@ class EmptySweepsTest {
         assertEquals(1, EmptySweeps.foundNothing(COLONY, ResourceType.SAND, 20_000), "e a contagem recomeça");
 
         assertFalse(EmptySweeps.isWaiting(COLONY, ResourceType.SAND, 21_200), "e a próxima volta ao primeiro castigo");
+    }
+
+    @Test
+    void eachEmptySweepTurnsTheSearchToTheNextSide() {
+        assertEquals(Direction.NORTH, EmptySweeps.turnedFrom(Direction.NORTH, COLONY, ResourceType.SAND),
+                "sem varredura vazia, a busca fica no setor mais distante");
+
+        EmptySweeps.foundNothing(COLONY, ResourceType.SAND, 0);
+        assertEquals(Direction.EAST, EmptySweeps.turnedFrom(Direction.NORTH, COLONY, ResourceType.SAND));
+        assertTrue(EmptySweeps.sweptEmpty(COLONY, ResourceType.SAND));
+
+        EmptySweeps.foundNothing(COLONY, ResourceType.SAND, 2_000);
+        EmptySweeps.foundNothing(COLONY, ResourceType.SAND, 5_000);
+        assertEquals(Direction.WEST, EmptySweeps.turnedFrom(Direction.NORTH, COLONY, ResourceType.SAND),
+                "a terceira vazia leva ao quarto lado da vila");
+
+        EmptySweeps.found(COLONY, ResourceType.SAND);
+        assertEquals(Direction.NORTH, EmptySweeps.turnedFrom(Direction.NORTH, COLONY, ResourceType.SAND),
+                "achou: volta ao mais distante");
     }
 }
