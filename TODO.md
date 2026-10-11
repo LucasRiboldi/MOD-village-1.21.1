@@ -10,8 +10,9 @@ Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
 - [ ] **Playtest único de aceite** (decisão do autor): Regra 51 ≤ 15% por ofício; `VC_SUPPLY_ERROR`
       perto de zero; lajes/escadas no baú abaixo do teto do P1; areia entrando (fundidor ou britador).
-- [ ] 🟠 **P4b — decisão do autor:** preparar o próximo lote exige o planejador escolher e reservar
-      lote com obra aberta (hoje `ALREADY_OPEN`). Alternativas: reservar o próximo lote; 2ª obra (4a).
+- [x] P4b, do jeito do autor: o construtor sem tarefa limpa a faixa de construção; planta tirada pelo
+      jogador não volta (`386c14f2`). Medir no playtest quanto do ócio de 81% sobra.
+- [ ] 🟡 Iluminar a rua: decidir onde a luz fica (tocha ao lado da rua derruba o lote; lampião em poste?).
 - [ ] 🟡 2a: o fundidor coletar areia por estoque no ócio (não feito).
 - [ ] 🟡 `FarmerCompost.SEED_RESERVE = 32` é ponto de partida; medir no playtest.
 - [ ] 🟡 `BuildSiteGameTest.indexedRoadFindsALotWithoutStartingFullSweep` reprova (2 de 3) quando um

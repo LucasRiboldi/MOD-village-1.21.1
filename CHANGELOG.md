@@ -11,6 +11,41 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.25] — autossuficiência (2026-10-11, JAR local, não jogado)
+
+Branch `claude/autossuficiencia`; análise e escolhas em
+`docs/research/2026-10-11-autossuficiencia-e-ocio.md`. O aceite é um playtest único.
+
+### Corrigido
+- A peça deixada de lado por falta de material voltou a contar na demanda: a vidraça adiada zerava a
+  meta de vidro e de areia, e nenhuma areia era coletada.
+- Produção antecipada (lajes, escadas, cercas, pedra lisa) tem teto: o que a obra aberta ainda pede
+  mais o maior uso numa casa do estilo da vila (antes: 318 lajes e 356 escadas para 15 pedregulhos).
+- Peça de estoque e fornalha não gastam o cru que a obra aberta ainda vai pôr.
+- Os quatro ramais da mina seguem abertos depois que o ramal zero acaba.
+- O mineiro não volta à mesma coluna de caverna: o beco conta as recusas dos últimos 15 minutos.
+- Tarefa de fabricação que termina com 0 peça não reabre outra igual.
+- A tábua das escadas, lajes e cercas da obra entra na conta da madeira do carpinteiro.
+- Fundidor: a reserva do cru é calculada uma vez por cru (era 72% do tempo do mod no Spark).
+
+### Novo
+- Britador do pedreiro: sem areia ao alcance, pedregulho vira cascalho e cascalho vira areia (2:1).
+- Busca de areia gira de setor a cada varredura vazia; a resposta "há areia" usa a mesma sonda da busca.
+- Sem rota para vidro, a vidraça da planta vira cerca de madeira.
+- O bloco de pedregulho da planta aceita andesito, granito e diorito.
+- Bosque-fazenda: 6 mudas por lenhador, e a árvore madura do bosque é cortada primeiro.
+- Lenhador parado no caminho tenta um desvio (cavando) antes de largar a árvore.
+- Compostor do fazendeiro: semente acima de 32 vira farinha de osso, usada na lavoura verde.
+- Fazendeiro semeia com semente de qualquer baú da colônia.
+- Regra do ócio: o titular único parado cede a um ofício em falta para a obra (o construtor nunca).
+- O construtor sem tarefa limpa muda, flor alta e arbusto da faixa de construção (6 blocos da rua);
+  ninguém planta nessa faixa.
+- Planta ou árvore que o jogador tirou não volta naquele lugar (marca salva).
+
+### Mudado
+- A peça que surge no baú da obra é último recurso: 10 ciclos (~5 min) sem entrega com a rota
+  trabalhando, e não 4 (emenda na ADR-040).
+
 ## [Não publicado] — correções do roteiro de 10-10 (2026-10-11, sem JAR publicado)
 
 Nada disto foi visto em jogo; o aceite é o playtest da Fase 2.5 do roteiro.

@@ -1,13 +1,14 @@
 # STATE — 2026-10-11
 
-> **JAR instalado: `village-colony-0.3.24.jar`** = `C553E735AC09A7CEDE0FE6547DDD2513EEA56422298DF3D6634EF4FC35A25E8F`,
-> igual em `build/libs`, `downloads/` e `.minecraft/mods`; o JAR gerado da `main` em `38015460` é
-> idêntico. **Jogado em 11-10 (10:04–11:44, mundo novo).**
+> **JAR instalado: `village-colony-0.3.25.jar`** (`claude/autossuficiencia`, 11-10) =
+> `863C8BF86C2DCB4FE27FB83A808A1326E76289EA8A3E745A42B9BB779D4B040F`, igual em `build/libs`,
+> `downloads/` e `.minecraft/mods` (`release_manifest.py --dry-run`); a 0.3.24 ficou como
+> `.jar.disabled`. **Ainda não jogado.** A 0.3.24 (= `main` em `38015460`) foi jogada em 11-10.
 >
 > **Última verificação (`main` em `38015460`, 11-10, depois do merge das PRs #20–#25):** 1446
 > unitários e de propriedade (`--rerun-tasks`, 0 falhas); 705/705 GameTests (1 rodada); 112 testes Python. PIT 1820/2112 (86,17%) em `e71607dd`.
 > **E na `claude/autossuficiencia` (`9d50cf42`, 11-10):** 1457 unitários (`--rerun-tasks`, 0 falhas);
-> 716/716 GameTests em 3 rodadas seguidas, cada uma num mundo novo; 112 Python. JAR não gerado.
+> 717/717 GameTests (2 rodadas, mundo novo) em `386c14f2`; 1458 unitários; 112 Python. JAR 0.3.25 acima.
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.** Se passar de 150 linhas, algo
 > está errado: P0 não está fechando. O que já foi resolvido mora em
@@ -44,11 +45,13 @@ ofício; `VC_SUPPLY_ERROR` perto de zero; nenhuma peça antecipada acima do que 
 Pilha #20–#25 **na `main`** desde 11-10 (`38015460`), com merge commit; as branches dela
 continuam no remoto (apagar é decisão do autor, AUD-24).
 
-**Sessão em curso:** `claude/autossuficiencia` (da `main`), enviada, sem PR. Feitos, cada um com
+**Sessão em curso:** `claude/autossuficiencia` (da `main`), enviada, PR aberta para a `main`. Feitos, cada um com
 GameTest e bateria verde (716/716, mundo novo): peça de lado por material volta à demanda (raiz da
 areia nunca coletada), P1, P2 (2a sonda e setores, 2c britador, 2d janela), P3 (3a, 3b, 3d), P5c,
-P6 (ramais), P7 (7a, 7b, 7c), P8b, P9 (10 ciclos). **Falta decidir:** P4b (o planejador recusa lote
-com obra aberta — decisão de arquitetura). **Não feito, por falta de defeito:** P5a (tosquia por
+P6 (ramais), P7 (7a, 7b, 7c), P8b, P9 (10 ciclos). O P4b virou, por escolha do autor, o construtor sem tarefa
+limpando a faixa de construção (6 blocos da rua), mais as regras: planta tirada pelo jogador não
+volta; obra concluída não reabre; o construtor usa qualquer baú da vila. Iluminar a rua ficou de fora
+(a tocha cairia na faixa de construção). **Não feito, por falta de defeito:** P5a (tosquia por
 estoque e curral já existem; a procriação parou por falta de trigo). **Não feito:** 2a coleta de
 areia por estoque no ócio; 3a não conta as rochas na meta (pediria `ResourceType` novo).
 Nada disso foi jogado.
