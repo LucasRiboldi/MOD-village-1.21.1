@@ -41,6 +41,7 @@
       "com.villagecolony.fabric.work.WoodInPiecesGameTest",
       "com.villagecolony.fabric.work.LumberjackDetoursGameTest",
       "com.villagecolony.fabric.work.FarmerCompostGameTest",
+      "com.villagecolony.fabric.work.ConstructionZoneGameTest",
       "com.villagecolony.fabric.work.MineSurfaceGameTest",
       "com.villagecolony.fabric.work.IdleYieldGameTest",
       "com.villagecolony.fabric.work.WorkMemorySaveGameTest",
