@@ -17,9 +17,7 @@ Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
       da vidraça). Aceite: Regra 51 ≤ 15% por ofício; `VC_SUPPLY_ERROR` perto de zero; nada acima de 64
       fabricado / 256 cru sem obra pedindo; areia pelo britador; `lends a hand` de carpinteiro e pedreiro;
       `tilled a new plot`; `goes to the grove`; segundo mineiro com ramal próprio cedo.
-- [ ] 🟠 O construtor não tem preferência na tarefa de obra: na 0.3.26 o pedreiro pegou a casa nova e o
-      construtor ficou 92% parado. O autor escolheu "ajudante só perto" (não "construtor tem a vez");
-      medir no playtest antes de reabrir.
+- [x] O construtor sempre começa a obra; os outros só ajudam depois (`HelperReach.mayStart`, 0.3.29).
 - [ ] 🟡 Mina: os ramais 1–3 abertos cedo começam a 5–10 blocos da sala, por rocha; ver no jogo se o
       mineiro chega (`gave up the stone`, ramal `exhausted` cedo).
 - [x] P4b, do jeito do autor: o construtor sem tarefa limpa a faixa de construção; planta tirada pelo

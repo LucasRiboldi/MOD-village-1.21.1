@@ -1,13 +1,13 @@
 # STATE — 2026-10-11
 
-> **JAR instalado: `village-colony-0.3.28.jar`** (`claude/autossuficiencia`, 11-10) =
-> `5E53CE5650339579F9C3D8388635DE563089778D67A52ED72CF4C5C647A4F428`, igual nas três cópias;
-> a 0.3.27 ficou como `.jar.disabled`. **Ainda não jogado.** Junta o 3º ciclo (0.3.27: ajudante
+> **JAR instalado: `village-colony-0.3.29.jar`** (`claude/autossuficiencia`, 11-10) =
+> `941BAA11F01C0E18F6704043FA715AFED7B32DACB9CFC458019752E829A94800`, igual nas três cópias;
+> a 0.3.28 ficou como `.jar.disabled`. **Ainda não jogado.** Junta o 3º ciclo (0.3.27: ajudante
 > só perto, construtor espera a peça, teto 64/256, britador primeiro, bosque perto, roça que
-> alarga, ramais cedo) e o 4º (0.3.28: divisão das peças por material, estoque de 8 de cada item
-> das plantas, coleta de flores/bambu/cana e de gelo/neve — `docs/research/2026-10-11-cobertura-de-blocos.md`).
+> alarga, ramais cedo), o 4º (0.3.28: divisão das peças por material, estoque de 8 de cada item
+> das plantas, coleta de flores/bambu/cana e de gelo/neve) e a 0.3.29 (o construtor sempre começa a obra).
 > A 0.3.26 foi jogada 6 min em 11-10 (Spark `HGyazYR1VW`): vila presa 3 min numa vidraça.
-> **Verificação da 0.3.28 (`561da1af` + docs):** 732/732 GameTests em 2 rodadas (mundo novo); 1473 unitários.
+> **Verificação da 0.3.29:** 732/732 GameTests em 2 rodadas (mundo novo); 1473 unitários.
 >
 > **Última verificação (`main` em `38015460`, 11-10, depois do merge das PRs #20–#25):** 1446
 > unitários e de propriedade (`--rerun-tasks`, 0 falhas); 705/705 GameTests (1 rodada); 112 testes Python. PIT 1820/2112 (86,17%) em `e71607dd`.

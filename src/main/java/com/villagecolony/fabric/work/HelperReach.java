@@ -48,6 +48,24 @@ public final class HelperReach {
         return entity == null || distanceToSite(entity.getBlockPos(), project) <= HELPER_RADIUS;
     }
 
+    /**
+     * Se este trabalhador pode <b>começar</b> a obra (a tarefa que o planejador abre):
+     * só o construtor — regra do autor, 2026-10-11: <i>"o construtor sempre começa a
+     * obra, podendo receber ajuda ou não"</i>. A ajuda entra depois, pela vaga de
+     * ajudante ({@link BuildHelper}). Colônia sem construtor cai na regra do ajudante
+     * perto ({@link #mayTake}), para a obra não ficar sem ninguém.
+     */
+    public static boolean mayStart(ServerWorld world, Worker worker, ConstructionProject project) {
+        if (isBuilder(worker.villagerId())) {
+            return true;
+        }
+
+        boolean colonyHasBuilder = VillageColonyMod.WORKERS.ofColony(worker.colonyId()).stream()
+                .anyMatch(other -> other.profession().filter(ProfessionType.BUILDER::equals).isPresent());
+
+        return !colonyHasBuilder && mayTake(world, worker, project);
+    }
+
     /** Quantos tiques andando sem chegar este trabalhador tem antes de soltar a obra. */
     static int stallLimit(UUID workerId) {
         return isBuilder(workerId) ? BuilderWork.STALL_LIMIT : HELPER_STALL;

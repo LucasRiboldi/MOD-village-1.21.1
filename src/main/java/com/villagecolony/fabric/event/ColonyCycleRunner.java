@@ -463,8 +463,8 @@ final class ColonyCycleRunner {
     }
 
     /**
-     * A mesma trava, sabendo quem vai pegar: o ajudante só pega a obra perto
-     * dela — {@link com.villagecolony.fabric.work.HelperReach#mayTake}.
+     * A mesma trava, sabendo quem vai pegar: quem começa a obra é o construtor —
+     * {@link com.villagecolony.fabric.work.HelperReach#mayStart}.
      */
     static boolean canReserveTask(ServerWorld world, UUID colonyId, @Nullable Worker worker, Task task) {
         return switch (ReservationGate.of(task.type())) {
@@ -473,7 +473,7 @@ final class ColonyCycleRunner {
                     && !crusherCovers(world, colonyId, task);
             case BUILD_SITE -> VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
                     .map(project -> (worker == null
-                            || com.villagecolony.fabric.work.HelperReach.mayTake(world, worker, project))
+                            || com.villagecolony.fabric.work.HelperReach.mayStart(world, worker, project))
                             && BuildSiteGate.admits(world, project))
                     .orElse(false);
             case SMELT_INPUT -> com.villagecolony.fabric.work.SmeltInput.inChests(

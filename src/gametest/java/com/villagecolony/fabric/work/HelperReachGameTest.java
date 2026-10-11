@@ -91,6 +91,15 @@ public class HelperReachGameTest implements FabricGameTest {
             context.assertTrue(HelperReach.stallLimit(shepherd.villagerId()) == HelperReach.HELPER_STALL
                             && HelperReach.stallLimit(builder.villagerId()) == BuilderWork.STALL_LIMIT,
                     "o ajudante desiste em 30 s; o construtor tem o prazo inteiro");
+
+            // Quem começa a obra é o construtor; o pastor perto só ajuda depois (autor, 11-10).
+            context.assertFalse(HelperReach.mayStart(context.getWorld(), shepherd, near),
+                    "com construtor na colônia, o pastor não devia começar a obra");
+            context.assertTrue(HelperReach.mayStart(context.getWorld(), builder, far),
+                    "o construtor começa a obra de qualquer distância");
+            builder.assign(ProfessionType.SHEPHERD);
+            context.assertTrue(HelperReach.mayStart(context.getWorld(), shepherd, near),
+                    "sem construtor na colônia, quem está perto começa a obra");
         } finally {
             VillageColonyMod.WORKERS.remove(shepherd.villagerId());
             VillageColonyMod.WORKERS.remove(builder.villagerId());

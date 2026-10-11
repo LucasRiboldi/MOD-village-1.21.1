@@ -11,6 +11,13 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.29] — o construtor começa a obra (2026-10-11, JAR local, não jogado)
+
+### Mudado
+- Só o construtor pega a tarefa que abre a obra; os outros ofícios entram como ajudantes depois
+  (`BuildHelper`), perto da obra. Colônia sem construtor cai na regra do ajudante perto. Na 0.3.26
+  o pedreiro tinha pegado a casa nova e o construtor ficou 92% parado.
+
 ## [0.3.28] — cobertura de blocos por profissão (2026-10-11, JAR local, não jogado)
 
 Pedido do autor: todo bloco das estruturas da vila, e todo bloco que os produz, com
