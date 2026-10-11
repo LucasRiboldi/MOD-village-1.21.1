@@ -220,6 +220,9 @@ public final class MinerWork {
         /** Se ele está encurtando a distância até a pedra — E44. Ver MineLease. */
         final MineLease lease = new MineLease();
 
+        /** Se a descida pela boca avança, em distância ou em nível. Ver MineLease. */
+        final MineLease descent = new MineLease();
+
         /** O desvio em curso, cavando e pondo bloco — ADR-025. Ver MinerDetours. */
         DetourWalker detour;
 

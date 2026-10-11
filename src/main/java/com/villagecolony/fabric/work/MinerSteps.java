@@ -151,7 +151,8 @@ final class MinerSteps {
             // Fora da mina, primeiro a boca de superfície e a descida nível por
             // nível; só no nível da pedra vale a perna de sempre (MineEntrance).
             // Na descida o prazo de aproximação não corre: ir até a boca pode
-            // afastá-lo da pedra. O guarda de imobilidade continua valendo.
+            // afastá-lo da pedra. Corre o prazo da descida, que aceita também
+            // descer mais fundo como avanço (MineLease.outOfTimeOnDescent).
             Optional<BlockPos> down = MineEntrance.legDown(
                     world, job.task.colonyId(), villager.getBlockPos(), job.target);
 
@@ -161,6 +162,8 @@ final class MinerSteps {
                 // Nem o orçamento de caminhada: a descida inteira (vila, boca, três
                 // níveis) passava dos 2.400 tiques (playtest de 08-10, 15:28–15:46).
                 job.stalled = 0;
+            } else {
+                job.descent.reset();
             }
 
             // E se ele saiu do lugar — 2026-09-03. Ver WorkStall, que faz
@@ -177,6 +180,11 @@ final class MinerSteps {
                 stuck(world, villager, job, "it got no closer than "
                         + String.format("%.1f", job.lease.closest())
                         + " blocks in " + job.lease.ticks()
+                        + " ticks of work time");
+            } else if (down.isPresent() && job.descent.outOfTimeOnDescent(world, villager, job.target)) {
+                stuck(world, villager, job, "the way down got no closer than "
+                        + String.format("%.1f", job.descent.closest())
+                        + " blocks and no deeper in " + job.descent.ticks()
                         + " ticks of work time");
             } else if (job.stalled >= MinerWork.STALL_LIMIT) {
                 stuck(world, villager, job, "it walked for "
@@ -407,6 +415,7 @@ final class MinerSteps {
         // ATÉ ESTA PEDRA; herdá-la da anterior faria ele desistir de uma
         // pedra mais distante sem ter dado um passo por ela.
         job.lease.reset();
+        job.descent.reset();
 
         // <b>E o guarda de imobilidade NÃO é zerado aqui</b> — E36,
         // 2026-09-04. A pergunta que ele faz é <i>o aldeão saiu do

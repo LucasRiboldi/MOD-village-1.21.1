@@ -139,8 +139,16 @@ mineiro sem boca de mina  →  sem pedra, sem ferro  →  fundidor sem cru  → 
 > 4. os outros três ficam barrados e raspam superfície vazia: **zero mineração**; sem pedra e
 >    ferro, o fundidor e o construtor param.
 >
-> **Correção (RC1):** prazo próprio para a descida, em vez de nenhum — ao estourar, o caminho
-> de desistência que já existe solta a tarefa e o ramal. **Aberto (RC2):** por que os níveis
+> **Correção (RC1), feita em 11-10:** a descida tem prazo próprio (`MineLease.outOfTimeOnDescent`,
+> `job.descent`): 3× o prazo normal, 1.200 tiques de expediente (60 s), e conta como avanço
+> chegar mais perto da pedra **ou** descer mais fundo do que já desceu. Ao estourar, cai no
+> `stuck(...)` de sempre (desvio, depois `MinerHands.giveUp`), que solta a tarefa e o ramal.
+> Provas: `MineLeaseTest` (vai e volta esgota; ir à boca e descer em caracol não esgota) e
+> `MineDescentLeaseGameTest` (mineiro indo e voltando na superfície larga a pedra no tique
+> 120 com prazo 40, pelo prazo da descida). Mutações conferidas: sem a ligação no `MinerSteps`
+> o GameTest reprova; sem a profundidade como avanço, o unitário reprova.
+> **O que a RC1 não faz:** o ramal passa a girar entre os mineiros a cada 60 s em vez de ficar
+> preso, mas o próximo pode repetir a mesma descida. **Aberto (RC2):** por que os níveis
 > guardados não existem no mundo; a recuperação de mina nova na borda (`MineEdge.relocate`)
 > não roda quando ele para na superfície (`StrandedEscape.isOut`).
 | | |
@@ -291,7 +299,7 @@ coluna "em jogo" é a que a régua cobra.
 | AUD-11 | ⚠️ parcial: codec, save e permissão testados (mutação conferida); `fabric.network` 42% / 46%, abaixo dos 60%; ordem ruim no save não apaga mais as regras do Mod Menu | — |
 | AUD-21 | ⬜ | — |
 | AUD-25 | ✅ motivo no `TASK_RELEASED`; `action_report` agrupa por motivo; mutação conferida | ⬜ |
-| 2.2 mineiro | ⬜ | ⬜ |
+| 2.2 mineiro | ⚠️ RC1 ✅ prazo da descida (`MineLease.outOfTimeOnDescent`), `MineDescentLeaseGameTest`, mutação conferida; 1442 unitários, 702/702 GameTests × 3; RC2 ⬜ níveis fantasma | ⬜ |
 | 2.3 IdleYield | ✅ regra abrangente (`WorkTime.idleRuleShare`); log de saída só quando o aldeão sai (mineiro nunca sai); mutação conferida | ⬜ |
 | 2.4 fundidor | ⬜ (código na linha Codex) | ⬜ |
 | AUD-01 aceite | ⬜ | ⬜ 0.3.22 e 0.3.23 reprovadas |

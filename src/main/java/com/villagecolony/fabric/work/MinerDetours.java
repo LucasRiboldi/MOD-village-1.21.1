@@ -88,6 +88,7 @@ public final class MinerDetours {
         job.detour = walker.get();
         job.stall.reset();
         job.lease.reset();
+        job.descent.reset();
         job.stalled = 0;
 
         VillageColonyMod.LOGGER.info(
@@ -141,6 +142,7 @@ public final class MinerDetours {
         job.detour = null;
         job.stall.reset();
         job.lease.reset();
+        job.descent.reset();
         job.stalled = 0;
 
         if (status == DetourWalker.Status.DONE) {
