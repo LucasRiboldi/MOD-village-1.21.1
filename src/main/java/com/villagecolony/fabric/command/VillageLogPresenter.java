@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.command;
 
 import com.villagecolony.core.colony.model.VillageHappiness;
+import com.villagecolony.core.coordination.IdleYield;
 import com.villagecolony.core.construction.model.ConstructionPriority;
 import com.villagecolony.core.construction.model.MaterialRequest;
 import com.villagecolony.core.telemetry.model.ActivityProfession;
@@ -9,6 +10,7 @@ import com.villagecolony.core.telemetry.model.ActivityTrace;
 import com.villagecolony.core.telemetry.model.ActivityTraceEvent;
 import com.villagecolony.core.telemetry.model.ControlledReason;
 import com.villagecolony.core.telemetry.model.TargetKind;
+import com.villagecolony.fabric.work.WorkTime;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -138,6 +140,63 @@ final class VillageLogPresenter {
         }
 
         return List.copyOf(lines);
+    }
+
+    /**
+     * O tempo de cada ofício na última janela do {@code WorkTime}, com a marca da
+     * regra do ócio acima de 15% — ADR-041 #4. Quem está sem ofício fica de fora.
+     */
+    static List<String> tradeTime(Map<String, ? extends Map<WorkTime.State, Integer>> window) {
+        List<String> lines = new ArrayList<>();
+
+        for (Map.Entry<String, ? extends Map<WorkTime.State, Integer>> trade : window.entrySet()) {
+            if ("NONE".equals(trade.getKey())) {
+                continue;
+            }
+
+            Map<WorkTime.State, Integer> seconds = trade.getValue();
+            int total = seconds.values().stream().mapToInt(Integer::intValue).sum();
+            StringBuilder line = new StringBuilder(tradeName(trade.getKey())).append(':');
+            String separator = " ";
+
+            for (WorkTime.State state : WorkTime.State.values()) {
+                int share = total == 0 ? 0 : Math.round(100f * seconds.getOrDefault(state, 0) / total);
+                line.append(separator).append(stateName(state)).append(' ').append(share).append('%');
+                separator = " · ";
+            }
+
+            int rule = WorkTime.idleRuleShare(seconds);
+
+            if (rule > IdleYield.IDLE_SHARE) {
+                line.append(" — regra do ócio: ").append(rule).append("% (teto ").append(IdleYield.IDLE_SHARE)
+                        .append("%)");
+            }
+
+            lines.add(line.toString());
+        }
+
+        return lines.isEmpty()
+                ? List.of("Ainda sem medida de tempo: a primeira janela fecha em até 5 minutos de expediente.")
+                : List.copyOf(lines);
+    }
+
+    private static String tradeName(String trade) {
+        try {
+            return profession(ActivityProfession.valueOf(trade));
+        } catch (IllegalArgumentException unknown) {
+            return trade;
+        }
+    }
+
+    private static String stateName(WorkTime.State state) {
+        return switch (state) {
+            case WORK -> "trabalho";
+            case WALK -> "caminhada";
+            case WAIT -> "espera";
+            case BLOCKED -> "bloqueio";
+            case IDLE -> "ócio";
+            case STRANDED -> "encalhe";
+        };
     }
 
     private static String subjectName(String subject) {

@@ -47,6 +47,17 @@ class ActionReportTest(unittest.TestCase):
         text = action_report.render(*action_report.summarize(action_report.parse(LINES)))
         self.assertIn("2× TARGET_REJECTED: TOO_HIGH", text)
 
+    def test_a_release_with_a_reason_is_counted_and_a_bare_state_is_not(self):
+        lines = LINES[:-1] + [
+            '{"t":1300,"colony":"33a6b9c4","worker":"cc99a53b","prof":"MINER","action":"TASK_RELEASED",'
+            '"task":"COLLECT_STONE","what":"cobblestone","n":32,'
+            '"detail":"no room in the chests for what it mined"}',
+        ]
+        by_prof, _, _ = action_report.summarize(action_report.parse(lines))
+
+        self.assertEqual(1, by_prof["MINER"]["reasons"]["TASK_RELEASED: no room in the chests for what it mined"])
+        self.assertNotIn("TASK_RELEASED: EXECUTING", by_prof["MINER"]["reasons"])
+
     def test_numbers_inside_a_reason_do_not_split_it(self):
         self.assertEqual(action_report.reason_of("it got no closer than 6,9 blocks in 400 ticks"),
                          action_report.reason_of("it got no closer than 7,4 blocks in 400 ticks"))

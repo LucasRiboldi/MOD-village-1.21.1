@@ -13,7 +13,10 @@ Ordem de execução: `docs/technical/Roteiro-Correcoes-2026-10-10.md`.
 Scripts: `scripts/audit/check-*.sh`.
 
 - [ ] 🔴 **AUD-01** Regra 51 reprovada nas duas sessões de 10-10 (0.3.23: SMELTER 91%, BUILDER 92%, MINER 17%;
-      fundidor 311/311 soltas). Raiz: mineiro sem boca de mina (`no mine mouth`, 50×). Roteiro: `docs/technical/Roteiro-Correcoes-2026-10-10.md`.
+      fundidor 311/311 soltas). Raiz (diagnóstico de 11-10): o dono do único ramal vai e volta numa descida até
+      um patamar de pedra maciça sem nenhum prazo correr; a rota vinha do rumo da escada girada, não da cavada.
+      RC1 (prazo da descida) e RC2 (rota pela escada cavada) feitas; falta o playtest.
+      Roteiro: `docs/technical/Roteiro-Correcoes-2026-10-10.md`, 2.2.
 - [x] 🟠 **AUD-02** Save malformado não apaga mais as colônias: entrada ruim é descartada com aviso
       (`ColonySaveReader.readEntry`), versão negativa vira 0, `toBlock` não lança. `ColonySaveFuzzTest` 13/13.
 - [x] 🟠 **AUD-03** `saveVersion` gravado no save (`SaveMigration.stamp`, `11bd4799`).
@@ -25,17 +28,19 @@ Scripts: `scripts/audit/check-*.sh`.
 - [ ] 🟡 **AUD-09** Ciclo raiz ↔ `fabric.*` por `VillageColonyMod` como localizador global.
 - [ ] 🟡 **AUD-10** 181 estáticos mutáveis; config estática não-final (`MineLease`, `TreeChoice`, `MinerDetours`, `FarmerWork`). A regra ArchUnit já existe congelada: esvaziar o congelado.
 - [ ] 🟡 **AUD-11** Parcial: codec, save da política e porta de permissão com teste (mutação conferida); `fabric.network`
-      0 → 42% (unitário) e 20 → 46% (bateria), abaixo dos 60%. Falta: receptores por lambda e `fabric.command` (vai com o AUD-19).
+      0 → 42% (unitário) e 20 → 46% (bateria), abaixo dos 60%. `fabric.command` 2 → 27% (bateria) com o
+      `VillageLogCommandGameTest`. Falta: receptores por lambda e o resto do `/vc log`.
 - [ ] 🟡 **AUD-12** Avisar quando outro mod tirar a tarefa da colônia do `Brain`; `suggests: modmenu` e `breaks` no `fabric.mod.json`.
 - [ ] 🟡 **AUD-04** Ciclo p95 67 ms na 0.3.22, 27,7 ms na 0.3.23: medir de novo (≥ 20 amostras) antes de otimizar.
-- [ ] 🟡 **AUD-25** Diário de ações sem o motivo de `TASK_RELEASED` (grava só o estado).
+- [x] 🟡 **AUD-25** `TASK_RELEASED` grava o motivo (`Task.release(why)` nas 15 solturas das profissões) e o
+      `action_report.py` agrupa as solturas por motivo.
 - [ ] 🟡 **AUD-13** Alternância de obras: o teste passa; atualizar `docs/behavioral-tests/README.md` e provar em jogo.
 - [ ] 🟢 **AUD-14** CHANGELOG sem entradas de 0.3.1 a 0.3.23.
 - [ ] 🟢 **AUD-15** 848 imports não usados (`RemoveUnusedImports` no Error Prone).
 - [ ] 🟢 **AUD-16** Cache de `CraftingLookup.listAllOfType`, se o Spark mostrar.
 - [x] 🟢 **AUD-17** `/vc log` continua aberto (ADR-041 #4).
 - [ ] 🟢 **AUD-18** Tag por JAR publicado (0.3.4–0.3.23 sem tag).
-- [ ] 🟡 **AUD-19** `/vc log` com dados amplos (ADR-041 #4): janela do `WorkTime` por ofício e a marca da regra do ócio.
+- [x] 🟡 **AUD-19** `/vc log` mostra a última janela do `WorkTime` por ofício e marca a regra do ócio (ADR-041 #4).
 - [ ] 🟢 **AUD-26** **Escolha do autor:** número da regra do ócio (colide com a Regra 51 do `docs/RULES.md`).
 - [ ] 🟢 **AUD-20** Dividir as 15 classes em 488–500 linhas antes da próxima mudança nelas.
 - [ ] 🟢 **AUD-21** `check-tests-green.sh --runs 8` antes de declarar a intermitência curada.

@@ -114,6 +114,22 @@ class TaskTest {
         assertTrue(task.isOpen());
     }
 
+    /** Quem solta diz por quê, e o diário de ações registra o motivo — AUD-25. */
+    @Test
+    void aReleaseKeepsItsReasonUntilTheNextOne() {
+        Task task = collectWood();
+        task.reserveFor(UUID.randomUUID());
+
+        task.release("no chest to put the logs in");
+
+        assertEquals("no chest to put the logs in", task.releaseReason());
+
+        task.reserveFor(UUID.randomUUID());
+        task.release();
+
+        assertEquals("", task.releaseReason(), "a soltura sem motivo herdou o motivo da anterior");
+    }
+
     @Test
     void onlyAnOwnedTaskCanBeReleased() {
         assertThrows(IllegalStateException.class, () -> collectWood().release());

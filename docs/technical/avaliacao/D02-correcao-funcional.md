@@ -49,7 +49,7 @@ porque o mineiro não cava. O defeito é da cadeia, e a raiz é a mina (memória
 | Fundidor parado por cru ausente (pedregulho, areia, pedra, ferro) | 48× | 12× (ferro) | `SmelterWork`, log `Smelter … stopped — none of N colony chests had …` |
 | Construtor `SET_ASIDE: no material` | 22× | 3× | `action_report` |
 
-Hipótese a provar primeiro (Fase 2 do roteiro): a colônia tem `Mine` registrada
+**Resultado em 11-10 (a hipótese abaixo caiu):** ver o diagnóstico na Fase 2.2 do roteiro — o dono do único ramal vai e volta numa descida até um patamar de pedra maciça, e os prazos zerados na descida impedem qualquer guarda de soltá-lo. Hipótese original: a colônia tem `Mine` registrada
 (`Mine … surface entrance is remembered`), mas o mineiro não a encontra como boca e
 cai na busca de pedra de superfície, que esgota o orçamento a cada passagem. Enquanto
 isso, a Regra 51 (`IdleYield`) tira mineiros de um ofício que está esperando, e não

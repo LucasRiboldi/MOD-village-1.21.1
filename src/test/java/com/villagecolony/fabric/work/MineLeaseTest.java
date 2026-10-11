@@ -136,4 +136,50 @@ class MineLeaseTest {
         // jogo — os estáticos dele pedem o registro de itens.
         assertTrue(MineLease.LIMIT < 4 * 600);
     }
+
+    /**
+     * A descida pela boca tem prazo próprio — 2.2 do roteiro de 10-10.
+     *
+     * <p>Antes, enquanto havia perna de descida, o prazo era zerado a cada
+     * tique: o mineiro que ia e voltava entre a boca (55 blocos da pedra) e um
+     * patamar de pedra maciça (59) segurou o único ramal três sessões inteiras.
+     */
+    @Test
+    @DisplayName("na descida, quem vai e volta sem chegar perde a pedra no prazo longo")
+    void aDescentThatGoesBackAndForthRunsOutOnTheLongDeadline() {
+        MineLease lease = new MineLease();
+        int deadline = MineLease.LIMIT * MineLease.DESCENT_FACTOR;
+
+        for (int tick = 0; tick < deadline; tick++) {
+            double distance = (tick / 20) % 2 == 0 ? 55.0 : 59.0;
+
+            assertFalse(lease.ranOutOnDescent(distance, 66), "desistiu da descida no tique " + tick);
+        }
+
+        assertTrue(lease.ranOutOnDescent(55.0, 66), "o vai e volta da descida não esgotou o prazo");
+    }
+
+    @Test
+    @DisplayName("na descida, ir até a boca e depois descer não perde a pedra")
+    void aDescentThatFirstWalksAwayAndThenComesDownKeepsTheStone() {
+        MineLease lease = new MineLease();
+        double distance = 60.0;
+        int y = 70;
+
+        // Até a boca, na superfície: quarenta blocos para longe da pedra, a passo de aldeão.
+        for (int tick = 0; tick < 400; tick++) {
+            assertFalse(lease.ranOutOnDescent(distance, y), "desistiu indo até a boca, no tique " + tick);
+            distance += 0.1;
+        }
+
+        // Pela escada em caracol: um bloco mais fundo a cada vinte tiques, sem
+        // chegar mais perto da pedra — só a profundidade conta como avanço.
+        for (int tick = 0; tick < 1000; tick++) {
+            if (tick % 20 == 0) {
+                y--;
+            }
+
+            assertFalse(lease.ranOutOnDescent(distance, y), "desistiu descendo a escada, no tique " + tick);
+        }
+    }
 }

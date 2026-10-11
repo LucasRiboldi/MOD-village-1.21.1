@@ -382,7 +382,7 @@ public final class FarmerWork {
                 job.target.toShortString());
 
         if (job.task.isHeld()) {
-            job.task.release();
+            job.task.release("could not reach the crop");
         }
 
         // A desistência passa a contar — 2026-09-10. Ver WorkerStrikes:

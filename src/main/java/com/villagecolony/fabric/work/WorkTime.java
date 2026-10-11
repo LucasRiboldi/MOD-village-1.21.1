@@ -11,6 +11,7 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -71,6 +72,9 @@ public final class WorkTime {
 
     private static final Map<UUID, Walker> WALKERS = new HashMap<>();
 
+    /** A última janela fechada de cada colônia, para o {@code /vc log} — ADR-041 #4. */
+    private static final Map<UUID, Map<String, EnumMap<State, Integer>>> LAST = new HashMap<>();
+
     private static long windowStart = Long.MIN_VALUE;
 
     private WorkTime() {
@@ -103,6 +107,8 @@ public final class WorkTime {
 
         if (now - windowStart >= REPORT_EVERY) {
             report(now - windowStart);
+            LAST.clear();
+            WINDOW.forEach((colony, trades) -> LAST.put(colony, copyOf(trades)));
             WINDOW.clear();
             windowStart = now;
         }
@@ -183,6 +189,19 @@ public final class WorkTime {
         }
     }
 
+    /**
+     * A parte da janela fora do trabalho pela regra do ócio, em %: ocioso +
+     * bloqueado + encalhado, a mesma conta do {@code time_ledger.py} — ADR-041 #3.
+     * Espera (falta de material) e caminhada não entram.
+     */
+    public static int idleRuleShare(Map<State, Integer> window) {
+        int total = window.values().stream().mapToInt(Integer::intValue).sum();
+        int parked = window.getOrDefault(State.IDLE, 0) + window.getOrDefault(State.BLOCKED, 0)
+                + window.getOrDefault(State.STRANDED, 0);
+
+        return total == 0 ? 0 : Math.round(100f * parked / total);
+    }
+
     /** Ofício parado cede uma pessoa — ADR-038 P1, regra em {@link IdleYield}. */
     static void yieldIdleTrades(UUID colonyId, Map<String, EnumMap<State, Integer>> window) {
         for (Map.Entry<String, EnumMap<State, Integer>> trade : window.entrySet()) {
@@ -191,8 +210,7 @@ public final class WorkTime {
             }
 
             ProfessionType profession = ProfessionType.valueOf(trade.getKey());
-            int total = trade.getValue().values().stream().mapToInt(Integer::intValue).sum();
-            int idle = total == 0 ? 0 : Math.round(100f * trade.getValue().getOrDefault(State.IDLE, 0) / total);
+            int idle = idleRuleShare(trade.getValue());
             List<Worker> holders = VillageColonyMod.WORKERS.ofColony(colonyId).stream()
                     .filter(worker -> worker.profession().filter(profession::equals).isPresent())
                     .toList();
@@ -206,8 +224,15 @@ public final class WorkTime {
                     .findFirst()
                     .ifPresent(worker -> {
                         worker.giveUpProfession();
+
+                        // O mineiro nunca larga o ofício (Worker.giveUpProfession):
+                        // sem esta guarda, o log anunciava uma saída que não houve.
+                        if (worker.profession().isPresent()) {
+                            return;
+                        }
+
                         VillageColonyMod.LOGGER.info(
-                                "Colony {} — the {} trade was {}% idle for {} windows; {} leaves it for"
+                                "Colony {} — the {} trade was {}% idle, blocked or stranded for {} windows; {} leaves it for"
                                         + " where the village needs hands",
                                 colonyId.toString().substring(0, 8), profession, idle, IdleYield.WINDOWS,
                                 worker.villagerId().toString().substring(0, 8));
@@ -229,8 +254,25 @@ public final class WorkTime {
         return out.append(']').toString();
     }
 
+    /**
+     * Segundos de expediente por ofício e estado: a última janela fechada desta
+     * colônia, ou a que está em curso se nenhuma fechou ainda — ADR-041 #4.
+     */
+    public static Map<String, Map<State, Integer>> lastWindowOf(UUID colonyId) {
+        Map<String, EnumMap<State, Integer>> window = LAST.getOrDefault(colonyId, WINDOW.get(colonyId));
+
+        return window == null ? Map.of() : Collections.unmodifiableMap(copyOf(window));
+    }
+
+    private static Map<String, EnumMap<State, Integer>> copyOf(Map<String, EnumMap<State, Integer>> trades) {
+        Map<String, EnumMap<State, Integer>> copy = new TreeMap<>();
+        trades.forEach((trade, seconds) -> copy.put(trade, new EnumMap<>(seconds)));
+        return copy;
+    }
+
     static void clearAll() {
         WINDOW.clear();
+        LAST.clear();
         WALKERS.clear();
         windowStart = Long.MIN_VALUE;
     }

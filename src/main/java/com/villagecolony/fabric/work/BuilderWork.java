@@ -463,7 +463,7 @@ public final class BuilderWork {
             WorkerStrikes.worked(workerId, job.task);
             TaskChain.next(job.task);
         } else if (job.task.isHeld()) {
-            job.task.release();
+            job.task.release(why);
         }
 
         WorkTargets.clear(workerId);
@@ -483,7 +483,7 @@ public final class BuilderWork {
         Job job = JOBS.remove(workerId);
 
         if (job != null && job.task.isHeld()) {
-            job.task.release();
+            job.task.release("the builder left the colony");
         }
     }
 

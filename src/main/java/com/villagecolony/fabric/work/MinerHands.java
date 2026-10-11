@@ -246,7 +246,7 @@ public final class MinerHands {
      * mesmo baú cheio seja tentado em todos os ciclos consecutivos.
      */
     private static void waitForStorage(UUID workerId, Job job) {
-        job.task.release();
+        job.task.release("no room in the chests for what it mined");
         VillageColonyMod.WORKERS.find(workerId)
                 .ifPresent(worker -> worker.rest(job.task.requiredCapability()));
         MineClaims.stepAside(job.task.colonyId(), workerId);
@@ -263,6 +263,7 @@ public final class MinerHands {
         job.settling = 0;
         job.stalled = 0;
         job.lease.reset();
+        job.descent.reset();
 
         // O guarda de imobilidade sobrevive a largar a pedra — E36. Ver
         // MinerSteps.startNextStone: largar não é andar, e este caminho é o mais
@@ -310,7 +311,7 @@ public final class MinerHands {
                         : "the miner left the world");
         ActionJournal.action(workerId, "GAVE_UP", "stone", 0, job.target, why);
 
-        job.task.release();
+        job.task.release(why);
 
         // <b>E a pedra ganha prazo</b> — E44, 2026-09-10. Segurar a
         // posição (logo abaixo) continua certo; segurar SEM PRAZO é o

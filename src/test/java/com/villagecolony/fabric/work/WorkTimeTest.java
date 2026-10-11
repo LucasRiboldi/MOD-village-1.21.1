@@ -55,4 +55,26 @@ class WorkTimeTest {
         assertEquals("MINER[s=50 work=60 walk=20 wait=0 blocked=0 idle=20 stranded=0]",
                 WorkTime.describe("MINER", seconds));
     }
+
+    /**
+     * A regra do ócio é a abrangente: ocioso + bloqueado + encalhado, como no
+     * time_ledger.py — ADR-041 #3. Espera e caminhada não entram.
+     */
+    @Test
+    void theIdleRuleCountsIdleBlockedAndStranded() {
+        EnumMap<WorkTime.State, Integer> window = new EnumMap<>(WorkTime.State.class);
+        window.put(WorkTime.State.WORK, 40);
+        window.put(WorkTime.State.WALK, 10);
+        window.put(WorkTime.State.WAIT, 10);
+        window.put(WorkTime.State.IDLE, 10);
+        window.put(WorkTime.State.BLOCKED, 20);
+        window.put(WorkTime.State.STRANDED, 10);
+
+        assertEquals(40, WorkTime.idleRuleShare(window));
+    }
+
+    @Test
+    void anEmptyWindowHasNoIdleShare() {
+        assertEquals(0, WorkTime.idleRuleShare(new EnumMap<>(WorkTime.State.class)));
+    }
 }

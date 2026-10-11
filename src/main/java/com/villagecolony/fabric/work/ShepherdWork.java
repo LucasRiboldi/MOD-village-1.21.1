@@ -443,7 +443,7 @@ public final class ShepherdWork {
         VillageColonyMod.LOGGER.info(
                 "Shepherd {} could not reach the sheep — task back to the queue", workerId);
 
-        job.task.release();
+        job.task.release("could not reach the sheep");
 
         // A desistência passa a contar — 2026-09-10. Ver WorkerStrikes.
         WorkerStrikes.gaveUp(workerId, job.task);

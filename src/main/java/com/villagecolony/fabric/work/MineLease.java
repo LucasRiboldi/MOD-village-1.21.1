@@ -122,11 +122,23 @@ public final class MineLease {
      */
     static final double MARGIN = 0.25;
 
+    /**
+     * Quantas vezes o prazo normal a descida pela boca tem — 2.2 do roteiro de 10-10.
+     *
+     * <p>Na descida a distância até a pedra não serve sozinha: ir até a boca
+     * pode afastá-lo dela. Conta como avanço também descer mais fundo do que
+     * já desceu, e o prazo é de sessenta segundos de expediente.
+     */
+    static final int DESCENT_FACTOR = 3;
+
     /** A menor distância já vista nesta pedra, ou NaN antes da primeira. */
     private double closest = Double.NaN;
 
     /** Há quantos tiques de expediente ele não bate a própria régua. */
     private int idle;
+
+    /** O nível mais fundo já visto nesta descida. */
+    private int lowest = Integer.MAX_VALUE;
 
     /**
      * Mais um tique de aproximação, e se o prazo venceu.
@@ -168,6 +180,40 @@ public final class MineLease {
     }
 
     /**
+     * O prazo da descida pela boca, que {@code MineEntrance.legDown} guia.
+     *
+     * <p>Sem ele, quem ia e voltava entre a boca e um patamar de pedra maciça
+     * segurava o único ramal da colônia sem prazo nenhum.
+     *
+     * @return true quando ele nem encurta a distância nem desce mais fundo há
+     *     {@link #DESCENT_FACTOR} vezes o prazo de tiques de expediente
+     */
+    public boolean outOfTimeOnDescent(ServerWorld world, VillagerEntity villager, BlockPos target) {
+        if (!WorkHours.isWorkTime(world, villager)) {
+            return false;
+        }
+
+        return ranOutOnDescent(
+                MinerReach.distanceTo(villager.getX(), villager.getY(), villager.getZ(), target),
+                villager.getBlockY());
+    }
+
+    /** O mesmo, pela distância e pelo nível que quem chama entrega. Ver {@code MineLeaseTest}. */
+    boolean ranOutOnDescent(double distance, int y) {
+        boolean closer = Double.isNaN(closest) || distance <= closest - MARGIN;
+
+        if (closer || y < lowest) {
+            closest = closer ? distance : closest;
+            lowest = Math.min(lowest, y);
+            idle = 0;
+
+            return false;
+        }
+
+        return ++idle >= limit * DESCENT_FACTOR;
+    }
+
+    /**
      * Pedra nova: a régua e a contagem recomeçam.
      *
      * <p><b>Aqui alvo novo É motivo</b>, e é a diferença desta classe
@@ -181,6 +227,7 @@ public final class MineLease {
      */
     void reset() {
         closest = Double.NaN;
+        lowest = Integer.MAX_VALUE;
         idle = 0;
     }
 

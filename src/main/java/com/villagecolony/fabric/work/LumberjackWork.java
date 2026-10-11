@@ -330,7 +330,7 @@ public final class LumberjackWork {
         if (storage.isEmpty()) {
             // Sem baú não há onde guardar. Soltar a tarefa devolve o
             // trabalho a quem tenha baú, em vez de travar a fila.
-            job.task.release();
+            job.task.release("no chest of its own");
 
             // E devolve o aldeão à agenda Vanilla: sem tarefa não há
             // por que ele continuar andando até a árvore.

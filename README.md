@@ -32,7 +32,10 @@ SHA-256 do JAR na descrição.
 - Evita sobreposição com estruturas existentes, projetos pendentes e blocos
   físicos dentro da área vertical protegida.
 - Põe o aldeão ocioso para recolher do chão só o item que falta à obra aberta
-  (Regra 48) e mostra no `/vc log` quem espera o quê há mais de dois minutos.
+  (Regra 48) e mostra no `/vc log` quem espera o quê há mais de dois minutos e,
+  por ofício, a última janela de cinco minutos do expediente (trabalho,
+  caminhada, espera, bloqueio, ócio e encalhe), marcando quem passa de 15% na
+  regra do ócio. O comando é aberto a todo jogador.
 - Regras de profissão por mundo, editáveis pelo [Mod Menu](https://modrinth.com/mod/modmenu)
   (opcional): ativar ou desativar a profissão, limite de trabalhadores, raio de
   busca do lenhador, fazendeiro e pastor, e ordem de contratação (ADR-030).

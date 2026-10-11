@@ -171,4 +171,35 @@ class VillageLogPresenterTest {
 
         assertEquals(1, lines.size(), lines.toString());
     }
+
+    /** O tempo de cada ofício, com a marca da regra do ócio acima de 15% — ADR-041 #4. */
+    @Test
+    void showsTheTimeOfEachTradeAndMarksTheIdleRule() {
+        java.util.Map<String, java.util.Map<com.villagecolony.fabric.work.WorkTime.State, Integer>> window =
+                new java.util.TreeMap<>();
+        java.util.EnumMap<com.villagecolony.fabric.work.WorkTime.State, Integer> smelter =
+                new java.util.EnumMap<>(com.villagecolony.fabric.work.WorkTime.State.class);
+        smelter.put(com.villagecolony.fabric.work.WorkTime.State.WORK, 5);
+        smelter.put(com.villagecolony.fabric.work.WorkTime.State.IDLE, 95);
+        java.util.EnumMap<com.villagecolony.fabric.work.WorkTime.State, Integer> lumberjack =
+                new java.util.EnumMap<>(com.villagecolony.fabric.work.WorkTime.State.class);
+        lumberjack.put(com.villagecolony.fabric.work.WorkTime.State.WORK, 60);
+        lumberjack.put(com.villagecolony.fabric.work.WorkTime.State.WALK, 30);
+        lumberjack.put(com.villagecolony.fabric.work.WorkTime.State.IDLE, 10);
+        window.put("SMELTER", smelter);
+        window.put("LUMBERJACK", lumberjack);
+        window.put("NONE", smelter);
+
+        assertEquals(List.of(
+                        "Lenhador: trabalho 60% · caminhada 30% · espera 0% · bloqueio 0% · ócio 10% · encalhe 0%",
+                        "Fundidor: trabalho 5% · caminhada 0% · espera 0% · bloqueio 0% · ócio 95% · encalhe 0%"
+                                + " — regra do ócio: 95% (teto 15%)"),
+                VillageLogPresenter.tradeTime(window));
+    }
+
+    @Test
+    void anEmptyWindowSaysThereIsNoMeasureYet() {
+        assertEquals(List.of("Ainda sem medida de tempo: a primeira janela fecha em até 5 minutos de expediente."),
+                VillageLogPresenter.tradeTime(java.util.Map.of()));
+    }
 }
