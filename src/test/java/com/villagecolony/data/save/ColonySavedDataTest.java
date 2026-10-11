@@ -242,6 +242,26 @@ class ColonySavedDataTest {
         assertEquals(ProfessionType.LUMBERJACK, loaded.get(0).profession().orElseThrow());
     }
 
+    /**
+     * O save gravado carrega a versão do esquema — AUD-03.
+     *
+     * <p>Sem ela, todo carregamento parece v0 e a migração v0→v1 roda de novo;
+     * a primeira migração que não for idempotente corromperia saves já migrados.
+     */
+    @Test
+    void aWrittenSaveCarriesTheCurrentSchemaVersion() {
+        Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(0, 64, 0));
+        ColonySavedData data = empty();
+        data.sync(List.of(colony), List.of());
+
+        NbtCompound written = data.writeNbt(new NbtCompound(), null);
+
+        assertEquals(SaveMigration.CURRENT, written.getInt("saveVersion"));
+        assertEquals(written.getInt("saveVersion"),
+                SaveMigration.migrate(written).getInt("saveVersion"),
+                "um save já na versão atual não pode mudar de versão ao ser lido");
+    }
+
     @Test
     void breederFromOldSaveBecomesShepherdAndWritesShepherd() {
         Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(0, 64, 0));
@@ -251,6 +271,8 @@ class ColonySavedDataTest {
         data.sync(List.of(colony), List.of(worker));
 
         NbtCompound oldSave = data.writeNbt(new NbtCompound(), null);
+        // Save anterior ao Pastor: v0, que não gravava a versão (AUD-03).
+        oldSave.remove("saveVersion");
         oldSave.getList("workers", 10).getCompound(0).putString("profession", "BREEDER");
 
         ColonySavedData loaded = ColonySavedData.TYPE.deserializer().apply(oldSave, null);

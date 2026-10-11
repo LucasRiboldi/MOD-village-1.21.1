@@ -456,6 +456,7 @@ public final class ColonySavedData extends PersistentState {
         RoadIndexSave.write(nbt, roads);
         SweepCursorSave.write(nbt, sweeps);
         ActivityTraceSave.write(nbt, activityTraces);
+        SaveMigration.stamp(nbt);
 
         return nbt;
     }
