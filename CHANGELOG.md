@@ -11,6 +11,29 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.27] — depois do playtest da 0.3.26 (2026-10-11, JAR local, não jogado)
+
+Playtest de 6 min (Spark `HGyazYR1VW`): TPS 20, mod 2,5%; a vila ficou 3 min presa numa
+vidraça que o pastor pegou e não alcançou, e quase todo ofício parado sem demanda.
+
+### Corrigido
+- O ajudante de obra (outro ofício) só pega a obra a até 32 blocos dela e a solta depois de
+  30 s andando sem chegar; o construtor mantém os 2 minutos.
+- Com só peças de lado faltando, o construtor segura a obra esperando o material (até 5 min)
+  e calça a rua enquanto isso, em vez de soltá-la para outro ofício.
+- O lenhador larga a árvore depois de 30 s sem chegar mais perto dela; antes eram 2 min, e
+  andar até árvore longe também contava.
+
+### Novo
+- Teto geral do estoque: 64 para bloco fabricado, 256 para bloco cru, acima só o que a obra pede.
+- O carpinteiro e o pedreiro sem tarefa ajudam a obra, como o pastor (até 2 ajudantes).
+- O britador é a primeira fonte de areia: enquanto há pedreiro e pedra a moer, ninguém sai
+  atrás de areia na natureza e o fundidor sem areia vai ajudar outro ofício.
+- A busca de areia volta direto à mancha lembrada mais perto da vila (raio 3 em volta).
+- A muda da árvore cortada longe vai para o bosque perto do baú do lenhador (até o dobro).
+- O fazendeiro ara canteiro novo na borda da roça, com água perto, quando nada está maduro.
+- Aberta a escada da mina, os outros ramais abrem já, pulando a sala comum.
+
 ## [0.3.26] — depois do playtest da 0.3.25 (2026-10-11, JAR local, não jogado)
 
 ### Corrigido

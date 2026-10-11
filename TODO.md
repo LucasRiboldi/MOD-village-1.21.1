@@ -8,8 +8,15 @@ Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
 ## 🔴 Autossuficiência 11-10 (`claude/autossuficiencia`; `docs/research/2026-10-11-autossuficiencia-e-ocio.md`)
 
-- [ ] **Playtest longo da 0.3.26 (30–60 min)**; a 0.3.25 só teve 10 min. Aceite: Regra 51 ≤ 15% por ofício; `VC_SUPPLY_ERROR`
-      perto de zero; lajes/escadas no baú abaixo do teto do P1; areia entrando (fundidor ou britador).
+- [ ] **Playtest longo da 0.3.27 (30–60 min)**; a 0.3.26 só teve 6 min (uma janela VC_TIME, caída na trava
+      da vidraça). Aceite: Regra 51 ≤ 15% por ofício; `VC_SUPPLY_ERROR` perto de zero; nada acima de 64
+      fabricado / 256 cru sem obra pedindo; areia pelo britador; `lends a hand` de carpinteiro e pedreiro;
+      `tilled a new plot`; `goes to the grove`; segundo mineiro com ramal próprio cedo.
+- [ ] 🟠 O construtor não tem preferência na tarefa de obra: na 0.3.26 o pedreiro pegou a casa nova e o
+      construtor ficou 92% parado. O autor escolheu "ajudante só perto" (não "construtor tem a vez");
+      medir no playtest antes de reabrir.
+- [ ] 🟡 Mina: os ramais 1–3 abertos cedo começam a 5–10 blocos da sala, por rocha; ver no jogo se o
+      mineiro chega (`gave up the stone`, ramal `exhausted` cedo).
 - [x] P4b, do jeito do autor: o construtor sem tarefa limpa a faixa de construção; planta tirada pelo
       jogador não volta (`386c14f2`). Medir no playtest quanto do ócio de 81% sobra.
 - [ ] 🟡 Iluminar a rua: decidir onde a luz fica (tocha ao lado da rua derruba o lote; lampião em poste?).

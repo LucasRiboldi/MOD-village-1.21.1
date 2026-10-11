@@ -1,9 +1,12 @@
 # STATE — 2026-10-11
 
-> **JAR instalado: `village-colony-0.3.26.jar`** (`claude/autossuficiencia`, 11-10) =
-> `5663237DCE589D41279B20929934D0D366F5EFEF553764E30D5C2D7433067079`, igual nas três cópias
-> (`release_manifest.py --dry-run`); a 0.3.25 ficou como `.jar.disabled`. **Ainda não jogado.**
-> A 0.3.25 foi jogada 10 min em 11-10 (14:52–15:03); o que ela mostrou está abaixo.
+> **JAR instalado: `village-colony-0.3.27.jar`** (`claude/autossuficiencia`, 11-10) =
+> `C3B1F7E38BD0295321E5948348B0BFA8735F2AF276E6CBF594B9FB2E7E5C4592`, igual nas três cópias;
+> a 0.3.26 ficou como `.jar.disabled`. **Ainda não jogado.** A 0.3.26 foi jogada 6 min em 11-10
+> (17:50–17:58, Spark `HGyazYR1VW`): a vila ficou 3 min presa numa vidraça que o pastor pegou;
+> a 0.3.27 responde a isso (ajudante só perto, construtor espera a peça, teto 64/256, britador
+> primeiro, artesão ajuda a obra, bosque perto, fazendeiro alarga a roça, ramais cedo).
+> **Verificação da 0.3.27 (`6af67ac5` + docs):** 729/729 GameTests em 2 rodadas (mundo novo); 1467 unitários.
 >
 > **Última verificação (`main` em `38015460`, 11-10, depois do merge das PRs #20–#25):** 1446
 > unitários e de propriedade (`--rerun-tasks`, 0 falhas); 705/705 GameTests (1 rodada); 112 testes Python. PIT 1820/2112 (86,17%) em `e71607dd`.
