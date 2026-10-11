@@ -291,6 +291,11 @@ public final class FarmerWork {
         if (job.target == null) {
             FarmerChores.findWork(world, workerId, job, storage.get());
 
+            // Sem colheita nem canteiro: o compostor e a farinha de osso (P8b).
+            if (job.target == null) {
+                FarmerCompost.tend(world, villager, job.task.colonyId(), storage.get());
+            }
+
             return;
         }
 
