@@ -240,12 +240,15 @@ public final class MinecraftTypeAdapter {
      * <p>Vazio para nome que o registro não tem — um projeto lido de um
      * datapack que depois saiu, por exemplo. O registro devolve
      * {@code AIR} para desconhecido, e "ar" é uma resposta que quem
-     * constrói não pode confundir com um bloco de verdade.
+     * constrói não pode confundir com um bloco de verdade. Nome com caractere
+     * que o jogo não aceita também volta vazio.
      */
     public static Optional<Block> toBlock(ResourceId id) {
-        Identifier identifier = toIdentifier(id);
+        // Nome que o jogo não aceita (maiúscula, espaço) também é desconhecido:
+        // ele pode vir do save, e lançar aqui derrubaria quem lê — AUD-02.
+        Identifier identifier = Identifier.tryParse(id.namespace(), id.path());
 
-        if (!Registries.BLOCK.containsId(identifier)) {
+        if (identifier == null || !Registries.BLOCK.containsId(identifier)) {
             return Optional.empty();
         }
 

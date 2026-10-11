@@ -62,7 +62,9 @@ public final class SaveMigration {
     public static NbtCompound migrate(NbtCompound source) {
         NbtCompound target = source.copy();
 
-        int from = target.getInt(SAVE_VERSION);
+        // Versão negativa só vem de save editado ou corrompido: é tratada como
+        // o save mais antigo, e não derruba a leitura — AUD-02.
+        int from = Math.max(0, target.getInt(SAVE_VERSION));
 
         for (int v = from; v < CURRENT; v++) {
             apply(v, target);

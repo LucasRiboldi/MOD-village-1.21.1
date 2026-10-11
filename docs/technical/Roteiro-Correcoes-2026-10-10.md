@@ -264,8 +264,8 @@ coluna "em jogo" é a que a régua cobra.
 | 0.1 commit da auditoria | ⬜ liberado (ADR-041 #1) | — |
 | 0.2 AUD-05 | ✅ integrada na branch `claude/integra-fluxo-grafo-waypoints` (0.3.24): 1402 unitários, 696/696 GameTests × 3, PIT 85,56% | ⬜ espera playtest |
 | 0.3 regra do ócio | ✅ decidida: abrangente (ADR-041 #3) | — |
-| AUD-03 | ⬜ | — |
-| AUD-02 | ⬜ (sonda pronta em `scripts/audit/probes/`) | — |
+| AUD-03 | ✅ `11bd4799` — `SaveMigration.stamp` no `writeNbt`; mutação conferida | — |
+| AUD-02 | ✅ leitura por entrada e por seção, versão negativa = 0, `toBlock` sem lançar; `ColonySaveFuzzTest` 13/13, `WorkMemoryLoadTest`; mutação conferida | — |
 | AUD-06 | ⬜ | — |
 | AUD-07 | ⬜ | — |
 | AUD-11 | ⬜ | — |
