@@ -83,6 +83,25 @@ public class VillageGroveGameTest implements FabricGameTest {
 
             context.assertTrue(VillageGrove.tendNow(world, colony) == 0,
                     "com o bosque cheio o lenhador plantou mais");
+
+            // P7a, bosque-fazenda: a árvore madura do bosque é a escolhida, e o
+            // bosque tem seis mudas por lenhador.
+            BlockPos grown = grove.get(0).up();
+            world.setBlockState(grown, Blocks.OAK_LOG.getDefaultState());
+
+            context.assertTrue(VillageGrove.matureTree(colony.id(), grove.get(0), log -> true, world)
+                            .filter(grown::equals).isPresent(),
+                    "o tronco que cresceu no bosque não foi o escolhido");
+
+            for (int i = 0; i < 2; i++) {
+                UUID lumberjack = UUID.randomUUID();
+                VillageColonyMod.WORKERS.register(lumberjack, colony.id())
+                        .assign(com.villagecolony.core.worker.model.ProfessionType.LUMBERJACK);
+                owned.owning(lumberjack);
+            }
+
+            context.assertTrue(VillageGrove.sizeFor(colony.id()) == 2 * VillageGrove.SIZE,
+                    "dois lenhadores, e o bosque não dobrou: " + VillageGrove.sizeFor(colony.id()));
         } finally {
             for (int x = -9; x <= 15; x++) {
                 for (int z = -9; z <= 15; z++) {

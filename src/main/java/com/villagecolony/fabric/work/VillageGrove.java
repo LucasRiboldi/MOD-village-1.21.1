@@ -112,7 +112,7 @@ public final class VillageGrove {
 
         int planted = 0;
 
-        while (grove.size() < SIZE) {
+        while (grove.size() < sizeFor(colony.id())) {
             Optional<BlockPos> spot = spotFor(world, colony, box.get(), grove);
 
             if (spot.isEmpty() || !TreeNursery.plant(world, spot.get(), sapling.get())) {
@@ -126,7 +126,7 @@ public final class VillageGrove {
             VillageColonyMod.LOGGER.info(
                     "Colony {} — the lumberjack planted {} near the village at {} (grove {} of {})",
                     colony.id().toString().substring(0, 8), TreeNursery.idOf(sapling.get()),
-                    spot.get().toShortString(), grove.size(), SIZE);
+                    spot.get().toShortString(), grove.size(), sizeFor(colony.id()));
         }
 
         fertilize(world, colony, grove);
@@ -165,6 +165,34 @@ public final class VillageGrove {
 
             world.syncWorldEvent(net.minecraft.world.WorldEvents.BONE_MEAL_USED, sapling, 15);
         }
+    }
+
+    /**
+     * O tamanho do bosque: {@link #SIZE} mudas por lenhador da colônia — P7a,
+     * bosque-fazenda (2026-10-11). Com dois lenhadores, 6 mudas não davam árvore
+     * perto para os dois, e metade das caminhadas ia a mais de 48 blocos.
+     */
+    static int sizeFor(UUID colonyId) {
+        long lumberjacks = VillageColonyMod.WORKERS.ofColony(colonyId).stream()
+                .filter(worker -> worker.profession()
+                        .filter(com.villagecolony.core.worker.model.ProfessionType.LUMBERJACK::equals).isPresent())
+                .count();
+
+        return SIZE * (int) Math.max(1, lumberjacks);
+    }
+
+    /**
+     * A árvore madura do bosque mais perto de {@code from}, se houver — P7a: o
+     * lenhador corta o bosque perto antes da floresta longe, e a muda é reposta.
+     */
+    static Optional<BlockPos> matureTree(UUID colonyId, BlockPos from,
+            java.util.function.Predicate<BlockPos> usable, ServerWorld world) {
+
+        return GROVES.getOrDefault(colonyId, List.of()).stream()
+                .map(BlockPos::up)
+                .filter(log -> world.getBlockState(log).isIn(BlockTags.LOGS))
+                .filter(usable)
+                .min(java.util.Comparator.comparingDouble(log -> log.getSquaredDistance(from)));
     }
 
     /** As mudas de agora, para o teste. */

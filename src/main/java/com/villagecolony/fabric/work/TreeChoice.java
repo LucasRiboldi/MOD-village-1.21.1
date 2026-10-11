@@ -150,11 +150,15 @@ public final class TreeChoice {
         Optional<com.villagecolony.core.colony.model.VillageBounds> zoned = ResourceSearches.zonedBox(
                 world, job.task.colonyId(), ProfessionType.LUMBERJACK,
                 LumberjackWork.searchRadius != LumberjackWork.SEARCH_RADIUS);
-        Optional<BlockPos> tree;
 
-        if (zoned.isPresent()) {
+        // O bosque maduro primeiro, perto da vila (P7a); o anel de busca não vale para ele.
+        Optional<BlockPos> tree = VillageGrove.matureTree(job.task.colonyId(), villager.getBlockPos(),
+                log -> !TreeClaims.isTaken(log) && !TreeMarks.isRejected(world, log)
+                        && !TreeMarks.isOutOfReach(world, log), world);
+
+        if (tree.isEmpty() && zoned.isPresent()) {
             tree = byZone(world, job, villager, zoned.get());
-        } else {
+        } else if (tree.isEmpty()) {
             // Primeiro a árvore conhecida mais perto dele; só sem nenhuma, a varredura — ADR-038 P3a.
             tree = com.villagecolony.fabric.integration.VillageTrees.nearest(
                     world, job.task.colonyId(), villager.getBlockPos(), usable);
