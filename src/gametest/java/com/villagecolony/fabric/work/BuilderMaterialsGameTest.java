@@ -153,7 +153,7 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
                         context.getWorld(), setup.project(), Items.GLASS_PANE);
             }
 
-            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+            for (int dispatch = 1; dispatch <= com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; dispatch++) {
                 ConstructionSupplyDispatches.recordCycleDispatch(
                         setup.project().id(), Items.GLASS_PANE, dispatch);
             }
@@ -197,7 +197,7 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
             }
 
             // Consultas não gastam tentativa: só o despacho do ciclo conta — ADR-040 §2.
-            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+            for (int dispatch = 1; dispatch <= com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; dispatch++) {
                 ConstructionSupplyDispatches.recordCycleDispatch(setup.project().id(), Items.OAK_PLANKS, dispatch);
             }
 
@@ -326,15 +326,15 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
             }
 
             context.assertTrue(count(context, setup.builderChest(), Items.WHITE_TERRACOTTA) == 0,
-                    "a terracota apareceu sem quatro despachos do ciclo");
+                    "a terracota apareceu antes dos despachos do ciclo");
 
-            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+            for (int dispatch = 1; dispatch <= com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; dispatch++) {
                 ConstructionSupplyDispatches.recordCycleDispatch(
                         setup.project().id(), Items.WHITE_TERRACOTTA, dispatch);
             }
 
             context.assertTrue(BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project()),
-                    "quatro despachos distintos não liberaram a contingência terminal");
+                    "os despachos distintos não liberaram a contingência terminal");
             context.assertTrue(count(context, setup.builderChest(), Items.WHITE_TERRACOTTA) == 1,
                     "a contingência terminal não entrou no baú do construtor");
         } finally {
@@ -373,7 +373,7 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
 
             ConstructionSupplyDispatches.renewForCycle(context.getWorld(), setup.colony());
             long tick = context.getWorld().getTime();
-            for (int cycle = 1; cycle <= 3; cycle++) {
+            for (int cycle = 1; cycle < com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; cycle++) {
                 ConstructionSupplyDispatches.recordCycleDispatch(
                         setup.project().id(), Items.OAK_PLANKS, tick + cycle);
             }

@@ -647,7 +647,7 @@ public class BuilderGameTest implements FabricGameTest {
             }
 
             // Consultas não gastam tentativa: só o despacho do ciclo conta — ADR-040 §2.
-            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+            for (int dispatch = 1; dispatch <= com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; dispatch++) {
                 ConstructionSupplyDispatches.recordCycleDispatch(
                         fixture.project.id(), Items.LANTERN, dispatch);
             }
@@ -686,7 +686,7 @@ public class BuilderGameTest implements FabricGameTest {
             }
 
             // Consultas não gastam tentativa: só o despacho do ciclo conta — ADR-040 §2.
-            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+            for (int dispatch = 1; dispatch <= com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; dispatch++) {
                 ConstructionSupplyDispatches.recordCycleDispatch(
                         fixture.project.id(), Items.HOPPER, dispatch);
             }
@@ -725,7 +725,7 @@ public class BuilderGameTest implements FabricGameTest {
             }
 
             // Consultas não gastam tentativa: só o despacho do ciclo conta — ADR-040 §2.
-            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+            for (int dispatch = 1; dispatch <= com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; dispatch++) {
                 ConstructionSupplyDispatches.recordCycleDispatch(
                         fixture.project.id(), Items.HAY_BLOCK, dispatch);
             }
@@ -764,14 +764,14 @@ public class BuilderGameTest implements FabricGameTest {
                         "a terracota apareceu antes da tentativa " + attempt);
             }
 
-            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+            for (int dispatch = 1; dispatch <= com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; dispatch++) {
                 ConstructionSupplyDispatches.recordCycleDispatch(
                         fixture.project.id(), Items.WHITE_TERRACOTTA, dispatch);
             }
 
             context.assertTrue(
                     BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
-                    "a quarta falta em uma rota teorica nao abasteceu a terracota");
+                    "a ultima falta em uma rota teorica nao abasteceu a terracota");
             context.assertTrue(
                     ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.WHITE_TERRACOTTA) == 1,
                     "a terracota de contingencia nao entrou no bau da obra");
@@ -1971,32 +1971,28 @@ public class BuilderGameTest implements FabricGameTest {
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
     }
 
-    /** Quatro despachos de ciclos diferentes liberam a contingência (ADR-040). */
+    /**
+     * Só o último despacho sem entrega libera a contingência — ADR-040, e o prazo
+     * do P9 (último recurso, 2026-10-11): {@code DISPATCHES_BEFORE_STOCKING} ciclos.
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_missing_piece",
             tickLimit = 20)
-    public void theFourthMissingPieceAttemptIsSupplied(TestContext context) {
+    public void theLastMissingPieceAttemptIsSupplied(TestContext context) {
         UUID projectId = UUID.randomUUID();
+        int last = com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING;
 
         try {
-            ConstructionSupplyDispatches.recordCycleDispatch(projectId, Items.BREWING_STAND, 1);
-            context.assertFalse(
-                    ConstructionSupplyDispatches.fallbackDue(projectId, Items.BREWING_STAND),
-                    "a primeira falta já liberou a peça");
+            for (int dispatch = 1; dispatch < last; dispatch++) {
+                ConstructionSupplyDispatches.recordCycleDispatch(projectId, Items.BREWING_STAND, dispatch);
+                context.assertFalse(
+                        ConstructionSupplyDispatches.fallbackDue(projectId, Items.BREWING_STAND),
+                        "a falta " + dispatch + " de " + last + " já liberou a peça");
+            }
 
-            ConstructionSupplyDispatches.recordCycleDispatch(projectId, Items.BREWING_STAND, 2);
-            context.assertFalse(
-                    ConstructionSupplyDispatches.fallbackDue(projectId, Items.BREWING_STAND),
-                    "a segunda falta já liberou a peça");
-
-            ConstructionSupplyDispatches.recordCycleDispatch(projectId, Items.BREWING_STAND, 3);
-            context.assertFalse(
-                    ConstructionSupplyDispatches.fallbackDue(projectId, Items.BREWING_STAND),
-                    "a terceira falta já liberou a peça");
-
-            ConstructionSupplyDispatches.recordCycleDispatch(projectId, Items.BREWING_STAND, 4);
+            ConstructionSupplyDispatches.recordCycleDispatch(projectId, Items.BREWING_STAND, last);
             context.assertTrue(
                     ConstructionSupplyDispatches.fallbackDue(projectId, Items.BREWING_STAND),
-                    "a quarta falta não liberou a peça");
+                    "a última falta não liberou a peça");
 
             ConstructionSupplyDispatches.delivered(projectId, Items.BREWING_STAND);
 

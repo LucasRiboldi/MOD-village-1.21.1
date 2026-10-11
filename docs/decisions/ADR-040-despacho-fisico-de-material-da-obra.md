@@ -29,7 +29,8 @@ nunca entrega.
    uma alternativa aceita aparece fisicamente em um bau que atende a obra.
    Esse evento zera a contagem. A aparicao por jogador tambem e entrega fisica,
    mas nao recebe atribuicao de profissao sem evento de deposito comprovado.
-4. Apos quatro tentativas despachadas sem entrega, a peca terminal ou o
+4. Apos quatro tentativas despachadas sem entrega (dez desde a emenda de
+   2026-10-11, abaixo), a peca terminal ou o
    ingrediente sem rota e depositado pelo caminho ja definido na ADR-036 item
    6, no bau da profissao que a usa; se nao houver oficio produtor, no bau que
    atende o construtor. A linha `VC_SUPPLY_ERROR` permanece obrigatoria.
@@ -57,3 +58,12 @@ nao esgotam a tolerancia; quatro ciclos com demanda executavel e sem entrega
 abastecem o destino correto; e um deposito fisico antes do quarto ciclo zera a
 contagem. O proximo save deve confirmar a queda de `VC_SUPPLY_ERROR`, a
 progressao da obra e os percentuais de `time_ledger.py`.
+
+## Emenda de 2026-10-11 (P9, autossuficiencia)
+
+Escolha do autor: a peca que surge no bau e o ultimo recurso. O prazo da obra
+passa de quatro para dez ciclos com tarefa de rota aberta e sem entrega
+(`BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING`), cerca de 5 minutos.
+Medida que o sustenta: no playtest de 11-10 a mina entregava ~13 pedregulhos
+por minuto; 5 minutos sem uma unidade e rota que nao entrega. A busca vazia de
+recurso natural (`LocateFallback`) continua com quatro.

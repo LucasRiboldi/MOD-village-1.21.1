@@ -125,6 +125,16 @@ public final class BiomeConstructionSupply {
      */
     public static final int ATTEMPTS_BEFORE_STOCKING = 4;
 
+    /**
+     * Ciclos com a rota da obra aberta e sem entrega antes de a peça aparecer —
+     * P9, último recurso (escolha do autor, 2026-10-11). O ciclo só conta quando
+     * a rota tem tarefa aberta (ADR-040 §2), então são 10 ciclos (5 min) de uma
+     * profissão trabalhando sem entregar uma unidade. No playtest de 11-10 a mina
+     * entregava ~13 pedregulhos por minuto: 5 minutos sem nenhum é rota que não
+     * entrega. A busca vazia ({@code LocateFallback}) segue com {@link #ATTEMPTS_BEFORE_STOCKING}.
+     */
+    public static final int DISPATCHES_BEFORE_STOCKING = 10;
+
     /** Esperas da obra antes de pedir ao fazendeiro uma muda específica. */
     private static final int TREE_WAITS_BEFORE_PLANTING = 20;
 
@@ -341,10 +351,10 @@ public final class BiomeConstructionSupply {
         }
 
         VillageColonyMod.LOGGER.info(
-                "The colony stocked {} for construction after four failed attempts"
+                "The colony stocked {} for construction after {} cycles without a delivery"
                         + " — no route delivered it (none in this biome, or one only on paper)",
-                item);
-        logSupplyError(item, ProfessionType.BUILDER, "no route delivered it");
+                item, DISPATCHES_BEFORE_STOCKING);
+        logSupplyError(item, ProfessionType.BUILDER, DISPATCHES_BEFORE_STOCKING, "no route delivered it");
         return true;
     }
 
@@ -353,8 +363,12 @@ public final class BiomeConstructionSupply {
      * sem a profissão a ter obtido fica registrada, para o playtest contar.
      */
     private static void logSupplyError(Item item, ProfessionType profession, String why) {
+        logSupplyError(item, profession, ATTEMPTS_BEFORE_STOCKING, why);
+    }
+
+    private static void logSupplyError(Item item, ProfessionType profession, int attempts, String why) {
         VillageColonyMod.LOGGER.warn("VC_SUPPLY_ERROR version=1 piece={} profession={} attempts={} reason={}",
-                Registries.ITEM.getId(item), profession, ATTEMPTS_BEFORE_STOCKING, why);
+                Registries.ITEM.getId(item), profession, attempts, why);
     }
 
     private static String treeKey(UUID colonyId, TreeSpecies species) {

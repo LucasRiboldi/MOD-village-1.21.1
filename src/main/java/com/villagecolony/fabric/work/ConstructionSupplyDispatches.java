@@ -48,12 +48,12 @@ public final class ConstructionSupplyDispatches {
     private ConstructionSupplyDispatches() {
     }
 
-    /** A quarta renovação sem entrega permite o suprimento terminal. */
+    /** A décima renovação sem entrega permite o suprimento terminal (P9, último recurso). */
     public static boolean fallbackDue(UUID projectId, Item item) {
         Dispatch dispatch = BY_PROJECT.get(projectId);
         return dispatch != null
                 && dispatch.item() == item
-                && dispatch.attempts() >= BiomeConstructionSupply.ATTEMPTS_BEFORE_STOCKING;
+                && dispatch.attempts() >= BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING;
     }
 
     /** Um item físico no estoque encerra a sequência, seja ele de profissão ou do jogador. */
