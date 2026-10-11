@@ -6,6 +6,8 @@
 >
 > **Última verificação (`main` em `38015460`, 11-10, depois do merge das PRs #20–#25):** 1446
 > unitários e de propriedade (`--rerun-tasks`, 0 falhas); 705/705 GameTests (1 rodada); 112 testes Python. PIT 1820/2112 (86,17%) em `e71607dd`.
+> **E na `claude/autossuficiencia` (`9d50cf42`, 11-10):** 1457 unitários (`--rerun-tasks`, 0 falhas);
+> 716/716 GameTests em 3 rodadas seguidas, cada uma num mundo novo; 112 Python. JAR não gerado.
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.** Se passar de 150 linhas, algo
 > está errado: P0 não está fechando. O que já foi resolvido mora em
@@ -42,8 +44,14 @@ ofício; `VC_SUPPLY_ERROR` perto de zero; nenhuma peça antecipada acima do que 
 Pilha #20–#25 **na `main`** desde 11-10 (`38015460`), com merge commit; as branches dela
 continuam no remoto (apagar é decisão do autor, AUD-24).
 
-**Sessão em curso:** `claude/autossuficiencia` (da `main`): P1–P9 e as correções sem escolha, tudo
-antes do playtest (decisão do autor).
+**Sessão em curso:** `claude/autossuficiencia` (da `main`), enviada, sem PR. Feitos, cada um com
+GameTest e bateria verde (716/716, mundo novo): peça de lado por material volta à demanda (raiz da
+areia nunca coletada), P1, P2 (2a sonda e setores, 2c britador, 2d janela), P3 (3a, 3b, 3d), P5c,
+P6 (ramais), P7 (7a, 7b, 7c), P8b, P9 (10 ciclos). **Falta decidir:** P4b (o planejador recusa lote
+com obra aberta — decisão de arquitetura). **Não feito, por falta de defeito:** P5a (tosquia por
+estoque e curral já existem; a procriação parou por falta de trigo). **Não feito:** 2a coleta de
+areia por estoque no ócio; 3a não conta as rochas na meta (pediria `ResourceType` novo).
+Nada disso foi jogado.
 
 ## O que o próximo jogo precisa mostrar
 

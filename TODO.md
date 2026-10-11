@@ -6,6 +6,18 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Autossuficiência 11-10 (`claude/autossuficiencia`; `docs/research/2026-10-11-autossuficiencia-e-ocio.md`)
+
+- [ ] **Playtest único de aceite** (decisão do autor): Regra 51 ≤ 15% por ofício; `VC_SUPPLY_ERROR`
+      perto de zero; lajes/escadas no baú abaixo do teto do P1; areia entrando (fundidor ou britador).
+- [ ] 🟠 **P4b — decisão do autor:** preparar o próximo lote exige o planejador escolher e reservar
+      lote com obra aberta (hoje `ALREADY_OPEN`). Alternativas: reservar o próximo lote; 2ª obra (4a).
+- [ ] 🟡 2a: o fundidor coletar areia por estoque no ócio (não feito).
+- [ ] 🟡 `FarmerCompost.SEED_RESERVE = 32` é ponto de partida; medir no playtest.
+- [ ] 🟡 `BuildSiteGameTest.indexedRoadFindsALotWithoutStartingFullSweep` reprova (2 de 3) quando um
+      lote novo de GameTest entra dois lotes antes dele: depende do tique em que roda. Teste novo vai
+      em `batchId` existente até isso ser corrigido.
+
 ## 🔴 Auditoria técnica 10-10 (fila AUD, P0→🔴 P1→🟠 P2→🟡 P3→🟢)
 
 Detalhe, evidência e teste de aceite: `docs/technical/avaliacao/ACTION-QUEUE.md`.
