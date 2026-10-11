@@ -35,6 +35,33 @@ class MineTest {
         assertEquals(Mine.ARMS, mine.branchesOpenNow());
     }
 
+    /** Aberta a escada, os outros três ramais entram pulando a sala comum — regra do autor, 2026-10-11. */
+    @Test
+    void theOtherBranchesOpenOnceTheStairIsCutAndSkipTheSharedHall() {
+        Mine mine = opened();
+
+        for (int index = 0; index < MineShaft.CARVED - 1; index++) {
+            mine.arm(0).nextPosition();
+        }
+
+        assertEquals(1, mine.branchesOpenNow(), "a escada ainda é de um mineiro só");
+
+        mine.arm(0).nextPosition();
+        assertEquals(Mine.ARMS, mine.branchesOpenNow(), "aberta a escada, os quatro ramais abrem");
+
+        mine.skipTheSharedHall();
+        java.util.Set<ColonyPos> hall = new java.util.HashSet<>();
+
+        for (int index = 0; index < MineShaft.SHARED_BLOCKS; index++) {
+            hall.add(mine.arm(0).shaft().positionAt(index));
+        }
+
+        for (int arm = 1; arm < Mine.ARMS; arm++) {
+            assertEquals(MineShaft.SHARED_BLOCKS, mine.arm(arm).cut(), "o ramal " + arm + " devia pular a sala");
+            assertFalse(hall.contains(mine.arm(arm).nextPosition()), "o ramal " + arm + " recebeu bloco da sala comum");
+        }
+    }
+
     @Test
     void fourArmsStartAtDifferentStaircasesAfterTheSharedArea() {
         Mine mine = opened();

@@ -175,15 +175,13 @@ public final class LumberjackWork {
         /** Quantos troncos esta tarefa já rendeu, para a linha de log. */
         int collected;
 
-        /**
-         * Ticks de horário de trabalho desde o último avanço de verdade.
-         *
-         * <p>Zerado quando um bloco cai e quando uma árvore nova começa —
-         * os dois únicos sinais de que o trabalho anda. Andar não conta:
-         * é exatamente o aldeão que anda para sempre sem chegar que este
-         * contador existe para pegar. Ver {@link TreeChoice#STALL_LIMIT}.
-         */
+        /** Tiques de expediente desde o último bloco caído ou árvore nova — {@link TreeChoice#STALL_LIMIT}. */
         int stalled;
+
+        /** O mais perto que chegou da árvore, e há quantos tiques não chega mais — {@link TreeChoice#NO_CLOSER}. */
+        double closest = Double.MAX_VALUE;
+
+        int noCloser;
 
         /**
          * Se ele saiu do lugar, e há quanto tempo não sai — 2026-09-03.
@@ -398,6 +396,10 @@ public final class LumberjackWork {
         }
 
         if (!villager.getBlockPos().isWithinDistance(job.plan.base(), REACH)) {
+            if (WorkHours.isWorkTime(world, villager) && TreeChoice.noCloser(job, villager.getBlockPos())) {
+                return TreeChoice.giveUp(world, job, workerId, TreeChoice.gotNoCloser(job.noCloser));
+            }
+
             TreeChoice.walkTo(world, villager, job.plan.base());
 
             return Outcome.WORKED;

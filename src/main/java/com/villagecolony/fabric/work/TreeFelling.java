@@ -174,7 +174,10 @@ public final class TreeFelling {
      */
     static void closePlan(ServerWorld world, LumberjackWork.Job job) {
         if (job.plan != null && job.index >= job.plan.logs()) {
-            TreeHarvester.finish(world, job.plan);
+            // A muda da árvore longe vai para o bosque perto da vila — regra do autor, 2026-10-11.
+            if (!VillageGrove.takesTheSapling(world, job.task.colonyId(), job.plan.base())) {
+                TreeHarvester.finish(world, job.plan);
+            }
 
             // O viveiro da borda é dele desde 2026-09-30 — decisão do
             // autor, que o tirou do fazendeiro. Depois de cada árvore

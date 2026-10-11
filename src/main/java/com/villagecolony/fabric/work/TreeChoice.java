@@ -241,6 +241,8 @@ public final class TreeChoice {
         job.progress = 0;
         job.required = 0;
         job.stalled = 0;
+        job.closest = Double.MAX_VALUE;
+        job.noCloser = 0;
 
         if (job.task.state() == TaskState.RESERVED) {
             job.task.start();
@@ -298,6 +300,32 @@ public final class TreeChoice {
 
     static String motionless(int ticks) {
         return "has not moved a block in " + ticks + " work ticks";
+    }
+
+    /**
+     * Tiques de expediente andando sem chegar mais perto da árvore antes de
+     * largá-la: 30 s — regra do autor, 2026-10-11. No playtest da 0.3.26 o
+     * lenhador insistiu dois minutos numa árvore fora de alcance. Andar até uma
+     * árvore longe não conta, enquanto ele se aproxima.
+     */
+    static final int NO_CLOSER = 600;
+
+    /** Anota a distância de agora; diz se ele passou de {@link #NO_CLOSER} sem se aproximar. */
+    static boolean noCloser(LumberjackWork.Job job, BlockPos at) {
+        double distance = Math.sqrt(at.getSquaredDistance(job.plan.base()));
+
+        if (job.closest - distance >= 1.0) {
+            job.closest = distance;
+            job.noCloser = 0;
+
+            return false;
+        }
+
+        return ++job.noCloser > Math.min(NO_CLOSER, stallLimit);
+    }
+
+    static String gotNoCloser(int ticks) {
+        return "got no closer to the tree for " + ticks + " work ticks";
     }
 
     /** Ele andou e não chegou, e há quantos tiques — o guarda de travamento. */

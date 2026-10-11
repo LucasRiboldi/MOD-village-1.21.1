@@ -36,6 +36,27 @@ class TreeChoiceTest {
                         + " senão a copa some e o resto vira tronco órfão");
     }
 
+    /** Quem se aproxima da árvore longe não desiste; quem não chega mais perto em 30 s, sim — regra do autor, 2026-10-11. */
+    @Test
+    void theLumberjackGivesUpOnlyAfterGettingNoCloserFor30Seconds() {
+        LumberjackWork.Job job = jobWithTree();
+
+        for (int step = 0; step < 3 * TreeChoice.NO_CLOSER; step += 10) {
+            int distance = 200 - step / 10;
+            assertFalse(TreeChoice.noCloser(job, new BlockPos(distance, 0, 0)),
+                    "ele se aproximava e desistiu a " + distance + " blocos");
+        }
+
+        BlockPos stuck = new BlockPos(30, 0, 0);
+        boolean gaveUp = false;
+
+        for (int tick = 0; tick <= TreeChoice.NO_CLOSER && !gaveUp; tick++) {
+            gaveUp = TreeChoice.noCloser(job, stuck);
+        }
+
+        assertTrue(gaveUp, "parado sem chegar mais perto, ele não largou a árvore em 30 s");
+    }
+
     private static LumberjackWork.Job jobWithTree() {
         Task task = Task.create(
                 UUID.randomUUID(),

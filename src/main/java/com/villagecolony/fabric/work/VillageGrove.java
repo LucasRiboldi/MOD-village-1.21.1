@@ -73,6 +73,9 @@ public final class VillageGrove {
 
     private static final Map<UUID, Long> CHECKED = new HashMap<>();
 
+    /** Mudas que vieram de árvores cortadas longe, a mais no bosque — regra do autor, 2026-10-11. */
+    private static final Map<UUID, Integer> MOVED = new HashMap<>();
+
     private VillageGrove() {
     }
 
@@ -178,7 +181,31 @@ public final class VillageGrove {
                         .filter(com.villagecolony.core.worker.model.ProfessionType.LUMBERJACK::equals).isPresent())
                 .count();
 
-        return SIZE * (int) Math.max(1, lumberjacks);
+        int base = SIZE * (int) Math.max(1, lumberjacks);
+
+        return base + Math.min(base, MOVED.getOrDefault(colonyId, 0));
+    }
+
+    /**
+     * A árvore cortada longe do bosque não é replantada lá: a muda dela vai para o
+     * bosque perto do baú do lenhador, que cresce até o dobro ({@link #sizeFor}) —
+     * regra do autor, 2026-10-11. No playtest da 0.3.26 o lenhador andava 48% do
+     * expediente atrás de árvores a 80–100 blocos do centro.
+     *
+     * @return se a muda foi para o bosque (e não deve ser replantada na base)
+     */
+    static boolean takesTheSapling(ServerWorld world, UUID colonyId, BlockPos base) {
+        Optional<VillageBounds> box = VillageColonyMod.COLONIES.find(colonyId).flatMap(Colony::bounds);
+
+        if (box.isEmpty() || box.get().containsColumn(base.getX(), base.getZ(), FAR + SPACING)) {
+            return false;
+        }
+
+        MOVED.merge(colonyId, 1, Integer::sum);
+        VillageColonyMod.LOGGER.info("Colony {} — the sapling of the tree at {} goes to the grove near the village"
+                + " (grove of {})", colonyId.toString().substring(0, 8), base.toShortString(), sizeFor(colonyId));
+
+        return true;
     }
 
     /**
@@ -217,9 +244,14 @@ public final class VillageGrove {
             }
         }
 
-        ring.sort(Comparator.<int[]>comparingDouble(cell -> turn(towards,
-                        Math.atan2(cell[1] - box.centerZ(), cell[0] - box.centerX())))
-                .thenComparingInt(cell -> cell[2]));
+        // Perto do baú do lenhador primeiro — um bosque junto, e não espalhado pela borda.
+        Optional<ColonyPos> chest = lumberjackChest(colony.id());
+
+        ring.sort(chest.isPresent()
+                ? Comparator.<int[]>comparingLong(cell -> flat(cell, chest.get()))
+                : Comparator.<int[]>comparingDouble(cell -> turn(towards,
+                                Math.atan2(cell[1] - box.centerZ(), cell[0] - box.centerX())))
+                        .thenComparingInt(cell -> cell[2]));
 
         for (int[] cell : ring) {
             Optional<BlockPos> ground = groundAt(world, cell[0], cell[1], colony.center().y());
@@ -339,6 +371,13 @@ public final class VillageGrove {
 
     /** O ângulo do baú do lenhador a partir do centro da vila; zero sem ele. */
     private static double towardsTheLumberjack(UUID colonyId, VillageBounds box) {
+        return lumberjackChest(colonyId)
+                .map(chest -> Math.atan2(chest.z() - box.centerZ(), chest.x() - box.centerX()))
+                .orElse(0.0);
+    }
+
+    /** O baú do primeiro lenhador da colônia que tem um. */
+    private static Optional<ColonyPos> lumberjackChest(UUID colonyId) {
         for (var worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
             if (worker.profession()
                     .filter(com.villagecolony.core.worker.model.ProfessionType.LUMBERJACK::equals).isEmpty()) {
@@ -348,12 +387,18 @@ public final class VillageGrove {
             var chest = VillageColonyMod.STORAGES.of(worker.villagerId());
 
             if (chest.isPresent()) {
-                return Math.atan2(chest.get().chestPosition().z() - box.centerZ(),
-                        chest.get().chestPosition().x() - box.centerX());
+                return Optional.of(chest.get().chestPosition());
             }
         }
 
-        return 0.0;
+        return Optional.empty();
+    }
+
+    private static long flat(int[] cell, ColonyPos chest) {
+        long dx = (long) cell[0] - chest.x();
+        long dz = (long) cell[1] - chest.z();
+
+        return dx * dx + dz * dz;
     }
 
     /** Quanto girar de um ângulo ao outro, de 0 a π. */
@@ -366,5 +411,6 @@ public final class VillageGrove {
     public static void clearAll() {
         GROVES.clear();
         CHECKED.clear();
+        MOVED.clear();
     }
 }

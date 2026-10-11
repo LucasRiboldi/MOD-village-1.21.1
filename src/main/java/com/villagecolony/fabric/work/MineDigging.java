@@ -151,6 +151,7 @@ public final class MineDigging {
                 : VillageColonyMod.COLONIES.find(colonyId)
                         .map(colony -> MineOreHeading.order(world, colony, mine.get()))
                         .orElse(new int[] {0, 1, 2, 3});
+        mine.get().skipTheSharedHall();
         OptionalInt claimed = MineClaims.claimArm(
                 colonyId, workerId, mine.get().branchesOpenNow(), index -> !mine.get().arm(index).isDone(), order);
 
