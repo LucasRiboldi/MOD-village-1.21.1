@@ -6,9 +6,47 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Auditoria técnica 10-10 (fila AUD, P0→🔴 P1→🟠 P2→🟡 P3→🟢)
+
+Detalhe, evidência e teste de aceite: `docs/technical/avaliacao/ACTION-QUEUE.md`.
+Ordem de execução: `docs/technical/Roteiro-Correcoes-2026-10-10.md`.
+Scripts: `scripts/audit/check-*.sh`.
+
+- [ ] 🔴 **AUD-01** Regra 51 reprovada nas duas sessões de 10-10 (0.3.23: SMELTER 91%, BUILDER 92%, MINER 17%;
+      fundidor 311/311 soltas). Raiz: mineiro sem boca de mina (`no mine mouth`, 50×). Roteiro: `docs/technical/Roteiro-Correcoes-2026-10-10.md`.
+- [ ] 🟠 **AUD-02** Save malformado apaga todas as colônias (o Vanilla cria estado vazio e o grava):
+      `try/catch` por entrada em `ColonySaveReader`; promover `scripts/audit/probes/NbtFuzzProbeTest`.
+- [ ] 🟠 **AUD-03** Gravar `saveVersion` no `ColonySavedData.writeNbt` (hoje a v0→v1 roda a cada carga).
+- [ ] 🟠 **AUD-05** Integrar a `codex/fluxo-grafo-waypoints` (decidido, ADR-041 #2): 14 commits, ADR-040,
+      despacho físico e retenção do fundidor fora da `main`; a PR #19 foi fechada sem trazê-los.
+- [ ] 🟠 **AUD-06** Asserções em `WorkDemandTest` para `constructionMaterials` (10 mutantes sobreviventes; PIT com folga de 13).
+- [ ] 🟡 **AUD-07** Régua de avaliação: C14 cego às seções 🔴, C01 conta uma linha a mais, quebra em cp1252 (régua v2).
+- [ ] 🟡 **AUD-08** `STATE.md` com 663 linhas (teto 150): arquivar seções fechadas de 02-10 a 08-10.
+- [ ] 🟡 **AUD-09** Ciclo raiz ↔ `fabric.*` por `VillageColonyMod` como localizador global.
+- [ ] 🟡 **AUD-10** 181 estáticos mutáveis; config estática não-final (`MineLease`, `TreeChoice`, `MinerDetours`, `FarmerWork`).
+- [ ] 🟡 **AUD-11** Testes de `ProfessionPolicyNetworking`/codec/SavedData; cobertura de `fabric.network` e `fabric.command`.
+- [ ] 🟡 **AUD-12** Avisar quando outro mod tirar a tarefa da colônia do `Brain`; `suggests: modmenu` e `breaks` no `fabric.mod.json`.
+- [ ] 🟡 **AUD-04** Ciclo p95 67 ms na 0.3.22, 27,7 ms na 0.3.23: medir de novo (≥ 20 amostras) antes de otimizar.
+- [ ] 🟡 **AUD-25** Diário de ações sem o motivo de `TASK_RELEASED` (grava só o estado).
+- [ ] 🟡 **AUD-13** Alternância de obras: o teste passa; atualizar `docs/behavioral-tests/README.md` e provar em jogo.
+- [ ] 🟢 **AUD-14** CHANGELOG sem entradas de 0.3.1 a 0.3.23.
+- [ ] 🟢 **AUD-15** 848 imports não usados (`RemoveUnusedImports` no Error Prone).
+- [ ] 🟢 **AUD-16** Cache de `CraftingLookup.listAllOfType`, se o Spark mostrar.
+- [x] 🟢 **AUD-17** `/vc log` continua aberto (ADR-041 #4).
+- [ ] 🟢 **AUD-18** Tag por JAR publicado (0.3.4–0.3.23 sem tag).
+- [ ] 🟡 **AUD-19** `/vc log` com dados amplos (ADR-041 #4): janela do `WorkTime` por ofício e a marca da regra do ócio.
+- [ ] 🟢 **AUD-26** **Escolha do autor:** número da regra do ócio (colide com a Regra 51 do `docs/RULES.md`).
+- [ ] 🟢 **AUD-20** Dividir as 15 classes em 488–500 linhas antes da próxima mudança nelas.
+- [ ] 🟢 **AUD-21** `check-tests-green.sh --runs 8` antes de declarar a intermitência curada.
+- [ ] 🟢 **AUD-22** Semente em `BigHouseFoundation.java:79` (`Random.create()`).
+- [ ] 🟢 **AUD-23** Javadoc "o único mixin do mod" em `VillagerEntityMixin.java:14`.
+- [ ] 🟢 **AUD-24** **Escolha do autor:** apagar as 7 branches já contidas na `main`.
+
 ## 🟡 Playtest do patch local 10-10 (obra/mina/baú)
 
-- [ ] Executar a bateria completa de GameTests da 0.3.23 (pulada no fechamento por instrução do autor).
+- [x] Executar a bateria completa de GameTests da 0.3.23 (pulada no fechamento por instrução do autor) —
+      **690/690** em 3 rodadas `--rerun-tasks`, mais 1 com Fabric API 0.116.17 e Loader 0.19.5 (auditoria 10-10),
+      e 690/690 no CI de `b290ed10`.
 - [ ] Obra em `WAITING_RESOURCES` não libera o lote antes de retentar blocos correspondentes,
       rotas de profissão e baú próximo do construtor.
 - [ ] Depois de quatro tentativas sem entrega real, o bloco faltante aparece em baú livre perto da obra
