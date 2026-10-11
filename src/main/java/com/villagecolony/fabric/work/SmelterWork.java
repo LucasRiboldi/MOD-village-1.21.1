@@ -474,7 +474,7 @@ public final class SmelterWork {
     private static void finish(Job job, UUID workerId, String why) {
         StopLog.stopped("Smelter", workerId, why);
 
-        job.task.release();
+        job.task.release(why);
     }
 
     private static boolean isOngoing(Task task) {

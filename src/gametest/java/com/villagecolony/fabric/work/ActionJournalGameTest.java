@@ -70,4 +70,47 @@ public class ActionJournalGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /** A soltura diz por quê; sem motivo, cai no estado de onde saiu — AUD-25. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "action_journal", tickLimit = 20)
+    public void aReleaseWritesItsReason(TestContext context) {
+        Path before = ActionJournal.file();
+        UUID colony = UUID.randomUUID();
+        UUID villager = UUID.randomUUID();
+
+        try {
+            Path journal = Files.createTempFile("villagecolony-actions-test", ".jsonl");
+            ActionJournal.flush();
+            ActionJournal.writeTo(journal);
+
+            VillageColonyMod.WORKERS.register(villager, colony).assign(ProfessionType.SMELTER);
+
+            Task task = Task.create(colony, TaskType.SMELT_MATERIAL, TaskPriority.PRODUCTION,
+                    ResourceType.GLASS, 4);
+            task.reserveFor(villager);
+            task.release("none of 3 colony chests had minecraft:sand to smelt");
+            task.reserveFor(villager);
+            task.release();
+            ActionJournal.flush();
+
+            List<String> released = Files.readAllLines(journal, StandardCharsets.UTF_8).stream()
+                    .filter(line -> line.contains(villager.toString().substring(0, 8)))
+                    .filter(line -> line.contains("\"action\":\"TASK_RELEASED\""))
+                    .toList();
+
+            context.assertTrue(released.size() == 2, "o diário devia ter 2 solturas, teve " + released);
+            context.assertTrue(released.get(0).contains("\"detail\":\"none of 3 colony chests had minecraft:sand to smelt\""),
+                    "a soltura com motivo saiu sem ele: " + released.get(0));
+            context.assertTrue(released.get(1).contains("\"detail\":\"RESERVED\""),
+                    "a soltura sem motivo devia dizer o estado de onde saiu: " + released.get(1));
+            Files.deleteIfExists(journal);
+        } catch (IOException failure) {
+            throw new AssertionError("o teste não conseguiu usar o disco", failure);
+        } finally {
+            ActionJournal.writeTo(before);
+            VillageColonyMod.WORKERS.remove(villager);
+        }
+
+        context.complete();
+    }
 }

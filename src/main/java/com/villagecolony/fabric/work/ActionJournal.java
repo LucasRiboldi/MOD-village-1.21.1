@@ -113,8 +113,14 @@ public final class ActionJournal {
                 ? null
                 : TAKEN_AT.remove(task.id());
 
+        // A soltura diz por quê quando quem soltou disse; senão, o estado de onde
+        // saiu, como antes — AUD-25.
+        String detail = to == TaskState.AVAILABLE && !task.releaseReason().isBlank()
+                ? task.releaseReason()
+                : from.name();
+
         append(worker, action, task.type().name(), task.targetResource().name(), task.amount(), null,
-                since == null ? -1 : now - since, from.name());
+                since == null ? -1 : now - since, detail);
     }
 
     /**

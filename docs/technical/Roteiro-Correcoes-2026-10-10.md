@@ -270,7 +270,7 @@ coluna "em jogo" é a que a régua cobra.
 | AUD-07 | ✅ régua v2; `tests/test_assess_counts.py`; 17613fa e b290ed10 recalculadas: 3,14 e 3,14 | — |
 | AUD-11 | ⚠️ parcial: codec, save e permissão testados (mutação conferida); `fabric.network` 42% / 46%, abaixo dos 60%; ordem ruim no save não apaga mais as regras do Mod Menu | — |
 | AUD-21 | ⬜ | — |
-| AUD-25 | ⬜ | ⬜ |
+| AUD-25 | ✅ motivo no `TASK_RELEASED`; `action_report` agrupa por motivo; mutação conferida | ⬜ |
 | 2.2 mineiro | ⬜ | ⬜ |
 | 2.3 IdleYield | ⬜ | ⬜ |
 | 2.4 fundidor | ⬜ (código na linha Codex) | ⬜ |

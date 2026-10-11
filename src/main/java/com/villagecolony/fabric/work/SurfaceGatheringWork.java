@@ -416,7 +416,7 @@ public final class SurfaceGatheringWork {
     private static void finish(Job job, UUID workerId, String why) {
         VillageColonyMod.LOGGER.info("{} {} stopped surface gathering — {}", role(job), workerId, why);
         if (isOngoing(job.task)) {
-            job.task.release();
+            job.task.release(why);
         }
         WorkTargets.clear(workerId);
         VillageSpiralSweep.forget(workerId);

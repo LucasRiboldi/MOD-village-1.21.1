@@ -350,7 +350,7 @@ public final class TreeChoice {
     static LumberjackWork.Outcome giveUp(
             ServerWorld world, LumberjackWork.Job job, UUID workerId, String why) {
 
-        job.task.release();
+        job.task.release(why);
 
         WorkTargets.clear(workerId);
 

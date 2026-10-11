@@ -268,7 +268,7 @@ public final class CraftingWork {
         Optional<WorkerStorage> storage = VillageColonyMod.STORAGES.of(workerId);
 
         if (storage.isEmpty()) {
-            job.task.release();
+            job.task.release("no chest of its own");
 
             WorkTargets.clear(workerId);
 
@@ -298,7 +298,7 @@ public final class CraftingWork {
             // 2026-09-03. O guarda de baixo cobra dois minutos para notar
             // o mesmo. Ver WorkStall.
             if (job.stall.stuck(world, villager)) {
-                job.task.release();
+                job.task.release("stuck on the way to its chest");
 
                 // A desistência passa a contar — 2026-09-10. Ver
                 // WorkerStrikes.
@@ -322,7 +322,7 @@ public final class CraftingWork {
                 // ao próprio baú. Devolver a tarefa à fila é melhor que
                 // guardá-la para quem não a fará — e em silêncio isto
                 // seria indistinguível de trabalho acontecendo.
-                job.task.release();
+                job.task.release("did not reach its chest in two minutes of work time");
 
                 // A desistência passa a contar — 2026-09-10. Ver
                 // WorkerStrikes.
@@ -468,7 +468,7 @@ public final class CraftingWork {
         Job job = JOBS.remove(workerId);
 
         if (job != null && job.task.state() == TaskState.EXECUTING) {
-            job.task.release();
+            job.task.release("the craftsman left the colony");
         }
     }
 

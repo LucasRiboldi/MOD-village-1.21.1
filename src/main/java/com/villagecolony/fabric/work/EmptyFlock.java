@@ -38,7 +38,7 @@ final class EmptyFlock {
         if (stocked) {
             task.cancel();
         } else {
-            task.release();
+            task.release("no sheep with wool within the radius");
         }
     }
 }

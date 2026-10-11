@@ -20,6 +20,7 @@ import sys
 from collections import Counter, defaultdict
 
 TASK_EVENTS = ("TASK_TAKEN", "TASK_STARTED", "TASK_DONE", "TASK_RELEASED", "TASK_CANCELLED")
+TASK_STATES = ("AVAILABLE", "RESERVED", "EXECUTING", "COMPLETED", "CANCELLED")
 TICKS_PER_MINUTE = 1200
 REASON_ACTIONS = ("TARGET_REJECTED", "GAVE_UP", "SET_ASIDE", "STRANDED")
 
@@ -76,6 +77,11 @@ def summarize(records):
                 p["done_ticks"].append(r["ticks"])
             if action == "TASK_RELEASED":
                 w["released_tasks"][r.get("task", "?") + " " + r.get("what", "")] += 1
+                # Desde a 0.3.24 a soltura traz o motivo; nome de estado é o
+                # formato antigo e não diz por quê (AUD-25).
+                detail = r.get("detail", "")
+                if detail and detail not in TASK_STATES:
+                    p["reasons"][action + ": " + reason_of(detail)] += 1
         else:
             p["actions"][action] += 1
             p["amount"][action] += r.get("n", 1)

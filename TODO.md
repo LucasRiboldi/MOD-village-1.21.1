@@ -28,7 +28,8 @@ Scripts: `scripts/audit/check-*.sh`.
       0 → 42% (unitário) e 20 → 46% (bateria), abaixo dos 60%. Falta: receptores por lambda e `fabric.command` (vai com o AUD-19).
 - [ ] 🟡 **AUD-12** Avisar quando outro mod tirar a tarefa da colônia do `Brain`; `suggests: modmenu` e `breaks` no `fabric.mod.json`.
 - [ ] 🟡 **AUD-04** Ciclo p95 67 ms na 0.3.22, 27,7 ms na 0.3.23: medir de novo (≥ 20 amostras) antes de otimizar.
-- [ ] 🟡 **AUD-25** Diário de ações sem o motivo de `TASK_RELEASED` (grava só o estado).
+- [x] 🟡 **AUD-25** `TASK_RELEASED` grava o motivo (`Task.release(why)` nas 15 solturas das profissões) e o
+      `action_report.py` agrupa as solturas por motivo.
 - [ ] 🟡 **AUD-13** Alternância de obras: o teste passa; atualizar `docs/behavioral-tests/README.md` e provar em jogo.
 - [ ] 🟢 **AUD-14** CHANGELOG sem entradas de 0.3.1 a 0.3.23.
 - [ ] 🟢 **AUD-15** 848 imports não usados (`RemoveUnusedImports` no Error Prone).

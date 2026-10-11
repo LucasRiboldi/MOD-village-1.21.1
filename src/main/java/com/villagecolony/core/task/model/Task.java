@@ -44,6 +44,8 @@ public final class Task {
 
     private @Nullable UUID executorId;
 
+    private String releaseReason = "";
+
     private Task(
             UUID id,
             UUID colonyId,
@@ -220,6 +222,16 @@ public final class Task {
      * errado — a colônia ainda precisa de madeira.
      */
     public void release() {
+        release("");
+    }
+
+    /**
+     * Devolve a tarefa à fila dizendo por quê — AUD-25.
+     *
+     * <p>O motivo fica só em memória, até a próxima soltura, para o diário de
+     * ações ({@code TASK_RELEASED}) dizer a causa e não só o estado anterior.
+     */
+    public void release(String why) {
         if (!isHeld()) {
             throw new IllegalStateException(
                     "Cannot release a task that is " + state + ": " + id);
@@ -229,7 +241,13 @@ public final class Task {
         TaskState from = state;
         this.executorId = null;
         this.state = TaskState.AVAILABLE;
+        this.releaseReason = java.util.Objects.requireNonNull(why, "why");
         TaskTransitions.moved(this, from, TaskState.AVAILABLE, had);
+    }
+
+    /** O motivo da última soltura, ou vazio se quem soltou não disse. */
+    public String releaseReason() {
+        return releaseReason;
     }
 
     /**
