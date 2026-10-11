@@ -13,12 +13,12 @@ import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 
 /**
- * Uma placa virada para a câmera: fundo em pixel art, ícone à esquerda e o
- * texto à direita — pedido do autor, 2026-10-03.
+ * Uma placa virada para a câmera: texto à esquerda e símbolo simples à
+ * direita, ambos dentro da mesma moldura — pedido do autor, 2026-10-03.
  *
- * <p><b>O fundo acompanha o texto.</b> A moldura de 16 × 16 é cortada em nove
- * partes: os cantos ficam do tamanho deles e o meio estica, então a placa
- * cresce e encolhe com o texto da obra sem deformar a borda.
+ * <p><b>O fundo acompanha o texto.</b> A moldura de 64 × 32 é cortada em nove
+ * partes: os cantos ficam nítidos e o meio estica, então a placa cresce e
+ * encolhe com o texto da obra sem deformar a borda.
  *
  * <p><b>Desenhado no {@code WorldRenderEvents.LAST}, com buffer próprio</b>,
  * e descarregado placa a placa: sem profundidade, quem é desenhado depois
@@ -29,22 +29,15 @@ final class OverlayDrawing {
     /** Tamanho de uma unidade de texto no mundo: 40 unidades por bloco. */
     static final float SCALE = 0.025F;
 
-    /** Lado do ícone, em unidades de texto. */
-    private static final float ICON = 16.0F;
-
-    /** Folga entre a borda do fundo e o conteúdo. */
-    private static final float PAD = 4.0F;
-
-    /** Espaço entre o ícone e o texto. */
-    private static final float GAP = 4.0F;
-
-    /** A moldura: 16 × 16, conteúdo entre x 1..14 e y 2..12, borda de 2. */
-    private static final float TEXTURE = 16.0F;
-    private static final float FRAME_MIN_U = 1;
-    private static final float FRAME_MAX_U = 15;
-    private static final float FRAME_MIN_V = 2;
-    private static final float FRAME_MAX_V = 13;
-    private static final float BORDER = 2;
+    /** A moldura nítida: 64 × 32, com borda de madeira e metal nos cantos. */
+    private static final float TEXTURE_WIDTH = 64.0F;
+    private static final float TEXTURE_HEIGHT = 32.0F;
+    private static final float FRAME_MIN_U = 0;
+    private static final float FRAME_MAX_U = 64;
+    private static final float FRAME_MIN_V = 0;
+    private static final float FRAME_MAX_V = 32;
+    private static final float BORDER_U = 8;
+    private static final float BORDER_V = 8;
 
     /** A borda desenhada, em unidades de texto. */
     private static final float BORDER_DRAWN = 3.0F;
@@ -52,6 +45,11 @@ final class OverlayDrawing {
     private static final String PANEL = "textures/gui/overlays/ui/panel_background.png";
 
     private static final int FULL_BRIGHT = 0xF000F0;
+
+    /** Camadas separadas para o fundo nunca cobrir texto ou símbolo. */
+    static final float PANEL_Z = 0.0F;
+    static final float ICON_Z = 0.01F;
+    static final float TEXT_Z = 0.02F;
 
     private OverlayDrawing() {
     }
@@ -71,18 +69,14 @@ final class OverlayDrawing {
 
         TextRenderer text = MinecraftClient.getInstance().textRenderer;
         float lineHeight = text.fontHeight + 1;
-        float textWidth = 0;
+        float[] textWidths = new float[lines.length];
 
-        for (Text line : lines) {
-            textWidth = Math.max(textWidth, text.getWidth(line));
+        for (int i = 0; i < lines.length; i++) {
+            textWidths[i] = text.getWidth(lines[i]);
         }
 
-        float textHeight = lines.length * lineHeight - 1;
-        float contentHeight = Math.max(ICON, textHeight);
-        float width = PAD + ICON + GAP + textWidth + PAD;
-        float height = PAD + contentHeight + PAD;
-        float left = -width / 2;
-        float top = -height;
+        PixelPanelLayout layout = PixelPanelLayout.withText(textWidths, lineHeight);
+        float left = -layout.width() / 2.0F;
 
         Vec3d relative = at.subtract(camera.getPos());
         MatrixStack matrices = new MatrixStack();
@@ -95,21 +89,24 @@ final class OverlayDrawing {
         matrices.scale(SCALE, -SCALE, SCALE);
 
         Matrix4f matrix = matrices.peek().getPositionMatrix();
+        Matrix4f panelMatrix = new Matrix4f(matrix).translate(0.0F, 0.0F, PANEL_Z);
+        Matrix4f iconMatrix = new Matrix4f(matrix).translate(0.0F, 0.0F, ICON_Z);
+        Matrix4f textMatrix = new Matrix4f(matrix).translate(0.0F, 0.0F, TEXT_Z);
 
-        panel(buffers.getBuffer(RenderLayer.getTextSeeThrough(OverlayDrawing.id(PANEL))), matrix,
-                left, top, left + width, top + height);
+        if (layout.hasFrame()) {
+            panel(buffers.getBuffer(RenderLayer.getTextSeeThrough(OverlayDrawing.id(PANEL))), panelMatrix,
+                    left + layout.frameLeft(), layout.frameTop(),
+                    left + layout.frameRight(), layout.frameBottom());
+            buffers.draw();
+        }
+
+        quad(buffers.getBuffer(RenderLayer.getTextSeeThrough(icon)), iconMatrix,
+                left + layout.iconLeft(), layout.iconTop(),
+                left + layout.iconRight(), layout.iconBottom(), 0, 0, 1, 1);
         buffers.draw();
-
-        // O ícone no alto, à esquerda.
-        quad(buffers.getBuffer(RenderLayer.getTextSeeThrough(icon)), matrix,
-                left + PAD, top + PAD, left + PAD + ICON, top + PAD + ICON, 0, 0, 1, 1);
-        buffers.draw();
-
-        // O texto à direita; uma linha só fica no meio da altura do ícone.
-        float textTop = top + PAD + Math.max(0, (contentHeight - textHeight) / 2);
 
         for (int i = 0; i < lines.length; i++) {
-            text.draw(lines[i], left + PAD + ICON + GAP, textTop + i * lineHeight, colors[i], true, matrix,
+            text.draw(lines[i], left + layout.textLeft(i), layout.textTop() + i * lineHeight, colors[i], true, textMatrix,
                     buffers, TextRenderer.TextLayerType.SEE_THROUGH, 0, FULL_BRIGHT);
         }
 
@@ -120,13 +117,14 @@ final class OverlayDrawing {
     private static void panel(VertexConsumer buffer, Matrix4f matrix, float x0, float y0, float x1, float y1) {
         float[] xs = {x0, x0 + BORDER_DRAWN, x1 - BORDER_DRAWN, x1};
         float[] ys = {y0, y0 + BORDER_DRAWN, y1 - BORDER_DRAWN, y1};
-        float[] us = {FRAME_MIN_U, FRAME_MIN_U + BORDER, FRAME_MAX_U - BORDER, FRAME_MAX_U};
-        float[] vs = {FRAME_MIN_V, FRAME_MIN_V + BORDER, FRAME_MAX_V - BORDER, FRAME_MAX_V};
+        float[] us = {FRAME_MIN_U, FRAME_MIN_U + BORDER_U, FRAME_MAX_U - BORDER_U, FRAME_MAX_U};
+        float[] vs = {FRAME_MIN_V, FRAME_MIN_V + BORDER_V, FRAME_MAX_V - BORDER_V, FRAME_MAX_V};
 
         for (int col = 0; col < 3; col++) {
             for (int row = 0; row < 3; row++) {
                 quad(buffer, matrix, xs[col], ys[row], xs[col + 1], ys[row + 1],
-                        us[col] / TEXTURE, vs[row] / TEXTURE, us[col + 1] / TEXTURE, vs[row + 1] / TEXTURE);
+                        us[col] / TEXTURE_WIDTH, vs[row] / TEXTURE_HEIGHT,
+                        us[col + 1] / TEXTURE_WIDTH, vs[row + 1] / TEXTURE_HEIGHT);
             }
         }
     }

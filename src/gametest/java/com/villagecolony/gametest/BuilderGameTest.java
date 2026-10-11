@@ -28,6 +28,7 @@ import com.villagecolony.fabric.work.BlockShaping;
 import com.villagecolony.fabric.work.BuilderMaterials;
 import com.villagecolony.fabric.work.MaterialChoice;
 import com.villagecolony.fabric.work.ConstructionPlanner;
+import com.villagecolony.fabric.work.ConstructionSupplyDispatches;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -576,7 +577,7 @@ public class BuilderGameTest implements FabricGameTest {
                     "o fermentador não entrou no baú");
         } finally {
             fixture.owned.cleanUp();
-            BiomeConstructionSupply.routeDelivered(fixture.colony.id(), Items.BREWING_STAND);
+            ConstructionSupplyDispatches.delivered(fixture.project.id(), Items.BREWING_STAND);
         }
 
         context.complete();
@@ -631,7 +632,7 @@ public class BuilderGameTest implements FabricGameTest {
 
     /** Lampião e corrente entram na mesma regra — pedido do autor, 2026-10-08. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
-    public void theLanternAppearsInTheBuildersChestAfterFourMisses(TestContext context) {
+    public void theLanternAppearsInTheBuildersChestAfterFourDispatches(TestContext context) {
         Fixture fixture = setUp(context, 0, Blueprint.of(
                 ResourceId.vanilla("village/plains/houses/test_lantern"),
                 List.of(new BlueprintBlock(
@@ -645,15 +646,21 @@ public class BuilderGameTest implements FabricGameTest {
                         "o lampião apareceu antes da tentativa " + attempt);
             }
 
+            // Consultas não gastam tentativa: só o despacho do ciclo conta — ADR-040 §2.
+            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+                ConstructionSupplyDispatches.recordCycleDispatch(
+                        fixture.project.id(), Items.LANTERN, dispatch);
+            }
+
             context.assertTrue(
                     BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
-                    "a quarta falta não abasteceu o lampião");
+                    "o quarto despacho não abasteceu o lampião");
             context.assertTrue(
                     ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.LANTERN) == 1,
                     "o lampião de contingência não entrou no baú da obra");
         } finally {
             fixture.owned.cleanUp();
-            BiomeConstructionSupply.routeDelivered(fixture.colony.id(), Items.LANTERN);
+            ConstructionSupplyDispatches.delivered(fixture.project.id(), Items.LANTERN);
         }
 
         context.complete();
@@ -664,7 +671,7 @@ public class BuilderGameTest implements FabricGameTest {
      * mineiro não achou em 37 min de mina, e o celeiro parado 40 min nele.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
-    public void theHopperAppearsInTheBuildersChestAfterFourMisses(TestContext context) {
+    public void theHopperAppearsInTheBuildersChestAfterFourDispatches(TestContext context) {
         Fixture fixture = setUp(context, 0, Blueprint.of(
                 ResourceId.vanilla("village/plains/houses/test_hopper"),
                 List.of(new BlueprintBlock(
@@ -678,15 +685,21 @@ public class BuilderGameTest implements FabricGameTest {
                         "o funil apareceu antes da tentativa " + attempt);
             }
 
+            // Consultas não gastam tentativa: só o despacho do ciclo conta — ADR-040 §2.
+            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+                ConstructionSupplyDispatches.recordCycleDispatch(
+                        fixture.project.id(), Items.HOPPER, dispatch);
+            }
+
             context.assertTrue(
                     BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
-                    "a quarta falta não abasteceu o funil");
+                    "o quarto despacho não abasteceu o funil");
             context.assertTrue(
                     ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.HOPPER) == 1,
                     "o funil de contingência não entrou no baú da obra");
         } finally {
             fixture.owned.cleanUp();
-            BiomeConstructionSupply.routeDelivered(fixture.colony.id(), Items.HOPPER);
+            ConstructionSupplyDispatches.delivered(fixture.project.id(), Items.HOPPER);
         }
 
         context.complete();
@@ -697,7 +710,7 @@ public class BuilderGameTest implements FabricGameTest {
      * pôs o fardo de lado 93 vezes em 22 min, nove trigos cada, com a roça pequena.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
-    public void theHayBlockAppearsInTheBuildersChestAfterFourMisses(TestContext context) {
+    public void theHayBlockAppearsInTheBuildersChestAfterFourDispatches(TestContext context) {
         Fixture fixture = setUp(context, 0, Blueprint.of(
                 ResourceId.vanilla("village/plains/houses/test_hay_block"),
                 List.of(new BlueprintBlock(
@@ -711,15 +724,21 @@ public class BuilderGameTest implements FabricGameTest {
                         "o fardo apareceu antes da tentativa " + attempt);
             }
 
+            // Consultas não gastam tentativa: só o despacho do ciclo conta — ADR-040 §2.
+            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+                ConstructionSupplyDispatches.recordCycleDispatch(
+                        fixture.project.id(), Items.HAY_BLOCK, dispatch);
+            }
+
             context.assertTrue(
                     BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
-                    "a quarta falta não abasteceu o fardo de feno");
+                    "o quarto despacho não abasteceu o fardo de feno");
             context.assertTrue(
                     ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.HAY_BLOCK) == 1,
                     "o fardo de contingência não entrou no baú da obra");
         } finally {
             fixture.owned.cleanUp();
-            BiomeConstructionSupply.routeDelivered(fixture.colony.id(), Items.HAY_BLOCK);
+            ConstructionSupplyDispatches.delivered(fixture.project.id(), Items.HAY_BLOCK);
         }
 
         context.complete();
@@ -745,6 +764,11 @@ public class BuilderGameTest implements FabricGameTest {
                         "a terracota apareceu antes da tentativa " + attempt);
             }
 
+            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+                ConstructionSupplyDispatches.recordCycleDispatch(
+                        fixture.project.id(), Items.WHITE_TERRACOTTA, dispatch);
+            }
+
             context.assertTrue(
                     BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
                     "a quarta falta em uma rota teorica nao abasteceu a terracota");
@@ -753,7 +777,7 @@ public class BuilderGameTest implements FabricGameTest {
                     "a terracota de contingencia nao entrou no bau da obra");
         } finally {
             fixture.owned.cleanUp();
-            BiomeConstructionSupply.routeDelivered(fixture.colony.id(), Items.WHITE_TERRACOTTA);
+            ConstructionSupplyDispatches.delivered(fixture.project.id(), Items.WHITE_TERRACOTTA);
         }
 
         context.complete();
@@ -1947,36 +1971,40 @@ public class BuilderGameTest implements FabricGameTest {
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
     }
 
-    /** A quarta falta sem profissão libera a peça, sem depender de tempo (ADR-036 item 6). */
+    /** Quatro despachos de ciclos diferentes liberam a contingência (ADR-040). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_missing_piece",
             tickLimit = 20)
     public void theFourthMissingPieceAttemptIsSupplied(TestContext context) {
-        UUID colonyId = UUID.randomUUID();
+        UUID projectId = UUID.randomUUID();
 
         try {
+            ConstructionSupplyDispatches.recordCycleDispatch(projectId, Items.BREWING_STAND, 1);
             context.assertFalse(
-                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    ConstructionSupplyDispatches.fallbackDue(projectId, Items.BREWING_STAND),
                     "a primeira falta já liberou a peça");
 
+            ConstructionSupplyDispatches.recordCycleDispatch(projectId, Items.BREWING_STAND, 2);
             context.assertFalse(
-                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    ConstructionSupplyDispatches.fallbackDue(projectId, Items.BREWING_STAND),
                     "a segunda falta já liberou a peça");
 
+            ConstructionSupplyDispatches.recordCycleDispatch(projectId, Items.BREWING_STAND, 3);
             context.assertFalse(
-                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    ConstructionSupplyDispatches.fallbackDue(projectId, Items.BREWING_STAND),
                     "a terceira falta já liberou a peça");
 
+            ConstructionSupplyDispatches.recordCycleDispatch(projectId, Items.BREWING_STAND, 4);
             context.assertTrue(
-                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    ConstructionSupplyDispatches.fallbackDue(projectId, Items.BREWING_STAND),
                     "a quarta falta não liberou a peça");
 
-            BiomeConstructionSupply.routeDelivered(colonyId, Items.BREWING_STAND);
+            ConstructionSupplyDispatches.delivered(projectId, Items.BREWING_STAND);
 
             context.assertFalse(
-                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    ConstructionSupplyDispatches.fallbackDue(projectId, Items.BREWING_STAND),
                     "a entrega não reiniciou as tentativas daquela peça");
         } finally {
-            BiomeConstructionSupply.routeDelivered(colonyId, Items.BREWING_STAND);
+            ConstructionSupplyDispatches.delivered(projectId, Items.BREWING_STAND);
         }
 
         context.complete();

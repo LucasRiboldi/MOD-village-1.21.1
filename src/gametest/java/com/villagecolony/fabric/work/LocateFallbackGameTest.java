@@ -151,13 +151,9 @@ public final class LocateFallbackGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /**
-     * As três tentativas contam para todas as peças que faltam, não só para a
-     * próxima — playtest de 2026-10-03, papoula, grama, cerca e dente-de-leão
-     * esperando um minuto cada, em fila.
-     */
+    /** A prévia de materiais não consome tentativas da peça que ainda não é ativa. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "locate_fallback")
-    public void aPieceFurtherDownTheListCountsItsAttemptsToo(TestContext context) {
+    public void aPieceFurtherDownTheListWaitsUntilItIsTheActiveNeed(TestContext context) {
         ServerWorld world = context.getWorld();
         Scene scene = Scene.of(context);
 
@@ -172,10 +168,9 @@ public final class LocateFallbackGameTest implements FabricGameTest {
                 BuilderMaterials.prepareAhead(world, project);
             }
 
-            context.assertTrue(ChestWithdrawer.countIn(world, scene.builderChest, Items.POPPY) == 1,
-                    "a papoula, segunda da lista, devia aparecer depois de quatro ciclos sem ser a próxima peça");
+            context.assertTrue(ChestWithdrawer.countIn(world, scene.builderChest, Items.POPPY) == 0,
+                    "a papoula futura gastou a contingência antes de se tornar a peça ativa");
         } finally {
-            BiomeConstructionSupply.routeDelivered(scene.colony.id(), Items.POPPY);
             scene.forget();
         }
 

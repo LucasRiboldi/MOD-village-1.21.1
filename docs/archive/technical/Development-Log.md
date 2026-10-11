@@ -84,6 +84,88 @@ e `%APPDATA%/.minecraft/mods` com SHA-256
 `7D69667E118C19CB056DCA9ACB5155AB45948F04A769C7611E892F8B9C9C1C5F`. O JAR
 local da 0.3.21 foi renomeado para `.jar.disabled` na pasta de mods para evitar
 duas versões carregáveis do mesmo mod.
+## 2026-10-10 — ADR-040 fecha a fase decisoria do pedido de material
+
+A opcao B aprovada pelo autor exigia que fallback terminal viesse depois de
+tentativas reais, nao depois de quatro leituras nem depois de uma rota apenas
+teorica. A ADR-040 define o contrato: o ciclo da colonia conta despachos
+executaveis, a entrega fisica em bau zera o contador e quatro despachos sem
+entrega usam o caminho terminal ja autorizado. Ela tambem proibe atribuir uma
+pilha anonima de bau a uma profissao sem evento de deposito observavel.
+
+A decisao ainda nao e implementacao: o proximo commit deve montar GameTest que
+separe consulta do construtor, despacho e entrega antes de alterar a cadeia de
+trabalho.
+
+## 2026-10-10 — relatório distingue fallback comprovado de estoque físico
+
+O log já continha `VC_SUPPLY_ERROR` em cada injeção terminal de material, mas o
+analisador só o tratava como uma assinatura genérica. `analyze_village_log.py`
+agora agrupa essas linhas por peça, profissão atendida e tentativas e mostra a
+tabela “Fallback terminal de materiais” no relatório. Ele não atribui uma peça
+retirada de baú a uma profissão: uma pilha física preexistente não carrega prova
+de qual aldeão a depositou, e chamá-la de entrega seria uma medição falsa.
+
+O histórico de sessões passou do esquema 2 para o 3, acrescentando listas vazias
+às sessões antigas. TDD: o teste novo falhou pela ausência de
+`analyze_supply_fallbacks`, passou após a implementação; `test_analyze_village_log`
+passou 11/11 e `python -m unittest discover -s tests` passou 96/96. O próximo
+playtest deve rodar o relatório para confrontar os fallbacks contra a linha de
+base de 334 inserções.
+
+## 2026-10-10 — overlay nítido, obra na placa e diagnóstico do Spark `vuUv6PZC5d`
+
+O Spark do playtest com a 0.3.9 indicou TPS normal no último minuto e queda de janela nos 5/15 min,
+com MSPT médio baixo; o problema principal não parece travamento contínuo do servidor, mas fila de
+fluxo. O log mostrou 51 esperas de recurso de obra, 3 travas de caminho do construtor, pior ciclo de
+colônia em 331 ms e uma obra aberta em `ColonyPos[x=-750,y=68,z=-893]` esperando
+`minecraft:stonecutter`. Como havia uma obra aberta, o planejador não varreu novos lotes em 9 ciclos;
+isso explica as zonas limpas não gerarem construção naquela sessão.
+
+O `time_ledger.py` apontou fluxo ruim em quase todas as profissões: construtor 95% ocioso, pedreiro
+44% ocioso, pastor 80% ocioso, mineiro sem trabalho efetivo e 41% esperando, e fundidor 89% ocioso
+com 95% do tempo sem trabalhar. O mineiro estava preso entre a boca da mina e minério profundo/distante
+perto de `-735,8,-944`; o fundidor ficou sem entrada material e a obra segurou o crescimento natural
+por causa do `stonecutter`.
+
+Correção publicada como 0.3.10: o overlay de profissão passou a sempre renderizar o nome dentro da
+moldura, sem preferência que esconda texto; a moldura foi refeita como textura 64×32 mais nítida, com
+nome à esquerda e símbolo simples à direita; os ícones das oito profissões voltaram a versões simples
+e não pixeladas. O overlay de obra voltou a usar a posição da placa visível via `SiteMarker.signAt`,
+e `OverlaySnapshotPayload.ConstructionEntry` passou a transportar coordenadas `double` para evitar
+deslocamento até a origem da blueprint.
+
+Evidência automatizada: `test --tests "com.villagecolony.client.*" --tests
+"com.villagecolony.fabric.integration.SiteMarkerHeightTest"` passou, `build --no-daemon` passou e
+`runGametest --rerun-tasks --no-daemon` concluiu 650/650 GameTests em 47,93 s. O JAR 0.3.10 foi
+copiado para `downloads/` e `%APPDATA%/.minecraft/mods/` com SHA-256
+`595E8FAE09C275EEEE20B840B674CA3EB2B80998B63A5FB2682355FB399BF709`; a 0.3.9 foi arquivada fora da
+pasta de mods. Falta validação visual no save real com a 0.3.10.
+
+## 2026-10-10 — painel de profissão dentro da moldura
+
+O playtest curto do `latest.log` não registrou erro do overlay: os erros eram de
+mods de cliente/resource pack, com dois ciclos de colônia acima de um tique e
+seis linhas de construtor caminhando sem alcançar o alvo. `time_ledger.py` e
+`cost_ledger.py` não encontraram linhas porque a sessão não abriu janela
+suficiente ou ainda não escreveu esses eventos.
+
+A regressão visual do painel de profissão estava no layout: depois da fusão das
+linhas, o desenho mantinha a moldura responsiva, mas voltou a compor ícone e
+texto lado a lado. A decisão viva da ADR-025 pedia outro contrato: a moldura
+fica na altura do nome, contém o texto, e o ícone fica centralizado acima.
+`PixelPanelLayout` foi reintroduzido só como geometria pura, mantendo o
+`OverlayDrawing` atual e seus buffers. O teste novo falhou primeiro por ausência
+da classe e depois passou cobrindo nome dentro do background, modo sem texto e
+painel de obra com duas linhas.
+
+Evidência automatizada: `PixelPanelLayoutTest` e a suíte `com.villagecolony.client.*`
+passaram, assim como `build --no-daemon` e `runGametest --rerun-tasks --no-daemon`
+com 649/649 testes em 33,02 s. O JAR 0.3.8 foi copiado para `downloads/` e
+`%APPDATA%/.minecraft/mods/` com SHA-256
+`317647772FDCC555C948578F775BA41B60D9FC916C5381031D68249ECD0944ED`. Falta a
+confirmação visual no save real, porque teste unitário não renderiza o painel no
+cliente.
 
 ## 2026-10-04 — publicação do JAR e fechamento da refatoração Fabric
 
@@ -10822,3 +10904,266 @@ Publicação local: versão elevada para `0.3.21`; `village-colony-0.3.21.jar`
 gerado em `build/libs/`, copiado para `downloads/` e instalado em
 `%APPDATA%/.minecraft/mods`. SHA-256 das três cópias:
 `A0C87BEEDAC7927CA4BC2C61F87B7E58F7FB540A562224AEC8DF24E0F58926FC`.
+### 2026-10-09 - Remoção do barn_majest do sorteio de obras
+
+O playtest mostrou `barn_majest` sendo construído apesar da decisão de removê-lo
+das possibilidades automáticas. A causa era o mapa explícito de modelos nomeados
+em `ColonyModels`: enquanto o arquivo existisse no jar e estivesse associado ao
+pastor, `VillageStructures.buildableFor` o inseria antes das estruturas Vanilla.
+
+O teste unitário `ConstructionOrderTest.retiredBarnDoesNotEnterTheConstructionCatalog`
+foi escrito primeiro e falhou com a regra antiga. A correção deixa apenas
+`storage_majest` como modelo nomeado de profissão, mantém o arquivo do celeiro
+como recurso inerte e atualiza o catálogo/documentação para que o gerador não
+reintroduza o item no sorteio.
+
+### 2026-10-09 - Fluxo de profissão, grafo de suprimento e waypoint de obra
+
+As melhorias 3, 4 e 6 do levantamento foram aplicadas em código na branch
+`codex/fluxo-grafo-waypoints`. A varredura incremental agora também tem uma
+variante com respiro após volta vazia completa; o mineiro usa essa entrada na
+busca de pedra exposta, evitando repetir uma varredura inteira a cada ciclo
+quando o terreno ao redor não oferece novo alvo.
+
+A decisão de viabilidade de material ganhou um grafo explícito de rota:
+recurso direto do bioma, queda automática aceita pela regra de obra, fabricação,
+fundição, ciclo, limite de profundidade ou ausência de rota. O primeiro uso
+fica exposto por `BiomeConstructionSupply.routeInBiome`, com GameTest cobrindo
+o caso de tábuas que dependem de tora disponível no bioma.
+
+O caminho até lote afastado passou a escolher a coluna de rua no índice central
+`ColonyRoads`, e não em cálculo isolado de `WorkPath`; o mesmo índice agora
+oferece waypoint horizontal para futuras decisões de navegação. A validação
+final desta sessão passou em unitários focados, `runGametest --rerun-tasks`
+com 648/648 e `build --no-daemon`. O playtest no save real segue pendente.
+
+### 2026-10-09 - Descida longa do mineiro segurando o ramal
+
+O playtest com Spark `GqK0MLwvTw` não indicou gargalo de TPS: a evidência local
+veio do `latest.log` e dos ledgers. O construtor estava parado em
+`WAITING_RESOURCES` por `minecraft:stonecutter`; o fundidor registrava que não
+havia `iron_ore`, `deepslate_iron_ore` nem `raw_iron` em 50 baús; e os mineiros
+apareciam presos na cadeia do `raw_iron`. Um mineiro segurava o único ramal
+aberto e recebia caminhada de `y=46` para `y=34`, enquanto os demais esperavam a
+abertura dos ramais seguintes.
+
+A correção ficou em `MinerApproach.climbableWalkTarget`: a mesma proteção que já
+partia uma perna alta demais em patamar alcançável agora também trata a descida
+profunda. Se a perna estiver mais de um bloco abaixo do aldeão, a navegação
+recebe o próximo patamar pisável que o aproxima do destino; se não houver
+patamar seguro, o comportamento antigo continua como fallback.
+
+O GameTest `MinerApproachGameTest.aDeepLegStopsAtTheNextSafeLanding` foi escrito
+primeiro e falhou com a regra antiga, entregando a perna profunda direta apesar
+do patamar seguro. Depois do patch, a bateria completa passou em
+`runGametest --rerun-tasks --no-daemon` com 649/649, e `build --no-daemon`
+também passou. Falta confirmar no save real se a cadeia `raw_iron -> fundidor ->
+stonecutter -> construtor` volta a andar e se o fundidor fica abaixo de 15% de
+ociosidade.
+
+### 2026-10-10 - Profissão dentro do painel pixelado
+
+O playtest mostrou a profissão ainda fora do background: a imagem exibia um
+painel pixelado vazio e o nome `Fundidor` em vermelho abaixo dele. A investigação
+separou as duas fontes visuais: o painel era do overlay cliente, enquanto o texto
+vermelho vinha do `WorkerNameplate` server-side, que ainda gravava a profissão
+como custom name visível do aldeão.
+
+Foram escritos dois testes de regressão antes da correção. `PixelPanelLayoutTest`
+passou a exigir texto e ícone dentro da mesma moldura, e falhou com o layout
+antigo que colocava o ícone fora do background. O GameTest
+`WorkerEquipmentGameTest.colonyProfessionNameIsStoredButNotForcedVisible` passou
+a exigir que `Carpinteiro` continue armazenado no aldeão sem renderizar o
+nameplate Vanilla, e falhou com `setCustomNameVisible(true)`.
+
+A correção 0.3.9 usa uma placa única: texto à esquerda, ícone à direita e ambos
+dentro da moldura pixelada, seguindo o modelo visual enviado pelo autor. O
+`WorkerNameplate` continua gravando o nome da profissão para reconhecimento e
+fallback, mas deixa `customNameVisible` falso, inclusive ao normalizar saves que
+já tinham o nome antigo escrito. Falta confirmar visualmente no save real com o
+JAR publicado.
+
+Verificação: `PixelPanelLayoutTest` falhou antes do patch e passou depois;
+`runGametest -PgametestOnly=WorkerEquipmentGameTest --rerun-tasks --no-daemon`
+falhou antes do patch no novo GameTest e passou depois com 24/24. A validação
+final passou em `test --tests com.villagecolony.client.*`, `build --no-daemon`
+e `runGametest --rerun-tasks --no-daemon` com 650/650. O JAR
+`village-colony-0.3.9.jar` foi copiado para `downloads/` e
+`%APPDATA%/.minecraft/mods/` com SHA-256
+`D2ED5E9447C42F49DF2ADB6C3C4BEDFF3E8D3235CB62AC43EB6186F43A907754`.
+
+### 2026-10-10 - Nameplate Vanilla removido e obra sem apoio liberando a fila
+
+O playtest com Spark `tSjvmMbtxH` rodava o JAR 0.3.10. O perfil não indicou
+congelamento permanente, mas o `latest.log` mostrou travas de fluxo: obras em
+`BUILDING` sem tarefa porque todas as peças restantes estavam adiadas por falta
+de apoio, construtor parado com lote aberto e fundidor sem tarefa aberta. O
+`time_ledger` marcou construtor 76% ocioso e 16% bloqueado; fundidor 93%
+ocioso; mineiro 40% ocioso e 23% esperando.
+
+Foram escritos GameTests de regressão antes do patch. Quatro cenários de
+`WorkerEquipmentGameTest` passaram a exigir que rótulos de profissão do mod
+sejam removidos do `customName`, preservando nomes dados pelo jogador. O
+`BuildProgressGameTest.aFullyDeferredProjectFinishesInsteadOfReopeningForever`
+passou a exigir que obra com todos os blocos restantes adiados por `NO_SUPPORT`
+seja registrada como infraestrutura finalizada, não como obra abandonada que
+pode reabrir para sempre. A bateria falhou primeiro nesses cinco pontos.
+
+A correção 0.3.11 deixa `WorkerNameplate` apenas como limpeza de legado: a
+profissão não é mais gravada no aldeão, então o texto aparece somente dentro do
+overlay cliente, com o símbolo à direita. Em `WaitingWork`, quando a obra só
+tem peças sem apoio por dois ciclos, ela é movida para `COMPLETED`, registrada
+como infraestrutura, remove o projeto aberto e cancela tarefas de build órfãs.
+O comando `/vc log` agora procura primeiro uma vila na coluna X/Z do jogador,
+ignorando altura, e mostra vila encontrada mesmo quando a região ainda não está
+ativa.
+
+Verificação: `test --no-daemon`, `runGametest --rerun-tasks --no-daemon` com
+650/650 em 32,67 s, e `build --no-daemon` passaram. O JAR
+`village-colony-0.3.11.jar` foi copiado para `downloads/` e
+`%APPDATA%/.minecraft/mods/` com SHA-256
+`28AB21E3573932CB560A37AB6586409020B8C776649CE3FA6C25D4062071B855`.
+
+### 2026-10-10 - Overlay em camada e reserva da obra aberta
+
+O playtest com o JAR 0.3.11 ainda mostrava o nome da profissão fora do painel
+esperado. O `latest.log` também mostrou uma obra aberta com 91 blocos restantes
+em `BUILDING`, mas com `builders: 0 working ... AVAILABLE with nobody`; a vila
+registrou `WAITING/ALREADY_OPEN`, então a fila tinha tarefa aberta, mas nenhum
+construtor conseguia reservá-la.
+
+A correção do overlay separou a profundidade da moldura, do símbolo e do texto.
+Assim o fundo não disputa mais a mesma camada com os elementos visíveis: o nome
+fica à esquerda e o símbolo à direita, ambos à frente do background. O teste
+`PixelPanelLayoutTest.professionTextAndIconAreDrawnInFrontOfTheBackground` foi
+escrito primeiro e falhou até esses campos de camada existirem.
+
+A correção da obra removeu a exigência de ponto de apoio/posição do portão de
+reserva em `ColonyCycleRunner.canReserveTask`. A reserva agora aceita obra
+aberta com próximo bloco e fundação qualificada; quem decide caminhar, adiar
+peça sem apoio ou seguir construindo é o `BuilderWork`, que possui o contexto
+físico completo. O GameTest
+`ColonyCycleRunnerGameTest.anOpenBuildTaskCanBeReservedEvenWhenTheFirstPieceHasNoStandingSpot`
+cobre o caso visto no log: primeiro bloco sem posição de trabalho não pode
+deixar a obra `AVAILABLE with nobody`.
+
+Verificação final: `test --no-daemon` passou, `runGametest --rerun-tasks --no-daemon`
+passou com 651/651 em 34,86 s, e `build --no-daemon` passou. O JAR
+`village-colony-0.3.12.jar` foi copiado para `downloads/` e para
+`%APPDATA%/.minecraft/mods/` com SHA-256
+`B812F7B2A46FB3E3B3CAF781B35D1123BE9570F25698EC3823A06E61FF8AB003`. O JAR 0.3.11
+ficou travado pelo processo do jogo e precisa sair da pasta ativa antes do próximo
+playtest. O log do playtest não tinha linhas `VC_TIME`/`VC_COST`, então os
+percentuais de ociosidade não foram calculáveis nessa amostra; ele ainda registrou
+fundidor em `NO_TASK` e mineiro em `WORK_STALLED`.
+
+### 2026-10-10 - Rota física para materiais de construção sem ResourceType
+
+A auditoria do playtest identificou calcita e folhas entre as peças inseridas
+instantaneamente na obra. Elas existem no mundo, mas não possuem `ResourceType`,
+então a rota de suprimento as tratava como impossíveis e acionava o fallback
+terminal depois de quatro faltas.
+
+Foi adicionado `SupplySource.PHYSICAL_BLOCK`. A rota agora reconhece terreno,
+pedra-base, calcita e folhas de uma espécie que o bosque local mantém, sem
+confundir recursos já catalogados: areia sem água, por exemplo, ainda obedece à
+regra de alcance anterior. `TreeSpecies.ofLeaves` preserva a correspondência
+entre folha e espécie alcançável.
+
+O novo GameTest `unmappedNaturalBlocksKeepAPhysicalRouteBeforeFallback` falhou
+antes do patch porque `PHYSICAL_BLOCK` não existia e, numa primeira versão ampla,
+também revelou que areia fora de água não podia ser promovida por tag genérica.
+Depois de restringir a origem física a itens sem `ResourceType`,
+`compileGametestJava --no-daemon` passou e `runGametest --rerun-tasks --no-daemon`
+passou com **652/652 em 47,56 s**. A entrega profissional efetiva e a telemetria
+de proveniência continuam nas próximas tarefas; este passo só impede o fallback
+indevido e descreve a rota corretamente.
+
+### 2026-10-10 - Calcita passa da rota teórica para a meta do mineiro
+
+A revisão imediata do passo anterior encontrou uma violação da própria regra de
+fluxo: `PHYSICAL_BLOCK` declarava calcita e folhas como atendíveis, mas não havia
+tarefa genérica que levasse esses itens até a obra. A consequência possível era
+uma obra esperar por uma rota apenas declarada. A classificação ampla foi retirada;
+folhas permanecem fora do lenhador, conforme a regra de preservar a copa.
+
+Calcita recebeu `ResourceType.CALCITE` com produção `MINED`. A demanda da obra
+agora a percorre por `WorkMaterials.minedNeeds`, `WorkDemand` e `ColonyGoals`,
+abrindo uma meta nominal do mineiro sem aceitar pedregulho como substituto. A
+rota de suprimento passa a ser `BIOME_RESOURCE`, que corresponde ao trabalho que
+o sistema sabe atribuir.
+
+O teste `ColonyGoalsTest.constructionCalciteCreatesItsOwnMiningGoal` foi escrito
+primeiro e falhou porque `CALCITE` não existia. Depois passaram o teste focal,
+`compileGametestJava --no-daemon` e `runGametest --rerun-tasks --no-daemon` com
+**652/652 em 45,19 s**. A entrega no save real ainda é obrigatória antes de
+considerar reduzidas as inserções instantâneas.
+
+### 2026-10-10 - Fundidor conserva a reserva durante falta transitória
+
+O log de playtest mostrou 882 liberações de tarefa para apenas quatro itens
+fundidos. A causa foi direta: ao não encontrar o cru, `SmelterWork` chamava
+`Task.release()`. O ciclo retomava a mesma tarefa, repetia a busca vazia e
+produzia o pico de paradas observado, mesmo havendo trabalho alternativo de
+obra.
+
+O GameTest `withoutTheRawMaterialTheSmelterWorksForTheOpenBuild` foi ajustado
+primeiro para reservar uma única tarefa através de três consultas. Ele falhou
+antes do patch porque o fundidor a soltava na primeira falta e não chegava ao
+vidro alternativo. A correção mantém o `Job` reservado para falta transitória,
+usa `StopLog` para registrar a espera sem spam e só libera nos erros definitivos
+de receita ou armazenamento. Depois de duas faltas, continua usando a seleção
+existente de item alternativo para obra/planta e volta a testar o pedido inicial.
+
+O teste focal `runGametest -PgametestOnly=SmelterGameTest --rerun-tasks
+--no-daemon` passou com 5/5. A verificação integral
+`runGametest --rerun-tasks --no-daemon` passou com 652/652 em 50,74 s. O próximo
+playtest continua necessário para confirmar no save a redução de ociosidade.
+
+### 2026-10-10 - Contingência da obra conta ciclos, não consultas
+
+O fallback de material contava cada chamada de `BuilderMaterials`, portanto o
+overlay, o planejador e o construtor podiam consumir as quatro tentativas sem que
+uma profissão tivesse recebido quatro ciclos para entregar. A nova classe
+`ConstructionSupplyDispatches` mantém esse relógio apenas em memória, por obra
+e item, e o renova uma vez no `ColonyCycleRunner`. A rota de suprimento também
+promove as tarefas abertas de seus recursos a `CONSTRUCTION_MATERIAL` antes da
+distribuição.
+
+`BuilderMaterials` deixou de incrementar tentativas. Ele zera o registro quando
+o item físico aparece em baú atendendo a obra e, depois de quatro renovações,
+primeiro abastece os ingredientes sem rota no baú do artesão; só então insere a
+peça final quando a cadeia não pode avançar. Peças futuras apenas são preparadas:
+não consomem nem disparam a contingência antes de se tornarem a próxima peça.
+
+O contador antigo foi removido de `BiomeConstructionSupply` e deixou de ser
+salvo em `WorkMarksSavedData`; a persistência desse campo continua somente para
+as esperas de muda. Isso impede que tentativas antigas de uma obra sobrevivam a
+um novo servidor e decidam material sem um novo ciclo da colônia.
+
+O teste novo prova que quatro consultas não abastecem terracota e que quatro
+despachos distintos abastecem o baú do construtor. `LocateFallbackGameTest` foi
+ajustado para a peça futura não gastar esse relógio. A bateria integral
+`runGametest --rerun-tasks --no-daemon` passou **653/653 em 50,87 s**. Falta o
+playtest de save para medir as entregas reais e os eventos `VC_SUPPLY_ERROR`.
+
+### 2026-10-10 - Fallback só avança depois de tarefa executável
+
+A revisão final da ADR-040 encontrou uma lacuna: priorizar uma rota antes da
+distribuição não prova que alguma profissão recebeu uma tarefa capaz de cumpri-la.
+Contar esse ciclo ainda permitiria que uma rota meramente declarada chegasse ao
+fallback terminal.
+
+`ConstructionSupplyDispatches` passou a separar prioridade e renovação. O
+`ColonyCycleRunner` prioriza a rota antes de `ColonyCycle.run`, e depois dele só
+renova a tentativa quando existe uma tarefa aberta de recurso para algum item da
+rota. O GameTest novo mantém quatro ciclos sem tarefa sem acionar a contingência,
+abre a tarefa de tábuas e então prova que quatro despachos reais habilitam o
+fallback.
+
+Para manter a regra arquitetural de tamanho, a reserva antecipada de pedreiro,
+fundidor e carpinteiro saiu de `ColonyGoals` para `AdvanceConstructionStock`.
+Não há alteração de política de metas. Verificação desta sessão: 1368 testes
+unitários, 96 testes Python, 654/654 GameTests em 32,73 s e `build` completo,
+tudo aprovado. A entrega e os eventos no save real continuam pendentes de
+playtest.

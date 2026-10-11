@@ -882,6 +882,30 @@ class ColonyGoalsTest {
         assertEquals(ColonyGoals.MINERAL_FLOOR, goal.get(ResourceType.RAW_IRON));
     }
 
+    /** A obra pede calcita exata; pedregulho no baú não a substitui. */
+    @Test
+    void constructionCalciteCreatesItsOwnMiningGoal() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(),
+                owned(ResourceType.COBBLESTONE, 64),
+                0,
+                0,
+                new WorkDemand(
+                        0,
+                        ResourceType.COBBLESTONE,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        Map.of(),
+                        Map.of(),
+                        Map.of(ResourceType.CALCITE, 7),
+                        0));
+
+        assertEquals(7, goal.get(ResourceType.CALCITE));
+    }
+
     /**
      * O que a obra pede de fornalha fora do catálogo entra pela lista da
      * obra — o vidro fica de fora do catálogo de propósito. Pedido zero

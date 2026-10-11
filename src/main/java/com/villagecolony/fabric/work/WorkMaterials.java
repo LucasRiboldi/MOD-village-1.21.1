@@ -285,6 +285,22 @@ public final class WorkMaterials {
         return wanted;
     }
 
+    /** Minerais exatos que a obra pede fora da pedra-padrão da paleta. */
+    public static Map<ResourceType, Integer> minedNeeds(Colony colony) {
+        Map<ResourceType, Integer> wanted = new LinkedHashMap<>();
+
+        for (Map.Entry<ResourceId, Integer> entry
+                : ConstructionDemand.materialsNeededBy(colony).entrySet()) {
+            MinecraftTypeAdapter.toBlock(entry.getKey())
+                    .flatMap(WorkMaterials::firstKnownAlternative)
+                    .filter(type -> type.production() == Production.MINED)
+                    .filter(type -> type.group() == ResourceGroup.NONE)
+                    .ifPresent(type -> wanted.merge(type, entry.getValue(), Integer::sum));
+        }
+
+        return wanted;
+    }
+
     /** O primeiro item conhecido entre as alternativas materiais da obra. */
     static Optional<ResourceType> firstKnownAlternative(Block block) {
         for (Item candidate : MaterialChoice.forBlock(block)) {
@@ -414,7 +430,7 @@ public final class WorkMaterials {
         }
 
         Optional<CraftingLookup.Bill> bill =
-                CraftingLookup.billFor(world, made, ingredient -> !sameFamily(made, ingredient));
+                CraftingLookup.billFor(world, made, ingredient -> !ItemFamily.same(made, ingredient));
 
         if (bill.isEmpty()) {
             return 0;
@@ -448,43 +464,5 @@ public final class WorkMaterials {
         }
 
         return total;
-    }
-
-    /**
-     * Se dois itens são a mesma coisa de outra cor ou outra madeira.
-     *
-     * <p><b>Existe porque a cama quase custou uma cama.</b> O jogo tem
-     * mais de uma receita que dá {@code white_bed}, e uma delas é
-     * <i>tingir</i>: {@code black_bed} mais corante branco. O livro
-     * devolve a primeira que encontrar, e encontrou essa — a conta de
-     * lã dava <b>zero</b>, e zero aqui é o pastor sem tarefa.
-     *
-     * <p>A regra que conserta é esta: <b>quem decompõe uma peça não pode
-     * partir de outra peça da mesma família.</b> Para saber quanta lã
-     * uma cama custa, uma receita que pede cama não serve, ainda que
-     * exista e funcione na bancada.
-     *
-     * <p>Família é a última palavra do nome: {@code white_bed} e
-     * {@code black_bed} são "bed"; {@code glass_pane} e {@code glass} não
-     * são parentes. <b>O limite conhecido:</b> tronco descascado e tronco
-     * são os dois "log", e uma conta que precisasse descer de um para o
-     * outro daria zero. Nenhuma das quatro contas desta classe passa por
-     * aí, e o dia em que uma passar vai aparecer como zero — que é o
-     * mesmo sintoma, e agora com um lugar nomeado para procurar.
-     */
-    private static boolean sameFamily(Item made, Item ingredient) {
-        if (made == ingredient) {
-            return true;
-        }
-
-        return lastWord(made).equals(lastWord(ingredient));
-    }
-
-    private static String lastWord(Item item) {
-        String path = Registries.ITEM.getId(item).getPath();
-
-        int underscore = path.lastIndexOf('_');
-
-        return underscore < 0 ? path : path.substring(underscore + 1);
     }
 }

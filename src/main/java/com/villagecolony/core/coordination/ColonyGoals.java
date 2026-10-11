@@ -430,14 +430,8 @@ public final class ColonyGoals {
                 Math.max(stoneForWork, STONE_FLOOR),
                 stoneRoom > 0 ? owned.amountOfGroup(stone.group()) + stoneRoom : 0));
 
-        // O pedreiro não fica parado (ADR-036 8), cinco de cada peça por vez (ADR-038 P5b).
-        AdvanceStock.addTo(goals, colony.id(),
-                AdvanceStock.piecesFor(colony.id(), "mason", MasonStock.piecesFor(stone)), owned::amountOf);
-        // O fundidor e o carpinteiro também, cada um no seu ciclo, com as peças do bioma (ADR-039 4).
-        for (String lane : java.util.List.of("smelter", "carpenter")) {
-            AdvanceStock.addTo(goals, colony.id(), lane, AdvanceStock.piecesFor(colony.id(), lane,
-                    lane.equals("smelter") ? AdvanceStock.SMELTER_PIECES : AdvanceStock.CARPENTER_PIECES), owned::amountOf);
-        }
+        // Reserva antecipada dos produtores de blocos — ADR-036 item 8 e ADR-039 item 4.
+        AdvanceConstructionStock.addTo(goals, colony.id(), stone, owned);
 
         // A despensa — 2026-08-27, e por cama desde 2026-09-05. Qualquer
         // lavoura conta, pelo grupo. O piso continua valendo para a
@@ -488,6 +482,14 @@ public final class ColonyGoals {
         work.surfaceGathered().forEach((gathered, amount) -> {
             if (amount > 0) {
                 goals.put(gathered, amount);
+            }
+        });
+
+        // Mineral fora da paleta (por exemplo, calcita) precisa de meta
+        // nominal: pedra comum no baú não substitui a peça exata da obra.
+        work.mined().forEach((mined, amount) -> {
+            if (amount > 0) {
+                goals.put(mined, amount);
             }
         });
 

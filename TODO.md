@@ -17,13 +17,13 @@ Scripts: `scripts/audit/check-*.sh`.
 - [ ] 🟠 **AUD-02** Save malformado apaga todas as colônias (o Vanilla cria estado vazio e o grava):
       `try/catch` por entrada em `ColonySaveReader`; promover `scripts/audit/probes/NbtFuzzProbeTest`.
 - [ ] 🟠 **AUD-03** Gravar `saveVersion` no `ColonySavedData.writeNbt` (hoje a v0→v1 roda a cada carga).
-- [ ] 🟠 **AUD-05** Integrar a `codex/fluxo-grafo-waypoints` (decidido, ADR-041 #2): 14 commits, ADR-040,
-      despacho físico e retenção do fundidor fora da `main`; a PR #19 foi fechada sem trazê-los.
+- [x] 🟠 **AUD-05** `codex/fluxo-grafo-waypoints` integrada (ADR-041 #2) na `claude/integra-fluxo-grafo-waypoints`,
+      0.3.24: 1402 unitários, 696/696 GameTests × 3, PIT 85,56%. Falta: PR na `main` e playtest.
 - [ ] 🟠 **AUD-06** Asserções em `WorkDemandTest` para `constructionMaterials` (10 mutantes sobreviventes; PIT com folga de 13).
 - [ ] 🟡 **AUD-07** Régua de avaliação: C14 cego às seções 🔴, C01 conta uma linha a mais, quebra em cp1252 (régua v2).
 - [ ] 🟡 **AUD-08** `STATE.md` com 663 linhas (teto 150): arquivar seções fechadas de 02-10 a 08-10.
 - [ ] 🟡 **AUD-09** Ciclo raiz ↔ `fabric.*` por `VillageColonyMod` como localizador global.
-- [ ] 🟡 **AUD-10** 181 estáticos mutáveis; config estática não-final (`MineLease`, `TreeChoice`, `MinerDetours`, `FarmerWork`).
+- [ ] 🟡 **AUD-10** 181 estáticos mutáveis; config estática não-final (`MineLease`, `TreeChoice`, `MinerDetours`, `FarmerWork`). A regra ArchUnit já existe congelada: esvaziar o congelado.
 - [ ] 🟡 **AUD-11** Testes de `ProfessionPolicyNetworking`/codec/SavedData; cobertura de `fabric.network` e `fabric.command`.
 - [ ] 🟡 **AUD-12** Avisar quando outro mod tirar a tarefa da colônia do `Brain`; `suggests: modmenu` e `breaks` no `fabric.mod.json`.
 - [ ] 🟡 **AUD-04** Ciclo p95 67 ms na 0.3.22, 27,7 ms na 0.3.23: medir de novo (≥ 20 amostras) antes de otimizar.
@@ -166,18 +166,55 @@ branch `claude/obra-lote-e-trava` (ver `STATE.md`).
 
 ## 🔴 Playtest da 0.3.5
 
-Nada das ADR-037, 038 e 039 foi visto em jogo. Rodar depois: `python scripts/time_ledger.py`
-e `python scripts/cost_ledger.py` no `latest.log`, e Spark.
+Nada das ADR-037, 038 e 039 foi confirmado visualmente no save real. A 0.3.12 corrige a camada do
+overlay, remove o nameplate Vanilla e deixa a obra ser assumida pelo construtor mesmo quando o
+primeiro bloco não tem ponto físico imediato; rodar depois:
+`python scripts/time_ledger.py` e
+`python scripts/cost_ledger.py` no `latest.log`, e Spark.
 
+- [ ] Painel da profissão 0.3.12: nome à esquerda e símbolo simples à direita dentro da mesma
+      moldura nítida; sem nameplate Vanilla fora do background.
+- [ ] Overlay da obra 0.3.12: painel aparece no mesmo lugar da placa de obra e atualiza o texto.
+- [ ] Crescimento natural depois da obra atual: no playtest `vuUv6PZC5d`, a vila tinha uma obra
+      aberta em `-750,68,-893` esperando `minecraft:stonecutter`; 9 ciclos não varreram lotes porque
+      uma build estava aberta.
+- [ ] Obra 0.3.12: confirmar no save que tarefa aberta deixa de ficar `AVAILABLE with nobody` e que
+      o construtor assume/diagnostica a peça pelo `BuilderWork`.
+- [ ] `/vc log` dentro da vila em qualquer altura: a busca deve contar a coluna X/Z da vila e só
+      avisar região dormente quando a vila existir mas ainda não estiver simulando.
 - [ ] `walk` aparece no `time_ledger` (A3: o braço do aldeão agora desce).
 - [ ] Carpinteiro com escada/laje/cerca **da madeira do bioma** no baú dele; pedreiro com as peças
       das casas da vila; fundidor com vidro e a pedra lisa que as casas usam.
 - [ ] Peça feita entra no **baú da profissão** de quem fez, não no do vizinho.
 - [ ] Mineiro encalhado **continua mineiro**; ramal novo abre para o minério que falta.
+- [ ] Fundidor fica abaixo de 15% de ociosidade quando houver minério no fluxo; no playtest
+      `vuUv6PZC5d`, ele ficou 89% ocioso e 95% sem trabalhar, com o mineiro mirando minério
+      profundo/distante e a cadeia da obra parada em `stonecutter`.
 - [ ] Caminho calçado até obra afastada da rua.
 - [ ] Fechar e abrir o mundo: lenhador vai direto à árvore conhecida; mineiro volta ao ramal e ao veio;
       animal na corda continua sendo levado à cerca.
 - [ ] Pastor trazendo animal solto até a cerca perto da cama; ovelha solta também procria.
+
+## 🟠 Fluxo físico de materiais da obra
+
+- [ ] Medir no save real a entrega de `CALCITE` pelo mineiro e comparar contra as 63 inserções
+      instantâneas registradas; rota declarada e meta nominal não substituem a confirmação de entrega.
+- [ ] Para cada bloco sem catálogo, criar primeiro uma cadeia executável de profissão ou mantê-lo no
+      fallback terminal. Não voltar a declarar uma rota genérica sem trabalhador que a cumpra; folhas
+      permanecem fora da coleta do lenhador pela regra de preservar a copa.
+- [ ] Conciliar demanda da obra, reserva de tarefa, estoque em baú e entrega para que uma reserva
+      sem retirada não impeça outra profissão de atender a peça.
+- [x] Remover o ciclo de reserva/liberação do fundidor quando falta insumo, mantendo
+      alternativa de construção produtiva enquanto espera. `SmelterGameTest` 5/5 e
+      GameTests 652/652; confirmar no próximo save a redução de liberações e a
+      ociosidade abaixo de 15%.
+- [x] Registrar no relatório cada fallback terminal (`VC_SUPPLY_ERROR`) por peça, profissão e
+      tentativas; `test_analyze_village_log` 11/11 e Python 96/96. Comparar o próximo playtest
+      com os 334 abastecimentos instantâneos da sessão anterior.
+- [x] Implementar a ADR-040: quatro despachos executáveis sem entrega física acionam o fallback;
+      consulta do construtor e reserva de tarefa não contam, e a entrega no baú zera o relógio.
+      `BuilderMaterialsGameTest` e GameTests 654/654; medir no save a entrega profissional e
+      cada fallback terminal antes de reduzir a política.
 
 ## 🟠 Erros abertos
 
@@ -206,8 +243,10 @@ Falta só fechar e abrir um mundo de verdade (playtest).
 
 ## 🟡 Estrutura
 
-- [ ] Seis arquivos de produção em 497–500 linhas (`SmelterWork`, `Mine`, `ClimbOut`,
-      `SurfaceGatheringWork`, `Worker`, `BuilderWork`): dividir antes da próxima mudança neles.
+- [ ] Outros seis arquivos de produção estão em 497–500 linhas (`SmelterWork`,
+      `Mine`, `ClimbOut`, `SurfaceGatheringWork`, `Worker`, `BuilderWork`) e devem ser divididos
+      antes da próxima mudança neles. `ColonyGoals` foi reduzido a 500 linhas com a extração de
+      `AdvanceConstructionStock`; `FileSizeRuleTest` voltou a passar.
 - [ ] Branch local do worktree do Codex (`codex/village-visuals-logistics-mine-sweep`): já toda na
       `main`; remover o worktree.
 

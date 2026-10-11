@@ -38,6 +38,32 @@ Fila AUD-01…24 no `TODO.md`. O que pede ação antes de código novo:
 
 **Não verificado:** Spark, nível 4 do modsmith (pack com outro mod de aldeão), 8 rodadas da bateria.
 
+## 🟡 10-10, noite — linha Codex integrada (AUD-05, ADR-041 #2), versão 0.3.24
+
+Branch `claude/integra-fluxo-grafo-waypoints`: merge de três vias da `codex/fluxo-grafo-waypoints`
+(14 commits de 09-10 e 10-10) sobre a auditoria, sem reescrever a branch do Codex. Entram o
+**despacho físico de material da obra (ADR-040)** — a contingência conta despachos de ciclo com
+tarefa aberta, não consultas —, o **fundidor que mantém a tarefa enquanto o cru falta**, a calcita
+na meta do mineiro, a rota física de material sem `ResourceType`, o overlay em camada e o relatório
+que separa fallback de estoque. O texto de cada entrega está no Development-Log (10-09 e 10-10).
+
+Conflitos decididos: a trava de reserva da obra é o `BuildSiteGate` da `main` (superconjunto do
+filtro do Codex); a obra com todas as peças adiadas **não** libera o lote antes do resgate (P0.54,
+posterior ao P0.8 do Codex); a árvore de contingência é a da `main` com o contador da ADR-040.
+Consequência a medir: as peças adiantadas (`AHEAD`) deixam de gastar tentativa, então peças sem
+rota caem no baú uma de cada vez, a cada quatro ciclos.
+
+Defeitos que o merge criou sem conflito, e foram corrigidos: (1) o Codex apagou `OverlayPreferences`
+(texto da profissão sempre visível desde a P0.7), mas a `main` o usava em `drawsNameOf`; (2) o ramo
+que fecha a obra sem apoio (P0.8) ficou morto depois do `return` da P0.54 e foi removido; (3)
+`ColonyCycleRunner` e `WorkMaterials` passaram de 500 linhas: `MissingHandsLog` e `ItemFamily` foram
+extraídos sem mudar comportamento. Quatro GameTests da `main` que contavam consultas como faltas
+foram adaptados ao contador da ADR-040. O servidor não escreve mais a profissão no nome do aldeão
+(P0.8): sem o mod no cliente, ela não aparece.
+
+**Verificado:** `build --rerun-tasks` (1402 unitários), 696/696 GameTests × 3, 105 Python, PIT
+1807/2112 (85,56%). **Pendente:** JAR 0.3.24 e playtest.
+
 ## 🟡 10-10 — integração 0.3.23 de obra, fundidor e mina
 
 As correções recentes foram reconciliadas sobre a `main` 0.3.22, preservando a
@@ -484,11 +510,10 @@ Playtest obrigatório: mina com save antigo (SHAPE_VERSION 7→8), painéis com 
   de todas as vilas Vanilla 1.21.1 está em
   `docs/reports/blocos-vilas-vanilla-1.21.1.xlsx`; 67 ainda não têm rota direta
   de uma profissão e estão marcados sem inventar suprimento.
-- `barn_majest.nbt` entra no sorteio de oficinas do pastor e
-  `storage_majest.nbt` no do construtor. O celeiro foi compactado ao retirar
-  apenas o solo natural da camada inferior, preservando os cinco blocos
-  funcionais nela presentes; sua nova área é 12x13x15. A rodada completa de
-  GameTests confirmou ambos os NBT reais carregados e associados: 582/582.
+- `barn_majest.nbt` foi retirado do sorteio de obras; ele não pertence mais ao
+  pastor nem entra em `VillageStructures.buildableFor`. `storage_majest.nbt`
+  permanece no sorteio do construtor. O celeiro segue como arquivo de recurso,
+  mas não é uma possibilidade de construção automática.
 - Falta o playtest visual e de desempenho no save, inclusive marcador em vila
   grande e coleta atravessando a borda, fluxo real dos baús, nova medição do
   lenhador/carpintaria e o sorteio das duas oficinas em uma vila real.

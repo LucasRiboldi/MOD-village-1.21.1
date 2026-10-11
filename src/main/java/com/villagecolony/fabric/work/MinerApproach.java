@@ -184,14 +184,16 @@ public final class MinerApproach {
     }
 
     /**
-     * Evita entregar à navegação uma perna acima do degrau que o aldeão
-     * consegue subir.
+     * Evita entregar à navegação uma perna fora do degrau que o aldeão
+     * consegue vencer.
      *
      * <p>A perna da mina normalmente é a boca ou uma posição da escada.
      * Quando o aldeão cai fora dela, porém, {@link MinerLeg#legTowards}
      * pode devolver a boca três blocos acima. A navegação fica girando no
      * destino alto e o relatório registra exatamente o sintoma de E44:
-     * {@code blocks below it and unable to climb}.
+     * {@code blocks below it and unable to climb}. A sessão de 2026-10-09
+     * mostrou o simétrico: perna muitos blocos abaixo fazia o mineiro
+     * oscilar no topo da descida e manter o único ramal reservado.
      *
      * <p>O destino intermediário é procurado só nesse caso excepcional. A
      * busca usa a mesma regra de lugar pisável do {@link #approachTo}, e a
@@ -200,16 +202,49 @@ public final class MinerApproach {
     public static BlockPos climbableWalkTarget(
             ServerWorld world, BlockPos villager, BlockPos leg) {
 
-        if (leg.getY() - villager.getY() <= MinerWork.CLIMB) {
+        if (leg.getY() - villager.getY() > MinerWork.CLIMB) {
+            BlockPos landing = approachTo(world, leg, villager);
+
+            return landing.getY() - villager.getY() <= MinerWork.CLIMB
+                    && BuilderApproach.standable(world, landing)
+                    ? landing
+                    : leg;
+        }
+
+        if (villager.getY() - leg.getY() <= MinerWork.CLIMB) {
             return leg;
         }
 
-        BlockPos landing = approachTo(world, leg, villager);
+        return nextSafeStepDown(world, villager, leg).orElse(leg);
+    }
 
-        return landing.getY() - villager.getY() <= MinerWork.CLIMB
-                && BuilderApproach.standable(world, landing)
-                ? landing
-                : leg;
+    private static Optional<BlockPos> nextSafeStepDown(
+            ServerWorld world, BlockPos villager, BlockPos leg) {
+
+        BlockPos best = null;
+        double bestDistance = villager.getSquaredDistance(leg);
+
+        for (Vec3i offset : MinerReach.APPROACH_OFFSETS) {
+            BlockPos at = villager.add(offset);
+
+            if (at.equals(villager)
+                    || at.getY() > villager.getY()
+                    || villager.getY() - at.getY() > MinerWork.CLIMB
+                    || !BuilderApproach.standable(world, at)) {
+                continue;
+            }
+
+            double distance = at.getSquaredDistance(leg);
+
+            if (distance >= bestDistance) {
+                continue;
+            }
+
+            best = at;
+            bestDistance = distance;
+        }
+
+        return Optional.ofNullable(best);
     }
 
     /**

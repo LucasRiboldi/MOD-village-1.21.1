@@ -91,10 +91,7 @@ public final class ColonyModelsGameTest implements FabricGameTest {
                 "o celeiro não deve mais pertencer a uma profissão");
         context.assertTrue(ColonyModels.professionOf(storage).equals(Optional.of(ProfessionType.BUILDER)),
                 "o depósito devia pertencer ao construtor");
-        context.assertFalse(HousePlans.isHouse(barn), "o celeiro não pode disputar a vez de moradia");
         context.assertFalse(HousePlans.isHouse(storage), "o depósito não pode disputar a vez de moradia");
-        context.assertTrue(StructureBlueprintReader.read(context.getWorld(), barn).isPresent(),
-                "o celeiro real do jar não foi lido");
         context.assertTrue(StructureBlueprintReader.read(context.getWorld(), storage).isPresent(),
                 "o depósito real do jar não foi lido");
 

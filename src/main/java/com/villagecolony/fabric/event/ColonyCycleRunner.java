@@ -53,6 +53,7 @@ import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.BuildSiteGate;
 import com.villagecolony.fabric.work.EmptySweeps;
 import com.villagecolony.fabric.work.ConstructionDemand;
+import com.villagecolony.fabric.work.ConstructionSupplyDispatches;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.CraftingWork;
 import net.minecraft.block.Blocks;
@@ -69,7 +70,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Locale;
 import java.util.UUID;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -333,6 +333,7 @@ final class ColonyCycleRunner {
                 WorkMaterials.iron(overworld, colony),
                 WorkMaterials.smeltedNeeds(overworld, colony),
                 WorkMaterials.surfaceGatheredNeeds(overworld, colony),
+                WorkMaterials.minedNeeds(colony),
                 // A tora que a obra pede bruta: a meta não a conta como tábua (A-1).
                 ConstructionDemand.rawWoodNeededBy(colony));
 
@@ -346,6 +347,9 @@ final class ColonyCycleRunner {
         // a conta do que a construção pede. É a fase que o plano suspeita
         // ser a cara, e agora ela responde por si.
         mark = CycleCost.since(CycleCost.Phase.PLANNER, mark);
+
+        // A obra eleva primeiro a prioridade da rota que destrava sua fila. Regra 40, ADR-040.
+        ConstructionSupplyDispatches.prioritizeForCycle(overworld, colony);
 
         int assigned = ColonyCycle.run(
                 colony.id(),
@@ -365,9 +369,13 @@ final class ColonyCycleRunner {
                 VillageColonyMod.TASKS,
                 VillageColonyMod.WORKERS,
                 VillageColonyMod.STORAGES::hasStorage,
-                (resource, type, hands) -> reportHands(colony.id(), resource, type, hands),
+                (resource, type, hands) -> MissingHandsLog.report(colony.id(), resource, type, hands),
                 work.constructionMaterials(),
                 (worker, task) -> canReserveTask(overworld, colony.id(), task));
+
+        // Só depois do ciclo sabemos que a rota produziu tarefa aberta; uma rota apenas possível
+        // não pode gastar o prazo nem materializar recurso cedo demais. Regra 40, ADR-040.
+        ConstructionSupplyDispatches.renewForCycle(overworld, colony);
 
         // Sem o `if (assigned > 0)` que estava aqui. A linha calava
         // exatamente quando havia algo a dizer: distribuição parada é
@@ -451,48 +459,5 @@ final class ColonyCycleRunner {
             case SMELT_INPUT -> com.villagecolony.fabric.work.SmeltInput.inChests(
                     world, colonyId, task.targetResource());
         };
-    }
-
-    /**
-     * Diz que a colônia não tem quem faça um material — 2026-09-09.
-     *
-     * <p><b>O silêncio que ela quebra.</b> {@code ColonyCycle} pula o
-     * pedido de material que ninguém sabe fazer, e pular está certo:
-     * tarefa sem executor possível fica na fila para sempre. O que estava
-     * errado é que ele pulava <b>sem uma linha</b>, e o que o autor via
-     * era {@code assigned 0 tasks (0 open)} sem causa — o mesmo sintoma
-     * da roça que travou a vila nesta mesma data, e que custou uma hora
-     * de sessão até ser diagnosticado.
-     *
-     * <p><b>Assunto por tarefa, e não por material.</b> Uma colônia sem
-     * fundidor não sabe fazer vidro <b>nem</b> lingote <b>nem</b> arenito
-     * liso: três linhas iguais diriam a mesma coisa três vezes. O
-     * {@code IdleLog} compara só o motivo, então a primeira fala e as
-     * outras calam sozinhas — e o detalhe, que fica fora da comparação
-     * de propósito, nomeia o material que chegou primeiro.
-     *
-     * <p><b>O {@code clear} é metade da correção.</b> Sem ele, uma
-     * colônia que perde o fundidor, contrata outro e o perde de novo
-     * ficaria muda na segunda vez: o motivo guardado ainda seria
-     * {@code NO_WORKER}, e o registrador trataria como repetição de um
-     * silêncio que já tinha acabado. É o caso que o javadoc de
-     * {@code IdleLog.clear} descreve.
-     */
-    static void reportHands(
-            UUID colonyId, ResourceType resource, TaskType type, int hands) {
-
-        String subject = type.name().toLowerCase(Locale.ROOT);
-
-        if (hands == 0) {
-            IdleLog.record(
-                    colonyId,
-                    subject,
-                    IdleReason.NO_WORKER,
-                    resource + " needs " + type.required());
-
-            return;
-        }
-
-        IdleLog.clear(colonyId, subject);
     }
 }

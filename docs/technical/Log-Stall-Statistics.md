@@ -33,7 +33,7 @@ guarda UUIDs, coordenadas ou linhas cruas do mundo do jogador.
 | `house_finished` | BuilderWork | 3 | progresso |
 | `stranded_freed` | StrandedEscape | 2 | progresso |
 | `stairs_backfilled` | EscapeBackfill | 0 | progresso |
-| `supper_shared` | VillageMeals | 1 | progresso |
+| `supper_shared` | VillageMeals | 0 | progresso |
 
 ## Atividades por profissao
 
@@ -98,7 +98,7 @@ guarda UUIDs, coordenadas ou linhas cruas do mundo do jogador.
 | `site_sweep_restarted` | 1 |
 | `worker_stranded` | 40 |
 | `stranded_cannot_dig_out` | 5 |
-| `construction_let_go` | 15 |
+| `construction_let_go` | 17 |
 | `miner_chest_full` | 270 |
 | `cycle_over_tick` | 550 |
 | `server_overloaded` | 22 |

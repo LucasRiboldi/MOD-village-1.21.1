@@ -185,7 +185,7 @@ Sem pressa, um item por vez, nunca no meio de uma correção da Fase 2.
 | **AUD-22** | `BigHouseFoundation.java:79`: `world.getRandom()` ou semente da colônia | não |
 | **AUD-15** | `RemoveUnusedImports` do Error Prone como erro; um commit só de limpeza | não |
 | **AUD-20** | dividir por eixo de domínio as 15 classes em 488–500 linhas, **antes** da próxima mudança em cada uma, não durante | não |
-| **AUD-10** | todo estático mutável registrado em `ServerMemory`; regra ArchUnit que o exige | **sim**, regra nova de arquitetura |
+| **AUD-10** | esvaziar o registro congelado da regra `aStaticMutableCollectionIsServerMemory`, que já exige o `ServerMemory` (a auditoria a dava como inexistente) | não |
 | **AUD-09** | tirar os registros globais de `VillageColonyMod` (`WORKERS`, `COLONIES`, `CONSTRUCTIONS`…) para um contexto de serviço, quebrando o ciclo raiz ↔ `fabric` | **sim, ADR**: é a mudança mais larga do roteiro; depende do AUD-10 |
 
 
@@ -262,7 +262,7 @@ coluna "em jogo" é a que a régua cobra.
 | Item | Estado | Em jogo |
 |---|---|---|
 | 0.1 commit da auditoria | ⬜ liberado (ADR-041 #1) | — |
-| 0.2 AUD-05 | ⬜ decidido: integrar (ADR-041 #2) | — |
+| 0.2 AUD-05 | ✅ integrada na branch `claude/integra-fluxo-grafo-waypoints` (0.3.24): 1402 unitários, 696/696 GameTests × 3, PIT 85,56% | ⬜ espera playtest |
 | 0.3 regra do ócio | ✅ decidida: abrangente (ADR-041 #3) | — |
 | AUD-03 | ⬜ | — |
 | AUD-02 | ⬜ (sonda pronta em `scripts/audit/probes/`) | — |

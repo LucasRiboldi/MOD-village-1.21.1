@@ -30,10 +30,12 @@ public final class ClientOverlayState {
 
     /**
      * Se o painel da profissão desenha o nome deste aldeão — e então a
-     * plaquinha Vanilla sobre a cabeça dele não é desenhada.
+     * plaquinha Vanilla sobre a cabeça dele não é desenhada. O texto do
+     * painel é sempre visível desde a P0.7 (09-10), que tirou a opção de
+     * escondê-lo.
      */
     public static boolean drawsNameOf(UUID id) {
-        return professions.containsKey(id) && OverlayPreferences.professionTextVisible();
+        return professions.containsKey(id);
     }
 
     public static Iterable<OverlaySnapshotPayload.ConstructionEntry> constructions() {

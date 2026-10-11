@@ -148,7 +148,7 @@ public class BuildProgressGameTest implements FabricGameTest {
 
     /** Uma obra sem nenhuma peca colocavel nao cede antes do resgate de apoio e material. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress")
-    public void aDeferredPieceIsNotAbandonedByTheProgressClock(TestContext context) {
+    public void aFullyDeferredProjectFinishesInsteadOfReopeningForever(TestContext context) {
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ORIGIN));
         Colony colony = Colony.create(UUID.randomUUID(), origin);
         BlueprintBlock torch = new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("torch"));

@@ -10,6 +10,22 @@ o commit e o SHA-256 do JAR no `STATE.md` (`scripts/release_manifest.py`). O his
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.24] — integração da linha Codex (2026-10-10, sem JAR publicado)
+
+### Adicionado
+- Despacho físico de material da obra (ADR-040): a contingência conta despachos de ciclo com tarefa
+  aberta na rota, não consultas do construtor.
+- Fundidor mantém a tarefa enquanto o cru falta; calcita na meta do mineiro; rota física para material
+  de obra sem `ResourceType`; relatório de log separa fallback de estoque.
+
+### Mudado
+- O servidor não escreve mais a profissão no nome do aldeão; o painel do cliente com o mod a mostra.
+- O texto da profissão no painel é sempre visível (a opção de escondê-lo saiu do Mod Menu).
+- Peças adiantadas da obra não gastam mais tentativa de contingência.
+
+### Verificado
+- 1402 unitários, 696/696 GameTests em 3 rodadas, 105 Python, PIT 1807/2112 (85,56%). Nada visto em jogo.
+
 ## [Não publicado] — auditoria técnica de 2026-10-10
 
 Nada muda no JAR: a auditoria não alterou código de produção.
