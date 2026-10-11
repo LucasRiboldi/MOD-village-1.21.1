@@ -5,6 +5,7 @@ import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
+import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -29,11 +30,11 @@ import java.util.UUID;
  * mineiro na superfície andava direto para esse ponto enterrado, em cima da mina,
  * e não chegava ("found no detour within 16 blocks").
  *
- * <p><b>A memória.</b> A boca de superfície é guardada quando a mina abre. Para a
- * mina que já desceu antes desta regra existir, ela é deduzida: cada nível começa
- * num deslocamento fixo do anterior ({@link MineShaft#deepened}, que só depende do
- * sentido de descida), e sobe-se por ele enquanto o nível de cima fica dentro do
- * terreno.
+ * <p><b>A memória.</b> A cadeia de entradas é guardada quando a mina abre e cresce
+ * um nível a cada descida. Sem ela (servidor reiniciado), é deduzida do mundo: cada
+ * nível começa no piso da escada do anterior ({@link MineShaft#deepened}), e o giro
+ * da escada (ADR-037 M1) muda o rumo sem mudar a entrada, então o rumo de cada
+ * nível é o da escada que está cavada no mundo — RC2 do roteiro de 10-10.
  *
  * <p><b>O caminho.</b> As entradas de cada nível, da superfície até a de agora, são
  * ligadas pela escada em caracol já cavada; cada trecho é curto o bastante para a
@@ -58,47 +59,30 @@ public final class MineEntrance {
     /** Dentro desta distância horizontal da entrada de agora, ele já está no nível. */
     static final int IN_LEVEL = 12;
 
-    private static final Map<UUID, ColonyPos> SURFACE = new HashMap<>();
+    /** Quanto da escada de um rumo precisa estar aberto para ela contar como cavada. */
+    static final double DUG_SHARE = 0.5;
+
+    /** Depois de uma dedução cortada por chunk fora de memória, quando deduzir de novo. */
+    static final int RETRY_TICKS = 200;
+
+    /** A cadeia de entradas de cada colônia, da boca de superfície até a de agora. */
+    private static final Map<UUID, Chain> CHAINS = new HashMap<>();
+
+    /** A cadeia, e até quando ela vale sem deduzir de novo. */
+    private record Chain(List<ColonyPos> entries, long until) {
+    }
 
     private MineEntrance() {
     }
 
     /** Guarda a boca de superfície da mina que acabou de abrir. */
     static void opened(UUID colonyId, ColonyPos mouth) {
-        SURFACE.put(colonyId, mouth);
+        CHAINS.put(colonyId, new Chain(List.of(mouth), Long.MAX_VALUE));
     }
 
-    /** A boca de superfície desta mina: a guardada, ou a deduzida subindo os níveis. */
+    /** A boca de superfície desta mina: a da cadeia guardada, ou a deduzida subindo os níveis. */
     public static ColonyPos surfaceOf(ServerWorld world, UUID colonyId, Mine mine) {
-        ColonyPos remembered = SURFACE.get(colonyId);
-
-        if (remembered != null && onTheChain(remembered, mine.shaft())) {
-            return remembered;
-        }
-
-        MineShaft shaft = mine.shaft();
-        ColonyPos step = stepOf(shaft);
-        ColonyPos at = shaft.entry();
-
-        for (int level = 0; level < MAX_LEVELS; level++) {
-            ColonyPos up = new ColonyPos(at.x() - step.x(), at.y() - step.y(), at.z() - step.z());
-
-            if (aboveTheTerrain(world, up)) {
-                break;
-            }
-
-            at = up;
-        }
-
-        SURFACE.put(colonyId, at);
-
-        if (!at.equals(shaft.entry())) {
-            VillageColonyMod.LOGGER.info(
-                    "Mine {} — the surface entrance is remembered at {}, the level now starts at {}",
-                    colonyId.toString().substring(0, 8), at, shaft.entry());
-        }
-
-        return at;
+        return chainOf(world, colonyId, mine.shaft()).getFirst();
     }
 
     /** As entradas dos níveis, da superfície até a de agora. Uma só quando a mina não desceu. */
@@ -111,20 +95,149 @@ public final class MineEntrance {
             return route;
         }
 
-        MineShaft level = new MineShaft(surfaceOf(world, colonyId, mine), now.descent(), now.gallery());
-
-        for (int count = 0; count <= MAX_LEVELS; count++) {
-            route.add(MinecraftTypeAdapter.toBlockPos(level.entry()));
-
-            if (level.entry().equals(now.entry())) {
-                return route;
-            }
-
-            level = level.deepened();
+        for (ColonyPos entry : chainOf(world, colonyId, now)) {
+            route.add(MinecraftTypeAdapter.toBlockPos(entry));
         }
 
-        // A cadeia não chegou ao nível de agora (mina realocada): só a entrada atual.
-        return new ArrayList<>(List.of(MinecraftTypeAdapter.toBlockPos(now.entry())));
+        return route;
+    }
+
+    /**
+     * A cadeia guardada, crescida de um nível quando a mina desceu um; a deduzida do
+     * mundo quando não há cadeia, ou quando ela não leva ao nível de agora.
+     */
+    private static List<ColonyPos> chainOf(ServerWorld world, UUID colonyId, MineShaft now) {
+        Chain known = CHAINS.get(colonyId);
+
+        if (known != null && known.until() >= world.getTime()) {
+            ColonyPos last = known.entries().getLast();
+
+            if (last.equals(now.entry())) {
+                return known.entries();
+            }
+
+            if (oneLevelBelow(last, now.entry())) {
+                List<ColonyPos> longer = new ArrayList<>(known.entries());
+                longer.add(now.entry());
+                CHAINS.put(colonyId, new Chain(List.copyOf(longer), known.until()));
+
+                return longer;
+            }
+        }
+
+        boolean[] cut = { false };
+        List<ColonyPos> deduced = deduce(world, now, cut);
+
+        CHAINS.put(colonyId, new Chain(List.copyOf(deduced),
+                cut[0] ? world.getTime() + RETRY_TICKS : Long.MAX_VALUE));
+
+        if (deduced.size() > 1) {
+            VillageColonyMod.LOGGER.info(
+                    "Mine {} — the surface entrance is remembered at {}, the level now starts at {}, {} levels down",
+                    colonyId.toString().substring(0, 8), deduced.getFirst(), now.entry(), deduced.size() - 1);
+        }
+
+        return deduced;
+    }
+
+    /** Se {@code below} é o piso da escada de {@code above} por algum rumo. */
+    private static boolean oneLevelBelow(ColonyPos above, ColonyPos below) {
+        for (Side descent : Side.values()) {
+            ColonyPos step = stepOf(descent);
+
+            if (below.equals(new ColonyPos(above.x() + step.x(), above.y() + step.y(), above.z() + step.z()))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Sobe nível por nível pela escada cavada: mantém o rumo enquanto a escada dele
+     * está aberta e troca pelo rumo mais aberto quando não está; para quando nenhum
+     * rumo tem escada, ou quando o nível de cima ficaria acima do terreno.
+     *
+     * @param cut marcado quando um chunk fora de memória interrompeu a subida
+     */
+    private static List<ColonyPos> deduce(ServerWorld world, MineShaft now, boolean[] cut) {
+        List<ColonyPos> chain = new ArrayList<>(List.of(now.entry()));
+        ColonyPos at = now.entry();
+        Side keep = now.descent();
+
+        for (int level = 0; level < MAX_LEVELS; level++) {
+            Optional<Side> descent = dugDescentAbove(world, at, keep, cut);
+
+            if (descent.isEmpty()) {
+                break;
+            }
+
+            ColonyPos up = above(at, descent.get());
+
+            if (aboveTheTerrain(world, up, cut)) {
+                break;
+            }
+
+            chain.addFirst(up);
+            at = up;
+            keep = descent.get();
+        }
+
+        return chain;
+    }
+
+    /** O rumo do nível de cima cuja escada até {@code at} está cavada: o de agora primeiro. */
+    private static Optional<Side> dugDescentAbove(ServerWorld world, ColonyPos at, Side keep, boolean[] cut) {
+        if (openShare(world, at, keep, cut) >= DUG_SHARE) {
+            return Optional.of(keep);
+        }
+
+        @Nullable Side best = null;
+        double bestShare = DUG_SHARE;
+
+        for (Side descent : Side.values()) {
+            if (descent == keep) {
+                continue;
+            }
+
+            double share = openShare(world, at, descent, cut);
+
+            if (share >= bestShare) {
+                best = descent;
+                bestShare = share;
+            }
+        }
+
+        return Optional.ofNullable(best);
+    }
+
+    /** Quanto da escada que desce até {@code at} pelo rumo {@code descent} está aberto. */
+    private static double openShare(ServerWorld world, ColonyPos at, Side descent, boolean[] cut) {
+        MineShaft stair = MineShaft.from(above(at, descent), descent);
+        int open = 0;
+
+        for (int index = 0; index < MineShaft.CARVED; index++) {
+            BlockPos cell = MinecraftTypeAdapter.toBlockPos(stair.positionAt(index));
+
+            if (world.getChunkManager().getWorldChunk(cell.getX() >> 4, cell.getZ() >> 4) == null) {
+                // Chunk fora de memória: não se força carregamento (ADR-002).
+                cut[0] = true;
+                continue;
+            }
+
+            if (MineRock.isOpenSpace(world, cell, world.getBlockState(cell))) {
+                open++;
+            }
+        }
+
+        return (double) open / MineShaft.CARVED;
+    }
+
+    /** A entrada do nível de cima, se a escada dele desce por {@code descent} até {@code at}. */
+    private static ColonyPos above(ColonyPos at, Side descent) {
+        ColonyPos step = stepOf(descent);
+
+        return new ColonyPos(at.x() - step.x(), at.y() - step.y(), at.z() - step.z());
     }
 
     /**
@@ -244,31 +357,8 @@ public final class MineEntrance {
     }
 
     /** O deslocamento de um nível para o seguinte; só depende do sentido de descida. */
-    private static ColonyPos stepOf(MineShaft shaft) {
-        ColonyPos origin = new ColonyPos(0, 0, 0);
-        ColonyPos next = new MineShaft(origin, shaft.descent(), shaft.gallery()).deepened().entry();
-
-        return next;
-    }
-
-    /** Se a boca guardada ainda leva ao nível de agora pela cadeia de níveis. */
-    private static boolean onTheChain(ColonyPos surface, MineShaft now) {
-        if (now.isRamp()) {
-            return surface.equals(now.entry());
-        }
-
-        ColonyPos step = stepOf(now);
-        ColonyPos at = surface;
-
-        for (int level = 0; level <= MAX_LEVELS; level++) {
-            if (at.equals(now.entry())) {
-                return true;
-            }
-
-            at = new ColonyPos(at.x() + step.x(), at.y() + step.y(), at.z() + step.z());
-        }
-
-        return false;
+    private static ColonyPos stepOf(Side descent) {
+        return MineShaft.from(new ColonyPos(0, 0, 0), descent).deepened().entry();
     }
 
     /**
@@ -277,21 +367,22 @@ public final class MineEntrance {
      * frágil — árvore, casa ou o arco em cima da boca a escondiam do céu, e a dedução
      * subia para um nível no ar (bateria de 2026-10-08).
      */
-    private static boolean aboveTheTerrain(ServerWorld world, ColonyPos up) {
+    private static boolean aboveTheTerrain(ServerWorld world, ColonyPos up, boolean[] cut) {
         if (world.getChunkManager().getWorldChunk(up.x() >> 4, up.z() >> 4) == null) {
             // Chunk fora de memória: não se força carregamento (ADR-002); para aqui.
+            cut[0] = true;
             return true;
         }
 
         return up.y() > world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, up.x(), up.z()) + SURFACE_SLACK;
     }
 
-    /** Para o teste: esquece a boca guardada desta colônia. */
+    /** Para o teste: esquece a cadeia guardada desta colônia. */
     static void forget(@Nullable UUID colonyId) {
-        SURFACE.remove(colonyId);
+        CHAINS.remove(colonyId);
     }
 
     public static void clearAll() {
-        SURFACE.clear();
+        CHAINS.clear();
     }
 }

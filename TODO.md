@@ -14,8 +14,9 @@ Scripts: `scripts/audit/check-*.sh`.
 
 - [ ] 🔴 **AUD-01** Regra 51 reprovada nas duas sessões de 10-10 (0.3.23: SMELTER 91%, BUILDER 92%, MINER 17%;
       fundidor 311/311 soltas). Raiz (diagnóstico de 11-10): o dono do único ramal vai e volta numa descida até
-      um patamar de pedra maciça sem nenhum prazo correr. RC1 feita (prazo da descida, 60 s); falta RC2 (níveis
-      guardados que não existem no mundo) e o playtest. Roteiro: `docs/technical/Roteiro-Correcoes-2026-10-10.md`, 2.2.
+      um patamar de pedra maciça sem nenhum prazo correr; a rota vinha do rumo da escada girada, não da cavada.
+      RC1 (prazo da descida) e RC2 (rota pela escada cavada) feitas; falta o playtest.
+      Roteiro: `docs/technical/Roteiro-Correcoes-2026-10-10.md`, 2.2.
 - [x] 🟠 **AUD-02** Save malformado não apaga mais as colônias: entrada ruim é descartada com aviso
       (`ColonySaveReader.readEntry`), versão negativa vira 0, `toBlock` não lança. `ColonySaveFuzzTest` 13/13.
 - [x] 🟠 **AUD-03** `saveVersion` gravado no save (`SaveMigration.stamp`, `11bd4799`).

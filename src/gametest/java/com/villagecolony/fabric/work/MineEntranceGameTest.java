@@ -105,4 +105,83 @@ public class MineEntranceGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * A escada girada no nível de agora (ADR-037 M1) não troca a boca guardada —
+     * RC2 do roteiro de 10-10. O giro muda o rumo e mantém a entrada, e a cadeia
+     * calculada pelo rumo novo saía de outro lugar.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_entrance_turned")
+    public void aTurnedStairKeepsTheRememberedMouth(TestContext context) {
+        ServerWorld world = context.getWorld();
+        UUID colonyId = UUID.randomUUID();
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(3, 42, 3)));
+        MineShaft turned = MineShaft.from(mouth, Side.NORTH).deepened().rerouted();
+
+        try {
+            MineEntrance.forget(colonyId);
+            MineEntrance.opened(colonyId, mouth);
+            VillageColonyMod.MINES.restore(Mine.restore(colonyId, turned, 0));
+
+            List<BlockPos> route = MineEntrance.route(world, colonyId,
+                    VillageColonyMod.MINES.of(colonyId).orElseThrow());
+
+            context.assertTrue(route.equals(List.of(MinecraftTypeAdapter.toBlockPos(mouth),
+                            MinecraftTypeAdapter.toBlockPos(turned.entry()))),
+                    "depois do giro da escada a rota não sai mais da boca guardada: " + route);
+        } finally {
+            VillageColonyMod.MINES.removeOfColony(colonyId);
+            MineEntrance.forget(colonyId);
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Sem boca guardada (servidor reiniciado), a dedução segue a escada cavada, e
+     * não o rumo de agora — RC2 do roteiro de 10-10. No save do autor a cadeia pelo
+     * rumo de agora subia por pedra maciça e o mineiro ia e voltava até um patamar
+     * que nunca foi cavado.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_entrance_dug_stair")
+    public void withoutAMemoryTheDeductionFollowsTheDugStair(TestContext context) {
+        ServerWorld world = context.getWorld();
+        UUID colonyId = UUID.randomUUID();
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(3, 72, 3)));
+        MineShaft surface = MineShaft.from(mouth, Side.NORTH);
+        MineShaft turned = surface.deepened().rerouted();
+        BlockPos below = MinecraftTypeAdapter.toBlockPos(turned.entry());
+        BlockPos from = below.add(-12, -3, -12);
+        BlockPos to = new BlockPos(below.getX() + 12, mouth.y() - 1, below.getZ() + 12);
+
+        try {
+            // Rocha em volta dos quatro rumos possíveis, e só a escada do rumo de cima cavada.
+            for (BlockPos at : BlockPos.iterate(from, to)) {
+                world.setBlockState(at, Blocks.STONE.getDefaultState());
+            }
+
+            for (int index = 0; index < MineShaft.CARVED; index++) {
+                world.setBlockState(MinecraftTypeAdapter.toBlockPos(surface.positionAt(index)),
+                        Blocks.AIR.getDefaultState());
+            }
+
+            VillageColonyMod.MINES.restore(Mine.restore(colonyId, turned, 0));
+            MineEntrance.forget(colonyId);
+
+            List<BlockPos> route = MineEntrance.route(world, colonyId,
+                    VillageColonyMod.MINES.of(colonyId).orElseThrow());
+
+            context.assertTrue(route.equals(List.of(MinecraftTypeAdapter.toBlockPos(mouth), below)),
+                    "a dedução não seguiu a escada cavada até a boca " + mouth + ": " + route);
+        } finally {
+            for (BlockPos at : BlockPos.iterate(from, to.up(3))) {
+                world.setBlockState(at, Blocks.AIR.getDefaultState());
+            }
+
+            VillageColonyMod.MINES.removeOfColony(colonyId);
+            MineEntrance.forget(colonyId);
+        }
+
+        context.complete();
+    }
 }

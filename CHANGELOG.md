@@ -18,6 +18,9 @@ Nada disto foi visto em jogo; o aceite é o playtest da Fase 2.5 do roteiro.
 - Mineiro: a descida pela boca da mina tem prazo próprio (60 s de expediente sem chegar mais perto
   nem descer mais fundo); antes, quem ia e voltava a caminho de um patamar de pedra maciça segurava
   o único ramal da colônia sem prazo nenhum (roteiro 2.2, RC1).
+- Mineiro: a rota até o nível de agora segue a escada cavada. Depois do giro da escada (ADR-037 M1),
+  ela era calculada pelo rumo novo, e no save do autor a boca deduzida ficava 50 blocos ao lado da
+  real, com patamares de pedra maciça no caminho (roteiro 2.2, RC2).
 - Save: uma entrada malformada é descartada com aviso, em vez de apagar todas as colônias (AUD-02);
   o save grava a versão do esquema (AUD-03).
 - Regras de profissão do Mod Menu: ordem ruim no save não apaga mais as regras (AUD-11).
@@ -30,7 +33,7 @@ Nada disto foi visto em jogo; o aceite é o playtest da Fase 2.5 do roteiro.
 - O diário de ações grava o motivo de cada tarefa solta; `action_report.py` agrupa por motivo (AUD-25).
 
 ### Verificado
-- Na RC1: 1442 unitários, 702/702 GameTests em 3 rodadas. PIT não roda: a mudança é toda em `fabric`.
+- Na RC2: 1442 unitários, 704/704 GameTests em 3 rodadas. PIT não roda: as mudanças são todas em `fabric`.
 
 ## [0.3.24] — integração da linha Codex (2026-10-10, sem JAR publicado)
 

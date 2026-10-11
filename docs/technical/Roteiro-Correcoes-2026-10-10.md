@@ -148,9 +148,26 @@ mineiro sem boca de mina  →  sem pedra, sem ferro  →  fundidor sem cru  → 
 > 120 com prazo 40, pelo prazo da descida). Mutações conferidas: sem a ligação no `MinerSteps`
 > o GameTest reprova; sem a profundidade como avanço, o unitário reprova.
 > **O que a RC1 não faz:** o ramal passa a girar entre os mineiros a cada 60 s em vez de ficar
-> preso, mas o próximo pode repetir a mesma descida. **Aberto (RC2):** por que os níveis
-> guardados não existem no mundo; a recuperação de mina nova na borda (`MineEdge.relocate`)
-> não roda quando ele para na superfície (`StrandedEscape.isOut`).
+> preso, mas o próximo pode repetir a mesma descida.
+>
+> **Causa da RC2, provada no save em 11-10:** os níveis existem; a rota é que estava errada. A
+> boca real é (−768, 66, **−923**), e os cinco níveis foram cavados descendo NORTH, com passo
+> (+5, −10, −5). No nível 5 a escada foi girada (`MineShaft.rerouted()`, ADR-037 M1), que muda o
+> rumo para EAST e mantém a entrada. O `MineEntrance` deduzia todos os níveis de cima pelo rumo
+> de agora, com passo (+5, −10, +5), e a cadeia saía 50 blocos ao sul, em (−768, 66, **−973**),
+> passando por pedra maciça nos níveis 1, 3 e 4. A boca guardada na abertura também não
+> salvava: o `onTheChain` a descartava depois do giro, e ela não sobrevive ao reinício.
+>
+> **Correção (RC2), feita em 11-10:** o `MineEntrance` guarda a cadeia inteira. Ela cresce um
+> nível por descida, aceitando qualquer rumo, porque o giro troca o rumo e mantém a entrada.
+> Sem cadeia guardada, a dedução sobe pela escada cavada no mundo: mantém o rumo enquanto pelo
+> menos metade da escada dele está aberta, troca pelo mais aberto quando não está, e para quando
+> nenhum serve ou quando o nível ficaria acima do terreno. No save real a regra chega à boca
+> verdadeira: a escada do rumo certo aparece 87–100% aberta, e a dos errados 13–33%. Provas:
+> `MineEntranceGameTest.aTurnedStairKeepsTheRememberedMouth` e
+> `withoutAMemoryTheDeductionFollowsTheDugStair`, os dois reprovados no código antigo. Uma
+> mutação para cada ramo foi conferida. A `MineEdge.relocate` na superfície deixa de ser
+> necessária para este caso e não foi mexida.
 | | |
 |---|---|
 | Problema | a colônia tem `Mine` registrada (`Mine … the surface entrance is remembered at …`), mas o mineiro cai na busca de pedra de superfície (`MineVein.java:184-191`), cuja varredura em anéis esgota o orçamento a cada passagem: `no mine mouth, and no exposed stone … the budget ran out before an answer` |
@@ -299,7 +316,7 @@ coluna "em jogo" é a que a régua cobra.
 | AUD-11 | ⚠️ parcial: codec, save e permissão testados (mutação conferida); `fabric.network` 42% / 46%, abaixo dos 60%; ordem ruim no save não apaga mais as regras do Mod Menu | — |
 | AUD-21 | ⬜ | — |
 | AUD-25 | ✅ motivo no `TASK_RELEASED`; `action_report` agrupa por motivo; mutação conferida | ⬜ |
-| 2.2 mineiro | ⚠️ RC1 ✅ prazo da descida (`MineLease.outOfTimeOnDescent`), `MineDescentLeaseGameTest`, mutação conferida; 1442 unitários, 702/702 GameTests × 3; RC2 ⬜ níveis fantasma | ⬜ |
+| 2.2 mineiro | ✅ RC1 prazo da descida (`MineDescentLeaseGameTest`); RC2 rota pela escada cavada, não pelo rumo de agora (`MineEntranceGameTest` +2); mutações conferidas; 1442 unitários, 704/704 GameTests × 3 | ⬜ |
 | 2.3 IdleYield | ✅ regra abrangente (`WorkTime.idleRuleShare`); log de saída só quando o aldeão sai (mineiro nunca sai); mutação conferida | ⬜ |
 | 2.4 fundidor | ⬜ (código na linha Codex) | ⬜ |
 | AUD-01 aceite | ⬜ | ⬜ 0.3.22 e 0.3.23 reprovadas |
