@@ -69,6 +69,26 @@ class MineTest {
         }
     }
 
+    /**
+     * O ramal zero que acaba depois de cavar além do trecho comum não fecha os
+     * outros três — P6, playtest de 2026-10-11: dois mineiros esperavam
+     * "branches 0 open" com três ramais por cavar, e a mina descia sem eles.
+     */
+    @Test
+    void theZeroArmFinishedPastTheSharedPathKeepsTheOtherBranchesOpen() {
+        Mine mine = opened();
+
+        for (int index = 0; index < MineShaft.SHARED_BLOCKS + 3; index++) {
+            mine.arm(0).nextPosition();
+        }
+
+        mine.arm(0).finish();
+
+        assertEquals(Mine.ARMS, mine.branchesOpenNow());
+        assertEquals(Mine.LevelAdvance.WAITING, mine.advanceIfEveryOpenArmIsDone(),
+                "a mina desceu com três ramais por cavar");
+    }
+
     @Test
     void theFourthFinishedArmStartsTheNextCycle() {
         Mine mine = opened();

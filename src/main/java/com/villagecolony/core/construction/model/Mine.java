@@ -251,15 +251,14 @@ public final class Mine {
      * tique, e o recuo do cursor roda duas vezes por um bloco.
      *
      * <p>O primeiro mineiro abre o poço sozinho, portanto, e os outros
-     * três entram quando a galeria começa — que é onde os rumos passam a
-     * divergir. O gametest
-     * {@code twoMinersGetTwoBranchesAndNeverTheSameBlock} é quem afirma
-     * isso, e foi ele quem pegou o defeito.
+     * três entram quando a galeria começa, onde os rumos divergem
+     * ({@code twoMinersGetTwoBranchesAndNeverTheSameBlock}).
      */
     public int branchesOpenNow() {
-        return !shaft.isRamp() && !arms.get(0).isDone() && arms.get(0).cut() >= MineShaft.SHARED_BLOCKS
-                ? ARMS
-                : 1;
+        // O zero acabado além do trecho comum não fecha os outros três (P6, 2026-10-11).
+        MineArm zero = arms.get(0);
+        boolean pastShared = zero.isDone() ? zero.cut() > MineShaft.SHARED_BLOCKS : zero.cut() >= MineShaft.SHARED_BLOCKS;
+        return !shaft.isRamp() && pastShared ? ARMS : 1;
     }
 
     /** Se os quatro ramais deste nível acabaram. */
