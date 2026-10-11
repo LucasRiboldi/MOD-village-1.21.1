@@ -38,6 +38,7 @@
       "com.villagecolony.fabric.work.BuildReserveGameTest",
       "com.villagecolony.fabric.work.CrusherGameTest",
       "com.villagecolony.fabric.work.WindowEquivalentGameTest",
+      "com.villagecolony.fabric.work.WoodInPiecesGameTest",
       "com.villagecolony.fabric.work.MineSurfaceGameTest",
       "com.villagecolony.fabric.work.IdleYieldGameTest",
       "com.villagecolony.fabric.work.WorkMemorySaveGameTest",

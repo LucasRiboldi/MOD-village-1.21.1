@@ -292,7 +292,10 @@ final class ColonyCycleRunner {
         int planksForWork = ConstructionDemand.planksNeededBy(
                 VillageBiomes.woodAt(overworld, colony.center())
                         .orElse(MinecraftTypeAdapter.toResourceId(Blocks.OAK_PLANKS)),
-                colony);
+                colony)
+                // E a tábua das escadas, lajes e cercas da obra (P7c).
+                + com.villagecolony.fabric.work.WoodInPieces.planksIn(
+                        overworld, ConstructionDemand.materialsNeededBy(colony));
 
         // A pedra que a obra pede, e a pedra desta vila — 2026-08-20. No
         // deserto é arenito; perguntar por pedregulho daria zero, e a

@@ -466,9 +466,11 @@ final class CraftingSteps {
                 .map(ConstructionProject::remainingMaterials)
                 .orElseGet(Map::of);
 
+        // A tábua da obra inclui a das escadas, lajes e cercas dela (P7c).
         return StockRules.logsThatMayBeConverted(
                 owned.amountOfGroup(ResourceGroup.WOOD),
                 owned.amountOfGroup(ResourceGroup.PLANKS),
-                stillNeeded) > 0;
+                StockRules.rawWoodIn(stillNeeded),
+                StockRules.planksIn(stillNeeded) + WoodInPieces.planksIn(world, stillNeeded)) > 0;
     }
 }
