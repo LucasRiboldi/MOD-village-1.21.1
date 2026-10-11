@@ -277,12 +277,16 @@ public final class BuilderWork {
         if (next.isEmpty()) {
             if (project.isFinished()) {
                 complete(project, job, workerId);
+            } else if (BuildWait.holds(world, project, workerId)) {
+                return true;
             } else {
-                finish(job, workerId, "every remaining piece is waiting for physical support");
+                finish(job, workerId, "every remaining piece is waiting for material or physical support");
             }
 
             return false;
         }
+
+        BuildWait.stop(workerId);
 
         BlockPos target = MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(next.get()));
 
@@ -340,7 +344,7 @@ public final class BuilderWork {
                 return true;
             }
 
-            if (job.stalled > STALL_LIMIT) {
+            if (job.stalled > HelperReach.stallLimit(workerId)) {
                 // Andou dois minutos de horário de trabalho e não chegou
                 // ao bloco. A obra continua de pé e volta para a fila; o
                 // que não continua é este construtor sendo dono dela.
@@ -463,17 +467,14 @@ public final class BuilderWork {
         }
 
         WorkTargets.clear(workerId);
+        BuildWait.stop(workerId);
 
         VillageColonyMod.LOGGER.info("Builder {} stopped — {}", workerId, why);
     }
 
     /**
-     * Esquece o trabalho deste construtor. Morte, zumbificação, dispensa.
-     *
-     * <p>Chamado de dois lugares, e nos dois a tarefa já pode ter voltado
-     * para a fila antes — {@code VillagerLifecycleHandler} solta tudo o
-     * que o morto tinha antes de avisar quem o empregava. Daí a pergunta
-     * ser {@link Task#isHeld()}, e não "não está encerrada".
+     * Esquece o trabalho deste construtor (morte, dispensa). A tarefa pode já
+     * ter voltado à fila — daí {@link Task#isHeld()}, e não "não encerrada".
      */
     public static void forget(UUID workerId) {
         Job job = JOBS.remove(workerId);

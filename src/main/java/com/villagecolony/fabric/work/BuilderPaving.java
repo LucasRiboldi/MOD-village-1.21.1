@@ -122,7 +122,7 @@ public final class BuilderPaving {
             UUID id = worker.villagerId();
 
             if (!(world.getEntity(id) instanceof VillagerEntity builder) || !builder.isAlive()
-                    || !VillageColonyMod.TASKS.assignedTo(id).isEmpty()
+                    || (!VillageColonyMod.TASKS.assignedTo(id).isEmpty() && !BuildWait.isWaiting(id))
                     || !WorkHours.isWorkTime(world, builder)
                     || StrandedWorkers.isStranded(id)) {
                 if (JOBS.remove(id) != null) {

@@ -21,6 +21,7 @@ import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.Worker;
+import org.jspecify.annotations.Nullable;
 import com.villagecolony.core.worker.service.HiringLog;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.core.worker.service.VacancyEnforcer;
@@ -374,7 +375,7 @@ final class ColonyCycleRunner {
                 VillageColonyMod.STORAGES::hasStorage,
                 (resource, type, hands) -> MissingHandsLog.report(colony.id(), resource, type, hands),
                 work.constructionMaterials(),
-                (worker, task) -> canReserveTask(overworld, colony.id(), task));
+                (worker, task) -> canReserveTask(overworld, colony.id(), worker, task));
 
         // Só depois do ciclo sabemos que a rota produziu tarefa aberta; uma rota apenas possível
         // não pode gastar o prazo nem materializar recurso cedo demais. Regra 40, ADR-040.
@@ -457,11 +458,21 @@ final class ColonyCycleRunner {
      * consulta.
      */
     static boolean canReserveTask(ServerWorld world, UUID colonyId, Task task) {
+        return canReserveTask(world, colonyId, null, task);
+    }
+
+    /**
+     * A mesma trava, sabendo quem vai pegar: o ajudante só pega a obra perto
+     * dela — {@link com.villagecolony.fabric.work.HelperReach#mayTake}.
+     */
+    static boolean canReserveTask(ServerWorld world, UUID colonyId, @Nullable Worker worker, Task task) {
         return switch (ReservationGate.of(task.type())) {
             case NONE -> true;
             case EMPTY_SWEEP -> !EmptySweeps.isWaiting(colonyId, task.targetResource(), world.getTime());
             case BUILD_SITE -> VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
-                    .map(project -> BuildSiteGate.admits(world, project))
+                    .map(project -> (worker == null
+                            || com.villagecolony.fabric.work.HelperReach.mayTake(world, worker, project))
+                            && BuildSiteGate.admits(world, project))
                     .orElse(false);
             case SMELT_INPUT -> com.villagecolony.fabric.work.SmeltInput.inChests(
                     world, colonyId, task.targetResource());
