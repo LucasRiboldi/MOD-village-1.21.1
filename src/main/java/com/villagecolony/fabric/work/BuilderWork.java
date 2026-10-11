@@ -135,7 +135,7 @@ public final class BuilderWork {
         /** Lugares de pé que a navegação recusou nesta tarefa — 2026-10-03. */
         final UnreachableSpots unreachable = new UnreachableSpots();
 
-        private Job(Task task, UUID projectId) {
+        Job(Task task, UUID projectId) {
             this.task = task;
             this.projectId = projectId;
         }
@@ -309,11 +309,7 @@ public final class BuilderWork {
             WorkTargets.set(workerId, spot, BuilderApproach.ARRIVAL);
 
             if (job.unreachable.gaveUp(world, villager, spot)) {
-                VillageColonyMod.LOGGER.info("Builder {} gives up standing at {} for {} — the path does not"
-                        + " reach it; it tries another side", workerId, spot.toShortString(), target.toShortString());
-                job.stall.reset();
-
-                return true;
+                return HelperReach.gaveUp(job, workerId, spot, target);
             }
 
             if (job.stall.stuck(world, villager)) {

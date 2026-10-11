@@ -261,7 +261,13 @@ public final class ColonyCycle {
             int deficit = Math.max(0,
                     constructionMaterials.getOrDefault(resource, 0) - owned.amountOf(resource));
 
-            if (deficit > 0) {
+            // Fundir sem o cru em baú nenhum não pede mão nova (regra do autor,
+            // 2026-10-11): no playtest da 0.3.25 a colônia contratou um terceiro
+            // fundidor para fazer vidro sem areia. Quem traz o cru é outro pedido.
+            boolean noRaw = resource.production() == com.villagecolony.core.type.Production.SMELTED
+                    && StockRules.rawOf(resource).map(raw -> owned.amountOf(raw) == 0).orElse(false);
+
+            if (deficit > 0 && !noRaw) {
                 for (Profession profession : ProfessionRegistry.withCapability(type.required())) {
                     demand.merge(profession.type(), deficit, Integer::sum);
                 }
