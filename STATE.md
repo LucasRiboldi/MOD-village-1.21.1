@@ -1,14 +1,14 @@
 # STATE — 2026-10-11
 
-> **JAR instalado: `village-colony-0.3.25.jar`** (`claude/autossuficiencia`, 11-10) =
-> `863C8BF86C2DCB4FE27FB83A808A1326E76289EA8A3E745A42B9BB779D4B040F`, igual em `build/libs`,
-> `downloads/` e `.minecraft/mods` (`release_manifest.py --dry-run`); a 0.3.24 ficou como
-> `.jar.disabled`. **Ainda não jogado.** A 0.3.24 (= `main` em `38015460`) foi jogada em 11-10.
+> **JAR instalado: `village-colony-0.3.26.jar`** (`claude/autossuficiencia`, 11-10) =
+> `5663237DCE589D41279B20929934D0D366F5EFEF553764E30D5C2D7433067079`, igual nas três cópias
+> (`release_manifest.py --dry-run`); a 0.3.25 ficou como `.jar.disabled`. **Ainda não jogado.**
+> A 0.3.25 foi jogada 10 min em 11-10 (14:52–15:03); o que ela mostrou está abaixo.
 >
 > **Última verificação (`main` em `38015460`, 11-10, depois do merge das PRs #20–#25):** 1446
 > unitários e de propriedade (`--rerun-tasks`, 0 falhas); 705/705 GameTests (1 rodada); 112 testes Python. PIT 1820/2112 (86,17%) em `e71607dd`.
 > **E na `claude/autossuficiencia` (`9d50cf42`, 11-10):** 1457 unitários (`--rerun-tasks`, 0 falhas);
-> 717/717 GameTests (2 rodadas, mundo novo) em `386c14f2`; 1458 unitários; 112 Python. JAR 0.3.25 acima.
+> 722/722 GameTests (2 rodadas, mundo novo) e 1460 unitários em `e545c328`; 112 Python. JAR 0.3.26 acima.
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.** Se passar de 150 linhas, algo
 > está errado: P0 não está fechando. O que já foi resolvido mora em
@@ -45,16 +45,13 @@ ofício; `VC_SUPPLY_ERROR` perto de zero; nenhuma peça antecipada acima do que 
 Pilha #20–#25 **na `main`** desde 11-10 (`38015460`), com merge commit; as branches dela
 continuam no remoto (apagar é decisão do autor, AUD-24).
 
-**Sessão em curso:** `claude/autossuficiencia` (da `main`), enviada, PR aberta para a `main`. Feitos, cada um com
-GameTest e bateria verde (716/716, mundo novo): peça de lado por material volta à demanda (raiz da
-areia nunca coletada), P1, P2 (2a sonda e setores, 2c britador, 2d janela), P3 (3a, 3b, 3d), P5c,
-P6 (ramais), P7 (7a, 7b, 7c), P8b, P9 (10 ciclos). O P4b virou, por escolha do autor, o construtor sem tarefa
-limpando a faixa de construção (6 blocos da rua), mais as regras: planta tirada pelo jogador não
-volta; obra concluída não reabre; o construtor usa qualquer baú da vila. Iluminar a rua ficou de fora
-(a tocha cairia na faixa de construção). **Não feito, por falta de defeito:** P5a (tosquia por
-estoque e curral já existem; a procriação parou por falta de trigo). **Não feito:** 2a coleta de
-areia por estoque no ócio; 3a não conta as rochas na meta (pediria `ResourceType` novo).
-Nada disso foi jogado.
+**Sessão em curso:** `claude/autossuficiencia`, PR LucasRiboldi/MOD-village-1.21.1#26 aberta para a `main`.
+Ciclo 1 (0.3.25): P1–P9, construtor limpando a faixa de construção, planta do jogador não volta.
+Ciclo 2 (0.3.26), depois do playtest curto da 0.3.25: contagem completa dos baús (a parcial furava
+o teto do P1), mina que nunca fecha por descida travada, fundidor que vai buscar a areia, britador
+pela obra esperando vidro, reserva de 16 areias, bloco no baú do construtor em 1 minuto, artesão
+fabrica sem andar até o baú, sem contratação de fundidor sem cru, ajudante larga peça que não
+alcança. **Não feito:** P5a (sem defeito), coleta de areia por estoque além da reserva, iluminar a rua.
 
 ## O que o próximo jogo precisa mostrar
 

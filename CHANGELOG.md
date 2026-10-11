@@ -11,6 +11,27 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.26] — depois do playtest da 0.3.25 (2026-10-11, JAR local, não jogado)
+
+### Corrigido
+- A vila decide com a última contagem completa dos baús enquanto a nova rodada de leitura não
+  termina; a leitura parcial (8 de 20 baús) fazia o pedreiro produzir laje com 330 no baú.
+- A mina nunca fecha por descida travada: um mineiro preso num buraco a 90 blocos fechou a mina
+  boa. O ponto fica de castigo e o mineiro cava outro caminho.
+- O fundidor parado sem areia solta a fornalha e vai buscá-la; antes os dois seguravam "fundir
+  vidro" e a colônia contratou um terceiro só para pegar a areia.
+- Fundir sem o cru em baú nenhum não abre vaga de contratação.
+
+### Novo
+- O britador do pedreiro entra também quando a obra espera vidro e não há areia nos baús.
+- O fundidor guarda 16 areias de reserva; a areia da reserva nunca surge do nada.
+- O artesão fabrica onde está: ninguém anda até o baú.
+- O ajudante de obra larga a peça que não alcança e a deixa para o construtor.
+
+### Mudado
+- O bloco que nenhuma rota entregou surge no baú do construtor depois de 1 minuto (2 ciclos),
+  e não 10 (segunda emenda na ADR-040).
+
 ## [0.3.25] — autossuficiência (2026-10-11, JAR local, não jogado)
 
 Branch `claude/autossuficiencia`; análise e escolhas em
