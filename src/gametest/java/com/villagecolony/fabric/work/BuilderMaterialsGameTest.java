@@ -143,9 +143,11 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
 
     /** Longe das praias das outras arenas: sem areia, o vidro aparece para a vidraça. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
-    public void theGlassForAPaneAppearsInTheCarpenterChestWithoutABeach(TestContext context) {
+    public void theGlassForAPaneAppearsInTheSmelterChestWithoutABeach(TestContext context) {
         BlockPos far = context.getAbsolutePos(new BlockPos(2, 2, 2)).add(-3_000, 0, 3_000);
         Setup setup = setUp(context, far, Items.GLASS_PANE);
+        // A vidraça é do fundidor desde a divisão por material (CraftFamily, 2026-10-11).
+        VillageColonyMod.WORKERS.find(setup.carpenter()).orElseThrow().assign(ProfessionType.SMELTER);
 
         try {
             for (int attempt = 1; attempt <= 4; attempt++) {
@@ -162,7 +164,7 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
                     context.getWorld(), setup.project(), Items.GLASS_PANE);
 
             context.assertTrue(count(context, setup.carpenterChest(), Items.GLASS) == 6,
-                    "o vidro da vidraça não apareceu no baú do carpinteiro: "
+                    "o vidro da vidraça não apareceu no baú do fundidor: "
                             + count(context, setup.carpenterChest(), Items.GLASS));
             context.assertTrue(count(context, setup.carpenterChest(), Items.SAND) == 0,
                     "a areia, que é natural, apareceu do nada");

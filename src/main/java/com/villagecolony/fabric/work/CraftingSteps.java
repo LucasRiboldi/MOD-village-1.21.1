@@ -112,7 +112,6 @@ final class CraftingSteps {
         // é a primeira posição que falta, e é dela que a lista começa a
         // ser contada. Não há prioridade a escrever aqui: basta a ordem
         // chegar inteira.
-        boolean masonry = job.task.type() == TaskType.CRAFT_STONE_MATERIAL;
 
         List<ColonyPos> chests =
                 ColonyChests.nearestFirst(world, colony.get().id(), colony.get().center());
@@ -125,7 +124,7 @@ final class CraftingSteps {
             // linha a divisão do fabricante seria só de nome: os dois
             // percorreriam a mesma lista e fariam a mesma peça, e o
             // segundo chegaria sempre para achar o trabalho feito.
-            if (CraftingWork.isMasonry(wanted) != masonry) {
+            if (com.villagecolony.core.coordination.CraftFamily.of(wanted.path()) != job.task.type()) {
                 continue;
             }
 

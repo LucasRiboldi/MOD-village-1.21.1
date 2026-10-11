@@ -38,7 +38,6 @@ import net.minecraft.util.Hand;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -118,7 +117,7 @@ public final class CraftingWork {
      * e o segundo silêncio nunca seria dito.
      */
     static String subjectOf(TaskType type) {
-        return type == TaskType.CRAFT_STONE_MATERIAL ? "mason" : "carpenter";
+        return com.villagecolony.core.coordination.CraftFamily.subjectOf(type);
     }
 
     private CraftingWork() {
@@ -168,8 +167,13 @@ public final class CraftingWork {
      * @return quantos fabricantes desta colônia estão com trabalho aberto
      */
     public static int run(ServerWorld world, Colony colony) {
-        return run(world, colony, TaskType.CRAFT_WOOD_MATERIAL)
-                + run(world, colony, TaskType.CRAFT_STONE_MATERIAL);
+        int open = 0;
+
+        for (TaskType type : com.villagecolony.core.coordination.CraftFamily.TYPES) {
+            open += run(world, colony, type);
+        }
+
+        return open;
     }
 
     /**
@@ -182,8 +186,7 @@ public final class CraftingWork {
      * família de material ela lavra. Duplicar seiscentas linhas para
      * mudar duas seria pior que o problema.
      *
-     * @param type {@code CRAFT_WOOD_MATERIAL} para o carpinteiro,
-     *     {@code CRAFT_STONE_MATERIAL} para o pedreiro
+     * @param type uma das oficinas de {@code CraftFamily.TYPES}
      */
     public static int run(ServerWorld world, Colony colony, TaskType type) {
         int open = 0;
@@ -340,55 +343,9 @@ public final class CraftingWork {
         return CraftingSteps.convertOne(world, job, villager.getUuid());
     }
 
-    /**
-     * As marcas de nome que fazem uma peça ser da pedra.
-     *
-     * <p><b>Por nome, e é o idioma desta base.</b> A conta da parede já
-     * pergunta {@code material.path().contains(family)}, a cama já é
-     * {@code endsWith("_bed")} e o descascado já é o prefixo
-     * {@code stripped_}. Perguntar ao {@code ResourceType} não serviria:
-     * a maior parte destas peças — escada, laje, muro — não é recurso
-     * declarado, e é por isso que o {@link CraftingSteps#produceForWork} existe.
-     *
-     * <p>{@code sandstone} entra por {@code stone}, e é o certo: no
-     * deserto a parede é dela.
-     */
-    static final List<String> MASONRY = List.of(
-            "stone", "cobble", "brick", "granite", "diorite", "andesite",
-            "deepslate", "tuff", "quartz", "terracotta", "basalt", "calcite");
-
-    /**
-     * Se esta peça é do pedreiro.
-     *
-     * <p><b>A tocha de redstone é a exceção que o nome cobra</b>: o
-     * caminho dela contém {@code stone} e ela não é alvenaria nenhuma.
-     * Classificá-la mal mandaria o carpinteiro ignorar a peça e o
-     * pedreiro tentar uma receita que não é dele, e a obra esperaria
-     * pelos dois.
-     *
-     * <p><b>Visível ao pacote para o teste.</b>
-     * {@code CraftingWorkFamilyTest} afirma a <b>classificação</b> — a
-     * lista de nomes e a armadilha da redstone. Que o filtro de fato
-     * <b>reparta o trabalho</b> é do batch {@code craft_family} em
-     * {@code CraftingGameTest}, e ele precisou existir: quando a divisão
-     * entrou, removido o {@code continue} abaixo, <b>701 unitários e 275
-     * testes de jogo continuavam verdes</b> — o filtro inteiro era código
-     * que nada exercitava.
-     */
+    /** Se esta peça é do pedreiro — {@code CraftFamily}, pelo material. */
     public static boolean isMasonry(ResourceId wanted) {
-        String path = wanted.path();
-
-        if (path.contains("redstone")) {
-            return false;
-        }
-
-        for (String mark : MASONRY) {
-            if (path.contains(mark)) {
-                return true;
-            }
-        }
-
-        return false;
+        return com.villagecolony.core.coordination.CraftFamily.of(wanted.path()) == TaskType.CRAFT_STONE_MATERIAL;
     }
 
     /** Encerra a tarefa e devolve o aldeão à rotina. */

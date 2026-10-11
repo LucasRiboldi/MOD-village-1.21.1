@@ -293,9 +293,8 @@ public final class BuilderMaterials {
 
         // O tear pede linha: as linhas aparecem no baú do carpinteiro, e ele
         // faz o tear. Primeiro despachamos todo ingrediente sem rota local.
-        ProfessionType craftsman = CraftingWork.isMasonry(MinecraftTypeAdapter.toResourceId(preferred))
-                ? ProfessionType.MASON
-                : ProfessionType.CARPENTER;
+        ProfessionType craftsman = com.villagecolony.core.coordination.CraftFamily.craftsmanOf(
+                com.villagecolony.core.coordination.CraftFamily.of(MinecraftTypeAdapter.toResourceId(preferred).path()));
         boolean stockedIngredient = false;
 
         for (Map.Entry<Item, Integer> ingredient : bill.get().ingredients().entrySet()) {

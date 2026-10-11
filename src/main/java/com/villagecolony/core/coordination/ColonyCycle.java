@@ -206,8 +206,7 @@ public final class ColonyCycle {
      * o artesão lendo a própria obra.
      */
     static boolean isWorkPieceRequest(Task task) {
-        boolean crafting = task.type() == TaskType.CRAFT_STONE_MATERIAL
-                || task.type() == TaskType.CRAFT_WOOD_MATERIAL;
+        boolean crafting = CraftFamily.isCrafting(task.type());
 
         return crafting && typeFor(task.targetResource()) != task.type();
     }

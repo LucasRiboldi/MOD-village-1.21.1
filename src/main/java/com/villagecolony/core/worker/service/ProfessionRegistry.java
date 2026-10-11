@@ -40,13 +40,13 @@ public final class ProfessionRegistry {
         // na quebra é a de ferro certa para cada bloco (ActionTool), e
         // não só a da profissão.
         define(ProfessionType.MINER, ToolType.IRON_PICKAXE, Capability.COLLECT_STONE);
-        define(ProfessionType.SHEPHERD, ToolType.SHEARS, Capability.COLLECT_WOOL);
+        define(ProfessionType.SHEPHERD, ToolType.SHEARS, Capability.COLLECT_WOOL, Capability.CRAFT_TEXTILE);
         define(ProfessionType.SMELTER, ToolType.SILK_TOUCH_IRON_SHOVEL,
-                Capability.SMELT_ITEMS, Capability.COLLECT_SURFACE_RESOURCE);
+                Capability.SMELT_ITEMS, Capability.COLLECT_SURFACE_RESOURCE, Capability.CRAFT_METAL);
         define(ProfessionType.CARPENTER, ToolType.NONE, Capability.CRAFT_WOOD);
         define(ProfessionType.MASON, ToolType.NONE, Capability.CRAFT_STONE);
         define(ProfessionType.FARMER, ToolType.IRON_HOE,
-                Capability.MAINTAIN_FOOD, Capability.COLLECT_SOIL);
+                Capability.MAINTAIN_FOOD, Capability.COLLECT_SOIL, Capability.CRAFT_FARM);
         define(ProfessionType.BUILDER, ToolType.NONE, Capability.BUILD_STRUCTURE);
     }
 
