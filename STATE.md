@@ -1,9 +1,9 @@
 # STATE — 2026-10-11
 
-> **JAR publicado: `village-colony-0.3.23.jar`** =
-> `6067E01A6B553F4D5CD2BAFA062E24713F7C32CD6B77F64E77022AA24A866661`.
-> O código já está em **0.3.24** (integração da linha Codex e as correções do roteiro de 10-10),
-> **sem JAR**. Nada do que veio depois da 0.3.23 foi visto em jogo.
+> **JAR instalado: `village-colony-0.3.24.jar`** (commit `0af32d84`, 11-10) =
+> `C553E735AC09A7CEDE0FE6547DDD2513EEA56422298DF3D6634EF4FC35A25E8F`, igual em `build/libs`,
+> `downloads/` e `.minecraft/mods` (`release_manifest.py`); a 0.3.23 ficou como `.jar.disabled`.
+> Traz a linha Codex integrada e as correções do roteiro de 10-10. **Ainda não jogada.**
 >
 > **Última verificação (`claude/correcoes-fase5-6-higiene`, 11-10):** 1445 unitários; 705/705
 > GameTests em **8 rodadas seguidas** (AUD-21); 112 testes Python. PIT 1820/2112 (86,17%) em `e71607dd`.
@@ -58,7 +58,7 @@ A ordem de merge é a da pilha: #20 primeiro. Cada uma aponta para a anterior.
 
 ## O que o próximo jogo precisa mostrar
 
-Antes, gerar e copiar o JAR 0.3.24 (`scripts/release_manifest.py` dá o SHA). Em ordem:
+JAR 0.3.24 já instalado. Em ordem:
 
 | # | Item | Sinal |
 |---|---|---|
