@@ -264,6 +264,12 @@ public final class SmelterWork {
             }
         }
 
+        // Nada para a obra também, e o cru é de superfície (areia): ele mesmo
+        // vai buscá-lo, em vez de segurar a fornalha parada (SmelterGathers).
+        if (SmelterFallback.isDue(job.task.id()) && SmelterGathers.handOff(workerId, job.task, raws)) {
+            return false;
+        }
+
         // A espera por cru é transitória: manter a reserva impede que o
         // próximo ciclo reapresente a mesma tarefa sem produzir. StopLog
         // registra a transição e limita repetições enquanto o pedido espera.

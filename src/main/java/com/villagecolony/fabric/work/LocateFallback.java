@@ -14,6 +14,7 @@ import net.minecraft.item.Item;
 import net.minecraft.server.world.ServerWorld;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * A quarta busca vazia põe o material no baú da profissão que buscou —
@@ -41,6 +42,12 @@ final class LocateFallback {
      */
     static boolean afterEmptySearch(ServerWorld world, Task task, int empty) {
         if (empty < ATTEMPTS) {
+            return false;
+        }
+
+        // A reserva de areia (StandingWork) é estoque, não obra: a areia só aparece
+        // do nada quando a obra aberta espera vidro (regra do autor, 2026-10-11).
+        if (task.targetResource() == ResourceType.SAND && !openBuildWantsGlass(task.colonyId())) {
             return false;
         }
 
@@ -74,6 +81,14 @@ final class LocateFallback {
         }
 
         return stocked;
+    }
+
+    /** Se a obra aberta desta colônia ainda pede vidro (bloco ou vidraça). */
+    static boolean openBuildWantsGlass(UUID colonyId) {
+        return VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
+                .map(project -> project.remainingMaterials().keySet().stream()
+                        .anyMatch(id -> id.path().contains("glass")))
+                .orElse(false);
     }
 
     /**

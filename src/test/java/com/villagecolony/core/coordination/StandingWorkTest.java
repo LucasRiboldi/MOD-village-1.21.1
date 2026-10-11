@@ -56,7 +56,18 @@ class StandingWorkTest {
 
         Map<ResourceType, Integer> goals = StandingWork.widen(before, OWNED, new StandingWork.Rooms(0, 0));
 
-        assertEquals(before, goals);
+        assertEquals(64, goals.get(ResourceType.WHEAT));
         assertFalse(goals.containsKey(ResourceType.WHITE_WOOL));
+    }
+
+    /** O fundidor guarda areia sem pedido (regra do autor, 2026-10-11); a obra maior continua mandando. */
+    @Test
+    void theSmelterKeepsASandReserve() {
+        Map<ResourceType, Integer> idle = StandingWork.widen(Map.of(), OWNED, new StandingWork.Rooms(0, 0));
+        Map<ResourceType, Integer> forWork = StandingWork.widen(
+                Map.of(ResourceType.SAND, 40), OWNED, new StandingWork.Rooms(0, 0));
+
+        assertEquals(StandingWork.SAND_RESERVE, idle.get(ResourceType.SAND));
+        assertEquals(40, forWork.get(ResourceType.SAND));
     }
 }
