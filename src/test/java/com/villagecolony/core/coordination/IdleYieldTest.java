@@ -46,11 +46,38 @@ class IdleYieldTest {
     }
 
     @Test
-    void theLastPersonOfATradeNeverYields() {
+    void theLastPersonOfATradeDoesNotYieldWhenNoOtherTradeIsShort() {
         UUID colony = UUID.randomUUID();
 
         IdleYield.observe(colony, ProfessionType.SHEPHERD, 90, 1);
 
         assertFalse(IdleYield.observe(colony, ProfessionType.SHEPHERD, 90, 1));
+    }
+
+    /** Vaga por demanda — P5c, 2026-10-11: o pastor parado vai aonde a obra tem falta. */
+    @Test
+    void theLastPersonYieldsToATradeTheBuildIsShortOf() {
+        UUID colony = UUID.randomUUID();
+        java.util.List<ProfessionType> minerShort = java.util.List.of(ProfessionType.MINER);
+
+        IdleYield.observe(colony, ProfessionType.SHEPHERD, 68, 1, minerShort);
+
+        assertTrue(IdleYield.observe(colony, ProfessionType.SHEPHERD, 68, 1, minerShort),
+                "o mineiro tem falta para a obra e o pastor estava parado: devia ceder");
+    }
+
+    @Test
+    void theLastPersonKeepsATradeTheBuildIsShortOfAndTheBuilderNeverGoes() {
+        UUID colony = UUID.randomUUID();
+        java.util.List<ProfessionType> bothShort = java.util.List.of(ProfessionType.MINER, ProfessionType.SHEPHERD);
+        java.util.List<ProfessionType> minerShort = java.util.List.of(ProfessionType.MINER);
+
+        IdleYield.observe(colony, ProfessionType.SHEPHERD, 68, 1, bothShort);
+        assertFalse(IdleYield.observe(colony, ProfessionType.SHEPHERD, 68, 1, bothShort),
+                "a obra também espera lã: o único pastor fica");
+
+        IdleYield.observe(colony, ProfessionType.BUILDER, 81, 1, minerShort);
+        assertFalse(IdleYield.observe(colony, ProfessionType.BUILDER, 81, 1, minerShort),
+                "sem o único construtor a obra para");
     }
 }

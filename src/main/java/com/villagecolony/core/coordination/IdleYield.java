@@ -13,6 +13,10 @@ import java.util.UUID;
  * em {@link #WINDOWS} janelas seguidas do {@code WorkTime}, com pelo menos
  * {@link #MIN_WORKERS} pessoas, e o ofício solta uma. Quem sai fica sem
  * ofício e a contratação por demanda o leva aonde a obra espera.
+ *
+ * <p><b>Vaga por demanda</b> (P5c, autossuficiência, 2026-10-11): o titular
+ * único também cede quando outro ofício tem falta para a obra e o dele não. O
+ * construtor fica de fora: sem ele a obra para.
  */
 public final class IdleYield {
 
@@ -47,9 +51,24 @@ public final class IdleYield {
      * @return se o ofício deve ceder uma pessoa agora
      */
     public static boolean observe(UUID colonyId, ProfessionType profession, int idleShare, int workers) {
-        Key key = new Key(colonyId, profession);
+        return observe(colonyId, profession, idleShare, workers, java.util.List.of());
+    }
 
-        if (idleShare <= IDLE_SHARE || workers < MIN_WORKERS) {
+    /**
+     * O mesmo, sabendo quais ofícios têm falta para a obra ({@code ProfessionDemand}).
+     *
+     * @param shortTrades os ofícios com falta para a obra neste ciclo
+     */
+    public static boolean observe(UUID colonyId, ProfessionType profession, int idleShare, int workers,
+            java.util.List<ProfessionType> shortTrades) {
+
+        Key key = new Key(colonyId, profession);
+        boolean lastOneMayGo = workers == 1
+                && profession != ProfessionType.BUILDER
+                && !shortTrades.contains(profession)
+                && shortTrades.stream().anyMatch(other -> other != profession);
+
+        if (idleShare <= IDLE_SHARE || (workers < MIN_WORKERS && !lastOneMayGo)) {
             STREAK.remove(key);
             return false;
         }

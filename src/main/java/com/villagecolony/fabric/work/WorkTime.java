@@ -215,7 +215,8 @@ public final class WorkTime {
                     .filter(worker -> worker.profession().filter(profession::equals).isPresent())
                     .toList();
 
-            if (!IdleYield.observe(colonyId, profession, idle, holders.size())) {
+            if (!IdleYield.observe(colonyId, profession, idle, holders.size(),
+                    com.villagecolony.core.worker.service.ProfessionDemand.of(colonyId))) {
                 continue;
             }
 
