@@ -9,7 +9,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * O único mixin do mod — ADR-004 §3, mixin 1.
+ * A tarefa da colônia no {@code Brain} do aldeão — ADR-004 §3, mixin 1. Os
+ * outros mixins do mod estão em {@code villagecolony.mixins.json} e
+ * {@code villagecolony.client.mixins.json}.
  *
  * <p>{@code @Inject} em {@code TAIL}, sem cancelar nada e sem remover
  * task alguma. Toda a lógica está em

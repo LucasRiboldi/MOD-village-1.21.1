@@ -142,6 +142,7 @@
       "com.villagecolony.fabric.work.ReachMapGameTest",
       "com.villagecolony.fabric.work.MineEntranceGameTest",
       "com.villagecolony.fabric.work.MineDescentLeaseGameTest",
+      "com.villagecolony.fabric.brain.BrainHeartbeatGameTest",
       "com.villagecolony.gametest.SmeltInputGameTest",
       "com.villagecolony.fabric.work.ProductionChainGameTest",
       "com.villagecolony.fabric.work.ShepherdWoolDeficitGameTest",

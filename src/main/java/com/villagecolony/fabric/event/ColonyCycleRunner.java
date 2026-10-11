@@ -399,6 +399,7 @@ final class ColonyCycleRunner {
 
         // Depois da distribuição: quem recebeu tarefa neste ciclo já
         // começa a andar nele, em vez de esperar o próximo.
+        com.villagecolony.fabric.brain.BrainHeartbeat.inspect(overworld, colony);
         runOngoingWork(overworld, colony);
 
         // <b>A peça que a obra espera e ninguém faz</b> — P1.1,

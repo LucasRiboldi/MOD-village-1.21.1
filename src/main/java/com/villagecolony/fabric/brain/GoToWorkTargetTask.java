@@ -53,6 +53,8 @@ public final class GoToWorkTargetTask extends MultiTickTask<VillagerEntity> {
 
     @Override
     protected boolean shouldRun(ServerWorld world, VillagerEntity villager) {
+        BrainHeartbeat.beat(world, villager);
+
         return WorkHours.isWorkTime(world, villager)
                 && WorkTargets.of(villager.getUuid()).isPresent()
                 && !WalkOverride.isHeld(villager.getUuid());
@@ -65,6 +67,8 @@ public final class GoToWorkTargetTask extends MultiTickTask<VillagerEntity> {
 
     @Override
     protected boolean shouldKeepRunning(ServerWorld world, VillagerEntity villager, long time) {
+        BrainHeartbeat.beat(world, villager);
+
         return WorkHours.isWorkTime(world, villager)
                 && WorkTargets.of(villager.getUuid()).isPresent()
                 && !WalkOverride.isHeld(villager.getUuid());
