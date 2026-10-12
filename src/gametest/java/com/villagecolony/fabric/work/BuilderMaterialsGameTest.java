@@ -350,6 +350,32 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Rota sem caminho nenhum conta todo ciclo: nenhuma tarefa vai nascer para ela (Regra 51). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
+    public void aPieceWithNoRouteAtAllCountsEveryCycle(TestContext context) {
+        Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.FLETCHING_TABLE);
+
+        setup.project().moveTo(ConstructionState.PREPARING);
+        setup.project().moveTo(ConstructionState.BUILDING);
+        setup.project().moveTo(ConstructionState.WAITING_RESOURCES);
+        VillageColonyMod.CONSTRUCTIONS.register(setup.project());
+        ConstructionSupplyDispatches.renewForCycle(context.getWorld(), setup.colony());
+
+        context.waitAndRun(1, () -> {
+            try {
+                ConstructionSupplyDispatches.renewForCycle(context.getWorld(), setup.colony());
+
+                context.assertTrue(ConstructionSupplyDispatches.fallbackDue(
+                                setup.project().id(), Items.FLETCHING_TABLE),
+                        "a peça sem rota nenhuma não contou os ciclos da obra");
+            } finally {
+                setup.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
     /**
      * Uma rota explicada pelo livro de receitas ainda nao e trabalho. Quatro
      * leituras do ciclo sem uma tarefa da cadeia nao podem materializar a

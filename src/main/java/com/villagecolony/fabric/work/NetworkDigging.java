@@ -7,6 +7,7 @@ import com.villagecolony.core.construction.model.MineNetwork;
 import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.construction.service.MineNetworks;
 import com.villagecolony.core.coordination.IdleReason;
+import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.MineFlooding;
@@ -79,13 +80,11 @@ public final class NetworkDigging {
         Optional<MineNetwork.Node> claimed = network.claim(workerId, near);
 
         if (claimed.isEmpty()) {
-            IdleLog.record(colonyId, SUBJECT, IdleReason.NO_TARGET,
-                    "every node of the level is taken or done — " + network.census());
+            IdleLog.recordAt(colonyId, SUBJECT, IdleReason.NO_TARGET,
+                    "every node of the level is taken or done — " + network.census(), world.getTime());
 
             return Optional.empty();
         }
-
-        IdleLog.clear(colonyId, SUBJECT);
 
         MineNetwork.Node node = claimed.get();
         List<ColonyPos> corridor = network.corridorOf(node);
@@ -104,6 +103,8 @@ public final class NetworkDigging {
         Optional<BlockPos> ore = NetworkVeins.next(world, workerId, network, node);
 
         if (ore.isPresent()) {
+            IdleLog.clear(colonyId, SUBJECT);
+
             return ore;
         }
 
@@ -142,15 +143,26 @@ public final class NetworkDigging {
                 return Optional.empty();
             }
 
+            IdleLog.clear(colonyId, SUBJECT);
+
             return Optional.of(at);
         }
 
         // Corredor aberto: piso garantido e aberturas vedadas, e o nó fica pronto.
-        if (!NetworkSafety.secureCorridor(world, colonyId, corridor, mineCells(network, mine), network.hub())) {
-            IdleLog.record(colonyId, SUBJECT, IdleReason.NO_TARGET,
-                    "node (" + node.gx() + ", " + node.gz() + ") is open and waits for fill blocks to be safe");
+        // O enchimento sai primeiro do baú do mineiro, onde cai o que ele cava.
+        Set<ColonyPos> cells = mineCells(network, mine);
+        ColonyPos own = VillageColonyMod.STORAGES.of(workerId)
+                .map(WorkerStorage::chestPosition).orElse(network.hub());
 
-            return Optional.empty();
+        if (!NetworkSafety.secureCorridor(world, colonyId, corridor, cells, own)) {
+            Optional<BlockPos> quarry = NetworkSafety.quarryFor(world, mine, corridor, cells);
+
+            IdleLog.recordAt(colonyId, SUBJECT, IdleReason.NO_TARGET,
+                    "node (" + node.gx() + ", " + node.gz() + ") is open and waits for fill blocks to be safe"
+                            + (quarry.isPresent() ? " — digging the wall for them" : ""),
+                    world.getTime());
+
+            return quarry;
         }
 
         network.done(node);

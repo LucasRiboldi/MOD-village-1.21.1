@@ -89,10 +89,14 @@ public final class ConstructionSupplyDispatches {
      * Registra somente o ciclo que deixou uma tarefa executável aberta para a
      * rota. Consultas da obra e uma rota teórica sem executor não gastam o
      * prazo do suprimento terminal. Regra 40, ADR-040.
+     *
+     * <p>Rota sem caminho nenhum (o sílex da bancada de flecheiro: sem receita e sem
+     * fonte no bioma) conta todo ciclo: nenhuma tarefa vai nascer para ela, e esperar
+     * uma deixou a obra parada a sessão inteira (playtest 0.3.36). Regra 51.
      */
     public static void renewForCycle(ServerWorld world, Colony colony) {
         currentNeed(world, colony)
-                .filter(need -> hasOpenSupplyTask(colony.id(), need.route()))
+                .filter(need -> !need.route().available() || hasOpenSupplyTask(colony.id(), need.route()))
                 .ifPresent(need -> recordCycleDispatch(
                         need.project().id(), need.item(), world.getTime()));
     }

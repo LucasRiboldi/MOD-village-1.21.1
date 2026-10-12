@@ -36,6 +36,12 @@ public final class SmelterAdvance {
     /** Quanto do cru fica nos baús além do que a obra pede. */
     static final int KEEP = 16;
 
+    /**
+     * O pedregulho que fica para a mina, além da obra: é o enchimento do piso e da
+     * beirada (playtest 0.3.36: a vila fundiu e cortou todo pedregulho e a mina parou).
+     */
+    static final int MINE_FILL = 64;
+
     /** Os crus que se adiantam, na ordem: minério, areia, pedra, argila, arenito. */
     static final List<Item> RAWS = List.of(
             Items.RAW_IRON, Items.RAW_COPPER, Items.RAW_GOLD,
@@ -77,7 +83,8 @@ public final class SmelterAdvance {
             }
 
             Item made = product.get().getItem();
-            int spare = ColonyChests.countIn(world, chests, raw) - BuildReserve.buildNeedOf(colony, raw) - KEEP;
+            int keep = raw == Items.COBBLESTONE || raw == Items.COBBLED_DEEPSLATE ? MINE_FILL : KEEP;
+            int spare = ColonyChests.countIn(world, chests, raw) - BuildReserve.buildNeedOf(colony, raw) - keep;
             int room = StockCeiling.RAW - ColonyChests.countIn(world, chests, made);
             int amount = Math.min(PER_SMELTER, Math.min(spare, room));
 

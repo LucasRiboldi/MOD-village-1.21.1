@@ -8,6 +8,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.fabric.integration.MineFlooding;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.LivingEntity;
@@ -25,6 +26,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -40,7 +42,8 @@ import java.util.UUID;
  *
  * <p>O enchimento sai dos baús mais perto da mina (pedregulho primeiro) — a colônia não
  * inventa matéria. Sem bloco nenhum, a colônia espera {@link #NO_FILL_WAIT} tiques antes
- * de procurar de novo: varrer os 39 baús a cada tique foi 4% do servidor.
+ * de procurar de novo: varrer os 39 baús a cada tique foi 4% do servidor. Enquanto
+ * isso, o mineiro tira o enchimento da própria mina ({@link #quarryFor}).
  */
 final class NetworkSafety {
 
@@ -202,6 +205,43 @@ final class NetworkSafety {
         }
 
         return left == 0;
+    }
+
+    /** Até quantos blocos para fora do túnel a parede é cavada atrás de enchimento. */
+    static final int QUARRY_DEPTH = 3;
+
+    /**
+     * Uma pedra da parede do túnel para virar enchimento: sem pedregulho nos baús, a mina
+     * se abastece sozinha em vez de esperar (playtest 0.3.36: 37 mil esperas, 0 pedregulho).
+     * A pedra encosta em espaço já aberto, tem chão firme embaixo (o nicho não vira queda)
+     * e não segura fluido.
+     */
+    static Optional<BlockPos> quarryFor(
+            ServerWorld world, Mine mine, Collection<ColonyPos> corridor, Set<ColonyPos> mineCells) {
+
+        for (int depth = 1; depth <= QUARRY_DEPTH; depth++) {
+            for (ColonyPos cell : corridor) {
+                BlockPos from = MinecraftTypeAdapter.toBlockPos(cell);
+
+                for (Direction side : Direction.Type.HORIZONTAL) {
+                    BlockPos at = from.offset(side, depth);
+
+                    if (mineCells.contains(MinecraftTypeAdapter.toColonyPos(at))
+                            || !world.isChunkLoaded(at)
+                            || !isOpen(world.getBlockState(at.offset(side.getOpposite())))
+                            || isOpen(world.getBlockState(at))
+                            || !isFirmFloor(world, at.down())
+                            || !MineRock.isDiggableRock(world, mine, at)
+                            || MineFlooding.holdsBackFluid(world, at)) {
+                        continue;
+                    }
+
+                    return Optional.of(at);
+                }
+            }
+        }
+
+        return Optional.empty();
     }
 
     /** Ar ou o que se atravessa (tocha, grama), ou fluido: aberto. */

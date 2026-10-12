@@ -125,6 +125,70 @@ public class NetworkDiggingGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Sem pedregulho nos baús, o túnel aberto dá uma pedra da parede para virar enchimento. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "network_quarry", tickLimit = 20)
+    public void withoutFillTheMinerDigsTheWallForIt(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos chestAt = context.getAbsolutePos(new BlockPos(1, 2, 1));
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(chestAt);
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+        UUID miner = UUID.randomUUID();
+
+        VillageColonyMod.COLONIES.register(colony);
+        VillageColonyMod.WORKERS.register(miner, colony.id());
+        owned.owning(miner);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(miner, chest));
+        world.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
+
+        ColonyPos entry = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(3, 42, 3)));
+        int shared = MineShaft.SHARED_BLOCKS;
+        Mine mine = Mine.restore(colony.id(), MineShaft.from(entry, Side.EAST), new int[] {shared, shared, shared, shared});
+        VillageColonyMod.MINES.restore(mine);
+        BlockPos hub = MinecraftTypeAdapter.toBlockPos(mine.shaft().hallFloor());
+        BlockPos from = hub.add(-10, -1, -10);
+        BlockPos to = hub.add(10, 3, 10);
+
+        try {
+            for (BlockPos at : BlockPos.iterate(from, to)) {
+                world.setBlockState(at, Blocks.STONE.getDefaultState());
+            }
+
+            NetworkDigging.nextTarget(world, miner, colony.id(), mine);
+            MineNetwork network = MineNetworks.of(colony.id()).orElseThrow();
+            MineNetwork.Node node = network.claimedBy(miner).orElseThrow();
+            List<ColonyPos> corridor = network.corridorOf(node);
+
+            for (ColonyPos cell : corridor) {
+                world.setBlockState(MinecraftTypeAdapter.toBlockPos(cell), Blocks.AIR.getDefaultState());
+            }
+
+            world.setBlockState(MinecraftTypeAdapter.toBlockPos(corridor.get(2 * MineNetwork.HEIGHT)).down(),
+                    Blocks.AIR.getDefaultState());
+            NetworkVeins.forget(miner);
+
+            Optional<BlockPos> quarry = NetworkDigging.nextTarget(world, miner, colony.id(), mine);
+
+            context.assertTrue(quarry.isPresent(), "sem enchimento, o mineiro ficou esperando em vez de cavar a parede");
+            context.assertTrue(!corridor.contains(MinecraftTypeAdapter.toColonyPos(quarry.get()))
+                            && world.getBlockState(quarry.get()).isOf(Blocks.STONE),
+                    "o alvo não é pedra da parede: " + quarry);
+            context.assertTrue(network.stateOf(node.gx(), node.gz()).orElseThrow() != MineNetwork.State.DONE,
+                    "o nó ficou pronto com o piso furado");
+        } finally {
+            for (BlockPos at : BlockPos.iterate(from, to)) {
+                world.setBlockState(at, Blocks.AIR.getDefaultState());
+            }
+
+            world.setBlockState(chestAt, Blocks.AIR.getDefaultState());
+            VillageColonyMod.MINES.removeOfColony(colony.id());
+            MineNetworks.forget(colony.id());
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
     /** O nível sem nó aberto faz a mina descer um nível — ADR-042 D7. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "network_descend", tickLimit = 20)
     public void anExhaustedLevelTakesTheMineOneLevelDeeper(TestContext context) {
