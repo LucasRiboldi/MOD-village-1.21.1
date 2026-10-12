@@ -40,19 +40,19 @@ class MineNetworkTest {
     }
 
     @Test
-    void theCorridorRunsFromTheParentToTheNodeThreeWideAndThreeHigh() {
+    void theTunnelRunsFromTheParentToTheNodeOneWideAndTwoHigh() {
         MineNetwork network = MineNetwork.open(HUB);
-        MineNetwork.Node east = network.claim(UUID.randomUUID(), HUB).filter(n -> n.gx() == 1).orElseGet(() ->
-                new MineNetwork.Node(1, 0, 0, 0));
+        MineNetwork.Node east = new MineNetwork.Node(1, 0, 0, 0);
         List<ColonyPos> cells = network.corridorOf(east);
+        int far = MineNetwork.SPACING;
 
         assertEquals(MineNetwork.SPACING * MineNetwork.WIDTH * MineNetwork.HEIGHT, cells.size());
-        assertTrue(cells.contains(new ColonyPos(HUB.x() + 1, HUB.y(), HUB.z())), "começa ao lado do salão");
-        assertTrue(cells.contains(new ColonyPos(HUB.x() + 7, HUB.y() + 2, HUB.z() + 1)), "vai até o centro do nó");
+        assertEquals(new ColonyPos(HUB.x() + 1, HUB.y(), HUB.z()), cells.getFirst(),
+                "o piso de andar ao lado do salão sai primeiro");
+        assertTrue(cells.contains(new ColonyPos(HUB.x() + far, HUB.y() + 1, HUB.z())), "vai até o centro do nó");
         assertTrue(cells.stream().allMatch(c -> c.y() >= HUB.y() && c.y() < HUB.y() + MineNetwork.HEIGHT),
-                "o corredor é plano: nada abaixo do piso");
-        assertEquals(new ColonyPos(HUB.x() + 1, HUB.y(), HUB.z() - 1), cells.getFirst(),
-                "o piso de andar perto do pai sai primeiro");
+                "o túnel é plano: nada abaixo do piso");
+        assertTrue(cells.stream().allMatch(c -> c.z() == HUB.z()), "um bloco de largura");
     }
 
     @Test

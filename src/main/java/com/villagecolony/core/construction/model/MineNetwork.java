@@ -29,17 +29,22 @@ import java.util.UUID;
  */
 public final class MineNetwork {
 
-    /** A distância entre os centros de dois nós vizinhos (MineColonies: 7). */
-    public static final int SPACING = 7;
+    /**
+     * A distância entre os centros de dois nós vizinhos: túneis a cada 4 blocos, com 3 de
+     * rocha entre eles — a mineração em ramal do jogador, que deixa todo bloco da rocha a
+     * no máximo 2 de um túnel (playtest 0.3.35: a grade de 7 com corredor 3 × 3 cavava
+     * pedra e não minério, e parecia labirinto).
+     */
+    public static final int SPACING = 4;
 
-    /** Até quantos nós do salão, em cada eixo, o nível se estende. */
-    public static final int RADIUS = 4;
+    /** Até quantos nós do salão, em cada eixo, o nível se estende: 49 × 49 blocos. */
+    public static final int RADIUS = 6;
 
-    /** Largura do corredor. */
-    public static final int WIDTH = 3;
+    /** Largura do túnel: um bloco, por onde o aldeão passa. */
+    public static final int WIDTH = 1;
 
-    /** Altura do corredor. */
-    public static final int HEIGHT = 3;
+    /** Altura do túnel: dois blocos, a altura do aldeão. */
+    public static final int HEIGHT = 2;
 
     /** Desistências num nó antes de ele ser vedado como inalcançável. */
     public static final int FAILURES_BEFORE_SEALING = 3;

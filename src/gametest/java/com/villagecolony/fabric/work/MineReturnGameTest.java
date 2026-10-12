@@ -79,7 +79,8 @@ public final class MineReturnGameTest implements FabricGameTest {
 
     /** Uma colônia com a caixa medida cobrindo o terreno todo, e o centro longe. */
     private static Colony villageOverTheTerrain(TestContext context) {
-        BlockPos a = context.getAbsolutePos(new BlockPos(0, 0, 0));
+        // O fundo da caixa é o chão da vila (TOP), como numa vila de verdade.
+        BlockPos a = context.getAbsolutePos(new BlockPos(0, TOP, 0));
         BlockPos b = context.getAbsolutePos(new BlockPos(LENGTH - 1, TOP + 4, SIDE - 1));
 
         Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(

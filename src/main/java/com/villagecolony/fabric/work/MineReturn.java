@@ -61,8 +61,11 @@ public final class MineReturn {
         ServerMemory.register(MineReturn.class, MineReturn::clearAll);
     }
 
-    /** Quantos blocos de cima do terreno da vila são intocáveis para quem sobe. */
-    static final int SHELL_DEPTH = 4;
+    /**
+     * Quantas camadas abaixo do chão da vila são intocáveis para quem volta de baixo —
+     * pedido do autor, 2026-10-12: "pelo menos 5 camadas abaixo do solo da vila".
+     */
+    static final int SHELL_DEPTH = 5;
 
     /** Quantas pisadas do rastro cada trecho da volta cobre. */
     static final int SEGMENT = 10;
@@ -293,9 +296,10 @@ public final class MineReturn {
     }
 
     /**
-     * Se esta posição é da casca da vila: dentro da caixa medida de uma
-     * colônia, nos {@link #SHELL_DEPTH} blocos de cima do terreno, ou acima
-     * dele.
+     * Se esta posição é da casca da vila: dentro da caixa medida de uma colônia, a até
+     * {@link #SHELL_DEPTH} abaixo do chão, ou acima dele. O chão é o mais baixo entre o
+     * topo da coluna e o fundo da caixa: debaixo de uma casa o topo é o telhado, e medir
+     * por ele deixava o chão sob a casa desprotegido.
      */
     static boolean isVillageShell(ServerWorld world, BlockPos pos) {
         for (Colony colony : VillageColonyMod.COLONIES.all()) {
@@ -306,8 +310,9 @@ public final class MineReturn {
             }
 
             int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, pos.getX(), pos.getZ());
+            int ground = Math.min(top, bounds.get().minY());
 
-            if (pos.getY() >= top - SHELL_DEPTH) {
+            if (pos.getY() >= ground - SHELL_DEPTH) {
                 return true;
             }
         }

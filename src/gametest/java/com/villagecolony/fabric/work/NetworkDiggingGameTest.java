@@ -72,33 +72,41 @@ public class NetworkDiggingGameTest implements FabricGameTest {
             context.assertTrue(first.map(MinecraftTypeAdapter::toColonyPos).map(corridor::contains).orElse(false),
                     "o primeiro alvo não é do corredor do nó: " + first);
 
-            // Abre a primeira fatia do corredor e põe minério na parede dela.
-            for (ColonyPos cell : corridor.subList(0, 9)) {
+            // Abre o primeiro passo do túnel e põe minério dentro da parede, a dois blocos,
+            // sem encostar em ar: ao alcance do braço, ele vem antes do túnel (0.3.35: só o
+            // exposto contava, e 1.411 blocos cavados deram 2 de ferro).
+            for (ColonyPos cell : corridor.subList(0, MineNetwork.HEIGHT)) {
                 world.setBlockState(MinecraftTypeAdapter.toBlockPos(cell), Blocks.AIR.getDefaultState());
             }
 
-            // Para fora da primeira célula, que é a da borda do corredor.
-            BlockPos side = MinecraftTypeAdapter.toBlockPos(corridor.getFirst()).add(-node.dz(), 1, -node.dx());
-            world.setBlockState(side, Blocks.IRON_ORE.getDefaultState());
+            BlockPos ore = MinecraftTypeAdapter.toBlockPos(corridor.getFirst()).add(-2 * node.dz(), 1, -2 * node.dx());
+            world.setBlockState(ore, Blocks.IRON_ORE.getDefaultState());
+            NetworkVeins.forget(miner);
 
-            context.assertTrue(NetworkDigging.nextTarget(world, miner, colony.id(), mine).equals(Optional.of(side)),
-                    "o veio da parede não passou à frente do corredor");
+            context.assertTrue(NetworkDigging.nextTarget(world, miner, colony.id(), mine).equals(Optional.of(ore)),
+                    "o minério ao alcance do túnel não passou à frente");
 
-            // O corredor inteiro aberto, com um buraco no piso e uma caverna ao lado.
-            world.setBlockState(side, Blocks.AIR.getDefaultState());
+            // O túnel inteiro aberto, um buraco no piso e uma queda ao lado do piso.
+            world.setBlockState(ore, Blocks.STONE.getDefaultState());
+            NetworkVeins.forget(miner);
 
             for (ColonyPos cell : corridor) {
                 world.setBlockState(MinecraftTypeAdapter.toBlockPos(cell), Blocks.AIR.getDefaultState());
             }
 
-            BlockPos hole = MinecraftTypeAdapter.toBlockPos(corridor.get(27)).down(); // 27: altura 0
+            BlockPos hole = MinecraftTypeAdapter.toBlockPos(corridor.get(2 * MineNetwork.HEIGHT)).down();
             world.setBlockState(hole, Blocks.AIR.getDefaultState());
 
+            BlockPos edge = MinecraftTypeAdapter.toBlockPos(corridor.get(MineNetwork.HEIGHT)).add(-node.dz(), 0, -node.dx());
+            world.setBlockState(edge, Blocks.AIR.getDefaultState());
+            world.setBlockState(edge.down(), Blocks.AIR.getDefaultState());
+            world.setBlockState(edge.down(2), Blocks.AIR.getDefaultState());
+
             context.assertTrue(NetworkDigging.nextTarget(world, miner, colony.id(), mine).isEmpty(),
-                    "com o corredor aberto não havia mais pedra a dar");
+                    "com o túnel aberto não havia mais pedra a dar");
             context.assertTrue(NetworkSafety.isFirmFloor(world, hole), "o buraco do piso ficou aberto");
-            context.assertTrue(!NetworkSafety.isOpen(world.getBlockState(side)),
-                    "a abertura do veio, de fora da mina, ficou sem vedar");
+            context.assertTrue(!NetworkSafety.isOpen(world.getBlockState(edge)),
+                    "a beirada da queda ao lado do piso ficou aberta");
             context.assertTrue(network.stateOf(node.gx(), node.gz()).orElseThrow() == MineNetwork.State.DONE,
                     "o nó não ficou pronto");
             context.assertTrue(network.stateOf(node.gx() * 2, node.gz() * 2).isPresent(),

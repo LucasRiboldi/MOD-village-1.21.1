@@ -101,7 +101,7 @@ public final class NetworkDigging {
             return Optional.empty();
         }
 
-        Optional<BlockPos> ore = NetworkVeins.next(world, network, node);
+        Optional<BlockPos> ore = NetworkVeins.next(world, workerId, network, node);
 
         if (ore.isPresent()) {
             return ore;
@@ -120,6 +120,19 @@ public final class NetworkDigging {
                 continue;
             }
 
+            // Célula que o mineiro recusou (sem lugar de pé, alta demais): conta contra o
+            // nó, em vez de voltar a mesma pedra a cada passagem (4.210 recusas na 0.3.35).
+            if (MineMarks.isOutOfReach(world, at)) {
+                if (network.failed(node)) {
+                    VillageColonyMod.LOGGER.info("Mine {} seals the node ({}, {}) — {} cannot be reached",
+                            colonyId.toString().substring(0, 8), node.gx(), node.gz(), at.toShortString());
+                } else {
+                    network.release(workerId);
+                }
+
+                return Optional.empty();
+            }
+
             // Pedra que segura água: o nó é vedado em vez de inundar o corredor (D6).
             if (MineFlooding.holdsBackFluid(world, at)) {
                 network.seal(node);
@@ -133,7 +146,7 @@ public final class NetworkDigging {
         }
 
         // Corredor aberto: piso garantido e aberturas vedadas, e o nó fica pronto.
-        if (!NetworkSafety.secureCorridor(world, colonyId, corridor, mineCells(network, mine))) {
+        if (!NetworkSafety.secureCorridor(world, colonyId, corridor, mineCells(network, mine), network.hub())) {
             IdleLog.record(colonyId, SUBJECT, IdleReason.NO_TARGET,
                     "node (" + node.gx() + ", " + node.gz() + ") is open and waits for fill blocks to be safe");
 

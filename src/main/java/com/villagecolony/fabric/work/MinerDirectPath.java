@@ -32,8 +32,8 @@ final class MinerDirectPath {
     /** De quanto em quanto tempo a resposta para o mesmo alvo é refeita. */
     static final long RECHECK_TICKS = 200;
 
-    /** A folga entre o fim do caminho e o lugar de pé da pedra. */
-    static final int NEAR = 1;
+    /** A folga entre o fim do caminho e o lugar de pé da pedra (o braço alcança 4). */
+    static final int NEAR = 2;
 
     private record Verdict(BlockPos approach, boolean reaches, long at) {
     }
@@ -52,9 +52,9 @@ final class MinerDirectPath {
             return known.reaches();
         }
 
-        // Com folga de um bloco: o caminho do jogo para um bloco antes do alvo, e de lá a
+        // Com folga: o caminho do jogo para um ou dois blocos antes do alvo, e de lá a
         // picareta ainda alcança a pedra.
-        Path path = villager.getNavigation().findPathTo(approach, NEAR);
+        Path path = villager.getNavigation().findPathTo(approach, 0);
         boolean reaches = path != null
                 && (path.reachesTarget() || (path.getEnd() != null
                         && path.getEnd().getBlockPos().getManhattanDistance(approach) <= NEAR));
