@@ -435,8 +435,7 @@ public final class SmelterWork {
         Optional<ItemStack> result = CraftingLookup.smelted(world, raw);
 
         if (result.isEmpty()) {
-            // O forno não faz nada com isto. Devolve intacto: tirar do
-            // baú e não devolver seria a colônia destruindo material.
+            // O forno não faz nada com isto: devolve intacto, sem destruir material.
             ChestDepositor.deposit(world, source, raw.getItem(), raw.getCount());
 
             finish(job, workerId, "the furnace makes nothing out of " + raw.getItem());
@@ -446,19 +445,21 @@ public final class SmelterWork {
 
         ItemStack made = result.get();
 
-        if (ChestDepositor.freeSpaceFor(world, output, made.getItem()) < made.getCount()) {
+        // Baú dele cheio: o produto vai ao baú da vila com lugar (ADR-038 P3c; playtest 11-10).
+        Optional<ColonyPos> into = ColonyChests.nearestFirst(world, job.task.colonyId(), output).stream()
+                .filter(chest -> ChestDepositor.freeSpaceFor(world, chest, made.getItem()) >= made.getCount())
+                .findFirst();
+
+        if (into.isEmpty()) {
             ChestDepositor.deposit(world, source, raw.getItem(), raw.getCount());
-
-            finish(job, workerId, "no room in the personal chest for " + made.getItem());
-
+            finish(job, workerId, "no room in any colony chest for " + made.getItem());
             return false;
         }
 
-        int leftOver = ChestDepositor.deposit(world, output, made.getItem(), made.getCount());
+        int leftOver = ChestDepositor.deposit(world, into.get(), made.getItem(), made.getCount());
 
         if (leftOver == made.getCount()) {
-            // Não coube nada. Devolve a matéria-prima e para: fundir sem
-            // onde guardar gasta o ingrediente à toa.
+            // Não coube nada: devolve a matéria-prima e para.
             ChestDepositor.deposit(world, source, raw.getItem(), raw.getCount());
 
             finish(job, workerId, "no room in the chest for " + made.getItem());

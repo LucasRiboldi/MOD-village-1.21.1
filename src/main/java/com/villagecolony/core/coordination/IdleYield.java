@@ -11,8 +11,9 @@ import java.util.UUID;
  * Ofício parado cede vaga — ADR-038 P1 e a regra do ócio (ADR-041 #3): mais de
  * {@link #IDLE_SHARE}% de ocioso + bloqueado + encalhado
  * em {@link #WINDOWS} janelas seguidas do {@code WorkTime}, com pelo menos
- * {@link #MIN_WORKERS} pessoas, e o ofício solta uma. Quem sai fica sem
- * ofício e a contratação por demanda o leva aonde a obra espera.
+ * {@link #MIN_WORKERS} pessoas, e o ofício solta uma — só quando outro ofício tem
+ * falta para a obra. Quem sai fica sem ofício e a contratação por demanda o leva
+ * aonde a obra espera.
  *
  * <p><b>Vaga por demanda</b> (P5c, autossuficiência, 2026-10-11): o titular
  * único também cede quando outro ofício tem falta para a obra e o dele não. O
@@ -68,7 +69,11 @@ public final class IdleYield {
                 && !shortTrades.contains(profession)
                 && shortTrades.stream().anyMatch(other -> other != profession);
 
-        if (idleShare <= IDLE_SHARE || (workers < MIN_WORKERS && !lastOneMayGo)) {
+        // Só cede para onde falta mão — playtest de 11-10: 19 saídas em 90 minutos, e
+        // quem saía de um ofício parado caía noutro também parado (uma ciranda).
+        boolean handsWantedElsewhere = shortTrades.stream().anyMatch(other -> other != profession);
+
+        if (idleShare <= IDLE_SHARE || !handsWantedElsewhere || (workers < MIN_WORKERS && !lastOneMayGo)) {
             STREAK.remove(key);
             return false;
         }

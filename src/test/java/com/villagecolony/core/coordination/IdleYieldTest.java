@@ -17,23 +17,38 @@ class IdleYieldTest {
         IdleYield.clearAll();
     }
 
+    private static final java.util.List<ProfessionType> MINER_SHORT = java.util.List.of(ProfessionType.MINER);
+
     @Test
     void twoIdleWindowsInARowYieldOnePerson() {
         UUID colony = UUID.randomUUID();
 
-        assertFalse(IdleYield.observe(colony, ProfessionType.SMELTER, 16, 3), "uma janela só não basta");
-        assertTrue(IdleYield.observe(colony, ProfessionType.SMELTER, 16, 3), "duas janelas paradas não cederam");
-        assertFalse(IdleYield.observe(colony, ProfessionType.SMELTER, 16, 2), "a conta não recomeçou depois de ceder");
+        assertFalse(IdleYield.observe(colony, ProfessionType.SMELTER, 16, 3, MINER_SHORT), "uma janela só não basta");
+        assertTrue(IdleYield.observe(colony, ProfessionType.SMELTER, 16, 3, MINER_SHORT),
+                "duas janelas paradas não cederam");
+        assertFalse(IdleYield.observe(colony, ProfessionType.SMELTER, 16, 2, MINER_SHORT),
+                "a conta não recomeçou depois de ceder");
+    }
+
+    /** Sem falta em outro ofício, ninguém sai — playtest de 11-10: a ciranda de 19 saídas em 90 minutos. */
+    @Test
+    void nobodyLeavesWhenNoOtherTradeIsShort() {
+        UUID colony = UUID.randomUUID();
+
+        IdleYield.observe(colony, ProfessionType.CARPENTER, 90, 3);
+
+        assertFalse(IdleYield.observe(colony, ProfessionType.CARPENTER, 90, 3),
+                "sair de um ofício parado para cair noutro parado não ajuda ninguém");
     }
 
     @Test
     void aBusyWindowBreaksTheStreak() {
         UUID colony = UUID.randomUUID();
 
-        IdleYield.observe(colony, ProfessionType.SMELTER, 16, 3);
-        IdleYield.observe(colony, ProfessionType.SMELTER, 15, 3);
+        IdleYield.observe(colony, ProfessionType.SMELTER, 16, 3, MINER_SHORT);
+        IdleYield.observe(colony, ProfessionType.SMELTER, 15, 3, MINER_SHORT);
 
-        assertFalse(IdleYield.observe(colony, ProfessionType.SMELTER, 16, 3));
+        assertFalse(IdleYield.observe(colony, ProfessionType.SMELTER, 16, 3, MINER_SHORT));
     }
 
     @Test

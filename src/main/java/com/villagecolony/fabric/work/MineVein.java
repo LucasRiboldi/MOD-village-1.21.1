@@ -274,8 +274,12 @@ final class MineVein {
                 // E o degrau é alvo como qualquer outro: se não há de
                 // onde bater nele, ele trava a veia do mesmo jeito que o
                 // minério travaria — 2026-09-03.
+                // E o degrau de castigo também — playtest de 11-10: o teto acima do
+                // minério ficou marcado e a veia o devolvia toda passada, 30 mil vezes
+                // em 50 minutos, com os três mineiros presos nele.
                 if (nowhereToStand(world, step.get())
-                        || MineFlooding.holdsBackFluid(world, step.get())) {
+                        || MineFlooding.holdsBackFluid(world, step.get())
+                        || MineMarks.isOutOfReach(world, step.get())) {
                     return exhausted(arm);
                 }
 

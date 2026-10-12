@@ -31,6 +31,8 @@ public class IdleYieldGameTest implements FabricGameTest {
             VillageColonyMod.WORKERS.register(first, colony).assign(ProfessionType.LUMBERJACK);
             VillageColonyMod.WORKERS.register(second, colony).assign(ProfessionType.LUMBERJACK);
 
+            // Só cede para onde falta mão (playtest de 11-10): o mineiro tem falta para a obra.
+            com.villagecolony.core.worker.service.ProfessionDemand.set(colony, List.of(ProfessionType.MINER));
             EnumMap<WorkTime.State, Integer> idle = new EnumMap<>(WorkTime.State.class);
             idle.put(WorkTime.State.IDLE, 100);
 
@@ -45,6 +47,7 @@ public class IdleYieldGameTest implements FabricGameTest {
             context.assertTrue(stayed.size() == 1,
                     "duas janelas 100% paradas e o ofício ficou com " + stayed.size() + " lenhadores");
         } finally {
+            com.villagecolony.core.worker.service.ProfessionDemand.set(colony, List.of());
             fixture.cleanUp();
         }
 
@@ -64,6 +67,7 @@ public class IdleYieldGameTest implements FabricGameTest {
             VillageColonyMod.WORKERS.register(first, colony).assign(ProfessionType.SMELTER);
             VillageColonyMod.WORKERS.register(second, colony).assign(ProfessionType.SMELTER);
 
+            com.villagecolony.core.worker.service.ProfessionDemand.set(colony, List.of(ProfessionType.MINER));
             EnumMap<WorkTime.State, Integer> blocked = new EnumMap<>(WorkTime.State.class);
             blocked.put(WorkTime.State.BLOCKED, 100);
 
@@ -78,6 +82,7 @@ public class IdleYieldGameTest implements FabricGameTest {
             context.assertTrue(stayed.size() == 1,
                     "duas janelas 100% bloqueadas e o ofício ficou com " + stayed.size() + " fundidores");
         } finally {
+            com.villagecolony.core.worker.service.ProfessionDemand.set(colony, List.of());
             fixture.cleanUp();
         }
 

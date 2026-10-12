@@ -1856,6 +1856,46 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * O degrau de castigo não volta pela veia — playtest de 2026-10-11: o teto acima do
+     * minério ficou marcado como fora de alcance e a veia o devolvia toda passada, 30 mil
+     * vezes em 50 minutos, com os três mineiros presos nele.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_vein",
+            tickLimit = 20)
+    public void aRefusedStepIsNotServedAgainByTheVein(TestContext context) {
+        BlockPos taken = new BlockPos(2, 3, 2);
+
+        Colony colony = veinGoingDown(context, taken);
+
+        context.setBlockState(taken.up(), Blocks.STONE.getDefaultState());
+
+        BlockPos step = context.getAbsolutePos(taken.up());
+        // O mesmo mineiro nas duas passagens: um mineiro novo acharia o ramal com dono.
+        UUID miner = UUID.randomUUID();
+        BlockPos from = context.getAbsolutePos(ROCK);
+
+        try {
+            context.assertTrue(MineDigging.nextTarget(context.getWorld(), miner, colony.id(), from)
+                            .filter(step::equals).isPresent(),
+                    "o cenário não reproduz o defeito: a veia não pediu o degrau");
+
+            MineMarks.refuse(context.getWorld(), step);
+
+            Optional<BlockPos> next = MineDigging.nextTarget(context.getWorld(), miner, colony.id(), from);
+
+            context.assertFalse(next.filter(step::equals).isPresent(),
+                    "a veia devolveu o degrau que está de castigo");
+            context.assertFalse(next.filter(target -> MineMarks.isOutOfReach(context.getWorld(), target)).isPresent(),
+                    "o alvo devolvido está de castigo: " + next);
+        } finally {
+            MineMarks.clearAll();
+            MineClaims.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
      * Aberto o degrau, o minério de baixo é o alvo seguinte.
      *
      * <p>A outra metade, e ela é o que impede o conserto de virar
