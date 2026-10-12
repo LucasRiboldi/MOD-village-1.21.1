@@ -190,9 +190,13 @@ public final class ShepherdFlock {
 
     /** Guardado: amarrado numa cerca, ou dentro de curral (cercado e com cerca perto). */
     static boolean isKept(ServerWorld world, AnimalEntity animal) {
-        return animal.getLeashHolder() instanceof LeashKnotEntity
-                || (FencedIn.isNearAFence(world, animal.getBlockPos())
-                        && FencedIn.check(world, animal.getBlockPos()).enclosed());
+        return animal.getLeashHolder() instanceof LeashKnotEntity || isPenned(world, animal);
+    }
+
+    /** Dentro de curral: cercado e com cerca perto. */
+    static boolean isPenned(ServerWorld world, AnimalEntity animal) {
+        return FencedIn.isNearAFence(world, animal.getBlockPos())
+                && FencedIn.check(world, animal.getBlockPos()).enclosed();
     }
 
     public static void clearAll() {

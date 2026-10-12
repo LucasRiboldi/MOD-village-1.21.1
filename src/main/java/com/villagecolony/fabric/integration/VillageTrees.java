@@ -80,18 +80,6 @@ public final class VillageTrees {
      */
     public static Optional<BlockPos> nearest(
             ServerWorld world, UUID colonyId, BlockPos from, Predicate<BlockPos> accepts) {
-        return nearest(world, colonyId, from, accepts, base -> 0);
-    }
-
-    /**
-     * A conhecida da faixa mais de dentro, e nela a mais perto de {@code from} — o
-     * lenhador vai do centro da vila para a borda (pedido do autor, 2026-10-08).
-     *
-     * @param rank a faixa de cada árvore: menor vem antes
-     */
-    public static Optional<BlockPos> nearest(
-            ServerWorld world, UUID colonyId, BlockPos from, Predicate<BlockPos> accepts,
-            java.util.function.ToIntFunction<BlockPos> rank) {
         promoteGrown(world, colonyId);
 
         Set<BlockPos> trees = TREES.get(colonyId);
@@ -101,7 +89,6 @@ public final class VillageTrees {
 
         BlockPos best = null;
         double bestDistance = Double.MAX_VALUE;
-        int bestRank = Integer.MAX_VALUE;
 
         for (Iterator<BlockPos> it = trees.iterator(); it.hasNext(); ) {
             BlockPos base = it.next();
@@ -117,12 +104,10 @@ public final class VillageTrees {
             }
 
             double distance = base.getSquaredDistance(from);
-            int order = rank.applyAsInt(base);
 
-            if ((order < bestRank || (order == bestRank && distance < bestDistance)) && accepts.test(base)) {
+            if (distance < bestDistance && accepts.test(base)) {
                 best = base;
                 bestDistance = distance;
-                bestRank = order;
             }
         }
 

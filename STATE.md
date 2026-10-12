@@ -1,12 +1,11 @@
 # STATE — 2026-10-11
 
-> **JAR instalado: `village-colony-0.3.30.jar`** (`claude/autossuficiencia`, 11-10) =
-> `A150A2EAE855AB147B124ADD870DD6A4BF64668C5578AD65787F5855F43B5EF5`, igual nas três cópias;
-> a 0.3.29 ficou como `.jar.disabled`. **Ainda não jogado.** A 0.3.29 foi jogada 1h50 em 11-10
-> (19:26–21:16): TPS 20, mod 3,3%; os três mineiros presos 50 min numa pedra marcada (degrau da
-> veia), a casa média parada 25 min na última peça (terra de lado por alcance), 19 trocas de ofício
-> em ciranda, fundidor largando a fundição com o baú cheio — os quatro corrigidos na 0.3.30.
-> **Verificação da 0.3.30:** 734/734 GameTests em 2 rodadas (mundo novo); 1474 unitários.
+> **JAR instalado: `village-colony-0.3.31.jar`** (`claude/autossuficiencia`, 11-10) =
+> `07B7F34F23D117453E4427483D48E0614AE8C78355D9D1514FF2A9A0C1908A81`, igual nas três cópias;
+> a 0.3.30 ficou como `.jar.disabled`. **Ainda não jogado.** Sobre a 0.3.30 (mina, última peça,
+> fundidor), a 0.3.31 traz os pedidos do autor: surgimento na quantidade toda, troca de ofícios
+> desligada, lenhador pela árvore mais perto dele, pastor com cercados (≤ 5), cerca e poste novo.
+> **Verificação da 0.3.31:** 735/735 GameTests em 2 rodadas (mundo novo); 1467 unitários.
 >
 > **Última verificação (`main` em `38015460`, 11-10, depois do merge das PRs #20–#25):** 1446
 > unitários e de propriedade (`--rerun-tasks`, 0 falhas); 705/705 GameTests (1 rodada); 112 testes Python. PIT 1820/2112 (86,17%) em `e71607dd`.

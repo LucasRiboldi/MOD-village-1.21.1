@@ -11,6 +11,19 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.31] — pedidos do autor depois do playtest da 0.3.29 (2026-10-11, JAR local, não jogado)
+
+### Mudado
+- **O que surge no baú surge na quantidade toda** que a obra ainda pede, e não um por vez.
+- **Troca de ofícios desligada:** nem a regra do ócio nem três desistências tiram mais o
+  aldeão do ofício. O teto de 15% da Regra 51 continua como medida.
+- **Lenhador:** corta a árvore mais perto dele, dentro do alcance da vila, e não mais a do
+  centro primeiro (a ordem "do centro para a borda" de 08-10 foi substituída).
+- **Pastor:** leva os animais para dentro do cercado com lugar mais perto da casa (até 5 por
+  cercado; com mais, tenta outro), entrando pelo portão. Sem cercado com lugar, amarra na cerca
+  mais perto, como antes. Sem cerca, põe um poste ao lado da casa com uma cerca do baú e amarra.
+  Com cercado com lugar, também leva para dentro quem estava só amarrado.
+
 ## [0.3.30] — depois do playtest da 0.3.29 (2026-10-11, JAR local, não jogado)
 
 Playtest de 1h50 (19:26–21:16). TPS 20, mod 3,3%. O Spark falhou ao enviar (sem rede) e

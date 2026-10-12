@@ -254,19 +254,18 @@ public final class TreeChoice {
     }
 
     /**
-     * Do centro da vila para a borda, e só então um pouco fora — pedido do autor,
-     * 2026-10-08 ({@link com.villagecolony.core.coordination.VillageZone}). Entre as
-     * conhecidas vale a faixa mais de dentro e, nela, a mais perto dele; sem
-     * conhecida, a varredura parte do centro da caixa, e a primeira que ela acha é
-     * a mais central. Substitui o rodízio centro ↔ borda do ADR-036 item 18 para o
-     * lenhador: com ele, árvore a 134 blocos ganhava da que estava na praça.
+     * A árvore mais perto do lenhador, dentro do alcance da vila (a caixa + a margem
+     * de {@link com.villagecolony.core.coordination.VillageZone}) — pedido do autor,
+     * 2026-10-11, que substitui a ordem "do centro para a borda" de 10-08. Entre as
+     * conhecidas, a mais perto dele; sem conhecida, a varredura parte de onde ele está.
      */
     static Optional<BlockPos> byZone(ServerWorld world, LumberjackWork.Job job, VillagerEntity villager,
             com.villagecolony.core.colony.model.VillageBounds box) {
 
+        // A árvore mais perto DELE, dentro do alcance da vila — pedido do autor, 2026-10-11,
+        // que substitui o "do centro para a borda" de 10-08: no playtest da 0.3.29 a faixa
+        // mandava o lenhador a ~100 blocos, e ele andou 73% do expediente.
         int margin = ResourceSearches.marginOf(job.task.colonyId(), ProfessionType.LUMBERJACK);
-        java.util.function.ToIntFunction<BlockPos> zone = log -> com.villagecolony.core.coordination.VillageZone
-                .of(box, log.getX(), log.getZ(), margin).rank();
         java.util.function.Predicate<BlockPos> usable = log -> com.villagecolony.core.coordination.VillageZone
                         .of(box, log.getX(), log.getZ(), margin).withinReach()
                 && !TreeClaims.isTaken(log)
@@ -274,13 +273,12 @@ public final class TreeChoice {
                 && !TreeMarks.isOutOfReach(world, log);
 
         Optional<BlockPos> tree = com.villagecolony.fabric.integration.VillageTrees.nearest(
-                world, job.task.colonyId(), villager.getBlockPos(), usable, zone);
+                world, job.task.colonyId(), villager.getBlockPos(), usable);
 
         if (tree.isEmpty()) {
-            BlockPos centre = new BlockPos(box.centerX(), job.center.getY(), box.centerZ());
             int radius = Math.max(box.sizeX(), box.sizeZ()) / 2 + margin;
 
-            tree = TreeScanner.findNearestLog(world, centre, radius, usable);
+            tree = TreeScanner.findNearestLog(world, villager.getBlockPos(), radius, usable);
             tree.ifPresent(found -> com.villagecolony.fabric.integration.VillageTrees.rememberTree(
                     job.task.colonyId(), found));
         }

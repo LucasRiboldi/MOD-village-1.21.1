@@ -8,12 +8,15 @@ Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
 ## 🔴 Autossuficiência 11-10 (`claude/autossuficiencia`; `docs/research/2026-10-11-autossuficiencia-e-ocio.md`)
 
+- [ ] **Playtest da 0.3.31:** `brought a … into the pen`, `put a post`/amarração ao lado da casa; lenhador andando
+      bem menos que 73%; `stocked X xN` (uma linha por peça, não N); nenhuma linha `leaves it for`.
+- [ ] 🟡 Argila: a busca do fundidor não achou (`clay … found none`); com o surgimento da quantidade toda a
+      obra não espera mais, mas a rota da terracota segue sem argila no alcance.
+- [ ] 🟡 `Worker.giveUpProfession` e o castigo de ofício (`ProfessionShun`) ficaram sem chamador em produção
+      com a troca desligada; remover se a decisão ficar.
 - [ ] **Playtest da 0.3.30:** mineração acima de 25/min sem `refused N times` crescendo na mesma pedra;
       nenhuma obra parada com 1 bloco e `no build task`; poucas linhas `leaves it for where the village needs hands`.
-- [ ] 🟠 Lenhador anda 73% do expediente: escolhe árvores a ~100 blocos dele, na borda de uma caixa de vila
-      de 105×157; o bosque não recebe as mudas porque essas árvores ficam a menos de 15 da borda.
-- [ ] 🟠 Terracota branca saiu pela regra do minuto (47 peças): a argila não foi achada (`clay … found none`).
-- [ ] 🟡 Pastor: 65 vezes `no sheep with wool within the radius`; 6 pastores no fim por causa da ciranda.
+- [x] Lenhador longe, terracota uma a uma, pastor sem lã/ciranda: tratados na 0.3.31 (medir no playtest).
 - [ ] **Playtest da 0.3.28 (cobertura de blocos):** `asks the carpenter to stock`/`smelter workshop`,
       `stocked 8 of`; pastor e fazendeiro fazendo peça de bancada sem largar a coleta; `gathered N POPPY`
       etc. Medir se o estoque de 8 gasta madeira antes da obra (`docs/research/2026-10-11-cobertura-de-blocos.md`).
