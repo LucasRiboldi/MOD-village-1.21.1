@@ -444,6 +444,7 @@ final class ColonyCycleRunner {
         LumberjackWork.run(world, colony);
         MinerWork.run(world, colony);
         SmelterWork.run(world, colony);
+        com.villagecolony.fabric.work.SmelterAdvance.smeltForIdleSmelters(world, colony);
         SurfaceGatheringWork.run(world, colony);
         ShepherdWork.run(world, colony);
         FarmerWork.run(world, colony);

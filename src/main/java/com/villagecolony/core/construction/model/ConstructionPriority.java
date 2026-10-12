@@ -57,4 +57,13 @@ public enum ConstructionPriority {
     public boolean requiresHouse() {
         return this != ROTATION_NON_RESIDENTIAL && this != WORKSHOP;
     }
+
+    /**
+     * Se esta vez levanta uma casa — autor, 2026-10-12: casa só quando falta cama (ou a
+     * primeira da vila). Na vez da casa do rodízio, sem falta de cama, vai a oficina ou a
+     * roça que falte, e sem nada a fazer nenhuma obra.
+     */
+    public boolean buildsHouse() {
+        return this == HOUSING_DEFICIT || this == FIRST_HOUSE;
+    }
 }

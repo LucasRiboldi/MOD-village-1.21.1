@@ -62,4 +62,14 @@ class ConstructionPriorityTest {
         assertEquals(ConstructionPriority.ROTATION_NON_RESIDENTIAL,
                 ConstructionPriority.decide(true, true, 6, 6, false));
     }
+
+    /** Casa só com falta de cama ou a primeira — autor, 2026-10-12. */
+    @Test
+    void aHouseIsBuiltOnlyWhenBedsAreShort() {
+        assertTrue(ConstructionPriority.decide(true, true, 7, 6, false).buildsHouse(), "faltam camas");
+        assertTrue(ConstructionPriority.decide(false, false, 6, 6, false).buildsHouse(), "a primeira casa");
+        assertFalse(ConstructionPriority.decide(true, false, 6, 6, false).buildsHouse(),
+                "camas de sobra: a vez da casa do rodízio não levanta casa");
+        assertFalse(ConstructionPriority.WORKSHOP.buildsHouse());
+    }
 }

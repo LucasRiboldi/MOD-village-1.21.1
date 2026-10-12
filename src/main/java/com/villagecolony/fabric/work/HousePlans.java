@@ -294,11 +294,9 @@ public final class HousePlans {
             }
         }
 
-        if (nextConstructionPriority(buildings, adults, beds).requiresHouse()) {
-            return plansFor(world, colony);
-        }
-
-        return nonHousePlansFor(world, colony, previous, buildings);
+        // Casa só com falta de cama ou a primeira (autor, 10-12); senão oficina/roça que falte.
+        ConstructionPriority priority = nextConstructionPriority(buildings, adults, beds);
+        return priority.buildsHouse() ? plansFor(world, colony) : nonHousePlansFor(world, colony, previous, buildings);
     }
 
     /** O tipo semântico de uma planta, usado para o rodízio A/B. */
@@ -364,8 +362,7 @@ public final class HousePlans {
         // sem roça, a roça sai do rodízio; com, ela vem antes das outras.
         boolean farmOwed = ColonyFarms.owedToTheFarmers(world, colony);
 
-        // A lâmpada Vanilla fica na raiz de `village/<style>/`, fora de
-        // `houses/`; as demais oficinas e roças continuam na pasta de lotes.
+        // A lâmpada fica em `village/<style>/`; oficinas e roças, na pasta de lotes.
         for (ResourceId id : VillageStructures.buildableFor(style)) {
             String type = constructionType(id);
 
@@ -401,7 +398,10 @@ public final class HousePlans {
 
         if (chosen.isPresent()) {
             List<Blueprint> plans = byType.get(chosen.get());
-            List<Blueprint> mixed = PlanOrdering.mixed(plans, seedFor(colony));
+            // A roça grande primeiro; a menor só onde a grande não cabe (autor, 2026-10-12).
+            List<Blueprint> mixed = "farm".equals(chosen.get())
+                    ? plans.stream().sorted(Comparator.comparingInt(HousePlans::volumeOf).reversed()).toList()
+                    : PlanOrdering.mixed(plans, seedFor(colony));
 
             Set<ResourceId> skipped = new HashSet<>();
 

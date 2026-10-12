@@ -161,6 +161,7 @@
       "com.villagecolony.fabric.work.NetworkDiggingGameTest",
       "com.villagecolony.fabric.work.ShepherdFeedingGameTest",
       "com.villagecolony.fabric.work.OutskirtsPlantingGameTest",
+      "com.villagecolony.fabric.work.SmelterAdvanceGameTest",
       "com.villagecolony.fabric.work.MineDescentLeaseGameTest",
       "com.villagecolony.fabric.brain.BrainHeartbeatGameTest",
       "com.villagecolony.gametest.SmeltInputGameTest",
