@@ -132,17 +132,6 @@ public final class Worker {
     private boolean stranded;
 
     /**
-     * Quantas desistências seguidas bastam para ele trocar de ofício.
-     *
-     * <p>Três, e não uma: desistir uma vez é o caso comum e saudável — a
-     * árvore atrás do rio, a pedra emparedada —, e o {@link #rest} já dá
-     * a resposta certa para ele. Três dentro da janela é outra coisa: é a
-     * capacidade inteira sendo impossível nesta colônia, e nenhuma escolha
-     * de alvo conserta isso.
-     */
-    private static final int STRIKES_BEFORE_GIVING_UP = 3;
-
-    /**
      * Por quantas passagens uma desistência conta para a soma.
      *
      * <p>Doze — três vezes o {@link #REST_CYCLES}, com folga para as três
@@ -351,28 +340,11 @@ public final class Worker {
     public void rest(Capability capability) {
         resting.put(Objects.requireNonNull(capability, "capability"), REST_CYCLES);
 
-        // <b>E é aqui que o verificador escala</b> — 2026-09-10, decisão
-        // do autor. Esta chamada é a porta por onde toda profissão avisa
-        // que desistiu, e por isso é o único lugar do projeto que vê o
-        // trabalhador teimar sem precisar saber de mina, árvore ou roça.
-        //
-        // Descansar a capacidade resolve o caso de UMA parede: a passagem
-        // seguinte prefere outra coisa. O que ele não resolve é a colônia
-        // em que a capacidade inteira é impossível — a mina sem pedra
-        // alcançável, a roça fora do raio —, e aí o trabalhador volta à
-        // mesma parede a cada quatro passagens para sempre. Três
-        // desistências dentro da janela são prova disso, e a resposta é
-        // trocar de ofício. Ver giveUpProfession.
-        int strike = strikes.merge(capability, 1, Integer::sum);
-
+        // As desistências só se contam (relatório): ele não troca mais de ofício por
+        // elas — o autor desligou a troca de ofícios em 2026-10-11 ("vira um tanto
+        // faz"). O descanso acima basta para a passagem seguinte preferir outra coisa.
+        strikes.merge(capability, 1, Integer::sum);
         strikesLeft.put(capability, STRIKE_MEMORY);
-
-        if (strike >= STRIKES_BEFORE_GIVING_UP) {
-            strikes.remove(capability);
-            strikesLeft.remove(capability);
-
-            giveUpProfession();
-        }
     }
 
     /**

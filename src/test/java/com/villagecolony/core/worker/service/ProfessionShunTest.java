@@ -117,12 +117,11 @@ class ProfessionShunTest {
     }
 
     /**
-     * <b>Três dentro da janela tiram</b> — é o verificador escalando. A
-     * terceira é prova de que não é a parede, é a capacidade inteira:
-     * mina sem pedra alcançável, roça fora do raio.
+     * <b>Três dentro da janela não tiram mais</b> — o autor desligou a troca de ofícios
+     * em 2026-10-11 ("vira um tanto faz"). A desistência só descansa a capacidade.
      */
     @Test
-    void threeGiveUpsInTheWindowLeaveTheTrade() {
+    void threeGiveUpsInTheWindowKeepTheTrade() {
         Worker worker = aWorker();
 
         worker.assign(ProfessionType.LUMBERJACK);
@@ -131,11 +130,8 @@ class ProfessionShunTest {
         worker.rest(Capability.COLLECT_WOOD);
         worker.rest(Capability.COLLECT_WOOD);
 
-        assertFalse(
-                worker.hasProfession(),
-                "ele teimou três vezes e continuou no mesmo ofício");
-
-        assertTrue(worker.isShunning(ProfessionType.LUMBERJACK));
+        assertTrue(worker.hasProfession(), "a troca de ofícios está desligada: ele devia continuar lenhador");
+        assertFalse(worker.isShunning(ProfessionType.LUMBERJACK));
     }
 
     /**

@@ -213,7 +213,7 @@ public final class BiomeConstructionSupply {
     public static boolean stock(
             ServerWorld world, UUID colonyId, ColonyPos near, Item item) {
 
-        return stock(world, ColonyChests.nearestFirst(world, colonyId, near), item);
+        return stock(world, ColonyChests.nearestFirst(world, colonyId, near), item, askedByTheBuild(colonyId, item));
     }
 
     /**
@@ -223,7 +223,18 @@ public final class BiomeConstructionSupply {
     public static boolean stockForConstruction(
             ServerWorld world, UUID colonyId, ColonyPos near, Item item) {
 
-        return stock(world, chestsOf(world, colonyId, near, ProfessionType.BUILDER), item);
+        return stock(world, chestsOf(world, colonyId, near, ProfessionType.BUILDER), item,
+                askedByTheBuild(colonyId, item));
+    }
+
+    /** Quanto da peça a obra ainda pede (mínimo 1): surge tudo de uma vez — autor, 2026-10-11. */
+    static int askedByTheBuild(UUID colonyId, Item item) {
+        ResourceId id = MinecraftTypeAdapter.toResourceId(Block.getBlockFromItem(item));
+
+        return VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
+                .map(project -> project.remainingMaterials().getOrDefault(id, 0))
+                .filter(asked -> asked > 0)
+                .orElse(1);
     }
 
     /**
@@ -329,30 +340,29 @@ public final class BiomeConstructionSupply {
         return chests;
     }
 
-    private static boolean stock(ServerWorld world, List<ColonyPos> chests, Item item) {
+    private static boolean stock(ServerWorld world, List<ColonyPos> chests, Item item, int asked) {
         // Natureza também, desde 2026-10-03: quem chega aqui não tem rota no
-        // bioma e falhou quatro vezes (ADR-036 item 6).
-        if (ColonyChests.countIn(world, chests, item) > 0) {
+        // bioma e falhou quatro vezes (ADR-036 item 6). Surge o que falta até o
+        // que a obra pede, de uma vez.
+        int missing = asked - ColonyChests.countIn(world, chests, item);
+
+        if (missing <= 0) {
             return true;
         }
 
-        Optional<ColonyPos> chest = ColonyChests.firstWithRoomFor(world, chests, item, 1);
+        int left = ColonyChests.deposit(world, chests, item, missing);
 
-        if (chest.isEmpty()) {
+        if (left == missing) {
             VillageColonyMod.LOGGER.info(
                     "The colony could stock {} for construction but every colony chest is full",
                     item);
             return false;
         }
 
-        if (ChestDepositor.deposit(world, chest.get(), item, 1) != 0) {
-            return false;
-        }
-
         VillageColonyMod.LOGGER.info(
-                "The colony stocked {} for construction after {} cycles without a delivery"
+                "The colony stocked {} x{} for construction after {} cycles without a delivery"
                         + " — no route delivered it (none in this biome, or one only on paper)",
-                item, DISPATCHES_BEFORE_STOCKING);
+                item, missing - left, DISPATCHES_BEFORE_STOCKING);
         logSupplyError(item, ProfessionType.BUILDER, DISPATCHES_BEFORE_STOCKING, "no route delivered it");
         return true;
     }
