@@ -50,6 +50,9 @@ final class MinerSteps {
     /** Quantos blocos abaixo do destino, sem desvio, tornam o mineiro encalhado. */
     static final int CLIMB_OUT_BELOW = 2;
 
+    /** Desistências seguidas num ramal, sem pedra cavada entre elas, antes de ele acabar. */
+    static final int UNREACHABLE_BEFORE_DONE = 3;
+
     private MinerSteps() {
     }
 
@@ -254,6 +257,13 @@ final class MinerSteps {
                 // MineDigging.armToWalk: os dois deixaram de ser o mesmo
                 // quando a mina ganhou quatro rumos, e a tarefa de areia
                 // nunca reservou rumo nenhum.
+                // O jogo já acha o caminho até a pedra: direto, sem perna (MinerDirectPath).
+                if (MinerDirectPath.reaches(world, villager, job.approach)) {
+                    WorkTargets.set(workerId, job.approach, MinerReach.ARRIVAL);
+
+                    return false;
+                }
+
                 if (down.isPresent()) {
                     WorkTargets.set(workerId, down.get(), MinerReach.ARRIVAL);
 
@@ -344,8 +354,16 @@ final class MinerSteps {
         boolean belowItsWay = WorkTargets.of(villager.getUuid())
                 .map(way -> way.getY() - villager.getBlockY() >= CLIMB_OUT_BELOW)
                 .orElse(false);
+        Optional<MineArm> arm = MineDigging.armOf(job.task.colonyId(), villager.getUuid());
 
         MinerHands.giveUp(world, villager.getUuid(), job, why);
+
+        // O ramal cuja pedra ninguém alcança acaba: sem isso o nível não descia nunca e a
+        // mina morria com um ramal só aberto (playtest 0.3.32, 11 desistências, 0 cavado).
+        if (arm.isPresent() && !arm.get().isDone() && arm.get().blockedAgain(UNREACHABLE_BEFORE_DONE)) {
+            VillageColonyMod.LOGGER.info("Mine {} closes a branch after {} stones nobody could reach — {}",
+                    job.task.colonyId().toString().substring(0, 8), UNREACHABLE_BEFORE_DONE, why);
+        }
 
         // Dois ou mais abaixo de para onde ia, sem desvio: aldeão sobe um, e devolver a
         // tarefa o deixava girando no mesmo buraco a cada pega (playtest 0.3.31, "5 blocks

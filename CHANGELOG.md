@@ -11,6 +11,20 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.34] — mineiro destravado; proposta da mina em rede (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **Mineiro 0% (playtest 0.3.32):** os mineiros desceram por quedas de 3 blocos e não voltavam; a
+  perna da mina os mandava para a entrada do nível pelo degrau, e não à pedra que estava a pé.
+  Agora, quando a navegação do jogo chega ao lugar de pé da pedra, ele vai direto
+  (`MinerDirectPath`).
+- **Mina parada com um ramal só aberto:** o nível só descia com os quatro ramais terminados, e o
+  ramal cuja pedra ninguém alcança nunca terminava. Três desistências seguidas o terminam.
+
+### Documentado
+- Pesquisa da mina (save, MineColonies, Baritone) e proposta ADR-042 "mina em rede", aguardando o
+  autor.
+
 ## [0.3.33] — obra esperando tijolo (2026-10-12, JAR local, não jogado)
 
 ### Corrigido

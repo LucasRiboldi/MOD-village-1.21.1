@@ -463,6 +463,7 @@ public final class MinerWork {
 
         WorkTargets.clear(workerId);
         SandGathering.forget(workerId);
+        MinerDirectPath.forget(workerId);
 
         // Na hora, e não no ciclo seguinte: morte e zumbificação passam
         // por aqui, e a mina não fica meio minuto fechada por causa de

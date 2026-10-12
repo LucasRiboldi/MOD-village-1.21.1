@@ -10,9 +10,8 @@ Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
 - [ ] 🔴 Obra com `bricks`: tarefas de `clay_ball` e `brick` abrem (`SMELT_MATERIAL brick` no diário),
       tijolo chega e a obra fecha.
-- [ ] 🔴 Mineiro 0% trabalhando em 12-10: 3 de 4 ramais esgotados e o aberto com pedra a 20–27 blocos
-      que ele não alcança (11 "got no closer"). Descer o nível quando os ramais acabam, ou largar o
-      ramal inalcançável.
+- [ ] 🔴 Mineiro (0.3.34): `MINED` acima de zero, `closes a branch` e `went one level deeper` no log.
+- [ ] 🔴 ADR-042 "mina em rede" aguardando o autor (`docs/decisions/ADR-042-mina-em-rede.md`).
 - [ ] 🟠 "the builder left the colony" (1×) — conferir por que o construtor saiu da colônia.
 
 ## 🔴 Playtest da 0.3.32 (`docs/research/2026-10-11-fluxos-das-profissoes-031.md`)

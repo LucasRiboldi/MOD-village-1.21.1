@@ -1,5 +1,11 @@
 # STATE — 2026-10-11
 
+> **0.3.34** (12-10): mineiro destravado — caminho direto pela navegação do jogo e ramal inalcançável
+> termina ([`docs/research/2026-10-12-mineiro-mina-em-rede.md`](docs/research/2026-10-12-mineiro-mina-em-rede.md)).
+> Verificado: test 1475/0; runGametest 742/742. **JAR instalado: `village-colony-0.3.34.jar`** =
+> `1975DF2FA50BE95DFEAFD29DB3D2D3D800D72B9F139FFDB2B5A43B98911B9BE1` (três cópias; 0.3.33 `.jar.disabled`).
+> **ADR-042 (mina em rede) aguardando o autor.**
+
 > **0.3.33** (12-10): a obra esperava `bricks` para sempre — a cadeia não descia a receita de peça
 > sem recurso declarado ([`docs/research/2026-10-12-obra-esperando-tijolo.md`](docs/research/2026-10-12-obra-esperando-tijolo.md)).
 > Verificado: test 1475/0; runGametest 741/741; mutação nos testes de tijolo (0 sem a correção).
