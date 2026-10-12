@@ -1,5 +1,11 @@
 # STATE — 2026-10-11
 
+> **0.3.35** (12-10): **mina em rede (ADR-042, aceita e aplicada)** — nós a cada 7 blocos, um mineiro
+> por nó, veio primeiro, piso garantido e cavernas/fluidos vedados, rota pelo que está pronto,
+> descida por nível esgotado, caminhos laterais no fundo, gravado no save. **Não jogado.**
+> Verificado: test 1485/0; runGametest 744/744 (mutação: sem piso garantido e sem fim dos ramais, os
+> testes caem). **JAR instalado: `village-colony-0.3.35.jar`** = `CCEAD667B72C4FF712D74CEF86466832C0D65F252EC398365F2F50514477D436`.
+
 > **0.3.34** (12-10): mineiro destravado — caminho direto pela navegação do jogo e ramal inalcançável
 > termina ([`docs/research/2026-10-12-mineiro-mina-em-rede.md`](docs/research/2026-10-12-mineiro-mina-em-rede.md)).
 > Verificado: test 1475/0; runGametest 742/742. **JAR instalado: `village-colony-0.3.34.jar`** =

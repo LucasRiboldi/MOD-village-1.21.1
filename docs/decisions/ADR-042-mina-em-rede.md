@@ -1,6 +1,6 @@
 # ADR-042 — Mina em rede: poço seguro, níveis em grafo e caminho só pelo que está pronto
 
-**Estado:** proposta, aguardando o autor (2026-10-12).
+**Estado:** aceita pelo autor e aplicada na 0.3.35 (2026-10-12: "apliquem tudo").
 **Pesquisa:** [`docs/research/2026-10-12-mineiro-mina-em-rede.md`](../research/2026-10-12-mineiro-mina-em-rede.md).
 
 ## Contexto
@@ -46,3 +46,21 @@ volta subindo, sempre seguro, pondo bloco para subir.
 - Gasto de pedregulho no piso e na vedação, coberto pelo que a própria mina produz.
 - Decisões em aberto para o autor: altura entre níveis (proposta: 8); largura do corredor (3);
   teto do veio (proposta: 64 blocos); escadaria ou escada de mão (D1).
+
+## Como foi aplicada (0.3.35)
+
+| # | Onde | Como ficou |
+|---|---|---|
+| D1 | `NetworkSafety.secureShaft` | A escadaria em caracol de hoje continua sendo o poço (degrau de 1, salão por nível); ao entrar na fase das galerias, o piso de toda célula da escadaria e do salão é garantido e as aberturas para caverna e fluido são vedadas (a boca do nível, 3 blocos abaixo da entrada, fica aberta para o de cima). |
+| D2 | `MineNetwork` | Grade de 7 blocos, corredor 3 × 3, raio de 4 nós (9 × 9 nós por nível). |
+| D3 | `MineNetwork.claim` | Cada mineiro pega o nó aberto mais perto dele; a escadaria e o salão continuam com um mineiro só. |
+| D4 | `NetworkVeins` | Minério na parede do corredor passa à frente; o veio é seguido até 64 blocos, só ao alcance do corredor e nunca abaixo do piso. |
+| D5 | `NetworkRoute`, `MinerDirectPath` | Caminho direto quando a navegação do jogo chega; senão, de centro em centro de nó pronto até o pai do nó em obra. |
+| D6 | `NetworkDigging`, `NetworkSafety.secureCorridor` | Nó com fluido no centro, ou cuja pedra segura fluido, é vedado; corredor pronto tem piso garantido e aberturas vedadas com o enchimento dos baús (pedregulho primeiro). |
+| D7 | `NetworkDigging.nextOrDescend` | Sem nó aberto nem em obra, os ramais antigos terminam e a escadaria desce um nível. |
+| D8 | `NetworkDigging.nextOrDescend` | No fundo, o nível ganha até 4 anéis de caminhos laterais; depois a mina volta subindo pela rampa (`MineTrouble.climbOutAtBottom`) e abre boca nova na borda oposta. |
+| D9 | `MineSave` (`network`, `networkHub`) | O nível de agora é gravado; nó em obra volta aberto. A mina antiga do save vira o nível 0 da rede assim que o salão está cavado. |
+
+**Diferenças da proposta:** a altura entre níveis ficou em 10 (a da escadaria em caracol de dois
+lances de 5), não em 8; a segunda escadaria de volta (D8) é a rampa que já existia no fundo, e não
+uma escada por nível.

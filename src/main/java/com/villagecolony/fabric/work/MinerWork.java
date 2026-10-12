@@ -323,6 +323,7 @@ public final class MinerWork {
                 // A reserva também morre com a tarefa: esperar o ciclo
                 // seguinte manteria o ramal fechado sem um job que o use.
                 MineClaims.release(workerId);
+                NetworkDigging.release(workerId);
 
                 continue;
             }
@@ -455,6 +456,7 @@ public final class MinerWork {
         // só, e mina trancada por um aldeão que já não existe é pior
         // que dois cavando a mesma escada.
         MineClaims.retainOnly(JOBS.keySet());
+        NetworkDigging.retainOnly(JOBS.keySet());
     }
 
     /** Esquece o trabalho deste aldeão. Morte, zumbificação, dispensa. */
@@ -469,6 +471,7 @@ public final class MinerWork {
         // por aqui, e a mina não fica meio minuto fechada por causa de
         // um aldeão que já morreu.
         MineClaims.release(workerId);
+        NetworkDigging.release(workerId);
     }
 
     /** Esvazia o registro. Chamado ao parar o servidor. */

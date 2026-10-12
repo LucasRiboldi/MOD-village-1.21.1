@@ -11,6 +11,18 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.35] — mina em rede (ADR-042) (2026-10-12, JAR local, não jogado)
+
+### Mudado
+- **A mina vira rede** depois da escadaria e do salão de cada nível: corredores 3 × 3 ligando nós
+  a cada 7 blocos, até 4 nós do salão em cada direção; vários mineiros, um nó cada; o minério da
+  parede é seguido primeiro (até 64 blocos); quando o nível acaba, a mina desce; no fundo, abre
+  caminhos laterais e volta subindo pela rampa.
+- **Mina segura:** a escadaria, o salão e cada corredor pronto têm piso garantido; aberturas para
+  caverna e fluido são vedadas com pedregulho dos baús. Nó com água ou lava não se abre.
+- **Caminho só pelo que está pronto:** de nó pronto em nó pronto até o corredor em obra.
+- O nível em rede é gravado no save.
+
 ## [0.3.34] — mineiro destravado; proposta da mina em rede (2026-10-12, JAR local, não jogado)
 
 ### Corrigido

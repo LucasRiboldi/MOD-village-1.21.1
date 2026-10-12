@@ -66,7 +66,8 @@ public final class MineEntrance {
      * nível; a régua de 12 deixava o fim do ramal "fora da mina", e o mineiro na
      * superfície ia direto à entrada enterrada embaixo dele (playtest 0.3.31).
      */
-    static final int LEVEL_REACH = 28;
+    static final int LEVEL_REACH = com.villagecolony.core.construction.model.MineNetwork.SPACING
+            * com.villagecolony.core.construction.model.MineNetwork.RADIUS + 4;
 
     /** Quanto da escada de um rumo precisa estar aberto para ela contar como cavada. */
     static final double DUG_SHARE = 0.5;

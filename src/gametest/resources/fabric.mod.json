@@ -158,6 +158,7 @@
       "com.villagecolony.fabric.work.ReachMapGameTest",
       "com.villagecolony.fabric.work.MineEntranceGameTest",
       "com.villagecolony.fabric.work.MinerDirectPathGameTest",
+      "com.villagecolony.fabric.work.NetworkDiggingGameTest",
       "com.villagecolony.fabric.work.MineDescentLeaseGameTest",
       "com.villagecolony.fabric.brain.BrainHeartbeatGameTest",
       "com.villagecolony.gametest.SmeltInputGameTest",

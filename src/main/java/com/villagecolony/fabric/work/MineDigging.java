@@ -138,13 +138,16 @@ public final class MineDigging {
         Optional<Mine> mine = mineOf(world, workerId, colonyId, center);
 
         if (mine.isEmpty()) {
-            // A boca não pôde nascer. Em vez de a colônia ficar sem a
-            // única fonte de pedra que tem, ela raspa o que estiver
-            // exposto em volta — ver MineVein.exposedStone.
+            // A boca não pôde nascer: raspa o que estiver exposto (MineVein.exposedStone).
             return exposedStoneFallback(world, workerId, colonyId, center);
         }
 
         IdleLog.clear(colonyId, SURFACE_SUBJECT);
+
+        // Passada a escadaria e o salão, as galerias são em rede (ADR-042).
+        if (NetworkDigging.galleryPhase(mine.get())) {
+            return NetworkDigging.nextOrDescend(world, workerId, colonyId, mine.get(), center);
+        }
 
         // O ramal novo vai para o minério que a vila precisa — ADR-039 D3.
         int[] order = MineClaims.armAlreadyHeld(colonyId, workerId).isPresent()
@@ -157,12 +160,8 @@ public final class MineDigging {
                 colonyId, workerId, mine.get().branchesOpenNow(), index -> !mine.get().arm(index).isDone(), order);
 
         if (claimed.isEmpty()) {
-            // <b>Nenhum ramal aceita picareta agora</b>: ou os abertos
-            // estão todos com outros mineiros, ou todos acabaram. O
-            // segundo caso é o que faz a mina descer, e é aqui que ele se
-            // decide — antes ficava no ramo do {@code isDone} logo
-            // abaixo, que a reserva nunca deixava alcançar quando o ramal
-            // acabado continuava sendo entregue.
+            // Nenhum ramal aceita picareta: os abertos estão com outros, ou todos
+            // acabaram — e é este caso que faz a mina descer.
             Mine.LevelAdvance advance = mine.get().advanceIfEveryOpenArmIsDone();
 
             if (advance == Mine.LevelAdvance.DEEPENED) {
