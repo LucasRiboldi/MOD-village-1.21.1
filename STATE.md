@@ -1,4 +1,14 @@
-# STATE — 2026-10-11
+# STATE — 2026-10-12
+
+> **0.3.36** (12-10): **mina minera em vez de labirinto** (túnel 1 × 2 a cada 4, minério ao alcance
+> primeiro, segurança mínima; [análise](docs/research/2026-10-12-mina-labirinto.md)); retorno nunca fura
+> as 5 camadas sob a vila; uma oficina de cada tipo; casa só com falta de cama; roça grande primeiro;
+> fundidor, lenhador e pastor ociosos com trabalho; grama e flores surgem sozinhas. **Não jogado.**
+> Verificado: test 1487/0; runGametest 747/747 em 2 de 3 rodadas (a outra: `MinerDirectPathGameTest`,
+> instável conhecido). **JAR instalado: `village-colony-0.3.36.jar`** =
+> `C3E0D0F621D0069E2F59DBD38E00DFF618F0EA79CB7B78B7A882DBFEDC9AE0C0` (0.3.35 `.jar.disabled`).
+> **Decisão do autor aberta:** expansão do terreno, opções A–E em
+> [`docs/research/2026-10-12-expansao-do-terreno.md`](docs/research/2026-10-12-expansao-do-terreno.md).
 
 > **0.3.35** (12-10): **mina em rede (ADR-042, aceita e aplicada)** — nós a cada 7 blocos, um mineiro
 > por nó, veio primeiro, piso garantido e cavernas/fluidos vedados, rota pelo que está pronto,

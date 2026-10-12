@@ -6,6 +6,15 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Playtest da 0.3.36 (`docs/research/2026-10-12-mina-labirinto.md`)
+
+- [ ] 🔴 Mina: minério por bloco cavado bem acima de 2/1.411; sem `refused` em laço; mod abaixo de 3% no Spark.
+- [ ] 🔴 Retorno do mineiro sai fora da vila sem furar as 5 camadas.
+- [ ] 🟠 Lenhador ocioso planta (`planted N saplings outside`); fundidor ocioso adianta (`an idle smelter advanced`).
+- [ ] 🟠 Nenhuma oficina repetida; casa só com falta de cama; roça nova grande.
+- [ ] 🟠 Pastor alimenta com a comida que houver.
+- [ ] 🟠 **Expansão do terreno — decisão do autor** (`docs/research/2026-10-12-expansao-do-terreno.md`, opções A–E).
+
 ## 🔴 Playtest da 0.3.33 (`docs/research/2026-10-12-obra-esperando-tijolo.md`)
 
 - [ ] 🔴 Obra com `bricks`: tarefas de `clay_ball` e `brick` abrem (`SMELT_MATERIAL brick` no diário),

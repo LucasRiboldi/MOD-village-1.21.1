@@ -11,6 +11,23 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.36] — mina minera; vila planeja por falta (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **Mina em labirinto (playtest 0.3.35):** 1.411 blocos cavados deram 2 de ferro. A rede passa a
+  túneis de ramal 1 × 2 a cada 4 blocos; todo minério ao alcance do braço a partir de um túnel aberto
+  vem antes do túnel; a segurança só garante piso, fluido encostado e beirada de queda, e espera sem
+  reler os baús quando falta enchimento ([análise](docs/research/2026-10-12-mina-labirinto.md)).
+- **O retorno do mineiro subindo nunca quebra as 5 camadas sob a vila.**
+
+### Mudado
+- **Uma oficina de cada tipo:** com todas de pé, nenhuma se repete. **Casa só quando faltam camas.**
+- **Roça grande primeiro;** a menor só onde a grande não cabe.
+- **Fundidor ocioso adianta o cru** que sobra nos baús (8 por ciclo; fica a reserva da obra + 16).
+- **Lenhador ocioso planta mudas** de tipos sorteados até 10 blocos fora da caixa da vila.
+- **Pastor alimenta com qualquer comida** que o animal aceite, 2 pares por espécie a cada minuto.
+- **Grama, capim e flores** da planta aparecem sozinhos; a obra não os pede.
+
 ## [0.3.35] — mina em rede (ADR-042) (2026-10-12, JAR local, não jogado)
 
 ### Mudado
