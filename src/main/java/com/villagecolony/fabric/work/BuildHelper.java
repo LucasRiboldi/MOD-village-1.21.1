@@ -27,8 +27,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Quem está parado ajuda na obra — pedidos do autor de 2026-10-08 (o pastor) e de
- * 2026-10-11 (o carpinteiro e o pedreiro com o estoque no teto,
+ * Quem está parado ajuda na obra — pedido do autor de 2026-10-11 (o carpinteiro e o
+ * pedreiro com o estoque no teto,
  * {@code StockCeiling}): <i>"no tempo livre, ajudar o construtor para as obras
  * nascerem mais rápido, com mais um adicionando blocos"</i>.
  *
@@ -55,12 +55,10 @@ public final class BuildHelper {
     static final int MIN_REMAINING = 8;
 
     /**
-     * Os ofícios que ajudam a obra quando estão sem tarefa. O fazendeiro entra com a
-     * roça descansando ({@link FieldRest}): nada maduro e nenhum canteiro vazio, e no
-     * playtest 0.3.31 ele passou 18 minutos andando sem colher nada (Regra 51).
+     * Os ofícios que ajudam a obra quando estão sem tarefa: carpinteiro e pedreiro. O
+     * fazendeiro e o pastor não ajudam — regra do autor, 2026-10-12.
      */
-    static final Set<ProfessionType> HELPS = EnumSet.of(
-            ProfessionType.SHEPHERD, ProfessionType.CARPENTER, ProfessionType.MASON, ProfessionType.FARMER);
+    static final Set<ProfessionType> HELPS = EnumSet.of(ProfessionType.CARPENTER, ProfessionType.MASON);
 
     /** Quantos ajudantes por colônia ao mesmo tempo. */
     static final int PER_COLONY = 2;
@@ -149,21 +147,13 @@ public final class BuildHelper {
 
             if (trade.isEmpty()
                     || isHelping(id)
-                    || !freeForTheBuild(world, colonyId, id)
+                    || !freeForTheBuild(id)
                     || tradeWaiting(world, colonyId, id)
                     || !(world.getEntity(id) instanceof VillagerEntity villager) || !villager.isAlive()
                     || StrandedWorkers.isStranded(id)
-                    || ShepherdHerding.isHerding(id)
                     || !HelperReach.mayTake(world, worker, project.get())) {
                 continue;
             }
-
-            // A colheita que ele segurava sem ter o que colher volta para a fila.
-            for (Task held : VillageColonyMod.TASKS.assignedTo(id)) {
-                held.release("nothing ripe — it helps the build");
-            }
-
-            FarmerWork.forget(id);
 
             Task help = VillageColonyMod.TASKS.create(colonyId, TaskType.BUILD, TaskPriority.CONSTRUCTION,
                     ResourceType.OAK_PLANKS, project.get().remainingCount());
@@ -182,32 +172,20 @@ public final class BuildHelper {
         }
     }
 
-    /**
-     * Se há tarefa do ofício deste aldeão esperando na fila. A colheita com a roça
-     * descansando não conta: não há o que colher.
-     */
+    /** Se há tarefa do ofício deste aldeão esperando na fila. */
     static boolean tradeWaiting(ServerWorld world, UUID colonyId, UUID workerId) {
         Set<Capability> own = VillageColonyMod.WORKERS.find(workerId)
                 .flatMap(Worker::profession)
                 .map(type -> ProfessionRegistry.of(type).capabilities())
                 .orElse(Set.of());
-        boolean fieldRests = FieldRest.isResting(colonyId, world.getTime());
 
         return VillageColonyMod.TASKS.availableFor(colonyId).stream()
-                .filter(task -> !(fieldRests && task.type() == TaskType.COLLECT_FOOD))
                 .anyMatch(task -> own.contains(task.type().required()));
     }
 
-    /**
-     * Sem tarefa do ofício na mão — ou, para o fazendeiro, só com a colheita na mão e a
-     * roça descansando.
-     */
-    private static boolean freeForTheBuild(ServerWorld world, UUID colonyId, UUID workerId) {
-        List<Task> held = VillageColonyMod.TASKS.assignedTo(workerId);
-
-        return held.isEmpty()
-                || (FieldRest.isResting(colonyId, world.getTime())
-                        && held.stream().allMatch(task -> task.type() == TaskType.COLLECT_FOOD));
+    /** Sem tarefa do ofício na mão. */
+    private static boolean freeForTheBuild(UUID workerId) {
+        return VillageColonyMod.TASKS.assignedTo(workerId).isEmpty();
     }
 
     /** Um bloco posto na obra por este aldeão; conta se ele é ajudante. */

@@ -83,6 +83,9 @@ regra que foi emendada. O corpo de cada regra vive em
 | 57 | O pastor põe no máximo um poste por casa e um por cercado (nenhum poste novo a até 6 blocos de um poste solto) | 10-12 | ✅ feita (0.3.38) | `ShepherdPens.postBesideHome`, `hasLonePostNear` |
 | 58 | Madeira e pedra cruas podem passar dos limites do baú do ofício e do teto por tipo: o excedente vai para os baús públicos da vila (sem ofício, fora a boca da mina) em vez de cair no chão ou se perder. Árvore nunca fica pela metade | 10-12 | ✅ feita (0.3.38) | `PublicChests`, `TreeFelling.finishTheTrunk`, `MinerHaul.deposit` |
 | 55 | Emenda (10-12, 0.3.38) | Grama, relva alta e flores da planta surgem sozinhas na obra, sem o construtor ir até elas (`GrowingPieces`) |
+| 56 | Emenda (10-12, 0.3.39) | Uma em cada 5 obras novas procura lote só na faixa de 16 blocos da borda da caixa (dentro ou fora); sem lote, a vez cai e não conta para anexar (`VillageExpansion.buildOpened/allowsLotAt`) |
+| 58 | Emenda (10-12, 0.3.39) | Sem baú público, a vila põe um numa casa da colônia, encostado na parede e a mais de 2 blocos de porta (`PublicChestPlacement`); baú público é só o de dentro da caixa |
+| 59 | Ajudam a obra só carpinteiro e pedreiro (fazendeiro e pastor não); o carpinteiro guarda um pouco de toda peça de madeira e, sem tarefa, calça a rua como o construtor | 10-12 | ✅ feita (0.3.39) | `BuildHelper.HELPS`, `ItemStock.isWoodPiece`, `BuilderPaving.PAVERS` |
 | 53 | A boca da mina só nasce na faixa da borda da caixa da vila (até 8 blocos da linha, dentro ou fora); com a mina aberta, o mineiro sem ramal livre não cava pedra exposta na superfície | 10-11 | ✅ feita (0.3.32) | `MineEdge.nearTheEdge`, `MineDigging.mineOf`, `MineTrouble`, `MineDigging.exposedStoneFallback` |
 
 ---

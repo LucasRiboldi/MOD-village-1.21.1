@@ -110,4 +110,42 @@ class VillageExpansionTest {
         assertEquals(new VillageBounds(100, 60, 0, 115, 70, 49), VillageExpansion.stripOf(box, Side.EAST));
         assertEquals(new VillageBounds(0, 60, -16, 99, 70, -1), VillageExpansion.stripOf(box, Side.NORTH));
     }
+
+    @Test
+    void oneBuildInFiveLooksForALotOnTheEdge() {
+        UUID colony = UUID.randomUUID();
+        VillageBounds box = new VillageBounds(0, 60, 0, 99, 70, 99);
+
+        for (int opened = 1; opened < VillageExpansion.EDGE_EVERY - 1; opened++) {
+            VillageExpansion.buildOpened(colony);
+            assertFalse(VillageExpansion.isEdgeTurn(colony), "vez da borda depois de " + opened + " obras");
+        }
+
+        VillageExpansion.buildOpened(colony);
+
+        assertTrue(VillageExpansion.isEdgeTurn(colony));
+        assertFalse(VillageExpansion.allowsLotAt(colony, box, 50, 50), "o miolo serviu na vez da borda");
+        assertTrue(VillageExpansion.allowsLotAt(colony, box, 95, 50), "a faixa de dentro da borda não serviu");
+        assertTrue(VillageExpansion.allowsLotAt(colony, box, 110, 50), "a faixa de fora da borda não serviu");
+        assertFalse(VillageExpansion.allowsLotAt(colony, box, 130, 50), "longe da borda serviu");
+
+        VillageExpansion.buildOpened(colony);
+
+        assertFalse(VillageExpansion.isEdgeTurn(colony), "a vez da borda não acabou com a obra aberta");
+        assertTrue(VillageExpansion.allowsLotAt(colony, box, 50, 50));
+    }
+
+    @Test
+    void anEdgeTurnWithoutALotGivesWayAndDoesNotCountAsFull() {
+        UUID colony = UUID.randomUUID();
+
+        for (int opened = 0; opened < VillageExpansion.EDGE_EVERY - 1; opened++) {
+            VillageExpansion.buildOpened(colony);
+        }
+
+        assertFalse(VillageExpansion.sweptWithoutLot(colony));
+        assertFalse(VillageExpansion.isEdgeTurn(colony));
+        assertFalse(VillageExpansion.sweptWithoutLot(colony), "a varredura da borda contou para anexar");
+        assertTrue(VillageExpansion.sweptWithoutLot(colony));
+    }
 }

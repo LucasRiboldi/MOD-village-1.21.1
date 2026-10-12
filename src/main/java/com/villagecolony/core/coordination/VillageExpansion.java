@@ -27,6 +27,8 @@ import java.util.function.Predicate;
  *       encheu: ela mede os quatro lados e anexa {@link #STRIP} blocos no melhor.</li>
  *   <li><b>D</b> — a rua cresce primeiro pelas pontas voltadas para o lado escolhido; o
  *       lote nasce na beira dela ({@code RoadExtension}).</li>
+ *   <li><b>Borda</b> — uma em cada {@link #EDGE_EVERY} obras nasce na faixa da borda, para a
+ *       vila crescer mais depressa (autor, 2026-10-12).</li>
  * </ul>
  */
 public final class VillageExpansion {
@@ -50,7 +52,17 @@ public final class VillageExpansion {
     /** Com uma faixa anexada que ainda não deu lote, quantas varreduras até a próxima. */
     public static final int FULL_AGAIN_AFTER = 3 * FULL_AFTER;
 
+    /** De quantas obras novas uma nasce na borda da vila (autor, 2026-10-12). */
+    public static final int EDGE_EVERY = 5;
+
+    /** A faixa da borda: até quantos blocos da linha da caixa, por dentro ou por fora. */
+    public static final int EDGE_BAND = 16;
+
     private static final Map<UUID, Integer> MISSES = new HashMap<>();
+
+    private static final Map<UUID, Integer> OPENED = new HashMap<>();
+
+    private static final Set<UUID> EDGE_TURN = new HashSet<>();
 
     private static final Map<UUID, Side> SIDE = new HashMap<>();
 
@@ -105,6 +117,11 @@ public final class VillageExpansion {
      * @return se a vila encheu e deve anexar uma faixa agora
      */
     public static boolean sweptWithoutLot(UUID colonyId) {
+        if (EDGE_TURN.remove(colonyId)) {
+            // A vez da borda não achou lote: a próxima busca é a de sempre, e esta não conta.
+            return false;
+        }
+
         int misses = MISSES.merge(colonyId, 1, Integer::sum);
 
         if (misses < (PENDING.contains(colonyId) ? FULL_AGAIN_AFTER : FULL_AFTER)) {
@@ -151,7 +168,32 @@ public final class VillageExpansion {
         return Optional.ofNullable(SIDE.get(colonyId));
     }
 
+    /**
+     * Uma obra nova abriu num lote. Depois de {@code EDGE_EVERY - 1} obras, a seguinte é
+     * a vez da borda: o lote dela sai da faixa da borda ({@link #allowsLotAt}).
+     */
+    public static void buildOpened(UUID colonyId) {
+        EDGE_TURN.remove(colonyId);
+
+        if (OPENED.merge(colonyId, 1, Integer::sum) % EDGE_EVERY == EDGE_EVERY - 1) {
+            EDGE_TURN.add(colonyId);
+        }
+    }
+
+    /** Se a próxima obra desta colônia procura lote na borda. */
+    public static boolean isEdgeTurn(UUID colonyId) {
+        return EDGE_TURN.contains(colonyId);
+    }
+
+    /** Se um lote nesta coluna serve agora: na vez da borda, só na faixa da borda. */
+    public static boolean allowsLotAt(UUID colonyId, VillageBounds box, int x, int z) {
+        return !EDGE_TURN.contains(colonyId)
+                || (box.containsColumn(x, z, EDGE_BAND) && !box.containsColumn(x, z, -EDGE_BAND));
+    }
+
     public static void clearAll() {
+        OPENED.clear();
+        EDGE_TURN.clear();
         MISSES.clear();
         SIDE.clear();
         PENDING.clear();

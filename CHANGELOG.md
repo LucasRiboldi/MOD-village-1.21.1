@@ -11,6 +11,24 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.39] — baú público, carpinteiro na rua, obra na borda (2026-10-12, JAR local, não jogado)
+
+### Adicionado
+- **Baú público:** a vila sem nenhum ganha um dentro de uma casa da colônia — encostado numa
+  parede, a mais de 2 blocos de qualquer porta, com chão firme e teto; sai dos baús um baú pronto
+  ou 8 tábuas.
+- **Obra na borda:** uma em cada 5 obras novas procura lote só na faixa de 16 blocos da borda da
+  vila (por dentro ou por fora); sem lote ali, a busca seguinte volta ao normal.
+- **Carpinteiro:** guarda um pouco de todas as peças de madeira do jogo (escadas, lajes, cercas,
+  portões, portas, alçapões, placas de pressão, botões, placas, escada de mão), não só as do estilo
+  da vila; e, sem tarefa, calça as ruas como o construtor.
+
+### Mudado
+- **Fazendeiro e pastor não ajudam mais a obra;** só carpinteiro e pedreiro.
+
+### Corrigido
+- Baú público contava baú fora da caixa da vila (a varredura lê chunks inteiros).
+
 ## [0.3.38] — grama sozinha, árvore inteira, baús públicos, um poste (2026-10-12, JAR local, não jogado)
 
 ### Corrigido

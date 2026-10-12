@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.coordination.VillageExpansion;
+import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.fabric.integration.SweepState.RoadScan;
 import com.villagecolony.fabric.integration.SweepState.Sweep;
 import com.villagecolony.fabric.integration.BuildSiteScanner.Site;
@@ -128,6 +130,14 @@ public final class RoadsideSites {
 
         if (building != null) {
             building.add(ColonyRoads.column(x, z));
+        }
+
+        // Na vez da borda, só o lote na faixa da borda da vila (Regra 56).
+        if (VillageExpansion.isEdgeTurn(colonyId) && VillageColonyMod.COLONIES.find(colonyId)
+                .flatMap(Colony::bounds)
+                .filter(box -> !VillageExpansion.allowsLotAt(colonyId, box, x, z))
+                .isPresent()) {
+            return Optional.empty();
         }
 
         // A altura da rua, que a Regra 19 usa como régua do lote.

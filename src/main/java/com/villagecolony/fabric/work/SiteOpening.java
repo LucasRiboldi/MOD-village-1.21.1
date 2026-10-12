@@ -256,6 +256,7 @@ final class SiteOpening {
         }
 
         VillageColonyMod.CONSTRUCTIONS.register(project);
+        com.villagecolony.core.coordination.VillageExpansion.buildOpened(colony.id());
 
         // Lote um acima da rua: a porta não pode ficar dois degraus acima de
         // quem chega — decisão do autor, 2026-09-30. Ver DoorStep.

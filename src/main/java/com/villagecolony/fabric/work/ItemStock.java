@@ -21,6 +21,9 @@ import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.VillageStructures;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
+import net.minecraft.registry.tag.TagKey;
+import net.minecraft.registry.tag.ItemTags;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
@@ -40,7 +43,8 @@ import java.util.UUID;
  * criar um estoque de todos que futuras profissões vão precisar"</i>.
  *
  * <p>Os itens são os que as plantas do estilo da vila usam e os ingredientes deles,
- * descendo a receita até {@link #DEPTH} degraus; ficam os que a bancada faz e que são
+ * descendo a receita até {@link #DEPTH} degraus, e todas as peças de madeira do jogo
+ * ({@link #isWoodPiece}, autor 2026-10-12: "um pouco de todas as peças de madeira"); ficam os que a bancada faz e que são
  * da madeira (carpinteiro) ou do metal e do vidro (fundidor), pela divisão do
  * {@link CraftFamily}. Cada um vai até {@link #EACH}, em rodízio, sempre abaixo do
  * teto de 64 ({@code StockCeiling}). A obra vem antes: a ordem de estoque é uma
@@ -232,6 +236,9 @@ public final class ItemStock {
             layer = below;
         }
 
+        // Todas as peças de madeira do jogo, além das do estilo — autor, 2026-10-12.
+        Registries.ITEM.stream().filter(ItemStock::isWoodPiece).forEach(seen::add);
+
         Map<TaskType, List<Item>> byFamily = new HashMap<>();
 
         for (Item item : seen) {
@@ -243,6 +250,19 @@ public final class ItemStock {
         }
 
         return byFamily;
+    }
+
+    /** As famílias de peça de madeira que o carpinteiro guarda um pouco de cada. */
+    private static final List<TagKey<Item>> WOOD_PIECES = List.of(
+            ItemTags.WOODEN_STAIRS, ItemTags.WOODEN_SLABS, ItemTags.WOODEN_FENCES, ItemTags.FENCE_GATES,
+            ItemTags.WOODEN_DOORS, ItemTags.WOODEN_TRAPDOORS, ItemTags.WOODEN_PRESSURE_PLATES,
+            ItemTags.WOODEN_BUTTONS, ItemTags.SIGNS);
+
+    /** Se este item é peça de madeira: das famílias acima, ou escada de mão. */
+    static boolean isWoodPiece(Item item) {
+        ItemStack stack = new ItemStack(item);
+
+        return item == Items.LADDER || WOOD_PIECES.stream().anyMatch(stack::isIn);
     }
 
     static String pathOf(Item item) {

@@ -28,7 +28,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * O construtor sem obra calça a rua — pedido do autor, 2026-10-08 (A4): <i>"calça
+ * O construtor sem obra e o carpinteiro sem tarefa calçam a rua ({@link #PAVERS}) —
+ * pedido do autor, 2026-10-08 (A4), e do carpinteiro em 2026-10-12: <i>"calça
  * as ruas substituindo grama no meio de caminhos por caminho"</i>. No playtest das
  * 15:14 ele ficou 82% ocioso, com a obra esperando material ou entre uma obra e outra.
  *
@@ -53,6 +54,12 @@ public final class BuilderPaving {
 
     /** Até onde ele conta como "ao lado" do bloco a calçar. */
     static final int REACH = 3;
+
+    /**
+     * Quem calça a rua quando está sem tarefa: o construtor e o carpinteiro — o
+     * carpinteiro por regra do autor, 2026-10-12.
+     */
+    static final Set<ProfessionType> PAVERS = java.util.EnumSet.of(ProfessionType.BUILDER, ProfessionType.CARPENTER);
 
     /** Quanto ele anda até um bloco antes de desistir dele. */
     static final int GIVE_UP_AFTER = 600;
@@ -115,7 +122,7 @@ public final class BuilderPaving {
     /** Uma passagem desta colônia: segue o calçamento em curso, ou acha o próximo bloco. */
     static void pass(ServerWorld world, Colony colony) {
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
-            if (worker.profession().filter(ProfessionType.BUILDER::equals).isEmpty()) {
+            if (worker.profession().filter(PAVERS::contains).isEmpty()) {
                 continue;
             }
 

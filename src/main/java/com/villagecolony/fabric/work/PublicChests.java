@@ -35,8 +35,11 @@ final class PublicChests {
                 .flatMap(at -> MineMouth.chestAt(world, at))
                 .map(MinecraftTypeAdapter::toColonyPos);
 
+        // Fora da caixa é fora de alcance, como em ColonyChests: a varredura lê chunks inteiros.
         return VillageColonyMod.COLONIES.find(colonyId)
-                .map(colony -> VillageChests.around(world, colony, List.of()))
+                .map(colony -> VillageChests.around(world, colony, List.of()).stream()
+                        .filter(chest -> colony.bounds().map(box -> VillageChests.isInside(box, chest)).orElse(true))
+                        .toList())
                 .orElse(List.of()).stream()
                 .filter(chest -> mouth.map(at -> !at.equals(chest)).orElse(true))
                 .sorted(Comparator.comparingLong((ColonyPos chest) -> chest.horizontalDistanceSquared(from)))

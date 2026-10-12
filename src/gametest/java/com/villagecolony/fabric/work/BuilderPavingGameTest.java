@@ -5,6 +5,9 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.gametest.ColonyFixture;
+import com.villagecolony.core.worker.model.ProfessionType;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
@@ -69,6 +72,58 @@ public class BuilderPavingGameTest implements FabricGameTest {
                 }
             }
 
+            owned.cleanUp();
+            BuilderPaving.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /** O carpinteiro sem tarefa também calça a rua — regra do autor, 2026-10-12. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "carpenter_paving")
+    public void anIdleCarpenterPavesTheRoad(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        for (int x = 0; x <= 6; x++) {
+            for (int z = 1; z <= 5; z++) {
+                world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y, z)),
+                        z == 3 && x != 3 ? Blocks.DIRT_PATH.getDefaultState() : Blocks.GRASS_BLOCK.getDefaultState());
+            }
+        }
+
+        BlockPos low = context.getAbsolutePos(new BlockPos(0, Y - 2, 1));
+        BlockPos high = context.getAbsolutePos(new BlockPos(6, Y + 2, 5));
+        Colony colony = Colony.create(UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(3, Y + 1, 3))));
+
+        colony.measure(new VillageBounds(low.getX(), low.getY(), low.getZ(), high.getX(), high.getY(), high.getZ()));
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+        VillagerEntity carpenter = EntityType.VILLAGER.create(world);
+        BlockPos stand = context.getAbsolutePos(new BlockPos(1, Y + 1, 2));
+
+        carpenter.refreshPositionAndAngles(stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, 0, 0);
+        world.spawnEntity(carpenter);
+        world.setTimeOfDay(2_000);
+        VillageColonyMod.WORKERS.register(carpenter.getUuid(), colony.id()).assign(ProfessionType.CARPENTER);
+        owned.owning(carpenter.getUuid());
+
+        try {
+            BuilderPaving.pass(world, colony);
+
+            // Ao alcance do buraco, ele calça na mesma passada; longe, sai andando até lá.
+            context.assertTrue(BuilderPaving.isPaving(carpenter.getUuid())
+                            || world.getBlockState(context.getAbsolutePos(new BlockPos(3, Y, 3))).isOf(Blocks.DIRT_PATH),
+                    "o carpinteiro sem tarefa não foi calçar a rua");
+        } finally {
+            for (int x = 0; x <= 6; x++) {
+                for (int z = 1; z <= 5; z++) {
+                    world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y, z)), Blocks.AIR.getDefaultState());
+                }
+            }
+
+            carpenter.discard();
             owned.cleanUp();
             BuilderPaving.clearAll();
         }

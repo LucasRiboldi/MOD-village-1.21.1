@@ -1,5 +1,12 @@
 # STATE — 2026-10-12
 
+> **0.3.39** (12-10): regras do autor — vila sem baú público ganha um numa casa (encostado na
+> parede, longe da porta); 1 em 5 obras na faixa da borda; carpinteiro guarda toda peça de madeira e
+> calça a rua; fazendeiro e pastor não ajudam a obra. **Não jogado.** Verificado: test 1497/0;
+> runGametest 755/755 (2 rodadas); mutação derruba os 4 testes novos.
+> **JAR instalado: `village-colony-0.3.39.jar`** =
+> `4C6C345A269BEDEE6B501FB1482144F310C185C94578E02FBAB8B0E6F956A83F` (0.3.38 `.jar.disabled`).
+
 > **0.3.38** (12-10): playtest da 0.3.37 (Spark `cKZHDMdNUm`, TPS 20, mod 1,4%): a mina voltou a
 > minerar (180 blocos em 9 min) e a bancada de flecheiro saiu em 2 min. Corrigidos: obra sem relva
 > alta (grama e flores surgem sozinhas), 267 toras no chão (excedente para os baús públicos, Regra

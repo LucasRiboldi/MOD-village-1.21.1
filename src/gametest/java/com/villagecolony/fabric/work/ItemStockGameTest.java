@@ -70,6 +70,10 @@ public class ItemStockGameTest implements FabricGameTest {
         context.assertTrue(wood.stream().allMatch(item ->
                         CraftFamily.of(ItemStock.pathOf(item)) == TaskType.CRAFT_WOOD_MATERIAL),
                 "item de outra oficina na lista do carpinteiro: " + wood);
+        // Um pouco de todas as peças de madeira, não só as do estilo (autor, 2026-10-12).
+        context.assertTrue(wood.containsAll(List.of(net.minecraft.item.Items.SPRUCE_DOOR,
+                        net.minecraft.item.Items.BIRCH_TRAPDOOR, net.minecraft.item.Items.DARK_OAK_FENCE_GATE)),
+                "faltam peças de madeira de outras madeiras na lista do carpinteiro: " + wood);
         context.assertTrue(order.isPresent(), "a ordem de estoque não foi aberta para o carpinteiro");
 
         order.get().reserveFor(villager.getUuid());

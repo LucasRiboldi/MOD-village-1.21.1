@@ -6,6 +6,14 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Playtest da 0.3.39
+
+- [ ] 🔴 `had no public chest — placed one at` (uma vez por vila sem baú público) e o baú encostado na parede, fora da porta.
+- [ ] 🟠 A 5ª obra em lote na borda; a vez da borda que falha não trava a obra seguinte.
+- [ ] 🟠 Carpinteiro calçando (`paved the path` com o id dele) e pedindo peças de todas as madeiras (`asks the carpenter to stock`).
+- [ ] 🟡 Fazendeiro e pastor: ócio subiu sem a ajuda à obra? (Regra 51)
+- [ ] 🟡 O contador da vez da borda vive só na memória: reiniciar o servidor recomeça a conta.
+
 ## 🔴 Playtest da 0.3.38
 
 - [ ] 🔴 Obra com relva alta e flores: `grass and flower pieces grew by themselves`; nenhuma casa termina sem elas.
