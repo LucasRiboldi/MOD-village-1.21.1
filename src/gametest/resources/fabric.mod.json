@@ -167,6 +167,7 @@
       "com.villagecolony.fabric.work.PublicChestsGameTest",
       "com.villagecolony.fabric.work.TreeFellingGameTest",
       "com.villagecolony.fabric.work.PublicChestPlacementGameTest",
+      "com.villagecolony.fabric.work.LotTypeRefusalsGameTest",
       "com.villagecolony.fabric.work.MineDescentLeaseGameTest",
       "com.villagecolony.fabric.brain.BrainHeartbeatGameTest",
       "com.villagecolony.gametest.SmeltInputGameTest",

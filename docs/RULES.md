@@ -86,6 +86,8 @@ regra que foi emendada. O corpo de cada regra vive em
 | 56 | Emenda (10-12, 0.3.39) | Uma em cada 5 obras novas procura lote só na faixa de 16 blocos da borda da caixa (dentro ou fora); sem lote, a vez cai e não conta para anexar (`VillageExpansion.buildOpened/allowsLotAt`) |
 | 58 | Emenda (10-12, 0.3.39) | Sem baú público, a vila põe um numa casa da colônia, encostado na parede e a mais de 2 blocos de porta (`PublicChestPlacement`); baú público é só o de dentro da caixa |
 | 59 | Ajudam a obra só carpinteiro e pedreiro (fazendeiro e pastor não); o carpinteiro guarda um pouco de toda peça de madeira e, sem tarefa, calça a rua como o construtor | 10-12 | ✅ feita (0.3.39) | `BuildHelper.HELPS`, `ItemStock.isWoodPiece`, `BuilderPaving.PAVERS` |
+| 55 | Emenda (10-12, 0.3.42) | O lenhador ocioso planta uma muda fora da vila por vila a cada 5 minutos (`OutskirtsPlanting.EVERY`) |
+| 60 | O tipo de obra que passa uma volta inteira da varredura sem lote fica 30 min fora da vez; com todas as oficinas que faltam recusadas, a vila constrói casa no lugar | 10-12 | ✅ feita (0.3.42) | `LotTypeRefusals`, `HousePlans.plansForNext`, `RoadGrowthPlanning.extendTheRoad` |
 | 53 | A boca da mina só nasce na faixa da borda da caixa da vila (até 8 blocos da linha, dentro ou fora); com a mina aberta, o mineiro sem ramal livre não cava pedra exposta na superfície | 10-11 | ✅ feita (0.3.32) | `MineEdge.nearTheEdge`, `MineDigging.mineOf`, `MineTrouble`, `MineDigging.exposedStoneFallback` |
 
 ---

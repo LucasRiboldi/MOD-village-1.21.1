@@ -11,6 +11,19 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.42] — a vila volta a construir (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **Nenhuma obra desde a 0.3.36 (cinco sessões):** com camas sobrando, a vila só tentava a oficina
+  que faltava; nenhum lote cabia e nada a tirava da vez. Antes, a casa entrava no rodízio e a vila
+  crescia assim mesmo. Agora o tipo que passa uma volta inteira da varredura sem lote fica 30 minutos
+  fora da vez e a vila tenta o seguinte; com todos os que faltam recusados, a casa entra no lugar.
+  Sem obra, construtor, carpinteiro e pedreiro ficavam parados — era a causa de "todos produzindo menos".
+
+### Mudado
+- **Mudas fora da vila:** uma por vila a cada 5 minutos (eram 44 em 21 minutos, uma por lenhador
+  ocioso a cada ciclo).
+
 ## [0.3.41] — a rua entra na faixa anexada (2026-10-12, JAR local, não jogado)
 
 ### Corrigido

@@ -167,9 +167,6 @@ public final class HousePlans {
      * abandonado treze vezes. O rodízio via só a casa, a vez continuava
      * com "não residencial", o templo não era excluído — e foi escolhido
      * de novo nas treze. Nenhuma casa em seis horas e meia.
-     *
-     * <p>{@link #hasNoHouseYet} continua olhando só a terminada, e de
-     * propósito: ali a pergunta é "existe casa de pé", não "de quem é a vez".
      */
     static boolean nextConstructionIsHouse(List<Building> buildings) {
         return nextConstructionPriority(buildings, 0, 0).requiresHouse();
@@ -294,9 +291,12 @@ public final class HousePlans {
             }
         }
 
-        // Casa só com falta de cama ou a primeira (autor, 10-12); senão oficina/roça que falte.
+        // Casa só com falta de cama ou a primeira (autor, 10-12); senão oficina/roça que falte —
+        // e a casa no lugar quando as que faltam não acham lote (LotTypeRefusals, 0.3.42).
         ConstructionPriority priority = nextConstructionPriority(buildings, adults, beds);
-        return priority.buildsHouse() ? plansFor(world, colony) : nonHousePlansFor(world, colony, previous, buildings);
+        List<Blueprint> others = priority.buildsHouse() ? List.of() : nonHousePlansFor(world, colony, previous, buildings);
+        return others.isEmpty() && (priority.buildsHouse() || LotTypeRefusals.anyRefused(colony.id(), world.getTime()))
+                ? plansFor(world, colony) : others;
     }
 
     /** O tipo semântico de uma planta, usado para o rodízio A/B. */
@@ -368,6 +368,7 @@ public final class HousePlans {
 
             if ("house".equals(type)
                     || type.equals(previousType)
+                    || LotTypeRefusals.isRefused(colony.id(), type, world.getTime())
                     || ("farm".equals(type) && (farmPostponed || !farmOwed))) {
                 continue;
             }

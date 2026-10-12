@@ -1,5 +1,13 @@
 # STATE — 2026-10-12
 
+> **0.3.42** (12-10): playtest da 0.3.41 (21 min) — a última obra nova foi na 0.3.35. Desde a 0.3.36
+> (casa só com falta de cama) a vila só tentava a oficina que faltava, sem lote, e nada a tirava da
+> vez: sem obra, construtor/carpinteiro/pedreiro paravam. Agora o tipo sem lote numa volta sai da vez
+> por 30 min e, com todos recusados, a casa entra (Regra 60); mudas fora da vila: 1 a cada 5 min.
+> **Não jogado.** Verificado: test 1497/0; runGametest 756/756; mutação derruba os 2 testes novos.
+> **JAR instalado: `village-colony-0.3.42.jar`** =
+> `D5B98A2C44C5B031A2751DE3FBE7E91717FB5EF6B379AAF0287AD7D299B076AB` (0.3.41 `.jar.disabled`).
+
 > **0.3.41** (12-10): playtest da 0.3.40 (Spark `c76Y5XgCfy`, TPS 20, mod 2%) — o anexo funcionou
 > (16 blocos a leste), mas a rua cresceu para oeste e a faixa ficou sem rua, sem lote e sem obra.
 > Agora a vila puxa a rua mais avançada daquele lado para dentro da faixa (`StripRoad`). **Não jogado.**

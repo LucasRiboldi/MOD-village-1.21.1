@@ -53,6 +53,8 @@ public class OutskirtsPlantingGameTest implements FabricGameTest {
             }
 
             context.assertTrue(planted > 0, "o lenhador ocioso não plantou muda nenhuma");
+            // Uma muda por vila a cada cinco minutos (autor, 2026-10-12): cinco rodadas, uma muda.
+            context.assertTrue(planted == 1, "plantou " + planted + " mudas de uma vez");
 
             for (BlockPos at : BlockPos.iterate(min.up(), max.up())) {
                 if (!world.getBlockState(at).isIn(BlockTags.SAPLINGS)) {

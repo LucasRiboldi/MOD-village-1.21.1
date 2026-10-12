@@ -6,6 +6,14 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Playtest da 0.3.42
+
+- [ ] 🔴 `found no lot for a … in a whole sweep` seguido de `planned minecraft:village/...` (obra nova); construtor acima de 0%.
+- [ ] 🟠 Uma volta da varredura leva ~20 min: cada tipo recusado custa uma volta. Medir quanto tempo até a primeira obra.
+- [ ] 🟠 Qual oficina não cabe e por quê (a linha `found no lot for a <tipo>` diz): 42 mil recusas por faixa reservada da rua.
+- [ ] 🟠 A rua puxada para a faixa anexada parou depois de 1 bloco (`grew the road 1 … 1 of 16`) — degrau ou água.
+- [ ] 🟡 Mudas: ~4 por 20 minutos.
+
 ## 🔴 Playtest da 0.3.41
 
 - [ ] 🔴 Depois de `is full — annexes … to the <lado>`: `leads a road <lado> into the annexed strip`, `grew the road … <lado>` e uma obra aberta na faixa.

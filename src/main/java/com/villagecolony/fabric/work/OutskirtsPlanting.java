@@ -27,7 +27,7 @@ import java.util.Optional;
  * aleatoriamente pelo lado de fora da borda do terreno da vila até 10 blocos de
  * distância fora"</i>. No playtest 0.3.35 os lenhadores ficaram 99% ociosos.
  *
- * <p>A cada ciclo da colônia, cada lenhador sem tarefa planta uma muda de tipo sorteado
+ * <p>A cada {@link #EVERY} tiques, um lenhador sem tarefa planta uma muda de tipo sorteado
  * num ponto sorteado da faixa de 1 a {@link #BAND} blocos fora da caixa da vila: chão
  * natural, céu aberto, longe de outra árvore ({@link #SPACING}), fora da faixa de
  * construção e do que é da colônia ou da vila original. A muda sai do baú quando há
@@ -43,6 +43,18 @@ final class OutskirtsPlanting {
 
     /** Quantos pontos sorteados se tentam por muda. */
     static final int TRIES = 12;
+
+    /**
+     * Uma muda por vila a cada cinco minutos — autor, 2026-10-12: no playtest da 0.3.41 foram
+     * 44 em 21 minutos, uma por lenhador ocioso a cada ciclo.
+     */
+    static final long EVERY = 6_000;
+
+    private static final java.util.Map<java.util.UUID, Long> LAST = new java.util.HashMap<>();
+
+    static {
+        com.villagecolony.core.type.ServerMemory.register(OutskirtsPlanting.class, LAST::clear);
+    }
 
     /** Os tipos sorteados: os que crescem sozinhos, de uma muda só. */
     static final List<Block> SAPLINGS = List.of(
@@ -65,6 +77,11 @@ final class OutskirtsPlanting {
         }
 
         int planted = 0;
+        long now = world.getTime();
+
+        if (now - LAST.getOrDefault(colony.id(), Long.MIN_VALUE / 2) < EVERY) {
+            return 0;
+        }
 
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
             if (worker.profession().filter(ProfessionType.LUMBERJACK::equals).isEmpty()
@@ -74,6 +91,8 @@ final class OutskirtsPlanting {
 
             if (plantOne(world, colony, box.get(), world.getRandom())) {
                 planted++;
+                LAST.put(colony.id(), now);
+                break;
             }
         }
 
