@@ -172,9 +172,13 @@ final class ShepherdPens {
     /**
      * O lugar do poste novo ao lado da casa: chão firme, céu aberto (fora da casa), a
      * até {@link #POST_RADIUS} blocos, o mais perto. Só se há cerca nos baús.
+     *
+     * <p>Um poste por casa e um por cercado — regra do autor, 2026-10-12: com um poste
+     * solto a até {@link #POST_RADIUS} da casa, ou a até {@link #POST_RADIUS} do lugar
+     * novo (o lado de um cercado), não se põe outro.
      */
     static Optional<BlockPos> postBesideHome(ServerWorld world, UUID colonyId, BlockPos home) {
-        if (fenceInChests(world, colonyId, home).isEmpty()) {
+        if (fenceInChests(world, colonyId, home).isEmpty() || hasLonePostNear(world, home)) {
             return Optional.empty();
         }
 
@@ -183,12 +187,41 @@ final class ShepherdPens {
 
             if (world.getBlockState(at).isAir() && world.getBlockState(at.up()).isAir()
                     && below.isSolidBlock(world, at.down()) && !below.isOf(Blocks.DIRT_PATH)
-                    && world.isSkyVisible(at)) {
+                    && world.isSkyVisible(at) && !hasLonePostNear(world, at)) {
                 return Optional.of(at.toImmutable());
             }
         }
 
         return Optional.empty();
+    }
+
+    /** Se há um poste solto (cerca sem cerca ao lado) a até {@link #POST_RADIUS} daqui. */
+    static boolean hasLonePostNear(ServerWorld world, BlockPos near) {
+        for (BlockPos at : BlockPos.iterateOutwards(near, POST_RADIUS, 2, POST_RADIUS)) {
+            if (isLonePost(world, at)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean isLonePost(ServerWorld world, BlockPos at) {
+        if (!world.getBlockState(at).isIn(net.minecraft.registry.tag.BlockTags.FENCES)) {
+            return false;
+        }
+
+        for (net.minecraft.util.math.Direction side : net.minecraft.util.math.Direction.Type.HORIZONTAL) {
+            BlockState next = world.getBlockState(at.offset(side));
+
+            if (next.isIn(net.minecraft.registry.tag.BlockTags.FENCES)
+                    || next.isIn(net.minecraft.registry.tag.BlockTags.FENCE_GATES)
+                    || next.isIn(net.minecraft.registry.tag.BlockTags.WALLS)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /** Põe o poste: uma cerca sai do baú e vira bloco. */

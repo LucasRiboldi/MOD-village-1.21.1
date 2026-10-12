@@ -1,5 +1,13 @@
 # STATE — 2026-10-12
 
+> **0.3.38** (12-10): playtest da 0.3.37 (Spark `cKZHDMdNUm`, TPS 20, mod 1,4%): a mina voltou a
+> minerar (180 blocos em 9 min) e a bancada de flecheiro saiu em 2 min. Corrigidos: obra sem relva
+> alta (grama e flores surgem sozinhas), 267 toras no chão (excedente para os baús públicos, Regra
+> 58), árvore pela metade, postes do pastor (um por casa e por cercado, Regra 57). **Não jogado.**
+> Verificado: test 1495/0; runGametest 753/753 (3 rodadas limpas com os testes novos); mutação
+> derruba os 5 testes novos. **JAR instalado: `village-colony-0.3.38.jar`** =
+> `B2ED23E582F965F7B25D70CED85EAB3873928FC6225CFD9F255E7F7CFEB46907` (0.3.37 `.jar.disabled`).
+
 > **0.3.37** (12-10): playtest da 0.3.36 (Spark `nTgYjiciKr`, TPS 19,5, mod 1,4%) achou o mineiro 0%:
 > o túnel esperava pedregulho e os baús não tinham nenhum — agora ele cava a parede para tirar o
 > enchimento; e a obra parada pela bancada de flecheiro (sílex sem rota nunca contava ciclo).

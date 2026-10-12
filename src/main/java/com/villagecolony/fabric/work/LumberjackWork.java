@@ -287,7 +287,7 @@ public final class LumberjackWork {
             }
 
             if (!isOngoing(job.task)) {
-                TreeFelling.closePlan(world, job);
+                TreeFelling.closePlan(world, workerId, job);
                 entries.remove();
 
                 // O destino morre com a tarefa — ver WorkTargets.clear.
@@ -303,7 +303,7 @@ public final class LumberjackWork {
             }
 
             if (outcome == Outcome.DONE) {
-                TreeFelling.closePlan(world, job);
+                TreeFelling.closePlan(world, workerId, job);
                 entries.remove();
             }
         }

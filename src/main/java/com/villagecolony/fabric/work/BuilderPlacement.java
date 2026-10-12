@@ -249,6 +249,9 @@ public final class BuilderPlacement {
      * core.
      */
     public static void reconsiderDeferredPieces(ServerWorld world, ConstructionProject project) {
+        // Grama, relva alta e flores surgem sozinhas, sem o construtor ir até elas (Regra 55).
+        GrowingPieces.appear(world, project);
+
         // Sem mais nada a pôr, as peças que esperam material voltam todas: a
         // obra passa a esperar por elas como antes.
         boolean nothingElse = project.nextBlock().isEmpty();

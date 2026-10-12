@@ -11,6 +11,19 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.38] — grama sozinha, árvore inteira, baús públicos, um poste (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **Obra sem relva alta (playtest 0.3.37):** o construtor deixava a grama de lado por não
+  alcançá-la e a casa terminava sem ela. Relva alta, grama e flores da planta agora surgem
+  sozinhas a cada ciclo da obra, com as duas metades da planta alta; terra embaixo vira grama.
+- **Toras no chão:** 267 toras caíram porque o baú do lenhador estava cheio. O excedente de
+  madeira e de pedra crua vai para os baús públicos da vila (os sem ofício), e o mineiro guarda
+  neles o que passa do teto por tipo, em vez de descartar.
+- **Árvore pela metade:** a tarefa que acaba no meio da árvore derruba os troncos que ficaram.
+- **Postes do pastor:** um poste por casa e um por cercado; com um poste solto perto, ele não
+  põe outro.
+
 ## [0.3.37] — mina sem impasse; expansão do terreno B + C + D (2026-10-12, JAR local, não jogado)
 
 ### Corrigido

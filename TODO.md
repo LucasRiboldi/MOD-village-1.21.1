@@ -6,6 +6,15 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Playtest da 0.3.38
+
+- [ ] 🔴 Obra com relva alta e flores: `grass and flower pieces grew by themselves`; nenhuma casa termina sem elas.
+- [ ] 🔴 Nenhum `chest had no room mid-harvest — dropped`; `went to the village's public chests` no lugar.
+- [ ] 🟠 `finished the tree it had started` e nenhuma árvore pela metade em volta da vila.
+- [ ] 🟠 Um poste por casa do pastor.
+- [ ] 🟠 Mineiro: 383 recusas `TOO_HIGH` de um mineiro só em 9 min (0.3.37) — ver se repete.
+- [ ] 🟡 Sem baú público na vila, o excedente ainda cai no chão: decidir se a vila deve fazer um.
+
 ## 🔴 Playtest da 0.3.37
 
 - [ ] 🔴 Mina: `digging the wall for them` aparece e o nó termina (`finished the node`); mineiro acima de 0%.

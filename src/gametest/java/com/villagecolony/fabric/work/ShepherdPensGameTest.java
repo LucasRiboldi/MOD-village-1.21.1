@@ -163,6 +163,9 @@ public class ShepherdPensGameTest implements FabricGameTest {
                     "o poste não foi posto");
             context.assertTrue(ColonyChests.countIn(world, List.of(chest), Items.OAK_FENCE) == 1,
                     "a cerca do poste devia sair do baú");
+            // Um poste por casa: com ele de pé, não há lugar para outro, mesmo com cerca no baú.
+            context.assertTrue(ShepherdPens.postBesideHome(world, colony.id(), home).isEmpty(),
+                    "a casa ganharia um segundo poste");
         } finally {
             VillageColonyMod.STORAGES.remove(shepherd);
             VillageColonyMod.WORKERS.remove(shepherd);
