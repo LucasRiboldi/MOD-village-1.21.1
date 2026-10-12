@@ -11,6 +11,32 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.32] — playtest da 0.3.31: mina na borda, obra, ócio e overlay (2026-10-11, JAR local, não jogado)
+
+### Mudado
+- **Regra 53 — boca da mina só na borda:** com a caixa da vila medida, a boca nasce na faixa
+  de até 8 blocos da linha da caixa (também quando a mina recomeça ou muda de lado no fundo).
+  Com a mina aberta, o mineiro sem ramal livre não cava mais a encosta em volta da vila.
+- **Overlay em pixel:** moldura medieval (madeira, latão, cantoneiras de ferro) com o pixel do
+  tamanho do pixel da fonte; ícones 16×16 com contorno para os oito ofícios e os três estados da
+  obra; placa da obra em português ("Casa média (planície) 62/292", "Falta: Cama branca ×1");
+  `pt_pt.json` (o jogo do autor está em português de Portugal e o overlay saía em inglês).
+- **Fazendeiro** com nada maduro e nenhum canteiro vazio ajuda a obra.
+- **Tábua e carvão vegetal com teto:** sem obra pedindo, a tora só vira tábua até 64; o fundidor
+  não faz nada "para as obras" acima de 64 (o carvão vegetal conta o mineral).
+- **Obra com só até 4 peças sem apoio** (tocha de parede sem parede), depois de duas janelas de
+  paciência, larga essas peças e fecha (`VC_UNSUPPORTED`), em vez de prender a vaga de obra.
+- **Antes de surgir**, o que a vila já tem em outro baú é levado ao baú da profissão.
+
+### Corrigido
+- Obra que volta do save voltava girada pela rua nova, por cima dela mesma (292 peças "por pôr",
+  27 blocos da própria casa limpos, 120 "no caminho"): volta no giro em que foi levantada.
+- Construtor ocioso 85%: a vaga do ajudante contava como a tarefa da obra, e o construtor que a
+  largou não recebia outra por 18 min.
+- Construtor dentro da mina mandado a uma galeria debaixo do lote.
+- Mineiro na superfície andando para a entrada enterrada embaixo dele quando a pedra estava no
+  fim do ramal; mineiro 2+ blocos abaixo do destino girando no mesmo buraco (agora sai pela fuga).
+
 ## [0.3.31] — pedidos do autor depois do playtest da 0.3.29 (2026-10-11, JAR local, não jogado)
 
 ### Mudado

@@ -52,7 +52,7 @@ final class MineEdge {
 
     /**
      * A faixa da borda onde uma boca pode nascer: até este tanto para dentro ou para
-     * fora da linha da caixa — Regra 52 (autor, 2026-10-11: <i>"não abrir entrada de
+     * fora da linha da caixa — Regra 53 (autor, 2026-10-11: <i>"não abrir entrada de
      * mina em lugares aleatórios, somente nas entradas próximas das bordas"</i>).
      */
     static final int EDGE_BAND = INSIDE + 3;
@@ -63,7 +63,7 @@ final class MineEdge {
     }
 
     /**
-     * Se este ponto está na faixa da borda da caixa (Regra 52): a até
+     * Se este ponto está na faixa da borda da caixa (Regra 53): a até
      * {@link #EDGE_BAND} blocos da linha de algum lado, dentro ou fora dela.
      */
     static boolean nearTheEdge(VillageBounds box, BlockPos at) {

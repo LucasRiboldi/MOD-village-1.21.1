@@ -6,8 +6,11 @@ import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.coordination.StockCeiling;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ServerMemory;
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.CraftingLookup;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
@@ -114,6 +117,19 @@ final class SmelterFallback {
         WANTED.put(colony.id(), new Cached(list, world.getTime()));
 
         return list;
+    }
+
+    /**
+     * Se a vila já guarda este produto até o teto do estoque ({@link StockCeiling#CRAFTED}):
+     * aí o fundidor não o faz "para as obras". O carvão vegetal conta junto com o
+     * mineral, que serve às mesmas receitas — no playtest 0.3.31 ele fez 238 carvões
+     * vegetais com 446 de carvão nos baús.
+     */
+    static boolean stocked(ServerWorld world, List<ColonyPos> chests, Item product) {
+        int have = ColonyChests.countIn(world, chests, product)
+                + (product == Items.CHARCOAL ? ColonyChests.countIn(world, chests, Items.COAL) : 0);
+
+        return have >= StockCeiling.CRAFTED;
     }
 
     /** O item de fornalha de cada material, ou do ingrediente dele. */

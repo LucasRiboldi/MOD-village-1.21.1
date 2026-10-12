@@ -1,10 +1,23 @@
 # TODO
 
-**Atualizado:** 2026-10-10. Só o que está **aberto**. O histórico até hoje está em
+**Atualizado:** 2026-10-11. Só o que está **aberto**. O histórico até hoje está em
 `docs/archive/technical/TODO-ate-2026-10-07.md` (consultar por `grep`, nunca inteiro).
 Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
+
+## 🔴 Playtest da 0.3.32 (`docs/research/2026-10-11-fluxos-das-profissoes-031.md`)
+
+- [ ] 🔴 Jogar a 0.3.32 e rodar `time_ledger`, `action_report`, `cost_ledger`: Regra 51 por ofício;
+      construtor trabalhando (era 85% ocioso); fazendeiro como ajudante (`lends a hand` com FARMER).
+- [ ] 🔴 Mina: nenhuma pedra cavada na superfície com a mina aberta; boca nova só na borda
+      (`picks the new mine mouth … on the … edge`); `gave up the stone` < 3 por mineiro em 30 min.
+- [ ] 🟠 Obra do save: nenhum `skips … is in the way` em massa depois de carregar; `VC_UNSUPPORTED`
+      só com tochas/lanternas, e a obra fechando.
+- [ ] 🟠 Overlay visto em jogo: moldura nova, ícones, nomes em português (pt_pt).
+- [ ] 🟡 Lenhador 39% andando pela regra "árvore mais perto dele" — decidir limite da corrente.
+- [ ] 🟡 Fundidor: "none of N colony chests had stone" quando o que barra é a reserva de cru.
+- [ ] 🟡 Mineiro "waiting for a branch" com ramais esgotados: descer o nível antes ou ceder à obra.
 
 ## 🔴 Autossuficiência 11-10 (`claude/autossuficiencia`; `docs/research/2026-10-11-autossuficiencia-e-ocio.md`)
 

@@ -1,16 +1,16 @@
 # STATE — 2026-10-11
 
-> **JAR instalado: `village-colony-0.3.31.jar`** (`claude/autossuficiencia`, 11-10) =
-> `07B7F34F23D117453E4427483D48E0614AE8C78355D9D1514FF2A9A0C1908A81`, igual nas três cópias;
-> a 0.3.30 ficou como `.jar.disabled`. **Ainda não jogado.** Sobre a 0.3.30 (mina, última peça,
-> fundidor), a 0.3.31 traz os pedidos do autor: surgimento na quantidade toda, troca de ofícios
-> desligada, lenhador pela árvore mais perto dele, pastor com cercados (≤ 5), cerca e poste novo.
-> **Verificação da 0.3.31:** 735/735 GameTests em 2 rodadas (mundo novo); 1467 unitários.
->
-> **Última verificação (`main` em `38015460`, 11-10, depois do merge das PRs #20–#25):** 1446
-> unitários e de propriedade (`--rerun-tasks`, 0 falhas); 705/705 GameTests (1 rodada); 112 testes Python. PIT 1820/2112 (86,17%) em `e71607dd`.
-> **E na `claude/autossuficiencia` (`9d50cf42`, 11-10):** 1457 unitários (`--rerun-tasks`, 0 falhas);
-> 722/722 GameTests (2 rodadas, mundo novo) e 1460 unitários em `e545c328`; 112 Python. JAR 0.3.26 acima.
+> **0.3.32** (`claude/autossuficiencia`, 11-10 noite) — correções do playtest da 0.3.31 (Spark
+> `qWTXLoLP5g`, TPS 20, mod 2,5%; Regra 51 reprovou em todos os ofícios). Análise por profissão:
+> [`docs/research/2026-10-11-fluxos-das-profissoes-031.md`](docs/research/2026-10-11-fluxos-das-profissoes-031.md).
+> Mina só na borda (Regra 53) e sem cava de superfície; rota da descida até o fim do ramal;
+> construtor de volta à obra (vaga do ajudante não é a tarefa); fazendeiro ajuda a obra; tetos de
+> tábua e carvão vegetal; obra do save no giro certo; até 4 peças sem apoio largadas; transferência
+> antes de surgir; overlay em pixel e em português (pt_pt). **Não jogado.**
+> **Verificação (11-10 noite):** `test --rerun-tasks` 1475/0 falhas; `runGametest` 739/739 (1 rodada,
+> mundo novo). **JAR instalado: `village-colony-0.3.32.jar`** =
+> `C2ABB0B952481164DADEF9401B3B5026F83B72D19D8958C08CBB8C5E0DC8C910`, igual em `build/libs`,
+> `downloads/` e `.minecraft/mods`; a 0.3.31 ficou como `.jar.disabled`.
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.** Se passar de 150 linhas, algo
 > está errado: P0 não está fechando. O que já foi resolvido mora em

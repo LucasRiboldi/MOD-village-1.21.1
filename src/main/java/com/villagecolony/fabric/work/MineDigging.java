@@ -281,7 +281,7 @@ public final class MineDigging {
     /**
      * Pedra exposta em volta da vila, só enquanto a colônia não tem mina. Com ela, o
      * mineiro sem ramal livre espera na mina: cavar a encosta deixava buracos que
-     * pareciam bocas de mina em lugar qualquer (Regra 52, playtest 0.3.31).
+     * pareciam bocas de mina em lugar qualquer (Regra 53, playtest 0.3.31).
      */
     static Optional<BlockPos> exposedStoneFallback(
             ServerWorld world, UUID workerId, UUID colonyId, BlockPos center) {
@@ -430,7 +430,7 @@ public final class MineDigging {
             descent = edge.get().side();
         }
 
-        // Com a caixa medida, a boca só nasce na faixa da borda (Regra 52).
+        // Com a caixa medida, a boca só nasce na faixa da borda (Regra 53).
         Optional<VillageBounds> box = MineEdge.boxOf(colonyId);
         Optional<BlockPos> mouth = edge.isPresent()
                 ? Optional.of(edge.get().mouth())

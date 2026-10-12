@@ -331,7 +331,7 @@ public final class SmelterWork {
         }
 
         for (Item other : SmelterFallback.wanted(world, colony.get())) {
-            if (other == pending) {
+            if (other == pending || SmelterFallback.stocked(world, searched, other)) {
                 continue;
             }
 

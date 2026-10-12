@@ -203,7 +203,7 @@ public final class MineTrouble {
         Side descent = MineCuts.sideOf(colonyId);
 
         // Com a caixa medida, a boca nova também nasce na faixa da borda, longe da
-        // velha (Regra 52); sem caixa, a busca em volta do centro de sempre.
+        // velha (Regra 53); sem caixa, a busca em volta do centro de sempre.
         Optional<MineEdge.Choice> edge = MineEdge.inside(
                 world, colonyId, center, MinecraftTypeAdapter.toBlockPos(mine.entry()));
 

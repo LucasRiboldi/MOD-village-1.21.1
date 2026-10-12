@@ -1,11 +1,18 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.coordination.StockCeiling;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.block.Blocks;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -21,6 +28,30 @@ import java.util.Set;
  * receitas do servidor, e é delas que a lista sai.
  */
 public final class SmelterFallbackGameTest implements FabricGameTest {
+
+    /** No teto do estoque o fundidor não faz o produto "para as obras" — playtest 0.3.31. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "smelter_fallback")
+    public void charcoalStopsWhenTheVillageHasCoalUpToTheCeiling(TestContext context) {
+        BlockPos local = new BlockPos(1, 2, 1);
+        context.setBlockState(local, Blocks.CHEST.getDefaultState());
+        List<ColonyPos> chests = List.of(MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(local)));
+        Inventory chest = (Inventory) context.getWorld().getBlockEntity(context.getAbsolutePos(local));
+
+        try {
+            chest.setStack(0, new ItemStack(Items.COAL, 10));
+            context.assertFalse(SmelterFallback.stocked(context.getWorld(), chests, Items.CHARCOAL),
+                    "com 10 carvões a vila ainda está abaixo do teto");
+
+            chest.setStack(0, new ItemStack(Items.COAL, StockCeiling.CRAFTED));
+            context.assertTrue(SmelterFallback.stocked(context.getWorld(), chests, Items.CHARCOAL),
+                    "com o carvão no teto, o carvão vegetal ainda seria feito");
+        } finally {
+            chest.clear();
+            context.setBlockState(local, Blocks.AIR.getDefaultState());
+        }
+
+        context.complete();
+    }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "smelter_fallback")
     public void smoothStoneBringsTheStoneThatGoesIntoIt(TestContext context) {
