@@ -150,4 +150,37 @@ public class HelperReachGameTest implements FabricGameTest {
 
         return project;
     }
+
+    /**
+     * A última peça de lado por alcance volta à fila — playtest de 2026-10-11: a escada do
+     * telhado ficou de lado 25 minutos e a obra ficou sem tarefa.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials", tickLimit = 20)
+    public void theLastUnreachablePieceComesBack(TestContext context) {
+        ConstructionProject project = siteAt(UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(2, 2, 2))));
+        com.villagecolony.core.construction.model.BlueprintBlock piece = project.nextBlock().orElseThrow();
+        BlockPos at = MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(piece));
+
+        // O lugar dela ocupado, como a terra do playtest: o "já cabe" responde não, e o
+        // apoio gravado é o de agora — não muda.
+        context.getWorld().setBlockState(at, net.minecraft.block.Blocks.STONE.getDefaultState());
+
+        try {
+            project.defer(piece, com.villagecolony.core.construction.model.ConstructionOutcome.skipped(
+                            project.worldPositionOf(piece), com.villagecolony.core.construction.model.SkipReason.UNREACHABLE),
+                    BuilderPlacement.supportFingerprint(context.getWorld(), at));
+
+            context.assertTrue(project.nextBlock().isEmpty(), "a peça devia estar de lado");
+
+            BuilderPlacement.reconsiderDeferredPieces(context.getWorld(), project);
+
+            context.assertTrue(project.nextBlock().isPresent(),
+                    "sem mais nada a pôr, a peça de lado por alcance devia voltar à fila");
+        } finally {
+            context.getWorld().setBlockState(at, net.minecraft.block.Blocks.AIR.getDefaultState());
+        }
+
+        context.complete();
+    }
 }

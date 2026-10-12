@@ -267,6 +267,16 @@ public final class BuilderPlacement {
                 continue;
             }
 
+            // Sem mais nada a pôr, a peça de lado por alcance também volta — playtest
+            // de 11-10: a última escada do telhado ficou de lado 25 minutos, sem tarefa
+            // de obra. A de lado por apoio não: sem mudança no apoio ela falharia igual.
+            if (nothingElse && piece.reason() == SkipReason.UNREACHABLE && project.retry(piece)) {
+                VillageColonyMod.LOGGER.info("Project {} retries {} at {} — nothing else is left to place",
+                        project.id(), piece.block(), target.toShortString());
+
+                continue;
+            }
+
             if (project.retryIfSupportChanged(piece, supportFingerprint(world, target))) {
                 VillageColonyMod.LOGGER.info(
                         "Project {} retries {} at {} after its support changed",

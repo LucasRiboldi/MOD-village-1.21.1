@@ -79,14 +79,21 @@ final class BuildWait {
         return true;
     }
 
-    /** As peças que esperavam material e cujo material já está nos baús voltam à fila. */
+    /**
+     * As peças que voltam à fila enquanto o construtor espera: a que esperava material,
+     * quando ele chega aos baús; a de lado por alcance, sempre — ele tenta de novo, por
+     * outro lado (playtest de 11-10: a última escada do telhado nunca voltava).
+     */
     static void retryArrived(ServerWorld world, ConstructionProject project) {
         for (ConstructionProject.DeferredPiece piece : project.deferredPieces()) {
-            if (piece.reason() == SkipReason.WAITING_MATERIAL
-                    && BuilderMaterials.isInTheChests(world, project, piece.block())
+            boolean material = piece.reason() == SkipReason.WAITING_MATERIAL;
+
+            boolean reach = piece.reason() == SkipReason.UNREACHABLE;
+
+            if ((reach || (material && BuilderMaterials.isInTheChests(world, project, piece.block())))
                     && project.retry(piece)) {
-                VillageColonyMod.LOGGER.info("Project {} retries {} — the material arrived while the builder waited",
-                        project.id(), piece.block());
+                VillageColonyMod.LOGGER.info("Project {} retries {} — {} while the builder waited",
+                        project.id(), piece.block(), material ? "the material arrived" : "another try");
             }
         }
     }

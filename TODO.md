@@ -8,6 +8,12 @@ Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
 ## 🔴 Autossuficiência 11-10 (`claude/autossuficiencia`; `docs/research/2026-10-11-autossuficiencia-e-ocio.md`)
 
+- [ ] **Playtest da 0.3.30:** mineração acima de 25/min sem `refused N times` crescendo na mesma pedra;
+      nenhuma obra parada com 1 bloco e `no build task`; poucas linhas `leaves it for where the village needs hands`.
+- [ ] 🟠 Lenhador anda 73% do expediente: escolhe árvores a ~100 blocos dele, na borda de uma caixa de vila
+      de 105×157; o bosque não recebe as mudas porque essas árvores ficam a menos de 15 da borda.
+- [ ] 🟠 Terracota branca saiu pela regra do minuto (47 peças): a argila não foi achada (`clay … found none`).
+- [ ] 🟡 Pastor: 65 vezes `no sheep with wool within the radius`; 6 pastores no fim por causa da ciranda.
 - [ ] **Playtest da 0.3.28 (cobertura de blocos):** `asks the carpenter to stock`/`smelter workshop`,
       `stocked 8 of`; pastor e fazendeiro fazendo peça de bancada sem largar a coleta; `gathered N POPPY`
       etc. Medir se o estoque de 8 gasta madeira antes da obra (`docs/research/2026-10-11-cobertura-de-blocos.md`).

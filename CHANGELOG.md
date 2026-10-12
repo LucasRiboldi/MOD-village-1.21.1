@@ -11,6 +11,23 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.30] — depois do playtest da 0.3.29 (2026-10-11, JAR local, não jogado)
+
+Playtest de 1h50 (19:26–21:16). TPS 20, mod 3,3%. O Spark falhou ao enviar (sem rede) e
+salvou o perfil em `config/spark/`.
+
+### Corrigido
+- **Mina:** o degrau de volta da veia que desce não consultava a marca de fora de alcance.
+  Os três mineiros ficaram 50 minutos na mesma pedra (30.079 recusas), e a mineração caiu
+  de 31 para 13 blocos por minuto.
+- **Obra presa na última peça:** a peça posta de lado por alcance só voltava se o apoio
+  mudasse. A casa média ficou 25 minutos com 1 bloco faltando e sem tarefa. Agora, sem mais
+  nada a pôr, ela volta, e o construtor que segura a obra também a tenta de novo.
+- **Ciranda de ofícios:** o ofício parado só cede gente quando outro ofício tem falta para a
+  obra. Foram 19 saídas em 90 minutos, de um ofício parado para outro também parado.
+- **Fundidor com baú cheio:** o produto vai ao baú da vila com lugar; antes ele largava a
+  fundição.
+
 ## [0.3.29] — o construtor começa a obra (2026-10-11, JAR local, não jogado)
 
 ### Mudado
