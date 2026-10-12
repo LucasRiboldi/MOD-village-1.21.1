@@ -46,8 +46,11 @@ public final class VillageExpansion {
     /** A largura da faixa anexada de cada vez. */
     public static final int STRIP = 16;
 
-    /** Quantas varreduras seguidas sem lote dizem que a vila encheu. */
-    public static final int FULL_AFTER = 2;
+    /**
+     * Quantas voltas completas da varredura sem lote dizem que a vila encheu. Uma: a volta
+     * já percorreu o raio inteiro, e no playtest da 0.3.39 ela levou 20 minutos.
+     */
+    public static final int FULL_AFTER = 1;
 
     /** Com uma faixa anexada que ainda não deu lote, quantas varreduras até a próxima. */
     public static final int FULL_AGAIN_AFTER = 3 * FULL_AFTER;

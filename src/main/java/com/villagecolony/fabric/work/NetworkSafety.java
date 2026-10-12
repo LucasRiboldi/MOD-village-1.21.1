@@ -214,7 +214,8 @@ final class NetworkSafety {
      * Uma pedra da parede do túnel para virar enchimento: sem pedregulho nos baús, a mina
      * se abastece sozinha em vez de esperar (playtest 0.3.36: 37 mil esperas, 0 pedregulho).
      * A pedra encosta em espaço já aberto, tem chão firme embaixo (o nicho não vira queda)
-     * e não segura fluido.
+     * e não segura fluido. A pedra que o mineiro já recusou fica de fora: no playtest da
+     * 0.3.39 a mesma foi escolhida 53 vezes.
      */
     static Optional<BlockPos> quarryFor(
             ServerWorld world, Mine mine, Collection<ColonyPos> corridor, Set<ColonyPos> mineCells) {
@@ -232,6 +233,7 @@ final class NetworkSafety {
                             || isOpen(world.getBlockState(at))
                             || !isFirmFloor(world, at.down())
                             || !MineRock.isDiggableRock(world, mine, at)
+                            || MineMarks.isOutOfReach(world, at)
                             || MineFlooding.holdsBackFluid(world, at)) {
                         continue;
                     }

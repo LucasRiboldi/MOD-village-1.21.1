@@ -65,9 +65,12 @@ public class VillageExpansionGameTest implements FabricGameTest {
                     "o leste plano e seco não mediu assim: " + east);
             context.assertTrue(west.water() == west.columns(), "o oeste alagado não mediu água: " + west);
 
-            context.assertTrue(VillageExpansionSurvey.sweptWithoutLot(world, colony).isEmpty(),
-                    "a vila anexou na primeira varredura sem lote");
-            Optional<Side> annexed = VillageExpansionSurvey.sweptWithoutLot(world, colony);
+            Optional<Side> annexed = Optional.empty();
+
+            for (int sweep = 1; sweep <= VillageExpansion.FULL_AFTER; sweep++) {
+                context.assertTrue(annexed.isEmpty(), "a vila anexou antes de encher");
+                annexed = VillageExpansionSurvey.sweptWithoutLot(world, colony);
+            }
 
             context.assertTrue(annexed.equals(Optional.of(Side.EAST)), "anexou " + annexed + " em vez do leste");
             context.assertTrue(colony.bounds().orElseThrow().maxX() >= box.maxX() + strip,

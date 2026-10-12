@@ -209,7 +209,11 @@ public final class TreeChoice {
         // que destruía o tronco.
         List<ColonyPos> chests = List.of(storage.chestPosition());
 
-        int room = ColonyChests.freeSpaceForGroup(world, chests, ResourceGroup.WOOD);
+        // E os baús públicos, para onde vai o que não cabe no dele (Regra 58): medir só o
+        // baú dele encerrava a tarefa antes da árvore, 128 vezes em 21 min (0.3.39).
+        int room = ColonyChests.freeSpaceForGroup(world, chests, ResourceGroup.WOOD)
+                + ColonyChests.freeSpaceForGroup(world,
+                        PublicChests.of(world, job.task.colonyId(), job.center), ResourceGroup.WOOD);
 
         if (room < trunkGroup.size()) {
             TreeFelling.finishTask(job, villager.getUuid(), storage, room);

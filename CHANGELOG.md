@@ -11,6 +11,17 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.40] — profissões paradas (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **Mineiro preso numa pedra (playtest 0.3.39):** a pedra da parede escolhida para enchimento não
+  consultava a marca de fora de alcance — a mesma foi escolhida 53 vezes.
+- **Lenhador em laço:** media só o próprio baú; cheio, encerrava a tarefa antes da árvore e a vila
+  pedia outra na hora (128 vezes em 21 min). Agora conta também os baús públicos.
+- **Vila sem obra por 23 min:** nenhum lote servia (115 mil recusas: faixa reservada da rua e nível
+  da rua), e o anexo de terreno pedia 2 voltas da varredura, de 20 min cada. Uma volta completa sem
+  lote já anexa a faixa.
+
 ## [0.3.39] — baú público, carpinteiro na rua, obra na borda (2026-10-12, JAR local, não jogado)
 
 ### Adicionado

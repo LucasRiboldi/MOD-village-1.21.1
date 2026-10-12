@@ -6,6 +6,14 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Playtest da 0.3.40
+
+- [ ] 🔴 Obra abre de novo: `is full — annexes` depois da primeira volta sem lote, e lote na faixa anexada.
+- [ ] 🔴 Nenhuma pedra recusada mais de 2 vezes seguidas na mina.
+- [ ] 🟠 Lenhador derruba a árvore com o baú dele cheio (`went to the village's public chests`), sem `filled the chest` em laço.
+- [ ] 🟠 Por que nenhum lote serve: 37 mil recusas por faixa reservada da rua e 30 mil por nível da rua — medir se a regra da faixa está larga demais.
+- [ ] 🟡 A correção do lenhador não tem GameTest próprio.
+
 ## 🔴 Playtest da 0.3.39
 
 - [ ] 🔴 `had no public chest — placed one at` (uma vez por vila sem baú público) e o baú encostado na parede, fora da porta.

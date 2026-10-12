@@ -54,10 +54,13 @@ class VillageExpansionTest {
     }
 
     @Test
-    void theVillageIsFullAfterTwoSweepsWithoutALot() {
+    void theVillageIsFullAfterACompleteSweepWithoutALot() {
         UUID colony = UUID.randomUUID();
 
-        assertFalse(VillageExpansion.sweptWithoutLot(colony));
+        for (int sweep = 1; sweep < VillageExpansion.FULL_AFTER; sweep++) {
+            assertFalse(VillageExpansion.sweptWithoutLot(colony));
+        }
+
         assertTrue(VillageExpansion.sweptWithoutLot(colony));
     }
 
@@ -76,11 +79,17 @@ class VillageExpansionTest {
     @Test
     void aLotFoundStartsTheCountAgain() {
         UUID colony = UUID.randomUUID();
+        VillageExpansion.annexed(colony, Side.EAST);
 
         VillageExpansion.sweptWithoutLot(colony);
         VillageExpansion.lotFound(colony);
 
-        assertFalse(VillageExpansion.sweptWithoutLot(colony));
+        // Sem anexo pendente, a conta volta à de sempre.
+        for (int sweep = 1; sweep < VillageExpansion.FULL_AFTER; sweep++) {
+            assertFalse(VillageExpansion.sweptWithoutLot(colony));
+        }
+
+        assertTrue(VillageExpansion.sweptWithoutLot(colony));
     }
 
     @Test
@@ -143,9 +152,13 @@ class VillageExpansionTest {
             VillageExpansion.buildOpened(colony);
         }
 
-        assertFalse(VillageExpansion.sweptWithoutLot(colony));
-        assertFalse(VillageExpansion.isEdgeTurn(colony));
         assertFalse(VillageExpansion.sweptWithoutLot(colony), "a varredura da borda contou para anexar");
+        assertFalse(VillageExpansion.isEdgeTurn(colony));
+
+        for (int sweep = 1; sweep < VillageExpansion.FULL_AFTER; sweep++) {
+            assertFalse(VillageExpansion.sweptWithoutLot(colony));
+        }
+
         assertTrue(VillageExpansion.sweptWithoutLot(colony));
     }
 }

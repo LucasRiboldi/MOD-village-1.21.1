@@ -1,5 +1,12 @@
 # STATE — 2026-10-12
 
+> **0.3.40** (12-10): playtest da 0.3.39 — "as profissões pararam". Nenhuma obra em 23 min (nenhum
+> lote servia e o anexo pedia 2 voltas de 20 min: agora 1), mineiro preso numa pedra recusada 53
+> vezes (o enchimento não lia a marca), lenhador em laço (só media o próprio baú). **Não jogado.**
+> Verificado: test 1497/0; runGametest 755/755; mutação da mina derruba o teste.
+> **JAR instalado: `village-colony-0.3.40.jar`** =
+> `7D5583179AE5DDD747A0BD7E67E3F22645E3A26A5FF38F4A983A0D465AD274E1` (0.3.39 `.jar.disabled`).
+
 > **0.3.39** (12-10): regras do autor — vila sem baú público ganha um numa casa (encostado na
 > parede, longe da porta); 1 em 5 obras na faixa da borda; carpinteiro guarda toda peça de madeira e
 > calça a rua; fazendeiro e pastor não ajudam a obra. **Não jogado.** Verificado: test 1497/0;

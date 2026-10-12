@@ -175,6 +175,13 @@ public class NetworkDiggingGameTest implements FabricGameTest {
                     "o alvo não é pedra da parede: " + quarry);
             context.assertTrue(network.stateOf(node.gx(), node.gz()).orElseThrow() != MineNetwork.State.DONE,
                     "o nó ficou pronto com o piso furado");
+
+            // A pedra que o mineiro recusou não volta (0.3.39: a mesma, 53 vezes).
+            MineMarks.refuse(world, quarry.get());
+            Optional<BlockPos> next = NetworkDigging.nextTarget(world, miner, colony.id(), mine);
+
+            context.assertTrue(next.isPresent() && !next.equals(quarry),
+                    "a pedra recusada voltou como enchimento: " + next);
         } finally {
             for (BlockPos at : BlockPos.iterate(from, to)) {
                 world.setBlockState(at, Blocks.AIR.getDefaultState());
