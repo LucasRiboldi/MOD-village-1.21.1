@@ -1,5 +1,11 @@
 # STATE — 2026-10-11
 
+> **0.3.33** (12-10): a obra esperava `bricks` para sempre — a cadeia não descia a receita de peça
+> sem recurso declarado ([`docs/research/2026-10-12-obra-esperando-tijolo.md`](docs/research/2026-10-12-obra-esperando-tijolo.md)).
+> Verificado: test 1475/0; runGametest 741/741; mutação nos testes de tijolo (0 sem a correção).
+> **JAR instalado: `village-colony-0.3.33.jar`** = `021C117693E0310D49C25B5E825956C97C3CA2EDFAEB44D8758F42588172F7D6`
+> (três cópias iguais; 0.3.32 como `.jar.disabled`). Aberto: mineiro 0% trabalhando com 3 de 4 ramais esgotados (TODO).
+
 > **0.3.32** (`claude/autossuficiencia`, 11-10 noite) — correções do playtest da 0.3.31 (Spark
 > `qWTXLoLP5g`, TPS 20, mod 2,5%; Regra 51 reprovou em todos os ofícios). Análise por profissão:
 > [`docs/research/2026-10-11-fluxos-das-profissoes-031.md`](docs/research/2026-10-11-fluxos-das-profissoes-031.md).

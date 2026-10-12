@@ -1,10 +1,19 @@
 # TODO
 
-**Atualizado:** 2026-10-11. Só o que está **aberto**. O histórico até hoje está em
+**Atualizado:** 2026-10-12. Só o que está **aberto**. O histórico até hoje está em
 `docs/archive/technical/TODO-ate-2026-10-07.md` (consultar por `grep`, nunca inteiro).
 Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
+
+## 🔴 Playtest da 0.3.33 (`docs/research/2026-10-12-obra-esperando-tijolo.md`)
+
+- [ ] 🔴 Obra com `bricks`: tarefas de `clay_ball` e `brick` abrem (`SMELT_MATERIAL brick` no diário),
+      tijolo chega e a obra fecha.
+- [ ] 🔴 Mineiro 0% trabalhando em 12-10: 3 de 4 ramais esgotados e o aberto com pedra a 20–27 blocos
+      que ele não alcança (11 "got no closer"). Descer o nível quando os ramais acabam, ou largar o
+      ramal inalcançável.
+- [ ] 🟠 "the builder left the colony" (1×) — conferir por que o construtor saiu da colônia.
 
 ## 🔴 Playtest da 0.3.32 (`docs/research/2026-10-11-fluxos-das-profissoes-031.md`)
 

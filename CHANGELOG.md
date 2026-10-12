@@ -11,6 +11,15 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.33] — obra esperando tijolo (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **A obra esperava `bricks` para sempre:** a demanda só descia a receita de peça que já era
+  recurso declarado, e `bricks` não é. Nenhuma tarefa de `brick` (fundidor) nem de `clay_ball`
+  (coleta) nascia, e o suprimento de último caso não contava ciclo sem tarefa. Agora a peça sem
+  recurso declarado desce pela receita do jogo até 3 degraus (escada de tijolo → tijolos →
+  tijolo assado); lingote e vidro continuam com a conta própria.
+
 ## [0.3.32] — playtest da 0.3.31: mina na borda, obra, ócio e overlay (2026-10-11, JAR local, não jogado)
 
 ### Mudado
