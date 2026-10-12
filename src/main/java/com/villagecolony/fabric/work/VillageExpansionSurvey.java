@@ -89,12 +89,12 @@ public final class VillageExpansionSurvey {
         Side side = reachable.get();
         LAST_ANNEX.put(colony.id(), world.getTime());
 
-        VillageColonyMod.reportGrowth(colony.id(), VillageGrowth.byStrip(
-                VillageColonyMod.COLONIES, colony.id(), VillageExpansion.stripOf(box.get(), side)), "an annexed strip");
+        // A caixa não ganha faixa vazia — autor, 2026-10-12: "a zona aumenta sem ter estrada ou
+        // construção nas bordas". A rua sai por este lado; a caixa cresce com ela e com as obras.
         VillageExpansion.annexed(colony.id(), side);
         StripRoad.lead(world, colony.id(), box.get(), side);
-        VillageColonyMod.LOGGER.info("Colony {} is full — annexes {} blocks to the {}, the road grows that way — {}",
-                colony.id().toString().substring(0, 8), VillageExpansion.STRIP, side, measured);
+        VillageColonyMod.LOGGER.info("Colony {} is full — the road grows out to the {} — {}",
+                colony.id().toString().substring(0, 8), side, measured);
 
         return Optional.of(side);
     }

@@ -114,6 +114,23 @@ class ColonySavedDataTest {
         assertTrue(restored.bounds().isEmpty(), "caixa da regra antiga devia voltar vazia, para ser medida de novo");
     }
 
+    /** A caixa do modelo 2 (crescida por faixa vazia anexada, 0.3.37–0.3.43) é medida de novo — 2026-10-12. */
+    @Test
+    void boundsOfModelTwoAreMeasuredAgain() {
+        Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(120, 68, -340));
+        colony.measure(new VillageBounds(1627, 63, -5376, 1764, 85, -5220));
+
+        ColonySavedData data = empty();
+        data.sync(List.of(colony), List.of());
+
+        NbtCompound oldSave = data.writeNbt(new NbtCompound(), null);
+        oldSave.getList("colonies", 10).getCompound(0).putInt("boundsModel", 2);
+
+        Colony restored = ColonySavedData.TYPE.deserializer().apply(oldSave, null).colonies().get(0);
+
+        assertTrue(restored.bounds().isEmpty(), "caixa do modelo 2 devia voltar vazia, para ser medida de novo");
+    }
+
     @Test
     void saveWithoutForestPopulationMilestoneStartsAtZero() {
         Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(0, 64, 0));

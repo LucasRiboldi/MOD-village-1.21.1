@@ -11,6 +11,19 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.44] — a caixa só cresce com rua e obra (2026-10-12, JAR local, não jogado)
+
+### Mudado
+- **Sem faixa vazia (pedido do autor):** a vila cheia não anexa mais terreno vazio; escolhe o melhor
+  lado aonde uma rua da vila chega e puxa a rua para fora por ele. A caixa cresce com a rua calçada e
+  com as obras, como antes da 0.3.37.
+
+### Corrigido
+- **Caixa inchada no save do autor:** a regra de medida passou ao modelo 3, e a caixa crescida por
+  faixas vazias (0.3.37–0.3.43) é medida de novo no primeiro carregamento — a partir da vila gerada
+  achada no meio das construções (o centro tinha andado), mais a folga de cada construção.
+- A colônia abandonada na 0.3.42 voltou na 0.3.43 (27 aldeões registrados de novo).
+
 ## [0.3.43] — a vila não é mais dada como abandonada (2026-10-12, JAR local, não jogado)
 
 ### Corrigido

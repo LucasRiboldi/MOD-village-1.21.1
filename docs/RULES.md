@@ -89,6 +89,7 @@ regra que foi emendada. O corpo de cada regra vive em
 | 55 | Emenda (10-12, 0.3.42) | O lenhador ocioso planta uma muda fora da vila por vila a cada 5 minutos (`OutskirtsPlanting.EVERY`) |
 | 60 | O tipo de obra que passa uma volta inteira da varredura sem lote fica 30 min fora da vez; com todas as oficinas que faltam recusadas, a vila constrói casa no lugar | 10-12 | ✅ feita (0.3.42) | `LotTypeRefusals`, `HousePlans.plansForNext`, `RoadGrowthPlanning.extendTheRoad` |
 | 56 | Emenda (10-12, 0.3.43) | No máximo um anexo a cada 30 min, e só no lado aonde uma rua da vila chega (`VillageExpansionSurvey.ANNEX_EVERY`, `StripRoad.find`) |
+| 56 | Emenda (10-12, 0.3.44) | **Sem faixa vazia:** a vila cheia não anexa terreno; puxa a rua para fora pelo melhor lado alcançável, e a caixa cresce com a rua e as obras (`VillageExpansionSurvey`, `StripRoad.lead`). Caixa do modelo 2 é medida de novo (`VillageBoundsSave.CURRENT_MODEL` = 3) |
 | 61 | A colônia só é dada como abandonada sem vila à vista do centro **nem** dentro da caixa, e com menos de 3 trabalhadores vivos dentro da caixa | 10-12 | ✅ feita (0.3.43) | `ColonyAbandonment.sees`, `VillageAdoption.peopleStillHome` |
 | 53 | A boca da mina só nasce na faixa da borda da caixa da vila (até 8 blocos da linha, dentro ou fora); com a mina aberta, o mineiro sem ramal livre não cava pedra exposta na superfície | 10-11 | ✅ feita (0.3.32) | `MineEdge.nearTheEdge`, `MineDigging.mineOf`, `MineTrouble`, `MineDigging.exposedStoneFallback` |
 

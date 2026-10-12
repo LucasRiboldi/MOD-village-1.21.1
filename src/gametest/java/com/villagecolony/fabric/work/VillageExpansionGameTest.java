@@ -18,7 +18,7 @@ import net.minecraft.util.math.BlockPos;
 import java.util.Optional;
 import java.util.UUID;
 
-/** A vila cheia anexa a faixa do lado de chão bom — Regra 56 C. */
+/** A vila cheia puxa a rua para fora pelo lado de chão bom, sem anexar faixa vazia — Regra 56 C. */
 public class VillageExpansionGameTest implements FabricGameTest {
 
     /** Alto o bastante para o chão da prova ser o topo de cada coluna. */
@@ -78,8 +78,9 @@ public class VillageExpansionGameTest implements FabricGameTest {
             }
 
             context.assertTrue(annexed.equals(Optional.of(Side.EAST)), "anexou " + annexed + " em vez do leste");
-            context.assertTrue(colony.bounds().orElseThrow().maxX() >= box.maxX() + strip,
-                    "a caixa não ganhou a faixa: " + colony.bounds());
+            // A caixa não ganha faixa vazia (autor, 2026-10-12): ela cresce com a rua que sai.
+            context.assertTrue(colony.bounds().orElseThrow().equals(box),
+                    "a caixa cresceu sem rua nem obra: " + colony.bounds());
             context.assertTrue(VillageExpansion.sideOf(colony.id()).equals(Optional.of(Side.EAST)),
                     "a rua não ficou apontada para o leste");
             context.assertTrue(com.villagecolony.fabric.integration.RoadExtension.isGrowing(colony.id()),

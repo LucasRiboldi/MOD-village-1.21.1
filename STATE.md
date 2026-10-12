@@ -1,5 +1,12 @@
 # STATE — 2026-10-12
 
+> **0.3.44** (12-10): a 0.3.43 reviveu a colônia (27 aldeões de volta), mas anexou de novo 16 blocos
+> ao norte sem rua nem obra. Pedido do autor: a caixa só cresce com rua e obra. A vila cheia agora só
+> puxa a rua para fora; a caixa inchada (237 x 197) é medida de novo (modelo 3). **Não jogado.**
+> Verificado: test 1500/0; runGametest 757/757; mutação derruba os testes (faixa vazia, modelo).
+> **JAR instalado: `village-colony-0.3.44.jar`** =
+> `3CC1DC6B9053F3270C44182C90141BC95558AFC32BB6AF03D43A75E5791AAF3D` (0.3.43 `.jar.disabled`).
+
 > **0.3.43** (12-10): playtest da 0.3.42 — a colônia foi dada como ABANDONADA às 19:41 e soltou os 27
 > trabalhadores (sumiram placas, overlay e trabalho): quatro anexos a leste em 5 min levaram o centro a
 > 68 blocos das camas, e a sonda só aceita vila a 64 do centro. Agora vila dentro da caixa conta, 3+

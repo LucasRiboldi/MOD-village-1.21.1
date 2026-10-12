@@ -6,6 +6,13 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Playtest da 0.3.44
+
+- [ ] 🔴 `measured at …` no primeiro carregamento, com a caixa de volta ao tamanho da vila (era 237 x 197).
+- [ ] 🔴 Nenhum `grew to … by an annexed strip`; `the road grows out to the <lado>` e `grew the road` no lugar.
+- [ ] 🟠 Obra nova (`planned minecraft:`).
+- [ ] 🟡 Regra de foco (Emenda 6): a vila só trabalha com o jogador dentro da caixa há 1 min — na sessão de 20:35 houve 3 `rests — the player left the village`.
+
 ## 🔴 Playtest da 0.3.43
 
 - [ ] 🔴 O save gravado com a colônia abandonada (0 trabalhadores) revive: `is now STABLE` e `Registered N villagers`; placas e overlay de volta.
