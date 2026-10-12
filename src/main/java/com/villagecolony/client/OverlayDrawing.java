@@ -29,18 +29,21 @@ final class OverlayDrawing {
     /** Tamanho de uma unidade de texto no mundo: 40 unidades por bloco. */
     static final float SCALE = 0.025F;
 
-    /** A moldura nítida: 64 × 32, com borda de madeira e metal nos cantos. */
+    /**
+     * A moldura em pixel: 64 × 32, borda de 5 px de madeira com filete de latão e
+     * cantoneira de ferro (scripts/make_overlay_pixel_art.py).
+     */
     private static final float TEXTURE_WIDTH = 64.0F;
     private static final float TEXTURE_HEIGHT = 32.0F;
     private static final float FRAME_MIN_U = 0;
     private static final float FRAME_MAX_U = 64;
     private static final float FRAME_MIN_V = 0;
     private static final float FRAME_MAX_V = 32;
-    private static final float BORDER_U = 8;
-    private static final float BORDER_V = 8;
+    private static final float BORDER_U = 5;
+    private static final float BORDER_V = 5;
 
-    /** A borda desenhada, em unidades de texto. */
-    private static final float BORDER_DRAWN = 3.0F;
+    /** A borda desenhada, em unidades de texto: um pixel da moldura é um pixel da fonte. */
+    private static final float BORDER_DRAWN = 5.0F;
 
     private static final String PANEL = "textures/gui/overlays/ui/panel_background.png";
 
