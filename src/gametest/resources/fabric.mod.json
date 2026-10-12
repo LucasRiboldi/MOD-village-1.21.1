@@ -117,6 +117,7 @@
       "com.villagecolony.gametest.WorkerEquipmentGameTest",
       "com.villagecolony.gametest.BetterToolGameTest",
       "com.villagecolony.fabric.integration.ColonyModelsGameTest",
+      "com.villagecolony.fabric.integration.BlueprintResumeGameTest",
       "com.villagecolony.gametest.BlueprintReaderGameTest",
       "com.villagecolony.gametest.BuildSiteGameTest",
       "com.villagecolony.gametest.BuilderGameTest",

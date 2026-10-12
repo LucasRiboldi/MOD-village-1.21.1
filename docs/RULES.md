@@ -112,6 +112,9 @@ Regras que o autor declarou **temporárias** e vão sair.
 | 14 | Emenda (10-11, 0.3.32) | A vaga do ajudante não é a tarefa da obra: com o construtor fora, o planejador abre outra para ele (`ConstructionPlanner.ensureTask`) |
 | 51 | Emenda (10-11, 0.3.32) | O fazendeiro com a roça descansando (nada maduro, nenhum canteiro vazio) devolve a colheita e ajuda a obra (`BuildHelper.HELPS`) |
 | 1, 5 | Emenda (10-11, 0.3.32) | Sem obra pedindo, a tora só vira tábua até o teto de 64 tábuas (`StockRules.logsToConvert`) |
+| 51 | Emenda (10-11, 0.3.32) | Antes de surgir, o que a vila já tem em outro baú é **levado** ao baú da profissão (`ChestTransfer`); só surge o que não há em baú nenhum |
+| 14 | Emenda (10-11, 0.3.32) | Obra que só tem até 4 peças sem apoio, depois de duas janelas de paciência, larga essas peças e fecha (`UnsupportedRelease`, linha `VC_UNSUPPORTED`) |
+| 14 | Emenda (10-11, 0.3.32) | A obra que volta do save volta no giro em que foi levantada: das quatro orientações, a que mais casa com o que está de pé (`BlueprintPlacement.resumedBlueprintOf`) |
 | 7 | Emenda 2 (10-11) | O lenhador corta a árvore **mais perto dele** dentro do alcance da vila (a ordem centro → borda de 10-08 saiu) |
 | 14 | Emenda (10-11) | **O construtor sempre começa a obra**, podendo receber ajuda ou não: a tarefa que o planejador abre é só dele; ajudante entra pela vaga do `BuildHelper`, a até 32 blocos (`HelperReach.mayStart`) |
 | 29 | Emenda (10-11) | Aberta a escada, os ramais 1 a 3 abrem já e pulam a sala comum, que fica com o ramal zero (`Mine.skipTheSharedHall`) |

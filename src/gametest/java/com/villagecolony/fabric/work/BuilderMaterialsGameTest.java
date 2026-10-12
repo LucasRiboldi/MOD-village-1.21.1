@@ -309,6 +309,10 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
 
             context.assertTrue(count(context, setup.smelterChest(), Items.CLAY_BALL) == 1,
                     "o clay ball já existia na colônia, mas não apareceu no baú do fundidor");
+
+            // Playtest 0.3.31: o que a vila tem é levado, e não criado de novo.
+            context.assertTrue(count(context, setup.otherChest(), Items.CLAY_BALL) == 0,
+                    "o clay ball surgiu no baú do fundidor em vez de vir do outro baú da vila");
         } finally {
             setup.cleanUp();
         }

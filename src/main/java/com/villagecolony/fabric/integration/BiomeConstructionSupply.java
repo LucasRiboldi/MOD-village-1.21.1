@@ -259,22 +259,14 @@ public final class BiomeConstructionSupply {
     }
 
     /**
-     * O material que a busca não achou quatro vezes aparece no baú de quem o
-     * usa — pedido do autor, 2026-10-03.
+     * O material que a busca não achou quatro vezes vai ao baú de quem o usa — pedido
+     * do autor, 2026-10-03, natureza inclusive. O que a vila já tem em outro baú é
+     * levado para lá; só o que ela não tem em baú nenhum aparece (Regra 51).
      *
-     * <p><i>"Se não há material necessário depois de tentativas repetidas de
-     * localizá-lo, o material necessário deve aparecer no baú da profissão
-     * que precisou dele; se for localizado no bioma alcançável da vila, o
-     * aldeão vai buscá-lo."</i> Vale também para o material da natureza, e é
-     * o que revê a decisão de 26-09: ela recusava natureza porque a regra
-     * fabricava tora e terra que a profissão <b>achava</b>. Aqui só chega o
-     * que a busca no mundo, de verdade, não achou quatro vezes seguidas.
-     *
-     * @return se o baú já tem, ou passou a ter, a quantidade pedida
+     * @return se a vila já tem, ou passou a ter, a quantidade pedida
      */
     public static boolean stockAfterEmptySearches(
             ServerWorld world, UUID colonyId, ColonyPos near, Item item, int count, ProfessionType user) {
-
         return stockFor(world, colonyId, near, item, count, user,
                 "after four searches of the village's reach found none");
     }
@@ -288,8 +280,14 @@ public final class BiomeConstructionSupply {
             return true;
         }
         if (!professionChests.isEmpty()) {
-            int missing = count - professionHave;
-            Optional<ColonyPos> professionChest = ColonyChests.firstWithRoomFor(world, professionChests, item, missing);
+            int need = count - professionHave;
+            Optional<ColonyPos> professionChest = ColonyChests.firstWithRoomFor(world, professionChests, item, need);
+            // O que a vila tem em outro baú vem antes de surgir (ChestTransfer).
+            int missing = professionChest.map(chest -> need - ChestTransfer.bring(
+                    world, chestsOf(world, colonyId, near, craftsman), chest, item, need)).orElse(need);
+            if (missing == 0) {
+                return true;
+            }
             if (professionChest.isPresent()
                     && ChestDepositor.deposit(world, professionChest.get(), item, missing) == 0) {
                 VillageColonyMod.LOGGER.info("The colony stocked {} x{} for the {} {}", item, missing, craftsman, why);
