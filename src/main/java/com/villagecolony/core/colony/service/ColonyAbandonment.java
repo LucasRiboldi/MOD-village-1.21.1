@@ -85,7 +85,7 @@ public final class ColonyAbandonment {
         Objects.requireNonNull(probedFrom, "probedFrom");
         Objects.requireNonNull(accepted, "accepted");
 
-        if (sees(probedFrom, accepted)) {
+        if (sees(colony, probedFrom, accepted)) {
             // Vila de volta. Volta a STABLE, e não ao que ela era antes:
             // o estado anterior descrevia uma decisão tomada sobre uma
             // vila que, no meio, deixou de existir. STABLE é o mesmo
@@ -130,9 +130,16 @@ public final class ColonyAbandonment {
      * marcar por engano —, e sobreposição já rende aviso próprio (ADR-003
      * §5).
      */
-    private static boolean sees(ColonyPos probedFrom, Collection<VillageCandidate> accepted) {
+    private static boolean sees(Colony colony, ColonyPos probedFrom, Collection<VillageCandidate> accepted) {
         for (VillageCandidate candidate : accepted) {
             if (candidate.center().horizontalDistanceSquared(probedFrom) <= VIABLE_DISTANCE_SQUARED) {
+                return true;
+            }
+
+            // E a vila dentro da própria caixa — playtest 0.3.42: dois anexos a leste levaram o
+            // centro a 68 blocos das camas, e a colônia foi dada como abandonada com 27 aldeões.
+            if (colony.bounds().map(box -> box.containsColumn(candidate.center().x(), candidate.center().z()))
+                    .orElse(false)) {
                 return true;
             }
         }

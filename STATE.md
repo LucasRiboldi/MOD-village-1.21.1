@@ -1,5 +1,14 @@
 # STATE — 2026-10-12
 
+> **0.3.43** (12-10): playtest da 0.3.42 — a colônia foi dada como ABANDONADA às 19:41 e soltou os 27
+> trabalhadores (sumiram placas, overlay e trabalho): quatro anexos a leste em 5 min levaram o centro a
+> 68 blocos das camas, e a sonda só aceita vila a 64 do centro. Agora vila dentro da caixa conta, 3+
+> trabalhadores vivos dentro impedem o abandono, a colônia gravada como abandonada revive; anexo no
+> máximo a cada 30 min e só com rua alcançando a faixa. **Não jogado.** Verificado: test 1499/0;
+> runGametest 757/757; mutação derruba os testes novos (abandono por caixa, anexo por tempo, anexo sem rua).
+> **JAR instalado: `village-colony-0.3.43.jar`** =
+> `086E6CF13830A6357825DC4D5D658780D68BB56D1EB60455767574524176D61F` (0.3.42 `.jar.disabled`).
+
 > **0.3.42** (12-10): playtest da 0.3.41 (21 min) — a última obra nova foi na 0.3.35. Desde a 0.3.36
 > (casa só com falta de cama) a vila só tentava a oficina que faltava, sem lote, e nada a tirava da
 > vez: sem obra, construtor/carpinteiro/pedreiro paravam. Agora o tipo sem lote numa volta sai da vez

@@ -6,6 +6,15 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Playtest da 0.3.43
+
+- [ ] 🔴 O save gravado com a colônia abandonada (0 trabalhadores) revive: `is now STABLE` e `Registered N villagers`; placas e overlay de volta.
+- [ ] 🔴 Nenhum `is now ABANDONED` com a vila habitada.
+- [ ] 🟠 No máximo um `annexes` por meia hora; `no side with a road to it` quando nenhuma rua alcança.
+- [ ] 🟠 Obra nova (`planned minecraft:`) depois de `found no lot for a farm/trade_builder…`.
+- [ ] 🟡 A guarda dos trabalhadores vivos (`peopleStillHome`) não tem GameTest próprio.
+- [ ] 🟡 A caixa ficou 64 blocos mais larga a leste no save do autor (anexos de 0.3.42).
+
 ## 🔴 Playtest da 0.3.42
 
 - [ ] 🔴 `found no lot for a … in a whole sweep` seguido de `planned minecraft:village/...` (obra nova); construtor acima de 0%.

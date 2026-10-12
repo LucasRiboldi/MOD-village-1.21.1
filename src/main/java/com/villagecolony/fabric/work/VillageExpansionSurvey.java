@@ -28,6 +28,18 @@ public final class VillageExpansionSurvey {
     /** De quantos em quantos blocos se mede uma coluna da faixa. */
     static final int STEP = 2;
 
+    /**
+     * No máximo um anexo a cada meia hora — playtest 0.3.42: quatro anexos a leste em cinco
+     * minutos levaram o centro a 68 blocos das camas e a colônia foi dada como abandonada.
+     */
+    static final long ANNEX_EVERY = 36_000;
+
+    private static final java.util.Map<java.util.UUID, Long> LAST_ANNEX = new java.util.HashMap<>();
+
+    static {
+        com.villagecolony.core.type.ServerMemory.register(VillageExpansionSurvey.class, LAST_ANNEX::clear);
+    }
+
     private VillageExpansionSurvey() {
     }
 
@@ -45,7 +57,8 @@ public final class VillageExpansionSurvey {
     static Optional<Side> sweptWithoutLot(ServerWorld world, Colony colony) {
         Optional<VillageBounds> box = colony.bounds();
 
-        if (box.isEmpty() || !VillageExpansion.sweptWithoutLot(colony.id())) {
+        if (box.isEmpty() || !VillageExpansion.sweptWithoutLot(colony.id())
+                || world.getTime() - LAST_ANNEX.getOrDefault(colony.id(), Long.MIN_VALUE / 2) < ANNEX_EVERY) {
             return Optional.empty();
         }
 
@@ -60,16 +73,21 @@ public final class VillageExpansionSurvey {
                         + survey.water() + " water, " + survey.built() + " built"
                         + (survey.foreign() ? ", another colony" : ""))
                 .collect(Collectors.joining("; "));
-        Optional<SideSurvey> best = VillageExpansion.choose(surveys);
+        // Só o lado aonde uma rua da vila consegue chegar: faixa sem rua não dá lote (0.3.42).
+        Optional<Side> reachable = VillageExpansion.ranked(surveys).stream()
+                .map(SideSurvey::side)
+                .filter(candidate -> StripRoad.find(world, colony.id(), box.get(), candidate).isPresent())
+                .findFirst();
 
-        if (best.isEmpty()) {
-            VillageColonyMod.LOGGER.info("Colony {} is full and no side can be annexed — {}",
+        if (reachable.isEmpty()) {
+            VillageColonyMod.LOGGER.info("Colony {} is full and no side with a road to it can be annexed — {}",
                     colony.id().toString().substring(0, 8), measured);
 
             return Optional.empty();
         }
 
-        Side side = best.get().side();
+        Side side = reachable.get();
+        LAST_ANNEX.put(colony.id(), world.getTime());
 
         VillageColonyMod.reportGrowth(colony.id(), VillageGrowth.byStrip(
                 VillageColonyMod.COLONIES, colony.id(), VillageExpansion.stripOf(box.get(), side)), "an annexed strip");

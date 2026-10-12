@@ -129,6 +129,34 @@ class ColonyAbandonmentTest {
     }
 
     /**
+     * A vila dentro da própria caixa conta, mesmo longe do centro — playtest 0.3.42: dois
+     * anexos a leste levaram o centro a 68 blocos das camas, e 27 aldeões foram soltos.
+     */
+    @Test
+    void aVillageInsideTheColonyBoxIsStillItsVillage() {
+        Colony colony = colonyAt(CENTER);
+        ColonyPos beds = new ColonyPos(-(VillageDetector.DUPLICATE_DISTANCE + 4), 64, 0);
+
+        colony.measure(new com.villagecolony.core.colony.model.VillageBounds(-100, 60, -50, 30, 80, 50));
+
+        assertEquals(Optional.empty(), ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(beds)), false));
+    }
+
+    @Test
+    void anAbandonedColonyRevivesWhenItsVillageIsInsideTheBox() {
+        Colony colony = colonyAt(CENTER);
+        ColonyPos beds = new ColonyPos(-(VillageDetector.DUPLICATE_DISTANCE + 4), 64, 0);
+
+        colony.measure(new com.villagecolony.core.colony.model.VillageBounds(-100, 60, -50, 30, 80, 50));
+        colony.setState(ColonyState.ABANDONED);
+
+        ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(beds)), false);
+
+        assertEquals(Optional.of(ColonyState.STABLE),
+                ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(beds)), false));
+    }
+
+    /**
      * A pergunta é sobre de onde a sonda partiu, não sobre onde a colônia
      * está agora.
      *

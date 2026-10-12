@@ -36,6 +36,25 @@ public final class StripRoad {
      */
     public static Optional<BlockPos> lead(ServerWorld world, UUID colonyId, VillageBounds box, Side side) {
         Direction towards = Direction.fromVector(side.offsetX(), 0, side.offsetZ());
+        Optional<BlockPos> start = find(world, colonyId, box, side);
+
+        if (towards == null || start.isEmpty()) {
+            VillageColonyMod.LOGGER.info("Colony {} found no road within {} blocks of its {} side to lead into the strip",
+                    colonyId.toString().substring(0, 8), BAND, side);
+
+            return Optional.empty();
+        }
+
+        RoadExtension.startGrowing(colonyId, start.get(), towards);
+        VillageColonyMod.LOGGER.info("Colony {} leads a road {} into the annexed strip from {}",
+                colonyId.toString().substring(0, 8), side, start.get().toShortString());
+
+        return start;
+    }
+
+    /** A rua de onde a faixa deste lado seria alcançada, sem começar nada. */
+    public static Optional<BlockPos> find(ServerWorld world, UUID colonyId, VillageBounds box, Side side) {
+        Direction towards = Direction.fromVector(side.offsetX(), 0, side.offsetZ());
 
         if (towards == null) {
             return Optional.empty();
@@ -72,18 +91,7 @@ public final class StripRoad {
             }
         }
 
-        if (best == null) {
-            VillageColonyMod.LOGGER.info("Colony {} found no road within {} blocks of its {} side to lead into the strip",
-                    colonyId.toString().substring(0, 8), BAND, side);
-
-            return Optional.empty();
-        }
-
-        RoadExtension.startGrowing(colonyId, best, towards);
-        VillageColonyMod.LOGGER.info("Colony {} leads a road {} into the annexed strip from {}",
-                colonyId.toString().substring(0, 8), side, best.toShortString());
-
-        return Optional.of(best);
+        return Optional.ofNullable(best);
     }
 
     private static boolean isRoad(ServerWorld world, UUID colonyId, BlockPos ground) {

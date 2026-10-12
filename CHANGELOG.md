@@ -11,6 +11,18 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.43] — a vila não é mais dada como abandonada (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **Colônia abandonada com 27 aldeões (playtest 0.3.42):** quatro anexos a leste em cinco minutos
+  levaram o centro da caixa a 68 blocos das camas; a sonda, que parte do centro e só aceita vila a
+  até 64 blocos, declarou a colônia ABANDONADA e soltou todos os trabalhadores — sumiram as placas,
+  o overlay e todo o trabalho. Agora: vila dentro da própria caixa conta como viva; colônia com 3 ou
+  mais trabalhadores vivos dentro da caixa não é abandonada; e a colônia gravada como abandonada
+  volta sozinha (duas leituras) quando a sonda vê as camas dentro da caixa.
+- **Anexo em disparada:** no máximo um anexo a cada 30 minutos, e só no lado aonde uma rua da vila
+  consegue chegar (faixa sem rua não dá lote); sem lado assim, não anexa.
+
 ## [0.3.42] — a vila volta a construir (2026-10-12, JAR local, não jogado)
 
 ### Corrigido

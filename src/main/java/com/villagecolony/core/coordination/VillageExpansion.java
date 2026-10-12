@@ -142,6 +142,15 @@ public final class VillageExpansion {
         PENDING.remove(colonyId);
     }
 
+    /** Os lados que se podem anexar, do melhor para o pior; no empate, o primeiro medido. */
+    public static java.util.List<SideSurvey> ranked(Collection<SideSurvey> surveys) {
+        java.util.List<SideSurvey> usable = new java.util.ArrayList<>(surveys.stream().filter(SideSurvey::usable).toList());
+
+        usable.sort(java.util.Comparator.comparingInt(SideSurvey::score).reversed());
+
+        return usable;
+    }
+
     /** O melhor lado que se pode anexar; vazio se nenhum serve. No empate, o primeiro medido. */
     public static Optional<SideSurvey> choose(Collection<SideSurvey> surveys) {
         SideSurvey best = null;

@@ -80,7 +80,7 @@ final class VillageAdoption {
                     overworld, MinecraftTypeAdapter.toBlockPos(probedFrom), true);
 
             if (judge) {
-                judgeAbandonment(colony, probedFrom, result);
+                judgeAbandonment(overworld, colony, probedFrom, result);
             }
         }
     }
@@ -102,9 +102,11 @@ final class VillageAdoption {
      * produziria uma linha a cada ciclo.
      */
     static void judgeAbandonment(
-            Colony colony, ColonyPos probedFrom, VillageScanner.ScanResult result) {
+            ServerWorld world, Colony colony, ColonyPos probedFrom, VillageScanner.ScanResult result) {
 
         ColonyAbandonment.judge(colony, probedFrom, result.candidates(), result.ignoredByBiome())
+                // Vila com o próprio povo dentro não é abandonada (playtest 0.3.42).
+                .filter(state -> state != ColonyState.ABANDONED || !peopleStillHome(world, colony))
                 .ifPresent(state -> {
                     ColonyState was = colony.state();
 
@@ -122,6 +124,24 @@ final class VillageAdoption {
 
                     VillagerLifecycleHandler.dismissIfAbandoned(colony, was, state);
                 });
+    }
+
+    /** Quantos trabalhadores vivos a colônia precisa ter dentro da caixa para não ser abandonada. */
+    static final int PEOPLE_TO_STAY = 3;
+
+    /** Se ainda há trabalhadores vivos da colônia dentro da caixa dela. */
+    static boolean peopleStillHome(ServerWorld world, Colony colony) {
+        if (world == null || colony.bounds().isEmpty()) {
+            return false;
+        }
+
+        long home = VillageColonyMod.WORKERS.ofColony(colony.id()).stream()
+                .map(worker -> world.getEntity(worker.villagerId()))
+                .filter(entity -> entity != null && entity.isAlive()
+                        && colony.bounds().get().containsColumn(entity.getBlockX(), entity.getBlockZ()))
+                .count();
+
+        return home >= PEOPLE_TO_STAY;
     }
 
     /**

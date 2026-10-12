@@ -84,6 +84,16 @@ public class VillageExpansionGameTest implements FabricGameTest {
                     "a rua não ficou apontada para o leste");
             context.assertTrue(com.villagecolony.fabric.integration.RoadExtension.isGrowing(colony.id()),
                     "a vila anexou sem puxar a rua para dentro da faixa");
+
+            // Um anexo a cada meia hora (0.3.42: quatro em cinco minutos soltaram a vila).
+            int width = colony.bounds().orElseThrow().sizeX();
+
+            for (int sweep = 0; sweep < 3 * VillageExpansion.FULL_AGAIN_AFTER; sweep++) {
+                context.assertTrue(VillageExpansionSurvey.sweptWithoutLot(world, colony).isEmpty(),
+                        "anexou de novo na mesma meia hora");
+            }
+
+            context.assertTrue(colony.bounds().orElseThrow().sizeX() == width, "a caixa cresceu de novo");
         } finally {
             for (BlockPos at : BlockPos.iterate(from, to)) {
                 world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
@@ -91,6 +101,67 @@ public class VillageExpansionGameTest implements FabricGameTest {
 
             VillageExpansion.lotFound(colony.id());
             com.villagecolony.fabric.integration.RoadExtension.lotFound(colony.id());
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /** Sem rua da vila que alcance a faixa, a vila não anexa: faixa sem rua não dá lote. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_expansion_no_road", tickLimit = 20)
+    public void withoutARoadToReachTheStripTheVillageDoesNotAnnex(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(0, HIGH, 0));
+        Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(origin.add(4, 1, 4)));
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+        VillageBounds box = new VillageBounds(origin.getX(), origin.getY(), origin.getZ(),
+                origin.getX() + 8, origin.getY() + 6, origin.getZ() + 8);
+        int strip = VillageExpansion.STRIP;
+        BlockPos from = origin.add(-strip, 0, -strip);
+        BlockPos to = origin.add(8 + strip, 1, 8 + strip);
+
+        colony.measure(box);
+        VillageColonyMod.COLONIES.register(colony);
+        VillageExpansion.lotFound(colony.id());
+
+        try {
+            for (BlockPos at : BlockPos.iterate(from, to)) {
+                world.setBlockState(at, at.getY() == origin.getY() ? Blocks.STONE.getDefaultState()
+                        : Blocks.AIR.getDefaultState(), 2);
+            }
+
+            // A colônia que a detecção funda na bateria pode encostar na faixa e vetar os lados:
+            // a pergunta é sobre a rua, então ela sai do registro só durante a pergunta.
+            VillageBounds area = new VillageBounds(from.getX(), from.getY(), from.getZ(), to.getX(), to.getY(), to.getZ());
+            java.util.List<Colony> others = VillageColonyMod.COLONIES.all().stream()
+                    .filter(other -> !other.id().equals(colony.id()))
+                    .filter(other -> other.bounds().map(b -> b.touches(area, 0)).orElse(false))
+                    .toList();
+            java.util.List<VillageExpansion.SideSurvey> sides = new java.util.ArrayList<>();
+            Optional<Side> annexed;
+
+            others.forEach(other -> VillageColonyMod.COLONIES.remove(other.id()));
+
+            try {
+                for (Side side : Side.values()) {
+                    sides.add(VillageExpansionSurvey.survey(world, colony, box, side));
+                }
+
+                annexed = VillageExpansionSurvey.sweptWithoutLot(world, colony);
+            } finally {
+                others.forEach(VillageColonyMod.COLONIES::register);
+            }
+
+            // Há lado bom para anexar: só a falta de rua pode impedir o anexo.
+            context.assertFalse(VillageExpansion.ranked(sides).isEmpty(), "nenhum lado utilizável: " + sides);
+            context.assertTrue(annexed.isEmpty(), "a vila anexou uma faixa que nenhuma rua alcança");
+            context.assertTrue(colony.bounds().orElseThrow().equals(box), "a caixa cresceu sem rua: " + colony.bounds());
+        } finally {
+            for (BlockPos at : BlockPos.iterate(from, to)) {
+                world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+            }
+
+            VillageExpansion.lotFound(colony.id());
             owned.cleanUp();
         }
 
