@@ -1,5 +1,12 @@
 # STATE — 2026-10-12
 
+> **0.3.41** (12-10): playtest da 0.3.40 (Spark `c76Y5XgCfy`, TPS 20, mod 2%) — o anexo funcionou
+> (16 blocos a leste), mas a rua cresceu para oeste e a faixa ficou sem rua, sem lote e sem obra.
+> Agora a vila puxa a rua mais avançada daquele lado para dentro da faixa (`StripRoad`). **Não jogado.**
+> Verificado: test 1497/0; runGametest 755/755; mutação derruba o teste da expansão.
+> **JAR instalado: `village-colony-0.3.41.jar`** =
+> `CEDBA3D16BD83373C32312EC9D871742075FC8D930E0537C50C412132ABA5C53` (0.3.40 `.jar.disabled`).
+
 > **0.3.40** (12-10): playtest da 0.3.39 — "as profissões pararam". Nenhuma obra em 23 min (nenhum
 > lote servia e o anexo pedia 2 voltas de 20 min: agora 1), mineiro preso numa pedra recusada 53
 > vezes (o enchimento não lia a marca), lenhador em laço (só media o próprio baú). **Não jogado.**

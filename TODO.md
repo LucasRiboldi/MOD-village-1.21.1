@@ -6,6 +6,11 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Playtest da 0.3.41
+
+- [ ] 🔴 Depois de `is full — annexes … to the <lado>`: `leads a road <lado> into the annexed strip`, `grew the road … <lado>` e uma obra aberta na faixa.
+- [ ] 🟠 Se `found no road within 24 blocks`: a vila precisa de outra forma de levar a rua até a faixa.
+
 ## 🔴 Playtest da 0.3.40
 
 - [ ] 🔴 Obra abre de novo: `is full — annexes` depois da primeira volta sem lote, e lote na faixa anexada.

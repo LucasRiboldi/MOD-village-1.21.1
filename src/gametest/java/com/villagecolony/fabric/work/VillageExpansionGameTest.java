@@ -58,6 +58,11 @@ public class VillageExpansionGameTest implements FabricGameTest {
                 }
             }
 
+            // Uma rua de oeste a leste no meio da vila, que acaba na borda leste.
+            for (int x = 0; x <= 8; x++) {
+                world.setBlockState(origin.add(x, 0, 4), Blocks.DIRT_PATH.getDefaultState(), 2);
+            }
+
             VillageExpansion.SideSurvey east = VillageExpansionSurvey.survey(world, colony, box, Side.EAST);
             VillageExpansion.SideSurvey west = VillageExpansionSurvey.survey(world, colony, box, Side.WEST);
 
@@ -77,12 +82,15 @@ public class VillageExpansionGameTest implements FabricGameTest {
                     "a caixa não ganhou a faixa: " + colony.bounds());
             context.assertTrue(VillageExpansion.sideOf(colony.id()).equals(Optional.of(Side.EAST)),
                     "a rua não ficou apontada para o leste");
+            context.assertTrue(com.villagecolony.fabric.integration.RoadExtension.isGrowing(colony.id()),
+                    "a vila anexou sem puxar a rua para dentro da faixa");
         } finally {
             for (BlockPos at : BlockPos.iterate(from, to)) {
                 world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
             }
 
             VillageExpansion.lotFound(colony.id());
+            com.villagecolony.fabric.integration.RoadExtension.lotFound(colony.id());
             owned.cleanUp();
         }
 

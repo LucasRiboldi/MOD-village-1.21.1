@@ -8,6 +8,7 @@ import com.villagecolony.core.coordination.VillageExpansion.SideSurvey;
 import com.villagecolony.core.coordination.VillageGrowth;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.integration.BlockProtection;
+import com.villagecolony.fabric.integration.StripRoad;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Heightmap;
@@ -73,6 +74,7 @@ public final class VillageExpansionSurvey {
         VillageColonyMod.reportGrowth(colony.id(), VillageGrowth.byStrip(
                 VillageColonyMod.COLONIES, colony.id(), VillageExpansion.stripOf(box.get(), side)), "an annexed strip");
         VillageExpansion.annexed(colony.id(), side);
+        StripRoad.lead(world, colony.id(), box.get(), side);
         VillageColonyMod.LOGGER.info("Colony {} is full — annexes {} blocks to the {}, the road grows that way — {}",
                 colony.id().toString().substring(0, 8), VillageExpansion.STRIP, side, measured);
 

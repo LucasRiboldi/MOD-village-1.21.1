@@ -277,6 +277,11 @@ public final class RoadExtension {
         GROWING.clear();
     }
 
+    /** Começa um trecho daqui, nesta direção — a rua que entra na faixa anexada ({@link StripRoad}). */
+    static void startGrowing(UUID colonyId, BlockPos road, Direction towards) {
+        GROWING.put(colonyId, new Growth(new End(road.toImmutable(), towards, 0), 0));
+    }
+
     /** Se esta colônia tem ponta rendendo, para retomar sem varrer. */
     public static boolean isGrowing(UUID colonyId) {
         return GROWING.containsKey(colonyId);

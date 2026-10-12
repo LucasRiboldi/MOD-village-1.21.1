@@ -11,6 +11,15 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.41] — a rua entra na faixa anexada (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **Faixa anexada sem obra (playtest 0.3.40):** a vila anexou 16 blocos a leste, mas não havia
+  ponta de rua virada para lá; a extensão de sempre calçou uma ponta a oeste e a faixa ficou sem
+  rua — e sem rua não nasce lote. Agora, ao anexar, a vila acha a rua mais avançada para aquele lado
+  (até 24 blocos por dentro da borda) e puxa um trecho dela para dentro da faixa, que o planejador
+  calça a cada passagem; a extensão de sempre não passa por cima dele.
+
 ## [0.3.40] — profissões paradas (2026-10-12, JAR local, não jogado)
 
 ### Corrigido
