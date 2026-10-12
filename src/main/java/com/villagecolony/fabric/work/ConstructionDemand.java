@@ -129,11 +129,20 @@ public final class ConstructionDemand {
      * de somar um nome: a meta de fornalha da ADR-009 pergunta de cada
      * material se ele sai de forno, e para isso precisa vê-los todos.
      *
-     * <p>Vazio quando não há obra, que é a resposta certa e não um erro.
+     * <p>Vazio quando não há obra, que é a resposta certa e não um erro. Sem a planta de
+     * enfeite que aparece sozinha na obra ({@link BlockShaping#growsByItself}): ninguém a
+     * colhe para a obra.
      */
     public static Map<ResourceId, Integer> materialsNeededBy(Colony colony) {
         return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
-                .map(ConstructionProject::remainingMaterials)
+                .map(project -> project.remainingMaterials().entrySet().stream()
+                        .filter(entry -> MinecraftTypeAdapter.toBlock(entry.getKey())
+                                .map(block -> !BlockShaping.growsByItself(block.getDefaultState()))
+                                .orElse(true))
+                        .collect(java.util.stream.Collectors.toMap(
+                                Map.Entry::getKey, Map.Entry::getValue, Integer::sum,
+                                java.util.LinkedHashMap::new)))
+                .map(java.util.Collections::unmodifiableMap)
                 .orElse(Map.of());
     }
 

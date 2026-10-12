@@ -298,9 +298,9 @@ public final class BlockShaping {
     /**
      * Se este bloco a colônia molda do chão em vez de tirar do baú.
      *
-     * <p>São blocos que se formam no local ou não têm item próprio para
-     * o estoque. Terra, grama, terra grossa e barro têm itens e continuam
-     * sendo materiais físicos de construção.
+     * <p>São blocos que se formam no local, não têm item próprio para o estoque ou
+     * crescem sozinhos ({@link #growsByItself}). Terra, terra grossa e barro têm itens e
+     * continuam sendo materiais físicos de construção.
      *
      * <p>O {@code dirt_path} permanece nesta lista porque não tem item
      * próprio; terra comum não entra aqui, pois pode ser fornecida pelo
@@ -315,7 +315,22 @@ public final class BlockShaping {
                 || state.isOf(Blocks.WATER)
                 || state.isOf(Blocks.DIRT_PATH)
                 || state.getBlock() instanceof CropBlock
-                || hasNoItemOfItsOwn(state);
+                || hasNoItemOfItsOwn(state)
+                || growsByItself(state);
+    }
+
+    /**
+     * Relva alta, grama, samambaia e flores aparecem sozinhas na obra — regra do autor,
+     * 2026-10-12: ninguém colhe nem guarda planta de enfeite para a obra pôr.
+     */
+    public static boolean growsByItself(BlockState state) {
+        return state.isOf(Blocks.SHORT_GRASS)
+                || state.isOf(Blocks.TALL_GRASS)
+                || state.isOf(Blocks.FERN)
+                || state.isOf(Blocks.LARGE_FERN)
+                || state.isOf(Blocks.GRASS_BLOCK)
+                || state.isIn(net.minecraft.registry.tag.BlockTags.SMALL_FLOWERS)
+                || state.isIn(net.minecraft.registry.tag.BlockTags.TALL_FLOWERS);
     }
 
     /**
