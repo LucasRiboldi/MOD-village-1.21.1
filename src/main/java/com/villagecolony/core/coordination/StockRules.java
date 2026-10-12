@@ -62,11 +62,19 @@ public final class StockRules {
      * é convertido de volta a toras equivalentes, e o que se compara são
      * duas medidas da mesma madeira.
      *
+     * <p><b>E nunca acima do teto do estoque</b> ({@link StockCeiling#CRAFTED}): sem
+     * ele a tábua seguia a tora para sempre — 960 tábuas no playtest 0.3.31, os baús
+     * pessoais cheios e o carpinteiro abrindo tarefa de 0 peça a cada ciclo. O que a
+     * obra pede passa do teto pela outra parcela de {@link #logsThatMayBeConverted}.
+     *
      * @param logs quantas toras a colônia guarda, de qualquer espécie
      * @param storedPlanks quantas tábuas ela guarda, de qualquer espécie
      */
     public static int logsToConvert(int logs, int storedPlanks) {
-        return Math.max(0, (logs - storedPlanks / PLANKS_PER_LOG) / 2);
+        int half = Math.max(0, (logs - storedPlanks / PLANKS_PER_LOG) / 2);
+        int roomUnderTheCeiling = Math.max(0, StockCeiling.CRAFTED - storedPlanks);
+
+        return Math.min(half, (roomUnderTheCeiling + PLANKS_PER_LOG - 1) / PLANKS_PER_LOG);
     }
 
     /**

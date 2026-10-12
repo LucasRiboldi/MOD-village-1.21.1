@@ -78,6 +78,16 @@ public class BuildHelperGameTest implements FabricGameTest {
                                     .anyMatch(task -> task.type() == TaskType.BUILD),
                     "o pastor ocioso não ganhou a vaga de ajudante na obra");
 
+            // O construtor larga a obra (playtest 0.3.31: encalhado na mina): a vaga do
+            // ajudante não é a tarefa da obra, e o planejador abre outra para o construtor.
+            builds.cancel();
+            ConstructionPlanner.ensureTask(colony, project);
+
+            context.assertTrue(VillageColonyMod.TASKS.ofColony(colony.id()).stream()
+                            .anyMatch(task -> task.type() == TaskType.BUILD && task.isOpen()
+                                    && !BuildHelper.isHelperTask(task.id())),
+                    "com só o ajudante na obra, o planejador não abriu a tarefa do construtor");
+
             // A obra o solta antes dos dez blocos: a vaga volta para ele.
             Task help = VillageColonyMod.TASKS.assignedTo(shepherd).getFirst();
 
@@ -164,6 +174,68 @@ public class BuildHelperGameTest implements FabricGameTest {
                                     .anyMatch(task -> task.type() == TaskType.BUILD),
                     "o carpinteiro sem tarefa não ganhou a vaga de ajudante na obra");
         } finally {
+            VillageColonyMod.TASKS.ofColony(colony.id()).forEach(task -> VillageColonyMod.TASKS.remove(task.id()));
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
+            owned.cleanUp();
+            BuildHelper.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * O fazendeiro com a colheita na mão e a roça descansando (nada maduro) ajuda a
+     * obra e devolve a colheita à fila; com a roça ativa, fica no ofício — Regra 51,
+     * playtest 0.3.31 (18 minutos andando sem colher).
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_helper")
+    public void aFarmerWithNothingRipeHelpsTheBuilder(TestContext context) {
+        ColonyPos centre = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(2, 2, 2)));
+        Colony colony = Colony.create(UUID.randomUUID(), centre);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(3, 2, 3));
+        UUID farmer = villager.getUuid();
+
+        VillageColonyMod.WORKERS.register(farmer, colony.id()).assign(ProfessionType.FARMER);
+        owned.owning(farmer);
+
+        List<BlueprintBlock> blocks = new ArrayList<>();
+
+        for (int x = 0; x < 10; x++) {
+            blocks.add(new BlueprintBlock(new ColonyPos(x, 0, 0), ResourceId.vanilla("oak_planks")));
+        }
+
+        ConstructionProject project = ConstructionProject.plan(colony.id(),
+                Blueprint.of(ResourceId.vanilla("village/plains/houses/test_helper"), blocks),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(1, 2, 6))));
+
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        try {
+            VillageColonyMod.CONSTRUCTIONS.register(project);
+            VillageColonyMod.TASKS.create(colony.id(), TaskType.BUILD, TaskPriority.CONSTRUCTION,
+                    ResourceType.OAK_PLANKS, 10).reserveFor(UUID.randomUUID());
+            Task harvest = VillageColonyMod.TASKS.create(colony.id(), TaskType.COLLECT_FOOD,
+                    TaskPriority.PRODUCTION, ResourceType.WHEAT, 64);
+
+            harvest.reserveFor(farmer);
+
+            BuildHelper.lendAHand(context.getWorld(), colony);
+            context.assertFalse(BuildHelper.isHelping(farmer), "com a roça ativa, o fazendeiro devia ficar no ofício");
+
+            FieldRest.sweptAndFoundNothing(colony.id(), context.getWorld().getTime());
+            BuildHelper.lendAHand(context.getWorld(), colony);
+
+            context.assertTrue(BuildHelper.isHelping(farmer)
+                            && VillageColonyMod.TASKS.assignedTo(farmer).stream()
+                                    .allMatch(task -> task.type() == TaskType.BUILD),
+                    "com nada maduro, o fazendeiro não largou a colheita para ajudar a obra");
+        } finally {
+            FieldRest.thereIsWorkAgain(colony.id());
             VillageColonyMod.TASKS.ofColony(colony.id()).forEach(task -> VillageColonyMod.TASKS.remove(task.id()));
             VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
             owned.cleanUp();

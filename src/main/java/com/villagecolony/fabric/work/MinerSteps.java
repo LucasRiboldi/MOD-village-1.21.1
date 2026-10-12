@@ -47,6 +47,9 @@ import java.util.UUID;
  */
 final class MinerSteps {
 
+    /** Quantos blocos abaixo do destino, sem desvio, tornam o mineiro encalhado. */
+    static final int CLIMB_OUT_BELOW = 2;
+
     private MinerSteps() {
     }
 
@@ -334,8 +337,22 @@ final class MinerSteps {
      * — ADR-025, fase 2. Ver MinerDetours.
      */
     private static void stuck(ServerWorld world, VillagerEntity villager, Job job, String why) {
-        if (!MinerDetours.tryDetour(world, villager, job, why)) {
-            MinerHands.giveUp(world, villager.getUuid(), job, why);
+        if (MinerDetours.tryDetour(world, villager, job, why)) {
+            return;
+        }
+
+        boolean belowItsWay = WorkTargets.of(villager.getUuid())
+                .map(way -> way.getY() - villager.getBlockY() >= CLIMB_OUT_BELOW)
+                .orElse(false);
+
+        MinerHands.giveUp(world, villager.getUuid(), job, why);
+
+        // Dois ou mais abaixo de para onde ia, sem desvio: aldeão sobe um, e devolver a
+        // tarefa o deixava girando no mesmo buraco a cada pega (playtest 0.3.31, "5 blocks
+        // below it and unable to climb"). A fuga do encalhado o tira de lá.
+        if (belowItsWay) {
+            StrandedWorkers.strandNow(villager.getUuid(), villager.getBlockPos(),
+                    "below its way and unable to climb");
         }
     }
 

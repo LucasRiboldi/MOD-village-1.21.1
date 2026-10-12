@@ -167,4 +167,51 @@ public final class BuilderApproachGameTest implements FabricGameTest {
                 "um ponto físico ao lado do bloco não foi aceito para a reserva");
         context.complete();
     }
+
+    /**
+     * Construtor muito abaixo do chão do lote vai ao chão, e não a um patamar na coluna
+     * debaixo do lote — playtest 0.3.31: a y=39, dentro da mina, ele foi mandado a
+     * -341, 41, -1016, uma galeria embaixo da casa com o piso a y=63.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_approach_below")
+    public void aBuilderFarBelowTheLotIsSentToTheFloorAndNotUnderIt(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos targetLocal = new BlockPos(8, 30, 8);
+        BlockPos target = context.getAbsolutePos(targetLocal);
+        BlockPos worker = target.down(20);
+        BlockPos pocketLocal = targetLocal.down(19);
+        ConstructionProject project = ConstructionProject.plan(
+                UUID.randomUUID(),
+                Blueprint.of(
+                        ResourceId.vanilla("village/plains/houses/approach_below"),
+                        List.of(new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("oak_planks")))),
+                MinecraftTypeAdapter.toColonyPos(target));
+
+        try {
+            for (int dx = -5; dx <= 5; dx++) {
+                for (int dz = -5; dz <= 5; dz++) {
+                    context.setBlockState(targetLocal.add(dx, -1, dz), Blocks.STONE.getDefaultState());
+                }
+            }
+
+            // A galeria debaixo do lote: chão de pedra e duas alturas livres, dois acima dele.
+            context.setBlockState(pocketLocal, Blocks.STONE.getDefaultState());
+
+            BlockPos approach = BuilderApproach.footOf(world, project, target, worker);
+
+            context.assertTrue(approach.getY() >= target.getY() - 1,
+                    "o construtor a " + worker.toShortString() + " foi mandado a " + approach.toShortString()
+                            + ", embaixo do lote, e não ao chão dele");
+        } finally {
+            for (int dx = -5; dx <= 5; dx++) {
+                for (int dz = -5; dz <= 5; dz++) {
+                    context.setBlockState(targetLocal.add(dx, -1, dz), Blocks.AIR.getDefaultState());
+                }
+            }
+
+            context.setBlockState(pocketLocal, Blocks.AIR.getDefaultState());
+        }
+
+        context.complete();
+    }
 }

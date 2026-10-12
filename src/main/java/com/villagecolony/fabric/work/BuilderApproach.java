@@ -184,7 +184,11 @@ public final class BuilderApproach {
 
         BlockPos ground = near.orElseGet(() -> standingSpotNear(world, floor).orElse(floor));
 
-        if (ClimbLimit.reachableFrom(worker.getY(), ground.getY())) {
+        // Abaixo do chão do lote o patamar não serve: ele cai na coluna debaixo do
+        // lote, dentro da terra ou numa galeria da mina (playtest 0.3.31: construtor a
+        // y=39 mandado a -341, 41, -1016 com o piso a y=63). Quem está embaixo vai ao
+        // chão por onde a navegação achar; o patamar é só para descer do telhado.
+        if (ClimbLimit.reachableFrom(worker.getY(), ground.getY()) || worker.getY() < ground.getY()) {
             return Optional.of(ground);
         }
 

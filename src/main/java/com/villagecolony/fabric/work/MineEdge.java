@@ -50,6 +50,34 @@ final class MineEdge {
     /** Até quantos blocos acima do centro o morro conta a favor. */
     static final int HILL_CAP = 12;
 
+    /**
+     * A faixa da borda onde uma boca pode nascer: até este tanto para dentro ou para
+     * fora da linha da caixa — Regra 52 (autor, 2026-10-11: <i>"não abrir entrada de
+     * mina em lugares aleatórios, somente nas entradas próximas das bordas"</i>).
+     */
+    static final int EDGE_BAND = INSIDE + 3;
+
+    /** A caixa medida desta colônia, se já houver. */
+    static Optional<VillageBounds> boxOf(UUID colonyId) {
+        return VillageColonyMod.COLONIES.find(colonyId).flatMap(Colony::bounds);
+    }
+
+    /**
+     * Se este ponto está na faixa da borda da caixa (Regra 52): a até
+     * {@link #EDGE_BAND} blocos da linha de algum lado, dentro ou fora dela.
+     */
+    static boolean nearTheEdge(VillageBounds box, BlockPos at) {
+        if (!box.containsColumn(at.getX(), at.getZ(), EDGE_BAND)) {
+            return false;
+        }
+
+        int toEdge = Math.min(
+                Math.min(Math.abs(at.getX() - box.minX()), Math.abs(at.getX() - box.maxX())),
+                Math.min(Math.abs(at.getZ() - box.minZ()), Math.abs(at.getZ() - box.maxZ())));
+
+        return toEdge <= EDGE_BAND;
+    }
+
     /** Longe da água pesa 4 por bloco, morro pesa 3 por bloco de altura (até {@link #HILL_CAP}). */
     static int score(int waterDistance, int hill) {
         return waterDistance * 4 + hill * 3;

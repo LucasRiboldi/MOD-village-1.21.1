@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.construction.model.MineShaft;
@@ -277,13 +278,19 @@ public final class MineDigging {
         return found;
     }
 
-    /** Pedra exposta sem invadir as células planejadas da mina aberta mais próxima da colônia. */
+    /**
+     * Pedra exposta em volta da vila, só enquanto a colônia não tem mina. Com ela, o
+     * mineiro sem ramal livre espera na mina: cavar a encosta deixava buracos que
+     * pareciam bocas de mina em lugar qualquer (Regra 52, playtest 0.3.31).
+     */
     static Optional<BlockPos> exposedStoneFallback(
             ServerWorld world, UUID workerId, UUID colonyId, BlockPos center) {
 
-        return VillageColonyMod.MINES.of(colonyId)
-                .map(mine -> MineVein.exposedStone(world, workerId, colonyId, center, mine.plannedCells()))
-                .orElseGet(() -> MineVein.exposedStone(world, workerId, colonyId, center));
+        if (VillageColonyMod.MINES.of(colonyId).isPresent()) {
+            return Optional.empty();
+        }
+
+        return MineVein.exposedStone(world, workerId, colonyId, center);
     }
 
 
@@ -423,13 +430,16 @@ public final class MineDigging {
             descent = edge.get().side();
         }
 
+        // Com a caixa medida, a boca só nasce na faixa da borda (Regra 52).
+        Optional<VillageBounds> box = MineEdge.boxOf(colonyId);
         Optional<BlockPos> mouth = edge.isPresent()
                 ? Optional.of(edge.get().mouth())
-                : MineSite.mouthOf(world, center, descent);
+                : box.isPresent() ? Optional.empty() : MineSite.mouthOf(world, center, descent);
         Optional<WaterMineAccess.Route> waterAccess = Optional.empty();
 
         if (mouth.isEmpty()) {
-            waterAccess = WaterMineAccess.find(world, center, descent);
+            waterAccess = WaterMineAccess.find(world, center, descent)
+                    .filter(route -> box.isEmpty() || MineEdge.nearTheEdge(box.get(), route.entry()));
 
             if (waterAccess.isPresent() && waterAccess.get().place(world)) {
                 mouth = Optional.of(waterAccess.get().entry());
@@ -450,9 +460,11 @@ public final class MineDigging {
                     colonyId,
                     MOUTH_SUBJECT,
                     IdleReason.NO_TARGET,
-                    "no column within " + MineSite.distance() + " blocks of " + center.toShortString()
-                            + " can hold a mine mouth — tried 8 directions at 5 distances,"
-                            + " the last two settling for a poor one");
+                    box.isPresent()
+                            ? "no column near the edge of the village box can hold a mine mouth"
+                            : "no column within " + MineSite.distance() + " blocks of " + center.toShortString()
+                                    + " can hold a mine mouth — tried 8 directions at 5 distances,"
+                                    + " the last two settling for a poor one");
 
             return Optional.empty();
         }

@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.construction.model.MineShaft;
@@ -201,12 +202,23 @@ public final class MineTrouble {
 
         Side descent = MineCuts.sideOf(colonyId);
 
-        Optional<BlockPos> mouth = MineSite.mouthOf(world, center, descent);
+        // Com a caixa medida, a boca nova também nasce na faixa da borda, longe da
+        // velha (Regra 52); sem caixa, a busca em volta do centro de sempre.
+        Optional<MineEdge.Choice> edge = MineEdge.inside(
+                world, colonyId, center, MinecraftTypeAdapter.toBlockPos(mine.entry()));
+
+        if (edge.isPresent()) {
+            descent = edge.get().side();
+        }
+
+        Optional<BlockPos> mouth = edge.isPresent()
+                ? Optional.of(edge.get().mouth())
+                : MineEdge.boxOf(colonyId).isPresent() ? Optional.empty() : MineSite.mouthOf(world, center, descent);
 
         if (mouth.isEmpty()) {
             VillageColonyMod.LOGGER.warn(
                     "Mine {} tried all {} helices and found no better mouth within {} blocks"
-                            + " of {} — the miner falls back to exposed stone",
+                            + " of {} — the old mine stays",
                     colonyId,
                     Mine.HELICES_BEFORE_BLAMING_THE_MOUTH,
                     MineSite.distance(),
@@ -289,7 +301,9 @@ public final class MineTrouble {
 
         Side opposite = mine.shaft().isRamp() ? mine.shaft().descent() : mine.shaft().descent().opposite();
 
-        Optional<WaterMineAccess.Route> waterAccess = WaterMineAccess.find(world, center, opposite);
+        Optional<VillageBounds> box = MineEdge.boxOf(colonyId);
+        Optional<WaterMineAccess.Route> waterAccess = WaterMineAccess.find(world, center, opposite)
+                .filter(route -> box.isEmpty() || MineEdge.nearTheEdge(box.get(), route.entry()));
         if (waterAccess.isPresent() && waterAccess.get().place(world)) {
             VillageColonyMod.MINES.removeOfColony(colonyId);
 
@@ -319,7 +333,7 @@ public final class MineTrouble {
 
         Optional<BlockPos> mouth = edge.isPresent()
                 ? Optional.of(edge.get().mouth())
-                : MineSite.mouthOnSide(world, center, opposite);
+                : box.isPresent() ? Optional.empty() : MineSite.mouthOnSide(world, center, opposite);
 
         if (mouth.isEmpty()) {
             return false;

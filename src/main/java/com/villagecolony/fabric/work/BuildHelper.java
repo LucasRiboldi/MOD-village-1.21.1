@@ -20,6 +20,7 @@ import net.minecraft.server.world.ServerWorld;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -53,9 +54,13 @@ public final class BuildHelper {
     /** Peças que a obra ainda precisa ter para valer a ajuda. */
     static final int MIN_REMAINING = 8;
 
-    /** Os ofícios que ajudam a obra quando estão sem tarefa. */
+    /**
+     * Os ofícios que ajudam a obra quando estão sem tarefa. O fazendeiro entra com a
+     * roça descansando ({@link FieldRest}): nada maduro e nenhum canteiro vazio, e no
+     * playtest 0.3.31 ele passou 18 minutos andando sem colher nada (Regra 51).
+     */
     static final Set<ProfessionType> HELPS = EnumSet.of(
-            ProfessionType.SHEPHERD, ProfessionType.CARPENTER, ProfessionType.MASON);
+            ProfessionType.SHEPHERD, ProfessionType.CARPENTER, ProfessionType.MASON, ProfessionType.FARMER);
 
     /** Quantos ajudantes por colônia ao mesmo tempo. */
     static final int PER_COLONY = 2;
@@ -113,7 +118,7 @@ public final class BuildHelper {
             // dele: a tarefa de ajudante não fica na fila para outro pegar.
             boolean released = task.get().state() == TaskState.AVAILABLE;
 
-            if (released || (tradeWaiting(colonyId, helper) && didHisPart)) {
+            if (released || (tradeWaiting(world, colonyId, helper) && didHisPart)) {
                 task.get().cancel();
                 it.remove();
                 forgetHelper(helper);
@@ -144,14 +149,21 @@ public final class BuildHelper {
 
             if (trade.isEmpty()
                     || isHelping(id)
-                    || !VillageColonyMod.TASKS.assignedTo(id).isEmpty()
-                    || tradeWaiting(colonyId, id)
+                    || !freeForTheBuild(world, colonyId, id)
+                    || tradeWaiting(world, colonyId, id)
                     || !(world.getEntity(id) instanceof VillagerEntity villager) || !villager.isAlive()
                     || StrandedWorkers.isStranded(id)
                     || ShepherdHerding.isHerding(id)
                     || !HelperReach.mayTake(world, worker, project.get())) {
                 continue;
             }
+
+            // A colheita que ele segurava sem ter o que colher volta para a fila.
+            for (Task held : VillageColonyMod.TASKS.assignedTo(id)) {
+                held.release("nothing ripe — it helps the build");
+            }
+
+            FarmerWork.forget(id);
 
             Task help = VillageColonyMod.TASKS.create(colonyId, TaskType.BUILD, TaskPriority.CONSTRUCTION,
                     ResourceType.OAK_PLANKS, project.get().remainingCount());
@@ -170,15 +182,32 @@ public final class BuildHelper {
         }
     }
 
-    /** Se há tarefa do ofício deste aldeão esperando na fila. */
-    static boolean tradeWaiting(UUID colonyId, UUID workerId) {
+    /**
+     * Se há tarefa do ofício deste aldeão esperando na fila. A colheita com a roça
+     * descansando não conta: não há o que colher.
+     */
+    static boolean tradeWaiting(ServerWorld world, UUID colonyId, UUID workerId) {
         Set<Capability> own = VillageColonyMod.WORKERS.find(workerId)
                 .flatMap(Worker::profession)
                 .map(type -> ProfessionRegistry.of(type).capabilities())
                 .orElse(Set.of());
+        boolean fieldRests = FieldRest.isResting(colonyId, world.getTime());
 
         return VillageColonyMod.TASKS.availableFor(colonyId).stream()
+                .filter(task -> !(fieldRests && task.type() == TaskType.COLLECT_FOOD))
                 .anyMatch(task -> own.contains(task.type().required()));
+    }
+
+    /**
+     * Sem tarefa do ofício na mão — ou, para o fazendeiro, só com a colheita na mão e a
+     * roça descansando.
+     */
+    private static boolean freeForTheBuild(ServerWorld world, UUID colonyId, UUID workerId) {
+        List<Task> held = VillageColonyMod.TASKS.assignedTo(workerId);
+
+        return held.isEmpty()
+                || (FieldRest.isResting(colonyId, world.getTime())
+                        && held.stream().allMatch(task -> task.type() == TaskType.COLLECT_FOOD));
     }
 
     /** Um bloco posto na obra por este aldeão; conta se ele é ajudante. */
@@ -199,6 +228,11 @@ public final class BuildHelper {
     /** Se este aldeão está ajudando numa obra. */
     public static boolean isHelping(UUID workerId) {
         return HELPERS.containsValue(workerId);
+    }
+
+    /** Se esta tarefa de obra é a vaga de um ajudante, e não a tarefa da obra. */
+    public static boolean isHelperTask(UUID taskId) {
+        return HELPERS.containsKey(taskId);
     }
 
     private static long helpersIn(UUID colonyId) {

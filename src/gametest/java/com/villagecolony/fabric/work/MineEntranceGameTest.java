@@ -44,6 +44,7 @@ public class MineEntranceGameTest implements FabricGameTest {
             world.setBlockState(MinecraftTypeAdapter.toBlockPos(mouth).down(), Blocks.STONE.getDefaultState());
             world.setBlockState(middleAt.up(16), Blocks.STONE.getDefaultState());
             world.setBlockState(nowAt.up(26), Blocks.STONE.getDefaultState());
+            world.setBlockState(nowAt.add(0, 26, -22), Blocks.STONE.getDefaultState());
 
             VillageColonyMod.MINES.restore(Mine.restore(colonyId, now, 0));
             MineEntrance.forget(colonyId);
@@ -93,12 +94,25 @@ public class MineEntranceGameTest implements FabricGameTest {
             context.assertTrue(above.map(MinecraftTypeAdapter.toBlockPos(mouth)::equals).orElse(false),
                     "em cima da mina, na superfície, ele não foi à boca: " + above);
 
+            // Playtest 0.3.31: a pedra no fim do ramal, 22 blocos da entrada do nível, e
+            // o mineiro na superfície em cima dela. Ele ia à entrada enterrada embaixo
+            // dele e desistia; vai à boca.
+            BlockPos endOfTheBranch = nowAt.add(0, -1, -22);
+            Optional<BlockPos> farStone = MineEntrance.legDown(
+                    world, colonyId, endOfTheBranch.up(29), endOfTheBranch);
+
+            context.assertTrue(farStone.map(MinecraftTypeAdapter.toBlockPos(mouth)::equals).orElse(false),
+                    "com a pedra no fim do ramal, na superfície ele não foi à boca: " + farStone);
+
             context.assertTrue(MineEntrance.legDown(world, colonyId, nowAt, stone).isEmpty(),
                     "no nível da pedra a descida ainda mandava nele");
+            context.assertTrue(MineEntrance.legDown(world, colonyId, nowAt.add(0, 0, -18), endOfTheBranch).isEmpty(),
+                    "no meio do ramal, no nível da pedra, a descida ainda mandava nele");
         } finally {
             world.setBlockState(MinecraftTypeAdapter.toBlockPos(mouth).down(), Blocks.AIR.getDefaultState());
             world.setBlockState(middleAt.up(16), Blocks.AIR.getDefaultState());
             world.setBlockState(nowAt.up(26), Blocks.AIR.getDefaultState());
+            world.setBlockState(nowAt.add(0, 26, -22), Blocks.AIR.getDefaultState());
             VillageColonyMod.MINES.removeOfColony(colonyId);
             MineEntrance.forget(colonyId);
         }
