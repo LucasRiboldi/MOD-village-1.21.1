@@ -3,6 +3,7 @@ package com.villagecolony.fabric.integration;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.service.VillageDetector;
+import com.villagecolony.core.coordination.VillageExpansion;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -259,6 +260,7 @@ public final class RoadExtension {
      * o trecho em curso perde a razão de ser e sai junto com as pontas.
      */
     public static void lotFound(UUID colonyId) {
+        VillageExpansion.lotFound(colonyId);
         ENDS.remove(colonyId);
         BRANCHES.remove(colonyId);
         GROWING.remove(colonyId);
@@ -410,6 +412,12 @@ public final class RoadExtension {
         if (block.isEmpty()) {
             return Outcome.NO_END;
         }
+
+        // A ponta voltada para o lado que a vila anexou vem primeiro (Regra 56 D); a
+        // ordenação é estável, e dentro de cada grupo segue a mais distante.
+        VillageExpansion.sideOf(colonyId).ifPresent(side -> ends.sort(Comparator.comparingInt(
+                end -> end.towards().getOffsetX() == side.offsetX() && end.towards().getOffsetZ() == side.offsetZ()
+                        ? 0 : 1)));
 
         // Da mais distante para a mais perto, e a primeira que aceitar
         // calçamento vence. Tentar todas custa poucas leituras de bloco e

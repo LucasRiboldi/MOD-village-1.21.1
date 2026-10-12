@@ -25,15 +25,27 @@ public final class VillageGrowth {
     }
 
     /**
-     * Construção ou lote: a borda fica {@link VillageBounds#GROWTH_MARGIN}
-     * além da caixa da peça.
+     * Construção ou lote: a borda fica a reivindicação do tipo além da caixa da peça
+     * ({@link VillageExpansion#claimOf}, Regra 56).
      *
      * @return a caixa nova, quando a vila cresceu
      */
     public static Optional<VillageBounds> byPiece(ColonyService colonies, Building piece) {
         Objects.requireNonNull(piece, "piece");
 
-        return grow(colonies, piece.colonyId(), VillageBounds.aroundPiece(piece.min(), piece.max()));
+        return grow(colonies, piece.colonyId(), VillageBounds.aroundPiece(
+                piece.min(), piece.max(), VillageExpansion.claimOf(piece.blueprint())));
+    }
+
+    /**
+     * A faixa anexada quando a vila enche (Regra 56).
+     *
+     * @return a caixa nova, quando a vila cresceu
+     */
+    public static Optional<VillageBounds> byStrip(ColonyService colonies, UUID colonyId, VillageBounds strip) {
+        Objects.requireNonNull(strip, "strip");
+
+        return grow(colonies, colonyId, strip);
     }
 
     /**

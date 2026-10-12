@@ -6,6 +6,14 @@ Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## 🔴 Playtest da 0.3.37
+
+- [ ] 🔴 Mina: `digging the wall for them` aparece e o nó termina (`finished the node`); mineiro acima de 0%.
+- [ ] 🔴 Obra que pede peça sem rota: `stocked … after N cycles` em poucos minutos.
+- [ ] 🟠 Expansão: `is full — annexes 16 blocks to the …` com a medida dos quatro lados; a rua cresce para o lado anexado (`extended the road … <lado>`); lote novo na faixa.
+- [ ] 🟡 A preferência da rua pelo lado anexado (D) não tem GameTest próprio — só a medida e o anexo (C).
+- [ ] 🟡 O lado escolhido fica só na memória: depois de reiniciar o servidor, a rua volta a crescer pela ponta mais distante até a vila encher de novo.
+
 ## 🔴 Playtest da 0.3.36 (`docs/research/2026-10-12-mina-labirinto.md`)
 
 - [ ] 🔴 Mina: minério por bloco cavado bem acima de 2/1.411; sem `refused` em laço; mod abaixo de 3% no Spark.

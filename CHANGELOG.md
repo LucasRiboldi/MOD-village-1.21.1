@@ -11,6 +11,21 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.37] — mina sem impasse; expansão do terreno B + C + D (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **Mineiro 0% (playtest 0.3.36):** o túnel esperava pedregulho para o piso e os baús não tinham
+  nenhum (37.297 esperas). Sem enchimento, o mineiro cava a parede do túnel para tirá-lo; o
+  enchimento sai primeiro do baú dele; o fundidor guarda 64 de pedregulho para a mina.
+- **Obra parada pela bancada de flecheiro:** o sílex não tem rota e nenhuma tarefa nascia, então a
+  4ª tentativa nunca chegava. Rota sem caminho nenhum agora conta todo ciclo.
+
+### Adicionado
+- **Expansão do terreno (Regra 56):** casa reivindica 16 blocos em volta, oficina e roça 24 (B);
+  depois de 2 varreduras sem lote, a vila mede os quatro lados e anexa 16 blocos no de chão mais
+  plano e seco, nunca encostando em outra colônia (C); a rua cresce primeiro para esse lado e os
+  lotes nascem na beira dela (D).
+
 ## [0.3.36] — mina minera; vila planeja por falta (2026-10-12, JAR local, não jogado)
 
 ### Corrigido

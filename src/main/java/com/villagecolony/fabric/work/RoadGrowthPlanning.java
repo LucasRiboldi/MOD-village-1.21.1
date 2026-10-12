@@ -106,6 +106,9 @@ final class RoadGrowthPlanning {
             ServerWorld world, Colony colony, Blueprint blueprint,
             List<Blueprint> plans, int builders) {
 
+        // A vila cheia anexa uma faixa no melhor lado, e a rua cresce para lá (Regra 56).
+        VillageExpansionSurvey.sweptWithoutLot(world, colony);
+
         Optional<ResourceId> paving = VillageRoad.pavingFor(
                 world, HousePlans.paletteOf(world, colony.center()).style());
 

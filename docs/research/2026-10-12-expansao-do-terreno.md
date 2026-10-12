@@ -68,3 +68,9 @@ novo é o gatilho, a escolha do lado e o preparo.
 3. Tamanho da faixa anexada por vez.
 4. Teto da caixa: sem teto (Emenda 7) ou um limite?
 5. O preparo do chão pode derrubar árvore e aplainar morro, ou só usar chão já bom?
+
+## 6. Decisão (autor, 2026-10-12)
+
+**B + C + D**, aplicadas na 0.3.37 como Regra 56. As perguntas 2–5 não foram respondidas, e
+ficaram com os valores deste documento: gatilho de 2 varreduras seguidas sem lote; faixa de 16;
+sem teto (Emenda 7); o chão não é preparado à parte — a obra já limpa e aterra o próprio lote.

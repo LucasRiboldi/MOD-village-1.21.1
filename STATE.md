@@ -1,5 +1,13 @@
 # STATE — 2026-10-12
 
+> **0.3.37** (12-10): playtest da 0.3.36 (Spark `nTgYjiciKr`, TPS 19,5, mod 1,4%) achou o mineiro 0%:
+> o túnel esperava pedregulho e os baús não tinham nenhum — agora ele cava a parede para tirar o
+> enchimento; e a obra parada pela bancada de flecheiro (sílex sem rota nunca contava ciclo).
+> **Expansão do terreno B + C + D (Regra 56).** **Não jogado.** Verificado: test 1495/0;
+> runGametest 750/750; mutação derruba os testes novos (mina, rota sem caminho, medida dos lados).
+> **JAR instalado: `village-colony-0.3.37.jar`** =
+> `4032F148360DE5C6C1595C2484982790C4EFE95D40AF35650CC4531F6C32BAF7` (0.3.36 `.jar.disabled`).
+
 > **0.3.36** (12-10): **mina minera em vez de labirinto** (túnel 1 × 2 a cada 4, minério ao alcance
 > primeiro, segurança mínima; [análise](docs/research/2026-10-12-mina-labirinto.md)); retorno nunca fura
 > as 5 camadas sob a vila; uma oficina de cada tipo; casa só com falta de cama; roça grande primeiro;
