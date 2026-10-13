@@ -12,7 +12,6 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.MineFlooding;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
@@ -75,9 +74,12 @@ public final class NetworkDigging {
                     colonyId.toString().substring(0, 8), network.hub());
         }
 
-        Entity body = world.getEntity(workerId);
-        ColonyPos near = body != null ? MinecraftTypeAdapter.toColonyPos(body.getBlockPos()) : network.hub();
-        Optional<MineNetwork.Node> claimed = network.claim(workerId, near);
+        // A reivindicação parte do salão do nível, não do corpo do mineiro — mina M, 2026-10-13.
+        // O mineiro sai do nível para depositar e voltar; medir do corpo fazia-o pegar sempre o nó
+        // mais raso, cavar uma ou duas pedras e subir (playtest 0.3.48: 336 "looking for stone"
+        // contra 12 "digging", parado em "11 of 86" por 33 min). Do salão ele reclama a frente de
+        // trabalho e cava vários antes de subir.
+        Optional<MineNetwork.Node> claimed = network.claim(workerId, network.hub());
 
         if (claimed.isEmpty()) {
             IdleLog.recordAt(colonyId, SUBJECT, IdleReason.NO_TARGET,

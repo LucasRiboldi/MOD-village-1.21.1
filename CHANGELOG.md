@@ -11,6 +11,15 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.49] — o mineiro reclama a frente de trabalho, não o nó mais raso (2026-10-13, JAR local, não jogado)
+
+### Corrigido
+- **Mineiro 336 "looking for stone" contra 12 "digging" (playtest 0.3.48, parado em "11 of 86" por
+  33 min):** a reivindicação do nó partia da posição do corpo do mineiro, que sobe para depositar;
+  ele pegava sempre o nó mais raso, cavava uma ou duas pedras e voltava. Agora parte do salão do
+  nível, então reclama a frente de trabalho e cava vários antes de subir. Era a causa de o fundidor
+  e a obra esperarem cobblestone (`NetworkDigging.nextTarget`).
+
 ## [0.3.48] — mina M: a frente do túnel anda, sem selar o nó por uma pedra (2026-10-13, JAR local, não jogado)
 
 ### Mudado

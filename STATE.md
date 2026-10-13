@@ -1,5 +1,12 @@
 # STATE — 2026-10-12
 
+> **0.3.49** (13-10): playtest da 0.3.48 — a obra voltou (4 casas, rede de ruas 1324 colunas), mas o
+> mineiro ficou 336× "looking for stone" contra 12 "digging", parado em "11 of 86" por 33 min, e por
+> isso fundidor/obra esperavam cobblestone. A reivindicação do nó partia do corpo (que sobe para
+> depositar); agora parte do salão, então ele reclama a frente de trabalho. **Não jogado.** Verificado:
+> test 1503/0; runGametest 760/760. JAR `village-colony-0.3.49.jar` =
+> `2325A59BB38266B30DD41DA775A7D91427E815DA0D2572080AA360F67B523B8D`.
+
 > **0.3.48** (13-10): mina M — a célula do corredor que o mineiro não alcança é pulada (o alvo anda
 > pela frente do túnel); o nó só falha com toda a pedra que falta recusada, em vez de selar por uma.
 > Fecha as 3 melhorias pedidas sobre a reanálise (1A, 2, mina) + F4 + rede de ruas (item 4). **Não
