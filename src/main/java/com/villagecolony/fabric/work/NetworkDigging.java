@@ -121,17 +121,11 @@ public final class NetworkDigging {
                 continue;
             }
 
-            // Célula que o mineiro recusou (sem lugar de pé, alta demais): conta contra o
-            // nó, em vez de voltar a mesma pedra a cada passagem (4.210 recusas na 0.3.35).
+            // Célula recusada (sem lugar de pé, alta demais): pula para a próxima do corredor
+            // — a frente do túnel anda, em vez de selar o nó inteiro por uma pedra (mina M,
+            // 2026-10-13). Só quando TODAS as que faltam estão recusadas o nó falha.
             if (MineMarks.isOutOfReach(world, at)) {
-                if (network.failed(node)) {
-                    VillageColonyMod.LOGGER.info("Mine {} seals the node ({}, {}) — {} cannot be reached",
-                            colonyId.toString().substring(0, 8), node.gx(), node.gz(), at.toShortString());
-                } else {
-                    network.release(workerId);
-                }
-
-                return Optional.empty();
+                continue;
             }
 
             // Pedra que segura água: o nó é vedado em vez de inundar o corredor (D6).
@@ -146,6 +140,18 @@ public final class NetworkDigging {
             IdleLog.clear(colonyId, SUBJECT);
 
             return Optional.of(at);
+        }
+
+        // Todas as células que faltam estão recusadas: aí sim o nó falha (mina M).
+        if (corridorHasClosedButAllRefused(world, corridor)) {
+            if (network.failed(node)) {
+                VillageColonyMod.LOGGER.info("Mine {} seals the node ({}, {}) — every stone left is out of reach",
+                        colonyId.toString().substring(0, 8), node.gx(), node.gz());
+            } else {
+                network.release(workerId);
+            }
+
+            return Optional.empty();
         }
 
         // Corredor aberto: piso garantido e aberturas vedadas, e o nó fica pronto.
@@ -224,6 +230,27 @@ public final class NetworkDigging {
         }
 
         return Optional.empty();
+    }
+
+    /** Se o corredor ainda tem pedra fechada, mas toda a que falta está recusada (mina M). */
+    static boolean corridorHasClosedButAllRefused(ServerWorld world, List<ColonyPos> corridor) {
+        boolean anyClosed = false;
+
+        for (ColonyPos cell : corridor) {
+            BlockPos at = MinecraftTypeAdapter.toBlockPos(cell);
+
+            if (!world.isChunkLoaded(at) || NetworkSafety.isOpen(world.getBlockState(at))) {
+                continue;
+            }
+
+            anyClosed = true;
+
+            if (!MineMarks.isOutOfReach(world, at)) {
+                return false;
+            }
+        }
+
+        return anyClosed;
     }
 
     /** O que é da mina neste nível: a escadaria, o salão e os corredores. */

@@ -11,6 +11,14 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.48] — mina M: a frente do túnel anda, sem selar o nó por uma pedra (2026-10-13, JAR local, não jogado)
+
+### Mudado
+- **Mina (item 3 / proposta M):** a célula do corredor que o mineiro não alcança é **pulada** — o
+  alvo passa para a próxima pedra à frente do túnel, em vez de contar falha e, em 3 falhas, selar o
+  nó inteiro. O nó só falha quando **toda** a pedra que falta no corredor está recusada. Some o
+  "out of reach" que travava a mina em todo desenho (reanálise de 13-10, C1 da mina).
+
 ## [0.3.47] — socorro único contra parada; tabela de regras consolidada (2026-10-13, JAR local, não jogado)
 
 ### Mudado

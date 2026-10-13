@@ -1,5 +1,11 @@
 # STATE — 2026-10-12
 
+> **0.3.48** (13-10): mina M — a célula do corredor que o mineiro não alcança é pulada (o alvo anda
+> pela frente do túnel); o nó só falha com toda a pedra que falta recusada, em vez de selar por uma.
+> Fecha as 3 melhorias pedidas sobre a reanálise (1A, 2, mina) + F4 + rede de ruas (item 4). **Não
+> jogado.** Verificado: test 1503/0; runGametest 760/760; mutação da mina derruba o teste.
+> JAR `village-colony-0.3.48.jar` = `D4ACA323D943F555817C9332DAE8B0DD9AFD26C65562535BAED9B64A968BFC9B`.
+
 > **0.3.47** (13-10): F4 — socorro único contra parada (`WorkRescue.LIMIT` = 1200, um minuto; eram
 > seis cópias de 2 min). Tabela de regras consolidada (ordem das obras numa regra só; mina 54 e
 > expansão 56 reescritas ao código; emenda da 51 revogada pela 59; regras 63/64). Falta aplicar a
