@@ -200,6 +200,10 @@ public final class BuildSiteScanner {
 
         try {
 
+        // Sem índice, a rede de caminhos conectados vira o índice (RoadNetwork, 2026-10-13): a
+        // busca anda pelas ruas em vez de varrer o raio em anéis.
+        RoadNetwork.indexIfMissing(world, colonyId);
+
         ColonyRoads roads = SweepState.ROADS.get(colonyId);
 
         if (roads != null && SweepState.drifted(roads.from(), center)) {
