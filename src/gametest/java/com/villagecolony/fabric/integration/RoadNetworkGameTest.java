@@ -29,7 +29,7 @@ public class RoadNetworkGameTest implements FabricGameTest {
         Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(origin.up()));
         ColonyFixture owned = ColonyFixture.create().owning(colony);
         BlockPos from = origin.add(-2, -1, -6);
-        BlockPos to = origin.add(40, 3, 6);
+        BlockPos to = origin.add(56, 3, 6);
 
         colony.measure(new VillageBounds(origin.getX() - 4, origin.getY() - 4, origin.getZ() - 4,
                 origin.getX() + 20, origin.getY() + 6, origin.getZ() + 4));
@@ -40,15 +40,16 @@ public class RoadNetworkGameTest implements FabricGameTest {
                 world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
             }
 
-            // Rua de 0 a 24 em x, com um degrau em x = 12; e um caminho solto em z = 5, longe do centro.
-            for (int x = 0; x <= 24; x++) {
-                int y = x >= 12 ? 1 : 0;
+            // Rua de 0 a 44 em x, com um degrau em x = 36 (além do raio das sementes, que parte do
+            // centro da caixa); e um caminho solto em z = 5, longe do centro.
+            for (int x = 0; x <= 44; x++) {
+                int y = x >= 36 ? 1 : 0;
 
                 world.setBlockState(origin.add(x, y - 1, 0), Blocks.STONE.getDefaultState(), 2);
                 world.setBlockState(origin.add(x, y, 0), Blocks.DIRT_PATH.getDefaultState(), 2);
             }
 
-            for (int x = 36; x <= 39; x++) {
+            for (int x = 48; x <= 51; x++) {
                 world.setBlockState(origin.add(x, 0, 5), Blocks.DIRT_PATH.getDefaultState(), 2);
             }
 
@@ -56,8 +57,8 @@ public class RoadNetworkGameTest implements FabricGameTest {
 
             context.assertTrue(roads.isPresent(), "a rede de caminhos não foi traçada");
 
-            BlockPos far = origin.add(24, 1, 0);
-            BlockPos stray = origin.add(37, 0, 5);
+            BlockPos far = origin.add(44, 1, 0);
+            BlockPos stray = origin.add(49, 0, 5);
 
             context.assertTrue(roads.get().columns().contains(ColonyRoads.column(far.getX(), far.getZ())),
                     "a rede parou no degrau e não chegou à ponta da rua");
