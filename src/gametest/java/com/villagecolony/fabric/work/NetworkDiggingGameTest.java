@@ -125,9 +125,13 @@ public class NetworkDiggingGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** Sem pedregulho nos baús, o túnel aberto dá uma pedra da parede para virar enchimento. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "network_quarry", tickLimit = 20)
-    public void withoutFillTheMinerDigsTheWallForIt(TestContext context) {
+    /**
+     * O enchimento da própria mina não sai dos baús: a construção interna da mina surge quando
+     * o mineiro precisa, sem consumir recurso da vila (decisão do autor, 2026-10-13). Sem
+     * pedregulho em baú nenhum, o túnel aberto fica seguro numa passagem e o nó fica pronto.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "network_fill", tickLimit = 20)
+    public void withoutFillInChestsTheMineFillsItselfAndFinishesTheNode(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos chestAt = context.getAbsolutePos(new BlockPos(1, 2, 1));
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(chestAt);
@@ -139,6 +143,7 @@ public class NetworkDiggingGameTest implements FabricGameTest {
         VillageColonyMod.WORKERS.register(miner, colony.id());
         owned.owning(miner);
         VillageColonyMod.STORAGES.register(WorkerStorage.of(miner, chest));
+        // Um baú vazio de propósito: nem o baú do mineiro nem os da vila têm enchimento.
         world.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
 
         ColonyPos entry = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(3, 42, 3)));
@@ -159,29 +164,23 @@ public class NetworkDiggingGameTest implements FabricGameTest {
             MineNetwork.Node node = network.claimedBy(miner).orElseThrow();
             List<ColonyPos> corridor = network.corridorOf(node);
 
+            // O túnel inteiro aberto e um buraco no piso: falta enchimento, e não há nenhum nos baús.
             for (ColonyPos cell : corridor) {
                 world.setBlockState(MinecraftTypeAdapter.toBlockPos(cell), Blocks.AIR.getDefaultState());
             }
 
-            world.setBlockState(MinecraftTypeAdapter.toBlockPos(corridor.get(2 * MineNetwork.HEIGHT)).down(),
-                    Blocks.AIR.getDefaultState());
+            BlockPos hole = MinecraftTypeAdapter.toBlockPos(corridor.get(2 * MineNetwork.HEIGHT)).down();
+            world.setBlockState(hole, Blocks.AIR.getDefaultState());
             NetworkVeins.forget(miner);
 
-            Optional<BlockPos> quarry = NetworkDigging.nextTarget(world, miner, colony.id(), mine);
-
-            context.assertTrue(quarry.isPresent(), "sem enchimento, o mineiro ficou esperando em vez de cavar a parede");
-            context.assertTrue(!corridor.contains(MinecraftTypeAdapter.toColonyPos(quarry.get()))
-                            && world.getBlockState(quarry.get()).isOf(Blocks.STONE),
-                    "o alvo não é pedra da parede: " + quarry);
-            context.assertTrue(network.stateOf(node.gx(), node.gz()).orElseThrow() != MineNetwork.State.DONE,
-                    "o nó ficou pronto com o piso furado");
-
-            // A pedra que o mineiro recusou não volta (0.3.39: a mesma, 53 vezes).
-            MineMarks.refuse(world, quarry.get());
             Optional<BlockPos> next = NetworkDigging.nextTarget(world, miner, colony.id(), mine);
 
-            context.assertTrue(next.isPresent() && !next.equals(quarry),
-                    "a pedra recusada voltou como enchimento: " + next);
+            context.assertTrue(next.isEmpty(),
+                    "o enchimento da mina devia surgir; em vez disso pediu um alvo: " + next);
+            context.assertTrue(NetworkSafety.isFirmFloor(world, hole),
+                    "o buraco do piso não foi fechado sem enchimento nos baús");
+            context.assertTrue(network.stateOf(node.gx(), node.gz()).orElseThrow() == MineNetwork.State.DONE,
+                    "o nó não ficou pronto com o enchimento surgido pela própria mina");
         } finally {
             for (BlockPos at : BlockPos.iterate(from, to)) {
                 world.setBlockState(at, Blocks.AIR.getDefaultState());

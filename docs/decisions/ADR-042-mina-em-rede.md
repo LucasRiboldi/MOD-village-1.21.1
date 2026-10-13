@@ -56,7 +56,7 @@ volta subindo, sempre seguro, pondo bloco para subir.
 | D3 | `MineNetwork.claim` | Cada mineiro pega o nó aberto mais perto dele; a escadaria e o salão continuam com um mineiro só. |
 | D4 | `NetworkVeins` | Minério na parede do corredor passa à frente; o veio é seguido até 64 blocos, só ao alcance do corredor e nunca abaixo do piso. |
 | D5 | `NetworkRoute`, `MinerDirectPath` | Caminho direto quando a navegação do jogo chega; senão, de centro em centro de nó pronto até o pai do nó em obra. |
-| D6 | `NetworkDigging`, `NetworkSafety.secureCorridor` | Nó com fluido no centro, ou cuja pedra segura fluido, é vedado; corredor pronto tem piso garantido e aberturas vedadas com o enchimento dos baús (pedregulho primeiro). |
+| D6 | `NetworkDigging`, `NetworkSafety.secureCorridor` | Nó com fluido no centro, ou cuja pedra segura fluido, é vedado; corredor pronto tem piso garantido e aberturas vedadas. O enchimento **surge** (pedregulho), a mina não gasta recurso da vila — 0.3.51, 2026-10-13, como o `MineFlooding` já fazia para o fluido. |
 | D7 | `NetworkDigging.nextOrDescend` | Sem nó aberto nem em obra, os ramais antigos terminam e a escadaria desce um nível. |
 | D8 | `NetworkDigging.nextOrDescend` | No fundo, o nível ganha até 4 anéis de caminhos laterais; depois a mina volta subindo pela rampa (`MineTrouble.climbOutAtBottom`) e abre boca nova na borda oposta. |
 | D9 | `MineSave` (`network`, `networkHub`) | O nível de agora é gravado; nó em obra volta aberto. A mina antiga do save vira o nível 0 da rede assim que o salão está cavado. |

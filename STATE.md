@@ -1,4 +1,16 @@
-# STATE — 2026-10-12
+# STATE — 2026-10-13
+
+> **0.3.51** (13-10): playtest da 0.3.50 (Spark `NDXMZczlmB`, 42 min) — TPS 20, mod 1,70%, **mas a
+> vila parou**: a mina minerou DONE 6→35 em 70 s e **congelou em `OPEN=19, DIGGING=2` por 41 min**;
+> o nó (-1, 2) ficava OPEN esperando enchimento (cobble) dos 6 baús próximos, que não tinham, e o
+> `quarryFor` não achava parede — deadlock sem saída (MINER 0%, "looking for stone" 400× vs 48
+> digging). Em cascata: SMELTER 0%, BUILDER 88% ocioso, MASON 84%, 97×/41×/20× "no material".
+> **Correção (decisão do autor):** a construção interna da mina (piso, beirada) **surge** quando o
+> mineiro precisa, sem gastar recurso da vila — como o `MineFlooding` já fazia para o fluido.
+> `NetworkSafety.secureCorridor` nunca mais fica sem enchimento; `quarryFor`/`NO_FILL` removidos.
+> **Não jogado.** Verificado: test 1503/0; runGametest 761/761; mutação (pôr ar em vez de
+> enchimento) derruba o teste novo (`withoutFillInChestsTheMineFillsItselfAndFinishesTheNode`).
+> JAR `village-colony-0.3.51.jar` = `EE1D0A4F4365D667341433532B6F739A75A73B4A04CC6CBC9C77DC2162D2537A`.
 
 > **0.3.50** (13-10): transferência automática entre baús (autor). Depósito/retirada já eram sem
 > viagem; agora todo baú de profissão quase cheio (≤10 slots livres) espalha o excedente para os

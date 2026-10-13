@@ -7,7 +7,6 @@ import com.villagecolony.core.construction.model.MineNetwork;
 import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.construction.service.MineNetworks;
 import com.villagecolony.core.coordination.IdleReason;
-import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.MineFlooding;
@@ -156,21 +155,13 @@ public final class NetworkDigging {
             return Optional.empty();
         }
 
-        // Corredor aberto: piso garantido e aberturas vedadas, e o nó fica pronto.
-        // O enchimento sai primeiro do baú do mineiro, onde cai o que ele cava.
+        // Corredor aberto: piso garantido e aberturas vedadas, e o nó fica pronto. O enchimento
+        // surge (a mina não gasta recurso da vila, 2026-10-13), então uma passagem que não
+        // terminou foi só o teto de PER_PASS deste tique — o próximo fecha o resto.
         Set<ColonyPos> cells = mineCells(network, mine);
-        ColonyPos own = VillageColonyMod.STORAGES.of(workerId)
-                .map(WorkerStorage::chestPosition).orElse(network.hub());
 
-        if (!NetworkSafety.secureCorridor(world, colonyId, corridor, cells, own)) {
-            Optional<BlockPos> quarry = NetworkSafety.quarryFor(world, mine, corridor, cells);
-
-            IdleLog.recordAt(colonyId, SUBJECT, IdleReason.NO_TARGET,
-                    "node (" + node.gx() + ", " + node.gz() + ") is open and waits for fill blocks to be safe"
-                            + (quarry.isPresent() ? " — digging the wall for them" : ""),
-                    world.getTime());
-
-            return quarry;
+        if (!NetworkSafety.secureCorridor(world, colonyId, corridor, cells)) {
+            return Optional.empty();
         }
 
         network.done(node);
