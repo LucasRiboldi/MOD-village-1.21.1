@@ -1,5 +1,12 @@
 # STATE — 2026-10-12
 
+> **0.3.47** (13-10): F4 — socorro único contra parada (`WorkRescue.LIMIT` = 1200, um minuto; eram
+> seis cópias de 2 min). Tabela de regras consolidada (ordem das obras numa regra só; mina 54 e
+> expansão 56 reescritas ao código; emenda da 51 revogada pela 59; regras 63/64). Falta aplicar a
+> **mina M** (proposta em `docs/research/2026-10-13-fluidez-mina-e-regras.md`). **Não jogado.**
+> Verificado: test 1503/0; runGametest 759/759. JAR `village-colony-0.3.47.jar` =
+> `17DB613F1BBDD9D625CC24ECA2E8003F4CBFAC87C76E076B9A5E5AAD9DD1C350`.
+
 > **0.3.46** (13-10): decisões do autor sobre a reanálise — rodízio casa ↔ outro tipo com teto de
 > camas (1A), reserva do artesanato 32 + "um pouco de tudo" 16 (2), ruas medidas como rede de caminhos
 > conectados (4). **Não jogado.** Verificado: test 1502/0; runGametest 759/759; mutação da rede derruba

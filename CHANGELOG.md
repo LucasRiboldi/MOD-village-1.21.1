@@ -11,6 +11,18 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.47] — socorro único contra parada; tabela de regras consolidada (2026-10-13, JAR local, não jogado)
+
+### Mudado
+- **F4 — prazo único de socorro:** o ofício que anda sem chegar ao alvo é socorrido em 1 minuto
+  (`WorkRescue.LIMIT` = 1200), e não mais em 2 minutos com seis cópias do número. A ação de parada
+  de cada ofício fica como estava.
+
+### Documentação
+- **docs/RULES.md consolidado** (reanálise de 13-10, §3): a ordem das obras vira uma regra só
+  (49, absorve 55 e 60 e o 1A); a mina (54) e a expansão (56) passam a descrever o que o código faz;
+  a emenda da 51 (fazendeiro ajuda a obra) é revogada pela 59; regras 63 (F4) e 64 (rede de ruas).
+
 ## [0.3.46] — a vila volta a girar (2026-10-13, JAR local, não jogado)
 
 ### Mudado (decisões do autor sobre a reanálise estrutural)
