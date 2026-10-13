@@ -83,7 +83,7 @@ public final class FarmerWork {
      * está proibido de andar, e punir quem não pode andar foi o que
      * queimou meia sessão do mineiro em 08-26.
      */
-    private static final int STALL_LIMIT = 4 * 600;
+    private static final int STALL_LIMIT = com.villagecolony.core.coordination.WorkRescue.LIMIT;
 
     private static final Map<UUID, Job> JOBS = new HashMap<>();
 

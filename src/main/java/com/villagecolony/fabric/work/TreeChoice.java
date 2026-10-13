@@ -60,7 +60,7 @@ public final class TreeChoice {
      * carregado — ver {@link BuilderWork#step}. Uma noite inteira não é
      * travamento, e chunk descarregado é a colônia dormindo.
      */
-    static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;
+    static final int STALL_LIMIT = com.villagecolony.core.coordination.WorkRescue.LIMIT;
 
     /**
      * O limite em vigor. É {@link #STALL_LIMIT}, menos nos testes.

@@ -118,7 +118,7 @@ public final class MinerWork {
      * sempre sem chegar não está trabalhando, e sem isto a tarefa nunca
      * volta para a fila.
      */
-    public static final int STALL_LIMIT = 4 * 600;
+    public static final int STALL_LIMIT = com.villagecolony.core.coordination.WorkRescue.LIMIT;
 
     /**
      * O mesmo número, no lugar onde ele passou a morar — 2026-09-03.

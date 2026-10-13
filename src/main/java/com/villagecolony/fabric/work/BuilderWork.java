@@ -100,7 +100,7 @@ public final class BuilderWork {
      * sempre com dono. Mesma regra e mesmo motivo de
      * {@code LumberjackWork.STALL_LIMIT}.
      */
-    static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;
+    static final int STALL_LIMIT = com.villagecolony.core.coordination.WorkRescue.LIMIT;
 
     /** Tiques andando sem alcançar a peça antes de deixá-la de lado — A-6. */
     static final int SET_ASIDE_AFTER = 200;

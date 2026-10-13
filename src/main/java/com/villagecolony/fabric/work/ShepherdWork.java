@@ -71,7 +71,7 @@ public final class ShepherdWork {
     private static int searchRadius = SEARCH_RADIUS;
 
     /** Quantos tiques de expediente sem chegar antes de largar a ovelha. */
-    private static final int STALL_LIMIT = 4 * 600;
+    private static final int STALL_LIMIT = com.villagecolony.core.coordination.WorkRescue.LIMIT;
 
     private static final Map<UUID, Job> JOBS = new HashMap<>();
 

@@ -103,7 +103,7 @@ public final class CraftingWork {
      * chegaria. Mesma regra e mesmo motivo de
      * {@code LumberjackWork.STALL_LIMIT}.
      */
-    static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;
+    static final int STALL_LIMIT = com.villagecolony.core.coordination.WorkRescue.LIMIT;
 
     /** O trabalho em curso de cada fabricante. */
     static final Map<UUID, Job> JOBS = new HashMap<>();
