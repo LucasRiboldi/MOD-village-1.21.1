@@ -112,7 +112,16 @@ public final class BuildSiteScanner {
      *     autor em 2026-08-20: a colônia levanta a maior que couber
      *     neste lote, e desce um degrau só onde a maior não cabe
      */
-    public record Site(ColonyPos origin, Direction doorSide, ColonyPos size) {
+    public record Site(ColonyPos origin, Direction doorSide, ColonyPos size, java.util.List<ColonyPos> path) {
+
+        public Site {
+            path = java.util.List.copyOf(path);
+        }
+
+        /** O lote encostado na rua, sem caminho a calçar. */
+        public Site(ColonyPos origin, Direction doorSide, ColonyPos size) {
+            this(origin, doorSide, size, java.util.List.of());
+        }
     }
 
     /**

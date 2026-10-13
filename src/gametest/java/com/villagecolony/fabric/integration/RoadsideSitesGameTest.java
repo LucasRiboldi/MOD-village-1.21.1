@@ -81,4 +81,62 @@ public final class RoadsideSitesGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * A beira da rua ocupada não esconde o terreno vazio atrás — autor, 2026-10-12. O lote
+     * recuado três blocos é aceito, com o caminho até a rua.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "roadside_setback")
+    public void aLotSetBackFromABusyRoadsideIsFound(TestContext context) {
+        UUID colony = UUID.randomUUID();
+        int y = 3;
+
+        for (int x = 0; x <= 8; x++) {
+            for (int z = 0; z <= 7; z++) {
+                context.setBlockState(new BlockPos(x, y, z), Blocks.GRASS_BLOCK);
+                context.setBlockState(new BlockPos(x, y + 1, z), Blocks.AIR);
+                context.setBlockState(new BlockPos(x, y + 2, z), Blocks.AIR);
+            }
+        }
+
+        List<BlockPos> road = List.of(
+                new BlockPos(2, y, 1), new BlockPos(3, y, 1), new BlockPos(4, y, 1),
+                new BlockPos(5, y, 1), new BlockPos(6, y, 1));
+
+        for (BlockPos at : road) {
+            context.setBlockState(at, Blocks.DIRT_PATH);
+        }
+
+        // A beira da rua tem coisa: uma cerca em z=3 em toda a largura, menos na coluna 4.
+        for (int x = 0; x <= 8; x++) {
+            if (x != 4) {
+                context.setBlockState(new BlockPos(x, y + 1, 3), Blocks.OAK_FENCE);
+            }
+        }
+
+        List<Long> columns = road.stream()
+                .map(context::getAbsolutePos)
+                .map(pos -> ColonyRoads.column(pos.getX(), pos.getZ()))
+                .toList();
+        ColonyPos center = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(road.get(0)));
+
+        try {
+            SweepPersistence.restore(new ColonyRoads(colony, center, columns));
+
+            BlockPos column = context.getAbsolutePos(new BlockPos(4, y, 1));
+
+            Optional<BuildSiteScanner.Site> site = RoadsideSites.siteFor(
+                    context.getWorld(), colony, column.getX(), column.getZ(), column.getY(),
+                    column.getY(), new ColonyPos(2, 2, 2), Direction.NORTH);
+
+            context.assertTrue(site.isPresent(), "o terreno vazio atrás da beira ocupada não virou lote");
+            context.assertTrue(site.get().path().size() == 3, "o lote recuado sem o caminho até a rua: " + site);
+            context.assertTrue(site.get().origin().z() == context.getAbsolutePos(new BlockPos(0, y, 5)).getZ(),
+                    "o lote não ficou três blocos atrás da rua: " + site.get().origin());
+        } finally {
+            BuildSiteScanner.clearAll();
+        }
+
+        context.complete();
+    }
 }

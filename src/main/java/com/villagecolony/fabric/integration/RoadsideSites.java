@@ -165,10 +165,49 @@ public final class RoadsideSites {
                 continue;
             }
 
-            // O lote começa no bloco seguinte à estrada — encostado nela,
-            // que é a decisão 1.
-            int lotX = x + side.getOffsetX();
-            int lotZ = z + side.getOffsetZ();
+            for (int setback : SETBACKS) {
+                Optional<Site> site = siteAt(world, colonyId, x, z, aroundY, roadY, size, side, setback);
+
+                if (site.isPresent()) {
+                    return site;
+                }
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Quantos blocos o lote pode ficar recuado da rua — autor, 2026-10-12: <i>"tem vários
+     * espaços visivelmente vazios para construção, mas o sistema não os identifica"</i>. A beira
+     * das ruas de uma vila gerada já tem as casas dela; o lote recuado ganha um caminho até a rua.
+     */
+    static final int[] SETBACKS = {0, 3};
+
+    private static Optional<Site> siteAt(
+            ServerWorld world, UUID colonyId, int x, int z, int aroundY, int roadY,
+            ColonyPos size, Direction side, int setback) {
+
+        List<ColonyPos> path = new ArrayList<>();
+
+        for (int step = 1; step <= setback; step++) {
+            Optional<BlockPos> ground = LotGround.groundInColumn(
+                    world, x + side.getOffsetX() * step, z + side.getOffsetZ() * step, aroundY);
+
+            if (ground.isEmpty() || Math.abs(ground.get().getY() - roadY) > 1
+                    || !LotGround.isNaturalGround(world.getBlockState(ground.get()))
+                    || !world.getBlockState(ground.get().up()).isReplaceable()
+                    || BlockProtection.isColonyBuilt(ground.get())) {
+                return Optional.empty();
+            }
+
+            path.add(MinecraftTypeAdapter.toColonyPos(ground.get()));
+        }
+
+        {
+            // O lote começa no bloco seguinte à estrada (decisão 1), ou depois do recuo.
+            int lotX = x + side.getOffsetX() * (1 + setback);
+            int lotZ = z + side.getOffsetZ() * (1 + setback);
 
             // A casa se estende para longe da estrada, e não por cima
             // dela: partindo da beira, o canto do lote recua meia casa
@@ -199,7 +238,8 @@ public final class RoadsideSites {
                     return Optional.of(new Site(
                             new ColonyPos(originX, floor.get(), originZ),
                             side.getOpposite(),
-                            size));
+                            size,
+                            path));
                 }
             }
         }

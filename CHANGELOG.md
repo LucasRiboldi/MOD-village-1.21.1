@@ -11,6 +11,15 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.45] — foco num perímetro, lote recuado da rua (2026-10-13, JAR local, não jogado)
+
+### Mudado
+- **A vila trabalha com o jogador num perímetro de 48 blocos em volta da caixa** (autor), e não só
+  com ele dentro dela.
+- **Lote recuado:** além do lote encostado na rua, a busca aceita o lote 3 blocos atrás dela, com os
+  3 blocos do meio livres e andáveis; ao abrir a obra, eles viram caminho até a rua. A beira das
+  ruas da vila gerada já tem as casas dela, e o terreno vazio de trás nunca era candidato.
+
 ## [0.3.44] — a caixa só cresce com rua e obra (2026-10-12, JAR local, não jogado)
 
 ### Mudado
