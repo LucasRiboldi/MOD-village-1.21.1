@@ -59,10 +59,22 @@ public enum ConstructionPriority {
     }
 
     /**
-     * Se esta vez levanta uma casa — autor, 2026-10-12: casa só quando falta cama (ou a
-     * primeira da vila). Na vez da casa do rodízio, sem falta de cama, vai a oficina ou a
-     * roça que falte, e sem nada a fazer nenhuma obra.
+     * Quantas camas a mais que adultos a vila pode ter antes de parar de levantar casa no
+     * rodízio — opção 1A do autor, 2026-10-13: o rodízio casa ↔ outro tipo volta, com teto.
      */
+    public static final int HOUSE_SURPLUS = 4;
+
+    /** Se ainda cabe casa no rodízio: camas abaixo de adultos + {@link #HOUSE_SURPLUS}. */
+    public static boolean roomForAHouse(int adults, int beds) {
+        return beds < adults + HOUSE_SURPLUS;
+    }
+
+    /** Se esta vez levanta casa: falta de cama, a primeira, ou a vez de casa do rodízio com teto. */
+    public boolean buildsHouse(int adults, int beds) {
+        return buildsHouse() || (this == ROTATION_HOUSE && roomForAHouse(adults, beds));
+    }
+
+    /** Se esta vez levanta casa por obrigação: falta de cama ou a primeira casa da vila. */
     public boolean buildsHouse() {
         return this == HOUSING_DEFICIT || this == FIRST_HOUSE;
     }

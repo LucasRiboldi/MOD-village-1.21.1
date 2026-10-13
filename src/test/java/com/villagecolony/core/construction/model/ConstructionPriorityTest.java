@@ -72,4 +72,16 @@ class ConstructionPriorityTest {
                 "camas de sobra: a vez da casa do rodízio não levanta casa");
         assertFalse(ConstructionPriority.WORKSHOP.buildsHouse());
     }
+
+    /** O rodízio casa ↔ outro tipo voltou com teto: camas abaixo de adultos + 4 (1A, 2026-10-13). */
+    @Test
+    void theRotationBuildsAHouseUntilThereAreFourBedsToSpare() {
+        ConstructionPriority houseTurn = ConstructionPriority.decide(true, false, 6, 6, false);
+
+        assertTrue(houseTurn.buildsHouse(6, 6), "camas iguais aos adultos: a vez da casa levanta casa");
+        assertTrue(houseTurn.buildsHouse(6, 6 + ConstructionPriority.HOUSE_SURPLUS - 1), "uma cama a menos que o teto");
+        assertFalse(houseTurn.buildsHouse(6, 6 + ConstructionPriority.HOUSE_SURPLUS), "no teto de camas");
+        assertFalse(ConstructionPriority.decide(true, true, 6, 6, false).buildsHouse(6, 6),
+                "a vez de outro tipo não levanta casa");
+    }
 }

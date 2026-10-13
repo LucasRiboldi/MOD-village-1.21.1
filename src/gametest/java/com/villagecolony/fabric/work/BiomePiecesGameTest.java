@@ -60,10 +60,10 @@ public class BiomePiecesGameTest implements FabricGameTest {
         Map<ResourceType, Integer> ceilings = BiomePieces.ceilings(largest,
                 Map.of(ResourceId.vanilla("oak_stairs"), 3, ResourceId.vanilla("glass_pane"), 2));
 
-        context.assertTrue(Integer.valueOf(13).equals(ceilings.get(ResourceType.OAK_STAIRS)),
-                "escada: a maior casa (10) mais a obra aberta (3), e não a soma das casas: " + ceilings);
-        context.assertTrue(Integer.valueOf(6).equals(ceilings.get(ResourceType.COBBLESTONE_SLAB)),
-                "laje: só a casa que a usa: " + ceilings);
+        context.assertTrue(Integer.valueOf(13 + BiomePieces.RESERVE).equals(ceilings.get(ResourceType.OAK_STAIRS)),
+                "escada: a maior casa (10), a reserva e a obra aberta (3), e não a soma das casas: " + ceilings);
+        context.assertTrue(Integer.valueOf(6 + BiomePieces.RESERVE).equals(ceilings.get(ResourceType.COBBLESTONE_SLAB)),
+                "laje: só a casa que a usa, mais a reserva: " + ceilings);
         context.complete();
     }
 

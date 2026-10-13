@@ -291,12 +291,12 @@ public final class HousePlans {
             }
         }
 
-        // Casa só com falta de cama ou a primeira (autor, 10-12); senão oficina/roça que falte —
-        // e a casa no lugar quando as que faltam não acham lote (LotTypeRefusals, 0.3.42).
+        // Rodízio casa ↔ outro tipo com teto de camas (1A, 10-13); sem outro tipo possível, casa.
         ConstructionPriority priority = nextConstructionPriority(buildings, adults, beds);
-        List<Blueprint> others = priority.buildsHouse() ? List.of() : nonHousePlansFor(world, colony, previous, buildings);
-        return others.isEmpty() && (priority.buildsHouse() || LotTypeRefusals.anyRefused(colony.id(), world.getTime()))
-                ? plansFor(world, colony) : others;
+        boolean house = priority.buildsHouse(adults, beds);
+        List<Blueprint> others = house ? List.of() : nonHousePlansFor(world, colony, previous, buildings);
+        return others.isEmpty() && (house || ConstructionPriority.roomForAHouse(adults, beds)
+                || LotTypeRefusals.anyRefused(colony.id(), world.getTime())) ? plansFor(world, colony) : others;
     }
 
     /** O tipo semântico de uma planta, usado para o rodízio A/B. */

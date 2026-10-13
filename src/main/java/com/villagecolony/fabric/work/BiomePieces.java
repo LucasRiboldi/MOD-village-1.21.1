@@ -94,13 +94,18 @@ public final class BiomePieces {
         return largest;
     }
 
-    /** O teto: a maior casa do estilo mais o que a obra aberta ainda pede de cada peça. */
+    /** A reserva fixa de cada peça das plantas, acima da maior casa; o teto geral ainda manda. */
+    static final int RESERVE = 32;
+
+    /** O teto: a maior casa do estilo, a reserva e o que a obra aberta ainda pede de cada peça. */
     static Map<ResourceType, Integer> ceilings(
             Map<ResourceType, Integer> largest, Map<ResourceId, Integer> openBuild) {
 
         Map<ResourceType, Integer> ceilings = new EnumMap<>(ResourceType.class);
 
-        ceilings.putAll(largest);
+        // E uma reserva fixa por peça (item 2 do autor, 2026-10-13): sem ela, coberta a casa
+        // típica, o artesão parava enquanto nenhuma obra abria (reanálise de 13-10, C2).
+        largest.forEach((type, amount) -> ceilings.put(type, amount + RESERVE));
         openBuild.forEach((id, amount) -> MinecraftTypeAdapter.toBlock(id)
                 .map(Block::asItem)
                 .flatMap(MinecraftTypeAdapter::toResourceType)

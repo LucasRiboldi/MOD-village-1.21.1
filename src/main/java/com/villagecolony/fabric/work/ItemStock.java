@@ -60,8 +60,8 @@ public final class ItemStock {
         ServerMemory.register(ItemStock.class, ItemStock::clearAll);
     }
 
-    /** Quantos de cada item. */
-    public static final int EACH = 8;
+    /** Quantos de cada item (16 desde 2026-10-13, item 2 do autor; eram 8). */
+    public static final int EACH = 16;
 
     /** Os ofícios que guardam um pouco de tudo. */
     static final List<TaskType> FAMILIES = List.of(TaskType.CRAFT_WOOD_MATERIAL, TaskType.CRAFT_METAL_MATERIAL);
