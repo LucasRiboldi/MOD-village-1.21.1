@@ -1,5 +1,12 @@
 # STATE — 2026-10-12
 
+> **0.3.46** (13-10): decisões do autor sobre a reanálise — rodízio casa ↔ outro tipo com teto de
+> camas (1A), reserva do artesanato 32 + "um pouco de tudo" 16 (2), ruas medidas como rede de caminhos
+> conectados (4). **Não jogado.** Verificado: test 1502/0; runGametest 759/759; mutação da rede derruba
+> o teste. JAR `village-colony-0.3.46.jar` = `6FD5D2DE659479FB3669F0195BA7046458287E21B79144CF2701E8F14AD8D9CD`.
+> **Proposta aberta:** mina que não trava, fluidez e conflitos de regra em
+> [`docs/research/2026-10-13-fluidez-mina-e-regras.md`](docs/research/2026-10-13-fluidez-mina-e-regras.md).
+
 > **0.3.45** (13-10): perímetro de foco de 48 blocos e lote 3 blocos atrás da rua. **Reanálise
 > estrutural** em [`docs/research/2026-10-13-reanalise-estrutural-profissoes.md`](docs/research/2026-10-13-reanalise-estrutural-profissoes.md):
 > a produção caiu porque nenhuma obra abre desde a 0.3.36 (C1), os tetos de 11-10 amarram o

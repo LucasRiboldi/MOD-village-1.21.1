@@ -11,6 +11,17 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.46] — a vila volta a girar (2026-10-13, JAR local, não jogado)
+
+### Mudado (decisões do autor sobre a reanálise estrutural)
+- **1A — rodízio casa ↔ outro tipo de volta:** a vez da casa levanta casa enquanto as camas forem
+  menos que adultos + 4; falta de cama continua mandando; uma oficina de cada tipo continua.
+- **2 — reserva do artesanato:** o adiantamento vai até a maior casa + 32 de cada peça das plantas
+  (teto geral de 64 mantido); "um pouco de tudo" sobe de 8 para 16 de cada item.
+- **4 — ruas medidas como rede de caminhos conectados:** sem índice de ruas, a busca de lote traça a
+  rede a partir do calçamento perto do centro (de bloco em bloco, degrau de 1, até 32 além da caixa)
+  e anda direto por ela, em vez da varredura em anéis de ~20 min por volta.
+
 ## [0.3.45] — foco num perímetro, lote recuado da rua (2026-10-13, JAR local, não jogado)
 
 ### Mudado
