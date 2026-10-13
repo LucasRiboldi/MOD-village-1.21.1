@@ -1,5 +1,11 @@
 # STATE — 2026-10-12
 
+> **0.3.45** (13-10): perímetro de foco de 48 blocos e lote 3 blocos atrás da rua. **Reanálise
+> estrutural** em [`docs/research/2026-10-13-reanalise-estrutural-profissoes.md`](docs/research/2026-10-13-reanalise-estrutural-profissoes.md):
+> a produção caiu porque nenhuma obra abre desde a 0.3.36 (C1), os tetos de 11-10 amarram o
+> artesanato à obra (C2) e a mina mudou de desenho 4 vezes (C3). **Decisões do autor abertas** (§4).
+> JAR `village-colony-0.3.45.jar` = `16F8F933FD8B1E4DC0BE640B69EA27E02C2442A97A194E42BB1D299B74F5DF73`.
+
 > **0.3.44** (12-10): a 0.3.43 reviveu a colônia (27 aldeões de volta), mas anexou de novo 16 blocos
 > ao norte sem rua nem obra. Pedido do autor: a caixa só cresce com rua e obra. A vila cheia agora só
 > puxa a rua para fora; a caixa inchada (237 x 197) é medida de novo (modelo 3). **Não jogado.**
