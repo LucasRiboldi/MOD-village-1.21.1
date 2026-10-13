@@ -1,5 +1,11 @@
 # STATE — 2026-10-12
 
+> **0.3.50** (13-10): transferência automática entre baús (autor). Depósito/retirada já eram sem
+> viagem; agora todo baú de profissão quase cheio (≤10 slots livres) espalha o excedente para os
+> baús sem profissão a cada ciclo (`ProfessionChestOverflow.spread`), não só no transbordo. **Não
+> jogado.** Verificado: test 1503/0; runGametest 761/761; mutação (nunca espalhar) derruba o teste.
+> JAR `village-colony-0.3.50.jar` = `3EEDD74F4AC5D4C8EC3B9A0029DA77595D7FA82FF7C8B5A7BC7D2AAD8717DA41`.
+
 > **0.3.49** (13-10): playtest da 0.3.48 — a obra voltou (4 casas, rede de ruas 1324 colunas), mas o
 > mineiro ficou 336× "looking for stone" contra 12 "digging", parado em "11 of 86" por 33 min, e por
 > isso fundidor/obra esperavam cobblestone. A reivindicação do nó partia do corpo (que sobe para

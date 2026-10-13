@@ -446,6 +446,7 @@ final class ColonyCycleRunner {
         SmelterWork.run(world, colony);
         com.villagecolony.fabric.work.SmelterAdvance.smeltForIdleSmelters(world, colony);
         com.villagecolony.fabric.work.PublicChestPlacement.ensure(world, colony);
+        com.villagecolony.fabric.integration.ProfessionChestOverflow.spread(world, colony);
         SurfaceGatheringWork.run(world, colony);
         ShepherdWork.run(world, colony);
         FarmerWork.run(world, colony);

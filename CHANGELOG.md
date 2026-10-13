@@ -11,6 +11,15 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.50] — baús se espalham sozinhos, sem viagem (2026-10-13, JAR local, não jogado)
+
+### Mudado
+- **Transferência automática e contínua entre baús (pedido do autor):** o depósito do que cada
+  profissão cava/colhe/recolhe e a retirada para fabricar já eram automáticos, sem o aldeão andar
+  até o baú (sempre foram: o mineiro, o lenhador e o artesão depositam/retiram no instante da ação).
+  Agora, a cada ciclo, todo baú de profissão quase cheio (≤ 10 slots livres) espalha o excedente
+  para os baús da vila sem profissão — não só quando um depósito transborda (`ProfessionChestOverflow.spread`).
+
 ## [0.3.49] — o mineiro reclama a frente de trabalho, não o nó mais raso (2026-10-13, JAR local, não jogado)
 
 ### Corrigido

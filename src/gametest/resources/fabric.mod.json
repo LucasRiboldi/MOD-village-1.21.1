@@ -180,6 +180,7 @@
       "com.villagecolony.fabric.integration.TreeReplantingGameTest",
       "com.villagecolony.fabric.integration.RoadsideSitesGameTest",
       "com.villagecolony.fabric.integration.RoadNetworkGameTest",
+      "com.villagecolony.fabric.integration.ProfessionChestSpreadGameTest",
       "com.villagecolony.fabric.event.ColonyMergeTriggerGameTest",
       "com.villagecolony.fabric.event.ColonyCycleRunnerGameTest",
       "com.villagecolony.fabric.work.BuilderMaterialsGameTest",
