@@ -1,5 +1,18 @@
 # STATE — 2026-10-13
 
+> **0.3.52** (13-10): **bancadas exclusivas do mod** (pedido do autor). Três blocos próprios —
+> `carpenter_bench` (mesa), `mason_cutter` (cortador), `blacksmith_forge` (ferreiro/fundidor),
+> réplicas das estações Vanilla com textura dourada e **luz 10**. O **player** as fabrica por
+> receita (estação Vanilla + 4× ouro, sempre disponível); a colônia nunca as faz nem coloca.
+> Vínculo por **POI próprio do mod** (sem profissão Vanilla): o titular que trabalha com a bancada
+> da sua profissão perto **dobra a produção por ciclo** (`ModBenchBonus`, +1 cópia no baú). É a
+> primeira infra de conteúdo registrado do mod. Spec em `docs/superpowers/specs/`. **Não jogado.**
+> Verificado: test 1503/0; runGametest 765/765 (2 rodadas limpas; 1 flake conhecido isolado);
+> mutação (FACTOR=1) derruba os 2 testes de dobro.
+> JAR `village-colony-0.3.52.jar` = `E4B7DDDC6B7F4EBD67B34F1C85520BB11A5E156145B953FBC00732254CEFD641`.
+> **Próximo ciclo pedido:** varredura das ações de todas as profissões (travamento/pausa/ócio) →
+> plano de melhoria para ritmo constante, com base no playtest atual + histórico das memórias.
+
 > **0.3.51** (13-10): playtest da 0.3.50 (Spark `NDXMZczlmB`, 42 min) — TPS 20, mod 1,70%, **mas a
 > vila parou**: a mina minerou DONE 6→35 em 70 s e **congelou em `OPEN=19, DIGGING=2` por 41 min**;
 > o nó (-1, 2) ficava OPEN esperando enchimento (cobble) dos 6 baús próximos, que não tinham, e o

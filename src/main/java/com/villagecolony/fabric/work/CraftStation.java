@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.fabric.content.ModContent;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
@@ -68,7 +69,31 @@ final class CraftStation {
         return spot;
     }
 
+    /**
+     * A bancada do mod desta profissão, se a vila tem uma perto — carpinteiro, pedreiro
+     * ou ferreiro/fundidor ({@link ModContent}). É a estação preferida: usá-la dobra a
+     * produção ({@link ModBenchBonus}). Vazio para profissão sem bancada do mod.
+     */
+    static Optional<BlockPos> modBench(ServerWorld world, ProfessionType profession, BlockPos near) {
+        if (profession == null || ModContent.benchPoi(profession) == null) {
+            return Optional.empty();
+        }
+
+        var poi = ModContent.benchPoi(profession);
+
+        return world.getPointOfInterestStorage().getNearestPosition(
+                entry -> entry.matchesKey(poi), near, POI_RADIUS,
+                PointOfInterestStorage.OccupationStatus.ANY);
+    }
+
     private static Optional<BlockPos> bench(ServerWorld world, ProfessionType profession, BlockPos chest) {
+        // A bancada do mod vem primeiro: é a estação que dobra a produção (2026-10-13).
+        Optional<BlockPos> mod = modBench(world, profession, chest);
+
+        if (mod.isPresent()) {
+            return mod;
+        }
+
         if (profession == ProfessionType.MASON) {
             return world.getPointOfInterestStorage().getNearestPosition(
                     entry -> entry.matchesKey(PointOfInterestTypes.MASON), chest, POI_RADIUS,

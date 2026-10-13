@@ -457,7 +457,6 @@ public final class SmelterWork {
         }
 
         int leftOver = ChestDepositor.deposit(world, into.get(), made.getItem(), made.getCount());
-
         if (leftOver == made.getCount()) {
             // Não coube nada: devolve a matéria-prima e para.
             ChestDepositor.deposit(world, source, raw.getItem(), raw.getCount());
@@ -468,6 +467,7 @@ public final class SmelterWork {
         }
 
         job.smelted += made.getCount() - leftOver;
+        ModBenchBonus.grantExtra(world, workerId, made.getItem(), output); // forja do mod: o dobro (2026-10-13)
         VillageColonyMod.LOGGER.info(
                 "Smelter {} made {} out of {} — {} this task", workerId, made.getItem(), raw.getItem(), job.smelted);
         ActionJournal.action(workerId, "SMELTED", ActionJournal.idOf(made.getItem()), made.getCount() - leftOver, null, "");

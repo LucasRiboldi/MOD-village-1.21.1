@@ -185,6 +185,7 @@ public class VillageColonyMod implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        com.villagecolony.fabric.content.ModContent.register();
         PayloadTypeRegistry.playS2C().register(OverlaySnapshotPayload.ID, OverlaySnapshotPayload.CODEC);
         OverlaySync.register();
         ServerLifecycleHandler.register();

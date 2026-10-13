@@ -61,5 +61,8 @@
   "overlay.biome.desert": "desert",
   "overlay.biome.savanna": "savanna",
   "overlay.biome.snowy": "snowy",
-  "overlay.biome.taiga": "taiga"
+  "overlay.biome.taiga": "taiga",
+  "block.villagecolony.carpenter_bench": "Carpenter's Bench",
+  "block.villagecolony.mason_cutter": "Mason's Cutter",
+  "block.villagecolony.blacksmith_forge": "Blacksmith's Forge"
 }

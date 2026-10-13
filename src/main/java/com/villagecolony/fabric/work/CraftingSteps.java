@@ -139,8 +139,13 @@ final class CraftingSteps {
                 continue;
             }
 
-            if (strip(world, colony.get(), wanted, workerId)
-                    || stockFor(world, colony.get(), workerId, item.get(), remaining.getValue())) {
+            if (strip(world, colony.get(), wanted, workerId)) {
+                return true;
+            }
+
+            if (stockFor(world, colony.get(), workerId, item.get(), remaining.getValue())) {
+                // Bancada do mod: a unidade rende o dobro (2026-10-13).
+                ModBenchBonus.grantExtra(world, workerId, item.get(), colony.get().center());
 
                 return true;
             }
@@ -199,6 +204,9 @@ final class CraftingSteps {
         if (!stockFor(world, colony.get(), workerId, item.get(), job.goalTarget)) {
             return Optional.empty();
         }
+
+        // Bancada do mod: a unidade rende o dobro (2026-10-13).
+        ModBenchBonus.grantExtra(world, workerId, item.get(), colony.get().center());
 
         job.crafted++;
 
