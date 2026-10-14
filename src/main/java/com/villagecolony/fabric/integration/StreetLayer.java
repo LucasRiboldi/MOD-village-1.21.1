@@ -51,7 +51,43 @@ final class StreetLayer {
 
         OptionalInt connector = streetConnectorLayerOf(template);
 
-        return connector.isPresent() ? connector : sunkenBase(blocks);
+        if (connector.isPresent()) {
+            return connector;
+        }
+
+        // A camada 0 que é só solo é o chão de pisar, não piso enterrado: ela vai no nível
+        // da rua, e o que sobe dela (a cerca do curral) fica acima — bug 0.3.52, o animal_pen
+        // assentou com o chão de dentro um bloco abaixo da rua, virando uma cova. O sunkenBase
+        // não o pegava: a camada de grama é densa (30 peças contra 21 da cerca).
+        OptionalInt ground = soilBase(blocks);
+
+        return ground.isPresent() ? ground : sunkenBase(blocks);
+    }
+
+    /** Terreno natural que é chão de pisar, não piso construído. */
+    private static final java.util.Set<String> SOIL = java.util.Set.of(
+            "grass_block", "dirt", "coarse_dirt", "rooted_dirt", "podzol", "mycelium",
+            "sand", "red_sand", "gravel", "snow_block", "farmland", "dirt_path");
+
+    /**
+     * A camada 0 que é só solo natural (grama, terra): é o chão de pisar e fica no nível da
+     * rua, com o que sobe dela acima — o curral (animal_pen), cujo piso é uma camada de grama.
+     * Decisão do autor, 2026-10-13: nivelar pela camada útil toda estrutura com piso de solo.
+     *
+     * @return a camada 0, ou vazio quando ela tem peça construída (não é só solo)
+     */
+    static OptionalInt soilBase(List<BlueprintBlock> blocks) {
+        List<BlueprintBlock> bottom = blocks.stream()
+                .filter(block -> block.offset().y() == 0)
+                .toList();
+
+        if (bottom.isEmpty() || blocks.stream().noneMatch(block -> block.offset().y() >= 1)) {
+            return OptionalInt.empty();
+        }
+
+        boolean allSoil = bottom.stream().allMatch(block -> SOIL.contains(block.block().path()));
+
+        return allSoil ? OptionalInt.of(0) : OptionalInt.empty();
     }
 
     /**

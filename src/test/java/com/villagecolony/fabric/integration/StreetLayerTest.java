@@ -18,16 +18,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class StreetLayerTest {
 
     private static final ResourceId STONE = ResourceId.vanilla("tuff_bricks");
+    private static final ResourceId GRASS = ResourceId.vanilla("grass_block");
+    private static final ResourceId FENCE = ResourceId.vanilla("oak_fence");
 
     private static List<BlueprintBlock> layers(int bottom, int above) {
+        return layers(bottom, STONE, above, STONE);
+    }
+
+    private static List<BlueprintBlock> layers(int bottom, ResourceId bottomBlock, int above, ResourceId aboveBlock) {
         List<BlueprintBlock> blocks = new ArrayList<>();
 
         for (int i = 0; i < bottom; i++) {
-            blocks.add(new BlueprintBlock(new ColonyPos(i, 0, 0), STONE));
+            blocks.add(new BlueprintBlock(new ColonyPos(i, 0, 0), bottomBlock));
         }
 
         for (int i = 0; i < above; i++) {
-            blocks.add(new BlueprintBlock(new ColonyPos(i, 1, 1), STONE));
+            blocks.add(new BlueprintBlock(new ColonyPos(i, 1, 1), aboveBlock));
         }
 
         return blocks;
@@ -54,5 +60,27 @@ class StreetLayerTest {
     @Test
     void aSingleLayerPlanHasNothingBelowTheStreet() {
         assertEquals(OptionalInt.empty(), StreetLayer.sunkenBase(layers(12, 0)));
+    }
+
+    /** O curral: a camada 0 é só grama (o chão de pisar) e vai no nível da rua, não abaixo. */
+    @Test
+    void aSoilBottomLayerIsTheStreetLevel() {
+        // animal_pen: 30 de grama embaixo, 21 de cerca em cima — o sunkenBase não pega (grama densa).
+        assertEquals(OptionalInt.of(0), StreetLayer.soilBase(layers(30, GRASS, 21, FENCE)));
+    }
+
+    /** Piso construído na camada 0 não é solo: segue como antes (sem nivelar pela camada 0). */
+    @Test
+    void aBuiltFloorIsNotSoil() {
+        assertEquals(OptionalInt.empty(), StreetLayer.soilBase(layers(30, STONE, 21, FENCE)));
+    }
+
+    /** Camada 0 de grama misturada com piso construído não conta como solo puro. */
+    @Test
+    void aMixedBottomLayerIsNotPureSoil() {
+        List<BlueprintBlock> blocks = layers(10, GRASS, 21, FENCE);
+        blocks.add(new BlueprintBlock(new ColonyPos(99, 0, 0), STONE));
+
+        assertEquals(OptionalInt.empty(), StreetLayer.soilBase(blocks));
     }
 }

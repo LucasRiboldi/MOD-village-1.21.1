@@ -2,6 +2,7 @@ package com.villagecolony.fabric.content;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.worker.model.ProfessionType;
+import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.object.builder.v1.world.poi.PointOfInterestHelper;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
@@ -10,10 +11,13 @@ import net.minecraft.block.CraftingTableBlock;
 import net.minecraft.block.StonecutterBlock;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
+import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.poi.PointOfInterestType;
 
@@ -61,10 +65,14 @@ public final class ModContent {
     private static RegistryKey<PointOfInterestType> masonPoi;
     private static RegistryKey<PointOfInterestType> blacksmithPoi;
 
+    /** A aba do mod no inventário criativo, com as bancadas. */
+    public static final RegistryKey<ItemGroup> GROUP = RegistryKey.of(
+            RegistryKeys.ITEM_GROUP, Identifier.of(VillageColonyMod.MOD_ID, "benches"));
+
     private ModContent() {
     }
 
-    /** Registra blocos, itens e POIs. Chamado uma vez, cedo, no init do mod. */
+    /** Registra blocos, itens, POIs e a aba do criativo. Chamado uma vez, cedo, no init do mod. */
     public static void register() {
         registerBlock("carpenter_bench", CARPENTER_BENCH);
         registerBlock("mason_cutter", MASON_CUTTER);
@@ -73,6 +81,20 @@ public final class ModContent {
         carpenterPoi = registerPoi("carpenter_bench_poi", CARPENTER_BENCH);
         masonPoi = registerPoi("mason_cutter_poi", MASON_CUTTER);
         blacksmithPoi = registerPoi("blacksmith_forge_poi", BLACKSMITH_FORGE);
+
+        registerGroup();
+    }
+
+    private static void registerGroup() {
+        Registry.register(Registries.ITEM_GROUP, GROUP, FabricItemGroup.builder()
+                .displayName(Text.translatable("itemGroup.villagecolony.benches"))
+                .icon(() -> new ItemStack(CARPENTER_BENCH))
+                .entries((context, entries) -> {
+                    entries.add(CARPENTER_BENCH);
+                    entries.add(MASON_CUTTER);
+                    entries.add(BLACKSMITH_FORGE);
+                })
+                .build());
     }
 
     private static void registerBlock(String path, Block block) {

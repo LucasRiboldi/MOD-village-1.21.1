@@ -1,5 +1,19 @@
 # STATE — 2026-10-13
 
+> **0.3.53** (13-10): playtest da 0.3.52 (Spark `ixYLSorDyV`, 38 min) — TPS 20, mod 1,20%, mina
+> voltou a produzir (MINED 27/min, deadlock da 0.3.51 resolvido). Dois pedidos do autor:
+> **(1) cercado no nível da rua** — o `animal_pen` tem uma camada de solo (grama/terra) em y=0 e
+> assentava 1 bloco abaixo da rua (chão de dentro virava cova). `StreetLayer.soilBase`: camada 0
+> só de solo natural é a camada da rua, o que sobe dela fica acima. **(2) aba própria do criativo**
+> — os 3 blocos agora têm uma aba "Village Colony — Bancadas" (`ModContent.GROUP`); antes só a
+> receita/`/give` os davam. **Não jogado.** Verificado: test 1506/0; runGametest 765/765; mutação
+> (soilBase invertido) derruba os testes do cercado. JAR `village-colony-0.3.53.jar` =
+> `F6C85111082814D36355F0844A1AB4D659DF4A7402A3FAB545B610F081F7ACD4`.
+> **Profissões (verificação, para o plano de melhoria):** produção boa (mina 27/min, carpinteiro/
+> pedreiro 100% quando trabalham), mas muito ócio esperando material/tarefa (BUILDER 76%, MASON 68%,
+> CARPENTER 60%); pastor em laço de lã (25 soltas "no sheep with wool"); fundidor 61% esperando cru;
+> mineiro perde tempo em 144 alvos rejeitados (`NO_STANDING_POSITION`/`TOO_HIGH`). → segunda frente.
+
 > **0.3.52** (13-10): **bancadas exclusivas do mod** (pedido do autor). Três blocos próprios —
 > `carpenter_bench` (mesa), `mason_cutter` (cortador), `blacksmith_forge` (ferreiro/fundidor),
 > réplicas das estações Vanilla com textura dourada e **luz 10**. O **player** as fabrica por
