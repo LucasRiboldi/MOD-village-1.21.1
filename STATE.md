@@ -1,5 +1,18 @@
 # STATE — 2026-10-14
 
+> **0.3.58** (14-10): playtest da 0.3.57 (Spark `iALIIoOwEK`, 42 min) — a horta destravou (obra
+> avança, 201 peças, TPS 20), mas **ociosidade geral alta**: lenhador 98% ocioso, pedreiro 71%,
+> pastor 80%, fundidor 60× "no task open". Raiz medida: a **vila está madura e sem obra** — 21×
+> "no empty plot", estoque cheio (837 cobble, 322 toras); os produtores param porque não há obra
+> pedindo, não por falta de material. E a **expansão era lenta**: esperava 3 voltas de varredura
+> (`FULL_AGAIN_AFTER=3*FULL_AFTER`, dezenas de min) entre anexos. **Correção (decisão do autor):**
+> `FULL_AGAIN_AFTER = FULL_AFTER` — a vila anexa a faixa já na volta que confirma a falta de lote,
+> crescendo no ritmo em que fica ociosa; a salvaguarda contra inchaço (só lado plano/seco/sem outra
+> colônia) permanece. **Não jogado.** Verificado: test 1515/0; runGametest 769/769. JAR
+> `village-colony-0.3.58.jar` = `429511EA11985FA09724E6A69F5E4C77A222DBB4DD6824709ABF0FDBD39BA659`.
+> **Aberto:** o mineiro ainda tem 172× NO_STANDING_POSITION (44% bloqueado) — o único ócio por
+> defeito real, não por vila madura.
+
 > **0.3.57** (14-10): playtest da 0.3.56 (Spark `hquYC03AAc`, 96 min) — **a vila parou**: a obra
 > `plains_small_house_8` travou nos últimos ~12 blocos (a **horta** da casa: 35 farmland + 16 wheat
 > + 2 water) e, aberta para sempre, bloqueou o planejador → lenhador 100% ocioso, pedreiro 99%,

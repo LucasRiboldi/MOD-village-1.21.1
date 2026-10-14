@@ -52,8 +52,17 @@ public final class VillageExpansion {
      */
     public static final int FULL_AFTER = 1;
 
-    /** Com uma faixa anexada que ainda não deu lote, quantas varreduras até a próxima. */
-    public static final int FULL_AGAIN_AFTER = 3 * FULL_AFTER;
+    /**
+     * Com uma faixa anexada que ainda não deu lote, quantas varreduras até a próxima.
+     *
+     * <p>Era {@code 3 * FULL_AFTER} (0.3.57): a vila esperava três voltas de varredura — dezenas de
+     * minutos — entre anexos, e no meio tempo ficava sem lote, sem obra e com os produtores
+     * ociosos (playtest `iALIIoOwEK`: lenhador 98%, pedreiro 71%, com o estoque cheio). Agora anexa
+     * já na volta seguinte que confirma a falta de lote (14-10): a vila cresce no ritmo em que fica
+     * ociosa. A salvaguarda contra inchaço é outra e continua — só se anexa um lado plano, seco e
+     * sem outra colônia ({@link SideSurvey#usable}).
+     */
+    public static final int FULL_AGAIN_AFTER = FULL_AFTER;
 
     /** De quantas obras novas uma nasce na borda da vila (autor, 2026-10-12). */
     public static final int EDGE_EVERY = 5;
