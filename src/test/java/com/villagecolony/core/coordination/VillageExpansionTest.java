@@ -64,16 +64,25 @@ class VillageExpansionTest {
         assertTrue(VillageExpansion.sweptWithoutLot(colony));
     }
 
+    /**
+     * Com uma faixa anexada que não rendeu lote, a vila anexa de novo já na volta seguinte sem lote
+     * — não espera mais que uma varredura completa (14-10): a vila crescia devagar demais e ficava
+     * ociosa entre anexos. A salvaguarda contra inchaço é a qualidade do lado, não a espera.
+     */
     @Test
-    void anAnnexedStripThatGaveNoLotWaitsLongerBeforeTheNext() {
+    void anAnnexedStripThatGaveNoLotAnnexesAgainOnTheNextFullSweep() {
         UUID colony = UUID.randomUUID();
         VillageExpansion.annexed(colony, Side.EAST);
 
+        // Uma faixa anexada não faz a vila esperar mais que o normal: a cadência com e sem anexo
+        // pendente é a mesma (FULL_AGAIN_AFTER == FULL_AFTER).
         for (int sweep = 1; sweep < VillageExpansion.FULL_AGAIN_AFTER; sweep++) {
             assertFalse(VillageExpansion.sweptWithoutLot(colony), "anexou de novo na varredura " + sweep);
         }
 
-        assertTrue(VillageExpansion.sweptWithoutLot(colony));
+        assertTrue(VillageExpansion.sweptWithoutLot(colony), "não re-anexou na volta que confirmou a falta de lote");
+        assertEquals(VillageExpansion.FULL_AFTER, VillageExpansion.FULL_AGAIN_AFTER,
+                "a espera com faixa pendente deve ser a mesma da primeira (sem atraso extra)");
     }
 
     @Test
