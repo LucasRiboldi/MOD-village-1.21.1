@@ -98,6 +98,10 @@ public final class ShepherdFlock {
             }
         }
 
+        // Colher o excedente do rebanho (couro/carne) e cozinhar a carne crua — 2026-10-14.
+        // Um abate por ciclo, deixando sempre a reserva viva; não toca a obra (Regra 59).
+        FlockHarvest.step(world, colony, area, chests);
+
         return paired;
     }
 
