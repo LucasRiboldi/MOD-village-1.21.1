@@ -5,8 +5,10 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.BlueprintKind;
+import com.villagecolony.core.construction.model.ConstructionPriority;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
+import com.villagecolony.fabric.integration.VillagerScanner;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.integration.VillageFarms;
@@ -77,14 +79,20 @@ public final class ColonyFarms {
                 .count();
     }
 
-    /** Se algum fazendeiro ainda não tem roça — a vez da roça no rodízio. */
+    /**
+     * Se a vila ainda deve uma plantação — a vez da roça no rodízio. Regra 67 (autor,
+     * 2026-10-13): uma a cada {@link ConstructionPriority#ADULTS_PER_FARM} adultos, no mínimo
+     * uma desde a fundação (substitui a Regra 52, uma por fazendeiro).
+     */
     public static boolean owedToTheFarmers(ServerWorld world, Colony colony) {
-        return owed(of(world, colony).size(), farmers(colony.id()));
+        int adults = VillagerScanner.livingAdultPopulation(world, colony);
+
+        return owed(of(world, colony).size(), adults);
     }
 
-    /** A conta da Regra 52: uma roça por fazendeiro. */
-    static boolean owed(int farms, int farmers) {
-        return farms < farmers;
+    /** A conta da Regra 67: uma roça a cada 15 adultos, no mínimo uma. */
+    static boolean owed(int farms, int adults) {
+        return farms < ConstructionPriority.farmsFor(adults);
     }
 
     private static BlockBox areaOf(Colony colony) {

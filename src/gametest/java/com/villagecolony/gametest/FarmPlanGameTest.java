@@ -247,44 +247,38 @@ public class FarmPlanGameTest implements FabricGameTest {
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farm_quota")
     public void oneFarmForEveryFarmer(TestContext context) {
-        Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(0, 64, 0));
-
+        // Regra 67 (2026-10-13): uma roça a cada 15 adultos, no mínimo uma desde a fundação —
+        // conta adultos vivos no mundo, não fazendeiros. A conta pura é exercitada em unidade
+        // (ConstructionPriorityTest, FarmOwnersTest); aqui a integração com o mundo.
+        ColonyPos center = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(8, 2, 8)));
+        Colony colony = Colony.create(UUID.randomUUID(), center);
         VillageColonyMod.COLONIES.register(colony);
-
         ColonyFixture owned = ColonyFixture.create().owning(colony);
+        List<net.minecraft.entity.passive.VillagerEntity> spawned = new java.util.ArrayList<>();
 
         try {
-            for (int villager = 0; villager < POPULATION; villager++) {
-                UUID id = UUID.randomUUID();
-
-                VillageColonyMod.WORKERS.register(id, colony.id());
-                owned.owning(id);
-            }
-
-            context.assertFalse(ColonyFarms.owedToTheFarmers(context.getWorld(), colony),
-                    "vinte aldeões sem fazendeiro pediram roça");
-
-            UUID first = UUID.randomUUID();
-            VillageColonyMod.WORKERS.register(first, colony.id()).assign(ProfessionType.FARMER);
-            owned.owning(first);
-
+            // Sem adultos ainda, mas a vila nasce devendo a primeira roça.
             context.assertTrue(ColonyFarms.owedToTheFarmers(context.getWorld(), colony),
-                    "um fazendeiro sem roça, e a colônia não pediu a dele");
+                    "a vila nasce sem dever a primeira roça");
 
+            // Uma roça de pé: com até 15 adultos, uma basta.
             VillageColonyMod.BUILDINGS.register(new Building(UUID.randomUUID(), colony.id(),
                     ResourceId.vanilla("village/plains/houses/plains_small_farm_1"),
-                    new ColonyPos(10, 64, 10), new ColonyPos(18, 66, 22)));
+                    new ColonyPos(center.x() + 2, center.y(), center.z() + 2),
+                    new ColonyPos(center.x() + 10, center.y() + 2, center.z() + 14)));
 
             context.assertFalse(ColonyFarms.owedToTheFarmers(context.getWorld(), colony),
-                    "o fazendeiro tem roça e a colônia pediu outra");
+                    "uma roça e poucos adultos, e a colônia pediu outra");
 
-            UUID second = UUID.randomUUID();
-            VillageColonyMod.WORKERS.register(second, colony.id()).assign(ProfessionType.FARMER);
-            owned.owning(second);
+            // 16 adultos vivos no mundo: a segunda roça é devida.
+            for (int i = 0; i < 16; i++) {
+                spawned.add(context.spawnEntity(net.minecraft.entity.EntityType.VILLAGER, new BlockPos(8, 2, 8)));
+            }
 
             context.assertTrue(ColonyFarms.owedToTheFarmers(context.getWorld(), colony),
-                    "dois fazendeiros e uma roça, e a colônia não pediu a segunda");
+                    "16 adultos com uma roça, e a colônia não pediu a segunda");
         } finally {
+            spawned.forEach(net.minecraft.entity.Entity::discard);
             VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
             owned.cleanUp();
         }

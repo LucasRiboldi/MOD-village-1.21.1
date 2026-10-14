@@ -84,4 +84,32 @@ class ConstructionPriorityTest {
         assertFalse(ConstructionPriority.decide(true, true, 6, 6, false).buildsHouse(6, 6),
                 "a vez de outro tipo não levanta casa");
     }
+
+    /** Regra 67: uma plantação a cada 15 adultos, no mínimo uma desde a fundação. */
+    @Test
+    void oneFarmPerFifteenAdultsWithAMinimumOfOne() {
+        assertEquals(1, ConstructionPriority.farmsFor(0), "a vila nasce devendo uma plantação");
+        assertEquals(1, ConstructionPriority.farmsFor(15), "até 15 adultos, uma basta");
+        assertEquals(2, ConstructionPriority.farmsFor(16), "o 16º adulto pede a segunda");
+        assertEquals(2, ConstructionPriority.farmsFor(30), "30 adultos: duas");
+        assertEquals(3, ConstructionPriority.farmsFor(31), "o 31º pede a terceira");
+    }
+
+    /** O 16º adulto sem a segunda roça torna a fazenda prioridade; antes disso, não. */
+    @Test
+    void theSixteenthAdultMakesTheFarmDue() {
+        assertFalse(ConstructionPriority.farmIsDue(15, 1), "15 adultos com uma roça: nada devido");
+        assertTrue(ConstructionPriority.farmIsDue(16, 1), "16 adultos com uma roça: a segunda é devida");
+        assertFalse(ConstructionPriority.farmIsDue(16, 2), "16 adultos com duas roças: em dia");
+    }
+
+    /** A falta de plantação (Regra 67) vem antes das oficinas e do rodízio, mas depois da cama. */
+    @Test
+    void theFarmDeficitComesAfterBedsAndBeforeTheWorkshop() {
+        assertEquals(ConstructionPriority.HOUSING_DEFICIT,
+                ConstructionPriority.decide(true, true, 16, 10, true, true), "a cama vem antes da roça");
+        assertEquals(ConstructionPriority.FARM_DEFICIT,
+                ConstructionPriority.decide(true, true, 16, 16, true, true), "a roça vem antes da oficina");
+        assertFalse(ConstructionPriority.FARM_DEFICIT.requiresHouse(), "a roça não é moradia");
+    }
 }

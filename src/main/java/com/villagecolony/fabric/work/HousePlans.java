@@ -187,13 +187,7 @@ public final class HousePlans {
         return nextConstructionPriority(buildings, adults, beds).requiresHouse();
     }
 
-    /**
-     * Motivo atual da família de plantas da próxima obra.
-     *
-     * <p>Esta adaptação conserva no Fabric a pergunta sobre a planta ser uma
-     * casa. A precedência entre déficit, primeira obra e rodízio fica no Core,
-     * onde também é exercitada sem mundo.
-     */
+    /** Motivo atual da família de plantas da próxima obra (a precedência fica no Core). */
     static ConstructionPriority nextConstructionPriority(
             List<Building> buildings, int adults, int beds) {
         Optional<Building> last = lastAttempted(buildings);
@@ -261,11 +255,7 @@ public final class HousePlans {
                 && !constructionType(blueprint).equals(lastNonHouseType(buildings).orElse(""));
     }
 
-    /**
-     * A próxima família de plantas da colônia, com a regra de alternância.
-     * O lote continua sendo escolhido pelo mesmo scanner para qualquer
-     * família retornada aqui.
-     */
+    /** A próxima família de plantas da colônia, com a regra de alternância (Regras 49, 67, 1A). */
     static List<Blueprint> plansForNext(ServerWorld world, Colony colony) {
         List<Building> buildings = VillageColonyMod.BUILDINGS.ofColony(colony.id());
         int adults = VillageColonyMod.WORKERS.countOfColony(colony.id());
@@ -281,17 +271,26 @@ public final class HousePlans {
             }
         }
 
-        // A casa do ofício que falta, sem falta de cama — Regra 49. Sem planta
-        // de oficina possível agora, o rodízio de sempre segue.
-        if (ConstructionTurn.of(buildings, adults, beds, ConstructionTurn.workshopMissing(world, colony, buildings))
-                == ConstructionPriority.WORKSHOP) {
+        // Regra 67 (16º adulto): a plantação fura a fila antes de oficina e rodízio; só a
+        // falta de cama vem antes (no decide). Regra 49: a casa do ofício que falta vem depois.
+        boolean farmDeficit = ConstructionTurn.farmDeficit(world, colony);
+        boolean workshopMissing = ConstructionTurn.workshopMissing(world, colony, buildings);
+        ConstructionPriority turn = ConstructionTurn.of(buildings, adults, beds, workshopMissing, farmDeficit);
+
+        if (turn == ConstructionPriority.FARM_DEFICIT) {
+            List<Blueprint> farms = plansFor(world, colony);
+            if (!farms.isEmpty()) {
+                return farms;
+            }
+        }
+
+        if (turn == ConstructionPriority.WORKSHOP) {
             List<Blueprint> workshops = nonHousePlansFor(world, colony, previous, buildings);
             if (!workshops.isEmpty()) {
                 return workshops;
             }
         }
 
-        // Rodízio casa ↔ outro tipo com teto de camas (1A, 10-13); sem outro tipo possível, casa.
         ConstructionPriority priority = nextConstructionPriority(buildings, adults, beds);
         boolean house = priority.buildsHouse(adults, beds);
         List<Blueprint> others = house ? List.of() : nonHousePlansFor(world, colony, previous, buildings);

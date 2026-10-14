@@ -71,13 +71,14 @@ class FarmOwnersTest {
         assertEquals(1, owners.size());
     }
 
+    /** Regra 67 (2026-10-13): uma roça a cada 15 adultos, no mínimo uma desde a fundação. */
     @Test
-    void oneFarmPerFarmer() {
-        assertFalse(ColonyFarms.owed(0, 0));
-        assertTrue(ColonyFarms.owed(0, 1));
-        assertFalse(ColonyFarms.owed(1, 1));
-        assertTrue(ColonyFarms.owed(1, 2));
-        assertFalse(ColonyFarms.owed(3, 2));
+    void oneFarmPerFifteenAdults() {
+        assertTrue(ColonyFarms.owed(0, 0), "a vila nasce devendo uma roça");
+        assertFalse(ColonyFarms.owed(1, 1), "uma roça basta para poucos adultos");
+        assertFalse(ColonyFarms.owed(1, 15), "até 15 adultos, uma basta");
+        assertTrue(ColonyFarms.owed(1, 16), "o 16º adulto pede a segunda");
+        assertFalse(ColonyFarms.owed(2, 16), "duas roças atendem 16 adultos");
     }
 
     @Test

@@ -37,8 +37,9 @@ public final class ConstructionTurn {
     private ConstructionTurn() {
     }
 
-    /** A prioridade, sabendo se falta a casa de algum ofício. */
-    static ConstructionPriority of(List<Building> buildings, int adults, int beds, boolean workshopMissing) {
+    /** A prioridade, sabendo se falta a casa de algum ofício e se falta plantação (Regra 67). */
+    static ConstructionPriority of(List<Building> buildings, int adults, int beds, boolean workshopMissing,
+            boolean farmDeficit) {
         Building last = buildings.isEmpty() ? null : buildings.get(buildings.size() - 1);
 
         return ConstructionPriority.decide(
@@ -46,17 +47,31 @@ public final class ConstructionTurn {
                 last != null && HousePlans.isHouse(last.blueprint()),
                 adults,
                 beds,
-                workshopMissing);
+                workshopMissing,
+                farmDeficit);
     }
 
-    /** A prioridade de agora, para o {@code /vc log}. */
+    /** A prioridade de agora, para o {@code /vc log} e para o planejador. */
     public static ConstructionPriority priorityFor(ServerWorld world, Colony colony) {
         int adults = VillageColonyMod.WORKERS.countOfColony(colony.id());
         List<Building> buildings = VillageColonyMod.BUILDINGS.ofColony(colony.id());
 
         return of(buildings, adults,
                 HousePlans.effectiveBedsForPriority(colony.id(), adults, colony.observedBeds()),
-                workshopMissing(world, colony, buildings));
+                workshopMissing(world, colony, buildings),
+                farmDeficit(world, colony));
+    }
+
+    /**
+     * Se a vila passou de {@link ConstructionPriority#ADULTS_PER_FARM} adultos (o 16º) e ainda
+     * não tem plantação para essa população — Regra 67. Conta adultos vivos de verdade (não só
+     * os empregados) e todas as plantações (da vila, construídas e em obra).
+     */
+    static boolean farmDeficit(ServerWorld world, Colony colony) {
+        int adults = com.villagecolony.fabric.integration.VillagerScanner.livingAdultPopulation(world, colony);
+        int farms = ColonyFarms.of(world, colony).size();
+
+        return ConstructionPriority.farmIsDue(adults, farms);
     }
 
     /**

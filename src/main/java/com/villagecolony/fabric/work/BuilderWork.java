@@ -297,8 +297,7 @@ public final class BuilderWork {
         if (!BuilderApproach.isWithinReach(villager.getPos(), target)
                 && !BuilderApproach.isInsideZone(project, villager.getPos())) {
             // <b>De onde ele está, e não do piso</b> — 2026-09-16. Ver
-            // BuilderApproach.footOf: mandar ao piso quem já subiu na obra
-            // é mandá-lo para uma queda que a navegação não percorre.
+            // footOf: mandar ao piso quem já subiu na obra é mandá-lo a uma queda intransponível.
             Optional<BlockPos> foot = BuilderApproach.footOf(
                     world, project, target, villager.getBlockPos(), job.unreachable.spots());
 
@@ -337,9 +336,7 @@ public final class BuilderWork {
                 return false;
             }
 
-            // A peça que não se alcança fica de lado, e a obra segue pela
-            // próxima — A-6, 2026-10-02. Antes ele insistia até o STALL_LIMIT
-            // (dois minutos) e largava a obra inteira.
+            // A peça que não se alcança fica de lado, e a obra segue pela próxima — A-6.
             if (++job.stalled % SET_ASIDE_AFTER == 0 && project.remaining().size() > 1) {
                 setAside(world, project, job, next.get(), target,
                         "the builder walked " + job.stalled + " ticks without reaching it");
@@ -348,9 +345,7 @@ public final class BuilderWork {
             }
 
             if (job.stalled > HelperReach.stallLimit(workerId)) {
-                // Andou dois minutos de horário de trabalho e não chegou
-                // ao bloco. A obra continua de pé e volta para a fila; o
-                // que não continua é este construtor sendo dono dela.
+                // Andou dois minutos sem chegar ao bloco: a obra volta para a fila, sem este dono.
                 WorkerStrikes.gaveUp(workerId, job.task);
 
                 finish(
@@ -372,9 +367,8 @@ public final class BuilderWork {
             WorkTargets.set(workerId,
                     BuilderApproach.footOf(world, project, target, villager.getBlockPos()), BuilderApproach.ARRIVAL);
 
-            // Insistiu e o ponto continua ocupado: tira o ocupante do caminho em vez de adiar a
-            // peça para sempre — a peça adiada reentra na fila e cai no mesmo bloco ocupado,
-            // e a obra ficava refém de um aldeão parado (bug 0.3.53).
+            // Insistiu e o ponto segue ocupado: empurra o ocupante em vez de adiar a peça para
+            // sempre (ela reentra no mesmo bloco ocupado) — bug 0.3.53, obra refém de um parado.
             if (job.stalled > 0 && job.stalled % SHOVE_AFTER == 0) {
                 BuilderApproach.shoveOutOf(world, target);
             }
