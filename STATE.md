@@ -1,5 +1,24 @@
 # STATE — 2026-10-13
 
+> **0.3.54** (13-10): playtest da 0.3.53 (Spark `vN5T2AtQNZ`, 36 min) — TPS 20, mod 2,39%, 18
+> trabalhadores, 1 obra aberta. Sete pedidos do autor; **3 feitos e verificados, 4 pendentes**:
+> - ✅ **Blocos na aba Blocos Funcionais** do criativo (era aba própria; o autor não achava os blocos).
+> - ✅ **Obra parada destravada**: a `storage_majest` ficava refém de aldeões/gado parados onde a
+>   peça ia (84 peças "someone kept standing", BUILDER 97% blocked). `BuilderApproach.shoveOutOf`
+>   empurra o ocupante após `SHOVE_AFTER` ticks.
+> - ✅ **Plantação (Regra 67)**: 1 por 15 adultos, mínimo 1 desde a fundação, 16º adulto torna a
+>   fazenda prioridade (`ConstructionPriority.FARM_DEFICIT`, `ColonyFarms.owed` por adultos).
+> - ⬜ **Pendentes (diagnóstico pronto, para o próximo ciclo):** (a) **mina** — vários mineiros em
+>   paralelo (a fase serial escada/salão deixa 2 mineiros "waiting for a branch"), descer mais
+>   agressivo, e o mineiro preso "unable to climb / walking to the mine mouth"; (b) **lenhador
+>   recolhe folhas** se a obra pedir (folhas não têm `ResourceType`/produção hoje; obra que pede
+>   `_leaves` não é suprida); (c) **revisar profissões esperando** (MASON 68% espera, FARMER 66%,
+>   SMELTER 67% ocioso/bloqueado — cadeia de material travada pela obra parada, que acabou de ser
+>   destravada; remedir no próximo playtest).
+> **Não jogado.** Verificado: test 1509/0; runGametest 766/766 (flake MinerDirectPath à parte);
+> mutação pendente só para folhas/mina (não implementadas). JAR `village-colony-0.3.54.jar` =
+> `4BDCF49127D66B8162941F7FA5023CA7ACC94647237C987516E8C7E962E889B1`.
+
 > **0.3.53** (13-10): playtest da 0.3.52 (Spark `ixYLSorDyV`, 38 min) — TPS 20, mod 1,20%, mina
 > voltou a produzir (MINED 27/min, deadlock da 0.3.51 resolvido). Dois pedidos do autor:
 > **(1) cercado no nível da rua** — o `animal_pen` tem uma camada de solo (grama/terra) em y=0 e
