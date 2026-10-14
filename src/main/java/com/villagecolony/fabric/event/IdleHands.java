@@ -77,7 +77,7 @@ final class IdleHands {
                 VillageColonyMod.TASKS,
                 VillageColonyMod.STORAGES::hasStorage,
                 (worker, task) -> HANDOUTS.mayHand(worker.villagerId(), task.id(), now)
-                        && ColonyCycleRunner.canReserveTask(world, colony.id(), task));
+                        && ColonyCycleRunner.canReserveTask(world, colony.id(), worker, task));
 
         if (handed > 0) {
             for (Worker worker : idle) {

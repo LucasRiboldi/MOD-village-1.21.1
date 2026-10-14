@@ -222,12 +222,7 @@ public final class Mine {
         return arms.get(index);
     }
 
-    /**
-     * Um ramal que ainda aceita picareta, se houver.
-     *
-     * <p>Quem escolhe qual mineiro fica com qual é o {@code MineClaims};
-     * aqui só se diz que existe frente livre.
-     */
+    /** Um ramal que ainda aceita picareta, se houver (quem fica com ele é o {@code MineClaims}). */
     public Optional<Integer> firstArmStillOpen() {
         for (int index = 0; index < arms.size(); index++) {
             if (!arms.get(index).isDone()) {
@@ -239,27 +234,38 @@ public final class Mine {
     }
 
     /**
-     * Quantos ramais podem ser repartidos agora — 2026-09-04.
-     *
-     * <p><b>Um, enquanto o poço não estiver aberto.</b> Os índices abaixo
-     * de {@link MineShaft#CARVED} são a escada e as duas salas, e eles
-     * apontam para as <b>mesmas</b> posições em todos os ramais — é o que
-     * faz deles ramais da mesma escada. Repartir antes disso é entregar o
-     * mesmo bloco a dois mineiros, que é exatamente o defeito de
-     * 2026-08-26 que a reserva veio consertar: os dois andam para o mesmo
-     * lugar, os dois escrevem {@code could not reach the stone} no mesmo
-     * tique, e o recuo do cursor roda duas vezes por um bloco.
-     *
-     * <p>O primeiro mineiro abre o poço sozinho, portanto, e os outros
-     * três entram quando a galeria começa — que é onde os rumos passam a
-     * divergir. O gametest
-     * {@code twoMinersGetTwoBranchesAndNeverTheSameBlock} é quem afirma
-     * isso, e foi ele quem pegou o defeito.
+     * Quantos ramais podem ser repartidos agora. A escada ({@link MineShaft#CARVED})
+     * e a sala comum apontam para as mesmas posições em todos os ramais: repartir
+     * ali daria o mesmo bloco a dois mineiros (defeito de 2026-08-26). A escada é
+     * de um só; aberta ela, os outros três entram pulando a sala, que fica com o
+     * ramal zero ({@link #skipTheSharedHall}) — regra do autor, 2026-10-11 (dois
+     * mineiros esperavam enquanto um cavava os 300 blocos da sala).
      */
     public int branchesOpenNow() {
-        return !shaft.isRamp() && !arms.get(0).isDone() && arms.get(0).cut() >= MineShaft.SHARED_BLOCKS
-                ? ARMS
-                : 1;
+        if (shaft.isRamp()) {
+            return 1;
+        }
+
+        // O zero acabado além do trecho comum não fecha os outros três (P6, 2026-10-11).
+        MineArm zero = arms.get(0);
+        boolean pastShared = zero.isDone() ? zero.cut() > MineShaft.SHARED_BLOCKS : zero.cut() >= MineShaft.SHARED_BLOCKS;
+        boolean othersStarted = arms.stream().skip(1)
+                .anyMatch(arm -> !arm.isDone() && arm.cut() > MineShaft.SHARED_BLOCKS);
+
+        return pastShared || othersStarted || (!zero.isDone() && zero.cut() >= MineShaft.CARVED) ? ARMS : 1;
+    }
+
+    /** Com a escada aberta, os ramais 1 a 3 ainda no trecho comum pulam para a própria galeria. */
+    public void skipTheSharedHall() {
+        if (branchesOpenNow() < ARMS) {
+            return;
+        }
+
+        for (int index = 1; index < arms.size(); index++) {
+            if (arms.get(index).cut() < MineShaft.SHARED_BLOCKS) {
+                arms.get(index).rewindTo(MineShaft.SHARED_BLOCKS);
+            }
+        }
     }
 
     /** Se os quatro ramais deste nível acabaram. */
@@ -267,14 +273,7 @@ public final class Mine {
         return arms.stream().allMatch(MineArm::isDone);
     }
 
-    /**
-     * Se todos os ramais entregáveis neste momento terminaram.
-     *
-     * <p>Antes de {@link MineShaft#SHARED_BLOCKS}, só o ramal zero é entregável:
-     * os outros três ainda são a mesma escada. Se o zero fecha nesse
-     * trecho, esperar pelos outros prende a mina entre "não posso
-     * entregar" e "não posso descer".
-     */
+    /** Se todos os ramais entregáveis agora terminaram — o zero fechado na escada não prende a mina. */
     private boolean everyOpenArmIsDone() {
         int open = branchesOpenNow();
 

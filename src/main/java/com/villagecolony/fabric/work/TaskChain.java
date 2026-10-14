@@ -24,9 +24,25 @@ final class TaskChain {
     private TaskChain() {
     }
 
+    /**
+     * O pedido {@code done} acabou com {@code produced} peças feitas.
+     *
+     * <p>Com zero, nada é encadeado: o pedido parou num bloqueio (a reserva
+     * de tora, por exemplo) e o mesmo pedido pararia no mesmo lugar. Quem
+     * reabre é o ciclo, que mede a falta de novo.
+     */
+    static void nextAfter(Task done, int produced) {
+        if (produced > 0) {
+            next(done);
+        }
+    }
+
     /** O pedido {@code done} acabou de ser concluído. */
     static void next(Task done) {
+        // O pedido nominal (peça de obra, ordem de estoque) não se encadeia: o alvo
+        // dele não é o que falta, e encadear punha o carpinteiro a converter tábua.
         if (!done.type().isResourceRequest()
+                || com.villagecolony.core.coordination.ColonyCycle.isWorkPieceRequest(done)
                 || !LastShortage.stillMissing(done.colonyId(), done.targetResource())) {
             return;
         }

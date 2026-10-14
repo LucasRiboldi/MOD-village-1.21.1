@@ -80,6 +80,13 @@ final class EquivalentPieces {
             }
         }
 
+        // As rochas que a mina traz junto com o pedregulho — P3a, 2026-10-11.
+        // Sem isto a obra deixava o pedregulho de lado e a 4ª tentativa o
+        // criava do nada, com andesito e granito no baú do mineiro.
+        if (path.equals("cobblestone")) {
+            return List.of("andesite", "granite", "diorite");
+        }
+
         if (path.equals("mossy_cobblestone") || path.equals("mossy_stone_bricks")) {
             return List.of("cobblestone", "stone_bricks");
         }

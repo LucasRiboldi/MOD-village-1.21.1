@@ -181,6 +181,7 @@ final class ConstructionOrder {
             }
         }
 
-        return types.stream().findFirst();
+        // Uma casa de cada tipo — autor, 2026-10-12: com todas de pé, nenhuma repetida.
+        return Optional.empty();
     }
 }

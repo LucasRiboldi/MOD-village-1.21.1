@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "villagecolony:block/mason_cutter_saw",
+    "bottom": "villagecolony:block/mason_cutter_bottom",
+    "side": "villagecolony:block/mason_cutter_side",
+    "particle": "villagecolony:block/mason_cutter_side"
+  }
+}

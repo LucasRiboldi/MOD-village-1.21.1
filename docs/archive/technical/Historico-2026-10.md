@@ -722,3 +722,203 @@ A lista completa e priorizada está no `TODO.md`.
   | `ChainRootsGameTest` | onde cada cadeia de produção começa |
   | `StructureCoverageGameTest` | quem fabrica cada peça |
   | `CraftReasons`, `VolumeSample`, `ProtectionSample` | por que algo não saiu ou foi recusado, no log |
+
+## Versões 0.3.32–0.3.54 (arquivadas do STATE em 2026-10-14)
+
+> **0.3.54** (13-10): playtest da 0.3.53 (Spark `vN5T2AtQNZ`, 36 min) — TPS 20, mod 2,39%, 18
+> trabalhadores, 1 obra aberta. Sete pedidos do autor; **3 feitos e verificados, 4 pendentes**:
+> - ✅ **Blocos na aba Blocos Funcionais** do criativo (era aba própria; o autor não achava os blocos).
+> - ✅ **Obra parada destravada**: a `storage_majest` ficava refém de aldeões/gado parados onde a
+>   peça ia (84 peças "someone kept standing", BUILDER 97% blocked). `BuilderApproach.shoveOutOf`
+>   empurra o ocupante após `SHOVE_AFTER` ticks.
+> - ✅ **Plantação (Regra 67)**: 1 por 15 adultos, mínimo 1 desde a fundação, 16º adulto torna a
+>   fazenda prioridade (`ConstructionPriority.FARM_DEFICIT`, `ColonyFarms.owed` por adultos).
+> - ⬜ **Pendentes (diagnóstico pronto, para o próximo ciclo):** (a) **mina** — vários mineiros em
+>   paralelo (a fase serial escada/salão deixa 2 mineiros "waiting for a branch"), descer mais
+>   agressivo, e o mineiro preso "unable to climb / walking to the mine mouth"; (b) **lenhador
+>   recolhe folhas** se a obra pedir (folhas não têm `ResourceType`/produção hoje; obra que pede
+>   `_leaves` não é suprida); (c) **revisar profissões esperando** (MASON 68% espera, FARMER 66%,
+>   SMELTER 67% ocioso/bloqueado — cadeia de material travada pela obra parada, que acabou de ser
+>   destravada; remedir no próximo playtest).
+> **Não jogado.** Verificado: test 1509/0; runGametest 766/766 (flake MinerDirectPath à parte);
+> mutação pendente só para folhas/mina (não implementadas). JAR `village-colony-0.3.54.jar` =
+> `4BDCF49127D66B8162941F7FA5023CA7ACC94647237C987516E8C7E962E889B1`.
+
+> **0.3.53** (13-10): playtest da 0.3.52 (Spark `ixYLSorDyV`, 38 min) — TPS 20, mod 1,20%, mina
+> voltou a produzir (MINED 27/min, deadlock da 0.3.51 resolvido). Dois pedidos do autor:
+> **(1) cercado no nível da rua** — o `animal_pen` tem uma camada de solo (grama/terra) em y=0 e
+> assentava 1 bloco abaixo da rua (chão de dentro virava cova). `StreetLayer.soilBase`: camada 0
+> só de solo natural é a camada da rua, o que sobe dela fica acima. **(2) aba própria do criativo**
+> — os 3 blocos agora têm uma aba "Village Colony — Bancadas" (`ModContent.GROUP`); antes só a
+> receita/`/give` os davam. **Não jogado.** Verificado: test 1506/0; runGametest 765/765; mutação
+> (soilBase invertido) derruba os testes do cercado. JAR `village-colony-0.3.53.jar` =
+> `F6C85111082814D36355F0844A1AB4D659DF4A7402A3FAB545B610F081F7ACD4`.
+> **Profissões (verificação, para o plano de melhoria):** produção boa (mina 27/min, carpinteiro/
+> pedreiro 100% quando trabalham), mas muito ócio esperando material/tarefa (BUILDER 76%, MASON 68%,
+> CARPENTER 60%); pastor em laço de lã (25 soltas "no sheep with wool"); fundidor 61% esperando cru;
+> mineiro perde tempo em 144 alvos rejeitados (`NO_STANDING_POSITION`/`TOO_HIGH`). → segunda frente.
+
+> **0.3.52** (13-10): **bancadas exclusivas do mod** (pedido do autor). Três blocos próprios —
+> `carpenter_bench` (mesa), `mason_cutter` (cortador), `blacksmith_forge` (ferreiro/fundidor),
+> réplicas das estações Vanilla com textura dourada e **luz 10**. O **player** as fabrica por
+> receita (estação Vanilla + 4× ouro, sempre disponível); a colônia nunca as faz nem coloca.
+> Vínculo por **POI próprio do mod** (sem profissão Vanilla): o titular que trabalha com a bancada
+> da sua profissão perto **dobra a produção por ciclo** (`ModBenchBonus`, +1 cópia no baú). É a
+> primeira infra de conteúdo registrado do mod. Spec em `docs/superpowers/specs/`. **Não jogado.**
+> Verificado: test 1503/0; runGametest 765/765 (2 rodadas limpas; 1 flake conhecido isolado);
+> mutação (FACTOR=1) derruba os 2 testes de dobro.
+> JAR `village-colony-0.3.52.jar` = `E4B7DDDC6B7F4EBD67B34F1C85520BB11A5E156145B953FBC00732254CEFD641`.
+> **Próximo ciclo pedido:** varredura das ações de todas as profissões (travamento/pausa/ócio) →
+> plano de melhoria para ritmo constante, com base no playtest atual + histórico das memórias.
+
+> **0.3.51** (13-10): playtest da 0.3.50 (Spark `NDXMZczlmB`, 42 min) — TPS 20, mod 1,70%, **mas a
+> vila parou**: a mina minerou DONE 6→35 em 70 s e **congelou em `OPEN=19, DIGGING=2` por 41 min**;
+> o nó (-1, 2) ficava OPEN esperando enchimento (cobble) dos 6 baús próximos, que não tinham, e o
+> `quarryFor` não achava parede — deadlock sem saída (MINER 0%, "looking for stone" 400× vs 48
+> digging). Em cascata: SMELTER 0%, BUILDER 88% ocioso, MASON 84%, 97×/41×/20× "no material".
+> **Correção (decisão do autor):** a construção interna da mina (piso, beirada) **surge** quando o
+> mineiro precisa, sem gastar recurso da vila — como o `MineFlooding` já fazia para o fluido.
+> `NetworkSafety.secureCorridor` nunca mais fica sem enchimento; `quarryFor`/`NO_FILL` removidos.
+> **Não jogado.** Verificado: test 1503/0; runGametest 761/761; mutação (pôr ar em vez de
+> enchimento) derruba o teste novo (`withoutFillInChestsTheMineFillsItselfAndFinishesTheNode`).
+> JAR `village-colony-0.3.51.jar` = `EE1D0A4F4365D667341433532B6F739A75A73B4A04CC6CBC9C77DC2162D2537A`.
+
+> **0.3.50** (13-10): transferência automática entre baús (autor). Depósito/retirada já eram sem
+> viagem; agora todo baú de profissão quase cheio (≤10 slots livres) espalha o excedente para os
+> baús sem profissão a cada ciclo (`ProfessionChestOverflow.spread`), não só no transbordo. **Não
+> jogado.** Verificado: test 1503/0; runGametest 761/761; mutação (nunca espalhar) derruba o teste.
+> JAR `village-colony-0.3.50.jar` = `3EEDD74F4AC5D4C8EC3B9A0029DA77595D7FA82FF7C8B5A7BC7D2AAD8717DA41`.
+
+> **0.3.49** (13-10): playtest da 0.3.48 — a obra voltou (4 casas, rede de ruas 1324 colunas), mas o
+> mineiro ficou 336× "looking for stone" contra 12 "digging", parado em "11 of 86" por 33 min, e por
+> isso fundidor/obra esperavam cobblestone. A reivindicação do nó partia do corpo (que sobe para
+> depositar); agora parte do salão, então ele reclama a frente de trabalho. **Não jogado.** Verificado:
+> test 1503/0; runGametest 760/760. JAR `village-colony-0.3.49.jar` =
+> `2325A59BB38266B30DD41DA775A7D91427E815DA0D2572080AA360F67B523B8D`.
+
+> **0.3.48** (13-10): mina M — a célula do corredor que o mineiro não alcança é pulada (o alvo anda
+> pela frente do túnel); o nó só falha com toda a pedra que falta recusada, em vez de selar por uma.
+> Fecha as 3 melhorias pedidas sobre a reanálise (1A, 2, mina) + F4 + rede de ruas (item 4). **Não
+> jogado.** Verificado: test 1503/0; runGametest 760/760; mutação da mina derruba o teste.
+> JAR `village-colony-0.3.48.jar` = `D4ACA323D943F555817C9332DAE8B0DD9AFD26C65562535BAED9B64A968BFC9B`.
+
+> **0.3.47** (13-10): F4 — socorro único contra parada (`WorkRescue.LIMIT` = 1200, um minuto; eram
+> seis cópias de 2 min). Tabela de regras consolidada (ordem das obras numa regra só; mina 54 e
+> expansão 56 reescritas ao código; emenda da 51 revogada pela 59; regras 63/64). Falta aplicar a
+> **mina M** (proposta em `docs/research/2026-10-13-fluidez-mina-e-regras.md`). **Não jogado.**
+> Verificado: test 1503/0; runGametest 759/759. JAR `village-colony-0.3.47.jar` =
+> `17DB613F1BBDD9D625CC24ECA2E8003F4CBFAC87C76E076B9A5E5AAD9DD1C350`.
+
+> **0.3.46** (13-10): decisões do autor sobre a reanálise — rodízio casa ↔ outro tipo com teto de
+> camas (1A), reserva do artesanato 32 + "um pouco de tudo" 16 (2), ruas medidas como rede de caminhos
+> conectados (4). **Não jogado.** Verificado: test 1502/0; runGametest 759/759; mutação da rede derruba
+> o teste. JAR `village-colony-0.3.46.jar` = `6FD5D2DE659479FB3669F0195BA7046458287E21B79144CF2701E8F14AD8D9CD`.
+> **Proposta aberta:** mina que não trava, fluidez e conflitos de regra em
+> [`docs/research/2026-10-13-fluidez-mina-e-regras.md`](docs/research/2026-10-13-fluidez-mina-e-regras.md).
+
+> **0.3.45** (13-10): perímetro de foco de 48 blocos e lote 3 blocos atrás da rua. **Reanálise
+> estrutural** em [`docs/research/2026-10-13-reanalise-estrutural-profissoes.md`](docs/research/2026-10-13-reanalise-estrutural-profissoes.md):
+> a produção caiu porque nenhuma obra abre desde a 0.3.36 (C1), os tetos de 11-10 amarram o
+> artesanato à obra (C2) e a mina mudou de desenho 4 vezes (C3). **Decisões do autor abertas** (§4).
+> JAR `village-colony-0.3.45.jar` = `16F8F933FD8B1E4DC0BE640B69EA27E02C2442A97A194E42BB1D299B74F5DF73`.
+
+> **0.3.44** (12-10): a 0.3.43 reviveu a colônia (27 aldeões de volta), mas anexou de novo 16 blocos
+> ao norte sem rua nem obra. Pedido do autor: a caixa só cresce com rua e obra. A vila cheia agora só
+> puxa a rua para fora; a caixa inchada (237 x 197) é medida de novo (modelo 3). **Não jogado.**
+> Verificado: test 1500/0; runGametest 757/757; mutação derruba os testes (faixa vazia, modelo).
+> **JAR instalado: `village-colony-0.3.44.jar`** =
+> `3CC1DC6B9053F3270C44182C90141BC95558AFC32BB6AF03D43A75E5791AAF3D` (0.3.43 `.jar.disabled`).
+
+> **0.3.43** (12-10): playtest da 0.3.42 — a colônia foi dada como ABANDONADA às 19:41 e soltou os 27
+> trabalhadores (sumiram placas, overlay e trabalho): quatro anexos a leste em 5 min levaram o centro a
+> 68 blocos das camas, e a sonda só aceita vila a 64 do centro. Agora vila dentro da caixa conta, 3+
+> trabalhadores vivos dentro impedem o abandono, a colônia gravada como abandonada revive; anexo no
+> máximo a cada 30 min e só com rua alcançando a faixa. **Não jogado.** Verificado: test 1499/0;
+> runGametest 757/757; mutação derruba os testes novos (abandono por caixa, anexo por tempo, anexo sem rua).
+> **JAR instalado: `village-colony-0.3.43.jar`** =
+> `086E6CF13830A6357825DC4D5D658780D68BB56D1EB60455767574524176D61F` (0.3.42 `.jar.disabled`).
+
+> **0.3.42** (12-10): playtest da 0.3.41 (21 min) — a última obra nova foi na 0.3.35. Desde a 0.3.36
+> (casa só com falta de cama) a vila só tentava a oficina que faltava, sem lote, e nada a tirava da
+> vez: sem obra, construtor/carpinteiro/pedreiro paravam. Agora o tipo sem lote numa volta sai da vez
+> por 30 min e, com todos recusados, a casa entra (Regra 60); mudas fora da vila: 1 a cada 5 min.
+> **Não jogado.** Verificado: test 1497/0; runGametest 756/756; mutação derruba os 2 testes novos.
+> **JAR instalado: `village-colony-0.3.42.jar`** =
+> `D5B98A2C44C5B031A2751DE3FBE7E91717FB5EF6B379AAF0287AD7D299B076AB` (0.3.41 `.jar.disabled`).
+
+> **0.3.41** (12-10): playtest da 0.3.40 (Spark `c76Y5XgCfy`, TPS 20, mod 2%) — o anexo funcionou
+> (16 blocos a leste), mas a rua cresceu para oeste e a faixa ficou sem rua, sem lote e sem obra.
+> Agora a vila puxa a rua mais avançada daquele lado para dentro da faixa (`StripRoad`). **Não jogado.**
+> Verificado: test 1497/0; runGametest 755/755; mutação derruba o teste da expansão.
+> **JAR instalado: `village-colony-0.3.41.jar`** =
+> `CEDBA3D16BD83373C32312EC9D871742075FC8D930E0537C50C412132ABA5C53` (0.3.40 `.jar.disabled`).
+
+> **0.3.40** (12-10): playtest da 0.3.39 — "as profissões pararam". Nenhuma obra em 23 min (nenhum
+> lote servia e o anexo pedia 2 voltas de 20 min: agora 1), mineiro preso numa pedra recusada 53
+> vezes (o enchimento não lia a marca), lenhador em laço (só media o próprio baú). **Não jogado.**
+> Verificado: test 1497/0; runGametest 755/755; mutação da mina derruba o teste.
+> **JAR instalado: `village-colony-0.3.40.jar`** =
+> `7D5583179AE5DDD747A0BD7E67E3F22645E3A26A5FF38F4A983A0D465AD274E1` (0.3.39 `.jar.disabled`).
+
+> **0.3.39** (12-10): regras do autor — vila sem baú público ganha um numa casa (encostado na
+> parede, longe da porta); 1 em 5 obras na faixa da borda; carpinteiro guarda toda peça de madeira e
+> calça a rua; fazendeiro e pastor não ajudam a obra. **Não jogado.** Verificado: test 1497/0;
+> runGametest 755/755 (2 rodadas); mutação derruba os 4 testes novos.
+> **JAR instalado: `village-colony-0.3.39.jar`** =
+> `4C6C345A269BEDEE6B501FB1482144F310C185C94578E02FBAB8B0E6F956A83F` (0.3.38 `.jar.disabled`).
+
+> **0.3.38** (12-10): playtest da 0.3.37 (Spark `cKZHDMdNUm`, TPS 20, mod 1,4%): a mina voltou a
+> minerar (180 blocos em 9 min) e a bancada de flecheiro saiu em 2 min. Corrigidos: obra sem relva
+> alta (grama e flores surgem sozinhas), 267 toras no chão (excedente para os baús públicos, Regra
+> 58), árvore pela metade, postes do pastor (um por casa e por cercado, Regra 57). **Não jogado.**
+> Verificado: test 1495/0; runGametest 753/753 (3 rodadas limpas com os testes novos); mutação
+> derruba os 5 testes novos. **JAR instalado: `village-colony-0.3.38.jar`** =
+> `B2ED23E582F965F7B25D70CED85EAB3873928FC6225CFD9F255E7F7CFEB46907` (0.3.37 `.jar.disabled`).
+
+> **0.3.37** (12-10): playtest da 0.3.36 (Spark `nTgYjiciKr`, TPS 19,5, mod 1,4%) achou o mineiro 0%:
+> o túnel esperava pedregulho e os baús não tinham nenhum — agora ele cava a parede para tirar o
+> enchimento; e a obra parada pela bancada de flecheiro (sílex sem rota nunca contava ciclo).
+> **Expansão do terreno B + C + D (Regra 56).** **Não jogado.** Verificado: test 1495/0;
+> runGametest 750/750; mutação derruba os testes novos (mina, rota sem caminho, medida dos lados).
+> **JAR instalado: `village-colony-0.3.37.jar`** =
+> `4032F148360DE5C6C1595C2484982790C4EFE95D40AF35650CC4531F6C32BAF7` (0.3.36 `.jar.disabled`).
+
+> **0.3.36** (12-10): **mina minera em vez de labirinto** (túnel 1 × 2 a cada 4, minério ao alcance
+> primeiro, segurança mínima; [análise](docs/research/2026-10-12-mina-labirinto.md)); retorno nunca fura
+> as 5 camadas sob a vila; uma oficina de cada tipo; casa só com falta de cama; roça grande primeiro;
+> fundidor, lenhador e pastor ociosos com trabalho; grama e flores surgem sozinhas. **Não jogado.**
+> Verificado: test 1487/0; runGametest 747/747 em 2 de 3 rodadas (a outra: `MinerDirectPathGameTest`,
+> instável conhecido). **JAR instalado: `village-colony-0.3.36.jar`** =
+> `C3E0D0F621D0069E2F59DBD38E00DFF618F0EA79CB7B78B7A882DBFEDC9AE0C0` (0.3.35 `.jar.disabled`).
+> **Decisão do autor aberta:** expansão do terreno, opções A–E em
+> [`docs/research/2026-10-12-expansao-do-terreno.md`](docs/research/2026-10-12-expansao-do-terreno.md).
+
+> **0.3.35** (12-10): **mina em rede (ADR-042, aceita e aplicada)** — nós a cada 7 blocos, um mineiro
+> por nó, veio primeiro, piso garantido e cavernas/fluidos vedados, rota pelo que está pronto,
+> descida por nível esgotado, caminhos laterais no fundo, gravado no save. **Não jogado.**
+> Verificado: test 1485/0; runGametest 744/744 (mutação: sem piso garantido e sem fim dos ramais, os
+> testes caem). **JAR instalado: `village-colony-0.3.35.jar`** = `CCEAD667B72C4FF712D74CEF86466832C0D65F252EC398365F2F50514477D436`.
+
+> **0.3.34** (12-10): mineiro destravado — caminho direto pela navegação do jogo e ramal inalcançável
+> termina ([`docs/research/2026-10-12-mineiro-mina-em-rede.md`](docs/research/2026-10-12-mineiro-mina-em-rede.md)).
+> Verificado: test 1475/0; runGametest 742/742. **JAR instalado: `village-colony-0.3.34.jar`** =
+> `1975DF2FA50BE95DFEAFD29DB3D2D3D800D72B9F139FFDB2B5A43B98911B9BE1` (três cópias; 0.3.33 `.jar.disabled`).
+> **ADR-042 (mina em rede) aguardando o autor.**
+
+> **0.3.33** (12-10): a obra esperava `bricks` para sempre — a cadeia não descia a receita de peça
+> sem recurso declarado ([`docs/research/2026-10-12-obra-esperando-tijolo.md`](docs/research/2026-10-12-obra-esperando-tijolo.md)).
+> Verificado: test 1475/0; runGametest 741/741; mutação nos testes de tijolo (0 sem a correção).
+> **JAR instalado: `village-colony-0.3.33.jar`** = `021C117693E0310D49C25B5E825956C97C3CA2EDFAEB44D8758F42588172F7D6`
+> (três cópias iguais; 0.3.32 como `.jar.disabled`). Aberto: mineiro 0% trabalhando com 3 de 4 ramais esgotados (TODO).
+
+> **0.3.32** (`claude/autossuficiencia`, 11-10 noite) — correções do playtest da 0.3.31 (Spark
+> `qWTXLoLP5g`, TPS 20, mod 2,5%; Regra 51 reprovou em todos os ofícios). Análise por profissão:
+> [`docs/research/2026-10-11-fluxos-das-profissoes-031.md`](docs/research/2026-10-11-fluxos-das-profissoes-031.md).
+> Mina só na borda (Regra 53) e sem cava de superfície; rota da descida até o fim do ramal;
+> construtor de volta à obra (vaga do ajudante não é a tarefa); fazendeiro ajuda a obra; tetos de
+> tábua e carvão vegetal; obra do save no giro certo; até 4 peças sem apoio largadas; transferência
+> antes de surgir; overlay em pixel e em português (pt_pt). **Não jogado.**
+> **Verificação (11-10 noite):** `test --rerun-tasks` 1475/0 falhas; `runGametest` 739/739 (1 rodada,
+> mundo novo). **JAR instalado: `village-colony-0.3.32.jar`** =
+> `C2ABB0B952481164DADEF9401B3B5026F83B72D19D8958C08CBB8C5E0DC8C910`, igual em `build/libs`,
+> `downloads/` e `.minecraft/mods`; a 0.3.31 ficou como `.jar.disabled`.

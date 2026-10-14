@@ -125,6 +125,15 @@ public final class BiomeConstructionSupply {
      */
     public static final int ATTEMPTS_BEFORE_STOCKING = 4;
 
+    /**
+     * Ciclos com a rota da obra aberta e sem entrega antes de a peça aparecer no
+     * baú do construtor — regra do autor, 2026-10-11 (depois do playtest da
+     * 0.3.25): se em um minuto nenhuma rota avançou, o bloco surge. São 2 ciclos
+     * de 30 s; o ciclo só conta com tarefa de rota aberta (ADR-040 §2). A busca
+     * vazia ({@code LocateFallback}) segue com {@link #ATTEMPTS_BEFORE_STOCKING}.
+     */
+    public static final int DISPATCHES_BEFORE_STOCKING = 2;
+
     /** Esperas da obra antes de pedir ao fazendeiro uma muda específica. */
     private static final int TREE_WAITS_BEFORE_PLANTING = 20;
 
@@ -204,7 +213,7 @@ public final class BiomeConstructionSupply {
     public static boolean stock(
             ServerWorld world, UUID colonyId, ColonyPos near, Item item) {
 
-        return stock(world, ColonyChests.nearestFirst(world, colonyId, near), item);
+        return stock(world, ColonyChests.nearestFirst(world, colonyId, near), item, askedByTheBuild(colonyId, item));
     }
 
     /**
@@ -214,7 +223,18 @@ public final class BiomeConstructionSupply {
     public static boolean stockForConstruction(
             ServerWorld world, UUID colonyId, ColonyPos near, Item item) {
 
-        return stock(world, chestsOf(world, colonyId, near, ProfessionType.BUILDER), item);
+        return stock(world, chestsOf(world, colonyId, near, ProfessionType.BUILDER), item,
+                askedByTheBuild(colonyId, item));
+    }
+
+    /** Quanto da peça a obra ainda pede (mínimo 1): surge tudo de uma vez — autor, 2026-10-11. */
+    static int askedByTheBuild(UUID colonyId, Item item) {
+        ResourceId id = MinecraftTypeAdapter.toResourceId(Block.getBlockFromItem(item));
+
+        return VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
+                .map(project -> project.remainingMaterials().getOrDefault(id, 0))
+                .filter(asked -> asked > 0)
+                .orElse(1);
     }
 
     /**
@@ -239,22 +259,14 @@ public final class BiomeConstructionSupply {
     }
 
     /**
-     * O material que a busca não achou quatro vezes aparece no baú de quem o
-     * usa — pedido do autor, 2026-10-03.
+     * O material que a busca não achou quatro vezes vai ao baú de quem o usa — pedido
+     * do autor, 2026-10-03, natureza inclusive. O que a vila já tem em outro baú é
+     * levado para lá; só o que ela não tem em baú nenhum aparece (Regra 51).
      *
-     * <p><i>"Se não há material necessário depois de tentativas repetidas de
-     * localizá-lo, o material necessário deve aparecer no baú da profissão
-     * que precisou dele; se for localizado no bioma alcançável da vila, o
-     * aldeão vai buscá-lo."</i> Vale também para o material da natureza, e é
-     * o que revê a decisão de 26-09: ela recusava natureza porque a regra
-     * fabricava tora e terra que a profissão <b>achava</b>. Aqui só chega o
-     * que a busca no mundo, de verdade, não achou quatro vezes seguidas.
-     *
-     * @return se o baú já tem, ou passou a ter, a quantidade pedida
+     * @return se a vila já tem, ou passou a ter, a quantidade pedida
      */
     public static boolean stockAfterEmptySearches(
             ServerWorld world, UUID colonyId, ColonyPos near, Item item, int count, ProfessionType user) {
-
         return stockFor(world, colonyId, near, item, count, user,
                 "after four searches of the village's reach found none");
     }
@@ -268,8 +280,14 @@ public final class BiomeConstructionSupply {
             return true;
         }
         if (!professionChests.isEmpty()) {
-            int missing = count - professionHave;
-            Optional<ColonyPos> professionChest = ColonyChests.firstWithRoomFor(world, professionChests, item, missing);
+            int need = count - professionHave;
+            Optional<ColonyPos> professionChest = ColonyChests.firstWithRoomFor(world, professionChests, item, need);
+            // O que a vila tem em outro baú vem antes de surgir (ChestTransfer).
+            int missing = professionChest.map(chest -> need - ChestTransfer.bring(
+                    world, chestsOf(world, colonyId, near, craftsman), chest, item, need)).orElse(need);
+            if (missing == 0) {
+                return true;
+            }
             if (professionChest.isPresent()
                     && ChestDepositor.deposit(world, professionChest.get(), item, missing) == 0) {
                 VillageColonyMod.LOGGER.info("The colony stocked {} x{} for the {} {}", item, missing, craftsman, why);
@@ -320,31 +338,30 @@ public final class BiomeConstructionSupply {
         return chests;
     }
 
-    private static boolean stock(ServerWorld world, List<ColonyPos> chests, Item item) {
+    private static boolean stock(ServerWorld world, List<ColonyPos> chests, Item item, int asked) {
         // Natureza também, desde 2026-10-03: quem chega aqui não tem rota no
-        // bioma e falhou quatro vezes (ADR-036 item 6).
-        if (ColonyChests.countIn(world, chests, item) > 0) {
+        // bioma e falhou quatro vezes (ADR-036 item 6). Surge o que falta até o
+        // que a obra pede, de uma vez.
+        int missing = asked - ColonyChests.countIn(world, chests, item);
+
+        if (missing <= 0) {
             return true;
         }
 
-        Optional<ColonyPos> chest = ColonyChests.firstWithRoomFor(world, chests, item, 1);
+        int left = ColonyChests.deposit(world, chests, item, missing);
 
-        if (chest.isEmpty()) {
+        if (left == missing) {
             VillageColonyMod.LOGGER.info(
                     "The colony could stock {} for construction but every colony chest is full",
                     item);
             return false;
         }
 
-        if (ChestDepositor.deposit(world, chest.get(), item, 1) != 0) {
-            return false;
-        }
-
         VillageColonyMod.LOGGER.info(
-                "The colony stocked {} for construction after four failed attempts"
+                "The colony stocked {} x{} for construction after {} cycles without a delivery"
                         + " — no route delivered it (none in this biome, or one only on paper)",
-                item);
-        logSupplyError(item, ProfessionType.BUILDER, "no route delivered it");
+                item, missing - left, DISPATCHES_BEFORE_STOCKING);
+        logSupplyError(item, ProfessionType.BUILDER, DISPATCHES_BEFORE_STOCKING, "no route delivered it");
         return true;
     }
 
@@ -353,8 +370,12 @@ public final class BiomeConstructionSupply {
      * sem a profissão a ter obtido fica registrada, para o playtest contar.
      */
     private static void logSupplyError(Item item, ProfessionType profession, String why) {
+        logSupplyError(item, profession, ATTEMPTS_BEFORE_STOCKING, why);
+    }
+
+    private static void logSupplyError(Item item, ProfessionType profession, int attempts, String why) {
         VillageColonyMod.LOGGER.warn("VC_SUPPLY_ERROR version=1 piece={} profession={} attempts={} reason={}",
-                Registries.ITEM.getId(item), profession, ATTEMPTS_BEFORE_STOCKING, why);
+                Registries.ITEM.getId(item), profession, attempts, why);
     }
 
     private static String treeKey(UUID colonyId, TreeSpecies species) {
@@ -462,6 +483,8 @@ public final class BiomeConstructionSupply {
         return switch (resource) {
             case CACTUS, SAND -> isDesert(biome);
             case GRASS_BLOCK, CLAY_BALL, CLAY -> !isDesert(biome);
+            case ICE, SNOWBALL -> VillageBiomes.paletteFor(biome).map(VillagePalette::style)
+                    .filter("snowy"::equals).isPresent();
             default -> false;
         };
     }

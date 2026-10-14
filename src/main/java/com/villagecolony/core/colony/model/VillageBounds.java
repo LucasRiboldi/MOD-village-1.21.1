@@ -79,6 +79,31 @@ public record VillageBounds(int minX, int minY, int minZ, int maxX, int maxY, in
                 max.x() + GROWTH_MARGIN, max.y(), max.z() + GROWTH_MARGIN);
     }
 
+    /** Uma construção ou lote com a folga dada em X e Z — a reivindicação por tipo (Regra 56). */
+    public static VillageBounds aroundPiece(ColonyPos min, ColonyPos max, int margin) {
+        Objects.requireNonNull(min, "min");
+        Objects.requireNonNull(max, "max");
+
+        return new VillageBounds(
+                min.x() - margin, min.y(), min.z() - margin,
+                max.x() + margin, max.y(), max.z() + margin);
+    }
+
+    /**
+     * A faixa de {@code depth} blocos logo além deste lado da caixa, da largura dele — o
+     * terreno que a vila anexa quando enche (Regra 56).
+     */
+    public VillageBounds stripBeyond(com.villagecolony.core.type.Side side, int depth) {
+        Objects.requireNonNull(side, "side");
+
+        return switch (side) {
+            case EAST -> new VillageBounds(maxX + 1, minY, minZ, maxX + depth, maxY, maxZ);
+            case WEST -> new VillageBounds(minX - depth, minY, minZ, minX - 1, maxY, maxZ);
+            case SOUTH -> new VillageBounds(minX, minY, maxZ + 1, maxX, maxY, maxZ + depth);
+            case NORTH -> new VillageBounds(minX, minY, minZ - depth, maxX, maxY, minZ - 1);
+        };
+    }
+
     /** Um bloco só — o de rua. */
     public static VillageBounds block(ColonyPos at) {
         Objects.requireNonNull(at, "at");

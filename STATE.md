@@ -1,12 +1,23 @@
-# STATE — 2026-10-11
+# STATE — 2026-10-14
 
-> **JAR instalado: `village-colony-0.3.24.jar`** (commit `0af32d84`, 11-10) =
-> `C553E735AC09A7CEDE0FE6547DDD2513EEA56422298DF3D6634EF4FC35A25E8F`, igual em `build/libs`,
-> `downloads/` e `.minecraft/mods` (`release_manifest.py`); a 0.3.23 ficou como `.jar.disabled`.
-> Traz a linha Codex integrada e as correções do roteiro de 10-10. **Ainda não jogada.**
->
-> **Última verificação (`claude/correcoes-fase5-6-higiene`, 11-10):** 1445 unitários; 705/705
-> GameTests em **8 rodadas seguidas** (AUD-21); 112 testes Python. PIT 1820/2112 (86,17%) em `e71607dd`.
+> **0.3.55** (14-10): **percurso por etapas até a boca da mina** (planta do autor, abordagem A
+> híbrida; spec em `docs/superpowers/specs/2026-10-14-percurso-descida-mina-design.md`). O mineiro
+> não alcançava a frente quando a boca ficava longe numa vila grande (playtest `MiIM0AisSh`: alvo a
+> ~95 blocos, "walking to nowhere", MINER 0%). `MineApproachPath.toward`: quando a navegação não
+> alcança a boca inteira, o mineiro anda até o **fim do caminho parcial** que o pathfinder achou
+> (`Path.getEnd()`, posição caminhável real — nunca divisão geométrica), com progresso útil mínimo;
+> recalcula ao chegar. `path==null` devolve a boca e deixa o guarda de descida (`job.descent`) contar
+> a falha — sem segundo sistema de travamento. Interposto em `MinerSteps` no ponto da descida;
+> `forget` ao liberar a tarefa (`MinerHands`). Mantém a ADR-042 (túnel 1×2, espaçamento 4, boca na
+> borda); não reescreve a mina. A planta completa (espiral externa, galerias radiais 3×3) fica como
+> visão de longo prazo, fora de escopo. **Não jogado.** Verificado: test 1512/0; runGametest 766/766;
+> mutação (usefulProgress sempre true) derruba `MineApproachProgressTest`. Os GameTests de aproximação
+> foram removidos por não-determinismo do pathfinder (o autor advertiu); a regra pura fica em unidade
+> e o efeito, no playtest. JAR `village-colony-0.3.55.jar` =
+> `4605A53E82EEF6834944A32463322BA3EA7AD35CA43D799161AA721A4C59A40B`.
+> **O próximo jogo precisa mostrar:** o mineiro chegar fisicamente à boca e descer (playtest **de
+> dia**, com a telemetria do percurso).
+
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.** Se passar de 150 linhas, algo
 > está errado: P0 não está fechando. O que já foi resolvido mora em
@@ -16,62 +27,44 @@
 
 ---
 
-## 🔴 P0 — AUD-01: a cadeia de produção para na mina
+## 🔴 P0 — As profissões não trabalham de forma contínua; a mina é a raiz
 
-A Regra 51 reprovou nas duas sessões de 10-10 (0.3.22: SMELTER 86%, BUILDER 68%, MINER 21%;
-0.3.23: SMELTER 91%, BUILDER 92%, MINER 17%). O fundidor pegou 311 tarefas e soltou 311.
-A raiz é a mina: **zero mineração**. O fundidor e o construtor param por falta de material.
+Varredura de engenharia 14-10 ([`docs/audit/2026-10-14-varredura-engenharia.md`](docs/audit/2026-10-14-varredura-engenharia.md)).
+O fio comum dos últimos playtests: **ação interrompida** (parada, bloqueada, esperando), e a
+**mina** concentra o risco de código (A1: `MinerSteps.step` com complexidade cognitiva 62),
+o P0 de produto (C1: boca a ~77–95 blocos numa vila grande, o mineiro não alcança) e o grosso das
+falhas. Em volta: produção antecipada sem teto e cadeia de material que trava a obra (C2),
+profissões periféricas em laço improdutivo (C4: pastor pede lã que não há, fundidor espera cru,
+fazendeiro sem lote).
 
-Diagnóstico de 11-10, a partir de três sessões, do save NBT e das regiões Anvil (roteiro 2.2):
+**Direção aceita pelo autor (14-10):** simplificar sem quebrar, deixando as ações das profissões
+contínuas e ininterruptas. Caminho: (1) a frente de mineração a um raio caminhável do baú do
+mineiro (C1); (2) quando um recurso não existe no raio por N tentativas, a profissão troca de
+tarefa em vez de reinstalar o pedido (C4); (3) refatorar o núcleo da mina em vez de remendar (A1).
 
-1. O mineiro dono do único ramal ia e voltava numa descida até um patamar de pedra maciça.
-   Na descida, o `MinerSteps` zerava os dois prazos a cada tique, então nenhum guarda
-   disparava. Os outros três mineiros ficavam barrados ("no mine mouth" é a frase do barrado).
-2. O patamar era de pedra porque a rota estava errada, não porque a mina não existisse. Os
-   cinco níveis foram cavados descendo NORTH a partir da boca (−768, 66, −923). O giro da
-   escada (ADR-037 M1) trocou o rumo para EAST, e o `MineEntrance` deduzia todos os níveis
-   de cima pelo rumo de agora: a boca deduzida ficava 50 blocos ao sul.
+**Aceite:** playtest de dia, ≥ 30 min; Regra 51 (ocioso+bloqueado+encalhado) ≤ 15% por ofício no
+expediente; `MINED`/min > 0,8; nenhuma profissão em laço de recusa visível no `action_report`.
 
-| Correção | Commit | Prova | Em jogo |
-|---|---|---|---|
-| RC1: a descida tem prazo próprio (60 s sem chegar mais perto nem descer mais fundo) | `08b0c34f` | `MineDescentLeaseGameTest`, `MineLeaseTest`, mutações | ⬜ |
-| RC2: a rota segue a escada cavada; a cadeia de entradas é guardada e sobrevive ao giro | `36d3946b` | `MineEntranceGameTest` (+2, reprovam no código antigo), mutações; regra simulada no save real | ⬜ |
-| 2.3: a regra do ócio cede vaga por ocioso + bloqueado + encalhado (ADR-041 #3) | `da43ef34` | `IdleYieldGameTest` | ⬜ |
+## Branches e processo
 
-**Aceite (roteiro 2.5):** playtest de 60 min com o JAR novo; `time_ledger` com ocioso +
-bloqueado + encalhado ≤ 15% por ofício; fundidor com soltas/pegas < 10% no `action_report`.
-
-## PRs abertas (empilhadas; nenhuma na `main`)
-
-| PR | Branch | Conteúdo |
-|---|---|---|
-| #20 | `claude/auditoria-tecnica-2026-10-10` | auditoria D1–D12, `scripts/audit/`, roteiro, ADR-041 |
-| #21 | `claude/integra-fluxo-grafo-waypoints` | AUD-05: linha Codex integrada, 0.3.24 |
-| #22 | `claude/correcoes-fase1-save` | AUD-02/03: o save não perde colônias por entrada ruim |
-| #23 | `claude/correcoes-fase3-testes` | AUD-06/07/11: rede de testes |
-| #24 | `claude/correcoes-fase2-cadeia` | AUD-25, regra do ócio, AUD-19 (`/vc log`), RC1 e RC2 do mineiro |
-
-A ordem de merge é a da pilha: #20 primeiro. Cada uma aponta para a anterior.
-
-**Sessão em curso:** `claude/correcoes-fase5-6-higiene` (sobre a #24): AUD-08, 11 (rede), 12, 13,
-14, 21, 22 e 23 feitos. Restam sem jogo: AUD-15, 20, 10 e 09 (Fase 5).
+**`main` é a linha oficial** (ADR-035 §2). A branch `claude/autossuficiencia` foi integrada na
+`main` em 14-10 (0.3.25→0.3.55); daqui em diante, branch curta por ciclo e PR para a `main` sem
+acumular. Erro de processo corrigido nesta rodada: a branch tinha 74 commits sem merge (B1 da
+varredura).
 
 ## O que o próximo jogo precisa mostrar
 
-JAR 0.3.24 já instalado. Em ordem:
+JAR **0.3.55** instalado. Playtest **de dia** (o de 14-10 foi ~84% à noite e mascarou a medição):
 
 | # | Item | Sinal |
 |---|---|---|
-| 1 | Mineiro chega ao nível pela escada real | `the surface entrance is remembered at -768, 66, -923 … 5 levels down` no save do autor; `MINED` por minuto acima de 0,8 |
-| 2 | Ninguém segura o ramal parado | nenhum mineiro com o ramal por mais de 60 s de descida; se houver, `the way down got no closer than` |
-| 3 | Regra 51 por ofício | `python scripts/time_ledger.py`; `/vc log` mostra a última janela de cada ofício |
-| 4 | Fundidor sai da roda | `python scripts/action_report.py`: soltas/pegas < 10%, com o motivo de cada soltura |
-| 5 | Custo do ciclo (AUD-04) | `python scripts/cost_ledger.py`: ≥ 20 amostras de `VC_COST`; p95 > 50 ms abre a Fase 4 |
-| 6 | Alternância de obras (AUD-13) | quatro obras seguidas, `grep "opened"` |
+| 1 | Mineiro chega à boca e desce | `MINED`/min > 0,8; sem "walking to nowhere" prolongado; telemetria do percurso (a implementar) |
+| 2 | Profissões contínuas | `time_ledger`: Regra 51 ≤ 15% por ofício no expediente |
+| 3 | Sem laço de recusa | `action_report`: soltas/pegas < 10%, sem o mesmo motivo repetido por profissão |
+| 4 | Obra não trava | `grep VC_SUPPLY_ERROR` perto de zero; "opened a build task" avança entre obras |
 
-Os playtests pendentes de antes (0.3.5 a 0.3.23) estão por versão no `TODO.md`; os de setembro,
-no `Historico-2026-09.md`. Depois de jogar: `scripts/analyze_village_log.py`,
-`scripts/time_ledger.py`, `scripts/action_report.py` e `scripts/cost_ledger.py` (CLAUDE.md §0.4).
+Depois de jogar: `scripts/analyze_village_log.py`, `time_ledger.py`, `action_report.py`,
+`cost_ledger.py` (CLAUDE.md §0.4).
 
 ## 🔴 Aberto
 

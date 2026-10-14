@@ -1,6 +1,5 @@
 package com.villagecolony.fabric.work;
 
-import com.villagecolony.core.coordination.IdleYield;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ServerMemory;
@@ -184,8 +183,6 @@ public final class WorkTime {
 
             VillageColonyMod.LOGGER.info("VC_TIME version=1 colony={} window={}s{}",
                     colony.getKey().toString().substring(0, 8), ticks / 20, line);
-
-            yieldIdleTrades(colony.getKey(), colony.getValue());
         }
     }
 
@@ -200,44 +197,6 @@ public final class WorkTime {
                 + window.getOrDefault(State.STRANDED, 0);
 
         return total == 0 ? 0 : Math.round(100f * parked / total);
-    }
-
-    /** Ofício parado cede uma pessoa — ADR-038 P1, regra em {@link IdleYield}. */
-    static void yieldIdleTrades(UUID colonyId, Map<String, EnumMap<State, Integer>> window) {
-        for (Map.Entry<String, EnumMap<State, Integer>> trade : window.entrySet()) {
-            if ("NONE".equals(trade.getKey())) {
-                continue;
-            }
-
-            ProfessionType profession = ProfessionType.valueOf(trade.getKey());
-            int idle = idleRuleShare(trade.getValue());
-            List<Worker> holders = VillageColonyMod.WORKERS.ofColony(colonyId).stream()
-                    .filter(worker -> worker.profession().filter(profession::equals).isPresent())
-                    .toList();
-
-            if (!IdleYield.observe(colonyId, profession, idle, holders.size())) {
-                continue;
-            }
-
-            holders.stream()
-                    .filter(worker -> VillageColonyMod.TASKS.assignedTo(worker.villagerId()).isEmpty())
-                    .findFirst()
-                    .ifPresent(worker -> {
-                        worker.giveUpProfession();
-
-                        // O mineiro nunca larga o ofício (Worker.giveUpProfession):
-                        // sem esta guarda, o log anunciava uma saída que não houve.
-                        if (worker.profession().isPresent()) {
-                            return;
-                        }
-
-                        VillageColonyMod.LOGGER.info(
-                                "Colony {} — the {} trade was {}% idle, blocked or stranded for {} windows; {} leaves it for"
-                                        + " where the village needs hands",
-                                colonyId.toString().substring(0, 8), profession, idle, IdleYield.WINDOWS,
-                                worker.villagerId().toString().substring(0, 8));
-                    });
-        }
     }
 
     /** {@code MINER[s=600 work=40 walk=20 wait=10 blocked=5 idle=20 stranded=5]}, em %. */

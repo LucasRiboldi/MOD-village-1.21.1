@@ -1,10 +1,135 @@
 # TODO
 
-**Atualizado:** 2026-10-10. Só o que está **aberto**. O histórico até hoje está em
+**Atualizado:** 2026-10-12. Só o que está **aberto**. O histórico até hoje está em
 `docs/archive/technical/TODO-ate-2026-10-07.md` (consultar por `grep`, nunca inteiro).
 Estado vivo: `STATE.md`. Decisões: `docs/decisions/` (a última é a ADR-039).
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
+
+## 🔴 Playtest da 0.3.44
+
+- [ ] 🔴 `measured at …` no primeiro carregamento, com a caixa de volta ao tamanho da vila (era 237 x 197).
+- [ ] 🔴 Nenhum `grew to … by an annexed strip`; `the road grows out to the <lado>` e `grew the road` no lugar.
+- [ ] 🟠 Obra nova (`planned minecraft:`).
+- [ ] 🟡 Regra de foco (Emenda 6): a vila só trabalha com o jogador dentro da caixa há 1 min — na sessão de 20:35 houve 3 `rests — the player left the village`.
+
+## 🔴 Playtest da 0.3.43
+
+- [ ] 🔴 O save gravado com a colônia abandonada (0 trabalhadores) revive: `is now STABLE` e `Registered N villagers`; placas e overlay de volta.
+- [ ] 🔴 Nenhum `is now ABANDONED` com a vila habitada.
+- [ ] 🟠 No máximo um `annexes` por meia hora; `no side with a road to it` quando nenhuma rua alcança.
+- [ ] 🟠 Obra nova (`planned minecraft:`) depois de `found no lot for a farm/trade_builder…`.
+- [ ] 🟡 A guarda dos trabalhadores vivos (`peopleStillHome`) não tem GameTest próprio.
+- [ ] 🟡 A caixa ficou 64 blocos mais larga a leste no save do autor (anexos de 0.3.42).
+
+## 🔴 Playtest da 0.3.42
+
+- [ ] 🔴 `found no lot for a … in a whole sweep` seguido de `planned minecraft:village/...` (obra nova); construtor acima de 0%.
+- [ ] 🟠 Uma volta da varredura leva ~20 min: cada tipo recusado custa uma volta. Medir quanto tempo até a primeira obra.
+- [ ] 🟠 Qual oficina não cabe e por quê (a linha `found no lot for a <tipo>` diz): 42 mil recusas por faixa reservada da rua.
+- [ ] 🟠 A rua puxada para a faixa anexada parou depois de 1 bloco (`grew the road 1 … 1 of 16`) — degrau ou água.
+- [ ] 🟡 Mudas: ~4 por 20 minutos.
+
+## 🔴 Playtest da 0.3.41
+
+- [ ] 🔴 Depois de `is full — annexes … to the <lado>`: `leads a road <lado> into the annexed strip`, `grew the road … <lado>` e uma obra aberta na faixa.
+- [ ] 🟠 Se `found no road within 24 blocks`: a vila precisa de outra forma de levar a rua até a faixa.
+
+## 🔴 Playtest da 0.3.40
+
+- [ ] 🔴 Obra abre de novo: `is full — annexes` depois da primeira volta sem lote, e lote na faixa anexada.
+- [ ] 🔴 Nenhuma pedra recusada mais de 2 vezes seguidas na mina.
+- [ ] 🟠 Lenhador derruba a árvore com o baú dele cheio (`went to the village's public chests`), sem `filled the chest` em laço.
+- [ ] 🟠 Por que nenhum lote serve: 37 mil recusas por faixa reservada da rua e 30 mil por nível da rua — medir se a regra da faixa está larga demais.
+- [ ] 🟡 A correção do lenhador não tem GameTest próprio.
+
+## 🔴 Playtest da 0.3.39
+
+- [ ] 🔴 `had no public chest — placed one at` (uma vez por vila sem baú público) e o baú encostado na parede, fora da porta.
+- [ ] 🟠 A 5ª obra em lote na borda; a vez da borda que falha não trava a obra seguinte.
+- [ ] 🟠 Carpinteiro calçando (`paved the path` com o id dele) e pedindo peças de todas as madeiras (`asks the carpenter to stock`).
+- [ ] 🟡 Fazendeiro e pastor: ócio subiu sem a ajuda à obra? (Regra 51)
+- [ ] 🟡 O contador da vez da borda vive só na memória: reiniciar o servidor recomeça a conta.
+
+## 🔴 Playtest da 0.3.38
+
+- [ ] 🔴 Obra com relva alta e flores: `grass and flower pieces grew by themselves`; nenhuma casa termina sem elas.
+- [ ] 🔴 Nenhum `chest had no room mid-harvest — dropped`; `went to the village's public chests` no lugar.
+- [ ] 🟠 `finished the tree it had started` e nenhuma árvore pela metade em volta da vila.
+- [ ] 🟠 Um poste por casa do pastor.
+- [ ] 🟠 Mineiro: 383 recusas `TOO_HIGH` de um mineiro só em 9 min (0.3.37) — ver se repete.
+- [ ] 🟡 Sem baú público na vila, o excedente ainda cai no chão: decidir se a vila deve fazer um.
+
+## 🔴 Playtest da 0.3.37
+
+- [ ] 🔴 Mina: `digging the wall for them` aparece e o nó termina (`finished the node`); mineiro acima de 0%.
+- [ ] 🔴 Obra que pede peça sem rota: `stocked … after N cycles` em poucos minutos.
+- [ ] 🟠 Expansão: `is full — annexes 16 blocks to the …` com a medida dos quatro lados; a rua cresce para o lado anexado (`extended the road … <lado>`); lote novo na faixa.
+- [ ] 🟡 A preferência da rua pelo lado anexado (D) não tem GameTest próprio — só a medida e o anexo (C).
+- [ ] 🟡 O lado escolhido fica só na memória: depois de reiniciar o servidor, a rua volta a crescer pela ponta mais distante até a vila encher de novo.
+
+## 🔴 Playtest da 0.3.36 (`docs/research/2026-10-12-mina-labirinto.md`)
+
+- [ ] 🔴 Mina: minério por bloco cavado bem acima de 2/1.411; sem `refused` em laço; mod abaixo de 3% no Spark.
+- [ ] 🔴 Retorno do mineiro sai fora da vila sem furar as 5 camadas.
+- [ ] 🟠 Lenhador ocioso planta (`planted N saplings outside`); fundidor ocioso adianta (`an idle smelter advanced`).
+- [ ] 🟠 Nenhuma oficina repetida; casa só com falta de cama; roça nova grande.
+- [ ] 🟠 Pastor alimenta com a comida que houver.
+- [ ] 🟠 **Expansão do terreno — decisão do autor** (`docs/research/2026-10-12-expansao-do-terreno.md`, opções A–E).
+
+## 🔴 Playtest da 0.3.33 (`docs/research/2026-10-12-obra-esperando-tijolo.md`)
+
+- [ ] 🔴 Obra com `bricks`: tarefas de `clay_ball` e `brick` abrem (`SMELT_MATERIAL brick` no diário),
+      tijolo chega e a obra fecha.
+- [ ] 🔴 Mineiro (0.3.34): `MINED` acima de zero, `closes a branch` e `went one level deeper` no log.
+- [ ] 🔴 Mina em rede (0.3.35) em jogo: `finished the node`, `made the way safe`, `secured the stair`,
+      `went one level deeper`; `MINED` por minuto e Regra 51 do mineiro; nenhum mineiro abaixo do piso.
+- [ ] 🟠 "the builder left the colony" (1×) — conferir por que o construtor saiu da colônia.
+
+## 🔴 Playtest da 0.3.32 (`docs/research/2026-10-11-fluxos-das-profissoes-031.md`)
+
+- [ ] 🔴 Jogar a 0.3.32 e rodar `time_ledger`, `action_report`, `cost_ledger`: Regra 51 por ofício;
+      construtor trabalhando (era 85% ocioso); fazendeiro como ajudante (`lends a hand` com FARMER).
+- [ ] 🔴 Mina: nenhuma pedra cavada na superfície com a mina aberta; boca nova só na borda
+      (`picks the new mine mouth … on the … edge`); `gave up the stone` < 3 por mineiro em 30 min.
+- [ ] 🟠 Obra do save: nenhum `skips … is in the way` em massa depois de carregar; `VC_UNSUPPORTED`
+      só com tochas/lanternas, e a obra fechando.
+- [ ] 🟠 Overlay visto em jogo: moldura nova, ícones, nomes em português (pt_pt).
+- [ ] 🟡 Lenhador 39% andando pela regra "árvore mais perto dele" — decidir limite da corrente.
+- [ ] 🟡 Fundidor: "none of N colony chests had stone" quando o que barra é a reserva de cru.
+- [ ] 🟡 Mineiro "waiting for a branch" com ramais esgotados: descer o nível antes ou ceder à obra.
+
+## 🔴 Autossuficiência 11-10 (`claude/autossuficiencia`; `docs/research/2026-10-11-autossuficiencia-e-ocio.md`)
+
+- [ ] **Playtest da 0.3.31:** `brought a … into the pen`, `put a post`/amarração ao lado da casa; lenhador andando
+      bem menos que 73%; `stocked X xN` (uma linha por peça, não N); nenhuma linha `leaves it for`.
+- [ ] 🟡 Argila: a busca do fundidor não achou (`clay … found none`); com o surgimento da quantidade toda a
+      obra não espera mais, mas a rota da terracota segue sem argila no alcance.
+- [ ] 🟡 `Worker.giveUpProfession` e o castigo de ofício (`ProfessionShun`) ficaram sem chamador em produção
+      com a troca desligada; remover se a decisão ficar.
+- [ ] **Playtest da 0.3.30:** mineração acima de 25/min sem `refused N times` crescendo na mesma pedra;
+      nenhuma obra parada com 1 bloco e `no build task`; poucas linhas `leaves it for where the village needs hands`.
+- [x] Lenhador longe, terracota uma a uma, pastor sem lã/ciranda: tratados na 0.3.31 (medir no playtest).
+- [ ] **Playtest da 0.3.28 (cobertura de blocos):** `asks the carpenter to stock`/`smelter workshop`,
+      `stocked 8 of`; pastor e fazendeiro fazendo peça de bancada sem largar a coleta; `gathered N POPPY`
+      etc. Medir se o estoque de 8 gasta madeira antes da obra (`docs/research/2026-10-11-cobertura-de-blocos.md`).
+- [ ] 🟡 Itens fundidos sem `ResourceType` (terracota esmaltada) fora do estoque de 8; `coal` cai no
+      carpinteiro pela receita do bloco de carvão (inofensivo).
+- [ ] **Playtest longo da 0.3.27 (30–60 min)**; a 0.3.26 só teve 6 min (uma janela VC_TIME, caída na trava
+      da vidraça). Aceite: Regra 51 ≤ 15% por ofício; `VC_SUPPLY_ERROR` perto de zero; nada acima de 64
+      fabricado / 256 cru sem obra pedindo; areia pelo britador; `lends a hand` de carpinteiro e pedreiro;
+      `tilled a new plot`; `goes to the grove`; segundo mineiro com ramal próprio cedo.
+- [x] O construtor sempre começa a obra; os outros só ajudam depois (`HelperReach.mayStart`, 0.3.29).
+- [ ] 🟡 Mina: os ramais 1–3 abertos cedo começam a 5–10 blocos da sala, por rocha; ver no jogo se o
+      mineiro chega (`gave up the stone`, ramal `exhausted` cedo).
+- [x] P4b, do jeito do autor: o construtor sem tarefa limpa a faixa de construção; planta tirada pelo
+      jogador não volta (`386c14f2`). Medir no playtest quanto do ócio de 81% sobra.
+- [ ] 🟡 Iluminar a rua: decidir onde a luz fica (tocha ao lado da rua derruba o lote; lampião em poste?).
+- [x] 2a: o fundidor guarda 16 areias de reserva (StandingWork.SAND_RESERVE, 0.3.26); medir se basta.
+- [ ] 🟡 `FarmerCompost.SEED_RESERVE = 32` é ponto de partida; medir no playtest.
+- [ ] 🟡 `BuildSiteGameTest.indexedRoadFindsALotWithoutStartingFullSweep` reprova (2 de 3) quando um
+      lote novo de GameTest entra dois lotes antes dele: depende do tique em que roda. Teste novo vai
+      em `batchId` existente até isso ser corrigido.
 
 ## 🔴 Auditoria técnica 10-10 (fila AUD, P0→🔴 P1→🟠 P2→🟡 P3→🟢)
 
@@ -55,7 +180,7 @@ Scripts: `scripts/audit/check-*.sh`.
       e 690/690 no CI de `b290ed10`.
 - [ ] Obra em `WAITING_RESOURCES` não libera o lote antes de retentar blocos correspondentes,
       rotas de profissão e baú próximo do construtor.
-- [ ] Depois de quatro tentativas sem entrega real, o bloco faltante aparece em baú livre perto da obra
+- [ ] Depois de um minuto (2 ciclos) sem entrega real (regra de 11-10), o bloco faltante aparece em baú livre perto da obra
       e o construtor retoma com esse item.
 - [ ] Mineiro em mina aberta usa a boca/galeria mais próxima sem roubar a busca do dono do ramal.
 - [ ] Recurso novo não recolhido antes entra na rota de busca quando aparece como peça adiada da obra.

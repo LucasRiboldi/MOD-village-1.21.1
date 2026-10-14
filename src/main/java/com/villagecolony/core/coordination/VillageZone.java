@@ -3,10 +3,9 @@ package com.villagecolony.core.coordination;
 import com.villagecolony.core.colony.model.VillageBounds;
 
 /**
- * Em que faixa da vila uma coluna fica — pedido do autor, 2026-10-08, para o
- * lenhador: <i>"varrer primeiro as árvores centrais da vila, depois as
- * intermediárias da área da vila, depois as das bordas; se não houver nenhuma
- * nessas, ele pode ir um pouco fora da vila"</i>.
+ * Em que faixa da vila uma coluna fica. O lenhador usa só o alcance
+ * ({@link #withinReach}): a ordem centro → borda de 2026-10-08 foi trocada pelo autor
+ * em 2026-10-11 pela árvore mais perto dele ({@code TreeChoice.byZone}).
  *
  * <p>A distância é medida do centro da caixa da vila (ADR-003 Emenda 6) e dividida
  * pela meia-largura de cada eixo, então a caixa comprida tem faixas compridas: o
@@ -15,22 +14,11 @@ import com.villagecolony.core.colony.model.VillageBounds;
  */
 public enum VillageZone {
 
-    CENTER(0),
-    MIDDLE(1),
-    EDGE(2),
-    OUTSIDE(3),
-    BEYOND(4);
-
-    private final int rank;
-
-    VillageZone(int rank) {
-        this.rank = rank;
-    }
-
-    /** A ordem de busca: menor vem antes. */
-    public int rank() {
-        return rank;
-    }
+    CENTER,
+    MIDDLE,
+    EDGE,
+    OUTSIDE,
+    BEYOND;
 
     /** A faixa da coluna {@code (x, z)}, com {@code margin} blocos de "um pouco fora". */
     public static VillageZone of(VillageBounds box, int x, int z, int margin) {

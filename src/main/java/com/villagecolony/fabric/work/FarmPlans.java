@@ -46,9 +46,8 @@ import java.util.UUID;
  *       mesma porta. Nenhuma regra nova de espaçamento foi escrita.
  * </ul>
  *
- * <p><b>A menor primeiro</b>, ao contrário das casas (cuja ordem não
- * favorece tamanho desde a ADR-036): uma roça pequena que nasce alimenta
- * mais que uma grande que nunca cabe.
+ * <p><b>A maior primeiro</b> — autor, 2026-10-12: a roça nova é grande sempre que
+ * houver lugar; a menor só entra onde a grande não cabe.
  */
 public final class FarmPlans {
 
@@ -126,7 +125,7 @@ public final class FarmPlans {
     }
 
     /**
-     * As roças que esta vila pode levantar, da menor para a maior.
+     * As roças que esta vila pode levantar, da maior para a menor.
      *
      * <p>Vazio quer dizer catálogo ausente ou estilo sem roça, e quem
      * chama trata: sem planta não há o que construir, e inventar uma
@@ -143,7 +142,7 @@ public final class FarmPlans {
                     .ifPresent(plans::add);
         }
 
-        plans.sort(Comparator.comparingInt(FarmPlans::volumeOf));
+        plans.sort(Comparator.comparingInt(FarmPlans::volumeOf).reversed());
 
         return List.copyOf(plans);
     }

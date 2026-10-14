@@ -104,9 +104,7 @@ public final class CraftsmanRequest {
             return false;
         }
 
-        TaskType type = CraftingWork.isMasonry(wanted)
-                ? TaskType.CRAFT_STONE_MATERIAL
-                : TaskType.CRAFT_WOOD_MATERIAL;
+        TaskType type = com.villagecolony.core.coordination.CraftFamily.of(wanted.path());
 
         // Só um pedido de peça de obra por vez — o marcado com o alvo nominal.
         // Tarefa de estoque do mesmo ofício (ADR-036 item 8) não conta: ela
@@ -147,7 +145,7 @@ public final class CraftsmanRequest {
         VillageColonyMod.LOGGER.info(
                 "Colony {} asks the {} for construction piece {}",
                 project.colonyId(),
-                type == TaskType.CRAFT_STONE_MATERIAL ? "mason" : "carpenter",
+                com.villagecolony.core.coordination.CraftFamily.subjectOf(type),
                 wanted);
 
         return true;

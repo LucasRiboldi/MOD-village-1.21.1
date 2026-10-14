@@ -50,6 +50,15 @@ public enum Capability {
     /** Lavrar pedra: pedra em tijolo, e o que a bancada fizer dele. */
     CRAFT_STONE,
 
+    /** Metal, vidro, gelo e neve à bancada — o fundidor (regra do autor, 2026-10-11). */
+    CRAFT_METAL,
+
+    /** Lã colorida, tapete, cama, estandarte e corante — o pastor. */
+    CRAFT_TEXTILE,
+
+    /** Papel, livro, farinha de osso e feno — o fazendeiro. */
+    CRAFT_FARM,
+
     /** Manter a plantação e o estoque de comida da colônia. */
     MAINTAIN_FOOD,
 

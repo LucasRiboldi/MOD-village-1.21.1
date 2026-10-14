@@ -47,6 +47,12 @@ import java.util.UUID;
  */
 final class MinerSteps {
 
+    /** Quantos blocos abaixo do destino, sem desvio, tornam o mineiro encalhado. */
+    static final int CLIMB_OUT_BELOW = 2;
+
+    /** Desistências seguidas num ramal, sem pedra cavada entre elas, antes de ele acabar. */
+    static final int UNREACHABLE_BEFORE_DONE = 3;
+
     private MinerSteps() {
     }
 
@@ -251,8 +257,28 @@ final class MinerSteps {
                 // MineDigging.armToWalk: os dois deixaram de ser o mesmo
                 // quando a mina ganhou quatro rumos, e a tarefa de areia
                 // nunca reservou rumo nenhum.
+                // O jogo já acha o caminho até a pedra: direto, sem perna (MinerDirectPath).
+                if (MinerDirectPath.reaches(world, villager, job.approach)) {
+                    WorkTargets.set(workerId, job.approach, MinerReach.ARRIVAL);
+
+                    return false;
+                }
+
+                // No nível em rede: de nó pronto em nó pronto até o pai do nó (ADR-042 D5).
+                Optional<BlockPos> waypoint = NetworkRoute.waypoint(job.task.colonyId(), villager, job.target);
+
+                if (waypoint.isPresent()) {
+                    WorkTargets.set(workerId, waypoint.get(), MinerReach.ARRIVAL);
+
+                    return false;
+                }
+
                 if (down.isPresent()) {
-                    WorkTargets.set(workerId, down.get(), MinerReach.ARRIVAL);
+                    // Boca longe numa vila grande: anda por etapas até lá, por caminhos reais da
+                    // navegação, em vez de mirar a boca a ~95 blocos e ficar "walking to nowhere"
+                    // (2026-10-14). A falha e a liberação ficam com o guarda de descida (job.descent).
+                    WorkTargets.set(workerId,
+                            MineApproachPath.toward(world, villager, down.get()), MinerReach.ARRIVAL);
 
                     return false;
                 }
@@ -334,8 +360,36 @@ final class MinerSteps {
      * — ADR-025, fase 2. Ver MinerDetours.
      */
     private static void stuck(ServerWorld world, VillagerEntity villager, Job job, String why) {
-        if (!MinerDetours.tryDetour(world, villager, job, why)) {
-            MinerHands.giveUp(world, villager.getUuid(), job, why);
+        if (MinerDetours.tryDetour(world, villager, job, why)) {
+            return;
+        }
+
+        boolean belowItsWay = WorkTargets.of(villager.getUuid())
+                .map(way -> way.getY() - villager.getBlockY() >= CLIMB_OUT_BELOW)
+                .orElse(false);
+        boolean network = NetworkDigging.galleryPhase(job.task.colonyId());
+        Optional<MineArm> arm = MineDigging.armOf(job.task.colonyId(), villager.getUuid());
+
+        // No nível em rede quem conta é o nó: três desistências o vedam (ADR-042).
+        if (network) {
+            NetworkDigging.gaveUp(job.task.colonyId(), villager.getUuid());
+        }
+
+        MinerHands.giveUp(world, villager.getUuid(), job, why);
+
+        // O ramal cuja pedra ninguém alcança acaba: sem isso o nível não descia nunca e a
+        // mina morria com um ramal só aberto (playtest 0.3.32, 11 desistências, 0 cavado).
+        if (!network && arm.isPresent() && !arm.get().isDone() && arm.get().blockedAgain(UNREACHABLE_BEFORE_DONE)) {
+            VillageColonyMod.LOGGER.info("Mine {} closes a branch after {} stones nobody could reach — {}",
+                    job.task.colonyId().toString().substring(0, 8), UNREACHABLE_BEFORE_DONE, why);
+        }
+
+        // Dois ou mais abaixo de para onde ia, sem desvio: aldeão sobe um, e devolver a
+        // tarefa o deixava girando no mesmo buraco a cada pega (playtest 0.3.31, "5 blocks
+        // below it and unable to climb"). A fuga do encalhado o tira de lá.
+        if (belowItsWay) {
+            StrandedWorkers.strandNow(villager.getUuid(), villager.getBlockPos(),
+                    "below its way and unable to climb");
         }
     }
 
@@ -367,7 +421,7 @@ final class MinerSteps {
 
         Optional<BlockPos> found;
 
-        if (!sand && MineClaims.heldByOther(colonyId, workerId, branches)) {
+        if (!sand && !NetworkDigging.galleryPhase(colonyId) && MineClaims.heldByOther(colonyId, workerId, branches)) {
             // O ramal continua exclusivo, mas o mineiro barrado não fica
             // parado: ele raspa pedra exposta fora das células planejadas
             // da mina aberta, criando caminho de coleta enquanto espera.

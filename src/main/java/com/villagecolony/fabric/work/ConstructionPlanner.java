@@ -194,6 +194,10 @@ public final class ConstructionPlanner {
      * {@link ConstructionState#BUILDING}: em {@code WAITING_RESOURCES} não
      * há o que colocar, e abrir tarefa ali poria um construtor a andar
      * até um canteiro para não fazer nada.
+     *
+     * <p>A vaga do ajudante ({@link BuildHelper}) não é a tarefa da obra: com ela
+     * contando, o construtor que largou a obra nunca recebia outra e ficava parado
+     * enquanto o pedreiro ajudava sozinho (playtest 0.3.31, 18 min) — Regra 14.
      */
     static void ensureTask(Colony colony, ConstructionProject project) {
         if (project.state() != ConstructionState.BUILDING) {
@@ -201,7 +205,7 @@ public final class ConstructionPlanner {
         }
 
         for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
-            if (task.type() == TaskType.BUILD && task.isOpen()) {
+            if (task.type() == TaskType.BUILD && task.isOpen() && !BuildHelper.isHelperTask(task.id())) {
                 return;
             }
         }

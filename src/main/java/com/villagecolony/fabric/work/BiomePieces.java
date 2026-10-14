@@ -39,24 +39,35 @@ public final class BiomePieces {
 
     private static final Map<UUID, Long> READ_AT = new HashMap<>();
 
+    /** O maior uso de cada peça numa só casa do estilo da vila. */
+    private static final Map<UUID, Map<ResourceType, Integer>> LARGEST = new HashMap<>();
+
     private BiomePieces() {
     }
 
     static void clearAll() {
         READ_AT.clear();
+        LARGEST.clear();
     }
 
-    /** Anota, para cada fila, as peças que as casas do estilo desta vila pedem. */
+    /**
+     * Anota, para cada fila, as peças que as casas do estilo desta vila pedem,
+     * e publica a cada ciclo o teto do adiantamento ({@link AdvanceStock#ceilings}).
+     */
     public static void refresh(ServerWorld world, Colony colony) {
         long now = world.getTime();
         Long last = READ_AT.get(colony.id());
 
-        if (last != null && now - last < REFRESH_TICKS) {
-            return;
+        if (last == null || now - last >= REFRESH_TICKS) {
+            READ_AT.put(colony.id(), now);
+            readPlans(world, colony);
         }
 
-        READ_AT.put(colony.id(), now);
+        AdvanceStock.ceilings(colony.id(), ceilings(
+                LARGEST.getOrDefault(colony.id(), Map.of()), ConstructionDemand.materialsNeededBy(colony)));
+    }
 
+    private static void readPlans(ServerWorld world, Colony colony) {
         String style = HousePlans.paletteOf(world, colony.center()).style();
         List<Blueprint> plans = new java.util.ArrayList<>();
 
@@ -66,6 +77,41 @@ public final class BiomePieces {
         }
 
         lanesFrom(plans).forEach((lane, pieces) -> AdvanceStock.piecesOfTheVillage(colony.id(), lane, pieces));
+        LARGEST.put(colony.id(), largestUse(plans));
+    }
+
+    /** O maior uso de cada peça numa só planta: a próxima casa é sorteada, e a maior cobre qualquer uma. */
+    static Map<ResourceType, Integer> largestUse(List<Blueprint> plans) {
+        Map<ResourceType, Integer> largest = new EnumMap<>(ResourceType.class);
+
+        for (Blueprint blueprint : plans) {
+            Map<ResourceType, Integer> used = new EnumMap<>(ResourceType.class);
+
+            blueprint.blocks().forEach(block -> count(block, used));
+            used.forEach((type, amount) -> largest.merge(type, amount, Math::max));
+        }
+
+        return largest;
+    }
+
+    /** A reserva fixa de cada peça das plantas, acima da maior casa; o teto geral ainda manda. */
+    static final int RESERVE = 32;
+
+    /** O teto: a maior casa do estilo, a reserva e o que a obra aberta ainda pede de cada peça. */
+    static Map<ResourceType, Integer> ceilings(
+            Map<ResourceType, Integer> largest, Map<ResourceId, Integer> openBuild) {
+
+        Map<ResourceType, Integer> ceilings = new EnumMap<>(ResourceType.class);
+
+        // E uma reserva fixa por peça (item 2 do autor, 2026-10-13): sem ela, coberta a casa
+        // típica, o artesão parava enquanto nenhuma obra abria (reanálise de 13-10, C2).
+        largest.forEach((type, amount) -> ceilings.put(type, amount + RESERVE));
+        openBuild.forEach((id, amount) -> MinecraftTypeAdapter.toBlock(id)
+                .map(Block::asItem)
+                .flatMap(MinecraftTypeAdapter::toResourceType)
+                .ifPresent(type -> ceilings.merge(type, amount, Integer::sum)));
+
+        return ceilings;
     }
 
     /** As peças de cada fila nestas plantas, das mais usadas para as menos; fila sem peça fica de fora. */

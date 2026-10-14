@@ -19,11 +19,11 @@ import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
+import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.worker.model.Worker;
-import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
@@ -34,12 +34,10 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -90,9 +88,6 @@ public final class CraftingWork {
      */
     static final int TICKS_PER_PIECE = 20;
 
-    /** De que distância ele alcança o próprio baú. */
-    static final int REACH = 3;
-
     /** De quantos em quantos ticks o braço balança. */
     static final int SWING_INTERVAL = 5;
 
@@ -108,7 +103,7 @@ public final class CraftingWork {
      * chegaria. Mesma regra e mesmo motivo de
      * {@code LumberjackWork.STALL_LIMIT}.
      */
-    static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;
+    static final int STALL_LIMIT = com.villagecolony.core.coordination.WorkRescue.LIMIT;
 
     /** O trabalho em curso de cada fabricante. */
     static final Map<UUID, Job> JOBS = new HashMap<>();
@@ -122,7 +117,7 @@ public final class CraftingWork {
      * e o segundo silêncio nunca seria dito.
      */
     static String subjectOf(TaskType type) {
-        return type == TaskType.CRAFT_STONE_MATERIAL ? "mason" : "carpenter";
+        return com.villagecolony.core.coordination.CraftFamily.subjectOf(type);
     }
 
     private CraftingWork() {
@@ -172,8 +167,13 @@ public final class CraftingWork {
      * @return quantos fabricantes desta colônia estão com trabalho aberto
      */
     public static int run(ServerWorld world, Colony colony) {
-        return run(world, colony, TaskType.CRAFT_WOOD_MATERIAL)
-                + run(world, colony, TaskType.CRAFT_STONE_MATERIAL);
+        int open = 0;
+
+        for (TaskType type : com.villagecolony.core.coordination.CraftFamily.TYPES) {
+            open += run(world, colony, type);
+        }
+
+        return open;
     }
 
     /**
@@ -186,8 +186,7 @@ public final class CraftingWork {
      * família de material ela lavra. Duplicar seiscentas linhas para
      * mudar duas seria pior que o problema.
      *
-     * @param type {@code CRAFT_WOOD_MATERIAL} para o carpinteiro,
-     *     {@code CRAFT_STONE_MATERIAL} para o pedreiro
+     * @param type uma das oficinas de {@code CraftFamily.TYPES}
      */
     public static int run(ServerWorld world, Colony colony, TaskType type) {
         int open = 0;
@@ -287,62 +286,9 @@ public final class CraftingWork {
             return true;
         }
 
-        // Diante da bancada, ou em volta do sino — ADR-038 P3c.
-        BlockPos chest = CraftStation.spotFor(
-                world, workerId, MinecraftTypeAdapter.toBlockPos(storage.get().chestPosition()));
-
-        if (!villager.getBlockPos().isWithinDistance(chest, REACH)) {
-            WorkTargets.set(workerId, chest);
-
-            // Parado no mesmo bloco há quinze segundos de expediente —
-            // 2026-09-03. O guarda de baixo cobra dois minutos para notar
-            // o mesmo. Ver WorkStall.
-            if (job.stall.stuck(world, villager)) {
-                job.task.release("stuck on the way to its chest");
-
-                // A desistência passa a contar — 2026-09-10. Ver
-                // WorkerStrikes.
-                WorkerStrikes.gaveUp(workerId, job.task);
-
-                WorkTargets.clear(workerId);
-
-                VillageColonyMod.LOGGER.info(
-                        "Worker {} has not moved a block in {} ticks of work time on the"
-                                + " way to its chest at {} — crafting task returned to"
-                                + " the queue",
-                        workerId,
-                        job.stall.ticks(),
-                        chest.toShortString());
-
-                return false;
-            }
-
-            if (++job.stalled > STALL_LIMIT) {
-                // Andou dois minutos de horário de trabalho e não chegou
-                // ao próprio baú. Devolver a tarefa à fila é melhor que
-                // guardá-la para quem não a fará — e em silêncio isto
-                // seria indistinguível de trabalho acontecendo.
-                job.task.release("did not reach its chest in two minutes of work time");
-
-                // A desistência passa a contar — 2026-09-10. Ver
-                // WorkerStrikes.
-                WorkerStrikes.gaveUp(workerId, job.task);
-
-                WorkTargets.clear(workerId);
-
-                VillageColonyMod.LOGGER.info(
-                        "Worker {} could not reach its chest at {} in {} work ticks"
-                                + " — crafting task returned to the queue",
-                        workerId,
-                        chest.toShortString(),
-                        STALL_LIMIT);
-
-                return false;
-            }
-
-            return true;
-        }
-
+        // Fabrica onde está: ninguém anda até o baú — regra do autor, 2026-10-11.
+        // O ingrediente sai de qualquer baú da colônia e a peça entra no baú dele;
+        // a caminhada até a bancada soltava a tarefa "stuck on the way to its chest".
         job.stalled = 0;
         job.stall.reset();
 
@@ -374,6 +320,11 @@ public final class CraftingWork {
 
         job.progress = 0;
 
+        // O pedido de areia ao pedreiro é o britador — P2c, 2026-10-11.
+        if (job.task.targetResource() == ResourceType.SAND) {
+            return Crusher.step(world, job, villager.getUuid(), storage.chestPosition());
+        }
+
         // O que a obra pede vem primeiro — 2026-08-20. Enquanto o
         // fabricante só sabia fazer tábua, a casa parava em qualquer
         // peça que a colônia não tivesse; agora ele descasca tronco,
@@ -381,6 +332,13 @@ public final class CraftingWork {
         // que a obra esteja esperando.
         if (CraftingSteps.produceForWork(world, job, villager.getUuid())) {
             return true;
+        }
+
+        // Um pouco de tudo no estoque — ItemStock, regra do autor de 2026-10-11.
+        Optional<Boolean> forStock = ItemStock.step(world, job, villager.getUuid());
+
+        if (forStock.isPresent()) {
+            return forStock.get();
         }
 
         Optional<Boolean> forGoal = CraftingSteps.produceForGoal(world, job, villager.getUuid());
@@ -392,55 +350,9 @@ public final class CraftingWork {
         return CraftingSteps.convertOne(world, job, villager.getUuid());
     }
 
-    /**
-     * As marcas de nome que fazem uma peça ser da pedra.
-     *
-     * <p><b>Por nome, e é o idioma desta base.</b> A conta da parede já
-     * pergunta {@code material.path().contains(family)}, a cama já é
-     * {@code endsWith("_bed")} e o descascado já é o prefixo
-     * {@code stripped_}. Perguntar ao {@code ResourceType} não serviria:
-     * a maior parte destas peças — escada, laje, muro — não é recurso
-     * declarado, e é por isso que o {@link CraftingSteps#produceForWork} existe.
-     *
-     * <p>{@code sandstone} entra por {@code stone}, e é o certo: no
-     * deserto a parede é dela.
-     */
-    static final List<String> MASONRY = List.of(
-            "stone", "cobble", "brick", "granite", "diorite", "andesite",
-            "deepslate", "tuff", "quartz", "terracotta", "basalt", "calcite");
-
-    /**
-     * Se esta peça é do pedreiro.
-     *
-     * <p><b>A tocha de redstone é a exceção que o nome cobra</b>: o
-     * caminho dela contém {@code stone} e ela não é alvenaria nenhuma.
-     * Classificá-la mal mandaria o carpinteiro ignorar a peça e o
-     * pedreiro tentar uma receita que não é dele, e a obra esperaria
-     * pelos dois.
-     *
-     * <p><b>Visível ao pacote para o teste.</b>
-     * {@code CraftingWorkFamilyTest} afirma a <b>classificação</b> — a
-     * lista de nomes e a armadilha da redstone. Que o filtro de fato
-     * <b>reparta o trabalho</b> é do batch {@code craft_family} em
-     * {@code CraftingGameTest}, e ele precisou existir: quando a divisão
-     * entrou, removido o {@code continue} abaixo, <b>701 unitários e 275
-     * testes de jogo continuavam verdes</b> — o filtro inteiro era código
-     * que nada exercitava.
-     */
+    /** Se esta peça é do pedreiro — {@code CraftFamily}, pelo material. */
     public static boolean isMasonry(ResourceId wanted) {
-        String path = wanted.path();
-
-        if (path.contains("redstone")) {
-            return false;
-        }
-
-        for (String mark : MASONRY) {
-            if (path.contains(mark)) {
-                return true;
-            }
-        }
-
-        return false;
+        return com.villagecolony.core.coordination.CraftFamily.of(wanted.path()) == TaskType.CRAFT_STONE_MATERIAL;
     }
 
     /** Encerra a tarefa e devolve o aldeão à rotina. */
@@ -451,7 +363,7 @@ public final class CraftingWork {
 
         job.task.complete();
         WorkerStrikes.worked(workerId, job.task);
-        TaskChain.next(job.task);
+        TaskChain.nextAfter(job.task, job.crafted);
 
         WorkTargets.clear(workerId);
 

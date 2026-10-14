@@ -73,12 +73,15 @@ public class HouseRotationGameTest implements FabricGameTest {
 
     /** Sem fazendeiro, ninguém deve roça e a vez vai para outra oficina — Regra 52. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "house_rotation_trade")
-    public void withoutAFarmerTheTurnSkipsTheFarm(TestContext context) {
+    public void theFirstFarmIsOwedEvenWithoutAFarmer(TestContext context) {
+        // Regra 67 (2026-10-13): a vila nasce devendo uma plantação, mesmo sem fazendeiro — a
+        // antiga Regra 52 (roça só por fazendeiro) foi revogada. Sem roça no cenário e sem
+        // adultos no mundo, farmsFor(0)=1, então a roça é a obra devida.
         ResourceId opened = openAfterAHouse(context, 40, false);
 
-        context.assertFalse(
+        context.assertTrue(
                 opened.path().contains("farm"),
-                "nenhum fazendeiro, e a colônia abriu a roça " + opened);
+                "a vila devia a primeira roça e abriu " + opened);
 
         context.complete();
     }

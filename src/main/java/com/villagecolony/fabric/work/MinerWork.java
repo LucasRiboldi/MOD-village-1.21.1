@@ -118,7 +118,7 @@ public final class MinerWork {
      * sempre sem chegar não está trabalhando, e sem isto a tarefa nunca
      * volta para a fila.
      */
-    public static final int STALL_LIMIT = 4 * 600;
+    public static final int STALL_LIMIT = com.villagecolony.core.coordination.WorkRescue.LIMIT;
 
     /**
      * O mesmo número, no lugar onde ele passou a morar — 2026-09-03.
@@ -323,6 +323,7 @@ public final class MinerWork {
                 // A reserva também morre com a tarefa: esperar o ciclo
                 // seguinte manteria o ramal fechado sem um job que o use.
                 MineClaims.release(workerId);
+                NetworkDigging.release(workerId);
 
                 continue;
             }
@@ -455,6 +456,7 @@ public final class MinerWork {
         // só, e mina trancada por um aldeão que já não existe é pior
         // que dois cavando a mesma escada.
         MineClaims.retainOnly(JOBS.keySet());
+        NetworkDigging.retainOnly(JOBS.keySet());
     }
 
     /** Esquece o trabalho deste aldeão. Morte, zumbificação, dispensa. */
@@ -463,11 +465,13 @@ public final class MinerWork {
 
         WorkTargets.clear(workerId);
         SandGathering.forget(workerId);
+        MinerDirectPath.forget(workerId);
 
         // Na hora, e não no ciclo seguinte: morte e zumbificação passam
         // por aqui, e a mina não fica meio minuto fechada por causa de
         // um aldeão que já morreu.
         MineClaims.release(workerId);
+        NetworkDigging.release(workerId);
     }
 
     /** Esvazia o registro. Chamado ao parar o servidor. */

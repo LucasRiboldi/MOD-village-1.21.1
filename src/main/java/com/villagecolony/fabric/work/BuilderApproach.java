@@ -74,6 +74,37 @@ public final class BuilderApproach {
                 new net.minecraft.util.math.Box(target), entity -> entity.isAlive()).isEmpty();
     }
 
+    /**
+     * Tira do lugar quem está parado onde o bloco vai, empurrando-o para um espaço livre ao
+     * lado — a obra não pode ficar refém de um aldeão (ou do gado) que não sai (bug 0.3.53:
+     * 84 peças adiadas por "someone kept standing", o construtor preso em 97% bloqueado).
+     *
+     * @return se havia alguém e ele foi movido
+     */
+    static boolean shoveOutOf(ServerWorld world, BlockPos target) {
+        var occupants = world.getEntitiesByClass(net.minecraft.entity.LivingEntity.class,
+                new net.minecraft.util.math.Box(target), entity -> entity.isAlive());
+
+        if (occupants.isEmpty()) {
+            return false;
+        }
+
+        for (var entity : occupants) {
+            for (net.minecraft.util.math.Direction side : net.minecraft.util.math.Direction.Type.HORIZONTAL) {
+                BlockPos to = target.offset(side);
+
+                if (world.getBlockState(to).getCollisionShape(world, to).isEmpty()
+                        && world.getBlockState(to.up()).getCollisionShape(world, to.up()).isEmpty()
+                        && !world.getBlockState(to.down()).getCollisionShape(world, to.down()).isEmpty()) {
+                    entity.requestTeleport(to.getX() + 0.5, to.getY(), to.getZ() + 0.5);
+                    break;
+                }
+            }
+        }
+
+        return true;
+    }
+
     /** Quantos blocos em volta da pegada da planta ainda são zona da obra (ADR-037 B1). */
     static final int ZONE_MARGIN = 4;
 
@@ -184,7 +215,11 @@ public final class BuilderApproach {
 
         BlockPos ground = near.orElseGet(() -> standingSpotNear(world, floor).orElse(floor));
 
-        if (ClimbLimit.reachableFrom(worker.getY(), ground.getY())) {
+        // Abaixo do chão do lote o patamar não serve: ele cai na coluna debaixo do
+        // lote, dentro da terra ou numa galeria da mina (playtest 0.3.31: construtor a
+        // y=39 mandado a -341, 41, -1016 com o piso a y=63). Quem está embaixo vai ao
+        // chão por onde a navegação achar; o patamar é só para descer do telhado.
+        if (ClimbLimit.reachableFrom(worker.getY(), ground.getY()) || worker.getY() < ground.getY()) {
             return Optional.of(ground);
         }
 

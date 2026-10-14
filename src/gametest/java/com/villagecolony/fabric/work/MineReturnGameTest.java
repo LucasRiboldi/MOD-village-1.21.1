@@ -79,7 +79,8 @@ public final class MineReturnGameTest implements FabricGameTest {
 
     /** Uma colônia com a caixa medida cobrindo o terreno todo, e o centro longe. */
     private static Colony villageOverTheTerrain(TestContext context) {
-        BlockPos a = context.getAbsolutePos(new BlockPos(0, 0, 0));
+        // O fundo da caixa é o chão da vila (TOP), como numa vila de verdade.
+        BlockPos a = context.getAbsolutePos(new BlockPos(0, TOP, 0));
         BlockPos b = context.getAbsolutePos(new BlockPos(LENGTH - 1, TOP + 4, SIDE - 1));
 
         Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(
@@ -198,9 +199,23 @@ public final class MineReturnGameTest implements FabricGameTest {
             context.assertFalse(StrandedEscape.mayDig(context.getWorld(), shallow,
                             context.getWorld().getBlockState(shallow)),
                     "a pedra a dois blocos da superfície da vila foi dada como cavável");
-            context.assertTrue(StrandedEscape.mayDig(context.getWorld(), deep,
-                            context.getWorld().getBlockState(deep)),
-                    "abaixo da casca a fuga devia poder cavar");
+            // A colônia que a detecção funda na bateria pode cobrir este canto com a casca
+            // dela (visto em 12-10, caixa de 145 x 145): a pergunta é sobre a deste teste.
+            List<Colony> others = VillageColonyMod.COLONIES.all().stream()
+                    .filter(other -> !other.id().equals(colony.id()))
+                    .filter(other -> other.bounds().map(box -> box.containsColumn(deep.getX(), deep.getZ())).orElse(false))
+                    .toList();
+            boolean diggable;
+
+            others.forEach(other -> VillageColonyMod.COLONIES.remove(other.id()));
+
+            try {
+                diggable = StrandedEscape.mayDig(context.getWorld(), deep, context.getWorld().getBlockState(deep));
+            } finally {
+                others.forEach(VillageColonyMod.COLONIES::register);
+            }
+
+            context.assertTrue(diggable, "abaixo da casca a fuga devia poder cavar");
         } finally {
             // "Fora de qualquer vila" não se testa aqui: a bateria divide um
             // mundo só, e a caixa de outra colônia de teste pode cobrir este

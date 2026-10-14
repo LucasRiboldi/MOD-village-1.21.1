@@ -22,7 +22,8 @@ record PixelPanelLayout(
         boolean hasFrame) {
 
     static final float ICON_SIZE = 16.0F;
-    static final float PADDING = 4.0F;
+    /** Da borda ao conteúdo: os 5 da moldura e um de folga. */
+    static final float PADDING = 6.0F;
     static final float GAP = 4.0F;
 
     private static final float MIN_FRAME_WIDTH = 32.0F;

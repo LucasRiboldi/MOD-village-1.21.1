@@ -112,7 +112,6 @@ final class CraftingSteps {
         // é a primeira posição que falta, e é dela que a lista começa a
         // ser contada. Não há prioridade a escrever aqui: basta a ordem
         // chegar inteira.
-        boolean masonry = job.task.type() == TaskType.CRAFT_STONE_MATERIAL;
 
         List<ColonyPos> chests =
                 ColonyChests.nearestFirst(world, colony.get().id(), colony.get().center());
@@ -125,7 +124,7 @@ final class CraftingSteps {
             // linha a divisão do fabricante seria só de nome: os dois
             // percorreriam a mesma lista e fariam a mesma peça, e o
             // segundo chegaria sempre para achar o trabalho feito.
-            if (CraftingWork.isMasonry(wanted) != masonry) {
+            if (com.villagecolony.core.coordination.CraftFamily.of(wanted.path()) != job.task.type()) {
                 continue;
             }
 
@@ -140,8 +139,13 @@ final class CraftingSteps {
                 continue;
             }
 
-            if (strip(world, colony.get(), wanted, workerId)
-                    || stockFor(world, colony.get(), workerId, item.get(), remaining.getValue())) {
+            if (strip(world, colony.get(), wanted, workerId)) {
+                return true;
+            }
+
+            if (stockFor(world, colony.get(), workerId, item.get(), remaining.getValue())) {
+                // Bancada do mod: a unidade rende o dobro (2026-10-13).
+                ModBenchBonus.grantExtra(world, workerId, item.get(), colony.get().center());
 
                 return true;
             }
@@ -189,9 +193,20 @@ final class CraftingSteps {
             return Optional.of(false);
         }
 
+        Optional<Item> reserved = BuildReserve.takenFromTheBuild(world, colony.get(), chests, item.get());
+
+        if (reserved.isPresent()) {
+            CraftingWork.finish(job, workerId, "the open build still needs the " + reserved.get());
+
+            return Optional.of(false);
+        }
+
         if (!stockFor(world, colony.get(), workerId, item.get(), job.goalTarget)) {
             return Optional.empty();
         }
+
+        // Bancada do mod: a unidade rende o dobro (2026-10-13).
+        ModBenchBonus.grantExtra(world, workerId, item.get(), colony.get().center());
 
         job.crafted++;
 
@@ -458,9 +473,11 @@ final class CraftingSteps {
                 .map(ConstructionProject::remainingMaterials)
                 .orElseGet(Map::of);
 
+        // A tábua da obra inclui a das escadas, lajes e cercas dela (P7c).
         return StockRules.logsThatMayBeConverted(
                 owned.amountOfGroup(ResourceGroup.WOOD),
                 owned.amountOfGroup(ResourceGroup.PLANKS),
-                stillNeeded) > 0;
+                StockRules.rawWoodIn(stillNeeded),
+                StockRules.planksIn(stillNeeded) + WoodInPieces.planksIn(world, stillNeeded)) > 0;
     }
 }

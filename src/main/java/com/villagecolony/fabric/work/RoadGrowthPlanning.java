@@ -106,6 +106,20 @@ final class RoadGrowthPlanning {
             ServerWorld world, Colony colony, Blueprint blueprint,
             List<Blueprint> plans, int builders) {
 
+        // A volta inteira não achou lote para este tipo: ele sai da vez (LotTypeRefusals).
+        String type = HousePlans.constructionType(blueprint.id());
+
+        if (!"house".equals(type)) {
+            LotTypeRefusals.refuse(colony.id(), type, world.getTime());
+        }
+
+        // A vila cheia anexa uma faixa no melhor lado, e a rua entra nela (Regra 56): o
+        // trecho da faixa segue já, sem a extensão de sempre calçar outra ponta por cima.
+        if (VillageExpansionSurvey.sweptWithoutLot(world, colony).isPresent()
+                && RoadExtension.isGrowing(colony.id())) {
+            return keepGrowing(world, colony, blueprint, plans, builders);
+        }
+
         Optional<ResourceId> paving = VillageRoad.pavingFor(
                 world, HousePlans.paletteOf(world, colony.center()).style());
 

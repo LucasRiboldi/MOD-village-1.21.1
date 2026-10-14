@@ -21,6 +21,7 @@ import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.Worker;
+import org.jspecify.annotations.Nullable;
 import com.villagecolony.core.worker.service.HiringLog;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.core.worker.service.VacancyEnforcer;
@@ -292,7 +293,10 @@ final class ColonyCycleRunner {
         int planksForWork = ConstructionDemand.planksNeededBy(
                 VillageBiomes.woodAt(overworld, colony.center())
                         .orElse(MinecraftTypeAdapter.toResourceId(Blocks.OAK_PLANKS)),
-                colony);
+                colony)
+                // E a tábua das escadas, lajes e cercas da obra (P7c).
+                + com.villagecolony.fabric.work.WoodInPieces.planksIn(
+                        overworld, ConstructionDemand.materialsNeededBy(colony));
 
         // A pedra que a obra pede, e a pedra desta vila — 2026-08-20. No
         // deserto é arenito; perguntar por pedregulho daria zero, e a
@@ -371,11 +375,14 @@ final class ColonyCycleRunner {
                 VillageColonyMod.STORAGES::hasStorage,
                 (resource, type, hands) -> MissingHandsLog.report(colony.id(), resource, type, hands),
                 work.constructionMaterials(),
-                (worker, task) -> canReserveTask(overworld, colony.id(), task));
+                (worker, task) -> canReserveTask(overworld, colony.id(), worker, task));
 
         // Só depois do ciclo sabemos que a rota produziu tarefa aberta; uma rota apenas possível
         // não pode gastar o prazo nem materializar recurso cedo demais. Regra 40, ADR-040.
         ConstructionSupplyDispatches.renewForCycle(overworld, colony);
+
+        // Areia sem natureza ao alcance: o pedreiro mói pedra (P2c).
+        com.villagecolony.fabric.work.Crusher.askTheMason(overworld, colony);
 
         // Sem o `if (assigned > 0)` que estava aqui. A linha calava
         // exatamente quando havia algo a dizer: distribuição parada é
@@ -414,6 +421,7 @@ final class ColonyCycleRunner {
         // CraftsmanRequest.askTheCraftsmanFor.
         CraftsmanRequest.askForWhatTheWorkIsWaitingOn(overworld, colony);
 
+        com.villagecolony.fabric.work.ItemStock.openOrders(overworld, colony); // um pouco de tudo (11-10)
         CraftingWork.run(overworld, colony);
 
         CycleCost.since(CycleCost.Phase.WORKERS, mark);
@@ -436,6 +444,9 @@ final class ColonyCycleRunner {
         LumberjackWork.run(world, colony);
         MinerWork.run(world, colony);
         SmelterWork.run(world, colony);
+        com.villagecolony.fabric.work.SmelterAdvance.smeltForIdleSmelters(world, colony);
+        com.villagecolony.fabric.work.PublicChestPlacement.ensure(world, colony);
+        com.villagecolony.fabric.integration.ProfessionChestOverflow.spread(world, colony);
         SurfaceGatheringWork.run(world, colony);
         ShepherdWork.run(world, colony);
         FarmerWork.run(world, colony);
@@ -451,14 +462,33 @@ final class ColonyCycleRunner {
      * consulta.
      */
     static boolean canReserveTask(ServerWorld world, UUID colonyId, Task task) {
+        return canReserveTask(world, colonyId, null, task);
+    }
+
+    /**
+     * A mesma trava, sabendo quem vai pegar: quem começa a obra é o construtor —
+     * {@link com.villagecolony.fabric.work.HelperReach#mayStart}.
+     */
+    static boolean canReserveTask(ServerWorld world, UUID colonyId, @Nullable Worker worker, Task task) {
         return switch (ReservationGate.of(task.type())) {
             case NONE -> true;
-            case EMPTY_SWEEP -> !EmptySweeps.isWaiting(colonyId, task.targetResource(), world.getTime());
+            case EMPTY_SWEEP -> !EmptySweeps.isWaiting(colonyId, task.targetResource(), world.getTime())
+                    && !crusherCovers(world, colonyId, task);
             case BUILD_SITE -> VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
-                    .map(project -> BuildSiteGate.admits(world, project))
+                    .map(project -> (worker == null
+                            || com.villagecolony.fabric.work.HelperReach.mayStart(world, worker, project))
+                            && BuildSiteGate.admits(world, project))
                     .orElse(false);
             case SMELT_INPUT -> com.villagecolony.fabric.work.SmeltInput.inChests(
                     world, colonyId, task.targetResource());
         };
+    }
+
+    /** Areia da natureza fica parada enquanto o britador dá conta — regra do autor, 2026-10-11. */
+    private static boolean crusherCovers(ServerWorld world, UUID colonyId, Task task) {
+        return task.type() == TaskType.COLLECT_SURFACE_RESOURCE && task.targetResource() == ResourceType.SAND
+                && VillageColonyMod.COLONIES.find(colonyId)
+                        .map(colony -> com.villagecolony.fabric.work.Crusher.covers(world, colony))
+                        .orElse(false);
     }
 }

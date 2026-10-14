@@ -185,6 +185,7 @@ public class VillageColonyMod implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        com.villagecolony.fabric.content.ModContent.register();
         PayloadTypeRegistry.playS2C().register(OverlaySnapshotPayload.ID, OverlaySnapshotPayload.CODEC);
         OverlaySync.register();
         ServerLifecycleHandler.register();
@@ -198,6 +199,7 @@ public class VillageColonyMod implements ModInitializer {
         SiteSignJanitor.register();
         VillageLogCommand.register();
         ProfessionPolicyNetworking.register();
+        com.villagecolony.fabric.work.VillageExpansionSurvey.register();
 
         LOGGER.info("[Village Colony] Mod initialized");
     }

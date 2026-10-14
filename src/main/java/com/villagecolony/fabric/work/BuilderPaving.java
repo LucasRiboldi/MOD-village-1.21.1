@@ -28,7 +28,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * O construtor sem obra calça a rua — pedido do autor, 2026-10-08 (A4): <i>"calça
+ * O construtor sem obra e o carpinteiro sem tarefa calçam a rua ({@link #PAVERS}) —
+ * pedido do autor, 2026-10-08 (A4), e do carpinteiro em 2026-10-12: <i>"calça
  * as ruas substituindo grama no meio de caminhos por caminho"</i>. No playtest das
  * 15:14 ele ficou 82% ocioso, com a obra esperando material ou entre uma obra e outra.
  *
@@ -38,6 +39,9 @@ import java.util.UUID;
  * cima. A Regra 3 vale como na fuga ({@link BlockProtection#mayDigOut}): o chão do
  * bioma dentro de peça da vila entra, casa e bloco do jogador não.
  *
+ * <p><b>E limpa a faixa de construção</b> — regra do autor, 2026-10-11: muda, flor
+ * alta ou arbusto a menos de {@link com.villagecolony.fabric.integration.ConstructionZone#BAND}
+ * da rua tiram o lote da escolha; ele os tira e guarda no baú dele.
  * <p><b>A obra vem primeiro:</b> recebeu tarefa, larga a rua. Um por colônia, uma
  * passagem por meio segundo; a busca varre a caixa por fatias e só volta a varrer
  * depois de {@link #RESCAN} tiques sem achar nada.
@@ -51,6 +55,12 @@ public final class BuilderPaving {
     /** Até onde ele conta como "ao lado" do bloco a calçar. */
     static final int REACH = 3;
 
+    /**
+     * Quem calça a rua quando está sem tarefa: o construtor e o carpinteiro — o
+     * carpinteiro por regra do autor, 2026-10-12.
+     */
+    static final Set<ProfessionType> PAVERS = java.util.EnumSet.of(ProfessionType.BUILDER, ProfessionType.CARPENTER);
+
     /** Quanto ele anda até um bloco antes de desistir dele. */
     static final int GIVE_UP_AFTER = 600;
 
@@ -63,10 +73,12 @@ public final class BuilderPaving {
     /** Um construtor calçando. */
     private static final class Job {
         final BlockPos target;
+        final boolean weed;
         int walked;
 
-        Job(BlockPos target) {
+        Job(BlockPos target, boolean weed) {
             this.target = target;
+            this.weed = weed;
         }
     }
 
@@ -110,14 +122,14 @@ public final class BuilderPaving {
     /** Uma passagem desta colônia: segue o calçamento em curso, ou acha o próximo bloco. */
     static void pass(ServerWorld world, Colony colony) {
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
-            if (worker.profession().filter(ProfessionType.BUILDER::equals).isEmpty()) {
+            if (worker.profession().filter(PAVERS::contains).isEmpty()) {
                 continue;
             }
 
             UUID id = worker.villagerId();
 
             if (!(world.getEntity(id) instanceof VillagerEntity builder) || !builder.isAlive()
-                    || !VillageColonyMod.TASKS.assignedTo(id).isEmpty()
+                    || (!VillageColonyMod.TASKS.assignedTo(id).isEmpty() && !BuildWait.isWaiting(id))
                     || !WorkHours.isWorkTime(world, builder)
                     || StrandedWorkers.isStranded(id)) {
                 if (JOBS.remove(id) != null) {
@@ -135,7 +147,7 @@ public final class BuilderPaving {
                     continue;
                 }
 
-                job = new Job(gap.get());
+                job = new Job(gap.get(), !isGap(world, gap.get()));
                 JOBS.put(id, job);
             }
 
@@ -149,8 +161,8 @@ public final class BuilderPaving {
     private static void step(ServerWorld world, VillagerEntity builder, Job job) {
         UUID id = builder.getUuid();
 
-        if (!isGap(world, job.target)) {
-            // Alguém calçou, ou o chão mudou: o próximo.
+        if (job.weed ? !isZoneWeed(world, job.target) : !isGap(world, job.target)) {
+            // Alguém calçou ou limpou, ou o chão mudou: o próximo.
             JOBS.remove(id);
             WorkTargets.clear(id);
             return;
@@ -171,11 +183,19 @@ public final class BuilderPaving {
             return;
         }
 
-        pave(world, job.target);
         builder.swingHand(Hand.MAIN_HAND);
-        ActionJournal.action(id, "PAVED", "dirt_path", 1, job.target, "");
-        VillageColonyMod.LOGGER.info("Builder {} paved the path at {} while the build waits",
-                id.toString().substring(0, 8), job.target.toShortString());
+
+        if (job.weed) {
+            String cleared = clear(world, id, job.target.up());
+            ActionJournal.action(id, "CLEARED", cleared, 1, job.target.up(), "construction zone");
+            VillageColonyMod.LOGGER.info("Builder {} cleared {} from the construction zone at {}",
+                    id.toString().substring(0, 8), cleared, job.target.up().toShortString());
+        } else {
+            pave(world, job.target);
+            ActionJournal.action(id, "PAVED", "dirt_path", 1, job.target, "");
+            VillageColonyMod.LOGGER.info("Builder {} paved the path at {} while the build waits",
+                    id.toString().substring(0, 8), job.target.toShortString());
+        }
 
         JOBS.remove(id);
         WorkTargets.clear(id);
@@ -190,6 +210,32 @@ public final class BuilderPaving {
         }
 
         world.setBlockState(ground, Blocks.DIRT_PATH.getDefaultState());
+    }
+
+    /** Tira a planta e guarda o item no baú do construtor; sem lugar, ela cai no chão. */
+    static String clear(ServerWorld world, UUID builder, BlockPos plant) {
+        BlockState state = world.getBlockState(plant);
+        net.minecraft.item.Item item = state.getBlock().asItem();
+        boolean kept = VillageColonyMod.STORAGES.of(builder)
+                .map(storage -> com.villagecolony.fabric.integration.ChestDepositor.deposit(
+                        world, storage.chestPosition(), item, 1) == 0)
+                .orElse(false);
+
+        world.breakBlock(plant, !kept);
+
+        return net.minecraft.registry.Registries.ITEM.getId(item).getPath();
+    }
+
+    /**
+     * Muda, flor alta ou arbusto na faixa de construção, que se pode tirar
+     * (Regra 3: peça da vila e obra da colônia ficam).
+     */
+    static boolean isZoneWeed(ServerWorld world, BlockPos ground) {
+        BlockState plant = world.getBlockState(ground.up());
+
+        return com.villagecolony.fabric.integration.ConstructionZone.isWeed(plant)
+                && BlockProtection.mayBreak(world, ground.up(), plant)
+                && com.villagecolony.fabric.integration.ConstructionZone.nearRoad(world, ground);
     }
 
     /** O próximo bloco no meio do caminho, varrendo a caixa da vila por fatias. */
@@ -228,7 +274,7 @@ public final class BuilderPaving {
 
             BlockPos ground = new BlockPos(x, world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z) - 1, z);
 
-            if (!SKIPPED.contains(ground) && isGap(world, ground)) {
+            if (!SKIPPED.contains(ground) && (isGap(world, ground) || isZoneWeed(world, ground))) {
                 CURSOR.put(colony.id(), index + 1);
                 return Optional.of(ground.toImmutable());
             }

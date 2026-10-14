@@ -153,7 +153,9 @@ public final class ColonyCycle {
         Objects.requireNonNull(hasStorage, "hasStorage");
         Objects.requireNonNull(canReserveTask, "canReserveTask");
 
-        Map<ResourceType, Integer> missing = ResourceDemand.deficit(goal, owned);
+        // O teto geral do estoque: 64 fabricados, 256 crus, ou o que a obra pede.
+        Map<ResourceType, Integer> missing =
+                ResourceDemand.deficit(StockCeiling.cap(goal, constructionMaterials), owned);
 
         // Para quem concluir um pedido antes do próximo ciclo — F-2.
         LastShortage.measured(colonyId, missing.keySet());
@@ -203,9 +205,8 @@ public final class ColonyCycle {
      * nominal de peça de obra ({@code CraftsmanRequest}): quem acha a peça é
      * o artesão lendo a própria obra.
      */
-    static boolean isWorkPieceRequest(Task task) {
-        boolean crafting = task.type() == TaskType.CRAFT_STONE_MATERIAL
-                || task.type() == TaskType.CRAFT_WOOD_MATERIAL;
+    public static boolean isWorkPieceRequest(Task task) {
+        boolean crafting = CraftFamily.isCrafting(task.type());
 
         return crafting && typeFor(task.targetResource()) != task.type();
     }
@@ -261,7 +262,13 @@ public final class ColonyCycle {
             int deficit = Math.max(0,
                     constructionMaterials.getOrDefault(resource, 0) - owned.amountOf(resource));
 
-            if (deficit > 0) {
+            // Fundir sem o cru em baú nenhum não pede mão nova (regra do autor,
+            // 2026-10-11): no playtest da 0.3.25 a colônia contratou um terceiro
+            // fundidor para fazer vidro sem areia. Quem traz o cru é outro pedido.
+            boolean noRaw = resource.production() == com.villagecolony.core.type.Production.SMELTED
+                    && StockRules.rawOf(resource).map(raw -> owned.amountOf(raw) == 0).orElse(false);
+
+            if (deficit > 0 && !noRaw) {
                 for (Profession profession : ProfessionRegistry.withCapability(type.required())) {
                     demand.merge(profession.type(), deficit, Integer::sum);
                 }

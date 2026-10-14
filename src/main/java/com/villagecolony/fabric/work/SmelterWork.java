@@ -264,6 +264,11 @@ public final class SmelterWork {
             }
         }
 
+        // Nada para a obra também: solta a fornalha parada (SmelterGathers).
+        if (SmelterFallback.isDue(job.task.id()) && SmelterGathers.handOff(world, workerId, job.task, raws)) {
+            return false;
+        }
+
         // A espera por cru é transitória: manter a reserva impede que o
         // próximo ciclo reapresente a mesma tarefa sem produzir. StopLog
         // registra a transição e limita repetições enquanto o pedido espera.
@@ -286,19 +291,18 @@ public final class SmelterWork {
             ServerWorld world, List<ColonyPos> searched, List<Item> raws, Item product,
             ColonyPos output, Job job, UUID workerId) {
 
-        for (ColonyPos chest : searched) {
-            for (Item raw : raws) {
-                // <b>Metade do cru fica para o pedreiro</b> — 2026-09-19,
-                // por simetria com a reserva de tronco de 09-05.
-                //
-                // A sessão de 17:15 parou 39 vezes esperando
-                // cut_sandstone com <b>139 arenitos LISOS e zero cru</b>:
-                // o fundidor assou o estoque inteiro, e o arenito
-                // cortado sai do cru. Ver StockRules.rawToKeep.
-                if (!mayStillSmelt(world, searched, raw, product)) {
-                    continue;
-                }
+        // <b>Metade do cru fica para o pedreiro</b> (StockRules.rawToKeep). A
+        // conta é da colônia inteira e não depende do baú: sai uma vez por
+        // cru, fora do laço dos baús. Dentro dele custava baús² leituras por
+        // peça, 72% do tempo do mod no Spark de 11-10.
+        Optional<Colony> colony = VillageColonyMod.COLONIES.find(job.task.colonyId());
+        List<Item> allowed = raws.stream()
+                .filter(raw -> mayStillSmelt(world, searched, raw, product,
+                        colony.map(open -> BuildReserve.buildNeedOf(open, raw)).orElse(0)))
+                .toList();
 
+        for (ColonyPos chest : searched) {
+            for (Item raw : allowed) {
                 if (ChestWithdrawer.withdraw(world, chest, raw, 1) == 0) {
                     continue;
                 }
@@ -327,7 +331,7 @@ public final class SmelterWork {
         }
 
         for (Item other : SmelterFallback.wanted(world, colony.get())) {
-            if (other == pending) {
+            if (other == pending || SmelterFallback.stocked(world, searched, other)) {
                 continue;
             }
 
@@ -359,13 +363,14 @@ public final class SmelterWork {
      * existir ou não conforme a ordem da varredura.
      */
     private static boolean mayStillSmelt(
-            ServerWorld world, List<ColonyPos> chests, Item raw, Item processed) {
+            ServerWorld world, List<ColonyPos> chests, Item raw, Item processed, int buildNeed) {
 
         int rawCount = ColonyChests.countIn(world, chests, raw);
 
         int madeCount = ColonyChests.countIn(world, chests, processed);
 
-        return StockRules.rawThatMayBeSmelted(rawCount, madeCount) > 0;
+        // E o que a obra aberta ainda vai pôr do cru fica fora da fornalha (P3b).
+        return Math.min(StockRules.rawThatMayBeSmelted(rawCount, madeCount), rawCount - buildNeed) > 0;
     }
 
     /**
@@ -430,8 +435,7 @@ public final class SmelterWork {
         Optional<ItemStack> result = CraftingLookup.smelted(world, raw);
 
         if (result.isEmpty()) {
-            // O forno não faz nada com isto. Devolve intacto: tirar do
-            // baú e não devolver seria a colônia destruindo material.
+            // O forno não faz nada com isto: devolve intacto, sem destruir material.
             ChestDepositor.deposit(world, source, raw.getItem(), raw.getCount());
 
             finish(job, workerId, "the furnace makes nothing out of " + raw.getItem());
@@ -441,19 +445,20 @@ public final class SmelterWork {
 
         ItemStack made = result.get();
 
-        if (ChestDepositor.freeSpaceFor(world, output, made.getItem()) < made.getCount()) {
+        // Baú dele cheio: o produto vai ao baú da vila com lugar (ADR-038 P3c; playtest 11-10).
+        Optional<ColonyPos> into = ColonyChests.nearestFirst(world, job.task.colonyId(), output).stream()
+                .filter(chest -> ChestDepositor.freeSpaceFor(world, chest, made.getItem()) >= made.getCount())
+                .findFirst();
+
+        if (into.isEmpty()) {
             ChestDepositor.deposit(world, source, raw.getItem(), raw.getCount());
-
-            finish(job, workerId, "no room in the personal chest for " + made.getItem());
-
+            finish(job, workerId, "no room in any colony chest for " + made.getItem());
             return false;
         }
 
-        int leftOver = ChestDepositor.deposit(world, output, made.getItem(), made.getCount());
-
+        int leftOver = ChestDepositor.deposit(world, into.get(), made.getItem(), made.getCount());
         if (leftOver == made.getCount()) {
-            // Não coube nada. Devolve a matéria-prima e para: fundir sem
-            // onde guardar gasta o ingrediente à toa.
+            // Não coube nada: devolve a matéria-prima e para.
             ChestDepositor.deposit(world, source, raw.getItem(), raw.getCount());
 
             finish(job, workerId, "no room in the chest for " + made.getItem());
@@ -462,6 +467,7 @@ public final class SmelterWork {
         }
 
         job.smelted += made.getCount() - leftOver;
+        ModBenchBonus.grantExtra(world, workerId, made.getItem(), output); // forja do mod: o dobro (2026-10-13)
         VillageColonyMod.LOGGER.info(
                 "Smelter {} made {} out of {} — {} this task", workerId, made.getItem(), raw.getItem(), job.smelted);
         ActionJournal.action(workerId, "SMELTED", ActionJournal.idOf(made.getItem()), made.getCount() - leftOver, null, "");

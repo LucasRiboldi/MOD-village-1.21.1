@@ -234,11 +234,30 @@ class MineMarksTest {
     void aDeadEndOpensWhenItsRefusalsExpire() {
         refuseTheDeadEnd(1000);
 
-        long afterTheFirstPunishment = 1000 + MineMarks.memoryFor(1);
+        long afterTheRegionWindow = 1000 + MineMarks.REGION_MEMORY;
 
         assertFalse(
-                MineMarks.isInADeadEndAt(afterTheFirstPunishment, FIRST_OF_THE_DEAD_END),
-                "vencido o castigo das três, o beco abre");
+                MineMarks.isInADeadEndAt(afterTheRegionWindow, FIRST_OF_THE_DEAD_END),
+                "vencida a janela da região, o beco abre");
+    }
+
+    /**
+     * <b>Recusas espaçadas também fazem beco</b> — playtest de 2026-10-11. O
+     * mineiro sem ramal desistiu da mesma coluna de caverna a cada 2 a 5
+     * minutos (0 s, 174 s, 297 s...), e o castigo de cada pedra é de 5: nunca
+     * havia três vivas, e ele voltou à coluna 31 vezes.
+     */
+    @Test
+    void refusalsSpacedByMinutesStillMakeADeadEnd() {
+        BlockPos column = new BlockPos(-386, 60, -1062);
+
+        MineMarks.refuseAt(0, column);
+        MineMarks.refuseAt(3480, column.up());
+        MineMarks.refuseAt(5940, column.down());
+
+        assertTrue(
+                MineMarks.isInADeadEndAt(7000, column.north()),
+                "três recusas da mesma coluna em cinco minutos são beco, mesmo com a primeira vencida");
     }
 
     /**

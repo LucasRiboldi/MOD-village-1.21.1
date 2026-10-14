@@ -96,6 +96,67 @@ public class CraftingAdvanceGameTest implements FabricGameTest {
         });
     }
 
+    /**
+     * Ninguém anda até o baú — regra do autor, 2026-10-11. O carpinteiro está preso
+     * numa caixa de vidro a sete blocos do baú e fabrica mesmo assim; antes ele
+     * precisava chegar a 3 blocos da bancada e soltava a tarefa no caminho.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock", tickLimit = 300)
+    public void theCarpenterCraftsWithoutWalkingToItsChest(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos chestAt = new BlockPos(1, 2, 1);
+        BlockPos standAt = new BlockPos(6, 2, 6);
+        context.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
+
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                for (int dy = 0; dy <= 2; dy++) {
+                    if (dx != 0 || dz != 0 || dy == 2) {
+                        context.setBlockState(standAt.add(dx, dy, dz), Blocks.GLASS.getDefaultState());
+                    }
+                }
+            }
+        }
+
+        world.setTimeOfDay(Schedule.WORK_TIME);
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chestAt));
+        ChestDepositor.deposit(world, chest, Items.OAK_PLANKS, 64);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, standAt);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+        VillageColonyMod.COLONIES.register(colony);
+        VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id()).assign(ProfessionType.CARPENTER);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+        ColonyFixture fixture = ColonyFixture.create().owning(colony).owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.CRAFT_WOOD_MATERIAL, TaskPriority.PRODUCTION, ResourceType.OAK_STAIRS, 4);
+        task.reserveFor(villager.getUuid());
+        CraftingWork.run(world, colony);
+
+        context.runAtTick(280, () -> {
+            try {
+                int made = ColonyChests.countIn(world, List.of(chest), Items.OAK_STAIRS);
+
+                context.assertTrue(made >= 4, "preso longe do baú, o carpinteiro fez " + made + " escadas de 4");
+            } finally {
+                fixture.cleanUp();
+
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        for (int dy = 0; dy <= 2; dy++) {
+                            context.setBlockState(standAt.add(dx, dy, dz), Blocks.AIR.getDefaultState());
+                        }
+                    }
+                }
+            }
+
+            context.complete();
+        });
+    }
+
     private static void advance(TestContext context, ProfessionType profession, TaskType type,
             Item material, ResourceType piece, Item pieceItem, int amount, int most) {
         ServerWorld world = context.getWorld();

@@ -48,6 +48,15 @@ public final class LocateFallbackGameTest implements FabricGameTest {
             Task task = VillageColonyMod.TASKS.create(scene.colony.id(), TaskType.COLLECT_SURFACE_RESOURCE,
                     TaskPriority.PRODUCTION, ResourceType.SAND, 8);
 
+            // Sem obra pedindo vidro, a areia é só reserva: não aparece do nada (11-10).
+            context.assertFalse(LocateFallback.afterEmptySearch(world, task, 4),
+                    "a areia de reserva apareceu do nada sem obra pedindo vidro");
+
+            VillageColonyMod.CONSTRUCTIONS.register(ConstructionProject.plan(scene.colony.id(),
+                    Blueprint.of(ResourceId.vanilla("test_window"), List.of(
+                            new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("glass_pane")))),
+                    new ColonyPos(scene.builderChest.x(), scene.builderChest.y() + 3, scene.builderChest.z())));
+
             context.assertFalse(LocateFallback.afterEmptySearch(world, task, 3),
                     "na terceira busca vazia o aldeão ainda procura (ADR-036 item 6)");
             context.assertTrue(ChestWithdrawer.countIn(world, scene.smelterChest, Items.SAND) == 0,
@@ -200,6 +209,7 @@ public final class LocateFallbackGameTest implements FabricGameTest {
         }
 
         void forget() {
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
             VillageColonyMod.TASKS.ofColony(colony.id()).forEach(task -> {
                 if (task.isOpen()) {
                     task.cancel();

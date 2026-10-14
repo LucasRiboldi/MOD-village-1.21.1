@@ -14,6 +14,11 @@ import java.util.function.ToIntFunction;
  * {@link #BATCH} de uma peça por vez; feitas, troca para a seguinte, num ciclo
  * sem fim de um pouco de cada. Peça que não avança em {@link #PATIENCE} ciclos
  * (falta de material) cede a vez, para o ciclo não parar nela.
+ *
+ * <p><b>Com teto</b> (P1, autossuficiência, 2026-10-11): quando a colônia tem
+ * tetos publicados ({@link #ceilings}), nenhuma peça passa do que a obra aberta
+ * ainda pede somado ao maior uso dela numa casa do estilo da vila. Sem teto a
+ * roda acumulou 318 lajes e 356 escadas enquanto a obra esperava pedregulho.
  */
 public final class AdvanceStock {
 
@@ -38,6 +43,8 @@ public final class AdvanceStock {
 
     private static final Map<Lane, Cursor> CURSORS = new HashMap<>();
 
+    private static final Map<UUID, Map<ResourceType, Integer>> CEILINGS = new HashMap<>();
+
     /** As peças que cada ofício adianta sem tarefa — ADR-038 P2a. */
     public static final List<ResourceType> SMELTER_PIECES = List.of(ResourceType.GLASS, ResourceType.SMOOTH_STONE);
 
@@ -51,6 +58,7 @@ public final class AdvanceStock {
     public static void clearAll() {
         CURSORS.clear();
         VILLAGE_PIECES.clear();
+        CEILINGS.clear();
     }
 
     /** As peças que as plantas da vila usam, por fila — ADR-039 item 4. */
@@ -59,6 +67,18 @@ public final class AdvanceStock {
     /** Anota as peças que as estruturas desta vila pedem, para esta fila. */
     public static void piecesOfTheVillage(UUID colonyId, String lane, List<ResourceType> pieces) {
         VILLAGE_PIECES.put(new Lane(colonyId, lane), List.copyOf(pieces));
+    }
+
+    /** O teto de cada peça desta colônia; peça fora do mapa tem teto zero. */
+    public static void ceilings(UUID colonyId, Map<ResourceType, Integer> ceilings) {
+        CEILINGS.put(colonyId, Map.copyOf(ceilings));
+    }
+
+    private static ToIntFunction<ResourceType> ceilingOf(UUID colonyId) {
+        Map<ResourceType, Integer> known = CEILINGS.get(colonyId);
+
+        // E nunca acima do teto geral (StockCeiling): o adiantamento não é pedido da obra.
+        return known == null ? StockCeiling::base : type -> Math.min(known.getOrDefault(type, 0), StockCeiling.base(type));
     }
 
     /** As peças da vila para esta fila, ou {@code fallback} enquanto as plantas não foram lidas. */
@@ -120,20 +140,47 @@ public final class AdvanceStock {
             CURSORS.put(key, cursor);
         }
 
+        ToIntFunction<ResourceType> ceiling = ceilingOf(colonyId);
+
         cursor.index = Math.floorMod(cursor.index, pieces.size());
         ResourceType piece = pieces.get(cursor.index);
         int have = stock.applyAsInt(piece);
 
-        if (have >= cursor.target || ++cursor.stalled > PATIENCE) {
-            cursor.index = Math.floorMod(cursor.index + 1, pieces.size());
+        if (have >= cursor.target || ++cursor.stalled > PATIENCE || have >= ceiling.applyAsInt(piece)) {
+            int next = nextBelowCeiling(pieces, cursor.index, stock, ceiling);
+
+            if (next < 0) {
+                cursor.stalled = 0;
+
+                return java.util.Optional.empty();
+            }
+
+            cursor.index = next;
             piece = pieces.get(cursor.index);
             have = stock.applyAsInt(piece);
             cursor.target = have + BATCH;
             cursor.stalled = 0;
         }
 
+        cursor.target = (int) Math.min(cursor.target, (long) ceiling.applyAsInt(piece));
         goals.merge(piece, cursor.target, Math::max);
 
         return java.util.Optional.of(piece);
+    }
+
+    /** A próxima peça, depois de {@code from} e em roda, ainda abaixo do teto; -1 se nenhuma. */
+    private static int nextBelowCeiling(List<ResourceType> pieces, int from,
+            ToIntFunction<ResourceType> stock, ToIntFunction<ResourceType> ceiling) {
+
+        for (int step = 1; step <= pieces.size(); step++) {
+            int index = Math.floorMod(from + step, pieces.size());
+            ResourceType piece = pieces.get(index);
+
+            if (stock.applyAsInt(piece) < ceiling.applyAsInt(piece)) {
+                return index;
+            }
+        }
+
+        return -1;
     }
 }

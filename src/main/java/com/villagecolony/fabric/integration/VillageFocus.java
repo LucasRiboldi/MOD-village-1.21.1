@@ -34,6 +34,12 @@ public final class VillageFocus {
     /** De quanto em quanto tempo conferir quem está dentro de qual vila. */
     public static final int EVERY_TICKS = 20;
 
+    /**
+     * O perímetro em volta da caixa em que a vila continua trabalhando com o jogador — autor,
+     * 2026-10-12: "deve continuar trabalhando comigo em um perímetro em volta da vila".
+     */
+    public static final int PERIMETER = 48;
+
     private VillageFocus() {
     }
 
@@ -78,7 +84,7 @@ public final class VillageFocus {
 
     public static boolean isInside(Colony colony, int x, int z) {
         if (colony.bounds().isPresent()) {
-            return colony.bounds().get().containsColumn(x, z);
+            return colony.bounds().get().containsColumn(x, z, PERIMETER);
         }
 
         long dx = (long) x - colony.center().x();

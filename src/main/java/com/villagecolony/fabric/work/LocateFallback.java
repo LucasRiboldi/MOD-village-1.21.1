@@ -1,7 +1,10 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.task.model.Task;
+import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.Profession;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.service.ProfessionRegistry;
@@ -11,6 +14,7 @@ import net.minecraft.item.Item;
 import net.minecraft.server.world.ServerWorld;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * A quarta busca vazia põe o material no baú da profissão que buscou —
@@ -41,6 +45,22 @@ final class LocateFallback {
             return false;
         }
 
+        // A reserva de areia (StandingWork) é estoque, não obra: a areia só aparece
+        // do nada quando a obra aberta espera vidro (regra do autor, 2026-10-11).
+        if (task.targetResource() == ResourceType.SAND && !openBuildWantsGlass(task.colonyId())) {
+            return false;
+        }
+
+        // A areia tem rota de produção — o britador do pedreiro (P2c). Enquanto
+        // houver pedreiro e pedra para moer, ela não aparece do nada.
+        if (task.targetResource() == ResourceType.SAND
+                && WorkAssignment.countCapableOf(task.colonyId(),
+                        TaskType.CRAFT_STONE_MATERIAL.required(), VillageColonyMod.WORKERS) > 0
+                && VillageColonyMod.COLONIES.find(task.colonyId())
+                        .map(colony -> Crusher.canCrush(world, colony)).orElse(false)) {
+            return false;
+        }
+
         Optional<Item> item = MinecraftTypeAdapter.toItem(task.targetResource());
 
         if (item.isEmpty()) {
@@ -61,6 +81,14 @@ final class LocateFallback {
         }
 
         return stocked;
+    }
+
+    /** Se a obra aberta desta colônia ainda pede vidro (bloco ou vidraça). */
+    static boolean openBuildWantsGlass(UUID colonyId) {
+        return VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
+                .map(project -> project.remainingMaterials().keySet().stream()
+                        .anyMatch(id -> id.path().contains("glass")))
+                .orElse(false);
     }
 
     /**

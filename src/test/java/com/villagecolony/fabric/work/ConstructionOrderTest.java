@@ -124,6 +124,15 @@ class ConstructionOrderTest {
         assertEquals(Optional.of("temple"), next(buildings, List.of(BUTCHER, FARM, TEMPLE)));
     }
 
+    /** Uma casa de cada tipo — autor, 2026-10-12: com todas de pé, nenhuma se repete. */
+    @Test
+    void withEveryTypeStandingNoWorkshopIsRepeated() {
+        List<Building> buildings = List.of(
+                built(FARM, true), built(MASON, true), built(BUTCHER, true), built(TEMPLE, true));
+
+        assertEquals(Optional.empty(), next(buildings, List.of(BUTCHER, FARM, TEMPLE, MASON)));
+    }
+
     @Test
     void onlyTradesTheCatalogOffersAreMissing() {
         assertEquals(List.of(ProfessionType.MASON),

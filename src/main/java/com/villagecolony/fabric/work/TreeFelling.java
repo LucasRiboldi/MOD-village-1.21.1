@@ -19,6 +19,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -172,9 +173,16 @@ public final class TreeFelling {
      * entre o último tronco e a última folha ainda pode repor a árvore sem
      * plantar sob um tronco que continua de pé.
      */
-    static void closePlan(ServerWorld world, LumberjackWork.Job job) {
+    static void closePlan(ServerWorld world, UUID workerId, LumberjackWork.Job job) {
+        if (job.plan != null && job.index < job.plan.logs()) {
+            finishTheTrunk(world, workerId, job);
+        }
+
         if (job.plan != null && job.index >= job.plan.logs()) {
-            TreeHarvester.finish(world, job.plan);
+            // A muda da árvore longe vai para o bosque perto da vila — regra do autor, 2026-10-11.
+            if (!VillageGrove.takesTheSapling(world, job.task.colonyId(), job.plan.base())) {
+                TreeHarvester.finish(world, job.plan);
+            }
 
             // O viveiro da borda é dele desde 2026-09-30 — decisão do
             // autor, que o tirou do fazendeiro. Depois de cada árvore
@@ -183,6 +191,45 @@ public final class TreeFelling {
         }
 
         TreeClaims.unclaim(job.plan);
+    }
+
+    /**
+     * Derruba os troncos que ficaram de pé quando a tarefa acabou no meio da árvore —
+     * regra do autor, 2026-10-12: árvore pela metade não pode. O que eles dão vai para o
+     * baú do lenhador e, sem lugar, para os baús públicos.
+     */
+    private static void finishTheTrunk(ServerWorld world, UUID workerId, LumberjackWork.Job job) {
+        int felled = 0;
+
+        while (job.index < job.plan.logs()) {
+            BlockPos pos = job.currentBlock();
+            BlockState state = stateAt(world, pos);
+
+            if (state == null) {
+                return;
+            }
+
+            if (state.isIn(net.minecraft.registry.tag.BlockTags.LOGS)) {
+                List<ItemStack> drops = TreeHarvester.breakOne(world, job.plan, pos);
+                Optional<WorkerStorage> storage = VillageColonyMod.STORAGES.of(workerId);
+
+                if (storage.isPresent()) {
+                    deposit(world, storage.get(), pos, drops);
+                } else {
+                    drops.forEach(stack -> PublicChests.store(
+                            world, job.task.colonyId(), pos, stack.getItem(), stack.getCount()));
+                }
+
+                felled++;
+            }
+
+            job.index++;
+        }
+
+        if (felled > 0) {
+            VillageColonyMod.LOGGER.info("Worker {} finished the tree it had started — {} logs left standing were felled",
+                    workerId.toString().substring(0, 8), felled);
+        }
     }
 
     /**
@@ -213,6 +260,16 @@ public final class TreeFelling {
         for (ItemStack stack : drops) {
             int leftOver = ChestDepositor.deposit(
                     world, storage.chestPosition(), stack.getItem(), stack.getCount());
+
+            if (leftOver == 0) {
+                continue;
+            }
+
+            // Sem lugar no baú do ofício, o resto vai para os baús públicos (autor, 2026-10-12).
+            int stillLeft = leftOver;
+            leftOver = VillageColonyMod.WORKERS.find(storage.workerId())
+                    .map(worker -> PublicChests.store(world, worker.colonyId(), position, stack.getItem(), stillLeft))
+                    .orElse(leftOver);
 
             if (leftOver == 0) {
                 continue;

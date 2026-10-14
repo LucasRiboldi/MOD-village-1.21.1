@@ -147,6 +147,85 @@ public class WorkMaterialsGameTest implements FabricGameTest {
     }
 
     /**
+     * Tijolos (o bloco) não são recurso declarado, e a cadeia não descia por eles —
+     * playtest 0.3.32: a obra esperou 10 minutos por {@code bricks} sem que o fundidor
+     * ou a coleta de argila recebessem tarefa. Três tijolos pedem doze tijolos assados
+     * e doze bolas de argila; a escada de tijolo desce um degrau a mais.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
+            tickLimit = 20)
+    public void bricksRequestTheSmelterAndTheClay(TestContext context) {
+        ServerWorld world = context.getWorld();
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(HERE));
+        Colony colony = Colony.create(UUID.randomUUID(), origin);
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+        VillageColonyMod.COLONIES.register(colony);
+
+        ResourceId bricks = MinecraftTypeAdapter.toResourceId(Blocks.BRICKS);
+        Blueprint plan = Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/bricks_test"),
+                List.of(new BlueprintBlock(new ColonyPos(0, 0, 0), bricks),
+                        new BlueprintBlock(new ColonyPos(1, 0, 0), bricks),
+                        new BlueprintBlock(new ColonyPos(2, 0, 0), bricks)));
+        ConstructionProject project = ConstructionProject.plan(colony.id(), plan, origin);
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        try {
+            int brick = WorkMaterials.smeltedNeeds(world, colony).getOrDefault(ResourceType.BRICK, 0);
+            int clay = WorkMaterials.surfaceGatheredNeeds(world, colony).getOrDefault(ResourceType.CLAY_BALL, 0);
+
+            context.assertTrue(brick == 12, "três tijolos deviam pedir doze tijolos assados, pediram " + brick);
+            context.assertTrue(clay == 12, "doze tijolos assados deviam pedir doze bolas de argila, pediram " + clay);
+
+        } finally {
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /** A escada de tijolo desce dois degraus pela receita do jogo: escada → tijolos → tijolo assado. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
+            tickLimit = 20)
+    public void brickStairsReachTheSmelterTwoRecipesDown(TestContext context) {
+        ServerWorld world = context.getWorld();
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(HERE));
+        Colony colony = Colony.create(UUID.randomUUID(), origin);
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+        VillageColonyMod.COLONIES.register(colony);
+
+        ResourceId stairs = MinecraftTypeAdapter.toResourceId(Blocks.BRICK_STAIRS);
+        List<BlueprintBlock> blocks = new java.util.ArrayList<>();
+
+        for (int x = 0; x < 4; x++) {
+            blocks.add(new BlueprintBlock(new ColonyPos(x, 0, 0), stairs));
+        }
+
+        ConstructionProject project = ConstructionProject.plan(colony.id(),
+                Blueprint.of(ResourceId.vanilla("village/plains/houses/brick_stairs_test"), blocks), origin);
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        try {
+            int brick = WorkMaterials.smeltedNeeds(world, colony).getOrDefault(ResourceType.BRICK, 0);
+            // Quantos tijolos (o bloco) a receita do jogo pede para as quatro escadas.
+            CraftingLookup.Bill bill = CraftingLookup.billFor(world, Items.BRICK_STAIRS, any -> true).orElseThrow();
+            int needed = (4 + bill.resultCount() - 1) / bill.resultCount() * bill.ingredients().get(Items.BRICKS);
+
+            context.assertTrue(brick == needed * 4,
+                    "quatro escadas (" + needed + " tijolos) deviam pedir " + needed * 4
+                            + " tijolos assados, pediram " + brick);
+        } finally {
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /**
      * A vidraça vira vidro pela receita do próprio jogo — 2026-08-20.
      *
      * <p>É a conta que fecha a cadeia, e a que pode calar sem quebrar

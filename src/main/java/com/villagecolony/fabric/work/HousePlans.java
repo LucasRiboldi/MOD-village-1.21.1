@@ -167,9 +167,6 @@ public final class HousePlans {
      * abandonado treze vezes. O rodízio via só a casa, a vez continuava
      * com "não residencial", o templo não era excluído — e foi escolhido
      * de novo nas treze. Nenhuma casa em seis horas e meia.
-     *
-     * <p>{@link #hasNoHouseYet} continua olhando só a terminada, e de
-     * propósito: ali a pergunta é "existe casa de pé", não "de quem é a vez".
      */
     static boolean nextConstructionIsHouse(List<Building> buildings) {
         return nextConstructionPriority(buildings, 0, 0).requiresHouse();
@@ -190,13 +187,7 @@ public final class HousePlans {
         return nextConstructionPriority(buildings, adults, beds).requiresHouse();
     }
 
-    /**
-     * Motivo atual da família de plantas da próxima obra.
-     *
-     * <p>Esta adaptação conserva no Fabric a pergunta sobre a planta ser uma
-     * casa. A precedência entre déficit, primeira obra e rodízio fica no Core,
-     * onde também é exercitada sem mundo.
-     */
+    /** Motivo atual da família de plantas da próxima obra (a precedência fica no Core). */
     static ConstructionPriority nextConstructionPriority(
             List<Building> buildings, int adults, int beds) {
         Optional<Building> last = lastAttempted(buildings);
@@ -264,11 +255,7 @@ public final class HousePlans {
                 && !constructionType(blueprint).equals(lastNonHouseType(buildings).orElse(""));
     }
 
-    /**
-     * A próxima família de plantas da colônia, com a regra de alternância.
-     * O lote continua sendo escolhido pelo mesmo scanner para qualquer
-     * família retornada aqui.
-     */
+    /** A próxima família de plantas da colônia, com a regra de alternância (Regras 49, 67, 1A). */
     static List<Blueprint> plansForNext(ServerWorld world, Colony colony) {
         List<Building> buildings = VillageColonyMod.BUILDINGS.ofColony(colony.id());
         int adults = VillageColonyMod.WORKERS.countOfColony(colony.id());
@@ -284,21 +271,31 @@ public final class HousePlans {
             }
         }
 
-        // A casa do ofício que falta, sem falta de cama — Regra 49. Sem planta
-        // de oficina possível agora, o rodízio de sempre segue.
-        if (ConstructionTurn.of(buildings, adults, beds, ConstructionTurn.workshopMissing(world, colony, buildings))
-                == ConstructionPriority.WORKSHOP) {
+        // Regra 67 (16º adulto): a plantação fura a fila antes de oficina e rodízio; só a
+        // falta de cama vem antes (no decide). Regra 49: a casa do ofício que falta vem depois.
+        boolean farmDeficit = ConstructionTurn.farmDeficit(world, colony);
+        boolean workshopMissing = ConstructionTurn.workshopMissing(world, colony, buildings);
+        ConstructionPriority turn = ConstructionTurn.of(buildings, adults, beds, workshopMissing, farmDeficit);
+
+        if (turn == ConstructionPriority.FARM_DEFICIT) {
+            List<Blueprint> farms = plansFor(world, colony);
+            if (!farms.isEmpty()) {
+                return farms;
+            }
+        }
+
+        if (turn == ConstructionPriority.WORKSHOP) {
             List<Blueprint> workshops = nonHousePlansFor(world, colony, previous, buildings);
             if (!workshops.isEmpty()) {
                 return workshops;
             }
         }
 
-        if (nextConstructionPriority(buildings, adults, beds).requiresHouse()) {
-            return plansFor(world, colony);
-        }
-
-        return nonHousePlansFor(world, colony, previous, buildings);
+        ConstructionPriority priority = nextConstructionPriority(buildings, adults, beds);
+        boolean house = priority.buildsHouse(adults, beds);
+        List<Blueprint> others = house ? List.of() : nonHousePlansFor(world, colony, previous, buildings);
+        return others.isEmpty() && (house || ConstructionPriority.roomForAHouse(adults, beds)
+                || LotTypeRefusals.anyRefused(colony.id(), world.getTime())) ? plansFor(world, colony) : others;
     }
 
     /** O tipo semântico de uma planta, usado para o rodízio A/B. */
@@ -364,13 +361,13 @@ public final class HousePlans {
         // sem roça, a roça sai do rodízio; com, ela vem antes das outras.
         boolean farmOwed = ColonyFarms.owedToTheFarmers(world, colony);
 
-        // A lâmpada Vanilla fica na raiz de `village/<style>/`, fora de
-        // `houses/`; as demais oficinas e roças continuam na pasta de lotes.
+        // A lâmpada fica em `village/<style>/`; oficinas e roças, na pasta de lotes.
         for (ResourceId id : VillageStructures.buildableFor(style)) {
             String type = constructionType(id);
 
             if ("house".equals(type)
                     || type.equals(previousType)
+                    || LotTypeRefusals.isRefused(colony.id(), type, world.getTime())
                     || ("farm".equals(type) && (farmPostponed || !farmOwed))) {
                 continue;
             }
@@ -401,7 +398,10 @@ public final class HousePlans {
 
         if (chosen.isPresent()) {
             List<Blueprint> plans = byType.get(chosen.get());
-            List<Blueprint> mixed = PlanOrdering.mixed(plans, seedFor(colony));
+            // A roça grande primeiro; a menor só onde a grande não cabe (autor, 2026-10-12).
+            List<Blueprint> mixed = "farm".equals(chosen.get())
+                    ? plans.stream().sorted(Comparator.comparingInt(HousePlans::volumeOf).reversed()).toList()
+                    : PlanOrdering.mixed(plans, seedFor(colony));
 
             Set<ResourceId> skipped = new HashSet<>();
 

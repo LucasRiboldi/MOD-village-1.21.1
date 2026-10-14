@@ -35,6 +35,33 @@ class MineTest {
         assertEquals(Mine.ARMS, mine.branchesOpenNow());
     }
 
+    /** Aberta a escada, os outros três ramais entram pulando a sala comum — regra do autor, 2026-10-11. */
+    @Test
+    void theOtherBranchesOpenOnceTheStairIsCutAndSkipTheSharedHall() {
+        Mine mine = opened();
+
+        for (int index = 0; index < MineShaft.CARVED - 1; index++) {
+            mine.arm(0).nextPosition();
+        }
+
+        assertEquals(1, mine.branchesOpenNow(), "a escada ainda é de um mineiro só");
+
+        mine.arm(0).nextPosition();
+        assertEquals(Mine.ARMS, mine.branchesOpenNow(), "aberta a escada, os quatro ramais abrem");
+
+        mine.skipTheSharedHall();
+        java.util.Set<ColonyPos> hall = new java.util.HashSet<>();
+
+        for (int index = 0; index < MineShaft.SHARED_BLOCKS; index++) {
+            hall.add(mine.arm(0).shaft().positionAt(index));
+        }
+
+        for (int arm = 1; arm < Mine.ARMS; arm++) {
+            assertEquals(MineShaft.SHARED_BLOCKS, mine.arm(arm).cut(), "o ramal " + arm + " devia pular a sala");
+            assertFalse(hall.contains(mine.arm(arm).nextPosition()), "o ramal " + arm + " recebeu bloco da sala comum");
+        }
+    }
+
     @Test
     void fourArmsStartAtDifferentStaircasesAfterTheSharedArea() {
         Mine mine = opened();
@@ -67,6 +94,26 @@ class MineTest {
             assertFalse(arm.isDone());
             assertEquals(0, arm.cut());
         }
+    }
+
+    /**
+     * O ramal zero que acaba depois de cavar além do trecho comum não fecha os
+     * outros três — P6, playtest de 2026-10-11: dois mineiros esperavam
+     * "branches 0 open" com três ramais por cavar, e a mina descia sem eles.
+     */
+    @Test
+    void theZeroArmFinishedPastTheSharedPathKeepsTheOtherBranchesOpen() {
+        Mine mine = opened();
+
+        for (int index = 0; index < MineShaft.SHARED_BLOCKS + 3; index++) {
+            mine.arm(0).nextPosition();
+        }
+
+        mine.arm(0).finish();
+
+        assertEquals(Mine.ARMS, mine.branchesOpenNow());
+        assertEquals(Mine.LevelAdvance.WAITING, mine.advanceIfEveryOpenArmIsDone(),
+                "a mina desceu com três ramais por cavar");
     }
 
     @Test

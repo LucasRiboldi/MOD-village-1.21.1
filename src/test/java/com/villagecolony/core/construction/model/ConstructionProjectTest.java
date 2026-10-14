@@ -216,6 +216,18 @@ class ConstructionProjectTest {
         assertTrue(project.deferredPieces().isEmpty());
     }
 
+    @Test
+    void aPieceSetAsideForMaterialStillAsksForIt() {
+        BlueprintBlock first = block(0, 0, 0, COBBLE);
+
+        project.deferForMaterial(first);
+
+        assertEquals(Map.of(COBBLE, 2, PLANKS, 1), project.remainingMaterials(),
+                "a peça de lado por falta de material é justamente a que a colônia precisa produzir"
+                        + " (ADR-023 não cobre material ausente)");
+        assertEquals(1, project.deferredPieces().size());
+    }
+
     // --- estados ---
 
     @Test

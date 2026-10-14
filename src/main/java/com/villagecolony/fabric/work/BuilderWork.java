@@ -100,10 +100,13 @@ public final class BuilderWork {
      * sempre com dono. Mesma regra e mesmo motivo de
      * {@code LumberjackWork.STALL_LIMIT}.
      */
-    static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;
+    static final int STALL_LIMIT = com.villagecolony.core.coordination.WorkRescue.LIMIT;
 
     /** Tiques andando sem alcançar a peça antes de deixá-la de lado — A-6. */
     static final int SET_ASIDE_AFTER = 200;
+
+    /** Tiques com alguém parado onde a peça vai antes de empurrá-lo para fora (0.3.54). */
+    static final int SHOVE_AFTER = 60;
 
     /** Trabalho aberto, por construtor. */
     static final Map<UUID, Job> JOBS = new HashMap<>();
@@ -135,7 +138,7 @@ public final class BuilderWork {
         /** Lugares de pé que a navegação recusou nesta tarefa — 2026-10-03. */
         final UnreachableSpots unreachable = new UnreachableSpots();
 
-        private Job(Task task, UUID projectId) {
+        Job(Task task, UUID projectId) {
             this.task = task;
             this.projectId = projectId;
         }
@@ -277,12 +280,16 @@ public final class BuilderWork {
         if (next.isEmpty()) {
             if (project.isFinished()) {
                 complete(project, job, workerId);
+            } else if (BuildWait.holds(world, project, workerId)) {
+                return true;
             } else {
-                finish(job, workerId, "every remaining piece is waiting for physical support");
+                finish(job, workerId, "every remaining piece is waiting for material or physical support");
             }
 
             return false;
         }
+
+        BuildWait.stop(workerId);
 
         BlockPos target = MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(next.get()));
 
@@ -290,8 +297,7 @@ public final class BuilderWork {
         if (!BuilderApproach.isWithinReach(villager.getPos(), target)
                 && !BuilderApproach.isInsideZone(project, villager.getPos())) {
             // <b>De onde ele está, e não do piso</b> — 2026-09-16. Ver
-            // BuilderApproach.footOf: mandar ao piso quem já subiu na obra
-            // é mandá-lo para uma queda que a navegação não percorre.
+            // footOf: mandar ao piso quem já subiu na obra é mandá-lo a uma queda intransponível.
             Optional<BlockPos> foot = BuilderApproach.footOf(
                     world, project, target, villager.getBlockPos(), job.unreachable.spots());
 
@@ -309,11 +315,7 @@ public final class BuilderWork {
             WorkTargets.set(workerId, spot, BuilderApproach.ARRIVAL);
 
             if (job.unreachable.gaveUp(world, villager, spot)) {
-                VillageColonyMod.LOGGER.info("Builder {} gives up standing at {} for {} — the path does not"
-                        + " reach it; it tries another side", workerId, spot.toShortString(), target.toShortString());
-                job.stall.reset();
-
-                return true;
+                return HelperReach.gaveUp(job, workerId, spot, target);
             }
 
             if (job.stall.stuck(world, villager)) {
@@ -334,9 +336,7 @@ public final class BuilderWork {
                 return false;
             }
 
-            // A peça que não se alcança fica de lado, e a obra segue pela
-            // próxima — A-6, 2026-10-02. Antes ele insistia até o STALL_LIMIT
-            // (dois minutos) e largava a obra inteira.
+            // A peça que não se alcança fica de lado, e a obra segue pela próxima — A-6.
             if (++job.stalled % SET_ASIDE_AFTER == 0 && project.remaining().size() > 1) {
                 setAside(world, project, job, next.get(), target,
                         "the builder walked " + job.stalled + " ticks without reaching it");
@@ -344,10 +344,8 @@ public final class BuilderWork {
                 return true;
             }
 
-            if (job.stalled > STALL_LIMIT) {
-                // Andou dois minutos de horário de trabalho e não chegou
-                // ao bloco. A obra continua de pé e volta para a fila; o
-                // que não continua é este construtor sendo dono dela.
+            if (job.stalled > HelperReach.stallLimit(workerId)) {
+                // Andou dois minutos sem chegar ao bloco: a obra volta para a fila, sem este dono.
                 WorkerStrikes.gaveUp(workerId, job.task);
 
                 finish(
@@ -368,6 +366,12 @@ public final class BuilderWork {
         if (BuilderApproach.someoneStandsIn(world, target)) {
             WorkTargets.set(workerId,
                     BuilderApproach.footOf(world, project, target, villager.getBlockPos()), BuilderApproach.ARRIVAL);
+
+            // Insistiu e o ponto segue ocupado: empurra o ocupante em vez de adiar a peça para
+            // sempre (ela reentra no mesmo bloco ocupado) — bug 0.3.53, obra refém de um parado.
+            if (job.stalled > 0 && job.stalled % SHOVE_AFTER == 0) {
+                BuilderApproach.shoveOutOf(world, target);
+            }
 
             if (++job.stalled % SET_ASIDE_AFTER == 0 && project.remaining().size() > 1) {
                 setAside(world, project, job, next.get(), target, "someone kept standing where it goes");
@@ -467,17 +471,14 @@ public final class BuilderWork {
         }
 
         WorkTargets.clear(workerId);
+        BuildWait.stop(workerId);
 
         VillageColonyMod.LOGGER.info("Builder {} stopped — {}", workerId, why);
     }
 
     /**
-     * Esquece o trabalho deste construtor. Morte, zumbificação, dispensa.
-     *
-     * <p>Chamado de dois lugares, e nos dois a tarefa já pode ter voltado
-     * para a fila antes — {@code VillagerLifecycleHandler} solta tudo o
-     * que o morto tinha antes de avisar quem o empregava. Daí a pergunta
-     * ser {@link Task#isHeld()}, e não "não está encerrada".
+     * Esquece o trabalho deste construtor (morte, dispensa). A tarefa pode já
+     * ter voltado à fila — daí {@link Task#isHeld()}, e não "não encerrada".
      */
     public static void forget(UUID workerId) {
         Job job = JOBS.remove(workerId);

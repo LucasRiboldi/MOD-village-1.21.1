@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.integration.BlueprintPlacement;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.ColonyModels;
 import com.villagecolony.fabric.integration.LotClearance;
@@ -151,7 +152,8 @@ final class ConstructionResume {
             return;
         }
 
-        Optional<Blueprint> blueprint = PlanPlacement.blueprintOf(
+        // Na orientação em que foi levantada, e não na da rua de agora (playtest 0.3.31).
+        Optional<Blueprint> blueprint = BlueprintPlacement.resumedBlueprintOf(
                 world, colony.id(), saved.blueprint(), saved.origin());
 
         if (blueprint.isEmpty()) {

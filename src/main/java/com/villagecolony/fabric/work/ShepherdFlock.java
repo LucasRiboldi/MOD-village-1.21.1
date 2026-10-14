@@ -13,6 +13,7 @@ import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -38,8 +39,11 @@ public final class ShepherdFlock {
     /** Adultos de cada espécie a partir dos quais o pastor para de criar. */
     public static final int FLOCK_TARGET = 12;
 
-    /** Entre um par e o seguinte da mesma colônia. */
-    static final int BETWEEN_PAIRS = 6_000;
+    /** Entre uma rodada de comida e a seguinte da mesma colônia: um minuto. */
+    static final int BETWEEN_PAIRS = 1_200;
+
+    /** Quantos pares de cada espécie o pastor alimenta por rodada. */
+    static final int PAIRS_PER_ROUND = 2;
 
     private static final int RADIUS = 32;
 
@@ -47,10 +51,13 @@ public final class ShepherdFlock {
     static final List<EntityType<? extends AnimalEntity>> SPECIES =
             List.of(EntityType.SHEEP, EntityType.COW, EntityType.PIG, EntityType.CHICKEN);
 
-    /** A comida dos baús que algum deles aceita. */
-    private static final List<Item> FOOD = List.of(
-            Items.WHEAT, Items.CARROT, Items.POTATO, Items.BEETROOT,
-            Items.WHEAT_SEEDS, Items.BEETROOT_SEEDS);
+    /**
+     * As comidas que esta espécie aceita, lidas do próprio jogo
+     * ({@code AnimalEntity.isBreedingItem}) — regra do autor, 2026-10-12: o pastor
+     * alimenta os animais com qualquer comida que haja nos baús da vila. Era uma lista
+     * fixa de seis itens.
+     */
+    private static final Map<EntityType<?>, List<Item>> FOOD = new HashMap<>();
 
     private static final Map<UUID, Long> LAST = new HashMap<>();
 
@@ -82,7 +89,13 @@ public final class ShepherdFlock {
         boolean paired = false;
 
         for (EntityType<? extends AnimalEntity> species : SPECIES) {
-            paired |= pairOf(world, colony, species, area, chests);
+            for (int pair = 0; pair < PAIRS_PER_ROUND; pair++) {
+                if (!pairOf(world, colony, species, area, chests)) {
+                    break;
+                }
+
+                paired = true;
+            }
         }
 
         return paired;
@@ -164,9 +177,8 @@ public final class ShepherdFlock {
             return false;
         }
 
-        for (Item food : FOOD) {
-            if (!ready.get(0).isBreedingItem(new ItemStack(food))
-                    || ColonyChests.countIn(world, chests, food) < 2) {
+        for (Item food : foodOf(species, ready.get(0))) {
+            if (ColonyChests.countIn(world, chests, food) < 2) {
                 continue;
             }
 
@@ -190,12 +202,24 @@ public final class ShepherdFlock {
 
     /** Guardado: amarrado numa cerca, ou dentro de curral (cercado e com cerca perto). */
     static boolean isKept(ServerWorld world, AnimalEntity animal) {
-        return animal.getLeashHolder() instanceof LeashKnotEntity
-                || (FencedIn.isNearAFence(world, animal.getBlockPos())
-                        && FencedIn.check(world, animal.getBlockPos()).enclosed());
+        return animal.getLeashHolder() instanceof LeashKnotEntity || isPenned(world, animal);
+    }
+
+    /** Dentro de curral: cercado e com cerca perto. */
+    static boolean isPenned(ServerWorld world, AnimalEntity animal) {
+        return FencedIn.isNearAFence(world, animal.getBlockPos())
+                && FencedIn.check(world, animal.getBlockPos()).enclosed();
+    }
+
+    /** Toda comida do jogo que esta espécie aceita, guardada na primeira pergunta. */
+    private static List<Item> foodOf(EntityType<?> species, AnimalEntity sample) {
+        return FOOD.computeIfAbsent(species, type -> Registries.ITEM.stream()
+                .filter(item -> item != Items.AIR && sample.isBreedingItem(new ItemStack(item)))
+                .toList());
     }
 
     public static void clearAll() {
         LAST.clear();
+        FOOD.clear();
     }
 }

@@ -3,13 +3,10 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
-import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.type.Side;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,10 +15,9 @@ import java.util.UUID;
  * 2026-10-02: <i>"a entrada deve ser criada na borda da vila, o mais distante
  * da água"</i>.
  *
- * <p><b>Quando.</b> O {@link MineDescent} marca o ponto onde a descida trava (a
- * caverna com lava de 02-10). Na segunda parada no mesmo ponto, a mina da
- * colônia sai do registro. O mineiro seguinte abre outra, e a boca dela é
- * escolhida aqui.
+ * <p><b>Quando.</b> Ao abrir a mina da colônia. A descida travada não fecha mais a
+ * mina (regra do autor, 2026-10-11): o {@link MineDescent} marca o ponto e o
+ * mineiro cava outro caminho.
  *
  * <p><b>Onde.</b> De 1 a {@link #INSIDE} blocos para dentro da borda da caixa
  * medida (ADR-038 P3b), a cada {@link #STEP} blocos dos quatro lados, longe da
@@ -32,10 +28,6 @@ import java.util.UUID;
  * decide.
  */
 final class MineEdge {
-
-    static {
-        ServerMemory.register(MineEdge.class, MineEdge::clearAll);
-    }
 
     /** De quantos em quantos blocos da borda se testa uma boca. */
     static final int STEP = 6;
@@ -49,36 +41,7 @@ final class MineEdge {
     record Choice(BlockPos mouth, Side side) {
     }
 
-    /** Colônia → o ponto onde a descida travou, à espera da mina nova. */
-    private static final Map<UUID, BlockPos> RELOCATE = new HashMap<>();
-
     private MineEdge() {
-    }
-
-    /** A descida travou: a mina sai do registro, e a próxima nasce na borda. */
-    static void relocate(UUID colonyId, BlockPos blocked) {
-        if (VillageColonyMod.MINES.of(colonyId).isEmpty() || RELOCATE.containsKey(colonyId)) {
-            return;
-        }
-
-        RELOCATE.put(colonyId, blocked.toImmutable());
-        VillageColonyMod.MINES.removeOfColony(colonyId);
-
-        VillageColonyMod.LOGGER.info(
-                "Colony {} closes its mine — the way down stops at {}; the next one opens at the edge of the"
-                        + " village, as far from water as it can",
-                colonyId, blocked.toShortString());
-    }
-
-    /** A boca da mina nova, se esta colônia está trocando de mina. */
-    static Optional<Choice> relocation(ServerWorld world, UUID colonyId, BlockPos center) {
-        BlockPos avoid = RELOCATE.remove(colonyId);
-
-        if (avoid == null) {
-            return Optional.empty();
-        }
-
-        return inside(world, colonyId, center, avoid);
     }
 
     /** Até quantos blocos para dentro da caixa da vila a boca nasce — ADR-038 P3b. */
@@ -86,6 +49,34 @@ final class MineEdge {
 
     /** Até quantos blocos acima do centro o morro conta a favor. */
     static final int HILL_CAP = 12;
+
+    /**
+     * A faixa da borda onde uma boca pode nascer: até este tanto para dentro ou para
+     * fora da linha da caixa — Regra 53 (autor, 2026-10-11: <i>"não abrir entrada de
+     * mina em lugares aleatórios, somente nas entradas próximas das bordas"</i>).
+     */
+    static final int EDGE_BAND = INSIDE + 3;
+
+    /** A caixa medida desta colônia, se já houver. */
+    static Optional<VillageBounds> boxOf(UUID colonyId) {
+        return VillageColonyMod.COLONIES.find(colonyId).flatMap(Colony::bounds);
+    }
+
+    /**
+     * Se este ponto está na faixa da borda da caixa (Regra 53): a até
+     * {@link #EDGE_BAND} blocos da linha de algum lado, dentro ou fora dela.
+     */
+    static boolean nearTheEdge(VillageBounds box, BlockPos at) {
+        if (!box.containsColumn(at.getX(), at.getZ(), EDGE_BAND)) {
+            return false;
+        }
+
+        int toEdge = Math.min(
+                Math.min(Math.abs(at.getX() - box.minX()), Math.abs(at.getX() - box.maxX())),
+                Math.min(Math.abs(at.getZ() - box.minZ()), Math.abs(at.getZ() - box.maxZ())));
+
+        return toEdge <= EDGE_BAND;
+    }
 
     /** Longe da água pesa 4 por bloco, morro pesa 3 por bloco de altura (até {@link #HILL_CAP}). */
     static int score(int waterDistance, int hill) {
@@ -176,9 +167,5 @@ final class MineEdge {
         }
 
         return WATER_LOOK;
-    }
-
-    static void clearAll() {
-        RELOCATE.clear();
     }
 }

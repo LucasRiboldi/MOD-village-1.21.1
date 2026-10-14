@@ -104,12 +104,16 @@ final class MinerHaul {
             int before = stored;
 
             if (!isAsked) {
-                // Teto por tipo (TYPE_CAP): passado ele, o bloco sai da
-                // galeria e o drop não é guardado. O pedido só tem o teto do baú.
+                // Teto por tipo (TYPE_CAP) no baú do mineiro: o que passa dele vai para os
+                // baús públicos — pedra crua pode passar dos limites (autor, 2026-10-12).
                 int room = Math.max(0, TYPE_CAP
                         - ChestWithdrawer.countIn(world, chest, drop.getItem()));
 
                 if (room < drop.getCount()) {
+                    if (colonyId.isPresent()) {
+                        PublicChests.store(world, colonyId.get(), dropPosition, drop.getItem(), drop.getCount() - room);
+                    }
+
                     if (room == 0) {
                         continue;
                     }
@@ -139,6 +143,10 @@ final class MinerHaul {
                             "Miner chest at {} released {} items to village storage before retrying {}",
                             chest, relieved, drop.getItem());
                 }
+            }
+
+            if (leftOver > 0 && colonyId.isPresent()) {
+                leftOver = PublicChests.store(world, colonyId.get(), dropPosition, drop.getItem(), leftOver);
             }
 
             stored += drop.getCount() - leftOver;

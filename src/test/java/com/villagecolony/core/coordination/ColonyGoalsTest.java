@@ -177,6 +177,16 @@ class ColonyGoalsTest {
         assertEquals(0, StockRules.logsToConvert(0, 0));
     }
 
+    /** Sem obra pedindo, a tábua para no teto do estoque (playtest 0.3.31: 960 tábuas). */
+    @Test
+    void withoutAWorkThePlanksStopAtTheStockCeiling() {
+        assertEquals(0, StockRules.logsToConvert(347, 1232), "o estoque do playtest ainda pedia conversão");
+        assertEquals(1, StockRules.logsToConvert(400, StockCeiling.CRAFTED - 2), "falta uma tora até o teto");
+        assertEquals(0, StockRules.logsToConvert(400, StockCeiling.CRAFTED), "no teto, nada");
+        assertEquals(30, StockRules.logsThatMayBeConverted(400, StockCeiling.CRAFTED, 0, StockCeiling.CRAFTED + 120),
+                "a obra passa do teto");
+    }
+
     @Test
     void keepsTheRawLogsThatTheOpenConstructionStillNeeds() {
         assertEquals(

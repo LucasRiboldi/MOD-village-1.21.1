@@ -23,11 +23,12 @@ final class VillageBoundsSave {
     /**
      * A regra com que a caixa foi medida. A 2, de 2026-10-03, parte das peças
      * da vila gerada (sem a folga de 12 da estrutura), 15 em volta das obras e
-     * lados ímpares. Caixa sem esta marca é da regra antiga e é medida de novo.
+     * lados ímpares. A 3, de 2026-10-12, mede de novo as caixas que cresceram por faixa
+     * vazia anexada (0.3.37 a 0.3.43). Caixa sem esta marca é da regra antiga e é medida de novo.
      */
     static final String MODEL = "boundsModel";
 
-    static final int CURRENT_MODEL = 2;
+    static final int CURRENT_MODEL = 3;
 
     private VillageBoundsSave() {
     }

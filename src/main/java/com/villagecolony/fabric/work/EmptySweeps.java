@@ -4,6 +4,8 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.ServerMemory;
 
+import net.minecraft.util.math.Direction;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -76,6 +78,32 @@ public final class EmptySweeps {
     /** Achou: a próxima varredura vazia volta ao primeiro castigo. */
     static void found(UUID colonyId, ResourceType resource) {
         MARKS.remove(new Key(colonyId, resource));
+    }
+
+    /** Quantas varreduras completas seguidas deste recurso voltaram vazias; 0 depois de achar. */
+    static int inARow(UUID colonyId, ResourceType resource) {
+        Mark mark = MARKS.get(new Key(colonyId, resource));
+
+        return mark == null ? 0 : mark.count();
+    }
+
+    /**
+     * O setor da próxima busca: cada varredura vazia seguida gira 90° a partir
+     * do mais distante (P2a, 2026-10-11), e a quarta já olhou os quatro lados.
+     */
+    static Direction turnedFrom(Direction farthest, UUID colonyId, ResourceType resource) {
+        Direction sector = farthest;
+
+        for (int turn = inARow(colonyId, resource) % 4; turn > 0; turn--) {
+            sector = sector.rotateYClockwise();
+        }
+
+        return sector;
+    }
+
+    /** Se a última varredura completa deste recurso voltou vazia (e nada foi achado desde então). */
+    static boolean sweptEmpty(UUID colonyId, ResourceType resource) {
+        return MARKS.containsKey(new Key(colonyId, resource));
     }
 
     /** Se ninguém deve procurar {@code resource} nesta colônia agora. */

@@ -60,7 +60,7 @@ public final class TreeChoice {
      * carregado — ver {@link BuilderWork#step}. Uma noite inteira não é
      * travamento, e chunk descarregado é a colônia dormindo.
      */
-    static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;
+    static final int STALL_LIMIT = com.villagecolony.core.coordination.WorkRescue.LIMIT;
 
     /**
      * O limite em vigor. É {@link #STALL_LIMIT}, menos nos testes.
@@ -150,11 +150,15 @@ public final class TreeChoice {
         Optional<com.villagecolony.core.colony.model.VillageBounds> zoned = ResourceSearches.zonedBox(
                 world, job.task.colonyId(), ProfessionType.LUMBERJACK,
                 LumberjackWork.searchRadius != LumberjackWork.SEARCH_RADIUS);
-        Optional<BlockPos> tree;
 
-        if (zoned.isPresent()) {
+        // O bosque maduro primeiro, perto da vila (P7a); o anel de busca não vale para ele.
+        Optional<BlockPos> tree = VillageGrove.matureTree(job.task.colonyId(), villager.getBlockPos(),
+                log -> !TreeClaims.isTaken(log) && !TreeMarks.isRejected(world, log)
+                        && !TreeMarks.isOutOfReach(world, log), world);
+
+        if (tree.isEmpty() && zoned.isPresent()) {
             tree = byZone(world, job, villager, zoned.get());
-        } else {
+        } else if (tree.isEmpty()) {
             // Primeiro a árvore conhecida mais perto dele; só sem nenhuma, a varredura — ADR-038 P3a.
             tree = com.villagecolony.fabric.integration.VillageTrees.nearest(
                     world, job.task.colonyId(), villager.getBlockPos(), usable);
@@ -205,7 +209,11 @@ public final class TreeChoice {
         // que destruía o tronco.
         List<ColonyPos> chests = List.of(storage.chestPosition());
 
-        int room = ColonyChests.freeSpaceForGroup(world, chests, ResourceGroup.WOOD);
+        // E os baús públicos, para onde vai o que não cabe no dele (Regra 58): medir só o
+        // baú dele encerrava a tarefa antes da árvore, 128 vezes em 21 min (0.3.39).
+        int room = ColonyChests.freeSpaceForGroup(world, chests, ResourceGroup.WOOD)
+                + ColonyChests.freeSpaceForGroup(world,
+                        PublicChests.of(world, job.task.colonyId(), job.center), ResourceGroup.WOOD);
 
         if (room < trunkGroup.size()) {
             TreeFelling.finishTask(job, villager.getUuid(), storage, room);
@@ -237,6 +245,8 @@ public final class TreeChoice {
         job.progress = 0;
         job.required = 0;
         job.stalled = 0;
+        job.closest = Double.MAX_VALUE;
+        job.noCloser = 0;
 
         if (job.task.state() == TaskState.RESERVED) {
             job.task.start();
@@ -248,19 +258,18 @@ public final class TreeChoice {
     }
 
     /**
-     * Do centro da vila para a borda, e só então um pouco fora — pedido do autor,
-     * 2026-10-08 ({@link com.villagecolony.core.coordination.VillageZone}). Entre as
-     * conhecidas vale a faixa mais de dentro e, nela, a mais perto dele; sem
-     * conhecida, a varredura parte do centro da caixa, e a primeira que ela acha é
-     * a mais central. Substitui o rodízio centro ↔ borda do ADR-036 item 18 para o
-     * lenhador: com ele, árvore a 134 blocos ganhava da que estava na praça.
+     * A árvore mais perto do lenhador, dentro do alcance da vila (a caixa + a margem
+     * de {@link com.villagecolony.core.coordination.VillageZone}) — pedido do autor,
+     * 2026-10-11, que substitui a ordem "do centro para a borda" de 10-08. Entre as
+     * conhecidas, a mais perto dele; sem conhecida, a varredura parte de onde ele está.
      */
     static Optional<BlockPos> byZone(ServerWorld world, LumberjackWork.Job job, VillagerEntity villager,
             com.villagecolony.core.colony.model.VillageBounds box) {
 
+        // A árvore mais perto DELE, dentro do alcance da vila — pedido do autor, 2026-10-11,
+        // que substitui o "do centro para a borda" de 10-08: no playtest da 0.3.29 a faixa
+        // mandava o lenhador a ~100 blocos, e ele andou 73% do expediente.
         int margin = ResourceSearches.marginOf(job.task.colonyId(), ProfessionType.LUMBERJACK);
-        java.util.function.ToIntFunction<BlockPos> zone = log -> com.villagecolony.core.coordination.VillageZone
-                .of(box, log.getX(), log.getZ(), margin).rank();
         java.util.function.Predicate<BlockPos> usable = log -> com.villagecolony.core.coordination.VillageZone
                         .of(box, log.getX(), log.getZ(), margin).withinReach()
                 && !TreeClaims.isTaken(log)
@@ -268,13 +277,12 @@ public final class TreeChoice {
                 && !TreeMarks.isOutOfReach(world, log);
 
         Optional<BlockPos> tree = com.villagecolony.fabric.integration.VillageTrees.nearest(
-                world, job.task.colonyId(), villager.getBlockPos(), usable, zone);
+                world, job.task.colonyId(), villager.getBlockPos(), usable);
 
         if (tree.isEmpty()) {
-            BlockPos centre = new BlockPos(box.centerX(), job.center.getY(), box.centerZ());
             int radius = Math.max(box.sizeX(), box.sizeZ()) / 2 + margin;
 
-            tree = TreeScanner.findNearestLog(world, centre, radius, usable);
+            tree = TreeScanner.findNearestLog(world, villager.getBlockPos(), radius, usable);
             tree.ifPresent(found -> com.villagecolony.fabric.integration.VillageTrees.rememberTree(
                     job.task.colonyId(), found));
         }
@@ -294,6 +302,32 @@ public final class TreeChoice {
 
     static String motionless(int ticks) {
         return "has not moved a block in " + ticks + " work ticks";
+    }
+
+    /**
+     * Tiques de expediente andando sem chegar mais perto da árvore antes de
+     * largá-la: 30 s — regra do autor, 2026-10-11. No playtest da 0.3.26 o
+     * lenhador insistiu dois minutos numa árvore fora de alcance. Andar até uma
+     * árvore longe não conta, enquanto ele se aproxima.
+     */
+    static final int NO_CLOSER = 600;
+
+    /** Anota a distância de agora; diz se ele passou de {@link #NO_CLOSER} sem se aproximar. */
+    static boolean noCloser(LumberjackWork.Job job, BlockPos at) {
+        double distance = Math.sqrt(at.getSquaredDistance(job.plan.base()));
+
+        if (job.closest - distance >= 1.0) {
+            job.closest = distance;
+            job.noCloser = 0;
+
+            return false;
+        }
+
+        return ++job.noCloser > Math.min(NO_CLOSER, stallLimit);
+    }
+
+    static String gotNoCloser(int ticks) {
+        return "got no closer to the tree for " + ticks + " work ticks";
     }
 
     /** Ele andou e não chegou, e há quantos tiques — o guarda de travamento. */

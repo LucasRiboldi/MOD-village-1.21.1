@@ -129,6 +129,13 @@ public final class TreeNursery {
         // casa do pastor aberta ali; a borda do viveiro (48–56) cai dentro do
         // raio de busca de lote (64). isColonyBuilt cobre a obra aberta e a
         // casa pronta.
+        // E nem na faixa de construção, nem onde o jogador tirou planta — regras
+        // do autor de 2026-10-11 (ConstructionZone, PlayerClearedPlants).
+        if (com.villagecolony.fabric.integration.PlayerClearedPlants.isCleared(ground)
+                || com.villagecolony.fabric.integration.ConstructionZone.nearRoad(world, ground)) {
+            return false;
+        }
+
         return com.villagecolony.fabric.integration.LotGround.isBiomeGround(world, ground)
                 && !com.villagecolony.fabric.integration.BlockProtection
                         .isVillageOriginal(world, ground)

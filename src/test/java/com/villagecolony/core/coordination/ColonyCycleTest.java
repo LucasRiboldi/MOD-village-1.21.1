@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -580,5 +581,25 @@ class ColonyCycleTest {
         assertTrue(
                 crafting > 0,
                 "a obra ocupou a vaga do pedido de tábua, e a colônia não vai fabricar");
+    }
+
+    /** Vidro sem areia em baú nenhum não pede fundidor novo (regra do autor, 2026-10-11). */
+    @Test
+    void smeltingWithoutItsRawAsksForNoNewHands() {
+        smelter();
+        Map<ResourceType, Integer> goal = Map.of(ResourceType.GLASS, 6);
+        Map<ResourceType, Integer> project = Map.of(ResourceType.GLASS, 6);
+
+        ColonyCycle.run(COLONY, ResourceTally.empty(), goal, tasks, workers,
+                worker -> true, com.villagecolony.core.coordination.ProductionHands.IGNORED, project);
+
+        assertFalse(com.villagecolony.core.worker.service.ProfessionDemand.of(COLONY).contains(ProfessionType.SMELTER),
+                "sem areia, a vaga de fundidor não devia ser pedida");
+
+        ColonyCycle.run(COLONY, ResourceTally.of(Map.of(ResourceType.SAND, 4)), goal, tasks, workers,
+                worker -> true, com.villagecolony.core.coordination.ProductionHands.IGNORED, project);
+
+        assertTrue(com.villagecolony.core.worker.service.ProfessionDemand.of(COLONY).contains(ProfessionType.SMELTER),
+                "com areia no baú, a falta de vidro pede mão de fundidor");
     }
 }

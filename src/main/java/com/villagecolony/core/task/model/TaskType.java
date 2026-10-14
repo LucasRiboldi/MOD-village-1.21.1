@@ -48,6 +48,15 @@ public enum TaskType {
     /** Lavrar pedra: pedra em tijolo. */
     CRAFT_STONE_MATERIAL(Capability.CRAFT_STONE, true, true),
 
+    /** Peça de metal, vidro, gelo ou neve — {@code CraftFamily}. */
+    CRAFT_METAL_MATERIAL(Capability.CRAFT_METAL, true, true),
+
+    /** Peça de tecido ou corante — {@code CraftFamily}. */
+    CRAFT_TEXTILE_MATERIAL(Capability.CRAFT_TEXTILE, true, true),
+
+    /** Peça da roça (papel, livro, farinha de osso, feno) — {@code CraftFamily}. */
+    CRAFT_FARM_MATERIAL(Capability.CRAFT_FARM, true, true),
+
     /**
      * Erguer parte de uma expansão.
      *

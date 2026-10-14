@@ -153,6 +153,53 @@ public class FarmerGameTest implements FabricGameTest {
     }
 
     /**
+     * <b>A semente de outro baú da colônia também planta.</b> O baú dele está
+     * vazio; a semente está no baú de outro trabalhador da mesma colônia.
+     * No código antigo ele lia só o próprio baú e o canteiro ficava vazio.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing",
+            tickLimit = 200)
+    public void theSeedInAnotherColonyChestIsSownToo(TestContext context) {
+        BlockPos other = new BlockPos(1, 2, 3);
+
+        context.setBlockState(FIELD.down(), Blocks.FARMLAND.getDefaultState());
+
+        VillagerEntity villager = farmer(context);
+
+        context.setBlockState(other, Blocks.CHEST.getDefaultState());
+
+        UUID neighbour = UUID.randomUUID();
+        UUID colonyId = VillageColonyMod.WORKERS.find(villager.getUuid()).orElseThrow().colonyId();
+
+        VillageColonyMod.WORKERS.register(neighbour, colonyId);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                neighbour, MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(other))));
+
+        if (context.getWorld().getBlockEntity(context.getAbsolutePos(other))
+                instanceof ChestBlockEntity inventory) {
+
+            inventory.setStack(0, new ItemStack(Items.WHEAT_SEEDS, 4));
+            inventory.markDirty();
+        }
+
+        context.runAtTick(120, () -> {
+            context.assertTrue(
+                    context.getBlockState(FIELD).getBlock() instanceof CropBlock,
+                    "a semente estava no outro baú da colônia e o canteiro ficou vazio");
+
+            context.assertTrue(
+                    context.getWorld().getBlockEntity(context.getAbsolutePos(other))
+                            instanceof ChestBlockEntity inventory
+                            && inventory.getStack(0).getCount() == 3,
+                    "a semente plantada não saiu do baú de onde veio");
+
+            FarmerWork.clearAll();
+
+            context.complete();
+        });
+    }
+
+    /**
      * E sem semente ele não semeia — o teto do campo, sem constante
      * inventada.
      *

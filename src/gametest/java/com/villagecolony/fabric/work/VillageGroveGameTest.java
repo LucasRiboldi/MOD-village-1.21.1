@@ -83,6 +83,25 @@ public class VillageGroveGameTest implements FabricGameTest {
 
             context.assertTrue(VillageGrove.tendNow(world, colony) == 0,
                     "com o bosque cheio o lenhador plantou mais");
+
+            // P7a, bosque-fazenda: a árvore madura do bosque é a escolhida, e o
+            // bosque tem seis mudas por lenhador.
+            BlockPos grown = grove.get(0).up();
+            world.setBlockState(grown, Blocks.OAK_LOG.getDefaultState());
+
+            context.assertTrue(VillageGrove.matureTree(colony.id(), grove.get(0), log -> true, world)
+                            .filter(grown::equals).isPresent(),
+                    "o tronco que cresceu no bosque não foi o escolhido");
+
+            for (int i = 0; i < 2; i++) {
+                UUID lumberjack = UUID.randomUUID();
+                VillageColonyMod.WORKERS.register(lumberjack, colony.id())
+                        .assign(com.villagecolony.core.worker.model.ProfessionType.LUMBERJACK);
+                owned.owning(lumberjack);
+            }
+
+            context.assertTrue(VillageGrove.sizeFor(colony.id()) == 2 * VillageGrove.SIZE,
+                    "dois lenhadores, e o bosque não dobrou: " + VillageGrove.sizeFor(colony.id()));
         } finally {
             for (int x = -9; x <= 15; x++) {
                 for (int z = -9; z <= 15; z++) {
@@ -93,6 +112,49 @@ public class VillageGroveGameTest implements FabricGameTest {
                 }
             }
 
+            owned.cleanUp();
+            VillageGrove.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * A árvore cortada longe não é replantada lá: a muda vai para o bosque perto da
+     * vila, que cresce até o dobro — regra do autor, 2026-10-11.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_grove", tickLimit = 20)
+    public void theSaplingOfAFarTreeGoesToTheGrove(TestContext context) {
+        BlockPos low = context.getAbsolutePos(new BlockPos(1, Y - 5, 1));
+        BlockPos high = context.getAbsolutePos(new BlockPos(5, Y + 5, 5));
+        VillageBounds box = new VillageBounds(low.getX(), low.getY(), low.getZ(), high.getX(), high.getY(), high.getZ());
+        Colony colony = Colony.create(UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(3, Y + 1, 3))));
+
+        colony.measure(box);
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        try {
+            int before = VillageGrove.sizeFor(colony.id());
+            BlockPos near = high.add(VillageGrove.NEAR, 0, 0);
+            BlockPos far = high.add(80, 0, 0);
+
+            context.assertFalse(VillageGrove.takesTheSapling(context.getWorld(), colony.id(), near),
+                    "a árvore do bosque é replantada no lugar");
+            context.assertTrue(VillageGrove.takesTheSapling(context.getWorld(), colony.id(), far),
+                    "a muda da árvore longe devia ir para o bosque");
+            context.assertTrue(VillageGrove.sizeFor(colony.id()) == before + 1,
+                    "o bosque não cresceu com a muda: " + VillageGrove.sizeFor(colony.id()));
+
+            for (int i = 0; i < 3 * VillageGrove.SIZE; i++) {
+                VillageGrove.takesTheSapling(context.getWorld(), colony.id(), far);
+            }
+
+            context.assertTrue(VillageGrove.sizeFor(colony.id()) == 2 * before,
+                    "o bosque passou do dobro: " + VillageGrove.sizeFor(colony.id()));
+        } finally {
             owned.cleanUp();
             VillageGrove.clearAll();
         }

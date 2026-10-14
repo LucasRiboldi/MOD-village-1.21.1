@@ -188,6 +188,14 @@ public final class MineMarks {
     private static final int NEIGHBOURS_FOR_A_DEAD_END = 3;
 
     /**
+     * Por quanto tempo uma recusa ainda conta para o beco da região: três
+     * castigos-base. O alvo por distância é retentado a cada 2 a 5 minutos
+     * (playtest de 2026-10-11), e com a janela do castigo da pedra (5 min)
+     * três recusas nunca ficavam vivas juntas.
+     */
+    static final int REGION_MEMORY = 3 * REFUSAL_MEMORY;
+
+    /**
      * Quanto tempo fica de fora a pedra que já recusou tantas vezes.
      *
      * @param refusals quantas recusas seguidas esta posição acumulou
@@ -272,7 +280,7 @@ public final class MineMarks {
 
     /**
      * Se esta posição está dentro de um beco — três ou mais recusas
-     * ainda de castigo num cubo de {@value #NEIGHBOURHOOD} blocos.
+     * ainda de castigo ou na janela da região ({@link #REGION_MEMORY}) num cubo de {@value #NEIGHBOURHOOD} blocos.
      *
      * <p><b>Quem pergunta isto são os três leitores de proximidade, e
      * não o cursor do túnel</b> — e a assimetria é a parte que se
@@ -332,9 +340,9 @@ public final class MineMarks {
 
             Refusal refusal = entry.getValue();
 
-            if (now - refusal.since() >= memoryFor(refusal.count())) {
-                // Castigo vencido: a entrada só guarda a contagem, e um
-                // beco feito de marcas mortas seria um beco eterno.
+            if (now - refusal.since() >= Math.max(memoryFor(refusal.count()), REGION_MEMORY)) {
+                // Vencidos o castigo e a janela da região: a entrada só guarda
+                // a contagem, e um beco feito de marcas mortas seria eterno.
                 continue;
             }
 

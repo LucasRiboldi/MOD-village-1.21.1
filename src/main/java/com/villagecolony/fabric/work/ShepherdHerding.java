@@ -29,9 +29,11 @@ import java.util.function.Predicate;
 
 /**
  * A coleta de animais do pastor — ADR-038 P2b: sem tosquia, ele procura o
- * animal criável solto mais perto até a borda + 10, põe a corda (corda
- * infinita: não gasta item), volta andando e o amarra na cerca mais perto da
- * cama dele. Um de cada vez, até {@link #MAX_TIED} por cerca.
+ * animal criável solto mais perto até a borda + 10 e põe a corda (corda
+ * infinita: não gasta item). Para onde ele o leva — regra do autor, 2026-10-11
+ * ({@link ShepherdPens}): para dentro do cercado com lugar mais perto da casa;
+ * sem cercado com lugar, para a cerca mais perto da cama (até {@link #MAX_TIED}
+ * por cerca); sem cerca, para um poste que ele põe ao lado da casa.
  */
 final class ShepherdHerding {
 
@@ -57,9 +59,14 @@ final class ShepherdHerding {
 
     static final class Herd {
         final UUID animal;
+        /** A cerca onde amarrar, o poste a pôr, ou o portão do cercado. */
         final BlockPos fence;
         Phase phase = Phase.FETCH;
         final long since;
+        /** O cercado de destino, ou nulo. */
+        ShepherdPens.Pen pen;
+        /** Se {@link #fence} é o poste que ele ainda vai pôr. */
+        boolean newPost;
 
         Herd(UUID animal, BlockPos fence, long since) {
             this.animal = animal;
@@ -94,6 +101,13 @@ final class ShepherdHerding {
             entry.putLong("fence", herd.fence.asLong());
             entry.putString("phase", herd.phase.name());
             entry.putLong("since", herd.since);
+            entry.putBoolean("newPost", herd.newPost);
+
+            if (herd.pen != null) {
+                entry.putLong("inside", herd.pen.inside().asLong());
+                entry.putLong("outside", herd.pen.outside().asLong());
+            }
+
             nbt.put(shepherd.toString(), entry);
         });
 
@@ -111,6 +125,13 @@ final class ShepherdHerding {
 
             Herd herd = new Herd(entry.getUuid("animal"), BlockPos.fromLong(entry.getLong("fence")), entry.getLong("since"));
             herd.phase = "LEAD".equals(entry.getString("phase")) ? Phase.LEAD : Phase.FETCH;
+            herd.newPost = entry.getBoolean("newPost");
+
+            if (entry.contains("inside")) {
+                herd.pen = new ShepherdPens.Pen(herd.fence, BlockPos.fromLong(entry.getLong("inside")),
+                        BlockPos.fromLong(entry.getLong("outside")), java.util.Set.of());
+            }
+
             HERDS.put(shepherd, herd);
         }
     }
@@ -148,15 +169,22 @@ final class ShepherdHerding {
         }
     }
 
-    /** A coleta deste pastor, se há cerca com lugar e animal solto. */
+    /** A coleta deste pastor, se há para onde levar e animal solto. */
     static Optional<Herd> start(ServerWorld world, Colony colony, VillagerEntity shepherd) {
         BlockPos home = BedTeleport.bedOf(world, shepherd)
                 .or(() -> VillageColonyMod.STORAGES.of(shepherd.getUuid())
                         .map(storage -> MinecraftTypeAdapter.toBlockPos(storage.chestPosition())))
                 .orElse(shepherd.getBlockPos());
-        Optional<BlockPos> fence = nearestFence(world, home);
 
-        if (fence.isEmpty() || tiedAt(world, fence.get()) >= MAX_TIED) {
+        // O cercado com lugar primeiro; depois a cerca mais perto; depois um poste novo.
+        Optional<ShepherdPens.Pen> pen = ShepherdPens.withRoom(world, colony, home);
+        Optional<BlockPos> fence = pen.map(ShepherdPens.Pen::gate)
+                .or(() -> nearestFence(world, home).filter(at -> tiedAt(world, at) < MAX_TIED));
+        Optional<BlockPos> newPost = fence.isPresent()
+                ? Optional.empty()
+                : ShepherdPens.postBesideHome(world, colony.id(), home);
+
+        if (fence.isEmpty() && newPost.isEmpty()) {
             return Optional.empty();
         }
 
@@ -170,9 +198,16 @@ final class ShepherdHerding {
         double bestDistance = Double.MAX_VALUE;
 
         for (EntityType<? extends AnimalEntity> species : ShepherdFlock.SPECIES) {
-            for (AnimalEntity animal : world.getEntitiesByType(species, area,
-                    candidate -> candidate.isAlive() && !candidate.isLeashed() && candidate.canBeLeashed()
-                            && !ShepherdFlock.isKept(world, candidate))) {
+            // Com cercado com lugar, o amarrado no poste também vai para dentro: o cercado
+            // é a prioridade. Sem ele, só o solto.
+            Predicate<AnimalEntity> wanted = pen.isPresent()
+                    ? candidate -> candidate.isAlive() && candidate.canBeLeashed()
+                            && (!candidate.isLeashed() || candidate.getLeashHolder() instanceof LeashKnotEntity)
+                            && !ShepherdFlock.isPenned(world, candidate)
+                    : candidate -> candidate.isAlive() && !candidate.isLeashed() && candidate.canBeLeashed()
+                            && !ShepherdFlock.isKept(world, candidate);
+
+            for (AnimalEntity animal : world.getEntitiesByType(species, area, wanted)) {
                 double distance = animal.squaredDistanceTo(shepherd);
 
                 if (distance < bestDistance) {
@@ -186,7 +221,11 @@ final class ShepherdHerding {
             return Optional.empty();
         }
 
-        return Optional.of(new Herd(best.getUuid(), fence.get(), world.getTime()));
+        Herd herd = new Herd(best.getUuid(), fence.or(() -> newPost).orElseThrow(), world.getTime());
+        herd.pen = pen.orElse(null);
+        herd.newPost = newPost.isPresent();
+
+        return Optional.of(herd);
     }
 
     /** Um passo de cada coleta, a cada cinco tiques. */
@@ -230,9 +269,30 @@ final class ShepherdHerding {
             return false;
         }
 
-        WorkTargets.set(shepherdId, herd.fence, REACH - 1);
+        BlockPos goal = herd.pen != null ? herd.pen.outside() : herd.fence;
+
+        WorkTargets.set(shepherdId, goal, REACH - 1);
+
+        if (herd.pen != null && shepherd.getBlockPos().isWithinDistance(goal, REACH)) {
+            ShepherdPens.bringIn(world, herd.pen, animal);
+            WorkTargets.clear(shepherdId);
+            VillageColonyMod.LOGGER.info("Shepherd {} brought a {} into the pen at {}",
+                    shepherdId.toString().substring(0, 8), animal.getType().getUntranslatedName(),
+                    herd.pen.gate().toShortString());
+            return false;
+        }
 
         if (shepherd.getBlockPos().isWithinDistance(herd.fence, REACH)) {
+            // Sem poste ali: ele põe um, com a cerca do baú.
+            boolean posted = !herd.newPost || VillageColonyMod.WORKERS.find(shepherdId)
+                    .map(worker -> ShepherdPens.placePost(world, worker.colonyId(), herd.fence))
+                    .orElse(false);
+
+            if (!posted) {
+                abort(world, shepherdId, herd);
+                return false;
+            }
+
             LeashKnotEntity knot = LeashKnotEntity.getOrCreate(world, herd.fence);
 
             animal.attachLeash(knot, true);

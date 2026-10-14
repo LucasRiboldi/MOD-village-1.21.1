@@ -41,8 +41,8 @@ import java.util.TreeSet;
  *
  * <p><b>O que ele afirma</b> é a regra que a colônia precisa cumprir: todo
  * bloco que uma casa pede ou <b>é fabricável</b> pelo livro do jogo — e
- * então cai no carpinteiro ou no pedreiro pela divisão de
- * {@code CraftingWork.isMasonry} —, ou <b>é colhível</b> na natureza, ou
+ * então cai no ofício do material pela divisão de
+ * {@code CraftFamily} —, ou <b>é colhível</b> na natureza, ou
  * é peça que o jogador põe no baú pela segunda metade da Regra 13.
  *
  * <p>O relatório que ele imprime no log é a fonte da tabela do README.
@@ -380,7 +380,13 @@ public class StructureCoverageGameTest implements FabricGameTest {
                 .getOrEmpty(Identifier.of(material.namespace(), path));
 
         if (item.isPresent() && CraftingLookup.billFor(world, item.get(), any -> true).isPresent()) {
-            return CraftingWork.isMasonry(material) ? "pedreiro" : "carpinteiro";
+            return switch (com.villagecolony.core.coordination.CraftFamily.of(path)) {
+                case CRAFT_STONE_MATERIAL -> "pedreiro";
+                case CRAFT_METAL_MATERIAL -> "fundidor (bancada)";
+                case CRAFT_TEXTILE_MATERIAL -> "pastor (bancada)";
+                case CRAFT_FARM_MATERIAL -> "fazendeiro (bancada)";
+                default -> "carpinteiro";
+            };
         }
 
         if (item.isPresent()

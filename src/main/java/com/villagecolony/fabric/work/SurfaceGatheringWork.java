@@ -100,7 +100,8 @@ public final class SurfaceGatheringWork {
                 }
 
                 VillageSpiralSweep.forget(worker);
-                Direction sector = FarthestVillageSector.farthestLoadedSector(world, center, colony.id());
+                Direction sector = EmptySweeps.turnedFrom(FarthestVillageSector.farthestLoadedSector(
+                        world, center, colony.id()), colony.id(), task.targetResource());
                 return new Job(task, center, sector);
             });
             open++;
@@ -240,18 +241,8 @@ public final class SurfaceGatheringWork {
                 .flatMap(Colony::bounds)
                 .orElseGet(() -> VillageBounds.block(MinecraftTypeAdapter.toColonyPos(job.center)));
         VillageFluidIndex.refresh(world, job.task.colonyId(), bounds);
-        // <b>A coluna fora do setor sai de graça</b> — 2026-09-16. Terra e
-        // grama continuam restritas ao setor externo escolhido. A varredura
-        // agora acompanha os retângulos da vila, da borda para dentro e
-        // depois para fora; colunas fora do setor não gastam orçamento de
-        // leitura. O log de 01:19 havia registrado 24 de 26 ciclos em "still
-        // sweeping — the budget ran out — dirt", com as obras esperando
-        // terra 93 vezes na semana.
-        //
-        // A pergunta é a mesma que o DirtPatch e o GrassPatch já faziam lá
-        // dentro; o que muda é a hora — antes do orçamento, e sem tocar o
-        // mundo. O índice de fluidos também é só uma consulta em memória
-        // aqui; a reconstrução incremental aconteceu acima.
+        // Coluna fora do setor (terra e grama) ou sob água sai antes do orçamento,
+        // sem tocar o mundo — 2026-09-16 (24 de 26 ciclos "budget ran out — dirt").
         // A argila não pula água: ela mora no fundo do lago — 2026-10-03.
         boolean clay = job.task.targetResource() == ResourceType.CLAY_BALL
                 || job.task.targetResource() == ResourceType.CLAY;
@@ -271,9 +262,11 @@ public final class SurfaceGatheringWork {
             if (job.task.targetResource() == ResourceType.DIRT) {
                 return DirtPatch.in(world, column, job.center.getY(), job.center, job.surfaceSector);
             }
-            // <b>E o cacto</b> — 2026-09-19, pergunta do autor. Só o
-            // TOPO: deixar a base é o replantio, e o cacto volta a
-            // crescer dali. Ver CactusPatch.
+            // O cacto pelo topo (CactusPatch); plantas, gelo e neve (PlantPatch, 11-10).
+            if (com.villagecolony.fabric.integration.PlantPatch.handles(job.task.targetResource())) {
+                return com.villagecolony.fabric.integration.PlantPatch.in(
+                        world, column, job.center.getY(), job.task.targetResource());
+            }
             if (job.task.targetResource() == ResourceType.CACTUS) {
                 return CactusPatch.in(world, column, job.center.getY());
             }
@@ -288,7 +281,7 @@ public final class SurfaceGatheringWork {
 
         // Primeiro onde já se achou — ADR-038 P7; depois a varredura.
         Optional<BlockPos> found = SurfaceHits.near(
-                job.task.colonyId(), job.task.targetResource(), worthLooking, probe)
+                job.task.colonyId(), job.task.targetResource(), job.center, worthLooking, probe)
                 .or(() -> VillageSpiralSweep.next(
                         workerId, bounds, job.center.getY(),
                         outerReach(job, bounds, outsideVillage, protectedRadius), worthLooking, probe));
@@ -356,7 +349,8 @@ public final class SurfaceGatheringWork {
         // fazendeiro sai de pá, e não de enxada — 2026-09-30.
         ItemStack tool = job.task.targetResource() == ResourceType.CLAY_BALL
                 ? new ItemStack(Items.IRON_SHOVEL)
-                : ActionTool.forBlock(state, villager.getMainHandStack());
+                : com.villagecolony.fabric.integration.PlantPatch.toolFor(world, job.task.targetResource())
+                        .orElseGet(() -> ActionTool.forBlock(state, villager.getMainHandStack()));
         List<ItemStack> drops = Block.getDroppedStacks(
                 state, world, job.target, world.getBlockEntity(job.target), villager, tool);
         int amount = drops.stream()
@@ -387,6 +381,8 @@ public final class SurfaceGatheringWork {
             }
         }
         job.collected += amount;
+        com.villagecolony.fabric.integration.PlantPatch.replant(world, job.task.colonyId(),
+                MinecraftTypeAdapter.toColonyPos(job.center), job.target, job.task.targetResource());
         VillageColonyMod.LOGGER.info(
                 "{} {} gathered {} {} at {} — {}/{} this task",
                 role(job), workerId, amount, job.task.targetResource(), job.target.toShortString(),

@@ -149,7 +149,8 @@ public final class WorkerStrikes {
             case COLLECT_SURFACE_RESOURCE, COLLECT_SOIL -> ActivityKind.MINING;
             case COLLECT_WOOL, MAINTAIN_FOOD -> ActivityKind.SHEPHERDING;
             case SMELT_ITEMS -> ActivityKind.SMELTING;
-            case CRAFT_STONE -> ActivityKind.CRAFTING;
+            case CRAFT_STONE, CRAFT_TEXTILE, CRAFT_FARM -> ActivityKind.CRAFTING;
+            case CRAFT_METAL -> ActivityKind.SMELTING;
             case BUILD_STRUCTURE -> ActivityKind.BUILDING;
         };
     }
@@ -160,7 +161,9 @@ public final class WorkerStrikes {
             case COLLECT_WOOD, CRAFT_WOOD -> TargetKind.WOOD;
             case COLLECT_SURFACE_RESOURCE, COLLECT_SOIL -> TargetKind.ORE;
             case COLLECT_WOOL, MAINTAIN_FOOD -> TargetKind.ANIMAL;
-            case SMELT_ITEMS -> TargetKind.ORE;
+            case SMELT_ITEMS, CRAFT_METAL -> TargetKind.ORE;
+            case CRAFT_TEXTILE -> TargetKind.ANIMAL;
+            case CRAFT_FARM -> TargetKind.CROP;
             case BUILD_STRUCTURE -> TargetKind.CONSTRUCTION;
         };
     }

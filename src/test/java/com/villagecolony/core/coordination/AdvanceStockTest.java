@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Cinco de cada peça por vez, em ciclo (ADR-038 P5b). */
 class AdvanceStockTest {
@@ -57,6 +58,44 @@ class AdvanceStockTest {
         }
 
         assertEquals(5, goals.get(ResourceType.STONE_BRICKS), "a peça sem material prendeu o ciclo");
+    }
+
+    @Test
+    void theAdvanceStopsAtTheCeilingOfTheNextBuild() {
+        UUID colony = UUID.randomUUID();
+        Map<ResourceType, Integer> stock = new EnumMap<>(ResourceType.class);
+        Map<ResourceType, Integer> goals = new HashMap<>();
+
+        AdvanceStock.ceilings(colony, Map.of(ResourceType.COBBLESTONE_SLAB, 7, ResourceType.STONE_BRICKS, 3));
+
+        AdvanceStock.addTo(goals, colony, PIECES, type -> stock.getOrDefault(type, 0));
+        assertEquals(5, goals.get(ResourceType.COBBLESTONE_SLAB));
+
+        stock.put(ResourceType.COBBLESTONE_SLAB, 5);
+        stock.put(ResourceType.STONE_BRICKS, 3);
+        goals.clear();
+        AdvanceStock.addTo(goals, colony, PIECES, type -> stock.getOrDefault(type, 0));
+        assertEquals(7, goals.get(ResourceType.COBBLESTONE_SLAB),
+                "a meta passou do que a próxima obra pede (teto 7)");
+        assertFalse(goals.containsKey(ResourceType.STONE_BRICKS), "o tijolo já está no teto");
+
+        stock.put(ResourceType.COBBLESTONE_SLAB, 7);
+        goals.clear();
+        AdvanceStock.addTo(goals, colony, PIECES, type -> stock.getOrDefault(type, 0));
+        assertTrue(goals.isEmpty(), "com as duas peças no teto, nada se adianta: " + goals);
+    }
+
+    @Test
+    void aPieceTheNextBuildDoesNotUseIsNeverAdvanced() {
+        UUID colony = UUID.randomUUID();
+        Map<ResourceType, Integer> goals = new HashMap<>();
+
+        AdvanceStock.ceilings(colony, Map.of(ResourceType.STONE_BRICKS, 4));
+
+        AdvanceStock.addTo(goals, colony, PIECES, type -> 0);
+
+        assertFalse(goals.containsKey(ResourceType.COBBLESTONE_SLAB), "laje sem uso na obra");
+        assertEquals(4, goals.get(ResourceType.STONE_BRICKS));
     }
 
     @Test

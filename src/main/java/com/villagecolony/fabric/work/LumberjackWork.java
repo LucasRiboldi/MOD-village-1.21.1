@@ -175,15 +175,13 @@ public final class LumberjackWork {
         /** Quantos troncos esta tarefa já rendeu, para a linha de log. */
         int collected;
 
-        /**
-         * Ticks de horário de trabalho desde o último avanço de verdade.
-         *
-         * <p>Zerado quando um bloco cai e quando uma árvore nova começa —
-         * os dois únicos sinais de que o trabalho anda. Andar não conta:
-         * é exatamente o aldeão que anda para sempre sem chegar que este
-         * contador existe para pegar. Ver {@link TreeChoice#STALL_LIMIT}.
-         */
+        /** Tiques de expediente desde o último bloco caído ou árvore nova — {@link TreeChoice#STALL_LIMIT}. */
         int stalled;
+
+        /** O mais perto que chegou da árvore, e há quantos tiques não chega mais — {@link TreeChoice#NO_CLOSER}. */
+        double closest = Double.MAX_VALUE;
+
+        int noCloser;
 
         /**
          * Se ele saiu do lugar, e há quanto tempo não sai — 2026-09-03.
@@ -192,6 +190,13 @@ public final class LumberjackWork {
          * alvo</b> e nunca pergunta se o aldeão andou. Ver {@link WorkStall}.
          */
         final WorkStall stall = new WorkStall();
+
+        /** O desvio em curso, e quantos esta árvore já teve — P7b. Ver {@link LumberjackDetours}. */
+        DetourWalker detour;
+
+        int detours;
+
+        BlockPos detourTree;
 
         Job(Task task, BlockPos center) {
             this.task = task;
@@ -239,9 +244,7 @@ public final class LumberjackWork {
         dropClosedJobs();
 
         if (open == 0) {
-            // Sem árvore a cortar, o lenhador recompõe o viveiro da borda
-            // antes de ficar ocioso. A atribuição de construção continua
-            // sendo a alternativa seguinte, em WorkAssignment.
+            // Sem árvore a cortar, o lenhador recompõe o viveiro da borda.
             if (LumberjackNursery.hasLumberjack(colony.id())) {
                 LumberjackNursery.plantBatchIfItIsTime(world, colony.id(), center);
             }
@@ -249,6 +252,9 @@ public final class LumberjackWork {
         } else {
             IdleLog.clear(colony.id(), SUBJECT);
         }
+
+        // Lenhador sem tarefa planta muda em volta da vila (OutskirtsPlanting).
+        OutskirtsPlanting.plantForIdleLumberjacks(world, colony);
 
         LumberjackReport.report(world, colony);
 
@@ -281,7 +287,7 @@ public final class LumberjackWork {
             }
 
             if (!isOngoing(job.task)) {
-                TreeFelling.closePlan(world, job);
+                TreeFelling.closePlan(world, workerId, job);
                 entries.remove();
 
                 // O destino morre com a tarefa — ver WorkTargets.clear.
@@ -297,7 +303,7 @@ public final class LumberjackWork {
             }
 
             if (outcome == Outcome.DONE) {
-                TreeFelling.closePlan(world, job);
+                TreeFelling.closePlan(world, workerId, job);
                 entries.remove();
             }
         }
@@ -372,9 +378,17 @@ public final class LumberjackWork {
         // Parado no mesmo bloco há quinze segundos de expediente —
         // 2026-09-03. O guarda de baixo cobra dois minutos para notar o
         // mesmo. Ver WorkStall.
+        if (LumberjackDetours.tick(world, villager, job, storage.get())) {
+            return Outcome.WORKED;
+        }
+
         if (job.stall.stuck(world, villager)) {
-            return TreeChoice.giveUp(world, job, workerId,
-                    TreeChoice.reasonFor(true, job.stall.ticks(), job.stalled));
+            String why = TreeChoice.reasonFor(true, job.stall.ticks(), job.stalled);
+
+            // Um desvio antes de largar a árvore (P7b).
+            return LumberjackDetours.tryDetour(world, villager, job, why)
+                    ? Outcome.WORKED
+                    : TreeChoice.giveUp(world, job, workerId, why);
         }
 
         if (WorkHours.isWorkTime(world, villager) && ++job.stalled > TreeChoice.stallLimit) {
@@ -383,6 +397,10 @@ public final class LumberjackWork {
         }
 
         if (!villager.getBlockPos().isWithinDistance(job.plan.base(), REACH)) {
+            if (WorkHours.isWorkTime(world, villager) && TreeChoice.noCloser(job, villager.getBlockPos())) {
+                return TreeChoice.giveUp(world, job, workerId, TreeChoice.gotNoCloser(job.noCloser));
+            }
+
             TreeChoice.walkTo(world, villager, job.plan.base());
 
             return Outcome.WORKED;

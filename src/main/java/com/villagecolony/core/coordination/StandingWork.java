@@ -40,6 +40,13 @@ public final class StandingWork {
         }
     }
 
+    /**
+     * A areia que o fundidor guarda sem pedido — regra do autor, 2026-10-11: no
+     * playtest da 0.3.25 a obra parou esperando vidro e a areia só começou a ser
+     * buscada quando a vidraça já faltava. Ponto de partida; o playtest mede.
+     */
+    public static final int SAND_RESERVE = 16;
+
     private StandingWork() {
     }
 
@@ -62,6 +69,10 @@ public final class StandingWork {
             widened.merge(ResourceType.WHEAT,
                     owned.amountOfGroup(ResourceGroup.CROPS) + rooms.food(), Math::max);
         }
+
+        // A areia de reserva: um pedido de produção, que nunca vira areia do nada
+        // (LocateFallback só cria o que a obra pede).
+        widened.merge(ResourceType.SAND, SAND_RESERVE, Math::max);
 
         return Map.copyOf(widened);
     }

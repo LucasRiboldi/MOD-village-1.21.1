@@ -143,9 +143,11 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
 
     /** Longe das praias das outras arenas: sem areia, o vidro aparece para a vidraça. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
-    public void theGlassForAPaneAppearsInTheCarpenterChestWithoutABeach(TestContext context) {
+    public void theGlassForAPaneAppearsInTheSmelterChestWithoutABeach(TestContext context) {
         BlockPos far = context.getAbsolutePos(new BlockPos(2, 2, 2)).add(-3_000, 0, 3_000);
         Setup setup = setUp(context, far, Items.GLASS_PANE);
+        // A vidraça é do fundidor desde a divisão por material (CraftFamily, 2026-10-11).
+        VillageColonyMod.WORKERS.find(setup.carpenter()).orElseThrow().assign(ProfessionType.SMELTER);
 
         try {
             for (int attempt = 1; attempt <= 4; attempt++) {
@@ -153,7 +155,7 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
                         context.getWorld(), setup.project(), Items.GLASS_PANE);
             }
 
-            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+            for (int dispatch = 1; dispatch <= com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; dispatch++) {
                 ConstructionSupplyDispatches.recordCycleDispatch(
                         setup.project().id(), Items.GLASS_PANE, dispatch);
             }
@@ -162,7 +164,7 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
                     context.getWorld(), setup.project(), Items.GLASS_PANE);
 
             context.assertTrue(count(context, setup.carpenterChest(), Items.GLASS) == 6,
-                    "o vidro da vidraça não apareceu no baú do carpinteiro: "
+                    "o vidro da vidraça não apareceu no baú do fundidor: "
                             + count(context, setup.carpenterChest(), Items.GLASS));
             context.assertTrue(count(context, setup.carpenterChest(), Items.SAND) == 0,
                     "a areia, que é natural, apareceu do nada");
@@ -197,7 +199,7 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
             }
 
             // Consultas não gastam tentativa: só o despacho do ciclo conta — ADR-040 §2.
-            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+            for (int dispatch = 1; dispatch <= com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; dispatch++) {
                 ConstructionSupplyDispatches.recordCycleDispatch(setup.project().id(), Items.OAK_PLANKS, dispatch);
             }
 
@@ -251,12 +253,13 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
     }
 
     /**
-     * O pedido mostra a sequência real de uma peça sem rota — ADR-035 §3: conta
-     * as tentativas e, na quarta (ADR-036 item 6), o vidro vai ao baú do carpinteiro e a
-     * vidraça passa a esperar o artesão.
+     * Vidraça sem praia e sem britador — P2d, 2026-10-11 (substitui a regra de
+     * ADR-036 item 6 para a vidraça): o vidro não tem rota, a janela vira cerca
+     * de madeira, que o carpinteiro faz. O pedido segue pela profissão do começo
+     * ao fim, e o vidro não aparece no baú.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
-    public void aPaneWithoutABeachShowsTheAttemptsAndThenTheCraftsman(TestContext context) {
+    public void aPaneWithoutABeachAsksTheCarpenterForAFence(TestContext context) {
         BlockPos far = context.getAbsolutePos(new BlockPos(2, 2, 2)).add(-3_000, 0, -3_000);
         Setup setup = setUp(context, far, Items.GLASS_PANE);
 
@@ -277,11 +280,11 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
             MaterialRequest fourth = MaterialRequests.of(setup.project().id()).orElse(null);
 
             context.assertTrue(first != null && first.state() == MaterialRequest.State.RESOLVING
-                            && first.source() == MaterialRequest.Source.STOCKED,
-                    "na primeira falta a vidraça devia estar contando tentativas: " + first);
+                            && first.source() == MaterialRequest.Source.PROFESSION,
+                    "sem rota de vidro a janela devia pedir a cerca ao carpinteiro: " + first);
             context.assertTrue(fourth != null && fourth.state() == MaterialRequest.State.RESOLVING
-                            && fourth.source() == MaterialRequest.Source.CRAFTSMAN,
-                    "na quarta a vidraça devia esperar o artesão: " + fourth);
+                            && fourth.source() == MaterialRequest.Source.PROFESSION,
+                    "as quatro tentativas de vidraça não podem criá-la do nada: " + fourth);
         } finally {
             setup.cleanUp();
         }
@@ -306,6 +309,10 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
 
             context.assertTrue(count(context, setup.smelterChest(), Items.CLAY_BALL) == 1,
                     "o clay ball já existia na colônia, mas não apareceu no baú do fundidor");
+
+            // Playtest 0.3.31: o que a vila tem é levado, e não criado de novo.
+            context.assertTrue(count(context, setup.otherChest(), Items.CLAY_BALL) == 0,
+                    "o clay ball surgiu no baú do fundidor em vez de vir do outro baú da vila");
         } finally {
             setup.cleanUp();
         }
@@ -325,15 +332,15 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
             }
 
             context.assertTrue(count(context, setup.builderChest(), Items.WHITE_TERRACOTTA) == 0,
-                    "a terracota apareceu sem quatro despachos do ciclo");
+                    "a terracota apareceu antes dos despachos do ciclo");
 
-            for (int dispatch = 1; dispatch <= 4; dispatch++) {
+            for (int dispatch = 1; dispatch <= com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; dispatch++) {
                 ConstructionSupplyDispatches.recordCycleDispatch(
                         setup.project().id(), Items.WHITE_TERRACOTTA, dispatch);
             }
 
             context.assertTrue(BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project()),
-                    "quatro despachos distintos não liberaram a contingência terminal");
+                    "os despachos distintos não liberaram a contingência terminal");
             context.assertTrue(count(context, setup.builderChest(), Items.WHITE_TERRACOTTA) == 1,
                     "a contingência terminal não entrou no baú do construtor");
         } finally {
@@ -341,6 +348,32 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
         }
 
         context.complete();
+    }
+
+    /** Rota sem caminho nenhum conta todo ciclo: nenhuma tarefa vai nascer para ela (Regra 51). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
+    public void aPieceWithNoRouteAtAllCountsEveryCycle(TestContext context) {
+        Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.FLETCHING_TABLE);
+
+        setup.project().moveTo(ConstructionState.PREPARING);
+        setup.project().moveTo(ConstructionState.BUILDING);
+        setup.project().moveTo(ConstructionState.WAITING_RESOURCES);
+        VillageColonyMod.CONSTRUCTIONS.register(setup.project());
+        ConstructionSupplyDispatches.renewForCycle(context.getWorld(), setup.colony());
+
+        context.waitAndRun(1, () -> {
+            try {
+                ConstructionSupplyDispatches.renewForCycle(context.getWorld(), setup.colony());
+
+                context.assertTrue(ConstructionSupplyDispatches.fallbackDue(
+                                setup.project().id(), Items.FLETCHING_TABLE),
+                        "a peça sem rota nenhuma não contou os ciclos da obra");
+            } finally {
+                setup.cleanUp();
+            }
+
+            context.complete();
+        });
     }
 
     /**
@@ -372,7 +405,7 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
 
             ConstructionSupplyDispatches.renewForCycle(context.getWorld(), setup.colony());
             long tick = context.getWorld().getTime();
-            for (int cycle = 1; cycle <= 3; cycle++) {
+            for (int cycle = 1; cycle < com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; cycle++) {
                 ConstructionSupplyDispatches.recordCycleDispatch(
                         setup.project().id(), Items.OAK_PLANKS, tick + cycle);
             }

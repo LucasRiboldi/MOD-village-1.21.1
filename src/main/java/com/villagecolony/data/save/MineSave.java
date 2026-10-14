@@ -1,7 +1,9 @@
 package com.villagecolony.data.save;
 
 import com.villagecolony.core.construction.model.Mine;
+import com.villagecolony.core.construction.model.MineNetwork;
 import com.villagecolony.core.construction.model.MineShaft;
+import com.villagecolony.core.construction.service.MineNetworks;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.Side;
 import net.minecraft.nbt.NbtCompound;
@@ -71,6 +73,10 @@ final class MineSave {
      */
     private static final String ASCENT = "ascent";
 
+    /** O nível em rede de agora (ADR-042 D9): salão e nós. */
+    private static final String NETWORK = "network";
+    private static final String NETWORK_HUB = "networkHub";
+
     /**
      * Qual geometria de mina escreveu esta fronteira — 2026-08-27.
      *
@@ -134,6 +140,10 @@ final class MineSave {
             entry.putInt(SHAPE, SHAPE_VERSION);
             entry.putBoolean(ARCH, mine.archRaised());
             entry.putInt(ASCENT, mine.shaft().ascent());
+            MineNetworks.of(mine.colonyId()).ifPresent(network -> {
+                entry.putIntArray(NETWORK_HUB, new int[] {network.hub().x(), network.hub().y(), network.hub().z()});
+                entry.putIntArray(NETWORK, network.toArray());
+            });
 
             list.add(entry);
         }
@@ -223,6 +233,12 @@ final class MineSave {
             // sem arco; não se infere uma construção que o mundo não prova.
             if (entry.getBoolean(ARCH)) {
                 mine.archIsUp();
+            }
+
+            int[] hub = entry.getIntArray(NETWORK_HUB);
+            if (hub.length == 3) {
+                MineNetworks.restore(colonyId, MineNetwork.restore(
+                        new ColonyPos(hub[0], hub[1], hub[2]), entry.getIntArray(NETWORK)));
             }
 
             found.add(mine);

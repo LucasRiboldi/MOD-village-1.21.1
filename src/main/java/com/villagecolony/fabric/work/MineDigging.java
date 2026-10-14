@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.construction.model.MineShaft;
@@ -137,13 +138,16 @@ public final class MineDigging {
         Optional<Mine> mine = mineOf(world, workerId, colonyId, center);
 
         if (mine.isEmpty()) {
-            // A boca não pôde nascer. Em vez de a colônia ficar sem a
-            // única fonte de pedra que tem, ela raspa o que estiver
-            // exposto em volta — ver MineVein.exposedStone.
+            // A boca não pôde nascer: raspa o que estiver exposto (MineVein.exposedStone).
             return exposedStoneFallback(world, workerId, colonyId, center);
         }
 
         IdleLog.clear(colonyId, SURFACE_SUBJECT);
+
+        // Passada a escadaria e o salão, as galerias são em rede (ADR-042).
+        if (NetworkDigging.galleryPhase(mine.get())) {
+            return NetworkDigging.nextOrDescend(world, workerId, colonyId, mine.get(), center);
+        }
 
         // O ramal novo vai para o minério que a vila precisa — ADR-039 D3.
         int[] order = MineClaims.armAlreadyHeld(colonyId, workerId).isPresent()
@@ -151,16 +155,13 @@ public final class MineDigging {
                 : VillageColonyMod.COLONIES.find(colonyId)
                         .map(colony -> MineOreHeading.order(world, colony, mine.get()))
                         .orElse(new int[] {0, 1, 2, 3});
+        mine.get().skipTheSharedHall();
         OptionalInt claimed = MineClaims.claimArm(
                 colonyId, workerId, mine.get().branchesOpenNow(), index -> !mine.get().arm(index).isDone(), order);
 
         if (claimed.isEmpty()) {
-            // <b>Nenhum ramal aceita picareta agora</b>: ou os abertos
-            // estão todos com outros mineiros, ou todos acabaram. O
-            // segundo caso é o que faz a mina descer, e é aqui que ele se
-            // decide — antes ficava no ramo do {@code isDone} logo
-            // abaixo, que a reserva nunca deixava alcançar quando o ramal
-            // acabado continuava sendo entregue.
+            // Nenhum ramal aceita picareta: os abertos estão com outros, ou todos
+            // acabaram — e é este caso que faz a mina descer.
             Mine.LevelAdvance advance = mine.get().advanceIfEveryOpenArmIsDone();
 
             if (advance == Mine.LevelAdvance.DEEPENED) {
@@ -276,13 +277,19 @@ public final class MineDigging {
         return found;
     }
 
-    /** Pedra exposta sem invadir as células planejadas da mina aberta mais próxima da colônia. */
+    /**
+     * Pedra exposta em volta da vila, só enquanto a colônia não tem mina. Com ela, o
+     * mineiro sem ramal livre espera na mina: cavar a encosta deixava buracos que
+     * pareciam bocas de mina em lugar qualquer (Regra 53, playtest 0.3.31).
+     */
     static Optional<BlockPos> exposedStoneFallback(
             ServerWorld world, UUID workerId, UUID colonyId, BlockPos center) {
 
-        return VillageColonyMod.MINES.of(colonyId)
-                .map(mine -> MineVein.exposedStone(world, workerId, colonyId, center, mine.plannedCells()))
-                .orElseGet(() -> MineVein.exposedStone(world, workerId, colonyId, center));
+        if (VillageColonyMod.MINES.of(colonyId).isPresent()) {
+            return Optional.empty();
+        }
+
+        return MineVein.exposedStone(world, workerId, colonyId, center);
     }
 
 
@@ -415,21 +422,23 @@ public final class MineDigging {
 
         Side descent = MineCuts.sideOf(colonyId);
 
-        // A descida da mina anterior travou: a nova nasce na borda, longe da água (A-4).
-        Optional<MineEdge.Choice> edge = MineEdge.relocation(world, colonyId, center)
-                .or(() -> MineEdge.inside(world, colonyId, center, null));
+        // A boca nasce dentro da caixa, longe da água (ADR-038 P3b).
+        Optional<MineEdge.Choice> edge = MineEdge.inside(world, colonyId, center, null);
 
         if (edge.isPresent()) {
             descent = edge.get().side();
         }
 
+        // Com a caixa medida, a boca só nasce na faixa da borda (Regra 53).
+        Optional<VillageBounds> box = MineEdge.boxOf(colonyId);
         Optional<BlockPos> mouth = edge.isPresent()
                 ? Optional.of(edge.get().mouth())
-                : MineSite.mouthOf(world, center, descent);
+                : box.isPresent() ? Optional.empty() : MineSite.mouthOf(world, center, descent);
         Optional<WaterMineAccess.Route> waterAccess = Optional.empty();
 
         if (mouth.isEmpty()) {
-            waterAccess = WaterMineAccess.find(world, center, descent);
+            waterAccess = WaterMineAccess.find(world, center, descent)
+                    .filter(route -> box.isEmpty() || MineEdge.nearTheEdge(box.get(), route.entry()));
 
             if (waterAccess.isPresent() && waterAccess.get().place(world)) {
                 mouth = Optional.of(waterAccess.get().entry());
@@ -450,9 +459,11 @@ public final class MineDigging {
                     colonyId,
                     MOUTH_SUBJECT,
                     IdleReason.NO_TARGET,
-                    "no column within " + MineSite.distance() + " blocks of " + center.toShortString()
-                            + " can hold a mine mouth — tried 8 directions at 5 distances,"
-                            + " the last two settling for a poor one");
+                    box.isPresent()
+                            ? "no column near the edge of the village box can hold a mine mouth"
+                            : "no column within " + MineSite.distance() + " blocks of " + center.toShortString()
+                                    + " can hold a mine mouth — tried 8 directions at 5 distances,"
+                                    + " the last two settling for a poor one");
 
             return Optional.empty();
         }

@@ -48,12 +48,12 @@ public final class ConstructionSupplyDispatches {
     private ConstructionSupplyDispatches() {
     }
 
-    /** A quarta renovação sem entrega permite o suprimento terminal. */
+    /** Um minuto de renovações sem entrega permite o suprimento terminal (regra do autor, 2026-10-11). */
     public static boolean fallbackDue(UUID projectId, Item item) {
         Dispatch dispatch = BY_PROJECT.get(projectId);
         return dispatch != null
                 && dispatch.item() == item
-                && dispatch.attempts() >= BiomeConstructionSupply.ATTEMPTS_BEFORE_STOCKING;
+                && dispatch.attempts() >= BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING;
     }
 
     /** Um item físico no estoque encerra a sequência, seja ele de profissão ou do jogador. */
@@ -89,10 +89,14 @@ public final class ConstructionSupplyDispatches {
      * Registra somente o ciclo que deixou uma tarefa executável aberta para a
      * rota. Consultas da obra e uma rota teórica sem executor não gastam o
      * prazo do suprimento terminal. Regra 40, ADR-040.
+     *
+     * <p>Rota sem caminho nenhum (o sílex da bancada de flecheiro: sem receita e sem
+     * fonte no bioma) conta todo ciclo: nenhuma tarefa vai nascer para ela, e esperar
+     * uma deixou a obra parada a sessão inteira (playtest 0.3.36). Regra 51.
      */
     public static void renewForCycle(ServerWorld world, Colony colony) {
         currentNeed(world, colony)
-                .filter(need -> hasOpenSupplyTask(colony.id(), need.route()))
+                .filter(need -> !need.route().available() || hasOpenSupplyTask(colony.id(), need.route()))
                 .ifPresent(need -> recordCycleDispatch(
                         need.project().id(), need.item(), world.getTime()));
     }

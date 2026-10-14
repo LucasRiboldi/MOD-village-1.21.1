@@ -38,8 +38,9 @@ class VillageGrowthTest {
     void aBuildingByTheBorderGrowsTheVillage() {
         assertTrue(VillageGrowth.byPiece(colonies, house(90, 95)).isPresent());
 
-        // A vila medida tem 0..100 (lado ímpar); a casa até 95 mais os 15 leva o sul a 110.
-        assertEquals(111, colony.bounds().orElseThrow().sizeZ());
+        // A vila medida tem 0..100 (lado ímpar); a casa até 95 mais os 16 dela (Regra 56) leva o sul
+        // a 111, e o lado par ganha mais uma linha: 0..112.
+        assertEquals(113, colony.bounds().orElseThrow().sizeZ());
     }
 
     @Test
@@ -67,7 +68,7 @@ class VillageGrowthTest {
 
         registry.register(house(90, 95));
 
-        assertEquals(111, colony.bounds().orElseThrow().sizeZ(),
+        assertEquals(113, colony.bounds().orElseThrow().sizeZ(),
                 "a construção registrada não fez a vila crescer");
     }
 }

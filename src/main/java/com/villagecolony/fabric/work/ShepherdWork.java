@@ -71,7 +71,7 @@ public final class ShepherdWork {
     private static int searchRadius = SEARCH_RADIUS;
 
     /** Quantos tiques de expediente sem chegar antes de largar a ovelha. */
-    private static final int STALL_LIMIT = 4 * 600;
+    private static final int STALL_LIMIT = com.villagecolony.core.coordination.WorkRescue.LIMIT;
 
     private static final Map<UUID, Job> JOBS = new HashMap<>();
 
@@ -182,7 +182,7 @@ public final class ShepherdWork {
         ShepherdFlock.tend(world, colony);
         ShepherdHerding.plan(world, colony, id -> JOBS.containsKey(id) || BuildHelper.isHelping(id));
 
-        // Sem lã a tosquiar, ele ajuda o construtor (pedido do autor, 2026-10-08).
+        // Quem está sem tarefa (pastor, carpinteiro, pedreiro) ajuda o construtor — BuildHelper.
         BuildHelper.lendAHand(world, colony);
 
         return open;

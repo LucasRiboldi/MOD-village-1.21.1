@@ -249,6 +249,9 @@ public final class BuilderPlacement {
      * core.
      */
     public static void reconsiderDeferredPieces(ServerWorld world, ConstructionProject project) {
+        // Grama, relva alta e flores surgem sozinhas, sem o construtor ir até elas (Regra 55).
+        GrowingPieces.appear(world, project);
+
         // Sem mais nada a pôr, as peças que esperam material voltam todas: a
         // obra passa a esperar por elas como antes.
         boolean nothingElse = project.nextBlock().isEmpty();
@@ -263,6 +266,16 @@ public final class BuilderPlacement {
                             project.id(), piece.block(), target.toShortString(),
                             nothingElse ? "nothing else is left to place" : "the material arrived");
                 }
+
+                continue;
+            }
+
+            // Sem mais nada a pôr, a peça de lado por alcance também volta — playtest
+            // de 11-10: a última escada do telhado ficou de lado 25 minutos, sem tarefa
+            // de obra. A de lado por apoio não: sem mudança no apoio ela falharia igual.
+            if (nothingElse && piece.reason() == SkipReason.UNREACHABLE && project.retry(piece)) {
+                VillageColonyMod.LOGGER.info("Project {} retries {} at {} — nothing else is left to place",
+                        project.id(), piece.block(), target.toShortString());
 
                 continue;
             }

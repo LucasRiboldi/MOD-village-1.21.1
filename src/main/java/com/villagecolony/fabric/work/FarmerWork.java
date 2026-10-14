@@ -16,7 +16,6 @@ import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.fabric.integration.ChestDepositor;
-import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.CropPatch;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -84,7 +83,7 @@ public final class FarmerWork {
      * está proibido de andar, e punir quem não pode andar foi o que
      * queimou meia sessão do mineiro em 08-26.
      */
-    private static final int STALL_LIMIT = 4 * 600;
+    private static final int STALL_LIMIT = com.villagecolony.core.coordination.WorkRescue.LIMIT;
 
     private static final Map<UUID, Job> JOBS = new HashMap<>();
 
@@ -97,10 +96,10 @@ public final class FarmerWork {
      * pequena, e depois de colhida não há nada maduro por muito tempo —
      * 86 ciclos ociosos de 81 na sessão de 2026-09-04.
      *
-     * <p><b>Arar não está aqui, e saiu por queixa do autor</b> — <i>"não
-     * podem arar qualquer lugar"</i>. Quem abre roça é a obra, com a
-     * planta do próprio jogo e num lote livre dentro da vila; o
-     * fazendeiro cuida da lavoura que existe.
+     * <p><b>Arar qualquer lugar não</b> (queixa do autor): quem abre roça é a
+     * obra, com a planta do próprio jogo. O fazendeiro só alarga a roça que
+     * existe, na borda dela e com água perto — {@link FarmerTill}, regra do
+     * autor de 2026-10-11.
      */
     enum Chore {
 
@@ -292,6 +291,12 @@ public final class FarmerWork {
         if (job.target == null) {
             FarmerChores.findWork(world, workerId, job, storage.get());
 
+            // Sem colheita nem canteiro: um canteiro novo na borda da roça, senão o
+            // compostor e a farinha de osso (P8b).
+            if (job.target == null && !FarmerTill.till(world, villager, job, storage.get())) {
+                FarmerCompost.tend(world, villager, job.task.colonyId(), storage.get());
+            }
+
             return;
         }
 
@@ -340,7 +345,7 @@ public final class FarmerWork {
         return switch (job.chore) {
             case HARVEST -> CropPatch.isRipe(world.getBlockState(job.target));
             case SOW -> CropPatch.isEmptyPlot(world, job.target)
-                    && ChestWithdrawer.seedIn(world, storage.chestPosition()).isPresent();
+                    && FarmerChores.seedChest(world, job.task.colonyId(), storage.chestPosition()).isPresent();
         };
     }
 

@@ -70,6 +70,9 @@ public final class WaitingWork {
      */
     private static final Map<UUID, Progress> BUILDING_SINCE = new HashMap<>();
 
+    /** Obra → quantas janelas de paciência ela passou só com peças sem apoio. */
+    private static final Map<UUID, Integer> UNSUPPORTED_WINDOWS = new HashMap<>();
+
     /** Última leitura e tiques de expediente acumulados sem assentar peça. */
     private record Progress(int left, long at, long timeOfDay, long stalled) {
     }
@@ -81,6 +84,7 @@ public final class WaitingWork {
     public static void clearAll() {
         WAITING_SINCE.clear();
         BUILDING_SINCE.clear();
+        UNSUPPORTED_WINDOWS.clear();
     }
 
     /** Esquece os relogios de uma obra removida por cancelamento manual. */
@@ -91,6 +95,7 @@ public final class WaitingWork {
 
         WAITING_SINCE.remove(projectId);
         BUILDING_SINCE.remove(projectId);
+        UNSUPPORTED_WINDOWS.remove(projectId);
     }
 
     /**
@@ -233,6 +238,16 @@ public final class WaitingWork {
         }
 
         if (onlyUnsupported) {
+            // A segunda janela sem o apoio aparecer: as poucas peças sem apoio são
+            // largadas e a obra fecha, em vez de prender a vaga única (playtest 0.3.31).
+            if (UNSUPPORTED_WINDOWS.merge(project.id(), 1, Integer::sum) >= 2
+                    && UnsupportedClosing.close(project)) {
+                UNSUPPORTED_WINDOWS.remove(project.id());
+                BUILDING_SINCE.remove(project.id());
+
+                return false;
+            }
+
             BuilderPlacement.reconsiderDeferredPieces(world, project);
             BUILDING_SINCE.put(project.id(), new Progress(left, now, timeOfDay, 0));
 

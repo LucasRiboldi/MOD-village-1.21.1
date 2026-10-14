@@ -5,7 +5,10 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.registry.Registries;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.Locale;
@@ -50,18 +53,45 @@ public final class ConstructionOverlayRenderer {
             Text status = missing.isBlank()
                     ? Text.translatable("overlay.construction.state."
                             + construction.state().toLowerCase(Locale.ROOT))
-                    : Text.translatable("overlay.construction.missing", missing);
+                    : Text.translatable("overlay.construction.missing", missingText(missing));
 
             OverlayDrawing.label(context.camera(), buffers, position,
                     OverlayDrawing.id(OverlaySprites.construction(construction.state(), missing)),
                     new Text[] {
-                        Text.literal(OverlaySprites.shortName(construction.blueprint()) + "  "
-                                + construction.placed() + "/" + construction.total()),
+                        name(construction.blueprint())
+                                .append("  " + construction.placed() + "/" + construction.total()),
                         status
                     },
                     new int[] {0xFF55FFFF, missing.isBlank() ? 0xFF55FF55 : 0xFFFFAA00});
         }
 
         buffers.draw();
+    }
+
+    /**
+     * O nome da obra na língua do jogo: o tipo e o bioma pelas chaves
+     * {@code overlay.building.*} e {@code overlay.biome.*}; o nome curto da planta
+     * quando a tradução não conhece o tipo.
+     */
+    private static MutableText name(String blueprint) {
+        OverlaySprites.BlueprintLabel label = OverlaySprites.label(blueprint);
+        MutableText name = Text.translatableWithFallback("overlay.building." + label.kind(), label.fallback());
+
+        if (!label.biome().isEmpty()) {
+            name.append(" (").append(Text.translatable("overlay.biome." + label.biome())).append(")");
+        }
+
+        return name;
+    }
+
+    /** O item que falta pelo nome do jogo, com a quantidade: "Vidraça ×4". */
+    private static Text missingText(String missing) {
+        String[] parts = OverlaySprites.missingParts(missing);
+        Identifier id = Identifier.tryParse(parts[0]);
+        MutableText item = id != null && Registries.ITEM.containsId(id)
+                ? Registries.ITEM.get(id).getName().copy()
+                : Text.literal(parts[0]);
+
+        return parts[1].isEmpty() ? item : item.append(" ×" + parts[1]);
     }
 }

@@ -72,4 +72,18 @@ class WorkMarksSavedDataTest {
         assertEquals(miner, read.mineTrails().get(0).worker());
         assertEquals(cells, read.mineTrails().get(0).cells(), "a ordem do rastro mudou");
     }
+
+    /** A coluna de onde o jogador tirou planta sobrevive ao carregar — regra do autor, 2026-10-11. */
+    @Test
+    void playerClearedColumnsRoundTrip() {
+        WorkMarksSavedData data = new WorkMarksSavedData();
+
+        data.syncPlayerCleared(List.of(42L, -7L));
+
+        WorkMarksSavedData read = WorkMarksSavedData.readNbt(data.writeNbt(new NbtCompound(), null), null);
+
+        assertEquals(List.of(42L, -7L), read.playerCleared());
+        assertTrue(WorkMarksSavedData.readNbt(new NbtCompound(), null).playerCleared().isEmpty(),
+                "save antigo, sem a chave, devia ler como nenhuma coluna");
+    }
 }

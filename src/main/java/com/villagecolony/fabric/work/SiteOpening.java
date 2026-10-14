@@ -256,6 +256,8 @@ final class SiteOpening {
         }
 
         VillageColonyMod.CONSTRUCTIONS.register(project);
+        com.villagecolony.core.coordination.VillageExpansion.buildOpened(colony.id());
+        pavePathTo(world, site);
 
         // Lote um acima da rua: a porta não pode ficar dois degraus acima de
         // quem chega — decisão do autor, 2026-09-30. Ver DoorStep.
@@ -377,5 +379,22 @@ final class SiteOpening {
         long dz = (long) origin.z() - centre.z();
 
         return (int) Math.round(Math.sqrt((double) (dx * dx + dz * dz)));
+    }
+
+    /** O caminho do lote recuado até a rua (RoadsideSites.SETBACKS): terra e grama viram caminho. */
+    private static void pavePathTo(ServerWorld world, BuildSiteScanner.Site site) {
+        for (ColonyPos cell : site.path()) {
+            net.minecraft.util.math.BlockPos at = MinecraftTypeAdapter.toBlockPos(cell);
+            net.minecraft.block.BlockState ground = world.getBlockState(at);
+
+            if (ground.isOf(net.minecraft.block.Blocks.GRASS_BLOCK) || ground.isOf(net.minecraft.block.Blocks.DIRT)
+                    || ground.isOf(net.minecraft.block.Blocks.COARSE_DIRT)) {
+                if (!world.getBlockState(at.up()).isAir() && world.getBlockState(at.up()).isReplaceable()) {
+                    world.breakBlock(at.up(), false);
+                }
+
+                world.setBlockState(at, net.minecraft.block.Blocks.DIRT_PATH.getDefaultState());
+            }
+        }
     }
 }

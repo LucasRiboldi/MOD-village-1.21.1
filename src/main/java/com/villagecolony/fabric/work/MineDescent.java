@@ -88,7 +88,7 @@ final class MineDescent {
                     miner.toShortString(), count, RADIUS, memoryFor(count));
         }
 
-        // Travou agora (e não de novo): quem chama abre a mina nova — A-4.
+        // Travou agora (e não de novo). A mina não fecha por isso (regra do autor, 2026-10-11).
         return count == TIMES_TO_BLOCK;
     }
 

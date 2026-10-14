@@ -11,6 +11,383 @@ em cada título; o SHA-256 de cada JAR publicado está no histórico do `STATE.m
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.50] — baús se espalham sozinhos, sem viagem (2026-10-13, JAR local, não jogado)
+
+### Mudado
+- **Transferência automática e contínua entre baús (pedido do autor):** o depósito do que cada
+  profissão cava/colhe/recolhe e a retirada para fabricar já eram automáticos, sem o aldeão andar
+  até o baú (sempre foram: o mineiro, o lenhador e o artesão depositam/retiram no instante da ação).
+  Agora, a cada ciclo, todo baú de profissão quase cheio (≤ 10 slots livres) espalha o excedente
+  para os baús da vila sem profissão — não só quando um depósito transborda (`ProfessionChestOverflow.spread`).
+
+## [0.3.49] — o mineiro reclama a frente de trabalho, não o nó mais raso (2026-10-13, JAR local, não jogado)
+
+### Corrigido
+- **Mineiro 336 "looking for stone" contra 12 "digging" (playtest 0.3.48, parado em "11 of 86" por
+  33 min):** a reivindicação do nó partia da posição do corpo do mineiro, que sobe para depositar;
+  ele pegava sempre o nó mais raso, cavava uma ou duas pedras e voltava. Agora parte do salão do
+  nível, então reclama a frente de trabalho e cava vários antes de subir. Era a causa de o fundidor
+  e a obra esperarem cobblestone (`NetworkDigging.nextTarget`).
+
+## [0.3.48] — mina M: a frente do túnel anda, sem selar o nó por uma pedra (2026-10-13, JAR local, não jogado)
+
+### Mudado
+- **Mina (item 3 / proposta M):** a célula do corredor que o mineiro não alcança é **pulada** — o
+  alvo passa para a próxima pedra à frente do túnel, em vez de contar falha e, em 3 falhas, selar o
+  nó inteiro. O nó só falha quando **toda** a pedra que falta no corredor está recusada. Some o
+  "out of reach" que travava a mina em todo desenho (reanálise de 13-10, C1 da mina).
+
+## [0.3.47] — socorro único contra parada; tabela de regras consolidada (2026-10-13, JAR local, não jogado)
+
+### Mudado
+- **F4 — prazo único de socorro:** o ofício que anda sem chegar ao alvo é socorrido em 1 minuto
+  (`WorkRescue.LIMIT` = 1200), e não mais em 2 minutos com seis cópias do número. A ação de parada
+  de cada ofício fica como estava.
+
+### Documentação
+- **docs/RULES.md consolidado** (reanálise de 13-10, §3): a ordem das obras vira uma regra só
+  (49, absorve 55 e 60 e o 1A); a mina (54) e a expansão (56) passam a descrever o que o código faz;
+  a emenda da 51 (fazendeiro ajuda a obra) é revogada pela 59; regras 63 (F4) e 64 (rede de ruas).
+
+## [0.3.46] — a vila volta a girar (2026-10-13, JAR local, não jogado)
+
+### Mudado (decisões do autor sobre a reanálise estrutural)
+- **1A — rodízio casa ↔ outro tipo de volta:** a vez da casa levanta casa enquanto as camas forem
+  menos que adultos + 4; falta de cama continua mandando; uma oficina de cada tipo continua.
+- **2 — reserva do artesanato:** o adiantamento vai até a maior casa + 32 de cada peça das plantas
+  (teto geral de 64 mantido); "um pouco de tudo" sobe de 8 para 16 de cada item.
+- **4 — ruas medidas como rede de caminhos conectados:** sem índice de ruas, a busca de lote traça a
+  rede a partir do calçamento perto do centro (de bloco em bloco, degrau de 1, até 32 além da caixa)
+  e anda direto por ela, em vez da varredura em anéis de ~20 min por volta.
+
+## [0.3.45] — foco num perímetro, lote recuado da rua (2026-10-13, JAR local, não jogado)
+
+### Mudado
+- **A vila trabalha com o jogador num perímetro de 48 blocos em volta da caixa** (autor), e não só
+  com ele dentro dela.
+- **Lote recuado:** além do lote encostado na rua, a busca aceita o lote 3 blocos atrás dela, com os
+  3 blocos do meio livres e andáveis; ao abrir a obra, eles viram caminho até a rua. A beira das
+  ruas da vila gerada já tem as casas dela, e o terreno vazio de trás nunca era candidato.
+
+## [0.3.44] — a caixa só cresce com rua e obra (2026-10-12, JAR local, não jogado)
+
+### Mudado
+- **Sem faixa vazia (pedido do autor):** a vila cheia não anexa mais terreno vazio; escolhe o melhor
+  lado aonde uma rua da vila chega e puxa a rua para fora por ele. A caixa cresce com a rua calçada e
+  com as obras, como antes da 0.3.37.
+
+### Corrigido
+- **Caixa inchada no save do autor:** a regra de medida passou ao modelo 3, e a caixa crescida por
+  faixas vazias (0.3.37–0.3.43) é medida de novo no primeiro carregamento — a partir da vila gerada
+  achada no meio das construções (o centro tinha andado), mais a folga de cada construção.
+- A colônia abandonada na 0.3.42 voltou na 0.3.43 (27 aldeões registrados de novo).
+
+## [0.3.43] — a vila não é mais dada como abandonada (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **Colônia abandonada com 27 aldeões (playtest 0.3.42):** quatro anexos a leste em cinco minutos
+  levaram o centro da caixa a 68 blocos das camas; a sonda, que parte do centro e só aceita vila a
+  até 64 blocos, declarou a colônia ABANDONADA e soltou todos os trabalhadores — sumiram as placas,
+  o overlay e todo o trabalho. Agora: vila dentro da própria caixa conta como viva; colônia com 3 ou
+  mais trabalhadores vivos dentro da caixa não é abandonada; e a colônia gravada como abandonada
+  volta sozinha (duas leituras) quando a sonda vê as camas dentro da caixa.
+- **Anexo em disparada:** no máximo um anexo a cada 30 minutos, e só no lado aonde uma rua da vila
+  consegue chegar (faixa sem rua não dá lote); sem lado assim, não anexa.
+
+## [0.3.42] — a vila volta a construir (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **Nenhuma obra desde a 0.3.36 (cinco sessões):** com camas sobrando, a vila só tentava a oficina
+  que faltava; nenhum lote cabia e nada a tirava da vez. Antes, a casa entrava no rodízio e a vila
+  crescia assim mesmo. Agora o tipo que passa uma volta inteira da varredura sem lote fica 30 minutos
+  fora da vez e a vila tenta o seguinte; com todos os que faltam recusados, a casa entra no lugar.
+  Sem obra, construtor, carpinteiro e pedreiro ficavam parados — era a causa de "todos produzindo menos".
+
+### Mudado
+- **Mudas fora da vila:** uma por vila a cada 5 minutos (eram 44 em 21 minutos, uma por lenhador
+  ocioso a cada ciclo).
+
+## [0.3.41] — a rua entra na faixa anexada (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **Faixa anexada sem obra (playtest 0.3.40):** a vila anexou 16 blocos a leste, mas não havia
+  ponta de rua virada para lá; a extensão de sempre calçou uma ponta a oeste e a faixa ficou sem
+  rua — e sem rua não nasce lote. Agora, ao anexar, a vila acha a rua mais avançada para aquele lado
+  (até 24 blocos por dentro da borda) e puxa um trecho dela para dentro da faixa, que o planejador
+  calça a cada passagem; a extensão de sempre não passa por cima dele.
+
+## [0.3.40] — profissões paradas (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **Mineiro preso numa pedra (playtest 0.3.39):** a pedra da parede escolhida para enchimento não
+  consultava a marca de fora de alcance — a mesma foi escolhida 53 vezes.
+- **Lenhador em laço:** media só o próprio baú; cheio, encerrava a tarefa antes da árvore e a vila
+  pedia outra na hora (128 vezes em 21 min). Agora conta também os baús públicos.
+- **Vila sem obra por 23 min:** nenhum lote servia (115 mil recusas: faixa reservada da rua e nível
+  da rua), e o anexo de terreno pedia 2 voltas da varredura, de 20 min cada. Uma volta completa sem
+  lote já anexa a faixa.
+
+## [0.3.39] — baú público, carpinteiro na rua, obra na borda (2026-10-12, JAR local, não jogado)
+
+### Adicionado
+- **Baú público:** a vila sem nenhum ganha um dentro de uma casa da colônia — encostado numa
+  parede, a mais de 2 blocos de qualquer porta, com chão firme e teto; sai dos baús um baú pronto
+  ou 8 tábuas.
+- **Obra na borda:** uma em cada 5 obras novas procura lote só na faixa de 16 blocos da borda da
+  vila (por dentro ou por fora); sem lote ali, a busca seguinte volta ao normal.
+- **Carpinteiro:** guarda um pouco de todas as peças de madeira do jogo (escadas, lajes, cercas,
+  portões, portas, alçapões, placas de pressão, botões, placas, escada de mão), não só as do estilo
+  da vila; e, sem tarefa, calça as ruas como o construtor.
+
+### Mudado
+- **Fazendeiro e pastor não ajudam mais a obra;** só carpinteiro e pedreiro.
+
+### Corrigido
+- Baú público contava baú fora da caixa da vila (a varredura lê chunks inteiros).
+
+## [0.3.38] — grama sozinha, árvore inteira, baús públicos, um poste (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **Obra sem relva alta (playtest 0.3.37):** o construtor deixava a grama de lado por não
+  alcançá-la e a casa terminava sem ela. Relva alta, grama e flores da planta agora surgem
+  sozinhas a cada ciclo da obra, com as duas metades da planta alta; terra embaixo vira grama.
+- **Toras no chão:** 267 toras caíram porque o baú do lenhador estava cheio. O excedente de
+  madeira e de pedra crua vai para os baús públicos da vila (os sem ofício), e o mineiro guarda
+  neles o que passa do teto por tipo, em vez de descartar.
+- **Árvore pela metade:** a tarefa que acaba no meio da árvore derruba os troncos que ficaram.
+- **Postes do pastor:** um poste por casa e um por cercado; com um poste solto perto, ele não
+  põe outro.
+
+## [0.3.37] — mina sem impasse; expansão do terreno B + C + D (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **Mineiro 0% (playtest 0.3.36):** o túnel esperava pedregulho para o piso e os baús não tinham
+  nenhum (37.297 esperas). Sem enchimento, o mineiro cava a parede do túnel para tirá-lo; o
+  enchimento sai primeiro do baú dele; o fundidor guarda 64 de pedregulho para a mina.
+- **Obra parada pela bancada de flecheiro:** o sílex não tem rota e nenhuma tarefa nascia, então a
+  4ª tentativa nunca chegava. Rota sem caminho nenhum agora conta todo ciclo.
+
+### Adicionado
+- **Expansão do terreno (Regra 56):** casa reivindica 16 blocos em volta, oficina e roça 24 (B);
+  depois de 2 varreduras sem lote, a vila mede os quatro lados e anexa 16 blocos no de chão mais
+  plano e seco, nunca encostando em outra colônia (C); a rua cresce primeiro para esse lado e os
+  lotes nascem na beira dela (D).
+
+## [0.3.36] — mina minera; vila planeja por falta (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **Mina em labirinto (playtest 0.3.35):** 1.411 blocos cavados deram 2 de ferro. A rede passa a
+  túneis de ramal 1 × 2 a cada 4 blocos; todo minério ao alcance do braço a partir de um túnel aberto
+  vem antes do túnel; a segurança só garante piso, fluido encostado e beirada de queda, e espera sem
+  reler os baús quando falta enchimento ([análise](docs/research/2026-10-12-mina-labirinto.md)).
+- **O retorno do mineiro subindo nunca quebra as 5 camadas sob a vila.**
+
+### Mudado
+- **Uma oficina de cada tipo:** com todas de pé, nenhuma se repete. **Casa só quando faltam camas.**
+- **Roça grande primeiro;** a menor só onde a grande não cabe.
+- **Fundidor ocioso adianta o cru** que sobra nos baús (8 por ciclo; fica a reserva da obra + 16).
+- **Lenhador ocioso planta mudas** de tipos sorteados até 10 blocos fora da caixa da vila.
+- **Pastor alimenta com qualquer comida** que o animal aceite, 2 pares por espécie a cada minuto.
+- **Grama, capim e flores** da planta aparecem sozinhos; a obra não os pede.
+
+## [0.3.35] — mina em rede (ADR-042) (2026-10-12, JAR local, não jogado)
+
+### Mudado
+- **A mina vira rede** depois da escadaria e do salão de cada nível: corredores 3 × 3 ligando nós
+  a cada 7 blocos, até 4 nós do salão em cada direção; vários mineiros, um nó cada; o minério da
+  parede é seguido primeiro (até 64 blocos); quando o nível acaba, a mina desce; no fundo, abre
+  caminhos laterais e volta subindo pela rampa.
+- **Mina segura:** a escadaria, o salão e cada corredor pronto têm piso garantido; aberturas para
+  caverna e fluido são vedadas com pedregulho dos baús. Nó com água ou lava não se abre.
+- **Caminho só pelo que está pronto:** de nó pronto em nó pronto até o corredor em obra.
+- O nível em rede é gravado no save.
+
+## [0.3.34] — mineiro destravado; proposta da mina em rede (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **Mineiro 0% (playtest 0.3.32):** os mineiros desceram por quedas de 3 blocos e não voltavam; a
+  perna da mina os mandava para a entrada do nível pelo degrau, e não à pedra que estava a pé.
+  Agora, quando a navegação do jogo chega ao lugar de pé da pedra, ele vai direto
+  (`MinerDirectPath`).
+- **Mina parada com um ramal só aberto:** o nível só descia com os quatro ramais terminados, e o
+  ramal cuja pedra ninguém alcança nunca terminava. Três desistências seguidas o terminam.
+
+### Documentado
+- Pesquisa da mina (save, MineColonies, Baritone) e proposta ADR-042 "mina em rede", aguardando o
+  autor.
+
+## [0.3.33] — obra esperando tijolo (2026-10-12, JAR local, não jogado)
+
+### Corrigido
+- **A obra esperava `bricks` para sempre:** a demanda só descia a receita de peça que já era
+  recurso declarado, e `bricks` não é. Nenhuma tarefa de `brick` (fundidor) nem de `clay_ball`
+  (coleta) nascia, e o suprimento de último caso não contava ciclo sem tarefa. Agora a peça sem
+  recurso declarado desce pela receita do jogo até 3 degraus (escada de tijolo → tijolos →
+  tijolo assado); lingote e vidro continuam com a conta própria.
+
+## [0.3.32] — playtest da 0.3.31: mina na borda, obra, ócio e overlay (2026-10-11, JAR local, não jogado)
+
+### Mudado
+- **Regra 53 — boca da mina só na borda:** com a caixa da vila medida, a boca nasce na faixa
+  de até 8 blocos da linha da caixa (também quando a mina recomeça ou muda de lado no fundo).
+  Com a mina aberta, o mineiro sem ramal livre não cava mais a encosta em volta da vila.
+- **Overlay em pixel:** moldura medieval (madeira, latão, cantoneiras de ferro) com o pixel do
+  tamanho do pixel da fonte; ícones 16×16 com contorno para os oito ofícios e os três estados da
+  obra; placa da obra em português ("Casa média (planície) 62/292", "Falta: Cama branca ×1");
+  `pt_pt.json` (o jogo do autor está em português de Portugal e o overlay saía em inglês).
+- **Fazendeiro** com nada maduro e nenhum canteiro vazio ajuda a obra.
+- **Tábua e carvão vegetal com teto:** sem obra pedindo, a tora só vira tábua até 64; o fundidor
+  não faz nada "para as obras" acima de 64 (o carvão vegetal conta o mineral).
+- **Obra com só até 4 peças sem apoio** (tocha de parede sem parede), depois de duas janelas de
+  paciência, larga essas peças e fecha (`VC_UNSUPPORTED`), em vez de prender a vaga de obra.
+- **Antes de surgir**, o que a vila já tem em outro baú é levado ao baú da profissão.
+
+### Corrigido
+- Obra que volta do save voltava girada pela rua nova, por cima dela mesma (292 peças "por pôr",
+  27 blocos da própria casa limpos, 120 "no caminho"): volta no giro em que foi levantada.
+- Construtor ocioso 85%: a vaga do ajudante contava como a tarefa da obra, e o construtor que a
+  largou não recebia outra por 18 min.
+- Construtor dentro da mina mandado a uma galeria debaixo do lote.
+- Mineiro na superfície andando para a entrada enterrada embaixo dele quando a pedra estava no
+  fim do ramal; mineiro 2+ blocos abaixo do destino girando no mesmo buraco (agora sai pela fuga).
+
+## [0.3.31] — pedidos do autor depois do playtest da 0.3.29 (2026-10-11, JAR local, não jogado)
+
+### Mudado
+- **O que surge no baú surge na quantidade toda** que a obra ainda pede, e não um por vez.
+- **Troca de ofícios desligada:** nem a regra do ócio nem três desistências tiram mais o
+  aldeão do ofício. O teto de 15% da Regra 51 continua como medida.
+- **Lenhador:** corta a árvore mais perto dele, dentro do alcance da vila, e não mais a do
+  centro primeiro (a ordem "do centro para a borda" de 08-10 foi substituída).
+- **Pastor:** leva os animais para dentro do cercado com lugar mais perto da casa (até 5 por
+  cercado; com mais, tenta outro), entrando pelo portão. Sem cercado com lugar, amarra na cerca
+  mais perto, como antes. Sem cerca, põe um poste ao lado da casa com uma cerca do baú e amarra.
+  Com cercado com lugar, também leva para dentro quem estava só amarrado.
+
+## [0.3.30] — depois do playtest da 0.3.29 (2026-10-11, JAR local, não jogado)
+
+Playtest de 1h50 (19:26–21:16). TPS 20, mod 3,3%. O Spark falhou ao enviar (sem rede) e
+salvou o perfil em `config/spark/`.
+
+### Corrigido
+- **Mina:** o degrau de volta da veia que desce não consultava a marca de fora de alcance.
+  Os três mineiros ficaram 50 minutos na mesma pedra (30.079 recusas), e a mineração caiu
+  de 31 para 13 blocos por minuto.
+- **Obra presa na última peça:** a peça posta de lado por alcance só voltava se o apoio
+  mudasse. A casa média ficou 25 minutos com 1 bloco faltando e sem tarefa. Agora, sem mais
+  nada a pôr, ela volta, e o construtor que segura a obra também a tenta de novo.
+- **Ciranda de ofícios:** o ofício parado só cede gente quando outro ofício tem falta para a
+  obra. Foram 19 saídas em 90 minutos, de um ofício parado para outro também parado.
+- **Fundidor com baú cheio:** o produto vai ao baú da vila com lugar; antes ele largava a
+  fundição.
+
+## [0.3.29] — o construtor começa a obra (2026-10-11, JAR local, não jogado)
+
+### Mudado
+- Só o construtor pega a tarefa que abre a obra; os outros ofícios entram como ajudantes depois
+  (`BuildHelper`), perto da obra. Colônia sem construtor cai na regra do ajudante perto. Na 0.3.26
+  o pedreiro tinha pegado a casa nova e o construtor ficou 92% parado.
+
+## [0.3.28] — cobertura de blocos por profissão (2026-10-11, JAR local, não jogado)
+
+Pedido do autor: todo bloco das estruturas da vila, e todo bloco que os produz, com
+ofício responsável. Análise e contagens: `docs/research/2026-10-11-cobertura-de-blocos.md`.
+
+### Mudado
+- As peças fabricadas vão ao ofício do material: madeira ao carpinteiro; pedra, barro,
+  terracota e fornalha ao pedreiro; metal, vidro, gelo e neve ao fundidor; lã colorida,
+  tapete, cama e corante ao pastor; papel, livro, farinha de osso e feno ao fazendeiro.
+  O carpinteiro tinha 103 dos 187 itens; agora tem 42.
+
+### Novo
+- Carpinteiro e fundidor guardam 8 de cada item das plantas da vila e dos ingredientes
+  deles, em rodízio, com a obra na frente.
+- O fazendeiro colhe flores, grama, samambaia, bambu e cana e replanta; o fundidor
+  recolhe gelo e neve.
+
+### Corrigido
+- O pedido nominal de peça não é mais encadeado como falta de recurso (o log mostrava
+  "chained CRAFT_WOOD_MATERIAL for COBBLESTONE" e o carpinteiro convertia tábua à toa).
+
+## [0.3.27] — depois do playtest da 0.3.26 (2026-10-11, JAR local, não jogado)
+
+Playtest de 6 min (Spark `HGyazYR1VW`): TPS 20, mod 2,5%; a vila ficou 3 min presa numa
+vidraça que o pastor pegou e não alcançou, e quase todo ofício parado sem demanda.
+
+### Corrigido
+- O ajudante de obra (outro ofício) só pega a obra a até 32 blocos dela e a solta depois de
+  30 s andando sem chegar; o construtor mantém os 2 minutos.
+- Com só peças de lado faltando, o construtor segura a obra esperando o material (até 5 min)
+  e calça a rua enquanto isso, em vez de soltá-la para outro ofício.
+- O lenhador larga a árvore depois de 30 s sem chegar mais perto dela; antes eram 2 min, e
+  andar até árvore longe também contava.
+
+### Novo
+- Teto geral do estoque: 64 para bloco fabricado, 256 para bloco cru, acima só o que a obra pede.
+- O carpinteiro e o pedreiro sem tarefa ajudam a obra, como o pastor (até 2 ajudantes).
+- O britador é a primeira fonte de areia: enquanto há pedreiro e pedra a moer, ninguém sai
+  atrás de areia na natureza e o fundidor sem areia vai ajudar outro ofício.
+- A busca de areia volta direto à mancha lembrada mais perto da vila (raio 3 em volta).
+- A muda da árvore cortada longe vai para o bosque perto do baú do lenhador (até o dobro).
+- O fazendeiro ara canteiro novo na borda da roça, com água perto, quando nada está maduro.
+- Aberta a escada da mina, os outros ramais abrem já, pulando a sala comum.
+
+## [0.3.26] — depois do playtest da 0.3.25 (2026-10-11, JAR local, não jogado)
+
+### Corrigido
+- A vila decide com a última contagem completa dos baús enquanto a nova rodada de leitura não
+  termina; a leitura parcial (8 de 20 baús) fazia o pedreiro produzir laje com 330 no baú.
+- A mina nunca fecha por descida travada: um mineiro preso num buraco a 90 blocos fechou a mina
+  boa. O ponto fica de castigo e o mineiro cava outro caminho.
+- O fundidor parado sem areia solta a fornalha e vai buscá-la; antes os dois seguravam "fundir
+  vidro" e a colônia contratou um terceiro só para pegar a areia.
+- Fundir sem o cru em baú nenhum não abre vaga de contratação.
+
+### Novo
+- O britador do pedreiro entra também quando a obra espera vidro e não há areia nos baús.
+- O fundidor guarda 16 areias de reserva; a areia da reserva nunca surge do nada.
+- O artesão fabrica onde está: ninguém anda até o baú.
+- O ajudante de obra larga a peça que não alcança e a deixa para o construtor.
+
+### Mudado
+- O bloco que nenhuma rota entregou surge no baú do construtor depois de 1 minuto (2 ciclos),
+  e não 10 (segunda emenda na ADR-040).
+
+## [0.3.25] — autossuficiência (2026-10-11, JAR local, não jogado)
+
+Branch `claude/autossuficiencia`; análise e escolhas em
+`docs/research/2026-10-11-autossuficiencia-e-ocio.md`. O aceite é um playtest único.
+
+### Corrigido
+- A peça deixada de lado por falta de material voltou a contar na demanda: a vidraça adiada zerava a
+  meta de vidro e de areia, e nenhuma areia era coletada.
+- Produção antecipada (lajes, escadas, cercas, pedra lisa) tem teto: o que a obra aberta ainda pede
+  mais o maior uso numa casa do estilo da vila (antes: 318 lajes e 356 escadas para 15 pedregulhos).
+- Peça de estoque e fornalha não gastam o cru que a obra aberta ainda vai pôr.
+- Os quatro ramais da mina seguem abertos depois que o ramal zero acaba.
+- O mineiro não volta à mesma coluna de caverna: o beco conta as recusas dos últimos 15 minutos.
+- Tarefa de fabricação que termina com 0 peça não reabre outra igual.
+- A tábua das escadas, lajes e cercas da obra entra na conta da madeira do carpinteiro.
+- Fundidor: a reserva do cru é calculada uma vez por cru (era 72% do tempo do mod no Spark).
+
+### Novo
+- Britador do pedreiro: sem areia ao alcance, pedregulho vira cascalho e cascalho vira areia (2:1).
+- Busca de areia gira de setor a cada varredura vazia; a resposta "há areia" usa a mesma sonda da busca.
+- Sem rota para vidro, a vidraça da planta vira cerca de madeira.
+- O bloco de pedregulho da planta aceita andesito, granito e diorito.
+- Bosque-fazenda: 6 mudas por lenhador, e a árvore madura do bosque é cortada primeiro.
+- Lenhador parado no caminho tenta um desvio (cavando) antes de largar a árvore.
+- Compostor do fazendeiro: semente acima de 32 vira farinha de osso, usada na lavoura verde.
+- Fazendeiro semeia com semente de qualquer baú da colônia.
+- Regra do ócio: o titular único parado cede a um ofício em falta para a obra (o construtor nunca).
+- O construtor sem tarefa limpa muda, flor alta e arbusto da faixa de construção (6 blocos da rua);
+  ninguém planta nessa faixa.
+- Planta ou árvore que o jogador tirou não volta naquele lugar (marca salva).
+
+### Mudado
+- A peça que surge no baú da obra é último recurso: 10 ciclos (~5 min) sem entrega com a rota
+  trabalhando, e não 4 (emenda na ADR-040).
+
 ## [Não publicado] — correções do roteiro de 10-10 (2026-10-11, sem JAR publicado)
 
 Nada disto foi visto em jogo; o aceite é o playtest da Fase 2.5 do roteiro.

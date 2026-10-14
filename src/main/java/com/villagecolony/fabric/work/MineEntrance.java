@@ -56,8 +56,18 @@ public final class MineEntrance {
     /** Quanto acima do terreno a entrada da boca pode ficar (o arco e a escada de entrada). */
     static final int SURFACE_SLACK = 6;
 
-    /** Dentro desta distância horizontal da entrada de agora, ele já está no nível. */
+    /** Dentro desta distância horizontal de uma entrada, ele está na escada dela. */
     static final int IN_LEVEL = 12;
+
+    /**
+     * Até onde o nível de agora vai, na horizontal, a partir da entrada dele: o salão
+     * e os quatro ramais com a área de busca no fim ({@link MineShaft#ARM_STAIRS} mais
+     * o comprimento da busca), com folga. A pedra e o mineiro dentro disso estão no
+     * nível; a régua de 12 deixava o fim do ramal "fora da mina", e o mineiro na
+     * superfície ia direto à entrada enterrada embaixo dele (playtest 0.3.31).
+     */
+    static final int LEVEL_REACH = com.villagecolony.core.construction.model.MineNetwork.SPACING
+            * com.villagecolony.core.construction.model.MineNetwork.RADIUS + 4;
 
     /** Quanto da escada de um rumo precisa estar aberto para ela contar como cavada. */
     static final double DUG_SHARE = 0.5;
@@ -349,10 +359,10 @@ public final class MineEntrance {
         return entry;
     }
 
-    /** No nível de agora: perto da entrada dele na horizontal e não acima dela. */
+    /** No nível de agora: no alcance dos ramais dele na horizontal e não acima da entrada. */
     private static boolean insideTheLevel(BlockPos at, BlockPos levelEntry) {
-        return Math.abs(at.getX() - levelEntry.getX()) <= IN_LEVEL
-                && Math.abs(at.getZ() - levelEntry.getZ()) <= IN_LEVEL
+        return Math.abs(at.getX() - levelEntry.getX()) <= LEVEL_REACH
+                && Math.abs(at.getZ() - levelEntry.getZ()) <= LEVEL_REACH
                 && at.getY() <= levelEntry.getY() + 2;
     }
 

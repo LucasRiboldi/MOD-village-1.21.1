@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "G G",
+    " S ",
+    "G G"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "S": {
+      "item": "minecraft:blast_furnace"
+    }
+  },
+  "result": {
+    "id": "villagecolony:blacksmith_forge",
+    "count": 1
+  }
+}

@@ -22,7 +22,6 @@ import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.worker.model.Worker;
-import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
@@ -33,7 +32,6 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -155,13 +153,8 @@ final class CraftingReport {
             return "no chest, " + clock + " (" + job.crafted + " pieces so far)";
         }
 
-        BlockPos chest = CraftStation.spotFor(
-                world, workerId, MinecraftTypeAdapter.toBlockPos(storage.get().chestPosition()));
-
-        int distance = (int) Math.sqrt(villager.getBlockPos().getSquaredDistance(chest));
-
-        return (distance <= CraftingWork.REACH ? "at the workstation" : "walking to the workstation, " + distance
-                + " blocks away")
+        // Fabrica onde está (regra do autor, 2026-10-11): não há caminhada a relatar.
+        return "crafting where it stands"
                 + ", " + clock
                 + ", " + job.progress + "/" + CraftingWork.TICKS_PER_PIECE + " ticks"
                 + " (" + job.crafted + " pieces so far)";

@@ -38,7 +38,9 @@ final class VillageMeasure {
             return;
         }
 
-        ColonyPos center = colony.center();
+        // A vila gerada é procurada no meio das construções: o centro pode ter andado (a caixa
+        // de faixas anexadas o levou a 68 blocos das camas, 0.3.42).
+        ColonyPos center = middleOfTheBuildings(colony).orElse(colony.center());
 
         if (!world.isChunkLoaded(center.x() >> 4, center.z() >> 4)) {
             return;
@@ -49,7 +51,8 @@ final class VillageMeasure {
         VillageBounds measured = generated.orElseGet(() -> typical(center, beds));
 
         for (Building building : VillageColonyMod.BUILDINGS.ofColony(colony.id())) {
-            measured = measured.union(VillageBounds.aroundPiece(building.min(), building.max()));
+            measured = measured.union(VillageBounds.aroundPiece(building.min(), building.max(),
+                    com.villagecolony.core.coordination.VillageExpansion.claimOf(building.blueprint())));
         }
 
         colony.measure(measured);
@@ -60,6 +63,30 @@ final class VillageMeasure {
                 measured,
                 generated.isPresent() ? "the generated village" : "the typical size",
                 colony.center());
+    }
+
+    /** O meio das construções terminadas desta colônia, se há alguma. */
+    private static Optional<ColonyPos> middleOfTheBuildings(Colony colony) {
+        List<Building> standing = VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()
+                .filter(Building::finished)
+                .toList();
+
+        if (standing.isEmpty()) {
+            return Optional.empty();
+        }
+
+        long x = 0;
+        long y = 0;
+        long z = 0;
+
+        for (Building building : standing) {
+            x += (building.min().x() + building.max().x()) / 2;
+            y += building.min().y();
+            z += (building.min().z() + building.max().z()) / 2;
+        }
+
+        return Optional.of(new ColonyPos((int) (x / standing.size()), (int) (y / standing.size()),
+                (int) (z / standing.size())));
     }
 
     private static VillageBounds typical(ColonyPos center, List<ColonyPos> beds) {
