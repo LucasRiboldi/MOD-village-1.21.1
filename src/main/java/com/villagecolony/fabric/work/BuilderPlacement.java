@@ -107,6 +107,26 @@ public final class BuilderPlacement {
 
         BlockState state = shaped(world, project, block, material.get(), target);
 
+        // A horta surge, sem gastar recurso da vila — decisão do autor, 2026-10-14. Canteiro
+        // (farmland), água, caminho e cultivo não têm item de inventário e a cadeia de material
+        // falhava ("could not make farmland"), travando a obra nos últimos blocos (playtest
+        // hquYC03AAc). Aqui eles são moldados no local, garantindo primeiro o chão de que o
+        // canteiro/cultivo precisa — como o enchimento da mina (NetworkSafety) já surge.
+        //
+        // Só sobre lugar livre: a Regra 3 continua valendo — bloco posto (planks, peça de vila) não
+        // é sobrescrito (BuilderGameTest.farmlandDoesNotReplaceAPlacedBlock).
+        boolean mayShapeHere = world.getBlockState(target).isReplaceable()
+                || BuriedPieces.mayReplaceGround(world, project.blueprint(), block, target)
+                || BlockShaping.tillsTheGround(world, state, target);
+
+        if (mayShapeHere && BlockShaping.isShapedFromTheGround(state) && !BlockShaping.isNeverPlaced(state)) {
+            BlockShaping.groundFor(world, state, target);
+            world.setBlockState(target, state, Block.NOTIFY_ALL);
+            project.markPlaced(block);
+
+            return true;
+        }
+
         if (!world.getBlockState(target).isReplaceable()
                 && !BuriedPieces.mayReplaceGround(world, project.blueprint(), block, target)
                 && !BlockShaping.tillsTheGround(world, state, target)) {
@@ -165,20 +185,6 @@ public final class BuilderPlacement {
             if (!BlockShaping.assemblePotted(world, project, job, workerId, block, target, state)) {
                 return false;
             }
-
-            return true;
-        }
-
-        if (BlockShaping.isShapedFromTheGround(state)) {
-            // A colônia molda no local apenas blocos sem item de inventário
-            // utilizável (canteiro, água, caminho e cultivos). Terra comum
-            // tem item e deve sair fisicamente do estoque.
-            //
-            // Quem abre um canteiro move o chão que já está ali. A regra
-            // vale para qualquer obra porque depende do bloco, não da planta.
-            world.setBlockState(target, state, Block.NOTIFY_ALL);
-
-            project.markPlaced(block);
 
             return true;
         }
