@@ -1,5 +1,16 @@
 # STATE — 2026-10-14
 
+> **0.3.57** (14-10): playtest da 0.3.56 (Spark `hquYC03AAc`, 96 min) — **a vila parou**: a obra
+> `plains_small_house_8` travou nos últimos ~12 blocos (a **horta** da casa: 35 farmland + 16 wheat
+> + 2 water) e, aberta para sempre, bloqueou o planejador → lenhador 100% ocioso, pedreiro 99%,
+> construtor 75%, pastor 83%, fundidor 0%. Raiz: `farmland` não é fabricável ("could not make
+> minecraft:farmland") nem coletável, e o assentamento falhava em loop. **Correção (decisão do
+> autor):** a horta **surge sem gastar recurso** — `BuilderPlacement` molda no local os blocos de
+> chão (farmland, água, caminho, cultivo) com o terreno garantido embaixo (`BlockShaping.groundFor`),
+> antes da cadeia de material; só sobre lugar livre (Regra 3 preservada). **Não jogado.** Verificado:
+> test 1515/0; runGametest 769/769; mutação (desligar o surgimento) derruba 6 testes de construção.
+> JAR `village-colony-0.3.57.jar` = `4DB9A471779F49D62D11A91C381C34193774343A65CC100E90BEE7A0850D6F69`.
+
 > **0.3.56** (14-10): **o pastor aproveita o rebanho** (manutenção do ofício, não toca a obra —
 > Regra 59). `FlockHarvest`: com mais de `HARVEST_KEEP=8` adultos de uma espécie (a criação enche
 > até `FLOCK_TARGET=12`), abate **1 por ciclo** o excedente deixando sempre ≥8 vivos, e deposita o
@@ -10,8 +21,6 @@
 > runGametest 768/768; mutação (HARVEST_KEEP=0) derruba `FlockHarvestTest`. Spec em
 > `docs/superpowers/specs/2026-10-14-pastor-aproveita-rebanho-design.md`. JAR
 > `village-colony-0.3.56.jar` = `9BE8707A710E4DA6D12D0D92DCCD82C675254680D48FC709E1C8CED18A2F2F55`.
-> **⚠ Troca do JAR pendente:** o jogo estava aberto com a 0.3.55 (arquivo travado); a 0.3.55 só é
-> desabilitada quando o jogo fechar — hoje há 0.3.55 e 0.3.56 na pasta de mods.
 
 > **0.3.55** (14-10): **percurso por etapas até a boca da mina** (planta do autor, abordagem A
 > híbrida; spec em `docs/superpowers/specs/2026-10-14-percurso-descida-mina-design.md`). O mineiro

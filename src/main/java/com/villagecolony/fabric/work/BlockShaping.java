@@ -320,6 +320,30 @@ public final class BlockShaping {
     }
 
     /**
+     * Garante o chão de que a peça moldada precisa, para ela surgir sem travar — decisão do autor,
+     * 2026-10-14. Canteiro, caminho e cultivo pedem bloco sólido embaixo; se a posição abaixo está
+     * vazia/substituível, surge terra ali (sem gastar recurso), de modo que {@code canPlaceAt}
+     * passe e a horta seja montada mesmo sobre o ar. Água e o que não precisa de apoio não mexem no
+     * chão.
+     */
+    public static void groundFor(ServerWorld world, BlockState planned, BlockPos where) {
+        boolean needsSolidBelow = planned.isOf(Blocks.FARMLAND)
+                || planned.isOf(Blocks.DIRT_PATH)
+                || planned.getBlock() instanceof CropBlock
+                || planned.isOf(Blocks.GRASS_BLOCK);
+
+        if (!needsSolidBelow) {
+            return;
+        }
+
+        BlockPos below = where.down();
+
+        if (world.getBlockState(below).isReplaceable()) {
+            world.setBlockState(below, Blocks.DIRT.getDefaultState(), Block.NOTIFY_ALL);
+        }
+    }
+
+    /**
      * Relva alta, grama, samambaia e flores aparecem sozinhas na obra — regra do autor,
      * 2026-10-12: ninguém colhe nem guarda planta de enfeite para a obra pôr.
      */
