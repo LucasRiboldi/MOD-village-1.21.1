@@ -274,7 +274,11 @@ final class MinerSteps {
                 }
 
                 if (down.isPresent()) {
-                    WorkTargets.set(workerId, down.get(), MinerReach.ARRIVAL);
+                    // Boca longe numa vila grande: anda por etapas até lá, por caminhos reais da
+                    // navegação, em vez de mirar a boca a ~95 blocos e ficar "walking to nowhere"
+                    // (2026-10-14). A falha e a liberação ficam com o guarda de descida (job.descent).
+                    WorkTargets.set(workerId,
+                            MineApproachPath.toward(world, villager, down.get()), MinerReach.ARRIVAL);
 
                     return false;
                 }

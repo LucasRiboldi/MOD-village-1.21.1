@@ -265,6 +265,7 @@ public final class MinerHands {
         job.stalled = 0;
         job.lease.reset();
         job.descent.reset();
+        MineApproachPath.forget(workerId);
 
         // O guarda de imobilidade sobrevive a largar a pedra — E36. Ver
         // MinerSteps.startNextStone: largar não é andar, e este caminho é o mais

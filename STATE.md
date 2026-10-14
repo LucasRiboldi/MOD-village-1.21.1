@@ -1,4 +1,22 @@
-# STATE — 2026-10-13
+# STATE — 2026-10-14
+
+> **0.3.55** (14-10): **percurso por etapas até a boca da mina** (planta do autor, abordagem A
+> híbrida; spec em `docs/superpowers/specs/2026-10-14-percurso-descida-mina-design.md`). O mineiro
+> não alcançava a frente quando a boca ficava longe numa vila grande (playtest `MiIM0AisSh`: alvo a
+> ~95 blocos, "walking to nowhere", MINER 0%). `MineApproachPath.toward`: quando a navegação não
+> alcança a boca inteira, o mineiro anda até o **fim do caminho parcial** que o pathfinder achou
+> (`Path.getEnd()`, posição caminhável real — nunca divisão geométrica), com progresso útil mínimo;
+> recalcula ao chegar. `path==null` devolve a boca e deixa o guarda de descida (`job.descent`) contar
+> a falha — sem segundo sistema de travamento. Interposto em `MinerSteps` no ponto da descida;
+> `forget` ao liberar a tarefa (`MinerHands`). Mantém a ADR-042 (túnel 1×2, espaçamento 4, boca na
+> borda); não reescreve a mina. A planta completa (espiral externa, galerias radiais 3×3) fica como
+> visão de longo prazo, fora de escopo. **Não jogado.** Verificado: test 1512/0; runGametest 766/766;
+> mutação (usefulProgress sempre true) derruba `MineApproachProgressTest`. Os GameTests de aproximação
+> foram removidos por não-determinismo do pathfinder (o autor advertiu); a regra pura fica em unidade
+> e o efeito, no playtest. JAR `village-colony-0.3.55.jar` =
+> `4605A53E82EEF6834944A32463322BA3EA7AD35CA43D799161AA721A4C59A40B`.
+> **O próximo jogo precisa mostrar:** o mineiro chegar fisicamente à boca e descer (playtest **de
+> dia**, com a telemetria do percurso).
 
 > **0.3.54** (13-10): playtest da 0.3.53 (Spark `vN5T2AtQNZ`, 36 min) — TPS 20, mod 2,39%, 18
 > trabalhadores, 1 obra aberta. Sete pedidos do autor; **3 feitos e verificados, 4 pendentes**:
