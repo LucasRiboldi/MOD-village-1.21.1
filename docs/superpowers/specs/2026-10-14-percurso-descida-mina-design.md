@@ -51,50 +51,65 @@ No ramo de `MinerSteps.step` em que `down = MineEntrance.legDown(...)` está pre
 chama `WorkTargets.set(workerId, down.get(), ARRIVAL)`: interpor
 `MineApproachPath.toward(world, villager, down.get())`, que devolve **o alvo de caminhada a usar**:
 
-1. Pede à navegação `findPathTo(boca, ARRIVAL_FOLGA)`.
+1. Pede à navegação `findPathTo(boca, ARRIVAL_FOLGA)`. **Sempre** consulta o pathfinder — sem
+   atalho por distância (ver "Sem atalho de 24", abaixo).
 2. `path != null && (reachesTarget() || getEnd() a ≤ NEAR da boca)` → devolve a **boca** (caso
    "boca a 20 blocos": comportamento atual inalterado).
-3. `path != null && parcial` (nós presentes, não alcança) → devolve `getEnd().getBlockPos()` — um
-   **waypoint caminhável real**, o ponto mais longe que a navegação alcança no rumo da boca.
-4. `path == null` (sem caminho nenhum) → **não substitui por posição arbitrária**: devolve a boca
-   como estava e deixa o guarda de descida (abaixo) medir a falha. Nunca inventa waypoint.
+3. `path != null && parcial` (nós presentes, não alcança) → **só** devolve `getEnd().getBlockPos()`
+   se ele demonstra **progresso útil** (ver "Progresso útil"); senão conta tentativa sem progresso
+   e mantém o alvo anterior.
+4. `path == null` (sem caminho nenhum) → **conta como tentativa sem progresso** e registra o
+   veredito "sem caminho" na telemetria; não reinstala indefinidamente o mesmo alvo inalcançável
+   sem contabilizar. Nunca inventa waypoint. A falha progride pelo contador (ver "Progresso").
 
 O waypoint é só o alvo de **caminhada**; `job.target` (pedra/boca final) e a tarefa não mudam.
 
-### Validação do waypoint (ajuste 1 do autor)
+### Progresso útil do waypoint (correção 2 do autor)
 
-`getEnd()` só é aceito como waypoint quando: o path é válido (não nulo, com nós) **e** o `getEnd()
-está mais perto da boca** que a posição atual do mineiro (progresso real em direção à boca). Se o
-`getEnd()` não representa avanço, não é usado como alvo novo (segue o alvo anterior e conta para o
-guarda de bloqueio). Nunca se aceita posição que não venha de um path Vanilla.
+`getEnd()` de um path parcial é alcançável pelo pathfinder, mas isso não basta — ele pode estar só
+um pouco mais perto, ou ser um ponto do qual o recálculo seguinte não avança. Regras:
+- **Progresso mínimo**: o `getEnd()` só vira waypoint novo se sua distância à boca for **menor que
+  `closest` (a menor já atingida) por ao menos `PROGRESS_MIN` blocos** (tolera pequenas oscilações).
+- **Waypoint repetido**: se o `getEnd()` é (aprox.) o mesmo waypoint já dado e o mineiro já está
+  nele, é tratado como **sem progresso** (não reinstala o mesmo alvo em ciclo).
+- Sem progresso útil → mantém o alvo anterior e **incrementa `sinceProgress`** (ver falha).
+O teste prova que os waypoints **sucessivos aproximam** o mineiro da boca, não só que cada path é
+válido.
 
-### Recálculo e detecção de progresso (ajustes 2 e 3)
+### Recálculo × progresso — contadores separados (correção 3 do autor)
 
-`MineApproachPath` guarda por mineiro: a boca-alvo, o waypoint atual, a menor distância já atingida
-à boca (`closest`) e `sinceProgress` (tentativas sem melhorar `closest`). Recalcula o `findPathTo`
-quando: (a) o mineiro **alcança** o waypoint atual (dentro de `ARRIVAL`/`REACH`); (b) o
-`RECHECK_TICKS` (≈200) venceu — rede de segurança, não o único gatilho; (c) o guarda de imobilidade
-do mineiro (`job.stall`/`WorkStall`, que já existe) indica parada. Caminho parcial **não** é falha:
-compara `closest` anterior e atual com tolerância pequena; só conta "sem progresso" quando não
-melhora.
+`MineApproachPath` guarda por mineiro, **separadamente**:
+- `mouth` (boca-alvo), `waypoint` (alvo de caminhada atual), `at` (tick do último cálculo);
+- `closest` (menor distância física já atingida da boca) e `lastProgressTick`;
+- `recalcs` (quantas vezes recalculou) e `sinceProgress` (recálculos **sem** melhorar `closest`).
 
-### Falha explícita (ajuste 4) — sem perder a tarefa
+Distinção explícita: **recalcular não é progredir.** Se o pathfinder devolve o mesmo caminho
+parcial repetidamente, `recalcs` sobe mas `sinceProgress` também — e é `sinceProgress` (progresso
+físico), não `recalcs`, que leva à falha. Recalcula o `findPathTo` quando: (a) o mineiro alcança o
+waypoint atual; (b) venceu `RECHECK_TICKS` (≈200, rede de segurança); (c) o guarda de imobilidade
+do mineiro (`job.stall`/`WorkStall`, **que já existe**) indica parada física. **Não se cria um
+segundo sistema de imobilidade** — o `sinceProgress` mede progresso rumo à boca; a imobilidade
+local continua com o `WorkStall`/`job.stall` que o mineiro já tem.
 
-Após `APPROACH_FAILURES` recálculos **sem progresso** (não após um único path parcial), integra-se
-ao guarda de descida existente: `stuck(world, villager, job, "no walkable approach to the mine
-mouth at X,Y,Z — closest got to D in N tries")`, que já chama `MinerHands.giveUp`→`job.task.release`
-e `MineDescent.stoppedAt`. A falha é registrada **uma vez por episódio** (ao disparar `stuck`), não
-a cada tick. O estado do `MineApproachPath` para esse mineiro é limpo quando: a boca-alvo muda, a
-tarefa é cancelada/liberada, ou o mineiro conclui a aproximação (entra no nível) — ganchos em
+### Falha explícita (correção 1 e 4) — sem perder a tarefa, sem duplicar travamento
+
+Após `APPROACH_FAILURES` recálculos com `sinceProgress` crescente (inclui o caso `path == null`:
+cada tentativa sem caminho conta), integra-se ao guarda de descida existente:
+`stuck(world, villager, job, "no walkable approach to the mine mouth at X,Y,Z — closest got to D in
+N tries")`, que já chama `MinerHands.giveUp`→`job.task.release`, `MineClaims.stepAside` e
+`MineDescent.stoppedAt`. A falha é registrada **uma vez por episódio** (ao disparar `stuck`), não a
+cada tick. O estado do `MineApproachPath` é limpo quando: a boca-alvo muda, a tarefa é
+cancelada/liberada, ou o mineiro conclui a aproximação (entra no nível) — ganchos em
 `MinerHands.release`/`forget` (padrão do `MinerDirectPath.forget`).
 
-### Limiar de 24 blocos (ajuste do autor: experimental, não regra)
+### Sem atalho de 24 blocos na versão mínima (correção/ressalva do autor)
 
-A lógica principal **não depende do número**: sempre tenta o alvo direto e, se o path é parcial,
-aproveita o `getEnd()`. O 24 entra apenas como atalho opcional (abaixo dele, pular o `findPathTo` e
-ir direto, economizando A*), documentado como **hipótese de teste** numa única constante nomeada
-`DIRECT_WHEN_WITHIN` — sem duplicar constantes. A decisão de verdade é sempre `reachesTarget()`/
-path parcial, não a distância.
+A versão mínima **não** tem o atalho por distância: sempre consulta o pathfinder e decide pelo
+resultado real (chega / parcial / nulo). Pular o `findPathTo` abaixo de um limite tornaria o sistema
+incapaz de afirmar que a navegação confirmou a boca alcançável — contradição que o autor apontou.
+O atalho só entra depois, **se** a telemetria de desempenho mostrar que o custo do A* é relevante;
+nesse caso, como constante única nomeada e identificada como otimização. Não há constante de 24 na
+entrega inicial.
 
 ## Fluxo de dados
 
