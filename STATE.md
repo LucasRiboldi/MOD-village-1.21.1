@@ -1,5 +1,18 @@
 # STATE — 2026-10-14
 
+> **0.3.56** (14-10): **o pastor aproveita o rebanho** (manutenção do ofício, não toca a obra —
+> Regra 59). `FlockHarvest`: com mais de `HARVEST_KEEP=8` adultos de uma espécie (a criação enche
+> até `FLOCK_TARGET=12`), abate **1 por ciclo** o excedente deixando sempre ≥8 vivos, e deposita o
+> drop Vanilla direto no baú (vaca→couro+carne, porco/ovelha→carne, galinha→frango+pena). A **carne
+> crua acima de `ITEM_KEEP=16` é cozida** (`CraftingLookup.smelted`, sem combustível — como o
+> fundidor; nenhuma profissão precisa de carvão). O ovo a galinha já larga no chão (Vanilla) e a
+> coleta do chão recolhe. Ligado em `ShepherdFlock.tend`. **Não jogado.** Verificado: test 1515/0;
+> runGametest 768/768; mutação (HARVEST_KEEP=0) derruba `FlockHarvestTest`. Spec em
+> `docs/superpowers/specs/2026-10-14-pastor-aproveita-rebanho-design.md`. JAR
+> `village-colony-0.3.56.jar` = `9BE8707A710E4DA6D12D0D92DCCD82C675254680D48FC709E1C8CED18A2F2F55`.
+> **⚠ Troca do JAR pendente:** o jogo estava aberto com a 0.3.55 (arquivo travado); a 0.3.55 só é
+> desabilitada quando o jogo fechar — hoje há 0.3.55 e 0.3.56 na pasta de mods.
+
 > **0.3.55** (14-10): **percurso por etapas até a boca da mina** (planta do autor, abordagem A
 > híbrida; spec em `docs/superpowers/specs/2026-10-14-percurso-descida-mina-design.md`). O mineiro
 > não alcançava a frente quando a boca ficava longe numa vila grande (playtest `MiIM0AisSh`: alvo a

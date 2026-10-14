@@ -6,9 +6,12 @@ Estender a **manutenção do ofício do pastor** (direção aceita no ciclo ante
 contínuas por manutenção, sem tocar a obra — Regra 59). Quando ocioso, além da lã e da criação, o
 pastor aproveita os outros animais:
 
-1. **Couro e carne a partir do 5º adulto da espécie** — com mais de 4 adultos de uma espécie, abate
-   o excedente (do 5º em diante), **gradualmente, 1 por ciclo**, deixando sempre ≥ 4 adultos vivos
-   para repovoar.
+1. **Couro e carne do excedente do rebanho** — o pastor já cria até `FLOCK_TARGET = 12` adultos por
+   espécie; o abate colhe o excedente **acima de `HARVEST_KEEP = 8`**, **gradualmente, 1 por ciclo**,
+   deixando sempre ≥ 8 adultos vivos. A faixa 8→12 é a de colheita; abaixo de 8 não abate, e a
+   criação não é contrariada (ela para em 12, o abate para em 8, com folga de 4). *(O pedido original
+   era "do 5º adulto"; ajustado para 8 porque abater até 4 brigaria com a criação até 12 — decisão
+   do autor, 2026-10-14.)*
 2. **Ovos de galinha** — recolhe do chão o ovo que a galinha já larga sozinha.
 3. **Cozinha** a carne crua (o próprio pastor), **sem carvão/combustível**.
 4. **Reserva fixa (16)** de cada item no baú: só processa/cozinha o que excede a cota.
