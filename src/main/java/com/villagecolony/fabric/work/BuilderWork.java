@@ -105,6 +105,9 @@ public final class BuilderWork {
     /** Tiques andando sem alcançar a peça antes de deixá-la de lado — A-6. */
     static final int SET_ASIDE_AFTER = 200;
 
+    /** Tiques com alguém parado onde a peça vai antes de empurrá-lo para fora (0.3.54). */
+    static final int SHOVE_AFTER = 60;
+
     /** Trabalho aberto, por construtor. */
     static final Map<UUID, Job> JOBS = new HashMap<>();
 
@@ -368,6 +371,13 @@ public final class BuilderWork {
         if (BuilderApproach.someoneStandsIn(world, target)) {
             WorkTargets.set(workerId,
                     BuilderApproach.footOf(world, project, target, villager.getBlockPos()), BuilderApproach.ARRIVAL);
+
+            // Insistiu e o ponto continua ocupado: tira o ocupante do caminho em vez de adiar a
+            // peça para sempre — a peça adiada reentra na fila e cai no mesmo bloco ocupado,
+            // e a obra ficava refém de um aldeão parado (bug 0.3.53).
+            if (job.stalled > 0 && job.stalled % SHOVE_AFTER == 0) {
+                BuilderApproach.shoveOutOf(world, target);
+            }
 
             if (++job.stalled % SET_ASIDE_AFTER == 0 && project.remaining().size() > 1) {
                 setAside(world, project, job, next.get(), target, "someone kept standing where it goes");

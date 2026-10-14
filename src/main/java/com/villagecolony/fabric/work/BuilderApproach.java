@@ -74,6 +74,37 @@ public final class BuilderApproach {
                 new net.minecraft.util.math.Box(target), entity -> entity.isAlive()).isEmpty();
     }
 
+    /**
+     * Tira do lugar quem está parado onde o bloco vai, empurrando-o para um espaço livre ao
+     * lado — a obra não pode ficar refém de um aldeão (ou do gado) que não sai (bug 0.3.53:
+     * 84 peças adiadas por "someone kept standing", o construtor preso em 97% bloqueado).
+     *
+     * @return se havia alguém e ele foi movido
+     */
+    static boolean shoveOutOf(ServerWorld world, BlockPos target) {
+        var occupants = world.getEntitiesByClass(net.minecraft.entity.LivingEntity.class,
+                new net.minecraft.util.math.Box(target), entity -> entity.isAlive());
+
+        if (occupants.isEmpty()) {
+            return false;
+        }
+
+        for (var entity : occupants) {
+            for (net.minecraft.util.math.Direction side : net.minecraft.util.math.Direction.Type.HORIZONTAL) {
+                BlockPos to = target.offset(side);
+
+                if (world.getBlockState(to).getCollisionShape(world, to).isEmpty()
+                        && world.getBlockState(to.up()).getCollisionShape(world, to.up()).isEmpty()
+                        && !world.getBlockState(to.down()).getCollisionShape(world, to.down()).isEmpty()) {
+                    entity.requestTeleport(to.getX() + 0.5, to.getY(), to.getZ() + 0.5);
+                    break;
+                }
+            }
+        }
+
+        return true;
+    }
+
     /** Quantos blocos em volta da pegada da planta ainda são zona da obra (ADR-037 B1). */
     static final int ZONE_MARGIN = 4;
 
