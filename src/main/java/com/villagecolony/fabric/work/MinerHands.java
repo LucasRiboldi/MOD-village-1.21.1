@@ -318,10 +318,28 @@ public final class MinerHands {
     }
 
     /**
+     * Se o desvio vale a pena para esta pedra — <b>não</b> quando ela está dentro de um beco.
+     *
+     * <p>Playtest 0.3.60 (15-10): numa parede/teto de caverna, {@link MineVein#roomBeside} escolhe um
+     * vizinho que está na <b>mesma</b> região sem pé, e o desvio só troca {@code NO_STANDING} por
+     * outro {@code NO_STANDING}/{@code TOO_HIGH} — dez desvios e zero progresso. Quando a vizinhança já
+     * acumulou recusas ({@link MineMarks#isInADeadEndAt}, o beco), desviar fura a defesa do beco; deixa
+     * o contorno agir (marca + o cursor pula + a galeria vira). Lógica pura, provada em
+     * {@code MinerRerouteTest}.
+     */
+    static boolean rerouteWorthTryingAt(long now, BlockPos target) {
+        return !MineMarks.isInADeadEndAt(now, target);
+    }
+
+    /**
      * Redireciona o alvo para a pedra ao lado que abre o pé, se houver — devolve {@code true} quando
      * desviou. O alvo e o approach são refeitos no padrão de {@code MinerSteps.startNextStone}.
      */
     private static boolean reroutedBeside(ServerWorld world, UUID workerId, Job job) {
+        if (!rerouteWorthTryingAt(world.getTime(), job.target)) {
+            return false;
+        }
+
         Optional<Mine> mine = MinerWork.mineOf(job);
 
         if (mine.isEmpty()) {

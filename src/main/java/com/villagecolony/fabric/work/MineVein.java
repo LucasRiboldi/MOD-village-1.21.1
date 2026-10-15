@@ -372,9 +372,11 @@ final class MineVein {
 
             // Os pés e depois a cabeça: o lugar de pé precisa de dois de altura.
             for (BlockPos open : new BlockPos[] {beside, beside.up()}) {
+                // isUnreachableAround, não só isOutOfReach: o vizinho não pode estar no mesmo beco —
+                // numa parede de caverna ele também não tem pé, e o desvio não progride (0.3.60).
                 if (MineRock.isDiggableRock(world, mine, open)
                         && !MineFlooding.holdsBackFluid(world, open)
-                        && !MineMarks.isOutOfReach(world, open)
+                        && !MineMarks.isUnreachableAround(world, open)
                         && !nowhereToStand(world, open)) {
                     return Optional.of(open.toImmutable());
                 }

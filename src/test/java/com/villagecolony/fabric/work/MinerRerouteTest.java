@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.work;
 
+import net.minecraft.util.math.BlockPos;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -19,10 +21,39 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class MinerRerouteTest {
 
+    @BeforeEach
+    void forgetMarks() {
+        MineMarks.clearAll();
+    }
+
     @Test
     void noStandingPositionIsWorthARerouteAttempt() {
         assertTrue(MinerHands.worthRerouting(MiningTarget.Rejection.NO_STANDING_POSITION),
                 "sem pé ao lado: cavar o vizinho abre o pé — vale tentar");
+    }
+
+    @Test
+    void anIsolatedRefusalStillReroutes() {
+        // Uma recusa só não forma beco: o desvio ao vizinho ainda vale.
+        BlockPos stone = new BlockPos(-120, 63, 668);
+        MineMarks.refuseAt(1000, stone);
+
+        assertTrue(MinerHands.rerouteWorthTryingAt(1000, stone),
+                "pedra emparedada isolada: o vizinho abre o pé, vale desviar");
+    }
+
+    @Test
+    void aStoneInsideADeadEndDoesNotReroute() {
+        // Parede/teto de caverna: três ou mais recusas num cubo pequeno. O vizinho está no mesmo
+        // beco, então o desvio só troca NO_STANDING por outro NO_STANDING/TOO_HIGH — contorna, não
+        // desvia (playtest 0.3.60, cluster y67-68).
+        MineMarks.refuseAt(1000, new BlockPos(-128, 68, 656));
+        MineMarks.refuseAt(1000, new BlockPos(-128, 68, 657));
+        MineMarks.refuseAt(1000, new BlockPos(-129, 68, 656));
+        BlockPos inWall = new BlockPos(-128, 68, 658);
+
+        assertFalse(MinerHands.rerouteWorthTryingAt(1000, inWall),
+                "pedra dentro de um beco: o vizinho está na mesma parede — não desvia");
     }
 
     @Test
