@@ -39,8 +39,12 @@ import java.util.Map;
  */
 public final class ModContent {
 
-    /** Luz que as bancadas do mod emitem (decisão do autor: nível 10). */
-    public static final int LIGHT = 10;
+    /**
+     * Luz que as bancadas do mod emitem — nível 14, o da tocha (decisão do autor, 2026-10-15).
+     * Acima do limiar que impede o spawn de mobs hostis (luz de bloco ≥ 1 já basta no 1.21, mas 14
+     * ilumina o ambiente como uma tocha e mantém a área segura).
+     */
+    public static final int LIGHT = 14;
 
     /** Até onde o POI de bancada é visível/buscável — a bancada fica na vila, perto do ofício. */
     private static final int POI_SEARCH_DISTANCE = 64;
@@ -54,28 +58,27 @@ public final class ModContent {
     public static final Block MASON_CUTTER =
             new StonecutterBlock(AbstractBlock.Settings.copy(Blocks.STONECUTTER).luminance(state -> LIGHT));
 
-    // A forja não funde de verdade (a fundição é do mod, não da fornalha física), então é um
-    // bloco simples com a forma da fornalha — sem BlockEntity para acertar.
+    // O fundidor e as demais bancadas sem estação Vanilla própria abrem a grade 3×3 ao player, como a
+    // mesa de trabalho (decisão do autor, 2026-10-15): CraftingTableBlock. A fundição de verdade
+    // continua sendo do fluxo do mod (o aldeão), não da fornalha física — por isso crafting e não
+    // FurnaceBlock, que exigiria um BlockEntity custom e arriscaria perda de item.
     public static final Block BLACKSMITH_FORGE =
-            new Block(AbstractBlock.Settings.copy(Blocks.BLAST_FURNACE).luminance(state -> LIGHT));
+            new CraftingTableBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
 
-    // As cinco bancadas restantes — uma por profissão (decisão do autor, 2026-10-15). Como a forja,
-    // são blocos simples com a forma da estação do ofício: não executam nada sozinhos (o trabalho é
-    // do fluxo do mod), só servem de POI e dobram a produção daquele ofício ({@link ModBenchBonus}).
     public static final Block LUMBERJACK_BENCH =
-            new Block(AbstractBlock.Settings.copy(Blocks.OAK_PLANKS).luminance(state -> LIGHT));
+            new CraftingTableBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
 
     public static final Block FARMER_BENCH =
-            new Block(AbstractBlock.Settings.copy(Blocks.OAK_PLANKS).luminance(state -> LIGHT));
+            new CraftingTableBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
 
     public static final Block SHEPHERD_BENCH =
-            new Block(AbstractBlock.Settings.copy(Blocks.OAK_PLANKS).luminance(state -> LIGHT));
+            new CraftingTableBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
 
     public static final Block BUILDER_BENCH =
-            new Block(AbstractBlock.Settings.copy(Blocks.OAK_PLANKS).luminance(state -> LIGHT));
+            new CraftingTableBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
 
     public static final Block MINER_BENCH =
-            new Block(AbstractBlock.Settings.copy(Blocks.STONE).luminance(state -> LIGHT));
+            new CraftingTableBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
 
     private static RegistryKey<PointOfInterestType> carpenterPoi;
     private static RegistryKey<PointOfInterestType> masonPoi;
