@@ -39,6 +39,18 @@ final class CraftStation {
     /** Até onde procurar cortador de pedra e sino pelo registro de pontos do jogo. */
     static final int POI_RADIUS = 64;
 
+    /**
+     * Ticks de expediente que o artesão insiste em caminhar até a bancada antes de desistir e fabricar
+     * onde está — a salvaguarda da regra de 2026-10-15. Reconcilia com a de 2026-10-11 ("fabrica onde
+     * está; a caminhada até a bancada soltava a tarefa 'stuck on the way'"): agora ele vai até a
+     * bancada, mas uma bancada inalcançável (ex.: do outro lado de um desnível na montanha) deixa de
+     * travar — passado o prazo, fabrica no lugar. 10 s a 20 tps.
+     */
+    static final int APPROACH_BUDGET = 200;
+
+    /** Código de distância que diz "não há bancada ao alcance" — fabrica onde está, sem andar. */
+    static final int NO_BENCH = -1;
+
     private record Choice(BlockPos spot, long at) {
     }
 
@@ -128,5 +140,28 @@ final class CraftStation {
         return world.getPointOfInterestStorage().getNearestPosition(
                 entry -> entry.matchesKey(PointOfInterestTypes.MEETING), chest, POI_RADIUS,
                 PointOfInterestStorage.OccupationStatus.ANY);
+    }
+
+    /**
+     * A bancada em que este artesão deve trabalhar: a do mod primeiro (dobra a produção), depois a
+     * estação Vanilla do ofício, e vazio quando não há nenhuma — aí ele fabrica onde está (trabalho
+     * normal). É o {@code mod → vanilla → normal} do fluxo de bancada (regra do autor, 2026-10-15).
+     */
+    static Optional<BlockPos> benchFor(ServerWorld world, UUID workerId, BlockPos chest) {
+        Optional<ProfessionType> profession = VillageColonyMod.WORKERS.find(workerId).flatMap(Worker::profession);
+
+        return bench(world, profession.orElse(null), chest);
+    }
+
+    /**
+     * Se o artesão já deve fabricar onde está, em vez de continuar indo até a bancada. Pura.
+     *
+     * <p>Fabrica aqui quando: já chegou ({@code atBench}); não há bancada ({@code ticksApproaching} é
+     * {@link #NO_BENCH}); ou o orçamento de ida estourou ({@code >= budget}) — a salvaguarda que impede
+     * uma bancada inalcançável de travar a tarefa (regra de 2026-10-11, preservada). Enquanto está
+     * longe e dentro do prazo, caminha.
+     */
+    static boolean craftHereNow(boolean atBench, int ticksApproaching, int budget) {
+        return atBench || ticksApproaching == NO_BENCH || ticksApproaching >= budget;
     }
 }
