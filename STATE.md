@@ -1,4 +1,18 @@
-# STATE — 2026-10-14
+# STATE — 2026-10-15
+
+> **0.3.60** (15-10): **o mineiro desvia para a pedra ao lado antes de largar** (P1 do plano, mina).
+> O playtest da 0.3.59 (Spark `1nwGlUtitv`, ~37 min) **confirmou o conserto anterior**: MINED saltou de
+> 0,8 para **~19/min** (297 e 295 blocos por mineiro, 1448 minerações) — o 1º defeito (falso caminho à
+> superfície) está fechado. Restava o 2º defeito em série: o approach **encala a 4-5 bl** quando o
+> mineiro chega perto (22× NO_STANDING_POSITION + 9× TOO_HIGH, conclusão 11%). **Correção:** antes de
+> `passOver` marcar e largar, se faltava só o pé (`worthRerouting` = só NO_STANDING), tenta
+> `MineVein.roomBeside` (ADR-038 P6) e redireciona o alvo para a pedra vizinha que abre o pé; TOO_HIGH/
+> sem-caminho seguem o contorno de sempre. **Não jogado.** Verificado: test 1521/0 (3 novos em
+> `MinerRerouteTest`); runGametest 769/769 exit 0; mutação (desviar para qualquer rejeição) derruba
+> `tooHighAndNoPathAreNotReroutable`. JAR `village-colony-0.3.60.jar` =
+> `F164319032E6DE6342027DE336B89B7AD34A5CC42527A1A51E0A2AF37295C169`.
+> **O próximo jogo precisa mostrar:** NO_STANDING_POSITION caindo (desvio funciona), MINER idle+blocked
+> < 15% no expediente (Regra 51), `went one level deeper` > 1. Playtest **de dia**.
 
 > **0.3.59** (14-10): **o mineiro recusa o falso caminho à superfície** (P0, mina). Playtest da 0.3.58
 > (Spark `YOT1oqyhIv`, 100 min) mostrou TPS 20 estável, mas o mineiro passava **janelas longas**

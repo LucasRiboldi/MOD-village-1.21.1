@@ -61,7 +61,16 @@ diagnóstico. Sem isso, os ciclos seguintes medem errado.
 
 ## Fase 1 — Produto: fechar o P0 da mina e os laços improdutivos
 
-### Ciclo P1 🔴 — Mina: 2º defeito em série (approach encalha a 4–5 blocos) — C1
+### Ciclo P1 🔴 — Mina: 2º defeito em série (approach encalha a 4–5 blocos) — C1 — ✅ FEITO (15-10), falta playtest
+- **Verificado em jogo que o pré-requisito fechou:** o playtest 0.3.59 (Spark `1nwGlUtitv`) provou o 1º
+  defeito resolvido — MINED 0,8→~19/min, 1448 minerações. Restavam 22× NO_STANDING + 9× TOO_HIGH.
+- **Feito (0.3.60):** `MinerHands.passOver` tenta `MineVein.roomBeside` antes de largar quando
+  `worthRerouting` (só NO_STANDING); redireciona o alvo para a pedra vizinha. test 1521/0; runGametest
+  769/769; mutação derruba `tooHighAndNoPathAreNotReroutable`. **Falta o playtest** para o aceite de
+  efeito (NO_STANDING caindo, MINER Regra 51 < 15%).
+
+<!-- registro original do ciclo, mantido para o aceite do playtest -->
+#### P1 (definição original)
 - **Evidência:** spike 0.3.59 — depois que o mineiro chega perto, o `closest` encalha em **4,1–5,2**
   (fora do REACH 4); 72× NO_STANDING_POSITION. O `roomBeside` (ADR-038 P6) só roda no fluxo do cursor,
   não quando o alvo é julgado de perto em `MinerSteps`/`MinerHands.passOver`.
