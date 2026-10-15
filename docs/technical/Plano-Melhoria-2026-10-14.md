@@ -39,25 +39,23 @@ diagnóstico. Sem isso, os ciclos seguintes medem errado.
 - **Verificação:** leitura; `wc -l STATE.md` ≤ 150. Sem código, sem build.
 - **Custo:** baixo. **Depende de:** nada.
 
-### Ciclo H2 🟠 — `time_ledger` separa dia/noite (C3)
-- **Evidência:** o ledger conta espera noturna como bloqueio (a `GoToWorkTargetTask` não começa fora do
-  expediente); o playtest 11-10 lido como "BUILDER 93% bloqueado" era, em boa parte, a noite.
-- **Ação:** o `time_ledger.py` marca cada janela como expediente/off-hours (pela linha `VC_TIME` ou por
-  um marcador de schedule no log) e aplica a Regra 51 só ao expediente; off-hours sai num rótulo
-  separado, não entra na conta de ócio.
-- **Aceite:** rodar sobre o log 0.3.58 e ver a Regra 51 recalculada só no expediente, com a fração
-  off-hours reportada à parte; o número bate com a inspeção manual de 2–3 profissões.
-- **Verificação:** `python scripts/time_ledger.py <log 0.3.58>`; conferir contra `action_report` do
-  mesmo log. Teste de unidade do parser se a lógica virar função pura.
-- **Custo:** baixo-médio. **Depende de:** nada. **Desvenena:** todos os ciclos de produto.
+### Ciclo H2 🟠 — `time_ledger` separa dia/noite (C3) — ✅ RESOLVIDO POR VERIFICAÇÃO (premissa errada)
+- **Evidência que refutou:** `WorkTime.sample` (`fabric/work/WorkTime.java:93-95`) já pula o aldeão
+  quando `!WorkHours.isWorkTime` → `continue`. A linha `VC_TIME` **só conta o expediente, por
+  construção, desde o commit da Regra 50** (`5ce71b0f`). O `time_ledger.py` também já pondera certo por
+  `s=` (`total*share/100`), não faz média simples. O "BUILDER 93% bloqueado = noite" de 11-10 foi
+  interpretação da época; o filtro já existia.
+- **Conclusão:** não há viés dia/noite a corrigir no ledger. O que falta para medir bem é **jogar de
+  dia** — que já é a regra do aceite do P0. H2 fechado sem alterar código. Ver memória
+  `time-ledger-ja-so-expediente`.
 
-### Ciclo H3 🟡 — Enxugar o TODO.md (I3)
-- **Evidência:** 157 itens abertos em 396 linhas; difícil separar P0 do acúmulo.
-- **Ação:** arquivar o concluído/obsoleto em `docs/archive/technical/`, deixar no `TODO.md` só o aberto
-  por prioridade (🔴/🟠/🟡/🟢), reconciliado com a fila AUD do STATE.
-- **Aceite:** `TODO.md` < 120 linhas; cada 🔴 tem evidência; nenhum item duplicado com o STATE.
-- **Verificação:** leitura; contagem honesta de itens por prioridade.
-- **Custo:** baixo. **Depende de:** H1 (reusa a fila reconciliada).
+### Ciclo H3 🟡 — Enxugar o TODO.md (I3) — ✅ FEITO (14-10)
+- **Evidência:** 157 itens abertos em 396 linhas; a maioria eram checklists "Playtest da 0.3.X" de
+  versões superadas (0.3.5→0.3.44), nunca verificados — o B3 materializado.
+- **Feito:** checklists de playtest ≤0.3.44 movidos para `docs/archive/technical/TODO-ate-2026-10-07.md`
+  (grep); TODO mantém só a fila viva (AUD, Fluxo físico, Erros abertos, Regra de teste, Bioma,
+  Estrutura, Decisões do autor).
+- **Aceite atingido:** TODO 396→**118 linhas** (< 120); 157→**26 itens abertos**.
 
 ---
 
