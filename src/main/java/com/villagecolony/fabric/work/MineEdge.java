@@ -98,9 +98,7 @@ final class MineEdge {
         }
 
         VillageBounds box = bounds.get();
-        Choice best = null;
-        int bestScore = Integer.MIN_VALUE;
-        int bestWater = 0;
+        Scored best = new Scored();
 
         for (int inset : new int[] {1, INSIDE}) {
             for (Side side : Side.values()) {
@@ -112,37 +110,53 @@ final class MineEdge {
                     int x = alongX ? along : side == Side.WEST ? box.minX() + inset : box.maxX() - inset;
                     int z = alongX ? (side == Side.NORTH ? box.minZ() + inset : box.maxZ() - inset) : along;
 
-                    if (avoid != null && Math.abs(x - avoid.getX()) < AVOID && Math.abs(z - avoid.getZ()) < AVOID) {
-                        continue;
-                    }
-
-                    Optional<BlockPos> mouth = MineSite.edgeMouth(
-                            world, center, x - center.getX(), z - center.getZ(), side);
-
-                    if (mouth.isEmpty()) {
-                        continue;
-                    }
-
-                    int water = waterDistance(world, mouth.get());
-                    int hill = Math.max(0, Math.min(HILL_CAP, mouth.get().getY() - center.getY()));
-                    int score = score(water, hill);
-
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestWater = water;
-                        best = new Choice(mouth.get(), side);
-                    }
+                    considerMouth(world, center, avoid, side, x, z, best);
                 }
             }
         }
 
-        if (best != null) {
+        if (best.choice != null) {
             VillageColonyMod.LOGGER.info("Colony {} picks the new mine mouth at {} on the {} edge — water {}",
-                    colonyId, best.mouth().toShortString(), best.side(),
-                    bestWater >= WATER_LOOK ? "farther than " + WATER_LOOK + " blocks" : bestWater + " blocks away");
+                    colonyId, best.choice.mouth().toShortString(), best.choice.side(),
+                    best.water >= WATER_LOOK ? "farther than " + WATER_LOOK + " blocks" : best.water + " blocks away");
         }
 
-        return Optional.ofNullable(best);
+        return Optional.ofNullable(best.choice);
+    }
+
+    /** O melhor candidato achado até agora: a escolha, a pontuação e a distância de água dela. */
+    private static final class Scored {
+        Choice choice;
+        int score = Integer.MIN_VALUE;
+        int water;
+    }
+
+    /**
+     * Pontua a boca na coluna (x, z) deste lado e atualiza {@code best} se ela for a melhor até agora.
+     * Extraído do laço quádruplo de {@link #inside} em 2026-10-15 (F3 do plano) sem mudar o critério.
+     */
+    private static void considerMouth(
+            ServerWorld world, BlockPos center, BlockPos avoid, Side side, int x, int z, Scored best) {
+
+        if (avoid != null && Math.abs(x - avoid.getX()) < AVOID && Math.abs(z - avoid.getZ()) < AVOID) {
+            return;
+        }
+
+        Optional<BlockPos> mouth = MineSite.edgeMouth(world, center, x - center.getX(), z - center.getZ(), side);
+
+        if (mouth.isEmpty()) {
+            return;
+        }
+
+        int water = waterDistance(world, mouth.get());
+        int hill = Math.max(0, Math.min(HILL_CAP, mouth.get().getY() - center.getY()));
+        int score = score(water, hill);
+
+        if (score > best.score) {
+            best.score = score;
+            best.water = water;
+            best.choice = new Choice(mouth.get(), side);
+        }
     }
 
     /** A distância (em anéis) da água mais perto, até {@link #WATER_LOOK}. */
