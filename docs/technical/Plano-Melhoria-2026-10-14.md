@@ -111,17 +111,20 @@ diagnóstico. Sem isso, os ciclos seguintes medem errado.
 
 ## Fase 2 — Dívida de forma (por último; não trava a vila, mas gera os P0)
 
-### Ciclo F1 🟠 — Subpacotes em `work/` + fronteira ArchUnit (A2)
-- **Evidência:** 173 arquivos num pacote só; ArchUnit existe mas não impõe "mina não chama obra".
-- **Ação:** mover por subsistema (`work.mine`, `work.build`, `work.farm`, `work.craft`, `work.shepherd`,
-  …) em **um commit por subsistema** (só move + ajusta imports, sem mudar lógica), e adicionar regras
-  ArchUnit de dependência entre eles.
-- **Aceite:** `work/` raiz com ≤ ~20 classes transversais; cada subpacote coeso; nova regra ArchUnit
-  passando; `test` + `runGametest` verdes **sem mudança de comportamento** (só import/pacote).
-- **Verificação:** `./gradlew test runGametest` verdes; `git diff` prova que são só movimentações.
-- **Rollback:** cada subsistema é um commit isolado; reverter o que quebrar.
-- **Custo:** médio (volume), risco baixo (mecânico). **Depende de:** nada, mas **só depois** da Fase 1
-  (mover a mina enquanto se corrige a mina multiplicaria conflito).
+### Ciclo F1 🟠 — Subpacotes em `work/` + fronteira ArchUnit (A2) — ❌ NÃO FAZER (premissa refutada, 15-10)
+- **Evidência que refutou:** as classes de `work/` usam **visibilidade de pacote de propósito** — nas
+  35 classes de mina há **147 métodos package-private**, e **24 classes não-mina** de `work/` chamam
+  classes de mina sem import (mesmo pacote). Mover a mina para `work.mine` forçaria **tornar ~147
+  métodos públicos** e adicionar imports em dezenas de arquivos.
+- **Por que não fazer:** o F1 queria *impor* fronteiras, mas mover para subpacotes aqui **enfraquece** o
+  encapsulamento (tudo vira público) em vez de fortalecê-lo — o oposto do objetivo. É o mesmo tipo de
+  armadilha que a memória `climb-out-nunca-desiste` já anota ("ArchUnit congelado muda com qualquer
+  dependência"). O custo real é alto e o resultado é pior arquitetura, não melhor.
+- **Alternativa mais leve (se o acoplamento voltar a doer):** impor a regra de dependência via
+  **convenção de nome** no ArchUnit (classes `Mine*`/`Miner*` como um slice lógico), sem mover arquivo
+  nem mexer em visibilidade. Fica como opção aberta, não como dívida a pagar.
+- **Conclusão:** o A2 (god-package) é um incômodo de organização, não um defeito. O ArchUnit já impõe o
+  que importa (camada core↔fabric, ciclos, ServerMemory). O F1 fica **cancelado**.
 
 ### Ciclo F2 🟠 — Teto de 500 como gatilho de extração, não de poda (A3)
 - **Evidência:** 4 arquivos exatamente em 500 (`TreeChoice`, `SmelterWork`, `BuilderWork`,
