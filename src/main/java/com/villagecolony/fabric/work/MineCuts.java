@@ -103,13 +103,8 @@ public final class MineCuts {
                     || BlockProtection.isVillageOriginal(world, at)
                     || BlockProtection.isColonyBuilt(at)) {
 
-                // Bedrock, casa da vila, casa da colônia. A Regra 3 e o
-                // impossível, pela mesma porta.
-                if (arm.blockedAgain(MineDigging.BLOCKED_BEFORE_TURNING)) {
-                    VillageColonyMod.LOGGER.info(
-                            "Miner {} hit something it cannot dig - the branch ends here",
-                            workerId);
-
+                // Bedrock, casa da vila, casa da colônia. A Regra 3 e o impossível, pela mesma porta.
+                if (hitUndiggable(arm, workerId, "something it cannot dig")) {
                     break;
                 }
 
@@ -121,12 +116,7 @@ public final class MineCuts {
                 // 2026-09-25: "não deixar o mineiro quebrar o bloco que tem
                 // líquido atrás". Conta para a curva como o bedrock: a
                 // galeria contorna a nascente em vez de abri-la.
-                if (arm.blockedAgain(MineDigging.BLOCKED_BEFORE_TURNING)) {
-                    VillageColonyMod.LOGGER.info(
-                            "Miner {} keeps finding stone that holds back water or lava"
-                                    + " - the branch ends here",
-                            workerId);
-
+                if (hitUndiggable(arm, workerId, "stone that holds back water or lava")) {
                     break;
                 }
 
@@ -155,11 +145,7 @@ public final class MineCuts {
                 // Impossível de trabalhar é impossível, e vai pela mesma
                 // porta do bedrock: conta para a curva, e a galeria
                 // contorna o vão em vez de mirar para dentro dele.
-                if (arm.blockedAgain(MineDigging.BLOCKED_BEFORE_TURNING)) {
-                    VillageColonyMod.LOGGER.info(
-                            "Miner {} hit stone with nowhere to stand - the branch ends here",
-                            workerId);
-
+                if (hitUndiggable(arm, workerId, "stone with nowhere to stand")) {
                     break;
                 }
 
@@ -186,12 +172,7 @@ public final class MineCuts {
                 // MineTrouble.couldNotReach existe para impedir. Contando, o ramal
                 // acaba depois de MineDigging.BLOCKED_BEFORE_TURNING recusas e a mina
                 // desce um nível — que é resposta, e não marcha.
-                if (arm.blockedAgain(MineDigging.BLOCKED_BEFORE_TURNING)) {
-                    VillageColonyMod.LOGGER.info(
-                            "Miner {} keeps finding stone it cannot reach"
-                                    + " - the branch ends here",
-                            workerId);
-
+                if (hitUndiggable(arm, workerId, "stone it cannot reach")) {
                     break;
                 }
 
@@ -281,6 +262,23 @@ public final class MineCuts {
         return Optional.empty();
     }
 
+    /**
+     * O cursor achou uma pedra impossível de cavar ou de alcançar: conta para a curva do ramal e diz
+     * se ele deve <b>parar</b> ({@code true}, o ramal vira/desce) ou seguir para a próxima posição
+     * ({@code false}). Extraído dos quatro ramos idênticos de {@link #nextCut} em 2026-10-15 (F3 do
+     * plano), sem mudar a contagem: bedrock, fluido retido, emparedada e inalcançável vão todos pela
+     * mesma porta — a defesa de 2026-08-27, que acaba o ramal após {@link MineDigging#BLOCKED_BEFORE_TURNING}
+     * recusas em vez de marchar pela ordem de cavar com o mundo intacto.
+     */
+    private static boolean hitUndiggable(MineArm arm, UUID workerId, String reason) {
+        if (arm.blockedAgain(MineDigging.BLOCKED_BEFORE_TURNING)) {
+            VillageColonyMod.LOGGER.info("Miner {} hit {} - the branch ends here", workerId, reason);
+
+            return true;
+        }
+
+        return false;
+    }
 
     /**
      * Para que lado esta colônia abre a mina.
