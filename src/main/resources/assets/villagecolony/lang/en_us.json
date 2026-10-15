@@ -64,5 +64,10 @@
   "overlay.biome.taiga": "taiga",
   "block.villagecolony.carpenter_bench": "Carpenter's Bench",
   "block.villagecolony.mason_cutter": "Mason's Cutter",
-  "block.villagecolony.blacksmith_forge": "Blacksmith's Forge"
+  "block.villagecolony.blacksmith_forge": "Blacksmith's Forge",
+  "block.villagecolony.lumberjack_bench": "Lumberjack's Bench",
+  "block.villagecolony.farmer_bench": "Farmer's Bench",
+  "block.villagecolony.shepherd_bench": "Shepherd's Bench",
+  "block.villagecolony.builder_bench": "Builder's Bench",
+  "block.villagecolony.miner_bench": "Miner's Bench"
 }

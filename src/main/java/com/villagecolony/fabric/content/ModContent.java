@@ -59,9 +59,32 @@ public final class ModContent {
     public static final Block BLACKSMITH_FORGE =
             new Block(AbstractBlock.Settings.copy(Blocks.BLAST_FURNACE).luminance(state -> LIGHT));
 
+    // As cinco bancadas restantes — uma por profissão (decisão do autor, 2026-10-15). Como a forja,
+    // são blocos simples com a forma da estação do ofício: não executam nada sozinhos (o trabalho é
+    // do fluxo do mod), só servem de POI e dobram a produção daquele ofício ({@link ModBenchBonus}).
+    public static final Block LUMBERJACK_BENCH =
+            new Block(AbstractBlock.Settings.copy(Blocks.OAK_PLANKS).luminance(state -> LIGHT));
+
+    public static final Block FARMER_BENCH =
+            new Block(AbstractBlock.Settings.copy(Blocks.OAK_PLANKS).luminance(state -> LIGHT));
+
+    public static final Block SHEPHERD_BENCH =
+            new Block(AbstractBlock.Settings.copy(Blocks.OAK_PLANKS).luminance(state -> LIGHT));
+
+    public static final Block BUILDER_BENCH =
+            new Block(AbstractBlock.Settings.copy(Blocks.OAK_PLANKS).luminance(state -> LIGHT));
+
+    public static final Block MINER_BENCH =
+            new Block(AbstractBlock.Settings.copy(Blocks.STONE).luminance(state -> LIGHT));
+
     private static RegistryKey<PointOfInterestType> carpenterPoi;
     private static RegistryKey<PointOfInterestType> masonPoi;
     private static RegistryKey<PointOfInterestType> blacksmithPoi;
+    private static RegistryKey<PointOfInterestType> lumberjackPoi;
+    private static RegistryKey<PointOfInterestType> farmerPoi;
+    private static RegistryKey<PointOfInterestType> shepherdPoi;
+    private static RegistryKey<PointOfInterestType> builderPoi;
+    private static RegistryKey<PointOfInterestType> minerPoi;
 
     private ModContent() {
     }
@@ -71,10 +94,20 @@ public final class ModContent {
         registerBlock("carpenter_bench", CARPENTER_BENCH);
         registerBlock("mason_cutter", MASON_CUTTER);
         registerBlock("blacksmith_forge", BLACKSMITH_FORGE);
+        registerBlock("lumberjack_bench", LUMBERJACK_BENCH);
+        registerBlock("farmer_bench", FARMER_BENCH);
+        registerBlock("shepherd_bench", SHEPHERD_BENCH);
+        registerBlock("builder_bench", BUILDER_BENCH);
+        registerBlock("miner_bench", MINER_BENCH);
 
         carpenterPoi = registerPoi("carpenter_bench_poi", CARPENTER_BENCH);
         masonPoi = registerPoi("mason_cutter_poi", MASON_CUTTER);
         blacksmithPoi = registerPoi("blacksmith_forge_poi", BLACKSMITH_FORGE);
+        lumberjackPoi = registerPoi("lumberjack_bench_poi", LUMBERJACK_BENCH);
+        farmerPoi = registerPoi("farmer_bench_poi", FARMER_BENCH);
+        shepherdPoi = registerPoi("shepherd_bench_poi", SHEPHERD_BENCH);
+        builderPoi = registerPoi("builder_bench_poi", BUILDER_BENCH);
+        minerPoi = registerPoi("miner_bench_poi", MINER_BENCH);
 
         // As bancadas na aba Blocos Funcionais do criativo, ao lado das estações Vanilla
         // (crafting table, stonecutter, fornalha) — decisão do autor, 2026-10-13.
@@ -82,6 +115,11 @@ public final class ModContent {
             entries.add(CARPENTER_BENCH);
             entries.add(MASON_CUTTER);
             entries.add(BLACKSMITH_FORGE);
+            entries.add(LUMBERJACK_BENCH);
+            entries.add(FARMER_BENCH);
+            entries.add(SHEPHERD_BENCH);
+            entries.add(BUILDER_BENCH);
+            entries.add(MINER_BENCH);
         });
     }
 
@@ -106,7 +144,11 @@ public final class ModContent {
             case CARPENTER -> CARPENTER_BENCH;
             case MASON -> MASON_CUTTER;
             case SMELTER -> BLACKSMITH_FORGE;
-            default -> null;
+            case LUMBERJACK -> LUMBERJACK_BENCH;
+            case FARMER -> FARMER_BENCH;
+            case SHEPHERD -> SHEPHERD_BENCH;
+            case BUILDER -> BUILDER_BENCH;
+            case MINER -> MINER_BENCH;
         };
     }
 
@@ -116,15 +158,24 @@ public final class ModContent {
             case CARPENTER -> carpenterPoi;
             case MASON -> masonPoi;
             case SMELTER -> blacksmithPoi;
-            default -> null;
+            case LUMBERJACK -> lumberjackPoi;
+            case FARMER -> farmerPoi;
+            case SHEPHERD -> shepherdPoi;
+            case BUILDER -> builderPoi;
+            case MINER -> minerPoi;
         };
     }
 
-    /** As profissões que têm bancada do mod e o bloco de cada uma. */
+    /** As profissões que têm bancada do mod e o bloco de cada uma — todas as oito. */
     public static Map<ProfessionType, Block> benches() {
         return Map.of(
                 ProfessionType.CARPENTER, CARPENTER_BENCH,
                 ProfessionType.MASON, MASON_CUTTER,
-                ProfessionType.SMELTER, BLACKSMITH_FORGE);
+                ProfessionType.SMELTER, BLACKSMITH_FORGE,
+                ProfessionType.LUMBERJACK, LUMBERJACK_BENCH,
+                ProfessionType.FARMER, FARMER_BENCH,
+                ProfessionType.SHEPHERD, SHEPHERD_BENCH,
+                ProfessionType.BUILDER, BUILDER_BENCH,
+                ProfessionType.MINER, MINER_BENCH);
     }
 }

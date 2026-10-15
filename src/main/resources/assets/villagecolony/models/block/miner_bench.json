@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "villagecolony:block/miner_bench_top",
+    "down": "minecraft:block/cobblestone",
+    "north": "villagecolony:block/miner_bench_front",
+    "south": "villagecolony:block/miner_bench_side",
+    "east": "villagecolony:block/miner_bench_side",
+    "west": "villagecolony:block/miner_bench_front",
+    "particle": "villagecolony:block/miner_bench_front"
+  }
+}
