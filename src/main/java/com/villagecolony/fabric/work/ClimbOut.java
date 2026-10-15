@@ -95,8 +95,6 @@ final class ClimbOut {
 
     private static final double MOVE_SPEED = 0.6;
 
-    /** De quanto em quanto tempo o log repete que ele está fechado. */
-    private static final long WARN_EVERY = 1_200;
 
     /** Uma subida em andamento. */
     static final class Climb {
@@ -208,13 +206,14 @@ final class ClimbOut {
             VillageColonyMod.LOGGER.info("Stranded worker {} climbed to {} by {} — {} level(s) up",
                     shortId(workerId), feet.toShortString(), climb.mode, climb.bestY - climb.startY);
         } else if (++climb.noGain >= (climb.mode == Mode.TUNNEL ? TUNNEL_PASSES : NO_GAIN_PASSES)) {
-            switchMode(workerId, climb, feet, next(climb.mode), "no height gained in " + climb.noGain + " s");
+            switchMode(workerId, climb, feet, next(climb.mode, workerId),
+                    "no height gained in " + climb.noGain + " s");
         }
 
         switch (climb.mode) {
             case STAIRS -> stairs(world, villager, climb, workerId, feet, home, now);
             case PILLAR -> pillar(world, villager, climb, workerId, feet, now);
-            case TUNNEL -> tunnel(world, villager, climb, workerId, feet, home, now);
+            case TUNNEL -> ClimbReshape.tunnel(world, villager, climb, workerId, feet, home, now);
         }
     }
 
@@ -275,11 +274,22 @@ final class ClimbOut {
     private static void stairs(ServerWorld world, VillagerEntity villager, Climb climb, UUID workerId,
             BlockPos feet, BlockPos home, long now) {
 
+        boolean mayReshape = ClimbPolicy.mayReshape(workerId);
         Optional<StrandedEscape.Step> step = StrandedEscape.planStep(world, feet, home);
 
+        // Não-mineiro: só degrau natural (sem quebrar). Se o perto exige quebra, procura num raio maior
+        // e, sem nenhum, larga o encalhe sem tocar o mundo (regra do autor, 15-10). Ver ClimbPolicy.
+        if (!mayReshape && step.filter(s -> s.toBreak().isEmpty()).isEmpty()) {
+            step = StrandedEscape.naturalStepAround(world, feet, home);
+        }
+
         if (step.isEmpty()) {
-            switchMode(workerId, climb, feet, Mode.PILLAR, "no natural, dry step toward the village");
-            pillar(world, villager, climb, workerId, feet, now);
+            if (mayReshape) {
+                switchMode(workerId, climb, feet, Mode.PILLAR, "no natural, dry step toward the village");
+                pillar(world, villager, climb, workerId, feet, now);
+            } else {
+                ClimbPolicy.leaveToNavigation(villager, workerId, feet, shortId(workerId), CLIMBS::remove);
+            }
 
             return;
         }
@@ -327,72 +337,6 @@ final class ClimbOut {
         villager.velocityModified = true;
         climb.jumpFrom = feet.toImmutable();
         climb.jumpedAt = now;
-    }
-
-    private static void tunnel(ServerWorld world, VillagerEntity villager, Climb climb, UUID workerId,
-            BlockPos feet, BlockPos home, long now) {
-
-        if (climb.tunnelWay == null) {
-            climb.tunnelWay = ClimbTerrain.tunnelWay(world, feet, home, climb.breakPieces).orElse(null);
-            climb.tunnelLeft = TUNNEL_LENGTH;
-
-            if (climb.tunnelWay == null && !climb.breakPieces) {
-                // Fechado — §9b-A, estudo de 01-10: a peça da própria colônia
-                // pode sair, e o reparo a reconstrói. Vila original e bloco do
-                // jogador continuam intocáveis (Regra 3).
-                climb.tunnelWay = ClimbTerrain.tunnelWay(world, feet, home, true).orElse(null);
-
-                if (climb.tunnelWay != null) {
-                    climb.breakPieces = true;
-                    VillageColonyMod.LOGGER.info(
-                            "Stranded worker {} is boxed in at {} — it cuts through the colony's own"
-                                    + " building toward {}; the repair rebuilds it",
-                            shortId(workerId), feet.toShortString(), climb.tunnelWay.asString());
-                }
-            }
-
-            if (climb.tunnelWay == null) {
-                if (now - climb.toldPlayersAt >= StrandedNotice.EVERY) {
-                    climb.toldPlayersAt = now;
-                    StrandedNotice.tell(world, shortId(workerId), feet);
-                }
-
-                if (now - climb.warnedAt >= WARN_EVERY) {
-                    climb.warnedAt = now;
-                    VillageColonyMod.LOGGER.warn(
-                            "Stranded worker {} is boxed in at {} by blocks it may not break — it keeps"
-                                    + " trying every few seconds",
-                            shortId(workerId), feet.toShortString());
-                }
-
-                climb.mode = Mode.STAIRS;
-                climb.noGain = 0;
-
-                return;
-            }
-        }
-
-        BlockPos ahead = feet.offset(climb.tunnelWay);
-
-        for (BlockPos cell : List.of(ahead, ahead.up())) {
-            if (!ClimbTerrain.isOpen(world, cell)) {
-                if (ClimbTerrain.mayBreak(world, cell, climb.breakPieces)) {
-                    breakOne(world, villager, climb, workerId, cell);
-                } else {
-                    climb.tunnelWay = null;
-                }
-
-                return;
-            }
-        }
-
-        moveTo(climb, ahead, now);
-
-        if (--climb.tunnelLeft <= 0) {
-            climb.tunnelWay = null;
-            climb.mode = Mode.STAIRS;
-            climb.noGain = 0;
-        }
     }
 
     private static void airborne(ServerWorld world, VillagerEntity villager, UUID workerId, Climb climb, long now) {
@@ -460,18 +404,27 @@ final class ClimbOut {
         villager.getMoveControl().moveTo(target.x, target.y, target.z, MOVE_SPEED);
     }
 
-    private static void moveTo(Climb climb, BlockPos to, long now) {
+    static void moveTo(Climb climb, BlockPos to, long now) {
         climb.moveTo = to.toImmutable();
         climb.moveSince = now;
     }
 
-    private static void breakOne(ServerWorld world, VillagerEntity villager, Climb climb, UUID workerId, BlockPos at) {
+    static void breakOne(ServerWorld world, VillagerEntity villager, Climb climb, UUID workerId, BlockPos at) {
         StrandedEscape.dig(world, new StrandedEscape.Step(at, List.of(at.toImmutable())), climb.chest,
                 villager.getBlockPos(), workerId);
         villager.swingHand(Hand.MAIN_HAND);
     }
 
-    private static Mode next(Mode mode) {
+    /**
+     * Para que modo ir quando o atual não ganha altura. O ciclo cheio (pilar e túnel) é só do mineiro
+     * — regra do autor, 2026-10-15: as outras profissões sobem apenas por degrau natural e não
+     * remodelam o terreno, então ficam em {@code STAIRS}.
+     */
+    private static Mode next(Mode mode, UUID workerId) {
+        if (!ClimbPolicy.mayReshape(workerId)) {
+            return Mode.STAIRS;
+        }
+
         return switch (mode) {
             case STAIRS -> Mode.PILLAR;
             case PILLAR -> Mode.TUNNEL;
@@ -493,7 +446,7 @@ final class ClimbOut {
         return world.getBlockState(at).getBlock().getTranslationKey() + " at " + at.toShortString();
     }
 
-    private static String shortId(UUID id) {
+    static String shortId(UUID id) {
         return id.toString().substring(0, 8);
     }
 }

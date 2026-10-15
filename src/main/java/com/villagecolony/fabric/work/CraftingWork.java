@@ -22,6 +22,8 @@ import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import net.minecraft.util.math.BlockPos;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.brain.WorkHours;
@@ -151,6 +153,9 @@ public final class CraftingWork {
          * alvo</b> e nunca pergunta se o aldeão andou. Ver {@link WorkStall}.
          */
         final WorkStall stall = new WorkStall();
+
+        /** Ticks de expediente indo até a bancada (salvaguarda do {@link CraftStation#APPROACH_BUDGET}). */
+        int toBench;
 
         private Job(Task task) {
             this.task = task;
@@ -286,13 +291,48 @@ public final class CraftingWork {
             return true;
         }
 
-        // Fabrica onde está: ninguém anda até o baú — regra do autor, 2026-10-11.
-        // O ingrediente sai de qualquer baú da colônia e a peça entra no baú dele;
-        // a caminhada até a bancada soltava a tarefa "stuck on the way to its chest".
+        // Vai até a bancada antes de fabricar — regra do autor, 2026-10-15 —, mas com a salvaguarda
+        // que reconcilia com a de 2026-10-11 ("fabrica onde está; a caminhada soltava a tarefa"):
+        // bancada do mod → Vanilla do ofício → nenhuma; e uma bancada inalcançável (ex.: do outro lado
+        // de um desnível na montanha) deixa de travar — passado o APPROACH_BUDGET, fabrica no lugar.
+        if (!atBench(world, villager, job, storage.get().chestPosition())) {
+            return true;
+        }
+
         job.stalled = 0;
         job.stall.reset();
 
         return craftOne(world, villager, job, storage.get());
+    }
+
+    /**
+     * Leva o artesão até a bancada e diz se ele já pode fabricar ali — {@code mod → Vanilla → nenhuma},
+     * com a salvaguarda do {@link CraftStation#APPROACH_BUDGET} (regra do autor, 2026-10-15).
+     *
+     * @return {@code true} quando ele deve fabricar onde está (chegou, não há bancada, ou o prazo de
+     *     ida estourou); {@code false} enquanto ainda caminha até ela
+     */
+    private static boolean atBench(ServerWorld world, VillagerEntity villager, Job job, ColonyPos chest) {
+        BlockPos chestPos = MinecraftTypeAdapter.toBlockPos(chest);
+        Optional<BlockPos> bench = CraftStation.benchFor(world, villager.getUuid(), chestPos);
+
+        if (bench.isEmpty()) {
+            return true;  // sem bancada: trabalho normal, no lugar do baú.
+        }
+
+        boolean here = villager.getBlockPos().isWithinDistance(
+                bench.get().toCenterPos(), WorkTargets.DEFAULT_ARRIVAL + 1.0);
+        int ticks = here ? 0 : (WorkHours.isWorkTime(world, villager) ? ++job.toBench : job.toBench);
+
+        if (CraftStation.craftHereNow(here, ticks, CraftStation.APPROACH_BUDGET)) {
+            job.toBench = 0;
+
+            return true;
+        }
+
+        WorkTargets.set(villager.getUuid(), bench.get(), WorkTargets.DEFAULT_ARRIVAL);
+
+        return false;
     }
 
     /**
