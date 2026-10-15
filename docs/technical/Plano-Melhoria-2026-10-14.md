@@ -134,12 +134,18 @@ diagnóstico. Sem isso, os ciclos seguintes medem errado.
 - **Rollback:** extração é commit por arquivo.
 - **Custo:** médio. **Depende de:** F1 (extrair dentro do subpacote certo).
 
-### Ciclo F3 🔴 — Reduzir as 80 violações de complexidade PMD (o A1 da varredura)
-- **Evidência:** PMD — 80 violações; piores: **`MinerSteps.step` 62**, `MineEdge.inside` 48,
-  `MineCuts.nextCut` 46, `BuildSiteScanner.findForFootprints` 42, `MiningTarget.judge` 34. A mina
-  concentra a complexidade, como a varredura (A1) dizia. **Prioridade: a mina primeiro.**
-- **Ação:** atacar os piores métodos extraindo sub-métodos nomeados (sem mudar comportamento),
-  começando por `MinerSteps.step`. Os GameTests da mina são a rede contra regressão.
+### Ciclo F3 🔴 — Reduzir a complexidade dos piores métodos da mina — ✅ PARCIAL (15-10)
+- **Evidência:** PMD — 80 violações; piores eram **`MinerSteps.step` 62**, `MineEdge.inside` 48,
+  `MineCuts.nextCut` 46. A mina concentra a complexidade, como a varredura (A1) dizia.
+- **Feito:** `MinerSteps.step` **62→24** (extraiu `walkToward` + `guardOrWalk`); `MineEdge.inside`
+  **48→35** (extraiu `considerMouth`); `MineCuts.nextCut` ganhou `hitUndiggable` (−24 linhas
+  duplicadas, mas o número PMD não caiu — extrair código repetido-mas-simples não baixa complexidade
+  cognitiva). Comportamento inalterado: test 1523/0, runGametest 769/769.
+- **Parado por decisão de risco:** o aceite original ("nenhum método > 20") exigiria reestruturar
+  ~12 métodos, vários em código crítico da mina com estado mutável entrelaçado (`BuildSiteScanner`,
+  `MineCuts`) — esforço grande e risco de regressão desproporcional ao ganho. Os dois piores (a
+  prioridade) foram feitos. O total segue 80 porque cada extração cria métodos novos abaixo do limiar.
+  **O resto fica como dívida consciente**, a atacar quando um desses métodos for tocado por outro motivo.
 - **Aceite:** nenhum método > 20 de complexidade cognitiva no PMD; total de violações caindo; `test` +
   `runGametest` verdes.
 - **Verificação:** `./gradlew pmdMain` (ou o relatório em `build/reports/pmd/main.xml`); comparar a
