@@ -29,47 +29,6 @@
 > **Aberto:** o mineiro ainda tem 172× NO_STANDING_POSITION (44% bloqueado) — o único ócio por
 > defeito real, não por vila madura.
 
-> **0.3.57** (14-10): playtest da 0.3.56 (Spark `hquYC03AAc`, 96 min) — **a vila parou**: a obra
-> `plains_small_house_8` travou nos últimos ~12 blocos (a **horta** da casa: 35 farmland + 16 wheat
-> + 2 water) e, aberta para sempre, bloqueou o planejador → lenhador 100% ocioso, pedreiro 99%,
-> construtor 75%, pastor 83%, fundidor 0%. Raiz: `farmland` não é fabricável ("could not make
-> minecraft:farmland") nem coletável, e o assentamento falhava em loop. **Correção (decisão do
-> autor):** a horta **surge sem gastar recurso** — `BuilderPlacement` molda no local os blocos de
-> chão (farmland, água, caminho, cultivo) com o terreno garantido embaixo (`BlockShaping.groundFor`),
-> antes da cadeia de material; só sobre lugar livre (Regra 3 preservada). **Não jogado.** Verificado:
-> test 1515/0; runGametest 769/769; mutação (desligar o surgimento) derruba 6 testes de construção.
-> JAR `village-colony-0.3.57.jar` = `4DB9A471779F49D62D11A91C381C34193774343A65CC100E90BEE7A0850D6F69`.
-
-> **0.3.56** (14-10): **o pastor aproveita o rebanho** (manutenção do ofício, não toca a obra —
-> Regra 59). `FlockHarvest`: com mais de `HARVEST_KEEP=8` adultos de uma espécie (a criação enche
-> até `FLOCK_TARGET=12`), abate **1 por ciclo** o excedente deixando sempre ≥8 vivos, e deposita o
-> drop Vanilla direto no baú (vaca→couro+carne, porco/ovelha→carne, galinha→frango+pena). A **carne
-> crua acima de `ITEM_KEEP=16` é cozida** (`CraftingLookup.smelted`, sem combustível — como o
-> fundidor; nenhuma profissão precisa de carvão). O ovo a galinha já larga no chão (Vanilla) e a
-> coleta do chão recolhe. Ligado em `ShepherdFlock.tend`. **Não jogado.** Verificado: test 1515/0;
-> runGametest 768/768; mutação (HARVEST_KEEP=0) derruba `FlockHarvestTest`. Spec em
-> `docs/superpowers/specs/2026-10-14-pastor-aproveita-rebanho-design.md`. JAR
-> `village-colony-0.3.56.jar` = `9BE8707A710E4DA6D12D0D92DCCD82C675254680D48FC709E1C8CED18A2F2F55`.
-
-> **0.3.55** (14-10): **percurso por etapas até a boca da mina** (planta do autor, abordagem A
-> híbrida; spec em `docs/superpowers/specs/2026-10-14-percurso-descida-mina-design.md`). O mineiro
-> não alcançava a frente quando a boca ficava longe numa vila grande (playtest `MiIM0AisSh`: alvo a
-> ~95 blocos, "walking to nowhere", MINER 0%). `MineApproachPath.toward`: quando a navegação não
-> alcança a boca inteira, o mineiro anda até o **fim do caminho parcial** que o pathfinder achou
-> (`Path.getEnd()`, posição caminhável real — nunca divisão geométrica), com progresso útil mínimo;
-> recalcula ao chegar. `path==null` devolve a boca e deixa o guarda de descida (`job.descent`) contar
-> a falha — sem segundo sistema de travamento. Interposto em `MinerSteps` no ponto da descida;
-> `forget` ao liberar a tarefa (`MinerHands`). Mantém a ADR-042 (túnel 1×2, espaçamento 4, boca na
-> borda); não reescreve a mina. A planta completa (espiral externa, galerias radiais 3×3) fica como
-> visão de longo prazo, fora de escopo. **Não jogado.** Verificado: test 1512/0; runGametest 766/766;
-> mutação (usefulProgress sempre true) derruba `MineApproachProgressTest`. Os GameTests de aproximação
-> foram removidos por não-determinismo do pathfinder (o autor advertiu); a regra pura fica em unidade
-> e o efeito, no playtest. JAR `village-colony-0.3.55.jar` =
-> `4605A53E82EEF6834944A32463322BA3EA7AD35CA43D799161AA721A4C59A40B`.
-> **O próximo jogo precisa mostrar:** o mineiro chegar fisicamente à boca e descer (playtest **de
-> dia**, com a telemetria do percurso).
-
-
 > Arquivo de estado vivo. **Sobrescreve, não acumula.** Se passar de 150 linhas, algo
 > está errado: P0 não está fechando. O que já foi resolvido mora em
 > [`docs/archive/technical/Historico-2026-10.md`](docs/archive/technical/Historico-2026-10.md)
@@ -80,32 +39,35 @@
 
 ## 🔴 P0 — As profissões não trabalham de forma contínua; a mina é a raiz
 
-Varredura de engenharia 14-10 ([`docs/audit/2026-10-14-varredura-engenharia.md`](docs/audit/2026-10-14-varredura-engenharia.md)).
-O fio comum dos últimos playtests: **ação interrompida** (parada, bloqueada, esperando), e a
-**mina** concentra o risco de código (A1: `MinerSteps.step` com complexidade cognitiva 62),
-o P0 de produto (C1: boca a ~77–95 blocos numa vila grande, o mineiro não alcança) e o grosso das
-falhas. Em volta: produção antecipada sem teto e cadeia de material que trava a obra (C2),
-profissões periféricas em laço improdutivo (C4: pastor pede lã que não há, fundidor espera cru,
-fazendeiro sem lote).
+Reavaliação 14-10 ([`docs/audit/2026-10-14-reavaliacao-pos-0359.md`](docs/audit/2026-10-14-reavaliacao-pos-0359.md)),
+plano de execução ([`docs/technical/Plano-Melhoria-2026-10-14.md`](docs/technical/Plano-Melhoria-2026-10-14.md)).
+O fio comum: **ação interrompida** (parada, bloqueada, esperando), e a **mina** concentra o P0.
 
-**Direção aceita pelo autor (14-10):** simplificar sem quebrar, deixando as ações das profissões
-contínuas e ininterruptas. Caminho: (1) a frente de mineração a um raio caminhável do baú do
-mineiro (C1); (2) quando um recurso não existe no raio por N tentativas, a profissão troca de
-tarefa em vez de reinstalar o pedido (C4); (3) refatorar o núcleo da mina em vez de remendar (A1).
+**O que a mina é hoje (correção da varredura de 14-10):** o PMD atual mostra o pior método em
+complexidade **26** (`VillagerScanner.scan`), e **nenhum método de mina no topo** — a "complexidade 62
+do `MinerSteps`" já não existe. O problema da mina é **tamanho de subsistema** (31 classes) e
+**geografia** (boca a ~77–95 blocos numa vila grande), não um método-monstro. A 0.3.59 fechou o
+mecanismo do falso caminho à superfície; **falta o 2º defeito em série (approach encalha a 4–5 bl) e a
+geografia**. Em volta: cadeia de material que trava a obra (C2), profissões periféricas em laço
+improdutivo (C4: fundidor pede clay inexistente, fazendeiro sem lote).
 
-**Aceite:** playtest de dia, ≥ 30 min; Regra 51 (ocioso+bloqueado+encalhado) ≤ 15% por ofício no
+**Plano em execução:** Fase 0 higiene (H1 feito — este STATE; H2 time_ledger dia/noite; H3 TODO) →
+Fase 1 produto (P1 approach 4–5 bl; P2 geografia da boca; P3 troca de tarefa) → Fase 2 forma (F1
+subpacotes `work/`; F2 teto de 500; F3 complexidade PMD).
+
+**Aceite do P0:** playtest de dia, ≥ 30 min; Regra 51 (ocioso+bloqueado+encalhado) ≤ 15% por ofício no
 expediente; `MINED`/min > 0,8; nenhuma profissão em laço de recusa visível no `action_report`.
 
 ## Branches e processo
 
-**`main` é a linha oficial** (ADR-035 §2). A branch `claude/autossuficiencia` foi integrada na
-`main` em 14-10 (0.3.25→0.3.55); daqui em diante, branch curta por ciclo e PR para a `main` sem
-acumular. Erro de processo corrigido nesta rodada: a branch tinha 74 commits sem merge (B1 da
-varredura).
+**`main` é a linha oficial** (ADR-035 §2). B1 resolvido: a `claude/autossuficiencia` foi integrada
+(0.3.25→0.3.55) e os ciclos seguintes (0.3.56→0.3.59) são branches curtas por PR. Ciclo atual:
+`fix/miner-directpath-superficie` (0.3.59 + reavaliação + plano), ainda sem push/merge.
 
 ## O que o próximo jogo precisa mostrar
 
-JAR **0.3.55** instalado. Playtest **de dia** (o de 14-10 foi ~84% à noite e mascarou a medição):
+JAR **0.3.59** instalado (o 0.3.58 foi jogado: Spark `YOT1oqyhIv`, 100 min; é dele a reavaliação).
+Playtest **de dia** (CLAUDE.md §0.4):
 
 | # | Item | Sinal |
 |---|---|---|
@@ -132,7 +94,8 @@ A fila completa e priorizada está no `TODO.md` (seção AUD) e no roteiro
 
 ## Dívida conhecida
 
-- Nenhum arquivo de produção acima de 500 linhas; 12 entre 488 e 500 em 11-10 (AUD-20; eram 15 na auditoria).
+- Teto de 500 linhas virou colete (A3): **4 arquivos exatamente em 500** (`TreeChoice`, `SmelterWork`,
+  `BuilderWork`, `ColonyGoals`), ~20 entre 470–500. Tratar 500 como gatilho de extração (ciclo F2).
 - `runGametest` não filtra por teste dentro da bateria completa; `-PgametestOnly=Classe` roda
   uma classe isolada. Testes rodam juntos num mundo só: quem conta entidades num raio grande
   afirma sobre as suas (o `FreeChestCountGameTest` falhava 2 em 8 por isso).
