@@ -1,9 +1,12 @@
 # STATE — 2026-10-15
 
 > **0.3.60** (15-10): **o mineiro desvia para a pedra ao lado antes de largar** (P1 do plano, mina).
-> O playtest da 0.3.59 (Spark `1nwGlUtitv`, ~37 min) **confirmou o conserto anterior**: MINED saltou de
-> 0,8 para **~19/min** (297 e 295 blocos por mineiro, 1448 minerações) — o 1º defeito (falso caminho à
-> superfície) está fechado. Restava o 2º defeito em série: o approach **encala a 4-5 bl** quando o
+> ⚠️ **Os consertos do mineiro (0.3.59 DirectPath, 0.3.60 reroute) ainda NÃO foram jogados:** os JARs
+> não estavam na pasta de mods — os 3 últimos playtests rodaram **0.3.58** (o `SendUserFile` entrega ao
+> chat, não instala; ver memória `jars-nao-instalados-deslocamento`). O salto MINED 0,8→~19/min foi de
+> **0.3.57→0.3.58**, não do conserto do DirectPath. A 0.3.60 foi instalada e conferida (sha256
+> F164319032…) em 15-10; o próximo jogo é o **primeiro** com o conserto do mineiro. Restava o 2º defeito
+> em série, alvo deste ciclo: o approach **encala a 4-5 bl** quando o
 > mineiro chega perto (22× NO_STANDING_POSITION + 9× TOO_HIGH, conclusão 11%). **Correção:** antes de
 > `passOver` marcar e largar, se faltava só o pé (`worthRerouting` = só NO_STANDING), tenta
 > `MineVein.roomBeside` (ADR-038 P6) e redireciona o alvo para a pedra vizinha que abre o pé; TOO_HIGH/
