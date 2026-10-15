@@ -16,11 +16,10 @@ verdes pela contagem honesta (XML / "All N required tests passed"); (b) para reg
 GameTest prova o mecanismo, o ledger prova o efeito (Regra 50/51). A ordem respeita dependências:
 higiene barata primeiro (desenvenena a medição), produto depois, dívida de forma por último.
 
-**Correção de rumo embutida.** Ao fundamentar este plano, o PMD de 14-10 (22:53) mostrou o pior método
-em **complexidade 26** (`VillagerScanner.scan`), e **nenhum método de mina no topo** — a "complexidade
-62 do `MinerSteps`" da varredura já não existe. Portanto o antigo **A1** (refatorar um método monstro)
-foi **reescopado**: o problema da mina hoje é **tamanho de subsistema** (31 classes) e **geografia**
-(C1), não um método. O plano reflete isso.
+**Correção (15-10):** uma leitura anterior deste plano disse que o pior método era `VillagerScanner.scan`
+(26) e que "a complexidade 62 do `MinerSteps` já não existe" — **estava errada** (li a métrica errada).
+O PMD real mostra **`MinerSteps.step` em 62**, seguido de `MineEdge.inside` 48 e `MineCuts.nextCut` 46:
+a mina concentra a complexidade, exatamente como a varredura de 14-10 (A1) dizia. O F3 ataca isso primeiro.
 
 ---
 
@@ -135,11 +134,12 @@ diagnóstico. Sem isso, os ciclos seguintes medem errado.
 - **Rollback:** extração é commit por arquivo.
 - **Custo:** médio. **Depende de:** F1 (extrair dentro do subpacote certo).
 
-### Ciclo F3 🟡 — Reduzir as 80 violações de complexidade PMD (A1 reescopado)
-- **Evidência:** PMD 14-10 — 80 violações; piores: `VillagerScanner.scan` 26, `VillageLogCommand.show`
-  25, `WorkerEquipment.equip` 23. O `MinerSteps` **não** está entre os piores (correção do antigo A1).
-- **Ação:** atacar os ~10 piores métodos extraindo sub-métodos nomeados (sem mudar comportamento),
-  priorizando os de caminho quente (scanner, equipamento).
+### Ciclo F3 🔴 — Reduzir as 80 violações de complexidade PMD (o A1 da varredura)
+- **Evidência:** PMD — 80 violações; piores: **`MinerSteps.step` 62**, `MineEdge.inside` 48,
+  `MineCuts.nextCut` 46, `BuildSiteScanner.findForFootprints` 42, `MiningTarget.judge` 34. A mina
+  concentra a complexidade, como a varredura (A1) dizia. **Prioridade: a mina primeiro.**
+- **Ação:** atacar os piores métodos extraindo sub-métodos nomeados (sem mudar comportamento),
+  começando por `MinerSteps.step`. Os GameTests da mina são a rede contra regressão.
 - **Aceite:** nenhum método > 20 de complexidade cognitiva no PMD; total de violações caindo; `test` +
   `runGametest` verdes.
 - **Verificação:** `./gradlew pmdMain` (ou o relatório em `build/reports/pmd/main.xml`); comparar a

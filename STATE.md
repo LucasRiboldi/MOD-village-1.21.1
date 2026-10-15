@@ -74,8 +74,9 @@ plano de execução ([`docs/technical/Plano-Melhoria-2026-10-14.md`](docs/techni
 O fio comum: **ação interrompida** (parada, bloqueada, esperando), e a **mina** concentra o P0.
 
 **O que a mina é hoje (correção da varredura de 14-10):** o PMD atual mostra o pior método em
-complexidade **26** (`VillagerScanner.scan`), e **nenhum método de mina no topo** — a "complexidade 62
-do `MinerSteps`" já não existe. O problema da mina é **tamanho de subsistema** (31 classes) e
+complexidade **62** (`MinerSteps.step`), seguido de `MineEdge.inside` 48 e `MineCuts.nextCut` 46 — a
+mina concentra a complexidade (o A1 da varredura estava certo). O problema da mina é **complexidade +
+tamanho de subsistema** (31 classes) e
 **geografia** (boca a ~77–95 blocos numa vila grande), não um método-monstro. A 0.3.59 fechou o
 mecanismo do falso caminho à superfície; **falta o 2º defeito em série (approach encalha a 4–5 bl) e a
 geografia**. Em volta: cadeia de material que trava a obra (C2), profissões periféricas em laço

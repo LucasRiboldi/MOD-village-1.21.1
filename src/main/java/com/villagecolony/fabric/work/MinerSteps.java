@@ -172,134 +172,7 @@ final class MinerSteps {
                 job.descent.reset();
             }
 
-            // E se ele saiu do lugar — 2026-09-03. Ver WorkStall, que faz
-            // a pergunta do expediente por conta própria.
-            if (job.stall.stuck(world, villager)) {
-                stuck(world, villager, job, "it has not moved a block in "
-                        + job.stall.ticks() + " ticks of work time");
-            } else if (job.lease.outOfTime(world, villager, job.target)) {
-                // <b>E se ele anda sem chegar mais perto</b> — E44,
-                // 2026-09-10. Este é o caso que os outros dois não
-                // pegam: quem contorna sem fim sai do bloco (escapa do
-                // guarda de imobilidade) e ainda tem 2.400 tiques de
-                // orçamento pela frente. Ver MineLease.
-                stuck(world, villager, job, "it got no closer than "
-                        + String.format("%.1f", job.lease.closest())
-                        + " blocks in " + job.lease.ticks()
-                        + " ticks of work time");
-            } else if (down.isPresent() && job.descent.outOfTimeOnDescent(world, villager, job.target)) {
-                stuck(world, villager, job, "the way down got no closer than "
-                        + String.format("%.1f", job.descent.closest())
-                        + " blocks and no deeper in " + job.descent.ticks()
-                        + " ticks of work time");
-            } else if (job.stalled >= MinerWork.STALL_LIMIT) {
-                stuck(world, villager, job, "it walked for "
-                        + job.stalled + " ticks of work time without arriving");
-            } else {
-                // <b>E se ele desceu, a aproximação guardada não serve
-                // mais</b> — sessão de jogo de 2026-09-19.
-                //
-                // O `approachTo` de três mãos filtra por MinerWork.CLIMB, mas
-                // responde para a posição em que ele estava <b>na hora
-                // de escolher o alvo</b>. Quem cai num buraco depois
-                // disso fica com um destino dois acima da cabeça, e
-                // aldeão sobe um: a navegação não cumpre, ele não sai do
-                // lugar, e o guarda de imobilidade devolve a tarefa. O
-                // ciclo reabre a mesma pedra e escolhe a mesma
-                // aproximação, porque a pergunta é feita de onde ele
-                // está — e ele está no buraco.
-                //
-                // O log de 09-19 mediu o laço fechado: 21 das 25 leituras
-                // com o mineiro em -841, 44, 1374 e toda aproximação em
-                // y=46. Dezoito das trinta e duas desistências dizem
-                // "2 blocks below it and unable to climb", e a sessão
-                // terminou com 103 pedras quebradas e ZERO entregues.
-                //
-                // Recalcular custa as seiscentas leituras que o cache
-                // evita, então só se paga quando o cache está
-                // comprovadamente furado — a condição abaixo é a mesma
-                // que o relatório usa para acusar o degrau.
-                if (job.approach.getY() - villager.getBlockPos().getY() > MinerWork.CLIMB) {
-                    BlockPos again =
-                            MinerApproach.approachTo(world, job.target, villager.getBlockPos());
-
-                    // Só troca por uma que ele alcance: sem nenhuma, o
-                    // `approachTo` devolve a de antes ou a própria pedra,
-                    // e trocar seria rodar a busca a cada tique para
-                    // chegar ao mesmo lugar.
-                    if (again.getY() - villager.getBlockPos().getY() <= MinerWork.CLIMB) {
-                        job.approach = again;
-                    }
-                }
-
-                // O mesmo destino da primeira vez, e pelo mesmo motivo:
-                // repor a pedra aqui era repor a rocha maciça, e a
-                // navegação não tem como cumprir isso — ver MinerApproach.approachTo.
-                //
-                // Guardado, e não recalculado: a busca custa umas
-                // seiscentas leituras de bloco, e isto roda todo tique
-                // enquanto ele caminha.
-                //
-                // E por pernas — 2026-08-28. Ver MinerLeg.legTowards:
-                // a navegação não traça um caminho de vinte blocos por
-                // dentro da rocha, e ele ficava parado na superfície
-                // acima da galeria.
-                // E32 — 2026-09-02. A perna entregava um bloco cru da ordem
-                // de cavar, sem perguntar se dava para ficar de pé nele. Ordem
-                // não é lista de lugares onde se fica de pé: duas de cada três
-                // posições da escada são a cabeça, e as que o cursor entregou
-                // podem não ter sido cavadas. Alvo sólido não faz a navegação
-                // desistir — o MobNavigation SOBE o alvo até sair da rocha, e
-                // dentro de uma mina isso é a superfície. Ver
-                // docs/research/E32-miner-walk-target.md.
-                // <b>O corredor é o de onde ele está</b> — 2026-09-05, e
-                // era o do ramal que ele reservou. Ver
-                // MineDigging.armToWalk: os dois deixaram de ser o mesmo
-                // quando a mina ganhou quatro rumos, e a tarefa de areia
-                // nunca reservou rumo nenhum.
-                // O jogo já acha o caminho até a pedra: direto, sem perna (MinerDirectPath).
-                if (MinerDirectPath.reaches(world, villager, job.approach)) {
-                    WorkTargets.set(workerId, job.approach, MinerReach.ARRIVAL);
-
-                    return false;
-                }
-
-                // No nível em rede: de nó pronto em nó pronto até o pai do nó (ADR-042 D5).
-                Optional<BlockPos> waypoint = NetworkRoute.waypoint(job.task.colonyId(), villager, job.target);
-
-                if (waypoint.isPresent()) {
-                    WorkTargets.set(workerId, waypoint.get(), MinerReach.ARRIVAL);
-
-                    return false;
-                }
-
-                if (down.isPresent()) {
-                    // Boca longe numa vila grande: anda por etapas até lá, por caminhos reais da
-                    // navegação, em vez de mirar a boca a ~95 blocos e ficar "walking to nowhere"
-                    // (2026-10-14). A falha e a liberação ficam com o guarda de descida (job.descent).
-                    WorkTargets.set(workerId,
-                            MineApproachPath.toward(world, villager, down.get()), MinerReach.ARRIVAL);
-
-                    return false;
-                }
-
-                Optional<MineArm> corridor =
-                        MineDigging.armToWalk(
-                                job.task.colonyId(), workerId, villager.getBlockPos());
-
-                BlockPos leg = MinerLeg.legTowards(
-                        villager.getBlockPos(),
-                        job.approach,
-                        corridor,
-                        MineDigging.leadsToTheTarget(
-                                job.task.colonyId(), workerId, corridor),
-                        MinerApproach.footingIn(world));
-
-                WorkTargets.set(
-                        workerId,
-                        MinerApproach.climbableWalkTarget(world, villager.getBlockPos(), leg),
-                        MinerReach.ARRIVAL);
-            }
+            guardOrWalk(world, workerId, job, villager, down);
 
             return false;
         }
@@ -353,6 +226,114 @@ final class MinerSteps {
         MinerHands.mine(world, villager, job, storage.get());
 
         return false;
+    }
+
+    /**
+     * O mineiro ainda não alcança a pedra: ou um guarda de travamento desiste da tarefa, ou ele anda
+     * em direção a ela. Extraído de {@link #step} em 2026-10-15 (F3 do plano) sem mudar o fluxo.
+     *
+     * <p>Os quatro guardas, na ordem: imobilidade ({@link WorkStall} — não saiu do bloco), aproximação
+     * ({@link MineLease#outOfTime} — andou sem chegar mais perto), descida ({@link MineLease#outOfTimeOnDescent}
+     * — a boca não encurtou e ele não desceu) e caminhada ({@link MinerWork#STALL_LIMIT} tiques sem
+     * chegar). Nenhum disparou → {@link #walkToward}.
+     */
+    private static void guardOrWalk(
+            ServerWorld world, UUID workerId, Job job, VillagerEntity villager, Optional<BlockPos> down) {
+
+        // E se ele saiu do lugar — 2026-09-03. Ver WorkStall, que faz a pergunta do expediente sozinho.
+        if (job.stall.stuck(world, villager)) {
+            stuck(world, villager, job, "it has not moved a block in "
+                    + job.stall.ticks() + " ticks of work time");
+        } else if (job.lease.outOfTime(world, villager, job.target)) {
+            // E se ele anda sem chegar mais perto — E44, 2026-09-10. O caso que os outros não pegam:
+            // quem contorna sem fim sai do bloco (escapa do guarda de imobilidade) e ainda tem 2.400
+            // tiques de orçamento pela frente. Ver MineLease.
+            stuck(world, villager, job, "it got no closer than "
+                    + String.format("%.1f", job.lease.closest())
+                    + " blocks in " + job.lease.ticks()
+                    + " ticks of work time");
+        } else if (down.isPresent() && job.descent.outOfTimeOnDescent(world, villager, job.target)) {
+            stuck(world, villager, job, "the way down got no closer than "
+                    + String.format("%.1f", job.descent.closest())
+                    + " blocks and no deeper in " + job.descent.ticks()
+                    + " ticks of work time");
+        } else if (job.stalled >= MinerWork.STALL_LIMIT) {
+            stuck(world, villager, job, "it walked for "
+                    + job.stalled + " ticks of work time without arriving");
+        } else {
+            walkToward(world, workerId, job, villager, down);
+        }
+    }
+
+    /**
+     * O mineiro ainda não alcança a pedra e nenhum guarda de travamento disparou: escolhe o alvo de
+     * caminhada deste tique. Extraído de {@link #step} em 2026-10-15 (F3 do plano) sem mudar o fluxo.
+     *
+     * <p>Primeiro reconfere a aproximação guardada — quem caiu num buraco depois de escolher o alvo
+     * fica com um destino acima do degrau que ele sobe, e a navegação nunca cumpre (sessão de 09-19).
+     * Depois a cascata, da mais barata para a mais cara: caminho direto do jogo ({@link MinerDirectPath}),
+     * rota em rede no nível ({@link NetworkRoute}), percurso por etapas até a boca ({@link MineApproachPath},
+     * só na descida) e, por fim, a perna pela ordem de cavar ({@link MinerLeg}).
+     */
+    private static void walkToward(
+            ServerWorld world, UUID workerId, Job job, VillagerEntity villager, Optional<BlockPos> down) {
+
+        // E se ele desceu, a aproximação guardada não serve mais (09-19): o approach fica acima do
+        // degrau, a navegação não cumpre, e o guarda de imobilidade devolve a tarefa. Recalcular custa
+        // ~600 leituras que o cache evita, então só quando o cache está comprovadamente furado.
+        if (job.approach.getY() - villager.getBlockPos().getY() > MinerWork.CLIMB) {
+            BlockPos again = MinerApproach.approachTo(world, job.target, villager.getBlockPos());
+
+            // Só troca por uma que ele alcance: sem nenhuma, o approachTo devolve a de antes ou a
+            // própria pedra, e trocar seria rodar a busca a cada tique para chegar ao mesmo lugar.
+            if (again.getY() - villager.getBlockPos().getY() <= MinerWork.CLIMB) {
+                job.approach = again;
+            }
+        }
+
+        // O jogo já acha o caminho até a pedra: direto, sem perna (MinerDirectPath). Guardado, não
+        // recalculado — a busca custa ~600 leituras e isto roda todo tique enquanto ele caminha.
+        if (MinerDirectPath.reaches(world, villager, job.approach)) {
+            WorkTargets.set(workerId, job.approach, MinerReach.ARRIVAL);
+
+            return;
+        }
+
+        // No nível em rede: de nó pronto em nó pronto até o pai do nó (ADR-042 D5).
+        Optional<BlockPos> waypoint = NetworkRoute.waypoint(job.task.colonyId(), villager, job.target);
+
+        if (waypoint.isPresent()) {
+            WorkTargets.set(workerId, waypoint.get(), MinerReach.ARRIVAL);
+
+            return;
+        }
+
+        if (down.isPresent()) {
+            // Boca longe numa vila grande: anda por etapas até lá, por caminhos reais da navegação, em
+            // vez de mirar a boca a ~95 blocos e ficar "walking to nowhere" (2026-10-14). A falha e a
+            // liberação ficam com o guarda de descida (job.descent).
+            WorkTargets.set(workerId,
+                    MineApproachPath.toward(world, villager, down.get()), MinerReach.ARRIVAL);
+
+            return;
+        }
+
+        // E32 (2026-09-02): a perna pela ordem de cavar, para quando a navegação não traça caminho por
+        // dentro da rocha. O corredor é o do ramal que ele reservou (MineDigging.armToWalk).
+        Optional<MineArm> corridor =
+                MineDigging.armToWalk(job.task.colonyId(), workerId, villager.getBlockPos());
+
+        BlockPos leg = MinerLeg.legTowards(
+                villager.getBlockPos(),
+                job.approach,
+                corridor,
+                MineDigging.leadsToTheTarget(job.task.colonyId(), workerId, corridor),
+                MinerApproach.footingIn(world));
+
+        WorkTargets.set(
+                workerId,
+                MinerApproach.climbableWalkTarget(world, villager.getBlockPos(), leg),
+                MinerReach.ARRIVAL);
     }
 
     /**
