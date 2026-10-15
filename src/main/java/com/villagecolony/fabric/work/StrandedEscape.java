@@ -298,6 +298,66 @@ public final class StrandedEscape {
         return Optional.empty();
     }
 
+    /** Até onde um não-mineiro procura um degrau natural de subida antes de desistir. */
+    static final int NATURAL_STEP_RADIUS = 6;
+
+    /**
+     * Um degrau de subida <b>natural</b> (sem quebrar bloco) num raio em volta dos pés — para as
+     * profissões que não remodelam o terreno (regra do autor, 2026-10-15). Varre as colunas vizinhas,
+     * da mais perto para a mais longe, e devolve o primeiro {@link Step} cujo {@code toBreak} é vazio:
+     * o aldeão caminha até ela e sobe sozinho. Só geometria e um {@code planStep} por coluna; quando não
+     * há nenhuma, devolve vazio e o chamador desiste.
+     */
+    static Optional<Step> naturalStepAround(ServerWorld world, BlockPos feet, BlockPos home) {
+        List<BlockPos> columns = new ArrayList<>();
+
+        for (int dx = -NATURAL_STEP_RADIUS; dx <= NATURAL_STEP_RADIUS; dx++) {
+            for (int dz = -NATURAL_STEP_RADIUS; dz <= NATURAL_STEP_RADIUS; dz++) {
+                if (dx == 0 && dz == 0) {
+                    continue;
+                }
+
+                columns.add(feet.add(dx, 0, dz));
+            }
+        }
+
+        columns.sort(Comparator.comparingInt(at -> at.getManhattanDistance(feet)));
+
+        for (BlockPos from : columns) {
+            BlockPos ground = groundNear(world, from, feet.getY());
+
+            if (ground == null) {
+                continue;
+            }
+
+            Optional<Step> step = planStep(world, ground, home).filter(s -> s.toBreak().isEmpty());
+
+            if (step.isPresent()) {
+                return step;
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /** O chão caminhável da coluna {@code at}, perto da altura {@code aroundY} (±2), ou nulo. */
+    private static BlockPos groundNear(ServerWorld world, BlockPos at, int aroundY) {
+        for (int dy = 2; dy >= -2; dy--) {
+            BlockPos feet = new BlockPos(at.getX(), aroundY + dy, at.getZ());
+            BlockPos floor = feet.down();
+
+            boolean solidFloor = !world.getBlockState(floor).getCollisionShape(world, floor).isEmpty();
+            boolean room = world.getBlockState(feet).getCollisionShape(world, feet).isEmpty()
+                    && world.getBlockState(feet.up()).getCollisionShape(world, feet.up()).isEmpty();
+
+            if (solidFloor && room) {
+                return feet;
+            }
+        }
+
+        return null;
+    }
+
     /** Terreno natural, que a proteção deixa quebrar. */
     static boolean mayDig(ServerWorld world, BlockPos at, BlockState state) {
         if (!state.getFluidState().isEmpty() || world.getBlockEntity(at) != null) {
