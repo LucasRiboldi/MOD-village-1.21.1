@@ -922,3 +922,27 @@ A lista completa e priorizada está no `TODO.md`.
 > mundo novo). **JAR instalado: `village-colony-0.3.32.jar`** =
 > `C2ABB0B952481164DADEF9401B3B5026F83B72D19D8958C08CBB8C5E0DC8C910`, igual em `build/libs`,
 > `downloads/` e `.minecraft/mods`; a 0.3.31 ficou como `.jar.disabled`.
+
+---
+
+> **0.3.57** (14-10): **a horta da casa surge sem gastar recurso** (destrava a obra). A obra
+> `plains_small_house_8` travava nos últimos ~12 blocos (horta: 35 farmland + 16 wheat + 2 water);
+> `farmland` não é fabricável nem coletável. Correção: `BuilderPlacement` molda no local os blocos de
+> chão (farmland, água, caminho, cultivo) com o terreno garantido embaixo (`BlockShaping.groundFor`),
+> antes da cadeia de material; só sobre lugar livre (Regra 3). Verificado: test 1515/0; runGametest
+> 769/769; mutação (desligar o surgimento) derruba 6 testes de construção. JAR
+> `village-colony-0.3.57.jar` = `4DB9A471779F49D62D11A91C381C34193774343A65CC100E90BEE7A0850D6F69`.
+
+> **0.3.56** (14-10): **o pastor aproveita o rebanho** (manutenção do ofício, não toca a obra —
+> Regra 59). `FlockHarvest`: com mais de `HARVEST_KEEP=8` adultos (criação enche até `FLOCK_TARGET=12`),
+> abate 1 por ciclo o excedente deixando ≥8 vivos, deposita o drop Vanilla no baú; carne crua acima de
+> `ITEM_KEEP=16` é cozida sem combustível. Ligado em `ShepherdFlock.tend`. Verificado: test 1515/0;
+> runGametest 768/768; mutação (HARVEST_KEEP=0) derruba `FlockHarvestTest`. JAR
+> `village-colony-0.3.56.jar` = `9BE8707A710E4DA6D12D0D92DCCD82C675254680D48FC709E1C8CED18A2F2F55`.
+
+> **0.3.55** (14-10): **percurso por etapas até a boca da mina** (abordagem A híbrida). `MineApproachPath.toward`:
+> quando a navegação não alcança a boca inteira, o mineiro anda até o fim do caminho parcial real
+> (`Path.getEnd()`), recalcula ao chegar; `path==null` devolve a boca e deixa o guarda de descida contar
+> a falha. Mantém a ADR-042. Verificado: test 1512/0; runGametest 766/766; mutação (usefulProgress sempre
+> true) derruba `MineApproachProgressTest`. JAR `village-colony-0.3.55.jar` =
+> `4605A53E82EEF6834944A32463322BA3EA7AD35CA43D799161AA721A4C59A40B`.

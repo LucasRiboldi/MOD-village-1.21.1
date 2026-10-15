@@ -97,28 +97,52 @@ public class ProfessionBenchGameTest implements FabricGameTest {
         context.assertTrue(ModContent.BLACKSMITH_FORGE.getDefaultState().getLuminance() == ModContent.LIGHT,
                 "a forja do ferreiro não emite luz " + ModContent.LIGHT);
 
-        context.complete();
-    }
-
-    /** A profissão sem bancada do mod (mineiro) nunca dobra. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mod_bench_none", tickLimit = 1)
-    public void aProfessionWithoutAModBenchNeverDoubles(TestContext context) {
-        ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(1, 1, 1));
-        UUID miner = UUID.randomUUID();
-        BlockPos chest = context.getAbsolutePos(new BlockPos(2, 1, 2));
-
-        try {
-            fixture.owning(miner);
-            VillageColonyMod.WORKERS.register(miner, fixture.colony().id()).assign(ProfessionType.MINER);
-
-            context.assertTrue(ModContent.benchBlock(ProfessionType.MINER) == null,
-                    "o mineiro não devia ter bancada do mod");
-            context.assertTrue(ModBenchBonus.factor(context.getWorld(), miner, chest) == 1,
-                    "o mineiro não devia dobrar");
-        } finally {
-            fixture.cleanUp();
+        // Todas as oito bancadas emitem luz — nenhuma profissão fica de fora.
+        for (ProfessionType profession : ProfessionType.values()) {
+            context.assertTrue(
+                    ModContent.benchBlock(profession).getDefaultState().getLuminance() == ModContent.LIGHT,
+                    "a bancada de " + profession + " não emite luz " + ModContent.LIGHT);
         }
 
         context.complete();
+    }
+
+    /**
+     * Toda profissão tem a sua bancada do mod — decisão do autor, 2026-10-15 (as oito). O mineiro,
+     * que antes não tinha, agora dobra na sua; e {@link ModContent#benchBlock} nunca é nulo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mod_bench_miner", tickLimit = 20)
+    public void theMinerDoublesAtItsOwnBench(TestContext context) {
+        ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(1, 1, 1));
+        UUID miner = UUID.randomUUID();
+        BlockPos chest = context.getAbsolutePos(new BlockPos(2, 1, 2));
+        BlockPos bench = context.getAbsolutePos(new BlockPos(5, 1, 2));
+
+        fixture.owning(miner);
+        VillageColonyMod.WORKERS.register(miner, fixture.colony().id()).assign(ProfessionType.MINER);
+
+        // Cada profissão tem bancada: nenhum benchBlock é nulo.
+        for (ProfessionType profession : ProfessionType.values()) {
+            context.assertTrue(ModContent.benchBlock(profession) != null,
+                    "a profissão " + profession + " ficou sem bancada do mod");
+        }
+
+        context.assertTrue(ModBenchBonus.factor(context.getWorld(), miner, chest) == 1,
+                "sem a bancada do mod o fator do mineiro devia ser 1");
+
+        context.getWorld().setBlockState(bench, ModContent.MINER_BENCH.getDefaultState());
+
+        context.waitAndRun(2, () -> {
+            try {
+                context.assertTrue(ModBenchBonus.factor(context.getWorld(), miner, chest) == 2,
+                        "a bancada do mineiro não dobrou a produção");
+            } finally {
+                CraftStation.clearAll();
+                context.getWorld().setBlockState(bench, Blocks.AIR.getDefaultState());
+                fixture.cleanUp();
+            }
+
+            context.complete();
+        });
     }
 }

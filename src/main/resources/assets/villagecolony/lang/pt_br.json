@@ -64,5 +64,10 @@
   "overlay.biome.taiga": "taiga",
   "block.villagecolony.carpenter_bench": "Bancada do Carpinteiro",
   "block.villagecolony.mason_cutter": "Cortador do Pedreiro",
-  "block.villagecolony.blacksmith_forge": "Forja do Ferreiro"
+  "block.villagecolony.blacksmith_forge": "Forja do Ferreiro",
+  "block.villagecolony.lumberjack_bench": "Bancada do Lenhador",
+  "block.villagecolony.farmer_bench": "Bancada do Fazendeiro",
+  "block.villagecolony.shepherd_bench": "Bancada do Pastor",
+  "block.villagecolony.builder_bench": "Bancada do Construtor",
+  "block.villagecolony.miner_bench": "Bancada do Mineiro"
 }

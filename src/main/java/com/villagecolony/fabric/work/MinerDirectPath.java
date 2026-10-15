@@ -5,6 +5,7 @@ import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -53,15 +54,28 @@ final class MinerDirectPath {
         }
 
         // Com folga: o caminho do jogo para um ou dois blocos antes do alvo, e de lá a
-        // picareta ainda alcança a pedra.
+        // picareta ainda alcança a pedra. O {@code reachesTarget()} NÃO basta sozinho: o
+        // findPathTo sobe o alvo sólido/distante até a superfície (E32) e o reporta "chegado"
+        // com o fim dezenas de blocos acima no Y — o que fazia o mineiro andar para a
+        // superfície sobre a pedra e nunca descer (playtest 0.3.58, 14-10). Vale o lugar onde
+        // o caminho termina de verdade, nos três eixos.
         Path path = villager.getNavigation().findPathTo(approach, 0);
         boolean reaches = path != null
-                && (path.reachesTarget() || (path.getEnd() != null
-                        && path.getEnd().getBlockPos().getManhattanDistance(approach) <= NEAR));
+                && endReachesApproach(path.getEnd() == null ? null : path.getEnd().getBlockPos(), approach);
 
         VERDICTS.put(villager.getUuid(), new Verdict(approach.toImmutable(), reaches, now));
 
         return reaches;
+    }
+
+    /**
+     * Se o fim de um caminho encosta no lugar de pé da pedra — a distância Manhattan nos três
+     * eixos, o Y incluído. É a conta que separa o caminho que de fato leva à pedra do falso
+     * caminho à superfície que o findPathTo devolve para alvo sólido (E32). Lógica pura, provada
+     * em {@code MinerDirectPathTest}.
+     */
+    static boolean endReachesApproach(@Nullable BlockPos end, BlockPos approach) {
+        return end != null && end.getManhattanDistance(approach) <= NEAR;
     }
 
     static void forget(UUID workerId) {

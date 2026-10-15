@@ -279,8 +279,20 @@ public final class MinerHands {
      * Larga a pedra sem posição de trabalho que ele alcance — E1, 2026-10-08. Não é
      * desistência: a tarefa fica com ele e não conta para o descanso do ofício; a pedra
      * ganha a marca temporária e o cursor a pula, e a passagem seguinte escolhe outra.
+     *
+     * <p><b>Antes de largar, tenta o desvio</b> — P1 do plano de melhoria, 2026-10-15. O playtest da
+     * 0.3.59 mostrou o mineiro encalhando a 4-5 blocos: 22× {@code NO_STANDING_POSITION}. O
+     * {@code MineVein.roomBeside} (ADR-038 P6) já abre o pé ao lado no fluxo do cursor, mas não
+     * quando a pedra é julgada de perto aqui. Quando faltava só o pé ({@link #worthRerouting}), cavar
+     * a pedra vizinha abaixa o acesso e expõe o lugar de pé: o mineiro passa a mirar nela em vez de
+     * recusar. Pé alto demais ({@code TOO_HIGH}) ou sem caminho não se resolvem cavando ao lado — aí
+     * o contorno de sempre (marca + o cursor pula + a galeria vira).
      */
     static void passOver(ServerWorld world, UUID workerId, Job job, MiningTarget.Rejection why) {
+        if (worthRerouting(why) && reroutedBeside(world, workerId, job)) {
+            return;
+        }
+
         VillageColonyMod.LOGGER.info(
                 "Miner {} passes over the stone at {} — no work position it can reach ({})",
                 workerId.toString().substring(0, 8), job.target.toShortString(), why);
@@ -293,6 +305,79 @@ public final class MinerHands {
         job.approach = null;
         job.judged = false;
         WorkTargets.clear(workerId);
+    }
+
+    /**
+     * Se vale tentar cavar a pedra ao lado para abrir o pé, pelo motivo da recusa. Só
+     * {@code NO_STANDING_POSITION}: cavar o vizinho abaixa o acesso e expõe um lugar de pé. Pé alto
+     * demais ({@code TOO_HIGH}) não baixa cavando ao lado, e falta de caminho ({@code NO_PATH}) é
+     * navegação, não geometria — os dois contornam. Lógica pura, provada em {@code MinerRerouteTest}.
+     */
+    static boolean worthRerouting(MiningTarget.Rejection why) {
+        return why == MiningTarget.Rejection.NO_STANDING_POSITION;
+    }
+
+    /**
+     * Se o desvio vale a pena para esta pedra — <b>não</b> quando ela está dentro de um beco.
+     *
+     * <p>Playtest 0.3.60 (15-10): numa parede/teto de caverna, {@link MineVein#roomBeside} escolhe um
+     * vizinho que está na <b>mesma</b> região sem pé, e o desvio só troca {@code NO_STANDING} por
+     * outro {@code NO_STANDING}/{@code TOO_HIGH} — dez desvios e zero progresso. Quando a vizinhança já
+     * acumulou recusas ({@link MineMarks#isInADeadEndAt}, o beco), desviar fura a defesa do beco; deixa
+     * o contorno agir (marca + o cursor pula + a galeria vira). Lógica pura, provada em
+     * {@code MinerRerouteTest}.
+     */
+    static boolean rerouteWorthTryingAt(long now, BlockPos target) {
+        return !MineMarks.isInADeadEndAt(now, target);
+    }
+
+    /**
+     * Redireciona o alvo para a pedra ao lado que abre o pé, se houver — devolve {@code true} quando
+     * desviou. O alvo e o approach são refeitos no padrão de {@code MinerSteps.startNextStone}.
+     */
+    private static boolean reroutedBeside(ServerWorld world, UUID workerId, Job job) {
+        if (!rerouteWorthTryingAt(world.getTime(), job.target)) {
+            return false;
+        }
+
+        Optional<Mine> mine = MinerWork.mineOf(job);
+
+        if (mine.isEmpty()) {
+            return false;
+        }
+
+        Optional<BlockPos> beside = MineVein.roomBeside(world, mine.get(), job.target);
+
+        if (beside.isEmpty()) {
+            return false;
+        }
+
+        if (!(world.getEntity(workerId) instanceof VillagerEntity miner)) {
+            return false;
+        }
+
+        BlockPos stone = beside.get();
+        MiningTarget.Verdict verdict = MiningTarget.judge(world, stone, miner.getBlockPos());
+
+        if (!verdict.eligible()) {
+            return false;
+        }
+
+        VillageColonyMod.LOGGER.info(
+                "Miner {} reroutes to the stone beside at {} to open a footing for {}",
+                workerId.toString().substring(0, 8), stone.toShortString(), job.target.toShortString());
+        ActionJournal.action(workerId, "REROUTED", "stone", 0, stone, "beside");
+
+        job.target = stone.toImmutable();
+        job.approach = verdict.workPosition();
+        job.judged = false;
+        job.progress = 0;
+        job.required = 0;
+        job.stalled = 0;
+        job.detour = null;
+        WorkTargets.clear(workerId);
+
+        return true;
     }
 
     /**

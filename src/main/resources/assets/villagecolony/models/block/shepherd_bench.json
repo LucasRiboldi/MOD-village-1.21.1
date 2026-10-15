@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "villagecolony:block/shepherd_bench_top",
+    "down": "minecraft:block/oak_planks",
+    "north": "villagecolony:block/shepherd_bench_front",
+    "south": "villagecolony:block/shepherd_bench_side",
+    "east": "villagecolony:block/shepherd_bench_side",
+    "west": "villagecolony:block/shepherd_bench_front",
+    "particle": "villagecolony:block/shepherd_bench_front"
+  }
+}
