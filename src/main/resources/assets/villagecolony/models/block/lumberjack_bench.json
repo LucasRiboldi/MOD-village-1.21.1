@@ -1,12 +1,12 @@
 {
   "parent": "minecraft:block/cube",
   "textures": {
-    "up": "villagecolony:block/lumberjack_bench_top",
-    "down": "minecraft:block/oak_planks",
-    "north": "villagecolony:block/lumberjack_bench_front",
-    "south": "villagecolony:block/lumberjack_bench_side",
-    "east": "villagecolony:block/lumberjack_bench_side",
-    "west": "villagecolony:block/lumberjack_bench_front",
-    "particle": "villagecolony:block/lumberjack_bench_front"
+    "up": "villagecolony:block/lumberjack_bench_up",
+    "down": "villagecolony:block/lumberjack_bench_down",
+    "north": "villagecolony:block/lumberjack_bench_north",
+    "south": "villagecolony:block/lumberjack_bench_south",
+    "east": "villagecolony:block/lumberjack_bench_east",
+    "west": "villagecolony:block/lumberjack_bench_west",
+    "particle": "villagecolony:block/lumberjack_bench_north"
   }
 }

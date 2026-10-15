@@ -1,12 +1,12 @@
 {
   "parent": "minecraft:block/cube",
   "textures": {
-    "up": "villagecolony:block/blacksmith_forge_top",
-    "down": "villagecolony:block/blacksmith_forge_top",
-    "north": "villagecolony:block/blacksmith_forge_front",
-    "south": "villagecolony:block/blacksmith_forge_side",
-    "east": "villagecolony:block/blacksmith_forge_side",
-    "west": "villagecolony:block/blacksmith_forge_side",
-    "particle": "villagecolony:block/blacksmith_forge_front"
+    "up": "villagecolony:block/blacksmith_forge_up",
+    "down": "villagecolony:block/blacksmith_forge_down",
+    "north": "villagecolony:block/blacksmith_forge_north",
+    "south": "villagecolony:block/blacksmith_forge_south",
+    "east": "villagecolony:block/blacksmith_forge_east",
+    "west": "villagecolony:block/blacksmith_forge_west",
+    "particle": "villagecolony:block/blacksmith_forge_north"
   }
 }
