@@ -7,7 +7,9 @@ import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.Production;
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.BiomeConstructionSupply;
 import net.minecraft.item.Item;
 import net.minecraft.server.world.ServerWorld;
 
@@ -60,6 +62,13 @@ final class SmelterGathers {
             return true;
         }
 
+        // A vila já provou que não tem este cru no alcance (KnownAbsent, regra do autor de 2026-10-20):
+        // registra e o material aparece no baú do fundidor, que segue na fornalha em vez de sair de novo.
+        if (colony.isPresent() && KnownAbsent.isAbsent(colonyId, raw.get(), world.getTime())
+                && stockWhatIsAbsent(world, colony.get(), workerId, raw.get())) {
+            return false;
+        }
+
         Task gather = VillageColonyMod.TASKS.availableFor(colonyId).stream()
                 .filter(task -> task.type() == TaskType.COLLECT_SURFACE_RESOURCE
                         && task.targetResource() == raw.get())
@@ -75,5 +84,31 @@ final class SmelterGathers {
                 workerId.toString().substring(0, 8), raw.get().name().toLowerCase(java.util.Locale.ROOT));
 
         return true;
+    }
+
+    /**
+     * O cru registrado como ausente aparece no baú do fundidor ({@link BiomeConstructionSupply}, que
+     * também escreve a linha {@code VC_SUPPLY_ERROR}). O que a vila já tem em outro baú é levado antes.
+     *
+     * @return se o baú dele passou a ter o pedido; sem espaço, ele cai na busca de sempre
+     */
+    private static boolean stockWhatIsAbsent(ServerWorld world, Colony colony, UUID workerId, ResourceType raw) {
+        Optional<Item> item = MinecraftTypeAdapter.toItem(raw);
+
+        if (item.isEmpty()) {
+            return false;
+        }
+
+        boolean stocked = BiomeConstructionSupply.stockAfterEmptySearches(
+                world, colony.id(), colony.center(), item.get(), ORDER, ProfessionType.SMELTER);
+
+        if (stocked) {
+            VillageColonyMod.LOGGER.info(
+                    "Smelter {} stays at the furnace — the village has no {} in reach (registered absent);"
+                            + " it was stocked into its chest instead of another search",
+                    workerId.toString().substring(0, 8), raw.name().toLowerCase(java.util.Locale.ROOT));
+        }
+
+        return stocked;
     }
 }
