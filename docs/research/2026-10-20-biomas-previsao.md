@@ -169,6 +169,27 @@ na busca maior; o aplainamento não foi exercido na bancada, e está provado só
 GameTest (`anUnevenLotIsLevelledToTheMedianFloor`, com mutação: sem o corte, a coluna
 fica um bloco acima) e pelo controle do tronco.
 
+### Rodada 4 — 3 dias por vila, tempo por profissão (0.3.69)
+
+As cinco nascem e constroem (obras concluídas: planície 2, deserto 1, savana 3, taiga 1,
+neve 0). Regra 51 reprova quase tudo **também na planície**: boa parte do ócio é geral
+(construtor "no material" 107–469×, mineiro TOO_HIGH/NO_STANDING_POSITION). O fazendeiro
+espera 50–68% em toda vila (espera de colheita). O que é próprio do bioma:
+
+| Vila | Fora da curva | Motivo (`action_report`) |
+|---|---|---|
+| deserto | pedreiro e fundidor 100% ociosos | `NO_TASK`: nenhuma tarefa aberta para eles em 3 dias |
+| deserto | fazendeiro 75% ocioso | 11× "could not reach the crop", encalhe "frozen twice" |
+| deserto | pastor 84% ocioso | 7× "no sheep with wool within the radius" |
+| deserto | lenhador 71% bloqueado | só viveiro (38 árvores derrubadas) |
+| neve | pastor 63% bloqueado | 14× "could not reach the sheep", 7× encalhe |
+| neve, taiga | lenhador 71–74% ocioso | árvore rara / sem alvo |
+| taiga | 19× "found no lot" | encosta (Regra 19) |
+
+Próximos passos (não feitos): por que o deserto não abre tarefa de pedreiro e fundidor;
+alcance do fazendeiro e do pastor (deserto, neve); biomas fixos (`fixed-*`) ainda não
+rodados.
+
 ## 6. Rodadas
 
 Cada rodada: `run/biome-sim/reports/<alvo>/` (log, `signals.txt`, `time_ledger.txt`,
