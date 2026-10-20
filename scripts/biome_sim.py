@@ -76,6 +76,8 @@ SIGNALS = {
     "estoque fabricado": r"The colony stocked",
     "encalhado": r"Stranded worker",
     "teleporte pela cama": r"was teleported from .* to its bed",
+    "peça surgida (G2)": r"VC_SUPPLY_ERROR",
+    "obra travada (G2)": r"stalled the construction for",
 }
 
 
@@ -312,6 +314,8 @@ def simulate(name, days, seed, keep_world):
     shutil.rmtree(logs, ignore_errors=True)
 
     write_server_files(level, seed, password)
+    ledger_file = os.path.join(RUN, "villagecolony", "supply-gaps.jsonl")
+    ledger_start = os.path.getsize(ledger_file) if os.path.exists(ledger_file) else 0
 
     if mode == "fixed":
         write_fixed_biome_pack(level, biome)
@@ -355,6 +359,18 @@ def simulate(name, days, seed, keep_world):
 
     for found in os.listdir(logs):
         shutil.copy(os.path.join(logs, found), report)
+
+    # O registro de faltas (G2) acumula entre rodadas: a parte desta vila é o que cresceu nela.
+    ledger = os.path.join(RUN, "villagecolony", "supply-gaps.jsonl")
+
+    if os.path.exists(ledger):
+        with open(ledger, encoding="utf-8", errors="replace") as source:
+            source.seek(ledger_start)
+            with open(os.path.join(report, "supply-gaps.jsonl"), "w", encoding="utf-8") as out:
+                out.write(source.read())
+
+        run_report("supply_gaps.py", [os.path.join(report, "supply-gaps.jsonl")],
+                   os.path.join(report, "supply_gaps.txt"))
 
     log = os.path.join(report, "latest.log")
     journals = [os.path.join(report, f) for f in os.listdir(report) if f.startswith("villagecolony-actions-")]

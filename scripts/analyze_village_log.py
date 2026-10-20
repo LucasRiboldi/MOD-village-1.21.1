@@ -78,7 +78,7 @@ ACTIVITY_PATTERN = re.compile(
 )
 
 SUPPLY_FALLBACK_PATTERN = re.compile(
-    r"\bVC_SUPPLY_ERROR\s+version=1\s+piece=(?P<piece>\S+)"
+    r"\bVC_SUPPLY_ERROR\s+version=[12]\s+piece=(?P<piece>\S+)"
     r"\s+profession=(?P<profession>[A-Z_]+)\s+attempts=(?P<attempts>\d+)\b"
 )
 

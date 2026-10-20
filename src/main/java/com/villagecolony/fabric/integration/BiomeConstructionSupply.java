@@ -129,8 +129,9 @@ public final class BiomeConstructionSupply {
      * Ciclos com a rota da obra aberta e sem entrega antes de a peça aparecer no
      * baú do construtor — regra do autor, 2026-10-11 (depois do playtest da
      * 0.3.25): se em um minuto nenhuma rota avançou, o bloco surge. São 2 ciclos
-     * de 30 s; o ciclo só conta com tarefa de rota aberta (ADR-040 §2). A busca
-     * vazia ({@code LocateFallback}) segue com {@link #ATTEMPTS_BEFORE_STOCKING}.
+     * de 30 s sem progresso, por peça, com ou sem tarefa aberta (G2, 2026-10-20;
+     * ADR-040). A busca vazia ({@code LocateFallback}) segue com
+     * {@link #ATTEMPTS_BEFORE_STOCKING}.
      */
     public static final int DISPATCHES_BEFORE_STOCKING = 2;
 
@@ -213,7 +214,8 @@ public final class BiomeConstructionSupply {
     public static boolean stock(
             ServerWorld world, UUID colonyId, ColonyPos near, Item item) {
 
-        return stock(world, ColonyChests.nearestFirst(world, colonyId, near), item, askedByTheBuild(colonyId, item));
+        return stock(world, colonyId, ColonyChests.nearestFirst(world, colonyId, near), item,
+                askedByTheBuild(colonyId, item), SupplyGapLedger.NO_ROUTE);
     }
 
     /**
@@ -223,8 +225,18 @@ public final class BiomeConstructionSupply {
     public static boolean stockForConstruction(
             ServerWorld world, UUID colonyId, ColonyPos near, Item item) {
 
-        return stock(world, chestsOf(world, colonyId, near, ProfessionType.BUILDER), item,
-                askedByTheBuild(colonyId, item));
+        return stockForConstruction(world, colonyId, near, item, SupplyGapLedger.STALLED);
+    }
+
+    /**
+     * O mesmo, dizendo ao registro de faltas por que a peça surgiu ({@link SupplyGapLedger}) — G2,
+     * 2026-10-20.
+     */
+    public static boolean stockForConstruction(
+            ServerWorld world, UUID colonyId, ColonyPos near, Item item, String reason) {
+
+        return stock(world, colonyId, chestsOf(world, colonyId, near, ProfessionType.BUILDER), item,
+                askedByTheBuild(colonyId, item), reason);
     }
 
     /** Quanto da peça a obra ainda pede (mínimo 1): surge tudo de uma vez — autor, 2026-10-11. */
@@ -254,7 +266,7 @@ public final class BiomeConstructionSupply {
             ServerWorld world, UUID colonyId, ColonyPos near, Item item, int count,
             ProfessionType craftsman) {
 
-        return stockFor(world, colonyId, near, item, count, craftsman,
+        return stockFor(world, colonyId, near, item, count, craftsman, SupplyGapLedger.NO_ROUTE,
                 "after four failed attempts to gather it — no profession can obtain it in this biome");
     }
 
@@ -267,13 +279,13 @@ public final class BiomeConstructionSupply {
      */
     public static boolean stockAfterEmptySearches(
             ServerWorld world, UUID colonyId, ColonyPos near, Item item, int count, ProfessionType user) {
-        return stockFor(world, colonyId, near, item, count, user,
+        return stockFor(world, colonyId, near, item, count, user, SupplyGapLedger.NOT_FOUND,
                 "after four searches of the village's reach found none");
     }
 
     private static boolean stockFor(
             ServerWorld world, UUID colonyId, ColonyPos near, Item item, int count, ProfessionType craftsman,
-            String why) {
+            String reason, String why) {
         List<ColonyPos> professionChests = professionChestsOf(colonyId, craftsman);
         int professionHave = ColonyChests.countIn(world, professionChests, item);
         if (professionHave >= count) {
@@ -291,7 +303,7 @@ public final class BiomeConstructionSupply {
             if (professionChest.isPresent()
                     && ChestDepositor.deposit(world, professionChest.get(), item, missing) == 0) {
                 VillageColonyMod.LOGGER.info("The colony stocked {} x{} for the {} {}", item, missing, craftsman, why);
-                logSupplyError(item, craftsman, why);
+                SupplyGapLedger.report(world, colonyId, item, missing, craftsman, ATTEMPTS_BEFORE_STOCKING, reason, why);
                 return true;
             }
         }
@@ -309,7 +321,7 @@ public final class BiomeConstructionSupply {
             return false;
         }
         VillageColonyMod.LOGGER.info("The colony stocked {} x{} for the {} {}", item, count - have, craftsman, why);
-        logSupplyError(item, craftsman, why);
+        SupplyGapLedger.report(world, colonyId, item, count - have, craftsman, ATTEMPTS_BEFORE_STOCKING, reason, why);
         return true;
     }
 
@@ -338,7 +350,8 @@ public final class BiomeConstructionSupply {
         return chests;
     }
 
-    private static boolean stock(ServerWorld world, List<ColonyPos> chests, Item item, int asked) {
+    private static boolean stock(
+            ServerWorld world, UUID colonyId, List<ColonyPos> chests, Item item, int asked, String reason) {
         // Natureza também, desde 2026-10-03: quem chega aqui não tem rota no
         // bioma e falhou quatro vezes (ADR-036 item 6). Surge o que falta até o
         // que a obra pede, de uma vez.
@@ -361,21 +374,9 @@ public final class BiomeConstructionSupply {
                 "The colony stocked {} x{} for construction after {} cycles without a delivery"
                         + " — no route delivered it (none in this biome, or one only on paper)",
                 item, missing - left, DISPATCHES_BEFORE_STOCKING);
-        logSupplyError(item, ProfessionType.BUILDER, DISPATCHES_BEFORE_STOCKING, "no route delivered it");
+        SupplyGapLedger.report(world, colonyId, item, missing - left, ProfessionType.BUILDER, DISPATCHES_BEFORE_STOCKING,
+                reason, "no route delivered it");
         return true;
-    }
-
-    /**
-     * A linha de erro de suprimento — ADR-036 item 6: toda peça que aparece
-     * sem a profissão a ter obtido fica registrada, para o playtest contar.
-     */
-    private static void logSupplyError(Item item, ProfessionType profession, String why) {
-        logSupplyError(item, profession, ATTEMPTS_BEFORE_STOCKING, why);
-    }
-
-    private static void logSupplyError(Item item, ProfessionType profession, int attempts, String why) {
-        VillageColonyMod.LOGGER.warn("VC_SUPPLY_ERROR version=1 piece={} profession={} attempts={} reason={}",
-                Registries.ITEM.getId(item), profession, attempts, why);
     }
 
     private static String treeKey(UUID colonyId, TreeSpecies species) {

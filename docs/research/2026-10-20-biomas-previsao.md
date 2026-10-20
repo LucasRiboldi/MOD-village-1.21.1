@@ -231,6 +231,32 @@ musgo, terra enraizada).
 As quatro nascem e crescem (8 → 13–15 aldeões), mas param depois: construtor, lenhador,
 pedreiro e mineiro acima de 80% sem trabalhar — o G2.
 
+### Rodada 7 — G2: peça que trava a obra aparece no baú do construtor (0.3.71)
+
+`ConstructionSupplyDispatches` vigia cada peça que trava o construtor (a da vez e as postas de
+lado por material), cada uma com o próprio contador; 2 ciclos sem progresso, com ou sem tarefa
+aberta, e tudo o que a obra pede da peça aparece no baú do construtor. Cada caso vai para
+`villagecolony/supply-gaps.jsonl` (`SupplyGapLedger`, resumo em `scripts/supply_gaps.py`).
+
+| Vila | Antes (rodada 5) | Depois (2 dias) |
+|---|---|---|
+| planície | 8,1 | 9,4 |
+| savana | 9,3 | 9,6 |
+| neve | 5,3 | **8,3** |
+| taiga | 7,8 | 8,0 |
+| deserto | 4,0 | 5,6 (fazendeiro e fundidor ainda parados) |
+| floresta, cerejeira, cogumelos, taiga nevada | 3,0 | 3,0 |
+
+As de mata não abrem obra nenhuma: "no building work: still sweeping — looking for a lot" —
+a busca de lote das obras comuns esbarra nas árvores (o G1 limpou só o lote da casa
+fundadora). Rodadas de 2 dias contra as de 3 dias da rodada 5: compare com cuidado.
+
+Registro de faltas da rodada (30 casos, 13 itens sem rota que entregue): `white_wool` 7
+(NOT_FOUND, pastor, em toda vila), `stripped_oak_log` 4 (NO_ROUTE, planície),
+`smooth_sandstone` 4 e `cut_sandstone` 2 (STALLED, deserto), `snow_block` 3, `snow` 1 e
+`blue_ice` 1 (NO_TASK, neve), `oak_log` 2 (STALLED), `torch` 2 (NO_ROUTE, deserto), terracotas
+coloridas, vidraça e melancia (savana).
+
 ## 6. Rodadas
 
 Cada rodada: `run/biome-sim/reports/<alvo>/` (log, `signals.txt`, `time_ledger.txt`,
