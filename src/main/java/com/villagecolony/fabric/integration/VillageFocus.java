@@ -79,7 +79,7 @@ public final class VillageFocus {
             }
         }
 
-        return false;
+        return SimulatedObserver.at(overworld).filter(at -> isInside(colony, at.getX(), at.getZ())).isPresent();
     }
 
     public static boolean isInside(Colony colony, int x, int z) {
@@ -96,7 +96,7 @@ public final class VillageFocus {
 
     /** As colônias que trabalham agora: ativas e com jogador dentro há até 5 minutos. */
     public static Set<UUID> attended(ServerWorld overworld, List<Colony> active) {
-        if (overworld.getPlayers().isEmpty()) {
+        if (!SimulatedObserver.anyone(overworld)) {
             return Set.of();
         }
 
@@ -135,7 +135,7 @@ public final class VillageFocus {
             }
         }
 
-        return false;
+        return SimulatedObserver.isNear(overworld, position.getX(), position.getZ(), radius);
     }
 
     /**
@@ -147,7 +147,8 @@ public final class VillageFocus {
      * trabalhadores diretamente, sem um jogador de teste.
      */
     public static boolean isWorking(ServerWorld overworld, UUID colonyId) {
-        if (overworld == null || overworld.getPlayers().isEmpty()) {
+        // Na bancada de simulação vale a regra do jogo, não a da bateria.
+        if (overworld == null || (overworld.getPlayers().isEmpty() && !SimulatedObserver.enabled())) {
             // Sem jogador (GameTest): a vila trabalha, salvo se abandonada
             // (ADR-036 item 10). O chunk dormente não conta aqui: cenário
             // distante fica dormente para a sonda e mesmo assim é testado.

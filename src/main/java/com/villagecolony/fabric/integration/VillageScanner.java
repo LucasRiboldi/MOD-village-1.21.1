@@ -125,6 +125,13 @@ public final class VillageScanner {
                 // Regra 20 — ver VillageBiomes.
                 ignoredByBiome = true;
 
+                if (SimulatedObserver.enabled()) {
+                    BlockPos at = MinecraftTypeAdapter.toBlockPos(observed.center());
+                    com.villagecolony.VillageColonyMod.LOGGER.info("VC_SIM ignored cluster at {} ({} beds) — biome {}",
+                            at.toShortString(), observed.bedCount(),
+                            world.getBiome(at).getKey().map(key -> key.getValue().toString()).orElse("?"));
+                }
+
                 continue;
             }
 

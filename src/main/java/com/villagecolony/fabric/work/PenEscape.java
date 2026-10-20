@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.brain.WalkOverride;
+import com.villagecolony.fabric.integration.SimulatedObserver;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -150,7 +151,7 @@ public final class PenEscape {
     // pacote event daqui faria crescer o ciclo work ↔ event que o ArchUnit
     // mantém congelado.
     static boolean isWorking(ServerWorld world, UUID colonyId) {
-        return world.getPlayers().isEmpty() || VillageColonyMod.COLONIES.find(colonyId)
+        return (world.getPlayers().isEmpty() && !SimulatedObserver.enabled()) || VillageColonyMod.COLONIES.find(colonyId)
                 .filter(colony -> colony.isActive() && colony.isAttended(world.getTime()))
                 .isPresent();
     }

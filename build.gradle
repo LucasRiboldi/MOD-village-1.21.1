@@ -227,6 +227,18 @@ loom {
 
             runDir 'run/gametest-server'
         }
+
+        // Bancada de simulação por bioma — servidor sem jogador, dirigido por
+        // scripts/biome_sim.py via RCON. A chave faz o centro dos chunks forçados
+        // contar como um jogador dentro da vila (SimulatedObserver).
+        biomeSim {
+            server()
+            name = 'Biome Simulation Server'
+
+            vmArg '-Dvillagecolony.simulate=true'
+
+            runDir 'run/biome-sim'
+        }
     }
 }
 

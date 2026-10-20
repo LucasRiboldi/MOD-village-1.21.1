@@ -6,6 +6,7 @@ import com.villagecolony.core.colony.service.ColonyAbandonment;
 import com.villagecolony.core.coordination.PlanningBudget;
 import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.fabric.integration.SimulatedObserver;
 import com.villagecolony.fabric.integration.RoadExtension;
 import com.villagecolony.fabric.integration.SweepDeadline;
 import com.villagecolony.fabric.integration.SweepState;
@@ -37,7 +38,7 @@ final class SweepCadence {
 
     /** Uma vez por segundo: a primeira vila atendida com varredura em curso ganha uma passagem. */
     static void pass(ServerWorld world) {
-        if (world.getPlayers().isEmpty()) {
+        if (!SimulatedObserver.anyone(world)) {
             return;
         }
 
