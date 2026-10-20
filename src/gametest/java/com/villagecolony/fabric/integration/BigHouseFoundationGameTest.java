@@ -11,6 +11,7 @@ import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.PlanPlacement;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.Entity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
@@ -288,6 +289,107 @@ public class BigHouseFoundationGameTest implements FabricGameTest {
                     "o lote aceitou cortar um tronco");
         } finally {
             clearPatch(context, corner);
+        }
+
+        context.complete();
+    }
+
+    /** Chão plano de 5 × 5 fora da arena (céu aberto), com o chão pedido; devolve o canto no piso. */
+    private static BlockPos flatGround(TestContext context, net.minecraft.block.Block ground, int offset) {
+        BlockPos corner = context.getAbsolutePos(new BlockPos(1, 0, 1)).add(1_000_000, 0, 1_400_000 + offset);
+        ServerWorld world = context.getWorld();
+        world.getChunk(corner);
+
+        for (int dx = 0; dx < 5; dx++) {
+            for (int dz = 0; dz < 5; dz++) {
+                world.setBlockState(corner.add(dx, 0, dz), Blocks.STONE.getDefaultState());
+                world.setBlockState(corner.add(dx, 1, dz), ground.getDefaultState());
+            }
+        }
+
+        return corner.up(2);
+    }
+
+    private static void clearAbove(TestContext context, BlockPos floor) {
+        for (BlockPos pos : BlockPos.iterate(floor.add(-1, -2, -1), floor.add(5, 12, 5))) {
+            context.getWorld().setBlockState(pos, Blocks.AIR.getDefaultState());
+        }
+    }
+
+    /** Árvore natural no meio do lote: o lote é aceito e a árvore sai — G1, 2026-10-20. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "big_house_growth")
+    public void aNaturalTreeInTheLotIsCleared(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos floor = flatGround(context, Blocks.GRASS_BLOCK, 0);
+        Vec3i size = new Vec3i(5, 4, 5);
+        Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(floor));
+
+        for (int dy = 0; dy < 4; dy++) {
+            world.setBlockState(floor.add(2, dy, 2), Blocks.OAK_LOG.getDefaultState());
+        }
+
+        for (BlockPos leaf : BlockPos.iterate(floor.add(1, 4, 1), floor.add(3, 5, 3))) {
+            world.setBlockState(leaf, Blocks.OAK_LEAVES.getDefaultState());
+        }
+
+        try {
+            context.assertTrue(BigHouseFoundation.safe(world, colony, floor.getX(), floor.getY(), floor.getZ(), size),
+                    "o lote com uma árvore natural foi recusado");
+
+            int cleared = BigHouseFoundation.clear(world, floor, size);
+
+            for (BlockPos pos : BlockPos.iterate(floor, floor.add(4, 10, 4))) {
+                net.minecraft.block.BlockState state = world.getBlockState(pos);
+                context.assertFalse(state.isIn(net.minecraft.registry.tag.BlockTags.LOGS)
+                                || state.isIn(net.minecraft.registry.tag.BlockTags.LEAVES),
+                        "ficou " + state.getBlock() + " no lote em " + pos.toShortString());
+            }
+
+            context.assertTrue(cleared >= 4 + 18, "saíram só " + cleared + " blocos da árvore");
+        } finally {
+            clearAbove(context, floor);
+            world.getEntitiesByClass(net.minecraft.entity.ItemEntity.class,
+                    new net.minecraft.util.math.Box(floor).expand(8), item -> true).forEach(Entity::discard);
+        }
+
+        context.complete();
+    }
+
+    /** Controle: toras de cabana cobertas de tábua não são árvore — o lote é recusado e nada se corta. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "big_house_growth")
+    public void aCabinOfLogsIsNotATree(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos floor = flatGround(context, Blocks.GRASS_BLOCK, 16);
+        Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(floor));
+
+        for (int dy = 0; dy < 3; dy++) {
+            world.setBlockState(floor.add(2, dy, 2), Blocks.OAK_LOG.getDefaultState());
+        }
+
+        world.setBlockState(floor.add(2, 3, 2), Blocks.OAK_PLANKS.getDefaultState());
+
+        try {
+            context.assertFalse(BigHouseFoundation.safe(world, colony, floor.getX(), floor.getY(), floor.getZ(),
+                    new Vec3i(5, 4, 5)), "a fundação aceitou derrubar a coluna de toras de uma cabana");
+        } finally {
+            clearAbove(context, floor);
+        }
+
+        context.complete();
+    }
+
+    /** Micélio, do campo de cogumelos, é chão do bioma — G1. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "big_house_growth")
+    public void myceliumIsGroundForTheHouse(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos floor = flatGround(context, Blocks.MYCELIUM, 32);
+        Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(floor));
+
+        try {
+            context.assertTrue(BigHouseFoundation.safe(world, colony, floor.getX(), floor.getY(), floor.getZ(),
+                    new Vec3i(5, 4, 5)), "o lote de micélio foi recusado");
+        } finally {
+            clearAbove(context, floor);
         }
 
         context.complete();

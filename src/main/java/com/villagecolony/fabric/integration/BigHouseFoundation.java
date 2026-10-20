@@ -15,7 +15,6 @@ import net.minecraft.structure.StructureTemplate;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.math.random.Random;
-import net.minecraft.world.Heightmap;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -77,6 +76,11 @@ public final class BigHouseFoundation {
         }
 
         BlockPos placedAt = site.get().origin();
+
+        if (site.get().clearing()) {
+            VillageColonyMod.LOGGER.info("Colony {} cleared the BigHouseMOD lot at {} — {} blocks of trees and plants",
+                    colony.id(), placedAt.toShortString(), clear(world, placedAt, template.get().getSize()));
+        }
 
         if (site.get().levelled()) {
             VillageColonyMod.LOGGER.info("Colony {} levelled the BigHouseMOD lot at {} — {} blocks moved",
@@ -169,8 +173,8 @@ public final class BigHouseFoundation {
                 .noneMatch(building -> building.id().equals(chestHouse.get().id()));
     }
 
-    /** Um lugar para a casa: o canto na altura do piso, e se o chão precisa ser aplainado. */
-    private record Site(BlockPos origin, boolean levelled) {
+    /** Um lugar para a casa: o canto na altura do piso, se o chão precisa ser aplainado e se há mato a tirar. */
+    private record Site(BlockPos origin, boolean levelled, boolean clearing) {
     }
 
     /**
@@ -178,8 +182,9 @@ public final class BigHouseFoundation {
      *
      * <p>Plano exato primeiro, numa área até a borda da vila gerada mais {@link #BEYOND_VILLAGE};
      * sem plano exato, o lote mais nivelado com desnível até {@link FoundationLotSearch#MAX_SPREAD},
-     * que {@link #level} aplaina. Só lê coluna de chunk carregado: pedir chunk descarregado o
-     * carregaria no tique.
+     * que {@link #level} aplaina. A altura é a do chão, sem a vegetação de pé nele; lote com árvore
+     * só depois do limpo, e {@link #clear} a tira (G1). Só lê coluna de chunk carregado: pedir
+     * chunk descarregado o carregaria no tique.
      */
     private static Optional<Site> findSafeOrigin(ServerWorld world, Colony colony, Vec3i size) {
         BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
@@ -189,27 +194,29 @@ public final class BigHouseFoundation {
         int minX = center.getX() - reach - size.getX() / 2;
         int minZ = center.getZ() - reach - size.getZ() / 2;
         int[] heights = new int[width * depth];
+        boolean[] growth = new boolean[width * depth];
 
         for (int dz = 0; dz < depth; dz++) {
             for (int dx = 0; dx < width; dx++) {
                 int x = minX + dx;
                 int z = minZ + dz;
 
-                heights[dz * width + dx] = world.isChunkLoaded(x >> 4, z >> 4)
-                        ? world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z)
-                        : FoundationLotSearch.UNKNOWN;
+                boolean loaded = world.isChunkLoaded(x >> 4, z >> 4);
+
+                heights[dz * width + dx] = loaded ? LotGrowth.groundTop(world, x, z) : FoundationLotSearch.UNKNOWN;
+                growth[dz * width + dx] = loaded && LotGrowth.hasGrowth(world, x, z);
             }
         }
 
         for (FoundationLotSearch.Lot lot
-                : FoundationLotSearch.candidates(heights, width, depth, size.getX(), size.getZ())) {
+                : FoundationLotSearch.candidates(heights, growth, width, depth, size.getX(), size.getZ())) {
             int x = minX + lot.offsetX();
             int z = minZ + lot.offsetZ();
             boolean levelled = lot.spread() > 0;
 
             if (levelled ? safeAfterLevelling(world, colony, x, lot.floor(), z, size)
                     : safe(world, colony, x, lot.floor(), z, size)) {
-                return Optional.of(new Site(new BlockPos(x, lot.floor(), z), levelled));
+                return Optional.of(new Site(new BlockPos(x, lot.floor(), z), levelled, lot.clearing()));
             }
         }
 
@@ -231,8 +238,8 @@ public final class BigHouseFoundation {
      * Se o lote de chão irregular pode ser aplainado e receber a casa.
      *
      * <p>A mesma régua de {@link #safe}, para o chão depois de aplainado: o que se corta é só
-     * chão do bioma (nunca tronco, peça de vila ou obra), o que se aterra é ar ou planta, e acima
-     * do chão de hoje e do piso tudo é ar.
+     * chão do bioma (nunca peça de vila ou obra), o que se aterra é ar ou vegetação, e acima do
+     * chão de hoje e do piso só há ar ou vegetação natural ({@link LotGrowth}).
      */
     static boolean safeAfterLevelling(
             ServerWorld world, Colony colony, int x, int y, int z, Vec3i size) {
@@ -257,9 +264,9 @@ public final class BigHouseFoundation {
         return true;
     }
 
-    /** Uma coluna do lote: apoio no chão do bioma, corte só de chão, aterro só sobre ar ou planta. */
+    /** Uma coluna do lote: apoio no chão do bioma, corte só de chão, aterro só sobre ar ou vegetação. */
     static boolean columnLevels(ServerWorld world, int x, int y, int z, int clearThrough) {
-        int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z);
+        int top = LotGrowth.groundTop(world, x, z);
 
         if (!LotGround.isBiomeGround(world, new BlockPos(x, Math.min(top, y) - 1, z))) {
             return false;
@@ -277,10 +284,8 @@ public final class BigHouseFoundation {
 
             if (at < top) {
                 ok = LotGround.isBiomeGround(world, pos); // corta
-            } else if (at < y || at == top) {
-                ok = LotGround.isNothing(state); // aterra, ou a planta do chão de hoje
             } else {
-                ok = state.isAir();
+                ok = LotGrowth.isClearable(world, pos, state); // ar, planta, árvore natural
             }
 
             if (!ok) {
@@ -299,7 +304,7 @@ public final class BigHouseFoundation {
             for (int dz = 0; dz < size.getZ(); dz++) {
                 int x = origin.getX() + dx;
                 int z = origin.getZ() + dz;
-                int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z);
+                int top = LotGrowth.groundTop(world, x, z);
 
                 for (int at = origin.getY(); at < top; at++) {
                     world.setBlockState(new BlockPos(x, at, z), Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
@@ -318,7 +323,25 @@ public final class BigHouseFoundation {
         return moved;
     }
 
-    private static boolean safe(
+    /** Tira do lote a vegetação natural, do chão ao topo da folga e da árvore; devolve os blocos tirados. */
+    static int clear(ServerWorld world, BlockPos origin, Vec3i size) {
+        int clearThrough = Math.max(size.getY() - 1, BuildSiteScanner.VERTICAL_CLEARANCE);
+        int cleared = 0;
+
+        for (int dx = 0; dx < size.getX(); dx++) {
+            for (int dz = 0; dz < size.getZ(); dz++) {
+                int x = origin.getX() + dx;
+                int z = origin.getZ() + dz;
+                int from = Math.min(LotGrowth.groundTop(world, x, z), origin.getY());
+
+                cleared += LotGrowth.clearColumn(world, x, from, origin.getY() + clearThrough, z);
+            }
+        }
+
+        return cleared;
+    }
+
+    static boolean safe(
             ServerWorld world, Colony colony, int x, int y, int z, Vec3i size) {
         ColonyPos min = new ColonyPos(x, y, z);
         int clearThrough = Math.max(size.getY() - 1, BuildSiteScanner.VERTICAL_CLEARANCE);
@@ -363,10 +386,9 @@ public final class BigHouseFoundation {
                         continue;
                     }
 
-                    // O lote inteiro precisa estar vazio acima do piso. Aceitar
-                    // blocos substituiveis aqui ainda poderia apagar camas,
-                    // baus ou decoracao de uma construcao ja existente.
-                    if (!world.getBlockState(pos).isAir()) {
+                    // Acima do piso, só ar ou vegetação natural (G1): cama, baú,
+                    // tábua e tronco descascado ou de cabana continuam recusando.
+                    if (!LotGrowth.isClearable(world, pos, world.getBlockState(pos))) {
                         return false;
                     }
                 }

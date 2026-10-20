@@ -210,6 +210,8 @@ public final class LotGround {
         BlockState state = world.getBlockState(pos);
 
         return isNaturalGround(state)
+                // Micélio, lama, musgo e terra enraizada: a etiqueta de terra do jogo (G1, 2026-10-20).
+                || state.isIn(BlockTags.DIRT)
                 || state.isIn(BlockTags.BASE_STONE_OVERWORLD)
                 || state.isIn(BlockTags.TERRACOTTA)
                 || state.isOf(Blocks.SANDSTONE)

@@ -214,6 +214,23 @@ estrutura gerada. Sem o registro, a junção das camas e o estilo pela vila não
 busca da casa fica nos 32 blocos. As notas das vilas postas medem uma vila "sem
 estrutura", como a feita pelo jogador — o pior caso, não o da vila natural na borda.
 
+### Rodada 6 — G1: a casa fundadora limpa o próprio lote (0.3.70)
+
+`LotGrowth`: sai do lote a vegetação natural (tronco que sobe até folha natural, folha não
+persistente, cogumelo gigante, bambu, planta); a altura do lote desconta o tronco; lote
+limpo antes do que pede corte. `#minecraft:dirt` entra no chão do bioma (micélio, lama,
+musgo, terra enraizada).
+
+| Bioma | Antes | Depois | Casa fundadora |
+|---|---|---|---|
+| floresta | 0 | 3,0 | 153 blocos de árvore tirados |
+| cerejeira | 0 | 3,0 | 94 blocos |
+| campo de cogumelos | 0 | 3,0 | lote de micélio, sem corte |
+| taiga nevada | 0 | 3,0 | 220 blocos |
+
+As quatro nascem e crescem (8 → 13–15 aldeões), mas param depois: construtor, lenhador,
+pedreiro e mineiro acima de 80% sem trabalhar — o G2.
+
 ## 6. Rodadas
 
 Cada rodada: `run/biome-sim/reports/<alvo>/` (log, `signals.txt`, `time_ledger.txt`,
