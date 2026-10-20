@@ -11,6 +11,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestTypes;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,12 +45,57 @@ final class CraftStation {
      * onde está — a salvaguarda da regra de 2026-10-15. Reconcilia com a de 2026-10-11 ("fabrica onde
      * está; a caminhada até a bancada soltava a tarefa 'stuck on the way'"): agora ele vai até a
      * bancada, mas uma bancada inalcançável (ex.: do outro lado de um desnível na montanha) deixa de
-     * travar — passado o prazo, fabrica no lugar. 10 s a 20 tps.
+     * travar — passado o prazo, fabrica no lugar até o fim da tarefa. 10 s a 20 tps.
      */
     static final int APPROACH_BUDGET = 200;
 
-    /** Código de distância que diz "não há bancada ao alcance" — fabrica onde está, sem andar. */
-    static final int NO_BENCH = -1;
+    /**
+     * A ida até a bancada numa tarefa — regra do autor, 2026-10-15.
+     *
+     * <p>A bancada é procurada <b>uma vez</b>, quando o artesão pega a tarefa ({@link #benchFor}
+     * custa uma consulta de POI de raio 64 e, para o carpinteiro, uma varredura de ~9.800 blocos;
+     * fazê-la a cada tique era o defeito G2 da varredura de 2026-10-20). Se ele não chega dentro do
+     * {@link #APPROACH_BUDGET}, desiste da bancada e fabrica onde está <b>até o fim da tarefa</b> — o
+     * defeito G1 era voltar a caminhar a cada prazo, o que derrubava a produção. Na tarefa seguinte, com
+     * um {@code Approach} novo, ele tenta a bancada de novo.
+     */
+    static final class Approach {
+
+        private final @Nullable BlockPos bench;
+
+        private int ticks;
+
+        private boolean gaveUp;
+
+        /** @param bench a bancada desta tarefa, ou {@code null} quando não há nenhuma ao alcance */
+        Approach(@Nullable BlockPos bench) {
+            this.bench = bench == null ? null : bench.toImmutable();
+        }
+
+        /** A bancada desta tarefa, ou {@code null} quando ele fabrica onde está. */
+        @Nullable BlockPos bench() {
+            return gaveUp ? null : bench;
+        }
+
+        /**
+         * Um tique de expediente: se ele fabrica onde está agora.
+         *
+         * @param atBench se ele já está ao lado da bancada
+         */
+        boolean craftHere(boolean atBench) {
+            if (bench == null || gaveUp || atBench) {
+                return true;
+            }
+
+            if (++ticks >= APPROACH_BUDGET) {
+                gaveUp = true;
+
+                return true;
+            }
+
+            return false;
+        }
+    }
 
     private record Choice(BlockPos spot, long at) {
     }
@@ -146,22 +192,13 @@ final class CraftStation {
      * A bancada em que este artesão deve trabalhar: a do mod primeiro (dobra a produção), depois a
      * estação Vanilla do ofício, e vazio quando não há nenhuma — aí ele fabrica onde está (trabalho
      * normal). É o {@code mod → vanilla → normal} do fluxo de bancada (regra do autor, 2026-10-15).
+     *
+     * <p><b>Cara</b>: uma consulta de POI de raio 64 e, para o carpinteiro sem bancada do mod, uma
+     * varredura de ~9.800 blocos. Chamar uma vez por tarefa, pelo {@link Approach} — nunca por tique.
      */
     static Optional<BlockPos> benchFor(ServerWorld world, UUID workerId, BlockPos chest) {
         Optional<ProfessionType> profession = VillageColonyMod.WORKERS.find(workerId).flatMap(Worker::profession);
 
         return bench(world, profession.orElse(null), chest);
-    }
-
-    /**
-     * Se o artesão já deve fabricar onde está, em vez de continuar indo até a bancada. Pura.
-     *
-     * <p>Fabrica aqui quando: já chegou ({@code atBench}); não há bancada ({@code ticksApproaching} é
-     * {@link #NO_BENCH}); ou o orçamento de ida estourou ({@code >= budget}) — a salvaguarda que impede
-     * uma bancada inalcançável de travar a tarefa (regra de 2026-10-11, preservada). Enquanto está
-     * longe e dentro do prazo, caminha.
-     */
-    static boolean craftHereNow(boolean atBench, int ticksApproaching, int budget) {
-        return atBench || ticksApproaching == NO_BENCH || ticksApproaching >= budget;
     }
 }

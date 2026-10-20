@@ -1,42 +1,52 @@
 package com.villagecolony.fabric.work;
 
+import net.minecraft.util.math.BlockPos;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * O artesão vai até a bancada antes de fabricar, mas com salvaguarda — regra do autor, 2026-10-15,
- * reconciliando com a de 2026-10-11 ("fabrica onde está; a caminhada até a bancada soltava a tarefa").
+ * A ida do artesão até a bancada, acompanhada ao longo de uma tarefa — regra do autor de 2026-10-15,
+ * com a salvaguarda que reconcilia com a de 2026-10-11 ("fabrica onde está").
  *
- * <p>Ele só insiste em caminhar enquanto <b>não chegou</b> e o <b>orçamento</b> de ida não estourou;
- * chegando, ou estourando o prazo (bancada inalcançável, ex.: na montanha), fabrica onde está — nunca
- * larga a tarefa por não alcançar a estação. Lógica pura, no padrão de {@link MinerRerouteTest}.
+ * <p>O teste anterior cobria só a regra de um tique e passava com o defeito G1 da varredura de
+ * 2026-10-20: o chamador zerava o contador ao desistir, e o artesão voltava a caminhar a cada 200
+ * tiques. Aqui o mesmo {@link CraftStation.Approach} é levado por tiques seguidos, como na tarefa.
  */
 class BenchApproachTest {
 
+    private static final BlockPos BENCH = new BlockPos(10, 64, 10);
+
     @Test
-    void craftsAtTheBenchWhenItHasArrived() {
-        assertTrue(CraftStation.craftHereNow(true, 0, CraftStation.APPROACH_BUDGET),
-                "chegou à bancada: fabrica nela");
+    void withoutABenchItCraftsWhereItIsFromTheFirstTick() {
+        CraftStation.Approach approach = new CraftStation.Approach(null);
+
+        assertTrue(approach.craftHere(false), "sem bancada: trabalho normal, no lugar");
     }
 
     @Test
-    void walksWhileAwayAndWithinBudget() {
-        assertFalse(CraftStation.craftHereNow(false, 10, CraftStation.APPROACH_BUDGET),
-                "longe e dentro do prazo: continua indo até a bancada");
+    void itWalksWhileAwayAndCraftsOnceItArrives() {
+        CraftStation.Approach approach = new CraftStation.Approach(BENCH);
+
+        assertFalse(approach.craftHere(false), "longe e dentro do prazo: caminha");
+        assertFalse(approach.craftHere(false), "ainda longe: segue caminhando");
+        assertTrue(approach.craftHere(true), "chegou: fabrica na bancada");
     }
 
     @Test
-    void craftsHereWhenTheBudgetRunsOut() {
-        assertTrue(CraftStation.craftHereNow(false, CraftStation.APPROACH_BUDGET, CraftStation.APPROACH_BUDGET),
-                "prazo estourado (bancada inalcançável): fabrica onde está, não larga a tarefa");
-    }
+    void onceTheBudgetRunsOutItKeepsCraftingHereUntilTheTaskEnds() {
+        CraftStation.Approach approach = new CraftStation.Approach(BENCH);
 
-    @Test
-    void craftsHereWhenThereIsNoBenchToWalkTo() {
-        // ticks = -1 é o código de "não há bancada" — fabrica onde está, sem andar.
-        assertTrue(CraftStation.craftHereNow(false, -1, CraftStation.APPROACH_BUDGET),
-                "sem bancada ao alcance: fabrica onde está (trabalho normal)");
+        for (int tick = 1; tick < CraftStation.APPROACH_BUDGET; tick++) {
+            assertFalse(approach.craftHere(false), "dentro do prazo, tique " + tick + ": caminha");
+        }
+
+        assertTrue(approach.craftHere(false), "prazo estourado: desiste da bancada e fabrica no lugar");
+
+        // O defeito G1: depois de desistir, ele voltava a caminhar. Agora fica no lugar até o fim.
+        for (int tick = 0; tick < 3 * CraftStation.APPROACH_BUDGET; tick++) {
+            assertTrue(approach.craftHere(false), "depois de desistir, tique " + tick + ": não volta a caminhar");
+        }
     }
 }

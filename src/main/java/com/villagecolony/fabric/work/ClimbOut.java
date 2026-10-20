@@ -278,7 +278,7 @@ final class ClimbOut {
         Optional<StrandedEscape.Step> step = StrandedEscape.planStep(world, feet, home);
 
         // Não-mineiro: só degrau natural (sem quebrar). Se o perto exige quebra, procura num raio maior
-        // e, sem nenhum, larga o encalhe sem tocar o mundo (regra do autor, 15-10). Ver ClimbPolicy.
+        // e, sem nenhum, volta à vila pela cama sem tocar o mundo (regras de 15-10 e 20-10). Ver ClimbPolicy.giveUp.
         if (!mayReshape && step.filter(s -> s.toBreak().isEmpty()).isEmpty()) {
             step = StrandedEscape.naturalStepAround(world, feet, home);
         }
@@ -288,7 +288,7 @@ final class ClimbOut {
                 switchMode(workerId, climb, feet, Mode.PILLAR, "no natural, dry step toward the village");
                 pillar(world, villager, climb, workerId, feet, now);
             } else {
-                ClimbPolicy.leaveToNavigation(villager, workerId, feet, shortId(workerId), CLIMBS::remove);
+                ClimbPolicy.giveUp(world, villager, workerId, feet);
             }
 
             return;

@@ -1,4 +1,17 @@
-# STATE — 2026-10-15
+# STATE — 2026-10-20
+
+> **0.3.67** (20-10): **corrige os 3 defeitos graves da varredura de 20-10**
+> ([`docs/audit/2026-10-20-varredura.md`](docs/audit/2026-10-20-varredura.md)), todos em código não
+> jogado das 0.3.64/0.3.66. **G1:** a proteção da bancada zerava o prazo ao desistir e o artesão voltava
+> a caminhar a cada 200 tiques (produção ~200× menor com bancada inalcançável) — agora, estourado o
+> prazo, fabrica no lugar até o fim da tarefa. **G2:** a bancada era procurada todo tique (~9.800
+> leituras de bloco por carpinteiro) — agora uma vez por tarefa (`CraftStation.Approach`). **G3:** o
+> não-mineiro que desistia de escalar seguia marcado como encalhado, fora da fila, repetindo busca e log
+> para sempre — agora volta à vila pelo teleporte da cama (`BedTeleport.toBed`); sem cama, é liberado.
+> **Não jogado.** Verificado: test 1529/0; runGametest 769/769; mutação do G1 derruba o teste. JAR
+> `village-colony-0.3.67.jar` = `A0594C3F1C24F75D9BEF3A6CBC3D15352114FBA59DC7C4DDEFCA4851E3E37E23`,
+> instalado e conferido. **Próximo:** jogar ≥30 min na vila montanhosa (pastor fora do laço, artesão sem
+> queda de produção, MSPT estável); depois o resto da ordem de ataque da varredura.
 
 > **0.3.62→0.3.66** (15-10, branch `fix/climb-nao-mineiro-so-natural`): sessão de bancadas + terreno
 > montanhoso. **0.3.62:** bancada do mod para as 8 profissões. **0.3.64:** só o mineiro remodela o

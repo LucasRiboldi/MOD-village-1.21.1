@@ -24,6 +24,7 @@ import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.util.math.BlockPos;
+import org.jspecify.annotations.Nullable;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.brain.WorkHours;
@@ -154,8 +155,8 @@ public final class CraftingWork {
          */
         final WorkStall stall = new WorkStall();
 
-        /** Ticks de expediente indo até a bancada (salvaguarda do {@link CraftStation#APPROACH_BUDGET}). */
-        int toBench;
+        /** A ida até a bancada desta tarefa; criada na primeira passagem dela. Ver {@link CraftStation.Approach}. */
+        CraftStation.@Nullable Approach approach;
 
         private Job(Task task) {
             this.task = task;
@@ -313,24 +314,22 @@ public final class CraftingWork {
      *     ida estourou); {@code false} enquanto ainda caminha até ela
      */
     private static boolean atBench(ServerWorld world, VillagerEntity villager, Job job, ColonyPos chest) {
-        BlockPos chestPos = MinecraftTypeAdapter.toBlockPos(chest);
-        Optional<BlockPos> bench = CraftStation.benchFor(world, villager.getUuid(), chestPos);
-
-        if (bench.isEmpty()) {
-            return true;  // sem bancada: trabalho normal, no lugar do baú.
+        if (job.approach == null) {
+            // Uma vez por tarefa: a busca é cara (POI de raio 64 e, para o carpinteiro, ~9.800 blocos).
+            job.approach = new CraftStation.Approach(CraftStation.benchFor(
+                    world, villager.getUuid(), MinecraftTypeAdapter.toBlockPos(chest)).orElse(null));
         }
 
-        boolean here = villager.getBlockPos().isWithinDistance(
-                bench.get().toCenterPos(), WorkTargets.DEFAULT_ARRIVAL + 1.0);
-        int ticks = here ? 0 : (WorkHours.isWorkTime(world, villager) ? ++job.toBench : job.toBench);
+        BlockPos bench = job.approach.bench();
+        boolean here = bench != null
+                && villager.getBlockPos().isWithinDistance(bench.toCenterPos(), WorkTargets.DEFAULT_ARRIVAL + 1.0);
 
-        if (CraftStation.craftHereNow(here, ticks, CraftStation.APPROACH_BUDGET)) {
-            job.toBench = 0;
-
+        // Sem bancada, chegou, ou desistiu dela (prazo estourado): fabrica onde está até o fim da tarefa.
+        if (bench == null || job.approach.craftHere(here)) {
             return true;
         }
 
-        WorkTargets.set(villager.getUuid(), bench.get(), WorkTargets.DEFAULT_ARRIVAL);
+        WorkTargets.set(villager.getUuid(), bench, WorkTargets.DEFAULT_ARRIVAL);
 
         return false;
     }
