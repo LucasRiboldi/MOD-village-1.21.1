@@ -344,6 +344,8 @@ def simulate(name, days, seed, keep_world):
         after = villagers_near(rcon, x, z)
         print(f"  fim: {after} aldeões")
 
+        # Prova o comando do boletim pelo console: a nota vai ao log e ao relatório.
+        print("  " + rcon.run(f"vc bioma nota fim da simulacao de {name}").strip())
         rcon.run("save-all flush")
         stop(rcon)
         process.wait(timeout=300)
@@ -379,6 +381,9 @@ def simulate(name, days, seed, keep_world):
 
     if journals:
         run_report("action_report.py", journals, os.path.join(report, "action_report.txt"))
+
+    run_report("biome_report.py", ["--log", log, "--out", os.path.join(report, "relatorio.md")],
+               os.path.join(report, "biome_report.txt"))
 
     signals = count_signals(log)
 

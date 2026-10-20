@@ -54,8 +54,11 @@ final class LotGrowth {
      * e selvas pelas etiquetas do jogo (ADR-009), mais cerejeira e mangue, que não têm etiqueta.
      */
     static boolean clearsTreesAt(ServerWorld world, BlockPos pos) {
-        var biome = world.getBiome(pos);
+        return clearsTrees(world.getBiome(pos));
+    }
 
+    /** O mesmo, para um bioma — a auditoria de cobertura pergunta sem posição. */
+    static boolean clearsTrees(net.minecraft.registry.entry.RegistryEntry<net.minecraft.world.biome.Biome> biome) {
         return biome.isIn(BiomeTags.IS_FOREST)
                 || biome.isIn(BiomeTags.IS_TAIGA)
                 || biome.isIn(BiomeTags.IS_JUNGLE)

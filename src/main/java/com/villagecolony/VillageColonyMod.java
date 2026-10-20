@@ -198,6 +198,7 @@ public class VillageColonyMod implements ModInitializer {
         VillageChests.register();
         SiteSignJanitor.register();
         VillageLogCommand.register();
+        com.villagecolony.fabric.command.BiomeCheck.register();
         ProfessionPolicyNetworking.register();
         com.villagecolony.fabric.work.VillageExpansionSurvey.register();
 

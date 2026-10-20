@@ -42,6 +42,13 @@ public final class SupplyGapLedger {
 
     private static boolean failed;
 
+    static {
+        com.villagecolony.core.type.ServerMemory.register(SupplyGapLedger.class, SupplyGapLedger::clearAll);
+    }
+
+    /** Quantas peças surgiram em cada colônia nesta sessão — o boletim do bioma conta. */
+    private static final java.util.Map<UUID, Integer> SESSION = new java.util.HashMap<>();
+
     private SupplyGapLedger() {
     }
 
@@ -59,6 +66,7 @@ public final class SupplyGapLedger {
     /** Grava um caso. Falha de disco vira um aviso, uma vez: a obra não pode parar por isso. */
     public static void record(ServerWorld world, UUID colonyId, Item item, int count,
             ProfessionType profession, String reason, String detail) {
+        SESSION.merge(colonyId, 1, Integer::sum);
         Path file = world.getServer().getRunDirectory().resolve("villagecolony").resolve("supply-gaps.jsonl");
         String line = "{\"time\":\"" + OffsetDateTime.now(ZoneId.systemDefault()) + "\""
                 + ",\"version\":\"" + version() + "\""
@@ -79,6 +87,15 @@ public final class SupplyGapLedger {
                 VillageColonyMod.LOGGER.warn("The supply gap ledger is off — cannot write {}", file, failure);
             }
         }
+    }
+
+    /** Quantas peças surgiram nesta colônia nesta sessão. */
+    public static int sessionCountOf(UUID colonyId) {
+        return SESSION.getOrDefault(colonyId, 0);
+    }
+
+    static void clearAll() {
+        SESSION.clear();
     }
 
     private static String styleOf(ServerWorld world, UUID colonyId) {

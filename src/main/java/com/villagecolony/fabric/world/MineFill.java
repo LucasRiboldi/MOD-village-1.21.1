@@ -29,8 +29,11 @@ public final class MineFill {
      * pedregulho no resto — a pedra que o bioma tem, e que não cai.
      */
     public static BlockState fillAt(ServerWorld world, BlockPos at) {
-        var biome = world.getBiome(at);
+        return fillFor(world.getBiome(at));
+    }
 
+    /** O mesmo, para um bioma — a auditoria de cobertura pergunta sem posição. */
+    public static BlockState fillFor(net.minecraft.registry.entry.RegistryEntry<net.minecraft.world.biome.Biome> biome) {
         if (biome.matchesKey(BiomeKeys.DESERT) || biome.isIn(BiomeTags.IS_BEACH)) {
             return Blocks.SANDSTONE.getDefaultState();
         }
