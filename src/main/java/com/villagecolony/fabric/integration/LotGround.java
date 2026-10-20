@@ -86,23 +86,31 @@ public final class LotGround {
         // limite de dois. A casa nasceria enfiada na encosta. Achado
         // pelo gametest do desnível, em 2026-08-14.
         //
-        // Efeito colateral assumido: lote com árvore em cima é recusado,
-        // porque o tronco está acima da janela. Conservador de
-        // propósito — a colônia procura outro lugar em vez de derrubar
-        // o que não planejou.
-        if (!isNothing(chunk.getBlockState(new BlockPos(x, aroundY + LotLevel.WINDOW_UP + 1, z)))) {
+        // Lote com árvore em cima é recusado, porque o tronco está acima
+        // da janela — a colônia procura outro lugar em vez de derrubar o
+        // que não planejou. Menos nos biomas de árvores juntas: lá a
+        // árvore natural não é obstáculo, o chão é o de baixo dela, e a
+        // obra limpa o lote (LotGrowth, autor, 2026-10-20).
+        boolean trees = LotGrowth.clearsTreesAt(world, new BlockPos(x, aroundY, z));
+
+        if (!isEmptyForGround(chunk.getBlockState(new BlockPos(x, aroundY + LotLevel.WINDOW_UP + 1, z)), trees)) {
             return Optional.empty();
         }
 
         for (int y = aroundY + LotLevel.WINDOW_UP; y >= aroundY - LotLevel.WINDOW_DOWN; y--) {
             BlockPos pos = new BlockPos(x, y, z);
 
-            if (!isNothing(chunk.getBlockState(pos))) {
+            if (!isEmptyForGround(chunk.getBlockState(pos), trees)) {
                 return Optional.of(pos);
             }
         }
 
         return Optional.empty();
+    }
+
+    /** Vazio para achar o chão: o de {@link #isNothing}, e a vegetação natural onde a obra a limpa. */
+    private static boolean isEmptyForGround(BlockState state, boolean trees) {
+        return isNothing(state) || (trees && LotGrowth.isLooseGrowth(state));
     }
 
     /**
@@ -127,8 +135,8 @@ public final class LotGround {
      * <p><b>Folha fica de fora, e é decisão.</b> O documento a lista, mas
      * aceitar folha como nada faria a colônia escolher lote debaixo de
      * copa — e a casa nasceria dentro da árvore. O guarda da janela pega
-     * o tronco, não a copa baixa. Conservador de propósito, como a recusa
-     * de lote com árvore em cima logo acima.
+     * o tronco, não a copa baixa. Nos biomas de árvores juntas a folha e
+     * o tronco naturais saem antes da obra ({@link LotGrowth}).
      *
      * <p>Quem limpa é o próprio construtor, sem código novo: ele escreve
      * o bloco no lugar, e o que estava ali sai. O que sobra é a moita

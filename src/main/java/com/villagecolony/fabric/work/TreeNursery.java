@@ -172,6 +172,8 @@ public final class TreeNursery {
         }
 
         world.setBlockState(ground.up(), seedling, Block.NOTIFY_ALL);
+        // A árvore que nascer daqui é da colônia: a limpeza de lote não a derruba.
+        com.villagecolony.fabric.world.ColonyTrees.planted(ground);
 
         return true;
     }

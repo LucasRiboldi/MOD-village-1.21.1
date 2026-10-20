@@ -377,7 +377,10 @@ public final class RoadIndex {
      * espacial. Uma troca manual de bloco jamais cria essa reserva sozinha.
      */
     public static boolean isRoadArea(ServerWorld world, UUID colonyId, BlockPos pos) {
-        if (!VillageRoad.isPaving(world, world.getBlockState(pos))) {
+        BlockState state = world.getBlockState(pos);
+        boolean biomePath = VillageRoad.isBiomePath(state);
+
+        if (!VillageRoad.isPaving(world, state) && !biomePath) {
             return false;
         }
 
@@ -390,8 +393,17 @@ public final class RoadIndex {
 
         Set<Long> building = SweepState.BUILDING.get(colonyId);
 
+        // O caminho de bioma só é rua no índice: o arenito liso da vila gerada é parede de casa.
         return (building != null && building.contains(column))
-                || BlockProtection.isVillageOriginal(world, pos);
+                || (!biomePath && BlockProtection.isVillageOriginal(world, pos));
+    }
+
+    /** Se a coluna está no índice de ruas de alguma colônia — quem assentou o caminho de bioma. */
+    public static boolean isLaidByAColony(BlockPos pos) {
+        long column = ColonyRoads.column(pos.getX(), pos.getZ());
+
+        return SweepState.ROADS.values().stream().anyMatch(roads -> roads.columns().contains(column))
+                || SweepState.BUILDING.values().stream().anyMatch(building -> building.contains(column));
     }
 
     /**

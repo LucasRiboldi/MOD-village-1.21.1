@@ -4,11 +4,13 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.tag.BiomeTags;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.Heightmap;
+import net.minecraft.world.biome.BiomeKeys;
 
 /**
  * A vegetação que a casa fundadora tira do próprio lote — decisão do autor, 2026-10-20 (G1).
@@ -21,7 +23,13 @@ import net.minecraft.world.Heightmap;
  * <p><b>Tronco natural é o que sobe até folha natural</b> (não persistente — a única marca de
  * "posto à mão" que o mundo guarda, {@link BlockProtection#isPlayerPlaced}). A cabana de toras de
  * um jogador, coberta de tábua, não passa; tronco descascado também não, porque é trabalho de
- * alguém.
+ * alguém; e o tronco que nasce do chão de uma muda que a colônia plantou é do viveiro ou do bosque
+ * dela, e fica ({@code ColonyTrees}).
+ *
+ * <p><b>Nas obras comuns, só nos biomas de árvores juntas</b> ({@link #clearsTreesAt}) — pedido
+ * do autor, 2026-10-20: <i>"nos biomas com árvores muito juntas prever a limpeza da área de
+ * construção"</i>. Na planície a regra antiga continua: lote com árvore é recusado e a colônia
+ * procura outro, sem derrubar o que não planejou.
  */
 final class LotGrowth {
 
@@ -41,6 +49,35 @@ final class LotGrowth {
                 || state.isOf(Blocks.MANGROVE_ROOTS);
     }
 
+    /**
+     * Se este bioma é de árvores juntas, onde a obra comum limpa o próprio lote: florestas, taigas
+     * e selvas pelas etiquetas do jogo (ADR-009), mais cerejeira e mangue, que não têm etiqueta.
+     */
+    static boolean clearsTreesAt(ServerWorld world, BlockPos pos) {
+        var biome = world.getBiome(pos);
+
+        return biome.isIn(BiomeTags.IS_FOREST)
+                || biome.isIn(BiomeTags.IS_TAIGA)
+                || biome.isIn(BiomeTags.IS_JUNGLE)
+                || biome.matchesKey(BiomeKeys.CHERRY_GROVE)
+                || biome.matchesKey(BiomeKeys.MANGROVE_SWAMP);
+    }
+
+    /**
+     * A régua barata da varredura: tronco, cogumelo, bambu ou folha natural, sem subir o tronco.
+     * O volume da casa confere depois com {@link #isClearableOnSite}.
+     */
+    static boolean isLooseGrowth(BlockState state) {
+        return isSolidGrowth(state) || (state.isIn(BlockTags.LEAVES) && !BlockProtection.isPlayerPlaced(state));
+    }
+
+    /** O mesmo de {@link #isClearable}, mais o que não é do mato: peça da vila gerada e obra da colônia. */
+    static boolean isClearableOnSite(ServerWorld world, BlockPos pos, BlockState state) {
+        return isClearable(world, pos, state)
+                && !BlockProtection.isColonyBuilt(pos)
+                && !BlockProtection.isVillageOriginal(world, pos);
+    }
+
     /** Se este bloco é vegetação que a fundação pode tirar do lote. */
     static boolean isClearable(ServerWorld world, BlockPos pos, BlockState state) {
         if (LotGround.isNothing(state)) {
@@ -52,7 +89,7 @@ final class LotGrowth {
         }
 
         if (state.isIn(BlockTags.LOGS)) {
-            return !isStripped(state) && reachesNaturalLeaves(world, pos);
+            return !isStripped(state) && reachesNaturalLeaves(world, pos) && !growsFromNursery(world, pos);
         }
 
         return isSolidGrowth(state);
@@ -102,7 +139,7 @@ final class LotGrowth {
                 continue;
             }
 
-            if (!isClearable(world, pos, state)) {
+            if (!isClearableOnSite(world, pos, state)) {
                 if (y > through) {
                     break;
                 }
@@ -141,6 +178,17 @@ final class LotGrowth {
         }
 
         return false;
+    }
+
+    /** O tronco nasce do chão de uma muda que a colônia plantou: é do viveiro ou do bosque (ColonyTrees). */
+    private static boolean growsFromNursery(ServerWorld world, BlockPos log) {
+        BlockPos at = log;
+
+        for (int step = 0; step < TALLEST_TRUNK && world.getBlockState(at.down()).isIn(BlockTags.LOGS); step++) {
+            at = at.down();
+        }
+
+        return com.villagecolony.fabric.world.ColonyTrees.isPlanted(at.down());
     }
 
     private static boolean isNaturalLeaf(BlockState state) {

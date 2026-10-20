@@ -95,6 +95,6 @@ public final class StripRoad {
     }
 
     private static boolean isRoad(ServerWorld world, UUID colonyId, BlockPos ground) {
-        return RoadIndex.isRoadArea(world, colonyId, ground) || VillageRoad.isPaving(world, world.getBlockState(ground));
+        return RoadIndex.isRoadArea(world, colonyId, ground) || VillageRoad.isPaving(world, ground);
     }
 }

@@ -11,7 +11,11 @@ import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.BlockProtection;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.BlockState;
+import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.VillageRoad;
+import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.registry.Registries;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
@@ -191,8 +195,10 @@ public final class BuilderPaving {
             VillageColonyMod.LOGGER.info("Builder {} cleared {} from the construction zone at {}",
                     id.toString().substring(0, 8), cleared, job.target.up().toShortString());
         } else {
-            pave(world, job.target);
-            ActionJournal.action(id, "PAVED", "dirt_path", 1, job.target, "");
+            String laid = pave(world, job.target);
+            // O caminho de bioma só é rua no índice (VillageRoad.isPaving por posição).
+            VillageColonyMod.WORKERS.find(id).ifPresent(worker -> RoadIndex.remember(worker.colonyId(), job.target));
+            ActionJournal.action(id, "PAVED", laid, 1, job.target, "");
             VillageColonyMod.LOGGER.info("Builder {} paved the path at {} while the build waits",
                     id.toString().substring(0, 8), job.target.toShortString());
         }
@@ -201,15 +207,18 @@ public final class BuilderPaving {
         WorkTargets.clear(id);
     }
 
-    /** Troca o bloco por caminho e tira a planta de cima. */
-    static void pave(ServerWorld world, BlockPos ground) {
+    /** Troca o chão pelo caminho natural dele (VillageRoad.pavingOn), tira a planta de cima e diz qual. */
+    static String pave(ServerWorld world, BlockPos ground) {
         BlockState above = world.getBlockState(ground.up());
 
         if (!above.isAir() && above.isReplaceable()) {
             world.breakBlock(ground.up(), false);
         }
 
-        world.setBlockState(ground, Blocks.DIRT_PATH.getDefaultState());
+        Block path = VillageRoad.pavingOn(world.getBlockState(ground));
+        world.setBlockState(ground, path.getDefaultState());
+
+        return Registries.BLOCK.getId(path).getPath();
     }
 
     /** Tira a planta e guarda o item no baú do construtor; sem lugar, ela cai no chão. */
@@ -284,11 +293,11 @@ public final class BuilderPaving {
         return Optional.empty();
     }
 
-    /** Grama ou terra na superfície com caminho dos dois lados, ou em três dos quatro. */
+    /** Chão do bioma na superfície com caminho dos dois lados, ou em três dos quatro. */
     static boolean isGap(ServerWorld world, BlockPos ground) {
         BlockState state = world.getBlockState(ground);
 
-        if (!(state.isOf(Blocks.GRASS_BLOCK) || state.isOf(Blocks.DIRT) || state.isOf(Blocks.COARSE_DIRT))
+        if (VillageRoad.isPaving(world, ground) || !VillageRoad.isPavableGround(world, ground, state)
                 || !BlockProtection.mayDigOut(world, ground, state)) {
             return false;
         }
@@ -309,7 +318,7 @@ public final class BuilderPaving {
     }
 
     private static boolean isPath(ServerWorld world, BlockPos at) {
-        return world.getBlockState(at).isOf(Blocks.DIRT_PATH);
+        return VillageRoad.isPaving(world, at);
     }
 
     public static void clearAll() {

@@ -257,7 +257,7 @@ final class SiteOpening {
 
         VillageColonyMod.CONSTRUCTIONS.register(project);
         com.villagecolony.core.coordination.VillageExpansion.buildOpened(colony.id());
-        pavePathTo(world, site);
+        pavePathTo(world, colony.id(), site);
 
         // Lote um acima da rua: a porta não pode ficar dois degraus acima de
         // quem chega — decisão do autor, 2026-09-30. Ver DoorStep.
@@ -381,19 +381,19 @@ final class SiteOpening {
         return (int) Math.round(Math.sqrt((double) (dx * dx + dz * dz)));
     }
 
-    /** O caminho do lote recuado até a rua (RoadsideSites.SETBACKS): terra e grama viram caminho. */
-    private static void pavePathTo(ServerWorld world, BuildSiteScanner.Site site) {
+    /** O caminho do lote recuado até a rua (RoadsideSites.SETBACKS): o chão vira o caminho natural dele. */
+    private static void pavePathTo(ServerWorld world, java.util.UUID colonyId, BuildSiteScanner.Site site) {
         for (ColonyPos cell : site.path()) {
             net.minecraft.util.math.BlockPos at = MinecraftTypeAdapter.toBlockPos(cell);
             net.minecraft.block.BlockState ground = world.getBlockState(at);
 
-            if (ground.isOf(net.minecraft.block.Blocks.GRASS_BLOCK) || ground.isOf(net.minecraft.block.Blocks.DIRT)
-                    || ground.isOf(net.minecraft.block.Blocks.COARSE_DIRT)) {
+            if (!VillageRoad.isPaving(world, at) && VillageRoad.isPavableGround(world, at, ground)) {
                 if (!world.getBlockState(at.up()).isAir() && world.getBlockState(at.up()).isReplaceable()) {
                     world.breakBlock(at.up(), false);
                 }
 
-                world.setBlockState(at, net.minecraft.block.Blocks.DIRT_PATH.getDefaultState());
+                world.setBlockState(at, VillageRoad.pavingOn(ground).getDefaultState());
+                com.villagecolony.fabric.integration.RoadIndex.remember(colonyId, at);
             }
         }
     }

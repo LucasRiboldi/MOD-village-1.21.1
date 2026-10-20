@@ -139,7 +139,7 @@ public final class RoadNetwork {
     }
 
     private static boolean isPaving(ServerWorld world, BlockPos at) {
-        return VillageRoad.isPaving(world, world.getBlockState(at)) && world.getBlockState(at.up()).isReplaceable();
+        return VillageRoad.isPaving(world, at) && world.getBlockState(at.up()).isReplaceable();
     }
 
     static void clearAll() {

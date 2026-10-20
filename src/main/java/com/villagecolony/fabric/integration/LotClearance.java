@@ -264,6 +264,10 @@ public final class LotClearance {
             return false;
         }
 
+        // Nos biomas de árvores juntas, a árvore natural sai antes da obra
+        // (LotGrowth, autor, 2026-10-20); fora deles, ocupa.
+        boolean trees = LotGrowth.clearsTreesAt(world, new BlockPos(x, floor, z));
+
         for (int y = floor; y < floor + height; y++) {
             BlockPos at = new BlockPos(x, y, z);
 
@@ -272,7 +276,8 @@ public final class LotClearance {
             // O teto de barreira é inserido pelo GameTest fora da arena e
             // não representa um bloco do mundo. Ele não deve encurtar a
             // janela de 25 blocos que a produção precisa validar.
-            if (!LotGround.isNothing(state) && !state.isOf(Blocks.BARRIER)) {
+            if (!LotGround.isNothing(state) && !state.isOf(Blocks.BARRIER)
+                    && !(trees && LotGrowth.isClearableOnSite(world, at, state))) {
                 // <b>Qual bloco barrou</b> — P1.6, 2026-09-19. A Regra 22
                 // é 70% das recusas em duas sessões seguidas e não dizia
                 // de que era feita. Aqui, e só aqui, porque este é o
