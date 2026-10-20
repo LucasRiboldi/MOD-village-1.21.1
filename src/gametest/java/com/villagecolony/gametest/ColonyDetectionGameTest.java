@@ -78,8 +78,8 @@ public class ColonyDetectionGameTest implements FabricGameTest {
     /**
      * Uma vila nova não entra no registro até sua casa fundacional caber no mundo.
      *
-     * <p>Os espigões tornam impossível uma caixa plana de 7 por 11 em todo o
-     * raio que {@code BigHouseFoundation} considera. O cenário ainda tem camas
+     * <p>Os espigões tornam impossível uma caixa de 7 por 11 plana ou
+     * aplainável em todo o raio que {@code BigHouseFoundation} considera. O cenário ainda tem camas
      * e adultos suficientes para a detecção; a única recusa é o lote da casa.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
@@ -387,18 +387,22 @@ public class ColonyDetectionGameTest implements FabricGameTest {
     private static void prepareImpossibleBigHouseLot(ServerWorld world, BlockPos anchor) {
         world.getChunk(anchor);
 
-        // O raio de busca é 32, a casa mede 7 por 11 e seus espigões são
-        // espaçados exatamente por essas dimensões. Assim toda caixa possível
-        // contém ao menos uma coluna mais alta e nunca é um lote plano.
-        for (int dx = -39; dx <= 38; dx++) {
-            for (int dz = -39; dz <= 38; dz++) {
+        // Sem vila gerada a busca vai a 32 do centro; a casa mede 7 por 11 e os
+        // espigões são espaçados exatamente por essas dimensões. Assim toda
+        // caixa possível contém um espigão, e com 3 blocos ele passa do
+        // desnível que a fundação aplaina (FoundationLotSearch.MAX_SPREAD).
+        // A grade cobre a área inteira da busca, para nenhum lote cair fora dela.
+        for (int dx = -48; dx <= 48; dx++) {
+            for (int dz = -48; dz <= 48; dz++) {
                 world.setBlockState(anchor.add(dx, -1, dz), Blocks.GRASS_BLOCK.getDefaultState());
             }
         }
 
-        for (int dx = -39; dx <= 38; dx += 7) {
-            for (int dz = -39; dz <= 38; dz += 11) {
-                world.setBlockState(anchor.add(dx, 0, dz), Blocks.STONE.getDefaultState());
+        for (int dx = -48; dx <= 48; dx += 7) {
+            for (int dz = -48; dz <= 48; dz += 11) {
+                for (int dy = 0; dy < 3; dy++) {
+                    world.setBlockState(anchor.add(dx, dy, dz), Blocks.STONE.getDefaultState());
+                }
             }
         }
     }

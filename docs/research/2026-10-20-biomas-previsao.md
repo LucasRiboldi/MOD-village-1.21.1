@@ -151,6 +151,24 @@ Desempenho: sem colônia, 1.130–1.250 tiques/s; 1 dia de jogo em ~20 s.
   encosta não há. Decisão do autor: procurar mais longe e, sem lote plano exato, aplainar
   o mais nivelado (desnível até 2).
 
+### Rodada 3 — casa fundadora: busca até a borda da vila, e aplainamento
+
+`BigHouseFoundation.findSafeOrigin` lê a altura da área uma vez (até a borda da vila
+gerada + 16, entre 32 e 96 blocos do centro, só em chunk carregado);
+`FoundationLotSearch` ordena os lotes por desnível (0, 1, 2) e distância ao centro; o
+primeiro seguro vence. Lote com desnível é aplainado na mediana (`level`): corta só chão
+do bioma, aterra só sobre ar ou planta, e acima do piso tudo precisa ser ar.
+
+| Vila | Colônia | Casa fundadora |
+|---|---|---|
+| deserto | **nasceu**, 5 camas, 7 → 14 aldeões | plano exato a 44 blocos do centro da rodada 2 — fora dos 32 de antes |
+| taiga | **nasceu**, 6 camas, 6 → 13 aldeões | plano exato a 48 blocos do centro da rodada 2 |
+
+**As cinco vilas Vanilla da semente de teste viram colônia.** As duas acharam plano exato
+na busca maior; o aplainamento não foi exercido na bancada, e está provado só pelo
+GameTest (`anUnevenLotIsLevelledToTheMedianFloor`, com mutação: sem o corte, a coluna
+fica um bloco acima) e pelo controle do tronco.
+
 ## 6. Rodadas
 
 Cada rodada: `run/biome-sim/reports/<alvo>/` (log, `signals.txt`, `time_ledger.txt`,
