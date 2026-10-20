@@ -66,8 +66,8 @@ public final class BiomeConstructionSupply {
                             com.villagecolony.core.coordination.GatheringReach.radius(
                                     colony.observedBeds(), SandNearWater.RADIUS));
 
-                    return world.getBiome(center).getKey().map(biome -> hasRouteInBiome(
-                            world, biome, item, new HashSet<>(), RECIPE_DEPTH, sandNearWater));
+                    return Optional.of(hasRouteInBiome(world, VillageStyle.biomeAt(world, colony.center()),
+                            item, new HashSet<>(), RECIPE_DEPTH, sandNearWater));
                 })
                 .orElse(false);
     }
@@ -82,8 +82,8 @@ public final class BiomeConstructionSupply {
                             com.villagecolony.core.coordination.GatheringReach.radius(
                                     colony.observedBeds(), SandNearWater.RADIUS));
 
-                    return world.getBiome(center).getKey()
-                            .map(biome -> SupplyRoutes.inBiome(world, biome, item, sandNearWater));
+                    return Optional.of(SupplyRoutes.inBiome(
+                            world, VillageStyle.biomeAt(world, colony.center()), item, sandNearWater));
                 })
                 .orElseGet(() -> SupplyRoute.unavailable(item, SupplySource.NO_COLONY, List.of()));
     }

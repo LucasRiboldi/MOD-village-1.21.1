@@ -68,18 +68,12 @@ public final class ColonyAbandonment {
      *     parâmetro porque a adoção pode ter movido o centro desde então,
      *     e a pergunta é sobre o que a sonda enxergou de onde estava
      * @param accepted os aglomerados que a varredura aprovou como vila
-     * @param sawIgnoredCluster se algum aglomerado aprovado foi
-     *     descartado por estar fora de PLAINS. Ele suprime o veredito:
-     *     bioma recusado é limite do MVP, não vila morta (ADR-003 §5), e
-     *     um centro que caminhou para a borda do bioma condenaria uma
-     *     vila cheia de gente
      * @return o estado a aplicar, ou vazio se nada muda
      */
     public static Optional<ColonyState> judge(
             Colony colony,
             ColonyPos probedFrom,
-            Collection<VillageCandidate> accepted,
-            boolean sawIgnoredCluster) {
+            Collection<VillageCandidate> accepted) {
 
         Objects.requireNonNull(colony, "colony");
         Objects.requireNonNull(probedFrom, "probedFrom");
@@ -109,7 +103,7 @@ public final class ColonyAbandonment {
 
         REVIVAL_READS.remove(colony.id());
 
-        if (sawIgnoredCluster || colony.state() == ColonyState.ABANDONED) {
+        if (colony.state() == ColonyState.ABANDONED) {
             return Optional.empty();
         }
 

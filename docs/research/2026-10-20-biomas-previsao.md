@@ -135,6 +135,22 @@ bloqueado. Mineiro e fundidor ficam acima de 50% de trabalho nas duas.
 
 Desempenho: sem colônia, 1.130–1.250 tiques/s; 1 dia de jogo em ~20 s.
 
+### Rodada 2 — 0.3.69 (ADR-003 Emenda 9: junção pela vila gerada, estilo pela vila gerada)
+
+| Vila | Varredura | Colônia |
+|---|---|---|
+| planície | 1 aglomerado | nasceu, 9 camas |
+| savana | 1 aglomerado (a casa de 1 cama entrou) | nasceu, 6 camas |
+| neve | 1 aglomerado | **nasceu, 19 camas** (antes ignorada) |
+| deserto | 1 aglomerado, nenhuma recusa | **não**: 40× "Deferred colony adoption ... until BigHouseMOD has a safe lot" |
+| taiga | 1 aglomerado, nenhuma recusa | **não**: idem |
+
+- **D4 — a casa fundadora não acha lote.** A colônia nasce junto com a BigHouseMOD
+  (7×11), que exige 77 colunas exatamente na mesma altura, fora das peças da vila e a até
+  32 blocos do centro (`BigHouseFoundation.findSafeOrigin`/`flatFloor`). Na duna e na
+  encosta não há. Decisão do autor: procurar mais longe e, sem lote plano exato, aplainar
+  o mais nivelado (desnível até 2).
+
 ## 6. Rodadas
 
 Cada rodada: `run/biome-sim/reports/<alvo>/` (log, `signals.txt`, `time_ledger.txt`,

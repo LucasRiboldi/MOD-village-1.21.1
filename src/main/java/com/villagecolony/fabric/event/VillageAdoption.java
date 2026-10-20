@@ -104,7 +104,7 @@ final class VillageAdoption {
     static void judgeAbandonment(
             ServerWorld world, Colony colony, ColonyPos probedFrom, VillageScanner.ScanResult result) {
 
-        ColonyAbandonment.judge(colony, probedFrom, result.candidates(), result.ignoredByBiome())
+        ColonyAbandonment.judge(colony, probedFrom, result.candidates())
                 // Vila com o próprio povo dentro não é abandonada (playtest 0.3.42).
                 .filter(state -> state != ColonyState.ABANDONED || !peopleStillHome(world, colony))
                 .ifPresent(state -> {

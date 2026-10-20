@@ -402,17 +402,15 @@ public final class VillageDetectionHandler {
         }
 
         // A bancada de simulação por bioma descobre a vila pelo observador simulado, e diz o que
-        // a varredura viu: sem jogador olhando, é a única testemunha (vila ignorada pelo bioma
-        // não deixa outra linha).
+        // a varredura viu: sem jogador olhando, é a única testemunha de uma recusa.
         SimulatedObserver.at(server.getOverworld()).ifPresent(at -> {
             VillageScanner.ScanResult seen = VillageAdoption.detectAround(server.getOverworld(), at, false);
             VillageColonyMod.LOGGER.info(
-                    "VC_SIM observer={} biome={} candidates={} rejected={} ignored_by_biome={}",
+                    "VC_SIM observer={} biome={} candidates={} rejected={}",
                     at.toShortString(),
                     server.getOverworld().getBiome(at).getKey().map(key -> key.getValue().toString()).orElse("?"),
                     seen.candidates().size(),
-                    seen.rejected(),
-                    seen.ignoredByBiome());
+                    seen.rejected());
         });
 
         mark = CycleCost.since(CycleCost.Phase.DETECT, mark);

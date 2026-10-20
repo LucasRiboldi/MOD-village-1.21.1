@@ -8,11 +8,14 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Decide o que é uma vila, a partir de posições de cama.
@@ -109,6 +112,51 @@ public final class VillageDetector {
         }
 
         return clusters;
+    }
+
+    /**
+     * Junta os aglomerados que são da mesma vila gerada — decisão do autor, 2026-10-20.
+     *
+     * <p>A distância de {@link #CLUSTER_DISTANCE} parte a vila espalhada: a de deserto da bancada
+     * de simulação tinha 5 camas em casas de uma ou duas, e saiu em três pedaços que nenhum chegava
+     * a {@link #MIN_BEDS}. Duas camas dentro da mesma vila que o jogo gerou são da mesma vila, a
+     * qualquer distância. Aglomerado sem vila gerada (feita pelo jogador) fica como estava.
+     *
+     * @param villageOf a vila gerada que contém esta cama, se houver; duas camas da mesma vila
+     *     devolvem chaves iguais
+     * @return aglomerados; a ordem acompanha a do primeiro pedaço de cada vila
+     */
+    public static <K> List<List<ColonyPos>> joinSameVillage(
+            List<List<ColonyPos>> clusters, Function<ColonyPos, Optional<K>> villageOf) {
+        Objects.requireNonNull(clusters, "clusters");
+        Objects.requireNonNull(villageOf, "villageOf");
+
+        List<List<ColonyPos>> joined = new ArrayList<>();
+        Map<K, List<ColonyPos>> byVillage = new HashMap<>();
+
+        for (List<ColonyPos> cluster : clusters) {
+            Optional<K> village = cluster.stream()
+                    .map(villageOf)
+                    .flatMap(Optional::stream)
+                    .findFirst();
+
+            if (village.isEmpty()) {
+                joined.add(new ArrayList<>(cluster));
+                continue;
+            }
+
+            List<ColonyPos> same = byVillage.get(village.get());
+
+            if (same == null) {
+                same = new ArrayList<>(cluster);
+                byVillage.put(village.get(), same);
+                joined.add(same);
+            } else {
+                same.addAll(cluster);
+            }
+        }
+
+        return joined;
     }
 
     /**
