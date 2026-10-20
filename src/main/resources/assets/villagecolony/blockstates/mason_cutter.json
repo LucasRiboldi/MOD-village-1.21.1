@@ -1,7 +1,8 @@
 {
   "variants": {
-    "": {
-      "model": "villagecolony:block/mason_cutter"
-    }
+    "facing=north": { "model": "villagecolony:block/mason_cutter" },
+    "facing=east": { "model": "villagecolony:block/mason_cutter", "y": 90 },
+    "facing=south": { "model": "villagecolony:block/mason_cutter", "y": 180 },
+    "facing=west": { "model": "villagecolony:block/mason_cutter", "y": 270 }
   }
 }

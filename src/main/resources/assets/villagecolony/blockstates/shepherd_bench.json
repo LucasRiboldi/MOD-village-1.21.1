@@ -1,7 +1,8 @@
 {
   "variants": {
-    "": {
-      "model": "villagecolony:block/shepherd_bench"
-    }
+    "facing=north": { "model": "villagecolony:block/shepherd_bench" },
+    "facing=east": { "model": "villagecolony:block/shepherd_bench", "y": 90 },
+    "facing=south": { "model": "villagecolony:block/shepherd_bench", "y": 180 },
+    "facing=west": { "model": "villagecolony:block/shepherd_bench", "y": 270 }
   }
 }

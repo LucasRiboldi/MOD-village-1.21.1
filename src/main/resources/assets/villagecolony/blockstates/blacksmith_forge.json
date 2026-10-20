@@ -1,7 +1,8 @@
 {
   "variants": {
-    "": {
-      "model": "villagecolony:block/blacksmith_forge"
-    }
+    "facing=north": { "model": "villagecolony:block/blacksmith_forge" },
+    "facing=east": { "model": "villagecolony:block/blacksmith_forge", "y": 90 },
+    "facing=south": { "model": "villagecolony:block/blacksmith_forge", "y": 180 },
+    "facing=west": { "model": "villagecolony:block/blacksmith_forge", "y": 270 }
   }
 }
