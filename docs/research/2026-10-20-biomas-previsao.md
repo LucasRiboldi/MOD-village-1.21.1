@@ -190,6 +190,30 @@ Próximos passos (não feitos): por que o deserto não abre tarefa de pedreiro e
 alcance do fazendeiro e do pastor (deserto, neve); biomas fixos (`fixed-*`) ainda não
 rodados.
 
+### Rodada 5 — biomas fixos (2 dias) e a nota por bioma
+
+Nota pela régua de `scripts/biome_score.py` (nasce 2, constrói 2, trabalha 3, nada parado
+2, estável 1). Uma vila por bioma e uma semente: margem de ±1 a 2 pontos.
+
+| Bioma | Nota | Base | O que pesou |
+|---|---|---|---|
+| savana | 9,3 | natural, 3 dias | 3 obras; lenhador 58% e mineiro 55% sem trabalhar |
+| meadow (fixo) | 9,0 | vila natural, 2 dias | relevo do ruído normal, **não** a montanha: superestima |
+| planície | 8,1 | natural, 3 dias | construtor 58% bloqueado ("no material") |
+| taiga | 7,8 | natural, 3 dias | 19× sem lote na encosta; lenhador 71% ocioso |
+| neve | 5,3 | natural, 3 dias | 0 obras; pastor 95% parado |
+| deserto | 4,0 | natural, 3 dias | pedreiro e fundidor sem tarefa; fazendeiro e pastor parados |
+| ermos (badlands) | 3,4 | vila de deserto posta | 0 obras; 4 profissões paradas |
+| rio, pântano, picos de gelo | 3,0 | vila posta | nasce e para: 5–6 profissões paradas |
+| floresta, cerejeira, cogumelos, taiga nevada | 0 | vila posta | **D5**: a casa fundadora nunca acha lote (árvore não se corta; micélio não é chão) |
+| selva, floresta escura | 0 | vila posta | vila partida em pedaços de 1 cama (ver artefato) |
+| platô de savana | — | — | nenhuma vila de savana perto da origem no mundo fixo |
+
+**Artefato da bancada:** `/place structure` assenta os blocos mas não registra a vila como
+estrutura gerada. Sem o registro, a junção das camas e o estilo pela vila não valem, e a
+busca da casa fica nos 32 blocos. As notas das vilas postas medem uma vila "sem
+estrutura", como a feita pelo jogador — o pior caso, não o da vila natural na borda.
+
 ## 6. Rodadas
 
 Cada rodada: `run/biome-sim/reports/<alvo>/` (log, `signals.txt`, `time_ledger.txt`,
