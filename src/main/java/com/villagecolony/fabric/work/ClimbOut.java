@@ -377,8 +377,9 @@ final class ClimbOut {
             // Do baú quando há; sem ele, criada — A-5, 2026-10-02: ele sempre pode
             // criar pedra para se locomover.
             placed = (climb.chest != null
-                    && EscapeBackfill.placeFromChest(world, workerId, climb.chest, at, Items.COBBLESTONE))
-                    || world.setBlockState(at, Blocks.COBBLESTONE.getDefaultState());
+                    && EscapeBackfill.placeFromChest(world, workerId, climb.chest, at,
+                            com.villagecolony.fabric.world.MineFill.fillAt(world, at).getBlock().asItem()))
+                    || world.setBlockState(at, com.villagecolony.fabric.world.MineFill.fillAt(world, at));
         }
 
         if (placed) {

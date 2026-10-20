@@ -26,10 +26,13 @@ import net.minecraft.util.math.Box;
  * perto —, e a resposta aqui é a simétrica: <b>parar, deixar cair, e então
  * olhar de novo</b>.
  *
- * <p><b>Por que esperar em vez de escorar.</b> Escorar gastaria bloco da
- * colônia para segurar uma duna que vai cair de qualquer jeito, e a areia
- * que desce <b>é minério que ele queria</b> — ela chega sozinha até a mão
- * dele. Esperar é de graça e ainda entrega o material.
+ * <p><b>Escorar antes, esperar depois</b> — pedido do autor, 2026-10-20.
+ * Antes de quebrar, o bloco que cai logo acima do alvo é compactado no
+ * lugar ({@link #shoreUp}): a areia vira arenito, e a coluna inteira fica
+ * apoiada. Não gasta bloco da colônia — é a mesma areia, endurecida —, e a
+ * frente não se fecha atrás dele. Na coleta de areia não escora: ali a
+ * areia que desce é o que ele quer. O que não se compacta (areia suspeita,
+ * pó de concreto) segue caindo, e a espera abaixo continua valendo.
  *
  * <p><b>Por que a entidade, e não o bloco.</b> Perguntar ao mundo se há
  * areia acima responde <i>"vai cair"</i>; perguntar pelas entidades
@@ -65,6 +68,30 @@ public final class MineSettling {
     public static final int PATIENCE = 100;
 
     private MineSettling() {
+    }
+
+    /**
+     * Compacta o bloco que cai logo acima do alvo, antes de o alvo sair — pedido do autor,
+     * 2026-10-20.
+     *
+     * <p>O bloco que cai só despenca no tique agendado depois de perder o apoio; trocado no mesmo
+     * tique, ele nunca solta, e o resto da coluna fica em cima do arenito. Não toca o que é da
+     * vila gerada, da colônia ou do jogador ({@code BlockProtection.mayBreak}).
+     *
+     * @return se escorou
+     */
+    public static boolean shoreUp(ServerWorld world, BlockPos target) {
+        BlockPos above = target.up();
+        net.minecraft.block.BlockState state = world.getBlockState(above);
+        java.util.Optional<net.minecraft.block.Block> firm = com.villagecolony.fabric.world.MineFill.compacted(state);
+
+        if (firm.isEmpty() || !com.villagecolony.fabric.integration.BlockProtection.mayBreak(world, above, state)) {
+            return false;
+        }
+
+        world.setBlockState(above, firm.get().getDefaultState(), net.minecraft.block.Block.NOTIFY_LISTENERS);
+
+        return true;
     }
 
     /**

@@ -28,14 +28,13 @@ import java.util.Set;
  * mineiro segue — o chão não é dele: tapar ali cimentaria a caverna inteira
  * que o veio atravessa.
  *
- * <p>Mesmo bloco e mesma regra de proteção do {@link MineFlooding}: pedregulho,
- * e nada que seja da vila gerada ou construído pela colônia. Como a vedação,
+ * <p>Mesmo bloco e mesma regra de proteção do {@link MineFlooding}: a pedra do
+ * bioma ({@code MineFill}: arenito no deserto, pedregulho no resto), e nada que
+ * seja da vila gerada ou construído pela colônia. Como a vedação,
  * não consome pedregulho do baú — a fase 1 fecha o buraco; a conta do material
  * entra com o planejador da fase 2.
  */
 public final class MineFloor {
-
-    private static final BlockState FLOOR = Blocks.COBBLESTONE.getDefaultState();
 
     private MineFloor() {
     }
@@ -69,7 +68,7 @@ public final class MineFloor {
             return false;
         }
 
-        world.setBlockState(below, FLOOR);
+        world.setBlockState(below, com.villagecolony.fabric.world.MineFill.fillAt(world, below));
 
         VillageColonyMod.LOGGER.info(
                 "The mine floored {} — the pick opened the passage over a gap",

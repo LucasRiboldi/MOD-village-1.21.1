@@ -42,15 +42,9 @@ import net.minecraft.util.math.Direction;
  */
 public final class MineFlooding {
 
-    /**
-     * O que se põe no buraco.
-     *
-     * <p>Pedregulho, que é o que o mineiro tira o dia inteiro e o que um
-     * jogador usaria. Sólido, barato, e sem estado nenhum a acertar —
-     * bloco com orientação ou com apoio traria a discussão que a tocha de
-     * parede trouxe em 2026-08-27.
-     */
-    private static final BlockState SEAL = Blocks.COBBLESTONE.getDefaultState();
+    // O que se põe no buraco: a pedra do bioma (MineFill — arenito no deserto,
+    // pedregulho no resto). Sólida e sem estado a acertar: bloco com orientação
+    // ou com apoio traria a discussão que a tocha de parede trouxe em 2026-08-27.
 
     private MineFlooding() {
     }
@@ -111,7 +105,7 @@ public final class MineFlooding {
                 continue;
             }
 
-            world.setBlockState(at, SEAL);
+            world.setBlockState(at, com.villagecolony.fabric.world.MineFill.fillAt(world, at));
 
             sealed++;
         }

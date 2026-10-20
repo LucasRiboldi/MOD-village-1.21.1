@@ -38,15 +38,14 @@ import java.util.UUID;
  * competir com a obra e o fundidor pelo pedregulho dos baús travava a mina de vez
  * (playtest 0.3.50, nó parado 41 min esperando enchimento, {@code MINER} 0%; a mesma
  * escolha que {@link com.villagecolony.fabric.integration.MineFlooding} já fazia para
- * vedar fluido). O bloco surge como pedregulho, o que um jogador poria.
+ * vedar fluido). O bloco surge como a pedra do bioma ({@code MineFill}: arenito no
+ * deserto, pedregulho no resto), o que um jogador poria.
  */
 final class NetworkSafety {
 
     /** Quantos blocos uma passagem põe, no máximo: o trabalho se espalha pelos tiques. */
     static final int PER_PASS = 8;
 
-    /** O bloco de enchimento que a mina gera: pedregulho, o que o mineiro tira o dia inteiro. */
-    private static final Block FILL = Blocks.COBBLESTONE;
 
     /** Abaixo da entrada do nível, quantos blocos ficam sem fechar: a ligação com o nível de cima. */
     static final int ENTRY_OPEN = 3;
@@ -156,7 +155,7 @@ final class NetworkSafety {
                 continue;
             }
 
-            world.setBlockState(at, FILL.getDefaultState(), Block.NOTIFY_ALL);
+            world.setBlockState(at, com.villagecolony.fabric.world.MineFill.fillAt(world, at), Block.NOTIFY_ALL);
             placed++;
         }
 
