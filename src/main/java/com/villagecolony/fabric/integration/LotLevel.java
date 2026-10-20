@@ -117,6 +117,8 @@ public final class LotLevel {
         // escolhida depois de a pegada inteira passar pelas perguntas.
         int[] offsets = new int[size.x() * size.z()];
         int column = 0;
+        // Alguma coluna a dois da rua: o lote só serve aplainado (LotTerraform).
+        boolean uneven = false;
 
         for (int dx = 0; dx < size.x(); dx++) {
             for (int dz = 0; dz < size.z(); dz++) {
@@ -176,12 +178,17 @@ public final class LotLevel {
                 // pode estar uma abaixo da base escolhida (a lacuna de uma
                 // camada de 28-09, aterrada), então o chão lido aqui vai de
                 // -1 a +1 em relação à rua.
+                //
+                // <b>Terraplanagem do lote, fase 1</b> (autor, 2026-10-20): a coluna
+                // a até LotTerraform.MAX_STEP da rua ainda serve, aplainada até a
+                // base na rua; mais longe, é recusada.
                 int levelOffset = ground.getY() - roadY;
-                if (levelOffset < -1 || levelOffset > 1) {
+                if (Math.abs(levelOffset) > LotTerraform.MAX_STEP) {
                     LotRefusals.refused(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL);
 
                     return Optional.empty();
                 }
+                uneven |= levelOffset < -1 || levelOffset > 1;
                 offsets[column++] = levelOffset;
 
                 // Uma leitura de bloco, logo depois da comparação gratuita
@@ -288,10 +295,20 @@ public final class LotLevel {
         // decisão do autor, 2026-09-30. Um acima, a porta fica um degrau
         // acima da rua, que o aldeão sobe; se a frente dela ficar dois abaixo
         // do piso, a abertura da obra põe o degrau (DoorStep).
-        OptionalInt base = baseFor(world, originX, originZ, size, roadY, offsets, 0);
+        OptionalInt base = uneven ? OptionalInt.empty() : baseFor(world, originX, originZ, size, roadY, offsets, 0);
 
-        if (base.isEmpty()) {
+        if (base.isEmpty() && !uneven) {
             base = baseFor(world, originX, originZ, size, roadY, offsets, 1);
+        }
+
+        // O lote que não serve como está ainda serve aplainado, com a base
+        // exatamente na rua (LotTerraform, fase 1): corte só de chão, aterro só
+        // sobre vazio. O estrito vem antes, e o lote que já servia não muda.
+        boolean levelled = false;
+
+        if (base.isEmpty() && levels(world, originX, originZ, size, roadY, offsets)) {
+            base = OptionalInt.of(roadY);
+            levelled = true;
         }
 
         if (base.isEmpty()) {
@@ -305,14 +322,21 @@ public final class LotLevel {
         // A caixa real da obra começa no piso comum, não no chão de cada
         // coluna. Assim, degraus, blocos voando e restos de outra construção
         // dentro da pegada não podem ser confundidos com terreno de apoio.
+        int index = 0;
+
         for (int dx = 0; dx < size.x(); dx++) {
             for (int dz = 0; dz < size.z(); dz++) {
+                // No lote aplainado, o chão acima da base é corte, não ocupação:
+                // o volume se confere a partir do chão de hoje.
+                int from = levelled ? Math.max(baseY, roadY + offsets[index]) + 1 : baseY + 1;
+                index++;
+
                 if (!LotClearance.isClearAbove(
                         world,
                         originX + dx,
                         originZ + dz,
-                        baseY + 1,
-                        Math.max(size.y(), BuildSiteScanner.VERTICAL_CLEARANCE))) {
+                        from,
+                        Math.max(size.y(), BuildSiteScanner.VERTICAL_CLEARANCE) + baseY + 1 - from)) {
                     LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
 
                     return Optional.empty();
@@ -360,6 +384,22 @@ public final class LotLevel {
         // O piso fica imediatamente acima do chão que passou em todas as
         // colunas da pegada.
         return Optional.of(baseY + 1);
+    }
+
+    /** Se cada coluna pode ser levada à base na rua (LotTerraform.columnLevels). */
+    private static boolean levels(
+            ServerWorld world, int originX, int originZ, ColonyPos size, int roadY, int[] offsets) {
+        int index = 0;
+
+        for (int dx = 0; dx < size.x(); dx++) {
+            for (int dz = 0; dz < size.z(); dz++) {
+                if (!LotTerraform.columnLevels(world, originX + dx, originZ + dz, roadY + offsets[index++], roadY)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /**

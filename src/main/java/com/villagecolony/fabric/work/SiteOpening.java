@@ -232,6 +232,10 @@ final class SiteOpening {
         ConstructionProject project = ConstructionProject.plan(
                 colony.id(), facingTheRoad, facingTheRoad.originFor(site.origin()));
 
+        // O lote aceito aplainado é aplainado agora, antes da trava da base
+        // (terraplanagem, fase 1); o lote que já era plano não muda.
+        com.villagecolony.fabric.integration.LotTerraform.level(world, project);
+
         // O lote aprovado tem de passar na trava que vai reservar a obra: se
         // as duas réguas discordarem, a obra nasceria sem ninguém que a pegue
         // (playtest de 2026-10-07). Ver BuildSiteGate.

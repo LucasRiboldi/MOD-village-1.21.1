@@ -118,22 +118,26 @@ public final class FoundationPreparationGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** O mesmo lote é recusado na escolha de lugar. */
+    /**
+     * Na escolha de lugar, metade da base três abaixo da rua é recusada; até dois, o lote é
+     * aplainado na abertura da obra (terraplanagem do lote, fase 1, 2026-10-20).
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "foundation_preparation")
-    public void aLotWithHalfItsBaseTwoBelowTheStreetIsRefused(TestContext context) {
-        BlockPos origin = new BlockPos(5, 3, 5);
+    public void aLotWithHalfItsBaseThreeBelowTheStreetIsRefused(TestContext context) {
+        BlockPos origin = new BlockPos(5, 4, 5);
         context.setBlockState(origin, Blocks.GRASS_BLOCK);
         context.setBlockState(origin.east(), Blocks.GRASS_BLOCK);
         for (BlockPos low : List.of(origin.south(), origin.south().east())) {
             context.setBlockState(low, Blocks.AIR);
             context.setBlockState(low.down(), Blocks.AIR);
-            context.setBlockState(low.down(2), Blocks.GRASS_BLOCK);
+            context.setBlockState(low.down(2), Blocks.AIR);
+            context.setBlockState(low.down(3), Blocks.GRASS_BLOCK);
         }
         BlockPos at = context.getAbsolutePos(origin);
 
         context.assertTrue(LotLevel.flatGroundAt(context.getWorld(), UUID.randomUUID(),
                         at.getX(), at.getZ(), at.getY(), at.getY(), new ColonyPos(2, 2, 2)).isEmpty(),
-                "o lote com metade da base dois blocos abaixo da rua foi aceito");
+                "o lote com metade da base três blocos abaixo da rua foi aceito");
         context.complete();
     }
 

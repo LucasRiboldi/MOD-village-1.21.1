@@ -144,8 +144,10 @@ public final class RoadsideSites {
         int roadY = ground.get().getY();
 
         for (BuildSiteScanner.Footprint footprint : footprints) {
+            // O lote se mede pela rua dele, e não pelo centro da vila: numa encosta,
+            // o morro atrás da rua saía da janela do centro (terraplanagem, fase 1).
             Optional<Site> site = siteFor(
-                    world, colonyId, x, z, aroundY, roadY, footprint.size(), footprint.doorSide());
+                    world, colonyId, x, z, roadY, roadY, footprint.size(), footprint.doorSide());
 
             if (site.isPresent()) {
                 return site;
