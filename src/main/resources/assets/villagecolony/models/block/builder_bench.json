@@ -1,12 +1,12 @@
 {
   "parent": "minecraft:block/cube",
   "textures": {
-    "up": "villagecolony:block/builder_bench_top",
-    "down": "minecraft:block/oak_planks",
-    "north": "villagecolony:block/builder_bench_front",
-    "south": "villagecolony:block/builder_bench_side",
-    "east": "villagecolony:block/builder_bench_side",
-    "west": "villagecolony:block/builder_bench_front",
-    "particle": "villagecolony:block/builder_bench_front"
+    "up": "villagecolony:block/builder_bench_up",
+    "down": "villagecolony:block/builder_bench_down",
+    "north": "villagecolony:block/builder_bench_north",
+    "south": "villagecolony:block/builder_bench_south",
+    "east": "villagecolony:block/builder_bench_east",
+    "west": "villagecolony:block/builder_bench_west",
+    "particle": "villagecolony:block/builder_bench_north"
   }
 }
