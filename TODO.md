@@ -43,6 +43,15 @@ próprias (madeira e argila com prova, descascar, ingrediente de superfície); `
       que mora lá (HomeMove); à noite o jogo já o leva para a cama. Bancada: 9,3 / 9,3 / 5,9 — na de
       5,9 todas as camas de cima eram de aldeões com ofício e o construtor não tinha para onde ir.
       Pendente 🟠: esse caso (decisão do autor: trocar com quem tem ofício? construir casa em cima?).
+      0.3.86 (deserto jogado na 0.3.85, nota 6,1, Spark IAXTyE0LXM; estudo em
+      `docs/research/2026-10-21-deserto-ociosidade-alternativas.md`): a vila ficou 34 de 57 min sem
+      obra porque **não havia lote** (a busca termina as voltas; não é falta de prazo). Feito: A1 (a
+      rua em crescimento que para registra o motivo — a da faixa anexada parava em silêncio), C1 (o
+      mineiro que chega ao lugar de trabalho alcança a pedra; antes ficava a 4,1 com alcance 4), B1
+      (sem arenito, o pedreiro o faz da areia da vila para o fundidor), D2 (a ceia deixa um par da
+      comida do rebanho). **Falta jogo.** Pendente 🟠: com o motivo da rua em mãos, A2 (rua da faixa
+      com alternativas) ou A3 (aterro além de 2); decisões do autor A5 (lote e rua juntos na faixa),
+      F2/G1 (lenhador e sem ofício ajudando a obra); D1 (o trato do rebanho contar como trabalho).
       0.3.82 (autor, 21-10, depois de jogar a 0.3.81): a escada fixa e a subida por pilar saíram —
       "quebra o visual", "a movimentação precisa ser a mais natural possível". Só o mineiro cava
       (degrau, túnel) para subir; os outros, só degrau natural (regra de 15-10 de volta). Pendente 🔴:

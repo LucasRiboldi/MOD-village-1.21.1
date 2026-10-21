@@ -5,6 +5,19 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ---
 
+## KF-007 — `MinerDirectPathGameTest.theMinerWalksStraightWhenTheGameFindsTheWay` cai na bateria inteira
+
+**ABERTO.** 21-10, branch `fix/deserto-a1-c1-b1-d2`. A navegação do jogo não chega ao lugar de pé
+aberto: *"aldeão em x+1, alvo x+8, caminho termina em x+7, chega=false"*. Isolado
+(`-PgametestOnly=MinerDirectPath`) passa 6 de 6. Na bateria inteira, medido por código em 22 baterias:
+`main` (824 testes) 0/3; só o C1 (824) 0/3; A1+B1 (830) 1/7; código do D2 sem os seus testes (830) 1/3;
+branch completa (832) 2/3. Nenhuma das mudanças toca a navegação; a ordem dos lotes é a mesma em toda
+rodada (vizinhos `walk_legs` e `lumber_bare_stump`) e, com o mesmo código, uma rodada passa e a seguinte
+cai. Hipótese, não medida: o teste põe chão até x=9 e parede em z −3…5, fora da arena vazia, e depende
+do que a arena vizinha deixa ali. A memória registrava ~1/3 de queda já no `690dee98`.
+
+---
+
 ## KF-006 — `CraftingGameTest.theCycleOpensTheCraftingTaskByItself` cai na bateria inteira
 
 **ABERTO.** 21-10, depois de duas classes novas de GameTest mudarem o arranjo das arenas: 2 quedas

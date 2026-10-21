@@ -182,7 +182,26 @@ Também achado: `MinerSteps.java:200-224` (log "waited N ticks for the sand") é
   contagem me fez anunciar um laço que não existia.
 - Os 92% e 93% de ócio de pastor e lenhador dependem da régua do `WorkTime` (D1).
 
-## 9. Ordem sugerida
+## 9. Aplicado na 0.3.86 (escolha do autor, 2026-10-21: A1, C1, B1, D2)
+
+| Item | Commit | O que mudou |
+|---|---|---|
+| C1 | `e38a5e47` | `MinerReach.isWithinReachStanding`: alcança também do centro do bloco em que pisa; o relatório usa a mesma conta |
+| A1 | `91de43ca` | `RoadExtension.keepGrowing` publica as `PavingRefusals` e escreve *"stopped growing the road … — motivos"* |
+| B1 | `e002ba46` | `FurnaceFeed`: sem o cru da fornalha, pedido ao pedreiro pela receita com material dos baús, sem tirar da obra aberta |
+| D2 | `25db9392` | `ShepherdFlock.breedingFoodToKeep`: com pastor, a ceia deixa um par de cada comida do rebanho com par pronto (emenda na ADR-037 R1) |
+
+Achado ao implementar o B1: o "cobblestone" que o carpinteiro "fabricava" (§8) é o alvo nominal do
+pedido de peça de obra (`CraftsmanRequest.NOMINAL = COBBLESTONE`), assim como o "dirt" é o da ordem de
+estoque (`ItemStock.NOMINAL`).
+
+Bateria inteira (832 GameTests, 3 rodadas nesta branch): caíram só o `CraftingGameTest.theCycleOpens…`
+(KF-006, conhecido) e o `MinerDirectPathGameTest.theMinerWalksStraight…` (KF-007: a navegação do jogo
+não acha caminho; isolado 6/6). A bisseção em 22 baterias está na KF-007
+(`docs/behavioral-tests/known-failures.md`): a queda aparece com o arranjo de 830+ testes, já sem o D2,
+e nenhuma das quatro mudanças toca a navegação.
+
+## 10. Ordem sugerida
 
 1. **A1** (log da rua que para) + **C1** (alcance do `judge`) + **B1** (fundidor pede arenito ao pedreiro).
    Pequenos, sem decisão, um GameTest com mutação cada.
