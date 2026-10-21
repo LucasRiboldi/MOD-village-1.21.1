@@ -1,6 +1,13 @@
 # STATE — 2026-10-20
 
-> **0.3.69–0.3.74** (20-10, branch `feat/biomas-simulacao`, sem push, **não jogado**): **o mod em todos os
+> **0.3.75–0.3.77** (20-10, mesma branch, push feito, **JAR 0.3.77 instalado, não jogado** — `EF825151…`):
+> terraplanagem fase 1 (lote ±2 da rua aplainado), rotas próprias (madeira/argila com prova, descascar),
+> folha natural dá lugar à peça e a peça inalcançável surge depois de 3 vezes de lado
+> (`villagecolony/unreachable-pieces.jsonl`, `VC_UNREACHABLE`). Taiga na bancada: 0 → 2 casas, nota 7,6.
+> test 1552/0, runGametest 802/802. **Próximo:** o autor joga deserto e floresta pelo roteiro; eu gero o
+> relatório com `scripts/biome_report.py`.
+>
+> **0.3.69–0.3.74** (20-10, branch `feat/biomas-simulacao`, **não jogado**): **o mod em todos os
 > biomas.** Bancada de simulação sem jogador (`scripts/biome_sim.py`, chave só de teste
 > `-Dvillagecolony.simulate`) achou que 3 das 5 vilas Vanilla nunca viravam colônia; corrigido:
 > camas da mesma vila gerada se juntam, o estilo vem da vila gerada (ADR-003 Emenda 9), a casa
