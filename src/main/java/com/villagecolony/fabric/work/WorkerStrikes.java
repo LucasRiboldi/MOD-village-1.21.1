@@ -44,6 +44,15 @@ public final class WorkerStrikes {
     }
 
     /**
+     * O mesmo, dizendo para onde ele ia: quem desiste abaixo do destino acaba mudando de casa para a
+     * altura dele (HomeMove, autor 2026-10-21).
+     */
+    public static void gaveUp(UUID workerId, Task task, net.minecraft.util.math.BlockPos way) {
+        HomeMove.gaveUpOnTheWayTo(workerId, way);
+        gaveUp(workerId, task);
+    }
+
+    /**
      * Este trabalhador desistiu do que estava fazendo.
      *
      * <p>Silencioso quando o aldeão já não é trabalhador da colônia —

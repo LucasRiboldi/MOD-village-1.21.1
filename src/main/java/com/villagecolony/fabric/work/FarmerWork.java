@@ -403,7 +403,7 @@ public final class FarmerWork {
         // até aqui o fazendeiro devolvia a tarefa sem deixar rastro no
         // trabalhador, e repetia o mesmo lote fora de alcance a cada
         // ciclo.
-        WorkerStrikes.gaveUp(workerId, job.task);
+        WorkerStrikes.gaveUp(workerId, job.task, job.target);
 
         release(workerId, job);
     }

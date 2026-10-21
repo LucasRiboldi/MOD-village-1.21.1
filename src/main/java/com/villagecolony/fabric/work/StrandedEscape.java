@@ -100,6 +100,8 @@ public final class StrandedEscape {
         SweepCadence.pass(world);
 
 
+        HomeMove.pass(world); // quem desistiu abaixo do trabalho muda de casa (2026-10-21)
+
         for (UUID workerId : StrandedWorkers.all()) {
             pass(world, workerId);
         }

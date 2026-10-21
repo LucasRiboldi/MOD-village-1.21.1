@@ -187,6 +187,7 @@
       "com.villagecolony.fabric.work.PostGrassGameTest",
       "com.villagecolony.fabric.work.DesertFixesGameTest",
       "com.villagecolony.fabric.work.VillageLevelsGameTest",
+      "com.villagecolony.fabric.work.HomeMoveGameTest",
       "com.villagecolony.fabric.integration.ConstructionCancellationGameTest",
       "com.villagecolony.fabric.integration.TreeReplantingGameTest",
       "com.villagecolony.fabric.integration.RoadsideSitesGameTest",

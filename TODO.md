@@ -31,6 +31,11 @@ próprias (madeira e argila com prova, descascar, ingrediente de superfície); `
       causas medidas na bancada com a semente do autor (`--near=-460,601`): a rua de arenito liso da
       vila gerada não era rua (só no índice, que só se enche de rua), a busca de rua só via +2 do
       centro, e a duna acima da rua não era cortada (corte até 5). Bancada: 0 → 4 casas, nota 5,1 → 8,8.
+      0.3.83 (autor, 21-10: "mudar de casa"): quem desiste do trabalho morando 2+ abaixo dele passa a
+      dormir numa cama livre da vila na altura do trabalho, ou troca de casa com um aldeão sem ofício
+      que mora lá (HomeMove); à noite o jogo já o leva para a cama. Bancada: 9,3 / 9,3 / 5,9 — na de
+      5,9 todas as camas de cima eram de aldeões com ofício e o construtor não tinha para onde ir.
+      Pendente 🟠: esse caso (decisão do autor: trocar com quem tem ofício? construir casa em cima?).
       0.3.82 (autor, 21-10, depois de jogar a 0.3.81): a escada fixa e a subida por pilar saíram —
       "quebra o visual", "a movimentação precisa ser a mais natural possível". Só o mineiro cava
       (degrau, túnel) para subir; os outros, só degrau natural (regra de 15-10 de volta). Pendente 🔴:
