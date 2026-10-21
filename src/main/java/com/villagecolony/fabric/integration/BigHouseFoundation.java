@@ -231,7 +231,10 @@ public final class BigHouseFoundation {
                         Math.max(Math.abs(box.minZ() - center.getZ()), Math.abs(box.maxZ() - center.getZ())))
                         + BEYOND_VILLAGE)
                 .map(reach -> Math.min(MAX_REACH, Math.max(SEARCH_RADIUS, reach)))
-                .orElse(SEARCH_RADIUS);
+                // Vila sem estrutura gerada (do jogador, ou posta por comando): sem a caixa das
+                // peças, a busca vai à folga além do raio de antes. Nos 32, o lote da cerejeira
+                // ficava no anel 31 e a colônia oscilava entre nascer e não nascer.
+                .orElse(SEARCH_RADIUS + BEYOND_VILLAGE);
     }
 
     /**

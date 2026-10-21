@@ -47,7 +47,7 @@ public final class LotTerraform {
             BlockState state = world.getBlockState(pos);
 
             if (!LotGround.isBiomeGround(world, pos) || !state.getFluidState().isEmpty()
-                    || BlockProtection.isColonyBuilt(pos)) {
+                    || BlockProtection.isColonyBuilt(pos) || besideFluid(world, pos)) {
                 return false;
             }
         }
@@ -61,6 +61,20 @@ public final class LotTerraform {
         }
 
         return true;
+    }
+
+    /**
+     * Se o bloco encosta em água ou lava: cortá-lo abriria o lote para o fluido — na bancada da taiga,
+     * o lote aplainado à beira do oceano frio deixou o construtor 76% bloqueado.
+     */
+    private static boolean besideFluid(ServerWorld world, BlockPos pos) {
+        for (net.minecraft.util.math.Direction side : net.minecraft.util.math.Direction.values()) {
+            if (side != net.minecraft.util.math.Direction.DOWN && !world.getFluidState(pos.offset(side)).isEmpty()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -88,6 +88,28 @@ public class LotTerraformGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Cortar terra encostada na água abriria o lote para ela: a coluna da beira não se corta. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lot_terraform")
+    public void groundBesideWaterIsNeverCut(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = footprint(context, new int[][] {{2, 2, 2}, {2, 2, 2}, {2, 2, 2}}, Blocks.GRASS_BLOCK);
+        BlockPos shore = origin.add(-1, 1, 1);
+
+        world.setBlockState(shore, Blocks.WATER.getDefaultState());
+
+        try {
+            context.assertFalse(LotTerraform.columnLevels(world, origin.getX(), origin.getZ() + 1,
+                    origin.getY() + 2, origin.getY()), "a coluna encostada na água foi dada como cortável");
+            context.assertTrue(LotTerraform.columnLevels(world, origin.getX() + 2, origin.getZ() + 1,
+                    origin.getY() + 2, origin.getY()), "controle: a coluna longe da água deixou de ser cortável");
+        } finally {
+            world.setBlockState(shore, Blocks.AIR.getDefaultState());
+            clear(context, origin);
+        }
+
+        context.complete();
+    }
+
     /** Controle: o que não é chão do bioma não se corta, e o lote não é aceito. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lot_terraform")
     public void aBumpThatIsNotGroundIsNeverCut(TestContext context) {
