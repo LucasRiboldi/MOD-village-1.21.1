@@ -255,7 +255,7 @@ public final class SmelterWork {
         // continua com ele. Ver SmelterFallback.
         int misses = SmelterFallback.missed(job.task.id());
 
-        if (SmelterFallback.isDue(job.task.id())) {
+        if (SmelterFallback.isDue(world, job.task)) {
             Optional<Boolean> meanwhile =
                     workForTheBuilds(world, searched, made.get(), output.get(), job, workerId, misses);
 
@@ -265,7 +265,7 @@ public final class SmelterWork {
         }
 
         // Nada para a obra também: solta a fornalha parada (SmelterGathers).
-        if (SmelterFallback.isDue(job.task.id()) && SmelterGathers.handOff(world, workerId, job.task, raws)) {
+        if (SmelterFallback.isDue(world, job.task) && SmelterGathers.handOff(world, workerId, job.task, raws)) {
             return false;
         }
 
@@ -273,7 +273,7 @@ public final class SmelterWork {
         // próximo ciclo reapresente a mesma tarefa sem produzir. StopLog
         // registra a transição e limita repetições enquanto o pedido espera.
         StopLog.stopped("Smelter", workerId, lookedButFound(searched.size(), names(raws))
-                + (SmelterFallback.isDue(job.task.id())
+                + (SmelterFallback.isDue(world, job.task)
                         ? " — and nothing the village builds need could be smelted either"
                         : " (" + misses + " of " + SmelterFallback.MISSES_BEFORE_FALLBACK
                                 + " before working for the builds)"));

@@ -411,6 +411,9 @@ public final class MinerHands {
                         ? MinerReport.whyNotReached(world, villager, job.target)
                         : "the miner left the world");
         ActionJournal.action(workerId, "GAVE_UP", "stone", 0, job.target, why);
+        // Ferro que a mina não tem descansa na colônia (IronRest, autor 2026-10-21).
+        com.villagecolony.fabric.integration.IronRest.minerGaveUp(
+                job.task.colonyId(), job.wanted, job.toward, job.collected, world.getTime());
 
         job.task.release(why);
 

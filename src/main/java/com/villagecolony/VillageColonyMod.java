@@ -191,6 +191,7 @@ public class VillageColonyMod implements ModInitializer {
         ServerLifecycleHandler.register();
         com.villagecolony.fabric.work.ActionJournal.register();
         com.villagecolony.fabric.work.ReachMap.register();
+        com.villagecolony.fabric.world.DesertGround.register();
         com.villagecolony.fabric.work.BuilderPaving.register();
         PlayerWorldChangeHandler.register();
         VillageDetectionHandler.register();

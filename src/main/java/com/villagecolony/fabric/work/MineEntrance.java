@@ -90,6 +90,11 @@ public final class MineEntrance {
         CHAINS.put(colonyId, new Chain(List.of(mouth), Long.MAX_VALUE));
     }
 
+    /** Quantos níveis a mina já desceu desde a boca de superfície: 0 no primeiro. */
+    public static int levelsDown(ServerWorld world, UUID colonyId, Mine mine) {
+        return chainOf(world, colonyId, mine.shaft()).size() - 1;
+    }
+
     /** A boca de superfície desta mina: a da cadeia guardada, ou a deduzida subindo os níveis. */
     public static ColonyPos surfaceOf(ServerWorld world, UUID colonyId, Mine mine) {
         return chainOf(world, colonyId, mine.shaft()).getFirst();

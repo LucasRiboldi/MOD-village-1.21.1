@@ -87,6 +87,46 @@ final class SmelterFallback {
     }
 
     /**
+     * O mesmo, e já na primeira falta quando a obra aberta está esperando uma peça de fornalha —
+     * autor, 2026-10-21: no deserto a obra pôs o arenito liso de lado 67 vezes enquanto o fundidor
+     * segurava o pedido de ferro sem minério, e só fazia o arenito liso "enquanto o ferro espera".
+     */
+    static boolean isDue(ServerWorld world, com.villagecolony.core.task.model.Task task) {
+        int misses = MISSES.getOrDefault(task.id(), 0);
+
+        return misses >= MISSES_BEFORE_FALLBACK || (misses >= 1 && !waitedFor(world, task.colonyId()).isEmpty());
+    }
+
+    /**
+     * As peças de fornalha que a obra aberta desta colônia espera agora: as postas de lado por falta de
+     * material, e a da vez quando a obra está parada nela.
+     */
+    static Set<Item> waitedFor(ServerWorld world, UUID colonyId) {
+        Set<ResourceId> pieces = new LinkedHashSet<>();
+
+        for (ConstructionProject project : VillageColonyMod.CONSTRUCTIONS.all()) {
+            if (!project.colonyId().equals(colonyId) || !project.state().isOpen()) {
+                continue;
+            }
+
+            for (ConstructionProject.DeferredPiece piece : project.deferredPieces()) {
+                if (piece.reason() == com.villagecolony.core.construction.model.SkipReason.WAITING_MATERIAL) {
+                    pieces.add(piece.block());
+                }
+            }
+
+            if (project.state() == com.villagecolony.core.construction.model.ConstructionState.WAITING_RESOURCES) {
+                project.nextBlock().ifPresent(next -> pieces.add(next.block()));
+            }
+        }
+
+        Set<Item> items = new LinkedHashSet<>();
+        addSmeltedFrom(world, pieces, items);
+
+        return items;
+    }
+
+    /**
      * O que sai da fornalha e a vila vai usar, na ordem de preferência:
      * primeiro o que a obra aberta ainda pede; se não houver obra aberta, o
      * que as plantas da vila pedem.
@@ -98,7 +138,8 @@ final class SmelterFallback {
             return cached.items();
         }
 
-        Set<Item> items = new LinkedHashSet<>();
+        // Primeiro o que a obra espera agora (waitedFor), depois o resto que ela ainda pede.
+        Set<Item> items = new LinkedHashSet<>(waitedFor(world, colony.id()));
 
         for (ConstructionProject project : VillageColonyMod.CONSTRUCTIONS.all()) {
             if (project.colonyId().equals(colony.id()) && project.state().isOpen()) {

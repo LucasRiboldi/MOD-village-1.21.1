@@ -37,8 +37,17 @@ public final class MineNetwork {
      */
     public static final int SPACING = 4;
 
-    /** Até quantos nós do salão, em cada eixo, o nível se estende: 49 × 49 blocos. */
+    /** Até quantos nós do salão, em cada eixo, o nível se estende no máximo: 49 × 49 blocos. */
     public static final int RADIUS = 6;
+
+    /**
+     * O raio do primeiro nível e o dos seguintes — autor, 2026-10-21: "todo sistema de mina deve descer
+     * mais níveis rapidamente, o primeiro nível deve ser menor". Com o raio cheio ({@link #RADIUS}) cada
+     * nível tinha 169 nós e a mina quase não descia; o primeiro passa a ter 25, os outros 49.
+     */
+    public static final int FIRST_LEVEL_RADIUS = 2;
+
+    public static final int LEVEL_RADIUS = 3;
 
     /** Largura do túnel: um bloco, por onde o aldeão passa. */
     public static final int WIDTH = 1;
@@ -121,7 +130,13 @@ public final class MineNetwork {
 
     /** Um nível novo neste salão: o salão pronto e os quatro vizinhos abertos. */
     public static MineNetwork open(ColonyPos hub) {
+        return open(hub, RADIUS);
+    }
+
+    /** O mesmo, com o raio do nível. */
+    public static MineNetwork open(ColonyPos hub, int radius) {
         MineNetwork network = new MineNetwork(hub);
+        network.radius = radius;
         Node root = new Node(0, 0, 0, 0);
 
         network.nodes.put(key(0, 0), new Entry(root, State.DONE));
@@ -386,7 +401,7 @@ public final class MineNetwork {
 
         MineNetwork network = new MineNetwork(hub);
         network.shaftSecured = saved[0] == 1;
-        network.radius = Math.max(RADIUS, saved[1]);
+        network.radius = saved[1] > 0 ? saved[1] : RADIUS;
 
         for (int i = 3; i < saved.length; i += 5) {
             State state = State.ofCode(saved[i + 4]);

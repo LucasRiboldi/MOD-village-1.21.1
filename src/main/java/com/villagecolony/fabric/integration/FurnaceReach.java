@@ -40,6 +40,11 @@ public final class FurnaceReach {
         Map<ResourceType, Integer> kept = new LinkedHashMap<>();
 
         goals.forEach((resource, amount) -> {
+            // O ferro cru que descansa sai das metas, salvo quando a obra pede ferro (IronRest).
+            if (resource == ResourceType.RAW_IRON && work.iron() <= 0 && IronRest.isResting(colonyId, world.getTime())) {
+                return;
+            }
+
             if (resource.production() != com.villagecolony.core.type.Production.SMELTED
                     || work.smelted().getOrDefault(resource, 0) > 0
                     || (resource == ResourceType.GLASS && work.glass() > 0)

@@ -27,13 +27,18 @@ public final class MineNetworks {
 
     /** O nível deste salão: o guardado, se for o mesmo salão; senão um nível novo. */
     public static MineNetwork forLevel(UUID colonyId, ColonyPos hub) {
+        return forLevel(colonyId, hub, MineNetwork.RADIUS);
+    }
+
+    /** O mesmo, com o raio que um nível novo ganha. */
+    public static MineNetwork forLevel(UUID colonyId, ColonyPos hub, int radius) {
         MineNetwork known = BY_COLONY.get(colonyId);
 
         if (known != null && known.hub().equals(hub)) {
             return known;
         }
 
-        MineNetwork fresh = MineNetwork.open(hub);
+        MineNetwork fresh = MineNetwork.open(hub, radius);
         BY_COLONY.put(colonyId, fresh);
 
         return fresh;
