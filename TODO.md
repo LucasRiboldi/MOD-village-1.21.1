@@ -1,10 +1,54 @@
 # TODO
 
-**Atualizado:** 2026-10-14 (ciclo H3). Só o que está **aberto**. Os checklists de playtest de
+**Atualizado:** 2026-10-20 (biomas, 0.3.69–0.3.76; antes: 2026-10-14, ciclo H3). Só o que está **aberto**. Os checklists de playtest de
 versões ≤0.3.44 foram arquivados em `docs/archive/technical/TODO-ate-2026-10-07.md` (grep, nunca
 inteiro). Estado vivo: `STATE.md`. Plano de melhoria: `docs/technical/Plano-Melhoria-2026-10-14.md`.
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
+
+## 🔴 Biomas — o mod em todos os biomas (bancada de 20-10, 0.3.69–0.3.76)
+
+Medido em `scripts/biome_sim.py` (uma vila por bioma, 2 dias, margem ±1–2 pontos; régua em
+`docs/testing/roteiro-por-bioma.md` §5). Notas atuais: savana 9,3 · meadow 9,0 · planície 7,2–9,9 ·
+neve 7,2 · taiga 6,8–8,8 · deserto 5,3–5,8 · taiga nevada 4,2 · floresta 4,0 · cerejeira 3,0 ·
+ermos 3,0. **Nada disto foi jogado** — o próximo passo de verdade é jogar pelo roteiro.
+
+Feito neste ciclo (não repetir): vila espalhada e vila na borda de bioma viram colônia (ADR-003
+Emenda 9); casa fundadora com busca maior, aplainamento e limpeza de mata; G2 (peça que trava
+surge no baú, registro `villagecolony/supply-gaps.jsonl`); caminho com o bloco do bioma; obra
+comum limpa lote na mata; mineiro escora areia; terraplanagem do lote fase 1 (±2); rotas
+próprias (madeira e argila com prova, descascar, ingrediente de superfície); `/vc bioma`,
+`VC_BIOME`, `biome_report.py`, `BiomeCoverageGameTest`.
+
+- [ ] 🔴 **Casa presa no último bloco.** Taiga, lote aplainado: a casa subiu 305 blocos e ficou 44
+      ciclos em "1 blocks left", segurando a vaga única de obra. Achar a peça (log `builders:` e o
+      save) e por que não assenta — parentes: [[peca-de-parede-sem-direcao]], [[riscado-nao-e-assentado]].
+- [ ] 🔴 **Jogar 0.3.76 pelo roteiro** (`docs/testing/roteiro-por-bioma.md`): deserto e uma floresta,
+      com `/vc bioma nota`; relatório com `scripts/biome_report.py`. A bancada não vê casa torta,
+      aldeão preso nem rua estranha. JAR 0.3.74 instalado — instalar o 0.3.76 antes.
+- [ ] 🟠 **Rotas que travam na execução (`STALLED`).** Deserto: arenito liso (7×), cortado (3×) e comum —
+      fundidor e pedreiro não pegam a tarefa; deserto também tem fundidor 100% parado. Neve: bloco e
+      camada de neve agora têm tarefa e travam (6× e 2×). Savana: vidraça, terracota colorida.
+- [ ] 🟠 **Terraplanagem fase 2** (a vila inteira em subida de 1 em 1, plano de 15-10): ermos e taiga
+      nevada têm 69% e 28% das recusas "sem chão na janela", relevo acima de 2.
+- [ ] 🟠 **Lavoura e viveiro na neve e no deserto.** `FarmerTill` e `TreeNursery` exigem ar em cima do
+      chão: a camada de neve barra. No deserto, roça nova exige grama/terra (aterrar com terra da mina) e
+      o fazendeiro "could not reach the crop" (9–11×). Fazendeiro 75–81% parado no deserto.
+- [ ] 🟠 **Pastor sem ovelha.** Deserto e neve: 84–96% parado, "no sheep with wool within the radius";
+      lã branca é a falta `NOT_FOUND` mais comum (todas as vilas). Decisão: o pastor traz/cria animais?
+- [ ] 🟡 **Estilo e madeira do bioma vizinho** para biomas fora da tabela (ermos → deserto, picos de
+      gelo → neve; selva, floresta escura, cerejeira com a madeira local). Hoje caem em planície de carvalho.
+- [ ] 🟡 **Reserva de madeira** onde não há árvore (lenhador 85–88% bloqueado no deserto).
+- [ ] 🟡 **Mineiro: alvo alto demais e sem onde pisar** (TOO_HIGH/NO_STANDING_POSITION em todo bioma) —
+      a mina 2ª fase.
+- [ ] 🟡 **Ofício sem trabalho ajuda os outros** (cadeia da Regra 51 para pastor e fazendeiro) — mexe
+      na Regra 59, **decisão do autor**.
+- [ ] 🟡 `NO_TASK` novos: tronco e madeira de acácia na savana. Melancia (`melon`) sem rota: o
+      fazendeiro não planta melancia.
+- [ ] 🟡 **Bancada mais fiel:** 3 sementes por bioma; vila posta por `/place structure` não fica
+      registrada como estrutura (mede o pior caso); medir o custo da limpeza de mata (`cost_ledger`).
+- [ ] 🟢 `MinerDirectPathGameTest` intermitente (~1/3, já no 690dee98) — card de tarefa aberto.
+- [ ] 🟢 PR e merge na `main` das branches `fix/varredura-g1-g3` e `feat/biomas-simulacao` (ADR-035).
 
 ## 🔴 Auditoria técnica 10-10 (fila AUD, P0→🔴 P1→🟠 P2→🟡 P3→🟢)
 
@@ -87,12 +131,6 @@ borda (ela já fez um teste passar sem medir nada, o D2).
 
 Plano de 07-10 aplicado: D2, B1, B3, B4, B5, B6 e o arquivo do save provados por mutação (ADR-039).
 Falta só fechar e abrir um mundo de verdade (playtest).
-
-## 🟡 Bioma (regra do autor: toda profissão se adequa ao bioma)
-
-- [x] Carpinteiro, pedreiro e fundidor: peças das casas do bioma (`BiomePieces`).
-- [x] Lenhador: espécies do bioma (floresta da vila, ADR-037); mineiro e coleta: o que o chão dá.
-- [ ] Fazendeiro e pastor: hoje iguais em todo bioma — levantar o que a vila Vanilla de cada bioma cultiva e cria.
 
 ## 🟡 Estrutura
 
