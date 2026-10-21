@@ -325,14 +325,28 @@ public final class RoadExtension {
             return Outcome.NO_END;
         }
 
-        List<ColonyPos> laidAt = RoadPaving.pave(world, colonyId, growth.end(), block.get());
+        PavingRefusals refusals = new PavingRefusals();
+        List<ColonyPos> laidAt = RoadPaving.pave(world, colonyId, growth.end(), block.get(), refusals);
 
         if (laidAt.isEmpty()) {
             // A ponta parou de render. Ela sai de castigo em dez ciclos,
-            // e a varredura volta a mandar.
+            // e a varredura volta a mandar — dizendo o que a parou, como a
+            // extensão comum (PavingRefusals): a rua da faixa anexada parava
+            // em silêncio, e a faixa plana não dava lote (deserto, 2026-10-21).
             RoadRefusals.refuse(world, growth.end().at());
 
             GROWING.remove(colonyId);
+
+            refusals.publish(colonyId);
+
+            VillageColonyMod.LOGGER.info(
+                    "Colony {} stopped growing the road {} at {} after {} of {} blocks — {}",
+                    colonyId,
+                    growth.end().towards(),
+                    growth.end().at().toShortString(),
+                    growth.laid(),
+                    MAX_RUN,
+                    refusals.isEmpty() ? "no reason recorded" : refusals.summary());
 
             return Outcome.BLOCKED;
         }
