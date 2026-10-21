@@ -194,6 +194,8 @@
       "com.villagecolony.fabric.work.MineGravityGameTest",
       "com.villagecolony.fabric.integration.BiomeCoverageGameTest",
       "com.villagecolony.fabric.integration.LotTerraformGameTest",
+      "com.villagecolony.fabric.integration.OwnRoutesGameTest",
+      "com.villagecolony.fabric.work.SurfaceIngredientNeedsGameTest",
       "com.villagecolony.fabric.integration.ColonyChestSurveyGameTest",
       "com.villagecolony.fabric.event.IdleHandsGameTest",
       "com.villagecolony.fabric.event.ProfessionChestOverflowGameTest",

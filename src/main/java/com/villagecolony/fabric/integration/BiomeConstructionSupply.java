@@ -22,13 +22,10 @@ import net.minecraft.world.biome.Biome;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
-import java.util.function.BooleanSupplier;
 
 /**
  * A fronteira entre a economia local e a peça que a construção recebe.
@@ -49,42 +46,22 @@ public final class BiomeConstructionSupply {
         ServerMemory.register(BiomeConstructionSupply.class, BiomeConstructionSupply::clearAll);
     }
 
-    private static final int RECIPE_DEPTH = 5;
-
     private BiomeConstructionSupply() {
     }
 
     /** A peça tem alguma rota de produção que esta vila pode executar? */
     public static boolean hasRouteInBiome(ServerWorld world, UUID colonyId, Item item) {
-        return VillageColonyMod.COLONIES.find(colonyId)
-                .flatMap(colony -> {
-                    BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
-                    // Areia de beira d'água ao alcance — decisão do autor,
-                    // 2026-09-30. Só é perguntada se a receita chegar à areia.
-                    BooleanSupplier sandNearWater = () -> SandNearWater.around(
-                            world, colonyId, center,
-                            com.villagecolony.core.coordination.GatheringReach.radius(
-                                    colony.observedBeds(), SandNearWater.RADIUS));
-
-                    return Optional.of(hasRouteInBiome(world, VillageStyle.biomeAt(world, colony.center()),
-                            item, new HashSet<>(), RECIPE_DEPTH, sandNearWater));
-                })
-                .orElse(false);
+        return routeInBiome(world, colonyId, item).available();
     }
 
-    /** A rota explicita da peça, para log e auditoria das dependencias da obra. */
+    /**
+     * A rota explicita da peça, para log e auditoria das dependencias da obra — com as provas do
+     * mundo em volta da colônia ({@link WorldEvidence}: areia de beira d'água, árvore, argila).
+     */
     public static SupplyRoute routeInBiome(ServerWorld world, UUID colonyId, Item item) {
         return VillageColonyMod.COLONIES.find(colonyId)
-                .flatMap(colony -> {
-                    BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
-                    BooleanSupplier sandNearWater = () -> SandNearWater.around(
-                            world, colonyId, center,
-                            com.villagecolony.core.coordination.GatheringReach.radius(
-                                    colony.observedBeds(), SandNearWater.RADIUS));
-
-                    return Optional.of(SupplyRoutes.inBiome(
-                            world, VillageStyle.biomeAt(world, colony.center()), item, sandNearWater));
-                })
+                .map(colony -> SupplyRoutes.inBiome(world, VillageStyle.biomeAt(world, colony.center()), item,
+                        WorldEvidence.around(world, colony)))
                 .orElseGet(() -> SupplyRoute.unavailable(item, SupplySource.NO_COLONY, List.of()));
     }
 
@@ -99,7 +76,7 @@ public final class BiomeConstructionSupply {
     public static boolean hasRouteInBiome(
             ServerWorld world, RegistryKey<Biome> biome, Item item) {
 
-        return hasRouteInBiome(world, biome, item, new HashSet<>(), RECIPE_DEPTH, () -> false);
+        return SupplyRoutes.inBiome(world, biome, item, WorldEvidence.NONE).available();
     }
 
     /**
@@ -388,61 +365,30 @@ public final class BiomeConstructionSupply {
         TREE_WAIT_ATTEMPTS.clear();
     }
 
-    private static boolean hasRouteInBiome(
-            ServerWorld world, RegistryKey<Biome> biome, Item item, Set<Item> visiting, int depth,
-            BooleanSupplier sandNearWater) {
-
-        if (depth < 0 || !visiting.add(item)) {
-            return false;
-        }
-
-        try {
-            if (directSourceInBiome(biome, item, sandNearWater).isPresent()) {
-                return true;
-            }
-
-            if (depth == 0) {
-                return false;
-            }
-
-            if (CraftingLookup.billFor(
-                    world,
-                    item,
-                    ingredient -> hasRouteInBiome(
-                            world, biome, ingredient, visiting, depth - 1, sandNearWater))
-                    .isPresent()) {
-
-                return true;
-            }
-
-            return CraftingLookup.smeltingInputsFor(world, item).stream()
-                    .anyMatch(input -> hasRouteInBiome(
-                            world, biome, input, visiting, depth - 1, sandNearWater));
-        } finally {
-            visiting.remove(item);
-        }
-    }
-
     static Optional<SupplySource> directSourceInBiome(
-            RegistryKey<Biome> biome, Item item, BooleanSupplier sandNearWater) {
+            RegistryKey<Biome> biome, Item item, WorldEvidence evidence) {
 
         if (DropIngredients.isAutomatic(item)) {
             return Optional.of(SupplySource.AUTOMATIC_DROP);
         }
 
         return MinecraftTypeAdapter.toResourceType(item)
-                .filter(resource -> isDirectBiomeResource(biome, resource, sandNearWater))
+                .filter(resource -> isDirectBiomeResource(biome, resource, evidence))
                 .map(resource -> SupplySource.BIOME_RESOURCE);
     }
 
     private static boolean isDirectBiomeResource(
-            RegistryKey<Biome> biome, ResourceType resource, BooleanSupplier sandNearWater) {
+            RegistryKey<Biome> biome, ResourceType resource, WorldEvidence evidence) {
 
         return switch (resource.production()) {
-            case HARVESTED -> isVillageWood(biome, resource);
+            case HARVESTED -> isVillageWood(biome, resource, evidence);
             case MINED -> isMineResource(biome, resource);
+            // A prova do mundo abre o que a regra do bioma fecha: areia de beira d'água fora do
+            // deserto, argila ao alcance no deserto (autor, 2026-10-20).
             case SURFACE_GATHERED -> isSurfaceResource(biome, resource)
-                    || (resource == ResourceType.SAND && sandNearWater.getAsBoolean());
+                    || (resource == ResourceType.SAND && evidence.sandNearWater().getAsBoolean())
+                    || ((resource == ResourceType.CLAY || resource == ResourceType.CLAY_BALL)
+                            && evidence.clayNearby().getAsBoolean());
             case SOIL_GATHERED -> !isDesert(biome);
             case SHEARED -> !isDesert(biome);
             case FARMED -> true;
@@ -450,7 +396,7 @@ public final class BiomeConstructionSupply {
         };
     }
 
-    private static boolean isVillageWood(RegistryKey<Biome> biome, ResourceType resource) {
+    private static boolean isVillageWood(RegistryKey<Biome> biome, ResourceType resource, WorldEvidence evidence) {
         Optional<String> species = VillageBiomes.woodFor(biome)
                 .map(ResourceId::path)
                 .map(path -> path.substring(0, path.length() - "_planks".length()));
@@ -459,8 +405,10 @@ public final class BiomeConstructionSupply {
                 .map(item -> Registries.ITEM.getId(item).getPath())
                 .orElse("");
 
+        // O deserto não tem madeira pela regra do bioma; com árvore em pé ao alcance (o bosque
+        // fundacional, o viveiro), tem — a tocha e a cama dependiam disso (autor, 2026-10-20).
         return species.map(name -> path.startsWith(name + "_")).orElse(false)
-                && !isDesert(biome);
+                && (!isDesert(biome) || evidence.woodNearby().getAsBoolean());
     }
 
     private static boolean isMineResource(RegistryKey<Biome> biome, ResourceType resource) {

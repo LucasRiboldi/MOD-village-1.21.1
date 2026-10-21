@@ -67,11 +67,16 @@ final class WorkMaterialRecipeNeeds {
         if (depth <= 0) {
             return;
         }
+        // Peça sem tipo próprio (bloco de neve, gelo azul): o ingrediente de superfície dela também
+        // vira pedido, senão a rota existe e ninguém a executa (NO_TASK; autor, 2026-10-20).
+        boolean fromUntyped = MinecraftTypeAdapter.toResourceType(item).isEmpty();
         CraftingLookup.billFor(world, item, any -> true).ifPresent(bill -> {
             int batches = (needed + bill.resultCount() - 1) / bill.resultCount();
             bill.ingredients().forEach((ingredient, amount) -> {
                 Optional<ResourceType> type = MinecraftTypeAdapter.toResourceType(ingredient);
-                if (type.isPresent() && type.get().production() == Production.SMELTED && !skip.contains(type.get())) {
+                if (type.isPresent() && (type.get().production() == Production.SMELTED
+                        || (type.get().production() == Production.SURFACE_GATHERED && fromUntyped))
+                        && !skip.contains(type.get())) {
                     wanted.merge(type.get(), batches * amount, Integer::sum);
                 } else if (type.isEmpty()) {
                     addSmeltedOf(world, ingredient, batches * amount, wanted, skip, depth - 1);
