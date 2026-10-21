@@ -46,7 +46,7 @@ import java.util.UUID;
  * <p><b>O que faz ele desistir de um rumo:</b> água ou lava encostada no
  * que ia sair (abrir o buraco inundaria a escada), e areia ou cascalho solto
  * logo acima do vão (cairia em cima dele). Desistir de um rumo não é
- * desistir de sair: sem degrau, o {@link ClimbOut} sobe em pilar ou abre
+ * desistir de sair: sem degrau, o {@link ClimbOut} (mineiro) abre
  * túnel para o lado, e recomeça — 2026-10-01, pedido do autor: <i>"nunca
  * ficar preso"</i>.
  *
@@ -99,7 +99,6 @@ public final class StrandedEscape {
         // de lote — estudo de 01-10, §7-A. Ver SweepCadence.
         SweepCadence.pass(world);
 
-        StrandedWorkers.strandThoseBelowTheirWay(world); // quem desistiu abaixo do destino (2026-10-21)
 
         for (UUID workerId : StrandedWorkers.all()) {
             pass(world, workerId);
@@ -164,12 +163,7 @@ public final class StrandedEscape {
                     StrandedWorkers.stepsDug(workerId));
             ActionJournal.action(workerId, "UNSTRANDED", "", StrandedWorkers.stepsDug(workerId), feet, "");
 
-            // Subiu até o caminho: fica uma escada fixa, e a de fuga não é tapada (VillageStairs).
-            boolean stair = StrandedWorkers.startOf(workerId).flatMap(start -> StrandedWorkers.wayOf(workerId)
-                    .map(way -> VillageStairs.connect(world, worker.get().colonyId(), start, feet, way) > 0))
-                    .orElse(false);
-
-            letGo(world, villager, workerId, !stair);
+            letGo(world, villager, workerId, true);
 
             return;
         }
@@ -182,7 +176,7 @@ public final class StrandedEscape {
 
         // A qualquer hora: sair do buraco não é trabalho, e preso ele não
         // chega à cama. Ver ClimbOut — primeiro o caminho por onde desceu
-        // (MineReturn); sem ele, escada, pilar ou túnel, mirando a borda da
+        // (MineReturn); sem ele, escada ou túnel, mirando a borda da
         // vila e não o centro dela, sem desistir.
         // E sobe rumo a ele: a borda da vila, no fundo do vale, fica na mesma altura.
         ClimbOut.pass(world, villager, workerId,
@@ -463,7 +457,7 @@ public final class StrandedEscape {
             }
 
             for (ItemStack dug : drops) {
-                // O que serve de bloco fica com quem sobe, para o pilar.
+                // O que serve de bloco fica com quem sobe, e vai ao baú quando ele sai.
                 ItemStack drop = ClimbOut.keep(digger, dug);
 
                 if (drop.isEmpty()) {

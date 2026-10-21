@@ -411,7 +411,7 @@ public final class TreeChoice {
         // faz a colônia continuar produzindo é ele mudar de foco.
         //
         // <b>Pela porta única desde 2026-09-10</b> — ver WorkerStrikes.
-        WorkerStrikes.gaveUp(workerId, job.task, job.plan == null ? null : job.plan.base());
+        WorkerStrikes.gaveUp(workerId, job.task);
 
         return LumberjackWork.Outcome.DONE;
     }

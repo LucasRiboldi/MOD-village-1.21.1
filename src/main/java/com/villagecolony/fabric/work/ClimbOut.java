@@ -38,22 +38,19 @@ import java.util.UUID;
  * mineiro, que seguia correndo ao lado, o puxava de volta (ver
  * {@link WorkerJobs}). Metade dos degraus foi cavada sem ele sair do lugar.
  *
- * <p><b>Três jeitos de subir, um depois do outro</b>, trocando quando o atual
+ * <p><b>Dois jeitos de subir, um depois do outro</b>, trocando quando o atual
  * passa {@link #NO_GAIN_PASSES} passagens sem ganhar altura:
  *
  * <ol>
  *   <li><b>escada</b> — o degrau do {@link StrandedEscape#planStep}, na direção
  *       da vila, e ele pisa nele;
- *   <li><b>pilar</b> — quebra o bloco acima da cabeça, pula e põe um bloco
- *       debaixo dos pés, como um jogador. O bloco é o que ele acabou de cavar;
- *       sem nada no bolso, cava um da parede ao lado, e por último usa
- *       pedregulho do baú;
- *   <li><b>túnel</b> — quando o que está acima não pode ser quebrado
- *       (construção, rocha-mãe, lava, areia que cairia nele), abre
+ *   <li><b>túnel</b> (só o mineiro) — quando não há degrau, abre
  *       {@link #TUNNEL_LENGTH} blocos para o lado e tenta subir dali.
  * </ol>
  *
- * <p><b>Nunca desiste.</b> Esgotados os três, recomeça pela escada. Só o que
+ * <p>Ninguém põe bloco debaixo dos pés para subir (o pilar saiu por decisão do autor, 2026-10-21).
+ *
+ * <p><b>Nunca desiste.</b> Esgotados os dois, recomeça pela escada. Só o que
  * a {@code BlockProtection} protege não é quebrado (Regra 3). Cada troca de
  * jeito é uma tentativa; {@link BedTeleport#STUCK_ATTEMPTS} tentativas sem sair
  * do lugar levam o aldeão para a cama dele (ADR-036 item 15).
@@ -68,7 +65,12 @@ final class ClimbOut {
         ServerMemory.register(ClimbOut.class, ClimbOut::clearAll);
     }
 
-    enum Mode { STAIRS, PILLAR, TUNNEL }
+    /**
+     * Os jeitos de subir: o degrau (natural, ou cavado pelo mineiro) e o túnel do mineiro. O pilar —
+     * pôr bloco debaixo dos pés e subir na vertical — saiu por decisão do autor, 2026-10-21: "a
+     * movimentação precisa ser a mais natural possível".
+     */
+    enum Mode { STAIRS, TUNNEL }
 
     /** Passagens (uma por segundo) sem subir antes de trocar de jeito. */
     static final int NO_GAIN_PASSES = 6;
@@ -86,9 +88,6 @@ final class ClimbOut {
 
     /** Quantos blocos ele carrega para pôr debaixo dos pés. */
     private static final int POCKET_MAX = 16;
-
-    /** O pulo do pilar: o topo fica a 1,7 bloco, e o bloco entra a 1. */
-    private static final double JUMP_UP = 0.5;
 
     /** Quanto tempo ele tem para pisar no degrau ou entrar no túnel. */
     private static final int MOVE_TICKS = 40;
@@ -114,10 +113,6 @@ final class ClimbOut {
         BlockPos moveTo;
 
         long moveSince;
-
-        BlockPos jumpFrom;
-
-        long jumpedAt;
 
         Direction tunnelWay;
 
@@ -146,7 +141,7 @@ final class ClimbOut {
     private ClimbOut() {
     }
 
-    /** A cada tique: o pulo do pilar e o passo para o degrau ou o túnel. */
+    /** A cada tique: o passo para o degrau ou o túnel. */
     static void tick(ServerWorld world) {
         if (CLIMBS.isEmpty()) {
             return;
@@ -169,8 +164,6 @@ final class ClimbOut {
 
             if (MineReturn.isDriving(entry.getKey())) {
                 MineReturn.drive(world, villager, entry.getKey(), climb.chest);
-            } else if (climb.jumpFrom != null) {
-                airborne(world, villager, entry.getKey(), climb, now);
             } else if (climb.moveTo != null) {
                 step(villager, climb, now);
             }
@@ -185,7 +178,7 @@ final class ClimbOut {
 
         climb.chest = chest;
 
-        if (climb.jumpFrom != null || climb.moveTo != null || !villager.isOnGround()) {
+        if (climb.moveTo != null || !villager.isOnGround()) {
             return;
         }
 
@@ -212,14 +205,13 @@ final class ClimbOut {
 
         switch (climb.mode) {
             case STAIRS -> stairs(world, villager, climb, workerId, feet, home, now);
-            case PILLAR -> pillar(world, villager, climb, workerId, feet, now);
             case TUNNEL -> ClimbReshape.tunnel(world, villager, climb, workerId, feet, home, now);
         }
     }
 
     /**
-     * O que sai do buraco e serve de bloco fica com ele, para o pilar.
-     * Chamado pelo {@link StrandedEscape} ao cavar; devolve o que vai para o baú.
+     * O que sai do buraco e serve de bloco fica com ele, e vai para o baú quando ele sai ({@link #finish}).
+     * Chamado pelo {@link StrandedEscape} ao cavar; devolve o que vai para o baú agora.
      */
     static ItemStack keep(UUID digger, ItemStack drop) {
         Climb climb = digger == null ? null : CLIMBS.get(digger);
@@ -247,8 +239,8 @@ final class ClimbOut {
 
         return climb == null ? "none"
                 : climb.mode + " best y " + climb.bestY + ", pocket " + climb.pocket + ", no gain " + climb.noGain
-                        + ", up by stairs/pillar/tunnel " + climb.upBy.getOrDefault(Mode.STAIRS, 0) + "/"
-                        + climb.upBy.getOrDefault(Mode.PILLAR, 0) + "/" + climb.upBy.getOrDefault(Mode.TUNNEL, 0);
+                        + ", up by stairs/tunnel " + climb.upBy.getOrDefault(Mode.STAIRS, 0) + "/"
+                        + climb.upBy.getOrDefault(Mode.TUNNEL, 0);
     }
 
     /** Ele saiu: o que sobrou no bolso cai a seus pés, e a subida acaba. */
@@ -285,8 +277,7 @@ final class ClimbOut {
 
         if (step.isEmpty()) {
             if (mayReshape) {
-                switchMode(workerId, climb, feet, Mode.PILLAR, "no natural, dry step toward the village");
-                pillar(world, villager, climb, workerId, feet, now);
+                switchMode(workerId, climb, feet, Mode.TUNNEL, "no natural, dry step toward the village");
             } else {
                 ClimbPolicy.giveUp(world, villager, workerId, feet);
             }
@@ -300,93 +291,6 @@ final class ClimbOut {
         }
 
         moveTo(climb, step.get().standAt(), now);
-    }
-
-    private static void pillar(ServerWorld world, VillagerEntity villager, Climb climb, UUID workerId,
-            BlockPos feet, long now) {
-
-        // Espaço para o pulo: a cabeça sobe até feet + 3.
-        for (BlockPos above : List.of(feet.up(2), feet.up(3))) {
-            if (ClimbTerrain.isOpen(world, above)) {
-                continue;
-            }
-
-            if (ClimbTerrain.mayBreak(world, above)) {
-                breakOne(world, villager, climb, workerId, above);
-            } else if (above.equals(feet.up(2))) {
-                switchMode(workerId, climb, feet, Mode.TUNNEL, "it may not break " + describe(world, above));
-            } else {
-                // O de cima de tudo fica: o pulo alcança 1 bloco mesmo assim.
-                continue;
-            }
-
-            return;
-        }
-
-        if (climb.pocket == 0) {
-            Optional<BlockPos> wall = ClimbTerrain.wallWithBlock(world, feet);
-
-            if (wall.isPresent()) {
-                breakOne(world, villager, climb, workerId, wall.get());
-
-                return;
-            }
-        }
-
-        villager.setVelocity(0.0, JUMP_UP, 0.0);
-        villager.velocityModified = true;
-        climb.jumpFrom = feet.toImmutable();
-        climb.jumpedAt = now;
-    }
-
-    private static void airborne(ServerWorld world, VillagerEntity villager, UUID workerId, Climb climb, long now) {
-        if (villager.getY() >= climb.jumpFrom.getY() + 1.0 && place(world, workerId, climb, climb.jumpFrom)) {
-            climb.jumpFrom = null;
-
-            return;
-        }
-
-        if (villager.isOnGround() && now - climb.jumpedAt > 4) {
-            // Pousou sem o bloco: a próxima passagem vê que não subiu.
-            climb.jumpFrom = null;
-
-            return;
-        }
-
-        // Sobe reto, sem sair de cima do vão.
-        Vec3d velocity = villager.getVelocity();
-        Vec3d center = Vec3d.ofBottomCenter(climb.jumpFrom);
-
-        villager.setVelocity((center.x - villager.getX()) * 0.3, velocity.y, (center.z - villager.getZ()) * 0.3);
-        villager.velocityModified = true;
-    }
-
-    private static boolean place(ServerWorld world, UUID workerId, Climb climb, BlockPos at) {
-        if (!world.getBlockState(at).isReplaceable()
-                || !world.getEntitiesByClass(LivingEntity.class, new Box(at), LivingEntity::isAlive).isEmpty()) {
-            return false;
-        }
-
-        boolean placed;
-
-        if (climb.pocket > 0) {
-            world.setBlockState(at, Block.getBlockFromItem(climb.pocketItem).getDefaultState());
-            climb.pocket--;
-            placed = true;
-        } else {
-            // Do baú quando há; sem ele, criada — A-5, 2026-10-02: ele sempre pode
-            // criar pedra para se locomover.
-            placed = (climb.chest != null
-                    && EscapeBackfill.placeFromChest(world, workerId, climb.chest, at,
-                            com.villagecolony.fabric.world.MineFill.fillAt(world, at).getBlock().asItem()))
-                    || world.setBlockState(at, com.villagecolony.fabric.world.MineFill.fillAt(world, at));
-        }
-
-        if (placed) {
-            ColonyEdits.remember(MinecraftTypeAdapter.toColonyPos(at));
-        }
-
-        return placed;
     }
 
     private static void step(VillagerEntity villager, Climb climb, long now) {
@@ -417,7 +321,7 @@ final class ClimbOut {
     }
 
     /**
-     * Para que modo ir quando o atual não ganha altura. O ciclo cheio (pilar e túnel) é só do mineiro
+     * Para que modo ir quando o atual não ganha altura. O túnel é só do mineiro
      * — regra do autor, 2026-10-15: as outras profissões sobem apenas por degrau natural e não
      * remodelam o terreno, então ficam em {@code STAIRS}.
      */
@@ -427,8 +331,7 @@ final class ClimbOut {
         }
 
         return switch (mode) {
-            case STAIRS -> Mode.PILLAR;
-            case PILLAR -> Mode.TUNNEL;
+            case STAIRS -> Mode.TUNNEL;
             case TUNNEL -> Mode.STAIRS;
         };
     }
@@ -441,10 +344,6 @@ final class ClimbOut {
         climb.noGain = 0;
         climb.tunnelWay = null;
         BedTeleport.attempt(workerId, feet);
-    }
-
-    private static String describe(ServerWorld world, BlockPos at) {
-        return world.getBlockState(at).getBlock().getTranslationKey() + " at " + at.toShortString();
     }
 
     static String shortId(UUID id) {

@@ -31,6 +31,11 @@ próprias (madeira e argila com prova, descascar, ingrediente de superfície); `
       causas medidas na bancada com a semente do autor (`--near=-460,601`): a rua de arenito liso da
       vila gerada não era rua (só no índice, que só se enche de rua), a busca de rua só via +2 do
       centro, e a duna acima da rua não era cortada (corte até 5). Bancada: 0 → 4 casas, nota 5,1 → 8,8.
+      0.3.82 (autor, 21-10, depois de jogar a 0.3.81): a escada fixa e a subida por pilar saíram —
+      "quebra o visual", "a movimentação precisa ser a mais natural possível". Só o mineiro cava
+      (degrau, túnel) para subir; os outros, só degrau natural (regra de 15-10 de volta). Pendente 🔴:
+      quem mora na parte baixa da vila do deserto volta a não chegar à obra de cima (bancada: 0 obras
+      em 2 rodadas com o construtor morando em y63) — falta uma saída natural, decisão do autor.
       0.3.81 (deserto jogado na 0.3.80, nota 8,2, Spark ETMetpWVS9; a vila tem duas alturas, y63 e y80+):
       toda profissão que desiste abaixo do destino sobe até a altura dele (pondo bloco ou cavando — a
       regra de 15-10 "só o mineiro" vale fora desse caso), com prazo de 2 min e descanso de 5; escada

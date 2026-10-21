@@ -60,7 +60,7 @@ public final class StrandedWorkers {
      */
     private static final Map<UUID, BlockPos> WAYS = new HashMap<>();
 
-    /** Onde encalhou quem estava abaixo do caminho: o pé da escada fixa (VillageStairs). */
+    /** Onde encalhou quem estava abaixo do caminho: a régua do prazo da subida. */
     private static final Map<UUID, BlockPos> STARTS = new HashMap<>();
 
     /** Quando encalhou abaixo do caminho, para a subida que não sobe ter prazo. */
@@ -79,8 +79,6 @@ public final class StrandedWorkers {
 
     static final long CLIMB_REST = 6_000;
 
-    /** Quem acaba de desistir da caminhada, e para onde ia: conferido no próximo tique da fuga. */
-    private static final Map<UUID, BlockPos> GAVE_UP = new HashMap<>();
 
     private StrandedWorkers() {
     }
@@ -150,41 +148,6 @@ public final class StrandedWorkers {
         RESTING.put(workerId, now + CLIMB_REST);
 
         return true;
-    }
-
-    /** Desistiu da caminhada rumo a {@code way}: a fuga confere se ele ficou abaixo dele. */
-    static void gaveUpOnTheWayTo(UUID workerId, BlockPos way) {
-        if (way != null) {
-            GAVE_UP.put(workerId, way.toImmutable());
-        }
-    }
-
-    /**
-     * Quem desistiu dois ou mais abaixo de para onde ia vira encalhado abaixo do caminho, e a fuga o
-     * sobe até a altura dele — autor, 2026-10-21: o construtor e o lenhador da casa baixa da vila do
-     * deserto (y63) ficavam parados a 58 blocos e 18 abaixo da obra e das árvores.
-     */
-    static void strandThoseBelowTheirWay(net.minecraft.server.world.ServerWorld world) {
-        if (GAVE_UP.isEmpty()) {
-            return;
-        }
-
-        Map<UUID, BlockPos> due = new HashMap<>(GAVE_UP);
-        GAVE_UP.clear();
-
-        due.forEach((workerId, way) -> {
-            if (world.getEntity(workerId) instanceof net.minecraft.entity.passive.VillagerEntity villager
-                    && villager.isAlive()
-                    && way.getY() - villager.getBlockY() >= MinerSteps.CLIMB_OUT_BELOW) {
-                strandBelow(workerId, villager.getBlockPos(), way, "below its way and unable to climb",
-                        world.getTime());
-            }
-        });
-    }
-
-    /** Onde encalhou quem estava abaixo do caminho. */
-    static Optional<BlockPos> startOf(UUID workerId) {
-        return Optional.ofNullable(STARTS.get(workerId));
     }
 
     /** Para onde ia quem encalhou abaixo do caminho. */
@@ -306,7 +269,7 @@ public final class StrandedWorkers {
         STARTS.remove(workerId);
         SINCE.remove(workerId);
         RESTING.remove(workerId);
-        GAVE_UP.remove(workerId);
+
         DROP_JOBS.remove(workerId);
         LAST_FREEZE.remove(workerId);
     }
@@ -318,7 +281,6 @@ public final class StrandedWorkers {
         STARTS.clear();
         SINCE.clear();
         RESTING.clear();
-        GAVE_UP.clear();
         DROP_JOBS.clear();
         LAST_FREEZE.clear();
     }

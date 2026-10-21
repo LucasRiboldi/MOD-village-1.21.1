@@ -131,7 +131,7 @@ public final class ClimbOutGameTest implements FabricGameTest {
                 int[] upBy = upBy(last[0]);
                 int climbed = out - bottom;
 
-                int byHow = how == ClimbOut.Mode.STAIRS ? upBy[0] : how == ClimbOut.Mode.PILLAR ? upBy[1] : upBy[2];
+                int byHow = how == ClimbOut.Mode.STAIRS ? upBy[0] : upBy[1];
 
                 context.assertTrue(byHow * 2 > climbed,
                         "saiu, mas não pelo " + how + ": " + last[0] + " para " + climbed + " níveis");
@@ -156,7 +156,7 @@ public final class ClimbOutGameTest implements FabricGameTest {
         });
     }
 
-    // "... up by stairs/pillar/tunnel A/B/C" -> {A, B, C}
+    // "... up by stairs/tunnel A/B" -> {A, B}
     private static int[] upBy(String state) {
         String[] parts = state.substring(state.lastIndexOf(' ') + 1).split("/");
         int[] up = new int[parts.length];
@@ -190,15 +190,33 @@ public final class ClimbOutGameTest implements FabricGameTest {
         awaitOut(context, strandedAtTheBottom(context, colony), colony[0], ClimbOut.Mode.STAIRS);
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "climb_out_pillar", tickLimit = TICKS)
-    public void aStrandedWorkerInABrickShaftPillarsUpThroughTheStone(TestContext context) {
-        // Tijolo não é terreno natural: nenhum degrau, nenhuma parede para
-        // cavar. Só a pedra acima da cabeça, que vira o bloco dos pés.
+    /**
+     * Ninguém põe bloco debaixo dos pés para subir — autor, 2026-10-21: "a movimentação precisa ser a
+     * mais natural possível". No poço de tijolo, sem degrau nem parede para cavar, o lugar dos pés dele
+     * continua vazio.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "climb_out_pillar", tickLimit = 220)
+    public void aStrandedWorkerInABrickShaftNeverPillars(TestContext context) {
         terrain(context, Blocks.STONE_BRICKS, Blocks.STONE);
 
         Colony[] colony = new Colony[1];
+        VillagerEntity villager = strandedAtTheBottom(context, colony);
+        BlockPos feet = context.getAbsolutePos(BOTTOM);
 
-        awaitOut(context, strandedAtTheBottom(context, colony), colony[0], ClimbOut.Mode.PILLAR);
+        context.runAtTick(200, () -> {
+            try {
+                context.assertTrue(context.getWorld().getBlockState(feet).isAir()
+                                && context.getWorld().getBlockState(feet.up()).isAir(),
+                        "um bloco foi posto no poço onde ele estava: "
+                                + context.getWorld().getBlockState(feet).getBlock());
+                context.assertFalse(ClimbOut.stateOf(villager.getUuid()).contains("PILLAR"),
+                        "a subida ainda passou pelo pilar: " + ClimbOut.stateOf(villager.getUuid()));
+            } finally {
+                forget(context, colony[0], villager);
+            }
+
+            context.complete();
+        });
     }
 
     /**
