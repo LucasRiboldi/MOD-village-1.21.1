@@ -70,6 +70,13 @@ public final class FarmerWork {
     /** Alcance de braço. O mesmo do pastor e do lenhador. */
     private static final int REACH = 3;
 
+    /**
+     * Daqui para longe, a caminhada até a lavoura vai por etapas (MineApproachPath) — deserto jogado,
+     * 2026-10-20: a roça da vila ficava a 54 blocos e 10 acima do fazendeiro, a navegação do jogo não
+     * traçava o caminho inteiro e ele desistiu 8 vezes ("could not reach the crop").
+     */
+    private static final int FAR = 24;
+
     /** Até onde ele procura lavoura em volta do centro da vila. */
     private static final int SEARCH_RADIUS = 32;
 
@@ -308,6 +315,10 @@ public final class FarmerWork {
         }
 
         if (!isWithinReach(villager, job.target)) {
+            WorkTargets.set(workerId, villager.getBlockPos().isWithinDistance(job.target, FAR)
+                    ? job.target
+                    : MineApproachPath.toward(world, villager, job.target));
+
             if (WorkHours.isWorkTime(world, villager)) {
                 job.stalled++;
             }
@@ -316,7 +327,7 @@ public final class FarmerWork {
             // 2026-09-03. Oito vezes mais rápido que o guarda de baixo, e
             // é o mesmo defeito. Ver WorkStall.
             if (job.stall.stuck(world, villager) || job.stalled >= STALL_LIMIT) {
-                giveUp(workerId, job);
+                giveUp(workerId, job, villager);
             }
 
             return;
@@ -357,6 +368,7 @@ public final class FarmerWork {
     static void release(UUID workerId, Job job) {
         job.target = null;
         job.stalled = 0;
+        MineApproachPath.forget(workerId);
 
         // O guarda de imobilidade sobrevive a largar a lavoura — E36.
         // Ver findWork. Quem zera é o ramo de trabalho, antes do harvest.
@@ -380,11 +392,13 @@ public final class FarmerWork {
      * pelo {@code VillagerLifecycleHandler}, e podem cair no meio de uma
      * passagem.
      */
-    private static void giveUp(UUID workerId, Job job) {
+    private static void giveUp(UUID workerId, Job job, VillagerEntity villager) {
         VillageColonyMod.LOGGER.info(
-                "Farmer {} could not reach the crop at {} — task back to the queue",
+                "Farmer {} could not reach the crop at {} — task back to the queue (it stands at {}, {} blocks away)",
                 workerId,
-                job.target.toShortString());
+                job.target.toShortString(),
+                villager.getBlockPos().toShortString(),
+                (int) Math.sqrt(villager.getBlockPos().getSquaredDistance(job.target)));
 
         if (job.task.isHeld()) {
             job.task.release("could not reach the crop");

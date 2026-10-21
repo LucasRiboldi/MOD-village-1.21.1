@@ -481,7 +481,8 @@ public class BuildSiteGameTest implements FabricGameTest {
                     continue;
                 }
 
-                for (int dy = 1; dy <= 3; dy++) {
+                // Um acima do corte da terraplanagem (LotTerraform.MAX_CUT = 5).
+                for (int dy = 1; dy <= 6; dy++) {
                     context.setBlockState(
                             center.add(dx, dy, dz), Blocks.GRASS_BLOCK.getDefaultState());
                 }
@@ -498,7 +499,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
             context.assertTrue(
                     site.isEmpty(),
-                    "três blocos de desnível viraram lote, e o aplainamento vai só até dois");
+                    "seis blocos de desnível viraram lote, e o corte vai só até cinco");
         } finally {
             BuildSiteScanner.clearAll();
             LotRefusals.clearAll();
@@ -1302,7 +1303,8 @@ public class BuildSiteGameTest implements FabricGameTest {
                     continue;
                 }
 
-                for (int dy = 1; dy <= BuildSiteScanner.MAX_SLOPE + 2; dy++) {
+                // Um acima do corte da terraplanagem (LotTerraform.MAX_CUT = 5).
+                for (int dy = 1; dy <= 6; dy++) {
                     context.setBlockState(
                             center.add(dx, dy, dz), Blocks.GRASS_BLOCK.getDefaultState());
                 }
@@ -1316,7 +1318,7 @@ public class BuildSiteGameTest implements FabricGameTest {
                 RADIUS,
                 SMALL_HOUSE);
 
-        context.assertTrue(site.isEmpty(), "aceitou lote com desnível de quatro blocos");
+        context.assertTrue(site.isEmpty(), "aceitou lote com desnível de seis blocos");
 
         context.complete();
     }
@@ -1535,16 +1537,16 @@ public class BuildSiteGameTest implements FabricGameTest {
         // Tudo em volta da rua sobe DOIS degraus. O lote continua plano
         // entre si, e deixa de estar no nível de quem anda na rua.
         //
-        // Um degrau é tolerância (2026-09-15) e dois são aplainados até a rua
-        // (terraplanagem do lote, fase 1, 2026-10-20). Três é a varanda sem
-        // escada que a regra descreve, e é o que ela ainda recusa.
+        // Um degrau é tolerância (2026-09-15) e até cinco são cortados até a rua
+        // (terraplanagem do lote, LotTerraform.MAX_CUT, 2026-10-20). Seis é a varanda
+        // sem escada que a regra descreve, e é o que ela ainda recusa.
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 if (dx == 0 && dz == 0) {
                     continue;
                 }
 
-                for (int dy = 1; dy <= 3; dy++) {
+                for (int dy = 1; dy <= 6; dy++) {
                     context.setBlockState(
                             center.add(dx, dy, dz), Blocks.GRASS_BLOCK.getDefaultState());
                 }
@@ -1837,7 +1839,8 @@ public class BuildSiteGameTest implements FabricGameTest {
                     continue;
                 }
 
-                for (int dy = 1; dy <= BuildSiteScanner.MAX_SLOPE + 2; dy++) {
+                // Um acima do corte da terraplanagem (LotTerraform.MAX_CUT = 5).
+                for (int dy = 1; dy <= 6; dy++) {
                     context.setBlockState(
                             center.add(dx, dy, dz), Blocks.GRASS_BLOCK.getDefaultState());
                 }
@@ -2271,19 +2274,26 @@ public class BuildSiteGameTest implements FabricGameTest {
             context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
             reserveRoad(context, colony, center);
 
-            // E um degrau de DOIS blocos dentro do lote, que é o bastante
+            // E um degrau de SEIS blocos encostado na rua, que é o bastante
             // para o flatGroundAt reprovar.
             //
-            // Era um até 2026-09-15, quando o autor mandou tolerar um bloco
-            // — ver oneBlockOffTheRoadLevelIsStillALot. O que este caso
-            // afirma é que a recusa é CONTADA pelo motivo certo, e para
+            // Era um até 2026-09-15 (o autor mandou tolerar um bloco — ver
+            // oneBlockOffTheRoadLevelIsStillALot) e dois até 2026-10-20, quando a
+            // terraplanagem passou a cortar até cinco (LotTerraform.MAX_CUT). O que
+            // este caso afirma é que a recusa é CONTADA pelo motivo certo, e para
             // isso ele precisa de um desnível que ainda seja recusa.
-            for (int dy = 1; dy <= 2; dy++) {
-                context.setBlockState(
-                        center.east().north().up(dy), Blocks.GRASS_BLOCK.getDefaultState());
-            }
+            // Em volta da rua inteira, para todo candidato encostado nela passar pelo degrau.
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    if (dx == 0 && dz == 0) {
+                        continue;
+                    }
 
-            context.setBlockState(center.east().north(), Blocks.GRASS_BLOCK.getDefaultState());
+                    for (int dy = 0; dy <= 6; dy++) {
+                        context.setBlockState(center.add(dx, dy, dz), Blocks.GRASS_BLOCK.getDefaultState());
+                    }
+                }
+            }
 
             ColonyPos from = MinecraftTypeAdapter.toColonyPos(
                     context.getAbsolutePos(center));
@@ -2295,7 +2305,11 @@ public class BuildSiteGameTest implements FabricGameTest {
                             || LotRefusals.countOf(colony, LotRefusals.Reason.NO_GROUND) > 0
                             || LotRefusals.countOf(colony, LotRefusals.Reason.OCCUPIED) > 0,
                     "a varredura recusou candidatos e não contou nenhum motivo —"
-                            + " o P0.1 pede saber POR QUE o lote não serve");
+                            + " o P0.1 pede saber POR QUE o lote não serve; contou "
+                            + java.util.Arrays.stream(LotRefusals.Reason.values())
+                                    .map(reason -> reason + "=" + LotRefusals.countOf(colony, reason))
+                                    .toList()
+                            + ", aceitos " + LotRefusals.acceptedIn(colony));
         } finally {
             BuildSiteScanner.clearAll();
             LotRefusals.clearAll();

@@ -27,6 +27,13 @@ próprias (madeira e argila com prova, descascar, ingrediente de superfície); `
       `villagecolony/unreachable-pieces.jsonl`, `VC_UNREACHABLE`). Bancada: taiga 0 → 2 casas
       concluídas, nota 7,6. Pendente: tronco natural no volume ainda é pulado ("spruce_log is in the
       way", 3×); peça de lado por apoio (`UNSUPPORTED`) que nunca ganha apoio ainda segura a obra.
+- [ ] 🟠 **Deserto jogado (0.3.77, 20-10, Spark IgpFCEon8m): 0 obras em 2,8 dias.** 0.3.78 corrige três
+      causas medidas na bancada com a semente do autor (`--near=-460,601`): a rua de arenito liso da
+      vila gerada não era rua (só no índice, que só se enche de rua), a busca de rua só via +2 do
+      centro, e a duna acima da rua não era cortada (corte até 5). Bancada: 0 → 4 casas, nota 5,1 → 8,8.
+      Pendente: **fazendeiro** ainda não alcança a roça elevada (para a 9 blocos, 3 abaixo dela — falta
+      degrau); **pastor** 0% de trabalho (deserto sem grama, a lã não volta); lenhador 31% e carpinteiro
+      33% bloqueados; cacto e cana contam como chão do lote.
 - [ ] 🔴 **Jogar 0.3.77 pelo roteiro** (`docs/testing/roteiro-por-bioma.md`): deserto e uma floresta,
       com `/vc bioma nota`; relatório com `scripts/biome_report.py`. A bancada não vê casa torta,
       aldeão preso nem rua estranha.

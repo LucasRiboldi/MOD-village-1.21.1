@@ -125,7 +125,8 @@ public final class LotLevel {
                 int x = originX + dx;
                 int z = originZ + dz;
 
-                Optional<BlockPos> found = LotGround.groundInColumn(world, x, z, aroundY);
+                // A janela sobe até o corte da terraplanagem: a duna de até MAX_CUT é chão, não teto.
+                Optional<BlockPos> found = LotGround.groundInColumn(world, x, z, aroundY, LotTerraform.MAX_CUT);
 
                 if (found.isEmpty()) {
                     LotRefusals.refused(colonyId, LotRefusals.Reason.NO_GROUND);
@@ -180,11 +181,12 @@ public final class LotLevel {
                 // -1 a +1 em relação à rua.
                 //
                 // <b>Terraplanagem do lote, fase 1</b> (autor, 2026-10-20): a coluna
-                // a até LotTerraform.MAX_STEP da rua ainda serve, aplainada até a
-                // base na rua; mais longe, é recusada.
+                // a até LotTerraform.MAX_CUT acima ou MAX_FILL abaixo da rua ainda serve,
+                // aplainada até a base na rua; mais longe, é recusada.
                 int levelOffset = ground.getY() - roadY;
-                if (Math.abs(levelOffset) > LotTerraform.MAX_STEP) {
+                if (levelOffset > LotTerraform.MAX_CUT || -levelOffset > LotTerraform.MAX_FILL) {
                     LotRefusals.refused(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL);
+                    VolumeSample.offRoad(levelOffset > 0 ? "+" + levelOffset : String.valueOf(levelOffset));
 
                     return Optional.empty();
                 }
@@ -246,6 +248,7 @@ public final class LotLevel {
                 // Uma leitura do bloco que já está na mão.
                 if (!LotGround.isLotGround(world, ground)) {
                     LotRefusals.refused(colonyId, LotRefusals.Reason.NOT_NATURAL_GROUND);
+                    VolumeSample.softGround(world, ground);
 
                     return Optional.empty();
                 }
@@ -313,6 +316,7 @@ public final class LotLevel {
 
         if (base.isEmpty()) {
             LotRefusals.refused(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL);
+            VolumeSample.offRoad("unlevelled");
 
             return Optional.empty();
         }

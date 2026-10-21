@@ -75,7 +75,9 @@ public final class StripRoad {
                     continue;
                 }
 
-                Optional<BlockPos> ground = LotGround.groundInColumn(world, x, z, y);
+                // Pela superfície na altura da caixa, como a busca de lote (RoadsideSites.roadGroundAt):
+                // a janela do meio da caixa não via as ruas da beira d'água da vila na duna.
+                Optional<BlockPos> ground = RoadsideSites.roadGroundAt(world, colonyId, x, z, y);
 
                 if (ground.isEmpty() || !isRoad(world, colonyId, ground.get())) {
                     continue;

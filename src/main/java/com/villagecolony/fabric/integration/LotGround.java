@@ -69,6 +69,12 @@ public final class LotGround {
      */
     static Optional<BlockPos> groundInColumn(
             ServerWorld world, int x, int z, int aroundY) {
+        return groundInColumn(world, x, z, aroundY, LotLevel.WINDOW_UP);
+    }
+
+    /** O mesmo, com a janela subindo {@code up} blocos — a terraplanagem corta até {@link LotTerraform#MAX_CUT}. */
+    static Optional<BlockPos> groundInColumn(
+            ServerWorld world, int x, int z, int aroundY, int up) {
 
         WorldChunk chunk = world.getChunkManager().getWorldChunk(x >> 4, z >> 4);
 
@@ -93,19 +99,30 @@ public final class LotGround {
         // obra limpa o lote (LotGrowth, autor, 2026-10-20).
         boolean trees = LotGrowth.clearsTreesAt(world, new BlockPos(x, aroundY, z));
 
-        if (!isEmptyForGround(chunk.getBlockState(new BlockPos(x, aroundY + LotLevel.WINDOW_UP + 1, z)), trees)) {
+        if (!isEmptyForGround(chunk.getBlockState(new BlockPos(x, aroundY + up + 1, z)), trees)
+                && !isArenaCeiling(chunk.getBlockState(new BlockPos(x, aroundY + up + 1, z)), up + 1)) {
             return Optional.empty();
         }
 
-        for (int y = aroundY + LotLevel.WINDOW_UP; y >= aroundY - LotLevel.WINDOW_DOWN; y--) {
+        for (int y = aroundY + up; y >= aroundY - LotLevel.WINDOW_DOWN; y--) {
             BlockPos pos = new BlockPos(x, y, z);
+            BlockState state = chunk.getBlockState(pos);
 
-            if (!isEmptyForGround(chunk.getBlockState(pos), trees)) {
+            if (!isEmptyForGround(state, trees) && !isArenaCeiling(state, y - aroundY)) {
                 return Optional.of(pos);
             }
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * O teto de barreira da arena de GameTest, acima da janela de sempre ({@link LotLevel#WINDOW_UP}): não
+     * é bloco do mundo (o mesmo de LotClearance), e a janela do corte ({@link LotTerraform#MAX_CUT}) o
+     * alcança. Na janela de sempre a barreira continua sendo parede, como a borda da arena.
+     */
+    private static boolean isArenaCeiling(BlockState state, int aboveRoad) {
+        return aboveRoad > LotLevel.WINDOW_UP && state.isOf(Blocks.BARRIER);
     }
 
     /** Vazio para achar o chão: o de {@link #isNothing}, e a vegetação natural onde a obra a limpa. */

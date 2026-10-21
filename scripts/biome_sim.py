@@ -50,6 +50,7 @@ TARGETS = {
     "snowy": ("natural", None, "minecraft:village_snowy", None),
     # Biomas de vila com o mundo todo do mesmo bioma: sem borda, só o recurso dele.
     "fixed-meadow": ("fixed", "minecraft:meadow", "minecraft:village_plains", None),
+    "fixed-desert": ("fixed", "minecraft:desert", "minecraft:village_desert", None),
     "fixed-snowy_taiga": ("fixed", "minecraft:snowy_taiga", None, "minecraft:village_taiga"),
     "fixed-savanna_plateau": ("fixed", "minecraft:savanna_plateau", "minecraft:village_savanna", None),
     # Biomas em que o jogo não gera vila: uma vila de planície posta à força.
@@ -224,8 +225,8 @@ def villagers_near(rcon, x, z):
     return int(found.group(1)) if found else 0
 
 
-def locate_or_place(rcon, locate, place):
-    """A coluna da vila: a natural mais perto da origem, ou uma posta à força em (0, 0)."""
+def locate_or_place(rcon, locate, place, near=(0, 0)):
+    """A coluna da vila: a natural mais perto de ``near`` (a origem, ou --near), ou uma posta à força em (0, 0)."""
     if place:
         # O /place recusa posição não carregada: força os chunks antes.
         force_around(rcon, 0, 0)
@@ -237,7 +238,7 @@ def locate_or_place(rcon, locate, place):
 
         return 0, 0
 
-    answer = rcon.run(f"execute in minecraft:overworld positioned 0 64 0 run locate structure {locate}")
+    answer = rcon.run(f"execute in minecraft:overworld positioned {near[0]} 64 {near[1]} run locate structure {locate}")
     print(f"  locate: {answer.strip()}")
     found = re.search(r"\[(-?\d+), [^,]+, (-?\d+)\]", answer)
 
@@ -300,7 +301,7 @@ def run_report(script, args, out_path):
         out.write(result.stderr)
 
 
-def simulate(name, days, seed, keep_world):
+def simulate(name, days, seed, keep_world, near=(0, 0)):
     mode, biome, locate, place = TARGETS[name]
     level = f"sim-{name}"
     password = secrets.token_hex(12)
@@ -330,7 +331,7 @@ def simulate(name, days, seed, keep_world):
         wait_for(latest, r"RCON running on", process, timeout=900)
         rcon = Rcon(RCON_PORT, password)
 
-        x, z = locate_or_place(rcon, locate, place)
+        x, z = locate_or_place(rcon, locate, place, near)
         print(f"  vila em ({x}, {z})")
 
         if not place:
@@ -410,6 +411,8 @@ def main(argv):
     parser.add_argument("--days", type=int, default=2, help="dias de jogo por alvo (padrão 2)")
     parser.add_argument("--seed", default=DEFAULT_SEED)
     parser.add_argument("--keep-world", action="store_true", help="não apaga o mundo depois")
+    parser.add_argument("--near", default="0,0",
+                        help="X,Z de onde procurar a vila: a do jogo do autor, com a mesma --seed")
     args = parser.parse_args(argv)
 
     if args.list:
@@ -427,7 +430,8 @@ def main(argv):
 
     for name in chosen:
         try:
-            summary[name] = simulate(name, args.days, args.seed, args.keep_world)
+            summary[name] = simulate(name, args.days, args.seed, args.keep_world,
+                                     tuple(int(v) for v in args.near.split(",")))
         except Exception as failure:  # um alvo que falha não derruba os outros
             print(f"[{name}] FALHOU: {failure}")
             summary[name] = {"falha": str(failure)}

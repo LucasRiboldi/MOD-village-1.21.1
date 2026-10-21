@@ -393,9 +393,11 @@ public final class RoadIndex {
 
         Set<Long> building = SweepState.BUILDING.get(colonyId);
 
-        // O caminho de bioma só é rua no índice: o arenito liso da vila gerada é parede de casa.
+        // O caminho de bioma só é rua no índice ou na peça de rua da vila gerada: o arenito liso
+        // da vila do deserto é parede de casa e é a rua dela (BlockProtection.isVillageStreet).
         return (building != null && building.contains(column))
-                || (!biomePath && BlockProtection.isVillageOriginal(world, pos));
+                || (!biomePath && BlockProtection.isVillageOriginal(world, pos))
+                || (biomePath && BlockProtection.isVillageStreet(world, pos));
     }
 
     /** Se a coluna está no índice de ruas de alguma colônia — quem assentou o caminho de bioma. */

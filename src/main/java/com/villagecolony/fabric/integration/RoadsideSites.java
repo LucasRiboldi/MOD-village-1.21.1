@@ -111,7 +111,7 @@ public final class RoadsideSites {
             ServerWorld world, UUID colonyId, BlockPos center,
             int x, int z, int aroundY, List<BuildSiteScanner.Footprint> footprints) {
 
-        Optional<BlockPos> ground = LotGround.groundInColumn(world, x, z, aroundY);
+        Optional<BlockPos> ground = roadGroundAt(world, colonyId, x, z, aroundY);
 
         // Material oficial so vira rua quando pertence a ROAD_AREA.
         if (ground.isEmpty() || !RoadIndex.isRoadArea(world, colonyId, ground.get())) {
@@ -155,6 +155,35 @@ public final class RoadsideSites {
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * O chão da coluna, para saber se ela é rua: na janela do centro, ou na superfície dela se esta
+     * cai na altura da caixa da vila — deserto jogado, 2026-10-20: a vila na encosta da duna tinha
+     * ruas de y63 a y72, a janela do centro (+2) só via as de baixo, à beira d'água, e a colônia
+     * ficou 2,8 dias sem lote aprovado. A rua de cima continua medindo o lote pela altura dela.
+     */
+    static Optional<BlockPos> roadGroundAt(ServerWorld world, UUID colonyId, int x, int z, int aroundY) {
+        Optional<BlockPos> near = LotGround.groundInColumn(world, x, z, aroundY);
+
+        if (near.isPresent() && RoadIndex.isRoadArea(world, colonyId, near.get())) {
+            return near;
+        }
+
+        WorldChunk chunk = world.getChunkManager().getWorldChunk(x >> 4, z >> 4);
+        Optional<com.villagecolony.core.colony.model.VillageBounds> box =
+                VillageColonyMod.COLONIES.find(colonyId).flatMap(Colony::bounds);
+
+        if (chunk == null || box.isEmpty()) {
+            return near;
+        }
+
+        BlockPos surface = new BlockPos(x, chunk.sampleHeightmap(
+                net.minecraft.world.Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z), z);
+
+        return surface.getY() >= box.get().minY() && surface.getY() <= box.get().maxY()
+                ? Optional.of(surface)
+                : near;
     }
 
     /** O lote desta planta ao lado desta rua, se houver. */

@@ -16,7 +16,7 @@ import java.util.Optional;
  *
  * <p>O plano manda <b>não afrouxar</b> o critério da obra e <b>preparar o terreno</b>. A casa pronta
  * continua com a base exatamente no nível da rua (Regra 19); o que muda é que um lote de chão
- * irregular, com cada coluna a até {@link #MAX_STEP} blocos da rua, é aceito como aplainável
+ * irregular, com cada coluna a até {@link #MAX_CUT} blocos acima ou {@link #MAX_FILL} abaixo da rua, é aceito como aplainável
  * ({@link LotLevel}) e aplainado aqui, na abertura da obra, antes de a preparação de fundação
  * conferir a base: o que sobra acima da base é cortado, e o que falta abaixo é aterrado com o chão
  * do bioma. A fase 2 é a vila inteira (a montanha em subida de 1 em 1).
@@ -27,8 +27,15 @@ import java.util.Optional;
  */
 public final class LotTerraform {
 
-    /** Quanto uma coluna pode estar acima ou abaixo da rua e ainda ser aplainada. */
-    static final int MAX_STEP = 2;
+    /**
+     * Quanto chão acima da rua uma coluna pode ter e ainda ser cortada — autor, 2026-10-20, depois do
+     * deserto jogado: a vila na encosta da duna teve 0 lotes aprovados em 2,8 dias (31.478 recusas
+     * "sem chão na janela"), com o relevo de +3 a +11 acima da rua. Corta-se só o chão do bioma.
+     */
+    static final int MAX_CUT = 5;
+
+    /** Quanto abaixo da rua uma coluna pode estar e ainda ser aterrada (fase 1). */
+    static final int MAX_FILL = 2;
 
     private LotTerraform() {
     }
@@ -38,7 +45,7 @@ public final class LotTerraform {
      * do bioma, o que se aterra é vazio.
      */
     static boolean columnLevels(ServerWorld world, int x, int z, int groundY, int baseY) {
-        if (Math.abs(groundY - baseY) > MAX_STEP) {
+        if (groundY - baseY > MAX_CUT || baseY - groundY > MAX_FILL) {
             return false;
         }
 
@@ -110,7 +117,7 @@ public final class LotTerraform {
             for (int dz = 0; dz < sizeZ; dz++) {
                 int x = originX + dx;
                 int z = originZ + dz;
-                Optional<BlockPos> ground = LotGround.groundInColumn(world, x, z, baseY);
+                Optional<BlockPos> ground = LotGround.groundInColumn(world, x, z, baseY, MAX_CUT);
 
                 if (ground.isEmpty() || ground.get().getY() == baseY
                         || !columnLevels(world, x, z, ground.get().getY(), baseY)) {

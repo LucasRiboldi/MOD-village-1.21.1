@@ -126,12 +126,13 @@ public final class VillageRoad {
 
     /**
      * Se o bloco desta posição é rua: o material oficial em qualquer lugar, e o caminho de bioma só
-     * onde a colônia o assentou (índice de ruas de qualquer colônia).
+     * onde a colônia o assentou (índice de ruas de qualquer colônia) ou na peça de rua da vila gerada.
      */
     public static boolean isPaving(ServerWorld world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
 
-        return isPaving(world, state) || (isBiomePath(state) && RoadIndex.isLaidByAColony(pos));
+        return isPaving(world, state) || (isBiomePath(state)
+                && (RoadIndex.isLaidByAColony(pos) || BlockProtection.isVillageStreet(world, pos)));
     }
 
     /** Se o bloco pertence ao conjunto oficial de materiais de rua. */

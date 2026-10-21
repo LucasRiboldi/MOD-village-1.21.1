@@ -101,6 +101,12 @@ public final class VolumeSample {
      */
     private static final Set<Long> COUNTED = new HashSet<>();
 
+    /** De que é feito o chão que não sustenta a casa (NOT_NATURAL_GROUND) — deserto jogado, 2026-10-20. */
+    private static final Map<String, Integer> SOFT_GROUND = new HashMap<>();
+
+    /** Quanto a coluna recusada fica da rua (OFF_ROAD_LEVEL), ou "unlevelled" quando o corte não serve. */
+    private static final Map<String, Integer> OFF_ROAD = new HashMap<>();
+
     private VolumeSample() {
     }
 
@@ -133,8 +139,42 @@ public final class VolumeSample {
         SEEN.merge(name, 1, Integer::sum);
     }
 
+    /** O chão da coluna não é bloco sólido: água, areia movediça, planta. */
+    public static void softGround(ServerWorld world, BlockPos pos) {
+        String name = Registries.BLOCK.getId(world.getBlockState(pos).getBlock()).getPath();
+
+        if (SOFT_GROUND.size() < MAX_KINDS || SOFT_GROUND.containsKey(name)) {
+            SOFT_GROUND.merge(name, 1, Integer::sum);
+        }
+    }
+
+    /** A coluna fora do nível da rua: o desnível dela, ou o lote que o corte não aplaina. */
+    public static void offRoad(String how) {
+        OFF_ROAD.merge(how, 1, Integer::sum);
+    }
+
     /** Diz o que se viu, junto do relatório de recusas. */
     public static void report() {
+        if (!OFF_ROAD.isEmpty()) {
+            StringBuilder off = new StringBuilder();
+            OFF_ROAD.entrySet().stream()
+                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                    .limit(10)
+                    .forEach(entry -> off.append(off.length() > 0 ? "; " : "")
+                            .append(entry.getValue()).append(" at ").append(entry.getKey()));
+            VillageColonyMod.LOGGER.info("Lots turned down off the street level — {}", off);
+        }
+
+        if (!SOFT_GROUND.isEmpty()) {
+            StringBuilder soft = new StringBuilder();
+            SOFT_GROUND.entrySet().stream()
+                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                    .limit(8)
+                    .forEach(entry -> soft.append(soft.length() > 0 ? "; " : "")
+                            .append(entry.getValue()).append(' ').append(entry.getKey()));
+            VillageColonyMod.LOGGER.info("Lots turned down for ground that is not solid — {}", soft);
+        }
+
         if (BY_CAUSE.isEmpty()) {
             return;
         }
@@ -171,6 +211,10 @@ public final class VolumeSample {
         SEEN.clear();
 
         COUNTED.clear();
+
+        SOFT_GROUND.clear();
+
+        OFF_ROAD.clear();
     }
 
     /** Quantas vezes esta causa recusou. Para a bateria. */
