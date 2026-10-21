@@ -51,6 +51,46 @@ public class DuneCutGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** O corredor em volta da casa desce até a base; além dele e na rua, nada muda (autor, 21-10). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "dune_cut")
+    public void aCorridorIsCutAroundTheHouseButNotThroughTheStreet(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 4, 1)).add(1_000_000, 0, 2_800_000);
+        int ring = LotTerraform.RING;
+        world.getChunk(origin);
+
+        for (int dx = -ring - 1; dx <= SIDE + ring; dx++) {
+            for (int dz = -ring - 1; dz <= SIDE + ring; dz++) {
+                for (int dy = -2; dy <= 4; dy++) {
+                    world.setBlockState(origin.add(dx, dy, dz), (dy < -1 ? Blocks.STONE : Blocks.SAND).getDefaultState());
+                }
+            }
+        }
+        BlockPos street = origin.add(-1, 4, 1);
+        world.setBlockState(street, Blocks.DIRT_PATH.getDefaultState());
+
+        try {
+            int cut = LotTerraform.cutRing(world, origin.getX(), origin.getZ(), SIDE, SIDE, origin.getY());
+
+            context.assertTrue(cut > 0, "o corredor não cortou nada");
+            context.assertTrue(world.getBlockState(origin.add(-ring, 1, 0)).isAir()
+                            && world.getBlockState(origin.add(SIDE + ring - 1, 1, SIDE)).isAir()
+                            && world.getBlockState(origin.add(-ring, 0, 0)).isOf(Blocks.SAND),
+                    "o corredor não ficou na altura da base");
+            context.assertTrue(world.getBlockState(origin.add(-ring - 1, 4, 0)).isOf(Blocks.SAND),
+                    "o corte passou do corredor");
+            context.assertTrue(world.getBlockState(origin.add(1, 4, 1)).isOf(Blocks.SAND),
+                    "o corredor mexeu na pegada da casa");
+            context.assertTrue(world.getBlockState(street).isOf(Blocks.DIRT_PATH), "controle: o corredor cortou a rua");
+        } finally {
+            for (BlockPos pos : BlockPos.iterate(origin.add(-ring - 1, -2, -ring - 1), origin.add(SIDE + ring, 5, SIDE + ring))) {
+                world.setBlockState(pos, Blocks.AIR.getDefaultState());
+            }
+        }
+
+        context.complete();
+    }
+
     /** Controle: um acima do corte continua recusado. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "dune_cut")
     public void aDuneAboveTheCutIsRefused(TestContext context) {

@@ -35,8 +35,9 @@ próprias (madeira e argila com prova, descascar, ingrediente de superfície); `
       fornalha que a obra espera (arenito liso 67× de lado); ferro descansa um dia onde a mina não o tem
       (IronRest); rede da mina menor por nível (1º raio 2, demais 3; antes 6) para descer mais rápido;
       chão firme da vila de areia (2 camadas abaixo da superfície de areia viram arenito, DesertGround).
-      Pendente 🔴: o lote cortado na duna vira buraco — a casa em 148,78,-507 trava a vila (telhado sem
-      lugar de pé, 570 desistências de lado) e explica as rodadas de nota 5 da bancada; decisão do autor.
+      0.3.85 (autor, opção 1): o lote aplainado ganha um corredor de 2 blocos em volta da casa, cortado
+      até a base (só chão do bioma; nunca rua, peça da vila, obra ou beira d'água; não aterra). Bancada:
+      9,4 / 9,1 / 8,9, a casa do buraco (148,78,-507) fecha; desistências de lado 570 → 63–107.
       0.3.83 (autor, 21-10: "mudar de casa"): quem desiste do trabalho morando 2+ abaixo dele passa a
       dormir numa cama livre da vila na altura do trabalho, ou troca de casa com um aldeão sem ofício
       que mora lá (HomeMove); à noite o jogo já o leva para a cama. Bancada: 9,3 / 9,3 / 5,9 — na de

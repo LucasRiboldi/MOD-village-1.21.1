@@ -37,6 +37,14 @@ public final class LotTerraform {
     /** Quanto abaixo da rua uma coluna pode estar e ainda ser aterrada (fase 1). */
     static final int MAX_FILL = 2;
 
+    /**
+     * A largura do corredor cortado em volta da casa no lote aplainado — autor, 2026-10-21 (opção 1).
+     * Na bancada do deserto o lote cortado na duna deixava a casa num buraco: o construtor não achava
+     * lugar de pé para o telhado (570 desistências de lado) e a vila parava. O corredor, na altura da
+     * base, dá a volta na casa.
+     */
+    static final int RING = 2;
+
     private LotTerraform() {
     }
 
@@ -102,11 +110,66 @@ public final class LotTerraform {
                 blueprint.size().x(), blueprint.size().z(), baseY);
 
         if (moved > 0) {
+            moved += cutRing(world, project.origin().x(), project.origin().z(),
+                    blueprint.size().x(), blueprint.size().z(), baseY);
+        }
+
+        if (moved > 0) {
             VillageColonyMod.LOGGER.info("Colony {} levelled the lot of {} at {} — {} blocks cut or filled",
                     project.colonyId(), blueprint.id(), project.origin(), moved);
         }
 
         return moved;
+    }
+
+    /**
+     * O corredor de {@link #RING} blocos em volta da pegada: só corta, até a base, o chão do bioma que
+     * sobra acima dela (o que está abaixo fica — o corredor não aterra); rua e o que a coluna não deixa
+     * cortar ({@link #columnLevels}) ficam.
+     *
+     * @return quantos blocos saíram
+     */
+    static int cutRing(ServerWorld world, int originX, int originZ, int sizeX, int sizeZ, int baseY) {
+        int moved = 0;
+
+        for (int dx = -RING; dx < sizeX + RING; dx++) {
+            for (int dz = -RING; dz < sizeZ + RING; dz++) {
+                if (dx >= 0 && dx < sizeX && dz >= 0 && dz < sizeZ) {
+                    continue;
+                }
+
+                int x = originX + dx;
+                int z = originZ + dz;
+                Optional<BlockPos> ground = LotGround.groundInColumn(world, x, z, baseY, MAX_CUT);
+
+                if (ground.isEmpty() || ground.get().getY() <= baseY
+                        || VillageRoad.isPaving(world, ground.get())
+                        || !columnLevels(world, x, z, ground.get().getY(), baseY)
+                        || touchesTheVillage(world, x, z, ground.get().getY(), baseY)) {
+                    continue;
+                }
+
+                moved += levelColumn(world, x, z, ground.get().getY(), baseY);
+            }
+        }
+
+        return moved;
+    }
+
+    /**
+     * Se o corte desta coluna levaria peça da vila gerada que não é solo natural — a parede de arenito
+     * liso das casas do deserto conta como chão do bioma, e o corredor não foi validado com o lote.
+     */
+    private static boolean touchesTheVillage(ServerWorld world, int x, int z, int groundY, int baseY) {
+        for (int y = baseY + 1; y <= groundY; y++) {
+            BlockPos pos = new BlockPos(x, y, z);
+
+            if (!LotGround.isNaturalGround(world.getBlockState(pos)) && BlockProtection.isVillageOriginal(world, pos)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Aplaina cada coluna da pegada que pode ser levada à base; a que não pode fica como está. */
