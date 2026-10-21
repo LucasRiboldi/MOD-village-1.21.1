@@ -30,7 +30,7 @@ public class DesertFixesGameTest implements FabricGameTest {
         VillageColonyMod.WORKERS.register(plain, colonyId);
 
         try {
-            StrandedWorkers.strandBelow(below, feet, feet.up(20), "test");
+            StrandedWorkers.strandBelow(below, feet, feet.up(20), "test", 0L);
             StrandedWorkers.strandNow(plain, feet, "test");
 
             context.assertFalse(StrandedWorkers.reachedTheWay(below, feet),
@@ -46,6 +46,42 @@ public class DesertFixesGameTest implements FabricGameTest {
             StrandedWorkers.forget(plain);
             VillageColonyMod.WORKERS.remove(below);
             VillageColonyMod.WORKERS.remove(plain);
+        }
+
+        context.complete();
+    }
+
+    /** A subida que não sobe tem prazo; quem subiu não larga; quem largou descansa dela. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "desert_fixes")
+    public void aClimbThatGainsNothingEndsAndRests(TestContext context) {
+        UUID colonyId = UUID.randomUUID();
+        UUID stuck = UUID.randomUUID();
+        UUID climbing = UUID.randomUUID();
+        BlockPos feet = context.getAbsolutePos(new BlockPos(2, 1, 2));
+        long deadline = StrandedWorkers.CLIMB_DEADLINE;
+
+        VillageColonyMod.WORKERS.register(stuck, colonyId);
+        VillageColonyMod.WORKERS.register(climbing, colonyId);
+
+        try {
+            StrandedWorkers.strandBelow(stuck, feet, feet.up(20), "test", 0L);
+            StrandedWorkers.strandBelow(climbing, feet, feet.up(20), "test", 0L);
+
+            context.assertFalse(StrandedWorkers.climbGaveUp(stuck, feet, deadline - 1),
+                    "largou a subida antes do prazo");
+            context.assertFalse(StrandedWorkers.climbGaveUp(climbing, feet.up(2), deadline),
+                    "controle: quem subiu dois blocos largou a subida");
+            context.assertTrue(StrandedWorkers.climbGaveUp(stuck, feet, deadline),
+                    "no prazo, sem subir, não largou a subida");
+
+            StrandedWorkers.release(stuck);
+            context.assertFalse(StrandedWorkers.strandBelow(stuck, feet, feet.up(20), "test", deadline + 1),
+                    "voltou à subida no descanso dela");
+        } finally {
+            StrandedWorkers.forget(stuck);
+            StrandedWorkers.forget(climbing);
+            VillageColonyMod.WORKERS.remove(stuck);
+            VillageColonyMod.WORKERS.remove(climbing);
         }
 
         context.complete();
@@ -89,8 +125,15 @@ public class DesertFixesGameTest implements FabricGameTest {
         floor(world, chest, -1);
         floor(world, high, LumberjackNursery.NEAR_CHEST_MAX);
 
+        com.villagecolony.core.colony.model.Colony colony = com.villagecolony.core.colony.model.Colony.create(
+                UUID.randomUUID(), com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(chest));
+        colony.measure(new com.villagecolony.core.colony.model.VillageBounds(chest.getX() - 20, chest.getY() - 8,
+                chest.getZ() - 20, chest.getX() + 20, chest.getY() + 8, high.getZ() + 20));
+        VillageColonyMod.COLONIES.register(colony);
+        UUID outside = UUID.randomUUID();
+
         try {
-            Optional<BlockPos> spot = LumberjackNursery.spotNearTheChest(world, chest);
+            Optional<BlockPos> spot = LumberjackNursery.spotNearTheChest(world, colony.id(), chest);
 
             context.assertTrue(spot.isPresent(), "não achou viveiro perto do baú");
             double distance = Math.sqrt(Math.pow(spot.get().getX() - chest.getX(), 2)
@@ -101,9 +144,13 @@ public class DesertFixesGameTest implements FabricGameTest {
                     "o viveiro ficou fora do anel ou da altura do baú: " + spot.get().subtract(chest));
 
             // Controle: o chão bem acima do baú não serve.
-            context.assertTrue(LumberjackNursery.spotNearTheChest(world, high).isEmpty(),
+            context.assertTrue(LumberjackNursery.spotNearTheChest(world, colony.id(), high).isEmpty(),
                     "o viveiro nasceu longe da altura do baú");
+            // Controle: colônia sem caixa medida não usa o anel.
+            context.assertTrue(LumberjackNursery.spotNearTheChest(world, outside, chest).isEmpty(),
+                    "o viveiro do anel nasceu sem caixa da vila");
         } finally {
+            VillageColonyMod.COLONIES.remove(colony.id());
             clear(world, chest);
             clear(world, high);
         }

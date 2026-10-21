@@ -160,7 +160,7 @@ public final class LotGround {
      * dentro de cômodo cujo projeto pede ar — o projeto não escreve nada
      * ali, e a grama fica. É cosmético e está registrado no §13.
      */
-    static boolean isNothing(BlockState state) {
+    public static boolean isNothing(BlockState state) {
         return state.isAir()
                 || state.isReplaceable()
                 || state.isIn(BlockTags.REPLACEABLE)

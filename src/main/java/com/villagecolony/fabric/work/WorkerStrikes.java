@@ -44,6 +44,15 @@ public final class WorkerStrikes {
     }
 
     /**
+     * O mesmo, dizendo para onde ele ia: quem desistiu dois ou mais abaixo do destino sobe até a altura
+     * dele (StrandedWorkers.gaveUpOnTheWayTo) — autor, 2026-10-21, todas as profissões.
+     */
+    public static void gaveUp(UUID workerId, Task task, net.minecraft.util.math.BlockPos way) {
+        StrandedWorkers.gaveUpOnTheWayTo(workerId, way);
+        gaveUp(workerId, task);
+    }
+
+    /**
      * Este trabalhador desistiu do que estava fazendo.
      *
      * <p>Silencioso quando o aldeão já não é trabalhador da colônia —

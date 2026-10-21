@@ -270,7 +270,7 @@ public final class ShepherdWork {
             // rápido que os dois minutos de baixo. Ver WorkStall, que faz a
             // pergunta do expediente por conta própria.
             if (job.stall.stuck(world, villager) || job.stalled >= STALL_LIMIT) {
-                giveUp(workerId, job);
+                giveUp(workerId, job, sheep.getBlockPos());
             } else {
                 WorkTargets.set(workerId, sheep.getBlockPos());
             }
@@ -442,14 +442,14 @@ public final class ShepherdWork {
         }
     }
 
-    private static void giveUp(UUID workerId, Job job) {
+    private static void giveUp(UUID workerId, Job job, BlockPos sheepAt) {
         VillageColonyMod.LOGGER.info(
                 "Shepherd {} could not reach the sheep — task back to the queue", workerId);
 
         job.task.release("could not reach the sheep");
 
         // A desistência passa a contar — 2026-09-10. Ver WorkerStrikes.
-        WorkerStrikes.gaveUp(workerId, job.task);
+        WorkerStrikes.gaveUp(workerId, job.task, sheepAt);
 
         release(workerId, job);
     }

@@ -99,6 +99,8 @@ public final class StrandedEscape {
         // de lote — estudo de 01-10, §7-A. Ver SweepCadence.
         SweepCadence.pass(world);
 
+        StrandedWorkers.strandThoseBelowTheirWay(world); // quem desistiu abaixo do destino (2026-10-21)
+
         for (UUID workerId : StrandedWorkers.all()) {
             pass(world, workerId);
         }
@@ -144,6 +146,15 @@ public final class StrandedEscape {
             return;
         }
 
+        // A subida abaixo do caminho que não sobe tem prazo (StrandedWorkers.CLIMB_DEADLINE).
+        if (StrandedWorkers.climbGaveUp(workerId, feet, world.getTime())) {
+            VillageColonyMod.LOGGER.info("Stranded worker {} gives up climbing at {} — no height gained in time",
+                    workerId.toString().substring(0, 8), feet.toShortString());
+            letGo(world, villager, workerId, true);
+
+            return;
+        }
+
         // Quem encalhou abaixo do caminho só sai na altura dele (StrandedWorkers.reachedTheWay).
         if (isOut(world, feet) && StrandedWorkers.reachedTheWay(workerId, feet)) {
             VillageColonyMod.LOGGER.info(
@@ -153,12 +164,12 @@ public final class StrandedEscape {
                     StrandedWorkers.stepsDug(workerId));
             ActionJournal.action(workerId, "UNSTRANDED", "", StrandedWorkers.stepsDug(workerId), feet, "");
 
-            StrandedWorkers.release(workerId);
-            ClimbOut.finish(world, villager, workerId);
-            MineReturn.finish(workerId);
-            forget(workerId);
-            EscapeBackfill.begin(workerId,
-                    VillageColonyMod.STORAGES.of(workerId).map(WorkerStorage::chestPosition).orElse(null));
+            // Subiu até o caminho: fica uma escada fixa, e a de fuga não é tapada (VillageStairs).
+            boolean stair = StrandedWorkers.startOf(workerId).flatMap(start -> StrandedWorkers.wayOf(workerId)
+                    .map(way -> VillageStairs.connect(world, worker.get().colonyId(), start, feet, way) > 0))
+                    .orElse(false);
+
+            letGo(world, villager, workerId, !stair);
 
             return;
         }
@@ -177,6 +188,19 @@ public final class StrandedEscape {
         ClimbOut.pass(world, villager, workerId,
                 StrandedWorkers.wayOf(workerId).orElseGet(() -> MineReturn.homeFor(colony.get(), feet)),
                 VillageColonyMod.STORAGES.of(workerId).map(WorkerStorage::chestPosition).orElse(null));
+    }
+
+    /** Solta o encalhado de volta à escala; {@code backfill}: a escada de fuga dele é tapada. */
+    private static void letGo(ServerWorld world, VillagerEntity villager, UUID workerId, boolean backfill) {
+        StrandedWorkers.release(workerId);
+        ClimbOut.finish(world, villager, workerId);
+        MineReturn.finish(workerId);
+        forget(workerId);
+
+        if (backfill) {
+            EscapeBackfill.begin(workerId,
+                    VillageColonyMod.STORAGES.of(workerId).map(WorkerStorage::chestPosition).orElse(null));
+        }
     }
 
     /**

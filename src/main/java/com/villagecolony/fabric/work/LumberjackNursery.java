@@ -71,7 +71,8 @@ public final class LumberjackNursery {
     private static final int INNER_EDGE = 48;
 
     /**
-     * O anel em volta do baú do lenhador, na altura dele, tentado antes da borda — deserto jogado,
+     * O anel em volta do baú do lenhador, na altura dele, tentado antes da borda quando o baú fica mais de
+     * {@code NEAR_CHEST_HEIGHT + 1} acima ou abaixo do centro (a vila em duas alturas) — deserto jogado,
      * 2026-10-21: o lenhador mora na parte baixa da vila (y63) e as mudas da borda ficaram 11 a 20
      * blocos acima; ele andou até 56 blocos por árvore e cortou 12 toras na sessão.
      */
@@ -143,10 +144,13 @@ public final class LumberjackNursery {
         int planted = 0;
 
         while (planted < room) {
-            Optional<BlockPos> spot = chest.flatMap(at -> spotNearTheChest(world, at))
+            // O anel do baú só na vila em duas alturas: o baú longe da altura do centro.
+            Optional<BlockPos> spot = chest.filter(at -> Math.abs(at.getY() - centre.getY()) > NEAR_CHEST_HEIGHT + 1)
+                    .flatMap(at -> spotNearTheChest(world, colonyId, at))
                     .or(() -> spotOnTheEdge(world, centre, towards));
 
-            if (spot.isEmpty() || !TreeNursery.plant(world, spot.get(), sapling.get())) {
+            // O lugar já foi conferido pela busca (borda ou anel do baú).
+            if (spot.isEmpty() || !TreeNursery.plantAt(world, spot.get(), sapling.get())) {
                 break;
             }
 
@@ -246,15 +250,26 @@ public final class LumberjackNursery {
         return Optional.empty();
     }
 
-    /** Um viveiro no anel em volta do baú do lenhador, com o chão na altura do baú. */
-    static Optional<BlockPos> spotNearTheChest(ServerWorld world, BlockPos chest) {
+    /**
+     * Um viveiro no anel em volta do baú do lenhador, com o chão na altura do baú e dentro da caixa da
+     * vila — fora dela a muda cai no terreno de outro (na bateria, no cenário vizinho).
+     */
+    static Optional<BlockPos> spotNearTheChest(ServerWorld world, UUID colonyId, BlockPos chest) {
+        Optional<com.villagecolony.core.colony.model.VillageBounds> box =
+                VillageColonyMod.COLONIES.find(colonyId).flatMap(com.villagecolony.core.colony.model.Colony::bounds);
+
+        if (box.isEmpty()) {
+            return Optional.empty();
+        }
+
         for (int radius = NEAR_CHEST_MIN; radius <= NEAR_CHEST_MAX; radius++) {
             for (int turn = 0; turn < DIRECTIONS; turn++) {
                 double angle = 2 * Math.PI * turn / DIRECTIONS;
                 int x = chest.getX() + (int) Math.round(radius * Math.cos(angle));
                 int z = chest.getZ() + (int) Math.round(radius * Math.sin(angle));
 
-                if (world.getChunkManager().getWorldChunk(x >> 4, z >> 4) == null) {
+                if (x < box.get().minX() || x > box.get().maxX() || z < box.get().minZ() || z > box.get().maxZ()
+                        || world.getChunkManager().getWorldChunk(x >> 4, z >> 4) == null) {
                     continue;
                 }
 
@@ -262,7 +277,7 @@ public final class LumberjackNursery {
                     BlockPos at = new BlockPos(x, y, z);
 
                     if (!world.getBlockState(at).isAir() && world.getBlockState(at.up()).isAir()) {
-                        if (TreeNursery.isSpotForANursery(world, at)) {
+                        if (TreeNursery.isSpotForANursery(world, at) || isOpenNaturalGround(world, at)) {
                             return Optional.of(at);
                         }
 
@@ -273,6 +288,25 @@ public final class LumberjackNursery {
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * Chão natural da vila gerada, a céu aberto — deserto jogado, 2026-10-21: em volta do baú do
+     * lenhador havia 77 lugares de areia, todos dentro das peças da vila e por isso recusados pelo
+     * viveiro de sempre. Aqui vale a areia ou a terra (o chão que o gerador assentou, como na
+     * BlockProtection.mayBuildOver), nunca dentro de casa, nem na faixa da rua, nem em obra.
+     */
+    static boolean isOpenNaturalGround(ServerWorld world, BlockPos ground) {
+        net.minecraft.block.BlockState state = world.getBlockState(ground);
+
+        return (state.isIn(BlockTags.SAND) || state.isIn(BlockTags.DIRT))
+                && !state.isOf(TreeNursery.BED)
+                && world.getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING, ground.getX(), ground.getZ())
+                        == ground.getY() + 1
+                && !com.villagecolony.fabric.integration.PlayerClearedPlants.isCleared(ground)
+                && !com.villagecolony.fabric.integration.ConstructionZone.nearRoad(world, ground)
+                && !com.villagecolony.fabric.integration.BlockProtection.isColonyBuilt(ground)
+                && !com.villagecolony.fabric.integration.BlockProtection.isColonyBuilt(ground.up());
     }
 
     /** O ângulo, a partir do centro, do baú do lenhador da colônia; zero sem lenhador com baú. */

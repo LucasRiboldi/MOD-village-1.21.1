@@ -29,17 +29,21 @@ public class TreeFellingGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_felling", tickLimit = 20)
     public void aTaskEndingMidTreeFellsTheRestOfTheTrunk(TestContext context) {
         ServerWorld world = context.getWorld();
-        BlockPos tree = new BlockPos(3, 2, 3);
+        // Longe da arena (21-10): na bateria, o viveiro de um teste de lenhador vizinho plantava na
+        // borda dele, dentro desta arena, e a árvore deixava de ser uma árvore de quatro troncos.
+        BlockPos origin = context.getAbsolutePos(BlockPos.ORIGIN).add(1_000_000, 0, 2_500_000);
+        BlockPos tree = origin.add(3, 2, 3);
+        world.getChunk(tree);
 
-        context.setBlockState(tree.down(), Blocks.DIRT.getDefaultState());
+        world.setBlockState(tree.down(), Blocks.DIRT.getDefaultState());
 
         for (int y = 0; y < 4; y++) {
-            context.setBlockState(tree.up(y), Blocks.OAK_LOG.getDefaultState());
+            world.setBlockState(tree.up(y), Blocks.OAK_LOG.getDefaultState());
         }
 
-        context.setBlockState(tree.up(3).north(), Blocks.OAK_LEAVES.getDefaultState());
+        world.setBlockState(tree.up(3).north(), Blocks.OAK_LEAVES.getDefaultState());
 
-        BlockPos chestAt = context.getAbsolutePos(new BlockPos(0, 2, 0));
+        BlockPos chestAt = origin.add(0, 2, 0);
         world.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(chestAt);
         UUID lumberjack = UUID.randomUUID();
@@ -49,8 +53,8 @@ public class TreeFellingGameTest implements FabricGameTest {
         VillageColonyMod.STORAGES.register(WorkerStorage.of(lumberjack, chest));
 
         try {
-            LumberjackWork.Job job = new LumberjackWork.Job(task, context.getAbsolutePos(tree));
-            job.plan = TreeHarvester.plan(world, context.getAbsolutePos(tree));
+            LumberjackWork.Job job = new LumberjackWork.Job(task, tree);
+            job.plan = TreeHarvester.plan(world, tree);
 
             context.assertTrue(job.plan.logs() == 4, "o plano não tem os quatro troncos: " + job.plan.logs());
 
@@ -60,7 +64,7 @@ public class TreeFellingGameTest implements FabricGameTest {
             TreeFelling.closePlan(world, lumberjack, job);
 
             for (int y = 0; y < 4; y++) {
-                context.assertFalse(world.getBlockState(context.getAbsolutePos(tree.up(y))).isIn(BlockTags.LOGS),
+                context.assertFalse(world.getBlockState(tree.up(y)).isIn(BlockTags.LOGS),
                         "ficou tronco de pé a " + y + " da base");
             }
 

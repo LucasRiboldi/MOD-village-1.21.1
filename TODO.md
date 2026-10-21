@@ -31,6 +31,13 @@ próprias (madeira e argila com prova, descascar, ingrediente de superfície); `
       causas medidas na bancada com a semente do autor (`--near=-460,601`): a rua de arenito liso da
       vila gerada não era rua (só no índice, que só se enche de rua), a busca de rua só via +2 do
       centro, e a duna acima da rua não era cortada (corte até 5). Bancada: 0 → 4 casas, nota 5,1 → 8,8.
+      0.3.81 (deserto jogado na 0.3.80, nota 8,2, Spark ETMetpWVS9; a vila tem duas alturas, y63 e y80+):
+      toda profissão que desiste abaixo do destino sobe até a altura dele (pondo bloco ou cavando — a
+      regra de 15-10 "só o mineiro" vale fora desse caso), com prazo de 2 min e descanso de 5; escada
+      fixa de arenito entre as alturas (VillageStairs); viveiro do anel do baú aceita areia da vila a
+      céu aberto, só na vila em duas alturas e dentro da caixa; canteiro novo na areia além da borda da
+      roça (mais trigo para o pastor cruzar os bichos). Pendente: na bancada a nota variou de 4,4 a 9,0
+      (sem ganho claro sobre a 0.3.80); escada parou em 4 de 18 degraus por peça da vila; KF-006.
       0.3.80 (deserto jogado na 0.3.79, nota 9,1, Spark jiRJWBtgDi): encalhado abaixo do caminho sobe
       até a altura dele (pilar/escada rumo ao destino — o mineiro da casa baixa saía "after 0 steps" 9×);
       grama também no chão do curral; viveiro primeiro em volta do baú do lenhador, na altura dele;

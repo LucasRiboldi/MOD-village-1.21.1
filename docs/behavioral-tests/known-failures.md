@@ -5,6 +5,20 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ---
 
+## KF-006 — `CraftingGameTest.theCycleOpensTheCraftingTaskByItself` cai na bateria inteira
+
+**ABERTO.** 21-10, depois de duas classes novas de GameTest mudarem o arranjo das arenas: 2 quedas
+em 3 baterias ("o ciclo devia ter aberto uma tarefa de tábua, abriu 0"); isolado
+(`-PgametestOnly=CraftingGameTest`) 3 de 3. O mesmo arranjo expôs duas interferências que foram
+corrigidas levando os testes para fora da arena: `ColonyDetectionGameTest.aClusterBesideAColonyBuilding…`
+(a varredura `runCycleNow` consertava a fundação da colônia do teste vizinho e punha a casa fundadora
+em cima da árvore de) `TreeFellingGameTest.aTaskEndingMidTree…`. Este não pode sair da arena: a segunda
+fase exige o aldeão trabalhando, e fora da arena o chunk não processa entidade. Hipótese, não medida:
+o mesmo `runCycleNow`, ou os baús da arena vizinha atendendo a meta de tábua. Medir: com a queda, ler
+as tarefas e os baús da colônia do teste.
+
+---
+
 ## KF-005 — `MinerGameTest.theCoalInTheGalleryReachesTheChestAndTheVeinIsFollowed` cai na bateria inteira
 
 **ABERTO.** 21-10, código da 0.3.79/0.3.80: 3 quedas em 7 baterias ("o carvão da escada não chegou

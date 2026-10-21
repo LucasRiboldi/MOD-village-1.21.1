@@ -370,7 +370,7 @@ final class MinerSteps {
         // below it and unable to climb"). A fuga do encalhado o tira de lá.
         if (belowItsWay) {
             StrandedWorkers.strandBelow(villager.getUuid(), villager.getBlockPos(), way.get(),
-                    "below its way and unable to climb");
+                    "below its way and unable to climb", world.getTime());
         }
     }
 

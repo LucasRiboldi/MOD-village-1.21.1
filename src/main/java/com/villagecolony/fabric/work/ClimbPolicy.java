@@ -13,7 +13,10 @@ import java.util.UUID;
 /**
  * Quem pode remodelar o terreno para escalar — regra do autor, 2026-10-15.
  *
- * <p><b>Só o mineiro</b> põe bloco (pilar) ou cava (túnel) para subir. As outras profissões sobem
+ * <p><b>Só o mineiro</b> põe bloco (pilar) ou cava (túnel) para subir — e, desde 2026-10-21 (autor),
+ * também qualquer profissão encalhada abaixo do caminho ({@link StrandedWorkers#wayOf}), que sobe até a
+ * altura do destino: na vila do deserto a cama do lenhador fica na parte baixa, e o teleporte o
+ * devolvia ao mesmo buraco. Fora desse caso, as outras profissões sobem
  * apenas por degrau natural; sem um ao alcance, procuram num raio maior e, se nada, voltam à vila pelo
  * teleporte da cama ({@link #giveUp}), sem tocar o mundo. Separado do {@link ClimbOut} para ele caber
  * no teto de 500 linhas (F2 do plano).
@@ -33,9 +36,9 @@ final class ClimbPolicy {
         return VillageColonyMod.WORKERS.find(workerId).flatMap(Worker::profession).orElse(null);
     }
 
-    /** Se este trabalhador pode remodelar o terreno para escalar. */
+    /** Se este trabalhador pode remodelar o terreno para escalar: o mineiro, ou quem está abaixo do caminho. */
     static boolean mayReshape(UUID workerId) {
-        return mayReshapeTerrain(professionOf(workerId));
+        return mayReshapeTerrain(professionOf(workerId)) || StrandedWorkers.wayOf(workerId).isPresent();
     }
 
     /**
