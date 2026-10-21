@@ -312,7 +312,7 @@ public final class BuilderWork {
             BlockPos spot = foot.orElseGet(
                     () -> BuilderApproach.footOf(world, project, target, villager.getBlockPos()));
 
-            WorkTargets.set(workerId, spot, BuilderApproach.ARRIVAL);
+            WorkTargets.set(workerId, MineApproachPath.legToward(world, villager, spot), BuilderApproach.ARRIVAL);
 
             if (job.unreachable.gaveUp(world, villager, spot)) {
                 return HelperReach.gaveUp(job, workerId, spot, target);

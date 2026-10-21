@@ -31,9 +31,12 @@ próprias (madeira e argila com prova, descascar, ingrediente de superfície); `
       causas medidas na bancada com a semente do autor (`--near=-460,601`): a rua de arenito liso da
       vila gerada não era rua (só no índice, que só se enche de rua), a busca de rua só via +2 do
       centro, e a duna acima da rua não era cortada (corte até 5). Bancada: 0 → 4 casas, nota 5,1 → 8,8.
-      Pendente: **fazendeiro** ainda não alcança a roça elevada (para a 9 blocos, 3 abaixo dela — falta
-      degrau); **pastor** 0% de trabalho (deserto sem grama, a lã não volta); lenhador 31% e carpinteiro
-      33% bloqueados; cacto e cana contam como chão do lote.
+      0.3.79: fazendeiro vai ao lugar de pé ao lado da planta (FarmerStand) e, como o construtor, anda
+      por etapas quando longe — desistências 7 → 0 na bancada; grama ao pé do poste da ovelha amarrada
+      (PostGrass, pedido do autor). Pendente: a grama do poste não foi exercida na bancada (o pastor não
+      amarrou ovelha nenhuma) — só GameTest; pastor segue 75% ocioso; lenhador e carpinteiro parados
+      (40–60% ócio); cacto e cana contam como chão do lote; a bancada varia muito entre rodadas (nota
+      3,9 a 8,8 com o mesmo código) — comparar com 2+ rodadas.
 - [ ] 🔴 **Jogar 0.3.77 pelo roteiro** (`docs/testing/roteiro-por-bioma.md`): deserto e uma floresta,
       com `/vc bioma nota`; relatório com `scripts/biome_report.py`. A bancada não vê casa torta,
       aldeão preso nem rua estranha.

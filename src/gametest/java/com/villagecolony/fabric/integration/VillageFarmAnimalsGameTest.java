@@ -41,15 +41,19 @@ public class VillageFarmAnimalsGameTest implements FabricGameTest {
         Box box = new Box(center.getX() - HALF, world.getBottomY(), center.getZ() - HALF,
                 center.getX() + HALF + 1, world.getTopY(), center.getZ() + HALF + 1);
 
-        int born = VillageFarmAnimals.seedInitial(world, colony);
-        List<AnimalEntity> animals = world.getEntitiesByClass(AnimalEntity.class, box, Entity::isAlive);
+        // Os bichos que a fundação pôs no mundo, e não os que a consulta acha: o mundo do GameTest
+        // persiste entre rodadas e pode guardar sobras na mesma caixa.
+        List<AnimalEntity> animals = VillageFarmAnimals.seedInitial(world, colony);
 
         try {
-            context.assertTrue(born == VillageFarmAnimals.EACH * VillageFarmAnimals.SPECIES.size(),
-                    "deviam nascer 8 bichos e nasceram " + born);
+            context.assertTrue(animals.size() == VillageFarmAnimals.EACH * VillageFarmAnimals.SPECIES.size(),
+                    "deviam nascer 8 bichos e nasceram " + animals.size());
 
             for (EntityType<? extends AnimalEntity> species : VillageFarmAnimals.SPECIES) {
-                long count = animals.stream().filter(animal -> animal.getType() == species).count();
+                long count = animals.stream()
+                        .filter(animal -> animal.getType() == species && animal.isAlive()
+                                && box.contains(animal.getPos()))
+                        .count();
                 context.assertTrue(count == VillageFarmAnimals.EACH,
                         "a caixa da vila tem " + count + " de " + species.getUntranslatedName() + ", e não 2");
             }

@@ -44,10 +44,10 @@ public final class VillageFarmAnimals {
     private VillageFarmAnimals() {
     }
 
-    /** Solta os bichos da fundação; devolve quantos nasceram. */
-    public static int seedInitial(ServerWorld world, Colony colony) {
+    /** Solta os bichos da fundação; devolve os que entraram no mundo. */
+    public static List<AnimalEntity> seedInitial(ServerWorld world, Colony colony) {
         Random random = world.getRandom();
-        int born = 0;
+        List<AnimalEntity> born = new java.util.ArrayList<>();
 
         for (EntityType<? extends AnimalEntity> species : SPECIES) {
             for (int index = 0; index < EACH; index++) {
@@ -61,14 +61,16 @@ public final class VillageFarmAnimals {
 
                 if (animal != null) {
                     animal.setPersistent();
-                    world.spawnEntity(animal);
-                    born++;
+
+                    if (world.spawnEntity(animal)) {
+                        born.add(animal);
+                    }
                 }
             }
         }
 
         VillageColonyMod.LOGGER.info("Colony {} got {} farm animals at its founding",
-                colony.id().toString().substring(0, 8), born);
+                colony.id().toString().substring(0, 8), born.size());
 
         return born;
     }

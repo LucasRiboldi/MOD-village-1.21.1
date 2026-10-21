@@ -297,6 +297,11 @@ final class ShepherdHerding {
 
             animal.attachLeash(knot, true);
             WorkTargets.clear(shepherdId);
+
+            // A ovelha amarrada ganha grama ao pé do poste para recriar a lã (PostGrass).
+            if (animal instanceof net.minecraft.entity.passive.SheepEntity) {
+                PostGrass.ensure(world, herd.fence);
+            }
             VillageColonyMod.LOGGER.info("Shepherd {} brought a {} in and tied it to the fence at {}",
                     shepherdId.toString().substring(0, 8), animal.getType().getUntranslatedName(),
                     herd.fence.toShortString());

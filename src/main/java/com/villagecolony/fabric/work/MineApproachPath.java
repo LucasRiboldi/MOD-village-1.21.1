@@ -135,6 +135,27 @@ final class MineApproachPath {
         return known.waypoint != null ? known.waypoint : mouth;
     }
 
+    /** Daqui para longe, o fazendeiro e o construtor também andam por etapas. */
+    static final int FAR = 24;
+
+    /**
+     * O alvo de caminhada de quem não é mineiro: o próprio destino quando perto, ou a etapa do
+     * caminho parcial ({@link #toward}) quando longe — deserto jogado, 2026-10-20: na vila da duna à
+     * beira d'água o fazendeiro parou a 54 blocos da roça e o construtor a 46 da obra, a navegação do
+     * jogo sem traçar o caminho inteiro (541 "the path does not reach it" numa rodada da bancada).
+     */
+    static BlockPos legToward(ServerWorld world, VillagerEntity villager, BlockPos target) {
+        if (villager.getBlockPos().isWithinDistance(target, FAR)) {
+            return target;
+        }
+
+        // Sem caminho parcial que avance, a perna em linha reta na superfície (WalkLegs): na bancada,
+        // o fazendeiro à beira d'água ficava com o próprio alvo e parado a 54 blocos dele.
+        BlockPos step = toward(world, villager, target);
+
+        return step.equals(target) ? WalkLegs.towards(world, villager.getBlockPos(), target).orElse(target) : step;
+    }
+
     /**
      * Se o fim de um caminho parcial é progresso útil: encurta a menor distância já atingida à
      * boca por ao menos {@link #PROGRESS_MIN} (tolera pequenas oscilações e waypoint repetido).

@@ -70,13 +70,6 @@ public final class FarmerWork {
     /** Alcance de braço. O mesmo do pastor e do lenhador. */
     private static final int REACH = 3;
 
-    /**
-     * Daqui para longe, a caminhada até a lavoura vai por etapas (MineApproachPath) — deserto jogado,
-     * 2026-10-20: a roça da vila ficava a 54 blocos e 10 acima do fazendeiro, a navegação do jogo não
-     * traçava o caminho inteiro e ele desistiu 8 vezes ("could not reach the crop").
-     */
-    private static final int FAR = 24;
-
     /** Até onde ele procura lavoura em volta do centro da vila. */
     private static final int SEARCH_RADIUS = 32;
 
@@ -315,9 +308,10 @@ public final class FarmerWork {
         }
 
         if (!isWithinReach(villager, job.target)) {
-            WorkTargets.set(workerId, villager.getBlockPos().isWithinDistance(job.target, FAR)
-                    ? job.target
-                    : MineApproachPath.toward(world, villager, job.target));
+            // Ao lugar de pé ao alcance da planta (FarmerStand); de longe, por etapas (MineApproachPath).
+            BlockPos stand = FarmerStand.of(world, workerId, job.target, villager.getBlockPos());
+            // Chegada exata: o lugar de pé já está ao alcance, e um de folga o deixava fora dele.
+            WorkTargets.set(workerId, MineApproachPath.legToward(world, villager, stand), 0);
 
             if (WorkHours.isWorkTime(world, villager)) {
                 job.stalled++;
@@ -369,6 +363,7 @@ public final class FarmerWork {
         job.target = null;
         job.stalled = 0;
         MineApproachPath.forget(workerId);
+        FarmerStand.forget(workerId);
 
         // O guarda de imobilidade sobrevive a largar a lavoura — E36.
         // Ver findWork. Quem zera é o ramo de trabalho, antes do harvest.
