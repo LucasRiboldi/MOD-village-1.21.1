@@ -1,9 +1,10 @@
 """Relatório de uma sessão de jogo num bioma — pedido do autor, 2026-10-20.
 
 Lê o log do jogo (linhas VC_BIOME, VC_BIOME_NOTE, VC_TIME, VC_SUPPLY_ERROR e as frases da colônia), o
-diário de ações (logs/villagecolony-actions-*.jsonl) e o registro de faltas
-(villagecolony/supply-gaps.jsonl), e escreve um relatório em Markdown: a nota de 0 a 10 (a mesma régua
-de scripts/biome_score.py), o que funcionou, os problemas que o log aponta e as notas do jogador.
+diário de ações (logs/villagecolony-actions-*.jsonl), o registro de faltas
+(villagecolony/supply-gaps.jsonl) e as peças inalcançáveis (VC_UNREACHABLE), e escreve um relatório em
+Markdown: a nota de 0 a 10 (a mesma régua de scripts/biome_score.py), o que funcionou, os problemas que o
+log aponta e as notas do jogador.
 
     python scripts/biome_report.py                                # a instalação de teste (%APPDATA%/.minecraft)
     python scripts/biome_report.py --game run/biome-sim           # a bancada de simulação
@@ -29,6 +30,7 @@ BIOME = re.compile(r"VC_BIOME version=1 mod=(\S+) colony=(\w+) biome=(\S+) style
 NOTE = re.compile(r"VC_BIOME_NOTE version=1 mod=(\S+) colony=(\S+) biome=(\S+) x=(-?\d+) y=(-?\d+) z=(-?\d+)"
                   r" text=\"(.*)\"")
 SUPPLY = re.compile(r"VC_SUPPLY_ERROR version=\d+ piece=(\S+) profession=(\w+) attempts=\d+(?: gap=(\w+))?")
+UNREACHABLE = re.compile(r"VC_UNREACHABLE version=\d+ project=\S+ piece=(\S+) at=(-?\d+), (-?\d+), (-?\d+)")
 REFUSALS = re.compile(r"lot refusals: (\d+) candidates turned down — (.*)")
 SIGNALS = {
     "colônia criada": r"Colony created at",
@@ -42,6 +44,7 @@ SIGNALS = {
     "lote da casa fundadora limpo": r"cleared the BigHouseMOD lot",
     "árvores tiradas de lote de obra": r"cleared \d+ blocks off the site",
     "obra travada por peça (G2)": r"stalled the construction for",
+    "peça inalcançável que surgiu": r"VC_UNREACHABLE",
 }
 
 # O que cada motivo de recusa de lote costuma querer dizer — para o problema já vir com a pista.
@@ -138,6 +141,7 @@ def main(argv):
     notes = [m.groups() for m in NOTE.finditer(text)]
     signals = {name: len(re.findall(pattern, text)) for name, pattern in SIGNALS.items()}
     supply = collections.Counter((m.group(1).replace("minecraft:", ""), m.group(3) or "?") for m in SUPPLY.finditer(text))
+    unreachable = collections.Counter(m.group(1).replace("minecraft:", "") for m in UNREACHABLE.finditer(text))
     refusal = REFUSALS.findall(text)
     table = professions(log_path)
     journals = sorted(glob.glob(os.path.join(os.path.dirname(log_path), "villagecolony-actions-*.jsonl")))[-1:]
@@ -200,6 +204,8 @@ def main(argv):
             problems.append(f"lote: {top[0]} de {total} recusas por \"{top[1]}\" — {REFUSAL_HINT.get(top[1], 'ver LotRefusals')}")
     for (item, gap), count in supply.most_common(8):
         problems.append(f"falta de rota: {item} surgiu {count}x ({gap})")
+    for item, count in unreachable.most_common(5):
+        problems.append(f"acesso: {item} surgiu {count}x sem o construtor alcançar (unreachable-pieces.jsonl)")
     for (prof, action, why), count in reasons.most_common(6):
         if count >= 5:
             problems.append(f"{prof} {action}: {why} ({count}x)")

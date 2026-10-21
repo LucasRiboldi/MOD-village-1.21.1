@@ -279,6 +279,14 @@ public final class BuilderPlacement {
             // Sem mais nada a pôr, a peça de lado por alcance também volta — playtest
             // de 11-10: a última escada do telhado ficou de lado 25 minutos, sem tarefa
             // de obra. A de lado por apoio não: sem mudança no apoio ela falharia igual.
+            // E a que já ficou de lado vezes demais surge no lugar — autor, 2026-10-20: tentada para
+            // sempre, a última peça inalcançável segurava a obra aberta (UnreachablePieces).
+            if (nothingElse && piece.reason() == SkipReason.UNREACHABLE && UnreachablePieces.isDue(project, piece)) {
+                UnreachablePieces.surge(world, project, piece);
+
+                continue;
+            }
+
             if (nothingElse && piece.reason() == SkipReason.UNREACHABLE && project.retry(piece)) {
                 VillageColonyMod.LOGGER.info("Project {} retries {} at {} — nothing else is left to place",
                         project.id(), piece.block(), target.toShortString());

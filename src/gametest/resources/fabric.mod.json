@@ -181,6 +181,7 @@
       "com.villagecolony.fabric.integration.CropPatchKnownFieldGameTest",
       "com.villagecolony.fabric.integration.StorageFormRecipeGameTest",
       "com.villagecolony.fabric.work.WallPieceGameTest",
+      "com.villagecolony.fabric.work.UnreachablePiecesGameTest",
       "com.villagecolony.fabric.integration.ConstructionCancellationGameTest",
       "com.villagecolony.fabric.integration.TreeReplantingGameTest",
       "com.villagecolony.fabric.integration.RoadsideSitesGameTest",

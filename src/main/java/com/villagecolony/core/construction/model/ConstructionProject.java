@@ -343,6 +343,11 @@ public final class ConstructionProject {
                 && !deferred.containsKey(worldPositionOf(other)));
     }
 
+    /** Quantas vezes a peça desta posição já foi posta de lado. */
+    public int deferralsAt(ColonyPos position) {
+        return deferrals.getOrDefault(position, 0);
+    }
+
     /** Se esta falha ao pôr é a quinta: a peça é pulada — ADR-036 item 6. */
     public boolean failsForTheLastTime(BlueprintBlock block) {
         return deferrals.getOrDefault(worldPositionOf(block), 0) + 1 >= PLACEMENT_FAILURES_BEFORE_SKIP;

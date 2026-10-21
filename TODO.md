@@ -20,12 +20,13 @@ comum limpa lote na mata; mineiro escora areia; terraplanagem do lote fase 1 (±
 próprias (madeira e argila com prova, descascar, ingrediente de superfície); `/vc bioma`,
 `VC_BIOME`, `biome_report.py`, `BiomeCoverageGameTest`.
 
-- [ ] 🔴 **Casa presa no último bloco.** Taiga, lote aplainado: a casa subiu 305 blocos e ficou 44
-      ciclos em "1 blocks left", segurando a vaga única de obra. Achar a peça (log `builders:` e o
-      save) e por que não assenta — parentes: [[peca-de-parede-sem-direcao]], [[riscado-nao-e-assentado]].
-- [ ] 🔴 **Jogar 0.3.76 pelo roteiro** (`docs/testing/roteiro-por-bioma.md`): deserto e uma floresta,
+- [ ] 🟠 **Casa presa no último bloco — falta provar na bancada/jogo.** Taiga, lote aplainado: 44 ciclos
+      em "1 blocks left". 0.3.77: a peça inalcançável surge no lugar depois de 3 vezes de lado
+      (`UnreachablePieces`, decisão do autor 20-10) e vai para `villagecolony/unreachable-pieces.jsonl`
+      e `VC_UNREACHABLE`. Pendente: o acesso real a cada peça registrada (por que o construtor não chega).
+- [ ] 🔴 **Jogar 0.3.77 pelo roteiro** (`docs/testing/roteiro-por-bioma.md`): deserto e uma floresta,
       com `/vc bioma nota`; relatório com `scripts/biome_report.py`. A bancada não vê casa torta,
-      aldeão preso nem rua estranha. JAR 0.3.74 instalado — instalar o 0.3.76 antes.
+      aldeão preso nem rua estranha.
 - [ ] 🟠 **Rotas que travam na execução (`STALLED`).** Deserto: arenito liso (7×), cortado (3×) e comum —
       fundidor e pedreiro não pegam a tarefa; deserto também tem fundidor 100% parado. Neve: bloco e
       camada de neve agora têm tarefa e travam (6× e 2×). Savana: vidraça, terracota colorida.
