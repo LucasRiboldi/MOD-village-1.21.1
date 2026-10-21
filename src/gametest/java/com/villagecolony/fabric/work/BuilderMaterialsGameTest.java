@@ -320,7 +320,7 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
     /** Consultar o baú não equivale a abrir quatro trabalhos na colônia. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
     public void onlyCycleDispatchesSpendConstructionFallbackAttempts(TestContext context) {
-        Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.WHITE_TERRACOTTA);
+        Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.HOPPER);
 
         try {
             for (int query = 1; query <= 4; query++) {
@@ -328,17 +328,17 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
                         "a consulta " + query + " do construtor gastou uma tentativa de despacho");
             }
 
-            context.assertTrue(count(context, setup.builderChest(), Items.WHITE_TERRACOTTA) == 0,
+            context.assertTrue(count(context, setup.builderChest(), Items.HOPPER) == 0,
                     "a terracota apareceu antes dos despachos do ciclo");
 
             for (int dispatch = 1; dispatch <= com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; dispatch++) {
                 ConstructionSupplyDispatches.recordCycleDispatch(
-                        setup.project().id(), Items.WHITE_TERRACOTTA, dispatch);
+                        setup.project().id(), Items.HOPPER, dispatch);
             }
 
             context.assertTrue(BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project()),
                     "os despachos distintos não liberaram a contingência terminal");
-            context.assertTrue(count(context, setup.builderChest(), Items.WHITE_TERRACOTTA) == 1,
+            context.assertTrue(count(context, setup.builderChest(), Items.HOPPER) == 1,
                     "a contingência terminal não entrou no baú do construtor");
         } finally {
             setup.cleanUp();

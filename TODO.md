@@ -31,6 +31,11 @@ próprias (madeira e argila com prova, descascar, ingrediente de superfície); `
       causas medidas na bancada com a semente do autor (`--near=-460,601`): a rua de arenito liso da
       vila gerada não era rua (só no índice, que só se enche de rua), a busca de rua só via +2 do
       centro, e a duna acima da rua não era cortada (corte até 5). Bancada: 0 → 4 casas, nota 5,1 → 8,8.
+      0.3.80 (deserto jogado na 0.3.79, nota 9,1, Spark jiRJWBtgDi): encalhado abaixo do caminho sobe
+      até a altura dele (pilar/escada rumo ao destino — o mineiro da casa baixa saía "after 0 steps" 9×);
+      grama também no chão do curral; viveiro primeiro em volta do baú do lenhador, na altura dele;
+      terracota, feno e argila aparecem quando a obra pede (AppearingPieces, sem pedido nem falta).
+      Pendente: KF-005 (teste do carvão do mineiro cai na bateria inteira, 3/7).
       0.3.79: fazendeiro vai ao lugar de pé ao lado da planta (FarmerStand) e, como o construtor, anda
       por etapas quando longe — desistências 7 → 0 na bancada; grama ao pé do poste da ovelha amarrada
       (PostGrass, pedido do autor). Pendente: a grama do poste não foi exercida na bancada (o pastor não

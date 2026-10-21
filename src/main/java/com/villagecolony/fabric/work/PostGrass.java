@@ -23,6 +23,11 @@ import java.util.Optional;
  *
  * <p>Fora de estrutura quer dizer: não é peça da vila gerada, nem obra da colônia, nem bloco posto à
  * mão (Regra 3). O chão escolhido é o do bioma, com ar em cima, para a ovelha pisar e comer.
+ *
+ * <p><b>No curral também</b> (autor, 2026-10-21): no deserto jogado o pastor levou as ovelhas para o
+ * curral, e não para o poste, e o chão de areia dele não recriava a lã. Ali a grama nasce no chão do
+ * próprio curral, perto da ovelha: o chão é peça do curral (da vila ou da colônia), e só o bloco
+ * posto pelo jogador fica de fora.
  */
 final class PostGrass {
 
@@ -32,11 +37,18 @@ final class PostGrass {
     private PostGrass() {
     }
 
-    /** A ovelha acaba de ser amarrada, ou tosquiada: garante a grama ao pé do poste dela. */
+    /** A ovelha acaba de ser amarrada, ou tosquiada: garante a grama ao pé do poste dela, ou no curral. */
     static void forSheep(ServerWorld world, SheepEntity sheep) {
         if (sheep.getLeashHolder() instanceof LeashKnotEntity knot) {
             ensure(world, knot.getAttachedBlockPos());
+        } else if (ShepherdFlock.isPenned(world, sheep)) {
+            inPen(world, sheep.getBlockPos());
         }
+    }
+
+    /** A grama no chão do curral, perto da ovelha que está em {@code feet}. */
+    static Optional<BlockPos> inPen(ServerWorld world, BlockPos feet) {
+        return around(world, feet.down(), 0, true, feet);
     }
 
     /**
@@ -46,11 +58,19 @@ final class PostGrass {
      * @return onde está a grama, se houver lugar para ela
      */
     static Optional<BlockPos> ensure(ServerWorld world, BlockPos post) {
-        BlockPos ground = post.down();
+        return around(world, post.down(), 1, false, post);
+    }
+
+    /**
+     * A grama em volta de {@code ground}, de {@code from} a {@link #AROUND} blocos: a que já existe, a
+     * terra comida, ou o chão do bioma. {@code structureFloor}: o chão pode ser peça (o do curral).
+     */
+    private static Optional<BlockPos> around(
+            ServerWorld world, BlockPos ground, int from, boolean structureFloor, BlockPos anchor) {
         BlockPos eaten = null;
         BlockPos natural = null;
 
-        for (int radius = 1; radius <= AROUND; radius++) {
+        for (int radius = from; radius <= AROUND; radius++) {
             for (int dx = -radius; dx <= radius; dx++) {
                 for (int dz = -radius; dz <= radius; dz++) {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
@@ -59,7 +79,7 @@ final class PostGrass {
 
                     BlockPos spot = ground.add(dx, 0, dz);
 
-                    if (!isFree(world, spot)) {
+                    if (!isFree(world, spot, structureFloor)) {
                         continue;
                     }
 
@@ -85,14 +105,14 @@ final class PostGrass {
         }
 
         world.setBlockState(chosen, Blocks.GRASS_BLOCK.getDefaultState(), Block.NOTIFY_ALL);
-        VillageColonyMod.LOGGER.info("Grass grew at {} beside the sheep's post at {}",
-                chosen.toShortString(), post.toShortString());
+        VillageColonyMod.LOGGER.info("Grass grew at {} for the sheep {} {}",
+                chosen.toShortString(), structureFloor ? "in the pen at" : "beside the post at", anchor.toShortString());
 
         return Optional.of(chosen);
     }
 
-    /** Chão de pé, fora de estrutura, com ar em cima para a ovelha pisar. */
-    private static boolean isFree(ServerWorld world, BlockPos spot) {
+    /** Chão de pé, com ar em cima para a ovelha pisar; fora de estrutura, salvo o chão do curral. */
+    private static boolean isFree(ServerWorld world, BlockPos spot, boolean structureFloor) {
         BlockState state = world.getBlockState(spot);
 
         return world.isChunkLoaded(spot)
@@ -101,7 +121,7 @@ final class PostGrass {
                 && world.getBlockState(spot.up(2)).isAir()
                 && world.getBlockEntity(spot) == null
                 && !BlockProtection.isPlayerPlaced(state)
-                && !BlockProtection.isColonyBuilt(spot)
-                && !BlockProtection.isVillageOriginal(world, spot);
+                && (structureFloor
+                        || (!BlockProtection.isColonyBuilt(spot) && !BlockProtection.isVillageOriginal(world, spot)));
     }
 }

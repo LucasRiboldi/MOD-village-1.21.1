@@ -117,9 +117,18 @@ public final class ConstructionDemand {
      * esperando um material que a colônia já sabe fazer.
      */
     public static int materialNeededBy(ResourceId material, Colony colony) {
+        if (appears(material)) {
+            return 0;
+        }
+
         return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
                 .map(project -> project.remainingMaterials().getOrDefault(material, 0))
                 .orElse(0);
+    }
+
+    /** A peça que aparece quando a obra a pede não é demanda de ninguém (AppearingPieces). */
+    private static boolean appears(ResourceId material) {
+        return MinecraftTypeAdapter.toBlock(material).map(AppearingPieces::appears).orElse(false);
     }
 
     /**
@@ -131,13 +140,15 @@ public final class ConstructionDemand {
      *
      * <p>Vazio quando não há obra, que é a resposta certa e não um erro. Sem a planta de
      * enfeite que aparece sozinha na obra ({@link BlockShaping#growsByItself}): ninguém a
-     * colhe para a obra.
+     * colhe para a obra. Nem a terracota, o feno e a argila, que aparecem quando pedidos
+     * ({@link AppearingPieces}).
      */
     public static Map<ResourceId, Integer> materialsNeededBy(Colony colony) {
         return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
                 .map(project -> project.remainingMaterials().entrySet().stream()
                         .filter(entry -> MinecraftTypeAdapter.toBlock(entry.getKey())
-                                .map(block -> !BlockShaping.growsByItself(block.getDefaultState()))
+                                .map(block -> !BlockShaping.growsByItself(block.getDefaultState())
+                                        && !AppearingPieces.appears(block))
                                 .orElse(true))
                         .collect(java.util.stream.Collectors.toMap(
                                 Map.Entry::getKey, Map.Entry::getValue, Integer::sum,
@@ -161,7 +172,7 @@ public final class ConstructionDemand {
     public static int materialNeededBy(Predicate<ResourceId> family, Colony colony) {
         return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
                 .map(project -> project.remainingMaterials().entrySet().stream()
-                        .filter(entry -> family.test(entry.getKey()))
+                        .filter(entry -> family.test(entry.getKey()) && !appears(entry.getKey()))
                         .mapToInt(Map.Entry::getValue)
                         .sum())
                 .orElse(0);

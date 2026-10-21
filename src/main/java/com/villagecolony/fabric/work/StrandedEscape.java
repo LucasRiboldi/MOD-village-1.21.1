@@ -144,7 +144,8 @@ public final class StrandedEscape {
             return;
         }
 
-        if (isOut(world, feet)) {
+        // Quem encalhou abaixo do caminho só sai na altura dele (StrandedWorkers.reachedTheWay).
+        if (isOut(world, feet) && StrandedWorkers.reachedTheWay(workerId, feet)) {
             VillageColonyMod.LOGGER.info(
                     "Stranded worker {} is out at {} after {} steps — back in the work queue",
                     workerId.toString().substring(0, 8),
@@ -172,7 +173,9 @@ public final class StrandedEscape {
         // chega à cama. Ver ClimbOut — primeiro o caminho por onde desceu
         // (MineReturn); sem ele, escada, pilar ou túnel, mirando a borda da
         // vila e não o centro dela, sem desistir.
-        ClimbOut.pass(world, villager, workerId, MineReturn.homeFor(colony.get(), feet),
+        // E sobe rumo a ele: a borda da vila, no fundo do vale, fica na mesma altura.
+        ClimbOut.pass(world, villager, workerId,
+                StrandedWorkers.wayOf(workerId).orElseGet(() -> MineReturn.homeFor(colony.get(), feet)),
                 VillageColonyMod.STORAGES.of(workerId).map(WorkerStorage::chestPosition).orElse(null));
     }
 

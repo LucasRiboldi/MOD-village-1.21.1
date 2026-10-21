@@ -5,6 +5,17 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ---
 
+## KF-005 — `MinerGameTest.theCoalInTheGalleryReachesTheChestAndTheVeinIsFollowed` cai na bateria inteira
+
+**ABERTO.** 21-10, código da 0.3.79/0.3.80: 3 quedas em 7 baterias ("o carvão da escada não chegou
+ao baú"); isolado (`-PgametestOnly=MinerGameTest`) passou 4 de 4. Na queda o mineiro do teste não
+deixa nenhuma linha no log em 320 tiques — nem pegou alvo. Duas baterias da 0.3.78 passaram.
+Hipótese, não medida: o mesmo mecanismo do KF-001 (`MinerWork.SEARCHES_PER_TICK` = 1 para o
+servidor inteiro, dividido entre os cenários de mineiro da bateria). Medir: contar as buscas que o
+mineiro do teste recebe numa queda e numa passada.
+
+---
+
 ## KF-004 — `LumberjackGameTest.theStallGuardReturnsTheTaskAndForgetsTheTree` caiu uma vez
 
 **ABERTO.** 07-10, tarde: 1 queda em ~6 baterias ("o guarda devolveu a tarefa e não esqueceu a

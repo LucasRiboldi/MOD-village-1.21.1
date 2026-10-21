@@ -194,6 +194,21 @@ public final class BuilderPlacement {
 
         Optional<Item> taken = BuilderMaterials.takeMaterial(world, project, material.get());
 
+        // Terracota, feno e argila que a vila não tem aparecem no lugar (AppearingPieces).
+        if (taken.isEmpty() && AppearingPieces.appears(material.get())) {
+            world.setBlockState(target, state, Block.NOTIFY_ALL);
+            project.markPlaced(block);
+            ActionJournal.action(workerId, "PLACED", block.block().path(), 1, target, "appeared");
+            BuildHelper.placed(workerId);
+            job.placed++;
+
+            if (world.getEntity(workerId) instanceof VillagerEntity builder) {
+                builder.swingHand(Hand.MAIN_HAND);
+            }
+
+            return true;
+        }
+
         if (taken.isEmpty()) {
             // Falta de material: a peça espera de lado e a obra segue pelas
             // outras (autor, 2026-10-08 — o celeiro parou 817 blocos por um

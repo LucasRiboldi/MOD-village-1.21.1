@@ -185,6 +185,7 @@
       "com.villagecolony.fabric.work.UnreachablePiecesGameTest",
       "com.villagecolony.fabric.work.FarmerStandGameTest",
       "com.villagecolony.fabric.work.PostGrassGameTest",
+      "com.villagecolony.fabric.work.DesertFixesGameTest",
       "com.villagecolony.fabric.integration.ConstructionCancellationGameTest",
       "com.villagecolony.fabric.integration.TreeReplantingGameTest",
       "com.villagecolony.fabric.integration.RoadsideSitesGameTest",

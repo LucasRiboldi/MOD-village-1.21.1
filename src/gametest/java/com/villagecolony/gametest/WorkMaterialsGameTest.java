@@ -73,7 +73,8 @@ public class WorkMaterialsGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
             tickLimit = 20)
-    public void whiteTerracottaRequestsClayForTheSmelter(TestContext context) {
+    /** A terracota aparece quando a obra a pede (AppearingPieces, autor 2026-10-21): não pede argila. */
+    public void whiteTerracottaAppearsAndAsksTheSmelterForNothing(TestContext context) {
         ServerWorld world = context.getWorld();
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(HERE));
         Colony colony = Colony.create(UUID.randomUUID(), origin);
@@ -92,12 +93,12 @@ public class WorkMaterialsGameTest implements FabricGameTest {
         try {
             context.assertTrue(
                     WorkMaterials.smeltedNeeds(world, colony)
-                            .getOrDefault(ResourceType.TERRACOTTA, 0) == 1,
-                    "a obra de terracota branca deve pedir uma terracota ao fundidor");
+                            .getOrDefault(ResourceType.TERRACOTTA, 0) == 0,
+                    "a terracota branca que aparece ainda pediu terracota ao fundidor");
             context.assertTrue(
                     WorkMaterials.surfaceGatheredNeeds(world, colony)
-                            .getOrDefault(ResourceType.CLAY, 0) == 1,
-                    "a terracota pedida pela obra deve abrir coleta de bloco de argila");
+                            .getOrDefault(ResourceType.CLAY, 0) == 0,
+                    "a terracota branca que aparece ainda abriu coleta de argila");
             context.assertTrue(
                     CraftingLookup.smeltingInputsFor(world, Items.TERRACOTTA).contains(Items.CLAY),
                     "a cadeia deve usar a receita de fornalha do Minecraft, argila para terracota");
@@ -110,7 +111,8 @@ public class WorkMaterialsGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
             tickLimit = 20)
-    public void redTerracottaKeepsMasonryAndRequestsItsKilnChain(TestContext context) {
+    /** A terracota aparece quando a obra a pede (AppearingPieces, autor 2026-10-21): não abre cadeia. */
+    public void redTerracottaAppearsAndOpensNoKilnChain(TestContext context) {
         ServerWorld world = context.getWorld();
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(HERE));
         Colony colony = Colony.create(UUID.randomUUID(), origin);
@@ -129,16 +131,14 @@ public class WorkMaterialsGameTest implements FabricGameTest {
         try {
             context.assertTrue(
                     WorkMaterials.smeltedNeeds(world, colony)
-                            .getOrDefault(ResourceType.RED_TERRACOTTA, 0) == 1,
-                    "a obra deve abrir a tarefa do pedreiro para a terracota vermelha");
-            context.assertTrue(
-                    WorkMaterials.smeltedNeeds(world, colony)
-                            .getOrDefault(ResourceType.TERRACOTTA, 0) == 8,
-                    "a receita de terracota vermelha deve pedir oito terracotas ao fundidor");
+                            .getOrDefault(ResourceType.RED_TERRACOTTA, 0) == 0
+                            && WorkMaterials.smeltedNeeds(world, colony)
+                            .getOrDefault(ResourceType.TERRACOTTA, 0) == 0,
+                    "a terracota vermelha que aparece ainda abriu tarefa de pedreiro ou de fundidor");
             context.assertTrue(
                     WorkMaterials.surfaceGatheredNeeds(world, colony)
-                            .getOrDefault(ResourceType.CLAY, 0) == 8,
-                    "a cadeia da terracota vermelha deve abrir coleta de oito blocos de argila");
+                            .getOrDefault(ResourceType.CLAY, 0) == 0,
+                    "a terracota vermelha que aparece ainda abriu coleta de argila");
         } finally {
             owned.cleanUp();
         }

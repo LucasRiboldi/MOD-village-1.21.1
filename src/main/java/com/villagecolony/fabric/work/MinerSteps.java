@@ -345,9 +345,9 @@ final class MinerSteps {
             return;
         }
 
-        boolean belowItsWay = WorkTargets.of(villager.getUuid())
-                .map(way -> way.getY() - villager.getBlockY() >= CLIMB_OUT_BELOW)
-                .orElse(false);
+        Optional<BlockPos> way = WorkTargets.of(villager.getUuid())
+                .filter(target -> target.getY() - villager.getBlockY() >= CLIMB_OUT_BELOW);
+        boolean belowItsWay = way.isPresent();
         boolean network = NetworkDigging.galleryPhase(job.task.colonyId());
         Optional<MineArm> arm = MineDigging.armOf(job.task.colonyId(), villager.getUuid());
 
@@ -369,7 +369,7 @@ final class MinerSteps {
         // tarefa o deixava girando no mesmo buraco a cada pega (playtest 0.3.31, "5 blocks
         // below it and unable to climb"). A fuga do encalhado o tira de lá.
         if (belowItsWay) {
-            StrandedWorkers.strandNow(villager.getUuid(), villager.getBlockPos(),
+            StrandedWorkers.strandBelow(villager.getUuid(), villager.getBlockPos(), way.get(),
                     "below its way and unable to climb");
         }
     }

@@ -70,6 +70,18 @@ public final class LumberjackNursery {
     /** Limite interno para não plantar dentro do miolo da vila. */
     private static final int INNER_EDGE = 48;
 
+    /**
+     * O anel em volta do baú do lenhador, na altura dele, tentado antes da borda — deserto jogado,
+     * 2026-10-21: o lenhador mora na parte baixa da vila (y63) e as mudas da borda ficaram 11 a 20
+     * blocos acima; ele andou até 56 blocos por árvore e cortou 12 toras na sessão.
+     */
+    static final int NEAR_CHEST_MIN = 6;
+
+    static final int NEAR_CHEST_MAX = 14;
+
+    /** Quanto acima ou abaixo do baú o chão do viveiro perto dele pode estar. */
+    private static final int NEAR_CHEST_HEIGHT = 3;
+
     /** Resolução do anel de candidatos, percorrido do mais distante ao centro. */
     private static final int DIRECTIONS = 48;
 
@@ -113,7 +125,9 @@ public final class LumberjackNursery {
             return 0;
         }
 
-        int room = Math.min(wanted, targetTrees(colonyId) - countNurseries(world, centre));
+        Optional<BlockPos> chest = lumberjackChest(colonyId);
+        int room = Math.min(wanted, targetTrees(colonyId) - countNurseries(world, centre,
+                chest.map(at -> Math.min(centre.getY() - 8, at.getY() - NEAR_CHEST_HEIGHT - 1)).orElse(centre.getY() - 8)));
 
         if (room <= 0) {
             // <b>Cheio também marca a hora</b> — spark de 2026-09-26. Com os
@@ -129,7 +143,8 @@ public final class LumberjackNursery {
         int planted = 0;
 
         while (planted < room) {
-            Optional<BlockPos> spot = spotOnTheEdge(world, centre, towards);
+            Optional<BlockPos> spot = chest.flatMap(at -> spotNearTheChest(world, at))
+                    .or(() -> spotOnTheEdge(world, centre, towards));
 
             if (spot.isEmpty() || !TreeNursery.plant(world, spot.get(), sapling.get())) {
                 break;
@@ -139,7 +154,7 @@ public final class LumberjackNursery {
             com.villagecolony.fabric.integration.VillageTrees.rememberSapling(colonyId, spot.get().up());
 
             VillageColonyMod.LOGGER.info(
-                    "Colony {} — the lumberjack planted {} on rooted dirt at {}, at the village edge",
+                    "Colony {} — the lumberjack planted {} on rooted dirt at {}, near its chest or at the village edge",
                     colonyId.toString().substring(0, 8),
                     TreeNursery.idOf(sapling.get()),
                     spot.get().toShortString());
@@ -231,8 +246,44 @@ public final class LumberjackNursery {
         return Optional.empty();
     }
 
+    /** Um viveiro no anel em volta do baú do lenhador, com o chão na altura do baú. */
+    static Optional<BlockPos> spotNearTheChest(ServerWorld world, BlockPos chest) {
+        for (int radius = NEAR_CHEST_MIN; radius <= NEAR_CHEST_MAX; radius++) {
+            for (int turn = 0; turn < DIRECTIONS; turn++) {
+                double angle = 2 * Math.PI * turn / DIRECTIONS;
+                int x = chest.getX() + (int) Math.round(radius * Math.cos(angle));
+                int z = chest.getZ() + (int) Math.round(radius * Math.sin(angle));
+
+                if (world.getChunkManager().getWorldChunk(x >> 4, z >> 4) == null) {
+                    continue;
+                }
+
+                for (int y = chest.getY() + NEAR_CHEST_HEIGHT; y >= chest.getY() - NEAR_CHEST_HEIGHT; y--) {
+                    BlockPos at = new BlockPos(x, y, z);
+
+                    if (!world.getBlockState(at).isAir() && world.getBlockState(at.up()).isAir()) {
+                        if (TreeNursery.isSpotForANursery(world, at)) {
+                            return Optional.of(at);
+                        }
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        return Optional.empty();
+    }
+
     /** O ângulo, a partir do centro, do baú do lenhador da colônia; zero sem lenhador com baú. */
     private static double towardsTheLumberjack(UUID colonyId, BlockPos centre) {
+        return lumberjackChest(colonyId)
+                .map(at -> Math.atan2(at.getZ() - centre.getZ(), at.getX() - centre.getX()))
+                .orElse(0.0);
+    }
+
+    /** O baú do primeiro lenhador da colônia que tem um. */
+    private static Optional<BlockPos> lumberjackChest(UUID colonyId) {
         for (var worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
             if (worker.profession().filter(com.villagecolony.core.worker.model.ProfessionType.LUMBERJACK::equals)
                     .isEmpty()) {
@@ -242,22 +293,20 @@ public final class LumberjackNursery {
             var chest = VillageColonyMod.STORAGES.of(worker.villagerId());
 
             if (chest.isPresent()) {
-                BlockPos at = MinecraftTypeAdapter.toBlockPos(chest.get().chestPosition());
-
-                return Math.atan2(at.getZ() - centre.getZ(), at.getX() - centre.getX());
+                return Optional.of(MinecraftTypeAdapter.toBlockPos(chest.get().chestPosition()));
             }
         }
 
-        return 0.0;
+        return Optional.empty();
     }
 
     /** Conta marcadores de viveiro que ainda têm muda ou árvore em cima. */
-    private static int countNurseries(ServerWorld world, BlockPos centre) {
+    private static int countNurseries(ServerWorld world, BlockPos centre, int lowest) {
         int count = 0;
 
         for (int x = centre.getX() - EDGE; x <= centre.getX() + EDGE; x++) {
             for (int z = centre.getZ() - EDGE; z <= centre.getZ() + EDGE; z++) {
-                for (int y = centre.getY() + 4; y >= centre.getY() - 8; y--) {
+                for (int y = centre.getY() + 4; y >= lowest; y--) {
                     BlockPos ground = new BlockPos(x, y, z);
 
                     if (!world.getBlockState(ground).isOf(TreeNursery.BED)
