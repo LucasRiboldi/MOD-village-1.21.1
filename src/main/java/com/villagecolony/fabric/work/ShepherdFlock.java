@@ -45,6 +45,9 @@ public final class ShepherdFlock {
     /** Quantos pares de cada espécie o pastor alimenta por rodada. */
     static final int PAIRS_PER_ROUND = 2;
 
+    /** Quanto de uma comida um par come: os dois animais, um item cada. */
+    public static final int PAIR_FOOD = 2;
+
     private static final int RADIUS = 32;
 
     /** As espécies que o pastor cria. */
@@ -76,9 +79,7 @@ public final class ShepherdFlock {
             return false;
         }
 
-        boolean hasShepherd = VillageColonyMod.WORKERS.ofColony(colony.id()).stream()
-                .anyMatch(worker -> worker.profession().filter(ProfessionType.SHEPHERD::equals).isPresent());
-        if (!hasShepherd) {
+        if (!hasShepherd(colony)) {
             return false;
         }
 
@@ -103,6 +104,45 @@ public final class ShepherdFlock {
         FlockHarvest.step(world, colony, area, chests);
 
         return paired;
+    }
+
+    /**
+     * A comida de cria que a ceia da vila deixa no baú — D2, decisão do autor de 2026-10-21.
+     *
+     * <p>No deserto o pastor disse ~200 vezes "no food" com o rebanho pedindo par: a ceia
+     * ({@link VillageMeals}) levava a cenoura, a batata e a beterraba de qualquer baú antes dele.
+     * Com pastor na vila, cada espécie com par pronto e abaixo de {@link #FLOCK_TARGET} guarda um
+     * par de cada comida que ela aceita.
+     *
+     * @return quanto de cada item a ceia não tira do baú; vazio sem pastor
+     */
+    public static Map<Item, Integer> breedingFoodToKeep(ServerWorld world, Colony colony) {
+        if (!hasShepherd(colony)) {
+            return Map.of();
+        }
+
+        Box area = areaOf(colony);
+        Map<Item, Integer> keep = new HashMap<>();
+
+        for (EntityType<? extends AnimalEntity> species : SPECIES) {
+            List<? extends AnimalEntity> adults = world.getEntitiesByType(
+                    species, area, animal -> animal.isAlive() && !animal.isBaby());
+
+            if (adults.size() < 2 || adults.size() >= FLOCK_TARGET) {
+                continue;
+            }
+
+            for (Item food : foodOf(species, adults.get(0))) {
+                keep.merge(food, PAIR_FOOD, Math::max);
+            }
+        }
+
+        return keep;
+    }
+
+    private static boolean hasShepherd(Colony colony) {
+        return VillageColonyMod.WORKERS.ofColony(colony.id()).stream()
+                .anyMatch(worker -> worker.profession().filter(ProfessionType.SHEPHERD::equals).isPresent());
     }
 
     /**
@@ -182,11 +222,11 @@ public final class ShepherdFlock {
         }
 
         for (Item food : foodOf(species, ready.get(0))) {
-            if (ColonyChests.countIn(world, chests, food) < 2) {
+            if (ColonyChests.countIn(world, chests, food) < PAIR_FOOD) {
                 continue;
             }
 
-            ColonyChests.withdraw(world, chests, food, 2);
+            ColonyChests.withdraw(world, chests, food, PAIR_FOOD);
 
             for (AnimalEntity animal : ready) {
                 animal.lovePlayer(null);
