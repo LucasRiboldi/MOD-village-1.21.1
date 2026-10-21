@@ -126,6 +126,7 @@
       "com.villagecolony.gametest.BlueprintReaderGameTest",
       "com.villagecolony.gametest.BuildSiteGameTest",
       "com.villagecolony.gametest.BuilderGameTest",
+      "com.villagecolony.gametest.LeafInTheWayGameTest",
       "com.villagecolony.gametest.BuilderMaterialWaitGameTest",
       "com.villagecolony.fabric.work.BuilderApproachGameTest",
       "com.villagecolony.fabric.work.BuilderRefusedSpotGameTest",

@@ -20,10 +20,13 @@ comum limpa lote na mata; mineiro escora areia; terraplanagem do lote fase 1 (±
 próprias (madeira e argila com prova, descascar, ingrediente de superfície); `/vc bioma`,
 `VC_BIOME`, `biome_report.py`, `BiomeCoverageGameTest`.
 
-- [ ] 🟠 **Casa presa no último bloco — falta provar na bancada/jogo.** Taiga, lote aplainado: 44 ciclos
-      em "1 blocks left". 0.3.77: a peça inalcançável surge no lugar depois de 3 vezes de lado
-      (`UnreachablePieces`, decisão do autor 20-10) e vai para `villagecolony/unreachable-pieces.jsonl`
-      e `VC_UNREACHABLE`. Pendente: o acesso real a cada peça registrada (por que o construtor não chega).
+- [ ] 🟠 **Casa presa no último bloco — falta jogo.** Taiga: 44 ciclos em "1 blocks left". A causa
+      vista na bancada era a copa de pinheiro de fora do lote: 29 peças de parede puladas por
+      "spruce_leaves is in the way" e a tocha da parede sem apoio. 0.3.77: folha natural dá lugar à
+      peça; a peça inalcançável surge depois de 3 vezes de lado (`UnreachablePieces`,
+      `villagecolony/unreachable-pieces.jsonl`, `VC_UNREACHABLE`). Bancada: taiga 0 → 2 casas
+      concluídas, nota 7,6. Pendente: tronco natural no volume ainda é pulado ("spruce_log is in the
+      way", 3×); peça de lado por apoio (`UNSUPPORTED`) que nunca ganha apoio ainda segura a obra.
 - [ ] 🔴 **Jogar 0.3.77 pelo roteiro** (`docs/testing/roteiro-por-bioma.md`): deserto e uma floresta,
       com `/vc bioma nota`; relatório com `scripts/biome_report.py`. A bancada não vê casa torta,
       aldeão preso nem rua estranha.

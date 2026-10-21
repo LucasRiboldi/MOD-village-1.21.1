@@ -24,6 +24,7 @@ import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.ColonySupply;
 import com.villagecolony.fabric.integration.BiomeConstructionSupply;
+import com.villagecolony.fabric.integration.BlockProtection;
 import net.minecraft.block.Block;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.DoubleBlockHalf;
@@ -34,6 +35,7 @@ import net.minecraft.block.CropBlock;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.Hand;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -129,7 +131,8 @@ public final class BuilderPlacement {
 
         if (!world.getBlockState(target).isReplaceable()
                 && !BuriedPieces.mayReplaceGround(world, project.blueprint(), block, target)
-                && !BlockShaping.tillsTheGround(world, state, target)) {
+                && !BlockShaping.tillsTheGround(world, state, target)
+                && !isNaturalLeafInTheWay(world, target)) {
             // Já tem coisa ali, e não é grama alta: pode ser peça de
             // vila, pode ser construção do jogador. A Regra 3 manda não
             // mexer, e a obra segue sem este bloco.
@@ -317,6 +320,21 @@ public final class BuilderPlacement {
                         target.toShortString());
             }
         }
+    }
+
+    /**
+     * Folha natural no lugar da peça dá lugar a ela — bancada da taiga, 2026-10-20: a copa de
+     * pinheiro de fora do lote entrou na casa, 29 peças de parede foram puladas por "spruce_leaves
+     * is in the way" e a tocha da parede que faltou ficou sem apoio, segurando a obra aberta.
+     * Ninguém pôs a folha que não é persistente ({@link BlockProtection#isPlayerPlaced}); peça da
+     * vila e obra da colônia continuam guardadas pela Regra 3 ({@link BlockProtection#mayBuildOver}).
+     */
+    private static boolean isNaturalLeafInTheWay(ServerWorld world, BlockPos target) {
+        BlockState there = world.getBlockState(target);
+
+        return there.isIn(BlockTags.LEAVES)
+                && !BlockProtection.isPlayerPlaced(there)
+                && BlockProtection.mayBuildOver(world, target, there);
     }
 
     /**
