@@ -385,7 +385,7 @@ public final class MinerWork {
 
 
     static boolean isWithinReach(VillagerEntity villager, BlockPos target) {
-        return MinerReach.isWithinReach(
+        return MinerReach.isWithinReachStanding(
                 villager.getX(), villager.getY(), villager.getZ(), target);
     }
 
