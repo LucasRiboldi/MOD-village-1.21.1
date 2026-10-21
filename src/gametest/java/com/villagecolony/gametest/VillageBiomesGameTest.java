@@ -33,11 +33,8 @@ public class VillageBiomesGameTest implements FabricGameTest {
     }
 
     /**
-     * Bioma sem vila continua de fora, e isso é limite e não recusa.
-     *
-     * <p>A distinção é da ADR-003 §5 e importa: recusa marca colônia
-     * abandonada, e uma vila que o mod não atende não pode ser marcada
-     * assim — ela está lá, viva, e o mod é que não a alcança.
+     * Bioma sem vila não é estilo de vila. A vila que estiver nele é
+     * atendida com o estilo da vila gerada (ADR-003 Emenda 9).
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_biomes")
     public void aBiomeWithoutVillagesIsNotOnTheTable(TestContext context) {

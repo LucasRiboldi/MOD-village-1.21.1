@@ -706,81 +706,48 @@ public class BuilderGameTest implements FabricGameTest {
     }
 
     /**
-     * O fardo de feno entra na mesma regra — pedido do autor, 2026-10-08: a obra
-     * pôs o fardo de lado 93 vezes em 22 min, nove trigos cada, com a roça pequena.
+     * O fardo de feno e a terracota não esperam material — decisão do autor, 2026-10-21
+     * (AppearingPieces): com o baú vazio a obra já os dá como servidos, sem pedido nem despacho, e o
+     * construtor os põe no lugar. Antes eles só apareciam no quarto despacho (2026-10-08).
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
-    public void theHayBlockAppearsInTheBuildersChestAfterFourDispatches(TestContext context) {
-        Fixture fixture = setUp(context, 0, Blueprint.of(
-                ResourceId.vanilla("village/plains/houses/test_hay_block"),
-                List.of(new BlueprintBlock(
-                        new ColonyPos(0, 0, 0),
-                        MinecraftTypeAdapter.toResourceId(Blocks.HAY_BLOCK)))), 1);
+    public void hayAndTerracottaNeverWaitForMaterial(TestContext context) {
+        for (net.minecraft.block.Block piece : List.of(Blocks.HAY_BLOCK, Blocks.WHITE_TERRACOTTA)) {
+            Fixture fixture = setUp(context, 0, Blueprint.of(
+                    ResourceId.vanilla("village/plains/houses/test_appearing"),
+                    List.of(new BlueprintBlock(new ColonyPos(0, 0, 0), MinecraftTypeAdapter.toResourceId(piece)))), 1);
 
-        try {
-            for (int attempt = 1; attempt <= 3; attempt++) {
-                context.assertFalse(
+            try {
+                context.assertTrue(
                         BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
-                        "o fardo apareceu antes da tentativa " + attempt);
+                        piece + " ficou esperando material com o baú vazio");
+                context.assertTrue(
+                        ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), piece.asItem()) == 0,
+                        piece + " foi posto no baú, e devia aparecer no lugar");
+            } finally {
+                fixture.owned.cleanUp();
             }
-
-            // Consultas não gastam tentativa: só o despacho do ciclo conta — ADR-040 §2.
-            for (int dispatch = 1; dispatch <= com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; dispatch++) {
-                ConstructionSupplyDispatches.recordCycleDispatch(
-                        fixture.project.id(), Items.HAY_BLOCK, dispatch);
-            }
-
-            context.assertTrue(
-                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
-                    "o quarto despacho não abasteceu o fardo de feno");
-            context.assertTrue(
-                    ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.HAY_BLOCK) == 1,
-                    "o fardo de contingência não entrou no baú da obra");
-        } finally {
-            fixture.owned.cleanUp();
-            ConstructionSupplyDispatches.delivered(fixture.project.id(), Items.HAY_BLOCK);
         }
 
         context.complete();
     }
 
-    /**
-     * Uma rota apenas teórica não pode prender a obra para sempre. Argila
-     * costuma existir fora da vila, mas ainda pode não ser alcançável pelo
-     * fundidor; depois de três faltas, a terracota de manufatura atende a obra.
-     */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
-    public void aTheoreticalTerracottaRouteFallsBackAfterFourMisses(TestContext context) {
-        Fixture fixture = setUp(context, 0, Blueprint.of(
-                ResourceId.vanilla("village/plains/houses/test_white_terracotta"),
-                List.of(new BlueprintBlock(
-                        new ColonyPos(0, 0, 0),
-                        MinecraftTypeAdapter.toResourceId(Blocks.WHITE_TERRACOTTA)))), 1);
+    /** E a peça que aparece vai ao mundo sem tirar nada do baú. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_appearing", tickLimit = 300)
+    public void theBuilderPlacesTerracottaThatTheColonyDoesNotHave(TestContext context) {
+        Fixture fixture = setUp(context, 0, Blueprint.of(HUT, List.of(
+                new BlueprintBlock(new ColonyPos(0, 0, 0), MinecraftTypeAdapter.toResourceId(Blocks.LIME_TERRACOTTA)))), 1);
 
-        try {
-            for (int attempt = 1; attempt <= 3; attempt++) {
-                context.assertFalse(
-                        BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
-                        "a terracota apareceu antes da tentativa " + attempt);
+        context.runAtTick(90, () -> {
+            try {
+                context.assertTrue(stateAt(context, SITE).isOf(Blocks.LIME_TERRACOTTA),
+                        "a terracota que a vila não tinha não apareceu: " + stateAt(context, SITE).getBlock());
+            } finally {
+                fixture.owned.cleanUp();
             }
 
-            for (int dispatch = 1; dispatch <= com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; dispatch++) {
-                ConstructionSupplyDispatches.recordCycleDispatch(
-                        fixture.project.id(), Items.WHITE_TERRACOTTA, dispatch);
-            }
-
-            context.assertTrue(
-                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
-                    "a ultima falta em uma rota teorica nao abasteceu a terracota");
-            context.assertTrue(
-                    ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.WHITE_TERRACOTTA) == 1,
-                    "a terracota de contingencia nao entrou no bau da obra");
-        } finally {
-            fixture.owned.cleanUp();
-            ConstructionSupplyDispatches.delivered(fixture.project.id(), Items.WHITE_TERRACOTTA);
-        }
-
-        context.complete();
+            context.complete();
+        });
     }
 
     /**

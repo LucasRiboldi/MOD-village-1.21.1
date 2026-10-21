@@ -7,6 +7,7 @@ import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.StructureTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureStart;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.Heightmap;
@@ -65,6 +66,31 @@ public final class GeneratedVillages {
         }
 
         return Optional.ofNullable(found);
+    }
+
+    /**
+     * Qual vila o jogo gerou nesta coluna ({@code minecraft:village_snowy}, ...), se houver e o
+     * chunk estiver carregado. É ela que dá o estilo da colônia — decisão do autor, 2026-10-20.
+     */
+    public static Optional<Identifier> structureAt(ServerWorld world, int x, int z) {
+        int chunkX = x >> 4;
+        int chunkZ = z >> 4;
+
+        if (!world.isChunkLoaded(chunkX, chunkZ)) {
+            return Optional.empty();
+        }
+
+        var registry = world.getRegistryManager().get(RegistryKeys.STRUCTURE);
+
+        for (StructureStart start : world.getStructureAccessor().getStructureStarts(
+                new ChunkPos(chunkX, chunkZ),
+                structure -> registry.getEntry(structure).isIn(StructureTags.VILLAGE))) {
+            if (start.hasChildren()) {
+                return Optional.ofNullable(registry.getId(start.getStructure()));
+            }
+        }
+
+        return Optional.empty();
     }
 
     /**

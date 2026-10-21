@@ -7,8 +7,7 @@ import net.fabricmc.fabric.api.object.builder.v1.world.poi.PointOfInterestHelper
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.CraftingTableBlock;
-import net.minecraft.block.StonecutterBlock;
+import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroups;
@@ -24,9 +23,11 @@ import java.util.Map;
 /**
  * As bancadas exclusivas do mod — decisão do autor, 2026-10-13.
  *
- * <p>Réplicas funcionais das estações Vanilla de três profissões (carpinteiro,
- * pedreiro, ferreiro/fundidor) que o <b>jogador</b> fabrica para dobrar a produção
- * daquele ofício ({@link ModBenchBonus}). Emitem luz ({@link #LIGHT}). A colônia
+ * <p>Uma bancada por profissão, que o <b>jogador</b> fabrica para dobrar a produção daquele
+ * ofício ({@link com.villagecolony.fabric.work.ModBenchBonus}) e que funciona para ele como a
+ * estação Vanilla do ofício: mesa de trabalho (carpinteiro, e os sem equivalente: lenhador,
+ * construtor, mineiro), cortador de pedra (pedreiro), fornalha (fundidor), tear (pastor) e
+ * composteira (fazendeiro) — decisão do autor, 2026-10-20. Emitem luz ({@link #LIGHT}). A colônia
  * nunca as fabrica nem coloca: não entram em nenhuma cadeia de produção.
  *
  * <p>Cada bancada é um POI próprio do mod ({@link PointOfInterestHelper}), <b>sem</b>
@@ -52,33 +53,34 @@ public final class ModContent {
     /** Um titular por bancada de cada vez. */
     private static final int POI_TICKET_COUNT = 1;
 
+    // Cada bancada funciona como a estação Vanilla do seu ofício, e as sem equivalente como a mesa de
+    // trabalho — decisão do autor, 2026-10-20. Todas são cubos cheios. As telas são próprias
+    // (BenchCraftingBlock e irmãos): as do Vanilla só ficam abertas diante do bloco Vanilla exato.
     public static final Block CARPENTER_BENCH =
-            new CraftingTableBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
+            new BenchCraftingBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
 
     public static final Block MASON_CUTTER =
-            new StonecutterBlock(AbstractBlock.Settings.copy(Blocks.STONECUTTER).luminance(state -> LIGHT));
+            new BenchStonecutterBlock(AbstractBlock.Settings.copy(Blocks.STONECUTTER).luminance(state -> LIGHT));
 
-    // O fundidor e as demais bancadas sem estação Vanilla própria abrem a grade 3×3 ao player, como a
-    // mesa de trabalho (decisão do autor, 2026-10-15): CraftingTableBlock. A fundição de verdade
-    // continua sendo do fluxo do mod (o aldeão), não da fornalha física — por isso crafting e não
-    // FurnaceBlock, que exigiria um BlockEntity custom e arriscaria perda de item.
     public static final Block BLACKSMITH_FORGE =
-            new CraftingTableBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
+            new BenchForgeBlock(AbstractBlock.Settings.copy(Blocks.FURNACE).luminance(state -> LIGHT));
 
     public static final Block LUMBERJACK_BENCH =
-            new CraftingTableBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
+            new BenchCraftingBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
 
     public static final Block FARMER_BENCH =
-            new CraftingTableBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
+            new BenchComposterBlock(AbstractBlock.Settings.copy(Blocks.COMPOSTER).luminance(state -> LIGHT));
 
     public static final Block SHEPHERD_BENCH =
-            new CraftingTableBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
+            new BenchLoomBlock(AbstractBlock.Settings.copy(Blocks.LOOM).luminance(state -> LIGHT));
 
     public static final Block BUILDER_BENCH =
-            new CraftingTableBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
+            new BenchCraftingBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
 
     public static final Block MINER_BENCH =
-            new CraftingTableBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
+            new BenchCraftingBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
+
+    private static BlockEntityType<BenchForgeBlockEntity> forgeEntity;
 
     private static RegistryKey<PointOfInterestType> carpenterPoi;
     private static RegistryKey<PointOfInterestType> masonPoi;
@@ -103,6 +105,12 @@ public final class ModContent {
         registerBlock("builder_bench", BUILDER_BENCH);
         registerBlock("miner_bench", MINER_BENCH);
 
+        // A forja é fornalha de verdade: tipo de BlockEntity próprio (o FURNACE do Vanilla só aceita o
+        // bloco Vanilla).
+        forgeEntity = Registry.register(Registries.BLOCK_ENTITY_TYPE,
+                Identifier.of(VillageColonyMod.MOD_ID, "blacksmith_forge"),
+                BlockEntityType.Builder.create(BenchForgeBlockEntity::new, BLACKSMITH_FORGE).build(null));
+
         carpenterPoi = registerPoi("carpenter_bench_poi", CARPENTER_BENCH);
         masonPoi = registerPoi("mason_cutter_poi", MASON_CUTTER);
         blacksmithPoi = registerPoi("blacksmith_forge_poi", BLACKSMITH_FORGE);
@@ -124,6 +132,11 @@ public final class ModContent {
             entries.add(BUILDER_BENCH);
             entries.add(MINER_BENCH);
         });
+    }
+
+    /** O tipo de BlockEntity da forja do fundidor; registrado em {@link #register()}. */
+    public static BlockEntityType<BenchForgeBlockEntity> forgeEntity() {
+        return forgeEntity;
     }
 
     private static void registerBlock(String path, Block block) {

@@ -349,6 +349,9 @@ public final class ShepherdWork {
 
         sheep.setSheared(true);
 
+        // A grama ao pé do poste volta, para a lã voltar (PostGrass, autor 2026-10-20).
+        PostGrass.forSheep(world, sheep);
+
         int dropped = 1 + world.random.nextInt(3);
 
         ColonyPos chest = storage.chestPosition();

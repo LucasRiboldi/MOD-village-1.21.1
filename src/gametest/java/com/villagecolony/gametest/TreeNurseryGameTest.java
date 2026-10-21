@@ -240,7 +240,9 @@ public class TreeNurseryGameTest {
     public void theNurseryStopsAtTenTrees(TestContext context) {
         ServerWorld world = context.getWorld();
         UUID colony = UUID.randomUUID();
-        BlockPos centre = context.getAbsolutePos(new BlockPos(8, 1, 8)).add(3000, 0, 3000);
+        // Bem longe da arena (21-10): a +3000 o anel de 48 a 57 caía em cenários vizinhos e um viveiro
+        // sumia na bateria inteira.
+        BlockPos centre = context.getAbsolutePos(new BlockPos(8, 1, 8)).add(1_000_000, 0, 2_600_000);
 
         LumberjackNursery.clearAll();
 

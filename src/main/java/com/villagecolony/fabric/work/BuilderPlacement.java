@@ -24,6 +24,7 @@ import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.ColonySupply;
 import com.villagecolony.fabric.integration.BiomeConstructionSupply;
+import com.villagecolony.fabric.integration.BlockProtection;
 import net.minecraft.block.Block;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.DoubleBlockHalf;
@@ -34,6 +35,7 @@ import net.minecraft.block.CropBlock;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.Hand;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -129,7 +131,8 @@ public final class BuilderPlacement {
 
         if (!world.getBlockState(target).isReplaceable()
                 && !BuriedPieces.mayReplaceGround(world, project.blueprint(), block, target)
-                && !BlockShaping.tillsTheGround(world, state, target)) {
+                && !BlockShaping.tillsTheGround(world, state, target)
+                && !isNaturalLeafInTheWay(world, target)) {
             // Já tem coisa ali, e não é grama alta: pode ser peça de
             // vila, pode ser construção do jogador. A Regra 3 manda não
             // mexer, e a obra segue sem este bloco.
@@ -190,6 +193,21 @@ public final class BuilderPlacement {
         }
 
         Optional<Item> taken = BuilderMaterials.takeMaterial(world, project, material.get());
+
+        // Terracota, feno e argila que a vila não tem aparecem no lugar (AppearingPieces).
+        if (taken.isEmpty() && AppearingPieces.appears(material.get())) {
+            world.setBlockState(target, state, Block.NOTIFY_ALL);
+            project.markPlaced(block);
+            ActionJournal.action(workerId, "PLACED", block.block().path(), 1, target, "appeared");
+            BuildHelper.placed(workerId);
+            job.placed++;
+
+            if (world.getEntity(workerId) instanceof VillagerEntity builder) {
+                builder.swingHand(Hand.MAIN_HAND);
+            }
+
+            return true;
+        }
 
         if (taken.isEmpty()) {
             // Falta de material: a peça espera de lado e a obra segue pelas
@@ -279,6 +297,14 @@ public final class BuilderPlacement {
             // Sem mais nada a pôr, a peça de lado por alcance também volta — playtest
             // de 11-10: a última escada do telhado ficou de lado 25 minutos, sem tarefa
             // de obra. A de lado por apoio não: sem mudança no apoio ela falharia igual.
+            // E a que já ficou de lado vezes demais surge no lugar — autor, 2026-10-20: tentada para
+            // sempre, a última peça inalcançável segurava a obra aberta (UnreachablePieces).
+            if (nothingElse && piece.reason() == SkipReason.UNREACHABLE && UnreachablePieces.isDue(project, piece)) {
+                UnreachablePieces.surge(world, project, piece);
+
+                continue;
+            }
+
             if (nothingElse && piece.reason() == SkipReason.UNREACHABLE && project.retry(piece)) {
                 VillageColonyMod.LOGGER.info("Project {} retries {} at {} — nothing else is left to place",
                         project.id(), piece.block(), target.toShortString());
@@ -309,6 +335,21 @@ public final class BuilderPlacement {
                         target.toShortString());
             }
         }
+    }
+
+    /**
+     * Folha natural no lugar da peça dá lugar a ela — bancada da taiga, 2026-10-20: a copa de
+     * pinheiro de fora do lote entrou na casa, 29 peças de parede foram puladas por "spruce_leaves
+     * is in the way" e a tocha da parede que faltou ficou sem apoio, segurando a obra aberta.
+     * Ninguém pôs a folha que não é persistente ({@link BlockProtection#isPlayerPlaced}); peça da
+     * vila e obra da colônia continuam guardadas pela Regra 3 ({@link BlockProtection#mayBuildOver}).
+     */
+    private static boolean isNaturalLeafInTheWay(ServerWorld world, BlockPos target) {
+        BlockState there = world.getBlockState(target);
+
+        return there.isIn(BlockTags.LEAVES)
+                && !BlockProtection.isPlayerPlaced(there)
+                && BlockProtection.mayBuildOver(world, target, there);
     }
 
     /**

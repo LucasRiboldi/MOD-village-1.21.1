@@ -73,3 +73,30 @@ recurso natural (`LocateFallback`) continua com quatro.
 Regra do autor: se em um minuto nenhuma rota avancou em conseguir o bloco, ele
 surge no bau do construtor. O prazo passa a dois ciclos (`DISPATCHES_BEFORE_STOCKING
 = 2`), revertendo os dez da primeira emenda.
+
+## Emenda de 2026-10-20 (G2, depois da bancada de simulação por bioma)
+
+Regra do autor: *"se não tiver material nos baús, se não tiver rota ou a rota para adquirir
+travar, registrar o travamento e fazer todos blocos necessários aparecerem no baú do
+construtor. Guardar os erros desta função sempre para no futuro todos itens terem uma rota
+própria de serem adquiridos."*
+
+A bancada mostrou o construtor 58% bloqueado e 107 a 469 "SET_ASIDE: no material" por vila,
+com a regra da segunda emenda escrita. Duas brechas:
+
+1. **Um contador por obra, zerado quando o item mudava.** O construtor põe de lado a peça sem
+   material e passa à seguinte; o item da vez trocava de ciclo em ciclo e a contagem nunca
+   passava de 1. Agora cada peça que trava a obra — a da vez, se a obra espera, e as postas de
+   lado por material — tem o próprio contador (`ConstructionSupplyDispatches`).
+2. **Rota de papel sem tarefa aberta não contava** (§2 desta ADR). Revogado: rota que ninguém
+   executa é rota travada.
+
+**Travou** é passar `DISPATCHES_BEFORE_STOCKING` ciclos sem progresso — a peça não aumentou nos
+baús e a obra não assentou mais dela; rota lenta que entrega não dispara nada. Ao travar, tudo
+o que a obra ainda pede da peça aparece no baú do construtor.
+
+**Registro permanente:** toda peça que surge sem a profissão a ter obtido — desta regra, do
+artesão e da busca vazia — vai para `<pasta do jogo>/villagecolony/supply-gaps.jsonl`
+(`SupplyGapLedger`), com o motivo: `NO_ROUTE`, `NO_TASK`, `STALLED` ou `NOT_FOUND`. O arquivo
+só cresce e fica fora de `logs/`. `scripts/supply_gaps.py` o resume como a lista de itens que
+ainda pedem rota própria.

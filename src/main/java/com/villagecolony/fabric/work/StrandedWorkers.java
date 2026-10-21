@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -52,6 +53,33 @@ public final class StrandedWorkers {
     /** Marcados cujo trabalho ainda não foi largado — ver {@link #dropMarkedJobs}. */
     private static final Set<UUID> DROP_JOBS = new HashSet<>();
 
+    /**
+     * Para onde ia quem encalhou abaixo do caminho, e por isso a altura que ele precisa alcançar —
+     * deserto jogado, 2026-10-21: o mineiro que mora na casa baixa da vila (y63) ficava 20 abaixo da
+     * boca da mina, a fuga o via no nível do chão em volta e o soltava "after 0 steps", nove vezes.
+     */
+    private static final Map<UUID, BlockPos> WAYS = new HashMap<>();
+
+    /** Onde encalhou quem estava abaixo do caminho: a régua do prazo da subida. */
+    private static final Map<UUID, BlockPos> STARTS = new HashMap<>();
+
+    /** Quando encalhou abaixo do caminho, para a subida que não sobe ter prazo. */
+    private static final Map<UUID, Long> SINCE = new HashMap<>();
+
+    /** Até quando quem largou a subida não é marcado de novo abaixo do caminho. */
+    private static final Map<UUID, Long> RESTING = new HashMap<>();
+
+    /**
+     * O prazo da subida abaixo do caminho — bancada do deserto, 2026-10-21: o construtor encalhou
+     * abaixo do lote, a escada não ganhou altura ali ("no height gained", 129 vezes em 13 minutos)
+     * e, pela regra da fuga que não desiste, ele perdeu a obra. Quem em dois minutos não sobe dois
+     * blocos larga a subida e volta ao trabalho, e descansa dela por cinco minutos.
+     */
+    static final long CLIMB_DEADLINE = 2_400;
+
+    static final long CLIMB_REST = 6_000;
+
+
     private StrandedWorkers() {
     }
 
@@ -85,6 +113,53 @@ public final class StrandedWorkers {
      */
     static boolean strandNow(UUID workerId, BlockPos where, String why) {
         return !STRANDED.containsKey(workerId) && strand(workerId, where, why);
+    }
+
+    /** O mesmo, para quem ficou abaixo de {@code way}: só sai ao chegar perto da altura dele. */
+    static boolean strandBelow(UUID workerId, BlockPos where, BlockPos way, String why, long now) {
+        if (RESTING.getOrDefault(workerId, Long.MIN_VALUE) > now) {
+            return false;
+        }
+
+        boolean marked = strandNow(workerId, where, why);
+
+        if (marked) {
+            WAYS.put(workerId, way.toImmutable());
+            STARTS.put(workerId, where.toImmutable());
+            SINCE.put(workerId, now);
+        }
+
+        return marked;
+    }
+
+    /**
+     * Se a subida abaixo do caminho venceu o prazo sem subir dois blocos ({@link #CLIMB_DEADLINE}):
+     * então ele descansa dela por {@link #CLIMB_REST} e a fuga o solta.
+     */
+    static boolean climbGaveUp(UUID workerId, BlockPos feet, long now) {
+        Long since = SINCE.get(workerId);
+        BlockPos start = STARTS.get(workerId);
+
+        if (since == null || start == null || now - since < CLIMB_DEADLINE
+                || feet.getY() - start.getY() >= MinerSteps.CLIMB_OUT_BELOW) {
+            return false;
+        }
+
+        RESTING.put(workerId, now + CLIMB_REST);
+
+        return true;
+    }
+
+    /** Para onde ia quem encalhou abaixo do caminho. */
+    static Optional<BlockPos> wayOf(UUID workerId) {
+        return Optional.ofNullable(WAYS.get(workerId));
+    }
+
+    /** Se já subiu até perto da altura para onde ia ({@code MinerSteps.CLIMB_OUT_BELOW}); sem destino, sim. */
+    static boolean reachedTheWay(UUID workerId, BlockPos feet) {
+        BlockPos way = WAYS.get(workerId);
+
+        return way == null || way.getY() - feet.getY() < MinerSteps.CLIMB_OUT_BELOW;
     }
 
     private static boolean strand(UUID workerId, BlockPos where, String why) {
@@ -166,6 +241,9 @@ public final class StrandedWorkers {
      */
     static void release(UUID workerId) {
         STRANDED.remove(workerId);
+        WAYS.remove(workerId);
+        STARTS.remove(workerId);
+        SINCE.remove(workerId);
         LAST_FREEZE.remove(workerId);
         DROP_JOBS.remove(workerId);
 
@@ -187,6 +265,11 @@ public final class StrandedWorkers {
     /** Esquece um trabalhador que saiu do registro. */
     static void forget(UUID workerId) {
         STRANDED.remove(workerId);
+        WAYS.remove(workerId);
+        STARTS.remove(workerId);
+        SINCE.remove(workerId);
+        RESTING.remove(workerId);
+
         DROP_JOBS.remove(workerId);
         LAST_FREEZE.remove(workerId);
     }
@@ -194,6 +277,10 @@ public final class StrandedWorkers {
     /** Esquece tudo. Chamado ao abrir e ao parar o servidor. */
     public static void clearAll() {
         STRANDED.clear();
+        WAYS.clear();
+        STARTS.clear();
+        SINCE.clear();
+        RESTING.clear();
         DROP_JOBS.clear();
         LAST_FREEZE.clear();
     }

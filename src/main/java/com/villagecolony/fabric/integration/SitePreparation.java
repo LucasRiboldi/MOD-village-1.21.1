@@ -74,6 +74,7 @@ public final class SitePreparation {
             }
         }
 
+        cleared += clearTrees(world, origin, size);
         cleared += removeGrassFromHouseBase(world, project);
 
         if (cleared > 0) {
@@ -82,6 +83,29 @@ public final class SitePreparation {
                     project.id(),
                     cleared,
                     origin);
+        }
+
+        return cleared;
+    }
+
+    /**
+     * Derruba a árvore natural de dentro do lote, nos biomas de árvores juntas — pedido do autor,
+     * 2026-10-20. O lote só foi aceito com ela porque ela sai ({@link LotGrowth}); do piso até a
+     * folga vertical, e o tronco que segue acima não fica pendurado.
+     */
+    private static int clearTrees(ServerWorld world, ColonyPos origin, ColonyPos size) {
+        int through = origin.y() + Math.max(size.y(), BuildSiteScanner.VERTICAL_CLEARANCE);
+        int cleared = 0;
+
+        for (int dx = 0; dx < size.x(); dx++) {
+            for (int dz = 0; dz < size.z(); dz++) {
+                int x = origin.x() + dx;
+                int z = origin.z() + dz;
+
+                if (LotGrowth.clearsTreesAt(world, new BlockPos(x, origin.y(), z))) {
+                    cleared += LotGrowth.clearColumn(world, x, origin.y(), through, z);
+                }
+            }
         }
 
         return cleared;

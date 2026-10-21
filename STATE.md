@@ -1,4 +1,58 @@
-# STATE — 2026-10-15
+# STATE — 2026-10-20
+
+> **0.3.75–0.3.77** (20-10, mesma branch, push feito, **JAR 0.3.77 instalado, não jogado** — `EF825151…`):
+> terraplanagem fase 1 (lote ±2 da rua aplainado), rotas próprias (madeira/argila com prova, descascar),
+> folha natural dá lugar à peça e a peça inalcançável surge depois de 3 vezes de lado
+> (`villagecolony/unreachable-pieces.jsonl`, `VC_UNREACHABLE`). Taiga na bancada: 0 → 2 casas, nota 7,6.
+> test 1552/0, runGametest 802/802. **Próximo:** o autor joga deserto e floresta pelo roteiro; eu gero o
+> relatório com `scripts/biome_report.py`.
+>
+> **0.3.69–0.3.74** (20-10, branch `feat/biomas-simulacao`, **não jogado**): **o mod em todos os
+> biomas.** Bancada de simulação sem jogador (`scripts/biome_sim.py`, chave só de teste
+> `-Dvillagecolony.simulate`) achou que 3 das 5 vilas Vanilla nunca viravam colônia; corrigido:
+> camas da mesma vila gerada se juntam, o estilo vem da vila gerada (ADR-003 Emenda 9), a casa
+> fundadora procura até a borda da vila, aplaina até 2 e limpa árvore natural (G1). **G2:** cada peça que
+> trava a obra tem contador próprio; 2 ciclos sem progresso e tudo aparece no baú do construtor, com
+> registro permanente em `villagecolony/supply-gaps.jsonl` (ADR-040 emenda 20-10). **Caminho com o bloco
+> natural do bioma** (arenito liso na areia etc.; só é rua onde a colônia assentou). **Mata fechada:** a
+> obra comum limpa o lote (florestas, taigas, selvas, cerejeira, mangue); viveiro e bosque protegidos
+> (`ColonyTrees`). **Mineiro no deserto:** escora o teto de areia em arenito antes de quebrar; enchimento
+> da mina com a pedra do bioma. **Teste por bioma:** `/vc bioma`, `/vc bioma nota`, linha `VC_BIOME`,
+> `scripts/biome_report.py`, auditoria `BiomeCoverageGameTest` (53 biomas) e o roteiro
+> [`docs/testing/roteiro-por-bioma.md`](docs/testing/roteiro-por-bioma.md). Notas na bancada:
+> planície 9,9, savana 9,2, taiga 8,8, neve 7,1–8,3, deserto 5,2–5,8, mata e ermos 3,0 (o relevo barra o
+> lote: terraplanagem). Verificado: test 1552/0, runGametest 788/788 (`MinerDirectPathGameTest` falha
+> ~1/3 já no 690dee98, instabilidade anterior). Detalhes: `docs/research/2026-10-20-biomas-previsao.md`.
+> **Próximo:** jogar um mundo de bioma único pelo roteiro; terraplanagem (o maior bloqueio restante).
+
+> **0.3.68** (20-10): **as bancadas funcionam de verdade para o jogador.** Defeito achado: as telas
+> Vanilla (mesa, cortador, tear) só ficam abertas diante do bloco Vanilla exato — com o bloco do mod abriam
+> e fechavam no mesmo tique, então o "o jogador usa as bancadas" da 0.3.63 **nunca funcionou**. Agora cada
+> bancada tem tela própria e funciona como a estação Vanilla do ofício (decisão do autor): mesa
+> (carpinteiro, lenhador, construtor, mineiro), cortador de pedra (pedreiro), **fornalha de verdade**
+> (fundidor, BlockEntity próprio), tear (pastor), composteira (fazendeiro). Todas cubos cheios. **Também:**
+> os blocos não tinham tabela de drop (quebrar não devolvia o bloco) — corrigido, com tags de ferramenta.
+> **Texturas:** recorte novo pela grade real dos mockups (as faces sul/fundo da 0.3.65 pegavam a tarja da
+> legenda) com 6 painéis diferentes; fazendeiro e mineiro ganharam arte nova do ofício
+> (`scripts/assets/art_farmer_miner.py`). **Fundidor:** a argila ausente aparece no baú dele
+> (`KnownAbsent`) em vez de 4 buscas inúteis por lote. **Não jogado.** Verificado: test 1534/0;
+> runGametest 773/773 (`BenchUseGameTest`: telas com controle Vanilla, forja funde, composteira composta,
+> todo bloco cai ao quebrar); mutações da tela e do drop derrubam os testes. JAR `village-colony-0.3.68.jar`
+> = `CDD55F4F07D588B096C00C6401FDCA936B1DA8C057C0E0354E1A5BD3D1DF4819`, instalado. **Próximo:** simulação
+> por bioma (plano em memória `bancadas-telas-e-biomas-plano`).
+
+> **0.3.67** (20-10): **corrige os 3 defeitos graves da varredura de 20-10**
+> ([`docs/audit/2026-10-20-varredura.md`](docs/audit/2026-10-20-varredura.md)), todos em código não
+> jogado das 0.3.64/0.3.66. **G1:** a proteção da bancada zerava o prazo ao desistir e o artesão voltava
+> a caminhar a cada 200 tiques (produção ~200× menor com bancada inalcançável) — agora, estourado o
+> prazo, fabrica no lugar até o fim da tarefa. **G2:** a bancada era procurada todo tique (~9.800
+> leituras de bloco por carpinteiro) — agora uma vez por tarefa (`CraftStation.Approach`). **G3:** o
+> não-mineiro que desistia de escalar seguia marcado como encalhado, fora da fila, repetindo busca e log
+> para sempre — agora volta à vila pelo teleporte da cama (`BedTeleport.toBed`); sem cama, é liberado.
+> **Não jogado.** Verificado: test 1529/0; runGametest 769/769; mutação do G1 derruba o teste. JAR
+> `village-colony-0.3.67.jar` = `A0594C3F1C24F75D9BEF3A6CBC3D15352114FBA59DC7C4DDEFCA4851E3E37E23`,
+> instalado e conferido. **Próximo:** jogar ≥30 min na vila montanhosa (pastor fora do laço, artesão sem
+> queda de produção, MSPT estável); depois o resto da ordem de ataque da varredura.
 
 > **0.3.62→0.3.66** (15-10, branch `fix/climb-nao-mineiro-so-natural`): sessão de bancadas + terreno
 > montanhoso. **0.3.62:** bancada do mod para as 8 profissões. **0.3.64:** só o mineiro remodela o

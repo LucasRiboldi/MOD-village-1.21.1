@@ -312,7 +312,7 @@ public final class BuilderWork {
             BlockPos spot = foot.orElseGet(
                     () -> BuilderApproach.footOf(world, project, target, villager.getBlockPos()));
 
-            WorkTargets.set(workerId, spot, BuilderApproach.ARRIVAL);
+            WorkTargets.set(workerId, MineApproachPath.legToward(world, villager, spot), BuilderApproach.ARRIVAL);
 
             if (job.unreachable.gaveUp(world, villager, spot)) {
                 return HelperReach.gaveUp(job, workerId, spot, target);
@@ -322,7 +322,7 @@ public final class BuilderWork {
                 // Parado no mesmo bloco há quinze segundos de expediente. A
                 // desistência conta (WorkerStrikes) só nos guardas de caminhada,
                 // nunca na falta de material.
-                WorkerStrikes.gaveUp(workerId, job.task);
+                WorkerStrikes.gaveUp(workerId, job.task, target);
 
                 finish(
                         job,
@@ -346,7 +346,7 @@ public final class BuilderWork {
 
             if (job.stalled > HelperReach.stallLimit(workerId)) {
                 // Andou dois minutos sem chegar ao bloco: a obra volta para a fila, sem este dono.
-                WorkerStrikes.gaveUp(workerId, job.task);
+                WorkerStrikes.gaveUp(workerId, job.task, target);
 
                 finish(
                         job,

@@ -90,7 +90,7 @@ public final class WorkPath {
             BlockPos at = ground.get();
             BlockState state = world.getBlockState(at);
 
-            if (!VillageRoad.isPaving(world, state)) {
+            if (!VillageRoad.isPaving(world, at)) {
                 if (RoadPaving.refusalAt(world, at, state).isPresent()) {
                     break;
                 }
@@ -99,7 +99,7 @@ public final class WorkPath {
                     world.setBlockState(at.up(), Blocks.AIR.getDefaultState());
                 }
 
-                world.setBlockState(at, Blocks.DIRT_PATH.getDefaultState());
+                world.setBlockState(at, VillageRoad.pavingOn(state).getDefaultState());
                 laid++;
             }
 

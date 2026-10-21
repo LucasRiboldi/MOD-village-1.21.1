@@ -142,9 +142,10 @@ public final class BuilderMaterials {
         }
 
         if (BlockShaping.isShapedFromTheGround(material.get().getDefaultState())
-                || BlockShaping.isNeverPlaced(material.get().getDefaultState())) {
-            // Estes blocos são formados no local ou não têm item próprio;
-            // por isso não podem deixar a obra esperando por estoque.
+                || BlockShaping.isNeverPlaced(material.get().getDefaultState())
+                || AppearingPieces.appears(material.get())) {
+            // Estes blocos são formados no local, não têm item próprio ou aparecem
+            // quando pedidos (AppearingPieces); não deixam a obra esperando por estoque.
             MaterialRequests.clear(project.id());
             return true;
         }
@@ -200,7 +201,8 @@ public final class BuilderMaterials {
 
             if (next.filter(id::equals).isPresent() || block.isEmpty()
                     || BlockShaping.isShapedFromTheGround(block.get().getDefaultState())
-                    || BlockShaping.isNeverPlaced(block.get().getDefaultState())) {
+                    || BlockShaping.isNeverPlaced(block.get().getDefaultState())
+                    || AppearingPieces.appears(block.get())) {
                 continue;
             }
 

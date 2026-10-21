@@ -315,6 +315,7 @@ public final class SurfaceGatheringWork {
         }
 
         EmptySweeps.found(job.task.colonyId(), job.task.targetResource());
+        KnownAbsent.found(job.task.colonyId(), job.task.targetResource());
         SurfaceHits.remember(job.task.colonyId(), job.task.targetResource(), found.get());
         IdleLog.clear(job.task.colonyId(), subject(job));
         job.target = found.get();

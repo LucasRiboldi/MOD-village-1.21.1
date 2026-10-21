@@ -102,6 +102,13 @@ public final class MinerHands {
         // dez por segundo, e a mina nunca desceu. Ver ColonyEdits.
         ColonyEdits.remember(MinecraftTypeAdapter.toColonyPos(job.target));
 
+        // O teto que cairia vira arenito antes de o alvo sair — autor, 2026-10-20. Na coleta de
+        // areia, não: lá a areia que desce é o que ele quer (MineSettling).
+        if (!wantsWhatFalls(job) && MineSettling.shoreUp(world, job.target)) {
+            ColonyEdits.remember(MinecraftTypeAdapter.toColonyPos(job.target.up()));
+            ActionJournal.action(villager.getUuid(), "SHORED", "ceiling", 1, job.target.up(), "falling block above");
+        }
+
         world.removeBlock(job.target, false);
 
         // A picareta pegou: a posição deixa de ser suspeita — E44. A
@@ -254,6 +261,13 @@ public final class MinerHands {
         release(workerId, job);
     }
 
+    /** Se a tarefa quer o bloco que cai (a coleta de areia ou de cascalho). */
+    private static boolean wantsWhatFalls(Job job) {
+        return MinecraftTypeAdapter.toItem(job.wanted)
+                .map(item -> net.minecraft.block.Block.getBlockFromItem(item) instanceof net.minecraft.block.FallingBlock)
+                .orElse(false);
+    }
+
     /** Larga a pedra de agora e volta a procurar. */
     static void release(UUID workerId, Job job) {
         job.target = null;
@@ -397,6 +411,9 @@ public final class MinerHands {
                         ? MinerReport.whyNotReached(world, villager, job.target)
                         : "the miner left the world");
         ActionJournal.action(workerId, "GAVE_UP", "stone", 0, job.target, why);
+        // Ferro que a mina não tem descansa na colônia (IronRest, autor 2026-10-21).
+        com.villagecolony.fabric.integration.IronRest.minerGaveUp(
+                job.task.colonyId(), job.wanted, job.toward, job.collected, world.getTime());
 
         job.task.release(why);
 

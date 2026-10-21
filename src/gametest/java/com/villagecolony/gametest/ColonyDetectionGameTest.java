@@ -78,8 +78,8 @@ public class ColonyDetectionGameTest implements FabricGameTest {
     /**
      * Uma vila nova não entra no registro até sua casa fundacional caber no mundo.
      *
-     * <p>Os espigões tornam impossível uma caixa plana de 7 por 11 em todo o
-     * raio que {@code BigHouseFoundation} considera. O cenário ainda tem camas
+     * <p>Os espigões tornam impossível uma caixa de 7 por 11 plana ou
+     * aplainável em todo o raio que {@code BigHouseFoundation} considera. O cenário ainda tem camas
      * e adultos suficientes para a detecção; a única recusa é o lote da casa.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
@@ -123,8 +123,14 @@ public class ColonyDetectionGameTest implements FabricGameTest {
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_detection")
     public void aClusterBesideAColonyBuildingIsNotANewColony(TestContext context) {
-        BlockPos anchor = new BlockPos(1, 1, 1);
-        BlockPos at = context.getAbsolutePos(anchor);
+        // Longe da arena (21-10): a varredura de vilas daqui alcançava a colônia do teste vizinho
+        // quando o arranjo da bateria os punha lado a lado, e consertava a fundação dela.
+        ServerWorld world = context.getWorld();
+        BlockPos at = context.getAbsolutePos(new BlockPos(1, 2, 1)).add(1_000_000, 0, 1_200_000);
+        world.getChunk(at);
+        for (BlockPos ground : BlockPos.iterate(at.add(-16, -1, -16), at.add(16, -1, 16))) {
+            world.setBlockState(ground, Blocks.GRASS_BLOCK.getDefaultState());
+        }
         Colony known = Colony.create(UUID.randomUUID(),
                 MinecraftTypeAdapter.toColonyPos(at.add(100, 0, 0)));
         Building house = new Building(UUID.randomUUID(), known.id(), ResourceId.vanilla("house"),
@@ -133,13 +139,15 @@ public class ColonyDetectionGameTest implements FabricGameTest {
 
         VillageColonyMod.COLONIES.register(known);
         VillageColonyMod.BUILDINGS.register(house);
-        placeBeds(context, anchor, BEDS);
-        spawnVillagers(context, anchor, VillageDetector.MIN_VILLAGERS);
+        placeBeds(world, at, BEDS);
+        spawnVillagers(world, at, VillageDetector.MIN_VILLAGERS);
 
-        runCycle(context, anchor);
+        VillageDetectionHandler.runCycleNow(world, at);
+        Optional<Colony> born = VillageColonyMod.COLONIES.findNearest(
+                MinecraftTypeAdapter.toColonyPos(at), VillageDetector.DUPLICATE_DISTANCE);
 
         try {
-            context.assertTrue(colonyOf(context, anchor).isEmpty(),
+            context.assertTrue(born.isEmpty(),
                     "as camas ao lado de uma casa da colônia viraram colônia nova");
             context.assertTrue(
                     VillageColonyMod.WORKERS.ofColony(known.id()).size()
@@ -147,7 +155,7 @@ public class ColonyDetectionGameTest implements FabricGameTest {
                     "os aldeões do aglomerado não entraram na colônia que já existia: "
                             + VillageColonyMod.WORKERS.ofColony(known.id()).size());
         } finally {
-            forget(context, anchor);
+            born.ifPresent(ColonyDetectionGameTest::forgetColony);
             VillageColonyMod.BUILDINGS.remove(house.id());
             forgetColony(known);
         }
@@ -387,18 +395,24 @@ public class ColonyDetectionGameTest implements FabricGameTest {
     private static void prepareImpossibleBigHouseLot(ServerWorld world, BlockPos anchor) {
         world.getChunk(anchor);
 
-        // O raio de busca é 32, a casa mede 7 por 11 e seus espigões são
-        // espaçados exatamente por essas dimensões. Assim toda caixa possível
-        // contém ao menos uma coluna mais alta e nunca é um lote plano.
-        for (int dx = -39; dx <= 38; dx++) {
-            for (int dz = -39; dz <= 38; dz++) {
+        // Sem vila gerada a busca vai a 32 do centro; a casa mede 7 por 11 e os
+        // espigões são espaçados exatamente por essas dimensões. Assim toda
+        // caixa possível contém um espigão, e com 3 blocos ele passa do
+        // desnível que a fundação aplaina (FoundationLotSearch.MAX_SPREAD).
+        // A grade cobre a área inteira da busca, para nenhum lote cair fora dela: a busca vai a 48 do
+        // centro das camas, e o centro fica alguns blocos além da âncora — com a grade a 48 da âncora,
+        // a casa achou lote no chão plano da borda quando o chunk de lá estava carregado (21-10).
+        for (int dx = -64; dx <= 64; dx++) {
+            for (int dz = -64; dz <= 64; dz++) {
                 world.setBlockState(anchor.add(dx, -1, dz), Blocks.GRASS_BLOCK.getDefaultState());
             }
         }
 
-        for (int dx = -39; dx <= 38; dx += 7) {
-            for (int dz = -39; dz <= 38; dz += 11) {
-                world.setBlockState(anchor.add(dx, 0, dz), Blocks.STONE.getDefaultState());
+        for (int dx = -62; dx <= 64; dx += 7) {
+            for (int dz = -59; dz <= 64; dz += 11) {
+                for (int dy = 0; dy < 3; dy++) {
+                    world.setBlockState(anchor.add(dx, dy, dz), Blocks.STONE.getDefaultState());
+                }
             }
         }
     }

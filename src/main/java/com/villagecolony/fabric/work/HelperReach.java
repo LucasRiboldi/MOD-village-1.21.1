@@ -88,6 +88,8 @@ public final class HelperReach {
         VillageColonyMod.LOGGER.info("Builder {} gives up standing at {} for {} — the path does not"
                 + " reach it; it tries another side", workerId, spot.toShortString(), target.toShortString());
         job.stall.reset();
+        // E se ele mora abaixo da obra, acaba mudando de casa para a altura dela (HomeMove).
+        HomeMove.gaveUpOnTheWayTo(workerId, target);
 
         return true;
     }

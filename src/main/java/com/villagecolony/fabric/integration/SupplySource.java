@@ -6,6 +6,8 @@ public enum SupplySource {
     AUTOMATIC_DROP,
     CRAFTING,
     SMELTING,
+    /** O machado no tronco: descascar não é receita do jogo. */
+    STRIPPING,
     NO_ROUTE,
     NO_COLONY,
     CYCLE,

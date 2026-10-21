@@ -9,6 +9,7 @@
 **Accepted:** 2026-08-06
 **Amended:** 2026-08-06 — três emendas vindas da implementação
 **Amended:** 2026-08-21 — Emenda 4: só a sonda move o centro
+**Amended:** 2026-10-20 — Emenda 9: a vila gerada junta as camas e dá o estilo
 **Decision Type:** Architecture / Integration
 **Blocks:** TASK-009, TASK-010, Phase 4, v0.2
 
@@ -190,6 +191,9 @@ Motivo: é o centro social real da vila Vanilla.
 ---
 
 ## Passo 5 — Bioma
+
+> **Substituído pela Emenda 9 (2026-10-20):** toda vila é atendida, em qualquer
+> bioma; o bioma decide o estilo dela, não se ela existe.
 
 ```text
 biomeType = bioma no centerPosition
@@ -792,3 +796,24 @@ carregado — o Minecraft não simula chunk descarregado.
 5. **Saves antigos** são medidos de novo (`boundsModel` = 2 no save).
 
 A vila continua sem encolher.
+
+## Emenda 9 — a vila gerada junta as camas e dá o estilo (2026-10-20)
+
+**Decisão do autor**, depois da rodada 1 da bancada de simulação por bioma
+(`docs/research/2026-10-20-biomas-previsao.md`): com a semente de teste, três
+das cinco vilas Vanilla nunca viravam colônia.
+
+1. **Passo 2:** camas dentro das peças da mesma vila gerada são um aglomerado
+   só, a qualquer distância (`VillageDetector.joinSameVillage`). Os 32 blocos
+   continuam valendo para vila sem estrutura. A vila do deserto tinha 5 camas
+   em pedaços de 1, 2 e 2, e nenhum chegava ao mínimo de 3.
+2. **Completude:** aglomerado que a junção uniu só é observação completa se a
+   caixa da vila couber no raio da busca — a prova dos 32 blocos não vale
+   para ele.
+3. **Passo 5:** toda vila é atendida, em qualquer bioma. O estilo
+   (`VillageStyle`) vem da vila gerada (`village_snowy` → planície nevada, …);
+   sem vila gerada, do bioma atendido mais comum entre as camas; sem nenhum,
+   planície. A vila de neve de 19 camas era ignorada porque a cama do centro
+   ficava num pedaço de floresta.
+4. Some o "aglomerado ignorado pelo bioma", e com ele o caso do abandono que
+   ele suprimia (`ColonyAbandonment.judge`).

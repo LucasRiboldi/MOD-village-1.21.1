@@ -320,7 +320,7 @@ public final class MineMouth {
      */
     private static boolean layStone(ServerWorld world, BlockPos at) {
         if (world.getBlockState(at).isReplaceable()) {
-            world.setBlockState(at, Blocks.COBBLESTONE.getDefaultState(), Block.NOTIFY_ALL);
+            world.setBlockState(at, com.villagecolony.fabric.world.MineFill.fillAt(world, at), Block.NOTIFY_ALL);
         }
 
         // Relido do mundo, e de propósito: é a única resposta que não

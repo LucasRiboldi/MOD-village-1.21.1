@@ -55,9 +55,12 @@ public final class NetworkDigging {
         return VillageColonyMod.MINES.of(colonyId).map(NetworkDigging::galleryPhase).orElse(false);
     }
 
-    /** O nível em rede do salão de agora. */
-    static MineNetwork levelOf(UUID colonyId, Mine mine) {
-        return MineNetworks.forLevel(colonyId, mine.shaft().hallFloor());
+    /** O nível em rede do salão de agora: o primeiro nível é menor que os outros (MineNetwork). */
+    static MineNetwork levelOf(ServerWorld world, UUID colonyId, Mine mine) {
+        int radius = MineEntrance.levelsDown(world, colonyId, mine) == 0
+                ? MineNetwork.FIRST_LEVEL_RADIUS : MineNetwork.LEVEL_RADIUS;
+
+        return MineNetworks.forLevel(colonyId, mine.shaft().hallFloor(), radius);
     }
 
     /**
@@ -65,7 +68,7 @@ public final class NetworkDigging {
      * nó que acabou de ficar pronto, nenhum nó aberto).
      */
     static Optional<BlockPos> nextTarget(ServerWorld world, UUID workerId, UUID colonyId, Mine mine) {
-        MineNetwork network = levelOf(colonyId, mine);
+        MineNetwork network = levelOf(world, colonyId, mine);
 
         if (!network.shaftSecured() && NetworkSafety.secureShaft(world, colonyId, mine, network)) {
             network.shaftIsSecured();
@@ -183,7 +186,7 @@ public final class NetworkDigging {
             ServerWorld world, UUID workerId, UUID colonyId, Mine mine, BlockPos center) {
 
         Optional<BlockPos> next = nextTarget(world, workerId, colonyId, mine);
-        MineNetwork network = levelOf(colonyId, mine);
+        MineNetwork network = levelOf(world, colonyId, mine);
 
         if (next.isPresent() || !network.exhausted()) {
             return next;

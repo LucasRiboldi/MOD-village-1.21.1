@@ -308,6 +308,11 @@ public final class FarmerWork {
         }
 
         if (!isWithinReach(villager, job.target)) {
+            // Ao lugar de pé ao alcance da planta (FarmerStand); de longe, por etapas (MineApproachPath).
+            BlockPos stand = FarmerStand.of(world, workerId, job.target, villager.getBlockPos());
+            // Chegada exata: o lugar de pé já está ao alcance, e um de folga o deixava fora dele.
+            WorkTargets.set(workerId, MineApproachPath.legToward(world, villager, stand), 0);
+
             if (WorkHours.isWorkTime(world, villager)) {
                 job.stalled++;
             }
@@ -316,7 +321,7 @@ public final class FarmerWork {
             // 2026-09-03. Oito vezes mais rápido que o guarda de baixo, e
             // é o mesmo defeito. Ver WorkStall.
             if (job.stall.stuck(world, villager) || job.stalled >= STALL_LIMIT) {
-                giveUp(workerId, job);
+                giveUp(workerId, job, villager);
             }
 
             return;
@@ -357,6 +362,8 @@ public final class FarmerWork {
     static void release(UUID workerId, Job job) {
         job.target = null;
         job.stalled = 0;
+        MineApproachPath.forget(workerId);
+        FarmerStand.forget(workerId);
 
         // O guarda de imobilidade sobrevive a largar a lavoura — E36.
         // Ver findWork. Quem zera é o ramo de trabalho, antes do harvest.
@@ -380,11 +387,13 @@ public final class FarmerWork {
      * pelo {@code VillagerLifecycleHandler}, e podem cair no meio de uma
      * passagem.
      */
-    private static void giveUp(UUID workerId, Job job) {
+    private static void giveUp(UUID workerId, Job job, VillagerEntity villager) {
         VillageColonyMod.LOGGER.info(
-                "Farmer {} could not reach the crop at {} — task back to the queue",
+                "Farmer {} could not reach the crop at {} — task back to the queue (it stands at {}, {} blocks away)",
                 workerId,
-                job.target.toShortString());
+                job.target.toShortString(),
+                villager.getBlockPos().toShortString(),
+                (int) Math.sqrt(villager.getBlockPos().getSquaredDistance(job.target)));
 
         if (job.task.isHeld()) {
             job.task.release("could not reach the crop");
@@ -394,7 +403,7 @@ public final class FarmerWork {
         // até aqui o fazendeiro devolvia a tarefa sem deixar rastro no
         // trabalhador, e repetia o mesmo lote fora de alcance a cada
         // ciclo.
-        WorkerStrikes.gaveUp(workerId, job.task);
+        WorkerStrikes.gaveUp(workerId, job.task, job.target);
 
         release(workerId, job);
     }

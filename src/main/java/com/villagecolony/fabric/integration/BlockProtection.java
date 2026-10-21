@@ -208,6 +208,36 @@ public final class BlockProtection {
     }
 
     /**
+     * Se este bloco é de uma peça de rua da vila gerada ({@code village/<estilo>/streets/...}) — deserto
+     * jogado, 2026-10-20: a rua do deserto é de arenito liso, o mesmo bloco da parede das casas, e por
+     * isso só contava como rua no índice; o índice só se enche de rua, e a vila ficou sem nenhuma.
+     * A peça diz o que a parede não diz: a casa é de outro molde.
+     */
+    public static boolean isVillageStreet(ServerWorld world, BlockPos pos) {
+        StructureAccessor structures = world.getStructureAccessor();
+
+        if (!structures.hasStructureReferences(pos)) {
+            return false;
+        }
+
+        StructureStart village = structures.getStructureContaining(pos, StructureTags.VILLAGE);
+
+        if (village == null || village == StructureStart.DEFAULT || !village.hasChildren()) {
+            return false;
+        }
+
+        for (net.minecraft.structure.StructurePiece piece : village.getChildren()) {
+            if (piece instanceof net.minecraft.structure.PoolStructurePiece pool
+                    && piece.getBoundingBox().contains(pos)
+                    && pool.getPoolElement().toString().contains("/streets/")) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Se este bloco foi colocado à mão.
      *
      * <p>Só a folha responde. É a mesma marca que a colheita usa para

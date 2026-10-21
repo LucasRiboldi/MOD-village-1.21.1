@@ -1,10 +1,97 @@
 # TODO
 
-**Atualizado:** 2026-10-14 (ciclo H3). Só o que está **aberto**. Os checklists de playtest de
+**Atualizado:** 2026-10-20 (biomas, 0.3.69–0.3.76; antes: 2026-10-14, ciclo H3). Só o que está **aberto**. Os checklists de playtest de
 versões ≤0.3.44 foram arquivados em `docs/archive/technical/TODO-ate-2026-10-07.md` (grep, nunca
 inteiro). Estado vivo: `STATE.md`. Plano de melhoria: `docs/technical/Plano-Melhoria-2026-10-14.md`.
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
+
+## 🔴 Biomas — o mod em todos os biomas (bancada de 20-10, 0.3.69–0.3.76)
+
+Medido em `scripts/biome_sim.py` (uma vila por bioma, 2 dias, margem ±1–2 pontos; régua em
+`docs/testing/roteiro-por-bioma.md` §5). Notas atuais: savana 9,3 · meadow 9,0 · planície 7,2–9,9 ·
+neve 7,2 · taiga 6,8–8,8 · deserto 5,3–5,8 · taiga nevada 4,2 · floresta 4,0 · cerejeira 3,0 ·
+ermos 3,0. **Nada disto foi jogado** — o próximo passo de verdade é jogar pelo roteiro.
+
+Feito neste ciclo (não repetir): vila espalhada e vila na borda de bioma viram colônia (ADR-003
+Emenda 9); casa fundadora com busca maior, aplainamento e limpeza de mata; G2 (peça que trava
+surge no baú, registro `villagecolony/supply-gaps.jsonl`); caminho com o bloco do bioma; obra
+comum limpa lote na mata; mineiro escora areia; terraplanagem do lote fase 1 (±2); rotas
+próprias (madeira e argila com prova, descascar, ingrediente de superfície); `/vc bioma`,
+`VC_BIOME`, `biome_report.py`, `BiomeCoverageGameTest`.
+
+- [ ] 🟠 **Casa presa no último bloco — falta jogo.** Taiga: 44 ciclos em "1 blocks left". A causa
+      vista na bancada era a copa de pinheiro de fora do lote: 29 peças de parede puladas por
+      "spruce_leaves is in the way" e a tocha da parede sem apoio. 0.3.77: folha natural dá lugar à
+      peça; a peça inalcançável surge depois de 3 vezes de lado (`UnreachablePieces`,
+      `villagecolony/unreachable-pieces.jsonl`, `VC_UNREACHABLE`). Bancada: taiga 0 → 2 casas
+      concluídas, nota 7,6. Pendente: tronco natural no volume ainda é pulado ("spruce_log is in the
+      way", 3×); peça de lado por apoio (`UNSUPPORTED`) que nunca ganha apoio ainda segura a obra.
+- [ ] 🟠 **Deserto jogado (0.3.77, 20-10, Spark IgpFCEon8m): 0 obras em 2,8 dias.** 0.3.78 corrige três
+      causas medidas na bancada com a semente do autor (`--near=-460,601`): a rua de arenito liso da
+      vila gerada não era rua (só no índice, que só se enche de rua), a busca de rua só via +2 do
+      centro, e a duna acima da rua não era cortada (corte até 5). Bancada: 0 → 4 casas, nota 5,1 → 8,8.
+      0.3.84 (deserto jogado na 0.3.83, nota 7,8, Spark 5tus3Etvsq): fundidor atende já a peça de
+      fornalha que a obra espera (arenito liso 67× de lado); ferro descansa um dia onde a mina não o tem
+      (IronRest); rede da mina menor por nível (1º raio 2, demais 3; antes 6) para descer mais rápido;
+      chão firme da vila de areia (2 camadas abaixo da superfície de areia viram arenito, DesertGround).
+      0.3.85 (autor, opção 1): o lote aplainado ganha um corredor de 2 blocos em volta da casa, cortado
+      até a base (só chão do bioma; nunca rua, peça da vila, obra ou beira d'água; não aterra). Bancada:
+      9,4 / 9,1 / 8,9, a casa do buraco (148,78,-507) fecha; desistências de lado 570 → 63–107.
+      0.3.83 (autor, 21-10: "mudar de casa"): quem desiste do trabalho morando 2+ abaixo dele passa a
+      dormir numa cama livre da vila na altura do trabalho, ou troca de casa com um aldeão sem ofício
+      que mora lá (HomeMove); à noite o jogo já o leva para a cama. Bancada: 9,3 / 9,3 / 5,9 — na de
+      5,9 todas as camas de cima eram de aldeões com ofício e o construtor não tinha para onde ir.
+      Pendente 🟠: esse caso (decisão do autor: trocar com quem tem ofício? construir casa em cima?).
+      0.3.82 (autor, 21-10, depois de jogar a 0.3.81): a escada fixa e a subida por pilar saíram —
+      "quebra o visual", "a movimentação precisa ser a mais natural possível". Só o mineiro cava
+      (degrau, túnel) para subir; os outros, só degrau natural (regra de 15-10 de volta). Pendente 🔴:
+      quem mora na parte baixa da vila do deserto volta a não chegar à obra de cima (bancada: 0 obras
+      em 2 rodadas com o construtor morando em y63) — falta uma saída natural, decisão do autor.
+      0.3.81 (deserto jogado na 0.3.80, nota 8,2, Spark ETMetpWVS9; a vila tem duas alturas, y63 e y80+):
+      toda profissão que desiste abaixo do destino sobe até a altura dele (pondo bloco ou cavando — a
+      regra de 15-10 "só o mineiro" vale fora desse caso), com prazo de 2 min e descanso de 5; escada
+      fixa de arenito entre as alturas (VillageStairs); viveiro do anel do baú aceita areia da vila a
+      céu aberto, só na vila em duas alturas e dentro da caixa; canteiro novo na areia além da borda da
+      roça (mais trigo para o pastor cruzar os bichos). Pendente: na bancada a nota variou de 4,4 a 9,0
+      (sem ganho claro sobre a 0.3.80); escada parou em 4 de 18 degraus por peça da vila; KF-006.
+      0.3.80 (deserto jogado na 0.3.79, nota 9,1, Spark jiRJWBtgDi): encalhado abaixo do caminho sobe
+      até a altura dele (pilar/escada rumo ao destino — o mineiro da casa baixa saía "after 0 steps" 9×);
+      grama também no chão do curral; viveiro primeiro em volta do baú do lenhador, na altura dele;
+      terracota, feno e argila aparecem quando a obra pede (AppearingPieces, sem pedido nem falta).
+      Pendente: KF-005 (teste do carvão do mineiro cai na bateria inteira, 3/7).
+      0.3.79: fazendeiro vai ao lugar de pé ao lado da planta (FarmerStand) e, como o construtor, anda
+      por etapas quando longe — desistências 7 → 0 na bancada; grama ao pé do poste da ovelha amarrada
+      (PostGrass, pedido do autor). Pendente: a grama do poste não foi exercida na bancada (o pastor não
+      amarrou ovelha nenhuma) — só GameTest; pastor segue 75% ocioso; lenhador e carpinteiro parados
+      (40–60% ócio); cacto e cana contam como chão do lote; a bancada varia muito entre rodadas (nota
+      3,9 a 8,8 com o mesmo código) — comparar com 2+ rodadas.
+- [ ] 🔴 **Jogar 0.3.77 pelo roteiro** (`docs/testing/roteiro-por-bioma.md`): deserto e uma floresta,
+      com `/vc bioma nota`; relatório com `scripts/biome_report.py`. A bancada não vê casa torta,
+      aldeão preso nem rua estranha.
+- [ ] 🟠 **Rotas que travam na execução (`STALLED`).** Deserto: arenito liso (7×), cortado (3×) e comum —
+      fundidor e pedreiro não pegam a tarefa; deserto também tem fundidor 100% parado. Neve: bloco e
+      camada de neve agora têm tarefa e travam (6× e 2×). Savana: vidraça, terracota colorida.
+- [ ] 🟠 **Terraplanagem fase 2** (a vila inteira em subida de 1 em 1, plano de 15-10): ermos e taiga
+      nevada têm 69% e 28% das recusas "sem chão na janela", relevo acima de 2.
+- [ ] 🟠 **Lavoura e viveiro na neve e no deserto.** `FarmerTill` e `TreeNursery` exigem ar em cima do
+      chão: a camada de neve barra. No deserto, roça nova exige grama/terra (aterrar com terra da mina) e
+      o fazendeiro "could not reach the crop" (9–11×). Fazendeiro 75–81% parado no deserto.
+- [ ] 🟠 **Pastor sem ovelha.** Deserto e neve: 84–96% parado, "no sheep with wool within the radius";
+      lã branca é a falta `NOT_FOUND` mais comum (todas as vilas). Decisão: o pastor traz/cria animais?
+- [ ] 🟡 **Estilo e madeira do bioma vizinho** para biomas fora da tabela (ermos → deserto, picos de
+      gelo → neve; selva, floresta escura, cerejeira com a madeira local). Hoje caem em planície de carvalho.
+- [ ] 🟡 **Reserva de madeira** onde não há árvore (lenhador 85–88% bloqueado no deserto).
+- [ ] 🟡 **Mineiro: alvo alto demais e sem onde pisar** (TOO_HIGH/NO_STANDING_POSITION em todo bioma) —
+      a mina 2ª fase.
+- [ ] 🟡 **Ofício sem trabalho ajuda os outros** (cadeia da Regra 51 para pastor e fazendeiro) — mexe
+      na Regra 59, **decisão do autor**.
+- [ ] 🟡 `NO_TASK` novos: tronco e madeira de acácia na savana. Melancia (`melon`) sem rota: o
+      fazendeiro não planta melancia.
+- [ ] 🟡 **Bancada mais fiel:** 3 sementes por bioma; vila posta por `/place structure` não fica
+      registrada como estrutura (mede o pior caso); medir o custo da limpeza de mata (`cost_ledger`).
+- [ ] 🟢 `MinerDirectPathGameTest` intermitente (~1/3, já no 690dee98) — card de tarefa aberto.
+- [ ] 🟢 PR e merge na `main` das branches `fix/varredura-g1-g3` e `feat/biomas-simulacao` (ADR-035).
 
 ## 🔴 Auditoria técnica 10-10 (fila AUD, P0→🔴 P1→🟠 P2→🟡 P3→🟢)
 
@@ -87,12 +174,6 @@ borda (ela já fez um teste passar sem medir nada, o D2).
 
 Plano de 07-10 aplicado: D2, B1, B3, B4, B5, B6 e o arquivo do save provados por mutação (ADR-039).
 Falta só fechar e abrir um mundo de verdade (playtest).
-
-## 🟡 Bioma (regra do autor: toda profissão se adequa ao bioma)
-
-- [x] Carpinteiro, pedreiro e fundidor: peças das casas do bioma (`BiomePieces`).
-- [x] Lenhador: espécies do bioma (floresta da vila, ADR-037); mineiro e coleta: o que o chão dá.
-- [ ] Fazendeiro e pastor: hoje iguais em todo bioma — levantar o que a vila Vanilla de cada bioma cultiva e cria.
 
 ## 🟡 Estrutura
 

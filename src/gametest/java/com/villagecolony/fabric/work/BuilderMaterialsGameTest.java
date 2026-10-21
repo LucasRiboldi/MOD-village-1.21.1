@@ -10,9 +10,6 @@ import com.villagecolony.core.construction.model.MaterialRequest;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
-import com.villagecolony.core.type.ResourceType;
-import com.villagecolony.core.task.model.TaskPriority;
-import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BiomeConstructionSupply;
@@ -323,7 +320,7 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
     /** Consultar o baú não equivale a abrir quatro trabalhos na colônia. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
     public void onlyCycleDispatchesSpendConstructionFallbackAttempts(TestContext context) {
-        Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.WHITE_TERRACOTTA);
+        Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.HOPPER);
 
         try {
             for (int query = 1; query <= 4; query++) {
@@ -331,17 +328,17 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
                         "a consulta " + query + " do construtor gastou uma tentativa de despacho");
             }
 
-            context.assertTrue(count(context, setup.builderChest(), Items.WHITE_TERRACOTTA) == 0,
+            context.assertTrue(count(context, setup.builderChest(), Items.HOPPER) == 0,
                     "a terracota apareceu antes dos despachos do ciclo");
 
             for (int dispatch = 1; dispatch <= com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; dispatch++) {
                 ConstructionSupplyDispatches.recordCycleDispatch(
-                        setup.project().id(), Items.WHITE_TERRACOTTA, dispatch);
+                        setup.project().id(), Items.HOPPER, dispatch);
             }
 
             context.assertTrue(BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), setup.project()),
                     "os despachos distintos não liberaram a contingência terminal");
-            context.assertTrue(count(context, setup.builderChest(), Items.WHITE_TERRACOTTA) == 1,
+            context.assertTrue(count(context, setup.builderChest(), Items.HOPPER) == 1,
                     "a contingência terminal não entrou no baú do construtor");
         } finally {
             setup.cleanUp();
@@ -365,9 +362,9 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
             try {
                 ConstructionSupplyDispatches.renewForCycle(context.getWorld(), setup.colony());
 
-                context.assertTrue(ConstructionSupplyDispatches.fallbackDue(
-                                setup.project().id(), Items.FLETCHING_TABLE),
-                        "a peça sem rota nenhuma não contou os ciclos da obra");
+                // Contou os dois ciclos e a peça surgiu (G2: ao travar, aparece no baú do construtor).
+                context.assertTrue(count(context, setup.builderChest(), Items.FLETCHING_TABLE) == 1,
+                        "a peça sem rota nenhuma não contou os ciclos da obra e não surgiu");
             } finally {
                 setup.cleanUp();
             }
@@ -377,49 +374,37 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
     }
 
     /**
-     * Uma rota explicada pelo livro de receitas ainda nao e trabalho. Quatro
-     * leituras do ciclo sem uma tarefa da cadeia nao podem materializar a
-     * peca; a contagem comeca quando a colonia efetivamente abriu o pedido.
-     * Regra 40, ADR-040.
+     * Rota de papel sem tarefa aberta é rota travada: ninguém a executa — G2, 2026-10-20. Dois
+     * ciclos sem progresso e a peça aparece no baú do construtor (era: a contagem esperava uma
+     * tarefa da cadeia, e a obra ficava parada; ADR-040, emenda de 2026-10-20).
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
-    public void dispatchCountsOnlyAfterTheSupplyChainHasAnOpenTask(TestContext context) {
+    public void aRouteWithoutAnOpenTaskIsAStall(TestContext context) {
         Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.OAK_PLANKS);
 
-        try {
-            setup.project().moveTo(ConstructionState.PREPARING);
-            setup.project().moveTo(ConstructionState.BUILDING);
-            setup.project().moveTo(ConstructionState.WAITING_RESOURCES);
-            VillageColonyMod.CONSTRUCTIONS.register(setup.project());
+        setup.project().moveTo(ConstructionState.PREPARING);
+        setup.project().moveTo(ConstructionState.BUILDING);
+        setup.project().moveTo(ConstructionState.WAITING_RESOURCES);
+        VillageColonyMod.CONSTRUCTIONS.register(setup.project());
+        ConstructionSupplyDispatches.renewForCycle(context.getWorld(), setup.colony());
 
-            for (int cycle = 1; cycle <= 4; cycle++) {
+        context.assertTrue(count(context, setup.builderChest(), Items.OAK_PLANKS) == 0,
+                "a tábua surgiu no primeiro ciclo, antes de a rota ter um minuto");
+
+        context.waitAndRun(1, () -> {
+            try {
                 ConstructionSupplyDispatches.renewForCycle(context.getWorld(), setup.colony());
+
+                context.assertTrue(count(context, setup.builderChest(), Items.OAK_PLANKS) == 1,
+                        "a rota de papel sem tarefa não foi tratada como travada");
+            } finally {
+                VillageColonyMod.CONSTRUCTIONS.removeOfColony(setup.colony().id());
+                VillageColonyMod.TASKS.clear();
+                setup.cleanUp();
             }
 
-            context.assertFalse(ConstructionSupplyDispatches.fallbackDue(
-                            setup.project().id(), Items.OAK_PLANKS),
-                    "a rota sem tarefa aberta gastou os despachos da obra");
-
-            VillageColonyMod.TASKS.create(setup.colony().id(), TaskType.CRAFT_WOOD_MATERIAL,
-                    TaskPriority.PRODUCTION, ResourceType.OAK_PLANKS, 1);
-
-            ConstructionSupplyDispatches.renewForCycle(context.getWorld(), setup.colony());
-            long tick = context.getWorld().getTime();
-            for (int cycle = 1; cycle < com.villagecolony.fabric.integration.BiomeConstructionSupply.DISPATCHES_BEFORE_STOCKING; cycle++) {
-                ConstructionSupplyDispatches.recordCycleDispatch(
-                        setup.project().id(), Items.OAK_PLANKS, tick + cycle);
-            }
-
-            context.assertTrue(ConstructionSupplyDispatches.fallbackDue(
-                            setup.project().id(), Items.OAK_PLANKS),
-                    "quatro ciclos com trabalho aberto nao registraram o despacho");
-        } finally {
-            VillageColonyMod.CONSTRUCTIONS.removeOfColony(setup.colony().id());
-            VillageColonyMod.TASKS.clear();
-            setup.cleanUp();
-        }
-
-        context.complete();
+            context.complete();
+        });
     }
 
     private record Setup(Colony colony, UUID builder, UUID carpenter, ColonyPos builderChest,

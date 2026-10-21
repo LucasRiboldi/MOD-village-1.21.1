@@ -150,10 +150,11 @@ public final class TreeNursery {
      * @return {@code true} se o viveiro nasceu agora
      */
     public static boolean plant(ServerWorld world, BlockPos ground, Block sapling) {
-        if (!isSpotForANursery(world, ground)) {
-            return false;
-        }
+        return isSpotForANursery(world, ground) && plantAt(world, ground, sapling);
+    }
 
+    /** O mesmo, num lugar que quem chama já conferiu (o viveiro perto do baú, LumberjackNursery). */
+    public static boolean plantAt(ServerWorld world, BlockPos ground, Block sapling) {
         BlockState seedling = sapling.getDefaultState();
 
         BlockState had = world.getBlockState(ground);
@@ -172,6 +173,8 @@ public final class TreeNursery {
         }
 
         world.setBlockState(ground.up(), seedling, Block.NOTIFY_ALL);
+        // A árvore que nascer daqui é da colônia: a limpeza de lote não a derruba.
+        com.villagecolony.fabric.world.ColonyTrees.planted(ground);
 
         return true;
     }

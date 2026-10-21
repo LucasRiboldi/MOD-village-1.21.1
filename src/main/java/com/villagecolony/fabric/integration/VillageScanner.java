@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.core.colony.model.ClusterRejection;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ColonyPos;
@@ -33,9 +34,8 @@ public final class VillageScanner {
     /**
      * Procura vilas em torno de um ponto.
      *
-     * <p>Clusters em bioma onde o jogo não gera vila são descartados em
-     * silêncio: o mod não os atende, e isso não é erro. A lista está em
-     * {@link VillageBiomes}. Ver ADR-003 §5.
+     * <p>Toda vila é atendida, em qualquer bioma (autor, 2026-10-20): o
+     * bioma decide o estilo dela, não se ela existe. Ver {@link VillageBiomes}.
      *
      * @param trigger centro da busca — o chunk que acabou de carregar ou
      *     o ponto avaliado no ciclo longo
@@ -80,17 +80,20 @@ public final class VillageScanner {
                     List.of(),
                     detector.rejectionOf(beds, ClusterRejection.VILLAGERS_NOT_COUNTED)
                             .map(List::of)
-                            .orElseGet(List::of),
-                    false);
+                            .orElseGet(List::of));
         }
 
         List<VillageCandidate> candidates = new ArrayList<>();
         List<ClusterRejection> rejections = new ArrayList<>();
-        boolean ignoredByBiome = false;
 
         Optional<ColonyPos> from = Optional.of(MinecraftTypeAdapter.toColonyPos(trigger));
 
-        for (List<ColonyPos> cluster : detector.cluster(beds)) {
+        // Vila espalhada não se parte: camas da mesma vila gerada são um aglomerado só.
+        List<List<ColonyPos>> byDistance = detector.cluster(beds);
+        List<List<ColonyPos>> clusters = VillageDetector.joinSameVillage(
+                byDistance, bed -> GeneratedVillages.boundsAt(world, bed.x(), bed.z()));
+
+        for (List<ColonyPos> cluster : clusters) {
             int villagers = countVillagers(world, cluster, window);
 
             Optional<ClusterRejection> rejection = detector.rejectionOf(cluster, villagers);
@@ -108,30 +111,52 @@ public final class VillageScanner {
                 continue;
             }
 
+            // Toda vila é atendida, em qualquer bioma; o estilo dela sai da vila gerada
+            // (VillageBiomes.styleBiomeAt) — decisão do autor, 2026-10-20.
             VillageCandidate observed = new VillageCandidate(
                     candidate.get().center(),
                     candidate.get().bedCount(),
-                    candidate.get().complete(),
+                    candidate.get().complete()
+                            && (byDistance.contains(cluster) || seesTheWholeVillage(world, cluster, trigger)),
                     candidate.get().anchor(),
                     cluster);
-
-            if (!VillageBiomes.hasVillages(world, observed.center())) {
-                // Bioma em que o jogo não gera vila é limite do mod, não
-                // recusa: a vila está lá, viva, e o mod é que não a
-                // atende (ADR-003 §5). A diferença importa porque recusa
-                // marca colônia abandonada e isto não pode marcar.
-                //
-                // A lista deixou de ser só PLAINS em 2026-08-19, com a
-                // Regra 20 — ver VillageBiomes.
-                ignoredByBiome = true;
-
-                continue;
-            }
 
             candidates.add(isProbe ? observed : withoutAnchor(observed));
         }
 
-        return new ScanResult(List.copyOf(candidates), List.copyOf(rejections), ignoredByBiome);
+        return new ScanResult(List.copyOf(candidates), List.copyOf(rejections));
+    }
+
+    /**
+     * Se a busca cobriu a vila gerada inteira deste aglomerado.
+     *
+     * <p>A prova de completude do detector é a dos 32 blocos entre camas; num aglomerado que a
+     * junção uniu ela deixa de valer, e uma cama da mesma vila pode estar além do raio. Então esse
+     * aglomerado só é completo se a caixa da vila couber no raio. Quem a junção não tocou fica com
+     * a prova do detector.
+     */
+    private static boolean seesTheWholeVillage(ServerWorld world, List<ColonyPos> cluster, BlockPos trigger) {
+        Optional<VillageBounds> village = GeneratedVillages.boundsAt(world, cluster.get(0).x(), cluster.get(0).z());
+
+        if (village.isEmpty()) {
+            return true;
+        }
+
+        long radius = VillageDetector.SEARCH_RADIUS;
+        VillageBounds box = village.get();
+
+        for (int x : new int[] {box.minX(), box.maxX()}) {
+            for (int z : new int[] {box.minZ(), box.maxZ()}) {
+                long dx = (long) x - trigger.getX();
+                long dz = (long) z - trigger.getZ();
+
+                if (dx * dx + dz * dz > radius * radius) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -140,14 +165,10 @@ public final class VillageScanner {
      * @param candidates aglomerados aprovados como vila
      * @param rejected aglomerados que não passaram na validação da
      *     ADR-003 §3, com o motivo de cada um
-     * @param ignoredByBiome se algum aglomerado passou na validação e foi
-     *     descartado por estar em bioma sem vila. Não é recusa, e quem
-     *     decide abandono precisa saber a diferença
      */
     public record ScanResult(
             List<VillageCandidate> candidates,
-            List<ClusterRejection> rejected,
-            boolean ignoredByBiome) {
+            List<ClusterRejection> rejected) {
     }
 
     /**

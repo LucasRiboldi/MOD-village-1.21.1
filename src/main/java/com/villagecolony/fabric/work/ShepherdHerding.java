@@ -276,6 +276,11 @@ final class ShepherdHerding {
         if (herd.pen != null && shepherd.getBlockPos().isWithinDistance(goal, REACH)) {
             ShepherdPens.bringIn(world, herd.pen, animal);
             WorkTargets.clear(shepherdId);
+
+            // A ovelha no curral também ganha grama, para recriar a lã (PostGrass, autor 2026-10-21).
+            if (animal instanceof net.minecraft.entity.passive.SheepEntity) {
+                PostGrass.inPen(world, animal.getBlockPos());
+            }
             VillageColonyMod.LOGGER.info("Shepherd {} brought a {} into the pen at {}",
                     shepherdId.toString().substring(0, 8), animal.getType().getUntranslatedName(),
                     herd.pen.gate().toShortString());
@@ -297,6 +302,11 @@ final class ShepherdHerding {
 
             animal.attachLeash(knot, true);
             WorkTargets.clear(shepherdId);
+
+            // A ovelha amarrada ganha grama ao pé do poste para recriar a lã (PostGrass).
+            if (animal instanceof net.minecraft.entity.passive.SheepEntity) {
+                PostGrass.ensure(world, herd.fence);
+            }
             VillageColonyMod.LOGGER.info("Shepherd {} brought a {} in and tied it to the fence at {}",
                     shepherdId.toString().substring(0, 8), animal.getType().getUntranslatedName(),
                     herd.fence.toShortString());

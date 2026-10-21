@@ -75,9 +75,10 @@ final class LocateFallback {
                 .orElse(false);
 
         if (stocked) {
-            // A contagem recomeça: se o baú esvaziar, a profissão volta a
-            // procurar antes de o material aparecer de novo.
+            // A contagem recomeça, e a ausência fica registrada (KnownAbsent, 2026-10-20): o
+            // próximo lote vai direto ao baú de quem usa, sem mais quatro buscas inúteis.
             EmptySweeps.found(task.colonyId(), task.targetResource());
+            KnownAbsent.register(task.colonyId(), task.targetResource(), world.getTime());
         }
 
         return stocked;

@@ -98,18 +98,27 @@ final class FarmerTill {
         return true;
     }
 
-    /** A terra ao lado da roça que serve de canteiro novo, a partir de {@code from}. */
+    /**
+     * O chão perto da roça que serve de canteiro novo, a partir de {@code from}: colado num canteiro,
+     * ou até dois além dele e um abaixo — deserto jogado, 2026-10-21: a roça da vila do deserto tem
+     * borda de arenito cortado e areia um abaixo do lado de fora, e o canteiro novo nunca cabia; a
+     * vila ficou com uma roça só e o pastor sem trigo para cruzar os bichos.
+     */
     static Optional<BlockPos> nextPlot(ServerWorld world, BlockPos from) {
         for (BlockPos at : BlockPos.iterateOutwards(from, REACH, 3, REACH)) {
             if (!CropPatch.isFarmland(world.getBlockState(at))) {
                 continue;
             }
 
-            for (Direction side : Direction.Type.HORIZONTAL) {
-                BlockPos next = at.offset(side).toImmutable();
+            for (int reach = 1; reach <= 2; reach++) {
+                for (Direction side : Direction.Type.HORIZONTAL) {
+                    for (int dy = 0; dy >= -1; dy--) {
+                        BlockPos next = at.offset(side, reach).up(dy).toImmutable();
 
-                if (fits(world, next)) {
-                    return Optional.of(next);
+                        if (fits(world, next)) {
+                            return Optional.of(next);
+                        }
+                    }
                 }
             }
         }
@@ -117,13 +126,16 @@ final class FarmerTill {
         return Optional.empty();
     }
 
-    /** Terra ou grama com ar em cima, água perto, longe da rua e de obra. */
+    /** Terra, grama ou areia com ar em cima, água perto, longe da rua e de obra. */
     static boolean fits(ServerWorld world, BlockPos ground) {
         BlockState state = world.getBlockState(ground);
+        boolean soil = state.isOf(Blocks.GRASS_BLOCK) || state.isOf(Blocks.DIRT);
+        // A areia é o chão do deserto, e a da vila gerada também serve (BlockProtection.mayBuildOver).
+        boolean sand = state.isIn(net.minecraft.registry.tag.BlockTags.SAND)
+                && BlockProtection.mayBuildOver(world, ground, state);
 
-        if (!(state.isOf(Blocks.GRASS_BLOCK) || state.isOf(Blocks.DIRT))
+        if (!((soil && BlockProtection.mayBreak(world, ground, state)) || sand)
                 || !world.getBlockState(ground.up()).isAir()
-                || !BlockProtection.mayBreak(world, ground, state)
                 || BlockProtection.isColonyBuilt(ground)
                 || pathNear(world, ground)) {
             return false;
@@ -138,10 +150,11 @@ final class FarmerTill {
         return false;
     }
 
-    /** Caminho de terra encostado: a rua não vira roça. */
+    /** Caminho encostado — de terra, ou a rua de arenito do deserto: a rua não vira roça. */
     private static boolean pathNear(ServerWorld world, BlockPos ground) {
         for (BlockPos at : BlockPos.iterate(ground.add(-1, -1, -1), ground.add(1, 1, 1))) {
-            if (world.getBlockState(at).isOf(Blocks.DIRT_PATH)) {
+            if (world.getBlockState(at).isOf(Blocks.DIRT_PATH)
+                    || com.villagecolony.fabric.integration.VillageRoad.isPaving(world, at.toImmutable())) {
                 return true;
             }
         }

@@ -42,7 +42,7 @@ class ColonyAbandonmentTest {
         Colony colony = colonyAt(CENTER);
 
         assertTrue(ColonyAbandonment.judge(
-                colony, CENTER, List.of(villageAt(CENTER)), false).isEmpty());
+                colony, CENTER, List.of(villageAt(CENTER))).isEmpty());
     }
 
     @Test
@@ -51,7 +51,7 @@ class ColonyAbandonmentTest {
 
         assertEquals(
                 Optional.of(ColonyState.ABANDONED),
-                ColonyAbandonment.judge(colony, CENTER, List.of(), false));
+                ColonyAbandonment.judge(colony, CENTER, List.of()));
     }
 
     /**
@@ -67,13 +67,13 @@ class ColonyAbandonmentTest {
         colony.setState(ColonyState.ABANDONED);
 
         assertTrue(
-                ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(CENTER)), false)
+                ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(CENTER)))
                         .isEmpty(),
                 "uma única leitura positiva ainda pode ser o pisca-pisca do E9");
 
         assertEquals(
                 Optional.of(ColonyState.STABLE),
-                ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(CENTER)), false));
+                ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(CENTER))));
     }
 
     /** Uma falha entre duas leituras positivas zera a confirmação de volta. */
@@ -83,12 +83,12 @@ class ColonyAbandonmentTest {
         colony.setState(ColonyState.ABANDONED);
 
         assertTrue(ColonyAbandonment.judge(
-                colony, CENTER, List.of(villageAt(CENTER)), false).isEmpty());
+                colony, CENTER, List.of(villageAt(CENTER))).isEmpty());
 
-        assertTrue(ColonyAbandonment.judge(colony, CENTER, List.of(), false).isEmpty());
+        assertTrue(ColonyAbandonment.judge(colony, CENTER, List.of()).isEmpty());
 
         assertTrue(
-                ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(CENTER)), false)
+                ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(CENTER)))
                         .isEmpty(),
                 "a leitura positiva depois de uma negativa contou como segunda confirmação");
     }
@@ -99,21 +99,7 @@ class ColonyAbandonmentTest {
         Colony colony = colonyAt(CENTER);
         colony.setState(ColonyState.ABANDONED);
 
-        assertTrue(ColonyAbandonment.judge(colony, CENTER, List.of(), false).isEmpty());
-    }
-
-    /**
-     * Bioma recusado não é vila morta.
-     *
-     * <p>ADR-003 §5: aglomerado fora de PLAINS é ignorado, e isso é
-     * limite do MVP. Um centro que caminhou para a borda do bioma
-     * condenaria uma vila cheia de gente.
-     */
-    @Test
-    void aClusterIgnoredByBiomeDoesNotCondemnTheColony() {
-        Colony colony = colonyAt(CENTER);
-
-        assertTrue(ColonyAbandonment.judge(colony, CENTER, List.of(), true).isEmpty());
+        assertTrue(ColonyAbandonment.judge(colony, CENTER, List.of()).isEmpty());
     }
 
     /** Vila de outra colônia, longe demais, não conta como esta. */
@@ -125,7 +111,7 @@ class ColonyAbandonmentTest {
 
         assertEquals(
                 Optional.of(ColonyState.ABANDONED),
-                ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(faraway)), false));
+                ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(faraway))));
     }
 
     /**
@@ -139,7 +125,7 @@ class ColonyAbandonmentTest {
 
         colony.measure(new com.villagecolony.core.colony.model.VillageBounds(-100, 60, -50, 30, 80, 50));
 
-        assertEquals(Optional.empty(), ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(beds)), false));
+        assertEquals(Optional.empty(), ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(beds))));
     }
 
     @Test
@@ -150,10 +136,10 @@ class ColonyAbandonmentTest {
         colony.measure(new com.villagecolony.core.colony.model.VillageBounds(-100, 60, -50, 30, 80, 50));
         colony.setState(ColonyState.ABANDONED);
 
-        ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(beds)), false);
+        ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(beds)));
 
         assertEquals(Optional.of(ColonyState.STABLE),
-                ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(beds)), false));
+                ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(beds))));
     }
 
     /**
@@ -172,7 +158,7 @@ class ColonyAbandonmentTest {
 
         assertEquals(
                 Optional.of(ColonyState.ABANDONED),
-                ColonyAbandonment.judge(colony, probedFrom, List.of(villageAt(CENTER)), false));
+                ColonyAbandonment.judge(colony, probedFrom, List.of(villageAt(CENTER))));
     }
 
     /**

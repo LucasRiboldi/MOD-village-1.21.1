@@ -119,6 +119,39 @@ class MineNetworkTest {
                 "sem pai pronto, não há rota");
     }
 
+    /** Cava até esgotar e devolve quantos nós ficaram prontos. */
+    private static int digToTheEnd(MineNetwork network) {
+        UUID miner = UUID.randomUUID();
+
+        for (int guard = 0; guard < 1000 && !network.exhausted(); guard++) {
+            network.done(network.claim(miner, HUB).orElseThrow());
+        }
+
+        return network.census().get(MineNetwork.State.DONE);
+    }
+
+    /** O primeiro nível é menor, e os seguintes menores que o raio cheio — autor, 2026-10-21. */
+    @Test
+    void theFirstLevelIsSmallAndTheNextOnesSmallerThanTheFullRadius() {
+        int first = 2 * MineNetwork.FIRST_LEVEL_RADIUS + 1;
+        int next = 2 * MineNetwork.LEVEL_RADIUS + 1;
+
+        assertEquals(first * first, digToTheEnd(MineNetwork.open(HUB, MineNetwork.FIRST_LEVEL_RADIUS)),
+                "o primeiro nível devia ter " + first + " × " + first + " nós");
+        assertEquals(next * next, digToTheEnd(MineNetwork.open(HUB, MineNetwork.LEVEL_RADIUS)),
+                "os níveis seguintes deviam ter " + next + " × " + next + " nós");
+        assertTrue(MineNetwork.FIRST_LEVEL_RADIUS < MineNetwork.LEVEL_RADIUS
+                && MineNetwork.LEVEL_RADIUS < MineNetwork.RADIUS, "a mina não ficou mais rasa por nível");
+    }
+
+    /** O raio do nível volta do save como foi gravado, e não o cheio. */
+    @Test
+    void aSmallLevelKeepsItsRadiusThroughTheSave() {
+        MineNetwork network = MineNetwork.open(HUB, MineNetwork.FIRST_LEVEL_RADIUS);
+
+        assertEquals(MineNetwork.FIRST_LEVEL_RADIUS, MineNetwork.restore(HUB, network.toArray()).radius());
+    }
+
     @Test
     void theLevelSurvivesTheSave() {
         MineNetwork network = MineNetwork.open(HUB);

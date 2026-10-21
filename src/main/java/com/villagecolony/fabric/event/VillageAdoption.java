@@ -15,6 +15,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillageFoundation;
+import com.villagecolony.fabric.integration.VillageFarmAnimals;
 import com.villagecolony.fabric.integration.VillageForest;
 import com.villagecolony.fabric.integration.VanillaBedChests;
 import com.villagecolony.fabric.integration.BigHouseFoundation;
@@ -104,7 +105,7 @@ final class VillageAdoption {
     static void judgeAbandonment(
             ServerWorld world, Colony colony, ColonyPos probedFrom, VillageScanner.ScanResult result) {
 
-        ColonyAbandonment.judge(colony, probedFrom, result.candidates(), result.ignoredByBiome())
+        ColonyAbandonment.judge(colony, probedFrom, result.candidates())
                 // Vila com o próprio povo dentro não é abandonada (playtest 0.3.42).
                 .filter(state -> state != ColonyState.ABANDONED || !peopleStillHome(world, colony))
                 .ifPresent(state -> {
@@ -368,6 +369,8 @@ final class VillageAdoption {
 
             if (created) {
                 int trees = VillageForest.seedInitial(world, colony);
+                // Dois de cada bicho de criação, sorteados na caixa da vila (regra do autor, 2026-10-20).
+                VillageFarmAnimals.seedInitial(world, colony);
                 VillageColonyMod.LOGGER.info(
                         "Colony created at {} with {} beds and {} forest trees",
                         colony.center(),

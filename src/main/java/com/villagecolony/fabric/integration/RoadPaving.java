@@ -92,7 +92,7 @@ public final class RoadPaving {
             // a ponta o via como chão proibido e a rua não crescia. Seguir
             // por cima não troca bloco nenhum; a coluna entra no índice e a
             // rua, com os arredores, passa a ser da vila que cresce.
-            if (VillageRoad.isPaving(world, state)) {
+            if (VillageRoad.isPaving(world, at)) {
                 RoadIndex.remember(colonyId, at);
 
                 previous = at;
@@ -117,7 +117,8 @@ public final class RoadPaving {
                 world.setBlockState(at.up(), net.minecraft.block.Blocks.AIR.getDefaultState());
             }
 
-            world.setBlockState(at, paving.getDefaultState());
+            // O caminho do chão que a rua cobre — o do bioma (VillageRoad.pavingOn).
+            world.setBlockState(at, VillageRoad.pavingOn(state, paving).getDefaultState());
 
             // O índice de ruas precisa saber da beira nova — 2026-08-27.
             // A rua cresce justamente quando não houve lote, e o lote
@@ -182,7 +183,7 @@ public final class RoadPaving {
             return Optional.of("colony-built block (" + nameOf(state) + ")");
         }
 
-        if (!LotGround.isNaturalGround(state)) {
+        if (!VillageRoad.isPavableGround(world, at, state)) {
             return Optional.of("not natural ground (" + nameOf(state) + ")");
         }
 

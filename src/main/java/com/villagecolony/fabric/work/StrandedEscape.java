@@ -46,7 +46,7 @@ import java.util.UUID;
  * <p><b>O que faz ele desistir de um rumo:</b> água ou lava encostada no
  * que ia sair (abrir o buraco inundaria a escada), e areia ou cascalho solto
  * logo acima do vão (cairia em cima dele). Desistir de um rumo não é
- * desistir de sair: sem degrau, o {@link ClimbOut} sobe em pilar ou abre
+ * desistir de sair: sem degrau, o {@link ClimbOut} (mineiro) abre
  * túnel para o lado, e recomeça — 2026-10-01, pedido do autor: <i>"nunca
  * ficar preso"</i>.
  *
@@ -99,6 +99,9 @@ public final class StrandedEscape {
         // de lote — estudo de 01-10, §7-A. Ver SweepCadence.
         SweepCadence.pass(world);
 
+
+        HomeMove.pass(world); // quem desistiu abaixo do trabalho muda de casa (2026-10-21)
+
         for (UUID workerId : StrandedWorkers.all()) {
             pass(world, workerId);
         }
@@ -144,7 +147,17 @@ public final class StrandedEscape {
             return;
         }
 
-        if (isOut(world, feet)) {
+        // A subida abaixo do caminho que não sobe tem prazo (StrandedWorkers.CLIMB_DEADLINE).
+        if (StrandedWorkers.climbGaveUp(workerId, feet, world.getTime())) {
+            VillageColonyMod.LOGGER.info("Stranded worker {} gives up climbing at {} — no height gained in time",
+                    workerId.toString().substring(0, 8), feet.toShortString());
+            letGo(world, villager, workerId, true);
+
+            return;
+        }
+
+        // Quem encalhou abaixo do caminho só sai na altura dele (StrandedWorkers.reachedTheWay).
+        if (isOut(world, feet) && StrandedWorkers.reachedTheWay(workerId, feet)) {
             VillageColonyMod.LOGGER.info(
                     "Stranded worker {} is out at {} after {} steps — back in the work queue",
                     workerId.toString().substring(0, 8),
@@ -152,12 +165,7 @@ public final class StrandedEscape {
                     StrandedWorkers.stepsDug(workerId));
             ActionJournal.action(workerId, "UNSTRANDED", "", StrandedWorkers.stepsDug(workerId), feet, "");
 
-            StrandedWorkers.release(workerId);
-            ClimbOut.finish(world, villager, workerId);
-            MineReturn.finish(workerId);
-            forget(workerId);
-            EscapeBackfill.begin(workerId,
-                    VillageColonyMod.STORAGES.of(workerId).map(WorkerStorage::chestPosition).orElse(null));
+            letGo(world, villager, workerId, true);
 
             return;
         }
@@ -170,10 +178,25 @@ public final class StrandedEscape {
 
         // A qualquer hora: sair do buraco não é trabalho, e preso ele não
         // chega à cama. Ver ClimbOut — primeiro o caminho por onde desceu
-        // (MineReturn); sem ele, escada, pilar ou túnel, mirando a borda da
+        // (MineReturn); sem ele, escada ou túnel, mirando a borda da
         // vila e não o centro dela, sem desistir.
-        ClimbOut.pass(world, villager, workerId, MineReturn.homeFor(colony.get(), feet),
+        // E sobe rumo a ele: a borda da vila, no fundo do vale, fica na mesma altura.
+        ClimbOut.pass(world, villager, workerId,
+                StrandedWorkers.wayOf(workerId).orElseGet(() -> MineReturn.homeFor(colony.get(), feet)),
                 VillageColonyMod.STORAGES.of(workerId).map(WorkerStorage::chestPosition).orElse(null));
+    }
+
+    /** Solta o encalhado de volta à escala; {@code backfill}: a escada de fuga dele é tapada. */
+    private static void letGo(ServerWorld world, VillagerEntity villager, UUID workerId, boolean backfill) {
+        StrandedWorkers.release(workerId);
+        ClimbOut.finish(world, villager, workerId);
+        MineReturn.finish(workerId);
+        forget(workerId);
+
+        if (backfill) {
+            EscapeBackfill.begin(workerId,
+                    VillageColonyMod.STORAGES.of(workerId).map(WorkerStorage::chestPosition).orElse(null));
+        }
     }
 
     /**
@@ -436,7 +459,7 @@ public final class StrandedEscape {
             }
 
             for (ItemStack dug : drops) {
-                // O que serve de bloco fica com quem sobe, para o pilar.
+                // O que serve de bloco fica com quem sobe, e vai ao baú quando ele sai.
                 ItemStack drop = ClimbOut.keep(digger, dug);
 
                 if (drop.isEmpty()) {

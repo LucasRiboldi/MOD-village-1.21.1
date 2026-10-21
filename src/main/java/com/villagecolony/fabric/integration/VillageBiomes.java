@@ -3,7 +3,6 @@ package com.villagecolony.fabric.integration;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ResourceId;
-import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.registry.RegistryKey;
@@ -26,8 +25,9 @@ import java.util.Optional;
  * carvalho porque não havia outra coisa a construir.
  *
  * <p>A tabela é dos biomas em que o jogo <b>gera vila</b>, mais as
- * variantes vizinhas em que uma vila pode se estender. Estar aqui é o
- * que faz o mod aceitar a vila; a madeira que acompanha é o estilo dela.
+ * variantes vizinhas em que uma vila pode se estender. São os estilos
+ * possíveis; qual deles é o de uma vila decide {@link VillageStyle}, e
+ * toda vila é atendida, em qualquer bioma (autor, 2026-10-20).
  *
  * <p><b>Por que uma tabela, e não uma leitura do mundo.</b> Dava para
  * olhar as árvores em volta e deduzir a espécie. Seria mais esperto e
@@ -162,30 +162,25 @@ public final class VillageBiomes {
         return "plains";
     }
 
-    /** A paleta da vila que está neste lugar. */
+    /** A paleta da vila que está neste lugar, pelo estilo dela ({@link VillageStyle}). */
     public static Optional<VillagePalette> paletteAt(ServerWorld world, ColonyPos where) {
-        return world.getBiome(MinecraftTypeAdapter.toBlockPos(where))
-                .getKey()
-                .flatMap(VillageBiomes::paletteFor);
+        return paletteFor(VillageStyle.biomeAt(world, where));
     }
 
     /**
      * A madeira da vila deste bioma.
      *
-     * <p>Vazio quer dizer que o jogo não gera vila aqui, e é assim que
-     * a varredura decide se o aglomerado vira colônia. Não é recusa: a
-     * vila que exista fora desta lista continua lá, viva, e o mod é que
-     * não a atende — ver ADR-003 §5.
+     * <p>Vazio quer dizer que o jogo não gera vila aqui. Não decide mais se
+     * a vila é atendida — toda vila é (autor, 2026-10-20) —, e sim se este
+     * bioma pode ser o estilo de uma ({@link VillageStyle}).
      */
     public static Optional<ResourceId> woodFor(RegistryKey<Biome> biome) {
         return Optional.ofNullable(WOOD.get(biome));
     }
 
-    /** O mesmo, perguntando ao mundo qual é o bioma deste ponto. */
+    /** A madeira da vila que está neste lugar, pelo estilo dela ({@link VillageStyle}). */
     public static Optional<ResourceId> woodAt(ServerWorld world, ColonyPos where) {
-        return world.getBiome(MinecraftTypeAdapter.toBlockPos(where))
-                .getKey()
-                .flatMap(VillageBiomes::woodFor);
+        return woodFor(VillageStyle.biomeAt(world, where));
     }
 
     /** Solo de acabamento para recompor uma depressão de uma camada no lote. */
@@ -204,16 +199,9 @@ public final class VillageBiomes {
         return Optional.ofNullable(FOREST.get(biome));
     }
 
-    /** O mesmo, lendo o bioma no centro da colônia. */
+    /** O mesmo, pelo estilo da vila que está neste lugar ({@link VillageStyle}). */
     public static Optional<List<TreeSpecies>> forestSpeciesAt(ServerWorld world, ColonyPos where) {
-        return world.getBiome(MinecraftTypeAdapter.toBlockPos(where))
-                .getKey()
-                .flatMap(VillageBiomes::forestSpeciesFor);
-    }
-
-    /** Se o mod atende vila neste ponto. */
-    public static boolean hasVillages(ServerWorld world, ColonyPos where) {
-        return woodAt(world, where).isPresent();
+        return forestSpeciesFor(VillageStyle.biomeAt(world, where));
     }
 
     private static ResourceId plank(String species) {

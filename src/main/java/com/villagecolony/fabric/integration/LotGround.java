@@ -69,6 +69,12 @@ public final class LotGround {
      */
     static Optional<BlockPos> groundInColumn(
             ServerWorld world, int x, int z, int aroundY) {
+        return groundInColumn(world, x, z, aroundY, LotLevel.WINDOW_UP);
+    }
+
+    /** O mesmo, com a janela subindo {@code up} blocos — a terraplanagem corta até {@link LotTerraform#MAX_CUT}. */
+    static Optional<BlockPos> groundInColumn(
+            ServerWorld world, int x, int z, int aroundY, int up) {
 
         WorldChunk chunk = world.getChunkManager().getWorldChunk(x >> 4, z >> 4);
 
@@ -86,23 +92,42 @@ public final class LotGround {
         // limite de dois. A casa nasceria enfiada na encosta. Achado
         // pelo gametest do desnível, em 2026-08-14.
         //
-        // Efeito colateral assumido: lote com árvore em cima é recusado,
-        // porque o tronco está acima da janela. Conservador de
-        // propósito — a colônia procura outro lugar em vez de derrubar
-        // o que não planejou.
-        if (!isNothing(chunk.getBlockState(new BlockPos(x, aroundY + LotLevel.WINDOW_UP + 1, z)))) {
+        // Lote com árvore em cima é recusado, porque o tronco está acima
+        // da janela — a colônia procura outro lugar em vez de derrubar o
+        // que não planejou. Menos nos biomas de árvores juntas: lá a
+        // árvore natural não é obstáculo, o chão é o de baixo dela, e a
+        // obra limpa o lote (LotGrowth, autor, 2026-10-20).
+        boolean trees = LotGrowth.clearsTreesAt(world, new BlockPos(x, aroundY, z));
+
+        if (!isEmptyForGround(chunk.getBlockState(new BlockPos(x, aroundY + up + 1, z)), trees)
+                && !isArenaCeiling(chunk.getBlockState(new BlockPos(x, aroundY + up + 1, z)), up + 1)) {
             return Optional.empty();
         }
 
-        for (int y = aroundY + LotLevel.WINDOW_UP; y >= aroundY - LotLevel.WINDOW_DOWN; y--) {
+        for (int y = aroundY + up; y >= aroundY - LotLevel.WINDOW_DOWN; y--) {
             BlockPos pos = new BlockPos(x, y, z);
+            BlockState state = chunk.getBlockState(pos);
 
-            if (!isNothing(chunk.getBlockState(pos))) {
+            if (!isEmptyForGround(state, trees) && !isArenaCeiling(state, y - aroundY)) {
                 return Optional.of(pos);
             }
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * O teto de barreira da arena de GameTest, acima da janela de sempre ({@link LotLevel#WINDOW_UP}): não
+     * é bloco do mundo (o mesmo de LotClearance), e a janela do corte ({@link LotTerraform#MAX_CUT}) o
+     * alcança. Na janela de sempre a barreira continua sendo parede, como a borda da arena.
+     */
+    private static boolean isArenaCeiling(BlockState state, int aboveRoad) {
+        return aboveRoad > LotLevel.WINDOW_UP && state.isOf(Blocks.BARRIER);
+    }
+
+    /** Vazio para achar o chão: o de {@link #isNothing}, e a vegetação natural onde a obra a limpa. */
+    private static boolean isEmptyForGround(BlockState state, boolean trees) {
+        return isNothing(state) || (trees && LotGrowth.isLooseGrowth(state));
     }
 
     /**
@@ -127,15 +152,15 @@ public final class LotGround {
      * <p><b>Folha fica de fora, e é decisão.</b> O documento a lista, mas
      * aceitar folha como nada faria a colônia escolher lote debaixo de
      * copa — e a casa nasceria dentro da árvore. O guarda da janela pega
-     * o tronco, não a copa baixa. Conservador de propósito, como a recusa
-     * de lote com árvore em cima logo acima.
+     * o tronco, não a copa baixa. Nos biomas de árvores juntas a folha e
+     * o tronco naturais saem antes da obra ({@link LotGrowth}).
      *
      * <p>Quem limpa é o próprio construtor, sem código novo: ele escreve
      * o bloco no lugar, e o que estava ali sai. O que sobra é a moita
      * dentro de cômodo cujo projeto pede ar — o projeto não escreve nada
      * ali, e a grama fica. É cosmético e está registrado no §13.
      */
-    static boolean isNothing(BlockState state) {
+    public static boolean isNothing(BlockState state) {
         return state.isAir()
                 || state.isReplaceable()
                 || state.isIn(BlockTags.REPLACEABLE)
@@ -210,6 +235,8 @@ public final class LotGround {
         BlockState state = world.getBlockState(pos);
 
         return isNaturalGround(state)
+                // Micélio, lama, musgo e terra enraizada: a etiqueta de terra do jogo (G1, 2026-10-20).
+                || state.isIn(BlockTags.DIRT)
                 || state.isIn(BlockTags.BASE_STONE_OVERWORLD)
                 || state.isIn(BlockTags.TERRACOTTA)
                 || state.isOf(Blocks.SANDSTONE)

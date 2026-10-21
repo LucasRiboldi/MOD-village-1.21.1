@@ -176,7 +176,8 @@ public class BuildSiteGameTest implements FabricGameTest {
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_refusal_order")
     public void theCheapRefusalAnswersBeforeTheExpensiveOne(TestContext context) {
-        BlockPos center = new BlockPos(3, 1, 3);
+        // Rua alta o bastante para o degrau caber três abaixo dela, na arena.
+        BlockPos center = new BlockPos(3, 4, 3);
         UUID colony = UUID.randomUUID();
 
         LotRefusals.clearAll();
@@ -187,21 +188,24 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
         reserveRoad(context, colony, center);
 
-        // <b>O degrau</b>: as colunas em volta sobem um bloco, em caminho
-        // de terra — fora do nível da rua e não sendo cubo inteiro, as
-        // duas coisas de uma vez. Fora do índice, para não virarem ruas.
+        // <b>O degrau</b>: as colunas em volta descem, em caminho de terra —
+        // fora do nível da rua e não sendo cubo inteiro, as duas coisas de
+        // uma vez. Fora do índice, para não virarem ruas.
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 if (dx == 0 && dz == 0) {
                     continue;
                 }
 
-                // Dois blocos: um so deixou de ser recusa em 2026-09-15,
-                // quando o autor mandou tolerar um bloco de desnivel.
-                for (int dy = 1; dy <= 2; dy++) {
-                    context.setBlockState(
-                            center.add(dx, dy, dz), Blocks.DIRT_PATH.getDefaultState());
+                // Três abaixo: um deixou de ser recusa em 2026-09-15 (tolerância),
+                // e dois em 2026-10-20 (o lote é aplainado até a rua). Abaixo, e
+                // não acima: três acima já sai da janela vertical (NO_GROUND), e
+                // a régua da rua não chegaria a responder.
+                for (int dy = 0; dy >= -2; dy--) {
+                    context.setBlockState(center.add(dx, dy, dz), Blocks.AIR.getDefaultState());
                 }
+
+                context.setBlockState(center.add(dx, -3, dz), Blocks.DIRT_PATH.getDefaultState());
             }
         }
 
@@ -453,14 +457,15 @@ public class BuildSiteGameTest implements FabricGameTest {
     }
 
     /**
-     * E dois blocos continuam sendo recusa.
+     * E três blocos continuam sendo recusa.
      *
-     * <p>A outra metade da decisão: o autor pediu <b>somente</b> um bloco.
-     * Sem este caso, afrouxar a régua viraria afrouxá-la sem limite, e a
-     * casa voltaria a nascer na varanda sem escada que a Regra 19 descreve.
+     * <p>A outra metade da decisão: até dois, o lote é aplainado até a rua
+     * (terraplanagem do lote, fase 1, autor 2026-10-20); a régua tem limite,
+     * e sem este caso a casa voltaria a nascer na varanda sem escada que a
+     * Regra 19 descreve.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_slope_one")
-    public void twoBlocksOffTheRoadLevelIsStillRefused(TestContext context) {
+    public void threeBlocksOffTheRoadLevelIsStillRefused(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
 
@@ -476,7 +481,8 @@ public class BuildSiteGameTest implements FabricGameTest {
                     continue;
                 }
 
-                for (int dy = 1; dy <= 2; dy++) {
+                // Um acima do corte da terraplanagem (LotTerraform.MAX_CUT = 5).
+                for (int dy = 1; dy <= 6; dy++) {
                     context.setBlockState(
                             center.add(dx, dy, dz), Blocks.GRASS_BLOCK.getDefaultState());
                 }
@@ -493,7 +499,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
             context.assertTrue(
                     site.isEmpty(),
-                    "dois blocos de desnível viraram lote, e o autor pediu somente um");
+                    "seis blocos de desnível viraram lote, e o corte vai só até cinco");
         } finally {
             BuildSiteScanner.clearAll();
             LotRefusals.clearAll();
@@ -1297,7 +1303,8 @@ public class BuildSiteGameTest implements FabricGameTest {
                     continue;
                 }
 
-                for (int dy = 1; dy <= BuildSiteScanner.MAX_SLOPE + 2; dy++) {
+                // Um acima do corte da terraplanagem (LotTerraform.MAX_CUT = 5).
+                for (int dy = 1; dy <= 6; dy++) {
                     context.setBlockState(
                             center.add(dx, dy, dz), Blocks.GRASS_BLOCK.getDefaultState());
                 }
@@ -1311,7 +1318,7 @@ public class BuildSiteGameTest implements FabricGameTest {
                 RADIUS,
                 SMALL_HOUSE);
 
-        context.assertTrue(site.isEmpty(), "aceitou lote com desnível de quatro blocos");
+        context.assertTrue(site.isEmpty(), "aceitou lote com desnível de seis blocos");
 
         context.complete();
     }
@@ -1377,11 +1384,11 @@ public class BuildSiteGameTest implements FabricGameTest {
     /**
      * Um degrau isolado dentro da caixa real da obra não pode virar apoio.
      *
-     * <p>A medição do chão aceita até um bloco de desnível, mas a obra é
-     * assentada no nível-base comum. Portanto, um bloco mais alto dentro da
-     * pegada fica no espaço vertical da construção e precisa reprovar o lote.
-     * A regra antiga começava a busca acima do chão de cada coluna e pulava
-     * exatamente esse bloco.
+     * <p>A obra é assentada no nível-base comum. Um degrau de chão natural
+     * dentro da pegada é cortado pelo aplainamento (terraplanagem do lote,
+     * fase 1, 2026-10-20) e não vira apoio; o que não é chão — aqui
+     * pedregulho — não se corta, fica no espaço vertical da construção e
+     * precisa reprovar o lote.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_volume")
     public void anElevatedColumnInsideTheBaseRefusesTheLot(TestContext context) {
@@ -1400,7 +1407,7 @@ public class BuildSiteGameTest implements FabricGameTest {
                 center.add(-1, 1, 0),
                 center.add(0, 1, 1),
                 center.add(0, 1, -1)}) {
-            context.setBlockState(bump, Blocks.GRASS_BLOCK.getDefaultState());
+            context.setBlockState(bump, Blocks.COBBLESTONE.getDefaultState());
         }
 
         try {
@@ -1530,18 +1537,16 @@ public class BuildSiteGameTest implements FabricGameTest {
         // Tudo em volta da rua sobe DOIS degraus. O lote continua plano
         // entre si, e deixa de estar no nível de quem anda na rua.
         //
-        // Era um degrau até 2026-09-15, quando o autor mandou tolerar um
-        // bloco — ver oneBlockOffTheRoadLevelIsStillALot. Com um, este
-        // caso passaria a medir a tolerância em vez da Regra 19; dois é
-        // a varanda sem escada que a regra descreve, e é o que ela ainda
-        // recusa.
+        // Um degrau é tolerância (2026-09-15) e até cinco são cortados até a rua
+        // (terraplanagem do lote, LotTerraform.MAX_CUT, 2026-10-20). Seis é a varanda
+        // sem escada que a regra descreve, e é o que ela ainda recusa.
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 if (dx == 0 && dz == 0) {
                     continue;
                 }
 
-                for (int dy = 1; dy <= 2; dy++) {
+                for (int dy = 1; dy <= 6; dy++) {
                     context.setBlockState(
                             center.add(dx, dy, dz), Blocks.GRASS_BLOCK.getDefaultState());
                 }
@@ -1834,7 +1839,8 @@ public class BuildSiteGameTest implements FabricGameTest {
                     continue;
                 }
 
-                for (int dy = 1; dy <= BuildSiteScanner.MAX_SLOPE + 2; dy++) {
+                // Um acima do corte da terraplanagem (LotTerraform.MAX_CUT = 5).
+                for (int dy = 1; dy <= 6; dy++) {
                     context.setBlockState(
                             center.add(dx, dy, dz), Blocks.GRASS_BLOCK.getDefaultState());
                 }
@@ -2268,19 +2274,26 @@ public class BuildSiteGameTest implements FabricGameTest {
             context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
             reserveRoad(context, colony, center);
 
-            // E um degrau de DOIS blocos dentro do lote, que é o bastante
+            // E um degrau de SEIS blocos encostado na rua, que é o bastante
             // para o flatGroundAt reprovar.
             //
-            // Era um até 2026-09-15, quando o autor mandou tolerar um bloco
-            // — ver oneBlockOffTheRoadLevelIsStillALot. O que este caso
-            // afirma é que a recusa é CONTADA pelo motivo certo, e para
+            // Era um até 2026-09-15 (o autor mandou tolerar um bloco — ver
+            // oneBlockOffTheRoadLevelIsStillALot) e dois até 2026-10-20, quando a
+            // terraplanagem passou a cortar até cinco (LotTerraform.MAX_CUT). O que
+            // este caso afirma é que a recusa é CONTADA pelo motivo certo, e para
             // isso ele precisa de um desnível que ainda seja recusa.
-            for (int dy = 1; dy <= 2; dy++) {
-                context.setBlockState(
-                        center.east().north().up(dy), Blocks.GRASS_BLOCK.getDefaultState());
-            }
+            // Em volta da rua inteira, para todo candidato encostado nela passar pelo degrau.
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    if (dx == 0 && dz == 0) {
+                        continue;
+                    }
 
-            context.setBlockState(center.east().north(), Blocks.GRASS_BLOCK.getDefaultState());
+                    for (int dy = 0; dy <= 6; dy++) {
+                        context.setBlockState(center.add(dx, dy, dz), Blocks.GRASS_BLOCK.getDefaultState());
+                    }
+                }
+            }
 
             ColonyPos from = MinecraftTypeAdapter.toColonyPos(
                     context.getAbsolutePos(center));
@@ -2292,7 +2305,11 @@ public class BuildSiteGameTest implements FabricGameTest {
                             || LotRefusals.countOf(colony, LotRefusals.Reason.NO_GROUND) > 0
                             || LotRefusals.countOf(colony, LotRefusals.Reason.OCCUPIED) > 0,
                     "a varredura recusou candidatos e não contou nenhum motivo —"
-                            + " o P0.1 pede saber POR QUE o lote não serve");
+                            + " o P0.1 pede saber POR QUE o lote não serve; contou "
+                            + java.util.Arrays.stream(LotRefusals.Reason.values())
+                                    .map(reason -> reason + "=" + LotRefusals.countOf(colony, reason))
+                                    .toList()
+                            + ", aceitos " + LotRefusals.acceptedIn(colony));
         } finally {
             BuildSiteScanner.clearAll();
             LotRefusals.clearAll();

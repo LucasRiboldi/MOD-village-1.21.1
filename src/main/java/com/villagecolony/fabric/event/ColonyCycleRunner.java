@@ -471,7 +471,7 @@ final class ColonyCycleRunner {
      */
     static boolean canReserveTask(ServerWorld world, UUID colonyId, @Nullable Worker worker, Task task) {
         return switch (ReservationGate.of(task.type())) {
-            case NONE -> true;
+            case NONE -> !com.villagecolony.fabric.integration.IronRest.blocks(colonyId, task, world.getTime());
             case EMPTY_SWEEP -> !EmptySweeps.isWaiting(colonyId, task.targetResource(), world.getTime())
                     && !crusherCovers(world, colonyId, task);
             case BUILD_SITE -> VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)

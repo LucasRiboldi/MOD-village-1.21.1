@@ -31,6 +31,7 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.fabric.integration.SimulatedObserver;
 import com.villagecolony.fabric.integration.SiteMarker;
 import com.villagecolony.fabric.integration.VillageMarker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -316,7 +317,7 @@ public final class VillageDetectionHandler {
     static void onServerTick(net.minecraft.server.MinecraftServer server) {
         ServerWorld overworld = server.getOverworld();
 
-        if (overworld.getPlayers().isEmpty()) {
+        if (!SimulatedObserver.anyone(overworld)) {
             return;
         }
 
@@ -399,6 +400,18 @@ public final class VillageDetectionHandler {
                 VillageAdoption.detectAround(world, player.getBlockPos());
             }
         }
+
+        // A bancada de simulação por bioma descobre a vila pelo observador simulado, e diz o que
+        // a varredura viu: sem jogador olhando, é a única testemunha de uma recusa.
+        SimulatedObserver.at(server.getOverworld()).ifPresent(at -> {
+            VillageScanner.ScanResult seen = VillageAdoption.detectAround(server.getOverworld(), at, false);
+            VillageColonyMod.LOGGER.info(
+                    "VC_SIM observer={} biome={} candidates={} rejected={}",
+                    at.toShortString(),
+                    server.getOverworld().getBiome(at).getKey().map(key -> key.getValue().toString()).orElse("?"),
+                    seen.candidates().size(),
+                    seen.rejected());
+        });
 
         mark = CycleCost.since(CycleCost.Phase.DETECT, mark);
 
