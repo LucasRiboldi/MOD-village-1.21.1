@@ -111,7 +111,9 @@ public final class Corridor {
             return Optional.of(isPath(world, colonyId, start) ? List.of() : List.of(start));
         }
 
-        PriorityQueue<State> open = new PriorityQueue<>();
+        // A fila ordena pela prioridade; o estado não é Comparable, porque a igualdade dele a ignora e o
+        // HashMap usa a ordem do Comparable para achar a chave nos baldes que viram árvore.
+        PriorityQueue<State> open = new PriorityQueue<>(java.util.Comparator.comparingInt(State::priority));
         Map<State, Integer> cost = new HashMap<>();
         Map<State, State> cameFrom = new HashMap<>();
         java.util.Set<State> touching = new java.util.HashSet<>();
@@ -301,8 +303,7 @@ public final class Corridor {
     }
 
     /** Um estado da busca: onde, para que lado, quantas curvas, quantos retos desde a última, e o tamanho. */
-    private record State(BlockPos pos, Direction way, int turns, int straight, int length, int priority)
-            implements Comparable<State> {
+    private record State(BlockPos pos, Direction way, int turns, int straight, int length, int priority) {
 
         State(BlockPos pos, Direction way, int turns, int straight) {
             this(pos, way, turns, straight, 1, 0);
@@ -314,11 +315,6 @@ public final class Corridor {
 
         State withCost(int cost) {
             return new State(pos, way, turns, straight, length, cost);
-        }
-
-        @Override
-        public int compareTo(State other) {
-            return Integer.compare(priority, other.priority);
         }
 
         @Override

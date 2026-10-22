@@ -49,6 +49,13 @@ fase exige o aldeão trabalhando, e fora da arena o chunk não processa entidade
 o mesmo `runCycleNow`, ou os baús da arena vizinha atendendo a meta de tábua. Medir: com a queda, ler
 as tarefas e os baús da colônia do teste.
 
+**22-10 (0.3.89 e 0.3.90):**
+- Com `-PgametestOnly=ColonyDetection,Crafting`, cai 2 de 2 nas duas versões, com outra mensagem: "a
+  tarefa que o ciclo abriu não virou tábua nenhuma" (segunda fase).
+- Na 0.3.90 a bateria inteira deu 853/853 uma vez em 3 rodadas, e nas outras caiu este teste. Em uma
+  delas caiu junto o `ColonyDetectionGameTest.aVillageBecomesAColony` (1×).
+- Esse filtro é a forma reproduzível de medir a hipótese acima.
+
 ---
 
 ## KF-005 — `MinerGameTest.theCoalInTheGalleryReachesTheChestAndTheVeinIsFollowed` cai na bateria inteira

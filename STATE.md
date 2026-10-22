@@ -1,5 +1,19 @@
 # STATE — 2026-10-22
 
+> **0.3.90** (22-10, branch `fix/corredor-crash-pit`): corrige o **crash da 0.3.89**, jogada às 10:41.
+> - **O crash:** `NullPointerException` em `Corridor.plan`, na busca do corredor que corta degraus na faixa.
+> - **A causa:** o estado da busca era `Comparable` só pela prioridade, e a igualdade a ignorava. Com muitos
+>   estados de hash igual, o `HashMap` vira árvore, procura pela ordem, e o custo sumia.
+> - **A correção:** o estado deixou de ser `Comparable`, e a fila ordena com um `Comparator`. O
+>   `CorridorStateTest` reproduz a falha (reprova sem a correção).
+> - **CI da main:** a etapa de mutação (PIT, Core) estava em 84%, abaixo dos 85%, porque o Core novo da
+>   branch não tinha teste de unidade. Agora está em 85,2% (2107/2473), com testes para a faixa do
+>   `VillageExpansion`, o `MineStairPoints` e os custos do mineiro.
+>
+> Verificado: test 1575/0; `pitest` passa; bateria 853/853 em 1 de 3. Nas outras caiu a KF-006 (Crafting),
+> que falha igual na 0.3.89 com o filtro `ColonyDetection,Crafting`.
+>
+
 > **0.3.89** (22-10, branch `fix/deserto-a1-c1-b1-d2`, **sem push, JAR instalado, não jogado** —
 > `2F8E0DDD…B21C`): resposta ao deserto jogado na 0.3.88 (Spark `YFIroI1U1x`, nota 4,0; §12 do estudo).
 > Itens:
