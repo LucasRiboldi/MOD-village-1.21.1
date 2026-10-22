@@ -118,7 +118,7 @@ public final class RoadPaving {
             }
 
             // O caminho do chão que a rua cobre — o do bioma (VillageRoad.pavingOn).
-            world.setBlockState(at, VillageRoad.pavingOn(state, paving).getDefaultState());
+            world.setBlockState(at, VillageRoad.pavingOn(world, at, state, paving).getDefaultState());
 
             // O índice de ruas precisa saber da beira nova — 2026-08-27.
             // A rua cresce justamente quando não houve lote, e o lote
@@ -169,6 +169,24 @@ public final class RoadPaving {
      * primeira que disser não é a que o registro conta.
      */
     static Optional<String> refusalAt(ServerWorld world, BlockPos at, BlockState state) {
+        Optional<String> ground = refusalOfTheGround(world, at, state);
+
+        if (ground.isPresent()) {
+            return ground;
+        }
+
+        BlockState above = world.getBlockState(at.up());
+
+        // Planta e flor saem ao calçar; o que não sai é bloco, nem água.
+        if (!isClearable(above)) {
+            return Optional.of("something above (" + nameOf(above) + ")");
+        }
+
+        return Optional.empty();
+    }
+
+    /** O que impede este chão de virar caminho, sem olhar o que há em cima — o degrau cortado tira o de cima. */
+    static Optional<String> refusalOfTheGround(ServerWorld world, BlockPos at, BlockState state) {
         // <b>O chão do bioma não é peça de vila</b> — pedido do autor,
         // 2026-09-30: estradas nascem para fora da vila. A caixa da peça de
         // rua inclui a grama em volta do caminho, e no playtest das 02:45 era
@@ -185,13 +203,6 @@ public final class RoadPaving {
 
         if (!VillageRoad.isPavableGround(world, at, state)) {
             return Optional.of("not natural ground (" + nameOf(state) + ")");
-        }
-
-        BlockState above = world.getBlockState(at.up());
-
-        // Planta e flor saem ao calçar; o que não sai é bloco, nem água.
-        if (!isClearable(above)) {
-            return Optional.of("something above (" + nameOf(above) + ")");
         }
 
         return Optional.empty();

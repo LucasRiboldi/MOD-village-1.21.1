@@ -67,6 +67,8 @@ final class ShepherdHerding {
         ShepherdPens.Pen pen;
         /** Se {@link #fence} é o poste que ele ainda vai pôr. */
         boolean newPost;
+        /** O cercado misto de onde o animal sai para o da espécie dele (Regra 72), ou nulo. */
+        ShepherdPens.Pen from;
 
         Herd(UUID animal, BlockPos fence, long since) {
             this.animal = animal;
@@ -102,6 +104,11 @@ final class ShepherdHerding {
             entry.putString("phase", herd.phase.name());
             entry.putLong("since", herd.since);
             entry.putBoolean("newPost", herd.newPost);
+
+            if (herd.from != null && herd.phase == Phase.FETCH) {
+                // A separação que ainda não tirou o animal do cercado recomeça do zero.
+                return;
+            }
 
             if (herd.pen != null) {
                 entry.putLong("inside", herd.pen.inside().asLong());
@@ -169,24 +176,16 @@ final class ShepherdHerding {
         }
     }
 
-    /** A coleta deste pastor, se há para onde levar e animal solto. */
+    /**
+     * A coleta deste pastor: o animal solto (ou amarrado em poste) mais perto, para o cercado da espécie
+     * dele (Regra 72, {@link ShepherdPens#forSpecies}); sem cercado com lugar, o solto vai para a cerca
+     * mais perto ou para um poste novo ao lado da casa. Sem nada a recolher, separa um curral misto.
+     */
     static Optional<Herd> start(ServerWorld world, Colony colony, VillagerEntity shepherd) {
         BlockPos home = BedTeleport.bedOf(world, shepherd)
                 .or(() -> VillageColonyMod.STORAGES.of(shepherd.getUuid())
                         .map(storage -> MinecraftTypeAdapter.toBlockPos(storage.chestPosition())))
                 .orElse(shepherd.getBlockPos());
-
-        // O cercado com lugar primeiro; depois a cerca mais perto; depois um poste novo.
-        Optional<ShepherdPens.Pen> pen = ShepherdPens.withRoom(world, colony, home);
-        Optional<BlockPos> fence = pen.map(ShepherdPens.Pen::gate)
-                .or(() -> nearestFence(world, home).filter(at -> tiedAt(world, at) < MAX_TIED));
-        Optional<BlockPos> newPost = fence.isPresent()
-                ? Optional.empty()
-                : ShepherdPens.postBesideHome(world, colony.id(), home);
-
-        if (fence.isEmpty() && newPost.isEmpty()) {
-            return Optional.empty();
-        }
 
         BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
         int margin = ResourceReach.EDGE_MARGIN;
@@ -194,38 +193,91 @@ final class ShepherdHerding {
                 .map(box -> new Box(box.minX() - margin, box.minY() - 8, box.minZ() - margin,
                         box.maxX() + margin + 1, box.maxY() + 8, box.maxZ() + margin + 1))
                 .orElseGet(() -> new Box(center).expand(48));
-        AnimalEntity best = null;
-        double bestDistance = Double.MAX_VALUE;
+        List<AnimalEntity> candidates = new java.util.ArrayList<>();
 
         for (EntityType<? extends AnimalEntity> species : ShepherdFlock.SPECIES) {
-            // Com cercado com lugar, o amarrado no poste também vai para dentro: o cercado
-            // é a prioridade. Sem ele, só o solto.
-            Predicate<AnimalEntity> wanted = pen.isPresent()
-                    ? candidate -> candidate.isAlive() && candidate.canBeLeashed()
-                            && (!candidate.isLeashed() || candidate.getLeashHolder() instanceof LeashKnotEntity)
-                            && !ShepherdFlock.isPenned(world, candidate)
-                    : candidate -> candidate.isAlive() && !candidate.isLeashed() && candidate.canBeLeashed()
-                            && !ShepherdFlock.isKept(world, candidate);
+            candidates.addAll(world.getEntitiesByType(species, area, candidate -> candidate.isAlive()
+                    && candidate.canBeLeashed()
+                    && (!candidate.isLeashed() || candidate.getLeashHolder() instanceof LeashKnotEntity)
+                    && !ShepherdFlock.isPenned(world, candidate)));
+        }
 
-            for (AnimalEntity animal : world.getEntitiesByType(species, area, wanted)) {
-                double distance = animal.squaredDistanceTo(shepherd);
+        candidates.sort(java.util.Comparator.comparingDouble(animal -> animal.squaredDistanceTo(shepherd)));
 
-                if (distance < bestDistance) {
-                    bestDistance = distance;
-                    best = animal;
+        Optional<BlockPos> fence = Optional.empty();
+        Optional<BlockPos> newPost = Optional.empty();
+        boolean fenceRead = false;
+
+        for (AnimalEntity animal : candidates) {
+            Optional<ShepherdPens.Pen> pen = ShepherdPens.forSpecies(world, colony, animal.getType(), home, null, false);
+
+            if (pen.isPresent()) {
+                Herd herd = new Herd(animal.getUuid(), pen.get().gate(), world.getTime());
+                herd.pen = pen.get();
+
+                return Optional.of(herd);
+            }
+
+            // Sem cercado com lugar: só o solto vai para a cerca ou para o poste novo.
+            if (animal.isLeashed() || ShepherdFlock.isKept(world, animal)) {
+                continue;
+            }
+
+            if (!fenceRead) {
+                fenceRead = true;
+                fence = nearestFence(world, home).filter(at -> tiedAt(world, at) < MAX_TIED);
+                newPost = fence.isPresent() ? Optional.empty() : ShepherdPens.postBesideHome(world, colony.id(), home);
+            }
+
+            if (fence.isEmpty() && newPost.isEmpty()) {
+                return Optional.empty();
+            }
+
+            BlockPos tieAt = fence.isPresent() ? fence.get() : newPost.get();
+            Herd herd = new Herd(animal.getUuid(), tieAt, world.getTime());
+            herd.newPost = newPost.isPresent();
+
+            return Optional.of(herd);
+        }
+
+        return separate(world, colony, home);
+    }
+
+    /**
+     * A separação dos currais mistos — Regra 72: um animal de um cercado com mais de uma espécie, para o
+     * cercado só da espécie dele (ou um vazio) com lugar, para que cada tipo acabe no seu quando a vila tem
+     * vários currais. Um por vez, e só quando não há animal solto a recolher.
+     */
+    static Optional<Herd> separate(ServerWorld world, Colony colony, BlockPos home) {
+        for (ShepherdPens.Pen mixed : ShepherdPens.pensOf(world, colony)) {
+            Map<EntityType<?>, Integer> inside = ShepherdPens.speciesIn(world, mixed);
+
+            if (inside.size() < 2) {
+                continue;
+            }
+
+            for (AnimalEntity animal : world.getEntitiesByClass(AnimalEntity.class,
+                    new Box(mixed.inside()).expand(FencedIn.RADIUS),
+                    candidate -> candidate.isAlive() && candidate.canBeLeashed() && !candidate.isLeashed()
+                            && mixed.reach().contains(candidate.getBlockPos()))) {
+                Optional<ShepherdPens.Pen> own =
+                        ShepherdPens.forSpecies(world, colony, animal.getType(), home, mixed, true);
+
+                if (own.isPresent()) {
+                    Herd herd = new Herd(animal.getUuid(), own.get().gate(), world.getTime());
+                    herd.pen = own.get();
+                    herd.from = mixed;
+
+                    VillageColonyMod.LOGGER.info("Colony {} separates the pens — a {} goes from the pen at {} to the one at {}",
+                            colony.id().toString().substring(0, 8), animal.getType().getUntranslatedName(),
+                            mixed.gate().toShortString(), own.get().gate().toShortString());
+
+                    return Optional.of(herd);
                 }
             }
         }
 
-        if (best == null) {
-            return Optional.empty();
-        }
-
-        Herd herd = new Herd(best.getUuid(), fence.or(() -> newPost).orElseThrow(), world.getTime());
-        herd.pen = pen.orElse(null);
-        herd.newPost = newPost.isPresent();
-
-        return Optional.of(herd);
+        return Optional.empty();
     }
 
     /** Um passo de cada coleta, a cada cinco tiques. */
@@ -251,6 +303,18 @@ final class ShepherdHerding {
                 || world.getTime() - herd.since > TIMEOUT) {
             abort(world, shepherdId, herd);
             return false;
+        }
+
+        if (herd.phase == Phase.FETCH && herd.from != null) {
+            // Separação: ele vai ao portão do cercado misto e o animal sai por ele, na corda.
+            WorkTargets.set(shepherdId, herd.from.outside(), REACH - 1);
+
+            if (shepherd.getBlockPos().isWithinDistance(herd.from.outside(), REACH)) {
+                ShepherdPens.bringOut(world, herd.from, animal, shepherd);
+                herd.phase = Phase.LEAD;
+            }
+
+            return true;
         }
 
         if (herd.phase == Phase.FETCH) {

@@ -665,6 +665,48 @@ public class RoadExtensionGameTest implements FabricGameTest {
     }
 
     /**
+     * O trecho em crescimento que para diz o que o parou — A1, deserto, 2026-10-21.
+     *
+     * <p>A rua da faixa anexada cresceu um bloco e parou duas vezes, em silêncio: o
+     * {@code keepGrowing} descartava as recusas do calçamento, e a faixa plana ficou sem
+     * lote uma hora sem que o log dissesse se era duna, peça da vila ou água. A pista
+     * deste cenário acaba na borda da arena, e a recusa dessa borda tem que ficar registrada.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void aStretchThatStopsGrowingSaysWhatStoppedIt(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        strip(context);
+        reserveInitialRoad(context, colony);
+
+        BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        context.assertTrue(
+                RoadExtension.extend(context.getWorld(), colony, ResourceId.vanilla("dirt_path"))
+                        == RoadExtension.Outcome.EXTENDED
+                        && PavingRefusals.lastOf(colony).isEmpty(),
+                "a montagem falhou: a rua não cresceu, ou já havia recusa registrada");
+
+        RoadExtension.Outcome again = RoadExtension.keepGrowing(
+                context.getWorld(), colony, ResourceId.vanilla("dirt_path"));
+
+        context.assertTrue(
+                again == RoadExtension.Outcome.BLOCKED,
+                "a montagem falhou: a pista devia acabar na borda da arena, e deu " + again);
+
+        context.assertTrue(
+                !PavingRefusals.lastOf(colony).isEmpty(),
+                "o trecho parou de crescer sem dizer o que o parou");
+
+        context.complete();
+    }
+
+    /**
      * <b>Varredura nova NÃO apaga o rumo</b> — 2026-09-10, e este teste
      * dizia o contrário até esta data.
      *

@@ -1,4 +1,74 @@
-# STATE — 2026-10-20
+# STATE — 2026-10-22
+
+> **0.3.89** (22-10, branch `fix/deserto-a1-c1-b1-d2`, **sem push, JAR instalado, não jogado** —
+> `2F8E0DDD…B21C`): resposta ao deserto jogado na 0.3.88 (Spark `YFIroI1U1x`, nota 4,0; §12 do estudo).
+> Itens:
+> - **Fazendeiro:** a 3 blocos alcança a planta, com a borda incluída (falhava 10×).
+> - **Mineiro, escolha do autor:** nada ao ar livre, e a água continua proibida debaixo da terra (`MinerCaution`).
+>   Ele ficou 12 min numa margem de lago cercada.
+> - **Regra 70, degrau cortado, escolha do autor:** sem caminho pelo terreno, o corredor da faixa corta a
+>   encosta até 12 de fundo, num vale de 3 (`Corridor` maxCut, `CorridorCut`). A faixa sul é uma duna 23
+>   acima da rua.
+> - **Pastor, pedidos do autor:** procria até 8 e abate acima de 6; o curral é lotado pelo tamanho (1 a
+>   cada 4 de chão); com todos cheios, um curral novo entra na fila (`PenPlans`).
+> - **Regra 73:** caminho de areia, exclusivo do deserto (`SandPathBlock`).
+>
+> Verificado:
+> - test 1564/0;
+> - runGametest 853/853 em 3 de 4 baterias. Na outra caiu o `MineReturnGameTest`, que passa isolado 4/4
+>   (KF-009);
+> - a mutação derruba o teste em cada item.
+>
+> Sem GameTest: o caminho `PenPlans` → fila de obras, e a textura vista em jogo.
+>
+> **Próximo:** jogar ≥30 min e ler *"cut … blocks of the slope for the path"*, *"finds a lot inside the
+> annexed strip"*, o caminho de areia nas ruas novas e a separação dos currais.
+>
+
+> **0.3.88** (22-10, branch `fix/deserto-a1-c1-b1-d2`, **sem push, JAR instalado, não jogado** —
+> `FBB7FB55…9680`): resposta ao deserto jogado na 0.3.87 (Spark `CnNU79zqZ5`, nota 4,9; §11 do estudo).
+> **Regra 71** (autor): o mineiro não constrói para fora da montanha (céu aberto não recebe bloco no desvio)
+> e, se precisar construir, desce antes de ir de lado (`MinerTerrain`, `DetourMoves.Costs.MINER`); com a
+> entrada da mina inalcançável a pé, cava um acesso só cavando, da vila até o nível (`MineAccess`, escolha
+> do autor). **Regra 70** (autor): caminho é corredor de um bloco que sai da porta em reta, vira só a 90° e
+> para no primeiro caminho (`Corridor`, usado pelo `WorkPath` e pelo `StripLot`); o construtor só fecha
+> buraco no meio de uma reta (acabou a regra dos 3 lados, que espalhava caminho). **Faixa:** um lote achado
+> em outro lugar não encerra mais a faixa (`STRIP_AWAITS`), e a volta sem lote diz por quê. Verificado: test
+> 1562/0; runGametest 846/846 e 845/846 (KF-008, pastoreio, intocado, isolado 4/4); mutação derruba teste em
+> cada item. Ligação do acesso no `MinerSteps` sem teste próprio. **Próximo:** jogar ≥30 min e ler
+> *"digs the mine access"*, *"has a dug access"*, *"found no lot inside the annexed strip … path stopped
+> by"* e os caminhos novos.
+>
+
+> **0.3.87** (22-10, branch `fix/deserto-a1-c1-b1-d2`, **sem push, JAR instalado, não jogado** —
+> `5B4DC077…62DD`): resposta ao deserto jogado na 0.3.86 (Spark `j7jTrVIaPQ`, nota 3,7; análise no §10
+> de `docs/research/2026-10-21-deserto-ociosidade-alternativas.md`). Decisões do autor de 22-10:
+> **encalhe** — o vaivém degrau/túnel de 3 blocos zerava a conta da cama; agora conta como o mesmo lugar
+> (`BedTeleport.SAME_PLACE` 4,5; os mineiros ficaram 12 e 17 min presos); **trigo** — o fazendeiro
+> semeia a lavoura que a vila tem menos e o pastor deixa 8 sementes para o plantio (semeava beterraba
+> 27× contra 4 de trigo); **mina** — a escada insiste em 5 pontos do nível (4 rumos cada, 20 partidas,
+> `MineStairPoints`) e a boca nova só vale se alcançável a pé (`ReachMap.reachesOnFoot`); **A5** — com a
+> rua da faixa barrada pela duna, o lote nasce no fundo da faixa com um caminho que segue o terreno
+> (degrau ≤1, até 32, calçado na abertura; `StripLot`; Regra 56 emendada). Mantido: rua não passa por
+> arenito na vila gerada (Regra 3). Verificado: test 1560/0; runGametest 840/840 ×2; mutação derruba
+> teste em cada item. **Próximo:** jogar o deserto ≥30 min com um anoitecer (para o D2) e conferir as
+> linhas *"finds a lot inside the annexed strip"*, *"keeps its place"* e o tempo de encalhe dos mineiros.
+>
+
+> **0.3.86** (21-10, branch `fix/deserto-a1-c1-b1-d2`, **sem push, JAR instalado, não jogado** —
+> `4A56148A…C93C`): resposta ao deserto jogado na 0.3.85 (Spark `IAXTyE0LXM`, nota 6,1; relatório
+> `docs/testing/relatorios/deserto-2026-10-21.md`, estudo `docs/research/2026-10-21-deserto-ociosidade-alternativas.md`).
+> A vila ficou 34 de 57 min sem obra porque **não havia lote** (a busca termina as voltas; não é falta
+> de prazo). Escolha do autor: **A1** a rua em crescimento que para registra o motivo (*"stopped growing
+> the road … — motivos"*; a da faixa anexada parava em silêncio); **C1** o mineiro que chega ao lugar de
+> trabalho alcança a pedra (`MinerReach.isWithinReachStanding`; ficava a 4,1 com alcance 4);
+> **B1** sem arenito, o pedreiro o faz da areia da vila para o fundidor (`FurnaceFeed`); **D2** com
+> pastor, a ceia deixa um par de cada comida do rebanho (emenda na ADR-037 R1). Verificado: test 1557/0;
+> mutação derruba teste em cada um (C1 1, A1 1, B1 4, D2 2). Bateria inteira 832: só KF-006 e KF-007
+> (nova, `MinerDirectPathGameTest`, navegação do jogo; bisseção em 22 baterias mostra a queda já sem o
+> D2 e no arranjo de 830+ testes). **Próximo:** jogar o deserto na 0.3.86 e ler a linha *"stopped growing
+> the road"* — ela decide entre A2 (rua da faixa com alternativas) e A3 (aterro além de 2).
+>
 
 > **0.3.75–0.3.77** (20-10, mesma branch, push feito, **JAR 0.3.77 instalado, não jogado** — `EF825151…`):
 > terraplanagem fase 1 (lote ±2 da rua aplainado), rotas próprias (madeira/argila com prova, descascar),

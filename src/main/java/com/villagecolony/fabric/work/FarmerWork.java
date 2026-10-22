@@ -355,7 +355,15 @@ public final class FarmerWork {
     }
 
     private static boolean isWithinReach(VillagerEntity villager, BlockPos target) {
-        return villager.getBlockPos().isWithinDistance(target, REACH);
+        return reaches(villager.getBlockPos(), target);
+    }
+
+    /**
+     * Se dos pés {@code feet} o braço alcança a planta: a até {@link #REACH} blocos, com a borda incluída —
+     * o {@link FarmerStand} escolhe lugares de pé até essa borda.
+     */
+    static boolean reaches(BlockPos feet, BlockPos target) {
+        return feet.getSquaredDistance(target) <= (double) REACH * REACH;
     }
 
     /** Larga a lavoura de agora e volta a procurar. */

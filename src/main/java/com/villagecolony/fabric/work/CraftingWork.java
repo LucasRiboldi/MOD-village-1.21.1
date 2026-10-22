@@ -364,6 +364,11 @@ public final class CraftingWork {
             return Crusher.step(world, job, villager.getUuid(), storage.chestPosition());
         }
 
+        // O cru que faltou na fornalha, pela receita — B1, 2026-10-21 (FurnaceFeed).
+        if (FurnaceFeed.isOrder(job.task)) {
+            return FurnaceFeed.step(world, job, villager.getUuid(), storage.chestPosition());
+        }
+
         // O que a obra pede vem primeiro — 2026-08-20. Enquanto o
         // fabricante só sabia fazer tábua, a casa parava em qualquer
         // peça que a colônia não tivesse; agora ele descasca tronco,

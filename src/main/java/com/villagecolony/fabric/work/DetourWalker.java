@@ -93,6 +93,9 @@ public final class DetourWalker {
      */
     private final boolean steer;
 
+    /** Quanto custa construir para andar: o de sempre, ou o do mineiro (descer antes de ir de lado). */
+    private final DetourMoves.Costs costs;
+
     private boolean reachesGoal;
 
     private int replans;
@@ -118,9 +121,10 @@ public final class DetourWalker {
     private DetourWalker(
             UUID workerId, ColonyPos from, DetourPlanner.Detour detour, Set<ColonyPos> keep,
             ColonyPos toward, Predicate<ColonyPos> goal, boolean partial,
-            Function<ServerWorld, Terrain> terrain, boolean steer) {
+            Function<ServerWorld, Terrain> terrain, boolean steer, DetourMoves.Costs costs) {
         this.terrain = terrain;
         this.steer = steer;
+        this.costs = costs;
         this.workerId = workerId;
         this.from = from;
         this.steps = detour.steps();
@@ -153,15 +157,24 @@ public final class DetourWalker {
             Predicate<BlockPos> goal, Set<BlockPos> keep, boolean partial,
             Function<ServerWorld, Terrain> terrain, boolean steer) {
 
+        return plan(world, workerId, feet, toward, goal, keep, partial, terrain, steer, DetourMoves.Costs.DEFAULT);
+    }
+
+    /** O mesmo, com o custo de construir de {@code costs} — o mineiro desce antes de ir de lado. */
+    static Optional<DetourWalker> plan(
+            ServerWorld world, UUID workerId, BlockPos feet, BlockPos toward,
+            Predicate<BlockPos> goal, Set<BlockPos> keep, boolean partial,
+            Function<ServerWorld, Terrain> terrain, boolean steer, DetourMoves.Costs costs) {
+
         ColonyPos start = MinecraftTypeAdapter.toColonyPos(feet);
         Set<ColonyPos> kept = keep.stream().map(MinecraftTypeAdapter::toColonyPos).collect(Collectors.toSet());
         ColonyPos aim = MinecraftTypeAdapter.toColonyPos(toward);
         Predicate<ColonyPos> reached = at -> goal.test(MinecraftTypeAdapter.toBlockPos(at));
 
-        return DetourPlanner.plan(terrain.apply(world), start, aim, reached, kept, partial)
+        return DetourPlanner.plan(terrain.apply(world), start, aim, reached, kept, partial, costs)
                 .filter(detour -> !detour.steps().isEmpty())
                 .map(detour -> new DetourWalker(
-                        workerId, start, detour, kept, aim, reached, partial, terrain, steer));
+                        workerId, start, detour, kept, aim, reached, partial, terrain, steer, costs));
     }
 
     /** Um tique do desvio. */
@@ -190,7 +203,7 @@ public final class DetourWalker {
         }
 
         Optional<DetourMoves.Actions> actions =
-                DetourMoves.actions(terrain.apply(world), from, step, keep);
+                DetourMoves.actions(terrain.apply(world), from, step, keep, costs);
 
         if (actions.isEmpty()) {
             return fail("the step to " + step.x() + ", " + step.y() + ", " + step.z()
@@ -234,7 +247,7 @@ public final class DetourWalker {
         replans++;
 
         Optional<DetourPlanner.Detour> again =
-                DetourPlanner.plan(terrain.apply(world), here, toward, goal, keep, partial);
+                DetourPlanner.plan(terrain.apply(world), here, toward, goal, keep, partial, costs);
 
         if (again.isEmpty()) {
             return fail("it left the path at " + here.x() + ", " + here.y() + ", " + here.z()
@@ -361,6 +374,11 @@ public final class DetourWalker {
 
     public int steps() {
         return steps.size();
+    }
+
+    /** Os pés planejados, como posições — para o teste. */
+    List<ColonyPos> cells() {
+        return steps;
     }
 
     /** Os pés planejados, passo a passo — para o log e para o teste. */

@@ -1,6 +1,7 @@
 package com.villagecolony.core.construction.service;
 
 import com.villagecolony.core.construction.model.Mine;
+import com.villagecolony.core.construction.model.MineStairPoints;
 import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.Side;
@@ -27,9 +28,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class MineRecoveryTest {
 
+    /** Os quatro rumos em cada um dos cinco pontos da escada — decisão do autor de 2026-10-22 (eram dez, num ponto só). */
     @Test
-    void tenFailedHallRoutesAreTriedBeforeTheMineMouthIsAbandoned() {
-        assertEquals(10, Mine.HELICES_BEFORE_BLAMING_THE_MOUTH);
+    void everyTurnAtEveryStairPointIsTriedBeforeTheMineMouthIsAbandoned() {
+        assertEquals(MineStairPoints.TURNS * (MineStairPoints.SHIFTS + 1), Mine.HELICES_BEFORE_BLAMING_THE_MOUTH);
+        assertEquals(20, Mine.HELICES_BEFORE_BLAMING_THE_MOUTH);
     }
 
     private static Mine freshMine() {

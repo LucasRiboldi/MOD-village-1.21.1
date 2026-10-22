@@ -80,6 +80,13 @@ public final class VillageExpansion {
 
     private static final Set<UUID> PENDING = new HashSet<>();
 
+    /**
+     * Faixa anexada que ainda espera o lote dentro dela (A5, 2026-10-22). Separada de {@link #PENDING},
+     * que qualquer lote achado limpa: na 0.3.87 uma casa achada perto de outra rua encerrou a faixa e o
+     * lote dentro dela nunca foi tentado de novo na sessão. Sai só quando o lote abre na faixa.
+     */
+    private static final Set<UUID> STRIP_AWAITS = new HashSet<>();
+
     private static Predicate<ResourceId> isHouse = id -> true;
 
     private VillageExpansion() {
@@ -182,6 +189,12 @@ public final class VillageExpansion {
     public static void annexed(UUID colonyId, Side side) {
         SIDE.put(colonyId, Objects.requireNonNull(side, "side"));
         PENDING.add(colonyId);
+        STRIP_AWAITS.add(colonyId);
+    }
+
+    /** Se a faixa anexada desta colônia ainda não deu lote — a vez do lote na faixa (StripLot, 2026-10-22). */
+    public static boolean hasPendingStrip(UUID colonyId) {
+        return STRIP_AWAITS.contains(colonyId) && SIDE.containsKey(colonyId);
     }
 
     /** Para onde a vila está crescendo, se ela já escolheu. */
@@ -218,5 +231,12 @@ public final class VillageExpansion {
         MISSES.clear();
         SIDE.clear();
         PENDING.clear();
+        STRIP_AWAITS.clear();
+    }
+
+    /** O lote abriu dentro da faixa anexada: ela deixa de esperar (A5). */
+    public static void stripLotOpened(UUID colonyId) {
+        STRIP_AWAITS.remove(colonyId);
+        lotFound(colonyId);
     }
 }

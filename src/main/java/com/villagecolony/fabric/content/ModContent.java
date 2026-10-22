@@ -80,6 +80,10 @@ public final class ModContent {
     public static final Block MINER_BENCH =
             new BenchCraftingBlock(AbstractBlock.Settings.copy(Blocks.CRAFTING_TABLE).luminance(state -> LIGHT));
 
+    /** O caminho de areia, exclusivo da vila do deserto — autor, 2026-10-22 ({@link SandPathBlock}). */
+    public static final Block SAND_PATH =
+            new SandPathBlock(AbstractBlock.Settings.copy(Blocks.DIRT_PATH).mapColor(net.minecraft.block.MapColor.PALE_YELLOW));
+
     private static BlockEntityType<BenchForgeBlockEntity> forgeEntity;
 
     private static RegistryKey<PointOfInterestType> carpenterPoi;
@@ -104,6 +108,7 @@ public final class ModContent {
         registerBlock("shepherd_bench", SHEPHERD_BENCH);
         registerBlock("builder_bench", BUILDER_BENCH);
         registerBlock("miner_bench", MINER_BENCH);
+        registerBlock("sand_path", SAND_PATH);
 
         // A forja é fornalha de verdade: tipo de BlockEntity próprio (o FURNACE do Vanilla só aceita o
         // bloco Vanilla).
@@ -132,6 +137,9 @@ public final class ModContent {
             entries.add(BUILDER_BENCH);
             entries.add(MINER_BENCH);
         });
+
+        ItemGroupEvents.modifyEntriesEvent(ItemGroups.NATURAL).register(entries ->
+                entries.addAfter(net.minecraft.item.Items.DIRT_PATH, SAND_PATH));
     }
 
     /** O tipo de BlockEntity da forja do fundidor; registrado em {@link #register()}. */

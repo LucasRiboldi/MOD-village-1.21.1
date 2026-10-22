@@ -26,8 +26,8 @@ final class FarmerStand {
     /** Até onde, no plano, o lugar de pé pode ficar da planta. */
     private static final int AROUND = 2;
 
-    /** O quadrado da distância máxima: estritamente dentro do alcance 3 do braço. */
-    private static final int WITHIN_REACH_SQUARED = 8;
+    /** O quadrado da distância máxima: dentro do alcance 3 do braço, borda incluída ({@link FarmerWork#reaches}). */
+    private static final int WITHIN_REACH_SQUARED = 9;
 
     private record Known(BlockPos crop, BlockPos stand) {
     }

@@ -10,6 +10,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FenceGateBlock;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
@@ -18,6 +19,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.Heightmap;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -33,7 +35,8 @@ import java.util.UUID;
  * levar os animais para dentro dos cercados como prioridade; se houver mais de 5
  * animais dentro de um cercado ele tenta outro cercado; não havendo cercados ele
  * prende a corda nos lugares mais próximos; se não houver poste para prender animal
- * ele anda até ao lado de sua casa, coloca um poste e prende o animal"</i>.
+ * ele anda até ao lado de sua casa, coloca um poste e prende o animal"</i>. Os 5 fixos viraram a
+ * lotação pelo tamanho do curral ({@link #FLOOR_PER_ANIMAL}, autor, 2026-10-22).
  *
  * <p>Cercado é o espaço fechado do lado de dentro de um portão de cerca
  * ({@link FencedIn#check}: o animal não chega a {@link FencedIn#RADIUS} blocos andando).
@@ -45,8 +48,11 @@ final class ShepherdPens {
         ServerMemory.register(ShepherdPens.class, ShepherdPens::clearAll);
     }
 
-    /** Mais que isto num cercado, e o pastor tenta outro. */
-    static final int MAX_ANIMALS = 5;
+    /**
+     * Blocos de chão do cercado por animal — autor, 2026-10-22: a lotação é pelo tamanho do curral, e não
+     * um número fixo. O cercado de 5×5 por dentro leva 6.
+     */
+    static final int FLOOR_PER_ANIMAL = 4;
 
     /** Releitura dos portões: cinco minutos. */
     static final long RESCAN = 6_000;
@@ -84,11 +90,107 @@ final class ShepherdPens {
         READ_AT.clear();
     }
 
-    /** O cercado com lugar (até {@link #MAX_ANIMALS} animais) mais perto de {@code from}. */
+    /** O cercado com lugar ({@link #hasRoom}) mais perto de {@code from}. */
     static Optional<Pen> withRoom(ServerWorld world, Colony colony, BlockPos from) {
         return pensOf(world, colony).stream()
-                .filter(pen -> animalsIn(world, pen) <= MAX_ANIMALS)
+                .filter(pen -> hasRoom(world, pen))
                 .min(Comparator.comparingDouble(pen -> pen.outside().getSquaredDistance(from)));
+    }
+
+    /** Quantos animais cabem: um a cada {@link #FLOOR_PER_ANIMAL} blocos de chão, ao menos um. */
+    static int capacityOf(Pen pen) {
+        return Math.max(1, pen.reach().size() / FLOOR_PER_ANIMAL);
+    }
+
+    static boolean hasRoom(ServerWorld world, Pen pen) {
+        return animalsIn(world, pen) < capacityOf(pen);
+    }
+
+    /**
+     * Se a vila tem cercado e todos estão cheios — autor, 2026-10-22: aí um curral novo entra na fila de
+     * obras ({@link PenPlans}).
+     */
+    static boolean allFull(ServerWorld world, Colony colony) {
+        List<Pen> pens = pensOf(world, colony);
+
+        return !pens.isEmpty() && pens.stream().noneMatch(pen -> hasRoom(world, pen));
+    }
+
+    /**
+     * O cercado para um animal desta espécie — Regra 72, autor de 2026-10-22: <i>"deixar animais iguais no
+     * mesmo curral; se tiver mais de um curral na vila, colocar um tipo de animal em um curral e outro em
+     * outro"</i>. Entre os que têm lugar, na ordem: o que só tem animais desta espécie; o vazio (que passa a
+     * ser dela); o misto que já a tem; qualquer um. No empate, o mais perto de {@code from}. Com um curral
+     * só, todos vão para ele, como antes.
+     *
+     * @param except o cercado de onde o animal está saindo, ou nulo
+     * @param onlyOwn só o cercado desta espécie ou o vazio — a separação dos currais mistos
+     */
+    static Optional<Pen> forSpecies(ServerWorld world, Colony colony, EntityType<?> species, BlockPos from,
+            @Nullable Pen except, boolean onlyOwn) {
+
+        Pen best = null;
+        int bestRank = Integer.MAX_VALUE;
+        double bestDistance = Double.MAX_VALUE;
+
+        for (Pen pen : pensOf(world, colony)) {
+            if (pen.equals(except) || !hasRoom(world, pen)) {
+                continue;
+            }
+
+            int rank = rankFor(speciesIn(world, pen), species);
+
+            if (onlyOwn && rank > OWN_OR_EMPTY) {
+                continue;
+            }
+
+            double distance = pen.outside().getSquaredDistance(from);
+
+            if (rank < bestRank || (rank == bestRank && distance < bestDistance)) {
+                best = pen;
+                bestRank = rank;
+                bestDistance = distance;
+            }
+        }
+
+        return Optional.ofNullable(best);
+    }
+
+    /** O pior posto que ainda conta como "o curral da espécie": só ela, ou vazio. */
+    static final int OWN_OR_EMPTY = 1;
+
+    /** 0 só desta espécie; 1 vazio; 2 misto com ela; 3 sem ela. */
+    static int rankFor(Map<EntityType<?>, Integer> inside, EntityType<?> species) {
+        if (inside.isEmpty()) {
+            return 1;
+        }
+
+        if (inside.containsKey(species)) {
+            return inside.size() == 1 ? 0 : 2;
+        }
+
+        return 3;
+    }
+
+    /** Quantos de cada espécie estão no chão de dentro deste cercado. */
+    static Map<EntityType<?>, Integer> speciesIn(ServerWorld world, Pen pen) {
+        Map<EntityType<?>, Integer> count = new HashMap<>();
+
+        for (AnimalEntity animal : world.getEntitiesByClass(AnimalEntity.class,
+                new Box(pen.inside()).expand(FencedIn.RADIUS),
+                animal -> animal.isAlive() && pen.reach().contains(animal.getBlockPos()))) {
+            count.merge(animal.getType(), 1, Integer::sum);
+        }
+
+        return count;
+    }
+
+    /** Tira o animal pelo portão e o entrega na corda do pastor — a separação dos currais mistos. */
+    static void bringOut(ServerWorld world, Pen pen, AnimalEntity animal, net.minecraft.entity.Entity shepherd) {
+        FencedIn.open(world, pen.gate());
+        animal.requestTeleport(pen.outside().getX() + 0.5, pen.outside().getY(), pen.outside().getZ() + 0.5);
+        animal.attachLeash(shepherd, true);
+        FencedIn.closeWhenClear(pen.gate());
     }
 
     /** Os cercados desta colônia, relidos a cada {@link #RESCAN}. */
@@ -186,7 +288,7 @@ final class ShepherdPens {
             BlockState below = world.getBlockState(at.down());
 
             if (world.getBlockState(at).isAir() && world.getBlockState(at.up()).isAir()
-                    && below.isSolidBlock(world, at.down()) && !below.isOf(Blocks.DIRT_PATH)
+                    && below.isSolidBlock(world, at.down()) && !com.villagecolony.fabric.integration.VillageRoad.isPathBlock(below)
                     && world.isSkyVisible(at) && !hasLonePostNear(world, at)) {
                 return Optional.of(at.toImmutable());
             }

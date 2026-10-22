@@ -308,7 +308,7 @@ public final class VillageGrove {
         for (int dx = -ROAD_CLEARANCE + 1; dx < ROAD_CLEARANCE; dx++) {
             for (int dz = -ROAD_CLEARANCE + 1; dz < ROAD_CLEARANCE; dz++) {
                 for (int dy = -1; dy <= 1; dy++) {
-                    if (world.getBlockState(ground.add(dx, dy, dz)).isOf(Blocks.DIRT_PATH)) {
+                    if (com.villagecolony.fabric.integration.VillageRoad.isPathBlock(world.getBlockState(ground.add(dx, dy, dz)))) {
                         return true;
                     }
                 }

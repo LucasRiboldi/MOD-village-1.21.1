@@ -40,6 +40,18 @@ final class SmelterGathers {
      * @return se ele soltou a fundição e ficou com a coleta
      */
     static boolean handOff(ServerWorld world, UUID workerId, Task smelting, List<Item> raws) {
+        Optional<Colony> asking = VillageColonyMod.COLONIES.find(smelting.colonyId());
+
+        // O cru que o pedreiro faz pela receita com o que há nos baús (FurnaceFeed, B1): o
+        // fundidor ajuda outro ofício até ele chegar, como no britador de areia.
+        if (asking.isPresent() && FurnaceFeed.askTheMason(world, asking.get(), raws)) {
+            smelting.release("no raw for the furnace in any chest — the mason makes it; the smelter helps elsewhere");
+            VillageColonyMod.LOGGER.info("Smelter {} leaves the furnace to help elsewhere — the mason makes its raw",
+                    workerId.toString().substring(0, 8));
+
+            return true;
+        }
+
         Optional<ResourceType> raw = raws.stream()
                 .map(MinecraftTypeAdapter::toResourceType)
                 .flatMap(Optional::stream)

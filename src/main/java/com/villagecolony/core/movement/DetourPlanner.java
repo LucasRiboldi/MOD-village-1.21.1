@@ -72,6 +72,19 @@ public final class DetourPlanner {
             Set<ColonyPos> keep,
             boolean partial) {
 
+        return plan(terrain, start, toward, goal, keep, partial, DetourMoves.Costs.DEFAULT);
+    }
+
+    /** O mesmo, com o custo de construir de {@code costs} ({@link DetourMoves.Costs}). */
+    public static java.util.Optional<Detour> plan(
+            Terrain terrain,
+            ColonyPos start,
+            ColonyPos toward,
+            Predicate<ColonyPos> goal,
+            Set<ColonyPos> keep,
+            boolean partial,
+            DetourMoves.Costs costs) {
+
         Map<ColonyPos, Integer> cost = new HashMap<>();
         Map<ColonyPos, ColonyPos> cameFrom = new HashMap<>();
         PriorityQueue<Node> open = new PriorityQueue<>();
@@ -110,7 +123,7 @@ public final class DetourPlanner {
                 }
 
                 java.util.Optional<DetourMoves.Actions> step =
-                        DetourMoves.actions(terrain, node.pos, next, keep);
+                        DetourMoves.actions(terrain, node.pos, next, keep, costs);
 
                 if (step.isEmpty()) {
                     continue;

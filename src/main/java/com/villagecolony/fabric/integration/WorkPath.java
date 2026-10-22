@@ -12,15 +12,17 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * O caminho até a obra — ADR-039 D2. A obra que não encosta em rua (lote da
- * busca larga, Emenda 7) ganha um calçamento em linha reta do caminho mais
- * perto até a borda do lote, até {@link #STEPS_PER_CYCLE} blocos por ciclo.
- * Calçar não custa material (Regra 15), e a Regra 3 vale como na rua: o
- * trecho para no primeiro bloco recusado.
+ * O caminho até a obra — ADR-039 D2, e o corredor da regra do autor de 2026-10-22. A obra que não encosta
+ * em rua (lote da busca larga, Emenda 7) ganha um {@link Corridor}: sai da porta em linha reta, vira só em
+ * ângulo reto e para no primeiro caminho que encostar. Era uma linha que trocava de eixo a cada passo e
+ * fazia escada em diagonal até a borda do lote. Calça até {@link #STEPS_PER_CYCLE} blocos por ciclo, da
+ * ponta da rua para a porta: o trecho já calçado é o encontro do corredor do ciclo seguinte, na mesma reta.
+ * Calçar não custa material (Regra 15), e a Regra 3 vale como na rua.
  */
 public final class WorkPath {
 
@@ -30,10 +32,12 @@ public final class WorkPath {
     /** A obra mais longe que isto da rua não ganha caminho: não é vizinha dela. */
     static final int MAX_GAP = 24;
 
+    /** O corredor mais longo. */
+    static final int MAX_LENGTH = 32;
+
     private WorkPath() {
     }
 
-    /** Calça um trecho rumo à obra aberta desta colônia; devolve quantos blocos entraram. */
     public static int paveToward(ServerWorld world, UUID colonyId) {
         Optional<ConstructionProject> open = VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
                 .filter(project -> project.state() == ConstructionState.BUILDING);
@@ -42,100 +46,85 @@ public final class WorkPath {
             return 0;
         }
 
-        ColonyPos origin = open.get().origin();
-        ColonyPos size = open.get().blueprint().size();
+        ConstructionProject project = open.get();
+        ColonyPos origin = project.origin();
+        ColonyPos size = project.blueprint().size();
 
         if (RoadIndex.roadSideOf(world, colonyId, origin, size).isPresent()) {
             return 0;
         }
 
-        return RoadIndex.roadsOf(colonyId)
-                .flatMap(roads -> roads.nearestRoadColumnTo(origin, size, MAX_GAP))
-                .map(column -> pave(world, colonyId, column, origin, size))
-                .orElse(0);
-    }
+        Optional<Long> road = RoadIndex.roadsOf(colonyId).flatMap(roads -> roads.nearestRoadColumnTo(origin, size, MAX_GAP));
 
-    private static int pave(ServerWorld world, UUID colonyId, long column, ColonyPos origin, ColonyPos size) {
-        int x = ColonyRoads.xOf(column);
-        int z = ColonyRoads.zOf(column);
-        Optional<BlockPos> start = RoadPaving.groundNear(world, new BlockPos(x, origin.y() - 1, z), origin.y() - 1);
+        if (road.isEmpty()) {
+            return 0;
+        }
+
+        Corridor.Door door = Corridor.doorOf(project).orElseGet(() -> sideFacing(origin, size, road.get()));
+        Optional<BlockPos> start = RoadPaving.groundNear(world, door.front().down(), origin.y() - 1);
 
         if (start.isEmpty()) {
             return 0;
         }
 
-        BlockPos previous = start.get();
+        return Corridor.plan(world, colonyId, start.get(), door.out(), MAX_LENGTH, at -> onTheLot(at, origin, size))
+                .map(cells -> pave(world, colonyId, cells, origin))
+                .orElse(0);
+    }
+
+    /** Calça até {@link #STEPS_PER_CYCLE} blocos do corredor, da ponta da rua para a porta. */
+    private static int pave(ServerWorld world, UUID colonyId, List<BlockPos> cells, ColonyPos origin) {
         int laid = 0;
 
-        while (laid < STEPS_PER_CYCLE) {
-            Optional<Direction> towards = towards(previous, origin, size);
+        for (int index = cells.size() - 1; index >= 0 && laid < STEPS_PER_CYCLE; index--) {
+            BlockPos at = cells.get(index);
 
-            if (towards.isEmpty()) {
-                break;
+            if (VillageRoad.isPaving(world, at)) {
+                continue;
             }
 
-            BlockPos ahead = previous.offset(towards.get());
-
-            if (gapX(ahead.getX(), origin, size) + gapZ(ahead.getZ(), origin, size) == 0) {
-                // A próxima coluna já é o lote: o caminho chegou à borda.
-                break;
-            }
-
-            Optional<BlockPos> ground = RoadPaving.groundNear(world, ahead, previous.getY());
-
-            if (ground.isEmpty()) {
-                break;
-            }
-
-            BlockPos at = ground.get();
             BlockState state = world.getBlockState(at);
 
-            if (!VillageRoad.isPaving(world, at)) {
-                if (RoadPaving.refusalAt(world, at, state).isPresent()) {
-                    break;
-                }
-
-                if (!world.getBlockState(at.up()).isAir()) {
-                    world.setBlockState(at.up(), Blocks.AIR.getDefaultState());
-                }
-
-                world.setBlockState(at, VillageRoad.pavingOn(state).getDefaultState());
-                laid++;
+            if (!world.getBlockState(at.up()).isAir()) {
+                world.setBlockState(at.up(), Blocks.AIR.getDefaultState());
             }
 
+            world.setBlockState(at, VillageRoad.pavingOn(world, at, state).getDefaultState());
             RoadIndex.remember(colonyId, at);
-            previous = at;
+            laid++;
         }
 
         if (laid > 0) {
-            VillageColonyMod.LOGGER.info("Colony {} paved {} path blocks toward the work at {}",
+            VillageColonyMod.LOGGER.info("Colony {} paved {} path blocks of the corridor toward the work at {}",
                     colonyId.toString().substring(0, 8), laid, MinecraftTypeAdapter.toBlockPos(origin).toShortString());
         }
 
         return laid;
     }
 
-    /** O lado que mais aproxima esta coluna do lote: o eixo de maior folga primeiro. */
-    static Optional<Direction> towards(BlockPos from, ColonyPos origin, ColonyPos size) {
-        int dx = gapX(from.getX(), origin, size);
-        int dz = gapZ(from.getZ(), origin, size);
+    /** A obra sem porta: o meio do lado do lote virado para a rua mais perto. */
+    static Corridor.Door sideFacing(ColonyPos origin, ColonyPos size, long column) {
+        int dx = ColonyRoads.xOf(column) - (origin.x() + size.x() / 2);
+        int dz = ColonyRoads.zOf(column) - (origin.z() + size.z() / 2);
+        Direction out = Math.abs(dx) >= Math.abs(dz)
+                ? (dx < 0 ? Direction.WEST : Direction.EAST)
+                : (dz < 0 ? Direction.NORTH : Direction.SOUTH);
+        int x = switch (out) {
+            case WEST -> origin.x() - 1;
+            case EAST -> origin.x() + size.x();
+            default -> origin.x() + size.x() / 2;
+        };
+        int z = switch (out) {
+            case NORTH -> origin.z() - 1;
+            case SOUTH -> origin.z() + size.z();
+            default -> origin.z() + size.z() / 2;
+        };
 
-        if (dx == 0 && dz == 0) {
-            return Optional.empty();
-        }
-
-        if (dx >= dz) {
-            return Optional.of(from.getX() < origin.x() ? Direction.EAST : Direction.WEST);
-        }
-
-        return Optional.of(from.getZ() < origin.z() ? Direction.SOUTH : Direction.NORTH);
+        return new Corridor.Door(new BlockPos(x, origin.y(), z), out);
     }
 
-    private static int gapX(int x, ColonyPos origin, ColonyPos size) {
-        return Math.max(0, Math.max(origin.x() - x, x - (origin.x() + size.x() - 1)));
-    }
-
-    private static int gapZ(int z, ColonyPos origin, ColonyPos size) {
-        return Math.max(0, Math.max(origin.z() - z, z - (origin.z() + size.z() - 1)));
+    private static boolean onTheLot(BlockPos at, ColonyPos origin, ColonyPos size) {
+        return at.getX() >= origin.x() && at.getX() < origin.x() + size.x()
+                && at.getZ() >= origin.z() && at.getZ() < origin.z() + size.z();
     }
 }

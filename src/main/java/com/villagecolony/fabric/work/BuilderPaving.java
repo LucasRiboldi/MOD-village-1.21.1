@@ -38,8 +38,8 @@ import java.util.UUID;
  * 15:14 ele ficou 82% ocioso, com a obra esperando material ou entre uma obra e outra.
  *
  * <p><b>O que é "no meio do caminho":</b> um bloco de grama ou terra na superfície,
- * dentro da caixa da vila, com caminho dos dois lados (norte e sul, ou leste e oeste)
- * ou em três dos quatro lados. Ele anda até lá, troca por caminho e tira a planta de
+ * dentro da caixa da vila, com caminho dos dois lados de uma reta (norte e sul, ou leste e
+ * oeste) e nada dos outros dois — o corredor de um bloco, regra do autor de 2026-10-22. Ele anda até lá, troca por caminho e tira a planta de
  * cima. A Regra 3 vale como na fuga ({@link BlockProtection#mayDigOut}): o chão do
  * bioma dentro de peça da vila entra, casa e bloco do jogador não.
  *
@@ -215,7 +215,7 @@ public final class BuilderPaving {
             world.breakBlock(ground.up(), false);
         }
 
-        Block path = VillageRoad.pavingOn(world.getBlockState(ground));
+        Block path = VillageRoad.pavingOn(world, ground, world.getBlockState(ground));
         world.setBlockState(ground, path.getDefaultState());
 
         return Registries.BLOCK.getId(path).getPath();
@@ -293,7 +293,7 @@ public final class BuilderPaving {
         return Optional.empty();
     }
 
-    /** Chão do bioma na superfície com caminho dos dois lados, ou em três dos quatro. */
+    /** Chão do bioma na superfície no meio de uma reta de caminho: os dois lados opostos, nada dos outros. */
     static boolean isGap(ServerWorld world, BlockPos ground) {
         BlockState state = world.getBlockState(ground);
 
@@ -312,9 +312,11 @@ public final class BuilderPaving {
         boolean south = isPath(world, ground.offset(Direction.SOUTH));
         boolean east = isPath(world, ground.offset(Direction.EAST));
         boolean west = isPath(world, ground.offset(Direction.WEST));
-        int sides = (north ? 1 : 0) + (south ? 1 : 0) + (east ? 1 : 0) + (west ? 1 : 0);
 
-        return (north && south) || (east && west) || sides >= 3;
+        // Só o buraco de uma reta: caminho dos dois lados opostos e nada dos outros dois — o corredor de
+        // um bloco (regra do autor de 2026-10-22). Os três lados de antes fechavam cantos, cada canto
+        // fechado abria outro, e o caminho crescia em mancha.
+        return (north && south && !east && !west) || (east && west && !north && !south);
     }
 
     private static boolean isPath(ServerWorld world, BlockPos at) {

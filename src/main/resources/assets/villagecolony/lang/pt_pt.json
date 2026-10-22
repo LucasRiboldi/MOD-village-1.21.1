@@ -69,5 +69,6 @@
   "block.villagecolony.farmer_bench": "Bancada do Agricultor",
   "block.villagecolony.shepherd_bench": "Bancada do Pastor",
   "block.villagecolony.builder_bench": "Bancada do Construtor",
-  "block.villagecolony.miner_bench": "Bancada do Mineiro"
+  "block.villagecolony.miner_bench": "Bancada do Mineiro",
+  "block.villagecolony.sand_path": "Caminho de Areia"
 }

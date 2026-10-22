@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.movement.DetourMoves;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
@@ -65,6 +66,8 @@ public final class MinerDetours {
         BlockPos stone = job.target;
         BlockPos aim = aimFor(villager.getUuid(), stone);
 
+        // Regra do autor de 2026-10-22: nada de piso no ar para fora da montanha (MinerTerrain), e se
+        // precisar construir, desce antes de ir de lado (DetourMoves.Costs.MINER).
         Optional<DetourWalker> walker = DetourWalker.plan(
                 world,
                 villager.getUuid(),
@@ -72,7 +75,10 @@ public final class MinerDetours {
                 aim,
                 feet -> reached(feet, aim, stone),
                 Set.of(stone),
-                false);
+                false,
+                MinerTerrain::of,
+                false,
+                DetourMoves.Costs.MINER);
 
         if (walker.isEmpty()) {
             VillageColonyMod.LOGGER.info(
@@ -145,6 +151,10 @@ public final class MinerDetours {
         job.descent.reset();
         job.stalled = 0;
 
+        boolean access = job.accessDetour;
+
+        job.accessDetour = false;
+
         if (status == DetourWalker.Status.DONE) {
             VillageColonyMod.LOGGER.info(
                     "Miner {} is through its detour at {} — {} dug, {} placed",
@@ -153,7 +163,15 @@ public final class MinerDetours {
                     walker.dug(),
                     walker.placed());
 
+            if (access) {
+                MineAccess.dug(job.task.colonyId(), villager.getBlockPos());
+            }
+
             return false;
+        }
+
+        if (access) {
+            MineAccess.failed(job.task.colonyId(), "the tunnel stopped — " + walker.why());
         }
 
         MinerHands.giveUp(world, villager.getUuid(), job, "its detour failed — " + walker.why());

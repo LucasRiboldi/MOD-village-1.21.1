@@ -124,11 +124,7 @@ public final class ReachMap {
                     continue;
                 }
 
-                VillageBounds box = colony.bounds().get();
-
-                sweep = new Sweep(start.get(), new VillageBounds(
-                        box.minX() - MARGIN, box.minY() - 10, box.minZ() - MARGIN,
-                        box.maxX() + MARGIN, box.maxY() + 10, box.maxZ() + MARGIN));
+                sweep = new Sweep(start.get(), areaOf(colony.bounds().get()));
                 SWEEPS.put(colony.id(), sweep);
             }
 
@@ -168,6 +164,42 @@ public final class ReachMap {
         }
 
         return sweep.frontier.isEmpty();
+    }
+
+    /** Onde a busca anda: a caixa da vila com {@link #MARGIN} em volta e 10 de folga na altura. */
+    static VillageBounds areaOf(VillageBounds box) {
+        return new VillageBounds(
+                box.minX() - MARGIN, box.minY() - 10, box.minZ() - MARGIN,
+                box.maxX() + MARGIN, box.maxY() + 10, box.maxZ() + MARGIN);
+    }
+
+    /**
+     * Se a pé, desde o centro da vila, se chega ao lado deste lugar — medido agora, por inteiro.
+     *
+     * <p>Para quem muda a mina de lugar (decisão do autor de 2026-10-22): no deserto a mina se mudou
+     * para uma boca cuja entrada ninguém alcançava, e os mineiros passaram a sessão encalhados. A
+     * mudança é rara, então a busca inteira de uma vez cabe. Sem caixa medida ou sem chão no centro
+     * não se sabe, e o "não sei" não barra.
+     */
+    public static boolean reachesOnFoot(ServerWorld world, Colony colony, BlockPos place) {
+        Optional<BlockPos> start = startOf(world, colony);
+
+        if (colony.bounds().isEmpty() || start.isEmpty()) {
+            return true;
+        }
+
+        return reaches(measure(world, start.get(), areaOf(colony.bounds().get())), place, 2);
+    }
+
+    /** Tudo o que se alcança a pé desde o centro, medido agora; vazio sem caixa ou sem chão no centro. */
+    static Set<BlockPos> reachableCells(ServerWorld world, Colony colony) {
+        Optional<BlockPos> start = startOf(world, colony);
+
+        if (colony.bounds().isEmpty() || start.isEmpty()) {
+            return Set.of();
+        }
+
+        return measure(world, start.get(), areaOf(colony.bounds().get()));
     }
 
     /** O mapa de um lugar só, inteiro, para o teste: o que se alcança de {@code start} dentro de {@code area}. */

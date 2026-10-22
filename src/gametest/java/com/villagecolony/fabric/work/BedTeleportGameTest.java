@@ -138,6 +138,34 @@ public class BedTeleportGameTest implements FabricGameTest {
         });
     }
 
+    /**
+     * O vaivém de um túnel para cada lado conta como o mesmo lugar — deserto, 2026-10-21: o mineiro
+     * alternava x=110 e x=113, a conta recomeçava a cada troca e ele ficou 12 minutos preso.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "bed_teleport", tickLimit = 100)
+    public void goingBackAndForthOneTunnelStillSendsTheVillagerToBed(TestContext context) {
+        BlockPos bed = placeBed(context, BED);
+        VillagerEntity villager = villagerHomedAt(context, bed);
+
+        context.waitAndRun(20, () -> {
+            ServerWorld world = context.getWorld();
+            BlockPos feet = villager.getBlockPos();
+            BlockPos other = feet.add(-ClimbReshape.TUNNEL_LENGTH, 0, 0);
+
+            for (int attempt = 0; attempt < BedTeleport.STUCK_ATTEMPTS; attempt++) {
+                BedTeleport.attempt(villager.getUuid(), attempt % 2 == 0 ? feet : other);
+            }
+
+            context.assertTrue(BedTeleport.attempts(villager.getUuid()) == BedTeleport.STUCK_ATTEMPTS,
+                    "o vaivém de um túnel recomeçou a conta: " + BedTeleport.attempts(villager.getUuid()));
+            context.assertTrue(BedTeleport.tooManyAttempts(world, villager, villager.getUuid()),
+                    "cinco trocas indo e voltando um túnel e o aldeão não foi para a cama");
+            context.assertTrue(villager.getBlockPos().isWithinDistance(bed, 1.5),
+                    "o aldeão ficou em " + villager.getBlockPos().toShortString() + ", longe da cama");
+            context.complete();
+        });
+    }
+
     /** O levado para a cama fecha a porta da casa (ADR-037 V2, C3). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "bed_teleport", tickLimit = 100)
     public void goingToBedClosesTheHouseDoor(TestContext context) {

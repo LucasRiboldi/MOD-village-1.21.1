@@ -35,6 +35,15 @@ final class BedTeleport {
     /** Tentativas de se soltar no mesmo lugar antes de ir para a cama. */
     static final int STUCK_ATTEMPTS = 5;
 
+    /**
+     * Até onde a tentativa ainda é "no mesmo lugar": um túnel da subida e meio bloco de folga.
+     *
+     * <p>Era 1,5. No deserto (2026-10-21) o mineiro preso na duna alternava degrau e túnel, e o
+     * túnel o levava 3 blocos para um lado e depois para o outro (x=110 ↔ 113): cada troca
+     * parecia lugar novo, a conta recomeçava, e ele ficou 12 e 17 minutos assim até a noite.
+     */
+    static final double SAME_PLACE = ClimbReshape.TUNNEL_LENGTH + 1.5;
+
     /** A altura do colchão: o aldeão fica de pé em cima da cama. */
     private static final double BED_TOP = 0.5625;
 
@@ -49,11 +58,11 @@ final class BedTeleport {
         ATTEMPTS.remove(workerId);
     }
 
-    /** Mais uma tentativa em {@code feet}; longe da anterior, a conta recomeça. */
+    /** Mais uma tentativa em {@code feet}; longe de onde a conta começou ({@link #SAME_PLACE}), ela recomeça. */
     static void attempt(UUID workerId, BlockPos feet) {
         Attempts last = ATTEMPTS.get(workerId);
 
-        ATTEMPTS.put(workerId, last != null && last.from().isWithinDistance(feet, 1.5)
+        ATTEMPTS.put(workerId, last != null && last.from().isWithinDistance(feet, SAME_PLACE)
                 ? new Attempts(last.from(), last.count() + 1)
                 : new Attempts(feet.toImmutable(), 1));
     }

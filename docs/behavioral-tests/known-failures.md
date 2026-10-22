@@ -5,6 +5,38 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ---
 
+## KF-009 — `MineReturnGameTest.aStrandedMinerGoesBackUpTheMineStairsAndLeavesTheVillageGroundWhole` caiu uma vez na bateria inteira
+
+**ABERTO.** 22-10, 0.3.89 (853 testes): caiu 1 vez em 4 baterias. O mineiro parou no passo 12 de 13 do
+rastro, 6 blocos acima do fundo, esperando sem ganho até o tempo acabar. Isolado (`-PgametestOnly=MineReturn`)
+passou 4 de 4. O `MineReturn` não muda desde o `62501caf` (0.3.88), que deu 846/846. Na 0.3.89 mudou o
+`MinerCaution` (a água é livre ao ar livre), e vários cenários novos rodam a y 40 e a y 120. Todos eles se
+desfazem no fim. Hipótese, não medida: interferência do arranjo das arenas, como KF-007 e KF-008.
+
+---
+
+## KF-008 — `ShepherdHerdingGameTest.theShepherdLeadsALooseCowToTheFence` caiu uma vez na bateria inteira
+
+**ABERTO.** 22-10, branch `fix/deserto-a1-c1-b1-d2` (846 testes): caiu 1 vez em 2 baterias, sem exceção
+(tempo esgotado). Isolado (`-PgametestOnly=ShepherdHerding`) passou 4 de 4. A classe de produção
+(`ShepherdHerding`) não muda desde o `984f321f` (0.3.80), e nenhuma mudança da rodada toca o pastoreio.
+Mesmo padrão da KF-007: interferência que depende do arranjo das arenas. Hipótese, não medida.
+
+---
+
+## KF-007 — `MinerDirectPathGameTest.theMinerWalksStraightWhenTheGameFindsTheWay` cai na bateria inteira
+
+**ABERTO.** 21-10, branch `fix/deserto-a1-c1-b1-d2`. A navegação do jogo não chega ao lugar de pé
+aberto: *"aldeão em x+1, alvo x+8, caminho termina em x+7, chega=false"*. Isolado
+(`-PgametestOnly=MinerDirectPath`) passa 6 de 6. Na bateria inteira, medido por código em 22 baterias:
+`main` (824 testes) 0/3; só o C1 (824) 0/3; A1+B1 (830) 1/7; código do D2 sem os seus testes (830) 1/3;
+branch completa (832) 2/3. Nenhuma das mudanças toca a navegação; a ordem dos lotes é a mesma em toda
+rodada (vizinhos `walk_legs` e `lumber_bare_stump`) e, com o mesmo código, uma rodada passa e a seguinte
+cai. Hipótese, não medida: o teste põe chão até x=9 e parede em z −3…5, fora da arena vazia, e depende
+do que a arena vizinha deixa ali. A memória registrava ~1/3 de queda já no `690dee98`.
+
+---
+
 ## KF-006 — `CraftingGameTest.theCycleOpensTheCraftingTaskByItself` cai na bateria inteira
 
 **ABERTO.** 21-10, depois de duas classes novas de GameTest mudarem o arranjo das arenas: 2 quedas

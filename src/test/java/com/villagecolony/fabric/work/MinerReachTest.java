@@ -309,4 +309,57 @@ class MinerReachTest {
                     at.toShortString() + " está fora do braço de " + MinerReach.REACH);
         }
     }
+
+    /**
+     * Quem chega a qualquer ponto do lugar escolhido alcança a pedra — deserto, 2026-10-21.
+     *
+     * <p>O desvio mandou o mineiro para 98,55,-508 bater em 95,53,-506: do centro do bloco, 3,9. Ele
+     * parou no destino com os pés meio bloco para o lado, ficou a 4,1, e o guarda devolveu a tarefa
+     * depois de 300 tiques parado no próprio destino — duas vezes no mesmo desvio.
+     */
+    @Test
+    void standingAnywhereOnTheChosenSpotReachesTheStone() {
+        BlockPos stone = new BlockPos(95, 53, -506);
+        BlockPos spot = new BlockPos(98, 55, -508);
+
+        assertTrue(
+                MinerReach.APPROACH_OFFSETS.contains(spot.subtract(stone)),
+                "o lugar da sessão é um lugar de trabalho da pedra");
+
+        double x = spot.getX() + 0.95;
+        double z = spot.getZ() + 0.05;
+
+        assertFalse(
+                MinerReach.isWithinReach(x, spot.getY(), z, stone),
+                "a posição real na borda do bloco fica fora do braço: é o caso da sessão");
+        assertTrue(
+                MinerReach.isWithinReachStanding(x, spot.getY(), z, stone),
+                "de pé no lugar escolhido, ele alcança");
+    }
+
+    /** O centro do bloco não estica o braço para quem está fora de todo lugar de trabalho. */
+    @Test
+    void standingFartherThanEveryWorkSpotStillDoesNotReach() {
+        double x = STONE.getX() + 0.5 - 5;
+
+        assertFalse(MinerReach.isWithinReachStanding(x, STONE.getY(), STONE.getZ() + 0.5, STONE));
+    }
+
+    /** Todo lugar de trabalho da lista alcança a pedra de qualquer ponto do bloco. */
+    @Test
+    void everyApproachReachesFromEveryCornerOfItsBlock() {
+        double[] corners = {0.01, 0.99};
+
+        for (Vec3i offset : MinerReach.APPROACH_OFFSETS) {
+            BlockPos at = STONE.add(offset);
+
+            for (double cx : corners) {
+                for (double cz : corners) {
+                    assertTrue(
+                            MinerReach.isWithinReachStanding(at.getX() + cx, at.getY(), at.getZ() + cz, STONE),
+                            at.toShortString() + " no canto " + cx + "," + cz + " não alcança");
+                }
+            }
+        }
+    }
 }

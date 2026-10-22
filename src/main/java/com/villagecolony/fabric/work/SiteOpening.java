@@ -387,6 +387,8 @@ final class SiteOpening {
 
     /** O caminho do lote recuado até a rua (RoadsideSites.SETBACKS): o chão vira o caminho natural dele. */
     private static void pavePathTo(ServerWorld world, java.util.UUID colonyId, BuildSiteScanner.Site site) {
+        CorridorCut.cut(world, colonyId, site.path());
+
         for (ColonyPos cell : site.path()) {
             net.minecraft.util.math.BlockPos at = MinecraftTypeAdapter.toBlockPos(cell);
             net.minecraft.block.BlockState ground = world.getBlockState(at);
@@ -396,7 +398,7 @@ final class SiteOpening {
                     world.breakBlock(at.up(), false);
                 }
 
-                world.setBlockState(at, VillageRoad.pavingOn(ground).getDefaultState());
+                world.setBlockState(at, VillageRoad.pavingOn(world, at, ground).getDefaultState());
                 com.villagecolony.fabric.integration.RoadIndex.remember(colonyId, at);
             }
         }

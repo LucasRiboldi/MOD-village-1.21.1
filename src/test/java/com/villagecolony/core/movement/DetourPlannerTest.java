@@ -341,4 +341,37 @@ class DetourPlannerTest {
 
         assertEquals(DetourPlanner.MAX_NODES, partial.nodes());
     }
+
+    /**
+     * O mineiro que precisa construir para andar desce antes de ir de lado — regra do autor de
+     * 2026-10-22. Rocha maciça, saída tanto três blocos ao lado quanto dois abaixo, e a busca puxando
+     * para o lado: o custo de sempre vai de lado, o do mineiro desce.
+     */
+    @Test
+    void theMinerDigsDownRatherThanSidewaysWhenItMustBuild() {
+        Grid rock = Grid.solid(Cell.ROCK).room(0, 1, 0);
+        ColonyPos sideways = new ColonyPos(3, 1, 0);
+        java.util.function.Predicate<ColonyPos> out = at -> at.x() >= 3 || at.y() <= -1;
+
+        DetourPlanner.Detour usual = DetourPlanner.plan(
+                rock, START, sideways, out, Set.of(), false, DetourMoves.Costs.DEFAULT).orElseThrow();
+        DetourPlanner.Detour miner = DetourPlanner.plan(
+                rock, START, sideways, out, Set.of(), false, DetourMoves.Costs.MINER).orElseThrow();
+
+        ColonyPos usualEnd = usual.steps().get(usual.steps().size() - 1);
+        ColonyPos minerEnd = miner.steps().get(miner.steps().size() - 1);
+
+        assertTrue(usualEnd.x() >= 3, "o custo de sempre devia ir de lado, e foi a " + usualEnd);
+        assertTrue(minerEnd.y() <= -1, "o mineiro devia descer, e foi a " + minerEnd);
+    }
+
+    /** Construir de lado e subindo custa mais ao mineiro; descendo, o mesmo de sempre. */
+    @Test
+    void theMinerCostsGrowFromDownToSidewaysToUp() {
+        DetourMoves.Costs miner = DetourMoves.Costs.MINER;
+
+        assertEquals(DetourMoves.Costs.DEFAULT.digDown(), miner.digDown());
+        assertTrue(miner.digDown() < miner.digLevel() && miner.digLevel() < miner.digUp());
+        assertTrue(miner.place() > DetourMoves.Costs.DEFAULT.place());
+    }
 }

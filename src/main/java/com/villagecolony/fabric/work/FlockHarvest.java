@@ -40,8 +40,8 @@ public final class FlockHarvest {
     /** Teto do rebanho que a criação busca ({@link ShepherdFlock#FLOCK_TARGET}). */
     static final int FLOCK_FULL = ShepherdFlock.FLOCK_TARGET;
 
-    /** Abaixo disto o pastor nunca abate: a reserva viva por espécie. */
-    static final int HARVEST_KEEP = 8;
+    /** Abaixo disto o pastor nunca abate: a reserva viva por espécie — autor, 2026-10-22 (eram 8). */
+    static final int HARVEST_KEEP = 6;
 
     /** Quanto de cada item fica sempre guardado no baú antes de cozinhar/processar o excedente. */
     static final int ITEM_KEEP = 16;

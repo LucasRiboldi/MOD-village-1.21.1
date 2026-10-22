@@ -230,7 +230,7 @@ public final class MinerReport {
 
         double away = MinerWork.distanceTo(villager, target);
 
-        if (away <= MinerWork.REACH) {
+        if (MinerWork.isWithinReach(villager, target)) {
             return String.format("%.1f blocks away", away);
         }
 

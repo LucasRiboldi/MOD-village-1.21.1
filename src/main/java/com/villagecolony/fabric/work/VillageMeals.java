@@ -43,6 +43,8 @@ import java.util.UUID;
  * doada a cada adulto até {@link #BREEDING_FOOD} pontos, com cama sobrando ou
  * não, e antes o fazendeiro assa o trigo guardado ({@link FarmerBakery}).
  * Todos alimentados é o convívio que a felicidade conta ({@link VillageMood}).
+ * Com pastor na vila, um par da comida de cada espécie do rebanho fica no baú
+ * ({@link ShepherdFlock#breedingFoodToKeep}, D2, decisão do autor de 2026-10-21).
  */
 public final class VillageMeals {
 
@@ -117,6 +119,8 @@ public final class VillageMeals {
         }
 
         List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.id(), colony.center());
+        // A comida de cria do rebanho fica no baú (ShepherdFlock.breedingFoodToKeep, D2).
+        Map<Item, Integer> keep = ShepherdFlock.breedingFoodToKeep(world, colony);
         int fed = 0;
 
         // Todo adulto da colônia, com ofício ou sem: o VillagerScanner
@@ -133,7 +137,7 @@ public final class VillageMeals {
                 continue;
             }
 
-            if (feed(world, chests, villager) > 0) {
+            if (feed(world, chests, villager, keep) > 0) {
                 fed++;
             }
         }
@@ -147,18 +151,20 @@ public final class VillageMeals {
         return fed;
     }
 
-    /** Tira do baú até doze pontos de comida e põe no inventário dele. */
-    private static int feed(ServerWorld world, List<ColonyPos> chests, VillagerEntity villager) {
+    /** Tira do baú até doze pontos de comida, acima do que fica para o rebanho, e põe no inventário dele. */
+    private static int feed(ServerWorld world, List<ColonyPos> chests, VillagerEntity villager, Map<Item, Integer> keep) {
         SimpleInventory pocket = villager.getInventory();
         int points = 0;
 
         for (Item food : MENU) {
             int value = VillagerEntity.ITEM_FOOD_VALUES.getOrDefault(food, 0);
+            int kept = keep.getOrDefault(food, 0);
 
             while (value > 0 && points < BREEDING_FOOD) {
                 ItemStack one = new ItemStack(food);
 
                 if (!pocket.canInsert(one)
+                        || (kept > 0 && ColonyChests.countIn(world, chests, food) <= kept)
                         || ColonyChests.withdraw(world, chests, food, 1) == 0) {
                     break;
                 }

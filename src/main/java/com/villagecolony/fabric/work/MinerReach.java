@@ -114,6 +114,22 @@ public final class MinerReach {
     }
 
     /**
+     * Se o mineiro de pé aqui alcança aquele bloco: da posição real, ou do centro do bloco em que
+     * ele pisa.
+     *
+     * <p>Os lugares de trabalho ({@link #APPROACH_OFFSETS}) são medidos do centro da coluna, e a
+     * navegação para em qualquer ponto do bloco de destino ({@link #ARRIVAL}). Um lugar a 3,9 da pedra
+     * virava 4,1 com o aldeão meio bloco para o lado, e ele ficava parado no próprio destino até o
+     * guarda devolver a tarefa (deserto, 2026-10-21, desvio 98,55,-508 para a pedra 95,53,-506). Medir
+     * também do centro do bloco devolve a garantia do {@code ARRIVAL}: quem chegou ao lugar escolhido
+     * alcança.
+     */
+    public static boolean isWithinReachStanding(double x, double y, double z, BlockPos target) {
+        return isWithinReach(x, y, z, target)
+                || isWithinReach(Math.floor(x) + 0.5, Math.floor(y), Math.floor(z) + 0.5, target);
+    }
+
+    /**
      * As posições de onde se pode bater numa pedra, da mais perto para a
      * mais longe — 2026-09-03.
      *

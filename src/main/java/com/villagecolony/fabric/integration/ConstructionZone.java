@@ -28,7 +28,7 @@ public final class ConstructionZone {
                     BlockPos at = ground.add(dx, dy, dz);
 
                     if (world.getChunkManager().getWorldChunk(at.getX() >> 4, at.getZ() >> 4) != null
-                            && world.getBlockState(at).isOf(Blocks.DIRT_PATH)) {
+                            && VillageRoad.isPathBlock(world.getBlockState(at))) {
                         return true;
                     }
                 }

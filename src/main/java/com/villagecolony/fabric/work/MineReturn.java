@@ -216,7 +216,7 @@ public final class MineReturn {
         Set<BlockPos> goals = new HashSet<>(retrace.cells.subList(0, aim + 1));
 
         Optional<DetourWalker> walker = DetourWalker.plan(world, id, feet, retrace.cells.get(aim),
-                goals::contains, Set.of(), true, MineReturn::sealedTerrain, true);
+                goals::contains, Set.of(), true, MinerTerrain.over(MineReturn::sealedTerrain), true);
 
         if (walker.isEmpty()) {
             fail(id, retrace, "no way back to the trail near " + retrace.cells.get(aim).toShortString());

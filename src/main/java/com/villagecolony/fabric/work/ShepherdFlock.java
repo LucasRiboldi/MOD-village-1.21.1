@@ -7,6 +7,7 @@ import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.fabric.integration.CropPatch;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.decoration.LeashKnotEntity;
 import net.minecraft.entity.passive.AnimalEntity;
@@ -36,14 +37,24 @@ public final class ShepherdFlock {
         ServerMemory.register(ShepherdFlock.class, ShepherdFlock::clearAll);
     }
 
-    /** Adultos de cada espécie a partir dos quais o pastor para de criar. */
-    public static final int FLOCK_TARGET = 12;
+    /** Adultos de cada espécie a partir dos quais o pastor para de criar — autor, 2026-10-22 (eram 12). */
+    public static final int FLOCK_TARGET = 8;
 
     /** Entre uma rodada de comida e a seguinte da mesma colônia: um minuto. */
     static final int BETWEEN_PAIRS = 1_200;
 
     /** Quantos pares de cada espécie o pastor alimenta por rodada. */
     static final int PAIRS_PER_ROUND = 2;
+
+    /** Quanto de uma comida um par come: os dois animais, um item cada. */
+    public static final int PAIR_FOOD = 2;
+
+    /**
+     * Sementes que a criação deixa para o plantio — decisão do autor de 2026-10-22 ("mais trigo
+     * para o rebanho"). No deserto (0.3.86) o pastor cevou galinha com semente de trigo e o fazendeiro,
+     * sem ela, semeou beterraba: ovelha e vaca ficaram sem trigo.
+     */
+    static final int SEEDS_FOR_SOWING = 8;
 
     private static final int RADIUS = 32;
 
@@ -76,9 +87,7 @@ public final class ShepherdFlock {
             return false;
         }
 
-        boolean hasShepherd = VillageColonyMod.WORKERS.ofColony(colony.id()).stream()
-                .anyMatch(worker -> worker.profession().filter(ProfessionType.SHEPHERD::equals).isPresent());
-        if (!hasShepherd) {
+        if (!hasShepherd(colony)) {
             return false;
         }
 
@@ -103,6 +112,52 @@ public final class ShepherdFlock {
         FlockHarvest.step(world, colony, area, chests);
 
         return paired;
+    }
+
+    /**
+     * A comida de cria que a ceia da vila deixa no baú — D2, decisão do autor de 2026-10-21.
+     *
+     * <p>No deserto o pastor disse ~200 vezes "no food" com o rebanho pedindo par: a ceia
+     * ({@link VillageMeals}) levava a cenoura, a batata e a beterraba de qualquer baú antes dele.
+     * Com pastor na vila, cada espécie com par pronto e abaixo de {@link #FLOCK_TARGET} guarda um
+     * par de cada comida que ela aceita.
+     *
+     * @return quanto de cada item a ceia não tira do baú; vazio sem pastor
+     */
+    public static Map<Item, Integer> breedingFoodToKeep(ServerWorld world, Colony colony) {
+        if (!hasShepherd(colony)) {
+            return Map.of();
+        }
+
+        Box area = areaOf(colony);
+        Map<Item, Integer> keep = new HashMap<>();
+
+        for (EntityType<? extends AnimalEntity> species : SPECIES) {
+            List<? extends AnimalEntity> adults = world.getEntitiesByType(
+                    species, area, animal -> animal.isAlive() && !animal.isBaby());
+
+            if (adults.size() < 2 || adults.size() >= FLOCK_TARGET) {
+                continue;
+            }
+
+            for (Item food : foodOf(species, adults.get(0))) {
+                keep.merge(food, PAIR_FOOD, Math::max);
+            }
+        }
+
+        return keep;
+    }
+
+    /** Se esta comida paga um par agora: semente só acima do que fica para o plantio. */
+    static boolean mayFeed(ServerWorld world, List<ColonyPos> chests, Item food) {
+        int keep = CropPatch.isSeed(food) ? SEEDS_FOR_SOWING : 0;
+
+        return ColonyChests.countIn(world, chests, food) - PAIR_FOOD >= keep;
+    }
+
+    static boolean hasShepherd(Colony colony) {
+        return VillageColonyMod.WORKERS.ofColony(colony.id()).stream()
+                .anyMatch(worker -> worker.profession().filter(ProfessionType.SHEPHERD::equals).isPresent());
     }
 
     /**
@@ -182,11 +237,11 @@ public final class ShepherdFlock {
         }
 
         for (Item food : foodOf(species, ready.get(0))) {
-            if (ColonyChests.countIn(world, chests, food) < 2) {
+            if (!mayFeed(world, chests, food)) {
                 continue;
             }
 
-            ColonyChests.withdraw(world, chests, food, 2);
+            ColonyChests.withdraw(world, chests, food, PAIR_FOOD);
 
             for (AnimalEntity animal : ready) {
                 animal.lovePlayer(null);

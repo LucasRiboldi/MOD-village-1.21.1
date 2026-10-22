@@ -132,6 +132,9 @@ public final class Mine {
      */
     private int helicesTried;
 
+    /** De onde a escada deste nível desce: o ponto de agora ou os deslocados ({@link MineStairPoints}). */
+    private final MineStairPoints stairPoints = new MineStairPoints();
+
     private Mine(UUID colonyId, MineShaft shaft, int[] cuts) {
         this.colonyId = Objects.requireNonNull(colonyId, "colonyId");
         this.shaft = Objects.requireNonNull(shaft, "shaft");
@@ -369,13 +372,11 @@ public final class Mine {
     }
 
     /**
-     * Quantas hélices a mina tenta antes de culpar a boca — E45.
-     *
-     * <p>Dez, conforme a regra dos salões: antes de abandonar a boca, a
-     * recuperação tenta dez partidas de descida. Os rumos se repetem, mas
-     * cada tentativa volta a avaliar o salão físico, que pode ter mudado.
+     * Quantas partidas de descida a mina tenta antes de culpar a boca — E45, e a decisão do autor de
+     * 2026-10-22: os quatro rumos em cada um dos pontos da escada ({@link MineStairPoints}). Eram dez,
+     * todas no mesmo ponto.
      */
-    public static final int HELICES_BEFORE_BLAMING_THE_MOUTH = 10;
+    public static final int HELICES_BEFORE_BLAMING_THE_MOUTH = MineStairPoints.TURNS * (MineStairPoints.SHIFTS + 1);
 
     /**
      * Quantas voltas sem picareta bastam para desconfiar do desenho.
@@ -419,23 +420,15 @@ public final class Mine {
     }
 
     /**
-     * Gira a hélice sem descer, e recomeça os ramais nela — E45.
-     *
-     * <p><b>A saída da boca intransponível</b>, e a decisão do autor em
-     * 2026-09-16: girar primeiro, porque é barato e reusa
-     * {@link MineShaft#rerouted()}, que já existe e já é usada quando a
-     * mina chega ao fundo. Se as quatro hélices falharem, o impedimento
-     * é a boca, e aí {@link #mouthIsHopeless()} responde.
-     *
-     * <p>Zera a conta de voltas: o desenho é outro agora, e cobrar da
-     * hélice nova o que a anterior não cavou faria a mina desistir da
-     * boca sem ter tentado de verdade. Quem conta as hélices é
-     * {@link #helicesTried}.
+     * Gira a hélice sem descer, ou muda a escada de ponto a cada volta completa, e recomeça os ramais
+     * nela — E45 (girar primeiro, decisão de 2026-09-16) e {@link MineStairPoints} (2026-10-22). Esgotadas
+     * as partidas, {@link #mouthIsHopeless()} culpa a boca. Zera a conta de voltas: cobrar do desenho
+     * novo o que o anterior não cavou faria a mina desistir sem ter tentado.
      */
     public void reroute() {
-        shaft = shaft.rerouted();
-
         helicesTried++;
+
+        shaft = stairPoints.next(shaft, helicesTried);
 
         turnsWithoutAPickaxe = 0;
 
@@ -449,13 +442,18 @@ public final class Mine {
     }
 
     /**
-     * Se as quatro hélices já falharam e a boca é que está ruim — E45.
+     * Se todas as partidas da escada já falharam e a boca é que está ruim — E45.
      *
      * <p>Quem pergunta é quem pode trocar a boca: a decisão de abandonar
      * o poço iniciado não é da mina, é de quem a plantou no mundo.
      */
     public boolean mouthIsHopeless() {
         return helicesTried >= HELICES_BEFORE_BLAMING_THE_MOUTH;
+    }
+
+    /** Quantas vezes a escada deste nível mudou de ponto. */
+    public int stairShifts() {
+        return stairPoints.shifts();
     }
 
     /** Quantas hélices esta mina já tentou neste nível. */
