@@ -69,6 +69,8 @@ final class UnreachablePieces {
             world.setBlockState(target, state, Block.NOTIFY_ALL);
             BlockShaping.placeSecondHalf(world, target, state);
             placed = true;
+            com.villagecolony.fabric.integration.Supplies.record(com.villagecolony.core.coordination.SupplyException.UNREACHABLE_PIECE, project.colonyId(),
+                    piece.block().path(), 1);
         }
 
         project.markPlaced(block.get());

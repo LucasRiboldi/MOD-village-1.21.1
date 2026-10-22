@@ -101,6 +101,8 @@ public final class ChestSpawner {
                 villager.getUuid(), MinecraftTypeAdapter.toColonyPos(chest.get()));
         storages.register(storage);
         WARNED.remove(villager.getUuid());
+        Supplies.record(com.villagecolony.core.coordination.SupplyException.CHEST_FOR_A_WORKER, colonyId,
+                "chest", 1);
 
         VillageColonyMod.LOGGER.info(
                 "{} {} got a chest of its own at {}, {}",

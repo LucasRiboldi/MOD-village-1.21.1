@@ -71,6 +71,8 @@ public final class VillageFarmAnimals {
 
         VillageColonyMod.LOGGER.info("Colony {} got {} farm animals at its founding",
                 colony.id().toString().substring(0, 8), born.size());
+        Supplies.record(com.villagecolony.core.coordination.SupplyException.FOUNDING_ANIMALS, colony.id(),
+                "farm animals", born.size());
 
         return born;
     }

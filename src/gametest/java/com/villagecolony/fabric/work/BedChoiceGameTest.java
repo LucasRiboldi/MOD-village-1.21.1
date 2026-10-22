@@ -5,6 +5,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.coordination.BedPlan;
 import com.villagecolony.core.storage.model.WorkerStorage;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageFoundation;
@@ -21,6 +22,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.GlobalPos;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -48,6 +50,8 @@ public class BedChoiceGameTest implements FabricGameTest {
         VillagerEntity builder = worker(context, colony, ProfessionType.BUILDER, new BlockPos(6, Y + 1, 4));
         BlockPos west = context.getAbsolutePos(WEST);
         BlockPos east = context.getAbsolutePos(EAST);
+        ColonyPos minerChest = VillageColonyMod.STORAGES.of(miner.getUuid()).orElseThrow().chestPosition();
+        ColonyPos builderChest = VillageColonyMod.STORAGES.of(builder.getUuid()).orElseThrow().chestPosition();
 
         context.waitAndRun(5, () -> {
             try {
@@ -61,8 +65,12 @@ public class BedChoiceGameTest implements FabricGameTest {
                 context.assertTrue(moved == 2, "deviam mudar os dois, mudaram " + moved);
                 context.assertTrue(isHome(miner, west) && isHome(builder, east), "a troca não aconteceu: mineiro em "
                         + homeOf(miner) + ", construtor em " + homeOf(builder));
-                context.assertTrue(VillageColonyMod.STORAGES.of(miner.getUuid()).isEmpty()
-                        && VillageColonyMod.STORAGES.of(builder.getUuid()).isEmpty(), "o baú não acompanhou a cama");
+                context.assertTrue(VillageColonyMod.STORAGES.of(miner.getUuid()).map(WorkerStorage::chestPosition)
+                                .equals(Optional.of(builderChest))
+                                && VillageColonyMod.STORAGES.of(builder.getUuid()).map(WorkerStorage::chestPosition)
+                                .equals(Optional.of(minerChest)),
+                        "o baú não acompanhou a cama: mineiro com " + VillageColonyMod.STORAGES.of(miner.getUuid())
+                                + ", construtor com " + VillageColonyMod.STORAGES.of(builder.getUuid()));
             } finally {
                 cleanUp(colony, miner, builder);
                 clearScenario(context);
@@ -76,6 +84,7 @@ public class BedChoiceGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "bed_choice_free", tickLimit = 40)
     public void aWorkerTakesTheFreeBedByHisWorkOnlyOnceHisWorkIsKnown(TestContext context) {
         floorAndBeds(context, WEST, EAST);
+        context.setBlockState(WEST.west(), Blocks.CHEST.getDefaultState());
 
         Colony colony = colonyOver(context);
         VillagerEntity miner = worker(context, colony, ProfessionType.MINER, new BlockPos(4, Y + 1, 4));
@@ -98,6 +107,45 @@ public class BedChoiceGameTest implements FabricGameTest {
                 context.assertTrue(BedChoice.reassign(context.getWorld(), colony, colony.bounds().orElseThrow()) == 1,
                         "não foi para a cama livre ao lado do trabalho");
                 context.assertTrue(isHome(miner, west), "a cama dele ficou em " + homeOf(miner));
+                context.assertTrue(VillageColonyMod.STORAGES.of(miner.getUuid()).map(WorkerStorage::chestPosition)
+                                .equals(Optional.of(MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(WEST.west())))),
+                        "o baú ao lado da cama nova não ficou com ele: " + VillageColonyMod.STORAGES.of(miner.getUuid()));
+            } finally {
+                cleanUp(colony, miner);
+                clearScenario(context);
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * A cama livre sem baú ao lado não é oferecida — R-043 do estudo v2: quem mudasse ficaria sem baú, e o
+     * trabalhador sem baú perde o ofício para quem tem (VacancyEnforcer). Ele vai para a próxima cama que tem
+     * baú, se ela ainda vale a mudança.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "bed_choice_no_chest", tickLimit = 40)
+    public void aFreeBedWithoutAChestBesideItIsNotOffered(TestContext context) {
+        // A do meio, com baú, fica a 7 da cama oeste: fora do raio de 6 em que o baú vale para ela.
+        BlockPos middle = new BlockPos(8, Y + 1, 2);
+        floorAndBeds(context, WEST, middle, EAST);
+        context.setBlockState(middle.east(), Blocks.CHEST.getDefaultState());
+
+        Colony colony = colonyOver(context);
+        VillagerEntity miner = worker(context, colony, ProfessionType.MINER, new BlockPos(4, Y + 1, 4));
+        BlockPos west = context.getAbsolutePos(WEST);
+        BlockPos east = context.getAbsolutePos(EAST);
+        BlockPos withChest = context.getAbsolutePos(middle);
+
+        context.waitAndRun(5, () -> {
+            try {
+                VillageFoundation.giveHome(context.getWorld(), miner, east);
+                worksAt(miner, west.east());
+
+                context.assertTrue(BedChoice.reassign(context.getWorld(), colony, colony.bounds().orElseThrow()) == 1,
+                        "não mudou para a cama com baú");
+                context.assertTrue(isHome(miner, withChest), "devia ir para a cama com baú, e foi para " + homeOf(miner)
+                        + (isHome(miner, west) ? " — a cama sem baú" : ""));
             } finally {
                 cleanUp(colony, miner);
                 clearScenario(context);

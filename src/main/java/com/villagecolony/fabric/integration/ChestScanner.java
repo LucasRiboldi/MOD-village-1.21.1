@@ -146,6 +146,16 @@ public final class ChestScanner {
     }
 
     /**
+     * O baú livre ao lado desta cama para quem exerce {@code wants}, pelas mesmas regras da reivindicação —
+     * a mudança de cama (Regra 74) só oferece cama que tenha um.
+     */
+    public static Optional<BlockPos> freeChestBeside(
+            ServerWorld world, BlockPos bed, StorageRegistry storages, Optional<ProfessionType> wants) {
+
+        return findFreeChest(world, bed, storages, wants);
+    }
+
+    /**
      * A cama deste aldeão, quando faz sentido procurar baú para ele.
      *
      * <p>Vazio quando ele já tem baú — rever o mesmo aldeão a cada ciclo

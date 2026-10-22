@@ -42,6 +42,8 @@
       "com.villagecolony.fabric.integration.SandPathGameTest",
       "com.villagecolony.fabric.work.CorridorCutGameTest",
       "com.villagecolony.fabric.work.BedChoiceGameTest",
+      "com.villagecolony.fabric.work.CuttingsGameTest",
+      "com.villagecolony.fabric.work.FunctionalPiecesGameTest",
       "com.villagecolony.fabric.work.MineOreHeadingGameTest",
       "com.villagecolony.fabric.work.WorkMemoryGameTest",
       "com.villagecolony.fabric.work.BiomePiecesGameTest",

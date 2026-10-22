@@ -142,6 +142,10 @@ public final class ActionJournal {
         return net.minecraft.registry.Registries.ITEM.getId(item).getPath();
     }
 
+    /** As ações que dizem por que algo não andou: soltar, desistir, adiar, recusar, encalhar. */
+    private static final java.util.Set<String> FAILURES = java.util.Set.of(
+            "TASK_RELEASED", "GAVE_UP", "SET_ASIDE", "TARGET_REJECTED", "STRANDED", "SKIPPED", "REFUSED");
+
     private static void append(UUID worker, String action, String task, String what, int amount,
             @Nullable BlockPos at, long ticks, String detail) {
 
@@ -181,6 +185,11 @@ public final class ActionJournal {
         }
 
         field(line, "detail", detail);
+
+        // O código único de bloqueio (Regra 112), para o relatório contar junto o que cada ofício diz de um jeito.
+        if (FAILURES.contains(action) && !detail.isEmpty()) {
+            field(line, "code", com.villagecolony.core.coordination.BlockCode.classify(detail).name());
+        }
 
         PENDING.add(line.append('}').toString());
 

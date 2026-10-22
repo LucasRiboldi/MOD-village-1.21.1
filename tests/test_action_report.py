@@ -70,5 +70,18 @@ class ActionReportTest(unittest.TestCase):
         self.assertIn("0%", text)
 
 
+    def test_the_block_codes_are_counted_per_profession(self):
+        lines = [
+            '{"t":0,"worker":"a","prof":"MINER","action":"GAVE_UP","detail":"has not moved","code":"NO_PROGRESS"}',
+            '{"t":5,"worker":"a","prof":"MINER","action":"STRANDED","detail":"frozen twice","code":"NO_PROGRESS"}',
+            '{"t":9,"worker":"b","prof":"FARMER","action":"TASK_RELEASED","detail":"could not reach the crop",'
+            '"code":"NO_PATH"}',
+        ]
+        by_prof, by_worker, minutes = action_report.summarize(action_report.parse(lines))
+
+        self.assertEqual(2, by_prof["MINER"]["codes"]["NO_PROGRESS"])
+        self.assertEqual(1, by_prof["FARMER"]["codes"]["NO_PATH"])
+        self.assertIn("Por código de bloqueio", action_report.render(by_prof, by_worker, minutes))
+
 if __name__ == "__main__":
     unittest.main()
