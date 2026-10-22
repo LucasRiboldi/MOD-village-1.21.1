@@ -111,6 +111,7 @@ final class RoadGrowthPlanning {
 
         if (opened.isPresent()) {
             RoadExtension.lotFound(colony.id());
+            VillageExpansion.stripLotOpened(colony.id());
             IdleLog.clear(colony.id(), ConstructionPlanner.SUBJECT);
         }
 

@@ -57,8 +57,27 @@ public final class StripLot {
     /** De quantos em quantos blocos a porta é testada, na frente e ao longo da faixa. */
     static final int STEP = 2;
 
-    /** Onde a busca parou, por colônia: a faixa medida e a próxima porta. */
-    private record Cursor(VillageBounds strip, Side side, int next) {
+    /** Onde a busca parou, por colônia: a faixa medida, a próxima porta e o que a volta já viu. */
+    private record Cursor(VillageBounds strip, Side side, int next, Tally tally) {
+    }
+
+    /** O que uma volta pela faixa viu — a linha do fim da volta sem lote (deserto, 2026-10-22). */
+    static final class Tally {
+        int doors;
+        int lotsFit;
+        final Map<String, Integer> pathStoppedBy = new HashMap<>();
+
+        void stopped(String why) {
+            pathStoppedBy.merge(why, 1, Integer::sum);
+        }
+
+        String summary() {
+            return pathStoppedBy.entrySet().stream()
+                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                    .limit(6)
+                    .map(entry -> entry.getValue() + " " + entry.getKey())
+                    .collect(java.util.stream.Collectors.joining("; "));
+        }
     }
 
     private static final Map<UUID, Cursor> CURSORS = new HashMap<>();
@@ -84,17 +103,20 @@ public final class StripLot {
 
         List<BlockPos> doors = doorColumns(strip, side);
         Cursor cursor = CURSORS.get(colonyId);
-        int next = cursor != null && cursor.strip().equals(strip) && cursor.side() == side ? cursor.next() : 0;
+        boolean resume = cursor != null && cursor.strip().equals(strip) && cursor.side() == side;
+        int next = resume ? cursor.next() : 0;
+        Tally tally = resume ? cursor.tally() : new Tally();
         long deadline = System.nanoTime() + PlanningBudget.DEADLINE_MS * 1_000_000L;
 
         for (; next < doors.size(); next++) {
             if (System.nanoTime() > deadline) {
-                CURSORS.put(colonyId, new Cursor(strip, side, next));
+                CURSORS.put(colonyId, new Cursor(strip, side, next, tally));
 
                 return Optional.empty();
             }
 
-            Optional<Site> site = siteAt(world, colonyId, doors.get(next), out, strip, footprints);
+            tally.doors++;
+            Optional<Site> site = siteAt(world, colonyId, doors.get(next), out, strip, footprints, tally);
 
             if (site.isPresent()) {
                 CURSORS.remove(colonyId);
@@ -103,8 +125,14 @@ public final class StripLot {
             }
         }
 
-        // Volta inteira sem lote: a próxima passada recomeça do fundo.
+        // Volta inteira sem lote: diz o que viu, e a próxima passada recomeça do fundo.
         CURSORS.remove(colonyId);
+
+        VillageColonyMod.LOGGER.info(
+                "Colony {} found no lot inside the annexed strip {} — {} doors, {} lots fit, none with a path"
+                        + " of at most {} blocks to the road — {}",
+                colonyId.toString().substring(0, 8), side, tally.doors, tally.lotsFit, MAX_PATH,
+                tally.pathStoppedBy.isEmpty() ? "no path search" : "path stopped by " + tally.summary());
 
         return Optional.empty();
     }
@@ -138,7 +166,7 @@ public final class StripLot {
     /** O lote com a porta nesta coluna, voltada para a vila, dentro da faixa e com caminho até a rua. */
     private static Optional<Site> siteAt(
             ServerWorld world, UUID colonyId, BlockPos column, Direction out, VillageBounds strip,
-            List<Footprint> footprints) {
+            List<Footprint> footprints, Tally tally) {
 
         Optional<BlockPos> door = groundAt(world, column.getX(), column.getZ());
 
@@ -173,7 +201,8 @@ public final class StripLot {
                 continue;
             }
 
-            Optional<List<ColonyPos>> path = pathToTheRoad(world, colonyId, door.get(), originX, originZ, size);
+            tally.lotsFit++;
+            Optional<List<ColonyPos>> path = pathToTheRoad(world, colonyId, door.get(), originX, originZ, size, tally);
 
             if (path.isPresent()) {
                 VillageColonyMod.LOGGER.info(
@@ -197,6 +226,14 @@ public final class StripLot {
     static Optional<List<ColonyPos>> pathToTheRoad(
             ServerWorld world, UUID colonyId, BlockPos door, int originX, int originZ, ColonyPos size) {
 
+        return pathToTheRoad(world, colonyId, door, originX, originZ, size, new Tally());
+    }
+
+    /** O mesmo, anotando em {@code tally} o que parou cada ramo da busca. */
+    static Optional<List<ColonyPos>> pathToTheRoad(
+            ServerWorld world, UUID colonyId, BlockPos door, int originX, int originZ, ColonyPos size,
+            Tally tally) {
+
         if (isRoad(world, colonyId, door)) {
             return Optional.of(List.of());
         }
@@ -213,6 +250,7 @@ public final class StripLot {
             BlockPos at = frontier.poll();
 
             if (depth.get(at) >= MAX_PATH) {
+                tally.stopped("more than " + MAX_PATH + " blocks");
                 continue;
             }
 
@@ -225,7 +263,17 @@ public final class StripLot {
 
                 Optional<BlockPos> ground = RoadPaving.groundNear(world, column, at.getY());
 
-                if (ground.isEmpty() || parent.containsKey(ground.get()) || !mayWalk(world, at, ground.get())) {
+                if (ground.isEmpty()) {
+                    tally.stopped("a step of more than 1");
+                    continue;
+                }
+
+                if (parent.containsKey(ground.get())) {
+                    continue;
+                }
+
+                if (!mayWalk(world, at, ground.get())) {
+                    tally.stopped("no room to walk");
                     continue;
                 }
 
@@ -235,7 +283,10 @@ public final class StripLot {
 
                 BlockState state = world.getBlockState(ground.get());
 
-                if (RoadPaving.refusalAt(world, ground.get(), state).isPresent()) {
+                Optional<String> refusal = RoadPaving.refusalAt(world, ground.get(), state);
+
+                if (refusal.isPresent()) {
+                    tally.stopped(refusal.get());
                     continue;
                 }
 

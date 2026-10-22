@@ -70,6 +70,12 @@ public class StripLotOpeningGameTest implements FabricGameTest {
         Blueprint plan = Blueprint.of(ResourceId.vanilla("test_strip_hut"), floor);
 
         try {
+            // Uma casa achada perto de outra rua não encerra a faixa (0.3.87: encerrava, e o lote
+            // dentro dela nunca mais foi tentado na sessão).
+            com.villagecolony.fabric.integration.RoadExtension.lotFound(colony.id());
+            context.assertTrue(VillageExpansion.hasPendingStrip(colony.id()),
+                    "um lote achado em outro lugar encerrou a faixa anexada");
+
             Optional<ConstructionProject> opened = Optional.empty();
 
             for (int pass = 0; pass < 20 && opened.isEmpty(); pass++) {
