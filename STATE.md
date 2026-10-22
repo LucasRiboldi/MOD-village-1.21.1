@@ -1,5 +1,23 @@
 # STATE — 2026-10-22
 
+> **0.3.93** (22-10, branch `feat/regras-v2-melhorias`): avaliação do "Regras Consolidadas v2" (proposta do
+> autor) contra o código — `docs/research/2026-10-22-avaliacao-regras-v2.md` — e as melhorias escolhidas.
+> Numeração 1–109 mantida.
+> - **Regra 74 transacional:** a cama nova só com baú ao lado; na troca cada um herda o baú do outro, remarcado;
+>   se falta algo ninguém muda; distância pela caminhada real (`Walks`). O risco era real: sem baú, o
+>   trabalhador perdia o ofício.
+> - **Regra 110:** o que a terraplanagem e o corredor cortam vai aos baús públicos; o que não cabe cai no chão
+>   (`Cuttings`).
+> - **C-02, Regras 21/32:** cama, porta e baú são obrigatórios; sem apoio ganham o chão
+>   (`FunctionalPieces`); `VC_FUNCTIONAL_MISSING` quando o apoio é impossível.
+> - **Regra 111:** lista declarada de suprimentos (`SupplyException`, linha `VC_SUPPLY`, `supply_report.py`).
+> - **Regra 112:** códigos únicos de bloqueio no diário (`BlockCode`; o `action_report.py` agrupa).
+> - **Configuração:** desenhada, sem código (`docs/research/2026-10-22-desenho-configuracao.md`); faltam 4
+>   decisões do autor.
+>
+> Verificado: test 1594/0; pitest 85,3%; Python OK; bateria 862/862 ×2; mutação em cada item. Não jogado.
+>
+
 > **0.3.92** (22-10, mesma branch da 0.3.91, PR #33): **Regra 74**, pedido do autor — cada aldeão dorme na
 > cama mais perto de onde trabalha.
 >
