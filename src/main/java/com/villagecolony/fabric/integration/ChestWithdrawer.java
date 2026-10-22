@@ -310,6 +310,26 @@ public final class ChestWithdrawer {
         return Optional.empty();
     }
 
+    /** Toda semente diferente que houver neste baú, na ordem dos slots, sem tirá-las. */
+    public static List<Item> seedsIn(ServerWorld world, ColonyPos chest) {
+        Inventory inventory = inventoryAt(world, chest);
+        List<Item> seeds = new ArrayList<>();
+
+        if (inventory == null) {
+            return seeds;
+        }
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            Item item = inventory.getStack(slot).getItem();
+
+            if (!inventory.getStack(slot).isEmpty() && CropPatch.isSeed(item) && !seeds.contains(item)) {
+                seeds.add(item);
+            }
+        }
+
+        return seeds;
+    }
+
     /**
      * Tira uma semente do baú — o par de {@link #seedIn}.
      *

@@ -7,6 +7,7 @@ import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.fabric.integration.CropPatch;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.decoration.LeashKnotEntity;
 import net.minecraft.entity.passive.AnimalEntity;
@@ -47,6 +48,13 @@ public final class ShepherdFlock {
 
     /** Quanto de uma comida um par come: os dois animais, um item cada. */
     public static final int PAIR_FOOD = 2;
+
+    /**
+     * Sementes que a criação deixa para o plantio — decisão do autor de 2026-10-22 ("mais trigo
+     * para o rebanho"). No deserto (0.3.86) o pastor cevou galinha com semente de trigo e o fazendeiro,
+     * sem ela, semeou beterraba: ovelha e vaca ficaram sem trigo.
+     */
+    static final int SEEDS_FOR_SOWING = 8;
 
     private static final int RADIUS = 32;
 
@@ -140,6 +148,13 @@ public final class ShepherdFlock {
         return keep;
     }
 
+    /** Se esta comida paga um par agora: semente só acima do que fica para o plantio. */
+    static boolean mayFeed(ServerWorld world, List<ColonyPos> chests, Item food) {
+        int keep = CropPatch.isSeed(food) ? SEEDS_FOR_SOWING : 0;
+
+        return ColonyChests.countIn(world, chests, food) - PAIR_FOOD >= keep;
+    }
+
     private static boolean hasShepherd(Colony colony) {
         return VillageColonyMod.WORKERS.ofColony(colony.id()).stream()
                 .anyMatch(worker -> worker.profession().filter(ProfessionType.SHEPHERD::equals).isPresent());
@@ -222,7 +237,7 @@ public final class ShepherdFlock {
         }
 
         for (Item food : foodOf(species, ready.get(0))) {
-            if (ColonyChests.countIn(world, chests, food) < PAIR_FOOD) {
+            if (!mayFeed(world, chests, food)) {
                 continue;
             }
 

@@ -24,8 +24,10 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -200,6 +202,44 @@ final class FarmerChores {
     }
 
     /**
+     * A semente deste baú cuja lavoura a vila tem menos — decisão do autor de 2026-10-22 ("mais
+     * trigo para o rebanho").
+     *
+     * <p>Era a primeira semente do baú: no deserto (0.3.86) o fazendeiro semeou beterraba 27 vezes e
+     * trigo 4, com o trigo da vila em 1 e ovelha e vaca sem comida. A lavoura de cada semente sai do
+     * nome ({@code wheat_seeds} → {@code wheat}); cenoura e batata são a própria semente.
+     */
+    static Optional<Item> scarcestSeed(ServerWorld world, UUID colonyId, ColonyPos chest) {
+        List<ColonyPos> chests = ColonyChests.nearestFirst(world, colonyId, chest);
+        Item best = null;
+        int fewest = Integer.MAX_VALUE;
+
+        for (Item seed : ChestWithdrawer.seedsIn(world, chest)) {
+            int have = ColonyChests.countIn(world, chests, cropOf(seed));
+
+            if (have < fewest) {
+                best = seed;
+                fewest = have;
+            }
+        }
+
+        return Optional.ofNullable(best);
+    }
+
+    /** O que esta semente rende: o item sem o "_seeds", ou ela mesma (cenoura, batata). */
+    static Item cropOf(Item seed) {
+        Identifier id = Registries.ITEM.getId(seed);
+
+        if (!id.getPath().endsWith("_seeds")) {
+            return seed;
+        }
+
+        Identifier crop = Identifier.of(id.getNamespace(), id.getPath().substring(0, id.getPath().length() - "_seeds".length()));
+
+        return Registries.ITEM.getOrEmpty(crop).orElse(seed);
+    }
+
+    /**
      * Planta a semente do baú no canteiro — 2026-09-05.
      *
      * <p><b>A semente sai antes de a muda entrar, e volta se não
@@ -210,7 +250,7 @@ final class FarmerChores {
             ServerWorld world, VillagerEntity villager, Job job, WorkerStorage storage) {
 
         Optional<ColonyPos> chest = seedChest(world, job.task.colonyId(), storage.chestPosition());
-        Optional<Item> seed = chest.flatMap(at -> ChestWithdrawer.seedIn(world, at));
+        Optional<Item> seed = chest.flatMap(at -> scarcestSeed(world, job.task.colonyId(), at));
 
         if (seed.isEmpty() || !ChestWithdrawer.takeSeed(world, chest.get(), seed.get())) {
 
