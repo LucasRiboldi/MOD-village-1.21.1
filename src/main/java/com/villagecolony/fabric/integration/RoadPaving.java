@@ -118,7 +118,7 @@ public final class RoadPaving {
             }
 
             // O caminho do chão que a rua cobre — o do bioma (VillageRoad.pavingOn).
-            world.setBlockState(at, VillageRoad.pavingOn(state, paving).getDefaultState());
+            world.setBlockState(at, VillageRoad.pavingOn(world, at, state, paving).getDefaultState());
 
             // O índice de ruas precisa saber da beira nova — 2026-08-27.
             // A rua cresce justamente quando não houve lote, e o lote

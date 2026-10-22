@@ -89,7 +89,7 @@ public final class WorkPath {
                 world.setBlockState(at.up(), Blocks.AIR.getDefaultState());
             }
 
-            world.setBlockState(at, VillageRoad.pavingOn(state).getDefaultState());
+            world.setBlockState(at, VillageRoad.pavingOn(world, at, state).getDefaultState());
             RoadIndex.remember(colonyId, at);
             laid++;
         }

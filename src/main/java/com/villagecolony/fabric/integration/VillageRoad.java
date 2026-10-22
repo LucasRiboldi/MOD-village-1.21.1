@@ -3,11 +3,15 @@ package com.villagecolony.fabric.integration;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.fabric.content.ModContent;
+import com.villagecolony.fabric.content.SandPathBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.world.biome.BiomeKeys;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
@@ -45,6 +49,8 @@ public final class VillageRoad {
             Blocks.SMOOTH_RED_SANDSTONE,
             Blocks.PACKED_MUD,
             Blocks.PACKED_ICE);
+
+    private static final RegistryKey<Biome> DESERT = BiomeKeys.DESERT;
 
     /** Os biomas cujo chão é rocha: só neles a pedra vira caminho de cascalho. */
     private static final Set<net.minecraft.registry.RegistryKey<net.minecraft.world.biome.Biome>> ROCKY = Set.of(
@@ -103,6 +109,29 @@ public final class VillageRoad {
     }
 
     /**
+     * O caminho que a colônia assenta neste lugar — autor, 2026-10-22: no deserto é sempre o caminho de
+     * areia ({@link SandPathBlock}), o caminho exclusivo da vila do deserto, sobre qualquer chão que vire
+     * caminho; fora dele, o caminho natural do chão ({@link #pavingOn(BlockState, Block)}).
+     */
+    public static Block pavingOn(ServerWorld world, BlockPos at, BlockState ground, Block fallback) {
+        return isDesert(world, at) ? ModContent.SAND_PATH : pavingOn(ground, fallback);
+    }
+
+    /** O mesmo, com o caminho de terra como o da grama. */
+    public static Block pavingOn(ServerWorld world, BlockPos at, BlockState ground) {
+        return pavingOn(world, at, ground, Blocks.DIRT_PATH);
+    }
+
+    private static boolean isDesert(ServerWorld world, BlockPos at) {
+        return world.getBiome(at).getKey().filter(DESERT::equals).isPresent();
+    }
+
+    /** O bloco de caminho — o de terra do Vanilla ou o de areia do deserto. */
+    public static boolean isPathBlock(BlockState state) {
+        return state.isOf(Blocks.DIRT_PATH) || state.getBlock() instanceof SandPathBlock;
+    }
+
+    /**
      * Se este chão pode virar caminho: o chão do bioma, mas na vila gerada só o solo — o arenito e
      * a pedra de uma peça Vanilla continuam dela (Regra 3). Pedra só nos biomas de rocha: fora
      * deles a rua não sobe na montanha.
@@ -135,9 +164,9 @@ public final class VillageRoad {
                 && (RoadIndex.isLaidByAColony(pos) || BlockProtection.isVillageStreet(world, pos)));
     }
 
-    /** Se o bloco pertence ao conjunto oficial de materiais de rua. */
+    /** Se o bloco pertence ao conjunto oficial de materiais de rua, com o caminho de areia. */
     public static boolean isPaving(ServerWorld world, BlockState state) {
-        return ROAD_MATERIALS.contains(state.getBlock());
+        return ROAD_MATERIALS.contains(state.getBlock()) || state.getBlock() instanceof SandPathBlock;
     }
 
     /**

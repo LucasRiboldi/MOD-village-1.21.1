@@ -215,7 +215,7 @@ public final class BuilderPaving {
             world.breakBlock(ground.up(), false);
         }
 
-        Block path = VillageRoad.pavingOn(world.getBlockState(ground));
+        Block path = VillageRoad.pavingOn(world, ground, world.getBlockState(ground));
         world.setBlockState(ground, path.getDefaultState());
 
         return Registries.BLOCK.getId(path).getPath();

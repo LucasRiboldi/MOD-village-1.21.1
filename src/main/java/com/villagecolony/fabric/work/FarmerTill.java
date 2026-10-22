@@ -153,7 +153,7 @@ final class FarmerTill {
     /** Caminho encostado — de terra, ou a rua de arenito do deserto: a rua não vira roça. */
     private static boolean pathNear(ServerWorld world, BlockPos ground) {
         for (BlockPos at : BlockPos.iterate(ground.add(-1, -1, -1), ground.add(1, 1, 1))) {
-            if (world.getBlockState(at).isOf(Blocks.DIRT_PATH)
+            if (com.villagecolony.fabric.integration.VillageRoad.isPathBlock(world.getBlockState(at))
                     || com.villagecolony.fabric.integration.VillageRoad.isPaving(world, at.toImmutable())) {
                 return true;
             }

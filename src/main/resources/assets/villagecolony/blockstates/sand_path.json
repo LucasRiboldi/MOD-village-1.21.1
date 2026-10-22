@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "": [
+      { "model": "villagecolony:block/sand_path" },
+      { "model": "villagecolony:block/sand_path", "y": 90 },
+      { "model": "villagecolony:block/sand_path", "y": 180 },
+      { "model": "villagecolony:block/sand_path", "y": 270 }
+    ]
+  }
+}

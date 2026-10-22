@@ -288,7 +288,7 @@ final class ShepherdPens {
             BlockState below = world.getBlockState(at.down());
 
             if (world.getBlockState(at).isAir() && world.getBlockState(at.up()).isAir()
-                    && below.isSolidBlock(world, at.down()) && !below.isOf(Blocks.DIRT_PATH)
+                    && below.isSolidBlock(world, at.down()) && !com.villagecolony.fabric.integration.VillageRoad.isPathBlock(below)
                     && world.isSkyVisible(at) && !hasLonePostNear(world, at)) {
                 return Optional.of(at.toImmutable());
             }
