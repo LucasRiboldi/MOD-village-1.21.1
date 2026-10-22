@@ -101,3 +101,48 @@ dela, o valor é recusado.
 2. **Por colônia:** cada vila do mesmo mundo pode ter valores próprios, ou é um valor para o mundo todo.
 3. **Como editar:** só o comando, comando e arquivo, ou já com a tela.
 4. **Lista da fase 1:** a tabela da §2 inteira, ou só um subconjunto.
+
+## 8. Decisões do autor (2026-10-22) e o que mudam no desenho
+
+- **Escopo:** por mundo. Cada save tem a sua.
+- **Por colônia:** sim. Cada vila do mundo pode sobrepor qualquer chave; sem sobreposição, vale o valor do mundo.
+- **Edição:** comando e arquivo.
+- **Lista da fase 1:** não perguntada. Vale a tabela da §2 inteira até o autor dizer outra coisa.
+
+**O que muda na §3:**
+
+- **A persistência é um arquivo JSON legível na pasta do mundo**
+  (`saves/<mundo>/villagecolony/config.json`), no lugar de um `PersistentState` binário, porque o autor quer
+  editá-lo com o jogo fechado. Formato:
+
+  ```json
+  {
+    "version": 1,
+    "world": { "flock.breedUpTo": 8, "stock.crafted": 64 },
+    "colonies": {
+      "a828fd3e-4d2a-4269-8df5-86c7519b8fb3": { "flock.breedUpTo": 12 }
+    }
+  }
+  ```
+
+  - Só aparecem as chaves que diferem do padrão.
+  - O arquivo é lido ao abrir o mundo.
+  - Chave desconhecida ou valor fora da faixa: o valor é ignorado e fica o padrão (ou o do mundo, numa colônia),
+    com aviso no log (R-153). O arquivo não é reescrito por cima, para o autor ver o próprio erro.
+  - Arquivo ilegível (JSON quebrado): todos os padrões, aviso no log, e o arquivo fica intacto.
+  - A escrita pelo comando é atômica: grava num `.tmp` e renomeia, para não corromper se o jogo cair no meio.
+- **Leitura por colônia:** `Settings.of(colonyId).get(chave)`, que procura a colônia, depois o mundo, depois o
+  padrão. Os sistemas que hoje usam a constante passam a pedir pelo id da colônia que estão servindo; todos já
+  o têm em mãos.
+- **Comando:** `/vc config list [colônia] | get <chave> [colônia] | set <chave> <valor> [colônia] |
+  reset [chave] [colônia]`.
+  - Sem colônia, vale o mundo; a colônia aceita o prefixo de 8 do id, como no log.
+  - Cada `set` grava o arquivo e escreve `VC_CONFIG version=1 scope=<mundo|colônia> key=… from=… to=… by=…`.
+- **Arquivo editado com o jogo aberto:** não é relido sozinho na fase 1. O comando `/vc config reload` relê,
+  valida e diz o que aceitou e o que recusou.
+- **Testes a mais:**
+  - a ordem colônia → mundo → padrão;
+  - o arquivo com chave desconhecida e valor fora da faixa;
+  - o JSON quebrado;
+  - a escrita atômica;
+  - o `reload`.
