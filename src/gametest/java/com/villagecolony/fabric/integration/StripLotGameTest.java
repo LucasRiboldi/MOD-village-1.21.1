@@ -31,15 +31,20 @@ public class StripLotGameTest implements FabricGameTest {
     public void thePathGoesAroundTheDuneAndNeverOverIt(TestContext context) {
         ServerWorld world = context.getWorld();
 
-        floor(context, 0, 10, 0, 6);
-        context.setBlockState(new BlockPos(0, Y, 3), Blocks.DIRT_PATH.getDefaultState());
+        // Uma linha de caminho em x=0 (z 0..8), uma parede em x=5 (z 0..5) com passagem em z 6..8.
+        floor(context, 0, 10, 0, 8);
+
+        for (int z = 0; z <= 8; z++) {
+            context.setBlockState(new BlockPos(0, Y, z), Blocks.DIRT_PATH.getDefaultState());
+        }
+
         wall(context, 5, 0, 5);
 
         BlockPos door = context.getAbsolutePos(new BlockPos(10, Y, 3));
         BlockPos farAway = context.getAbsolutePos(new BlockPos(30, Y, 30));
 
         Optional<List<ColonyPos>> path = StripLot.pathToTheRoad(
-                world, UUID.randomUUID(), door, farAway.getX(), farAway.getZ(), new ColonyPos(1, 1, 1));
+                world, UUID.randomUUID(), door, Direction.WEST, farAway.getX(), farAway.getZ(), new ColonyPos(1, 1, 1));
 
         context.assertTrue(path.isPresent(), "havia volta pela passagem em z=6 e a rota não a achou");
         context.assertTrue(path.get().size() <= StripLot.MAX_PATH, "rota maior que o teto: " + path.get().size());
@@ -52,11 +57,18 @@ public class StripLotGameTest implements FabricGameTest {
             context.assertTrue(cell.y() == door.getY(), "a rota subiu ou desceu num chão plano: " + cell);
         }
 
+        List<BlockPos> cells = path.get().stream().map(cell -> new BlockPos(cell.x(), cell.y(), cell.z())).toList();
+
+        context.assertTrue(CorridorGameTest.turnsOf(cells) <= Corridor.MAX_TURNS,
+                "o caminho virou mais de " + Corridor.MAX_TURNS + " vezes: " + cells);
+        CorridorGameTest.assertOrthogonal(context, cells);
+
         // Fecha a passagem: a duna barra tudo, e a rota não corta nem sobe.
-        wall(context, 5, 6, 6);
+        wall(context, 5, 6, 8);
 
         context.assertTrue(StripLot.pathToTheRoad(
-                        world, UUID.randomUUID(), door, farAway.getX(), farAway.getZ(), new ColonyPos(1, 1, 1)).isEmpty(),
+                        world, UUID.randomUUID(), door, Direction.WEST, farAway.getX(), farAway.getZ(),
+                        new ColonyPos(1, 1, 1)).isEmpty(),
                 "com a duna fechada a rota ainda passou");
 
         context.complete();

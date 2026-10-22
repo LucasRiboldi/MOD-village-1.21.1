@@ -7,16 +7,13 @@ import com.villagecolony.core.coordination.VillageExpansion;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.type.Side;
-import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner.Footprint;
 import com.villagecolony.fabric.integration.BuildSiteScanner.Site;
-import net.minecraft.block.BlockState;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.Heightmap;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,9 +31,9 @@ import java.util.UUID;
  * a pé até a rua que já existe:
  *
  * <ul>
- *   <li>o caminho <b>segue o terreno</b>, com degrau de no máximo um ({@link RoadPaving#groundNear}),
- *       sem cortar nem aterrar, e cada coluna passa pelas mesmas recusas da rua
- *       ({@link RoadPaving#refusalAt}); contorna a duna quando há volta;</li>
+ *   <li>o caminho é um <b>corredor</b> ({@link Corridor}): sai da porta em linha reta, vira só em ângulo
+ *       reto e para no primeiro caminho que encostar; segue o terreno com degrau de no máximo um, sem
+ *       cortar nem aterrar, e contorna a duna quando há volta;</li>
  *   <li>tem até {@link #MAX_PATH} blocos, e é calçado na abertura da obra (o {@code path} do
  *       {@link Site}, como o recuo da Regra 62);</li>
  *   <li>o lote nasce <b>o mais fundo na faixa</b> que couber nela.</li>
@@ -202,7 +199,8 @@ public final class StripLot {
             }
 
             tally.lotsFit++;
-            Optional<List<ColonyPos>> path = pathToTheRoad(world, colonyId, door.get(), originX, originZ, size, tally);
+            Optional<List<ColonyPos>> path = pathToTheRoad(
+                    world, colonyId, door.get(), out.getOpposite(), originX, originZ, size, tally);
 
             if (path.isPresent()) {
                 VillageColonyMod.LOGGER.info(
@@ -218,114 +216,27 @@ public final class StripLot {
     }
 
     /**
-     * O caminho a pé da porta até a rua: busca em largura pelo terreno, degrau de no máximo um, cada
-     * coluna calçável e com espaço para passar, fora do lote, até {@link #MAX_PATH} blocos.
+     * O caminho da porta até a rua: o corredor ({@link Corridor}) — retas de um bloco com curvas em ângulo
+     * reto, saindo da porta na direção dela e parando no primeiro caminho que encostar, até
+     * {@link #MAX_PATH} blocos. Regra do autor de 2026-10-22, que substituiu a busca livre pelo terreno.
      *
      * @return as colunas a calçar, da porta até a última antes da rua; vazio sem caminho
      */
     static Optional<List<ColonyPos>> pathToTheRoad(
-            ServerWorld world, UUID colonyId, BlockPos door, int originX, int originZ, ColonyPos size) {
+            ServerWorld world, UUID colonyId, BlockPos door, Direction out,
+            int originX, int originZ, ColonyPos size) {
 
-        return pathToTheRoad(world, colonyId, door, originX, originZ, size, new Tally());
+        return pathToTheRoad(world, colonyId, door, out, originX, originZ, size, new Tally());
     }
 
     /** O mesmo, anotando em {@code tally} o que parou cada ramo da busca. */
     static Optional<List<ColonyPos>> pathToTheRoad(
-            ServerWorld world, UUID colonyId, BlockPos door, int originX, int originZ, ColonyPos size,
-            Tally tally) {
+            ServerWorld world, UUID colonyId, BlockPos door, Direction out,
+            int originX, int originZ, ColonyPos size, Tally tally) {
 
-        if (isRoad(world, colonyId, door)) {
-            return Optional.of(List.of());
-        }
-
-        ArrayDeque<BlockPos> frontier = new ArrayDeque<>();
-        Map<BlockPos, BlockPos> parent = new HashMap<>();
-        Map<BlockPos, Integer> depth = new HashMap<>();
-
-        frontier.add(door);
-        parent.put(door, door);
-        depth.put(door, 1);
-
-        while (!frontier.isEmpty()) {
-            BlockPos at = frontier.poll();
-
-            if (depth.get(at) >= MAX_PATH) {
-                tally.stopped("more than " + MAX_PATH + " blocks");
-                continue;
-            }
-
-            for (Direction way : Direction.Type.HORIZONTAL) {
-                BlockPos column = at.offset(way);
-
-                if (onTheLot(column, originX, originZ, size)) {
-                    continue;
-                }
-
-                Optional<BlockPos> ground = RoadPaving.groundNear(world, column, at.getY());
-
-                if (ground.isEmpty()) {
-                    tally.stopped("a step of more than 1");
-                    continue;
-                }
-
-                if (parent.containsKey(ground.get())) {
-                    continue;
-                }
-
-                if (!mayWalk(world, at, ground.get())) {
-                    tally.stopped("no room to walk");
-                    continue;
-                }
-
-                if (isRoad(world, colonyId, ground.get())) {
-                    return Optional.of(trace(parent, at));
-                }
-
-                BlockState state = world.getBlockState(ground.get());
-
-                Optional<String> refusal = RoadPaving.refusalAt(world, ground.get(), state);
-
-                if (refusal.isPresent()) {
-                    tally.stopped(refusal.get());
-                    continue;
-                }
-
-                parent.put(ground.get(), at);
-                depth.put(ground.get(), depth.get(at) + 1);
-                frontier.add(ground.get());
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    /** Cabe o corpo: dois de ar em cima, e um terceiro sobre quem sobe o degrau. */
-    private static boolean mayWalk(ServerWorld world, BlockPos from, BlockPos to) {
-        return world.getBlockState(to.up(2)).getCollisionShape(world, to.up(2)).isEmpty()
-                && (to.getY() <= from.getY()
-                        || world.getBlockState(from.up(2)).getCollisionShape(world, from.up(2)).isEmpty());
-    }
-
-    private static boolean isRoad(ServerWorld world, UUID colonyId, BlockPos ground) {
-        return VillageRoad.isPaving(world, ground) || RoadIndex.isRoadArea(world, colonyId, ground);
-    }
-
-    private static List<ColonyPos> trace(Map<BlockPos, BlockPos> parent, BlockPos last) {
-        List<ColonyPos> path = new ArrayList<>();
-        BlockPos at = last;
-
-        while (true) {
-            path.add(MinecraftTypeAdapter.toColonyPos(at));
-            BlockPos before = parent.get(at);
-
-            if (before == null || before.equals(at)) {
-                break;
-            }
-
-            at = before;
-        }
-
-        return path;
+        return Corridor.plan(world, colonyId, door, out, MAX_PATH,
+                        at -> onTheLot(at, originX, originZ, size), tally::stopped)
+                .map(Corridor::asColonyPositions);
     }
 
     /** O chão desta coluna: o topo do terreno, pela mesma leitura do lote. */

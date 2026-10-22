@@ -15,6 +15,7 @@ import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -55,6 +56,19 @@ public class BuilderPavingGameTest implements FabricGameTest {
         try {
             context.assertTrue(BuilderPaving.isGap(world, gap), "a grama no meio do caminho não foi vista");
             context.assertTrue(!BuilderPaving.isGap(world, verge), "a grama na beira do caminho virou buraco");
+
+            // Corredor de um bloco (regra do autor de 2026-10-22): o canto com caminho em três lados e o
+            // buraco com caminho ao lado não se fecham — fechá-los fazia o caminho crescer em mancha.
+            BlockPos corner = context.getAbsolutePos(new BlockPos(5, Y, 4));
+            world.setBlockState(context.getAbsolutePos(new BlockPos(4, Y, 4)), Blocks.DIRT_PATH.getDefaultState());
+            world.setBlockState(context.getAbsolutePos(new BlockPos(6, Y, 4)), Blocks.DIRT_PATH.getDefaultState());
+
+            context.assertTrue(!BuilderPaving.isGap(world, corner),
+                    "o bloco com caminho em três lados virou buraco: o caminho alarga");
+
+            for (BlockPos undo : List.of(new BlockPos(4, Y, 4), new BlockPos(6, Y, 4))) {
+                world.setBlockState(context.getAbsolutePos(undo), Blocks.GRASS_BLOCK.getDefaultState());
+            }
 
             Optional<BlockPos> found = BuilderPaving.nextGap(world, colony);
 

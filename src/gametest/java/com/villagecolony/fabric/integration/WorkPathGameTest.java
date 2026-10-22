@@ -22,39 +22,47 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/** A obra longe da rua ganha caminho até a borda do lote, e não dentro dele (ADR-039 D2). */
+/**
+ * A obra longe da rua ganha o corredor que sai da porta — ADR-039 D2 e a regra do autor de 2026-10-22: em
+ * linha reta na direção da porta, curva em ângulo reto, e parada no primeiro caminho que encostar. A regra
+ * antiga ia da rua até a borda do lote, trocando de eixo a cada passo.
+ */
 public class WorkPathGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_hours", tickLimit = 20)
-    public void aPathIsPavedFromTheRoadToTheEdgeOfTheLot(TestContext context) {
+    public void theCorridorLeavesTheDoorAndTurnsTowardTheRoad(TestContext context) {
         // Tudo dentro da arena de 8x8: na borda dela há barreira, e a barreira recusa o calçamento.
         for (int x = 0; x <= 7; x++) {
             for (int z = 0; z <= 7; z++) {
                 context.setBlockState(new BlockPos(x, 1, z), Blocks.GRASS_BLOCK.getDefaultState());
             }
+
+            context.setBlockState(new BlockPos(x, 1, 0), Blocks.DIRT_PATH.getDefaultState());
         }
 
-        BlockPos road = new BlockPos(0, 1, 4);
-        context.setBlockState(road, Blocks.DIRT_PATH.getDefaultState());
+        BlockPos absoluteRoad = context.getAbsolutePos(new BlockPos(0, 1, 0));
+        List<Long> columns = new ArrayList<>();
 
-        BlockPos absoluteRoad = context.getAbsolutePos(road);
-        // O lote: 2x2 de x 6 a 7 e z 3 a 4, com o piso no y 2.
-        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(6, 2, 3)));
+        for (int x = 0; x <= 7; x++) {
+            BlockPos road = context.getAbsolutePos(new BlockPos(x, 1, 0));
+            columns.add(ColonyRoads.column(road.getX(), road.getZ()));
+        }
+
+        // O lote: 3x3 de x 5 a 7 e z 3 a 5, com o piso no y 2 e a porta no meio da parede oeste.
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(5, 2, 3)));
         UUID colonyId = UUID.randomUUID();
         Colony colony = Colony.create(colonyId, origin);
         VillageColonyMod.COLONIES.register(colony);
         ColonyFixture fixture = ColonyFixture.create().owning(colony);
 
-        SweepPersistence.restore(new ColonyRoads(colonyId, MinecraftTypeAdapter.toColonyPos(absoluteRoad),
-                List.of(ColonyRoads.column(absoluteRoad.getX(), absoluteRoad.getZ()))));
+        SweepPersistence.restore(new ColonyRoads(colonyId, MinecraftTypeAdapter.toColonyPos(absoluteRoad), columns));
 
         List<BlueprintBlock> blocks = new ArrayList<>();
 
-        for (int x = 0; x < 2; x++) {
-            for (int z = 0; z < 2; z++) {
-                // Um acima do piso: a caixa da obra aberta (que a proteção recusa) não cobre a altura do
-                // caminho, e só a parada na borda do lote segura o calçamento.
-                blocks.add(new BlueprintBlock(new ColonyPos(x, 1, z), MinecraftTypeAdapter.toResourceId(Blocks.OAK_PLANKS)));
+        for (int x = 0; x < 3; x++) {
+            for (int z = 0; z < 3; z++) {
+                blocks.add(new BlueprintBlock(new ColonyPos(x, 1, z), MinecraftTypeAdapter.toResourceId(
+                        x == 0 && z == 1 ? Blocks.OAK_DOOR : Blocks.OAK_PLANKS)));
             }
         }
 
@@ -69,15 +77,21 @@ public class WorkPathGameTest implements FabricGameTest {
             int second = WorkPath.paveToward(context.getWorld(), colonyId);
 
             context.assertTrue(first == WorkPath.STEPS_PER_CYCLE, "o primeiro ciclo calçou " + first);
-            context.assertTrue(second == 1, "do x 1 ao 5 são 5 blocos; o segundo ciclo calçou " + second);
+            context.assertTrue(second == 1, "o corredor tem 5 blocos; o segundo ciclo calçou " + second);
 
-            for (int x = 1; x <= 5; x++) {
-                context.expectBlock(Blocks.DIRT_PATH, new BlockPos(x, 1, 4));
+            // Da porta (x 5, z 4) para oeste: x 4 e x 3; curva para o norte: z 3, 2 e 1, encostando na rua.
+            for (BlockPos cell : List.of(new BlockPos(4, 1, 4), new BlockPos(3, 1, 4), new BlockPos(3, 1, 3),
+                    new BlockPos(3, 1, 2), new BlockPos(3, 1, 1))) {
+                context.expectBlock(Blocks.DIRT_PATH, cell);
             }
 
-            context.expectBlock(Blocks.GRASS_BLOCK, new BlockPos(6, 1, 4));
+            for (BlockPos verge : List.of(new BlockPos(4, 1, 3), new BlockPos(2, 1, 4), new BlockPos(4, 1, 1),
+                    new BlockPos(2, 1, 2))) {
+                context.expectBlock(Blocks.GRASS_BLOCK, verge);
+            }
+
             context.assertTrue(WorkPath.paveToward(context.getWorld(), colonyId) == 0,
-                    "o caminho encostou no lote e continuou calçando");
+                    "o corredor já encostava na rua e continuou calçando");
         } finally {
             VillageColonyMod.CONSTRUCTIONS.removeOfColony(colonyId);
             fixture.cleanUp();
