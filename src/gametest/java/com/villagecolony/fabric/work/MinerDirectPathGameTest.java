@@ -30,7 +30,11 @@ public class MinerDirectPathGameTest implements FabricGameTest {
         BlockPos open = context.getAbsolutePos(new BlockPos(8, 2, 1));
 
         context.waitAndRun(5, () -> {
+            // O aldeão desempregado já passeia no tique 3, e o findPathTo devolve o caminho em curso quando o
+            // alvo bate com o da busca anterior: pare a navegação antes de perguntar (KF-007).
+            villager.getNavigation().stop();
             net.minecraft.entity.ai.pathing.Path probe = villager.getNavigation().findPathTo(open, 0);
+            villager.getNavigation().stop();
             context.assertTrue(MinerDirectPath.reaches(context.getWorld(), villager, open),
                     "com o chão aberto até a pedra, a navegação não chegou: aldeão em "
                             + villager.getBlockPos().toShortString() + ", alvo " + open.toShortString()
@@ -44,6 +48,8 @@ public class MinerDirectPathGameTest implements FabricGameTest {
             }
 
             MinerDirectPath.forget(villager.getUuid());
+            // Pôr a parede ao lado do caminho em curso recalcula o caminho para o mesmo alvo: pare de novo.
+            villager.getNavigation().stop();
 
             context.assertFalse(MinerDirectPath.reaches(context.getWorld(), villager, open),
                     "com a parede no meio, o caminho direto ainda foi aceito");

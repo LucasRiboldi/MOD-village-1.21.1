@@ -47,6 +47,10 @@ Mesmo padrão da KF-007: interferência que depende do arranjo das arenas. Hipó
 
 ## KF-007 — `MinerDirectPathGameTest.theMinerWalksStraightWhenTheGameFindsTheWay` cai na bateria inteira
 
+**22-10, 0.3.92: corrigido** pelo `navigation().stop()` antes da prova e depois da parede. A causa está na
+memória do projeto: o aldeão passeia, e o `findPathTo` devolve o caminho em curso. A mesma correção estava no
+`c281eecb`, numa branch que nunca foi mesclada. Depois dela: 4/4 sozinho e bateria 857/857 ×2.
+
 **ABERTO.** 21-10, branch `fix/deserto-a1-c1-b1-d2`. A navegação do jogo não chega ao lugar de pé
 aberto: *"aldeão em x+1, alvo x+8, caminho termina em x+7, chega=false"*. Isolado
 (`-PgametestOnly=MinerDirectPath`) passa 6 de 6. Na bateria inteira, medido por código em 22 baterias:
