@@ -1,5 +1,30 @@
 # STATE — 2026-10-22
 
+> **0.3.89** (22-10, branch `fix/deserto-a1-c1-b1-d2`, **sem push, JAR instalado, não jogado** —
+> `2F8E0DDD…B21C`): resposta ao deserto jogado na 0.3.88 (Spark `YFIroI1U1x`, nota 4,0; §12 do estudo).
+> Itens:
+> - **Fazendeiro:** a 3 blocos alcança a planta, com a borda incluída (falhava 10×).
+> - **Mineiro, escolha do autor:** nada ao ar livre, e a água continua proibida debaixo da terra (`MinerCaution`).
+>   Ele ficou 12 min numa margem de lago cercada.
+> - **Regra 70, degrau cortado, escolha do autor:** sem caminho pelo terreno, o corredor da faixa corta a
+>   encosta até 12 de fundo, num vale de 3 (`Corridor` maxCut, `CorridorCut`). A faixa sul é uma duna 23
+>   acima da rua.
+> - **Pastor, pedidos do autor:** procria até 8 e abate acima de 6; o curral é lotado pelo tamanho (1 a
+>   cada 4 de chão); com todos cheios, um curral novo entra na fila (`PenPlans`).
+> - **Regra 73:** caminho de areia, exclusivo do deserto (`SandPathBlock`).
+>
+> Verificado:
+> - test 1564/0;
+> - runGametest 853/853 em 3 de 4 baterias. Na outra caiu o `MineReturnGameTest`, que passa isolado 4/4
+>   (KF-009);
+> - a mutação derruba o teste em cada item.
+>
+> Sem GameTest: o caminho `PenPlans` → fila de obras, e a textura vista em jogo.
+>
+> **Próximo:** jogar ≥30 min e ler *"cut … blocks of the slope for the path"*, *"finds a lot inside the
+> annexed strip"*, o caminho de areia nas ruas novas e a separação dos currais.
+>
+
 > **0.3.88** (22-10, branch `fix/deserto-a1-c1-b1-d2`, **sem push, JAR instalado, não jogado** —
 > `FBB7FB55…9680`): resposta ao deserto jogado na 0.3.87 (Spark `CnNU79zqZ5`, nota 4,9; §11 do estudo).
 > **Regra 71** (autor): o mineiro não constrói para fora da montanha (céu aberto não recebe bloco no desvio)

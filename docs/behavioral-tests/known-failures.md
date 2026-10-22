@@ -5,6 +5,16 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ---
 
+## KF-009 — `MineReturnGameTest.aStrandedMinerGoesBackUpTheMineStairsAndLeavesTheVillageGroundWhole` caiu uma vez na bateria inteira
+
+**ABERTO.** 22-10, 0.3.89 (853 testes): caiu 1 vez em 4 baterias. O mineiro parou no passo 12 de 13 do
+rastro, 6 blocos acima do fundo, esperando sem ganho até o tempo acabar. Isolado (`-PgametestOnly=MineReturn`)
+passou 4 de 4. O `MineReturn` não muda desde o `62501caf` (0.3.88), que deu 846/846. Na 0.3.89 mudou o
+`MinerCaution` (a água é livre ao ar livre), e vários cenários novos rodam a y 40 e a y 120. Todos eles se
+desfazem no fim. Hipótese, não medida: interferência do arranjo das arenas, como KF-007 e KF-008.
+
+---
+
 ## KF-008 — `ShepherdHerdingGameTest.theShepherdLeadsALooseCowToTheFence` caiu uma vez na bateria inteira
 
 **ABERTO.** 22-10, branch `fix/deserto-a1-c1-b1-d2` (846 testes): caiu 1 vez em 2 baterias, sem exceção

@@ -269,7 +269,34 @@ Versão confirmada (`villagecolony 0.3.87`). Relatório:
 3. **Caminhos em mancha e em escada diagonal.** A regra dos três lados do `BuilderPaving` fechava cantos,
    e o `WorkPath` trocava de eixo a cada passo. O corredor da Regra 70 (`aff29065`) troca os dois.
 
-## 12. Ordem sugerida
+## 12. Jogo da 0.3.88 (22-10, 08:12–08:49, Spark `YFIroI1U1x`) e a 0.3.89
+
+A versão foi confirmada no log (`villagecolony 0.3.88`). O relatório está em
+[`docs/testing/relatorios/deserto-2026-10-22-0388.md`](../testing/relatorios/deserto-2026-10-22-0388.md)
+(nota 4,0).
+
+- **Desempenho:** TPS 20. Os picos de 110–126 ms a cada 5 min são o salvamento do jogo. `StripLot` e
+  `Corridor` somam 0,09% da thread.
+- **Alcance:** `VC_REACH` 28/28, então o `MineAccess` não disparou.
+
+O save do mundo foi lido offline (nbtlib) para medir o terreno.
+
+| Profissão | Medido | Causa | Feito na 0.3.89 |
+|---|---|---|---|
+| Fazendeiro | 0 de 11 tarefas; "could not reach the crop" 10× | parava a (2,1,2) da planta (distância² 9) e o alcance era estrito | alcance ≤ 3 com a borda (`FarmerWork.reaches`, `FarmerStand` até 9) |
+| Mineiro 34d462b6 | 7 desistências e 12 min parado em 96,63,-481 | margem de 12 blocos entre o lago e o paredão: a pé não há saída, nadando bastam 3 blocos, e a água era proibida | escolha do autor: a proibição vale só debaixo da terra (`MinerCaution`, OCEAN_FLOOR) |
+| Construtor e todos os produtores | ócio de 70% a 99%; 2 obras | **sem lote**: a faixa sul é um platô 23 blocos acima da rua (440 portas, 228 lotes que cabem, nenhum corredor) | escolha do autor: o corredor corta degraus, num vale de 3 (`Corridor` maxCut 12, `CorridorCut`; a melhor rampa reta tem 24 blocos e corte de 12) |
+| Mineiro c37e298f | 971 blocos, 67 tetos escorados | — | — |
+
+Pedidos do autor na mesma rodada, todos feitos na 0.3.89:
+
+- **Regra 72** (um curral por espécie).
+- **Rebanho 8/6.**
+- **Lotação pelo tamanho:** 1 animal a cada 4 blocos de chão.
+- **Curral novo com todos cheios** (`PenPlans`).
+- **Caminho de areia** exclusivo do deserto (Regra 73).
+
+## 13. Ordem sugerida
 
 1. **A1** (log da rua que para) + **C1** (alcance do `judge`) + **B1** (fundidor pede arenito ao pedreiro).
    Pequenos, sem decisão, um GameTest com mutação cada.

@@ -43,6 +43,13 @@ próprias (madeira e argila com prova, descascar, ingrediente de superfície); `
       que mora lá (HomeMove); à noite o jogo já o leva para a cama. Bancada: 9,3 / 9,3 / 5,9 — na de
       5,9 todas as camas de cima eram de aldeões com ofício e o construtor não tinha para onde ir.
       Pendente 🟠: esse caso (decisão do autor: trocar com quem tem ofício? construir casa em cima?).
+      0.3.89 (deserto jogado na 0.3.88, nota 4,0, Spark YFIroI1U1x; escolhas do autor de 22-10):
+      - alcance do fazendeiro com a borda;
+      - mineiro nada ao ar livre;
+      - corredor corta degraus na duna (vale de 3, até 12 de fundo);
+      - rebanho 8/6, lotação pelo tamanho, curral novo com todos cheios;
+      - caminho de areia (Regra 73).
+      **Falta jogo.** Pendente 🟡: KF-009 (MineReturn 1 em 4 baterias); o `PenPlans` não tem GameTest.
       0.3.88 (deserto jogado na 0.3.87, nota 4,9, Spark CnNU79zqZ5): Regra 71 (mineiro não constrói
       fora da montanha, desce antes de ir de lado, acesso cavado), Regra 70 (corredor de caminho), a faixa
       continua esperando lote. **Falta jogo.** Pendente 🟡: caminhos em mancha já calçados não foram
