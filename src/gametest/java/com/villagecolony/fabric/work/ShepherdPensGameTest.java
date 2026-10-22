@@ -36,6 +36,9 @@ public class ShepherdPensGameTest implements FabricGameTest {
 
     private static final int Y = 60;
 
+    /** Os currais por espécie, em outra altura: o chão de 29×29 passa da arena. */
+    private static final int Y2 = 90;
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herding", tickLimit = 40)
     public void theShepherdFindsThePenAndFillsItUpToFive(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -180,6 +183,84 @@ public class ShepherdPensGameTest implements FabricGameTest {
         }
 
         context.complete();
+    }
+
+    /**
+     * Um curral por espécie — Regra 72, autor de 2026-10-22: com dois currais, a vaca vai para o da vaca e
+     * a ovelha para o vazio (mesmo mais longe), e a ovelha de um curral misto sai pelo portão para o dela.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_pens_species", tickLimit = 40)
+    public void eachSpeciesGetsItsOwnPen(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        for (int x = 0; x <= 28; x++) {
+            for (int z = 0; z <= 28; z++) {
+                world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y2, z)), Blocks.GRASS_BLOCK.getDefaultState());
+
+                boolean ringA = (x == 1 || x == 7 || z == 1 || z == 7) && x >= 1 && x <= 7 && z >= 1 && z <= 7;
+                boolean ringB = (x == 11 || x == 17 || z == 1 || z == 7) && x >= 11 && x <= 17 && z >= 1 && z <= 7;
+
+                if (ringA || ringB) {
+                    world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y2 + 1, z)), Blocks.OAK_FENCE.getDefaultState());
+                }
+            }
+        }
+
+        BlockPos gateA = context.getAbsolutePos(new BlockPos(4, Y2 + 1, 1));
+        BlockPos gateB = context.getAbsolutePos(new BlockPos(14, Y2 + 1, 1));
+        world.setBlockState(gateA, Blocks.OAK_FENCE_GATE.getDefaultState());
+        world.setBlockState(gateB, Blocks.OAK_FENCE_GATE.getDefaultState());
+
+        BlockPos low = context.getAbsolutePos(new BlockPos(0, Y2 - 2, 0));
+        BlockPos high = context.getAbsolutePos(new BlockPos(28, Y2 + 4, 28));
+        Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(gateA));
+        colony.measure(new VillageBounds(low.getX(), low.getY(), low.getZ(), high.getX(), high.getY(), high.getZ()));
+
+        List<ShepherdPens.Pen> pens = ShepherdPens.pensOf(world, colony);
+        ShepherdPens.Pen penA = pens.stream().filter(pen -> pen.gate().equals(gateA)).findFirst().orElseThrow();
+        ShepherdPens.Pen penB = pens.stream().filter(pen -> pen.gate().equals(gateB)).findFirst().orElseThrow();
+        BlockPos home = gateA.north(2);
+
+        CowEntity cow = animalAt(world, EntityType.COW, penA.inside().south());
+        List<net.minecraft.entity.Entity> spawned = new ArrayList<>(List.of(cow));
+
+        context.waitAndRun(5, () -> {
+            try {
+                context.assertTrue(ShepherdPens.forSpecies(world, colony, EntityType.COW, home, null, false)
+                                .map(penA::equals).orElse(false),
+                        "a vaca devia ir para o curral da vaca");
+                context.assertTrue(ShepherdPens.forSpecies(world, colony, EntityType.SHEEP, home, null, false)
+                                .map(penB::equals).orElse(false),
+                        "a ovelha devia ir para o curral vazio, e não para o da vaca, mais perto");
+
+                SheepEntity sheep = animalAt(world, EntityType.SHEEP, penA.inside().south().east());
+                spawned.add(sheep);
+
+                context.assertTrue(ShepherdPens.speciesIn(world, penA).size() == 2, "o curral A devia estar misto");
+                context.assertTrue(ShepherdPens.forSpecies(world, colony, EntityType.SHEEP, home, penA, true)
+                                .map(penB::equals).orElse(false),
+                        "a separação devia mandar a ovelha do curral misto para o vazio");
+
+                VillagerEntity shepherd = animalFree(world, penA.outside());
+                spawned.add(shepherd);
+                ShepherdPens.bringOut(world, penA, sheep, shepherd);
+
+                context.assertFalse(penA.reach().contains(sheep.getBlockPos()), "a ovelha não saiu do curral misto");
+                context.assertTrue(sheep.getLeashHolder() == shepherd, "a ovelha não ficou na corda do pastor");
+            } finally {
+                spawned.forEach(net.minecraft.entity.Entity::discard);
+                ShepherdPens.clearAll();
+
+                for (int x = 0; x <= 28; x++) {
+                    for (int z = 0; z <= 28; z++) {
+                        world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y2 + 1, z)), Blocks.AIR.getDefaultState());
+                        world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y2, z)), Blocks.AIR.getDefaultState());
+                    }
+                }
+            }
+
+            context.complete();
+        });
     }
 
     private static <T extends net.minecraft.entity.passive.AnimalEntity> T animalAt(

@@ -10,6 +10,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FenceGateBlock;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
@@ -18,6 +19,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.Heightmap;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -89,6 +91,83 @@ final class ShepherdPens {
         return pensOf(world, colony).stream()
                 .filter(pen -> animalsIn(world, pen) <= MAX_ANIMALS)
                 .min(Comparator.comparingDouble(pen -> pen.outside().getSquaredDistance(from)));
+    }
+
+    /**
+     * O cercado para um animal desta espécie — Regra 72, autor de 2026-10-22: <i>"deixar animais iguais no
+     * mesmo curral; se tiver mais de um curral na vila, colocar um tipo de animal em um curral e outro em
+     * outro"</i>. Entre os que têm lugar, na ordem: o que só tem animais desta espécie; o vazio (que passa a
+     * ser dela); o misto que já a tem; qualquer um. No empate, o mais perto de {@code from}. Com um curral
+     * só, todos vão para ele, como antes.
+     *
+     * @param except o cercado de onde o animal está saindo, ou nulo
+     * @param onlyOwn só o cercado desta espécie ou o vazio — a separação dos currais mistos
+     */
+    static Optional<Pen> forSpecies(ServerWorld world, Colony colony, EntityType<?> species, BlockPos from,
+            @Nullable Pen except, boolean onlyOwn) {
+
+        Pen best = null;
+        int bestRank = Integer.MAX_VALUE;
+        double bestDistance = Double.MAX_VALUE;
+
+        for (Pen pen : pensOf(world, colony)) {
+            if (pen.equals(except) || animalsIn(world, pen) > MAX_ANIMALS) {
+                continue;
+            }
+
+            int rank = rankFor(speciesIn(world, pen), species);
+
+            if (onlyOwn && rank > OWN_OR_EMPTY) {
+                continue;
+            }
+
+            double distance = pen.outside().getSquaredDistance(from);
+
+            if (rank < bestRank || (rank == bestRank && distance < bestDistance)) {
+                best = pen;
+                bestRank = rank;
+                bestDistance = distance;
+            }
+        }
+
+        return Optional.ofNullable(best);
+    }
+
+    /** O pior posto que ainda conta como "o curral da espécie": só ela, ou vazio. */
+    static final int OWN_OR_EMPTY = 1;
+
+    /** 0 só desta espécie; 1 vazio; 2 misto com ela; 3 sem ela. */
+    static int rankFor(Map<EntityType<?>, Integer> inside, EntityType<?> species) {
+        if (inside.isEmpty()) {
+            return 1;
+        }
+
+        if (inside.containsKey(species)) {
+            return inside.size() == 1 ? 0 : 2;
+        }
+
+        return 3;
+    }
+
+    /** Quantos de cada espécie estão no chão de dentro deste cercado. */
+    static Map<EntityType<?>, Integer> speciesIn(ServerWorld world, Pen pen) {
+        Map<EntityType<?>, Integer> count = new HashMap<>();
+
+        for (AnimalEntity animal : world.getEntitiesByClass(AnimalEntity.class,
+                new Box(pen.inside()).expand(FencedIn.RADIUS),
+                animal -> animal.isAlive() && pen.reach().contains(animal.getBlockPos()))) {
+            count.merge(animal.getType(), 1, Integer::sum);
+        }
+
+        return count;
+    }
+
+    /** Tira o animal pelo portão e o entrega na corda do pastor — a separação dos currais mistos. */
+    static void bringOut(ServerWorld world, Pen pen, AnimalEntity animal, net.minecraft.entity.Entity shepherd) {
+        FencedIn.open(world, pen.gate());
+        animal.requestTeleport(pen.outside().getX() + 0.5, pen.outside().getY(), pen.outside().getZ() + 0.5);
+        animal.attachLeash(shepherd, true);
+        FencedIn.closeWhenClear(pen.gate());
     }
 
     /** Os cercados desta colônia, relidos a cada {@link #RESCAN}. */
