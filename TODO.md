@@ -43,6 +43,11 @@ próprias (madeira e argila com prova, descascar, ingrediente de superfície); `
       que mora lá (HomeMove); à noite o jogo já o leva para a cama. Bancada: 9,3 / 9,3 / 5,9 — na de
       5,9 todas as camas de cima eram de aldeões com ofício e o construtor não tinha para onde ir.
       Pendente 🟠: esse caso (decisão do autor: trocar com quem tem ofício? construir casa em cima?).
+      0.3.87 (deserto jogado na 0.3.86, nota 3,7, Spark j7jTrVIaPQ; decisões do autor de 22-10): encalhe
+      sem vaivém (BedTeleport 4,5), trigo pela semente mais rara e reserva de semente, mina insiste em 5
+      pontos e só muda para boca alcançável, lote no fundo da faixa com caminho pelo terreno (A5, Regra 56).
+      **Falta jogo.** Pendente 🟡: o fundidor larga a fornalha a cada ~30 s com o pedido ao pedreiro aberto
+      (~7% do tempo dele; cooldown por tarefa); D2 ainda não exercido (a sessão não teve ceia).
       0.3.86 (deserto jogado na 0.3.85, nota 6,1, Spark IAXTyE0LXM; estudo em
       `docs/research/2026-10-21-deserto-ociosidade-alternativas.md`): a vila ficou 34 de 57 min sem
       obra porque **não havia lote** (a busca termina as voltas; não é falta de prazo). Feito: A1 (a
