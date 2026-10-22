@@ -35,7 +35,8 @@ import java.util.UUID;
  * levar os animais para dentro dos cercados como prioridade; se houver mais de 5
  * animais dentro de um cercado ele tenta outro cercado; não havendo cercados ele
  * prende a corda nos lugares mais próximos; se não houver poste para prender animal
- * ele anda até ao lado de sua casa, coloca um poste e prende o animal"</i>.
+ * ele anda até ao lado de sua casa, coloca um poste e prende o animal"</i>. Os 5 fixos viraram a
+ * lotação pelo tamanho do curral ({@link #FLOOR_PER_ANIMAL}, autor, 2026-10-22).
  *
  * <p>Cercado é o espaço fechado do lado de dentro de um portão de cerca
  * ({@link FencedIn#check}: o animal não chega a {@link FencedIn#RADIUS} blocos andando).
@@ -47,8 +48,11 @@ final class ShepherdPens {
         ServerMemory.register(ShepherdPens.class, ShepherdPens::clearAll);
     }
 
-    /** Mais que isto num cercado, e o pastor tenta outro. */
-    static final int MAX_ANIMALS = 5;
+    /**
+     * Blocos de chão do cercado por animal — autor, 2026-10-22: a lotação é pelo tamanho do curral, e não
+     * um número fixo. O cercado de 5×5 por dentro leva 6.
+     */
+    static final int FLOOR_PER_ANIMAL = 4;
 
     /** Releitura dos portões: cinco minutos. */
     static final long RESCAN = 6_000;
@@ -86,11 +90,30 @@ final class ShepherdPens {
         READ_AT.clear();
     }
 
-    /** O cercado com lugar (até {@link #MAX_ANIMALS} animais) mais perto de {@code from}. */
+    /** O cercado com lugar ({@link #hasRoom}) mais perto de {@code from}. */
     static Optional<Pen> withRoom(ServerWorld world, Colony colony, BlockPos from) {
         return pensOf(world, colony).stream()
-                .filter(pen -> animalsIn(world, pen) <= MAX_ANIMALS)
+                .filter(pen -> hasRoom(world, pen))
                 .min(Comparator.comparingDouble(pen -> pen.outside().getSquaredDistance(from)));
+    }
+
+    /** Quantos animais cabem: um a cada {@link #FLOOR_PER_ANIMAL} blocos de chão, ao menos um. */
+    static int capacityOf(Pen pen) {
+        return Math.max(1, pen.reach().size() / FLOOR_PER_ANIMAL);
+    }
+
+    static boolean hasRoom(ServerWorld world, Pen pen) {
+        return animalsIn(world, pen) < capacityOf(pen);
+    }
+
+    /**
+     * Se a vila tem cercado e todos estão cheios — autor, 2026-10-22: aí um curral novo entra na fila de
+     * obras ({@link PenPlans}).
+     */
+    static boolean allFull(ServerWorld world, Colony colony) {
+        List<Pen> pens = pensOf(world, colony);
+
+        return !pens.isEmpty() && pens.stream().noneMatch(pen -> hasRoom(world, pen));
     }
 
     /**
@@ -111,7 +134,7 @@ final class ShepherdPens {
         double bestDistance = Double.MAX_VALUE;
 
         for (Pen pen : pensOf(world, colony)) {
-            if (pen.equals(except) || animalsIn(world, pen) > MAX_ANIMALS) {
+            if (pen.equals(except) || !hasRoom(world, pen)) {
                 continue;
             }
 

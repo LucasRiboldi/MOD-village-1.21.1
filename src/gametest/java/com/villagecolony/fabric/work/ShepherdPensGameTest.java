@@ -29,8 +29,8 @@ import java.util.UUID;
 
 /**
  * O pastor e os cercados — regra do autor, 2026-10-11 ({@link ShepherdPens}): o cercado
- * pelo portão, mais de 5 animais e ele tenta outro, o animal entra pelo portão, e sem
- * cerca nenhuma ele põe um poste ao lado da casa com a cerca do baú.
+ * pelo portão, cheio ele tenta outro (a lotação é pelo tamanho, 2026-10-22), o animal entra
+ * pelo portão, e sem cerca nenhuma ele põe um poste ao lado da casa com a cerca do baú.
  */
 public class ShepherdPensGameTest implements FabricGameTest {
 
@@ -38,6 +38,9 @@ public class ShepherdPensGameTest implements FabricGameTest {
 
     /** Os currais por espécie, em outra altura: o chão de 29×29 passa da arena. */
     private static final int Y2 = 90;
+
+    /** O curral grande, numa terceira altura. */
+    private static final int Y3 = 120;
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herding", tickLimit = 40)
     public void theShepherdFindsThePenAndFillsItUpToFive(TestContext context) {
@@ -255,6 +258,72 @@ public class ShepherdPensGameTest implements FabricGameTest {
                     for (int z = 0; z <= 28; z++) {
                         world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y2 + 1, z)), Blocks.AIR.getDefaultState());
                         world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y2, z)), Blocks.AIR.getDefaultState());
+                    }
+                }
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * A lotação é pelo tamanho — autor, 2026-10-22: um animal a cada {@link ShepherdPens#FLOOR_PER_ANIMAL}
+     * blocos de chão. O curral de 7×7 por dentro leva 12: com 8 ainda cabe (os 5 fixos de antes o davam
+     * por cheio), com 12 está cheio, e sendo o único, a vila tem todos os currais cheios.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_pens_size", tickLimit = 40)
+    public void theBiggerPenHoldsMoreAnimals(TestContext context) {
+        ServerWorld world = context.getWorld();
+        List<SheepEntity> sheep = new ArrayList<>();
+
+        for (int x = 0; x <= 28; x++) {
+            for (int z = 0; z <= 28; z++) {
+                world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y3, z)), Blocks.GRASS_BLOCK.getDefaultState());
+
+                if ((x == 1 || x == 9 || z == 1 || z == 9) && x >= 1 && x <= 9 && z >= 1 && z <= 9) {
+                    world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y3 + 1, z)), Blocks.OAK_FENCE.getDefaultState());
+                }
+            }
+        }
+
+        BlockPos gate = context.getAbsolutePos(new BlockPos(5, Y3 + 1, 1));
+        world.setBlockState(gate, Blocks.OAK_FENCE_GATE.getDefaultState());
+
+        BlockPos low = context.getAbsolutePos(new BlockPos(0, Y3 - 2, 0));
+        BlockPos high = context.getAbsolutePos(new BlockPos(28, Y3 + 4, 28));
+        VillageBounds box = new VillageBounds(low.getX(), low.getY(), low.getZ(), high.getX(), high.getY(), high.getZ());
+        Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(gate));
+        colony.measure(box);
+
+        List<ShepherdPens.Pen> pens = ShepherdPens.scan(world, box);
+        ShepherdPens.Pen pen = pens.get(0);
+
+        for (int i = 0; i < 12; i++) {
+            sheep.add(animalAt(world, EntityType.SHEEP, pen.inside().add(i % 4 - 1, 0, 1 + i / 4)));
+        }
+
+        context.waitAndRun(5, () -> {
+            try {
+                context.assertTrue(ShepherdPens.capacityOf(pen) == 12,
+                        "o curral de 49 de chão devia levar 12, leva " + ShepherdPens.capacityOf(pen));
+                context.assertTrue(ShepherdPens.animalsIn(world, pen) == 12, "contou " + ShepherdPens.animalsIn(world, pen));
+                context.assertTrue(ShepherdPens.allFull(world, colony), "com 12 no curral de 12 a vila devia estar cheia");
+
+                for (int i = 0; i < 4; i++) {
+                    sheep.remove(sheep.size() - 1).discard();
+                }
+
+                context.assertTrue(ShepherdPens.withRoom(world, colony, gate).isPresent(),
+                        "com 8 animais o curral grande ainda aceita");
+                context.assertFalse(ShepherdPens.allFull(world, colony), "com lugar, a vila não está cheia");
+            } finally {
+                sheep.forEach(SheepEntity::discard);
+                ShepherdPens.clearAll();
+
+                for (int x = 0; x <= 28; x++) {
+                    for (int z = 0; z <= 28; z++) {
+                        world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y3 + 1, z)), Blocks.AIR.getDefaultState());
+                        world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y3, z)), Blocks.AIR.getDefaultState());
                     }
                 }
             }

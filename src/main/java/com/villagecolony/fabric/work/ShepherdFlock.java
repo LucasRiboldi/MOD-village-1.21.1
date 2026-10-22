@@ -37,8 +37,8 @@ public final class ShepherdFlock {
         ServerMemory.register(ShepherdFlock.class, ShepherdFlock::clearAll);
     }
 
-    /** Adultos de cada espécie a partir dos quais o pastor para de criar. */
-    public static final int FLOCK_TARGET = 12;
+    /** Adultos de cada espécie a partir dos quais o pastor para de criar — autor, 2026-10-22 (eram 12). */
+    public static final int FLOCK_TARGET = 8;
 
     /** Entre uma rodada de comida e a seguinte da mesma colônia: um minuto. */
     static final int BETWEEN_PAIRS = 1_200;
@@ -155,7 +155,7 @@ public final class ShepherdFlock {
         return ColonyChests.countIn(world, chests, food) - PAIR_FOOD >= keep;
     }
 
-    private static boolean hasShepherd(Colony colony) {
+    static boolean hasShepherd(Colony colony) {
         return VillageColonyMod.WORKERS.ofColony(colony.id()).stream()
                 .anyMatch(worker -> worker.profession().filter(ProfessionType.SHEPHERD::equals).isPresent());
     }
