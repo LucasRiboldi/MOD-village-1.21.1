@@ -5,19 +5,24 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ---
 
-## Causa provável de KF-005 a KF-009: o mundo de teste guardado entre baterias
+## Interferência por colônia de outro cenário (22-10, 0.3.91)
 
-**22-10, 0.3.91.**
-- **O que se via:** o `runGametest` reaproveitava `build/gametest/world`, e a abertura dizia "Loaded 8
-  colonies with 10 workers". As colônias das rodadas anteriores ficavam no mundo e pegavam as camas e os
-  baús dos cenários.
-- **Antes de limpar:** caíam `ColonyDetection`, `Crafting` (KF-006) e `MinerDirectPath` (KF-007) em 3 de 4
-  baterias.
-- **Depois de apagar o mundo:** 854/854 ×2.
-- **O que mudou:** o `build.gradle` apaga o mundo antes de cada bateria, como o CI, que sempre começa limpo
-  e por isso não via essas quedas.
+**ColonyDetection.aVillageBecomesAColony** caía até no CI, que começa limpo. O log diz: *"Bed cluster … (3
+beds) is part of colony e4d68248 — NEAR_ITS_BUILDINGS; no new colony"*.
+- A colônia `e4d68248` era a do vizinho `aClusterBesideAColonyBuilding`, montada ao mesmo tempo no mesmo lote.
+- **Corrigido:** o teste ganhou um lote próprio (`colony_detection_alone`).
 
-As KF abaixo ficam abertas até uma série de baterias limpas confirmar.
+**Crafting.theCycleOpensTheCraftingTaskByItself (KF-006)** caía sempre com
+`-PgametestOnly=ColonyDetection,Crafting`.
+- O `runCycleNow` do teste chama a detecção de vila, que adotava as camas das arenas vizinhas como colônia
+  nova (7 adultos, casa fundadora), e ela tomava aldeões e baús perto do teste.
+- **Corrigido:** o teste roda só o ciclo das colônias (`runColonyCycleNow`). Com o filtro, 29/29 ×3.
+
+**Mundo guardado entre baterias:** o `runGametest` reaproveitava `build/gametest/world` ("Loaded 8
+colonies" na abertura), o que somava sobras de rodadas antigas. Agora ele apaga o mundo antes de cada
+bateria, como o CI.
+
+Aberto: outros cenários que chamam `runCycleNow` na arena podem adotar camas vizinhas do mesmo jeito.
 
 ---
 
