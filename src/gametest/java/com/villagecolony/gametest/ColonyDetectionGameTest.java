@@ -55,7 +55,10 @@ public class ColonyDetectionGameTest implements FabricGameTest {
      * <p>É o V1 do §7, que até aqui só podia ser conferido lendo log
      * depois de andar pela vila.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_detection")
+    // Lote próprio: no "colony_detection" o vizinho aClusterBesideAColonyBuilding monta, ao mesmo tempo, uma
+    // colônia com casa ao lado da arena, e ela engolia estas camas ("is part of colony … —
+    // NEAR_ITS_BUILDINGS; no new colony", CI de 22-10).
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_detection_alone")
     public void aVillageBecomesAColony(TestContext context) {
         BlockPos anchor = new BlockPos(1, 1, 1);
 

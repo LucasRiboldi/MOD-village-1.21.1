@@ -62,6 +62,15 @@ public final class StripLot {
     static final class Tally {
         int doors;
         int lotsFit;
+
+        /** O fim do orçamento desta passada; entre um tamanho de casa e outro a porta para se passou dele. */
+        long deadline = Long.MAX_VALUE;
+
+        /** De que tamanho de casa a porta interrompida recomeça. */
+        int resumeFootprint;
+
+        /** Se a porta desta passada parou no meio dos tamanhos — a próxima passada volta a ela. */
+        boolean interrupted;
         final Map<String, Integer> pathStoppedBy = new HashMap<>();
 
         void stopped(String why) {
@@ -105,6 +114,8 @@ public final class StripLot {
         Tally tally = resume ? cursor.tally() : new Tally();
         long deadline = System.nanoTime() + PlanningBudget.DEADLINE_MS * 1_000_000L;
 
+        tally.deadline = deadline;
+
         for (; next < doors.size(); next++) {
             if (System.nanoTime() > deadline) {
                 CURSORS.put(colonyId, new Cursor(strip, side, next, tally));
@@ -112,7 +123,10 @@ public final class StripLot {
                 return Optional.empty();
             }
 
-            tally.doors++;
+            if (tally.resumeFootprint == 0) {
+                tally.doors++;
+            }
+
             Optional<Site> site = siteAt(world, colonyId, doors.get(next), out, strip, footprints, tally);
 
             if (site.isPresent()) {
@@ -120,6 +134,17 @@ public final class StripLot {
 
                 return site;
             }
+
+            // A busca com corte é cara: a porta que parou no meio volta na próxima passada, do tamanho
+            // em que parou, e cada passada anda ao menos um tamanho (0.3.90: 3 s num tique sem isso).
+            if (tally.interrupted) {
+                tally.interrupted = false;
+                CURSORS.put(colonyId, new Cursor(strip, side, next, tally));
+
+                return Optional.empty();
+            }
+
+            tally.resumeFootprint = 0;
         }
 
         // Volta inteira sem lote: diz o que viu, e a próxima passada recomeça do fundo.
@@ -172,10 +197,20 @@ public final class StripLot {
         }
 
         int floorY = door.get().getY();
+        int from = tally.resumeFootprint;
 
-        for (Footprint footprint : footprints) {
+        for (int index = from; index < footprints.size(); index++) {
+            Footprint footprint = footprints.get(index);
+
             if (footprint.doorSide() != out.getOpposite()) {
                 continue;
+            }
+
+            if (index > from && System.nanoTime() > tally.deadline) {
+                tally.resumeFootprint = index;
+                tally.interrupted = true;
+
+                return Optional.empty();
             }
 
             ColonyPos size = footprint.size();

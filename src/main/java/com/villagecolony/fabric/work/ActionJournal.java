@@ -134,6 +134,7 @@ public final class ActionJournal {
     public static void action(UUID worker, String action, String what, int amount, @Nullable BlockPos at,
             String detail) {
         append(worker, action, "", what, amount, at, -1, detail);
+        BedChoice.worked(worker, action, at);
     }
 
     /** O nome curto de um item, para a coluna {@code what}. */

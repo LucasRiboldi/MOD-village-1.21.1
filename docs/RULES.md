@@ -103,7 +103,46 @@ regra que foi emendada. O corpo de cada regra vive em
 | 71 | **O mineiro não constrói para fora da montanha:** o desvio dele não põe bloco ao céu aberto (só dentro da montanha) e, se precisar construir para andar, desce antes de ir de lado (cavar descendo custa o de sempre, de lado o dobro, subindo o triplo; pôr bloco o dobro); com a entrada da mina inalcançável a pé, ele cava um acesso só cavando, descendo da vila até o nível; debaixo da terra não entra na água (ADR-025), ao ar livre nada pelo custo do Vanilla — a margem de lago cercada por paredão só se deixa nadando (autor, 10-22) | 10-22 | ✅ feita (0.3.88; água 0.3.89) | `MinerTerrain`, `DetourMoves.Costs.MINER`, `MineAccess`, `MinerCaution` |
 | 72 | **Um curral por espécie:** animais iguais ficam no mesmo curral; com mais de um curral na vila, cada tipo vai para o seu — o pastor leva o animal para o curral só daquela espécie, senão um vazio (que passa a ser dela), senão um misto que já a tem, senão qualquer um com lugar; sem animal solto a recolher, tira de um curral misto o animal que tem curral próprio ou vazio com lugar e o leva até lá, para que, com a vila crescendo, cada espécie acabe no seu. **Lotação pelo tamanho** (autor, 10-22): um animal a cada 4 blocos de chão do curral (eram 5 fixos); **com pastor e todos os currais cheios, um curral novo (animal_pen do estilo) entra na fila de obras**, depois do armazém e da falta de cama | 10-22 | ✅ feita (0.3.89) | `ShepherdPens.forSpecies`, `ShepherdHerding.separate`, `ShepherdPens.capacityOf`/`allFull`, `PenPlans`, `UrgentPlans` |
 | 73 | **Caminho de areia:** a vila do deserto tem caminho próprio — cópia do caminho de terra do Vanilla (mesma altura, mesmo comportamento: coberto por bloco sólido volta a ser o chão, aqui areia; quebrado dá areia) com a cor do arenito. No bioma de deserto todo caminho que a colônia assenta (rua, corredor, caminho de obra, buraco fechado pelo construtor) é ele; fora do deserto ele não é usado, e o caminho segue o do chão (Regra 70 e pedido de 10-20). Conta como rua em qualquer lugar | 10-22 | ✅ feita (0.3.89) | `SandPathBlock`, `ModContent.SAND_PATH`, `VillageRoad.pavingOn(world, at, …)`, `VillageRoad.isPathBlock` |
+| 74 | **A cama mais perto do trabalho:** cada aldeão dorme na cama da vila mais perto de onde trabalha de fato (a mediana das últimas 32 ações com lugar do diário; com menos de 8, fica onde está). A vila reavalia uma vez por dia, ao amanhecer, e só muda quem fica ao menos 16 blocos mais perto; quem anda mais escolhe primeiro. Cama livre só se alcança a pé da vila; cama ocupada só troca de dono se a soma das duas caminhadas cai e o dono não passa a andar mais (o sem ofício sempre cede); quem está dormindo não muda nem cede. O baú acompanha a cama: o velho, com o que tem, fica para a vila. O `HomeMove` (desistiu 2× abaixo do trabalho) continua como reação imediata | 10-22 | ✅ feita (0.3.92) | `BedPlan`, `BedChoice`, `ActionJournal` |
 | 53 | A boca da mina só nasce na faixa da borda da caixa da vila (até 8 blocos da linha, dentro ou fora); com a mina aberta, o mineiro sem ramal livre não cava pedra exposta na superfície | 10-11 | ✅ feita (0.3.32) | `MineEdge.nearTheEdge`, `MineDigging.mineOf`, `MineTrouble`, `MineDigging.exposedStoneFallback` |
+| 75 | **Movimentação natural:** só o mineiro remodela o terreno para subir (degrau, túnel); ninguém põe bloco debaixo dos pés, e não há escada fixa | 10-15, 10-21 | ✅ no código (registrada 10-22) | `ClimbPolicy` |
+| 76 | **O encalhado nunca desiste:** larga o ofício e sobe até a superfície; a escada da fuga é tampada depois que ele sai | 10-01 (E47), 09-24 (N10) | ✅ no código (registrada 10-22) | `ClimbOut`, `StrandedEscape`, `EscapeBackfill` |
+| 77 | **Cama como último recurso:** preso 5 vezes no mesmo lugar, ou sem caminho para casa à noite, ele vai para a cama | ADR-036 item 15 | ✅ no código (registrada 10-22) | `BedTeleport`, `NightHome` |
+| 78 | **Caminhada longa por etapas:** um trajeto de 50 a 130 blocos vira etapas na superfície | 10-08 (A7) | ✅ no código (registrada 10-22) | `WalkLegs` |
+| 79 | **A pedra é emprestada:** o alvo do mineiro vale por um prazo curto, e só o progresso renova | 09-10 (E44) | ✅ no código (registrada 10-22) | `MineLease` |
+| 80 | **Só vira alvo o bloco com posição de trabalho válida e alcançável** | 10-08 (E1) | ✅ no código (registrada 10-22) | `MiningTarget` |
+| 81 | **Ramal com dono:** cada ramal da mina é reservado a um mineiro, com o estado dito pelo nome | 09-04, 10-08 (E2) | ✅ no código (registrada 10-22) | `MineArm`, `MineBranch` |
+| 82 | **O mineiro memoriza a entrada da mina** e chega por ela, por etapas, até o nível de agora | 10-08, 10-14 | ✅ no código (registrada 10-22) | `MineEntrance`, `MineApproachPath` |
+| 83 | **Espera a areia assentar** antes de voltar a cavar | 09-19 | ✅ no código (registrada 10-22) | `MineSettling` |
+| 84 | **Tapa e escora com o bloco do bioma** (arenito no deserto) | 10-20 | ✅ no código (registrada 10-22) | `MineFill` |
+| 85 | **O ferro descansa onde a mina não o tem:** o piso de ferro cru não força busca sem veio | 10-21 | ✅ no código (registrada 10-22) | `IronRest` |
+| 86 | **A peça que o construtor não alcança surge no lugar** | 10-20 | ✅ no código (registrada 10-22) | `UnreachablePieces` |
+| 87 | **Peça equivalente:** sem a exata e sem tag do jogo, vale a equivalente da tabela | 09-24 (N3) | ✅ no código (registrada 10-22) | `EquivalentPieces` |
+| 88 | **Terracota, feno e argila aparecem quando a obra pede** | 10-21 | ✅ no código (registrada 10-22) | `AppearingPieces` |
+| 89 | **Degrau na frente da porta** do lote que fica um bloco acima da rua | 09-30 | ✅ no código (registrada 10-22) | `DoorStep` |
+| 90 | **Terraplanagem do lote:** corta até 5 e aterra até 2 blocos do chão do bioma, com um corredor de 2 em volta da casa | 10-20, 10-21 | ✅ no código (registrada 10-22) | `LotTerraform` |
+| 91 | **Casa fundadora:** primeiro o lote plano exato, depois o aplainável; a vegetação do lote sai | 10-20 (G1) | ✅ no código (registrada 10-22) | `FoundationLotSearch`, `LotGrowth` |
+| 92 | **Deserto:** a areia da planta vira arenito (emenda à Regra 27), e o chão da vila de areia não desaba | 09-19, 10-21 | ✅ no código (registrada 10-22) | `DesertSand`, `DesertGround` |
+| 93 | **Obra abandonada tem retomada limitada** antes de a vila aceitar obra nova | — | ✅ no código (registrada 10-22) | `BuildingRepairPlanner` |
+| 94 | **Faixa de construção:** o lote novo nasce ao lado da rua; muda, flor alta ou arbusto crescendo ali tiram o lote da faixa | 10-11 | ✅ no código (registrada 10-22) | `ConstructionZone` |
+| 95 | **Todo ofício trabalha independente do pedido** (produção contínua até os tetos) | 09-26 | ✅ no código (registrada 10-22) | `StandingWork` |
+| 96 | **Todo trabalhador de ofício tem um baú nascido para ele** (emenda à Regra 8) | 09-26 | ✅ no código (registrada 10-22) | `ChestSpawner` |
+| 97 | **Baú cheio chama os outros ofícios**, e os 10 últimos espaços dos baús da colônia ficam sempre livres | 09-19, ADR-036 item 9 | ✅ no código (registrada 10-22) | `ChestRelief`, `ProfessionChestOverflow` |
+| 98 | **O que a vila provou não ter no alcance não é mais buscado**, e o raio varrido vazio espera | 10-20, 10-02 (F-1) | ✅ no código (registrada 10-22) | `KnownAbsent`, `EmptySweeps` |
+| 99 | **O alcance da coleta cresce com a vila** | 09-24 (N11) | ✅ no código (registrada 10-22) | `GatheringReach` |
+| 100 | **Autossuficiência:** britador do pedreiro (pedra → areia), janela sem vidro, compostor do fazendeiro, pedreiro faz o insumo da fornalha, fundidor sem cru solta a fornalha, areia de beira d'água, argila | 09-19 a 10-21 | ✅ no código (registrada 10-22) | `Crusher`, `WindowEquivalent`, `FarmerCompost`, `FurnaceFeed`, `SmelterGathers`, `SandNearWater`, `ClayPatch` |
+| 101 | **Receita de tingir peça pronta é ignorada** | 09-26 | ✅ no código (registrada 10-22) | `RecolorRecipes` |
+| 102 | **Toda vila nasce com 2 ovelhas, 2 galinhas, 2 vacas e 2 porcos** | 10-20 | ✅ no código (registrada 10-22) | `VillageFarmAnimals` |
+| 103 | **Grama ao pé do poste da ovelha** amarrada, e **o golem sai do curral** pela porteira | 10-20, 10-02 | ✅ no código (registrada 10-22) | `PostGrass`, `PenGolems` |
+| 104 | **O que o jogador tirou não volta:** árvore, muda ou flor quebrada pelo jogador não é replantada naquela coluna | 10-11 | ✅ no código (registrada 10-22) | `PlayerClearedPlants` |
+| 105 | **Duas colônias da mesma vila viram uma**, e a identidade é a vila gerada, não o centro | ADR-007, 09-30 (E51) | ✅ no código (registrada 10-22) | `ColonyMergeTrigger`, `ColonyIdentity` |
+| 106 | **A vila é uma caixa** medida pela vila gerada, e não um raio | 09-30 (ADR-003 Emenda 6) | ✅ no código (registrada 10-22) | `VillageBounds`, `VillageMeasure` |
+| 107 | **Marcas no mundo:** contorno de chamas no lote, área da vila, dono de cada baú, nome do aldeão no painel do ofício | 08-12 a 10-08 | ✅ no código (registrada 10-22) | `SiteMarker`, `VillageMarker`, `ChestMarker`, `WorkerNameplateMixin` |
+| 108 | **A Tocha das Almas cancela a obra:** uma tocha das almas (também a de parede) posta pelo jogador dentro do volume de uma obra aberta cancela o canteiro e as tarefas de construção; o que já foi posto fica no mundo, e a tocha também; a fundação `BigHouseMOD` não é afetada | — | ✅ no código (registrada 10-22) | `ConstructionCancellation` |
+| 109 | **A casa fundadora `BigHouseMOD`:** toda vila adotada a recebe uma única vez — cópia editada da casa grande Vanilla, com sete camas e sete baús para os titulares (mineiro, lenhador, carpinteiro, pedreiro, fundidor, pastor, construtor); o fazendeiro trabalha sem cama reservada nela; ela nunca entra no catálogo de obras | — | ✅ no código (registrada 10-22) | `BigHouseFoundation`, `VillageFoundation` |
+
+Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
+(levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).
 
 ---
 
@@ -135,7 +174,7 @@ Regras que o autor declarou **temporárias** e vão sair.
 | 26 | Emenda (10-11) | **Divisão por material:** madeira → carpinteiro; pedra, barro, terracota, fornalha → pedreiro; metal, vidro, gelo, neve → fundidor; tecido e corante → pastor; papel, livro, farinha de osso, feno → fazendeiro (`CraftFamily`). Carpinteiro e fundidor guardam 8 de cada item das plantas (`ItemStock`); flores, grama, bambu, cana (fazendeiro) e gelo, neve (fundidor) têm coleta (`PlantPatch`) |
 | 51 | Emenda (10-11) | A peça que surge no baú surge **na quantidade toda** que a obra ainda pede (`BiomeConstructionSupply.askedByTheBuild`) |
 | — | Decisão (10-11) | **Troca de ofícios desligada:** ninguém troca de ofício por ócio nem por desistência; a Regra 51 (15%) fica só como medida |
-| 43 | Emenda (10-11) | **Pastor:** cercado com lugar primeiro (≤ 5 animais; com mais, outro cercado), pelo portão; sem cercado, a cerca mais perto; sem cerca, um poste novo ao lado da casa, com cerca do baú (`ShepherdPens`) |
+| 43 | Emenda (10-11; lotação trocada em 10-22 pela Regra 72) | **Pastor:** cercado com lugar primeiro (~~≤ 5 animais~~ um a cada 4 blocos de chão, Regra 72; cheio, outro cercado), pelo portão; sem cercado, a cerca mais perto; sem cerca, um poste novo ao lado da casa, com cerca do baú (`ShepherdPens`) |
 | 14 | Emenda (10-11, 0.3.32) | A vaga do ajudante não é a tarefa da obra: com o construtor fora, o planejador abre outra para ele (`ConstructionPlanner.ensureTask`) |
 | 51 | Emenda (10-11, 0.3.32) | ~~O fazendeiro com a roça descansando ajuda a obra~~ — **revogada em 13-10 pela Regra 59**: fazendeiro e pastor não ajudam a obra |
 | 1, 5 | Emenda (10-11, 0.3.32) | Sem obra pedindo, a tora só vira tábua até o teto de 64 tábuas (`StockRules.logsToConvert`) |
@@ -159,7 +198,9 @@ precisam **concordar**.
 
 A regra de arquitetura "a colônia não cria recurso" (`Construction-System.md`,
 sem número nesta tabela) foi **retirada em 2026-09-30** — ADR-028. A 25 foi
-**desfeita em 2026-10-06** — ADR-036 item 5.
+**desfeita em 2026-10-06** — ADR-036 item 5. A 52 (uma roça por fazendeiro, 10-08) foi **substituída pela 67**
+em 2026-10-13. Continua dela a posse: cada fazendeiro sem roça recebe a roça
+sem dono mais perto do baú dele (`FarmOwners`, `VillageFarms`).
 
 ---
 

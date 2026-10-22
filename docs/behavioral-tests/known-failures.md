@@ -5,6 +5,27 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ---
 
+## Interferência por colônia de outro cenário (22-10, 0.3.91)
+
+**ColonyDetection.aVillageBecomesAColony** caía até no CI, que começa limpo. O log diz: *"Bed cluster … (3
+beds) is part of colony e4d68248 — NEAR_ITS_BUILDINGS; no new colony"*.
+- A colônia `e4d68248` era a do vizinho `aClusterBesideAColonyBuilding`, montada ao mesmo tempo no mesmo lote.
+- **Corrigido:** o teste ganhou um lote próprio (`colony_detection_alone`).
+
+**Crafting.theCycleOpensTheCraftingTaskByItself (KF-006)** caía sempre com
+`-PgametestOnly=ColonyDetection,Crafting`.
+- O `runCycleNow` do teste chama a detecção de vila, que adotava as camas das arenas vizinhas como colônia
+  nova (7 adultos, casa fundadora), e ela tomava aldeões e baús perto do teste.
+- **Corrigido:** o teste roda só o ciclo das colônias (`runColonyCycleNow`). Com o filtro, 29/29 ×3.
+
+**Mundo guardado entre baterias:** o `runGametest` reaproveitava `build/gametest/world` ("Loaded 8
+colonies" na abertura), o que somava sobras de rodadas antigas. Agora ele apaga o mundo antes de cada
+bateria, como o CI.
+
+Aberto: outros cenários que chamam `runCycleNow` na arena podem adotar camas vizinhas do mesmo jeito.
+
+---
+
 ## KF-009 — `MineReturnGameTest.aStrandedMinerGoesBackUpTheMineStairsAndLeavesTheVillageGroundWhole` caiu uma vez na bateria inteira
 
 **ABERTO.** 22-10, 0.3.89 (853 testes): caiu 1 vez em 4 baterias. O mineiro parou no passo 12 de 13 do
@@ -25,6 +46,10 @@ Mesmo padrão da KF-007: interferência que depende do arranjo das arenas. Hipó
 ---
 
 ## KF-007 — `MinerDirectPathGameTest.theMinerWalksStraightWhenTheGameFindsTheWay` cai na bateria inteira
+
+**22-10, 0.3.92: corrigido** pelo `navigation().stop()` antes da prova e depois da parede. A causa está na
+memória do projeto: o aldeão passeia, e o `findPathTo` devolve o caminho em curso. A mesma correção estava no
+`c281eecb`, numa branch que nunca foi mesclada. Depois dela: 4/4 sozinho e bateria 857/857 ×2.
 
 **ABERTO.** 21-10, branch `fix/deserto-a1-c1-b1-d2`. A navegação do jogo não chega ao lugar de pé
 aberto: *"aldeão em x+1, alvo x+8, caminho termina em x+7, chega=false"*. Isolado

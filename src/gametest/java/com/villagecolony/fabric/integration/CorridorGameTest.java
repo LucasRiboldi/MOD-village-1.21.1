@@ -79,6 +79,39 @@ public class CorridorGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * A busca tem teto de tempo — 0.3.90: no deserto a busca com corte chegou a 3,2 s num tique. Com o teto
+     * zerado, um platô sem caminho nenhum para na primeira conferida do relógio e diz por quê. Alto e
+     * pequeno, longe das arenas vizinhas.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "corridor_budget")
+    public void aSearchStopsAtTheTimeCeilingAndSaysSo(TestContext context) {
+        ServerWorld world = context.getWorld();
+        int high = Y + 60;
+
+        for (int x = 0; x <= 15; x++) {
+            for (int z = 0; z <= 15; z++) {
+                world.setBlockState(context.getAbsolutePos(new BlockPos(x, high, z)), Blocks.SAND.getDefaultState());
+            }
+        }
+
+        BlockPos start = context.getAbsolutePos(new BlockPos(8, high, 8));
+        List<String> why = new java.util.ArrayList<>();
+        Optional<List<BlockPos>> corridor = Corridor.plan(world, UUID.randomUUID(), start,
+                context.getRotation().rotate(Direction.NORTH), 64, Corridor.MAX_CUT, 0L, at -> false, why::add);
+
+        for (int x = 0; x <= 15; x++) {
+            for (int z = 0; z <= 15; z++) {
+                world.setBlockState(context.getAbsolutePos(new BlockPos(x, high, z)), Blocks.AIR.getDefaultState());
+            }
+        }
+
+        context.assertTrue(corridor.isEmpty(), "sem caminho nenhum, o corredor devia sair vazio");
+        context.assertTrue(why.contains(Corridor.OUT_OF_TIME), "a busca não parou pelo teto de tempo: " + why.size()
+                + " motivos, nenhum de tempo");
+        context.complete();
+    }
+
     private static void floor(TestContext context, int fromX, int toX, int fromZ, int toZ) {
         for (int x = fromX; x <= toX; x++) {
             for (int z = fromZ; z <= toZ; z++) {

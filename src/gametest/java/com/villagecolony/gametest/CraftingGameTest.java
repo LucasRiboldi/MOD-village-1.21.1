@@ -357,7 +357,9 @@ public class CraftingGameTest implements FabricGameTest {
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
-        VillageDetectionHandler.runCycleNow(world, context.getAbsolutePos(stand));
+        // Só o ciclo das colônias: a detecção de vila (runCycleNow) adotava as camas das arenas vizinhas
+        // como colônia nova, e ela tomava aldeões e baús perto deste teste (KF-006, 22-10).
+        VillageDetectionHandler.runColonyCycleNow(world);
 
         int crafting = 0;
 

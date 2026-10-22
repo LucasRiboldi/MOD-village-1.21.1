@@ -43,6 +43,17 @@ próprias (madeira e argila com prova, descascar, ingrediente de superfície); `
       que mora lá (HomeMove); à noite o jogo já o leva para a cama. Bancada: 9,3 / 9,3 / 5,9 — na de
       5,9 todas as camas de cima eram de aldeões com ofício e o construtor não tinha para onde ir.
       Pendente 🟠: esse caso (decisão do autor: trocar com quem tem ofício? construir casa em cima?).
+      0.3.92: Regra 74 — cama mais perto do trabalho (BedPlan/BedChoice, 1×/dia ao amanhecer, troca se os
+      dois ganham). **Falta jogo.** Pendente 🟡: o carpinteiro, o pedreiro e o fundidor não marcam lugar no
+      diário (CRAFTED sem posição), então ficam onde estão.
+      0.3.91 (deserto jogado na 0.3.90, nota 7,6, Spark LYMx4yHjKk): a faixa deu lote (curral, 486 blocos
+      cortados, caminho de areia). Corrigido: a busca com corte travava 3 s (memória por passo, teto de
+      50 ms); a bateria agora começa com o mundo limpo.
+      Pendente 🟠: os mineiros andam 36% do expediente da vila alta até a mina do lago (9 desistências a
+      32–61 blocos).
+      Pendente 🟡: o `storage_majest` pede deepslate, calcita, folha de acácia e madeira de pinheiro no
+      deserto (55 peças deixadas de lado).
+      Pendente 🟡: espera de 42% do fazendeiro e de 41% do fundidor.
       0.3.89 (deserto jogado na 0.3.88, nota 4,0, Spark YFIroI1U1x; escolhas do autor de 22-10):
       - alcance do fazendeiro com a borda;
       - mineiro nada ao ar livre;
