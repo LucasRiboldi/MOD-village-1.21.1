@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.ToDoubleBiFunction;
 
 /**
  * A cama mais perto do trabalho — Regra 74, autor de 2026-10-22: <i>"fazer a troca da cama destinada dos
@@ -67,6 +68,15 @@ public final class BedPlan {
      * @return as mudanças; numa troca, as duas
      */
     public static List<Move> plan(Collection<Sleeper> sleepers, Collection<ColonyPos> freeBeds) {
+        return plan(sleepers, freeBeds, BedPlan::distance);
+    }
+
+    /**
+     * O mesmo, medindo com {@code walk} — a caminhada real do trabalho até a cama, quando o lado do jogo a
+     * conhece (R-148 do estudo v2); infinita para a cama a que não se chega a pé.
+     */
+    public static List<Move> plan(Collection<Sleeper> sleepers, Collection<ColonyPos> freeBeds,
+            ToDoubleBiFunction<ColonyPos, ColonyPos> walk) {
         Map<ColonyPos, Sleeper> owners = new HashMap<>();
 
         for (Sleeper sleeper : sleepers) {
@@ -82,7 +92,8 @@ public final class BedPlan {
         List<Sleeper> walkers = sleepers.stream()
                 .filter(sleeper -> sleeper.movable() && sleeper.work() != null)
                 .sorted(Comparator.comparingDouble(
-                        (Sleeper sleeper) -> distance(Objects.requireNonNull(sleeper.work()), sleeper.bed())).reversed())
+                        (Sleeper sleeper) -> walk.applyAsDouble(Objects.requireNonNull(sleeper.work()), sleeper.bed()))
+                        .reversed())
                 .toList();
 
         for (Sleeper walker : walkers) {
@@ -92,7 +103,7 @@ public final class BedPlan {
 
             ColonyPos work = Objects.requireNonNull(walker.work());
             ColonyPos home = walker.bed();
-            double today = distance(work, home);
+            double today = walk.applyAsDouble(work, home);
             List<ColonyPos> candidates = new ArrayList<>(free);
 
             for (Sleeper owner : owners.values()) {
@@ -101,10 +112,10 @@ public final class BedPlan {
                 }
             }
 
-            candidates.sort(Comparator.comparingDouble((ColonyPos bed) -> distance(work, bed)));
+            candidates.sort(Comparator.comparingDouble((ColonyPos bed) -> walk.applyAsDouble(work, bed)));
 
             for (ColonyPos bed : candidates) {
-                if (distance(work, bed) > today - MIN_GAIN) {
+                if (walk.applyAsDouble(work, bed) > today - MIN_GAIN) {
                     break;
                 }
 
@@ -121,7 +132,8 @@ public final class BedPlan {
                 }
 
                 // O dono só cede a cama se não passa a andar mais: sem ofício, qualquer cama serve.
-                if (owner.work() != null && distance(owner.work(), home) > distance(owner.work(), bed)) {
+                if (owner.work() != null
+                        && walk.applyAsDouble(owner.work(), home) > walk.applyAsDouble(owner.work(), bed)) {
                     continue;
                 }
 

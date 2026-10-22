@@ -359,5 +359,5 @@ Das 164 regras propostas:
   - códigos de bloqueio únicos e lista declarada das exceções de suprimento (R-052, R-080).
 - **C-02 (Regras 21/32):** cama, porta e baú da planta são obrigatórios para a obra terminar; as outras peças
   mantêm as saídas atuais.
-- **Sistema grande:** a área protegida (R-035) será desenhada antes de qualquer código. Transporte físico,
-  configuração e outros mods ficam como futuro.
+- **Sistema grande:** a configuração (R-153/154) será desenhada antes de qualquer código; o autor trocou a
+  escolha inicial (área protegida). Área protegida, transporte físico e outros mods ficam como futuro.
