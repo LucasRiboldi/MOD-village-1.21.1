@@ -1,5 +1,21 @@
 # STATE — 2026-10-22
 
+> **0.3.91** (22-10, branch `fix/corredor-teto-de-tempo`): o jogo da 0.3.90 (Spark `LYMx4yHjKk`) teve **nota
+> 7,6** (era 4,0). A faixa sul deu o primeiro lote: um curral no platô, com 486 blocos cortados e caminho de
+> areia num vale de 3. A busca com corte, porém, travou o servidor 7 vezes, de 2,6 a 3,7 s.
+>
+> Feito na 0.3.91:
+> - **Busca:** guarda a leitura de cada passo, para em 50 ms (`Corridor.OUT_OF_TIME`, que aparece no log).
+> - **`StripLot`:** para entre tamanhos de casa e retoma dali.
+> - **Bateria:** o `runGametest` apaga o mundo de teste antes de rodar. As colônias guardadas de rodadas
+>   anteriores derrubavam ColonyDetection, Crafting e MinerDirectPath.
+>
+> Verificado: test 1575/0; pitest 85,2%; bateria 854/854 ×2 limpa; a mutação sem o teto reprova.
+>
+> Abertos: o percurso dos mineiros até a mina do lago (36% andando) e as peças de ardósia do armazém no
+> deserto.
+>
+
 > **0.3.90** (22-10, branch `fix/corredor-crash-pit`): corrige o **crash da 0.3.89**, jogada às 10:41.
 > - **O crash:** `NullPointerException` em `Corridor.plan`, na busca do corredor que corta degraus na faixa.
 > - **A causa:** o estado da busca era `Comparable` só pela prioridade, e a igualdade a ignorava. Com muitos

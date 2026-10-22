@@ -49,6 +49,15 @@ public final class Corridor {
     static final int TURN_COST = 6;
 
     /**
+     * O teto de tempo de uma busca: passou dele, a busca para e o motivo vai para o log. Na 0.3.90 a busca
+     * com corte chegou a 3,2 s num tique (planejador, `VC_COST`) e travou o servidor a cada volta pela faixa.
+     */
+    static final long MAX_PLAN_NANOS = 50_000_000L;
+
+    /** O motivo que a busca anota quando passa de {@link #MAX_PLAN_NANOS}. */
+    public static final String OUT_OF_TIME = "a search longer than 50 ms";
+
+    /**
      * Até quantos blocos de fundo o corredor da faixa anexada corta a encosta. A duna sul do deserto
      * (0.3.88) fica 23 blocos acima da rua, e a melhor rampa reta até o platô pede 12.
      */
@@ -107,6 +116,14 @@ public final class Corridor {
             ServerWorld world, UUID colonyId, BlockPos start, Direction out, int maxLength, int maxCut,
             Predicate<BlockPos> avoid, Consumer<String> stopped) {
 
+        return plan(world, colonyId, start, out, maxLength, maxCut, MAX_PLAN_NANOS, avoid, stopped);
+    }
+
+    /** O mesmo, com o teto de tempo dado — o teste o zera para medir a parada sem depender da máquina. */
+    static Optional<List<BlockPos>> plan(
+            ServerWorld world, UUID colonyId, BlockPos start, Direction out, int maxLength, int maxCut,
+            long maxNanos, Predicate<BlockPos> avoid, Consumer<String> stopped) {
+
         if (isPath(world, colonyId, start) || touchesPath(world, colonyId, start, out.getOpposite())) {
             return Optional.of(isPath(world, colonyId, start) ? List.of() : List.of(start));
         }
@@ -122,7 +139,18 @@ public final class Corridor {
         open.add(first);
         cost.put(first, 0);
 
+        // A mesma coluna, saindo do mesmo lugar, se lê uma vez só: os estados que diferem só nas curvas e
+        // nos retos passam por ela de novo, e o corte relê a coluna inteira e os vizinhos de fluido.
+        Map<Move, Expansion> expansions = new HashMap<>();
+        long deadline = System.nanoTime() + maxNanos;
+        int polled = 0;
+
         while (!open.isEmpty()) {
+            if ((++polled & 63) == 0 && System.nanoTime() > deadline) {
+                stopped.accept(OUT_OF_TIME);
+                return Optional.empty();
+            }
+
             State at = open.poll();
             int here = cost.get(at);
 
@@ -151,31 +179,14 @@ public final class Corridor {
                     continue;
                 }
 
-                Optional<BlockPos> ground = RoadPaving.groundNear(world, at.pos().offset(way), at.pos().getY());
+                Expansion expansion = expansions.computeIfAbsent(new Move(at.pos(), way),
+                        move -> expand(world, colonyId, move, maxCut, avoid, stopped));
 
-                if (ground.isPresent() && isPath(world, colonyId, ground.get())) {
+                if (expansion.reachesPath()) {
                     return Optional.of(trace(cameFrom, at));
                 }
 
-                Map<BlockPos, Integer> steps = new java.util.LinkedHashMap<>();
-
-                if (ground.isEmpty()) {
-                    stopped.accept("a step of more than 1");
-                } else {
-                    Optional<String> refusal = refusal(world, at.pos(), ground.get(), avoid);
-
-                    if (refusal.isPresent()) {
-                        stopped.accept(refusal.get());
-                    } else {
-                        steps.put(ground.get(), 0);
-                    }
-                }
-
-                if (maxCut > 0) {
-                    cutSteps(world, at.pos(), way, maxCut, avoid, stopped).forEach(steps::putIfAbsent);
-                }
-
-                for (Map.Entry<BlockPos, Integer> step : steps.entrySet()) {
+                for (Map.Entry<BlockPos, Integer> step : expansion.steps().entrySet()) {
                     State next = new State(step.getKey(), way, at.turns() + (turn ? 1 : 0),
                             turn ? 1 : at.straight() + 1, at.length() + 1);
                     int reached = here + 1 + (turn ? TURN_COST : 0) + step.getValue();
@@ -184,7 +195,7 @@ public final class Corridor {
                         cost.put(next, reached);
                         cameFrom.put(next, at);
 
-                        if (touchesPath(world, colonyId, next.pos(), way.getOpposite())) {
+                        if (expansion.touching().contains(next.pos())) {
                             touching.add(next);
                         }
 
@@ -195,6 +206,55 @@ public final class Corridor {
         }
 
         return Optional.empty();
+    }
+
+    /** Um passo da busca: de onde, para que lado. */
+    private record Move(BlockPos from, Direction way) {
+    }
+
+    /**
+     * O que um passo dá, lido do mundo uma vez: se o bloco à frente já é caminho, os degraus possíveis
+     * (natural e cortados, com o que cada um corta) e quais deles encostam em caminho de lado.
+     */
+    private record Expansion(boolean reachesPath, Map<BlockPos, Integer> steps, java.util.Set<BlockPos> touching) {
+    }
+
+    private static Expansion expand(
+            ServerWorld world, UUID colonyId, Move move, int maxCut, Predicate<BlockPos> avoid, Consumer<String> stopped) {
+
+        Optional<BlockPos> ground = RoadPaving.groundNear(world, move.from().offset(move.way()), move.from().getY());
+
+        if (ground.isPresent() && isPath(world, colonyId, ground.get())) {
+            return new Expansion(true, Map.of(), java.util.Set.of());
+        }
+
+        Map<BlockPos, Integer> steps = new java.util.LinkedHashMap<>();
+
+        if (ground.isEmpty()) {
+            stopped.accept("a step of more than 1");
+        } else {
+            Optional<String> refusal = refusal(world, move.from(), ground.get(), avoid);
+
+            if (refusal.isPresent()) {
+                stopped.accept(refusal.get());
+            } else {
+                steps.put(ground.get(), 0);
+            }
+        }
+
+        if (maxCut > 0) {
+            cutSteps(world, move.from(), move.way(), maxCut, avoid, stopped).forEach(steps::putIfAbsent);
+        }
+
+        java.util.Set<BlockPos> touching = new java.util.HashSet<>();
+
+        for (BlockPos step : steps.keySet()) {
+            if (touchesPath(world, colonyId, step, move.way().getOpposite())) {
+                touching.add(step);
+            }
+        }
+
+        return new Expansion(false, steps, touching);
     }
 
     /** O mesmo, sem anotar os motivos. */

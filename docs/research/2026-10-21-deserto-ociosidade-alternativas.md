@@ -296,7 +296,34 @@ Pedidos do autor na mesma rodada, todos feitos na 0.3.89:
 - **Curral novo com todos cheios** (`PenPlans`).
 - **Caminho de areia** exclusivo do deserto (Regra 73).
 
-## 13. Ordem sugerida
+## 13. Jogo da 0.3.90 (22-10, 12:52–13:20, Spark `LYMx4yHjKk`) e a 0.3.91
+
+A versão foi confirmada no log. O relatório está em
+[`docs/testing/relatorios/deserto-2026-10-22-0390.md`](../testing/relatorios/deserto-2026-10-22-0390.md)
+(**nota 7,6**; a anterior foi 4,0). Não houve crash.
+
+- **A faixa sul deu lote, pela primeira vez.** Às 12:58:44 abriu um curral no platô, a y93. O corredor tem
+  32 blocos e cortou 486 blocos da encosta.
+  - No save, a coluna do caminho é `sand_path`, desce 1 bloco por vez de y93 a y67 e passa num vale de 3.
+- **O custo foi alto.** Das 12:54 às 12:58 houve 7 "Can't keep up", de 2,6 a 3,7 s, um a cada volta pela
+  faixa, e o planejador chegou a 3.160 ms (`cost_ledger`).
+  - A busca com corte relia a mesma coluna para cada combinação de direção, curvas e retos, e não tinha teto
+    de tempo.
+  - Corrigido na 0.3.91: a leitura da coluna é guardada uma vez por busca, a busca para em 50 ms, e o
+    `StripLot` para entre um tamanho de casa e outro e retoma dali.
+- **Profissões:**
+  - construtor 48% de trabalho (era 7%), 441 blocos postos;
+  - pedreiro 23% (era 2%);
+  - lenhador 11%, com 19 árvores;
+  - o fazendeiro não desistiu nenhuma vez por alcance.
+- **Abertos:**
+  - **Mineiros:** 36% do expediente andando. A cama fica na vila alta (y80–83), a mina a y55, depois do
+    lago, e eles desistiram 9 vezes a 32–61 blocos do alvo.
+  - **Armazém:** o `storage_majest` pede ardósia funda (deepslate), calcita, folha de acácia e madeira de
+    pinheiro, que o deserto não tem (55 peças deixadas de lado).
+  - **Espera alta:** fazendeiro 42% e fundidor 41%.
+
+## 14. Ordem sugerida
 
 1. **A1** (log da rua que para) + **C1** (alcance do `judge`) + **B1** (fundidor pede arenito ao pedreiro).
    Pequenos, sem decisão, um GameTest com mutação cada.

@@ -5,6 +5,22 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ---
 
+## Causa provável de KF-005 a KF-009: o mundo de teste guardado entre baterias
+
+**22-10, 0.3.91.**
+- **O que se via:** o `runGametest` reaproveitava `build/gametest/world`, e a abertura dizia "Loaded 8
+  colonies with 10 workers". As colônias das rodadas anteriores ficavam no mundo e pegavam as camas e os
+  baús dos cenários.
+- **Antes de limpar:** caíam `ColonyDetection`, `Crafting` (KF-006) e `MinerDirectPath` (KF-007) em 3 de 4
+  baterias.
+- **Depois de apagar o mundo:** 854/854 ×2.
+- **O que mudou:** o `build.gradle` apaga o mundo antes de cada bateria, como o CI, que sempre começa limpo
+  e por isso não via essas quedas.
+
+As KF abaixo ficam abertas até uma série de baterias limpas confirmar.
+
+---
+
 ## KF-009 — `MineReturnGameTest.aStrandedMinerGoesBackUpTheMineStairsAndLeavesTheVillageGroundWhole` caiu uma vez na bateria inteira
 
 **ABERTO.** 22-10, 0.3.89 (853 testes): caiu 1 vez em 4 baterias. O mineiro parou no passo 12 de 13 do

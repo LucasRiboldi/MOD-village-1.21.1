@@ -249,6 +249,14 @@ loom {
 // includeNoLocationClasses o relatório sairia vazio.
 // Relatório em build/reports/jacoco/gametest/html/index.html.
 tasks.named('runGametest') {
+    // Cada bateria começa num mundo novo, como no CI. O mundo de build/gametest guardava as colônias das
+    // rodadas anteriores ("Loaded 8 colonies" na abertura), e elas pegavam as camas e os baús dos
+    // cenários: ColonyDetection, Crafting e MinerDirectPath caíam em 3 de 4 baterias e passavam 854/854
+    // ×2 com o mundo apagado (2026-10-22).
+    doFirst {
+        delete layout.buildDirectory.dir('gametest/world')
+    }
+
     jacoco.applyTo(it)
     jacoco {
         includes = ['com.villagecolony.*']
