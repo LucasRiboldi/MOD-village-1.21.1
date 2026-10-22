@@ -47,6 +47,7 @@
       "com.villagecolony.fabric.work.FlockWheatGameTest",
       "com.villagecolony.fabric.work.StripLotOpeningGameTest",
       "com.villagecolony.fabric.work.MinerTerrainGameTest",
+      "com.villagecolony.fabric.work.MineAccessGameTest",
       "com.villagecolony.fabric.work.SmelterGathersGameTest",
       "com.villagecolony.fabric.work.HelperReachGameTest",
       "com.villagecolony.fabric.work.FarmerTillGameTest",

@@ -376,6 +376,11 @@ public final class DetourWalker {
         return steps.size();
     }
 
+    /** Os pés planejados, como posições — para o teste. */
+    List<ColonyPos> cells() {
+        return steps;
+    }
+
     /** Os pés planejados, passo a passo — para o log e para o teste. */
     public String path() {
         return steps.stream().map(step -> step.x() + "," + step.y() + "," + step.z())

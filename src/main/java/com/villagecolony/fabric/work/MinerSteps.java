@@ -162,6 +162,20 @@ final class MinerSteps {
             Optional<BlockPos> down = MineEntrance.legDown(
                     world, job.task.colonyId(), villager.getBlockPos(), job.target);
 
+            // A entrada no alto não se alcança a pé: o acesso cavado desde a vila (MineAccess, 2026-10-22).
+            if (down.isPresent() && MineEntrance.outsideTheShaft(world, job.task.colonyId(), villager.getBlockPos())) {
+                if (MineAccess.atTheStart(world, job.task.colonyId(), villager.getBlockPos())
+                        && MineAccess.begin(world, villager, job)) {
+                    return false;
+                }
+
+                Optional<BlockPos> access = MineAccess.leg(world, job.task.colonyId());
+
+                if (access.isPresent()) {
+                    down = access;
+                }
+            }
+
             if (down.isPresent()) {
                 job.lease.reset();
 

@@ -298,6 +298,13 @@ public final class MineEntrance {
         return Optional.of(footing(world, route.getLast()));
     }
 
+    /** Se o mineiro está fora da escada desta mina — na superfície ou longe dela (MineAccess, 2026-10-22). */
+    static boolean outsideTheShaft(ServerWorld world, UUID colonyId, BlockPos miner) {
+        Optional<Mine> mine = VillageColonyMod.MINES.of(colonyId);
+
+        return mine.isPresent() && !nearTheShaft(world, miner, route(world, colonyId, mine.get()));
+    }
+
     /**
      * Na escada da mina: logo abaixo da boca (o primeiro lance, que pode ser a céu
      * aberto), ou debaixo da terra perto de alguma entrada. Quem está na superfície
@@ -365,7 +372,7 @@ public final class MineEntrance {
     }
 
     /** No nível de agora: no alcance dos ramais dele na horizontal e não acima da entrada. */
-    private static boolean insideTheLevel(BlockPos at, BlockPos levelEntry) {
+    static boolean insideTheLevel(BlockPos at, BlockPos levelEntry) {
         return Math.abs(at.getX() - levelEntry.getX()) <= LEVEL_REACH
                 && Math.abs(at.getZ() - levelEntry.getZ()) <= LEVEL_REACH
                 && at.getY() <= levelEntry.getY() + 2;

@@ -151,6 +151,10 @@ public final class MinerDetours {
         job.descent.reset();
         job.stalled = 0;
 
+        boolean access = job.accessDetour;
+
+        job.accessDetour = false;
+
         if (status == DetourWalker.Status.DONE) {
             VillageColonyMod.LOGGER.info(
                     "Miner {} is through its detour at {} — {} dug, {} placed",
@@ -159,7 +163,15 @@ public final class MinerDetours {
                     walker.dug(),
                     walker.placed());
 
+            if (access) {
+                MineAccess.dug(job.task.colonyId(), villager.getBlockPos());
+            }
+
             return false;
+        }
+
+        if (access) {
+            MineAccess.failed(job.task.colonyId(), "the tunnel stopped — " + walker.why());
         }
 
         MinerHands.giveUp(world, villager.getUuid(), job, "its detour failed — " + walker.why());

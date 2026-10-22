@@ -34,6 +34,20 @@ final class MinerTerrain implements Terrain {
         return new MinerTerrain(world, new WorldTerrain(world));
     }
 
+    /**
+     * Só cavar: nenhum vazio recebe bloco, nem dentro da montanha — o acesso da vila até a mina
+     * ({@link MineAccess}, decisão do autor de 2026-10-22).
+     */
+    static Terrain digOnly(ServerWorld world) {
+        Terrain base = new WorldTerrain(world);
+
+        return pos -> {
+            Cell cell = base.at(pos);
+
+            return cell == Cell.OPEN ? Cell.PASSAGE : cell;
+        };
+    }
+
     /** Qualquer terreno, com a regra do mineiro por cima. */
     static Function<ServerWorld, Terrain> over(Function<ServerWorld, Terrain> base) {
         return world -> new MinerTerrain(world, base.apply(world));

@@ -229,6 +229,9 @@ public final class MinerWork {
         /** Quantos desvios esta pedra já pediu. Zera com a pedra. */
         int detours;
 
+        /** Se o desvio em curso é o acesso cavado da vila até o nível da mina ({@link MineAccess}). */
+        boolean accessDetour;
+
         Job(Task task, BlockPos center) {
             this.task = task;
             this.center = center;

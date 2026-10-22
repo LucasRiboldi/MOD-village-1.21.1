@@ -191,6 +191,17 @@ public final class ReachMap {
         return reaches(measure(world, start.get(), areaOf(colony.bounds().get())), place, 2);
     }
 
+    /** Tudo o que se alcança a pé desde o centro, medido agora; vazio sem caixa ou sem chão no centro. */
+    static Set<BlockPos> reachableCells(ServerWorld world, Colony colony) {
+        Optional<BlockPos> start = startOf(world, colony);
+
+        if (colony.bounds().isEmpty() || start.isEmpty()) {
+            return Set.of();
+        }
+
+        return measure(world, start.get(), areaOf(colony.bounds().get()));
+    }
+
     /** O mapa de um lugar só, inteiro, para o teste: o que se alcança de {@code start} dentro de {@code area}. */
     static Set<BlockPos> measure(ServerWorld world, BlockPos start, VillageBounds area) {
         Sweep sweep = new Sweep(start, area);
