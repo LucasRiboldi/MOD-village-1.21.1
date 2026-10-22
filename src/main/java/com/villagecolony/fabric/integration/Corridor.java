@@ -31,6 +31,11 @@ import java.util.function.Predicate;
  * lado. Por isso nunca corre colado ao lado de outra rua: encostou, parou. Cada bloco segue o terreno com
  * degrau de no máximo um ({@link RoadPaving#groundNear}), passa pelas recusas da rua
  * ({@link RoadPaving#refusalAt}) e tem espaço para o corpo.
+ *
+ * <p>Na encosta, o corredor que pode cortar ({@code maxCut} &gt; 0) também desce ou sobe um bloco por vez
+ * cortando o chão do bioma acima dele, até {@code maxCut} de fundo ({@link LotTerraform#cutAbove}) — o
+ * degrau cortado na duna, escolha do autor de 2026-10-22. Cada bloco cortado custa um passo a mais: o
+ * terreno natural vence o corte. Nunca aterra.
  */
 public final class Corridor {
 
@@ -42,6 +47,12 @@ public final class Corridor {
 
     /** O que uma curva custa a mais que um bloco: a reta é o caminho. */
     static final int TURN_COST = 6;
+
+    /**
+     * Até quantos blocos de fundo o corredor da faixa anexada corta a encosta. A duna sul do deserto
+     * (0.3.88) fica 23 blocos acima da rua, e a melhor rampa reta até o platô pede 12.
+     */
+    public static final int MAX_CUT = 12;
 
     private Corridor() {
     }
@@ -82,6 +93,18 @@ public final class Corridor {
      */
     public static Optional<List<BlockPos>> plan(
             ServerWorld world, UUID colonyId, BlockPos start, Direction out, int maxLength,
+            Predicate<BlockPos> avoid, Consumer<String> stopped) {
+
+        return plan(world, colonyId, start, out, maxLength, 0, avoid, stopped);
+    }
+
+    /**
+     * O corredor que pode cortar a encosta até {@code maxCut} blocos de fundo; 0 segue só o terreno.
+     *
+     * @return os blocos a calçar, cada um na altura em que fica depois do corte
+     */
+    public static Optional<List<BlockPos>> plan(
+            ServerWorld world, UUID colonyId, BlockPos start, Direction out, int maxLength, int maxCut,
             Predicate<BlockPos> avoid, Consumer<String> stopped) {
 
         if (isPath(world, colonyId, start) || touchesPath(world, colonyId, start, out.getOpposite())) {
@@ -128,35 +151,43 @@ public final class Corridor {
 
                 Optional<BlockPos> ground = RoadPaving.groundNear(world, at.pos().offset(way), at.pos().getY());
 
-                if (ground.isEmpty()) {
-                    stopped.accept("a step of more than 1");
-                    continue;
-                }
-
-                if (isPath(world, colonyId, ground.get())) {
+                if (ground.isPresent() && isPath(world, colonyId, ground.get())) {
                     return Optional.of(trace(cameFrom, at));
                 }
 
-                Optional<String> refusal = refusal(world, at.pos(), ground.get(), avoid);
+                Map<BlockPos, Integer> steps = new java.util.LinkedHashMap<>();
 
-                if (refusal.isPresent()) {
-                    stopped.accept(refusal.get());
-                    continue;
+                if (ground.isEmpty()) {
+                    stopped.accept("a step of more than 1");
+                } else {
+                    Optional<String> refusal = refusal(world, at.pos(), ground.get(), avoid);
+
+                    if (refusal.isPresent()) {
+                        stopped.accept(refusal.get());
+                    } else {
+                        steps.put(ground.get(), 0);
+                    }
                 }
 
-                State next = new State(ground.get(), way, at.turns() + (turn ? 1 : 0),
-                        turn ? 1 : at.straight() + 1, at.length() + 1);
-                int reached = here + 1 + (turn ? TURN_COST : 0);
+                if (maxCut > 0) {
+                    cutSteps(world, at.pos(), way, maxCut, avoid, stopped).forEach(steps::putIfAbsent);
+                }
 
-                if (reached < cost.getOrDefault(next, Integer.MAX_VALUE)) {
-                    cost.put(next, reached);
-                    cameFrom.put(next, at);
+                for (Map.Entry<BlockPos, Integer> step : steps.entrySet()) {
+                    State next = new State(step.getKey(), way, at.turns() + (turn ? 1 : 0),
+                            turn ? 1 : at.straight() + 1, at.length() + 1);
+                    int reached = here + 1 + (turn ? TURN_COST : 0) + step.getValue();
 
-                    if (touchesPath(world, colonyId, next.pos(), way.getOpposite())) {
-                        touching.add(next);
+                    if (reached < cost.getOrDefault(next, Integer.MAX_VALUE)) {
+                        cost.put(next, reached);
+                        cameFrom.put(next, at);
+
+                        if (touchesPath(world, colonyId, next.pos(), way.getOpposite())) {
+                            touching.add(next);
+                        }
+
+                        open.add(next.withCost(reached));
                     }
-
-                    open.add(next.withCost(reached));
                 }
             }
         }
@@ -169,6 +200,46 @@ public final class Corridor {
             ServerWorld world, UUID colonyId, BlockPos start, Direction out, int maxLength, Predicate<BlockPos> avoid) {
 
         return plan(world, colonyId, start, out, maxLength, avoid, why -> { });
+    }
+
+    /**
+     * Os degraus cortados para o lado {@code way}: o chão um acima, no nível ou um abaixo de {@code from},
+     * com chão do bioma por cima que se pode tirar ({@link LotTerraform#cutAbove}), e quantos blocos sai —
+     * 0 para o degrau natural que sai de uma coluna cortada.
+     */
+    private static Map<BlockPos, Integer> cutSteps(
+            ServerWorld world, BlockPos from, Direction way, int maxCut, Predicate<BlockPos> avoid,
+            Consumer<String> stopped) {
+
+        Map<BlockPos, Integer> steps = new java.util.LinkedHashMap<>();
+        BlockPos column = from.offset(way);
+
+        for (int dy = 1; dy >= -1; dy--) {
+            BlockPos at = column.up(dy);
+            BlockState state = world.getBlockState(at);
+
+            if (!world.isInBuildLimit(at) || LotGround.isNothing(state) || !state.getFluidState().isEmpty()) {
+                continue;
+            }
+
+            java.util.OptionalInt depth = LotTerraform.cutAbove(world, at, maxCut);
+
+            if (depth.isEmpty()) {
+                stopped.accept("a cut deeper than " + maxCut + " or not of the biome ground");
+                continue;
+            }
+
+            // O degrau que sobe precisa de cabeça livre em cima de onde se está — livre já, ou livre
+            // depois do corte da própria coluna.
+            boolean head = dy <= 0 || world.getBlockState(from.up(2)).getCollisionShape(world, from.up(2)).isEmpty()
+                    || LotTerraform.cutAbove(world, from, maxCut).orElse(0) > 0;
+
+            if (head && !avoid.test(at) && RoadPaving.refusalOfTheGround(world, at, state).isEmpty()) {
+                steps.put(at, depth.getAsInt());
+            }
+        }
+
+        return steps;
     }
 
     /** O que impede este bloco de ser corredor, se algo impede. */

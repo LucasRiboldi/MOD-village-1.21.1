@@ -8,8 +8,10 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.Heightmap;
 
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * A terraplanagem do lote — fase 1 do plano do autor (15-10), aplicada em 2026-10-20.
@@ -76,6 +78,44 @@ public final class LotTerraform {
         }
 
         return true;
+    }
+
+    /**
+     * Quanto chão há acima de {@code ground} até o céu, se todo ele pode ser cortado — o corredor que
+     * corta degraus na encosta (Regra 70, autor 2026-10-22). Corta-se o que o lote cortaria
+     * ({@link #columnLevels}): chão do bioma, sem fluido nem fluido ao lado, sem obra da colônia nem
+     * peça da vila gerada; ar e planta no meio passam.
+     *
+     * @return quantos blocos há acima, 0 se nenhum; vazio se a coluna não deixa ou passa de {@code maxCut}
+     */
+    public static OptionalInt cutAbove(ServerWorld world, BlockPos ground, int maxCut) {
+        int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, ground.getX(), ground.getZ()) - 1;
+        int depth = top - ground.getY();
+
+        if (depth <= 0) {
+            return OptionalInt.of(0);
+        }
+
+        if (depth > maxCut) {
+            return OptionalInt.empty();
+        }
+
+        for (int y = ground.getY() + 1; y <= top; y++) {
+            BlockPos pos = new BlockPos(ground.getX(), y, ground.getZ());
+            BlockState state = world.getBlockState(pos);
+
+            if (LotGround.isNothing(state) && state.getFluidState().isEmpty()) {
+                continue;
+            }
+
+            if (!LotGround.isBiomeGround(world, pos) || !state.getFluidState().isEmpty()
+                    || BlockProtection.isColonyBuilt(pos) || besideFluid(world, pos)
+                    || (!LotGround.isNaturalGround(state) && BlockProtection.isVillageOriginal(world, pos))) {
+                return OptionalInt.empty();
+            }
+        }
+
+        return OptionalInt.of(depth);
     }
 
     /**

@@ -26,7 +26,7 @@ public class StripLotGameTest implements FabricGameTest {
 
     private static final int Y = 40;
 
-    /** A rota segue o terreno e contorna a parede pela passagem; sem passagem, não há rota. */
+    /** A rota segue o terreno e contorna a parede pela passagem; sem passagem, corta a parede — nunca sobe nela. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "strip_lot")
     public void thePathGoesAroundTheDuneAndNeverOverIt(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -63,13 +63,17 @@ public class StripLotGameTest implements FabricGameTest {
                 "o caminho virou mais de " + Corridor.MAX_TURNS + " vezes: " + cells);
         CorridorGameTest.assertOrthogonal(context, cells);
 
-        // Fecha a passagem: a duna barra tudo, e a rota não corta nem sobe.
+        // Fecha a passagem: sem volta, a rota corta a duna (autor, 2026-10-22) e passa no nível do chão.
         wall(context, 5, 6, 8);
 
-        context.assertTrue(StripLot.pathToTheRoad(
-                        world, UUID.randomUUID(), door, Direction.WEST, farAway.getX(), farAway.getZ(),
-                        new ColonyPos(1, 1, 1)).isEmpty(),
-                "com a duna fechada a rota ainda passou");
+        Optional<List<ColonyPos>> cut = StripLot.pathToTheRoad(
+                world, UUID.randomUUID(), door, Direction.WEST, farAway.getX(), farAway.getZ(), new ColonyPos(1, 1, 1));
+
+        context.assertTrue(cut.isPresent(), "com a duna fechada a rota não cortou caminho");
+        context.assertTrue(cut.get().stream().allMatch(cell -> cell.y() == door.getY()),
+                "a rota subiu na duna em vez de cortá-la: " + cut.get());
+        context.assertTrue(cut.get().stream().anyMatch(cell -> cell.x() == wallFrom.getX()),
+                "a rota não atravessou a duna: " + cut.get());
 
         context.complete();
     }

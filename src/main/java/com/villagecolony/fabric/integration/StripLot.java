@@ -218,7 +218,9 @@ public final class StripLot {
     /**
      * O caminho da porta até a rua: o corredor ({@link Corridor}) — retas de um bloco com curvas em ângulo
      * reto, saindo da porta na direção dela e parando no primeiro caminho que encostar, até
-     * {@link #MAX_PATH} blocos. Regra do autor de 2026-10-22, que substituiu a busca livre pelo terreno.
+     * {@link #MAX_PATH} blocos. Sem caminho pelo terreno, corta a encosta até {@link Corridor#MAX_CUT} de
+     * fundo. Regras do autor de 2026-10-22: o corredor substituiu a busca livre pelo terreno, e o degrau
+     * cortado vence a duna que não tem volta.
      *
      * @return as colunas a calçar, da porta até a última antes da rua; vazio sem caminho
      */
@@ -234,8 +236,11 @@ public final class StripLot {
             ServerWorld world, UUID colonyId, BlockPos door, Direction out,
             int originX, int originZ, ColonyPos size, Tally tally) {
 
-        return Corridor.plan(world, colonyId, door, out, MAX_PATH,
-                        at -> onTheLot(at, originX, originZ, size), tally::stopped)
+        java.util.function.Predicate<BlockPos> lot = at -> onTheLot(at, originX, originZ, size);
+        Optional<List<BlockPos>> natural = Corridor.plan(world, colonyId, door, out, MAX_PATH, lot, tally::stopped);
+
+        // O terreno natural primeiro: só se corta a encosta quando não há volta por ela.
+        return natural.or(() -> Corridor.plan(world, colonyId, door, out, MAX_PATH, Corridor.MAX_CUT, lot, tally::stopped))
                 .map(Corridor::asColonyPositions);
     }
 
