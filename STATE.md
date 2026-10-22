@@ -1,5 +1,20 @@
 # STATE — 2026-10-22
 
+> **0.3.88** (22-10, branch `fix/deserto-a1-c1-b1-d2`, **sem push, JAR instalado, não jogado** —
+> `FBB7FB55…9680`): resposta ao deserto jogado na 0.3.87 (Spark `CnNU79zqZ5`, nota 4,9; §11 do estudo).
+> **Regra 71** (autor): o mineiro não constrói para fora da montanha (céu aberto não recebe bloco no desvio)
+> e, se precisar construir, desce antes de ir de lado (`MinerTerrain`, `DetourMoves.Costs.MINER`); com a
+> entrada da mina inalcançável a pé, cava um acesso só cavando, da vila até o nível (`MineAccess`, escolha
+> do autor). **Regra 70** (autor): caminho é corredor de um bloco que sai da porta em reta, vira só a 90° e
+> para no primeiro caminho (`Corridor`, usado pelo `WorkPath` e pelo `StripLot`); o construtor só fecha
+> buraco no meio de uma reta (acabou a regra dos 3 lados, que espalhava caminho). **Faixa:** um lote achado
+> em outro lugar não encerra mais a faixa (`STRIP_AWAITS`), e a volta sem lote diz por quê. Verificado: test
+> 1562/0; runGametest 846/846 e 845/846 (KF-008, pastoreio, intocado, isolado 4/4); mutação derruba teste em
+> cada item. Ligação do acesso no `MinerSteps` sem teste próprio. **Próximo:** jogar ≥30 min e ler
+> *"digs the mine access"*, *"has a dug access"*, *"found no lot inside the annexed strip … path stopped
+> by"* e os caminhos novos.
+>
+
 > **0.3.87** (22-10, branch `fix/deserto-a1-c1-b1-d2`, **sem push, JAR instalado, não jogado** —
 > `5B4DC077…62DD`): resposta ao deserto jogado na 0.3.86 (Spark `j7jTrVIaPQ`, nota 3,7; análise no §10
 > de `docs/research/2026-10-21-deserto-ociosidade-alternativas.md`). Decisões do autor de 22-10:

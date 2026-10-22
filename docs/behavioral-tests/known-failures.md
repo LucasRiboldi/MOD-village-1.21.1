@@ -5,6 +5,15 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ---
 
+## KF-008 — `ShepherdHerdingGameTest.theShepherdLeadsALooseCowToTheFence` caiu uma vez na bateria inteira
+
+**ABERTO.** 22-10, branch `fix/deserto-a1-c1-b1-d2` (846 testes): caiu 1 vez em 2 baterias, sem exceção
+(tempo esgotado). Isolado (`-PgametestOnly=ShepherdHerding`) passou 4 de 4. A classe de produção
+(`ShepherdHerding`) não muda desde o `984f321f` (0.3.80), e nenhuma mudança da rodada toca o pastoreio.
+Mesmo padrão da KF-007: interferência que depende do arranjo das arenas. Hipótese, não medida.
+
+---
+
 ## KF-007 — `MinerDirectPathGameTest.theMinerWalksStraightWhenTheGameFindsTheWay` cai na bateria inteira
 
 **ABERTO.** 21-10, branch `fix/deserto-a1-c1-b1-d2`. A navegação do jogo não chega ao lugar de pé

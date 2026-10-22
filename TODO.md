@@ -43,6 +43,10 @@ próprias (madeira e argila com prova, descascar, ingrediente de superfície); `
       que mora lá (HomeMove); à noite o jogo já o leva para a cama. Bancada: 9,3 / 9,3 / 5,9 — na de
       5,9 todas as camas de cima eram de aldeões com ofício e o construtor não tinha para onde ir.
       Pendente 🟠: esse caso (decisão do autor: trocar com quem tem ofício? construir casa em cima?).
+      0.3.88 (deserto jogado na 0.3.87, nota 4,9, Spark CnNU79zqZ5): Regra 71 (mineiro não constrói
+      fora da montanha, desce antes de ir de lado, acesso cavado), Regra 70 (corredor de caminho), a faixa
+      continua esperando lote. **Falta jogo.** Pendente 🟡: caminhos em mancha já calçados não foram
+      desfeitos; a extensão de rua e o recuo de 3 não passam pelo `Corridor` (já são retos).
       0.3.87 (deserto jogado na 0.3.86, nota 3,7, Spark j7jTrVIaPQ; decisões do autor de 22-10): encalhe
       sem vaivém (BedTeleport 4,5), trigo pela semente mais rara e reserva de semente, mina insiste em 5
       pontos e só muda para boca alcançável, lote no fundo da faixa com caminho pelo terreno (A5, Regra 56).

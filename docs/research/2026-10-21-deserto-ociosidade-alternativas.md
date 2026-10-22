@@ -240,7 +240,36 @@ somem em 5 min. Sem efeito no MSPT.
 4. **Obra:** 0 lote aprovado em 28 min. A sessão anterior teve 2 em 57 min, então é o mesmo ritmo raro,
    não regressão.
 
-## 11. Ordem sugerida
+## 11. Jogo da 0.3.87 (22-10, 01:48–02:20, Spark `CnNU79zqZ5`) e a 0.3.88
+
+Versão confirmada (`villagecolony 0.3.87`). Relatório:
+[`docs/testing/relatorios/deserto-2026-10-22-0387.md`](../testing/relatorios/deserto-2026-10-22-0387.md)
+(nota 4,9; a anterior foi 3,7). TPS 20 o tempo todo, MSPT mediano 6,7 ms, mod em ~1,2% da thread.
+
+| Profissão | Medido | Leitura |
+|---|---|---|
+| Mineiro | encalhe **7%** (era 71%); 34d462b6 cavou 551 blocos | o vaivém da cama acabou |
+| Construtor | 71% ócio; 1 obra (casa média, 138 blocos) | lote raro, como antes |
+| Fundidor | 72% ócio, 1% trabalho | estoque cheio (arenito liso 256, arenito 355): vila madura, não defeito |
+| Fazendeiro | semeou trigo 5 e beterraba 5 (era 4 contra 27) | o trigo pela semente mais rara funciona; a roça produz pouco (16 colheitas) |
+| Pastor | 83% ócio, 32 abates | sem comida (trigo 1, beterraba 1); D2 ainda sem ceia na sessão |
+| Lenhador | 94% ócio | deserto quase sem árvore |
+| Pedreiro | dentro da Regra 51 | — |
+
+**Achados:**
+
+1. **O lote na faixa (A5) nunca disparou.** Às 01:57 uma casa achou lote perto de outra rua, e o
+   `RoadExtension.lotFound` limpou o `PENDING` que o `StripLot` usava. Mesmo assim os lotes aprovados
+   subiram de 3.082 para 12.327 sem nenhum caminho, e nada dizia o motivo. Corrigido em `70a345a2`
+   (`STRIP_AWAITS` próprio da faixa, e uma linha de telemetria no fim de cada volta sem lote).
+2. **O mineiro construía caminho para fora da duna.** Um desvio teve "0 dug, 8 placed", a caminho da
+   entrada da mina em 82,94,-434, que ficou inalcançável a sessão inteira. Duas regras do autor resolvem:
+   - `62501caf`: nada de bloco ao céu aberto no desvio do mineiro, e ele desce antes de ir de lado (Regra 71);
+   - `dd668591`: acesso cavado da vila até o nível, só cavando, quando a entrada não se alcança a pé.
+3. **Caminhos em mancha e em escada diagonal.** A regra dos três lados do `BuilderPaving` fechava cantos,
+   e o `WorkPath` trocava de eixo a cada passo. O corredor da Regra 70 (`aff29065`) troca os dois.
+
+## 12. Ordem sugerida
 
 1. **A1** (log da rua que para) + **C1** (alcance do `judge`) + **B1** (fundidor pede arenito ao pedreiro).
    Pequenos, sem decisão, um GameTest com mutação cada.
