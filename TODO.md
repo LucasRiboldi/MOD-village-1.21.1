@@ -43,6 +43,9 @@ próprias (madeira e argila com prova, descascar, ingrediente de superfície); `
       que mora lá (HomeMove); à noite o jogo já o leva para a cama. Bancada: 9,3 / 9,3 / 5,9 — na de
       5,9 todas as camas de cima eram de aldeões com ofício e o construtor não tinha para onde ir.
       Pendente 🟠: esse caso (decisão do autor: trocar com quem tem ofício? construir casa em cima?).
+      0.3.92: Regra 74 — cama mais perto do trabalho (BedPlan/BedChoice, 1×/dia ao amanhecer, troca se os
+      dois ganham). **Falta jogo.** Pendente 🟡: o carpinteiro, o pedreiro e o fundidor não marcam lugar no
+      diário (CRAFTED sem posição), então ficam onde estão.
       0.3.91 (deserto jogado na 0.3.90, nota 7,6, Spark LYMx4yHjKk): a faixa deu lote (curral, 486 blocos
       cortados, caminho de areia). Corrigido: a busca com corte travava 3 s (memória por passo, teto de
       50 ms); a bateria agora começa com o mundo limpo.

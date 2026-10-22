@@ -1,5 +1,25 @@
 # STATE — 2026-10-22
 
+> **0.3.92** (22-10, mesma branch da 0.3.91, PR #33): **Regra 74**, pedido do autor — cada aldeão dorme na
+> cama mais perto de onde trabalha.
+>
+> Escolhas do autor (todas as recomendadas):
+> - **Trabalho:** onde trabalhou de fato, a mediana das últimas ações com lugar do diário.
+> - **Cama ocupada:** troca se os dois andam menos; o sem ofício sempre cede.
+> - **Frequência:** uma vez por dia, ao amanhecer, com ganho mínimo de 16 blocos.
+> - **Baú:** acompanha a cama.
+>
+> A cama livre só vale se alcançada a pé da vila, e quem dorme não muda (`BedPlan` no Core, `BedChoice`).
+> No deserto (sessão 0.3.90), os mineiros dormiam a 70 e 97 blocos da mina.
+>
+> Verificado:
+> - `BedPlanTest` 11 casos e 3 GameTests (troca, cama livre só com trabalho medido, cama cercada não);
+> - duas mutações reprovam;
+> - test 1586/0, pitest 85,2%, bateria 857/857 ×2.
+>
+> **Próximo:** jogar e ler *"moves home from … — its work is at"* no amanhecer.
+>
+
 > **0.3.91** (22-10, branch `fix/corredor-teto-de-tempo`): o jogo da 0.3.90 (Spark `LYMx4yHjKk`) teve **nota
 > 7,6** (era 4,0). A faixa sul deu o primeiro lote: um curral no platô, com 486 blocos cortados e caminho de
 > areia num vale de 3. A busca com corte, porém, travou o servidor 7 vezes, de 2,6 a 3,7 s.

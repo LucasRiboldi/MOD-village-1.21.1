@@ -101,6 +101,7 @@ public final class StrandedEscape {
 
 
         HomeMove.pass(world); // quem desistiu abaixo do trabalho muda de casa (2026-10-21)
+        BedChoice.pass(world); // ao amanhecer, cada um vai para a cama mais perto do trabalho (Regra 74)
 
         for (UUID workerId : StrandedWorkers.all()) {
             pass(world, workerId);
