@@ -201,7 +201,46 @@ não acha caminho; isolado 6/6). A bisseção em 22 baterias está na KF-007
 (`docs/behavioral-tests/known-failures.md`): a queda aparece com o arranjo de 830+ testes, já sem o D2,
 e nenhuma das quatro mudanças toca a navegação.
 
-## 10. Ordem sugerida
+## 10. Jogo da 0.3.86 (21-10, 20:37–21:08, Spark `j7jTrVIaPQ`)
+
+Versão confirmada no log (`villagecolony 0.3.86`). Sessão de 28 min, a metade da anterior. Relatório:
+[`docs/testing/relatorios/deserto-2026-10-21-0386.md`](../testing/relatorios/deserto-2026-10-21-0386.md) (nota 3,7).
+
+**Desempenho:** TPS 20, salvo os 3 minutos de carga (8,6). MSPT mediano 6–8 ms. O mod ocupa ~1% da
+thread. As entidades subiram de 206 para 335 em 20:43–20:49 e voltaram a ~215: são as folhas das 20
+árvores que o lenhador derrubou levando só as toras ("0 leaves"), apodrecendo e soltando itens, que
+somem em 5 min. Sem efeito no MSPT.
+
+**O que as mudanças fizeram:**
+
+| Item | Resultado em jogo |
+|---|---|
+| A1 | **Funciona.** A rua da faixa anexada para em *"0 of 16 blocks — something above (sandstone)"*: a duna sobe 2+ blocos logo na entrada da faixa. Nas outras pontas: arenito tratado como "not natural ground" (9×), água (4×), duna (vários), tapete da vila (Regra 3) |
+| C1 | Assinatura sumiu: 25 "fora de alcance", **0** parados no próprio destino (eram 2). Prova fraca: houve só 1 desvio |
+| B1 | **Funciona.** Pedreiro fez 34 arenitos em 13 pedidos (moeu 127 areias de pedra); o fundidor fundiu 144 arenitos lisos (eram 32 em 57 min). Custo: o fundidor solta e repega a fornalha a cada ~30 s (60 "leaves the furnace") |
+| D2 | **Não exercido:** nenhuma ceia na sessão ("shared supper" 0) |
+
+**Achados novos:**
+
+1. **Mineiros 71% encalhados** (eram 15%), e **não vem do C1**: os dois param a caminho da boca da mina,
+   no alto da duna (y84–87, vila em y63–80), e o resgate entra num vaivém: o `ClimbOut` não acha degrau →
+   túnel; o túnel anda `TUNNEL_LENGTH` blocos por caminho aberto e devolve o modo a degrau sem log
+   (`ClimbReshape.java:88`); a direção se inverte (x=110 ↔ 113), e o `BedTeleport.attempt` zera a conta
+   porque ele "saiu" de 1,5 bloco (`BedTeleport.java:53`). 34d462b6 ficou 12 min assim (216 trocas) e
+   c37e298f 17 min (200 trocas), até a cama pela noite. Correção candidata: contar a tentativa contra a
+   posição de partida do episódio, com raio maior que o túnel, ou contra a melhor distância até a casa.
+2. **A rua recusa arenito dentro da vila gerada**: `VillageRoad.isPavableGround` aceita ali só grama,
+   terra e areia, por decisão (Regra 3). Hipótese, não medida: o chão firme da 0.3.84 (`DesertGround`,
+   18.609 blocos de areia viraram arenito sob a superfície) expõe arenito onde a areia de cima sai, e a
+   rua o lê como peça original. Para medir: marcar no log se o bloco recusado é um dos firmados.
+3. **Pastor:** procriar até 12 e abater acima de 8 (`FlockHarvest`) é a "faixa de colheita" decidida em
+   14-10; o comentário diz que "um não desfaz o outro", mas toda comida de cria vira carne (36 abates em
+   28 min) e o "no food" segue (porco 22×, ovelha e vaca 26× cada) com trigo 1 e beterraba 2–3 no
+   estoque. A reserva do D2 vai alimentar esse ciclo.
+4. **Obra:** 0 lote aprovado em 28 min. A sessão anterior teve 2 em 57 min, então é o mesmo ritmo raro,
+   não regressão.
+
+## 11. Ordem sugerida
 
 1. **A1** (log da rua que para) + **C1** (alcance do `judge`) + **B1** (fundidor pede arenito ao pedreiro).
    Pequenos, sem decisão, um GameTest com mutação cada.
