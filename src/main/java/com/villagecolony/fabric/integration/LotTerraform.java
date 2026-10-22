@@ -156,8 +156,13 @@ public final class LotTerraform {
         }
 
         int baseY = project.origin().y() + blueprint.streetLayer();
+        int[] filled = new int[1];
         int moved = levelFootprint(world, project.origin().x(), project.origin().z(),
-                blueprint.size().x(), blueprint.size().z(), baseY, taken);
+                blueprint.size().x(), blueprint.size().z(), baseY, taken, filled);
+
+        // O aterro é chão que surge: uma linha por lote, com o total (Regra 111).
+        Supplies.record(com.villagecolony.core.coordination.SupplyException.FOUNDATION_GROUND, project.colonyId(),
+                "lot fill", filled[0]);
 
         if (moved > 0) {
             moved += cutRing(world, project.origin().x(), project.origin().z(),
@@ -185,6 +190,7 @@ public final class LotTerraform {
 
     static int cutRing(ServerWorld world, int originX, int originZ, int sizeX, int sizeZ, int baseY,
             java.util.Map<Item, Integer> taken) {
+        int[] filled = new int[1];
         int moved = 0;
 
         for (int dx = -RING; dx < sizeX + RING; dx++) {
@@ -204,7 +210,7 @@ public final class LotTerraform {
                     continue;
                 }
 
-                moved += levelColumn(world, x, z, ground.get().getY(), baseY, taken);
+                moved += levelColumn(world, x, z, ground.get().getY(), baseY, taken, filled);
             }
         }
 
@@ -234,6 +240,12 @@ public final class LotTerraform {
 
     static int levelFootprint(ServerWorld world, int originX, int originZ, int sizeX, int sizeZ, int baseY,
             java.util.Map<Item, Integer> taken) {
+        return levelFootprint(world, originX, originZ, sizeX, sizeZ, baseY, taken, new int[1]);
+    }
+
+    /** O mesmo, contando em {@code filled[0]} quantos blocos de chão o aterro pôs (Regra 111). */
+    static int levelFootprint(ServerWorld world, int originX, int originZ, int sizeX, int sizeZ, int baseY,
+            java.util.Map<Item, Integer> taken, int[] filled) {
         int moved = 0;
 
         for (int dx = 0; dx < sizeX; dx++) {
@@ -247,7 +259,7 @@ public final class LotTerraform {
                     continue;
                 }
 
-                moved += levelColumn(world, x, z, ground.get().getY(), baseY, taken);
+                moved += levelColumn(world, x, z, ground.get().getY(), baseY, taken, filled);
             }
         }
 
@@ -255,7 +267,7 @@ public final class LotTerraform {
     }
 
     private static int levelColumn(ServerWorld world, int x, int z, int groundY, int baseY,
-            java.util.Map<Item, Integer> taken) {
+            java.util.Map<Item, Integer> taken, int[] filled) {
         int moved = 0;
 
         // A planta de cima da coluna cortada sairia flutuando: vai junto.
@@ -282,6 +294,7 @@ public final class LotTerraform {
             BlockPos pos = new BlockPos(x, y, z);
             world.setBlockState(pos, VillageBiomes.foundationGroundAt(world, pos).getDefaultState(), Block.NOTIFY_ALL);
             moved++;
+            filled[0]++;
         }
 
         return moved;

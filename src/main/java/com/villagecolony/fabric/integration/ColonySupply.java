@@ -284,6 +284,8 @@ public final class ColonySupply {
 
         VillageColonyMod.LOGGER.info(
                 "The colony received {} x{} — drop ingredients appear on their own", item, amount);
+        Supplies.record(com.villagecolony.core.coordination.SupplyException.AUTOMATIC_DROP, null,
+                net.minecraft.registry.Registries.ITEM.getId(item).getPath(), amount);
 
         return true;
     }

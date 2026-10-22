@@ -105,6 +105,7 @@ final class PostGrass {
         }
 
         world.setBlockState(chosen, Blocks.GRASS_BLOCK.getDefaultState(), Block.NOTIFY_ALL);
+        com.villagecolony.fabric.integration.Supplies.record(com.villagecolony.core.coordination.SupplyException.GRASS_FOR_THE_SHEEP, null, "grass_block", 1);
         VillageColonyMod.LOGGER.info("Grass grew at {} for the sheep {} {}",
                 chosen.toShortString(), structureFloor ? "in the pen at" : "beside the post at", anchor.toShortString());
 

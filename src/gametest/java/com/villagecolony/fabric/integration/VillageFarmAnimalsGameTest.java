@@ -46,6 +46,10 @@ public class VillageFarmAnimalsGameTest implements FabricGameTest {
         List<AnimalEntity> animals = VillageFarmAnimals.seedInitial(world, colony);
 
         try {
+            // Regra 111: os animais da fundação são suprimento excepcional, e ficam contados.
+            context.assertTrue(Supplies.sessionCount(colony.id(), com.villagecolony.core.coordination.SupplyException
+                            .FOUNDING_ANIMALS) == animals.size(),
+                    "a fundação não registrou os " + animals.size() + " animais como suprimento");
             context.assertTrue(animals.size() == VillageFarmAnimals.EACH * VillageFarmAnimals.SPECIES.size(),
                     "deviam nascer 8 bichos e nasceram " + animals.size());
 

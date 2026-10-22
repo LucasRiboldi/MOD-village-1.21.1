@@ -59,7 +59,8 @@ def reason_of(detail):
 def summarize(records):
     """{profissão: {...}} e {aldeão: {...}} com as contagens e medianas."""
     by_prof = defaultdict(lambda: {"events": Counter(), "actions": Counter(), "amount": Counter(),
-                                   "done_ticks": [], "workers": set(), "reasons": Counter()})
+                                   "done_ticks": [], "workers": set(), "reasons": Counter(),
+                                   "codes": Counter()})
     by_worker = defaultdict(lambda: {"prof": "", "events": Counter(), "actions": Counter(),
                                      "released_tasks": Counter()})
     first = min((r.get("t", 0) for r in records), default=0)
@@ -69,6 +70,9 @@ def summarize(records):
         prof, worker, action = r.get("prof", "NONE"), r.get("worker", "?"), r.get("action", "?")
         p, w = by_prof[prof], by_worker[worker]
         p["workers"].add(worker)
+        # O código único de bloqueio (Regra 112), gravado pelo diário desde a 0.3.93.
+        if r.get("code"):
+            p["codes"][r["code"]] += 1
         w["prof"] = prof
         if action in TASK_EVENTS:
             p["events"][action] += 1
@@ -122,6 +126,12 @@ def render(by_prof, by_worker, minutes):
         out.append("Motivos de recusa e desistência (os mais frequentes por profissão):")
         for prof, reason, n in reasons:
             out.append(f"  {prof:<10} {n:>4}× {reason}")
+    codes = [(prof, code, n) for prof in sorted(by_prof) for code, n in by_prof[prof]["codes"].most_common()]
+    if codes:
+        out.append("")
+        out.append("Por código de bloqueio (Regra 112):")
+        for prof, code, n in codes:
+            out.append(f"  {prof:<10} {n:>4}× {code}")
     return "\n".join(out)
 
 

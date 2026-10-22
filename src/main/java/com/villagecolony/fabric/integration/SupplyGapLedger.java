@@ -61,6 +61,8 @@ public final class SupplyGapLedger {
         VillageColonyMod.LOGGER.warn("VC_SUPPLY_ERROR version=2 piece={} profession={} attempts={} gap={} reason={}",
                 Registries.ITEM.getId(item), profession, attempts, reason, why);
         record(world, colonyId, item, count, profession, reason, why);
+        Supplies.record(com.villagecolony.core.coordination.SupplyException.MISSING_PIECE, colonyId,
+                Registries.ITEM.getId(item).getPath(), count);
     }
 
     /** Grava um caso. Falha de disco vira um aviso, uma vez: a obra não pode parar por isso. */

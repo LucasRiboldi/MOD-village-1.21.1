@@ -125,6 +125,8 @@ public final class BuilderPlacement {
             BlockShaping.groundFor(world, state, target);
             world.setBlockState(target, state, Block.NOTIFY_ALL);
             project.markPlaced(block);
+            com.villagecolony.fabric.integration.Supplies.record(com.villagecolony.core.coordination.SupplyException.SHAPED_GROUND, project.colonyId(),
+                    block.block().path(), 1);
 
             return true;
         }
@@ -149,7 +151,10 @@ public final class BuilderPlacement {
 
         // Cama, porta e baú não ficam de fora por falta de apoio: ganham o chão embaixo (C-02, 2026-10-22).
         if (!state.canPlaceAt(world, target) && FunctionalPieces.isFunctional(state)) {
-            FunctionalPieces.support(world, target, state);
+            if (FunctionalPieces.support(world, target, state)) {
+                com.villagecolony.fabric.integration.Supplies.record(com.villagecolony.core.coordination.SupplyException.FOUNDATION_GROUND, project.colonyId(),
+                        "ground under " + block.block().path(), 1);
+            }
         }
 
         if (!state.canPlaceAt(world, target) && project.failsForTheLastTime(block)) {
@@ -208,6 +213,8 @@ public final class BuilderPlacement {
         if (taken.isEmpty() && AppearingPieces.appears(material.get())) {
             world.setBlockState(target, state, Block.NOTIFY_ALL);
             project.markPlaced(block);
+            com.villagecolony.fabric.integration.Supplies.record(com.villagecolony.core.coordination.SupplyException.APPEARING_PIECE, project.colonyId(),
+                    block.block().path(), 1);
             ActionJournal.action(workerId, "PLACED", block.block().path(), 1, target, "appeared");
             BuildHelper.placed(workerId);
             job.placed++;
