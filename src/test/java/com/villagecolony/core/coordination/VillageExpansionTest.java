@@ -170,4 +170,89 @@ class VillageExpansionTest {
 
         assertTrue(VillageExpansion.sweptWithoutLot(colony));
     }
+
+    @Test
+    void theScoreWeighsFlatGroundAgainstWaterAndBuildings() {
+        assertEquals(30 - 2 * 4 - 3 * 2, new SideSurvey(Side.NORTH, 40, 30, 4, 2, false).score());
+    }
+
+    @Test
+    void exactlyHalfFlatIsStillUsable() {
+        assertTrue(new SideSurvey(Side.NORTH, 40, 20, 0, 0, false).usable());
+        assertFalse(new SideSurvey(Side.NORTH, 40, 19, 0, 0, false).usable());
+    }
+
+    @Test
+    void onATieTheFirstMeasuredSideWins() {
+        assertEquals(Optional.of(Side.WEST), VillageExpansion.choose(List.of(
+                new SideSurvey(Side.WEST, 40, 30, 0, 0, false),
+                new SideSurvey(Side.EAST, 40, 30, 0, 0, false))).map(SideSurvey::side));
+    }
+
+    @Test
+    void theRankingDropsTheUnusableAndPutsTheBestFirst() {
+        List<SideSurvey> ranked = VillageExpansion.ranked(List.of(
+                new SideSurvey(Side.NORTH, 40, 22, 0, 0, false),
+                new SideSurvey(Side.SOUTH, 40, 10, 0, 0, false),
+                new SideSurvey(Side.EAST, 40, 36, 0, 0, false),
+                new SideSurvey(Side.WEST, 40, 38, 0, 0, true)));
+
+        assertEquals(List.of(Side.EAST, Side.NORTH), ranked.stream().map(SideSurvey::side).toList());
+    }
+
+    /** A5, 2026-10-22: a faixa anexada espera o lote dela; um lote achado em outro lugar não a encerra. */
+    @Test
+    void theAnnexedStripWaitsForItsOwnLot() {
+        UUID colony = UUID.randomUUID();
+
+        assertFalse(VillageExpansion.hasPendingStrip(colony));
+        assertEquals(Optional.empty(), VillageExpansion.sideOf(colony));
+
+        VillageExpansion.annexed(colony, Side.SOUTH);
+
+        assertTrue(VillageExpansion.hasPendingStrip(colony));
+        assertEquals(Optional.of(Side.SOUTH), VillageExpansion.sideOf(colony));
+
+        VillageExpansion.lotFound(colony);
+
+        assertTrue(VillageExpansion.hasPendingStrip(colony), "um lote em outro lugar encerrou a faixa");
+
+        VillageExpansion.stripLotOpened(colony);
+
+        assertFalse(VillageExpansion.hasPendingStrip(colony));
+        assertEquals(Optional.of(Side.SOUTH), VillageExpansion.sideOf(colony), "o lado anexado continua o da rua");
+    }
+
+    @Test
+    void clearingForgetsTheStripTheSideAndTheEdgeCount() {
+        UUID colony = UUID.randomUUID();
+
+        VillageExpansion.annexed(colony, Side.EAST);
+
+        for (int i = 0; i < VillageExpansion.EDGE_EVERY - 2; i++) {
+            VillageExpansion.buildOpened(colony);
+        }
+
+        VillageExpansion.clearAll();
+        VillageExpansion.buildOpened(colony);
+
+        assertFalse(VillageExpansion.hasPendingStrip(colony));
+        assertEquals(Optional.empty(), VillageExpansion.sideOf(colony));
+        assertFalse(VillageExpansion.isEdgeTurn(colony), "a contagem de obras não recomeçou");
+    }
+
+    @Test
+    void clearingForgetsTheEdgeTurn() {
+        UUID colony = UUID.randomUUID();
+
+        for (int i = 0; i < VillageExpansion.EDGE_EVERY - 1; i++) {
+            VillageExpansion.buildOpened(colony);
+        }
+
+        assertTrue(VillageExpansion.isEdgeTurn(colony), "o cenário não chegou à vez da borda");
+
+        VillageExpansion.clearAll();
+
+        assertFalse(VillageExpansion.isEdgeTurn(colony), "a vez da borda sobreviveu à limpeza");
+    }
 }
