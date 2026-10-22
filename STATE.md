@@ -1,6 +1,7 @@
 # STATE — 2026-10-22
 
-> **0.3.89** (22-10, branch `fix/deserto-a1-c1-b1-d2`, **sem push, JAR instalado, não jogado** —
+> **0.3.89** (22-10, branch `fix/deserto-a1-c1-b1-d2`, **na `main` pelo PR #31, JAR instalado; o jogo fechou com
+> erro em 22-10 e o crash report ainda não foi lido** —
 > `2F8E0DDD…B21C`): resposta ao deserto jogado na 0.3.88 (Spark `YFIroI1U1x`, nota 4,0; §12 do estudo).
 > Itens:
 > - **Fazendeiro:** a 3 blocos alcança a planta, com a borda incluída (falhava 10×).
@@ -25,7 +26,7 @@
 > annexed strip"*, o caminho de areia nas ruas novas e a separação dos currais.
 >
 
-> **0.3.88** (22-10, branch `fix/deserto-a1-c1-b1-d2`, **sem push, JAR instalado, não jogado** —
+> **0.3.88** (22-10, branch `fix/deserto-a1-c1-b1-d2`, **na `main` pelo PR #31, JAR instalado** —
 > `FBB7FB55…9680`): resposta ao deserto jogado na 0.3.87 (Spark `CnNU79zqZ5`, nota 4,9; §11 do estudo).
 > **Regra 71** (autor): o mineiro não constrói para fora da montanha (céu aberto não recebe bloco no desvio)
 > e, se precisar construir, desce antes de ir de lado (`MinerTerrain`, `DetourMoves.Costs.MINER`); com a
@@ -40,7 +41,7 @@
 > by"* e os caminhos novos.
 >
 
-> **0.3.87** (22-10, branch `fix/deserto-a1-c1-b1-d2`, **sem push, JAR instalado, não jogado** —
+> **0.3.87** (22-10, branch `fix/deserto-a1-c1-b1-d2`, **na `main` pelo PR #31, JAR instalado** —
 > `5B4DC077…62DD`): resposta ao deserto jogado na 0.3.86 (Spark `j7jTrVIaPQ`, nota 3,7; análise no §10
 > de `docs/research/2026-10-21-deserto-ociosidade-alternativas.md`). Decisões do autor de 22-10:
 > **encalhe** — o vaivém degrau/túnel de 3 blocos zerava a conta da cama; agora conta como o mesmo lugar
@@ -55,7 +56,7 @@
 > linhas *"finds a lot inside the annexed strip"*, *"keeps its place"* e o tempo de encalhe dos mineiros.
 >
 
-> **0.3.86** (21-10, branch `fix/deserto-a1-c1-b1-d2`, **sem push, JAR instalado, não jogado** —
+> **0.3.86** (21-10, branch `fix/deserto-a1-c1-b1-d2`, **na `main` pelo PR #31, JAR instalado** —
 > `4A56148A…C93C`): resposta ao deserto jogado na 0.3.85 (Spark `IAXTyE0LXM`, nota 6,1; relatório
 > `docs/testing/relatorios/deserto-2026-10-21.md`, estudo `docs/research/2026-10-21-deserto-ociosidade-alternativas.md`).
 > A vila ficou 34 de 57 min sem obra porque **não havia lote** (a busca termina as voltas; não é falta
@@ -229,8 +230,10 @@ expediente; `MINED`/min > 0,8; nenhuma profissão em laço de recusa visível no
 ## Branches e processo
 
 **`main` é a linha oficial** (ADR-035 §2). B1 resolvido: a `claude/autossuficiencia` foi integrada
-(0.3.25→0.3.55) e os ciclos seguintes (0.3.56→0.3.59) são branches curtas por PR. Ciclo atual:
-`fix/miner-directpath-superficie` (0.3.59 + reavaliação + plano), ainda sem push/merge.
+(0.3.25→0.3.55) e os ciclos seguintes são branches curtas por PR. Último merge: PR #31
+(`fix/deserto-a1-c1-b1-d2`, até a 0.3.89); nenhuma branch remota tem commit fora da `main`, exceto a
+`claude/opcao-b-e-plano-de-testes` (9 commits de 07-10, versão 0.3.7, nunca mergeados; se o conteúdo foi
+refeito depois na `main` não foi verificado item a item).
 
 ## O que o próximo jogo precisa mostrar
 
