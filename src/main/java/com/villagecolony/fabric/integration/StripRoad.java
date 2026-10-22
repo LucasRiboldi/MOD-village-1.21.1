@@ -11,9 +11,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * A rua que entra na faixa anexada — Regra 56 D. O lote só nasce encostado em rua, e no
- * playtest da 0.3.40 a vila anexou 16 blocos a leste, não havia ponta de rua virada
- * para lá, a rua cresceu para oeste e a faixa ficou vazia.
+ * A rua que entra na faixa anexada — Regra 56 D. No playtest da 0.3.40 a vila anexou 16
+ * blocos a leste, não havia ponta de rua virada para lá, a rua cresceu para oeste e a faixa
+ * ficou vazia. Quando esta rua não anda (duna na entrada), o lote nasce dentro da faixa com o
+ * caminho até a rua ({@link StripLot}, emenda A5 de 2026-10-22).
  *
  * <p>Na faixa de {@link #BAND} blocos por dentro do lado anexado, a vila acha a rua mais
  * avançada para aquele lado (a ponta virada para ele primeiro) e começa ali um trecho

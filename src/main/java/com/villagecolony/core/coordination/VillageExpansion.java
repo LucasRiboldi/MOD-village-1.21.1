@@ -184,6 +184,11 @@ public final class VillageExpansion {
         PENDING.add(colonyId);
     }
 
+    /** Se a faixa anexada desta colônia ainda não deu lote — a vez do lote na faixa (StripLot, 2026-10-22). */
+    public static boolean hasPendingStrip(UUID colonyId) {
+        return PENDING.contains(colonyId) && SIDE.containsKey(colonyId);
+    }
+
     /** Para onde a vila está crescendo, se ela já escolheu. */
     public static Optional<Side> sideOf(UUID colonyId) {
         return Optional.ofNullable(SIDE.get(colonyId));

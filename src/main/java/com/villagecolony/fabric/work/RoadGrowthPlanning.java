@@ -12,6 +12,7 @@ import com.villagecolony.core.construction.model.ConstructionReach;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.coordination.IdleReason;
+import com.villagecolony.core.coordination.VillageExpansion;
 import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
@@ -23,6 +24,7 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.integration.RoadExtension;
+import com.villagecolony.fabric.integration.StripLot;
 import com.villagecolony.fabric.integration.SweepLog;
 import com.villagecolony.fabric.integration.SitePreparation;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
@@ -75,7 +77,8 @@ final class RoadGrowthPlanning {
         if (RoadExtension.keepGrowing(world, colony.id(), paving.get())
                 != RoadExtension.Outcome.EXTENDED) {
 
-            return Optional.empty();
+            // A rua da faixa parou: o lote nasce dentro dela, com o caminho (StripLot, A5).
+            return lotInTheStrip(world, colony, blueprint, plans, builders);
         }
 
         IdleLog.clear(colony.id(), ConstructionPlanner.SUBJECT);
@@ -87,6 +90,31 @@ final class RoadGrowthPlanning {
                         SiteOpening.footprintsFor(plans),
                         RoadExtension.justPaved(colony.id()))
                 .flatMap(beside -> SiteOpening.open(world, colony, beside, plans, blueprint, builders));
+    }
+
+    /**
+     * O lote dentro da faixa anexada que ainda não deu lote, com o caminho até a rua — decisão do autor
+     * de 2026-10-22 (A5, emenda à Regra 56 D). Ver {@link StripLot}.
+     */
+    static Optional<ConstructionProject> lotInTheStrip(
+            ServerWorld world, Colony colony, Blueprint blueprint, List<Blueprint> plans, int builders) {
+
+        Optional<Side> side = VillageExpansion.sideOf(colony.id());
+
+        if (!VillageExpansion.hasPendingStrip(colony.id()) || side.isEmpty() || colony.bounds().isEmpty()) {
+            return Optional.empty();
+        }
+
+        Optional<ConstructionProject> opened = StripLot.find(
+                        world, colony.id(), colony.bounds().get(), side.get(), SiteOpening.footprintsFor(plans))
+                .flatMap(site -> SiteOpening.open(world, colony, site, plans, blueprint, builders));
+
+        if (opened.isPresent()) {
+            RoadExtension.lotFound(colony.id());
+            IdleLog.clear(colony.id(), ConstructionPlanner.SUBJECT);
+        }
+
+        return opened;
     }
 
     /**
@@ -118,6 +146,13 @@ final class RoadGrowthPlanning {
         if (VillageExpansionSurvey.sweptWithoutLot(world, colony).isPresent()
                 && RoadExtension.isGrowing(colony.id())) {
             return keepGrowing(world, colony, blueprint, plans, builders);
+        }
+
+        // A faixa anexada ainda sem lote: antes de calçar outra ponta, o lote dentro dela (A5).
+        Optional<ConstructionProject> inTheStrip = lotInTheStrip(world, colony, blueprint, plans, builders);
+
+        if (inTheStrip.isPresent()) {
+            return inTheStrip;
         }
 
         Optional<ResourceId> paving = VillageRoad.pavingFor(
