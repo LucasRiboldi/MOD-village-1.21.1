@@ -40,6 +40,24 @@ public final class DetourMoves {
     private DetourMoves() {
     }
 
+    /**
+     * Quanto custa construir para andar: cavar descendo, cavar no mesmo nível, cavar subindo e pôr o piso.
+     *
+     * <p>{@link #DEFAULT} é o de sempre. {@link #MINER} é a regra do autor de 2026-10-22: o mineiro que
+     * precisa construir para se locomover vai para a profundidade, e não para os lados — cavar de lado
+     * custa o dobro, subindo o triplo, e pôr bloco o dobro.
+     */
+    public record Costs(int digDown, int digLevel, int digUp, int place) {
+
+        public static final Costs DEFAULT = new Costs(DIG, DIG, DIG, PLACE);
+
+        public static final Costs MINER = new Costs(DIG, DIG * 2, DIG * 3, PLACE * 2);
+
+        int dig(int dy) {
+            return dy < 0 ? digDown : dy == 0 ? digLevel : digUp;
+        }
+    }
+
     /** O que o passo pede: quais células abrir, em ordem, e onde pôr bloco. */
     public record Actions(List<ColonyPos> dig, List<ColonyPos> place, int cost) {
 
@@ -57,6 +75,13 @@ public final class DetourMoves {
      */
     public static Optional<Actions> actions(
             Terrain terrain, ColonyPos from, ColonyPos to, Set<ColonyPos> keep) {
+
+        return actions(terrain, from, to, keep, Costs.DEFAULT);
+    }
+
+    /** O mesmo, com o custo de construir de {@code costs}. */
+    public static Optional<Actions> actions(
+            Terrain terrain, ColonyPos from, ColonyPos to, Set<ColonyPos> keep, Costs costs) {
 
         int dx = to.x() - from.x();
         int dy = to.y() - from.y();
@@ -120,7 +145,7 @@ public final class DetourMoves {
         }
 
         return Optional.of(new Actions(dig, place,
-                cost + dig.size() * DIG + place.size() * PLACE));
+                cost + dig.size() * costs.dig(dy) + place.size() * costs.place()));
     }
 
     /**
