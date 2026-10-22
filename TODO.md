@@ -6,6 +6,33 @@ inteiro). Estado vivo: `STATE.md`. Plano de melhoria: `docs/technical/Plano-Melh
 
 Prioridade: 🔴 bloqueia · 🟠 importante · 🟡 melhoria · 🟢 futuro.
 
+## Produção futura (estudo "Regras v2", 2026-10-22)
+
+Guardado a pedido do autor para as próximas versões. Avaliação ponto a ponto em
+`docs/research/2026-10-22-avaliacao-regras-v2.md`; numeração 1–112 mantida.
+
+- [ ] 🟠 **Configuração** (R-153/154) — desenho com decisões do autor em
+      `docs/research/2026-10-22-desenho-configuracao.md` §8: por mundo, sobreposição por colônia
+      (colônia → mundo → padrão), arquivo `saves/<mundo>/villagecolony/config.json` + `/vc config
+      list|get|set|reset|reload`, operador nível 2, `VC_CONFIG` a cada mudança. F1 = tabela da §2
+      inteira (14 ajustes) até o autor dizer outra coisa. Falta implementar.
+- [ ] 🟡 **Ausência com invalidação por evento** (R-021/R-027): `KnownAbsent` só expira pelo relógio
+      (1 dia); invalidar quando o alcance cresce, aparece rota nova ou o terreno muda.
+- [ ] 🟡 **Contrato de tarefa** (R-047): prazo de progresso e critério de sucesso declarados na `Task`;
+      centralizar os prazos hoje espalhados por ofício (R-050).
+- [ ] 🟡 **Estados de disponibilidade** (R-019): disponível, inacessível, não encontrado,
+      temporariamente indisponível, não examinado — hoje espalhados.
+- [ ] 🟡 **Bateria de escassez** (R-158): falta total de madeira, água, semente, animal, combustível,
+      ferramenta, baú livre e lote; esperado: alternativa válida ou bloqueio explícito.
+- [ ] 🟡 **Animal inacessível não conta como plantel** (R-107).
+- [ ] 🟡 **Cobrir com teste o registro de cada suprimento** (Regra 111): só a fundação tem asserção.
+- [ ] 🟢 **Área protegida pelo jogador** (R-035) — sistema novo; sem decisão.
+- [ ] 🟢 **Transporte físico de itens** (R-140 a R-142) — hoje a transferência entre baús é
+      instantânea; sistema novo e grande; sem decisão.
+- [ ] 🟢 **Itens de outros mods** (R-026) — sem decisão.
+- [ ] 🟢 **Adaptador para versões futuras do Minecraft** (R-003/R-163) — o Core já não depende do jogo;
+      só com ambiente da versão.
+
 ## 🔴 Biomas — o mod em todos os biomas (bancada de 20-10, 0.3.69–0.3.76)
 
 Medido em `scripts/biome_sim.py` (uma vila por bioma, 2 dias, margem ±1–2 pontos; régua em

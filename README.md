@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.24%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.93%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -43,11 +43,32 @@ SHA-256 do JAR na descrição.
   obra, com o primeiro material que falta. Sem o mod no cliente, a profissão
   não aparece: desde 2026-10-10 (P0.8) o servidor não escreve mais o nome da
   profissão no aldeão.
+- Traça cada caminho como um corredor de um bloco que sai da porta em linha
+  reta e vira só em ângulo reto (Regra 70); na encosta sem volta pelo terreno,
+  corta degraus num vale de três, até 12 de fundo, e guarda o que corta
+  (Regras 70 e 110).
+- No deserto usa o bloco próprio "caminho de areia" (Regra 73).
+- O mineiro não constrói fora da montanha, desce antes de ir de lado, cava um
+  acesso quando a entrada da mina não se alcança a pé, e nada ao ar livre
+  (Regra 71).
+- O pastor mantém um curral por espécie, lota pelo tamanho do curral, cria até
+  8 e abate acima de 6, e pede um curral novo quando todos estão cheios
+  (Regras 68 e 72).
+- Cada aldeão dorme na cama mais perto de onde trabalha: uma vez por dia, só
+  com ganho de 16 blocos de caminhada, levando o baú junto, como uma transação
+  (Regra 74).
+- Cama, porta e baú são peças obrigatórias da obra; sem apoio, ganham o chão
+  embaixo (Regra 21).
+- Diagnóstico: tudo o que surge sem uma profissão obter está numa lista
+  declarada e deixa a linha `VC_SUPPLY` no log (Regra 111); toda desistência
+  no diário de ações leva um código único de bloqueio (Regra 112).
 
-O mod é alpha. A 0.3.23 passou na bateria automática completa (auditoria de
-2026-10-10), mas o último playtest, ainda com a 0.3.22, reprovou a Regra 51
-em 4 dos 8 ofícios, e várias entregas desde 2026-09-24 ainda não foram vistas
-em jogo. O que mudou em cada
+O mod é alpha. A 0.3.93 (2026-10-22) passou na bateria automática completa
+(ver "Desenvolvimento e verificação"). O último jogo foi o da 0.3.90 no
+deserto: nota 7,6 no relatório do bioma (era 4,0), primeiro lote aberto na
+faixa da duna e construtor com 48% do expediente trabalhando; as entregas da
+0.3.91 à 0.3.93 ainda não foram vistas em jogo. O estado vivo está no
+[`STATE.md`](STATE.md). O que mudou em cada
 publicação está no [`CHANGELOG.md`](CHANGELOG.md); a avaliação técnica mais
 recente, em
 [`docs/technical/avaliacao/`](docs/technical/avaliacao/).
@@ -67,7 +88,7 @@ desatualizados.
 | `SMELTER` | Fundidor | Pá de ferro com Silk Touch | Funde materiais e coleta areia, relva, cacto e argila sob demanda | `SmelterWork` |
 | `CARPENTER` | Carpinteiro | Nenhuma | Artesão geral: madeira e toda peça que não é alvenaria (vidraça, tear, cama, lampião, tocha) | `CraftingWork` |
 | `FARMER` | Agricultor/Fazendeiro | Enxada de ferro | Mantém lavouras, cava terra para obra e faz pão do trigo acima da reserva | `FarmerWork` |
-| `SHEPHERD` | Pastor | Tesoura | Tosquia e faz o rebanho procriar com trigo da colônia (até 12 ovelhas) | `ShepherdWork` |
+| `SHEPHERD` | Pastor | Tesoura | Tosquia, faz o rebanho procriar (até 8 adultos por espécie) e abate acima de 6, um curral por espécie | `ShepherdWork` |
 | `BUILDER` | Construtor | Nenhuma | Reserva lotes, repara e assenta estruturas | `BuilderWork` |
 
 Compatibilidade: `BREEDER` é convertido para `SHEPHERD` ao ler saves antigos.
@@ -368,18 +389,18 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 `runGametest` gera `build/reports/jacoco/gametest/html` (bateria de jogo, que
 é quem exercita a camada `fabric`).
 
-Verificação de 2026-10-10 (0.3.24, linha Codex integrada à `main`), rodada e
-não copiada:
+Verificação de 2026-10-22 (0.3.93, `main` depois da PR #34), rodada e não
+copiada:
 
-- 1402 testes unitários: aprovados (`build --rerun-tasks`, com propriedades,
-  ArchUnit, Error Prone e PMD).
-- 105 testes Python: aprovados.
-- 696 GameTests: todos aprovados em três rodadas seguidas com `--rerun-tasks`.
-- Mutação (PIT, pacote `core`): 1807 de 2112 mutações mortas (85,56%, limiar
-  85%), força de teste 91%.
-
-A 0.3.23 (auditoria, `b290ed10`) também passou com 690/690 com Fabric API
-0.116.17 e Loader 0.19.5.
+- 1594 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
+  de 500 linhas por arquivo).
+- 119 testes Python: aprovados.
+- 862 GameTests: todos aprovados em duas rodadas seguidas com `--rerun-tasks`;
+  o `runGametest` começa cada bateria com o mundo de teste apagado, como o CI.
+- Mutação (PIT, pacote `core`): 2140 de 2509 mutações mortas (85,3%, limiar
+  85%).
+- CI do GitHub ("Build and test"): verde; a `main` exige esse check para
+  mesclar.
 
 Para refazer: `scripts/audit/check-tests-green.sh --runs 3` e
 `scripts/audit/check-mutation-threshold.sh --run` (ver
@@ -403,11 +424,32 @@ mas falta a prova em jogo. O retrato de 09-21 está em
 e o de 10-10 em
 [`docs/archive/technical/Project-Audit-2026-10-10.md`](docs/archive/technical/Project-Audit-2026-10-10.md).
 
+## Produção futura
+
+O que já está decidido ou estudado e ainda não foi feito — o detalhe e a ordem
+ficam no [`TODO.md`](TODO.md), seção "Produção futura":
+
+- **Configuração por mundo e por colônia** (R-153/154 do estudo v2): desenho
+  pronto em
+  [`docs/research/2026-10-22-desenho-configuracao.md`](docs/research/2026-10-22-desenho-configuracao.md)
+  — arquivo JSON na pasta do mundo, comando `/vc config`, 14 ajustes com faixa
+  segura. Decisões do autor tomadas; falta implementar.
+- **O resto do estudo "Regras v2"**, avaliado ponto a ponto em
+  [`docs/research/2026-10-22-avaliacao-regras-v2.md`](docs/research/2026-10-22-avaliacao-regras-v2.md):
+  contrato explícito de tarefa (R-047), estados de disponibilidade de recurso
+  (R-019) com invalidação por evento (R-021/R-027), bateria de escassez (R-158),
+  e os sistemas grandes ainda sem decisão — área protegida pelo jogador (R-035),
+  transporte físico de itens (R-140 a R-142) e itens de outros mods (R-026).
+- **Pendências de jogo**: o percurso dos mineiros até a mina do lago no deserto
+  e as peças de ardósia que o armazém pede no deserto.
+
 ## Documentos de entrada
 
 - [`CLAUDE.md`](CLAUDE.md): regras para trabalhar no repositório.
 - [`STATE.md`](STATE.md): estado vivo e pendências de playtest.
-- [`TODO.md`](TODO.md): backlog canônico.
+- [`TODO.md`](TODO.md): backlog canônico, com a produção futura.
+- [`docs/RULES.md`](docs/RULES.md): todas as regras do autor (fonte da tabela
+  acima).
 - [`CHANGELOG.md`](CHANGELOG.md): o que mudou em cada publicação.
 - [`docs/decisions/`](docs/decisions/): decisões arquiteturais.
 - [`docs/behavioral-tests/`](docs/behavioral-tests/): estratégia e falhas de
