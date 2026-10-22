@@ -30,7 +30,7 @@ import java.util.UUID;
  * corte. Aqui a coluna de cada bloco que corta é aberta até ele, e as duas colunas do lado até a mesma
  * altura: o caminho continua com um bloco, num vale de três ("trincheira de 3", escolha do autor). O
  * caminho no terreno natural fica como está. Corta-se só o que o lote cortaria
- * ({@link LotTerraform#cutAbove}); o que sai vai para os baús públicos da vila.
+ * ({@link LotTerraform#cutAbove}); o que sai vai para os baús públicos da vila ({@link Cuttings}).
  */
 final class CorridorCut {
 
@@ -77,7 +77,7 @@ final class CorridorCut {
 
         BlockPos door = MinecraftTypeAdapter.toBlockPos(path.get(0));
 
-        taken.forEach((item, amount) -> PublicChests.store(world, colonyId, door, item, amount));
+        Cuttings.keep(world, colonyId, door, taken);
 
         if (moved > 0) {
             VillageColonyMod.LOGGER.info("Colony {} cut {} blocks of the slope for the path from {} to the road",

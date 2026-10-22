@@ -69,7 +69,12 @@ public class LotTerraformGameTest implements FabricGameTest {
         BlockPos origin = footprint(context, new int[][] {{2, 0, -2}, {1, 0, -1}, {2, -2, 0}}, Blocks.GRASS_BLOCK);
 
         try {
-            int moved = LotTerraform.levelFootprint(world, origin.getX(), origin.getZ(), SIDE, SIDE, origin.getY());
+            java.util.Map<net.minecraft.item.Item, Integer> taken = new java.util.HashMap<>();
+            int moved = LotTerraform.levelFootprint(world, origin.getX(), origin.getZ(), SIDE, SIDE, origin.getY(), taken);
+
+            // Regra 110: o que se corta é anotado para guardar — 2 + 1 + 2 blocos acima da rua.
+            context.assertTrue(taken.values().stream().mapToInt(Integer::intValue).sum() == 5,
+                    "anotou " + taken + " do que cortou, e não 5 blocos");
 
             for (int dx = 0; dx < SIDE; dx++) {
                 for (int dz = 0; dz < SIDE; dz++) {
