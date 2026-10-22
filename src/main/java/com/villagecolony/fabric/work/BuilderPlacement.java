@@ -147,11 +147,21 @@ public final class BuilderPlacement {
             return true;
         }
 
+        // Cama, porta e baú não ficam de fora por falta de apoio: ganham o chão embaixo (C-02, 2026-10-22).
+        if (!state.canPlaceAt(world, target) && FunctionalPieces.isFunctional(state)) {
+            FunctionalPieces.support(world, target, state);
+        }
+
         if (!state.canPlaceAt(world, target) && project.failsForTheLastTime(block)) {
             // Quinta falha ao pôr: a peça é pulada e o erro fica no log — ADR-036 item 6.
             VillageColonyMod.LOGGER.warn(
                     "VC_SUPPLY_ERROR version=1 piece={} profession=BUILDER attempts={} reason=placement failed at {}",
                     block.block(), ConstructionProject.PLACEMENT_FAILURES_BEFORE_SKIP, target.toShortString());
+
+            if (FunctionalPieces.isFunctional(state)) {
+                FunctionalPieces.missing(block.block(), target, "no way to hold it after five tries");
+            }
+
             project.markPlaced(block);
 
             return true;

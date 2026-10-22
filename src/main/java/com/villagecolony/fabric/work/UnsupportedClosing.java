@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ConstructionProject;
@@ -40,6 +42,13 @@ final class UnsupportedClosing {
             if (task.type() == TaskType.BUILD && task.isOpen()) {
                 task.executor().ifPresent(BuilderWork::forget);
                 task.cancel();
+            }
+        }
+
+        for (ResourceId piece : released) {
+            if (FunctionalPieces.isFunctional(piece)) {
+                FunctionalPieces.missing(piece, MinecraftTypeAdapter.toBlockPos(project.origin()),
+                        "released with the last pieces that nothing holds");
             }
         }
 

@@ -122,7 +122,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 18-e1 | **Emenda 1:** ninguém para de trabalhar por chuva, e não há pausa ao meio-dia (R-6 e R-7 do estudo de 10-02 recusadas) | 10-02 | ✅ é o que já acontece | `WorkHours` não olha o tempo |
 | 19 | O lote fica no nível da estrada | 08-19 | ✅ feita | `LotLevel.flatGroundAt` |
 | 20 | Cada vila constrói no estilo do bioma | 08-19 | ✅ feita | `VillagePalette`, `VillageBiomesGameTest` |
-| 21 | Toda casa nasce com cama, baú e lampião | 08-19 | ⚠️ a decidir (C-02 da auditoria) | `BuilderWork.furnish` **não existe**; o código diz que a regra morreu e a cama vem da planta (`TestBarrier`, `WorkMaterials`) |
+| 21 | Toda casa nasce com cama, baú e lampião — **resolvida em 10-22 (C-02, autor):** cama, porta e baú vêm da planta e são **obrigatórios**; sem apoio, ganham o chão do bioma embaixo e são postos; só quando o apoio é impossível (algo protegido embaixo) caem nas saídas de sempre, com `VC_FUNCTIONAL_MISSING`. As demais peças (lampião inclusive) mantêm as saídas atuais, sem obra eterna | 08-19 | ✅ feita (0.3.93) | `FunctionalPieces`, `BuilderPlacement`, `UnsupportedClosing` |
 | 22 | O lote é livre no volume | 08-19 | ✅ feita | `BuildSiteScanner.isNothing` |
 | 23 | O que já foi analisado se analisa de novo | 08-19 | ✅ feita | `TreeMarks` (prazos), `RingSweep` |
 | 24 | A vila de planície levanta a casa do jogo | 08-19 | ✅ feita | `VillageStructures` |
@@ -137,7 +137,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 30 | O mineiro recolhe tudo, e a boca tem endereço | 08-22 | ✅ feita | `MineMouth`, `MinerHaul` |
 | 30-e1 | **Emenda 1:** manter piso de carvão e ferro bruto mesmo sem obra ativa | 09-14 | ✅ feita | `ColonyGoals.MINERAL_FLOOR` |
 | 31 | O fazendeiro planta o que tem e colhe o que está pronto | 08-26 | ✅ feita | `FarmerWork`, `CropPatch` |
-| 32 | Móveis e cama entram depois da casa pronta | 08-29 | ⚠️ a decidir (C-02 da auditoria) | `BuilderWork.furnish` **não existe**; a segunda passada saiu com a Regra 21 (`TestBarrier`) |
+| 32 | ~~Móveis e cama entram depois da casa pronta~~ — **substituída em 10-22 pela 21 (C-02, autor):** não há segunda passada de mobília; cama, porta e baú vêm da planta, como peças obrigatórias | 08-29 | ❌ substituída | — |
 | 33 | Pedido de commit+push também atualiza o JAR local | 09-14 | ✅ registrada | `build/libs/` → `downloads/` → `%APPDATA%/.minecraft/mods/`; conferir SHA-256 |
 | 34 | A lava nunca surge automática | 09-30 | ✅ feita | `BlockShaping.isNeverPlaced`, `BuilderPlacement.placeOne` |
 | 35 | Carpinteiro titular na BigHouseMOD, cama e baú à direita da porta, corredor livre até a escada | 09-30 | ✅ feita | `FOUNDATION_ORDER`, `big_house_mod.nbt` |
