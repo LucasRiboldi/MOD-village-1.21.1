@@ -224,6 +224,57 @@ class MineTest {
         assertEquals(0, mine.turnsWithoutAPickaxe());
     }
 
+    /**
+     * Uma volta completa sem passar do salão muda a escada de ponto — decisão do autor de 2026-10-22.
+     * No deserto as dez hélices giraram em volta da mesma entrada e bateram na mesma água.
+     */
+    @Test
+    void aFullTurnWithoutTheHallMovesTheStairToAnotherPoint() {
+        Mine mine = Mine.open(UUID.randomUUID(), SHAFT);
+
+        for (int turn = 1; turn < MineStairPoints.TURNS; turn++) {
+            mine.reroute();
+            assertEquals(ENTRY, mine.entry(), "a hélice " + turn + " devia girar no mesmo ponto");
+        }
+
+        mine.reroute();
+
+        assertEquals(1, mine.stairShifts());
+        assertEquals(MineStairPoints.SHIFT, Math.abs(mine.entry().x() - ENTRY.x()) + Math.abs(mine.entry().z() - ENTRY.z()),
+                "a volta completa devia levar a escada a " + MineStairPoints.SHIFT + " blocos, e foi para " + mine.entry());
+        assertEquals(ENTRY.y(), mine.entry().y(), "a escada nova começa no mesmo nível");
+    }
+
+    /** Os pontos novos são todos diferentes, e só acabam junto com as partidas. */
+    @Test
+    void everyShiftIsANewPointUntilTheMouthIsBlamed() {
+        Mine mine = Mine.open(UUID.randomUUID(), SHAFT);
+        java.util.Set<ColonyPos> points = new java.util.HashSet<>(java.util.List.of(ENTRY));
+
+        for (int helix = 1; helix <= Mine.HELICES_BEFORE_BLAMING_THE_MOUTH; helix++) {
+            assertFalse(mine.mouthIsHopeless(), "culpou a boca antes da partida " + helix);
+            mine.reroute();
+            points.add(mine.entry());
+        }
+
+        assertTrue(mine.mouthIsHopeless());
+        assertEquals(MineStairPoints.SHIFTS, mine.stairShifts());
+        assertEquals(MineStairPoints.SHIFTS + 1, points.size(), "pontos repetidos: " + points);
+    }
+
+    /** A rampa não muda de ponto: ela já é a saída do fundo. */
+    @Test
+    void aRampOnlyTurns() {
+        Mine mine = Mine.open(UUID.randomUUID(), MineShaft.ramp(ENTRY, Side.NORTH, 5));
+
+        for (int helix = 0; helix < MineStairPoints.TURNS * 2; helix++) {
+            mine.reroute();
+        }
+
+        assertEquals(0, mine.stairShifts());
+        assertEquals(ENTRY, mine.entry());
+    }
+
     /** Mina recém-aberta não desce por nenhuma das duas portas. */
     @Test
     void aFreshMineDoesNotDeepen() {

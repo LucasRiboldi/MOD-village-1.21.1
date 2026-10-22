@@ -227,6 +227,10 @@ public final class MineTrouble {
             return;
         }
 
+        if (!walkableFromTheVillage(world, colonyId, mouth.get())) {
+            return;
+        }
+
         VillageColonyMod.LOGGER.info(
                 "Mine {} tried all {} helices without a pickaxe — the mouth is the problem,"
                         + " and the mine starts over at {}",
@@ -241,6 +245,25 @@ public final class MineTrouble {
                 MineShaft.from(MinecraftTypeAdapter.toColonyPos(mouth.get()), descent));
 
         MineFurnishing.furnishAndLight(world, replacement);
+    }
+
+    /**
+     * Se a boca nova se alcança a pé desde a vila ({@link ReachMap#reachesOnFoot}) — decisão do autor de
+     * 2026-10-22: no deserto a mina se mudou para uma boca na duna cuja entrada ninguém alcançava, e os
+     * dois mineiros passaram a sessão encalhados. Sem alcance, a mina fica onde está.
+     */
+    static boolean walkableFromTheVillage(ServerWorld world, UUID colonyId, BlockPos mouth) {
+        boolean walkable = VillageColonyMod.COLONIES.find(colonyId)
+                .map(colony -> ReachMap.reachesOnFoot(world, colony, mouth))
+                .orElse(true);
+
+        if (!walkable) {
+            VillageColonyMod.LOGGER.info(
+                    "Mine {} keeps its place — the new mouth at {} cannot be reached on foot from the village",
+                    colonyId.toString().substring(0, 8), mouth.toShortString());
+        }
+
+        return walkable;
     }
 
     /**
@@ -304,7 +327,8 @@ public final class MineTrouble {
         Optional<VillageBounds> box = MineEdge.boxOf(colonyId);
         Optional<WaterMineAccess.Route> waterAccess = WaterMineAccess.find(world, center, opposite)
                 .filter(route -> box.isEmpty() || MineEdge.nearTheEdge(box.get(), route.entry()));
-        if (waterAccess.isPresent() && waterAccess.get().place(world)) {
+        if (waterAccess.isPresent() && walkableFromTheVillage(world, colonyId, waterAccess.get().entry())
+                && waterAccess.get().place(world)) {
             VillageColonyMod.MINES.removeOfColony(colonyId);
 
             Mine replacement = VillageColonyMod.MINES.open(
@@ -335,7 +359,7 @@ public final class MineTrouble {
                 ? Optional.of(edge.get().mouth())
                 : box.isPresent() ? Optional.empty() : MineSite.mouthOnSide(world, center, opposite);
 
-        if (mouth.isEmpty()) {
+        if (mouth.isEmpty() || !walkableFromTheVillage(world, colonyId, mouth.get())) {
             return false;
         }
 
