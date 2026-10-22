@@ -1,7 +1,9 @@
 # STATE — 2026-10-22
 
-> **0.3.89** (22-10, branch `fix/deserto-a1-c1-b1-d2`, **na `main` pelo PR #31, JAR instalado; o jogo fechou com
-> erro em 22-10 e o crash report ainda não foi lido** —
+> **0.3.89** (22-10, branch `fix/deserto-a1-c1-b1-d2`, **na `main` pelo PR #31, JAR instalado; o servidor caiu em
+> 22-10 10:41** — NPE em `Corridor.plan:125` (`cost.get` nulo), via `StripLot.pathToTheRoad`: o `State` da busca
+> ordena só pela prioridade e o `equals` a ignora, e o `HashMap` em árvore procura pelo `compareTo`. Correção
+> feita na sessão local para a 0.3.90, ainda fora do GitHub —
 > `2F8E0DDD…B21C`): resposta ao deserto jogado na 0.3.88 (Spark `YFIroI1U1x`, nota 4,0; §12 do estudo).
 > Itens:
 > - **Fazendeiro:** a 3 blocos alcança a planta, com a borda incluída (falhava 10×).
