@@ -267,7 +267,7 @@ destrói o que é de outro) e o degrau de 1.
 | 123 | A rede de caminhos da vila: grafo guardado, traçado com desnível ≤ 1 (serpentina, depois corte ≤ 2, depois contorno), 3 de largura, buraco aterrado, terra do bioma. Substitui a Regra 70. |
 | 124 | Distância mínima de 3 blocos entre construções, com o caminho podendo encostar. |
 | 125 | Quem faz o caminho: o pedreiro, o carpinteiro e o fundidor ociosos, um por vez. |
-| 126 | O lote novo nasce na frente da rede e é escolhido pela centralidade. Cobre o item 7 das decisões de 27-10. |
+| 127 | O lote novo nasce na frente da rede e é escolhido pela centralidade. Cobre o item 7 das decisões de 27-10. (Era 126; esse número ficou com a peça colorida que sai branca.) |
 
 ## 8. Fases e verificação
 

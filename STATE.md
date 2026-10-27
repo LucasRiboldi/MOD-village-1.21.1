@@ -1,5 +1,25 @@
 # STATE — 2026-10-27
 
+> **0.3.96** (27-10, branch `fix/obra-pecas-de-lado`, PR #36): mina em caracol (119), rede de caminhos
+> (123–125, estudo `docs/research/2026-10-27-rede-de-caminhos.md`), fazendeiro (121), lenhador (120),
+> cercados (122), 3 blocos entre construções (124), peça colorida branca (126) e códigos do diário.
+> - **Verificado:** testes de unidade OK; bateria 874/874. Cada regra tem teste, e as provas de mutação da
+>   mina, da roça, do custo de colar e do aterro foram pegas. **Não jogado.**
+> - **Para o jogo:**
+>   - a mina nova num save novo (num save antigo ela segue da mesma boca);
+>   - "traced a path", "finished a path" e "PAVED … path network" no log;
+>   - recusas `TOO_CLOSE` no `LotRefusals`;
+>   - "closed the wood task"; "still sweeping" deve cair.
+> - **Ainda abertos:**
+>   - item 3 (trabalho perto da cama, troca forçada);
+>   - item 8 (ajudante da cadeia);
+>   - D5 (atalho ao chafariz);
+>   - Regra 127 (lote pela centralidade);
+>   - neve (snow_block da pá, diorito da mina);
+>   - remover o código parado da rede de túneis;
+>   - o veio que mira pedra alta no mineiro.
+>
+
 > **0.3.95** (27-10, mesma branch `fix/obra-pecas-de-lado`, PR #36): correções feitas a partir dos cinco
 > logs da 0.3.93 (savana, planície ×3, neve, taiga, deserto). Análise na memória `analise-biomas-logs-0393`.
 > - **Regra 114:** o teleporte pousa onde o corpo cabe (14 sufocados: 12 na neve, 2 no deserto); o preso sem

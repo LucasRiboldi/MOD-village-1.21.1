@@ -12,6 +12,30 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.96] — mina em caracol, rede de caminhos e correções da lista (2026-10-27, JAR local, não jogado)
+
+### Mudado
+- **Mina em caracol (Regra 119):** cada nível desce por um caracol de uma volta (4 lances de 3 degraus,
+  1 bloco por degrau), abre um salão de 17×17×3 e desce de novo pelos quatro cantos, cada canto até um
+  salão próprio; o nível seguinte desce do meio do salão do primeiro canto. Nenhuma célula cavada é chão
+  de degrau ou de salão, e a volta é pelo mesmo caminho. A rede de túneis (ADR-042) está desligada.
+- **Rede de caminhos (Regras 123 a 125):** cada construção pronta se liga pela porta ao ponto mais
+  barato da rede, ou ao centro da vila. O caminho tem 3 de largura, degrau de no máximo um, buraco
+  aterrado e caminho de terra; o corte é curto e a subida é em serpentina. Os caminhos se unem e não
+  correm colados. Quem assenta são o pedreiro, o carpinteiro e o fundidor sem tarefa, um por vez. Isto
+  substitui o corredor de 1 bloco da Regra 70.
+
+### Corrigido
+- **Fazendeiro sem tarefa (Regra 121):** a roça conhecida responde antes da varredura do raio.
+- **Tarefa do lenhador sem fim (Regra 120):** a tarefa fecha concluída quando o alcance esvazia.
+- **Cercados (Regra 122):** o chão do curral fica caro no caminho de quem não é pastor
+  (`LandPathNodeMakerMixin`), e quem fica cercado sem portão larga a cama de dentro.
+
+### Adicionado
+- **3 blocos entre construções (Regra 124):** o lote mais perto que isso é recusado (`TOO_CLOSE`).
+- **Peça colorida branca (Regra 126):** cama, lã, tapete e estandarte de qualquer cor saem brancos.
+- **Diário:** os motivos que mais ficavam sem código ganharam código (Regra 112).
+
 ## [0.3.95] — ninguém sufoca nem fica preso, e o armazém é do bioma (2026-10-27, JAR local, não jogado)
 
 Correções feitas a partir dos cinco logs da 0.3.93 (23 a 26-10: savana, planície, neve, taiga e deserto).
