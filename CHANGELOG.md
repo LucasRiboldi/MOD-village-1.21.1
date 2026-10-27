@@ -12,6 +12,29 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.97] — os sete pontos abertos: cama, ajudas, tocha, neve, veio, atalho e a rede de túneis fora (2026-10-27, JAR local, não jogado)
+
+### Adicionado
+- **Tocha da colônia (Regra 127):** o carpinteiro sem tarefa põe a tocha ao lado do caminho escuro. Ela
+  tem luz 15, um anel de luz invisível em volta (área clara cerca de 3 vezes maior) e chama laranja, e
+  monstro não nasce sozinho a 30 blocos dela.
+- **Ajudas de quem está sem tarefa (Regra 127):** o pastor colhe e replanta a roça, o lenhador cuida do
+  bosque e o pedreiro recolhe neve com a pá quando a obra pede.
+- **Atalho ao chafariz (D5):** a porta ganha ligação direta quando a rede dá mais de 2 vezes a volta.
+
+### Mudado
+- **Cama e tarefa (Regra 74):** a troca de cama vale quando a soma das caminhadas cai 16 blocos, e a
+  tarefa vai primeiro a quem mora mais perto do lugar do ofício.
+- **Veio (Regra 119):** o veio nunca sobe acima da altura em que começou.
+
+### Removido
+- **A rede de corredores da mina (ADR-042)**, parada desde a mina em caracol: cerca de 1.375 linhas.
+  O save antigo carrega e ignora as chaves dela.
+
+### Corrigido
+- **Teto de 500 linhas:** um commit intermediário (94932be6) saiu com o teste de tamanho falhando; a
+  correção veio em 398ddc75.
+
 ## [0.3.96] — mina em caracol, rede de caminhos e correções da lista (2026-10-27, JAR local, não jogado)
 
 ### Mudado

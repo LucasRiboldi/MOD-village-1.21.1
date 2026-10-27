@@ -1,5 +1,23 @@
 # STATE — 2026-10-27
 
+> **0.3.97** (27-10, branch `fix/obra-pecas-de-lado`, PR #36): os sete pontos abertos da 0.3.96, cada um com
+> as opções escolhidas pelo autor (memória `decisoes-autor-2026-10-27-sete-itens`).
+> - Cama pela soma (16) e tarefa a quem mora perto do lugar do ofício (Regra 74).
+> - Ajudas (127): pastor na roça, lenhador no bosque, carpinteiro com a tocha da colônia, pedreiro com a pá
+>   na neve.
+> - Atalho ao chafariz a partir de 2× (D5); veio que não sobe (119).
+> - Rede de corredores removida; Regra 127 de lote pela centralidade **não feita**, por escolha do autor.
+> - **Verificado:** testes de unidade e arquitetura OK; bateria 876/876; cada ajuda e a tocha com GameTest,
+>   menos o lenhador e a escolha do lugar da tocha (dependem do expediente). **Não jogado.**
+> - **Para o jogo:**
+>   - a cara da tocha e a área clara;
+>   - "lit the dark path", "tended the grove", "harvested … for the farmer", "shoveled";
+>   - se a vila faz bloco e camada de neve com as bolas;
+>   - um save antigo com a rede de túneis carregando sem erro.
+> - **Desvio a confirmar com o autor:** no veio, a régua é "nunca sobe acima de onde começou", e não
+>   "até 2 acima do piso" ao pé da letra (esta quebrava 5 testes do veio).
+>
+
 > **0.3.96** (27-10, branch `fix/obra-pecas-de-lado`, PR #36): mina em caracol (119), rede de caminhos
 > (123–125, estudo `docs/research/2026-10-27-rede-de-caminhos.md`), fazendeiro (121), lenhador (120),
 > cercados (122), 3 blocos entre construções (124), peça colorida branca (126) e códigos do diário.
