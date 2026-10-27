@@ -51,11 +51,19 @@ final class MineVein {
      */
     private static final IdentityHashMap<MineArm, Deque<BlockPos>> TRAILS = new IdentityHashMap<>();
 
+    /**
+     * A altura em que o veio de cada ramal começou: ele nunca sobe acima dela — item 7 das escolhas do
+     * autor (27-10). O veio que sobe vira chaminé de um bloco, e o mineiro no piso não alcança a pedra
+     * (as recusas TOO_HIGH do jogo da 0.3.93); de lado e para baixo ele segue, com o degrau de volta.
+     */
+    private static final IdentityHashMap<MineArm, Integer> TOPS = new IdentityHashMap<>();
+
     private MineVein() {
     }
 
     static void clearAll() {
         TRAILS.clear();
+        TOPS.clear();
     }
 
     /**
@@ -121,12 +129,14 @@ final class MineVein {
     /** Um veio novo, achado pelo túnel: o rastro recomeça. */
     static void startVein(MineArm arm, ColonyPos ore) {
         TRAILS.remove(arm);
+        TOPS.remove(arm);
         arm.followVein(ore);
     }
 
     private static Optional<BlockPos> exhausted(MineArm arm) {
         arm.veinExhausted();
         TRAILS.remove(arm);
+        TOPS.remove(arm);
 
         return Optional.empty();
     }
@@ -217,6 +227,7 @@ final class MineVein {
             return Optional.empty();
         }
 
+        int veinStart = from.get().getY();
         Optional<BlockPos> more = OreVein.beside(world, from.get());
         Deque<BlockPos> trail = TRAILS.get(arm);
 
@@ -253,8 +264,11 @@ final class MineVein {
         // que já recusou noutra passagem, e é ele que este método serve.
         // Sem esta linha o laço voltaria pelo lado do minério, que é
         // justamente por onde ele voltou em 2026-09-03.
+        int top = TOPS.computeIfAbsent(arm, ignored -> veinStart);
+
         if (WaterMineAccess.protects(world, mine, more.get())
                 || nowhereToStand(world, more.get())
+                || more.get().getY() > top
                 || MineFlooding.holdsBackFluid(world, more.get())
                 || MineMarks.isUnreachableAround(world, more.get())) {
             return exhausted(arm);
