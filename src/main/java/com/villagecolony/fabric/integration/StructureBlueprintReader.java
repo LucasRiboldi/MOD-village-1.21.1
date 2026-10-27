@@ -266,6 +266,13 @@ public final class StructureBlueprintReader {
         // Blueprint.withStreetLayer e StreetLayer.of.
         OptionalInt street = StreetLayer.of(template.get(), blocks);
 
+        // O modelo do mod sem porta (o armazém) pisa na camada 0: ela vai no nível do chão e a obra
+        // sobe dele, com o lote nivelado — Regra 115. Sem isto ele não era nivelado e, em terreno
+        // inclinado, nascia com metade dentro do morro.
+        if (street.isEmpty() && ColonyModels.isColonyModel(structure)) {
+            street = OptionalInt.of(0);
+        }
+
         return Optional.of(street.isPresent() ? blueprint.withStreetLayer(street.getAsInt()) : blueprint);
     }
 

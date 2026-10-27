@@ -8,6 +8,7 @@ import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -81,12 +82,25 @@ public final class ColonyModelsGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_models", tickLimit = 20)
     public void storageModelJoinsTheBuilderConstructionDrawButBarnDoesNot(TestContext context) {
         ResourceId barn = new ResourceId("villagecolony", "colony/barn_majest");
-        ResourceId storage = new ResourceId("villagecolony", "colony/storage_majest");
+        // Cada bioma tem o seu armazém, no lugar do de todos os estilos (Regra 115).
+        ResourceId storage = new ResourceId("villagecolony", "colony/plains/storage_majest");
 
         context.assertFalse(VillageStructures.buildableFor("plains").contains(barn),
                 "o celeiro não deve mais entrar nas obras possíveis");
         context.assertTrue(VillageStructures.buildableFor("plains").contains(storage),
-                "o depósito não entrou nas obras possíveis");
+                "o armazém da planície não entrou nas obras possíveis: " + VillageStructures.buildableFor("plains"));
+        context.assertFalse(VillageStructures.buildableFor("plains")
+                        .contains(new ResourceId("villagecolony", "colony/storage_majest")),
+                "com o armazém do bioma, o de todos os estilos não devia entrar também");
+
+        for (String style : List.of("desert", "savanna", "taiga", "snowy")) {
+            ResourceId own = new ResourceId("villagecolony", "colony/" + style + "/storage_majest");
+
+            context.assertTrue(VillageStructures.buildableFor(style).contains(own),
+                    "o armazém de " + style + " não entrou nas obras possíveis");
+            context.assertTrue(StructureBlueprintReader.read(context.getWorld(), own).isPresent(),
+                    "o armazém de " + style + " não foi lido do jar");
+        }
         context.assertTrue(ColonyModels.professionOf(barn).isEmpty(),
                 "o celeiro não deve mais pertencer a uma profissão");
         context.assertTrue(ColonyModels.professionOf(storage).equals(Optional.of(ProfessionType.BUILDER)),

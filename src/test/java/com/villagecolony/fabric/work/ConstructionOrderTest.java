@@ -93,7 +93,12 @@ class ConstructionOrderTest {
         assertFalse(HousePlans.isHouse(barn));
         assertFalse(HousePlans.isHouse(storage));
         assertFalse(VillageStructures.buildableFor("plains").contains(barn));
-        assertTrue(VillageStructures.buildableFor("plains").contains(storage));
+        // O armazém do bioma entra no lugar do de todos os estilos (Regra 115).
+        ResourceId plainsStorage = ResourceId.parse("villagecolony:colony/plains/storage_majest");
+
+        assertEquals(Optional.of(ProfessionType.BUILDER), ColonyModels.professionOf(plainsStorage));
+        assertTrue(VillageStructures.buildableFor("plains").contains(plainsStorage));
+        assertFalse(VillageStructures.buildableFor("plains").contains(storage));
     }
 
     @Test

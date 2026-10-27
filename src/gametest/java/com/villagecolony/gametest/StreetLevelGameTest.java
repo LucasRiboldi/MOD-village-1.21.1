@@ -104,8 +104,9 @@ public class StreetLevelGameTest implements FabricGameTest {
 
         context.assertTrue(barn.hasStreetLayer() && barn.streetLayer() == 0,
                 "o celeiro devia ter a rua na camada 0 (a camada 0 é debaixo do piso)");
-        context.assertFalse(storage.hasStreetLayer(),
-                "o depósito tem piso cheio na camada 0 e não pode mudar de altura");
+        // Regra 115: o piso do armazém vai no nível do chão e o lote é nivelado, como numa casa.
+        context.assertTrue(storage.hasStreetLayer() && storage.streetLayer() == 0,
+                "o armazém devia pisar na camada 0, no nível do chão");
         context.complete();
     }
 

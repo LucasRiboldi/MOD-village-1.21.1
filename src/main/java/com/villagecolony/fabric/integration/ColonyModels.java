@@ -105,7 +105,10 @@ public final class ColonyModels {
         List<ResourceId> found = new ArrayList<>();
 
         for (ProfessionType profession : ProfessionType.values()) {
-            namedModelsFor(profession).forEach(model -> find(FOLDER + "/" + model).ifPresent(found::add));
+            // O do estilo primeiro: cada bioma tem o seu armazém (Regra 115).
+            namedModelsFor(profession).forEach(model -> find(FOLDER + "/" + style + "/" + model)
+                    .or(() -> find(FOLDER + "/" + model))
+                    .ifPresent(found::add));
 
             String name = TRADE + profession.name().toLowerCase(Locale.ROOT);
 
@@ -131,7 +134,7 @@ public final class ColonyModels {
         }
 
         String path = id.path();
-        String named = path.substring((FOLDER + "/").length());
+        String named = path.substring(path.lastIndexOf('/') + 1);
         ProfessionType profession = NAMED_PROFESSION_MODELS.get(named);
 
         if (profession != null) {
