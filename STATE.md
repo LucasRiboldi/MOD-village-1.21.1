@@ -1,5 +1,29 @@
 # STATE — 2026-10-27
 
+> **0.3.95** (27-10, mesma branch `fix/obra-pecas-de-lado`, PR #36): correções feitas a partir dos cinco
+> logs da 0.3.93 (savana, planície ×3, neve, taiga, deserto). Análise na memória `analise-biomas-logs-0393`.
+> - **Regra 114:** o teleporte pousa onde o corpo cabe (14 sufocados: 12 na neve, 2 no deserto); o preso sem
+>   cama vai ao centro da vila; quem fica 3 rodadas cercado sai por cima da cerca (`SafeLanding`, `PenLift`).
+> - **Regra 115:** o armazém pisa no nível do chão, com lote nivelado; há um por bioma, sem folhas, alçapões
+>   nem teias (`scripts/storage_variants.py`).
+> - **Regra 116:** a argila surge na 3ª busca vazia. **Regra 117:** ração do pastor sem comida do fazendeiro.
+>   **Regra 118:** no deserto, bosque com o dobro de mudas, nas bordas sorteadas.
+> - Animais da fundação (2 de cada espécie): já existiam (Regra 102); os logs mostram 8 em toda vila.
+> - **Ainda sem correção:**
+>   - savana: o lenhador não termina tarefa e há 94 acacia_log de lado. As tarefas do lenhador terminam soltas
+>     em todo bioma, então falta medir se é a acácia ou a cota de 128 toras;
+>   - fazendeiro: "could not reach the crop" (até 31×) e, na planície 1bd4fbb9, "budget ran out" (266×), com a
+>     população parada em 16 e 41 camas;
+>   - neve: snow, snow_block e diorite surgindo; deserto: smooth_sandstone (146);
+>   - mineiro: NO_STANDING e TOO_HIGH; Regra 74 sem troca; códigos UNCLASSIFIED.
+>
+> Verificado: test OK; Python 124 OK; bateria 871/871 depois de cada marco (×2 nos três primeiros).
+> Não jogado.
+>
+> **Próximo:** jogar e procurar "lifted from", "to the village center", "animal feed", morte de aldeão
+> "sufocou"; ver o armazém num terreno inclinado.
+>
+
 > **0.3.94** (27-10, branch `fix/obra-pecas-de-lado`): **Regra 113**, decisão do autor. No jogo da 0.3.93
 > no deserto (22-10, ~3 h), a vila parou às 18:57: o armazém (`storage_majest`, 112 89 -430) chegou a
 > "5 blocks left" com as cinco peças de lado; o construtor soltou a obra depois dos 5 minutos do

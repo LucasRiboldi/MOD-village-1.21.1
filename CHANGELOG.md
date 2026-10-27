@@ -12,6 +12,29 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.95] — ninguém sufoca nem fica preso, e o armazém é do bioma (2026-10-27, JAR local, não jogado)
+
+Correções feitas a partir dos cinco logs da 0.3.93 (23 a 26-10: savana, planície, neve, taiga e deserto).
+
+### Corrigido
+- **14 aldeões sufocados ao ir para a cama** (12 na neve, 2 no deserto): o teleporte punha o aldeão em
+  pé no colchão sem conferir o teto. Agora ele pousa onde o corpo inteiro cabe; em cama de teto baixo,
+  vai para o chão livre ao lado (Regra 114, `SafeLanding`).
+- **Preso por horas:** o construtor da savana ficou 4 h e o mineiro da taiga 3,5 h. O preso sem cama
+  vai para o chão do centro da vila (`BedTeleport.toSafety`). Quem passa 3 rodadas com todas as saídas
+  do cercado falhando é posto logo atrás da cerca (Regra 114, `PenLift`).
+- **Armazém nascendo dentro do solo:** o modelo do mod sem porta pisa na camada 0, no nível do chão,
+  e o lote é nivelado como o de uma casa (Regra 115).
+
+### Adicionado
+- **Um armazém por bioma** (`colony/<estilo>/storage_majest.nbt`, gerado por
+  `scripts/storage_variants.py`): cada um usa a madeira e a pedra do seu bioma, e o do deserto usa
+  arenito no lugar da madeira. Folhas, alçapões e teias saíram de todos os modelos (Regra 115).
+- **Argila na terceira busca vazia**, em todo bioma (Regra 116).
+- **Ração do pastor:** quando nenhum baú tem comida da espécie, a ração vem sozinha
+  (`VC_SUPPLY` `ANIMAL_FEED`, Regra 117).
+- **Bosque do deserto:** o dobro de mudas, espalhadas por pontos sorteados das bordas (Regra 118).
+
 ## [0.3.94] — a obra parada em peças de lado não prende a vila (2026-10-27, JAR local, não jogado)
 
 ### Corrigido
