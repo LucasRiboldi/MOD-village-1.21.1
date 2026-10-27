@@ -113,7 +113,7 @@ public final class BuilderPlacement {
         // (farmland), água, caminho e cultivo não têm item de inventário e a cadeia de material
         // falhava ("could not make farmland"), travando a obra nos últimos blocos (playtest
         // hquYC03AAc). Aqui eles são moldados no local, garantindo primeiro o chão de que o
-        // canteiro/cultivo precisa — como o enchimento da mina (NetworkSafety) já surge.
+        // canteiro/cultivo precisa — como o enchimento da mina já surgia.
         //
         // Só sobre lugar livre: a Regra 3 continua valendo — bloco posto (planks, peça de vila) não
         // é sobrescrito (BuilderGameTest.farmlandDoesNotReplaceAPlacedBlock).
