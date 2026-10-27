@@ -31,6 +31,17 @@ final class LocateFallback {
     /** Varreduras vazias seguidas antes de o material aparecer — 4 desde a ADR-036 item 6. */
     static final int ATTEMPTS = BiomeConstructionSupply.ATTEMPTS_BEFORE_STOCKING;
 
+    /**
+     * A argila aparece na terceira busca vazia, em todo bioma — Regra 116 (autor, 2026-10-27: na
+     * planície sem argila o fundidor passou a sessão parado na fornalha esperando por ela).
+     */
+    static final int CLAY_ATTEMPTS = 3;
+
+    /** Quantas buscas vazias este recurso espera antes de aparecer. */
+    static int attemptsFor(ResourceType resource) {
+        return resource == ResourceType.CLAY || resource == ResourceType.CLAY_BALL ? CLAY_ATTEMPTS : ATTEMPTS;
+    }
+
     private LocateFallback() {
     }
 
@@ -41,7 +52,7 @@ final class LocateFallback {
      * @return se o material foi posto no baú
      */
     static boolean afterEmptySearch(ServerWorld world, Task task, int empty) {
-        if (empty < ATTEMPTS) {
+        if (empty < attemptsFor(task.targetResource())) {
             return false;
         }
 

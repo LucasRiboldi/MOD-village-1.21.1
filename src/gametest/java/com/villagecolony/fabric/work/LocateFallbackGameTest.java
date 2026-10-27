@@ -80,6 +80,31 @@ public final class LocateFallbackGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** A argila aparece já na terceira busca vazia, em qualquer bioma — Regra 116. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "locate_fallback")
+    public void theThirdEmptySearchStocksTheClay(TestContext context) {
+        ServerWorld world = context.getWorld();
+        Scene scene = Scene.of(context);
+
+        try {
+            Task task = VillageColonyMod.TASKS.create(scene.colony.id(), TaskType.COLLECT_SURFACE_RESOURCE,
+                    TaskPriority.CONSTRUCTION_MATERIAL, ResourceType.CLAY, 8);
+
+            context.assertFalse(LocateFallback.afterEmptySearch(world, task, 2),
+                    "na segunda busca vazia a argila ainda é procurada");
+            context.assertTrue(LocateFallback.afterEmptySearch(world, task, 3),
+                    "na terceira busca vazia a argila devia aparecer");
+            context.assertTrue(ChestWithdrawer.countIn(world, scene.smelterChest, Items.CLAY) == 8,
+                    "a argila devia estar no baú do fundidor; tem "
+                            + ChestWithdrawer.countIn(world, scene.smelterChest, Items.CLAY));
+            VillageColonyMod.TASKS.remove(task.id());
+        } finally {
+            scene.forget();
+        }
+
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "locate_fallback")
     public void theMaterialGoesToTheChestOfWhoSearched(TestContext context) {
         UUID colony = UUID.randomUUID();

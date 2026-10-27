@@ -2,12 +2,14 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.coordination.SupplyException;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.CropPatch;
+import com.villagecolony.fabric.integration.Supplies;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.decoration.LeashKnotEntity;
 import net.minecraft.entity.passive.AnimalEntity;
@@ -57,6 +59,11 @@ public final class ShepherdFlock {
     static final int SEEDS_FOR_SOWING = 8;
 
     private static final int RADIUS = 32;
+
+    /** A ração de cada espécie quando o fazendeiro não produziu nada — Regra 117. */
+    static final Map<EntityType<?>, Item> ANIMAL_FEED = Map.of(
+            EntityType.SHEEP, Items.WHEAT, EntityType.COW, Items.WHEAT,
+            EntityType.PIG, Items.CARROT, EntityType.CHICKEN, Items.WHEAT_SEEDS);
 
     /** As espécies que o pastor cria. */
     static final List<EntityType<? extends AnimalEntity>> SPECIES =
@@ -254,9 +261,30 @@ public final class ShepherdFlock {
             return true;
         }
 
-        VillageColonyMod.LOGGER.info("Colony {} — the shepherd has no food for the {} ({} adults)",
-                colony.id().toString().substring(0, 8), species.getUntranslatedName(), adults.size());
-        return false;
+        // Sem nada do fazendeiro nos baús, a ração vem sozinha — Regra 117 (jogo da 0.3.93: "the
+        // shepherd has no food" milhares de vezes em todo bioma, e o rebanho parado abaixo da meta).
+        // Só sem nada: com um pouco do fazendeiro guardado, o par espera a colheita.
+        Item feed = ANIMAL_FEED.get(species);
+        boolean farmMadeSome = foodOf(species, ready.get(0)).stream()
+                .anyMatch(food -> ColonyChests.countIn(world, chests, food) > 0);
+
+        if (feed == null || farmMadeSome) {
+            VillageColonyMod.LOGGER.info("Colony {} — the shepherd has no food for the {} ({} adults)",
+                    colony.id().toString().substring(0, 8), species.getUntranslatedName(), adults.size());
+            return false;
+        }
+
+        for (AnimalEntity animal : ready) {
+            animal.lovePlayer(null);
+        }
+
+        Supplies.record(SupplyException.ANIMAL_FEED, colony.id(), Registries.ITEM.getId(feed).getPath(), PAIR_FOOD);
+        VillageColonyMod.LOGGER.info(
+                "Colony {} — the farmer made no food for the {}, so animal feed ({}) came in for a pair"
+                        + " ({} adults, target {})",
+                colony.id().toString().substring(0, 8), species.getUntranslatedName(), feed, adults.size(),
+                FLOCK_TARGET);
+        return true;
     }
 
     /** Guardado: amarrado numa cerca, ou dentro de curral (cercado e com cerca perto). */
