@@ -333,7 +333,7 @@ public final class SweepState {
         return switch (reason) {
             case BED -> ScanRefusalReason.BED;
             case ROAD -> ScanRefusalReason.ROAD;
-            case PROTECTED, OCCUPIED -> ScanRefusalReason.LOT;
+            case PROTECTED, OCCUPIED, TOO_CLOSE -> ScanRefusalReason.LOT;
             case NO_GROUND, NOT_NATURAL_GROUND, OFF_ROAD_LEVEL -> ScanRefusalReason.TERRAIN;
         };
     }

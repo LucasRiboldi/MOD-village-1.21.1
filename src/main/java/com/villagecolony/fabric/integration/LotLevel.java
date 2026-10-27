@@ -113,6 +113,12 @@ public final class LotLevel {
             ServerWorld world, UUID colonyId, int originX, int originZ, int aroundY,
             int roadY, ColonyPos size) {
 
+        if (LotSpacing.tooClose(colonyId, originX, originZ, size)) {
+            LotRefusals.refused(colonyId, LotRefusals.Reason.TOO_CLOSE);
+
+            return Optional.empty();
+        }
+
         // A altura de cada coluna em relação à rua: -1, 0 ou +1. A base é
         // escolhida depois de a pegada inteira passar pelas perguntas.
         int[] offsets = new int[size.x() * size.z()];
