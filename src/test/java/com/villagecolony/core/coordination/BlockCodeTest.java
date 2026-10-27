@@ -44,6 +44,14 @@ class BlockCodeTest {
 
     @Test
     void anUnknownReasonIsUnclassifiedAndCaseDoesNotMatter() {
+        // Os mais comuns sem classe no jogo da 0.3.93.
+        assertEquals(BlockCode.NO_PATH, BlockCode.classify("NO_PATH"));
+        assertEquals(BlockCode.NO_PATH, BlockCode.classify("fenced in"));
+        assertEquals(BlockCode.NO_PATH, BlockCode.classify("below its way and unable to climb"));
+        assertEquals(BlockCode.NO_RESOURCE, BlockCode.classify("no sheep with wool within the radius"));
+        assertEquals(BlockCode.NO_RESOURCE, BlockCode.classify("nothing in the whole radius"));
+        assertEquals(BlockCode.NO_RESOURCE,
+                BlockCode.classify("no sand in any chest — the mason crushes it; the smelter helps elsewhere"));
         assertEquals(BlockCode.UNCLASSIFIED, BlockCode.classify("a reason nobody wrote yet"));
         assertEquals(BlockCode.UNCLASSIFIED, BlockCode.classify(""));
         assertEquals(BlockCode.NO_RESOURCE, BlockCode.classify("NO MATERIAL"));
