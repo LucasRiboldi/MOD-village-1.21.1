@@ -2,11 +2,14 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ServerMemory;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.BedBlock;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.Heightmap;
 import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.HashMap;
@@ -43,9 +46,6 @@ final class BedTeleport {
      * parecia lugar novo, a conta recomeçava, e ele ficou 12 e 17 minutos assim até a noite.
      */
     static final double SAME_PLACE = ClimbReshape.TUNNEL_LENGTH + 1.5;
-
-    /** A altura do colchão: o aldeão fica de pé em cima da cama. */
-    private static final double BED_TOP = 0.5625;
 
     private BedTeleport() {
     }
@@ -87,7 +87,7 @@ final class BedTeleport {
 
         ATTEMPTS.remove(workerId);
 
-        return toBed(world, villager, workerId,
+        return toSafety(world, villager, workerId,
                 last.count() + " attempts to get free without leaving " + last.from().toShortString());
     }
 
@@ -107,9 +107,10 @@ final class BedTeleport {
     }
 
     /**
-     * Leva o aldeão para a cama e encerra a fuga em andamento.
+     * Leva o aldeão para a cama e encerra a fuga em andamento. Ele fica de pé onde o corpo cabe
+     * ({@link SafeLanding}, Regra 114): em cima do colchão se há espaço até a cabeça, senão ao lado.
      *
-     * @return se havia cama para onde ir
+     * @return se havia cama, e lugar seguro junto dela, para onde ir
      */
     static boolean toBed(ServerWorld world, VillagerEntity villager, UUID workerId, String why) {
         Optional<BlockPos> bed = bedOf(world, villager);
@@ -118,14 +119,62 @@ final class BedTeleport {
             return false;
         }
 
+        Optional<Vec3d> spot = SafeLanding.near(world, villager, bed.get());
+
+        if (spot.isEmpty()) {
+            VillageColonyMod.LOGGER.info("Worker {} stays put — its bed at {} has no room to stand beside it ({})",
+                    shortId(workerId), bed.get().toShortString(), why);
+
+            return false;
+        }
+
+        land(world, villager, workerId, spot.get(), "its bed at " + bed.get().toShortString(), why);
+
+        // E fecha a porta da casa — ADR-037 C3.
+        HouseDoors.close(world, villager, bed.get());
+
+        return true;
+    }
+
+    /**
+     * A cama, e sem ela o chão do centro da vila — Regra 114: quem está preso sem cama não fica
+     * preso para sempre (savana, 23-10: o construtor passou 4 h trocando de jeito de subir em y=55).
+     *
+     * @return se ele foi levado a algum lugar
+     */
+    static boolean toSafety(ServerWorld world, VillagerEntity villager, UUID workerId, String why) {
+        return toBed(world, villager, workerId, why) || toVillage(world, villager, workerId, why);
+    }
+
+    /** O chão livre mais perto do centro da colônia dele. */
+    static boolean toVillage(ServerWorld world, VillagerEntity villager, UUID workerId, String why) {
+        Optional<BlockPos> center = VillageColonyMod.WORKERS.find(workerId)
+                .flatMap(worker -> VillageColonyMod.COLONIES.find(worker.colonyId()))
+                .map(colony -> MinecraftTypeAdapter.toBlockPos(colony.center()))
+                .filter(world::isChunkLoaded);
+
+        // O centro da colônia já é a altura do chão; a coluna de cima só quando ali não cabe.
+        Optional<Vec3d> spot = center
+                .flatMap(at -> SafeLanding.near(world, villager, at.down())
+                        .or(() -> SafeLanding.near(world, villager,
+                                world.getTopPosition(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, at).down())));
+
+        if (spot.isEmpty()) {
+            return false;
+        }
+
+        land(world, villager, workerId, spot.get(), "the village center", why);
+
+        return true;
+    }
+
+    private static void land(ServerWorld world, VillagerEntity villager, UUID workerId, Vec3d spot, String where,
+                             String why) {
         BlockPos from = villager.getBlockPos();
 
         villager.getBrain().forget(MemoryModuleType.WALK_TARGET);
         villager.getNavigation().stop();
-        villager.requestTeleport(bed.get().getX() + 0.5, bed.get().getY() + BED_TOP, bed.get().getZ() + 0.5);
-
-        // E fecha a porta da casa — ADR-037 C3.
-        HouseDoors.close(world, villager, bed.get());
+        villager.requestTeleport(spot.x, spot.y, spot.z);
 
         if (StrandedWorkers.isStranded(workerId)) {
             StrandedWorkers.release(workerId);
@@ -135,9 +184,11 @@ final class BedTeleport {
         MineReturn.finish(workerId);
         StrandedEscape.forget(workerId);
 
-        VillageColonyMod.LOGGER.info("Worker {} was teleported from {} to its bed at {} — {}",
-                workerId.toString().substring(0, 8), from.toShortString(), bed.get().toShortString(), why);
+        VillageColonyMod.LOGGER.info("Worker {} was teleported from {} to {} — {}",
+                shortId(workerId), from.toShortString(), where, why);
+    }
 
-        return true;
+    private static String shortId(UUID workerId) {
+        return workerId.toString().substring(0, 8);
     }
 }
