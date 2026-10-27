@@ -29,8 +29,13 @@ import java.util.UUID;
 
 /**
  * As ajudas de quem está sem tarefa do ofício — item 8 das escolhas do autor (2026-10-27), cada ajuda com
- * um ofício fixo. Por ora: <b>o pastor colhe e replanta a roça madura</b>, como o fazendeiro, sem arar
- * terra nova; a colheita vai para o baú da colônia mais perto. Um pastor por colônia por vez.
+ * um ofício fixo:
+ * <ul>
+ *   <li><b>o pastor colhe e replanta a roça madura</b>, como o fazendeiro, sem arar terra nova; a colheita
+ *       vai para o baú da colônia mais perto. Um pastor por colônia por vez;</li>
+ *   <li><b>o lenhador cuida do bosque</b>: vai até ele e repõe a muda que falta e põe farinha de osso,
+ *       sem esperar o relógio do bosque, no máximo uma vez a cada {@link #GROVE_EVERY}.</li>
+ * </ul>
  */
 public final class IdleHelps {
 
@@ -57,6 +62,13 @@ public final class IdleHelps {
 
     private static final Map<UUID, Help> FIELD = new HashMap<>();
 
+    /** De quanto em quanto tempo o lenhador sem tarefa cuida do bosque: meio minuto. */
+    static final long GROVE_EVERY = 600;
+
+    private static final Map<UUID, Help> GROVE = new HashMap<>();
+
+    private static final Map<UUID, Long> GROVE_DONE = new HashMap<>();
+
     private IdleHelps() {
     }
 
@@ -72,7 +84,8 @@ public final class IdleHelps {
 
     /** Se este aldeão está numa ajuda agora — conta como trabalho no {@code WorkTime}. */
     public static boolean isHelping(UUID workerId) {
-        return FIELD.values().stream().anyMatch(help -> help.worker.equals(workerId));
+        return FIELD.values().stream().anyMatch(help -> help.worker.equals(workerId))
+                || GROVE.values().stream().anyMatch(help -> help.worker.equals(workerId));
     }
 
     private static void tick(ServerWorld world) {
@@ -81,6 +94,7 @@ public final class IdleHelps {
         for (Colony colony : List.copyOf(VillageColonyMod.COLONIES.all())) {
             if (colony.isActive() && colony.isAttended(now)) {
                 shepherdInTheField(world, colony);
+                lumberjackInTheGrove(world, colony);
             }
         }
     }
@@ -144,6 +158,69 @@ public final class IdleHelps {
         stop(colony.id());
     }
 
+    /** O lenhador sem tarefa vai ao bosque e cuida dele. */
+    static void lumberjackInTheGrove(ServerWorld world, Colony colony) {
+        long now = world.getTime();
+        Help help = GROVE.get(colony.id());
+
+        if (help != null && !(world.getEntity(help.worker) instanceof VillagerEntity helper && isFree(world, helper))) {
+            stopGrove(colony.id());
+            help = null;
+        }
+
+        if (help == null) {
+            if (now - GROVE_DONE.getOrDefault(colony.id(), Long.MIN_VALUE / 2) < GROVE_EVERY) {
+                return;
+            }
+
+            List<BlockPos> grove = VillageGrove.of(colony.id());
+            BlockPos target = grove.isEmpty() ? MinecraftTypeAdapter.toBlockPos(colony.center()) : grove.getFirst();
+
+            for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
+                if (worker.profession().filter(ProfessionType.LUMBERJACK::equals).isPresent()
+                        && world.getEntity(worker.villagerId()) instanceof VillagerEntity lumberjack
+                        && isFree(world, lumberjack)) {
+                    help = new Help(lumberjack.getUuid(), target);
+                    GROVE.put(colony.id(), help);
+                    break;
+                }
+            }
+        }
+
+        if (help == null || !(world.getEntity(help.worker) instanceof VillagerEntity lumberjack)) {
+            return;
+        }
+
+        if (!lumberjack.getBlockPos().isWithinDistance(help.target, 4)) {
+            help.walked += 10;
+
+            if (help.walked > GIVE_UP_AFTER) {
+                stopGrove(colony.id());
+                GROVE_DONE.put(colony.id(), now);
+                return;
+            }
+
+            WorkTargets.set(lumberjack.getUuid(), help.target.up(), 2);
+            return;
+        }
+
+        lumberjack.swingHand(Hand.MAIN_HAND);
+        int planted = VillageGrove.tendNow(world, colony);
+
+        VillageColonyMod.LOGGER.info("Lumberjack {} tended the grove — {} sapling(s) planted, bone meal on the rest",
+                lumberjack.getUuid().toString().substring(0, 8), planted);
+        stopGrove(colony.id());
+        GROVE_DONE.put(colony.id(), now);
+    }
+
+    private static void stopGrove(UUID colonyId) {
+        Help help = GROVE.remove(colonyId);
+
+        if (help != null) {
+            WorkTargets.clear(help.worker);
+        }
+    }
+
     /**
      * Colhe e replanta esta lavoura, e guarda o que sobra no baú da colônia mais perto.
      *
@@ -186,5 +263,7 @@ public final class IdleHelps {
 
     static void clearAll() {
         FIELD.clear();
+        GROVE.clear();
+        GROVE_DONE.clear();
     }
 }
