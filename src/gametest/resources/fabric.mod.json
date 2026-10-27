@@ -201,6 +201,7 @@
       "com.villagecolony.fabric.work.PenLiftGameTest",
       "com.villagecolony.fabric.work.PathNetworkGameTest",
       "com.villagecolony.fabric.work.IdleHelpsGameTest",
+      "com.villagecolony.fabric.work.SnowShovelGameTest",
       "com.villagecolony.fabric.integration.PenFloorsGameTest",
       "com.villagecolony.fabric.work.FarmerStandGameTest",
       "com.villagecolony.fabric.work.PostGrassGameTest",

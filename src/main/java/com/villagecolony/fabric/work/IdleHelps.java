@@ -44,6 +44,7 @@ import java.util.UUID;
  *   <li><b>o carpinteiro põe a tocha da colônia</b> ao lado do caminho onde a luz de bloco é zero, sem
  *       tocha da colônia a menos de {@link #TORCH_SPACING} blocos; a tocha surge sem custo
  *       ({@code ColonyTorches}).</li>
+ *   <li><b>o pedreiro recolhe neve com a pá</b> quando a obra pede peça de neve ({@link SnowShovel}).</li>
  * </ul>
  */
 public final class IdleHelps {
@@ -88,6 +89,7 @@ public final class IdleHelps {
 
     private static final Map<UUID, Integer> TORCH_CURSOR = new HashMap<>();
 
+
     private IdleHelps() {
     }
 
@@ -105,7 +107,8 @@ public final class IdleHelps {
     public static boolean isHelping(UUID workerId) {
         return FIELD.values().stream().anyMatch(help -> help.worker.equals(workerId))
                 || GROVE.values().stream().anyMatch(help -> help.worker.equals(workerId))
-                || TORCH.values().stream().anyMatch(help -> help.worker.equals(workerId));
+                || TORCH.values().stream().anyMatch(help -> help.worker.equals(workerId))
+                || SnowShovel.isShoveling(workerId);
     }
 
     private static void tick(ServerWorld world) {
@@ -116,6 +119,7 @@ public final class IdleHelps {
                 shepherdInTheField(world, colony);
                 lumberjackInTheGrove(world, colony);
                 carpenterLightsThePath(world, colony);
+                SnowShovel.pass(world, colony);
             }
         }
     }
@@ -379,7 +383,7 @@ public final class IdleHelps {
         return stored;
     }
 
-    private static boolean isFree(ServerWorld world, VillagerEntity villager) {
+    static boolean isFree(ServerWorld world, VillagerEntity villager) {
         UUID id = villager.getUuid();
 
         return villager.isAlive() && !villager.isSleeping()
@@ -403,5 +407,6 @@ public final class IdleHelps {
         GROVE_DONE.clear();
         TORCH.clear();
         TORCH_CURSOR.clear();
+
     }
 }
