@@ -35,7 +35,7 @@ public class CropRegistryGameTest implements FabricGameTest {
 
             context.assertTrue(first.incomplete(), "o raio de 64 devia ficar no meio da volta numa passagem");
 
-            CropPatch.register(colonyId, farmland);
+            com.villagecolony.fabric.integration.KnownFarmland.register(colonyId, farmland);
 
             Optional<BlockPos> ripe = CropPatch.survey(world, colonyId, center, 64).ripe();
 

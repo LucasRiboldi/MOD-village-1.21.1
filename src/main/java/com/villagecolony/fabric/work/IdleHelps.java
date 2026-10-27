@@ -102,7 +102,7 @@ public final class IdleHelps {
                     continue;
                 }
 
-                Optional<BlockPos> ripe = CropPatch.ripeKnown(world, colony.id(), shepherd.getBlockPos());
+                Optional<BlockPos> ripe = com.villagecolony.fabric.integration.KnownFarmland.ripeNear(world, colony.id(), shepherd.getBlockPos());
 
                 if (ripe.isEmpty()) {
                     return;

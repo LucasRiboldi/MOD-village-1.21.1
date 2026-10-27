@@ -39,9 +39,9 @@ public class IdleHelpsGameTest implements FabricGameTest {
                 MinecraftTypeAdapter.toColonyPos(chestAt)));
 
         try {
-            CropPatch.register(colony.id(), farmland);
+            com.villagecolony.fabric.integration.KnownFarmland.register(colony.id(), farmland);
 
-            Optional<BlockPos> ripe = CropPatch.ripeKnown(world, colony.id(), chestAt);
+            Optional<BlockPos> ripe = com.villagecolony.fabric.integration.KnownFarmland.ripeNear(world, colony.id(), chestAt);
 
             context.assertTrue(ripe.map(farmland.up()::equals).orElse(false), "a lavoura madura conhecida não foi achada");
 
@@ -53,7 +53,7 @@ public class IdleHelpsGameTest implements FabricGameTest {
                     "a lavoura não foi replantada: " + world.getBlockState(farmland.up()));
             context.assertTrue(ColonyChests.countIn(world, List.of(MinecraftTypeAdapter.toColonyPos(chestAt)),
                     Items.WHEAT) > 0, "o trigo não foi para o baú da colônia");
-            context.assertTrue(CropPatch.ripeKnown(world, colony.id(), chestAt).isEmpty(),
+            context.assertTrue(com.villagecolony.fabric.integration.KnownFarmland.ripeNear(world, colony.id(), chestAt).isEmpty(),
                     "replantada, a lavoura não está mais madura");
         } finally {
             CropPatch.forget(colony.id());

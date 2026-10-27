@@ -280,44 +280,12 @@ public final class CropPatch {
         return Optional.of(new Field(null, plot, false));
     }
 
-    /**
-     * A lavoura madura mais perto de {@code from} entre as roças conhecidas da colônia, sem mexer na
-     * varredura do fazendeiro — para quem ajuda na roça (o pastor, item 8 de 27-10).
-     */
-    public static Optional<BlockPos> ripeKnown(ServerWorld world, UUID colonyId, BlockPos from) {
-        java.util.LinkedHashSet<BlockPos> cells = KNOWN.get(colonyId);
-
-        if (cells == null) {
-            return Optional.empty();
-        }
-
-        BlockPos best = null;
-        double bestDistance = Double.MAX_VALUE;
-
-        for (BlockPos cell : cells) {
-            WorldChunk chunk = loadedChunk(world, cell);
-
-            if (chunk == null || !isRipe(chunk.getBlockState(cell.up()))) {
-                continue;
-            }
-
-            double distance = cell.getSquaredDistance(from);
-
-            if (distance < bestDistance) {
-                best = cell.up().toImmutable();
-                bestDistance = distance;
-            }
-        }
-
-        return Optional.ofNullable(best);
+    /** As roças conhecidas desta colônia, só para leitura — {@link KnownFarmland}. */
+    static java.util.Set<BlockPos> knownOf(UUID colonyId) {
+        return java.util.Collections.unmodifiableSet(KNOWN.getOrDefault(colonyId, new java.util.LinkedHashSet<>()));
     }
 
-    /** Põe no registro a terra arada que alguém da colônia acabou de fazer — Regra 121. */
-    public static void register(UUID colonyId, BlockPos farmland) {
-        learn(colonyId, farmland);
-    }
-
-    private static void learn(UUID colonyId, BlockPos farmland) {
+    static void learn(UUID colonyId, BlockPos farmland) {
         java.util.LinkedHashSet<BlockPos> cells = KNOWN.computeIfAbsent(colonyId, id -> new java.util.LinkedHashSet<>());
 
         if (cells.size() < MAX_KNOWN) {
