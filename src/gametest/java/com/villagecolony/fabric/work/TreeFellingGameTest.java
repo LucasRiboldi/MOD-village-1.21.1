@@ -79,4 +79,28 @@ public class TreeFellingGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /** Sem árvore madura no alcance depois de cortar, a tarefa fecha CONCLUÍDA — Regra 120. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_felling_emptied", tickLimit = 20)
+    public void anEmptiedReachClosesTheTaskAsDone(TestContext context) {
+        UUID lumberjack = UUID.randomUUID();
+        Task task = VillageColonyMod.TASKS.create(
+                UUID.randomUUID(), TaskType.COLLECT_WOOD, TaskPriority.PRODUCTION, ResourceType.OAK_LOG, 256);
+
+        try {
+            task.reserveFor(lumberjack);
+
+            LumberjackWork.Job job = new LumberjackWork.Job(task, context.getAbsolutePos(BlockPos.ORIGIN));
+            job.collected = 12;
+
+            TreeFelling.closeEmptied(job, lumberjack);
+
+            context.assertTrue(task.state() == com.villagecolony.core.task.model.TaskState.COMPLETED,
+                    "a tarefa de 256 toras devia fechar concluída com 12, e ficou " + task.state());
+        } finally {
+            VillageColonyMod.TASKS.remove(task.id());
+        }
+
+        context.complete();
+    }
 }

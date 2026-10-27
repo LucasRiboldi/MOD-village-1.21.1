@@ -84,6 +84,7 @@ final class FarmerTill {
         }
 
         world.setBlockState(plot.get(), Blocks.FARMLAND.getDefaultState());
+        com.villagecolony.fabric.integration.CropPatch.register(job.task.colonyId(), plot.get());
         villager.swingHand(Hand.MAIN_HAND, true);
         TILLED.merge(id, 1, Integer::sum);
 
