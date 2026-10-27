@@ -245,6 +245,30 @@ destrói o que é de outro) e o degrau de 1.
 | D8 | Usar a rede para escolher lote (§5.5) | já na fase 1 / só depois de a rede estar no jogo |
 | D9 | Fase 2, tráfego e preferência pelo caminho (§5.6) | fazer / deixar para depois |
 
+### 7.1 Respostas do autor (27-10)
+
+| # | Decisão |
+|---|---|
+| D1 | **Sim**: o caminho tem 3 de largura e substitui o corredor de 1 bloco da Regra 70. Além disso, **construção nova só nasce a no mínimo 3 blocos de qualquer outra construção**, podendo encostar no caminho. |
+| D2 | **Aterra** o buraco do traçado com o chão do bioma. |
+| D3 | **Serpentina primeiro, corte curto depois.** O traçado sobe a encosta em ziguezague, sem cortar. Se não couber, corta até 2 blocos de fundo, em degraus de 1. Se ainda não der, contorna. |
+| D4 | O caminho de terra vale em todo bioma, inclusive no deserto e na neve. |
+| D5 | Cada entrada se liga ao ponto mais barato da rede, com atalho ao chafariz quando o desvio passa de 1,6×. |
+| D6 | **O pedreiro, o carpinteiro e o fundidor** fazem o caminho quando estão sem tarefa do ofício, **um por vez**, revezando entre eles. O "ferreiro" foi confirmado como o fundidor. |
+| D7 | As ruas Vanilla existentes entram na rede como estão. |
+| D8 | Os lotes novos são escolhidos pela rede já na primeira fase. |
+| D9 | A preferência pelo caminho e a contagem de tráfego ficam para uma fase 2. |
+| — | **Critérios de 27-10, logo depois:** o caminho não destrói construção (construção é coluna proibida); busca sempre o menor percurso de um ponto a outro; não se sobrepõe nem corre colado ao lado de outro; e os caminhos se unem para servirem como uma rede só, em vez de muitos caminhos separados. |
+
+### 7.2 Regras previstas
+
+| Regra | O quê |
+|---|---|
+| 123 | A rede de caminhos da vila: grafo guardado, traçado com desnível ≤ 1 (serpentina, depois corte ≤ 2, depois contorno), 3 de largura, buraco aterrado, terra do bioma. Substitui a Regra 70. |
+| 124 | Distância mínima de 3 blocos entre construções, com o caminho podendo encostar. |
+| 125 | Quem faz o caminho: o pedreiro, o carpinteiro e o fundidor ociosos, um por vez. |
+| 126 | O lote novo nasce na frente da rede e é escolhido pela centralidade. Cobre o item 7 das decisões de 27-10. |
+
 ## 8. Fases e verificação
 
 1. **Grafo no núcleo e save.** Teste de unidade: aresta, junção, chafariz
