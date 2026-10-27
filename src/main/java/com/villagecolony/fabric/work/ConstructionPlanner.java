@@ -319,6 +319,7 @@ public final class ConstructionPlanner {
                 // longe. Ver WaitingWork.giveUp(colony, project, blamePlan).
                 WaitingWork.giveUp(colony, open.get(), false);
             } else if (!WaitingWork.giveUpIfStalled(world, colony, open.get())) {
+                StuckPieces.rescue(world, open.get());
                 ensureTask(colony, open.get());
 
                 // <b>E este ciclo conta</b> — 2026-09-19. A vaga de obra

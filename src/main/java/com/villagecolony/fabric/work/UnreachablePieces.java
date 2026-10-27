@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.coordination.SupplyException;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
@@ -51,6 +52,12 @@ final class UnreachablePieces {
      * faz com o que está no caminho.
      */
     static void surge(ServerWorld world, ConstructionProject project, ConstructionProject.DeferredPiece piece) {
+        surge(world, project, piece, SupplyException.UNREACHABLE_PIECE);
+    }
+
+    /** O mesmo, com a exceção de suprimento que autoriza a peça a surgir (Regras 86 e 113). */
+    static void surge(ServerWorld world, ConstructionProject project, ConstructionProject.DeferredPiece piece,
+            SupplyException why) {
         Optional<BlueprintBlock> block = project.remaining().stream()
                 .filter(candidate -> project.worldPositionOf(candidate).equals(piece.position()))
                 .findFirst();
@@ -69,13 +76,14 @@ final class UnreachablePieces {
             world.setBlockState(target, state, Block.NOTIFY_ALL);
             BlockShaping.placeSecondHalf(world, target, state);
             placed = true;
-            com.villagecolony.fabric.integration.Supplies.record(com.villagecolony.core.coordination.SupplyException.UNREACHABLE_PIECE, project.colonyId(),
+            com.villagecolony.fabric.integration.Supplies.record(why, project.colonyId(),
                     piece.block().path(), 1);
         }
 
         project.markPlaced(block.get());
-        VillageColonyMod.LOGGER.warn("VC_UNREACHABLE version=1 project={} piece={} at={} tries={} placed={}",
-                project.id(), piece.block(), target.toShortString(), project.deferralsAt(piece.position()), placed);
+        VillageColonyMod.LOGGER.warn("VC_UNREACHABLE version=1 project={} piece={} at={} tries={} placed={} why={} rule={}",
+                project.id(), piece.block(), target.toShortString(), project.deferralsAt(piece.position()), placed,
+                why, why.rule());
         record(world, project, piece, target, placed);
     }
 

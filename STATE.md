@@ -1,4 +1,21 @@
-# STATE — 2026-10-22
+# STATE — 2026-10-27
+
+> **0.3.94** (27-10, branch `fix/obra-pecas-de-lado`): **Regra 113**, decisão do autor. No jogo da 0.3.93
+> no deserto (22-10, ~3 h), a vila parou às 18:57: o armazém (`storage_majest`, 112 89 -430) chegou a
+> "5 blocks left" com as cinco peças de lado; o construtor soltou a obra depois dos 5 minutos do
+> `BuildWait`, o planejador não reabre tarefa sem peça a pôr, o `UnsupportedRelease` só fecha até 4
+> peças sem apoio, e nenhuma obra nova abria (343 ciclos "a build was open"). Construtor 77% ocioso,
+> lenhador 98%, pedreiro 93%.
+> - **Agora:** a cada ciclo, toda peça de lado volta à fila (qualquer motivo) e a tarefa reabre; depois de
+>   4 voltas a peça surge (`VC_SUPPLY` `STUCK_PIECE`) e a obra fecha (`PieceRescue`, `StuckPieces`).
+> - **Também visto nesse jogo, sem correção ainda:** 115 aldeões levados à cama à noite por falta de
+>   caminho; fazendeiro 15× "could not reach the crop"; mineiros 59× sem lugar de pé e 22× sem
+>   caminho; nenhuma troca de cama da Regra 74 (não verificado se o diário tinha ações bastantes);
+>   12 códigos `UNCLASSIFIED` no mineiro.
+> - CHANGELOG reconstruído de 0.3.51 a 0.3.85 e corrigido de 0.3.86 a 0.3.93 a partir dos commits.
+>
+> **Próximo:** jogar e ler `brings back … try N of 4` e `the last pieces set aside came up in place`.
+>
 
 > **0.3.93** (22-10, branch `feat/regras-v2-melhorias`): avaliação do "Regras Consolidadas v2" (proposta do
 > autor) contra o código — `docs/research/2026-10-22-avaliacao-regras-v2.md` — e as melhorias escolhidas.

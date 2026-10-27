@@ -19,7 +19,8 @@ public enum SupplyException {
     FOUNDATION_GROUND(90, "o chão do bioma que aterra o lote e apoia cama, porta e baú (Regra 21)"),
     CHEST_FOR_A_WORKER(96, "o baú ao lado da cama do trabalhador de ofício que não tem um"),
     FOUNDING_ANIMALS(102, "duas ovelhas, duas galinhas, duas vacas e dois porcos, uma vez, na fundação"),
-    GRASS_FOR_THE_SHEEP(103, "o bloco de grama ao pé do poste ou no curral da ovelha");
+    GRASS_FOR_THE_SHEEP(103, "o bloco de grama ao pé do poste ou no curral da ovelha"),
+    STUCK_PIECE(113, "a peça de lado da obra sem mais nada a pôr, depois de 4 tentativas, posta no lugar");
 
     private final int rule;
 

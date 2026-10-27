@@ -4,115 +4,185 @@ Mudanças que chegam ao JAR ou à forma de verificar o mod. O formato segue o
 [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 Até 03-10 a versão ficou em **0.3.0 alpha**, republicada a cada entrega. Desde
-então cada JAR ganha número próprio. As entradas de 0.3.1 a 0.3.50 foram
-reconstruídas a partir do commit que trocou a versão; o SHA-256 de cada JAR publicado está no histórico do `STATE.md`
+então cada JAR ganha número próprio. As entradas de 0.3.1 a 0.3.23 foram
+reconstruídas em 11-10 (AUD-14), e as de 0.3.51 a 0.3.85 em 27-10, a partir do
+commit que trocou a versão, citado em cada título; o SHA-256 de cada JAR
+publicado está no histórico do `STATE.md`
 (`docs/archive/technical/Historico-2026-10.md`, `scripts/release_manifest.py`). O histórico anterior a
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
-## [0.3.93] — regras v2 avaliadas (2026-10-22)
-
-### Adicionado
-- **Diagnóstico: lista declarada de suprimentos (Regra 111)** — tudo que surge sem uma profissão obter está numa lista
-  declarada em `SupplyException` e deixa a linha `VC_SUPPLY` no log, mostrando qual exceção, qual regra a autorizou,
-  a colônia, o item e a quantidade.
-- **Códigos únicos de bloqueio (Regra 112)** — toda desistência no diário de ações (`action_report.py`) leva um código
-  de bloqueio (`BlockCode`) que classifica a razão em uma de 13 categorias: sem recurso, sem caminho, sem progresso,
-  recurso inacessível, obra bloqueada, peça sem apoio, baú cheio, sem armazenamento, bloco protegido, sem receita,
-  ferramenta faltando, alvo reservado, mundo indisponível.
-- **Cama, porta e baú são peças obrigatórias (C-02, Regras 21/32)** — sem apoio embaixo, ganham o chão automaticamente;
-  teste em `FunctionalPiecesGameTest`.
-- **Troca de cama é uma transação (Regra 74)** — ao amanhecer, o aldeão dorme na cama mais perto de onde trabalhou,
-  desde que o ganho de caminhada seja ≥ 16 blocos. O baú o acompanha: se tem baú, ele é remarcado no mundo;
-  se não, ganha um ao lado da cama nova. Implementação em `BedChoice` e `Walks` (BFS real pelo mapa).
+## [0.3.94] — a obra parada em peças de lado não prende a vila (2026-10-27, JAR local, não jogado)
 
 ### Corrigido
-- **Nada que a colônia corta some (Regra 110)** — blocos cortados do terreno (degraus do corredor, aterro) agora vão
-  aos baús públicos e o que não cabe cai no chão; antes caíam todos no chão sem avisar.
-- **Crash da 0.3.89 no corredor** — NPE em `Corridor.plan` quando o State era Comparable com hash-code inconsistente
-  com equals; removido o Comparable, a fila usa `Comparator.comparingInt` (test: `CorridorStateTest`).
-- **Travada de 3 segundos na busca com corte** — limite de 50 ms por tique de busca (MAX_PLAN_NANOS), com retomada
-  no ciclo seguinte (`StripLot.interrupted`).
+- **Vila parada duas horas (jogo da 0.3.93 no deserto):** o armazém chegou a "5 blocks left" com as
+  cinco peças de lado; o construtor esperou os 5 minutos e soltou a obra, o planejador não reabre
+  tarefa quando nada há a pôr, o fechamento de emergência só aceita até 4 peças sem apoio, e nenhuma
+  obra nova abria com aquela aberta. Agora, a cada ciclo, toda peça de lado volta à fila e a tarefa
+  reabre; depois de 4 voltas a peça surge no lugar (`VC_SUPPLY` `STUCK_PIECE`) e a obra fecha
+  (Regra 113, `PieceRescue`, `StuckPieces`).
+
+## [0.3.93] — regras v2 avaliadas (2026-10-22, `8b30c7dc`, JAR local)
+
+### Adicionado
+- **Lista declarada de suprimentos (Regra 111):** o que surge sem uma profissão obter está em
+  `SupplyException` e deixa a linha `VC_SUPPLY`; `scripts/supply_report.py` soma por exceção e item.
+- **Código único de bloqueio (Regra 112):** toda desistência no diário leva um código (`BlockCode`), e o
+  `action_report.py` agrupa por código.
+- **Cama, porta e baú obrigatórios (C-02, Regra 21):** sem apoio, ganham o chão do bioma embaixo
+  (`FunctionalPieces`); só faltam com `VC_FUNCTIONAL_MISSING`.
+
+### Corrigido
+- **Troca de cama transacional (Regra 74):** a troca leva o baú junto (remarca o do dono antigo ou
+  põe um ao lado da cama nova) e mede a caminhada real pelo mapa a pé (`Walks`).
+- **Nada que a colônia corta some (Regra 110):** o que a terraplanagem e o corte do corredor tiram vai
+  aos baús públicos; o que não cabe cai no chão (`Cuttings`).
 
 ### Documentação
-- **Regras 75–112** — 38 lógicas do código levantadas e documentadas em `docs/RULES.md`; README traz a tabela completa.
-- **Avaliação do "Regras v2"** — análise ponto a ponto em `docs/research/2026-10-22-avaliacao-regras-v2.md`, decisões
-  do autor registradas.
-- **Desenho da configuração** — especificação para R-153/154 (por mundo, por colônia, comando e arquivo), decidido e
-  aguardando implementação.
+- Avaliação do "Regras Consolidadas v2" e desenho da configuração (`docs/research/2026-10-22-*`).
 
-## [0.3.92] — KF-006 resolvido (2026-10-22)
+## [0.3.92] — cama perto do trabalho (2026-10-22, `ac984d41`)
+
+### Adicionado
+- **Regra 74:** uma vez por dia, ao amanhecer, cada aldeão passa à cama livre mais perto de onde
+  trabalhou de fato (mediana das últimas ações do diário), só com ganho de 16 blocos e quando os dois
+  lados de uma troca ganham (`BedPlan`, `BedChoice`).
+
+### Testes
+- `ColonyDetection` e `Crafting` não caem mais pela colônia da arena vizinha (`runColonyCycleNow`);
+  `MinerDirectPathGameTest` para a navegação antes de cada prova (`navigation.stop()`, KF-007).
+
+### Documentação
+- Regras 75–109: 35 lógicas do código registradas; o README traz a tabela completa, gerada por
+  `scripts/rules_to_readme.py`.
+
+## [0.3.91] — a busca com corte não trava o servidor (2026-10-22, `0e3baf50`)
 
 ### Corrigido
-- **MinerDirectPathGameTest falhava intermitentemente** — navegação do aldeão iniciada em paralelo com a prova;
-  adicionado `waitAndRun(5)` antes de `findPathTo`.
-- **Testes ColonyDetection e Crafting caíam pela colônia vizinha** — cada um passou a usar seu próprio lote e batch.
+- **Travadas de 3 s na busca do corredor com corte:** memória por passo, teto de 50 ms por busca e
+  retomada no ciclo seguinte (`Corridor`, `StripLot`).
+- O `runGametest` começa cada bateria com o mundo de teste apagado, como o CI.
 
-## [0.3.91] — teto de tempo no corredor (2026-10-22)
-
-### Mudado
-- **Busca do corredor com teto de tempo** — em vez de travar o servidor em vilas grandes, a busca roda até 50 ms
-  por tique, retoma no ciclo seguinte se não terminar (MAX_PLAN_NANOS = 50ms).
-
-## [0.3.90] — crash da 0.3.89 (2026-10-22)
+## [0.3.90] — o crash da 0.3.89 (2026-10-22, `8c3c4181`)
 
 ### Corrigido
-- **NPE em Corridor.plan** — `cost.get(current)` retornava null porque o State era Comparable de forma inconsistente;
-  removido o Comparable, fila usa Comparator.
+- **NPE em `Corridor.plan`:** o estado da busca era `Comparable` de forma inconsistente com `equals` e
+  sumia do `HashMap` quando o balde virava árvore; a fila usa um `Comparator` (`CorridorStateTest`).
+- Mutação do Core de volta acima do limiar de 85% (testes novos do Core).
 
-## [0.3.89] — alcance, mineiro, corredor, pastor, caminho de areia (2026-10-22, playtest deserto)
-
-### Adicionado
-- **Caminho de areia no deserto (Regra 73)** — bloco próprio `SandPathBlock` e `ModContent.SAND_PATH`, textura 16x16,
-  usado em vez de `dirt_path` quando a vila está no deserto (`VillageRoad.pavingOn`).
-- **Pastor: rebanho 8/6, curral por espécie (Regras 68 e 72)** — procria até 8 adultos, abate acima de 6;
-  um curral por espécie; nova obra de curral quando todos estão cheios (lotação pelo tamanho do curral).
+## [0.3.89] — fazendeiro, mineiro, corredor, pastor e caminho de areia (2026-10-22, `8028ba7b`)
 
 ### Mudado
-- **Alcance do fazendeiro inclusivo (Regra 68)** — ≤ 3 blocos = ao alcance; `FarmerStand.WITHIN_REACH_SQUARED = 9`;
-  teste em `FarmerReachTest`.
-- **Mineiro não nada dentro de construções (Regra 71)** — água debaixo da terra NEVER; água ao ar livre usa penalidade
-  normal de pathfinding (`MinerCaution.keepOutOfWater`).
-- **Corredor da faixa corta degraus (Regras 70 e 110)** — vale de 3 blocos, até 12 de fundo; blocos cortados vão aos
-  baús públicos e o resto cai no chão; teste em `CorridorCutGameTest`.
+- O fazendeiro a 3 blocos da planta alcança — o braço inclui a borda.
+- O mineiro nada ao ar livre; a água só é proibida debaixo da terra (Regra 71).
+- O corredor da faixa corta degraus na duna, num vale de três (Regra 70).
+- Pastor: rebanho de até 8 e abate acima de 6; um curral por espécie, lotado pelo tamanho; curral novo
+  quando todos estão cheios (Regras 68 e 72).
 
-## [0.3.88] — mineiro em profundidade, acesso cavado, corredor de caminho (2026-10-21)
+### Adicionado
+- **Caminho de areia**, o caminho exclusivo da vila do deserto (Regra 73).
+
+## [0.3.88] — mineiro em profundidade, acesso cavado, corredor (2026-10-22, `b1844629`)
 
 ### Mudado
-- **Mineiro não constrói para fora da montanha (Regra 71)** — desce antes de ir de lado; calcula profundidade do nó
-  antes de comprometer (`MineStairPoints`).
-- **Acesso cavado (Regra 71)** — quando a boca da mina não se alcança a pé, o mineiro cava um acesso do nível da vila
-  até a boca (`MineApproachPath`).
-
-### Adicionado
-- **Corredor de um bloco em ângulo reto (Regra 70)** — a partir da porta, sai em linha reta; curvas só em ângulo reto
-  (90°), um bloco de largura; implementação em `Corridor` com teto de profundidade de busca.
-
-## [0.3.87] — encalhe, trigo, mina com alcance, lote na faixa (2026-10-21)
-
-### Mudado
-- **Lote dentro da faixa anexada (Regra A5)** — com caminho a pé até a rua; mapa de alcance (`ReachMap`) integrado
-  à busca de lote.
-- **Mina reclama alcance a pé (Regra 71)** — a boca precisa ser alcançável a pé da vila; buscas em escada insistem em
-  outros pontos se a entrada não se alcança.
-- **Trigo para o rebanho (Decisão do autor)** — semente da lavoura é mais rara; sementes do plantio são guardadas para
-  fazer pão.
-
-### Adicionado
-- **Encalhe detectado e resgatado (Regra F4)** — aldeão preso num túnel conta como o mesmo lugar para a cama; socorro
-  em 1 minuto de impasse.
-
-## [0.3.86] — A1, C1, B1, D2 do deserto (2026-10-20, playtest deserto)
-
-### Adicionado
-- **Arenito no deserto (B1)** — quando falta arenito, o pedreiro o faz da areia da vila (via `StonecrafterWork`).
-- **Ceia no curral (D2)** — pastor deixa no baú um par da comida do rebanho (trigo + sementes).
-- **Arenito mais raso (C1)** — mineiro que chega ao lugar de trabalho alcança a pedra que procura.
-- **Rua que para diz o quê (A1)** — `StripLot` registra quando interrompe por falta de recurso (no `action_report.py`,
-  campo `code`).
+- O mineiro não constrói caminho para fora da montanha e desce antes de ir de lado (Regra 71).
+- Acesso cavado da vila até o nível quando a entrada da mina no alto não se alcança.
+- Corredor de um bloco, da porta em linha reta, curvas em ângulo reto (Regra 70).
 
 ### Corrigido
-- **KF-007 — MinerDirectPathGameTest determinístico** — repositório de teste fixo, sem aleatoriedade de terreno.
+- Lote achado em outro lugar não encerra a faixa anexada; a volta sem lote diz por quê.
+
+## [0.3.87] — encalhe, trigo, mina com alcance e lote na faixa (2026-10-22, `7f6fc112`)
+
+### Mudado
+- Lote dentro da faixa anexada, com caminho a pé até a rua (A5).
+- A escada da mina insiste em outros pontos, e a boca nova precisa ser alcançável a pé.
+- Mais trigo para o rebanho: semente da lavoura mais rara e sementes do plantio guardadas.
+
+### Corrigido
+- O vaivém de um túnel conta como o mesmo lugar para a cama (encalhe).
+
+## [0.3.86] — A1, C1, B1 e D2 do deserto (2026-10-21, `d7eb0c5f`)
+
+### Mudado
+- **A1:** o trecho de rua em crescimento que para diz o que o parou.
+- **C1:** quem chega ao lugar de trabalho alcança a pedra.
+- **B1:** sem arenito, o pedreiro o faz da areia da vila.
+- **D2:** a ceia deixa no baú um par da comida do rebanho.
+
+### Documentação
+- KF-007 registrada (`MinerDirectPathGameTest` intermitente).
+
+## [0.3.85] — corredor de 2 blocos em volta da casa no lote aplainado (2026-10-21, `9f4672fc`)
+
+## [0.3.84] — deserto: arenito liso primeiro, ferro que descansa, mina que desce e chão firme (2026-10-21, `84c920a6`)
+
+## [0.3.83] — quem mora abaixo do trabalho muda de casa para a altura dele (2026-10-21, `d4b1c794`)
+
+## [0.3.82] — sem escada fixa e sem subir por pilar — movimentação natural (desfaz parte da 0.3.81) (2026-10-21, `9eae5855`)
+
+## [0.3.81] — as duas alturas da vila — subida para todos, escada fixa, viveiro e roça na areia (2026-10-21, `71abe3ce`)
+
+## [0.3.80] — deserto: mineiro da casa baixa sobe até a mina, grama no curral, viveiro perto do lenhador, terracota/feno/argila aparecem (2026-10-21, `984f321f`)
+
+## [0.3.79] — deserto: fazendeiro chega à roça, caminhada por etapas e grama no poste da ovelha (2026-10-21, `84ae294c`)
+
+## [0.3.78] — deserto: a vila da duna volta a construir; animais na fundação (2026-10-21, `6472ffeb`)
+
+## [0.3.77] — a peça que o construtor não alcança surge no lugar depois de 3 tentativas (2026-10-20, `119fad7e`)
+
+## [0.3.76] — rota própria para os itens do registro de faltas (2026-10-20, `fcf199e9`)
+
+## [0.3.75] — terraplanagem do lote, fase 1 — desnível de até 2 é aplainado até a rua (2026-10-20, `db4bdd64`)
+
+## [0.3.74] — estrutura de teste e registro por bioma — /vc bioma, VC_BIOME, relatório e cobertura (2026-10-20, `24448dbe`)
+
+## [0.3.73] — o mineiro escora o teto de areia em arenito antes de quebrar, e tapa com a pedra do bioma (2026-10-20, `a2725c6d`)
+
+## [0.3.72] — caminho com o bloco natural do bioma, e a obra limpa o lote na mata fechada (2026-10-20, `c74041cd`)
+
+## [0.3.71] — peça que trava a obra aparece no baú do construtor, e a falta fica registrada (G2) (2026-10-20, `6b159f12`)
+
+## [0.3.70] — a casa fundadora limpa o próprio lote (G1) (2026-10-20, `cf97cb9e`)
+
+## [0.3.69] — vila espalhada e vila na borda de bioma viram colônia (2026-10-20, `5c983a27`)
+
+## [0.3.68] — as bancadas funcionam de verdade para o jogador, como a estação Vanilla (2026-10-20, `690dee98`)
+
+## [0.3.67] — os 3 defeitos graves da varredura de 20-10 (bancada, leituras por tique, não-mineiro preso) (2026-10-20, `0d7839f5`)
+
+## [0.3.66] — o artesão vai até a bancada antes de fabricar (mod → vanilla → normal), com salvaguarda (2026-10-15, `4ba40fad`)
+
+## [0.3.65] — cada bloco do mod com os 6 lados diferentes (texturas HD) (2026-10-15, `0ac5a474`)
+
+## [0.3.64] — só o mineiro remodela o terreno para escalar (vila montanhosa) (2026-10-15, `fc11a631`)
+
+## [0.3.63] — bancadas HD, receitas e luz 14, e F3 parcial da mina (2026-10-15, `98a267bb`)
+
+## [0.3.62] — bancada do mod para as 8 profissões, com texturas novas (2026-10-15, `31333436`)
+
+## [0.3.61] — o desvio do mineiro respeita o beco — fecha o P1 numa parede de caverna (2026-10-15, `30f4490f`)
+
+## [0.3.60] — o mineiro desvia para a pedra ao lado antes de largar (P1) (2026-10-15, `34294d97`)
+
+## [0.3.59] — conserto do mineiro (DirectPath) e STATE (2026-10-14, `75130165`)
+
+## [0.3.58] — expansão mais ágil para a vila madura não ficar ociosa (2026-10-14, `b4830e6b`)
+
+## [0.3.57] — a horta da casa surge sem gastar recurso (destrava a obra) (2026-10-14, `1247fb46`)
+
+## [0.3.56] — o pastor aproveita o rebanho (abate excedente, cozinha sem carvão, ovos) (2026-10-14, `d90ccb91`)
+
+## [0.3.55] — percurso por etapas até a boca da mina (MineApproachPath) (2026-10-14, `9ddcb036`)
+
+## [0.3.54] — bancadas na aba Blocos Funcionais; obra destravada do ocupante parado (2026-10-13, `9feb6ab3`)
+
+## [0.3.53] — cercado no nível da rua e aba do criativo para as bancadas do mod (2026-10-13, `5a305b83`)
+
+## [0.3.52] — bancadas exclusivas do mod que dobram a produção da profissão (2026-10-13, `58116a10`)
+
+## [0.3.51] — o enchimento de segurança da mina surge, sem gastar recurso da vila (2026-10-13, `1e6538c7`)
+
 
 ## [0.3.50] — baús se espalham sozinhos, sem viagem (2026-10-13, JAR local, não jogado)
 
