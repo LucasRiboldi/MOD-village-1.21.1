@@ -135,6 +135,7 @@
       "com.villagecolony.gametest.BetterToolGameTest",
       "com.villagecolony.fabric.integration.ColonyModelsGameTest",
       "com.villagecolony.fabric.integration.CropRegistryGameTest",
+      "com.villagecolony.fabric.integration.ColonyTorchesGameTest",
       "com.villagecolony.fabric.integration.BlueprintResumeGameTest",
       "com.villagecolony.gametest.BlueprintReaderGameTest",
       "com.villagecolony.gametest.BuildSiteGameTest",
