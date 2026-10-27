@@ -198,6 +198,7 @@
       "com.villagecolony.fabric.work.UnreachablePiecesGameTest",
       "com.villagecolony.fabric.work.StuckPiecesGameTest",
       "com.villagecolony.fabric.work.PenLiftGameTest",
+      "com.villagecolony.fabric.integration.PenFloorsGameTest",
       "com.villagecolony.fabric.work.FarmerStandGameTest",
       "com.villagecolony.fabric.work.PostGrassGameTest",
       "com.villagecolony.fabric.work.DesertFixesGameTest",

@@ -233,6 +233,10 @@ public final class PenEscape {
 
         long gates = exits.stream().filter(FencedIn.Exit::gate).count();
 
+        if (gates == 0 && villager instanceof VillagerEntity worker) {
+            PenLift.leaveBedInPen(world, worker, pen.reach());
+        }
+
         VillageColonyMod.LOGGER.info(
                 "{} {} is fenced in at {} ({} gate(s), {} fence spot(s) to jump; {} time this"
                         + " session) — heading for {}",

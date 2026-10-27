@@ -74,6 +74,27 @@ final class PenLift {
         return false;
     }
 
+    /**
+     * A cama dentro de cercado sem portão não é casa — Regra 122: o aldeão a larga, e o jogo escolhe
+     * outra. Na taiga (24-10) a cama e o baú do mineiro ficaram num cercado assim, e toda noite o
+     * teleporte o devolvia para dentro.
+     */
+    static void leaveBedInPen(ServerWorld world, net.minecraft.entity.passive.VillagerEntity villager,
+                              Set<BlockPos> reach) {
+        Optional<BlockPos> bed = BedTeleport.bedOf(world, villager);
+
+        if (bed.isEmpty() || java.util.stream.Stream.of(bed.get(), bed.get().north(), bed.get().south(),
+                bed.get().east(), bed.get().west()).noneMatch(reach::contains)) {
+            return;
+        }
+
+        villager.releaseTicketFor(net.minecraft.entity.ai.brain.MemoryModuleType.HOME);
+        villager.getBrain().forget(net.minecraft.entity.ai.brain.MemoryModuleType.HOME);
+
+        VillageColonyMod.LOGGER.info("Worker {} leaves its bed at {} — it is inside a pen with no gate",
+                villager.getUuid().toString().substring(0, 8), bed.get().toShortString());
+    }
+
     /** Saiu sozinho, ou não está mais cercado: a conta recomeça. */
     static void forget(UUID id) {
         FAILED.remove(id);
