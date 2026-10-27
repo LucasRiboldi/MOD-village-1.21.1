@@ -376,7 +376,9 @@ final class ColonyCycleRunner {
                 VillageColonyMod.STORAGES::hasStorage,
                 (resource, type, hands) -> MissingHandsLog.report(colony.id(), resource, type, hands),
                 work.constructionMaterials(),
-                (worker, task) -> canReserveTask(overworld, colony.id(), worker, task));
+                (worker, task) -> canReserveTask(overworld, colony.id(), worker, task),
+                // Quem mora mais perto do lugar do ofício pega primeiro — item 3 de 27-10.
+                com.villagecolony.fabric.work.TradeSites.nearFirst(overworld, colony));
 
         // Só depois do ciclo sabemos que a rota produziu tarefa aberta; uma rota apenas possível
         // não pode gastar o prazo nem materializar recurso cedo demais. Regra 40, ADR-040.

@@ -62,6 +62,20 @@ class WorkAssignmentTest {
                 ResourceType.DIRT, 16);
     }
 
+    /** Quem mora mais perto do lugar do ofício pega primeiro — item 3 de 27-10. */
+    @Test
+    void theNearestOfTwoLumberjacksTakesTheOnlyTask() {
+        Worker far = workerWith(ProfessionType.LUMBERJACK);
+        Worker near = workerWith(ProfessionType.LUMBERJACK);
+        Task task = woodTask();
+
+        WorkAssignment.assign(COLONY, workers, tasks, worker -> true, (worker, open) -> true,
+                java.util.Comparator.comparing(worker -> worker == near ? 0 : 1));
+
+        assertEquals(Optional.of(near.villagerId()), task.executor(), "a tarefa devia ir a quem mora perto");
+        assertTrue(tasks.assignedTo(far.villagerId()).isEmpty());
+    }
+
     @Test
     void aLumberjackTakesTheWoodTask() {
         Worker lumberjack = workerWith(ProfessionType.LUMBERJACK);
