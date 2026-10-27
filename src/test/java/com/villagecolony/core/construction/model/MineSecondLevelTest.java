@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** A repetição vertical preserva a forma e desce só pelo caracol central. */
+/** A repetição vertical preserva a forma e desce pelo salão do ramal zero (Regra 119). */
 class MineSecondLevelTest {
 
     @Test
@@ -17,17 +17,19 @@ class MineSecondLevelTest {
 
         assertEquals(first.gallery(), second.gallery());
         assertEquals(first.descent(), second.descent());
-        assertEquals(MineShaft.DESCENT, first.entry().y() - second.entry().y());
-        assertEquals(MineShaft.DESCENT,
-                Math.abs(first.entry().x() - second.entry().x())
-                        + Math.abs(first.entry().z() - second.entry().z()));
+        // Regra 119: o nível seguinte desce do meio do salão do ramal zero, duas escadas abaixo.
+        assertEquals(MineShaft.DESCENT + MineShaft.ARM_STAIRS, first.entry().y() - second.entry().y());
+        assertEquals(new ColonyPos(16, 40, -8), second.entry());
     }
 
     @Test
     void aCycleThatStillFitsCanDescendOnce() {
         MineShaft shaft = MineShaft.from(
-                new ColonyPos(0, MineShaft.DEEPEST + 2 * MineShaft.DESCENT, 0), Side.SOUTH);
+                new ColonyPos(0, MineShaft.DEEPEST + 2 * MineShaft.DESCENT + MineShaft.ARM_STAIRS, 0), Side.SOUTH);
+        MineShaft tooDeep = MineShaft.from(
+                new ColonyPos(0, MineShaft.DEEPEST + 2 * MineShaft.DESCENT + MineShaft.ARM_STAIRS - 1, 0), Side.SOUTH);
 
         assertTrue(shaft.mayDeepen());
+        org.junit.jupiter.api.Assertions.assertFalse(tooDeep.mayDeepen());
     }
 }

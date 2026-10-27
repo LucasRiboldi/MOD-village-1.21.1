@@ -6,28 +6,36 @@ import com.villagecolony.core.type.Side;
 import java.util.Objects;
 
 /**
- * A geometria determinística de um nível da mina.
+ * A geometria determinística de um nível da mina — Regra 119 (autor, 2026-10-27).
  *
- * <p>Cada nível abre dois lances de cinco degraus, limpa um salão de
- * 10 x 10 x 3 e então libera quatro ramais. Cada ramal desce dez
- * degraus e limpa outro salão. A ordem não usa sorteio de
- * execução: o cursor salvo sempre volta à mesma posição.
+ * <p><b>O ciclo.</b> Cada nível desce por um caracol de {@link #HELIX_FLIGHTS} lances curtos, que dá
+ * uma volta inteira e desce um bloco por degrau; ao pé dele abre um salão de
+ * {@value #HALL_SIDE} x {@value #HALL_SIDE} x 3. De cada um dos quatro cantos do salão sai um ramal: outro
+ * caracol, virado para fora, que termina num salão do mesmo tamanho no quadrante diagonal daquele canto.
+ * O nível seguinte começa no meio do salão do ramal zero, e o ciclo se repete.
  *
- * <p><b>A rampa</b> ({@code ascent > 0}) é o fim da mina no fundo do mundo —
- * ADR-036 item 17: a partir do piso do salão ({@code entry}), {@code ascent}
- * degraus de três pistas por três alturas, um para a frente e um para cima,
- * no rumo {@code descent} (para longe do centro da vila). Um ramal só.
+ * <p><b>O caminho de volta é o da descida.</b> Os degraus são três pistas de largura por três de altura,
+ * e cada um fica um bloco abaixo do anterior; do pé do caracol para o salão e do canto do salão para o
+ * ramal o passo também é de um bloco. Nenhuma célula planejada é o chão de um degrau ou de um salão do
+ * mesmo nível: o caracol fica fora das colunas do salão, e cada ramal fica fora delas e das dos outros.
+ * O {@code MineShaftLayoutTest} confere isso para vários níveis seguidos.
+ *
+ * <p>A ordem não usa sorteio de execução: o cursor salvo sempre volta à mesma posição.
+ *
+ * <p><b>A rampa</b> ({@code ascent > 0}) é o fim da mina no fundo do mundo — ADR-036 item 17: a partir
+ * do piso do salão ({@code entry}), {@code ascent} degraus de três pistas por três alturas, um para a
+ * frente e um para cima, no rumo {@code descent} (para longe do centro da vila). Um ramal só.
  */
 public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent) {
 
-    /** Dois lances formam cada ciclo de descida. */
-    public static final int HELIX_FLIGHTS = 2;
+    /** Quatro lances: o caracol dá uma volta inteira. */
+    public static final int HELIX_FLIGHTS = 4;
+
+    /** Degraus de cada lance — poucos, para o caracol ficar curto. */
+    public static final int HELIX_SIDE = 3;
 
     /** Quantos degraus o caracol inteiro desce. */
-    public static final int DESCENT = 10;
-
-    /** Maior lado do caracol, exposto para os testes de largura. */
-    public static final int HELIX_SIDE = 5;
+    public static final int DESCENT = HELIX_FLIGHTS * HELIX_SIDE;
 
     /** Altura livre de túneis e áreas de coleta. */
     public static final int HEADROOM = 3;
@@ -41,31 +49,34 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
     /** Blocos planejados por degrau: três pistas por três alturas. */
     public static final int STAIR_STEP_BLOCKS = STAIR_HEADROOM * STAIR_LANES;
 
-    /** Blocos da escada inicial compartilhada. */
+    /** Blocos do caracol do nível. */
     public static final int CARVED = DESCENT * STAIR_STEP_BLOCKS;
 
-    /** Salão comum de 10 x 10 colunas por três blocos de altura. */
-    public static final int SEARCH_AREA_BLOCKS = 300;
+    /** O lado do salão, ímpar para ter meio. */
+    public static final int HALL_SIDE = 17;
+
+    /** Do meio do salão até a borda. */
+    private static final int HALF = HALL_SIDE / 2;
+
+    /** O salão do nível, ao pé do caracol. */
+    public static final int SEARCH_AREA_BLOCKS = HALL_SIDE * HALL_SIDE * HEADROOM;
 
     /** Tudo que os quatro ramais compartilham antes de se separar. */
     public static final int SHARED_BLOCKS = CARVED + SEARCH_AREA_BLOCKS;
 
-    /** Degraus de cada um dos quatro ramais. */
-    public static final int ARM_STAIRS = 10;
+    /** Degraus do caracol de cada ramal. */
+    public static final int ARM_STAIRS = DESCENT;
 
-    /** Blocos do salão de 10 x 10 x 3 limpo por ramal. */
-    public static final int ARM_AREA_BLOCKS = 300;
+    /** O salão no fim de cada ramal, do mesmo tamanho do salão do nível. */
+    public static final int ARM_AREA_BLOCKS = SEARCH_AREA_BLOCKS;
 
     /** Total de posições exclusivas de cada ramal. */
     public static final int ARM_BLOCKS = ARM_STAIRS * STAIR_STEP_BLOCKS + ARM_AREA_BLOCKS;
 
-    private static final int SEARCH_WIDTH = 10;
-    private static final int SEARCH_HEIGHT = 3;
-    private static final int SEARCH_LENGTH = SEARCH_AREA_BLOCKS / (SEARCH_WIDTH * SEARCH_HEIGHT);
     private static final int MINEABLE_BOTTOM = -63;
 
-    /** A menor altura do piso central que ainda deixa o último ramal acima da rocha-mãe. */
-    public static final int DEEPEST = MINEABLE_BOTTOM + ARM_STAIRS - 2;
+    /** A menor altura do piso do salão do nível que ainda deixa o salão dos ramais acima da rocha-mãe. */
+    public static final int DEEPEST = MINEABLE_BOTTOM + ARM_STAIRS - 1;
 
     public MineShaft {
         Objects.requireNonNull(entry, "entry");
@@ -95,17 +106,17 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
         return ascent > 0;
     }
 
-    /** O piso do salão deste nível, de onde a rampa do fundo parte. */
+    /** O piso (o bloco debaixo dos pés) no meio do salão deste nível, de onde a rampa do fundo parte. */
     public ColonyPos hallFloor() {
-        return isRamp() ? entry : levelFloor();
+        return isRamp() ? entry : hallCenter();
     }
 
-    /** Abre a escada e posiciona o primeiro ramal à direita da entrada. */
+    /** Abre o caracol e posiciona o primeiro ramal no canto oposto ao rumo da descida. */
     public static MineShaft from(ColonyPos entry, Side descent) {
         return new MineShaft(entry, descent, descent.clockwise().clockwise());
     }
 
-    /** A mesma escada, com o próximo ramal em sentido horário. */
+    /** O mesmo caracol, com o próximo ramal em sentido horário. */
     public MineShaft turned() {
         return new MineShaft(entry, descent, gallery.clockwise(), ascent);
     }
@@ -115,9 +126,40 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
         return isRamp() ? ramp(entry, descent.clockwise(), ascent) : from(entry, descent.clockwise());
     }
 
-    /** O próximo nível começa no piso central desta escada. */
+    /** O próximo nível começa no meio do salão do ramal zero, o do canto de {@code gallery}. */
     public MineShaft deepened() {
-        return new MineShaft(levelFloor(), descent, gallery);
+        return new MineShaft(armHallCenter(), descent, gallery);
+    }
+
+    /**
+     * O caminho a pé da entrada deste nível até a do seguinte, em pisos (o bloco debaixo dos pés): o fim
+     * de cada lance do caracol, a borda do salão, o canto do ramal zero, o fim de cada lance do caracol
+     * dele, a borda do salão dele e o meio, de onde o próximo nível desce. Cada trecho é curto para a
+     * navegação Vanilla — Regra 119.
+     */
+    public java.util.List<ColonyPos> waypoints() {
+        java.util.List<ColonyPos> path = new java.util.ArrayList<>();
+        int flight = HELIX_SIDE * STAIR_STEP_BLOCKS;
+
+        for (int end = flight; end <= CARVED; end += flight) {
+            path.add(floorOf(positionAt(end - STAIR_STEP_BLOCKS)));
+        }
+
+        path.add(floorOf(positionAt(CARVED)));
+        path.add(corner());
+
+        for (int end = flight; end <= ARM_STAIRS * STAIR_STEP_BLOCKS; end += flight) {
+            path.add(floorOf(positionAt(SHARED_BLOCKS + end - STAIR_STEP_BLOCKS)));
+        }
+
+        path.add(floorOf(positionAt(SHARED_BLOCKS + ARM_STAIRS * STAIR_STEP_BLOCKS)));
+        path.add(armHallCenter());
+
+        return path;
+    }
+
+    private static ColonyPos floorOf(ColonyPos feet) {
+        return new ColonyPos(feet.x(), feet.y() - 1, feet.z());
     }
 
     /** Não propõe posições abaixo da faixa minerável do mundo. */
@@ -135,30 +177,33 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
             return rampCell(index);
         }
 
+        if (beyondTheArm(index)) {
+            throw new IllegalArgumentException("Index past the end of the arm: " + index);
+        }
+
         if (index < CARVED) {
-            return helix(index);
+            return helix(entry, descent, index);
         }
 
         if (index < SHARED_BLOCKS) {
-            return search(levelFloor(), commonDirection(), index - CARVED);
+            return hall(index - CARVED);
         }
 
         int armIndex = index - SHARED_BLOCKS;
 
         if (armIndex < ARM_STAIRS * STAIR_STEP_BLOCKS) {
-            return stair(branchTop(), gallery, armIndex);
+            return helix(corner(), gallery, armIndex);
         }
 
-        return search(branchFloor(), gallery, armIndex - ARM_STAIRS * STAIR_STEP_BLOCKS);
+        return armHall(armIndex - ARM_STAIRS * STAIR_STEP_BLOCKS);
     }
 
     /**
-     * Todas as células que este nível e este ramal planejam abrir — 2026-09-25,
-     * ADR-025.
+     * Todas as células que este nível e este ramal planejam abrir — 2026-09-25, ADR-025.
      *
-     * <p>É o que separa o vão de caverna da célula que a própria mina ainda
-     * vai cavar: o bloco sob a sala comum é piso, e o sob a camada de cima da
-     * sala é a camada de baixo. Quem remenda o piso pergunta aqui.
+     * <p>É o que separa o vão de caverna da célula que a própria mina ainda vai cavar: o bloco sob a
+     * sala comum é piso, e o sob a camada de cima da sala é a camada de baixo. Quem remenda o piso
+     * pergunta aqui.
      */
     public java.util.Set<ColonyPos> plannedCells() {
         java.util.Set<ColonyPos> cells = new java.util.HashSet<>();
@@ -171,7 +216,7 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
         return cells;
     }
 
-    /** Cada ramal tem exatamente sua escada e sua área finitas. */
+    /** Cada ramal tem exatamente seu caracol e seu salão finitos. */
     public boolean beyondTheArm(int index) {
         return index >= (isRamp() ? ascent * STAIR_STEP_BLOCKS : SHARED_BLOCKS + ARM_BLOCKS);
     }
@@ -190,50 +235,25 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
                 entry.z() + descent.offsetZ() * step + sideways.offsetZ() * lane);
     }
 
-    private ColonyPos helix(int index) {
-        int remaining = index;
-
-        for (int flight = 0; flight < HELIX_FLIGHTS; flight++) {
-            int blocks = flightLength() * STAIR_STEP_BLOCKS;
-
-            if (remaining < blocks) {
-                return stair(cornerOf(flight), facingOn(flight), remaining);
-            }
-
-            remaining -= blocks;
-        }
-
-        throw new IllegalArgumentException("Helix index outside the shared stair: " + index);
-    }
-
-    private static int flightLength() {
-        return HELIX_SIDE;
-    }
-
-    private ColonyPos cornerOf(int flight) {
-        int x = entry.x();
-        int y = entry.y();
-        int z = entry.z();
+    /**
+     * Um caracol de {@link #HELIX_FLIGHTS} lances a partir de {@code top}: cada lance anda
+     * {@link #HELIX_SIDE} degraus e vira à direita. As pistas ficam à esquerda de quem desce, para fora
+     * da volta, e o miolo do caracol fica de rocha. O último degrau cai na coluna de {@code top}.
+     */
+    private static ColonyPos helix(ColonyPos top, Side first, int index) {
+        int flight = index / (HELIX_SIDE * STAIR_STEP_BLOCKS);
+        int within = index % (HELIX_SIDE * STAIR_STEP_BLOCKS);
+        Side towards = first;
+        int x = top.x();
+        int z = top.z();
 
         for (int prior = 0; prior < flight; prior++) {
-            Side towards = facingOn(prior);
-            int length = flightLength();
-            x += towards.offsetX() * length;
-            z += towards.offsetZ() * length;
-            y -= length;
-        }
-
-        return new ColonyPos(x, y, z);
-    }
-
-    private Side facingOn(int flight) {
-        Side towards = descent;
-
-        for (int turn = 0; turn < flight; turn++) {
+            x += towards.offsetX() * HELIX_SIDE;
+            z += towards.offsetZ() * HELIX_SIDE;
             towards = towards.clockwise();
         }
 
-        return towards;
+        return stair(new ColonyPos(x, top.y() - flight * HELIX_SIDE, z), towards, within);
     }
 
     private static ColonyPos stair(ColonyPos top, Side towards, int index) {
@@ -249,56 +269,83 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
                 top.z() + towards.offsetZ() * step + sideways.offsetZ() * lane);
     }
 
-    /** O centro do próximo ciclo, dez blocos abaixo da entrada do ciclo atual. */
-    private ColonyPos levelFloor() {
-        return cornerOf(HELIX_FLIGHTS);
+    /** O piso no pé do caracol que começa em {@code top}: a coluna de {@code top}, {@link #DESCENT} abaixo. */
+    private static int bottomFloorY(ColonyPos top) {
+        return top.y() - DESCENT;
     }
 
-    private Side commonDirection() {
-        return descent.clockwise().clockwise();
-    }
-
-    private ColonyPos branchTop() {
-        ColonyPos floor = levelFloor();
+    /** O meio do salão do nível: à esquerda do pé do caracol, por onde o último lance sai. */
+    private ColonyPos hallCenter() {
+        Side out = descent.clockwise().opposite();
 
         return new ColonyPos(
-                floor.x() + gallery.offsetX() * SEARCH_LENGTH,
-                floor.y() + 1,
-                floor.z() + gallery.offsetZ() * SEARCH_LENGTH);
-    }
-
-    private ColonyPos branchFloor() {
-        ColonyPos top = branchTop();
-        return new ColonyPos(
-                top.x() + gallery.offsetX() * ARM_STAIRS,
-                top.y() - ARM_STAIRS,
-                top.z() + gallery.offsetZ() * ARM_STAIRS);
+                entry.x() + out.offsetX() * (HALF + 1),
+                bottomFloorY(entry),
+                entry.z() + out.offsetZ() * (HALF + 1));
     }
 
     /**
-     * Um salão de 10 x 10 x 3. A ordem alterna os lados a partir do centro,
-     * variando a área explorada sem perder um caminho físico de volta.
+     * O salão do nível, fileira por fileira a partir da que encosta no caracol, e em cada fileira do
+     * meio para os lados — o mineiro abre a área sem perder o caminho físico de volta.
      */
-    private ColonyPos search(ColonyPos floor, Side towards, int index) {
-        if (index < 0 || index >= SEARCH_AREA_BLOCKS) {
-            throw new IllegalArgumentException("Search index outside the area: " + index);
-        }
-
-        int column = index / SEARCH_HEIGHT;
-        int layer = index % SEARCH_HEIGHT;
-        int row = column / SEARCH_WIDTH;
-        int withinRow = column % SEARCH_WIDTH;
-        int offset = withinRow == 0 ? 0
-                : (withinRow % 2 == 1 ? (withinRow + 1) / 2 : -withinRow / 2);
-        Side sideways = towards.clockwise();
+    private ColonyPos hall(int index) {
+        Side along = descent.clockwise().opposite();
+        int column = index / HEADROOM;
+        int layer = index % HEADROOM;
+        int row = column / HALL_SIDE - HALF;
+        int withinRow = column % HALL_SIDE;
+        int offset = withinRow == 0 ? 0 : (withinRow % 2 == 1 ? (withinRow + 1) / 2 : -withinRow / 2);
+        ColonyPos center = hallCenter();
 
         return new ColonyPos(
-                floor.x() + towards.offsetX() * row + sideways.offsetX() * offset,
-                floor.y() + 1 + layer,
-                floor.z() + towards.offsetZ() * row + sideways.offsetZ() * offset);
+                center.x() + along.offsetX() * row + descent.offsetX() * offset,
+                center.y() + 1 + layer,
+                center.z() + along.offsetZ() * row + descent.offsetZ() * offset);
+    }
+
+    /** O canto do salão de onde sai este ramal: o de fora nos rumos {@code gallery} e à esquerda dele. */
+    private ColonyPos corner() {
+        ColonyPos center = hallCenter();
+        Side left = gallery.clockwise().opposite();
+
+        return new ColonyPos(
+                center.x() + (gallery.offsetX() + left.offsetX()) * HALF,
+                center.y(),
+                center.z() + (gallery.offsetZ() + left.offsetZ()) * HALF);
+    }
+
+    /**
+     * O salão do ramal, no quadrante diagonal do canto: fileiras para a esquerda de {@code gallery} a
+     * partir do pé do caracol do ramal, e colunas no rumo {@code gallery}, ambas para fora do salão do
+     * nível.
+     */
+    private ColonyPos armHall(int index) {
+        Side along = gallery.clockwise().opposite();
+        int column = index / HEADROOM;
+        int layer = index % HEADROOM;
+        int row = column / HALL_SIDE + 1;
+        int sideways = column % HALL_SIDE;
+        ColonyPos corner = corner();
+        int floorY = bottomFloorY(corner);
+
+        return new ColonyPos(
+                corner.x() + along.offsetX() * row + gallery.offsetX() * sideways,
+                floorY + 1 + layer,
+                corner.z() + along.offsetZ() * row + gallery.offsetZ() * sideways);
+    }
+
+    /** O meio do salão do ramal, piso: de onde o nível seguinte desce. */
+    private ColonyPos armHallCenter() {
+        Side along = gallery.clockwise().opposite();
+        ColonyPos corner = corner();
+
+        return new ColonyPos(
+                corner.x() + along.offsetX() * (HALF + 1) + gallery.offsetX() * HALF,
+                bottomFloorY(corner),
+                corner.z() + along.offsetZ() * (HALF + 1) + gallery.offsetZ() * HALF);
     }
 
     private int lowestPlannedY() {
-        return branchFloor().y() + 1;
+        return bottomFloorY(corner()) + 1;
     }
 }

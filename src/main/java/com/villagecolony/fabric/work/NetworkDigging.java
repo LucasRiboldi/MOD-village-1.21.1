@@ -45,9 +45,9 @@ public final class NetworkDigging {
      * {@link MineShaft#SHARED_BLOCKS} o salão existe para os corredores saírem dele.
      */
     public static boolean galleryPhase(Mine mine) {
-        return !mine.shaft().isRamp()
-                && mine.branchesOpenNow() == Mine.ARMS
-                && mine.arm(0).cut() >= MineShaft.SHARED_BLOCKS;
+        // Regra 119: desde 27-10 o nível não tem mais a rede de corredores — os quatro ramais descem
+        // em caracol dos cantos do salão e abrem um salão cada um (MineShaft). A rede fica desligada.
+        return false;
     }
 
     /** O mesmo, pela colônia. */
