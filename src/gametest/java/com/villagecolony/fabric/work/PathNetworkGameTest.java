@@ -51,7 +51,7 @@ public class PathNetworkGameTest implements FabricGameTest {
             }
 
             PathLinks.Entrance door = new PathLinks.Entrance(base.add(1, 1, 0), Side.EAST);
-            List<PathStep> steps = PathLinks.trace(world, colonyId, door, roads, base.add(100, 0, 0)).orElseThrow();
+            List<PathStep> steps = PathLinks.trace(world, colonyId, door, roads, base.add(100, 0, 0), false).orElseThrow();
 
             context.assertTrue(roads.contains(ColonyRoads.column(steps.getLast().x(), steps.getLast().z())),
                     "o caminho devia parar na rede: " + steps.getLast());

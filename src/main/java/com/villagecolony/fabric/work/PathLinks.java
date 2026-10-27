@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ColonyRoads;
+import com.villagecolony.core.construction.model.NetworkDetour;
 import com.villagecolony.core.construction.model.PathStep;
 import com.villagecolony.core.construction.model.VillagePathPlanner;
 import com.villagecolony.core.type.ServerMemory;
@@ -30,7 +31,9 @@ import java.util.UUID;
 
 /**
  * As ligações da rede de caminhos — Regra 123: cada construção pronta da colônia se liga pela porta ao
- * ponto mais barato da rede (decisão D5), e a primeira se liga ao centro da vila, o chafariz. O traçado é
+ * ponto mais barato da rede (decisão D5), e a primeira se liga ao centro da vila, o chafariz. Quando o
+ * percurso pela rede até o chafariz passa de duas vezes o direto ({@link NetworkDetour}), a ligação é um
+ * atalho direto, que ainda reaproveita a rede onde ela serve. O traçado é
  * o {@link VillagePathPlanner}; quem assenta é {@link PathPaving}.
  *
  * <p>Um traçado por colônia por vez. Construção sem porta legível, ou sem traçado possível, fica de lado
@@ -113,7 +116,23 @@ public final class PathLinks {
                 continue;
             }
 
-            Optional<List<PathStep>> steps = trace(world, colony.id(), entrance.get(), roads, hub);
+            Optional<List<PathStep>> steps = trace(world, colony.id(), entrance.get(), roads, hub, false);
+
+            // Atalho ao chafariz quando a rede dá volta demais — decisão D5 (2×).
+            if (steps.isPresent() && !steps.get().isEmpty() && !roads.isEmpty()) {
+                PathStep join = steps.get().getLast();
+                BlockPos front = entrance.get().front();
+                int direct = Math.abs(front.getX() - hub.getX()) + Math.abs(front.getZ() - hub.getZ());
+
+                if (NetworkDetour.needsShortcut(steps.get().size(),
+                        NetworkDetour.stepsToHub(roads, join.x(), join.z(), hub.getX(), hub.getZ()), direct)) {
+                    Optional<List<PathStep>> shortcut = trace(world, colony.id(), entrance.get(), roads, hub, true);
+
+                    if (shortcut.isPresent() && !shortcut.get().isEmpty()) {
+                        steps = shortcut;
+                    }
+                }
+            }
 
             if (steps.isEmpty() || steps.get().isEmpty()) {
                 SET_ASIDE.put(building.id(), now);
@@ -134,7 +153,7 @@ public final class PathLinks {
 
     /** O traçado da porta até a rede, ou até o chafariz quando ainda não há rede. */
     static Optional<List<PathStep>> trace(ServerWorld world, UUID colonyId, Entrance entrance, Set<Long> roads,
-                                          BlockPos hub) {
+                                          BlockPos hub, boolean toTheHub) {
         WorldPathTerrain terrain = new WorldPathTerrain(world, colonyId);
         BlockPos front = entrance.front();
         OptionalInt floor = terrain.groundY(front.getX(), front.getZ(), front.getY() - 1);
@@ -146,13 +165,13 @@ public final class PathLinks {
         VillagePathPlanner.Goal goal = new VillagePathPlanner.Goal() {
             @Override
             public boolean reached(int x, int floorY, int z) {
-                return roads.contains(ColonyRoads.column(x, z))
+                return (!toTheHub && roads.contains(ColonyRoads.column(x, z)))
                         || (Math.abs(x - hub.getX()) <= 1 && Math.abs(z - hub.getZ()) <= 1);
             }
 
             @Override
             public int estimate(int x, int z) {
-                return roads.isEmpty() ? Math.abs(x - hub.getX()) + Math.abs(z - hub.getZ()) : 0;
+                return toTheHub || roads.isEmpty() ? Math.abs(x - hub.getX()) + Math.abs(z - hub.getZ()) : 0;
             }
 
             @Override
