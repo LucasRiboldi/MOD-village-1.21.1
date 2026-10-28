@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.102%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.103%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -551,16 +551,16 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 `runGametest` gera `build/reports/jacoco/gametest/html` (bateria de jogo, que
 é quem exercita a camada `fabric`).
 
-Verificação de 2026-10-28 (0.3.102, branch `fix/playtest-0397`, PR #37),
+Verificação de 2026-10-28 (0.3.103, branch `fix/playtest-0102`),
 rodada e não copiada:
 
-- 1609 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
+- 1620 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
   de 500 linhas por arquivo).
-- 126 testes Python: aprovados (o CI instala o `nbtlib` para o teste das
+- 136 testes Python: aprovados (o CI instala o `nbtlib` para o teste das
   versões do armazém).
-- 900 GameTests: todos aprovados com `--rerun-tasks`; o `runGametest` começa
+- 913 GameTests: todos aprovados com `--rerun-tasks`; o `runGametest` começa
   cada bateria com o mundo de teste apagado, como o CI.
-- `build --rerun-tasks`: aprovado; JAR `village-colony-0.3.102.jar`.
+- `build --rerun-tasks`: aprovado; JAR `village-colony-0.3.103.jar`.
 - Mutação (PIT, pacote `core`): não refeita nesta versão; a última medida
   (0.3.93) foi 2140 de 2509 mutações mortas (85,3%, limiar 85%).
 - CI do GitHub ("Build and test"): a `main` exige esse check para mesclar.

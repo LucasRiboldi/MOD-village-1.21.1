@@ -1,5 +1,11 @@
 # STATE — 2026-10-28
 
+> **0.3.103** (28-10, branch `fix/playtest-0102`): ruas naturais (Regras 138–140), centro fixo (141), noite
+> só para o preso (142), baú público inteiro (143), alvo inalcançável esquecido (144), camas da caixa (145),
+> produtos de valor (146), diário da vila `VC_EVENT`/`VC_DAY`/`VC_AUDIT` (147), obra nunca largada meio
+> pronta (148), rua sem falha e ajudantes (149), mina com salão de 9 e forma 9; correções da auditoria
+> (`PROJECT_AUDIT.md`, T1–T5). **Não jogado.** Para o jogo: `python scripts/state_report.py` lê o diário.
+>
 > **0.3.102** (28-10): tocha nova (referência do autor) e o retrato da vila `VC_STATE`, no log e em
 > `<mundo>/villagecolony/analytics/*.jsonl`. Também `/vc dados`, `/vc log` e `/vc bioma` com o retrato, e
 > `scripts/state_report.py`. Bateria 900/900. **Não jogado.** Para o jogo: `/vc log`, `/vc dados` e

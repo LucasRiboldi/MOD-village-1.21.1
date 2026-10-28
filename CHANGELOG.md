@@ -12,6 +12,45 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.103] — ruas naturais, centro fixo, diário da vila e mina mais rasa por nível (2026-10-28, JAR local, não jogado)
+
+Branch `fix/playtest-0102`. Achados de duas simulações de 10 dias de uma taiga e da auditoria
+`PROJECT_AUDIT.md`.
+
+### Adicionado
+- **Ruas (Regras 138–140):** chão de rua com mistura gasta (cascalho e terra grossa na borda, arenito na
+  areia), protegido de mineração e coleta; lote escolhido pelo mapa de interesse (distância, altura e caminho
+  até a rua); rua esticada com 3 de largura, pela ponta mais perto do centro.
+- **Diário da vila (Regra 147):** `VC_EVENT` a cada fato (obra aberta e fechada com as peças contadas no
+  mundo, caixa, camas, teleporte, nível da mina, morte), `VC_DAY` com o tempo das profissões no dia de jogo e
+  `VC_AUDIT` conferindo camas, trabalhadores e peças da obra contra o mundo; `state_report.py` lê os três.
+- **Ajudantes (Regra 149):** o pedreiro sem tarefa tapa falhas de até 2 blocos no meio da rua e nivela em
+  volta da casa pronta; o fundidor leva o minério da boca da mina aos baús públicos e acende a rua escura.
+- **Produtos de valor (Regra 146):** teto 512; o fundidor funde todo minério cru e assa a carne; o pedreiro faz
+  degrau, laje e muro de pedregulho, tijolo entalhado e arenito cortado — cada receita na sua proporção.
+- **Scripts:** `village_map.py` (a vila vista de cima, antes e depois) e `road_map.py` (só as ruas, as
+  ligações e o que a colônia fez); `biome_sim.py --snapshot`.
+
+### Mudado
+- **Centro fixo (Regra 141):** a caixa da vila cresce sem mover o centro; a busca de lote mede do centro ao
+  canto mais longe; o lote da faixa anexada fica a até 48 blocos do centro, +10 por volta sem lote.
+- **Noite (Regra 142):** o caminho de casa é buscado a 128 blocos; só vai à cama quem ficou parado em duas
+  conferências seguidas.
+- **Camas (Regra 145):** contadas na caixa inteira, não pela sonda de 64 blocos.
+- **Mina (Regra 119):** salão de 9 × 9 em vez de 17 × 17 — um nível cava ~1.755 blocos em vez de ~4.875.
+
+### Corrigido
+- **Obra largada meio pronta (Regra 148):** a obra sem peça a pôr fecha pelo ciclo da colônia; parada no fim,
+  o que falta surge no lugar e vai ao `supply-gaps.jsonl` (`END_OF_BUILD`).
+- **Baú público (Regra 143):** sem o teto de 3 compartimentos por item; o lenhador não larga mais toras no
+  chão com a vila a 38%.
+- **Alvo de coleta inalcançável (Regra 144):** sai da memória por um dia (79 retornos ao mesmo alvo).
+- **Carregar o mundo movia o centro fixo** da vila que cresceu para um lado (save).
+- **Mina salva antes da 0.3.96** retomava com o cursor da geometria antiga: a forma da mina sobe para 9 e ela
+  recomeça do primeiro degrau, pulando o já cavado.
+- **A nota do lote** sobrevivia à troca de mundo.
+- **A luz da rua carregava chunk:** a busca de luz e o lugar da lanterna não leem nem avisam chunk descarregado.
+
 ## [0.3.102] — tocha nova e o retrato da vila para análise (2026-10-28, JAR local, não jogado)
 
 ### Adicionado
