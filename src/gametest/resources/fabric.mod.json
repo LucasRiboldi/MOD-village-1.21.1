@@ -161,6 +161,8 @@
       "com.villagecolony.fabric.integration.MineSealGameTest",
       "com.villagecolony.fabric.work.GardenPiecesGameTest",
       "com.villagecolony.fabric.work.IdleWatchGameTest",
+      "com.villagecolony.fabric.work.CrowdedPostGameTest",
+      "com.villagecolony.fabric.integration.SiteSurroundingsGameTest",
       "com.villagecolony.gametest.ShepherdGameTest",
       "com.villagecolony.gametest.StructureCoverageGameTest",
       "com.villagecolony.gametest.VillageStructuresGameTest",
