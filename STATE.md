@@ -1,4 +1,18 @@
-# STATE — 2026-10-27
+# STATE — 2026-10-28
+
+> **0.3.99** (28-10, branch `fix/playtest-0397`, PR #37): caminho rente ao chão (Regra 123 emendada) depois
+> do jogo da 0.3.98 (Spark S3FcIdzPmh: aterros de até 4 blocos e travão de 12 s no traçado). Memória
+> `caminho-rente-ao-chao`.
+> - **Verificado:** testes de unidade OK; bateria 892/892 (o GameTest da rede confere que nada nasce
+>   acima da superfície e que o poço ao lado não é aterrado). **Não jogado.**
+> - **Para o jogo:**
+>   - os caminhos novos rentes ao chão;
+>   - o tempo de cada traçado no log (`traced a path … in N ms`, `no path … (N ms)`);
+>   - nenhum "Can't keep up" vindo do traçado.
+> - **Fica como estava, por escolha do autor:** os aterros que a 0.3.98 já fez.
+> - **Para decidir:** o corredor do lote (Regras 70/110) ainda corta encosta até 12 de fundo ao abrir uma
+>   obra. Ele só tira bloco, mas não segue o "rente ao chão".
+>
 
 > **0.3.98** (27-10, branch `fix/playtest-0397`): o playtest da 0.3.97 (savana, Spark n4DVevJAmw) e os
 > pedidos do autor, cada um com as opções que ele escolheu (memória `playtest-0397-e-decisoes-2026-10-27`).

@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.98%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.99%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -46,8 +46,10 @@ SHA-256 do JAR na descrição.
   não aparece: desde 2026-10-10 (P0.8) o servidor não escreve mais o nome da
   profissão no aldeão.
 - Liga a porta de cada construção pronta à rede de caminhos da vila: caminho
-  de 3 blocos de largura, de terra do bioma, que aterra buracos, sobe no
-  máximo 1 bloco por passo, nunca passa por construção nem pela boca da mina e
+  de até 3 blocos de largura, **rente ao chão** — troca só o bloco de cima,
+  cobre só o buraco de 1 bloco, corta no máximo 1 e nunca põe bloco acima do
+  terreno; sobe no máximo 1 bloco por passo, estreita onde o lado não cabe,
+  contorna o desnível maior, nunca passa por construção nem pela boca da mina e
   se junta aos caminhos que já existem; vai ao chafariz por atalho quando a
   rede dá mais de 2 vezes a volta (Regras 123 a 125). Quem assenta é o
   pedreiro, o carpinteiro ou o fundidor sem tarefa, um por vez.
@@ -77,11 +79,11 @@ SHA-256 do JAR na descrição.
   declarada e deixa a linha `VC_SUPPLY` no log (Regra 111); toda desistência
   no diário de ações leva um código único de bloqueio (Regra 112).
 
-O mod é alpha. A 0.3.98 (2026-10-27) passou na bateria automática completa
-(ver "Desenvolvimento e verificação"). O último jogo foi o da 0.3.97 na
-savana (Spark `n4DVevJAmw`): servidor a 20 TPS e o mod com 1,4% do tique; os
-defeitos achados nele (obra presa pela horta, tocha invisível, tocha da mina
-caindo, rede de caminhos parada) foram corrigidos na 0.3.98, que ainda não foi
+O mod é alpha. A 0.3.99 (2026-10-28) passou na bateria automática completa
+(ver "Desenvolvimento e verificação"). O último jogo foi o da 0.3.98 na
+savana (Spark `S3FcIdzPmh`): a rede de caminhos levantava aterros de até 4
+blocos e o traçado de várias portas num tique parou o servidor 12 s; a 0.3.99
+refez o caminho rente ao chão e com um traçado por vez, e ainda não foi
 jogada. O estado vivo está no
 [`STATE.md`](STATE.md). O que mudou em cada
 publicação está no [`CHANGELOG.md`](CHANGELOG.md); a avaliação técnica mais
@@ -274,7 +276,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 120 | **A tarefa do lenhador fecha concluída quando o alcance esvazia** (autor 10-27, jogo da 0.3.93: nenhuma tarefa de 256 toras chegava ao fim; todas saíam como "made no progress" e o relatório dava 0% de conclusão): sem árvore madura no alcance depois de ter cortado alguma, a tarefa termina CONCLUÍDA com o que rendeu, e o ciclo seguinte abre outra se a vila ainda pedir madeira; sem ter cortado nada, ele segue esperando o bosque | 10-27 | ✅ feita (0.3.96) | `TreeChoice.closeEmptied` |
 | 121 | **A roça conhecida responde primeiro, sempre** (autor 10-27, jogo da 0.3.93: 622 "still sweeping" com roça madura conhecida esperando, e a planície parou em 16 aldeões com 41 camas): o registro de canteiros da colônia é olhado inteiro a cada passagem — o custo é o número de canteiros, não o tamanho da vila —, e o canteiro arado pelo fazendeiro entra nele na hora; lavoura madura do registro vira trabalho mesmo com a varredura do raio no meio da volta; com só canteiro vazio no registro, a varredura anda mais um trecho atrás de lavoura madura e o canteiro fica de reserva; a varredura do raio serve para achar roça nova | 10-27 | ✅ feita (0.3.96) | `CropPatch.survey`, `KnownFarmland.register`, `FarmerTill` |
 | 122 | **O curral é do pastor** (autor 10-27, jogo da 0.3.93: 217 entradas em curral na planície e o mineiro da taiga 3,5 h cercado com a cama dentro): o chão de dentro dos currais que o pastor mede é caro no caminho de todo aldeão de ofício que não é pastor (o nó vale como perigo leve, 8 por bloco) — atravessar fica possível quando é o único jeito, mas deixa de ser atalho; o aldeão achado cercado sem portão junto da própria cama larga essa cama, e o jogo escolhe outra; o portão que um aldeão abre fecha sozinho quando ninguém está nele (como já era) | 10-27 | ✅ feita (0.3.96) | `PenFloors`, `LandPathNodeMakerMixin`, `PenLift.leaveBedInPen` |
-| 123 | **A rede de caminhos da vila** (autor 10-27, estudo `docs/research/2026-10-27-rede-de-caminhos.md`): cada construção pronta se liga pela porta ao ponto mais barato da rede, e a primeira ao centro da vila; o traçado tem 3 de largura, degrau de no máximo um bloco entre passos, buraco aterrado com o chão do bioma, morro cortado no máximo 2 (antes disso sobe em serpentina pela encosta, e depois contorna), piso de caminho de terra em todo bioma e 2 de altura livre; construção, peça da vila, bloco do jogador e água nunca entram no traçado; caminho existente é reaproveitado, e correr colado ao lado de outro é evitado — os caminhos se unem numa rede só; substitui o corredor de 1 bloco da Regra 70 | 10-27 | ✅ feita (0.3.96; atalho ao chafariz quando a rede passa de 2× o direto, D5, 0.3.97) | `VillagePathPlanner`, `WorldPathTerrain`, `PathLinks`, `NetworkDetour` |
+| 123 | **A rede de caminhos da vila** (autor 10-27, estudo `docs/research/2026-10-27-rede-de-caminhos.md`): cada construção pronta se liga pela porta ao ponto mais barato da rede, e a primeira ao centro da vila; o traçado tem 3 de largura onde cabe, degrau de no máximo um bloco entre passos e **rente ao chão** (emenda do autor de 10-28, jogo da 0.3.98: o aterro de até 4 por coluna levantou paredes de terra e o traçado de 9 portas num tique parou o servidor 12 s): o caminho troca só o bloco de cima, cobre só o buraco de um bloco entre vizinhos no mesmo nível ou acima, corta no máximo um, nunca põe bloco acima do chão natural e por cima só tira planta; cada coluna de lado segue o próprio chão, até um acima ou abaixo do eixo, e onde não dá o caminho estreita; desnível maior se contorna, ou a porta fica sem ligação e é tentada de novo uma hora depois; um traçado por passagem, com o chão de cada coluna lido uma vez; piso de caminho de terra (de areia na areia) e 2 de altura livre; construção, peça da vila, bloco do jogador e água nunca entram no traçado; caminho existente é reaproveitado, e correr colado ao lado de outro é evitado — os caminhos se unem numa rede só; substitui o corredor de 1 bloco da Regra 70 | 10-27 | ✅ feita (0.3.96; atalho ao chafariz quando a rede passa de 2× o direto, D5, 0.3.97; rente ao chão, 0.3.99) | `VillagePathPlanner`, `WorldPathTerrain`, `PathLinks`, `PathPaving`, `NetworkDetour` |
 | 124 | **Construção nova nasce a no mínimo 3 blocos de qualquer construção** (autor 10-27, D1): o lote cuja pegada fica a menos de 3 blocos da caixa de outra construção, ou da obra aberta, é recusado (`TOO_CLOSE`); o caminho pode encostar no lote | 10-27 | ✅ feita (0.3.96) | `LotSpacing`, `LotLevel.flatGroundAt` |
 | 125 | **Quem assenta o caminho** (autor 10-27, D6): o pedreiro, o carpinteiro e o fundidor sem tarefa do ofício, no expediente e soltos, um por vez por colônia, revezando nessa ordem a cada 8 passos; cada passo é a seção de 3 colunas — aterro, corte do que está em cima do piso, caminho de terra e 2 livres —, e se o mundo mudou e a seção não serve mais, o traçado sai e é refeito | 10-27 | ✅ feita (0.3.96) | `PathPaving` |
 | 126 | **Peça colorida sai branca** (autor 10-27, item 5; jogo da 0.3.93: 64 "cama sem lã" e lã preta parada por corante): cama, lã, tapete e estandarte de qualquer cor entram na planta brancos, onde ela é montada — a lã que o rebanho dá é branca e nenhum corante é pedido; as outras peças não mudam | 10-27 | ✅ feita (0.3.96) | `WhitePieces`, `StructureBlueprintReader` |
@@ -469,7 +471,7 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 `runGametest` gera `build/reports/jacoco/gametest/html` (bateria de jogo, que
 é quem exercita a camada `fabric`).
 
-Verificação de 2026-10-27 (0.3.98, branch `fix/playtest-0397`, PR #37),
+Verificação de 2026-10-28 (0.3.99, branch `fix/playtest-0397`, PR #37),
 rodada e não copiada:
 
 - 1602 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
@@ -478,7 +480,7 @@ rodada e não copiada:
   versões do armazém).
 - 892 GameTests: todos aprovados com `--rerun-tasks`; o `runGametest` começa
   cada bateria com o mundo de teste apagado, como o CI.
-- `build --rerun-tasks`: aprovado; JAR `village-colony-0.3.98.jar`.
+- `build --rerun-tasks`: aprovado; JAR `village-colony-0.3.99.jar`.
 - Mutação (PIT, pacote `core`): não refeita nesta versão; a última medida
   (0.3.93) foi 2140 de 2509 mutações mortas (85,3%, limiar 85%).
 - CI do GitHub ("Build and test"): a `main` exige esse check para mesclar.

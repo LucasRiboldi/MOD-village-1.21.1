@@ -20,7 +20,7 @@ import java.util.UUID;
  *
  * <p><b>O caminho não destrói construção</b> (autor, 27-10): coluna com casa ou obra da colônia, peça
  * da vila que não seja chão do bioma, bloco do jogador ou água não tem chão para caminho. O que se corta
- * ({@code VillagePathPlanner.MAX_CUT}) e o que se aterra é sempre chão natural. Chunk fora de memória
+ * ({@code VillagePathPlanner.MAX_CUT}) e o buraco que se cobre são sempre chão natural. Chunk fora de memória
  * não é lido (ADR-002): a coluna fica proibida e o traçado passa por outro lado ou espera.
  */
 public final class WorldPathTerrain implements PathTerrain {
@@ -48,8 +48,24 @@ public final class WorldPathTerrain implements PathTerrain {
         this.mine = VillageColonyMod.MINES.of(colonyId).map(found -> found.shaft().entry());
     }
 
+    /** O que já foi lido neste traçado: cada coluna se lê uma vez (o traçado lia milhões de vezes, Spark S3FcIdzPmh). */
+    private final java.util.Map<Long, OptionalInt> grounds = new java.util.HashMap<>();
+    private final java.util.Map<Long, Boolean> blockedColumns = new java.util.HashMap<>();
+
     @Override
     public OptionalInt groundY(int x, int z, int nearY) {
+        long key = ((long) (x & 0x3FFFFFF) << 38) | ((long) (z & 0x3FFFFFF) << 12) | (nearY & 0xFFF);
+        OptionalInt known = grounds.get(key);
+
+        if (known == null) {
+            known = readGroundY(x, z, nearY);
+            grounds.put(key, known);
+        }
+
+        return known;
+    }
+
+    private OptionalInt readGroundY(int x, int z, int nearY) {
         if (!world.isChunkLoaded(x >> 4, z >> 4)) {
             return OptionalInt.empty();
         }
@@ -78,6 +94,11 @@ public final class WorldPathTerrain implements PathTerrain {
 
     @Override
     public boolean blocked(int x, int z) {
+        return blockedColumns.computeIfAbsent(com.villagecolony.core.construction.model.ColonyRoads.column(x, z),
+                ignored -> readBlocked(x, z));
+    }
+
+    private boolean readBlocked(int x, int z) {
         if (!world.isChunkLoaded(x >> 4, z >> 4)) {
             return true;
         }

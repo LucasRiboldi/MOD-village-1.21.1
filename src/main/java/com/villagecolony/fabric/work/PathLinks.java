@@ -48,8 +48,11 @@ public final class PathLinks {
     /** De quanto em quanto tempo a colônia procura a próxima construção sem ligação. */
     static final long PLAN_EVERY = 600;
 
-    /** Construção sem ligação possível: quanto tempo fica de lado. */
-    static final long RETRY_AFTER = 12_000;
+    /**
+     * Construção sem ligação possível: quanto tempo fica de lado — uma hora de jogo (autor, 2026-10-28:
+     * sem volta, a porta fica sem ligação e é tentada depois).
+     */
+    static final long RETRY_AFTER = 72_000;
 
     /** A porta mais perto que isto de um caminho já está ligada. */
     static final int LINKED = 1;
@@ -126,6 +129,9 @@ public final class PathLinks {
                 continue;
             }
 
+            // Um traçado por passagem, dê certo ou não: nove portas sem saída no mesmo tique pararam o
+            // servidor 12 s no jogo da 0.3.98.
+            long began = System.nanoTime();
             Optional<List<PathStep>> steps = trace(world, colony.id(), entrance.get(), roads, hub, false);
 
             // Atalho ao chafariz quando a rede dá volta demais — decisão D5 (2×).
@@ -144,18 +150,21 @@ public final class PathLinks {
                 }
             }
 
+            long millis = (System.nanoTime() - began) / 1_000_000;
+
             if (steps.isEmpty() || steps.get().isEmpty()) {
                 SET_ASIDE.put(building.id(), now);
-                VillageColonyMod.LOGGER.info("Colony {} — no path from the door of {} at {} to the network yet",
+                VillageColonyMod.LOGGER.info("Colony {} — no path from the door of {} at {} to the network yet"
+                                + " ({} ms); it is tried again in an hour",
                         colony.id().toString().substring(0, 8), building.blueprint().path(),
-                        entrance.get().front().toShortString());
-                continue;
+                        entrance.get().front().toShortString(), millis);
+                return;
             }
 
             PLANS.put(colony.id(), new Plan(building.id(), steps.get()));
-            VillageColonyMod.LOGGER.info("Colony {} traced a path of {} steps from the door of {} at {} (Regra 123)",
-                    colony.id().toString().substring(0, 8), steps.get().size(), building.blueprint().path(),
-                    entrance.get().front().toShortString());
+            VillageColonyMod.LOGGER.info("Colony {} traced a path of {} steps from the door of {} at {} in {} ms"
+                            + " (Regra 123)", colony.id().toString().substring(0, 8), steps.get().size(),
+                    building.blueprint().path(), entrance.get().front().toShortString(), millis);
 
             return;
         }

@@ -24,25 +24,30 @@ import java.util.UUID;
 public class PathNetworkGameTest implements FabricGameTest {
 
     /**
-     * Da porta até a rede por cima de uma vala: o caminho tem 3 de largura, a vala é aterrada, o degrau é
-     * de no máximo um, e ele para ao encostar na rede.
+     * O caminho da porta até a rede, rente ao chão (autor, 2026-10-28): o buraco de um bloco é coberto no
+     * nível do chão em volta, o poço fundo ao lado nunca é aterrado (o caminho estreita ou desvia), e
+     * nenhum bloco nasce acima da superfície — na 0.3.98 o aterro de até 4 levantou paredes de terra.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "path_network", tickLimit = 40)
-    public void aPathFromTheDoorFillsTheDitchAndJoinsTheNetwork(TestContext context) {
+    public void aPathFromTheDoorStaysFlushWithTheGroundAndJoinsTheNetwork(TestContext context) {
         ServerWorld world = context.getWorld();
         UUID colonyId = UUID.randomUUID();
         // Longe de tudo e acima do chão plano do mundo de teste: o cenário é só esta laje.
         BlockPos base = context.getAbsolutePos(BlockPos.ORIGIN).add(3_000_000, 30, 3_000_000);
         int y = base.getY();
+        BlockPos pit = base.add(12, 0, 1);
 
         try {
             for (int x = -2; x <= 22; x++) {
                 for (int z = -6; z <= 6; z++) {
                     BlockPos at = base.add(x, 0, z);
                     world.getChunk(at);
-                    world.setBlockState(x == 8 ? at.down(3) : at, Blocks.GRASS_BLOCK.getDefaultState());
+                    world.setBlockState(x == 8 ? at.down() : at, Blocks.GRASS_BLOCK.getDefaultState());
                 }
             }
+
+            world.setBlockState(pit, Blocks.AIR.getDefaultState());
+            world.setBlockState(pit.down(3), Blocks.GRASS_BLOCK.getDefaultState());
 
             Set<Long> roads = new HashSet<>();
 
@@ -60,33 +65,24 @@ public class PathNetworkGameTest implements FabricGameTest {
 
             for (PathStep step : steps) {
                 context.assertTrue(Math.abs(step.floorY() - lastY) <= 1, "degrau maior que um em " + step);
+                context.assertTrue(step.floorY() <= y, "piso acima da superfície em " + step);
                 context.assertTrue(PathPaving.layStep(world, colonyId, step), "o passo não coube em " + step);
+                context.assertTrue(world.getBlockState(new BlockPos(step.x(), step.floorY(), step.z())).isOf(Blocks.DIRT_PATH),
+                        "o eixo não virou caminho em " + step);
                 lastY = step.floorY();
-
-                for (int offset = -1; offset <= 1; offset++) {
-                    BlockPos floor = new BlockPos(step.sideX(offset), step.floorY(), step.sideZ(offset));
-
-                    context.assertTrue(world.getBlockState(floor).isOf(Blocks.DIRT_PATH),
-                            "a seção não virou caminho em " + floor.toShortString());
-                    context.assertTrue(world.getBlockState(floor.up()).isAir() && world.getBlockState(floor.up(2)).isAir(),
-                            "sem altura livre em cima de " + floor.toShortString());
-                }
             }
 
-            // O passo sobre a vala: o piso dele tem chão debaixo, até o fundo da vala.
-            PathStep overTheDitch = steps.stream().filter(step -> step.x() == base.getX() + 8).findFirst()
-                    .orElseThrow();
+            for (BlockPos at : BlockPos.iterate(base.add(-2, 1, -6), base.add(22, 4, 6))) {
+                context.assertTrue(world.getBlockState(at).isAir(),
+                        "nasceu bloco acima da superfície em " + at.toShortString() + ": " + world.getBlockState(at));
+            }
 
-            for (int offset = -1; offset <= 1; offset++) {
-                for (int below = y - 2; below < overTheDitch.floorY(); below++) {
-                    BlockPos under = new BlockPos(overTheDitch.sideX(offset), below, overTheDitch.sideZ(offset));
-
-                    context.assertTrue(!world.getBlockState(under).isAir(),
-                            "a vala não foi aterrada debaixo do caminho em " + under.toShortString() + ": " + overTheDitch);
-                }
+            for (int down = 0; down <= 2; down++) {
+                context.assertTrue(world.getBlockState(pit.down(down)).isAir(),
+                        "o poço fundo ao lado do caminho foi aterrado em " + pit.down(down).toShortString());
             }
         } finally {
-            for (BlockPos at : BlockPos.iterate(base.add(-3, -4, -7), base.add(23, 3, 7))) {
+            for (BlockPos at : BlockPos.iterate(base.add(-3, -4, -7), base.add(23, 4, 7))) {
                 world.setBlockState(at, Blocks.AIR.getDefaultState());
             }
 

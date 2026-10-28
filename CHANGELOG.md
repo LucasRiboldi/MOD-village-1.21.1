@@ -12,6 +12,19 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.99] — caminho rente ao chão e sem travar o servidor (2026-10-28, JAR local, não jogado)
+
+### Corrigido
+- **Blocos altos nascendo do nada (jogo da 0.3.98):** o caminho aterrava até 4 blocos por coluna, e na
+  encosta e na depressão levantava paredes de terra. Agora é rente ao chão: troca só o bloco de cima,
+  cobre só o buraco de 1 entre vizinhos no mesmo nível ou acima, corta no máximo 1, nunca põe bloco acima
+  do terreno e por cima só tira planta; cada coluna de lado segue o próprio chão, e o caminho estreita
+  onde ela não cabe.
+- **Travão de 12 s:** a vila traçava todas as portas sem ligação no mesmo tique, cada falha olhando
+  40.000 estados e relendo o mundo. Agora é um traçado por passagem, o chão de cada coluna lido uma vez
+  por traçado, a porta sem saída volta só uma hora depois, e o log diz quantos ms o traçado levou.
+- Os aterros já feitos pela 0.3.98 ficam no mundo (escolha do autor).
+
 ## [0.3.98] — playtest 0.3.97: obra presa, tocha, mina, horta e as passivas das bancadas (2026-10-27, JAR local, não jogado)
 
 ### Corrigido
