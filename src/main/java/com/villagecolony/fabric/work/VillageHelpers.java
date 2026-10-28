@@ -174,7 +174,7 @@ public final class VillageHelpers {
         return moved;
     }
 
-    private static int lightTheStreet(ServerWorld world, Colony colony, VillagerEntity smelter) {
+    static int lightTheStreet(ServerWorld world, Colony colony, VillagerEntity smelter) {
         Optional<ColonyRoads> roads = RoadIndex.roadsOf(colony.id());
 
         if (roads.isEmpty()) {
@@ -208,6 +208,12 @@ public final class VillageHelpers {
                 BlockPos spot = above.offset(side);
                 BlockPos ground = spot.down();
 
+                // Nem no chunk descarregado nem na borda dele: ler o lugar carregaria o chunk, e pôr a lanterna
+                // avisa os vizinhos, que também seriam lidos.
+                if (!insideTheLoadedArea(world, spot)) {
+                    continue;
+                }
+
                 if (world.getBlockState(spot).isAir() && world.getBlockState(ground).isSideSolidFullSquare(world, ground,
                         Direction.UP) && SiteSurroundings.isNaturalGround(world.getBlockState(ground))
                         && !RoadIndex.isRoadArea(world, colony.id(), ground) && !insideABuilding(colony.id(), spot)) {
@@ -235,6 +241,21 @@ public final class VillageHelpers {
         }
 
         return false;
+    }
+
+    /** Se o lugar e os quatro vizinhos dele estão em chunk carregado. */
+    static boolean insideTheLoadedArea(ServerWorld world, BlockPos spot) {
+        if (!world.isChunkLoaded(spot)) {
+            return false;
+        }
+
+        for (Direction side : Direction.Type.HORIZONTAL) {
+            if (!world.isChunkLoaded(spot.offset(side))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static boolean insideABuilding(UUID colonyId, BlockPos spot) {
