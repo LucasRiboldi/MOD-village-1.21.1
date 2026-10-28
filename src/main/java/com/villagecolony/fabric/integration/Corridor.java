@@ -39,8 +39,15 @@ import java.util.function.Predicate;
  */
 public final class Corridor {
 
-    /** Quantas vezes o corredor vira. */
+    /** Quantas vezes o corredor vira quando corta a encosta. */
     public static final int MAX_TURNS = 2;
+
+    /**
+     * Quantas vezes o corredor que só segue o terreno pode virar: a serpentina que sobe a encosta com
+     * degrau de no máximo um, como trilha de morro — opção 3 do autor, 2026-10-28. É a primeira tentativa;
+     * só sem ela o corredor corta.
+     */
+    public static final int SERPENTINE_TURNS = 6;
 
     /** Quantos blocos retos antes de virar: sai da porta, não rente à parede. */
     static final int MIN_STRAIGHT = 2;
@@ -58,10 +65,11 @@ public final class Corridor {
     public static final String OUT_OF_TIME = "a search longer than 50 ms";
 
     /**
-     * Até quantos blocos de fundo o corredor da faixa anexada corta a encosta. A duna sul do deserto
-     * (0.3.88) fica 23 blocos acima da rua, e a melhor rampa reta até o platô pede 12.
+     * Até quantos blocos de fundo o corredor corta a encosta, quando a serpentina não tem volta: corte raso,
+     * com talude dos lados ({@code CorridorCut}) — opção 3 do autor, 2026-10-28. Era 12, e o corte de 12 com
+     * paredes retas abria um cânion no morro.
      */
-    public static final int MAX_CUT = 12;
+    public static final int MAX_CUT = 3;
 
     private Corridor() {
     }
@@ -116,13 +124,28 @@ public final class Corridor {
             ServerWorld world, UUID colonyId, BlockPos start, Direction out, int maxLength, int maxCut,
             Predicate<BlockPos> avoid, Consumer<String> stopped) {
 
-        return plan(world, colonyId, start, out, maxLength, maxCut, MAX_PLAN_NANOS, avoid, stopped);
+        return plan(world, colonyId, start, out, maxLength, maxCut, MAX_TURNS, MAX_PLAN_NANOS, avoid, stopped);
+    }
+
+    /** O corredor em serpentina que só segue o terreno: até {@link #SERPENTINE_TURNS} curvas, sem cortar. */
+    public static Optional<List<BlockPos>> planWinding(
+            ServerWorld world, UUID colonyId, BlockPos start, Direction out, int maxLength,
+            Predicate<BlockPos> avoid, Consumer<String> stopped) {
+
+        return plan(world, colonyId, start, out, maxLength, 0, SERPENTINE_TURNS, MAX_PLAN_NANOS, avoid, stopped);
     }
 
     /** O mesmo, com o teto de tempo dado — o teste o zera para medir a parada sem depender da máquina. */
     static Optional<List<BlockPos>> plan(
             ServerWorld world, UUID colonyId, BlockPos start, Direction out, int maxLength, int maxCut,
             long maxNanos, Predicate<BlockPos> avoid, Consumer<String> stopped) {
+
+        return plan(world, colonyId, start, out, maxLength, maxCut, MAX_TURNS, maxNanos, avoid, stopped);
+    }
+
+    private static Optional<List<BlockPos>> plan(
+            ServerWorld world, UUID colonyId, BlockPos start, Direction out, int maxLength, int maxCut,
+            int maxTurns, long maxNanos, Predicate<BlockPos> avoid, Consumer<String> stopped) {
 
         if (isPath(world, colonyId, start) || touchesPath(world, colonyId, start, out.getOpposite())) {
             return Optional.of(isPath(world, colonyId, start) ? List.of() : List.of(start));
@@ -175,7 +198,7 @@ public final class Corridor {
 
                 boolean turn = way != at.way();
 
-                if (turn && (at.turns() >= MAX_TURNS || at.straight() < MIN_STRAIGHT)) {
+                if (turn && (at.turns() >= maxTurns || at.straight() < MIN_STRAIGHT)) {
                     continue;
                 }
 

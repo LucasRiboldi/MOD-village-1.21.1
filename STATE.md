@@ -1,5 +1,9 @@
 # STATE — 2026-10-28
 
+> **0.3.101** (28-10): corredor do lote com serpentina primeiro e corte raso (até 3) com talude, no lugar
+> do cânion de até 12 (Regra 70, opção 3 do autor). Bateria 899/899. **Não jogado.** Para o jogo:
+> `cut N blocks of the slope` no log e a aparência do corte nas obras de encosta.
+>
 > **0.3.100** (28-10, branch `fix/playtest-0397`, PR #37): os ociosos e travados do jogo da 0.3.99 (Spark
 > eVkPhNEtZT, 76 min, 20 TPS), Regras 133 a 137 com as escolhas do autor (memória
 > `playtest-0399-ociosos-decisoes`).
@@ -9,7 +13,6 @@
 >   - `restarts its stair` do mineiro;
 >   - `value goods` no diário;
 >   - quedas de "could not reach the crop" e "no sheep with wool".
-> - **Para decidir (de 10-28):** o corredor do lote (Regras 70/110) ainda corta até 12 de fundo.
 >
 
 > **0.3.99** (28-10, branch `fix/playtest-0397`, PR #37): caminho rente ao chão (Regra 123 emendada) depois

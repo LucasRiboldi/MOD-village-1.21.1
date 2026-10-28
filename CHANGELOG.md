@@ -12,6 +12,18 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.101] — corredor do lote natural na encosta (2026-10-28, JAR local, não jogado)
+
+### Mudado
+- **Corredor da obra até a rua (Regra 70, emenda, opção 3 do autor):**
+  - tenta primeiro a serpentina pelo terreno (até 6 curvas, degrau de no máximo 1, sem cortar);
+  - só sem volta por ela corta, e no máximo 3 de fundo (era 12);
+  - os lados do corte descem em talude — 1 degrau por bloco, com a grama de volta no degrau — em vez do
+    cânion de paredes retas.
+
+### Limite
+- O corredor que corre ao pé de um barranco natural mais alto que o corte deixa o barranco como está.
+
 ## [0.3.100] — ociosos e travados do jogo da 0.3.99 (2026-10-28, JAR local, não jogado)
 
 ### Mudado
