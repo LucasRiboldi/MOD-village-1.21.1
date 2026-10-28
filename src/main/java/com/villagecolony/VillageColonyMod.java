@@ -194,6 +194,9 @@ public class VillageColonyMod implements ModInitializer {
         com.villagecolony.fabric.world.DesertGround.register();
         com.villagecolony.fabric.work.BuilderPaving.register();
         com.villagecolony.fabric.work.PathPaving.register();
+        com.villagecolony.fabric.work.BenchPanel.register();
+        com.villagecolony.fabric.work.BenchPassives.register();
+        com.villagecolony.fabric.work.BenchUpkeep.register();
         com.villagecolony.fabric.work.IdleHelps.register();
         PlayerWorldChangeHandler.register();
         VillageDetectionHandler.register();

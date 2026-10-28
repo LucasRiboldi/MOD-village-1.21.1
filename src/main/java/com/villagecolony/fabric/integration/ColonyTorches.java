@@ -1,6 +1,8 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ServerMemory;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.content.ColonyTorchBlock;
 import com.villagecolony.fabric.content.ModContent;
 import net.minecraft.entity.SpawnReason;
@@ -51,6 +53,32 @@ public final class ColonyTorches {
         NEAR.clear();
     }
 
+    /** Até onde da boca a mina é segura com a bancada do mineiro na vila (Regra 132). */
+    public static final int SAFE_MINE = 64;
+
+    /**
+     * Se este ponto fica dentro da mina de uma vila com bancada do mineiro: a até {@link #SAFE_MINE} da
+     * entrada e não acima dela — a superfície em volta continua como era.
+     */
+    public static boolean inASafeMine(ServerWorld world, BlockPos pos) {
+        for (com.villagecolony.core.construction.model.Mine mine : VillageColonyMod.MINES.all()) {
+            BlockPos entry = MinecraftTypeAdapter.toBlockPos(mine.shaft().entry());
+
+            if (pos.getY() > entry.getY() + 1 || Math.abs(pos.getX() - entry.getX()) > SAFE_MINE
+                    || Math.abs(pos.getZ() - entry.getZ()) > SAFE_MINE) {
+                continue;
+            }
+
+            if (VillageColonyMod.COLONIES.find(mine.colonyId())
+                    .filter(colony -> BenchPresence.has(world, colony, com.villagecolony.core.worker.model.ProfessionType.MINER))
+                    .isPresent()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /** Se este nascimento de monstro no escuro é barrado por uma tocha da colônia perto. */
     public static boolean suppresses(ServerWorldAccess access, SpawnReason reason, BlockPos pos) {
         if (reason != SpawnReason.NATURAL && reason != SpawnReason.CHUNK_GENERATION) {
@@ -58,6 +86,11 @@ public final class ColonyTorches {
         }
 
         ServerWorld world = access.toServerWorld();
+
+        if (inASafeMine(world, pos)) {
+            return true;
+        }
+
         long now = world.getTime();
         long chunk = ChunkPos.toLong(pos.getX() >> 4, pos.getZ() >> 4);
         Answer cached = NEAR.get(chunk);

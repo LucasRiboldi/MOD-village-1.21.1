@@ -95,7 +95,7 @@ public final class FlockHarvest {
 
             AnimalEntity victim = adults.get(adults.size() - 1);
 
-            depositDrops(world, species, chests, shepherd.get());
+            depositDrops(world, colony, species, chests, shepherd.get());
             victim.kill();
             butchered = true;
 
@@ -107,10 +107,12 @@ public final class FlockHarvest {
         return butchered;
     }
 
-    private static void depositDrops(ServerWorld world, EntityType<?> species, List<ColonyPos> chests, UUID shepherd) {
+    private static void depositDrops(ServerWorld world, Colony colony, EntityType<?> species, List<ColonyPos> chests,
+            UUID shepherd) {
         for (ItemStack drop : DROPS.getOrDefault(species, List.of())) {
-            deposit(world, chests, drop.getItem(), drop.getCount());
-            ActionJournal.action(shepherd, "BUTCHERED", ActionJournal.idOf(drop.getItem()), drop.getCount(), null, "");
+            int count = BenchYield.butchered(world, colony, drop.getItem(), drop.getCount()); // bancada do pastor, Regra 132
+            deposit(world, chests, drop.getItem(), count);
+            ActionJournal.action(shepherd, "BUTCHERED", ActionJournal.idOf(drop.getItem()), count, null, "");
         }
     }
 

@@ -138,6 +138,11 @@ public final class IdleWatch {
         }
     }
 
+    /** Quantos segundos este trabalhador soma esperando com tarefa, para o painel da bancada. */
+    static int waitingOf(UUID workerId) {
+        return WAITING.getOrDefault(workerId, 0);
+    }
+
     static void clearAll() {
         WAITING.clear();
         FIRST_LET_GO.clear();

@@ -94,6 +94,7 @@ public final class MinerHands {
 
         List<ItemStack> drops = new ArrayList<>(
                 Block.getDroppedStacks(state, world, job.target, null, null, ItemStack.EMPTY));
+        BenchYield.mined(world, job.task.colonyId(), state, drops); // bancadas do mineiro e do pedreiro (Regra 132)
 
         // <b>A colônia avisa que foi ela</b> — 2026-09-16. Sem isto o
         // PlayerWorldChangeHandler via a própria picareta como edição do

@@ -72,5 +72,22 @@
   "block.villagecolony.miner_bench": "Bancada do Mineiro",
   "block.villagecolony.sand_path": "Caminho de Areia",
   "block.villagecolony.colony_torch": "Tocha da Colônia",
-  "block.villagecolony.colony_wall_torch": "Tocha da Colônia"
+  "block.villagecolony.colony_wall_torch": "Tocha da Colônia",
+  "text.villagecolony.panel.no_colony": "Bancada de %s fora de qualquer vila da colônia.",
+  "text.villagecolony.panel.header": "— Bancada de %s: %s titular(es) —",
+  "text.villagecolony.panel.build": "  Obra aberta: %s, faltam %s blocos",
+  "text.villagecolony.panel.waiting": " · esperando %s de %s s",
+  "text.villagecolony.badge.duty": "trabalhando",
+  "text.villagecolony.badge.help": "ajudando",
+  "text.villagecolony.badge.stuck": "travado",
+  "text.villagecolony.badge.idle": "à toa",
+  "text.villagecolony.badge.off": "fora do expediente",
+  "text.villagecolony.passives.carpenter": "Passivas: ferramenta feita na vila sai encantada; repara a ferramenta de quem está a 8 blocos.",
+  "text.villagecolony.passives.lumberjack": "Passivas: as árvores a 32 blocos crescem mais rápido.",
+  "text.villagecolony.passives.mason": "Passivas: tapa buracos das ruas a 32 blocos; a pedra rende +1 a cada 4.",
+  "text.villagecolony.passives.smelter": "Passivas: fornalhas a 32 blocos 2× mais rápidas; restaura armadura a 8 blocos; armadura feita na vila sai encantada.",
+  "text.villagecolony.passives.farmer": "Passivas: a roça a 24 blocos cresce mais rápido; a sobra dos baús vira farinha de osso.",
+  "text.villagecolony.passives.shepherd": "Passivas: um par cruza sozinho a cada 10 min; lã rápida; o que os animais derrubam vai aos baús; abate rende o dobro.",
+  "text.villagecolony.passives.builder": "Passivas: a obra a 48 blocos assenta 1 bloco por minuto; o material da obra vem ao baú do construtor.",
+  "text.villagecolony.passives.miner": "Passivas: mina sem monstro a 64 blocos da boca; minério rende o dobro (gema +1); 1% de chance de ferramenta."
 }
