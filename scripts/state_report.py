@@ -116,6 +116,9 @@ def render(summaries):
 
 
 def main(arguments):
+    # O console do Windows (cp1252) não tem o "→" do relatório: a saída vai em UTF-8.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     records = []
     for path in files_from(arguments):
         records.extend(records_from(path))

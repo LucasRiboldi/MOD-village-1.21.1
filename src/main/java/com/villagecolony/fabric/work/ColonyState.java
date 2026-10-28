@@ -154,6 +154,14 @@ public final class ColonyState {
         build.addProperty("buildings", VillageColonyMod.BUILDINGS.ofColony(colony.id()).size());
         build.addProperty("lotsOk", LotRefusals.acceptedIn(colony.id()));
         build.addProperty("supplyGaps", SupplyGapLedger.sessionCountOf(colony.id()));
+        // A nota do último lote no mapa de interesse e a distância média das construções ao centro: medem se a
+        // vila adensa antes de esticar (autor, 2026-10-28).
+        com.villagecolony.fabric.integration.SweepState.lastLotScore(colony.id())
+                .ifPresent(score -> build.addProperty("lotScore", Math.round(score * 10) / 10.0));
+        build.addProperty("meanDistance", Math.round(VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()
+                .mapToDouble(building -> Math.hypot((building.min().x() + building.max().x()) / 2.0 - colony.center().x(),
+                        (building.min().z() + building.max().z()) / 2.0 - colony.center().z()))
+                .average().orElse(0)));
         VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).ifPresent(open -> {
             build.addProperty("open", open.blueprint().id().path().replaceAll(".*/", ""));
             build.addProperty("state", open.state().name());

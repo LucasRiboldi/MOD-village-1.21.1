@@ -168,44 +168,53 @@ public final class RoadIndex {
 
         int looked = 0;
 
+        // Do centro para fora: a vila adensa antes de esticar, e entre os lotes de uma janela fica o de melhor
+        // nota no mapa de interesse (LotScore; autor, 2026-10-28).
+        int[] order = com.villagecolony.core.construction.model.LotScore.nearestFirst(columns, from.getX(), from.getZ());
+        Optional<Site> best = Optional.empty();
+        double bestScore = Double.MAX_VALUE;
+        int windowEnd = -1;
+
         for (int at = start; at < columns.size(); at++) {
-            // O mesmo prazo da varredura do quadrado — F1, 2026-09-30. Esta
-            // volta só parava nas 1.024 colunas, cada uma testando as pegadas
-            // das plantas, e com a maioria das respostas vindo daqui o
-            // planejador chegou a 178 ms num ciclo.
             if (++looked > SweepDeadline.columnCap(BuildSiteScanner.MAX_COLUMNS)
                     || SweepDeadline.expired(looked)) {
+                if (best.isPresent()) {
+                    return chosen(colonyId, from, radius, best.get(), bestScore, start, looked);
+                }
+
                 SweepState.ROAD_CURSOR.put(colonyId, at);
 
-                // Aqui houve passagem de verdade: o orçamento foi gasto
-                // inteiro e a volta parou no meio.
                 SweepLog.pass(colonyId, looked - 1);
 
                 return new RoadScan(Optional.empty(), looked - 1);
             }
 
-            long column = columns.get(at);
+            long column = columns.get(order[at]);
 
             Optional<Site> site = RoadsideSites.siteBesideRoadAt(
                     world, colonyId, from,
                     ColonyRoads.xOf(column), ColonyRoads.zOf(column), from.getY(), footprints);
 
             if (site.isPresent()) {
-                // Uma adiante, pelo mesmo motivo do cursor do quadrado:
-                // esta acabou de responder, e a passagem seguinte tem
-                // mais o que perguntar.
-                SweepState.ROAD_CURSOR.put(colonyId, at + 1);
+                double score = scoreOf(site.get(), from);
 
-                if (start > 0) {
-                    countTheIndexPass(colonyId, looked);
+                if (score < bestScore) {
+                    best = site;
+                    bestScore = score;
                 }
 
-                RoadExtension.lotFound(colonyId);
-
-                SweepState.warnIfBeyondTheRadius(colonyId, site.get(), from, radius);
-
-                return new RoadScan(site, looked);
+                if (windowEnd < 0) {
+                    windowEnd = at + CANDIDATE_WINDOW;
+                }
             }
+
+            if (best.isPresent() && at >= windowEnd) {
+                return chosen(colonyId, from, radius, best.get(), bestScore, start, looked);
+            }
+        }
+
+        if (best.isPresent()) {
+            return chosen(colonyId, from, radius, best.get(), bestScore, start, looked);
         }
 
         // Perguntou a todas: aqui, e só aqui, a Regra 15 está autorizada.
@@ -220,6 +229,31 @@ public final class RoadIndex {
         SweepState.EXHAUSTED.merge(colonyId, 1, Integer::sum);
 
         return new RoadScan(Optional.empty(), looked);
+    }
+
+    /** Quantas colunas, depois do primeiro lote achado, entram na comparação pela nota. */
+    static final int CANDIDATE_WINDOW = 64;
+
+    private static double scoreOf(Site site, BlockPos center) {
+        return com.villagecolony.core.construction.model.LotScore.of(center.getX(), center.getY(), center.getZ(),
+                site.origin().x(), site.origin().y(), site.origin().z(), site.size().x(), site.size().z(),
+                site.path().size());
+    }
+
+    /** O lote escolhido: a próxima busca recomeça do centro, para a vila adensar. */
+    private static RoadScan chosen(UUID colonyId, BlockPos from, int radius, Site site, double score, int start,
+                                   int looked) {
+        SweepState.ROAD_CURSOR.remove(colonyId);
+
+        if (start > 0) {
+            countTheIndexPass(colonyId, looked);
+        }
+
+        RoadExtension.lotFound(colonyId);
+        SweepState.warnIfBeyondTheRadius(colonyId, site, from, radius);
+        SweepState.LOT_SCORE.put(colonyId, score);
+
+        return new RoadScan(Optional.of(site), looked);
     }
 
     /**
