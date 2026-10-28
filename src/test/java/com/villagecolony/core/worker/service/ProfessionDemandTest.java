@@ -67,13 +67,21 @@ class ProfessionDemandTest {
                 ProfessionAssigner.vacancyFor(candidate, colonyWith(candidate), 16));
     }
 
-    /** A demanda redistribui vaga; ela não cria vaga onde a população não abre. */
+    /**
+     * Com todas na meta, o adulto que sobra vai ao ofício que a obra espera — a meta sobe (autor, 2026-10-28);
+     * sem espera nenhuma ele continua sem ofício.
+     */
     @Test
-    void demandDoesNotOpenASlotThePopulationDoesNotHave() {
+    void theSpareAdultGoesToTheTradeTheBuildWaitsFor() {
         Worker candidate = Worker.register(UUID.randomUUID(), COLONY);
         List<Worker> colony = colonyWith(candidate);
         colony.add(hired(ProfessionType.FARMER));
         ProfessionDemand.set(COLONY, List.of(ProfessionType.CARPENTER));
+
+        assertEquals(Optional.of(ProfessionType.CARPENTER),
+                ProfessionAssigner.vacancyFor(candidate, colony, 8));
+
+        ProfessionDemand.set(COLONY, List.of());
 
         assertEquals(Optional.empty(),
                 ProfessionAssigner.vacancyFor(candidate, colony, 8));

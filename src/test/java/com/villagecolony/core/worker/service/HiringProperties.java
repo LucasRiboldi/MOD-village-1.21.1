@@ -111,11 +111,11 @@ class HiringProperties {
         Map<ProfessionType, Integer> after = counts();
 
         // 1. A demanda não dispara: quem acabou de ser contratado não passa de
-        //    uma cabeça acima da cota da profissão (e toda função da fundação
-        //    pode ter o seu primeiro titular).
+        //    ProfessionAssigner.SPARE_ABOVE acima da cota da profissão — a meta que sobe para o ofício que a
+        //    obra espera (autor, 2026-10-28) — e toda função da fundação pode ter o seu primeiro titular.
         for (ProfessionType type : ProfessionType.values()) {
             if (after.get(type) > before.get(type)) {
-                int ceiling = Math.max(1, ProfessionAssigner.targetCount(type, adults) + 1);
+                int ceiling = Math.max(1, ProfessionAssigner.targetCount(type, adults) + ProfessionAssigner.SPARE_ABOVE);
 
                 if (after.get(type) > ceiling) {
                     throw new AssertionError(type + " foi a " + after.get(type)

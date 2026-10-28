@@ -66,9 +66,26 @@ public final class ColonyTorchBlock extends TorchBlock {
     }
 
     @Override
+    protected void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
+        super.onBlockAdded(state, world, pos, oldState, notify);
+        ringOnAdded(state, world, pos, oldState);
+    }
+
+    @Override
     protected void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
         super.onStateReplaced(state, world, pos, newState, moved);
+        ringOnReplaced(state, world, pos, newState);
+    }
 
+    /** O anel acende quando a tocha (de chão ou de parede) chega, seja quem a pôs: o carpinteiro ou o jogador. */
+    static void ringOnAdded(BlockState state, World world, BlockPos pos, BlockState oldState) {
+        if (!oldState.isOf(state.getBlock()) && world instanceof ServerWorld server) {
+            lightRing(server, pos);
+        }
+    }
+
+    /** E sai quando ela sai. */
+    static void ringOnReplaced(BlockState state, World world, BlockPos pos, BlockState newState) {
         if (!state.isOf(newState.getBlock()) && world instanceof ServerWorld server) {
             clearRing(server, pos);
         }

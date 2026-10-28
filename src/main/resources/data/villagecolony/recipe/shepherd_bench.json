@@ -1,13 +1,20 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "G G",
+    "GDG",
     " S ",
     "G G"
   ],
   "key": {
-    "G": { "item": "minecraft:gold_ingot" },
-    "S": { "item": "minecraft:loom" }
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "S": {
+      "item": "minecraft:loom"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    }
   },
   "result": {
     "id": "villagecolony:shepherd_bench",

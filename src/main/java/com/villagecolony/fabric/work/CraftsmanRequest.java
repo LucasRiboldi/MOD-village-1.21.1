@@ -94,7 +94,7 @@ public final class CraftsmanRequest {
 
         Optional<Item> piece = MinecraftTypeAdapter.toBlock(wanted).map(Block::asItem);
 
-        if (piece.isEmpty()) {
+        if (piece.isEmpty() || AppearingPieces.needsNoStock(wanted)) {
             return false;
         }
 

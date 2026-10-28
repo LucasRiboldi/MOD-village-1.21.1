@@ -65,7 +65,8 @@ public final class BiomeCheck {
                                 .executes(BiomeCheck::show)
                                 .then(CommandManager.literal("nota")
                                         .then(CommandManager.argument("texto", StringArgumentType.greedyString())
-                                                .executes(BiomeCheck::note))))));
+                                                .executes(BiomeCheck::note))))
+                        .then(CommandManager.literal("dados").executes(BiomeCheck::record))));
     }
 
     /** O retrato de uma colônia no bioma. */
@@ -151,8 +152,11 @@ public final class BiomeCheck {
 
         source.sendFeedback(() -> Text.literal("Village Colony — boletim do bioma").formatted(Formatting.GOLD), false);
         lines.forEach(line -> source.sendFeedback(() -> Text.literal(line).formatted(Formatting.WHITE), false));
-        source.sendFeedback(() -> Text.literal("Anote problemas com /vc bioma nota <texto>; depois, "
-                + "python scripts/biome_report.py").formatted(Formatting.GRAY), false);
+        // O retrato inteiro, o mesmo que vai para o arquivo de análise (VC_STATE, autor 2026-10-28).
+        StateLines.of(com.villagecolony.fabric.work.ColonyState.of(source.getWorld(), colony.get()))
+                .forEach(line -> source.sendFeedback(() -> Text.literal(line).formatted(Formatting.GRAY), false));
+        source.sendFeedback(() -> Text.literal("Anote problemas com /vc bioma nota <texto>; grave o retrato com "
+                + "/vc dados; depois, python scripts/state_report.py e scripts/biome_report.py").formatted(Formatting.GRAY), false);
         VillageColonyMod.LOGGER.info(shot.line(version()));
 
         return 1;
@@ -167,10 +171,41 @@ public final class BiomeCheck {
 
         VillageColonyMod.LOGGER.info("VC_BIOME_NOTE version=1 mod={} colony={} biome={} x={} y={} z={} text=\"{}\"",
                 version(), colony, biome, at.getX(), at.getY(), at.getZ(), text);
+
+        // A nota fica também no arquivo de análise do mundo, ao lado dos retratos.
+        com.google.gson.JsonObject record = new com.google.gson.JsonObject();
+        record.addProperty("colony", colony);
+        record.addProperty("biome", biome);
+        record.addProperty("x", at.getX());
+        record.addProperty("y", at.getY());
+        record.addProperty("z", at.getZ());
+        record.addProperty("text", text);
+        com.villagecolony.fabric.work.AnalyticsLog.note(source.getWorld(), record);
         source.sendFeedback(() -> Text.literal("Nota registrada em " + biome + " (" + at.toShortString() + ")")
                 .formatted(Formatting.GREEN), false);
 
         return 1;
+    }
+
+    /** {@code /vc dados}: grava agora o retrato da vila em que o jogador está e diz onde ficou. */
+    private static int record(CommandContext<ServerCommandSource> context) {
+        ServerCommandSource source = context.getSource();
+        Optional<Colony> colony = colonyOf(source);
+
+        if (colony.isEmpty()) {
+            source.sendError(Text.literal("Village Colony: nenhuma vila perto de você neste mundo."));
+            return 0;
+        }
+
+        Optional<java.nio.file.Path> file = com.villagecolony.fabric.work.AnalyticsLog.record(
+                source.getWorld(), colony.get(), "manual");
+
+        source.sendFeedback(() -> Text.literal(file.map(path -> "Retrato gravado em " + path.getFileName()
+                        + " (pasta do mundo, villagecolony/analytics)")
+                .orElse("Não deu para gravar o retrato; veja o log.")).formatted(file.isPresent()
+                ? Formatting.GREEN : Formatting.RED), false);
+
+        return file.isPresent() ? 1 : 0;
     }
 
     private static Optional<Colony> colonyOf(ServerCommandSource source) {

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " T ",
+    "TGT",
+    " T "
+  ],
+  "key": {
+    "T": {
+      "item": "minecraft:torch"
+    },
+    "G": {
+      "item": "minecraft:gold_ingot"
+    }
+  },
+  "result": {
+    "id": "villagecolony:colony_torch",
+    "count": 4
+  }
+}

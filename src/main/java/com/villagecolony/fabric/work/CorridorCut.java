@@ -27,9 +27,11 @@ import java.util.UUID;
  * O corte do corredor na encosta, na abertura da obra — Regra 70, degrau cortado (autor, 2026-10-22).
  *
  * <p>O {@link Corridor} da faixa anexada foi planejado com cada bloco na altura que ele tem depois do
- * corte. Aqui a coluna de cada bloco que corta é aberta até ele, e as duas colunas do lado até a mesma
- * altura: o caminho continua com um bloco, num vale de três ("trincheira de 3", escolha do autor). O
- * caminho no terreno natural fica como está. Corta-se só o que o lote cortaria
+ * corte. Aqui a coluna de cada bloco que corta é aberta até ele, e os lados descem em <b>talude</b>: a
+ * coluna a {@code k} blocos do caminho é aberta até {@code k} acima do piso, um degrau por bloco, até o
+ * terreno — o corte de estrada de serra, e não o cânion de paredes retas (opção 3 do autor, 2026-10-28;
+ * o corte é de no máximo {@link Corridor#MAX_CUT}). O degrau que fica exposto ganha o chão de cima da
+ * coluna (a grama volta). O caminho no terreno natural fica como está. Corta-se só o que o lote cortaria
  * ({@link LotTerraform#cutAbove}); o que sai vai para os baús públicos da vila ({@link Cuttings}).
  */
 final class CorridorCut {
@@ -63,14 +65,28 @@ final class CorridorCut {
                 continue;
             }
 
+            int depth = LotTerraform.cutAbove(world, at, Corridor.MAX_CUT).orElse(0);
+
             moved += open(world, at, taken);
 
             for (Direction side : sidesOf(path, i)) {
-                BlockPos beside = at.offset(side);
+                for (int k = 1; k <= depth; k++) {
+                    BlockPos step = at.offset(side, k).up(k);
 
-                if (!columns.contains(column(beside.getX(), beside.getZ()))
-                        && LotTerraform.cutAbove(world, beside, Corridor.MAX_CUT).isPresent()) {
-                    moved += open(world, beside, taken);
+                    if (columns.contains(column(step.getX(), step.getZ()))
+                            || LotTerraform.cutAbove(world, step, Corridor.MAX_CUT).isEmpty()) {
+                        break;
+                    }
+
+                    BlockState surface = surfaceOf(world, step);
+                    int opened = open(world, step, taken);
+
+                    if (opened == 0) {
+                        break;
+                    }
+
+                    moved += opened;
+                    regrass(world, step, surface);
                 }
             }
         }
@@ -137,6 +153,24 @@ final class CorridorCut {
         }
 
         return moved;
+    }
+
+    /** O bloco de cima da coluna antes do corte: o chão que o degrau do talude vai mostrar. */
+    private static BlockState surfaceOf(ServerWorld world, BlockPos at) {
+        int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, at.getX(), at.getZ()) - 1;
+
+        return world.getBlockState(new BlockPos(at.getX(), top, at.getZ()));
+    }
+
+    /** O degrau exposto do talude volta a ter o chão de cima: a grama sobre a terra, a areia sobre a areia. */
+    private static void regrass(ServerWorld world, BlockPos step, BlockState surface) {
+        BlockState now = world.getBlockState(step);
+
+        if (surface.isOf(Blocks.GRASS_BLOCK) && now.isIn(net.minecraft.registry.tag.BlockTags.DIRT)) {
+            world.setBlockState(step, Blocks.GRASS_BLOCK.getDefaultState(), Block.NOTIFY_ALL);
+        } else if (surface.isOf(Blocks.SNOW_BLOCK) || surface.isOf(Blocks.PODZOL) || surface.isOf(Blocks.COARSE_DIRT)) {
+            world.setBlockState(step, surface, Block.NOTIFY_ALL);
+        }
     }
 
     private static long column(int x, int z) {

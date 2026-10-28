@@ -26,4 +26,17 @@ final class AppearingPieces {
                 || block == Blocks.HAY_BLOCK
                 || block == Blocks.CLAY;
     }
+
+    /**
+     * Se a obra põe esta peça sem estoque: moldada do chão (a horta: terra arada, plantação, água),
+     * nunca posta, ou que aparece. Ninguém a pede ao fabricante nem vai buscá-la no chão — no playtest
+     * 0.3.97 a colônia pediu trigo ao carpinteiro 19 vezes e mandou recolher trigo do chão para a horta.
+     */
+    static boolean needsNoStock(com.villagecolony.core.type.ResourceId id) {
+        return com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlock(id)
+                .map(block -> BlockShaping.isShapedFromTheGround(block.getDefaultState())
+                        || BlockShaping.isNeverPlaced(block.getDefaultState())
+                        || appears(block))
+                .orElse(false);
+    }
 }

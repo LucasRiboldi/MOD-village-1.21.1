@@ -1,4 +1,57 @@
-# STATE — 2026-10-27
+# STATE — 2026-10-28
+
+> **0.3.102** (28-10): tocha nova (referência do autor) e o retrato da vila `VC_STATE`, no log e em
+> `<mundo>/villagecolony/analytics/*.jsonl`. Também `/vc dados`, `/vc log` e `/vc bioma` com o retrato, e
+> `scripts/state_report.py`. Bateria 900/900. **Não jogado.** Para o jogo: `/vc log`, `/vc dados` e
+> `python scripts/state_report.py` depois de jogar.
+>
+> **0.3.101** (28-10): corredor do lote com serpentina primeiro e corte raso (até 3) com talude, no lugar
+> do cânion de até 12 (Regra 70, opção 3 do autor). Bateria 899/899. **Não jogado.** Para o jogo:
+> `cut N blocks of the slope` no log e a aparência do corte nas obras de encosta.
+>
+> **0.3.100** (28-10, branch `fix/playtest-0397`, PR #37): os ociosos e travados do jogo da 0.3.99 (Spark
+> eVkPhNEtZT, 76 min, 20 TPS), Regras 133 a 137 com as escolhas do autor (memória
+> `playtest-0399-ociosos-decisoes`).
+> - **Verificado:** testes de unidade OK; bateria 898/898 (`IdleFixesGameTest`). **Não jogado.**
+> - **Para o jogo:** rodar `time_ledger` e `action_report`; conferir no log:
+>   - `chests are N% full` e o armazém aberto;
+>   - `restarts its stair` do mineiro;
+>   - `value goods` no diário;
+>   - quedas de "could not reach the crop" e "no sheep with wool".
+>
+
+> **0.3.99** (28-10, branch `fix/playtest-0397`, PR #37): caminho rente ao chão (Regra 123 emendada) depois
+> do jogo da 0.3.98 (Spark S3FcIdzPmh: aterros de até 4 blocos e travão de 12 s no traçado). Memória
+> `caminho-rente-ao-chao`.
+> - **Verificado:** testes de unidade OK; bateria 892/892 (o GameTest da rede confere que nada nasce
+>   acima da superfície e que o poço ao lado não é aterrado). **Não jogado.**
+> - **Para o jogo:**
+>   - os caminhos novos rentes ao chão;
+>   - o tempo de cada traçado no log (`traced a path … in N ms`, `no path … (N ms)`);
+>   - nenhum "Can't keep up" vindo do traçado.
+> - **Fica como estava, por escolha do autor:** os aterros que a 0.3.98 já fez.
+> - **Para decidir:** o corredor do lote (Regras 70/110) ainda corta encosta até 12 de fundo ao abrir uma
+>   obra. Ele só tira bloco, mas não segue o "rente ao chão".
+>
+
+> **0.3.98** (27-10, branch `fix/playtest-0397`): o playtest da 0.3.97 (savana, Spark n4DVevJAmw) e os
+> pedidos do autor, cada um com as opções que ele escolheu (memória `playtest-0397-e-decisoes-2026-10-27`).
+> - Defeitos: base com a horta da planta, horta pedida como material, fundidor sem a cadeia da pedra,
+>   porta recuada sem caminho, tocha invisível, tocha da mina na parede, escada fechada pela água.
+> - Regras 128 (5 min), 129 (cor do nome), 130 (curral), 131 (nivelamento), 132 (bancadas); árvore rara;
+>   receitas.
+> - **Verificado:** testes de unidade e arquitetura OK; bateria 892/892. **Não jogado.**
+> - **Para o jogo:**
+>   - a tocha com os pacotes de textura e na parede;
+>   - as cores dos nomes;
+>   - `Regra 128` no log e o `time_ledger` abaixo de 15% de ócio;
+>   - `levelled` em volta das obras;
+>   - `path network —` e `traced a path`;
+>   - o painel das bancadas;
+>   - o custo das passivas no Spark.
+> - **Limites conhecidos:** a escada em caracol da mina não leva tocha (só os salões); a proteção do caminho
+>   cobre a entrada do nível atual da mina; o encantamento vale para o que o jogador fabrica na vila.
+>
 
 > **0.3.97** (27-10, branch `fix/obra-pecas-de-lado`, PR #36): os sete pontos abertos da 0.3.96, cada um com
 > as opções escolhidas pelo autor (memória `decisoes-autor-2026-10-27-sete-itens`).

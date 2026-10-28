@@ -94,6 +94,7 @@ public final class MinerHands {
 
         List<ItemStack> drops = new ArrayList<>(
                 Block.getDroppedStacks(state, world, job.target, null, null, ItemStack.EMPTY));
+        BenchYield.mined(world, job.task.colonyId(), state, drops); // bancadas do mineiro e do pedreiro (Regra 132)
 
         // <b>A colônia avisa que foi ela</b> — 2026-09-16. Sem isto o
         // PlayerWorldChangeHandler via a própria picareta como edição do
@@ -415,6 +416,9 @@ public final class MinerHands {
                 job.task.colonyId(), job.wanted, job.toward, job.collected, world.getTime());
 
         job.task.release(why);
+
+        // Preso muito acima do nível da mina, duas vezes: a escada recomeça do topo (MineRestart, Regra 119).
+        MineRestart.afterGiveUp(world, job.task.colonyId(), workerId);
 
         // <b>E a pedra ganha prazo</b> — E44, 2026-09-10. Segurar a
         // posição (logo abaixo) continua certo; segurar SEM PRAZO é o

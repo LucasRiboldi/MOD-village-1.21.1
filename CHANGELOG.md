@@ -12,6 +12,89 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.102] — tocha nova e o retrato da vila para análise (2026-10-28, JAR local, não jogado)
+
+### Adicionado
+- **Retrato da vila (`VC_STATE`):** a cada 5 minutos, por vila atendida, um JSON com população, ofícios,
+  estado de cada um (Regra 129), tempo por ofício, estoque e baús cheios, obra, tarefas, mina, ruas,
+  bancadas, animais e MSPT. Vai para o log e para `<mundo>/villagecolony/analytics/AAAA-MM-DD.jsonl`,
+  que fica com o mundo entre sessões.
+- **`/vc dados`:** grava o retrato na hora.
+- **`/vc log` e `/vc bioma`:** mostram o retrato completo no chat (seção "Estado agora", com os travados
+  nomeados).
+- **`/vc bioma nota`:** a nota também vai para o arquivo de análise.
+- **`scripts/state_report.py`:** a evolução de cada colônia entre sessões e versões.
+
+### Mudado
+- **Tocha da Colônia:** textura nova pela referência do autor — cabeça de chama laranja de 3 pixels com o
+  centro claro sobre o cabo marrom de duas tonalidades, sem pixels soltos fora do modelo (o ícone do
+  item mostrava sobras).
+
+## [0.3.101] — corredor do lote natural na encosta (2026-10-28, JAR local, não jogado)
+
+### Mudado
+- **Corredor da obra até a rua (Regra 70, emenda, opção 3 do autor):**
+  - tenta primeiro a serpentina pelo terreno (até 6 curvas, degrau de no máximo 1, sem cortar);
+  - só sem volta por ela corta, e no máximo 3 de fundo (era 12);
+  - os lados do corte descem em talude — 1 degrau por bloco, com a grama de volta no degrau — em vez do
+    cânion de paredes retas.
+
+### Limite
+- O corredor que corre ao pé de um barranco natural mais alto que o corte deixa o barranco como está.
+
+## [0.3.100] — ociosos e travados do jogo da 0.3.99 (2026-10-28, JAR local, não jogado)
+
+### Mudado
+- **Estoque cheio (Regra 133):** baús da vila a 80% pedem o armazém como próxima obra e um construtor a
+  mais; lenhador, pedreiro e fundidor sem tarefa fazem produtos de valor (carvão vegetal, tijolo de pedra,
+  pedra polida, pedra, vidro, terracota).
+- **Sem ofício (Regra 134):** com todas as profissões na meta, o adulto que sobra vai ao ofício que a obra
+  espera.
+- **Tarefa que não rende não abre (Regra 135):** peça de tábua sem tábua com a tora reservada; lã sem
+  ovelha lanuda ou com 64 no baú.
+- **Fazendeiro (Regra 136):** alcance de 4,5 blocos com linha livre.
+- **Mineiro (Regra 137):** preso acima do nível duas vezes, a escada recomeça na boca de superfície.
+
+### Limites
+- O lote de produto de valor é instantâneo e não conta como trabalho no `time_ledger`.
+- O construtor a mais só vem com os baús a 80%.
+
+## [0.3.99] — caminho rente ao chão e sem travar o servidor (2026-10-28, JAR local, não jogado)
+
+### Corrigido
+- **Blocos altos nascendo do nada (jogo da 0.3.98):** o caminho aterrava até 4 blocos por coluna, e na
+  encosta e na depressão levantava paredes de terra. Agora é rente ao chão: troca só o bloco de cima,
+  cobre só o buraco de 1 entre vizinhos no mesmo nível ou acima, corta no máximo 1, nunca põe bloco acima
+  do terreno e por cima só tira planta; cada coluna de lado segue o próprio chão, e o caminho estreita
+  onde ela não cabe.
+- **Travão de 12 s:** a vila traçava todas as portas sem ligação no mesmo tique, cada falha olhando
+  40.000 estados e relendo o mundo. Agora é um traçado por passagem, o chão de cada coluna lido uma vez
+  por traçado, a porta sem saída volta só uma hora depois, e o log diz quantos ms o traçado levou.
+- Os aterros já feitos pela 0.3.98 ficam no mundo (escolha do autor).
+
+## [0.3.98] — playtest 0.3.97: obra presa, tocha, mina, horta e as passivas das bancadas (2026-10-27, JAR local, não jogado)
+
+### Corrigido
+- **Obra parada 15 min:** a água e a terra arada da horta da própria planta eram lidas como buraco na
+  base (`FoundationPreparation`).
+- **Horta pedida como material:** terra arada, trigo e água eram pedidos ao carpinteiro e buscados no
+  chão; agora são moldados no lugar sem pedido (`AppearingPieces.needsNoStock`).
+- **Fundidor parado com 626 pedregulhos:** o cru que também sai da fornalha (pedra) vem antes.
+- **Rede de caminhos sem nenhum traçado:** a porta recuada das casas Vanilla não era achada.
+- **Tocha da colônia invisível** com pacotes de textura: modelo próprio, versão de parede e item igual
+  ao da tocha comum; tabelas de saque.
+- **Tocha da mina caía:** agora vai no chão dos salões, numa grade de 12, nunca no degrau.
+- **Escada da mina fechada:** o selo de água drena a célula da mina, e o caminho não passa na boca.
+
+### Adicionado
+- **Regra 128:** ninguém espera mais de 5 minutos; com 10 minutos, o produto surge.
+- **Regra 129:** nome sobre a cabeça na cor do estado.
+- **Regra 130:** 5 animais num poste pedem curral com prioridade.
+- **Regra 131:** chão nivelado em volta da obra nova (anel de 2 + rampa de 3).
+- **Regra 132:** painel das bancadas (shift+clique) e passivas por ofício.
+- **Bosque:** uma em cada dez mudas da borda é de outra espécie.
+- **Receitas:** bancadas com 1 diamante; tocha da colônia (4 tochas + 1 ouro → 4); caminho de areia pela pá.
+
 ## [0.3.97] — os sete pontos abertos: cama, ajudas, tocha, neve, veio, atalho e a rede de túneis fora (2026-10-27, JAR local, não jogado)
 
 ### Adicionado

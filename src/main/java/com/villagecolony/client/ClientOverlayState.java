@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ClientOverlayState {
 
     private static volatile Map<UUID, String> professions = Map.of();
+    private static volatile Map<UUID, String> badges = Map.of();
     private static volatile Map<UUID, OverlaySnapshotPayload.ConstructionEntry> constructions = Map.of();
 
     private ClientOverlayState() {
@@ -19,6 +20,9 @@ public final class ClientOverlayState {
         Map<UUID, String> next = new ConcurrentHashMap<>();
         payload.workers().forEach(worker -> next.put(worker.id(), worker.profession()));
         professions = Map.copyOf(next);
+        Map<UUID, String> nextBadges = new ConcurrentHashMap<>();
+        payload.workers().forEach(worker -> nextBadges.put(worker.id(), worker.badge()));
+        badges = Map.copyOf(nextBadges);
         Map<UUID, OverlaySnapshotPayload.ConstructionEntry> nextConstructions = new ConcurrentHashMap<>();
         payload.constructions().forEach(construction -> nextConstructions.put(construction.id(), construction));
         constructions = Map.copyOf(nextConstructions);
@@ -26,6 +30,11 @@ public final class ClientOverlayState {
 
     public static String professionOf(UUID id) {
         return professions.get(id);
+    }
+
+    /** O estado do aldeão na última amostra do servidor ({@code WorkTime.Badge}), ou vazio. */
+    public static String badgeOf(UUID id) {
+        return badges.getOrDefault(id, "");
     }
 
     /**
@@ -44,6 +53,7 @@ public final class ClientOverlayState {
 
     public static void clear() {
         professions = Map.of();
+        badges = Map.of();
         constructions = Map.of();
     }
 }

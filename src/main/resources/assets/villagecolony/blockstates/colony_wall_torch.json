@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "villagecolony:block/colony_wall_torch"
+    },
+    "facing=north": {
+      "model": "villagecolony:block/colony_wall_torch",
+      "y": 270
+    },
+    "facing=south": {
+      "model": "villagecolony:block/colony_wall_torch",
+      "y": 90
+    },
+    "facing=west": {
+      "model": "villagecolony:block/colony_wall_torch",
+      "y": 180
+    }
+  }
+}

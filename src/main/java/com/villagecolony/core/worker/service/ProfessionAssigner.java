@@ -302,6 +302,19 @@ public final class ProfessionAssigner {
             return Optional.of(type);
         }
 
+        // <b>Todas na meta e sobra adulto: a meta sobe para o ofício que a vila espera</b> — escolha do autor,
+        // 2026-10-28 (jogo da 0.3.99: 6 de 18 aldeões sem profissão). Só o que a obra espera agora
+        // (ProfessionDemand); sem espera, vale a meta do crescimento. O máximo de cada profissão continua.
+        if (candidate != null) {
+            Optional<ProfessionType> spare = spareHand(candidate, counts, adultPopulation, growthOrder, policies);
+
+            if (spare.isPresent()) {
+                HiringLog.record(colonyId, spare.get(), HiringLog.Outcome.FILLED);
+
+                return spare;
+            }
+        }
+
         if (colonyId != null) {
             // Nenhuma profissão serviu a este candidato. A conta por
             // profissão acima já disse quais e por quê; esta linha existe
@@ -310,6 +323,24 @@ public final class ProfessionAssigner {
         }
 
         return Optional.empty();
+    }
+
+    /** Até quanto acima da meta do crescimento a vaga extra leva uma profissão. */
+    static final int SPARE_ABOVE = 2;
+
+    /**
+     * A profissão do adulto que sobra com todas na meta: a que a obra espera agora, na ordem da falta, até
+     * {@link #SPARE_ABOVE} acima da meta dela.
+     */
+    static Optional<ProfessionType> spareHand(Worker candidate, Map<ProfessionType, Integer> counts,
+            int adultPopulation, List<ProfessionType> growthOrder, ProfessionPolicySet policies) {
+        return java.util.stream.Stream.concat(ProfessionDemand.of(candidate.colonyId()).stream(),
+                        ProfessionDemand.spareOf(candidate.colonyId()).stream())
+                .filter(type -> growthOrder.contains(type) && !HiringQuota.atMaximum(type, counts, policies)
+                        && !candidate.isShunning(type)
+                        && counts.getOrDefault(type, 0)
+                                < HiringQuota.targetCount(type, adultPopulation, growthOrder, policies) + SPARE_ABOVE)
+                .findFirst();
     }
 
     /** Cota desta profissão com a política padrão do mundo. */

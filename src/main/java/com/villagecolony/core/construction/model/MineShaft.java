@@ -334,6 +334,39 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
                 corner.z() + along.offsetZ() * row + gallery.offsetZ() * sideways);
     }
 
+    /** De quantos em quantos blocos vai a tocha de chão do salão (autor, 2026-10-27). */
+    public static final int LIGHT_SPACING = 12;
+
+    /**
+     * Onde vão as tochas de chão deste ramal, nos pés: uma grade de {@link #LIGHT_SPACING} no salão do
+     * nível e no do ramal, nunca no degrau. A grade fica a 6 do meio de cada salão, longe do caracol do
+     * nível seguinte (que desce do meio do salão do ramal) e dos cantos de onde saem os ramais. A rampa do
+     * fundo não leva tocha.
+     */
+    public java.util.List<ColonyPos> lightSpots() {
+        if (isRamp()) {
+            return java.util.List.of();
+        }
+
+        int off = LIGHT_SPACING / 2;
+        Side along = descent.clockwise().opposite();
+        Side armAlong = gallery.clockwise().opposite();
+        ColonyPos hall = hallCenter();
+        ColonyPos arm = armHallCenter();
+        java.util.List<ColonyPos> spots = new java.util.ArrayList<>();
+
+        for (int a : new int[] {-off, off}) {
+            for (int b : new int[] {-off, off}) {
+                spots.add(new ColonyPos(hall.x() + along.offsetX() * a + descent.offsetX() * b, hall.y() + 1,
+                        hall.z() + along.offsetZ() * a + descent.offsetZ() * b));
+                spots.add(new ColonyPos(arm.x() + armAlong.offsetX() * a + gallery.offsetX() * b, arm.y() + 1,
+                        arm.z() + armAlong.offsetZ() * a + gallery.offsetZ() * b));
+            }
+        }
+
+        return spots;
+    }
+
     /** O meio do salão do ramal, piso: de onde o nível seguinte desce. */
     private ColonyPos armHallCenter() {
         Side along = gallery.clockwise().opposite();

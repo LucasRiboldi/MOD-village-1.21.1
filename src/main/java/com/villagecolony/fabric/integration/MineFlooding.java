@@ -1,6 +1,8 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
@@ -72,6 +74,19 @@ public final class MineFlooding {
         return false;
     }
 
+    /** Se esta posição é célula planejada de alguma mina: escada, salão ou ramal, aberta ou por abrir. */
+    static boolean isPassage(BlockPos at) {
+        ColonyPos cell = MinecraftTypeAdapter.toColonyPos(at);
+
+        for (com.villagecolony.core.construction.model.Mine mine : VillageColonyMod.MINES.all()) {
+            if (mine.plannedCells().contains(cell)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Tapa as nascentes que a picareta acabou de abrir nesta posição.
      *
@@ -102,6 +117,13 @@ public final class MineFlooding {
 
             if (BlockProtection.isVillageOriginal(world, at)
                     || BlockProtection.isColonyBuilt(at)) {
+                continue;
+            }
+
+            // A água que entrou na escada ou no salão sai, e a passagem fica aberta: tapar ali fechava a
+            // escada de volta. O que tapa a fonte é a face de fora, que não é passagem.
+            if (isPassage(at)) {
+                world.setBlockState(at, Blocks.AIR.getDefaultState());
                 continue;
             }
 

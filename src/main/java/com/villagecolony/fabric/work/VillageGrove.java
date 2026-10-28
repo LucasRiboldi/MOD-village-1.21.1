@@ -77,6 +77,35 @@ public final class VillageGrove {
 
     private static final Map<UUID, List<BlockPos>> GROVES = new HashMap<>();
 
+    /** Uma em cada tantas mudas do bosque é de outra espécie (autor, 2026-10-27). */
+    static final int OTHER_SPECIES_EVERY = 10;
+
+    /**
+     * As espécies que uma muda só faz crescer. O carvalho escuro fica de fora: precisa de quatro mudas
+     * juntas.
+     */
+    static final List<Block> OTHER_SPECIES = List.of(Blocks.OAK_SAPLING, Blocks.BIRCH_SAPLING,
+            Blocks.SPRUCE_SAPLING, Blocks.JUNGLE_SAPLING, Blocks.ACACIA_SAPLING, Blocks.CHERRY_SAPLING,
+            Blocks.MANGROVE_PROPAGULE);
+
+    private static final Map<UUID, Integer> PLANTED = new HashMap<>();
+
+    /**
+     * A muda desta vez: a do bioma, e a cada {@link #OTHER_SPECIES_EVERY} uma de outra espécie, sorteada.
+     * As toras dela também servem à colônia.
+     */
+    static Block speciesFor(ServerWorld world, UUID colonyId, Block nativeSapling) {
+        int count = PLANTED.merge(colonyId, 1, Integer::sum);
+
+        if (count % OTHER_SPECIES_EVERY != 0) {
+            return nativeSapling;
+        }
+
+        List<Block> others = OTHER_SPECIES.stream().filter(other -> other != nativeSapling).toList();
+
+        return others.get(world.getRandom().nextInt(others.size()));
+    }
+
     private static final Map<UUID, Long> CHECKED = new HashMap<>();
 
     /** Mudas que vieram de árvores cortadas longe, a mais no bosque — regra do autor, 2026-10-11. */
@@ -125,7 +154,14 @@ public final class VillageGrove {
         while (grove.size() < size) {
             Optional<BlockPos> spot = spotFor(world, colony, box.get(), grove);
 
-            if (spot.isEmpty() || !TreeNursery.plant(world, spot.get(), sapling.get())) {
+            if (spot.isEmpty()) {
+                break;
+            }
+
+            Block chosen = speciesFor(world, colony.id(), sapling.get());
+
+            if (!TreeNursery.plant(world, spot.get(), chosen)
+                    && (chosen == sapling.get() || !TreeNursery.plant(world, spot.get(), sapling.get()))) {
                 break;
             }
 
@@ -135,7 +171,8 @@ public final class VillageGrove {
 
             VillageColonyMod.LOGGER.info(
                     "Colony {} — the lumberjack planted {} near the village at {} (grove {} of {})",
-                    colony.id().toString().substring(0, 8), TreeNursery.idOf(sapling.get()),
+                    colony.id().toString().substring(0, 8),
+                    TreeNursery.idOf(world.getBlockState(spot.get().up()).getBlock()),
                     spot.get().toShortString(), grove.size(), size);
         }
 
@@ -428,5 +465,6 @@ public final class VillageGrove {
         GROVES.clear();
         CHECKED.clear();
         MOVED.clear();
+        PLANTED.clear();
     }
 }

@@ -36,16 +36,67 @@ public final class ProfessionChestOverflow {
     /** Colônias com baú de profissão lotado e nenhum baú livre que o aliviasse. */
     private static final Set<UUID> NEEDS_STORAGE = new HashSet<>();
 
+    /**
+     * Colônias com os baús da vila cheios: {@link #FULL_SHARE} dos espaços ocupados, até cair abaixo de
+     * {@link #RELIEVED_SHARE} — escolha do autor, 2026-10-28: <i>"se os baús estiverem cheios, a prioridade da
+     * obra é criar um armazém"</i>.
+     */
+    private static final Set<UUID> FULL = new HashSet<>();
+
+    /** A última parte medida dos espaços ocupados, por colônia — para o retrato da vila (VC_STATE). */
+    private static final java.util.Map<UUID, Double> SHARE = new java.util.HashMap<>();
+
+    /** A parte dos espaços ocupados que marca os baús da vila como cheios. */
+    static final double FULL_SHARE = 0.8;
+
+    /** Abaixo disto a marca sai. */
+    static final double RELIEVED_SHARE = 0.7;
+
     private ProfessionChestOverflow() {
     }
 
     public static void clearAll() {
         NEEDS_STORAGE.clear();
+        FULL.clear();
+        SHARE.clear();
+    }
+
+    /** A parte dos espaços dos baús da vila ocupada na última medida, se já houve uma. */
+    public static java.util.OptionalDouble fullnessOf(UUID colonyId) {
+        Double share = SHARE.get(colonyId);
+
+        return share == null ? java.util.OptionalDouble.empty() : java.util.OptionalDouble.of(share);
     }
 
     /** Se, no último alívio, faltou baú livre na vila desta colônia. */
     public static boolean needsStorage(UUID colonyId) {
-        return NEEDS_STORAGE.contains(colonyId);
+        return NEEDS_STORAGE.contains(colonyId) || FULL.contains(colonyId);
+    }
+
+    /** Marca ou desmarca os baús da vila como cheios, pela parte dos espaços ocupados. */
+    public static void measureFullness(Colony colony, List<Inventory> inventories) {
+        int slots = 0;
+        int used = 0;
+
+        for (Inventory inventory : inventories) {
+            slots += inventory.size();
+            used += inventory.size() - freeSlots(inventory);
+        }
+
+        double share = slots == 0 ? 0 : (double) used / slots;
+        SHARE.put(colony.id(), share);
+
+        if (share >= FULL_SHARE && FULL.add(colony.id())) {
+            VillageColonyMod.LOGGER.info("Colony {} — the village chests are {}% full: the next build is a storage house,"
+                    + " and a spare adult becomes a second builder", colony.id().toString().substring(0, 8),
+                    Math.round(share * 100));
+        } else if (share < RELIEVED_SHARE) {
+            FULL.remove(colony.id());
+        }
+
+        // Baú cheio é estoque parado: mais um construtor gasta o estoque nas obras (autor, 2026-10-28).
+        com.villagecolony.core.worker.service.ProfessionDemand.setSpare(colony.id(), FULL.contains(colony.id())
+                ? List.of(com.villagecolony.core.worker.model.ProfessionType.BUILDER) : List.of());
     }
 
     /**
@@ -77,6 +128,12 @@ public final class ProfessionChestOverflow {
         for (ColonyPos chest : community) {
             ChestInventories.at(world, chest).map(ChestInventories.Handle::inventory).ifPresent(boxes::add);
         }
+
+        List<Inventory> everything = new ArrayList<>(boxes);
+        for (ColonyPos chest : professionChests) {
+            ChestInventories.at(world, chest).map(ChestInventories.Handle::inventory).ifPresent(everything::add);
+        }
+        measureFullness(colony, everything);
 
         boxes.stream().filter(ProfessionChestOverflow::isEmpty).forEach(destinations::add);
         boxes.stream().filter(inventory -> !isEmpty(inventory)).forEach(destinations::add);

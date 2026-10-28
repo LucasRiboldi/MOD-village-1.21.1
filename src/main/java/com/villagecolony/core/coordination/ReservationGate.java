@@ -27,11 +27,19 @@ public enum ReservationGate {
      * Fundir só é reservado com o cru num baú da colônia — playtest de 2026-10-08:
      * sem minério, o fundidor pegou e soltou a tarefa de lingote 191 vezes em 12 min.
      */
-    SMELT_INPUT;
+    SMELT_INPUT,
+
+    /**
+     * Tosquiar só com ovelha lanuda no alcance do pastor e menos de 64 da lã pedida nos baús — escolha do
+     * autor, 2026-10-28 (jogo da 0.3.99: 28 tarefas de lã sem ovelha com lã, 102 lãs no baú). Também espera
+     * o descanso da varredura, como {@link #EMPTY_SWEEP}.
+     */
+    WOOL_ON_A_SHEEP;
 
     public static ReservationGate of(TaskType type) {
         return switch (type) {
-            case COLLECT_SURFACE_RESOURCE, COLLECT_SOIL, COLLECT_WOOL -> EMPTY_SWEEP;
+            case COLLECT_SURFACE_RESOURCE, COLLECT_SOIL -> EMPTY_SWEEP;
+            case COLLECT_WOOL -> WOOL_ON_A_SHEEP;
             case BUILD -> BUILD_SITE;
             case SMELT_MATERIAL -> SMELT_INPUT;
             default -> NONE;

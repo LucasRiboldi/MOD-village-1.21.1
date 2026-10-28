@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.97%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.102%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -39,21 +39,37 @@ SHA-256 do JAR na descrição.
 - Regras de profissão por mundo, editáveis pelo [Mod Menu](https://modrinth.com/mod/modmenu)
   (opcional): ativar ou desativar a profissão, limite de trabalhadores, raio de
   busca do lenhador, fazendeiro e pastor, e ordem de contratação (ADR-030).
-- Com o mod no cliente, mostra a profissão sobre o aldeão e o progresso da
-  obra, com o primeiro material que falta. Sem o mod no cliente, a profissão
+- Com o mod no cliente, mostra a profissão sobre o aldeão, na cor do que ele
+  faz agora — laranja no ofício, azul ajudando, vermelho travado há 30 s,
+  branco à toa, cinza fora do expediente (Regra 129) — e o progresso da obra,
+  com o primeiro material que falta. Sem o mod no cliente, a profissão
   não aparece: desde 2026-10-10 (P0.8) o servidor não escreve mais o nome da
   profissão no aldeão.
-- Traça cada caminho como um corredor de um bloco que sai da porta em linha
-  reta e vira só em ângulo reto (Regra 70); na encosta sem volta pelo terreno,
-  corta degraus num vale de três, até 12 de fundo, e guarda o que corta
-  (Regras 70 e 110).
+- Liga a porta de cada construção pronta à rede de caminhos da vila: caminho
+  de até 3 blocos de largura, **rente ao chão** — troca só o bloco de cima,
+  cobre só o buraco de 1 bloco, corta no máximo 1 e nunca põe bloco acima do
+  terreno; sobe no máximo 1 bloco por passo, estreita onde o lado não cabe,
+  contorna o desnível maior, nunca passa por construção nem pela boca da mina e
+  se junta aos caminhos que já existem; vai ao chafariz por atalho quando a
+  rede dá mais de 2 vezes a volta (Regras 123 a 125). Quem assenta é o
+  pedreiro, o carpinteiro ou o fundidor sem tarefa, um por vez.
 - No deserto usa o bloco próprio "caminho de areia" (Regra 73).
-- O mineiro não constrói fora da montanha, desce antes de ir de lado, cava um
-  acesso quando a entrada da mina não se alcança a pé, e nada ao ar livre
-  (Regra 71).
+- A mina desce em caracol de 4 lances curtos, abre um salão de 17×17 e desce de
+  novo pelos 4 cantos; a escada de descida é o caminho de volta, com no máximo
+  1 bloco por degrau, e nunca é fechada; a luz é de tocha no chão dos salões
+  (Regra 119).
 - O pastor mantém um curral por espécie, lota pelo tamanho do curral, cria até
-  8 e abate acima de 6, e pede um curral novo quando todos estão cheios
-  (Regras 68 e 72).
+  8 e abate acima de 6, e pede um curral novo quando todos estão cheios ou
+  quando há 5 animais amarrados no mesmo poste (Regras 68, 72 e 130).
+- Antes de cada obra nova, nivela o chão em volta na altura da rua: um anel de
+  2 blocos com no máximo 1 de diferença e uma rampa de 3 até o terreno natural
+  (Regra 131).
+- Nenhuma profissão espera mais de 5 minutos: quem fica parado com tarefa a
+  larga e vai ajudar a vila; se a mesma tarefa trava de novo em 10 minutos, o
+  produto surge no baú (Regra 128).
+- Quem está sem tarefa ajuda: o pastor colhe a roça, o lenhador cuida do
+  bosque (1 em cada 10 mudas é de outra espécie), o carpinteiro põe a tocha da
+  colônia nos caminhos escuros, o pedreiro recolhe neve com a pá (Regra 127).
 - Cada aldeão dorme na cama mais perto de onde trabalha: uma vez por dia, só
   com ganho de 16 blocos de caminhada, levando o baú junto, como uma transação
   (Regra 74).
@@ -63,11 +79,12 @@ SHA-256 do JAR na descrição.
   declarada e deixa a linha `VC_SUPPLY` no log (Regra 111); toda desistência
   no diário de ações leva um código único de bloqueio (Regra 112).
 
-O mod é alpha. A 0.3.93 (2026-10-22) passou na bateria automática completa
-(ver "Desenvolvimento e verificação"). O último jogo foi o da 0.3.90 no
-deserto: nota 7,6 no relatório do bioma (era 4,0), primeiro lote aberto na
-faixa da duna e construtor com 48% do expediente trabalhando; as entregas da
-0.3.91 à 0.3.93 ainda não foram vistas em jogo. O estado vivo está no
+O mod é alpha. A 0.3.100 (2026-10-28) passou na bateria automática completa
+(ver "Desenvolvimento e verificação"). O último jogo foi o da 0.3.99 na
+savana (Spark `eVkPhNEtZT`, 76 min): 20 TPS sem travão e o caminho rente ao
+chão; o tempo dos ofícios mostrou vila madura parada (estoque cheio), tarefas
+que abriam sem poder render, roça fora do alcance e o mineiro preso na boca.
+A 0.3.100 trata cada um (Regras 133 a 137) e ainda não foi jogada. O estado vivo está no
 [`STATE.md`](STATE.md). O que mudou em cada
 publicação está no [`CHANGELOG.md`](CHANGELOG.md); a avaliação técnica mais
 recente, em
@@ -90,6 +107,9 @@ desatualizados.
 | `FARMER` | Agricultor/Fazendeiro | Enxada de ferro | Mantém lavouras, cava terra para obra e faz pão do trigo acima da reserva | `FarmerWork` |
 | `SHEPHERD` | Pastor | Tesoura | Tosquia, faz o rebanho procriar (até 8 adultos por espécie) e abate acima de 6, um curral por espécie | `ShepherdWork` |
 | `BUILDER` | Construtor | Nenhuma | Reserva lotes, repara e assenta estruturas | `BuilderWork` |
+
+Cada ofício tem a sua bancada do mod (estação de trabalho, produção em dobro e
+passivas na vila); ver [Blocos do mod](#blocos-do-mod).
 
 Compatibilidade: `BREEDER` é convertido para `SHEPHERD` ao ler saves antigos.
 O agricultor continua profissão completa, sem cama ou baú fundacional dentro
@@ -202,7 +222,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 67 | **Plantação por população**: uma roça a cada 15 adultos, no mínimo uma desde a fundação; ao passar de 15 adultos (o 16º), a obra de fazenda vira prioridade e fura a fila antes de oficinas e do rodízio (só a falta de cama vem antes). Substitui a Regra 52 (uma por fazendeiro) | 10-13 | ✅ feita (0.3.54) | `ConstructionPriority.FARM_DEFICIT`, `ColonyFarms.owed` |
 | 68 | **O pastor aproveita o rebanho** (manutenção do ofício, não toca a obra): com mais de 6 adultos de uma espécie (a criação enche até 8; eram 8 e 12 até 10-22, autor), abate 1 por ciclo o excedente deixando sempre ≥6 vivos, e deposita o drop Vanilla no baú (couro/carne); a carne crua acima de 16 é cozida sem combustível; o ovo que a galinha larga no chão é recolhido. Reserva viva (6 adultos) e reserva de item (16) são limites distintos | 10-14 | ✅ feita (0.3.56; 8/6 em 0.3.89) | `FlockHarvest`, `ShepherdFlock.tend`, `CraftingLookup.smelted` |
 | 69 | **A horta da casa surge sem gastar recurso**: os blocos de chão da planta que não têm item nem receita (farmland, água, caminho, cultivo) são moldados no local, com o terreno garantido embaixo, em vez de passar pela cadeia de material (que falhava, "could not make farmland", travando a obra nos últimos blocos — playtest 0.3.56). Só sobre lugar livre; bloco posto não é sobrescrito (Regra 3) | 10-14 | ✅ feita (0.3.57) | `BuilderPlacement.placeOne`, `BlockShaping.isShapedFromTheGround`/`groundFor` |
-| 70 | **Corredor de caminho:** todo caminho que a colônia traça até uma construção tem um bloco de largura, sai da porta em linha reta na direção dela, vira só em ângulo reto (no máximo 2 vezes, nunca antes de 2 blocos retos) e para no primeiro caminho que encostar, de frente ou de lado; o construtor sem obra só fecha o buraco de um bloco no meio de uma reta (caminho dos dois lados opostos e nada dos outros), nunca canto — para não virar tudo caminho. **Degrau cortado (autor, 10-22):** sem caminho pelo terreno até a rua, o corredor da faixa anexada desce a encosta um bloco por vez cortando o chão do bioma acima dele, até 12 de fundo; a abertura da obra corta a coluna do caminho e as duas do lado (vale de três, caminho de um no meio) e guarda o que sai nos baús públicos. Nunca aterra; só corta o que o lote cortaria | 10-22 | ↪️ substituída pela 123 (10-27); era feita (0.3.88; corte 0.3.89) | `Corridor`, `WorkPath`, `StripLot`, `BuilderPaving.isGap`, `LotTerraform.cutAbove`, `CorridorCut` |
+| 70 | **Corredor de caminho:** todo caminho que a colônia traça até uma construção tem um bloco de largura, sai da porta em linha reta na direção dela, vira só em ângulo reto (no máximo 2 vezes, nunca antes de 2 blocos retos) e para no primeiro caminho que encostar, de frente ou de lado; o construtor sem obra só fecha o buraco de um bloco no meio de uma reta (caminho dos dois lados opostos e nada dos outros), nunca canto — para não virar tudo caminho. **Degrau cortado (autor, 10-22; emenda de 10-28, opção 3):** o corredor do lote tenta primeiro a **serpentina** pelo terreno, até 6 curvas, degrau de no máximo um e sem cortar; só sem volta por ela desce a encosta cortando o chão do bioma, **até 3 de fundo** (era 12); a abertura da obra corta a coluna do caminho e desce os lados em **talude** — a coluna a k blocos fica k acima do piso, um degrau por bloco, e o degrau exposto ganha a grama de cima —, em vez do vale de paredes retas; guarda o que sai nos baús públicos. Nunca aterra; só corta o que o lote cortaria | 10-22 | ↪️ substituída pela 123 (10-27) nos caminhos da rede; o corredor do lote segue, com serpentina e talude (0.3.101) | `Corridor`, `WorkPath`, `StripLot`, `BuilderPaving.isGap`, `LotTerraform.cutAbove`, `CorridorCut` |
 | 71 | **O mineiro não constrói para fora da montanha:** o desvio dele não põe bloco ao céu aberto (só dentro da montanha) e, se precisar construir para andar, desce antes de ir de lado (cavar descendo custa o de sempre, de lado o dobro, subindo o triplo; pôr bloco o dobro); com a entrada da mina inalcançável a pé, ele cava um acesso só cavando, descendo da vila até o nível; debaixo da terra não entra na água (ADR-025), ao ar livre nada pelo custo do Vanilla — a margem de lago cercada por paredão só se deixa nadando (autor, 10-22) | 10-22 | ✅ feita (0.3.88; água 0.3.89) | `MinerTerrain`, `DetourMoves.Costs.MINER`, `MineAccess`, `MinerCaution` |
 | 72 | **Um curral por espécie:** animais iguais ficam no mesmo curral; com mais de um curral na vila, cada tipo vai para o seu — o pastor leva o animal para o curral só daquela espécie, senão um vazio (que passa a ser dela), senão um misto que já a tem, senão qualquer um com lugar; sem animal solto a recolher, tira de um curral misto o animal que tem curral próprio ou vazio com lugar e o leva até lá, para que, com a vila crescendo, cada espécie acabe no seu. **Lotação pelo tamanho** (autor, 10-22): um animal a cada 4 blocos de chão do curral (eram 5 fixos); **com pastor e todos os currais cheios, um curral novo (animal_pen do estilo) entra na fila de obras**, depois do armazém e da falta de cama | 10-22 | ✅ feita (0.3.89) | `ShepherdPens.forSpecies`, `ShepherdHerding.separate`, `ShepherdPens.capacityOf`/`allFull`, `PenPlans`, `UrgentPlans` |
 | 73 | **Caminho de areia:** a vila do deserto tem caminho próprio — cópia do caminho de terra do Vanilla (mesma altura, mesmo comportamento: coberto por bloco sólido volta a ser o chão, aqui areia; quebrado dá areia) com a cor do arenito. No bioma de deserto todo caminho que a colônia assenta (rua, corredor, caminho de obra, buraco fechado pelo construtor) é ele; fora do deserto ele não é usado, e o caminho segue o do chão (Regra 70 e pedido de 10-20). Conta como rua em qualquer lugar | 10-22 | ✅ feita (0.3.89) | `SandPathBlock`, `ModContent.SAND_PATH`, `VillageRoad.pavingOn(world, at, …)`, `VillageRoad.isPathBlock` |
@@ -256,11 +276,21 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 120 | **A tarefa do lenhador fecha concluída quando o alcance esvazia** (autor 10-27, jogo da 0.3.93: nenhuma tarefa de 256 toras chegava ao fim; todas saíam como "made no progress" e o relatório dava 0% de conclusão): sem árvore madura no alcance depois de ter cortado alguma, a tarefa termina CONCLUÍDA com o que rendeu, e o ciclo seguinte abre outra se a vila ainda pedir madeira; sem ter cortado nada, ele segue esperando o bosque | 10-27 | ✅ feita (0.3.96) | `TreeChoice.closeEmptied` |
 | 121 | **A roça conhecida responde primeiro, sempre** (autor 10-27, jogo da 0.3.93: 622 "still sweeping" com roça madura conhecida esperando, e a planície parou em 16 aldeões com 41 camas): o registro de canteiros da colônia é olhado inteiro a cada passagem — o custo é o número de canteiros, não o tamanho da vila —, e o canteiro arado pelo fazendeiro entra nele na hora; lavoura madura do registro vira trabalho mesmo com a varredura do raio no meio da volta; com só canteiro vazio no registro, a varredura anda mais um trecho atrás de lavoura madura e o canteiro fica de reserva; a varredura do raio serve para achar roça nova | 10-27 | ✅ feita (0.3.96) | `CropPatch.survey`, `KnownFarmland.register`, `FarmerTill` |
 | 122 | **O curral é do pastor** (autor 10-27, jogo da 0.3.93: 217 entradas em curral na planície e o mineiro da taiga 3,5 h cercado com a cama dentro): o chão de dentro dos currais que o pastor mede é caro no caminho de todo aldeão de ofício que não é pastor (o nó vale como perigo leve, 8 por bloco) — atravessar fica possível quando é o único jeito, mas deixa de ser atalho; o aldeão achado cercado sem portão junto da própria cama larga essa cama, e o jogo escolhe outra; o portão que um aldeão abre fecha sozinho quando ninguém está nele (como já era) | 10-27 | ✅ feita (0.3.96) | `PenFloors`, `LandPathNodeMakerMixin`, `PenLift.leaveBedInPen` |
-| 123 | **A rede de caminhos da vila** (autor 10-27, estudo `docs/research/2026-10-27-rede-de-caminhos.md`): cada construção pronta se liga pela porta ao ponto mais barato da rede, e a primeira ao centro da vila; o traçado tem 3 de largura, degrau de no máximo um bloco entre passos, buraco aterrado com o chão do bioma, morro cortado no máximo 2 (antes disso sobe em serpentina pela encosta, e depois contorna), piso de caminho de terra em todo bioma e 2 de altura livre; construção, peça da vila, bloco do jogador e água nunca entram no traçado; caminho existente é reaproveitado, e correr colado ao lado de outro é evitado — os caminhos se unem numa rede só; substitui o corredor de 1 bloco da Regra 70 | 10-27 | ✅ feita (0.3.96; atalho ao chafariz quando a rede passa de 2× o direto, D5, 0.3.97) | `VillagePathPlanner`, `WorldPathTerrain`, `PathLinks`, `NetworkDetour` |
+| 123 | **A rede de caminhos da vila** (autor 10-27, estudo `docs/research/2026-10-27-rede-de-caminhos.md`): cada construção pronta se liga pela porta ao ponto mais barato da rede, e a primeira ao centro da vila; o traçado tem 3 de largura onde cabe, degrau de no máximo um bloco entre passos e **rente ao chão** (emenda do autor de 10-28, jogo da 0.3.98: o aterro de até 4 por coluna levantou paredes de terra e o traçado de 9 portas num tique parou o servidor 12 s): o caminho troca só o bloco de cima, cobre só o buraco de um bloco entre vizinhos no mesmo nível ou acima, corta no máximo um, nunca põe bloco acima do chão natural e por cima só tira planta; cada coluna de lado segue o próprio chão, até um acima ou abaixo do eixo, e onde não dá o caminho estreita; desnível maior se contorna, ou a porta fica sem ligação e é tentada de novo uma hora depois; um traçado por passagem, com o chão de cada coluna lido uma vez; piso de caminho de terra (de areia na areia) e 2 de altura livre; construção, peça da vila, bloco do jogador e água nunca entram no traçado; caminho existente é reaproveitado, e correr colado ao lado de outro é evitado — os caminhos se unem numa rede só; substitui o corredor de 1 bloco da Regra 70 | 10-27 | ✅ feita (0.3.96; atalho ao chafariz quando a rede passa de 2× o direto, D5, 0.3.97; rente ao chão, 0.3.99) | `VillagePathPlanner`, `WorldPathTerrain`, `PathLinks`, `PathPaving`, `NetworkDetour` |
 | 124 | **Construção nova nasce a no mínimo 3 blocos de qualquer construção** (autor 10-27, D1): o lote cuja pegada fica a menos de 3 blocos da caixa de outra construção, ou da obra aberta, é recusado (`TOO_CLOSE`); o caminho pode encostar no lote | 10-27 | ✅ feita (0.3.96) | `LotSpacing`, `LotLevel.flatGroundAt` |
 | 125 | **Quem assenta o caminho** (autor 10-27, D6): o pedreiro, o carpinteiro e o fundidor sem tarefa do ofício, no expediente e soltos, um por vez por colônia, revezando nessa ordem a cada 8 passos; cada passo é a seção de 3 colunas — aterro, corte do que está em cima do piso, caminho de terra e 2 livres —, e se o mundo mudou e a seção não serve mais, o traçado sai e é refeito | 10-27 | ✅ feita (0.3.96) | `PathPaving` |
 | 126 | **Peça colorida sai branca** (autor 10-27, item 5; jogo da 0.3.93: 64 "cama sem lã" e lã preta parada por corante): cama, lã, tapete e estandarte de qualquer cor entram na planta brancos, onde ela é montada — a lã que o rebanho dá é branca e nenhum corante é pedido; as outras peças não mudam | 10-27 | ✅ feita (0.3.96) | `WhitePieces`, `StructureBlueprintReader` |
 | 127 | **Ajudas de quem está sem tarefa do ofício, cada uma com um ofício fixo** (autor 10-27, item 8): o pastor colhe e replanta a lavoura madura das roças conhecidas, sem arar terra nova, e guarda a colheita no baú da colônia mais perto (um pastor por colônia por vez); o construtor limpa a faixa de obra (já fazia, `BuilderPaving`); o lenhador sem tarefa vai ao bosque e repõe muda e põe farinha de osso na hora, no máximo a cada meio minuto; o carpinteiro sem tarefa põe a **tocha da colônia** ao lado do caminho onde a luz de bloco é zero, a 8 blocos ou mais de outra — ela surge sem custo, tem luz 15 e um anel de 8 luzes invisíveis a 10 blocos (área clara ~3×), chama e partícula laranja (a luz do jogo não tem cor), e monstro não nasce sozinho a 30 blocos dela (criador de monstro e invasão continuam); quebrada, o anel sai junto; e o pedreiro sem tarefa recolhe com a pá a neve natural da vila quando a obra aberta pede camada ou bloco de neve — uma bola por camada, quatro por bloco, para o baú (item 5) | 10-27 | ✅ feita (0.3.97) | `IdleHelps`, `KnownFarmland`, `ColonyTorchBlock`, `ColonyTorches`, `HostileSpawnMixin`, `SnowShovel` |
+| 128 | **Nenhuma profissão espera mais de 5 minutos por nada** (autor 10-27, jogo da 0.3.97: pedreiro 68% e construtor 59% ociosos). 1º degrau: 300 s esperando, bloqueado ou encalhado desde o último golpe de trabalho (caminhar não conta) e ele larga a tarefa, a capacidade descansa e ele entra na cadeia de ajudas. 2º degrau: a mesma tarefa largada de novo 10 min depois faz o produto surgir no baú dele (`WAITED_TOO_LONG`); a peça de obra já surge em 2 ciclos pela obra | 10-27 | ✅ feita | `IdleWatch` |
+| 129 | **O nome sobre a cabeça tem a cor do estado** (autor 10-27): laranja no ofício, azul em ajuda, vermelho bloqueado ou encalhado há 30 s, branco à toa no expediente, cinza fora dele | 10-27 | ✅ feita | `WorkTime.Badge`, `ProfessionOverlayRenderer` |
+| 130 | **Cinco animais no mesmo poste pedem curral, com prioridade** (autor 10-27): o curral do estilo entra pela fila urgente; pronto, o pastor leva os do poste um a um | 10-27 | ✅ feita | `PenPlans.crowdedPost`, `UrgentPlans` |
+| 131 | **O chão em volta da obra nova fica na altura da rua** (autor 10-27): na abertura, um anel de 2 blocos na altura da rua ±1 e uma rampa de 3 que abre a faixa em 1 por passo; só chão natural é cortado e só o vazio é aterrado; nunca construção, peça da vila, bloco do jogador, caminho, água, árvore ou a caixa de outra construção | 10-27 | ✅ feita | `SiteSurroundings` |
+| 132 | **As bancadas do mod têm painel e passivas** (autor 10-27): shift+clique mostra titulares, estado, tarefa e espera; só com a bancada do ofício na vila valem as passivas — carpinteiro (ferramenta fabricada sai encantada, conserta ferramenta a 8), fundidor (armadura encantada, restaura armadura a 8, fornalhas 2× a 32), lenhador (mudas crescem a 32), fazendeiro (roça a 24, compostagem), pastor (par cruza a cada 10 min, lã rápida, recolha dos drops, abate em dobro), pedreiro (tapa buraco de rua, +1 pedregulho a cada 4), construtor (1 bloco a mais por minuto, material vem ao baú), mineiro (mina sem monstro a 64, minério em dobro, gema +1, 1% de ferramenta) | 10-27 | ✅ feita | `BenchPanel`, `BenchPassives`, `BenchUpkeep`, `BenchYield`, `CraftedEnchant` |
+| 133 | **Estoque cheio vira obra e produto** (autor 10-28, jogo da 0.3.99: lenhador 74%, pedreiro 48% e fundidor 44% parados com 413 toras, 1.202 pedregulhos e 695 pedras guardados): com 80% dos espaços dos baús da vila ocupados (até cair abaixo de 70%), a próxima obra é o armazém e o adulto que sobra vira mais um construtor; e o lenhador, o pedreiro e o fundidor sem tarefa fazem, a cada minuto, um lote de 8 de produto de valor — carvão vegetal da tora, tijolo de pedra e pedra polida, pedra, vidro e terracota — com o cru acima de 64 e o produto abaixo de 128 | 10-28 | ✅ feita (0.3.100) | `ProfessionChestOverflow.measureFullness`, `ProfessionDemand.setSpare`, `ValueGoods` |
+| 134 | **O adulto que sobra vai ao ofício que a vila espera** (autor 10-28, jogo da 0.3.99: 6 de 18 aldeões sem profissão): com todas as profissões na meta do crescimento, a vaga a mais vai à profissão que a obra espera agora, na ordem da falta, e ao construtor quando os baús estão cheios; sem espera, vale a meta do crescimento; o máximo de cada profissão continua | 10-28 | ✅ feita (0.3.100) | `ProfessionAssigner.spareHand`, `ProfessionDemand` |
+| 135 | **Tarefa só abre quando pode render** (autor 10-28, jogo da 0.3.99): a ordem de estoque de peça de tábua não abre sem tábua no baú quando a reserva de metade em tora não deixa converter (69 tarefas fechadas com 0 peça); a tarefa de lã só é reservada com ovelha lanuda na área do pastor e com menos de 64 da lã pedida nos baús (28 tarefas sem ovelha com lã) | 10-28 | ✅ feita (0.3.100) | `ItemStock.woodHeldInLogs`, `ReservationGate.WOOL_ON_A_SHEEP`, `WoolGate` |
+| 136 | **O fazendeiro alcança como o jogador** (autor 10-28, jogo da 0.3.99: roça 2 blocos acima, a 3 de distância, e 9 desistências): colhe e planta a até 4,5 blocos do olho até o meio da planta, com a linha livre, além do alcance de 3 do braço | 10-28 | ✅ feita (0.3.100) | `FarmerWork.seesWithinEyeReach` |
+| 137 | **A escada da mina recomeça do topo** (autor 10-28, jogo da 0.3.99: o mineiro passou 30 min na boca, 30 blocos acima do nível, sem descer — a escada entre a superfície e o nível era de antes do caracol): com 2 desistências seguidas em 10 min de um mineiro a 8 blocos ou mais acima da entrada do nível, a mina recomeça na boca de superfície (a lembrada, se está no chão da superfície; senão o chão em cima da entrada, se se alcança a pé) com o cursor no primeiro degrau | 10-28 | ✅ feita (0.3.100) | `MineRestart` |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).
@@ -342,6 +372,43 @@ o código já tratava todo bloco sólido como solo desde 15-09 (`LotGround.isLot
 
 <!-- REGRAS:FIM -->
 
+## Blocos do mod
+
+Todos os blocos aparecem no criativo (bancadas em "Blocos funcionais", ao lado
+das estações Vanilla) e têm receita para o jogador fabricar. Quebrados, devolvem
+o próprio bloco.
+
+### Bancadas de ofício
+
+Cada bancada é a estação de trabalho de uma profissão: atrai o aldeão para o
+ofício, funciona para o jogador como a estação Vanilla equivalente, ilumina
+como uma tocha (luz 14) e **dobra a produção** do titular que trabalha perto
+dela. Receita de todas: ouro, diamante e ouro em cima; a estação Vanilla do
+ofício no meio; ouro nos dois cantos de baixo (4 lingotes de ouro e 1 diamante).
+
+Só por estar na vila, cada bancada liga **passivas** (Regra 132). Shift+clique
+em qualquer uma abre no chat o **painel** do ofício: os titulares, o estado de
+cada um na cor do nome, a tarefa, há quanto tempo esperam, a obra aberta (no
+construtor) e as passivas ligadas.
+
+| Bloco | Estação na receita | Para o jogador funciona como | Passivas na vila (Regra 132) |
+|---|---|---|---|
+| Bancada do Carpinteiro | mesa de trabalho | mesa de trabalho | ferramenta e arma que o jogador fabrica na vila saem com 1 encantamento sorteado; repara aos poucos a ferramenta de quem está a até 8 blocos |
+| Cortador do Pedreiro | cortador de pedra | cortador de pedra | tapa um buraco de rua por minuto a até 32 blocos; a cada 4 pedregulhos minerados, 1 a mais |
+| Forja do Ferreiro (fundidor) | alto-forno | fornalha de verdade | fornalhas, alto-fornos e defumadores a até 32 (também os do jogador) com o dobro da velocidade; restaura armadura a até 8; armadura fabricada na vila sai encantada |
+| Bancada do Lenhador | mesa de trabalho | mesa de trabalho | mudas a até 32 blocos crescem mais rápido |
+| Bancada do Fazendeiro | composteira | composteira | a roça a até 24 blocos ganha um passo de crescimento; a sobra dos baús (sementes acima da reserva, folhas) vira farinha de osso |
+| Bancada do Pastor | tear | tear | abaixo da meta, um par cruza sozinho a cada 10 min (a até 36); lã volta mais rápido; o que os animais derrubam vai para os baús; o abate rende o dobro de carne e couro |
+| Bancada do Construtor | andaime | mesa de trabalho | a obra a até 48 blocos assenta 1 bloco a mais por minuto; o material da obra guardado em outros baús vem para o baú do construtor |
+| Bancada do Mineiro | cortador de pedra | mesa de trabalho | nenhum monstro nasce na mina (até 64 blocos da entrada, abaixo dela); ferro, cobre, carvão, ouro, lápis e redstone rendem o dobro; diamante, esmeralda, ametista e quartzo rendem +1; 1% de chance de soltar uma ferramenta de ferro, ouro ou diamante |
+
+### Outros blocos
+
+| Bloco | Como se obtém | O que faz |
+|---|---|---|
+| Tocha da Colônia | 4 tochas em volta de 1 lingote de ouro → 4 tochas | Mesmo formato da tocha do jogo, com cabeça de chama laranja de 3 pixels e o centro claro, sobre o cabo marrom; vai no chão ou na parede, como a tocha comum, com luz 15; acende um anel de luz invisível em volta (área clara cerca de 3 vezes maior) e impede que monstro nasça sozinho a até 30 blocos. O carpinteiro sem tarefa a põe sozinho, sem custo, ao lado dos caminhos escuros da vila (Regra 127) |
+| Caminho de Areia | pá na areia, como o caminho de terra | Igual ao caminho de terra do jogo, na cor do arenito; é o caminho das vilas do deserto (Regra 73) e volta a ser areia quando algo sólido o cobre |
+
 ## Construções e biomas
 
 O catálogo profissional está em
@@ -353,6 +420,11 @@ contra os nomes reais do Minecraft 1.21.1. As famílias permitidas são:
 - Savana: casas, oficinas, fazendas, currais e lampião.
 - Taiga: casas, oficinas, fazendas, curral e lampião.
 - Tundra nevada: casas, oficinas, fazendas, currais e lampião.
+
+O armazém do mod tem uma versão por estilo de bioma, nasce sempre do solo
+para cima e não leva folhas nem alçapões (Regra 115). Toda obra nova é
+afastada no mínimo 3 blocos de outra construção (Regra 124) e ganha o chão
+nivelado em volta (Regra 131).
 
 O detalhe dos IDs e a regra da estrutura própria estão em
 [`src/main/resources/data/villagecolony/structure/houses/README.md`](src/main/resources/data/villagecolony/structure/houses/README.md).
@@ -366,6 +438,69 @@ cliente, o mod liga as sobreposições de profissão e de obra, e o Mod Menu
 (opcional) abre a tela de regras de profissão — mudar regras exige operador
 nível 2.
 Use um mundo de teste: o mod corta árvores, minera e coloca blocos no mundo.
+
+## Comandos e dados de análise
+
+Todos os comandos são abertos a qualquer jogador e respondem sobre a vila em que você está.
+
+| Comando | O que mostra ou faz |
+|---|---|
+| `/vc log` | Situação da vila: prioridade das obras, felicidade, **estado agora** (quem está no ofício, ajudando, travado — com os travados nomeados —, estoque e baús cheios, obra aberta, tarefas, mina, ruas, bancadas e animais), atividades recentes, o que a obra espera e a cadeia que a traz, alcance a pé, tempo dos ofícios na última janela de 5 min (Regra 51) e esperas longas |
+| `/vc bioma` | Boletim do bioma (estilo, camas, aldeões, lotes e recusas, peças que surgiram, ofícios acima da Regra 51) e o mesmo retrato completo do `/vc log` |
+| `/vc bioma nota <texto>` | Anota uma observação sua, com posição e bioma, no log (`VC_BIOME_NOTE`) e no arquivo de análise do mundo |
+| `/vc dados` | Grava agora o retrato completo da vila no arquivo de análise e diz onde ficou |
+
+**O retrato da vila (`VC_STATE`).** A cada 5 minutos, por vila com jogador perto, o mod registra num
+JSON só:
+
+- dia e hora do jogo, MSPT do servidor, bioma, estilo e tamanho da vila;
+- aldeões, ofícios, camas, encalhados, e quantos estão no ofício, ajudando, travados, à toa ou fora do
+  expediente (Regra 129), com os travados nomeados;
+- tempo de cada ofício na última janela e a parte da Regra 51;
+- estoque por grupo, número de baús, quanto estão cheios e se pedem armazém;
+- obras prontas, obra aberta (estado, peças que faltam e de lado), lotes aceitos e recusas;
+- tarefas abertas por tipo e quantas têm dono;
+- mina (altura do nível, níveis abaixo da boca, posições cavadas);
+- colunas de rua, bancadas presentes e animais por espécie.
+
+O registro sai no log como `VC_STATE` e fica, junto das notas, em
+`<mundo>/villagecolony/analytics/AAAA-MM-DD.jsonl` — uma linha por registro, com o instante real
+(`at`) para cruzar com o Spark. O arquivo fica com o mundo entre sessões e versões, e cada registro
+traz `schema` e `mod`, para comparar versões.
+
+Relatórios (rodar depois de jogar):
+
+```bash
+python scripts/state_report.py
+```
+
+```bash
+python scripts/time_ledger.py
+```
+
+```bash
+python scripts/action_report.py
+```
+
+O `state_report.py` lê os arquivos de análise de todos os mundos da instalação de teste (ou os arquivos e
+logs passados) e mostra, por colônia:
+
+- o período e a versão do mod;
+- a evolução de aldeões, ofícios e obras por hora;
+- o enchimento dos baús e os travados;
+- a média da Regra 51 por ofício;
+- o MSPT;
+- as notas do jogador.
+
+Os outros relatórios:
+
+| Script | O que mostra |
+|---|---|
+| `time_ledger.py` | O tempo por ofício (`VC_TIME`) |
+| `action_report.py` | O diário de ações por aldeão, com os motivos de recusa |
+| `cost_ledger.py` | O custo por fase do ciclo (`VC_COST`) |
+| `supply_report.py` | O que surgiu sem um ofício obter (`VC_SUPPLY`) |
+| `biome_report.py` | O boletim por bioma (`VC_BIOME`) |
 
 ## Desenvolvimento e verificação
 
@@ -404,18 +539,19 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 `runGametest` gera `build/reports/jacoco/gametest/html` (bateria de jogo, que
 é quem exercita a camada `fabric`).
 
-Verificação de 2026-10-22 (0.3.93, `main` depois da PR #34), rodada e não
-copiada:
+Verificação de 2026-10-28 (0.3.102, branch `fix/playtest-0397`, PR #37),
+rodada e não copiada:
 
-- 1594 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
+- 1609 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
   de 500 linhas por arquivo).
-- 119 testes Python: aprovados.
-- 862 GameTests: todos aprovados em duas rodadas seguidas com `--rerun-tasks`;
-  o `runGametest` começa cada bateria com o mundo de teste apagado, como o CI.
-- Mutação (PIT, pacote `core`): 2140 de 2509 mutações mortas (85,3%, limiar
-  85%).
-- CI do GitHub ("Build and test"): verde; a `main` exige esse check para
-  mesclar.
+- 126 testes Python: aprovados (o CI instala o `nbtlib` para o teste das
+  versões do armazém).
+- 900 GameTests: todos aprovados com `--rerun-tasks`; o `runGametest` começa
+  cada bateria com o mundo de teste apagado, como o CI.
+- `build --rerun-tasks`: aprovado; JAR `village-colony-0.3.102.jar`.
+- Mutação (PIT, pacote `core`): não refeita nesta versão; a última medida
+  (0.3.93) foi 2140 de 2509 mutações mortas (85,3%, limiar 85%).
+- CI do GitHub ("Build and test"): a `main` exige esse check para mesclar.
 
 Para refazer: `scripts/audit/check-tests-green.sh --runs 3` e
 `scripts/audit/check-mutation-threshold.sh --run` (ver

@@ -1,13 +1,18 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.BlockState;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 
@@ -52,9 +57,9 @@ public final class FoundationPreparation {
      *
      * <p>A régua é a do {@link LotLevel}, medida na cota da rua da planta:
      * pelo menos metade das colunas apoiada, e cada outra uma lacuna de até
-     * {@link #MAX_FILL_DEPTH} camada, sem fluido. A recusa era muda e a obra
-     * ficava "AVAILABLE with nobody" sem causa no log (playtest de
-     * 2026-10-07).
+     * {@link #MAX_FILL_DEPTH} camada, sem fluido. A coluna onde a peça da
+     * própria planta já está assentada (a água e a terra arada da horta na
+     * camada da rua) conta como apoiada: é a obra, e não um buraco.
      */
     public static Optional<String> refusal(ServerWorld world, ConstructionProject project) {
         return scan(world, project, new ArrayList<>());
@@ -68,10 +73,13 @@ public final class FoundationPreparation {
         int roadY = project.origin().y() + blueprint.streetLayer();
         int width = blueprint.size().x();
         int depth = blueprint.size().z();
+        Map<Long, ResourceId> planned = streetPieces(blueprint);
         int supported = 0;
         for (int dx = 0; dx < width; dx++) for (int dz = 0; dz < depth; dz++) {
             BlockPos base = new BlockPos(project.origin().x() + dx, roadY, project.origin().z() + dz);
-            if (!world.getBlockState(base).getCollisionShape(world, base).isEmpty()) {
+            BlockState here = world.getBlockState(base);
+            if (!here.getCollisionShape(world, base).isEmpty()
+                    || MinecraftTypeAdapter.toResourceId(here.getBlock()).equals(planned.get(column(dx, dz)))) {
                 supported++;
                 continue;
             }
@@ -87,6 +95,21 @@ public final class FoundationPreparation {
                     + width * depth + " columns, under " + MIN_SUPPORTED_PERCENT + "%");
         }
         return Optional.empty();
+    }
+
+    /** A peça que a planta põe em cada coluna da camada da rua. */
+    private static Map<Long, ResourceId> streetPieces(Blueprint blueprint) {
+        Map<Long, ResourceId> pieces = new HashMap<>();
+        for (BlueprintBlock block : blueprint.blocks()) {
+            if (block.offset().y() == blueprint.streetLayer()) {
+                pieces.put(column(block.offset().x(), block.offset().z()), block.block());
+            }
+        }
+        return pieces;
+    }
+
+    private static long column(int dx, int dz) {
+        return ((long) dx << 32) | (dz & 0xFFFFFFFFL);
     }
 
     static boolean isFillableBaseGap(ServerWorld world, BlockPos base) {

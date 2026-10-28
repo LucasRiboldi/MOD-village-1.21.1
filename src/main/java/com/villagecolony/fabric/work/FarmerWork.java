@@ -70,6 +70,9 @@ public final class FarmerWork {
     /** Alcance de braço. O mesmo do pastor e do lenhador. */
     private static final int REACH = 3;
 
+    /** O alcance do olho, o do jogador (autor, 2026-10-28). */
+    static final double EYE_REACH = 4.5;
+
     /** Até onde ele procura lavoura em volta do centro da vila. */
     private static final int SEARCH_RADIUS = 32;
 
@@ -307,7 +310,7 @@ public final class FarmerWork {
             return;
         }
 
-        if (!isWithinReach(villager, job.target)) {
+        if (!isWithinReach(world, villager, job.target)) {
             // Ao lugar de pé ao alcance da planta (FarmerStand); de longe, por etapas (MineApproachPath).
             BlockPos stand = FarmerStand.of(world, workerId, job.target, villager.getBlockPos());
             // Chegada exata: o lugar de pé já está ao alcance, e um de folga o deixava fora dele.
@@ -354,8 +357,29 @@ public final class FarmerWork {
         };
     }
 
-    private static boolean isWithinReach(VillagerEntity villager, BlockPos target) {
-        return reaches(villager.getBlockPos(), target);
+    /** Ao alcance do braço, ou a até {@link #EYE_REACH} do olho com a linha livre até a planta. */
+    static boolean isWithinReach(ServerWorld world, VillagerEntity villager, BlockPos target) {
+        return reaches(villager.getBlockPos(), target) || seesWithinEyeReach(world, villager, target);
+    }
+
+    /**
+     * O alcance do jogador — escolha do autor, 2026-10-28 (jogo da 0.3.99: roça dois blocos acima, a três de
+     * distância, e o fazendeiro desistia 9 vezes): a até 4,5 blocos do olho até o meio da planta, sem bloco
+     * sólido no caminho.
+     */
+    static boolean seesWithinEyeReach(ServerWorld world, VillagerEntity villager, BlockPos target) {
+        net.minecraft.util.math.Vec3d eye = villager.getEyePos();
+        net.minecraft.util.math.Vec3d center = net.minecraft.util.math.Vec3d.ofCenter(target);
+
+        if (eye.squaredDistanceTo(center) > EYE_REACH * EYE_REACH) {
+            return false;
+        }
+
+        net.minecraft.util.hit.BlockHitResult hit = world.raycast(new net.minecraft.world.RaycastContext(eye, center,
+                net.minecraft.world.RaycastContext.ShapeType.COLLIDER, net.minecraft.world.RaycastContext.FluidHandling.NONE,
+                villager));
+
+        return hit.getType() == net.minecraft.util.hit.HitResult.Type.MISS || hit.getBlockPos().equals(target);
     }
 
     /**

@@ -161,4 +161,24 @@ public class VillageGroveGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /** Uma em cada dez mudas do bosque é de outra espécie, e nunca a do bioma (autor, 2026-10-27). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_grove", tickLimit = 20)
+    public void oneSaplingInTenIsOfAnotherSpecies(TestContext context) {
+        UUID colonyId = UUID.randomUUID();
+        int others = 0;
+
+        for (int i = 1; i <= 3 * VillageGrove.OTHER_SPECIES_EVERY; i++) {
+            net.minecraft.block.Block chosen = VillageGrove.speciesFor(context.getWorld(), colonyId, Blocks.ACACIA_SAPLING);
+
+            if (chosen != Blocks.ACACIA_SAPLING) {
+                others++;
+                context.assertTrue(i % VillageGrove.OTHER_SPECIES_EVERY == 0, "outra espécie fora da vez, na muda " + i);
+                context.assertTrue(VillageGrove.OTHER_SPECIES.contains(chosen), "espécie fora da lista: " + chosen);
+            }
+        }
+
+        context.assertTrue(others == 3, "em 30 mudas deviam vir 3 de outra espécie, vieram " + others);
+        context.complete();
+    }
 }

@@ -1,13 +1,20 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "G G",
+    "GDG",
     " S ",
     "G G"
   ],
   "key": {
-    "G": { "item": "minecraft:gold_ingot" },
-    "S": { "item": "minecraft:stonecutter" }
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "S": {
+      "item": "minecraft:stonecutter"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    }
   },
   "result": {
     "id": "villagecolony:miner_bench",

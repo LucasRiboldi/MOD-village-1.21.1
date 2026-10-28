@@ -4644,20 +4644,12 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
-     * A galeria ganha luz onde já foi cavada — 2026-08-28.
-     *
-     * <p><b>Só a boca tinha lanterna, e nem sempre.</b> Vinte blocos
-     * abaixo do chão, com luz zero, é criatura nascendo <b>dentro</b> da
-     * mina, ao lado de um aldeão desarmado — e a sessão de 08-26 nem a
-     * lanterna da boca conseguiu pôr: {@code lantern at nowhere it fits}.
-     *
-     * <p>A tocha vai no <b>chão</b> da passagem, e não na posição da
-     * ordem: a ordem abre a coluna inteira, e só a de baixo tem rocha
-     * embaixo para apoiar a tocha.
+     * A escada não leva tocha: a luz da mina é de chão, nos salões ({@code MineShaft.lightSpots}). A tocha
+     * de parede caía quando o mineiro cavava a parede depois (playtest 0.3.97).
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_light",
             tickLimit = 20)
-    public void theGalleryIsLitWhereItWasAlreadyDug(TestContext context) {
+    public void theStairsGetNoWallTorch(TestContext context) {
         solidRock(context);
 
         Colony colony = openedMine(context, 18);
@@ -4665,25 +4657,43 @@ public class MinerGameTest implements FabricGameTest {
         try {
             targetFor(context, colony);
 
-            // <b>Procurada, e não escrita à mão.</b> As coordenadas
-            // estavam fixas — (3,6,3) e (3,4,3) —, e a forma da mina
-            // mudou em 2026-09-05: a escada ganhou uma segunda pista e o
-            // túnel um bloco de altura, então todo índice andou de
-            // lugar. Um teste que grava a coordenada mede a forma de
-            // ontem; o que ele quer afirmar é que <b>a galeria acendeu</b>.
             Optional<BlockPos> lit = wallTorchIn(context);
 
-            context.assertTrue(
-                    lit.isPresent(),
-                    "a galeria continuou escura: nenhuma tocha de parede na mina");
-
-            // E o chão da coluna da tocha continua sendo degrau — a
-            // tocha no piso foi o primeiro defeito desta feature.
-            context.assertTrue(
-                    !context.getWorld().getBlockState(lit.get().down()).isOf(Blocks.WALL_TORCH),
-                    "a tocha comeu o degrau em " + lit.get().toShortString());
+            context.assertTrue(lit.isEmpty(), "a escada ganhou tocha de parede em "
+                    + lit.map(BlockPos::toShortString).orElse(""));
         } finally {
             MineClaims.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /** O salão aberto ganha tocha de chão no lugar da grade, apoiada no piso que nunca é cavado. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_light",
+            tickLimit = 20)
+    public void theOpenHallGetsAFloorTorch(TestContext context) {
+        BlockPos entry = context.getAbsolutePos(BlockPos.ORIGIN).add(4_200_000, 40, 4_200_000);
+        MineShaft shaft = MineShaft.from(MinecraftTypeAdapter.toColonyPos(entry), Side.EAST);
+        BlockPos spot = MinecraftTypeAdapter.toBlockPos(shaft.lightSpots().getFirst());
+        ServerWorld world = context.getWorld();
+
+        try {
+            world.getChunk(spot);
+            world.setBlockState(spot.down(), Blocks.STONE.getDefaultState());
+            world.setBlockState(spot, Blocks.AIR.getDefaultState());
+            world.setBlockState(spot.up(), Blocks.AIR.getDefaultState());
+
+            Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(entry));
+            Mine mine = Mine.restore(colony.id(), shaft, 0);
+
+            Optional<BlockPos> lit = com.villagecolony.fabric.integration.MineLighting.light(world, mine, mine.arms().getFirst());
+
+            context.assertTrue(lit.isPresent() && lit.get().equals(spot), "o salão aberto ficou sem tocha: " + lit);
+            context.assertTrue(world.getBlockState(spot).isOf(Blocks.TORCH), "a tocha devia ser de chão");
+        } finally {
+            for (BlockPos at : List.of(spot.down(), spot, spot.up())) {
+                world.setBlockState(at, Blocks.AIR.getDefaultState());
+            }
         }
 
         context.complete();

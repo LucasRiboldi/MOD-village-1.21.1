@@ -190,17 +190,7 @@ public final class SmelterWork {
             return false;
         }
 
-        // Quem sabe o que entra na fornalha é o livro de receitas do jogo
-        // — 2026-08-22, ADR-009. Havia aqui uma tabela de duas linhas
-        // escritas à mão, e o arenito liso seria a terceira. A regra de
-        // ouro da ADR diz que material novo não pode custar mais um nome
-        // no código.
-        //
-        // <b>E o item exato, e não o grupo dele.</b> A busca antiga tirava
-        // do baú qualquer coisa do grupo do cru — e grupo deixou de
-        // significar equivalência na mesma ADR. Com STONE contendo
-        // pedregulho e arenito, isso poria o fundidor a queimar
-        // pedregulho achando que faz arenito liso.
+        // O cru vem do livro de receitas do jogo, pelo item exato e não pelo grupo (ADR-009).
         List<Item> raws = CraftingLookup.smeltingInputsFor(world, made.get());
 
         if (raws.isEmpty()) {
@@ -209,14 +199,7 @@ public final class SmelterWork {
             return false;
         }
 
-        // <b>Pelo ColonyChests, e não pelo registro de trabalhadores</b> —
-        // P0.3, 2026-09-11. Percorrer os trabalhadores deixava o baú
-        // histórico da boca da mina de fora: o fundidor dizia "nothing in
-        // the colony chests to smelt" ao lado de minério deixado ali antes
-        // da regra de depósito direto no baú profissional.
-        //
-        // Do baú do próprio fundidor para fora, que é a Regra 10: a
-        // fornalha fica onde ele está, e andar menos com o cru é o certo.
+        // Todos os baús da colônia, do baú do próprio fundidor para fora (Regra 10).
         Optional<ColonyPos> from = VillageColonyMod.STORAGES.of(workerId)
                 .map(WorkerStorage::chestPosition)
                 .or(() -> VillageColonyMod.COLONIES.find(job.task.colonyId())
@@ -249,10 +232,25 @@ public final class SmelterWork {
             return pending.get();
         }
 
-        // <b>Duas faltas pelo mesmo pedido, e ele trabalha para a obra</b>
-        // — F2 e pedido do autor, 2026-09-30. Uma peça de outro item que as
-        // obras vão usar, e o passo seguinte tenta o pedido de novo: a tarefa
-        // continua com ele. Ver SmelterFallback.
+        // O cru que também sai da fornalha vem antes: a pedra lisa espera pedra, e a pedra sai do
+        // pedregulho do baú (playtest 0.3.97: 806 paradas com 626 pedregulhos guardados).
+        for (Item raw : raws) {
+            List<Item> rawOfRaw = CraftingLookup.smeltingInputsFor(world, raw);
+
+            if (rawOfRaw.isEmpty()) {
+                continue;
+            }
+
+            Optional<Boolean> step = smeltFrom(world, searched, rawOfRaw, raw, output.get(), job, workerId);
+
+            if (step.isPresent()) {
+                SmelterFallback.found(job.task.id());
+
+                return step.get();
+            }
+        }
+
+        // Duas faltas pelo mesmo pedido: uma peça de outro item das obras, e o pedido volta depois (SmelterFallback).
         int misses = SmelterFallback.missed(job.task.id());
 
         if (SmelterFallback.isDue(world, job.task)) {

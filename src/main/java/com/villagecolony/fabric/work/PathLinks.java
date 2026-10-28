@@ -48,8 +48,11 @@ public final class PathLinks {
     /** De quanto em quanto tempo a colônia procura a próxima construção sem ligação. */
     static final long PLAN_EVERY = 600;
 
-    /** Construção sem ligação possível: quanto tempo fica de lado. */
-    static final long RETRY_AFTER = 12_000;
+    /**
+     * Construção sem ligação possível: quanto tempo fica de lado — uma hora de jogo (autor, 2026-10-28:
+     * sem volta, a porta fica sem ligação e é tentada depois).
+     */
+    static final long RETRY_AFTER = 72_000;
 
     /** A porta mais perto que isto de um caminho já está ligada. */
     static final int LINKED = 1;
@@ -77,6 +80,7 @@ public final class PathLinks {
     private static final Map<UUID, Plan> PLANS = new HashMap<>();
     private static final Map<UUID, Long> PLANNED_AT = new HashMap<>();
     private static final Map<UUID, Long> SET_ASIDE = new HashMap<>();
+    private static final Map<UUID, String> SUMMARY = new HashMap<>();
 
     private PathLinks() {
     }
@@ -105,6 +109,9 @@ public final class PathLinks {
         Set<Long> roads = roadsOf(colony.id());
         BlockPos hub = MinecraftTypeAdapter.toBlockPos(colony.center());
 
+        int noDoor = 0;
+        int linked = 0;
+
         for (Building building : VillageColonyMod.BUILDINGS.ofColony(colony.id())) {
             if (!building.finished() || SET_ASIDE.containsKey(building.id())) {
                 continue;
@@ -112,10 +119,19 @@ public final class PathLinks {
 
             Optional<Entrance> entrance = entranceOf(world, building);
 
-            if (entrance.isEmpty() || linked(roads, entrance.get().front())) {
+            if (entrance.isEmpty()) {
+                noDoor++;
                 continue;
             }
 
+            if (linked(roads, entrance.get().front())) {
+                linked++;
+                continue;
+            }
+
+            // Um traçado por passagem, dê certo ou não: nove portas sem saída no mesmo tique pararam o
+            // servidor 12 s no jogo da 0.3.98.
+            long began = System.nanoTime();
             Optional<List<PathStep>> steps = trace(world, colony.id(), entrance.get(), roads, hub, false);
 
             // Atalho ao chafariz quando a rede dá volta demais — decisão D5 (2×).
@@ -134,20 +150,30 @@ public final class PathLinks {
                 }
             }
 
+            long millis = (System.nanoTime() - began) / 1_000_000;
+
             if (steps.isEmpty() || steps.get().isEmpty()) {
                 SET_ASIDE.put(building.id(), now);
-                VillageColonyMod.LOGGER.info("Colony {} — no path from the door of {} at {} to the network yet",
+                VillageColonyMod.LOGGER.info("Colony {} — no path from the door of {} at {} to the network yet"
+                                + " ({} ms); it is tried again in an hour",
                         colony.id().toString().substring(0, 8), building.blueprint().path(),
-                        entrance.get().front().toShortString());
-                continue;
+                        entrance.get().front().toShortString(), millis);
+                return;
             }
 
             PLANS.put(colony.id(), new Plan(building.id(), steps.get()));
-            VillageColonyMod.LOGGER.info("Colony {} traced a path of {} steps from the door of {} at {} (Regra 123)",
-                    colony.id().toString().substring(0, 8), steps.get().size(), building.blueprint().path(),
-                    entrance.get().front().toShortString());
+            VillageColonyMod.LOGGER.info("Colony {} traced a path of {} steps from the door of {} at {} in {} ms"
+                            + " (Regra 123)", colony.id().toString().substring(0, 8), steps.get().size(),
+                    building.blueprint().path(), entrance.get().front().toShortString(), millis);
 
             return;
+        }
+
+        // Nada a traçar: diz por quê, uma vez por mudança (a rede ficou muda o playtest 0.3.97 inteiro).
+        String summary = linked + " doors on the network, " + noDoor + " buildings without a readable door, "
+                + SET_ASIDE.size() + " set aside";
+        if (!summary.equals(SUMMARY.put(colony.id(), summary))) {
+            VillageColonyMod.LOGGER.info("Colony {} path network — {}", colony.id().toString().substring(0, 8), summary);
         }
     }
 
@@ -219,10 +245,7 @@ public final class PathLinks {
         BlockPos max = MinecraftTypeAdapter.toBlockPos(building.max());
 
         for (BlockPos at : BlockPos.iterate(min, new BlockPos(max.getX(), Math.min(max.getY(), min.getY() + 3), max.getZ()))) {
-            boolean edge = at.getX() == min.getX() || at.getX() == max.getX()
-                    || at.getZ() == min.getZ() || at.getZ() == max.getZ();
-
-            if (!edge || !world.isChunkLoaded(at)) {
+            if (!world.isChunkLoaded(at)) {
                 continue;
             }
 
@@ -232,13 +255,32 @@ public final class PathLinks {
                 continue;
             }
 
-            for (Direction out : Direction.Type.HORIZONTAL) {
-                BlockPos front = at.offset(out);
+            // A porta pode ficar recuada (a varanda das casas Vanilla): sai pelo lado da porta que chega
+            // à borda com menos obstáculo, e a frente é o primeiro chão fora da caixa.
+            Direction facing = state.get(DoorBlock.FACING);
+            Optional<Entrance> best = Optional.empty();
+            int fewest = Integer.MAX_VALUE;
 
-                if (front.getX() < min.getX() || front.getX() > max.getX()
-                        || front.getZ() < min.getZ() || front.getZ() > max.getZ()) {
-                    return Optional.of(new Entrance(front.toImmutable(), sideOf(out)));
+            for (Direction out : List.of(facing, facing.getOpposite())) {
+                int blocked = 0;
+                BlockPos step = at.toImmutable();
+
+                do {
+                    step = step.offset(out);
+                    if (!world.getBlockState(step).getCollisionShape(world, step).isEmpty()) {
+                        blocked++;
+                    }
+                } while (step.getX() >= min.getX() && step.getX() <= max.getX()
+                        && step.getZ() >= min.getZ() && step.getZ() <= max.getZ());
+
+                if (blocked < fewest) {
+                    fewest = blocked;
+                    best = Optional.of(new Entrance(step, sideOf(out)));
                 }
+            }
+
+            if (best.isPresent()) {
+                return best;
             }
         }
 
@@ -258,5 +300,6 @@ public final class PathLinks {
         PLANS.clear();
         PLANNED_AT.clear();
         SET_ASIDE.clear();
+        SUMMARY.clear();
     }
 }

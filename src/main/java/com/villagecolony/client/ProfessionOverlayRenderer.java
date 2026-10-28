@@ -48,9 +48,23 @@ public final class ProfessionOverlayRenderer {
             OverlayDrawing.label(context.camera(), buffers, above,
                     OverlayDrawing.id(OverlaySprites.profession(profession)),
                     new Text[] {Text.translatable("overlay.profession." + profession.toLowerCase(Locale.ROOT))},
-                    new int[] {0xFFFFFFFF});
+                    new int[] {colorOf(ClientOverlayState.badgeOf(villager.getUuid()))});
         }
 
         buffers.draw();
+    }
+
+    /**
+     * A cor do nome pelo estado (autor, 2026-10-27): laranja no ofício, azul na ajuda, vermelho travado,
+     * branco à toa no expediente, cinza fora dele.
+     */
+    static int colorOf(String badge) {
+        return switch (badge) {
+            case "DUTY" -> 0xFFFFA020;
+            case "HELP" -> 0xFF55AAFF;
+            case "STUCK" -> 0xFFFF4040;
+            case "OFF" -> 0xFFA0A0A0;
+            default -> 0xFFFFFFFF;
+        };
     }
 }

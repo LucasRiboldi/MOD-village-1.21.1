@@ -282,6 +282,9 @@ final class SiteOpening {
 
         SitePreparation.clear(world, project);
 
+        // E o chão em volta, na altura da rua: anel de 2 e rampa de 3 (Regra 131).
+        com.villagecolony.fabric.integration.SiteSurroundings.level(world, project);
+
         project.moveTo(ConstructionState.BUILDING);
 
         ConstructionPlanner.ensureTask(colony, project);

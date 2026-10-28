@@ -8,13 +8,17 @@ import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.core.construction.model.VillagePathPlanner;
+import com.villagecolony.fabric.content.ModContent;
 import com.villagecolony.fabric.integration.BlockProtection;
+import com.villagecolony.fabric.integration.LotGround;
 import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
@@ -31,10 +35,11 @@ import java.util.UUID;
  * carpinteiro e o fundidor, quando estão sem tarefa do ofício, <b>um por vez</b> por colônia, revezando
  * a cada {@link #STEPS_PER_TURN} passos.
  *
- * <p>Cada passo é uma seção de três colunas ({@link #layStep}): o buraco é aterrado com o chão do bioma
- * até o piso (decisão D2), o morro em cima do piso é tirado, o piso vira caminho de terra (decisão D4) e
- * ficam dois blocos livres em cima. Nada que não seja chão natural é tocado (Regra 3): se o mundo mudou e
- * a seção não serve mais, o traçado sai e é refeito no ciclo seguinte.
+ * <p>Cada passo é uma seção de até três colunas ({@link #layStep}), <b>rente ao chão</b> (autor,
+ * 2026-10-28): o bloco de cima vira caminho; o buraco de um bloco ganha o caminho por cima; o corte é de
+ * um bloco no máximo; por cima só sai planta, nunca terreno. Nunca nasce bloco acima do chão natural —
+ * na 0.3.98 o aterro de até 4 por coluna levantou paredes de terra. Nada que não seja chão natural é
+ * tocado (Regra 3): se o mundo mudou e o eixo não serve mais, o traçado sai e é refeito.
  */
 public final class PathPaving {
 
@@ -174,58 +179,69 @@ public final class PathPaving {
     }
 
     /**
-     * Assenta a seção de três colunas deste passo.
+     * Assenta a seção deste passo: o eixo, e cada coluna de lado que couber no próprio chão.
      *
-     * @return se a seção coube; falso quando o mundo mudou e alguma coluna não é mais chão natural
+     * @return se o eixo coube; falso quando o mundo mudou e ele não é mais chão a no máximo um bloco do piso
      */
     static boolean layStep(ServerWorld world, UUID colonyId, PathStep step) {
         WorldPathTerrain terrain = new WorldPathTerrain(world, colonyId);
+        OptionalInt axis = terrain.groundY(step.x(), step.z(), step.floorY());
 
-        for (int offset = -1; offset <= 1; offset++) {
-            int x = step.sideX(offset);
-            int z = step.sideZ(offset);
-            OptionalInt ground = terrain.groundY(x, z, step.floorY());
-
-            if (ground.isEmpty() || terrain.blocked(x, z)
-                    || step.floorY() - ground.getAsInt() > com.villagecolony.core.construction.model.VillagePathPlanner.MAX_FILL
-                    || ground.getAsInt() - step.floorY() > com.villagecolony.core.construction.model.VillagePathPlanner.MAX_CUT) {
-                return false;
-            }
+        if (axis.isEmpty() || terrain.blocked(step.x(), step.z())
+                || step.floorY() - axis.getAsInt() > VillagePathPlanner.MAX_FILL
+                || axis.getAsInt() - step.floorY() > VillagePathPlanner.MAX_CUT) {
+            return false;
         }
 
-        for (int offset = -1; offset <= 1; offset++) {
+        pave(world, colonyId, step.x(), step.z(), axis.getAsInt(), step.floorY());
+
+        for (int offset : new int[] {-1, 1}) {
             int x = step.sideX(offset);
             int z = step.sideZ(offset);
-            int ground = terrain.groundY(x, z, step.floorY()).orElseThrow();
-            BlockState fill = fillFor(world.getBlockState(new BlockPos(x, ground, z)));
 
-            for (int y = ground + 1; y < step.floorY(); y++) {
-                world.setBlockState(new BlockPos(x, y, z), fill);
+            if (VillagePathPlanner.laneFits(terrain, x, z, step.floorY())) {
+                int ground = terrain.groundY(x, z, step.floorY()).orElseThrow();
+                pave(world, colonyId, x, z, ground, ground);
             }
-
-            for (int y = step.floorY() + 1; y <= step.floorY() + CLEAR; y++) {
-                BlockPos above = new BlockPos(x, y, z);
-                BlockState state = world.getBlockState(above);
-
-                if (!state.isAir() && BlockProtection.mayDigOut(world, above, state)) {
-                    world.breakBlock(above, false);
-                }
-            }
-
-            BlockPos floor = new BlockPos(x, step.floorY(), z);
-            world.setBlockState(floor, Blocks.DIRT_PATH.getDefaultState());
-            RoadIndex.remember(colonyId, floor);
         }
 
         return true;
     }
 
-    /** O aterro: o chão do bioma da coluna, e terra quando ele não é solo. */
-    private static BlockState fillFor(BlockState ground) {
-        return ground.isOf(Blocks.SAND) || ground.isOf(Blocks.RED_SAND) || ground.isOf(Blocks.SANDSTONE)
-                || ground.isOf(Blocks.DIRT) || ground.isOf(Blocks.COARSE_DIRT)
-                ? ground.getBlock().getDefaultState()
-                : Blocks.DIRT.getDefaultState();
+    /**
+     * Uma coluna de caminho com o piso em {@code floorY} sobre o chão em {@code ground}: no chão, o bloco de
+     * cima vira caminho; um abaixo, o bloco de cima sai (o corte); um acima, o caminho vai por cima do
+     * buraco. Por cima do piso só sai planta.
+     */
+    static void pave(ServerWorld world, UUID colonyId, int x, int z, int ground, int floorY) {
+        BlockPos top = new BlockPos(x, ground, z);
+        BlockState surface = world.getBlockState(top);
+        BlockPos floor = new BlockPos(x, floorY, z);
+
+        if (floorY < ground) {
+            if (!BlockProtection.mayDigOut(world, top, surface)) {
+                return;
+            }
+
+            world.breakBlock(top, false);
+        }
+
+        if (floorY > ground && !LotGround.isNothing(world.getBlockState(floor))) {
+            return;
+        }
+
+        for (int y = floorY + 1; y <= floorY + CLEAR; y++) {
+            BlockPos above = new BlockPos(x, y, z);
+            BlockState state = world.getBlockState(above);
+
+            if (!state.isAir() && LotGround.isNothing(state) && state.getFluidState().isEmpty()) {
+                world.breakBlock(above, false);
+            }
+        }
+
+        world.setBlockState(floor, surface.isIn(BlockTags.SAND)
+                ? ModContent.SAND_PATH.getDefaultState() : Blocks.DIRT_PATH.getDefaultState());
+        RoadIndex.remember(colonyId, floor);
     }
 
     /** O próximo do rodízio que está livre; sem ele, o primeiro livre de qualquer um dos três. */

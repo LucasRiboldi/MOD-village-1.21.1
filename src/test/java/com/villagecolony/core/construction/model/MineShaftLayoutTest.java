@@ -92,6 +92,35 @@ class MineShaftLayoutTest {
         }
     }
 
+    /**
+     * A tocha de chão fica num salão (célula aberta) e o chão dela nunca é cavado depois — nem pelos
+     * ramais deste nível, nem pelo nível seguinte: a tocha da parede caía quando o mineiro cavava a
+     * parede (playtest 0.3.97).
+     */
+    @Test
+    void theFloorUnderEveryTorchIsNeverDug() {
+        for (Side descent : Side.values()) {
+            MineShaft level = MineShaft.from(new ColonyPos(0, 60, 0), descent);
+            Set<ColonyPos> dug = new HashSet<>();
+
+            for (MineShaft arm : armsOf(level)) {
+                dug.addAll(arm.plannedCells());
+            }
+            for (MineShaft arm : armsOf(level.deepened())) {
+                dug.addAll(arm.plannedCells());
+            }
+
+            for (MineShaft arm : armsOf(level)) {
+                assertEquals(8, arm.lightSpots().size(), descent + ": quatro tochas por salão");
+                for (ColonyPos spot : arm.lightSpots()) {
+                    assertTrue(arm.plannedCells().contains(spot), descent + ": tocha fora do salão em " + spot);
+                    ColonyPos floor = new ColonyPos(spot.x(), spot.y() - 1, spot.z());
+                    assertFalse(dug.contains(floor), descent + ": o chão da tocha em " + spot + " é cavado depois");
+                }
+            }
+        }
+    }
+
     @Test
     void theFourArmsAreFourCornersAndFourHalls() {
         List<MineShaft> arms = armsOf(MineShaft.from(new ColonyPos(0, 60, 0), Side.SOUTH));

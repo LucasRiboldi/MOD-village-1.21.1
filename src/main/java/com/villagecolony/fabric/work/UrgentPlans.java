@@ -28,6 +28,7 @@ final class UrgentPlans {
             }
         }
 
-        return bedsForAll ? PenPlans.forColony(world, colony, buildings) : List.of();
+        // O poste com 5 animais fura até a fila das camas: o curral entra como prioridade (Regra 130).
+        return bedsForAll || PenPlans.crowdedPost(world, colony) ? PenPlans.forColony(world, colony, buildings) : List.of();
     }
 }

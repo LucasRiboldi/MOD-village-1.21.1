@@ -31,7 +31,8 @@ public final class OverlaySync {
         OverlaySnapshotPayload snapshot = new OverlaySnapshotPayload(VillageColonyMod.WORKERS.all().stream()
                 .flatMap(worker -> worker.profession().stream()
                         .map(profession -> new OverlaySnapshotPayload.WorkerEntry(
-                                worker.villagerId(), profession.name())))
+                                worker.villagerId(), profession.name(),
+                                com.villagecolony.fabric.work.WorkTime.badgeOf(worker.villagerId()).name())))
                 .toList(), VillageColonyMod.CONSTRUCTIONS.all().stream()
                 .filter(project -> project.state().isOpen())
                 .map(OverlaySync::constructionEntry)

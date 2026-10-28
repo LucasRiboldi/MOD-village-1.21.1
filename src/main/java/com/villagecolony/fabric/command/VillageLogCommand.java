@@ -92,6 +92,14 @@ public final class VillageLogCommand {
                     happiness.mood() == com.villagecolony.core.colony.model.VillageHappiness.Mood.UNHAPPY
                             ? Formatting.RED : Formatting.GREEN), false);
         });
+        // O retrato da vila agora: quem está no ofício, ajudando ou travado, estoque, obra, tarefas, mina
+        // (VC_STATE, pedido do autor de 2026-10-28).
+        source.sendFeedback(() -> Text.literal("Estado agora:").formatted(Formatting.WHITE), false);
+        for (String line : StateLines.of(com.villagecolony.fabric.work.ColonyState.of(source.getWorld(), nearby))) {
+            source.sendFeedback(() -> Text.literal(line).formatted(
+                    line.contains("travados:") ? Formatting.RED : Formatting.GRAY), false);
+        }
+
         source.sendFeedback(
                 () -> Text.literal("Atividades mais recentes:").formatted(Formatting.WHITE),
                 false);

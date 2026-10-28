@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** O traçado do caminho — Regra 123: degrau de um bloco, seção de três, aterro, corte curto, rede. */
+/** O traçado do caminho — Regra 123, rente ao chão: degrau de um, aterro só de buraco de um, corte de um, rede. */
 class VillagePathPlannerTest {
 
     /** Terreno de mentira: altura por coluna, colunas proibidas e água; tudo fora de |x|,|z| ≤ 40 é proibido. */
@@ -79,16 +79,53 @@ class VillagePathPlannerTest {
         assertTrue(path.stream().allMatch(step -> step.z() == 0 && step.floorY() == 0 && step.heading() == Side.EAST));
     }
 
+    /**
+     * O buraco fundo de ponta a ponta não é aterrado: sem volta, a ligação não sai (autor, 28-10). A vala
+     * de 3 ainda passa — corta um em cada margem e cobre um no fundo, tudo abaixo do chão em volta —, a de
+     * 5 não.
+     */
     @Test
-    void aDitchAcrossTheWayIsFilled() {
-        Ground ground = new Ground((x, z) -> x == 5 ? -3 : 0);
+    void aDeepDitchAcrossTheWholeWayIsNoWay() {
+        Ground shallow = new Ground((x, z) -> x == 5 ? -3 : 0);
+        List<PathStep> across = VillagePathPlanner.plan(shallow, 0, 0, 0, Side.EAST, to(10, 0)).orElseThrow();
+
+        assertSafe(shallow, across, 0);
+        assertTrue(across.stream().allMatch(step -> step.floorY() <= 0), "o caminho subiu acima do chão: " + across);
+
+        assertTrue(VillagePathPlanner.plan(new Ground((x, z) -> x == 5 ? -5 : 0), 0, 0, 0, Side.EAST, to(10, 0))
+                .isEmpty(), "o caminho atravessou uma vala de 5 — teria de levantar terra");
+    }
+
+    /** O buraco de um bloco é coberto rente ao chão em volta, e nunca nasce trecho elevado. */
+    @Test
+    void aOneBlockHoleIsCoveredLevelWithTheGroundAround() {
+        Ground ground = new Ground((x, z) -> x == 5 ? -1 : 0);
 
         List<PathStep> path = VillagePathPlanner.plan(ground, 0, 0, 0, Side.EAST, to(10, 0)).orElseThrow();
-        PathStep overTheDitch = path.stream().filter(step -> step.x() == 5).findFirst().orElseThrow();
 
-        assertEquals(0, overTheDitch.floorY());
-        assertEquals(3, overTheDitch.fill(), "o buraco devia ser aterrado até o piso");
         assertSafe(ground, path, 0);
+        assertTrue(path.stream().allMatch(step -> step.fill() <= 1));
+    }
+
+    /** No chão plano nada fica acima do terreno: o piso é sempre o próprio chão. */
+    @Test
+    void onFlatGroundNothingRisesAboveIt() {
+        List<PathStep> path = VillagePathPlanner.plan(new Ground((x, z) -> 0), 0, 0, 0, Side.EAST, to(10, 6))
+                .orElseThrow();
+
+        assertTrue(path.stream().allMatch(step -> step.fill() == 0 && step.cut() == 0 && step.floorY() == 0),
+                "caminho fora do chão em terreno plano: " + path);
+    }
+
+    /** O passo aterrado só existe entre vizinhos no mesmo nível ou acima — nunca um trecho elevado. */
+    @Test
+    void theHoleRuleRefusesARaisedRun() {
+        assertTrue(VillagePathPlanner.fitsTheHoleRule(false, 0, 1), "buraco entre iguais");
+        assertTrue(VillagePathPlanner.fitsTheHoleRule(false, -1, 1), "buraco depois de descer");
+        assertFalse(VillagePathPlanner.fitsTheHoleRule(false, 1, 1), "subir para um aterro é trecho elevado");
+        assertFalse(VillagePathPlanner.fitsTheHoleRule(true, 0, 1), "dois aterros seguidos");
+        assertFalse(VillagePathPlanner.fitsTheHoleRule(true, -1, 0), "descer depois do aterro: não era buraco");
+        assertTrue(VillagePathPlanner.fitsTheHoleRule(true, 0, 0), "sair do buraco no mesmo nível");
     }
 
     @Test
@@ -104,7 +141,7 @@ class VillagePathPlannerTest {
     }
 
     @Test
-    void aSteepBumpIsCutAtMostTwoBlocks() {
+    void aSteepBumpIsCutAtMostOneBlock() {
         Ground ground = new Ground((x, z) -> x == 5 || x == 6 ? 2 : 0);
 
         List<PathStep> path = VillagePathPlanner.plan(ground, 0, 0, 0, Side.EAST, to(10, 0)).orElseThrow();
@@ -113,8 +150,9 @@ class VillagePathPlannerTest {
         assertTrue(path.stream().allMatch(step -> step.cut() <= VillagePathPlanner.MAX_CUT));
     }
 
+    /** No vão estreito o caminho estreita ali, sem tocar a construção dos lados (autor, 28-10). */
     @Test
-    void aGapNarrowerThanThreeIsNoWay() {
+    void aNarrowGapNarrowsThePath() {
         Ground ground = new Ground((x, z) -> 0);
 
         for (int z = -40; z <= 40; z++) {
@@ -123,19 +161,12 @@ class VillagePathPlannerTest {
             }
         }
 
-        assertTrue(VillagePathPlanner.plan(ground, 0, 0, 0, Side.EAST, to(10, 0)).isEmpty(),
-                "um vão de um bloco não passa um caminho de três");
+        List<PathStep> path = VillagePathPlanner.plan(ground, 0, 0, 0, Side.EAST, to(10, 0)).orElseThrow();
+        PathStep inTheGap = path.stream().filter(step -> step.x() == 5).findFirst().orElseThrow();
 
-        ground = new Ground((x, z) -> 0);
-
-        for (int z = -40; z <= 40; z++) {
-            if (Math.abs(z) > 1) {
-                ground.block(5, z);
-            }
-        }
-
-        assertTrue(VillagePathPlanner.plan(ground, 0, 0, 0, Side.EAST, to(10, 0)).isPresent(),
-                "um vão de três devia passar");
+        assertEquals(0, inTheGap.z(), "o eixo devia passar no vão");
+        assertFalse(VillagePathPlanner.laneFits(ground, inTheGap.sideX(-1), inTheGap.sideZ(-1), 0),
+                "a coluna de lado no vão é construção e fica de fora");
     }
 
     @Test
@@ -150,7 +181,7 @@ class VillagePathPlannerTest {
 
         List<PathStep> path = VillagePathPlanner.plan(ground, 0, 0, 0, Side.EAST, to(10, 0)).orElseThrow();
 
-        assertTrue(path.stream().filter(step -> step.x() == 5).allMatch(step -> step.z() >= 16 && step.z() <= 18),
+        assertTrue(path.stream().filter(step -> step.x() == 5).allMatch(step -> step.z() >= 15 && step.z() <= 19),
                 "o caminho atravessou a água: " + path);
     }
 
@@ -259,14 +290,19 @@ class VillagePathPlannerTest {
                 assertEquals(1, Math.abs(step.x() - last.x()) + Math.abs(step.z() - last.z()), "passo que pula coluna");
             }
 
-            for (int offset = -1; offset <= 1; offset++) {
-                int cx = step.sideX(offset);
-                int cz = step.sideZ(offset);
-                int ground = terrain.groundY(cx, cz, step.floorY()).orElseThrow();
+            int ground = terrain.groundY(step.x(), step.z(), step.floorY()).orElseThrow();
 
-                assertFalse(terrain.blocked(cx, cz), "seção em coluna proibida em " + step);
-                assertTrue(step.floorY() - ground <= VillagePathPlanner.MAX_FILL, "aterro fundo demais em " + step);
-                assertTrue(ground - step.floorY() <= VillagePathPlanner.MAX_CUT, "corte fundo demais em " + step);
+            assertFalse(terrain.blocked(step.x(), step.z()), "eixo em coluna proibida em " + step);
+            assertTrue(step.floorY() - ground <= VillagePathPlanner.MAX_FILL, "aterro fundo demais em " + step);
+            assertTrue(ground - step.floorY() <= VillagePathPlanner.MAX_CUT, "corte fundo demais em " + step);
+
+            if (last != null && last.fill() > 0) {
+                assertTrue(step.floorY() >= last.floorY() && step.fill() == 0,
+                        "trecho elevado depois do buraco em " + step);
+            }
+
+            if (step.fill() > 0) {
+                assertTrue(step.floorY() <= lastY, "subiu para um aterro em " + step);
             }
 
             lastY = step.floorY();

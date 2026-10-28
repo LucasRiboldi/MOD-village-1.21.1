@@ -51,6 +51,44 @@ public class ColonyTorchesGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** A tocha de parede: o mesmo item escolhe a parede pela face clicada, acende o anel e conta no bloqueio. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_torch", tickLimit = 40)
+    public void theWallTorchComesFromTheSameItemAndLightsTheRing(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos torch = context.getAbsolutePos(BlockPos.ORIGIN).add(4_100_000, 20, 4_100_000);
+
+        try {
+            for (int x = -12; x <= 12; x++) {
+                for (int z = -12; z <= 12; z++) {
+                    BlockPos floor = torch.add(x, -1, z);
+                    world.getChunk(floor);
+                    world.setBlockState(floor, Blocks.STONE.getDefaultState());
+                }
+            }
+            world.setBlockState(torch.west(), Blocks.STONE.getDefaultState());
+
+            context.assertTrue(ModContent.COLONY_TORCH.asItem() instanceof net.minecraft.item.VerticallyAttachableBlockItem,
+                    "o item da tocha devia escolher entre chão e parede, como o da tocha comum");
+
+            world.setBlockState(torch, ModContent.COLONY_WALL_TORCH.getDefaultState()
+                    .with(net.minecraft.block.WallTorchBlock.FACING, net.minecraft.util.math.Direction.EAST));
+
+            context.assertTrue(lightsAround(world, torch) == com.villagecolony.fabric.content.ColonyTorchBlock.RING.size(),
+                    "a tocha de parede devia acender o anel, tem " + lightsAround(world, torch));
+            context.assertTrue(ColonyTorches.isNear(world, torch.add(20, 0, 0)), "a tocha de parede devia barrar monstro");
+
+            world.breakBlock(torch, false);
+
+            context.assertTrue(lightsAround(world, torch) == 0, "quebrada a tocha de parede, o anel devia sair");
+        } finally {
+            for (BlockPos at : BlockPos.iterate(torch.add(-12, -1, -12), torch.add(12, 5, 12))) {
+                world.setBlockState(at, Blocks.AIR.getDefaultState());
+            }
+        }
+
+        context.complete();
+    }
+
     private static int lightsAround(ServerWorld world, BlockPos torch) {
         int lights = 0;
 
