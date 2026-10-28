@@ -39,21 +39,35 @@ SHA-256 do JAR na descrição.
 - Regras de profissão por mundo, editáveis pelo [Mod Menu](https://modrinth.com/mod/modmenu)
   (opcional): ativar ou desativar a profissão, limite de trabalhadores, raio de
   busca do lenhador, fazendeiro e pastor, e ordem de contratação (ADR-030).
-- Com o mod no cliente, mostra a profissão sobre o aldeão e o progresso da
-  obra, com o primeiro material que falta. Sem o mod no cliente, a profissão
+- Com o mod no cliente, mostra a profissão sobre o aldeão, na cor do que ele
+  faz agora — laranja no ofício, azul ajudando, vermelho travado há 30 s,
+  branco à toa, cinza fora do expediente (Regra 129) — e o progresso da obra,
+  com o primeiro material que falta. Sem o mod no cliente, a profissão
   não aparece: desde 2026-10-10 (P0.8) o servidor não escreve mais o nome da
   profissão no aldeão.
-- Traça cada caminho como um corredor de um bloco que sai da porta em linha
-  reta e vira só em ângulo reto (Regra 70); na encosta sem volta pelo terreno,
-  corta degraus num vale de três, até 12 de fundo, e guarda o que corta
-  (Regras 70 e 110).
+- Liga a porta de cada construção pronta à rede de caminhos da vila: caminho
+  de 3 blocos de largura, de terra do bioma, que aterra buracos, sobe no
+  máximo 1 bloco por passo, nunca passa por construção nem pela boca da mina e
+  se junta aos caminhos que já existem; vai ao chafariz por atalho quando a
+  rede dá mais de 2 vezes a volta (Regras 123 a 125). Quem assenta é o
+  pedreiro, o carpinteiro ou o fundidor sem tarefa, um por vez.
 - No deserto usa o bloco próprio "caminho de areia" (Regra 73).
-- O mineiro não constrói fora da montanha, desce antes de ir de lado, cava um
-  acesso quando a entrada da mina não se alcança a pé, e nada ao ar livre
-  (Regra 71).
+- A mina desce em caracol de 4 lances curtos, abre um salão de 17×17 e desce de
+  novo pelos 4 cantos; a escada de descida é o caminho de volta, com no máximo
+  1 bloco por degrau, e nunca é fechada; a luz é de tocha no chão dos salões
+  (Regra 119).
 - O pastor mantém um curral por espécie, lota pelo tamanho do curral, cria até
-  8 e abate acima de 6, e pede um curral novo quando todos estão cheios
-  (Regras 68 e 72).
+  8 e abate acima de 6, e pede um curral novo quando todos estão cheios ou
+  quando há 5 animais amarrados no mesmo poste (Regras 68, 72 e 130).
+- Antes de cada obra nova, nivela o chão em volta na altura da rua: um anel de
+  2 blocos com no máximo 1 de diferença e uma rampa de 3 até o terreno natural
+  (Regra 131).
+- Nenhuma profissão espera mais de 5 minutos: quem fica parado com tarefa a
+  larga e vai ajudar a vila; se a mesma tarefa trava de novo em 10 minutos, o
+  produto surge no baú (Regra 128).
+- Quem está sem tarefa ajuda: o pastor colhe a roça, o lenhador cuida do
+  bosque (1 em cada 10 mudas é de outra espécie), o carpinteiro põe a tocha da
+  colônia nos caminhos escuros, o pedreiro recolhe neve com a pá (Regra 127).
 - Cada aldeão dorme na cama mais perto de onde trabalha: uma vez por dia, só
   com ganho de 16 blocos de caminhada, levando o baú junto, como uma transação
   (Regra 74).
@@ -63,11 +77,12 @@ SHA-256 do JAR na descrição.
   declarada e deixa a linha `VC_SUPPLY` no log (Regra 111); toda desistência
   no diário de ações leva um código único de bloqueio (Regra 112).
 
-O mod é alpha. A 0.3.93 (2026-10-22) passou na bateria automática completa
-(ver "Desenvolvimento e verificação"). O último jogo foi o da 0.3.90 no
-deserto: nota 7,6 no relatório do bioma (era 4,0), primeiro lote aberto na
-faixa da duna e construtor com 48% do expediente trabalhando; as entregas da
-0.3.91 à 0.3.93 ainda não foram vistas em jogo. O estado vivo está no
+O mod é alpha. A 0.3.98 (2026-10-27) passou na bateria automática completa
+(ver "Desenvolvimento e verificação"). O último jogo foi o da 0.3.97 na
+savana (Spark `n4DVevJAmw`): servidor a 20 TPS e o mod com 1,4% do tique; os
+defeitos achados nele (obra presa pela horta, tocha invisível, tocha da mina
+caindo, rede de caminhos parada) foram corrigidos na 0.3.98, que ainda não foi
+jogada. O estado vivo está no
 [`STATE.md`](STATE.md). O que mudou em cada
 publicação está no [`CHANGELOG.md`](CHANGELOG.md); a avaliação técnica mais
 recente, em
@@ -90,6 +105,9 @@ desatualizados.
 | `FARMER` | Agricultor/Fazendeiro | Enxada de ferro | Mantém lavouras, cava terra para obra e faz pão do trigo acima da reserva | `FarmerWork` |
 | `SHEPHERD` | Pastor | Tesoura | Tosquia, faz o rebanho procriar (até 8 adultos por espécie) e abate acima de 6, um curral por espécie | `ShepherdWork` |
 | `BUILDER` | Construtor | Nenhuma | Reserva lotes, repara e assenta estruturas | `BuilderWork` |
+
+Cada ofício tem a sua bancada do mod (estação de trabalho, produção em dobro e
+passivas na vila); ver [Blocos do mod](#blocos-do-mod).
 
 Compatibilidade: `BREEDER` é convertido para `SHEPHERD` ao ler saves antigos.
 O agricultor continua profissão completa, sem cama ou baú fundacional dentro
@@ -347,6 +365,43 @@ o código já tratava todo bloco sólido como solo desde 15-09 (`LotGround.isLot
 
 <!-- REGRAS:FIM -->
 
+## Blocos do mod
+
+Todos os blocos aparecem no criativo (bancadas em "Blocos funcionais", ao lado
+das estações Vanilla) e têm receita para o jogador fabricar. Quebrados, devolvem
+o próprio bloco.
+
+### Bancadas de ofício
+
+Cada bancada é a estação de trabalho de uma profissão: atrai o aldeão para o
+ofício, funciona para o jogador como a estação Vanilla equivalente, ilumina
+como uma tocha (luz 14) e **dobra a produção** do titular que trabalha perto
+dela. Receita de todas: ouro, diamante e ouro em cima; a estação Vanilla do
+ofício no meio; ouro nos dois cantos de baixo (4 lingotes de ouro e 1 diamante).
+
+Só por estar na vila, cada bancada liga **passivas** (Regra 132). Shift+clique
+em qualquer uma abre no chat o **painel** do ofício: os titulares, o estado de
+cada um na cor do nome, a tarefa, há quanto tempo esperam, a obra aberta (no
+construtor) e as passivas ligadas.
+
+| Bloco | Estação na receita | Para o jogador funciona como | Passivas na vila (Regra 132) |
+|---|---|---|---|
+| Bancada do Carpinteiro | mesa de trabalho | mesa de trabalho | ferramenta e arma que o jogador fabrica na vila saem com 1 encantamento sorteado; repara aos poucos a ferramenta de quem está a até 8 blocos |
+| Cortador do Pedreiro | cortador de pedra | cortador de pedra | tapa um buraco de rua por minuto a até 32 blocos; a cada 4 pedregulhos minerados, 1 a mais |
+| Forja do Ferreiro (fundidor) | alto-forno | fornalha de verdade | fornalhas, alto-fornos e defumadores a até 32 (também os do jogador) com o dobro da velocidade; restaura armadura a até 8; armadura fabricada na vila sai encantada |
+| Bancada do Lenhador | mesa de trabalho | mesa de trabalho | mudas a até 32 blocos crescem mais rápido |
+| Bancada do Fazendeiro | composteira | composteira | a roça a até 24 blocos ganha um passo de crescimento; a sobra dos baús (sementes acima da reserva, folhas) vira farinha de osso |
+| Bancada do Pastor | tear | tear | abaixo da meta, um par cruza sozinho a cada 10 min (a até 36); lã volta mais rápido; o que os animais derrubam vai para os baús; o abate rende o dobro de carne e couro |
+| Bancada do Construtor | andaime | mesa de trabalho | a obra a até 48 blocos assenta 1 bloco a mais por minuto; o material da obra guardado em outros baús vem para o baú do construtor |
+| Bancada do Mineiro | cortador de pedra | mesa de trabalho | nenhum monstro nasce na mina (até 64 blocos da entrada, abaixo dela); ferro, cobre, carvão, ouro, lápis e redstone rendem o dobro; diamante, esmeralda, ametista e quartzo rendem +1; 1% de chance de soltar uma ferramenta de ferro, ouro ou diamante |
+
+### Outros blocos
+
+| Bloco | Como se obtém | O que faz |
+|---|---|---|
+| Tocha da Colônia | 4 tochas em volta de 1 lingote de ouro → 4 tochas | Vai no chão ou na parede, como a tocha comum, com chama laranja e luz 15; acende um anel de luz invisível em volta (área clara cerca de 3 vezes maior) e impede que monstro nasça sozinho a até 30 blocos. O carpinteiro sem tarefa a põe sozinho, sem custo, ao lado dos caminhos escuros da vila (Regra 127) |
+| Caminho de Areia | pá na areia, como o caminho de terra | Igual ao caminho de terra do jogo, na cor do arenito; é o caminho das vilas do deserto (Regra 73) e volta a ser areia quando algo sólido o cobre |
+
 ## Construções e biomas
 
 O catálogo profissional está em
@@ -358,6 +413,11 @@ contra os nomes reais do Minecraft 1.21.1. As famílias permitidas são:
 - Savana: casas, oficinas, fazendas, currais e lampião.
 - Taiga: casas, oficinas, fazendas, curral e lampião.
 - Tundra nevada: casas, oficinas, fazendas, currais e lampião.
+
+O armazém do mod tem uma versão por estilo de bioma, nasce sempre do solo
+para cima e não leva folhas nem alçapões (Regra 115). Toda obra nova é
+afastada no mínimo 3 blocos de outra construção (Regra 124) e ganha o chão
+nivelado em volta (Regra 131).
 
 O detalhe dos IDs e a regra da estrutura própria estão em
 [`src/main/resources/data/villagecolony/structure/houses/README.md`](src/main/resources/data/villagecolony/structure/houses/README.md).
@@ -409,18 +469,19 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 `runGametest` gera `build/reports/jacoco/gametest/html` (bateria de jogo, que
 é quem exercita a camada `fabric`).
 
-Verificação de 2026-10-22 (0.3.93, `main` depois da PR #34), rodada e não
-copiada:
+Verificação de 2026-10-27 (0.3.98, branch `fix/playtest-0397`, PR #37),
+rodada e não copiada:
 
-- 1594 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
+- 1602 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
   de 500 linhas por arquivo).
-- 119 testes Python: aprovados.
-- 862 GameTests: todos aprovados em duas rodadas seguidas com `--rerun-tasks`;
-  o `runGametest` começa cada bateria com o mundo de teste apagado, como o CI.
-- Mutação (PIT, pacote `core`): 2140 de 2509 mutações mortas (85,3%, limiar
-  85%).
-- CI do GitHub ("Build and test"): verde; a `main` exige esse check para
-  mesclar.
+- 124 testes Python: aprovados (o CI instala o `nbtlib` para o teste das
+  versões do armazém).
+- 892 GameTests: todos aprovados com `--rerun-tasks`; o `runGametest` começa
+  cada bateria com o mundo de teste apagado, como o CI.
+- `build --rerun-tasks`: aprovado; JAR `village-colony-0.3.98.jar`.
+- Mutação (PIT, pacote `core`): não refeita nesta versão; a última medida
+  (0.3.93) foi 2140 de 2509 mutações mortas (85,3%, limiar 85%).
+- CI do GitHub ("Build and test"): a `main` exige esse check para mesclar.
 
 Para refazer: `scripts/audit/check-tests-green.sh --runs 3` e
 `scripts/audit/check-mutation-threshold.sh --run` (ver
