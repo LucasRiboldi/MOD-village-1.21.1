@@ -285,6 +285,11 @@ def game_time(rcon):
     return int(found.group(1)) if found else 0
 
 
+def copy_regions(level, target):
+    """Copia os arquivos de região do mundo — a matéria-prima do ``village_map.py``."""
+    shutil.copytree(os.path.join(RUN, level, "region"), target, dirs_exist_ok=True)
+
+
 def count_signals(log_path):
     with open(log_path, encoding="utf-8", errors="replace") as source:
         text = source.read()
@@ -301,7 +306,7 @@ def run_report(script, args, out_path):
         out.write(result.stderr)
 
 
-def simulate(name, days, seed, keep_world, near=(0, 0)):
+def simulate(name, days, seed, keep_world, near=(0, 0), snapshot=False):
     mode, biome, locate, place = TARGETS[name]
     level = f"sim-{name}"
     password = secrets.token_hex(12)
@@ -341,6 +346,11 @@ def simulate(name, days, seed, keep_world, near=(0, 0)):
         before = villagers_near(rcon, x, z)
         print(f"  área carregada; {before} aldeões")
 
+        if snapshot:
+            # O retrato do dia 0: a vila como o jogo a gerou, antes de a colônia mexer.
+            rcon.run("save-all flush")
+            copy_regions(level, os.path.join(report, "regiao-dia0"))
+
         wait_game_ticks(rcon, days * 24000, process, timeout=days * 24000)
         after = villagers_near(rcon, x, z)
         print(f"  fim: {after} aldeões")
@@ -359,6 +369,9 @@ def simulate(name, days, seed, keep_world, near=(0, 0)):
                 process.kill()
 
         console.close()
+
+    if snapshot:
+        copy_regions(level, os.path.join(report, "regiao-fim"))
 
     for found in os.listdir(logs):
         shutil.copy(os.path.join(logs, found), report)
@@ -411,6 +424,8 @@ def main(argv):
     parser.add_argument("--days", type=int, default=2, help="dias de jogo por alvo (padrão 2)")
     parser.add_argument("--seed", default=DEFAULT_SEED)
     parser.add_argument("--keep-world", action="store_true", help="não apaga o mundo depois")
+    parser.add_argument("--snapshot", action="store_true",
+                        help="guarda as regiões do dia 0 e do fim no relatório (para o village_map.py)")
     parser.add_argument("--near", default="0,0",
                         help="X,Z de onde procurar a vila: a do jogo do autor, com a mesma --seed")
     args = parser.parse_args(argv)
@@ -431,7 +446,7 @@ def main(argv):
     for name in chosen:
         try:
             summary[name] = simulate(name, args.days, args.seed, args.keep_world,
-                                     tuple(int(v) for v in args.near.split(",")))
+                                     tuple(int(v) for v in args.near.split(",")), args.snapshot)
         except Exception as failure:  # um alvo que falha não derruba os outros
             print(f"[{name}] FALHOU: {failure}")
             summary[name] = {"falha": str(failure)}
