@@ -1,5 +1,10 @@
 # STATE — 2026-10-28
 
+> **0.3.102** (28-10): tocha nova (referência do autor) e o retrato da vila `VC_STATE`, no log e em
+> `<mundo>/villagecolony/analytics/*.jsonl`. Também `/vc dados`, `/vc log` e `/vc bioma` com o retrato, e
+> `scripts/state_report.py`. Bateria 900/900. **Não jogado.** Para o jogo: `/vc log`, `/vc dados` e
+> `python scripts/state_report.py` depois de jogar.
+>
 > **0.3.101** (28-10): corredor do lote com serpentina primeiro e corte raso (até 3) com talude, no lugar
 > do cânion de até 12 (Regra 70, opção 3 do autor). Bateria 899/899. **Não jogado.** Para o jogo:
 > `cut N blocks of the slope` no log e a aparência do corte nas obras de encosta.

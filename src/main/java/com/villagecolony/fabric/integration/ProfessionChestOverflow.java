@@ -43,6 +43,9 @@ public final class ProfessionChestOverflow {
      */
     private static final Set<UUID> FULL = new HashSet<>();
 
+    /** A última parte medida dos espaços ocupados, por colônia — para o retrato da vila (VC_STATE). */
+    private static final java.util.Map<UUID, Double> SHARE = new java.util.HashMap<>();
+
     /** A parte dos espaços ocupados que marca os baús da vila como cheios. */
     static final double FULL_SHARE = 0.8;
 
@@ -55,6 +58,14 @@ public final class ProfessionChestOverflow {
     public static void clearAll() {
         NEEDS_STORAGE.clear();
         FULL.clear();
+        SHARE.clear();
+    }
+
+    /** A parte dos espaços dos baús da vila ocupada na última medida, se já houve uma. */
+    public static java.util.OptionalDouble fullnessOf(UUID colonyId) {
+        Double share = SHARE.get(colonyId);
+
+        return share == null ? java.util.OptionalDouble.empty() : java.util.OptionalDouble.of(share);
     }
 
     /** Se, no último alívio, faltou baú livre na vila desta colônia. */
@@ -73,6 +84,7 @@ public final class ProfessionChestOverflow {
         }
 
         double share = slots == 0 ? 0 : (double) used / slots;
+        SHARE.put(colony.id(), share);
 
         if (share >= FULL_SHARE && FULL.add(colony.id())) {
             VillageColonyMod.LOGGER.info("Colony {} — the village chests are {}% full: the next build is a storage house,"

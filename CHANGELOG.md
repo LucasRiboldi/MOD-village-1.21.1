@@ -12,6 +12,24 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.102] — tocha nova e o retrato da vila para análise (2026-10-28, JAR local, não jogado)
+
+### Adicionado
+- **Retrato da vila (`VC_STATE`):** a cada 5 minutos, por vila atendida, um JSON com população, ofícios,
+  estado de cada um (Regra 129), tempo por ofício, estoque e baús cheios, obra, tarefas, mina, ruas,
+  bancadas, animais e MSPT. Vai para o log e para `<mundo>/villagecolony/analytics/AAAA-MM-DD.jsonl`,
+  que fica com o mundo entre sessões.
+- **`/vc dados`:** grava o retrato na hora.
+- **`/vc log` e `/vc bioma`:** mostram o retrato completo no chat (seção "Estado agora", com os travados
+  nomeados).
+- **`/vc bioma nota`:** a nota também vai para o arquivo de análise.
+- **`scripts/state_report.py`:** a evolução de cada colônia entre sessões e versões.
+
+### Mudado
+- **Tocha da Colônia:** textura nova pela referência do autor — cabeça de chama laranja de 3 pixels com o
+  centro claro sobre o cabo marrom de duas tonalidades, sem pixels soltos fora do modelo (o ícone do
+  item mostrava sobras).
+
 ## [0.3.101] — corredor do lote natural na encosta (2026-10-28, JAR local, não jogado)
 
 ### Mudado

@@ -198,6 +198,7 @@ public class VillageColonyMod implements ModInitializer {
         com.villagecolony.fabric.work.BenchPassives.register();
         com.villagecolony.fabric.work.BenchUpkeep.register();
         com.villagecolony.fabric.work.ValueGoods.register();
+        com.villagecolony.fabric.work.AnalyticsLog.register();
         com.villagecolony.fabric.work.IdleHelps.register();
         PlayerWorldChangeHandler.register();
         VillageDetectionHandler.register();

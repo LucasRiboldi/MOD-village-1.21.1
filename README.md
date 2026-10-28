@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.101%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.102%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -406,7 +406,7 @@ construtor) e as passivas ligadas.
 
 | Bloco | Como se obtém | O que faz |
 |---|---|---|
-| Tocha da Colônia | 4 tochas em volta de 1 lingote de ouro → 4 tochas | Vai no chão ou na parede, como a tocha comum, com chama laranja e luz 15; acende um anel de luz invisível em volta (área clara cerca de 3 vezes maior) e impede que monstro nasça sozinho a até 30 blocos. O carpinteiro sem tarefa a põe sozinho, sem custo, ao lado dos caminhos escuros da vila (Regra 127) |
+| Tocha da Colônia | 4 tochas em volta de 1 lingote de ouro → 4 tochas | Mesmo formato da tocha do jogo, com cabeça de chama laranja de 3 pixels e o centro claro, sobre o cabo marrom; vai no chão ou na parede, como a tocha comum, com luz 15; acende um anel de luz invisível em volta (área clara cerca de 3 vezes maior) e impede que monstro nasça sozinho a até 30 blocos. O carpinteiro sem tarefa a põe sozinho, sem custo, ao lado dos caminhos escuros da vila (Regra 127) |
 | Caminho de Areia | pá na areia, como o caminho de terra | Igual ao caminho de terra do jogo, na cor do arenito; é o caminho das vilas do deserto (Regra 73) e volta a ser areia quando algo sólido o cobre |
 
 ## Construções e biomas
@@ -438,6 +438,69 @@ cliente, o mod liga as sobreposições de profissão e de obra, e o Mod Menu
 (opcional) abre a tela de regras de profissão — mudar regras exige operador
 nível 2.
 Use um mundo de teste: o mod corta árvores, minera e coloca blocos no mundo.
+
+## Comandos e dados de análise
+
+Todos os comandos são abertos a qualquer jogador e respondem sobre a vila em que você está.
+
+| Comando | O que mostra ou faz |
+|---|---|
+| `/vc log` | Situação da vila: prioridade das obras, felicidade, **estado agora** (quem está no ofício, ajudando, travado — com os travados nomeados —, estoque e baús cheios, obra aberta, tarefas, mina, ruas, bancadas e animais), atividades recentes, o que a obra espera e a cadeia que a traz, alcance a pé, tempo dos ofícios na última janela de 5 min (Regra 51) e esperas longas |
+| `/vc bioma` | Boletim do bioma (estilo, camas, aldeões, lotes e recusas, peças que surgiram, ofícios acima da Regra 51) e o mesmo retrato completo do `/vc log` |
+| `/vc bioma nota <texto>` | Anota uma observação sua, com posição e bioma, no log (`VC_BIOME_NOTE`) e no arquivo de análise do mundo |
+| `/vc dados` | Grava agora o retrato completo da vila no arquivo de análise e diz onde ficou |
+
+**O retrato da vila (`VC_STATE`).** A cada 5 minutos, por vila com jogador perto, o mod registra num
+JSON só:
+
+- dia e hora do jogo, MSPT do servidor, bioma, estilo e tamanho da vila;
+- aldeões, ofícios, camas, encalhados, e quantos estão no ofício, ajudando, travados, à toa ou fora do
+  expediente (Regra 129), com os travados nomeados;
+- tempo de cada ofício na última janela e a parte da Regra 51;
+- estoque por grupo, número de baús, quanto estão cheios e se pedem armazém;
+- obras prontas, obra aberta (estado, peças que faltam e de lado), lotes aceitos e recusas;
+- tarefas abertas por tipo e quantas têm dono;
+- mina (altura do nível, níveis abaixo da boca, posições cavadas);
+- colunas de rua, bancadas presentes e animais por espécie.
+
+O registro sai no log como `VC_STATE` e fica, junto das notas, em
+`<mundo>/villagecolony/analytics/AAAA-MM-DD.jsonl` — uma linha por registro, com o instante real
+(`at`) para cruzar com o Spark. O arquivo fica com o mundo entre sessões e versões, e cada registro
+traz `schema` e `mod`, para comparar versões.
+
+Relatórios (rodar depois de jogar):
+
+```bash
+python scripts/state_report.py
+```
+
+```bash
+python scripts/time_ledger.py
+```
+
+```bash
+python scripts/action_report.py
+```
+
+O `state_report.py` lê os arquivos de análise de todos os mundos da instalação de teste (ou os arquivos e
+logs passados) e mostra, por colônia:
+
+- o período e a versão do mod;
+- a evolução de aldeões, ofícios e obras por hora;
+- o enchimento dos baús e os travados;
+- a média da Regra 51 por ofício;
+- o MSPT;
+- as notas do jogador.
+
+Os outros relatórios:
+
+| Script | O que mostra |
+|---|---|
+| `time_ledger.py` | O tempo por ofício (`VC_TIME`) |
+| `action_report.py` | O diário de ações por aldeão, com os motivos de recusa |
+| `cost_ledger.py` | O custo por fase do ciclo (`VC_COST`) |
+| `supply_report.py` | O que surgiu sem um ofício obter (`VC_SUPPLY`) |
+| `biome_report.py` | O boletim por bioma (`VC_BIOME`) |
 
 ## Desenvolvimento e verificação
 
@@ -476,16 +539,16 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 `runGametest` gera `build/reports/jacoco/gametest/html` (bateria de jogo, que
 é quem exercita a camada `fabric`).
 
-Verificação de 2026-10-28 (0.3.101, branch `fix/playtest-0397`, PR #37),
+Verificação de 2026-10-28 (0.3.102, branch `fix/playtest-0397`, PR #37),
 rodada e não copiada:
 
-- 1602 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
+- 1609 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
   de 500 linhas por arquivo).
-- 124 testes Python: aprovados (o CI instala o `nbtlib` para o teste das
+- 126 testes Python: aprovados (o CI instala o `nbtlib` para o teste das
   versões do armazém).
-- 899 GameTests: todos aprovados com `--rerun-tasks`; o `runGametest` começa
+- 900 GameTests: todos aprovados com `--rerun-tasks`; o `runGametest` começa
   cada bateria com o mundo de teste apagado, como o CI.
-- `build --rerun-tasks`: aprovado; JAR `village-colony-0.3.101.jar`.
+- `build --rerun-tasks`: aprovado; JAR `village-colony-0.3.102.jar`.
 - Mutação (PIT, pacote `core`): não refeita nesta versão; a última medida
   (0.3.93) foi 2140 de 2509 mutações mortas (85,3%, limiar 85%).
 - CI do GitHub ("Build and test"): a `main` exige esse check para mesclar.
