@@ -80,6 +80,11 @@ public class BedTeleportGameTest implements FabricGameTest {
         enclose(context, BED);
 
         context.waitAndRun(20, () -> {
+            // Regra 142: a primeira conferência sem caminho só anota onde ele está; parado na segunda, vai.
+            boolean first = NightHome.check(context.getWorld(), villager, villager.getUuid());
+
+            context.assertTrue(!first, "foi para a cama na primeira conferência, sem chance de andar");
+
             boolean went = NightHome.check(context.getWorld(), villager, villager.getUuid());
 
             // O teto de vidro fica a dois blocos da cama: de pé no colchão, a cabeça entra nele (Regra 114).

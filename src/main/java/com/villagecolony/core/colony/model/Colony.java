@@ -219,24 +219,28 @@ public final class Colony {
     }
 
     /**
-     * A medida da vila: a primeira define a caixa, as seguintes só a
-     * aumentam. O centro vai para o meio dela, na altura de antes.
+     * A medida da vila: a primeira define a caixa e põe o centro no meio dela; as seguintes só aumentam a
+     * caixa — o centro fica (Regra 141, autor 2026-10-28: a vila que cresce para um lado não arrasta as
+     * obras, as camas e as varreduras atrás dela).
      *
      * @return se a caixa mudou
      */
     public boolean measure(VillageBounds measured) {
         Objects.requireNonNull(measured, "measured");
 
-        // Só o lado que a medida passa avança, e o centro fica num bloco só —
-        // 2026-10-03, ver VillageBounds.grownBy.
-        VillageBounds next = bounds == null ? measured.centered() : bounds.grownBy(measured);
+        VillageBounds current = bounds;
+        boolean first = current == null;
+        VillageBounds next = current == null ? measured.centered() : current.grownBy(measured);
 
         if (next.equals(bounds)) {
             return false;
         }
 
         bounds = next;
-        center = new ColonyPos(next.centerX(), center.y(), next.centerZ());
+
+        if (first) {
+            center = new ColonyPos(next.centerX(), center.y(), next.centerZ());
+        }
 
         return true;
     }

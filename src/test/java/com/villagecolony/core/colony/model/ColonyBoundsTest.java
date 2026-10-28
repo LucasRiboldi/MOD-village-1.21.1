@@ -33,11 +33,12 @@ class ColonyBoundsTest {
     }
 
     @Test
-    void growingFollowsTheBoxAndNeverShrinks() {
+    void growingWidensTheBoxAndLeavesTheCenterWhereItWas() {
         colony.measure(HUNDRED);
 
+        // Regra 141: a caixa cresce para o sul, o centro fica no meio da primeira medida.
         assertTrue(colony.grow(VillageBounds.block(new ColonyPos(50, 64, 120))));
-        assertEquals(60, colony.center().z());
+        assertEquals(new ColonyPos(50, 64, 50), colony.center());
 
         assertFalse(colony.grow(new VillageBounds(10, 64, 10, 20, 66, 20)), "peça de dentro não muda nada");
         assertEquals(121, colony.bounds().orElseThrow().sizeZ());

@@ -199,6 +199,7 @@ public final class SurfaceGatheringWork {
                 }
             }
             if (job.still >= STILL_LIMIT) {
+                SurfaceHits.unreachable(job.task.colonyId(), job.target, world.getTime()); // Regra 144
                 finish(job, workerId, "unable to reach " + job.target.toShortString());
             } else {
                 WorkTargets.set(workerId, job.target, 1);
@@ -248,6 +249,7 @@ public final class SurfaceGatheringWork {
                 || job.task.targetResource() == ResourceType.CLAY;
         java.util.function.Predicate<BlockPos> worthLooking = column ->
                 (clay || !VillageFluidIndex.skip(job.task.colonyId(), bounds, column))
+                        && !SurfaceHits.isUnreachable(job.task.colonyId(), column, world.getTime())
                         && (!outsideVillage || FarthestVillageSector.isInSector(
                                 job.center, column, job.surfaceSector, protectedRadius));
 

@@ -112,15 +112,19 @@ public final class ConstructionPlanner {
             return shortened;
         }
 
-        return colony.bounds().map(ConstructionPlanner::reachOf).orElse(VillageDetector.SEARCH_RADIUS);
+        return colony.bounds().map(box -> reachOf(box, colony.center())).orElse(VillageDetector.SEARCH_RADIUS);
     }
 
-    /** Metade da diagonal da caixa, mais a margem de crescimento; nunca menos que 64. */
-    static int reachOf(VillageBounds box) {
-        double halfDiagonal = Math.hypot(box.sizeX() / 2.0, box.sizeZ() / 2.0);
+    /**
+     * Do centro ao canto mais longe da caixa, mais a margem de crescimento; nunca menos que 64. O centro é
+     * fixo (Regra 141) e a caixa cresce para um lado: a metade da diagonal não cobriria o lado que cresceu.
+     */
+    static int reachOf(VillageBounds box, com.villagecolony.core.type.ColonyPos center) {
+        int dx = Math.max(Math.abs(center.x() - box.minX()), Math.abs(box.maxX() - center.x()));
+        int dz = Math.max(Math.abs(center.z() - box.minZ()), Math.abs(box.maxZ() - center.z()));
 
         return Math.max(VillageDetector.SEARCH_RADIUS,
-                (int) Math.ceil(halfDiagonal) + VillageBounds.GROWTH_MARGIN);
+                (int) Math.ceil(Math.hypot(dx, dz)) + VillageBounds.GROWTH_MARGIN);
     }
 
     /** Encurta a busca de lote. Só os testes precisam disso. */

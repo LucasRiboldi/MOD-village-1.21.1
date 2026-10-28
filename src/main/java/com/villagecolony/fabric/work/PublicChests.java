@@ -3,7 +3,7 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.MineMouth;
 import com.villagecolony.fabric.integration.VillageChests;
 import net.minecraft.item.Item;
@@ -19,7 +19,8 @@ import java.util.UUID;
  * Os baús públicos da vila: os que não são baú de nenhuma profissão — regra do autor,
  * 2026-10-12. Madeira e pedra cruas podem passar dos limites do baú do ofício e do teto
  * por tipo; o excedente vai para eles em vez de cair no chão ou se perder (playtest
- * 0.3.37: 267 toras caídas pelo baú cheio do lenhador).
+ * 0.3.37: 267 toras caídas pelo baú cheio do lenhador). O baú público não tem o teto de
+ * compartimentos por item e enche antes do seguinte — Regra 143.
  */
 final class PublicChests {
 
@@ -56,7 +57,17 @@ final class PublicChests {
             return 0;
         }
 
-        int left = ColonyChests.deposit(world, of(world, colonyId, near), item, amount);
+        // Sem teto de compartimentos e do mais perto para o mais longe: um baú enche antes do seguinte
+        // (Regra 143). O lenhador largava toras no chão com a vila a 38% (taiga simulada, 2026-10-28).
+        int left = amount;
+
+        for (ColonyPos chest : of(world, colonyId, near)) {
+            if (left <= 0) {
+                break;
+            }
+
+            left = ChestDepositor.deposit(world, chest, item, left, true);
+        }
 
         if (left < amount) {
             VillageColonyMod.LOGGER.info("Colony {} — {} {} went to the village's public chests",
