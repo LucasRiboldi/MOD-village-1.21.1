@@ -107,3 +107,44 @@ recusa e desistência por profissão (pedido do autor, 2026-10-08).
   comentário e documento que a descreve.
 - Comentários históricos que já existem não são reescritos em massa: enxugue
   o do método que você estiver tocando.
+
+---
+
+## 1. Stack
+
+Fabric 1.21.1 · Java 21 · Gradle + Loom
+
+## 2. Regras de desenvolvimento
+
+1. Antes de modificar comportamento vanilla, use `minecraft-code-research`
+   para localizar a classe Yarn correspondente. Cite o arquivo.
+2. Todo bugfix vem com Fabric GameTest de regressão (red → green).
+3. Toda nova regra de negócio entra como teste em `src/gametest`.
+4. Não reescrever classes de domínio sem antes rodar `graphify`.
+5. Após implementação, rodar `./gradlew build && ./gradlew test`.
+6. Commits atômicos (Conventional Commits).
+7. Se encontrar bloqueio arquitetural, PARAR e apresentar hipóteses
+   antes de improvisar.
+
+### 2.1 Workflow por etapa
+
+| Etapa | Skill | O pedido |
+|---|---|---|
+| Antes de tocar em comportamento vanilla | `minecraft-code-research` | Mostrar como o vanilla 1.21.1 faz (ex.: como `VillagerEntity.tick()` e o `Brain` chamam `Sensor.tick()`), na ordem exata, antes de decidir o que entra no Mixin. |
+| Antes de corrigir bug | `debugging-strategies` | Listar as 5 hipóteses mais prováveis dado o código (arquivo e linha). Não corrigir ainda — só diagnosticar. |
+| Depois de entender o bug | `minecraft-testing` | Criar um Fabric GameTest que reproduz o bug. Ele deve falhar agora. |
+| Depois do teste falhar | `fabric-development` | Corrigir o bug. O GameTest deve passar. |
+| Ao finalizar feature ou bugfix | `clean-code` + `code-review-excellence` | Revisar o diff do PR contra as regras do mod. |
+
+### 2.2 Comportamento que não se aceita
+
+- "Vou implementar uma solução para X" sem antes pesquisar como o vanilla faz.
+- "Corrigi o bug, teste manualmente" — sempre exija teste automatizado.
+- Reescrita de classe de domínio sem antes mapear dependências.
+
+## 3. Skills a priorizar
+
+- `minecraft-code-research` (sempre antes de tocar em vanilla)
+- `minecraft-testing` (todo bugfix)
+- `fabric-development` + `minecraft-villager-systems` (implementação)
+- `debugging-strategies` (diagnóstico)
