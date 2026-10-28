@@ -88,6 +88,10 @@ public final class ModContent {
     public static final Block COLONY_TORCH = new ColonyTorchBlock(
             AbstractBlock.Settings.copy(Blocks.TORCH).luminance(state -> 15));
 
+    /** A mesma tocha presa na parede: o par TORCH/WALL_TORCH do jogo, com um item só. */
+    public static final Block COLONY_WALL_TORCH = new ColonyWallTorchBlock(
+            AbstractBlock.Settings.copy(Blocks.WALL_TORCH).luminance(state -> 15).dropsLike(COLONY_TORCH));
+
     private static RegistryKey<PointOfInterestType> colonyTorchPoi;
 
     private static BlockEntityType<BenchForgeBlockEntity> forgeEntity;
@@ -115,7 +119,10 @@ public final class ModContent {
         registerBlock("builder_bench", BUILDER_BENCH);
         registerBlock("miner_bench", MINER_BENCH);
         registerBlock("sand_path", SAND_PATH);
-        registerBlock("colony_torch", COLONY_TORCH);
+        registerTorch();
+
+        // A pá faz o caminho de areia como faz o de terra (receita escolhida pelo autor, 2026-10-27).
+        net.fabricmc.fabric.api.registry.FlattenableBlockRegistry.register(Blocks.SAND, SAND_PATH.getDefaultState());
 
         // A forja é fornalha de verdade: tipo de BlockEntity próprio (o FURNACE do Vanilla só aceita o
         // bloco Vanilla).
@@ -131,7 +138,7 @@ public final class ModContent {
         shepherdPoi = registerPoi("shepherd_bench_poi", SHEPHERD_BENCH);
         builderPoi = registerPoi("builder_bench_poi", BUILDER_BENCH);
         minerPoi = registerPoi("miner_bench_poi", MINER_BENCH);
-        colonyTorchPoi = registerPoi("colony_torch_poi", COLONY_TORCH);
+        colonyTorchPoi = registerPoi("colony_torch_poi", COLONY_TORCH, COLONY_WALL_TORCH);
 
         // As bancadas na aba Blocos Funcionais do criativo, ao lado das estações Vanilla
         // (crafting table, stonecutter, fornalha) — decisão do autor, 2026-10-13.
@@ -169,10 +176,19 @@ public final class ModContent {
         Registry.register(Registries.ITEM, id, new BlockItem(block, new Item.Settings()));
     }
 
-    private static RegistryKey<PointOfInterestType> registerPoi(String path, Block block) {
+    /** A tocha de chão e a de parede, com o item que escolhe entre as duas pela face clicada, como a do jogo. */
+    private static void registerTorch() {
+        Registry.register(Registries.BLOCK, Identifier.of(VillageColonyMod.MOD_ID, "colony_torch"), COLONY_TORCH);
+        Registry.register(Registries.BLOCK, Identifier.of(VillageColonyMod.MOD_ID, "colony_wall_torch"), COLONY_WALL_TORCH);
+        Registry.register(Registries.ITEM, Identifier.of(VillageColonyMod.MOD_ID, "colony_torch"),
+                new net.minecraft.item.VerticallyAttachableBlockItem(COLONY_TORCH, COLONY_WALL_TORCH,
+                        new Item.Settings(), net.minecraft.util.math.Direction.DOWN));
+    }
+
+    private static RegistryKey<PointOfInterestType> registerPoi(String path, Block... blocks) {
         Identifier id = Identifier.of(VillageColonyMod.MOD_ID, path);
 
-        PointOfInterestHelper.register(id, POI_TICKET_COUNT, POI_SEARCH_DISTANCE, block);
+        PointOfInterestHelper.register(id, POI_TICKET_COUNT, POI_SEARCH_DISTANCE, blocks);
 
         return RegistryKey.of(RegistryKeys.POINT_OF_INTEREST_TYPE, id);
     }

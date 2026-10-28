@@ -16,8 +16,9 @@ public final class VillageColonyClient implements ClientModInitializer {
         ProfessionOverlayRenderer.register();
         ConstructionOverlayRenderer.register();
         // A tocha da colônia tem partes transparentes, como a tocha comum.
-        net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
+        net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlocks(
+                net.minecraft.client.render.RenderLayer.getCutout(),
                 com.villagecolony.fabric.content.ModContent.COLONY_TORCH,
-                net.minecraft.client.render.RenderLayer.getCutout());
+                com.villagecolony.fabric.content.ModContent.COLONY_WALL_TORCH);
     }
 }

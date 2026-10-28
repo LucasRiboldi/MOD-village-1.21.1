@@ -71,5 +71,6 @@
   "block.villagecolony.builder_bench": "Builder's Bench",
   "block.villagecolony.miner_bench": "Miner's Bench",
   "block.villagecolony.sand_path": "Sand Path",
-  "block.villagecolony.colony_torch": "Colony Torch"
+  "block.villagecolony.colony_torch": "Colony Torch",
+  "block.villagecolony.colony_wall_torch": "Colony Torch"
 }

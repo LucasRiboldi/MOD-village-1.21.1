@@ -45,10 +45,9 @@ public final class ColonyTorches {
     private ColonyTorches() {
     }
 
-    /** Põe a tocha da colônia em {@code at} e o anel de luz em volta ({@link ColonyTorchBlock#lightRing}). */
+    /** Põe a tocha da colônia em {@code at}; o anel de luz acende com ela ({@link ColonyTorchBlock#lightRing}). */
     public static void place(ServerWorld world, BlockPos at) {
         world.setBlockState(at, ModContent.COLONY_TORCH.getDefaultState());
-        ColonyTorchBlock.lightRing(world, at);
         NEAR.clear();
     }
 

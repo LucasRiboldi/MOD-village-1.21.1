@@ -71,5 +71,6 @@
   "block.villagecolony.builder_bench": "Bancada do Construtor",
   "block.villagecolony.miner_bench": "Bancada do Mineiro",
   "block.villagecolony.sand_path": "Caminho de Areia",
-  "block.villagecolony.colony_torch": "Tocha da Colônia"
+  "block.villagecolony.colony_torch": "Tocha da Colônia",
+  "block.villagecolony.colony_wall_torch": "Tocha da Colônia"
 }

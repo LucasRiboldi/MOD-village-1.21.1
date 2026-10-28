@@ -1,7 +1,7 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "G G",
+    "GDG",
     " S ",
     "G G"
   ],
@@ -11,6 +11,9 @@
     },
     "S": {
       "item": "minecraft:stonecutter"
+    },
+    "D": {
+      "item": "minecraft:diamond"
     }
   },
   "result": {
