@@ -13,6 +13,7 @@ import com.villagecolony.fabric.content.ModContent;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.LotGround;
 import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.StreetSurface;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.BlockState;
@@ -193,7 +194,7 @@ public final class PathPaving {
             return false;
         }
 
-        pave(world, colonyId, step.x(), step.z(), axis.getAsInt(), step.floorY());
+        pave(world, colonyId, step.x(), step.z(), axis.getAsInt(), step.floorY(), false);
 
         for (int offset : new int[] {-1, 1}) {
             int x = step.sideX(offset);
@@ -201,7 +202,7 @@ public final class PathPaving {
 
             if (VillagePathPlanner.laneFits(terrain, x, z, step.floorY())) {
                 int ground = terrain.groundY(x, z, step.floorY()).orElseThrow();
-                pave(world, colonyId, x, z, ground, ground);
+                pave(world, colonyId, x, z, ground, ground, true);
             }
         }
 
@@ -213,7 +214,7 @@ public final class PathPaving {
      * cima vira caminho; um abaixo, o bloco de cima sai (o corte); um acima, o caminho vai por cima do
      * buraco. Por cima do piso só sai planta.
      */
-    static void pave(ServerWorld world, UUID colonyId, int x, int z, int ground, int floorY) {
+    static void pave(ServerWorld world, UUID colonyId, int x, int z, int ground, int floorY, boolean edge) {
         BlockPos top = new BlockPos(x, ground, z);
         BlockState surface = world.getBlockState(top);
         BlockPos floor = new BlockPos(x, floorY, z);
@@ -239,8 +240,8 @@ public final class PathPaving {
             }
         }
 
-        world.setBlockState(floor, surface.isIn(BlockTags.SAND)
-                ? ModContent.SAND_PATH.getDefaultState() : Blocks.DIRT_PATH.getDefaultState());
+        // O meio é o caminho do bioma; a borda, a mistura gasta (StreetSurface, autor 2026-10-28).
+        world.setBlockState(floor, edge ? StreetSurface.edge(world, floor, surface) : StreetSurface.center(world, floor, surface));
         RoadIndex.remember(colonyId, floor);
     }
 
