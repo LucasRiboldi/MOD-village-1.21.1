@@ -122,6 +122,9 @@ class Chunk:
         self.x = int(tag["xPos"])
         self.z = int(tag["zPos"])
         self.heights = unpack(tag["Heightmaps"]["WORLD_SURFACE"], HEIGHT_BITS, 256)
+        # A altura sem folhas: o chão debaixo da copa (road_map.py).
+        no_leaves = tag["Heightmaps"].get("MOTION_BLOCKING_NO_LEAVES")
+        self.ground_heights = unpack(no_leaves, HEIGHT_BITS, 256) if no_leaves is not None else None
         self.sections = {}
 
         for section in tag.get("sections", []):
