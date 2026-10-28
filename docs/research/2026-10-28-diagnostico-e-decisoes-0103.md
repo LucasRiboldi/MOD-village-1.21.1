@@ -139,7 +139,7 @@ da conversa de 2026-10-28; as recomendações eram:
 | T1, O2, O4 | Peças postas de lado por falta de material | 642 / 276 / 205 | `action_report.py` → `SET_ASIDE: no material` |
 | T1 | Gelo compactado, neve e acácia de lado | 162 / 298 / 234 | `SET_ASIDE` por `what` no diário de ações |
 | T2 | Presos no curral | 45 + 19 + 14 | `STRANDED: fenced in` |
-| T3 | Teleportes por vila | 5–14 | `VC_EVENT type=teleport`; mapa do script novo |
+| T3 | Teleportes por vila e lugares que prendem | 5–14; taiga: 9 casos na ponta oeste, 7 na rua sul | `stuck_map.py LOG diários --region DIR --center X,Z` |
 | T4 | Alvos recusados do mineiro | `TOO_HIGH` 65, `NO_PATH` 28 | `TARGET_REJECTED` no diário |
 | T5 | Argila e vidraça sem rota | 30 / 10 | `supply-gaps.jsonl` → `supply_gaps.py` |
 | L3 | Níveis da mina no deserto e na taiga | 0 / 0 | `VC_STATE` → `mine.levels` |
