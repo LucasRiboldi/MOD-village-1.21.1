@@ -59,6 +59,19 @@ public final class WorkTime {
     /** Amostras paradas com destino antes de contar como bloqueado. */
     static final int BLOCKED_AFTER = 3;
 
+    /**
+     * A cor do nome sobre a cabeça (autor, 2026-10-27): laranja no ofício, azul na ajuda, vermelho
+     * travado há {@link #STUCK_AFTER} tiques, branco à toa no expediente, cinza fora dele.
+     */
+    public enum Badge { DUTY, HELP, STUCK, IDLE, OFF }
+
+    /** Quanto tempo bloqueado ou encalhado até o nome ficar vermelho: 30 s. */
+    static final long STUCK_AFTER = 600;
+
+    private static final Map<UUID, Badge> BADGES = new HashMap<>();
+
+    private static final Map<UUID, Long> STUCK_SINCE = new HashMap<>();
+
     private static final class Walker {
 
         BlockPos last;
@@ -93,10 +106,14 @@ public final class WorkTime {
             if (!(world.getEntity(id) instanceof VillagerEntity villager) || !villager.isAlive()
                     || !PenEscape.isWorking(world, worker.colonyId())
                     || !WorkHours.isWorkTime(world, villager)) {
+                BADGES.put(id, Badge.OFF);
+                STUCK_SINCE.remove(id);
                 continue;
             }
 
             State state = stateOf(id, villager);
+            BADGES.put(id, badgeFor(id, state, now));
+            IdleWatch.sample(world, id, state);
             String profession = worker.profession().map(Enum::name).orElse("NONE");
 
             WINDOW.computeIfAbsent(worker.colonyId(), ignored -> new TreeMap<>())
@@ -229,7 +246,33 @@ public final class WorkTime {
         return copy;
     }
 
+    /** A cor do nome deste aldeão, da última amostra; cinza para quem ainda não foi amostrado. */
+    public static Badge badgeOf(UUID id) {
+        return BADGES.getOrDefault(id, Badge.OFF);
+    }
+
+    /** Travado há {@link #STUCK_AFTER} vence; senão a tarefa do ofício, depois a ajuda, depois à toa. */
+    static Badge badgeFor(UUID id, State state, long now) {
+        if (state == State.BLOCKED || state == State.STRANDED) {
+            long since = STUCK_SINCE.computeIfAbsent(id, ignored -> now);
+
+            if (now - since >= STUCK_AFTER) {
+                return Badge.STUCK;
+            }
+        } else {
+            STUCK_SINCE.remove(id);
+        }
+
+        if (!VillageColonyMod.TASKS.assignedTo(id).isEmpty()) {
+            return Badge.DUTY;
+        }
+
+        return state == State.IDLE ? Badge.IDLE : Badge.HELP;
+    }
+
     static void clearAll() {
+        BADGES.clear();
+        STUCK_SINCE.clear();
         WINDOW.clear();
         LAST.clear();
         WALKERS.clear();

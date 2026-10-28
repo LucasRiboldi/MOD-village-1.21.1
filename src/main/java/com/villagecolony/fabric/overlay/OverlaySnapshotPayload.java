@@ -26,7 +26,7 @@ public record OverlaySnapshotPayload(
         int size = buffer.readVarInt();
         List<WorkerEntry> workers = new ArrayList<>(size);
         for (int index = 0; index < size; index++) {
-            workers.add(new WorkerEntry(buffer.readUuid(), buffer.readString()));
+            workers.add(new WorkerEntry(buffer.readUuid(), buffer.readString(), buffer.readString()));
         }
         int constructionSize = buffer.readVarInt();
         List<ConstructionEntry> constructions = new ArrayList<>(constructionSize);
@@ -44,6 +44,7 @@ public record OverlaySnapshotPayload(
         for (WorkerEntry worker : workers) {
             buffer.writeUuid(worker.id());
             buffer.writeString(worker.profession());
+            buffer.writeString(worker.badge());
         }
         buffer.writeVarInt(constructions.size());
         for (ConstructionEntry construction : constructions) {
@@ -64,8 +65,11 @@ public record OverlaySnapshotPayload(
         return ID;
     }
 
-    /** O mínimo necessário para desenhar uma profissão sobre uma entidade já existente no cliente. */
-    public record WorkerEntry(UUID id, String profession) {
+    /**
+     * O mínimo necessário para desenhar uma profissão sobre uma entidade já existente no cliente, com a cor
+     * do estado dele ({@code WorkTime.Badge}).
+     */
+    public record WorkerEntry(UUID id, String profession, String badge) {
     }
 
     /** Uma obra aberta, compactada para o HUD de mundo do cliente; x, y, z são os da placa da obra. */

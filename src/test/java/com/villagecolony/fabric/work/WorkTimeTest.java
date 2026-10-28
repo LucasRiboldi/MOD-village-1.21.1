@@ -77,4 +77,21 @@ class WorkTimeTest {
     void anEmptyWindowHasNoIdleShare() {
         assertEquals(0, WorkTime.idleRuleShare(new EnumMap<>(WorkTime.State.class)));
     }
+
+    /** O nome fica vermelho só depois de 30 s travado; antes disso, a cor da ajuda ou do ócio. */
+    @Test
+    void theNameTurnsRedOnlyAfterThirtySecondsStuck() {
+        java.util.UUID id = java.util.UUID.randomUUID();
+
+        try {
+            assertEquals(WorkTime.Badge.HELP, WorkTime.badgeFor(id, WorkTime.State.BLOCKED, 1_000));
+            assertEquals(WorkTime.Badge.HELP, WorkTime.badgeFor(id, WorkTime.State.BLOCKED, 1_000 + WorkTime.STUCK_AFTER - 1));
+            assertEquals(WorkTime.Badge.STUCK, WorkTime.badgeFor(id, WorkTime.State.BLOCKED, 1_000 + WorkTime.STUCK_AFTER));
+            assertEquals(WorkTime.Badge.HELP, WorkTime.badgeFor(id, WorkTime.State.WALK, 2_000));
+            assertEquals(WorkTime.Badge.HELP, WorkTime.badgeFor(id, WorkTime.State.STRANDED, 2_001));
+            assertEquals(WorkTime.Badge.IDLE, WorkTime.badgeFor(id, WorkTime.State.IDLE, 2_002));
+        } finally {
+            WorkTime.clearAll();
+        }
+    }
 }

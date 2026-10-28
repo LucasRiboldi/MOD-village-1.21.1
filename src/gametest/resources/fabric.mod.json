@@ -160,6 +160,7 @@
       "com.villagecolony.gametest.SmelterChainGameTest",
       "com.villagecolony.fabric.integration.MineSealGameTest",
       "com.villagecolony.fabric.work.GardenPiecesGameTest",
+      "com.villagecolony.fabric.work.IdleWatchGameTest",
       "com.villagecolony.gametest.ShepherdGameTest",
       "com.villagecolony.gametest.StructureCoverageGameTest",
       "com.villagecolony.gametest.VillageStructuresGameTest",
