@@ -158,6 +158,7 @@
       "com.villagecolony.gametest.SurfaceGatheringGameTest",
       "com.villagecolony.gametest.SmelterGameTest",
       "com.villagecolony.gametest.SmelterChainGameTest",
+      "com.villagecolony.fabric.integration.MineSealGameTest",
       "com.villagecolony.gametest.ShepherdGameTest",
       "com.villagecolony.gametest.StructureCoverageGameTest",
       "com.villagecolony.gametest.VillageStructuresGameTest",

@@ -35,11 +35,17 @@ public final class WorldPathTerrain implements PathTerrain {
     private final ServerWorld world;
     private final List<Building> buildings;
     private final Optional<ConstructionProject> open;
+    private final Optional<ColonyPos> mine;
+
+    /** Quanto em volta da entrada da mina o caminho não passa: o caracol e a borda dele. */
+    static final int MINE_CLEARANCE = com.villagecolony.core.construction.model.MineShaft.HELIX_SIDE
+            + com.villagecolony.core.construction.model.MineShaft.STAIR_LANES + 2;
 
     public WorldPathTerrain(ServerWorld world, UUID colonyId) {
         this.world = world;
         this.buildings = List.copyOf(VillageColonyMod.BUILDINGS.ofColony(colonyId));
         this.open = VillageColonyMod.CONSTRUCTIONS.openOf(colonyId);
+        this.mine = VillageColonyMod.MINES.of(colonyId).map(found -> found.shaft().entry());
     }
 
     @Override
@@ -80,6 +86,12 @@ public final class WorldPathTerrain implements PathTerrain {
             if (inside(x, z, building.min(), building.max())) {
                 return true;
             }
+        }
+
+        // A boca da mina é buraco de propósito: o caminho que aterra fecharia a escada (playtest 0.3.97).
+        if (mine.filter(entry -> Math.abs(x - entry.x()) <= MINE_CLEARANCE
+                && Math.abs(z - entry.z()) <= MINE_CLEARANCE).isPresent()) {
+            return true;
         }
 
         return open.filter(project -> {
