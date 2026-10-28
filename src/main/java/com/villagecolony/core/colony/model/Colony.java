@@ -231,6 +231,14 @@ public final class Colony {
     }
 
     /**
+     * A caixa gravada no save, devolvida como estava. O centro gravado fica: passar pela primeira medida o poria no
+     * meio da caixa, e a vila que cresceu para um lado teria o centro movido a cada carga do mundo (Regra 141).
+     */
+    public void restoreBounds(VillageBounds saved) {
+        this.bounds = Objects.requireNonNull(saved, "saved");
+    }
+
+    /**
      * A medida da vila: a primeira define a caixa e põe o centro no meio dela; as seguintes só aumentam a
      * caixa — o centro fica (Regra 141, autor 2026-10-28: a vila que cresce para um lado não arrasta as
      * obras, as camas e as varreduras atrás dela).
