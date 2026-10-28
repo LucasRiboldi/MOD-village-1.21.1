@@ -77,6 +77,7 @@ public final class PathLinks {
     private static final Map<UUID, Plan> PLANS = new HashMap<>();
     private static final Map<UUID, Long> PLANNED_AT = new HashMap<>();
     private static final Map<UUID, Long> SET_ASIDE = new HashMap<>();
+    private static final Map<UUID, String> SUMMARY = new HashMap<>();
 
     private PathLinks() {
     }
@@ -105,6 +106,9 @@ public final class PathLinks {
         Set<Long> roads = roadsOf(colony.id());
         BlockPos hub = MinecraftTypeAdapter.toBlockPos(colony.center());
 
+        int noDoor = 0;
+        int linked = 0;
+
         for (Building building : VillageColonyMod.BUILDINGS.ofColony(colony.id())) {
             if (!building.finished() || SET_ASIDE.containsKey(building.id())) {
                 continue;
@@ -112,7 +116,13 @@ public final class PathLinks {
 
             Optional<Entrance> entrance = entranceOf(world, building);
 
-            if (entrance.isEmpty() || linked(roads, entrance.get().front())) {
+            if (entrance.isEmpty()) {
+                noDoor++;
+                continue;
+            }
+
+            if (linked(roads, entrance.get().front())) {
+                linked++;
                 continue;
             }
 
@@ -148,6 +158,13 @@ public final class PathLinks {
                     entrance.get().front().toShortString());
 
             return;
+        }
+
+        // Nada a traçar: diz por quê, uma vez por mudança (a rede ficou muda o playtest 0.3.97 inteiro).
+        String summary = linked + " doors on the network, " + noDoor + " buildings without a readable door, "
+                + SET_ASIDE.size() + " set aside";
+        if (!summary.equals(SUMMARY.put(colony.id(), summary))) {
+            VillageColonyMod.LOGGER.info("Colony {} path network — {}", colony.id().toString().substring(0, 8), summary);
         }
     }
 
@@ -219,10 +236,7 @@ public final class PathLinks {
         BlockPos max = MinecraftTypeAdapter.toBlockPos(building.max());
 
         for (BlockPos at : BlockPos.iterate(min, new BlockPos(max.getX(), Math.min(max.getY(), min.getY() + 3), max.getZ()))) {
-            boolean edge = at.getX() == min.getX() || at.getX() == max.getX()
-                    || at.getZ() == min.getZ() || at.getZ() == max.getZ();
-
-            if (!edge || !world.isChunkLoaded(at)) {
+            if (!world.isChunkLoaded(at)) {
                 continue;
             }
 
@@ -232,13 +246,32 @@ public final class PathLinks {
                 continue;
             }
 
-            for (Direction out : Direction.Type.HORIZONTAL) {
-                BlockPos front = at.offset(out);
+            // A porta pode ficar recuada (a varanda das casas Vanilla): sai pelo lado da porta que chega
+            // à borda com menos obstáculo, e a frente é o primeiro chão fora da caixa.
+            Direction facing = state.get(DoorBlock.FACING);
+            Optional<Entrance> best = Optional.empty();
+            int fewest = Integer.MAX_VALUE;
 
-                if (front.getX() < min.getX() || front.getX() > max.getX()
-                        || front.getZ() < min.getZ() || front.getZ() > max.getZ()) {
-                    return Optional.of(new Entrance(front.toImmutable(), sideOf(out)));
+            for (Direction out : List.of(facing, facing.getOpposite())) {
+                int blocked = 0;
+                BlockPos step = at.toImmutable();
+
+                do {
+                    step = step.offset(out);
+                    if (!world.getBlockState(step).getCollisionShape(world, step).isEmpty()) {
+                        blocked++;
+                    }
+                } while (step.getX() >= min.getX() && step.getX() <= max.getX()
+                        && step.getZ() >= min.getZ() && step.getZ() <= max.getZ());
+
+                if (blocked < fewest) {
+                    fewest = blocked;
+                    best = Optional.of(new Entrance(step, sideOf(out)));
                 }
+            }
+
+            if (best.isPresent()) {
+                return best;
             }
         }
 
@@ -258,5 +291,6 @@ public final class PathLinks {
         PLANS.clear();
         PLANNED_AT.clear();
         SET_ASIDE.clear();
+        SUMMARY.clear();
     }
 }

@@ -162,6 +162,27 @@ public final class ShepherdFlock {
         return ColonyChests.countIn(world, chests, food) - PAIR_FOOD >= keep;
     }
 
+    /** O mesmo, guardando também o que as obras abertas da colônia ainda pedem dessa comida (o trigo da horta). */
+    static boolean mayFeed(ServerWorld world, UUID colonyId, List<ColonyPos> chests, Item food) {
+        int keep = (CropPatch.isSeed(food) ? SEEDS_FOR_SOWING : 0) + buildsNeed(colonyId, food);
+
+        return ColonyChests.countIn(world, chests, food) - PAIR_FOOD >= keep;
+    }
+
+    /** Quanto desta comida as obras abertas da colônia ainda vão assentar. */
+    static int buildsNeed(UUID colonyId, Item food) {
+        var id = MinecraftTypeAdapter.toResourceId(food);
+        int need = 0;
+
+        for (var project : VillageColonyMod.CONSTRUCTIONS.all()) {
+            if (project.colonyId().equals(colonyId) && project.state().isOpen()) {
+                need += project.remainingMaterials().getOrDefault(id, 0);
+            }
+        }
+
+        return need;
+    }
+
     static boolean hasShepherd(Colony colony) {
         return VillageColonyMod.WORKERS.ofColony(colony.id()).stream()
                 .anyMatch(worker -> worker.profession().filter(ProfessionType.SHEPHERD::equals).isPresent());
@@ -244,7 +265,7 @@ public final class ShepherdFlock {
         }
 
         for (Item food : foodOf(species, ready.get(0))) {
-            if (!mayFeed(world, chests, food)) {
+            if (!mayFeed(world, colony.id(), chests, food)) {
                 continue;
             }
 
@@ -263,10 +284,11 @@ public final class ShepherdFlock {
 
         // Sem nada do fazendeiro nos baús, a ração vem sozinha — Regra 117 (jogo da 0.3.93: "the
         // shepherd has no food" milhares de vezes em todo bioma, e o rebanho parado abaixo da meta).
-        // Só sem nada: com um pouco do fazendeiro guardado, o par espera a colheita.
+        // Só sem nada: com um pouco do fazendeiro guardado, o par espera a colheita. O que a obra
+        // reservou (o trigo da horta) não conta como guardado para o rebanho.
         Item feed = ANIMAL_FEED.get(species);
         boolean farmMadeSome = foodOf(species, ready.get(0)).stream()
-                .anyMatch(food -> ColonyChests.countIn(world, chests, food) > 0);
+                .anyMatch(food -> ColonyChests.countIn(world, chests, food) > buildsNeed(colony.id(), food));
 
         if (feed == null || farmMadeSome) {
             VillageColonyMod.LOGGER.info("Colony {} — the shepherd has no food for the {} ({} adults)",

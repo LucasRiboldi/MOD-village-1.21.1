@@ -254,6 +254,35 @@ public final class FoundationPreparationGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * A água da horta da própria planta, já assentada na camada da rua, não é buraco na base: a casa
+     * de savana com 21 blocos por pôr ficou 15 minutos sem construtor por isso (playtest 0.3.97).
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "foundation_preparation")
+    public void thePlannedWaterOfTheGardenIsNotAGapInTheBase(TestContext context) {
+        BlockPos origin = new BlockPos(5, 2, 5);
+        for (BlockPos column : List.of(origin, origin.east(), origin.south(), origin.south().east())) {
+            context.setBlockState(column.down(), Blocks.DIRT);
+            context.setBlockState(column, Blocks.DIRT);
+        }
+        context.setBlockState(origin.east(), Blocks.WATER);
+
+        Blueprint garden = Blueprint.of(ResourceId.vanilla("foundation_garden"), List.of(
+                new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("farmland")),
+                new BlueprintBlock(new ColonyPos(1, 0, 0), ResourceId.vanilla("water")),
+                new BlueprintBlock(new ColonyPos(0, 0, 1), ResourceId.vanilla("farmland")),
+                new BlueprintBlock(new ColonyPos(1, 0, 1), ResourceId.vanilla("farmland"))
+        )).withStreetLayer(0);
+        ConstructionProject project = ConstructionProject.plan(UUID.randomUUID(), garden,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(origin)));
+
+        java.util.Optional<String> refusal = FoundationPreparation.refusal(context.getWorld(), project);
+        context.assertTrue(refusal.isEmpty(), "a água da planta foi tomada por buraco na base: " + refusal);
+        context.assertTrue(FoundationPreparation.refusal(context.getWorld(), project(context, origin)).isPresent(),
+                "a água fora da planta devia continuar recusada");
+        context.complete();
+    }
+
     private static ConstructionProject project(TestContext context, BlockPos relativeOrigin) {
         Blueprint blueprint = Blueprint.of(ResourceId.vanilla("foundation_preparation"), List.of(
                 new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("cobblestone")),

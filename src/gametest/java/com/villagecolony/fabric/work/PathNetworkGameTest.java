@@ -97,6 +97,36 @@ public class PathNetworkGameTest implements FabricGameTest {
     }
 
     /** Construção nova nasce a no mínimo três blocos de outra; o caminho pode encostar. */
+    /**
+     * A porta recuada da casa Vanilla (a varanda fica dentro da caixa) também é achada, e a frente é o
+     * primeiro chão fora da caixa pelo lado aberto — no playtest 0.3.97 a rede não traçou nada por isso.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "path_network", tickLimit = 20)
+    public void aRecessedDoorIsFoundAndLeadsOutOfTheBox(TestContext context) {
+        BlockPos min = context.getAbsolutePos(new BlockPos(1, 2, 1));
+        BlockPos max = context.getAbsolutePos(new BlockPos(7, 5, 7));
+        BlockPos door = context.getAbsolutePos(new BlockPos(4, 2, 3));
+        ServerWorld world = context.getWorld();
+
+        world.setBlockState(door, Blocks.OAK_DOOR.getDefaultState()
+                .with(net.minecraft.block.DoorBlock.FACING, net.minecraft.util.math.Direction.NORTH));
+        world.setBlockState(door.up(), Blocks.OAK_DOOR.getDefaultState()
+                .with(net.minecraft.block.DoorBlock.FACING, net.minecraft.util.math.Direction.NORTH)
+                .with(net.minecraft.block.DoorBlock.HALF, net.minecraft.block.enums.DoubleBlockHalf.UPPER));
+        world.setBlockState(door.south(2), Blocks.STONE.getDefaultState());
+
+        Building house = new Building(UUID.randomUUID(), UUID.randomUUID(), ResourceId.vanilla("test_porch_house"),
+                new ColonyPos(min.getX(), min.getY(), min.getZ()), new ColonyPos(max.getX(), max.getY(), max.getZ()));
+
+        var entrance = PathLinks.entranceOf(world, house);
+
+        context.assertTrue(entrance.isPresent(), "a porta recuada não foi achada");
+        context.assertTrue(entrance.get().front().equals(new BlockPos(door.getX(), door.getY(), min.getZ() - 1)),
+                "a frente devia ser o chão logo fora da caixa, ao norte; veio " + entrance.get().front());
+        context.assertTrue(entrance.get().out() == Side.NORTH, "o rumo devia ser o norte, veio " + entrance.get().out());
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lot_spacing", tickLimit = 20)
     public void aNewLotKeepsThreeBlocksFromAnyConstruction(TestContext context) {
         UUID colonyId = UUID.randomUUID();
