@@ -226,6 +226,10 @@ public final class GroundPickup {
     }
 
     private static void addKnownItem(Set<Item> items, ResourceId material) {
+        if (AppearingPieces.needsNoStock(material)) {
+            return;
+        }
+
         Item item = Registries.ITEM.get(Identifier.of(material.namespace(), material.path()));
 
         if (item != Items.AIR) {

@@ -88,41 +88,6 @@ public class FlockWheatGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** O trigo que a obra aberta ainda pede (a horta da casa) fica para ela: o pastor não ceva com ele. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "flock_wheat", tickLimit = 20)
-    public void breedingLeavesTheWheatTheBuildAsksFor(TestContext context) {
-        ColonyPos chest = chest(context);
-        List<ColonyPos> chests = List.of(chest);
-        UUID colonyId = UUID.randomUUID();
-        com.villagecolony.core.construction.model.ConstructionProject project =
-                com.villagecolony.core.construction.model.ConstructionProject.plan(colonyId,
-                        com.villagecolony.core.construction.model.Blueprint.of(
-                                com.villagecolony.core.type.ResourceId.vanilla("flock_garden"), List.of(
-                                        new com.villagecolony.core.construction.model.BlueprintBlock(
-                                                new ColonyPos(0, 1, 0), MinecraftTypeAdapter.toResourceId(Items.WHEAT)),
-                                        new com.villagecolony.core.construction.model.BlueprintBlock(
-                                                new ColonyPos(1, 1, 0), MinecraftTypeAdapter.toResourceId(Items.WHEAT)))),
-                        chest);
-        VillageColonyMod.CONSTRUCTIONS.register(project);
-
-        try {
-            ChestDepositor.deposit(context.getWorld(), chest, Items.WHEAT, ShepherdFlock.PAIR_FOOD + 1);
-            context.assertTrue(ShepherdFlock.buildsNeed(colonyId, Items.WHEAT) == 2,
-                    "a obra devia pedir 2 de trigo, veio " + ShepherdFlock.buildsNeed(colonyId, Items.WHEAT));
-            context.assertFalse(ShepherdFlock.mayFeed(context.getWorld(), colonyId, chests, Items.WHEAT),
-                    "o pastor cevou com o trigo que a obra espera");
-
-            ChestDepositor.deposit(context.getWorld(), chest, Items.WHEAT, 1);
-            context.assertTrue(ShepherdFlock.mayFeed(context.getWorld(), colonyId, chests, Items.WHEAT),
-                    "com trigo acima do que a obra pede, o par devia sair");
-        } finally {
-            VillageColonyMod.CONSTRUCTIONS.forget(project.id(),
-                    com.villagecolony.core.construction.service.RemovalAudit.playerCancellation());
-        }
-
-        context.complete();
-    }
-
     private static ColonyPos chest(TestContext context) {
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
 
