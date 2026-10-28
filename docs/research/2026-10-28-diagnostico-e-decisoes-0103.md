@@ -104,7 +104,7 @@ no lugar" (deserto: 128 de 416).
 | Item | Opção escolhida | O que fazer |
 |---|---|---|
 | **T1** | **A** — por material | O gelo compactado (o jogo só dá com toque suave) entra nas peças que surgem com registro; a neve ganha prioridade na rota da pá; o lenhador derruba a espécie que a obra pede (acácia); depois de N tentativas, a obra aceita a madeira equivalente do bioma |
-| **T2** | **B** — porta no curral | O curral da colônia leva porta de madeira no lugar do portão: o aldeão do jogo sabe abrir porta, não portão |
+| **T2** | **A** — pastor por cima da cerca | O curral não muda. O pastor tosquia e abate de fora da cerca, a até 4,5 blocos do olho (como o fazendeiro); só entra para levar animal, e fecha o portão ao sair. (A primeira leitura, "trocar o portão por porta", foi descartada pelo autor.) |
 | **T3** | **B** — mapa de encalhe | A posição de cada teleporte e de cada encalhe vira um mapa (script) para achar os lugares que prendem |
 | **T4** | **B** — filtrar antes | O mineiro descarta o alvo alto demais ou sem caminho antes de escolher, em vez de tentar e recusar |
 | **T5** | **A** — rota própria | A argila vem do fundo de água rasa e de rio (busca mais longe), e surge depois de 3 buscas vazias; a acácia segue o T1; a vidraça ganha a cadeia areia → vidro → vidraça no fundidor |
