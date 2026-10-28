@@ -426,7 +426,7 @@ public final class BuildSiteScanner {
         return List.copyOf(footprints);
     }
 
-    /** Esquece os cursores. Chamado ao descarregar o mundo. */
+    /** Esquece o estado da varredura — cursores, ruas, relatórios e a nota do lote. Chamado ao descarregar o mundo. */
     public static void clearAll() {
         SweepState.SWEEPS.clear();
         SweepState.ROADS.clear();
@@ -434,6 +434,7 @@ public final class BuildSiteScanner {
         SweepState.BUILDING.clear();
         SweepState.EXHAUSTED.clear();
         SweepState.REPORTS.clear();
+        SweepState.LOT_SCORE.clear();
     }
 
     /** Esquece o estado transitório de uma colônia, para testes isolados. */
