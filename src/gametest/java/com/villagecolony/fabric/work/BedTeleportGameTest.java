@@ -1,5 +1,10 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import java.util.UUID;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.BlockState;
@@ -77,9 +82,82 @@ public class BedTeleportGameTest implements FabricGameTest {
         context.waitAndRun(20, () -> {
             boolean went = NightHome.check(context.getWorld(), villager, villager.getUuid());
 
+            // O teto de vidro fica a dois blocos da cama: de pé no colchão, a cabeça entra nele (Regra 114).
             context.assertTrue(went, "a cama está fechada em vidro e o aldeão não foi para ela");
-            context.assertTrue(villager.getBlockPos().isWithinDistance(bed, 1.5),
+            context.assertTrue(villager.getBlockPos().isWithinDistance(bed, 3),
                     "o aldeão ficou em " + villager.getBlockPos().toShortString() + ", longe da cama");
+            context.assertTrue(SafeLanding.fits(context.getWorld(), villager, villager.getPos()),
+                    "o aldeão foi posto com o corpo dentro de bloco em " + villager.getPos());
+            context.complete();
+        });
+    }
+
+    /**
+     * Teto baixo sobre a cama: ele vai para o lado dela, não para dentro do teto — Regra 114 (neve,
+     * 23-10: 12 aldeões morreram sufocados segundos depois de serem levados para a cama).
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "bed_teleport", tickLimit = 100)
+    public void underALowCeilingTheVillagerStandsBesideTheBed(TestContext context) {
+        BlockPos bed = placeBed(context, BED);
+        VillagerEntity villager = villagerHomedAt(context, bed);
+
+        context.setBlockState(BED.up(2), Blocks.STONE.getDefaultState());
+        context.setBlockState(BED.north().up(2), Blocks.STONE.getDefaultState());
+
+        context.waitAndRun(20, () -> {
+            context.assertTrue(BedTeleport.toBed(context.getWorld(), villager, villager.getUuid(), "test"),
+                    "havia chão livre ao lado da cama e o aldeão não foi");
+            context.assertTrue(SafeLanding.fits(context.getWorld(), villager, villager.getPos()),
+                    "o aldeão foi posto com a cabeça no teto em " + villager.getPos());
+            context.assertTrue(villager.getBlockPos().isWithinDistance(bed, 3),
+                    "o aldeão ficou em " + villager.getBlockPos().toShortString() + ", longe da cama");
+            context.complete();
+        });
+    }
+
+    /** Controle: com espaço até a cabeça, ele fica de pé no colchão, como antes. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "bed_teleport", tickLimit = 100)
+    public void withRoomOverheadTheVillagerStandsOnTheMattress(TestContext context) {
+        BlockPos bed = placeBed(context, BED);
+        VillagerEntity villager = villagerHomedAt(context, bed);
+
+        context.waitAndRun(20, () -> {
+            BedTeleport.toBed(context.getWorld(), villager, villager.getUuid(), "test");
+
+            context.assertTrue(villager.getBlockPos().equals(bed),
+                    "com espaço sobre a cama ele devia ficar nela, ficou em " + villager.getBlockPos().toShortString());
+            context.complete();
+        });
+    }
+
+    /** Sem cama, o preso vai ao chão do centro da vila — Regra 114 (savana, 23-10: 4 h preso). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "bed_teleport", tickLimit = 100)
+    public void withNoBedTheStuckVillagerGoesToTheVillageCenter(TestContext context) {
+        floor(context);
+
+        BlockPos pit = new BlockPos(1, 2, 1);
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, pit);
+        Colony colony = Colony.create(UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(7, 2, 7))));
+
+        VillageColonyMod.COLONIES.register(colony);
+        VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id()).assign(ProfessionType.BUILDER);
+
+        context.waitAndRun(20, () -> {
+            try {
+                for (int attempt = 0; attempt < BedTeleport.STUCK_ATTEMPTS; attempt++) {
+                    BedTeleport.attempt(villager.getUuid(), villager.getBlockPos());
+                }
+
+                context.assertTrue(BedTeleport.tooManyAttempts(context.getWorld(), villager, villager.getUuid()),
+                        "sem cama, cinco tentativas no mesmo lugar e o aldeão não saiu dali");
+                context.assertTrue(villager.getBlockPos().isWithinDistance(context.getAbsolutePos(new BlockPos(7, 2, 7)), 3),
+                        "o aldeão foi para " + villager.getBlockPos().toShortString() + ", não para o centro da vila");
+            } finally {
+                VillageColonyMod.WORKERS.remove(villager.getUuid());
+                VillageColonyMod.COLONIES.remove(colony.id());
+            }
+
             context.complete();
         });
     }

@@ -48,6 +48,28 @@ public class ShepherdWoolDeficitGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Sem trigo do fazendeiro nos baús, a ração vem sozinha e o par sai — Regra 117. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "wool_deficit_no_feed")
+    public void withNoFarmFoodTheAnimalFeedComesIn(TestContext context) {
+        List<SheepEntity> sheep = shorn(context, 2);
+        BlockPos at = context.getAbsolutePos(new BlockPos(6, 2, 6));
+
+        context.getWorld().setBlockState(at, Blocks.CHEST.getDefaultState());
+
+        try {
+            boolean bred = ShepherdFlock.breedForWool(context.getWorld(), colonyAt(context),
+                    area(context), List.of(MinecraftTypeAdapter.toColonyPos(at)));
+
+            context.assertTrue(bred, "sem comida nos baús, a ração não veio e o rebanho não procriou");
+            context.assertTrue(sheep.stream().allMatch(SheepEntity::isInLove),
+                    "as ovelhas não ficaram prontas para procriar com a ração");
+        } finally {
+            sheep.forEach(SheepEntity::discard);
+        }
+
+        context.complete();
+    }
+
     /** Controle: com o rebanho no teto, nada se cria — a lã volta sozinha. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "wool_deficit_full")
     public void aFullShornFlockDoesNotBreed(TestContext context) {

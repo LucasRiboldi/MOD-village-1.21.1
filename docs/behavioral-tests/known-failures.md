@@ -26,6 +26,14 @@ Aberto: outros cenários que chamam `runCycleNow` na arena podem adotar camas vi
 
 ---
 
+## KF-010 — `MinerCautionGameTest.underARoofTheBeachHasNoWayOff` caiu uma vez na bateria inteira
+
+**ABERTO.** 27-10, 0.3.94 (864 testes): caiu 1 vez em 4 baterias (as outras três 864/864). A mudança da
+0.3.94 (Regra 113) não toca o mineiro nem a água; o teste é da 0.3.89 (água proibida só debaixo da terra).
+Hipótese, não medida: interferência do arranjo das arenas, como KF-007 a KF-009.
+
+---
+
 ## KF-009 — `MineReturnGameTest.aStrandedMinerGoesBackUpTheMineStairsAndLeavesTheVillageGroundWhole` caiu uma vez na bateria inteira
 
 **ABERTO.** 22-10, 0.3.89 (853 testes): caiu 1 vez em 4 baterias. O mineiro parou no passo 12 de 13 do

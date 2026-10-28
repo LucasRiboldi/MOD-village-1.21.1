@@ -129,6 +129,41 @@ public final class TreeFelling {
     }
 
     /**
+     * Nenhuma árvore madura ao alcance: o viveiro planta em lote (uma muda a cada cinco minutos deu 15
+     * toras em 33 minutos numa vila sem árvore natural), e quem já cortou fecha a tarefa CONCLUÍDA com
+     * o que rendeu — Regra 120. Quem não cortou nada espera o bosque crescer.
+     */
+    static LumberjackWork.Outcome noTreeInReach(
+            net.minecraft.server.world.ServerWorld world, net.minecraft.entity.passive.VillagerEntity villager,
+            LumberjackWork.Job job) {
+        LumberjackNursery.plantBatchIfItIsTime(world, job.task.colonyId(), job.center);
+
+        if (job.collected > 0) {
+            closeEmptied(job, villager.getUuid());
+
+            return LumberjackWork.Outcome.DONE;
+        }
+
+        return LumberjackWork.Outcome.SEARCHED;
+    }
+
+    /** Fecha a tarefa como concluída: nenhuma árvore madura no alcance, e ele já cortou — Regra 120. */
+    static void closeEmptied(LumberjackWork.Job job, UUID workerId) {
+        if (job.task.state() == com.villagecolony.core.task.model.TaskState.RESERVED) {
+            job.task.start();
+        }
+
+        job.task.complete();
+        WorkerStrikes.worked(workerId, job.task);
+        TaskChain.next(job.task);
+        WorkTargets.clear(workerId);
+
+        VillageColonyMod.LOGGER.info(
+                "Worker {} closed the wood task — no mature tree left in reach, {} logs this task",
+                LumberjackReport.shortId(workerId), job.collected);
+    }
+
+    /**
      * Encerra a tarefa por baú cheio.
      *
      * <p>É o fim previsto pela Regra 1, e não uma falha. A linha diz

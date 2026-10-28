@@ -211,6 +211,7 @@ public final class PenEscape {
         if (exits.isEmpty()) {
             // Solto, ou preso por outra coisa que não cerca — buraco é do E47.
             SEEN_FREE.put(id, feet.toImmutable());
+            PenLift.forget(id);
 
             return false;
         }
@@ -231,6 +232,10 @@ public final class PenEscape {
         }
 
         long gates = exits.stream().filter(FencedIn.Exit::gate).count();
+
+        if (gates == 0 && villager instanceof VillagerEntity worker) {
+            PenLift.leaveBedInPen(world, worker, pen.reach());
+        }
 
         VillageColonyMod.LOGGER.info(
                 "{} {} is fenced in at {} ({} gate(s), {} fence spot(s) to jump; {} time this"
@@ -268,6 +273,7 @@ public final class PenEscape {
                     now - escape.began);
 
             finish(id, escape, villager);
+            PenLift.forget(id);
 
             return;
         }
@@ -400,6 +406,7 @@ public final class PenEscape {
                     who(villager), shortId(id), villager.getBlockPos().toShortString(), escape.exits.size());
 
             finish(id, escape, villager);
+            PenLift.failedRound(world, villager, escape.exits, escape.reach);
 
             return;
         }

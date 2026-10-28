@@ -174,13 +174,7 @@ public final class TreeChoice {
         ResourceSearches.found(job.task.colonyId(), ProfessionType.LUMBERJACK, tree.isPresent());
 
         if (tree.isEmpty()) {
-            // Nenhuma árvore ao alcance. Não é motivo para encerrar: a
-            // floresta cresce, e a muda replantada volta a ser árvore.
-            // Em lote — 2026-09-26: uma muda a cada cinco minutos deu 15
-            // toras em 33 minutos numa vila sem árvore natural.
-            LumberjackNursery.plantBatchIfItIsTime(world, job.task.colonyId(), job.center);
-
-            return LumberjackWork.Outcome.SEARCHED;
+            return TreeFelling.noTreeInReach(world, villager, job);
         }
 
         // Perguntar antes de derrubar. O tronco sai do mundo sem drop,

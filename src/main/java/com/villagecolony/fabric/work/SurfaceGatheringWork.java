@@ -302,7 +302,8 @@ public final class SurfaceGatheringWork {
                 boolean stocked = LocateFallback.afterEmptySearch(world, job.task, empty);
 
                 finish(job, workerId, stocked
-                        ? "nothing in the whole radius — " + LocateFallback.ATTEMPTS + " searches came up empty,"
+                        ? "nothing in the whole radius — "
+                                + LocateFallback.attemptsFor(job.task.targetResource()) + " searches came up empty,"
                                 + " so it was stocked instead"
                         : "nothing in the whole radius");
 

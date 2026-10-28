@@ -495,7 +495,7 @@ class MineRegistryTest {
         assertTrue(mine.deepenIfEveryArmIsDone(), "os quatro ramais fecharam e ela não desceu");
 
         assertEquals(
-                before - MineShaft.DESCENT,
+                before - MineShaft.DESCENT - MineShaft.ARM_STAIRS,
                 mine.shaft().positionAt(MineShaft.CARVED).y());
 
         assertEquals(0, mine.arm(0).cut());

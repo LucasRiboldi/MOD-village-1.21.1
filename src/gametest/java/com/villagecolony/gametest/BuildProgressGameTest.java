@@ -7,6 +7,7 @@ import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionOutcome;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
+import com.villagecolony.core.construction.model.PieceRescue;
 import com.villagecolony.core.construction.model.SkipReason;
 import com.villagecolony.core.coordination.PatienceClock;
 import com.villagecolony.core.coordination.WorkClock;
@@ -73,12 +74,12 @@ public class BuildProgressGameTest implements FabricGameTest {
     private static final BlockPos UNSUPPORTED_STAND = new BlockPos(1, 4, 2);
 
     /**
-     * Peça sem apoio não pode sair da planta nem acordar outro construtor
-     * sem mudança no mundo.
+     * Peça sem apoio não sai da planta como se tivesse sido posta; sem mais nada a pôr, o ciclo a traz
+     * de volta e reabre a tarefa, sem fazê-la surgir antes de {@link PieceRescue#TRIES} voltas (Regra 113).
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress",
             tickLimit = 100)
-    public void anUnsupportedPieceStaysPartialWithoutReopeningTheBuildTask(TestContext context) {
+    public void anUnsupportedPieceStaysPartialAndTheRescueReopensTheTask(TestContext context) {
         ServerWorld world = context.getWorld();
         context.setBlockState(UNSUPPORTED_CHEST, Blocks.CHEST.getDefaultState());
         context.setBlockState(UNSUPPORTED_STAND.down(), Blocks.STONE.getDefaultState());
@@ -126,18 +127,13 @@ public class BuildProgressGameTest implements FabricGameTest {
 
                 ConstructionPlanner.plan(world, colony);
 
-                context.assertFalse(VillageColonyMod.TASKS.ofColony(colony.id()).stream()
-                                .anyMatch(candidate -> candidate.type() == TaskType.BUILD
-                                        && candidate.isOpen()),
-                        "o planejador reabriu a mesma tarefa sem uma mudança no apoio");
-
-                context.setBlockState(ORIGIN.down(), Blocks.STONE.getDefaultState());
-                ConstructionPlanner.plan(world, colony);
-
                 context.assertTrue(VillageColonyMod.TASKS.ofColony(colony.id()).stream()
                                 .anyMatch(candidate -> candidate.type() == TaskType.BUILD
                                         && candidate.isOpen()),
-                        "a mudança no apoio nao devolveu a peca pendente ao construtor");
+                        "sem mais nada a pôr, o resgate devia trazer a peça de volta e reabrir a tarefa");
+                context.assertTrue(world.getBlockState(context.getAbsolutePos(ORIGIN)).isAir()
+                                && project.remainingCount() == 1,
+                        "na primeira volta a peça não surge");
             } finally {
                 owned.cleanUp();
             }

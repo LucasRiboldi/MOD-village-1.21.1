@@ -1,5 +1,7 @@
 package com.villagecolony.core.coordination;
 
+import org.jspecify.annotations.Nullable;
+
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.task.service.TaskService;
@@ -131,9 +133,29 @@ public final class WorkAssignment {
         Objects.requireNonNull(hasStorage, "hasStorage");
         Objects.requireNonNull(canReserveTask, "canReserveTask");
 
-        int assigned = 0;
+        return assign(colonyId, workers, tasks, hasStorage, canReserveTask, null);
+    }
 
-        for (Worker worker : idleWorkers(colonyId, workers, tasks)) {
+    /**
+     * O mesmo, oferecendo a tarefa primeiro a quem vem antes em {@code nearFirst} — item 3 de 27-10; nulo
+     * mantém a ordem do registro.
+     */
+    public static int assign(
+            java.util.UUID colonyId,
+            WorkerService workers,
+            TaskService tasks,
+            Predicate<java.util.UUID> hasStorage,
+            BiPredicate<Worker, Task> canReserveTask,
+            java.util.@Nullable Comparator<Worker> nearFirst) {
+
+        int assigned = 0;
+        List<Worker> idle = new ArrayList<>(idleWorkers(colonyId, workers, tasks));
+
+        if (nearFirst != null) {
+            idle.sort(nearFirst);
+        }
+
+        for (Worker worker : idle) {
             // O relógio dos descansos é esta passagem: ela roda uma vez
             // por ciclo da colônia, e o Core não conhece world.getTime()
             // (ADR-005). Quem está com tarefa aberta não gasta descanso,

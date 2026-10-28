@@ -1,4 +1,83 @@
-# STATE — 2026-10-22
+# STATE — 2026-10-27
+
+> **0.3.97** (27-10, branch `fix/obra-pecas-de-lado`, PR #36): os sete pontos abertos da 0.3.96, cada um com
+> as opções escolhidas pelo autor (memória `decisoes-autor-2026-10-27-sete-itens`).
+> - Cama pela soma (16) e tarefa a quem mora perto do lugar do ofício (Regra 74).
+> - Ajudas (127): pastor na roça, lenhador no bosque, carpinteiro com a tocha da colônia, pedreiro com a pá
+>   na neve.
+> - Atalho ao chafariz a partir de 2× (D5); veio que não sobe (119).
+> - Rede de corredores removida; Regra 127 de lote pela centralidade **não feita**, por escolha do autor.
+> - **Verificado:** testes de unidade e arquitetura OK; bateria 876/876; cada ajuda e a tocha com GameTest,
+>   menos o lenhador e a escolha do lugar da tocha (dependem do expediente). **Não jogado.**
+> - **Para o jogo:**
+>   - a cara da tocha e a área clara;
+>   - "lit the dark path", "tended the grove", "harvested … for the farmer", "shoveled";
+>   - se a vila faz bloco e camada de neve com as bolas;
+>   - um save antigo com a rede de túneis carregando sem erro.
+> - **Veio:** a régua é "nunca sobe acima de onde começou" (e não "até 2 acima do piso" ao pé da letra, que
+>   quebrava 5 testes do veio) — confirmada pelo autor em 27-10.
+>
+
+> **0.3.96** (27-10, branch `fix/obra-pecas-de-lado`, PR #36): mina em caracol (119), rede de caminhos
+> (123–125, estudo `docs/research/2026-10-27-rede-de-caminhos.md`), fazendeiro (121), lenhador (120),
+> cercados (122), 3 blocos entre construções (124), peça colorida branca (126) e códigos do diário.
+> - **Verificado:** testes de unidade OK; bateria 874/874. Cada regra tem teste, e as provas de mutação da
+>   mina, da roça, do custo de colar e do aterro foram pegas. **Não jogado.**
+> - **Para o jogo:**
+>   - a mina nova num save novo (num save antigo ela segue da mesma boca);
+>   - "traced a path", "finished a path" e "PAVED … path network" no log;
+>   - recusas `TOO_CLOSE` no `LotRefusals`;
+>   - "closed the wood task"; "still sweeping" deve cair.
+> - **Ainda abertos:**
+>   - item 3 (trabalho perto da cama, troca forçada);
+>   - item 8 (ajudante da cadeia);
+>   - D5 (atalho ao chafariz);
+>   - Regra 127 (lote pela centralidade);
+>   - neve (snow_block da pá, diorito da mina);
+>   - remover o código parado da rede de túneis;
+>   - o veio que mira pedra alta no mineiro.
+>
+
+> **0.3.95** (27-10, mesma branch `fix/obra-pecas-de-lado`, PR #36): correções feitas a partir dos cinco
+> logs da 0.3.93 (savana, planície ×3, neve, taiga, deserto). Análise na memória `analise-biomas-logs-0393`.
+> - **Regra 114:** o teleporte pousa onde o corpo cabe (14 sufocados: 12 na neve, 2 no deserto); o preso sem
+>   cama vai ao centro da vila; quem fica 3 rodadas cercado sai por cima da cerca (`SafeLanding`, `PenLift`).
+> - **Regra 115:** o armazém pisa no nível do chão, com lote nivelado; há um por bioma, sem folhas, alçapões
+>   nem teias (`scripts/storage_variants.py`).
+> - **Regra 116:** a argila surge na 3ª busca vazia. **Regra 117:** ração do pastor sem comida do fazendeiro.
+>   **Regra 118:** no deserto, bosque com o dobro de mudas, nas bordas sorteadas.
+> - Animais da fundação (2 de cada espécie): já existiam (Regra 102); os logs mostram 8 em toda vila.
+> - **Ainda sem correção:**
+>   - savana: o lenhador não termina tarefa e há 94 acacia_log de lado. As tarefas do lenhador terminam soltas
+>     em todo bioma, então falta medir se é a acácia ou a cota de 128 toras;
+>   - fazendeiro: "could not reach the crop" (até 31×) e, na planície 1bd4fbb9, "budget ran out" (266×), com a
+>     população parada em 16 e 41 camas;
+>   - neve: snow, snow_block e diorite surgindo; deserto: smooth_sandstone (146);
+>   - mineiro: NO_STANDING e TOO_HIGH; Regra 74 sem troca; códigos UNCLASSIFIED.
+>
+> Verificado: test OK; Python 124 OK; bateria 871/871 depois de cada marco (×2 nos três primeiros).
+> Não jogado.
+>
+> **Próximo:** jogar e procurar "lifted from", "to the village center", "animal feed", morte de aldeão
+> "sufocou"; ver o armazém num terreno inclinado.
+>
+
+> **0.3.94** (27-10, branch `fix/obra-pecas-de-lado`): **Regra 113**, decisão do autor. No jogo da 0.3.93
+> no deserto (22-10, ~3 h), a vila parou às 18:57: o armazém (`storage_majest`, 112 89 -430) chegou a
+> "5 blocks left" com as cinco peças de lado; o construtor soltou a obra depois dos 5 minutos do
+> `BuildWait`, o planejador não reabre tarefa sem peça a pôr, o `UnsupportedRelease` só fecha até 4
+> peças sem apoio, e nenhuma obra nova abria (343 ciclos "a build was open"). Construtor 77% ocioso,
+> lenhador 98%, pedreiro 93%.
+> - **Agora:** a cada ciclo, toda peça de lado volta à fila (qualquer motivo) e a tarefa reabre; depois de
+>   4 voltas a peça surge (`VC_SUPPLY` `STUCK_PIECE`) e a obra fecha (`PieceRescue`, `StuckPieces`).
+> - **Também visto nesse jogo, sem correção ainda:** 115 aldeões levados à cama à noite por falta de
+>   caminho; fazendeiro 15× "could not reach the crop"; mineiros 59× sem lugar de pé e 22× sem
+>   caminho; nenhuma troca de cama da Regra 74 (não verificado se o diário tinha ações bastantes);
+>   12 códigos `UNCLASSIFIED` no mineiro.
+> - CHANGELOG reconstruído de 0.3.51 a 0.3.85 e corrigido de 0.3.86 a 0.3.93 a partir dos commits.
+>
+> **Próximo:** jogar e ler `brings back … try N of 4` e `the last pieces set aside came up in place`.
+>
 
 > **0.3.93** (22-10, branch `feat/regras-v2-melhorias`): avaliação do "Regras Consolidadas v2" (proposta do
 > autor) contra o código — `docs/research/2026-10-22-avaliacao-regras-v2.md` — e as melhorias escolhidas.

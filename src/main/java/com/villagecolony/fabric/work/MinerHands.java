@@ -116,7 +116,6 @@ public final class MinerHands {
         // recusa velha continuaria contando contra a pedra que veio
         // depois no mesmo lugar, quando a mina descer um nível.
         MineMarks.dug(job.target);
-        NetworkDigging.worked(job.task.colonyId(), villager.getUuid());
 
         // E a curva do ramal recomeça — 2026-09-11. Aqui, e não onde o
         // cursor escolhe a pedra: é este bloco saindo do mundo que prova

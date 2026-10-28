@@ -84,6 +84,12 @@ public final class ModContent {
     public static final Block SAND_PATH =
             new SandPathBlock(AbstractBlock.Settings.copy(Blocks.DIRT_PATH).mapColor(net.minecraft.block.MapColor.PALE_YELLOW));
 
+    /** A tocha da colônia — Regra 127 ({@link ColonyTorchBlock}): luz 15, chama laranja. */
+    public static final Block COLONY_TORCH = new ColonyTorchBlock(
+            AbstractBlock.Settings.copy(Blocks.TORCH).luminance(state -> 15));
+
+    private static RegistryKey<PointOfInterestType> colonyTorchPoi;
+
     private static BlockEntityType<BenchForgeBlockEntity> forgeEntity;
 
     private static RegistryKey<PointOfInterestType> carpenterPoi;
@@ -109,6 +115,7 @@ public final class ModContent {
         registerBlock("builder_bench", BUILDER_BENCH);
         registerBlock("miner_bench", MINER_BENCH);
         registerBlock("sand_path", SAND_PATH);
+        registerBlock("colony_torch", COLONY_TORCH);
 
         // A forja é fornalha de verdade: tipo de BlockEntity próprio (o FURNACE do Vanilla só aceita o
         // bloco Vanilla).
@@ -124,6 +131,7 @@ public final class ModContent {
         shepherdPoi = registerPoi("shepherd_bench_poi", SHEPHERD_BENCH);
         builderPoi = registerPoi("builder_bench_poi", BUILDER_BENCH);
         minerPoi = registerPoi("miner_bench_poi", MINER_BENCH);
+        colonyTorchPoi = registerPoi("colony_torch_poi", COLONY_TORCH);
 
         // As bancadas na aba Blocos Funcionais do criativo, ao lado das estações Vanilla
         // (crafting table, stonecutter, fornalha) — decisão do autor, 2026-10-13.
@@ -140,6 +148,13 @@ public final class ModContent {
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.NATURAL).register(entries ->
                 entries.addAfter(net.minecraft.item.Items.DIRT_PATH, SAND_PATH));
+        ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register(entries ->
+                entries.addAfter(net.minecraft.item.Items.TORCH, COLONY_TORCH));
+    }
+
+    /** O ponto de interesse da tocha da colônia: onde as tochas estão, para o bloqueio de monstros. */
+    public static RegistryKey<PointOfInterestType> colonyTorchPoi() {
+        return colonyTorchPoi;
     }
 
     /** O tipo de BlockEntity da forja do fundidor; registrado em {@link #register()}. */

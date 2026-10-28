@@ -1,5 +1,7 @@
 package com.villagecolony.core.coordination;
 
+import org.jspecify.annotations.Nullable;
+
 import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.resource.service.ResourceDemand;
 import com.villagecolony.core.task.model.Task;
@@ -143,6 +145,26 @@ public final class ColonyCycle {
             Map<ResourceType, Integer> constructionMaterials,
             BiPredicate<Worker, Task> canReserveTask) {
 
+        return run(colonyId, owned, goal, tasks, workers, hasStorage, hands, constructionMaterials, canReserveTask,
+                null);
+    }
+
+    /**
+     * O mesmo, entregando a tarefa primeiro a quem mora mais perto do lugar do ofício — item 3 das escolhas
+     * do autor (27-10). A ordem vem do lado do jogo, que sabe onde fica a cama e o lugar de cada ofício.
+     */
+    public static int run(
+            UUID colonyId,
+            ResourceTally owned,
+            Map<ResourceType, Integer> goal,
+            TaskService tasks,
+            WorkerService workers,
+            Predicate<UUID> hasStorage,
+            ProductionHands hands,
+            Map<ResourceType, Integer> constructionMaterials,
+            BiPredicate<Worker, Task> canReserveTask,
+            java.util.@Nullable Comparator<Worker> nearFirst) {
+
         Objects.requireNonNull(hands, "hands");
         Objects.requireNonNull(constructionMaterials, "constructionMaterials");
         Objects.requireNonNull(colonyId, "colonyId");
@@ -163,7 +185,7 @@ public final class ColonyCycle {
         cancelSatisfied(colonyId, missing, tasks);
         requestMissing(colonyId, owned, missing, constructionMaterials, tasks, workers, hands);
 
-        return WorkAssignment.assign(colonyId, workers, tasks, hasStorage, canReserveTask);
+        return WorkAssignment.assign(colonyId, workers, tasks, hasStorage, canReserveTask, nearFirst);
     }
 
     /**

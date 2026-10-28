@@ -66,6 +66,12 @@ public final class VillageGrove {
     /** Entre duas mudas do bosque. */
     static final int SPACING = 5;
 
+    /**
+     * No deserto o bosque é o dobro e se espalha por pontos sorteados das bordas — Regra 118 (jogo da
+     * 0.3.93: três lenhadores 61% ociosos esperando as 6 mudas juntas perto do baú crescerem).
+     */
+    static final int DESERT_FACTOR = 2;
+
     /** De quanto em quanto tempo o bosque é conferido: 1 min. */
     static final long CHECK_EVERY = 1_200;
 
@@ -114,8 +120,9 @@ public final class VillageGrove {
         }
 
         int planted = 0;
+        int size = sizeFor(colony.id()) * (isDesert(world, colony) ? DESERT_FACTOR : 1);
 
-        while (grove.size() < sizeFor(colony.id())) {
+        while (grove.size() < size) {
             Optional<BlockPos> spot = spotFor(world, colony, box.get(), grove);
 
             if (spot.isEmpty() || !TreeNursery.plant(world, spot.get(), sapling.get())) {
@@ -129,7 +136,7 @@ public final class VillageGrove {
             VillageColonyMod.LOGGER.info(
                     "Colony {} — the lumberjack planted {} near the village at {} (grove {} of {})",
                     colony.id().toString().substring(0, 8), TreeNursery.idOf(sapling.get()),
-                    spot.get().toShortString(), grove.size(), sizeFor(colony.id()));
+                    spot.get().toShortString(), grove.size(), size);
         }
 
         fertilize(world, colony, grove);
@@ -222,6 +229,10 @@ public final class VillageGrove {
                 .min(java.util.Comparator.comparingDouble(log -> log.getSquaredDistance(from)));
     }
 
+    static boolean isDesert(ServerWorld world, Colony colony) {
+        return "desert".equals(HousePlans.paletteOf(world, colony.center()).style());
+    }
+
     /** As mudas de agora, para o teste. */
     static List<BlockPos> of(UUID colonyId) {
         return List.copyOf(GROVES.getOrDefault(colonyId, List.of()));
@@ -252,6 +263,11 @@ public final class VillageGrove {
                 : Comparator.<int[]>comparingDouble(cell -> turn(towards,
                                 Math.atan2(cell[1] - box.centerZ(), cell[0] - box.centerX())))
                         .thenComparingInt(cell -> cell[2]));
+
+        // No deserto, bordas sorteadas: o bosque se espalha em volta da vila (Regra 118).
+        if (isDesert(world, colony)) {
+            java.util.Collections.shuffle(ring, new java.util.Random(world.getRandom().nextLong()));
+        }
 
         for (int[] cell : ring) {
             Optional<BlockPos> ground = groundAt(world, cell[0], cell[1], colony.center().y());

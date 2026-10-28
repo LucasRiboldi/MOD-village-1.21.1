@@ -144,11 +144,6 @@ public final class MineDigging {
 
         IdleLog.clear(colonyId, SURFACE_SUBJECT);
 
-        // Passada a escadaria e o salão, as galerias são em rede (ADR-042).
-        if (NetworkDigging.galleryPhase(mine.get())) {
-            return NetworkDigging.nextOrDescend(world, workerId, colonyId, mine.get(), center);
-        }
-
         // O ramal novo vai para o minério que a vila precisa — ADR-039 D3.
         int[] order = MineClaims.armAlreadyHeld(colonyId, workerId).isPresent()
                 ? new int[] {0, 1, 2, 3}

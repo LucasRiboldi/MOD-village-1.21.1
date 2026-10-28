@@ -76,7 +76,10 @@ public final class LotRefusals {
         OFF_ROAD_LEVEL("the ground is not at street level"),
 
         /** A coluna tem coisa dentro do volume da casa. A Regra 22. */
-        OCCUPIED("something stands inside the house's volume");
+        OCCUPIED("something stands inside the house's volume"),
+
+        /** O lote fica a menos de 3 blocos de outra construção. A Regra 124. */
+        TOO_CLOSE("closer than 3 blocks to another construction");
 
         private final String said;
 

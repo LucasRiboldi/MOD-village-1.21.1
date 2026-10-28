@@ -59,6 +59,19 @@ class BedPlanTest {
                 new Move(BUILDER, at(5, 63, 0), at(100, 80, 0))), Set.copyOf(moves));
     }
 
+    /** A soma cai 40: troca, mesmo com o construtor passando a andar mais (autor, 27-10). */
+    @Test
+    void theySwapWhenTheSumFallsEvenIfTheOwnerWalksALittleMore() {
+        Sleeper miner = new Sleeper(MINER, at(100, 60, 0), at(0, 60, 0), true);
+        Sleeper builder = new Sleeper(BUILDER, at(10, 60, 0), at(30, 60, 0), true);
+
+        assertEquals(Set.of(
+                new Move(MINER, at(100, 60, 0), at(10, 60, 0)),
+                new Move(BUILDER, at(10, 60, 0), at(100, 60, 0))),
+                Set.copyOf(BedPlan.plan(List.of(miner, builder), List.of())));
+    }
+
+    /** A soma cai só 4: não vale a troca. */
     @Test
     void anOwnerWhoWouldWalkMoreKeepsHisBed() {
         Sleeper miner = new Sleeper(MINER, at(100, 60, 0), at(0, 60, 0), true);

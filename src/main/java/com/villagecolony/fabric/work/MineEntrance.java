@@ -60,14 +60,13 @@ public final class MineEntrance {
     static final int IN_LEVEL = 12;
 
     /**
-     * Até onde o nível de agora vai, na horizontal, a partir da entrada dele: o salão
-     * e os quatro ramais com a área de busca no fim ({@link MineShaft#ARM_STAIRS} mais
-     * o comprimento da busca), com folga. A pedra e o mineiro dentro disso estão no
-     * nível; a régua de 12 deixava o fim do ramal "fora da mina", e o mineiro na
-     * superfície ia direto à entrada enterrada embaixo dele (playtest 0.3.31).
+     * Até onde o nível de agora vai, na horizontal, a partir da entrada dele: o salão e,
+     * nos quatro cantos, o salão de cada ramal (Regra 119), com folga. A pedra e o
+     * mineiro dentro disso estão no nível; uma régua curta deixava o fim do ramal "fora da
+     * mina", e o mineiro na superfície ia direto à entrada enterrada embaixo dele
+     * (playtest 0.3.31).
      */
-    static final int LEVEL_REACH = com.villagecolony.core.construction.model.MineNetwork.SPACING
-            * com.villagecolony.core.construction.model.MineNetwork.RADIUS + 4;
+    static final int LEVEL_REACH = 2 * MineShaft.HALL_SIDE + 4;
 
     /** Quanto da escada de um rumo precisa estar aberto para ela contar como cavada. */
     static final double DUG_SHARE = 0.5;
@@ -110,8 +109,24 @@ public final class MineEntrance {
             return route;
         }
 
-        for (ColonyPos entry : chainOf(world, colonyId, now)) {
-            route.add(MinecraftTypeAdapter.toBlockPos(entry));
+        List<ColonyPos> chain = chainOf(world, colonyId, now);
+
+        route.add(MinecraftTypeAdapter.toBlockPos(chain.getFirst()));
+
+        // Entre uma entrada e a seguinte, o caminho a pé do nível de cima (Regra 119): o caracol, o
+        // salão, o canto e o caracol do ramal — trechos curtos para a navegação Vanilla.
+        for (int level = 1; level < chain.size(); level++) {
+            ColonyPos above = chain.get(level - 1);
+            ColonyPos below = chain.get(level);
+            Optional<Side> descent = descentBetween(above, below);
+
+            if (descent.isPresent()) {
+                MineShaft.from(above, descent.get()).waypoints().stream()
+                        .map(MinecraftTypeAdapter::toBlockPos)
+                        .forEach(route::add);
+            } else {
+                route.add(MinecraftTypeAdapter.toBlockPos(below));
+            }
         }
 
         return route;
@@ -155,17 +170,22 @@ public final class MineEntrance {
         return deduced;
     }
 
-    /** Se {@code below} é o piso da escada de {@code above} por algum rumo. */
+    /** Se {@code below} é a entrada do nível seguinte ao de {@code above} por algum rumo. */
     private static boolean oneLevelBelow(ColonyPos above, ColonyPos below) {
+        return descentBetween(above, below).isPresent();
+    }
+
+    /** O rumo de descida que leva da entrada {@code above} à {@code below}, um nível abaixo. */
+    private static Optional<Side> descentBetween(ColonyPos above, ColonyPos below) {
         for (Side descent : Side.values()) {
             ColonyPos step = stepOf(descent);
 
             if (below.equals(new ColonyPos(above.x() + step.x(), above.y() + step.y(), above.z() + step.z()))) {
-                return true;
+                return Optional.of(descent);
             }
         }
 
-        return false;
+        return Optional.empty();
     }
 
     /**

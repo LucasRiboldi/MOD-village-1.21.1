@@ -198,7 +198,8 @@ final class ColonyCycleRunner {
 
         // A rua do jogador também faz a vila crescer — 2026-10-03, RoadSpill.
         RoadPaving.growByRoads(overworld, colony.id());
-        com.villagecolony.fabric.integration.WorkPath.paveToward(overworld, colony.id()); // ADR-039 D2
+        // O corredor de 1 bloco até a obra (WorkPath, Regra 70) deu lugar à rede de caminhos de 3
+        // (Regra 123): a construção pronta se liga pela porta, e quem assenta é o PathPaving.
 
         // A reunião mede a felicidade e decide os filhos — ADR-036 20.
         com.villagecolony.fabric.work.VillageMood.meet(overworld, colony);
@@ -375,7 +376,9 @@ final class ColonyCycleRunner {
                 VillageColonyMod.STORAGES::hasStorage,
                 (resource, type, hands) -> MissingHandsLog.report(colony.id(), resource, type, hands),
                 work.constructionMaterials(),
-                (worker, task) -> canReserveTask(overworld, colony.id(), worker, task));
+                (worker, task) -> canReserveTask(overworld, colony.id(), worker, task),
+                // Quem mora mais perto do lugar do ofício pega primeiro — item 3 de 27-10.
+                com.villagecolony.fabric.work.TradeSites.nearFirst(overworld, colony));
 
         // Só depois do ciclo sabemos que a rota produziu tarefa aberta; uma rota apenas possível
         // não pode gastar o prazo nem materializar recurso cedo demais. Regra 40, ADR-040.

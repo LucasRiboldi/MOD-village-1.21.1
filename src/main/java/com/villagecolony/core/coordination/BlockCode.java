@@ -68,6 +68,13 @@ public enum BlockCode {
             Map.entry("too_high", RESOURCE_INACCESSIBLE),
             Map.entry("out of reach", RESOURCE_INACCESSIBLE),
             Map.entry("unreachable", RESOURCE_INACCESSIBLE),
+            // Os que mais ficaram sem classe no jogo da 0.3.93 (mineiro, pastor, encalhado, fundidor).
+            Map.entry("no_path", NO_PATH),
+            Map.entry("fenced in", NO_PATH),
+            Map.entry("unable to climb", NO_PATH),
+            Map.entry("no sheep with wool", NO_RESOURCE),
+            Map.entry("nothing in the whole radius", NO_RESOURCE),
+            Map.entry("in any chest", NO_RESOURCE),
             Map.entry("could not reach", NO_PATH),
             Map.entry("unable to reach", NO_PATH),
             Map.entry("got no closer", NO_PATH),

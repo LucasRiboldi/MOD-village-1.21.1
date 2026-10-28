@@ -1980,6 +1980,31 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * O veio não sobe acima de onde começou — item 7 das escolhas de 27-10: o minério acima vira chaminé de
+     * um bloco, e o mineiro no piso não o alcança.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_vein_up",
+            tickLimit = 20)
+    public void aVeinDoesNotClimbAboveWhereItBegan(TestContext context) {
+        BlockPos taken = new BlockPos(2, 3, 2);
+
+        Colony colony = mineOwner(context);
+
+        context.setBlockState(taken.up(), Blocks.COPPER_ORE.getDefaultState());
+
+        VillageColonyMod.MINES.of(colony.id()).orElseThrow()
+                .arm(0)
+                .followVein(MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(taken)));
+
+        Optional<BlockPos> next = veinTarget(context, colony);
+
+        context.assertFalse(next.isPresent() && next.get().equals(context.getAbsolutePos(taken.up())),
+                "o veio subiu acima de onde começou: " + next);
+
+        context.complete();
+    }
+
+    /**
      * O veio inteiro — ADR-036 item 23: acabado um galho, o mineiro volta pelo
      * rastro e cava o outro. Antes, o galho de trás ficava na parede.
      */

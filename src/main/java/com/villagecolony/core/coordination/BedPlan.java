@@ -21,9 +21,10 @@ import java.util.function.ToDoubleBiFunction;
  * aldeões para a cama que exista mais próxima do local onde ele trabalha, para não precisar caminhar
  * longas distâncias"</i>.
  *
- * <p>Escolhas do autor: o trabalho é onde o aldeão trabalhou de fato; a cama ocupada só troca de dono se a
- * soma das duas caminhadas cai e nenhum dos dois passa a andar mais; a vila reavalia uma vez por dia e só
- * muda quem ganha ao menos {@link #MIN_GAIN} blocos. Quem anda mais escolhe primeiro, e cada aldeão muda no
+ * <p>Escolhas do autor: o trabalho é onde o aldeão trabalhou de fato; a cama ocupada troca de dono quando a
+ * soma das duas caminhadas cai ao menos {@link #MIN_GAIN} blocos, mesmo que um dos dois passe a andar um
+ * pouco mais (27-10: com a exigência de os dois ganharem, o jogo da 0.3.93 teve 95 mudanças e nenhuma
+ * troca); a vila reavalia uma vez por dia e só muda quem ganha ao menos {@link #MIN_GAIN} blocos. Quem anda mais escolhe primeiro, e cada aldeão muda no
  * máximo uma vez por passada.
  */
 public final class BedPlan {
@@ -131,9 +132,11 @@ public final class BedPlan {
                     break;
                 }
 
-                // O dono só cede a cama se não passa a andar mais: sem ofício, qualquer cama serve.
+                // A troca vale quando a soma das duas caminhadas cai ao menos MIN_GAIN, mesmo que o dono
+                // passe a andar um pouco mais (autor, 27-10); sem ofício, qualquer cama serve.
                 if (owner.work() != null
-                        && walk.applyAsDouble(owner.work(), home) > walk.applyAsDouble(owner.work(), bed)) {
+                        && walk.applyAsDouble(work, bed) + walk.applyAsDouble(owner.work(), home)
+                                > today + walk.applyAsDouble(owner.work(), bed) - MIN_GAIN) {
                     continue;
                 }
 

@@ -23,13 +23,14 @@ class MineShaftTest {
     }
 
     @Test
-    void theSharedSpiralHasExactlyTenSteps() {
+    void theSharedSpiralIsOneTurnOfFourShortFlights() {
         MineShaft shaft = shaft();
         int blocksPerStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
 
-        assertEquals(10, MineShaft.DESCENT);
-        assertEquals(2, MineShaft.HELIX_FLIGHTS);
-        assertEquals(10 * blocksPerStep, MineShaft.CARVED);
+        assertEquals(4, MineShaft.HELIX_FLIGHTS);
+        assertEquals(3, MineShaft.HELIX_SIDE);
+        assertEquals(12, MineShaft.DESCENT);
+        assertEquals(12 * blocksPerStep, MineShaft.CARVED);
         assertEquals(ENTRY.y() - MineShaft.DESCENT + 1,
                 shaft.positionAt(MineShaft.CARVED - blocksPerStep).y());
     }
@@ -58,7 +59,7 @@ class MineShaftTest {
     }
 
     @Test
-    void theSharedHallIsTenByTenByThree() {
+    void theSharedHallIsSeventeenBySeventeenByThree() {
         MineShaft shaft = shaft();
         Set<ColonyPos> area = new HashSet<>();
 
@@ -66,7 +67,7 @@ class MineShaftTest {
             area.add(shaft.positionAt(index));
         }
 
-        assertEquals(300, MineShaft.SEARCH_AREA_BLOCKS);
+        assertEquals(17 * 17 * 3, MineShaft.SEARCH_AREA_BLOCKS);
         assertEquals(MineShaft.SEARCH_AREA_BLOCKS, area.size());
     }
 
@@ -84,13 +85,13 @@ class MineShaftTest {
     }
 
     @Test
-    void eachArmHasTenStairStepsAndAThreeHundredBlockHall() {
+    void eachArmHasASpiralAndAHallAsLargeAsTheLevels() {
         MineShaft shaft = shaft();
         int blocksPerStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
         int armStairBlocks = MineShaft.ARM_STAIRS * blocksPerStep;
 
-        assertEquals(10, MineShaft.ARM_STAIRS);
-        assertEquals(300, MineShaft.ARM_AREA_BLOCKS);
+        assertEquals(12, MineShaft.ARM_STAIRS);
+        assertEquals(MineShaft.SEARCH_AREA_BLOCKS, MineShaft.ARM_AREA_BLOCKS);
         assertFalse(shaft.beyondTheArm(MineShaft.SHARED_BLOCKS + MineShaft.ARM_BLOCKS - 1));
         assertTrue(shaft.beyondTheArm(MineShaft.SHARED_BLOCKS + MineShaft.ARM_BLOCKS));
         assertTrue(shaft.positionAt(MineShaft.SHARED_BLOCKS + armStairBlocks).y()
@@ -98,96 +99,91 @@ class MineShaftTest {
                 "a área do ramal precisa começar abaixo da sua escada");
     }
 
+    /** O nível seguinte desce do meio do salão do ramal zero: duas escadas abaixo. */
     @Test
-    void aDeeperCycleStartsTenBlocksBelowThePreviousOne() {
+    void aDeeperCycleStartsTwoSpiralsBelowThePreviousOne() {
         MineShaft shaft = shaft();
         MineShaft deeper = shaft.deepened();
 
-        assertEquals(shaft.positionAt(MineShaft.CARVED).y() - MineShaft.DESCENT,
+        assertEquals(shaft.positionAt(MineShaft.CARVED).y() - MineShaft.DESCENT - MineShaft.ARM_STAIRS,
                 deeper.positionAt(MineShaft.CARVED).y());
+        assertEquals(new ColonyPos(108, 40, 216), deeper.entry());
         assertEquals(shaft.descent(), deeper.descent());
     }
 
     /**
-     * Onde cada índice cai — 2026-09-25.
-     *
-     * <p>O cursor da mina é salvo como índice, então {@code positionAt} é
-     * contrato com o save: mudar a conta muda onde uma mina já aberta cava.
-     * Os testes acima só contavam posições, e o PIT mostrou 37 mutações de
-     * coordenada passando por eles.
-     *
-     * <p>Os valores foram tirados à mão da geometria, não da fórmula: entrada
-     * (100, 64, 200), descida ao norte. Degrau = um passo à frente e um abaixo;
-     * as segunda e terceira pistas ficam à esquerda de quem desce; três alturas
-     * por degrau.
-     * A descida vira em sentido horário depois de cinco degraus e fecha dez
-     * blocos abaixo da entrada, em (105, 54, 195).
+     * Onde cada índice cai — o cursor da mina é salvo como índice, então {@code positionAt} é contrato
+     * com o save. Valores tirados à mão da geometria (Regra 119): entrada (100, 64, 200), descida ao
+     * norte; degrau = um à frente e um abaixo; pistas à esquerda de quem desce; vira à direita a cada
+     * três degraus e fecha a volta doze blocos abaixo, na coluna da entrada.
      */
     @Test
     void theSpiralLandsWhereTheGeometrySays() {
         MineShaft shaft = shaft();
 
-        // Primeira volta: norte, três degraus; pistas adicionais a oeste.
+        // Norte: pistas a oeste.
         assertEquals(new ColonyPos(100, 64, 199), shaft.positionAt(0));
         assertEquals(new ColonyPos(100, 66, 199), shaft.positionAt(2));
         assertEquals(new ColonyPos(99, 64, 199), shaft.positionAt(3));
-        assertEquals(new ColonyPos(98, 64, 199), shaft.positionAt(6));
         assertEquals(new ColonyPos(100, 63, 198), shaft.positionAt(9));
         assertEquals(new ColonyPos(98, 62, 197), shaft.positionAt(24));
-
-        // Segundo lance: leste, cinco degraus, a partir de (100, 59, 195).
-        assertEquals(new ColonyPos(101, 59, 195), shaft.positionAt(45));
-        assertEquals(new ColonyPos(101, 59, 194), shaft.positionAt(48));
-        assertEquals(new ColonyPos(103, 57, 193), shaft.positionAt(69));
-        assertEquals(new ColonyPos(104, 56, 195), shaft.positionAt(72));
-        assertEquals(new ColonyPos(105, 55, 193), shaft.positionAt(87));
+        // Leste, de (100, 61, 197): pistas ao norte.
+        assertEquals(new ColonyPos(101, 61, 197), shaft.positionAt(27));
+        assertEquals(new ColonyPos(101, 61, 196), shaft.positionAt(30));
+        assertEquals(new ColonyPos(103, 59, 195), shaft.positionAt(51));
+        // Sul, de (103, 58, 197): pistas a leste.
+        assertEquals(new ColonyPos(103, 58, 198), shaft.positionAt(54));
+        assertEquals(new ColonyPos(103, 56, 200), shaft.positionAt(72));
+        // Oeste, de (103, 55, 200): o último degrau cai na coluna da entrada.
+        assertEquals(new ColonyPos(102, 55, 200), shaft.positionAt(81));
+        assertEquals(new ColonyPos(100, 53, 200), shaft.positionAt(99));
     }
 
     /**
-     * O salão comum, a partir do piso (105, 54, 195), avança para o sul e
-     * alterna os lados do centro em três camadas.
+     * O salão do nível, com o meio em (91, 52, 200): a primeira fileira encosta no pé do caracol, e
+     * cada fileira alterna os lados do meio em três camadas.
      */
     @Test
     void theSharedRoomAlternatesSidesFromTheCentre() {
         MineShaft shaft = shaft();
         int room = MineShaft.CARVED;
 
-        assertEquals(new ColonyPos(105, 55, 195), shaft.positionAt(room));
-        assertEquals(new ColonyPos(105, 56, 195), shaft.positionAt(room + 1));
-        assertEquals(new ColonyPos(105, 57, 195), shaft.positionAt(room + 2));
-        assertEquals(new ColonyPos(104, 55, 195), shaft.positionAt(room + 3));
-        assertEquals(new ColonyPos(106, 55, 195), shaft.positionAt(room + 6));
-        assertEquals(new ColonyPos(105, 55, 196), shaft.positionAt(room + 30));
-        assertEquals(new ColonyPos(100, 57, 204), shaft.positionAt(room + 299));
+        assertEquals(new ColonyPos(99, 53, 200), shaft.positionAt(room));
+        assertEquals(new ColonyPos(99, 54, 200), shaft.positionAt(room + 1));
+        assertEquals(new ColonyPos(99, 55, 200), shaft.positionAt(room + 2));
+        assertEquals(new ColonyPos(99, 53, 199), shaft.positionAt(room + 3));
+        assertEquals(new ColonyPos(99, 53, 201), shaft.positionAt(room + 6));
+        assertEquals(new ColonyPos(98, 53, 200), shaft.positionAt(room + 51));
+        assertEquals(new ColonyPos(83, 55, 208), shaft.positionAt(room + MineShaft.SEARCH_AREA_BLOCKS - 1));
     }
 
     /**
-     * O ramal sai da ponta da sala, cinco blocos adiante do piso, desce dez
-     * degraus e abre a sala dele. Dois ramais, um em cada eixo: com só o do
-     * sul, trocar a conta do x não mudaria nada.
+     * Cada ramal sai de um canto do salão, desce o caracol dele para fora e abre o salão no quadrante
+     * diagonal daquele canto. Dois ramais, um em cada eixo.
      */
     @Test
-    void eachArmLeavesFromTheFarEndOfTheRoom() {
+    void eachArmLeavesFromACornerOfTheRoom() {
         MineShaft south = shaft();
         MineShaft west = south.turned();
         int arm = MineShaft.SHARED_BLOCKS;
         int armRoom = arm + MineShaft.ARM_STAIRS * MineShaft.STAIR_STEP_BLOCKS;
+        int last = armRoom + MineShaft.ARM_AREA_BLOCKS - 1;
 
         assertEquals(Side.SOUTH, south.gallery());
         assertEquals(Side.WEST, west.gallery());
 
-        // Sul: topo em (105, 55, 205), pista a leste, salão em (105, 45, 215).
-        assertEquals(new ColonyPos(105, 55, 206), south.positionAt(arm));
-        assertEquals(new ColonyPos(106, 55, 206), south.positionAt(arm + 3));
-        assertEquals(new ColonyPos(107, 48, 215), south.positionAt(armRoom - 1));
-        assertEquals(new ColonyPos(105, 46, 215), south.positionAt(armRoom));
-        assertEquals(new ColonyPos(100, 48, 224), south.positionAt(armRoom + 299));
+        // Sul: canto (99, 52, 208), pistas a leste, salão a leste e ao sul.
+        assertEquals(new ColonyPos(99, 52, 209), south.positionAt(arm));
+        assertEquals(new ColonyPos(100, 52, 209), south.positionAt(arm + 3));
+        assertEquals(new ColonyPos(99, 43, 206), south.positionAt(armRoom - 1));
+        assertEquals(new ColonyPos(100, 41, 208), south.positionAt(armRoom));
+        assertEquals(new ColonyPos(116, 43, 224), south.positionAt(last));
 
-        // Oeste: topo em (95, 55, 195), pista ao sul, salão em (85, 45, 195).
-        assertEquals(new ColonyPos(94, 55, 195), west.positionAt(arm));
-        assertEquals(new ColonyPos(94, 55, 196), west.positionAt(arm + 3));
-        assertEquals(new ColonyPos(85, 46, 195), west.positionAt(armRoom));
-        assertEquals(new ColonyPos(76, 48, 190), west.positionAt(armRoom + 299));
+        // Oeste: canto (83, 52, 208), pistas ao sul, salão ao sul e a oeste.
+        assertEquals(new ColonyPos(82, 52, 208), west.positionAt(arm));
+        assertEquals(new ColonyPos(82, 52, 209), west.positionAt(arm + 3));
+        assertEquals(new ColonyPos(83, 41, 209), west.positionAt(armRoom));
+        assertEquals(new ColonyPos(67, 43, 225), west.positionAt(last));
     }
 
     @Test
@@ -205,6 +201,7 @@ class MineShaftTest {
                 new ColonyPos(0, MineShaft.DEEPEST + MineShaft.DESCENT, 0), Side.EAST);
 
         assertFalse(last.mayDeepen());
+        assertTrue(MineShaft.from(new ColonyPos(0, 0, 0), Side.EAST).mayDeepen());
     }
 
     // --- as células que a mina planeja abrir, 2026-09-25 (ADR-025) ---
@@ -218,13 +215,12 @@ class MineShaftTest {
         java.util.Set<ColonyPos> cells = shaft().plannedCells();
 
         assertTrue(cells.contains(new ColonyPos(100, 64, 199)), "o primeiro degrau");
-        assertTrue(cells.contains(new ColonyPos(105, 55, 195)), "o salão comum");
-        assertTrue(cells.contains(new ColonyPos(100, 48, 224)), "o salão do ramal");
+        assertTrue(cells.contains(new ColonyPos(99, 53, 200)), "o salão comum");
+        assertTrue(cells.contains(new ColonyPos(116, 43, 224)), "o salão do ramal");
         assertFalse(cells.contains(new ColonyPos(100, 63, 199)), "a rocha sob o primeiro degrau");
-        assertFalse(cells.contains(new ColonyPos(105, 54, 195)), "o piso do salão");
-        // O último degrau de cada escada cai dentro da sala que ela abre: nove
-        // índices do caracol e seis do ramal repetem células já contadas.
-        assertEquals(MineShaft.SHARED_BLOCKS + MineShaft.ARM_BLOCKS - 15, cells.size(),
+        assertFalse(cells.contains(new ColonyPos(99, 52, 200)), "o piso do salão");
+        // O caracol fica fora das colunas do salão, e o ramal fora das dele: nada se repete.
+        assertEquals(MineShaft.SHARED_BLOCKS + MineShaft.ARM_BLOCKS, cells.size(),
                 "o conjunto não tem repetição e não perde célula");
     }
 }

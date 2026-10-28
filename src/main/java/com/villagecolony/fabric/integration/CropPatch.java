@@ -63,10 +63,11 @@ public final class CropPatch {
     private static final int MAX_KNOWN = 4_096;
 
     /**
-     * Quantas células conhecidas uma passagem olha — E3, 2026-10-08: cursor
-     * incremental sobre a roça conhecida, em vez de revarrer o raio inteiro.
+     * Quantas células conhecidas uma passagem olha: o registro inteiro — Regra 121. O custo é o
+     * número de canteiros, não o tamanho da vila, e o registro sempre responde na mesma passagem
+     * (jogo da 0.3.93: 622 "still sweeping" com roça conhecida esperando).
      */
-    static final int KNOWN_PER_PASS = 512;
+    static final int KNOWN_PER_PASS = MAX_KNOWN;
 
     /** De quanto em quanto tempo a varredura do raio volta, para achar roça nova: 2 min. */
     static final long EXPANSION_EVERY = 2_400;
@@ -147,18 +148,20 @@ public final class CropPatch {
         // A roça conhecida primeiro — A-8 e E3. Ela responde sozinha (maduro,
         // canteiro vazio, ou "nada" com a volta completa); o raio só é varrido
         // quando ela está vazia ou quando a expansão periódica vence.
+        // O registro responde sempre primeiro, mesmo com a expansão no meio da volta — Regra 121: a
+        // varredura do raio só anda quando a roça conhecida não tem trabalho, e retoma de onde parou.
         boolean expansionDue = world.getTime() - LAST_EXPANSION.getOrDefault(colonyId, Long.MIN_VALUE / 2)
                 >= EXPANSION_EVERY;
+        Optional<Field> known = fromKnownFarmland(world, colonyId, remembered, expansionDue);
         boolean sweeping = RingSweep.pausedAt(colonyId, RingSweep.Scan.FARMING).isPresent();
-        Optional<Field> known = expansionDue && sweeping
-                ? Optional.empty()
-                : fromKnownFarmland(world, colonyId, remembered, expansionDue);
 
-        if (known.isPresent()) {
+        // Madura na roça conhecida responde na hora. Só canteiro vazio, com a volta do raio em curso:
+        // ela anda mais um trecho atrás de lavoura madura, e o canteiro conhecido fica de reserva.
+        if (known.isPresent() && (known.get().ripe().isPresent() || !sweeping)) {
             return known.get();
         }
 
-        BlockPos[] plot = {remembered};
+        BlockPos[] plot = {remembered != null ? remembered : known.flatMap(Field::emptyPlot).orElse(null)};
 
         Optional<BlockPos> ripe = RingSweep.around(colonyId, RingSweep.Scan.FARMING, center, radius,
                 column -> true, at -> {
@@ -277,7 +280,12 @@ public final class CropPatch {
         return Optional.of(new Field(null, plot, false));
     }
 
-    private static void learn(UUID colonyId, BlockPos farmland) {
+    /** As roças conhecidas desta colônia, só para leitura — {@link KnownFarmland}. */
+    static java.util.Set<BlockPos> knownOf(UUID colonyId) {
+        return java.util.Collections.unmodifiableSet(KNOWN.getOrDefault(colonyId, new java.util.LinkedHashSet<>()));
+    }
+
+    static void learn(UUID colonyId, BlockPos farmland) {
         java.util.LinkedHashSet<BlockPos> cells = KNOWN.computeIfAbsent(colonyId, id -> new java.util.LinkedHashSet<>());
 
         if (cells.size() < MAX_KNOWN) {

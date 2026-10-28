@@ -201,6 +201,9 @@ final class ShepherdPens {
         if (read == null || now - read >= RESCAN) {
             READ_AT.put(colony.id(), now);
             PENS.put(colony.id(), colony.bounds().map(box -> scan(world, box)).orElse(List.of()));
+            // O chão de dentro fica caro no caminho de quem não é pastor (Regra 122).
+            com.villagecolony.fabric.integration.PenFloors.update(colony.id(),
+                    PENS.get(colony.id()).stream().map(Pen::reach).toList());
         }
 
         return PENS.getOrDefault(colony.id(), List.of());

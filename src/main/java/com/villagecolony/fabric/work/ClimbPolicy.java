@@ -46,14 +46,15 @@ final class ClimbPolicy {
      *
      * <p>O defeito G3 era largar só o estado de escalada: o aldeão seguia marcado em
      * {@link StrandedWorkers}, fora da fila de trabalho, e a passagem seguinte recomeçava a busca e o
-     * log, para sempre. O {@code toBed} já tira dos encalhados e encerra a escalada. Sem cama, faz o
-     * mesmo sem o teleporte: libera e devolve à fila, e a navegação normal tenta tirá-lo dali.
+     * log, para sempre. O {@code toSafety} já tira dos encalhados e encerra a escalada; sem cama, ele vai
+     * ao centro da vila (Regra 114). Sem nem isso, libera e devolve à fila, e a navegação normal tenta
+     * tirá-lo dali.
      */
     static void giveUp(ServerWorld world, VillagerEntity villager, UUID workerId, BlockPos feet) {
         String why = "no natural step to climb out of " + feet.toShortString()
                 + " and it does not reshape the terrain";
 
-        if (BedTeleport.toBed(world, villager, workerId, why)) {
+        if (BedTeleport.toSafety(world, villager, workerId, why)) {
             return;
         }
 

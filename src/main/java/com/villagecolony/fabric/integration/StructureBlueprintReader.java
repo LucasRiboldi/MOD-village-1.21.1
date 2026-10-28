@@ -5,6 +5,7 @@ import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BuildOrder;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ShapeStates;
+import com.villagecolony.core.construction.model.WhitePieces;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -260,11 +261,19 @@ public final class StructureBlueprintReader {
         // precisa, quem espera o bloco e quem o assenta leem todos a
         // MESMA planta. Trocar mais adiante faria a colônia estocar areia
         // e o construtor assentar arenito, que é o defeito de 08-22.
-        Blueprint blueprint = Blueprint.of(structure, DesertSand.baked(structure, blocks));
+        // E a peça colorida sai branca (WhitePieces, item 5 de 27-10), no mesmo ponto e pelo mesmo motivo.
+        Blueprint blueprint = Blueprint.of(structure, WhitePieces.baked(DesertSand.baked(structure, blocks)));
 
         // <b>E a altura da rua</b> — sessão de jogo de 2026-09-26. Ver
         // Blueprint.withStreetLayer e StreetLayer.of.
         OptionalInt street = StreetLayer.of(template.get(), blocks);
+
+        // O modelo do mod sem porta (o armazém) pisa na camada 0: ela vai no nível do chão e a obra
+        // sobe dele, com o lote nivelado — Regra 115. Sem isto ele não era nivelado e, em terreno
+        // inclinado, nascia com metade dentro do morro.
+        if (street.isEmpty() && ColonyModels.isColonyModel(structure)) {
+            street = OptionalInt.of(0);
+        }
 
         return Optional.of(street.isPresent() ? blueprint.withStreetLayer(street.getAsInt()) : blueprint);
     }

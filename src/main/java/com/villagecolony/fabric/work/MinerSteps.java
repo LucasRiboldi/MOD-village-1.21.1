@@ -286,7 +286,7 @@ final class MinerSteps {
      * <p>Primeiro reconfere a aproximação guardada — quem caiu num buraco depois de escolher o alvo
      * fica com um destino acima do degrau que ele sobe, e a navegação nunca cumpre (sessão de 09-19).
      * Depois a cascata, da mais barata para a mais cara: caminho direto do jogo ({@link MinerDirectPath}),
-     * rota em rede no nível ({@link NetworkRoute}), percurso por etapas até a boca ({@link MineApproachPath},
+     * percurso por etapas até a boca ({@link MineApproachPath},
      * só na descida) e, por fim, a perna pela ordem de cavar ({@link MinerLeg}).
      */
     private static void walkToward(
@@ -309,15 +309,6 @@ final class MinerSteps {
         // recalculado — a busca custa ~600 leituras e isto roda todo tique enquanto ele caminha.
         if (MinerDirectPath.reaches(world, villager, job.approach)) {
             WorkTargets.set(workerId, job.approach, MinerReach.ARRIVAL);
-
-            return;
-        }
-
-        // No nível em rede: de nó pronto em nó pronto até o pai do nó (ADR-042 D5).
-        Optional<BlockPos> waypoint = NetworkRoute.waypoint(job.task.colonyId(), villager, job.target);
-
-        if (waypoint.isPresent()) {
-            WorkTargets.set(workerId, waypoint.get(), MinerReach.ARRIVAL);
 
             return;
         }
@@ -362,19 +353,13 @@ final class MinerSteps {
         Optional<BlockPos> way = WorkTargets.of(villager.getUuid())
                 .filter(target -> target.getY() - villager.getBlockY() >= CLIMB_OUT_BELOW);
         boolean belowItsWay = way.isPresent();
-        boolean network = NetworkDigging.galleryPhase(job.task.colonyId());
         Optional<MineArm> arm = MineDigging.armOf(job.task.colonyId(), villager.getUuid());
-
-        // No nível em rede quem conta é o nó: três desistências o vedam (ADR-042).
-        if (network) {
-            NetworkDigging.gaveUp(job.task.colonyId(), villager.getUuid());
-        }
 
         MinerHands.giveUp(world, villager.getUuid(), job, why);
 
         // O ramal cuja pedra ninguém alcança acaba: sem isso o nível não descia nunca e a
         // mina morria com um ramal só aberto (playtest 0.3.32, 11 desistências, 0 cavado).
-        if (!network && arm.isPresent() && !arm.get().isDone() && arm.get().blockedAgain(UNREACHABLE_BEFORE_DONE)) {
+        if (arm.isPresent() && !arm.get().isDone() && arm.get().blockedAgain(UNREACHABLE_BEFORE_DONE)) {
             VillageColonyMod.LOGGER.info("Mine {} closes a branch after {} stones nobody could reach — {}",
                     job.task.colonyId().toString().substring(0, 8), UNREACHABLE_BEFORE_DONE, why);
         }
@@ -416,7 +401,7 @@ final class MinerSteps {
 
         Optional<BlockPos> found;
 
-        if (!sand && !NetworkDigging.galleryPhase(colonyId) && MineClaims.heldByOther(colonyId, workerId, branches)) {
+        if (!sand && MineClaims.heldByOther(colonyId, workerId, branches)) {
             // O ramal continua exclusivo, mas o mineiro barrado não fica
             // parado: ele raspa pedra exposta fora das células planejadas
             // da mina aberta, criando caminho de coleta enquanto espera.
