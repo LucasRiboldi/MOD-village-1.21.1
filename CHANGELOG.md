@@ -12,6 +12,29 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.98] — playtest 0.3.97: obra presa, tocha, mina, horta e as passivas das bancadas (2026-10-27, JAR local, não jogado)
+
+### Corrigido
+- **Obra parada 15 min:** a água e a terra arada da horta da própria planta eram lidas como buraco na
+  base (`FoundationPreparation`).
+- **Horta pedida como material:** terra arada, trigo e água eram pedidos ao carpinteiro e buscados no
+  chão; agora são moldados no lugar sem pedido (`AppearingPieces.needsNoStock`).
+- **Fundidor parado com 626 pedregulhos:** o cru que também sai da fornalha (pedra) vem antes.
+- **Rede de caminhos sem nenhum traçado:** a porta recuada das casas Vanilla não era achada.
+- **Tocha da colônia invisível** com pacotes de textura: modelo próprio, versão de parede e item igual
+  ao da tocha comum; tabelas de saque.
+- **Tocha da mina caía:** agora vai no chão dos salões, numa grade de 12, nunca no degrau.
+- **Escada da mina fechada:** o selo de água drena a célula da mina, e o caminho não passa na boca.
+
+### Adicionado
+- **Regra 128:** ninguém espera mais de 5 minutos; com 10 minutos, o produto surge.
+- **Regra 129:** nome sobre a cabeça na cor do estado.
+- **Regra 130:** 5 animais num poste pedem curral com prioridade.
+- **Regra 131:** chão nivelado em volta da obra nova (anel de 2 + rampa de 3).
+- **Regra 132:** painel das bancadas (shift+clique) e passivas por ofício.
+- **Bosque:** uma em cada dez mudas da borda é de outra espécie.
+- **Receitas:** bancadas com 1 diamante; tocha da colônia (4 tochas + 1 ouro → 4); caminho de areia pela pá.
+
 ## [0.3.97] — os sete pontos abertos: cama, ajudas, tocha, neve, veio, atalho e a rede de túneis fora (2026-10-27, JAR local, não jogado)
 
 ### Adicionado

@@ -1,5 +1,24 @@
 # STATE — 2026-10-27
 
+> **0.3.98** (27-10, branch `fix/playtest-0397`): o playtest da 0.3.97 (savana, Spark n4DVevJAmw) e os
+> pedidos do autor, cada um com as opções que ele escolheu (memória `playtest-0397-e-decisoes-2026-10-27`).
+> - Defeitos: base com a horta da planta, horta pedida como material, fundidor sem a cadeia da pedra,
+>   porta recuada sem caminho, tocha invisível, tocha da mina na parede, escada fechada pela água.
+> - Regras 128 (5 min), 129 (cor do nome), 130 (curral), 131 (nivelamento), 132 (bancadas); árvore rara;
+>   receitas.
+> - **Verificado:** testes de unidade e arquitetura OK; bateria 892/892. **Não jogado.**
+> - **Para o jogo:**
+>   - a tocha com os pacotes de textura e na parede;
+>   - as cores dos nomes;
+>   - `Regra 128` no log e o `time_ledger` abaixo de 15% de ócio;
+>   - `levelled` em volta das obras;
+>   - `path network —` e `traced a path`;
+>   - o painel das bancadas;
+>   - o custo das passivas no Spark.
+> - **Limites conhecidos:** a escada em caracol da mina não leva tocha (só os salões); a proteção do caminho
+>   cobre a entrada do nível atual da mina; o encantamento vale para o que o jogador fabrica na vila.
+>
+
 > **0.3.97** (27-10, branch `fix/obra-pecas-de-lado`, PR #36): os sete pontos abertos da 0.3.96, cada um com
 > as opções escolhidas pelo autor (memória `decisoes-autor-2026-10-27-sete-itens`).
 > - Cama pela soma (16) e tarefa a quem mora perto do lugar do ofício (Regra 74).
