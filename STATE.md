@@ -14,8 +14,8 @@
 >   - "lit the dark path", "tended the grove", "harvested … for the farmer", "shoveled";
 >   - se a vila faz bloco e camada de neve com as bolas;
 >   - um save antigo com a rede de túneis carregando sem erro.
-> - **Desvio a confirmar com o autor:** no veio, a régua é "nunca sobe acima de onde começou", e não
->   "até 2 acima do piso" ao pé da letra (esta quebrava 5 testes do veio).
+> - **Veio:** a régua é "nunca sobe acima de onde começou" (e não "até 2 acima do piso" ao pé da letra, que
+>   quebrava 5 testes do veio) — confirmada pelo autor em 27-10.
 >
 
 > **0.3.96** (27-10, branch `fix/obra-pecas-de-lado`, PR #36): mina em caracol (119), rede de caminhos
