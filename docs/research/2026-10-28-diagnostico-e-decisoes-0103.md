@@ -140,7 +140,7 @@ da conversa de 2026-10-28; as recomendações eram:
 | T1 | Gelo compactado, neve e acácia de lado | 162 / 298 / 234 | `SET_ASIDE` por `what` no diário de ações |
 | T2 | Presos no curral | 45 + 19 + 14 | `STRANDED: fenced in` |
 | T3 | Teleportes por vila e lugares que prendem | 5–14; taiga: 9 casos na ponta oeste, 7 na rua sul | `stuck_map.py LOG diários --region DIR --center X,Z` |
-| T4 | Alvos recusados do mineiro | `TOO_HIGH` 65, `NO_PATH` 28 | `TARGET_REJECTED` no diário |
+| T4 | Alvos recusados do mineiro | `TOO_HIGH` 65, `NO_PATH` 28 (70 em cadeia, 23 depois de andar) | `TARGET_REJECTED` (recusa de quem andou) e `SKIPPED what=stone` (posta de lado antes de virar alvo) no diário |
 | T5 | Argila e vidraça sem rota | 30 / 10 | `supply-gaps.jsonl` → `supply_gaps.py` |
 | L3 | Níveis da mina no deserto e na taiga | 0 / 0 | `VC_STATE` → `mine.levels` |
 | O1–O8 | Tempo parado por profissão | tabela da §1 | `time_ledger.py`, `VC_DAY` (`dayTime.rule51`) |
@@ -149,3 +149,12 @@ da conversa de 2026-10-28; as recomendações eram:
 
 Comparar com a mesma semente e os mesmos dias: `python scripts/biome_sim.py plains desert savanna taiga
 snowy --days 5 --snapshot`. Em jogo: `/vc log`, `/vc bioma`, `/vc dados` e `python scripts/state_report.py`.
+
+## 5. Achados durante as correções (abertos)
+
+- **Mineiro anda até uma pedra 9 blocos acima e a recusa** (achado no T4). Das 23 recusas depois de andar, 21 são
+  `TOO_HIGH` numa pedra 5–10 blocos acima da última que ele cavou (planície: +9 em todos os níveis, −26 → −17,
+  −2 → 7, 22 → 31, 46 → 55). De longe a pedra passa (ele "ainda vai mudar de altura"), de perto não tem pé ao
+  alcance. Custa ~175 tiques de caminhada por caso. Causa ainda não achada: falta saber de que fonte vem a pedra
+  (escada, salão de 3 de altura ou o `roomBeside`). O T4 não resolve este caso — só tira as cadeias de recusa sem
+  caminhada.

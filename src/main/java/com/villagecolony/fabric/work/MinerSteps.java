@@ -399,33 +399,36 @@ final class MinerSteps {
                 .map(Mine::branchesOpenNow)
                 .orElse(Mine.ARMS);
 
-        Optional<BlockPos> found;
+        // O ramal continua exclusivo, mas o mineiro barrado não fica parado: ele raspa pedra exposta fora das
+        // células planejadas da mina aberta, criando caminho de coleta enquanto espera. Se nada aparecer, a recusa
+        // continua não sendo busca; o dono ainda precisa da passagem para soltar ou avançar o ramal.
+        boolean barred = !sand && MineClaims.heldByOther(colonyId, workerId, branches);
+        int[] skipped = {0};
+        MiningTarget.Verdict[] judged = {MiningTarget.Verdict.no(MiningTarget.Rejection.NONE)};
 
-        if (!sand && MineClaims.heldByOther(colonyId, workerId, branches)) {
-            // O ramal continua exclusivo, mas o mineiro barrado não fica
-            // parado: ele raspa pedra exposta fora das células planejadas
-            // da mina aberta, criando caminho de coleta enquanto espera.
-            // Se nada aparecer, a recusa continua não sendo busca; o dono
-            // ainda precisa da passagem para soltar ou avançar o ramal.
-            found = MineDigging.exposedStoneFallback(world, workerId, colonyId, job.center);
+        // Alvo só com posição de trabalho válida e alcançável — E1, ver MiningTarget. A alta demais ou sem caminho
+        // sai antes de virar alvo e a próxima é pedida na mesma passagem (T4, MinerPicks).
+        Optional<BlockPos> found = MinerPicks.firstAccepted(
+                () -> barred ? MineDigging.exposedStoneFallback(world, workerId, colonyId, job.center)
+                        : sand ? SandGathering.nextTarget(world, workerId, colonyId, job.center)
+                        : MineDigging.nextTarget(world, workerId, colonyId, job.center),
+                stone -> {
+                    judged[0] = MiningTarget.judge(world, stone, villager.getBlockPos());
 
-            if (found.isEmpty()) {
-                return false;
-            }
-        } else {
-            found = sand
-                    ? SandGathering.nextTarget(world, workerId, colonyId, job.center)
-                    : MineDigging.nextTarget(world, workerId, colonyId, job.center);
-        }
+                    return !MinerPicks.skipsBeforeChoosing(judged[0]);
+                },
+                stone -> {
+                    skipped[0]++;
+                    MinerPicks.skip(world, workerId, colonyId, stone, judged[0].rejection());
+                });
 
         if (found.isEmpty()) {
-            return true;
+            return !barred || skipped[0] > 0;
         }
 
         job.target = found.get();
 
-        // Alvo só com posição de trabalho válida e alcançável — E1, ver MiningTarget.
-        MiningTarget.Verdict verdict = MiningTarget.judge(world, job.target, villager.getBlockPos());
+        MiningTarget.Verdict verdict = judged[0];
 
         if (!verdict.eligible()) {
             MinerHands.passOver(world, workerId, job, verdict.rejection());
