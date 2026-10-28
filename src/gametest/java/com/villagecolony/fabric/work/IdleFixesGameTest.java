@@ -141,9 +141,35 @@ public class IdleFixesGameTest implements FabricGameTest {
         ChestDepositor.deposit(context.getWorld(), chest(context), Items.STONE, ValueGoods.KEEP_RAW + ValueGoods.BATCH);
         var recipe = ValueGoods.recipeFor(context.getWorld(), chests, ProfessionType.MASON).orElseThrow();
 
-        context.assertTrue(ValueGoods.batch(context.getWorld(), chests, recipe[0], recipe[1]), "o lote não saiu");
+        context.assertTrue(ValueGoods.batch(context.getWorld(), chests, recipe) == ValueGoods.BATCH, "o lote não saiu");
         context.assertTrue(com.villagecolony.fabric.integration.ColonyChests.countIn(context.getWorld(), chests,
                 Items.STONE_BRICKS) == ValueGoods.BATCH, "o lote devia virar 8 tijolos de pedra");
+        context.complete();
+    }
+
+    /**
+     * Regra 146: o fundidor funde todo o minério cru (sem reserva), e a receita que não é 1 por 1 sai na
+     * proporção dela — 6 pedregulhos dão 4 degraus.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_fixes", tickLimit = 20)
+    public void rawOreIsSmeltedWholeAndStairsComeInTheirRatio(TestContext context) {
+        context.setBlockState(CHEST, Blocks.CHEST);
+        List<ColonyPos> chests = List.of(chest(context));
+        var world = context.getWorld();
+
+        ChestDepositor.deposit(world, chest(context), Items.RAW_IRON, 5);
+        var ore = ValueGoods.recipeFor(world, chests, ProfessionType.SMELTER).orElseThrow();
+
+        context.assertTrue(ore.product() == Items.IRON_INGOT, "o fundidor devia fundir o ferro primeiro: " + ore);
+        context.assertTrue(ValueGoods.batch(world, chests, ore) == 5, "os 5 ferros crus deviam virar 5 lingotes");
+
+        var stairs = ValueGoods.RECIPES.get(ProfessionType.MASON).stream()
+                .filter(recipe -> recipe.product() == Items.COBBLESTONE_STAIRS).findFirst().orElseThrow();
+        ChestDepositor.deposit(world, chest(context), Items.COBBLESTONE, ValueGoods.KEEP_RAW + 7);
+
+        context.assertTrue(ValueGoods.batch(world, chests, stairs) == 4, "7 de sobra fazem uma receita: 4 degraus");
+        context.assertTrue(com.villagecolony.fabric.integration.ColonyChests.countIn(world, chests, Items.COBBLESTONE)
+                == ValueGoods.KEEP_RAW + 1, "a reserva e a sobra que não fez receita deviam ficar");
         context.complete();
     }
 

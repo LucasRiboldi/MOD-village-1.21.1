@@ -186,6 +186,15 @@ final class BedTeleport {
 
         VillageColonyMod.LOGGER.info("Worker {} was teleported from {} to {} — {}",
                 shortId(workerId), from.toShortString(), where, why);
+
+        VillageColonyMod.WORKERS.find(workerId).ifPresent(worker -> {
+            com.google.gson.JsonObject moved = new com.google.gson.JsonObject();
+            moved.addProperty("villager", shortId(workerId));
+            moved.addProperty("from", from.toShortString());
+            moved.addProperty("to", where);
+            moved.addProperty("why", why);
+            VillageDiary.event(worker.colonyId(), "teleport", moved);
+        });
     }
 
     private static String shortId(UUID workerId) {

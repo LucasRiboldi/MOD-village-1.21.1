@@ -160,6 +160,18 @@ public final class Colony {
         return observedBeds;
     }
 
+    /**
+     * As camas contadas na caixa inteira — Regra 145: medida a vila, este é o número dela, e a sonda não o
+     * muda mais ({@link #observe(ColonyPos, int, boolean, ColonyPos)}).
+     */
+    public void countBeds(int beds) {
+        if (beds < 0) {
+            throw new IllegalArgumentException("beds must not be negative");
+        }
+
+        observedBeds = beds;
+    }
+
     /** Maior dezena populacional já atendida pelo bosque da colônia. */
     public int forestPopulationMilestone() {
         return forestPopulationMilestone;
@@ -368,7 +380,8 @@ public final class Colony {
             probeBeds = beds;
         }
 
-        if (beds < observedBeds && !complete && !confirmedByProbe) {
+        // Vila medida: as camas vêm da caixa inteira (Regra 145), não do que a sonda enxergou.
+        if (bounds != null || (beds < observedBeds && !complete && !confirmedByProbe)) {
             return false;
         }
 
@@ -386,8 +399,8 @@ public final class Colony {
         // A sonda parte do centro da colônia e a ele volta. É a única
         // varredura cuja posição não é acidente de onde alguém estava.
         // Ver ADR-003, Emenda 4.
-        // Vila medida: o centro é o meio da caixa, e só anda quando ela
-        // cresce — a média das camas fazia o centro oscilar (obra órfã).
+        // Vila medida: o centro fica onde a primeira medida o pôs (Regra 141)
+        // — a média das camas fazia o centro oscilar (obra órfã).
         if (!ownProbe || bounds != null) {
             return false;
         }

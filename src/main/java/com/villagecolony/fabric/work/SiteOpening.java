@@ -320,6 +320,12 @@ final class SiteOpening {
                 straightDistance(project.origin(), colony.center()),
                 ConstructionPlanner.searchRadius(colony));
 
+        com.google.gson.JsonObject planned = new com.google.gson.JsonObject();
+        planned.addProperty("building", project.blueprint().id().toString());
+        planned.addProperty("origin", project.origin().toString());
+        planned.addProperty("fromCenter", straightDistance(project.origin(), colony.center()));
+        VillageDiary.event(colony.id(), "build_planned", planned);
+
         return Optional.of(project);
     }
 

@@ -49,6 +49,26 @@ class StateReportTest(unittest.TestCase):
         self.assertIn("acima de 15%: MASON", text)
         self.assertIn("1.0 por hora", text)
 
+    def test_reads_the_village_diary(self):
+        day = dict(state(24_000, 12, 6, 50, 10), kind="day", ofDay=3,
+                   dayTime={"MASON": {"rule51": 40}, "NONE": {"rule51": 100}})
+        records = state_report.records_from_lines([
+            "[x] VC_STATE " + json.dumps(state(0, 10, 4, 40, 10)),
+            "[x] VC_DAY " + json.dumps(day),
+            "[x] VC_EVENT " + json.dumps({"kind": "event", "type": "teleport", "colony": "3fc51129"}),
+            "[x] VC_EVENT " + json.dumps({"kind": "event", "type": "teleport", "colony": "3fc51129"}),
+            "[x] VC_AUDIT " + json.dumps({"kind": "audit", "colony": "3fc51129", "problems": 1, "beds": 5,
+                                          "bedsInTheWorld": 2}),
+            "[x] VC_AUDIT " + json.dumps({"kind": "audit", "colony": "3fc51129", "problems": 0}),
+        ])
+        summary = state_report.summarize(records)["3fc51129"]
+
+        self.assertEqual(1, summary["samples"], "o resumo do dia não é um retrato a mais")
+        self.assertEqual({"teleport": 2}, summary["events"])
+        self.assertEqual(1, len(summary["audits"]), "só a auditoria com problema aparece")
+        self.assertIn("dia 3", summary["days"][0])
+        self.assertIn("MASON 40%", summary["days"][0])
+        self.assertNotIn("NONE", summary["days"][0])
 
 if __name__ == "__main__":
     unittest.main()

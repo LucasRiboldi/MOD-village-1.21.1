@@ -32,6 +32,19 @@ class ColonyBoundsTest {
         assertEquals(101, colony.bounds().orElseThrow().sizeX());
     }
 
+    /** Regra 145: medida a vila, as camas vêm da caixa inteira e a sonda parcial não as muda. */
+    @Test
+    void aMeasuredVillageTakesItsBedsFromTheBoxNotFromTheProbe() {
+        colony.measure(HUNDRED);
+        colony.countBeds(15);
+
+        colony.observe(colony.center(), 7, true, colony.center());
+        assertEquals(15, colony.observedBeds(), "a sonda que viu 7 encolheu a vila de 15 camas");
+
+        colony.countBeds(16);
+        assertEquals(16, colony.observedBeds());
+    }
+
     @Test
     void growingWidensTheBoxAndLeavesTheCenterWhereItWas() {
         colony.measure(HUNDRED);
@@ -58,7 +71,8 @@ class ColonyBoundsTest {
 
         assertEquals(new ColonyPos(50, 64, 50), colony.center(),
                 "a média das camas não manda mais no centro da vila medida");
-        assertEquals(12, colony.observedBeds());
+        // Regra 145: na vila medida, as camas vêm da caixa (BoxBeds), não da sonda.
+        assertEquals(0, colony.observedBeds());
     }
 
     @Test

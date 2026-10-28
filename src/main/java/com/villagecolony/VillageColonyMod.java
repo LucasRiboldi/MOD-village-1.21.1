@@ -180,6 +180,11 @@ public class VillageColonyMod implements ModInitializer {
                     bounds,
                     by,
                     COLONIES.find(colonyId).map(Colony::center).orElse(null));
+
+            com.google.gson.JsonObject box = new com.google.gson.JsonObject();
+            box.addProperty("box", bounds.toString());
+            box.addProperty("by", by);
+            com.villagecolony.fabric.work.VillageDiary.event(colonyId, "box_grew", box);
         });
     }
 
@@ -198,6 +203,8 @@ public class VillageColonyMod implements ModInitializer {
         com.villagecolony.fabric.work.BenchPassives.register();
         com.villagecolony.fabric.work.BenchUpkeep.register();
         com.villagecolony.fabric.work.ValueGoods.register();
+        com.villagecolony.fabric.work.BoxBeds.register();
+        com.villagecolony.fabric.work.VillageDiary.register();
         com.villagecolony.fabric.work.AnalyticsLog.register();
         com.villagecolony.fabric.work.IdleHelps.register();
         PlayerWorldChangeHandler.register();

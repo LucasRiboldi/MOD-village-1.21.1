@@ -6,7 +6,9 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.Heightmap;
+import net.minecraft.world.chunk.WorldChunk;
 
 /**
  * O jogador de mentira da bancada de simulação por bioma — chave só de teste, decisão do autor de
@@ -52,6 +54,28 @@ public final class SimulatedObserver {
         int y = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, (int) column[0], (int) column[1]);
 
         return Optional.of(new BlockPos((int) column[0], y, (int) column[1]));
+    }
+
+    /**
+     * Os tiques de bloco dos chunks forçados, como se o observador fosse um jogador — 2026-10-28. O jogo só
+     * dá tique aleatório a chunk com jogador perto: na taiga simulada o trigo não cresceu em 10 dias e o
+     * fazendeiro ficou com 0% de trabalho por isso, não por defeito dele.
+     */
+    public static void tickForcedChunks(ServerWorld world) {
+        if (!ENABLED || !world.getPlayers().isEmpty() || !world.getTickManager().shouldTick()) {
+            return;
+        }
+
+        int speed = world.getGameRules().getInt(GameRules.RANDOM_TICK_SPEED);
+
+        for (long packed : world.getForcedChunks().toLongArray()) {
+            WorldChunk chunk = world.getChunkManager()
+                    .getWorldChunk(ChunkPos.getPackedX(packed), ChunkPos.getPackedZ(packed));
+
+            if (chunk != null && world.shouldTickBlocksInChunk(packed)) {
+                world.tickChunk(chunk, speed);
+            }
+        }
     }
 
     /** Se há quem observe o mundo: um jogador, ou o observador simulado. */

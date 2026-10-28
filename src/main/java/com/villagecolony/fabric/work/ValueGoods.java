@@ -22,29 +22,67 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Produtos de valor quando o estoque básico está cheio — escolha do autor, 2026-10-28 (jogo da 0.3.99:
- * lenhador 74%, pedreiro 48% e fundidor 44% parados com o estoque cheio). O titular sem tarefa do ofício,
- * no expediente, faz um lote de {@link #BATCH} por minuto: o lenhador faz carvão vegetal da tora, o
- * pedreiro faz tijolo de pedra e pedra polida, o fundidor faz pedra, vidro e terracota. Só com o cru acima de
- * {@link #KEEP_RAW} e o produto abaixo de {@link #CAP}: o estoque das obras vem primeiro.
+ * Produtos de valor com o titular sem tarefa — Regra 133 (autor, 2026-10-28; jogo da 0.3.99: lenhador 74%,
+ * pedreiro 48% e fundidor 44% parados com o estoque cheio) e Regra 146 (autor, 2026-10-28; taiga simulada:
+ * fundidor 80% e pedreiro 64% parados com 1.209 pedras, porque o produto batia no teto de 128). O titular
+ * sem tarefa do ofício, no expediente, faz um lote por minuto: o lenhador faz carvão vegetal da tora; o
+ * pedreiro faz tijolo, pedra polida, arenito cortado e as peças de pedregulho das obras; o fundidor funde o
+ * minério cru, assa a carne, e faz pedra, pedra lisa, vidro, tijolo e terracota. Cada receita guarda uma
+ * reserva do cru ({@link Recipe#keep}) e para com o produto em {@link #CAP}: o estoque das obras vem primeiro.
  */
 public final class ValueGoods {
 
+    /** Quantos do cru um lote gasta, no máximo. */
     static final int BATCH = 8;
-    static final int KEEP_RAW = 64;
-    static final int CAP = 128;
 
-    /** O que cada ofício transforma, na ordem de preferência: cru → produto. */
-    static final Map<ProfessionType, List<Item[]>> RECIPES = Map.of(
+    /** A reserva de cru das matérias que as obras também usam. */
+    static final int KEEP_RAW = 64;
+
+    /** O produto para de ser feito com tanto nos baús. */
+    static final int CAP = 512;
+
+    /** Uma receita: {@code in} do cru dão {@code out} do produto; o cru nunca desce de {@code keep}. */
+    record Recipe(Item raw, int in, Item product, int out, int keep) {
+
+        static Recipe oneToOne(Item raw, Item product) {
+            return new Recipe(raw, 1, product, 1, KEEP_RAW);
+        }
+
+        /** Minério cru e carne: nada os usa crus, não há reserva. */
+        static Recipe allOf(Item raw, Item product) {
+            return new Recipe(raw, 1, product, 1, 0);
+        }
+    }
+
+    /** O que cada ofício transforma, na ordem de preferência. */
+    static final Map<ProfessionType, List<Recipe>> RECIPES = Map.of(
             ProfessionType.MASON, List.of(
-                    new Item[] {Items.STONE, Items.STONE_BRICKS},
-                    new Item[] {Items.ANDESITE, Items.POLISHED_ANDESITE},
-                    new Item[] {Items.GRANITE, Items.POLISHED_GRANITE},
-                    new Item[] {Items.DIORITE, Items.POLISHED_DIORITE}),
+                    Recipe.oneToOne(Items.STONE, Items.STONE_BRICKS),
+                    new Recipe(Items.COBBLESTONE, 6, Items.COBBLESTONE_STAIRS, 4, KEEP_RAW),
+                    new Recipe(Items.COBBLESTONE, 3, Items.COBBLESTONE_SLAB, 6, KEEP_RAW),
+                    new Recipe(Items.COBBLESTONE, 6, Items.COBBLESTONE_WALL, 6, KEEP_RAW),
+                    Recipe.oneToOne(Items.STONE_BRICKS, Items.CHISELED_STONE_BRICKS),
+                    Recipe.oneToOne(Items.SANDSTONE, Items.CUT_SANDSTONE),
+                    Recipe.oneToOne(Items.RED_SANDSTONE, Items.CUT_RED_SANDSTONE),
+                    Recipe.oneToOne(Items.ANDESITE, Items.POLISHED_ANDESITE),
+                    Recipe.oneToOne(Items.GRANITE, Items.POLISHED_GRANITE),
+                    Recipe.oneToOne(Items.DIORITE, Items.POLISHED_DIORITE),
+                    Recipe.oneToOne(Items.COBBLED_DEEPSLATE, Items.POLISHED_DEEPSLATE)),
             ProfessionType.SMELTER, List.of(
-                    new Item[] {Items.COBBLESTONE, Items.STONE},
-                    new Item[] {Items.SAND, Items.GLASS},
-                    new Item[] {Items.CLAY, Items.TERRACOTTA}));
+                    Recipe.allOf(Items.RAW_IRON, Items.IRON_INGOT),
+                    Recipe.allOf(Items.RAW_GOLD, Items.GOLD_INGOT),
+                    Recipe.allOf(Items.RAW_COPPER, Items.COPPER_INGOT),
+                    Recipe.allOf(Items.BEEF, Items.COOKED_BEEF),
+                    Recipe.allOf(Items.PORKCHOP, Items.COOKED_PORKCHOP),
+                    Recipe.allOf(Items.MUTTON, Items.COOKED_MUTTON),
+                    Recipe.allOf(Items.CHICKEN, Items.COOKED_CHICKEN),
+                    Recipe.allOf(Items.RABBIT, Items.COOKED_RABBIT),
+                    Recipe.oneToOne(Items.COBBLESTONE, Items.STONE),
+                    Recipe.oneToOne(Items.STONE, Items.SMOOTH_STONE),
+                    Recipe.oneToOne(Items.SAND, Items.GLASS),
+                    Recipe.oneToOne(Items.CLAY_BALL, Items.BRICK),
+                    Recipe.oneToOne(Items.CLAY, Items.TERRACOTTA),
+                    Recipe.oneToOne(Items.SANDSTONE, Items.SMOOTH_SANDSTONE)));
 
     private ValueGoods() {
     }
@@ -80,13 +118,17 @@ public final class ValueGoods {
                 continue;
             }
 
-            Optional<Item[]> recipe = recipeFor(world, chests, trade.get());
+            Optional<Recipe> recipe = recipeFor(world, chests, trade.get());
 
-            if (recipe.isPresent() && batch(world, chests, recipe.get()[0], recipe.get()[1])) {
-                villager.swingHand(Hand.MAIN_HAND);
-                ActionJournal.action(worker.villagerId(), "CRAFTED", ActionJournal.idOf(recipe.get()[1]), BATCH, null,
-                        "value goods");
-                made++;
+            if (recipe.isPresent()) {
+                int crafted = batch(world, chests, recipe.get());
+
+                if (crafted > 0) {
+                    villager.swingHand(Hand.MAIN_HAND);
+                    ActionJournal.action(worker.villagerId(), "CRAFTED", ActionJournal.idOf(recipe.get().product()),
+                            crafted, null, "value goods");
+                    made++;
+                }
             }
         }
 
@@ -94,13 +136,13 @@ public final class ValueGoods {
     }
 
     /** O lote que este ofício pode fazer agora: cru acima da reserva e produto abaixo do teto. */
-    static Optional<Item[]> recipeFor(ServerWorld world, List<ColonyPos> chests, ProfessionType trade) {
-        List<Item[]> recipes = trade == ProfessionType.LUMBERJACK ? charcoalFromTheMostLogs(world, chests)
+    static Optional<Recipe> recipeFor(ServerWorld world, List<ColonyPos> chests, ProfessionType trade) {
+        List<Recipe> recipes = trade == ProfessionType.LUMBERJACK ? charcoalFromTheMostLogs(world, chests)
                 : RECIPES.getOrDefault(trade, List.of());
 
-        for (Item[] recipe : recipes) {
-            if (ColonyChests.countIn(world, chests, recipe[0]) >= KEEP_RAW + BATCH
-                    && ColonyChests.countIn(world, chests, recipe[1]) < CAP) {
+        for (Recipe recipe : recipes) {
+            if (ColonyChests.countIn(world, chests, recipe.raw()) >= recipe.keep() + recipe.in()
+                    && ColonyChests.countIn(world, chests, recipe.product()) < CAP) {
                 return Optional.of(recipe);
             }
         }
@@ -109,7 +151,7 @@ public final class ValueGoods {
     }
 
     /** O carvão vegetal sai da tora de que a vila tem mais. */
-    private static List<Item[]> charcoalFromTheMostLogs(ServerWorld world, List<ColonyPos> chests) {
+    private static List<Recipe> charcoalFromTheMostLogs(ServerWorld world, List<ColonyPos> chests) {
         Item most = null;
         int mostCount = 0;
 
@@ -124,26 +166,44 @@ public final class ValueGoods {
             }
         }
 
-        return most == null ? List.of() : List.<Item[]>of(new Item[] {most, Items.CHARCOAL});
+        return most == null ? List.of() : List.of(Recipe.oneToOne(most, Items.CHARCOAL));
     }
 
-    /** Tira {@link #BATCH} do cru e põe o mesmo tanto do produto no primeiro baú com lugar. */
-    static boolean batch(ServerWorld world, List<ColonyPos> chests, Item raw, Item product) {
-        int taken = ColonyChests.withdraw(world, chests, raw, BATCH);
-        int left = taken;
+    /**
+     * Faz quantas vezes a receita couber em {@link #BATCH} do cru, acima da reserva, e põe o produto no
+     * primeiro baú com lugar; o cru que não virou produto volta.
+     *
+     * @return quanto do produto saiu
+     */
+    static int batch(ServerWorld world, List<ColonyPos> chests, Recipe recipe) {
+        int spare = ColonyChests.countIn(world, chests, recipe.raw()) - recipe.keep();
+        int crafts = Math.min(BATCH, spare) / recipe.in();
+
+        if (crafts <= 0) {
+            return 0;
+        }
+
+        int taken = ColonyChests.withdraw(world, chests, recipe.raw(), crafts * recipe.in());
+        crafts = taken / recipe.in();
+
+        int made = crafts * recipe.out();
+        int left = made;
 
         for (ColonyPos chest : chests) {
             if (left <= 0) {
                 break;
             }
 
-            left = ChestDepositor.deposit(world, chest, product, left);
+            left = ChestDepositor.deposit(world, chest, recipe.product(), left);
         }
 
-        if (left > 0 && !chests.isEmpty()) {
-            ChestDepositor.deposit(world, chests.getFirst(), raw, left);
+        // O que não coube volta como cru, na proporção da receita, junto com a sobra que não fez receita.
+        int rawBack = taken - crafts * recipe.in() + (left * recipe.in()) / recipe.out();
+
+        if (rawBack > 0 && !chests.isEmpty()) {
+            ChestDepositor.deposit(world, chests.getFirst(), recipe.raw(), rawBack);
         }
 
-        return taken - left > 0;
+        return made - left;
     }
 }

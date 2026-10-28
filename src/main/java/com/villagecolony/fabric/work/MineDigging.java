@@ -163,6 +163,7 @@ public final class MineDigging {
                 VillageColonyMod.LOGGER.info(
                         "Mine {} finished every branch and went one level deeper",
                         colonyId);
+                VillageDiary.event(colonyId, "mine_level", new com.google.gson.JsonObject());
 
                 IdleLog.clear(colonyId, ARM_SUBJECT);
 
