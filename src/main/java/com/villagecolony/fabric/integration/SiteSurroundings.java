@@ -75,7 +75,7 @@ public final class SiteSurroundings {
                 boolean wall = x == min.x() - 1 || x == max.x() + 1 || z == min.z() - 1 || z == max.z() + 1;
 
                 if (wall && world.isChunkLoaded(x >> 4, z >> 4)) {
-                    heights.add(world.getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z) - 1);
+                    groundAt(world, x, z, min.y()).ifPresent(heights::add);
                 }
             }
         }
@@ -88,6 +88,20 @@ public final class SiteSurroundings {
 
         return levelAround(world, building.colonyId(), min, max.x(), max.z(), heights.get(heights.size() / 2),
                 building.blueprint().path());
+    }
+
+    /** O chão natural desta coluna perto do piso, com espaço livre em cima, de {@link #SCAN} acima a abaixo. */
+    private static java.util.Optional<Integer> groundAt(ServerWorld world, int x, int z, int floorY) {
+        for (int y = floorY + SCAN; y >= floorY - SCAN; y--) {
+            net.minecraft.util.math.BlockPos at = new net.minecraft.util.math.BlockPos(x, y, z);
+
+            // Só chão natural: laje, telhado ou a barreira de cima não são o chão em volta da casa.
+            if (isNaturalGround(world.getBlockState(at)) && world.getBlockState(at.up()).isReplaceable()) {
+                return java.util.Optional.of(y);
+            }
+        }
+
+        return java.util.Optional.empty();
     }
 
     private static int levelAround(ServerWorld world, java.util.UUID colonyId, ColonyPos origin, int x1, int z1,
@@ -146,7 +160,9 @@ public final class SiteSurroundings {
         for (int y = roadY + SCAN; y >= roadY - SCAN; y--) {
             BlockState state = world.getBlockState(new BlockPos(x, y, z));
 
-            if (state.isAir() || (LotGround.isNothing(state) && state.getFluidState().isEmpty())) {
+            // A barreira (teto da arena, mapa do jogador) não é chão nem obstáculo do chão: passa por ela.
+            if (state.isAir() || state.isOf(Blocks.BARRIER)
+                    || (LotGround.isNothing(state) && state.getFluidState().isEmpty())) {
                 continue;
             }
 

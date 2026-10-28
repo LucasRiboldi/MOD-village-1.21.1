@@ -66,8 +66,8 @@ public final class StreetGaps {
     /** A falha que sai desta coluna de rua para este lado, se a linha volta a ser rua logo depois. */
     static int fill(ServerWorld world, UUID colonyId, BlockPos street, Direction side) {
         for (int gap = 1; gap <= MAX_GAP; gap++) {
-            Optional<BlockPos> beyond = surface(world, street.getX() + side.getOffsetX() * (gap + 1),
-                    street.getZ() + side.getOffsetZ() * (gap + 1));
+            Optional<BlockPos> beyond = groundNear(world, street.getX() + side.getOffsetX() * (gap + 1),
+                    street.getZ() + side.getOffsetZ() * (gap + 1), street.getY());
 
             if (beyond.isEmpty() || Math.abs(beyond.get().getY() - street.getY()) > 1) {
                 return 0;
@@ -80,8 +80,8 @@ public final class StreetGaps {
             int laid = 0;
 
             for (int step = 1; step <= gap; step++) {
-                Optional<BlockPos> hole = surface(world, street.getX() + side.getOffsetX() * step,
-                        street.getZ() + side.getOffsetZ() * step);
+                Optional<BlockPos> hole = groundNear(world, street.getX() + side.getOffsetX() * step,
+                        street.getZ() + side.getOffsetZ() * step, street.getY());
 
                 if (hole.isEmpty() || isStreet(world, hole.get()) || !pave(world, colonyId, street, hole.get())) {
                     return laid;
@@ -123,6 +123,26 @@ public final class StreetGaps {
     /** Se este bloco é rua: caminho, ou o desgaste que a colônia assentou. */
     static boolean isStreet(ServerWorld world, BlockPos at) {
         return VillageRoad.isPaving(world, at) || StreetSurface.isColonyStreet(at, world.getBlockState(at));
+    }
+
+    /**
+     * O chão desta coluna a até um bloco de {@code aroundY}: sólido, com espaço livre em cima. Pela altura da
+     * rua e não pelo topo do mundo — a falha debaixo de uma ponte ou de um beiral também é falha.
+     */
+    static Optional<BlockPos> groundNear(ServerWorld world, int x, int z, int aroundY) {
+        if (!world.isChunkLoaded(x >> 4, z >> 4)) {
+            return Optional.empty();
+        }
+
+        for (int y = aroundY + 1; y >= aroundY - 1; y--) {
+            BlockPos at = new BlockPos(x, y, z);
+
+            if (!world.getBlockState(at).isReplaceable() && world.getBlockState(at.up()).isReplaceable()) {
+                return Optional.of(at);
+            }
+        }
+
+        return Optional.empty();
     }
 
     /** O chão da coluna, por baixo da copa e da planta rasteira; vazio se o chunk não está carregado. */
