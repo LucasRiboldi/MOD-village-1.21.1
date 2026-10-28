@@ -85,12 +85,15 @@ public class BenchPassivesGameTest implements FabricGameTest {
         } finally {
             VillageColonyMod.WORKERS.remove(carpenter);
             VillageColonyMod.COLONIES.remove(colony.id());
+            context.setBlockState(bench, net.minecraft.block.Blocks.AIR);
         }
 
         context.complete();
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "bench_passives", tickLimit = 20)
+    // Lote próprio: o teste do painel põe uma bancada de carpinteiro na arena vizinha, no mesmo instante, e a busca
+    // de bancada (raio de 64 em volta da colônia) a achava — "sem bancada não encanta" falhava por acaso.
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "bench_passives_enchant", tickLimit = 20)
     public void theCarpenterEnchantsAndTheForgeFindsTheFurnaces(TestContext context) {
         BlockPos center = new BlockPos(5, 2, 5);
         Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)));
