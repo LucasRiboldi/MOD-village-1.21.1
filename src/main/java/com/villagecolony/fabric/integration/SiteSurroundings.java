@@ -54,13 +54,49 @@ public final class SiteSurroundings {
         Blueprint blueprint = project.blueprint();
         ColonyPos origin = project.origin();
         int roadY = origin.y() + (blueprint.hasStreetLayer() ? blueprint.streetLayer() : 0);
+        int x1 = origin.x() + blueprint.size().x() - 1;
+        int z1 = origin.z() + blueprint.size().z() - 1;
+
+        return levelAround(world, project.colonyId(), origin, x1, z1, roadY, blueprint.id().path());
+    }
+
+    /**
+     * Nivela em volta de uma construção já de pé — o pedreiro sem tarefa, Regra 149 (autor, 2026-10-28). A
+     * altura de referência é a mediana do chão logo em volta das paredes: a planta não diz onde fica a rua de
+     * uma casa antiga.
+     */
+    public static int level(ServerWorld world, com.villagecolony.core.construction.model.Building building) {
+        List<Integer> heights = new java.util.ArrayList<>();
+        ColonyPos min = building.min();
+        ColonyPos max = building.max();
+
+        for (int x = min.x() - 1; x <= max.x() + 1; x++) {
+            for (int z = min.z() - 1; z <= max.z() + 1; z++) {
+                boolean wall = x == min.x() - 1 || x == max.x() + 1 || z == min.z() - 1 || z == max.z() + 1;
+
+                if (wall && world.isChunkLoaded(x >> 4, z >> 4)) {
+                    heights.add(world.getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z) - 1);
+                }
+            }
+        }
+
+        if (heights.isEmpty()) {
+            return 0;
+        }
+
+        java.util.Collections.sort(heights);
+
+        return levelAround(world, building.colonyId(), min, max.x(), max.z(), heights.get(heights.size() / 2),
+                building.blueprint().path());
+    }
+
+    private static int levelAround(ServerWorld world, java.util.UUID colonyId, ColonyPos origin, int x1, int z1,
+            int roadY, String what) {
         int x0 = origin.x();
         int z0 = origin.z();
-        int x1 = x0 + blueprint.size().x() - 1;
-        int z1 = z0 + blueprint.size().z() - 1;
-        Set<Long> roads = RoadIndex.roadsOf(project.colonyId()).map(index -> Set.copyOf(index.columns())).orElse(Set.of());
+        Set<Long> roads = RoadIndex.roadsOf(colonyId).map(index -> Set.copyOf(index.columns())).orElse(Set.of());
         List<com.villagecolony.core.construction.model.Building> others =
-                List.copyOf(VillageColonyMod.BUILDINGS.ofColony(project.colonyId()));
+                List.copyOf(VillageColonyMod.BUILDINGS.ofColony(colonyId));
         Map<Item, Integer> cut = new HashMap<>();
         int changed = 0;
 
@@ -78,12 +114,12 @@ public final class SiteSurroundings {
             }
         }
 
-        store(world, project, cut);
+        store(world, colonyId, origin, cut);
 
         if (changed > 0) {
             VillageColonyMod.LOGGER.info("Colony {} levelled {} blocks around {} — ring of {} at the road height"
-                            + " ±1 and a ramp of {} (Regra 131)", project.colonyId().toString().substring(0, 8), changed,
-                    blueprint.id().path(), RING, RAMP);
+                            + " ±1 and a ramp of {} (Regra 131)", colonyId.toString().substring(0, 8), changed,
+                    what, RING, RAMP);
         }
 
         return changed;
@@ -157,7 +193,7 @@ public final class SiteSurroundings {
     }
 
     /** Terra, areia, cascalho e pedra do mundo: o que o nivelamento pode cortar. Caminho fica. */
-    static boolean isNaturalGround(BlockState state) {
+    public static boolean isNaturalGround(BlockState state) {
         Block block = state.getBlock();
 
         return (state.isIn(BlockTags.DIRT) || state.isIn(BlockTags.SAND) || state.isIn(BlockTags.BASE_STONE_OVERWORLD)
@@ -166,8 +202,8 @@ public final class SiteSurroundings {
                 && block != Blocks.DIRT_PATH && block != ModContent.SAND_PATH;
     }
 
-    private static void store(ServerWorld world, ConstructionProject project, Map<Item, Integer> cut) {
-        List<ColonyPos> chests = ColonyChests.nearestFirst(world, project.colonyId(), project.origin());
+    private static void store(ServerWorld world, java.util.UUID colonyId, ColonyPos near, Map<Item, Integer> cut) {
+        List<ColonyPos> chests = ColonyChests.nearestFirst(world, colonyId, near);
 
         cut.forEach((item, count) -> {
             int left = count;

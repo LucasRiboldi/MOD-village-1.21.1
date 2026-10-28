@@ -22,7 +22,8 @@ public enum SupplyException {
     GRASS_FOR_THE_SHEEP(103, "o bloco de grama ao pé do poste ou no curral da ovelha"),
     STUCK_PIECE(113, "a peça de lado da obra sem mais nada a pôr, depois de 4 tentativas, posta no lugar"),
     ANIMAL_FEED(117, "a ração do par que o pastor vai criar, quando os baús não têm comida do fazendeiro"),
-    WAITED_TOO_LONG(128, "o produto da tarefa largada duas vezes em 10 minutos, no baú de quem a largou");
+    WAITED_TOO_LONG(128, "o produto da tarefa largada duas vezes em 10 minutos, no baú de quem a largou"),
+    END_OF_BUILD(148, "as peças que faltam quando a obra para no fim, postas no lugar para a casa fechar");
 
     private final int rule;
 

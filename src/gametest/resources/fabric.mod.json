@@ -175,6 +175,7 @@
       "com.villagecolony.gametest.RoadExtensionGameTest",
       "com.villagecolony.gametest.StreetWidthGameTest",
       "com.villagecolony.fabric.work.VillageDiaryGameTest",
+      "com.villagecolony.fabric.work.BuildClosingGameTest",
       "com.villagecolony.gametest.MineLeaseGameTest",
       "com.villagecolony.gametest.MinerApproachGameTest",
       "com.villagecolony.gametest.VillageFoundationGameTest",

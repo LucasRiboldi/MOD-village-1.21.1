@@ -101,7 +101,7 @@ public final class VillageDiary {
     }
 
     /** A obra terminou: quantas peças do projeto estão de fato no mundo (o log dizia "0 blocks placed"). */
-    public static void buildFinished(ConstructionProject project, int placedByLast, UUID builder) {
+    public static void buildFinished(ConstructionProject project, int placedByLast, @Nullable UUID builder) {
         MinecraftServer current = server;
         int pieces = project.blueprint().blocks().size();
         int inPlace = current == null ? -1 : inPlace(current.getOverworld(), project, project.blueprint().blocks());
@@ -109,7 +109,7 @@ public final class VillageDiary {
         VillageColonyMod.LOGGER.info("Colony {} finished {} at {} — {} of {} pieces in place in the world"
                         + " ({} by the last builder, {}), now colony infrastructure",
                 project.colonyId(), project.blueprint().id(), project.origin(), inPlace, pieces, placedByLast,
-                builder);
+                builder == null ? "closed by the colony" : builder);
 
         JsonObject details = new JsonObject();
         details.addProperty("building", project.blueprint().id().toString());
