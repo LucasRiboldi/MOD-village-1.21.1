@@ -12,6 +12,27 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.104] — decisões do diagnóstico: gelo, pastor, mineiro e mapa de encalhe (2026-10-28, JAR local, não jogado)
+
+Branch `fix/playtest-0102`. Escolhas do autor sobre o diagnóstico da 0.3.103
+(`docs/research/2026-10-28-diagnostico-e-decisoes-0103.md`, §3).
+
+### Corrigido
+- **Gelo na obra (T1, parte):** gelo, gelo compactado e gelo azul surgem quando a obra os pede (Regra 88); a
+  neve continua vindo da pá.
+- **Pastor preso no curral (T2, Regra 150):** tosquia a até 4,5 blocos do olho, por cima da cerca, sem entrar.
+- **Mineiro recusando pedra em cadeia (T4):** a pedra alta demais ou sem caminho é posta de lado na escolha
+  (`SKIPPED` no diário) e a próxima é pedida na mesma passagem, até 4.
+
+### Adicionado
+- **Área forçada que cresce (D4):** a simulação e a bancada forçam os chunks da caixa da vila conforme ela
+  cresce; `VC_STATE` ganhou `box`.
+- **Mapa de encalhe (T3):** `scripts/stuck_map.py` lista e desenha os lugares de teleporte e encalhe.
+
+### Pendente
+- T1 (neve na pá, espécie de madeira, madeira equivalente), T5, L3, O1–O8, D1; a recusa depois de andar até a
+  pedra 9 acima (doc, §5).
+
 ## [0.3.103] — ruas naturais, centro fixo, diário da vila e mina mais rasa por nível (2026-10-28, JAR local, não jogado)
 
 Branch `fix/playtest-0102`. Achados de duas simulações de 10 dias de uma taiga e da auditoria

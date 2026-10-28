@@ -1,5 +1,11 @@
 # STATE — 2026-10-28
 
+> **0.3.104** (28-10, branch `fix/playtest-0102`): decisões do autor sobre o diagnóstico da 0.3.103
+> (`docs/research/2026-10-28-diagnostico-e-decisoes-0103.md`) — gelo surge na obra (T1, parte), pastor tosquia
+> por cima da cerca (T2, Regra 150), área forçada da bancada cresce com a caixa (D4), mapa de encalhe
+> `scripts/stuck_map.py` (T3), mineiro pula pedra alta demais ou sem caminho na escolha (T4). Unitários
+> 1625/1625, bateria 915/915, Python 144. **Não jogado.** Para o jogo: a §4 do documento de decisões.
+>
 > **0.3.103** (28-10, branch `fix/playtest-0102`): ruas naturais (Regras 138–140), centro fixo (141), noite
 > só para o preso (142), baú público inteiro (143), alvo inalcançável esquecido (144), camas da caixa (145),
 > produtos de valor (146), diário da vila `VC_EVENT`/`VC_DAY`/`VC_AUDIT` (147), obra nunca largada meio
