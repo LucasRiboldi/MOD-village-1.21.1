@@ -51,7 +51,10 @@ public final class StreetSurface {
             return Blocks.SANDSTONE.getDefaultState();
         }
 
-        return (world.getRandom().nextBoolean() ? Blocks.GRAVEL : Blocks.COARSE_DIRT).getDefaultState();
+        // Cascalho cai: sobre o vazio a borda fica com a terra grossa.
+        boolean falls = world.getBlockState(at.down()).isReplaceable();
+
+        return (!falls && world.getRandom().nextBoolean() ? Blocks.GRAVEL : Blocks.COARSE_DIRT).getDefaultState();
     }
 
     /** Se este bloco é material de rua. */

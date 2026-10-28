@@ -57,10 +57,9 @@ public class RoadExtensionGameTest implements FabricGameTest {
     /**
      * Sem beira livre, a colônia calça o trecho seguinte.
      *
-     * <p>A ponta escolhida é a <b>mais distante do centro</b>, e o cenário
-     * tem duas: a rua acaba dos dois lados, e o começo dela está a zero do
-     * centro enquanto o fim está a quatro. Estrada que cresce pelo meio
-     * racha a vila, e é por isso que a distância decide.
+     * <p>O cenário tem duas pontas: a do começo, mais perto do centro, é a
+     * primeira da fila (Regra 140) e não tem chão calçável a oeste — o vidro
+     * da selagem —; a rua cresce pela outra.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
     public void withoutAFreeLotTheRoadGrows(TestContext context) {
@@ -310,19 +309,13 @@ public class RoadExtensionGameTest implements FabricGameTest {
     /**
      * Uma ponta murada não para a vila — E27, 2026-08-25.
      *
-     * <p>A colônia guardava <b>uma</b> ponta, a mais distante, e nenhuma
-     * outra. Quando essa não se deixava calçar, {@code pave} devolvia
-     * zero e a vila não tinha alternativa: a varredura seguinte gastava
-     * mais oito minutos para reescolher a mesma ponta e bater no mesmo
-     * bloco. Foi o que a sessão de 2026-08-25 mostrou, às 23:14:27, na
-     * colônia {@code 56c5b68d}.
+     * <p>A colônia guardava <b>uma</b> ponta e nenhuma outra. Quando essa não se deixava calçar,
+     * {@code pave} devolvia zero e a vila não tinha alternativa: a varredura seguinte reescolhia a mesma
+     * ponta e batia no mesmo bloco.
      *
-     * <p>O cenário tem as duas pontas da mesma faixa: a de leste é a mais
-     * distante do centro e está murada de pedra; a de oeste está mais
-     * perto e tem chão. A afirmação é que a segunda foi tentada.
-     *
-     * <p>Rodado contra a regra desligada: a saída é {@code BLOCKED} e
-     * nenhum bloco de rua aparece a oeste.
+     * <p>O cenário tem as duas pontas da mesma faixa: a de oeste é a mais perto do centro — a primeira da
+     * fila pela Regra 140 — e está murada de pedra; a de leste tem chão. A afirmação é que a segunda foi
+     * tentada.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
     public void aWalledEndDoesNotStopTheRoadWhenAnotherServes(TestContext context) {
@@ -331,16 +324,8 @@ public class RoadExtensionGameTest implements FabricGameTest {
         strip(context);
         reserveInitialRoad(context, colony);
 
-        // A ponta mais distante, murada. É a que a colônia escolhia, e
-        // era a única que ela tentava.
-        context.setBlockState(ROAD_END.add(1, 0, 0), Blocks.STONE.getDefaultState());
-
-        // A outra ponta da mesma faixa, com chão de sobra. Mais perto do
-        // centro, então é a segunda da fila.
-        for (int step = 1; step <= 2; step++) {
-            context.setBlockState(
-                    ROAD_START.add(-step, 0, 0), Blocks.DIRT.getDefaultState());
-        }
+        // A ponta mais perto, murada: é a primeira que a colônia tenta.
+        context.setBlockState(ROAD_START.add(-1, 0, 0), Blocks.STONE.getDefaultState());
 
         BuildSiteScanner.find(
                 context.getWorld(),
@@ -357,11 +342,11 @@ public class RoadExtensionGameTest implements FabricGameTest {
                 "a ponta murada parou a vila em vez de a colônia tentar a próxima: " + outcome);
 
         context.assertTrue(
-                context.getBlockState(ROAD_START.add(-1, 0, 0)).isOf(Blocks.DIRT_PATH),
+                context.getBlockState(ROAD_END.add(1, 0, 0)).isOf(Blocks.DIRT_PATH),
                 "a segunda ponta não foi tentada");
 
         context.assertTrue(
-                context.getBlockState(ROAD_END.add(1, 0, 0)).isOf(Blocks.STONE),
+                context.getBlockState(ROAD_START.add(-1, 0, 0)).isOf(Blocks.STONE),
                 "a pedra virou rua");
 
         context.complete();
