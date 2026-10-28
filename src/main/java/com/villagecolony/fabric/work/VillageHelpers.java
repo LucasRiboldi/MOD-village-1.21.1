@@ -222,11 +222,14 @@ public final class VillageHelpers {
         return 0;
     }
 
-    /** Se já há luz a {@link #LIGHT_SPACING} blocos: a luz de bloco no ponto conta o alcance dela. */
-    private static boolean lightNear(ServerWorld world, BlockPos at) {
+    /**
+     * Se já há luz a {@link #LIGHT_SPACING} blocos: a luz de bloco no ponto conta o alcance dela. O bloco de chunk
+     * descarregado é pulado — lê-lo carregaria o chunk na thread do servidor.
+     */
+    static boolean lightNear(ServerWorld world, BlockPos at) {
         for (BlockPos near : BlockPos.iterate(at.add(-LIGHT_SPACING / 2, -2, -LIGHT_SPACING / 2),
                 at.add(LIGHT_SPACING / 2, 2, LIGHT_SPACING / 2))) {
-            if (world.getBlockState(near).getLuminance() > 0) {
+            if (world.isChunkLoaded(near) && world.getBlockState(near).getLuminance() > 0) {
                 return true;
             }
         }

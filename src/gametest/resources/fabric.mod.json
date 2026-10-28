@@ -178,6 +178,7 @@
       "com.villagecolony.fabric.work.BuildClosingGameTest",
       "com.villagecolony.fabric.integration.StreetGapsGameTest",
       "com.villagecolony.fabric.integration.HouseSurroundingsGameTest",
+      "com.villagecolony.fabric.work.StreetLightChunkGameTest",
       "com.villagecolony.gametest.MineLeaseGameTest",
       "com.villagecolony.gametest.MinerApproachGameTest",
       "com.villagecolony.gametest.VillageFoundationGameTest",
