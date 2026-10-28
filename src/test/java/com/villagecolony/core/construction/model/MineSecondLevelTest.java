@@ -10,6 +10,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /** A repetição vertical preserva a forma e desce pelo salão do ramal zero (Regra 119). */
 class MineSecondLevelTest {
 
+    /** Metade do lado do salão: as coordenadas do traçado crescem com ela. */
+    private static final int H = MineShaft.HALL_SIDE / 2;
+
     @Test
     void theNextCyclePreservesEveryArmDirection() {
         MineShaft first = MineShaft.from(new ColonyPos(0, 64, 0), Side.WEST);
@@ -19,7 +22,7 @@ class MineSecondLevelTest {
         assertEquals(first.descent(), second.descent());
         // Regra 119: o nível seguinte desce do meio do salão do ramal zero, duas escadas abaixo.
         assertEquals(MineShaft.DESCENT + MineShaft.ARM_STAIRS, first.entry().y() - second.entry().y());
-        assertEquals(new ColonyPos(16, 40, -8), second.entry());
+        assertEquals(new ColonyPos(2 * H, 40, -H), second.entry());
     }
 
     @Test

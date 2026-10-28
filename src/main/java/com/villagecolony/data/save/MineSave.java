@@ -110,8 +110,11 @@ final class MineSave {
      *
      * <p><b>Oito desde 2026-10-03</b>, com dois lances de cinco degraus e
      * salões de 10 x 10 x 3. Toda fronteira anterior muda de significado.
+     *
+     * <p><b>Nove desde 2026-10-28</b>, com salões de 9 x 9 x 3. A forma 8 também cobre os salões de 17 da 0.3.96,
+     * que mudaram a ordem sem subir a versão: as duas recomeçam do primeiro degrau.
      */
-    private static final int SHAPE_VERSION = 8;
+    private static final int SHAPE_VERSION = 9;
 
     private MineSave() {
     }

@@ -52,8 +52,12 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
     /** Blocos do caracol do nível. */
     public static final int CARVED = DESCENT * STAIR_STEP_BLOCKS;
 
-    /** O lado do salão, ímpar para ter meio. */
-    public static final int HALL_SIDE = 17;
+    /**
+     * O lado do salão, ímpar para ter meio. Nove (autor, 2026-10-28): com dezessete um nível cavava 4.875 blocos
+     * e a mina descia um nível em dez dias; com nove são 1.755. Sete quebraria o traçado: o caracol, de tamanho
+     * fixo, cavaria o chão dos degraus ({@code MineShaftLayoutTest}).
+     */
+    public static final int HALL_SIDE = 9;
 
     /** Do meio do salão até a borda. */
     private static final int HALF = HALL_SIDE / 2;
@@ -339,16 +343,16 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
 
     /**
      * Onde vão as tochas de chão deste ramal, nos pés: uma grade de {@link #LIGHT_SPACING} no salão do
-     * nível e no do ramal, nunca no degrau. A grade fica a 6 do meio de cada salão, longe do caracol do
-     * nível seguinte (que desce do meio do salão do ramal) e dos cantos de onde saem os ramais. A rampa do
-     * fundo não leva tocha.
+     * nível e no do ramal, nunca no degrau. A grade fica a metade do espaçamento do meio de cada salão, sem
+     * passar da borda dele, longe do caracol do nível seguinte (que desce do meio do salão do ramal) e dos cantos
+     * de onde saem os ramais. A rampa do fundo não leva tocha.
      */
     public java.util.List<ColonyPos> lightSpots() {
         if (isRamp()) {
             return java.util.List.of();
         }
 
-        int off = LIGHT_SPACING / 2;
+        int off = Math.min(LIGHT_SPACING / 2, HALF - 1);
         Side along = descent.clockwise().opposite();
         Side armAlong = gallery.clockwise().opposite();
         ColonyPos hall = hallCenter();
