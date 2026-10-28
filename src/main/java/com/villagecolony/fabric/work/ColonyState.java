@@ -67,6 +67,14 @@ public final class ColonyState {
         colony.bounds().ifPresent(box -> {
             state.addProperty("width", box.maxX() - box.minX() + 1);
             state.addProperty("depth", box.maxZ() - box.minZ() + 1);
+
+            // Os cantos: com o centro fixo (Regra 141), centro e tamanho não dizem onde a caixa está.
+            JsonObject corners = new JsonObject();
+            corners.addProperty("minX", box.minX());
+            corners.addProperty("minZ", box.minZ());
+            corners.addProperty("maxX", box.maxX());
+            corners.addProperty("maxZ", box.maxZ());
+            state.add("box", corners);
         });
         state.addProperty("mspt", Math.round(world.getServer().getAverageNanosPerTick() / 100_000.0) / 10.0);
 
