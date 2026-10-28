@@ -12,6 +12,23 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.100] — ociosos e travados do jogo da 0.3.99 (2026-10-28, JAR local, não jogado)
+
+### Mudado
+- **Estoque cheio (Regra 133):** baús da vila a 80% pedem o armazém como próxima obra e um construtor a
+  mais; lenhador, pedreiro e fundidor sem tarefa fazem produtos de valor (carvão vegetal, tijolo de pedra,
+  pedra polida, pedra, vidro, terracota).
+- **Sem ofício (Regra 134):** com todas as profissões na meta, o adulto que sobra vai ao ofício que a obra
+  espera.
+- **Tarefa que não rende não abre (Regra 135):** peça de tábua sem tábua com a tora reservada; lã sem
+  ovelha lanuda ou com 64 no baú.
+- **Fazendeiro (Regra 136):** alcance de 4,5 blocos com linha livre.
+- **Mineiro (Regra 137):** preso acima do nível duas vezes, a escada recomeça na boca de superfície.
+
+### Limites
+- O lote de produto de valor é instantâneo e não conta como trabalho no `time_ledger`.
+- O construtor a mais só vem com os baús a 80%.
+
 ## [0.3.99] — caminho rente ao chão e sem travar o servidor (2026-10-28, JAR local, não jogado)
 
 ### Corrigido

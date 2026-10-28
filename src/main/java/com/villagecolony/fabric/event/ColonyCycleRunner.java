@@ -484,6 +484,8 @@ final class ColonyCycleRunner {
                     .orElse(false);
             case SMELT_INPUT -> com.villagecolony.fabric.work.SmeltInput.inChests(
                     world, colonyId, task.targetResource());
+            case WOOL_ON_A_SHEEP -> !EmptySweeps.isWaiting(colonyId, task.targetResource(), world.getTime())
+                    && com.villagecolony.fabric.work.WoolGate.open(world, colonyId, task.targetResource());
         };
     }
 

@@ -15,10 +15,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class ReservationGateTest {
 
     private static final Set<TaskType> SWEPT =
-            EnumSet.of(TaskType.COLLECT_SURFACE_RESOURCE, TaskType.COLLECT_SOIL, TaskType.COLLECT_WOOL);
+            EnumSet.of(TaskType.COLLECT_SURFACE_RESOURCE, TaskType.COLLECT_SOIL);
 
     @Test
-    void surfaceSoilAndWoolWaitForAnEmptySweepToCoolDown() {
+    void woolWaitsForASheepWithWool() {
+        assertEquals(ReservationGate.WOOL_ON_A_SHEEP, ReservationGate.of(TaskType.COLLECT_WOOL));
+    }
+
+    @Test
+    void surfaceAndSoilWaitForAnEmptySweepToCoolDown() {
         for (TaskType type : SWEPT) {
             assertEquals(ReservationGate.EMPTY_SWEEP, ReservationGate.of(type), type.name());
         }
@@ -37,7 +42,8 @@ class ReservationGateTest {
     @Test
     void everyOtherTaskHasNoGate() {
         for (TaskType type : TaskType.values()) {
-            if (type != TaskType.BUILD && type != TaskType.SMELT_MATERIAL && !SWEPT.contains(type)) {
+            if (type != TaskType.BUILD && type != TaskType.SMELT_MATERIAL && type != TaskType.COLLECT_WOOL
+                    && !SWEPT.contains(type)) {
                 assertEquals(ReservationGate.NONE, ReservationGate.of(type), type.name());
             }
         }

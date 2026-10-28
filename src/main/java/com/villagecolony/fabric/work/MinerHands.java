@@ -417,6 +417,9 @@ public final class MinerHands {
 
         job.task.release(why);
 
+        // Preso muito acima do nível da mina, duas vezes: a escada recomeça do topo (MineRestart, Regra 119).
+        MineRestart.afterGiveUp(world, job.task.colonyId(), workerId);
+
         // <b>E a pedra ganha prazo</b> — E44, 2026-09-10. Segurar a
         // posição (logo abaixo) continua certo; segurar SEM PRAZO é o
         // laço que a sessão das 08:33 mediu: o mineiro gasta 2.400

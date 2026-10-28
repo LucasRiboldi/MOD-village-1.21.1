@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.99%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.100%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -79,12 +79,12 @@ SHA-256 do JAR na descrição.
   declarada e deixa a linha `VC_SUPPLY` no log (Regra 111); toda desistência
   no diário de ações leva um código único de bloqueio (Regra 112).
 
-O mod é alpha. A 0.3.99 (2026-10-28) passou na bateria automática completa
-(ver "Desenvolvimento e verificação"). O último jogo foi o da 0.3.98 na
-savana (Spark `S3FcIdzPmh`): a rede de caminhos levantava aterros de até 4
-blocos e o traçado de várias portas num tique parou o servidor 12 s; a 0.3.99
-refez o caminho rente ao chão e com um traçado por vez, e ainda não foi
-jogada. O estado vivo está no
+O mod é alpha. A 0.3.100 (2026-10-28) passou na bateria automática completa
+(ver "Desenvolvimento e verificação"). O último jogo foi o da 0.3.99 na
+savana (Spark `eVkPhNEtZT`, 76 min): 20 TPS sem travão e o caminho rente ao
+chão; o tempo dos ofícios mostrou vila madura parada (estoque cheio), tarefas
+que abriam sem poder render, roça fora do alcance e o mineiro preso na boca.
+A 0.3.100 trata cada um (Regras 133 a 137) e ainda não foi jogada. O estado vivo está no
 [`STATE.md`](STATE.md). O que mudou em cada
 publicação está no [`CHANGELOG.md`](CHANGELOG.md); a avaliação técnica mais
 recente, em
@@ -286,6 +286,11 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 130 | **Cinco animais no mesmo poste pedem curral, com prioridade** (autor 10-27): o curral do estilo entra pela fila urgente; pronto, o pastor leva os do poste um a um | 10-27 | ✅ feita | `PenPlans.crowdedPost`, `UrgentPlans` |
 | 131 | **O chão em volta da obra nova fica na altura da rua** (autor 10-27): na abertura, um anel de 2 blocos na altura da rua ±1 e uma rampa de 3 que abre a faixa em 1 por passo; só chão natural é cortado e só o vazio é aterrado; nunca construção, peça da vila, bloco do jogador, caminho, água, árvore ou a caixa de outra construção | 10-27 | ✅ feita | `SiteSurroundings` |
 | 132 | **As bancadas do mod têm painel e passivas** (autor 10-27): shift+clique mostra titulares, estado, tarefa e espera; só com a bancada do ofício na vila valem as passivas — carpinteiro (ferramenta fabricada sai encantada, conserta ferramenta a 8), fundidor (armadura encantada, restaura armadura a 8, fornalhas 2× a 32), lenhador (mudas crescem a 32), fazendeiro (roça a 24, compostagem), pastor (par cruza a cada 10 min, lã rápida, recolha dos drops, abate em dobro), pedreiro (tapa buraco de rua, +1 pedregulho a cada 4), construtor (1 bloco a mais por minuto, material vem ao baú), mineiro (mina sem monstro a 64, minério em dobro, gema +1, 1% de ferramenta) | 10-27 | ✅ feita | `BenchPanel`, `BenchPassives`, `BenchUpkeep`, `BenchYield`, `CraftedEnchant` |
+| 133 | **Estoque cheio vira obra e produto** (autor 10-28, jogo da 0.3.99: lenhador 74%, pedreiro 48% e fundidor 44% parados com 413 toras, 1.202 pedregulhos e 695 pedras guardados): com 80% dos espaços dos baús da vila ocupados (até cair abaixo de 70%), a próxima obra é o armazém e o adulto que sobra vira mais um construtor; e o lenhador, o pedreiro e o fundidor sem tarefa fazem, a cada minuto, um lote de 8 de produto de valor — carvão vegetal da tora, tijolo de pedra e pedra polida, pedra, vidro e terracota — com o cru acima de 64 e o produto abaixo de 128 | 10-28 | ✅ feita (0.3.100) | `ProfessionChestOverflow.measureFullness`, `ProfessionDemand.setSpare`, `ValueGoods` |
+| 134 | **O adulto que sobra vai ao ofício que a vila espera** (autor 10-28, jogo da 0.3.99: 6 de 18 aldeões sem profissão): com todas as profissões na meta do crescimento, a vaga a mais vai à profissão que a obra espera agora, na ordem da falta, e ao construtor quando os baús estão cheios; sem espera, vale a meta do crescimento; o máximo de cada profissão continua | 10-28 | ✅ feita (0.3.100) | `ProfessionAssigner.spareHand`, `ProfessionDemand` |
+| 135 | **Tarefa só abre quando pode render** (autor 10-28, jogo da 0.3.99): a ordem de estoque de peça de tábua não abre sem tábua no baú quando a reserva de metade em tora não deixa converter (69 tarefas fechadas com 0 peça); a tarefa de lã só é reservada com ovelha lanuda na área do pastor e com menos de 64 da lã pedida nos baús (28 tarefas sem ovelha com lã) | 10-28 | ✅ feita (0.3.100) | `ItemStock.woodHeldInLogs`, `ReservationGate.WOOL_ON_A_SHEEP`, `WoolGate` |
+| 136 | **O fazendeiro alcança como o jogador** (autor 10-28, jogo da 0.3.99: roça 2 blocos acima, a 3 de distância, e 9 desistências): colhe e planta a até 4,5 blocos do olho até o meio da planta, com a linha livre, além do alcance de 3 do braço | 10-28 | ✅ feita (0.3.100) | `FarmerWork.seesWithinEyeReach` |
+| 137 | **A escada da mina recomeça do topo** (autor 10-28, jogo da 0.3.99: o mineiro passou 30 min na boca, 30 blocos acima do nível, sem descer — a escada entre a superfície e o nível era de antes do caracol): com 2 desistências seguidas em 10 min de um mineiro a 8 blocos ou mais acima da entrada do nível, a mina recomeça na boca de superfície (a lembrada, se está no chão da superfície; senão o chão em cima da entrada, se se alcança a pé) com o cursor no primeiro degrau | 10-28 | ✅ feita (0.3.100) | `MineRestart` |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).
@@ -471,16 +476,16 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 `runGametest` gera `build/reports/jacoco/gametest/html` (bateria de jogo, que
 é quem exercita a camada `fabric`).
 
-Verificação de 2026-10-28 (0.3.99, branch `fix/playtest-0397`, PR #37),
+Verificação de 2026-10-28 (0.3.100, branch `fix/playtest-0397`, PR #37),
 rodada e não copiada:
 
 - 1602 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
   de 500 linhas por arquivo).
 - 124 testes Python: aprovados (o CI instala o `nbtlib` para o teste das
   versões do armazém).
-- 892 GameTests: todos aprovados com `--rerun-tasks`; o `runGametest` começa
+- 898 GameTests: todos aprovados com `--rerun-tasks`; o `runGametest` começa
   cada bateria com o mundo de teste apagado, como o CI.
-- `build --rerun-tasks`: aprovado; JAR `village-colony-0.3.99.jar`.
+- `build --rerun-tasks`: aprovado; JAR `village-colony-0.3.100.jar`.
 - Mutação (PIT, pacote `core`): não refeita nesta versão; a última medida
   (0.3.93) foi 2140 de 2509 mutações mortas (85,3%, limiar 85%).
 - CI do GitHub ("Build and test"): a `main` exige esse check para mesclar.

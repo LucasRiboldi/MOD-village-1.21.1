@@ -192,7 +192,8 @@ public final class ItemStock {
 
             if ((skipped != null && now - skipped < SKIP_FOR)
                     || ColonyChests.countIn(world, chests, item) >= EACH
-                    || !ColonySupply.canProvide(world, colony.id(), colony.center(), item)) {
+                    || !ColonySupply.canProvide(world, colony.id(), colony.center(), item)
+                    || woodHeldInLogs(world, colony, chests, item)) {
                 continue;
             }
 
@@ -202,6 +203,28 @@ public final class ItemStock {
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * A peça de tábua sem tábua bastante no baú, quando a reserva de metade em tora não deixa converter:
+     * a ordem abriria e o carpinteiro a fecharia com 0 peça (69 vezes no jogo da 0.3.99). Não abre.
+     */
+    static boolean woodHeldInLogs(ServerWorld world, Colony colony, List<ColonyPos> chests, Item item) {
+        var bill = CraftingLookup.billFor(world, item, any -> true);
+
+        if (bill.isEmpty()) {
+            return false;
+        }
+
+        for (var ingredient : bill.get().ingredients().entrySet()) {
+            if (ingredient.getKey().getDefaultStack().isIn(net.minecraft.registry.tag.ItemTags.PLANKS)
+                    && ColonyChests.countIn(world, chests, ingredient.getKey()) < ingredient.getValue()
+                    && !CraftingSteps.halfTheWoodMayStillBeConverted(world, colony.id())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Os itens das plantas do estilo da vila e os ingredientes deles, por oficina. */

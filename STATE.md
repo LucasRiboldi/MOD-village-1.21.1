@@ -1,5 +1,17 @@
 # STATE — 2026-10-28
 
+> **0.3.100** (28-10, branch `fix/playtest-0397`, PR #37): os ociosos e travados do jogo da 0.3.99 (Spark
+> eVkPhNEtZT, 76 min, 20 TPS), Regras 133 a 137 com as escolhas do autor (memória
+> `playtest-0399-ociosos-decisoes`).
+> - **Verificado:** testes de unidade OK; bateria 898/898 (`IdleFixesGameTest`). **Não jogado.**
+> - **Para o jogo:** rodar `time_ledger` e `action_report`; conferir no log:
+>   - `chests are N% full` e o armazém aberto;
+>   - `restarts its stair` do mineiro;
+>   - `value goods` no diário;
+>   - quedas de "could not reach the crop" e "no sheep with wool".
+> - **Para decidir (de 10-28):** o corredor do lote (Regras 70/110) ainda corta até 12 de fundo.
+>
+
 > **0.3.99** (28-10, branch `fix/playtest-0397`, PR #37): caminho rente ao chão (Regra 123 emendada) depois
 > do jogo da 0.3.98 (Spark S3FcIdzPmh: aterros de até 4 blocos e travão de 12 s no traçado). Memória
 > `caminho-rente-ao-chao`.
