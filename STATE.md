@@ -8,6 +8,8 @@
 > 939/939 na rodada final (`ShepherdHerding`, `ShepherdFeeding` e `Builder ground` falharam uma vez cada antes),
 > Python 153. Regras 161 e 162 sem teste próprio. **A versão testada não foi jogada.** Para o jogo: **mundo novo**; o
 > pastor no curral sem portão, o construtor no telhado, o miolo do cercado.
+> Publicada como pré-lançamento `v0.3.110-alpha` (workflow `Release`, só `remapJar`, commit `29b9ca4`): JAR
+> `village-colony-0.3.110.jar`, SHA-256 `A23105CF54A35A852E9FD9677114FCA7A48D965B689743F738266151D41EE2D1`.
 >
 > **0.3.109** (29-10, branch `fix/playtest-0102`): depois do jogo da 0.3.108 (`docs/research/2026-10-29-jogo-0108.md`):
 > o chão em volta da vila é a mistura suave com o terreno numa faixa de 4× o desnível, de 16 a 64 (Regra 152 refeita,

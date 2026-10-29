@@ -6,11 +6,6 @@ name: Release
 # workflow. Se o release da versão já existe, não faz nada.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - "ccr-4cf7a1a1-w9h8bq"
-    paths:
-      - ".github/workflows/release.yml"
 
 permissions:
   contents: write
