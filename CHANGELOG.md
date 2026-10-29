@@ -12,6 +12,32 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.110] — pulo de 2 e de cerca, construtor no chão, pulo do telhado, cercado livre, comer enche a vida (2026-10-29, JAR local, não jogado)
+
+Branch `fix/playtest-0102`, commits `878d209` e `e92e1fe`. Pedidos do autor depois dos jogos da 0.3.109 e de um JAR
+0.3.110 gerado antes da bateria.
+
+### Adicionado
+- **Pulo (Regra 159):** o aldeão da colônia sobe 2 blocos de um passo e passa por cima da cerca; força de pulo
+  0,42 → 0,62 (`ColonyPathing`, `LandPathNodeMakerMixin`).
+- **Descida do telhado (Regra 160):** o encalhado em pé sobre construção se joga rumo ao chão mais perto, até 8
+  blocos; depois de 3 pulos sem sair é posto no chão (`RoofDescent`).
+- **Comer enche a vida (Regra 161):** quem come ou recebe comida fica com a vida no máximo (`VillagerMeals`). Sem
+  teste próprio.
+- **Miolo do cercado (Regra 162):** o pedreiro tira o chão natural e a planta de dentro dos cercados da colônia
+  (`GroundSmoothing.clearPens`). Sem teste próprio.
+
+### Mudado
+- **Construtor do chão (Regra 160):** o lugar de pé que ele procura fica no máximo 1 acima do chão da obra
+  (`BuilderApproach`).
+- **Mina (emenda da Regra 119):** ao recomeçar, a escada volta à boca que a mina lembra e vira de rumo; boca nova
+  nunca (`MineRestart`, `MineEntrance.rememberedMouth`).
+- **Alisamento (Regra 162):** não mexe dentro da caixa de construção ou obra da colônia, com 1 de folga.
+
+### Verificação
+- 1663 unitários, 939 GameTests com `--rerun-tasks` (rodada final verde; `ShepherdHerding`, `ShepherdFeeding` e
+  `Builder ground` falharam uma vez cada nas anteriores), 153 Python.
+
 ## [0.3.109] — solo largo em volta da vila, mineiro e cascalho, cama fora da escada (2026-10-29, JAR local, não jogado)
 
 Branch `fix/playtest-0102`. Jogo da 0.3.108 (`docs/research/2026-10-29-jogo-0108.md`) e estudo do solo

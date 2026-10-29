@@ -1,5 +1,14 @@
 # STATE — 2026-10-29
 
+> **0.3.110** (29-10, branch `fix/playtest-0102`, commits `878d209` e `e92e1fe`): pedidos do autor depois dos jogos da
+> 0.3.109 e de um JAR 0.3.110 sem testes — o aldeão da colônia pula 2 blocos e por cima da cerca (Regra 159); o
+> construtor trabalha do chão e quem fica num telhado se joga rumo ao chão, posto no chão depois de 3 pulos (Regra 160);
+> a mina recomeça na mesma boca, virando de rumo (emenda da Regra 119); comer enche a vida (Regra 161); o alisamento não
+> mexe dentro de construção ou obra e o pedreiro limpa o miolo dos cercados (Regra 162). Unitários 1663/1663, bateria
+> 939/939 na rodada final (`ShepherdHerding`, `ShepherdFeeding` e `Builder ground` falharam uma vez cada antes),
+> Python 153. Regras 161 e 162 sem teste próprio. **A versão testada não foi jogada.** Para o jogo: **mundo novo**; o
+> pastor no curral sem portão, o construtor no telhado, o miolo do cercado.
+>
 > **0.3.109** (29-10, branch `fix/playtest-0102`): depois do jogo da 0.3.108 (`docs/research/2026-10-29-jogo-0108.md`):
 > o chão em volta da vila é a mistura suave com o terreno numa faixa de 4× o desnível, de 16 a 64 (Regra 152 refeita,
 > `VillageBlend`; a vila referencia os chunks até 64 além das peças); a árvore sobre chão cortado sai inteira; o mineiro
