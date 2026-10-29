@@ -150,7 +150,7 @@ da conversa de 2026-10-28; as recomendações eram:
 Comparar com a mesma semente e os mesmos dias: `python scripts/biome_sim.py plains desert savanna taiga
 snowy --days 5 --snapshot`. Em jogo: `/vc log`, `/vc bioma`, `/vc dados` e `python scripts/state_report.py`.
 
-## 5. Achados durante as correções (abertos)
+## 5. Achados durante as correções
 
 - **Mineiro anda até uma pedra 9 blocos acima e a recusa** (achado no T4). Das 23 recusas depois de andar, 21 são
   `TOO_HIGH` numa pedra 5–10 blocos acima da última que ele cavou (planície: +9 em todos os níveis, −26 → −17,
@@ -158,3 +158,9 @@ snowy --days 5 --snapshot`. Em jogo: `/vc log`, `/vc bioma`, `/vc dados` e `pyth
   alcance. Custa ~175 tiques de caminhada por caso. Causa ainda não achada: falta saber de que fonte vem a pedra
   (escada, salão de 3 de altura ou o `roomBeside`). O T4 não resolve este caso — só tira as cadeias de recusa sem
   caminhada.
+
+  **Resolvido em 2026-10-28** (jogo da 0.3.104 e geometria da mina): a pedra é o **primeiro degrau do caracol do
+  ramal novo**, na altura do salão comum. O mineiro sai do salão do ramal acabado, 11 abaixo, sobe o caracol, e a
+  4 blocos de altura o julgamento de perto (`MiningTarget.judge`) recusava `TOO_HIGH` só pela geometria, sem a
+  busca a pé. A marca contava para a curva e encerrava o ramal: 11 ramais encerrados no jogo. Agora o `TOO_HIGH` de
+  perto passa pela busca a pé, e só a busca que chega a um lugar de pé o desfaz (`MiningTargetGameTest`).

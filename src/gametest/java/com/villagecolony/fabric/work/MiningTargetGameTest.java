@@ -65,6 +65,46 @@ public class MiningTargetGameTest implements FabricGameTest {
     }
 
     /**
+     * O primeiro degrau do ramal novo — jogo da 0.3.104 (2026-10-28): o mineiro sobe o caracol do ramal acabado e,
+     * a 4 blocos de altura da pedra, o julgamento de perto a recusava como alta demais sem procurar caminho; 15
+     * recusas e 11 ramais encerrados. Aqui a pedra fica no alto de uma escada de degraus de 1, com o lugar de pé no
+     * patamar: a busca a pé sobe a escada e chega.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mining_target_stair")
+    public void aStoneAtTheTopOfTheStairHeIsClimbingIsATarget(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        for (int x = 0; x <= 7; x++) {
+            for (int y = 36; y <= 50; y++) {
+                for (int z = 0; z <= 2; z++) {
+                    world.setBlockState(context.getAbsolutePos(new BlockPos(x, y, z)), Blocks.AIR.getDefaultState());
+                }
+            }
+        }
+
+        // Pé do mineiro em y 41; degraus de 1 até o patamar em x 5, pé em y 45; a pedra em x 6, y 45.
+        world.setBlockState(context.getAbsolutePos(new BlockPos(0, 40, 1)), Blocks.GLASS.getDefaultState());
+
+        for (int step = 1; step <= 4; step++) {
+            world.setBlockState(context.getAbsolutePos(new BlockPos(step, 40 + step, 1)), Blocks.GLASS.getDefaultState());
+        }
+
+        world.setBlockState(context.getAbsolutePos(new BlockPos(5, 44, 1)), Blocks.GLASS.getDefaultState());
+
+        for (int y = 40; y <= 45; y++) {
+            world.setBlockState(context.getAbsolutePos(new BlockPos(6, y, 1)), Blocks.STONE.getDefaultState());
+        }
+
+        BlockPos stone = context.getAbsolutePos(new BlockPos(6, 45, 1));
+        BlockPos miner = context.getAbsolutePos(new BlockPos(0, 41, 1));
+
+        MiningTarget.Verdict verdict = MiningTarget.judge(world, stone, miner);
+
+        context.assertTrue(verdict.eligible(), "a pedra no alto da escada que ele sobe foi recusada: " + verdict);
+        context.complete();
+    }
+
+    /**
      * Trinta acima do piso, onde nenhuma arena tem bloco (um bloco do vizinho em
      * z -1 virava lugar de pé): ar dentro da arena, vidro sob o mineiro em x 0..1
      * (ou 0..5 com {@code floor}) e um pilar de pedra em x 6, y 38..42, na linha
