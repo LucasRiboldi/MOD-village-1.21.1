@@ -32,7 +32,7 @@ import java.util.Map;
  * postas: as ruas do Minecraft seguem o chão que acharem, então nascem sobre o chão novo.
  *
  * <p>A conta é do {@link VillageBlend}: na vila (as peças + {@link #CORE_PAD}), degrau de 1 e buraco tampado; em
- * volta, até {@link #REACH}, a mistura suave com o terreno natural, numa faixa de 4 vezes o desnível. Calculada uma
+ * volta, até {@link #REACH}, a mistura suave do topo de verdade com o nível da vila, numa faixa de 4 vezes o desnível. Calculada uma
  * vez por vila, com a planta inteira dela e a altura natural do gerador, e guardada: todos os chunks da vila veem a
  * mesma. Cada chunk só mexe nas próprias colunas — corta ou aterra com o bloco de cima e o de baixo da própria
  * coluna, tampa os vãos de caverna logo abaixo, e a árvore em pé sobre o chão cortado sai inteira. Água não é tocada.
@@ -52,8 +52,11 @@ public final class VillageGround {
     /** Até quantos chunks do início da vila o jogo procura a referência ({@code addStructureReferences}). */
     static final int REFERENCE_CHUNKS = 8;
 
-    /** De quantos em quantos blocos se lê a altura natural do gerador (o meio é interpolado). */
-    static final int SAMPLE = 4;
+    /**
+     * De quantos em quantos blocos se lê a altura natural do gerador (o meio é interpolado). Cada leitura custa o
+     * ruído de uma coluna inteira: com 4, uma vila da taiga levou 20 s; a conta em volta parte do topo de verdade.
+     */
+    static final int SAMPLE = 8;
 
     /** Quantos blocos acima do mapa de altura a varredura do topo começa. */
     static final int SCAN_ABOVE = 16;
@@ -70,47 +73,33 @@ public final class VillageGround {
     /** Vilas guardadas ao mesmo tempo; a geração vai e volta entre poucas. */
     static final int CACHED = 32;
 
-    /** A conta de uma vila: o canto de menor x e z, o natural, o quanto cada coluna muda e o miolo. */
+    /** A conta de uma vila: o canto de menor x e z, o papel de cada coluna e a mistura ({@link VillageBlend.Shape}). */
     static final class Plan {
         private final int minX;
         private final int minZ;
-        private final int[][] natural;
-        private final int[][] offsets;
         private final VillageSurface.Kind[][] kinds;
-        private final VillageBlend.Area core;
+        private final VillageBlend.Shape shape;
 
-        Plan(int minX, int minZ, int[][] natural, int[][] offsets, VillageSurface.Kind[][] kinds,
-             VillageBlend.Area core) {
+        Plan(int minX, int minZ, VillageSurface.Kind[][] kinds, VillageBlend.Shape shape) {
             this.minX = minX;
             this.minZ = minZ;
-            this.natural = natural;
-            this.offsets = offsets;
             this.kinds = kinds;
-            this.core = core;
+            this.shape = shape;
         }
 
         boolean covers(int x, int z) {
-            return x >= minX && z >= minZ && x < minX + offsets.length && z < minZ + offsets[0].length;
+            return x >= minX && z >= minZ && x < minX + kinds.length && z < minZ + kinds[0].length;
         }
 
-        /** Se a coluna muda: chão (nem casa, nem água) da vila, ou em volta com conta diferente de zero. */
+        /** Se a coluna muda: chão (nem casa, nem água) da vila, ou em volta com peso. */
         boolean shapes(int x, int z) {
             return covers(x, z) && kinds[x - minX][z - minZ] == VillageSurface.Kind.FREE
-                    && (offsets[x - minX][z - minZ] != 0 || inCore(x, z));
+                    && shape.shapes(x - minX, z - minZ);
         }
 
-        boolean inCore(int x, int z) {
-            return core.contains(x - minX, z - minZ);
-        }
-
-        /**
-         * A altura nova da coluna: na vila, o chão de degrau 1; em volta, o topo de verdade mais a mistura — o
-         * relevo natural fica, achatado na proporção do peso.
-         */
+        /** A altura nova da coluna, partindo do topo de verdade. */
         int targetFor(int x, int z, int top) {
-            int offset = offsets[x - minX][z - minZ];
-
-            return inCore(x, z) ? natural[x - minX][z - minZ] + offset : top + offset;
+            return shape.target(x - minX, z - minZ, top);
         }
     }
 
@@ -256,14 +245,14 @@ public final class VillageGround {
         VillageBlend.Area reach = new VillageBlend.Area(
                 (origin.x - REFERENCE_CHUNKS) * 16 - minX, (origin.z - REFERENCE_CHUNKS) * 16 - minZ,
                 (origin.x + REFERENCE_CHUNKS) * 16 + 15 - minX, (origin.z + REFERENCE_CHUNKS) * 16 + 15 - minZ);
-        int[][] offsets = VillageBlend.offsets(natural, kinds, core, reach);
+        VillageBlend.Shape shape = VillageBlend.shape(natural, kinds, core, reach);
 
         // A área moldada, o miolo e as peças fixas, para medir o chão depois (scripts/ground_report.py).
         VillageColonyMod.LOGGER.info("VC_GROUND {\"minX\":{},\"minZ\":{},\"width\":{},\"depth\":{},\"reach\":{},"
                         + "\"core\":{},\"ms\":{},\"fixed\":[{}]}", minX, minZ, width, depth, REACH, CORE_PAD,
                 (System.nanoTime() - began) / 1_000_000, fixed);
 
-        return new Plan(minX, minZ, natural, offsets, kinds, core);
+        return new Plan(minX, minZ, kinds, shape);
     }
 
     /** A caixa de todas as peças da vila. */

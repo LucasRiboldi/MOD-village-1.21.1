@@ -103,16 +103,49 @@ class VillageBlendTest {
         assertEquals(0, offsets[CORE_END + 40][4]);
     }
 
+    /** A água não se move, e a margem dela fica natural: a mistura some em 8 blocos até a água. */
     @Test
-    void waterIsNeverMoved() {
+    void waterIsNeverMovedAndItsBankStaysNatural() {
         int[][] natural = strip(60, 70, 90);
         VillageSurface.Kind[][] kinds = free(natural);
         kinds[CORE_END + 5][4] = VillageSurface.Kind.WATER;
 
         int[][] offsets = blend(natural, kinds, EVERYWHERE);
 
-        assertEquals(0, offsets[CORE_END + 5][4]);
-        assertTrue(offsets[CORE_END + 5][3] < -10, "a margem em volta da água desce: " + offsets[CORE_END + 5][3]);
+        assertEquals(0, offsets[CORE_END + 5][4], "a água");
+        assertTrue(offsets[CORE_END + 5][3] >= -2, "a margem colada na água quase não muda: " + offsets[CORE_END + 5][3]);
+        assertTrue(offsets[CORE_END + 15][4] < -10, "a 10 da água a mistura volta: " + offsets[CORE_END + 15][4]);
+    }
+
+    /** A conta parte do topo de verdade: colada na vila dá o nível dela, longe dá o próprio topo. */
+    @Test
+    void theRealTopKeepsItsReliefAndMeetsTheVillage() {
+        int[][] natural = strip(120, 70, 100);
+        VillageBlend.Shape shape = VillageBlend.shape(natural, free(natural),
+                new VillageBlend.Area(0, 0, CORE_END, 8), EVERYWHERE);
+
+        assertEquals(70, shape.target(CORE_END + 1, 4, 104), 1, "colada na vila, o nível dela, seja qual for o topo");
+        assertEquals(103, shape.target(CORE_END + 80, 4, 103), "fora da faixa, o próprio topo");
+        assertEquals(1, shape.target(CORE_END + 32, 4, 101) - shape.target(CORE_END + 32, 4, 99), 1,
+                "na metade da faixa, 2 blocos de relevo viram 1");
+        assertTrue(shape.shapes(2, 2) && !shape.shapes(CORE_END + 80, 4));
+    }
+
+    /** A distância até a água conta as 8 vizinhas. */
+    @Test
+    void theDistanceToWaterCountsDiagonals() {
+        int[][] natural = strip(12, 70, 70);
+        VillageSurface.Kind[][] kinds = free(natural);
+        kinds[0][0] = VillageSurface.Kind.WATER;
+        kinds[11][8] = VillageSurface.Kind.WATER;
+
+        int[][] distance = VillageBlend.waterDistance(kinds);
+
+        assertEquals(0, distance[0][0]);
+        assertEquals(3, distance[3][3]);
+        assertEquals(4, distance[4][1]);
+        assertEquals(2, distance[9][6]);
+        assertEquals(6, distance[5][8]);
     }
 
     /** O que a vila não alcança fica natural, e a mistura amacia até lá em 8 blocos. */
