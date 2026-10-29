@@ -98,6 +98,56 @@ public class MineGravityGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Uma coluna de pedra na arena, com o que for pedido acima do alvo, em {@code (x, 2, 4)}. */
+    private static BlockPos column(TestContext context, int x, net.minecraft.block.BlockState... above) {
+        ServerWorld world = context.getWorld();
+        BlockPos target = context.getAbsolutePos(new BlockPos(x, 2, 4));
+
+        world.setBlockState(target.down(), Blocks.STONE.getDefaultState());
+        world.setBlockState(target, Blocks.STONE.getDefaultState());
+
+        for (int dy = 0; dy < above.length; dy++) {
+            world.setBlockState(target.up(dy + 1), above[dy], net.minecraft.block.Block.FORCE_STATE);
+        }
+
+        return target;
+    }
+
+    /**
+     * O mineiro não quebra o bloco com cascalho pendurado acima, através do ar — jogo da 0.3.108: o
+     * cascalho de y 56–57 caiu pelo vão de y 55 sobre o mineiro que acabara de cavar y 54, e o matou; o
+     * escoramento só olha o bloco logo acima. Água e lava acima, pelo vão, também seguram o bloco.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_gravity")
+    public void aBlockUnderLooseGravelWaterOrLavaIsNotBroken(TestContext context) {
+        ServerWorld world = context.getWorld();
+        var air = Blocks.AIR.getDefaultState();
+        BlockPos hanging = column(context, 1, air, Blocks.GRAVEL.getDefaultState(), Blocks.GRAVEL.getDefaultState());
+        BlockPos water = column(context, 3, air, air, Blocks.WATER.getDefaultState());
+        BlockPos lava = column(context, 5, Blocks.LAVA.getDefaultState());
+        BlockPos roofed = column(context, 7, Blocks.STONE.getDefaultState(), Blocks.GRAVEL.getDefaultState());
+        BlockPos shored = column(context, 9, Blocks.GRAVEL.getDefaultState(), Blocks.GRAVEL.getDefaultState());
+        BlockPos open = column(context, 11, air, air, air);
+
+        try {
+            context.assertTrue(MineSettling.looseAbove(world, hanging), "o cascalho pendurado acima do vão passou");
+            context.assertTrue(MineSettling.looseAbove(world, water), "a água acima do vão passou");
+            context.assertTrue(MineSettling.looseAbove(world, lava), "a lava logo acima passou");
+            context.assertFalse(MineSettling.looseAbove(world, roofed), "a pedra firme acima segura o cascalho");
+            context.assertFalse(MineSettling.looseAbove(world, shored),
+                    "o cascalho logo acima é escorado antes de o alvo sair, como pediu o autor em 2026-10-20");
+            context.assertFalse(MineSettling.looseAbove(world, open), "ar acima não segura nada");
+        } finally {
+            for (BlockPos target : new BlockPos[] {hanging, water, lava, roofed, shored, open}) {
+                for (BlockPos pos : BlockPos.iterate(target.down(), target.up(4))) {
+                    world.setBlockState(pos, Blocks.AIR.getDefaultState(), net.minecraft.block.Block.FORCE_STATE);
+                }
+            }
+        }
+
+        context.complete();
+    }
+
     /** O enchimento da mina é a pedra do bioma: arenito no deserto, pedregulho na planície. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_gravity")
     public void theDesertFillsWithSandstone(TestContext context) {
