@@ -132,7 +132,7 @@ public final class VillageHelpers {
         return carried + spread;
     }
 
-    /** Tapa as falhas da rua; sem falha, nivela em volta da próxima casa. */
+    /** Tapa as falhas da rua; sem falha, alisa o chão da vila; sem nada a alisar, nivela em volta da próxima casa. */
     static int masonHelps(ServerWorld world, Colony colony, VillagerEntity mason) {
         int mended = StreetGaps.mend(world, colony.id(), mason.getBlockPos(), GAPS_PER_PASS);
 
@@ -140,6 +140,13 @@ public final class VillageHelpers {
             ActionJournal.action(mason.getUuid(), "PAVED", "minecraft:dirt_path", mended, null, "street gaps");
 
             return mended;
+        }
+
+        // Sem falha de rua, alisa o chão da vila (autor, 2026-10-29).
+        int smoothed = GroundSmoothing.pass(world, colony, mason);
+
+        if (smoothed > 0) {
+            return smoothed;
         }
 
         List<Building> standing = VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()

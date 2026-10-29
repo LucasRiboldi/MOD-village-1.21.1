@@ -56,6 +56,7 @@
       "com.villagecolony.fabric.work.MineAccessGameTest",
       "com.villagecolony.fabric.work.SmelterGathersGameTest",
       "com.villagecolony.fabric.work.TreeChoiceSpeciesGameTest",
+      "com.villagecolony.fabric.work.GroundSmoothingGameTest",
       "com.villagecolony.fabric.work.HelperReachGameTest",
       "com.villagecolony.fabric.work.FarmerTillGameTest",
       "com.villagecolony.fabric.work.CraftFamilyGameTest",
