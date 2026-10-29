@@ -12,14 +12,17 @@ import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
+import com.villagecolony.fabric.world.GeneratedVillages;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.DoorBlock;
 import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,8 +33,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * As ligações da rede de caminhos — Regra 123: cada construção pronta da colônia se liga pela porta ao
- * ponto mais barato da rede (decisão D5), e a primeira se liga ao centro da vila, o chafariz. Quando o
+ * As ligações da rede de caminhos — Regra 123: cada construção pronta da colônia, e cada casa da vila original
+ * (autor, 2026-10-28), se liga pela porta, com um caminho de 1 bloco, ao ponto mais barato da rede (decisão D5), e a primeira se liga ao centro da vila, o chafariz. Quando o
  * percurso pela rede até o chafariz passa de duas vezes o direto ({@link NetworkDetour}), a ligação é um
  * atalho direto, que ainda reaproveita a rede onde ela serve. O traçado é
  * o {@link VillagePathPlanner}; quem assenta é {@link PathPaving}.
@@ -95,7 +98,10 @@ public final class PathLinks {
         PLANS.remove(colonyId);
     }
 
-    /** Uma passagem desta colônia: sem traçado em curso, procura a próxima construção sem ligação. */
+    /**
+     * Uma passagem desta colônia: sem traçado em curso, procura a próxima porta sem ligação — primeiro as
+     * construções da colônia, depois as casas da vila original (autor, 2026-10-28: "1 de largura, todas as casas").
+     */
     static void tend(ServerWorld world, Colony colony) {
         long now = world.getTime();
 
@@ -108,73 +114,93 @@ public final class PathLinks {
 
         Set<Long> roads = roadsOf(colony.id());
         BlockPos hub = MinecraftTypeAdapter.toBlockPos(colony.center());
-
-        int noDoor = 0;
-        int linked = 0;
+        int[] count = new int[2];
 
         for (Building building : VillageColonyMod.BUILDINGS.ofColony(colony.id())) {
-            if (!building.finished() || SET_ASIDE.containsKey(building.id())) {
-                continue;
-            }
-
-            Optional<Entrance> entrance = entranceOf(world, building);
-
-            if (entrance.isEmpty()) {
-                noDoor++;
-                continue;
-            }
-
-            if (linked(roads, entrance.get().front())) {
-                linked++;
-                continue;
-            }
-
-            // Um traçado por passagem, dê certo ou não: nove portas sem saída no mesmo tique pararam o
-            // servidor 12 s no jogo da 0.3.98.
-            long began = System.nanoTime();
-            Optional<List<PathStep>> steps = trace(world, colony.id(), entrance.get(), roads, hub, false);
-
-            // Atalho ao chafariz quando a rede dá volta demais — decisão D5 (2×).
-            if (steps.isPresent() && !steps.get().isEmpty() && !roads.isEmpty()) {
-                PathStep join = steps.get().getLast();
-                BlockPos front = entrance.get().front();
-                int direct = Math.abs(front.getX() - hub.getX()) + Math.abs(front.getZ() - hub.getZ());
-
-                if (NetworkDetour.needsShortcut(steps.get().size(),
-                        NetworkDetour.stepsToHub(roads, join.x(), join.z(), hub.getX(), hub.getZ()), direct)) {
-                    Optional<List<PathStep>> shortcut = trace(world, colony.id(), entrance.get(), roads, hub, true);
-
-                    if (shortcut.isPresent() && !shortcut.get().isEmpty()) {
-                        steps = shortcut;
-                    }
-                }
-            }
-
-            long millis = (System.nanoTime() - began) / 1_000_000;
-
-            if (steps.isEmpty() || steps.get().isEmpty()) {
-                SET_ASIDE.put(building.id(), now);
-                VillageColonyMod.LOGGER.info("Colony {} — no path from the door of {} at {} to the network yet"
-                                + " ({} ms); it is tried again in an hour",
-                        colony.id().toString().substring(0, 8), building.blueprint().path(),
-                        entrance.get().front().toShortString(), millis);
+            if (building.finished() && link(world, colony, building.id(), building.blueprint().path(),
+                    MinecraftTypeAdapter.toBlockPos(building.min()), MinecraftTypeAdapter.toBlockPos(building.max()),
+                    roads, hub, count)) {
                 return;
             }
+        }
 
-            PLANS.put(colony.id(), new Plan(building.id(), steps.get()));
-            VillageColonyMod.LOGGER.info("Colony {} traced a path of {} steps from the door of {} at {} in {} ms"
-                            + " (Regra 123)", colony.id().toString().substring(0, 8), steps.get().size(),
-                    building.blueprint().path(), entrance.get().front().toShortString(), millis);
+        for (BlockBox house : GeneratedVillages.housesAt(world, hub.getX(), hub.getZ())) {
+            UUID id = UUID.nameUUIDFromBytes(("village house " + house).getBytes(StandardCharsets.UTF_8));
 
-            return;
+            if (link(world, colony, id, "village house", new BlockPos(house.getMinX(), house.getMinY(), house.getMinZ()),
+                    new BlockPos(house.getMaxX(), house.getMaxY(), house.getMaxZ()), roads, hub, count)) {
+                return;
+            }
         }
 
         // Nada a traçar: diz por quê, uma vez por mudança (a rede ficou muda o playtest 0.3.97 inteiro).
-        String summary = linked + " doors on the network, " + noDoor + " buildings without a readable door, "
+        String summary = count[0] + " doors on the network, " + count[1] + " buildings without a readable door, "
                 + SET_ASIDE.size() + " set aside";
         if (!summary.equals(SUMMARY.put(colony.id(), summary))) {
             VillageColonyMod.LOGGER.info("Colony {} path network — {}", colony.id().toString().substring(0, 8), summary);
         }
+    }
+
+    /**
+     * Tenta ligar a porta desta casa: já ligada ou sem porta, conta e segue ({@code false}); senão traça — um traçado
+     * por passagem, dê certo ou não ({@code true}): nove portas sem saída no mesmo tique pararam o servidor 12 s no
+     * jogo da 0.3.98.
+     *
+     * @param count {portas na rede, casas sem porta legível}
+     */
+    private static boolean link(ServerWorld world, Colony colony, UUID id, String name, BlockPos min, BlockPos max,
+                                Set<Long> roads, BlockPos hub, int[] count) {
+        if (SET_ASIDE.containsKey(id)) {
+            return false;
+        }
+
+        Optional<Entrance> entrance = entranceOf(world, min, max);
+
+        if (entrance.isEmpty()) {
+            count[1]++;
+            return false;
+        }
+
+        if (linked(roads, entrance.get().front())) {
+            count[0]++;
+            return false;
+        }
+
+        long began = System.nanoTime();
+        Optional<List<PathStep>> steps = trace(world, colony.id(), entrance.get(), roads, hub, false);
+
+        // Atalho ao chafariz quando a rede dá volta demais — decisão D5 (2×).
+        if (steps.isPresent() && !steps.get().isEmpty() && !roads.isEmpty()) {
+            PathStep join = steps.get().getLast();
+            BlockPos front = entrance.get().front();
+            int direct = Math.abs(front.getX() - hub.getX()) + Math.abs(front.getZ() - hub.getZ());
+
+            if (NetworkDetour.needsShortcut(steps.get().size(),
+                    NetworkDetour.stepsToHub(roads, join.x(), join.z(), hub.getX(), hub.getZ()), direct)) {
+                Optional<List<PathStep>> shortcut = trace(world, colony.id(), entrance.get(), roads, hub, true);
+
+                if (shortcut.isPresent() && !shortcut.get().isEmpty()) {
+                    steps = shortcut;
+                }
+            }
+        }
+
+        long millis = (System.nanoTime() - began) / 1_000_000;
+
+        if (steps.isEmpty() || steps.get().isEmpty()) {
+            SET_ASIDE.put(id, world.getTime());
+            VillageColonyMod.LOGGER.info("Colony {} — no path from the door of {} at {} to the network yet"
+                            + " ({} ms); it is tried again in an hour",
+                    colony.id().toString().substring(0, 8), name, entrance.get().front().toShortString(), millis);
+            return true;
+        }
+
+        PLANS.put(colony.id(), new Plan(id, steps.get()));
+        VillageColonyMod.LOGGER.info("Colony {} traced a path of {} steps from the door of {} at {} in {} ms"
+                        + " (Regra 123)", colony.id().toString().substring(0, 8), steps.get().size(),
+                name, entrance.get().front().toShortString(), millis);
+
+        return true;
     }
 
     /** O traçado da porta até a rede, ou até o chafariz quando ainda não há rede. */
@@ -241,9 +267,12 @@ public final class PathLinks {
      * para o lado de fora dela. Vale também para as casas Vanilla, que não guardam a planta.
      */
     static Optional<Entrance> entranceOf(ServerWorld world, Building building) {
-        BlockPos min = MinecraftTypeAdapter.toBlockPos(building.min());
-        BlockPos max = MinecraftTypeAdapter.toBlockPos(building.max());
+        return entranceOf(world, MinecraftTypeAdapter.toBlockPos(building.min()),
+                MinecraftTypeAdapter.toBlockPos(building.max()));
+    }
 
+    /** A porta na caixa de {@code min} a {@code max} — a construção da colônia ou a casa da vila original. */
+    static Optional<Entrance> entranceOf(ServerWorld world, BlockPos min, BlockPos max) {
         for (BlockPos at : BlockPos.iterate(min, new BlockPos(max.getX(), Math.min(max.getY(), min.getY() + 3), max.getZ()))) {
             if (!world.isChunkLoaded(at)) {
                 continue;
