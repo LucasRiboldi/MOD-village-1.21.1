@@ -152,4 +152,38 @@ public final class BedPlan {
 
         return List.copyOf(moves);
     }
+
+    /**
+     * Quem dorme numa cama proibida — o andar de baixo da casa de escada de mão (autor, 2026-10-29) — sai dela
+     * para a cama livre mais perto do trabalho, ou da cama de hoje para quem não tem ofício. A proibida nunca é
+     * dada; quem dorme agora, ou não tem cama a que se chegue a pé, fica.
+     */
+    public static List<Move> leave(Collection<Sleeper> sleepers, Collection<ColonyPos> freeBeds,
+            Set<ColonyPos> banned, ToDoubleBiFunction<ColonyPos, ColonyPos> walk) {
+        Set<ColonyPos> free = new LinkedHashSet<>(freeBeds);
+        free.removeAll(banned);
+
+        for (Sleeper sleeper : sleepers) {
+            free.remove(sleeper.bed());
+        }
+
+        List<Move> moves = new ArrayList<>();
+
+        for (Sleeper sleeper : sleepers) {
+            if (!sleeper.movable() || !banned.contains(sleeper.bed())) {
+                continue;
+            }
+
+            ColonyPos from = sleeper.work() != null ? sleeper.work() : sleeper.bed();
+            free.stream()
+                    .filter(bed -> Double.isFinite(walk.applyAsDouble(from, bed)))
+                    .min(Comparator.comparingDouble((ColonyPos bed) -> walk.applyAsDouble(from, bed)))
+                    .ifPresent(bed -> {
+                        free.remove(bed);
+                        moves.add(new Move(sleeper.id(), sleeper.bed(), bed));
+                    });
+        }
+
+        return List.copyOf(moves);
+    }
 }

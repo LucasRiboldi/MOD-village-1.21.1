@@ -13,6 +13,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.integration.ChestScanner;
 import com.villagecolony.fabric.integration.VillageFoundation;
+import com.villagecolony.fabric.world.GeneratedVillages;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -159,21 +160,66 @@ final class BedChoice {
                     !villager.isSleeping()));
         }
 
-        if (sleepers.stream().noneMatch(sleeper -> sleeper.work() != null)) {
+        Set<ColonyPos> banned = ladderFloorBeds(world, box);
+        boolean anyWork = sleepers.stream().anyMatch(sleeper -> sleeper.work() != null);
+
+        if (!anyWork && sleepers.stream().noneMatch(sleeper -> banned.contains(sleeper.bed()))) {
             return 0;
         }
 
         Set<BlockPos> reachable = ReachMap.reachableCells(world, colony);
         List<ColonyPos> free = freeBeds(world, box).stream()
+                .filter(bed -> !banned.contains(bed))
                 .filter(bed -> reachable.isEmpty()
                         || ReachMap.reaches(reachable, MinecraftTypeAdapter.toBlockPos(bed), 2))
                 .filter(bed -> ChestScanner.freeChestBeside(world, MinecraftTypeAdapter.toBlockPos(bed),
                         VillageColonyMod.STORAGES, Optional.empty()).isPresent())
                 .toList();
         Walks walks = new Walks(reachable);
-        List<BedPlan.Move> moves = BedPlan.plan(sleepers, free, walks::between);
+
+        // Primeiro sai quem dorme no andar de baixo da casa de escada de mão; ele e quem não pôde sair ficam
+        // fora da troca do dia, e a cama de lá não se oferece.
+        List<BedPlan.Move> leaving = BedPlan.leave(sleepers, free, banned, walks::between);
+        Map<UUID, ColonyPos> movedTo = new HashMap<>();
+        leaving.forEach(move -> movedTo.put(move.id(), move.to()));
+        List<BedPlan.Sleeper> after = sleepers.stream()
+                .map(sleeper -> movedTo.containsKey(sleeper.id()) || banned.contains(sleeper.bed())
+                        ? new BedPlan.Sleeper(sleeper.id(), movedTo.getOrDefault(sleeper.id(), sleeper.bed()),
+                                sleeper.work(), false)
+                        : sleeper)
+                .toList();
+        List<ColonyPos> rest = free.stream().filter(bed -> !movedTo.containsValue(bed)).toList();
+        List<BedPlan.Move> moves = new ArrayList<>(leaving);
+
+        if (anyWork) {
+            moves.addAll(BedPlan.plan(after, rest, walks::between));
+        }
 
         return apply(world, villagers, professions, sleepers, moves);
+    }
+
+    /** As camas no andar de baixo das casas de escada de mão da vila ({@link GeneratedVillages#ladderLowerFloorsAt}). */
+    private static Set<ColonyPos> ladderFloorBeds(ServerWorld world, VillageBounds box) {
+        List<net.minecraft.util.math.BlockBox> floors = GeneratedVillages.ladderLowerFloorsAt(world,
+                (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
+        Set<ColonyPos> beds = new HashSet<>();
+
+        if (floors.isEmpty()) {
+            return beds;
+        }
+
+        for (net.minecraft.util.math.BlockBox floor : floors) {
+            world.getPointOfInterestStorage()
+                    .getInSquare(type -> type.matchesKey(PointOfInterestTypes.HOME), floor.getCenter(),
+                            Math.max(floor.getBlockCountX(), floor.getBlockCountZ()) / 2 + 1,
+                            PointOfInterestStorage.OccupationStatus.ANY)
+                    .map(PointOfInterest::getPos)
+                    .filter(floor::contains)
+                    .map(MinecraftTypeAdapter::toColonyPos)
+                    .forEach(beds::add);
+        }
+
+        return beds;
     }
 
     /**
