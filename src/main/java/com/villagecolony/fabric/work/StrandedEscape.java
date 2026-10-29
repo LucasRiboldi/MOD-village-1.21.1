@@ -147,6 +147,9 @@ public final class StrandedEscape {
         if (PenEscape.check(world, villager)) {
             return;
         }
+        if (RoofDescent.check(world, villager)) { // em cima de um telhado, a fuga não o via preso (jogo da 0.3.109)
+            return;
+        }
 
         // A subida abaixo do caminho que não sobe tem prazo (StrandedWorkers.CLIMB_DEADLINE).
         if (StrandedWorkers.climbGaveUp(workerId, feet, world.getTime())) {

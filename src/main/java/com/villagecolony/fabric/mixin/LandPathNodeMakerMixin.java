@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.villagecolony.fabric.integration.ColonyPathing;
 import com.villagecolony.fabric.integration.PenFloors;
 import net.minecraft.entity.ai.pathing.LandPathNodeMaker;
@@ -19,6 +21,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * caminho só existe dentro do construtor de caminho do jogo, e é ali que o custo se decide. Nada é
  * cancelado (Regra 2): o cálculo do Vanilla roda inteiro e só o tipo devolvido muda. A decisão mora em
  * {@link PenFloors} (Regra 3).
+ *
+ * <p>E a altura de passo que o caminho usa: o aldeão da colônia sobe 2 blocos e passa a cerca (autor, 2026-10-29); o
+ * jogo lê {@code getStepHeight} do bicho em {@code getSuccessors} e {@code getStepHeight}, e só esse valor muda — o
+ * corpo dele continua com o passo do jogo e pula ({@link ColonyPathing#stepFor}).
  */
 @Mixin(LandPathNodeMaker.class)
 public abstract class LandPathNodeMakerMixin {
@@ -36,5 +42,13 @@ public abstract class LandPathNodeMakerMixin {
         if (costed != type) {
             returned.setReturnValue(costed);
         }
+    }
+
+    // Chamado pelo Mixin por injeção de bytecode.
+    @SuppressWarnings("UnusedMethod")
+    @WrapOperation(method = {"getSuccessors", "getStepHeight"}, at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/entity/mob/MobEntity;getStepHeight()F"))
+    private float villagecolony$colonyVillagersJumpTwo(MobEntity mob, Operation<Float> original) {
+        return ColonyPathing.stepFor(mob, original.call(mob));
     }
 }

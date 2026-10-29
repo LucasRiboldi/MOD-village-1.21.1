@@ -67,6 +67,13 @@ final class GroundSmoothing {
             return 0;
         }
 
+        int cleared = clearPens(world, colony.id());
+
+        if (cleared > 0) {
+            ActionJournal.action(mason.getUuid(), "LEVELLED", "minecraft:grass_block", cleared, mason.getBlockPos(),
+                    "the inside of a pen");
+        }
+
         VillageBounds box = bounds.get();
         int across = Math.max(1, (box.maxX() - box.minX()) / STEP + 1);
         int down = Math.max(1, (box.maxZ() - box.minZ()) / STEP + 1);
@@ -121,6 +128,9 @@ final class GroundSmoothing {
         VillageSurface.Kind[][] kinds = new VillageSurface.Kind[size][size];
         Optional<BlockPos> mine = colonyId == null ? Optional.empty() : VillageColonyMod.MINES.of(colonyId)
                 .map(found -> MinecraftTypeAdapter.toBlockPos(found.shaft().entry()));
+        // Dentro de construção e obra da colônia nada se mexe, nem o miolo: o cercado do jogo da 0.3.110 teve o chão
+        // de dentro tampado até o alto da cerca, porque o vão entre as cercas parecia buraco.
+        List<int[]> footprints = colonyId == null ? List.of() : footprintsOf(colonyId);
 
         for (int dx = 0; dx < size; dx++) {
             for (int dz = 0; dz < size; dz++) {
@@ -142,7 +152,7 @@ final class GroundSmoothing {
 
                 if (!state.getFluidState().isEmpty()) {
                     kinds[dx][dz] = VillageSurface.Kind.WATER;
-                } else if (nearMine || !isGround(world, at, state)) {
+                } else if (nearMine || insideAny(footprints, x, z) || !isGround(world, at, state)) {
                     kinds[dx][dz] = VillageSurface.Kind.SKIP;
                 } else {
                     kinds[dx][dz] = ring ? VillageSurface.Kind.FIXED : VillageSurface.Kind.FREE;
@@ -176,6 +186,74 @@ final class GroundSmoothing {
         }
 
         return done;
+    }
+
+    /** Quantos blocos acima do piso o miolo do cercado fica livre. */
+    static final int PEN_HEADROOM = 3;
+
+    /**
+     * O miolo de cada cercado da colônia fica livre — autor, 2026-10-29 (jogo da 0.3.110: o cercado nasceu com blocos
+     * de grama dentro, à altura da cerca, e ficou inútil): o chão natural e a planta acima do piso, dentro da cerca,
+     * saem; o que a colônia pôs (feno, cocho) fica.
+     *
+     * @return quantos blocos saíram
+     */
+    static int clearPens(ServerWorld world, UUID colonyId) {
+        int cleared = 0;
+
+        for (com.villagecolony.core.construction.model.Building pen : VillageColonyMod.BUILDINGS.ofColony(colonyId)) {
+            if (!PenPlans.isPen(pen.blueprint())) {
+                continue;
+            }
+
+            for (int x = pen.min().x() + 1; x < pen.max().x(); x++) {
+                for (int z = pen.min().z() + 1; z < pen.max().z(); z++) {
+                    for (int y = pen.min().y() + 1; y <= pen.min().y() + PEN_HEADROOM; y++) {
+                        BlockPos at = new BlockPos(x, y, z);
+
+                        if (!world.isChunkLoaded(x >> 4, z >> 4) || BlockProtection.isColonyBuilt(at)) {
+                            continue;
+                        }
+
+                        BlockState state = world.getBlockState(at);
+                        boolean plant = state.isReplaceable() && !state.isAir() && state.getFluidState().isEmpty();
+
+                        if (plant || SiteSurroundings.isNaturalGround(state)) {
+                            world.setBlockState(at, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+                            cleared++;
+                        }
+                    }
+                }
+            }
+        }
+
+        return cleared;
+    }
+
+    /** A caixa em x e z de cada construção da colônia e da obra aberta, com 1 de folga: {minX, minZ, maxX, maxZ}. */
+    static List<int[]> footprintsOf(UUID colonyId) {
+        List<int[]> boxes = new ArrayList<>();
+
+        for (com.villagecolony.core.construction.model.Building building : VillageColonyMod.BUILDINGS.ofColony(colonyId)) {
+            boxes.add(new int[] {building.min().x() - 1, building.min().z() - 1, building.max().x() + 1,
+                    building.max().z() + 1});
+        }
+
+        VillageColonyMod.CONSTRUCTIONS.openOf(colonyId).ifPresent(open -> boxes.add(new int[] {
+                open.origin().x() - 1, open.origin().z() - 1,
+                open.origin().x() + open.blueprint().size().x(), open.origin().z() + open.blueprint().size().z()}));
+
+        return boxes;
+    }
+
+    static boolean insideAny(List<int[]> boxes, int x, int z) {
+        for (int[] box : boxes) {
+            if (x >= box[0] && z >= box[1] && x <= box[2] && z <= box[3]) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
