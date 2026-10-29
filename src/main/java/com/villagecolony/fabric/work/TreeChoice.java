@@ -151,23 +151,12 @@ public final class TreeChoice {
                 world, job.task.colonyId(), ProfessionType.LUMBERJACK,
                 LumberjackWork.searchRadius != LumberjackWork.SEARCH_RADIUS);
 
-        // O bosque maduro primeiro, perto da vila (P7a); o anel de busca não vale para ele.
-        Optional<BlockPos> tree = VillageGrove.matureTree(job.task.colonyId(), villager.getBlockPos(),
-                log -> !TreeClaims.isTaken(log) && !TreeMarks.isRejected(world, log)
-                        && !TreeMarks.isOutOfReach(world, log), world);
+        // A espécie que a obra pede primeiro (T1); sem ela no alcance, a árvore mais perto, como sempre.
+        java.util.function.Predicate<BlockPos> species = WantedTree.species(world, job.task);
+        Optional<BlockPos> tree = WantedTree.find(world, job, villager, search, zoned, usable, species);
 
-        if (tree.isEmpty() && zoned.isPresent()) {
-            tree = byZone(world, job, villager, zoned.get());
-        } else if (tree.isEmpty()) {
-            // Primeiro a árvore conhecida mais perto dele; só sem nenhuma, a varredura — ADR-038 P3a.
-            tree = com.villagecolony.fabric.integration.VillageTrees.nearest(
-                    world, job.task.colonyId(), villager.getBlockPos(), usable);
-
-            if (tree.isEmpty()) {
-                tree = TreeScanner.findNearestLog(world, search.origin(), search.radius(), usable);
-                tree.ifPresent(found -> com.villagecolony.fabric.integration.VillageTrees.rememberTree(
-                        job.task.colonyId(), found));
-            }
+        if (tree.isEmpty()) {
+            tree = WantedTree.find(world, job, villager, search, zoned, usable, log -> true);
         }
 
         ResourceSearches.advance(job.task.colonyId(), ProfessionType.LUMBERJACK);
