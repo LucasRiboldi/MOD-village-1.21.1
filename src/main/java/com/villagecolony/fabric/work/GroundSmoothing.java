@@ -83,6 +83,33 @@ final class GroundSmoothing {
         return edits;
     }
 
+    /** Quanto em volta da obra o construtor parado nivela. */
+    static final int LOT_MARGIN = 6;
+
+    /**
+     * O construtor com a obra parada limpa e nivela o lote — O2 (autor, 2026-10-29): sem tarefa (a obra espera material,
+     * Regra 128), ele alisa o chão da obra aberta e de {@link #LOT_MARGIN} em volta; a própria obra não é mexida.
+     */
+    static int aroundTheOpenBuild(ServerWorld world, Colony colony, VillagerEntity builder) {
+        Optional<com.villagecolony.core.construction.model.ConstructionProject> open =
+                VillageColonyMod.CONSTRUCTIONS.openOf(colony.id());
+
+        if (open.isEmpty()) {
+            return 0;
+        }
+
+        BlockPos origin = MinecraftTypeAdapter.toBlockPos(open.get().origin());
+        com.villagecolony.core.type.ColonyPos size = open.get().blueprint().size();
+        int side = Math.max(size.x(), size.z()) + 2 * LOT_MARGIN;
+        int edits = smoothWindow(world, colony.id(), origin.getX() - LOT_MARGIN, origin.getZ() - LOT_MARGIN, side, EDITS);
+
+        if (edits > 0) {
+            ActionJournal.action(builder.getUuid(), "LEVELLED", "minecraft:dirt", edits, origin, "the lot of the open build");
+        }
+
+        return edits;
+    }
+
     /**
      * Alisa a janela de {@code size} a partir de {@code (minX, minZ)}, mexendo em até {@code budget} colunas.
      *

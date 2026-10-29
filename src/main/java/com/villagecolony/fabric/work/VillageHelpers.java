@@ -100,7 +100,8 @@ public final class VillageHelpers {
 
     /**
      * A ajuda de quem está sem tarefa: o pedreiro tapa a rua e nivela, o fundidor leva o minério e acende a rua, o
-     * pastor cuida do rebanho (O3) e o adulto sem profissão carrega (O8).
+     * pastor cuida do rebanho (O3), o construtor com a obra parada limpa e nivela o lote (O2) e o adulto sem profissão
+     * carrega (O8).
      *
      * @return quanto ele fez
      */
@@ -113,6 +114,7 @@ public final class VillageHelpers {
             case MASON -> masonHelps(world, colony, villager);
             case SMELTER -> smelterHelps(world, colony, villager);
             case SHEPHERD -> FlockCare.feed(world, colony, villager);
+            case BUILDER -> GroundSmoothing.aroundTheOpenBuild(world, colony, villager);
             default -> 0;
         };
     }

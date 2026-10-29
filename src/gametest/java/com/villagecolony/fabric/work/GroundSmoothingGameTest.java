@@ -71,6 +71,66 @@ public class GroundSmoothingGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * O2 (autor, 2026-10-29): o construtor com a obra parada limpa e nivela o lote — sem tarefa, ele alisa o chão em
+     * volta da obra aberta.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_smoothing_builder", tickLimit = 20)
+    public void theIdleBuilderLevelsTheGroundAroundTheOpenBuild(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        for (int x = 0; x <= 14; x++) {
+            for (int z = 0; z <= 14; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.DIRT);
+                context.setBlockState(new BlockPos(x, FLOOR, z), Blocks.GRASS_BLOCK);
+
+                for (int y = FLOOR + 1; y <= FLOOR + 20; y++) {
+                    context.setBlockState(new BlockPos(x, y, z), Blocks.AIR);
+                }
+            }
+        }
+
+        for (int y = FLOOR + 1; y <= FLOOR + 3; y++) {
+            context.setBlockState(new BlockPos(4, y, 4), Blocks.DIRT);
+        }
+
+        BlockPos site = context.getAbsolutePos(new BlockPos(7, FLOOR + 1, 7));
+        com.villagecolony.core.colony.model.Colony colony = com.villagecolony.core.colony.model.Colony.create(
+                java.util.UUID.randomUUID(), com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(site));
+        com.villagecolony.VillageColonyMod.COLONIES.register(colony);
+        com.villagecolony.core.construction.model.ConstructionProject project =
+                com.villagecolony.core.construction.model.ConstructionProject.plan(colony.id(),
+                        com.villagecolony.core.construction.model.Blueprint.of(
+                                com.villagecolony.core.type.ResourceId.vanilla("o2_test"),
+                                java.util.List.of(new com.villagecolony.core.construction.model.BlueprintBlock(
+                                        new com.villagecolony.core.type.ColonyPos(0, 0, 0),
+                                        com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toResourceId(Blocks.OAK_PLANKS)))),
+                        com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(site));
+        project.moveTo(com.villagecolony.core.construction.model.ConstructionState.PREPARING);
+        project.moveTo(com.villagecolony.core.construction.model.ConstructionState.BUILDING);
+        com.villagecolony.VillageColonyMod.CONSTRUCTIONS.register(project);
+        net.minecraft.entity.passive.VillagerEntity builder =
+                context.spawnEntity(net.minecraft.entity.EntityType.VILLAGER, new BlockPos(10, FLOOR + 1, 10));
+
+        try {
+            for (int round = 0; round < 10; round++) {
+                VillageHelpers.helps(world, colony, java.util.Optional.of(
+                        com.villagecolony.core.worker.model.ProfessionType.BUILDER), builder);
+            }
+
+            int floorY = context.getAbsolutePos(new BlockPos(0, FLOOR, 0)).getY();
+
+            context.assertTrue(top(context, 4, 4) == floorY,
+                    "o construtor parado não nivelou o lote: o calombo ficou com topo em " + top(context, 4, 4));
+        } finally {
+            com.villagecolony.VillageColonyMod.CONSTRUCTIONS.forget(project.id(),
+                    com.villagecolony.core.construction.service.RemovalAudit.playerCancellation());
+            com.villagecolony.VillageColonyMod.COLONIES.remove(colony.id());
+        }
+
+        context.complete();
+    }
+
     private static int top(TestContext context, int x, int z) {
         BlockPos at = context.getAbsolutePos(new BlockPos(x, 0, z));
 
