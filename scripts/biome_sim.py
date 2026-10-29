@@ -408,14 +408,21 @@ def measure_ground(report, x, z, half=50):
     ground_report = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(ground_report)
 
+    region = os.path.join(report, "regiao-dia0")
+    wide = 2 * half
+
     try:
-        line = ground_report.describe(ground_report.measure(
-            ground_report.around(os.path.join(report, "regiao-dia0"), x, z, half)))
+        line = ground_report.describe(ground_report.measure(ground_report.around(region, x, z, half)))
+        # A faixa em volta da vila vai até 64 além das peças: a janela larga mede o paredão e o que ficou no ar.
+        ring = ground_report.describe(ground_report.measure(ground_report.around(region, x, z, wide)))
+        hanging = ground_report.describe_floating(ground_report.floating(region, x, z, wide))
     except Exception as failure:  # o retrato pode faltar chunk; a medida não derruba a simulação
-        line = f"sem medida: {failure}"
+        line = ring = hanging = f"sem medida: {failure}"
 
     with open(os.path.join(report, "solo.txt"), "w", encoding="utf-8") as out:
         out.write(f"vila em ({x}, {z}), janela de {2 * half} x {2 * half}: {line}\n")
+        out.write(f"janela de {2 * wide} x {2 * wide}: {ring}\n")
+        out.write(f"janela de {2 * wide} x {2 * wide}: {hanging}\n")
 
     print(f"  solo: {line}")
 

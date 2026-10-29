@@ -31,6 +31,27 @@ class GroundReportTest(unittest.TestCase):
         self.assertEqual(6, result["maior"])
         self.assertEqual(6, result["degraus"])
 
+    def test_a_wall_is_a_step_of_four_or_more(self):
+        grid = flat(4, 64)
+        grid[0][3] = (67, "stone")
+        grid[3][3] = (68, "stone")
+
+        result = ground_report.measure(grid)
+
+        self.assertEqual(2, result["paredoes"], "só o par com degrau 4, nos dois vizinhos do canto")
+        self.assertEqual(4, result["maior"])
+
+    def test_ground_over_a_gap_near_the_top_hangs(self):
+        self.assertEqual((True, False), ground_report.hangs(["stone", "air", "air", "dirt", "stone"]))
+        self.assertEqual((False, False), ground_report.hangs(["grass_block", "dirt", "stone", "stone"]))
+        self.assertEqual((False, True), ground_report.hangs(["oak_leaves", "oak_log", "air", "grass_block", "dirt"]))
+        self.assertEqual((False, False), ground_report.hangs(["oak_leaves", "oak_log", "grass_block", "dirt"]))
+
+    def test_a_cave_deep_under_the_top_is_not_hanging(self):
+        column = ["grass_block"] + ["stone"] * (ground_report.HANG_DEPTH + 2) + ["air"]
+
+        self.assertEqual((False, False), ground_report.hangs(column))
+
     def test_buildings_are_not_ground(self):
         grid = flat(3, 64)
         grid[1][1] = (75, "oak_planks")
