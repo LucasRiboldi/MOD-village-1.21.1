@@ -12,6 +12,28 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.108] — pedreiro alisa a vila, construtor nivela o lote, portão da mina (2026-10-29, JAR local, não jogado)
+
+Branch `fix/playtest-0102`. Pedidos do autor no mesmo dia da 0.3.107.
+
+### Adicionado
+- **Pedreiro alisa o chão da vila (Regra 156):** sem tarefa, uma janela de 24×24 por passada varre a caixa da vila;
+  buraco tampado, calombo de qualquer tamanho vira rampa de degrau 1, até 32 colunas por passada. Nunca mexe em
+  construção, peça da vila, obra ou bloco do jogador, em roça e água, nem a 8 da boca da mina.
+- **Construtor nivela o lote (O2):** com a obra parada, alisa o chão da obra aberta e de 6 blocos em volta.
+- **Portão da mina (Regra 155):** a estrutura do autor (`mine_entrance.nbt`, 9×7×5) no lugar do arco de
+  pedregulho, com as três pistas da escada no centro do vão; baú e barril só de enfeite.
+- **Bancada:** `biome_sim.py --all --days 0` mede o solo da vila em 100×100 em todos os biomas de superfície
+  (`solo.txt` por bioma, `scripts/ground_report.py`).
+
+### Mudado
+- **Solo da geração:** calombo isolado de até 4 colunas é cortado ao nível em volta; o que não é chão (casa,
+  árvore, roça) fica fora da conta e não puxa o chão vizinho.
+- **CI:** Python 3.13 fixo (o Pillow não tinha pacote para a 3.15).
+
+### Pendente
+- O pedreiro ajudar a assentar (O1) e aplainar o canteiro antigo (O7) — o alisamento da vila cobre parte do segundo.
+
 ## [0.3.107] — solo suave na geração, materiais que aparecem e ajudas (2026-10-29, JAR local, não jogado)
 
 Branch `fix/playtest-0102`. Pedidos do autor depois do jogo da 0.3.106.

@@ -1,5 +1,12 @@
 # STATE — 2026-10-29
 
+> **0.3.108** (29-10, branch `fix/playtest-0102`): o pedreiro sem tarefa alisa o chão da vila aos poucos (Regra 156 —
+> janela de 24×24, buraco tampado, calombo vira rampa de degrau 1, nunca em construção, roça, água ou mina); o
+> construtor com a obra parada nivela o lote (O2); o portão do autor no lugar do arco da mina, pistas no centro do vão
+> (Regra 155); bancada de solo em 100×100 em todos os biomas. Unitários 1643/1643, bateria 933/933, Python 150.
+> **Não jogado.** Falta: O1 (ajudar a assentar), O7 (canteiro antigo). Para o jogo: **mundo novo**; o portão sobre a
+> boca da mina; `LEVELLED` no diário do pedreiro e do construtor.
+>
 > **0.3.107** (29-10, branch `fix/playtest-0102`): o solo da vila nasce suave na geração (Regra 152 — degrau > 1
 > na área: deserto 4,29 → 0,19 %, savana 2,11 → 0,10 %, neve 1,95 → 0,42 %, medido em mundo novo); neve e argila
 > aparecem, o fundidor faz vidraça, o lenhador derruba a espécie pedida (T1, T5); carregador, pastor cuidando do
