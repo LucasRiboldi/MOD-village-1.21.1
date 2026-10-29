@@ -12,6 +12,27 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.107] — solo suave na geração, materiais que aparecem e ajudas (2026-10-29, JAR local, não jogado)
+
+Branch `fix/playtest-0102`. Pedidos do autor depois do jogo da 0.3.106.
+
+### Adicionado
+- **Solo da vila suave na geração (Regra 152):** ao gerar cada chunk da vila, antes das peças, o chão da área mais 16
+  é refeito — buraco tampado, degrau de 1, casa e água no lugar, borda até o terreno natural. Só em mundo novo.
+- **Ajudas (Regras 153–154):** o sem profissão carrega (boca da mina e baús cheios); o pastor alimenta o rebanho para
+  cruzar; o carpinteiro adianta tábua, escada e laje; pedreiro e carpinteiro fazem antes o que a obra pede; o
+  fazendeiro faz composto.
+
+### Mudado
+- **Materiais (T1, T5):** neve e argila aparecem quando pedidas; o fundidor faz vidraça do vidro; o lenhador busca
+  primeiro a espécie pedida.
+- **O5, O6:** árvore inalcançável fica de fora um dia; bosque de 4 a 6 da vila; areia e argila buscadas até 40 além
+  da borda.
+- **CI:** instala o Pillow para os testes dos mapas.
+
+### Pendente
+- O2 (construtor com a obra parada), o pedreiro ajudar a assentar (O1), aplainar o canteiro antigo (O7).
+
 ## [0.3.106] — trajeto pela rua e o primeiro degrau do ramal (2026-10-28, JAR local, não jogado)
 
 Branch `fix/playtest-0102`. O que ficou pendente da 0.3.105.

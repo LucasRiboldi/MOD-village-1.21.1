@@ -1,5 +1,12 @@
-# STATE — 2026-10-28
+# STATE — 2026-10-29
 
+> **0.3.107** (29-10, branch `fix/playtest-0102`): o solo da vila nasce suave na geração (Regra 152 — degrau > 1
+> na área: deserto 4,29 → 0,19 %, savana 2,11 → 0,10 %, neve 1,95 → 0,42 %, medido em mundo novo); neve e argila
+> aparecem, o fundidor faz vidraça, o lenhador derruba a espécie pedida (T1, T5); carregador, pastor cuidando do
+> rebanho, madeira e pedra adiantadas, árvore fora um dia, bosque perto, areia mais longe, composto (Regras 153–154).
+> Bateria 931/931, unitários verdes. **Não jogado.** Falta: O2, o pedreiro ajudar a assentar (O1) e aplainar o
+> canteiro antigo (O7). Para o jogo: **mundo novo**.
+>
 > **0.3.106** (28-10, branch `fix/playtest-0102`): o trajeto longo do aldeão da colônia vai pela rede de ruas
 > (Regra 151, `StreetRoute` + `MoveToTargetTaskMixin`), e o mineiro não recusa mais o primeiro degrau do ramal novo
 > (`MiningTarget.judge`; no jogo da 0.3.104 foram 11 ramais encerrados). Bateria 923/923, unitários verdes.
