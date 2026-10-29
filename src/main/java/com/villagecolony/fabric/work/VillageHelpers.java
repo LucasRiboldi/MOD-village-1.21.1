@@ -84,22 +84,52 @@ public final class VillageHelpers {
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
             Optional<ProfessionType> trade = worker.profession();
 
-            if (trade.isEmpty() || !(world.getEntity(worker.villagerId()) instanceof VillagerEntity villager)
+            if (!(world.getEntity(worker.villagerId()) instanceof VillagerEntity villager)
                     || !VillageColonyMod.TASKS.assignedTo(worker.villagerId()).isEmpty()
                     || !WorkHours.isWorkTime(world, villager) || villager.isSleeping()) {
                 continue;
             }
 
-            int done = switch (trade.get()) {
-                case MASON -> masonHelps(world, colony, villager);
-                case SMELTER -> smelterHelps(world, colony, villager);
-                default -> 0;
-            };
+            int done = helps(world, colony, trade, villager);
 
             if (done > 0) {
                 villager.swingHand(Hand.MAIN_HAND);
             }
         }
+    }
+
+    /**
+     * A ajuda de quem está sem tarefa: o pedreiro tapa a rua e nivela, o fundidor leva o minério e acende a rua, o
+     * pastor cuida do rebanho (O3) e o adulto sem profissão carrega (O8).
+     *
+     * @return quanto ele fez
+     */
+    static int helps(ServerWorld world, Colony colony, Optional<ProfessionType> trade, VillagerEntity villager) {
+        if (trade.isEmpty()) {
+            return haulerHelps(world, colony, villager);
+        }
+
+        return switch (trade.get()) {
+            case MASON -> masonHelps(world, colony, villager);
+            case SMELTER -> smelterHelps(world, colony, villager);
+            case SHEPHERD -> FlockCare.feed(world, colony, villager);
+            default -> 0;
+        };
+    }
+
+    /**
+     * O adulto sem profissão é o carregador da vila — O8 (autor, 2026-10-28): leva o baú da boca da mina para os baús
+     * públicos e alivia os baús de profissão quase cheios.
+     */
+    static int haulerHelps(ServerWorld world, Colony colony, VillagerEntity hauler) {
+        int carried = haulFromTheMine(world, colony, hauler);
+        int spread = com.villagecolony.fabric.integration.ProfessionChestOverflow.spread(world, colony);
+
+        if (spread > 0) {
+            ActionJournal.action(hauler.getUuid(), "HAULED", "minecraft:chest", spread, null, "full chests to the village");
+        }
+
+        return carried + spread;
     }
 
     /** Tapa as falhas da rua; sem falha, nivela em volta da próxima casa. */
@@ -138,7 +168,7 @@ public final class VillageHelpers {
         return carried + lightTheStreet(world, colony, smelter);
     }
 
-    private static int haulFromTheMine(ServerWorld world, Colony colony, VillagerEntity smelter) {
+    private static int haulFromTheMine(ServerWorld world, Colony colony, VillagerEntity carrier) {
         Optional<BlockPos> chest = VillageColonyMod.MINES.of(colony.id())
                 .map(mine -> MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()))
                 .flatMap(mouth -> MineMouth.chestAt(world, mouth));
@@ -168,7 +198,7 @@ public final class VillageHelpers {
 
         if (moved > 0) {
             box.markDirty();
-            ActionJournal.action(smelter.getUuid(), "HAULED", "minecraft:chest", moved, null, "mine mouth to the village");
+            ActionJournal.action(carrier.getUuid(), "HAULED", "minecraft:chest", moved, null, "mine mouth to the village");
         }
 
         return moved;

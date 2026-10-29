@@ -190,6 +190,40 @@ public class IdleFixesGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** O4 (autor, 2026-10-28): o carpinteiro sem tarefa adianta a madeira — tábua da tora que a vila tem mais. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_fixes_wood", tickLimit = 20)
+    public void theIdleCarpenterMakesPlanksAhead(TestContext context) {
+        context.setBlockState(CHEST, Blocks.CHEST);
+        List<ColonyPos> chests = List.of(chest(context));
+        var world = context.getWorld();
+
+        ChestDepositor.deposit(world, chest(context), Items.ACACIA_LOG, ValueGoods.KEEP_RAW + 2);
+        var recipe = ValueGoods.recipeFor(world, chests, ProfessionType.CARPENTER).orElseThrow();
+
+        context.assertTrue(recipe.product() == Items.ACACIA_PLANKS, "devia fazer tábua de acácia: " + recipe);
+        context.assertTrue(ValueGoods.batch(world, chests, recipe) == 8, "2 toras deviam dar 8 tábuas");
+        context.complete();
+    }
+
+    /** O1 (autor, 2026-10-28): o pedreiro faz antes a peça de pedra que a obra aberta pede. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_fixes_wanted", tickLimit = 20)
+    public void theMasonMakesWhatTheOpenBuildAsksFirst(TestContext context) {
+        context.setBlockState(CHEST, Blocks.CHEST);
+        List<ColonyPos> chests = List.of(chest(context));
+        var world = context.getWorld();
+
+        ChestDepositor.deposit(world, chest(context), Items.STONE, ValueGoods.KEEP_RAW + 8);
+        ChestDepositor.deposit(world, chest(context), Items.COBBLESTONE, ValueGoods.KEEP_RAW + 8);
+
+        var plain = ValueGoods.recipeFor(world, chests, ProfessionType.MASON, item -> false).orElseThrow();
+        var wanted = ValueGoods.recipeFor(world, chests, ProfessionType.MASON,
+                item -> item == Items.COBBLESTONE_WALL).orElseThrow();
+
+        context.assertTrue(plain.product() == Items.STONE_BRICKS, "sem obra pedindo, a ordem de sempre: " + plain);
+        context.assertTrue(wanted.product() == Items.COBBLESTONE_WALL, "a obra pede muro, e o muro vem antes: " + wanted);
+        context.complete();
+    }
+
     /** Sem chegar ao nível da mina, a escada recomeça na boca da superfície, cursor no primeiro degrau. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_fixes", tickLimit = 20)
     public void theStairStartsOverFromTheSurfaceMouth(TestContext context) {

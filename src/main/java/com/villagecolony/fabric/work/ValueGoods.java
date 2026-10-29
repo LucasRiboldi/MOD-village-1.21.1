@@ -26,7 +26,8 @@ import java.util.Optional;
  * pedreiro 48% e fundidor 44% parados com o estoque cheio) e Regra 146 (autor, 2026-10-28; taiga simulada:
  * fundidor 80% e pedreiro 64% parados com 1.209 pedras, porque o produto batia no teto de 128). O titular
  * sem tarefa do ofício, no expediente, faz um lote por minuto: o lenhador faz carvão vegetal da tora; o
- * pedreiro faz tijolo, pedra polida, arenito cortado e as peças de pedregulho das obras; o fundidor funde o
+ * pedreiro faz tijolo, pedra polida, arenito cortado e as peças de pedregulho das obras; o carpinteiro faz tábua,
+ * escada e laje da tora que a vila tem mais (O4); o que a obra aberta pede vem primeiro (O1); o fundidor funde o
  * minério cru, assa a carne, e faz pedra, pedra lisa, vidro, vidraça (T5, autor 2026-10-29), tijolo e terracota. Cada receita guarda uma
  * reserva do cru ({@link Recipe#keep}) e para com o produto em {@link #CAP}: o estoque das obras vem primeiro.
  */
@@ -119,7 +120,8 @@ public final class ValueGoods {
                 continue;
             }
 
-            Optional<Recipe> recipe = recipeFor(world, chests, trade.get());
+            Optional<Recipe> recipe = recipeFor(world, chests, trade.get(), item -> ConstructionDemand.materialNeededBy(
+                    com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toResourceId(item), colony) > 0);
 
             if (recipe.isPresent()) {
                 int crafted = batch(world, chests, recipe.get());
@@ -138,10 +140,25 @@ public final class ValueGoods {
 
     /** O lote que este ofício pode fazer agora: cru acima da reserva e produto abaixo do teto. */
     static Optional<Recipe> recipeFor(ServerWorld world, List<ColonyPos> chests, ProfessionType trade) {
-        List<Recipe> recipes = trade == ProfessionType.LUMBERJACK ? charcoalFromTheMostLogs(world, chests)
-                : RECIPES.getOrDefault(trade, List.of());
+        return recipeFor(world, chests, trade, item -> false);
+    }
 
-        for (Recipe recipe : recipes) {
+    /**
+     * O mesmo, com o que a obra aberta pede primeiro — O1 e O4 (autor, 2026-10-28): o pedreiro e o carpinteiro fazem
+     * antes as peças de pedra e de madeira da planta; sem pedido, a ordem de sempre.
+     */
+    static Optional<Recipe> recipeFor(ServerWorld world, List<ColonyPos> chests, ProfessionType trade,
+                                      java.util.function.Predicate<Item> wanted) {
+        List<Recipe> recipes = switch (trade) {
+            case LUMBERJACK -> charcoalFromTheMostLogs(world, chests);
+            case CARPENTER -> woodFromTheMostLogs(world, chests);
+            default -> RECIPES.getOrDefault(trade, List.of());
+        };
+        List<Recipe> ordered = new java.util.ArrayList<>(recipes);
+
+        ordered.sort(java.util.Comparator.comparing(recipe -> !wanted.test(recipe.product())));
+
+        for (Recipe recipe : ordered) {
             if (ColonyChests.countIn(world, chests, recipe.raw()) >= recipe.keep() + recipe.in()
                     && ColonyChests.countIn(world, chests, recipe.product()) < CAP) {
                 return Optional.of(recipe);
@@ -149,6 +166,55 @@ public final class ValueGoods {
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * A madeira adiantada do carpinteiro — O4: da tora de que a vila tem mais, a tábua (1 dá 4), e da tábua a escada
+     * (6 dão 4) e a laje (3 dão 6), da mesma espécie.
+     */
+    private static List<Recipe> woodFromTheMostLogs(ServerWorld world, List<ColonyPos> chests) {
+        Item most = null;
+        int mostCount = 0;
+
+        for (Item item : Registries.ITEM) {
+            String path = Registries.ITEM.getId(item).getPath();
+
+            if (path.endsWith("_log") && !path.startsWith("stripped_")
+                    && item.getDefaultStack().isIn(ItemTags.LOGS_THAT_BURN)) {
+                int count = ColonyChests.countIn(world, chests, item);
+
+                if (count > mostCount) {
+                    most = item;
+                    mostCount = count;
+                }
+            }
+        }
+
+        if (most == null) {
+            return List.of();
+        }
+
+        net.minecraft.util.Identifier log = Registries.ITEM.getId(most);
+        String species = log.getPath().substring(0, log.getPath().length() - "_log".length());
+        Item planks = Registries.ITEM.get(net.minecraft.util.Identifier.of(log.getNamespace(), species + "_planks"));
+        Item stairs = Registries.ITEM.get(net.minecraft.util.Identifier.of(log.getNamespace(), species + "_stairs"));
+        Item slab = Registries.ITEM.get(net.minecraft.util.Identifier.of(log.getNamespace(), species + "_slab"));
+
+        if (planks == Items.AIR) {
+            return List.of();
+        }
+
+        List<Recipe> recipes = new java.util.ArrayList<>(List.of(new Recipe(most, 1, planks, 4, KEEP_RAW)));
+
+        if (stairs != Items.AIR) {
+            recipes.add(new Recipe(planks, 6, stairs, 4, KEEP_RAW));
+        }
+
+        if (slab != Items.AIR) {
+            recipes.add(new Recipe(planks, 3, slab, 6, KEEP_RAW));
+        }
+
+        return recipes;
     }
 
     /** O carvão vegetal sai da tora de que a vila tem mais. */
