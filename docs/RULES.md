@@ -118,7 +118,7 @@ regra que foi emendada. O corpo de cada regra vive em
 | 85 | **O ferro descansa onde a mina não o tem:** o piso de ferro cru não força busca sem veio | 10-21 | ✅ no código (registrada 10-22) | `IronRest` |
 | 86 | **A peça que o construtor não alcança surge no lugar** | 10-20 | ✅ no código (registrada 10-22) | `UnreachablePieces` |
 | 87 | **Peça equivalente:** sem a exata e sem tag do jogo, vale a equivalente da tabela | 09-24 (N3) | ✅ no código (registrada 10-22) | `EquivalentPieces` |
-| 88 | **Terracota, feno, argila e gelo aparecem quando a obra pede** (gelo, gelo compactado e gelo azul desde 10-28: o jogo só os dá com toque suave) | 10-21 | ✅ no código (registrada 10-22) | `AppearingPieces` |
+| 88 | **Terracota, feno, argila, gelo e neve aparecem quando a obra pede** (gelo, gelo compactado e gelo azul desde 10-28: o jogo só os dá com toque suave; bloco e camada de neve desde 10-29, T1; a argila crua do forno aparece no baú do fundidor sem ele sair a buscá-la, T5) | 10-21 | ✅ no código (registrada 10-22) | `AppearingPieces` |
 | 89 | **Degrau na frente da porta** do lote que fica um bloco acima da rua | 09-30 | ✅ no código (registrada 10-22) | `DoorStep` |
 | 90 | **Terraplanagem do lote:** corta até 5 e aterra até 2 blocos do chão do bioma, com um corredor de 2 em volta da casa | 10-20, 10-21 | ✅ no código (registrada 10-22) | `LotTerraform` |
 | 91 | **Casa fundadora:** primeiro o lote plano exato, depois o aplainável; a vegetação do lote sai | 10-20 (G1) | ✅ no código (registrada 10-22) | `FoundationLotSearch`, `LotGrowth` |

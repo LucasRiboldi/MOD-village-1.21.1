@@ -27,7 +27,7 @@ import java.util.Optional;
  * fundidor 80% e pedreiro 64% parados com 1.209 pedras, porque o produto batia no teto de 128). O titular
  * sem tarefa do ofício, no expediente, faz um lote por minuto: o lenhador faz carvão vegetal da tora; o
  * pedreiro faz tijolo, pedra polida, arenito cortado e as peças de pedregulho das obras; o fundidor funde o
- * minério cru, assa a carne, e faz pedra, pedra lisa, vidro, tijolo e terracota. Cada receita guarda uma
+ * minério cru, assa a carne, e faz pedra, pedra lisa, vidro, vidraça (T5, autor 2026-10-29), tijolo e terracota. Cada receita guarda uma
  * reserva do cru ({@link Recipe#keep}) e para com o produto em {@link #CAP}: o estoque das obras vem primeiro.
  */
 public final class ValueGoods {
@@ -80,6 +80,7 @@ public final class ValueGoods {
                     Recipe.oneToOne(Items.COBBLESTONE, Items.STONE),
                     Recipe.oneToOne(Items.STONE, Items.SMOOTH_STONE),
                     Recipe.oneToOne(Items.SAND, Items.GLASS),
+                    new Recipe(Items.GLASS, 6, Items.GLASS_PANE, 16, KEEP_RAW),
                     Recipe.oneToOne(Items.CLAY_BALL, Items.BRICK),
                     Recipe.oneToOne(Items.CLAY, Items.TERRACOTTA),
                     Recipe.oneToOne(Items.SANDSTONE, Items.SMOOTH_SANDSTONE)));

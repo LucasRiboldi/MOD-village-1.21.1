@@ -30,7 +30,9 @@ final class AppearingPieces {
                 || block == Blocks.CLAY
                 || block == Blocks.ICE
                 || block == Blocks.PACKED_ICE
-                || block == Blocks.BLUE_ICE;
+                || block == Blocks.BLUE_ICE
+                || block == Blocks.SNOW_BLOCK
+                || block == Blocks.SNOW;
     }
 
     /**

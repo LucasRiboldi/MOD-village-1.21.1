@@ -159,17 +159,17 @@ public class DesertFixesGameTest implements FabricGameTest {
     }
 
     /**
-     * O gelo que nenhuma profissão obtém aparece (T1 do diagnóstico da 0.3.103: 162 gelos compactados postos de
-     * lado na vila da neve) — o jogo só o dá com toque suave. A neve, que sai da pá, não.
+     * O gelo e a neve aparecem quando a obra os pede — T1 (autor, 2026-10-29: "a neve deve aparecer automático"; o gelo
+     * só sai com toque suave e a neve travava a obra: 16 registros de obra parada por neve nas simulações).
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "desert_fixes")
-    public void iceThatNoTradeObtainsAppearsAndSnowDoesNot(TestContext context) {
+    public void iceAndSnowAppearWhenTheBuildAsks(TestContext context) {
         context.assertTrue(AppearingPieces.appears(Blocks.PACKED_ICE)
                         && AppearingPieces.appears(Blocks.ICE)
                         && AppearingPieces.appears(Blocks.BLUE_ICE),
                 "o gelo devia aparecer: nenhuma profissão o obtém sem toque suave");
-        context.assertFalse(AppearingPieces.appears(Blocks.SNOW_BLOCK) || AppearingPieces.appears(Blocks.SNOW),
-                "controle: a neve tem rota (a pá) e não devia aparecer");
+        context.assertTrue(AppearingPieces.appears(Blocks.SNOW_BLOCK) && AppearingPieces.appears(Blocks.SNOW),
+                "a neve devia aparecer quando a obra a pede");
         context.complete();
     }
 

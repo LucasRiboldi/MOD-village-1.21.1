@@ -173,6 +173,23 @@ public class IdleFixesGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** T5 (autor, 2026-10-29): a vidraça sai do fundidor — areia, vidro, vidraça; 6 vidros dão 16 vidraças. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_fixes_panes", tickLimit = 20)
+    public void theSmelterTurnsSpareGlassIntoPanes(TestContext context) {
+        context.setBlockState(CHEST, Blocks.CHEST);
+        List<ColonyPos> chests = List.of(chest(context));
+        var world = context.getWorld();
+
+        ChestDepositor.deposit(world, chest(context), Items.GLASS, ValueGoods.KEEP_RAW + 6);
+        var recipe = ValueGoods.recipeFor(world, chests, ProfessionType.SMELTER).orElseThrow();
+
+        context.assertTrue(recipe.product() == Items.GLASS_PANE, "o fundidor devia fazer vidraça do vidro: " + recipe);
+        context.assertTrue(ValueGoods.batch(world, chests, recipe) == 16, "6 vidros deviam virar 16 vidraças");
+        context.assertTrue(com.villagecolony.fabric.integration.ColonyChests.countIn(world, chests, Items.GLASS)
+                == ValueGoods.KEEP_RAW, "a reserva de vidro das obras devia ficar");
+        context.complete();
+    }
+
     /** Sem chegar ao nível da mina, a escada recomeça na boca da superfície, cursor no primeiro degrau. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_fixes", tickLimit = 20)
     public void theStairStartsOverFromTheSurfaceMouth(TestContext context) {
