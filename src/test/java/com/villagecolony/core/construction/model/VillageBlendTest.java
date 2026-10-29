@@ -158,4 +158,48 @@ class VillageBlendTest {
         assertEquals(-15, offsets[9 + 23][9 + 23], 1);
         assertEquals(0, offsets[9 + 46][9 + 46], "a 65 do canto, fora da faixa");
     }
+
+    /** A vila longe do canto da grade: as contas são feitas a partir dela, não da coluna 0. */
+    @Test
+    void theVillageNeedNotStartAtTheCornerOfTheGrid() {
+        int[][] natural = new int[90][20];
+
+        for (int x = 0; x < 90; x++) {
+            Arrays.fill(natural[x], x >= 10 && x <= 19 ? 70 : 100);
+        }
+
+        natural[14][9] = 60;
+        VillageBlend.Area core = new VillageBlend.Area(10, 5, 19, 14);
+        int[][] offsets = VillageBlend.offsets(natural, free(natural), core, EVERYWHERE);
+
+        assertEquals(10, offsets[14][9], "a cratera do miolo deslocado sobe");
+        assertEquals(0, offsets[12][7], "o miolo plano fica");
+        assertEquals(-30, offsets[20][9], 1, "colada na vila, pelo lado de x");
+        assertEquals(-15, offsets[19 + 32][9], 1, "a 32 da vila");
+        assertEquals(-30, offsets[9][9], 1, "colada na vila, pelo lado de menor x");
+        assertEquals(-27, offsets[20][16], 2, "na diagonal, perto do canto da vila");
+    }
+
+    /** O desfoque é simétrico: dois picos iguais, um de cada lado da vila, descem igual. */
+    @Test
+    void twoMirroredPeaksComeDownAlike() {
+        int[][] natural = new int[61][21];
+
+        for (int[] row : natural) {
+            Arrays.fill(row, 70);
+        }
+
+        natural[30 - 5 - 10][10] = 110;
+        natural[30 + 5 + 10][10] = 110;
+        natural[30 - 5 - 10][11] = 96;
+        natural[30 + 5 + 10][11] = 96;
+        VillageBlend.Area core = new VillageBlend.Area(25, 5, 35, 15);
+
+        int[][] offsets = VillageBlend.offsets(natural, free(natural), core, EVERYWHERE);
+
+        assertTrue(offsets[15][10] < -10, "o pico desce: " + offsets[15][10]);
+        assertEquals(offsets[15][10], offsets[45][10], "o pico da esquerda e o da direita");
+        assertEquals(offsets[15][11], offsets[45][11]);
+        assertEquals(offsets[13][10], offsets[47][10]);
+    }
 }

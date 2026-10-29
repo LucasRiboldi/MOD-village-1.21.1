@@ -157,13 +157,9 @@ public final class VillageSurface {
 
     /**
      * Espalha os valores com degrau de 1 (distância de quarteirão, duas passadas): com {@code fromBelow}, cada coluna
-     * fica no máximo 1 acima da vizinha (o maior relevo de degrau 1 abaixo dos valores); sem, no mínimo 1 abaixo.
+     * fica no máximo 1 acima da vizinha (o maior relevo de degrau 1 abaixo dos valores); sem, no mínimo 1 abaixo. As
+     * colunas marcadas em {@code skip} não mudam nem servem de origem.
      */
-    static void spread(int[][] grid, boolean fromBelow) {
-        spread(grid, fromBelow, new boolean[grid.length][grid.length == 0 ? 0 : grid[0].length]);
-    }
-
-    /** O mesmo, sem passar pelas colunas marcadas em {@code skip}: elas não mudam nem servem de origem. */
     static void spread(int[][] grid, boolean fromBelow, boolean[][] skip) {
         int width = grid.length;
         int depth = width == 0 ? 0 : grid[0].length;

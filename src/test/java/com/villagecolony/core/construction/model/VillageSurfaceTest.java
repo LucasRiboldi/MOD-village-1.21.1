@@ -193,4 +193,103 @@ class VillageSurfaceTest {
         assertEquals(78, surface[0][10], "a borda é o terreno natural");
         assertSmooth(surface, kinds);
     }
+
+    /** O calombo de até 4 colunas desce exatamente ao nível em volta; o de 5 fica para a encosta. */
+    @Test
+    void aBumpOfFourIsCutToTheGroundAroundAndOneOfFiveIsNot() {
+        int[][] natural = flat(15, 70);
+        VillageSurface.Kind[][] kinds = kinds(15);
+
+        for (int[] cell : new int[][] {{3, 3}, {3, 4}, {4, 4}, {4, 5}}) {
+            natural[cell[0]][cell[1]] = 74;
+        }
+
+        for (int z = 3; z <= 7; z++) {
+            natural[10][z] = 73;
+        }
+
+        int[][] cut = VillageSurface.cutSmallBumps(natural, kinds);
+
+        assertEquals(70, cut[3][3]);
+        assertEquals(70, cut[4][5]);
+        assertEquals(73, cut[10][5], "o calombo de 5 colunas não é cortado aqui");
+        assertEquals(70, cut[7][7], "o chão em volta fica");
+    }
+
+    /** O calombo na beira de um degrau desce ao nível mais alto em volta, não ao mais baixo. */
+    @Test
+    void aBumpComesDownToTheHighestGroundAroundIt() {
+        int[][] natural = flat(9, 70);
+        VillageSurface.Kind[][] kinds = kinds(9);
+
+        for (int z = 0; z < 9; z++) {
+            natural[5][z] = 72;
+            natural[6][z] = 72;
+            natural[7][z] = 72;
+            natural[8][z] = 72;
+        }
+
+        natural[4][4] = 76;
+
+        int[][] cut = VillageSurface.cutSmallBumps(natural, kinds);
+
+        assertEquals(72, cut[4][4]);
+        assertEquals(70, cut[3][4]);
+    }
+
+    /** Casa e água não são calombo: ficam como estão. */
+    @Test
+    void housesAndWaterAreNeverCutAsBumps() {
+        int[][] natural = flat(9, 70);
+        VillageSurface.Kind[][] kinds = kinds(9);
+        natural[3][3] = 75;
+        kinds[3][3] = VillageSurface.Kind.FIXED;
+        natural[5][5] = 75;
+        kinds[5][5] = VillageSurface.Kind.SKIP;
+
+        int[][] cut = VillageSurface.cutSmallBumps(natural, kinds);
+
+        assertEquals(75, cut[3][3]);
+        assertEquals(75, cut[5][5]);
+    }
+
+    /** A vala na beira de longe da grade escoa para fora: não é tampada. */
+    @Test
+    void aDitchOnTheFarBordersDrainsAndStays() {
+        int[][] natural = flat(9, 70);
+        VillageSurface.Kind[][] kinds = kinds(9);
+
+        for (int i = 2; i <= 6; i++) {
+            natural[8][i] = 60;
+            natural[i][8] = 60;
+        }
+
+        int[][] level = VillageSurface.filled(natural, kinds);
+
+        assertEquals(60, level[8][4], "a vala na última coluna escoa para fora");
+        assertEquals(60, level[4][8], "a vala na última linha escoa para fora");
+        assertEquals(70, level[4][4]);
+    }
+
+    /** O buraco do meio sobe à beira mais baixa por onde escoaria, e não mais. */
+    @Test
+    void aHoleFillsUpToItsLowestRim() {
+        int[][] natural = flat(9, 72);
+        VillageSurface.Kind[][] kinds = kinds(9);
+
+        for (int x = 3; x <= 5; x++) {
+            for (int z = 3; z <= 5; z++) {
+                natural[x][z] = 60;
+            }
+        }
+
+        for (int x = 0; x <= 3; x++) {
+            natural[x][4] = Math.min(natural[x][4], 68);
+        }
+
+        int[][] level = VillageSurface.filled(natural, kinds);
+
+        assertEquals(68, level[4][4], "o buraco escoa pelo vão de 68 até a borda");
+        assertEquals(72, level[7][7]);
+    }
 }
