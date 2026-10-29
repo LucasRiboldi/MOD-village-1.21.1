@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.mixin;
 
+import com.villagecolony.fabric.integration.ColonyPathing;
 import com.villagecolony.fabric.integration.PenFloors;
 import net.minecraft.entity.ai.pathing.LandPathNodeMaker;
 import net.minecraft.entity.ai.pathing.PathContext;
@@ -11,7 +12,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * O chão do curral é caro no caminho do aldeão de ofício que não é pastor — Regra 122.
+ * O custo dos nós do caminho do aldeão: o chão do curral é caro para quem não é pastor (Regra 122), e para o aldeão da
+ * colônia a água é cara e o gramado de dentro da vila custa mais que a rua ({@link ColonyPathing}, autor 2026-10-28).
  *
  * <p>Injeção no retorno, permitida pela ADR-004 §4 Regra 1 com justificativa: o tipo de cada nó do
  * caminho só existe dentro do construtor de caminho do jogo, e é ali que o custo se decide. Nada é
@@ -28,7 +30,8 @@ public abstract class LandPathNodeMakerMixin {
     private void villagecolony$penFloorIsCostly(PathContext context, int x, int y, int z, MobEntity mob,
                                                 CallbackInfoReturnable<PathNodeType> returned) {
         PathNodeType type = returned.getReturnValue();
-        PathNodeType costed = PenFloors.forWalker(mob, x, y, z, type);
+        PathNodeType costed = ColonyPathing.forWalker(context.getWorld(), mob, x, y, z,
+                PenFloors.forWalker(mob, x, y, z, type));
 
         if (costed != type) {
             returned.setReturnValue(costed);
