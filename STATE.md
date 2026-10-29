@@ -1,5 +1,10 @@
 # STATE — 2026-10-28
 
+> **0.3.106** (28-10, branch `fix/playtest-0102`): o trajeto longo do aldeão da colônia vai pela rede de ruas
+> (Regra 151, `StreetRoute` + `MoveToTargetTaskMixin`), e o mineiro não recusa mais o primeiro degrau do ramal novo
+> (`MiningTarget.judge`; no jogo da 0.3.104 foram 11 ramais encerrados). Bateria 923/923, unitários verdes.
+> **Não jogado.** Para o jogo: mundo novo, a §4 e a §5 de `docs/research/2026-10-28-jogo-0104-savana.md`.
+>
 > **0.3.105** (28-10, branch `fix/playtest-0102`): os pedidos do jogo da 0.3.104 na savana
 > (`docs/research/2026-10-28-jogo-0104-savana.md`) — rua só de caminho (Regra 138), vila do Minecraft gerada em
 > terreno plano (`beard_box`, só chunks novos), aldeão da colônia evita a água e prefere a rua (Regra 151), porta

@@ -12,6 +12,20 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.106] — trajeto pela rua e o primeiro degrau do ramal (2026-10-28, JAR local, não jogado)
+
+Branch `fix/playtest-0102`. O que ficou pendente da 0.3.105.
+
+### Adicionado
+- **Trajeto longo pela rede de ruas (Regra 151):** de 24 blocos para cima, o aldeão da colônia vai à rua mais perto
+  (até 8), anda por ela em trechos de até 32 passos até a coluna mais perto do destino e sai dali; vai direto quando a
+  rua não liga os dois pontos ou a volta passa de 2× o direto.
+
+### Corrigido
+- **Mineiro e o ramal novo:** o primeiro degrau do caracol do ramal novo era recusado como alto demais enquanto ele
+  subia o caracol até lá, e a recusa encerrava o ramal (11 no jogo da 0.3.104). O julgamento de perto agora procura
+  o caminho a pé antes de recusar.
+
 ## [0.3.105] — terreno plano, rua só de caminho, água e portas (2026-10-28, JAR local, não jogado)
 
 Branch `fix/playtest-0102`. Pedidos do autor depois do jogo da 0.3.104 na savana
