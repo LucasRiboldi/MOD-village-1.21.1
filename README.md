@@ -578,14 +578,14 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 Verificação de 2026-10-29 (0.3.109, branch `fix/playtest-0102`),
 rodada e não copiada:
 
-- 1661 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
+- 1663 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
   de 500 linhas por arquivo).
 - 153 testes Python: aprovados (o CI instala o `nbtlib` e o `pillow` para os
   testes das versões do armazém e dos mapas).
 - 936 GameTests: todos aprovados com `--rerun-tasks`; o `runGametest` começa
   cada bateria com o mundo de teste apagado, como o CI.
 - `build`: aprovado; JAR `village-colony-0.3.109.jar`.
-- Mutação (PIT, pacote `core`): 2450 de 2882 mutações mortas (85%, limiar
+- Mutação (PIT, pacote `core`): 2514 de 2957 mutações mortas (85%, limiar
   85%).
 - CI do GitHub ("Build and test"): a `main` exige esse check para mesclar.
 

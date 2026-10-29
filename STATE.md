@@ -4,7 +4,9 @@
 > o chão em volta da vila é a mistura suave com o terreno numa faixa de 4× o desnível, de 16 a 64 (Regra 152 refeita,
 > `VillageBlend`; a vila referencia os chunks até 64 além das peças); a árvore sobre chão cortado sai inteira; o mineiro
 > não quebra o que segura cascalho, água ou lava pelo vão (Regra 157); ninguém dorme no andar de baixo da casa de escada
-> de mão (Regra 158). Unitários 1654/1654, bateria 936/936, Python 153. **Não jogado.** Falta: portão da mina na entrada
+> de mão (Regra 158). A mistura parte do topo de verdade e a margem da água fica natural (bancada de 6 cenários: chão
+> sobre vão cai em todos, maior degrau igual, paredões +8 a 25 % perto da vila). Unitários 1663/1663, bateria 936/936,
+> Python 153, PIT 85 %. **Não jogado.** Falta: portão da mina na entrada
 > real, argila, fazendeiro, construtor sem material. Para o jogo: **mundo novo**; a encosta em volta da vila.
 >
 > **0.3.108** (29-10, branch `fix/playtest-0102`): o pedreiro sem tarefa alisa o chão da vila aos poucos (Regra 156 —
