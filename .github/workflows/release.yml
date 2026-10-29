@@ -1,0 +1,78 @@
+name: Release
+
+# Publica o JAR da versão de gradle.properties como pré-lançamento do GitHub
+# (tag v<versão>-alpha), com o SHA-256 e a entrada da versão no CHANGELOG.md.
+# Só compila o JAR (remapJar): a verificação é o trabalho do CI, não deste
+# workflow. Se o release da versão já existe, não faz nada.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "ccr-4cf7a1a1-w9h8bq"
+    paths:
+      - ".github/workflows/release.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build JAR and publish release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Build JAR
+        run: ./gradlew remapJar
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(sed -n 's/^mod_version=//p' gradle.properties)
+          tag="v${version}-alpha"
+          jar="build/libs/village-colony-${version}.jar"
+          test -f "$jar"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "O release $tag já existe; nada a fazer."
+            exit 0
+          fi
+          sha=$(sha256sum "$jar" | cut -d' ' -f1 | tr 'a-f' 'A-F')
+          awk -v head="## [${version}]" 'index($0, head) == 1 { p = 1; print; next } p && /^## \[/ { exit } p' \
+            CHANGELOG.md > entry.md
+          test -s entry.md
+          {
+            echo "Village Colony ${version} alpha para Minecraft 1.21.1 (Fabric)."
+            echo
+            echo "JAR compilado por este workflow no commit \`${GITHUB_SHA}\`, só com \`remapJar\`: os testes não rodaram nesta compilação. A verificação registrada da versão está abaixo e no README."
+            echo
+            echo "**JAR:** \`village-colony-${version}.jar\`"
+            echo "**SHA-256:** \`${sha}\`"
+            echo
+            echo "O histórico completo está no [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md)."
+            echo
+            echo "---"
+            echo
+            cat entry.md
+          } > notes.md
+          gh release create "$tag" "$jar" --prerelease --title "$tag" --target "$GITHUB_SHA" --notes-file notes.md
+          echo "Publicado $tag — SHA-256 $sha"
