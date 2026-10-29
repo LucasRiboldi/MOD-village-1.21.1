@@ -229,7 +229,8 @@ public final class SurfaceGatheringWork {
 
         // A varredura daqui já percorre a caixa da borda para dentro
         // (VillageSpiralSweep); só o alcance vem da ADR-036 18.
-        return ResourceSearches.villageReach(job.task.colonyId(), job.center, SEARCH_RADIUS);
+        return ResourceSearches.villageReach(job.task.colonyId(), job.center, SEARCH_RADIUS,
+                SurfaceReach.marginFor(job.task.targetResource()));
     }
 
     private static boolean findTarget(ServerWorld world, UUID workerId, Job job) {

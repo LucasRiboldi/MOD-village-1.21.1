@@ -27,7 +27,8 @@ import java.util.Optional;
  * fundidor 80% e pedreiro 64% parados com 1.209 pedras, porque o produto batia no teto de 128). O titular
  * sem tarefa do ofício, no expediente, faz um lote por minuto: o lenhador faz carvão vegetal da tora; o
  * pedreiro faz tijolo, pedra polida, arenito cortado e as peças de pedregulho das obras; o carpinteiro faz tábua,
- * escada e laje da tora que a vila tem mais (O4); o que a obra aberta pede vem primeiro (O1); o fundidor funde o
+ * escada e laje da tora que a vila tem mais (O4); o que a obra aberta pede vem primeiro (O1); o fazendeiro faz composto da
+ * semente de sobra (O7); o fundidor funde o
  * minério cru, assa a carne, e faz pedra, pedra lisa, vidro, vidraça (T5, autor 2026-10-29), tijolo e terracota. Cada receita guarda uma
  * reserva do cru ({@link Recipe#keep}) e para com o produto em {@link #CAP}: o estoque das obras vem primeiro.
  */
@@ -84,7 +85,10 @@ public final class ValueGoods {
                     new Recipe(Items.GLASS, 6, Items.GLASS_PANE, 16, KEEP_RAW),
                     Recipe.oneToOne(Items.CLAY_BALL, Items.BRICK),
                     Recipe.oneToOne(Items.CLAY, Items.TERRACOTTA),
-                    Recipe.oneToOne(Items.SANDSTONE, Items.SMOOTH_SANDSTONE)));
+                    Recipe.oneToOne(Items.SANDSTONE, Items.SMOOTH_SANDSTONE)),
+            // O composto do fazendeiro (O7): 24 sementes, a média do compostor do jogo, dão uma farinha de osso.
+            ProfessionType.FARMER, List.of(
+                    new Recipe(Items.WHEAT_SEEDS, 24, Items.BONE_MEAL, 1, KEEP_RAW)));
 
     private ValueGoods() {
     }
@@ -237,14 +241,16 @@ public final class ValueGoods {
     }
 
     /**
-     * Faz quantas vezes a receita couber em {@link #BATCH} do cru, acima da reserva, e põe o produto no
+     * Faz quantas vezes a receita couber em {@link #BATCH} do cru (ou uma vez, quando ela pede mais), acima da
+     * reserva, e põe o produto no
      * primeiro baú com lugar; o cru que não virou produto volta.
      *
      * @return quanto do produto saiu
      */
     static int batch(ServerWorld world, List<ColonyPos> chests, Recipe recipe) {
         int spare = ColonyChests.countIn(world, chests, recipe.raw()) - recipe.keep();
-        int crafts = Math.min(BATCH, spare) / recipe.in();
+        // O lote é de BATCH do cru, ou de uma receita quando ela pede mais que isso (o composto).
+        int crafts = Math.min(Math.max(BATCH, recipe.in()), spare) / recipe.in();
 
         if (crafts <= 0) {
             return 0;

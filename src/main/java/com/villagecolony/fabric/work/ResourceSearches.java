@@ -102,11 +102,16 @@ final class ResourceSearches {
      * sem ela, o {@link GatheringReach} até {@code ceiling}.
      */
     static int villageReach(UUID colonyId, BlockPos centre, int ceiling) {
+        return villageReach(colonyId, centre, ceiling, ResourceReach.EDGE_MARGIN);
+    }
+
+    /** O mesmo, com a margem além da borda dada (o fundidor busca areia e argila mais longe, O6). */
+    static int villageReach(UUID colonyId, BlockPos centre, int ceiling, int margin) {
         Optional<Colony> colony = VillageColonyMod.COLONIES.find(colonyId);
         Optional<VillageBounds> box = colony.flatMap(Colony::bounds);
 
         if (box.isPresent()) {
-            return ResourceReach.search(box.get(), MinecraftTypeAdapter.toColonyPos(centre), 0).radius();
+            return ResourceReach.search(box.get(), MinecraftTypeAdapter.toColonyPos(centre), 0, margin).radius();
         }
 
         return GatheringReach.radius(colony.map(Colony::observedBeds).orElse(0), ceiling);

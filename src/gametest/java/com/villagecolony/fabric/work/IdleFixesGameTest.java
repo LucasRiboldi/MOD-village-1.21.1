@@ -224,6 +224,23 @@ public class IdleFixesGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** O7 (autor, 2026-10-28): o fazendeiro faz composto — a semente que sobra vira farinha de osso. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_fixes_compost", tickLimit = 20)
+    public void theIdleFarmerCompostsSpareSeeds(TestContext context) {
+        context.setBlockState(CHEST, Blocks.CHEST);
+        List<ColonyPos> chests = List.of(chest(context));
+        var world = context.getWorld();
+
+        ChestDepositor.deposit(world, chest(context), Items.WHEAT_SEEDS, ValueGoods.KEEP_RAW + 24);
+        var recipe = ValueGoods.recipeFor(world, chests, ProfessionType.FARMER).orElseThrow();
+
+        context.assertTrue(recipe.product() == Items.BONE_MEAL, "a semente de sobra devia virar farinha de osso: " + recipe);
+        context.assertTrue(ValueGoods.batch(world, chests, recipe) >= 1, "o composto não saiu");
+        context.assertTrue(com.villagecolony.fabric.integration.ColonyChests.countIn(world, chests, Items.WHEAT_SEEDS)
+                >= ValueGoods.KEEP_RAW, "a semente de plantar devia ficar");
+        context.complete();
+    }
+
     /** Sem chegar ao nível da mina, a escada recomeça na boca da superfície, cursor no primeiro degrau. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_fixes", tickLimit = 20)
     public void theStairStartsOverFromTheSurfaceMouth(TestContext context) {
