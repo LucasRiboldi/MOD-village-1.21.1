@@ -1,5 +1,12 @@
 # STATE — 2026-10-28
 
+> **0.3.105** (28-10, branch `fix/playtest-0102`): os pedidos do jogo da 0.3.104 na savana
+> (`docs/research/2026-10-28-jogo-0104-savana.md`) — rua só de caminho (Regra 138), vila do Minecraft gerada em
+> terreno plano (`beard_box`, só chunks novos), aldeão da colônia evita a água e prefere a rua (Regra 151), porta
+> de toda casa ligada à rua por caminho de 1 (Regra 123), canteiro novo 9×9 com água no meio (Regra 31).
+> Bateria 921/921, unitários verdes, Python 145. **Não jogado.** Falta: trajeto longo pela rede de ruas. Para o
+> jogo: **mundo novo**, e a §4 do documento do jogo.
+>
 > **0.3.104** (28-10, branch `fix/playtest-0102`): decisões do autor sobre o diagnóstico da 0.3.103
 > (`docs/research/2026-10-28-diagnostico-e-decisoes-0103.md`) — gelo surge na obra (T1, parte), pastor tosquia
 > por cima da cerca (T2, Regra 150), área forçada da bancada cresce com a caixa (D4), mapa de encalhe

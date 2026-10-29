@@ -12,6 +12,28 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.105] — terreno plano, rua só de caminho, água e portas (2026-10-28, JAR local, não jogado)
+
+Branch `fix/playtest-0102`. Pedidos do autor depois do jogo da 0.3.104 na savana
+(`docs/research/2026-10-28-jogo-0104-savana.md`).
+
+### Mudado
+- **Rua só de caminho (Regra 138):** a borda é o mesmo caminho do meio; o cascalho, a terra grossa e o arenito
+  que a colônia já assentou voltam a ser caminho na passada do pedreiro.
+- **Vila gerada em terreno plano:** as cinco vilas do Minecraft geram com `beard_box` (aterra embaixo e corta em
+  cima de cada peça). Só em chunks novos.
+- **Porta → rua (Regra 123):** caminho de 1 bloco, e as casas da vila original também são ligadas.
+- **Canteiro novo (Regra 31):** retângulo 9×9 em chão plano ao lado da fazenda, água na linha do meio.
+
+### Adicionado
+- **Trajeto do aldeão da colônia (Regra 151):** a água custa 48 por nó (Vanilla 8), e ele só nada sem volta a pé;
+  dentro da caixa da vila, o gramado custa mais que a rua.
+- `stuck_map.py` sem argumentos lê o log e o diário da pasta do jogo.
+
+### Pendente
+- Trajeto longo (~24+) pela rede de ruas; a recusa do mineiro depois de andar até a pedra 9 acima; T1 (neve, espécie
+  de madeira), T5, L3, O1–O8.
+
 ## [0.3.104] — decisões do diagnóstico: gelo, pastor, mineiro e mapa de encalhe (2026-10-28, JAR local, não jogado)
 
 Branch `fix/playtest-0102`. Escolhas do autor sobre o diagnóstico da 0.3.103
