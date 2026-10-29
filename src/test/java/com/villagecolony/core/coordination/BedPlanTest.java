@@ -138,4 +138,37 @@ class BedPlanTest {
         assertTrue(BedPlan.plan(List.of(miner, sleeping), List.of(at(2, 60, 0))).isEmpty(),
                 "a cama ocupada que veio na lista das livres não é livre");
     }
+
+    /**
+     * A cama do andar de baixo da casa de escada de mão é deixada pela cama livre mais perto do trabalho, ou da
+     * cama de hoje para quem não tem ofício (autor, 2026-10-29); a proibida nunca é dada, e quem dorme fica.
+     */
+    @Test
+    void aBannedBedIsLeftForTheFreeBedNearestToTheWork() {
+        ColonyPos trap = at(0, 64, 0);
+        ColonyPos trapToo = at(1, 64, 0);
+        Sleeper miner = new Sleeper(MINER, trap, at(50, 64, 0), true);
+        Sleeper idle = new Sleeper(IDLE, trapToo, null, true);
+        Sleeper asleep = new Sleeper(BUILDER, at(2, 64, 0), null, false);
+        Set<ColonyPos> banned = Set.of(trap, trapToo, at(2, 64, 0), at(3, 64, 0));
+
+        List<Move> moves = BedPlan.leave(List.of(miner, idle, asleep),
+                List.of(at(3, 64, 0), at(10, 64, 0), at(45, 64, 0), trap), banned, BedPlan::distance);
+
+        assertEquals(List.of(new Move(MINER, trap, at(45, 64, 0)), new Move(IDLE, trapToo, at(10, 64, 0))), moves);
+    }
+
+    /** Sem cama livre fora da proibida, ou só com cama a que não se chega a pé, ninguém muda. */
+    @Test
+    void withNoOtherBedTheSleeperStays() {
+        ColonyPos trap = at(0, 64, 0);
+        Sleeper miner = new Sleeper(MINER, trap, at(50, 64, 0), true);
+        ColonyPos far = at(9, 64, 0);
+
+        assertTrue(BedPlan.leave(List.of(miner), List.of(trap), Set.of(trap), BedPlan::distance).isEmpty());
+        assertTrue(BedPlan.leave(List.of(miner), List.of(far), Set.of(trap),
+                (a, b) -> b.equals(far) ? Double.POSITIVE_INFINITY : 1).isEmpty());
+        assertEquals(List.of(new Move(MINER, trap, far)),
+                BedPlan.leave(List.of(miner), List.of(far), Set.of(trap), BedPlan::distance));
+    }
 }

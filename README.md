@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.107%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.109%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -57,13 +57,28 @@ SHA-256 do JAR na descrição.
 - A mina desce em caracol de 4 lances curtos, abre um salão de 17×17 e desce de
   novo pelos 4 cantos; a escada de descida é o caminho de volta, com no máximo
   1 bloco por degrau, e nunca é fechada; a luz é de tocha no chão dos salões
-  (Regra 119).
+  (Regra 119). Sobre a boca fica o portão de entrada desenhado pelo autor —
+  pilares de pedra e tijolo, telhado de carvalho escuro e lanternas —, com as
+  três pistas da escada no centro do vão (Regra 155).
 - O pastor mantém um curral por espécie, lota pelo tamanho do curral, cria até
   8 e abate acima de 6, e pede um curral novo quando todos estão cheios ou
   quando há 5 animais amarrados no mesmo poste (Regras 68, 72 e 130).
 - Antes de cada obra nova, nivela o chão em volta na altura da rua: um anel de
   2 blocos com no máximo 1 de diferença e uma rampa de 3 até o terreno natural
   (Regra 131).
+- O solo da vila nasce suave na geração do mundo: na vila, buraco tampado,
+  calombo pequeno cortado e degrau de no máximo 1, com casas e água no lugar;
+  em volta, o chão mistura o nível da vila com o terreno natural numa faixa de
+  4 vezes o desnível, de 16 a 64 blocos, sem escada nem paredão, e a árvore
+  sobre chão cortado sai inteira (Regra 152; só em mundo novo).
+- O mineiro não quebra o bloco que segura, acima e pelo vão, cascalho, areia,
+  água ou lava (Regra 157); ninguém dorme no andar de baixo da casa de escada
+  de mão (Regra 158).
+- O pedreiro sem tarefa alisa o chão da vila aos poucos, uma janela de 24×24
+  por vez: tapa buraco, tira calombo de qualquer tamanho e deixa degrau de 1,
+  pondo e tirando solo, sem tocar em construção, bloco do jogador, roça, água
+  nem na boca e na escada da mina (Regra 156). O construtor com a obra parada
+  limpa e nivela o lote dela e 6 blocos em volta.
 - Nenhuma profissão espera mais de 5 minutos: quem fica parado com tarefa a
   larga e vai ajudar a vila; se a mesma tarefa trava de novo em 10 minutos, o
   produto surge no baú (Regra 128).
@@ -79,12 +94,11 @@ SHA-256 do JAR na descrição.
   declarada e deixa a linha `VC_SUPPLY` no log (Regra 111); toda desistência
   no diário de ações leva um código único de bloqueio (Regra 112).
 
-O mod é alpha. A 0.3.100 (2026-10-28) passou na bateria automática completa
-(ver "Desenvolvimento e verificação"). O último jogo foi o da 0.3.99 na
-savana (Spark `eVkPhNEtZT`, 76 min): 20 TPS sem travão e o caminho rente ao
-chão; o tempo dos ofícios mostrou vila madura parada (estoque cheio), tarefas
-que abriam sem poder render, roça fora do alcance e o mineiro preso na boca.
-A 0.3.100 trata cada um (Regras 133 a 137) e ainda não foi jogada. O estado vivo está no
+O mod é alpha. A 0.3.109 (2026-10-29) passou na bateria automática completa
+(ver "Desenvolvimento e verificação"). O último jogo foi o da 0.3.108: o
+alisamento fora da vila cortou montanhas ao meio, um mineiro morreu soterrado
+por cascalho e aldeões ficavam presos na casa de escada de mão. A 0.3.109
+trata os três e ainda não foi jogada (jogar em **mundo novo**). O estado vivo está no
 [`STATE.md`](STATE.md). O que mudou em cada
 publicação está no [`CHANGELOG.md`](CHANGELOG.md); a avaliação técnica mais
 recente, em
@@ -305,9 +319,13 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 149 | **Rua sem falha e ajudantes da vila** (autor 10-28): falha de até 2 blocos de chão natural numa linha reta entre duas colunas de rua vira caminho; o pedreiro sem tarefa tapa até 8 falhas por minuto e, sem falha, nivela em volta de uma casa pronta; o fundidor sem tarefa leva até 64 itens do baú da boca da mina aos baús públicos e põe uma lanterna por minuto ao lado da rua escura | 10-28 | ✅ feita | `StreetGaps`, `VillageHelpers`, `SiteSurroundings.level` |
 | 150 | **O pastor tosquia por cima da cerca** (autor 10-28, diagnóstico da 0.3.103: 45 pastores presos no curral): ele tosquia a ovelha a até 4,5 blocos do olho ao meio dela, como o fazendeiro, e anda só até 3 blocos dela, em vez do bloco dela; não entra no curral para tosquiar (a condução de animal, que já mira o lado de fora, segue igual) | 10-28 | ✅ feita | `ShepherdWork.EYE_REACH` |
 | 151 | **O aldeão da colônia prefere a rua e evita a água** (autor 10-28, jogo da 0.3.104: 4 de 7 teleportes noturnos saíram do meio do lago): só o custo dos nós da navegação do jogo muda — o nó de água custa 48 (o Vanilla cobra 8; a busca do jogo aceita caminho até 1,5× mais caro, então o custo é alto de propósito), e ele nada só quando a volta a pé não existe ou é muito longa; dentro da caixa da vila, o nó andável sem chão de rua embaixo custa 1, e a rua ganha quando o desvio por ela não passa de ~2× a linha reta; **o trajeto de 24 blocos ou mais vai pela rede de ruas**: ele vai à coluna de rua mais perto (até 8), anda pela rede em trechos de até 32 passos até a coluna mais perto do destino e sai dali — não quando a rua não liga os dois pontos ou a volta passa de 2× o direto | 10-28 | ✅ feita | `ColonyPathing`, `StreetRoute`, `LandPathNodeMakerMixin`, `MoveToTargetTaskMixin` |
-| 152 | **O solo da vila nasce suave na geração** (autor 10-29: crateras e montanhas no meio das vilas): ao gerar cada chunk da vila, antes de as peças serem postas, o chão da área da vila mais uma faixa de 16 é refeito — depressão que não escoa é tampada, nenhuma coluna fica mais de 1 acima ou abaixo da vizinha (o paredão vira encosta, cortando e aterrando o mínimo), o piso das casas e a água ficam, a margem desce até a água e a borda encontra o terreno natural; os vãos de caverna até 8 abaixo do chão novo são tampados; as ruas do Minecraft nascem sobre o chão novo. Só em chunks gerados depois (mundo novo) | 10-29 | ✅ feita | `VillageSurface`, `VillageGround`, `ChunkGeneratorMixin` |
+| 152 | **O solo da vila nasce suave na geração** (autor 10-29: crateras e montanhas no meio das vilas; refeita no mesmo dia depois do jogo da 0.3.108: "quebrou uma montanha no meio e deixou partes voando"): ao gerar cada chunk da vila, antes de as peças serem postas, **na vila** (as peças + 4) a depressão que não escoa é tampada, o calombo de até 4 colunas é cortado e nenhuma coluna fica mais de 1 acima ou abaixo da vizinha, com o piso das casas e a água no lugar; **em volta**, o chão é a mistura do nível da vila com o terreno natural, numa faixa de 4 vezes o desnível, de 16 a 64 blocos, em curva suave — o relevo natural fica, achatado na proporção, sem escada nem paredão; a vila referencia os chunks até 64 além das peças (o jogo, 12), e o que o jogo não alcança (8 chunks do início da vila) fica natural; a árvore em pé sobre chão cortado sai inteira; os vãos de caverna até 8 abaixo do chão novo são tampados; as ruas do Minecraft nascem sobre o chão novo. Só em chunks gerados depois (mundo novo) | 10-29 | ✅ feita | `VillageBlend`, `VillageSurface`, `VillageGround`, `ChunkGeneratorMixin` |
 | 153 | **Mais ajudas de quem está sem tarefa** (autor 10-28, O1/O3/O4/O8; pedido de novo em 10-29), uma vez por minuto, no expediente: o adulto **sem profissão é o carregador** — leva o baú da boca da mina aos baús públicos e alivia os baús de profissão quase cheios; o **pastor** com o rebanho abaixo da meta (8) dá 2 trigos dos baús públicos a duas ovelhas adultas, e elas cruzam; o **carpinteiro** adianta a madeira — tábua da tora que a vila tem mais, e dela escada e laje da mesma espécie; no **pedreiro e no carpinteiro**, a peça que a obra aberta pede (pela planta) é feita primeiro; cada receita guarda a reserva das obras (Regra 146) | 10-29 | ✅ feita | `VillageHelpers.helps`, `FlockCare`, `ValueGoods` |
 | 154 | **Lenhador, fundidor e fazendeiro: os ajustes do O5–O7** (autor 10-28; pedido de novo em 10-29): a árvore que o lenhador não alcança fica de fora **um dia** na primeira recusa (era 5 min; a recusa de parede segue em 10 ciclos) e o bosque nasce de 4 a 6 blocos da vila (era até 10); o fundidor busca areia e argila até **40** além da borda (a busca comum, 10); o fazendeiro faz **composto** — 24 sementes acima da reserva viram uma farinha de osso | 10-29 | ✅ feita | `TreeMarks.outOfReachFor`, `VillageGrove`, `SurfaceReach`, `ValueGoods` |
+| 155 | **A boca da mina ganha o portão do autor** (10-29, estrutura `mine_entrance.nbt`, 9×7×5): no lugar do arco de pedregulho, dois pilares de pedra e tijolo, telhado de carvalho escuro e três lanternas penduradas; a entrada da mina — as três pistas da escada — fica no centro do vão de 3 por 4, e o vão corre no rumo da descida; baú e barril são só enfeite; cada bloco entra só sobre ar, planta ou chão natural, nunca sobre casa ou obra (Regra 3); sobe uma vez só, e o que o jogador derrubar não volta; a mina nunca escava um bloco do portão | 10-29 | ✅ feita | `MineGate`, `MineMouth` |
+| 156 | **O pedreiro alisa o chão da vila** (autor 10-29): sem falha de rua a tapar, uma vez por minuto ele pega a próxima janela de 24×24 que varre a caixa da vila e deixa o chão com degrau de no máximo 1 — de qualquer tamanho e altura —, pondo e tirando solo com o bloco de cima e o de baixo da própria coluna (caminho continua caminho); o **construtor** sem tarefa (a obra parada por material, Regra 128) limpa e nivela do mesmo jeito o lote da obra aberta e 6 em volta (O2); o grupo de até 4 colunas que se destaca é cortado até o nível em volta, e o buraco é tampado; até 32 colunas por passada, as de maior diferença primeiro; nunca mexe em construção, peça da vila que não seja rua, obra, roça, água, nem a 8 da boca da mina | 10-29 | ✅ feita | `GroundSmoothing`, `VillageSurface`, `VillageHelpers.masonHelps`, `GroundSmoothing.aroundTheOpenBuild` |
+| 157 | **O mineiro não quebra o que segura algo solto** (autor 10-29, jogo da 0.3.108: o cascalho pendurado sobre um vão caiu no mineiro e o matou): ele não quebra o bloco que tem, acima e pelo ar, até 8 blocos, um bloco que cai, água ou lava; a pedra fica marcada e a galeria contorna; o bloco que cai logo acima segue escorado antes de o alvo sair (pedido de 10-20) | 10-29 | ✅ feita | `MineSettling.looseAbove`, `MinerHands` |
+| 158 | **Sem cama no andar de baixo da casa de escada de mão** (autor 10-29, jogo da 0.3.108: 9 de 21 encalhes e teleportes junto da escada da `plains_small_house_5`): uma vez por dia, quem dorme ali muda para a cama livre mais perto do trabalho (ou da cama de hoje, sem ofício), e a cama de lá não entra na troca do dia; sem cama livre, fica | 10-29 | ✅ feita | `BedPlan.leave`, `BedChoice`, `GeneratedVillages.ladderLowerFloorsAt` |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).
@@ -557,18 +575,18 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 `runGametest` gera `build/reports/jacoco/gametest/html` (bateria de jogo, que
 é quem exercita a camada `fabric`).
 
-Verificação de 2026-10-29 (0.3.107, branch `fix/playtest-0102`),
+Verificação de 2026-10-29 (0.3.109, branch `fix/playtest-0102`),
 rodada e não copiada:
 
-- 1642 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
+- 1661 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
   de 500 linhas por arquivo).
-- 145 testes Python: aprovados (o CI instala o `nbtlib` para o teste das
-  versões do armazém).
-- 931 GameTests: todos aprovados com `--rerun-tasks`; o `runGametest` começa
+- 153 testes Python: aprovados (o CI instala o `nbtlib` e o `pillow` para os
+  testes das versões do armazém e dos mapas).
+- 936 GameTests: todos aprovados com `--rerun-tasks`; o `runGametest` começa
   cada bateria com o mundo de teste apagado, como o CI.
-- `build`: aprovado; JAR `village-colony-0.3.107.jar`.
-- Mutação (PIT, pacote `core`): não refeita nesta versão; a última medida
-  (0.3.93) foi 2140 de 2509 mutações mortas (85,3%, limiar 85%).
+- `build`: aprovado; JAR `village-colony-0.3.109.jar`.
+- Mutação (PIT, pacote `core`): 2450 de 2882 mutações mortas (85%, limiar
+  85%).
 - CI do GitHub ("Build and test"): a `main` exige esse check para mesclar.
 
 Para refazer: `scripts/audit/check-tests-green.sh --runs 3` e

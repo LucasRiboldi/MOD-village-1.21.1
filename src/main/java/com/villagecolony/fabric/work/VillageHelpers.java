@@ -100,7 +100,8 @@ public final class VillageHelpers {
 
     /**
      * A ajuda de quem está sem tarefa: o pedreiro tapa a rua e nivela, o fundidor leva o minério e acende a rua, o
-     * pastor cuida do rebanho (O3) e o adulto sem profissão carrega (O8).
+     * pastor cuida do rebanho (O3), o construtor com a obra parada limpa e nivela o lote (O2) e o adulto sem profissão
+     * carrega (O8).
      *
      * @return quanto ele fez
      */
@@ -113,6 +114,7 @@ public final class VillageHelpers {
             case MASON -> masonHelps(world, colony, villager);
             case SMELTER -> smelterHelps(world, colony, villager);
             case SHEPHERD -> FlockCare.feed(world, colony, villager);
+            case BUILDER -> GroundSmoothing.aroundTheOpenBuild(world, colony, villager);
             default -> 0;
         };
     }
@@ -132,7 +134,7 @@ public final class VillageHelpers {
         return carried + spread;
     }
 
-    /** Tapa as falhas da rua; sem falha, nivela em volta da próxima casa. */
+    /** Tapa as falhas da rua; sem falha, alisa o chão da vila; sem nada a alisar, nivela em volta da próxima casa. */
     static int masonHelps(ServerWorld world, Colony colony, VillagerEntity mason) {
         int mended = StreetGaps.mend(world, colony.id(), mason.getBlockPos(), GAPS_PER_PASS);
 
@@ -140,6 +142,13 @@ public final class VillageHelpers {
             ActionJournal.action(mason.getUuid(), "PAVED", "minecraft:dirt_path", mended, null, "street gaps");
 
             return mended;
+        }
+
+        // Sem falha de rua, alisa o chão da vila (autor, 2026-10-29).
+        int smoothed = GroundSmoothing.pass(world, colony, mason);
+
+        if (smoothed > 0) {
+            return smoothed;
         }
 
         List<Building> standing = VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()

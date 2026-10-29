@@ -73,6 +73,19 @@ public final class MinerHands {
             return;
         }
 
+        // O que cairia nele pelo vão de cima fica — autor, 2026-10-29 (MineSettling.looseAbove).
+        if (job.progress == 0 && MineSettling.looseAbove(world, job.target)) {
+            VillageColonyMod.LOGGER.info(
+                    "Miner {} leaves {} alone - something loose hangs above it",
+                    villager.getUuid().toString().substring(0, 8),
+                    job.target.toShortString());
+
+            MineMarks.refuse(world, job.target);
+            release(villager.getUuid(), job);
+
+            return;
+        }
+
         if (job.required == 0) {
             job.required = BlockBreakTime.ticksFor(world, job.target, state, villager);
         }

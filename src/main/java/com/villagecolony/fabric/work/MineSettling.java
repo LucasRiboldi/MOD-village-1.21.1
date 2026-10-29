@@ -94,6 +94,36 @@ public final class MineSettling {
         return true;
     }
 
+    /** Quantos blocos acima do alvo o mineiro olha, pelo ar, procurando o que cairia nele. */
+    static final int LOOSE_REACH = 8;
+
+    /**
+     * Se o alvo segura, acima dele e pelo ar, um bloco que cai, água ou lava — o mineiro não o quebra
+     * (autor, 2026-10-29). O bloco que cai logo acima não conta: ele é escorado antes de o alvo sair
+     * ({@link #shoreUp}); o que não se compacta conta.
+     */
+    public static boolean looseAbove(ServerWorld world, BlockPos target) {
+        for (int dy = 1; dy <= LOOSE_REACH; dy++) {
+            BlockPos at = target.up(dy);
+            net.minecraft.block.BlockState state = world.getBlockState(at);
+
+            if (!state.getFluidState().isEmpty()) {
+                return true;
+            }
+
+            if (state.getBlock() instanceof net.minecraft.block.FallingBlock) {
+                return dy > 1 || com.villagecolony.fabric.world.MineFill.compacted(state).isEmpty()
+                        || !com.villagecolony.fabric.integration.BlockProtection.mayBreak(world, at, state);
+            }
+
+            if (!state.isAir() && !state.isReplaceable()) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Se ainda há bloco caindo em volta deste alvo.
      *

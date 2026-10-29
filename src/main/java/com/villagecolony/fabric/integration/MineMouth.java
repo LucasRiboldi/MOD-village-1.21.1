@@ -127,9 +127,8 @@ public final class MineMouth {
         // colônia — o que ele guarda a colônia passa a não ver, e é o preço
         // conhecido desta decisão.
         //
-        // A lanterna não vem por aqui: ela é peça do arco, posta pelo
-        // {@code raiseArch}. A linha de log que dizia "the mouth lantern
-        // waits on the chest" descrevia uma dependência que já não existia.
+        // As lanternas não vêm por aqui: são peças do portão, postas pelo
+        // {@code raiseArch}.
         return new Furnished(Optional.empty(), archRaisedNow);
     }
 
@@ -173,160 +172,21 @@ public final class MineMouth {
     }
 
     /**
-     * A altura do arco — quatro, por decisão do autor em 2026-09-11.
-     *
-     * <p>Os pilares sobem até {@code ARCH_HIGH - 1} e a verga fecha em
-     * {@code ARCH_HIGH}, então a passagem por baixo tem quatro blocos de
-     * vão: a boca e os três acima dela. Eram três, e a entrada ficava da
-     * altura de quem passa.
-     */
-    private static final int ARCH_HIGH = 4;
-    private static final int ARCH_HALF_WIDTH = 2;
-
-    /**
-     * Se a posição pertence ao arco inicial ou à lanterna da boca.
-     * Essas peças nunca entram na ordem de escavação da própria mina.
+     * Se a posição pertence ao portão da boca ({@link MineGate}). Essas peças nunca entram na ordem de escavação da
+     * própria mina.
      */
     public static boolean isPortalBlock(BlockPos mouth, Direction descent, BlockPos at) {
-        Direction side = descent.rotateYClockwise();
-
-        for (int up = 1; up < ARCH_HIGH; up++) {
-            if (at.equals(mouth.offset(side, ARCH_HALF_WIDTH).up(up))
-                    || at.equals(mouth.offset(side.getOpposite(), ARCH_HALF_WIDTH).up(up))) {
-                return true;
-            }
-        }
-
-        for (int across = -ARCH_HALF_WIDTH; across <= ARCH_HALF_WIDTH; across++) {
-            if (at.equals(mouth.offset(side, across).up(ARCH_HIGH))) {
-                return true;
-            }
-        }
-        return at.equals(mouth.offset(side, ARCH_HALF_WIDTH).up(ARCH_HIGH + 1))
-                || at.equals(mouth.offset(side.getOpposite(), ARCH_HALF_WIDTH).up(ARCH_HIGH + 1));
+        return MineGate.isPart(mouth, descent, at);
     }
 
     /**
-     * O arco de pedra da entrada — decisão do autor, 2026-09-05:
-     * <i>"colocar um arco de pedra com lanterna na entrada da mina"</i>.
+     * O portão da entrada — a estrutura do autor (2026-10-29), no lugar do arco de pedregulho de 2026-09-05. A boca
+     * fica no meio do vão, e o vão corre no rumo da descida. Só onde cabe (Regra 3); uma vez só, pelo save.
      *
-     * <p>Dois pilares nos lados da boca e uma verga ligando os dois por
-     * cima. Os lados são os perpendiculares ao rumo da descida, que é o
-     * que emoldura a entrada em vez de tapá-la.
-     *
-     * <p><b>A lanterna fica em cima da verga</b> — decisão do autor em
-     * 2026-09-11, e ela é a <b>única</b> da boca. Havia duas: uma
-     * pendurada sob a verga, dentro do vão, e outra no chão ao lado do
-     * buraco, da primeira versão da Regra 30. A de dentro roubava altura
-     * da passagem e a de fora disputava o lugar do baú. Em cima do arco
-     * ela ilumina de mais longe e não atrapalha ninguém.
-     *
-     * <p><b>Pedregulho, e não a paleta da vila.</b> A paleta mora em
-     * {@code fabric.work} e esta classe é {@code fabric.integration} —
-     * puxá-la daqui inverteria a dependência que o
-     * {@code DependencyRuleTest} guarda. Pedregulho é o que a própria
-     * mina produz, e lê como pedra em qualquer bioma.
-     *
-     * <p><b>Só onde cabe.</b> Cada bloco é posto apenas sobre o que é
-     * substituível — a Regra 3 vale para o arco como vale para o resto:
-     * pilar que teria de derrubar a casa de alguém simplesmente não
-     * nasce, e o arco sai incompleto em vez de sair por cima.
-     *
-     * <p>Idempotente: com o arco lá, isto não faz nada.
+     * @return se ao menos uma posição do portão está firme depois da passagem
      */
     private static boolean raiseArch(ServerWorld world, BlockPos mouth, Direction descent) {
-        Direction side = descent.rotateYClockwise();
-
-        boolean anyStone = false;
-
-        // <b>Começa um bloco acima do chão</b> — e é o que faz o arco
-        // conviver com a mobília. O baú e a lanterna da boca moram nos
-        // vizinhos do nível do chão, e um pilar ali disputaria o lugar
-        // deles: a primeira versão deixou a mina sem baú. Daqui para
-        // cima não há disputa, e o arco emoldura a entrada na altura em
-        // que ela é vista.
-        for (int up = 1; up < ARCH_HIGH; up++) {
-            anyStone |= layStone(world, mouth.offset(side, ARCH_HALF_WIDTH).up(up));
-            anyStone |= layStone(world, mouth.offset(side.getOpposite(), ARCH_HALF_WIDTH).up(up));
-        }
-
-        for (int across = -ARCH_HALF_WIDTH; across <= ARCH_HALF_WIDTH; across++) {
-            anyStone |= layStone(world, mouth.offset(side, across).up(ARCH_HIGH));
-        }
-
-        // <b>A lanterna fica aqui dentro, e é decisão</b> — 2026-09-12. O
-        // {@code gauntlet-verifier} pediu para tirá-la deste portão,
-        // porque posição de lanterna bloqueada na passagem em que o arco
-        // sobe deixa a boca sem luz para sempre. O achado é real; a
-        // correção proposta, não: acender a cada passagem faz a lanterna
-        // <b>voltar quando o jogador a quebra</b>, que é literalmente o
-        // defeito que o autor relatou — <i>"deve permitir que seja
-        // destruído normalmente e não reaparecendo infinitamente"</i>. A
-        // lanterna é peça do portal tanto quanto a pedra.
-        //
-        // {@code lightTheTop} é idempotente quanto a <b>não duplicar</b>,
-        // e isso não é o mesmo que não ressuscitar — a distinção que esta
-        // sessão inteira existe para aprender. Entre uma boca sem luz num
-        // caso raro e uma lanterna que o jogador não consegue remover, o
-        // pedido do autor decide.
-        lightTheTop(world, mouth, descent);
-
-        return anyStone;
-    }
-
-    /**
-     * A lanterna, de pé sobre o meio da verga.
-     *
-     * <p><b>Só se a verga existe.</b> O arco nasce incompleto onde a
-     * Regra 3 o impede — pilar que teria de derrubar casa não nasce —, e
-     * uma lanterna posta assim mesmo ficaria boiando no ar sobre o
-     * buraco. Ela pergunta pelo bloco de baixo antes de existir.
-     *
-     * <p>Idempotente pelo mesmo teste de sempre: lugar que não é
-     * substituível já tem alguma coisa, e o mod não discorda do dono do
-     * mundo — inclusive quando a coisa é a lanterna da passagem anterior.
-     */
-    private static void lightTheTop(ServerWorld world, BlockPos mouth, Direction descent) {
-        Direction side = descent.rotateYClockwise();
-        for (Direction pillar : new Direction[] {side, side.getOpposite()}) {
-            BlockPos lintel = mouth.offset(pillar, ARCH_HALF_WIDTH).up(ARCH_HIGH);
-            BlockPos lamp = lintel.up();
-            if (world.getBlockState(lintel).isSolidBlock(world, lintel)
-                    && world.getBlockState(lamp).isReplaceable()) {
-                world.setBlockState(lamp, Blocks.LANTERN.getDefaultState(), Block.NOTIFY_ALL);
-            }
-        }
-    }
-
-    /**
-     * Uma pedra do arco, se o lugar aceitar — e se ele está resolvido.
-     *
-     * <p><b>Devolve "há pedra aqui", e não "eu a pus"</b> — 2026-09-12,
-     * terceira volta. A diferença custou duas iterações do Gauntlet. O
-     * critério anterior era a substituição ter dado certo, e pedra
-     * <b>natural</b> ocupando a posição nunca passa por substituição: boca
-     * cavada em rocha intacta — o caso comum, porque o {@code MineSite} só
-     * valida a coluna da própria boca — não marcava nada, e o mod repunha
-     * com pedregulho a pedra lateral que o jogador cavasse. O defeito
-     * relatado em jogo, de volta com outra roupa.
-     *
-     * <p>Pedra natural já faz o papel do pilar. Quem pergunta quer saber
-     * se a posição está resolvida, não quem a resolveu.
-     *
-     * @return se esta posição do arco tem algo firme — o pedregulho que
-     *     acabou de entrar, a rocha que já estava lá, ou o bloco que o
-     *     jogador pôs. O {@code raiseArch} soma estes retornos, e é a soma
-     *     que decide se há arco — ver {@link Furnished#archRaisedNow()}
-     */
-    private static boolean layStone(ServerWorld world, BlockPos at) {
-        if (world.getBlockState(at).isReplaceable()) {
-            world.setBlockState(at, com.villagecolony.fabric.world.MineFill.fillAt(world, at), Block.NOTIFY_ALL);
-        }
-
-        // Relido do mundo, e de propósito: é a única resposta que não
-        // depende de quem pôs o bloco. Substituível ainda aqui significa
-        // que a posição segue vazia — e aí não há arco a preservar.
-        return !world.getBlockState(at).isReplaceable();
+        return MineGate.raise(world, mouth, descent);
     }
 
     /**

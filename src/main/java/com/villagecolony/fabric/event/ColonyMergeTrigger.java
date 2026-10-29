@@ -6,8 +6,6 @@ import com.villagecolony.core.coordination.ColonyIdentity;
 import com.villagecolony.core.coordination.ColonyMerge;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.StructureTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.util.math.BlockPos;
@@ -161,14 +159,11 @@ final class ColonyMergeTrigger {
             return found;
         }
 
-        var registry = world.getRegistryManager().get(RegistryKeys.STRUCTURE);
+        ChunkPos chunk = new ChunkPos(center);
 
-        for (StructureStart start : world.getStructureAccessor().getStructureStarts(
-                new ChunkPos(center),
-                structure -> registry.getEntry(structure).isIn(StructureTags.VILLAGE))) {
-            if (start.hasChildren()) {
-                found.add(start.getPos());
-            }
+        for (StructureStart start : com.villagecolony.fabric.world.GeneratedVillages.villagesReaching(
+                world, chunk.x, chunk.z)) {
+            found.add(start.getPos());
         }
 
         return found;
