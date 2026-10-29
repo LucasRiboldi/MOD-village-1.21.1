@@ -13,6 +13,7 @@ import com.villagecolony.fabric.content.ModContent;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.LotGround;
 import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.StreetSurface;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.BlockState;
@@ -35,7 +36,7 @@ import java.util.UUID;
  * carpinteiro e o fundidor, quando estão sem tarefa do ofício, <b>um por vez</b> por colônia, revezando
  * a cada {@link #STEPS_PER_TURN} passos.
  *
- * <p>Cada passo é uma seção de até três colunas ({@link #layStep}), <b>rente ao chão</b> (autor,
+ * <p>Cada passo é uma coluna de caminho ({@link #layStep}, 1 de largura desde 2026-10-28), <b>rente ao chão</b> (autor,
  * 2026-10-28): o bloco de cima vira caminho; o buraco de um bloco ganha o caminho por cima; o corte é de
  * um bloco no máximo; por cima só sai planta, nunca terreno. Nunca nasce bloco acima do chão natural —
  * na 0.3.98 o aterro de até 4 por coluna levantou paredes de terra. Nada que não seja chão natural é
@@ -179,7 +180,8 @@ public final class PathPaving {
     }
 
     /**
-     * Assenta a seção deste passo: o eixo, e cada coluna de lado que couber no próprio chão.
+     * Assenta o passo: só o eixo — o caminho da porta até a rua tem 1 bloco de largura (autor, 2026-10-28, depois
+     * do jogo da 0.3.104). A rua de 3 é a da Regra 140 ({@code RoadPaving}).
      *
      * @return se o eixo coube; falso quando o mundo mudou e ele não é mais chão a no máximo um bloco do piso
      */
@@ -193,17 +195,7 @@ public final class PathPaving {
             return false;
         }
 
-        pave(world, colonyId, step.x(), step.z(), axis.getAsInt(), step.floorY());
-
-        for (int offset : new int[] {-1, 1}) {
-            int x = step.sideX(offset);
-            int z = step.sideZ(offset);
-
-            if (VillagePathPlanner.laneFits(terrain, x, z, step.floorY())) {
-                int ground = terrain.groundY(x, z, step.floorY()).orElseThrow();
-                pave(world, colonyId, x, z, ground, ground);
-            }
-        }
+        pave(world, colonyId, step.x(), step.z(), axis.getAsInt(), step.floorY(), false);
 
         return true;
     }
@@ -213,7 +205,7 @@ public final class PathPaving {
      * cima vira caminho; um abaixo, o bloco de cima sai (o corte); um acima, o caminho vai por cima do
      * buraco. Por cima do piso só sai planta.
      */
-    static void pave(ServerWorld world, UUID colonyId, int x, int z, int ground, int floorY) {
+    static void pave(ServerWorld world, UUID colonyId, int x, int z, int ground, int floorY, boolean edge) {
         BlockPos top = new BlockPos(x, ground, z);
         BlockState surface = world.getBlockState(top);
         BlockPos floor = new BlockPos(x, floorY, z);
@@ -239,8 +231,8 @@ public final class PathPaving {
             }
         }
 
-        world.setBlockState(floor, surface.isIn(BlockTags.SAND)
-                ? ModContent.SAND_PATH.getDefaultState() : Blocks.DIRT_PATH.getDefaultState());
+        // Meio e borda são o caminho do chão (StreetSurface, autor 2026-10-28).
+        world.setBlockState(floor, edge ? StreetSurface.edge(world, floor, surface) : StreetSurface.center(world, floor, surface));
         RoadIndex.remember(colonyId, floor);
     }
 

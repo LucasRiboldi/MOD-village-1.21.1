@@ -15,14 +15,15 @@ public enum SupplyException {
     AUTOMATIC_DROP(41, "corante, linha, pó de osso e drops de bicho e inimigo que a receita pede"),
     SHAPED_GROUND(69, "canteiro, água, caminho e cultivo da planta, moldados no local"),
     UNREACHABLE_PIECE(86, "a peça que o construtor não alcança, posta no lugar"),
-    APPEARING_PIECE(88, "terracota, fardo de feno e argila que a vila não tem, postos no lugar"),
+    APPEARING_PIECE(88, "terracota, fardo de feno, argila, gelo e neve que a vila não tem, postos no lugar"),
     FOUNDATION_GROUND(90, "o chão do bioma que aterra o lote e apoia cama, porta e baú (Regra 21)"),
     CHEST_FOR_A_WORKER(96, "o baú ao lado da cama do trabalhador de ofício que não tem um"),
     FOUNDING_ANIMALS(102, "duas ovelhas, duas galinhas, duas vacas e dois porcos, uma vez, na fundação"),
     GRASS_FOR_THE_SHEEP(103, "o bloco de grama ao pé do poste ou no curral da ovelha"),
     STUCK_PIECE(113, "a peça de lado da obra sem mais nada a pôr, depois de 4 tentativas, posta no lugar"),
     ANIMAL_FEED(117, "a ração do par que o pastor vai criar, quando os baús não têm comida do fazendeiro"),
-    WAITED_TOO_LONG(128, "o produto da tarefa largada duas vezes em 10 minutos, no baú de quem a largou");
+    WAITED_TOO_LONG(128, "o produto da tarefa largada duas vezes em 10 minutos, no baú de quem a largou"),
+    END_OF_BUILD(148, "as peças que faltam quando a obra para no fim, postas no lugar para a casa fechar");
 
     private final int rule;
 

@@ -126,12 +126,44 @@ public final class RoadPaving {
             // que não soubesse disto nunca mais acharia nada.
             RoadIndex.remember(colonyId, at);
 
+            layEdges(world, colonyId, at, end.towards());
+
             previous = at;
 
             laid.add(MinecraftTypeAdapter.toColonyPos(at));
         }
 
         return grown(world, colonyId, laid);
+    }
+
+    /**
+     * As duas bordas da rua de 3 (Regra 140): a coluna de cada lado do meio, no chão dela a até
+     * {@link RoadExtension#MAX_STEP} do meio, com o caminho do chão ({@link StreetSurface#edge}). A borda que
+     * não cabe — degrau alto, construção, água — fica sem calçar e a rua segue estreita ali.
+     */
+    private static void layEdges(ServerWorld world, UUID colonyId, BlockPos middle, Direction towards) {
+        for (Direction side : List.of(towards.rotateYClockwise(), towards.rotateYCounterclockwise())) {
+            Optional<BlockPos> ground = groundNear(world, middle.offset(side), middle.getY());
+
+            if (ground.isEmpty() || RoadIndex.isRoadArea(world, colonyId, ground.get())) {
+                continue;
+            }
+
+            BlockPos at = ground.get();
+            BlockState state = world.getBlockState(at);
+
+            if (refusalAt(world, at, state).isPresent()) {
+                continue;
+            }
+
+            if (!world.getBlockState(at.up()).isAir()) {
+                world.setBlockState(at.up(), net.minecraft.block.Blocks.AIR.getDefaultState());
+            }
+
+            world.setBlockState(at, StreetSurface.edge(world, at, state));
+
+            RoadIndex.remember(colonyId, at);
+        }
     }
 
     /**
@@ -270,6 +302,28 @@ public final class RoadPaving {
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * Se esta coluna é o meio da rua no corte transversal ao rumo {@code towards} — Regra 140. A rua de 3
+     * tem a borda de cada lado, e a borda não é ponta: prolongá-la faria a rua engordar de lado. Rua de 1
+     * é o próprio meio; a de 2 fica com a coluna que tem a outra à direita, para só uma valer.
+     */
+    static boolean isMiddleOf(ServerWorld world, UUID colonyId, BlockPos road, Direction towards) {
+        boolean left = isRoadNear(world, colonyId, road.offset(towards.rotateYCounterclockwise()), road.getY());
+        boolean right = isRoadNear(world, colonyId, road.offset(towards.rotateYClockwise()), road.getY());
+
+        if (left == right) {
+            return true;
+        }
+
+        if (left) {
+            return false;
+        }
+
+        BlockPos neighbour = road.offset(towards.rotateYClockwise());
+
+        return !isRoadNear(world, colonyId, neighbour.offset(towards.rotateYClockwise()), road.getY());
     }
 
     /**

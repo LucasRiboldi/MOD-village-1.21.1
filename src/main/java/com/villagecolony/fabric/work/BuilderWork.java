@@ -436,13 +436,8 @@ public final class BuilderWork {
 
         VillageColonyMod.BUILDINGS.registerOrMerge(building);
 
-        VillageColonyMod.LOGGER.info(
-                "Colony {} finished {} at {} — {} blocks placed by {}, now colony infrastructure",
-                project.colonyId(),
-                project.blueprint().id(),
-                project.origin(),
-                job.placed,
-                workerId);
+        // As peças contadas no mundo, não as do último construtor (Regra 147).
+        VillageDiary.buildFinished(project, job.placed, workerId);
 
         finish(job, workerId, "the house is up");
     }

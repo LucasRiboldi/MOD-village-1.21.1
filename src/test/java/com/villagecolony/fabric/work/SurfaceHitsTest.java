@@ -77,4 +77,22 @@ class SurfaceHitsTest {
 
         assertEquals(Optional.of(near), found);
     }
+
+    /** Regra 144: o alvo que o coletor não alcançou sai da memória e fica de fora por um dia. */
+    @Test
+    void anUnreachableTargetIsForgottenAndLeftOutForADay() {
+        UUID colony = UUID.randomUUID();
+        BlockPos dirt = new BlockPos(1370, 68, 96);
+
+        SurfaceHits.remember(colony, ResourceType.DIRT, dirt);
+        SurfaceHits.unreachable(colony, dirt, 1_000);
+
+        assertTrue(SurfaceHits.near(colony, ResourceType.DIRT, BlockPos.ORIGIN, column -> true,
+                column -> Optional.of(column)).isEmpty(), "a memória devolveu a terra inalcançável");
+        assertTrue(SurfaceHits.isUnreachable(colony, new BlockPos(1371, 0, 97), 1_000 + 100),
+                "a mancha em volta do alvo voltou às buscas");
+        assertTrue(!SurfaceHits.isUnreachable(colony, new BlockPos(1380, 0, 96), 1_100), "longe dela não");
+        assertTrue(!SurfaceHits.isUnreachable(colony, dirt, 1_000 + SurfaceHits.UNREACHABLE_FOR),
+                "passado um dia, a coluna devia voltar");
+    }
 }

@@ -16,6 +16,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /** Contratos de avanço e divisão dos quatro ramais. */
 class MineTest {
 
+    /** Metade do lado do salão: as coordenadas do traçado crescem com ela. */
+    private static final int H = MineShaft.HALL_SIDE / 2;
+
     private static final ColonyPos ENTRY = new ColonyPos(100, 64, 200);
 
     private static Mine opened() {
@@ -292,8 +295,8 @@ class MineTest {
     void thePlannedCellsCoverEveryArm() {
         java.util.Set<ColonyPos> cells = opened().plannedCells();
 
-        assertTrue(cells.contains(new ColonyPos(99, 52, 209)), "o ramal do sul");
-        assertTrue(cells.contains(new ColonyPos(82, 52, 208)), "o ramal do oeste");
+        assertTrue(cells.contains(new ColonyPos(99, 52, 201 + H)), "o ramal do sul");
+        assertTrue(cells.contains(new ColonyPos(98 - 2 * H, 52, 200 + H)), "o ramal do oeste");
         assertTrue(cells.contains(new ColonyPos(100, 64, 199)), "o caracol comum");
     }
 

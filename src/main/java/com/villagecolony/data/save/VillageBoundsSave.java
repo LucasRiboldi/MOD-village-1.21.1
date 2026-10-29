@@ -52,7 +52,8 @@ final class VillageBoundsSave {
             return;
         }
 
-        colony.measure(new VillageBounds(
+        // Como estava: a primeira medida poria o centro no meio da caixa (Regra 141).
+        colony.restoreBounds(new VillageBounds(
                 entry.getInt(MIN_X), entry.getInt(MIN_Y), entry.getInt(MIN_Z),
                 entry.getInt(MAX_X), entry.getInt(MAX_Y), entry.getInt(MAX_Z)));
     }

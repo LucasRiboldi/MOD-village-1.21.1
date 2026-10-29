@@ -87,6 +87,26 @@ class ColonySavedDataTest {
         assertEquals(colony.center(), restored.center());
     }
 
+    /**
+     * Regra 141: o centro fica onde a primeira medida o pôs, mesmo depois de a caixa crescer — e continua lá depois
+     * de gravar e carregar o mundo (PROJECT_AUDIT.md, T3).
+     */
+    @Test
+    void theFixedCenterSurvivesRoundTripAfterTheBoxGrew() {
+        Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(0, 68, 0));
+        colony.measure(new VillageBounds(0, 60, 0, 100, 80, 100));
+        ColonyPos fixed = colony.center();
+        colony.grow(VillageBounds.block(new ColonyPos(50, 64, 300)));
+
+        ColonySavedData data = empty();
+        data.sync(List.of(colony), List.of());
+
+        Colony restored = roundTrip(data).colonies().get(0);
+
+        assertEquals(colony.bounds().orElseThrow(), restored.bounds().orElseThrow(), "a caixa crescida devia voltar");
+        assertEquals(fixed, restored.center(), "o centro andou para o meio da caixa ao carregar o mundo");
+    }
+
     @Test
     void anOldSaveComesBackWithoutBounds() {
         Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(120, 68, -340));

@@ -39,6 +39,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class TreeMarksTest {
 
+    /** O5 (autor, 2026-10-28): a árvore que ele não alcança fica de fora um dia inteiro, e não cinco minutos. */
+    @Test
+    void anUnreachableTreeSitsOutAWholeDay() {
+        assertEquals(24_000, TreeMarks.outOfReachFor(1));
+        assertTrue(TreeMarks.outOfReachFor(3) >= 24_000, "a recusa repetida não pode durar menos que a primeira");
+        assertEquals(0, TreeMarks.outOfReachFor(0));
+    }
+
     @Test
     void aTreeRefusedOnceSitsOutTheUsualTenCycles() {
         assertEquals(6000, TreeMarks.memoryFor(1));

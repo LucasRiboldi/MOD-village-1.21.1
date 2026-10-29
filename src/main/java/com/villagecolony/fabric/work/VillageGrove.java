@@ -53,9 +53,9 @@ public final class VillageGrove {
     /** Quantas mudas o bosque tem — eram 3; o autor pediu mais (A8, 2026-10-08). */
     public static final int SIZE = 6;
 
-    /** A distância mínima e máxima da borda da vila. */
+    /** A distância mínima e máxima da borda da vila — o bosque perto da vila (O5, autor 2026-10-28; era até 10). */
     static final int NEAR = 4;
-    static final int FAR = 10;
+    static final int FAR = 6;
 
     /** Folga até casa ou obra da colônia. */
     static final int CLEARANCE = 4;

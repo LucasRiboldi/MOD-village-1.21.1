@@ -92,6 +92,47 @@ public class PathNetworkGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * O caminho da porta até a rua tem 1 bloco de largura — autor, 2026-10-28, depois do jogo da 0.3.104 ("1 de
+     * largura, todas as casas"): o passo assenta só o eixo, e as colunas de lado ficam como estão.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "path_network_width", tickLimit = 20)
+    public void aDoorPathIsOneBlockWide(TestContext context) {
+        ServerWorld world = context.getWorld();
+        UUID colonyId = UUID.randomUUID();
+        BlockPos base = context.getAbsolutePos(BlockPos.ORIGIN).add(3_000_100, 30, 3_000_100);
+
+        try {
+            for (int x = -2; x <= 2; x++) {
+                for (int z = -2; z <= 2; z++) {
+                    BlockPos at = base.add(x, 0, z);
+                    world.getChunk(at);
+                    world.setBlockState(at, Blocks.GRASS_BLOCK.getDefaultState());
+                }
+            }
+
+            PathStep step = new PathStep(base.getX(), base.getY(), base.getZ(), Side.EAST, 0, 0);
+
+            context.assertTrue(PathPaving.layStep(world, colonyId, step), "o passo não coube em " + step);
+            context.assertTrue(world.getBlockState(base).isOf(Blocks.DIRT_PATH), "o eixo não virou caminho");
+
+            for (int offset : new int[] {-1, 1}) {
+                BlockPos side = new BlockPos(step.sideX(offset), base.getY(), step.sideZ(offset));
+
+                context.assertTrue(world.getBlockState(side).isOf(Blocks.GRASS_BLOCK),
+                        "a coluna de lado virou " + world.getBlockState(side) + ": o caminho da porta é de 1");
+            }
+        } finally {
+            for (BlockPos at : BlockPos.iterate(base.add(-3, -1, -3), base.add(3, 3, 3))) {
+                world.setBlockState(at, Blocks.AIR.getDefaultState());
+            }
+
+            PathLinks.clearAll();
+        }
+
+        context.complete();
+    }
+
     /** Construção nova nasce a no mínimo três blocos de outra; o caminho pode encostar. */
     /**
      * A porta recuada da casa Vanilla (a varanda fica dentro da caixa) também é achada, e a frente é o

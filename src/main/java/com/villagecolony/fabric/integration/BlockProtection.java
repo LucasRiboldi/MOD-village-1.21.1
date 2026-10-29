@@ -59,7 +59,9 @@ public final class BlockProtection {
     public static boolean mayBreak(ServerWorld world, BlockPos pos, BlockState state) {
         return !isPlayerPlaced(state)
                 && !isColonyBuilt(pos)
-                && !isVillageOriginal(world, pos);
+                && !isVillageOriginal(world, pos)
+                // A rua e o caminho que a colônia assentou também são da vila (autor, 2026-10-28).
+                && !StreetSurface.isColonyStreet(pos, state);
     }
 
     /**

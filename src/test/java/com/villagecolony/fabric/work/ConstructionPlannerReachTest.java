@@ -18,7 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * <p>Era 64 do centro, fixo; com o centro no meio da caixa, a vila parava em
  * uns 64 para cada lado. Agora é metade da diagonal da caixa mais a margem de
- * crescimento: alcança os cantos e passa da borda, e cresce junto com ela.
+ * crescimento: alcança os cantos e passa da borda, e cresce junto com ela. Com o
+ * centro fixo (Regra 141), a conta parte do centro até o canto mais longe.
  */
 class ConstructionPlannerReachTest {
 
@@ -31,10 +32,14 @@ class ConstructionPlannerReachTest {
         return new VillageBounds(0, 60, 0, side - 1, 80, side - 1);
     }
 
+    private static int reachFromTheMiddle(VillageBounds box) {
+        return ConstructionPlanner.reachOf(box, new ColonyPos(box.centerX(), 64, box.centerZ()));
+    }
+
     @Test
     void aTypicalVillageSearchesPastTheOld64() {
         // 144 de lado: metade da diagonal é 101,8 — os cantos, mais 15.
-        assertEquals(117, ConstructionPlanner.reachOf(square(144)));
+        assertEquals(117, reachFromTheMiddle(square(144)));
     }
 
     @Test
@@ -42,7 +47,7 @@ class ConstructionPlannerReachTest {
         VillageBounds box = new VillageBounds(0, 60, 0, 199, 80, 99);
         double corner = Math.hypot(box.sizeX() / 2.0, box.sizeZ() / 2.0);
 
-        int reach = ConstructionPlanner.reachOf(box);
+        int reach = reachFromTheMiddle(box);
 
         assertTrue(reach >= corner + VillageBounds.GROWTH_MARGIN,
                 "o raio " + reach + " não passa do canto (" + corner + ") com a margem");
@@ -50,7 +55,7 @@ class ConstructionPlannerReachTest {
 
     @Test
     void aSmallVillageNeverSearchesLessThanBefore() {
-        assertEquals(VillageDetector.SEARCH_RADIUS, ConstructionPlanner.reachOf(square(40)));
+        assertEquals(VillageDetector.SEARCH_RADIUS, reachFromTheMiddle(square(40)));
     }
 
     @Test
@@ -58,7 +63,7 @@ class ConstructionPlannerReachTest {
         int previous = 0;
 
         for (int side = 144; side <= 4_608; side *= 2) {
-            int reach = ConstructionPlanner.reachOf(square(side));
+            int reach = reachFromTheMiddle(square(side));
 
             assertTrue(reach > previous, "o raio parou de crescer numa vila de " + side);
             previous = reach;
@@ -76,8 +81,8 @@ class ConstructionPlannerReachTest {
         measured.measure(square(144));
 
         assertEquals(VillageDetector.SEARCH_RADIUS, ConstructionPlanner.searchRadius(unmeasured));
-        // Medida, a caixa de 144 vira 145 (centro num bloco só): 102,5 + 15.
-        assertEquals(118, ConstructionPlanner.searchRadius(measured));
+        // Medida, a caixa de 144 vira 145 com o centro em 72: 72 para cada lado, 101,8 + 15.
+        assertEquals(117, ConstructionPlanner.searchRadius(measured));
     }
 
     @Test
@@ -93,6 +98,16 @@ class ConstructionPlannerReachTest {
         assertTrue(ConstructionPlanner.searchRadius(colony) > before,
                 "a vila cresceu e a busca não acompanhou: " + before + " -> "
                         + ConstructionPlanner.searchRadius(colony));
+    }
+
+    @Test
+    void aBoxThatGrewToOneSideIsReachedFromTheFixedCenter() {
+        // Regra 141: o centro fica em 72 e a caixa cresceu 100 a leste — o canto leste está a mais que
+        // a metade da diagonal.
+        VillageBounds grown = new VillageBounds(0, 60, 0, 243, 80, 143);
+        int reach = ConstructionPlanner.reachOf(grown, new ColonyPos(72, 64, 72));
+
+        assertTrue(reach >= Math.hypot(243 - 72, 72) + VillageBounds.GROWTH_MARGIN, "o raio não chega ao canto leste");
     }
 
     @Test

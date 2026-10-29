@@ -197,6 +197,82 @@ public class ShepherdGameTest implements FabricGameTest {
         });
     }
 
+    /**
+     * O pastor tosquia por cima da cerca e não entra no curral — T2 do diagnóstico da 0.3.103 (autor, 2026-10-28:
+     * 45 pastores presos no curral). A ovelha fica num cercado fechado, a 4 blocos do pastor do lado de fora: o
+     * braço não chega, o olho chega (4,5 blocos, como o fazendeiro).
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd",
+            tickLimit = 200)
+    public void theShepherdShearsOverTheFenceWithoutGoingIn(TestContext context) {
+        // Cercado de 7 x 7 fechado, a ovelha no meio: de fora, o pé fica a 4 blocos dela e o braço (3) não chega.
+        BlockPos inside = new BlockPos(5, 2, 5);
+        BlockPos outside = new BlockPos(5, 2, 9);
+        BlockPos pastureChest = new BlockPos(0, 2, 0);
+
+        for (int x = 0; x <= 10; x++) {
+            for (int z = 0; z <= 10; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.DIRT.getDefaultState());
+
+                boolean ring = (x == 2 || x == 8) && z >= 2 && z <= 8 || (z == 2 || z == 8) && x >= 2 && x <= 8;
+
+                if (ring) {
+                    context.setBlockState(new BlockPos(x, 2, z), Blocks.OAK_FENCE.getDefaultState());
+                }
+            }
+        }
+
+        context.setBlockState(pastureChest, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(pastureChest));
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        SheepEntity sheep = context.spawnEntity(EntityType.SHEEP, inside);
+        sheep.setColor(DyeColor.WHITE);
+        sheep.setSheared(false);
+        sheep.setBreedingAge(0);
+        sheep.setAiDisabled(true);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, outside);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.SHEPHERD);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.COLLECT_WOOL, TaskPriority.PRODUCTION, ResourceType.WHITE_WOOL, 8);
+
+        task.reserveFor(villager.getUuid());
+
+        ShepherdWork.shortenSearchTo(8);
+
+        ShepherdWork.run(context.getWorld(), colony);
+
+        context.runAtTick(150, () -> {
+            try {
+                context.assertTrue(sheep.isSheared(), "a ovelha do cercado continua lanuda: o pastor não tosquiou de fora");
+                BlockPos at = context.getRelativePos(villager.getBlockPos());
+                boolean inThePen = at.getX() > 2 && at.getX() < 8 && at.getZ() > 2 && at.getZ() < 8;
+
+                context.assertTrue(!inThePen, "o pastor entrou no curral: está em " + at.toShortString());
+            } finally {
+                owned.cleanUp();
+
+                ShepherdWork.restoreSearch();
+            }
+
+            context.complete();
+        });
+    }
+
     private static void ground(TestContext context) {
         for (int x = 0; x <= 6; x++) {
             for (int z = 0; z <= 6; z++) {

@@ -12,6 +12,123 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.107] — solo suave na geração, materiais que aparecem e ajudas (2026-10-29, JAR local, não jogado)
+
+Branch `fix/playtest-0102`. Pedidos do autor depois do jogo da 0.3.106.
+
+### Adicionado
+- **Solo da vila suave na geração (Regra 152):** ao gerar cada chunk da vila, antes das peças, o chão da área mais 16
+  é refeito — buraco tampado, degrau de 1, casa e água no lugar, borda até o terreno natural. Só em mundo novo.
+- **Ajudas (Regras 153–154):** o sem profissão carrega (boca da mina e baús cheios); o pastor alimenta o rebanho para
+  cruzar; o carpinteiro adianta tábua, escada e laje; pedreiro e carpinteiro fazem antes o que a obra pede; o
+  fazendeiro faz composto.
+
+### Mudado
+- **Materiais (T1, T5):** neve e argila aparecem quando pedidas; o fundidor faz vidraça do vidro; o lenhador busca
+  primeiro a espécie pedida.
+- **O5, O6:** árvore inalcançável fica de fora um dia; bosque de 4 a 6 da vila; areia e argila buscadas até 40 além
+  da borda.
+- **CI:** instala o Pillow para os testes dos mapas.
+
+### Pendente
+- O2 (construtor com a obra parada), o pedreiro ajudar a assentar (O1), aplainar o canteiro antigo (O7).
+
+## [0.3.106] — trajeto pela rua e o primeiro degrau do ramal (2026-10-28, JAR local, não jogado)
+
+Branch `fix/playtest-0102`. O que ficou pendente da 0.3.105.
+
+### Adicionado
+- **Trajeto longo pela rede de ruas (Regra 151):** de 24 blocos para cima, o aldeão da colônia vai à rua mais perto
+  (até 8), anda por ela em trechos de até 32 passos até a coluna mais perto do destino e sai dali; vai direto quando a
+  rua não liga os dois pontos ou a volta passa de 2× o direto.
+
+### Corrigido
+- **Mineiro e o ramal novo:** o primeiro degrau do caracol do ramal novo era recusado como alto demais enquanto ele
+  subia o caracol até lá, e a recusa encerrava o ramal (11 no jogo da 0.3.104). O julgamento de perto agora procura
+  o caminho a pé antes de recusar.
+
+## [0.3.105] — terreno plano, rua só de caminho, água e portas (2026-10-28, JAR local, não jogado)
+
+Branch `fix/playtest-0102`. Pedidos do autor depois do jogo da 0.3.104 na savana
+(`docs/research/2026-10-28-jogo-0104-savana.md`).
+
+### Mudado
+- **Rua só de caminho (Regra 138):** a borda é o mesmo caminho do meio; o cascalho, a terra grossa e o arenito
+  que a colônia já assentou voltam a ser caminho na passada do pedreiro.
+- **Vila gerada em terreno plano:** as cinco vilas do Minecraft geram com `beard_box` (aterra embaixo e corta em
+  cima de cada peça). Só em chunks novos.
+- **Porta → rua (Regra 123):** caminho de 1 bloco, e as casas da vila original também são ligadas.
+- **Canteiro novo (Regra 31):** retângulo 9×9 em chão plano ao lado da fazenda, água na linha do meio.
+
+### Adicionado
+- **Trajeto do aldeão da colônia (Regra 151):** a água custa 48 por nó (Vanilla 8), e ele só nada sem volta a pé;
+  dentro da caixa da vila, o gramado custa mais que a rua.
+- `stuck_map.py` sem argumentos lê o log e o diário da pasta do jogo.
+
+### Pendente
+- Trajeto longo (~24+) pela rede de ruas; a recusa do mineiro depois de andar até a pedra 9 acima; T1 (neve, espécie
+  de madeira), T5, L3, O1–O8.
+
+## [0.3.104] — decisões do diagnóstico: gelo, pastor, mineiro e mapa de encalhe (2026-10-28, JAR local, não jogado)
+
+Branch `fix/playtest-0102`. Escolhas do autor sobre o diagnóstico da 0.3.103
+(`docs/research/2026-10-28-diagnostico-e-decisoes-0103.md`, §3).
+
+### Corrigido
+- **Gelo na obra (T1, parte):** gelo, gelo compactado e gelo azul surgem quando a obra os pede (Regra 88); a
+  neve continua vindo da pá.
+- **Pastor preso no curral (T2, Regra 150):** tosquia a até 4,5 blocos do olho, por cima da cerca, sem entrar.
+- **Mineiro recusando pedra em cadeia (T4):** a pedra alta demais ou sem caminho é posta de lado na escolha
+  (`SKIPPED` no diário) e a próxima é pedida na mesma passagem, até 4.
+
+### Adicionado
+- **Área forçada que cresce (D4):** a simulação e a bancada forçam os chunks da caixa da vila conforme ela
+  cresce; `VC_STATE` ganhou `box`.
+- **Mapa de encalhe (T3):** `scripts/stuck_map.py` lista e desenha os lugares de teleporte e encalhe.
+
+### Pendente
+- T1 (neve na pá, espécie de madeira, madeira equivalente), T5, L3, O1–O8, D1; a recusa depois de andar até a
+  pedra 9 acima (doc, §5).
+
+## [0.3.103] — ruas naturais, centro fixo, diário da vila e mina mais rasa por nível (2026-10-28, JAR local, não jogado)
+
+Branch `fix/playtest-0102`. Achados de duas simulações de 10 dias de uma taiga e da auditoria
+`PROJECT_AUDIT.md`.
+
+### Adicionado
+- **Ruas (Regras 138–140):** chão de rua com mistura gasta (cascalho e terra grossa na borda, arenito na
+  areia), protegido de mineração e coleta; lote escolhido pelo mapa de interesse (distância, altura e caminho
+  até a rua); rua esticada com 3 de largura, pela ponta mais perto do centro.
+- **Diário da vila (Regra 147):** `VC_EVENT` a cada fato (obra aberta e fechada com as peças contadas no
+  mundo, caixa, camas, teleporte, nível da mina, morte), `VC_DAY` com o tempo das profissões no dia de jogo e
+  `VC_AUDIT` conferindo camas, trabalhadores e peças da obra contra o mundo; `state_report.py` lê os três.
+- **Ajudantes (Regra 149):** o pedreiro sem tarefa tapa falhas de até 2 blocos no meio da rua e nivela em
+  volta da casa pronta; o fundidor leva o minério da boca da mina aos baús públicos e acende a rua escura.
+- **Produtos de valor (Regra 146):** teto 512; o fundidor funde todo minério cru e assa a carne; o pedreiro faz
+  degrau, laje e muro de pedregulho, tijolo entalhado e arenito cortado — cada receita na sua proporção.
+- **Scripts:** `village_map.py` (a vila vista de cima, antes e depois) e `road_map.py` (só as ruas, as
+  ligações e o que a colônia fez); `biome_sim.py --snapshot`.
+
+### Mudado
+- **Centro fixo (Regra 141):** a caixa da vila cresce sem mover o centro; a busca de lote mede do centro ao
+  canto mais longe; o lote da faixa anexada fica a até 48 blocos do centro, +10 por volta sem lote.
+- **Noite (Regra 142):** o caminho de casa é buscado a 128 blocos; só vai à cama quem ficou parado em duas
+  conferências seguidas.
+- **Camas (Regra 145):** contadas na caixa inteira, não pela sonda de 64 blocos.
+- **Mina (Regra 119):** salão de 9 × 9 em vez de 17 × 17 — um nível cava ~1.755 blocos em vez de ~4.875.
+
+### Corrigido
+- **Obra largada meio pronta (Regra 148):** a obra sem peça a pôr fecha pelo ciclo da colônia; parada no fim,
+  o que falta surge no lugar e vai ao `supply-gaps.jsonl` (`END_OF_BUILD`).
+- **Baú público (Regra 143):** sem o teto de 3 compartimentos por item; o lenhador não larga mais toras no
+  chão com a vila a 38%.
+- **Alvo de coleta inalcançável (Regra 144):** sai da memória por um dia (79 retornos ao mesmo alvo).
+- **Carregar o mundo movia o centro fixo** da vila que cresceu para um lado (save).
+- **Mina salva antes da 0.3.96** retomava com o cursor da geometria antiga: a forma da mina sobe para 9 e ela
+  recomeça do primeiro degrau, pulando o já cavado.
+- **A nota do lote** sobrevivia à troca de mundo.
+- **A luz da rua carregava chunk:** a busca de luz e o lugar da lanterna não leem nem avisam chunk descarregado.
+
 ## [0.3.102] — tocha nova e o retrato da vila para análise (2026-10-28, JAR local, não jogado)
 
 ### Adicionado

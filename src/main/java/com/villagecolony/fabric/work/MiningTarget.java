@@ -113,7 +113,12 @@ public final class MiningTarget {
     public static Verdict judge(ServerWorld world, BlockPos target, BlockPos miner) {
         Verdict geometry = quick(world, target, miner);
 
-        if (!geometry.eligible() || !isNear(miner, target)) {
+        // Alto demais pela geometria ainda passa pela busca a pé: no caracol ele sobe degrau de 1, e o primeiro
+        // degrau do ramal novo fica 4 acima dele quando ele vira "perto". Só a busca que chega desfaz o TOO_HIGH;
+        // a que não fecha a conta o mantém (E1).
+        boolean tooHigh = geometry.rejection() == Rejection.TOO_HIGH;
+
+        if ((!geometry.eligible() && !tooHigh) || !isNear(miner, target)) {
             return geometry;
         }
 

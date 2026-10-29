@@ -1,5 +1,36 @@
-# STATE — 2026-10-28
+# STATE — 2026-10-29
 
+> **0.3.107** (29-10, branch `fix/playtest-0102`): o solo da vila nasce suave na geração (Regra 152 — degrau > 1
+> na área: deserto 4,29 → 0,19 %, savana 2,11 → 0,10 %, neve 1,95 → 0,42 %, medido em mundo novo); neve e argila
+> aparecem, o fundidor faz vidraça, o lenhador derruba a espécie pedida (T1, T5); carregador, pastor cuidando do
+> rebanho, madeira e pedra adiantadas, árvore fora um dia, bosque perto, areia mais longe, composto (Regras 153–154).
+> Bateria 931/931, unitários verdes. **Não jogado.** Falta: O2, o pedreiro ajudar a assentar (O1) e aplainar o
+> canteiro antigo (O7). Para o jogo: **mundo novo**.
+>
+> **0.3.106** (28-10, branch `fix/playtest-0102`): o trajeto longo do aldeão da colônia vai pela rede de ruas
+> (Regra 151, `StreetRoute` + `MoveToTargetTaskMixin`), e o mineiro não recusa mais o primeiro degrau do ramal novo
+> (`MiningTarget.judge`; no jogo da 0.3.104 foram 11 ramais encerrados). Bateria 923/923, unitários verdes.
+> **Não jogado.** Para o jogo: mundo novo, a §4 e a §5 de `docs/research/2026-10-28-jogo-0104-savana.md`.
+>
+> **0.3.105** (28-10, branch `fix/playtest-0102`): os pedidos do jogo da 0.3.104 na savana
+> (`docs/research/2026-10-28-jogo-0104-savana.md`) — rua só de caminho (Regra 138), vila do Minecraft gerada em
+> terreno plano (`beard_box`, só chunks novos), aldeão da colônia evita a água e prefere a rua (Regra 151), porta
+> de toda casa ligada à rua por caminho de 1 (Regra 123), canteiro novo 9×9 com água no meio (Regra 31).
+> Bateria 921/921, unitários verdes, Python 145. **Não jogado.** Falta: trajeto longo pela rede de ruas. Para o
+> jogo: **mundo novo**, e a §4 do documento do jogo.
+>
+> **0.3.104** (28-10, branch `fix/playtest-0102`): decisões do autor sobre o diagnóstico da 0.3.103
+> (`docs/research/2026-10-28-diagnostico-e-decisoes-0103.md`) — gelo surge na obra (T1, parte), pastor tosquia
+> por cima da cerca (T2, Regra 150), área forçada da bancada cresce com a caixa (D4), mapa de encalhe
+> `scripts/stuck_map.py` (T3), mineiro pula pedra alta demais ou sem caminho na escolha (T4). Unitários
+> 1625/1625, bateria 915/915, Python 144. **Não jogado.** Para o jogo: a §4 do documento de decisões.
+>
+> **0.3.103** (28-10, branch `fix/playtest-0102`): ruas naturais (Regras 138–140), centro fixo (141), noite
+> só para o preso (142), baú público inteiro (143), alvo inalcançável esquecido (144), camas da caixa (145),
+> produtos de valor (146), diário da vila `VC_EVENT`/`VC_DAY`/`VC_AUDIT` (147), obra nunca largada meio
+> pronta (148), rua sem falha e ajudantes (149), mina com salão de 9 e forma 9; correções da auditoria
+> (`PROJECT_AUDIT.md`, T1–T5). **Não jogado.** Para o jogo: `python scripts/state_report.py` lê o diário.
+>
 > **0.3.102** (28-10): tocha nova (referência do autor) e o retrato da vila `VC_STATE`, no log e em
 > `<mundo>/villagecolony/analytics/*.jsonl`. Também `/vc dados`, `/vc log` e `/vc bioma` com o retrato, e
 > `scripts/state_report.py`. Bateria 900/900. **Não jogado.** Para o jogo: `/vc log`, `/vc dados` e

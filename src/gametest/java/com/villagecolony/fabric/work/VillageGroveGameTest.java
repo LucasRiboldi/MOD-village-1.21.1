@@ -67,6 +67,8 @@ public class VillageGroveGameTest implements FabricGameTest {
             for (BlockPos spot : grove) {
                 context.assertTrue(!box.containsColumn(spot.getX(), spot.getZ(), VillageGrove.NEAR - 1),
                         "uma muda nasceu dentro da vila: " + spot);
+                context.assertTrue(box.containsColumn(spot.getX(), spot.getZ(), 6),
+                        "uma muda nasceu a mais de 6 da vila (O5: o bosque perto): " + spot);
                 context.assertTrue(Math.abs(spot.getX() - pathX) >= VillageGrove.ROAD_CLEARANCE,
                         "uma muda nasceu ao lado da rua, onde os lotes nascem: " + spot);
                 // A farinha de osso pode já ter feito a muda virar árvore.

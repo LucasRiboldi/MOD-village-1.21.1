@@ -24,6 +24,7 @@ saque; os chunks fora da área forçada não simulam.
 """
 
 import argparse
+import json
 import os
 import re
 import secrets
@@ -196,6 +197,65 @@ def wait_for(path, pattern, process, timeout):
     raise TimeoutError(f"'{pattern}' não apareceu em {timeout} s")
 
 
+# A bancada força a caixa da vila mais esta margem; o /forceload aceita 256 chunks por comando.
+FORCE_MARGIN = 32
+MAX_FORCED_CHUNKS = 256
+
+
+def latest_box(log_path):
+    """Os cantos da caixa da vila no último VC_STATE do log: (minX, minZ, maxX, maxZ), ou None."""
+    box = None
+
+    try:
+        with open(log_path, encoding="utf-8", errors="replace") as source:
+            for line in source:
+                if "VC_STATE " in line and '"box"' in line:
+                    try:
+                        corners = json.loads(line.split("VC_STATE ", 1)[1])["box"]
+                        box = (corners["minX"], corners["minZ"], corners["maxX"], corners["maxZ"])
+                    except (ValueError, KeyError):
+                        continue
+    except OSError:
+        return None
+
+    return box
+
+
+def forced_pieces(min_x, min_z, max_x, max_z, limit=MAX_FORCED_CHUNKS):
+    """O retângulo em blocos, em pedaços de no máximo ``limit`` chunks — o teto do /forceload por comando."""
+    cx0, cz0, cx1, cz1 = min_x >> 4, min_z >> 4, max_x >> 4, max_z >> 4
+    rows = min(cz1 - cz0 + 1, limit)
+    width = max(1, limit // rows)
+    pieces = []
+
+    for x in range(cx0, cx1 + 1, width):
+        for z in range(cz0, cz1 + 1, rows):
+            pieces.append((x * 16, z * 16, min(cx1, x + width - 1) * 16 + 15, min(cz1, z + rows - 1) * 16 + 15))
+
+    return pieces
+
+
+def grow_forced(rcon, log_path, forced):
+    """Força o que a caixa da vila (com a margem) passou da área forçada; devolve a área forçada nova."""
+    box = latest_box(log_path)
+
+    if box is None:
+        return forced
+
+    want = (box[0] - FORCE_MARGIN, box[1] - FORCE_MARGIN, box[2] + FORCE_MARGIN, box[3] + FORCE_MARGIN)
+    union = (min(forced[0], want[0]), min(forced[1], want[1]), max(forced[2], want[2]), max(forced[3], want[3]))
+
+    if union == forced:
+        return forced
+
+    for piece in forced_pieces(*union):
+        rcon.run("forceload add {} {} {} {}".format(*piece))
+
+    print(f"  área forçada cresceu com a vila: {forced} -> {union}")
+
+    return union
+
+
 def force_around(rcon, x, z):
     # 13 x 13 chunks: a vila, a caixa que cresce e a mina embaixo dela.
     print("  " + rcon.run(f"forceload add {x - 96} {z - 96} {x + 96} {z + 96}").strip())
@@ -248,8 +308,8 @@ def locate_or_place(rcon, locate, place, near=(0, 0)):
     return int(found.group(1)), int(found.group(2))
 
 
-def wait_game_ticks(rcon, ticks, process, timeout):
-    """Acelera o jogo e espera o relógio do mundo andar ``ticks`` tiques."""
+def wait_game_ticks(rcon, ticks, process, timeout, grow=None):
+    """Acelera o jogo e espera o relógio do mundo andar ``ticks`` tiques; ``grow`` roda a cada conferência."""
     start = game_time(rcon)
     rcon.run(f"tick sprint {ticks}")
     deadline = time.time() + timeout
@@ -264,6 +324,9 @@ def wait_game_ticks(rcon, ticks, process, timeout):
         if now - start >= ticks:
             print()
             return
+
+        if grow is not None:
+            grow()
 
         time.sleep(10)
 
@@ -285,6 +348,11 @@ def game_time(rcon):
     return int(found.group(1)) if found else 0
 
 
+def copy_regions(level, target):
+    """Copia os arquivos de região do mundo — a matéria-prima do ``village_map.py``."""
+    shutil.copytree(os.path.join(RUN, level, "region"), target, dirs_exist_ok=True)
+
+
 def count_signals(log_path):
     with open(log_path, encoding="utf-8", errors="replace") as source:
         text = source.read()
@@ -301,7 +369,7 @@ def run_report(script, args, out_path):
         out.write(result.stderr)
 
 
-def simulate(name, days, seed, keep_world, near=(0, 0)):
+def simulate(name, days, seed, keep_world, near=(0, 0), snapshot=False):
     mode, biome, locate, place = TARGETS[name]
     level = f"sim-{name}"
     password = secrets.token_hex(12)
@@ -341,7 +409,18 @@ def simulate(name, days, seed, keep_world, near=(0, 0)):
         before = villagers_near(rcon, x, z)
         print(f"  área carregada; {before} aldeões")
 
-        wait_game_ticks(rcon, days * 24000, process, timeout=days * 24000)
+        if snapshot:
+            # O retrato do dia 0: a vila como o jogo a gerou, antes de a colônia mexer.
+            rcon.run("save-all flush")
+            copy_regions(level, os.path.join(report, "regiao-dia0"))
+
+        # A área forçada cresce com a caixa da vila (D4): o que passa dos 96 blocos também é simulado.
+        forced = [(x - 96, z - 96, x + 96, z + 96)]
+
+        def grow():
+            forced[0] = grow_forced(rcon, latest, forced[0])
+
+        wait_game_ticks(rcon, days * 24000, process, timeout=days * 24000, grow=grow)
         after = villagers_near(rcon, x, z)
         print(f"  fim: {after} aldeões")
 
@@ -359,6 +438,9 @@ def simulate(name, days, seed, keep_world, near=(0, 0)):
                 process.kill()
 
         console.close()
+
+    if snapshot:
+        copy_regions(level, os.path.join(report, "regiao-fim"))
 
     for found in os.listdir(logs):
         shutil.copy(os.path.join(logs, found), report)
@@ -411,6 +493,8 @@ def main(argv):
     parser.add_argument("--days", type=int, default=2, help="dias de jogo por alvo (padrão 2)")
     parser.add_argument("--seed", default=DEFAULT_SEED)
     parser.add_argument("--keep-world", action="store_true", help="não apaga o mundo depois")
+    parser.add_argument("--snapshot", action="store_true",
+                        help="guarda as regiões do dia 0 e do fim no relatório (para o village_map.py)")
     parser.add_argument("--near", default="0,0",
                         help="X,Z de onde procurar a vila: a do jogo do autor, com a mesma --seed")
     args = parser.parse_args(argv)
@@ -431,7 +515,7 @@ def main(argv):
     for name in chosen:
         try:
             summary[name] = simulate(name, args.days, args.seed, args.keep_world,
-                                     tuple(int(v) for v in args.near.split(",")))
+                                     tuple(int(v) for v in args.near.split(",")), args.snapshot)
         except Exception as failure:  # um alvo que falha não derruba os outros
             print(f"[{name}] FALHOU: {failure}")
             summary[name] = {"falha": str(failure)}

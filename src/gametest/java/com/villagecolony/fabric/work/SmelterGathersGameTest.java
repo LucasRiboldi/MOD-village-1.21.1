@@ -45,4 +45,45 @@ public class SmelterGathersGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * A argila do forno aparece no baú do fundidor, sem ele sair para buscá-la — T5 (autor, 2026-10-29: "argila
+     * aparece automático"; 30 argilas surgidas só depois de quatro buscas vazias nas simulações).
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "clay_appears", tickLimit = 20)
+    public void clayForTheFurnaceAppearsInsteadOfASearch(TestContext context) {
+        net.minecraft.util.math.BlockPos at = new net.minecraft.util.math.BlockPos(2, 2, 2);
+        context.setBlockState(at, net.minecraft.block.Blocks.CHEST);
+        com.villagecolony.core.type.ColonyPos chest =
+                com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(at));
+        com.villagecolony.core.colony.model.Colony colony = com.villagecolony.core.colony.model.Colony.create(
+                UUID.randomUUID(), chest);
+        VillageColonyMod.COLONIES.register(colony);
+        com.villagecolony.gametest.ColonyFixture owned = com.villagecolony.gametest.ColonyFixture.create().owning(colony);
+        UUID smelter = UUID.randomUUID();
+        VillageColonyMod.WORKERS.register(smelter, colony.id())
+                .assign(com.villagecolony.core.worker.model.ProfessionType.SMELTER);
+        VillageColonyMod.STORAGES.register(com.villagecolony.core.storage.model.WorkerStorage.of(smelter, chest));
+        owned.owning(smelter);
+        Task terracotta = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.SMELT_MATERIAL, TaskPriority.CONSTRUCTION_MATERIAL, ResourceType.TERRACOTTA, 8);
+
+        try {
+            terracotta.reserveFor(smelter);
+
+            context.assertFalse(SmelterGathers.handOff(context.getWorld(), smelter, terracotta, List.of(Items.CLAY)),
+                    "o fundidor devia seguir na fornalha: a argila aparece");
+            context.assertTrue(com.villagecolony.fabric.integration.ColonyChests.countIn(context.getWorld(),
+                            List.of(chest), Items.CLAY) >= SmelterGathers.ORDER,
+                    "a argila não apareceu no baú do fundidor");
+            context.assertFalse(VillageColonyMod.TASKS.assignedTo(smelter).stream().anyMatch(task ->
+                            task.type() == TaskType.COLLECT_SURFACE_RESOURCE),
+                    "o fundidor saiu para buscar argila");
+        } finally {
+            VillageColonyMod.TASKS.ofColony(colony.id()).forEach(task -> VillageColonyMod.TASKS.remove(task.id()));
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
 }

@@ -160,6 +160,18 @@ public final class Colony {
         return observedBeds;
     }
 
+    /**
+     * As camas contadas na caixa inteira — Regra 145: medida a vila, este é o número dela, e a sonda não o
+     * muda mais ({@link #observe(ColonyPos, int, boolean, ColonyPos)}).
+     */
+    public void countBeds(int beds) {
+        if (beds < 0) {
+            throw new IllegalArgumentException("beds must not be negative");
+        }
+
+        observedBeds = beds;
+    }
+
     /** Maior dezena populacional já atendida pelo bosque da colônia. */
     public int forestPopulationMilestone() {
         return forestPopulationMilestone;
@@ -219,24 +231,36 @@ public final class Colony {
     }
 
     /**
-     * A medida da vila: a primeira define a caixa, as seguintes só a
-     * aumentam. O centro vai para o meio dela, na altura de antes.
+     * A caixa gravada no save, devolvida como estava. O centro gravado fica: passar pela primeira medida o poria no
+     * meio da caixa, e a vila que cresceu para um lado teria o centro movido a cada carga do mundo (Regra 141).
+     */
+    public void restoreBounds(VillageBounds saved) {
+        this.bounds = Objects.requireNonNull(saved, "saved");
+    }
+
+    /**
+     * A medida da vila: a primeira define a caixa e põe o centro no meio dela; as seguintes só aumentam a
+     * caixa — o centro fica (Regra 141, autor 2026-10-28: a vila que cresce para um lado não arrasta as
+     * obras, as camas e as varreduras atrás dela).
      *
      * @return se a caixa mudou
      */
     public boolean measure(VillageBounds measured) {
         Objects.requireNonNull(measured, "measured");
 
-        // Só o lado que a medida passa avança, e o centro fica num bloco só —
-        // 2026-10-03, ver VillageBounds.grownBy.
-        VillageBounds next = bounds == null ? measured.centered() : bounds.grownBy(measured);
+        VillageBounds current = bounds;
+        boolean first = current == null;
+        VillageBounds next = current == null ? measured.centered() : current.grownBy(measured);
 
         if (next.equals(bounds)) {
             return false;
         }
 
         bounds = next;
-        center = new ColonyPos(next.centerX(), center.y(), next.centerZ());
+
+        if (first) {
+            center = new ColonyPos(next.centerX(), center.y(), next.centerZ());
+        }
 
         return true;
     }
@@ -364,7 +388,8 @@ public final class Colony {
             probeBeds = beds;
         }
 
-        if (beds < observedBeds && !complete && !confirmedByProbe) {
+        // Vila medida: as camas vêm da caixa inteira (Regra 145), não do que a sonda enxergou.
+        if (bounds != null || (beds < observedBeds && !complete && !confirmedByProbe)) {
             return false;
         }
 
@@ -382,8 +407,8 @@ public final class Colony {
         // A sonda parte do centro da colônia e a ele volta. É a única
         // varredura cuja posição não é acidente de onde alguém estava.
         // Ver ADR-003, Emenda 4.
-        // Vila medida: o centro é o meio da caixa, e só anda quando ela
-        // cresce — a média das camas fazia o centro oscilar (obra órfã).
+        // Vila medida: o centro fica onde a primeira medida o pôs (Regra 141)
+        // — a média das camas fazia o centro oscilar (obra órfã).
         if (!ownProbe || bounds != null) {
             return false;
         }

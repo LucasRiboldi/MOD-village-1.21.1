@@ -41,8 +41,8 @@ import java.util.UUID;
  * pergunta a mais nas poucas colunas que <b>são</b>, e a resposta fica
  * guardada para quando a varredura terminar sem lote.
  *
- * <p><b>Da ponta mais distante do centro</b>, que é a frase da regra:
- * estrada que cresce pelo meio racha a vila.
+ * <p><b>Da ponta mais perto do centro</b> — Regra 140 (autor, 2026-10-28): a vila
+ * adensa antes de esticar, e a rua é de 3, toda de caminho (StreetSurface).
  *
  * <p><b>Calçar não custa material</b> — decisão registrada no Backlog. O
  * que a colônia gasta é a passagem, e o teto de {@link #STRETCH} blocos é
@@ -92,8 +92,8 @@ public final class RoadExtension {
     public static final int CANDIDATES = 12;
 
     /**
-     * As pontas que esta varredura viu, da mais distante para a mais
-     * perto.
+     * As pontas que esta varredura viu, da mais perto para a mais
+     * distante.
      */
     private static final Map<UUID, List<End>> ENDS = new HashMap<>();
 
@@ -174,7 +174,7 @@ public final class RoadExtension {
      * Esta coluna é rua — vale a pena olhar se ela é ponta?
      *
      * <p>Chamada pela busca de lote, uma vez por coluna de rua. Guarda as
-     * {@value #CANDIDATES} mais distantes do centro e descarta o resto:
+     * {@value #CANDIDATES} mais perto do centro e descarta o resto:
      * guardar todas seria uma lista que cresce com o tamanho da vila, e
      * guardar uma só era a vila parando na primeira ponta ruim.
      */
@@ -188,7 +188,9 @@ public final class RoadExtension {
         Optional<Direction> towards = RoadPaving.openSideOf(world, colonyId, road);
 
         if (towards.isPresent()) {
-            addCandidate(ENDS, colonyId, road, towards.get(), center);
+            if (RoadPaving.isMiddleOf(world, colonyId, road, towards.get())) {
+                addCandidate(ENDS, colonyId, road, towards.get(), center);
+            }
             return;
         }
 
@@ -207,16 +209,16 @@ public final class RoadExtension {
 
         double distance = center.getSquaredDistance(road);
 
-        if (found.size() == CANDIDATES && distance <= found.get(found.size() - 1).fromCenter()) {
+        if (found.size() == CANDIDATES && distance >= found.get(found.size() - 1).fromCenter()) {
             // Não entra nem no fim da lista: sai barato, sem ordenar.
             return;
         }
 
         found.add(new End(road, towards, distance));
 
-        // Da mais distante para a mais perto, que é a frase da regra: a
-        // rua cresce pela ponta, e não pelo meio.
-        found.sort(Comparator.comparingDouble(End::fromCenter).reversed());
+        // Da mais perto para a mais distante (Regra 140): a vila adensa
+        // antes de esticar.
+        found.sort(Comparator.comparingDouble(End::fromCenter));
 
         if (found.size() > CANDIDATES) {
             found.remove(found.size() - 1);
@@ -401,7 +403,7 @@ public final class RoadExtension {
     }
 
     /**
-     * Prolonga a rua desta colônia, tentando as pontas mais distantes.
+     * Prolonga a rua desta colônia, tentando as pontas mais perto do centro.
      *
      * <p>Só faz sentido depois de uma varredura de lote que terminou sem
      * achar nada: é ela que enche o registro de pontas, e é o "não há
@@ -433,12 +435,12 @@ public final class RoadExtension {
         }
 
         // A ponta voltada para o lado que a vila anexou vem primeiro (Regra 56 D); a
-        // ordenação é estável, e dentro de cada grupo segue a mais distante.
+        // ordenação é estável, e dentro de cada grupo segue a mais perto.
         VillageExpansion.sideOf(colonyId).ifPresent(side -> ends.sort(Comparator.comparingInt(
                 end -> end.towards().getOffsetX() == side.offsetX() && end.towards().getOffsetZ() == side.offsetZ()
                         ? 0 : 1)));
 
-        // Da mais distante para a mais perto, e a primeira que aceitar
+        // Da mais perto para a mais distante, e a primeira que aceitar
         // calçamento vence. Tentar todas custa poucas leituras de bloco e
         // é o que impede a vila de parar por causa de uma ponta ruim.
         PavingRefusals refusals = new PavingRefusals();

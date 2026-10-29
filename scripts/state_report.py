@@ -10,7 +10,9 @@ Lê os arquivos que o mod grava na pasta do mundo (`<mundo>/villagecolony/analyt
 - quantos ficaram travados;
 - a média da Regra 51 por ofício;
 - o servidor (MSPT);
-- as notas do jogador.
+- as notas do jogador;
+- o diário da vila: o resumo de cada dia de jogo (VC_DAY), os eventos por tipo (VC_EVENT) e as
+  auditorias contra o mundo com problema (VC_AUDIT).
 
 Uso:
     python scripts/state_report.py                       # mundos da instalação de teste
@@ -27,21 +29,28 @@ TICKS_PER_HOUR = 72_000
 
 
 def records_from(path):
-    """Os registros de um arquivo JSONL do mundo ou das linhas VC_STATE de um log."""
-    found = []
+    """Os registros de um arquivo JSONL do mundo ou das linhas VC_* de um log."""
     with open(path, encoding="utf-8", errors="replace") as source:
-        for line in source:
-            line = line.strip()
-            if not line:
-                continue
-            if "VC_STATE " in line:
-                line = line.split("VC_STATE ", 1)[1]
-            if not line.startswith("{"):
-                continue
-            try:
-                found.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue
+        return records_from_lines(source)
+
+
+def records_from_lines(lines):
+    """Os registros JSON destas linhas: a linha inteira, ou o que vem depois de VC_STATE/EVENT/DAY/AUDIT."""
+    found = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        for prefix in ("VC_STATE ", "VC_EVENT ", "VC_DAY ", "VC_AUDIT "):
+            if prefix in line:
+                line = line.split(prefix, 1)[1]
+                break
+        if not line.startswith("{"):
+            continue
+        try:
+            found.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
     return found
 
 
@@ -60,11 +69,22 @@ def summarize(records):
     """Por colônia: o resumo do período, na ordem dos tiques."""
     by_colony = defaultdict(list)
     notes = defaultdict(list)
+    days = defaultdict(list)
+    events = defaultdict(lambda: defaultdict(int))
+    audits = defaultdict(list)
     for record in records:
-        if record.get("kind") == "note":
+        kind = record.get("kind")
+        colony = record.get("colony", "?")
+        if kind == "note":
             notes[record.get("colony", "-")].append(record)
+        elif kind == "day":
+            days[colony].append(record)
+        elif kind == "event":
+            events[colony][record.get("type", "?")] += 1
+        elif kind == "audit":
+            audits[colony].append(record)
         elif "people" in record:
-            by_colony[record.get("colony", "?")].append(record)
+            by_colony[colony].append(record)
 
     summaries = {}
     for colony, states in by_colony.items():
@@ -94,8 +114,21 @@ def summarize(records):
             "rule51": {trade: round(sum(values) / len(values)) for trade, values in sorted(rule51.items())},
             "mspt": (round(sum(mspt) / len(mspt), 1), max(mspt)) if mspt else None,
             "notes": [note.get("text", "") for note in notes.get(colony, [])],
+            "days": [day_line(day) for day in sorted(days.get(colony, []), key=lambda d: d.get("ofDay", 0))],
+            "events": dict(sorted(events.get(colony, {}).items())),
+            "audits": [audit for audit in audits.get(colony, []) if audit.get("problems", 0) > 0],
         }
     return summaries
+
+
+def day_line(day):
+    """Uma linha por dia de jogo: população, obras, camas, baús e a Regra 51 de cada ofício no dia."""
+    people = day.get("people", {})
+    rule51 = ", ".join(f"{trade} {shares.get('rule51', '?')}%" for trade, shares in sorted(day.get("dayTime", {}).items())
+                       if trade != "NONE")
+    return (f"dia {day.get('ofDay', '?')}: aldeões {people.get('villagers', '?')}, camas {people.get('beds', '?')},"
+            f" obras {day.get('build', {}).get('buildings', '?')}, baús {day.get('stock', {}).get('fill', '?')}%"
+            f" — Regra 51: {rule51 or '-'}")
 
 
 def render(summaries):
@@ -112,10 +145,21 @@ def render(summaries):
                      + (f" — acima de 15%: {', '.join(over)}" if over else ""))
         for note in s["notes"]:
             lines.append(f"  nota: {note}")
+        for day in s["days"]:
+            lines.append(f"  {day}")
+        if s["events"]:
+            lines.append("  eventos: " + ", ".join(f"{kind} {count}" for kind, count in s["events"].items()))
+        for audit in s["audits"]:
+            details = {key: value for key, value in audit.items()
+                       if key not in ("schema", "mod", "tick", "kind", "colony", "at")}
+            lines.append(f"  auditoria com problema: {details}")
     return lines
 
 
 def main(arguments):
+    # O console do Windows (cp1252) não tem o "→" do relatório: a saída vai em UTF-8.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     records = []
     for path in files_from(arguments):
         records.extend(records_from(path))

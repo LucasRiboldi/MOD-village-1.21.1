@@ -42,11 +42,52 @@ final class SurfaceHits {
 
     private static final Map<Key, Set<BlockPos>> HITS = new HashMap<>();
 
+    /**
+     * Quanto tempo a coluna que o coletor não alcançou fica fora das buscas — Regra 144 (autor
+     * 2026-10-28): na taiga simulada três fazendeiros voltaram 79 vezes à mesma terra inalcançável, porque
+     * a memória a devolvia a cada tarefa nova. Um dia de jogo.
+     */
+    static final long UNREACHABLE_FOR = 24_000;
+
+    /** Quantos blocos em volta da coluna inalcançável ficam de fora com ela. */
+    static final int UNREACHABLE_PATCH = 2;
+
+    /** As colunas inalcançáveis de cada colônia, e até quando ficam de fora. */
+    private static final Map<UUID, Map<BlockPos, Long>> UNREACHABLE = new HashMap<>();
+
     private SurfaceHits() {
     }
 
     static void clearAll() {
         HITS.clear();
+        UNREACHABLE.clear();
+    }
+
+    /** O coletor não alcançou {@code target}: a mancha sai da memória e a coluna fica fora por um dia. */
+    static void unreachable(UUID colonyId, BlockPos target, long now) {
+        BlockPos column = new BlockPos(target.getX(), 0, target.getZ());
+
+        HITS.forEach((key, columns) -> {
+            if (key.colonyId().equals(colonyId)) {
+                columns.removeIf(hit -> hit.getManhattanDistance(column) <= 2 * PATCH_RADIUS);
+            }
+        });
+        UNREACHABLE.computeIfAbsent(colonyId, id -> new HashMap<>()).put(column, now + UNREACHABLE_FOR);
+    }
+
+    /** Se esta coluna fica a {@link #UNREACHABLE_PATCH} de uma inalcançável há menos de um dia. */
+    static boolean isUnreachable(UUID colonyId, BlockPos column, long now) {
+        Map<BlockPos, Long> columns = UNREACHABLE.get(colonyId);
+
+        if (columns == null) {
+            return false;
+        }
+
+        columns.values().removeIf(until -> until <= now);
+
+        // A mancha em volta do alvo também: a terra vizinha fica no mesmo lugar que não se alcança.
+        return columns.keySet().stream().anyMatch(marked -> Math.abs(marked.getX() - column.getX()) <= UNREACHABLE_PATCH
+                && Math.abs(marked.getZ() - column.getZ()) <= UNREACHABLE_PATCH);
     }
 
     /** As colunas lembradas, para o save — ADR-039 C. Chave {@code colônia|RECURSO}. */

@@ -139,6 +139,7 @@ public final class VillageDetectionHandler {
     public static void register() {
         ServerChunkEvents.CHUNK_LOAD.register(VillageDetectionHandler::onChunkLoad);
         ServerTickEvents.END_SERVER_TICK.register(VillageDetectionHandler::onServerTick);
+        ServerTickEvents.END_WORLD_TICK.register(SimulatedObserver::tickForcedChunks);
     }
 
     /**

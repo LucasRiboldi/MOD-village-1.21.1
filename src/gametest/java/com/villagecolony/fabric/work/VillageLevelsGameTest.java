@@ -17,40 +17,35 @@ public class VillageLevelsGameTest implements FabricGameTest {
 
 
 
-    /** A roça do deserto: borda de arenito e areia um abaixo; com água perto, ali cabe canteiro. */
+    /**
+     * A roça do deserto: borda de arenito e areia um abaixo; o canteiro 9×9 cabe na areia de fora, um abaixo da roça
+     * (autor, 2026-10-28: canteiro retangular, {@link FarmPlots}).
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_levels")
     public void aNewPlotFitsOnTheSandBeyondTheBorder(TestContext context) {
         ServerWorld world = context.getWorld();
+        java.util.UUID colonyId = java.util.UUID.randomUUID();
         BlockPos farm = context.getAbsolutePos(new BlockPos(1, 4, 1)).add(1_000_000, 0, 2_300_000);
-        BlockPos dry = farm.add(0, 0, 40);
-        world.getChunk(farm);
-        world.getChunk(dry);
 
-        for (BlockPos at : new BlockPos[] {farm, dry}) {
-            for (BlockPos pos : BlockPos.iterate(at.add(-3, -2, -3), at.add(3, -1, 3))) {
-                world.setBlockState(pos, Blocks.SAND.getDefaultState());
-            }
-            world.setBlockState(at, Blocks.FARMLAND.getDefaultState());
-            world.setBlockState(at.down(), Blocks.SAND.getDefaultState());
-            world.setBlockState(at.east(), Blocks.CUT_SANDSTONE.getDefaultState());
-            world.setBlockState(at.east().down(), Blocks.SAND.getDefaultState());
+        for (BlockPos pos : BlockPos.iterate(farm.add(-2, -2, -6), farm.add(13, 2, 6))) {
+            world.getChunk(pos);
+            world.setBlockState(pos, pos.getY() < farm.getY() ? Blocks.SAND.getDefaultState() : Blocks.AIR.getDefaultState());
         }
-        world.setBlockState(farm.west(), Blocks.WATER.getDefaultState());
-        world.setBlockState(farm.west().down(), Blocks.SAND.getDefaultState());
+
+        world.setBlockState(farm, Blocks.FARMLAND.getDefaultState());
+        world.setBlockState(farm.east(), Blocks.CUT_SANDSTONE.getDefaultState());
 
         try {
-            Optional<BlockPos> plot = FarmerTill.nextPlot(world, farm);
+            Optional<BlockPos> plot = FarmPlots.next(world, colonyId, farm);
 
-            context.assertTrue(plot.isPresent() && world.getBlockState(plot.get()).isOf(Blocks.SAND),
-                    "a areia em volta da roça do deserto não serviu de canteiro: " + plot);
-            context.assertTrue(FarmerTill.nextPlot(world, dry).isEmpty(),
-                    "controle: sem água perto, a areia virou canteiro");
+            context.assertTrue(plot.isPresent() && world.getBlockState(plot.get()).isOf(Blocks.SAND)
+                            && plot.get().getY() == farm.getY() - 1,
+                    "a areia além da borda, um abaixo da roça do deserto, não serviu de canteiro: " + plot);
         } finally {
-            for (BlockPos at : new BlockPos[] {farm, dry}) {
-                for (BlockPos pos : BlockPos.iterate(at.add(-3, -2, -3), at.add(3, 1, 3))) {
-                    world.setBlockState(pos, Blocks.AIR.getDefaultState());
-                }
+            for (BlockPos pos : BlockPos.iterate(farm.add(-2, -2, -6), farm.add(13, 2, 6))) {
+                world.setBlockState(pos, Blocks.AIR.getDefaultState());
             }
+            FarmPlots.clearAll();
         }
 
         context.complete();

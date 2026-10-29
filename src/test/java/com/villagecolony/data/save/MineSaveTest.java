@@ -271,6 +271,27 @@ class MineSaveTest {
         assertEquals(mine.shaft().gallery(), back.shaft().gallery());
     }
 
+    /**
+     * A forma 8 era a dos salões de 10, e a 0.3.96 os fez de 17 sem subir a versão: o cursor de uma mina gravada
+     * na forma 8 aponta para outra posição física. Na forma atual, ela recomeça do primeiro degrau.
+     */
+    @Test
+    void aMineFromShapeEightStartsOver() {
+        UUID colonyId = UUID.randomUUID();
+
+        Mine mine = Mine.restore(colonyId, MineShaft.from(MOUTH, Side.EAST), 437);
+
+        NbtCompound nbt = savedWith(colonyAt(colonyId), mine)
+                .writeNbt(new NbtCompound(), null);
+
+        nbt.getList("mines", NbtElement.COMPOUND_TYPE).getCompound(0).putInt("shape", 8);
+
+        Mine back = ColonySavedData.TYPE.deserializer().apply(nbt, null).mines().get(0);
+
+        assertEquals(0, back.arm(0).cut(), "o cursor da forma 8 devia voltar ao primeiro degrau");
+        assertEquals(MOUTH, back.entry());
+    }
+
     @Test
     void aMineFromShapeFiveRestartsItsCursorAndKeepsItsMouthAndArch() {
         UUID colonyId = UUID.randomUUID();

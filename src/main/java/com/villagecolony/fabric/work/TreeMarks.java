@@ -211,6 +211,18 @@ public final class TreeMarks {
         return Math.min(doubled, (long) UNREACHABLE_MEMORY * MAX_MEMORY_FACTOR);
     }
 
+    /** Um dia de jogo, em tiques. */
+    static final int ONE_DAY = 24_000;
+
+    /**
+     * Quanto tempo fica de fora a árvore que ele não alcança — O5 (autor, 2026-10-28): um dia na primeira recusa; as
+     * seguintes seguem a escada de {@link #memoryFor}, sem nunca durar menos que o dia. A marca de parede
+     * ({@link #REJECTED}) continua na escada de dez ciclos.
+     */
+    static long outOfReachFor(int refusals) {
+        return refusals <= 0 ? 0 : Math.max(ONE_DAY, memoryFor(refusals));
+    }
+
     /**
      * Marca uma árvore como fora de alcance por ora.
      *
@@ -273,7 +285,7 @@ public final class TreeMarks {
                 base.toShortString(),
                 count,
                 Math.max(trunk.size(), 1),
-                memoryFor(count));
+                outOfReachFor(count));
     }
 
     /**
@@ -360,7 +372,7 @@ public final class TreeMarks {
         // A entrada fica mesmo depois de o castigo vencer, e é de
         // propósito: ela carrega a contagem, que é o que faz o castigo
         // seguinte ser maior. Quem a apaga é forgetStaleMarks.
-        return world.getTime() - refusal.since() < memoryFor(refusal.count());
+        return world.getTime() - refusal.since() < outOfReachFor(refusal.count());
     }
 
     static void reject(ServerWorld world, List<BlockPos> trunk) {

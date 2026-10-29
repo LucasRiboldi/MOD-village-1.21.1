@@ -111,6 +111,16 @@ public final class SweepState {
     record Sweep(int ring, int column, ColonyPos from) {
     }
 
+    /** A nota do último lote escolhido por colônia no mapa de interesse, para o retrato da vila (VC_STATE). */
+    static final Map<UUID, Double> LOT_SCORE = new HashMap<>();
+
+    /** A nota do último lote escolhido desta colônia, se já houve um. */
+    public static java.util.OptionalDouble lastLotScore(UUID colonyId) {
+        Double score = LOT_SCORE.get(colonyId);
+
+        return score == null ? java.util.OptionalDouble.empty() : java.util.OptionalDouble.of(score);
+    }
+
     record RoadScan(Optional<Site> site, int columns) {
     }
 
@@ -319,6 +329,7 @@ public final class SweepState {
         }
         if (REPORTS.size() >= MAX_REPORTS && !REPORTS.containsKey(colonyId)) {
             REPORTS.clear();
+            LOT_SCORE.clear();
         }
         REPORTS.put(
                 colonyId,

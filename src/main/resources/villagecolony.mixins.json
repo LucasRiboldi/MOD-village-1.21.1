@@ -4,9 +4,11 @@
   "package": "com.villagecolony.fabric.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "ChunkGeneratorMixin",
     "HostileSpawnMixin",
     "ItemStackCraftMixin",
     "LandPathNodeMakerMixin",
+    "MoveToTargetTaskMixin",
     "VillagerDataMixin",
     "VillagerEntityMixin"
   ],

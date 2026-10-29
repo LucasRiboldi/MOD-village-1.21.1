@@ -123,6 +123,7 @@ public final class WorkTime {
 
         if (now - windowStart >= REPORT_EVERY) {
             report(now - windowStart);
+            VillageDiary.addWindows(WINDOW);
             LAST.clear();
             WINDOW.forEach((colony, trades) -> LAST.put(colony, copyOf(trades)));
             WINDOW.clear();

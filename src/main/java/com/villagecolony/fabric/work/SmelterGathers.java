@@ -74,10 +74,12 @@ final class SmelterGathers {
             return true;
         }
 
-        // A vila já provou que não tem este cru no alcance (KnownAbsent, regra do autor de 2026-10-20):
-        // registra e o material aparece no baú do fundidor, que segue na fornalha em vez de sair de novo.
-        if (colony.isPresent() && KnownAbsent.isAbsent(colonyId, raw.get(), world.getTime())
-                && stockWhatIsAbsent(world, colony.get(), workerId, raw.get())) {
+        // A vila já provou que não tem este cru no alcance (KnownAbsent, regra do autor de 2026-10-20), ou ele é a
+        // argila, que aparece sempre (T5, autor 2026-10-29): registra e o material aparece no baú do fundidor, que
+        // segue na fornalha em vez de sair de novo.
+        boolean appears = raw.get() == ResourceType.CLAY || KnownAbsent.isAbsent(colonyId, raw.get(), world.getTime());
+
+        if (colony.isPresent() && appears && stockWhatIsAbsent(world, colony.get(), workerId, raw.get())) {
             return false;
         }
 

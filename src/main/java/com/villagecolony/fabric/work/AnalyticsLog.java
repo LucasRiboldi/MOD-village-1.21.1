@@ -72,7 +72,7 @@ public final class AnalyticsLog {
         return append(world, note);
     }
 
-    private static Optional<Path> append(ServerWorld world, JsonObject record) {
+    static Optional<Path> append(ServerWorld world, JsonObject record) {
         // O instante real, para cruzar com o Spark e com o log do jogo.
         record.addProperty("at", java.time.Instant.now().toString());
         Path folder = world.getServer().getSavePath(WorldSavePath.ROOT).resolve("villagecolony").resolve("analytics");

@@ -150,6 +150,14 @@ public final class WaitingWork {
     public static boolean giveUpIfStalled(
             ServerWorld world, Colony colony, ConstructionProject project) {
 
+        // Sem peça a pôr, a obra fecha aqui — o construtor só a fechava com tarefa aberta (Regra 148).
+        if (BuildClosing.closeIfDone(world, colony, project)) {
+            WAITING_SINCE.remove(project.id());
+            BUILDING_SINCE.remove(project.id());
+
+            return true;
+        }
+
         if (project.state() != ConstructionState.WAITING_RESOURCES) {
             WAITING_SINCE.remove(project.id());
 
@@ -240,12 +248,15 @@ public final class WaitingWork {
         if (onlyUnsupported) {
             // A segunda janela sem o apoio aparecer: as poucas peças sem apoio são
             // largadas e a obra fecha, em vez de prender a vaga única (playtest 0.3.31).
-            if (UNSUPPORTED_WINDOWS.merge(project.id(), 1, Integer::sum) >= 2
-                    && UnsupportedClosing.close(project)) {
+            // Na segunda, o que só esperava material surge e a obra fecha (Regra 148).
+            if (UNSUPPORTED_WINDOWS.merge(project.id(), 1, Integer::sum) >= 2) {
+                if (!UnsupportedClosing.close(project)) {
+                    BuildClosing.finishBySurging(world, colony, project);
+                }
                 UNSUPPORTED_WINDOWS.remove(project.id());
                 BUILDING_SINCE.remove(project.id());
 
-                return false;
+                return true;
             }
 
             BuilderPlacement.reconsiderDeferredPieces(world, project);
@@ -260,9 +271,18 @@ public final class WaitingWork {
             return false;
         }
 
+        BUILDING_SINCE.remove(project.id());
+
+        // Começada, a casa não fica meio pronta: o que falta surge e ela fecha (Regra 148).
+        if (project.hasBuiltAnything()) {
+            BuildClosing.finishBySurging(world, colony, project);
+
+            return true;
+        }
+
         VillageColonyMod.LOGGER.info(
                 "Colony {} lets go of {} at {} — it has been at {} pieces for {} work ticks"
-                        + " and placed none. The half-built house and its lot stay taken",
+                        + " and nothing of it stands yet — it is let go",
                 colony.id(),
                 project.blueprint().id(),
                 project.origin(),
@@ -385,7 +405,7 @@ public final class WaitingWork {
         IdleLog.clear(colony.id(), SUBJECT);
     }
     /** A vaga de obra é única; suas tarefas não podem sobreviver ao projeto. */
-    private static void cancelBuildTasks(Colony colony) {
+    static void cancelBuildTasks(Colony colony) {
         for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
             if (task.type() == TaskType.BUILD && task.isOpen()) {
                 task.executor().ifPresent(worker -> {

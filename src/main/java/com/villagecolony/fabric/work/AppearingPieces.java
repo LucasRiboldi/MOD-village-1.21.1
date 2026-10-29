@@ -11,6 +11,9 @@ import net.minecraft.registry.tag.BlockTags;
  * verde-limão 4×, feno, argila, terracota branca vitrificada), a obra as punha de lado e o carpinteiro
  * e o construtor ficavam esperando.
  *
+ * <p>E o gelo — gelo, gelo compactado e gelo azul (autor, 2026-10-28, T1 do diagnóstico da 0.3.103: 162 gelos
+ * compactados postos de lado na vila da neve): o jogo só o dá com toque suave, e nenhuma profissão o obtém.
+ *
  * <p>O baú vem primeiro: a que a vila já tem é usada. Sem ela, a peça surge no lugar, como a horta
  * (BuilderPlacement), e não vira pedido de material nem falta no registro.
  */
@@ -24,7 +27,12 @@ final class AppearingPieces {
         return block.getDefaultState().isIn(BlockTags.TERRACOTTA)
                 || Registries.BLOCK.getId(block).getPath().endsWith("_glazed_terracotta")
                 || block == Blocks.HAY_BLOCK
-                || block == Blocks.CLAY;
+                || block == Blocks.CLAY
+                || block == Blocks.ICE
+                || block == Blocks.PACKED_ICE
+                || block == Blocks.BLUE_ICE
+                || block == Blocks.SNOW_BLOCK
+                || block == Blocks.SNOW;
     }
 
     /**

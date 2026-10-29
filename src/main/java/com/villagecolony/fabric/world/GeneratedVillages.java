@@ -6,12 +6,15 @@ import com.villagecolony.core.colony.model.VillageBounds;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.StructureTags;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.structure.PoolStructurePiece;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.Heightmap;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -66,6 +69,34 @@ public final class GeneratedVillages {
         }
 
         return Optional.ofNullable(found);
+    }
+
+    /**
+     * As caixas das casas da vila gerada que alcança esta coluna — as peças {@code village/<estilo>/houses/...}, se o
+     * chunk estiver carregado. Servem para ligar a porta das casas originais à rua (autor, 2026-10-28).
+     */
+    public static List<BlockBox> housesAt(ServerWorld world, int x, int z) {
+        int chunkX = x >> 4;
+        int chunkZ = z >> 4;
+
+        if (!world.isChunkLoaded(chunkX, chunkZ)) {
+            return List.of();
+        }
+
+        var registry = world.getRegistryManager().get(RegistryKeys.STRUCTURE);
+        List<BlockBox> houses = new ArrayList<>();
+
+        for (StructureStart start : world.getStructureAccessor().getStructureStarts(
+                new ChunkPos(chunkX, chunkZ),
+                structure -> registry.getEntry(structure).isIn(StructureTags.VILLAGE))) {
+            for (var piece : start.getChildren()) {
+                if (piece instanceof PoolStructurePiece pool && pool.getPoolElement().toString().contains("/houses/")) {
+                    houses.add(piece.getBoundingBox());
+                }
+            }
+        }
+
+        return houses;
     }
 
     /**

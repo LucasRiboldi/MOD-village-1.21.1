@@ -29,8 +29,11 @@ import java.util.PriorityQueue;
  */
 public final class VillagePathPlanner {
 
-    /** A largura do caminho, onde cabe: o eixo e uma coluna de cada lado. */
-    public static final int WIDTH = 3;
+    /**
+     * A largura do caminho da porta até a rua: só o eixo (autor, 2026-10-28). O traçado ainda prefere passar onde
+     * cabem as colunas de lado ({@code NARROW}), e foge de correr colado a outro caminho ({@code BESIDE}).
+     */
+    public static final int WIDTH = 1;
 
     /** O degrau máximo entre um passo e o seguinte, e entre o eixo e a coluna de lado. */
     public static final int MAX_STEP = 1;

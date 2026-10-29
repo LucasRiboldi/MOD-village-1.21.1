@@ -51,6 +51,18 @@ public final class StripLot {
     /** O caminho mais longo até a rua: o alcance da rede de caminhos além da caixa (Regra 64). */
     public static final int MAX_PATH = 32;
 
+    /**
+     * O lote da faixa fica a até tantos blocos do centro da vila — Regra 141 (autor 2026-10-28; na taiga
+     * simulada o curral nasceu a 98 blocos e as obras seguintes foram atrás dele).
+     */
+    public static final int REACH = 48;
+
+    /** Quanto o alcance cresce a cada volta inteira pela faixa sem lote. */
+    public static final int REACH_STEP = 10;
+
+    /** As voltas sem lote de cada colônia: o alcance de agora é {@code REACH + REACH_STEP × voltas}. */
+    private static final Map<UUID, Integer> MISSES = new HashMap<>();
+
     /** De quantos em quantos blocos a porta é testada, na frente e ao longo da faixa. */
     static final int STEP = 2;
 
@@ -62,6 +74,7 @@ public final class StripLot {
     static final class Tally {
         int doors;
         int lotsFit;
+        int tooFar;
 
         /** O fim do orçamento desta passada; entre um tamanho de casa e outro a porta para se passou dele. */
         long deadline = Long.MAX_VALUE;
@@ -131,6 +144,7 @@ public final class StripLot {
 
             if (site.isPresent()) {
                 CURSORS.remove(colonyId);
+                MISSES.remove(colonyId);
 
                 return site;
             }
@@ -147,13 +161,19 @@ public final class StripLot {
             tally.resumeFootprint = 0;
         }
 
-        // Volta inteira sem lote: diz o que viu, e a próxima passada recomeça do fundo.
+        // Volta inteira sem lote: diz o que viu, a próxima passada recomeça do fundo e, se a faixa tinha
+        // porta além do alcance, o alcance cresce um passo.
         CURSORS.remove(colonyId);
 
+        if (tally.tooFar > 0) {
+            MISSES.merge(colonyId, 1, Integer::sum);
+        }
+
         VillageColonyMod.LOGGER.info(
-                "Colony {} found no lot inside the annexed strip {} — {} doors, {} lots fit, none with a path"
-                        + " of at most {} blocks to the road — {}",
-                colonyId.toString().substring(0, 8), side, tally.doors, tally.lotsFit, MAX_PATH,
+                "Colony {} found no lot inside the annexed strip {} — {} doors ({} beyond {} blocks of the"
+                        + " center), {} lots fit, none with a path of at most {} blocks to the road — {}",
+                colonyId.toString().substring(0, 8), side, tally.doors, tally.tooFar, reachOf(colonyId),
+                tally.lotsFit, MAX_PATH,
                 tally.pathStoppedBy.isEmpty() ? "no path search" : "path stopped by " + tally.summary());
 
         return Optional.empty();
@@ -189,6 +209,12 @@ public final class StripLot {
     private static Optional<Site> siteAt(
             ServerWorld world, UUID colonyId, BlockPos column, Direction out, VillageBounds strip,
             List<Footprint> footprints, Tally tally) {
+
+        if (beyondReach(colonyId, column)) {
+            tally.tooFar++;
+
+            return Optional.empty();
+        }
 
         Optional<BlockPos> door = groundAt(world, column.getX(), column.getZ());
 
@@ -291,6 +317,25 @@ public final class StripLot {
         return LotGround.groundInColumn(world, x, z, top);
     }
 
+    /** O alcance de agora desta colônia: {@link #REACH}, mais {@link #REACH_STEP} por volta sem lote. */
+    static int reachOf(UUID colonyId) {
+        return REACH + REACH_STEP * MISSES.getOrDefault(colonyId, 0);
+    }
+
+    /** Se a porta nesta coluna fica além do alcance, medido do centro fixo da vila. */
+    private static boolean beyondReach(UUID colonyId, BlockPos column) {
+        long reach = reachOf(colonyId);
+
+        return VillageColonyMod.COLONIES.find(colonyId)
+                .map(colony -> {
+                    long dx = (long) column.getX() - colony.center().x();
+                    long dz = (long) column.getZ() - colony.center().z();
+
+                    return dx * dx + dz * dz > reach * reach;
+                })
+                .orElse(false);
+    }
+
     private static boolean inside(VillageBounds strip, int originX, int originZ, ColonyPos size) {
         return strip.containsColumn(originX, originZ)
                 && strip.containsColumn(originX + size.x() - 1, originZ + size.z() - 1);
@@ -303,5 +348,6 @@ public final class StripLot {
 
     public static void clearAll() {
         CURSORS.clear();
+        MISSES.clear();
     }
 }

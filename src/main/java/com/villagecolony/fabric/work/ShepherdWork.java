@@ -61,8 +61,14 @@ public final class ShepherdWork {
         ServerMemory.register(ShepherdWork.class, ShepherdWork::clearAll);
     }
 
-    /** Alcance de braço, medido no plano. O mesmo do lenhador. */
+    /** Até onde ele anda: para a 3 blocos da ovelha, e não no bloco dela — com a ovelha no curral, ficava preso lá dentro. */
     private static final int REACH = 3;
+
+    /**
+     * Até onde ele tosquia: 4,5 blocos do olho ao meio da ovelha, como o fazendeiro — por cima da cerca, sem entrar
+     * no curral (T2 do diagnóstico da 0.3.103, autor 2026-10-28: 45 pastores presos no curral).
+     */
+    static final double EYE_REACH = 4.5;
 
     /** Até onde ele procura rebanho. */
     private static final int SEARCH_RADIUS = 32;
@@ -272,7 +278,7 @@ public final class ShepherdWork {
             if (job.stall.stuck(world, villager) || job.stalled >= STALL_LIMIT) {
                 giveUp(workerId, job);
             } else {
-                WorkTargets.set(workerId, sheep.getBlockPos());
+                WorkTargets.set(workerId, sheep.getBlockPos(), REACH);
             }
 
             return;
@@ -413,10 +419,7 @@ public final class ShepherdWork {
     }
 
     private static boolean isWithinReach(VillagerEntity villager, SheepEntity sheep) {
-        double dx = villager.getX() - sheep.getX();
-        double dz = villager.getZ() - sheep.getZ();
-
-        return dx * dx + dz * dz <= REACH * REACH;
+        return villager.getEyePos().squaredDistanceTo(sheep.getBoundingBox().getCenter()) <= EYE_REACH * EYE_REACH;
     }
 
     private static void release(UUID workerId, Job job) {

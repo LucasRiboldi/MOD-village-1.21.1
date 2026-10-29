@@ -48,6 +48,14 @@ public final class ChestDepositor {
      * @return quantos itens não couberam
      */
     public static int deposit(ServerWorld world, ColonyPos chest, Item item, int amount) {
+        return deposit(world, chest, item, amount, false);
+    }
+
+    /**
+     * O mesmo, e {@code uncapped} tira o teto de compartimentos por item ({@link ChestSlotCap}): o baú
+     * público da vila enche por inteiro — Regra 143 (autor 2026-10-28).
+     */
+    public static int deposit(ServerWorld world, ColonyPos chest, Item item, int amount, boolean uncapped) {
         if (amount <= 0) {
             return 0;
         }
@@ -60,7 +68,8 @@ public final class ChestDepositor {
 
         remaining = fillExistingStacks(inventory, item, remaining);
         remaining = fillEmptySlots(inventory, item, remaining,
-                ChestSlotCap.slotsOpenFor(emptySlots(inventory), slotsHolding(inventory, item), handle.named()));
+                ChestSlotCap.slotsOpenFor(emptySlots(inventory), slotsHolding(inventory, item),
+                        handle.named() || uncapped));
 
         inventory.markDirty();
 
