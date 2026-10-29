@@ -138,7 +138,7 @@ public final class RoadPaving {
 
     /**
      * As duas bordas da rua de 3 (Regra 140): a coluna de cada lado do meio, no chão dela a até
-     * {@link RoadExtension#MAX_STEP} do meio, com a mistura gasta ({@link StreetSurface#edge}). A borda que
+     * {@link RoadExtension#MAX_STEP} do meio, com o caminho do chão ({@link StreetSurface#edge}). A borda que
      * não cabe — degrau alto, construção, água — fica sem calçar e a rua segue estreita ali.
      */
     private static void layEdges(ServerWorld world, UUID colonyId, BlockPos middle, Direction towards) {

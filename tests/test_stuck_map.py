@@ -38,6 +38,27 @@ class StuckMapTest(unittest.TestCase):
         self.assertEqual(3, len(result[0][1]))
         self.assertEqual(1, len(result[1][1]))
 
+    def test_without_a_log_it_reads_the_game_logs_folder(self):
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as appdata:
+            logs = pathlib.Path(appdata) / ".minecraft" / "logs"
+            logs.mkdir(parents=True)
+            (logs / "villagecolony-actions-20261028-010000.jsonl").write_text("", encoding="utf-8")
+            (logs / "villagecolony-actions-20261028-020000.jsonl").write_text("", encoding="utf-8")
+            old = os.environ.get("APPDATA")
+            os.environ["APPDATA"] = appdata
+
+            try:
+                log, journals = stuck_map.game_logs()
+            finally:
+                if old is not None:
+                    os.environ["APPDATA"] = old
+
+        self.assertEqual(str(logs / "latest.log"), log)
+        self.assertEqual([str(logs / "villagecolony-actions-20261028-020000.jsonl")], journals)
+
 
 if __name__ == "__main__":
     unittest.main()

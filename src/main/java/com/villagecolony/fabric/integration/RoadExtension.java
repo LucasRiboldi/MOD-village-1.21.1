@@ -42,7 +42,7 @@ import java.util.UUID;
  * guardada para quando a varredura terminar sem lote.
  *
  * <p><b>Da ponta mais perto do centro</b> — Regra 140 (autor, 2026-10-28): a vila
- * adensa antes de esticar, e a rua é de 3, com a mistura gasta nas bordas.
+ * adensa antes de esticar, e a rua é de 3, toda de caminho (StreetSurface).
  *
  * <p><b>Calçar não custa material</b> — decisão registrada no Backlog. O
  * que a colônia gasta é a passagem, e o teto de {@link #STRETCH} blocos é

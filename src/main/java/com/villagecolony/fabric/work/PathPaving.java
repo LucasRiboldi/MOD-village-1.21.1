@@ -240,7 +240,7 @@ public final class PathPaving {
             }
         }
 
-        // O meio é o caminho do bioma; a borda, a mistura gasta (StreetSurface, autor 2026-10-28).
+        // Meio e borda são o caminho do chão (StreetSurface, autor 2026-10-28).
         world.setBlockState(floor, edge ? StreetSurface.edge(world, floor, surface) : StreetSurface.center(world, floor, surface));
         RoadIndex.remember(colonyId, floor);
     }

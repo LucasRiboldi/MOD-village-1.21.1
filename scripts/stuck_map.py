@@ -9,14 +9,19 @@ de ações (``action=STRANDED``, com ``x, y, z``), agrupa em células de ``--cel
   laranja = encalhe, o tamanho cresce com a contagem.
 
 Uso:
-    python scripts/stuck_map.py LOG [DIARIO.jsonl ...] [--region DIR --center X,Z --radius 96 --out mapa.png]
+    python scripts/stuck_map.py [LOG [DIARIO.jsonl ...]] [--region DIR --center X,Z --radius 96 --out mapa.png]
+
+Sem LOG, lê o ``latest.log`` e o diário de ações mais novo da pasta ``logs`` do jogo (``%APPDATA%/.minecraft``),
+como o ``action_report.py``.
 """
 
 from __future__ import annotations
 
 import argparse
+import glob
 import importlib.util
 import json
+import os
 import pathlib
 import re
 from collections import Counter, defaultdict
@@ -26,6 +31,14 @@ from PIL import ImageDraw
 TELEPORT = "teleporte"
 STRANDED = "encalhe"
 POSITION = re.compile(r"(-?\d+), (-?\d+), (-?\d+)")
+
+
+def game_logs():
+    """O ``latest.log`` e o diário de ações mais novo da pasta ``logs`` do jogo."""
+    folder = os.path.join(os.environ.get("APPDATA", ""), ".minecraft", "logs")
+    journals = sorted(glob.glob(os.path.join(folder, "villagecolony-actions-*.jsonl")))
+
+    return os.path.join(folder, "latest.log"), journals[-1:]
 
 
 def teleports_from(lines):
@@ -107,7 +120,7 @@ def draw(region, center, radius, scale, teleports, strandings, out):
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("log", help="latest.log com as linhas VC_EVENT")
+    parser.add_argument("log", nargs="?", help="latest.log com as linhas VC_EVENT (padrão: o do jogo)")
     parser.add_argument("journals", nargs="*", help="diários de ações (villagecolony-actions-*.jsonl)")
     parser.add_argument("--cell", type=int, default=4)
     parser.add_argument("--top", type=int, default=15)
@@ -117,6 +130,9 @@ def main(argv=None) -> int:
     parser.add_argument("--scale", type=int, default=4)
     parser.add_argument("--out", default="stuck_map.png")
     args = parser.parse_args(argv)
+
+    if args.log is None:
+        args.log, args.journals = game_logs()
 
     with open(args.log, encoding="utf-8", errors="replace") as source:
         teleports = teleports_from(source)

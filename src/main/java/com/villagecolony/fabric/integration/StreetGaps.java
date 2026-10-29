@@ -17,8 +17,8 @@ import java.util.UUID;
  * As falhas no meio da rua viram rua — Regra 149 (autor, 2026-10-28: no mapa das ruas da taiga simulada a rua
  * do jogo era pontilhada, com grama e terra no meio do percurso). Uma falha é de {@link #MAX_GAP} blocos ou
  * menos numa linha reta entre duas colunas de rua, com no máximo um de desnível. Só o chão natural é trocado
- * (a mesma recusa do calçamento, {@link RoadPaving#refusalOfTheGround}); o desgaste da borda que a colônia
- * assentou já é rua ({@link StreetSurface#isColonyStreet}) e fica.
+ * (a mesma recusa do calçamento, {@link RoadPaving#refusalOfTheGround}). Na mesma passada, o desgaste que a
+ * colônia assentou na borda volta a ser caminho ({@link StreetSurface#unworn}, autor 2026-10-28).
  */
 public final class StreetGaps {
 
@@ -29,9 +29,10 @@ public final class StreetGaps {
     }
 
     /**
-     * Tapa até {@code max} colunas de falha, a partir das colunas de rua mais perto de {@code near}.
+     * Tapa até {@code max} colunas de falha, e troca o desgaste da borda pelo caminho, a partir das colunas de rua
+     * mais perto de {@code near}.
      *
-     * @return quantas colunas viraram rua
+     * @return quantas colunas viraram rua ou caminho
      */
     public static int mend(ServerWorld world, UUID colonyId, BlockPos near, int max) {
         Optional<ColonyRoads> roads = RoadIndex.roadsOf(colonyId);
@@ -49,6 +50,10 @@ public final class StreetGaps {
 
             if (street.isEmpty() || !isStreet(world, street.get())) {
                 continue;
+            }
+
+            if (StreetSurface.unworn(world, street.get()) && ++mended >= max) {
+                return mended;
             }
 
             for (Direction side : Direction.Type.HORIZONTAL) {

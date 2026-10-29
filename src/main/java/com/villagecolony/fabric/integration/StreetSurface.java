@@ -4,17 +4,16 @@ import com.villagecolony.fabric.content.ModContent;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Set;
 
 /**
- * O chão das ruas e caminhos da colônia — mistura gasta natural, escolha do autor (2026-10-28; estudo em
- * {@code docs/research/2026-10-28-ruas-naturais.md}). O meio é o caminho do bioma ({@link VillageRoad#pavingOn});
- * a borda sorteia entre o caminho e o desgaste — cascalho e terra grossa, ou arenito na areia —, e a rua deixa
- * de parecer um tapete reto.
+ * O chão das ruas e caminhos da colônia — só o caminho do chão (autor, 2026-10-28, depois do jogo da 0.3.104:
+ * "voltar para utilizar apenas blocos de caminho"; a mistura gasta da Regra 138 deixava a rua com cara de quebrada).
+ * Meio e borda são o mesmo bloco, {@link VillageRoad#pavingOn}; o desgaste que a colônia já assentou volta a ser
+ * caminho ({@link #unworn}).
  *
  * <p>Todo bloco desta lista, numa coluna que a colônia assentou, é da vila: nenhuma profissão o minera nem
  * recolhe ({@link BlockProtection#mayBreak}).
@@ -26,8 +25,8 @@ public final class StreetSurface {
             Blocks.COARSE_DIRT, Blocks.SANDSTONE, Blocks.SMOOTH_SANDSTONE, Blocks.SMOOTH_RED_SANDSTONE,
             Blocks.PACKED_MUD);
 
-    /** De cada tantas colunas de borda, quantas ficam com o desgaste em vez do caminho. */
-    static final int WORN_IN = 2;
+    /** O desgaste que a mistura antiga assentava na borda. */
+    private static final Set<Block> WORN = Set.of(Blocks.GRAVEL, Blocks.COARSE_DIRT, Blocks.SANDSTONE);
 
     private StreetSurface() {
     }
@@ -37,24 +36,33 @@ public final class StreetSurface {
         return VillageRoad.pavingOn(world, at, ground).getDefaultState();
     }
 
-    /** O chão da borda: o caminho, ou o desgaste (cascalho e terra grossa; arenito na areia). */
+    /** O chão da borda: o mesmo do meio. */
     public static BlockState edge(ServerWorld world, BlockPos at, BlockState ground) {
-        Block path = VillageRoad.pavingOn(world, at, ground);
+        return center(world, at, ground);
+    }
 
-        if (world.getRandom().nextInt(WORN_IN) != 0) {
-            return path.getDefaultState();
+    /**
+     * Troca pelo caminho o desgaste que a colônia assentou nesta coluna — o caminho do chão de baixo, como a rua
+     * nova. Cascalho sobre pedra continua cascalho, que é o caminho da pedra.
+     *
+     * @return se trocou
+     */
+    public static boolean unworn(ServerWorld world, BlockPos at) {
+        BlockState state = world.getBlockState(at);
+
+        if (!WORN.contains(state.getBlock()) || !isColonyStreet(at, state)) {
+            return false;
         }
 
-        boolean sandy = path == ModContent.SAND_PATH || ground.isIn(BlockTags.SAND);
+        BlockState path = center(world, at, world.getBlockState(at.down()));
 
-        if (sandy) {
-            return Blocks.SANDSTONE.getDefaultState();
+        if (path.isOf(state.getBlock())) {
+            return false;
         }
 
-        // Cascalho cai: sobre o vazio a borda fica com a terra grossa.
-        boolean falls = world.getBlockState(at.down()).isReplaceable();
+        world.setBlockState(at, path);
 
-        return (!falls && world.getRandom().nextBoolean() ? Blocks.GRAVEL : Blocks.COARSE_DIRT).getDefaultState();
+        return true;
     }
 
     /** Se este bloco é material de rua. */
