@@ -153,6 +153,31 @@ class VillageSurfaceTest {
         assertTrue(millis < 2_000, "a superfície de uma vila levou " + millis + " ms");
     }
 
+    /**
+     * O que não é chão (casa, árvore, roça) não muda e não puxa as vizinhas: o telhado de uma casa a 85 no meio do chão
+     * a 70 não faz o chão em volta subir até ele (pedreiro alisando a vila, autor 2026-10-29).
+     */
+    @Test
+    void whatIsNotGroundNeitherChangesNorPullsItsNeighbours() {
+        int[][] natural = flat(21, 70);
+        VillageSurface.Kind[][] kinds = kinds(21);
+
+        for (int x = 8; x <= 12; x++) {
+            for (int z = 8; z <= 12; z++) {
+                natural[x][z] = 85;
+                kinds[x][z] = VillageSurface.Kind.SKIP;
+            }
+        }
+
+        natural[3][3] = 74;
+
+        int[][] surface = VillageSurface.smooth(natural, kinds);
+
+        assertEquals(85, surface[10][10], "o telhado não muda");
+        assertEquals(70, surface[7][10], "o chão colado na casa fica no nível dele");
+        assertEquals(70, surface[3][3], "o calombo isolado desce ao nível em volta");
+    }
+
     @Test
     void theOuterRingKeepsTheNaturalGround() {
         int[][] natural = flat(21, 70);

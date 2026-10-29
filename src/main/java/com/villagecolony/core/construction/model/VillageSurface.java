@@ -9,6 +9,8 @@ import java.util.PriorityQueue;
  * vizinhas (4 vizinhos) onde as colunas fixas deixam:
  *
  * <ol>
+ *   <li><b>Calombo pequeno cortado:</b> o grupo de até {@link #SMALL_BUMP} colunas que se destaca do terreno em volta desce
+ *   ao nível dele ({@link #cutSmallBumps}).</li>
  *   <li><b>Buraco tampado:</b> a depressão que não escoa para a borda nem para a água sobe até a beira
  *   (preenchimento por inundação, priority-flood).</li>
  *   <li><b>Faixa das fixas:</b> nenhuma coluna fica mais longe de uma coluna fixa do que a distância deixa — o piso
@@ -32,7 +34,9 @@ public final class VillageSurface {
         /** Altura que não muda: o piso das casas e o anel externo da borda. */
         FIXED,
         /** Lago ou rio: fica, e a margem desce até ele. */
-        WATER
+        WATER,
+        /** O que não é chão — casa, árvore, roça: não muda e não puxa as vizinhas. */
+        SKIP
     }
 
     /** Passadas do corte mínimo, no máximo. */
@@ -49,22 +53,24 @@ public final class VillageSurface {
     public static int[][] smooth(int[][] natural, Kind[][] kinds) {
         int width = natural.length;
         int depth = width == 0 ? 0 : natural[0].length;
-        int[][] level = filled(natural, kinds);
+        int[][] level = filled(cutSmallBumps(natural, kinds), kinds);
 
-        // A faixa que as fixas deixam.
+        // A faixa que as fixas deixam; o que não é chão (SKIP) fica fora da conta.
         int[][] high = new int[width][depth];
         int[][] low = new int[width][depth];
+        boolean[][] skip = new boolean[width][depth];
 
         for (int x = 0; x < width; x++) {
             for (int z = 0; z < depth; z++) {
-                boolean fixed = kinds[x][z] != Kind.FREE;
+                skip[x][z] = kinds[x][z] == Kind.SKIP;
+                boolean fixed = kinds[x][z] == Kind.FIXED || kinds[x][z] == Kind.WATER;
                 high[x][z] = fixed ? natural[x][z] : FAR;
                 low[x][z] = fixed ? natural[x][z] : -FAR;
             }
         }
 
-        spread(high, true);
-        spread(low, false);
+        spread(high, true, skip);
+        spread(low, false, skip);
 
         int[][] wanted = new int[width][depth];
 
@@ -87,8 +93,8 @@ public final class VillageSurface {
         int[][] below = copy(wanted);
         int[][] above = copy(wanted);
 
-        spread(below, true);
-        spread(above, false);
+        spread(below, true, skip);
+        spread(above, false, skip);
 
         int[][] surface = new int[width][depth];
 
@@ -129,7 +135,7 @@ public final class VillageSurface {
             int nx = x + side[0];
             int nz = z + side[1];
 
-            if (nx >= 0 && nz >= 0 && nx < surface.length && nz < surface[nx].length) {
+            if (nx >= 0 && nz >= 0 && nx < surface.length && nz < surface[nx].length && kinds[nx][nz] != Kind.SKIP) {
                 low = Math.max(low, surface[nx][nz] - 1);
                 high = Math.min(high, surface[nx][nz] + 1);
             }
@@ -154,17 +160,26 @@ public final class VillageSurface {
      * fica no máximo 1 acima da vizinha (o maior relevo de degrau 1 abaixo dos valores); sem, no mínimo 1 abaixo.
      */
     static void spread(int[][] grid, boolean fromBelow) {
+        spread(grid, fromBelow, new boolean[grid.length][grid.length == 0 ? 0 : grid[0].length]);
+    }
+
+    /** O mesmo, sem passar pelas colunas marcadas em {@code skip}: elas não mudam nem servem de origem. */
+    static void spread(int[][] grid, boolean fromBelow, boolean[][] skip) {
         int width = grid.length;
         int depth = width == 0 ? 0 : grid[0].length;
         int step = fromBelow ? 1 : -1;
 
         for (int x = 0; x < width; x++) {
             for (int z = 0; z < depth; z++) {
-                if (x > 0) {
+                if (skip[x][z]) {
+                    continue;
+                }
+
+                if (x > 0 && !skip[x - 1][z]) {
                     grid[x][z] = pick(grid[x][z], grid[x - 1][z] + step, fromBelow);
                 }
 
-                if (z > 0) {
+                if (z > 0 && !skip[x][z - 1]) {
                     grid[x][z] = pick(grid[x][z], grid[x][z - 1] + step, fromBelow);
                 }
             }
@@ -172,11 +187,15 @@ public final class VillageSurface {
 
         for (int x = width - 1; x >= 0; x--) {
             for (int z = depth - 1; z >= 0; z--) {
-                if (x < width - 1) {
+                if (skip[x][z]) {
+                    continue;
+                }
+
+                if (x < width - 1 && !skip[x + 1][z]) {
                     grid[x][z] = pick(grid[x][z], grid[x + 1][z] + step, fromBelow);
                 }
 
-                if (z < depth - 1) {
+                if (z < depth - 1 && !skip[x][z + 1]) {
                     grid[x][z] = pick(grid[x][z], grid[x][z + 1] + step, fromBelow);
                 }
             }
@@ -185,6 +204,68 @@ public final class VillageSurface {
 
     private static int pick(int value, int candidate, boolean smaller) {
         return smaller ? Math.min(value, candidate) : Math.max(value, candidate);
+    }
+
+    /** O maior calombo que é cortado inteiro até o nível em volta (autor, 2026-10-29: "1, 2, 3 ou 4 blocos juntos"). */
+    static final int SMALL_BUMP = 4;
+
+    /**
+     * Os calombos pequenos cortados: o espelho da inundação ({@link #filled} sobre a altura invertida) acha o que se
+     * destaca do terreno em volta, e o grupo de até {@link #SMALL_BUMP} colunas desce ao nível em volta. Morro maior fica,
+     * e a suavização o transforma em encosta.
+     */
+    static int[][] cutSmallBumps(int[][] natural, Kind[][] kinds) {
+        int width = natural.length;
+        int depth = width == 0 ? 0 : natural[0].length;
+        int[][] inverted = new int[width][depth];
+
+        for (int x = 0; x < width; x++) {
+            for (int z = 0; z < depth; z++) {
+                inverted[x][z] = -natural[x][z];
+            }
+        }
+
+        int[][] carved = filled(inverted, kinds);
+        int[][] result = copy(natural);
+        boolean[][] seen = new boolean[width][depth];
+
+        for (int x = 0; x < width; x++) {
+            for (int z = 0; z < depth; z++) {
+                if (seen[x][z] || kinds[x][z] != Kind.FREE || -carved[x][z] >= natural[x][z]) {
+                    continue;
+                }
+
+                // O grupo de colunas que se destaca, ligado pelos lados.
+                java.util.List<int[]> group = new java.util.ArrayList<>();
+                java.util.ArrayDeque<int[]> open = new java.util.ArrayDeque<>();
+                seen[x][z] = true;
+                open.add(new int[] {x, z});
+
+                while (!open.isEmpty()) {
+                    int[] at = open.poll();
+                    group.add(at);
+
+                    for (int[] side : SIDES) {
+                        int nx = at[0] + side[0];
+                        int nz = at[1] + side[1];
+
+                        if (nx >= 0 && nz >= 0 && nx < width && nz < depth && !seen[nx][nz]
+                                && kinds[nx][nz] == Kind.FREE && -carved[nx][nz] < natural[nx][nz]) {
+                            seen[nx][nz] = true;
+                            open.add(new int[] {nx, nz});
+                        }
+                    }
+                }
+
+                if (group.size() <= SMALL_BUMP) {
+                    for (int[] at : group) {
+                        result[at[0]][at[1]] = -carved[at[0]][at[1]];
+                    }
+                }
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -202,7 +283,10 @@ public final class VillageSurface {
             for (int z = 0; z < depth; z++) {
                 boolean border = x == 0 || z == 0 || x == width - 1 || z == depth - 1;
 
-                if (border || kinds[x][z] == Kind.WATER) {
+                if (kinds[x][z] == Kind.SKIP) {
+                    // O que não é chão nem é inundado nem leva a inundação adiante.
+                    seen[x][z] = true;
+                } else if (border || kinds[x][z] == Kind.WATER) {
                     seen[x][z] = true;
                     frontier.add(new long[] {natural[x][z], x, z});
                 }
