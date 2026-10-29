@@ -12,6 +12,29 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.109] — solo largo em volta da vila, mineiro e cascalho, cama fora da escada (2026-10-29, JAR local, não jogado)
+
+Branch `fix/playtest-0102`. Jogo da 0.3.108 (`docs/research/2026-10-29-jogo-0108.md`) e estudo do solo
+(`docs/research/2026-10-29-solo-fora-da-vila.md`).
+
+### Mudado
+- **Solo em volta da vila (Regra 152):** na vila, o degrau de 1 de antes; em volta, a mistura suave do nível da vila
+  com o terreno natural numa faixa de 4 vezes o desnível, de 16 a 64 blocos — sem escada nem paredão. A vila
+  referencia os chunks até 64 além das peças (o jogo, 12), só na geração. A árvore em pé sobre chão cortado sai
+  inteira.
+
+### Corrigido
+- **Mineiro soterrado (Regra 157):** não quebra o bloco que tem, acima e pelo ar, cascalho, areia, água ou lava.
+- **Aldeões presos na casa de escada de mão (Regra 158):** ninguém dorme no andar de baixo da
+  `plains_small_house_5`; quem dorme ali muda de cama uma vez por dia.
+
+### Adicionado
+- **Bancada:** `ground_report.py` mede paredão (degrau de 4 ou mais) e o que ficou no ar numa janela de 200 × 200.
+
+### Pendente
+- O portão da mina fica ao lado da entrada real da escada (visto no jogo); argila nunca achada; fazendeiro parado;
+  construtor sem tronco e tocha; lenhador e pastor sem caminho.
+
 ## [0.3.108] — pedreiro alisa a vila, construtor nivela o lote, portão da mina (2026-10-29, JAR local, não jogado)
 
 Branch `fix/playtest-0102`. Pedidos do autor no mesmo dia da 0.3.107.

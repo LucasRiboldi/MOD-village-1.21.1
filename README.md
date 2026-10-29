@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.108%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.109%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -66,10 +66,14 @@ SHA-256 do JAR na descrição.
 - Antes de cada obra nova, nivela o chão em volta na altura da rua: um anel de
   2 blocos com no máximo 1 de diferença e uma rampa de 3 até o terreno natural
   (Regra 131).
-- O solo da vila nasce suave na geração do mundo: buraco tampado, calombo
-  pequeno cortado, degrau de no máximo 1 entre colunas vizinhas, casas e água
-  no lugar e 16 blocos de transição até o terreno natural (Regra 152; só em
-  mundo novo).
+- O solo da vila nasce suave na geração do mundo: na vila, buraco tampado,
+  calombo pequeno cortado e degrau de no máximo 1, com casas e água no lugar;
+  em volta, o chão mistura o nível da vila com o terreno natural numa faixa de
+  4 vezes o desnível, de 16 a 64 blocos, sem escada nem paredão, e a árvore
+  sobre chão cortado sai inteira (Regra 152; só em mundo novo).
+- O mineiro não quebra o bloco que segura, acima e pelo vão, cascalho, areia,
+  água ou lava (Regra 157); ninguém dorme no andar de baixo da casa de escada
+  de mão (Regra 158).
 - O pedreiro sem tarefa alisa o chão da vila aos poucos, uma janela de 24×24
   por vez: tapa buraco, tira calombo de qualquer tamanho e deixa degrau de 1,
   pondo e tirando solo, sem tocar em construção, bloco do jogador, roça, água
@@ -90,12 +94,11 @@ SHA-256 do JAR na descrição.
   declarada e deixa a linha `VC_SUPPLY` no log (Regra 111); toda desistência
   no diário de ações leva um código único de bloqueio (Regra 112).
 
-O mod é alpha. A 0.3.108 (2026-10-29) passou na bateria automática completa
-(ver "Desenvolvimento e verificação"). O último jogo foi o da 0.3.106: o solo
-da vila não saía suave e as vilas nasciam com crateras e no meio de montanhas.
-A 0.3.107 refaz o solo na geração do chunk e a 0.3.108 põe o pedreiro e o
-construtor para alisar o que sobra; nenhuma das duas foi jogada (jogar em
-**mundo novo**). O estado vivo está no
+O mod é alpha. A 0.3.109 (2026-10-29) passou na bateria automática completa
+(ver "Desenvolvimento e verificação"). O último jogo foi o da 0.3.108: o
+alisamento fora da vila cortou montanhas ao meio, um mineiro morreu soterrado
+por cascalho e aldeões ficavam presos na casa de escada de mão. A 0.3.109
+trata os três e ainda não foi jogada (jogar em **mundo novo**). O estado vivo está no
 [`STATE.md`](STATE.md). O que mudou em cada
 publicação está no [`CHANGELOG.md`](CHANGELOG.md); a avaliação técnica mais
 recente, em
@@ -572,18 +575,18 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 `runGametest` gera `build/reports/jacoco/gametest/html` (bateria de jogo, que
 é quem exercita a camada `fabric`).
 
-Verificação de 2026-10-29 (0.3.108, branch `fix/playtest-0102`),
+Verificação de 2026-10-29 (0.3.109, branch `fix/playtest-0102`),
 rodada e não copiada:
 
-- 1643 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
+- 1661 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
   de 500 linhas por arquivo).
-- 150 testes Python: aprovados (o CI instala o `nbtlib` e o `pillow` para os
+- 153 testes Python: aprovados (o CI instala o `nbtlib` e o `pillow` para os
   testes das versões do armazém e dos mapas).
-- 933 GameTests: todos aprovados com `--rerun-tasks`; o `runGametest` começa
+- 936 GameTests: todos aprovados com `--rerun-tasks`; o `runGametest` começa
   cada bateria com o mundo de teste apagado, como o CI.
-- `build`: aprovado; JAR `village-colony-0.3.108.jar`.
-- Mutação (PIT, pacote `core`): não refeita nesta versão; a última medida
-  (0.3.93) foi 2140 de 2509 mutações mortas (85,3%, limiar 85%).
+- `build`: aprovado; JAR `village-colony-0.3.109.jar`.
+- Mutação (PIT, pacote `core`): 2450 de 2882 mutações mortas (85%, limiar
+  85%).
 - CI do GitHub ("Build and test"): a `main` exige esse check para mesclar.
 
 Para refazer: `scripts/audit/check-tests-green.sh --runs 3` e
