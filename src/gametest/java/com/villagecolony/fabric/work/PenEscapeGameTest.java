@@ -192,7 +192,10 @@ public final class PenEscapeGameTest implements FabricGameTest {
                 last[0] = now;
             }
 
-            if (done[0] || !escaped[0] || !sawHow[0] || !sawOpen[0] || isInside(context, villager) || !villager.isOnGround()
+            // Sem portão, sair andando por cima da cerca também vale: o aldeão da colônia pula cerca (Regra 159).
+            boolean conducted = escaped[0] && sawHow[0] || !withGate;
+
+            if (done[0] || !conducted || !sawOpen[0] || isInside(context, villager) || !villager.isOnGround()
                     || PenEscape.isEscaping(villager.getUuid()) || !gateShut) {
                 return;
             }

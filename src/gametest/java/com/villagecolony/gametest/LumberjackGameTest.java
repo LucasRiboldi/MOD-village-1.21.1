@@ -1269,7 +1269,8 @@ public class LumberjackGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_stall_guard",
             tickLimit = 400)
     public void theStallGuardReturnsTheTaskAndForgetsTheTree(TestContext context) {
-        BlockPos marooned = new BlockPos(4, 6, 4);
+        // Alta o bastante para o pulo de 2 (Regra 159) não pôr o tronco ao alcance (LumberjackWork.REACH) do chão.
+        BlockPos marooned = new BlockPos(4, 8, 4);
         BlockPos chest = new BlockPos(2, 2, 2);
         BlockPos stand = new BlockPos(3, 2, 6);
 
@@ -1281,7 +1282,7 @@ public class LumberjackGameTest implements FabricGameTest {
 
         // Uma coluna isolada com a árvore em cima: a busca a enxerga, os
         // pés não chegam nela.
-        for (int y = 2; y <= 5; y++) {
+        for (int y = 2; y <= 7; y++) {
             context.setBlockState(new BlockPos(4, y, 4), Blocks.STONE.getDefaultState());
         }
 

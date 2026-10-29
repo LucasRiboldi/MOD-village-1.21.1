@@ -23,9 +23,8 @@ import java.util.UUID;
  * para dentro da rocha.
  *
  * <p>Com {@link #STRIKES} desistências seguidas em {@link #WINDOW} tiques, de um mineiro a
- * {@link #ABOVE} blocos ou mais acima da entrada do nível, a mina recomeça na boca de superfície com o
- * cursor no primeiro degrau, e o caracol é cavado de cima para baixo; o que já está aberto passa depressa.
- * Sem boca conhecida, a boca é o chão em cima da entrada do nível, se ele se alcança a pé desde a vila.
+ * {@link #ABOVE} blocos ou mais acima da entrada do nível, a mina recomeça na mesma boca de superfície com o
+ * cursor no primeiro degrau, virando para o rumo seguinte; o que já está aberto passa depressa. Boca nova nunca.
  */
 final class MineRestart {
 
@@ -80,32 +79,33 @@ final class MineRestart {
         return restart(world, colonyId, mine.get());
     }
 
-    /** A mina recomeça na boca de superfície, cursor no primeiro degrau. */
+    /**
+     * A mina recomeça na <b>mesma</b> boca de superfície, cursor no primeiro degrau, virando para o outro lado — autor,
+     * 2026-10-29 (jogo da 0.3.109: a mina abriu uma boca nova em 3072,73,1281 e voltou a 0 níveis): nunca uma boca
+     * nova; a primeira descida é a mesma e o caracol segue no rumo seguinte, para os níveis irem para outro lado. Sem
+     * a boca lembrada na superfície, a mina fica como está.
+     */
     static boolean restart(ServerWorld world, UUID colonyId, Mine mine) {
         ColonyPos entry = mine.shaft().entry();
-        ColonyPos mouth = MineEntrance.surfaceOf(world, colonyId, mine);
+        ColonyPos mouth = MineEntrance.rememberedMouth(colonyId)
+                .filter(remembered -> remembered.y() - entry.y() >= ABOVE && atTheSurface(world, remembered))
+                .orElseGet(() -> MineEntrance.surfaceOf(world, colonyId, mine));
 
-        // A boca lembrada ou deduzida só vale se está no chão da superfície e bem acima do nível: a dedução
-        // num save de antes do caracol pode parar num nível do meio.
         if (mouth.y() - entry.y() < ABOVE || !atTheSurface(world, mouth)) {
-            BlockPos top = surfaceAbove(world, entry);
-
-            if (top.getY() - entry.y() < ABOVE || !MineTrouble.walkableFromTheVillage(world, colonyId, top)) {
-                return false;
-            }
-
-            mouth = MinecraftTypeAdapter.toColonyPos(top);
+            VillageColonyMod.LOGGER.info("Mine {} keeps its stair — no first mouth at the surface to go back to"
+                    + " (a new mouth is never opened)", colonyId.toString().substring(0, 8));
+            return false;
         }
 
         VillageColonyMod.MINES.removeOfColony(colonyId);
 
-        Mine fresh = VillageColonyMod.MINES.open(colonyId, MineShaft.from(mouth, mine.shaft().descent()));
+        Mine fresh = VillageColonyMod.MINES.open(colonyId, MineShaft.from(mouth, mine.shaft().descent().clockwise()));
 
         MineEntrance.opened(colonyId, fresh.entry());
         MineFurnishing.furnishAndLight(world, fresh);
-        VillageColonyMod.LOGGER.info("Mine {} restarts its stair from the mouth at {} — the miners could not get"
+        VillageColonyMod.LOGGER.info("Mine {} goes back to its first mouth at {} and turns {} — the miners could not get"
                         + " down to the level at y={} (Regra 119)", colonyId.toString().substring(0, 8),
-                MinecraftTypeAdapter.toBlockPos(mouth).toShortString(), entry.y());
+                MinecraftTypeAdapter.toBlockPos(mouth).toShortString(), fresh.shaft().descent(), entry.y());
 
         return true;
     }

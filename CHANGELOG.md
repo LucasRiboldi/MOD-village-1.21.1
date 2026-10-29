@@ -20,8 +20,12 @@ Branch `fix/playtest-0102`. Jogo da 0.3.108 (`docs/research/2026-10-29-jogo-0108
 ### Mudado
 - **Solo em volta da vila (Regra 152):** na vila, o degrau de 1 de antes; em volta, a mistura suave do nível da vila
   com o terreno natural numa faixa de 4 vezes o desnível, de 16 a 64 blocos — sem escada nem paredão. A vila
-  referencia os chunks até 64 além das peças (o jogo, 12), só na geração. A árvore em pé sobre chão cortado sai
-  inteira.
+  referencia os chunks até 64 além das peças (o jogo, 12), só na geração. A conta parte do topo de verdade de cada
+  coluna, e a margem da água fica natural. A árvore em pé sobre chão cortado sai inteira. Na bancada de 6 cenários,
+  contra a 0.3.108 (janela de 200 × 200): colunas com chão sobre vão caem em todos (taiga 1532 → 1319, deserto 941 →
+  850), o maior degrau fica igual (11 nas montanhas), e os paredões (degrau de 4 ou mais) sobem 8 a 25 % entre 8 e 24
+  blocos da vila — o relevo natural que a faixa de 16 aplainava. O plano de uma vila leva 5 a 6 s (era 20 s com a
+  primeira versão).
 
 ### Corrigido
 - **Mineiro soterrado (Regra 157):** não quebra o bloco que tem, acima e pelo ar, cascalho, areia, água ou lava.
