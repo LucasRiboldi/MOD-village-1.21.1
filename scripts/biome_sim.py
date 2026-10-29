@@ -24,6 +24,7 @@ saque; os chunks fora da área forçada não simulam.
 """
 
 import argparse
+import importlib.util
 import json
 import os
 import re
@@ -49,22 +50,42 @@ TARGETS = {
     "savanna": ("natural", None, "minecraft:village_savanna", None),
     "taiga": ("natural", None, "minecraft:village_taiga", None),
     "snowy": ("natural", None, "minecraft:village_snowy", None),
-    # Biomas de vila com o mundo todo do mesmo bioma: sem borda, só o recurso dele.
-    "fixed-meadow": ("fixed", "minecraft:meadow", "minecraft:village_plains", None),
-    "fixed-desert": ("fixed", "minecraft:desert", "minecraft:village_desert", None),
-    "fixed-snowy_taiga": ("fixed", "minecraft:snowy_taiga", None, "minecraft:village_taiga"),
-    "fixed-savanna_plateau": ("fixed", "minecraft:savanna_plateau", "minecraft:village_savanna", None),
-    # Biomas em que o jogo não gera vila: uma vila de planície posta à força.
-    "fixed-forest": ("fixed", "minecraft:forest", None, "minecraft:village_plains"),
-    "fixed-river": ("fixed", "minecraft:river", None, "minecraft:village_plains"),
-    "fixed-jungle": ("fixed", "minecraft:jungle", None, "minecraft:village_plains"),
-    "fixed-swamp": ("fixed", "minecraft:swamp", None, "minecraft:village_plains"),
-    "fixed-badlands": ("fixed", "minecraft:badlands", None, "minecraft:village_desert"),
-    "fixed-cherry_grove": ("fixed", "minecraft:cherry_grove", None, "minecraft:village_plains"),
-    "fixed-dark_forest": ("fixed", "minecraft:dark_forest", None, "minecraft:village_plains"),
-    "fixed-ice_spikes": ("fixed", "minecraft:ice_spikes", None, "minecraft:village_snowy"),
-    "fixed-mushroom_fields": ("fixed", "minecraft:mushroom_fields", None, "minecraft:village_plains"),
 }
+
+# Todos os biomas de superfície do Overworld (oceanos e cavernas ficam fora: vila não nasce lá) — autor, 2026-10-29:
+# "testes em arenas de 100 por 100 em todos os biomas". Com o mundo todo de um bioma só, o pacote de dados põe o bioma
+# na etiqueta da vila do clima dele, e a vila nasce naturalmente — passando pelo solo da geração (Regra 152).
+SURFACE_BIOMES = [
+    "plains", "sunflower_plains", "snowy_plains", "ice_spikes", "desert", "swamp", "mangrove_swamp", "forest",
+    "flower_forest", "birch_forest", "dark_forest", "old_growth_birch_forest", "old_growth_pine_taiga",
+    "old_growth_spruce_taiga", "taiga", "snowy_taiga", "savanna", "savanna_plateau", "windswept_hills",
+    "windswept_gravelly_hills", "windswept_forest", "windswept_savanna", "jungle", "sparse_jungle", "bamboo_jungle",
+    "badlands", "eroded_badlands", "wooded_badlands", "meadow", "cherry_grove", "grove", "snowy_slopes",
+    "frozen_peaks", "jagged_peaks", "stony_peaks", "river", "frozen_river", "beach", "snowy_beach", "stony_shore",
+    "mushroom_fields",
+]
+
+
+def village_style(biome):
+    """O estilo de vila do clima do bioma."""
+    if "badlands" in biome or biome == "desert":
+        return "desert"
+
+    if "savanna" in biome:
+        return "savanna"
+
+    if "snow" in biome or "ice" in biome or "frozen" in biome or biome in ("grove", "jagged_peaks"):
+        return "snowy"
+
+    if "taiga" in biome:
+        return "taiga"
+
+    return "plains"
+
+
+for _biome in SURFACE_BIOMES:
+    TARGETS[f"fixed-{_biome}"] = ("fixed", f"minecraft:{_biome}", f"minecraft:village_{village_style(_biome)}", None)
+
 
 # Frases do log que dizem se a vila andou: contadas no resumo de cada alvo.
 SIGNALS = {
@@ -156,11 +177,19 @@ def write_server_files(level, seed, password):
             out.write(f"{key}={value}\n")
 
 
-def write_fixed_biome_pack(level, biome):
-    """Pacote de dados que troca a fonte de biomas do mundo normal por um bioma só."""
+def write_fixed_biome_pack(level, biome, village=None):
+    """Pacote de dados que troca a fonte de biomas do mundo normal por um bioma só; com ``village``, o bioma entra na
+    etiqueta dessa vila e ela nasce naturalmente nele."""
     pack = os.path.join(RUN, level, "datapacks", "vc_fixed_biome")
     dimension = os.path.join(pack, "data", "minecraft", "dimension")
     os.makedirs(dimension, exist_ok=True)
+
+    if village:
+        tags = os.path.join(pack, "data", "minecraft", "tags", "worldgen", "biome", "has_structure")
+        os.makedirs(tags, exist_ok=True)
+
+        with open(os.path.join(tags, village.split(":")[1] + ".json"), "w", encoding="utf-8") as out:
+            out.write(f'{{"replace": false, "values": ["{biome}"]}}\n')
 
     with open(os.path.join(pack, "pack.mcmeta"), "w", encoding="utf-8") as out:
         out.write('{"pack": {"pack_format": 48, "description": "Village Colony: bioma fixo"}}\n')
@@ -309,7 +338,11 @@ def locate_or_place(rcon, locate, place, near=(0, 0)):
 
 
 def wait_game_ticks(rcon, ticks, process, timeout, grow=None):
-    """Acelera o jogo e espera o relógio do mundo andar ``ticks`` tiques; ``grow`` roda a cada conferência."""
+    """Acelera o jogo e espera o relógio do mundo andar ``ticks`` tiques; ``grow`` roda a cada conferência. Zero tiques
+    (``--days 0``) é só o retrato da geração: nada a esperar."""
+    if ticks <= 0:
+        return
+
     start = game_time(rcon)
     rcon.run(f"tick sprint {ticks}")
     deadline = time.time() + timeout
@@ -369,6 +402,24 @@ def run_report(script, args, out_path):
         out.write(result.stderr)
 
 
+def measure_ground(report, x, z, half=50):
+    """O solo do dia 0 numa janela de 100 x 100 em volta da vila (ground_report.py), escrito em solo.txt."""
+    spec = importlib.util.spec_from_file_location("ground_report", os.path.join(ROOT, "scripts", "ground_report.py"))
+    ground_report = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ground_report)
+
+    try:
+        line = ground_report.describe(ground_report.measure(
+            ground_report.around(os.path.join(report, "regiao-dia0"), x, z, half)))
+    except Exception as failure:  # o retrato pode faltar chunk; a medida não derruba a simulação
+        line = f"sem medida: {failure}"
+
+    with open(os.path.join(report, "solo.txt"), "w", encoding="utf-8") as out:
+        out.write(f"vila em ({x}, {z}), janela de {2 * half} x {2 * half}: {line}\n")
+
+    print(f"  solo: {line}")
+
+
 def simulate(name, days, seed, keep_world, near=(0, 0), snapshot=False):
     mode, biome, locate, place = TARGETS[name]
     level = f"sim-{name}"
@@ -387,7 +438,7 @@ def simulate(name, days, seed, keep_world, near=(0, 0), snapshot=False):
     ledger_start = os.path.getsize(ledger_file) if os.path.exists(ledger_file) else 0
 
     if mode == "fixed":
-        write_fixed_biome_pack(level, biome)
+        write_fixed_biome_pack(level, biome, locate)
 
     print(f"[{name}] subindo o servidor ({mode}{', ' + biome if biome else ''})")
     console = open(os.path.join(report, "console.txt"), "w", encoding="utf-8")
@@ -413,6 +464,7 @@ def simulate(name, days, seed, keep_world, near=(0, 0), snapshot=False):
             # O retrato do dia 0: a vila como o jogo a gerou, antes de a colônia mexer.
             rcon.run("save-all flush")
             copy_regions(level, os.path.join(report, "regiao-dia0"))
+            measure_ground(report, x, z)
 
         # A área forçada cresce com a caixa da vila (D4): o que passa dos 96 blocos também é simulado.
         forced = [(x - 96, z - 96, x + 96, z + 96)]

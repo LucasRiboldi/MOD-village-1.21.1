@@ -74,5 +74,29 @@ class ForcedAreaTest(unittest.TestCase):
             self.assertEqual([], rcon.commands)
 
 
+class FixedBiomeTest(unittest.TestCase):
+
+    def test_the_fixed_biome_joins_the_village_tag_so_the_village_grows_there(self):
+        with tempfile.TemporaryDirectory() as folder:
+            old = biome_sim.RUN
+            biome_sim.RUN = folder
+
+            try:
+                biome_sim.write_fixed_biome_pack("mundo", "minecraft:jungle", "minecraft:village_plains")
+            finally:
+                biome_sim.RUN = old
+
+            tag = pathlib.Path(folder) / "mundo" / "datapacks" / "vc_fixed_biome" / "data" / "minecraft" / "tags"                 / "worldgen" / "biome" / "has_structure" / "village_plains.json"
+
+            self.assertEqual({"replace": False, "values": ["minecraft:jungle"]}, json.loads(tag.read_text("utf-8")))
+
+    def test_every_surface_biome_is_a_target_with_its_climate_village(self):
+        self.assertEqual("minecraft:village_desert", biome_sim.TARGETS["fixed-eroded_badlands"][2])
+        self.assertEqual("minecraft:village_snowy", biome_sim.TARGETS["fixed-frozen_peaks"][2])
+        self.assertEqual("minecraft:village_taiga", biome_sim.TARGETS["fixed-old_growth_spruce_taiga"][2])
+        self.assertEqual("minecraft:village_plains", biome_sim.TARGETS["fixed-jungle"][2])
+        self.assertTrue(all(target[3] is None for name, target in biome_sim.TARGETS.items() if name.startswith("fixed-")))
+
+
 if __name__ == "__main__":
     unittest.main()
