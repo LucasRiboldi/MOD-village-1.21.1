@@ -87,7 +87,9 @@ final class MineRestart {
      */
     static boolean restart(ServerWorld world, UUID colonyId, Mine mine) {
         ColonyPos entry = mine.shaft().entry();
-        ColonyPos mouth = MineEntrance.surfaceOf(world, colonyId, mine);
+        ColonyPos mouth = MineEntrance.rememberedMouth(colonyId)
+                .filter(remembered -> remembered.y() - entry.y() >= ABOVE && atTheSurface(world, remembered))
+                .orElseGet(() -> MineEntrance.surfaceOf(world, colonyId, mine));
 
         if (mouth.y() - entry.y() < ABOVE || !atTheSurface(world, mouth)) {
             VillageColonyMod.LOGGER.info("Mine {} keeps its stair — no first mouth at the surface to go back to"

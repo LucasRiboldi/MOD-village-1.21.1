@@ -18,7 +18,7 @@ public class RoofDescentGameTest implements FabricGameTest {
 
     private static final int GROUND = 1;
 
-    private static final int ROOF = 6;
+    private static final int ROOF = 3;
 
     /** Chão de grama de 11 × 11 e um telhado de tábuas de 3 × 3 no meio, 5 acima. */
     private static void scene(TestContext context, Block roof) {
