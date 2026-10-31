@@ -12,7 +12,7 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
-## [Não lançado] — roça por fazendeiro, teto de camas na casa de reserva (2026-10-30, não jogado)
+## [Não lançado] — roça por fazendeiro, teto de camas na casa de reserva, armazém pequeno (2026-10-30, não jogado)
 
 Branch `fix/estruturas-0110`. Depois do jogo da 0.3.110 (12,3 h, 38 obras, nenhuma roça, 58 camas para 19 adultos).
 
@@ -21,6 +21,12 @@ Branch `fix/estruturas-0110`. Depois do jogo da 0.3.110 (12,3 h, 38 obras, nenhu
   pede as roças da vez (`HousePlans.plansForNext`).
 - **Casa de reserva (Regra 164):** sem outro tipo com lote, a casa só sai se for obrigatória ou se as camas ainda
   estão abaixo de adultos + 4 (`ConstructionPriority.fallsBackToAHouse`). Antes o tipo recusado bastava.
+
+### Adicionado
+- **Armazém pequeno (Regra 165):** galpão `storage_small` de 7×7 por 5 (179 blocos, 8 baús, porta ao sul), um por
+  estilo com os materiais do `storage_majest`, gerado por `scripts/gen_storage_small.py`. Quando a vila precisa de
+  armazém, o galpão sai primeiro; o `storage_majest` (11×12, 604 blocos) só depois de um galpão terminado, e aí à
+  frente dele. No jogo da 0.3.110 o grande ficou 63× sem lote.
 
 ### Alterado
 - **Roças (Regra 163, emenda da 67):** vale a maior das contas — uma a cada 15 adultos ou uma por fazendeiro; o
