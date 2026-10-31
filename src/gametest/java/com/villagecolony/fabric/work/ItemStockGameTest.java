@@ -31,6 +31,22 @@ import java.util.UUID;
 /** Um pouco de tudo no estoque do carpinteiro — regra do autor, 2026-10-11 ({@link ItemStock}). */
 public class ItemStockGameTest implements FabricGameTest {
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock_catalog", tickLimit = 20)
+    public void allThreeWorkshopsStockBlocksBeyondTheVillagePalette(TestContext context) {
+        Colony colony = Colony.create(UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(2, 2, 2))));
+        var catalog = ItemStock.read(context.getWorld(), colony);
+
+        context.assertTrue(catalog.getOrDefault(TaskType.CRAFT_STONE_MATERIAL, List.of())
+                        .containsAll(List.of(Items.POLISHED_TUFF, Items.DEEPSLATE_BRICK_STAIRS)),
+                "o pedreiro não mantém peças de pedra fora das plantas da vila");
+        context.assertTrue(catalog.getOrDefault(TaskType.CRAFT_METAL_MATERIAL, List.of())
+                        .containsAll(List.of(Items.CUT_COPPER_STAIRS, Items.IRON_TRAPDOOR)),
+                "o fundidor não mantém peças de metal fora das plantas da vila");
+        context.assertTrue(ItemStock.EACH == 16, "a reserva deve ser de 16 por tipo");
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock", tickLimit = 400)
     public void theCarpenterStocksAPieceOfTheVillagePlans(TestContext context) {
         ServerWorld world = context.getWorld();

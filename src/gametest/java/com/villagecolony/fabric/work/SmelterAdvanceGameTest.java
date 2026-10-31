@@ -24,6 +24,65 @@ import java.util.UUID;
 /** O fundidor ocioso adianta o cru que sobra no baú — regra do autor, 2026-10-12. */
 public class SmelterAdvanceGameTest implements FabricGameTest {
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "smelter_advance_catalog", tickLimit = 20)
+    public void anIdleSmelterStocksTerracottaAndReplenishesIt(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos chestAt = context.getAbsolutePos(new BlockPos(1, 2, 1));
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(chestAt);
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+        UUID smelter = UUID.randomUUID();
+        VillageColonyMod.COLONIES.register(colony);
+        VillageColonyMod.WORKERS.register(smelter, colony.id()).assign(ProfessionType.SMELTER);
+        owned.owning(smelter);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(smelter, chest));
+        world.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
+        ((Inventory) world.getBlockEntity(chestAt)).setStack(0, new ItemStack(Items.CLAY, 48));
+        try {
+            for (int i = 0; i < 2; i++) {
+                SmelterAdvance.smeltForIdleSmelters(world, colony);
+            }
+            context.assertTrue(ColonyChests.countIn(world, List.of(chest), Items.TERRACOTTA) == 16,
+                    "o fundidor não estocou 16 terracotas");
+            ColonyChests.withdraw(world, List.of(chest), Items.TERRACOTTA, 5);
+            SmelterAdvance.smeltForIdleSmelters(world, colony);
+            context.assertTrue(ColonyChests.countIn(world, List.of(chest), Items.TERRACOTTA) == 16,
+                    "o fundidor não repôs o consumo");
+        } finally {
+            ((Inventory) world.getBlockEntity(chestAt)).clear();
+            world.setBlockState(chestAt, Blocks.AIR.getDefaultState());
+            owned.cleanUp();
+        }
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "smelter_advance_catalog", tickLimit = 20)
+    public void anIdleSmelterStocksBlocksOutsideTheOldRawList(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos chestAt = context.getAbsolutePos(new BlockPos(1, 2, 1));
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(chestAt);
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+        UUID smelter = UUID.randomUUID();
+        VillageColonyMod.COLONIES.register(colony);
+        VillageColonyMod.WORKERS.register(smelter, colony.id()).assign(ProfessionType.SMELTER);
+        owned.owning(smelter);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(smelter, chest));
+        world.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
+        ((Inventory) world.getBlockEntity(chestAt)).setStack(0, new ItemStack(Items.WHITE_TERRACOTTA, 40));
+        try {
+            context.assertTrue(SmelterAdvance.smeltForIdleSmelters(world, colony) == 8,
+                    "o fundidor ignorou a receita de cerâmica vidrada");
+            context.assertTrue(ColonyChests.countIn(world, List.of(chest), Items.WHITE_GLAZED_TERRACOTTA) == 8,
+                    "a cerâmica vidrada não entrou no baú");
+        } finally {
+            ((Inventory) world.getBlockEntity(chestAt)).clear();
+            world.setBlockState(chestAt, Blocks.AIR.getDefaultState());
+            owned.cleanUp();
+        }
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "smelter_advance", tickLimit = 20)
     public void anIdleSmelterTurnsSpareSandIntoGlass(TestContext context) {
         ServerWorld world = context.getWorld();

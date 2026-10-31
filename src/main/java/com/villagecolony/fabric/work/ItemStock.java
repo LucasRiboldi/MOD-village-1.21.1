@@ -44,8 +44,8 @@ import java.util.UUID;
  *
  * <p>Os itens são os que as plantas do estilo da vila usam e os ingredientes deles,
  * descendo a receita até {@link #DEPTH} degraus, e todas as peças de madeira do jogo
- * ({@link #isWoodPiece}, autor 2026-10-12: "um pouco de todas as peças de madeira"); ficam os que a bancada faz e que são
- * da madeira (carpinteiro) ou do metal e do vidro (fundidor), pela divisão do
+ * ({@link #isWoodPiece}, autor 2026-10-12: "um pouco de todas as peças de madeira"); entram também os blocos
+ * fabricáveis de pedra e metal (autor 2026-10-31), pela divisão do
  * {@link CraftFamily}. Cada um vai até {@link #EACH}, em rodízio, sempre abaixo do
  * teto de 64 ({@code StockCeiling}). A obra vem antes: a ordem de estoque é uma
  * tarefa de fabricação, e o artesão atende primeiro a peça que a obra espera
@@ -64,7 +64,8 @@ public final class ItemStock {
     public static final int EACH = 16;
 
     /** Os ofícios que guardam um pouco de tudo. */
-    static final List<TaskType> FAMILIES = List.of(TaskType.CRAFT_WOOD_MATERIAL, TaskType.CRAFT_METAL_MATERIAL);
+    static final List<TaskType> FAMILIES = List.of(TaskType.CRAFT_WOOD_MATERIAL, TaskType.CRAFT_STONE_MATERIAL,
+            TaskType.CRAFT_METAL_MATERIAL);
 
     /** Alvo nominal da ordem — outro que o do pedido de peça de obra, para um não calar o outro. */
     static final ResourceType NOMINAL = ResourceType.DIRT;
@@ -261,6 +262,8 @@ public final class ItemStock {
 
         // Todas as peças de madeira do jogo, além das do estilo — autor, 2026-10-12.
         Registries.ITEM.stream().filter(ItemStock::isWoodPiece).forEach(seen::add);
+        Registries.ITEM.stream().filter(item -> item instanceof net.minecraft.item.BlockItem)
+                .filter(item -> FAMILIES.contains(CraftFamily.of(pathOf(item)))).forEach(seen::add);
 
         Map<TaskType, List<Item>> byFamily = new HashMap<>();
 
