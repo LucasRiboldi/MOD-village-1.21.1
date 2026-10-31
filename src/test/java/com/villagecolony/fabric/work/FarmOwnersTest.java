@@ -81,6 +81,14 @@ class FarmOwnersTest {
         assertFalse(ColonyFarms.owed(2, 16), "duas roças atendem 16 adultos");
     }
 
+    /** Regra 163: a maior das contas — o fazendeiro sem roça a pede. */
+    @Test
+    void eachFarmerIsOwedAFarm() {
+        assertTrue(ColonyFarms.owed(2, 19, 3), "três fazendeiros, duas roças: falta uma");
+        assertFalse(ColonyFarms.owed(3, 19, 3), "três e três: em dia");
+        assertTrue(ColonyFarms.owed(1, 16, 0), "sem fazendeiro, vale a conta dos adultos");
+    }
+
     @Test
     void theOwnerSurvivesTheWorkMemoryRoundTrip() {
         try {

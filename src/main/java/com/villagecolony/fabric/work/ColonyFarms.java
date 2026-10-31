@@ -82,17 +82,22 @@ public final class ColonyFarms {
     /**
      * Se a vila ainda deve uma plantação — a vez da roça no rodízio. Regra 67 (autor,
      * 2026-10-13): uma a cada {@link ConstructionPriority#ADULTS_PER_FARM} adultos, no mínimo
-     * uma desde a fundação (substitui a Regra 52, uma por fazendeiro).
+     * uma desde a fundação; ou uma por fazendeiro, se der mais — Regra 163.
      */
     public static boolean owedToTheFarmers(ServerWorld world, Colony colony) {
         int adults = VillagerScanner.livingAdultPopulation(world, colony);
 
-        return owed(of(world, colony).size(), adults);
+        return owed(of(world, colony).size(), adults, farmers(colony.id()));
     }
 
     /** A conta da Regra 67: uma roça a cada 15 adultos, no mínimo uma. */
     static boolean owed(int farms, int adults) {
-        return farms < ConstructionPriority.farmsFor(adults);
+        return owed(farms, adults, 0);
+    }
+
+    /** Regra 163: a maior das contas — a da Regra 67 ou uma roça por fazendeiro. */
+    static boolean owed(int farms, int adults, int farmers) {
+        return farms < ConstructionPriority.farmsFor(adults, farmers);
     }
 
     private static BlockBox areaOf(Colony colony) {

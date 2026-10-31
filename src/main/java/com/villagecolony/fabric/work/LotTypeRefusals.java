@@ -44,11 +44,6 @@ final class LotTypeRefusals {
         return since != null && now - since < REFUSE_FOR;
     }
 
-    /** Se algum tipo desta colônia está fora da vez agora. */
-    static boolean anyRefused(UUID colonyId, long now) {
-        return REFUSED.getOrDefault(colonyId, Map.of()).values().stream().anyMatch(since -> now - since < REFUSE_FOR);
-    }
-
     static void clearAll() {
         REFUSED.clear();
     }

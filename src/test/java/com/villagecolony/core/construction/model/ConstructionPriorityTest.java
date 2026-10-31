@@ -103,6 +103,34 @@ class ConstructionPriorityTest {
         assertFalse(ConstructionPriority.farmIsDue(16, 2), "16 adultos com duas roças: em dia");
     }
 
+    /** Regra 163: vale a maior das contas — uma a cada 15 adultos ou uma por fazendeiro. */
+    @Test
+    void theLargerCountOfFarmsWins() {
+        assertEquals(2, ConstructionPriority.farmsFor(19, 0), "sem fazendeiro, a conta dos adultos");
+        assertEquals(3, ConstructionPriority.farmsFor(19, 3), "três fazendeiros pedem três roças");
+        assertEquals(1, ConstructionPriority.farmsFor(0, 0), "a vila nasce devendo uma");
+        assertEquals(3, ConstructionPriority.farmsFor(40, 1), "40 adultos: a conta dos adultos vence");
+    }
+
+    /** Regra 163: o fazendeiro sem roça torna a fazenda prioridade, mesmo antes do 16º adulto. */
+    @Test
+    void aFarmerWithoutAFarmMakesTheFarmDue() {
+        assertTrue(ConstructionPriority.farmIsDue(19, 3, 2), "o playtest da 0.3.110: 3 fazendeiros, 2 roças");
+        assertTrue(ConstructionPriority.farmIsDue(10, 2, 1), "dois fazendeiros, uma roça, poucos adultos");
+        assertFalse(ConstructionPriority.farmIsDue(10, 1, 1), "cada fazendeiro com a sua: em dia");
+        assertFalse(ConstructionPriority.farmIsDue(10, 0, 0), "sem fazendeiro e poucos adultos: nada furando a fila");
+        assertFalse(ConstructionPriority.farmIsDue(19, 3, 3), "três e três: em dia");
+    }
+
+    /** Regra 164: sem outro tipo com lote, a casa só sai se ainda cabe cama no teto. */
+    @Test
+    void theFallbackHouseRespectsTheBedCeiling() {
+        assertFalse(ConstructionPriority.fallsBackToAHouse(false, 19, 58),
+                "o playtest da 0.3.110: 58 camas para 19 adultos não pedem outra casa");
+        assertTrue(ConstructionPriority.fallsBackToAHouse(false, 19, 22), "22 camas para 19: ainda cabe");
+        assertTrue(ConstructionPriority.fallsBackToAHouse(true, 19, 58), "a casa obrigatória sai sempre");
+    }
+
     /** A falta de plantação (Regra 67) vem antes das oficinas e do rodízio, mas depois da cama. */
     @Test
     void theFarmDeficitComesAfterBedsAndBeforeTheWorkshop() {

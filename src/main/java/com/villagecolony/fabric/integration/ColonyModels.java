@@ -8,6 +8,7 @@ import com.villagecolony.core.worker.model.ProfessionType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -54,9 +55,18 @@ public final class ColonyModels {
 
     private static final String TRADE = "trade_";
 
-    /** Modelos nomeados que entram no rodízio de uma profissão específica. */
-    private static final Map<String, ProfessionType> NAMED_PROFESSION_MODELS = Map.of(
-            "storage_majest", ProfessionType.BUILDER);
+    /**
+     * Modelos nomeados que entram no rodízio de uma profissão específica, nesta ordem: o armazém
+     * pequeno antes do grande (Regra 165).
+     */
+    private static final Map<String, ProfessionType> NAMED_PROFESSION_MODELS = orderedModels();
+
+    private static Map<String, ProfessionType> orderedModels() {
+        Map<String, ProfessionType> models = new LinkedHashMap<>();
+        models.put("storage_small", ProfessionType.BUILDER);
+        models.put("storage_majest", ProfessionType.BUILDER);
+        return java.util.Collections.unmodifiableMap(models);
+    }
 
     private static final Map<String, Boolean> EXISTS = new HashMap<>();
 
