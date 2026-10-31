@@ -39,6 +39,6 @@ Não leia documentos históricos inteiros. Use `rg` para localizar trechos em `d
 
 ## Skills
 
-- Código Fabric/aldeões: use `fabric-development`, `minecraft-modding` e, conforme o escopo, `minecraft-villager-systems`, `minecraft-code-research` e `minecraft-testing`.
-- CI/CD e release: use `minecraft-ci-release` e mantenha a classificação **categoria 1.9** nas auditorias relacionadas.
+- Código Fabric/aldeões: use `fabric-development` e, conforme o escopo, `minecraft-villager-systems`, `minecraft-code-research` e `minecraft-testing`.
+- CI/CD e release: siga `.github/workflows/` (a skill `minecraft-ci-release` está em `docs/archive/skills/`) e mantenha a classificação **categoria 1.9** nas auditorias relacionadas.
 - Carregue skills sob demanda; não abra instruções de áreas que a tarefa não toca.

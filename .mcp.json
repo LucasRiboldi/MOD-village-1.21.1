@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "minecraft-modding": {
+      "command": "npx",
+      "args": ["-y", "@adhisang/minecraft-modding-mcp@8.0.0"]
+    }
+  }
+}

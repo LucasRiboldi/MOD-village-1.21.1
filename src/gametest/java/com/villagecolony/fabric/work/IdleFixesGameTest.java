@@ -241,11 +241,16 @@ public class IdleFixesGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** Sem chegar ao nível da mina, a escada recomeça na boca da superfície, cursor no primeiro degrau. */
+    /**
+     * Sem chegar ao nível da mina, a escada recomeça na mesma boca da superfície, cursor no primeiro degrau, virando
+     * para o rumo seguinte — boca nova nunca (autor, 2026-10-29).
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_fixes", tickLimit = 20)
-    public void theStairStartsOverFromTheSurfaceMouth(TestContext context) {
+    public void theStairStartsOverFromTheSameMouthTurned(TestContext context) {
         UUID colonyId = UUID.randomUUID();
-        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(2, 1, 2)));
+        BlockPos column = context.getAbsolutePos(new BlockPos(2, 1, 2));
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getWorld()
+                .getTopPosition(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, column).down());
         ColonyPos deep = new ColonyPos(mouth.x() + 30, mouth.y() - 40, mouth.z() + 30);
 
         VillageColonyMod.MINES.restore(Mine.restore(colonyId, MineShaft.from(deep, Side.EAST), 500));
@@ -257,10 +262,31 @@ public class IdleFixesGameTest implements FabricGameTest {
 
             Mine fresh = VillageColonyMod.MINES.of(colonyId).orElseThrow();
 
-            // O arco e a lanterna da boca nova sobem o topo da coluna: confere a altura contra o nível fundo.
-            context.assertTrue(fresh.shaft().entry().y() >= mouth.y() - 3,
-                    "a mina nova devia começar no chão da superfície: " + fresh.shaft().entry());
+            context.assertTrue(fresh.shaft().entry().equals(mouth), "a mina devia voltar à mesma boca: " + fresh.shaft().entry());
+            context.assertTrue(fresh.shaft().descent() == Side.EAST.clockwise(), "a escada devia virar de rumo");
             context.assertTrue(fresh.arms().getFirst().cut() == 0, "o cursor devia voltar ao primeiro degrau");
+        } finally {
+            VillageColonyMod.MINES.removeOfColony(colonyId);
+        }
+
+        context.complete();
+    }
+
+    /** Sem a boca lembrada na superfície, a mina fica como está: nunca abre outra boca. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_fixes", tickLimit = 20)
+    public void withoutTheFirstMouthTheMineKeepsItsStair(TestContext context) {
+        UUID colonyId = UUID.randomUUID();
+        ColonyPos buried = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(2, 1, 2)));
+        ColonyPos deep = new ColonyPos(buried.x() + 30, buried.y() - 40, buried.z() + 30);
+        Mine before = Mine.restore(colonyId, MineShaft.from(deep, Side.EAST), 500);
+
+        VillageColonyMod.MINES.restore(before);
+        MineEntrance.opened(colonyId, buried);
+
+        try {
+            context.assertFalse(MineRestart.restart(context.getWorld(), colonyId, before), "abriu uma boca nova");
+            context.assertTrue(VillageColonyMod.MINES.of(colonyId).orElseThrow().shaft().entry().equals(deep),
+                    "a mina devia ficar como estava");
         } finally {
             VillageColonyMod.MINES.removeOfColony(colonyId);
         }

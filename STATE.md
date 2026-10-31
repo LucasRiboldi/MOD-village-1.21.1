@@ -1,10 +1,29 @@
 # STATE — 2026-10-29
 
+> **31-10 — a 0.3.110 foi jogada** por longo tempo (relato do autor; logs ainda não analisados com
+> `time_ledger.py`/`action_report.py`). A corrigir: estrutura e entrada da mina; criação e ligação dos caminhos;
+> escolha das estruturas a construir e as que faltam. Ambiente: 11 skills fora do escopo foram para
+> `docs/archive/skills/`; MCP `minecraft-modding` (`@adhisang/minecraft-modding-mcp@8.0.0`) em `.mcp.json`.
+> Diagnóstico: `docs/audit/2026-10-31-auditoria-controle.md`.
+
+> **0.3.110** (29-10, branch `fix/playtest-0102`, commits `878d209` e `e92e1fe`): pedidos do autor depois dos jogos da
+> 0.3.109 e de um JAR 0.3.110 sem testes — o aldeão da colônia pula 2 blocos e por cima da cerca (Regra 159); o
+> construtor trabalha do chão e quem fica num telhado se joga rumo ao chão, posto no chão depois de 3 pulos (Regra 160);
+> a mina recomeça na mesma boca, virando de rumo (emenda da Regra 119); comer enche a vida (Regra 161); o alisamento não
+> mexe dentro de construção ou obra e o pedreiro limpa o miolo dos cercados (Regra 162). Unitários 1663/1663, bateria
+> 939/939 na rodada final (`ShepherdHerding`, `ShepherdFeeding` e `Builder ground` falharam uma vez cada antes),
+> Python 153. Regras 161 e 162 sem teste próprio. **A versão testada não foi jogada.** Para o jogo: **mundo novo**; o
+> pastor no curral sem portão, o construtor no telhado, o miolo do cercado.
+> Publicada como pré-lançamento `v0.3.110-alpha` (workflow `Release`, só `remapJar`, commit `29b9ca4`): JAR
+> `village-colony-0.3.110.jar`, SHA-256 `A23105CF54A35A852E9FD9677114FCA7A48D965B689743F738266151D41EE2D1`.
+>
 > **0.3.109** (29-10, branch `fix/playtest-0102`): depois do jogo da 0.3.108 (`docs/research/2026-10-29-jogo-0108.md`):
 > o chão em volta da vila é a mistura suave com o terreno numa faixa de 4× o desnível, de 16 a 64 (Regra 152 refeita,
 > `VillageBlend`; a vila referencia os chunks até 64 além das peças); a árvore sobre chão cortado sai inteira; o mineiro
 > não quebra o que segura cascalho, água ou lava pelo vão (Regra 157); ninguém dorme no andar de baixo da casa de escada
-> de mão (Regra 158). Unitários 1654/1654, bateria 936/936, Python 153. **Não jogado.** Falta: portão da mina na entrada
+> de mão (Regra 158). A mistura parte do topo de verdade e a margem da água fica natural (bancada de 6 cenários: chão
+> sobre vão cai em todos, maior degrau igual, paredões +8 a 25 % perto da vila). Unitários 1663/1663, bateria 936/936,
+> Python 153, PIT 85 %. **Não jogado.** Falta: portão da mina na entrada
 > real, argila, fazendeiro, construtor sem material. Para o jogo: **mundo novo**; a encosta em volta da vila.
 >
 > **0.3.108** (29-10, branch `fix/playtest-0102`): o pedreiro sem tarefa alisa o chão da vila aos poucos (Regra 156 —

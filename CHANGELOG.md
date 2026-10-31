@@ -12,6 +12,32 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.3.110] — pulo de 2 e de cerca, construtor no chão, pulo do telhado, cercado livre, comer enche a vida (2026-10-29, JAR local, não jogado)
+
+Branch `fix/playtest-0102`, commits `878d209` e `e92e1fe`. Pedidos do autor depois dos jogos da 0.3.109 e de um JAR
+0.3.110 gerado antes da bateria.
+
+### Adicionado
+- **Pulo (Regra 159):** o aldeão da colônia sobe 2 blocos de um passo e passa por cima da cerca; força de pulo
+  0,42 → 0,62 (`ColonyPathing`, `LandPathNodeMakerMixin`).
+- **Descida do telhado (Regra 160):** o encalhado em pé sobre construção se joga rumo ao chão mais perto, até 8
+  blocos; depois de 3 pulos sem sair é posto no chão (`RoofDescent`).
+- **Comer enche a vida (Regra 161):** quem come ou recebe comida fica com a vida no máximo (`VillagerMeals`). Sem
+  teste próprio.
+- **Miolo do cercado (Regra 162):** o pedreiro tira o chão natural e a planta de dentro dos cercados da colônia
+  (`GroundSmoothing.clearPens`). Sem teste próprio.
+
+### Mudado
+- **Construtor do chão (Regra 160):** o lugar de pé que ele procura fica no máximo 1 acima do chão da obra
+  (`BuilderApproach`).
+- **Mina (emenda da Regra 119):** ao recomeçar, a escada volta à boca que a mina lembra e vira de rumo; boca nova
+  nunca (`MineRestart`, `MineEntrance.rememberedMouth`).
+- **Alisamento (Regra 162):** não mexe dentro da caixa de construção ou obra da colônia, com 1 de folga.
+
+### Verificação
+- 1663 unitários, 939 GameTests com `--rerun-tasks` (rodada final verde; `ShepherdHerding`, `ShepherdFeeding` e
+  `Builder ground` falharam uma vez cada nas anteriores), 153 Python.
+
 ## [0.3.109] — solo largo em volta da vila, mineiro e cascalho, cama fora da escada (2026-10-29, JAR local, não jogado)
 
 Branch `fix/playtest-0102`. Jogo da 0.3.108 (`docs/research/2026-10-29-jogo-0108.md`) e estudo do solo
@@ -20,8 +46,12 @@ Branch `fix/playtest-0102`. Jogo da 0.3.108 (`docs/research/2026-10-29-jogo-0108
 ### Mudado
 - **Solo em volta da vila (Regra 152):** na vila, o degrau de 1 de antes; em volta, a mistura suave do nível da vila
   com o terreno natural numa faixa de 4 vezes o desnível, de 16 a 64 blocos — sem escada nem paredão. A vila
-  referencia os chunks até 64 além das peças (o jogo, 12), só na geração. A árvore em pé sobre chão cortado sai
-  inteira.
+  referencia os chunks até 64 além das peças (o jogo, 12), só na geração. A conta parte do topo de verdade de cada
+  coluna, e a margem da água fica natural. A árvore em pé sobre chão cortado sai inteira. Na bancada de 6 cenários,
+  contra a 0.3.108 (janela de 200 × 200): colunas com chão sobre vão caem em todos (taiga 1532 → 1319, deserto 941 →
+  850), o maior degrau fica igual (11 nas montanhas), e os paredões (degrau de 4 ou mais) sobem 8 a 25 % entre 8 e 24
+  blocos da vila — o relevo natural que a faixa de 16 aplainava. O plano de uma vila leva 5 a 6 s (era 20 s com a
+  primeira versão).
 
 ### Corrigido
 - **Mineiro soterrado (Regra 157):** não quebra o bloco que tem, acima e pelo ar, cascalho, areia, água ou lava.

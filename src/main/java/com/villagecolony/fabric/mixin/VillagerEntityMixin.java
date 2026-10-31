@@ -1,6 +1,8 @@
 package com.villagecolony.fabric.mixin;
 
 import com.villagecolony.fabric.brain.ColonyBrainInitializer;
+import com.villagecolony.fabric.integration.VillagerMeals;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.passive.VillagerEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,5 +35,18 @@ public abstract class VillagerEntityMixin {
             Brain<VillagerEntity> brain, CallbackInfo info) {
 
         ColonyBrainInitializer.install(brain);
+    }
+
+    // A vida cheia de quem come ou recebe comida (VillagerMeals); só a chamada, ADR-004 §4 regra 3.
+    @SuppressWarnings({"UnusedMethod", "UnusedVariable"})
+    @Inject(method = {"consumeAvailableFood", "eatForBreeding"}, at = @At("HEAD"))
+    private void villagecolony$eatsToFullHealth(CallbackInfo info) {
+        VillagerMeals.ate((VillagerEntity) (Object) this);
+    }
+
+    @SuppressWarnings({"UnusedMethod", "UnusedVariable"})
+    @Inject(method = "loot", at = @At("HEAD"))
+    private void villagecolony$receivesFood(ItemEntity item, CallbackInfo info) {
+        VillagerMeals.picksUp((VillagerEntity) (Object) this, item);
     }
 }

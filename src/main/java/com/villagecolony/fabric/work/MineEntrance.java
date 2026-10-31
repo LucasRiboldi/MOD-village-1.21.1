@@ -89,6 +89,16 @@ public final class MineEntrance {
         CHAINS.put(colonyId, new Chain(List.of(mouth), Long.MAX_VALUE));
     }
 
+    /**
+     * A primeira boca que a mina lembra — a da cadeia guardada, antes de qualquer dedução. É a ela que a escada volta
+     * ao recomeçar (autor, 2026-10-29: "usar a mesma primeira descida").
+     */
+    static Optional<ColonyPos> rememberedMouth(UUID colonyId) {
+        Chain known = CHAINS.get(colonyId);
+
+        return known == null || known.entries().isEmpty() ? Optional.empty() : Optional.of(known.entries().getFirst());
+    }
+
     /** Quantos níveis a mina já desceu desde a boca de superfície: 0 no primeiro. */
     public static int levelsDown(ServerWorld world, UUID colonyId, Mine mine) {
         return chainOf(world, colonyId, mine.shaft()).size() - 1;

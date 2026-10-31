@@ -263,7 +263,10 @@ public final class BuilderApproach {
 
                 Optional<BlockPos> candidate = standingSpotNear(world, floor.add(dx, 0, dz));
 
-                if (candidate.isEmpty() || refused.contains(candidate.get())) {
+                // De pé no chão da obra, nunca em cima de parede ou telhado: da zona ele põe qualquer bloco sem
+                // subir (autor, 2026-10-29).
+                if (candidate.isEmpty() || refused.contains(candidate.get())
+                        || candidate.get().getY() > floor.getY() + 1) {
                     continue;
                 }
 

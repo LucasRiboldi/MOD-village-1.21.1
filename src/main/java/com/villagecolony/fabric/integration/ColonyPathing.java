@@ -143,6 +143,39 @@ public final class ColonyPathing {
         if (mob.getPathfindingPenalty(OFF_STREET) != OFF_STREET_COST) {
             mob.setPathfindingPenalty(OFF_STREET, OFF_STREET_COST);
         }
+
+        // Pula 2 blocos e por cima da cerca — autor, 2026-10-29 ("pulo de verdade").
+        if (mob.getNavigation() instanceof net.minecraft.entity.ai.pathing.MobNavigation walking) {
+            walking.setCanWalkOverFences(true);
+        }
+
+        var jump = mob.getAttributeInstance(net.minecraft.entity.attribute.EntityAttributes.GENERIC_JUMP_STRENGTH);
+
+        if (jump != null && !jump.hasModifier(JUMP_ID)) {
+            jump.addTemporaryModifier(new net.minecraft.entity.attribute.EntityAttributeModifier(JUMP_ID, JUMP_GAIN,
+                    net.minecraft.entity.attribute.EntityAttributeModifier.Operation.ADD_VALUE));
+        }
+    }
+
+    /** O degrau que o caminho do aldeão da colônia sobe de um nó para o outro (o Vanilla, 1 para o aldeão). */
+    public static final float STEP = 2.0f;
+
+    /**
+     * Quanto o pulo do aldeão da colônia ganha: de 0,42 para 0,62, uns 2,2 blocos de altura — o bastante para o
+     * degrau de {@link #STEP} e para a cerca, que tem 1,5.
+     */
+    static final double JUMP_GAIN = 0.2;
+
+    static final net.minecraft.util.Identifier JUMP_ID = net.minecraft.util.Identifier.of("villagecolony", "colony_jump");
+
+    /**
+     * A altura de passo que o construtor de caminho do jogo usa para este bicho: {@link #STEP} para o aldeão da
+     * colônia (o caminho aceita subir 2 blocos e o topo da cerca; o controle de movimento do jogo pula sempre que o
+     * próximo nó fica acima do passo do corpo, que não muda); a do jogo para os outros.
+     */
+    public static float stepFor(MobEntity mob, float vanilla) {
+        return mob instanceof VillagerEntity && VillageColonyMod.WORKERS.find(mob.getUuid()).isPresent()
+                ? Math.max(vanilla, STEP) : vanilla;
     }
 
     private static boolean insideTheVillage(Worker worker, int x, int z) {

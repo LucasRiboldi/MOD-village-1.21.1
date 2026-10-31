@@ -1,18 +1,6 @@
 {
   "version": 1,
   "skills": {
-    "minecraft-ci-release": {
-      "source": "Jahrome907/minecraft-agent-skills",
-      "sourceType": "github",
-      "skillPath": ".agents/skills/minecraft-ci-release/SKILL.md",
-      "computedHash": "4f1550283365d868d308305438162d81521ace6431476759d4f8167da5a1ed3b"
-    },
-    "minecraft-modding": {
-      "source": "Jahrome907/minecraft-agent-skills",
-      "sourceType": "github",
-      "skillPath": ".agents/skills/minecraft-modding/SKILL.md",
-      "computedHash": "4966194cb94765ada2b01c796b79fd79b523890839a051c7226f2e6c33cf230d"
-    },
     "minecraft-testing": {
       "source": "Jahrome907/minecraft-agent-skills",
       "sourceType": "github",

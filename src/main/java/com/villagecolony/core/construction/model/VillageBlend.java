@@ -13,8 +13,10 @@ package com.villagecolony.core.construction.model;
  *   desnível daquela coluna; e o campo de pesos passa por um desfoque gaussiano, para a faixa não mudar de largura
  *   aos saltos. O relevo natural continua lá, só achatado na proporção do peso — a montanha vira encosta larga,
  *   não escada nem paredão.</li>
- *   <li><b>Água</b> não se move, e o que a vila não alcança na geração fica natural; a mistura amacia até essa
- *   beira em {@link #EDGE_FADE} blocos.</li>
+ *   <li><b>Água</b> não se move e a margem dela fica natural ({@link #WATER_FADE}); o que a vila não alcança na
+ *   geração fica natural, e a mistura amacia até essa beira em {@link #EDGE_FADE} blocos.</li>
+ *   <li>A conta parte do <b>topo de verdade</b> de cada coluna ({@link Shape#target}): a altura natural da grade é
+ *   lida de longe em longe pelo gerador e só serve à vila e à largura da faixa.</li>
  * </ul>
  *
  * <p>Puro e determinístico: a mesma vila dá a mesma conta em todos os chunks dela.
@@ -32,6 +34,9 @@ public final class VillageBlend {
 
     /** Em quantos blocos a mistura amacia até a beira do que a vila alcança. */
     static final int EDGE_FADE = 8;
+
+    /** Em quantos blocos a mistura amacia até a água: a margem natural fica. */
+    static final int WATER_FADE = 8;
 
     /** O raio do desfoque gaussiano do campo de pesos. */
     static final int BLUR = 2;
@@ -62,37 +67,125 @@ public final class VillageBlend {
     private VillageBlend() {
     }
 
+    /** A conta de uma vila: a superfície do miolo e o peso de cada coluna em volta. */
+    public static final class Shape {
+        private final Area core;
+        private final int[][] village;
+        private final double[][] weight;
+
+        Shape(Area core, int[][] village, double[][] weight) {
+            this.core = core;
+            this.village = village;
+            this.weight = weight;
+        }
+
+        /** Se a coluna muda: o miolo, ou em volta com peso. */
+        public boolean shapes(int x, int z) {
+            return core.contains(x, z) || weight[x][z] > 0;
+        }
+
+        /**
+         * A altura nova da coluna, partindo do topo de verdade: no miolo, a superfície de degrau 1; em volta,
+         * {@code (1 − w)·topo + w·nível da vila} — colada na vila encontra o nível dela, longe não muda.
+         */
+        public int target(int x, int z, int top) {
+            int nearX = Math.max(core.minX(), Math.min(core.maxX(), x));
+            int nearZ = Math.max(core.minZ(), Math.min(core.maxZ(), z));
+            int level = village[nearX - core.minX()][nearZ - core.minZ()];
+
+            if (core.contains(x, z)) {
+                return level;
+            }
+
+            return (int) Math.round((1 - weight[x][z]) * top + weight[x][z] * level);
+        }
+    }
+
     /**
-     * Quanto cada coluna sobe (positivo) ou desce, partindo de {@code natural} ({@code [x][z]}).
+     * A conta da vila sobre a altura natural {@code natural} ({@code [x][z]}).
      *
      * @param core a vila — o miolo de degrau 1, dentro da grade
      * @param reach o que a geração alcança; fora dele nada muda
      */
-    public static int[][] offsets(int[][] natural, VillageSurface.Kind[][] kinds, Area core, Area reach) {
+    public static Shape shape(int[][] natural, VillageSurface.Kind[][] kinds, Area core, Area reach) {
         int width = natural.length;
         int depth = natural[0].length;
         int[][] village = coreSurface(natural, kinds, core);
+        int[][] water = waterDistance(kinds);
+        double[][] raw = new double[width][depth];
+
+        for (int x = 0; x < width; x++) {
+            for (int z = 0; z < depth; z++) {
+                raw[x][z] = core.contains(x, z) ? 1
+                        : reach.contains(x, z) ? rawWeight(natural, village, core, reach, x, z)
+                                * smoothstep((double) water[x][z] / WATER_FADE) : 0;
+            }
+        }
+
         double[][] weight = new double[width][depth];
 
         for (int x = 0; x < width; x++) {
             for (int z = 0; z < depth; z++) {
-                weight[x][z] = core.contains(x, z) ? 1 : reach.contains(x, z) ? rawWeight(natural, village, core, reach, x, z) : 0;
+                boolean free = reach.contains(x, z) && kinds[x][z] != VillageSurface.Kind.WATER;
+                weight[x][z] = core.contains(x, z) ? 1 : free ? blurred(raw, x, z) : 0;
             }
         }
 
-        int[][] offsets = new int[width][depth];
+        return new Shape(core, village, weight);
+    }
 
-        for (int x = 0; x < width; x++) {
-            for (int z = 0; z < depth; z++) {
-                if (core.contains(x, z)) {
-                    offsets[x][z] = village[x - core.minX()][z - core.minZ()] - natural[x][z];
-                } else if (reach.contains(x, z) && kinds[x][z] != VillageSurface.Kind.WATER) {
-                    offsets[x][z] = (int) Math.round(blurred(weight, x, z) * delta(natural, village, core, x, z));
-                }
+    /** Quanto cada coluna sobe (positivo) ou desce, se o topo de verdade for o natural. */
+    public static int[][] offsets(int[][] natural, VillageSurface.Kind[][] kinds, Area core, Area reach) {
+        Shape shape = shape(natural, kinds, core, reach);
+        int[][] offsets = new int[natural.length][natural[0].length];
+
+        for (int x = 0; x < natural.length; x++) {
+            for (int z = 0; z < natural[0].length; z++) {
+                offsets[x][z] = shape.target(x, z, natural[x][z]) - natural[x][z];
             }
         }
 
         return offsets;
+    }
+
+    /** A distância, em colunas (8 vizinhas), até a água mais perto; longe sem água, a largura da grade. */
+    static int[][] waterDistance(VillageSurface.Kind[][] kinds) {
+        int width = kinds.length;
+        int depth = kinds[0].length;
+        int far = width + depth;
+        int[][] distance = new int[width][depth];
+
+        for (int x = 0; x < width; x++) {
+            for (int z = 0; z < depth; z++) {
+                distance[x][z] = kinds[x][z] == VillageSurface.Kind.WATER ? 0 : far;
+            }
+        }
+
+        for (int x = 0; x < width; x++) {
+            for (int z = 0; z < depth; z++) {
+                for (int dx = -1; dx <= 0; dx++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        if ((dx < 0 || dz < 0) && x + dx >= 0 && z + dz >= 0 && z + dz < depth) {
+                            distance[x][z] = Math.min(distance[x][z], distance[x + dx][z + dz] + 1);
+                        }
+                    }
+                }
+            }
+        }
+
+        for (int x = width - 1; x >= 0; x--) {
+            for (int z = depth - 1; z >= 0; z--) {
+                for (int dx = 0; dx <= 1; dx++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        if ((dx > 0 || dz > 0) && x + dx < width && z + dz >= 0 && z + dz < depth) {
+                            distance[x][z] = Math.min(distance[x][z], distance[x + dx][z + dz] + 1);
+                        }
+                    }
+                }
+            }
+        }
+
+        return distance;
     }
 
     /** A superfície de degrau 1 do miolo, nas coordenadas do miolo. */
