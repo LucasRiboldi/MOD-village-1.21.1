@@ -1,6 +1,14 @@
 # TODO
 
-**Atualizado:** 2026-10-20 (biomas, 0.3.69–0.3.76; antes: 2026-10-14, ciclo H3). Só o que está **aberto**. Os checklists de playtest de
+## Diagnóstico de terreno e trabalho — 31-10-2026
+
+- [ ] Validar em jogo o alisamento em vila nova e no save antigo; medir degraus, paredes e vazios após reparo raso.
+- [ ] Validar entrada da mina e ruas desconectadas: caminho natural quando o trecho da rede não for alcançável.
+- [ ] Conferir produção contínua e reposição de 16 itens por tipo nos três ofícios, incluindo produtos de fornalha;
+      manter prioridade das obras e baús nomeados reservados.
+- [ ] Repetir diário de trabalho: distinguir espera real de trabalho auxiliar sem marcação e medir NO_PATH/NO_PROGRESS.
+
+**Atualizado:** 2026-10-31 (diagnóstico de terreno e trabalho; histórico de biomas: 2026-10-20). Só o que está **aberto**. Os checklists de playtest de
 versões ≤0.3.44 foram arquivados em `docs/archive/technical/TODO-ate-2026-10-07.md` (grep, nunca
 inteiro). Estado vivo: `STATE.md`. Plano de melhoria: `docs/technical/Plano-Melhoria-2026-10-14.md`.
 

@@ -11167,3 +11167,15 @@ Não há alteração de política de metas. Verificação desta sessão: 1368 te
 unitários, 96 testes Python, 654/654 GameTests em 32,73 s e `build` completo,
 tudo aprovado. A entrega e os eventos no save real continuam pendentes de
 playtest.
+
+## 31-10-2026 — reparo de terreno, rotas e estoque (linha em validação)
+
+O log da 0.3.111 e os relatórios do save mostraram degraus, paredes e vazios sob terreno, ruas separadas e espera
+de trabalhadores. Os testes controlados reproduziram corte que apagava baú enterrado, cópia de baú como subsolo,
+piso sem apoio, construtor sem obra ocioso e catálogo sem peças de pedra e metal. A correção inspeciona a coluna
+antes de escrever, repara só apoio raso seco, protege a geração, permite ao construtor ajudar na vila e só impõe
+um trecho de rua quando há caminho até ele. O catálogo de três oficinas considera peças fabricáveis de blocos;
+baús nomeados continuam reservados. Os testes focados de terreno/estoque/rota e de geração passaram.
+O ciclo de fundição passou a percorrer receitas de blocos, manter 16 por tipo e respeitar a reserva da obra;
+GameTests cobrem reposição e cerâmica vidrada. Validação final: `clean build`, `build` após a fundição,
+949/949 GameTests e `rules_to_readme.py --check` aprovados. Resta playtest em mundo e save do autor.

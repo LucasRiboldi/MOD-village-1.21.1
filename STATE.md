@@ -1,12 +1,22 @@
 # STATE — 2026-10-31
 
+> **Linha `codex/terrain-stock-repair` em validação, sem versão publicada:**
+> proteção prévia de cortes/aterros do alisamento e da geração, apoio de vazios secos de até 3 blocos fora de minas e construções,
+> construtor ajudando o terreno da vila sem obra, catálogo de estoque com pedra e metal, fundidor repondo blocos
+> de receitas de fornalha até 16 por tipo e trecho de rua sujeito a caminho alcançável.
+> Baús nomeados pelo jogador seguem reservados. A 0.4.0 permanece sem playtest; testar em mundo novo e no save de diagnóstico
+> antes de concluir que as paredes, os acessos à mina e a ociosidade foram resolvidos.
+> Verificação da linha: `clean build` aprovado, `build` final aprovado e 949/949 GameTests aprovados.
+> JAR de desenvolvimento desta linha instalado no TLauncher: `village-colony-0.4.0.jar`,
+> SHA-256 `6F4DE59814B9F30BD25E4E93CF43BF1F9868FA92B7F5FA3D285B5B7259920E64`; ainda não publicado.
+
 > **0.4.0** (31-10, promovida de `fix/estruturas-0110`): depois da análise do
 > jogo da 0.3.110 (12,3 h, nenhuma roça, 58 camas para 19 adultos, armazém grande 63× sem lote). A vez da roça abria
 > casa (`HousePlans.plansForNext` pedia a lista de casas) — corrigido; roças pela maior das contas, 1 a cada 15
 > adultos ou 1 por fazendeiro (Regra 163); casa de reserva respeita o teto de camas (Regra 164); galpão
 > `storage_small` 7×7 antes do `storage_majest` (Regra 165). Unitários 1667/1667, bateria 940/940, Python 155/155.
 > JAR `village-colony-0.4.0.jar`, SHA-256 `9E011A3F256C22B1695D2A2AA44366CB4A38AE03DD4C356F138B958B86BF040D`,
-> instalado no TLauncher. A versão ainda não foi jogada.
+> cópia da release preservada como `village-colony-0.4.0-release.jar.disabled` no TLauncher. A versão ainda não foi jogada.
 > Para o jogo: **mundo novo**; ver se a roça sai com fazendeiro sem roça, se as casas param perto de adultos + 4, se o
 > galpão fica de pé com porta, tocha e 8 baús. Mina, caminhos, curral duplo e flecheiro seguem abertos
 > (análise na memória `playtest-0110-mina-caminhos-estruturas`).
