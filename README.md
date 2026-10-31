@@ -549,14 +549,15 @@ Os outros relatórios:
 Os perfis de trabalho e as skills utilizadas neste repositório estão em
 `AGENTS.md`. A matriz operacional é:
 
-- `fabric-development` e `minecraft-modding` para código Fabric e integração
-  com Minecraft 1.21.1.
+- `fabric-development` para código Fabric e integração com Minecraft 1.21.1.
 - `minecraft-villager-systems` e `minecraft-code-research` para profissão,
   rotina, caminho, estoque e diagnóstico de aldeões.
 - `minecraft-testing` para testes unitários e GameTests.
-- `minecraft-ci-release` para CI, versionamento, artefatos e publicação.
-- Auditoria (2026-10-10): `modpack-modsmith` (convivência com o pack e a escada
-  de testes do `probar.py`), `java-architecture-review`, `java-static-analysis`,
+- `minecraft-resource-pack` e `minecraft-world-generation` só quando a tarefa for
+  textura ou geração de mundo.
+- Skills fora do escopo de um mod Fabric (Paper, servidor, datapack, multiloader…)
+  saíram em 2026-10-31 e estão guardadas em `docs/archive/skills/`.
+- Auditoria (2026-10-10): `java-architecture-review`, `java-static-analysis`,
   `minecraft-performance-profiling`, `fabric-persistence-migration` e
   `git-workflow-audit`. Origem e uso em
   [`docs/technical/avaliacao/agent-setup.md`](docs/technical/avaliacao/agent-setup.md).

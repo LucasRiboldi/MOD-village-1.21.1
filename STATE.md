@@ -1,5 +1,11 @@
 # STATE — 2026-10-29
 
+> **31-10 — a 0.3.110 foi jogada** por longo tempo (relato do autor; logs ainda não analisados com
+> `time_ledger.py`/`action_report.py`). A corrigir: estrutura e entrada da mina; criação e ligação dos caminhos;
+> escolha das estruturas a construir e as que faltam. Ambiente: 11 skills fora do escopo foram para
+> `docs/archive/skills/`; MCP `minecraft-modding` (`@adhisang/minecraft-modding-mcp@8.0.0`) em `.mcp.json`.
+> Diagnóstico: `docs/audit/2026-10-31-auditoria-controle.md`.
+
 > **0.3.110** (29-10, branch `fix/playtest-0102`, commits `878d209` e `e92e1fe`): pedidos do autor depois dos jogos da
 > 0.3.109 e de um JAR 0.3.110 sem testes — o aldeão da colônia pula 2 blocos e por cima da cerca (Regra 159); o
 > construtor trabalha do chão e quem fica num telhado se joga rumo ao chão, posto no chão depois de 3 pulos (Regra 160);
