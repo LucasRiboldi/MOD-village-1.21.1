@@ -2,7 +2,14 @@
 
 ## Diagnóstico de terreno e trabalho — 31-10-2026
 
-- [ ] Validar em jogo o alisamento em vila nova e no save antigo; medir degraus, paredes e vazios após reparo raso.
+- [ ] Jogar o novo JAR em mundo novo e no save `Novo mundo`: medir grama flutuante,
+      transição do lote em degraus de 1 bloco e apoio sob o piso; conferir cortes em dunas e estruturas.
+- [ ] Observar pastor junto do animal ao alimentar e abater, reserva de 6 adultos por espécie,
+      currais intercalados de 15×15 e cercados existentes aproveitados.
+- [ ] Confirmar limpeza de árvores e copas nos novos lotes, folhas removidas durante a passagem,
+      itens recolhidos a 5 blocos e reposição de 16 produtos por tipo nos três ofícios.
+- [ ] Comparar o novo diário de profissões e Spark com o jogo de 31-10: pastor 3%, carpinteiro 11%,
+      pedreiro 15%, construtor 46% trabalhando; investigar esperas sem matéria-prima ou caminho.
 - [ ] Validar entrada da mina e ruas desconectadas: caminho natural quando o trecho da rede não for alcançável.
 - [ ] Conferir produção contínua e reposição de 16 itens por tipo nos três ofícios, incluindo produtos de fornalha;
       manter prioridade das obras e baús nomeados reservados.

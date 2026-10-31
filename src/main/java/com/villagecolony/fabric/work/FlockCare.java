@@ -19,7 +19,7 @@ import java.util.List;
 final class FlockCare {
 
     /** Até onde, em volta do pastor, ele procura as ovelhas. */
-    static final int REACH = 16;
+    static final int REACH = 5;
 
     /** O trigo de um cruzamento: um por ovelha. */
     static final int WHEAT = 2;
@@ -37,7 +37,8 @@ final class FlockCare {
         }
 
         List<SheepEntity> ready = flock.stream()
-                .filter(sheep -> !sheep.isBaby() && sheep.getBreedingAge() == 0 && !sheep.isInLove())
+                .filter(sheep -> !sheep.isBaby() && sheep.getBreedingAge() == 0 && !sheep.isInLove()
+                        && shepherd.squaredDistanceTo(sheep) <= ShepherdFlock.ACTION_REACH_SQUARED)
                 .limit(2)
                 .toList();
 

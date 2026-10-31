@@ -14,6 +14,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.passive.SheepEntity;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.test.GameTest;
@@ -36,7 +37,8 @@ public class ShepherdLooseFlockGameTest implements FabricGameTest {
         Colony colony = Colony.create(UUID.randomUUID(), center);
         VillageColonyMod.COLONIES.register(colony);
         ColonyFixture fixture = ColonyFixture.create().owning(colony);
-        UUID shepherd = UUID.randomUUID();
+        VillagerEntity shepherdEntity = context.spawnEntity(EntityType.VILLAGER, new BlockPos(3, 1, 3));
+        UUID shepherd = shepherdEntity.getUuid();
 
         VillageColonyMod.WORKERS.register(shepherd, colony.id()).assign(ProfessionType.SHEPHERD);
         VillageColonyMod.STORAGES.register(WorkerStorage.of(shepherd, center));
@@ -55,6 +57,7 @@ public class ShepherdLooseFlockGameTest implements FabricGameTest {
             context.assertTrue(ColonyChests.countIn(context.getWorld(), List.of(center), Items.WHEAT) == 2,
                     "o par devia comer 2 trigos do baú");
         } finally {
+            shepherdEntity.discard();
             fixture.cleanUp();
             ShepherdFlock.clearAll();
         }

@@ -10,6 +10,8 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
@@ -28,16 +30,14 @@ import net.minecraft.util.math.BlockPos;
  * Regra 22 — a planta não reprova o lote, e por não reprovar precisa de
  * alguém que a tire.
  *
- * <p><b>O que ele tira, e só isso:</b> o que o jogo considera
- * substituível — grama alta, samambaia, flor, camada de neve, muda
- * solta. Bloco sólido não entra nesta lista, e não entra por acidente:
- * a Regra 3 manda não tocar no que é do jogador, e um lote com bloco
- * sólido dentro nem devia ter sido escolhido (Regra 22).
+ * <p>A preparação tira plantas substituíveis e árvores naturais inteiras do lote
+ * (Regra 22). Tronco da vila, da colônia e do jogador permanece protegido
+ * (Regra 3). A madeira da árvore vai aos baús públicos; excedente cai no mundo.
  *
- * <p><b>Sem drop.</b> A flor some, não vira item no chão. É o mesmo que
+ * <p><b>Plantas pequenas sem drop.</b> A flor some, não vira item no chão. É o mesmo que
  * acontece quando um jogador põe um bloco sobre grama alta: o mundo a
  * substitui e nada cai. Fazer cair encheria o canteiro de itens que
- * ninguém recolhe, e a colônia passaria a criar entulho onde constrói.
+ * precisa ser recolhido dentro da obra.
  */
 public final class SitePreparation {
 
@@ -74,7 +74,7 @@ public final class SitePreparation {
             }
         }
 
-        cleared += clearTrees(world, origin, size);
+        cleared += clearTrees(world, project);
         cleared += removeGrassFromHouseBase(world, project);
 
         if (cleared > 0) {
@@ -89,13 +89,52 @@ public final class SitePreparation {
     }
 
     /**
-     * Derruba a árvore natural de dentro do lote, nos biomas de árvores juntas — pedido do autor,
-     * 2026-10-20. O lote só foi aceito com ela porque ela sai ({@link LotGrowth}); do piso até a
-     * folga vertical, e o tronco que segue acima não fica pendurado.
+     * Derruba a árvore natural inteira, em qualquer bioma, quando o tronco ocupa o lote
+     * (Regra 22). A copa conectada também sai; proteção e drops vêm de {@link TreeHarvester}.
      */
-    private static int clearTrees(ServerWorld world, ColonyPos origin, ColonyPos size) {
+    private static int clearTrees(ServerWorld world, ConstructionProject project) {
+        ColonyPos origin = project.origin();
+        ColonyPos size = project.blueprint().size();
         int through = origin.y() + Math.max(size.y(), BuildSiteScanner.VERTICAL_CLEARANCE);
         int cleared = 0;
+        java.util.Set<BlockPos> visited = new java.util.HashSet<>();
+        java.util.List<ColonyPos> chests = ColonyChests.nearestFirst(world, project.colonyId(), origin);
+
+        for (int dx = 0; dx < size.x(); dx++) {
+            for (int dz = 0; dz < size.z(); dz++) {
+                int x = origin.x() + dx;
+                int z = origin.z() + dz;
+                for (int y = origin.y(); y <= through + 40; y++) {
+                    BlockPos at = new BlockPos(x, y, z);
+                    if (visited.contains(at) || !world.getBlockState(at).isIn(BlockTags.LOGS)) {
+                        continue;
+                    }
+                    TreeHarvester.Plan tree = TreeHarvester.plan(world, at);
+                    if (tree.isEmpty()) {
+                        continue;
+                    }
+                    visited.addAll(tree.blocks());
+                    java.util.List<BlockPos> canopy = TreeShape.connectedLeaves(world, tree.species(), tree.blocks());
+                    for (BlockPos block : java.util.stream.Stream.concat(tree.blocks().stream(), canopy.stream()).toList()) {
+                        for (ItemStack drop : TreeHarvester.breakOne(world, tree, block)) {
+                            int left = drop.getCount();
+                            for (ColonyPos chest : chests) {
+                                left = ChestDepositor.deposit(world, chest, drop.getItem(), left);
+                                if (left == 0) {
+                                    break;
+                                }
+                            }
+                            if (left > 0) {
+                                ItemStack remaining = drop.copyWithCount(left);
+                                world.spawnEntity(new ItemEntity(world, block.getX() + 0.5, block.getY() + 0.5,
+                                        block.getZ() + 0.5, remaining));
+                            }
+                        }
+                        cleared++;
+                    }
+                }
+            }
+        }
 
         for (int dx = 0; dx < size.x(); dx++) {
             for (int dz = 0; dz < size.z(); dz++) {

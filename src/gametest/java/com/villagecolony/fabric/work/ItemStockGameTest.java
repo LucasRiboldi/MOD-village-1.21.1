@@ -47,6 +47,26 @@ public class ItemStockGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** O trabalho livre repõe só o que falta até 16, sem acumular centenas (Regra 133). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock_catalog", tickLimit = 20)
+    public void valueGoodsRefillsOnlyTheConsumedStoneBrick(TestContext context) {
+        BlockPos chestAt = new BlockPos(2, 2, 2);
+        context.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chestAt));
+        ServerWorld world = context.getWorld();
+        ChestDepositor.deposit(world, chest, Items.STONE, 80);
+        ChestDepositor.deposit(world, chest, Items.STONE_BRICKS, 15);
+        List<ColonyPos> chests = List.of(chest);
+
+        ValueGoods.Recipe recipe = ValueGoods.recipeFor(world, chests, ProfessionType.MASON).orElseThrow();
+        context.assertTrue(recipe.product() == Items.STONE_BRICKS, "o pedreiro escolheu outra peça");
+        context.assertTrue(ValueGoods.batch(world, chests, recipe) == 1,
+                "o lote não respeitou o déficit de uma unidade");
+        context.assertTrue(ColonyChests.countIn(world, chests, Items.STONE_BRICKS) == 16,
+                "o estoque passou de 16 tijolos de pedra");
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock", tickLimit = 400)
     public void theCarpenterStocksAPieceOfTheVillagePlans(TestContext context) {
         ServerWorld world = context.getWorld();

@@ -53,9 +53,9 @@ public class BiomeSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** Na floresta a árvore natural sai do lote; na planície continua ocupando (controle). */
+    /** Árvores naturais podem ser limpas do lote em qualquer bioma. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "biome_site")
-    public void aForestTreeDoesNotOccupyTheLotButAPlainsTreeDoes(TestContext context) {
+    public void naturalTreesDoNotBlockSelectedLotsInForestOrPlains(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos forest = groundAt(context, 0);
         BlockPos plains = groundAt(context, 32);
@@ -69,8 +69,8 @@ public class BiomeSiteGameTest implements FabricGameTest {
                     "na floresta, a árvore natural ainda ocupa o lote (bioma "
                             + world.getBiome(forest.up()).getKey().map(key -> key.getValue().toString()).orElse("?")
                             + ", mata " + LotGrowth.clearsTreesAt(world, forest.up()) + ")");
-            context.assertFalse(LotClearance.isClearAbove(world, plains.getX(), plains.getZ(), plains.getY() + 1, 25),
-                    "controle: na planície a árvore deixou de ocupar o lote");
+            context.assertTrue(LotClearance.isClearAbove(world, plains.getX(), plains.getZ(), plains.getY() + 1, 25),
+                    "a árvore natural da planície deve ser removível do lote");
 
             int ground = LotGround.groundInColumn(world, forest.getX(), forest.getZ(), forest.getY())
                     .map(BlockPos::getY).orElse(Integer.MIN_VALUE);

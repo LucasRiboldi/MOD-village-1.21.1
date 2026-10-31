@@ -1,0 +1,33 @@
+package com.villagecolony.fabric.work;
+
+import com.villagecolony.fabric.brain.WorkTargets;
+import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.block.Blocks;
+import net.minecraft.entity.EntityType;
+import net.minecraft.test.GameTest;
+import net.minecraft.test.TestContext;
+import net.minecraft.util.math.BlockPos;
+
+/** A folhagem natural sai um bloco por passagem; a folha colocada pelo jogador fica. */
+public final class LeafPathsGameTest implements FabricGameTest {
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "leaf_paths", tickLimit = 20)
+    public void aWalkingVillagerClearsOneNaturalLeafAtATime(TestContext context) {
+        var villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(2, 2, 2));
+        BlockPos first = new BlockPos(3, 2, 2);
+        BlockPos second = first.up();
+        context.setBlockState(first, Blocks.OAK_LEAVES);
+        context.setBlockState(second, Blocks.OAK_LEAVES);
+        WorkTargets.set(villager.getUuid(), context.getAbsolutePos(new BlockPos(6, 2, 2)), 1);
+        try {
+            context.assertTrue(LeafPaths.clearOne(context.getWorld(), villager), "primeira folha não saiu");
+            context.assertTrue(context.getBlockState(first).isAir(), "primeira folha continua");
+            context.assertTrue(context.getBlockState(second).isOf(Blocks.OAK_LEAVES), "duas folhas saíram de uma vez");
+            context.assertTrue(LeafPaths.clearOne(context.getWorld(), villager), "segunda folha não saiu");
+            context.assertTrue(context.getBlockState(second).isAir(), "segunda folha continua");
+        } finally {
+            WorkTargets.clear(villager.getUuid());
+            villager.discard();
+        }
+        context.complete();
+    }
+}

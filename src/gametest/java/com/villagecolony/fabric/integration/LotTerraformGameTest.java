@@ -47,6 +47,41 @@ public class LotTerraformGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lot_terraform")
+    public void aCutLotMeetsTheHillsideInOneBlockSteps(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(8, 4, 8));
+        for (int distance = 1; distance <= 6; distance++) {
+            BlockPos column = origin.add(-distance, 0, 0);
+            for (int dy = -3; dy <= 5; dy++) {
+                world.setBlockState(column.up(dy),
+                        (dy < 5 ? Blocks.DIRT : Blocks.GRASS_BLOCK).getDefaultState());
+            }
+            for (int dy = 6; dy <= 7; dy++) {
+                world.setBlockState(column.up(dy), Blocks.AIR.getDefaultState());
+            }
+        }
+        try {
+            LotTerraform.cutRing(world, origin.getX(), origin.getZ(), SIDE, SIDE, origin.getY());
+            for (int distance = 1; distance <= 6; distance++) {
+                BlockPos at = origin.add(-distance, distance - 1, 0);
+                context.assertTrue(world.getBlockState(at).isOf(Blocks.GRASS_BLOCK),
+                        "a borda a " + distance + " blocos não termina no degrau " + (distance - 1));
+                context.assertTrue(world.getBlockState(at.down()).isSideSolidFullSquare(world, at.down(),
+                        net.minecraft.util.math.Direction.UP), "grama sem apoio na borda " + distance);
+                context.assertTrue(world.getBlockState(at.up()).isAir(), "encosta não foi cortada na borda " + distance);
+            }
+        } finally {
+            for (int distance = 1; distance <= 6; distance++) {
+                BlockPos column = origin.add(-distance, 0, 0);
+                for (int dy = -3; dy <= 7; dy++) {
+                    world.setBlockState(column.up(dy), Blocks.AIR.getDefaultState());
+                }
+            }
+        }
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lot_terraform")
     public void aLotTwoAboveTheRoadIsAcceptedWithTheBaseOnTheStreet(TestContext context) {
         BlockPos origin = footprint(context, new int[][] {{2, 2, 2}, {2, 2, 2}, {2, 2, 2}}, Blocks.GRASS_BLOCK);
 

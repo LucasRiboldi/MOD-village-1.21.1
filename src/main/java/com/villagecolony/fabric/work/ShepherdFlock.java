@@ -13,6 +13,7 @@ import com.villagecolony.fabric.integration.Supplies;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.decoration.LeashKnotEntity;
 import net.minecraft.entity.passive.AnimalEntity;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -59,6 +60,7 @@ public final class ShepherdFlock {
     static final int SEEDS_FOR_SOWING = 8;
 
     private static final int RADIUS = 32;
+    static final double ACTION_REACH_SQUARED = 25.0;
 
     /** A ração de cada espécie quando o fazendeiro não produziu nada — Regra 117. */
     static final Map<EntityType<?>, Item> ANIMAL_FEED = Map.of(
@@ -167,6 +169,18 @@ public final class ShepherdFlock {
                 .anyMatch(worker -> worker.profession().filter(ProfessionType.SHEPHERD::equals).isPresent());
     }
 
+    /** Regra 68: alimentar e abater exigem um pastor vivo a até cinco blocos do animal. */
+    static VillagerEntity nearbyShepherd(ServerWorld world, Colony colony, AnimalEntity animal) {
+        for (var worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
+            if (worker.profession().filter(ProfessionType.SHEPHERD::equals).isPresent()
+                    && world.getEntity(worker.villagerId()) instanceof VillagerEntity shepherd
+                    && shepherd.isAlive() && shepherd.squaredDistanceTo(animal) <= ACTION_REACH_SQUARED) {
+                return shepherd;
+            }
+        }
+        return null;
+    }
+
     /**
      * A lã faltou e nenhuma ovelha tem lã — E7, decisão do autor de 2026-10-08: só
      * procria sob <b>déficit real</b> do rebanho. Abaixo de {@link #FLOCK_TARGET}
@@ -231,7 +245,8 @@ public final class ShepherdFlock {
 
         List<AnimalEntity> ready = new ArrayList<>();
         for (AnimalEntity animal : adults) {
-            if (animal.getBreedingAge() == 0 && !animal.isInLove()) {
+            if (animal.getBreedingAge() == 0 && !animal.isInLove()
+                    && nearbyShepherd(world, colony, animal) != null) {
                 ready.add(animal);
             }
             if (ready.size() == 2) {
@@ -239,7 +254,8 @@ public final class ShepherdFlock {
             }
         }
 
-        if (ready.size() < 2) {
+        if (ready.size() < 2 || nearbyShepherd(world, colony, ready.get(0))
+                != nearbyShepherd(world, colony, ready.get(1))) {
             return false;
         }
 

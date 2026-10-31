@@ -26,10 +26,8 @@ import net.minecraft.world.biome.BiomeKeys;
  * alguém; e o tronco que nasce do chão de uma muda que a colônia plantou é do viveiro ou do bosque
  * dela, e fica ({@code ColonyTrees}).
  *
- * <p><b>Nas obras comuns, só nos biomas de árvores juntas</b> ({@link #clearsTreesAt}) — pedido
- * do autor, 2026-10-20: <i>"nos biomas com árvores muito juntas prever a limpeza da área de
- * construção"</i>. Na planície a regra antiga continua: lote com árvore é recusado e a colônia
- * procura outro, sem derrubar o que não planejou.
+ * <p><b>Nas obras comuns, em qualquer bioma</b> ({@link #clearsTreesAt}): o lote escolhido
+ * recebe limpeza completa da árvore natural antes da obra; vegetação protegida continua fora.
  */
 final class LotGrowth {
 
@@ -50,20 +48,15 @@ final class LotGrowth {
     }
 
     /**
-     * Se este bioma é de árvores juntas, onde a obra comum limpa o próprio lote: florestas, taigas
-     * e selvas pelas etiquetas do jogo (ADR-009), mais cerejeira e mangue, que não têm etiqueta.
+     * A limpeza de árvores naturais no lote vale em todos os biomas (Regra 22).
      */
     static boolean clearsTreesAt(ServerWorld world, BlockPos pos) {
-        return clearsTrees(world.getBiome(pos));
+        return true;
     }
 
     /** O mesmo, para um bioma — a auditoria de cobertura pergunta sem posição. */
     static boolean clearsTrees(net.minecraft.registry.entry.RegistryEntry<net.minecraft.world.biome.Biome> biome) {
-        return biome.isIn(BiomeTags.IS_FOREST)
-                || biome.isIn(BiomeTags.IS_TAIGA)
-                || biome.isIn(BiomeTags.IS_JUNGLE)
-                || biome.matchesKey(BiomeKeys.CHERRY_GROVE)
-                || biome.matchesKey(BiomeKeys.MANGROVE_SWAMP);
+        return true;
     }
 
     /**

@@ -25,7 +25,7 @@ import java.util.Optional;
  * Produtos de valor com o titular sem tarefa — Regra 133 (autor, 2026-10-28; jogo da 0.3.99: lenhador 74%,
  * pedreiro 48% e fundidor 44% parados com o estoque cheio) e Regra 146 (autor, 2026-10-28; taiga simulada:
  * fundidor 80% e pedreiro 64% parados com 1.209 pedras, porque o produto batia no teto de 128). O titular
- * sem tarefa do ofício, no expediente, faz um lote por minuto: o lenhador faz carvão vegetal da tora; o
+ * sem tarefa do ofício, no expediente, repõe até 16 por tipo: o lenhador faz carvão vegetal da tora; o
  * pedreiro faz tijolo, pedra polida, arenito cortado e as peças de pedregulho das obras; o carpinteiro faz tábua,
  * escada e laje da tora que a vila tem mais (O4); o que a obra aberta pede vem primeiro (O1); o fazendeiro faz composto da
  * semente de sobra (O7); o fundidor funde o
@@ -40,8 +40,8 @@ public final class ValueGoods {
     /** A reserva de cru das matérias que as obras também usam. */
     static final int KEEP_RAW = 64;
 
-    /** O produto para de ser feito com tanto nos baús. */
-    static final int CAP = 512;
+    /** Estoque auxiliar por tipo; repõe conforme o consumo (Regra 133, emenda 31-10). */
+    static final int CAP = 16;
 
     /** Uma receita: {@code in} do cru dão {@code out} do produto; o cru nunca desce de {@code keep}. */
     record Recipe(Item raw, int in, Item product, int out, int keep) {
@@ -63,7 +63,7 @@ public final class ValueGoods {
                     new Recipe(Items.COBBLESTONE, 6, Items.COBBLESTONE_STAIRS, 4, KEEP_RAW),
                     new Recipe(Items.COBBLESTONE, 3, Items.COBBLESTONE_SLAB, 6, KEEP_RAW),
                     new Recipe(Items.COBBLESTONE, 6, Items.COBBLESTONE_WALL, 6, KEEP_RAW),
-                    Recipe.oneToOne(Items.STONE_BRICKS, Items.CHISELED_STONE_BRICKS),
+                    new Recipe(Items.STONE_BRICKS, 1, Items.CHISELED_STONE_BRICKS, 1, 8),
                     Recipe.oneToOne(Items.SANDSTONE, Items.CUT_SANDSTONE),
                     Recipe.oneToOne(Items.RED_SANDSTONE, Items.CUT_RED_SANDSTONE),
                     Recipe.oneToOne(Items.ANDESITE, Items.POLISHED_ANDESITE),
@@ -82,7 +82,7 @@ public final class ValueGoods {
                     Recipe.oneToOne(Items.COBBLESTONE, Items.STONE),
                     Recipe.oneToOne(Items.STONE, Items.SMOOTH_STONE),
                     Recipe.oneToOne(Items.SAND, Items.GLASS),
-                    new Recipe(Items.GLASS, 6, Items.GLASS_PANE, 16, KEEP_RAW),
+                    new Recipe(Items.GLASS, 6, Items.GLASS_PANE, 16, 8),
                     Recipe.oneToOne(Items.CLAY_BALL, Items.BRICK),
                     Recipe.oneToOne(Items.CLAY, Items.TERRACOTTA),
                     Recipe.oneToOne(Items.SANDSTONE, Items.SMOOTH_SANDSTONE)),
@@ -164,7 +164,7 @@ public final class ValueGoods {
 
         for (Recipe recipe : ordered) {
             if (ColonyChests.countIn(world, chests, recipe.raw()) >= recipe.keep() + recipe.in()
-                    && ColonyChests.countIn(world, chests, recipe.product()) < CAP) {
+                    && ColonyChests.countIn(world, chests, recipe.product()) + recipe.out() <= CAP) {
                 return Optional.of(recipe);
             }
         }
@@ -211,11 +211,11 @@ public final class ValueGoods {
         List<Recipe> recipes = new java.util.ArrayList<>(List.of(new Recipe(most, 1, planks, 4, KEEP_RAW)));
 
         if (stairs != Items.AIR) {
-            recipes.add(new Recipe(planks, 6, stairs, 4, KEEP_RAW));
+            recipes.add(new Recipe(planks, 6, stairs, 4, 8));
         }
 
         if (slab != Items.AIR) {
-            recipes.add(new Recipe(planks, 3, slab, 6, KEEP_RAW));
+            recipes.add(new Recipe(planks, 3, slab, 6, 8));
         }
 
         return recipes;
@@ -250,7 +250,8 @@ public final class ValueGoods {
     static int batch(ServerWorld world, List<ColonyPos> chests, Recipe recipe) {
         int spare = ColonyChests.countIn(world, chests, recipe.raw()) - recipe.keep();
         // O lote é de BATCH do cru, ou de uma receita quando ela pede mais que isso (o composto).
-        int crafts = Math.min(Math.max(BATCH, recipe.in()), spare) / recipe.in();
+        int crafts = Math.min(Math.min(Math.max(BATCH, recipe.in()), spare) / recipe.in(),
+                (CAP - ColonyChests.countIn(world, chests, recipe.product())) / recipe.out());
 
         if (crafts <= 0) {
             return 0;

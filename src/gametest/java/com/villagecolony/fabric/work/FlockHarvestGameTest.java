@@ -77,6 +77,24 @@ public class FlockHarvestGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** O pastor precisa alcançar o animal antes do abate. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "flock_harvest_distance", tickLimit = 20)
+    public void distantShepherdDoesNotButcherCattle(TestContext context) {
+        Fixture f = setUp(context);
+        List<CowEntity> cows = spawnCows(context, FlockHarvest.HARVEST_KEEP + 1);
+        cows.forEach(cow -> cow.setPosition(context.getAbsolutePos(new BlockPos(11, 2, 11)).toCenterPos()));
+
+        try {
+            context.assertFalse(FlockHarvest.step(context.getWorld(), f.colony, f.area, f.chests),
+                    "pastor distante abateu o rebanho");
+            context.assertTrue(cows.stream().allMatch(CowEntity::isAlive), "um animal morreu sem pastor próximo");
+        } finally {
+            tearDown(context, f, cows);
+        }
+
+        context.complete();
+    }
+
     private record Fixture(Colony colony, ColonyFixture owned, Box area, List<ColonyPos> chests, UUID shepherd) {
     }
 

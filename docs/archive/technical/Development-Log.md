@@ -8,6 +8,29 @@
 
 # Village Colony — Development Log
 
+## 2026-10-31 — jogo 0.4.0, transição de lotes e trabalho físico
+
+O autor jogou `villagecolony 0.4.0` no mundo `Novo mundo`. O log fechou sem
+exceção fatal. O Spark `NuQRCK1bmh` manteve TPS 20; no último minuto, MSPT
+médio 21,62 ms, p95 29,02 ms e máximo 97,44 ms. Havia 828 entidades, das
+quais 136 itens soltos e 18 blocos em queda. O diário mostrou pastor 3%,
+carpinteiro 11%, pedreiro 15%, construtor 46% e fundidor 57% trabalhando.
+O pico não demonstra travamento contínuo; as esperas exigem novo jogo.
+
+A preparação do lote agora retira árvores naturais inteiras e cria uma
+transição em degraus de um bloco por coluna, com solo de superfície e apoio.
+O pastor vivo precisa estar a cinco blocos para alimentar, cruzar ou abater;
+o abate mantém seis adultos por espécie. A vila usa um curral 15×15 único
+para todos os biomas, constrói um por espécie intercalado com outras obras
+e conta cercados fechados já existentes. Aldeões removem folhas naturais
+que bloqueiam a passagem e recolhem todo item solto a cinco blocos.
+Produtos auxiliares dos ofícios repõem até 16 por tipo, sem passar do teto.
+
+Os testes novos reproduziram a falha do corte do lote e o excesso de produção
+antes das correções. O teste antigo da duna foi alinhado à nova transição;
+o da pedra caída foi alinhado à recolha geral. A validação completa e o
+playtest do novo JAR ficam registrados no `STATE.md` e no `TODO.md`.
+
 ## 2026-10-10 — unificação da linha 0.3.23
 
 A `main` 0.3.22 recebeu por reconciliação as correções de fluxo que dividiam a

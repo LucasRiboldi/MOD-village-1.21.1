@@ -49,8 +49,8 @@ import java.util.UUID;
  * inventário"</i>.
  *
  * <p>O mineiro agora deposita diretamente no próprio baú. Quando ele está
- * cheio, o que não couber vira uma linha de WARN e fica no mundo; a regra não
- * contamina o baú de outro trabalhador.
+ * cheio, o que não couber vira uma linha de WARN e cai no mundo. Pela Regra 48,
+ * um aldeão próximo pode recolher o drop e guardá-lo em outro baú compartilhado.
  *
  * <p>Este teste é a prova da segunda metade, e é de integração de
  * propósito — o defeito só existe com baú cheio de verdade, bloco saindo
@@ -63,7 +63,7 @@ public class MinerOverflowGameTest implements FabricGameTest {
     /** O baú do mineiro, que este teste enche até não caber um item. */
     private static final BlockPos CHEST = new BlockPos(2, 2, 2);
 
-    /** O baú de outro trabalhador da colônia; jamais recebe o transbordo. */
+    /** O baú de outro trabalhador da colônia; pode receber o item recolhido do chão. */
     private static final BlockPos SPARE = new BlockPos(2, 2, 5);
 
     /** Baú comunitário vazio que deve receber os dez últimos slots. */
@@ -105,10 +105,10 @@ public class MinerOverflowGameTest implements FabricGameTest {
     }
 
     /**
-     * O baú do mineiro está cheio; a pedra não deve contaminar outro baú.
+     * O baú do mineiro está cheio; a pedra cai e é recolhida perto do fundidor.
      *
-     * <p>A afirmação central é que a produção não vai para o baú do
-     * fundidor. Sem espaço pessoal, o drop real permanece no mundo.
+     * <p>A produção não transborda diretamente para o baú do fundidor.
+     * O recolhimento posterior pode guardá-la ali (Regra 48).
      *
      * <p>Duas asserções de montagem seguram o cenário, porque sem elas
      * este teste passaria por motivo errado. Que o baú do mineiro
@@ -208,17 +208,17 @@ public class MinerOverflowGameTest implements FabricGameTest {
                         inOwn == 0,
                         "coube pedra no baú do mineiro — o cenário não força o transbordo");
 
-                // O minério não é depósito de transbordo de outra profissão.
+                // Regra 48: o fundidor que passa perto recolhe até o drop do mineiro.
                 context.assertTrue(
-                        inSpare == 0,
-                        "a produção do mineiro contaminou o baú do fundidor com " + inSpare);
+                        inSpare > 0,
+                        "o drop do mineiro não foi recolhido pelo fundidor próximo");
 
                 boolean itemOnGround = !world.getEntitiesByClass(
                         ItemEntity.class,
                         new Box(context.getAbsolutePos(ROCK)).expand(2),
                         entity -> true).isEmpty();
 
-                context.assertTrue(itemOnGround, "a pedra saiu do mundo e não foi guardada nem dropada");
+                context.assertFalse(itemOnGround, "a pedra recolhida continuou caída no chão");
 
                 context.assertTrue(
                         task.state() == TaskState.AVAILABLE,

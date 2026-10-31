@@ -85,7 +85,8 @@ public class ProfessionReviewGameTest implements FabricGameTest {
         Colony colony = Colony.create(UUID.randomUUID(), center);
         VillageColonyMod.COLONIES.register(colony);
 
-        UUID shepherdId = UUID.randomUUID();
+        VillagerEntity shepherdEntity = context.spawnEntity(EntityType.VILLAGER, new BlockPos(3, 1, 3));
+        UUID shepherdId = shepherdEntity.getUuid();
         VillageColonyMod.WORKERS.register(shepherdId, colony.id()).assign(ProfessionType.SHEPHERD);
         VillageColonyMod.STORAGES.register(WorkerStorage.of(shepherdId, center));
         ColonyFixture fixture = ColonyFixture.create().owning(colony).owning(shepherdId);
@@ -114,6 +115,7 @@ public class ProfessionReviewGameTest implements FabricGameTest {
             context.assertFalse(ShepherdFlock.tend(context.getWorld(), colony),
                     "um segundo par saiu antes do intervalo");
         } finally {
+            shepherdEntity.discard();
             fixture.cleanUp();
             ShepherdFlock.clearAll();
         }
