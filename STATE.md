@@ -1,5 +1,10 @@
 # STATE — 2026-10-29
 
+> **31-10 — ambiente Codex registrado:** `minecraft-modding`, `jvmsrc` e
+> `fabric` foram configurados, `token-saviour` foi instalado globalmente e o
+> `skill-freeze` ficou em 11 hot/98 cold (90% de economia). Stonecutter não faz
+> parte deste estado; detalhes reproduzíveis em `docs/technical/Codex-Tooling.md`.
+
 > **31-10 — a 0.3.110 foi jogada** por longo tempo (relato do autor; logs ainda não analisados com
 > `time_ledger.py`/`action_report.py`). A corrigir: estrutura e entrada da mina; criação e ligação dos caminhos;
 > escolha das estruturas a construir e as que faltam. Ambiente: 11 skills fora do escopo foram para
