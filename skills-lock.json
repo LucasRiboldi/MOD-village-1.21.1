@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "minecraft-modding": {
+      "source": "Jahrome907/minecraft-agent-skills",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/minecraft-modding/SKILL.md",
+      "computedHash": "beae3c4121acf641885d23a7d89b93a19cf68e9058d41254d19f440c4a1d557f"
+    },
     "minecraft-testing": {
       "source": "Jahrome907/minecraft-agent-skills",
       "sourceType": "github",
