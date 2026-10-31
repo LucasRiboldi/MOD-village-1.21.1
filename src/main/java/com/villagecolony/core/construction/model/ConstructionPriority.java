@@ -79,9 +79,30 @@ public enum ConstructionPriority {
         return Math.max(1, (adults + ADULTS_PER_FARM - 1) / ADULTS_PER_FARM);
     }
 
+    /** Regra 163: a maior das contas — uma a cada 15 adultos (Regra 67) ou uma por fazendeiro. */
+    public static int farmsFor(int adults, int farmers) {
+        return Math.max(farmsFor(adults), farmers);
+    }
+
     /** Se falta plantação para a população e isso já virou prioridade (passou dos 15, o 16º). */
     public static boolean farmIsDue(int adults, int farms) {
-        return adults > ADULTS_PER_FARM && farms < farmsFor(adults);
+        return farmIsDue(adults, 0, farms);
+    }
+
+    /**
+     * Se falta plantação e isso já virou prioridade: o 16º adulto (Regra 67) ou um fazendeiro
+     * sem roça (Regra 163).
+     */
+    public static boolean farmIsDue(int adults, int farmers, int farms) {
+        return farms < farmsFor(adults, farmers) && (adults > ADULTS_PER_FARM || farmers > farms);
+    }
+
+    /**
+     * Regra 164: sem outro tipo com lote, a casa só sai se for obrigatória ou se ainda cabe
+     * cama no teto de {@link #roomForAHouse}.
+     */
+    public static boolean fallsBackToAHouse(boolean obligatoryHouse, int adults, int beds) {
+        return obligatoryHouse || roomForAHouse(adults, beds);
     }
 
     /** Se a prioridade atual exige uma planta de moradia. */

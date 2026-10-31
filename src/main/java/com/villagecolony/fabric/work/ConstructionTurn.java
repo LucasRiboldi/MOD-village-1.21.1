@@ -71,7 +71,7 @@ public final class ConstructionTurn {
         int adults = com.villagecolony.fabric.integration.VillagerScanner.livingAdultPopulation(world, colony);
         int farms = ColonyFarms.of(world, colony).size();
 
-        return ConstructionPriority.farmIsDue(adults, farms);
+        return ConstructionPriority.farmIsDue(adults, ColonyFarms.farmers(colony.id()), farms);
     }
 
     /**

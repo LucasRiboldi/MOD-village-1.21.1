@@ -275,7 +275,10 @@ public final class HousePlans {
         ConstructionPriority turn = ConstructionTurn.of(buildings, adults, beds, workshopMissing, farmDeficit);
 
         if (turn == ConstructionPriority.FARM_DEFICIT) {
-            List<Blueprint> farms = plansFor(world, colony);
+            // A vez da roça abre roça — `plansFor` é a lista de casas.
+            List<Blueprint> farms = nonHousePlansFor(world, colony, previous, buildings).stream()
+                    .filter(plan -> FarmPlans.isFarm(plan.id()))
+                    .toList();
             if (!farms.isEmpty()) {
                 return farms;
             }
@@ -291,8 +294,9 @@ public final class HousePlans {
         ConstructionPriority priority = nextConstructionPriority(buildings, adults, beds);
         boolean house = priority.buildsHouse(adults, beds);
         List<Blueprint> others = house ? List.of() : nonHousePlansFor(world, colony, previous, buildings);
-        return others.isEmpty() && (house || ConstructionPriority.roomForAHouse(adults, beds)
-                || LotTypeRefusals.anyRefused(colony.id(), world.getTime())) ? plansFor(world, colony) : others;
+        // Regra 164: o tipo sem lote não abre vaga para casa acima do teto de camas.
+        return others.isEmpty() && ConstructionPriority.fallsBackToAHouse(house, adults, beds)
+                ? plansFor(world, colony) : others;
     }
 
     /** O tipo semântico de uma planta, usado para o rodízio A/B. */
