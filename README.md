@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.110%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.0%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -94,11 +94,9 @@ SHA-256 do JAR na descrição.
   declarada e deixa a linha `VC_SUPPLY` no log (Regra 111); toda desistência
   no diário de ações leva um código único de bloqueio (Regra 112).
 
-O mod é alpha. A 0.3.110 (2026-10-29) passou na bateria automática completa
-(ver "Desenvolvimento e verificação"). Os últimos jogos foram os da 0.3.109 e de
-um JAR 0.3.110 ainda sem testes: pastor preso no curral sem portão, construtor
-preso no telhado e cercado nascido com grama dentro. A 0.3.110 trata esses pontos
-(Regras 159 a 162) e, na versão testada, ainda não foi jogada (jogar em **mundo novo**). O estado vivo está no
+O mod é alpha. A 0.4.0 (2026-10-31) preserva a bateria automática e acrescenta
+as Regras 163 a 165 (ver "Desenvolvimento e verificação"). A versão ainda não foi
+jogada; use **mundo novo**. O estado vivo está no
 [`STATE.md`](STATE.md). O que mudou em cada
 publicação está no [`CHANGELOG.md`](CHANGELOG.md); a avaliação técnica mais
 recente, em
@@ -330,6 +328,9 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 160 | **O construtor trabalha do chão, e quem fica num telhado desce** (autor 10-29, jogo da 0.3.109: construtor preso 3 vezes no telhado de uma casa, a obra 32 min com 1 peça): o lugar de pé que ele procura fica no máximo 1 acima do chão da obra — da zona da obra (pegada + 4) ele põe qualquer bloco sem subir; o encalhado em pé sobre construção, em 5 das 8 colunas a 4 blocos, se joga do telhado rumo ao chão mais perto, até 8 blocos, com o chão 2 ou mais abaixo do pé (autor, 10-29: "deve se atirar dos telhados"); depois de 3 pulos sem sair é posto no chão | 10-29 | ✅ feita | `BuilderApproach`, `RoofDescent`, `StrandedEscape` |
 | 161 | **Comer enche a vida** (autor 10-29): todo aldeão que come (a comida do inventário, ou para cruzar) ou recebe comida (pega do chão pão, batata, cenoura ou beterraba, o que o colega joga) fica com a vida no máximo | 10-29 | 🟡 feita, sem teste próprio | `VillagerMeals`, `VillagerEntityMixin` |
 | 162 | **O miolo do cercado fica livre** (autor 10-29, jogo da 0.3.110: o cercado nasceu com blocos de grama dentro, à altura da cerca): o alisamento do pedreiro e do construtor não mexe dentro da caixa de construção ou obra da colônia (com 1 de folga) — o vão entre as cercas parecia buraco e era tampado; e o pedreiro tira o chão natural e a planta até 3 acima do piso, dentro dos cercados da colônia que já nasceram assim | 10-29 | 🟡 feita, sem teste próprio | `GroundSmoothing.footprintsOf`, `GroundSmoothing.clearPens` |
+| 163 | **Roça por fazendeiro e pela maior das contas** (autor 10-30): a vila abre uma roça para cada 15 adultos ou para cada fazendeiro, valendo a maior conta; fazendeiro sem roça põe a roça na frente da fila | 10-30 | ✅ feita | `ColonyFarms`, `ConstructionPriority` |
+| 164 | **Casa de reserva respeita teto de camas** (autor 10-30): sem outro tipo com lote, a casa de reserva só abre quando obrigatória ou quando as camas ficam abaixo de adultos + 4 | 10-30 | ✅ feita | `ConstructionPriority.fallsBackToAHouse` |
+| 165 | **Armazém pequeno antes do grande** (autor 10-30): quando a vila precisa de armazenamento, abre primeiro o `storage_small` de 7×7; o `storage_majest` só abre após o galpão pequeno terminar | 10-30 | ✅ feita | `StoragePlans`, `ConstructionPriority` |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).
@@ -580,18 +581,18 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 `runGametest` gera `build/reports/jacoco/gametest/html` (bateria de jogo, que
 é quem exercita a camada `fabric`).
 
-Verificação de 2026-10-29 (0.3.110, branch `fix/playtest-0102`, commit
-`e92e1fe`), rodada na sessão de desenvolvimento e não copiada:
+Verificação de 2026-10-31 (0.4.0, promoção de `fix/estruturas-0110`), rodada
+antes da release:
 
-- 1663 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
+- 1667 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
   de 500 linhas por arquivo).
 - 153 testes Python: aprovados (o CI instala o `nbtlib` e o `pillow` para os
   testes das versões do armazém e dos mapas).
-- 939 GameTests: todos aprovados com `--rerun-tasks` na rodada final; nas
-  anteriores, `ShepherdHerding`, `ShepherdFeeding` e `Builder ground` falharam
-  uma vez cada e passaram depois (instáveis, sem causa achada). O
+- 940 GameTests: todos aprovados. O
   `runGametest` começa cada bateria com o mundo de teste apagado, como o CI.
-- `build`: aprovado; JAR `village-colony-0.3.110.jar`.
+- `clean build`, `test` e `runGametest`: aprovados; JAR
+  `village-colony-0.4.0.jar`, SHA-256
+  `9E011A3F256C22B1695D2A2AA44366CB4A38AE03DD4C356F138B958B86BF040D`.
 - Regras 161 e 162: sem teste próprio.
 - Mutação (PIT, pacote `core`): medida na 0.3.109, 2514 de 2957 mutações
   mortas (85%, limiar 85%); não refeita na 0.3.110.

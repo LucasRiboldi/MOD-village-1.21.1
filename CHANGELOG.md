@@ -12,9 +12,9 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
-## [0.3.111] — roça por fazendeiro, teto de camas na casa de reserva, armazém pequeno (2026-10-30, JAR local, não jogado)
+## [0.4.0] — roça por fazendeiro, teto de camas na casa de reserva, armazém pequeno (2026-10-31, marco alpha)
 
-Branch `fix/estruturas-0110`. Depois do jogo da 0.3.110 (12,3 h, 38 obras, nenhuma roça, 58 camas para 19 adultos).
+Promovida da branch `fix/estruturas-0110` para `main`. Depois do jogo da 0.3.110 (12,3 h, 38 obras, nenhuma roça, 58 camas para 19 adultos).
 
 ### Corrigido
 - **A vez da roça abria casa:** com `FARM_DEFICIT` o planejador pedia `HousePlans.plansFor`, a lista de casas; agora
