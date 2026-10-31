@@ -114,9 +114,15 @@ public final class VillageHelpers {
             case MASON -> masonHelps(world, colony, villager);
             case SMELTER -> smelterHelps(world, colony, villager);
             case SHEPHERD -> FlockCare.feed(world, colony, villager);
-            case BUILDER -> GroundSmoothing.aroundTheOpenBuild(world, colony, villager);
+            case BUILDER -> builderHelps(world, colony, villager);
             default -> 0;
         };
+    }
+
+    /** O construtor atende primeiro o lote aberto; sem reparo ali, ajuda no terreno da vila. */
+    static int builderHelps(ServerWorld world, Colony colony, VillagerEntity builder) {
+        int repaired = GroundSmoothing.aroundTheOpenBuild(world, colony, builder);
+        return repaired > 0 ? repaired : GroundSmoothing.pass(world, colony, builder);
     }
 
     /**
