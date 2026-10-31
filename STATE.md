@@ -1,4 +1,15 @@
-# STATE — 2026-10-29
+# STATE — 2026-10-30
+
+> **0.3.111** (30-10, branch `fix/estruturas-0110`, commits `98dd26f4` e `422c17a4`, sem push): depois da análise do
+> jogo da 0.3.110 (12,3 h, nenhuma roça, 58 camas para 19 adultos, armazém grande 63× sem lote). A vez da roça abria
+> casa (`HousePlans.plansForNext` pedia a lista de casas) — corrigido; roças pela maior das contas, 1 a cada 15
+> adultos ou 1 por fazendeiro (Regra 163); casa de reserva respeita o teto de camas (Regra 164); galpão
+> `storage_small` 7×7 antes do `storage_majest` (Regra 165). Unitários 1667/1667, bateria 940/940, Python 155/155.
+> JAR `village-colony-0.3.111.jar`, SHA-256 `4784E5646F16577C3F2D40E0A06AD6663C394F277482489663CA05D2A93A08F6`,
+> instalado no TLauncher (0.3.110 jogada guardada como `village-colony-0.3.110-jogado.jar.disabled`). **Não jogado.**
+> Para o jogo: **mundo novo**; ver se a roça sai com fazendeiro sem roça, se as casas param perto de adultos + 4, se o
+> galpão fica de pé com porta, tocha e 8 baús. Mina, caminhos, curral duplo e flecheiro seguem abertos
+> (análise na memória `playtest-0110-mina-caminhos-estruturas`).
 
 > **31-10 — a 0.3.110 foi jogada** por longo tempo (relato do autor; logs ainda não analisados com
 > `time_ledger.py`/`action_report.py`). A corrigir: estrutura e entrada da mina; criação e ligação dos caminhos;
