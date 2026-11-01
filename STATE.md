@@ -16,6 +16,8 @@
 > volta a ser travessia válida, conforme decisão do autor. `test` e 978/978
 > GameTests passaram nesta rodada excepcionalmente liberada pelo autor. Falta
 > playtest em mundo novo e no save; não declarar os sintomas corrigidos antes dele.
+> JAR 0.4.0 em `build/libs`, `downloads/` e TLauncher: SHA-256
+> `B65D7DB9A15AE61BC84AEA9674CFD0EF9305FA48DD9124C6F7462498314AA752`.
 
 > **Rede e currais, desenho aprovado em 01-11 — entrega parcial autorizada:**
 > grafo puro e codec paralelo versionado implementados; sete testes de grafo,
