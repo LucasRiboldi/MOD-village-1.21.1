@@ -11312,3 +11312,19 @@ baús nomeados continuam reservados. Os testes focados de terreno/estoque/rota e
 O ciclo de fundição passou a percorrer receitas de blocos, manter 16 por tipo e respeitar a reserva da obra;
 GameTests cobrem reposição e cerâmica vidrada. Validação final: `clean build`, `build` após a fundição,
 949/949 GameTests e `rules_to_readme.py --check` aprovados. Resta playtest em mundo e save do autor.
+
+## 01-11-2026 — correções candidatas após novo playtest
+
+O ciclo atual removeu suporte artificial usado pela flora na terraplanagem e
+passou a limpar grama, samambaias e flores sem bloco válido abaixo. O lenhador
+prioriza árvores no centro da vila; o pastor procura primeiro ovelha tosquiável
+próxima. A coleta de itens soltos passou a usar, no cenário simulado, a mesma
+presença atendida que governa a vila no jogo.
+
+A política aprovada para navegação permite atravessar água curta em vez de
+forçar uma volta terrestre longa. Os GameTests de caminho foram alinhados a
+essa regra e o de coleta passou a configurar presença contínua real. Nesta
+rodada explicitamente liberada pelo autor, `test` passou e `runGametest` passou
+**978/978**. Isso prova os mecanismos no servidor de teste; a confirmação de
+grama, rotas, prioridade de árvores, pastor e ociosidade continua pendente de
+playtest em mundo novo e no save do autor.

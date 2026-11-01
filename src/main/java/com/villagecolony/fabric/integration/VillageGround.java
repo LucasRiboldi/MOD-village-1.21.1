@@ -23,6 +23,7 @@ import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.noise.NoiseConfig;
 
+import java.util.ArrayDeque;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -35,7 +36,8 @@ import java.util.Map;
  * volta, até {@link #REACH}, a mistura suave do topo de verdade com o nível da vila, numa faixa de 4 vezes o desnível. Calculada uma
  * vez por vila, com a planta inteira dela e a altura natural do gerador, e guardada: todos os chunks da vila veem a
  * mesma. Cada chunk só mexe nas próprias colunas — corta ou aterra com o bloco de cima e o de baixo da própria
- * coluna, tampa os vãos de caverna logo abaixo, e a árvore em pé sobre o chão cortado sai inteira. Água não é tocada.
+ * coluna, tampa os vãos de caverna logo abaixo, e a árvore em pé sobre o chão cortado sai inteira. Mar, rio e água
+ * que alcança a borda da geração não são tocados; poça fechada no miolo vira solo da vila.
  */
 public final class VillageGround {
 
@@ -78,12 +80,14 @@ public final class VillageGround {
         private final int minX;
         private final int minZ;
         private final VillageSurface.Kind[][] kinds;
+        private final boolean[][] drainWater;
         private final VillageBlend.Shape shape;
 
-        Plan(int minX, int minZ, VillageSurface.Kind[][] kinds, VillageBlend.Shape shape) {
+        Plan(int minX, int minZ, VillageSurface.Kind[][] kinds, boolean[][] drainWater, VillageBlend.Shape shape) {
             this.minX = minX;
             this.minZ = minZ;
             this.kinds = kinds;
+            this.drainWater = drainWater;
             this.shape = shape;
         }
 
@@ -100,6 +104,10 @@ public final class VillageGround {
         /** A altura nova da coluna, partindo do topo de verdade. */
         int targetFor(int x, int z, int top) {
             return shape.target(x - minX, z - minZ, top);
+        }
+
+        boolean drainsWater(int x, int z) {
+            return drainWater[x - minX][z - minZ];
         }
     }
 
@@ -149,7 +157,7 @@ public final class VillageGround {
                     if (plan.shapes(x, z)) {
                         int top = topOf(chunk, x, z,
                                 chunk.sampleHeightmap(Heightmap.Type.OCEAN_FLOOR_WG, x & 15, z & 15) + SCAN_ABOVE);
-                        column(world, chunk, x, z, top, plan.targetFor(x, z, top));
+                        column(world, chunk, x, z, top, plan.targetFor(x, z, top), plan.drainsWater(x, z));
                     }
                 }
             }
@@ -183,6 +191,10 @@ public final class VillageGround {
 
         int[][] natural = new int[width][depth];
         VillageSurface.Kind[][] kinds = new VillageSurface.Kind[width][depth];
+        boolean[][] wet = new boolean[width][depth];
+        boolean[][] drainWater = new boolean[width][depth];
+        VillageBlend.Area core = new VillageBlend.Area(REACH - CORE_PAD, REACH - CORE_PAD,
+                width - 1 - REACH + CORE_PAD, depth - 1 - REACH + CORE_PAD);
         int samplesX = (width - 1) / SAMPLE + 2;
         int samplesZ = (depth - 1) / SAMPLE + 2;
         int[][] ground = new int[samplesX][samplesZ];
@@ -203,14 +215,30 @@ public final class VillageGround {
                 int j = z / SAMPLE;
                 double fx = (x % SAMPLE) / (double) SAMPLE;
                 double fz = (z % SAMPLE) / (double) SAMPLE;
+                int nearI = fx < 0.5 ? i : i + 1;
+                int nearJ = fz < 0.5 ? j : j + 1;
+                wet[x][z] = water[nearI][nearJ] > ground[nearI][nearJ];
+            }
+        }
+
+        boolean[][] openWater = reachesGenerationEdge(wet);
+
+        for (int x = 0; x < width; x++) {
+            for (int z = 0; z < depth; z++) {
+                int i = x / SAMPLE;
+                int j = z / SAMPLE;
+                double fx = (x % SAMPLE) / (double) SAMPLE;
+                double fz = (z % SAMPLE) / (double) SAMPLE;
                 double floor = ground[i][j] * (1 - fx) * (1 - fz) + ground[i + 1][j] * fx * (1 - fz)
                         + ground[i][j + 1] * (1 - fx) * fz + ground[i + 1][j + 1] * fx * fz;
                 int nearI = fx < 0.5 ? i : i + 1;
                 int nearJ = fz < 0.5 ? j : j + 1;
-                boolean wet = water[nearI][nearJ] > ground[nearI][nearJ];
+                boolean enclosedCoreWater = wet[x][z] && !openWater[x][z] && core.contains(x, z);
 
-                natural[x][z] = wet ? water[nearI][nearJ] : (int) Math.round(floor);
-                kinds[x][z] = wet ? VillageSurface.Kind.WATER : VillageSurface.Kind.FREE;
+                natural[x][z] = enclosedCoreWater ? (int) Math.round(floor)
+                        : wet[x][z] ? water[nearI][nearJ] : (int) Math.round(floor);
+                kinds[x][z] = wet[x][z] && !enclosedCoreWater ? VillageSurface.Kind.WATER : VillageSurface.Kind.FREE;
+                drainWater[x][z] = enclosedCoreWater;
             }
         }
 
@@ -238,8 +266,6 @@ public final class VillageGround {
                     .append(']');
         }
 
-        VillageBlend.Area core = new VillageBlend.Area(REACH - CORE_PAD, REACH - CORE_PAD,
-                width - 1 - REACH + CORE_PAD, depth - 1 - REACH + CORE_PAD);
         // O jogo procura a referência a até 8 chunks do início da vila: além disso a geração não alcança.
         ChunkPos origin = start.getPos();
         VillageBlend.Area reach = new VillageBlend.Area(
@@ -252,7 +278,7 @@ public final class VillageGround {
                         + "\"core\":{},\"ms\":{},\"fixed\":[{}]}", minX, minZ, width, depth, REACH, CORE_PAD,
                 (System.nanoTime() - began) / 1_000_000, fixed);
 
-        return new Plan(minX, minZ, kinds, shape);
+        return new Plan(minX, minZ, kinds, drainWater, shape);
     }
 
     /** A caixa de todas as peças da vila. */
@@ -268,14 +294,22 @@ public final class VillageGround {
 
     /**
      * Corta ou aterra a coluna de {@code top} até {@code target}, com o bloco de cima e o de baixo que a coluna já
-     * tinha, e tampa os vãos logo abaixo. Coluna com água em cima fica como está; a árvore em pé sobre o chão
-     * cortado sai inteira (autor, 2026-10-29).
+     * tinha, e tampa os vãos logo abaixo. Água externa fica como está; uma poça fechada no miolo pode ser preenchida.
+     * A árvore em pé sobre o chão cortado sai inteira (autor, 2026-10-29).
      */
-    static void column(StructureWorldAccess world, Chunk chunk, int x, int z, int top, int target) {
+    static void column(StructureWorldAccess world, Chunk chunk, int x, int z, int top, int target, boolean drainWater) {
         BlockPos.Mutable at = new BlockPos.Mutable(x, top + 1, z);
 
-        if (top <= chunk.getBottomY() || !chunk.getFluidState(at.setY(top)).isEmpty()
-                || !chunk.getFluidState(at.setY(top + 1)).isEmpty()) {
+        if (top <= chunk.getBottomY() || (!drainWater && (!chunk.getFluidState(at.setY(top)).isEmpty()
+                || !chunk.getFluidState(at.setY(top + 1)).isEmpty()))) {
+            return;
+        }
+
+        int waterTop = top;
+        while (drainWater && !chunk.getFluidState(at.setY(waterTop + 1)).isEmpty()) {
+            waterTop++;
+        }
+        if (drainWater && target < waterTop) {
             return;
         }
 
@@ -286,7 +320,7 @@ public final class VillageGround {
                 ? below : Blocks.DIRT.getDefaultState();
 
         if (surface.isAir() || !surface.getFluidState().isEmpty()
-                || !safeColumn(chunk, x, z, top, target)) {
+                || !safeColumn(chunk, x, z, top, target, drainWater)) {
             return;
         }
 
@@ -314,15 +348,70 @@ public final class VillageGround {
                 chunk.setBlockState(at, fill, false);
             }
         }
+
+        clearUnsupportedGrass(world, chunk, at, Math.min(top, target) + 1, Math.max(top, target) + 2);
+    }
+
+    /** Remove flora sem apoio depois de mudar a altura da coluna. */
+    private static void clearUnsupportedGrass(StructureWorldAccess world, Chunk chunk, BlockPos.Mutable at,
+                                              int fromY, int toY) {
+        for (int y = fromY; y <= toY; y++) {
+            BlockState state = chunk.getBlockState(at.setY(y));
+            if (isFlora(state) && !state.canPlaceAt(world, at)) {
+                chunk.setBlockState(at, Blocks.AIR.getDefaultState(), false);
+            }
+        }
+    }
+
+    /** Plantas soltas não sobrevivem ao nivelamento; lavoura não é flora espontânea. */
+    private static boolean isFlora(BlockState state) {
+        return state.isOf(Blocks.SHORT_GRASS) || state.isOf(Blocks.TALL_GRASS)
+                || state.isOf(Blocks.FERN) || state.isOf(Blocks.LARGE_FERN) || state.isIn(BlockTags.FLOWERS);
+    }
+
+    /** Marca água ligada à borda da área gerada: mar e rio ficam; água fechada no miolo pode virar terreno. */
+    private static boolean[][] reachesGenerationEdge(boolean[][] wet) {
+        int width = wet.length;
+        int depth = wet[0].length;
+        boolean[][] open = new boolean[width][depth];
+        ArrayDeque<BlockPos> pending = new ArrayDeque<>();
+
+        for (int x = 0; x < width; x++) {
+            addWaterEdge(wet, open, pending, x, 0);
+            addWaterEdge(wet, open, pending, x, depth - 1);
+        }
+        for (int z = 1; z < depth - 1; z++) {
+            addWaterEdge(wet, open, pending, 0, z);
+            addWaterEdge(wet, open, pending, width - 1, z);
+        }
+
+        while (!pending.isEmpty()) {
+            BlockPos at = pending.removeFirst();
+            addWaterEdge(wet, open, pending, at.getX() - 1, at.getZ());
+            addWaterEdge(wet, open, pending, at.getX() + 1, at.getZ());
+            addWaterEdge(wet, open, pending, at.getX(), at.getZ() - 1);
+            addWaterEdge(wet, open, pending, at.getX(), at.getZ() + 1);
+        }
+
+        return open;
+    }
+
+    private static void addWaterEdge(boolean[][] wet, boolean[][] open, ArrayDeque<BlockPos> pending, int x, int z) {
+        if (x >= 0 && z >= 0 && x < wet.length && z < wet[0].length && wet[x][z] && !open[x][z]) {
+            open[x][z] = true;
+            pending.addLast(new BlockPos(x, 0, z));
+        }
     }
 
     /** Confere o corte e o aterro antes de escrever: blocos de estrutura e líquidos ficam intactos. */
-    static boolean safeColumn(Chunk chunk, int x, int z, int top, int target) {
+    static boolean safeColumn(Chunk chunk, int x, int z, int top, int target, boolean drainWater) {
         BlockPos.Mutable at = new BlockPos.Mutable(x, top, z);
         for (int y = Math.min(top, target); y <= Math.max(top, target); y++) {
             BlockState state = chunk.getBlockState(at.setY(y));
-            if (!state.getFluidState().isEmpty()
-                    || (!state.isAir() && !state.isReplaceable() && !SiteSurroundings.isNaturalGround(state))) {
+            boolean fluid = !state.getFluidState().isEmpty();
+            if ((!drainWater && fluid)
+                    || (!fluid && !state.isAir() && !state.isReplaceable()
+                    && !SiteSurroundings.isNaturalGround(state))) {
                 return false;
             }
         }

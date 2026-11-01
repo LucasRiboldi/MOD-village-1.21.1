@@ -28,19 +28,19 @@ import java.util.UUID;
 
 /**
  * Como o aldeão da colônia escolhe o trajeto — autor, 2026-10-28, depois do jogo da 0.3.104 (4 de 7 teleportes
- * noturnos saíram do meio do lago; o aldeão cortava pelo gramado). Escolhas: nadar só se não houver volta, e
- * preferir a rua. A navegação é a do jogo ({@code findPathTo}); o mod só muda o custo dos nós.
+ * noturnos saíram do meio do lago; o aldeão cortava pelo gramado). Escolhas: travessia curta de água é válida, e
+ * a rua continua preferível. A navegação é a do jogo ({@code findPathTo}); o mod só muda o custo dos nós.
  */
 public class ColonyPathingGameTest implements FabricGameTest {
 
     /**
      * Canal de 1 de largura em z 3, de x 0 a 12, com volta a pé pela ponta (x 13..14). No custo do Vanilla nadar sai
-     * por 30 (6 de distância, 8 na água e 8 em cada margem) e a volta por ~34: ele nada. No da colônia nadar sai por
-     * 70 e a volta ganha, mesmo com a folga de 1,5 da busca do jogo. Tudo dentro de x 0..14: além disso a arena não
-     * tem chão carregado e a volta não existe.
+     * por 30 (6 de distância, 8 na água e 8 em cada margem) e a volta por ~34: ele nada. Na colônia a travessia
+     * curta mantém o custo Vanilla. Tudo dentro de x 0..14: além disso a arena não tem chão carregado e a volta não
+     * existe.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_pathing_water", tickLimit = 40)
-    public void theColonyVillagerWalksAroundTheWaterWhenThereIsAWayAround(TestContext context) {
+    public void theColonyVillagerCrossesShortWaterInsteadOfTakingALongDetour(TestContext context) {
         floor(context, Blocks.STONE, 14);
 
         for (int x = 0; x <= 12; x++) {
@@ -60,14 +60,14 @@ public class ColonyPathingGameTest implements FabricGameTest {
 
                 Set<Long> channel = columns(context, 0, 12, 3, 3);
 
+                boolean crossesChannel = false;
                 for (int i = 0; i < path.getLength(); i++) {
                     BlockPos at = path.getNode(i).getBlockPos();
-
-                    context.assertFalse(channel.contains(column(at)), "o caminho atravessa o canal em "
-                            + at.toShortString() + ", e há volta a pé pela ponta (custo da água "
-                            + scene.villager().getPathfindingPenalty(net.minecraft.entity.ai.pathing.PathNodeType.WATER)
-                            + "): " + nodes(path));
+                    crossesChannel |= channel.contains(column(at));
                 }
+                context.assertTrue(crossesChannel, "a travessia curta deveria usar água (custo "
+                        + scene.villager().getPathfindingPenalty(net.minecraft.entity.ai.pathing.PathNodeType.WATER)
+                        + "): " + nodes(path));
             } finally {
                 try {
                     diagnoseWater(context, scene, path);
@@ -128,7 +128,7 @@ public class ColonyPathingGameTest implements FabricGameTest {
 
     /** Mesma geometria fechada nas posições observadas; nenhuma entidade é movida entre as buscas. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_pathing_water_translation", tickLimit = 40)
-    public void theWaterDetourIsTranslationInvariantAtTheObservedCoordinates(TestContext context) {
+    public void theShortWaterCrossingIsTranslationInvariantAtTheObservedCoordinates(TestContext context) {
         Map<BlockPos, BlockState> saved = new HashMap<>();
         Map<BlockPos, Scene> probes = new java.util.LinkedHashMap<>();
         Set<Long> forced = new HashSet<>();
@@ -205,10 +205,11 @@ public class ColonyPathingGameTest implements FabricGameTest {
                 context.assertTrue(probes.get(origin).villager().isOnGround(),
                         "diagnóstico sem apoio físico em " + origin.toShortString());
                 context.assertTrue(path != null && path.reachesTarget(), "sem caminho na translação " + origin.toShortString());
+                boolean crossesWater = false;
                 for (int i = 0; i < path.getLength(); i++) {
-                    context.assertFalse(path.getNode(i).type == net.minecraft.entity.ai.pathing.PathNodeType.WATER,
-                            "translação atravessa água: " + origin.toShortString());
+                    crossesWater |= path.getNode(i).type == net.minecraft.entity.ai.pathing.PathNodeType.WATER;
                 }
+                context.assertTrue(crossesWater, "travessia curta não usou água: " + origin.toShortString());
             }
             } finally {
                 cleanup.run();

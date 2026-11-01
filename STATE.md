@@ -6,6 +6,16 @@
 > correção escolhida → revisão estática → commit → `remapJar` → cópia e SHA-256
 > no `downloads/` e TLauncher → novo playtest. CI não foi alterado. Correções
 > feitas neste modo são candidatas até confirmação pelo jogo (`CLAUDE.md` §0.2.2).
+> Antes de cada etapa, indicar modelo e força e aguardar o "ok" do autor para
+> a troca manual; os perfis locais não foram alterados.
+
+> **Correções candidatas do ciclo atual:** a limpeza de terreno não cria mais
+> suporte artificial sob flora; plantas sem apoio válido são removidas; lenhador
+> prioriza árvores centrais; pastor escolhe ovelha tosquiável próxima; e coleta
+> do chão usa a presença atendida da vila também no cenário simulado. Água curta
+> volta a ser travessia válida, conforme decisão do autor. `test` e 978/978
+> GameTests passaram nesta rodada excepcionalmente liberada pelo autor. Falta
+> playtest em mundo novo e no save; não declarar os sintomas corrigidos antes dele.
 
 > **Rede e currais, desenho aprovado em 01-11 — entrega parcial autorizada:**
 > grafo puro e codec paralelo versionado implementados; sete testes de grafo,

@@ -65,6 +65,14 @@ Ativo desde 2026-11-01, até o autor liberar testes novamente. Este modo
 substitui temporariamente as exigências de teste das seções 2 e 2.1, sem
 alterar nem desativar o CI do repositório.
 
+Antes de iniciar cada etapa de triagem, diagnóstico, implementação ou análise
+complexa, informe ao autor a etapa, o modelo e a força recomendados e aguarde
+um "ok" explícito. O autor faz a troca manual; não afirme que ela ocorreu sem
+confirmação. Recomendações: triagem `gpt-5.6-luna`/`low`; diagnóstico e
+implementação `gpt-5.6-terra`/`medium`; problemas complexos `gpt-5.5`/`high`.
+Indique se o perfil local ainda não corresponde à recomendação. A cada mudança
+de etapa, peça novo "ok", mesmo que o modelo recomendado seja o mesmo.
+
 1. Ler somente o `latest.log` mais recente e os relatórios `VC_*` gerados no
    jogo. Usar `time_ledger.py`, `action_report.py`, `cost_ledger.py`, `rg` e
    recortes por horário; não despejar logs inteiros no contexto.

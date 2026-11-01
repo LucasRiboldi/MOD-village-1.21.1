@@ -19,14 +19,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * O lenhador corta a árvore mais perto dele, e não a do centro da vila — pedido do
- * autor, 2026-10-11 (no playtest da 0.3.29 ele andou 73% do expediente atrás de
- * árvores a ~100 blocos).
+ * O lenhador corta primeiro a árvore do centro da vila — pedido do autor, 2026-11-01:
+ * árvores no miolo obstruem caminhos e portas.
  */
 public class TreeNearestGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_grove", tickLimit = 20)
-    public void theLumberjackTakesTheTreeNearestToHim(TestContext context) {
+    public void theLumberjackTakesTheCentralTreeBeforeTheEdge(TestContext context) {
         ServerWorld world = context.getWorld();
         UUID colonyId = UUID.randomUUID();
         // Quarenta acima do piso, fora do alcance das outras arenas.
@@ -45,10 +44,11 @@ public class TreeNearestGameTest implements FabricGameTest {
             VillageTrees.rememberTree(colonyId, centre);
             VillageTrees.rememberTree(colonyId, edge);
 
-            Optional<BlockPos> chosen = TreeChoice.byZone(world, new LumberjackWork.Job(task, centre), lumberjack, box);
+            Optional<BlockPos> chosen = TreeChoice.byZone(world, new LumberjackWork.Job(task, centre), box,
+                    log -> true);
 
-            context.assertTrue(chosen.map(edge::equals).orElse(false),
-                    "a árvore ao lado dele devia vir antes da do centro: " + chosen);
+            context.assertTrue(chosen.map(centre::equals).orElse(false),
+                    "a árvore do centro devia vir antes da borda: " + chosen);
         } finally {
             world.setBlockState(centre, Blocks.AIR.getDefaultState());
             world.setBlockState(edge, Blocks.AIR.getDefaultState());

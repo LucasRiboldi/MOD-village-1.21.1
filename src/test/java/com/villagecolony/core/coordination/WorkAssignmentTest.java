@@ -398,17 +398,17 @@ class WorkAssignmentTest {
         assertTrue(stone.executor().isEmpty());
     }
 
-    /** O descanso e por capacidade; outra capacidade ainda pode trabalhar. */
+    /** O descanso de um mineiro não o transforma em construtor. */
     @Test
-    void aRestingMinerCanStillTakeAConstructionTask() {
+    void aRestingMinerDoesNotTakeAConstructionTask() {
         Worker miner = workerWith(ProfessionType.MINER);
         miner.rest(Capability.COLLECT_STONE);
 
         Task build = tasks.create(
                 COLONY, TaskType.BUILD, TaskPriority.CONSTRUCTION, ResourceType.OAK_PLANKS, 1);
 
-        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
-        assertEquals(Optional.of(miner.villagerId()), build.executor());
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(Optional.empty(), build.executor());
     }
 
     /**
@@ -420,27 +420,27 @@ class WorkAssignmentTest {
      * de uma casa é defeito, não ajuda.
      */
     @Test
-    void aProducerCanTakeConstructionWithoutChangingProfession() {
+    void aProducerDoesNotTakeConstructionWithoutChangingProfession() {
         Worker miner = workerWith(ProfessionType.MINER);
 
         Task build = tasks.create(COLONY, TaskType.BUILD, TaskPriority.CONSTRUCTION,
                 ResourceType.OAK_PLANKS, 1);
 
-        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
-        assertEquals(Optional.of(miner.villagerId()), build.executor());
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(Optional.empty(), build.executor());
         assertEquals(Optional.of(ProfessionType.MINER), miner.profession());
     }
 
     @Test
-    void shepherdCanHelpBuildWhenIdle() {
+    void shepherdDoesNotHelpBuildWhenIdle() {
         Worker shepherd = workerWith(ProfessionType.SHEPHERD);
         Task build = tasks.create(COLONY, TaskType.BUILD, TaskPriority.CONSTRUCTION,
                 ResourceType.OAK_PLANKS, 1);
 
-        assertEquals(1, WorkAssignment.countCapableOf(
+        assertEquals(0, WorkAssignment.countCapableOf(
                 COLONY, Capability.BUILD_STRUCTURE, workers));
-        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
-        assertEquals(Optional.of(shepherd.villagerId()), build.executor());
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(Optional.empty(), build.executor());
     }
 
     /**

@@ -17,20 +17,23 @@ final class WantedTree {
     private WantedTree() {
     }
 
-    /** A árvore pelas fontes de sempre — o bosque maduro, a zona, as conhecidas e a varredura — só da espécie dada. */
+    /** A árvore pelas fontes de sempre — miolo, margem, bosque e varredura — só da espécie dada. */
     static Optional<BlockPos> find(ServerWorld world, LumberjackWork.Job job, VillagerEntity villager,
             ResourceSearches.Plan search, Optional<com.villagecolony.core.colony.model.VillageBounds> zoned,
             java.util.function.Predicate<BlockPos> usable, java.util.function.Predicate<BlockPos> species) {
         java.util.function.Predicate<BlockPos> wanted = usable.and(species);
 
-        // O bosque maduro primeiro, perto da vila (P7a); o anel de busca não vale para ele.
-        Optional<BlockPos> tree = VillageGrove.matureTree(job.task.colonyId(), villager.getBlockPos(),
-                log -> species.test(log) && !TreeClaims.isTaken(log) && !TreeMarks.isRejected(world, log)
-                        && !TreeMarks.isOutOfReach(world, log), world);
+        Optional<BlockPos> tree = zoned.map(box -> TreeChoice.byZone(world, job, box, wanted))
+                .orElseGet(Optional::empty);
 
-        if (tree.isEmpty() && zoned.isPresent()) {
-            tree = TreeChoice.byZone(world, job, villager, zoned.get()).filter(species);
-        } else if (tree.isEmpty()) {
+        if (tree.isEmpty()) {
+            // O bosque é reserva: árvores no miolo agora têm prioridade para liberar a vila.
+            tree = VillageGrove.matureTree(job.task.colonyId(), job.center,
+                    log -> species.test(log) && !TreeClaims.isTaken(log) && !TreeMarks.isRejected(world, log)
+                            && !TreeMarks.isOutOfReach(world, log), world);
+        }
+
+        if (tree.isEmpty() && zoned.isEmpty()) {
             // Primeiro a árvore conhecida mais perto dele; só sem nenhuma, a varredura — ADR-038 P3a.
             tree = com.villagecolony.fabric.integration.VillageTrees.nearest(
                     world, job.task.colonyId(), villager.getBlockPos(), wanted);

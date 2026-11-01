@@ -22,8 +22,8 @@ import java.util.Optional;
  * noturnos saíram do meio do lago, e o aldeão cortava pelo gramado). Muda só o custo dos nós da navegação do jogo:
  *
  * <ul>
- *   <li><b>Água:</b> o nó de água custa {@link #WATER_COST} (o Vanilla cobra 8). Ele nada só quando a volta a pé
- *   é muito mais longa ou não existe — escolha "nadar só se não houver volta".</li>
+ *   <li><b>Água:</b> o nó de água custa {@link #WATER_COST}, igual ao Vanilla. A rota seca continua preferível
+ *   quando é curta, mas uma travessia curta não bloqueia o trabalho.</li>
  *   <li><b>Rua:</b> dentro da caixa da vila, o nó andável sem chão de rua embaixo vira {@link #OFF_STREET}, que
  *   custa {@link #OFF_STREET_COST}. A rua ganha sempre que o desvio por ela não passa de cerca de 2 vezes a
  *   linha reta; perto do alvo ele sai da rua normalmente.</li>
@@ -37,11 +37,10 @@ import java.util.Optional;
 public final class ColonyPathing {
 
     /**
-     * O custo de cada nó de água para o aldeão da colônia. Alto de propósito: a busca do jogo pesa a distância até o
-     * alvo 1,5 vez ({@code PathNodeNavigator}) e aceita caminho até 1,5 vez mais caro que o melhor; com 24, cruzar
-     * 2 blocos (70) ainda vencia uma volta de 47. Com 48, cruzar 2 custa 118 e a volta de até ~78 ganha.
+     * O custo Vanilla de cada nó de água. Mantém a preferência normal por terra sem impedir travessia curta
+     * (decisão do autor, 2026-11-01).
      */
-    public static final float WATER_COST = 48.0F;
+    public static final float WATER_COST = 8.0F;
 
     /**
      * O tipo do nó de gramado dentro da vila: o perigo cauteloso, que o Vanilla só usa para dar custo (0 por padrão)

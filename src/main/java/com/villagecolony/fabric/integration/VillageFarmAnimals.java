@@ -19,17 +19,18 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Toda vila que nasce ganha 2 ovelhas, 2 galinhas, 2 vacas e 2 porcos em lugares sorteados dentro
+ * Toda vila que nasce ganha 6 ovelhas, 6 galinhas, 6 vacas e 6 porcos em lugares sorteados dentro
  * da caixa dela — regra do autor, 2026-10-20: no deserto o pastor passou a sessão em "no sheep
  * with wool within the radius", e a vila Vanilla do deserto não gera bicho nenhum.
  *
  * <p>Só no nascimento da colônia (como as árvores de {@link VillageForest#seedInitial}): depois,
- * o rebanho cresce pelo pastor e quem morreu fica morto.
+ * o rebanho cresce pelo pastor e quem morreu fica morto. A fundação já entrega a reserva mínima de abate por espécie
+ * (decisão do autor, 2026-11-01).
  */
 public final class VillageFarmAnimals {
 
-    /** Quantos de cada espécie. */
-    static final int EACH = 2;
+    /** Reserva mínima adulta por espécie na fundação. */
+    static final int EACH = 6;
 
     /** As quatro espécies da regra. */
     static final List<EntityType<? extends AnimalEntity>> SPECIES =

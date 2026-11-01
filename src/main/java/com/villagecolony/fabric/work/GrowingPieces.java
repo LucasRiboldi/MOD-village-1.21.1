@@ -9,7 +9,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.TallPlantBlock;
 import net.minecraft.block.enums.DoubleBlockHalf;
-import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
@@ -22,8 +21,9 @@ import java.util.Optional;
  * lado por não alcançá-la e a casa terminou sem a relva alta.
  *
  * <p>A cada ciclo da obra, cada peça que cresce sozinha ({@link BlockShaping#growsByItself},
- * fora o bloco de grama, que é chão) surge no lugar dela quando o lugar está livre. Terra
- * embaixo vira grama, que é onde a planta nasce. A planta alta surge com as duas metades.
+ * fora o bloco de grama, que é chão) surge no lugar dela quando o lugar está livre e já tem
+ * apoio válido. A planta alta surge com as duas metades. A obra nunca troca solo por grama
+ * para decorar: isso alterava fundação e rua depois do nivelamento.
  */
 final class GrowingPieces {
 
@@ -85,12 +85,6 @@ final class GrowingPieces {
         if (!world.getBlockState(target).isReplaceable()
                 || (tall && !world.getBlockState(target.up()).isReplaceable())) {
             return false;
-        }
-
-        BlockPos below = target.down();
-
-        if (!state.canPlaceAt(world, target) && world.getBlockState(below).isIn(BlockTags.DIRT)) {
-            world.setBlockState(below, Blocks.GRASS_BLOCK.getDefaultState(), Block.NOTIFY_ALL);
         }
 
         if (!state.canPlaceAt(world, target)) {

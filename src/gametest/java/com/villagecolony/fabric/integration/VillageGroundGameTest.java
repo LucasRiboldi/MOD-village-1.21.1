@@ -21,7 +21,7 @@ public class VillageGroundGameTest implements FabricGameTest {
         context.setBlockState(new BlockPos(2, 2, 2), Blocks.CHEST);
         context.setBlockState(new BlockPos(2, 3, 2), Blocks.GRASS_BLOCK);
         context.assertFalse(VillageGround.safeColumn(context.getWorld().getChunk(at), at.getX(), at.getZ(),
-                at.getY(), at.getY() - 2), "o corte aceitou baú enterrado");
+                at.getY(), at.getY() - 2, false), "o corte aceitou baú enterrado");
         context.complete();
     }
 
