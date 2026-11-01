@@ -59,6 +59,9 @@ public final class IdleHelps {
     /** Quanto ele anda até a lavoura antes de largar. */
     static final int GIVE_UP_AFTER = 600;
 
+    /** Ajuda comum só começa depois de um turno sem tarefa do ofício. */
+    static final long HELP_AFTER_IDLE = 1_200;
+
     private static final class Help {
         final UUID worker;
         final BlockPos target;
@@ -71,6 +74,8 @@ public final class IdleHelps {
     }
 
     private static final Map<UUID, Help> FIELD = new HashMap<>();
+
+    private static final Map<UUID, Long> IDLE_SINCE = new HashMap<>();
 
     /** De quanto em quanto tempo o lenhador sem tarefa cuida do bosque: meio minuto. */
     static final long GROVE_EVERY = 600;
@@ -386,11 +391,19 @@ public final class IdleHelps {
     static boolean isFree(ServerWorld world, VillagerEntity villager) {
         UUID id = villager.getUuid();
 
-        return villager.isAlive() && !villager.isSleeping()
+        boolean free = villager.isAlive() && !villager.isSleeping()
                 && VillageColonyMod.TASKS.assignedTo(id).isEmpty()
                 && WorkHours.isWorkTime(world, villager)
                 && !StrandedWorkers.isStranded(id) && !PenEscape.isEscaping(id)
                 && !ShepherdHerding.isHerding(id) && !GroundPickup.isHelping(id);
+
+        if (!free) {
+            IDLE_SINCE.remove(id);
+            return false;
+        }
+
+        long since = IDLE_SINCE.computeIfAbsent(id, ignored -> world.getTime());
+        return world.getTime() - since >= HELP_AFTER_IDLE;
     }
 
     private static void stop(UUID colonyId) {
@@ -403,6 +416,7 @@ public final class IdleHelps {
 
     static void clearAll() {
         FIELD.clear();
+        IDLE_SINCE.clear();
         GROVE.clear();
         GROVE_DONE.clear();
         TORCH.clear();

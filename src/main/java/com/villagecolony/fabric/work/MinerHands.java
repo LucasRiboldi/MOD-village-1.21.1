@@ -123,7 +123,15 @@ public final class MinerHands {
             ActionJournal.action(villager.getUuid(), "SHORED", "ceiling", 1, job.target.up(), "falling block above");
         }
 
-        world.removeBlock(job.target, false);
+        if (!world.removeBlock(job.target, false)) {
+            VillageColonyMod.LOGGER.info(
+                    "Miner {} could not break {} — releasing the target",
+                    villager.getUuid().toString().substring(0, 8),
+                    job.target.toShortString());
+            release(villager.getUuid(), job);
+
+            return;
+        }
 
         // A picareta pegou: a posição deixa de ser suspeita — E44. A
         // marca é por posição e o servidor vive dias; sem isto uma

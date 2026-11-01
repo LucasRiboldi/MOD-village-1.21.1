@@ -11328,3 +11328,25 @@ rodada explicitamente liberada pelo autor, `test` passou e `runGametest` passou
 **978/978**. Isso prova os mecanismos no servidor de teste; a confirmação de
 grama, rotas, prioridade de árvores, pastor e ociosidade continua pendente de
 playtest em mundo novo e no save do autor.
+
+## 01-11-2026 — lote, mina e ociosidade após decisões do autor
+
+O autor aprovou limpeza de vegetação e árvores naturais no lote e em uma margem
+externa de um bloco, com as proteções existentes preservadas e a madeira usando
+o coletor que deposita nos baús públicos. `SitePreparation` passou a procurar
+troncos também nessa margem; a estrutura e a água funcional continuam fora do
+escopo da limpeza.
+
+O log mostrava o mineiro alternando alvos mesmo quando a quebra não tinha sido
+confirmada. `MinerHands` agora libera o alvo sem avançar quando `removeBlock`
+falha. A rota dos trabalhadores classifica folhas e troncos como bloqueados e
+`LeafPaths` remove uma folha, no corpo ou na cabeça, do próximo nó real da rota
+a cada segundo. Isso evita usar árvores como piso sem ampliar a destruição de
+folhagem protegida.
+
+Ajuda comum passou a esperar 1.200 ticks sem tarefa própria, preservando a
+prioridade do ofício. O fundidor que estiver fora de área construída volta ao
+baú pessoal antes de continuar a fundição. Não foram criados nem executados
+testes: o modo temporário de correção por playtest os mantém suspensos. A única
+verificação desta rodada foi `./gradlew.bat classes --console=plain --no-daemon`,
+aprovada. A confirmação permanece no playtest do autor.

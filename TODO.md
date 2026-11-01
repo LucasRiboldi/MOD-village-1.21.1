@@ -20,6 +20,9 @@ Fila priorizada, evidências e critérios de fechamento:
 - [ ] Reproduzir giro do mineiro e retorno repetido do lenhador com navegação concorrente,
       acesso obstruído e retomada após areia. Testes de descida e colheita completa reforçados
       em 01-11 passam; não demonstram a causa do defeito observado no save.
+- [ ] Confirmar no playtest a correção candidata: mineiro só libera alvo após falha de quebra;
+      fundidor retorna à área construída; ajuda comum espera 1.200 ticks de ociosidade própria;
+      folhas e troncos não servem de piso; e lote novo limpa vegetação e árvores na margem de um bloco.
 - [ ] Investigar o reprodutor forense preservado em patch diagnóstico: caminho calculado não se traduz em chegada
       física em 140 ticks, inclusive com WorkTargets ativo no expediente. Separar geometria,
       tolerância de chegada e interferência do Brain antes de alterar o código de produção.

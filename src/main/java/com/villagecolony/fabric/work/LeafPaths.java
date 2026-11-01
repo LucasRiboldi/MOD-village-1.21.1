@@ -23,22 +23,24 @@ final class LeafPaths {
         }
     }
 
-    /** Um bloco por aldeão e por segundo, apenas na direção do destino de trabalho. */
+    /** Um bloco por aldeão e por segundo, no próximo nó real da rota. */
     static boolean clearOne(ServerWorld world, VillagerEntity villager) {
         BlockPos target = WorkTargets.of(villager.getUuid()).orElse(null);
-        if (target == null && villager.getNavigation().isIdle()) {
+        var path = villager.getNavigation().getCurrentPath();
+        if (target == null && (path == null || path.isFinished())) {
             return false;
         }
         BlockPos current = villager.getBlockPos();
+        BlockPos next = path != null && !path.isFinished() ? path.getCurrentNodePos() : target;
         int dx;
         int dz;
-        if (target == null) {
+        if (next == null) {
             dx = villager.getHorizontalFacing().getOffsetX();
             dz = villager.getHorizontalFacing().getOffsetZ();
         } else {
-            dx = Integer.compare(target.getX(), current.getX());
-            dz = Integer.compare(target.getZ(), current.getZ());
-            if (Math.abs(target.getX() - current.getX()) >= Math.abs(target.getZ() - current.getZ())) {
+            dx = Integer.compare(next.getX(), current.getX());
+            dz = Integer.compare(next.getZ(), current.getZ());
+            if (Math.abs(next.getX() - current.getX()) >= Math.abs(next.getZ() - current.getZ())) {
                 dz = 0;
             } else {
                 dx = 0;

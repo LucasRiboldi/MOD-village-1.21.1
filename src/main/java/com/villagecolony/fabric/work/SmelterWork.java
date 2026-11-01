@@ -17,8 +17,10 @@ import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
+import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.CraftingLookup;
 import com.villagecolony.fabric.integration.VillageFocus;
+import com.villagecolony.fabric.brain.WorkTargets;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Item;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -156,6 +158,10 @@ public final class SmelterWork {
                 return true;
             }
 
+            if (!isInsideBuiltArea(world, entry.getKey())) {
+                return false;
+            }
+
             if (++job.progress < TICKS_PER_PIECE) {
                 return false;
             }
@@ -164,6 +170,23 @@ public final class SmelterWork {
 
             return !smeltOne(world, entry.getKey(), job);
         });
+    }
+
+    /** O fundidor volta ao baú pessoal, dentro da vila construída, antes de fundir. */
+    private static boolean isInsideBuiltArea(ServerWorld world, UUID workerId) {
+        if (!(world.getEntity(workerId) instanceof VillagerEntity villager)) {
+            return false;
+        }
+
+        if (BlockProtection.isColonyBuilt(villager.getBlockPos())) {
+            return true;
+        }
+
+        VillageColonyMod.STORAGES.of(workerId)
+                .map(WorkerStorage::chestPosition)
+                .map(MinecraftTypeAdapter::toBlockPos)
+                .ifPresent(chest -> WorkTargets.set(workerId, chest.up(), 2));
+        return false;
     }
 
     /**

@@ -10,6 +10,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.entity.ai.pathing.PathNodeType;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.BlockView;
@@ -79,6 +80,10 @@ public final class ColonyPathing {
         }
 
         BlockState floor = world.getBlockState(new BlockPos(x, y - 1, z));
+
+        if (floor.isIn(BlockTags.LEAVES) || floor.isIn(BlockTags.LOGS)) {
+            return PathNodeType.BLOCKED;
+        }
 
         return VillageRoad.isPathBlock(floor) || StreetSurface.isStreetMaterial(floor) ? type : OFF_STREET;
     }

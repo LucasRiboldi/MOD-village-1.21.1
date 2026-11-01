@@ -19,6 +19,13 @@
 > JAR 0.4.0 em `build/libs`, `downloads/` e TLauncher: SHA-256
 > `B65D7DB9A15AE61BC84AEA9674CFD0EF9305FA48DD9124C6F7462498314AA752`.
 
+> **Correções em revisão, ainda sem JAR — 01-11:** lotes novos limpam vegetação e árvores naturais na margem
+> externa de um bloco, preservando blocos protegidos e enviando madeira ao estoque público. O mineiro só
+> confirma avanço depois de `removeBlock` bem-sucedido. Aldeões da colônia não usam folhas ou troncos como
+> piso e removem uma folha do nó real da rota por segundo. Ajuda fora do ofício só começa após 1.200 ticks
+> sem tarefa própria. Fundidores fora de área construída retornam ao baú pessoal antes de fundir. Compilação
+> `classes` passou; testes continuam suspensos. Falta revisão estática, commit e playtest do autor.
+
 > **Rede e currais, desenho aprovado em 01-11 — entrega parcial autorizada:**
 > grafo puro e codec paralelo versionado implementados; sete testes de grafo,
 > treze de persistência nova e testes legados/planejador passam. Duas regressões do codec
