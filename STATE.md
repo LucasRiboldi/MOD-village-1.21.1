@@ -1,5 +1,32 @@
 # STATE — 2026-11-01
 
+> **Rede e currais, desenho aprovado em 01-11 — entrega parcial autorizada:**
+> grafo puro e codec paralelo versionado implementados; sete testes de grafo,
+> treze de persistência nova e testes legados/planejador passam. Duas regressões do codec
+> foram reproduzidas e corrigidas: lista NBT com tipo errado e circuito de 6.000 colunas.
+> Rotas sobre os trechos contraídos passaram em quatro testes; componentes desconectados ficam fora das distâncias ao centro.
+> Revalidação física e origem passam em quinze GameTests, incluindo o hook real de geração e descoberta tardia.
+> Ainda faltam migração operacional, planejador integrado
+> e mudanças de currais. Última rodada completa: 1.691 testes JUnit, zero falhas;
+> 977/977 GameTests, incluindo migração, diário e controles de terreno externo.
+> Fuga: 4/4 isolados e combinados; bateria 15/16, falha no desvio de água ainda investigada.
+> Entrada elevada, piso sem apoio e contagem do diário tiveram falhas reproduzidas; PathNetwork passou 7/7 depois.
+> Migração passou 8/8 após reproduzir defeitos de teto, pisos ambíguos, janela insuficiente e carga indireta de chunk.
+> Delegação dos mixins passou após mover VillageOrigin para integration, sem ampliar a whitelist arquitetural.
+> Quatro casos novos do codec falharam antes da correção; a rodada focada passou 18/18 depois.
+> Outros dois casos reproduziram nó interno sem divisão da aresta; os treze testes do codec passaram após a correção.
+> A rodada combinada passou, mas ainda não explica a intermitência do desvio de água.
+> Autor confirmou manter o bloqueio da integração até concluir esse diagnóstico, mesmo com a bateria completa verde.
+> Controle A/B/A manteve a mesma rota seca nas três consultas; esse trecho de terreno externo não explicou o defeito nessa montagem.
+> Correções locais de entrada, apoio e diário estão testadas; o novo planejador e os novos currais permanecem desativados.
+> Após a bateria completa, três controles focados de água passaram, sem reproduzir a falha histórica.
+> Autor encerrou os testes e autorizou commit, push, merge e atualização do JAR em 01-11.
+> JAR local de desenvolvimento 0.4.0 atualizado; build, downloads e instalação têm SHA-256
+> `2F37C545B8A205EABBC8F80FFE230F8B3067D65382761D46CC3BAEC418CF1032`.
+> `remapJar` aprovado sem reabrir testes; efeito no mundo do autor ainda exige playtest.
+> [Desenho aprovado](docs/superpowers/specs/2026-11-01-hierarchical-roads-and-pens-design.md)
+> e [ADR-043](docs/decisions/ADR-043-hierarchical-road-graph.md).
+
 > **Integração e diagnóstico de 01-11:** [19 pontos priorizados](docs/audit/2026-11-01-falhas-priorizadas.md),
 > backlog histórico e [plano aprovado](docs/technical/Plano-playtest-2026-11-01.md).
 > `clean build` e `test runGametest` aprovados: 1.667 unitários, uma propriedade jqwik,

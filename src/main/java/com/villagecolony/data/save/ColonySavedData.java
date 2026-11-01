@@ -141,6 +141,14 @@ public final class ColonySavedData extends PersistentState {
      */
     final List<ColonyRoads> roads = new ArrayList<>();
 
+    /** Payloads derivados e opacos quando futuros; o índice legado permanece separado — ADR-043. */
+    private final RoadGraphStore roadGraphs = new RoadGraphStore(this::markDirty);
+
+    /** A persistência derivada das ruas, com versão independente — ADR-043. */
+    public RoadGraphStore roadGraphs() {
+        return roadGraphs;
+    }
+
     /**
      * A varredura que ficou no meio — 2026-08-27.
      *
@@ -454,6 +462,7 @@ public final class ColonySavedData extends PersistentState {
 
         MineSave.write(nbt, mines);
         RoadIndexSave.write(nbt, roads);
+        roadGraphs.write(nbt);
         SweepCursorSave.write(nbt, sweeps);
         ActivityTraceSave.write(nbt, activityTraces);
         SaveMigration.stamp(nbt);

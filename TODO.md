@@ -1,5 +1,17 @@
 # TODO
 
+## Rede e currais — desenho aprovado em 01-11-2026
+
+- [x] Grafo puro e codec paralelo inicial, com testes de topologia, compatibilidade e corrupção.
+- [ ] Explicar a falha intermitente de `PenEscape` antes da integração da rede e da condução.
+- [ ] Explicar o desvio intermitente pela água em `ColonyPathing`; o controle A/B/A não reproduziu a rota defeituosa.
+- [ ] Revalidar ruas no mundo e integrar migração reversível, origem de geração e planejamento hierárquico.
+- [ ] Provar condução física de pastor e animal; atualizar modelo, cultivos e crescimento local do curral.
+- [ ] Validar bateria integrada, documentação e JAR após cada feature commitada.
+
+Detalhes nos planos de [rede](docs/superpowers/plans/2026-11-01-hierarchical-roads.md)
+e [currais](docs/superpowers/plans/2026-11-01-pens.md). Não representam gameplay concluído.
+
 ## Diagnóstico de terreno e trabalho — 01-11-2026
 
 Fila priorizada, evidências e critérios de fechamento:

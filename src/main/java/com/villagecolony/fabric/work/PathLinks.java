@@ -210,7 +210,10 @@ public final class PathLinks {
         BlockPos front = entrance.front();
         OptionalInt floor = terrain.groundY(front.getX(), front.getZ(), front.getY() - 1);
 
-        if (floor.isEmpty()) {
+        int entranceFloor = front.getY() - 1;
+        if (floor.isEmpty() || terrain.blocked(front.getX(), front.getZ())
+                || floor.getAsInt() - entranceFloor > VillagePathPlanner.MAX_CUT
+                || entranceFloor - floor.getAsInt() > VillagePathPlanner.MAX_FILL) {
             return Optional.empty();
         }
 
@@ -232,8 +235,9 @@ public final class PathLinks {
             }
         };
 
-        return VillagePathPlanner.plan(terrain, front.getX(), floor.getAsInt(), front.getZ(), entrance.out(), goal)
-                .map(steps -> steps.isEmpty() ? steps : withTheFront(front, floor.getAsInt(), entrance.out(), steps));
+        // A entrada conserva o apoio da porta; o terreno não desloca sua cota — ADR-043.
+        return VillagePathPlanner.plan(terrain, front.getX(), entranceFloor, front.getZ(), entrance.out(), goal)
+                .map(steps -> steps.isEmpty() ? steps : withTheFront(front, entranceFloor, entrance.out(), steps));
     }
 
     /** O primeiro passo é o chão em frente à porta, que o traçado parte de cima dele. */
