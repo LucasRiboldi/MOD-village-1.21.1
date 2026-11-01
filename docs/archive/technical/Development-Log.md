@@ -10,6 +10,11 @@
 
 ## 2026-11-01 — fundação da rede hierárquica, entrega ainda parcial
 
+PR #43: CI do push aprovado; CI do PR executou 978 GameTests e falhou em
+`theWaterDetourIsTranslationInvariantAtTheObservedCoordinates`, com travessia de água
+na origem 8977781, -60, 13733688. O autor pediu encerrar os testes à força e seguir.
+Nenhuma execução local permanecia ativa; a falha continua registrada e sem correção.
+
 O autor encerrou os testes e depois autorizou commit, push, merge e atualização do JAR.
 Entrega parcial preserva o bloqueio de ativação do planejador hierárquico e dos novos currais.
 Após a bateria completa, três controles focados de água passaram sem reproduzir a falha;

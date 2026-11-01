@@ -24,6 +24,9 @@
 > JAR local de desenvolvimento 0.4.0 atualizado; build, downloads e instalação têm SHA-256
 > `2F37C545B8A205EABBC8F80FFE230F8B3067D65382761D46CC3BAEC418CF1032`.
 > `remapJar` aprovado sem reabrir testes; efeito no mundo do autor ainda exige playtest.
+> CI do push aprovado; CI do PR #43 falhou em 1/978 GameTests: translação atravessou água
+> na origem 8977781, -60, 13733688. Autor pediu encerrar os testes à força e seguir a integração.
+> Essa falha permanece aberta; não foi corrigida nem tratada como teste aprovado.
 > [Desenho aprovado](docs/superpowers/specs/2026-11-01-hierarchical-roads-and-pens-design.md)
 > e [ADR-043](docs/decisions/ADR-043-hierarchical-road-graph.md).
 
