@@ -19,6 +19,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.registry.Registries;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
@@ -156,7 +157,7 @@ public final class PathPaving {
             return;
         }
 
-        if (!layStep(world, colonyId, step)) {
+        if (!layAndRecord(world, colonyId, paver.getUuid(), step)) {
             VillageColonyMod.LOGGER.info("Colony {} — the path step at {} no longer fits; the path is traced again",
                     colonyId.toString().substring(0, 8), floor.toShortString());
             PathLinks.drop(colonyId);
@@ -165,7 +166,6 @@ public final class PathPaving {
         }
 
         paver.swingHand(Hand.MAIN_HAND);
-        ActionJournal.action(paver.getUuid(), "PAVED", "dirt_path", 3, floor, "path network");
         plan.next++;
         turn.walked = 0;
 
@@ -177,6 +177,21 @@ public final class PathPaving {
 
             endTurn(colonyId);
         }
+    }
+
+    /** O diário conta apenas o piso realmente alterado, uma vez por coluna — ADR-043. */
+    static boolean layAndRecord(ServerWorld world, UUID colonyId, UUID workerId, PathStep step) {
+        BlockPos floor = new BlockPos(step.x(), step.floorY(), step.z());
+        BlockState before = world.getBlockState(floor);
+        if (!layStep(world, colonyId, step)) {
+            return false;
+        }
+        BlockState after = world.getBlockState(floor);
+        if (!before.equals(after)) {
+            ActionJournal.action(workerId, "PAVED", Registries.BLOCK.getId(after.getBlock()).getPath(), 1,
+                    floor, "path network");
+        }
+        return true;
     }
 
     /**
@@ -195,9 +210,7 @@ public final class PathPaving {
             return false;
         }
 
-        pave(world, colonyId, step.x(), step.z(), axis.getAsInt(), step.floorY(), false);
-
-        return true;
+        return pave(world, colonyId, step.x(), step.z(), axis.getAsInt(), step.floorY(), false);
     }
 
     /**
@@ -205,21 +218,31 @@ public final class PathPaving {
      * cima vira caminho; um abaixo, o bloco de cima sai (o corte); um acima, o caminho vai por cima do
      * buraco. Por cima do piso só sai planta.
      */
-    static void pave(ServerWorld world, UUID colonyId, int x, int z, int ground, int floorY, boolean edge) {
+    static boolean pave(ServerWorld world, UUID colonyId, int x, int z, int ground, int floorY, boolean edge) {
         BlockPos top = new BlockPos(x, ground, z);
         BlockState surface = world.getBlockState(top);
         BlockPos floor = new BlockPos(x, floorY, z);
 
-        if (floorY < ground) {
-            if (!BlockProtection.mayDigOut(world, top, surface)) {
-                return;
+        // Toda recusa precede a primeira escrita; caminho exige apoio físico — ADR-043.
+        BlockPos support = floor.down();
+        if (!world.getBlockState(support).isSideSolidFullSquare(world, support, net.minecraft.util.math.Direction.UP)
+                || !BlockProtection.mayBuildOver(world, floor, world.getBlockState(floor))
+                || (floorY < ground && !BlockProtection.mayDigOut(world, top, surface))
+                || (floorY > ground && !LotGround.isNothing(world.getBlockState(floor)))) {
+            return false;
+        }
+        for (int y = floorY + 1; y <= floorY + CLEAR; y++) {
+            BlockPos above = new BlockPos(x, y, z);
+            BlockState state = world.getBlockState(above);
+            if (!state.getFluidState().isEmpty()
+                    || (!state.isAir() && !LotGround.isNothing(state)
+                    && !(floorY < ground && above.equals(top) && BlockProtection.mayDigOut(world, top, surface)))) {
+                return false;
             }
-
-            world.breakBlock(top, false);
         }
 
-        if (floorY > ground && !LotGround.isNothing(world.getBlockState(floor))) {
-            return;
+        if (floorY < ground) {
+            world.breakBlock(top, false);
         }
 
         for (int y = floorY + 1; y <= floorY + CLEAR; y++) {
@@ -232,8 +255,12 @@ public final class PathPaving {
         }
 
         // Meio e borda são o caminho do chão (StreetSurface, autor 2026-10-28).
-        world.setBlockState(floor, edge ? StreetSurface.edge(world, floor, surface) : StreetSurface.center(world, floor, surface));
+        BlockState paving = edge ? StreetSurface.edge(world, floor, surface) : StreetSurface.center(world, floor, surface);
+        if (!world.getBlockState(floor).equals(paving) && !world.setBlockState(floor, paving)) {
+            return false;
+        }
         RoadIndex.remember(colonyId, floor);
+        return true;
     }
 
     /** O próximo do rodízio que está livre; sem ele, o primeiro livre de qualquer um dos três. */

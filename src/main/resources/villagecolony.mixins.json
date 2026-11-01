@@ -9,6 +9,7 @@
     "ItemStackCraftMixin",
     "LandPathNodeMakerMixin",
     "MoveToTargetTaskMixin",
+    "StructureStartMixin",
     "VillagerDataMixin",
     "VillagerEntityMixin"
   ],

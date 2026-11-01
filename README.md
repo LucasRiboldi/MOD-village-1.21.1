@@ -21,6 +21,11 @@ separa correções implementadas, relatos ainda sem reprodução e requisitos pe
 Prioridades: chegada do mineiro, aldeões presos e terreno de novas vilas.
 Build e GameTests não substituem o playtest dessas situações.
 
+Rede hierárquica e currais têm [desenho aprovado](docs/superpowers/specs/2026-11-01-hierarchical-roads-and-pens-design.md).
+Grafo, persistência paralela e identificação de geração nova estão em implementação;
+o planejador integrado e os novos currais ainda não foram ativados. Evidências e limites
+ficam no [STATE](STATE.md) e na [ADR-043](docs/decisions/ADR-043-hierarchical-road-graph.md).
+
 ## O que o mod faz
 
 - Adota vilas Vanilla e mantém o estado no mundo, nos aldeões, baús e blocos.

@@ -4,12 +4,17 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.villagecolony.fabric.integration.VillageGround;
+import com.villagecolony.fabric.integration.VillageOrigin;
+import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.util.math.BlockBox;
+import net.minecraft.util.math.ChunkSectionPos;
+import net.minecraft.world.StructureHolder;
 import net.minecraft.world.StructureWorldAccess;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.gen.structure.Structure;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -30,6 +35,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(ChunkGenerator.class)
 public abstract class ChunkGeneratorMixin {
+
+    // Apenas criação válida, nunca leitura ou descoberta de vila — ADR-043.
+    @SuppressWarnings("UnusedMethod")
+    @WrapOperation(method = "trySetStructureStart", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/world/gen/StructureAccessor;setStructureStart(Lnet/minecraft/util/math/ChunkSectionPos;Lnet/minecraft/world/gen/structure/Structure;Lnet/minecraft/structure/StructureStart;Lnet/minecraft/world/StructureHolder;)V"))
+    private void villagecolony$markCreatedVillage(StructureAccessor accessor, ChunkSectionPos sectionPos,
+                                                 Structure structure, StructureStart start, StructureHolder holder,
+                                                 Operation<Void> original,
+                                                 @Local(argsOnly = true) DynamicRegistryManager registries) {
+        VillageOrigin.markCreated(start, registries);
+        original.call(accessor, sectionPos, structure, start, holder);
+    }
 
     // Chamado pelo Mixin por injeção de bytecode, e o CallbackInfo é obrigatório na assinatura do @Inject.
     @SuppressWarnings({"UnusedMethod", "UnusedVariable"})

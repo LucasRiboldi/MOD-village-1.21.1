@@ -6,6 +6,28 @@ primeiro. Criado em 2026-09-02, na primeira sessão que usou a skill
 
 ## Objetivo atual
 
+**2026-11-01 — rede hierárquica e condução em currais.** Desenho aprovado e
+ADR-043 criada; grafo puro e codec paralelo testados. Integração ainda pendente.
+Investigação FORENSIC da fuga intermitente: experimento controlado comprovou saída
+completa e pouso em 28 ticks, 11 antes da primeira inspeção. Cerca intacta, portão
+fechado e recuperação inativa. Isso demonstra a corrida do cenário; não identifica
+definitivamente a causa da falha histórica. A montagem alinhada passou 4/4 isolada
+e combinada. Bateria 15/16: desvio de água em `ColonyPathing` segue investigado.
+A origem distingue `trySetStructureStart` de simples descoberta. Sete GameTests passam,
+incluindo o callsite Vanilla transformado e descoberta tardia sem marcar legado.
+Rodada com os três testes de migração física: 10/10. Política física ainda não ativada.
+Revalidação posterior: 35/35 GameTests focados e 1.689 JUnit sem falhas. Migração ampliada
+passou 7/7 após reproduzir quatro defeitos. Controle A/B/A de terreno externo manteve
+a mesma rota seca nas três fases; não reproduz integralmente a geometria histórica.
+Validação completa posterior: `build runGametest` passou com 1.691 JUnit e 977/977
+GameTests (`village-hierarchy-full-validation.log`). O oitavo teste de migração reproduziu
+piso superior ocultando rua abaixo da janela; passou depois da correção. Dois testes do
+codec reproduziram nó interno sem divisão de trecho e passaram após rejeitar essa topologia.
+O controle de orçamento não reproduziu a rota ruim e não variou o orçamento; resultado
+inconclusivo para essa hipótese. Diagnóstico da água continua aberto, assim como a integração operacional.
+
+### Objetivo anterior
+
 **2026-09-26 — travamentos críticos e alternativas externas.** Auditoria
 FORENSIC dos loops de lote/rua, obra com peças adiadas, recuperação de
 trabalhador, orientação de blueprint e custo por tick. Baritone, MineColonies,
@@ -54,7 +76,7 @@ com fase vermelha conferida. Falta a sessão de jogo.
 | Fabric Loader | 0.19.3 |
 | Fabric API | 0.116.15+1.21.1 |
 | Java | 21 |
-| Conferido em | 2026-09-02, via `gradle.properties` |
+| Conferido em | 2026-11-01, via `gradle.properties` |
 
 Os fontes do Vanilla foram gerados (`./gradlew genSources`) e estão em
 `.gradle/loom-cache/minecraftMaven/.../minecraft-merged-*-sources.jar`.

@@ -19,9 +19,102 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /** A rede de caminhos no mundo — Regras 123 e 124. */
 public class PathNetworkGameTest implements FabricGameTest {
+
+    /** O diário mede blocos realmente assentados, sem contar de novo o piso pronto — ADR-043. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "path_paving_journal", tickLimit = 20)
+    public void theJournalCountsOnlyTheSingleBlockActuallyChanged(TestContext context) throws IOException {
+        ServerWorld world = context.getWorld();
+        BlockPos at = context.getAbsolutePos(BlockPos.ORIGIN).add(3_200_200, 30, 3_200_200);
+        UUID colonyId = UUID.randomUUID();
+        UUID workerId = UUID.randomUUID();
+        Path previousJournal = ActionJournal.file();
+        Path journal = Files.createTempFile("village-path-paving-", ".jsonl");
+        ActionJournal.flush();
+        ActionJournal.writeTo(journal);
+        try {
+            world.getChunk(at);
+            world.setBlockState(at.down(), Blocks.STONE.getDefaultState());
+            world.setBlockState(at, Blocks.GRASS_BLOCK.getDefaultState());
+            PathStep step = new PathStep(at.getX(), at.getY(), at.getZ(), Side.EAST, 0, 0);
+            context.assertTrue(PathPaving.layAndRecord(world, colonyId, workerId, step), "primeiro passo recusado");
+            context.assertTrue(world.getBlockState(at).isOf(Blocks.DIRT_PATH), "nenhum bloco foi assentado");
+            context.assertTrue(PathPaving.layAndRecord(world, colonyId, workerId, step), "piso pronto recusado");
+            ActionJournal.flush();
+            List<String> actions = Files.readAllLines(journal).stream()
+                    .filter(line -> line.contains(workerId.toString().substring(0, 8))).toList();
+            context.assertTrue(actions.size() == 1 && actions.getFirst().contains("\"n\":1"),
+                    "um bloco alterado deve produzir uma ação de quantidade 1: " + actions);
+        } finally {
+            ActionJournal.flush();
+            ActionJournal.writeTo(previousJournal);
+            Files.deleteIfExists(journal);
+            world.setBlockState(at, Blocks.AIR.getDefaultState());
+            world.setBlockState(at.down(), Blocks.AIR.getDefaultState());
+        }
+        context.complete();
+    }
+
+    /** A cota da entrada vem do apoio da porta, não do monte em sua frente — ADR-043. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "path_entry_height", tickLimit = 20)
+    public void aMoundInFrontDoesNotRaiseTheDoorPath(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos base = context.getAbsolutePos(BlockPos.ORIGIN).add(3_200_000, 30, 3_200_000);
+        UUID colonyId = UUID.randomUUID();
+        try {
+            for (BlockPos at : BlockPos.iterate(base.add(-2, -1, -3), base.add(12, 0, 3))) {
+                world.getChunk(at);
+                world.setBlockState(at, Blocks.GRASS_BLOCK.getDefaultState());
+            }
+            world.setBlockState(base.up(), Blocks.GRASS_BLOCK.getDefaultState());
+            BlockPos road = base.east(10);
+            world.setBlockState(road, Blocks.DIRT_PATH.getDefaultState());
+            PathLinks.Entrance entrance = new PathLinks.Entrance(base.up(), Side.EAST);
+            List<PathStep> steps = PathLinks.trace(world, colonyId, entrance,
+                    Set.of(ColonyRoads.column(road.getX(), road.getZ())), road, false).orElseThrow();
+            context.assertTrue(steps.getFirst().floorY() == base.getY(),
+                    "o monte elevou o piso da entrada: " + steps.getFirst());
+            context.assertTrue(PathPaving.layStep(world, colonyId, steps.getFirst()),
+                    "o corte de um bloco na frente da porta deveria caber");
+            context.assertTrue(world.getBlockState(base).isOf(Blocks.DIRT_PATH) && world.getBlockState(base.up()).isAir(),
+                    "o piso deve ficar abaixo da metade inferior da porta, com passagem livre");
+        } finally {
+            for (BlockPos at : BlockPos.iterate(base.add(-2, -1, -3), base.add(12, 4, 3))) {
+                world.setBlockState(at, Blocks.AIR.getDefaultState());
+            }
+            PathLinks.clearAll();
+        }
+        context.complete();
+    }
+
+    /** Índice e retorno de sucesso exigem apoio físico antes da pavimentação — ADR-043. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "path_entry_support", tickLimit = 20)
+    public void anUnsupportedFloorIsRejectedWithoutChangingTheWorld(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos base = context.getAbsolutePos(BlockPos.ORIGIN).add(3_200_100, 30, 3_200_100);
+        UUID colonyId = UUID.randomUUID();
+        world.getChunk(base);
+        try {
+            world.setBlockState(base.down(), Blocks.AIR.getDefaultState());
+            world.setBlockState(base, Blocks.GRASS_BLOCK.getDefaultState());
+            PathStep step = new PathStep(base.getX(), base.getY(), base.getZ(), Side.EAST, 0, 0);
+            context.assertFalse(PathPaving.layStep(world, colonyId, step),
+                    "pavimentação sem apoio não pode retornar sucesso");
+            context.assertTrue(world.getBlockState(base).isOf(Blocks.GRASS_BLOCK),
+                    "pavimentação recusada alterou o piso");
+            context.assertFalse(PathLinks.roadsOf(colonyId).contains(ColonyRoads.column(base.getX(), base.getZ())),
+                    "pavimentação recusada entrou no índice");
+        } finally {
+            world.setBlockState(base, Blocks.AIR.getDefaultState());
+            PathLinks.clearAll();
+        }
+        context.complete();
+    }
 
     /**
      * O caminho da porta até a rede, rente ao chão (autor, 2026-10-28): o buraco de um bloco é coberto no
@@ -42,11 +135,15 @@ public class PathNetworkGameTest implements FabricGameTest {
                 for (int z = -6; z <= 6; z++) {
                     BlockPos at = base.add(x, 0, z);
                     world.getChunk(at);
-                    world.setBlockState(x == 8 ? at.down() : at, Blocks.GRASS_BLOCK.getDefaultState());
+                    BlockPos surface = x == 8 ? at.down() : at;
+                    world.setBlockState(surface.down(), Blocks.STONE.getDefaultState());
+                    world.setBlockState(surface, Blocks.GRASS_BLOCK.getDefaultState());
                 }
             }
 
             world.setBlockState(pit, Blocks.AIR.getDefaultState());
+            world.setBlockState(pit.down(), Blocks.AIR.getDefaultState());
+            world.setBlockState(pit.down(2), Blocks.AIR.getDefaultState());
             world.setBlockState(pit.down(3), Blocks.GRASS_BLOCK.getDefaultState());
 
             Set<Long> roads = new HashSet<>();
@@ -107,6 +204,7 @@ public class PathNetworkGameTest implements FabricGameTest {
                 for (int z = -2; z <= 2; z++) {
                     BlockPos at = base.add(x, 0, z);
                     world.getChunk(at);
+                    world.setBlockState(at.down(), Blocks.STONE.getDefaultState());
                     world.setBlockState(at, Blocks.GRASS_BLOCK.getDefaultState());
                 }
             }

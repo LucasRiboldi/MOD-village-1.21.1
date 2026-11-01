@@ -8,6 +8,88 @@
 
 # Village Colony — Development Log
 
+## 2026-11-01 — fundação da rede hierárquica, entrega ainda parcial
+
+PR #43: CI do push aprovado; CI do PR executou 978 GameTests e falhou em
+`theWaterDetourIsTranslationInvariantAtTheObservedCoordinates`, com travessia de água
+na origem 8977781, -60, 13733688. O autor pediu encerrar os testes à força e seguir.
+Nenhuma execução local permanecia ativa; a falha continua registrada e sem correção.
+
+O autor encerrou os testes e depois autorizou commit, push, merge e atualização do JAR.
+Entrega parcial preserva o bloqueio de ativação do planejador hierárquico e dos novos currais.
+Após a bateria completa, três controles focados de água passaram sem reproduzir a falha;
+isso não comprova sua correção. `remapJar` aprovado sem nova execução dos testes.
+As cópias locais de build, downloads e mods foram comparadas pelo manifesto: SHA-256
+`2F37C545B8A205EABBC8F80FFE230F8B3067D65382761D46CC3BAEC418CF1032`.
+Versão de desenvolvimento permanece 0.4.0; sem nova publicação de release nesta entrega.
+
+Validação completa posterior: `build runGametest` aprovado em 2min17s, com 1.691 testes
+JUnit sem falhas e 977/977 GameTests (`village-hierarchy-full-validation.log`). O oitavo
+teste de migração falhou com piso Y=80 ocultando rua legada Y=64 fora da janela; passou
+após adiar a migração nessa condição. Dois testes do codec falharam com nó interno
+sem divisão da aresta; a leitura agora recusa a topologia antes de publicar ou alterar o store.
+O controle com água em duas alturas não reproduziu a rota ruim; por isso não aumentou
+o orçamento de busca. A bateria verde não explica a falha intermitente histórica.
+
+Continuação: os dois novos casos de entrada e apoio falharam antes da alteração e passaram
+depois; `PathNetwork` passou 6/6. Entrada usa a cota do apoio da porta, e pavimentação
+recusa falta de apoio ou obstrução antes da primeira escrita. Cenários antigos receberam
+apoio físico sem fechar seu poço. `aMixinOnlyDelegates` também teve RED/GREEN: helper
+`VillageOrigin` movido de `world` para `integration`, sem ampliar dependências permitidas.
+Revisão completa executou 1.689 testes; quatro casos novos do codec expuseram coerção
+de versão e múltiplos centros. Após exigir tipo inteiro exato e centro único, codec e legado
+passaram 18/18. Nova rodada completa passou com 1.689 JUnit e 29/29 GameTests combinados
+(`village-reviewed-foundation-combined.log`). Novos controles de migração, diário e terreno
+externo são posteriores a essa rodada. Nova validação `build runGametest` passou com 35/35
+GameTests focados (`village-reviewed-migration-build.log`); JUnit manteve 1.689 testes sem falhas.
+O diário reproduziu duas ações de três blocos para um único piso alterado; agora registra
+somente a alteração real, com material e quantidade efetivos. PathNetwork passou 7/7.
+Quatro testes de migração falharam antes da correção: rua sob teto, pisos ambíguos,
+cobertura insuficiente da janela e carregamento indireto de referência estrutural remota.
+Migração passou 7/7 depois; leitura continua sem escrever blocos ou substituir o índice legado.
+Controle A/B/A com assentamento físico retornou a mesma rota seca de 31 nós nas três fases.
+A faixa externa testada não explica a falha nessa montagem; a geometria histórica ainda difere.
+Ativação operacional e causa da intermitência de água continuam pendentes.
+
+Desenho aprovado pelo autor para rede e currais; criada ADR-043 e planos de execução.
+`RoadGraph` contrai cadeias preservando entradas, junções, circuitos e geometria cardinal.
+Codec `roadGraphs` v1 mantém o índice legado e preserva payload futuro sem reinterpretá-lo.
+Testes novos começaram em vermelho; duas regressões adicionais demonstraram lista NBT
+de tipo incorreto aceita como vazia e circuito máximo recusado pela âncora repetida.
+Ambas foram corrigidas. Testes focados do grafo, codec, índice antigo e planejador passam.
+Build completo com codec passou: 1.681 testes JUnit, zero falhas. O teto de tamanho
+detectou `ColonySavedData` com 505 linhas; persistência extraída para `RoadGraphStore`,
+reduzindo o arquivo a 487 linhas sem mudar o formato. Novo build passou em 1min26s.
+
+O adaptador `RoadGraphMigration` apenas lê chunks carregados e nunca repara o terreno;
+pendência impede publicar grafo parcial. Três GameTests passam. Marcador de origem
+usa NBT por StructureStart. Sete GameTests passam, incluindo geração pelo callsite Vanilla
+transformado e descoberta tardia sem marcação retroativa. Rodada conjunta: 10/10.
+A rodada anterior passou 8/8, após quatro falhas esperadas antes das correções.
+A política física ainda não foi ativada.
+
+`RoadGraphRoutes` mede distâncias pelos trechos contraídos e preserva altura e circuitos.
+Quatro testes falharam com resultado vazio e passaram após Dijkstra e expansão das colunas.
+Rodada com os sete testes do grafo passou 11/11. O planejador ainda não usa essas distâncias.
+O build de 1.681 testes antecede estas rotas e os novos adaptadores Fabric.
+
+Reprodução física posterior: `PathNetwork` passou nos quatro cenários existentes e
+falhou nos dois novos pelo comportamento esperado. Monte na frente elevou o piso da
+entrada acima do apoio da porta; pavimentação sem bloco de apoio retornou sucesso.
+Log `village-entry-support-red.log`; correções passaram depois em 6/6. README gerado confere.
+
+Integração física permanece pendente. O teste de fuga de cercado recebeu diagnóstico
+limitado aos primeiros 60 ticks e mensagem de falha menor que o limite do livro do Minecraft.
+Experimento com alvo controlado comprovou saída completa e pouso em 28 ticks,
+11 antes da primeira inspeção, com cerca intacta e portão fechado. A montagem alinhada
+à inspeção passou 4/4 isoladamente e na combinação. A bateria combinada falhou 1/16:
+o teste `ColonyPathing` escolheu água apesar da volta seca disponível. Esse novo
+contraste segue em investigação; a causa histórica da fuga não foi identificada definitivamente.
+Experimento com apoio físico em três posições passou 3/3; coordenadas altas, isoladamente,
+não reproduziram a escolha pela água. Esse resultado não fecha a causa combinada.
+Não declarar a intermitência resolvida nem entregar gameplay com esse gate aberto.
+Sem commit ou implantação de JAR nesta etapa.
+
 ## 2026-11-01 — testes de descida e colheita completa
 
 Integração solicitada pelo autor: relatório categoria 1.9 com 19 pontos priorizados,
