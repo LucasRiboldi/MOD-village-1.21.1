@@ -1,5 +1,12 @@
 # STATE — 2026-11-01
 
+> **Modo temporário de correção por playtest ativo:** testes locais e criação de
+> testes estão suspensos até liberação explícita do autor. O ciclo atual é:
+> log e relatórios `VC_*` → achados com evidência → opções para escolha → menor
+> correção escolhida → revisão estática → commit → `remapJar` → cópia e SHA-256
+> no `downloads/` e TLauncher → novo playtest. CI não foi alterado. Correções
+> feitas neste modo são candidatas até confirmação pelo jogo (`CLAUDE.md` §0.2.2).
+
 > **Rede e currais, desenho aprovado em 01-11 — entrega parcial autorizada:**
 > grafo puro e codec paralelo versionado implementados; sete testes de grafo,
 > treze de persistência nova e testes legados/planejador passam. Duas regressões do codec

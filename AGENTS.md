@@ -10,14 +10,18 @@
 
 Não leia documentos históricos inteiros. Use `rg` para localizar trechos em `docs/archive/technical/` (`Development-Log.md`, `Project-State.md`, `Backlog.md`). Em `TODO.md`, leia o topo (100 linhas) e pesquise o item específico.
 
+## Modo temporário ativo: log → escolha → correção → JAR
+
+Até o autor liberar testes novamente, siga `CLAUDE.md` §0.2.2. Não crie nem execute testes locais. Leia somente recortes do log e dos relatórios `VC_*`, liste achados com evidência, ofereça 2 ou 3 opções e espere a escolha. Depois implemente a menor correção escolhida, revise o diff, faça commit, rode apenas `remapJar`, copie o JAR para `downloads/` e para o TLauncher e compare os SHA-256. Trate o resultado como candidato até o próximo playtest. Não altere o CI.
+
 ## Antes de alterar
 
 - **Uma linha por vez** (ADR-035 §2): branch nova a partir da `main` atualizada, de volta por PR. Se outra branch viva toca o mesmo sistema, pare e pergunte ao autor.
 
 - Identifique o problema, o sistema responsável, os arquivos envolvidos e se há decisão arquitetural.
 - Se a mudança exigir decisão não coberta por ADR, pare e peça deliberação; não invente arquitetura.
-- Antes de editar código, rode `./gradlew build` (Windows: `./gradlew.bat build`). Se a linha de base falhar, registre e pare.
-- Para defeito, reproduza primeiro com teste que falhe pela causa correta; depois implemente e rode o teste novamente.
+- Fora do modo temporário, antes de editar código, rode `./gradlew build` (Windows: `./gradlew.bat build`). Se a linha de base falhar, registre e pare.
+- Fora do modo temporário, para defeito, reproduza primeiro com teste que falhe pela causa correta; depois implemente e rode o teste novamente.
 
 ## Invariantes
 
@@ -31,6 +35,7 @@ Não leia documentos históricos inteiros. Use `rg` para localizar trechos em `d
 
 ## Verificação e conclusão
 
+- No modo temporário, as regras de teste abaixo ficam suspensas; valem revisão de diff, verificações estáticas, `remapJar`, SHA-256 e playtest.
 - `./gradlew test`: unitários; `./gradlew runGametest`: testes Fabric no servidor.
 - Alterações em `fabric/` exigem GameTests. Teste verde não substitui evidência em jogo; declare explicitamente o que ainda depende do playtest do autor.
 - Teste novo deve demonstrar a falha antes da correção. Rode os testes proporcionais ao escopo e relate exatamente o que foi executado.
