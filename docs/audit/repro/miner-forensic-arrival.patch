@@ -1,0 +1,43 @@
+diff --git a/src/gametest/java/com/villagecolony/gametest/MineStallForensicGameTest.java b/src/gametest/java/com/villagecolony/gametest/MineStallForensicGameTest.java
+index 8b74405c..11d17729 100644
+--- a/src/gametest/java/com/villagecolony/gametest/MineStallForensicGameTest.java
++++ b/src/gametest/java/com/villagecolony/gametest/MineStallForensicGameTest.java
+@@ -1,5 +1,7 @@
+ package com.villagecolony.gametest;
+
++import com.villagecolony.fabric.brain.WorkTargets;
++import net.minecraft.entity.ai.brain.Schedule;
+ import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+ import net.minecraft.block.Blocks;
+ import net.minecraft.entity.EntityType;
+@@ -56,7 +58,10 @@ public class MineStallForensicGameTest implements FabricGameTest {
+         buildTheMine(context);
+
+         VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, MINER);
++        villager.setBreedingAge(0);
++        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+         BlockPos target = context.getAbsolutePos(STAND);
++        WorkTargets.set(villager.getUuid(), target, 0);
+
+         context.waitAndRun(5, () -> {
+             Path path = villager.getNavigation().findPathTo(target, 0);
+@@ -65,7 +70,18 @@ public class MineStallForensicGameTest implements FabricGameTest {
+             context.assertTrue(path.reachesTarget(),
+                     "a navegação achou caminho, mas ele não chega ao lugar de pisar — termina em "
+                             + path.getTarget() + " (alvo " + target + ")");
+-            context.complete();
++            context.assertTrue(villager.getNavigation().startMovingAlong(path, 0.5),
++                    "a navegação recusou o caminho calculado");
++        });
++        context.runAtTick(140, () -> {
++            try {
++                context.assertTrue(villager.squaredDistanceTo(target.toBottomCenterPos()) <= 2.25,
++                        "o caminho existe, mas o aldeão não chegou: " + villager.getPos());
++                context.complete();
++            } finally {
++                WorkTargets.clear(villager.getUuid());
++                villager.discard();
++            }
+         });
+     }
+ }

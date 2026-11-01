@@ -5,15 +5,15 @@ import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
-import com.villagecolony.fabric.integration.VillageStructures;
+import net.minecraft.entity.passive.AnimalEntity;
+import net.minecraft.util.math.Box;
 import net.minecraft.server.world.ServerWorld;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * O curral novo — autor, 2026-10-22: com pastor na vila e todos os currais cheios
- * ({@link ShepherdPens#allFull}, lotação pelo tamanho), o curral do catálogo do estilo
+ * O curral novo — Regra 72: com pastor na vila, um cercado por espécie com par adulto;
+ * cercados prontos contam para a meta. O curral único do mod
  * ({@code animal_pen}) é a próxima obra, como o armazém de {@link StoragePlans}. Com
  * {@link #CROWDED_POST} animais amarrados num mesmo poste ({@link #crowdedPost}) o curral também é a
  * próxima obra, com prioridade, e o pastor leva os do poste para ele um a um (Regra 130, autor 2026-10-27).
@@ -22,6 +22,7 @@ final class PenPlans {
 
     /** O nome do curral no catálogo do jogo, em todos os estilos. */
     static final String TYPE = "animal_pen";
+    static final ResourceId MODEL = new ResourceId("villagecolony", "colony/animal_pen");
 
     /** Quantos animais num mesmo poste pedem um curral (autor, 2026-10-27). */
     static final int CROWDED_POST = 5;
@@ -30,7 +31,7 @@ final class PenPlans {
     }
 
     /**
-     * As plantas do curral, quando a vila precisa de um: tem pastor, todos os currais estão cheios e o
+     * As plantas do curral, quando a vila precisa de um: tem pastor, falta cercado por espécie e o
      * curral não foi a última obra tentada — largado ou recém-acabado, não volta na vez seguinte (E48), e
      * o recém-acabado ainda não entrou na releitura dos portões.
      */
@@ -40,23 +41,33 @@ final class PenPlans {
         }
 
         if (!ShepherdFlock.hasShepherd(colony)
-                || !(ShepherdPens.allFull(world, colony) || crowdedPost(world, colony))) {
+                || ShepherdPens.pensOf(world, colony).size() >= neededPens(world, colony)) {
             return List.of();
         }
 
-        String style = HousePlans.paletteOf(world, colony.center()).style();
-        List<Blueprint> plans = new ArrayList<>();
-
-        for (ResourceId id : VillageStructures.buildableFor(style)) {
-            if (!isPen(id) || PlanRefusals.skip(world, colony.id(), colony.center(), id)) {
-                continue;
-            }
-
-            HousePlans.READ.computeIfAbsent(id, missing -> StructureBlueprintReader.read(world, missing))
-                    .ifPresent(plans::add);
+        if (PlanRefusals.skip(world, colony.id(), colony.center(), MODEL)) {
+            return List.of();
         }
+        return HousePlans.READ.computeIfAbsent(MODEL, missing -> StructureBlueprintReader.read(world, missing))
+                .map(List::of).orElseGet(List::of);
+    }
 
-        return plans;
+    /** Um cercado para cada espécie com ao menos um par adulto na vila (Regra 72). */
+    static int neededPens(ServerWorld world, Colony colony) {
+        Box area = colony.bounds()
+                .map(box -> new Box(box.minX() - 16, box.minY() - 8, box.minZ() - 16,
+                        box.maxX() + 17, box.maxY() + 8, box.maxZ() + 17))
+                .orElseGet(() -> new Box(com.villagecolony.fabric.adapter.MinecraftTypeAdapter
+                        .toBlockPos(colony.center())).expand(48));
+        int species = 0;
+        for (var type : ShepherdFlock.SPECIES) {
+            List<? extends AnimalEntity> adults = world.getEntitiesByType(type, area,
+                    animal -> animal.isAlive() && !animal.isBaby());
+            if (adults.size() >= 2) {
+                species++;
+            }
+        }
+        return species;
     }
 
     /** Se algum poste da vila segura {@link #CROWDED_POST} animais ou mais. */

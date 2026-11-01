@@ -98,6 +98,8 @@
       "com.villagecolony.fabric.work.MineReturnGameTest",
       "com.villagecolony.fabric.work.MineEdgeGameTest",
       "com.villagecolony.fabric.work.GroundPickupGameTest",
+      "com.villagecolony.fabric.work.LeafPathsGameTest",
+      "com.villagecolony.fabric.work.PenModelGameTest",
       "com.villagecolony.fabric.work.SmelterFallbackGameTest",
       "com.villagecolony.fabric.work.ClimbOutPiecesGameTest",
       "com.villagecolony.fabric.work.SweepCadenceGameTest",

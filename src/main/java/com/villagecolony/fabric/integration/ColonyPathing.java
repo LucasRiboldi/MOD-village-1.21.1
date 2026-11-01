@@ -111,7 +111,12 @@ public final class ColonyPathing {
             return target;
         }
 
-        return standingOn(world, x, z, mob.getBlockY()).orElse(target);
+        Optional<BlockPos> feet = standingOn(world, x, z, mob.getBlockY());
+        if (feet.isEmpty()) {
+            return target;
+        }
+        var path = mob.getNavigation().findPathTo(feet.get(), 0);
+        return path != null && path.reachesTarget() ? feet.get() : target;
     }
 
     /**

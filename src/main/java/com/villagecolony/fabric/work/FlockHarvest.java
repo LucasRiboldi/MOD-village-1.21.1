@@ -74,12 +74,7 @@ public final class FlockHarvest {
      * @return se algo foi abatido
      */
     static boolean step(ServerWorld world, Colony colony, Box area, List<ColonyPos> chests) {
-        Optional<UUID> shepherd = VillageColonyMod.WORKERS.ofColony(colony.id()).stream()
-                .filter(w -> w.profession().filter(ProfessionType.SHEPHERD::equals).isPresent())
-                .map(w -> w.villagerId())
-                .findFirst();
-
-        if (shepherd.isEmpty()) {
+        if (!ShepherdFlock.hasShepherd(colony)) {
             return false;
         }
 
@@ -93,16 +88,24 @@ public final class FlockHarvest {
                 continue;
             }
 
-            AnimalEntity victim = adults.get(adults.size() - 1);
+            AnimalEntity victim = adults.stream()
+                    .filter(animal -> ShepherdFlock.nearbyShepherd(world, colony, animal) != null)
+                    .findFirst().orElse(null);
+            if (victim == null) {
+                continue;
+            }
 
-            depositDrops(world, colony, species, chests, shepherd.get());
+            depositDrops(world, colony, species, chests,
+                    ShepherdFlock.nearbyShepherd(world, colony, victim).getUuid());
             victim.kill();
             butchered = true;
 
             break;
         }
 
-        cookSurplusMeat(world, chests);
+        if (butchered) {
+            cookSurplusMeat(world, chests);
+        }
 
         return butchered;
     }

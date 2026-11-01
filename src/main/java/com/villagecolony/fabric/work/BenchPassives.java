@@ -40,8 +40,8 @@ import java.util.Set;
  *   <li><b>lenhador:</b> mudas a até {@link #GROVE_REACH} recebem um passo de crescimento;</li>
  *   <li><b>fazendeiro:</b> a roça a até {@link #FIELD_REACH} cresce um passo a mais; a sobra dos baús
  *       (semente acima da reserva, mudas e folhas) vira farinha de osso, {@link #COMPOST_PER_MEAL} por uma;</li>
- *   <li><b>pastor:</b> a até {@link #FLOCK_REACH}, um par abaixo da meta cruza sozinho a cada 10 min, a
- *       ovelha tosquiada recupera a lã mais depressa e o que os animais derrubam vai aos baús;</li>
+ *   <li><b>pastor:</b> a ovelha tosquiada recupera a lã mais depressa e o que os animais derrubam
+ *       vai aos baús; alimentar e abater exigem o pastor perto do animal (Regras 43 e 68);</li>
  *   <li><b>construtor:</b> a obra a até {@link #BUILD_REACH} assenta um bloco a mais por minuto
  *       ({@link #hurry}).</li>
  * </ul>
@@ -102,9 +102,6 @@ public final class BenchPassives {
             hurryTheBuild(world, colony);
         }
 
-        if (now % 12_000 == 0) {
-            breed(world, colony);
-        }
     }
 
     /** Um ponto por segundo na ferramenta (ou na armadura) de quem está perto da bancada. */
@@ -264,7 +261,7 @@ public final class BenchPassives {
         return ANIMAL_DROPS.contains(stack.getItem()) || stack.isIn(ItemTags.WOOL);
     }
 
-    /** Abaixo da meta, um par perto da bancada do pastor cruza sozinho, sem gastar comida. */
+    /** Abaixo da meta, o pastor só alimenta um par quando está perto de ambos (Regra 68). */
     static boolean breed(ServerWorld world, Colony colony) {
         for (BlockPos bench : BenchPresence.of(world, colony, ProfessionType.SHEPHERD)) {
             for (var species : ShepherdFlock.SPECIES) {
@@ -276,9 +273,11 @@ public final class BenchPassives {
                 }
 
                 List<? extends AnimalEntity> ready = adults.stream()
-                        .filter(animal -> animal.getBreedingAge() == 0 && !animal.isInLove()).limit(2).toList();
+                        .filter(animal -> animal.getBreedingAge() == 0 && !animal.isInLove()
+                                && ShepherdFlock.nearbyShepherd(world, colony, animal) != null).limit(2).toList();
 
-                if (ready.size() == 2) {
+                if (ready.size() == 2 && ShepherdFlock.nearbyShepherd(world, colony, ready.get(0))
+                        == ShepherdFlock.nearbyShepherd(world, colony, ready.get(1))) {
                     ready.forEach(animal -> animal.lovePlayer(null));
                     VillageColonyMod.LOGGER.info("Colony {} — a pair of {} bred by the shepherd bench (Regra 132)",
                             colony.id().toString().substring(0, 8), species.getUntranslatedName());

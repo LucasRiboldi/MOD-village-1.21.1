@@ -16,6 +16,79 @@ public class GroundSmoothingGameTest implements FabricGameTest {
 
     private static final int FLOOR = 2;
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_smoothing_support", tickLimit = 20)
+    public void onlyShallowNaturalGroundVoidsGetSupport(TestContext context) {
+        for (int x = 2; x <= 4; x++) {
+            context.setBlockState(new BlockPos(x, 0, 2), Blocks.STONE);
+            context.setBlockState(new BlockPos(x, 4, 2), Blocks.GRASS_BLOCK);
+        }
+        context.setBlockState(new BlockPos(2, 3, 2), Blocks.AIR);
+        context.setBlockState(new BlockPos(2, 2, 2), Blocks.AIR);
+        context.setBlockState(new BlockPos(2, 1, 2), Blocks.AIR);
+        context.setBlockState(new BlockPos(3, 3, 2), Blocks.AIR);
+        context.setBlockState(new BlockPos(3, 2, 2), Blocks.AIR);
+        context.setBlockState(new BlockPos(3, 1, 2), Blocks.AIR);
+        context.setBlockState(new BlockPos(4, 0, 2), Blocks.AIR);
+        context.setBlockState(new BlockPos(4, 3, 2), Blocks.AIR);
+        context.setBlockState(new BlockPos(4, 2, 2), Blocks.AIR);
+        context.setBlockState(new BlockPos(4, 1, 2), Blocks.AIR);
+        BlockPos base = context.getAbsolutePos(new BlockPos(2, 4, 2));
+        context.assertTrue(GroundSmoothing.repairShallowSupport(context.getWorld(), base), "buraco raso não foi reparado");
+        context.assertTrue(context.getWorld().getBlockState(base.down(3)).isOf(Blocks.DIRT), "apoio incompleto");
+        BlockPos deep = context.getAbsolutePos(new BlockPos(4, 4, 2));
+        context.assertFalse(GroundSmoothing.repairShallowSupport(context.getWorld(), deep), "caverna profunda foi preenchida");
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_smoothing_safety", tickLimit = 20)
+    public void cuttingGroundDoesNotDestroyABuriedChest(TestContext context) {
+        context.setBlockState(new BlockPos(2, 1, 2), Blocks.STONE);
+        context.setBlockState(new BlockPos(2, 2, 2), Blocks.DIRT);
+        context.setBlockState(new BlockPos(2, 3, 2), Blocks.CHEST);
+        context.setBlockState(new BlockPos(2, 4, 2), Blocks.GRASS_BLOCK);
+        BlockPos top = context.getAbsolutePos(new BlockPos(2, 4, 2));
+
+        GroundSmoothing.column(context.getWorld(), top.getX(), top.getZ(), top.getY(), top.getY() - 2);
+
+        context.assertTrue(context.getWorld().getBlockState(top.down()).isOf(Blocks.CHEST),
+                "o corte apagou o baú enterrado sob solo natural");
+        context.assertTrue(context.getWorld().getBlockState(top).isOf(Blocks.GRASS_BLOCK),
+                "uma coluna recusada foi alterada parcialmente");
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_smoothing_safety", tickLimit = 20)
+    public void raisingGroundDoesNotCopyABuriedChest(TestContext context) {
+        context.setBlockState(new BlockPos(2, 1, 2), Blocks.CHEST);
+        context.setBlockState(new BlockPos(2, 2, 2), Blocks.GRASS_BLOCK);
+        BlockPos top = context.getAbsolutePos(new BlockPos(2, 2, 2));
+
+        GroundSmoothing.column(context.getWorld(), top.getX(), top.getZ(), top.getY(), top.getY() + 2);
+
+        context.assertTrue(context.getWorld().getBlockState(top.down()).isOf(Blocks.CHEST), "o baú original mudou");
+        context.assertFalse(context.getWorld().getBlockState(top).isOf(Blocks.CHEST)
+                        || context.getWorld().getBlockState(top.up()).isOf(Blocks.CHEST),
+                "o aterro copiou um baú como material de enchimento");
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_smoothing_safety", tickLimit = 20)
+    public void cuttingGroundDoesNotLeaveAFloatingSurface(TestContext context) {
+        context.setBlockState(new BlockPos(2, 1, 2), Blocks.AIR);
+        context.setBlockState(new BlockPos(2, 2, 2), Blocks.AIR);
+        context.setBlockState(new BlockPos(2, 3, 2), Blocks.DIRT);
+        context.setBlockState(new BlockPos(2, 4, 2), Blocks.GRASS_BLOCK);
+        BlockPos top = context.getAbsolutePos(new BlockPos(2, 4, 2));
+
+        GroundSmoothing.column(context.getWorld(), top.getX(), top.getZ(), top.getY(), top.getY() - 2);
+
+        context.assertTrue(context.getWorld().getBlockState(top).isOf(Blocks.GRASS_BLOCK),
+                "o corte sem apoio deveria manter a coluna original");
+        context.assertTrue(context.getWorld().getBlockState(top.down(2)).isAir(),
+                "o corte criou chão suspenso sobre o vazio");
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_smoothing", tickLimit = 20)
     public void theMasonFlattensBumpsFillsHolesAndLeavesTheRest(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -135,5 +208,39 @@ public class GroundSmoothingGameTest implements FabricGameTest {
         BlockPos at = context.getAbsolutePos(new BlockPos(x, 0, z));
 
         return context.getWorld().getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, at.getX(), at.getZ()) - 1;
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_smoothing_no_build", tickLimit = 20)
+    public void theBuilderRepairsVillageGroundWithoutAnOpenBuild(TestContext context) {
+        for (int x = 0; x < 24; x++) {
+            for (int z = 0; z < 24; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.DIRT);
+                context.setBlockState(new BlockPos(x, FLOOR, z), Blocks.GRASS_BLOCK);
+                for (int y = FLOOR + 1; y <= FLOOR + 20; y++) {
+                    context.setBlockState(new BlockPos(x, y, z), Blocks.AIR);
+                }
+            }
+        }
+        for (int y = FLOOR + 1; y <= FLOOR + 3; y++) {
+            context.setBlockState(new BlockPos(4, y, 4), Blocks.DIRT);
+        }
+        BlockPos origin = context.getAbsolutePos(new BlockPos(0, FLOOR, 0));
+        var colony = com.villagecolony.core.colony.model.Colony.create(java.util.UUID.randomUUID(),
+                com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(origin));
+        colony.measure(new com.villagecolony.core.colony.model.VillageBounds(origin.getX(), origin.getY(), origin.getZ(),
+                origin.getX() + 14, origin.getY() + 5, origin.getZ() + 14));
+        var builder = context.spawnEntity(net.minecraft.entity.EntityType.VILLAGER, new BlockPos(8, FLOOR + 1, 8));
+
+        try {
+            int done = VillageHelpers.helps(context.getWorld(), colony,
+                    java.util.Optional.of(com.villagecolony.core.worker.model.ProfessionType.BUILDER), builder);
+            context.assertTrue(done > 0, "sem obra aberta, o construtor ignorou o terreno danificado; chunk final carregado="
+                    + context.getWorld().isChunkLoaded((origin.getX() + 23) >> 4, (origin.getZ() + 23) >> 4));
+            context.assertTrue(top(context, 4, 4) == origin.getY(), "o construtor deixou o calombo");
+        } finally {
+            builder.discard();
+            GroundSmoothing.clearAll();
+        }
+        context.complete();
     }
 }

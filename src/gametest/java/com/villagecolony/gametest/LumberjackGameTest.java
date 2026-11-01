@@ -1181,11 +1181,26 @@ public class LumberjackGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_continuous",
             tickLimit = 400)
     public void theHarvestTakesTimeAndEndsInTheChest(TestContext context) {
+        assertWholeTreeHarvest(context, 4);
+    }
+
+    /** Colheita pela base: a copa fora do alcance não exige outra aproximação. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_continuous",
+            tickLimit = 400)
+    public void theLumberjackFinishesATallTreeWithoutLeavingItsBase(TestContext context) {
+        assertWholeTreeHarvest(context, 8);
+    }
+
+    private void assertWholeTreeHarvest(TestContext context, int logCount) {
         BlockPos base = new BlockPos(4, 2, 4);
         BlockPos chest = new BlockPos(2, 2, 2);
         BlockPos stand = new BlockPos(3, 2, 4);
 
         plantTree(context, base);
+        for (int y = 4; y < logCount; y++) {
+            context.setBlockState(base.up(y), Blocks.OAK_LOG.getDefaultState());
+        }
+        context.setBlockState(base.up(logCount - 1).north(), Blocks.OAK_LEAVES.getDefaultState());
         context.setBlockState(chest, Blocks.CHEST.getDefaultState());
         context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
 
@@ -1226,6 +1241,23 @@ public class LumberjackGameTest implements FabricGameTest {
         // servidor, que é o que este teste quer exercitar.
         LumberjackWork.run(world, colony);
 
+        int[] departuresDuringHarvest = { 0 };
+        boolean[] wasOutside = { false };
+        context.runAtEveryTick(() -> {
+            int remaining = 0;
+            for (int y = 0; y < logCount; y++) {
+                if (world.getBlockState(context.getAbsolutePos(base.up(y))).isOf(Blocks.OAK_LOG)) {
+                    remaining++;
+                }
+            }
+            boolean outside = villager.squaredDistanceTo(
+                    context.getAbsolutePos(base).toCenterPos()) > 16;
+            if (remaining > 0 && remaining < logCount && outside && !wasOutside[0]) {
+                departuresDuringHarvest[0]++;
+            }
+            wasOutside[0] = outside;
+        });
+
         context.runAtTick(5, () -> {
             int standing = logsStanding(context, base);
 
@@ -1240,7 +1272,17 @@ public class LumberjackGameTest implements FabricGameTest {
                     .amountOf(ResourceType.OAK_LOG);
 
             try {
-                context.assertTrue(stored > 0, "a madeira não chegou ao baú");
+                context.assertTrue(logsStanding(context, base) == 0,
+                        "o lenhador abandonou toras da árvore iniciada");
+                for (int y = 0; y < logCount; y++) {
+                    context.assertTrue(!world.getBlockState(context.getAbsolutePos(base.up(y)))
+                                    .isOf(Blocks.OAK_LOG),
+                            "tora abandonada na altura " + y);
+                }
+                context.assertTrue(stored == logCount,
+                        "todas as toras devem chegar ao baú, recebidas: " + stored);
+                context.assertTrue(departuresDuringHarvest[0] == 0,
+                        "o lenhador saiu do alcance antes de terminar: " + departuresDuringHarvest[0]);
             } finally {
                 owned.cleanUp();
             }

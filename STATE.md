@@ -1,4 +1,54 @@
-# STATE — 2026-10-31
+# STATE — 2026-11-01
+
+> **Integração e diagnóstico de 01-11:** [19 pontos priorizados](docs/audit/2026-11-01-falhas-priorizadas.md),
+> backlog histórico e [plano aprovado](docs/technical/Plano-playtest-2026-11-01.md).
+> `clean build` e `test runGametest` aprovados: 1.667 unitários, uma propriedade jqwik,
+> 955/955 GameTests; Python 155/155 e `rules_to_readme.py --check` aprovados.
+> JAR local de desenvolvimento 0.4.0: SHA-256
+> `F787497B76CAB6AFD09EC80B817CE64D888702E3F90C390F6F42ACD66B3C92B7`.
+> Binário igual ao anterior: esta etapa muda testes/documentação, sem nova lógica de produção.
+> Permanecem abertas as causas do mineiro girando, aldeões presos e terreno incompleto;
+> a integração não as declara corrigidas. CI anterior registrou intermitência de condução da vaca pelo pastor.
+
+> **01-11 — reforço dos testes de mineiro e lenhador:** corrigida consulta absoluta/relativa
+> no teste de descida; agora exige degrau inicialmente sólido, escavação real e descida física.
+> Colheita exige todas as toras no baú; cenário adicional cobre árvore de oito toras sem
+> abandonar a base durante o corte. Os 135 GameTests focados passaram. Falhas artificiais
+> de degrau fechado e tora abandonada derrubaram os três testes esperados; foram retiradas.
+> Isso valida a sensibilidade dos testes, mas ainda não reproduz o giro e as idas e voltas
+> observados no save. Esta etapa reforça testes; o comportamento de produção vem da linha anterior.
+> **Diagnóstico aberto, preservado em patch:** após 147/147 aprovados, o cenário forense passou a exigir
+> chegada física. Falhou tanto com navegação direta quanto com destino de trabalho e
+> horário correto. Existe caminho calculado, mas o aldeão não alcança a posição exigida
+> em 140 ticks. Causa ainda em investigação; não equivale à reprodução do save atual.
+> O teste obrigatório original cobre planejamento; o reprodutor de chegada está no
+> [relatório priorizado](docs/audit/2026-11-01-falhas-priorizadas.md), com instruções de aplicação e retirada.
+
+> **Jogo de 31-10, `villagecolony 0.4.0`, mundo `Novo mundo`:** log sem exceção fatal e
+> encerramento normal. Spark [NuQRCK1bmh](https://spark.lucko.me/NuQRCK1bmh): TPS 20,
+> MSPT médio de 21,62 ms no último minuto (p95 29,02 ms), pico de 97,44 ms; 828 entidades,
+> 136 itens soltos e 18 blocos em queda. O diário aponta construtor 46% trabalhando,
+> carpinteiro 11%, pastor 3%, pedreiro 15% e fundidor 57%; não há prova de travamento contínuo.
+> Nesta linha de desenvolvimento, a obra ganha transição em degraus de 1 bloco, preservando solo
+> e apoio; o pastor precisa estar a até 5 blocos para alimentar, cruzar e abater, com reserva
+> de 6 adultos por espécie; currais usam um modelo de 15×15 para todos os biomas, intercalados
+> até haver um por espécie; folhas naturais no trajeto são removidas aos poucos, todo item
+> solto a até 5 blocos de trabalhador é recolhido, e árvores naturais no lote saem inteiras.
+> A produção auxiliar repõe até 16 por tipo conforme o consumo. Tudo exige novo playtest;
+> GameTests e build validam o código, não o comportamento no save do autor.
+> Validação desta correção: `clean build` aprovado, 954/954 GameTests aprovados,
+> `rules_to_readme.py --check` aprovado. JAR de desenvolvimento SHA-256
+> `F787497B76CAB6AFD09EC80B817CE64D888702E3F90C390F6F42ACD66B3C92B7`.
+
+> **Linha `codex/terrain-stock-repair` em validação, sem versão publicada:**
+> proteção prévia de cortes/aterros do alisamento e da geração, apoio de vazios secos de até 3 blocos fora de minas e construções,
+> construtor ajudando o terreno da vila sem obra, catálogo de estoque com pedra e metal, fundidor repondo blocos
+> de receitas de fornalha até 16 por tipo e trecho de rua sujeito a caminho alcançável.
+> Baús nomeados pelo jogador seguem reservados. A 0.4.0 foi jogada em 31-10; testar as mudanças desta linha em mundo novo e no save de diagnóstico
+> antes de concluir que as paredes, os acessos à mina e a ociosidade foram resolvidos.
+> Verificação da linha: `clean build` aprovado, `build` final aprovado e 949/949 GameTests aprovados.
+> JAR de desenvolvimento desta linha instalado no TLauncher: `village-colony-0.4.0.jar`,
+> SHA-256 `F787497B76CAB6AFD09EC80B817CE64D888702E3F90C390F6F42ACD66B3C92B7`; ainda não publicado.
 
 > **0.4.0** (31-10, promovida de `fix/estruturas-0110`): depois da análise do
 > jogo da 0.3.110 (12,3 h, nenhuma roça, 58 camas para 19 adultos, armazém grande 63× sem lote). A vez da roça abria
@@ -6,7 +56,7 @@
 > adultos ou 1 por fazendeiro (Regra 163); casa de reserva respeita o teto de camas (Regra 164); galpão
 > `storage_small` 7×7 antes do `storage_majest` (Regra 165). Unitários 1667/1667, bateria 940/940, Python 155/155.
 > JAR `village-colony-0.4.0.jar`, SHA-256 `9E011A3F256C22B1695D2A2AA44366CB4A38AE03DD4C356F138B958B86BF040D`,
-> instalado no TLauncher. A versão ainda não foi jogada.
+> cópia da release preservada como `village-colony-0.4.0-release.jar.disabled` no TLauncher. A 0.4.0 foi jogada em 31-10.
 > Para o jogo: **mundo novo**; ver se a roça sai com fazendeiro sem roça, se as casas param perto de adultos + 4, se o
 > galpão fica de pé com porta, tocha e 8 baús. Mina, caminhos, curral duplo e flecheiro seguem abertos
 > (análise na memória `playtest-0110-mina-caminhos-estruturas`).

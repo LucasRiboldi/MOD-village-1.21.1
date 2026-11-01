@@ -281,9 +281,12 @@ public final class VillageGround {
 
         BlockState surface = chunk.getBlockState(at.setY(top));
         BlockState below = chunk.getBlockState(at.setY(top - 1));
-        BlockState fill = below.isAir() || !below.getFluidState().isEmpty() ? Blocks.DIRT.getDefaultState() : below;
+        BlockState fill = SiteSurroundings.isNaturalGround(below)
+                && !(below.getBlock() instanceof net.minecraft.block.FallingBlock)
+                ? below : Blocks.DIRT.getDefaultState();
 
-        if (surface.isAir() || !surface.getFluidState().isEmpty()) {
+        if (surface.isAir() || !surface.getFluidState().isEmpty()
+                || !safeColumn(chunk, x, z, top, target)) {
             return;
         }
 
@@ -306,11 +309,24 @@ public final class VillageGround {
 
             if (state.isAir()) {
                 chunk.setBlockState(at, y >= target - 2 ? fill : Blocks.STONE.getDefaultState(), false);
-            } else if (y >= target - 2 && top > target) {
+            } else if (y >= target - 2 && top > target && SiteSurroundings.isNaturalGround(state)) {
                 // O chão cortado ganha o mesmo subsolo do de antes, e não a pedra crua.
                 chunk.setBlockState(at, fill, false);
             }
         }
+    }
+
+    /** Confere o corte e o aterro antes de escrever: blocos de estrutura e líquidos ficam intactos. */
+    static boolean safeColumn(Chunk chunk, int x, int z, int top, int target) {
+        BlockPos.Mutable at = new BlockPos.Mutable(x, top, z);
+        for (int y = Math.min(top, target); y <= Math.max(top, target); y++) {
+            BlockState state = chunk.getBlockState(at.setY(y));
+            if (!state.getFluidState().isEmpty()
+                    || (!state.isAir() && !state.isReplaceable() && !SiteSurroundings.isNaturalGround(state))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

@@ -3017,16 +3017,22 @@ public class MinerGameTest implements FabricGameTest {
 
         VillageColonyMod.MINES.restore(Mine.restore(colony.id(), shaft, 0));
 
+        BlockPos fourthStep = MinecraftTypeAdapter.toBlockPos(
+                shaft.positionAt(3 * MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES));
+        context.assertTrue(world.getBlockState(fourthStep).isOf(Blocks.STONE),
+                "o degrau 4 deve começar fechado na arena");
+        double[] lowestY = { villager.getY() };
+        context.runAtEveryTick(() -> lowestY[0] = Math.min(lowestY[0], villager.getY()));
+
         MinerWork.run(world, colony);
 
         context.runAtTick(560, () -> {
             try {
-                BlockPos fourthStep = MinecraftTypeAdapter.toBlockPos(
-                        shaft.positionAt(3 * MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES));
-
                 context.assertTrue(
-                        context.getBlockState(fourthStep).isAir(),
+                        world.getBlockState(fourthStep).isAir(),
                         "o degrau 4 continua fechado — ele cava da boca e não desce");
+                context.assertTrue(lowestY[0] <= context.getAbsolutePos(mouth).getY() - 1,
+                        "o mineiro não desceu sequer um bloco: menor Y=" + lowestY[0]);
             } finally {
                 owned.cleanUp();
             }

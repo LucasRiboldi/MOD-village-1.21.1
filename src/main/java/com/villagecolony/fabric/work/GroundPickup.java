@@ -30,19 +30,17 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * O ajudante no tempo ocioso recolhe do chão o que a obra espera — B-1 e
- * Regra 48, decisões do autor de 2026-10-02: <i>"itens no chão somente são
- * recolhidos se forem itens em falta, na lista da obra"</i>.
+ * Regra 48: todo trabalhador recolhe qualquer item solto a cinco blocos ao passar.
+ * Quem está livre também pode ir buscar material que falta à obra.
  *
  * <p><b>Quem.</b> Um trabalhador da colônia sem tarefa, no expediente, solto
  * (nem encalhado, nem saindo de curral). A reanálise de 02-10 mediu o pastor,
  * o pedreiro e o fundidor parados por desenho; esta é a primeira coisa que eles
  * fazem nesse tempo.
  *
- * <p><b>O quê.</b> Só item caído que seja peça que falta à obra aberta da
- * colônia, dentro da caixa da vila (ou a {@link #REACH} blocos da obra, sem
- * caixa). O resto fica no chão. Vai para o baú da colônia mais perto da obra —
- * é de lá que o construtor tira.
+ * <p><b>O quê.</b> Perto de qualquer trabalhador, todo item. A busca ativa do
+ * ajudante livre continua restrita ao material da obra aberta, dentro da caixa
+ * da vila (ou a {@link #REACH} blocos da obra, sem caixa).
  *
  * <p><b>Como.</b> Pelo destino de trabalho, como qualquer ofício; ao chegar a
  * {@link #PICK_UP} blocos do item, ele o guarda. Um ajudante por item, e no
@@ -59,6 +57,7 @@ public final class GroundPickup {
 
     /** A que distância do item ele o pega. */
     static final double PICK_UP = 1.8;
+    static final double PASSING_REACH = 5.0;
 
     /** Quantos ajudantes por colônia ao mesmo tempo. */
     static final int HELPERS = 2;
@@ -89,6 +88,12 @@ public final class GroundPickup {
     static void pass(ServerWorld world) {
         long now = world.getTime();
 
+        for (Colony colony : List.copyOf(VillageColonyMod.COLONIES.all())) {
+            if (PenEscape.isWorking(world, colony.id())) {
+                collectNearby(world, colony);
+            }
+        }
+
         for (UUID workerId : List.copyOf(HELPING.keySet())) {
             drive(world, workerId, HELPING.get(workerId), now);
         }
@@ -98,6 +103,45 @@ public final class GroundPickup {
                 callHelp(world, colony, now);
             }
         }
+    }
+
+    /** Regra 48: qualquer trabalhador que passe a cinco blocos guarda itens soltos nos baús públicos. */
+    static int collectNearby(ServerWorld world, Colony colony) {
+        int gathered = 0;
+        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
+            if (!(world.getEntity(worker.villagerId()) instanceof VillagerEntity villager) || !villager.isAlive()) {
+                continue;
+            }
+            List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.id(),
+                    MinecraftTypeAdapter.toColonyPos(villager.getBlockPos()));
+            if (chests.isEmpty()) {
+                continue;
+            }
+            for (ItemEntity item : world.getEntitiesByClass(ItemEntity.class,
+                    villager.getBoundingBox().expand(PASSING_REACH),
+                    drop -> drop.isAlive() && villager.squaredDistanceTo(drop) <= PASSING_REACH * PASSING_REACH)) {
+                int left = item.getStack().getCount();
+                for (ColonyPos chest : chests) {
+                    left = ChestDepositor.deposit(world, chest, item.getStack().getItem(), left);
+                    if (left == 0) {
+                        break;
+                    }
+                }
+                int stored = item.getStack().getCount() - left;
+                if (stored == 0) {
+                    continue;
+                }
+                gathered += stored;
+                if (left == 0) {
+                    item.discard();
+                } else {
+                    item.getStack().setCount(left);
+                }
+                ActionJournal.action(villager.getUuid(), "PICKED_UP", ActionJournal.idOf(item.getStack().getItem()),
+                        stored, item.getBlockPos(), "ground item");
+            }
+        }
+        return gathered;
     }
 
     private static void callHelp(ServerWorld world, Colony colony, long now) {

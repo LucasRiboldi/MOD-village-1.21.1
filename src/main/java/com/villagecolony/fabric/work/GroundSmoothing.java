@@ -77,10 +77,12 @@ final class GroundSmoothing {
         VillageBounds box = bounds.get();
         int across = Math.max(1, (box.maxX() - box.minX()) / STEP + 1);
         int down = Math.max(1, (box.maxZ() - box.minZ()) / STEP + 1);
-        int index = CURSOR.merge(colony.id(), 1, Integer::sum) % (across * down);
+        int index = CURSOR.getOrDefault(colony.id(), 0) % (across * down);
+        CURSOR.put(colony.id(), index + 1);
         int minX = box.minX() + (index % across) * STEP;
         int minZ = box.minZ() + (index / across) * STEP;
-        int edits = smoothWindow(world, colony.id(), minX, minZ, WINDOW, EDITS);
+        int size = Math.min(WINDOW, Math.min(box.maxX() - box.minX() + 1, box.maxZ() - box.minZ() + 1));
+        int edits = smoothWindow(world, colony.id(), minX, minZ, size, EDITS);
 
         if (edits > 0) {
             ActionJournal.action(mason.getUuid(), "LEVELLED", "minecraft:dirt", edits,
@@ -160,6 +162,16 @@ final class GroundSmoothing {
             }
         }
 
+        int supported = 0;
+        for (int dx = 0; dx < size && supported < budget; dx++) {
+            for (int dz = 0; dz < size && supported < budget; dz++) {
+                if (kinds[dx][dz] == VillageSurface.Kind.FREE
+                        && repairShallowSupport(world, new BlockPos(minX + dx, natural[dx][dz], minZ + dz))) {
+                    supported++;
+                }
+            }
+        }
+
         int[][] surface = VillageSurface.smooth(natural, kinds);
         List<int[]> changes = new ArrayList<>();
 
@@ -177,15 +189,44 @@ final class GroundSmoothing {
         int done = 0;
 
         for (int[] cell : changes) {
-            if (done >= budget) {
+            if (done + supported >= budget) {
                 break;
             }
 
-            column(world, minX + cell[0], minZ + cell[1], natural[cell[0]][cell[1]], surface[cell[0]][cell[1]]);
-            done++;
+            if (column(world, minX + cell[0], minZ + cell[1], natural[cell[0]][cell[1]], surface[cell[0]][cell[1]])) {
+                done++;
+            }
         }
 
-        return done;
+        return done + supported;
+    }
+
+    /** Repara apenas um vazio seco de até três blocos sob chão natural, apoiado por solo firme. */
+    static boolean repairShallowSupport(ServerWorld world, BlockPos surface) {
+        if (!world.isChunkLoaded(surface.getX() >> 4, surface.getZ() >> 4)
+                || !isGround(world, surface, world.getBlockState(surface))) {
+            return false;
+        }
+        int gap = 0;
+        BlockPos below = surface.down();
+        while (gap < 4 && world.getBlockState(below).isAir()) {
+            gap++;
+            below = below.down();
+        }
+        if (gap == 0 || gap > 3 || !world.getBlockState(below).isSideSolidFullSquare(world, below,
+                net.minecraft.util.math.Direction.UP)) {
+            return false;
+        }
+        for (int depth = 1; depth <= gap; depth++) {
+            BlockPos at = surface.down(depth);
+            if (BlockProtection.isColonyBuilt(at) || !BlockProtection.mayBuildOver(world, at, world.getBlockState(at))) {
+                return false;
+            }
+        }
+        for (int depth = 1; depth <= gap; depth++) {
+            world.setBlockState(surface.down(depth), Blocks.DIRT.getDefaultState(), Block.NOTIFY_ALL);
+        }
+        return true;
     }
 
     /** Quantos blocos acima do piso o miolo do cercado fica livre. */
@@ -273,12 +314,17 @@ final class GroundSmoothing {
      * Corta ou aterra a coluna de {@code top} até {@code target}, com o bloco de cima e o de baixo que ela já tinha:
      * o caminho continua caminho, a grama continua grama.
      */
-    static void column(ServerWorld world, int x, int z, int top, int target) {
+    static boolean column(ServerWorld world, int x, int z, int top, int target) {
+        if (top == target || !safeColumn(world, x, z, top, target)) {
+            return false;
+        }
+
         BlockPos.Mutable at = new BlockPos.Mutable(x, top, z);
         BlockState surface = world.getBlockState(at);
         BlockState below = world.getBlockState(at.setY(top - 1));
-        BlockState fill = below.isAir() || !below.getFluidState().isEmpty() || below.isOf(Blocks.FARMLAND)
-                ? Blocks.DIRT.getDefaultState() : below;
+        BlockState fill = SiteSurroundings.isNaturalGround(below) && !below.isOf(Blocks.FARMLAND)
+                && !(below.getBlock() instanceof net.minecraft.block.FallingBlock)
+                ? below : Blocks.DIRT.getDefaultState();
 
         for (int y = top; y > target; y--) {
             at.setY(y + 1);
@@ -296,6 +342,35 @@ final class GroundSmoothing {
         }
 
         world.setBlockState(at.setY(target), surface, Block.NOTIFY_ALL);
+
+        return true;
+    }
+
+    /** Regra 156: verifica toda a coluna antes de escrever; não corta estrutura nem cria piso sem apoio. */
+    private static boolean safeColumn(ServerWorld world, int x, int z, int top, int target) {
+        if (!world.isChunkLoaded(x >> 4, z >> 4)) {
+            return false;
+        }
+
+        BlockPos.Mutable at = new BlockPos.Mutable(x, Math.min(top, target) - 1, z);
+
+        if (!world.getBlockState(at).isSideSolidFullSquare(world, at, net.minecraft.util.math.Direction.UP)) {
+            return false;
+        }
+
+        for (int y = Math.min(top, target); y <= Math.max(top + 1, target); y++) {
+            at.setY(y);
+            BlockState state = world.getBlockState(at);
+            boolean empty = state.isAir() || state.isReplaceable();
+
+            if (!state.getFluidState().isEmpty() || world.getBlockEntity(at) != null
+                    || BlockProtection.isColonyBuilt(at) || !BlockProtection.mayBuildOver(world, at, state)
+                    || (!empty && !isGround(world, at, state))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     static void clearAll() {

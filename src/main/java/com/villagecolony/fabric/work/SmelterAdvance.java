@@ -11,6 +11,8 @@ import com.villagecolony.fabric.integration.CraftingLookup;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.item.BlockItem;
+import net.minecraft.recipe.RecipeType;
 import net.minecraft.server.world.ServerWorld;
 
 import java.util.List;
@@ -22,11 +24,10 @@ import java.util.Optional;
  * espaço para novos blocos crus"</i> (o pedido diz ferreiro; no mod o ofício do forno é
  * o fundidor). No playtest 0.3.35 os fundidores ficaram 58% esperando.
  *
- * <p>A cada ciclo da colônia, cada fundidor sem tarefa funde até {@link #PER_SMELTER} do
- * cru que sobra nos baús no produto seguinte da cadeia (o jogo diz qual,
- * {@link CraftingLookup#smelted}). Fica nos baús o que a obra aberta pede do cru e mais
- * {@link #KEEP}; o produto para em {@link StockCeiling#RAW}. Sem lugar para o produto,
- * o cru volta.
+ * <p>A cada ciclo, o fundidor sem tarefa repõe blocos de receitas de fornalha até
+ * {@link ItemStock#EACH} por tipo. Depois adianta os demais crus da lista {@link #RAWS}.
+ * Fica nos baús o que a obra aberta pede do cru e mais {@link #KEEP}; os demais
+ * produtos param em {@link StockCeiling#RAW}. Sem lugar para o produto, o cru volta.
  */
 public final class SmelterAdvance {
 
@@ -75,6 +76,33 @@ public final class SmelterAdvance {
     static int smeltOnce(ServerWorld world, Colony colony) {
         List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.id(), colony.center());
 
+        for (var entry : world.getRecipeManager().listAllOfType(RecipeType.SMELTING)) {
+            Item made = entry.value().getResult(world.getRegistryManager()).getItem();
+            if (!(made instanceof BlockItem) || ColonyChests.countIn(world, chests, made) >= ItemStock.EACH) {
+                continue;
+            }
+            for (var ingredient : entry.value().getIngredients()) {
+                for (ItemStack option : ingredient.getMatchingStacks()) {
+                    Item raw = option.getItem();
+                    int keep = raw == Items.COBBLESTONE || raw == Items.COBBLED_DEEPSLATE ? MINE_FILL : KEEP;
+                    int spare = ColonyChests.countIn(world, chests, raw) - BuildReserve.buildNeedOf(colony, raw) - keep;
+                    int room = ItemStock.EACH - ColonyChests.countIn(world, chests, made);
+                    int amount = Math.min(PER_SMELTER, Math.min(spare, room));
+                    if (amount <= 0) {
+                        continue;
+                    }
+                    int taken = ColonyChests.withdraw(world, chests, raw, amount);
+                    int left = ColonyChests.deposit(world, chests, made, taken);
+                    if (left > 0) {
+                        ColonyChests.deposit(world, chests, raw, left);
+                    }
+                    if (taken > left) {
+                        return taken - left;
+                    }
+                }
+            }
+        }
+
         for (Item raw : RAWS) {
             Optional<ItemStack> product = CraftingLookup.smelted(world, new ItemStack(raw));
 
@@ -83,6 +111,9 @@ public final class SmelterAdvance {
             }
 
             Item made = product.get().getItem();
+            if (made instanceof BlockItem) {
+                continue;
+            }
             int keep = raw == Items.COBBLESTONE || raw == Items.COBBLED_DEEPSLATE ? MINE_FILL : KEEP;
             int spare = ColonyChests.countIn(world, chests, raw) - BuildReserve.buildNeedOf(colony, raw) - keep;
             int room = StockCeiling.RAW - ColonyChests.countIn(world, chests, made);

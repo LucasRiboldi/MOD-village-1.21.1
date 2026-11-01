@@ -14,6 +14,17 @@ import net.minecraft.util.math.BlockPos;
  */
 public class VillageGroundGameTest implements FabricGameTest {
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_ground_safety", tickLimit = 5)
+    public void aBuriedChestRejectsTheWholeTerrainCut(TestContext context) {
+        BlockPos at = context.getAbsolutePos(new BlockPos(2, 3, 2));
+        context.setBlockState(new BlockPos(2, 1, 2), Blocks.DIRT);
+        context.setBlockState(new BlockPos(2, 2, 2), Blocks.CHEST);
+        context.setBlockState(new BlockPos(2, 3, 2), Blocks.GRASS_BLOCK);
+        context.assertFalse(VillageGround.safeColumn(context.getWorld().getChunk(at), at.getX(), at.getZ(),
+                at.getY(), at.getY() - 2), "o corte aceitou baú enterrado");
+        context.complete();
+    }
+
     private static void tree(ServerWorld world, BlockPos base, int height) {
         for (int dy = 0; dy < height; dy++) {
             world.setBlockState(base.up(dy), Blocks.OAK_LOG.getDefaultState(), Block.FORCE_STATE);

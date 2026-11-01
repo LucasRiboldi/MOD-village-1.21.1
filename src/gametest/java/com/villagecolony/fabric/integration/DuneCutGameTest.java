@@ -51,7 +51,7 @@ public class DuneCutGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** O corredor em volta da casa desce até a base; além dele e na rua, nada muda (autor, 21-10). */
+    /** A rampa em volta da casa sobe um bloco por coluna; a rua permanece (Regra 131). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "dune_cut")
     public void aCorridorIsCutAroundTheHouseButNotThroughTheStreet(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -73,10 +73,12 @@ public class DuneCutGameTest implements FabricGameTest {
             int cut = LotTerraform.cutRing(world, origin.getX(), origin.getZ(), SIDE, SIDE, origin.getY());
 
             context.assertTrue(cut > 0, "o corredor não cortou nada");
-            context.assertTrue(world.getBlockState(origin.add(-ring, 1, 0)).isAir()
-                            && world.getBlockState(origin.add(SIDE + ring - 1, 1, SIDE)).isAir()
-                            && world.getBlockState(origin.add(-ring, 0, 0)).isOf(Blocks.SAND),
-                    "o corredor não ficou na altura da base");
+            context.assertTrue(world.getBlockState(origin.add(-1, 1, 0)).isAir()
+                            && world.getBlockState(origin.add(-1, 0, 0)).isOf(Blocks.SAND)
+                            && world.getBlockState(origin.add(-2, 2, 0)).isAir()
+                            && world.getBlockState(origin.add(-2, 1, 0)).isOf(Blocks.SAND)
+                            && world.getBlockState(origin.add(-ring, 4, 0)).isOf(Blocks.SAND),
+                    "a rampa não sobe um bloco por coluna");
             context.assertTrue(world.getBlockState(origin.add(-ring - 1, 4, 0)).isOf(Blocks.SAND),
                     "o corte passou do corredor");
             context.assertTrue(world.getBlockState(origin.add(1, 4, 1)).isOf(Blocks.SAND),

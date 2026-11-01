@@ -35,7 +35,7 @@ public final class GroundPickupGameTest implements FabricGameTest {
     private static final int TICKS = 600;
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_pickup", tickLimit = TICKS)
-    public void anIdleWorkerPicksUpWhatTheBuildNeedsAndLeavesTheRest(TestContext context) {
+    public void aPassingWorkerPicksUpAllGroundItems(TestContext context) {
         context.getWorld().setTimeOfDay(2_000);
 
         for (int x = 0; x <= 12; x++) {
@@ -74,7 +74,7 @@ public final class GroundPickupGameTest implements FabricGameTest {
         VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
 
         Vec3d wantedAt = Vec3d.ofBottomCenter(context.getAbsolutePos(new BlockPos(7, 2, 5)));
-        Vec3d otherAt = Vec3d.ofBottomCenter(context.getAbsolutePos(new BlockPos(7, 2, 9)));
+        Vec3d otherAt = Vec3d.ofBottomCenter(context.getAbsolutePos(new BlockPos(7, 2, 6)));
         ItemEntity wanted = new ItemEntity(context.getWorld(), wantedAt.x, wantedAt.y, wantedAt.z,
                 new ItemStack(Items.COBBLESTONE, 5));
         ItemEntity other = new ItemEntity(context.getWorld(), otherAt.x, otherAt.y, otherAt.z,
@@ -100,7 +100,7 @@ public final class GroundPickupGameTest implements FabricGameTest {
         };
 
         context.runAtEveryTick(() -> {
-            if (done[0] || wanted.isAlive()) {
+            if (done[0] || wanted.isAlive() || other.isAlive()) {
                 return;
             }
 
@@ -115,12 +115,17 @@ public final class GroundPickupGameTest implements FabricGameTest {
                 }
             }
 
-            boolean otherStays = other.isAlive();
+            int dirt = 0;
+            for (int slot = 0; slot < box.size(); slot++) {
+                if (box.getStack(slot).isOf(Items.DIRT)) {
+                    dirt += box.getStack(slot).getCount();
+                }
+            }
 
             cleanup.run();
 
             context.assertTrue(stored == 5, "o pedregulho recolhido devia estar no baú: " + stored);
-            context.assertTrue(otherStays, "a terra não é peça da obra e devia ficar no chão (Regra 48)");
+            context.assertTrue(dirt == 5, "a terra também deveria ser recolhida: " + dirt);
             context.complete();
         });
 

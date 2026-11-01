@@ -12,6 +12,28 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [Não publicado] — correções e diagnóstico após o jogo da 0.4.0
+
+### Adicionado
+- Relatório priorizado de falhas conhecidas, com evidência, limites e critérios de fechamento.
+- GameTest de árvore alta: oito toras entregues sem abandonar a base durante o corte.
+- Patch diagnóstico reproduzível para investigar chegada física na arena forense da mina;
+  permanece fora da bateria obrigatória até diagnóstico e correção. A falha continua aberta.
+
+### Alterado
+- Estoque dos três ofícios repõe até 16 unidades por tipo fabricável; baús nomeados seguem reservados.
+- Pastor atua a até cinco blocos dos animais, preservando seis adultos por espécie;
+  currais usam modelo único 15×15 e construção intercalada por espécie.
+- Trabalhadores recolhem itens próximos; preparação de novos lotes retira árvores naturais inteiras.
+
+### Corrigido
+- Proteções e suporte do terreno, transição em degraus ao redor da obra e ajuda do construtor
+  ao terreno sem obra. Terraços integrais de novas vilas e reparos restantes continuam pendentes.
+- Desvio por terreno natural quando a rua não é alcançável.
+- Teste da descida do mineiro consulta coordenadas corretas e exige escavação e descida física.
+  Testes de colheita exigem entrega de todas as toras. Causas dos comportamentos relatados no save
+  ainda precisam de reprodução; estas entradas não encerram as falhas de navegação.
+
 ## [0.4.0] — roça por fazendeiro, teto de camas na casa de reserva, armazém pequeno (2026-10-31, marco alpha)
 
 Promovida da branch `fix/estruturas-0110` para `main`. Depois do jogo da 0.3.110 (12,3 h, 38 obras, nenhuma roça, 58 camas para 19 adultos).

@@ -41,13 +41,8 @@ public final class LotTerraform {
     /** Quanto abaixo da rua uma coluna pode estar e ainda ser aterrada (fase 1). */
     static final int MAX_FILL = 2;
 
-    /**
-     * A largura do corredor cortado em volta da casa no lote aplainado — autor, 2026-10-21 (opção 1).
-     * Na bancada do deserto o lote cortado na duna deixava a casa num buraco: o construtor não achava
-     * lugar de pé para o telhado (570 desistências de lado) e a vila parava. O corredor, na altura da
-     * base, dá a volta na casa.
-     */
-    static final int RING = 2;
+    /** Corredor da obra e transição de um bloco por coluna até a encosta (Regra 131). */
+    static final int RING = 6;
 
     private LotTerraform() {
     }
@@ -177,13 +172,7 @@ public final class LotTerraform {
         return moved;
     }
 
-    /**
-     * O corredor de {@link #RING} blocos em volta da pegada: só corta, até a base, o chão do bioma que
-     * sobra acima dela (o que está abaixo fica — o corredor não aterra); rua e o que a coluna não deixa
-     * cortar ({@link #columnLevels}) ficam.
-     *
-     * @return quantos blocos saíram
-     */
+    /** O corredor e a rampa da Regra 131: base junto da casa, subida de um bloco por coluna. */
     static int cutRing(ServerWorld world, int originX, int originZ, int sizeX, int sizeZ, int baseY) {
         return cutRing(world, originX, originZ, sizeX, sizeZ, baseY, new java.util.HashMap<>());
     }
@@ -201,16 +190,33 @@ public final class LotTerraform {
 
                 int x = originX + dx;
                 int z = originZ + dz;
+                int fromX = dx < 0 ? -dx : Math.max(0, dx - sizeX + 1);
+                int fromZ = dz < 0 ? -dz : Math.max(0, dz - sizeZ + 1);
+                int target = baseY + Math.max(fromX, fromZ) - 1;
                 Optional<BlockPos> ground = LotGround.groundInColumn(world, x, z, baseY, MAX_CUT);
+                BlockPos support = new BlockPos(x, target - 1, z);
 
-                if (ground.isEmpty() || ground.get().getY() <= baseY
+                if (ground.isEmpty() || ground.get().getY() <= target
                         || VillageRoad.isPaving(world, ground.get())
-                        || !columnLevels(world, x, z, ground.get().getY(), baseY)
-                        || touchesTheVillage(world, x, z, ground.get().getY(), baseY)) {
+                        || !world.getBlockState(support).isSideSolidFullSquare(world, support,
+                                net.minecraft.util.math.Direction.UP)
+                        || !columnLevels(world, x, z, ground.get().getY(), target)
+                        || touchesTheVillage(world, x, z, ground.get().getY(), target)) {
                     continue;
                 }
 
-                moved += levelColumn(world, x, z, ground.get().getY(), baseY, taken, filled);
+                BlockState surface = world.getBlockState(ground.get());
+                BlockState displaced = world.getBlockState(new BlockPos(x, target, z));
+                moved += levelColumn(world, x, z, ground.get().getY(), target, taken, filled);
+                world.setBlockState(new BlockPos(x, target, z), surface, Block.NOTIFY_ALL);
+                Item surfaceItem = surface.getBlock().asItem();
+                if (surfaceItem != Items.AIR) {
+                    taken.computeIfPresent(surfaceItem, (item, count) -> count == 1 ? null : count - 1);
+                }
+                Item displacedItem = displaced.getBlock().asItem();
+                if (displacedItem != Items.AIR) {
+                    taken.merge(displacedItem, 1, Integer::sum);
+                }
             }
         }
 

@@ -1,5 +1,9 @@
 # Avaliações técnicas
 
+Diagnóstico operacional de 01-11-2026, **categoria 1.9**:
+[falhas e prioridades](../../audit/2026-11-01-falhas-priorizadas.md).
+Reúne relatos, testes e backlog; não recalcula as notas históricas abaixo.
+
 A forma de avaliar está em [METODOLOGIA.md](METODOLOGIA.md). Cada avaliação é
 uma pasta `<data>-<commit>/` com três arquivos:
 - `metricas.json`, gerado pelo coletor;

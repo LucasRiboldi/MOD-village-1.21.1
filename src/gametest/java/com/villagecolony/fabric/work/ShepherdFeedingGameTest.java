@@ -11,6 +11,7 @@ import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.passive.ChickenEntity;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -34,7 +35,8 @@ public class ShepherdFeedingGameTest implements FabricGameTest {
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(chestAt);
         Colony colony = Colony.create(UUID.randomUUID(), chest);
         ColonyFixture owned = ColonyFixture.create().owning(colony);
-        UUID shepherd = UUID.randomUUID();
+        VillagerEntity shepherdEntity = context.spawnEntity(EntityType.VILLAGER, new BlockPos(3, 2, 2));
+        UUID shepherd = shepherdEntity.getUuid();
         ChickenEntity[] hens = new ChickenEntity[2];
 
         VillageColonyMod.COLONIES.register(colony);
@@ -65,6 +67,7 @@ public class ShepherdFeedingGameTest implements FabricGameTest {
             }
 
             world.setBlockState(chestAt, Blocks.AIR.getDefaultState());
+            shepherdEntity.discard();
             ShepherdFlock.clearAll();
             owned.cleanUp();
         }

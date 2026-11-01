@@ -8,6 +8,57 @@
 
 # Village Colony — Development Log
 
+## 2026-11-01 — testes de descida e colheita completa
+
+Integração solicitada pelo autor: relatório categoria 1.9 com 19 pontos priorizados,
+backlog histórico e critérios de fechamento; README, CHANGELOG, STATE, TODO e índice
+de avaliações sincronizados. Histórico JSON preexistente validado e incluído como
+evidência do diagnóstico. `clean build` e `test runGametest` passaram: 1.667 unitários,
+uma propriedade jqwik, 955 GameTests e 155 testes Python; README gerado consistente.
+CI anterior do mesmo código apresentou falha intermitente ao conduzir vaca ao cercado;
+registrada como F19, sem causa corrigida. O JAR 0.4.0 conserva o SHA-256
+`F787497B76CAB6AFD09EC80B817CE64D888702E3F90C390F6F42ACD66B3C92B7`, pois
+esta etapa só altera testes e documentação. Sem nova release publicada.
+
+Build de referência aprovado em 2min02s. O teste de descida consultava posição absoluta
+pela API relativa de TestContext. Passa a consultar o mundo, comprovar pedra inicial e
+registrar o menor Y do aldeão. A colheita exige quatro toras entregues; um cenário de oito
+toras verifica corte pela base e ausência de saídas de alcance enquanto restam toras.
+Os 135 GameTests focados passaram. Mutação temporária recolocando pedra no quarto degrau
+e uma tora na árvore fez falhar exatamente os três cenários previstos. Mutações retiradas.
+Não houve correção de comportamento: o defeito relatado no save ainda não foi reproduzido.
+Continuam pendentes os cenários de acesso alternativo, areia e navegação concorrente.
+
+A rodada ampliada aprovou 147/147 antes da alteração do cenário forense. Este agora inicia
+a navegação e exige chegada em 140 ticks, em vez de concluir ao encontrar um Path.
+Falhou com navegação direta e também com adulto, expediente e WorkTargets ativo.
+O reprodutor vermelho fica preservado em `docs/audit/repro/miner-forensic-arrival.patch`
+para investigação de geometria, tolerância e Brain. A bateria obrigatória conserva o teste
+original de planejamento. Ainda não há prova da causa nem vínculo demonstrado com o save atual.
+
+## 2026-10-31 — jogo 0.4.0, transição de lotes e trabalho físico
+
+O autor jogou `villagecolony 0.4.0` no mundo `Novo mundo`. O log fechou sem
+exceção fatal. O Spark `NuQRCK1bmh` manteve TPS 20; no último minuto, MSPT
+médio 21,62 ms, p95 29,02 ms e máximo 97,44 ms. Havia 828 entidades, das
+quais 136 itens soltos e 18 blocos em queda. O diário mostrou pastor 3%,
+carpinteiro 11%, pedreiro 15%, construtor 46% e fundidor 57% trabalhando.
+O pico não demonstra travamento contínuo; as esperas exigem novo jogo.
+
+A preparação do lote agora retira árvores naturais inteiras e cria uma
+transição em degraus de um bloco por coluna, com solo de superfície e apoio.
+O pastor vivo precisa estar a cinco blocos para alimentar, cruzar ou abater;
+o abate mantém seis adultos por espécie. A vila usa um curral 15×15 único
+para todos os biomas, constrói um por espécie intercalado com outras obras
+e conta cercados fechados já existentes. Aldeões removem folhas naturais
+que bloqueiam a passagem e recolhem todo item solto a cinco blocos.
+Produtos auxiliares dos ofícios repõem até 16 por tipo, sem passar do teto.
+
+Os testes novos reproduziram a falha do corte do lote e o excesso de produção
+antes das correções. O teste antigo da duna foi alinhado à nova transição;
+o da pedra caída foi alinhado à recolha geral. A validação completa e o
+playtest do novo JAR ficam registrados no `STATE.md` e no `TODO.md`.
+
 ## 2026-10-10 — unificação da linha 0.3.23
 
 A `main` 0.3.22 recebeu por reconciliação as correções de fluxo que dividiam a
@@ -11167,3 +11218,15 @@ Não há alteração de política de metas. Verificação desta sessão: 1368 te
 unitários, 96 testes Python, 654/654 GameTests em 32,73 s e `build` completo,
 tudo aprovado. A entrega e os eventos no save real continuam pendentes de
 playtest.
+
+## 31-10-2026 — reparo de terreno, rotas e estoque (linha em validação)
+
+O log da 0.3.111 e os relatórios do save mostraram degraus, paredes e vazios sob terreno, ruas separadas e espera
+de trabalhadores. Os testes controlados reproduziram corte que apagava baú enterrado, cópia de baú como subsolo,
+piso sem apoio, construtor sem obra ocioso e catálogo sem peças de pedra e metal. A correção inspeciona a coluna
+antes de escrever, repara só apoio raso seco, protege a geração, permite ao construtor ajudar na vila e só impõe
+um trecho de rua quando há caminho até ele. O catálogo de três oficinas considera peças fabricáveis de blocos;
+baús nomeados continuam reservados. Os testes focados de terreno/estoque/rota e de geração passaram.
+O ciclo de fundição passou a percorrer receitas de blocos, manter 16 por tipo e respeitar a reserva da obra;
+GameTests cobrem reposição e cerâmica vidrada. Validação final: `clean build`, `build` após a fundição,
+949/949 GameTests e `rules_to_readme.py --check` aprovados. Resta playtest em mundo e save do autor.

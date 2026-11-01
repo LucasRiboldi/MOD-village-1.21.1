@@ -45,7 +45,7 @@ public class StreetRouteGameTest implements FabricGameTest {
         VillageColonyMod.COLONIES.register(colony);
 
         ColonyFixture owned = ColonyFixture.create().owning(colony);
-        VillagerEntity villager = EntityType.VILLAGER.create(world);
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(4, 2, 6));
         VillagerEntity stranger = EntityType.VILLAGER.create(world);
 
         villager.refreshPositionAndAngles(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0, 0);
@@ -66,14 +66,32 @@ public class StreetRouteGameTest implements FabricGameTest {
             BlockPos far = at.add(62, 0, 50);
             BlockPos leg = ColonyPathing.legToward(villager, far);
 
-            context.assertTrue(leg.getX() == at.getX() && leg.getZ() == at.getZ() - 3 && leg.getY() == at.getY(),
-                    "o primeiro trecho devia ser a rua a 3 blocos, de pé em " + at.getX() + ", " + at.getY() + ", "
-                            + (at.getZ() - 3) + "; foi " + leg.toShortString());
+            var pathToStreet = villager.getNavigation().findPathTo(at.add(0, 0, -3), 0);
+            if (pathToStreet != null && pathToStreet.reachesTarget()) {
+                context.assertTrue(leg.getX() == at.getX() && leg.getZ() == at.getZ() - 3 && leg.getY() == at.getY(),
+                        "a rua alcançável devia ser o primeiro trecho");
+            } else {
+                context.assertTrue(leg.equals(far), "sem caminho até a rua, devia andar pelo terreno natural");
+            }
 
             BlockPos near = at.add(10, 0, 0);
             context.assertTrue(ColonyPathing.legToward(villager, near).equals(near), "o trajeto curto devia ir direto");
             context.assertTrue(ColonyPathing.legToward(stranger, far).equals(far),
                     "o aldeão de fora da colônia devia ir direto");
+
+            // A rua indexada existe, mas uma parede posterior impede chegar à entrada.
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    if (dx != 0 || dz != 0) {
+                        for (int dy = 0; dy < 4; dy++) {
+                            world.setBlockState(at.add(dx, dy, dz - 3), Blocks.STONE.getDefaultState());
+                        }
+                    }
+                }
+            }
+            villager.getNavigation().stop();
+            context.assertTrue(ColonyPathing.legToward(villager, far).equals(far),
+                    "a rua inacessível continuou impondo seu trecho em vez de liberar o trajeto pelo terreno");
         } finally {
             SweepState.ROADS.remove(colony.id());
             owned.cleanUp();

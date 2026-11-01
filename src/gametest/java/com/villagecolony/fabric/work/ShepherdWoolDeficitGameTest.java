@@ -1,13 +1,16 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.passive.SheepEntity;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
@@ -33,9 +36,10 @@ public class ShepherdWoolDeficitGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "wool_deficit_small")
     public void aShornSmallFlockBreedsForWool(TestContext context) {
         List<SheepEntity> sheep = shorn(context, 2);
+        ShepherdFixture shepherd = shepherdAt(context);
 
         try {
-            boolean bred = ShepherdFlock.breedForWool(context.getWorld(), colonyAt(context),
+            boolean bred = ShepherdFlock.breedForWool(context.getWorld(), shepherd.colony(),
                     area(context), chestWithWheat(context));
 
             context.assertTrue(bred, "o rebanho de 2 ovelhas tosquiadas não procriou pela lã");
@@ -43,6 +47,7 @@ public class ShepherdWoolDeficitGameTest implements FabricGameTest {
                     "as ovelhas não ficaram prontas para procriar");
         } finally {
             sheep.forEach(SheepEntity::discard);
+            shepherd.close();
         }
 
         context.complete();
@@ -52,12 +57,13 @@ public class ShepherdWoolDeficitGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "wool_deficit_no_feed")
     public void withNoFarmFoodTheAnimalFeedComesIn(TestContext context) {
         List<SheepEntity> sheep = shorn(context, 2);
+        ShepherdFixture shepherd = shepherdAt(context);
         BlockPos at = context.getAbsolutePos(new BlockPos(6, 2, 6));
 
         context.getWorld().setBlockState(at, Blocks.CHEST.getDefaultState());
 
         try {
-            boolean bred = ShepherdFlock.breedForWool(context.getWorld(), colonyAt(context),
+            boolean bred = ShepherdFlock.breedForWool(context.getWorld(), shepherd.colony(),
                     area(context), List.of(MinecraftTypeAdapter.toColonyPos(at)));
 
             context.assertTrue(bred, "sem comida nos baús, a ração não veio e o rebanho não procriou");
@@ -65,6 +71,7 @@ public class ShepherdWoolDeficitGameTest implements FabricGameTest {
                     "as ovelhas não ficaram prontas para procriar com a ração");
         } finally {
             sheep.forEach(SheepEntity::discard);
+            shepherd.close();
         }
 
         context.complete();
@@ -74,14 +81,16 @@ public class ShepherdWoolDeficitGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "wool_deficit_full")
     public void aFullShornFlockDoesNotBreed(TestContext context) {
         List<SheepEntity> sheep = shorn(context, ShepherdFlock.FLOCK_TARGET);
+        ShepherdFixture shepherd = shepherdAt(context);
 
         try {
-            boolean bred = ShepherdFlock.breedForWool(context.getWorld(), colonyAt(context),
+            boolean bred = ShepherdFlock.breedForWool(context.getWorld(), shepherd.colony(),
                     area(context), chestWithWheat(context));
 
             context.assertTrue(!bred, "o rebanho cheio procriou pela lã");
         } finally {
             sheep.forEach(SheepEntity::discard);
+            shepherd.close();
         }
 
         context.complete();
@@ -117,9 +126,19 @@ public class ShepherdWoolDeficitGameTest implements FabricGameTest {
         return List.of(MinecraftTypeAdapter.toColonyPos(at));
     }
 
-    private static Colony colonyAt(TestContext context) {
-        return Colony.create(UUID.randomUUID(),
+    private record ShepherdFixture(Colony colony, VillagerEntity villager) {
+        void close() {
+            VillageColonyMod.WORKERS.remove(villager.getUuid());
+            villager.discard();
+        }
+    }
+
+    private static ShepherdFixture shepherdAt(TestContext context) {
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(2, 2, 2));
+        Colony colony = Colony.create(UUID.randomUUID(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(3, 2, 3))));
+        VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id()).assign(ProfessionType.SHEPHERD);
+        return new ShepherdFixture(colony, villager);
     }
 
     private static Box area(TestContext context) {

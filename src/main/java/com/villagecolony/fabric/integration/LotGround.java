@@ -92,11 +92,8 @@ public final class LotGround {
         // limite de dois. A casa nasceria enfiada na encosta. Achado
         // pelo gametest do desnível, em 2026-08-14.
         //
-        // Lote com árvore em cima é recusado, porque o tronco está acima
-        // da janela — a colônia procura outro lugar em vez de derrubar o
-        // que não planejou. Menos nos biomas de árvores juntas: lá a
-        // árvore natural não é obstáculo, o chão é o de baixo dela, e a
-        // obra limpa o lote (LotGrowth, autor, 2026-10-20).
+        // Árvore natural no lote é limpa antes da obra em qualquer bioma;
+        // tronco protegido continua sendo obstáculo (LotGrowth, Regra 22).
         boolean trees = LotGrowth.clearsTreesAt(world, new BlockPos(x, aroundY, z));
 
         if (!isEmptyForGround(chunk.getBlockState(new BlockPos(x, aroundY + up + 1, z)), trees)
