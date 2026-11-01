@@ -1,4 +1,28 @@
-# STATE — 2026-10-31
+# STATE — 2026-11-01
+
+> **Integração e diagnóstico de 01-11:** [19 pontos priorizados](docs/audit/2026-11-01-falhas-priorizadas.md),
+> backlog histórico e [plano aprovado](docs/technical/Plano-playtest-2026-11-01.md).
+> `clean build` e `test runGametest` aprovados: 1.667 unitários, uma propriedade jqwik,
+> 955/955 GameTests; Python 155/155 e `rules_to_readme.py --check` aprovados.
+> JAR local de desenvolvimento 0.4.0: SHA-256
+> `F787497B76CAB6AFD09EC80B817CE64D888702E3F90C390F6F42ACD66B3C92B7`.
+> Binário igual ao anterior: esta etapa muda testes/documentação, sem nova lógica de produção.
+> Permanecem abertas as causas do mineiro girando, aldeões presos e terreno incompleto;
+> a integração não as declara corrigidas. CI anterior registrou intermitência de condução da vaca pelo pastor.
+
+> **01-11 — reforço dos testes de mineiro e lenhador:** corrigida consulta absoluta/relativa
+> no teste de descida; agora exige degrau inicialmente sólido, escavação real e descida física.
+> Colheita exige todas as toras no baú; cenário adicional cobre árvore de oito toras sem
+> abandonar a base durante o corte. Os 135 GameTests focados passaram. Falhas artificiais
+> de degrau fechado e tora abandonada derrubaram os três testes esperados; foram retiradas.
+> Isso valida a sensibilidade dos testes, mas ainda não reproduz o giro e as idas e voltas
+> observados no save. Esta etapa reforça testes; o comportamento de produção vem da linha anterior.
+> **Diagnóstico aberto, preservado em patch:** após 147/147 aprovados, o cenário forense passou a exigir
+> chegada física. Falhou tanto com navegação direta quanto com destino de trabalho e
+> horário correto. Existe caminho calculado, mas o aldeão não alcança a posição exigida
+> em 140 ticks. Causa ainda em investigação; não equivale à reprodução do save atual.
+> O teste obrigatório original cobre planejamento; o reprodutor de chegada está no
+> [relatório priorizado](docs/audit/2026-11-01-falhas-priorizadas.md), com instruções de aplicação e retirada.
 
 > **Jogo de 31-10, `villagecolony 0.4.0`, mundo `Novo mundo`:** log sem exceção fatal e
 > encerramento normal. Spark [NuQRCK1bmh](https://spark.lucko.me/NuQRCK1bmh): TPS 20,

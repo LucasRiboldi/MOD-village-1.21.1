@@ -8,6 +8,34 @@
 
 # Village Colony — Development Log
 
+## 2026-11-01 — testes de descida e colheita completa
+
+Integração solicitada pelo autor: relatório categoria 1.9 com 19 pontos priorizados,
+backlog histórico e critérios de fechamento; README, CHANGELOG, STATE, TODO e índice
+de avaliações sincronizados. Histórico JSON preexistente validado e incluído como
+evidência do diagnóstico. `clean build` e `test runGametest` passaram: 1.667 unitários,
+uma propriedade jqwik, 955 GameTests e 155 testes Python; README gerado consistente.
+CI anterior do mesmo código apresentou falha intermitente ao conduzir vaca ao cercado;
+registrada como F19, sem causa corrigida. O JAR 0.4.0 conserva o SHA-256
+`F787497B76CAB6AFD09EC80B817CE64D888702E3F90C390F6F42ACD66B3C92B7`, pois
+esta etapa só altera testes e documentação. Sem nova release publicada.
+
+Build de referência aprovado em 2min02s. O teste de descida consultava posição absoluta
+pela API relativa de TestContext. Passa a consultar o mundo, comprovar pedra inicial e
+registrar o menor Y do aldeão. A colheita exige quatro toras entregues; um cenário de oito
+toras verifica corte pela base e ausência de saídas de alcance enquanto restam toras.
+Os 135 GameTests focados passaram. Mutação temporária recolocando pedra no quarto degrau
+e uma tora na árvore fez falhar exatamente os três cenários previstos. Mutações retiradas.
+Não houve correção de comportamento: o defeito relatado no save ainda não foi reproduzido.
+Continuam pendentes os cenários de acesso alternativo, areia e navegação concorrente.
+
+A rodada ampliada aprovou 147/147 antes da alteração do cenário forense. Este agora inicia
+a navegação e exige chegada em 140 ticks, em vez de concluir ao encontrar um Path.
+Falhou com navegação direta e também com adulto, expediente e WorkTargets ativo.
+O reprodutor vermelho fica preservado em `docs/audit/repro/miner-forensic-arrival.patch`
+para investigação de geometria, tolerância e Brain. A bateria obrigatória conserva o teste
+original de planejamento. Ainda não há prova da causa nem vínculo demonstrado com o save atual.
+
 ## 2026-10-31 — jogo 0.4.0, transição de lotes e trabalho físico
 
 O autor jogou `villagecolony 0.4.0` no mundo `Novo mundo`. O log fechou sem

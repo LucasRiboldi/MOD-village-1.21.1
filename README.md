@@ -15,6 +15,12 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
+Estado de desenvolvimento em 01-11-2026: a linha de correções mantém a versão
+0.4.0, sem nova release publicada. O [relatório de falhas e prioridades](docs/audit/2026-11-01-falhas-priorizadas.md)
+separa correções implementadas, relatos ainda sem reprodução e requisitos pendentes.
+Prioridades: chegada do mineiro, aldeões presos e terreno de novas vilas.
+Build e GameTests não substituem o playtest dessas situações.
+
 ## O que o mod faz
 
 - Adota vilas Vanilla e mantém o estado no mundo, nos aldeões, baús e blocos.
@@ -31,8 +37,9 @@ SHA-256 do JAR na descrição.
   dentro dela, liberando a fila; a `BigHouseMOD` é protegida dessa regra.
 - Evita sobreposição com estruturas existentes, projetos pendentes e blocos
   físicos dentro da área vertical protegida.
-- Põe o aldeão ocioso para recolher do chão só o item que falta à obra aberta
-  (Regra 48) e mostra no `/vc log` quem espera o quê há mais de dois minutos e,
+- Trabalhadores recolhem itens soltos a até 5 blocos; a tarefa auxiliar do aldeão
+  ocioso também busca o item que falta à obra aberta (Regra 48).
+  Mostra no `/vc log` quem espera o quê há mais de dois minutos e,
   por ofício, a última janela de cinco minutos do expediente (trabalho,
   caminhada, espera, bloqueio, ócio e encalhe), marcando quem passa de 15% na
   regra do ócio. O comando é aberto a todo jogador.
@@ -60,9 +67,10 @@ SHA-256 do JAR na descrição.
   (Regra 119). Sobre a boca fica o portão de entrada desenhado pelo autor —
   pilares de pedra e tijolo, telhado de carvalho escuro e lanternas —, com as
   três pistas da escada no centro do vão (Regra 155).
-- O pastor mantém um curral por espécie, lota pelo tamanho do curral, cria até
-  8 e abate acima de 6, e pede um curral novo quando todos estão cheios ou
-  quando há 5 animais amarrados no mesmo poste (Regras 68, 72 e 130).
+- O pastor precisa estar a até 5 blocos para alimentar, cruzar e abater;
+  preserva 6 adultos por espécie. A construção intercala currais por espécie,
+  usando modelo único de 15×15 com cercas e tochas. Cercados existentes válidos
+  também podem ser usados (Regras 68, 72 e 130). Falta confirmar o conjunto em jogo.
 - Antes de cada obra nova, nivela o chão em volta na altura da rua: um anel de
   2 blocos com no máximo 1 de diferença e uma rampa de 3 até o terreno natural
   (Regra 131).
@@ -649,6 +657,8 @@ ficam no [`TODO.md`](TODO.md), seção "Produção futura":
 - [`CLAUDE.md`](CLAUDE.md): regras para trabalhar no repositório.
 - [`STATE.md`](STATE.md): estado vivo e pendências de playtest.
 - [`TODO.md`](TODO.md): backlog canônico, com a produção futura.
+- [Falhas e prioridades de 01-11-2026](docs/audit/2026-11-01-falhas-priorizadas.md):
+  problemas conhecidos, urgência e evidência; [plano aprovado](docs/technical/Plano-playtest-2026-11-01.md).
 - [`docs/RULES.md`](docs/RULES.md): todas as regras do autor (fonte da tabela
   acima).
 - [`CHANGELOG.md`](CHANGELOG.md): o que mudou em cada publicação.

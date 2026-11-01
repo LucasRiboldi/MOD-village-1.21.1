@@ -1,6 +1,18 @@
 # TODO
 
-## Diagnóstico de terreno e trabalho — 31-10-2026
+## Diagnóstico de terreno e trabalho — 01-11-2026
+
+Fila priorizada, evidências e critérios de fechamento:
+[relatório de falhas](docs/audit/2026-11-01-falhas-priorizadas.md), categoria 1.9.
+
+- [ ] Reproduzir giro do mineiro e retorno repetido do lenhador com navegação concorrente,
+      acesso obstruído e retomada após areia. Testes de descida e colheita completa reforçados
+      em 01-11 passam; não demonstram a causa do defeito observado no save.
+- [ ] Investigar o reprodutor forense preservado em patch diagnóstico: caminho calculado não se traduz em chegada
+      física em 140 ticks, inclusive com WorkTargets ativo no expediente. Separar geometria,
+      tolerância de chegada e interferência do Brain antes de alterar o código de produção.
+- [ ] Investigar F19: condução da vaca ao cercado falhou no CI de push 41254270066,
+      mas passou no CI de PR do mesmo código e nos 955 GameTests locais de 01-11.
 
 - [ ] Jogar o novo JAR em mundo novo e no save `Novo mundo`: medir grama flutuante,
       transição do lote em degraus de 1 bloco e apoio sob o piso; conferir cortes em dunas e estruturas.
@@ -15,7 +27,7 @@
       manter prioridade das obras e baús nomeados reservados.
 - [ ] Repetir diário de trabalho: distinguir espera real de trabalho auxiliar sem marcação e medir NO_PATH/NO_PROGRESS.
 
-**Atualizado:** 2026-10-31 (diagnóstico de terreno e trabalho; histórico de biomas: 2026-10-20). Só o que está **aberto**. Os checklists de playtest de
+**Atualizado:** 2026-11-01 (diagnóstico de terreno e trabalho; histórico de biomas: 2026-10-20). Só o que está **aberto**. Os checklists de playtest de
 versões ≤0.3.44 foram arquivados em `docs/archive/technical/TODO-ate-2026-10-07.md` (grep, nunca
 inteiro). Estado vivo: `STATE.md`. Plano de melhoria: `docs/technical/Plano-Melhoria-2026-10-14.md`.
 
