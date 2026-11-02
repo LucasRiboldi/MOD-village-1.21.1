@@ -1,5 +1,12 @@
 # STATE — 2026-11-02
 
+> **Planejamento aprovado, antes do desenvolvimento:** seis opções A para
+> orçamento por tick, acesso/casa da mina, reservas por bloco, frentes exclusivas,
+> terra/salto normal e tarefas restritas ao ofício. Nenhuma profissão deve
+> executar atividade de outra durante a regra temporária. Detalhes e evidências:
+> `docs/technical/Plano-Playtest-2026-11-02.md`. Código ainda não corrigido.
+> Modelos atualizados em `docs/technical/Modelos-Codex.md`; testes suspensos.
+
 > **0.4.7 — análise local do Sentinela pendente:** `scripts/sentinel_analysis.py`
 > lê apenas execuções preservadas, agrupa causas, indica evidência incompleta e
 > cria JSON, Markdown e HTML em `reports/sentinel-analysis/`. A janela oferece

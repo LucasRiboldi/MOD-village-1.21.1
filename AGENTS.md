@@ -14,6 +14,11 @@ Não leia documentos históricos inteiros. Use `rg` para localizar trechos em `d
 
 Antes de cada etapa, informe modelo e força recomendados e aguarde o "ok" do autor para a troca manual, conforme `CLAUDE.md` §0.2.2.
 
+Tabela atual: `docs/technical/Modelos-Codex.md`. Plano aprovado de terreno,
+mina e profissões: `docs/technical/Plano-Playtest-2026-11-02.md`.
+Regra temporária: nenhuma profissão executa atividade de outra, inclusive
+como alternativa ociosa ou ajuda de obra.
+
 Até o autor liberar testes novamente, siga `CLAUDE.md` §0.2.2. Não crie nem execute testes locais. Leia somente recortes do log e dos relatórios `VC_*`, liste achados com evidência, ofereça 2 ou 3 opções e espere a escolha. Depois implemente a menor correção escolhida, revise o diff, faça commit, rode apenas `remapJar`, copie o JAR para `downloads/` e para o TLauncher e compare os SHA-256. Trate o resultado como candidato até o próximo playtest. Não altere o CI.
 
 ## Antes de alterar

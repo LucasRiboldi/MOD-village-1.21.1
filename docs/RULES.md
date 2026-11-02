@@ -3,6 +3,12 @@
 
 # RULES.md
 
+> **Regra temporária do autor — 02-11-2026:** nenhuma profissão executa
+> atividade de outra, inclusive ajuda de obra, fallback ou reatribuição.
+> Alternativas devem permanecer no próprio ofício; coleta comum e recuperação
+> de locomoção seguem as regras compartilhadas. Implementação pendente no
+> [plano aprovado](technical/Plano-Playtest-2026-11-02.md).
+
 As regras do autor do Village Colony, em tabela. **Fonte única para
 "esta regra existe, está ativa, e onde está implementada".**
 

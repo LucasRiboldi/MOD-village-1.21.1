@@ -1,5 +1,17 @@
 # TODO
 
+## Playtest de 02-11 — escolhas A aprovadas
+
+Plano: [terreno, mina e profissões](docs/technical/Plano-Playtest-2026-11-02.md).
+
+- [ ] Diagnosticar custo de geração e recalculo; processar lotes por tick.
+- [ ] Conectar pórtico ao grafo, smoothing local e casa do mineiro com tocha laranja.
+- [ ] Garantir reserva exclusiva por bloco e frente exclusiva por mineiro.
+- [ ] Preferir terra e usar salto maior somente em recuperação.
+- [ ] Restringir alternativas ao ofício; fazendeiro atende todas as fazendas,
+      lenhador planta nas bordas sem árvore madura disponível.
+- [ ] Gerar JAR candidato e validar o efeito no próximo playtest.
+
 ## Sentinela local de testes — 01-11-2026
 
 - [x] Criar varredura manual com perfis `quick`, `fast` e `full`, logs e

@@ -15,6 +15,10 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
+Planejamento aprovado para o próximo ciclo: [terreno, mina e profissões](docs/technical/Plano-Playtest-2026-11-02.md).
+As correções desse plano ainda não estão entregues. Tabela operacional:
+[modelos do Codex por atividade](docs/technical/Modelos-Codex.md).
+
 Estado de desenvolvimento em 02-11-2026: a versão 0.4.7 adiciona análise manual
 de evidências e métricas locais ao Sentinela; a 0.4.6 adiciona o Observatório
 local do Sentinela; a 0.4.5 adiciona a janela local; a 0.4.4 prepara o

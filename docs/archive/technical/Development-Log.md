@@ -8,6 +8,17 @@
 
 # Village Colony — Development Log
 
+## 2026-11-02 — planejamento aprovado antes de desenvolver
+
+O autor aprovou as seis opções A do playtest: orçamento por tick, conexão da
+mina ao grafo, reservas de blocos, frentes de mineração individuais, navegação
+por terra e alternativas do próprio ofício. Acrescentou regra temporária que
+proíbe assumir atividade de outra profissão. O plano registra evidências,
+critérios e limites em `docs/technical/Plano-Playtest-2026-11-02.md`.
+A tabela de modelos substitui recomendações antigas por Luna, Terra, Sol e
+Astra conforme escopo. O autor pediu commit/push antes do desenvolvimento.
+A revisão atual valida sintaxe Python e diff; não executa baterias de testes.
+
 ## 2026-11-02 — análise local e métricas do Sentinela
 
 A versão 0.4.7 acrescenta `scripts/sentinel_analysis.py`, que somente lê as

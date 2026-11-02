@@ -68,8 +68,10 @@ alterar nem desativar o CI do repositório.
 Antes de iniciar cada etapa de triagem, diagnóstico, implementação ou análise
 complexa, informe ao autor a etapa, o modelo e a força recomendados e aguarde
 um "ok" explícito. O autor faz a troca manual; não afirme que ela ocorreu sem
-confirmação. Recomendações: triagem `gpt-5.6-luna`/`low`; diagnóstico e
-implementação `gpt-5.6-terra`/`medium`; problemas complexos `gpt-5.5`/`high`.
+confirmação. Recomendações atuais: triagem `gpt-6.1-terra`/`medium`;
+diagnóstico delimitado `gpt-6.1-terra`/`high`; implementação entre subsistemas
+`gpt-6.1-sol`/`high`; impasse complexo `gpt-6-astra`/`high`.
+A tabela por atividade está em `docs/technical/Modelos-Codex.md`.
 Indique se o perfil local ainda não corresponde à recomendação. A cada mudança
 de etapa, peça novo "ok", mesmo que o modelo recomendado seja o mesmo.
 
@@ -119,8 +121,10 @@ e encalhe no expediente.
 
 - **Regra 51 (autor, 2026-10-08): ocioso + bloqueado + encalhado ≤ 15%** por
   profissão no expediente (sem ofício fica fora). Quem fica sem tarefa entra na
-  cadeia de alternativas: tarefa do ofício → manutenção do ofício → ajudar a obra
-  → recolher do chão. Espera acima de 40% é alerta. Análise e alternativas:
+  cadeia de alternativas: tarefa do ofício → manutenção do próprio ofício
+  → coleta comum permitida. Pela regra temporária de 02-11, nenhuma profissão
+  assume atividade de outra, inclusive ajuda de obra e reatribuição.
+  Espera acima de 40% é alerta. Análise e alternativas:
   `docs/research/2026-10-08-tempo-ocioso.md`.
 
 Uma correção de fluxo só está provada quando a proporção cai no playtest
