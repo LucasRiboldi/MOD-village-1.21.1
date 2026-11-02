@@ -6,6 +6,7 @@ import os
 import pathlib
 import tempfile
 import unittest
+from unittest import mock
 
 SCRIPT = pathlib.Path(__file__).resolve().parent.parent / "scripts" / "test_lab.py"
 SPEC = importlib.util.spec_from_file_location("test_lab", SCRIPT)
@@ -112,7 +113,8 @@ class MetricsTest(unittest.TestCase):
         self.addCleanup(setattr, test_lab.subprocess, "run", original_run)
         self.addCleanup(setattr, test_lab, "collect_gpu_metrics", original_gpu)
 
-        metrics = test_lab.collect_host_metrics()
+        with mock.patch.object(test_lab.os, "name", "nt"):
+            metrics = test_lab.collect_host_metrics()
 
         self.assertIsNone(metrics["cpu_percent"])
         self.assertIsNone(metrics["java_working_set_mib"])

@@ -1,5 +1,12 @@
 # STATE — 2026-11-02
 
+> **Integração pelo PR #47:** o CI Linux encontrou um teste de métricas de
+> PowerShell que dependia da plataforma hospedeira. A fixture agora simula
+> Windows somente durante a coleta, preservando as asserções de erro.
+> Nenhum teste local foi criado ou executado; a confirmação depende do CI.
+> MAE permanece separado desta integração: região maior supervisionada,
+> com aprovação individual de cada obra antes da execução.
+
 > **0.4.8 — primeiro lote do plano aprovado:** o despacho de `VillageHelpers`
 > deixa de enviar pedreiro para terraplanagem e fundidor para transporte/luz.
 > Construtor mantém reparos de terreno, pastor mantém alimentação e adultos

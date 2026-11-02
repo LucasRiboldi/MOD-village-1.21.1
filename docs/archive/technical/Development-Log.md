@@ -8,6 +8,20 @@
 
 # Village Colony — Development Log
 
+## 2026-11-02 — PR #47: independência de plataforma na fixture de métricas
+
+O CI Linux falhou em
+`test_failed_powershell_is_recorded_as_unavailable_not_zero_usage`: a fixture
+simulava o processo PowerShell, mas a coleta encerrava antes por detectar
+Linux. A fixture existente passou a simular `os.name == "nt"` apenas durante
+`collect_host_metrics`, com restauração automática. As asserções permanecem
+inalteradas; o código de produção e a configuração do CI não mudaram.
+
+Não foram criados nem executados testes locais, conforme o modo temporário.
+A verificação desta correção fica pendente do novo CI do PR #47.
+O autor escolheu integrar os commits publicados antes de abrir a linha MAE;
+para o MAE, aprovou região maior com revisão individual de cada obra.
+
 ## 2026-11-02 — 0.4.8: separar ajudas dos ofícios
 
 Depois de publicar o planejamento, a inspeção de `ProfessionRegistry`,
