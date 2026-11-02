@@ -12,6 +12,28 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.9] — segurança de região MAE (2026-11-02, candidato)
+
+### Adicionado
+- Evidência persistente somente em chunks recém-gerados; carga de terreno
+  legado ou marcador de origem da vila não autoriza lote.
+- Reserva supervisionada e aprovação individual usando os limites de `Building`,
+  com proteção de estruturas, edificações, ruas, minas, água e blocos ativos.
+- Escrita MAE com pré-condições, orçamento global por mundo, pausa, retomada
+  explícita e histórico limitado de estados anteriores e posteriores.
+- Casos focados de geometria, persistência e GameTest integrados às suites
+  existentes do Sentinela Local; instruções em `Sentinela/TUTORIAL.md`.
+
+### Alterado
+- `ColonySavedData` preserva a seção opcional `maeWork`; conteúdo futuro permanece
+  opaco. A ausência da seção não cria permissões nem reconstrói provas antigas.
+- Base de API da Fase 1; construtores legados, terreno e grafo não passam a usar
+  o novo serviço nesta entrega. Sem comando de ativação, migração física ou release.
+
+### Verificação
+- 35 unitários focados, seis de dependências/memória e 25 GameTests passaram.
+- Sem PIT, bateria completa ou playtest; custo sob carga real permanece pendente.
+
 ## [0.4.8] — alternativas restritas ao ofício (2026-11-02, candidato)
 
 ### Corrigido

@@ -1,5 +1,15 @@
 # TODO
 
+## MAE — Fase 1 (0.4.9 candidata)
+
+- [x] Escolher prova na geração, sem autorização retroativa por carga ou origem da vila.
+- [x] Criar reserva supervisionada e aprovação individual reaproveitando `Building`.
+- [x] Persistir intenção, progresso e histórico limitado sem migrar terreno legado.
+- [x] Aplicar proteção, pré-condições, orçamento, pausa e retomada na escrita MAE.
+- [x] Concluir verificação focada e revisão da branch; sem integração autorizada.
+- [ ] Medir custo de captura e escrita em carga real antes de ativar orquestração.
+- [ ] Apresentar a Fase 2 para aprovação; terreno e caminhos continuam fora desta entrega.
+
 ## Playtest de 02-11 — escolhas A aprovadas
 
 Plano: [terreno, mina e profissões](docs/technical/Plano-Playtest-2026-11-02.md).

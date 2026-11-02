@@ -74,6 +74,7 @@ final class ColonySaveReader {
         readSection("mines", () -> data.mines.addAll(MineSave.read(nbt, knownColonies)));
         readSection("roads", () -> data.roads.addAll(RoadIndexSave.read(nbt, knownColonies)));
         readSection("roadGraphs", () -> data.roadGraphs().read(nbt, knownColonies));
+        readSection("maeWork", () -> data.maeWork().read(nbt));
         readSection("sweeps", () -> data.sweeps.addAll(SweepCursorSave.read(nbt, knownColonies)));
         readSection("activityTraces",
                 () -> data.activityTraces.putAll(ActivityTraceSave.read(nbt, knownColonies)));

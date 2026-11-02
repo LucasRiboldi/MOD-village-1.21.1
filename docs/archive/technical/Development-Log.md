@@ -2,6 +2,41 @@
 
 # Development-Log.md
 
+## 02-11-2026 — MAE, Fase 1 de segurança (0.4.9 candidata)
+
+Após merge do PR #47 e atualização da `main`, foi aberta a branch
+`codex/mae-region-safety`. O autor aprovou prova durante a geração e revalidação
+antes de toda escrita; sem evidência, bloquear. Região maior supervisionada
+não dispensa aprovação individual de cada `Building`.
+
+A implementação adiciona hashes persistentes por seção em `CHUNK_GENERATE`,
+reserva e plano na seção opcional `maeWork`, proteção reutilizando o sistema
+existente e writer MAE com intenção anterior, confirmação, orçamento global,
+pausa, retomada explícita e histórico limitado. Não redireciona escritores
+legados nem ativa preparação de terreno. ADR-044 e `docs/technical/MAE-Fase-1.md`
+registram interfaces, limites e comandos focados do Sentinela.
+
+O primeiro GameTest falhou pela ausência do recibo de geração. Na validação,
+foram identificadas barreiras da cobertura do próprio GameTest dentro da
+fixture; o cenário foi afastado, mantendo a proteção de produção. ArchUnit
+exigiu registrar o orçamento estático no `ServerMemory`; a conexão foi feita.
+Resultado final consta no `STATE.md`. Sem save do jogador, commit, push, merge,
+publicação, build de distribuição ou atualização do JAR na etapa inicial.
+
+A revisão apontou geometria de mina recalculada por célula e cópias de todo o
+store em cada consulta. Foram corrigidas com snapshot local de células por
+inspeção, cópia apenas da região consultada e orçamento conferido antes do
+acesso ao store. A revisão dessas correções não encontrou outro achado acionável.
+Passaram 41 unitários distintos e 25 GameTests focados, além da sincronização
+do README com regras e da verificação de whitespace. Custo real permanece pendente.
+
+O autor solicitou depois commit, push e atualização do JAR antes da Fase 2.
+`remapJar` passou em nove segundos, sem repetir os testes. Build, `downloads/` e
+TLauncher receberam a 0.4.9, com SHA-256 idêntico:
+`7184B163EB44AE3CBE26F0748DE5632E77A9FBE2D26C03D80A0462C953C1688C`.
+O JAR anterior foi preservado como `.disabled`. Sem merge, release ou save do
+jogador aberto; preparação de terreno depende da próxima etapa do MAE.
+
 > ⚠️ **HISTÓRICO — 7.793 linhas. Nunca leia inteiro.**
 > Use `grep` por data ou por símbolo, como manda `CLAUDE.md` §0.1. O
 > estado de hoje está em [`STATE.md`](../../STATE.md).

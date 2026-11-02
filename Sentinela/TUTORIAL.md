@@ -58,6 +58,31 @@ python scripts/test_lab.py --resume 20261102T120000Z
 `--budget-minutes` encerra com segurança antes da próxima suite. `--resume`
 retoma apenas suites que ainda não foram registradas na execução interrompida.
 
+## Segurança MAE — Fase 1
+
+Os testes MAE integram as suites existentes: `WorkAreaTest` e `MaeWorkStoreTest`
+em `unit`; `MaeSafetyGameTest` em `gametest`. Não há suite, perfil ou execução
+automática adicional. A janela inclui esses casos quando executa as respectivas
+suites. Para guardar os relatórios completos no fluxo normal:
+
+```powershell
+python scripts/test_lab.py fast --only unit,gametest
+```
+
+Para diagnóstico restrito, sem executar todas as profissões e construções:
+
+```powershell
+.\gradlew.bat test --tests com.villagecolony.core.construction.model.WorkAreaTest --tests com.villagecolony.data.save.MaeWorkStoreTest
+.\gradlew.bat runGametest -PgametestOnly=MaeSafetyGameTest
+```
+
+Os comandos Gradle diretos geram os relatórios normais de `build/`; não criam
+uma execução do painel Sentinela. Verificam prova de geração, recusa em terreno
+legado/desconhecido, estruturas, água, árvores, BlockEntities, limites de lote,
+proteção surgida após aprovação, orçamento, pausa, progresso salvo e intenção
+sem confirmação. Não aprovam qualidade visual de smoothing nem desempenho sob
+carga real. A Fase 1 não ativa obras MAE no jogo.
+
 ## Analisar execuções já concluídas
 
 Depois de rodar testes, clique `Analisar relatórios` na janela ou execute:

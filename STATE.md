@@ -1,24 +1,25 @@
 # STATE — 2026-11-02
 
-> **PR #47 — cultivo e diagnóstico de coleta:** as duas fixtures de cultivo
-> agora compartilham a água contida do teste de canteiro. O teste automático
-> de coleta mantém suas asserções e registra remoção dos itens, posições,
-> limites da colônia e estoques dos baús públicos. Os 36 GameTests focados
-> passaram; a coleta continua sem causa confirmada no CI. Sem alteração de
-> produção ou JAR. Integração e MAE aguardam a bateria completa do CI.
-
-> **PR #47 — diagnóstico do canteiro:** a fixture agora contém água e verifica
-> a construção e a hidratação após `randomTick`. Os 35 GameTests do construtor
-> passaram isolados; a bateria completa permanece pendente no CI. A falha do CI
-> é compatível com desidratação, reproduzida localmente, mas seu evento original
-> não foi registrado. Nenhum comportamento de produção foi alterado.
-
-> **Integração pelo PR #47:** o CI Linux encontrou um teste de métricas de
-> PowerShell que dependia da plataforma hospedeira. A fixture agora simula
-> Windows somente durante a coleta, preservando as asserções de erro.
-> Nenhum teste local foi criado ou executado; a confirmação depende do CI.
-> MAE permanece separado desta integração: região maior supervisionada,
-> com aprovação individual de cada obra antes da execução.
+> **0.4.9 candidata — MAE Fase 1:** branch `codex/mae-region-safety` baseada
+> na `main` atualizada. Fundação de segurança: recibo de geração por seção,
+> reserva supervisionada, aprovação individual, proteção no limite da escrita,
+> orçamento global por mundo, pausa, retomada e histórico persistente limitado.
+> Elegibilidade aprovada: registrar durante geração e revalidar; sem prova,
+> bloquear. `VillageOrigin` sozinho não autoriza expansão. Passaram 35 unitários
+> focados, seis de dependências/memória e 25 GameTests (dez MAE; 15 de origem e
+> migração). Revisão concluída, com dois custos evitáveis corrigidos. Documentação em
+> `docs/technical/MAE-Fase-1.md` e ADR-044.
+> Não ativa preparação de terreno, grafo ou construtores legados. Nenhum save
+> do jogador foi aberto. Entrega local solicitada em 02-11: `remapJar` aprovado,
+> JAR 0.4.9 em `build/libs`, `downloads/` e TLauncher, com SHA-256 idêntico:
+> `7184B163EB44AE3CBE26F0748DE5632E77A9FBE2D26C03D80A0462C953C1688C`.
+> A 0.4.8 foi preservada como `.disabled`. Integração na `main` e playtest pendentes.
+>
+> **PR #47 integrado:** merge `8a8ae09844761566f9b7e2e9fc06c67bac1db29d`;
+> CI 553 (`41513439513`) passou, incluindo 977 GameTests e PIT. `main` local
+> atualizada antes da abertura desta branch. As fixtures de cultivo e métricas
+> foram corrigidas; causa histórica do episódio intermitente de coleta continua
+> sem confirmação. O CI verde não demonstra sua causa.
 
 > **0.4.8 — primeiro lote do plano aprovado:** o despacho de `VillageHelpers`
 > deixa de enviar pedreiro para terraplanagem e fundidor para transporte/luz.

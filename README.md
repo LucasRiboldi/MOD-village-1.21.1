@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.8%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.9%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -16,11 +16,15 @@ do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
 Planejamento aprovado para o próximo ciclo: [terreno, mina e profissões](docs/technical/Plano-Playtest-2026-11-02.md).
+Na branch de desenvolvimento, a candidata **0.4.9** adiciona a fundação de segurança
+do [MAE, Fase 1](docs/technical/MAE-Fase-1.md): evidência de geração, reserva supervisionada,
+aprovação individual e escrita limitada. Não ativa terraplanagem ou planejamento de ruas.
 A candidata 0.4.8 suspende ajudas cruzadas de pedreiro e fundidor em
 `VillageHelpers`; os demais itens e o playtest permanecem pendentes. Tabela operacional:
 [modelos do Codex por atividade](docs/technical/Modelos-Codex.md).
 
-Estado de desenvolvimento em 02-11-2026: a versão 0.4.8 restringe alternativas
+Estado de desenvolvimento em 02-11-2026: a versão 0.4.9 prepara escrita segura MAE;
+a versão 0.4.8 restringe alternativas
 auxiliares aos ofícios. A 0.4.7 adiciona análise manual
 de evidências e métricas locais ao Sentinela; a 0.4.6 adiciona o Observatório
 local do Sentinela; a 0.4.5 adiciona a janela local; a 0.4.4 prepara o
@@ -119,7 +123,9 @@ geração nova. Evidências e limites ficam no [STATE](STATE.md) e na
   declarada e deixa a linha `VC_SUPPLY` no log (Regra 111); toda desistência
   no diário de ações leva um código único de bloqueio (Regra 112).
 
-O mod é alpha. A 0.4.8 (2026-11-02) suspende ajudas cruzadas em `VillageHelpers`
+O mod é alpha. A candidata 0.4.9 prepara a segurança MAE conforme a
+[ADR-044](docs/decisions/ADR-044-mae-region-safety.md), sem ativar a Fase 2.
+A 0.4.8 (2026-11-02) suspende ajudas cruzadas em `VillageHelpers`
 e aguarda playtest. A 0.4.7 (2026-11-02) adiciona análise manual e métricas locais do
 Sentinela. A 0.4.6 (2026-11-02) adiciona o Observatório local do Sentinela.
 A 0.4.5 (2026-11-02) adiciona a janela local do Sentinela.
@@ -664,6 +670,10 @@ no Sentinela atualizam esse tutorial no mesmo commit.
 - `quick`: JUnit e propriedades jqwik.
 - `fast`: `quick` mais GameTests em servidor.
 - `full`: `fast` mais auditoria GameTest e PIT.
+
+Os casos MAE de elegibilidade, proteção, interrupção e persistência entram nas
+suites `unit` e `gametest` existentes. Comandos focados e limites constam no
+[tutorial](Sentinela/TUTORIAL.md#segurança-mae--fase-1).
 
 Se uma suite falhar em uma repetição e passar em outra, o resumo é
 `UNSTABLE` e o comando sai não zero. GPU não acelera estas suites de servidor;
