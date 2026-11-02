@@ -21,6 +21,11 @@ passaram; `GroundPickupGameTest.aPassingWorkerPicksUpAllGroundItems` falhou, mas
 passou ao repetir isolado. A coleta de chão não mudou nesta entrega. Por instrução
 do autor, a intermitência ficou em TODO e não bloqueou commit, JAR ou integração.
 
+O CI de push da mesma revisão falhou em 1/979, agora no
+`BuilderGameTest.groundBlocksAreShapedWithoutTheChest`. Como é um segundo cenário
+intermitente e não há reprodução causal, também ficou registrado no TODO sem mudar
+o código de produção.
+
 O manifesto comparou `build/libs`, `downloads` e `%APPDATA%/.minecraft/mods`:
 `FD72245C3BDF5E4B1DA816CC37E69C9B4CBE725E0A62254D0F184320D731606E`.
 O JAR ativo é `village-colony-0.4.1.jar`; o 0.4.0 foi preservado como `.disabled`.

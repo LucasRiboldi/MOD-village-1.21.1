@@ -7,9 +7,10 @@
 > recebe retorno ao baú pessoal antes de fundir. O GameTest agora registra a oficina
 > exigida pelo cenário de fundição e cobre explicitamente o retorno.
 
-> `clean build remapJar` passou em 2m20. A bateria completa rodou 979 GameTests:
+> `clean build remapJar` passou em 2m20. A bateria completa local rodou 979 GameTests:
 > 978 passaram e `GroundPickupGameTest.aPassingWorkerPicksUpAllGroundItems` falhou;
-> a repetição isolada passou. A intermitência fica aberta, sem alteração de produção,
+> a repetição isolada passou. O CI de push também falhou, em
+> `BuilderGameTest.groundBlocksAreShapedWithoutTheChest`; a intermitência fica aberta, sem alteração de produção,
 > conforme a instrução do autor de não bloquear esta entrega por testes. Ainda falta
 > playtest em mundo novo e no save; não declarar os sintomas corrigidos antes dele.
 > JAR 0.4.1 em `build/libs`, `downloads/` e TLauncher: SHA-256
