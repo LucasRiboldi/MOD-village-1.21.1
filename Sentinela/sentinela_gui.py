@@ -15,13 +15,20 @@ from tkinter import messagebox, ttk
 
 ROOT = Path(__file__).resolve().parent.parent
 RUNNER = ROOT / "scripts" / "test_lab.py"
+ANALYSER = ROOT / "scripts" / "sentinel_analysis.py"
 REPORTS = ROOT / "reports" / "test-runs"
+ANALYSIS_REPORTS = ROOT / "reports" / "sentinel-analysis"
 PROFILES = ("quick", "fast", "full")
 PROFILE_SUITES = {
     "quick": {"unit", "property"},
     "fast": {"unit", "property", "gametest"},
     "full": {"unit", "property", "gametest", "gametest-audit", "mutation"},
 }
+
+
+def analysis_command() -> list[str]:
+    """Comando manual de análise; nunca delega para Gradle."""
+    return [sys.executable, str(ANALYSER)]
 
 
 class SentinelaGui(tk.Tk):
@@ -106,10 +113,12 @@ class SentinelaGui(tk.Tk):
         actions.grid(column=0, row=10, columnspan=3, sticky="e", pady=(10, 0))
         self.open_button = ttk.Button(actions, text="Abrir relatórios", command=self._open_reports)
         self.open_button.grid(column=0, row=0, padx=(0, 8))
+        self.analysis_button = ttk.Button(actions, text="Analisar relatórios", command=self._analyse)
+        self.analysis_button.grid(column=1, row=0, padx=(0, 8))
         self.cancel_button = ttk.Button(actions, text="Cancelar", command=self._cancel, state="disabled")
-        self.cancel_button.grid(column=1, row=0, padx=(0, 8))
+        self.cancel_button.grid(column=2, row=0, padx=(0, 8))
         self.run_button = ttk.Button(actions, text="Executar", command=self._run)
-        self.run_button.grid(column=2, row=0)
+        self.run_button.grid(column=3, row=0)
 
     def _arguments(self) -> list[str] | None:
         resume = self.resume.get().strip()
@@ -164,19 +173,34 @@ class SentinelaGui(tk.Tk):
         self._set_running(True)
         threading.Thread(target=self._execute, args=(arguments,), daemon=True).start()
 
+    def _analyse(self) -> None:
+        if not ANALYSER.is_file():
+            messagebox.showerror("Sentinela Local", f"Analisador não encontrado: {ANALYSER}")
+            return
+        command = analysis_command()
+        self._append("$ " + " ".join(command) + "\n")
+        self._set_running(True)
+        threading.Thread(target=self._execute_analysis, args=(command,), daemon=True).start()
+
     def _execute(self, arguments: list[str]) -> None:
+        self._execute_command([sys.executable, str(RUNNER), *arguments], "finished")
+
+    def _execute_analysis(self, command: list[str]) -> None:
+        self._execute_command(command, "analysis-finished")
+
+    def _execute_command(self, command: list[str], finished_event: str) -> None:
         try:
             self.process = subprocess.Popen(
-                [sys.executable, str(RUNNER), *arguments], cwd=ROOT,
+                command, cwd=ROOT,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                 encoding="utf-8", errors="replace")
             if self.process.stdout:
                 for line in self.process.stdout:
                     self.events.put(("output", line))
-            self.events.put(("finished", self.process.wait()))
+            self.events.put((finished_event, self.process.wait()))
         except OSError as error:
             self.events.put(("output", f"Erro ao iniciar: {error}\n"))
-            self.events.put(("finished", 1))
+            self.events.put((finished_event, 1))
 
     def _drain_events(self) -> None:
         try:
@@ -189,6 +213,8 @@ class SentinelaGui(tk.Tk):
                     self._set_running(False)
                     result = int(value)
                     self.status.set("Concluído com sucesso." if result == 0 else f"Concluído com código {result}.")
+                    if kind == "analysis-finished" and result == 0:
+                        self._open_analysis()
         except queue.Empty:
             pass
         self.after(100, self._drain_events)
@@ -197,6 +223,7 @@ class SentinelaGui(tk.Tk):
         state = "disabled" if running else "normal"
         self.run_button.configure(state=state)
         self.open_button.configure(state=state)
+        self.analysis_button.configure(state=state)
         self.cancel_button.configure(state="normal" if running else "disabled")
         self.repeat_entry.configure(state=state)
         self.budget_entry.configure(state=state)
@@ -223,6 +250,13 @@ class SentinelaGui(tk.Tk):
             os.startfile(REPORTS)  # type: ignore[attr-defined]
         else:
             messagebox.showinfo("Sentinela Local", f"Relatórios: {REPORTS}")
+
+    def _open_analysis(self) -> None:
+        ANALYSIS_REPORTS.mkdir(parents=True, exist_ok=True)
+        if os.name == "nt":
+            os.startfile(ANALYSIS_REPORTS)  # type: ignore[attr-defined]
+        else:
+            messagebox.showinfo("Sentinela Local", f"Análises: {ANALYSIS_REPORTS}")
 
     def _append(self, text: str) -> None:
         self.output.configure(state="normal")

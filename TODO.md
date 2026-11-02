@@ -12,6 +12,8 @@
       extras, para escolher perfil, repetição, simulação e retomada localmente.
 - [x] Criar o Observatório local: seleção de suites, orçamento seguro, painel
       HTML, agrupamento de falhas, testes lentos e histórico local.
+- [x] Criar análise manual de execuções, painel separado e métricas locais
+      opcionais; não inicia Gradle e tolera GPU NVIDIA indisponível.
 - [x] Criar tutorial operacional do Sentinela e regra de atualização conjunta.
 - [ ] Validar uma futura camada visual de cliente/GPU em spike Fabric isolada,
       no perfil `village-max`; não entra no fluxo diário sem prova reproduzível.

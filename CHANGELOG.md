@@ -12,6 +12,22 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.7] — análise local e métricas do Sentinela (2026-11-02, pendente)
+
+### Adicionado
+- Analisador manual de evidências preservadas, com JSON, Markdown e painel HTML
+  em `reports/sentinel-analysis/`, sem iniciar Gradle.
+- Métricas locais por suite para CPU, RAM, processos Java e GPU NVIDIA opcional.
+- Ação `Analisar relatórios` na janela e frase `analisar Sentinela Local`.
+
+### Alterado
+- Falhas compartilhadas de compilação são agrupadas; JSON inválido, XML ausente
+  e relatório `RUNNING` são apontados como lacunas, sem abortar a análise.
+
+### Verificação
+- Testes Python focados e compilação Python passaram. As baterias Java e o JAR
+  permanecem suspensos/pendentes por ordem do autor.
+
 ## [0.4.6] — Observatório local do Sentinela (2026-11-02, pendente)
 
 ### Adicionado

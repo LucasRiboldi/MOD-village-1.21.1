@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.6%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.7%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -15,7 +15,8 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-Estado de desenvolvimento em 02-11-2026: a versão 0.4.6 adiciona o Observatório
+Estado de desenvolvimento em 02-11-2026: a versão 0.4.7 adiciona análise manual
+de evidências e métricas locais ao Sentinela; a 0.4.6 adiciona o Observatório
 local do Sentinela; a 0.4.5 adiciona a janela local; a 0.4.4 prepara o
 fechamento rastreável de entregas; a 0.4.3 consolida o
 watchdog de progresso, o curral grande, a ativação compatível do grafo de ruas e
@@ -111,7 +112,8 @@ geração nova. Evidências e limites ficam no [STATE](STATE.md) e na
   declarada e deixa a linha `VC_SUPPLY` no log (Regra 111); toda desistência
   no diário de ações leva um código único de bloqueio (Regra 112).
 
-O mod é alpha. A 0.4.6 (2026-11-02) adiciona o Observatório local do Sentinela.
+O mod é alpha. A 0.4.7 (2026-11-02) adiciona análise manual e métricas locais do
+Sentinela. A 0.4.6 (2026-11-02) adiciona o Observatório local do Sentinela.
 A 0.4.5 (2026-11-02) adiciona a janela local do Sentinela.
 A 0.4.4 (2026-11-02) adiciona o fechamento rastreável de
 entregas. A 0.4.3 consolida trabalho, curral e ruas sob as
@@ -632,6 +634,7 @@ python scripts/test_lab.py quick
 python scripts/test_lab.ps1 fast --repeat 3
 python scripts/test_lab.py full
 python scripts/test_lab.py --resume 20261101T120000Z
+python scripts/sentinel_analysis.py
 ```
 
 ### Aplicativo Windows
@@ -662,6 +665,12 @@ artefatos compara todos os arquivos internos, impedindo que um XML atualizado
 seja omitido porque o diretório pai conservou o mesmo horário. O script exige
 Python 3.9+; o wrapper `test_lab.sh` requer Git Bash, WSL ou outro shell POSIX
 e escolhe `python3` ou, na ausência dele, `python`.
+
+`analisar Sentinela Local` executa somente `scripts/sentinel_analysis.py`.
+Ele lê execuções já preservadas e cria `reports/sentinel-analysis/<UTC-id>/`
+com JSON, Markdown e painel HTML. Não chama Gradle. Durante uma nova execução,
+o Sentinela registra CPU, RAM e memória dos processos Java; GPU NVIDIA é
+opcional e aparece como indisponível quando `nvidia-smi` não existe.
 
 O build exige Java 21 (`JAVA_HOME` apontando para um JDK 21).
 

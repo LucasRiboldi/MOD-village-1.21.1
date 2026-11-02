@@ -58,6 +58,25 @@ python scripts/test_lab.py --resume 20261102T120000Z
 `--budget-minutes` encerra com segurança antes da próxima suite. `--resume`
 retoma apenas suites que ainda não foram registradas na execução interrompida.
 
+## Analisar execuções já concluídas
+
+Depois de rodar testes, clique `Analisar relatórios` na janela ou execute:
+
+```powershell
+py -3 scripts/sentinel_analysis.py
+```
+
+A frase `analisar Sentinela Local` usa esse comando. Ele nunca inicia Gradle:
+lê `reports/test-runs/` e cria `reports/sentinel-analysis/<UTC-id>/` com
+`analysis.json`, `analysis.md` e `dashboard.html`. A análise agrupa falhas de
+compilação, teste e infraestrutura; marca `RUNNING` como evidência incompleta;
+e aponta ausência de XML como lacuna de evidência, sem inventar casos de teste.
+
+Cada suite nova também grava `metrics.json` com amostras locais de CPU, RAM e
+memória Java. GPU depende de `nvidia-smi`; se não existir, fica explicitamente
+indisponível e a suite mantém seu status Gradle. As métricas comparam pressão da
+máquina, não provam desempenho do cliente ou correção visual no jogo.
+
 ## Ler o resultado
 
 Cada execução cria `reports/test-runs/<UTC-id>/`:

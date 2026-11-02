@@ -18,10 +18,12 @@ import html
 import json
 import os
 import platform
+import re
 import shutil
 import socket
 import subprocess
 import sys
+import threading
 import time
 from collections import Counter
 from datetime import datetime, timezone
@@ -88,6 +90,87 @@ def command_version(command: list[str]) -> str:
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return "unavailable"
     return (completed.stdout or completed.stderr).strip().splitlines()[0]
+
+
+def collect_gpu_metrics(command_runner=None) -> dict:
+    """Lê NVIDIA quando disponível; ausência nunca altera o resultado da suite."""
+    runner = command_runner or (lambda: subprocess.run(
+        ["nvidia-smi", "--query-gpu=utilization.gpu,memory.used", "--format=csv,noheader,nounits"],
+        text=True, capture_output=True, errors="replace", timeout=5))
+    try:
+        completed = runner()
+    except (FileNotFoundError, subprocess.SubprocessError, OSError) as error:
+        return {"available": False, "reason": str(error) or "nvidia-smi unavailable"}
+    if getattr(completed, "returncode", 0) != 0:
+        return {"available": False, "reason": (completed.stderr or "nvidia-smi unavailable").strip()}
+    values = re.findall(r"\d+(?:\.\d+)?", completed.stdout.splitlines()[0] if completed.stdout else "")
+    if len(values) < 2:
+        return {"available": False, "reason": "nvidia-smi returned no GPU values"}
+    return {"available": True, "utilization_percent": float(values[0]), "memory_used_mib": float(values[1])}
+
+
+def collect_host_metrics() -> dict:
+    """Captura CPU/RAM/JVM local. Falhas viram aviso de metadados."""
+    metrics = {"cpu_percent": None, "ram_used_mib": None, "java_working_set_mib": None, "warnings": []}
+    if os.name != "nt":
+        metrics["warnings"].append("Windows metrics unavailable on this platform")
+        metrics["gpu"] = collect_gpu_metrics()
+        return metrics
+    command = ("$cpu=(Get-CimInstance Win32_Processor | Measure-Object LoadPercentage -Average).Average;"
+               "$java=(Get-Process java -ErrorAction SilentlyContinue | Measure-Object WorkingSet64 -Sum).Sum;"
+               "Write-Output \"$cpu;$java\"")
+    try:
+        completed = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", command],
+                                   text=True, capture_output=True, errors="replace", timeout=5)
+        if completed.returncode != 0:
+            detail = (completed.stderr or "PowerShell exited without metric data").strip()
+            metrics["warnings"].append(f"CPU/JVM metric unavailable: {detail}")
+        else:
+            values = completed.stdout.strip().split(";")
+            metrics["cpu_percent"] = float(values[0]) if values and values[0] else None
+            metrics["java_working_set_mib"] = (round(int(values[1]) / 1024 / 1024, 1)
+                                               if len(values) > 1 and values[1] else None)
+    except (ValueError, OSError, subprocess.SubprocessError) as error:
+        metrics["warnings"].append(f"CPU/JVM metric unavailable: {error}")
+    try:
+        import ctypes
+        class MemoryStatus(ctypes.Structure):
+            _fields_ = [("length", ctypes.c_ulong), ("memory_load", ctypes.c_ulong),
+                         ("total", ctypes.c_ulonglong), ("available", ctypes.c_ulonglong),
+                         ("page_file_total", ctypes.c_ulonglong), ("page_file_available", ctypes.c_ulonglong),
+                         ("virtual_total", ctypes.c_ulonglong), ("virtual_available", ctypes.c_ulonglong),
+                         ("extended_virtual_available", ctypes.c_ulonglong)]
+        memory = MemoryStatus()
+        memory.length = ctypes.sizeof(memory)
+        if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(memory)):
+            raise OSError("GlobalMemoryStatusEx failed")
+        metrics["ram_used_mib"] = round((memory.total - memory.available) / 1024 / 1024, 1)
+    except (AttributeError, OSError) as error:
+        metrics["warnings"].append(f"RAM metric unavailable: {error}")
+    metrics["gpu"] = collect_gpu_metrics()
+    return metrics
+
+
+class MetricSampler:
+    """Amostra curta e local; não influencia Gradle nem o status da suite."""
+
+    def __init__(self) -> None:
+        self.samples: list[dict] = []
+        self.stop_event = threading.Event()
+        self.thread = threading.Thread(target=self._sample, daemon=True)
+
+    def _sample(self) -> None:
+        while not self.stop_event.is_set():
+            self.samples.append(collect_host_metrics())
+            self.stop_event.wait(5)
+
+    def start(self) -> None:
+        self.thread.start()
+
+    def stop(self) -> dict:
+        self.stop_event.set()
+        self.thread.join(timeout=6)
+        return {"samples": self.samples}
 
 
 def file_fingerprint(path: Path) -> tuple[int, int, str]:
@@ -180,6 +263,8 @@ def run_suite(name: str, tasks: list[str], attempt: int, run_dir: Path) -> dict:
     command = [str(GRADLEW), *tasks, "--console=plain"]
     before = snapshot_artifacts()
     started = time.monotonic()
+    sampler = MetricSampler()
+    sampler.start()
     try:
         with stdout_path.open("w", encoding="utf-8") as stdout, stderr_path.open(
                 "w", encoding="utf-8") as stderr:
@@ -192,6 +277,7 @@ def run_suite(name: str, tasks: list[str], attempt: int, run_dir: Path) -> dict:
         error = f"command missing: {missing}"
         stderr_path.write_text(error + "\n", encoding="utf-8")
     elapsed = round(time.monotonic() - started, 1)
+    metrics = sampler.stop()
     status = "PASS" if exit_code == 0 else "FAIL" if exit_code is not None else "ERROR"
     artifact_dir = run_dir / "artifacts" / label
     artifacts = copy_changed_artifacts(before, artifact_dir)
@@ -207,6 +293,7 @@ def run_suite(name: str, tasks: list[str], attempt: int, run_dir: Path) -> dict:
         "stderr": str(stderr_path.relative_to(run_dir)).replace("\\", "/"),
         "artifacts": artifacts,
         "test_cases": test_cases_from_artifacts(artifact_dir, name, attempt),
+        "metrics": metrics,
     }
 
 
@@ -285,6 +372,10 @@ def write_summary(run_dir: Path, report: dict) -> None:
     lines.extend(["", "Logs e artefatos desta execução ficam neste diretório.",
                   "Painel visual: `dashboard.html`.", ""])
     (run_dir / "summary.md").write_text("\n".join(lines), encoding="utf-8")
+    (run_dir / "metrics.json").write_text(json.dumps({
+        "suites": [{"attempt": item.get("attempt"), "name": item.get("name"),
+                    "status": item.get("status"), "metrics": item.get("metrics", {})}
+                   for item in report["results"]]}, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     write_dashboard(run_dir, report)
 
 

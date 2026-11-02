@@ -8,6 +8,19 @@
 
 # Village Colony — Development Log
 
+## 2026-11-02 — análise local e métricas do Sentinela
+
+A versão 0.4.7 acrescenta `scripts/sentinel_analysis.py`, que somente lê as
+execuções existentes do Sentinela e produz um relatório separado com causas
+agrupadas, supersessão por passagem posterior e lacunas de evidência. A janela
+Windows ganhou a ação manual `Analisar relatórios`; ela não chama Gradle.
+
+Novas execuções passam a gravar métricas locais de CPU, RAM, processos Java e
+GPU NVIDIA opcional. Falta de `nvidia-smi` é registrada como indisponibilidade,
+sem alterar a suite. Durante a suspensão das baterias Java, passaram os testes
+Python focados e a compilação Python; nenhum Gradle, GameTest, PIT ou JAR foi
+executado nesta etapa.
+
 ## 2026-11-02 — fechamento local 0.4.3 e handoff
 
 A versão 0.4.3 consolida o watchdog de progresso, a reposição física na segunda

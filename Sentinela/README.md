@@ -1,13 +1,15 @@
 # Sentinela Local — aplicativo
 
 Abra `Abrir-Sentinela.cmd` para configurar e iniciar uma varredura local sem
-usar um agente de IA. A janela chama somente o orquestrador oficial
-`../scripts/test_lab.py`; resultados, logs e artefatos continuam em
-`../reports/test-runs/<UTC-id>/`.
+usar um agente de IA. A janela chama o orquestrador oficial
+`../scripts/test_lab.py` para testes e `../scripts/sentinel_analysis.py` somente
+para analisar execuções já preservadas. Resultados, logs e artefatos continuam em
+`../reports/test-runs/<UTC-id>/`; análises ficam em `../reports/sentinel-analysis/`.
 
 Requisitos: Python 3.9+ com Tkinter e o Java 21 já exigido pelo projeto.
-`Abrir relatórios` abre a pasta dos resultados. Use `Simular comandos` para
-conferir o que será executado sem iniciar Gradle.
+`Abrir relatórios` abre a pasta dos resultados. `Analisar relatórios` não chama
+Gradle e abre a análise gerada. Use `Simular comandos` para conferir o que será
+executado sem iniciar Gradle.
 
 Para verificar a instalação sem abrir a janela:
 

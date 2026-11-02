@@ -53,9 +53,9 @@ class ResumeMetadataTest(unittest.TestCase):
                 "profile": "quick", "repeat": 1, "metadata": metadata,
                 "results": [
                     {"attempt": 1, "name": "unit", "status": "PASS", "seconds": 0,
-                     "exit_code": 0},
+                     "exit_code": 0, "stdout": "", "stderr": ""},
                     {"attempt": 1, "name": "property", "status": "PASS", "seconds": 0,
-                     "exit_code": 0},
+                     "exit_code": 0, "stdout": "", "stderr": ""},
                 ], "status": "RUNNING",
             }
             (run_dir / "summary.json").write_text(json.dumps(report), encoding="utf-8")
@@ -77,6 +77,46 @@ class CoverageManifestTest(unittest.TestCase):
 
             self.assertEqual(["coverage manifest line 3 needs test and profile"],
                              test_lab.coverage_errors(manifest))
+
+
+class MetricsTest(unittest.TestCase):
+
+    def test_unavailable_gpu_is_metadata_and_does_not_change_suite_status(self):
+        gpu = test_lab.collect_gpu_metrics(lambda: (_ for _ in ()).throw(FileNotFoundError()))
+        result = {"status": "PASS", "metrics": {"gpu": gpu}}
+
+        self.assertFalse(gpu["available"])
+        self.assertEqual("PASS", result["status"])
+
+    def test_gpu_values_are_parsed_when_nvidia_smi_is_available(self):
+        class Completed:
+            returncode = 0
+            stdout = "42, 256\n"
+            stderr = ""
+
+        gpu = test_lab.collect_gpu_metrics(lambda: Completed())
+
+        self.assertEqual({"available": True, "utilization_percent": 42.0,
+                          "memory_used_mib": 256.0}, gpu)
+
+    def test_failed_powershell_is_recorded_as_unavailable_not_zero_usage(self):
+        class Completed:
+            returncode = 1
+            stdout = "0;0"
+            stderr = "access denied"
+
+        original_run = test_lab.subprocess.run
+        original_gpu = test_lab.collect_gpu_metrics
+        test_lab.subprocess.run = lambda *args, **kwargs: Completed()
+        test_lab.collect_gpu_metrics = lambda: {"available": False, "reason": "test"}
+        self.addCleanup(setattr, test_lab.subprocess, "run", original_run)
+        self.addCleanup(setattr, test_lab, "collect_gpu_metrics", original_gpu)
+
+        metrics = test_lab.collect_host_metrics()
+
+        self.assertIsNone(metrics["cpu_percent"])
+        self.assertIsNone(metrics["java_working_set_mib"])
+        self.assertIn("CPU/JVM metric unavailable: access denied", metrics["warnings"])
 
 
 if __name__ == "__main__":

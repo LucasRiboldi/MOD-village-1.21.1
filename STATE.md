@@ -1,5 +1,13 @@
 # STATE — 2026-11-02
 
+> **0.4.7 — análise local do Sentinela pendente:** `scripts/sentinel_analysis.py`
+> lê apenas execuções preservadas, agrupa causas, indica evidência incompleta e
+> cria JSON, Markdown e HTML em `reports/sentinel-analysis/`. A janela oferece
+> a ação manual correspondente. Cada suite futura registra CPU, RAM, memória
+> Java e GPU opcional em `metrics.json`; GPU ausente é metadado, não falha.
+> Baterias Java seguem suspensas. Foram executados testes Python e compilação
+> Python, sem Gradle. O JAR 0.4.7 ainda não foi gerado nem copiado.
+
 > **0.4.6 — Observatório local do Sentinela pendente:** o mesmo
 > `Sentinela/Abrir-Sentinela.cmd` agora escolhe suites, repetição e orçamento
 > seguro em minutos. `scripts/test_lab.py` preserva `dashboard.html` local com
