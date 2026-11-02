@@ -13,6 +13,8 @@
 > iniciar Gradle. A liberação não abrange baterias Java, GameTests ou PIT.
 > Camada visual/GPU do cliente continua pendente de prova Fabric no perfil
 > `village-max`.
+> JAR 0.4.2 em `build/libs`, `downloads/` e TLauncher: SHA-256
+> `5BEFF5C20D1514A3B3B9BC474DF8BB27D7913C60501277AFFEADBBF7CD254389`.
 
 > **Fechamento local 0.4.1 — 01-11:** testes foram liberados para esta rodada.
 > Lotes novos limpam vegetação e árvores naturais na margem externa de um bloco;

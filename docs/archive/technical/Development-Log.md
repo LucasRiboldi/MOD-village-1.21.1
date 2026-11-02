@@ -20,6 +20,12 @@ Em 02-11, a varredura recebeu o nome oficial **Sentinela Local**. A frase
 conversacional `rodar Sentinela Local` solicita a execução completa (`full`)
 ao Codex; o nome não agenda nem dispara testes automaticamente.
 
+A primeira execução `full` passou em 02-11: unitários (1m30), propriedades
+(7s), 979 GameTests (2m43), auditoria GameTest (1 teste, 2m46) e PIT. O
+`remapJar` gerou `village-colony-0.4.2.jar`; as cópias em `build/libs`,
+`downloads` e TLauncher têm SHA-256
+`5BEFF5C20D1514A3B3B9BC474DF8BB27D7913C60501277AFFEADBBF7CD254389`.
+
 O orquestrador não altera Gradle ou CI. Ao repetir uma suite, resultado misto
 vira `UNSTABLE` e mantém saída não zero, evitando que uma intermitência pareça
 verde. O modo temporário de correção por playtest impediu rodar baterias nesta
