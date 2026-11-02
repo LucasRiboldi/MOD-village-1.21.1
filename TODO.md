@@ -10,8 +10,15 @@
       passaram sem iniciar Gradle.
 - [x] Criar aplicativo Windows `Sentinela/Abrir-Sentinela.cmd`, sem dependências
       extras, para escolher perfil, repetição, simulação e retomada localmente.
+- [x] Criar o Observatório local: seleção de suites, orçamento seguro, painel
+      HTML, agrupamento de falhas, testes lentos e histórico local.
+- [x] Criar tutorial operacional do Sentinela e regra de atualização conjunta.
 - [ ] Validar uma futura camada visual de cliente/GPU em spike Fabric isolada,
       no perfil `village-max`; não entra no fluxo diário sem prova reproduzível.
+- [ ] Avaliar publicação opcional Allure entre máquinas após necessidade real;
+      plano em `docs/superpowers/plans/2026-11-02-sentinela-futuro.md`.
+- [ ] Avaliar laboratório serial de carga/JFR após definir orçamento de máquina;
+      plano em `docs/superpowers/plans/2026-11-02-sentinela-futuro.md`.
 
 ## Rede e currais — implementação 0.4.3 em 02-11-2026
 

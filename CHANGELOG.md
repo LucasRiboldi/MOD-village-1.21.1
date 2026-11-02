@@ -12,6 +12,28 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.6] — Observatório local do Sentinela (2026-11-02, pendente)
+
+### Adicionado
+- Seleção de suites do perfil, repetições de larga escala e orçamento em minutos
+  que encerra com segurança antes da próxima suite.
+- `dashboard.html` local e autocontido por execução, com resultados XML,
+  assinaturas de falha agrupadas, casos lentos, logs e histórico local.
+- Desenho aprovado e plano futuro para publicação compartilhada e laboratório
+  de desempenho, sem adicionar dependência ou carga automática.
+
+### Alterado
+- A janela Windows do Sentinela expõe suites e limite de tempo, preservando a
+  retomada e o orquestrador único.
+- Tutorial operacional versionado em `Sentinela/TUTORIAL.md`; toda alteração do
+  Sentinela passa a exigir sua atualização no mesmo commit.
+
+### Verificação
+- Sintaxe/importação Python e simulações secas aprovadas durante a suspensão
+  das baterias Java. `remapJar` gerou o JAR local 0.4.6; build, downloads e
+  TLauncher conferem SHA-256
+  `FD5BDA43D752E9E70AB0CC7701E7A9CB8D4913791C16097B985F996E47C9D37B`.
+
 ## [0.4.5] — aplicativo local do Sentinela (2026-11-02, pendente)
 
 ### Adicionado
