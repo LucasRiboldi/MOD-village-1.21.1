@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.1%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.2%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -15,8 +15,8 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-Estado de desenvolvimento em 01-11-2026: a linha de correções fechou a versão
-local 0.4.1, ainda sem nova release publicada. O [relatório de falhas e prioridades](docs/audit/2026-11-01-falhas-priorizadas.md)
+Estado de desenvolvimento em 02-11-2026: a versão local 0.4.2 inclui o
+Sentinela Local, ainda sem nova release publicada. O [relatório de falhas e prioridades](docs/audit/2026-11-01-falhas-priorizadas.md)
 separa correções implementadas, relatos ainda sem reprodução e requisitos pendentes.
 Prioridades: chegada do mineiro, aldeões presos, terreno de novas vilas e a
 intermitência do teste de coleta no chão. Build e GameTests não substituem o
@@ -108,9 +108,9 @@ ficam no [STATE](STATE.md) e na [ADR-043](docs/decisions/ADR-043-hierarchical-ro
   declarada e deixa a linha `VC_SUPPLY` no log (Regra 111); toda desistência
   no diário de ações leva um código único de bloqueio (Regra 112).
 
-O mod é alpha. A 0.4.1 (2026-11-01) consolida as correções de terreno, trabalho
-e testes de fundição desta linha. A versão ainda não foi jogada; use **mundo
-novo**. O estado vivo está no
+O mod é alpha. A 0.4.2 (2026-11-02) adiciona o Sentinela Local para executar
+as baterias existentes sob chamada explícita. A versão ainda não foi jogada;
+use **mundo novo**. O estado vivo está no
 [`STATE.md`](STATE.md). O que mudou em cada
 publicação está no [`CHANGELOG.md`](CHANGELOG.md); a avaliação técnica mais
 recente, em
@@ -593,6 +593,38 @@ Os perfis Codex são `village-quick` (consulta), `village-audit` (diagnóstico),
 ./gradlew.bat javadoc
 python -m unittest discover -s tests
 ```
+
+### Sentinela Local
+
+**Sentinela Local** é nome oficial da varredura manual. Para pedir a execução
+completa ao Codex, use `rodar Sentinela Local`; ela usa o perfil `full`. O
+Sentinela não roda no login, não agenda tarefas e não altera o CI. Cada chamada
+preserva logs, XMLs e um resumo em
+`reports/test-runs/<UTC-id>/`.
+
+```powershell
+python scripts/test_lab.py quick --dry-run
+python scripts/test_lab.py --list
+python scripts/test_lab.py quick
+python scripts/test_lab.ps1 fast --repeat 3
+python scripts/test_lab.py full
+python scripts/test_lab.py --resume 20261101T120000Z
+```
+
+- `quick`: JUnit e propriedades jqwik.
+- `fast`: `quick` mais GameTests em servidor.
+- `full`: `fast` mais auditoria GameTest e PIT.
+
+Se uma suite falhar em uma repetição e passar em outra, o resumo é
+`UNSTABLE` e o comando sai não zero. GPU não acelera estas suites de servidor;
+uma futura camada visual de cliente precisa de validação Fabric separada.
+
+O resumo mostra duração e contagem por estado. Se a execução for interrompida,
+`--resume <UTC-id>` executa somente as suites ainda não registradas. A cópia de
+artefatos compara todos os arquivos internos, impedindo que um XML atualizado
+seja omitido porque o diretório pai conservou o mesmo horário. O script exige
+Python 3.9+; o wrapper `test_lab.sh` requer Git Bash, WSL ou outro shell POSIX
+e escolhe `python3` ou, na ausência dele, `python`.
 
 O build exige Java 21 (`JAVA_HOME` apontando para um JDK 21).
 
