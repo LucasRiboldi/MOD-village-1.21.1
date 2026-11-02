@@ -73,8 +73,8 @@ Fila priorizada, evidências e critérios de fechamento:
 - [ ] Investigar a intermitência de `GroundPickupGameTest.aPassingWorkerPicksUpAllGroundItems`:
       a bateria da 0.4.1 falhou em 1/979, mas a repetição isolada passou. Não houve
       alteração de produção para este sintoma.
-- [ ] Investigar a intermitência de `BuilderGameTest.groundBlocksAreShapedWithoutTheChest`:
-      CI de push da 0.4.1 falhou em 1/979; não foi reproduzido nem alterado nesta entrega.
+- [ ] Confirmar no CI completo a fixture hidratada de `BuilderGameTest.groundBlocksAreShapedWithoutTheChest`;
+      desidratação reproduziu a falha e os 35 testes isolados passaram após a correção.
 
 - [ ] Jogar o novo JAR em mundo novo e no save `Novo mundo`: medir grama flutuante,
       transição do lote em degraus de 1 bloco e apoio sob o piso; conferir cortes em dunas e estruturas.

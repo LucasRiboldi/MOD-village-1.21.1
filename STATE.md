@@ -1,5 +1,11 @@
 # STATE — 2026-11-02
 
+> **PR #47 — diagnóstico do canteiro:** a fixture agora contém água e verifica
+> a construção e a hidratação após `randomTick`. Os 35 GameTests do construtor
+> passaram isolados; a bateria completa permanece pendente no CI. A falha do CI
+> é compatível com desidratação, reproduzida localmente, mas seu evento original
+> não foi registrado. Nenhum comportamento de produção foi alterado.
+
 > **Integração pelo PR #47:** o CI Linux encontrou um teste de métricas de
 > PowerShell que dependia da plataforma hospedeira. A fixture agora simula
 > Windows somente durante a coleta, preservando as asserções de erro.

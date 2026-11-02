@@ -8,6 +8,15 @@
 
 # Village Colony — Development Log
 
+## 2026-11-02 — PR #47: hidratação da fixture do construtor
+
+O CI encontrou terra no lugar do canteiro. Um experimento reproduziu a falha
+ao executar o randomTick Vanilla sem água; com água o canteiro permaneceu
+hidratado. O evento original do CI não foi registrado e pode ter outra causa.
+A fixture contém água e verifica a construção, a hidratação e o estado no tick
+200. Os 35 GameTests do construtor passaram; a bateria completa depende do CI.
+Não houve mudança no código de produção nem nos saves do jogador.
+
 ## 2026-11-02 — PR #47: independência de plataforma na fixture de métricas
 
 O CI Linux falhou em

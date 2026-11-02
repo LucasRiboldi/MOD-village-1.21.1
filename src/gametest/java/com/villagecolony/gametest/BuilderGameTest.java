@@ -861,9 +861,27 @@ public class BuilderGameTest implements FabricGameTest {
             tickLimit = 400)
     public void groundBlocksAreShapedWithoutTheChest(TestContext context) {
         Fixture fixture = setUp(context, 0, ground(), 2);
+        BlockPos water = SITE.east(2);
+        for (BlockPos wall : List.of(water.down(), water.north(), water.south(), water.east(), water.west())) {
+            context.setBlockState(wall, Blocks.STONE.getDefaultState());
+        }
+        context.setBlockState(water, Blocks.WATER.getDefaultState());
+        boolean[] sampled = {false};
+        boolean[] hydrated = {false};
+        context.runAtEveryTick(() -> {
+            if (sampled[0] || !stateAt(context, SITE).isOf(Blocks.FARMLAND)) return;
+            sampled[0] = true;
+            BlockPos absolute = context.getAbsolutePos(SITE);
+            stateAt(context, SITE).randomTick(context.getWorld(), absolute, context.getWorld().random);
+            BlockState after = stateAt(context, SITE);
+            hydrated[0] = after.isOf(Blocks.FARMLAND)
+                    && after.get(net.minecraft.state.property.Properties.MOISTURE) > 0;
+        });
 
         context.runAtTick(200, () -> {
             try {
+                context.assertTrue(sampled[0], "o construtor não assentou o canteiro");
+                context.assertTrue(hydrated[0], "o canteiro não permaneceu hidratado após randomTick");
                 context.assertTrue(
                         stateAt(context, SITE).isOf(Blocks.FARMLAND),
                         "o canteiro não foi assentado: ficou "
