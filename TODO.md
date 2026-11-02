@@ -1,5 +1,16 @@
 # TODO
 
+## Sentinela local de testes — 01-11-2026
+
+- [x] Criar varredura manual com perfis `quick`, `fast` e `full`, logs e
+      relatórios por execução; não inicia sozinha e não muda CI.
+- [x] Corrigir cópia de artefatos por árvore de arquivos e permitir retomada de
+      execução interrompida, sem executar Gradle durante o modo de playtest.
+- [x] Criar dois testes Python pequenos para cópia recursiva e `--resume`; ambos
+      passaram sem iniciar Gradle.
+- [ ] Validar uma futura camada visual de cliente/GPU em spike Fabric isolada,
+      no perfil `village-max`; não entra no fluxo diário sem prova reproduzível.
+
 ## Rede e currais — desenho aprovado em 01-11-2026
 
 - [x] Grafo puro e codec paralelo inicial, com testes de topologia, compatibilidade e corrupção.

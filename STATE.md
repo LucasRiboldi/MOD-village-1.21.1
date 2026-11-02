@@ -1,4 +1,18 @@
-# STATE — 2026-11-01
+# STATE — 2026-11-02
+
+> **Sentinela Local 0.4.2 — 02-11:** nome oficial da varredura manual. O comando
+> conversacional `rodar Sentinela Local` solicita o perfil `full`. O
+> `scripts/test_lab.py` cria uma
+> varredura manual com perfis `quick`, `fast` e `full`, repetição, retomada e
+> relatórios isolados em `reports/test-runs/`. A cópia compara arquivos internos
+> dos relatórios, não somente o horário da pasta. Não altera CI nem inicia ao
+> abrir o projeto.
+> O modo temporário de correção por playtest permanece ativo: esta entrega foi
+> verificada apenas com `--dry-run`; nenhum JUnit, GameTest ou PIT foi iniciado.
+> Dois testes Python específicos para cópia e retomada passaram em 02-11 sem
+> iniciar Gradle. A liberação não abrange baterias Java, GameTests ou PIT.
+> Camada visual/GPU do cliente continua pendente de prova Fabric no perfil
+> `village-max`.
 
 > **Fechamento local 0.4.1 — 01-11:** testes foram liberados para esta rodada.
 > Lotes novos limpam vegetação e árvores naturais na margem externa de um bloco;

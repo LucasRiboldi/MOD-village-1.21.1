@@ -107,3 +107,6 @@ graphify-out/
 # Fora do repositório (ADR-036 item 26): o site e o JAR. O JAR vai para a página de versões do GitHub.
 /Website/
 /downloads/
+
+# Relatórios locais do Sentinela de Testes. Cada execução é descartável.
+reports/test-runs/
