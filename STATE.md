@@ -1,5 +1,12 @@
 # STATE — 2026-11-02
 
+> **PR #47 — cultivo e diagnóstico de coleta:** as duas fixtures de cultivo
+> agora compartilham a água contida do teste de canteiro. O teste automático
+> de coleta mantém suas asserções e registra remoção dos itens, posições,
+> limites da colônia e estoques dos baús públicos. Os 36 GameTests focados
+> passaram; a coleta continua sem causa confirmada no CI. Sem alteração de
+> produção ou JAR. Integração e MAE aguardam a bateria completa do CI.
+
 > **PR #47 — diagnóstico do canteiro:** a fixture agora contém água e verifica
 > a construção e a hidratação após `randomTick`. Os 35 GameTests do construtor
 > passaram isolados; a bateria completa permanece pendente no CI. A falha do CI

@@ -73,6 +73,9 @@ Fila priorizada, evidências e critérios de fechamento:
 - [ ] Investigar a intermitência de `GroundPickupGameTest.aPassingWorkerPicksUpAllGroundItems`:
       a bateria da 0.4.1 falhou em 1/979, mas a repetição isolada passou. Não houve
       alteração de produção para este sintoma.
+      O CI 552 encontrou terra zero no baú original. Depósito em segundo baú reproduz
+      o erro, mas o evento original ainda não foi rastreado. O teste agora registra
+      remoção dos itens e estoques; conferir a próxima execução completa do CI.
 - [ ] Confirmar no CI completo a fixture hidratada de `BuilderGameTest.groundBlocksAreShapedWithoutTheChest`;
       desidratação reproduziu a falha e os 35 testes isolados passaram após a correção.
 

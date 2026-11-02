@@ -8,6 +8,23 @@
 
 # Village Colony — Development Log
 
+## 2026-11-02 — PR #47: cultivo hidratado e coleta rastreável
+
+As opções 1A e 2A aprovadas pelo autor foram aplicadas apenas aos GameTests.
+As fixtures de cultivo reutilizam a água contida do teste de canteiro, mantendo
+as verificações no tick 300. Um experimento anterior havia reproduzido a perda
+do canteiro por randomTick antes da colocação do trigo.
+
+O teste automático de coleta preserva as contagens exatas no baú original.
+Registra estado inicial, remoção dos itens, falha e timeout, com identificadores,
+posições, motivos de remoção, limites da colônia e estoques dos baús consultados.
+O depósito em outro baú reproduziu o erro em experimento controlado; isso ainda
+não confirma o destino dos itens na falha original do CI 552.
+
+`runGametest -PgametestOnly=BuilderGameTest,GroundPickupGameTest` passou nos
+36 casos. A integração continua condicionada ao CI completo. Nenhuma mudança
+de produção, configuração de CI, versão do mod, JAR ou save do jogador.
+
 ## 2026-11-02 — PR #47: hidratação da fixture do construtor
 
 O CI encontrou terra no lugar do canteiro. Um experimento reproduziu a falha
