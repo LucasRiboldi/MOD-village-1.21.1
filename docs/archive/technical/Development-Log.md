@@ -11452,3 +11452,19 @@ dividir as pilhas sem mudar o código de produção. Depois disso,
 passou em `reports/test-runs/20261102T125155Z` (356,9 s): unitários,
 propriedades, GameTests, auditoria e mutação, cinco de cinco. O playtest em
 mundo novo permanece a validação visual e comportamental final desta sessão.
+
+## 02-11-2026 — fechamento rastreável de entrega
+
+Foram criados dois comandos de processo, sem alterar a lógica do jogo.
+`FECHAR-RAPIDO` verifica a versão em CHANGELOG, README e STATE, as regras
+geradas e o estado da árvore antes do PR. `REGISTRO-RELEASE` usa um documento
+versionado em `docs/releases/`, recusa publicar evidência pendente e gera a
+seção de commit e SHA-256 que o workflow incorpora à release GitHub.
+
+O CI completo deixou de rodar a cada push de branch, pois duplicava a execução
+do PR; PR e `main` continuam sendo as portas de validação. Foram verificados a
+sintaxe Python, o pré-voo válido, o bloqueio explícito de registro pendente e
+`git diff --check`. O modo temporário de correção por playtest manteve JUnit,
+GameTests, PIT e Sentinela sem execução. `remapJar` gerou a 0.4.4 e o
+manifesto confirmou build, downloads e TLauncher com SHA-256
+`5DFAB711B431FB9A693F991ABA4A3434235528E60DBC1C96E34EB205A1D64891`.

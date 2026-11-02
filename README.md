@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.3%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.4%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -15,7 +15,8 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-Estado de desenvolvimento em 02-11-2026: a versão local 0.4.3 consolida o
+Estado de desenvolvimento em 02-11-2026: a versão 0.4.4 prepara o
+fechamento rastreável de entregas; a 0.4.3 consolida o
 watchdog de progresso, o curral grande, a ativação compatível do grafo de ruas e
 as metas ociosas de mina e fundição. O [relatório de falhas e prioridades](docs/audit/2026-11-01-falhas-priorizadas.md)
 separa correções implementadas, relatos ainda sem reprodução e requisitos pendentes.
@@ -109,7 +110,8 @@ geração nova. Evidências e limites ficam no [STATE](STATE.md) e na
   declarada e deixa a linha `VC_SUPPLY` no log (Regra 111); toda desistência
   no diário de ações leva um código único de bloqueio (Regra 112).
 
-O mod é alpha. A 0.4.3 (2026-11-02) consolida trabalho, curral e ruas sob as
+O mod é alpha. A 0.4.4 (2026-11-02) adiciona o fechamento rastreável de
+entregas. A 0.4.3 consolida trabalho, curral e ruas sob as
 regras de geração somente para vilas novas. A versão ainda não foi jogada; use
 **mundo novo**. O estado vivo está no
 [`STATE.md`](STATE.md). O que mudou em cada
@@ -585,6 +587,21 @@ Os perfis de trabalho e as skills utilizadas neste repositório estão em
 
 Os perfis Codex são `village-quick` (consulta), `village-audit` (diagnóstico),
 `village-dev` (implementação comum) e `village-max` (mudança entre subsistemas).
+
+### Fechamento de entrega
+
+Use as palavras-chave **FECHAR-RAPIDO** e **REGISTRO-RELEASE** ao pedir este
+fluxo ao agente. Os comandos locais equivalentes são:
+
+```powershell
+python scripts/release_workflow.py fechar-rapido
+python scripts/release_workflow.py registro-release --jar build/libs/village-colony-X.Y.Z.jar --output release-evidence.md
+```
+
+`FECHAR-RAPIDO` só confere e relata: não altera documentos. `REGISTRO-RELEASE`
+exige [`docs/releases/vX.Y.Z.md`](docs/releases/README.md), recusa evidência
+pendente e gera a seção que o workflow do GitHub inclui na descrição da release.
+O PR continua responsável pela revisão humana de README, STATE e CHANGELOG.
 
 ```powershell
 ./gradlew.bat test

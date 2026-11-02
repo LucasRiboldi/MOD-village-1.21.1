@@ -52,6 +52,7 @@ jobs:
             exit 0
           fi
           sha=$(sha256sum "$jar" | cut -d' ' -f1 | tr 'a-f' 'A-F')
+          python scripts/release_workflow.py registro-release --version "$version" --commit "$GITHUB_SHA" --sha "$sha" --output release-evidence.md
           awk -v head="## [${version}]" 'index($0, head) == 1 { p = 1; print; next } p && /^## \[/ { exit } p' \
             CHANGELOG.md > entry.md
           test -s entry.md
@@ -67,7 +68,12 @@ jobs:
             echo
             echo "---"
             echo
+            cat release-evidence.md
+            echo
+            echo "---"
+            echo
             cat entry.md
           } > notes.md
           gh release create "$tag" "$jar" --prerelease --title "$tag" --target "$GITHUB_SHA" --notes-file notes.md
+          cat release-evidence.md >> "$GITHUB_STEP_SUMMARY"
           echo "Publicado $tag — SHA-256 $sha"
