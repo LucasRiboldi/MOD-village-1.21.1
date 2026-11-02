@@ -1,5 +1,14 @@
 # STATE — 2026-11-02
 
+> **0.4.4 — fechamento rastreável pendente:** `FECHAR-RAPIDO` confere os
+> documentos vivos antes do PR; `REGISTRO-RELEASE` transforma o registro humano
+> versionado em evidência de commit e SHA-256 para a publicação GitHub. Push de
+> branches deixa de repetir a bateria completa, que continua obrigatória no PR
+> e na `main`. Esta alteração não muda o mod no jogo e permanece sem bateria
+> Java pelo modo temporário de correção por playtest. JAR local 0.4.4 em
+> `build/libs`, `downloads/` e TLauncher: SHA-256
+> `5DFAB711B431FB9A693F991ABA4A3434235528E60DBC1C96E34EB205A1D64891`.
+
 > **0.4.3 — fechamento local em 02-11:** watchdog de progresso útil, reposição física
 > na segunda falha diária, metas ociosas de mina e fundição, casa do mineiro,
 > curral grande único e ativação compatível do grafo de ruas foram implementados.

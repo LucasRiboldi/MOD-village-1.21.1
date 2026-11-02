@@ -12,6 +12,26 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.4] — fechamento rastreável de entregas (2026-11-02, pendente)
+
+### Adicionado
+- `FECHAR-RAPIDO`: pré-voo local que confere versão em CHANGELOG, README e
+  STATE, além das regras geradas, antes de abrir o PR.
+- `REGISTRO-RELEASE`: evidência versionada de mudanças, validação, playtest,
+  pendências, commit e SHA-256 para a descrição da release.
+
+### Alterado
+- Push em branches não executa a bateria completa duplicada; o PR e a `main`
+  seguem como portas de validação completa.
+- O workflow de release recusa publicar enquanto o registro da versão estiver
+  incompleto ou marcado como pendente.
+
+### Verificação
+- Pendente de revisão do PR. O modo temporário de correção por playtest não
+  executa baterias Java para esta alteração de ferramentas. `remapJar` gerou o
+  JAR local 0.4.4 e o manifesto confirmou as cópias de build, downloads e
+  TLauncher com SHA-256 `5DFAB711B431FB9A693F991ABA4A3434235528E60DBC1C96E34EB205A1D64891`.
+
 ## [0.4.3] — rede, curral e trabalho (2026-11-02, JAR local)
 
 ### Adicionado
