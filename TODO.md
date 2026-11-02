@@ -28,6 +28,9 @@ Fila priorizada, evidências e critérios de fechamento:
       tolerância de chegada e interferência do Brain antes de alterar o código de produção.
 - [ ] Investigar F19: condução da vaca ao cercado falhou no CI de push 41254270066,
       mas passou no CI de PR do mesmo código e nos 955 GameTests locais de 01-11.
+- [ ] Investigar a intermitência de `GroundPickupGameTest.aPassingWorkerPicksUpAllGroundItems`:
+      a bateria da 0.4.1 falhou em 1/979, mas a repetição isolada passou. Não houve
+      alteração de produção para este sintoma.
 
 - [ ] Jogar o novo JAR em mundo novo e no save `Novo mundo`: medir grama flutuante,
       transição do lote em degraus de 1 bloco e apoio sob o piso; conferir cortes em dunas e estruturas.

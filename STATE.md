@@ -1,30 +1,19 @@
 # STATE — 2026-11-01
 
-> **Modo temporário de correção por playtest ativo:** testes locais e criação de
-> testes estão suspensos até liberação explícita do autor. O ciclo atual é:
-> log e relatórios `VC_*` → achados com evidência → opções para escolha → menor
-> correção escolhida → revisão estática → commit → `remapJar` → cópia e SHA-256
-> no `downloads/` e TLauncher → novo playtest. CI não foi alterado. Correções
-> feitas neste modo são candidatas até confirmação pelo jogo (`CLAUDE.md` §0.2.2).
-> Antes de cada etapa, indicar modelo e força e aguardar o "ok" do autor para
-> a troca manual; os perfis locais não foram alterados.
+> **Fechamento local 0.4.1 — 01-11:** testes foram liberados para esta rodada.
+> Lotes novos limpam vegetação e árvores naturais na margem externa de um bloco;
+> mineiro só avança após `removeBlock` bem-sucedido; folhas e troncos não viram
+> piso; ajuda fora do ofício espera 1.200 ticks; e fundidor fora de área construída
+> recebe retorno ao baú pessoal antes de fundir. O GameTest agora registra a oficina
+> exigida pelo cenário de fundição e cobre explicitamente o retorno.
 
-> **Correções candidatas do ciclo atual:** a limpeza de terreno não cria mais
-> suporte artificial sob flora; plantas sem apoio válido são removidas; lenhador
-> prioriza árvores centrais; pastor escolhe ovelha tosquiável próxima; e coleta
-> do chão usa a presença atendida da vila também no cenário simulado. Água curta
-> volta a ser travessia válida, conforme decisão do autor. `test` e 978/978
-> GameTests passaram nesta rodada excepcionalmente liberada pelo autor. Falta
+> `clean build remapJar` passou em 2m20. A bateria completa rodou 979 GameTests:
+> 978 passaram e `GroundPickupGameTest.aPassingWorkerPicksUpAllGroundItems` falhou;
+> a repetição isolada passou. A intermitência fica aberta, sem alteração de produção,
+> conforme a instrução do autor de não bloquear esta entrega por testes. Ainda falta
 > playtest em mundo novo e no save; não declarar os sintomas corrigidos antes dele.
-> JAR 0.4.0 em `build/libs`, `downloads/` e TLauncher: SHA-256
-> `B65D7DB9A15AE61BC84AEA9674CFD0EF9305FA48DD9124C6F7462498314AA752`.
-
-> **Correções em revisão, ainda sem JAR — 01-11:** lotes novos limpam vegetação e árvores naturais na margem
-> externa de um bloco, preservando blocos protegidos e enviando madeira ao estoque público. O mineiro só
-> confirma avanço depois de `removeBlock` bem-sucedido. Aldeões da colônia não usam folhas ou troncos como
-> piso e removem uma folha do nó real da rota por segundo. Ajuda fora do ofício só começa após 1.200 ticks
-> sem tarefa própria. Fundidores fora de área construída retornam ao baú pessoal antes de fundir. Compilação
-> `classes` passou; testes continuam suspensos. Falta revisão estática, commit e playtest do autor.
+> JAR 0.4.1 em `build/libs`, `downloads/` e TLauncher: SHA-256
+> `FD72245C3BDF5E4B1DA816CC37E69C9B4CBE725E0A62254D0F184320D731606E`.
 
 > **Rede e currais, desenho aprovado em 01-11 — entrega parcial autorizada:**
 > grafo puro e codec paralelo versionado implementados; sete testes de grafo,

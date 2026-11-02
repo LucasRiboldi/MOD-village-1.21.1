@@ -8,6 +8,23 @@
 
 # Village Colony — Development Log
 
+## 2026-11-01 — fechamento local 0.4.1
+
+Versão atualizada para 0.4.1 depois das correções de terreno, trabalho e rota
+desta linha. Os cenários de fundição passaram a registrar uma oficina concluída;
+um GameTest novo prova que o fundidor fora da área construída retorna primeiro ao
+baú pessoal, sem fundir. Isto mantém a regra de produção e remove a falsa falha
+das fixtures sem edifício.
+
+`clean build remapJar` passou em 2m20. Na bateria completa, 978/979 GameTests
+passaram; `GroundPickupGameTest.aPassingWorkerPicksUpAllGroundItems` falhou, mas
+passou ao repetir isolado. A coleta de chão não mudou nesta entrega. Por instrução
+do autor, a intermitência ficou em TODO e não bloqueou commit, JAR ou integração.
+
+O manifesto comparou `build/libs`, `downloads` e `%APPDATA%/.minecraft/mods`:
+`FD72245C3BDF5E4B1DA816CC37E69C9B4CBE725E0A62254D0F184320D731606E`.
+O JAR ativo é `village-colony-0.4.1.jar`; o 0.4.0 foi preservado como `.disabled`.
+
 ## 2026-11-01 — fundação da rede hierárquica, entrega ainda parcial
 
 PR #43: CI do push aprovado; CI do PR executou 978 GameTests e falhou em

@@ -12,13 +12,15 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
-## [Não publicado] — correções e diagnóstico após o jogo da 0.4.0
+## [0.4.1] — correções e diagnóstico após o jogo da 0.4.0 (2026-11-01, JAR local)
 
 ### Adicionado
 - Relatório priorizado de falhas conhecidas, com evidência, limites e critérios de fechamento.
 - GameTest de árvore alta: oito toras entregues sem abandonar a base durante o corte.
 - Patch diagnóstico reproduzível para investigar chegada física na arena forense da mina;
   permanece fora da bateria obrigatória até diagnóstico e correção. A falha continua aberta.
+- Regressão GameTest para o fundidor fora da área construída: ele deve receber o
+  destino do baú pessoal antes de iniciar a fundição.
 
 ### Alterado
 - Estoque dos três ofícios repõe até 16 unidades por tipo fabricável; baús nomeados seguem reservados.
@@ -33,6 +35,8 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - Teste da descida do mineiro consulta coordenadas corretas e exige escavação e descida física.
   Testes de colheita exigem entrega de todas as toras. Causas dos comportamentos relatados no save
   ainda precisam de reprodução; estas entradas não encerram as falhas de navegação.
+- Cenários de fundição agora registram oficina concluída antes de exigir trabalho;
+  o controle de área construída é exercitado sem mascarar a produção normal.
 
 ## [0.4.0] — roça por fazendeiro, teto de camas na casa de reserva, armazém pequeno (2026-10-31, marco alpha)
 
