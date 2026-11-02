@@ -2,7 +2,6 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
-import com.villagecolony.core.coordination.StockCeiling;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
@@ -25,9 +24,9 @@ import java.util.Optional;
  * o fundidor). No playtest 0.3.35 os fundidores ficaram 58% esperando.
  *
  * <p>A cada ciclo, o fundidor sem tarefa repõe blocos de receitas de fornalha até
- * {@link ItemStock#EACH} por tipo. Depois adianta os demais crus da lista {@link #RAWS}.
- * Fica nos baús o que a obra aberta pede do cru e mais {@link #KEEP}; os demais
- * produtos param em {@link StockCeiling#RAW}. Sem lugar para o produto, o cru volta.
+ * {@link ItemStock#EACH} por tipo. Depois reserva somente lingotes de minérios físicos,
+ * até {@link #INGOT_RESERVE} por tipo. Fica nos baús o que a obra aberta pede do cru e
+ * mais {@link #KEEP}. Sem lugar para o produto, o cru volta.
  */
 public final class SmelterAdvance {
 
@@ -43,13 +42,11 @@ public final class SmelterAdvance {
      */
     static final int MINE_FILL = 64;
 
-    /** Os crus que se adiantam, na ordem: minério, areia, pedra, argila, arenito. */
-    static final List<Item> RAWS = List.of(
-            Items.RAW_IRON, Items.RAW_COPPER, Items.RAW_GOLD,
-            Items.SAND, Items.RED_SAND,
-            Items.COBBLESTONE, Items.COBBLED_DEEPSLATE, Items.STONE,
-            Items.CLAY_BALL, Items.CLAY,
-            Items.SANDSTONE, Items.RED_SANDSTONE);
+    /** Somente minérios físicos viram reserva ociosa; demais itens seguem estoque padrão. */
+    static final List<Item> INGOT_RAWS = List.of(Items.RAW_IRON, Items.RAW_COPPER, Items.RAW_GOLD);
+
+    /** Meta máxima de cada lingote mineral disponível à vila. */
+    static final int INGOT_RESERVE = 64;
 
     private SmelterAdvance() {
     }
@@ -103,7 +100,7 @@ public final class SmelterAdvance {
             }
         }
 
-        for (Item raw : RAWS) {
+        for (Item raw : INGOT_RAWS) {
             Optional<ItemStack> product = CraftingLookup.smelted(world, new ItemStack(raw));
 
             if (product.isEmpty() || product.get().isEmpty()) {
@@ -114,9 +111,8 @@ public final class SmelterAdvance {
             if (made instanceof BlockItem) {
                 continue;
             }
-            int keep = raw == Items.COBBLESTONE || raw == Items.COBBLED_DEEPSLATE ? MINE_FILL : KEEP;
-            int spare = ColonyChests.countIn(world, chests, raw) - BuildReserve.buildNeedOf(colony, raw) - keep;
-            int room = StockCeiling.RAW - ColonyChests.countIn(world, chests, made);
+            int spare = ColonyChests.countIn(world, chests, raw) - BuildReserve.buildNeedOf(colony, raw) - KEEP;
+            int room = INGOT_RESERVE - ColonyChests.countIn(world, chests, made);
             int amount = Math.min(PER_SMELTER, Math.min(spare, room));
 
             if (amount <= 0) {
@@ -133,7 +129,7 @@ public final class SmelterAdvance {
 
             if (taken - left > 0) {
                 VillageColonyMod.LOGGER.info(
-                        "Colony {} — an idle smelter advanced {} {} into {} to free room for raw blocks",
+                        "Colony {} — an idle smelter reserved {} {} as {}",
                         colony.id().toString().substring(0, 8), taken - left, raw, made);
 
                 return taken - left;

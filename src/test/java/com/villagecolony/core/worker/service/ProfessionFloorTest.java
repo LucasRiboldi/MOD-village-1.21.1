@@ -184,7 +184,7 @@ class ProfessionFloorTest {
      * o que prende essa parte.
      */
     @Test
-    void theDismissalDoesNotKnowAboutTheFloor() {
+    void dismissalNeverRemovesAProfession() {
         List<UUID> everyone = addWorkers(ProfessionAssigner.FOUNDATION_ORDER.size() + 2);
 
         ProfessionAssigner.assignMissing(workers, COLONY, new HashSet<>(everyone));
@@ -192,13 +192,13 @@ class ProfessionFloorTest {
         Set<UUID> demoted = VacancyEnforcer.enforceVacancies(
                 workers, COLONY, villagerId -> false, 3);
 
-        assertEquals(3, demoted.size());
+        assertTrue(demoted.isEmpty());
 
         long empty = ProfessionAssigner.PRODUCER_ORDER.stream()
                 .filter(type -> headcount().get(type) == 0)
                 .count();
 
-        assertEquals(3, empty, "as três trocas deviam ter esvaziado três funções");
+        assertEquals(0, empty, "falta de baú não esvazia profissão");
     }
 
     /** A dispensa da vila nunca remove o último ocupante da fundação. */
@@ -328,7 +328,7 @@ class ProfessionFloorTest {
      * 2026-09-25, pelo PIT.
      */
     @Test
-    void aDuplicatedFoundationPostLosesOnlyTheExtraWorker() {
+    void aDuplicatedFoundationPostKeepsBothWorkers() {
         UUID first = UUID.randomUUID();
         UUID second = UUID.randomUUID();
         workers.register(first, COLONY).assign(ProfessionType.MINER);
@@ -337,7 +337,7 @@ class ProfessionFloorTest {
         Set<UUID> demoted = VacancyEnforcer.enforceVacanciesPreservingFoundation(
                 workers, COLONY, villagerId -> false, 2);
 
-        assertEquals(Set.of(first), demoted);
-        assertEquals(1, headcount().get(ProfessionType.MINER), "a fundação ficou sem mineiro");
+        assertTrue(demoted.isEmpty());
+        assertEquals(2, headcount().get(ProfessionType.MINER), "ambos mantêm o ofício");
     }
 }

@@ -36,6 +36,15 @@ public class ShepherdPensGameTest implements FabricGameTest {
 
     private static final int Y = 60;
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_pens_size", tickLimit = 20)
+    public void aRegisteredLargePenHoldsTwentyAnimals(TestContext context) {
+        ShepherdPens.Pen large = new ShepherdPens.Pen(new BlockPos(0, 2, 0), new BlockPos(0, 2, 1),
+                new BlockPos(0, 2, -1), java.util.Set.of(), true);
+        context.assertTrue(ShepherdPens.capacityOf(large) == 20,
+                "curral grande registrado não ficou limitado a 20 animais");
+        context.complete();
+    }
+
     /** Os currais por espécie, em outra altura: o chão de 29×29 passa da arena. */
     private static final int Y2 = 90;
 

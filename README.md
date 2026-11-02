@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.1%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.3%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -15,17 +15,17 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-Estado de desenvolvimento em 01-11-2026: a linha de correções fechou a versão
-local 0.4.1, ainda sem nova release publicada. O [relatório de falhas e prioridades](docs/audit/2026-11-01-falhas-priorizadas.md)
+Estado de desenvolvimento em 02-11-2026: a versão local 0.4.3 consolida o
+watchdog de progresso, o curral grande, a ativação compatível do grafo de ruas e
+as metas ociosas de mina e fundição. O [relatório de falhas e prioridades](docs/audit/2026-11-01-falhas-priorizadas.md)
 separa correções implementadas, relatos ainda sem reprodução e requisitos pendentes.
-Prioridades: chegada do mineiro, aldeões presos, terreno de novas vilas e a
-intermitência do teste de coleta no chão. Build e GameTests não substituem o
-playtest dessas situações.
+GameTests não substituem o playtest dessas situações.
 
 Rede hierárquica e currais têm [desenho aprovado](docs/superpowers/specs/2026-11-01-hierarchical-roads-and-pens-design.md).
-Grafo, persistência paralela e identificação de geração nova estão em implementação;
-o planejador integrado e os novos currais ainda não foram ativados. Evidências e limites
-ficam no [STATE](STATE.md) e na [ADR-043](docs/decisions/ADR-043-hierarchical-road-graph.md).
+O grafo é ativado somente em vilas novas depois de validar o índice legado; vilas
+existentes preservam o índice anterior. O curral grande único segue a mesma regra de
+geração nova. Evidências e limites ficam no [STATE](STATE.md) e na
+[ADR-043](docs/decisions/ADR-043-hierarchical-road-graph.md).
 
 ## O que o mod faz
 
@@ -74,9 +74,10 @@ ficam no [STATE](STATE.md) e na [ADR-043](docs/decisions/ADR-043-hierarchical-ro
   pilares de pedra e tijolo, telhado de carvalho escuro e lanternas —, com as
   três pistas da escada no centro do vão (Regra 155).
 - O pastor precisa estar a até 5 blocos para alimentar, cruzar e abater;
-  preserva 6 adultos por espécie. A construção intercala currais por espécie,
-  usando modelo único de 15×15 com cercas e tochas. Cercados existentes válidos
-  também podem ser usados (Regras 68, 72 e 130). Falta confirmar o conjunto em jogo.
+  preserva 6 adultos por espécie. Em vilas novas, há no máximo um curral grande
+  de até 20 animais, com água, cultivos, grama, portão e tochas. Currais pequenos
+  e cercados existentes válidos continuam utilizáveis (Regras 68, 72 e 130).
+  Falta confirmar o conjunto em jogo.
 - Antes de cada obra nova, nivela o chão em volta na altura da rua: um anel de
   2 blocos com no máximo 1 de diferença e uma rampa de 3 até o terreno natural
   (Regra 131).
@@ -108,9 +109,9 @@ ficam no [STATE](STATE.md) e na [ADR-043](docs/decisions/ADR-043-hierarchical-ro
   declarada e deixa a linha `VC_SUPPLY` no log (Regra 111); toda desistência
   no diário de ações leva um código único de bloqueio (Regra 112).
 
-O mod é alpha. A 0.4.1 (2026-11-01) consolida as correções de terreno, trabalho
-e testes de fundição desta linha. A versão ainda não foi jogada; use **mundo
-novo**. O estado vivo está no
+O mod é alpha. A 0.4.3 (2026-11-02) consolida trabalho, curral e ruas sob as
+regras de geração somente para vilas novas. A versão ainda não foi jogada; use
+**mundo novo**. O estado vivo está no
 [`STATE.md`](STATE.md). O que mudou em cada
 publicação está no [`CHANGELOG.md`](CHANGELOG.md); a avaliação técnica mais
 recente, em
@@ -125,13 +126,13 @@ desatualizados.
 
 | Código | Nome | Ferramenta inicial | Responsabilidade | Executor |
 |---|---|---|---|---|
-| `MINER` | Mineiro | Picareta de ferro | Abre e amplia a mina, coleta pedra e minério; guarda até 256 de cada tipo que a tarefa não pediu | `MinerWork` |
+| `MINER` | Mineiro | Picareta de ferro | Abre e amplia a mina; sem demanda, extrai na frente planejada até 64 pedras por dia, sem tocar a escadaria | `MinerWork` |
 | `LUMBERJACK` | Lenhador | Machado de ferro | Derruba árvores, replanta e mantém o viveiro da borda | `LumberjackWork` |
 | `MASON` | Pedreiro, equivalente ao ferreiro do catálogo | Nenhuma | Produz alvenaria e peças de pedra exigidas pelas obras | `CraftingWork` |
-| `SMELTER` | Fundidor | Pá de ferro com Silk Touch | Funde materiais e coleta areia, relva, cacto e argila sob demanda | `SmelterWork` |
+| `SMELTER` | Fundidor | Pá de ferro com Silk Touch | Funde materiais e coleta areia, relva, cacto e argila sob demanda; ocioso mantém somente lingotes físicos até 64 por tipo | `SmelterWork` |
 | `CARPENTER` | Carpinteiro | Nenhuma | Artesão geral: madeira e toda peça que não é alvenaria (vidraça, tear, cama, lampião, tocha) | `CraftingWork` |
 | `FARMER` | Agricultor/Fazendeiro | Enxada de ferro | Mantém lavouras, cava terra para obra e faz pão do trigo acima da reserva | `FarmerWork` |
-| `SHEPHERD` | Pastor | Tesoura | Tosquia, faz o rebanho procriar (até 8 adultos por espécie) e abate acima de 6, um curral por espécie | `ShepherdWork` |
+| `SHEPHERD` | Pastor | Tesoura | Tosquia, mantém reprodução e abate somente acima de 6 adultos; vilas novas recebem um curral grande para até 20 animais | `ShepherdWork` |
 | `BUILDER` | Construtor | Nenhuma | Reserva lotes, repara e assenta estruturas | `BuilderWork` |
 
 Cada ofício tem a sua bancada do mod (estação de trabalho, produção em dobro e
@@ -307,7 +308,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 125 | **Quem assenta o caminho** (autor 10-27, D6): o pedreiro, o carpinteiro e o fundidor sem tarefa do ofício, no expediente e soltos, um por vez por colônia, revezando nessa ordem a cada 8 passos; cada passo é a seção de 3 colunas — aterro, corte do que está em cima do piso, caminho de terra e 2 livres —, e se o mundo mudou e a seção não serve mais, o traçado sai e é refeito | 10-27 | ✅ feita (0.3.96) | `PathPaving` |
 | 126 | **Peça colorida sai branca** (autor 10-27, item 5; jogo da 0.3.93: 64 "cama sem lã" e lã preta parada por corante): cama, lã, tapete e estandarte de qualquer cor entram na planta brancos, onde ela é montada — a lã que o rebanho dá é branca e nenhum corante é pedido; as outras peças não mudam | 10-27 | ✅ feita (0.3.96) | `WhitePieces`, `StructureBlueprintReader` |
 | 127 | **Ajudas de quem está sem tarefa do ofício, cada uma com um ofício fixo** (autor 10-27, item 8): o pastor colhe e replanta a lavoura madura das roças conhecidas, sem arar terra nova, e guarda a colheita no baú da colônia mais perto (um pastor por colônia por vez); o construtor limpa a faixa de obra (já fazia, `BuilderPaving`); o lenhador sem tarefa vai ao bosque e repõe muda e põe farinha de osso na hora, no máximo a cada meio minuto; o carpinteiro sem tarefa põe a **tocha da colônia** ao lado do caminho onde a luz de bloco é zero, a 8 blocos ou mais de outra — ela surge sem custo, tem luz 15 e um anel de 8 luzes invisíveis a 10 blocos (área clara ~3×), chama e partícula laranja (a luz do jogo não tem cor), e monstro não nasce sozinho a 30 blocos dela (criador de monstro e invasão continuam); quebrada, o anel sai junto; e o pedreiro sem tarefa recolhe com a pá a neve natural da vila quando a obra aberta pede camada ou bloco de neve — uma bola por camada, quatro por bloco, para o baú (item 5) | 10-27 | ✅ feita (0.3.97) | `IdleHelps`, `KnownFarmland`, `ColonyTorchBlock`, `ColonyTorches`, `HostileSpawnMixin`, `SnowShovel` |
-| 128 | **Nenhuma profissão espera mais de 5 minutos por nada** (autor 10-27, jogo da 0.3.97: pedreiro 68% e construtor 59% ociosos). 1º degrau: 300 s esperando, bloqueado ou encalhado desde o último golpe de trabalho (caminhar não conta) e ele larga a tarefa, a capacidade descansa e ele entra na cadeia de ajudas. 2º degrau: a mesma tarefa largada de novo 10 min depois faz o produto surgir no baú dele (`WAITED_TOO_LONG`); a peça de obra já surge em 2 ciclos pela obra | 10-27 | ✅ feita | `IdleWatch` |
+| 128 | **Nenhuma profissão espera mais de 5 minutos por nada** (autor 10-27, emenda 11-02): 300 s sem progresso útil na tarefa — caminhar não conta — libera a reserva e registra a tentativa diária. Na segunda falha da mesma demanda no dia, o item físico não construtivo pode ser reposto no baú do ofício com `WAITED_TOO_LONG`; obra nunca surge por essa via. Progresso útil reinicia apenas a tarefa que alterou o mundo | 10-27; emenda 11-02 | ✅ código; falta jogo | `TaskProgressWatch`, `DemandRetries` |
 | 129 | **O nome sobre a cabeça tem a cor do estado** (autor 10-27): laranja no ofício, azul em ajuda, vermelho bloqueado ou encalhado há 30 s, branco à toa no expediente, cinza fora dele | 10-27 | ✅ feita | `WorkTime.Badge`, `ProfessionOverlayRenderer` |
 | 130 | **Cinco animais no mesmo poste pedem curral, com prioridade** (autor 10-27): o curral do estilo entra pela fila urgente; pronto, o pastor leva os do poste um a um | 10-27 | ✅ feita | `PenPlans.crowdedPost`, `UrgentPlans` |
 | 131 | **O chão em volta da obra nova fica na altura da rua** (autor 10-27): na abertura, um anel de 2 blocos na altura da rua ±1 e uma rampa de 3 que abre a faixa em 1 por passo; só chão natural é cortado e só o vazio é aterrado; nunca construção, peça da vila, bloco do jogador, caminho, água, árvore ou a caixa de outra construção | 10-27 | ✅ feita | `SiteSurroundings` |
@@ -347,7 +348,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 165 | **Armazém pequeno antes do grande** (autor 10-30): quando a vila precisa de armazenamento, abre primeiro o `storage_small` de 7×7; o `storage_majest` só abre após o galpão pequeno terminar | 10-30 | ✅ feita | `StoragePlans`, `ConstructionPriority` |
 | 166 | **Transição em volta do lote:** após cortar o terreno para a obra, o corredor de seis colunas sobe em degraus de um bloco até a encosta; a superfície cortada volta ao topo, com apoio sólido. Não corta caminho, fluido ou peça protegida | 10-31 | ✅ código; falta jogo | `LotTerraform`, `LotTerraformGameTest` |
 | 167 | **Cuidado físico do rebanho:** só pastor vivo a até 5 blocos alimenta ou abate; a passiva da bancada não cruza animais sozinha. O abate preserva pelo menos seis adultos por espécie (emenda das Regras 43, 68 e 132) | 10-31 | ✅ código; falta jogo | `ShepherdFlock`, `FlockCare`, `FlockHarvest`, `BenchPassives` |
-| 168 | **Curral por espécie:** quando há pares adultos de espécies distintas, a vila constrói currais intercalados com outras obras, contando cercados fechados existentes; um modelo `.nbt` de 15×15 serve a todos os biomas, com interior limpo, portão e tochas (emenda da Regra 72) | 10-31 | ✅ código; falta jogo | `PenPlans`, `ShepherdPens`, `colony/animal_pen.nbt` |
+| 168 | **Um curral grande por vila nova:** a vila gerada após esta regra constrói no máximo um curral grande, intercalado com outras obras, para até 20 animais. O modelo único em todos os biomas tem portão, tochas, água, 12 cultivos e grama no interior. Currais pequenos e cercados legados continuam reconhecidos e funcionam; eles não bloqueiam nem substituem o curral grande | 10-31; emenda 11-02 | ✅ código; falta jogo | `PenPlans`, `ShepherdPens`, `colony/large_animal_pen.nbt` |
 | 169 | **Passagem livre:** aldeão da colônia quebra aos poucos as folhas naturais que bloqueiam seu trajeto; folhas persistentes e estruturas protegidas permanecem | 10-31 | ✅ código; falta jogo | `LeafPaths` |
 | 170 | **Lote sem árvores:** ao escolher terreno para qualquer estrutura, remove a árvore natural inteira, copa conectada inclusive, antes da construção; madeira vai aos baús e excesso cai no mundo | 10-31 | ✅ código; falta jogo | `LotGrowth`, `SitePreparation` |
 
@@ -593,6 +594,38 @@ Os perfis Codex são `village-quick` (consulta), `village-audit` (diagnóstico),
 ./gradlew.bat javadoc
 python -m unittest discover -s tests
 ```
+
+### Sentinela Local
+
+**Sentinela Local** é nome oficial da varredura manual. Para pedir a execução
+completa ao Codex, use `rodar Sentinela Local`; ela usa o perfil `full`. O
+Sentinela não roda no login, não agenda tarefas e não altera o CI. Cada chamada
+preserva logs, XMLs e um resumo em
+`reports/test-runs/<UTC-id>/`.
+
+```powershell
+python scripts/test_lab.py quick --dry-run
+python scripts/test_lab.py --list
+python scripts/test_lab.py quick
+python scripts/test_lab.ps1 fast --repeat 3
+python scripts/test_lab.py full
+python scripts/test_lab.py --resume 20261101T120000Z
+```
+
+- `quick`: JUnit e propriedades jqwik.
+- `fast`: `quick` mais GameTests em servidor.
+- `full`: `fast` mais auditoria GameTest e PIT.
+
+Se uma suite falhar em uma repetição e passar em outra, o resumo é
+`UNSTABLE` e o comando sai não zero. GPU não acelera estas suites de servidor;
+uma futura camada visual de cliente precisa de validação Fabric separada.
+
+O resumo mostra duração e contagem por estado. Se a execução for interrompida,
+`--resume <UTC-id>` executa somente as suites ainda não registradas. A cópia de
+artefatos compara todos os arquivos internos, impedindo que um XML atualizado
+seja omitido porque o diretório pai conservou o mesmo horário. O script exige
+Python 3.9+; o wrapper `test_lab.sh` requer Git Bash, WSL ou outro shell POSIX
+e escolhe `python3` ou, na ausência dele, `python`.
 
 O build exige Java 21 (`JAVA_HOME` apontando para um JDK 21).
 

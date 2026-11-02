@@ -405,6 +405,7 @@ public final class CraftingWork {
             job.task.start();
         }
 
+        TaskProgressWatch.progressed(job.task);
         job.task.complete();
         WorkerStrikes.worked(workerId, job.task);
         TaskChain.nextAfter(job.task, job.crafted);

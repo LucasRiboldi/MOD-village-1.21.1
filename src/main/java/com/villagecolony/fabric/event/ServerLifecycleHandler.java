@@ -18,6 +18,7 @@ import com.villagecolony.data.save.ColonySavedData;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.data.save.WorkMarksSavedData;
+import com.villagecolony.data.save.DemandRetrySave;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.work.MineMarks;
 import com.villagecolony.fabric.work.MineReturn;
@@ -144,6 +145,8 @@ public final class ServerLifecycleHandler {
         // minas: o veio e o rastro voltam presos ao ramal de cada uma.
         com.villagecolony.fabric.work.WorkMemory.load(
                 com.villagecolony.data.save.WorkMemorySavedData.get(server).memory());
+        com.villagecolony.fabric.work.TaskProgressWatch.restoreRetries(
+                DemandRetrySave.get(server).retries());
 
         // E o traço de atividade de cada colônia — decisão 7B,
         // 2026-09-24. newestFirst() devolve do mais novo para o mais
@@ -312,6 +315,8 @@ public final class ServerLifecycleHandler {
 
         com.villagecolony.data.save.WorkMemorySavedData.get(server)
                 .sync(com.villagecolony.fabric.work.WorkMemory.save());
+        DemandRetrySave.get(server).sync(com.villagecolony.fabric.work.TaskProgressWatch.retries(
+                server.getOverworld().getTimeOfDay() / 24_000L));
 
         return new CopyCounts(roads.size(), sweeps.size(), openProjects().size());
     }

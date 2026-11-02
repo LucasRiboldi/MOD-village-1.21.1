@@ -458,6 +458,7 @@ public final class BuilderWork {
      */
     static void finish(Job job, UUID workerId, String why) {
         if (job.task.state() == TaskState.EXECUTING) {
+            TaskProgressWatch.progressed(job.task);
             job.task.complete();
             WorkerStrikes.worked(workerId, job.task);
             TaskChain.next(job.task);

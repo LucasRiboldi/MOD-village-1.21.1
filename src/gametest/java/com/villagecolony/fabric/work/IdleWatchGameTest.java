@@ -11,7 +11,7 @@ import net.minecraft.test.TestContext;
 
 import java.util.UUID;
 
-/** Regra 128: cinco minutos esperando com tarefa e ele a larga; a segunda vez em 10 minutos faz surgir. */
+/** Regra 128: a espera parada e o deslocamento sem resultado soltam a tarefa após cinco minutos. */
 public class IdleWatchGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_watch", tickLimit = 20)
@@ -24,7 +24,7 @@ public class IdleWatchGameTest implements FabricGameTest {
 
         try {
             for (int second = 1; second < IdleWatch.WAIT_LIMIT; second++) {
-                IdleWatch.sample(context.getWorld(), worker, second % 7 == 0 ? WorkTime.State.WALK : WorkTime.State.WAIT);
+                IdleWatch.sample(context.getWorld(), worker, WorkTime.State.WAIT);
             }
             context.assertFalse(VillageColonyMod.TASKS.assignedTo(worker).isEmpty(),
                     "largou antes dos 5 minutos de espera");
@@ -47,22 +47,51 @@ public class IdleWatchGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_watch", tickLimit = 20)
-    public void theSecondLetGoTenMinutesLaterMakesItAppear(TestContext context) {
-        Task task = VillageColonyMod.TASKS.create(
-                UUID.randomUUID(), TaskType.SMELT_MATERIAL, TaskPriority.PRODUCTION, ResourceType.GLASS, 4);
+    public void stationaryWatchDoesNotTreatWalkingAsWaiting(TestContext context) {
+        UUID worker = UUID.randomUUID();
+        Task task = VillageColonyMod.TASKS.create(UUID.randomUUID(), TaskType.SMELT_MATERIAL,
+                TaskPriority.PRODUCTION, ResourceType.SMOOTH_STONE, 4);
+        task.reserveFor(worker);
 
         try {
-            context.assertFalse(IdleWatch.isSecondTime(task, 1_000), "a primeira vez não faz surgir");
-            context.assertFalse(IdleWatch.isSecondTime(task, 1_000 + IdleWatch.APPEAR_AFTER - 1),
-                    "antes dos 10 minutos não surge");
-            context.assertTrue(IdleWatch.isSecondTime(task, 1_000 + IdleWatch.APPEAR_AFTER),
-                    "a segunda vez, 10 minutos depois, devia fazer surgir");
-            context.assertFalse(IdleWatch.isSecondTime(task, 1_000 + IdleWatch.APPEAR_AFTER + 1),
-                    "depois de surgir a conta recomeça");
+            for (int second = 1; second < IdleWatch.WAIT_LIMIT; second++) {
+                IdleWatch.sample(context.getWorld(), worker, WorkTime.State.WALK);
+            }
+            context.assertFalse(VillageColonyMod.TASKS.assignedTo(worker).isEmpty(),
+                    "watch estacionário não deve soltar quem ainda caminha");
         } finally {
             VillageColonyMod.TASKS.remove(task.id());
         }
 
         context.complete();
     }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_watch", tickLimit = 20)
+    public void usefulProgressResetsWalkingDeadline(TestContext context) {
+        UUID worker = UUID.randomUUID();
+        Task task = VillageColonyMod.TASKS.create(UUID.randomUUID(), TaskType.SMELT_MATERIAL,
+                TaskPriority.PRODUCTION, ResourceType.SMOOTH_STONE, 4);
+        task.reserveFor(worker);
+
+        try {
+            for (int second = 1; second < TaskProgressWatch.LIMIT_SECONDS; second++) {
+                TaskProgressWatch.sample(context.getWorld(), worker, WorkTime.State.WALK);
+            }
+            TaskProgressWatch.progressed(task);
+            for (int second = 1; second < TaskProgressWatch.LIMIT_SECONDS; second++) {
+                TaskProgressWatch.sample(context.getWorld(), worker, WorkTime.State.WALK);
+            }
+            context.assertFalse(VillageColonyMod.TASKS.assignedTo(worker).isEmpty(),
+                    "progresso útil não reiniciou o prazo da tarefa");
+            TaskProgressWatch.sample(context.getWorld(), worker, WorkTime.State.WALK);
+            context.assertTrue(VillageColonyMod.TASKS.assignedTo(worker).isEmpty(),
+                    "cinco minutos sem outro progresso mantiveram a tarefa presa");
+        } finally {
+            TaskProgressWatch.clearAll();
+            VillageColonyMod.TASKS.remove(task.id());
+        }
+
+        context.complete();
+    }
+
 }

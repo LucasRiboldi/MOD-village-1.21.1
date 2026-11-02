@@ -33,9 +33,8 @@ import java.util.OptionalInt;
 import java.util.UUID;
 
 /**
- * Quem assenta a rede de caminhos — Regra 125 (decisão D6 do autor, 2026-10-27): o pedreiro, o
- * carpinteiro e o fundidor, quando estão sem tarefa do ofício, <b>um por vez</b> por colônia, revezando
- * a cada {@link #STEPS_PER_TURN} passos.
+ * Quem assenta a rede de caminhos: somente o construtor, quando não há obra aberta.
+ * Os demais ofícios permanecem na própria atividade.
  *
  * <p>Cada passo é uma coluna de caminho ({@link #layStep}, 1 de largura desde 2026-10-28), <b>rente ao chão</b> (autor,
  * 2026-10-28): o bloco de cima vira caminho; o buraco de um bloco ganha o caminho por cima; o corte é de
@@ -49,9 +48,9 @@ public final class PathPaving {
         ServerMemory.register(PathPaving.class, PathPaving::clearAll);
     }
 
-    /** O rodízio de quem assenta, na ordem do autor. */
+    /** Construção de rua não desvia os ofícios produtivos. */
     static final List<ProfessionType> PAVERS =
-            List.of(ProfessionType.MASON, ProfessionType.CARPENTER, ProfessionType.SMELTER);
+            List.of(ProfessionType.BUILDER);
 
     /** Passos que um assenta antes de passar a vez. */
     static final int STEPS_PER_TURN = 8;
@@ -263,7 +262,7 @@ public final class PathPaving {
         return true;
     }
 
-    /** O próximo do rodízio que está livre; sem ele, o primeiro livre de qualquer um dos três. */
+    /** O construtor livre recebe a próxima etapa da rua. */
     private static Optional<VillagerEntity> nextPaver(ServerWorld world, UUID colonyId) {
         int last = LAST.getOrDefault(colonyId, PAVERS.size() - 1);
 

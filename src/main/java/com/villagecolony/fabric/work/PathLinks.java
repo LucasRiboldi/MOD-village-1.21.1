@@ -112,7 +112,7 @@ public final class PathLinks {
         PLANNED_AT.put(colony.id(), now);
         SET_ASIDE.entrySet().removeIf(entry -> now - entry.getValue() >= RETRY_AFTER);
 
-        Set<Long> roads = roadsOf(colony.id());
+        Set<Long> roads = roadsOf(world, colony);
         BlockPos hub = MinecraftTypeAdapter.toBlockPos(colony.center());
         int[] count = new int[2];
 
@@ -250,6 +250,12 @@ public final class PathLinks {
     }
 
     /** As colunas de caminho que a colônia conhece. */
+    static Set<Long> roadsOf(ServerWorld world, Colony colony) {
+        return RoadGraphActivation.roads(world, colony).orElseGet(() -> RoadIndex.roadsOf(colony.id())
+                .map(roads -> (Set<Long>) new HashSet<>(roads.columns())).orElseGet(HashSet::new));
+    }
+
+    /** Índice legado para testes de traçado isolado. O ciclo usa {@link #roadsOf(ServerWorld, Colony)}. */
     static Set<Long> roadsOf(UUID colonyId) {
         return RoadIndex.roadsOf(colonyId).map(roads -> (Set<Long>) new HashSet<>(roads.columns())).orElseGet(HashSet::new);
     }

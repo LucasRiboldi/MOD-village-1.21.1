@@ -49,7 +49,7 @@ public interface VillageOrigin {
     }
 
     /** Versões e políticas desconhecidas não habilitam comportamento — ADR-043. */
-    static boolean isCurrent(@Nullable StructureStart start) {
+    public static boolean isCurrent(@Nullable StructureStart start) {
         if (start == null || !start.hasChildren()) {
             return false;
         }

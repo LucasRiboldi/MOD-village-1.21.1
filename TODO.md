@@ -1,13 +1,27 @@
 # TODO
 
-## Rede e currais — desenho aprovado em 01-11-2026
+## Sentinela local de testes — 01-11-2026
+
+- [x] Criar varredura manual com perfis `quick`, `fast` e `full`, logs e
+      relatórios por execução; não inicia sozinha e não muda CI.
+- [x] Corrigir cópia de artefatos por árvore de arquivos e permitir retomada de
+      execução interrompida, sem executar Gradle durante o modo de playtest.
+- [x] Criar dois testes Python pequenos para cópia recursiva e `--resume`; ambos
+      passaram sem iniciar Gradle.
+- [ ] Validar uma futura camada visual de cliente/GPU em spike Fabric isolada,
+      no perfil `village-max`; não entra no fluxo diário sem prova reproduzível.
+
+## Rede e currais — implementação 0.4.3 em 02-11-2026
 
 - [x] Grafo puro e codec paralelo inicial, com testes de topologia, compatibilidade e corrupção.
+- [x] Ativar grafo em vilas novas após converter o índice legado, sem alterar vilas existentes.
+- [x] Criar curral grande único de até 20 animais, com água, cultivos, grama, portão e tochas;
+      manter currais pequenos e cercados legados utilizáveis.
 - [ ] Explicar a falha intermitente de `PenEscape` antes da integração da rede e da condução.
 - [ ] Explicar o desvio intermitente pela água em `ColonyPathing`; o controle A/B/A não reproduziu a rota defeituosa.
-- [ ] Revalidar ruas no mundo e integrar migração reversível, origem de geração e planejamento hierárquico.
+- [ ] Revalidar ruas e migração no mundo novo antes de declarar o planejamento hierárquico concluído.
 - [ ] Provar condução física de pastor e animal; atualizar modelo, cultivos e crescimento local do curral.
-- [ ] Validar bateria integrada, documentação e JAR após cada feature commitada.
+- [x] Registrar a bateria anterior, documentação e JAR local 0.4.3; falta playtest em mundo novo.
 
 Detalhes nos planos de [rede](docs/superpowers/plans/2026-11-01-hierarchical-roads.md)
 e [currais](docs/superpowers/plans/2026-11-01-pens.md). Não representam gameplay concluído.

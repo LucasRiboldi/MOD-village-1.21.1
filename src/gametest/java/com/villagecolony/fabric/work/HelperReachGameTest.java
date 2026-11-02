@@ -9,11 +9,6 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.core.task.model.Task;
-import com.villagecolony.core.task.model.TaskPriority;
-import com.villagecolony.core.task.model.TaskState;
-import com.villagecolony.core.task.model.TaskType;
-import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.ProfessionType;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.entity.EntityType;
@@ -25,50 +20,11 @@ import net.minecraft.util.math.BlockPos;
 import java.util.List;
 import java.util.UUID;
 
-/** O ajudante de obra só fica com a peça que alcança — regra do autor, 2026-10-11. */
+/** Só o construtor executa obra. */
 public class HelperReachGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials", tickLimit = 20)
-    public void aHelperLeavesAnUnreachablePieceAndTheBuilderTriesAnotherSide(TestContext context) {
-        UUID colony = UUID.randomUUID();
-        UUID shepherd = UUID.randomUUID();
-        UUID builder = UUID.randomUUID();
-        BlockPos spot = new BlockPos(1, 64, 1);
-        BlockPos target = new BlockPos(2, 64, 1);
-
-        VillageColonyMod.WORKERS.register(shepherd, colony).assign(ProfessionType.SHEPHERD);
-        VillageColonyMod.WORKERS.register(builder, colony).assign(ProfessionType.BUILDER);
-        Task helped = VillageColonyMod.TASKS.create(colony, TaskType.BUILD, TaskPriority.CONSTRUCTION, ResourceType.OAK_PLANKS, 1);
-        Task built = VillageColonyMod.TASKS.create(colony, TaskType.BUILD, TaskPriority.CONSTRUCTION, ResourceType.OAK_PLANKS, 1);
-
-        try {
-            helped.reserveFor(shepherd);
-            built.reserveFor(builder);
-
-            boolean helperGoesOn = HelperReach.gaveUp(new BuilderWork.Job(helped, UUID.randomUUID()), shepherd, spot, target);
-            boolean builderGoesOn = HelperReach.gaveUp(new BuilderWork.Job(built, UUID.randomUUID()), builder, spot, target);
-
-            context.assertTrue(!helperGoesOn && helped.state() == TaskState.AVAILABLE,
-                    "o pastor ajudante devia largar a peça que não alcança: " + helped.state());
-            context.assertTrue(builderGoesOn && built.isHeld(),
-                    "o construtor devia seguir tentando outro lado: " + built.state());
-        } finally {
-            VillageColonyMod.TASKS.remove(helped.id());
-            VillageColonyMod.TASKS.remove(built.id());
-            VillageColonyMod.WORKERS.remove(shepherd);
-            VillageColonyMod.WORKERS.remove(builder);
-        }
-
-        context.complete();
-    }
-
-    /**
-     * O ajudante só pega a obra a até 32 blocos dela; o construtor, de qualquer
-     * lugar — regra do autor, 2026-10-11 (playtest da 0.3.26: o pastor pegou a
-     * última vidraça e parou a 51 blocos).
-     */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials", tickLimit = 20)
-    public void aHelperTakesTheBuildOnlyNearTheSite(TestContext context) {
+    public void onlyTheBuilderCanTakeOrStartTheBuild(TestContext context) {
         UUID colony = UUID.randomUUID();
         VillagerEntity shepherdEntity = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 2, 1));
         VillagerEntity builderEntity = context.spawnEntity(EntityType.VILLAGER, new BlockPos(2, 2, 1));
@@ -82,24 +38,22 @@ public class HelperReachGameTest implements FabricGameTest {
             ConstructionProject near = siteAt(colony, new ColonyPos(here.x() + 20, here.y(), here.z()));
             ConstructionProject far = siteAt(colony, new ColonyPos(here.x() + 40, here.y(), here.z()));
 
-            context.assertTrue(HelperReach.mayTake(context.getWorld(), shepherd, near),
-                    "a 20 blocos o pastor pode ajudar a obra");
+            context.assertFalse(HelperReach.mayTake(context.getWorld(), shepherd, near),
+                    "o pastor assumiu obra do construtor");
             context.assertFalse(HelperReach.mayTake(context.getWorld(), shepherd, far),
-                    "a 40 blocos o pastor não devia pegar a obra");
+                    "o pastor distante assumiu obra do construtor");
             context.assertTrue(HelperReach.mayTake(context.getWorld(), builder, far),
                     "o construtor pega a obra de qualquer distância");
-            context.assertTrue(HelperReach.stallLimit(shepherd.villagerId()) == HelperReach.HELPER_STALL
-                            && HelperReach.stallLimit(builder.villagerId()) == BuilderWork.STALL_LIMIT,
-                    "o ajudante desiste em 30 s; o construtor tem o prazo inteiro");
+            context.assertTrue(HelperReach.stallLimit(builder.villagerId()) == BuilderWork.STALL_LIMIT,
+                    "o construtor não recebeu prazo inteiro");
 
-            // Quem começa a obra é o construtor; o pastor perto só ajuda depois (autor, 11-10).
             context.assertFalse(HelperReach.mayStart(context.getWorld(), shepherd, near),
-                    "com construtor na colônia, o pastor não devia começar a obra");
+                    "o pastor começou obra");
             context.assertTrue(HelperReach.mayStart(context.getWorld(), builder, far),
                     "o construtor começa a obra de qualquer distância");
             builder.assign(ProfessionType.SHEPHERD);
-            context.assertTrue(HelperReach.mayStart(context.getWorld(), shepherd, near),
-                    "sem construtor na colônia, quem está perto começa a obra");
+            context.assertFalse(HelperReach.mayStart(context.getWorld(), shepherd, near),
+                    "sem construtor, outro ofício começou obra");
         } finally {
             VillageColonyMod.WORKERS.remove(shepherd.villagerId());
             VillageColonyMod.WORKERS.remove(builder.villagerId());
@@ -110,10 +64,7 @@ public class HelperReachGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /**
-     * Com só a peça de lado faltando, o construtor segura a obra e espera; o
-     * ajudante a solta — regra do autor, 2026-10-11.
-     */
+    /** Com só a peça de lado faltando, só o construtor segura a obra e espera. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials", tickLimit = 20)
     public void theBuilderHoldsTheBuildWhileThePieceIsMissing(TestContext context) {
         UUID colony = UUID.randomUUID();

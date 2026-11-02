@@ -69,6 +69,19 @@ class ActionReportTest(unittest.TestCase):
         self.assertIn("100%", text)
         self.assertIn("0%", text)
 
+    def test_open_task_reports_elapsed_and_time_without_progress(self):
+        lines = [
+            '{"t":0,"worker":"a","prof":"MINER","action":"TASK_TAKEN","task":"COLLECT_STONE"}',
+            '{"t":100,"worker":"a","prof":"MINER","action":"MINED","what":"stone","n":1}',
+            '{"t":500,"worker":"b","prof":"FARMER","action":"HARVESTED","what":"wheat","n":1}',
+        ]
+        by_prof, by_worker, minutes = action_report.summarize(action_report.parse(lines))
+
+        self.assertEqual(1, len(by_worker["a"]["open_tasks"]))
+        self.assertEqual(500, by_worker["a"]["open_tasks"][0]["elapsed"])
+        self.assertEqual(400, by_worker["a"]["open_tasks"][0]["without_progress"])
+        self.assertIn("sem progresso 20s", action_report.render(by_prof, by_worker, minutes))
+
 
     def test_the_block_codes_are_counted_per_profession(self):
         lines = [

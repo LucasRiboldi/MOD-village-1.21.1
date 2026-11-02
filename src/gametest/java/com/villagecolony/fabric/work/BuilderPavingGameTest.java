@@ -93,9 +93,9 @@ public class BuilderPavingGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** O carpinteiro sem tarefa também calça a rua — regra do autor, 2026-10-12. */
+    /** Ofício fixo: carpinteiro não calça rua. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "carpenter_paving")
-    public void anIdleCarpenterPavesTheRoad(TestContext context) {
+    public void anIdleCarpenterDoesNotPaveTheRoad(TestContext context) {
         ServerWorld world = context.getWorld();
 
         for (int x = 0; x <= 6; x++) {
@@ -126,10 +126,9 @@ public class BuilderPavingGameTest implements FabricGameTest {
         try {
             BuilderPaving.pass(world, colony);
 
-            // Ao alcance do buraco, ele calça na mesma passada; longe, sai andando até lá.
-            context.assertTrue(BuilderPaving.isPaving(carpenter.getUuid())
+            context.assertFalse(BuilderPaving.isPaving(carpenter.getUuid())
                             || world.getBlockState(context.getAbsolutePos(new BlockPos(3, Y, 3))).isOf(Blocks.DIRT_PATH),
-                    "o carpinteiro sem tarefa não foi calçar a rua");
+                    "o carpinteiro assumiu calçamento do construtor");
         } finally {
             for (int x = 0; x <= 6; x++) {
                 for (int z = 1; z <= 5; z++) {

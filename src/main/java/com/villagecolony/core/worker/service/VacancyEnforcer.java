@@ -2,11 +2,8 @@ package com.villagecolony.core.worker.service;
 
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.Objects;
@@ -15,13 +12,13 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Quem perde a função quando falta baú — separado de {@link ProfessionAssigner}
- * em 2026-09-24, quando ele passou de 500 linhas.
+ * Compatibilidade da antiga reposição por baú — separada de
+ * {@link ProfessionAssigner} em 2026-09-24, quando ele passou de 500 linhas.
  *
  * <p>O {@code ProfessionAssigner} decide <b>quem recebe</b> uma vaga; esta
- * classe decide o lado oposto: tirar a função do trabalhador sem baú quando
- * existe candidato que conseguiria um. As regras e os motivos estão nos
- * comentários de cada método, que vieram junto sem mudança.
+ * classe mantinha o lado oposto: tirar a função do trabalhador sem baú quando
+ * existia candidato que conseguiria um. Profissões agora são fixas; falta de
+ * baú impede trabalho, mas não troca o ofício do aldeão.
  */
 public final class VacancyEnforcer {
 
@@ -29,14 +26,9 @@ public final class VacancyEnforcer {
     }
 
     /**
-     * Substitui trabalhadores sem baú quando há candidatos equipáveis.
+     * Mantém profissões existentes quando faltam baús.
      *
-     * <p>Profissões existentes nunca são removidas apenas porque a
-     * população caiu. A substituição aqui só trata a falta de baú, e só
-     * quando existe candidato que possa receber a vaga.
-     *
-     * @return os aldeões que perderam a função, para quem chama soltar o
-     *     que eles seguravam
+     * @return sempre vazio: profissão é fixa
      */
     public static Set<UUID> enforceVacancies(WorkerService workers, UUID colonyId) {
         return enforceVacancies(workers, colonyId, villagerId -> true);
@@ -60,22 +52,7 @@ public final class VacancyEnforcer {
     }
 
     /**
-     * O mesmo, com o teto de trocas pelos candidatos que conseguiriam baú.
-     *
-     * @param replacements quantos aldeões sem função conseguiriam baú
-     *     agora. É o teto de trocas: um trabalhador sem baú perde a
-     *     função para quem consegue um, e só quando esse alguém existe.
-     *
-     *     <p>Decisão do autor em 2026-08-13, depois de a vila
-     *     {@code c18264c9} passar duas sessões com dois lenhadores sem
-     *     baú devolvendo a tarefa à fila a cada trinta segundos. A
-     *     preferência de atribuição não os alcançava: ela escolhe quem
-     *     <b>recebe</b> a função, e eles já a tinham do save.
-     *
-     *     <p>Sem candidato, ninguém é dispensado: vaga vazia não é
-     *     melhor que trabalhador sem baú, e o jogador pode construir o
-     *     baú depois. É a mesma regra da atribuição, vista do outro
-     *     lado.
+     * Compatibilidade com chamadores que ainda calculam substitutos.
      */
     public static Set<UUID> enforceVacancies(
             WorkerService workers, UUID colonyId, Predicate<UUID> equipped, int replacements) {
@@ -84,8 +61,7 @@ public final class VacancyEnforcer {
     }
 
     /**
-     * Substitui trabalhadores sem baú sem retirar o último ocupante de uma
-     * função da fundação da vila.
+     * Compatibilidade com chamadores que preservam a fundação.
      */
     public static Set<UUID> enforceVacanciesPreservingFoundation(
             WorkerService workers, UUID colonyId, Predicate<UUID> equipped, int replacements) {
@@ -104,50 +80,9 @@ public final class VacancyEnforcer {
         Objects.requireNonNull(colonyId, "colonyId");
         Objects.requireNonNull(equipped, "equipped");
 
-        List<Worker> employed = new ArrayList<>();
-
-        for (Worker worker : workers.ofColony(colonyId)) {
-            if (worker.hasProfession()) {
-                employed.add(worker);
-            }
-        }
-
-        Set<UUID> demoted = new LinkedHashSet<>();
-        Map<ProfessionType, Integer> counts = countByProfession(employed);
-
-        // E a troca: quem ficou com a vaga sem conseguir baú a perde
-        // para quem consegue, enquanto houver quem consiga.
-        int left = replacements;
-
-        for (Worker worker : employed) {
-            if (left <= 0) {
-                break;
-            }
-
-            if (demoted.contains(worker.villagerId()) || equipped.test(worker.villagerId())) {
-                continue;
-            }
-
-            ProfessionType role = worker.profession().orElse(null);
-
-            if (preserveFoundation
-                    && role != null
-                    && ProfessionAssigner.FOUNDATION_ORDER.contains(role)
-                    && counts.getOrDefault(role, 0) <= 1) {
-                continue;
-            }
-
-            worker.unassign();
-            demoted.add(worker.villagerId());
-
-            if (role != null) {
-                counts.merge(role, -1, Integer::sum);
-            }
-
-            left--;
-        }
-
-        return demoted;
+        // Regra 2026-11-02: aldeão não troca de profissão. Os argumentos são
+        // preservados para compatibilidade dos saves e dos chamadores antigos.
+        return Set.of();
     }
 
     static Map<ProfessionType, Integer> countByProfession(

@@ -8,6 +8,62 @@
 
 # Village Colony — Development Log
 
+## 2026-11-02 — fechamento local 0.4.3 e handoff
+
+A versão 0.4.3 consolida o watchdog de progresso, a reposição física na segunda
+falha diária, as metas ociosas de mina e fundição, a casa do mineiro, o curral
+grande único e a ativação compatível do grafo de ruas. Essas regras físicas são
+aplicadas apenas a vilas novas; vilas existentes mantêm ruas, currais e índice
+legados. A lista de continuação fica em `TODO.md`, e o desenho aprovado em
+`docs/superpowers/specs/2026-11-02-village-work-supply-and-roads-design.md`.
+
+Por decisão do autor, este fechamento não executou testes. A evidência anterior
+permanece o Sentinela Local full de 02-11: 1.691 unitários, 977 GameTests,
+propriedades, auditoria e mutação aprovados em
+`reports/test-runs/20261102T125155Z/summary.md`. Foi executado somente
+`./gradlew.bat remapJar -x test -x runGametest --console=plain` para gerar o
+artefato. O JAR `village-colony-0.4.3.jar` foi copiado para `build/libs/`,
+`downloads/` e `%APPDATA%/.minecraft/mods/` com cliente fechado; as três cópias
+conferem SHA-256
+`5A95A448D74152A17646CB0F0B7E1299DDDCC6A1FFC672E6595DD31057256BAF`.
+
+## 2026-11-01 — Sentinela local de testes manual
+
+Criado `scripts/test_lab.py`, com wrappers PowerShell e shell, para rodar sob
+chamada explícita três perfis de testes já existentes: `quick` (JUnit e jqwik),
+`fast` (mais GameTests) e `full` (mais auditoria GameTest e PIT). Cada execução
+guarda metadados, stdout, stderr, XMLs/relatórios atualizados e resumo em
+`reports/test-runs/<UTC-id>/`; essa saída é local e ignorada pelo Git.
+
+Em 02-11, a varredura recebeu o nome oficial **Sentinela Local**. A frase
+conversacional `rodar Sentinela Local` solicita a execução completa (`full`)
+ao Codex; o nome não agenda nem dispara testes automaticamente.
+
+A primeira execução `full` passou em 02-11: unitários (1m30), propriedades
+(7s), 979 GameTests (2m43), auditoria GameTest (1 teste, 2m46) e PIT. O
+`remapJar` gerou `village-colony-0.4.2.jar`; as cópias em `build/libs`,
+`downloads` e TLauncher têm SHA-256
+`5BEFF5C20D1514A3B3B9BC474DF8BB27D7913C60501277AFFEADBBF7CD254389`.
+
+O orquestrador não altera Gradle ou CI. Ao repetir uma suite, resultado misto
+vira `UNSTABLE` e mantém saída não zero, evitando que uma intermitência pareça
+verde. O modo temporário de correção por playtest impediu rodar baterias nesta
+entrega: somente `--dry-run` dos perfis e dos wrappers foi executado. A prova de
+cliente visual/GPU continua fora desta entrega, condicionada a um spike Fabric
+no perfil `village-max`.
+
+Revisão posterior corrigiu a detecção de artefatos: comparar somente o horário
+da pasta poderia ignorar XMLs e relatórios alterados internamente. O Sentinela
+agora compara a árvore de arquivos, registra duração e contagem por estado e
+persiste o resumo depois de cada suite. `--resume <UTC-id>` retoma apenas suites
+que ainda não ficaram registradas. Essas mudanças receberam somente validação
+estática e `--dry-run`; o bloqueio temporário continua proibindo Gradle.
+O wrapper POSIX também passou a escolher `python` quando `python3` não existir,
+para funcionar no Git Bash comum do Windows. Testes Python para os dois fluxos
+de persistência foram liberados e passaram em 02-11. Um força conteúdo novo com
+mesmo tamanho e horário para provar o hash da árvore; outro prova que a retomada
+persiste `resumed_at` em `metadata.json`. Nenhuma bateria Gradle foi iniciada.
+
 ## 2026-11-01 — fechamento local 0.4.1
 
 Versão atualizada para 0.4.1 depois das correções de terreno, trabalho e rota
@@ -11372,3 +11428,27 @@ baú pessoal antes de continuar a fundição. Não foram criados nem executados
 testes: o modo temporário de correção por playtest os mantém suspensos. A única
 verificação desta rodada foi `./gradlew.bat classes --console=plain --no-daemon`,
 aprovada. A confirmação permanece no playtest do autor.
+
+## 02-11-2026 — progresso de tarefa, rede e curral grande
+
+Foi instalado um watchdog de progresso útil para todas as profissões. Após 300
+segundos sem efeito no mundo, a tarefa é liberada; na segunda falha diária da
+mesma demanda não construtiva, a reposição física registra `WAITED_TOO_LONG`.
+O contador e as tentativas persistem no save. O mineiro ocioso mantém a frente
+planejada, sem escavar escadas, até 64 pedras por dia. O fundidor ocioso só
+reserva lingotes de ferro, cobre e ouro até 64 por tipo.
+
+Para vilas novas, o grafo de ruas é ativado após inspecionar e converter o
+índice legado, sem alterar vilas existentes. A mesma delimitação protege o novo
+curral grande: no máximo um por vila, capacidade 20, água, 12 cultivos, grama,
+portão e tochas; currais pequenos e cercados antigos continuam utilizáveis.
+Também foi adicionada a casa do mineiro próxima ao pórtico da mina.
+
+Testes unitários, de propriedades e auditoria do Sentinela passaram antes da
+rodada final. Um GameTest do limite de lingotes falhou porque a fixture tentava
+guardar uma pilha de 96 em um baú Vanilla, que aceita 64; a fixture passou a
+dividir as pilhas sem mudar o código de produção. Depois disso,
+`./gradlew.bat runGametest` passou com 977/977. A bateria Sentinela completa
+passou em `reports/test-runs/20261102T125155Z` (356,9 s): unitários,
+propriedades, GameTests, auditoria e mutação, cinco de cinco. O playtest em
+mundo novo permanece a validação visual e comportamental final desta sessão.

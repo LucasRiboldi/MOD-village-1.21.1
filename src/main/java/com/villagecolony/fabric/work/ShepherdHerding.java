@@ -136,7 +136,7 @@ final class ShepherdHerding {
 
             if (entry.contains("inside")) {
                 herd.pen = new ShepherdPens.Pen(herd.fence, BlockPos.fromLong(entry.getLong("inside")),
-                        BlockPos.fromLong(entry.getLong("outside")), java.util.Set.of());
+                        BlockPos.fromLong(entry.getLong("outside")), java.util.Set.of(), false);
             }
 
             HERDS.put(shepherd, herd);

@@ -41,6 +41,7 @@ import com.villagecolony.fabric.integration.VillageForest;
 import com.villagecolony.fabric.integration.VillagerScanner;
 import com.villagecolony.fabric.work.IdleLog;
 import com.villagecolony.fabric.work.MinerWork;
+import com.villagecolony.fabric.work.MineSupply;
 import com.villagecolony.fabric.work.FarmerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
@@ -244,10 +245,9 @@ final class ColonyCycleRunner {
         // tábua. Medida do mesmo jeito e pelo mesmo motivo.
         int plankRoom = survey.freeSpaceForGroup(ResourceGroup.PLANKS);
 
-        // E a pedra, só no baú de quem a cava — 2026-09-25, decisão do autor
-        // ("galerias novas sem parar"). Ver ColonyGoals.of: medir a vila
-        // inteira contaria todo slot vazio de todo baú como lugar de pedra.
-        int stoneRoom = ColonyChests.minersRoom(overworld, colony.id());
+        // A pedra só cabe no baú de quem a cava. A meta diária é decidida
+        // depois que a obra for conhecida, para nunca competir com material dela.
+        int minerStoneRoom = ColonyChests.minersRoom(overworld, colony.id());
 
         // Até aqui é baú: uma só fotografia produz estoque e as duas
         // medidas de espaço, sem reler os mesmos inventários no ciclo.
@@ -342,20 +342,21 @@ final class ColonyCycleRunner {
                 // A tora que a obra pede bruta: a meta não a conta como tábua (A-1).
                 ConstructionDemand.rawWoodNeededBy(colony));
 
+        int stoneRoom = work.constructionMaterials().isEmpty() ? MineSupply.room(
+                colony.id(), overworld.getTimeOfDay(),
+                survey.resources().total().amountOfGroup(stone.group()), minerStoneRoom)
+                : 0;
         // E a placa da obra fica sabendo do estoque — 2026-09-15. O ciclo
         // acabou de ler os baús; a placa desenha uma vez por segundo e
         // reler ali multiplicaria por trinta o custo da fase `chests`.
         // Ver SiteMarker.remember.
         SiteMarker.remember(colony.id(), survey.resources().total());
-
         // A obra inteira: varredura de lote, crescimento de rua, paleta e
         // a conta do que a construção pede. É a fase que o plano suspeita
         // ser a cara, e agora ela responde por si.
         mark = CycleCost.since(CycleCost.Phase.PLANNER, mark);
-
         // A obra eleva primeiro a prioridade da rota que destrava sua fila. Regra 40, ADR-040.
         ConstructionSupplyDispatches.prioritizeForCycle(overworld, colony);
-
         int assigned = ColonyCycle.run(
                 colony.id(),
                 survey.resources().total(),

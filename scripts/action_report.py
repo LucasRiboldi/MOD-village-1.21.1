@@ -62,7 +62,7 @@ def summarize(records):
                                    "done_ticks": [], "workers": set(), "reasons": Counter(),
                                    "codes": Counter()})
     by_worker = defaultdict(lambda: {"prof": "", "events": Counter(), "actions": Counter(),
-                                     "released_tasks": Counter()})
+                                     "released_tasks": Counter(), "open_tasks": {}})
     first = min((r.get("t", 0) for r in records), default=0)
     last = max((r.get("t", 0) for r in records), default=0)
 
@@ -86,12 +86,28 @@ def summarize(records):
                 detail = r.get("detail", "")
                 if detail and detail not in TASK_STATES:
                     p["reasons"][action + ": " + reason_of(detail)] += 1
+            task_key = (r.get("task", "?"), r.get("what", ""))
+            if action in ("TASK_TAKEN", "TASK_STARTED"):
+                opened = w["open_tasks"].setdefault(task_key, {"opened": r.get("t", 0),
+                                                                  "progress": r.get("t", 0)})
+                opened["progress"] = r.get("t", 0)
+            elif action in ("TASK_DONE", "TASK_RELEASED", "TASK_CANCELLED"):
+                w["open_tasks"].pop(task_key, None)
         else:
             p["actions"][action] += 1
             p["amount"][action] += r.get("n", 1)
             if action in REASON_ACTIONS:
                 p["reasons"][action + ": " + reason_of(r.get("detail", ""))] += 1
             w["actions"][action] += 1
+            for opened in w["open_tasks"].values():
+                opened["progress"] = r.get("t", 0)
+
+    for worker in by_worker.values():
+        worker["open_tasks"] = [
+            {"task": task, "elapsed": max(0, last - opened["opened"]),
+             "without_progress": max(0, last - opened["progress"])}
+            for task, opened in worker["open_tasks"].items()
+        ]
 
     minutes = max(1e-9, (last - first) / TICKS_PER_MINUTE)
     return by_prof, by_worker, minutes
@@ -118,8 +134,12 @@ def render(by_prof, by_worker, minutes):
     for worker, w in ranked:
         why = ", ".join(f"{k} ×{v}" for k, v in w["released_tasks"].most_common(2))
         acts = ", ".join(f"{k} {v}" for k, v in w["actions"].most_common(3))
+        opened = ", ".join(
+            f"{task['task'][0]} {task['task'][1]}: {task['elapsed'] / 20:.0f}s, sem progresso "
+            f"{task['without_progress'] / 20:.0f}s" for task in w["open_tasks"])
         out.append(f"  {worker} {w['prof']:<10} feitas {w['events']['TASK_DONE']:>3}, "
-                   f"soltas {w['events']['TASK_RELEASED']:>3}  {acts}{'  | soltou: ' + why if why else ''}")
+                   f"soltas {w['events']['TASK_RELEASED']:>3}  {acts}{'  | soltou: ' + why if why else ''}"
+                   f"{'  | aberta: ' + opened if opened else ''}")
     reasons = [(prof, r, n) for prof in sorted(by_prof) for r, n in by_prof[prof]["reasons"].most_common(5)]
     if reasons:
         out.append("")
