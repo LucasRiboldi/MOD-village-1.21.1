@@ -12,6 +12,19 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.2] — Sentinela Local (2026-11-02, JAR local)
+
+### Adicionado
+- Sentinela Local: orquestrador manual de `quick`, `fast` e `full`, com logs,
+  XMLs e resumo isolados por execução.
+- Retomada de execução interrompida e detecção por hash de artefatos que mudam
+  sem alterar tamanho ou horário.
+- Wrappers PowerShell e POSIX; dois testes Python de persistência do orquestrador.
+
+### Alterado
+- O comando conversacional `rodar Sentinela Local` solicita o perfil completo,
+  sem agendar tarefas, alterar o CI ou abrir o jogo automaticamente.
+
 ## [0.4.1] — correções e diagnóstico após o jogo da 0.4.0 (2026-11-01, JAR local)
 
 ### Adicionado

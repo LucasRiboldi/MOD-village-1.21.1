@@ -8,6 +8,43 @@
 
 # Village Colony — Development Log
 
+## 2026-11-01 — Sentinela local de testes manual
+
+Criado `scripts/test_lab.py`, com wrappers PowerShell e shell, para rodar sob
+chamada explícita três perfis de testes já existentes: `quick` (JUnit e jqwik),
+`fast` (mais GameTests) e `full` (mais auditoria GameTest e PIT). Cada execução
+guarda metadados, stdout, stderr, XMLs/relatórios atualizados e resumo em
+`reports/test-runs/<UTC-id>/`; essa saída é local e ignorada pelo Git.
+
+Em 02-11, a varredura recebeu o nome oficial **Sentinela Local**. A frase
+conversacional `rodar Sentinela Local` solicita a execução completa (`full`)
+ao Codex; o nome não agenda nem dispara testes automaticamente.
+
+A primeira execução `full` passou em 02-11: unitários (1m30), propriedades
+(7s), 979 GameTests (2m43), auditoria GameTest (1 teste, 2m46) e PIT. O
+`remapJar` gerou `village-colony-0.4.2.jar`; as cópias em `build/libs`,
+`downloads` e TLauncher têm SHA-256
+`5BEFF5C20D1514A3B3B9BC474DF8BB27D7913C60501277AFFEADBBF7CD254389`.
+
+O orquestrador não altera Gradle ou CI. Ao repetir uma suite, resultado misto
+vira `UNSTABLE` e mantém saída não zero, evitando que uma intermitência pareça
+verde. O modo temporário de correção por playtest impediu rodar baterias nesta
+entrega: somente `--dry-run` dos perfis e dos wrappers foi executado. A prova de
+cliente visual/GPU continua fora desta entrega, condicionada a um spike Fabric
+no perfil `village-max`.
+
+Revisão posterior corrigiu a detecção de artefatos: comparar somente o horário
+da pasta poderia ignorar XMLs e relatórios alterados internamente. O Sentinela
+agora compara a árvore de arquivos, registra duração e contagem por estado e
+persiste o resumo depois de cada suite. `--resume <UTC-id>` retoma apenas suites
+que ainda não ficaram registradas. Essas mudanças receberam somente validação
+estática e `--dry-run`; o bloqueio temporário continua proibindo Gradle.
+O wrapper POSIX também passou a escolher `python` quando `python3` não existir,
+para funcionar no Git Bash comum do Windows. Testes Python para os dois fluxos
+de persistência foram liberados e passaram em 02-11. Um força conteúdo novo com
+mesmo tamanho e horário para provar o hash da árvore; outro prova que a retomada
+persiste `resumed_at` em `metadata.json`. Nenhuma bateria Gradle foi iniciada.
+
 ## 2026-11-01 — fechamento local 0.4.1
 
 Versão atualizada para 0.4.1 depois das correções de terreno, trabalho e rota
