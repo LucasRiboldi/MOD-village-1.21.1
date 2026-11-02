@@ -1,5 +1,14 @@
 # STATE — 2026-11-02
 
+> **0.4.5 — aplicativo local do Sentinela pendente:** `Sentinela/Abrir-Sentinela.cmd`
+> abre uma janela Windows que chama o orquestrador oficial sem IA. A tela expõe
+> perfil, repetição, simulação e retomada, transmite a saída e abre os relatórios
+> existentes. Não agenda tarefas, não muda CI e não duplica a lógica de testes.
+> A validação fica restrita a importação/sintaxe e `--dry-run`, pois o modo
+> temporário de correção por playtest ainda suspende as baterias Java. JAR local
+> 0.4.5 em `build/libs`, `downloads/` e TLauncher: SHA-256
+> `6D180AE9701125CE26B39CAA10B37A6BA1588664AE58C8D055A785A6DA23FA53`.
+
 > **0.4.4 — fechamento rastreável pendente:** `FECHAR-RAPIDO` confere os
 > documentos vivos antes do PR; `REGISTRO-RELEASE` transforma o registro humano
 > versionado em evidência de commit e SHA-256 para a publicação GitHub. Push de

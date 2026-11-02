@@ -8,6 +8,8 @@
       execução interrompida, sem executar Gradle durante o modo de playtest.
 - [x] Criar dois testes Python pequenos para cópia recursiva e `--resume`; ambos
       passaram sem iniciar Gradle.
+- [x] Criar aplicativo Windows `Sentinela/Abrir-Sentinela.cmd`, sem dependências
+      extras, para escolher perfil, repetição, simulação e retomada localmente.
 - [ ] Validar uma futura camada visual de cliente/GPU em spike Fabric isolada,
       no perfil `village-max`; não entra no fluxo diário sem prova reproduzível.
 

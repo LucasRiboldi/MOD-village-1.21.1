@@ -11468,3 +11468,19 @@ sintaxe Python, o pré-voo válido, o bloqueio explícito de registro pendente e
 GameTests, PIT e Sentinela sem execução. `remapJar` gerou a 0.4.4 e o
 manifesto confirmou build, downloads e TLauncher com SHA-256
 `5DFAB711B431FB9A693F991ABA4A3434235528E60DBC1C96E34EB205A1D64891`.
+
+## 02-11-2026 — aplicativo local do Sentinela
+
+Foi adicionada a pasta `Sentinela/` com `Abrir-Sentinela.cmd` e uma janela
+Tkinter sem dependências. Ela não conhece nem reproduz a lógica dos testes:
+chama o `scripts/test_lab.py` existente em processo separado, com perfil,
+repetição, simulação, retomada, saída ao vivo e abertura dos relatórios. Assim
+o autor pode rodar a máquina local sem chamar agente de IA e sem introduzir
+outro caminho de execução.
+
+O modo temporário de correção por playtest permanece: baterias Java não foram
+iniciadas. A verificação será sintaxe/importação da janela, `--dry-run` do
+orquestrador, verificação textual e `remapJar` sem testes; o playtest continua
+fora do escopo desta ferramenta. O `remapJar` passou e o manifesto confirmou
+build, downloads e TLauncher para 0.4.5 com SHA-256
+`6D180AE9701125CE26B39CAA10B37A6BA1588664AE58C8D055A785A6DA23FA53`.
