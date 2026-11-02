@@ -41,11 +41,14 @@ import net.minecraft.util.math.BlockPos;
  */
 public final class SitePreparation {
 
+    /** Margem externa limpa junto do lote para não deixar vegetação entrando na construção. */
+    private static final int OUTER_MARGIN = 1;
+
     private SitePreparation() {
     }
 
     /**
-     * Limpa a planta que estiver dentro da caixa da obra.
+     * Limpa a planta que estiver dentro da caixa da obra e na margem externa de um bloco.
      *
      * <p>Roda uma vez, quando o projeto nasce e quando ele volta do
      * save — o jogador pode ter plantado alguma coisa entre uma sessão e
@@ -59,13 +62,14 @@ public final class SitePreparation {
 
         int cleared = 0;
 
-        for (int dx = 0; dx < size.x(); dx++) {
+        for (int dx = -OUTER_MARGIN; dx < size.x() + OUTER_MARGIN; dx++) {
             for (int dy = 0; dy < size.y(); dy++) {
-                for (int dz = 0; dz < size.z(); dz++) {
+                for (int dz = -OUTER_MARGIN; dz < size.z() + OUTER_MARGIN; dz++) {
                     BlockPos pos = new BlockPos(
                             origin.x() + dx, origin.y() + dy, origin.z() + dz);
 
-                    if (isPlant(world.getBlockState(pos))) {
+                    if (isPlant(world.getBlockState(pos))
+                            && BlockProtection.mayBreak(world, pos, world.getBlockState(pos))) {
                         world.setBlockState(pos, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
 
                         cleared++;
@@ -89,7 +93,7 @@ public final class SitePreparation {
     }
 
     /**
-     * Derruba a árvore natural inteira, em qualquer bioma, quando o tronco ocupa o lote
+     * Derruba a árvore natural inteira, em qualquer bioma, quando o tronco ocupa o lote ou sua margem
      * (Regra 22). A copa conectada também sai; proteção e drops vêm de {@link TreeHarvester}.
      */
     private static int clearTrees(ServerWorld world, ConstructionProject project) {
@@ -100,8 +104,8 @@ public final class SitePreparation {
         java.util.Set<BlockPos> visited = new java.util.HashSet<>();
         java.util.List<ColonyPos> chests = ColonyChests.nearestFirst(world, project.colonyId(), origin);
 
-        for (int dx = 0; dx < size.x(); dx++) {
-            for (int dz = 0; dz < size.z(); dz++) {
+        for (int dx = -OUTER_MARGIN; dx < size.x() + OUTER_MARGIN; dx++) {
+            for (int dz = -OUTER_MARGIN; dz < size.z() + OUTER_MARGIN; dz++) {
                 int x = origin.x() + dx;
                 int z = origin.z() + dz;
                 for (int y = origin.y(); y <= through + 40; y++) {

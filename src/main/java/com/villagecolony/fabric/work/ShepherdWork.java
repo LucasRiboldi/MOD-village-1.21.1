@@ -88,8 +88,6 @@ public final class ShepherdWork {
 
         private final Task task;
 
-        private final BlockPos center;
-
         /** Onde ele procura ovelha com lã — {@link ShepherdFlock#shearingArea}. */
         private final Box area;
 
@@ -111,9 +109,8 @@ public final class ShepherdWork {
          */
         final WorkStall stall = new WorkStall();
 
-        private Job(Task task, BlockPos center, Box area) {
+        private Job(Task task, Box area) {
             this.task = task;
-            this.center = center;
             this.area = area;
         }
     }
@@ -161,7 +158,7 @@ public final class ShepherdWork {
                 continue;
             }
 
-            JOBS.computeIfAbsent(executor.get(), worker -> new Job(task, center,
+            JOBS.computeIfAbsent(executor.get(), worker -> new Job(task,
                     ShepherdFlock.shearingArea(colony, center, searchRadius(world))));
 
             open++;
@@ -248,7 +245,7 @@ public final class ShepherdWork {
         }
 
         if (job.sheep == null) {
-            findSheep(world, workerId, job);
+            findSheep(world, workerId, job, villager);
 
             return;
         }
@@ -292,8 +289,8 @@ public final class ShepherdWork {
         shear(world, villager, sheep, job, storage.get());
     }
 
-    /** A ovelha mais próxima que ainda tem lã. */
-    private static void findSheep(ServerWorld world, UUID workerId, Job job) {
+    /** A ovelha com lã mais próxima do pastor; assim ele tosquia pela cerca antes de tentar entrar. */
+    private static void findSheep(ServerWorld world, UUID workerId, Job job, VillagerEntity villager) {
         List<SheepEntity> flock = world.getEntitiesByClass(
                 SheepEntity.class, job.area, ShepherdWork::isWoolly);
 
@@ -308,8 +305,8 @@ public final class ShepherdWork {
         SheepEntity nearest = flock.get(0);
 
         for (SheepEntity sheep : flock) {
-            if (sheep.getBlockPos().getSquaredDistance(job.center)
-                    < nearest.getBlockPos().getSquaredDistance(job.center)) {
+            if (sheep.getBlockPos().getSquaredDistance(villager.getBlockPos())
+                    < nearest.getBlockPos().getSquaredDistance(villager.getBlockPos())) {
 
                 nearest = sheep;
             }

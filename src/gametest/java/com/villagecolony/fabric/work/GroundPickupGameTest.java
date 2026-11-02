@@ -59,6 +59,13 @@ public final class GroundPickupGameTest implements FabricGameTest {
                 Math.min(a.getX(), b.getX()), Math.min(a.getY(), b.getY()), Math.min(a.getZ(), b.getZ()),
                 Math.max(a.getX(), b.getX()), Math.max(a.getY(), b.getY()), Math.max(a.getZ(), b.getZ())));
 
+        // runGametest simula observador; marque o minuto de presença que o jogo
+        // exige antes de iniciar trabalho (ADR-036 item 11).
+        long now = context.getWorld().getTime();
+        for (long tick = now - Colony.SETTLE_TICKS; tick <= now; tick += 20) {
+            colony.attend(tick);
+        }
+
         VillageColonyMod.COLONIES.register(colony);
 
         // Uma obra que ainda pede pedregulho.

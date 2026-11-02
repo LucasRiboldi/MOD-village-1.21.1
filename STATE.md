@@ -1,5 +1,21 @@
 # STATE — 2026-11-01
 
+> **Fechamento local 0.4.1 — 01-11:** testes foram liberados para esta rodada.
+> Lotes novos limpam vegetação e árvores naturais na margem externa de um bloco;
+> mineiro só avança após `removeBlock` bem-sucedido; folhas e troncos não viram
+> piso; ajuda fora do ofício espera 1.200 ticks; e fundidor fora de área construída
+> recebe retorno ao baú pessoal antes de fundir. O GameTest agora registra a oficina
+> exigida pelo cenário de fundição e cobre explicitamente o retorno.
+
+> `clean build remapJar` passou em 2m20. A bateria completa local rodou 979 GameTests:
+> 978 passaram e `GroundPickupGameTest.aPassingWorkerPicksUpAllGroundItems` falhou;
+> a repetição isolada passou. O CI de push também falhou, em
+> `BuilderGameTest.groundBlocksAreShapedWithoutTheChest`; a intermitência fica aberta, sem alteração de produção,
+> conforme a instrução do autor de não bloquear esta entrega por testes. Ainda falta
+> playtest em mundo novo e no save; não declarar os sintomas corrigidos antes dele.
+> JAR 0.4.1 em `build/libs`, `downloads/` e TLauncher: SHA-256
+> `FD72245C3BDF5E4B1DA816CC37E69C9B4CBE725E0A62254D0F184320D731606E`.
+
 > **Rede e currais, desenho aprovado em 01-11 — entrega parcial autorizada:**
 > grafo puro e codec paralelo versionado implementados; sete testes de grafo,
 > treze de persistência nova e testes legados/planejador passam. Duas regressões do codec

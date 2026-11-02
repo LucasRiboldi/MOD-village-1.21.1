@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.MineShaft;
@@ -18,6 +19,7 @@ import com.villagecolony.core.type.Side;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ColonyChests;
@@ -89,6 +91,7 @@ public class SmelterGameTest implements FabricGameTest {
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
         owned.owning(villager.getUuid());
+        registerWorkshop(context, colony);
 
         VillageColonyMod.CONSTRUCTIONS.register(ConstructionProject.plan(
                 colony.id(),
@@ -168,6 +171,7 @@ public class SmelterGameTest implements FabricGameTest {
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
         owned.owning(villager.getUuid());
+        registerWorkshop(context, colony);
 
         Task task = VillageColonyMod.TASKS.create(
                 colony.id(),
@@ -251,6 +255,7 @@ public class SmelterGameTest implements FabricGameTest {
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
         owned.owning(villager.getUuid());
+        registerWorkshop(context, colony);
 
         Task task = VillageColonyMod.TASKS.create(
                 colony.id(),
@@ -392,6 +397,7 @@ public class SmelterGameTest implements FabricGameTest {
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
         owned.owning(villager.getUuid());
+        registerWorkshop(context, colony);
 
         Task task = VillageColonyMod.TASKS.create(
                 colony.id(),
@@ -537,6 +543,7 @@ public class SmelterGameTest implements FabricGameTest {
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
         owned.owning(villager.getUuid());
+        registerWorkshop(context, colony);
 
         Task task = VillageColonyMod.TASKS.create(
                 colony.id(),
@@ -572,5 +579,61 @@ public class SmelterGameTest implements FabricGameTest {
 
             context.complete();
         });
+    }
+
+    /** Fundir fora de casa só agenda o retorno ao baú pessoal. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "smelter_location", tickLimit = 40)
+    public void aSmelterOutsideTheBuiltAreaReturnsBeforeSmelting(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos outside = new BlockPos(6, 2, 6);
+
+        context.setBlockState(outside.down(), Blocks.DIRT.getDefaultState());
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+        ChestDepositor.deposit(world, chest, Items.SAND, 4);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+        VillageColonyMod.COLONIES.register(colony);
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, outside);
+        villager.setBreedingAge(0);
+        VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id()).assign(ProfessionType.SMELTER);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+        owned.owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.SMELT_MATERIAL, TaskPriority.PRODUCTION, ResourceType.GLASS, 4);
+        task.reserveFor(villager.getUuid());
+
+        try {
+            SmelterWork.run(world, colony);
+            for (int tick = 0; tick < 20; tick++) {
+                SmelterWork.tick(world);
+            }
+
+            context.assertTrue(
+                    ChestInventoryReader.read(world, context.getAbsolutePos(CHEST)).amountOf(ResourceType.GLASS) == 0,
+                    "o fundidor fora da área construída fundiu antes de voltar");
+            context.assertTrue(
+                    WorkTargets.of(villager.getUuid())
+                            .filter(context.getAbsolutePos(CHEST).up()::equals)
+                            .isPresent(),
+                    "o fundidor fora da área construída não recebeu o retorno ao baú");
+        } finally {
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    private static void registerWorkshop(TestContext context, Colony colony) {
+        VillageColonyMod.BUILDINGS.register(new Building(
+                UUID.randomUUID(),
+                colony.id(),
+                ResourceId.vanilla("village/plains/houses/smelter_workshop"),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(1, 1, 1))),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(4, 4, 4)))));
     }
 }

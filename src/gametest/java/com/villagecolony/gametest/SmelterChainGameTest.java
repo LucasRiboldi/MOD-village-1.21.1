@@ -2,11 +2,13 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
@@ -58,6 +60,7 @@ public class SmelterChainGameTest implements FabricGameTest {
         worker.assign(ProfessionType.SMELTER);
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
         owned.owning(villager.getUuid());
+        registerWorkshop(context, colony);
 
         Task task = VillageColonyMod.TASKS.create(
                 colony.id(), TaskType.SMELT_MATERIAL, TaskPriority.PRODUCTION, ResourceType.SMOOTH_STONE, 4);
@@ -79,5 +82,14 @@ public class SmelterChainGameTest implements FabricGameTest {
 
             context.complete();
         });
+    }
+
+    private static void registerWorkshop(TestContext context, Colony colony) {
+        VillageColonyMod.BUILDINGS.register(new Building(
+                UUID.randomUUID(),
+                colony.id(),
+                ResourceId.vanilla("village/plains/houses/smelter_workshop"),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(1, 1, 1))),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(4, 4, 4)))));
     }
 }

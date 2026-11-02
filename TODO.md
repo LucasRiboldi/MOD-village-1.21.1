@@ -20,11 +20,19 @@ Fila priorizada, evidências e critérios de fechamento:
 - [ ] Reproduzir giro do mineiro e retorno repetido do lenhador com navegação concorrente,
       acesso obstruído e retomada após areia. Testes de descida e colheita completa reforçados
       em 01-11 passam; não demonstram a causa do defeito observado no save.
+- [ ] Confirmar no playtest a correção candidata: mineiro só libera alvo após falha de quebra;
+      fundidor retorna à área construída; ajuda comum espera 1.200 ticks de ociosidade própria;
+      folhas e troncos não servem de piso; e lote novo limpa vegetação e árvores na margem de um bloco.
 - [ ] Investigar o reprodutor forense preservado em patch diagnóstico: caminho calculado não se traduz em chegada
       física em 140 ticks, inclusive com WorkTargets ativo no expediente. Separar geometria,
       tolerância de chegada e interferência do Brain antes de alterar o código de produção.
 - [ ] Investigar F19: condução da vaca ao cercado falhou no CI de push 41254270066,
       mas passou no CI de PR do mesmo código e nos 955 GameTests locais de 01-11.
+- [ ] Investigar a intermitência de `GroundPickupGameTest.aPassingWorkerPicksUpAllGroundItems`:
+      a bateria da 0.4.1 falhou em 1/979, mas a repetição isolada passou. Não houve
+      alteração de produção para este sintoma.
+- [ ] Investigar a intermitência de `BuilderGameTest.groundBlocksAreShapedWithoutTheChest`:
+      CI de push da 0.4.1 falhou em 1/979; não foi reproduzido nem alterado nesta entrega.
 
 - [ ] Jogar o novo JAR em mundo novo e no save `Novo mundo`: medir grama flutuante,
       transição do lote em degraus de 1 bloco e apoio sob o piso; conferir cortes em dunas e estruturas.

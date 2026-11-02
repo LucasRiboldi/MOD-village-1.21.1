@@ -59,7 +59,6 @@ import java.util.UUID;
  * vidro. Este componente permanece responsável apenas pela fundição.
  */
 public final class SmelterWork {
-
     static {
         ServerMemory.register(SmelterWork.class, SmelterWork::clearAll);
     }
@@ -154,6 +153,10 @@ public final class SmelterWork {
 
             if (!isOngoing(job.task)) {
                 return true;
+            }
+
+            if (!SmelterLocation.isInsideBuiltArea(world, entry.getKey())) {
+                return false;
             }
 
             if (++job.progress < TICKS_PER_PIECE) {
@@ -494,5 +497,4 @@ public final class SmelterWork {
     public static void clearAll() {
         JOBS.clear();
     }
-
 }

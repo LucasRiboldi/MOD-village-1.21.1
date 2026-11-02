@@ -8,6 +8,28 @@
 
 # Village Colony — Development Log
 
+## 2026-11-01 — fechamento local 0.4.1
+
+Versão atualizada para 0.4.1 depois das correções de terreno, trabalho e rota
+desta linha. Os cenários de fundição passaram a registrar uma oficina concluída;
+um GameTest novo prova que o fundidor fora da área construída retorna primeiro ao
+baú pessoal, sem fundir. Isto mantém a regra de produção e remove a falsa falha
+das fixtures sem edifício.
+
+`clean build remapJar` passou em 2m20. Na bateria completa, 978/979 GameTests
+passaram; `GroundPickupGameTest.aPassingWorkerPicksUpAllGroundItems` falhou, mas
+passou ao repetir isolado. A coleta de chão não mudou nesta entrega. Por instrução
+do autor, a intermitência ficou em TODO e não bloqueou commit, JAR ou integração.
+
+O CI de push da mesma revisão falhou em 1/979, agora no
+`BuilderGameTest.groundBlocksAreShapedWithoutTheChest`. Como é um segundo cenário
+intermitente e não há reprodução causal, também ficou registrado no TODO sem mudar
+o código de produção.
+
+O manifesto comparou `build/libs`, `downloads` e `%APPDATA%/.minecraft/mods`:
+`FD72245C3BDF5E4B1DA816CC37E69C9B4CBE725E0A62254D0F184320D731606E`.
+O JAR ativo é `village-colony-0.4.1.jar`; o 0.4.0 foi preservado como `.disabled`.
+
 ## 2026-11-01 — fundação da rede hierárquica, entrega ainda parcial
 
 PR #43: CI do push aprovado; CI do PR executou 978 GameTests e falhou em
@@ -11312,3 +11334,41 @@ baús nomeados continuam reservados. Os testes focados de terreno/estoque/rota e
 O ciclo de fundição passou a percorrer receitas de blocos, manter 16 por tipo e respeitar a reserva da obra;
 GameTests cobrem reposição e cerâmica vidrada. Validação final: `clean build`, `build` após a fundição,
 949/949 GameTests e `rules_to_readme.py --check` aprovados. Resta playtest em mundo e save do autor.
+
+## 01-11-2026 — correções candidatas após novo playtest
+
+O ciclo atual removeu suporte artificial usado pela flora na terraplanagem e
+passou a limpar grama, samambaias e flores sem bloco válido abaixo. O lenhador
+prioriza árvores no centro da vila; o pastor procura primeiro ovelha tosquiável
+próxima. A coleta de itens soltos passou a usar, no cenário simulado, a mesma
+presença atendida que governa a vila no jogo.
+
+A política aprovada para navegação permite atravessar água curta em vez de
+forçar uma volta terrestre longa. Os GameTests de caminho foram alinhados a
+essa regra e o de coleta passou a configurar presença contínua real. Nesta
+rodada explicitamente liberada pelo autor, `test` passou e `runGametest` passou
+**978/978**. Isso prova os mecanismos no servidor de teste; a confirmação de
+grama, rotas, prioridade de árvores, pastor e ociosidade continua pendente de
+playtest em mundo novo e no save do autor.
+
+## 01-11-2026 — lote, mina e ociosidade após decisões do autor
+
+O autor aprovou limpeza de vegetação e árvores naturais no lote e em uma margem
+externa de um bloco, com as proteções existentes preservadas e a madeira usando
+o coletor que deposita nos baús públicos. `SitePreparation` passou a procurar
+troncos também nessa margem; a estrutura e a água funcional continuam fora do
+escopo da limpeza.
+
+O log mostrava o mineiro alternando alvos mesmo quando a quebra não tinha sido
+confirmada. `MinerHands` agora libera o alvo sem avançar quando `removeBlock`
+falha. A rota dos trabalhadores classifica folhas e troncos como bloqueados e
+`LeafPaths` remove uma folha, no corpo ou na cabeça, do próximo nó real da rota
+a cada segundo. Isso evita usar árvores como piso sem ampliar a destruição de
+folhagem protegida.
+
+Ajuda comum passou a esperar 1.200 ticks sem tarefa própria, preservando a
+prioridade do ofício. O fundidor que estiver fora de área construída volta ao
+baú pessoal antes de continuar a fundição. Não foram criados nem executados
+testes: o modo temporário de correção por playtest os mantém suspensos. A única
+verificação desta rodada foi `./gradlew.bat classes --console=plain --no-daemon`,
+aprovada. A confirmação permanece no playtest do autor.
