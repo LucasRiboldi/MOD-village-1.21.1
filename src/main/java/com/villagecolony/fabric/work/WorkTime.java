@@ -114,6 +114,7 @@ public final class WorkTime {
             State state = stateOf(id, villager);
             BADGES.put(id, badgeFor(id, state, now));
             IdleWatch.sample(world, id, state);
+            TaskProgressWatch.sample(world, id, state);
             String profession = worker.profession().map(Enum::name).orElse("NONE");
 
             WINDOW.computeIfAbsent(worker.colonyId(), ignored -> new TreeMap<>())

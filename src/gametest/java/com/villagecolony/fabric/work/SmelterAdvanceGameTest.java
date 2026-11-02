@@ -84,7 +84,7 @@ public class SmelterAdvanceGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "smelter_advance", tickLimit = 20)
-    public void anIdleSmelterTurnsSpareSandIntoGlass(TestContext context) {
+    public void anIdleSmelterKeepsAvailableIngotsAt64(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos chestAt = context.getAbsolutePos(new BlockPos(1, 2, 1));
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(chestAt);
@@ -97,17 +97,51 @@ public class SmelterAdvanceGameTest implements FabricGameTest {
         owned.owning(smelter);
         VillageColonyMod.STORAGES.register(WorkerStorage.of(smelter, chest));
         world.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
-        ((Inventory) world.getBlockEntity(chestAt)).setStack(0, new ItemStack(Items.SAND, 64));
+        Inventory chestInventory = (Inventory) world.getBlockEntity(chestAt);
+        chestInventory.setStack(0, new ItemStack(Items.RAW_IRON, 64));
+        chestInventory.setStack(1, new ItemStack(Items.RAW_IRON, 32));
 
         try {
-            int smelted = SmelterAdvance.smeltForIdleSmelters(world, colony);
             List<ColonyPos> chests = List.of(chest);
+            for (int attempt = 0; attempt < 10; attempt++) {
+                SmelterAdvance.smeltForIdleSmelters(world, colony);
+            }
 
-            context.assertTrue(smelted == SmelterAdvance.PER_SMELTER, "fundiu " + smelted + " em vez de uma fornada");
-            context.assertTrue(ColonyChests.countIn(world, chests, Items.GLASS) == SmelterAdvance.PER_SMELTER,
-                    "o vidro não entrou no baú");
-            context.assertTrue(ColonyChests.countIn(world, chests, Items.SAND) == 64 - SmelterAdvance.PER_SMELTER,
-                    "a areia não saiu do baú");
+            int ingots = ColonyChests.countIn(world, chests, Items.IRON_INGOT);
+            context.assertTrue(ingots == SmelterAdvance.INGOT_RESERVE,
+                    "reserva de lingotes deveria parar em 64, veio " + ingots);
+            context.assertTrue(SmelterAdvance.smeltForIdleSmelters(world, colony) == 0,
+                    "não deveria fundir além da reserva de lingotes");
+        } finally {
+            ((Inventory) world.getBlockEntity(chestAt)).clear();
+            world.setBlockState(chestAt, Blocks.AIR.getDefaultState());
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "smelter_advance", tickLimit = 20)
+    public void anIdleSmelterDoesNotMakeLooseBricksAsReserve(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos chestAt = context.getAbsolutePos(new BlockPos(1, 2, 1));
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(chestAt);
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+        UUID smelter = UUID.randomUUID();
+
+        VillageColonyMod.COLONIES.register(colony);
+        VillageColonyMod.WORKERS.register(smelter, colony.id()).assign(ProfessionType.SMELTER);
+        owned.owning(smelter);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(smelter, chest));
+        world.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
+        ((Inventory) world.getBlockEntity(chestAt)).setStack(0, new ItemStack(Items.CLAY_BALL, 64));
+
+        try {
+            context.assertTrue(SmelterAdvance.smeltForIdleSmelters(world, colony) == 0,
+                    "reserva ociosa não deve fabricar tijolos soltos");
+            context.assertTrue(ColonyChests.countIn(world, List.of(chest), Items.BRICK) == 0,
+                    "tijolo solto não deve entrar na reserva");
         } finally {
             ((Inventory) world.getBlockEntity(chestAt)).clear();
             world.setBlockState(chestAt, Blocks.AIR.getDefaultState());

@@ -12,6 +12,32 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.3] — rede, curral e trabalho (2026-11-02, JAR local)
+
+### Adicionado
+- Watchdog persistido de progresso: libera tarefa sem efeito após cinco minutos
+  e, na segunda falha diária, repõe fisicamente a demanda no baú da profissão.
+- Casa do mineiro próxima ao pórtico da mina e modelo único de curral grande,
+  limitado a um por vila nova e a 20 animais.
+- Ativação compatível do grafo de ruas para vilas novas, preservando o índice e
+  as ruas legadas das vilas existentes.
+
+### Alterado
+- Mineiro sem demanda mantém frente planejada e estoque diário de pedra; fundidor
+  ocioso produz somente lingotes físicos disponíveis até 64. Nenhuma profissão
+  troca de ofício.
+- Curral grande passa a incluir água, 12 cultivos, grama, portão e tochas;
+  currais pequenos e cercados existentes permanecem válidos.
+
+### Corrigido
+- Fixtures de GameTest não usam mais pilha inválida de 96 lingotes em um único
+  slot de baú Vanilla.
+
+### Verificação
+- A última validação registrada antes do empacotamento é o Sentinela Local full
+  de 02-11-2026: 1.691 unitários e 977 GameTests aprovados. O empacotamento 0.4.3
+  executou somente `remapJar`, sem rodar testes.
+
 ## [0.4.2] — Sentinela Local (2026-11-02, JAR local)
 
 ### Adicionado

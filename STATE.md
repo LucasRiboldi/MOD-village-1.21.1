@@ -1,6 +1,16 @@
 # STATE — 2026-11-02
 
-> **Sentinela Local 0.4.2 — 02-11:** nome oficial da varredura manual. O comando
+> **0.4.3 — fechamento local em 02-11:** watchdog de progresso útil, reposição física
+> na segunda falha diária, metas ociosas de mina e fundição, casa do mineiro,
+> curral grande único e ativação compatível do grafo de ruas foram implementados.
+> A correção da fixture de lingotes dividiu a pilha inválida de 96 itens em duas
+> pilhas aceitas pelo baú Vanilla; não mudou produção. `runGametest` passou
+> 977/977 depois da correção. O **Sentinela Local full** passou em
+> `reports/test-runs/20261102T125155Z`: unitários 36,8 s, propriedades 2,6 s,
+> GameTests 145,9 s, auditoria 169,0 s e mutação 2,6 s. Vilas existentes
+> preservam rua e currais legados; o playtest em mundo novo ainda é necessário.
+
+> **Sentinela Local — 02-11:** nome oficial da varredura manual. O comando
 > conversacional `rodar Sentinela Local` solicita o perfil `full`. O
 > `scripts/test_lab.py` cria uma
 > varredura manual com perfis `quick`, `fast` e `full`, repetição, retomada e
@@ -13,8 +23,10 @@
 > iniciar Gradle. A liberação não abrange baterias Java, GameTests ou PIT.
 > Camada visual/GPU do cliente continua pendente de prova Fabric no perfil
 > `village-max`.
-> JAR 0.4.2 em `build/libs`, `downloads/` e TLauncher: SHA-256
-> `5BEFF5C20D1514A3B3B9BC474DF8BB27D7913C60501277AFFEADBBF7CD254389`.
+> O empacotamento 0.4.3 executou somente `remapJar -x test -x runGametest`; não
+> houve nova bateria de testes por decisão do autor. JAR 0.4.3 em `build/libs`,
+> `downloads/` e TLauncher: SHA-256
+> `5A95A448D74152A17646CB0F0B7E1299DDDCC6A1FFC672E6595DD31057256BAF`.
 
 > **Fechamento local 0.4.1 — 01-11:** testes foram liberados para esta rodada.
 > Lotes novos limpam vegetação e árvores naturais na margem externa de um bloco;

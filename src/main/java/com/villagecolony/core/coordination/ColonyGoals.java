@@ -308,22 +308,19 @@ public final class ColonyGoals {
     }
 
     /**
-     * O mesmo, com o espaço nos baús dos mineiros — 2026-09-25, decisão do
-     * autor: <i>"galerias novas sem parar"</i>.
+     * O mesmo, com a parcela diária de espaço dos baús dos mineiros.
      *
      * <p>A Regra 1 da madeira, agora para a pedra: sem obra pedindo, o
-     * mineiro continua cavando enquanto os baús dele tiverem onde guardar. A
-     * mina já cresce sozinha (ramais, níveis, a outra boca no fundo) e cada
-     * corte segue o minério que encontra; o que faltava era a tarefa, que
-     * sumia assim que o piso de pedra era atendido. O playtest de 25-09 teve
-     * vinte minutos de "no miner work: no task open for it".
+     * mineiro pode abrir uma frente autônoma limitada a uma pilha diária.
+     * A integração calcula a parcela; obra aberta passa antes e deixa este
+     * número em zero.
      *
      * <p>O espaço é o do baú do mineiro, e não o da vila: é nele que a pedra
      * entra, e o espaço vazio de qualquer baú conta para todo grupo — medir
      * a vila inteira encheria de pedregulho os baús da madeira da obra.
      *
-     * @param stoneRoom quanta pedra ainda cabe nos baús dos mineiros; zero
-     *     deixa a meta de pedra exatamente como era
+     * @param stoneRoom quanto da parcela autônoma ainda cabe nos baús dos
+     *     mineiros; zero deixa somente piso e demanda da obra
      */
     public static Map<ResourceType, Integer> of(
             Colony colony,

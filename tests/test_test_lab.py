@@ -67,5 +67,17 @@ class ResumeMetadataTest(unittest.TestCase):
             self.assertIn("resumed_at", saved)
 
 
+class CoverageManifestTest(unittest.TestCase):
+
+    def test_requires_a_test_and_minimum_profile_for_each_feature(self):
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = pathlib.Path(directory) / "coverage.md"
+            manifest.write_text("| feature | rule | test | profile |\n| --- | --- | --- | --- |\n"
+                                "| watchdog | 1 | | quick |\n", encoding="utf-8")
+
+            self.assertEqual(["coverage manifest line 3 needs test and profile"],
+                             test_lab.coverage_errors(manifest))
+
+
 if __name__ == "__main__":
     unittest.main()

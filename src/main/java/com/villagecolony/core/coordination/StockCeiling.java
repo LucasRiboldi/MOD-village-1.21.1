@@ -16,7 +16,7 @@ import java.util.Objects;
  * 382 tábuas, e as metas pediam 751 toras. Nenhuma meta passa do teto, a não ser
  * a que a obra aberta ainda pede: a obra nunca fica sem a peça por causa dele.
  * Quem chega ao teto fica sem tarefa do ofício e vai ajudar a obra
- * ({@code BuildHelper}).
+ * (construtor).
  */
 public final class StockCeiling {
 

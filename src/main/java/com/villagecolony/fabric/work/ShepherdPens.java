@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.type.ColonyPos;
@@ -75,7 +76,7 @@ final class ShepherdPens {
      * @param outside o chão de fora, de onde o pastor entrega o animal
      * @param reach o chão de dentro inteiro
      */
-    record Pen(BlockPos gate, BlockPos inside, BlockPos outside, Set<BlockPos> reach) {
+    record Pen(BlockPos gate, BlockPos inside, BlockPos outside, Set<BlockPos> reach, boolean large) {
     }
 
     private static final Map<UUID, List<Pen>> PENS = new HashMap<>();
@@ -97,9 +98,9 @@ final class ShepherdPens {
                 .min(Comparator.comparingDouble(pen -> pen.outside().getSquaredDistance(from)));
     }
 
-    /** Quantos animais cabem: um a cada {@link #FLOOR_PER_ANIMAL} blocos de chão, ao menos um. */
+    /** Curral grande registrado leva 20; cercados legados usam área de chão. */
     static int capacityOf(Pen pen) {
-        return Math.max(1, pen.reach().size() / FLOOR_PER_ANIMAL);
+        return pen.large() ? 20 : Math.max(1, pen.reach().size() / FLOOR_PER_ANIMAL);
     }
 
     static boolean hasRoom(ServerWorld world, Pen pen) {
@@ -200,7 +201,8 @@ final class ShepherdPens {
 
         if (read == null || now - read >= RESCAN) {
             READ_AT.put(colony.id(), now);
-            PENS.put(colony.id(), colony.bounds().map(box -> scan(world, box)).orElse(List.of()));
+            PENS.put(colony.id(), colony.bounds().map(box -> scan(world, box).stream()
+                    .map(pen -> markLarge(colony, pen)).toList()).orElse(List.of()));
             // O chão de dentro fica caro no caminho de quem não é pastor (Regra 122).
             com.villagecolony.fabric.integration.PenFloors.update(colony.id(),
                     PENS.get(colony.id()).stream().map(Pen::reach).toList());
@@ -253,11 +255,18 @@ final class ShepherdPens {
             if (pen.enclosed() && pen.reach().size() >= 4
                     && (best == null || pen.reach().size() < best.reach().size())) {
                 best = new Pen(gate.toImmutable(), inside.toImmutable(),
-                        gate.offset(way.getOpposite()).toImmutable(), pen.reach());
+                        gate.offset(way.getOpposite()).toImmutable(), pen.reach(), false);
             }
         }
 
         return Optional.ofNullable(best);
+    }
+
+    private static Pen markLarge(Colony colony, Pen pen) {
+        boolean large = VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()
+                .anyMatch(building -> PenPlans.isLargePen(building.blueprint())
+                        && building.contains(MinecraftTypeAdapter.toColonyPos(pen.gate())));
+        return large ? new Pen(pen.gate(), pen.inside(), pen.outside(), pen.reach(), true) : pen;
     }
 
     /** Quantos animais estão no chão de dentro deste cercado. */

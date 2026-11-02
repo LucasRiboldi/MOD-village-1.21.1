@@ -237,7 +237,7 @@ class ProfessionAssignerTest {
      * do save.
      */
     @Test
-    void aChestlessWorkerLosesTheJobWhenSomeoneElseCanGetAChest() {
+    void aChestlessWorkerKeepsTheJobWhenSomeoneElseCanGetAChest() {
         addWorkers(COLONY, 2);
 
         for (Worker worker : workers.ofColony(COLONY)) {
@@ -247,13 +247,13 @@ class ProfessionAssignerTest {
         Set<UUID> demoted = VacancyEnforcer.enforceVacancies(
                 workers, COLONY, villagerId -> false, 1);
 
-        assertEquals(1, demoted.size(), "um candidato, uma troca");
+        assertTrue(demoted.isEmpty(), "falta de baú não troca profissão");
 
         long lumberjacks = workers.ofColony(COLONY).stream()
                 .filter(w -> w.profession().filter(ProfessionType.LUMBERJACK::equals).isPresent())
                 .count();
 
-        assertEquals(1, lumberjacks, "o outro devia continuar na vaga");
+        assertEquals(2, lumberjacks, "os dois mantêm o próprio ofício");
     }
 
     /**

@@ -30,6 +30,21 @@ final class LotSeeking {
     }
 
     static Optional<ConstructionProject> seek(ServerWorld world, Colony colony, int builders) {
+        if (MineHomePlans.isOwed(world, colony)) {
+            List<Blueprint> houses = HousePlans.plansFor(world, colony);
+            if (houses.isEmpty()) {
+                return ConstructionPlanner.silent(colony, IdleReason.NOT_IN_GAME,
+                        "this game has no buildable miner home for the village style");
+            }
+            Optional<BuildSiteScanner.Site> mineHome = MineHomePlans.findSite(world, colony, houses);
+
+            if (mineHome.isPresent()) {
+                return SiteOpening.open(world, colony, mineHome.get(), houses, houses.getFirst(), builders);
+            }
+
+            return ConstructionPlanner.silent(colony, IdleReason.NO_TARGET, "no lot for the miner home near the mine mouth");
+        }
+
         // A seleção é global, mas a descoberta do lote continua única: a
         // família escolhida aqui passa pelo mesmo scanner e pelas mesmas
         // recusas físicas, seja casa, roça, cercado ou templo.

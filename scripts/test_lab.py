@@ -56,6 +56,23 @@ ARTIFACTS = (
 )
 
 
+def coverage_errors(path: Path | None = None) -> list[str]:
+    """Cada regra do Sentinela precisa apontar teste e perfil manual mínimo."""
+    manifest = path or ROOT / "docs" / "testing" / "sentinela-local-coverage.md"
+    if not manifest.is_file():
+        return [f"coverage manifest missing: {manifest}"]
+    rows = [line for line in manifest.read_text(encoding="utf-8").splitlines()
+            if line.startswith("|") and "---" not in line]
+    if len(rows) < 2:
+        return ["coverage manifest has no feature rows"]
+    errors = []
+    for number, row in enumerate(rows[1:], start=3):
+        cells = [cell.strip() for cell in row.strip("|").split("|")]
+        if len(cells) < 4 or not cells[2] or not cells[3]:
+            errors.append(f"coverage manifest line {number} needs test and profile")
+    return errors
+
+
 def git(*args: str) -> str:
     completed = subprocess.run(["git", *args], cwd=ROOT, text=True,
                                capture_output=True, errors="replace")
@@ -206,6 +223,12 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("provide one profile, or --resume RUN_ID")
     if args.repeat < 1:
         parser.error("--repeat must be at least 1")
+    if args.profile:
+        errors = coverage_errors()
+        if errors:
+            for error in errors:
+                print(error, file=sys.stderr)
+            return 2
     if args.profile and args.dry_run:
         for attempt, name, tasks in planned_suites(args.profile, args.repeat):
             print(f"attempt {attempt} {name}: {' '.join(tasks)}")

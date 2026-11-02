@@ -216,7 +216,6 @@ public final class BuilderPlacement {
             com.villagecolony.fabric.integration.Supplies.record(com.villagecolony.core.coordination.SupplyException.APPEARING_PIECE, project.colonyId(),
                     block.block().path(), 1);
             ActionJournal.action(workerId, "PLACED", block.block().path(), 1, target, "appeared");
-            BuildHelper.placed(workerId);
             job.placed++;
 
             if (world.getEntity(workerId) instanceof VillagerEntity builder) {
@@ -263,8 +262,6 @@ public final class BuilderPlacement {
 
         project.markPlaced(block);
         ActionJournal.action(workerId, "PLACED", block.block().path(), 1, target, "");
-        BuildHelper.placed(workerId);
-
         job.placed++;
 
         // O gesto de assentar — e o sinal de "trabalhando" do WorkTime (Regra 50).

@@ -183,10 +183,7 @@ public final class ShepherdWork {
 
         // Cuidar do rebanho e, sem tosquia, coletar animais — ADR-038 P2b, P2c.
         ShepherdFlock.tend(world, colony);
-        ShepherdHerding.plan(world, colony, id -> JOBS.containsKey(id) || BuildHelper.isHelping(id));
-
-        // Quem está sem tarefa (pastor, carpinteiro, pedreiro) ajuda o construtor — BuildHelper.
-        BuildHelper.lendAHand(world, colony);
+        ShepherdHerding.plan(world, colony, JOBS::containsKey);
 
         return open;
     }

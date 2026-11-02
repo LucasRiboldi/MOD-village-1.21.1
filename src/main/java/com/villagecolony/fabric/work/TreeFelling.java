@@ -94,6 +94,7 @@ public final class TreeFelling {
         world.setBlockBreakingInfo(villager.getId(), pos, -1);
 
         List<ItemStack> drops = TreeHarvester.breakOne(world, job.plan, pos);
+        TaskProgressWatch.progressed(job.task);
 
         job.collected += countLogs(drops, job.plan);
 
@@ -153,6 +154,7 @@ public final class TreeFelling {
             job.task.start();
         }
 
+        TaskProgressWatch.progressed(job.task);
         job.task.complete();
         WorkerStrikes.worked(workerId, job.task);
         TaskChain.next(job.task);
@@ -184,6 +186,7 @@ public final class TreeFelling {
             job.task.start();
         }
 
+        TaskProgressWatch.progressed(job.task);
         job.task.complete();
         WorkerStrikes.worked(workerId, job.task);
         TaskChain.next(job.task);

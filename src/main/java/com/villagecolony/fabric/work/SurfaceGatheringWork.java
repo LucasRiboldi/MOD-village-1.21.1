@@ -386,13 +386,13 @@ public final class SurfaceGatheringWork {
             }
         }
         job.collected += amount;
+        TaskProgressWatch.progressed(job.task);
         com.villagecolony.fabric.integration.PlantPatch.replant(world, job.task.colonyId(),
                 MinecraftTypeAdapter.toColonyPos(job.center), job.target, job.task.targetResource());
         VillageColonyMod.LOGGER.info(
                 "{} {} gathered {} {} at {} — {}/{} this task",
                 role(job), workerId, amount, job.task.targetResource(), job.target.toShortString(),
                 job.collected, job.task.amount());
-
         if (job.collected >= job.task.amount()) {
             if (job.task.state() == TaskState.RESERVED) {
                 job.task.start();
