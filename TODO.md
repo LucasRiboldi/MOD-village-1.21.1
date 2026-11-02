@@ -8,9 +8,14 @@ Plano: [terreno, mina e profissões](docs/technical/Plano-Playtest-2026-11-02.md
 - [ ] Conectar pórtico ao grafo, smoothing local e casa do mineiro com tocha laranja.
 - [ ] Garantir reserva exclusiva por bloco e frente exclusiva por mineiro.
 - [ ] Preferir terra e usar salto maior somente em recuperação.
+- [x] Suspender ajudas cruzadas de pedreiro e fundidor no despacho `VillageHelpers`
+      (0.4.8 candidata; falta playtest).
+- [ ] Ao liberar testes, cobrir a suspensão no despacho `VillageHelpers.helps`;
+      os GameTests legados chamam rotinas auxiliares diretamente e não provam essa restrição.
 - [ ] Restringir alternativas ao ofício; fazendeiro atende todas as fazendas,
       lenhador planta nas bordas sem árvore madura disponível.
-- [ ] Gerar JAR candidato e validar o efeito no próximo playtest.
+- [x] Gerar JAR candidato 0.4.8 e copiar para `downloads/` e TLauncher com SHA-256 idêntico.
+- [ ] Validar a separação dos ofícios no próximo playtest e concluir os demais itens do plano.
 
 ## Sentinela local de testes — 01-11-2026
 

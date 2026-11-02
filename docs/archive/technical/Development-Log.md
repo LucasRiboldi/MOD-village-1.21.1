@@ -8,6 +8,25 @@
 
 # Village Colony — Development Log
 
+## 2026-11-02 — 0.4.8: separar ajudas dos ofícios
+
+Depois de publicar o planejamento, a inspeção de `ProfessionRegistry`,
+`HelperReach`, `BuilderPaving` e `PathPaving` confirmou que tarefas de obra e
+pavimentação já se restringem ao construtor. O despacho `VillageHelpers.helps`
+ainda enviava pedreiros para terreno/rua e fundidores para transporte/luz.
+Esses dois despachos foram removidos pela regra temporária aprovada no plano
+de 02-11, opção 6. Permanecem as alternativas próprias de construtor e pastor,
+e o transporte do adulto sem profissão. As rotinas antigas ficam sem chamador
+de produção; os GameTests legados continuam preservados e suspensos.
+
+Versão incrementada para 0.4.8. Nenhuma alteração em mixins, saves ou CI.
+Revisão estática realizada; `remapJar` passou em 3min25s, sem iniciar testes.
+Manifesto interno 0.4.8 e cópias no build, `downloads/` e TLauncher conferidos:
+SHA-256 `ABDD780E8B026F9C9BFE1CC6C0018E4ABE60ED465F2861E1C1BF81A861D20C8B`.
+O JAR 0.4.6 foi preservado como `.disabled`; playtest ainda pendente.
+Orçamento por tick, acesso/casa da mina, reservas, frentes individuais,
+navegação e filas próprias continuam abertos no plano aprovado.
+
 ## 2026-11-02 — planejamento aprovado antes de desenvolver
 
 O autor aprovou as seis opções A do playtest: orçamento por tick, conexão da

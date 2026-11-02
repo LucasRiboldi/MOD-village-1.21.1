@@ -1,10 +1,18 @@
 # STATE — 2026-11-02
 
-> **Planejamento aprovado, antes do desenvolvimento:** seis opções A para
+> **0.4.8 — primeiro lote do plano aprovado:** o despacho de `VillageHelpers`
+> deixa de enviar pedreiro para terraplanagem e fundidor para transporte/luz.
+> Construtor mantém reparos de terreno, pastor mantém alimentação e adultos
+> sem profissão mantêm transporte. Testes seguem suspensos. `remapJar` passou
+> em 3min25s; manifesto interno 0.4.8 e SHA-256 idêntico no build, `downloads/`
+> e TLauncher: `ABDD780E8B026F9C9BFE1CC6C0018E4ABE60ED465F2861E1C1BF81A861D20C8B`.
+> O JAR anterior foi preservado como `.disabled`. Efeito depende de playtest.
+>
+> **Planejamento aprovado, em desenvolvimento:** seis opções A para
 > orçamento por tick, acesso/casa da mina, reservas por bloco, frentes exclusivas,
 > terra/salto normal e tarefas restritas ao ofício. Nenhuma profissão deve
 > executar atividade de outra durante a regra temporária. Detalhes e evidências:
-> `docs/technical/Plano-Playtest-2026-11-02.md`. Código ainda não corrigido.
+> `docs/technical/Plano-Playtest-2026-11-02.md`. Demais correções ainda pendentes.
 > Modelos atualizados em `docs/technical/Modelos-Codex.md`; testes suspensos.
 
 > **0.4.7 — análise local do Sentinela pendente:** `scripts/sentinel_analysis.py`

@@ -1,7 +1,8 @@
 # Plano aprovado — terreno, mina e profissões
 
 Data: 2026-11-02. Categoria de auditoria: **1.9**.
-Estado: aprovado pelo autor; implementação ainda pendente.
+Estado: aprovado pelo autor; primeiro lote implementado na candidata 0.4.8;
+demais itens pendentes.
 
 ## Evidências e limites
 
@@ -71,10 +72,13 @@ existentes. Correções de tarefas e navegação devem preservar saves.
 
 ## Pendências
 
+- [x] Suspender ajudas cruzadas de pedreiro/fundidor no despacho `VillageHelpers`;
+      revisão estática feita, efeito ainda depende de playtest.
 - [ ] Localizar e corrigir custo por tick com diagnóstico mensurável.
 - [ ] Integrar acesso, smoothing e casa da mina ao sistema existente.
 - [ ] Verificar exclusão mútua das ações em blocos.
 - [ ] Corrigir seleção e recuperação de frente dos mineiros.
 - [ ] Revisar água e saltos sem cancelar IA Vanilla.
 - [ ] Restringir tarefas aos ofícios e revisar fazendeiro/lenhador/pastor/fundidor.
-- [ ] Registrar JAR candidato e confirmar efeito no próximo playtest.
+- [x] Registrar JAR candidato 0.4.8, com cópia e SHA-256 conferidos no `STATE.md`.
+- [ ] Confirmar efeito da 0.4.8 no próximo playtest e concluir os demais itens.

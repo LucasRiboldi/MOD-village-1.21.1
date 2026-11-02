@@ -6,7 +6,9 @@
 > **Regra temporária do autor — 02-11-2026:** nenhuma profissão executa
 > atividade de outra, inclusive ajuda de obra, fallback ou reatribuição.
 > Alternativas devem permanecer no próprio ofício; coleta comum e recuperação
-> de locomoção seguem as regras compartilhadas. Implementação pendente no
+> de locomoção seguem as regras compartilhadas. Na candidata 0.4.8,
+> `VillageHelpers` suspende terraplanagem por pedreiros e transporte/luz por
+> fundidores. Demais verificações permanecem pendentes no
 > [plano aprovado](technical/Plano-Playtest-2026-11-02.md).
 
 As regras do autor do Village Colony, em tabela. **Fonte única para
@@ -19,6 +21,11 @@ regra que foi emendada. O corpo de cada regra vive em
 ---
 
 ## Regras ativas
+
+> **Emenda temporária — 02-11, candidata 0.4.8:** somente construtores
+> executam obra, pavimentação e terraplanagem. Ficam suspensas as ajudas
+> cruzadas descritas nas Regras 59, 149 e 156. `VillageHelpers` não despacha
+> pedreiro nem fundidor para essas ajudas. Falta confirmar o efeito em jogo.
 
 | # | Enunciado | Data | Estado | Implementação |
 |---|---|---|---|---|

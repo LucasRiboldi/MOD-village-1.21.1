@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.7%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.8%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -16,10 +16,12 @@ do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
 Planejamento aprovado para o próximo ciclo: [terreno, mina e profissões](docs/technical/Plano-Playtest-2026-11-02.md).
-As correções desse plano ainda não estão entregues. Tabela operacional:
+A candidata 0.4.8 suspende ajudas cruzadas de pedreiro e fundidor em
+`VillageHelpers`; os demais itens e o playtest permanecem pendentes. Tabela operacional:
 [modelos do Codex por atividade](docs/technical/Modelos-Codex.md).
 
-Estado de desenvolvimento em 02-11-2026: a versão 0.4.7 adiciona análise manual
+Estado de desenvolvimento em 02-11-2026: a versão 0.4.8 restringe alternativas
+auxiliares aos ofícios. A 0.4.7 adiciona análise manual
 de evidências e métricas locais ao Sentinela; a 0.4.6 adiciona o Observatório
 local do Sentinela; a 0.4.5 adiciona a janela local; a 0.4.4 prepara o
 fechamento rastreável de entregas; a 0.4.3 consolida o
@@ -71,8 +73,8 @@ geração nova. Evidências e limites ficam no [STATE](STATE.md) e na
   terreno; sobe no máximo 1 bloco por passo, estreita onde o lado não cabe,
   contorna o desnível maior, nunca passa por construção nem pela boca da mina e
   se junta aos caminhos que já existem; vai ao chafariz por atalho quando a
-  rede dá mais de 2 vezes a volta (Regras 123 a 125). Quem assenta é o
-  pedreiro, o carpinteiro ou o fundidor sem tarefa, um por vez.
+  rede dá mais de 2 vezes a volta (Regras 123 a 125). Quem assenta é somente o
+  construtor sem obra, um por vez, conforme a regra temporária de ofícios.
 - No deserto usa o bloco próprio "caminho de areia" (Regra 73).
 - A mina desce em caracol de 4 lances curtos, abre um salão de 17×17 e desce de
   novo pelos 4 cantos; a escada de descida é o caminho de volta, com no máximo
@@ -96,10 +98,11 @@ geração nova. Evidências e limites ficam no [STATE](STATE.md) e na
 - O mineiro não quebra o bloco que segura, acima e pelo vão, cascalho, areia,
   água ou lava (Regra 157); ninguém dorme no andar de baixo da casa de escada
   de mão (Regra 158).
-- O pedreiro sem tarefa alisa o chão da vila aos poucos, uma janela de 24×24
+- O construtor sem tarefa alisa o chão da vila aos poucos, uma janela de 24×24
   por vez: tapa buraco, tira calombo de qualquer tamanho e deixa degrau de 1,
   pondo e tirando solo, sem tocar em construção, bloco do jogador, roça, água
-  nem na boca e na escada da mina (Regra 156). O construtor com a obra parada
+  nem na boca e na escada da mina (Regra 156, restrita pela regra temporária
+  de ofícios de 02-11). O construtor com a obra parada
   limpa e nivela o lote dela e 6 blocos em volta.
 - Nenhuma profissão espera mais de 5 minutos: quem fica parado com tarefa a
   larga e vai ajudar a vila; se a mesma tarefa trava de novo em 10 minutos, o
@@ -116,7 +119,8 @@ geração nova. Evidências e limites ficam no [STATE](STATE.md) e na
   declarada e deixa a linha `VC_SUPPLY` no log (Regra 111); toda desistência
   no diário de ações leva um código único de bloqueio (Regra 112).
 
-O mod é alpha. A 0.4.7 (2026-11-02) adiciona análise manual e métricas locais do
+O mod é alpha. A 0.4.8 (2026-11-02) suspende ajudas cruzadas em `VillageHelpers`
+e aguarda playtest. A 0.4.7 (2026-11-02) adiciona análise manual e métricas locais do
 Sentinela. A 0.4.6 (2026-11-02) adiciona o Observatório local do Sentinela.
 A 0.4.5 (2026-11-02) adiciona a janela local do Sentinela.
 A 0.4.4 (2026-11-02) adiciona o fechamento rastreável de
@@ -174,6 +178,11 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 <!-- REGRAS:INICIO (gerado por scripts/rules_to_readme.py a partir de docs/RULES.md; não editar à mão) -->
 
 ### Regras ativas
+
+> **Emenda temporária — 02-11, candidata 0.4.8:** somente construtores
+> executam obra, pavimentação e terraplanagem. Ficam suspensas as ajudas
+> cruzadas descritas nas Regras 59, 149 e 156. `VillageHelpers` não despacha
+> pedreiro nem fundidor para essas ajudas. Falta confirmar o efeito em jogo.
 
 | # | Enunciado | Data | Estado | Implementação |
 |---|---|---|---|---|

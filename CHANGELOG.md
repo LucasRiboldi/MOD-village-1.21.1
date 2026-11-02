@@ -12,6 +12,21 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.8] — alternativas restritas ao ofício (2026-11-02, candidato)
+
+### Corrigido
+- Pedreiro não recebe mais terraplanagem auxiliar; fundidor não recebe mais
+  transporte de minério ou iluminação de ruas pelo despacho `VillageHelpers`.
+- Reparos de terreno continuam com construtores; alimentação com pastores;
+  transporte auxiliar com adultos sem profissão. Filas de produção preservadas.
+
+### Verificação
+- Revisão dos chamadores e do diff. Testes suspensos por ordem do autor.
+- `remapJar` passou em 3min25s. Manifesto interno 0.4.8 conferido.
+- Build, `downloads/` e TLauncher conferem SHA-256
+  `ABDD780E8B026F9C9BFE1CC6C0018E4ABE60ED465F2861E1C1BF81A861D20C8B`.
+- Playtest pendente; demais itens do plano de 02-11 continuam abertos.
+
 ## [0.4.7] — análise local e métricas do Sentinela (2026-11-02, pendente)
 
 ### Adicionado
