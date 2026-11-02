@@ -14,17 +14,21 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import html
 import json
 import os
 import platform
+import re
 import shutil
 import socket
 import subprocess
 import sys
+import threading
 import time
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
+from xml.etree import ElementTree
 
 ROOT = Path(__file__).resolve().parent.parent
 REPORTS = ROOT / "reports" / "test-runs"
@@ -88,6 +92,87 @@ def command_version(command: list[str]) -> str:
     return (completed.stdout or completed.stderr).strip().splitlines()[0]
 
 
+def collect_gpu_metrics(command_runner=None) -> dict:
+    """Lê NVIDIA quando disponível; ausência nunca altera o resultado da suite."""
+    runner = command_runner or (lambda: subprocess.run(
+        ["nvidia-smi", "--query-gpu=utilization.gpu,memory.used", "--format=csv,noheader,nounits"],
+        text=True, capture_output=True, errors="replace", timeout=5))
+    try:
+        completed = runner()
+    except (FileNotFoundError, subprocess.SubprocessError, OSError) as error:
+        return {"available": False, "reason": str(error) or "nvidia-smi unavailable"}
+    if getattr(completed, "returncode", 0) != 0:
+        return {"available": False, "reason": (completed.stderr or "nvidia-smi unavailable").strip()}
+    values = re.findall(r"\d+(?:\.\d+)?", completed.stdout.splitlines()[0] if completed.stdout else "")
+    if len(values) < 2:
+        return {"available": False, "reason": "nvidia-smi returned no GPU values"}
+    return {"available": True, "utilization_percent": float(values[0]), "memory_used_mib": float(values[1])}
+
+
+def collect_host_metrics() -> dict:
+    """Captura CPU/RAM/JVM local. Falhas viram aviso de metadados."""
+    metrics = {"cpu_percent": None, "ram_used_mib": None, "java_working_set_mib": None, "warnings": []}
+    if os.name != "nt":
+        metrics["warnings"].append("Windows metrics unavailable on this platform")
+        metrics["gpu"] = collect_gpu_metrics()
+        return metrics
+    command = ("$cpu=(Get-CimInstance Win32_Processor | Measure-Object LoadPercentage -Average).Average;"
+               "$java=(Get-Process java -ErrorAction SilentlyContinue | Measure-Object WorkingSet64 -Sum).Sum;"
+               "Write-Output \"$cpu;$java\"")
+    try:
+        completed = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", command],
+                                   text=True, capture_output=True, errors="replace", timeout=5)
+        if completed.returncode != 0:
+            detail = (completed.stderr or "PowerShell exited without metric data").strip()
+            metrics["warnings"].append(f"CPU/JVM metric unavailable: {detail}")
+        else:
+            values = completed.stdout.strip().split(";")
+            metrics["cpu_percent"] = float(values[0]) if values and values[0] else None
+            metrics["java_working_set_mib"] = (round(int(values[1]) / 1024 / 1024, 1)
+                                               if len(values) > 1 and values[1] else None)
+    except (ValueError, OSError, subprocess.SubprocessError) as error:
+        metrics["warnings"].append(f"CPU/JVM metric unavailable: {error}")
+    try:
+        import ctypes
+        class MemoryStatus(ctypes.Structure):
+            _fields_ = [("length", ctypes.c_ulong), ("memory_load", ctypes.c_ulong),
+                         ("total", ctypes.c_ulonglong), ("available", ctypes.c_ulonglong),
+                         ("page_file_total", ctypes.c_ulonglong), ("page_file_available", ctypes.c_ulonglong),
+                         ("virtual_total", ctypes.c_ulonglong), ("virtual_available", ctypes.c_ulonglong),
+                         ("extended_virtual_available", ctypes.c_ulonglong)]
+        memory = MemoryStatus()
+        memory.length = ctypes.sizeof(memory)
+        if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(memory)):
+            raise OSError("GlobalMemoryStatusEx failed")
+        metrics["ram_used_mib"] = round((memory.total - memory.available) / 1024 / 1024, 1)
+    except (AttributeError, OSError) as error:
+        metrics["warnings"].append(f"RAM metric unavailable: {error}")
+    metrics["gpu"] = collect_gpu_metrics()
+    return metrics
+
+
+class MetricSampler:
+    """Amostra curta e local; não influencia Gradle nem o status da suite."""
+
+    def __init__(self) -> None:
+        self.samples: list[dict] = []
+        self.stop_event = threading.Event()
+        self.thread = threading.Thread(target=self._sample, daemon=True)
+
+    def _sample(self) -> None:
+        while not self.stop_event.is_set():
+            self.samples.append(collect_host_metrics())
+            self.stop_event.wait(5)
+
+    def start(self) -> None:
+        self.thread.start()
+
+    def stop(self) -> dict:
+        self.stop_event.set()
+        self.thread.join(timeout=6)
+        return {"samples": self.samples}
+
+
 def file_fingerprint(path: Path) -> tuple[int, int, str]:
     digest = hashlib.sha256()
     with path.open("rb") as source:
@@ -129,6 +214,46 @@ def copy_changed_artifacts(
     return copied
 
 
+def failure_details(case: ElementTree.Element) -> tuple[str, str]:
+    problem = case.find("failure")
+    if problem is None:
+        problem = case.find("error")
+    if problem is None:
+        return "", ""
+    message = (problem.get("message") or problem.text or "test failure").strip().splitlines()[0]
+    kind = problem.get("type") or problem.tag
+    return f"{kind}: {message}", message
+
+
+def test_cases_from_artifacts(destination: Path, name: str, attempt: int) -> list[dict]:
+    """Lê XML JUnit copiado; relatório ausente nunca invalida a execução Gradle."""
+    cases = []
+    for xml_path in destination.rglob("*.xml"):
+        try:
+            root = ElementTree.parse(xml_path).getroot()
+        except ElementTree.ParseError:
+            continue
+        for case in root.iter("testcase"):
+            signature, message = failure_details(case)
+            state = "FAIL" if case.find("failure") is not None else "ERROR" if case.find("error") is not None else "SKIPPED" if case.find("skipped") is not None else "PASS"
+            try:
+                seconds = round(float(case.get("time", "0")), 3)
+            except ValueError:
+                seconds = 0.0
+            cases.append({
+                "suite": name,
+                "attempt": attempt,
+                "class_name": case.get("classname", "unknown"),
+                "name": case.get("name", "unknown"),
+                "status": state,
+                "seconds": seconds,
+                "message": message,
+                "signature": signature,
+                "source": str(xml_path.relative_to(destination)).replace("\\", "/"),
+            })
+    return cases
+
+
 def run_suite(name: str, tasks: list[str], attempt: int, run_dir: Path) -> dict:
     suite_dir = run_dir / "suites"
     suite_dir.mkdir(exist_ok=True)
@@ -138,6 +263,8 @@ def run_suite(name: str, tasks: list[str], attempt: int, run_dir: Path) -> dict:
     command = [str(GRADLEW), *tasks, "--console=plain"]
     before = snapshot_artifacts()
     started = time.monotonic()
+    sampler = MetricSampler()
+    sampler.start()
     try:
         with stdout_path.open("w", encoding="utf-8") as stdout, stderr_path.open(
                 "w", encoding="utf-8") as stderr:
@@ -150,8 +277,10 @@ def run_suite(name: str, tasks: list[str], attempt: int, run_dir: Path) -> dict:
         error = f"command missing: {missing}"
         stderr_path.write_text(error + "\n", encoding="utf-8")
     elapsed = round(time.monotonic() - started, 1)
+    metrics = sampler.stop()
     status = "PASS" if exit_code == 0 else "FAIL" if exit_code is not None else "ERROR"
-    artifacts = copy_changed_artifacts(before, run_dir / "artifacts" / label)
+    artifact_dir = run_dir / "artifacts" / label
+    artifacts = copy_changed_artifacts(before, artifact_dir)
     return {
         "name": name,
         "attempt": attempt,
@@ -163,6 +292,8 @@ def run_suite(name: str, tasks: list[str], attempt: int, run_dir: Path) -> dict:
         "stdout": str(stdout_path.relative_to(run_dir)).replace("\\", "/"),
         "stderr": str(stderr_path.relative_to(run_dir)).replace("\\", "/"),
         "artifacts": artifacts,
+        "test_cases": test_cases_from_artifacts(artifact_dir, name, attempt),
+        "metrics": metrics,
     }
 
 
@@ -175,6 +306,54 @@ def overall_status(results: list[dict]) -> str:
     return "PASS" if all(result["status"] == "PASS" for result in results) else "FAIL"
 
 
+def report_history() -> list[dict]:
+    history = []
+    for summary in sorted(REPORTS.glob("*/summary.json"), reverse=True)[:50]:
+        try:
+            report = json.loads(summary.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        history.append({
+            "id": summary.parent.name,
+            "status": report.get("status", "UNKNOWN"),
+            "profile": report.get("profile", "unknown"),
+            "seconds": round(sum(item.get("seconds", 0) for item in report.get("results", [])), 1),
+        })
+    return history
+
+
+def write_dashboard(run_dir: Path, report: dict) -> None:
+    cases = [case for result in report["results"] for case in result.get("test_cases", [])]
+    counts = Counter(case["status"] for case in cases)
+    failures = Counter(case["signature"] for case in cases if case["signature"])
+    slowest = sorted(cases, key=lambda case: case["seconds"], reverse=True)[:20]
+    result_rows = "".join(
+        "<tr><td>{}</td><td>{}</td><td>{}</td><td>{:.1f}s</td><td><a href=\"{}\">stdout</a> · <a href=\"{}\">stderr</a></td></tr>".format(
+            item["attempt"], html.escape(item["name"]), item["status"], item["seconds"],
+            html.escape(item["stdout"]), html.escape(item["stderr"]))
+        for item in report["results"])
+    failure_rows = "".join("<tr><td>{}</td><td>{}</td></tr>".format(count, html.escape(signature))
+                           for signature, count in failures.most_common(20)) or "<tr><td colspan=\"2\">Nenhuma falha XML registrada.</td></tr>"
+    slow_rows = "".join("<tr><td>{:.3f}s</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(
+        item["seconds"], html.escape(item["suite"]), html.escape(item["class_name"]), html.escape(item["name"]))
+        for item in slowest) or "<tr><td colspan=\"4\">Nenhum XML de teste foi copiado.</td></tr>"
+    history_rows = "".join("<tr><td>{}</td><td>{}</td><td>{}</td><td>{:.1f}s</td></tr>".format(
+        html.escape(item["id"]), item["status"], html.escape(item["profile"]), item["seconds"])
+        for item in report_history())
+    bars = "".join("<div class=\"bar {}\" style=\"width:{}px\">{} {}</div>".format(
+        status.lower(), max(8, count * 18), status, count) for status, count in sorted(counts.items())) or "<p>Sem XML de casos nesta execução.</p>"
+    document = f"""<!doctype html><html lang=\"pt-BR\"><meta charset=\"utf-8\"><title>Sentinela Observatório</title>
+<style>body{{font:15px Segoe UI,Arial,sans-serif;margin:24px;color:#17202a;background:#f7f9fb}}h1,h2{{margin-bottom:8px}}section{{background:white;padding:16px;margin:16px 0;border:1px solid #d9e1e8;border-radius:8px}}table{{border-collapse:collapse;width:100%}}th,td{{padding:7px;border-bottom:1px solid #e5e9ed;text-align:left}}.bar{{color:white;margin:5px;padding:5px;border-radius:3px}}.pass{{background:#248a3d}}.fail,.error{{background:#b83232}}.skipped{{background:#777}}.interrupted{{background:#9b6c00}}a{{color:#0759b7}}</style>
+<h1>Sentinela Observatório: {html.escape(report['status'])}</h1><p>Perfil: <b>{html.escape(report['profile'])}</b> · Repetições: {report['repeat']} · Casos XML: {len(cases)}</p>
+<section><h2>Resultados de casos</h2>{bars}</section>
+<section><h2>Suites</h2><table><tr><th>Tentativa</th><th>Suite</th><th>Status</th><th>Duração</th><th>Logs</th></tr>{result_rows}</table></section>
+<section><h2>Falhas agrupadas por assinatura</h2><table><tr><th>Ocorrências</th><th>Assinatura</th></tr>{failure_rows}</table></section>
+<section><h2>20 casos mais lentos</h2><table><tr><th>Duração</th><th>Suite</th><th>Classe</th><th>Teste</th></tr>{slow_rows}</table></section>
+<section><h2>Histórico local (até 50 execuções)</h2><table><tr><th>Execução</th><th>Status</th><th>Perfil</th><th>Duração</th></tr>{history_rows}</table></section>
+</html>"""
+    (run_dir / "dashboard.html").write_text(document, encoding="utf-8")
+
+
 def write_summary(run_dir: Path, report: dict) -> None:
     (run_dir / "summary.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n",
                                            encoding="utf-8")
@@ -182,6 +361,7 @@ def write_summary(run_dir: Path, report: dict) -> None:
     duration = round(sum(result["seconds"] for result in report["results"]), 1)
     lines = [f"# Sentinela Local: {report['status']}", "",
              f"Perfil: `{report['profile']}`  ", f"Repetições: {report['repeat']}  ",
+             f"Suites escolhidas: `{', '.join(report.get('only', ())) or 'todas do perfil'}`  ",
              f"Commit: `{report['metadata']['git_commit']}`  ",
              f"Duração das suites: {duration}s  ",
              "Status: " + ", ".join(f"{status} {count}" for status, count in sorted(counts.items())),
@@ -189,13 +369,33 @@ def write_summary(run_dir: Path, report: dict) -> None:
     for result in report["results"]:
         lines.append(f"- {result['status']}: tentativa {result['attempt']}, `{result['name']}` "
                      f"({result['seconds']}s, saída {result['exit_code']})")
-    lines.extend(["", "Logs e artefatos desta execução ficam neste diretório.", ""])
+    lines.extend(["", "Logs e artefatos desta execução ficam neste diretório.",
+                  "Painel visual: `dashboard.html`.", ""])
     (run_dir / "summary.md").write_text("\n".join(lines), encoding="utf-8")
+    (run_dir / "metrics.json").write_text(json.dumps({
+        "suites": [{"attempt": item.get("attempt"), "name": item.get("name"),
+                    "status": item.get("status"), "metrics": item.get("metrics", {})}
+                   for item in report["results"]]}, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    write_dashboard(run_dir, report)
 
 
-def planned_suites(profile: str, repeat: int) -> list[tuple[int, str, list[str]]]:
+def selected_suites(profile: str, only: set[str] | None, parser: argparse.ArgumentParser) -> list[tuple[str, list[str]]]:
+    suites = PROFILES[profile]
+    available = {name for name, _ in suites}
+    if only is None:
+        return suites
+    unknown = only - available
+    if unknown:
+        parser.error("--only includes suites unavailable for profile {}: {}".format(profile, ", ".join(sorted(unknown))))
+    chosen = [(name, tasks) for name, tasks in suites if name in only]
+    if not chosen:
+        parser.error("--only must select at least one suite")
+    return chosen
+
+
+def planned_suites(profile: str, repeat: int, only: set[str] | None, parser: argparse.ArgumentParser) -> list[tuple[int, str, list[str]]]:
     return [(attempt, name, tasks) for attempt in range(1, repeat + 1)
-            for name, tasks in PROFILES[profile]]
+            for name, tasks in selected_suites(profile, only, parser)]
 
 
 def run_directory(run_id: str, parser: argparse.ArgumentParser) -> Path:
@@ -212,6 +412,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("profile", choices=PROFILES, nargs="?")
     parser.add_argument("--repeat", type=int, default=1, metavar="N")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--budget-minutes", type=int, default=0, metavar="MIN",
+                        help="parar antes da próxima suite ao atingir MIN; 0 não limita")
+    parser.add_argument("--only", metavar="SUITES",
+                        help="suites do perfil, separadas por vírgula")
     parser.add_argument("--list", action="store_true", help="list profiles without running Gradle")
     parser.add_argument("--resume", metavar="RUN_ID", help="continue a saved interrupted run")
     args = parser.parse_args(argv)
@@ -223,6 +427,10 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("provide one profile, or --resume RUN_ID")
     if args.repeat < 1:
         parser.error("--repeat must be at least 1")
+    if args.budget_minutes < 0:
+        parser.error("--budget-minutes cannot be negative")
+    if args.resume and args.only:
+        parser.error("--only cannot change a saved run; resume its original selection")
     if args.profile:
         errors = coverage_errors()
         if errors:
@@ -230,7 +438,8 @@ def main(argv: list[str] | None = None) -> int:
                 print(error, file=sys.stderr)
             return 2
     if args.profile and args.dry_run:
-        for attempt, name, tasks in planned_suites(args.profile, args.repeat):
+        only = set(filter(None, (args.only or "").split(","))) or None
+        for attempt, name, tasks in planned_suites(args.profile, args.repeat, only, parser):
             print(f"attempt {attempt} {name}: {' '.join(tasks)}")
         return 0
 
@@ -243,6 +452,7 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("saved run has invalid profile or repeat")
         report.setdefault("results", [])
         report.setdefault("metadata", {})
+        only = set(report.get("only", [])) or None
         report["metadata"].setdefault("resumed_at", []).append(datetime.now(timezone.utc).isoformat())
         (run_dir / "metadata.json").write_text(
             json.dumps(report["metadata"], indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -265,13 +475,15 @@ def main(argv: list[str] | None = None) -> int:
             "host": socket.gethostname(),
             "platform": platform.platform(),
         }
-        report = {"profile": profile, "repeat": repeat, "metadata": metadata,
+        only = set(filter(None, (args.only or "").split(","))) or None
+        selected_suites(profile, only, parser)
+        report = {"profile": profile, "repeat": repeat, "only": sorted(only or ()), "metadata": metadata,
                   "results": [], "status": "RUNNING"}
         (run_dir / "metadata.json").write_text(
             json.dumps(metadata, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         write_summary(run_dir, report)
 
-    suites = planned_suites(profile, repeat)
+    suites = planned_suites(profile, repeat, only, parser)
     completed = {(result.get("attempt"), result.get("name")) for result in report["results"]}
     pending = [(attempt, name, tasks) for attempt, name, tasks in suites
                if (attempt, name) not in completed]
@@ -280,7 +492,14 @@ def main(argv: list[str] | None = None) -> int:
             print(f"attempt {attempt} {name}: {' '.join(tasks)}")
         return 0
 
+    deadline = time.monotonic() + args.budget_minutes * 60 if args.budget_minutes else None
     for attempt, name, tasks in pending:
+        if deadline is not None and time.monotonic() >= deadline:
+            report["status"] = "INTERRUPTED"
+            report["interrupted_reason"] = f"time budget reached before attempt {attempt} {name}"
+            write_summary(run_dir, report)
+            print(f"INTERRUPTED: {run_dir.relative_to(ROOT)}")
+            return 2
         report["results"].append(run_suite(name, tasks, attempt, run_dir))
         report["status"] = "RUNNING"
         write_summary(run_dir, report)

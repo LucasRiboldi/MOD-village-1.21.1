@@ -1,5 +1,22 @@
 # TODO
 
+## Playtest de 02-11 — escolhas A aprovadas
+
+Plano: [terreno, mina e profissões](docs/technical/Plano-Playtest-2026-11-02.md).
+
+- [ ] Diagnosticar custo de geração e recalculo; processar lotes por tick.
+- [ ] Conectar pórtico ao grafo, smoothing local e casa do mineiro com tocha laranja.
+- [ ] Garantir reserva exclusiva por bloco e frente exclusiva por mineiro.
+- [ ] Preferir terra e usar salto maior somente em recuperação.
+- [x] Suspender ajudas cruzadas de pedreiro e fundidor no despacho `VillageHelpers`
+      (0.4.8 candidata; falta playtest).
+- [ ] Ao liberar testes, cobrir a suspensão no despacho `VillageHelpers.helps`;
+      os GameTests legados chamam rotinas auxiliares diretamente e não provam essa restrição.
+- [ ] Restringir alternativas ao ofício; fazendeiro atende todas as fazendas,
+      lenhador planta nas bordas sem árvore madura disponível.
+- [x] Gerar JAR candidato 0.4.8 e copiar para `downloads/` e TLauncher com SHA-256 idêntico.
+- [ ] Validar a separação dos ofícios no próximo playtest e concluir os demais itens do plano.
+
 ## Sentinela local de testes — 01-11-2026
 
 - [x] Criar varredura manual com perfis `quick`, `fast` e `full`, logs e
@@ -8,8 +25,19 @@
       execução interrompida, sem executar Gradle durante o modo de playtest.
 - [x] Criar dois testes Python pequenos para cópia recursiva e `--resume`; ambos
       passaram sem iniciar Gradle.
+- [x] Criar aplicativo Windows `Sentinela/Abrir-Sentinela.cmd`, sem dependências
+      extras, para escolher perfil, repetição, simulação e retomada localmente.
+- [x] Criar o Observatório local: seleção de suites, orçamento seguro, painel
+      HTML, agrupamento de falhas, testes lentos e histórico local.
+- [x] Criar análise manual de execuções, painel separado e métricas locais
+      opcionais; não inicia Gradle e tolera GPU NVIDIA indisponível.
+- [x] Criar tutorial operacional do Sentinela e regra de atualização conjunta.
 - [ ] Validar uma futura camada visual de cliente/GPU em spike Fabric isolada,
       no perfil `village-max`; não entra no fluxo diário sem prova reproduzível.
+- [ ] Avaliar publicação opcional Allure entre máquinas após necessidade real;
+      plano em `docs/superpowers/plans/2026-11-02-sentinela-futuro.md`.
+- [ ] Avaliar laboratório serial de carga/JFR após definir orçamento de máquina;
+      plano em `docs/superpowers/plans/2026-11-02-sentinela-futuro.md`.
 
 ## Rede e currais — implementação 0.4.3 em 02-11-2026
 
@@ -45,8 +73,11 @@ Fila priorizada, evidências e critérios de fechamento:
 - [ ] Investigar a intermitência de `GroundPickupGameTest.aPassingWorkerPicksUpAllGroundItems`:
       a bateria da 0.4.1 falhou em 1/979, mas a repetição isolada passou. Não houve
       alteração de produção para este sintoma.
-- [ ] Investigar a intermitência de `BuilderGameTest.groundBlocksAreShapedWithoutTheChest`:
-      CI de push da 0.4.1 falhou em 1/979; não foi reproduzido nem alterado nesta entrega.
+      O CI 552 encontrou terra zero no baú original. Depósito em segundo baú reproduz
+      o erro, mas o evento original ainda não foi rastreado. O teste agora registra
+      remoção dos itens e estoques; conferir a próxima execução completa do CI.
+- [ ] Confirmar no CI completo a fixture hidratada de `BuilderGameTest.groundBlocksAreShapedWithoutTheChest`;
+      desidratação reproduziu a falha e os 35 testes isolados passaram após a correção.
 
 - [ ] Jogar o novo JAR em mundo novo e no save `Novo mundo`: medir grama flutuante,
       transição do lote em degraus de 1 bloco e apoio sob o piso; conferir cortes em dunas e estruturas.

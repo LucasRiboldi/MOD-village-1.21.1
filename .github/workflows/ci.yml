@@ -2,14 +2,10 @@ name: CI
 
 on:
   push:
-    # O trabalho do dia vive nos branches codex/*, e ate 2026-09-24 o CI so
-    # rodava na main: os commits enviados nao passavam por verificacao nenhuma.
-    # claude/** e integra/** entraram em 2026-10-06 pelo mesmo motivo (ADR-035 2).
+    # Push de branch só duplicava a bateria completa que o PR já executa.
+    # FECHAR-RAPIDO valida localmente antes de abrir o PR; main permanece coberta.
     branches:
       - main
-      - "codex/**"
-      - "claude/**"
-      - "integra/**"
   pull_request:
   workflow_dispatch:
 

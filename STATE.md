@@ -1,5 +1,76 @@
 # STATE — 2026-11-02
 
+> **PR #47 — cultivo e diagnóstico de coleta:** as duas fixtures de cultivo
+> agora compartilham a água contida do teste de canteiro. O teste automático
+> de coleta mantém suas asserções e registra remoção dos itens, posições,
+> limites da colônia e estoques dos baús públicos. Os 36 GameTests focados
+> passaram; a coleta continua sem causa confirmada no CI. Sem alteração de
+> produção ou JAR. Integração e MAE aguardam a bateria completa do CI.
+
+> **PR #47 — diagnóstico do canteiro:** a fixture agora contém água e verifica
+> a construção e a hidratação após `randomTick`. Os 35 GameTests do construtor
+> passaram isolados; a bateria completa permanece pendente no CI. A falha do CI
+> é compatível com desidratação, reproduzida localmente, mas seu evento original
+> não foi registrado. Nenhum comportamento de produção foi alterado.
+
+> **Integração pelo PR #47:** o CI Linux encontrou um teste de métricas de
+> PowerShell que dependia da plataforma hospedeira. A fixture agora simula
+> Windows somente durante a coleta, preservando as asserções de erro.
+> Nenhum teste local foi criado ou executado; a confirmação depende do CI.
+> MAE permanece separado desta integração: região maior supervisionada,
+> com aprovação individual de cada obra antes da execução.
+
+> **0.4.8 — primeiro lote do plano aprovado:** o despacho de `VillageHelpers`
+> deixa de enviar pedreiro para terraplanagem e fundidor para transporte/luz.
+> Construtor mantém reparos de terreno, pastor mantém alimentação e adultos
+> sem profissão mantêm transporte. Testes seguem suspensos. `remapJar` passou
+> em 3min25s; manifesto interno 0.4.8 e SHA-256 idêntico no build, `downloads/`
+> e TLauncher: `ABDD780E8B026F9C9BFE1CC6C0018E4ABE60ED465F2861E1C1BF81A861D20C8B`.
+> O JAR anterior foi preservado como `.disabled`. Efeito depende de playtest.
+>
+> **Planejamento aprovado, em desenvolvimento:** seis opções A para
+> orçamento por tick, acesso/casa da mina, reservas por bloco, frentes exclusivas,
+> terra/salto normal e tarefas restritas ao ofício. Nenhuma profissão deve
+> executar atividade de outra durante a regra temporária. Detalhes e evidências:
+> `docs/technical/Plano-Playtest-2026-11-02.md`. Demais correções ainda pendentes.
+> Modelos atualizados em `docs/technical/Modelos-Codex.md`; testes suspensos.
+
+> **0.4.7 — análise local do Sentinela pendente:** `scripts/sentinel_analysis.py`
+> lê apenas execuções preservadas, agrupa causas, indica evidência incompleta e
+> cria JSON, Markdown e HTML em `reports/sentinel-analysis/`. A janela oferece
+> a ação manual correspondente. Cada suite futura registra CPU, RAM, memória
+> Java e GPU opcional em `metrics.json`; GPU ausente é metadado, não falha.
+> Baterias Java seguem suspensas. Foram executados testes Python e compilação
+> Python, sem Gradle. O JAR 0.4.7 ainda não foi gerado nem copiado.
+
+> **0.4.6 — Observatório local do Sentinela pendente:** o mesmo
+> `Sentinela/Abrir-Sentinela.cmd` agora escolhe suites, repetição e orçamento
+> seguro em minutos. `scripts/test_lab.py` preserva `dashboard.html` local com
+> casos XML, falhas agrupadas, lentidão, logs e até 50 execuções; `INTERRUPTED`
+> nunca mata a suite corrente e pode ser retomado. Não há dependência nova,
+> telemetria, execução em login ou mudança de CI. Baterias Java continuam
+> suspensas por ordem do autor; foram validadas sintaxe/importação Python e
+> simulações secas. JAR local 0.4.6 em `build/libs`, `downloads/` e TLauncher:
+> SHA-256 `FD5BDA43D752E9E70AB0CC7701E7A9CB8D4913791C16097B985F996E47C9D37B`.
+
+> **0.4.5 — aplicativo local do Sentinela pendente:** `Sentinela/Abrir-Sentinela.cmd`
+> abre uma janela Windows que chama o orquestrador oficial sem IA. A tela expõe
+> perfil, repetição, simulação e retomada, transmite a saída e abre os relatórios
+> existentes. Não agenda tarefas, não muda CI e não duplica a lógica de testes.
+> A validação fica restrita a importação/sintaxe e `--dry-run`, pois o modo
+> temporário de correção por playtest ainda suspende as baterias Java. JAR local
+> 0.4.5 em `build/libs`, `downloads/` e TLauncher: SHA-256
+> `6D180AE9701125CE26B39CAA10B37A6BA1588664AE58C8D055A785A6DA23FA53`.
+
+> **0.4.4 — fechamento rastreável pendente:** `FECHAR-RAPIDO` confere os
+> documentos vivos antes do PR; `REGISTRO-RELEASE` transforma o registro humano
+> versionado em evidência de commit e SHA-256 para a publicação GitHub. Push de
+> branches deixa de repetir a bateria completa, que continua obrigatória no PR
+> e na `main`. Esta alteração não muda o mod no jogo e permanece sem bateria
+> Java pelo modo temporário de correção por playtest. JAR local 0.4.4 em
+> `build/libs`, `downloads/` e TLauncher: SHA-256
+> `5DFAB711B431FB9A693F991ABA4A3434235528E60DBC1C96E34EB205A1D64891`.
+
 > **0.4.3 — fechamento local em 02-11:** watchdog de progresso útil, reposição física
 > na segunda falha diária, metas ociosas de mina e fundição, casa do mineiro,
 > curral grande único e ativação compatível do grafo de ruas foram implementados.

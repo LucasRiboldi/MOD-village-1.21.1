@@ -8,6 +8,7 @@ import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.ColonyChests;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.ChestBlockEntity;
@@ -93,6 +94,8 @@ public final class GroundPickupGameTest implements FabricGameTest {
         context.getWorld().spawnEntity(other);
 
         boolean[] done = {false};
+        boolean[] removed = {false, false};
+        recordPickupState(context, colony, villager, wanted, other, "initial");
 
         Runnable cleanup = () -> {
             VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
@@ -107,6 +110,12 @@ public final class GroundPickupGameTest implements FabricGameTest {
         };
 
         context.runAtEveryTick(() -> {
+            if (done[0]) return;
+            if ((!removed[0] && !wanted.isAlive()) || (!removed[1] && !other.isAlive())) {
+                recordPickupState(context, colony, villager, wanted, other, "item_removed");
+                removed[0] = !wanted.isAlive();
+                removed[1] = !other.isAlive();
+            }
             if (done[0] || wanted.isAlive() || other.isAlive()) {
                 return;
             }
@@ -129,6 +138,9 @@ public final class GroundPickupGameTest implements FabricGameTest {
                 }
             }
 
+            if (stored != 5 || dirt != 5) {
+                recordPickupState(context, colony, villager, wanted, other, "assertion_failed");
+            }
             cleanup.run();
 
             context.assertTrue(stored == 5, "o pedregulho recolhido devia estar no baú: " + stored);
@@ -144,9 +156,37 @@ public final class GroundPickupGameTest implements FabricGameTest {
             String where = villager.getBlockPos().toShortString();
             boolean helping = GroundPickup.isHelping(villager.getUuid());
 
+            recordPickupState(context, colony, villager, wanted, other, "timeout");
             cleanup.run();
             context.assertTrue(false, "o pedregulho que a obra espera ficou no chão; o aldeão está em " + where
                     + ", ajudando=" + helping);
         });
+    }
+
+    /** Regra 48: o diagnóstico mostra todos os destinos públicos sem relaxar as asserções. */
+    private static void recordPickupState(TestContext context, Colony colony, VillagerEntity villager,
+            ItemEntity wanted, ItemEntity other, String event) {
+        var chests = new java.util.ArrayList<>(ColonyChests.nearestFirst(context.getWorld(), colony.id(),
+                MinecraftTypeAdapter.toColonyPos(villager.getBlockPos())));
+        ColonyPos original = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+        if (!chests.contains(original)) chests.add(original);
+        StringBuilder stocks = new StringBuilder();
+        for (ColonyPos chest : chests) {
+            var entity = context.getWorld().getBlockEntity(MinecraftTypeAdapter.toBlockPos(chest));
+            stocks.append(chest).append('=');
+            if (entity instanceof ChestBlockEntity box) {
+                for (int slot = 0; slot < box.size(); slot++) {
+                    if (!box.getStack(slot).isEmpty()) stocks.append(slot).append(':').append(box.getStack(slot)).append(';');
+                }
+            } else {
+                stocks.append("not_chest");
+            }
+            stocks.append('|');
+        }
+        VillageColonyMod.LOGGER.info(
+                "PICKUP_DIAG event={} tick={} colony={} bounds={} worker={} workerPos={} wanted={} wantedPos={} wantedRemoval={} other={} otherPos={} otherRemoval={} stocks={}",
+                event, context.getWorld().getTime(), colony.id(), colony.bounds(), villager.getUuid(),
+                villager.getPos(), wanted.getUuid(), wanted.getPos(), wanted.getRemovalReason(),
+                other.getUuid(), other.getPos(), other.getRemovalReason(), stocks);
     }
 }

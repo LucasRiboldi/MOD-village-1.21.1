@@ -31,17 +31,17 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Os ajudantes da vila — Regra 149 (autor, 2026-10-28; taiga simulada: pedreiro 64% e fundidor 80% parados).
- * Uma vez por minuto, o titular sem tarefa do ofício, no expediente:
+ * As alternativas do próprio ofício — regra temporária do autor de 2026-11-02
+ * (docs/technical/Plano-Playtest-2026-11-02.md, opção 6).
+ * Uma vez por minuto, no expediente:
  *
  * <ul>
- *   <li><b>pedreiro</b>: tapa até {@link #GAPS_PER_PASS} falhas da rua ({@link StreetGaps}), das mais perto
- *       dele; sem falha, nivela o chão em volta de uma casa pronta, uma por vez
- *       ({@link SiteSurroundings#level(ServerWorld, Building)});</li>
- *   <li><b>fundidor</b>: leva até {@link #HAUL} itens do baú da boca da mina para os baús públicos; e acende a
- *       rua — uma lanterna por minuto ao lado da coluna de rua escura (luz de bloco abaixo de
- *       {@link #DARK}), a {@link #LIGHT_SPACING} blocos de outra luz.</li>
+ *   <li><b>construtor</b>: repara o terreno, começando pelo lote da obra aberta;</li>
+ *   <li><b>pastor</b>: alimenta o rebanho;</li>
+ *   <li><b>adulto sem profissão</b>: transporta itens e alivia os baús cheios.</li>
  * </ul>
+ * As ajudas cruzadas da Regra 149 ficam suspensas; pedreiro e fundidor
+ * permanecem disponíveis para suas filas de produção.
  */
 public final class VillageHelpers {
 
@@ -99,9 +99,9 @@ public final class VillageHelpers {
     }
 
     /**
-     * A ajuda de quem está sem tarefa: o pedreiro tapa a rua e nivela, o fundidor leva o minério e acende a rua, o
-     * pastor cuida do rebanho (O3), o construtor com a obra parada limpa e nivela o lote (O2) e o adulto sem profissão
-     * carrega (O8).
+     * Alternativas sem troca de ofício: pastor cuida do rebanho (O3), construtor
+     * limpa e nivela o lote (O2), adulto sem profissão carrega (O8). As ajudas
+     * cruzadas da Regra 149 ficam suspensas pela opção 6 do plano de 2026-11-02.
      *
      * @return quanto ele fez
      */
@@ -111,8 +111,6 @@ public final class VillageHelpers {
         }
 
         return switch (trade.get()) {
-            case MASON -> masonHelps(world, colony, villager);
-            case SMELTER -> smelterHelps(world, colony, villager);
             case SHEPHERD -> FlockCare.feed(world, colony, villager);
             case BUILDER -> builderHelps(world, colony, villager);
             default -> 0;
@@ -140,7 +138,11 @@ public final class VillageHelpers {
         return carried + spread;
     }
 
-    /** Tapa as falhas da rua; sem falha, alisa o chão da vila; sem nada a alisar, nivela em volta da próxima casa. */
+    /**
+     * Rotina legada da Regra 149, sem despacho em jogo pela regra temporária de
+     * 2026-11-02; mantida para os GameTests existentes, atualmente suspensos.
+     * Tapa as falhas da rua; sem falha, alisa o chão e nivela em volta da próxima casa.
+     */
     static int masonHelps(ServerWorld world, Colony colony, VillagerEntity mason) {
         int mended = StreetGaps.mend(world, colony.id(), mason.getBlockPos(), GAPS_PER_PASS);
 
@@ -176,7 +178,11 @@ public final class VillageHelpers {
         return levelled;
     }
 
-    /** Leva o minério da boca da mina aos baús públicos e acende a rua escura. */
+    /**
+     * Rotina legada da Regra 149, sem despacho em jogo pela regra temporária de
+     * 2026-11-02; mantida para os GameTests existentes, atualmente suspensos.
+     * Leva o minério da boca da mina aos baús públicos e acende a rua escura.
+     */
     static int smelterHelps(ServerWorld world, Colony colony, VillagerEntity smelter) {
         int carried = haulFromTheMine(world, colony, smelter);
 

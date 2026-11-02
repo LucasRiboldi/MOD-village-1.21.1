@@ -8,6 +8,89 @@
 
 # Village Colony — Development Log
 
+## 2026-11-02 — PR #47: cultivo hidratado e coleta rastreável
+
+As opções 1A e 2A aprovadas pelo autor foram aplicadas apenas aos GameTests.
+As fixtures de cultivo reutilizam a água contida do teste de canteiro, mantendo
+as verificações no tick 300. Um experimento anterior havia reproduzido a perda
+do canteiro por randomTick antes da colocação do trigo.
+
+O teste automático de coleta preserva as contagens exatas no baú original.
+Registra estado inicial, remoção dos itens, falha e timeout, com identificadores,
+posições, motivos de remoção, limites da colônia e estoques dos baús consultados.
+O depósito em outro baú reproduziu o erro em experimento controlado; isso ainda
+não confirma o destino dos itens na falha original do CI 552.
+
+`runGametest -PgametestOnly=BuilderGameTest,GroundPickupGameTest` passou nos
+36 casos. A integração continua condicionada ao CI completo. Nenhuma mudança
+de produção, configuração de CI, versão do mod, JAR ou save do jogador.
+
+## 2026-11-02 — PR #47: hidratação da fixture do construtor
+
+O CI encontrou terra no lugar do canteiro. Um experimento reproduziu a falha
+ao executar o randomTick Vanilla sem água; com água o canteiro permaneceu
+hidratado. O evento original do CI não foi registrado e pode ter outra causa.
+A fixture contém água e verifica a construção, a hidratação e o estado no tick
+200. Os 35 GameTests do construtor passaram; a bateria completa depende do CI.
+Não houve mudança no código de produção nem nos saves do jogador.
+
+## 2026-11-02 — PR #47: independência de plataforma na fixture de métricas
+
+O CI Linux falhou em
+`test_failed_powershell_is_recorded_as_unavailable_not_zero_usage`: a fixture
+simulava o processo PowerShell, mas a coleta encerrava antes por detectar
+Linux. A fixture existente passou a simular `os.name == "nt"` apenas durante
+`collect_host_metrics`, com restauração automática. As asserções permanecem
+inalteradas; o código de produção e a configuração do CI não mudaram.
+
+Não foram criados nem executados testes locais, conforme o modo temporário.
+A verificação desta correção fica pendente do novo CI do PR #47.
+O autor escolheu integrar os commits publicados antes de abrir a linha MAE;
+para o MAE, aprovou região maior com revisão individual de cada obra.
+
+## 2026-11-02 — 0.4.8: separar ajudas dos ofícios
+
+Depois de publicar o planejamento, a inspeção de `ProfessionRegistry`,
+`HelperReach`, `BuilderPaving` e `PathPaving` confirmou que tarefas de obra e
+pavimentação já se restringem ao construtor. O despacho `VillageHelpers.helps`
+ainda enviava pedreiros para terreno/rua e fundidores para transporte/luz.
+Esses dois despachos foram removidos pela regra temporária aprovada no plano
+de 02-11, opção 6. Permanecem as alternativas próprias de construtor e pastor,
+e o transporte do adulto sem profissão. As rotinas antigas ficam sem chamador
+de produção; os GameTests legados continuam preservados e suspensos.
+
+Versão incrementada para 0.4.8. Nenhuma alteração em mixins, saves ou CI.
+Revisão estática realizada; `remapJar` passou em 3min25s, sem iniciar testes.
+Manifesto interno 0.4.8 e cópias no build, `downloads/` e TLauncher conferidos:
+SHA-256 `ABDD780E8B026F9C9BFE1CC6C0018E4ABE60ED465F2861E1C1BF81A861D20C8B`.
+O JAR 0.4.6 foi preservado como `.disabled`; playtest ainda pendente.
+Orçamento por tick, acesso/casa da mina, reservas, frentes individuais,
+navegação e filas próprias continuam abertos no plano aprovado.
+
+## 2026-11-02 — planejamento aprovado antes de desenvolver
+
+O autor aprovou as seis opções A do playtest: orçamento por tick, conexão da
+mina ao grafo, reservas de blocos, frentes de mineração individuais, navegação
+por terra e alternativas do próprio ofício. Acrescentou regra temporária que
+proíbe assumir atividade de outra profissão. O plano registra evidências,
+critérios e limites em `docs/technical/Plano-Playtest-2026-11-02.md`.
+A tabela de modelos substitui recomendações antigas por Luna, Terra, Sol e
+Astra conforme escopo. O autor pediu commit/push antes do desenvolvimento.
+A revisão atual valida sintaxe Python e diff; não executa baterias de testes.
+
+## 2026-11-02 — análise local e métricas do Sentinela
+
+A versão 0.4.7 acrescenta `scripts/sentinel_analysis.py`, que somente lê as
+execuções existentes do Sentinela e produz um relatório separado com causas
+agrupadas, supersessão por passagem posterior e lacunas de evidência. A janela
+Windows ganhou a ação manual `Analisar relatórios`; ela não chama Gradle.
+
+Novas execuções passam a gravar métricas locais de CPU, RAM, processos Java e
+GPU NVIDIA opcional. Falta de `nvidia-smi` é registrada como indisponibilidade,
+sem alterar a suite. Durante a suspensão das baterias Java, passaram os testes
+Python focados e a compilação Python; nenhum Gradle, GameTest, PIT ou JAR foi
+executado nesta etapa.
+
 ## 2026-11-02 — fechamento local 0.4.3 e handoff
 
 A versão 0.4.3 consolida o watchdog de progresso, a reposição física na segunda
@@ -11452,3 +11535,57 @@ dividir as pilhas sem mudar o código de produção. Depois disso,
 passou em `reports/test-runs/20261102T125155Z` (356,9 s): unitários,
 propriedades, GameTests, auditoria e mutação, cinco de cinco. O playtest em
 mundo novo permanece a validação visual e comportamental final desta sessão.
+
+## 02-11-2026 — fechamento rastreável de entrega
+
+Foram criados dois comandos de processo, sem alterar a lógica do jogo.
+`FECHAR-RAPIDO` verifica a versão em CHANGELOG, README e STATE, as regras
+geradas e o estado da árvore antes do PR. `REGISTRO-RELEASE` usa um documento
+versionado em `docs/releases/`, recusa publicar evidência pendente e gera a
+seção de commit e SHA-256 que o workflow incorpora à release GitHub.
+
+O CI completo deixou de rodar a cada push de branch, pois duplicava a execução
+do PR; PR e `main` continuam sendo as portas de validação. Foram verificados a
+sintaxe Python, o pré-voo válido, o bloqueio explícito de registro pendente e
+`git diff --check`. O modo temporário de correção por playtest manteve JUnit,
+GameTests, PIT e Sentinela sem execução. `remapJar` gerou a 0.4.4 e o
+manifesto confirmou build, downloads e TLauncher com SHA-256
+`5DFAB711B431FB9A693F991ABA4A3434235528E60DBC1C96E34EB205A1D64891`.
+
+## 02-11-2026 — Observatório local do Sentinela
+
+O Sentinela Local recebeu a alternativa A aprovada pelo autor: `--only` escolhe
+suites já presentes no perfil, `--budget-minutes` termina a suite em curso sem
+matá-la e registra `INTERRUPTED` antes da próxima, e cada execução produz
+`dashboard.html` autocontido. O painel usa os XMLs copiados para a execução e
+mostra casos por estado, assinaturas agrupadas, lentidão, logs e as últimas 50
+execuções. A janela Windows passou a expor esses controles. Foram registrados,
+mas não instalados, os planos futuros para relatório compartilhado opcional e
+laboratório serial com JFR.
+
+Foi criado `Sentinela/TUTORIAL.md`, com operação pela janela e pelo terminal,
+perfis, suites, orçamento, retomada, resultados e limites. `AGENTS.md`,
+`Sentinela/README.md` e o README da raiz agora exigem atualizar esse tutorial
+no mesmo commit de qualquer mudança observável do Sentinela.
+
+Por ordem ativa do autor, não foram rodados JUnit, GameTests, PIT nem um perfil
+real do Sentinela. Passaram sintaxe Python, importação da janela e simulações
+secas. `./gradlew.bat remapJar -x test -x runGametest --console=plain` passou.
+O manifesto confirmou `build/libs`, `downloads` e TLauncher para 0.4.6 com
+SHA-256 `FD5BDA43D752E9E70AB0CC7701E7A9CB8D4913791C16097B985F996E47C9D37B`.
+
+## 02-11-2026 — aplicativo local do Sentinela
+
+Foi adicionada a pasta `Sentinela/` com `Abrir-Sentinela.cmd` e uma janela
+Tkinter sem dependências. Ela não conhece nem reproduz a lógica dos testes:
+chama o `scripts/test_lab.py` existente em processo separado, com perfil,
+repetição, simulação, retomada, saída ao vivo e abertura dos relatórios. Assim
+o autor pode rodar a máquina local sem chamar agente de IA e sem introduzir
+outro caminho de execução.
+
+O modo temporário de correção por playtest permanece: baterias Java não foram
+iniciadas. A verificação será sintaxe/importação da janela, `--dry-run` do
+orquestrador, verificação textual e `remapJar` sem testes; o playtest continua
+fora do escopo desta ferramenta. O `remapJar` passou e o manifesto confirmou
+build, downloads e TLauncher para 0.4.5 com SHA-256
+`6D180AE9701125CE26B39CAA10B37A6BA1588664AE58C8D055A785A6DA23FA53`.

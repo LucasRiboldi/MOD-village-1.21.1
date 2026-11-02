@@ -14,6 +14,11 @@ Não leia documentos históricos inteiros. Use `rg` para localizar trechos em `d
 
 Antes de cada etapa, informe modelo e força recomendados e aguarde o "ok" do autor para a troca manual, conforme `CLAUDE.md` §0.2.2.
 
+Tabela atual: `docs/technical/Modelos-Codex.md`. Plano aprovado de terreno,
+mina e profissões: `docs/technical/Plano-Playtest-2026-11-02.md`.
+Regra temporária: nenhuma profissão executa atividade de outra, inclusive
+como alternativa ociosa ou ajuda de obra.
+
 Até o autor liberar testes novamente, siga `CLAUDE.md` §0.2.2. Não crie nem execute testes locais. Leia somente recortes do log e dos relatórios `VC_*`, liste achados com evidência, ofereça 2 ou 3 opções e espere a escolha. Depois implemente a menor correção escolhida, revise o diff, faça commit, rode apenas `remapJar`, copie o JAR para `downloads/` e para o TLauncher e compare os SHA-256. Trate o resultado como candidato até o próximo playtest. Não altere o CI.
 
 ## Antes de alterar
@@ -42,6 +47,7 @@ Até o autor liberar testes novamente, siga `CLAUDE.md` §0.2.2. Não crie nem e
 - Alterações em `fabric/` exigem GameTests. Teste verde não substitui evidência em jogo; declare explicitamente o que ainda depende do playtest do autor.
 - Teste novo deve demonstrar a falha antes da correção. Rode os testes proporcionais ao escopo e relate exatamente o que foi executado.
 - Atualize `STATE.md` quando o estado vivo mudar, `TODO.md` quando uma pendência abrir/fechar e `docs/archive/technical/Development-Log.md` para registrar uma sessão de implementação. Decisão arquitetural nova também exige ADR.
+- Alteração no Sentinela Local (perfis, suites, argumentos, relatórios, janela ou retomada) exige atualizar `Sentinela/TUTORIAL.md` no mesmo commit e a seção correspondente do `README.md` quando a capacidade visível mudar.
 - Cada commit deve conter uma tarefa. Formato: `P0.x: descrição (teste que prova)`. O JAR fica fora do git (ADR-036 item 26): `downloads/` é cópia local, e a versão publicada vai para a página de versões do GitHub.
 
 ## Skills

@@ -12,6 +12,94 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.8] — alternativas restritas ao ofício (2026-11-02, candidato)
+
+### Corrigido
+- Pedreiro não recebe mais terraplanagem auxiliar; fundidor não recebe mais
+  transporte de minério ou iluminação de ruas pelo despacho `VillageHelpers`.
+- Reparos de terreno continuam com construtores; alimentação com pastores;
+  transporte auxiliar com adultos sem profissão. Filas de produção preservadas.
+
+### Verificação
+- Revisão dos chamadores e do diff. Testes suspensos por ordem do autor.
+- `remapJar` passou em 3min25s. Manifesto interno 0.4.8 conferido.
+- Build, `downloads/` e TLauncher conferem SHA-256
+  `ABDD780E8B026F9C9BFE1CC6C0018E4ABE60ED465F2861E1C1BF81A861D20C8B`.
+- Playtest pendente; demais itens do plano de 02-11 continuam abertos.
+
+## [0.4.7] — análise local e métricas do Sentinela (2026-11-02, pendente)
+
+### Adicionado
+- Analisador manual de evidências preservadas, com JSON, Markdown e painel HTML
+  em `reports/sentinel-analysis/`, sem iniciar Gradle.
+- Métricas locais por suite para CPU, RAM, processos Java e GPU NVIDIA opcional.
+- Ação `Analisar relatórios` na janela e frase `analisar Sentinela Local`.
+
+### Alterado
+- Falhas compartilhadas de compilação são agrupadas; JSON inválido, XML ausente
+  e relatório `RUNNING` são apontados como lacunas, sem abortar a análise.
+
+### Verificação
+- Testes Python focados e compilação Python passaram. As baterias Java e o JAR
+  permanecem suspensos/pendentes por ordem do autor.
+
+## [0.4.6] — Observatório local do Sentinela (2026-11-02, pendente)
+
+### Adicionado
+- Seleção de suites do perfil, repetições de larga escala e orçamento em minutos
+  que encerra com segurança antes da próxima suite.
+- `dashboard.html` local e autocontido por execução, com resultados XML,
+  assinaturas de falha agrupadas, casos lentos, logs e histórico local.
+- Desenho aprovado e plano futuro para publicação compartilhada e laboratório
+  de desempenho, sem adicionar dependência ou carga automática.
+
+### Alterado
+- A janela Windows do Sentinela expõe suites e limite de tempo, preservando a
+  retomada e o orquestrador único.
+- Tutorial operacional versionado em `Sentinela/TUTORIAL.md`; toda alteração do
+  Sentinela passa a exigir sua atualização no mesmo commit.
+
+### Verificação
+- Sintaxe/importação Python e simulações secas aprovadas durante a suspensão
+  das baterias Java. `remapJar` gerou o JAR local 0.4.6; build, downloads e
+  TLauncher conferem SHA-256
+  `FD5BDA43D752E9E70AB0CC7701E7A9CB8D4913791C16097B985F996E47C9D37B`.
+
+## [0.4.5] — aplicativo local do Sentinela (2026-11-02, pendente)
+
+### Adicionado
+- `Sentinela/Abrir-Sentinela.cmd`: atalho por duplo clique para uma janela
+  local que executa a varredura sem agente de IA.
+- Tela Tkinter sem dependências extras para escolher perfil, repetição,
+  simulação ou retomada, acompanhar a saída e abrir os relatórios.
+
+### Verificação
+- Pendente de revisão do PR. No modo temporário de correção por playtest não
+  foram iniciadas baterias Java; a validação limita-se à sintaxe/importação da
+  janela e à simulação seca do orquestrador. `remapJar` sem testes gerou o JAR
+  local 0.4.5; build, downloads e TLauncher conferem SHA-256
+  `6D180AE9701125CE26B39CAA10B37A6BA1588664AE58C8D055A785A6DA23FA53`.
+
+## [0.4.4] — fechamento rastreável de entregas (2026-11-02, pendente)
+
+### Adicionado
+- `FECHAR-RAPIDO`: pré-voo local que confere versão em CHANGELOG, README e
+  STATE, além das regras geradas, antes de abrir o PR.
+- `REGISTRO-RELEASE`: evidência versionada de mudanças, validação, playtest,
+  pendências, commit e SHA-256 para a descrição da release.
+
+### Alterado
+- Push em branches não executa a bateria completa duplicada; o PR e a `main`
+  seguem como portas de validação completa.
+- O workflow de release recusa publicar enquanto o registro da versão estiver
+  incompleto ou marcado como pendente.
+
+### Verificação
+- Pendente de revisão do PR. O modo temporário de correção por playtest não
+  executa baterias Java para esta alteração de ferramentas. `remapJar` gerou o
+  JAR local 0.4.4 e o manifesto confirmou as cópias de build, downloads e
+  TLauncher com SHA-256 `5DFAB711B431FB9A693F991ABA4A3434235528E60DBC1C96E34EB205A1D64891`.
+
 ## [0.4.3] — rede, curral e trabalho (2026-11-02, JAR local)
 
 ### Adicionado
