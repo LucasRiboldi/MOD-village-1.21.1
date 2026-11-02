@@ -12,6 +12,21 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.5] — aplicativo local do Sentinela (2026-11-02, pendente)
+
+### Adicionado
+- `Sentinela/Abrir-Sentinela.cmd`: atalho por duplo clique para uma janela
+  local que executa a varredura sem agente de IA.
+- Tela Tkinter sem dependências extras para escolher perfil, repetição,
+  simulação ou retomada, acompanhar a saída e abrir os relatórios.
+
+### Verificação
+- Pendente de revisão do PR. No modo temporário de correção por playtest não
+  foram iniciadas baterias Java; a validação limita-se à sintaxe/importação da
+  janela e à simulação seca do orquestrador. `remapJar` sem testes gerou o JAR
+  local 0.4.5; build, downloads e TLauncher conferem SHA-256
+  `6D180AE9701125CE26B39CAA10B37A6BA1588664AE58C8D055A785A6DA23FA53`.
+
 ## [0.4.4] — fechamento rastreável de entregas (2026-11-02, pendente)
 
 ### Adicionado
