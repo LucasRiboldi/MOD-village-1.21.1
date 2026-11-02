@@ -12,7 +12,7 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
-## [0.4.2] — Sentinela Local (2026-11-02, JAR local pendente)
+## [0.4.2] — Sentinela Local (2026-11-02, JAR local)
 
 ### Adicionado
 - Sentinela Local: orquestrador manual de `quick`, `fast` e `full`, com logs,
