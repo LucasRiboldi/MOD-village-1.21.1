@@ -17,3 +17,13 @@ py -3 Sentinela/sentinela_gui.py --check
 
 O aplicativo não agenda testes, não altera CI e não substitui o playtest do
 jogo.
+
+Leia [TUTORIAL.md](TUTORIAL.md) para perfis, suites, orçamento, retomada e
+interpretação dos relatórios.
+
+## Regra de manutenção
+
+Qualquer alteração nos perfis, suites, argumentos, relatórios, janela ou
+retomada do Sentinela deve atualizar `TUTORIAL.md` no mesmo commit. Se mudar um
+comando ou uma capacidade visível ao autor, atualize também a seção Sentinela do
+`README.md` da raiz.

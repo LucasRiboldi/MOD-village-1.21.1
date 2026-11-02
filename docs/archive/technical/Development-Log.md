@@ -11469,6 +11469,28 @@ GameTests, PIT e Sentinela sem execução. `remapJar` gerou a 0.4.4 e o
 manifesto confirmou build, downloads e TLauncher com SHA-256
 `5DFAB711B431FB9A693F991ABA4A3434235528E60DBC1C96E34EB205A1D64891`.
 
+## 02-11-2026 — Observatório local do Sentinela
+
+O Sentinela Local recebeu a alternativa A aprovada pelo autor: `--only` escolhe
+suites já presentes no perfil, `--budget-minutes` termina a suite em curso sem
+matá-la e registra `INTERRUPTED` antes da próxima, e cada execução produz
+`dashboard.html` autocontido. O painel usa os XMLs copiados para a execução e
+mostra casos por estado, assinaturas agrupadas, lentidão, logs e as últimas 50
+execuções. A janela Windows passou a expor esses controles. Foram registrados,
+mas não instalados, os planos futuros para relatório compartilhado opcional e
+laboratório serial com JFR.
+
+Foi criado `Sentinela/TUTORIAL.md`, com operação pela janela e pelo terminal,
+perfis, suites, orçamento, retomada, resultados e limites. `AGENTS.md`,
+`Sentinela/README.md` e o README da raiz agora exigem atualizar esse tutorial
+no mesmo commit de qualquer mudança observável do Sentinela.
+
+Por ordem ativa do autor, não foram rodados JUnit, GameTests, PIT nem um perfil
+real do Sentinela. Passaram sintaxe Python, importação da janela e simulações
+secas. `./gradlew.bat remapJar -x test -x runGametest --console=plain` passou.
+O manifesto confirmou `build/libs`, `downloads` e TLauncher para 0.4.6 com
+SHA-256 `FD5BDA43D752E9E70AB0CC7701E7A9CB8D4913791C16097B985F996E47C9D37B`.
+
 ## 02-11-2026 — aplicativo local do Sentinela
 
 Foi adicionada a pasta `Sentinela/` com `Abrir-Sentinela.cmd` e uma janela

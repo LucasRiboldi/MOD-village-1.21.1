@@ -1,5 +1,15 @@
 # STATE — 2026-11-02
 
+> **0.4.6 — Observatório local do Sentinela pendente:** o mesmo
+> `Sentinela/Abrir-Sentinela.cmd` agora escolhe suites, repetição e orçamento
+> seguro em minutos. `scripts/test_lab.py` preserva `dashboard.html` local com
+> casos XML, falhas agrupadas, lentidão, logs e até 50 execuções; `INTERRUPTED`
+> nunca mata a suite corrente e pode ser retomado. Não há dependência nova,
+> telemetria, execução em login ou mudança de CI. Baterias Java continuam
+> suspensas por ordem do autor; foram validadas sintaxe/importação Python e
+> simulações secas. JAR local 0.4.6 em `build/libs`, `downloads/` e TLauncher:
+> SHA-256 `FD5BDA43D752E9E70AB0CC7701E7A9CB8D4913791C16097B985F996E47C9D37B`.
+
 > **0.4.5 — aplicativo local do Sentinela pendente:** `Sentinela/Abrir-Sentinela.cmd`
 > abre uma janela Windows que chama o orquestrador oficial sem IA. A tela expõe
 > perfil, repetição, simulação e retomada, transmite a saída e abre os relatórios

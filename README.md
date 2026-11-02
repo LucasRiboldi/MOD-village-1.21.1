@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.5%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.6%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -15,8 +15,8 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-Estado de desenvolvimento em 02-11-2026: a versão 0.4.5 adiciona a janela local
-do Sentinela; a 0.4.4 prepara o
+Estado de desenvolvimento em 02-11-2026: a versão 0.4.6 adiciona o Observatório
+local do Sentinela; a 0.4.5 adiciona a janela local; a 0.4.4 prepara o
 fechamento rastreável de entregas; a 0.4.3 consolida o
 watchdog de progresso, o curral grande, a ativação compatível do grafo de ruas e
 as metas ociosas de mina e fundição. O [relatório de falhas e prioridades](docs/audit/2026-11-01-falhas-priorizadas.md)
@@ -111,7 +111,8 @@ geração nova. Evidências e limites ficam no [STATE](STATE.md) e na
   declarada e deixa a linha `VC_SUPPLY` no log (Regra 111); toda desistência
   no diário de ações leva um código único de bloqueio (Regra 112).
 
-O mod é alpha. A 0.4.5 (2026-11-02) adiciona a janela local do Sentinela.
+O mod é alpha. A 0.4.6 (2026-11-02) adiciona o Observatório local do Sentinela.
+A 0.4.5 (2026-11-02) adiciona a janela local do Sentinela.
 A 0.4.4 (2026-11-02) adiciona o fechamento rastreável de
 entregas. A 0.4.3 consolida trabalho, curral e ruas sob as
 regras de geração somente para vilas novas. A versão ainda não foi jogada; use
@@ -624,6 +625,8 @@ preserva logs, XMLs e um resumo em
 
 ```powershell
 python scripts/test_lab.py quick --dry-run
+python scripts/test_lab.py fast --only unit,property --repeat 100
+python scripts/test_lab.py full --budget-minutes 120
 python scripts/test_lab.py --list
 python scripts/test_lab.py quick
 python scripts/test_lab.ps1 fast --repeat 3
@@ -634,10 +637,13 @@ python scripts/test_lab.py --resume 20261101T120000Z
 ### Aplicativo Windows
 
 Abra [`Sentinela/Abrir-Sentinela.cmd`](Sentinela/Abrir-Sentinela.cmd) por duplo
-clique. A janela configura perfil, repetições, simulação e retomada; mostra a
-saída ao vivo e abre `reports/test-runs/`. Ela chama o mesmo
+clique. A janela configura perfil, suites, repetições, limite seguro, simulação
+e retomada; mostra a saída ao vivo e abre `reports/test-runs/`. Ela chama o mesmo
 `scripts/test_lab.py`, não usa IA, não agenda nada e não altera CI. Requer
 Python 3.9+ com Tkinter.
+
+Tutorial completo: [`Sentinela/TUTORIAL.md`](Sentinela/TUTORIAL.md). Alterações
+no Sentinela atualizam esse tutorial no mesmo commit.
 
 - `quick`: JUnit e propriedades jqwik.
 - `fast`: `quick` mais GameTests em servidor.
@@ -647,8 +653,11 @@ Se uma suite falhar em uma repetição e passar em outra, o resumo é
 `UNSTABLE` e o comando sai não zero. GPU não acelera estas suites de servidor;
 uma futura camada visual de cliente precisa de validação Fabric separada.
 
-O resumo mostra duração e contagem por estado. Se a execução for interrompida,
-`--resume <UTC-id>` executa somente as suites ainda não registradas. A cópia de
+O resumo e `dashboard.html` mostram duração, casos XML, falhas agrupadas,
+testes lentos e até 50 execuções locais. `--only unit,property` escolhe suites
+do perfil. `--budget-minutes 120` termina a suite corrente e registra
+`INTERRUPTED` antes de iniciar outra. `--resume <UTC-id>` executa somente as
+suites ainda não registradas. A cópia de
 artefatos compara todos os arquivos internos, impedindo que um XML atualizado
 seja omitido porque o diretório pai conservou o mesmo horário. O script exige
 Python 3.9+; o wrapper `test_lab.sh` requer Git Bash, WSL ou outro shell POSIX
