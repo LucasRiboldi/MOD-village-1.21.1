@@ -188,4 +188,56 @@ class TerrainPlannerTest {
         assertThrows(IllegalArgumentException.class, () ->
                 new TerrainPlanner.Column(new ColonyPos(0, 62, 0), 64, 2, 2, true, false, 0, 1, 2));
     }
+
+    @Test
+    void surfaceCanConnectAlongBothAxesAtNegativeCoordinates() {
+        var origin = new ColonyPos(-2, 64, -2);
+        var footprint = new WorkArea(origin, new ColonyPos(-1, 64, -1));
+        var columns = List.of(column(-2, -2, 64, 64), column(-1, -2, 64, 64),
+                column(-2, -1, 64, 64), column(-1, -1, 64, 64));
+        var candidate = new TerrainPlanner.Candidate(origin, footprint, origin, new ColonyPos(-2, 64, -3),
+                columns, List.of(), 0);
+        assertTrue(choose(List.of(candidate)).feasible());
+        var reverseBarrier = new TerrainPlanner.Barrier(new ColonyPos(-2, 64, -3), origin);
+        var blocked = new TerrainPlanner.Candidate(origin, footprint, origin, candidate.anchor(),
+                columns, List.of(reverseBarrier), 0);
+        assertEquals("incompatible_anchor", choose(List.of(blocked)).reason());
+    }
+
+    @Test
+    void changeBudgetIncludesItsExactLimit() {
+        var atLimit = new TerrainPlanner.Column(new ColonyPos(0, 64, 0), 64, 2, 2, true, false, 1024, 0);
+        var result = plan(List.of(atLimit, column(1, 0, 64, 64)));
+        assertTrue(result.feasible());
+        assertEquals(1024, result.changedPositions());
+    }
+
+    @Test
+    void clearanceCannotExtendAboveAuthorizedArea() {
+        var candidate = candidate(0, 64, null);
+        var exact = new TerrainPlanner.Request(new WorkArea(new ColonyPos(0, 62, 0), new ColonyPos(1, 66, 0)),
+                new ColonyPos(0, 64, 0));
+        var tooLow = new TerrainPlanner.Request(new WorkArea(new ColonyPos(0, 62, 0), new ColonyPos(1, 65, 0)),
+                new ColonyPos(0, 64, 0));
+        assertTrue(TerrainPlanner.plan(new TerrainPlanner.Surface(List.of(candidate)), exact).feasible());
+        assertEquals("outside_work_area", TerrainPlanner.plan(new TerrainPlanner.Surface(List.of(candidate)), tooLow).reason());
+    }
+
+    @Test
+    void workVolumeIncludesWidthHeightAndDepth() {
+        var area = new WorkArea(new ColonyPos(0, 62, 0), new ColonyPos(40, 66, 30));
+        var request = new TerrainPlanner.Request(area, new ColonyPos(0, 64, 0));
+        for (int width : new int[]{32, 33}) {
+            var columns = new java.util.ArrayList<TerrainPlanner.Column>();
+            for (int x = 0; x < width; x++) {
+                for (int z = 0; z < 25; z++) columns.add(column(x, z, 64, 64));
+            }
+            var origin = new ColonyPos(0, 64, 0);
+            var footprint = new WorkArea(origin, new ColonyPos(width - 1, 64, 24));
+            var candidate = new TerrainPlanner.Candidate(origin, footprint, origin, null, columns, List.of(), 0);
+            var result = TerrainPlanner.plan(new TerrainPlanner.Surface(List.of(candidate)), request);
+            if (width == 32) assertTrue(result.feasible());
+            else assertEquals("work_budget", result.reason());
+        }
+    }
 }
