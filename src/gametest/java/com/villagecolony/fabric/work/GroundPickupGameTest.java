@@ -97,8 +97,11 @@ public final class GroundPickupGameTest implements FabricGameTest {
         });
         context.runAtTick(TICKS - 5, () -> {
             if (!done[0]) {
+                String details = "; aldeão=" + villager.getPos() + ", item=" + item.getPos()
+                        + ", navegação parada=" + villager.getNavigation().isIdle()
+                        + ", item vivo=" + item.isAlive();
                 cleanup.run();
-                context.assertTrue(false, "aldeão não recolheu a terra durante o deslocamento");
+                context.assertTrue(false, "aldeão não recolheu a terra durante o deslocamento" + details);
             }
         });
     }
