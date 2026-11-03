@@ -36,6 +36,74 @@ public final class GroundPickupGameTest implements FabricGameTest {
     private static final int TICKS = 600;
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_pickup", tickLimit = TICKS)
+    public void workerCollectsWhileWalkingPast(TestContext context) {
+        context.getWorld().setTimeOfDay(2_000);
+        for (int x = 0; x <= 14; x++) {
+            for (int z = 0; z <= 8; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.STONE.getDefaultState());
+                context.setBlockState(new BlockPos(x, 2, z), Blocks.AIR.getDefaultState());
+                context.setBlockState(new BlockPos(x, 3, z), Blocks.AIR.getDefaultState());
+            }
+        }
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST)));
+        BlockPos a = context.getAbsolutePos(new BlockPos(0, 0, 0));
+        BlockPos b = context.getAbsolutePos(new BlockPos(14, 6, 8));
+        colony.measure(new com.villagecolony.core.colony.model.VillageBounds(
+                Math.min(a.getX(), b.getX()), Math.min(a.getY(), b.getY()), Math.min(a.getZ(), b.getZ()),
+                Math.max(a.getX(), b.getX()), Math.max(a.getY(), b.getY()), Math.max(a.getZ(), b.getZ())));
+        long now = context.getWorld().getTime();
+        for (long tick = now - Colony.SETTLE_TICKS; tick <= now; tick += 20) colony.attend(tick);
+        VillageColonyMod.COLONIES.register(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(2, 2, 5));
+        villager.setBreedingAge(0);
+        villager.setAiDisabled(true);
+        VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        Vec3d itemPos = Vec3d.ofBottomCenter(context.getAbsolutePos(new BlockPos(11, 2, 5)));
+        ItemEntity item = new ItemEntity(context.getWorld(), itemPos.x, itemPos.y, itemPos.z, new ItemStack(Items.DIRT, 5));
+        item.setPickupDelayInfinite();
+        context.getWorld().spawnEntity(item);
+        boolean[] done = {false};
+        Runnable cleanup = () -> {
+            VillageColonyMod.WORKERS.remove(villager.getUuid());
+            VillageColonyMod.COLONIES.remove(colony.id());
+            villager.discard();
+            item.discard();
+        };
+
+        context.runAtTick(40, () -> {
+            context.assertTrue(item.isAlive(), "item fora de alcance não deve ser recolhido");
+            villager.setAiDisabled(false);
+        });
+        context.runAtEveryTick(() -> {
+            if (done[0]) return;
+            if (context.getWorld().getTime() >= now + 40 && item.isAlive()) {
+                villager.getNavigation().startMovingTo(itemPos.x, itemPos.y, itemPos.z, 0.7);
+            }
+            if (!item.isAlive()) {
+                done[0] = true;
+                ChestBlockEntity box = (ChestBlockEntity) context.getBlockEntity(CHEST);
+                int dirt = 0;
+                for (int slot = 0; slot < box.size(); slot++) {
+                    if (box.getStack(slot).isOf(Items.DIRT)) dirt += box.getStack(slot).getCount();
+                }
+                double moved = villager.squaredDistanceTo(Vec3d.ofBottomCenter(context.getAbsolutePos(new BlockPos(2, 2, 5))));
+                cleanup.run();
+                context.assertTrue(moved > 1, "aldeão deve caminhar antes da coleta");
+                context.assertTrue(dirt == 5, "a terra recolhida deve chegar ao baú: " + dirt);
+                context.complete();
+            }
+        });
+        context.runAtTick(TICKS - 5, () -> {
+            if (!done[0]) {
+                cleanup.run();
+                context.assertTrue(false, "aldeão não recolheu a terra durante o deslocamento");
+            }
+        });
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_pickup", tickLimit = TICKS)
     public void aPassingWorkerPicksUpAllGroundItems(TestContext context) {
         context.getWorld().setTimeOfDay(2_000);
 
@@ -77,8 +145,10 @@ public final class GroundPickupGameTest implements FabricGameTest {
 
         VillageColonyMod.CONSTRUCTIONS.register(project);
 
-        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(2, 2, 5));
+        // Regra 48: os dois itens devem estar ao alcance, sem depender do passeio Vanilla.
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(4, 2, 5));
         villager.setBreedingAge(0);
+        villager.setAiDisabled(true);
         VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
 
         Vec3d wantedAt = Vec3d.ofBottomCenter(context.getAbsolutePos(new BlockPos(7, 2, 5)));
