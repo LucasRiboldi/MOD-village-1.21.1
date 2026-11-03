@@ -16,6 +16,66 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 
 /** Reservas explícitas de terreno não autorizam escrita nem flexibilizam o contrato antigo — MAE Fase 2. */
 public final class MaeTerrainGameTest implements FabricGameTest {
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_structure_entry", tickLimit = 20)
+    public void proposalRejectsAmbiguousDoorsAndMissingEntry(TestContext context) {
+        var id = com.villagecolony.core.type.ResourceId.vanilla("oak_door");
+        var lower = new com.villagecolony.core.construction.model.BlueprintBlock(new ColonyPos(1, 1, 0), id);
+        var misplacedUpper = new com.villagecolony.core.construction.model.BlueprintBlock(
+                new ColonyPos(0, 2, 1), id, false, java.util.Optional.empty(), java.util.Map.of("half", "upper"));
+        var origin = new ColonyPos(100, 64, 100);
+        var blueprint = com.villagecolony.core.construction.model.Blueprint.of(id, List.of(misplacedUpper, lower));
+        var project = com.villagecolony.core.construction.model.ConstructionProject.plan(UUID.randomUUID(), blueprint, origin);
+        refusedArgument(context, () -> MaeTerrainPreparation.Proposal.forProject(project,
+                List.of(new ColonyPos(101, 64, 99)), null, List.of(), 0), "ambiguous_structure_entry");
+        var single = com.villagecolony.core.construction.model.Blueprint.of(id, List.of(lower));
+        var singleProject = com.villagecolony.core.construction.model.ConstructionProject.plan(UUID.randomUUID(), single, origin);
+        refusedArgument(context, () -> MaeTerrainPreparation.Proposal.forProject(singleProject,
+                List.of(), null, List.of(), 0), "missing_structure_entry_surface");
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_structure_entry", tickLimit = 20)
+    public void proposalReadsVanillaHouseDoor(TestContext context) {
+        var blueprint = StructureBlueprintReader.read(context.getWorld(),
+                com.villagecolony.core.type.ResourceId.vanilla("village/plains/houses/plains_small_house_1")).orElseThrow();
+        var origin = new ColonyPos(100, 64, 100);
+        for (int turns = 0; turns < 4; turns++) {
+            var rotated = blueprint.rotated(turns);
+            var door = rotated.blocks().stream().filter(block -> block.block().path().endsWith("_door"))
+                    .findFirst().orElseThrow();
+            var side = rotated.doorSide().orElseThrow();
+            var expected = new ColonyPos(origin.x() + door.offset().x() + side.offsetX(),
+                    origin.y() + door.offset().y() - 1, origin.z() + door.offset().z() + side.offsetZ());
+            var project = com.villagecolony.core.construction.model.ConstructionProject.plan(UUID.randomUUID(), rotated, origin);
+            context.assertTrue(MaeTerrainPreparation.Proposal.forProject(project, List.of(expected), null, List.of(), 0)
+                    .entry().equals(expected), "entrada da casa vanilla inválida: " + turns);
+        }
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_structure_entry", tickLimit = 20)
+    public void proposalUsesDoorFloorAcrossRotations(TestContext context) {
+        var id = new com.villagecolony.core.type.ResourceId("villagecolony", "mae_entry_test");
+        var planks = new com.villagecolony.core.type.ResourceId("minecraft", "oak_planks");
+        var door = new com.villagecolony.core.type.ResourceId("minecraft", "oak_door");
+        var blueprint = com.villagecolony.core.construction.model.Blueprint.of(id, List.of(
+                new com.villagecolony.core.construction.model.BlueprintBlock(new ColonyPos(0, 0, 0), planks),
+                new com.villagecolony.core.construction.model.BlueprintBlock(new ColonyPos(2, 0, 2), planks),
+                new com.villagecolony.core.construction.model.BlueprintBlock(new ColonyPos(1, 3, 0), door)));
+        ColonyPos origin = new ColonyPos(100, 64, 100);
+        for (int turns = 0; turns < 4; turns++) {
+            var rotated = blueprint.rotated(turns);
+            var project = com.villagecolony.core.construction.model.ConstructionProject.plan(UUID.randomUUID(), rotated, origin);
+            var relativeDoor = rotated.blocks().stream().filter(block -> block.block().equals(door)).findFirst().orElseThrow().offset();
+            var side = rotated.doorSide().orElseThrow();
+            var expected = new ColonyPos(origin.x() + relativeDoor.x() + side.offsetX(),
+                    origin.y() + relativeDoor.y() - 1, origin.z() + relativeDoor.z() + side.offsetZ());
+            var proposal = MaeTerrainPreparation.Proposal.forProject(project, List.of(expected), null, List.of(), 0);
+            context.assertTrue(proposal.entry().equals(expected), "entrada perdeu altura ou orientação: " + turns);
+            context.assertTrue(proposal.lot().min().equals(origin), "lote não usa origem da obra");
+        }
+        context.complete();
+    }
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_terrain_flowers", tickLimit = 20)
     public void flowersRequireExplicitPolicyAndReservationNeverWrites(TestContext context) {
         var fixture = new MaeSafetyGameTest.Fixture(context);
@@ -369,6 +429,16 @@ public final class MaeTerrainGameTest implements FabricGameTest {
         var surface = new ArrayList<ColonyPos>();
         for (int x = 0; x < 4; x++) surface.add(MinecraftTypeAdapter.toColonyPos(fixture.base.add(x, 0, 0)));
         return new MaeTerrainPreparation.Proposal(fixture.lot(), surface, surface.getFirst(), null, 0);
+    }
+
+    private static void refusedArgument(TestContext context, Runnable action, String reason) {
+        try {
+            action.run();
+        } catch (IllegalArgumentException failure) {
+            context.assertTrue(reason.equals(failure.getMessage()), "recusa incorreta: " + failure.getMessage());
+            return;
+        }
+        context.assertTrue(false, "operação deveria recusar: " + reason);
     }
 
     private static void refused(TestContext context, Runnable action, String reason) {

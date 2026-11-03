@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.TerrainPlan;
 import com.villagecolony.core.construction.model.TerrainPlanner;
 import com.villagecolony.core.construction.model.WorkArea;
@@ -49,6 +50,32 @@ public final class MaeTerrainPreparation {
     /** Superfícies e corredor vêm do chamador; o levantamento não cria outro grafo — MAE Fase 2. */
     public record Proposal(Building lot, List<ColonyPos> surfaces, ColonyPos entry,
                            @Nullable ColonyPos anchor, List<ColonyPos> corridor, int pathLength) {
+        /** Deriva o piso adjacente à porta; a validação física continua no levantamento MAE. */
+        public static Proposal forProject(ConstructionProject project,
+                                          List<ColonyPos> surfaces, @Nullable ColonyPos anchor,
+                                          List<ColonyPos> corridor, int pathLength) {
+            Objects.requireNonNull(project);
+            var blueprint = project.blueprint();
+            var doors = blueprint.blocks().stream()
+                    .filter(block -> block.block().path().endsWith("_door"))
+                    .filter(block -> !"upper".equals(block.states().get("half")))
+                    .toList();
+            if (doors.size() != 1) throw new IllegalArgumentException("ambiguous_structure_entry");
+            var door = doors.getFirst().offset();
+            if (blueprint.blocks().stream().filter(block -> block.block().path().endsWith("_door"))
+                    .anyMatch(block -> block.offset().x() != door.x() || block.offset().z() != door.z()
+                            || ("upper".equals(block.states().get("half"))
+                                && (block.offset().y() != door.y() + 1 || !block.block().equals(doors.getFirst().block()))))) {
+                throw new IllegalArgumentException("ambiguous_structure_entry");
+            }
+            var side = blueprint.doorSide().orElseThrow();
+            var origin = project.origin();
+            var entry = new ColonyPos(origin.x() + door.x() + side.offsetX(),
+                    origin.y() + door.y() - 1, origin.z() + door.z() + side.offsetZ());
+            if (!surfaces.contains(entry)) throw new IllegalArgumentException("missing_structure_entry_surface");
+            return new Proposal(Building.of(project), surfaces, entry, anchor, corridor, pathLength);
+        }
+
         public Proposal(Building lot, List<ColonyPos> surfaces, ColonyPos entry,
                         @Nullable ColonyPos anchor, int pathLength) {
             this(lot, surfaces, entry, anchor, List.of(), pathLength);

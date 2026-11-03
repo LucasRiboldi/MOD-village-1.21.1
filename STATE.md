@@ -1,5 +1,11 @@
 # STATE — 2026-11-03
 
+> **MAE Fase 3 em andamento, candidata 0.4.11:** branch `codex/mae-structures`, baseada no merge
+> `0a7590fc` do PR #49. Auditoria e limites em `docs/technical/MAE-Fase-3.md`.
+> O contrato experimental deriva o ponto de entrada da planta da obra; ainda
+> não existe integração automática com construção ou caminhos. Carga real e
+> playtest da Fase 2 continuam necessários antes da orquestração automática.
+
 > **MAE Fase 2 — implementação local com validação focada concluída:** branch `codex/mae-terrain`,
 > criada sobre `main` `b57063162165b7d78c4657cb571ced734b862fea`, após integração
 > da Fase 1 pelo PR #48. Modelo e testes focados liberados pelo autor.
