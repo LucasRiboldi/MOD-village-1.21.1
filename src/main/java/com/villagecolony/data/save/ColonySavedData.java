@@ -144,6 +144,13 @@ public final class ColonySavedData extends PersistentState {
     /** Payloads derivados e opacos quando futuros; o índice legado permanece separado — ADR-043. */
     private final RoadGraphStore roadGraphs = new RoadGraphStore(this::markDirty);
 
+    private final MaeWorkStore maeWork = new MaeWorkStore(this::markDirty);
+
+    /** Reservas supervisionadas; ler não autoriza nem escreve terreno — ADR-044. */
+    public MaeWorkStore maeWork() {
+        return maeWork;
+    }
+
     /** A persistência derivada das ruas, com versão independente — ADR-043. */
     public RoadGraphStore roadGraphs() {
         return roadGraphs;
@@ -463,6 +470,7 @@ public final class ColonySavedData extends PersistentState {
         MineSave.write(nbt, mines);
         RoadIndexSave.write(nbt, roads);
         roadGraphs.write(nbt);
+        maeWork.write(nbt);
         SweepCursorSave.write(nbt, sweeps);
         ActivityTraceSave.write(nbt, activityTraces);
         SaveMigration.stamp(nbt);

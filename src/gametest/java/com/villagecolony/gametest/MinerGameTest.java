@@ -1978,16 +1978,21 @@ public class MinerGameTest implements FabricGameTest {
 
         Colony colony = mineOwner(context);
 
-        context.setBlockState(taken.up(), Blocks.COPPER_ORE.getDefaultState());
+        try {
+            context.setBlockState(taken.up(), Blocks.COPPER_ORE.getDefaultState());
 
-        VillageColonyMod.MINES.of(colony.id()).orElseThrow()
-                .arm(0)
-                .followVein(MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(taken)));
+            VillageColonyMod.MINES.of(colony.id()).orElseThrow()
+                    .arm(0)
+                    .followVein(MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(taken)));
 
-        Optional<BlockPos> next = veinTarget(context, colony);
+            Optional<BlockPos> next = veinTarget(context, colony);
 
-        context.assertFalse(next.isPresent() && next.get().equals(context.getAbsolutePos(taken.up())),
-                "o veio subiu acima de onde começou: " + next);
+            context.assertFalse(next.isPresent() && next.get().equals(context.getAbsolutePos(taken.up())),
+                    "o veio subiu acima de onde começou: " + next);
+
+        } finally {
+            ColonyFixture.create().owning(colony).cleanUp();
+        }
 
         context.complete();
     }
@@ -3526,6 +3531,7 @@ public class MinerGameTest implements FabricGameTest {
                     "o poço aceitou " + MineClaims.diggersIn(colony.id()) + " mineiros");
         } finally {
             MineClaims.clearAll();
+            ColonyFixture.create().owning(colony).cleanUp();
         }
 
         context.complete();
@@ -5252,6 +5258,7 @@ public class MinerGameTest implements FabricGameTest {
                     "o mineiro mirou o tijolo do jogador em " + step.toShortString());
         } finally {
             MineClaims.clearAll();
+            ColonyFixture.create().owning(colony).cleanUp();
         }
 
         context.complete();
@@ -5285,6 +5292,7 @@ public class MinerGameTest implements FabricGameTest {
                             + next.get().toShortString());
         } finally {
             MineClaims.clearAll();
+            ColonyFixture.create().owning(colony).cleanUp();
         }
 
         context.complete();
@@ -5329,6 +5337,7 @@ public class MinerGameTest implements FabricGameTest {
                             + next.map(BlockPos::toShortString).orElse("lugar nenhum"));
         } finally {
             MineClaims.clearAll();
+            ColonyFixture.create().owning(colony).cleanUp();
         }
 
         context.complete();
@@ -5802,6 +5811,7 @@ public class MinerGameTest implements FabricGameTest {
                             + next.map(BlockPos::toShortString).orElse("lugar nenhum"));
         } finally {
             MineClaims.clearAll();
+            ColonyFixture.create().owning(colony).cleanUp();
         }
 
         context.complete();

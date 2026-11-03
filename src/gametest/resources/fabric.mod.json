@@ -11,6 +11,7 @@
       "com.villagecolony.gametest.GameTestWorkerTickBridge"
     ],
     "fabric-gametest": [
+      "com.villagecolony.fabric.integration.MaeSafetyGameTest",
       "com.villagecolony.gametest.WaterTerrainControlGameTest",
       "com.villagecolony.fabric.world.VillageOriginGameTest",
       "com.villagecolony.fabric.integration.RoadGraphMigrationGameTest",

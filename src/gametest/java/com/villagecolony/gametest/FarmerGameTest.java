@@ -273,18 +273,25 @@ public class FarmerGameTest implements FabricGameTest {
     public void ripeWheatEndsUpInTheFarmersChest(TestContext context) {
         ripeWheat(context, FIELD);
 
-        farmer(context);
+        VillagerEntity villager = farmer(context);
+        UUID colonyId = VillageColonyMod.WORKERS.find(villager.getUuid()).orElseThrow().colonyId();
+        ColonyFixture fixture = ColonyFixture.create().owning(VillageColonyMod.COLONIES.find(colonyId).orElseThrow())
+                .owning(villager.getUuid());
 
         context.runAtTick(120, () -> {
-            int wheat = ChestInventoryReader
-                    .read(context.getWorld(), context.getAbsolutePos(CHEST))
-                    .amountOf(ResourceType.WHEAT);
+            try {
+                int wheat = ChestInventoryReader
+                        .read(context.getWorld(), context.getAbsolutePos(CHEST))
+                        .amountOf(ResourceType.WHEAT);
 
-            context.assertTrue(wheat > 0, "o baú do fazendeiro ficou sem trigo");
+                context.assertTrue(wheat > 0, "o baú do fazendeiro ficou sem trigo");
 
-            FarmerWork.clearAll();
+                FarmerWork.clearAll();
 
-            context.complete();
+                context.complete();
+            } finally {
+                fixture.cleanUp();
+            }
         });
     }
 
@@ -300,21 +307,28 @@ public class FarmerGameTest implements FabricGameTest {
     public void theFieldIsPlantedAgain(TestContext context) {
         ripeWheat(context, FIELD);
 
-        farmer(context);
+        VillagerEntity villager = farmer(context);
+        UUID colonyId = VillageColonyMod.WORKERS.find(villager.getUuid()).orElseThrow().colonyId();
+        ColonyFixture fixture = ColonyFixture.create().owning(VillageColonyMod.COLONIES.find(colonyId).orElseThrow())
+                .owning(villager.getUuid());
 
         context.runAtTick(120, () -> {
-            context.assertTrue(
-                    context.getBlockState(FIELD).getBlock() instanceof CropBlock,
-                    "o campo ficou vazio depois da colheita: "
-                            + context.getBlockState(FIELD).getBlock());
+            try {
+                context.assertTrue(
+                        context.getBlockState(FIELD).getBlock() instanceof CropBlock,
+                        "o campo ficou vazio depois da colheita: "
+                                + context.getBlockState(FIELD).getBlock());
 
-            context.assertFalse(
-                    CropPatch.isRipe(context.getBlockState(FIELD)),
-                    "a muda replantada já nasceu madura");
+                context.assertFalse(
+                        CropPatch.isRipe(context.getBlockState(FIELD)),
+                        "a muda replantada já nasceu madura");
 
-            FarmerWork.clearAll();
+                FarmerWork.clearAll();
 
-            context.complete();
+                context.complete();
+            } finally {
+                fixture.cleanUp();
+            }
         });
     }
 
