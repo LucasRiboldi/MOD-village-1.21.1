@@ -5,6 +5,7 @@ import com.villagecolony.core.construction.model.WorkArea;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.data.save.ColonySavedData;
 import com.villagecolony.data.save.MaeWorkStore;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.nbt.NbtCompound;
@@ -107,7 +108,7 @@ public final class MaeWorldWriter {
         NbtList plan = new NbtList();
         for (Change change : changes) {
             BlockPos pos = change.position();
-            if (!lotArea.contains(colonyPos(pos)) || !positions.add(pos)
+            if (!lotArea.contains(MinecraftTypeAdapter.toColonyPos(pos)) || !positions.add(pos)
                     || !MaeProtection.terrain(change.after()) || change.before().equals(change.after())
                     || !world.getBlockState(pos).equals(change.before())) {
                 throw new IllegalArgumentException("invalid_change_or_expected_state");
@@ -214,7 +215,7 @@ public final class MaeWorldWriter {
         BlockPos pos = BlockPos.fromLong(step.getLong("position"));
         BlockState before = decodeState(step.getCompound("before"));
         BlockState after = decodeState(step.getCompound("after"));
-        if (!area(job).contains(colonyPos(pos)) || !world.getBlockState(pos).equals(before)
+        if (!area(job).contains(MinecraftTypeAdapter.toColonyPos(pos)) || !world.getBlockState(pos).equals(before)
                 || !MaeProtection.terrain(after)) {
             throw new IllegalStateException("invalid_or_changed_target");
         }
@@ -346,10 +347,6 @@ public final class MaeWorldWriter {
             throw new IllegalStateException("invalid_block_state_properties");
         }
         return state;
-    }
-
-    private static ColonyPos colonyPos(BlockPos pos) {
-        return new ColonyPos(pos.getX(), pos.getY(), pos.getZ());
     }
 
     private static String dimension(ServerWorld world) {

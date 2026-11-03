@@ -3,6 +3,7 @@ package com.villagecolony.fabric.integration;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.WorkArea;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
@@ -90,7 +91,7 @@ final class MaeProtection {
             if (!world.getWorldBorder().contains(pos) || state.hasBlockEntity()
                     || !state.getFluidState().isEmpty() || !terrain(state)
                     || !BlockProtection.mayBreak(world, pos, state)
-                    || mineCells.contains(new ColonyPos(pos.getX(), pos.getY(), pos.getZ()))) {
+                    || mineCells.contains(MinecraftTypeAdapter.toColonyPos(pos))) {
                 throw new IllegalStateException("protected_volume");
             }
             if (RoadIndex.isLaidByAColony(pos)) {
