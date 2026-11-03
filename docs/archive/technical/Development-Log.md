@@ -2,6 +2,29 @@
 
 # Development-Log.md
 
+## 03-11-2026 — MAE, Fase 2 local de terreno e ruas supervisionadas
+
+Após integração da Fase 1 pelo PR #48, desenvolvimento em `codex/mae-terrain`
+sobre `main` `b5706316`. Autor aprovou desenho ampliado, modelo e testes focados.
+Planejador puro, levantamento incremental, reserva com vegetação baixa controlada,
+terreno transitável e operação de rua encadeada no writer/diário existentes.
+Sete entradas legadas recusam efeitos em seções supervisionadas. ADR-045 registra
+limites, versão v2 e exceção de solo restrita às células aprovadas.
+
+Passaram 37 testes unitários/estáticos e 48 GameTests focados, sendo 45 MAE e três
+dos helpers físicos. Revisão independente encontrou adoção entre colônias,
+liberação por contrato desconhecido e envelope excessivo de corte; regressões
+reproduziram os riscos e passaram após correção. Outro teste reproduziu perda
+da contagem de plantas sobrepostas ao aterro. Verificação de arquitetura detectou
+ciclo `integration`/`work`; helpers `Cuttings` e `PublicChests` foram movidos para
+`integration`, preservando lógica e chamadores, sem ampliar exceções do teste.
+Arquitetura e testes dos helpers passaram sem ampliar exceções. A fixture mediu
+520 leituras incrementais, até 256 por fatia, e dez escritas, até uma por fatia.
+Máximos de 2,557 ms no levantamento e 4,967 ms no writer; hashes/inspeções são
+síncronos e não entram nas 520 leituras. Esses dados não validam carga real ou SLA.
+
+Sem ativação automática, save do jogador, commit, push ou JAR. Versão 0.4.10 preparada para entrega. Relatório vivo em `docs/technical/MAE-Fase-2.md`.
+
 ## 02-11-2026 — MAE, Fase 1 de segurança (0.4.9 candidata)
 
 Após merge do PR #47 e atualização da `main`, foi aberta a branch
@@ -39,7 +62,7 @@ jogador aberto; preparação de terreno depende da próxima etapa do MAE.
 
 > ⚠️ **HISTÓRICO — 7.793 linhas. Nunca leia inteiro.**
 > Use `grep` por data ou por símbolo, como manda `CLAUDE.md` §0.1. O
-> estado de hoje está em [`STATE.md`](../../STATE.md).
+> estado de hoje está em [`STATE.md`](../../../STATE.md).
 
 # Village Colony — Development Log
 

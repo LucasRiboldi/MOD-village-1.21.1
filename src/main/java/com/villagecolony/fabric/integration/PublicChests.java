@@ -1,11 +1,8 @@
-package com.villagecolony.fabric.work;
+package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.integration.ChestDepositor;
-import com.villagecolony.fabric.integration.MineMouth;
-import com.villagecolony.fabric.integration.VillageChests;
 import net.minecraft.item.Item;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -22,13 +19,13 @@ import java.util.UUID;
  * 0.3.37: 267 toras caídas pelo baú cheio do lenhador). O baú público não tem o teto de
  * compartimentos por item e enche antes do seguinte — Regra 143.
  */
-final class PublicChests {
+public final class PublicChests {
 
     private PublicChests() {
     }
 
     /** Os baús da vila que nenhum ofício reivindica, do mais perto para o mais longe. */
-    static List<ColonyPos> of(ServerWorld world, UUID colonyId, BlockPos near) {
+    public static List<ColonyPos> of(ServerWorld world, UUID colonyId, BlockPos near) {
         ColonyPos from = MinecraftTypeAdapter.toColonyPos(near);
         // O baú da boca da mina é do minério (Regra 30): não é público.
         Optional<ColonyPos> mouth = VillageColonyMod.MINES.of(colonyId)
@@ -52,7 +49,7 @@ final class PublicChests {
      *
      * @return quanto não coube em nenhum
      */
-    static int store(ServerWorld world, UUID colonyId, BlockPos near, Item item, int amount) {
+    public static int store(ServerWorld world, UUID colonyId, BlockPos near, Item item, int amount) {
         if (amount <= 0) {
             return 0;
         }

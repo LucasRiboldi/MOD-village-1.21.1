@@ -21,7 +21,7 @@ class MaeWorkStoreTest {
 
     @Test
     void futureAndMalformedPayloadsRemainOpaqueAndBlockUpdates() {
-        for (int version : new int[]{1, 2}) {
+        for (int version : new int[]{1, 3}) {
             NbtCompound payload = new NbtCompound();
             payload.putInt("version", version);
             if (version == 1) {
@@ -42,6 +42,56 @@ class MaeWorkStoreTest {
             store.write(rewritten);
             assertEquals(root, rewritten);
         }
+    }
+
+    @Test
+    void readingV1IsReadOnlyAndTerrainReservationPromotesWithoutLosingLegacyJobs() {
+        var changed = new java.util.concurrent.atomic.AtomicInteger();
+        var store = new MaeWorkStore(changed::incrementAndGet);
+        var legacy = new NbtCompound();
+        legacy.putUuid("id", UUID.randomUUID());
+        legacy.putString("job", "legacy payload preserved");
+        store.update(legacy);
+        var root = new NbtCompound();
+        store.write(root);
+        var restored = new MaeWorkStore(changed::incrementAndGet);
+        restored.read(root);
+        var before = new NbtCompound();
+        restored.write(before);
+        assertEquals(root, before);
+        assertEquals(1, changed.get());
+        var terrain = new NbtCompound();
+        terrain.putUuid("id", UUID.randomUUID());
+        terrain.putString("policy", "terrain_v2");
+        assertThrows(IllegalStateException.class, () -> restored.update(terrain));
+        restored.reserveTerrain(terrain);
+        var after = new NbtCompound();
+        restored.write(after);
+        assertEquals(2, after.getCompound(MaeWorkStore.KEY).getInt("version"));
+        assertEquals(legacy, restored.region(legacy.getUuid("id")).orElseThrow());
+        restored.update(legacy);
+        restored.write(after);
+        assertEquals(2, after.getCompound(MaeWorkStore.KEY).getInt("version"));
+        assertEquals(terrain, restored.region(terrain.getUuid("id")).orElseThrow());
+    }
+
+    @Test
+    void failedTerrainReservationDoesNotPromoteOrReplaceExistingReservation() {
+        var store = new MaeWorkStore(() -> { });
+        var legacy = new NbtCompound();
+        legacy.putUuid("id", UUID.randomUUID());
+        store.update(legacy);
+        var before = new NbtCompound();
+        store.write(before);
+        var invalid = legacy.copy();
+        invalid.putString("policy", "terrain_v2");
+        assertThrows(IllegalStateException.class, () -> store.reserveTerrain(invalid));
+        invalid.putUuid("id", UUID.randomUUID());
+        invalid.putString("policy", "unknown");
+        assertThrows(IllegalArgumentException.class, () -> store.reserveTerrain(invalid));
+        var after = new NbtCompound();
+        store.write(after);
+        assertEquals(before, after);
     }
 
     @Test

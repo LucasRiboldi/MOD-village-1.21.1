@@ -24,6 +24,23 @@ final class MaeProtection {
     }
 
     static void inspect(ServerWorld world, UUID colonyId, WorkArea area) {
+        inspect(world, colonyId, area, false);
+    }
+
+    /** Política explícita não altera proteções ou prova; somente admite plantas da lista fechada — MAE Fase 2. */
+    static void inspectTerrain(ServerWorld world, UUID colonyId, WorkArea area) {
+        inspect(world, colonyId, area, true);
+    }
+
+    static void inspectTerrain(ServerWorld world, UUID colonyId, WorkArea area, Set<BlockPos> readOnlyRoads) {
+        inspect(world, colonyId, area, true, readOnlyRoads);
+    }
+
+    private static void inspect(ServerWorld world, UUID colonyId, WorkArea area, boolean lowVegetation) {
+        inspect(world, colonyId, area, lowVegetation, Set.of());
+    }
+
+    private static void inspect(ServerWorld world, UUID colonyId, WorkArea area, boolean lowVegetation, Set<BlockPos> readOnlyRoads) {
         if (!world.getServer().isOnThread()) {
             throw new IllegalStateException("not_server_thread");
         }
@@ -88,16 +105,30 @@ final class MaeProtection {
         for (BlockPos pos : BlockPos.iterate(area.min().x(), area.min().y(), area.min().z(),
                 area.max().x(), area.max().y(), area.max().z())) {
             BlockState state = world.getBlockState(pos);
+            boolean roadColumn = readOnlyRoads.stream().anyMatch(road -> road.getX() == pos.getX() && road.getZ() == pos.getZ());
+            boolean roadFloor = readOnlyRoads.contains(pos);
             if (!world.getWorldBorder().contains(pos) || state.hasBlockEntity()
-                    || !state.getFluidState().isEmpty() || !terrain(state)
-                    || !BlockProtection.mayBreak(world, pos, state)
+                    || !state.getFluidState().isEmpty() || !(terrain(state) || (lowVegetation && vegetation(state))
+                        || (roadFloor && MaeRoadExecution.accepts(state)))
+                    || BlockProtection.isPlayerPlaced(state) || BlockProtection.isColonyBuilt(pos)
+                    || BlockProtection.isVillageOriginal(world, pos)
+                    || (!roadColumn && !BlockProtection.mayBreak(world, pos, state))
                     || mineCells.contains(MinecraftTypeAdapter.toColonyPos(pos))) {
                 throw new IllegalStateException("protected_volume");
             }
-            if (RoadIndex.isLaidByAColony(pos)) {
+            if (RoadIndex.isLaidByAColony(pos) && !roadColumn) {
                 throw new IllegalStateException("reserved_road");
             }
         }
+    }
+
+    /** Lista aprovada; tags genéricas não autorizam árvore, cultivo ou planta de duas metades — MAE Fase 2. */
+    static boolean vegetation(BlockState state) {
+        return state.isOf(Blocks.SHORT_GRASS) || state.isOf(Blocks.FERN) || state.isOf(Blocks.DANDELION)
+                || state.isOf(Blocks.POPPY) || state.isOf(Blocks.BLUE_ORCHID) || state.isOf(Blocks.ALLIUM)
+                || state.isOf(Blocks.AZURE_BLUET) || state.isOf(Blocks.RED_TULIP) || state.isOf(Blocks.ORANGE_TULIP)
+                || state.isOf(Blocks.WHITE_TULIP) || state.isOf(Blocks.PINK_TULIP) || state.isOf(Blocks.OXEYE_DAISY)
+                || state.isOf(Blocks.CORNFLOWER) || state.isOf(Blocks.LILY_OF_THE_VALLEY);
     }
 
     /** Somente materiais passivos nesta fundação; vegetação, fluidos e blocos ativos ficam bloqueados — ADR-044. */

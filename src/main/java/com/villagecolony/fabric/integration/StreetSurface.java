@@ -48,6 +48,7 @@ public final class StreetSurface {
      * @return se trocou
      */
     public static boolean unworn(ServerWorld world, BlockPos at) {
+        if (!MaeRoadAccess.legacyAllowed(world, at, at.up())) return false;
         BlockState state = world.getBlockState(at);
 
         if (!WORN.contains(state.getBlock()) || !isColonyStreet(at, state)) {

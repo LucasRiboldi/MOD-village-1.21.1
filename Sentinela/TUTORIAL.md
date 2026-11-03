@@ -58,10 +58,12 @@ python scripts/test_lab.py --resume 20261102T120000Z
 `--budget-minutes` encerra com segurança antes da próxima suite. `--resume`
 retoma apenas suites que ainda não foram registradas na execução interrompida.
 
-## Segurança MAE — Fase 1
+## Segurança MAE — Fases 1 e 2
 
-Os testes MAE integram as suites existentes: `WorkAreaTest` e `MaeWorkStoreTest`
-em `unit`; `MaeSafetyGameTest` em `gametest`. Não há suite, perfil ou execução
+Os testes MAE integram as suites existentes: `WorkAreaTest`, `TerrainPlannerTest`
+e `MaeWorkStoreTest` em `unit`; `MaeSafetyGameTest`, `MaeTerrainGameTest`,
+`MaeRoadEvidenceGameTest`, `MaeRoadGateGameTest`, `MaeContractGameTest` e
+`MaeMaterialGameTest` em `gametest`. Não há suite, perfil ou execução
 automática adicional. A janela inclui esses casos quando executa as respectivas
 suites. Para guardar os relatórios completos no fluxo normal:
 
@@ -72,16 +74,26 @@ python scripts/test_lab.py fast --only unit,gametest
 Para diagnóstico restrito, sem executar todas as profissões e construções:
 
 ```powershell
-.\gradlew.bat test --tests com.villagecolony.core.construction.model.WorkAreaTest --tests com.villagecolony.data.save.MaeWorkStoreTest
-.\gradlew.bat runGametest -PgametestOnly=MaeSafetyGameTest
+.\gradlew.bat test --tests com.villagecolony.core.construction.model.WorkAreaTest --tests com.villagecolony.core.construction.model.TerrainPlannerTest --tests com.villagecolony.data.save.MaeWorkStoreTest
+.\gradlew.bat runGametest "-PgametestOnly=MaeSafetyGameTest,MaeTerrainGameTest,MaeRoadEvidenceGameTest,MaeRoadGateGameTest,MaeContractGameTest,MaeMaterialGameTest"
 ```
 
 Os comandos Gradle diretos geram os relatórios normais de `build/`; não criam
 uma execução do painel Sentinela. Verificam prova de geração, recusa em terreno
 legado/desconhecido, estruturas, água, árvores, BlockEntities, limites de lote,
 proteção surgida após aprovação, orçamento, pausa, progresso salvo e intenção
-sem confirmação. Não aprovam qualidade visual de smoothing nem desempenho sob
-carga real. A Fase 1 não ativa obras MAE no jogo.
+sem confirmação. A Fase 2 cobre flores controladas, corte/aterro, materiais,
+exclusão de seções, prova encadeada de ruas, recarga e percurso de aldeão real
+numa superfície local com degrau. As fixtures são sintéticas, fora de saves do
+jogador. Não aprovam qualidade visual de smoothing, navegação da vila inteira
+ou desempenho sob carga real. As fases não ativam obras MAE automaticamente.
+
+A fixture `MaeRoadEvidenceGameTest` emite `VC_MAE_METRICS` no log Gradle após
+concluir o percurso: leituras incrementais, escritas, máximo por fatia e maior
+duração observada em nanossegundos. Leituras internas de hash/proteção não entram
+no contador incremental. Uma operação síncrona pode exceder dois milissegundos;
+o registro não demonstra SLA nem desempenho de uma vila completa. Os testes
+de arquitetura existentes também devem passar após mudanças entre camadas.
 
 ## Analisar execuções já concluídas
 

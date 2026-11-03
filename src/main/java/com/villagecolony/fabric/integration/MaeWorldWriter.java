@@ -63,9 +63,22 @@ public final class MaeWorldWriter {
 
     /** Chamada explícita representa a aprovação supervisionada da região; ainda não aprova obra — ADR-044. */
     public UUID reserve(ServerWorld world, UUID colonyId, WorkArea area) {
+        return reserve(world, colonyId, area, false);
+    }
+
+    /** Reserva supervisionada v2; vegetação permitida continua intacta até aprovação tipada — MAE Fase 2. */
+    public UUID reserveTerrain(ServerWorld world, UUID colonyId, WorkArea area) {
+        return reserve(world, colonyId, area, true);
+    }
+
+    private UUID reserve(ServerWorld world, UUID colonyId, WorkArea area, boolean terrain) {
         checkThread(world);
         validateRegionSize(area);
-        MaeProtection.inspect(world, colonyId, area);
+        if (terrain) {
+            MaeProtection.inspectTerrain(world, colonyId, area);
+        } else {
+            MaeProtection.inspect(world, colonyId, area);
+        }
         MaeGenerationEvidence.inspect(world, area, true, 128);
         for (NbtCompound other : store.regions()) {
             validateRegion(other);
@@ -83,7 +96,12 @@ public final class MaeWorldWriter {
         region.putString("proof", "generation_sections_sha256_v1");
         region.put("history", new NbtList());
         region.put("ownedSections", new NbtCompound());
-        store.update(region);
+        if (terrain) {
+            region.putString("policy", "terrain_v2");
+            store.reserveTerrain(region);
+        } else {
+            store.update(region);
+        }
         return id;
     }
 
@@ -91,8 +109,12 @@ public final class MaeWorldWriter {
     public void approve(ServerWorld world, UUID regionId, Building lot, List<Change> changes) {
         checkThread(world);
         NbtCompound region = region(world, regionId);
+        if (region.contains("policy")) {
+            throw new IllegalStateException("terrain_region_requires_typed_approval");
+        }
         WorkArea lotArea = new WorkArea(lot.min(), lot.max());
         WorkArea inspection = MaeProtection.margin(lotArea);
+        MaeSectionLocks.check(world, store, regionId, inspection);
         if (!region.getUuid("colony").equals(lot.colonyId()) || !area(region).contains(inspection)
                 || lotArea.volume() > 4096 || changes.isEmpty()
                 || changes.size() + history(region).size() > MAX_HISTORY) {
@@ -127,6 +149,37 @@ public final class MaeWorldWriter {
         job.put("plan", plan);
         job.putInt("cursor", 0);
         job.putString("state", "approved");
+        region.put("job", job);
+        store.update(region);
+    }
+
+    /** Executa somente trabalho aprovado. Orçamento global do mundo, conferido entre operações indivisíveis — ADR-044. */
+    public boolean approveTerrain(ServerWorld world, MaeTerrainPreparation.Prepared prepared) {
+        NbtCompound region = terrainContext(world, prepared.regionId(), prepared.work(), prepared.readOnly());
+        if (!region.getUuid("colony").equals(prepared.lot().colonyId())
+                || !prepared.evidence().equals(MaeGenerationEvidence.inspect(world,
+                        MaeProtection.margin(prepared.work()), false, 8))) {
+            throw new IllegalStateException("changed_prepared_terrain");
+        }
+        if (prepared.changes().isEmpty()) return false;
+        if (prepared.changes().size() + history(region).size() > MAX_HISTORY) {
+            throw new IllegalStateException("history_budget_exceeded");
+        }
+        region.put("job", MaeTerrainExecution.job(world, prepared));
+        store.update(region);
+        return true;
+    }
+
+    /** Rua e terreno compartilham diário e exclusão mútua; reserva não publica a rota — MAE Fase 2. */
+    public void approveRoad(ServerWorld world, MaeRoadPreparation.Prepared prepared) {
+        NbtCompound job = prepared.job();
+        NbtCompound region = terrainContext(world, prepared.region(), prepared.work(), job.getCompound("readOnly"));
+        if (!job.getCompound("expectedSections").equals(MaeGenerationEvidence.inspect(world,
+                MaeProtection.margin(prepared.work()), false, 8))) throw new IllegalStateException("changed_prepared_road");
+        if (job.getList("plan", NbtElement.COMPOUND_TYPE).size() + history(region).size() + 1 > MAX_HISTORY) {
+            throw new IllegalStateException("history_budget_exceeded");
+        }
+        MaeRoadExecution.validate(world, region, job);
         region.put("job", job);
         store.update(region);
     }
@@ -193,7 +246,7 @@ public final class MaeWorldWriter {
     public void resume(ServerWorld world, UUID regionId) {
         NbtCompound region = region(world, regionId);
         NbtCompound job = region.getCompound("job");
-        if (!List.of("paused", "blocked").contains(job.getString("state")) || job.getBoolean("pendingWrite")) {
+        if (!List.of("paused", "blocked").contains(job.getString("state")) || job.getBoolean("pendingWrite") || job.getBoolean("pendingPublication")) {
             throw new IllegalStateException("unconfirmed_or_nonresumable_job");
         }
         validateJob(world, region, job);
@@ -216,11 +269,12 @@ public final class MaeWorldWriter {
         BlockState before = decodeState(step.getCompound("before"));
         BlockState after = decodeState(step.getCompound("after"));
         if (!area(job).contains(MinecraftTypeAdapter.toColonyPos(pos)) || !world.getBlockState(pos).equals(before)
-                || !MaeProtection.terrain(after)) {
+                || !(MaeRoadExecution.TYPE.equals(job.getString("type")) ? MaeRoadExecution.accepts(after) : MaeProtection.terrain(after))) {
             throw new IllegalStateException("invalid_or_changed_target");
         }
         NbtCompound expectedAfter = MaeGenerationEvidence.after(world, MaeProtection.margin(area(job)), pos, after);
         NbtCompound record = step.copy();
+        if (job.contains("type")) MaeTerrainExecution.intent(step, record);
         record.putUuid("operation", job.getUuid("id"));
         record.putLong("tick", world.getTime());
         record.putString("result", "pending");
@@ -240,6 +294,14 @@ public final class MaeWorldWriter {
         }
         record.putString("result", "applied");
         history.set(history.size() - 1, record);
+        if (job.contains("type")) {
+            region.put("history", history);
+            store.update(region);
+            if (MaeRoadExecution.TYPE.equals(job.getString("type"))) {
+                MaeRoadExecution.deliver(world, region.getUuid("colony"), record, pos, after);
+            } else MaeTerrainExecution.deliver(world, region.getUuid("colony"), record, pos, after);
+            history.set(history.size() - 1, record);
+        }
         job.putBoolean("pendingWrite", false);
         job.putInt("cursor", cursor + 1);
         job.put("expectedSections", expectedAfter);
@@ -249,6 +311,8 @@ public final class MaeWorldWriter {
         }
         region.put("ownedSections", owned);
         if (cursor + 1 == plan.size()) {
+            if (MaeRoadExecution.TYPE.equals(job.getString("type"))) MaeRoadExecution.finish(world, region, job, store);
+            else if (job.contains("type")) MaeTerrainExecution.finish(world, job);
             job.putString("state", "complete");
         }
         region.put("job", job);
@@ -257,8 +321,9 @@ public final class MaeWorldWriter {
     }
 
     private void validateJob(ServerWorld world, NbtCompound region, NbtCompound job) {
+        MaeSectionLocks.check(world, store, region.getUuid("id"), MaeProtection.margin(area(job)));
         if (!job.containsUuid("id") || !job.contains("cursor", NbtElement.INT_TYPE)
-                || !job.contains("plan", NbtElement.LIST_TYPE) || job.getBoolean("pendingWrite")) {
+                || !job.contains("plan", NbtElement.LIST_TYPE) || job.getBoolean("pendingWrite") || job.getBoolean("pendingPublication")) {
             throw new IllegalStateException("invalid_or_unconfirmed_job");
         }
         var plan = job.getList("plan", NbtElement.COMPOUND_TYPE);
@@ -267,14 +332,20 @@ public final class MaeWorldWriter {
                 || !area(region).contains(MaeProtection.margin(area(job)))) {
             throw new IllegalStateException("invalid_job_bounds_or_cursor");
         }
-        MaeProtection.inspect(world, region.getUuid("colony"), MaeProtection.margin(area(job)));
+        if (job.contains("type")) {
+            if (MaeRoadExecution.TYPE.equals(job.getString("type"))) MaeRoadExecution.validate(world, region, job);
+            else MaeTerrainExecution.validate(world, region, job);
+        } else {
+            if (region.contains("policy")) throw new IllegalStateException("typed_terrain_job_required");
+            MaeProtection.inspect(world, region.getUuid("colony"), MaeProtection.margin(area(job)));
+        }
         NbtCompound actual = MaeGenerationEvidence.inspect(world, MaeProtection.margin(area(job)), false, 8);
         if (!actual.equals(job.getCompound("expectedSections"))) {
             throw new IllegalStateException("world_changed_since_approval");
         }
     }
 
-    private static void validateEvidence(ServerWorld world, WorkArea inspection, NbtCompound actual, NbtCompound owned) {
+    static void validateEvidence(ServerWorld world, WorkArea inspection, NbtCompound actual, NbtCompound owned) {
         NbtCompound original = MaeGenerationEvidence.original(world, inspection);
         for (String key : actual.getKeys()) {
             NbtElement expected = owned.contains(key) ? owned.get(key) : original.get(key);
@@ -282,6 +353,34 @@ public final class MaeWorldWriter {
                 throw new IllegalStateException("changed_generation_evidence");
             }
         }
+    }
+
+    /** Contexto de leitura não aprova trabalho; prova e proteções continuam obrigatórias — MAE Fase 2. */
+    NbtCompound terrainContext(ServerWorld world, UUID id, WorkArea work) {
+        return terrainContext(world, id, work, new NbtCompound());
+    }
+
+    NbtCompound roadContext(ServerWorld world, UUID id, WorkArea work, ColonyPos anchor) {
+        return MaeRoadEvidence.capture(world, region(world, id), MaeProtection.margin(work), anchor);
+    }
+
+    NbtCompound terrainContext(ServerWorld world, UUID id, WorkArea work, NbtCompound readOnly) {
+        NbtCompound region = region(world, id);
+        MaeSectionLocks.check(world, store, id, MaeProtection.margin(work));
+        if (!"terrain_v2".equals(region.getString("policy"))) {
+            throw new IllegalStateException("terrain_policy_required");
+        }
+        if (work.volume() > 4096 || !area(region).contains(MaeProtection.margin(work))) {
+            throw new IllegalStateException("outside_work_area");
+        }
+        if (region.contains("job") && !"complete".equals(region.getCompound("job").getString("state"))) {
+            throw new IllegalStateException("unfinished_job");
+        }
+        MaeRoadEvidence.revalidate(world, region, readOnly);
+        MaeProtection.inspectTerrain(world, region.getUuid("colony"), MaeProtection.margin(work), MaeRoadEvidence.floors(readOnly));
+        NbtCompound actual = MaeGenerationEvidence.inspect(world, MaeProtection.margin(work), false, 8);
+        validateEvidence(world, MaeProtection.margin(work), actual, region.getCompound("ownedSections"));
+        return region;
     }
 
     private NbtCompound region(ServerWorld world, UUID id) {
@@ -295,6 +394,9 @@ public final class MaeWorldWriter {
     }
 
     private static void validateRegion(NbtCompound region) {
+        if (region.contains("policy") && !"terrain_v2".equals(region.getString("policy"))) {
+            throw new IllegalStateException("unknown_region_policy");
+        }
         if (!region.containsUuid("id") || !region.containsUuid("colony")
                 || !"generation_sections_sha256_v1".equals(region.getString("proof"))
                 || region.getString("dimension").isEmpty() || !region.contains("history", NbtElement.LIST_TYPE)
@@ -318,7 +420,7 @@ public final class MaeWorldWriter {
         return region.getList("history", NbtElement.COMPOUND_TYPE);
     }
 
-    private static WorkArea area(NbtCompound parent) {
+    static WorkArea area(NbtCompound parent) {
         NbtCompound value = parent.getCompound("area");
         for (String key : List.of("minX", "minY", "minZ", "maxX", "maxY", "maxZ")) {
             if (!value.contains(key, NbtElement.INT_TYPE)) {
@@ -329,14 +431,14 @@ public final class MaeWorldWriter {
                 new ColonyPos(value.getInt("maxX"), value.getInt("maxY"), value.getInt("maxZ")));
     }
 
-    private static NbtCompound encode(WorkArea area) {
+    static NbtCompound encode(WorkArea area) {
         NbtCompound value = new NbtCompound();
         value.putInt("minX", area.min().x()); value.putInt("minY", area.min().y()); value.putInt("minZ", area.min().z());
         value.putInt("maxX", area.max().x()); value.putInt("maxY", area.max().y()); value.putInt("maxZ", area.max().z());
         return value;
     }
 
-    private static BlockState decodeState(NbtCompound value) {
+    static BlockState decodeState(NbtCompound value) {
         var id = net.minecraft.util.Identifier.tryParse(value.getString("Name"));
         if (!value.contains("Name", NbtElement.STRING_TYPE)
                 || id == null || !Registries.BLOCK.containsId(id)) {

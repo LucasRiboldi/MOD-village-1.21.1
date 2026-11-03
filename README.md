@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.9%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.10%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,6 +19,10 @@ Planejamento aprovado para o próximo ciclo: [terreno, mina e profissões](docs/
 Na branch de desenvolvimento, a candidata **0.4.9** adiciona a fundação de segurança
 do [MAE, Fase 1](docs/technical/MAE-Fase-1.md): evidência de geração, reserva supervisionada,
 aprovação individual e escrita limitada. Não ativa terraplanagem ou planejamento de ruas.
+A candidata 0.4.10 inclui a [Fase 2](docs/technical/MAE-Fase-2.md) acrescenta
+contratos locais de terreno transitável e ruas com prova encadeada, conforme a
+[ADR-045](docs/decisions/ADR-045-mae-terrain-road-chain.md). Exige aprovação explícita;
+não ativa obras automaticamente; o playtest permanece pendente.
 A candidata 0.4.8 suspende ajudas cruzadas de pedreiro e fundidor em
 `VillageHelpers`; os demais itens e o playtest permanecem pendentes. Tabela operacional:
 [modelos do Codex por atividade](docs/technical/Modelos-Codex.md).
@@ -124,7 +128,8 @@ geração nova. Evidências e limites ficam no [STATE](STATE.md) e na
   no diário de ações leva um código único de bloqueio (Regra 112).
 
 O mod é alpha. A candidata 0.4.9 prepara a segurança MAE conforme a
-[ADR-044](docs/decisions/ADR-044-mae-region-safety.md), sem ativar a Fase 2.
+[ADR-044](docs/decisions/ADR-044-mae-region-safety.md). A Fase 2 está em validação
+local na branch de desenvolvimento, conforme a [ADR-045](docs/decisions/ADR-045-mae-terrain-road-chain.md), sem ativação automática.
 A 0.4.8 (2026-11-02) suspende ajudas cruzadas em `VillageHelpers`
 e aguarda playtest. A 0.4.7 (2026-11-02) adiciona análise manual e métricas locais do
 Sentinela. A 0.4.6 (2026-11-02) adiciona o Observatório local do Sentinela.
@@ -296,7 +301,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 87 | **Peça equivalente:** sem a exata e sem tag do jogo, vale a equivalente da tabela | 09-24 (N3) | ✅ no código (registrada 10-22) | `EquivalentPieces` |
 | 88 | **Terracota, feno, argila, gelo e neve aparecem quando a obra pede** (gelo, gelo compactado e gelo azul desde 10-28: o jogo só os dá com toque suave; bloco e camada de neve desde 10-29, T1; a argila crua do forno aparece no baú do fundidor sem ele sair a buscá-la, T5) | 10-21 | ✅ no código (registrada 10-22) | `AppearingPieces` |
 | 89 | **Degrau na frente da porta** do lote que fica um bloco acima da rua | 09-30 | ✅ no código (registrada 10-22) | `DoorStep` |
-| 90 | **Terraplanagem do lote:** corta até 5 e aterra até 2 blocos do chão do bioma, com um corredor de 2 em volta da casa | 10-20, 10-21 | ✅ no código (registrada 10-22) | `LotTerraform` |
+| 90 | **Terraplanagem do lote:** no legado, corta até 5 e aterra até 2 blocos do chão do bioma, com um corredor de 2 em volta da casa. No MAE (ADR-045), somente células aprovadas: corte/aterro até 2, duas camadas de apoio e transição até 6; `FOUNDATION_GROUND` inclui superfície, aterro e apoio do corredor/transição; calçamento usa `SHAPED_GROUND` | 10-20, 10-21, 11-02 | ✅ contratos locais; MAE sem ativação automática | `LotTerraform`, `TerrainPlanner`, `MaeWorldWriter` |
 | 91 | **Casa fundadora:** primeiro o lote plano exato, depois o aplainável; a vegetação do lote sai | 10-20 (G1) | ✅ no código (registrada 10-22) | `FoundationLotSearch`, `LotGrowth` |
 | 92 | **Deserto:** a areia da planta vira arenito (emenda à Regra 27), e o chão da vila de areia não desaba | 09-19, 10-21 | ✅ no código (registrada 10-22) | `DesertSand`, `DesertGround` |
 | 93 | **Obra abandonada tem retomada limitada** antes de a vila aceitar obra nova | — | ✅ no código (registrada 10-22) | `BuildingRepairPlanner` |
@@ -673,7 +678,7 @@ no Sentinela atualizam esse tutorial no mesmo commit.
 
 Os casos MAE de elegibilidade, proteção, interrupção e persistência entram nas
 suites `unit` e `gametest` existentes. Comandos focados e limites constam no
-[tutorial](Sentinela/TUTORIAL.md#segurança-mae--fase-1).
+[tutorial](Sentinela/TUTORIAL.md#segurança-mae--fases-1-e-2).
 
 Se uma suite falhar em uma repetição e passar em outra, o resumo é
 `UNSTABLE` e o comando sai não zero. GPU não acelera estas suites de servidor;

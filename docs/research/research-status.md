@@ -6,6 +6,32 @@ primeiro. Criado em 2026-09-02, na primeira sessão que usou a skill
 
 ## Objetivo atual
 
+**2026-11-03 — MAE Fase 2, implementação local (FEATURE).** Fase 1 integrada
+pelo PR #48; branch `codex/mae-terrain` sobre `main` `b5706316`. O autor aprovou
+implementação e testes focados. Contratos e limites na
+[ADR-045](../decisions/ADR-045-mae-terrain-road-chain.md); evidências, comandos
+e pendências em [MAE-Fase-2](../technical/MAE-Fase-2.md).
+
+Planejamento puro de até oito alternativas e levantamento incremental, sem
+agendamento automático. Terreno e ruas tipadas usam o mesmo writer e diário;
+âncora somente lida exige índice/grafo da própria colônia, estado físico e prova
+na mesma região. Ruas posteriores à geração só contam após confirmação de
+escrita, materiais e publicação. Nenhum hash é importado de outra região.
+Os sete pontos legados recusam antes de efeitos; redescoberta de metadados adia
+na dimensão reservada, impedindo adoção indireta por outra colônia.
+
+Passaram 37 testes unitários/estáticos e 48 GameTests focados: 45 MAE e três dos
+helpers físicos. Arquitetura passou sem ampliar exceções. A fixture mediu 520
+leituras incrementais e dez escritas; máximos de 2,557 ms no levantamento e
+4,967 ms no writer. Não inclui todas as leituras de hash/proteção nem constitui SLA.
+As fixtures controlam o terreno de teste e o destino do aldeão; não simulam
+uma vila completa nem comprovam a causa dos sintomas históricos. Nenhum save
+do jogador foi aberto ou reparado. Não há ativação no jogo, entrega ou alteração
+de dependências. A pesquisa anterior sobre navegação intermitente na água
+continua inconclusiva; esta fase não encerra essa investigação.
+
+### Objetivo anterior — rede e currais
+
 **2026-11-01 — rede hierárquica e condução em currais.** Desenho aprovado e
 ADR-043 criada; grafo puro e codec paralelo testados. Integração ainda pendente.
 Investigação FORENSIC da fuga intermitente: experimento controlado comprovou saída

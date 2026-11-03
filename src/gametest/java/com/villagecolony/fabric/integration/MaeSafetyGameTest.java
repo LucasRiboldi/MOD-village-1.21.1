@@ -105,6 +105,7 @@ public class MaeSafetyGameTest implements FabricGameTest {
     public void reservationDoesNotApproveWorkAndOutOfLotChangesAreRejected(TestContext context) {
         Fixture fixture = new Fixture(context);
         try {
+            fixture.set(fixture.base, Blocks.AIR.getDefaultState());
             fixture.capture();
             UUID region = fixture.reserve();
             context.assertTrue(fixture.writer.runSlice(context.getWorld(), region) == 0, "reserva executou sem aprovação");
@@ -213,6 +214,7 @@ public class MaeSafetyGameTest implements FabricGameTest {
     public void writerRevalidatesBoundsAndNewProtectionAtTheLastMoment(TestContext context) {
         Fixture fixture = new Fixture(context);
         try {
+            fixture.set(fixture.base.add(4, 0, 0), Blocks.AIR.getDefaultState());
             fixture.capture();
             UUID region = fixture.reserve();
             fixture.writer.approve(context.getWorld(), region, fixture.lot(), List.of(fixture.change(fixture.base)));
@@ -337,7 +339,7 @@ public class MaeSafetyGameTest implements FabricGameTest {
         return new ColonyPos(pos.getX(), pos.getY(), pos.getZ());
     }
 
-    private static final class Fixture {
+    static final class Fixture {
         final TestContext context;
         final ColonyFixture colony;
         final WorldChunk chunk;
