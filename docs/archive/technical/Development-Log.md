@@ -2,6 +2,17 @@
 
 # Development-Log.md
 
+## 03-11-2026 — MAE, início da Fase 3
+
+Branch `codex/mae-structures` criada sobre `main` `0a7590fc`, merge do PR #49;
+versão candidata 0.4.11.
+Auditoria em `docs/technical/MAE-Fase-3.md`. Contrato experimental deriva entrada
+do projeto a partir do piso da porta e exige superfície proposta. A construção
+automática continua desativada: faltam integração física, medição em carga real
+e playtest. A suíte `MaeTerrainGameTest` passou com 14 testes após corrigir a
+recusa de porta inconsistente; a validação física de acesso permanece aberta.
+Nenhum save do jogador foi aberto.
+
 ## 03-11-2026 — MAE, Fase 2 local de terreno e ruas supervisionadas
 
 Após integração da Fase 1 pelo PR #48, desenvolvimento em `codex/mae-terrain`

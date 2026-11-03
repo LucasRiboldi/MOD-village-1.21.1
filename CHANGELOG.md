@@ -12,6 +12,15 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.11] — início do MAE Fase 3 (2026-11-03, candidato)
+
+### Adicionado
+- Contrato experimental que deriva a entrada da planta e recusa portas
+  inconsistentes ou superfícies sem o ponto de acesso.
+- GameTests focados para rotações, casa vanilla e recusas; auditoria da Fase 3.
+
+Ainda não integra obras ou caminhos. O acesso físico e o playtest seguem pendentes.
+
 ## [0.4.10] — MAE Fase 2 (2026-11-03, candidato)
 
 ### Adicionado

@@ -19,8 +19,14 @@
 - [x] Integrar a Fase 1 pelo PR #48 antes de abrir `codex/mae-terrain`.
 - [x] Concluir validação focada e revisão do gate da Fase 2: 37 unitários/estáticos
       e 48 GameTests passaram; limites e evidências em `docs/technical/MAE-Fase-2.md`.
-- [ ] Autorizar integração e entrega candidata da Fase 2; gerar/copiar JAR somente na entrega.
+- [x] Integrar a Fase 2 pelo PR #49 (`0a7590fc`).
 - [ ] Validar carga real e playtest antes de qualquer orquestração automática MAE.
+
+## MAE — Fase 3
+
+- [x] Auditar plantas, construção, terreno e limites de integração.
+- [ ] Validar acesso físico completo, modelos e dados de block entities.
+- [ ] Integrar reserva, preparação, construção e retomada após cumprir os gates da Fase 2.
 
 ## Playtest de 02-11 — escolhas A aprovadas
 
