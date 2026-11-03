@@ -3,6 +3,7 @@ package com.villagecolony.fabric.integration;
 import com.villagecolony.core.construction.model.WorkArea;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.data.save.ColonySavedData;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -41,8 +42,8 @@ public final class MaeRoadAccess {
 
     public static boolean legacyAllowed(ServerWorld world, BlockPos min, BlockPos max) {
         try {
-            return legacyAllowed(world, new WorkArea(new ColonyPos(min.getX(), min.getY(), min.getZ()),
-                    new ColonyPos(max.getX(), max.getY(), max.getZ())));
+            return legacyAllowed(world, new WorkArea(MinecraftTypeAdapter.toColonyPos(min),
+                    MinecraftTypeAdapter.toColonyPos(max)));
         } catch (IllegalArgumentException malformed) {
             return false;
         }
