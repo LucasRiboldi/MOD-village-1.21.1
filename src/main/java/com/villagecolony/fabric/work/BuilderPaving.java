@@ -9,6 +9,7 @@ import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.BlockProtection;
+import com.villagecolony.fabric.integration.MaeRoadAccess;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.BlockState;
 import com.villagecolony.fabric.integration.RoadIndex;
@@ -161,7 +162,8 @@ public final class BuilderPaving {
     private static void step(ServerWorld world, VillagerEntity builder, Job job) {
         UUID id = builder.getUuid();
 
-        if (job.weed ? !isZoneWeed(world, job.target) : !isGap(world, job.target)) {
+        if (!MaeRoadAccess.legacyAllowed(world, job.target, job.target.up(2))
+                || (job.weed ? !isZoneWeed(world, job.target) : !isGap(world, job.target))) {
             // Alguém calçou ou limpou, ou o chão mudou: o próximo.
             JOBS.remove(id);
             WorkTargets.clear(id);
@@ -205,6 +207,7 @@ public final class BuilderPaving {
 
     /** Troca o chão pelo caminho natural dele (VillageRoad.pavingOn), tira a planta de cima e diz qual. */
     static String pave(ServerWorld world, BlockPos ground) {
+        if (!MaeRoadAccess.legacyAllowed(world, ground, ground.up(2))) return "";
         BlockState above = world.getBlockState(ground.up());
 
         if (!above.isAir() && above.isReplaceable()) {
@@ -219,6 +222,7 @@ public final class BuilderPaving {
 
     /** Tira a planta e guarda o item no baú do construtor; sem lugar, ela cai no chão. */
     static String clear(ServerWorld world, UUID builder, BlockPos plant) {
+        if (!MaeRoadAccess.legacyAllowed(world, plant.down(), plant.up())) return "";
         BlockState state = world.getBlockState(plant);
         net.minecraft.item.Item item = state.getBlock().asItem();
         boolean kept = VillageColonyMod.STORAGES.of(builder)

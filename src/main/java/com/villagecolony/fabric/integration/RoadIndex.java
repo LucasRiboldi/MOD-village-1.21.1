@@ -60,7 +60,11 @@ public final class RoadIndex {
      * {@link SweepState#ROAD_CURSOR}, que pagina a volta como a varredura do
      * quadrado.
      */
-    static void indexWhatWasSeen(UUID colonyId, ColonyPos center) {
+    static void indexWhatWasSeen(ServerWorld world, UUID colonyId, ColonyPos center) {
+        if (!MaeRoadAccess.metadataAllowed(world, colonyId)) {
+            SweepState.BUILDING.remove(colonyId);
+            return;
+        }
         Set<Long> seen = SweepState.BUILDING.remove(colonyId);
 
         // Índice novo é outra lista: a posição guardada falava da

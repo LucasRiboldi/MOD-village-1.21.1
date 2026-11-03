@@ -1,20 +1,33 @@
-# STATE — 2026-11-02
+# STATE — 2026-11-03
 
-> **0.4.9 candidata — MAE Fase 1:** branch `codex/mae-region-safety` baseada
-> na `main` atualizada. Fundação de segurança: recibo de geração por seção,
-> reserva supervisionada, aprovação individual, proteção no limite da escrita,
-> orçamento global por mundo, pausa, retomada e histórico persistente limitado.
-> Elegibilidade aprovada: registrar durante geração e revalidar; sem prova,
-> bloquear. `VillageOrigin` sozinho não autoriza expansão. Passaram 35 unitários
-> focados, seis de dependências/memória e 25 GameTests (dez MAE; 15 de origem e
-> migração). Revisão concluída, com dois custos evitáveis corrigidos. Documentação em
-> `docs/technical/MAE-Fase-1.md` e ADR-044.
-> Não ativa preparação de terreno, grafo ou construtores legados. Nenhum save
-> do jogador foi aberto. Entrega local solicitada em 02-11: `remapJar` aprovado,
-> JAR 0.4.9 em `build/libs`, `downloads/` e TLauncher, com SHA-256 idêntico:
-> `7184B163EB44AE3CBE26F0748DE5632E77A9FBE2D26C03D80A0462C953C1688C`.
-> A 0.4.8 foi preservada como `.disabled`. Integração na `main` e playtest pendentes.
->
+> **MAE Fase 2 — implementação local com validação focada concluída:** branch `codex/mae-terrain`,
+> criada sobre `main` `b57063162165b7d78c4657cb571ced734b862fea`, após integração
+> da Fase 1 pelo PR #48. Modelo e testes focados liberados pelo autor.
+> Planejamento puro limitado, levantamento incremental, vegetação baixa explícita,
+> corte/aterro até dois, duas camadas de apoio e transição até seis. Operações
+> tipadas de terreno/rua usam o writer e diário existentes; só publicam rua confirmada.
+> Os sete pontos legados recusam efeitos em seções supervisionadas. Redescoberta
+> legada de metadados é adiada na dimensão com reserva MAE; contratos desconhecidos
+> conservam o bloqueio de seções após recarga. Não há certificação retroativa.
+> Passaram 37 testes unitários/estáticos e 48 GameTests focados (45 MAE e três
+> dos helpers físicos), sem falhas ou ignorados. Arquitetura passou sem ampliar exceções.
+> A bateria completa passou com 1.023 GameTests após isolar as fixtures MAE de
+> colônias criadas por outros testes; o isolamento mantém a proteção entre colônias.
+> A fixture mediu 520 leituras incrementais e dez escritas; máximos por fatia:
+> 256 leituras, uma escrita, 2,557 ms no levantamento e 4,967 ms no writer.
+> Hashes/inspeções síncronas não entram nas 520 leituras; não é medição de carga ou SLA.
+> A revisão reproduziu e corrigiu adoção entre colônias, liberação por contrato
+> desconhecido, envelope excessivo de corte e contagem de plantas sobrepostas ao aterro.
+> ADR-045, relatório `docs/technical/MAE-Fase-2.md` e tutorial Sentinela registram o contrato.
+> Não ativa o MAE nas obras do jogo e não comprova correção dos sintomas históricos.
+> Nenhum save do jogador foi aberto. Versão candidata 0.4.10; integração e
+> distribuição dependem do resultado do PR e do CI.
+> Os registros antigos de suspensão de testes abaixo descrevem suas respectivas entregas.
+
+> **MAE Fase 1 integrada:** PR #48, base `b5706316`. Contrato conservador preservado;
+> detalhes em `docs/technical/MAE-Fase-1.md` e ADR-044. A entrega 0.4.9 anterior
+> permanece distinta deste desenvolvimento ainda não distribuído.
+
 > **PR #47 integrado:** merge `8a8ae09844761566f9b7e2e9fc06c67bac1db29d`;
 > CI 553 (`41513439513`) passou, incluindo 977 GameTests e PIT. `main` local
 > atualizada antes da abertura desta branch. As fixtures de cultivo e métricas

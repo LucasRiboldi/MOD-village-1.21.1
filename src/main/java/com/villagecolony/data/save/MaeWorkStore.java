@@ -19,7 +19,8 @@ public final class MaeWorkStore {
 
     public boolean supported() {
         return payload == null || (payload instanceof NbtCompound root
-                && root.contains("version", NbtElement.INT_TYPE) && root.getInt("version") == 1
+                && root.contains("version", NbtElement.INT_TYPE)
+                && (root.getInt("version") == 1 || root.getInt("version") == 2)
                 && root.contains("regions", NbtElement.LIST_TYPE)
                 && root.getList("regions", NbtElement.COMPOUND_TYPE).size() == ((NbtList) root.get("regions")).size());
     }
@@ -42,6 +43,27 @@ public final class MaeWorkStore {
     }
 
     public void update(NbtCompound region) {
+        if (!supported()) {
+            throw new IllegalStateException("unsupported MAE work payload");
+        }
+        if (region.contains("policy") && (payload == null || ((NbtCompound) payload).getInt("version") != 2)) {
+            throw new IllegalStateException("terrain_reservation_required");
+        }
+        update(region, false);
+    }
+
+    /** Somente uma reserva nova explicitamente aceita promove o envelope — desenho MAE Fase 2. */
+    public void reserveTerrain(NbtCompound region) {
+        if (!"terrain_v2".equals(region.getString("policy"))) {
+            throw new IllegalArgumentException("unknown_terrain_policy");
+        }
+        if (!region.containsUuid("id") || region(region.getUuid("id")).isPresent()) {
+            throw new IllegalStateException("new_terrain_reservation_required");
+        }
+        update(region, true);
+    }
+
+    private void update(NbtCompound region, boolean promote) {
         if (!region.containsUuid("id")) {
             throw new IllegalArgumentException("MAE region missing identity");
         }
@@ -58,7 +80,7 @@ public final class MaeWorkStore {
         }
         list.add(region.copy());
         NbtCompound root = payload == null ? new NbtCompound() : ((NbtCompound) payload).copy();
-        root.putInt("version", 1);
+        root.putInt("version", promote || root.getInt("version") == 2 ? 2 : 1);
         root.put("regions", list);
         payload = root;
         changed.run();

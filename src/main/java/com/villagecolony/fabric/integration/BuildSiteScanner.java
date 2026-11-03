@@ -406,7 +406,7 @@ public final class BuildSiteScanner {
 
         // E aqui, e só aqui, o índice fica pronto: o raio inteiro foi
         // visitado, então a lista de ruas é a lista de ruas.
-        RoadIndex.indexWhatWasSeen(colonyId, center);
+        RoadIndex.indexWhatWasSeen(world, colonyId, center);
 
         return Optional.empty();
         } finally {

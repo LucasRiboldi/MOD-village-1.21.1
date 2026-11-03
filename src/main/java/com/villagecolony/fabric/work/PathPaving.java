@@ -12,6 +12,7 @@ import com.villagecolony.core.construction.model.VillagePathPlanner;
 import com.villagecolony.fabric.content.ModContent;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.LotGround;
+import com.villagecolony.fabric.integration.MaeRoadAccess;
 import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.StreetSurface;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
@@ -218,6 +219,8 @@ public final class PathPaving {
      * buraco. Por cima do piso só sai planta.
      */
     static boolean pave(ServerWorld world, UUID colonyId, int x, int z, int ground, int floorY, boolean edge) {
+        if (!MaeRoadAccess.legacyAllowed(world, new BlockPos(x, Math.min(ground, floorY), z),
+                new BlockPos(x, Math.max(ground + 2, floorY + CLEAR + 1), z))) return false;
         BlockPos top = new BlockPos(x, ground, z);
         BlockState surface = world.getBlockState(top);
         BlockPos floor = new BlockPos(x, floorY, z);

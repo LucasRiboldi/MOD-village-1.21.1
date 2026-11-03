@@ -6,6 +6,7 @@ import com.villagecolony.core.construction.model.RoadGraph;
 import com.villagecolony.data.save.ColonySavedData;
 import com.villagecolony.fabric.integration.RoadGraphMigration;
 import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.MaeRoadAccess;
 import net.minecraft.server.world.ServerWorld;
 
 import java.util.HashSet;
@@ -18,6 +19,11 @@ final class RoadGraphActivation {
     }
 
     static Optional<Set<Long>> roads(ServerWorld world, Colony colony) {
+        if (!MaeRoadAccess.metadataAllowed(world, colony.id())) {
+            var confirmed = ColonySavedData.get(world.getServer()).roadGraphs();
+            return Optional.of(confirmed.versionSupported(colony.id())
+                    ? confirmed.graph(colony.id()).map(RoadGraphActivation::columnsOf).orElse(Set.of()) : Set.of());
+        }
         if (!MineHomePlans.isCurrentVillage(world, colony.center())) {
             return Optional.empty();
         }

@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.integration.Cuttings;
+
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.ItemEntity;

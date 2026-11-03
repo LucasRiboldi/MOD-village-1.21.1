@@ -61,6 +61,7 @@ public final class RoadNetwork {
      * @return o índice novo, quando foi traçado agora
      */
     public static Optional<ColonyRoads> indexIfMissing(ServerWorld world, UUID colonyId) {
+        if (!MaeRoadAccess.metadataAllowed(world, colonyId)) return Optional.empty();
         if (SweepState.ROADS.containsKey(colonyId)
                 || world.getTime() - TRACED_AT.getOrDefault(colonyId, Long.MIN_VALUE / 2) < RETRACE_EVERY) {
             return Optional.empty();

@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.integration.PublicChests;
+
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.integration.ColonyChests;

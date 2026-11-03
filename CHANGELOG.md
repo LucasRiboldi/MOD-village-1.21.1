@@ -12,6 +12,23 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.10] — MAE Fase 2 (2026-11-03, candidato)
+
+### Adicionado
+- Planejamento local de terreno com corte/aterro até dois blocos, apoio duplo,
+  vegetação baixa controlada, circulação conectada e âncora de rua somente lida.
+- Operação de rua com prova encadeada desde a geração, diário de materiais,
+  publicação após confirmação e exclusão persistente de seções compartilhadas.
+- Cobertura focada integrada às suites existentes do Sentinela; tutorial atualizado.
+
+### Alterado
+- Sete entradas legadas de pavimentação recusam seções MAE antes dos efeitos;
+  redescoberta de metadados é adiada na dimensão com reservas supervisionadas.
+- `maeWork` admite v1/v2; promoção somente ao aceitar reserva explícita de terreno.
+- Regra 90 e `FOUNDATION_GROUND` abrangem células MAE aprovadas de corredor e transição.
+
+Não ativa obras no jogo nem altera saves legados.
+
 ## [0.4.9] — segurança de região MAE (2026-11-02, candidato)
 
 ### Adicionado

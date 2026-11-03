@@ -1,14 +1,26 @@
 # TODO
 
-## MAE — Fase 1 (0.4.9 candidata)
+## MAE — Fases 1 e 2
 
 - [x] Escolher prova na geração, sem autorização retroativa por carga ou origem da vila.
 - [x] Criar reserva supervisionada e aprovação individual reaproveitando `Building`.
 - [x] Persistir intenção, progresso e histórico limitado sem migrar terreno legado.
 - [x] Aplicar proteção, pré-condições, orçamento, pausa e retomada na escrita MAE.
-- [x] Concluir verificação focada e revisão da branch; sem integração autorizada.
+- [x] Concluir a Fase 1 e integrar pelo PR #48; atualizar a base local antes da Fase 2.
 - [ ] Medir custo de captura e escrita em carga real antes de ativar orquestração.
-- [ ] Apresentar a Fase 2 para aprovação; terreno e caminhos continuam fora desta entrega.
+- [x] Apresentar a Fase 2 e concluir o diagnóstico autorizado, sem implementar terreno.
+- [x] Escolher alternativa A e preparar desenho de integração local com vegetação baixa controlada.
+- [x] Rever desenho a pedido do autor: conexão a âncora de rua comprovada e transitabilidade de toda superfície preparada.
+- [x] Ampliar desenho da prova a pedido do autor: reservar antes da rua e encadear alterações certificadas no diário MAE.
+- [x] Aprovar integração supervisionada dos sete pontos de rua, publicação após confirmação e limites da prova; sem certificação retroativa.
+- [x] Aprovar limites e desenho em `docs/superpowers/specs/2026-11-02-mae-terrain-design.md` (alternativa A, 02-11).
+- [x] Registrar o desenho ampliado aprovado na ADR-045 e no índice real do README.
+      Registro formal consolidado durante a revisão da implementação.
+- [x] Integrar a Fase 1 pelo PR #48 antes de abrir `codex/mae-terrain`.
+- [x] Concluir validação focada e revisão do gate da Fase 2: 37 unitários/estáticos
+      e 48 GameTests passaram; limites e evidências em `docs/technical/MAE-Fase-2.md`.
+- [ ] Autorizar integração e entrega candidata da Fase 2; gerar/copiar JAR somente na entrega.
+- [ ] Validar carga real e playtest antes de qualquer orquestração automática MAE.
 
 ## Playtest de 02-11 — escolhas A aprovadas
 

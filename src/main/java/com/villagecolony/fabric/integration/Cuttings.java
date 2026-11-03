@@ -1,4 +1,4 @@
-package com.villagecolony.fabric.work;
+package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
 import net.minecraft.block.Block;
@@ -15,7 +15,7 @@ import java.util.UUID;
  * terraplanagem do lote e o corte do corredor tiram vai para os baús públicos da vila ({@link PublicChests});
  * o que não couber cai no chão ao lado da obra, inteiro, como o bloco quebrado à mão.
  */
-final class Cuttings {
+public final class Cuttings {
 
     private Cuttings() {
     }
@@ -26,7 +26,7 @@ final class Cuttings {
      * @param near onde o que não couber cai
      * @return quanto caiu no chão
      */
-    static int keep(ServerWorld world, UUID colonyId, BlockPos near, Map<Item, Integer> taken) {
+    public static int keep(ServerWorld world, UUID colonyId, BlockPos near, Map<Item, Integer> taken) {
         int dropped = 0;
 
         for (Map.Entry<Item, Integer> entry : taken.entrySet()) {
