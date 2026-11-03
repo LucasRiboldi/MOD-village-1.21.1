@@ -96,6 +96,10 @@ public final class MaeMaterialGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_fill_materials", tickLimit = 200)
     public void fillPreservesNamedChestSpillsWhenPublicChestIsFullAndCountsActualSupply(TestContext context) {
         var f = new MaeSafetyGameTest.Fixture(context);
+        context.waitAndRun(20, () -> startFill(context, f));
+    }
+
+    private static void startFill(TestContext context, MaeSafetyGameTest.Fixture f) {
         try {
             ground(f);
             BlockPos publicAt = f.base.south(5), namedAt = f.base.south(7);

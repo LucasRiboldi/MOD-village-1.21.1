@@ -340,6 +340,7 @@ public class MaeSafetyGameTest implements FabricGameTest {
     }
 
     static final class Fixture {
+        private static final java.util.concurrent.atomic.AtomicInteger NEXT_ARENA = new java.util.concurrent.atomic.AtomicInteger();
         final TestContext context;
         final ColonyFixture colony;
         final WorldChunk chunk;
@@ -353,7 +354,9 @@ public class MaeSafetyGameTest implements FabricGameTest {
             this.context = context;
             // A cobertura de barreiras do GameTest não pertence ao terreno elegível — ADR-044.
             BlockPos origin = context.getAbsolutePos(new BlockPos(1, 40, 1));
-            base = new BlockPos((origin.getX() & ~15) + 5, origin.getY(), (origin.getZ() & ~15) + 5);
+            // As colônias de testes concorrentes ocupam 144 blocos; arenas MAE ficam separadas — ADR-035 §7.
+            base = new BlockPos(100_005 + NEXT_ARENA.getAndIncrement() * 256, origin.getY(), 100_005);
+            forceChunks(true);
             chunk = context.getWorld().getWorldChunk(base);
             originalReceipt = chunk.getAttached(MaeGenerationEvidence.RECEIPT);
             colony = ColonyFixture.colonyAt(context, base.subtract(context.getAbsolutePos(BlockPos.ORIGIN)));
@@ -394,6 +397,15 @@ public class MaeSafetyGameTest implements FabricGameTest {
                     Block.NOTIFY_LISTENERS | Block.FORCE_STATE));
             chunk.setAttached(MaeGenerationEvidence.RECEIPT, originalReceipt);
             colony.cleanUp();
+            forceChunks(false);
+        }
+
+        private void forceChunks(boolean force) {
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    context.getWorld().setChunkForced((base.getX() >> 4) + dx, (base.getZ() >> 4) + dz, force);
+                }
+            }
         }
     }
 }

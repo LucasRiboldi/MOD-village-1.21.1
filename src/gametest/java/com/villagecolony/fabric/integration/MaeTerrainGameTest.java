@@ -271,6 +271,10 @@ public final class MaeTerrainGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_terrain_execute", tickLimit = 240)
     public void typedCutResumesFromDiskAndNeverRepeatsMaterialDelivery(TestContext context) {
         var fixture = new MaeSafetyGameTest.Fixture(context);
+        context.waitAndRun(20, () -> startCut(context, fixture));
+    }
+
+    private static void startCut(TestContext context, MaeSafetyGameTest.Fixture fixture) {
         try {
             prepareGround(fixture);
             for (int x = 0; x < 4; x++) {

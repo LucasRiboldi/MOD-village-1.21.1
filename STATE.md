@@ -11,6 +11,8 @@
 > conservam o bloqueio de seções após recarga. Não há certificação retroativa.
 > Passaram 37 testes unitários/estáticos e 48 GameTests focados (45 MAE e três
 > dos helpers físicos), sem falhas ou ignorados. Arquitetura passou sem ampliar exceções.
+> A bateria completa passou com 1.023 GameTests após isolar as fixtures MAE de
+> colônias criadas por outros testes; o isolamento mantém a proteção entre colônias.
 > A fixture mediu 520 leituras incrementais e dez escritas; máximos por fatia:
 > 256 leituras, uma escrita, 2,557 ms no levantamento e 4,967 ms no writer.
 > Hashes/inspeções síncronas não entram nas 520 leituras; não é medição de carga ou SLA.
@@ -20,8 +22,7 @@
 > Não ativa o MAE nas obras do jogo e não comprova correção dos sintomas históricos.
 > Nenhum save do jogador foi aberto. Versão candidata 0.4.10; integração e
 > distribuição dependem do resultado do PR e do CI.
-> Liberação atual vale apenas para testes focados; os registros antigos de suspensão
-> abaixo descrevem suas respectivas entregas, não revogam essa liberação.
+> Os registros antigos de suspensão de testes abaixo descrevem suas respectivas entregas.
 
 > **MAE Fase 1 integrada:** PR #48, base `b5706316`. Contrato conservador preservado;
 > detalhes em `docs/technical/MAE-Fase-1.md` e ADR-044. A entrega 0.4.9 anterior
