@@ -361,8 +361,8 @@ ligação local de rua não entra, pois é `road_v2` (Fase 2).
 `MaeStructureSiteGameTest` fecha essa lacuna para `plains_small_house_1`:
 `MaeStructureSite` deriva as superfícies, levanta o terreno, prova o acesso
 com o terreno previsto e conclui a casa em terreno plano (sem job de terreno)
-e com aterro do piso da entrada (job `terrain_v2` antes da obra). Os outros
-três modelos do exercício ainda não passaram pelo fluxo com terreno real.
+e com aterro do piso da entrada (job `terrain_v2` antes da obra). Oficina,
+curral e depósito do exercício também concluem pelo fluxo com aterro real.
 A obra concluída não prova mobília funcional, reconhecimento pelo pastor
 nem passagem de animais pelos portões.
 

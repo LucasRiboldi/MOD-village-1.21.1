@@ -35,7 +35,7 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_flat", tickLimit = 1000)
     public void flatGroundBuildsWithoutATerrainJob(TestContext context) {
-        var site = new Arena(context, true);
+        var site = new Arena(context, HOUSE, true);
         site.run(arena -> {
             var job = arena.job();
             context.assertTrue(job.getCompound("terrain").getBoolean("flat"), "terreno plano não foi aceito pela prova sem mudança");
@@ -45,7 +45,7 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_fill", tickLimit = 1000)
     public void missingEntryFloorIsPreparedBeforeTheBuilding(TestContext context) {
-        var site = new Arena(context, false);
+        var site = new Arena(context, HOUSE, false);
         site.run(arena -> {
             context.assertTrue(arena.job().getCompound("terrain").containsUuid("id"), "obra não ligou o job de terreno");
             context.assertTrue(arena.foreignRecords() > 0, "piso da entrada não passou pelo writer de terreno");
@@ -56,7 +56,7 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_stale_flat", tickLimit = 400)
     public void flatProofIsRefusedOnceTheWorldChanges(TestContext context) {
-        var arena = new Arena(context, true);
+        var arena = new Arena(context, HOUSE, true);
         arena.guarded(() -> {
             arena.id = arena.fixture.writer.reserveTerrain(context.getWorld(), arena.fixture.colony.colony().id(),
                     new WorkArea(Arena.pos(arena.fixture.base.add(-5, -6, -5)), Arena.pos(arena.fixture.base.add(10, 10, 10))));
@@ -68,21 +68,38 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
         });
     }
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_workshop", tickLimit = 1000)
+    public void masonsHouseGoesThroughTheWholeFlow(TestContext context) {
+        new Arena(context, ResourceId.vanilla("village/plains/houses/plains_masons_house_1"), false).run(arena -> { });
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_pen", tickLimit = 1000)
+    public void animalPenGoesThroughTheWholeFlow(TestContext context) {
+        new Arena(context, ResourceId.vanilla("village/plains/houses/plains_animal_pen_1"), false).run(arena -> { });
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_storage", tickLimit = 1000)
+    public void smallStorageGoesThroughTheWholeFlow(TestContext context) {
+        new Arena(context, ResourceId.parse("villagecolony:colony/storage_small"), false).run(arena -> { });
+    }
+
     private static final class Arena {
         final TestContext context;
         final MaeSafetyGameTest.Fixture fixture;
         final BlockPos origin;
         final List<BlockPos> chests = new ArrayList<>();
         final ConstructionProject project;
+        final ResourceId model;
         UUID id;
         MaeStructureSite site;
 
-        Arena(TestContext context, boolean entryReady) {
+        Arena(TestContext context, ResourceId model, boolean entryReady) {
+            this.model = model;
             this.context = context;
             this.fixture = new MaeSafetyGameTest.Fixture(context);
             // Pegada, entrada e margem do terreno cabem no chunk da arena, o único com recibo recapturado.
             this.origin = fixture.base.add(-1, 1, -1);
-            var blueprint = StructureBlueprintReader.readForMae(context.getWorld(), HOUSE).orElseThrow();
+            var blueprint = StructureBlueprintReader.readForMae(context.getWorld(), model).orElseThrow();
             this.project = ConstructionProject.plan(fixture.colony.colony().id(), blueprint, pos(origin));
             for (BlockPos at : BlockPos.iterate(fixture.base.add(-5, -2, -5), fixture.base.add(10, 0, 10))) {
                 fixture.set(at, Blocks.DIRT.getDefaultState());
@@ -121,7 +138,7 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
             guarded(() -> {
                 for (int i = 0; i < 3; i++) site.runSlice();
                 if (site.phase() == MaeStructureSite.Phase.FAILED) {
-                    context.assertTrue(false, "fluxo falhou: " + site.failure());
+                    context.assertTrue(false, model + ": fluxo falhou: " + site.failure());
                 }
                 context.assertTrue(site.waiting().isEmpty(), "obra esperou material: " + site.waiting());
                 if (site.phase() != MaeStructureSite.Phase.DONE) {
@@ -129,8 +146,8 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
                     return;
                 }
                 long finished = VillageColonyMod.BUILDINGS.ofColony(fixture.colony.colony().id()).stream()
-                        .filter(building -> building.blueprint().equals(HOUSE) && building.finished()).count();
-                context.assertTrue(finished == 1, "fluxo registrou " + finished + " edifícios");
+                        .filter(building -> building.blueprint().equals(model) && building.finished()).count();
+                context.assertTrue(finished == 1, model + ": fluxo registrou " + finished + " edifícios");
                 context.assertTrue(chests.stream().allMatch(at -> context.getWorld().getBlockEntity(at) instanceof ChestBlockEntity box
                         && box.isEmpty()), "obra não gastou exatamente o material do plano");
                 then.accept(this);
