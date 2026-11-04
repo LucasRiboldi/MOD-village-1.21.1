@@ -284,6 +284,10 @@ Cada passo é uma peça com todas as suas partes:
   o animal anda para fora e recebe a corda. Sem passar em 200 tiques, o portão
   fecha e a coleta desiste com log, sem teleporte de reserva. Vale para todo
   curral, MAE ou não.
+- **Mobília funcional** (item 6): as obras MAE põem o bloco pelo `setBlockState`
+  comum, então cama e bancada entram no registro de POI do mundo como as do
+  jogo, e baú construído dentro da caixa da vila é baú livre da colônia
+  (`VillageChests`). Provado em casa, oficina e depósito sem mudar código.
 - Teto: plano + histórico ≤ 1.024 registros; acima disso a aprovação recusa
   com `history_budget_exceeded`, sem dividir a obra automaticamente.
 

@@ -10,6 +10,11 @@
 > A obra liga a entrada à rua MAE (`road_v2`): semente perto do centro ou ligação
 > ao grafo; a obra seguinte reaproveita a região. Passaram 1104 GameTests da
 > bateria completa e a suíte unitária. Ainda não exercitado em jogo.
+> Fim do plano MAE na mesma branch: vaso com planta, curral grande (água, solo
+> arado e trigo moldados), placa/baú/barril/fornalha vazios, depósito grande
+> recriado com porta térrea, pastor atravessando o portão andando e mobília
+> funcional provada. Passaram 1112 GameTests da bateria completa e a suíte
+> unitária. Sem push; falta playtest, carga real e a fila automática.
 
 > **MAE Fase 3 — candidata 0.4.16:** branch `codex/mae-structure-access`,
 > baseada na `main` `9dc8b4f2`. Contrato `structure_v3` na ADR-046, P1–P4

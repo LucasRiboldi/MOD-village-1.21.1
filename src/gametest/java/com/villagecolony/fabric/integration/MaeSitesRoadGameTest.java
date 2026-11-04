@@ -134,6 +134,59 @@ public final class MaeSitesRoadGameTest implements FabricGameTest {
         });
     }
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_furniture_house", tickLimit = 2400)
+    public void houseBedIsAHomeTheVillagersCanClaim(TestContext context) {
+        furniture(context, ResourceId.vanilla("village/plains/houses/plains_small_house_1"));
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_furniture_workshop", tickLimit = 2400)
+    public void workshopBenchIsAJobSiteTheProfessionRecognizes(TestContext context) {
+        furniture(context, ResourceId.vanilla("village/plains/houses/plains_masons_house_1"));
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_furniture_storage", tickLimit = 2400)
+    public void storageChestsAreFreeColonyChests(TestContext context) {
+        furniture(context, ResourceId.parse("villagecolony:colony/storage_small"));
+    }
+
+    /**
+     * Mobília funcional (item 6): todo bloco da obra que o jogo trata como POI (cama, bancada) está no registro
+     * de POI do mundo, e todo baú construído é um baú livre da colônia — ADR-046.
+     */
+    private static void furniture(TestContext context, ResourceId model) {
+        var arena = new WideArena(context, model, 1);
+        arena.guarded(() -> {
+            var origin = arena.fixture.base.add(-1, 1, -1);
+            var status = MaeSites.start(context.getWorld(), arena.writer(), arena.colony(), model, origin, 0, null);
+            arena.await(status.regionId(), () -> {
+                var world = context.getWorld();
+                var project = ConstructionProject.plan(arena.colony(),
+                        StructureBlueprintReader.readForMae(world, model).orElseThrow(), MinecraftTypeAdapter.toColonyPos(origin));
+                var lot = com.villagecolony.core.construction.model.Building.of(project);
+                int pois = 0;
+                var chests = new ArrayList<ColonyPos>();
+                for (BlockPos at : BlockPos.iterate(MinecraftTypeAdapter.toBlockPos(lot.min()), MinecraftTypeAdapter.toBlockPos(lot.max()))) {
+                    var state = world.getBlockState(at);
+                    var type = net.minecraft.world.poi.PointOfInterestTypes.getTypeForState(state);
+                    if (type.isPresent()) {
+                        pois++;
+                        var registered = world.getPointOfInterestStorage().getType(at);
+                        context.assertTrue(registered.isPresent() && registered.get().equals(type.get()),
+                                model + ": " + state.getBlock() + " em " + at.toShortString() + " não está no registro de POI");
+                    }
+                    if (world.getBlockEntity(at) instanceof ChestBlockEntity) chests.add(MinecraftTypeAdapter.toColonyPos(at.toImmutable()));
+                }
+                var colony = VillageColonyMod.COLONIES.find(arena.colony()).orElseThrow();
+                var free = com.villagecolony.fabric.integration.VillageChests.around(world, colony, List.of());
+                context.assertTrue(free.containsAll(chests), model + ": baús construídos fora dos baús livres da colônia: "
+                        + chests.stream().filter(chest -> !free.contains(chest)).toList());
+                context.assertTrue(pois + chests.size() > 0, model + ": obra sem mobília para conferir");
+                arena.cleanup();
+                context.complete();
+            });
+        });
+    }
+
     /** Plataforma de três de altura em 3×3 chunks, com os recibos de geração recapturados e devolvidos. */
     private static final class WideArena {
         final TestContext context;

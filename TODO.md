@@ -49,6 +49,7 @@
 - [x] Cobrir acesso alternativo, agrupamento do cercado e capacidade total 20, preservando a rotina legada.
 - [x] Provar travessia física do pastor e animal pelos portões: o teleporte virou caminhada (escolha do autor).
 - [ ] Medir no playtest o tempo do pastor com a caminhada (`time_ledger`, motivos "gave up").
+- [x] Provar mobília funcional nas obras MAE: cama e bancada como POI, baús livres da colônia.
 - [x] Detalhar e implementar `structure_v3` no writer existente: materiais, intenção, confirmação, efeitos secundários e retomada ambígua bloqueada (ADR-046, 0.4.16).
 - [x] Concluir obra só com acesso real conferido; registrar o edifício uma vez; retomada volta a conferir.
 - [x] Derivar circulação e destino (`beginFor`) e ligar terreno → acesso → obra (`MaeStructureSite`), terreno plano por prova sem mudança.
