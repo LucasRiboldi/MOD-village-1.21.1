@@ -250,6 +250,13 @@ Cada passo é uma peça com todas as suas partes:
   ficam fora; o modelo que dependa delas fica bloqueado com motivo, conforme o
   item 9. *Não escolhida:* registrar a escolha na intenção, com o `after`
   vestido, ao custo de recalcular `expectedSections` no passo.
+- **Vaso com planta** (escolha do autor, 2026-11-04): o passo tira `flower_pot` e a
+  planta juntos, como o construtor legado monta (ADR-028). O segundo item vai em
+  `extra`; obra com algum `extra` grava `contract=2`, que leitores do contrato 1
+  recusam em vez de tirar só o vaso. `MaeStructureMaterials` concentra a regra.
+- **Alpendre**: a prova de acesso aceita vão um passo para dentro da pegada; a
+  circulação exigida é a primeira célula fora dela. A entrada escolhida pelo
+  fluxo prefere piso até um bloco acima do chão da pegada.
 - Teto: plano + histórico ≤ 1.024 registros; acima disso a aprovação recusa
   com `history_budget_exceeded`, sem dividir a obra automaticamente.
 

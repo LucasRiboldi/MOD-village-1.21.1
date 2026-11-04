@@ -347,8 +347,8 @@ acesso e conclusão única no registro de edifícios.
 | `plains_animal_pen_1` | aceito | curral construído e concluído |
 | `colony/storage_small` | aceito | depósito construído e concluído |
 | `savanna_small_house_1`, `snowy_small_house_1`, `desert_mason_1`, `plains_tool_smith_1` | aceito | não exercitado |
-| `desert_small_house_1` | recusado: `potted_cactus` | — |
-| `taiga_masons_house_1` | recusado: `potted_spruce_sapling` | — |
+| `desert_small_house_1` | aceito (vaso + cacto, contrato 2) | casa construída e concluída pelo fluxo com terreno |
+| `taiga_masons_house_1` | aceito (vaso + muda, contrato 2) | não exercitado |
 | `colony/large_animal_pen` | recusado: `farmland`, `water`, `wheat` | — |
 | `taiga_small_house_1`, `savanna_mason_1`, `snowy_masons_house_1` | recusado na leitura: `unsafe_structure_payload` | — |
 

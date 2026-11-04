@@ -20,6 +20,9 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
   ou num lote nivelado próximo, com no máximo 4 obras simultâneas e aviso no chat.
 - Ligação da entrada da obra à rua MAE (`road_v2`): semente perto do centro ou ligação ao
   grafo publicado; a obra seguinte reaproveita a região da colônia para a rua se ligar.
+- Vaso com planta no MAE: `flower_pot` e a planta saem juntos dos baús (`contract=2`);
+  casa desert e oficina taiga passam a ser aceitas. A prova de acesso aceita alpendre
+  entre a porta e o lado de fora.
 
 ## [0.4.16] — obra supervisionada MAE `structure_v3` (2026-11-04, candidato)
 

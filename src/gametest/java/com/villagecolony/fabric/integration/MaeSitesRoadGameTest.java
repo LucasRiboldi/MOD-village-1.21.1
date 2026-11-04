@@ -126,10 +126,7 @@ public final class MaeSitesRoadGameTest implements FabricGameTest {
                     StructureBlueprintReader.readForMae(context.getWorld(), HOUSE).orElseThrow(), new ColonyPos(0, 100, 0));
             Map<Item, Integer> needed = new LinkedHashMap<>();
             for (var piece : MaeStructurePieces.ordered(project)) {
-                if (piece.main().isAir()) continue;
-                int count = piece.main().contains(Properties.SLAB_TYPE)
-                        && piece.main().get(Properties.SLAB_TYPE) == SlabType.DOUBLE ? 2 : 1;
-                needed.merge(piece.main().getBlock().asItem(), count * copies, Integer::sum);
+                MaeStructureMaterials.of(piece).forEach((item, count) -> needed.merge(item, count * copies, Integer::sum));
             }
             int slot = 0;
             for (var entry : needed.entrySet()) {

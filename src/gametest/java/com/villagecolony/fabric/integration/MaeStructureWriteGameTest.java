@@ -91,7 +91,7 @@ public final class MaeStructureWriteGameTest implements FabricGameTest {
                             scene.base.add(2, 0, 0), Set.of(), MinecraftTypeAdapter.toColonyPos(scene.base.add(1, 1, 0)),
                             List.of(MinecraftTypeAdapter.toColonyPos(scene.base.add(-1, 0, 0))))), "wrong_project_or_colony");
             scene.approve(id, scene.house(), scene.sources(scene.house()));
-            scene.edit(id, job -> job.putInt("contract", 2));
+            scene.edit(id, job -> job.putInt("contract", 3));
             // O orçamento de escrita é do tick; a fatia seguinte começa com ele cheio — ADR-044.
             scene.nextTick(() -> {
                 scene.fixture.writer.runSlice(context.getWorld(), id);

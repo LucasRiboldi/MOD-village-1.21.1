@@ -136,6 +136,8 @@ final class MaeStructureExecution {
             if (step != null) plan.add(step);
         }
         if (plan.isEmpty()) throw new IllegalArgumentException("empty_structure_plan");
+        boolean extra = false;
+        for (int i = 0; i < plan.size(); i++) extra |= plan.getCompound(i).contains("extra");
         if (plan.size() + region.getList("history", NbtElement.COMPOUND_TYPE).size() > 1024) {
             throw new IllegalStateException("history_budget_exceeded");
         }
@@ -152,7 +154,7 @@ final class MaeStructureExecution {
         chosen.put("circulation", circulation);
         NbtCompound job = new NbtCompound();
         job.putString("type", TYPE);
-        job.putInt("contract", 1);
+        job.putInt("contract", extra ? 2 : 1);
         job.putUuid("id", project.id());
         job.putString("blueprint", project.blueprint().id().toString());
         job.putString("template", hash);
@@ -187,25 +189,20 @@ final class MaeStructureExecution {
             parts.add(part);
         }
         if (present) return null;
-        Item item = piece.main().getBlock().asItem();
-        NbtCompound material = new NbtCompound();
-        material.putString("item", Registries.ITEM.getId(item).toString());
-        material.putInt("count", piece.main().contains(Properties.SLAB_TYPE)
-                && piece.main().get(Properties.SLAB_TYPE) == SlabType.DOUBLE ? 2 : 1);
         NbtCompound step = new NbtCompound();
         step.put("parts", parts);
-        step.put("material", material);
+        MaeStructureMaterials.write(step, MaeStructureMaterials.of(piece));
         return step;
     }
 
-    /** Contrato 1: sem fluido, cultivo nem solo arado, e a peça principal tem item próprio — ADR-046 P2. */
+    /** Sem fluido, cultivo nem solo arado, e com origem física: item próprio ou vaso e planta — ADR-046 P2. */
     static boolean supported(MaeStructurePieces.Piece piece) {
         for (var part : piece.parts()) {
             BlockState after = part.getValue();
             if (!after.getFluidState().isEmpty() || after.getBlock() instanceof CropBlock
                     || after.getBlock() instanceof FarmlandBlock) return false;
         }
-        return piece.main().isAir() || piece.main().getBlock().asItem() != Items.AIR;
+        return piece.main().isAir() || !MaeStructureMaterials.of(piece).isEmpty();
     }
 
     private static String role(BlockState after) {
@@ -213,7 +210,8 @@ final class MaeStructureExecution {
     }
 
     static void validate(ServerWorld world, NbtCompound region, NbtCompound job) {
-        if (!is(job) || job.getInt("contract") != 1 || !MaeTerrainExecution.TYPE.equals(region.getString("policy"))
+        if (!is(job) || job.getInt("contract") < 1 || job.getInt("contract") > 2
+                || !MaeTerrainExecution.TYPE.equals(region.getString("policy"))
                 || job.getString("template").length() != 64 || !job.contains("rotation", NbtElement.INT_TYPE)
                 || !job.contains("origin", NbtElement.LONG_TYPE) || !job.contains("access", NbtElement.COMPOUND_TYPE)
                 || !job.contains("terrain", NbtElement.COMPOUND_TYPE)) {
@@ -238,19 +236,15 @@ final class MaeStructureExecution {
                 throw new IllegalStateException("invalid_or_changed_target");
             }
         }
-        NbtCompound material = step.getCompound("material");
-        Identifier itemId = Identifier.tryParse(material.getString("item"));
-        int count = material.getInt("count");
-        if (itemId == null || !Registries.ITEM.containsId(itemId) || count < 1 || count > 2) {
-            throw new IllegalStateException("invalid_material_contract");
-        }
-        Item item = Registries.ITEM.get(itemId);
+        if (step.contains("extra") && job.getInt("contract") != 2) throw new IllegalStateException("invalid_material_contract");
+        var materials = MaeStructureMaterials.read(step);
         UUID colony = region.getUuid("colony");
         List<ColonyPos> chests = sources.chests(world, colony, MinecraftTypeAdapter.toColonyPos(
                 BlockPos.fromLong(job.getLong("origin"))));
-        if (ColonyChests.countIn(world, chests, item) < count) {
+        Item missing = MaeStructureMaterials.missing(world, chests, materials);
+        if (missing != null) {
             job.putString("state", "waiting");
-            job.putString("reason", "material:" + itemId);
+            job.putString("reason", "material:" + Registries.ITEM.getId(missing));
             job.putLong("retryAt", world.getTime() + RETRY_TICKS);
             region.put("job", job);
             store.update(region);
@@ -274,9 +268,7 @@ final class MaeStructureExecution {
         job.putBoolean("pendingWrite", true);
         region.put("job", job);
         store.update(region);
-        if (ColonyChests.withdraw(world, chests, item, count) != count) {
-            throw new IllegalStateException("material_withdraw_failed");
-        }
+        MaeStructureMaterials.withdraw(world, chests, materials);
         for (int i = 0; i < parts.size(); i++) {
             NbtCompound part = parts.getCompound(i);
             world.setBlockState(BlockPos.fromLong(part.getLong("position")),

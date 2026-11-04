@@ -73,8 +73,9 @@ public final class MaeStructureSite {
     }
 
     /**
-     * O piso do lado de fora do vão escolhido: o que sai da pegada em menos passos; empate vai para porta,
-     * depois portão, depois vão aberto, depois a ordem do levantamento. A prova de acesso confirma ou recusa.
+     * O piso do lado de fora do vão escolhido: primeiro os que ficam até um bloco acima do chão da pegada (o
+     * terreno só liga superfícies com degrau de um), depois o que sai da pegada em menos passos; empate vai para
+     * porta, depois portão, depois vão aberto, depois a ordem do levantamento. A prova de acesso confirma.
      */
     static ColonyPos entry(ConstructionProject project) {
         Building lot = Building.of(project);
@@ -82,6 +83,7 @@ public final class MaeStructureSite {
         BlueprintAccess best = null;
         BlockPos bestFloor = null;
         int bestSteps = Integer.MAX_VALUE;
+        int ground = lot.min().y() - 1;
         var ordered = MaeStructureAccess.sorted(project.blueprint().accesses()).stream()
                 .sorted(Comparator.comparingInt((BlueprintAccess declared) -> KIND_ORDER.indexOf(declared.kind()))).toList();
         for (BlueprintAccess declared : ordered) {
@@ -91,9 +93,11 @@ public final class MaeStructureSite {
             for (int step = 1; step <= 6; step++) {
                 at = at.offset(direction);
                 if (!lot.contains(MinecraftTypeAdapter.toColonyPos(at))) {
-                    if (step < bestSteps) {
+                    // Degrau de até um sobre o chão conta antes; vão mais alto só entra sem outro.
+                    int rank = step + (at.down().getY() - ground > 1 ? 1000 : 0);
+                    if (rank < bestSteps) {
                         best = declared;
-                        bestSteps = step;
+                        bestSteps = rank;
                         bestFloor = at.down();
                     }
                     break;
