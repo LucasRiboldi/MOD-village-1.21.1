@@ -53,7 +53,7 @@ public final class MaeStructureAccessGameTest implements FabricGameTest {
             refused = "no_interior_goal".equals(expected.getMessage());
         }
         context.assertTrue(refused, "obra maciça ganhou destino interno");
-        context.complete();
+        done(context, fixture);
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_access_budget", tickLimit = 20)
@@ -70,7 +70,7 @@ public final class MaeStructureAccessGameTest implements FabricGameTest {
             refused = "access_budget".equals(expected.getMessage());
         }
         context.assertTrue(refused, "coordenadas extremas contornaram o orçamento antes da consulta ao mundo");
-        context.complete();
+        done(context, fixture);
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_access_piece_overlap", tickLimit = 20)
@@ -88,7 +88,7 @@ public final class MaeStructureAccessGameTest implements FabricGameTest {
             refused = "overlapping_structure_effect".equals(expected.getMessage());
         }
         context.assertTrue(refused, "metade de porta sobrepôs outra peça sem recusa");
-        context.complete();
+        done(context, fixture);
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_access_piece_bounds", tickLimit = 20)
@@ -107,7 +107,7 @@ public final class MaeStructureAccessGameTest implements FabricGameTest {
             refused = "structure_effect_outside_building".equals(expected.getMessage());
         }
         context.assertTrue(refused, "cabeceira fora da caixa foi planejada implicitamente");
-        context.complete();
+        done(context, fixture);
     }
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_access_door", tickLimit = 200)
     public void plannedDoorIncludesItsUpperHalfWithoutBuildingTheHouse(TestContext context) {
@@ -236,7 +236,7 @@ public final class MaeStructureAccessGameTest implements FabricGameTest {
         try { survey.runSlice(); }
         catch (IllegalStateException expected) { refused = "world_changed_during_access_survey".equals(expected.getMessage()); }
         context.assertTrue(refused, "levantamento usou amostra anterior à mudança");
-        context.complete();
+        done(context, fixture);
     }
 
     private static void check(TestContext context, String block, boolean missingFloor, String refusal,
@@ -250,8 +250,17 @@ public final class MaeStructureAccessGameTest implements FabricGameTest {
                 fixture.surfaces(), fixture.goal(), false);
     }
 
+    private static final java.util.concurrent.atomic.AtomicInteger NEXT_ARENA = new java.util.concurrent.atomic.AtomicInteger();
+
+    /**
+     * A prova compara seções inteiras; na bateria completa, testes vizinhos da grade mudavam a mesma seção no
+     * meio do levantamento ({@code world_changed_during_access_survey}). Cada fixture usa um chunk próprio,
+     * longe da grade, como as arenas MAE — ADR-035 §7.
+     */
     private static Fixture fixture(TestContext context, String block, boolean missingFloor) {
-        var origin = context.getAbsolutePos(new BlockPos(2, 2, 2));
+        var near = context.getAbsolutePos(new BlockPos(2, 2, 2));
+        var origin = new BlockPos(300_005 + NEXT_ARENA.getAndIncrement() * 64, near.getY(), 300_005);
+        context.getWorld().setChunkForced(origin.getX() >> 4, origin.getZ() >> 4, true);
         for (BlockPos at : BlockPos.iterate(origin.add(-2, -1, -2), origin.add(5, 5, 5))) {
             context.getWorld().setBlockState(at, Blocks.AIR.getDefaultState(), 3);
         }
@@ -287,8 +296,13 @@ public final class MaeStructureAccessGameTest implements FabricGameTest {
             catch (IllegalStateException expected) { refused = refusal.equals(expected.getMessage()); }
             context.assertTrue(refused, "recusa física divergente: " + refusal);
         }
+        done(context, fixture);
+    }
+
+    private static void done(TestContext context, Fixture fixture) {
         for (BlockPos at : BlockPos.iterate(fixture.origin().add(-2, -1, -2), fixture.origin().add(5, 5, 5)))
             context.getWorld().setBlockState(at, Blocks.AIR.getDefaultState(), 18);
+        context.getWorld().setChunkForced(fixture.origin().getX() >> 4, fixture.origin().getZ() >> 4, false);
         context.complete();
     }
 
