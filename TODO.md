@@ -2,7 +2,9 @@
 
 ## Playtest de 03-11 — fila de construção
 
-- [ ] Analisar `VC_REACH_DETAIL` e `VC_REACH_START` no próximo playtest antes de corrigir o mapa.
+- [x] Analisar `VC_REACH_DETAIL`: origem no telhado, 38 posições e nenhum destino alcançado.
+- [x] Preferir rua indexada validada, depois chão próximo ao nível do centro; manter fallback.
+- [ ] Confirmar no playtest 0.4.14 origem no chão e alcance dos destinos; investigar mineiros em seguida.
 - [x] Isolar a busca da casa do mineiro, preservando índice, cursor geral e pontas de rua.
 - [x] Liberar outras obras somente após volta local completa sem lote; manter a casa pendente.
 - [ ] Confirmar no próximo playtest ausência das falsas derivas e progresso de outras obras.

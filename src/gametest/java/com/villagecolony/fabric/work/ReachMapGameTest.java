@@ -3,7 +3,10 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
+import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.SweepPersistence;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
@@ -12,6 +15,7 @@ import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -20,6 +24,73 @@ import java.util.UUID;
  * caminho, mas três blocos acima, não — o degrau é de um.
  */
 public class ReachMapGameTest implements FabricGameTest {
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "reach_map")
+    public void indexedGroundRoadWinsOverTheCentreAndRoof(TestContext context) {
+        Colony colony = roofVillage(context);
+        BlockPos road = context.getAbsolutePos(new BlockPos(4, 39, 3));
+        context.getWorld().setBlockState(road, Blocks.DIRT_PATH.getDefaultState());
+        SweepPersistence.restore(new ColonyRoads(colony.id(), colony.center(),
+                List.of(ColonyRoads.column(road.getX(), road.getZ()))));
+        try {
+            context.assertTrue(ReachMap.startOf(context.getWorld(), colony).orElseThrow().equals(road.up()),
+                    "a origem deve preferir a rua indexada no chão, não o centro nem o telhado");
+        } finally {
+            BuildSiteScanner.clear(colony.id());
+        }
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "reach_map")
+    public void groundBelowTheRoofRemainsReachableWithoutAnIndex(TestContext context) {
+        Colony colony = roofVillage(context);
+        BlockPos centre = MinecraftTypeAdapter.toBlockPos(colony.center());
+        Set<BlockPos> seen = ReachMap.reachableCells(context.getWorld(), colony);
+        context.assertTrue(seen.contains(centre), "o chão sob o telhado ficou fora do mapa");
+        context.assertFalse(seen.contains(centre.up(5)), "o telhado isolado virou origem da vila");
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "reach_map")
+    public void staleOrObstructedIndexedRoadDoesNotOverrideGround(TestContext context) {
+        Colony colony = roofVillage(context);
+        BlockPos centre = MinecraftTypeAdapter.toBlockPos(colony.center());
+        BlockPos road = centre.east().down(2);
+        SweepPersistence.restore(new ColonyRoads(colony.id(), colony.center(),
+                List.of(ColonyRoads.column(road.getX(), road.getZ()))));
+        try {
+            context.getWorld().setBlockState(road, Blocks.STONE.getDefaultState());
+            context.assertTrue(ReachMap.startOf(context.getWorld(), colony).orElseThrow().equals(centre),
+                    "coluna indexada sem pavimento foi aceita como rua");
+            context.getWorld().setBlockState(road, Blocks.DIRT_PATH.getDefaultState());
+            context.getWorld().setBlockState(road.up(2), Blocks.STONE.getDefaultState());
+            context.assertTrue(ReachMap.startOf(context.getWorld(), colony).orElseThrow().equals(centre),
+                    "rua sem espaço para a cabeça foi aceita como origem");
+        } finally {
+            BuildSiteScanner.clear(colony.id());
+        }
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "reach_map")
+    public void heightmapRemainsTheFallbackWithoutNearbyGround(TestContext context) {
+        Colony colony = roofVillage(context);
+        BlockPos centre = MinecraftTypeAdapter.toBlockPos(colony.center());
+        context.getWorld().setBlockState(centre.down(), Blocks.AIR.getDefaultState());
+        context.assertTrue(ReachMap.startOf(context.getWorld(), colony).orElseThrow().equals(centre.up(5)),
+                "sem chão próximo, o fallback pela superfície deve continuar disponível");
+        context.complete();
+    }
+
+    private static Colony roofVillage(TestContext context) {
+        BlockPos centre = context.getAbsolutePos(new BlockPos(3, 41, 3));
+        context.getWorld().setBlockState(centre.down(), Blocks.GRASS_BLOCK.getDefaultState());
+        context.getWorld().setBlockState(centre.up(4), Blocks.ACACIA_STAIRS.getDefaultState());
+        Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(centre));
+        colony.measure(new VillageBounds(centre.getX() - 4, centre.getY() - 4, centre.getZ() - 4,
+                centre.getX() + 4, centre.getY() + 8, centre.getZ() + 4));
+        return colony;
+    }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "reach_map")
     public void aChestThreeBlocksUpIsOutOfReachOnFoot(TestContext context) {

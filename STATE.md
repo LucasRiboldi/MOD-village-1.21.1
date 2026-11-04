@@ -1,5 +1,22 @@
 # STATE — 2026-11-03
 
+> **Playtest — candidata 0.4.14:** correção da origem do mapa de alcance.
+> Opções A+B+C aprovadas. O playtest da 0.4.13 repetiu quatro vezes origem
+> `(-1554,115,3553)` sobre escada de acácia: 38 posições, nenhum destino alcançado.
+> Inspeção somente leitura encontrou rua em `(-1554,109,3552)`, com pés em Y=110,
+> abaixo do telhado e perto do centro Y=111. A busca agora prefere rua indexada
+> fisicamente válida; depois procura chão até quatro blocos do centro e ±2 em Y.
+> O heightmap permanece como último recurso. Não escreve terreno, índice ou save.
+> Quatro regressões cobrem rua, chão sob telhado, índice inválido e fallback.
+> Testes focados liberados: seis ReachMap e quatro BedChoice passaram (10/10).
+> Antes da correção, três regressões falharam pela seleção do telhado.
+> `remapJar`, revisão do diff e README `--check` passaram. Manifesto confirma
+> 0.4.14, Minecraft 1.21.1 e Java 21. SHA-256 idêntico em build, downloads e TLauncher:
+> `9BC402F9D3F7AB8ADAB21E775D0833003C86CCE611A2D452D4D6E28A6682BC6C`.
+> Só 0.4.14 permanece ativa em mods; 0.4.13 foi preservada como `.disabled`.
+> Commit local nesta linha; sem push ou merge. Bateria completa não executada.
+> Acesso real à mina, comportamento das profissões e efeito em jogo continuam pendentes.
+
 > **Playtest — candidata 0.4.13:** instrumentação da busca periódica de alcance.
 > `VC_REACH_DETAIL` registra centro, origem, piso, contagens de verificações fora
 > da área, sem passagem e sem posição válida, além de uma amostra dos primeiros

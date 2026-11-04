@@ -12,6 +12,20 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.14] — origem do mapa de alcance no chão (2026-11-03, candidato)
+
+### Corrigido
+- Origem prefere rua indexada com pavimento, apoio e passagem válidos no mundo.
+- Sem rua válida, procura chão até quatro blocos do centro e dois de diferença vertical.
+  A superfície pelo heightmap permanece como último recurso.
+
+### Adicionado
+- Quatro GameTests de regressão na suíte existente do Sentinela Local: preferência por rua,
+  chão sob telhado, índice desatualizado/passagem bloqueada e preservação do fallback.
+
+O playtest da 0.4.13 confirmou origem sobre telhado com apenas 38 posições e nenhum destino
+alcançado. Esta correção do diagnóstico não comprova acesso real à mina nem resolve tarefas de profissões.
+
 ## [0.4.13] — diagnóstico do mapa de alcance (2026-11-03, candidato)
 
 ### Adicionado

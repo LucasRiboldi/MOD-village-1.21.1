@@ -3,10 +3,13 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
+import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.StreetSurface;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.registry.tag.BlockTags;
@@ -316,8 +319,18 @@ public final class ReachMap {
         return world.getFluidState(at).isEmpty() ? "changed" : "fluid";
     }
 
-    /** Onde a busca começa: o chão no centro da vila, ou o mais perto dele num raio de 4. */
-    private static Optional<BlockPos> startOf(ServerWorld world, Colony colony) {
+    /** M2: prefere rua comprovada no mundo, depois chão próximo ao nível do centro; superfície é fallback. */
+    static Optional<BlockPos> startOf(ServerWorld world, Colony colony) {
+        Set<Long> roads = RoadIndex.roadsOf(colony.id())
+                .map(index -> Set.copyOf(index.columns())).orElse(Set.of());
+        Optional<BlockPos> ground = nearbyGround(world, colony.center(), roads, true);
+        if (ground.isEmpty()) {
+            ground = nearbyGround(world, colony.center(), roads, false);
+        }
+        if (ground.isPresent()) {
+            return ground;
+        }
+
         ColonyPos centre = colony.center();
 
         for (int radius = 0; radius <= 4; radius++) {
@@ -339,6 +352,37 @@ public final class ReachMap {
             }
         }
 
+        return Optional.empty();
+    }
+
+    /** M2: busca limitada a quatro blocos horizontais e dois verticais, sem carregar chunks. */
+    private static Optional<BlockPos> nearbyGround(
+            ServerWorld world, ColonyPos centre, Set<Long> roads, boolean indexedOnly) {
+        if (indexedOnly && roads.isEmpty()) {
+            return Optional.empty();
+        }
+        int[] heights = {0, -1, 1, -2, 2};
+        for (int radius = 0; radius <= 4; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
+                        continue;
+                    }
+                    int x = centre.x() + dx;
+                    int z = centre.z() + dz;
+                    if (indexedOnly && !roads.contains(ColonyRoads.column(x, z))) {
+                        continue;
+                    }
+                    for (int dy : heights) {
+                        BlockPos at = new BlockPos(x, centre.y() + dy, z);
+                        if (standable(world, at) && (!indexedOnly
+                                || StreetSurface.isStreetMaterial(world.getBlockState(at.down())))) {
+                            return Optional.of(at);
+                        }
+                    }
+                }
+            }
+        }
         return Optional.empty();
     }
 

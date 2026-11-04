@@ -2,6 +2,28 @@
 
 # Development-Log.md
 
+## 03-11-2026 — origem do mapa de alcance 0.4.14
+
+Autor aprovou A+B+C e testes focados. Quatro medições do playtest 0.4.13
+começaram em `(-1554,115,3553)`, sobre escada de acácia: 38 posições e nenhum
+destino alcançado. Inspeção somente leitura do mundo identificou rua no Y=109
+perto do centro Y=111, com espaço para pés e cabeça abaixo do telhado.
+
+ReachMap prefere rua do índice com pavimento e passagem reconferidos no mundo;
+na ausência, procura chão no raio quatro e diferença vertical de até dois.
+Heightmap permanece como fallback. Consumidores existentes (camas, acesso e
+mudança de boca da mina) usam a mesma seleção, sem alterar seus contratos.
+Não houve alteração de save, persistência ou IA Vanilla.
+
+Quatro testes adicionados à classe ReachMapGameTest já registrada no Sentinela.
+Antes da correção, três falharam pela seleção do telhado; o fallback e os dois
+testes anteriores passaram. Depois da correção, os seis ReachMap e quatro
+BedChoice passaram: `runGametest "-PgametestOnly=ReachMap,BedChoice"`, 10/10.
+`remapJar`, manifesto e README `--check` conferidos. Build, downloads e TLauncher
+têm SHA-256 `9BC402F9D3F7AB8ADAB21E775D0833003C86CCE611A2D452D4D6E28A6682BC6C`.
+Somente 0.4.14 ativa em mods; anterior preservada como `.disabled`. Sem push ou merge.
+Não inclui diagnóstico adicional dos mineiros nem integração automática MAE.
+
 ## 03-11-2026 — diagnóstico de alcance 0.4.13
 
 Opção A: registrar a origem do mapa periódico, piso e motivos amostrados de
