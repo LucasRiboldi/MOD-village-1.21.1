@@ -14,6 +14,9 @@
 > Sem comando em jogo nem fila automática; sem playtest. Ativação automática
 > segue bloqueada por carga real e playtest da Fase 2. Travessia física dos
 > animais pelos portões continua pendente.
+> JAR 0.4.16 com SHA-256 idêntico em build, downloads e TLauncher:
+> `9C983881043F6180D05A53F77A21D1958C243D11645D998454B22B3BD785EA26`;
+> 0.4.15 preservada como `.disabled`. Push de `codex/mae-structure-access`; sem PR.
 
 > **Playtest — candidata 0.4.15:** conservação da rota da mina, opção A aprovada.
 > O playtest 0.4.14 confirmou origem na rua e até 30.289 células, com 23/23
