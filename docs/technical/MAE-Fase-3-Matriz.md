@@ -357,6 +357,12 @@ obra escrita está em `MaeStructureWriteGameTest`); rotação 0; circulação e
 destino útil derivados por `MaeStructureAccess.beginFor`, mas a superfície
 preparada fora da pegada é posta pelo teste, não pela preparação de terreno;
 ligação local de rua não entra, pois é `road_v2` (Fase 2).
+
+`MaeStructureSiteGameTest` fecha essa lacuna para `plains_small_house_1`:
+`MaeStructureSite` deriva as superfícies, levanta o terreno, prova o acesso
+com o terreno previsto e conclui a casa em terreno plano (sem job de terreno)
+e com aterro do piso da entrada (job `terrain_v2` antes da obra). Os outros
+três modelos do exercício ainda não passaram pelo fluxo com terreno real.
 A obra concluída não prova mobília funcional, reconhecimento pelo pastor
 nem passagem de animais pelos portões.
 

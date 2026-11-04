@@ -201,7 +201,19 @@ pergunta; quem prova a passagem continua sendo o levantamento.
 
 A aprovação exige o job de terreno `complete` e sem pendência, e compara as
 seções atuais com o `expectedSections` final dele pelo diário existente; não
-recaptura evidência como se fosse geração intacta.
+recaptura evidência como se fosse geração intacta. Terreno já plano (escolha do
+autor, 2026-11-04): no lugar do job, vale um levantamento viável sem mudança da
+mesma região, modelo e pegada, cuja evidência ainda bate com o mundo no momento
+da aprovação; nada novo é gravado e `terrain` guarda `flat=true` e a evidência.
+Prova velha recusa com `terrain_job_required`.
+
+`MaeStructureSite` conduz o fluxo supervisionado do item 7 numa região já
+reservada: levantamento do terreno pela saída escolhida (pegada inteira logo
+abaixo da origem e o piso de fora do vão que sai da pegada em menos passos;
+empate vai para porta, portão e vão aberto), prova do acesso com as mudanças
+previstas do terreno, que precisa confirmar a mesma entrada, escrita do
+terreno quando há mudança, e obra até a prova real. Vive só na sessão; os jobs
+do writer são o que sobrevive à recarga. Não é chamado pela fila automática.
 
 ### Passo e efeitos planejados
 

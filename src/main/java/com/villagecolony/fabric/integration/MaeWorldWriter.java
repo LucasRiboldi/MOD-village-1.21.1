@@ -68,6 +68,8 @@ public final class MaeWorldWriter {
         this.sources = sources;
     }
 
+    MaeWorkStore store() { return store; }
+
     /** Chamada explícita representa a aprovação supervisionada da região; ainda não aprova obra — ADR-044. */
     public UUID reserve(ServerWorld world, UUID colonyId, WorkArea area) {
         return reserve(world, colonyId, area, false);
@@ -194,8 +196,14 @@ public final class MaeWorldWriter {
     /** Aprovação tipada de edifício sobre terreno concluído da mesma obra; promove o envelope — ADR-046. */
     void approveStructure(ServerWorld world, UUID regionId, ConstructionProject project, int quarterTurns,
                           MaeStructureAccess.Selected access) {
+        approveStructure(world, regionId, project, quarterTurns, access, null);
+    }
+
+    /** Terreno já plano entra pela prova sem mudança, nunca por um job vazio — escolha do autor, 2026-11-04. */
+    void approveStructure(ServerWorld world, UUID regionId, ConstructionProject project, int quarterTurns,
+                          MaeStructureAccess.Selected access, MaeTerrainPreparation.@org.jspecify.annotations.Nullable Prepared flat) {
         NbtCompound region = region(world, regionId);
-        NbtCompound job = MaeStructureExecution.job(world, region, project, quarterTurns, access, sources);
+        NbtCompound job = MaeStructureExecution.job(world, region, project, quarterTurns, access, flat, sources);
         MaeSectionLocks.check(world, store, regionId, MaeProtection.margin(area(job)));
         region.put("job", job);
         store.approveStructure(region);

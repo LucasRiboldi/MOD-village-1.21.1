@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.WeakHashMap;
+import org.jspecify.annotations.Nullable;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
@@ -80,19 +81,40 @@ final class MaeStructureExecution {
         return TYPE.equals(job.getString("type"));
     }
 
-    /** O terreno da mesma obra precisa ter terminado; a evidência atual vira o ponto de partida. */
+    /**
+     * O terreno da mesma obra precisa estar pronto: um job {@code terrain_v2} concluído ou, no terreno já plano,
+     * um levantamento viável sem mudança cuja evidência ainda bate com o mundo — ADR-046, escolha do autor de
+     * 2026-11-04. A evidência atual vira o ponto de partida.
+     */
     static NbtCompound job(ServerWorld world, NbtCompound region, ConstructionProject project, int quarterTurns,
-                           MaeStructureAccess.Selected access, Sources sources) {
+                           MaeStructureAccess.Selected access, MaeTerrainPreparation.@Nullable Prepared flat,
+                           Sources sources) {
         if (!MaeTerrainExecution.TYPE.equals(region.getString("policy"))) {
             throw new IllegalStateException("terrain_policy_required");
         }
         WorkArea box = box(project);
         NbtCompound terrain = region.getCompound("job");
-        if (!MaeTerrainExecution.TYPE.equals(terrain.getString("type")) || !"complete".equals(terrain.getString("state"))
-                || terrain.getBoolean("pendingWrite") || !terrain.containsUuid("id")
-                || !project.blueprint().id().toString().equals(terrain.getString("blueprint"))
-                || !sameFootprint(MaeWorldWriter.area(wrap(terrain.getCompound("footprint"))), box)) {
-            throw new IllegalStateException("terrain_job_required");
+        NbtCompound link = new NbtCompound();
+        if (flat != null) {
+            if (!flat.changes().isEmpty() || !flat.terrain().feasible() || !flat.regionId().equals(region.getUuid("id"))
+                    || !project.blueprint().id().equals(flat.lot().blueprint())
+                    || !sameFootprint(new WorkArea(flat.lot().min(), flat.lot().max()), box)
+                    || (region.contains("job") && !"complete".equals(terrain.getString("state")))
+                    || !flat.evidence().equals(MaeGenerationEvidence.inspect(world,
+                            MaeProtection.margin(flat.work()), false, 8))) {
+                throw new IllegalStateException("terrain_job_required");
+            }
+            link.putBoolean("flat", true);
+            link.put("sections", flat.evidence().copy());
+        } else {
+            if (!MaeTerrainExecution.TYPE.equals(terrain.getString("type")) || !"complete".equals(terrain.getString("state"))
+                    || terrain.getBoolean("pendingWrite") || !terrain.containsUuid("id")
+                    || !project.blueprint().id().toString().equals(terrain.getString("blueprint"))
+                    || !sameFootprint(MaeWorldWriter.area(wrap(terrain.getCompound("footprint"))), box)) {
+                throw new IllegalStateException("terrain_job_required");
+            }
+            link.putUuid("id", terrain.getUuid("id"));
+            link.put("sections", terrain.getCompound("expectedSections").copy());
         }
         if (!region.getUuid("colony").equals(project.colonyId()) || !access.projectId().equals(project.id())) {
             throw new IllegalStateException("wrong_project_or_colony");
@@ -117,9 +139,6 @@ final class MaeStructureExecution {
         if (plan.size() + region.getList("history", NbtElement.COMPOUND_TYPE).size() > 1024) {
             throw new IllegalStateException("history_budget_exceeded");
         }
-        NbtCompound link = new NbtCompound();
-        link.putUuid("id", terrain.getUuid("id"));
-        link.put("sections", terrain.getCompound("expectedSections").copy());
         NbtCompound chosen = new NbtCompound();
         chosen.putLong("opening", access.opening().asLong());
         chosen.putLong("support", access.support().asLong());

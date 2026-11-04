@@ -135,7 +135,7 @@ public final class MaeStructureAccess {
                 && state.getCollisionShape(EmptyBlockView.INSTANCE, at).isEmpty();
     }
 
-    private static List<BlueprintAccess> sorted(List<BlueprintAccess> accesses) {
+    static List<BlueprintAccess> sorted(List<BlueprintAccess> accesses) {
         return accesses.stream().sorted(Comparator
                 .comparingInt((BlueprintAccess access) -> access.opening().getFirst().x())
                 .thenComparingInt(access -> access.opening().getFirst().y())
