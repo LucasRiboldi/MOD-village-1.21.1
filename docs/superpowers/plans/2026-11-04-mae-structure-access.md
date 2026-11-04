@@ -260,7 +260,7 @@ e `MaeStructureWriteGameTest.java`.
 - [ ] Permitir exercício supervisionado de uma casa, oficina, curral, depósito
   e conexão local comprovados, dentro dos tetos. Modelo sem prova segue bloqueado.
   Feito em GameTest para casa, oficina, curral e depósito (`MaeStructureSite`);
-  falta a conexão local de rua e um disparo supervisionado em jogo.
+  a conexão local de rua e o disparo `/vc mae obra` foram feitos depois; falta exercitar em jogo.
 - [ ] Antes de ligar à fila automática, comprovar carga real e playtest da
   Fase 2 com relatórios. Sem isso, entregar o recorte supervisionado e registrar
   a ativação como pendência; não marcar toda a Fase 3 concluída.

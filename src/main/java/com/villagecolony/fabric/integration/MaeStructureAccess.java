@@ -94,8 +94,8 @@ public final class MaeStructureAccess {
 
     /**
      * A primeira célula transitável para dentro de um vão declarado, pelas peças planejadas: porta e portão são
-     * atravessados, não são destino. Primeiro os vãos cuja célula de fora está na circulação — a mesma condição
-     * com que o levantamento aceita um acesso —, depois os demais, na ordem do levantamento. Sem nenhuma, a obra
+     * atravessados, não são destino. Primeiro os vãos cuja primeira célula fora da pegada está na circulação — a
+     * mesma condição com que o levantamento aceita um acesso —, depois os demais, na ordem do levantamento. Sem nenhuma, a obra
      * não tem destino útil.
      */
     static ColonyPos interiorGoal(ConstructionProject project, List<ColonyPos> circulation) {
@@ -106,8 +106,12 @@ public final class MaeStructureAccess {
         circulation.forEach(at -> outside.add(MinecraftTypeAdapter.toBlockPos(at).up()));
         var accesses = sorted(project.blueprint().accesses()).stream().sorted(Comparator.comparing((BlueprintAccess access) -> {
             var first = access.opening().getFirst();
-            return !outside.contains(origin.add(first.x(), first.y(), first.z())
-                    .offset(MinecraftTypeAdapter.toDirection(access.outward())));
+            BlockPos exit = origin.add(first.x(), first.y(), first.z());
+            Direction direction = MinecraftTypeAdapter.toDirection(access.outward());
+            for (int step = 0; step < 7 && (step == 0 || lot.contains(MinecraftTypeAdapter.toColonyPos(exit))); step++) {
+                exit = exit.offset(direction);
+            }
+            return !outside.contains(exit);
         })).toList();
         for (BlueprintAccess access : accesses) {
             Direction inward = MinecraftTypeAdapter.toDirection(access.outward()).getOpposite();
@@ -280,7 +284,7 @@ public final class MaeStructureAccess {
             for (ColonyPos relative : access.opening()) {
                 BlockPos at = absolute(relative);
                 BlockPos outside = at.offset(outward);
-                if (!circulation.contains(outside) || !step(at, outside)) continue;
+                if (!step(at, outside)) continue;
                 // Uma porta interna não substitui a saída: a projeção exterior não atravessa outra porta.
                 BlockPos trace = outside;
                 int distance = 0;
@@ -288,9 +292,10 @@ public final class MaeStructureAccess {
                     if (interactive(view.getBlockState(trace)) || !step(trace, trace.offset(outward))) break;
                     trace = trace.offset(outward);
                 }
-                if (inside(trace)) continue;
+                // A circulação começa na primeira célula fora da pegada; alpendre dentro dela é atravessado.
+                if (inside(trace) || !circulation.contains(trace)) continue;
                 opening = at;
-                exterior = outside;
+                exterior = trace;
                 visited.add(at);
                 visited.add(outside);
                 parents.put(at, at);

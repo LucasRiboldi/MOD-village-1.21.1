@@ -24,7 +24,7 @@ import java.util.UUID;
  */
 public final class MaeStructureSite {
     /** Etapa atual; {@link #FAILED} guarda o motivo em {@link #failure()}. */
-    public enum Phase { TERRAIN, ACCESS, TERRAIN_WRITE, STRUCTURE, DONE, FAILED }
+    public enum Phase { TERRAIN, ACCESS, TERRAIN_WRITE, STRUCTURE, ROAD, DONE, FAILED }
 
     private static final List<BlueprintAccess.Kind> KIND_ORDER = List.of(
             BlueprintAccess.Kind.DOOR, BlueprintAccess.Kind.GATE, BlueprintAccess.Kind.OPENING);
@@ -43,9 +43,12 @@ public final class MaeStructureSite {
     private MaeTerrainPreparation.@Nullable Prepared prepared;
     private MaeStructureAccess.@Nullable Selected selected;
     private boolean approved;
+    private final boolean withRoad;
+    private String note = "";
 
     private MaeStructureSite(ServerWorld world, MaeWorldWriter writer, UUID regionId, ConstructionProject project,
-                             int quarterTurns, ColonyPos center) {
+                             int quarterTurns, ColonyPos center, boolean withRoad) {
+        this.withRoad = withRoad;
         this.world = world;
         this.writer = writer;
         this.regionId = regionId;
@@ -60,12 +63,19 @@ public final class MaeStructureSite {
     /** A região já reservada com {@code terrain_v2}; o projeto já orientado na rotação informada. */
     public static MaeStructureSite begin(ServerWorld world, MaeWorldWriter writer, UUID regionId,
                                          ConstructionProject project, int quarterTurns, ColonyPos center) {
-        return new MaeStructureSite(world, writer, regionId, project, quarterTurns, center);
+        return new MaeStructureSite(world, writer, regionId, project, quarterTurns, center, false);
+    }
+
+    /** Igual, e ao concluir liga a entrada à rua certificada pelo {@code road_v2} — ADR-046. */
+    public static MaeStructureSite beginWithRoad(ServerWorld world, MaeWorldWriter writer, UUID regionId,
+                                                 ConstructionProject project, int quarterTurns, ColonyPos center) {
+        return new MaeStructureSite(world, writer, regionId, project, quarterTurns, center, true);
     }
 
     /**
-     * O piso do lado de fora do vão escolhido: o que sai da pegada em menos passos; empate vai para porta,
-     * depois portão, depois vão aberto, depois a ordem do levantamento. A prova de acesso confirma ou recusa.
+     * O piso do lado de fora do vão escolhido: primeiro os que ficam até um bloco acima do chão da pegada (o
+     * terreno só liga superfícies com degrau de um), depois o que sai da pegada em menos passos; empate vai para
+     * porta, depois portão, depois vão aberto, depois a ordem do levantamento. A prova de acesso confirma.
      */
     static ColonyPos entry(ConstructionProject project) {
         Building lot = Building.of(project);
@@ -73,6 +83,7 @@ public final class MaeStructureSite {
         BlueprintAccess best = null;
         BlockPos bestFloor = null;
         int bestSteps = Integer.MAX_VALUE;
+        int ground = lot.min().y() - 1;
         var ordered = MaeStructureAccess.sorted(project.blueprint().accesses()).stream()
                 .sorted(Comparator.comparingInt((BlueprintAccess declared) -> KIND_ORDER.indexOf(declared.kind()))).toList();
         for (BlueprintAccess declared : ordered) {
@@ -82,9 +93,11 @@ public final class MaeStructureSite {
             for (int step = 1; step <= 6; step++) {
                 at = at.offset(direction);
                 if (!lot.contains(MinecraftTypeAdapter.toColonyPos(at))) {
-                    if (step < bestSteps) {
+                    // Degrau de até um sobre o chão conta antes; vão mais alto só entra sem outro.
+                    int rank = step + (at.down().getY() - ground > 1 ? 1000 : 0);
+                    if (rank < bestSteps) {
                         best = declared;
-                        bestSteps = step;
+                        bestSteps = rank;
                         bestFloor = at.down();
                     }
                     break;
@@ -147,7 +160,14 @@ public final class MaeStructureSite {
                     writer.runSlice(world, regionId);
                     String state = job().getString("state");
                     if ("blocked".equals(state)) fail("structure:" + job().getString("reason"));
-                    else if ("complete".equals(state)) phase = Phase.DONE;
+                    else if ("complete".equals(state)) phase = withRoad ? road() : Phase.DONE;
+                }
+                case ROAD -> {
+                    writer.runSlice(world, regionId);
+                    String state = job().getString("state");
+                    // A obra já está concluída e registrada; rua que não fecha vira nota, não falha da obra.
+                    if ("blocked".equals(state)) finish("road_blocked:" + job().getString("reason"));
+                    else if ("complete".equals(state)) finish("road_linked");
                 }
                 case DONE, FAILED -> { }
             }
@@ -156,6 +176,33 @@ public final class MaeStructureSite {
                     + (refused.getMessage() == null ? "invalid_payload" : refused.getMessage()));
         }
     }
+
+    /** Planeja e aprova a ligação; sem rua certificada ao alcance, a obra termina sem ela. */
+    private Phase road() {
+        var region = writer.store().region(regionId).orElseThrow();
+        var plan = MaeStructureRoad.plan(world, region.getUuid("colony"), MaeWorldWriter.area(region),
+                Building.of(project), MinecraftTypeAdapter.toBlockPos(entry));
+        if (plan.isEmpty()) {
+            note = "no_certified_road";
+            return Phase.DONE;
+        }
+        try {
+            writer.approveRoad(world, MaeRoadPreparation.prepare(world, writer, regionId,
+                    plan.get().route(), plan.get().hub(), plan.get().connection()));
+        } catch (IllegalStateException | IllegalArgumentException refused) {
+            note = "road_refused:" + (refused.getMessage() == null ? "invalid_payload" : refused.getMessage());
+            return Phase.DONE;
+        }
+        return Phase.ROAD;
+    }
+
+    private void finish(String reason) {
+        note = reason;
+        phase = Phase.DONE;
+    }
+
+    /** O que aconteceu com a ligação à rua, ou vazio sem ela. */
+    public String note() { return note; }
 
     private NbtCompound job() {
         return writer.store().region(regionId).orElseThrow().getCompound("job");

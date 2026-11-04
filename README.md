@@ -44,8 +44,13 @@ writer de edifícios `structure_v3` (material exato dos baús, retomada que
 bloqueia ambiguidade, conclusão só com acesso conferido no mundo) e o fluxo
 supervisionado `MaeStructureSite` (terreno → acesso → obra), provados por
 GameTests com casa, oficina, curral e depósito reais nas quatro rotações.
-Nada disso é disparado em jogo: não há comando nem fila automática, e o
-playtest continua pendente.
+Na `main` depois da 0.4.16, `/vc mae obra <modelo>` (operador, nível 2) dispara uma obra supervisionada:
+pegada centrada no jogador e rotação pela direção do olhar; `<rotação>` 0–3
+fixa a rotação; `busca` procura lote nivelado (desnível até 2) num raio de 24.
+`/vc mae estado` mostra as obras em andamento e `/vc mae parar` pausa os jobs
+aprovados, sem desfazer nada. Quem pediu recebe o resultado no chat; o log
+registra `VC_MAE_SITE`.
+A fila automática continua desligada e o playtest continua pendente.
 Na branch de desenvolvimento, a candidata **0.4.9** adiciona a fundação de segurança
 do [MAE, Fase 1](docs/technical/MAE-Fase-1.md): evidência de geração, reserva supervisionada,
 aprovação individual e escrita limitada. Não ativa terraplanagem ou planejamento de ruas.

@@ -347,10 +347,13 @@ acesso e conclusão única no registro de edifícios.
 | `plains_animal_pen_1` | aceito | curral construído e concluído |
 | `colony/storage_small` | aceito | depósito construído e concluído |
 | `savanna_small_house_1`, `snowy_small_house_1`, `desert_mason_1`, `plains_tool_smith_1` | aceito | não exercitado |
-| `desert_small_house_1` | recusado: `potted_cactus` | — |
-| `taiga_masons_house_1` | recusado: `potted_spruce_sapling` | — |
-| `colony/large_animal_pen` | recusado: `farmland`, `water`, `wheat` | — |
-| `taiga_small_house_1`, `savanna_mason_1`, `snowy_masons_house_1` | recusado na leitura: `unsafe_structure_payload` | — |
+| `desert_small_house_1` | aceito (vaso + cacto, contrato 2) | casa construída e concluída pelo fluxo com terreno |
+| `taiga_masons_house_1` | aceito (vaso + muda, contrato 2) | não exercitado |
+| `colony/large_animal_pen` | aceito (água, solo arado e trigo moldados, contrato 2) | curral construído e concluído pelo fluxo, ligado à rua |
+| Mobília das obras MAE | cama e bancada no registro de POI; baús livres da colônia | casa, oficina e depósito pequeno (`MaeSitesRoadGameTest`) |
+| Travessia do curral grande MAE | animal entra andando por cada um dos quatro portões; cada um fecha atrás | `PenAccessGameTest` |
+| `colony/storage_majest` e as cinco variantes de estilo | aceito (recriado com porta térrea; conteúdo descartado) | depósito plains construído e concluído pelo fluxo, ligado à rua |
+| `taiga_small_house_1`, `savanna_mason_1`, `snowy_masons_house_1` | aceito (placa, baú e fornalha vazios) | oficina savanna construída pelo fluxo, baú sem loot |
 
 Limites do exercício: terreno concluído sintético (a cadeia terreno real →
 obra escrita está em `MaeStructureWriteGameTest`); rotação 0 (as demais estão

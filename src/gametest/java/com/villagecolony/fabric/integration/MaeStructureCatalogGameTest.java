@@ -24,19 +24,22 @@ public final class MaeStructureCatalogGameTest implements FabricGameTest {
 
     static {
         EXPECTED.put("minecraft:village/plains/houses/plains_small_house_1", "ok");
-        EXPECTED.put("minecraft:village/desert/houses/desert_small_house_1", "potted_cactus");
+        EXPECTED.put("minecraft:village/desert/houses/desert_small_house_1", "ok");
         EXPECTED.put("minecraft:village/savanna/houses/savanna_small_house_1", "ok");
-        EXPECTED.put("minecraft:village/taiga/houses/taiga_small_house_1", "payload");
+        EXPECTED.put("minecraft:village/taiga/houses/taiga_small_house_1", "ok");
         EXPECTED.put("minecraft:village/snowy/houses/snowy_small_house_1", "ok");
         EXPECTED.put("minecraft:village/plains/houses/plains_masons_house_1", "ok");
         EXPECTED.put("minecraft:village/desert/houses/desert_mason_1", "ok");
-        EXPECTED.put("minecraft:village/savanna/houses/savanna_mason_1", "payload");
-        EXPECTED.put("minecraft:village/taiga/houses/taiga_masons_house_1", "potted_spruce_sapling");
-        EXPECTED.put("minecraft:village/snowy/houses/snowy_masons_house_1", "payload");
+        EXPECTED.put("minecraft:village/savanna/houses/savanna_mason_1", "ok");
+        EXPECTED.put("minecraft:village/taiga/houses/taiga_masons_house_1", "ok");
+        EXPECTED.put("minecraft:village/snowy/houses/snowy_masons_house_1", "ok");
         EXPECTED.put("minecraft:village/plains/houses/plains_tool_smith_1", "ok");
         EXPECTED.put("minecraft:village/plains/houses/plains_animal_pen_1", "ok");
-        EXPECTED.put("villagecolony:colony/large_animal_pen", "farmland,water,wheat");
+        EXPECTED.put("villagecolony:colony/large_animal_pen", "ok");
         EXPECTED.put("villagecolony:colony/storage_small", "ok");
+        for (String style : java.util.List.of("", "plains/", "savanna/", "taiga/", "snowy/", "desert/")) {
+            EXPECTED.put("villagecolony:colony/" + style + "storage_majest", "ok");
+        }
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_structure_catalog", tickLimit = 20)

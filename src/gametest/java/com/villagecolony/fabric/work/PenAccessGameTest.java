@@ -104,7 +104,10 @@ public final class PenAccessGameTest implements FabricGameTest {
             }
             context.assertTrue(ShepherdPens.animalsIn(context.getWorld(), pen) == 20
                     && !ShepherdPens.hasRoom(context.getWorld(), pen), "quatro entradas multiplicaram a lotação total de 20");
-            ShepherdPens.bringIn(context.getWorld(), pen, cow);
+            // A vaca já está dentro: a entrega abre o portão principal e ele fecha assim que fica livre.
+            ShepherdPens.startIn(context.getWorld(), pen, cow);
+            context.assertTrue(ShepherdPens.isInside(pen, cow), "vaca do canto não conta como dentro");
+            FencedIn.closeWhenClear(pen.gate());
             FencedIn.tick(context.getWorld());
             context.assertTrue(pen.accesses().stream().noneMatch(access ->
                     context.getWorld().getBlockState(access.gate()).get(FenceGateBlock.OPEN)), "portão ficou aberto após entrega");
@@ -120,6 +123,95 @@ public final class PenAccessGameTest implements FabricGameTest {
             }
         }
         context.complete();
+    }
+
+    /** Um animal entra andando por cada um dos quatro portões do curral grande MAE, e cada portão fecha atrás. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "pen_large_walk", tickLimit = 1200)
+    public void animalsWalkInThroughEachOfTheFourGates(TestContext context) {
+        var origin = context.getAbsolutePos(new BlockPos(3, 90, 3));
+        // Animal que anda precisa de chunk com tique de entidade; a grade de teste não garante isso.
+        forceChunks(context, origin, true);
+        floor(context, origin, 14);
+        var colony = colony(origin, 14);
+        var plan = StructureBlueprintReader.readForMae(context.getWorld(), PenPlans.MODEL).orElseThrow();
+        for (var piece : plan.blocks()) {
+            context.getWorld().setBlockState(origin.add(piece.offset().x(), piece.offset().y(), piece.offset().z()),
+                    com.villagecolony.fabric.integration.PaletteStates.planned(piece), 18);
+        }
+        var pen = ShepherdPens.scan(context.getWorld(), colony.bounds().orElseThrow()).getFirst();
+        var cows = new java.util.ArrayList<net.minecraft.entity.passive.CowEntity>();
+        try {
+            context.assertTrue(pen.accesses().size() == 4, "curral MAE sem os quatro acessos: " + pen.accesses().size());
+            walkEach(context, origin, pen, pen.accesses(), 0, ShepherdPens.WALK_LIMIT, cows);
+        } catch (RuntimeException | AssertionError failure) {
+            clearLargeWalk(context, origin, cows);
+            throw failure;
+        }
+    }
+
+    private static void walkEach(TestContext context, BlockPos origin, ShepherdPens.Pen pen,
+                                 List<ShepherdPens.Access> accesses, int index, int left,
+                                 java.util.List<net.minecraft.entity.passive.CowEntity> cows) {
+        try {
+            var world = context.getWorld();
+            FencedIn.tick(world);
+            if (index == accesses.size()) {
+                context.assertTrue(cows.stream().allMatch(cow -> pen.reach().contains(cow.getBlockPos())),
+                        "um animal saiu depois de entrar");
+                context.assertTrue(accesses.stream().noneMatch(access -> world.getBlockState(access.gate()).get(FenceGateBlock.OPEN)),
+                        "portão ficou aberto depois das entradas");
+                clearLargeWalk(context, origin, cows);
+                context.complete();
+                return;
+            }
+            var access = accesses.get(index);
+            var through = new ShepherdPens.Pen(access.gate(), access.inside(), access.outside(), pen.reach(), true);
+            if (cows.size() == index) {
+                var cow = net.minecraft.entity.EntityType.COW.create(world);
+                context.assertTrue(cow != null, "vaca da fixture ausente");
+                cow.refreshPositionAndAngles(access.outside().getX() + .5, access.outside().getY(), access.outside().getZ() + .5, 0, 0);
+                world.spawnEntity(cow);
+                cows.add(cow);
+                ShepherdPens.startIn(world, through, cow);
+            }
+            var cow = cows.get(index);
+            if (ShepherdPens.isInside(through, cow)) {
+                FencedIn.closeWhenClear(access.gate());
+                FencedIn.tick(world);
+                context.waitAndRun(1, () -> walkEach(context, origin, pen, accesses, index + 1, ShepherdPens.WALK_LIMIT, cows));
+                return;
+            }
+            context.assertTrue(left > 0, "a vaca não entrou andando pelo portão " + access.gate().subtract(origin).toShortString()
+                    + ": " + cow.getBlockPos().subtract(origin).toShortString() + " alvo=" + ShepherdPens.deeper(through).subtract(origin).toShortString()
+                    + "/" + world.getBlockState(ShepherdPens.deeper(through)) + " dentro=" + access.inside().subtract(origin).toShortString()
+                    + "/" + world.getBlockState(access.inside()) + " portão=" + world.getBlockState(access.gate())
+                    + " parada=" + cow.getNavigation().isIdle() + " caminho=" + cow.getNavigation().getCurrentPath()
+                    + " chão=" + cow.isOnGround() + " busca=" + cow.getNavigation().findPathTo(ShepherdPens.deeper(through), 0)
+                    + " piso=" + world.getBlockState(ShepherdPens.deeper(through).down()) + "/" + world.getBlockState(access.inside().down())
+                    + " fora=" + world.getBlockState(access.outside().down()));
+            ShepherdPens.walkThrough(world, through, cow, ShepherdPens.deeper(through));
+            context.waitAndRun(1, () -> walkEach(context, origin, pen, accesses, index, left - 1, cows));
+        } catch (RuntimeException | AssertionError failure) {
+            clearLargeWalk(context, origin, cows);
+            throw failure;
+        }
+    }
+
+    private static void forceChunks(TestContext context, BlockPos origin, boolean force) {
+        for (int x = (origin.getX() - 3) >> 4; x <= (origin.getX() + 17) >> 4; x++) {
+            for (int z = (origin.getZ() - 3) >> 4; z <= (origin.getZ() + 17) >> 4; z++) {
+                context.getWorld().setChunkForced(x, z, force);
+            }
+        }
+    }
+
+    private static void clearLargeWalk(TestContext context, BlockPos origin, java.util.List<net.minecraft.entity.passive.CowEntity> cows) {
+        forceChunks(context, origin, false);
+        cows.forEach(net.minecraft.entity.Entity::discard);
+        ShepherdPens.clearAll();
+        for (var at : BlockPos.iterate(origin.add(-3, 0, -3), origin.add(17, 4, 17))) {
+            context.getWorld().setBlockState(at, Blocks.AIR.getDefaultState(), 18);
+        }
     }
 
     private static Colony colony(BlockPos origin, int size) {

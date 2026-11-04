@@ -215,6 +215,22 @@ previstas do terreno, que precisa confirmar a mesma entrada, escrita do
 terreno quando há mudança, e obra até a prova real. Vive só na sessão; os jobs
 do writer são o que sobrevive à recarga. Não é chamado pela fila automática.
 
+O disparo supervisionado é o comando `/vc mae obra` (`MaeCommand`, `MaeSites`),
+escolha do autor de 2026-11-04: origem centrada no jogador com rotação pelo
+olhar, ou busca de lote nivelado pelo mesmo mapa de alturas da casa fundadora
+(`FoundationLotSearch`, desnível até 2, sem vegetação a tirar). A região
+reservada é a pegada com folga de 5 na horizontal, 7 abaixo e 5 acima. Até 4
+obras simultâneas; `parar` pausa o job aprovado e não desfaz nada.
+
+Ao concluir, a obra pedida por comando liga a entrada à rua: `MaeStructureRoad`
+procura, dentro da região, um trajeto de chão firme até o grafo de ruas MAE
+publicado ou, sem grafo nem índice de ruas, até a semente perto do centro; o
+trajeto passa por `MaeRoadPreparation` e pelo writer (`road_v2`). Sem rua
+certificada ao alcance, a obra termina sem ela, com nota. As ruas MAE só se
+ligam dentro de uma região, então a obra seguinte reaproveita a região ociosa
+da colônia que a comporta. A proteção trata a caixa das obras concluídas na
+própria região como trabalho MAE, derivada do diário, sem campo novo no save.
+
 ### Passo e efeitos planejados
 
 Cada passo é uma peça com todas as suas partes:
@@ -234,6 +250,44 @@ Cada passo é uma peça com todas as suas partes:
   ficam fora; o modelo que dependa delas fica bloqueado com motivo, conforme o
   item 9. *Não escolhida:* registrar a escolha na intenção, com o `after`
   vestido, ao custo de recalcular `expectedSections` no passo.
+- **Vaso com planta** (escolha do autor, 2026-11-04): o passo tira `flower_pot` e a
+  planta juntos, como o construtor legado monta (ADR-028). O segundo item vai em
+  `extra`; obra com algum `extra` grava `contract=2`, que leitores do contrato 1
+  recusam em vez de tirar só o vaso. `MaeStructureMaterials` concentra a regra.
+- **Alpendre**: a prova de acesso aceita vão um passo para dentro da pegada; a
+  circulação exigida é a primeira célula fora dela. A entrada escolhida pelo
+  fluxo prefere piso até um bloco acima do chão da pegada.
+- **Água, solo arado e cultivo** (escolha do autor, 2026-11-04, igual ao legado):
+  surgem no local sem material, com registro `SHAPED_GROUND`; o passo grava
+  `shaped` e a obra, `contract=2`. Na camada, a água vem primeiro e logo as quatro
+  vizinhas, fechando o tanque antes do primeiro tique do fluido; o solo arado nasce
+  úmido (7) ao lado dela e o trigo do curral grande já é maduro (idade 7), estados
+  que não mudam sozinhos e por isso não quebram a evidência. Água um bloco abaixo
+  do solo foi considerada e descartada: não umedece o solo arado.
+- **Placa, baú, barril e fornalha** (escolha do autor, 2026-11-04): a leitura MAE
+  aceita o bloco e descarta o conteúdo do template (texto, loot, itens,
+  cozimento), sem lê-lo nem copiá-lo; o writer só põe o bloco, que nasce vazio.
+  Conteúdo de qualquer outro bloco continua recusado com `unsafe_structure_payload`.
+  Pote decorado e estante cinzelada seguem a mesma regra (desenhos e livros descartados).
+- **Depósito grande** (escolha do autor, 2026-11-04): os seis `storage_majest`
+  foram recriados com porta térrea, substituindo os originais, também no fluxo
+  automático. No vão leste de 3×3 já existente (x=8, z=2..4, y=1..3), porta no
+  meio (z=3, voltada a oeste, da madeira do estilo; selva no deserto), lados e
+  verga com o bloco da parede onde havia ar, e patamar em x=10 (y=0) ligando a
+  escada de x=9 ao terreno. Barril e afins com `facing` horizontal de seis
+  direções passam a girar pelo mesmo `Side` dos demais blocos.
+- **Travessia do pastor** (escolha do autor, 2026-11-04): o teleporte de um bloco
+  de `ShepherdPens.bringIn`/`bringOut` foi trocado por caminhada. Diante do portão,
+  o pastor o abre (a navegação não abre portão) e solta a corda; o animal anda até
+  uma célula além da primeira de dentro, o último passo pelo controle de movimento.
+  Dentro e sem encostar no portão, este fecha na hora. Na saída do cercado misto,
+  o animal anda para fora e recebe a corda. Sem passar em 200 tiques, o portão
+  fecha e a coleta desiste com log, sem teleporte de reserva. Vale para todo
+  curral, MAE ou não.
+- **Mobília funcional** (item 6): as obras MAE põem o bloco pelo `setBlockState`
+  comum, então cama e bancada entram no registro de POI do mundo como as do
+  jogo, e baú construído dentro da caixa da vila é baú livre da colônia
+  (`VillageChests`). Provado em casa, oficina e depósito sem mudar código.
 - Teto: plano + histórico ≤ 1.024 registros; acima disso a aprovação recusa
   com `history_budget_exceeded`, sem dividir a obra automaticamente.
 

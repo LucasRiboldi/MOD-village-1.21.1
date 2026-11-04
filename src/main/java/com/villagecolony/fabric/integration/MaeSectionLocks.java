@@ -23,7 +23,9 @@ final class MaeSectionLocks {
             if (!other.contains("job", NbtElement.COMPOUND_TYPE)) throw new IllegalStateException("invalid_job");
             NbtCompound job = other.getCompound("job");
             boolean known = !job.contains("type") ? !other.contains("policy")
-                    : job.getInt("contract") == 1 && (MaeTerrainExecution.TYPE.equals(job.getString("type"))
+                    : (job.getInt("contract") == 1 || (job.getInt("contract") == 2
+                            && MaeStructureExecution.TYPE.equals(job.getString("type"))))
+                    && (MaeTerrainExecution.TYPE.equals(job.getString("type"))
                     || MaeRoadExecution.TYPE.equals(job.getString("type"))
                     || MaeStructureExecution.TYPE.equals(job.getString("type")));
             var plan = job.getList("plan", NbtElement.COMPOUND_TYPE);

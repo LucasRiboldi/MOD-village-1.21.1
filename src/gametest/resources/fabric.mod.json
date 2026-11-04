@@ -22,6 +22,8 @@
       "com.villagecolony.fabric.integration.MaeStructureCatalogGameTest",
       "com.villagecolony.fabric.integration.MaeStructureModelsGameTest",
       "com.villagecolony.fabric.integration.MaeStructureSiteGameTest",
+      "com.villagecolony.fabric.integration.MaeSitesGameTest",
+      "com.villagecolony.fabric.integration.MaeSitesRoadGameTest",
       "com.villagecolony.fabric.integration.MaeStructureModelGameTest",
       "com.villagecolony.fabric.integration.MaeSafetyGameTest",
       "com.villagecolony.gametest.WaterTerrainControlGameTest",

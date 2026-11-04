@@ -95,7 +95,7 @@ final class MaeTerrainExecution {
         var surfaces = surfaces(job);
         MaeRoadEvidence.revalidate(world, region, job.getCompound("readOnly"));
         MaeProtection.inspectTerrain(world, region.getUuid("colony"), MaeProtection.margin(MaeWorldWriter.area(job)),
-                MaeRoadEvidence.floors(job.getCompound("readOnly")));
+                MaeRoadEvidence.floors(job.getCompound("readOnly")), MaeProtection.ownedCells(region));
         for (var step : job.getList("plan", NbtElement.COMPOUND_TYPE)) {
             BlockPos at = BlockPos.fromLong(((NbtCompound) step).getLong("position"));
             if (surfaces.stream().noneMatch(surface -> surface.getX() == at.getX() && surface.getZ() == at.getZ())) {

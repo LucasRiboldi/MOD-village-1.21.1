@@ -83,6 +83,13 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
         new Arena(context, ResourceId.parse("villagecolony:colony/storage_small"), false).run(arena -> { });
     }
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_pot", tickLimit = 1000)
+    public void desertHouseBringsPotAndCactusFromTheChests(TestContext context) {
+        new Arena(context, ResourceId.vanilla("village/desert/houses/desert_small_house_1"), false).run(arena ->
+                context.assertTrue(arena.job().getInt("contract") == 2,
+                        "obra com vaso não gravou o contrato 2: " + arena.job().getInt("contract")));
+    }
+
     // Rotações 1–3: a mesma obra girada, com terreno, prova de acesso e conclusão — ADR-046.
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_house_r1", tickLimit = 1000)
     public void houseRotated1(TestContext context) {
@@ -144,7 +151,7 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
         new Arena(context, ResourceId.parse("villagecolony:colony/storage_small"), false, 3).run(arena -> { });
     }
 
-    private static final class Arena {
+    static final class Arena {
         final TestContext context;
         final MaeSafetyGameTest.Fixture fixture;
         final BlockPos origin;
@@ -275,10 +282,7 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
         private void stock() {
             Map<Item, Integer> needed = new LinkedHashMap<>();
             for (var piece : MaeStructurePieces.ordered(project)) {
-                if (piece.main().isAir()) continue;
-                int count = piece.main().contains(Properties.SLAB_TYPE)
-                        && piece.main().get(Properties.SLAB_TYPE) == SlabType.DOUBLE ? 2 : 1;
-                needed.merge(piece.main().getBlock().asItem(), count, Integer::sum);
+                MaeStructureMaterials.of(piece).forEach((item, count) -> needed.merge(item, count, Integer::sum));
             }
             int slot = 0;
             for (var entry : needed.entrySet()) {
@@ -293,7 +297,7 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
             }
         }
 
-        private MaeStructureExecution.Sources sources() {
+        MaeStructureExecution.Sources sources() {
             var where = chests.stream().map(Arena::pos).toList();
             return new MaeStructureExecution.Sources() {
                 @Override public Optional<Blueprint> template(ServerWorld world, ResourceId resource) {
@@ -306,7 +310,7 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
             };
         }
 
-        private void guarded(Runnable step) {
+        void guarded(Runnable step) {
             try {
                 step.run();
             } catch (RuntimeException | AssertionError failure) {
@@ -315,7 +319,7 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
             }
         }
 
-        private void cleanup() {
+        void cleanup() {
             for (BlockPos chest : chests) {
                 if (context.getWorld().getBlockEntity(chest) instanceof ChestBlockEntity box) box.clear();
             }

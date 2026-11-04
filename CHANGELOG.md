@@ -12,6 +12,29 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.17] — comando e fim do plano MAE (2026-11-04, candidato)
+
+### Adicionado
+- Comando `/vc mae obra <modelo> [rotação|busca]`, `/vc mae estado` e `/vc mae parar`
+  (operador): dispara o fluxo supervisionado `MaeStructureSite` na posição do jogador
+  ou num lote nivelado próximo, com no máximo 4 obras simultâneas e aviso no chat.
+- Ligação da entrada da obra à rua MAE (`road_v2`): semente perto do centro ou ligação ao
+  grafo publicado; a obra seguinte reaproveita a região da colônia para a rua se ligar.
+- Vaso com planta no MAE: `flower_pot` e a planta saem juntos dos baús (`contract=2`);
+  casa desert e oficina taiga passam a ser aceitas. A prova de acesso aceita alpendre
+  entre a porta e o lado de fora.
+- Curral grande no MAE: água, solo arado e trigo surgem no local como no legado
+  (`SHAPED_GROUND`, `contract=2`); a água vem antes das vizinhas para não escorrer.
+- Placa, baú, barril e fornalha entram vazios no MAE: o conteúdo do template é
+  descartado, nunca copiado. Casa taiga, oficina savanna e oficina snowy passam a ser aceitas.
+
+### Alterado
+- Depósito grande (`storage_majest`, seis estilos) recriado com porta térrea no vão leste,
+  patamar na escada e lados fechados com o bloco da parede; vale também para o fluxo automático.
+  Barril com `facing` horizontal gira junto com a obra.
+- Pastor: o animal entra e sai do curral andando pelo portão aberto, em vez de teleporte de
+  um bloco; o portão fecha assim que o animal o libera. Sem conseguir em 200 tiques, a coleta desiste.
+
 ## [0.4.16] — obra supervisionada MAE `structure_v3` (2026-11-04, candidato)
 
 ### Adicionado

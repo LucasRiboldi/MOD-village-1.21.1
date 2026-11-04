@@ -27,7 +27,7 @@ REMOVED = {"minecraft:acacia_leaves", "minecraft:spruce_trapdoor", "minecraft:co
 COMMON = {"minecraft:ender_chest": "minecraft:chest"}
 
 # As propriedades só passam quando a peça é da mesma família (degrau, laje, cerca, tora).
-SAME_SHAPE = ("_stairs", "_slab", "_fence", "_fence_gate", "_log", "_wood", "_wall_hanging_sign", "chest")
+SAME_SHAPE = ("_stairs", "_slab", "_fence", "_fence_gate", "_log", "_wood", "_wall_hanging_sign", "chest", "_door")
 
 
 def wood(name):
@@ -38,6 +38,7 @@ def wood(name):
         "spruce_slab": f"{name}_slab", "spruce_stairs": f"{name}_stairs", "dark_oak_stairs": f"{name}_stairs",
         "spruce_fence": f"{name}_fence", "dark_oak_fence": f"{name}_fence",
         "spruce_fence_gate": f"{name}_fence_gate", "spruce_wall_hanging_sign": f"{name}_wall_hanging_sign",
+        "spruce_door": f"{name}_door",
     }
 
 
@@ -73,6 +74,8 @@ STYLES = {
                "spruce_stairs": "sandstone_stairs", "dark_oak_stairs": "sandstone_stairs",
                "spruce_fence": "sandstone_wall", "dark_oak_fence": "sandstone_wall",
                "spruce_fence_gate": None, "spruce_wall_hanging_sign": None,
+               # A porta térrea (autor, 2026-11-04) fica de selva, como nas casas do deserto Vanilla.
+               "spruce_door": "jungle_door",
                **stone("cut_sandstone", "sandstone_stairs", "cut_sandstone_slab",
                        "sandstone", "sandstone_stairs", "sandstone_slab"),
                "calcite": "sandstone", "polished_diorite": "cut_sandstone"},

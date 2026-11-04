@@ -40,7 +40,7 @@ final class MaeStructurePieces {
         return Map.copyOf(pieces);
     }
 
-    /** Ordem estável de baixo para cima, depois x e z; o cursor do structure_v3 depende dela — ADR-046 P3. */
+    /** Ordem estável de baixo para cima, água e vizinhas primeiro na camada, depois x e z; o cursor do structure_v3 depende dela — ADR-046 P3. */
     static List<Piece> ordered(ConstructionProject project) {
         var lot = Building.of(project);
         var origin = MinecraftTypeAdapter.toBlockPos(project.origin());
@@ -68,7 +68,14 @@ final class MaeStructurePieces {
             parts.addFirst(Map.entry(at.toImmutable(), state));
             result.add(new Piece(parts));
         }
+        // Na camada, a água e logo as quatro vizinhas: o tanque fecha em dois tiques, antes do primeiro
+        // tique do fluido (cinco), e o solo arado já nasce úmido ao lado dela — ADR-046.
+        var water = new java.util.HashSet<BlockPos>();
+        for (var piece : result) if (piece.main().isOf(net.minecraft.block.Blocks.WATER)) water.add(piece.parts().getFirst().getKey());
         result.sort(Comparator.comparingInt((Piece piece) -> piece.parts().getFirst().getKey().getY())
+                .thenComparingInt(piece -> water.contains(piece.parts().getFirst().getKey()) ? 0
+                        : net.minecraft.util.math.Direction.Type.HORIZONTAL.stream().anyMatch(side ->
+                                water.contains(piece.parts().getFirst().getKey().offset(side))) ? 1 : 2)
                 .thenComparingInt(piece -> piece.parts().getFirst().getKey().getX())
                 .thenComparingInt(piece -> piece.parts().getFirst().getKey().getZ()));
         return List.copyOf(result);

@@ -47,13 +47,20 @@
 - [x] Implementar metadados, vãos declarados e validação local prevista/real, sem autorização de escrita ou carga de chunks.
 - [x] Provar estados, limites e partes secundárias de representantes dos cinco estilos; recusar payload não suportado. Resultados atuais somente em `STATE.md`.
 - [x] Cobrir acesso alternativo, agrupamento do cercado e capacidade total 20, preservando a rotina legada.
-- [ ] Provar travessia física do pastor e animal pelos portões; a coleta legada ainda usa teleporte de animais.
+- [x] Provar travessia física do pastor e animal pelos portões: o teleporte virou caminhada (escolha do autor).
+- [ ] Medir no playtest o tempo do pastor com a caminhada (`time_ledger`, motivos "gave up").
+- [x] Provar mobília funcional nas obras MAE: cama e bancada como POI, baús livres da colônia.
 - [x] Detalhar e implementar `structure_v3` no writer existente: materiais, intenção, confirmação, efeitos secundários e retomada ambígua bloqueada (ADR-046, 0.4.16).
 - [x] Concluir obra só com acesso real conferido; registrar o edifício uma vez; retomada volta a conferir.
 - [x] Derivar circulação e destino (`beginFor`) e ligar terreno → acesso → obra (`MaeStructureSite`), terreno plano por prova sem mudança.
 - [x] Exercitar casa, oficina, curral e depósito reais nas quatro rotações (GameTests).
-- [ ] Validar conteúdo funcional e habilitação individual dos demais modelos; vaso com planta, curral grande (água, solo arado, trigo), depósito grande e payloads não tratados continuam recusados.
-- [ ] Escolher lote e origem reais para a obra supervisionada e expor um comando em jogo para disparar `MaeStructureSite`.
+- [x] Aceitar vaso com planta no MAE (vaso + planta dos baús, `contract=2`).
+- [x] Aceitar o curral grande no MAE (água, solo arado e trigo moldados no local, como no legado).
+- [x] Aceitar placa, baú, barril e fornalha vazios (conteúdo do template descartado).
+- [x] Recriar o depósito grande (`storage_majest`) com porta térrea, substituindo os originais (escolha do autor).
+- [x] Escolher lote e origem reais para a obra supervisionada e expor um comando em jogo para disparar `MaeStructureSite` (`/vc mae obra`, posição do jogador ou `busca`).
+- [x] Ligar a entrada da obra à rua MAE (`road_v2`), semente ou grafo publicado, reaproveitando a região.
+- [ ] Exercitar `/vc mae obra` em jogo e ler `VC_MAE_SITE` no próximo playtest.
 - [ ] Integrar reserva, preparação, construção e retomada à fila automática após cumprir os gates da Fase 2.
 
 ## Playtest de 02-11 — escolhas A aprovadas

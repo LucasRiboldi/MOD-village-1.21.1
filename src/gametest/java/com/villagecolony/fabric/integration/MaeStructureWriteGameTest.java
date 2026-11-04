@@ -82,7 +82,7 @@ public final class MaeStructureWriteGameTest implements FabricGameTest {
         scene.terrain(id -> {
             var changed = scene.house(new BlueprintBlock(new ColonyPos(1, 1, 0), ResourceId.vanilla("stone")));
             scene.refused(() -> scene.approve(id, scene.house(), scene.sources(changed)), "template_changed");
-            var water = scene.house(new BlueprintBlock(new ColonyPos(3, 1, 0), ResourceId.vanilla("water")));
+            var water = scene.house(new BlueprintBlock(new ColonyPos(3, 1, 0), ResourceId.vanilla("lava")));
             scene.refused(() -> scene.approve(id, water, scene.sources(water)), "unsupported_structure_piece");
             // Mesmo modelo e pegada, mas de outra colônia: a região não pertence a ela — ADR-044.
             var foreign = ConstructionProject.plan(UUID.randomUUID(), scene.house(), MinecraftTypeAdapter.toColonyPos(scene.base.up()));
@@ -91,7 +91,7 @@ public final class MaeStructureWriteGameTest implements FabricGameTest {
                             scene.base.add(2, 0, 0), Set.of(), MinecraftTypeAdapter.toColonyPos(scene.base.add(1, 1, 0)),
                             List.of(MinecraftTypeAdapter.toColonyPos(scene.base.add(-1, 0, 0))))), "wrong_project_or_colony");
             scene.approve(id, scene.house(), scene.sources(scene.house()));
-            scene.edit(id, job -> job.putInt("contract", 2));
+            scene.edit(id, job -> job.putInt("contract", 3));
             // O orçamento de escrita é do tick; a fatia seguinte começa com ele cheio — ADR-044.
             scene.nextTick(() -> {
                 scene.fixture.writer.runSlice(context.getWorld(), id);

@@ -36,6 +36,12 @@ final class MaeProtection {
         inspect(world, colonyId, area, true, readOnlyRoads);
     }
 
+    /** Terreno e rua ao lado de obra concluída pela própria região: a caixa dela é trabalho MAE, não volume alheio — ADR-046. */
+    static void inspectTerrain(ServerWorld world, UUID colonyId, WorkArea area, Set<BlockPos> readOnlyRoads,
+                               Set<BlockPos> ownWrites) {
+        inspect(world, colonyId, area, true, readOnlyRoads, ownWrites);
+    }
+
     /** Peças já confirmadas desta obra não contam como volume protegido; o resto segue a regra do terreno — ADR-046. */
     static void inspectStructure(ServerWorld world, UUID colonyId, WorkArea area, Set<BlockPos> ownWrites) {
         inspect(world, colonyId, area, true, Set.of(), ownWrites);
@@ -148,5 +154,34 @@ final class MaeProtection {
                 || state.isOf(Blocks.COARSE_DIRT) || state.isOf(Blocks.STONE)
                 || state.isOf(Blocks.COBBLESTONE) || state.isOf(Blocks.SANDSTONE)
                 || state.isOf(Blocks.RED_SANDSTONE) || state.isOf(Blocks.DIRT_PATH);
+    }
+
+    /**
+     * A caixa de cada obra {@code structure_v3} desta região que chegou a escrever, derivada do diário (registros
+     * aplicados com {@code parts}), sem campo novo no save. A evidência das seções continua conferida à parte.
+     */
+    static Set<BlockPos> ownedCells(net.minecraft.nbt.NbtCompound region) {
+        java.util.Map<UUID, int[]> boxes = new java.util.HashMap<>();
+        net.minecraft.nbt.NbtList history = region.getList("history", net.minecraft.nbt.NbtElement.COMPOUND_TYPE);
+        for (int i = 0; i < history.size(); i++) {
+            net.minecraft.nbt.NbtCompound record = history.getCompound(i);
+            if (!"applied".equals(record.getString("result")) || !record.containsUuid("operation")
+                    || !record.contains("parts", net.minecraft.nbt.NbtElement.LIST_TYPE)) continue;
+            net.minecraft.nbt.NbtList parts = record.getList("parts", net.minecraft.nbt.NbtElement.COMPOUND_TYPE);
+            for (int p = 0; p < parts.size(); p++) {
+                BlockPos at = BlockPos.fromLong(parts.getCompound(p).getLong("position"));
+                int[] box = boxes.computeIfAbsent(record.getUuid("operation"), ignored -> new int[] {
+                        Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE,
+                        Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE});
+                box[0] = Math.min(box[0], at.getX()); box[1] = Math.min(box[1], at.getY()); box[2] = Math.min(box[2], at.getZ());
+                box[3] = Math.max(box[3], at.getX()); box[4] = Math.max(box[4], at.getY()); box[5] = Math.max(box[5], at.getZ());
+            }
+        }
+        Set<BlockPos> result = new HashSet<>();
+        for (int[] box : boxes.values()) {
+            if ((long) (box[3] - box[0] + 1) * (box[4] - box[1] + 1) * (box[5] - box[2] + 1) > 4096) continue;
+            BlockPos.iterate(box[0], box[1], box[2], box[3], box[4], box[5]).forEach(at -> result.add(at.toImmutable()));
+        }
+        return result;
     }
 }

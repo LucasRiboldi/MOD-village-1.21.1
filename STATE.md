@@ -1,5 +1,24 @@
 # STATE — 2026-11-04
 
+> **MAE — candidata 0.4.17, comando supervisionado (branch `claude/mae-obra-comando`):**
+> `/vc mae obra <modelo>` (operador, nível 2) dispara uma obra supervisionada:
+> pegada centrada no jogador e rotação pela direção do olhar; `<rotação>` 0–3
+> fixa a rotação; `busca` procura lote nivelado (desnível até 2) num raio de 24.
+> `/vc mae estado` mostra as obras em andamento e `/vc mae parar` pausa os jobs
+> aprovados, sem desfazer nada. Quem pediu recebe o resultado no chat; o log
+> registra `VC_MAE_SITE`.
+> A obra liga a entrada à rua MAE (`road_v2`): semente perto do centro ou ligação
+> ao grafo; a obra seguinte reaproveita a região. Passaram 1104 GameTests da
+> bateria completa e a suíte unitária. Ainda não exercitado em jogo.
+> Fim do plano MAE na mesma branch: vaso com planta, curral grande (água, solo
+> arado e trigo moldados), placa/baú/barril/fornalha vazios, depósito grande
+> recriado com porta térrea, pastor atravessando o portão andando e mobília
+> funcional provada. Passaram 1112 GameTests da bateria completa e a suíte
+> unitária. PR #53; JAR 0.4.17 com SHA-256 idêntico em build, downloads e TLauncher:
+> `DA497943FBE45EDD03E64E0F19B952C2BA0EEDEC9C9506B6472A3D3848A13DC5` (refeito após a correção
+> do CI: depósito gerado pelo script e pastor no rumo); 0.4.16 preservada
+> como `.disabled`. Falta playtest, carga real e a fila automática.
+
 > **MAE Fase 3 — candidata 0.4.16:** branch `codex/mae-structure-access`,
 > baseada na `main` `9dc8b4f2`. Contrato `structure_v3` na ADR-046, P1–P4
 > aprovadas pelo autor: envelope `maeWork` v3, material exato dos baús, cursor
