@@ -45,18 +45,26 @@ public final class MaeStructureAccess {
         private final BlockPos opening;
         private final BlockPos support;
         private final Set<BlockPos> gates;
+        private final ColonyPos goal;
+        private final List<ColonyPos> circulation;
 
-        Selected(UUID projectId, BlockPos opening, BlockPos support, Set<BlockPos> gates) {
+        Selected(UUID projectId, BlockPos opening, BlockPos support, Set<BlockPos> gates,
+                 ColonyPos goal, List<ColonyPos> circulation) {
             this.projectId = projectId;
             this.opening = opening.toImmutable();
             this.support = support.toImmutable();
             this.gates = Set.copyOf(gates);
+            this.goal = goal;
+            this.circulation = List.copyOf(circulation);
         }
 
         public UUID projectId() { return projectId; }
         public BlockPos opening() { return opening; }
         public BlockPos support() { return support; }
         public Set<BlockPos> gates() { return gates; }
+        /** Destino útil e circulação da prova; a conferência após a obra repete a mesma pergunta — ADR-046. */
+        public ColonyPos goal() { return goal; }
+        public List<ColonyPos> circulation() { return circulation; }
     }
 
     /** O chamador informa o destino útil; circulação não inclui água funcional, cultivos ou paredes. */
@@ -75,6 +83,7 @@ public final class MaeStructureAccess {
         private final Map<BlockPos, BlockState> sampled = new HashMap<>();
         private final Map<BlockPos, BlockState> overlay = new HashMap<>();
         private final Set<BlockPos> circulation;
+        private final List<ColonyPos> circulationInput;
         private final BlockPos goal;
         private final List<BlueprintAccess> candidates;
         private final Iterator<BlockPos> positions;
@@ -99,6 +108,7 @@ public final class MaeStructureAccess {
             this.lot = Building.of(project);
             this.goal = MinecraftTypeAdapter.toBlockPos(goal);
             if (!inside(this.goal) || circulation.isEmpty()) throw new IllegalArgumentException("invalid_access_goal");
+            this.circulationInput = List.copyOf(circulation);
             this.circulation = new HashSet<>();
             circulation.forEach(at -> this.circulation.add(MinecraftTypeAdapter.toBlockPos(at).up()));
             long minX = (long) lot.min().x() - 2, minY = (long) lot.min().y() - 1, minZ = (long) lot.min().z() - 2;
@@ -167,7 +177,8 @@ public final class MaeStructureAccess {
                             } else if (!routes.isEmpty()) trace();
                             else {
                                 revalidate();
-                                result = new Selected(project.id(), opening, exterior.down(), gates);
+                                result = new Selected(project.id(), opening, exterior.down(), gates,
+                                        MinecraftTypeAdapter.toColonyPos(goal), circulationInput);
                             }
                         } else if (candidate >= candidates.size()) failure = "no_physical_structure_access";
                         else start(candidates.get(candidate++));

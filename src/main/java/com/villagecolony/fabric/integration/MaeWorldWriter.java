@@ -225,6 +225,10 @@ public final class MaeWorldWriter {
         if (structure ? !MaeStructureExecution.runnable(world, job) : !"approved".equals(job.getString("state"))) {
             return 0;
         }
+        if (structure && "built".equals(job.getString("state"))) {
+            MaeStructureExecution.verify(world, region, job, store, sources);
+            return 0;
+        }
         int written = 0;
         while (budget.attempts < MAX_WRITES_PER_TICK && budget.nanos < SLICE_NANOS) {
             budget.attempts++;
@@ -267,7 +271,7 @@ public final class MaeWorldWriter {
         NbtCompound region = region(world, regionId);
         NbtCompound job = region.getCompound("job");
         if (MaeStructureExecution.is(job) && List.of("paused", "blocked").contains(job.getString("state"))) {
-            MaeStructureExecution.revalidate(world, region, job, store, sources);
+            if (MaeStructureExecution.resume(world, region, job, store, sources)) return;
         }
         if (!List.of("paused", "blocked").contains(job.getString("state")) || job.getBoolean("pendingWrite") || job.getBoolean("pendingPublication")) {
             throw new IllegalStateException("unconfirmed_or_nonresumable_job");

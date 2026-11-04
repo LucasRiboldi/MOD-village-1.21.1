@@ -28,7 +28,11 @@ import net.minecraft.util.math.BlockPos;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import com.villagecolony.VillageColonyMod;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
@@ -44,6 +48,14 @@ import java.util.UUID;
 final class MaeStructureExecution {
     static final String TYPE = "structure_v3";
     private static final int RETRY_TICKS = 20;
+    /** Conferência de acesso em andamento; vive só na sessão e recomeça após recarga — ADR-046. */
+    private static final Map<ServerWorld, Map<UUID, Check>> CHECKS = new WeakHashMap<>();
+
+    static {
+        com.villagecolony.core.type.ServerMemory.register(MaeStructureExecution.class, CHECKS::clear);
+    }
+
+    private record Check(ConstructionProject project, MaeStructureAccess.Survey survey) { }
 
     /** Origem do template e dos baús; o jogo usa a leitura MAE e os baús da colônia. */
     interface Sources {
@@ -114,6 +126,11 @@ final class MaeStructureExecution {
         NbtList gates = new NbtList();
         access.gates().stream().map(BlockPos::asLong).sorted().forEach(gate -> gates.add(NbtLong.of(gate)));
         chosen.put("gates", gates);
+        chosen.putLong("goal", MinecraftTypeAdapter.toBlockPos(access.goal()).asLong());
+        NbtList circulation = new NbtList();
+        access.circulation().forEach(at -> circulation.add(NbtLong.of(MinecraftTypeAdapter.toBlockPos(at).asLong())));
+        if (circulation.isEmpty()) throw new IllegalArgumentException("invalid_access_goal");
+        chosen.put("circulation", circulation);
         NbtCompound job = new NbtCompound();
         job.putString("type", TYPE);
         job.putInt("contract", 1);
@@ -266,8 +283,87 @@ final class MaeStructureExecution {
     }
 
     static boolean runnable(ServerWorld world, NbtCompound job) {
-        return "approved".equals(job.getString("state"))
+        return "approved".equals(job.getString("state")) || "built".equals(job.getString("state"))
                 || ("waiting".equals(job.getString("state")) && world.getTime() >= job.getLong("retryAt"));
+    }
+
+    /**
+     * Obra escrita só conclui depois de o acesso passar nos blocos reais; falhou, bloqueia e não conclui.
+     * Concluída, entra no registro de edifícios pelo mesmo {@code Building.of(project, true)} do fechamento
+     * legado e libera as seções — ADR-046 item 10.
+     */
+    static void verify(ServerWorld world, NbtCompound region, NbtCompound job, MaeWorkStore store, Sources sources) {
+        UUID regionId = region.getUuid("id");
+        var checks = CHECKS.computeIfAbsent(world, ignored -> new HashMap<>());
+        try {
+            WorkArea area = MaeWorldWriter.area(job);
+            MaeSectionLocks.check(world, store, regionId, MaeProtection.margin(area));
+            validate(world, region, job);
+            if (job.getInt("cursor") != job.getList("plan", NbtElement.COMPOUND_TYPE).size()) {
+                throw new IllegalStateException("invalid_job_bounds_or_cursor");
+            }
+            if (!MaeGenerationEvidence.inspect(world, MaeProtection.margin(area), false, 8)
+                    .equals(job.getCompound("expectedSections"))) {
+                throw new IllegalStateException("world_changed_since_approval");
+            }
+            Check check = checks.get(regionId);
+            if (check == null) {
+                ConstructionProject project = rebuilt(world, region, job, sources);
+                NbtCompound access = job.getCompound("access");
+                List<ColonyPos> circulation = access.getList("circulation", NbtElement.LONG_TYPE).stream()
+                        .map(at -> MinecraftTypeAdapter.toColonyPos(BlockPos.fromLong(((NbtLong) at).longValue()))).toList();
+                check = new Check(project, MaeStructureAccess.begin(world, project, List.of(), circulation,
+                        MinecraftTypeAdapter.toColonyPos(BlockPos.fromLong(access.getLong("goal"))), true));
+                checks.put(regionId, check);
+            }
+            check.survey().runSlice();
+            if (!check.survey().complete()) return;
+            checks.remove(regionId);
+            try {
+                check.survey().result();
+            } catch (IllegalStateException failed) {
+                job.putString("detail", failed.getMessage() == null ? "unknown" : failed.getMessage());
+                throw new IllegalStateException("access_not_verified");
+            }
+            VillageColonyMod.BUILDINGS.registerOrMerge(Building.of(check.project(), true));
+            job.putString("state", "complete");
+            region.put("job", job);
+            store.update(region);
+            VillageColonyMod.LOGGER.info("VC_MAE_STRUCTURE version=1 colony={} building={} at={} result=complete",
+                    region.getUuid("colony").toString().substring(0, 8), job.getString("blueprint"),
+                    BlockPos.fromLong(job.getLong("origin")).toShortString());
+        } catch (IllegalStateException | IllegalArgumentException failure) {
+            checks.remove(regionId);
+            job.putString("state", "blocked");
+            job.putString("reason", failure.getMessage() == null ? "invalid_payload" : failure.getMessage());
+            region.put("job", job);
+            store.update(region);
+        }
+    }
+
+    /** O projeto refeito do template conferido; hash diferente recusa — a conferência não usa outra planta. */
+    private static ConstructionProject rebuilt(ServerWorld world, NbtCompound region, NbtCompound job, Sources sources) {
+        Identifier id = Identifier.tryParse(job.getString("blueprint"));
+        if (id == null) throw new IllegalStateException("template_changed");
+        var origin = MinecraftTypeAdapter.toColonyPos(BlockPos.fromLong(job.getLong("origin")));
+        var project = sources.template(world, MinecraftTypeAdapter.toResourceId(id))
+                .map(read -> ConstructionProject.plan(region.getUuid("colony"), read.rotated(job.getInt("rotation")), origin))
+                .orElseThrow(() -> new IllegalStateException("template_changed"));
+        if (!hash(project).equals(job.getString("template"))) throw new IllegalStateException("template_changed");
+        return project;
+    }
+
+    /** Retomada de obra já escrita volta a {@code built} para conferir o acesso de novo; diz se tratou. */
+    static boolean resume(ServerWorld world, NbtCompound region, NbtCompound job, MaeWorkStore store, Sources sources) {
+        revalidate(world, region, job, store, sources);
+        if (job.getInt("cursor") != job.getList("plan", NbtElement.COMPOUND_TYPE).size()) return false;
+        validate(world, region, job);
+        job.putString("state", "built");
+        job.remove("reason");
+        job.remove("detail");
+        region.put("job", job);
+        store.update(region);
+        return true;
     }
 
     /** Retomada explícita: escrita interrompida bloqueia com causa, template diferente também. */

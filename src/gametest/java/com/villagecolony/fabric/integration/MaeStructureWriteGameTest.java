@@ -147,7 +147,8 @@ public final class MaeStructureWriteGameTest implements FabricGameTest {
             boolean refused = false;
             try {
                 fixture.writer.approveStructure(context.getWorld(), id, project, 0,
-                        new MaeStructureAccess.Selected(project.id(), fixture.base.up(), fixture.base, Set.of()));
+                        new MaeStructureAccess.Selected(project.id(), fixture.base.up(), fixture.base, Set.of(),
+                                MinecraftTypeAdapter.toColonyPos(fixture.base.up()), List.of(MinecraftTypeAdapter.toColonyPos(fixture.base))));
             } catch (IllegalStateException expected) {
                 refused = "terrain_job_required".equals(expected.getMessage());
             }
@@ -228,7 +229,8 @@ public final class MaeStructureWriteGameTest implements FabricGameTest {
             project = ConstructionProject.plan(fixture.colony.colony().id(), blueprint,
                     MinecraftTypeAdapter.toColonyPos(base.up()));
             fixture.writer.approveStructure(context.getWorld(), id, project, 0, new MaeStructureAccess.Selected(
-                    project.id(), base.add(2, 1, 0), base.add(2, 0, 0), Set.of()));
+                    project.id(), base.add(2, 1, 0), base.add(2, 0, 0), Set.of(),
+                    MinecraftTypeAdapter.toColonyPos(base.add(1, 1, 0)), List.of(MinecraftTypeAdapter.toColonyPos(base.add(-1, 0, 0)))));
             current = sources;
         }
 

@@ -140,9 +140,9 @@ precisa bloquear; um teste de serialização isolado não prova recuperação ap
 ## Esquema `structure_v3`
 
 Detalha o item 8. O autor aprovou as escolhas **P1–P4** em 2026-11-04; as
-alternativas ficam registradas como não escolhidas. O writer até o estado
-`built` está em `MaeStructureExecution`; a conclusão com acesso conferido
-continua pendente (seção Conclusão).
+alternativas ficam registradas como não escolhidas. Writer, conclusão com
+acesso conferido e retomada estão em `MaeStructureExecution`. A ligação com a
+fila automática continua bloqueada pela carga real e pelo playtest da Fase 2.
 
 ### Premissa de durabilidade
 
@@ -183,7 +183,7 @@ o de `MaeWorldWriter` (quatro escritas e 2 ms por tick, 1.024 registros).
 | `rotation`, `origin` | a rotação e a origem já aplicadas; não reaplicar |
 | `area` | caixa do edifício, volume ≤ 4.096, contida na região |
 | `terrain` | id e `expectedSections` finais do job `terrain_v2` concluído; a ligação exige o mesmo `blueprint` e a mesma pegada em x/z |
-| `access` | abertura, apoio e portões escolhidos por `MaeStructureAccess` |
+| `access` | abertura, apoio, portões, destino útil (`goal`) e circulação da prova de `MaeStructureAccess` |
 | `plan`, `cursor` | passos em ordem; índice do próximo |
 | `state`, `reason` | `approved`, `waiting`, `paused`, `blocked`, `built`, `complete` |
 | `pendingWrite`, `expectedSections` | como no writer atual |
@@ -257,21 +257,35 @@ do contrato 1.
 ### Conclusão
 
 O último passo confirmado deixa o job em `built`, que mantém as seções
-ocupadas. **Pendente (tarefa 7 do plano):** `MaeStructureAccess` confere o
-acesso com os blocos realmente presentes. Passou: `BuildClosing` conclui o `Building` com
-`ConstructionState.COMPLETED` e o job fica `complete`. Falhou:
-`access_not_verified`, bloqueio, e o edifício não conclui. Nenhum outro
-indicador persistido de acesso. Após recarga, obra concluída não reconstrói
-nem consome material.
+ocupadas. Nas fatias seguintes, `MaeStructureAccess` repete a prova com
+`built=true`, o mesmo destino e a mesma circulação gravados, sobre os blocos
+realmente presentes e o projeto refeito do template conferido pelo hash. A
+prova é incremental e vive só na sessão; após recarga, recomeça do zero.
+
+- Passou: o `Building.of(project, true)` entra no registro de edifícios por
+  `registerOrMerge`, o mesmo registro final do `BuildClosing`, e o job fica
+  `complete`, o que libera as seções. O `BuildClosing` em si não é chamado: ele
+  opera sobre o `ConstructionProject` vivo do construtor legado e o move para
+  `ConstructionState.COMPLETED`, e a obra MAE não tem esse projeto vivo.
+- Falhou: `access_not_verified`, com a causa da prova em `detail`, bloqueio, e
+  o edifício não entra no registro.
+- `resume` de obra já escrita confere o template e volta a `built`, para
+  provar o acesso de novo; nunca reescreve.
+- Nenhum outro indicador persistido de acesso. Após recarga, obra `complete`
+  não reconstrói, não consome material nem registra o edifício de novo.
 
 ### Regressões
 
-`MaeStructureWriteGameTest` cobre: escrita única com consumo único e recarga
+`MaeStructureCompletionGameTest` cobre: conclusão única após a prova real,
+sem reescrita nem novo registro após recarga; acesso que não passa bloqueia
+sem registrar; `template_changed` na retomada; retomada volta a conferir e
+conclui. `MaeStructureWriteGameTest` cobre: escrita única com consumo único e recarga
 do diário; porta com as duas metades no mesmo passo; espera por material sem
 intenção e continuação quando ele chega; template alterado; peça não suportada (água);
 contrato desconhecido; mundo alterado após aprovação; terreno ausente;
 envelope futuro opaco e preservado; `materials_uncertain` e `partial_parts`.
 A interrupção é simulada pelo estado gravado (`pendingWrite` e blocos), não
 por crash real do servidor. Ainda sem teste próprio: todas as partes em
-`after` com `pendingWrite`, `template_changed` na retomada, região de outra
-colônia e o [?] dos pontos legados com envelope v3.
+`after` com `pendingWrite`, região de outra colônia e o [?] dos pontos legados
+com envelope v3. O cenário de conclusão usa um job de terreno sintético; a
+cadeia terreno real → obra escrita (`built`) é provada em `MaeStructureWriteGameTest`, sem conclusão.
