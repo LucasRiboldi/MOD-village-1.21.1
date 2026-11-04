@@ -22,6 +22,82 @@ public class MineAccessGameTest implements FabricGameTest {
 
     private static final int Y = 40;
 
+    /** O piso natural também pertence à escadaria; não pode virar alvo de minério. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_route")
+    public void naturalStairFloorIsNotDiggable(TestContext context) {
+        var shaft = com.villagecolony.core.construction.model.MineShaft.from(
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(8, Y, 8))),
+                com.villagecolony.core.type.Side.EAST);
+        var mine = com.villagecolony.core.construction.model.Mine.restore(UUID.randomUUID(), shaft, 9);
+        BlockPos feet = MinecraftTypeAdapter.toBlockPos(shaft.positionAt(0));
+        context.getWorld().setBlockState(feet.down(), Blocks.IRON_ORE.getDefaultState());
+        com.villagecolony.VillageColonyMod.MINES.restore(mine);
+        try {
+            context.assertFalse(MineRock.isDiggableRock(context.getWorld(), mine, feet.down()),
+                    "a picareta pode destruir o apoio natural da escadaria");
+            context.assertTrue(new WorldTerrain(context.getWorld()).at(
+                    MinecraftTypeAdapter.toColonyPos(feet.down())) == com.villagecolony.core.movement.Cell.FIRM,
+                    "o desvio ainda pode cavar o piso da escadaria");
+        } finally {
+            com.villagecolony.VillageColonyMod.MINES.removeOfColony(mine.colonyId());
+        }
+        context.complete();
+    }
+
+    /** O reparo local só atende passagem aberta cujo cursor já foi registrado. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_route")
+    public void openedStairGapIsRepairedWithoutTouchingPlayerBlocks(TestContext context) {
+        var shaft = com.villagecolony.core.construction.model.MineShaft.from(
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(8, Y, 8))),
+                com.villagecolony.core.type.Side.EAST);
+        var mine = com.villagecolony.core.construction.model.Mine.restore(UUID.randomUUID(), shaft, 9);
+        BlockPos feet = MinecraftTypeAdapter.toBlockPos(shaft.positionAt(0));
+        for (int index = 0; index < 9; index += 3) {
+            context.getWorld().setBlockState(MinecraftTypeAdapter.toBlockPos(shaft.positionAt(index)).down(),
+                    Blocks.STONE.getDefaultState());
+        }
+        for (int height = -1; height <= 2; height++) {
+            context.getWorld().setBlockState(feet.up(height), Blocks.AIR.getDefaultState());
+        }
+        context.assertTrue(MineRoute.repairNear(context.getWorld(), mine, feet) == 1,
+                "a passagem já aberta continuou sem apoio");
+        context.assertTrue(context.getWorld().getBlockState(feet.down()).isOf(Blocks.COBBLESTONE),
+                "não colocou o apoio da mina");
+        context.getWorld().setBlockState(feet.down(), Blocks.OAK_SLAB.getDefaultState());
+        context.assertTrue(MineRoute.repairNear(context.getWorld(), mine, feet) == 0,
+                "o reparo alterou um bloco do jogador");
+        context.assertTrue(context.getWorld().getBlockState(feet.down()).isOf(Blocks.OAK_SLAB),
+                "a laje do jogador foi substituída");
+        context.getWorld().setBlockState(feet.down(), Blocks.WATER.getDefaultState());
+        context.assertTrue(MineRoute.repairNear(context.getWorld(), mine, feet) == 0,
+                "o reparo preencheu água");
+        context.getWorld().setBlockState(feet.down(), Blocks.AIR.getDefaultState());
+        var untouched = com.villagecolony.core.construction.model.Mine.open(UUID.randomUUID(), shaft);
+        context.assertTrue(MineRoute.repairNear(context.getWorld(), untouched, feet) == 0,
+                "a geometria futura foi tratada como passagem já aberta");
+        context.complete();
+    }
+
+    /** O save do rastro conserva o apoio percorrido mesmo sem geometria do nível antigo. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_route")
+    public void savedReturnTrailKeepsItsFloorProtected(TestContext context) {
+        UUID worker = UUID.randomUUID();
+        BlockPos feet = context.getAbsolutePos(new BlockPos(4, Y, 4));
+        context.getWorld().setBlockState(feet.down(), Blocks.STONE.getDefaultState());
+        try {
+            MineReturn.walked(worker, feet.east(), false);
+            MineReturn.walked(worker, feet, false);
+            long[] saved = MineReturn.snapshot().get(worker);
+            MineReturn.finish(worker);
+            MineReturn.restore(java.util.Map.of(worker, saved));
+            context.assertFalse(MineRock.canDig(context.getWorld(), feet.down()),
+                    "o apoio do retorno deixou de ser protegido após recarga");
+        } finally {
+            MineReturn.finish(worker);
+        }
+        context.complete();
+    }
+
     /** Da plataforma até a sala do nível dentro da pedra: só cavando, e descendo. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_access")
     public void theAccessIsDugDownOnlyDigging(TestContext context) {

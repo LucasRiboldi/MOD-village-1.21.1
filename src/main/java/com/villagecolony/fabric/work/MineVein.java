@@ -266,7 +266,7 @@ final class MineVein {
         // justamente por onde ele voltou em 2026-09-03.
         int top = TOPS.computeIfAbsent(arm, ignored -> veinStart);
 
-        if (WaterMineAccess.protects(world, mine, more.get())
+        if (!MineRock.isDiggableRock(world, mine, more.get())
                 || nowhereToStand(world, more.get())
                 || more.get().getY() > top
                 || MineFlooding.holdsBackFluid(world, more.get())

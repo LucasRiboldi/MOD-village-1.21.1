@@ -167,6 +167,12 @@ public final class MineReturn {
         }
     }
 
+    /** Apoio do rastro realmente percorrido, inclusive em nível antigo carregado — Regra 119. */
+    static boolean protectsFloor(BlockPos floor) {
+        BlockPos feet = floor.up();
+        return TRAILS.values().stream().anyMatch(trail -> trail.index.containsKey(feet));
+    }
+
     /**
      * Uma passagem do encalhado.
      *

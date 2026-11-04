@@ -12,6 +12,53 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.15] — conservação da rota da mina (2026-11-03, candidato)
+
+### Corrigido
+- Pisos naturais da geometria ativa e apoios do rastro salvo deixam de ser alvos de mineração e desvio.
+- A quebra revalida o apoio para impedir que uma tarefa já aberta retire a rota de retorno.
+- Passagens abertas próximas do mineiro recebem até um apoio por chamada, mediante geometria,
+  cursor avançado, dois blocos livres acima e vazio no apoio; água e blocos existentes permanecem.
+
+### Adicionado
+- Regressões de proteção, reparo, preservação de laje/água, cursor inicial e rastro salvo,
+  na classe MineAccessGameTest já registrada para o Sentinela Local.
+
+## [0.4.14] — origem do mapa de alcance no chão (2026-11-03, candidato)
+
+### Corrigido
+- Origem prefere rua indexada com pavimento, apoio e passagem válidos no mundo.
+- Sem rua válida, procura chão até quatro blocos do centro e dois de diferença vertical.
+  A superfície pelo heightmap permanece como último recurso.
+
+### Adicionado
+- Quatro GameTests de regressão na suíte existente do Sentinela Local: preferência por rua,
+  chão sob telhado, índice desatualizado/passagem bloqueada e preservação do fallback.
+
+O playtest da 0.4.13 confirmou origem sobre telhado com apenas 38 posições e nenhum destino
+alcançado. Esta correção do diagnóstico não comprova acesso real à mina nem resolve tarefas de profissões.
+
+## [0.4.13] — diagnóstico do mapa de alcance (2026-11-03, candidato)
+
+### Adicionado
+- Registro da origem, piso e contagem de verificações bloqueadas da busca periódica.
+- Amostra limitada dos primeiros 64 bloqueios e aviso periódico quando não há origem válida.
+
+As contagens representam verificações, não posições únicas. A causa do alcance reduzido
+continua pendente de confirmação no próximo playtest.
+
+## [0.4.12] — busca local da casa do mineiro (2026-11-03, candidato)
+
+### Corrigido
+- Busca perto da mina tem cursor próprio, sem recentrar o índice da vila,
+  descartar a varredura geral ou alterar as pontas de extensão de rua.
+- Após uma volta local completa sem lote, o planejador pode tentar outras
+  construções. O pedido da casa permanece e volta a ser procurado depois.
+- Busca incompleta informa orçamento esgotado, em vez de afirmar ausência de lote.
+
+Mantém recusas físicas e proteções existentes. Testes locais suspensos nesta
+entrega; compilação e revisão não substituem o próximo playtest.
+
 ## [0.4.11] — início do MAE Fase 3 (2026-11-03, candidato)
 
 ### Adicionado

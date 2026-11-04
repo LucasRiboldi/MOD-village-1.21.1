@@ -6,14 +6,13 @@ import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.MineHomeSiteSearch;
 import com.villagecolony.fabric.integration.VillageOrigin;
 import com.villagecolony.fabric.world.GeneratedVillages;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
-import java.util.Optional;
 
 /** A primeira casa junto à boca da mina pertence somente a vilas novas — ADR-043. */
 final class MineHomePlans {
@@ -33,9 +32,9 @@ final class MineHomePlans {
                 .noneMatch(building -> near(mouth, building));
     }
 
-    static Optional<BuildSiteScanner.Site> findSite(ServerWorld world, Colony colony, List<Blueprint> houses) {
+    static MineHomeSiteSearch.Result findSite(ServerWorld world, Colony colony, List<Blueprint> houses) {
         BlockPos mouth = MinecraftTypeAdapter.toBlockPos(VillageColonyMod.MINES.of(colony.id()).orElseThrow().shaft().entry());
-        return BuildSiteScanner.findForFootprints(world, colony.id(), MinecraftTypeAdapter.toColonyPos(mouth), RADIUS,
+        return MineHomeSiteSearch.find(world, colony.id(), MinecraftTypeAdapter.toColonyPos(mouth), RADIUS,
                 SiteOpening.footprintsFor(houses));
     }
 

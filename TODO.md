@@ -1,5 +1,19 @@
 # TODO
 
+## Playtest de 03-11 — fila de construção
+
+- [x] Analisar `VC_REACH_DETAIL`: origem no telhado, 38 posições e nenhum destino alcançado.
+- [x] Preferir rua indexada validada, depois chão próximo ao nível do centro; manter fallback.
+- [x] Confirmar no playtest 0.4.14 origem na rua: até 30.289 células e 23/23 destinos alcançados.
+- [ ] Validar 0.4.15: conservação da escada, reparo local de apoios e redução dos 21% de bloqueio/encalhe dos mineiros.
+- [ ] Trechos antigos sem geometria ativa ou rastro salvo não têm prova suficiente para reparo automático.
+- [x] Isolar a busca da casa do mineiro, preservando índice, cursor geral e pontas de rua.
+- [x] Liberar outras obras somente após volta local completa sem lote; manter a casa pendente.
+- [ ] Confirmar no próximo playtest ausência das falsas derivas e progresso de outras obras.
+- [ ] Quando os testes forem liberados, cobrir busca parcelada, preservação do índice/cursor
+      e liberação da fila após volta sem lote no Sentinela Local.
+- [ ] Seguir com navegação e profissões antes da integração supervisionada MAE (ordem A, depois B).
+
 ## MAE — Fases 1 e 2
 
 - [x] Escolher prova na geração, sem autorização retroativa por carga ou origem da vila.

@@ -2,6 +2,34 @@
 
 # Development-Log.md
 
+## 03-11-2026 — origem do mapa de alcance 0.4.14
+
+Autor aprovou A+B+C e testes focados. Quatro medições do playtest 0.4.13
+começaram em `(-1554,115,3553)`, sobre escada de acácia: 38 posições e nenhum
+destino alcançado. Inspeção somente leitura do mundo identificou rua no Y=109
+perto do centro Y=111, com espaço para pés e cabeça abaixo do telhado.
+
+ReachMap prefere rua do índice com pavimento e passagem reconferidos no mundo;
+na ausência, procura chão no raio quatro e diferença vertical de até dois.
+Heightmap permanece como fallback. Consumidores existentes (camas, acesso e
+mudança de boca da mina) usam a mesma seleção, sem alterar seus contratos.
+Não houve alteração de save, persistência ou IA Vanilla.
+
+Quatro testes adicionados à classe ReachMapGameTest já registrada no Sentinela.
+Antes da correção, três falharam pela seleção do telhado; o fallback e os dois
+testes anteriores passaram. Depois da correção, os seis ReachMap e quatro
+BedChoice passaram: `runGametest "-PgametestOnly=ReachMap,BedChoice"`, 10/10.
+`remapJar`, manifesto e README `--check` conferidos. Build, downloads e TLauncher
+têm SHA-256 `9BC402F9D3F7AB8ADAB21E775D0833003C86CCE611A2D452D4D6E28A6682BC6C`.
+Somente 0.4.14 ativa em mods; anterior preservada como `.disabled`. Sem push ou merge.
+Não inclui diagnóstico adicional dos mineiros nem integração automática MAE.
+
+## 03-11-2026 — diagnóstico de alcance 0.4.13
+
+Opção A: registrar a origem do mapa periódico, piso e motivos amostrados de
+bloqueio, sem alterar sua busca. A hipótese de origem sobre telhado aguarda
+evidência em playtest. Consultas síncronas não coletam amostras.
+
 ## 03-11-2026 — MAE, início da Fase 3
 
 Branch `codex/mae-structures` criada sobre `main` `0a7590fc`, merge do PR #49;
@@ -11658,3 +11686,67 @@ orquestrador, verificação textual e `remapJar` sem testes; o playtest continua
 fora do escopo desta ferramenta. O `remapJar` passou e o manifesto confirmou
 build, downloads e TLauncher para 0.4.5 com SHA-256
 `6D180AE9701125CE26B39CAA10B37A6BA1588664AE58C8D055A785A6DA23FA53`.
+
+## 03-11-2026 — busca isolada da casa do mineiro, candidata 0.4.12
+
+O playtest de 0.4.11 registrou 103 falsas derivas do centro durante a busca
+da casa junto à mina. O centro da colônia permanecia em (-1554,111,3553),
+mas `MineHomePlans.findSite` fornecia a boca da mina ao scanner geral.
+O scanner reancorava o índice de ruas e descartava o cursor compartilhado.
+`LotSeeking` retornava sem tentar outras construções quando a casa não cabia.
+
+O autor escolheu a opção A: cursor local independente, índice da vila
+preservado e outras obras permitidas após uma volta local completa sem lote.
+`MineHomeSiteSearch` reutiliza a avaliação física de `RoadsideSites`, sem
+registrar ruas ou pontas. A busca retoma respeitando teto de colunas e prazo;
+memória transitória é limpa pelo `ServerMemory`. O pedido da casa continua
+derivado da mina e das construções reais. Sem planta compatível, a fila também
+pode seguir. `VC_MINE_HOME` registra volta sem lote e manutenção do pedido.
+
+Branch `codex/mine-home-search`, criada da `main` atualizada `adb7630c`.
+README, STATE, TODO, CHANGELOG, PATTERNS, versão e plano de playtest atualizados.
+Nenhum save foi aberto, nenhuma nova dependência ou alteração de CI foi criada.
+Não inclui navegação, profissões, rua/smoothing da mina ou ativação automática MAE.
+
+Testes locais não foram criados nem executados, conforme modo temporário.
+A regressão necessária no Sentinela está registrada no TODO para quando houver liberação.
+Revisão de diff e `git diff --check` concluídos. `./gradlew.bat remapJar --console=plain`
+passou em 2m50s, com cinco tarefas e sem execução de testes. Manifesto do JAR
+confirma 0.4.12, Minecraft 1.21.1 e Java 21. Build, `downloads/` e TLauncher
+têm SHA-256 `4EBBB6C35AB112280570A9936E522C57B237327F9E64FAC363271C98AA4C0DFD`.
+O JAR 0.4.11 foi preservado como `.disabled`. Sem push, merge ou release nesta entrega.
+O próximo playtest deverá confirmar ausência das falsas derivas e progresso
+na busca geral de lotes; compilação não comprova retomada efetiva de obras.
+
+## 03-11-2026 — conservação da rota da mina, candidata 0.4.15
+
+O autor aprovou proteger a rota e reparar somente trechos identificados como
+parte da mina, preservando construções do jogador e liberando testes focados.
+O playtest 0.4.14 confirmou o mapa de alcance no chão: até 30.289 células e
+23/23 destinos. Os mineiros ainda tiveram 21% de bloqueio/encalhe; essa medida
+não comprova que a escada foi destruída. A inspeção encontrou pisos naturais
+sem proteção específica e reparo de apoio chamado somente após uma quebra.
+
+`MineRoute` deriva apoios da geometria ativa e reutiliza o rastro persistido de
+`MineReturn`. Seleção de alvo, veio, terreno dos desvios e ato da quebra recusam
+esses apoios. A geometria fica em cache transitório, limpo com o servidor.
+O reparo reutiliza `MineFloor.patch`, sem novo formato de save: no máximo um
+apoio por chamada, até quatro blocos horizontais e dois verticais do mineiro,
+somente vazio, passagem livre e cursor avançado. Água e blocos existentes são
+preservados. Trechos antigos ausentes da geometria não são reconstruídos.
+
+Antes da correção, as duas regressões falharam por piso minerável e vão sem
+reparo. Na primeira execução após a correção, o teste de reparo encontrou outro
+vão legítimo na arena vazia; a fixture passou a fornecer piso nas demais pistas.
+Na validação final, passaram 16 GameTests focados (`MineAccess`, `MineReturn`,
+`MineEntrance`, `MineFloor`, `WaterMineAccess`) e 21 unitários de `MineShaft*`
+e `MineReturnTest`. Proteção após recarga do rastro, laje, água e cursor inicial
+estão cobertos. A classe `MineAccessGameTest` já é executada pelo Sentinela Local.
+
+README, STATE, TODO, CHANGELOG, ADR-025 e referência de versão sincronizados.
+`git diff --check`, `rules_to_readme.py --check` e `remapJar` passaram.
+Manifesto confirma versão 0.4.15, Minecraft 1.21.1 e Java 21. SHA-256 do JAR:
+`518524FF551536EC10701F540599751E9279BBBA26F67E2FF49B6EE9C4CFEC3F`.
+Entrega local em `build/libs/`, `downloads/` e TLauncher; JAR 0.4.14 preservado
+como `.disabled`. Nenhum save do jogador foi aberto. Sem push, merge ou release.
+Bateria completa não executada; retorno e conservação da escadaria aguardam playtest.

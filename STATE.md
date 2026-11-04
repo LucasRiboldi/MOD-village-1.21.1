@@ -1,7 +1,66 @@
 # STATE — 2026-11-03
 
-> **MAE Fase 3 em andamento, candidata 0.4.11:** branch `codex/mae-structures`, baseada no merge
-> `0a7590fc` do PR #49. Auditoria e limites em `docs/technical/MAE-Fase-3.md`.
+> **Playtest — candidata 0.4.15:** conservação da rota da mina, opção A aprovada.
+> O playtest 0.4.14 confirmou origem na rua e até 30.289 células, com 23/23
+> destinos alcançados. Mineiros ainda somaram 21% de bloqueio/encalhe; o log
+> não prova destruição da escadaria. Duas regressões reproduziram falhas de
+> proteção do piso natural e reparo de passagem aberta antes da correção.
+> Pisos da geometria ativa e apoios do rastro salvo ficam protegidos na seleção,
+> quebra e desvios. O reparo reutiliza MineFloor: um apoio por chamada, próximo
+> do trabalhador, somente vazio, passagem livre e cursor já avançado.
+> Não substitui água ou blocos do jogador; não redesenha minas nem certifica
+> níveis antigos sem geometria ativa. Nenhum novo formato de save.
+> Passaram 21 unitários de geometria/retorno e 16 GameTests de acesso, retorno,
+> entrada, piso e proteção aquática. A classe já integra o Sentinela Local.
+> `remapJar`, revisão do diff e README `--check` passaram. Manifesto confirma
+> 0.4.15, Minecraft 1.21.1 e Java 21. SHA-256 das cópias locais:
+> `518524FF551536EC10701F540599751E9279BBBA26F67E2FF49B6EE9C4CFEC3F`.
+> Entrega local nesta linha, sem push ou merge e sem bateria completa.
+> Conservação da escada e retorno real continuam pendentes do próximo playtest.
+
+> **Playtest — candidata 0.4.14:** correção da origem do mapa de alcance.
+> Opções A+B+C aprovadas. O playtest da 0.4.13 repetiu quatro vezes origem
+> `(-1554,115,3553)` sobre escada de acácia: 38 posições, nenhum destino alcançado.
+> Inspeção somente leitura encontrou rua em `(-1554,109,3552)`, com pés em Y=110,
+> abaixo do telhado e perto do centro Y=111. A busca agora prefere rua indexada
+> fisicamente válida; depois procura chão até quatro blocos do centro e ±2 em Y.
+> O heightmap permanece como último recurso. Não escreve terreno, índice ou save.
+> Quatro regressões cobrem rua, chão sob telhado, índice inválido e fallback.
+> Testes focados liberados: seis ReachMap e quatro BedChoice passaram (10/10).
+> Antes da correção, três regressões falharam pela seleção do telhado.
+> `remapJar`, revisão do diff e README `--check` passaram. Manifesto confirma
+> 0.4.14, Minecraft 1.21.1 e Java 21. SHA-256 idêntico em build, downloads e TLauncher:
+> `9BC402F9D3F7AB8ADAB21E775D0833003C86CCE611A2D452D4D6E28A6682BC6C`.
+> Só 0.4.14 permanece ativa em mods; 0.4.13 foi preservada como `.disabled`.
+> Commit local nesta linha; sem push ou merge. Bateria completa não executada.
+> Acesso real à mina, comportamento das profissões e efeito em jogo continuam pendentes.
+
+> **Playtest — candidata 0.4.13:** instrumentação da busca periódica de alcance.
+> `VC_REACH_DETAIL` registra centro, origem, piso, contagens de verificações fora
+> da área, sem passagem e sem posição válida, além de uma amostra dos primeiros
+> 64 bloqueios. `VC_REACH_START` informa ausência de origem no máximo uma vez por
+> minuto. A hipótese de origem sobre telhado continua sem confirmação. A análise
+> depende do próximo playtest; não altera a escolha de origem nem a navegação.
+> `remapJar` compilou; SHA-256 do JAR:
+> `42F7E6F55F7BF138C8BE5B7FA3364D23BC0BBE3B463453628BFB5B657C16CCD3`.
+> Testes locais suspensos; a instrumentação aguarda validação em jogo.
+
+> **Playtest — candidata 0.4.12:** branch `codex/mine-home-search`, baseada na
+> `main` `adb7630c` (PR #50). Opção A aprovada: busca local da casa do mineiro
+> com cursor independente, sem recentrar o índice nem apagar o progresso geral.
+> Uma volta completa sem lote permite tentar outras obras; a casa continua pendente.
+> Busca parcial retoma respeitando teto de 1.024 colunas e prazo do planejador.
+> O log de 03-11 mostrou 103 falsas derivas: centro da vila comparado à boca da mina.
+> O marcador `VC_MINE_HOME` informa volta local sem lote e liberação da fila.
+> `remapJar` passou; manifesto confirma 0.4.12, Minecraft 1.21.1 e Java 21.
+> SHA-256 idêntico em `build/libs/`, `downloads/` e TLauncher:
+> `4EBBB6C35AB112280570A9936E522C57B237327F9E64FAC363271C98AA4C0DFD`.
+> O JAR anterior foi preservado como `.disabled`. Testes locais suspensos nesta
+> entrega; o efeito na fila ainda depende do próximo playtest. Sem push ou merge.
+> Não inclui acesso/smoothing da mina, navegação, profissões nem integração automática MAE.
+
+> **MAE Fase 3 em andamento, base 0.4.11 integrada pelo PR #50:**
+> auditoria e limites em `docs/technical/MAE-Fase-3.md`.
 > O contrato experimental deriva o ponto de entrada da planta da obra; ainda
 > não existe integração automática com construção ou caminhos. Carga real e
 > playtest da Fase 2 continuam necessários antes da orquestração automática.

@@ -19,6 +19,18 @@ Se encontrar uma assinatura nova, adicione aqui ao encerrar a sessão.
 
 ## Ciclo e tempo
 
+### Busca da casa da mina repete deriva do centro e impede novas obras
+
+**Causa confirmada:** `MineHomePlans` passava a boca da mina como centro ao
+scanner geral, identificado apenas pela colônia. O índice construído no centro
+real era reancorado na mina e o cursor geral perdia progresso. `LotSeeking`
+também retornava sem tentar outras obras quando não encontrava essa casa.
+
+**Onde olhar:** `MineHomeSiteSearch`, `MineHomePlans.findSite` e `LotSeeking.seek`.
+A busca local deve preservar o estado geral e distinguir orçamento esgotado de
+volta completa sem lote. `VC_MINE_HOME` registra a segunda situação. Correção
+candidata 0.4.12; retomada efetiva da construção exige playtest.
+
 ### Vila nova sem portal/mina; mineiro fica em `looking for stone, 0 of 64`
 
 **Causa confirmada no escalonador:** a cota de uma busca é global. Um

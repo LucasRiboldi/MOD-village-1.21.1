@@ -3,10 +3,13 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
+import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.StreetSurface;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.registry.tag.BlockTags;
@@ -71,9 +74,18 @@ public final class ReachMap {
         final ArrayDeque<BlockPos> frontier = new ArrayDeque<>();
         final Set<BlockPos> seen = new HashSet<>();
         final VillageBounds area;
+        final BlockPos start;
+        final boolean diagnostic;
+        long outside;
+        long clearance;
+        long blocked;
+        final Map<String, Integer> samples = new LinkedHashMap<>();
+        int sampled;
 
-        Sweep(BlockPos start, VillageBounds area) {
+        Sweep(BlockPos start, VillageBounds area, boolean diagnostic) {
             this.area = area;
+            this.start = start;
+            this.diagnostic = diagnostic;
             frontier.add(start);
             seen.add(start);
         }
@@ -121,10 +133,14 @@ public final class ReachMap {
                 Optional<BlockPos> start = startOf(world, colony);
 
                 if (start.isEmpty()) {
+                    if (now % 1200 == 0) {
+                        VillageColonyMod.LOGGER.info("VC_REACH_START colony={} center={} reason=no_standable_loaded_column",
+                                colony.id().toString().substring(0, 8), colony.center());
+                    }
                     continue;
                 }
 
-                sweep = new Sweep(start.get(), areaOf(colony.bounds().get()));
+                sweep = new Sweep(start.get(), areaOf(colony.bounds().get()), true);
                 SWEEPS.put(colony.id(), sweep);
             }
 
@@ -148,12 +164,26 @@ public final class ReachMap {
                 for (int dy = -1; dy <= 1; dy++) {
                     BlockPos next = at.offset(way).up(dy);
 
-                    if (sweep.seen.contains(next)
-                            || !sweep.area.containsColumn(next.getX(), next.getZ())
-                            || next.getY() < sweep.area.minY() || next.getY() > sweep.area.maxY()
-                            || (dy > 0 && !open(world, at.up(2)))
-                            || (dy < 0 && !open(world, at.offset(way).up()))
-                            || !standable(world, next)) {
+                    if (sweep.seen.contains(next)) {
+                        continue;
+                    }
+                    if (!sweep.area.containsColumn(next.getX(), next.getZ())
+                            || next.getY() < sweep.area.minY() || next.getY() > sweep.area.maxY()) {
+                        if (sweep.diagnostic) sweep.outside++;
+                        continue;
+                    }
+                    if ((dy > 0 && !open(world, at.up(2)))
+                            || (dy < 0 && !open(world, at.offset(way).up()))) {
+                        if (sweep.diagnostic) sweep.clearance++;
+                        continue;
+                    }
+                    if (!standable(world, next)) {
+                        if (sweep.diagnostic) sweep.blocked++;
+                        if (sweep.diagnostic && sweep.sampled < 64) {
+                            sweep.sampled++;
+                            String reason = blockedReason(world, next);
+                            sweep.samples.merge(reason, 1, Integer::sum);
+                        }
                         continue;
                     }
 
@@ -204,7 +234,7 @@ public final class ReachMap {
 
     /** O mapa de um lugar só, inteiro, para o teste: o que se alcança de {@code start} dentro de {@code area}. */
     static Set<BlockPos> measure(ServerWorld world, BlockPos start, VillageBounds area) {
-        Sweep sweep = new Sweep(start, area);
+        Sweep sweep = new Sweep(start, area, false);
 
         while (!step(world, sweep, BUDGET)) {
             // até fechar
@@ -264,10 +294,43 @@ public final class ReachMap {
                 "VC_REACH version=1 colony={} cells={} places={} reached={} unreached={}",
                 colony.id().toString().substring(0, 8), result.cells(), result.places(), result.reached(),
                 String.join(";", unreached).replace(' ', '_'));
+        VillageColonyMod.LOGGER.info(
+                "VC_REACH_DETAIL version=1 colony={} center={} start={} floor={} outside_checks={} clearance_checks={} blocked_checks={} first_blocked_samples={}",
+                colony.id().toString().substring(0, 8), colony.center(), sweep.start.toShortString(),
+                world.getBlockState(sweep.start.down()).getBlock(), sweep.outside, sweep.clearance,
+                sweep.blocked, sweep.samples.toString().replace(' ', '_'));
     }
 
-    /** Onde a busca começa: o chão no centro da vila, ou o mais perto dele num raio de 4. */
-    private static Optional<BlockPos> startOf(ServerWorld world, Colony colony) {
+    /** Classificação limitada aos primeiros bloqueios; contagens representam verificações, não células. */
+    private static String blockedReason(ServerWorld world, BlockPos at) {
+        if (world.getChunkManager().getWorldChunk(at.getX() >> 4, at.getZ() >> 4) == null) {
+            return "chunk_unloaded";
+        }
+        BlockPos floor = at.down();
+        if (world.getBlockState(floor).getCollisionShape(world, floor).isEmpty()) {
+            return "no_floor";
+        }
+        if (!open(world, at)) {
+            return "feet_obstructed";
+        }
+        if (!open(world, at.up())) {
+            return "head_obstructed";
+        }
+        return world.getFluidState(at).isEmpty() ? "changed" : "fluid";
+    }
+
+    /** M2: prefere rua comprovada no mundo, depois chão próximo ao nível do centro; superfície é fallback. */
+    static Optional<BlockPos> startOf(ServerWorld world, Colony colony) {
+        Set<Long> roads = RoadIndex.roadsOf(colony.id())
+                .map(index -> Set.copyOf(index.columns())).orElse(Set.of());
+        Optional<BlockPos> ground = nearbyGround(world, colony.center(), roads, true);
+        if (ground.isEmpty()) {
+            ground = nearbyGround(world, colony.center(), roads, false);
+        }
+        if (ground.isPresent()) {
+            return ground;
+        }
+
         ColonyPos centre = colony.center();
 
         for (int radius = 0; radius <= 4; radius++) {
@@ -289,6 +352,37 @@ public final class ReachMap {
             }
         }
 
+        return Optional.empty();
+    }
+
+    /** M2: busca limitada a quatro blocos horizontais e dois verticais, sem carregar chunks. */
+    private static Optional<BlockPos> nearbyGround(
+            ServerWorld world, ColonyPos centre, Set<Long> roads, boolean indexedOnly) {
+        if (indexedOnly && roads.isEmpty()) {
+            return Optional.empty();
+        }
+        int[] heights = {0, -1, 1, -2, 2};
+        for (int radius = 0; radius <= 4; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
+                        continue;
+                    }
+                    int x = centre.x() + dx;
+                    int z = centre.z() + dz;
+                    if (indexedOnly && !roads.contains(ColonyRoads.column(x, z))) {
+                        continue;
+                    }
+                    for (int dy : heights) {
+                        BlockPos at = new BlockPos(x, centre.y() + dy, z);
+                        if (standable(world, at) && (!indexedOnly
+                                || StreetSurface.isStreetMaterial(world.getBlockState(at.down())))) {
+                            return Optional.of(at);
+                        }
+                    }
+                }
+            }
+        }
         return Optional.empty();
     }
 

@@ -32,17 +32,19 @@ final class LotSeeking {
     static Optional<ConstructionProject> seek(ServerWorld world, Colony colony, int builders) {
         if (MineHomePlans.isOwed(world, colony)) {
             List<Blueprint> houses = HousePlans.plansFor(world, colony);
-            if (houses.isEmpty()) {
-                return ConstructionPlanner.silent(colony, IdleReason.NOT_IN_GAME,
-                        "this game has no buildable miner home for the village style");
-            }
-            Optional<BuildSiteScanner.Site> mineHome = MineHomePlans.findSite(world, colony, houses);
+            if (!houses.isEmpty()) {
+                var search = MineHomePlans.findSite(world, colony, houses);
 
-            if (mineHome.isPresent()) {
-                return SiteOpening.open(world, colony, mineHome.get(), houses, houses.getFirst(), builders);
-            }
+                if (search.site().isPresent()) {
+                    return SiteOpening.open(world, colony, search.site().get(), houses, houses.getFirst(), builders);
+                }
 
-            return ConstructionPlanner.silent(colony, IdleReason.NO_TARGET, "no lot for the miner home near the mine mouth");
+                if (!search.complete()) {
+                    return ConstructionPlanner.silent(colony, IdleReason.SWEEP_INCOMPLETE,
+                            "local search for the miner home is still in progress");
+                }
+            }
+            // ADR-043: casa pendente não impede outras obras após esgotar a busca local.
         }
 
         // A seleção é global, mas a descoberta do lote continua única: a

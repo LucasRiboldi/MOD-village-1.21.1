@@ -111,6 +111,15 @@ public final class RoadsideSites {
             ServerWorld world, UUID colonyId, BlockPos center,
             int x, int z, int aroundY, List<BuildSiteScanner.Footprint> footprints) {
 
+        return siteBesideRoadAt(world, colonyId, center, x, z, aroundY, footprints, true);
+    }
+
+    /** A busca local usa as mesmas recusas, sem registrar ruas ou pontas — ADR-043. */
+    static Optional<Site> siteBesideRoadAt(
+            ServerWorld world, UUID colonyId, BlockPos center,
+            int x, int z, int aroundY, List<BuildSiteScanner.Footprint> footprints,
+            boolean recordRoads) {
+
         Optional<BlockPos> ground = roadGroundAt(world, colonyId, x, z, aroundY);
 
         // Material oficial so vira rua quando pertence a ROAD_AREA.
@@ -122,14 +131,16 @@ public final class RoadsideSites {
         // esta varredura é a única que passa por todas elas. Perguntar
         // agora se ela é ponta custa algumas leituras nas poucas colunas
         // calçadas; perguntar depois custaria o raio inteiro de novo.
-        RoadExtension.consider(world, colonyId, ground.get(), center);
+        if (recordRoads) {
+            RoadExtension.consider(world, colonyId, ground.get(), center);
 
-        // Esta coluna é rua, e esta varredura é a única que passa por
-        // todas elas — o índice se enche exatamente aqui, e de graça.
-        Set<Long> building = SweepState.BUILDING.get(colonyId);
+            // Esta coluna é rua, e esta varredura é a única que passa por
+            // todas elas — o índice se enche exatamente aqui, e de graça.
+            Set<Long> building = SweepState.BUILDING.get(colonyId);
 
-        if (building != null) {
-            building.add(ColonyRoads.column(x, z));
+            if (building != null) {
+                building.add(ColonyRoads.column(x, z));
+            }
         }
 
         // Na vez da borda, só o lote na faixa da borda da vila (Regra 56).

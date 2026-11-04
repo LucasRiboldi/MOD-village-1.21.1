@@ -84,6 +84,7 @@ public final class WorldTerrain implements Terrain {
 
     private boolean mayDig(BlockPos pos, BlockState state) {
         return state.getHardness(world, pos) >= 0
+                && !MineRoute.protects(pos)
                 && world.getBlockEntity(pos) == null
                 && isNaturalGround(state)
                 && BlockProtection.mayBreak(world, pos, state);

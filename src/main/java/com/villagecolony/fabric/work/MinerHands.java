@@ -57,6 +57,12 @@ public final class MinerHands {
 
         BlockState state = world.getBlockState(job.target);
 
+        // Regra 119: revalidar o apoio no ato da quebra, inclusive em tarefa já aberta.
+        if (MineRoute.protects(job.target)) {
+            release(villager.getUuid(), job);
+            return;
+        }
+
         // <b>A água anda</b> — 2026-09-25. Toda porta de escolha já recusa a
         // pedra que segura líquido; esta é a trava para o que chegou depois
         // da escolha. A marca afasta a pedra das próximas passagens pelo
