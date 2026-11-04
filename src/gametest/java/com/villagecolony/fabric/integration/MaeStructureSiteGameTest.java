@@ -144,7 +144,7 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
         new Arena(context, ResourceId.parse("villagecolony:colony/storage_small"), false, 3).run(arena -> { });
     }
 
-    private static final class Arena {
+    static final class Arena {
         final TestContext context;
         final MaeSafetyGameTest.Fixture fixture;
         final BlockPos origin;
@@ -293,7 +293,7 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
             }
         }
 
-        private MaeStructureExecution.Sources sources() {
+        MaeStructureExecution.Sources sources() {
             var where = chests.stream().map(Arena::pos).toList();
             return new MaeStructureExecution.Sources() {
                 @Override public Optional<Blueprint> template(ServerWorld world, ResourceId resource) {
@@ -306,7 +306,7 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
             };
         }
 
-        private void guarded(Runnable step) {
+        void guarded(Runnable step) {
             try {
                 step.run();
             } catch (RuntimeException | AssertionError failure) {
@@ -315,7 +315,7 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
             }
         }
 
-        private void cleanup() {
+        void cleanup() {
             for (BlockPos chest : chests) {
                 if (context.getWorld().getBlockEntity(chest) instanceof ChestBlockEntity box) box.clear();
             }

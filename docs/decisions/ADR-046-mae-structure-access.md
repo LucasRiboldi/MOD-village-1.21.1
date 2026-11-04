@@ -215,6 +215,13 @@ previstas do terreno, que precisa confirmar a mesma entrada, escrita do
 terreno quando há mudança, e obra até a prova real. Vive só na sessão; os jobs
 do writer são o que sobrevive à recarga. Não é chamado pela fila automática.
 
+O disparo supervisionado é o comando `/vc mae obra` (`MaeCommand`, `MaeSites`),
+escolha do autor de 2026-11-04: origem centrada no jogador com rotação pelo
+olhar, ou busca de lote nivelado pelo mesmo mapa de alturas da casa fundadora
+(`FoundationLotSearch`, desnível até 2, sem vegetação a tirar). A região
+reservada é a pegada com folga de 5 na horizontal, 7 abaixo e 5 acima. Até 4
+obras simultâneas; `parar` pausa o job aprovado e não desfaz nada.
+
 ### Passo e efeitos planejados
 
 Cada passo é uma peça com todas as suas partes:

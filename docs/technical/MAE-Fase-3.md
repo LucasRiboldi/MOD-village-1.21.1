@@ -160,7 +160,7 @@ Bateria completa não executada.
 ### O que ainda impede concluir a fase
 
 - Conteúdo funcional e circulação individual dos demais modelos antes de habilitá-los.
-- Lote e origem reais e um disparo supervisionado em jogo.
+- Exercício em jogo do comando `/vc mae obra` (implementado após a 0.4.16).
 - Travessia controlada do pastor e dos animais; coleta legada por teleporte não é essa prova.
 - Carga real e playtest da Fase 2 antes de qualquer orquestração automática.
 

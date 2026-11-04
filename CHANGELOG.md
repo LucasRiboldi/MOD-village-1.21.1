@@ -12,6 +12,13 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [Não publicado]
+
+### Adicionado
+- Comando `/vc mae obra <modelo> [rotação|busca]`, `/vc mae estado` e `/vc mae parar`
+  (operador): dispara o fluxo supervisionado `MaeStructureSite` na posição do jogador
+  ou num lote nivelado próximo, com no máximo 4 obras simultâneas e aviso no chat.
+
 ## [0.4.16] — obra supervisionada MAE `structure_v3` (2026-11-04, candidato)
 
 ### Adicionado

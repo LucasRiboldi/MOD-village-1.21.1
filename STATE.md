@@ -1,5 +1,15 @@
 # STATE — 2026-11-04
 
+> **MAE — comando supervisionado (branch `claude/mae-obra-comando`):**
+> `/vc mae obra <modelo>` (operador, nível 2) dispara uma obra supervisionada:
+> pegada centrada no jogador e rotação pela direção do olhar; `<rotação>` 0–3
+> fixa a rotação; `busca` procura lote nivelado (desnível até 2) num raio de 24.
+> `/vc mae estado` mostra as obras em andamento e `/vc mae parar` pausa os jobs
+> aprovados, sem desfazer nada. Quem pediu recebe o resultado no chat; o log
+> registra `VC_MAE_SITE`.
+> Passaram 1103 GameTests da bateria completa e a suíte unitária. Ainda não
+> exercitado em jogo.
+
 > **MAE Fase 3 — candidata 0.4.16:** branch `codex/mae-structure-access`,
 > baseada na `main` `9dc8b4f2`. Contrato `structure_v3` na ADR-046, P1–P4
 > aprovadas pelo autor: envelope `maeWork` v3, material exato dos baús, cursor
