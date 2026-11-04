@@ -2,6 +2,7 @@
 
 Estado: contrato A, implementação e testes focados aprovados pelo autor
 em 2026-11-04. Implementação parcial; escrita de edifícios ainda não habilitada.
+O esquema `structure_v3` (seção própria abaixo) é proposta aguardando o autor.
 Esta ADR complementa as ADRs [044](ADR-044-mae-region-safety.md) e
 [045](ADR-045-mae-terrain-road-chain.md). Não ativa obras no jogo.
 
@@ -134,3 +135,127 @@ continuam pendentes. Antes de implementá-los, o detalhamento deve distinguir
 intenção persistível de durabilidade: `PersistentState.markDirty` não confirma
 uma transação atômica entre inventário, chunks e diário. Uma retomada ambígua
 precisa bloquear; um teste de serialização isolado não prova recuperação após crash.
+
+## Esquema `structure_v3` — proposta, aguardando aprovação do autor
+
+Detalha o item 8. Nada desta seção está implementado. As escolhas marcadas
+**P1–P4** são propostas; as alternativas ficam ao lado para o autor decidir.
+
+### Premissa de durabilidade
+
+O Minecraft grava o arquivo da colônia (`PersistentState`) e os chunks — onde
+ficam os blocos e o inventário dos baús — em momentos distintos, sem transação
+entre eles. Depois de um crash, qualquer combinação de "diário antigo/novo" com
+"bloco e baú antigos/novos" é possível. Nenhum desenho de campos elimina isso.
+O contrato, portanto, não promete recuperação automática de um passo
+interrompido: promete **detectar** a interrupção, **nunca repetir** o passo e
+**bloquear com causa**, como o writer de terreno já faz (ADR-044).
+
+### Envelope e compatibilidade
+
+- **P1.** `maeWork.version` passa a 3 somente quando a primeira aprovação
+  `structure_v3` for aceita, como `reserveTerrain` promove para 2 hoje.
+  Leitores até a 0.4.15 aceitam só 1 e 2: o payload inteiro fica opaco,
+  preservado na gravação, e toda operação MAE da dimensão recusa. Sem conversão
+  de reservas v1/v2. *Alternativa:* manter o envelope em 2 e confiar na
+  recusa por `type` desconhecido; o leitor antigo, porém, gravaria
+  `state=blocked` por cima do job novo.
+- O leitor novo aceita 1, 2 e 3. Jobs v1/v2 seguem pelos caminhos atuais.
+  `type` ou `contract` desconhecido recusa com `unknown_structure_contract`;
+  `MaeSectionLocks` trata o job desconhecido como seção ocupada.
+- [?] Na implementação, comprovar que os sete pontos legados também recusam
+  quando `supported()` é falso, sem lançar exceção no tick.
+
+### Região e projeto
+
+O job vive em `region.job` de uma região com `policy=terrain_v2`, já usada pela
+preparação. Uma obra ativa por região; o orçamento global de escrita continua
+o de `MaeWorldWriter` (quatro escritas e 2 ms por tick, 1.024 registros).
+
+| Campo do job | Conteúdo |
+|---|---|
+| `type`, `contract` | `"structure_v3"`, `1` |
+| `id` | id do `Building`/projeto; o mesmo da reserva de lote |
+| `blueprint`, `template` | id do modelo e SHA-256 do NBT efetivamente lido por `readForMae` |
+| `rotation`, `origin` | a rotação e a origem já aplicadas; não reaplicar |
+| `area` | caixa do edifício, volume ≤ 4.096, contida na região |
+| `terrain` | id e `expectedSections` finais do job `terrain_v2` concluído |
+| `access` | abertura, apoio e portões escolhidos por `MaeStructureAccess` |
+| `plan`, `cursor` | passos em ordem; índice do próximo |
+| `state`, `reason` | `approved`, `waiting`, `paused`, `blocked`, `complete` |
+| `pendingWrite`, `expectedSections` | como no writer atual |
+
+A aprovação exige o job de terreno `complete` e sem pendência, e compara as
+seções atuais com o `expectedSections` final dele pelo diário existente; não
+recaptura evidência como se fosse geração intacta.
+
+### Passo e efeitos planejados
+
+Cada passo é uma peça com todas as suas partes:
+
+- `parts`: lista com `position`, `before`, `after` e `role` (`main`,
+  `upper_half`, `bed_head`, `support`). Porta e cama levam as duas partes no
+  mesmo passo. Apoio que `BlockShaping.groundFor` criaria vira parte `support`
+  planejada na aprovação, ou o modelo é recusado; o writer não chama
+  `BlockShaping` nem `placeSecondHalf`.
+- `material`: `item` e `count` exatos, ou ausente para remoção.
+- **P2.** O contrato 1 aceita só o material exato da planta, tirado dos baús.
+  Substituição (`MaterialChoice`) e peça que surge (`AppearingPieces`, ADR-036)
+  ficam fora; o modelo que dependa delas fica bloqueado com motivo, conforme o
+  item 9. *Alternativa:* registrar a escolha na intenção, com o `after`
+  vestido, ao custo de recalcular `expectedSections` no passo.
+- Teto: plano + histórico ≤ 1.024 registros; acima disso a aprovação recusa
+  com `history_budget_exceeded`, sem dividir a obra automaticamente.
+
+### Sequência de um passo
+
+1. **Revalidar:** `validateJob` atual, mais o template pelo hash, cada `before`
+   no mundo, proteção, seções da região e o acesso escolhido.
+2. **Material:** se o baú não tiver o item, `state=waiting` com o item no
+   `reason`, sem intenção e sem escrita; reavaliar com limite de taxa.
+   **P3.** A ordem do cursor é estrita no contrato 1, sem pôr peças de lado.
+   *Alternativa:* lista de adiadas, como o construtor legado; exige revalidar
+   apoio fora de ordem.
+3. **Intenção:** histórico com `result=pending` e `materials=reserved`
+   (item, quantidade, baú), `pendingWrite=true`, `store.update`.
+4. **P4. Retirada antes da escrita:** retirar do baú, depois escrever as
+   partes com `NOTIFY_LISTENERS | FORCE_STATE`. Um crash nesse intervalo perde
+   no máximo o material de um passo; nunca cria bloco sem material ("a colônia
+   não inventa matéria"). *Alternativa:* escrever antes de retirar, que
+   arrisca bloco grátis em vez de perda.
+5. **Confirmar:** conferir cada parte e as seções esperadas; histórico com
+   `result=applied` e `materials=consumed`; `pendingWrite=false`, cursor + 1.
+   Falha na conferência: `write_not_confirmed`, bloqueio.
+
+### Retomada
+
+Só por `resume` explícito, como hoje; nunca no carregamento.
+
+| Situação ao retomar | Resultado |
+|---|---|
+| sem `pendingWrite` e seções iguais às esperadas | continua do cursor |
+| sem `pendingWrite` e seções diferentes | `world_changed_since_approval` |
+| `pendingWrite`, todas as partes em `before` | `materials_uncertain` com item e baú |
+| `pendingWrite`, todas as partes em `after` | `materials_uncertain` |
+| `pendingWrite`, partes misturadas | `partial_parts` |
+| template com hash diferente | `template_changed` |
+
+Toda linha exceto a primeira bloqueia. Liberar um bloqueio exige decisão
+explícita sobre o material; o comando para isso fica pendente e não faz parte
+do contrato 1.
+
+### Conclusão
+
+No último passo, `MaeStructureAccess` confere o acesso com os blocos
+realmente presentes. Passou: `BuildClosing` conclui o `Building` com
+`ConstructionState.COMPLETED` e o job fica `complete`. Falhou:
+`access_not_verified`, bloqueio, e o edifício não conclui. Nenhum outro
+indicador persistido de acesso. Após recarga, obra concluída não reconstrói
+nem consome material.
+
+### Regressões exigidas pela implementação
+
+Corte de proteção, parte fora do plano, região errada, terreno incompleto,
+template alterado, contrato desconhecido, envelope v3 lido como opaco,
+falta de material, e cada linha da tabela de retomada provocada por crash
+simulado entre intenção, retirada, escrita e confirmação.
