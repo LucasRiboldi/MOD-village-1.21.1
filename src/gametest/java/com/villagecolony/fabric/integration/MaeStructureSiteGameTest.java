@@ -83,6 +83,67 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
         new Arena(context, ResourceId.parse("villagecolony:colony/storage_small"), false).run(arena -> { });
     }
 
+    // Rotações 1–3: a mesma obra girada, com terreno, prova de acesso e conclusão — ADR-046.
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_house_r1", tickLimit = 1000)
+    public void houseRotated1(TestContext context) {
+        new Arena(context, HOUSE, false, 1).run(arena -> { });
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_house_r2", tickLimit = 1000)
+    public void houseRotated2(TestContext context) {
+        new Arena(context, HOUSE, false, 2).run(arena -> { });
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_house_r3", tickLimit = 1000)
+    public void houseRotated3(TestContext context) {
+        new Arena(context, HOUSE, false, 3).run(arena -> { });
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_workshop_r1", tickLimit = 1000)
+    public void workshopRotated1(TestContext context) {
+        new Arena(context, ResourceId.vanilla("village/plains/houses/plains_masons_house_1"), false, 1).run(arena -> { });
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_workshop_r2", tickLimit = 1000)
+    public void workshopRotated2(TestContext context) {
+        new Arena(context, ResourceId.vanilla("village/plains/houses/plains_masons_house_1"), false, 2).run(arena -> { });
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_workshop_r3", tickLimit = 1000)
+    public void workshopRotated3(TestContext context) {
+        new Arena(context, ResourceId.vanilla("village/plains/houses/plains_masons_house_1"), false, 3).run(arena -> { });
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_pen_r1", tickLimit = 1000)
+    public void penRotated1(TestContext context) {
+        new Arena(context, ResourceId.vanilla("village/plains/houses/plains_animal_pen_1"), false, 1).run(arena -> { });
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_pen_r2", tickLimit = 1000)
+    public void penRotated2(TestContext context) {
+        new Arena(context, ResourceId.vanilla("village/plains/houses/plains_animal_pen_1"), false, 2).run(arena -> { });
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_pen_r3", tickLimit = 1000)
+    public void penRotated3(TestContext context) {
+        new Arena(context, ResourceId.vanilla("village/plains/houses/plains_animal_pen_1"), false, 3).run(arena -> { });
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_storage_r1", tickLimit = 1000)
+    public void storageRotated1(TestContext context) {
+        new Arena(context, ResourceId.parse("villagecolony:colony/storage_small"), false, 1).run(arena -> { });
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_storage_r2", tickLimit = 1000)
+    public void storageRotated2(TestContext context) {
+        new Arena(context, ResourceId.parse("villagecolony:colony/storage_small"), false, 2).run(arena -> { });
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_site_storage_r3", tickLimit = 1000)
+    public void storageRotated3(TestContext context) {
+        new Arena(context, ResourceId.parse("villagecolony:colony/storage_small"), false, 3).run(arena -> { });
+    }
+
     private static final class Arena {
         final TestContext context;
         final MaeSafetyGameTest.Fixture fixture;
@@ -90,16 +151,22 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
         final List<BlockPos> chests = new ArrayList<>();
         final ConstructionProject project;
         final ResourceId model;
+        final int quarterTurns;
         UUID id;
         MaeStructureSite site;
 
         Arena(TestContext context, ResourceId model, boolean entryReady) {
+            this(context, model, entryReady, 0);
+        }
+
+        Arena(TestContext context, ResourceId model, boolean entryReady, int quarterTurns) {
+            this.quarterTurns = quarterTurns;
             this.model = model;
             this.context = context;
             this.fixture = new MaeSafetyGameTest.Fixture(context);
             // Pegada, entrada e margem do terreno cabem no chunk da arena, o único com recibo recapturado.
             this.origin = fixture.base.add(-1, 1, -1);
-            var blueprint = StructureBlueprintReader.readForMae(context.getWorld(), model).orElseThrow();
+            var blueprint = StructureBlueprintReader.readForMae(context.getWorld(), model).orElseThrow().rotated(quarterTurns);
             this.project = ConstructionProject.plan(fixture.colony.colony().id(), blueprint, pos(origin));
             for (BlockPos at : BlockPos.iterate(fixture.base.add(-5, -2, -5), fixture.base.add(10, 0, 10))) {
                 fixture.set(at, Blocks.DIRT.getDefaultState());
@@ -128,7 +195,7 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
                 id = fixture.writer.reserveTerrain(context.getWorld(), fixture.colony.colony().id(),
                         new WorkArea(pos(fixture.base.add(-5, -6, -5)), pos(fixture.base.add(10, 10, 10))));
                 fixture.writer = new MaeWorldWriter(fixture.store, sources());
-                site = MaeStructureSite.begin(context.getWorld(), fixture.writer, id, project, 0,
+                site = MaeStructureSite.begin(context.getWorld(), fixture.writer, id, project, quarterTurns,
                         fixture.colony.colony().center());
                 context.waitAndRun(1, () -> tick(then));
             });
@@ -138,7 +205,7 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
             guarded(() -> {
                 for (int i = 0; i < 3; i++) site.runSlice();
                 if (site.phase() == MaeStructureSite.Phase.FAILED) {
-                    context.assertTrue(false, model + ": fluxo falhou: " + site.failure());
+                    context.assertTrue(false, model + " r" + quarterTurns + ": fluxo falhou: " + site.failure());
                 }
                 context.assertTrue(site.waiting().isEmpty(), "obra esperou material: " + site.waiting());
                 if (site.phase() != MaeStructureSite.Phase.DONE) {
@@ -150,6 +217,12 @@ public final class MaeStructureSiteGameTest implements FabricGameTest {
                 context.assertTrue(finished == 1, model + ": fluxo registrou " + finished + " edifícios");
                 context.assertTrue(chests.stream().allMatch(at -> context.getWorld().getBlockEntity(at) instanceof ChestBlockEntity box
                         && box.isEmpty()), "obra não gastou exatamente o material do plano");
+                var original = StructureBlueprintReader.readForMae(context.getWorld(), model).orElseThrow().size();
+                var size = project.blueprint().size();
+                boolean odd = quarterTurns % 2 == 1;
+                context.assertTrue(job().getInt("rotation") == quarterTurns
+                        && size.x() == (odd ? original.z() : original.x()) && size.z() == (odd ? original.x() : original.z()),
+                        model + " r" + quarterTurns + ": obra não está girada como pedido");
                 then.accept(this);
                 cleanup();
                 context.complete();

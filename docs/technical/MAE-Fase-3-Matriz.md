@@ -353,7 +353,8 @@ acesso e conclusão única no registro de edifícios.
 | `taiga_small_house_1`, `savanna_mason_1`, `snowy_masons_house_1` | recusado na leitura: `unsafe_structure_payload` | — |
 
 Limites do exercício: terreno concluído sintético (a cadeia terreno real →
-obra escrita está em `MaeStructureWriteGameTest`); rotação 0; circulação e
+obra escrita está em `MaeStructureWriteGameTest`); rotação 0 (as demais estão
+no fluxo com terreno, abaixo); circulação e
 destino útil derivados por `MaeStructureAccess.beginFor`, mas a superfície
 preparada fora da pegada é posta pelo teste, não pela preparação de terreno;
 ligação local de rua não entra, pois é `road_v2` (Fase 2).
@@ -362,7 +363,8 @@ ligação local de rua não entra, pois é `road_v2` (Fase 2).
 `MaeStructureSite` deriva as superfícies, levanta o terreno, prova o acesso
 com o terreno previsto e conclui a casa em terreno plano (sem job de terreno)
 e com aterro do piso da entrada (job `terrain_v2` antes da obra). Oficina,
-curral e depósito do exercício também concluem pelo fluxo com aterro real.
+curral e depósito do exercício também concluem pelo fluxo com aterro real,
+nas quatro rotações: o teste confere a rotação gravada e as dimensões giradas.
 A obra concluída não prova mobília funcional, reconhecimento pelo pastor
 nem passagem de animais pelos portões.
 
