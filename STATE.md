@@ -15,7 +15,8 @@
 > recriado com porta térrea, pastor atravessando o portão andando e mobília
 > funcional provada. Passaram 1112 GameTests da bateria completa e a suíte
 > unitária. PR #53; JAR 0.4.17 com SHA-256 idêntico em build, downloads e TLauncher:
-> `1B979BAD30EFD9BDC0055CEF49AACF3846529B40E413AE8BBC698FB99E413754`; 0.4.16 preservada
+> `DA497943FBE45EDD03E64E0F19B952C2BA0EEDEC9C9506B6472A3D3848A13DC5` (refeito após a correção
+> do CI: depósito gerado pelo script e pastor no rumo); 0.4.16 preservada
 > como `.disabled`. Falta playtest, carga real e a fila automática.
 
 > **MAE Fase 3 — candidata 0.4.16:** branch `codex/mae-structure-access`,
