@@ -2,6 +2,14 @@
 
 `CLAUDE.md` é a fonte canônica do projeto. Este arquivo concentra apenas o fluxo do Codex e as regras que ele deve aplicar neste repositório; em conflito, `CLAUDE.md` vence.
 
+## Alternância entre agentes
+
+Quando houver indicador disponível, antes de restarem 10% de contexto, use
+`pnpm dlx delta-torch@0.1.6 save --reason context-limit`. Nunca inclua segredos.
+O próximo agente retoma com `pnpm dlx delta-torch@0.1.6 resume latest` e segue
+**Next Steps**. Checkpoints em `.handoff/` são locais; detalhes e instalação do
+hook de sincronização estão em `AGENT-SWITCH-SETUP.md` e `HANDOFF.md`.
+
 ## Contexto mínimo
 
 1. Leia `STATE.md` — somente as primeiras 60 linhas.

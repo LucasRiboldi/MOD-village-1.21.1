@@ -1,5 +1,9 @@
 # Village Colony
 
+Para alternar entre Claude Code e Codex, consulte [HANDOFF.md](HANDOFF.md) e
+[AGENT-SWITCH-SETUP.md](AGENT-SWITCH-SETUP.md). O hook local de pré-commit
+sincroniza as referências `@AGENTS.md`; cada worktree precisa instalá-lo.
+
 Mod Fabric para Minecraft 1.21.1 que transforma vilas Vanilla em colônias
 autônomas. Os aldeões recebem profissões, usam baús reais, produzem recursos,
 plantam, mineram e constroem estruturas do próprio jogo sem exigir menu ou

@@ -1,5 +1,16 @@
 # Handoff — Village Colony, MAE Fase 3
 
+## Alternância entre agentes
+
+Os checkpoints DeltaTorch ficam locais em `.handoff/`, fora do Git. Antes de
+atingir 10% de contexto restante, quando esse indicador estiver disponível,
+registre o trabalho com `pnpm dlx delta-torch@0.1.6 save --reason context-limit`.
+Não inclua segredos. No outro agente, execute
+`pnpm dlx delta-torch@0.1.6 resume latest` e siga a seção **Next Steps**.
+O hook local de pré-commit usa `sync-claude-md@1.0.1` para manter referências
+`@AGENTS.md` em arquivos `CLAUDE.md`; ele não compara o sentido das regras.
+Consulte `AGENT-SWITCH-SETUP.md` para instalação e limites do hook.
+
 Registro de 2026-11-04. `[V]` indica evidência conferida no Git ou na
 documentação do repositório; `[?]` indica informação ainda não comprovada.
 Reconfira o estado antes de trabalhar: este arquivo é uma fotografia.

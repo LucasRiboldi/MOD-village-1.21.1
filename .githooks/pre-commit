@@ -1,0 +1,3 @@
+#!/bin/sh
+# Synchronize references for staged AGENTS.md files in this worktree.
+exec npx --yes sync-claude-md@1.0.1 sync --stage

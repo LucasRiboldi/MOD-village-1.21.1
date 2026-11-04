@@ -1,0 +1,4 @@
+interface:
+  display_name: "DeltaTorch"
+  short_description: "Agent handoff and task resume workflows"
+  default_prompt: "Use $delta-torch to save or resume this task with DeltaTorch."
