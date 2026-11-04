@@ -279,6 +279,10 @@ prova é incremental e vive só na sessão; após recarga, recomeça do zero.
 
 ### Regressões
 
+`MaeStructureModelsGameTest` exercita o caminho inteiro com quatro modelos
+reais lidos por `readForMae` (casa, oficina, curral e depósito), e
+`MaeStructureCatalogGameTest` fixa o que o contrato 1 aceita no catálogo
+representativo; detalhes na matriz da Fase 3.
 `MaeStructureCompletionGameTest` cobre: conclusão única após a prova real,
 sem reescrita nem novo registro após recarga; acesso que não passa bloqueia
 sem registrar; `template_changed` na retomada; retomada volta a conferir e

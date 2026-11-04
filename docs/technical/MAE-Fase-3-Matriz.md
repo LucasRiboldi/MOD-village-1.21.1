@@ -327,9 +327,37 @@ somente `IntArray` por listas de inteiros nos campos consumidos pelo Minecraft.
 O asset automático do curral permaneceu byte a byte igual ao anterior; hashes
 atualizados no CSV, incluindo o novo arquivo supervisionado.
 
-Escrita `structure_v3`, materiais, conclusão e retomada seguem pendentes.
-Não houve alteração de saves do jogador, commit, nova versão ou JAR desta fase.
+Escrita `structure_v3`, materiais, conclusão e retomada estão implementados
+(ADR-046, seção `structure_v3`). Não houve alteração de saves do jogador,
+nova versão ou JAR desta fase.
 Comandos e limitações no [relatório da fase](MAE-Fase-3.md); contagens em `STATE.md`.
+
+### Exercício supervisionado `structure_v3` — 2026-11-04
+
+`MaeStructureCatalogGameTest` fixa a tabela abaixo para o contrato 1; mudou o
+catálogo ou o contrato, a tabela do teste muda junto. `MaeStructureModelsGameTest`
+exercita o caminho inteiro em um representante de cada família: prova prevista
+do acesso, aprovação, material exato tirado dos baús, escrita, prova real do
+acesso e conclusão única no registro de edifícios.
+
+| Modelo | Contrato 1 | Exercício completo |
+| --- | --- | --- |
+| `plains_small_house_1` | aceito | casa construída e concluída |
+| `plains_masons_house_1` | aceito | oficina construída e concluída |
+| `plains_animal_pen_1` | aceito | curral construído e concluído |
+| `colony/storage_small` | aceito | depósito construído e concluído |
+| `savanna_small_house_1`, `snowy_small_house_1`, `desert_mason_1`, `plains_tool_smith_1` | aceito | não exercitado |
+| `desert_small_house_1` | recusado: `potted_cactus` | — |
+| `taiga_masons_house_1` | recusado: `potted_spruce_sapling` | — |
+| `colony/large_animal_pen` | recusado: `farmland`, `water`, `wheat` | — |
+| `taiga_small_house_1`, `savanna_mason_1`, `snowy_masons_house_1` | recusado na leitura: `unsafe_structure_payload` | — |
+
+Limites do exercício: terreno concluído sintético (a cadeia terreno real →
+obra escrita está em `MaeStructureWriteGameTest`); rotação 0; circulação e
+destino útil escolhidos pelo teste, porque ainda não há chamador de produção
+que os derive; ligação local de rua não entra, pois é `road_v2` (Fase 2).
+A obra concluída não prova mobília funcional, reconhecimento pelo pastor
+nem passagem de animais pelos portões.
 
 ## Fontes de integração
 

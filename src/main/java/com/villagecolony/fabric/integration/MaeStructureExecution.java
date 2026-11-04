@@ -151,16 +151,13 @@ final class MaeStructureExecution {
 
     /** Contrato 1 só constrói em ar; peça já presente sai do plano, peça sem origem física recusa o modelo. */
     private static NbtCompound step(ServerWorld world, MaeStructurePieces.Piece piece) {
+        if (!supported(piece)) throw new IllegalArgumentException("unsupported_structure_piece");
         NbtList parts = new NbtList();
         boolean present = true;
         for (int i = 0; i < piece.parts().size(); i++) {
             var entry = piece.parts().get(i);
             BlockState before = world.getBlockState(entry.getKey());
             BlockState after = entry.getValue();
-            if (!after.getFluidState().isEmpty() || after.getBlock() instanceof CropBlock
-                    || after.getBlock() instanceof FarmlandBlock) {
-                throw new IllegalArgumentException("unsupported_structure_piece");
-            }
             present &= before.equals(after);
             if (!before.isAir() && !before.equals(after)) throw new IllegalStateException("occupied_structure_target");
             NbtCompound part = new NbtCompound();
@@ -172,7 +169,6 @@ final class MaeStructureExecution {
         }
         if (present) return null;
         Item item = piece.main().getBlock().asItem();
-        if (item == Items.AIR) throw new IllegalArgumentException("unsupported_structure_piece");
         NbtCompound material = new NbtCompound();
         material.putString("item", Registries.ITEM.getId(item).toString());
         material.putInt("count", piece.main().contains(Properties.SLAB_TYPE)
@@ -181,6 +177,16 @@ final class MaeStructureExecution {
         step.put("parts", parts);
         step.put("material", material);
         return step;
+    }
+
+    /** Contrato 1: sem fluido, cultivo nem solo arado, e a peça principal tem item próprio — ADR-046 P2. */
+    static boolean supported(MaeStructurePieces.Piece piece) {
+        for (var part : piece.parts()) {
+            BlockState after = part.getValue();
+            if (!after.getFluidState().isEmpty() || after.getBlock() instanceof CropBlock
+                    || after.getBlock() instanceof FarmlandBlock) return false;
+        }
+        return piece.main().isAir() || piece.main().getBlock().asItem() != Items.AIR;
     }
 
     private static String role(BlockState after) {
