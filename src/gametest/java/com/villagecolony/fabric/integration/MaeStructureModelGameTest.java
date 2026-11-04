@@ -50,7 +50,7 @@ public final class MaeStructureModelGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_model_payload", tickLimit = 20)
-    public void maeRefusesInventoryLootAndArbitraryBlockData(TestContext context) {
+    public void storageContentIsDiscardedAndOtherBlockDataIsRefused(TestContext context) {
         for (String key : java.util.List.of("Items", "LootTable", "CustomName")) {
             var nbt = fixture();
             var entry = add(nbt, 1, 1, 1, Blocks.CHEST.getDefaultState());
@@ -65,11 +65,16 @@ public final class MaeStructureModelGameTest implements FabricGameTest {
             } else payload.putString(key, key.equals("LootTable") ? "minecraft:chests/simple_dungeon" : "unsafe");
             entry.put("nbt", payload);
             var id = load(context, key.toLowerCase(java.util.Locale.ROOT), nbt);
-            boolean refused = false;
-            try { StructureBlueprintReader.readForMae(context.getWorld(), id); }
-            catch (IllegalArgumentException expected) { refused = "unsafe_structure_payload".equals(expected.getMessage()); }
-            context.assertTrue(refused, "payload sem tratamento foi aceito: " + key);
+            // O baú entra vazio: o conteúdo é descartado, nunca lido nem copiado — ADR-046 item 9.
+            context.assertTrue(StructureBlueprintReader.readForMae(context.getWorld(), id).isPresent(),
+                    "baú com conteúdo descartável foi recusado: " + key);
         }
+        var nbt = fixture();
+        var spawner = add(nbt, 1, 1, 1, Blocks.SPAWNER.getDefaultState());
+        var payload = new NbtCompound();
+        payload.putString("SpawnData", "unsafe");
+        spawner.put("nbt", payload);
+        refused(context, nbt, "spawner_data", "unsafe_structure_payload");
         context.complete();
     }
 
@@ -139,12 +144,12 @@ public final class MaeStructureModelGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_model_payload_types", tickLimit = 20)
     public void maeRefusesMalformedInventoryAndExecutableFinalState(TestContext context) {
         var nbt = fixture();
-        var chest = add(nbt, 1, 1, 1, Blocks.CHEST.getDefaultState());
+        var hopper = add(nbt, 1, 1, 1, Blocks.HOPPER.getDefaultState());
         var payload = new NbtCompound();
         var items = new NbtList();
         items.add(NbtString.of("not an inventory entry"));
         payload.put("Items", items);
-        chest.put("nbt", payload);
+        hopper.put("nbt", payload);
         refused(context, nbt, "bad_items", "unsafe_structure_payload");
         nbt = fixture();
         var jigsaw = add(nbt, 1, 1, 1, Blocks.JIGSAW.getDefaultState());
@@ -180,13 +185,11 @@ public final class MaeStructureModelGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_model_storage", tickLimit = 20)
-    public void actualStorageAndSignsRemainBlockedUntilTheirPayloadHasTreatment(TestContext context) {
-        for (String name : java.util.List.of("villagecolony:colony/plains/storage_majest",
-                "minecraft:village/taiga/houses/taiga_small_house_1")) {
-            boolean blocked = false;
-            try { StructureBlueprintReader.readForMae(context.getWorld(), ResourceId.parse(name)); }
-            catch (IllegalArgumentException expected) { blocked = "unsafe_structure_payload".equals(expected.getMessage()); }
-            context.assertTrue(blocked, "modelo com dados funcionais não tratados deve permanecer bloqueado: " + name);
+    public void actualStorageAndSignsAreReadWithTheirContentDiscarded(TestContext context) {
+        for (String name : java.util.List.of("minecraft:village/taiga/houses/taiga_small_house_1",
+                "minecraft:village/savanna/houses/savanna_mason_1", "minecraft:village/snowy/houses/snowy_masons_house_1")) {
+            context.assertTrue(StructureBlueprintReader.readForMae(context.getWorld(), ResourceId.parse(name)).isPresent(),
+                    "modelo com placa, baú ou fornalha vazios foi recusado: " + name);
         }
         context.complete();
     }

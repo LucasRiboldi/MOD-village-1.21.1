@@ -264,6 +264,10 @@ Cada passo é uma peça com todas as suas partes:
   úmido (7) ao lado dela e o trigo do curral grande já é maduro (idade 7), estados
   que não mudam sozinhos e por isso não quebram a evidência. Água um bloco abaixo
   do solo foi considerada e descartada: não umedece o solo arado.
+- **Placa, baú, barril e fornalha** (escolha do autor, 2026-11-04): a leitura MAE
+  aceita o bloco e descarta o conteúdo do template (texto, loot, itens,
+  cozimento), sem lê-lo nem copiá-lo; o writer só põe o bloco, que nasce vazio.
+  Conteúdo de qualquer outro bloco continua recusado com `unsafe_structure_payload`.
 - Teto: plano + histórico ≤ 1.024 registros; acima disso a aprovação recusa
   com `history_budget_exceeded`, sem dividir a obra automaticamente.
 

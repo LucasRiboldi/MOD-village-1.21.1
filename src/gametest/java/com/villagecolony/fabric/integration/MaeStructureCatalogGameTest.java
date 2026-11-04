@@ -26,13 +26,13 @@ public final class MaeStructureCatalogGameTest implements FabricGameTest {
         EXPECTED.put("minecraft:village/plains/houses/plains_small_house_1", "ok");
         EXPECTED.put("minecraft:village/desert/houses/desert_small_house_1", "ok");
         EXPECTED.put("minecraft:village/savanna/houses/savanna_small_house_1", "ok");
-        EXPECTED.put("minecraft:village/taiga/houses/taiga_small_house_1", "payload");
+        EXPECTED.put("minecraft:village/taiga/houses/taiga_small_house_1", "ok");
         EXPECTED.put("minecraft:village/snowy/houses/snowy_small_house_1", "ok");
         EXPECTED.put("minecraft:village/plains/houses/plains_masons_house_1", "ok");
         EXPECTED.put("minecraft:village/desert/houses/desert_mason_1", "ok");
-        EXPECTED.put("minecraft:village/savanna/houses/savanna_mason_1", "payload");
+        EXPECTED.put("minecraft:village/savanna/houses/savanna_mason_1", "ok");
         EXPECTED.put("minecraft:village/taiga/houses/taiga_masons_house_1", "ok");
-        EXPECTED.put("minecraft:village/snowy/houses/snowy_masons_house_1", "payload");
+        EXPECTED.put("minecraft:village/snowy/houses/snowy_masons_house_1", "ok");
         EXPECTED.put("minecraft:village/plains/houses/plains_tool_smith_1", "ok");
         EXPECTED.put("minecraft:village/plains/houses/plains_animal_pen_1", "ok");
         EXPECTED.put("villagecolony:colony/large_animal_pen", "ok");

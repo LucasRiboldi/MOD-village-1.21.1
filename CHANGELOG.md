@@ -25,6 +25,8 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
   entre a porta e o lado de fora.
 - Curral grande no MAE: água, solo arado e trigo surgem no local como no legado
   (`SHAPED_GROUND`, `contract=2`); a água vem antes das vizinhas para não escorrer.
+- Placa, baú, barril e fornalha entram vazios no MAE: o conteúdo do template é
+  descartado, nunca copiado. Casa taiga, oficina savanna e oficina snowy passam a ser aceitas.
 
 ## [0.4.16] — obra supervisionada MAE `structure_v3` (2026-11-04, candidato)
 

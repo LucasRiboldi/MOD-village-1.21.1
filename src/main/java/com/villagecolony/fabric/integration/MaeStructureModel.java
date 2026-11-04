@@ -48,7 +48,7 @@ final class MaeStructureModel {
             if (index < 0 || index >= palette.size()) throw new IllegalArgumentException("invalid_structure_palette");
             var state = NbtHelper.toBlockState(Registries.BLOCK.getReadOnlyWrapper(), palette.getCompound(index));
             if (state.isOf(Blocks.JIGSAW)) state = promised(entry.getCompound("nbt"));
-            else safePayload(entry.getCompound("nbt"));
+            else if (!emptied(state)) safePayload(entry.getCompound("nbt"));
             if (state.isAir() || state.isOf(Blocks.STRUCTURE_VOID) || state.isOf(Blocks.STRUCTURE_BLOCK)) continue;
             var offset = MinecraftTypeAdapter.toBlockPos(StructureBlueprintReader.offsetOf(entry));
             if (expected.putIfAbsent(offset, state) != null)
@@ -129,6 +129,16 @@ final class MaeStructureModel {
         } catch (CommandSyntaxException invalid) {
             throw new IllegalArgumentException("unsafe_structure_final_state", invalid);
         }
+    }
+
+    /**
+     * Placa, baú, barril e fornalha entram vazios: o conteúdo do template (texto, loot, itens, cozimento) é
+     * descartado, nunca copiado, e o writer só põe o bloco — ADR-046 item 9, escolha do autor de 2026-11-04.
+     */
+    static boolean emptied(BlockState state) {
+        var block = state.getBlock();
+        return block instanceof net.minecraft.block.AbstractSignBlock || block instanceof ChestBlock
+                || block instanceof net.minecraft.block.BarrelBlock || block instanceof net.minecraft.block.AbstractFurnaceBlock;
     }
 
     private static void safePayload(NbtCompound payload) {

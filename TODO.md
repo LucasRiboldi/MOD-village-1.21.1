@@ -54,7 +54,8 @@
 - [x] Exercitar casa, oficina, curral e depósito reais nas quatro rotações (GameTests).
 - [x] Aceitar vaso com planta no MAE (vaso + planta dos baús, `contract=2`).
 - [x] Aceitar o curral grande no MAE (água, solo arado e trigo moldados no local, como no legado).
-- [ ] Validar conteúdo funcional e habilitação individual dos demais modelos; depósito grande e payloads não tratados continuam recusados.
+- [x] Aceitar placa, baú, barril e fornalha vazios (conteúdo do template descartado).
+- [ ] Recriar o depósito grande (`storage_majest`) com porta térrea, substituindo os originais (escolha do autor).
 - [x] Escolher lote e origem reais para a obra supervisionada e expor um comando em jogo para disparar `MaeStructureSite` (`/vc mae obra`, posição do jogador ou `busca`).
 - [x] Ligar a entrada da obra à rua MAE (`road_v2`), semente ou grafo publicado, reaproveitando a região.
 - [ ] Exercitar `/vc mae obra` em jogo e ler `VC_MAE_SITE` no próximo playtest.

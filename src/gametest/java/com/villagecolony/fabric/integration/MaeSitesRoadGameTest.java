@@ -90,6 +90,34 @@ public final class MaeSitesRoadGameTest implements FabricGameTest {
         });
     }
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_loot", tickLimit = 2400)
+    public void savannaMasonChestIsBuiltEmptyWithoutTheTemplateLoot(TestContext context) {
+        var mason = ResourceId.vanilla("village/savanna/houses/savanna_mason_1");
+        var arena = new WideArena(context, mason, 1);
+        arena.guarded(() -> {
+            var origin = arena.fixture.base.add(-1, 1, -1);
+            var status = MaeSites.start(context.getWorld(), arena.writer(), arena.colony(), mason, origin, 0, null);
+            arena.await(status.regionId(), () -> {
+                int chests = 0;
+                for (BlockPos at : BlockPos.iterate(origin, origin.add(10, 7, 10))) {
+                    if (context.getWorld().getBlockEntity(at) instanceof ChestBlockEntity box) {
+                        chests++;
+                        // Só a sobra da pavimentação (terra) pode entrar; loot e itens do template, nunca.
+                        boolean onlyCuttings = java.util.stream.IntStream.range(0, box.size()).mapToObj(box::getStack)
+                                .allMatch(stack -> stack.isEmpty() || stack.isOf(net.minecraft.item.Items.DIRT));
+                        context.assertTrue(box.getLootTable() == null && onlyCuttings,
+                                "baú da oficina saiu com conteúdo em " + at.toShortString() + ": loot=" + box.getLootTable()
+                                        + " itens=" + java.util.stream.IntStream.range(0, box.size()).mapToObj(box::getStack)
+                                        .filter(stack -> !stack.isEmpty()).map(Object::toString).toList());
+                    }
+                }
+                context.assertTrue(chests > 0, "oficina sem baú construído");
+                arena.cleanup();
+                context.complete();
+            });
+        });
+    }
+
     /** Plataforma de três de altura em 3×3 chunks, com os recibos de geração recapturados e devolvidos. */
     private static final class WideArena {
         final TestContext context;
