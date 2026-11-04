@@ -261,7 +261,8 @@ final class ShepherdPens {
      */
     static void walkThrough(ServerWorld world, Pen pen, AnimalEntity animal, BlockPos target) {
         FencedIn.open(world, pen.gate());
-        if (!animal.getNavigation().isIdle()) return;
+        // O passeio da própria IA toma a navegação; ela volta para o portão a cada passo — MAE, item 5.
+        if (!animal.getNavigation().isIdle() && target.equals(animal.getNavigation().getTargetPos())) return;
         // A navegação dá por chegada a um bloco do alvo e o deixa no portão; o último passo é direto (PenMoves).
         if (animal.getBlockPos().isWithinDistance(target, 2.5)) {
             animal.getMoveControl().moveTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5, 1.0);
