@@ -12,6 +12,18 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.15] — conservação da rota da mina (2026-11-03, candidato)
+
+### Corrigido
+- Pisos naturais da geometria ativa e apoios do rastro salvo deixam de ser alvos de mineração e desvio.
+- A quebra revalida o apoio para impedir que uma tarefa já aberta retire a rota de retorno.
+- Passagens abertas próximas do mineiro recebem até um apoio por chamada, mediante geometria,
+  cursor avançado, dois blocos livres acima e vazio no apoio; água e blocos existentes permanecem.
+
+### Adicionado
+- Regressões de proteção, reparo, preservação de laje/água, cursor inicial e rastro salvo,
+  na classe MineAccessGameTest já registrada para o Sentinela Local.
+
 ## [0.4.14] — origem do mapa de alcance no chão (2026-11-03, candidato)
 
 ### Corrigido

@@ -15,6 +15,18 @@ queda, água e lava, e colha os veios mais valiosos da área acessível.
 
 ## Problema
 
+### Conservação da rota — 0.4.15
+
+Os pisos derivados da geometria ativa e os apoios do rastro percorrido e salvo são
+preservados tanto pela escolha de alvos quanto pela quebra e pelo terreno dos desvios.
+A geometria é calculada uma vez por forma ativa e descartada com a memória do servidor;
+não há novo formato de save. O reparo reutiliza `MineFloor.patch`: somente apoio vazio,
+dois blocos de passagem livres, cursor já avançado e proximidade horizontal até quatro
+blocos e vertical até dois dos pés. No máximo um apoio por chamada; respeita as proteções
+existentes. Não substitui água nem blocos do jogador. Não reconstrói corredores fechados
+nem presume a forma de níveis antigos ausentes do registro. A escadaria mantém a
+geometria da Regra 119; não exige migração de `shape`.
+
 Dar ao mineiro mobilidade própria e segura sem trocar a navegação Vanilla onde
 ela funciona, e sem custo de CPU descontrolado.
 

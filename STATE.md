@@ -1,5 +1,23 @@
 # STATE — 2026-11-03
 
+> **Playtest — candidata 0.4.15:** conservação da rota da mina, opção A aprovada.
+> O playtest 0.4.14 confirmou origem na rua e até 30.289 células, com 23/23
+> destinos alcançados. Mineiros ainda somaram 21% de bloqueio/encalhe; o log
+> não prova destruição da escadaria. Duas regressões reproduziram falhas de
+> proteção do piso natural e reparo de passagem aberta antes da correção.
+> Pisos da geometria ativa e apoios do rastro salvo ficam protegidos na seleção,
+> quebra e desvios. O reparo reutiliza MineFloor: um apoio por chamada, próximo
+> do trabalhador, somente vazio, passagem livre e cursor já avançado.
+> Não substitui água ou blocos do jogador; não redesenha minas nem certifica
+> níveis antigos sem geometria ativa. Nenhum novo formato de save.
+> Passaram 21 unitários de geometria/retorno e 16 GameTests de acesso, retorno,
+> entrada, piso e proteção aquática. A classe já integra o Sentinela Local.
+> `remapJar`, revisão do diff e README `--check` passaram. Manifesto confirma
+> 0.4.15, Minecraft 1.21.1 e Java 21. SHA-256 das cópias locais:
+> `518524FF551536EC10701F540599751E9279BBBA26F67E2FF49B6EE9C4CFEC3F`.
+> Entrega local nesta linha, sem push ou merge e sem bateria completa.
+> Conservação da escada e retorno real continuam pendentes do próximo playtest.
+
 > **Playtest — candidata 0.4.14:** correção da origem do mapa de alcance.
 > Opções A+B+C aprovadas. O playtest da 0.4.13 repetiu quatro vezes origem
 > `(-1554,115,3553)` sobre escada de acácia: 38 posições, nenhum destino alcançado.

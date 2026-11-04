@@ -69,7 +69,7 @@ public final class MineCuts {
                 continue;
             }
 
-            if (WaterMineAccess.protects(world, mine, at)) {
+            if (MineRoute.protects(mine, at) || WaterMineAccess.protects(world, mine, at)) {
                 // A escada selada é passagem, não frente de escavação. A
                 // mesma exclusão também entra no recuo e no veio.
                 continue;
@@ -200,6 +200,7 @@ public final class MineCuts {
             Optional<BlockPos> ore = OreVein.isOre(state)
                     ? Optional.of(at)
                     : OreVein.beside(world, at);
+            ore = ore.filter(candidate -> MineRock.isDiggableRock(world, mine, candidate));
 
             // <b>E o minério da parede também precisa ter onde se ficar de
             // pé</b> — 2026-09-03. A guarda de emparedada acima conferia a

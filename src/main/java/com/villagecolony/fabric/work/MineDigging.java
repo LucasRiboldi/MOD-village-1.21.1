@@ -411,6 +411,10 @@ public final class MineDigging {
         Optional<Mine> known = VillageColonyMod.MINES.of(colonyId);
 
         if (known.isPresent()) {
+            net.minecraft.entity.Entity miner = world.getEntity(workerId);
+            if (miner != null) {
+                MineRoute.repairNear(world, known.get(), miner.getBlockPos());
+            }
             MineFurnishing.lightMine(world, known.get());
 
             return known;

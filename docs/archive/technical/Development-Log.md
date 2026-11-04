@@ -11717,3 +11717,36 @@ têm SHA-256 `4EBBB6C35AB112280570A9936E522C57B237327F9E64FAC363271C98AA4C0DFD`.
 O JAR 0.4.11 foi preservado como `.disabled`. Sem push, merge ou release nesta entrega.
 O próximo playtest deverá confirmar ausência das falsas derivas e progresso
 na busca geral de lotes; compilação não comprova retomada efetiva de obras.
+
+## 03-11-2026 — conservação da rota da mina, candidata 0.4.15
+
+O autor aprovou proteger a rota e reparar somente trechos identificados como
+parte da mina, preservando construções do jogador e liberando testes focados.
+O playtest 0.4.14 confirmou o mapa de alcance no chão: até 30.289 células e
+23/23 destinos. Os mineiros ainda tiveram 21% de bloqueio/encalhe; essa medida
+não comprova que a escada foi destruída. A inspeção encontrou pisos naturais
+sem proteção específica e reparo de apoio chamado somente após uma quebra.
+
+`MineRoute` deriva apoios da geometria ativa e reutiliza o rastro persistido de
+`MineReturn`. Seleção de alvo, veio, terreno dos desvios e ato da quebra recusam
+esses apoios. A geometria fica em cache transitório, limpo com o servidor.
+O reparo reutiliza `MineFloor.patch`, sem novo formato de save: no máximo um
+apoio por chamada, até quatro blocos horizontais e dois verticais do mineiro,
+somente vazio, passagem livre e cursor avançado. Água e blocos existentes são
+preservados. Trechos antigos ausentes da geometria não são reconstruídos.
+
+Antes da correção, as duas regressões falharam por piso minerável e vão sem
+reparo. Na primeira execução após a correção, o teste de reparo encontrou outro
+vão legítimo na arena vazia; a fixture passou a fornecer piso nas demais pistas.
+Na validação final, passaram 16 GameTests focados (`MineAccess`, `MineReturn`,
+`MineEntrance`, `MineFloor`, `WaterMineAccess`) e 21 unitários de `MineShaft*`
+e `MineReturnTest`. Proteção após recarga do rastro, laje, água e cursor inicial
+estão cobertos. A classe `MineAccessGameTest` já é executada pelo Sentinela Local.
+
+README, STATE, TODO, CHANGELOG, ADR-025 e referência de versão sincronizados.
+`git diff --check`, `rules_to_readme.py --check` e `remapJar` passaram.
+Manifesto confirma versão 0.4.15, Minecraft 1.21.1 e Java 21. SHA-256 do JAR:
+`518524FF551536EC10701F540599751E9279BBBA26F67E2FF49B6EE9C4CFEC3F`.
+Entrega local em `build/libs/`, `downloads/` e TLauncher; JAR 0.4.14 preservado
+como `.disabled`. Nenhum save do jogador foi aberto. Sem push, merge ou release.
+Bateria completa não executada; retorno e conservação da escadaria aguardam playtest.

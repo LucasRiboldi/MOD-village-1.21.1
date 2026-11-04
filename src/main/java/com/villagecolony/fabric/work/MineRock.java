@@ -111,9 +111,10 @@ public final class MineRock {
         return canDig(world, at) && !isOpenSpace(world, at, world.getBlockState(at));
     }
 
-    /** Rocha cavável por esta mina, sem a infraestrutura aquática dela. */
+    /** Rocha cavável sem retirar apoio da passagem ou infraestrutura aquática — Regra 119. */
     public static boolean isDiggableRock(ServerWorld world, Mine mine, BlockPos at) {
-        return !WaterMineAccess.protects(world, mine, at) && isDiggableRock(world, at);
+        return !MineRoute.protects(mine, at)
+                && !WaterMineAccess.protects(world, mine, at) && isDiggableRock(world, at);
     }
 
     /**
@@ -124,7 +125,7 @@ public final class MineRock {
      * descer. Bedrock, lava e o que é da vila respondem não.
      */
     public static boolean canDig(ServerWorld world, BlockPos at) {
-        if (!world.isInBuildLimit(at)) {
+        if (!world.isInBuildLimit(at) || MineRoute.protects(at)) {
             return false;
         }
 
