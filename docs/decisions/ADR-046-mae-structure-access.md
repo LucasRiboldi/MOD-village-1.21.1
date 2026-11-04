@@ -139,9 +139,10 @@ precisa bloquear; um teste de serialização isolado não prova recuperação ap
 
 ## Esquema `structure_v3`
 
-Detalha o item 8. Nada desta seção está implementado. O autor aprovou as
-escolhas **P1–P4** em 2026-11-04; as alternativas ficam registradas como
-não escolhidas.
+Detalha o item 8. O autor aprovou as escolhas **P1–P4** em 2026-11-04; as
+alternativas ficam registradas como não escolhidas. O writer até o estado
+`built` está em `MaeStructureExecution`; a conclusão com acesso conferido
+continua pendente (seção Conclusão).
 
 ### Premissa de durabilidade
 
@@ -177,14 +178,14 @@ o de `MaeWorldWriter` (quatro escritas e 2 ms por tick, 1.024 registros).
 | Campo do job | Conteúdo |
 |---|---|
 | `type`, `contract` | `"structure_v3"`, `1` |
-| `id` | id do `Building`/projeto; o mesmo da reserva de lote |
-| `blueprint`, `template` | id do modelo e SHA-256 do NBT efetivamente lido por `readForMae` |
+| `id` | id do `ConstructionProject` |
+| `blueprint`, `template` | id do modelo e SHA-256 das partes (posição relativa e estado) do modelo lido por `readForMae` e girado |
 | `rotation`, `origin` | a rotação e a origem já aplicadas; não reaplicar |
 | `area` | caixa do edifício, volume ≤ 4.096, contida na região |
-| `terrain` | id e `expectedSections` finais do job `terrain_v2` concluído |
+| `terrain` | id e `expectedSections` finais do job `terrain_v2` concluído; a ligação exige o mesmo `blueprint` e a mesma pegada em x/z |
 | `access` | abertura, apoio e portões escolhidos por `MaeStructureAccess` |
 | `plan`, `cursor` | passos em ordem; índice do próximo |
-| `state`, `reason` | `approved`, `waiting`, `paused`, `blocked`, `complete` |
+| `state`, `reason` | `approved`, `waiting`, `paused`, `blocked`, `built`, `complete` |
 | `pendingWrite`, `expectedSections` | como no writer atual |
 
 A aprovação exige o job de terreno `complete` e sem pendência, e compara as
@@ -200,7 +201,11 @@ Cada passo é uma peça com todas as suas partes:
   mesmo passo. Apoio que `BlockShaping.groundFor` criaria vira parte `support`
   planejada na aprovação, ou o modelo é recusado; o writer não chama
   `BlockShaping` nem `placeSecondHalf`.
-- `material`: `item` e `count` exatos, ou ausente para remoção.
+- `material`: `item` e `count` exatos — um por peça, dois na laje dupla.
+- O contrato 1 só escreve em ar. Peça já presente com o estado planejado sai do
+  plano; célula ocupada por outra coisa recusa com `occupied_structure_target`.
+  Fluido, cultivo, solo arado e bloco sem item recusam o modelo com
+  `unsupported_structure_piece`; nenhuma parte `support` é gerada.
 - **P2.** O contrato 1 aceita só o material exato da planta, tirado dos baús.
   Substituição (`MaterialChoice`) e peça que surge (`AppearingPieces`, ADR-036)
   ficam fora; o modelo que dependa delas fica bloqueado com motivo, conforme o
@@ -211,8 +216,11 @@ Cada passo é uma peça com todas as suas partes:
 
 ### Sequência de um passo
 
-1. **Revalidar:** `validateJob` atual, mais o template pelo hash, cada `before`
-   no mundo, proteção, seções da região e o acesso escolhido.
+1. **Revalidar:** `validateJob` atual, cada `before` no mundo, proteção
+   (as peças já confirmadas desta obra não contam como volume protegido) e
+   seções da região. O template pelo hash é conferido na aprovação e na
+   retomada, não a cada passo, porque relê e prova o modelo inteiro. O acesso
+   escolhido fica registrado; sua conferência é a da Conclusão.
 2. **Material:** se o baú não tiver o item, `state=waiting` com o item no
    `reason`, sem intenção e sem escrita; reavaliar com limite de taxa.
    **P3.** A ordem do cursor é estrita no contrato 1, sem pôr peças de lado.
@@ -248,16 +256,22 @@ do contrato 1.
 
 ### Conclusão
 
-No último passo, `MaeStructureAccess` confere o acesso com os blocos
-realmente presentes. Passou: `BuildClosing` conclui o `Building` com
+O último passo confirmado deixa o job em `built`, que mantém as seções
+ocupadas. **Pendente (tarefa 7 do plano):** `MaeStructureAccess` confere o
+acesso com os blocos realmente presentes. Passou: `BuildClosing` conclui o `Building` com
 `ConstructionState.COMPLETED` e o job fica `complete`. Falhou:
 `access_not_verified`, bloqueio, e o edifício não conclui. Nenhum outro
 indicador persistido de acesso. Após recarga, obra concluída não reconstrói
 nem consome material.
 
-### Regressões exigidas pela implementação
+### Regressões
 
-Corte de proteção, parte fora do plano, região errada, terreno incompleto,
-template alterado, contrato desconhecido, envelope v3 lido como opaco,
-falta de material, e cada linha da tabela de retomada provocada por crash
-simulado entre intenção, retirada, escrita e confirmação.
+`MaeStructureWriteGameTest` cobre: escrita única com consumo único e recarga
+do diário; porta com as duas metades no mesmo passo; espera por material sem
+intenção e continuação quando ele chega; template alterado; peça não suportada (água);
+contrato desconhecido; mundo alterado após aprovação; terreno ausente;
+envelope futuro opaco e preservado; `materials_uncertain` e `partial_parts`.
+A interrupção é simulada pelo estado gravado (`pendingWrite` e blocos), não
+por crash real do servidor. Ainda sem teste próprio: todas as partes em
+`after` com `pendingWrite`, `template_changed` na retomada, região de outra
+colônia e o [?] dos pontos legados com envelope v3.

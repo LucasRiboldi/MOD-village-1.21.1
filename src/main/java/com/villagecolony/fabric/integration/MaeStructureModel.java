@@ -76,7 +76,7 @@ final class MaeStructureModel {
         var normalized = WhitePieces.baked(DesertSand.baked(legacy.id(), pieces));
         var dimensions = template.getSize();
         var result = Blueprint.of(legacy.id(), normalized).withAccesses(legacy.accesses())
-                .withTemplateBounds(new ColonyPos(dimensions.getX(), dimensions.getY(), dimensions.getZ()));
+                .withTemplateBounds(MinecraftTypeAdapter.toColonyPos(new BlockPos(dimensions)));
         if (legacy.hasStreetLayer()) result = result.withStreetLayer(legacy.streetLayer());
         var project = ConstructionProject.plan(UUID.randomUUID(), result, new ColonyPos(0, 0, 0));
         var planned = MaeStructurePieces.planned(project);

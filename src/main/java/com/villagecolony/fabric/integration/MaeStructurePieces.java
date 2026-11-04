@@ -11,32 +11,67 @@ import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /** Explicita todas as partes previstas, sem escrita ou efeitos fora da caixa — ADR-046. */
 final class MaeStructurePieces {
     private MaeStructurePieces() { }
 
+    /** Uma peça e todas as suas partes; a primeira é a principal, que define o material — ADR-046. */
+    record Piece(List<Map.Entry<BlockPos, BlockState>> parts) {
+        Piece {
+            parts = List.copyOf(parts);
+        }
+
+        BlockState main() {
+            return parts.getFirst().getValue();
+        }
+    }
+
     static Map<BlockPos, BlockState> planned(ConstructionProject project) {
+        var pieces = new LinkedHashMap<BlockPos, BlockState>();
+        for (var piece : ordered(project)) {
+            piece.parts().forEach(part -> pieces.put(part.getKey(), part.getValue()));
+        }
+        return Map.copyOf(pieces);
+    }
+
+    /** Ordem estável de baixo para cima, depois x e z; o cursor do structure_v3 depende dela — ADR-046 P3. */
+    static List<Piece> ordered(ConstructionProject project) {
         var lot = Building.of(project);
         var origin = MinecraftTypeAdapter.toBlockPos(project.origin());
-        var pieces = new LinkedHashMap<BlockPos, BlockState>();
+        var taken = new LinkedHashMap<BlockPos, BlockState>();
+        var result = new ArrayList<Piece>();
         for (var piece : project.blueprint().blocks()) {
             var at = origin.add(piece.offset().x(), piece.offset().y(), piece.offset().z());
             var state = PaletteStates.planned(piece);
+            var parts = new ArrayList<Map.Entry<BlockPos, BlockState>>();
             if (state.getBlock() instanceof DoorBlock || state.getBlock() instanceof TallPlantBlock) {
                 if (state.get(Properties.DOUBLE_BLOCK_HALF) != DoubleBlockHalf.LOWER)
                     throw new IllegalArgumentException("orphan_structure_part");
-                put(pieces, lot, at.up(), state.with(Properties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER));
+                var upper = state.with(Properties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER);
+                put(taken, lot, at.up(), upper);
+                parts.add(Map.entry(at.up().toImmutable(), upper));
             } else if (state.getBlock() instanceof BedBlock) {
                 if (state.get(Properties.BED_PART) != BedPart.FOOT)
                     throw new IllegalArgumentException("orphan_structure_part");
-                put(pieces, lot, at.offset(state.get(Properties.HORIZONTAL_FACING)), state.with(Properties.BED_PART, BedPart.HEAD));
+                var headAt = at.offset(state.get(Properties.HORIZONTAL_FACING));
+                var head = state.with(Properties.BED_PART, BedPart.HEAD);
+                put(taken, lot, headAt, head);
+                parts.add(Map.entry(headAt.toImmutable(), head));
             }
-            put(pieces, lot, at, state);
+            put(taken, lot, at, state);
+            parts.addFirst(Map.entry(at.toImmutable(), state));
+            result.add(new Piece(parts));
         }
-        return Map.copyOf(pieces);
+        result.sort(Comparator.comparingInt((Piece piece) -> piece.parts().getFirst().getKey().getY())
+                .thenComparingInt(piece -> piece.parts().getFirst().getKey().getX())
+                .thenComparingInt(piece -> piece.parts().getFirst().getKey().getZ()));
+        return List.copyOf(result);
     }
 
     private static void put(Map<BlockPos, BlockState> pieces, Building lot, BlockPos at, BlockState state) {

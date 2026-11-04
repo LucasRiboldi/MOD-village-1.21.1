@@ -36,11 +36,21 @@ final class MaeProtection {
         inspect(world, colonyId, area, true, readOnlyRoads);
     }
 
+    /** Peças já confirmadas desta obra não contam como volume protegido; o resto segue a regra do terreno — ADR-046. */
+    static void inspectStructure(ServerWorld world, UUID colonyId, WorkArea area, Set<BlockPos> ownWrites) {
+        inspect(world, colonyId, area, true, Set.of(), ownWrites);
+    }
+
     private static void inspect(ServerWorld world, UUID colonyId, WorkArea area, boolean lowVegetation) {
         inspect(world, colonyId, area, lowVegetation, Set.of());
     }
 
     private static void inspect(ServerWorld world, UUID colonyId, WorkArea area, boolean lowVegetation, Set<BlockPos> readOnlyRoads) {
+        inspect(world, colonyId, area, lowVegetation, readOnlyRoads, Set.of());
+    }
+
+    private static void inspect(ServerWorld world, UUID colonyId, WorkArea area, boolean lowVegetation,
+                                Set<BlockPos> readOnlyRoads, Set<BlockPos> ownWrites) {
         if (!world.getServer().isOnThread()) {
             throw new IllegalStateException("not_server_thread");
         }
@@ -104,6 +114,7 @@ final class MaeProtection {
         }
         for (BlockPos pos : BlockPos.iterate(area.min().x(), area.min().y(), area.min().z(),
                 area.max().x(), area.max().y(), area.max().z())) {
+            if (ownWrites.contains(pos)) continue;
             BlockState state = world.getBlockState(pos);
             boolean roadColumn = readOnlyRoads.stream().anyMatch(road -> road.getX() == pos.getX() && road.getZ() == pos.getZ());
             boolean roadFloor = readOnlyRoads.contains(pos);

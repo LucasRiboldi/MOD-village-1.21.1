@@ -21,7 +21,8 @@ class MaeWorkStoreTest {
 
     @Test
     void futureAndMalformedPayloadsRemainOpaqueAndBlockUpdates() {
-        for (int version : new int[]{1, 3}) {
+        // A versão 3 é o structure_v3; o futuro começa na 4 — ADR-046 P1.
+        for (int version : new int[]{1, 4}) {
             NbtCompound payload = new NbtCompound();
             payload.putInt("version", version);
             if (version == 1) {

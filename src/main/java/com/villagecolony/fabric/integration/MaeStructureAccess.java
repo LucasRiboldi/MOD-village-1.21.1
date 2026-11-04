@@ -46,7 +46,7 @@ public final class MaeStructureAccess {
         private final BlockPos support;
         private final Set<BlockPos> gates;
 
-        private Selected(UUID projectId, BlockPos opening, BlockPos support, Set<BlockPos> gates) {
+        Selected(UUID projectId, BlockPos opening, BlockPos support, Set<BlockPos> gates) {
             this.projectId = projectId;
             this.opening = opening.toImmutable();
             this.support = support.toImmutable();
