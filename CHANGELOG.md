@@ -12,6 +12,18 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.12] — busca local da casa do mineiro (2026-11-03, candidato)
+
+### Corrigido
+- Busca perto da mina tem cursor próprio, sem recentrar o índice da vila,
+  descartar a varredura geral ou alterar as pontas de extensão de rua.
+- Após uma volta local completa sem lote, o planejador pode tentar outras
+  construções. O pedido da casa permanece e volta a ser procurado depois.
+- Busca incompleta informa orçamento esgotado, em vez de afirmar ausência de lote.
+
+Mantém recusas físicas e proteções existentes. Testes locais suspensos nesta
+entrega; compilação e revisão não substituem o próximo playtest.
+
 ## [0.4.11] — início do MAE Fase 3 (2026-11-03, candidato)
 
 ### Adicionado

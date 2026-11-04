@@ -72,6 +72,23 @@ existentes. Correções de tarefas e navegação devem preservar saves.
 
 ## Pendências
 
+### Busca da casa do mineiro — opção A aprovada em 03-11
+
+A candidata 0.4.12 separa o cursor local junto à boca da mina do estado de
+varredura e do índice geral da vila. Reutiliza as recusas físicas de lote sem
+registrar pontas de rua ou reancorar o índice. O orçamento interrompe e retoma
+a busca local; somente uma volta completa sem lote libera a tentativa de outras
+obras. A ausência de planta residencial compatível também não bloqueia a fila.
+O pedido da casa continua derivado da mina e das construções existentes, sem
+marcador persistente de conclusão ou certificação de terreno legado.
+
+`VC_MINE_HOME` registra a volta sem lote. O próximo playtest precisa mostrar
+que cessaram as falsas derivas do centro e que outras obras podem avançar.
+Não implementa rua, smoothing ou garantia de terreno disponível junto à mina.
+Testes locais continuam suspensos nesta entrega; regressão fica registrada no TODO.
+
+### Demais itens
+
 - [x] Suspender ajudas cruzadas de pedreiro/fundidor no despacho `VillageHelpers`;
       revisão estática feita, efeito ainda depende de playtest.
 - [ ] Localizar e corrigir custo por tick com diagnóstico mensurável.

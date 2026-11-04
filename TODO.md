@@ -1,5 +1,14 @@
 # TODO
 
+## Playtest de 03-11 — fila de construção
+
+- [x] Isolar a busca da casa do mineiro, preservando índice, cursor geral e pontas de rua.
+- [x] Liberar outras obras somente após volta local completa sem lote; manter a casa pendente.
+- [ ] Confirmar no próximo playtest ausência das falsas derivas e progresso de outras obras.
+- [ ] Quando os testes forem liberados, cobrir busca parcelada, preservação do índice/cursor
+      e liberação da fila após volta sem lote no Sentinela Local.
+- [ ] Seguir com navegação e profissões antes da integração supervisionada MAE (ordem A, depois B).
+
 ## MAE — Fases 1 e 2
 
 - [x] Escolher prova na geração, sem autorização retroativa por carga ou origem da vila.

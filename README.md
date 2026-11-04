@@ -7,7 +7,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.11%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.12%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -16,7 +16,10 @@ do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
 Planejamento aprovado para o próximo ciclo: [terreno, mina e profissões](docs/technical/Plano-Playtest-2026-11-02.md).
-Na branch de desenvolvimento, a candidata **0.4.11** prepara o cálculo da entrada
+A candidata **0.4.12** separa a busca da casa do mineiro do índice geral da vila.
+Uma busca local completa sem lote permite outras obras e mantém a casa pendente.
+Efeito ainda depende do próximo playtest; não cria rua nem prepara terreno na mina.
+A versão **0.4.11** prepara o cálculo da entrada
 de estruturas da [Fase 3 do MAE](docs/technical/MAE-Fase-3.md), ainda sem integração
 automática com obras ou caminhos.
 Na branch de desenvolvimento, a candidata **0.4.9** adiciona a fundação de segurança

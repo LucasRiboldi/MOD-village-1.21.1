@@ -11658,3 +11658,34 @@ orquestrador, verificação textual e `remapJar` sem testes; o playtest continua
 fora do escopo desta ferramenta. O `remapJar` passou e o manifesto confirmou
 build, downloads e TLauncher para 0.4.5 com SHA-256
 `6D180AE9701125CE26B39CAA10B37A6BA1588664AE58C8D055A785A6DA23FA53`.
+
+## 03-11-2026 — busca isolada da casa do mineiro, candidata 0.4.12
+
+O playtest de 0.4.11 registrou 103 falsas derivas do centro durante a busca
+da casa junto à mina. O centro da colônia permanecia em (-1554,111,3553),
+mas `MineHomePlans.findSite` fornecia a boca da mina ao scanner geral.
+O scanner reancorava o índice de ruas e descartava o cursor compartilhado.
+`LotSeeking` retornava sem tentar outras construções quando a casa não cabia.
+
+O autor escolheu a opção A: cursor local independente, índice da vila
+preservado e outras obras permitidas após uma volta local completa sem lote.
+`MineHomeSiteSearch` reutiliza a avaliação física de `RoadsideSites`, sem
+registrar ruas ou pontas. A busca retoma respeitando teto de colunas e prazo;
+memória transitória é limpa pelo `ServerMemory`. O pedido da casa continua
+derivado da mina e das construções reais. Sem planta compatível, a fila também
+pode seguir. `VC_MINE_HOME` registra volta sem lote e manutenção do pedido.
+
+Branch `codex/mine-home-search`, criada da `main` atualizada `adb7630c`.
+README, STATE, TODO, CHANGELOG, PATTERNS, versão e plano de playtest atualizados.
+Nenhum save foi aberto, nenhuma nova dependência ou alteração de CI foi criada.
+Não inclui navegação, profissões, rua/smoothing da mina ou ativação automática MAE.
+
+Testes locais não foram criados nem executados, conforme modo temporário.
+A regressão necessária no Sentinela está registrada no TODO para quando houver liberação.
+Revisão de diff e `git diff --check` concluídos. `./gradlew.bat remapJar --console=plain`
+passou em 2m50s, com cinco tarefas e sem execução de testes. Manifesto do JAR
+confirma 0.4.12, Minecraft 1.21.1 e Java 21. Build, `downloads/` e TLauncher
+têm SHA-256 `4EBBB6C35AB112280570A9936E522C57B237327F9E64FAC363271C98AA4C0DFD`.
+O JAR 0.4.11 foi preservado como `.disabled`. Sem push, merge ou release nesta entrega.
+O próximo playtest deverá confirmar ausência das falsas derivas e progresso
+na busca geral de lotes; compilação não comprova retomada efetiva de obras.

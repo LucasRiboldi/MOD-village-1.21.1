@@ -1,7 +1,21 @@
 # STATE — 2026-11-03
 
-> **MAE Fase 3 em andamento, candidata 0.4.11:** branch `codex/mae-structures`, baseada no merge
-> `0a7590fc` do PR #49. Auditoria e limites em `docs/technical/MAE-Fase-3.md`.
+> **Playtest — candidata 0.4.12:** branch `codex/mine-home-search`, baseada na
+> `main` `adb7630c` (PR #50). Opção A aprovada: busca local da casa do mineiro
+> com cursor independente, sem recentrar o índice nem apagar o progresso geral.
+> Uma volta completa sem lote permite tentar outras obras; a casa continua pendente.
+> Busca parcial retoma respeitando teto de 1.024 colunas e prazo do planejador.
+> O log de 03-11 mostrou 103 falsas derivas: centro da vila comparado à boca da mina.
+> O marcador `VC_MINE_HOME` informa volta local sem lote e liberação da fila.
+> `remapJar` passou; manifesto confirma 0.4.12, Minecraft 1.21.1 e Java 21.
+> SHA-256 idêntico em `build/libs/`, `downloads/` e TLauncher:
+> `4EBBB6C35AB112280570A9936E522C57B237327F9E64FAC363271C98AA4C0DFD`.
+> O JAR anterior foi preservado como `.disabled`. Testes locais suspensos nesta
+> entrega; o efeito na fila ainda depende do próximo playtest. Sem push ou merge.
+> Não inclui acesso/smoothing da mina, navegação, profissões nem integração automática MAE.
+
+> **MAE Fase 3 em andamento, base 0.4.11 integrada pelo PR #50:**
+> auditoria e limites em `docs/technical/MAE-Fase-3.md`.
 > O contrato experimental deriva o ponto de entrada da planta da obra; ainda
 > não existe integração automática com construção ou caminhos. Carga real e
 > playtest da Fase 2 continuam necessários antes da orquestração automática.
