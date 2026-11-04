@@ -59,7 +59,8 @@ public class MaeRoadGateGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_road_gates", tickLimit = 20)
     public void supervisionUsesWholeSectionsInBothVersionsAndOnlyItsDimension(TestContext context) {
         try (Fixture f = new Fixture(context)) {
-            for (int version : List.of(1, 2)) {
+            // A versão 3 leva uma obra structure_v3; a caixa da região continua sendo a fronteira — ADR-046 P1.
+            for (int version : List.of(1, 2, 3)) {
                 for (BlockPos low : List.of(f.base, new BlockPos(-32, -32, -32))) {
                     BlockPos corner = low.add(15, 15, 15);
                     f.supervise(corner, version);
@@ -319,7 +320,14 @@ public class MaeRoadGateGameTest implements FabricGameTest {
             region.put("area", MaeWorldWriter.encode(new com.villagecolony.core.construction.model.WorkArea(pos(at), pos(at))));
             region.put("history", new NbtList());
             region.put("ownedSections", new NbtCompound());
-            if (version == 2) region.putString("policy", "terrain_v2");
+            if (version >= 2) region.putString("policy", "terrain_v2");
+            if (version == 3) {
+                NbtCompound job = new NbtCompound();
+                job.putString("type", "structure_v3");
+                job.putInt("contract", 1);
+                job.putString("state", "approved");
+                region.put("job", job);
+            }
             return region;
         }
 

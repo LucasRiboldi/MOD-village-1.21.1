@@ -84,6 +84,12 @@ public final class MaeStructureWriteGameTest implements FabricGameTest {
             scene.refused(() -> scene.approve(id, scene.house(), scene.sources(changed)), "template_changed");
             var water = scene.house(new BlueprintBlock(new ColonyPos(3, 1, 0), ResourceId.vanilla("water")));
             scene.refused(() -> scene.approve(id, water, scene.sources(water)), "unsupported_structure_piece");
+            // Mesmo modelo e pegada, mas de outra colônia: a região não pertence a ela — ADR-044.
+            var foreign = ConstructionProject.plan(UUID.randomUUID(), scene.house(), MinecraftTypeAdapter.toColonyPos(scene.base.up()));
+            scene.refused(() -> new MaeWorldWriter(scene.fixture.store, scene.sources(scene.house())).approveStructure(
+                    context.getWorld(), id, foreign, 0, new MaeStructureAccess.Selected(foreign.id(), scene.base.add(2, 1, 0),
+                            scene.base.add(2, 0, 0), Set.of(), MinecraftTypeAdapter.toColonyPos(scene.base.add(1, 1, 0)),
+                            List.of(MinecraftTypeAdapter.toColonyPos(scene.base.add(-1, 0, 0))))), "wrong_project_or_colony");
             scene.approve(id, scene.house(), scene.sources(scene.house()));
             scene.edit(id, job -> job.putInt("contract", 2));
             // O orçamento de escrita é do tick; a fatia seguinte começa com ele cheio — ADR-044.
@@ -124,6 +130,15 @@ public final class MaeStructureWriteGameTest implements FabricGameTest {
                     var door = scene.base.add(2, 1, 0);
                     scene.fixture.set(door, Blocks.OAK_DOOR.getDefaultState());
                     scene.refused(() -> scene.fixture.writer.resume(context.getWorld(), id), "partial_parts");
+                    // Todas as partes já no estado planejado: a escrita pode ter ocorrido, o baú não diz — ADR-046.
+                    var job = scene.job(id);
+                    var parts = job.getList("plan", NbtElement.COMPOUND_TYPE).getCompound(job.getInt("cursor"))
+                            .getList("parts", NbtElement.COMPOUND_TYPE);
+                    for (int i = 0; i < parts.size(); i++) {
+                        scene.fixture.set(BlockPos.fromLong(parts.getCompound(i).getLong("position")),
+                                MaeWorldWriter.decodeState(parts.getCompound(i).getCompound("after")));
+                    }
+                    scene.refused(() -> scene.fixture.writer.resume(context.getWorld(), id), "materials_uncertain");
                     context.assertTrue(scene.history(id).size() == 2 && "blocked".equals(scene.job(id).getString("state")),
                             "retomada ambígua repetiu ou liberou o passo");
                     context.assertTrue(!scene.chestEmpty(), "retomada ambígua consumiu material");
@@ -291,7 +306,7 @@ public final class MaeStructureWriteGameTest implements FabricGameTest {
                 context.assertTrue(reason.equals(failure.getMessage()), "recusa incorreta: " + failure.getMessage());
                 return;
             }
-            throw new AssertionError("operação deveria recusar: " + reason);
+            context.assertTrue(false, "operação deveria recusar: " + reason);
         }
 
         /** Corta terra e flor sobre a pegada, como a preparação MAE faria, e entrega a região pronta. */

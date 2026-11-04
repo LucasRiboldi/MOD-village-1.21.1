@@ -166,8 +166,11 @@ interrompido: promete **detectar** a interrupção, **nunca repetir** o passo e
 - O leitor novo aceita 1, 2 e 3. Jobs v1/v2 seguem pelos caminhos atuais.
   `type` ou `contract` desconhecido recusa com `unknown_structure_contract`;
   `MaeSectionLocks` trata o job desconhecido como seção ocupada.
-- [?] Na implementação, comprovar que os sete pontos legados também recusam
-  quando `supported()` é falso, sem lançar exceção no tick.
+- Os pontos legados passam por `MaeRoadAccess`: com `supported()` falso,
+  `legacyAllowed` e `metadataAllowed` devolvem falso sem lançar exceção. É o
+  caminho de um leitor até v2 diante de um save v3, provado com envelope
+  futuro em `MaeRoadGateGameTest`. Com envelope v3 legível, a caixa da região
+  com obra `structure_v3` bloqueia o legado só nas próprias seções.
 
 ### Região e projeto
 
@@ -284,8 +287,11 @@ do diário; porta com as duas metades no mesmo passo; espera por material sem
 intenção e continuação quando ele chega; template alterado; peça não suportada (água);
 contrato desconhecido; mundo alterado após aprovação; terreno ausente;
 envelope futuro opaco e preservado; `materials_uncertain` e `partial_parts`.
-A interrupção é simulada pelo estado gravado (`pendingWrite` e blocos), não
-por crash real do servidor. Ainda sem teste próprio: todas as partes em
-`after` com `pendingWrite`, região de outra colônia e o [?] dos pontos legados
-com envelope v3. O cenário de conclusão usa um job de terreno sintético; a
+`MaeStructureWriteGameTest` também cobre todas as partes em `after` com
+`pendingWrite` (`materials_uncertain`) e projeto de outra colônia
+(`wrong_project_or_colony`); `MaeRoadGateGameTest` cobre os pontos legados
+com envelope v3. A interrupção é simulada pelo estado gravado
+(`pendingWrite` e blocos), não por crash real do servidor. O leitor até v2
+não é executado: sua recusa é inferida do mesmo caminho de envelope
+desconhecido. O cenário de conclusão usa um job de terreno sintético; a
 cadeia terreno real → obra escrita (`built`) é provada em `MaeStructureWriteGameTest`, sem conclusão.

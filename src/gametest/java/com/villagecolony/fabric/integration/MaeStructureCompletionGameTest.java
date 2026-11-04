@@ -233,7 +233,7 @@ public final class MaeStructureCompletionGameTest implements FabricGameTest {
                 context.assertTrue(reason.equals(failure.getMessage()), "recusa incorreta: " + failure.getMessage());
                 return;
             }
-            throw new AssertionError("operação deveria recusar: " + reason);
+            context.assertTrue(false, "operação deveria recusar: " + reason);
         }
 
         void guarded(Runnable step) {
