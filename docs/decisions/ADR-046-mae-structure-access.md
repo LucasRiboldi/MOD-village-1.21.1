@@ -2,7 +2,8 @@
 
 Estado: contrato A, implementação e testes focados aprovados pelo autor
 em 2026-11-04. Implementação parcial; escrita de edifícios ainda não habilitada.
-O esquema `structure_v3` (seção própria abaixo) é proposta aguardando o autor.
+O esquema `structure_v3` (seção própria abaixo) foi aprovado pelo autor em
+2026-11-04, com P1–P4; ainda não implementado.
 Esta ADR complementa as ADRs [044](ADR-044-mae-region-safety.md) e
 [045](ADR-045-mae-terrain-road-chain.md). Não ativa obras no jogo.
 
@@ -136,10 +137,11 @@ intenção persistível de durabilidade: `PersistentState.markDirty` não confir
 uma transação atômica entre inventário, chunks e diário. Uma retomada ambígua
 precisa bloquear; um teste de serialização isolado não prova recuperação após crash.
 
-## Esquema `structure_v3` — proposta, aguardando aprovação do autor
+## Esquema `structure_v3`
 
-Detalha o item 8. Nada desta seção está implementado. As escolhas marcadas
-**P1–P4** são propostas; as alternativas ficam ao lado para o autor decidir.
+Detalha o item 8. Nada desta seção está implementado. O autor aprovou as
+escolhas **P1–P4** em 2026-11-04; as alternativas ficam registradas como
+não escolhidas.
 
 ### Premissa de durabilidade
 
@@ -157,7 +159,7 @@ interrompido: promete **detectar** a interrupção, **nunca repetir** o passo e
   `structure_v3` for aceita, como `reserveTerrain` promove para 2 hoje.
   Leitores até a 0.4.15 aceitam só 1 e 2: o payload inteiro fica opaco,
   preservado na gravação, e toda operação MAE da dimensão recusa. Sem conversão
-  de reservas v1/v2. *Alternativa:* manter o envelope em 2 e confiar na
+  de reservas v1/v2. *Não escolhida:* manter o envelope em 2 e confiar na
   recusa por `type` desconhecido; o leitor antigo, porém, gravaria
   `state=blocked` por cima do job novo.
 - O leitor novo aceita 1, 2 e 3. Jobs v1/v2 seguem pelos caminhos atuais.
@@ -202,7 +204,7 @@ Cada passo é uma peça com todas as suas partes:
 - **P2.** O contrato 1 aceita só o material exato da planta, tirado dos baús.
   Substituição (`MaterialChoice`) e peça que surge (`AppearingPieces`, ADR-036)
   ficam fora; o modelo que dependa delas fica bloqueado com motivo, conforme o
-  item 9. *Alternativa:* registrar a escolha na intenção, com o `after`
+  item 9. *Não escolhida:* registrar a escolha na intenção, com o `after`
   vestido, ao custo de recalcular `expectedSections` no passo.
 - Teto: plano + histórico ≤ 1.024 registros; acima disso a aprovação recusa
   com `history_budget_exceeded`, sem dividir a obra automaticamente.
@@ -214,14 +216,14 @@ Cada passo é uma peça com todas as suas partes:
 2. **Material:** se o baú não tiver o item, `state=waiting` com o item no
    `reason`, sem intenção e sem escrita; reavaliar com limite de taxa.
    **P3.** A ordem do cursor é estrita no contrato 1, sem pôr peças de lado.
-   *Alternativa:* lista de adiadas, como o construtor legado; exige revalidar
+   *Não escolhida:* lista de adiadas, como o construtor legado; exige revalidar
    apoio fora de ordem.
 3. **Intenção:** histórico com `result=pending` e `materials=reserved`
    (item, quantidade, baú), `pendingWrite=true`, `store.update`.
 4. **P4. Retirada antes da escrita:** retirar do baú, depois escrever as
    partes com `NOTIFY_LISTENERS | FORCE_STATE`. Um crash nesse intervalo perde
    no máximo o material de um passo; nunca cria bloco sem material ("a colônia
-   não inventa matéria"). *Alternativa:* escrever antes de retirar, que
+   não inventa matéria"). *Não escolhida:* escrever antes de retirar, que
    arrisca bloco grátis em vez de perda.
 5. **Confirmar:** conferir cada parte e as seções esperadas; histórico com
    `result=applied` e `materials=consumed`; `pendingWrite=false`, cursor + 1.
