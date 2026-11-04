@@ -89,6 +89,16 @@ Reconfira o estado antes de trabalhar: este arquivo é uma fotografia.
   Preserve `.serena/`, saves do jogador, `downloads/` e a pasta de mods ao
   retomar, salvo autorização correspondente.
 
+## Atualização de 2026-11-04 (Claude Code)
+
+- [V] Os passos 2 a 5 abaixo foram feitos nesta branch, até a candidata 0.4.16:
+  `structure_v3` na ADR-046 com P1–P4 aprovadas, writer, conclusão com acesso
+  real, `beginFor`, `MaeStructureSite` e modelos reais nas quatro rotações.
+  Ver `STATE.md`, ADR-046 e matriz da Fase 3, seção 7.
+- [V] Terreno plano entra por prova sem mudança, escolha do autor.
+- [?] Pendentes: lote e origem reais, comando supervisionado em jogo, demais
+  modelos, travessia de animais, carga real e playtest da Fase 2.
+
 ## Próximos passos
 
 1. [V] Conferir `git status`, `git fetch` e a branch de trabalho; preservar

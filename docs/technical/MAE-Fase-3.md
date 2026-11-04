@@ -140,10 +140,27 @@ Ambas passaram; contagens atuais em `STATE.md`. Logs locais em
 `fabric.mod.json`; as suites `unit` e `gametest` do Sentinela já as descobrem.
 Não foi criado outro runner nem executada a bateria completa do Sentinela.
 
+### Writer e fluxo supervisionado — 04-11 (0.4.16)
+
+O contrato `structure_v3` está na ADR-046. `MaeStructureExecution` aprova,
+escreve, conclui e retoma; `MaeStructureAccess.beginFor` deriva circulação e
+destino; `MaeStructureSite` conduz terreno → acesso → obra. Resultado por
+modelo na matriz, seção 7.
+
+```powershell
+.\gradlew.bat runGametest "-PgametestOnly=Mae" --console=plain
+.\gradlew.bat test --tests "com.villagecolony.architecture.*" --tests "com.villagecolony.data.save.MaeWorkStoreTest" --console=plain
+```
+
+Passaram 105 GameTests MAE e 23 unitários. Mutações na retirada do baú, na
+falha de acesso, na classificação da retomada, na checagem de colônia, no
+filtro da circulação, na prova de terreno plano e na rotação foram mortas.
+Bateria completa não executada.
+
 ### O que ainda impede concluir a fase
 
-- Writer `structure_v3`, materiais físicos, efeitos secundários e retomada.
-- Conteúdo funcional e circulação individual de cada modelo antes de habilitá-lo.
+- Conteúdo funcional e circulação individual dos demais modelos antes de habilitá-los.
+- Lote e origem reais e um disparo supervisionado em jogo.
 - Travessia controlada do pastor e dos animais; coleta legada por teleporte não é essa prova.
 - Carga real e playtest da Fase 2 antes de qualquer orquestração automática.
 
@@ -151,4 +168,4 @@ Não foi criado outro runner nem executada a bateria completa do Sentinela.
 entre inventário, blocos e diário. A próxima integração precisa registrar consumo
 antes das peças dependentes e bloquear ambiguidade, sem presumir durabilidade de
 um simples round-trip NBT. O detalhamento de persistência deve anteceder código.
-O checkpoint desta fase preserva trabalho parcial para retomada; não houve alteração de saves do jogador, nova versão ou JAR.
+Nenhum save do jogador foi alterado. A candidata 0.4.16 é a primeira versão com JAR desta fase.

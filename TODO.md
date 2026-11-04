@@ -48,9 +48,13 @@
 - [x] Provar estados, limites e partes secundárias de representantes dos cinco estilos; recusar payload não suportado. Resultados atuais somente em `STATE.md`.
 - [x] Cobrir acesso alternativo, agrupamento do cercado e capacidade total 20, preservando a rotina legada.
 - [ ] Provar travessia física do pastor e animal pelos portões; a coleta legada ainda usa teleporte de animais.
-- [ ] Validar conteúdo funcional, materiais físicos e habilitação individual dos modelos; depósito grande e placas não tratados continuam bloqueados.
-- [ ] Detalhar e implementar `structure_v3` no writer existente: materiais, intenção, confirmação, efeitos secundários e retomada ambígua bloqueada.
-- [ ] Integrar reserva, preparação, construção e retomada após cumprir os gates da Fase 2.
+- [x] Detalhar e implementar `structure_v3` no writer existente: materiais, intenção, confirmação, efeitos secundários e retomada ambígua bloqueada (ADR-046, 0.4.16).
+- [x] Concluir obra só com acesso real conferido; registrar o edifício uma vez; retomada volta a conferir.
+- [x] Derivar circulação e destino (`beginFor`) e ligar terreno → acesso → obra (`MaeStructureSite`), terreno plano por prova sem mudança.
+- [x] Exercitar casa, oficina, curral e depósito reais nas quatro rotações (GameTests).
+- [ ] Validar conteúdo funcional e habilitação individual dos demais modelos; vaso com planta, curral grande (água, solo arado, trigo), depósito grande e payloads não tratados continuam recusados.
+- [ ] Escolher lote e origem reais para a obra supervisionada e expor um comando em jogo para disparar `MaeStructureSite`.
+- [ ] Integrar reserva, preparação, construção e retomada à fila automática após cumprir os gates da Fase 2.
 
 ## Playtest de 02-11 — escolhas A aprovadas
 

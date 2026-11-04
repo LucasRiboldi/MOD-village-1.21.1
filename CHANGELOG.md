@@ -12,6 +12,27 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.16] — obra supervisionada MAE `structure_v3` (2026-11-04, candidato)
+
+### Adicionado
+- Contrato `structure_v3` (ADR-046, P1–P4 aprovadas): envelope `maeWork` v3,
+  material exato dos baús, cursor em ordem estrita e retirada antes da escrita.
+  Passo interrompido nunca se repete; a retomada bloqueia com causa.
+- Conclusão só depois de a prova de acesso passar nos blocos reais; o edifício
+  entra no registro uma vez e a obra concluída não reconstrói após recarga.
+- `MaeStructureAccess.beginFor` deriva circulação e destino útil da planta.
+- `MaeStructureSite` conduz terreno → prova de acesso → obra numa região
+  reservada; terreno já plano entra por prova sem mudança (escolha do autor).
+- GameTests com casa, oficina, curral e depósito reais nas quatro rotações e
+  tabela do que o contrato 1 aceita em 14 modelos representativos.
+
+### Corrigido
+- Conversão de `ColonyPos` em `MaeStructureModel` fora do adaptador (ADR-005 §4).
+
+### Limites
+- Nenhuma obra MAE é disparada em jogo: não há comando nem fila automática.
+- Lote e origem ainda vêm do chamador; sem playtest.
+
 ## [0.4.15] — conservação da rota da mina (2026-11-03, candidato)
 
 ### Corrigido

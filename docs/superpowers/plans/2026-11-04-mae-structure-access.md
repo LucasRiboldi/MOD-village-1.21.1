@@ -222,22 +222,23 @@ e `BlockShaping.java`.
 **Provas:** criar `src/gametest/java/com/villagecolony/fabric/integration/MaeStructureWriteGameTest.java`;
 estender `MaeContractGameTest.java` e as regressões MAE afetadas no mesmo diretório.
 
-- [ ] Mapear todos os efeitos da colocação antes de editar: bloco principal,
+- [x] Mapear todos os efeitos da colocação antes de editar: bloco principal,
   segunda metade, apoio, inicialização admitida e consumo de material.
-- [ ] Fixar o esquema de `structure_v3` na ADR-046: associação com região e
+- [x] Fixar o esquema de `structure_v3` na ADR-046: associação com região e
   projeto, efeitos planejados, intenção, confirmação e cursor. Leitores antigos
   devem bloquear o formato desconhecido; não reinterpretar v1/v2 ou migrar reservas.
-- [ ] Criar regressões para corte de proteção, escrita fora do plano, região
+- [x] Criar regressões para corte de proteção, escrita fora do plano, região
   errada, falta de prova, contrato desconhecido e falha após escrita física.
-- [ ] Implementar aprovação explícita após preparação concluída; revalidar
+- [x] Implementar aprovação explícita após preparação concluída; revalidar
   os efeitos do terreno pelo diário existente. Não recapturar evidência como
   se a área alterada fosse uma nova geração intacta.
-- [ ] Conduzir todas as partes da peça pelo writer e pelo fluxo de materiais
+- [x] Conduzir todas as partes da peça pelo writer e pelo fluxo de materiais
   existente. Não ligar `BlockShaping` diretamente ao mundo supervisionado como fallback.
-- [ ] Provar retomada entre intenção/escrita/confirmação/consumo sem duplicação
+- [x] Provar retomada entre intenção/escrita/confirmação/consumo sem duplicação
   ou perda silenciosa. Ambiguidade bloqueia e informa causa; orçamento permanece
   global, com uma obra ativa por região e histórico combinado dentro do teto atual.
-- [ ] Validar focadamente; revisar compatibilidade e diff antes do commit autorizado.
+  Interrupção simulada pelo estado gravado, não por crash real do servidor.
+- [x] Validar focadamente; revisar compatibilidade e diff antes do commit autorizado.
 
 ### Tarefa 7 — Conclusão, retomada e habilitação supervisionada
 
@@ -249,13 +250,17 @@ Reutilizar `src/main/java/com/villagecolony/fabric/integration/BlueprintPlacemen
 `src/gametest/java/com/villagecolony/fabric/integration/BlueprintResumeGameTest.java`
 e `MaeStructureWriteGameTest.java`.
 
-- [ ] Provar que conclusão sem mobília não certifica acesso e que projeto
+- [x] Provar que conclusão sem mobília não certifica acesso e que projeto
   concluído não reconstrói nem consome materiais novamente após recarga.
-- [ ] Revalidar a geometria real e a compatibilidade do template antes de
+- [x] Revalidar a geometria real e a compatibilidade do template antes de
   retomar. Conservar os estados já persistidos por `ColonySavedData` e
   `ColonySaveReader`; não salvar outro booleano de acesso pronto.
+  `BuildClosing` não é chamado (opera sobre o projeto vivo do legado); o
+  registro final `BUILDINGS.registerOrMerge` é o mesmo — ADR-046.
 - [ ] Permitir exercício supervisionado de uma casa, oficina, curral, depósito
   e conexão local comprovados, dentro dos tetos. Modelo sem prova segue bloqueado.
+  Feito em GameTest para casa, oficina, curral e depósito (`MaeStructureSite`);
+  falta a conexão local de rua e um disparo supervisionado em jogo.
 - [ ] Antes de ligar à fila automática, comprovar carga real e playtest da
   Fase 2 com relatórios. Sem isso, entregar o recorte supervisionado e registrar
   a ativação como pendência; não marcar toda a Fase 3 concluída.
@@ -272,7 +277,7 @@ Versão funcional: conferir `gradle.properties` e manifesto efetivamente gerado.
 
 - [x] Garantir que as novas classes de prova sejam descobertas nas suites
   `unit` e `gametest` existentes de `scripts/test_lab.py`; não criar outro runner.
-- [ ] Documentar os comandos focados após existirem as classes. Exemplo futuro:
+- [x] Documentar os comandos focados após existirem as classes (`MAE-Fase-3.md`). Exemplo anterior:
   `.\gradlew.bat runGametest "-PgametestOnly=MaeStructureAccessGameTest,MaeStructureWriteGameTest,PenModelGameTest,ShepherdPensGameTest,ShepherdHerdingGameTest"`.
 - [ ] Após liberação específica, reunir resultados em uma execução proporcional
   do Sentinela: `python scripts/test_lab.py fast --only unit,gametest`.
