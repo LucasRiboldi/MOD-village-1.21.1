@@ -209,7 +209,7 @@ final class ShepherdHerding {
         boolean fenceRead = false;
 
         for (AnimalEntity animal : candidates) {
-            Optional<ShepherdPens.Pen> pen = ShepherdPens.forSpecies(world, colony, animal.getType(), home, null, false);
+            Optional<ShepherdPens.Pen> pen = ShepherdPens.forSpecies(world, colony, animal.getType(), shepherd, null, false);
 
             if (pen.isPresent()) {
                 Herd herd = new Herd(animal.getUuid(), pen.get().gate(), world.getTime());
@@ -240,7 +240,7 @@ final class ShepherdHerding {
             return Optional.of(herd);
         }
 
-        return separate(world, colony, home);
+        return separate(world, colony, shepherd);
     }
 
     /**
@@ -248,8 +248,11 @@ final class ShepherdHerding {
      * cercado só da espécie dele (ou um vazio) com lugar, para que cada tipo acabe no seu quando a vila tem
      * vários currais. Um por vez, e só quando não há animal solto a recolher.
      */
-    static Optional<Herd> separate(ServerWorld world, Colony colony, BlockPos home) {
-        for (ShepherdPens.Pen mixed : ShepherdPens.pensOf(world, colony)) {
+    private static Optional<Herd> separate(ServerWorld world, Colony colony, VillagerEntity shepherd) {
+        for (ShepherdPens.Pen group : ShepherdPens.pensOf(world, colony)) {
+            var source = ShepherdPens.reachableFrom(world, group, shepherd);
+            if (source.isEmpty()) continue;
+            var mixed = source.get();
             Map<EntityType<?>, Integer> inside = ShepherdPens.speciesIn(world, mixed);
 
             if (inside.size() < 2) {
@@ -257,11 +260,11 @@ final class ShepherdHerding {
             }
 
             for (AnimalEntity animal : world.getEntitiesByClass(AnimalEntity.class,
-                    new Box(mixed.inside()).expand(FencedIn.RADIUS),
+                    ShepherdPens.areaOf(mixed),
                     candidate -> candidate.isAlive() && candidate.canBeLeashed() && !candidate.isLeashed()
                             && mixed.reach().contains(candidate.getBlockPos()))) {
                 Optional<ShepherdPens.Pen> own =
-                        ShepherdPens.forSpecies(world, colony, animal.getType(), home, mixed, true);
+                        ShepherdPens.forSpecies(world, colony, animal.getType(), shepherd, mixed, true);
 
                 if (own.isPresent()) {
                     Herd herd = new Herd(animal.getUuid(), own.get().gate(), world.getTime());

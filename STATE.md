@@ -1,4 +1,26 @@
-# STATE — 2026-11-03
+# STATE — 2026-11-04
+
+> **MAE Fase 3 — implementação parcial autorizada:** contrato A formalizado na
+> `docs/decisions/ADR-046-mae-structure-access.md`; plano em
+> `docs/superpowers/plans/2026-11-04-mae-structure-access.md`.
+> Inclui metadados, circulação física, quatro portões no curral e escrita
+> supervisionada de edifícios. PR #51 integrado após CI; linha atual
+> `codex/mae-structure-access`, baseada na `main` `9dc8b4f2`.
+> Implementados metadados imutáveis, extração do template carregado, limites
+> declarados e validação física local prevista/real. Leitura estrita confere
+> estados, partes secundárias, payloads admitidos e quatro rotações por modelo.
+> Passaram 36 unitários/arquitetura e 67 GameTests focados, em execuções finais
+> separadas. Comandos e limites no relatório da Fase 3; testes focados liberados.
+> Opção B do autor: variante de quatro portões exclusiva de `readForMae`;
+> fluxo automático conserva o NBT anterior de um portão. Um único cercado,
+> acessos alternativos e capacidade 20 cobertos; travessia física dos animais
+> pela rotina do pastor continua pendente. Não foi ativada construção MAE.
+> Corrigidas codificação NBT do pórtico, fronteiras/rotação de templates,
+> orçamento vulnerável a overflow e dependência circular introduzida no MAE.
+> Writer de edifícios, materiais, retomada e habilitação continuam pendentes.
+> Checkpoint parcial de pausa nesta branch; sem edição de saves, nova versão ou JAR.
+> Retomar pelo detalhamento de `structure_v3` na ADR-046 e pelo plano da Fase 3.
+> Ativação automática permanece bloqueada por carga real e playtest da Fase 2.
 
 > **Playtest — candidata 0.4.15:** conservação da rota da mina, opção A aprovada.
 > O playtest 0.4.14 confirmou origem na rua e até 30.289 células, com 23/23

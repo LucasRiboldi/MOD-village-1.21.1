@@ -1,0 +1,9 @@
+{
+  "villagecolony:colony/storage_majest": [{"opening": [[9, 1, 3]], "outward": "east"}],
+  "villagecolony:colony/plains/storage_majest": [{"opening": [[9, 1, 3]], "outward": "east"}],
+  "villagecolony:colony/desert/storage_majest": [{"opening": [[9, 1, 3]], "outward": "east"}],
+  "villagecolony:colony/savanna/storage_majest": [{"opening": [[9, 1, 3]], "outward": "east"}],
+  "villagecolony:colony/taiga/storage_majest": [{"opening": [[9, 1, 3]], "outward": "east"}],
+  "villagecolony:colony/snowy/storage_majest": [{"opening": [[9, 1, 3]], "outward": "east"}],
+  "villagecolony:mine_entrance": [{"opening": [[3, 1, 0], [4, 1, 0], [5, 1, 0]], "outward": "north"}]
+}

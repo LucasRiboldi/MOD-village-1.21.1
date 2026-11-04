@@ -10,6 +10,21 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class ShapeStatesTest {
 
     @Test
+    void maeConnectionsRotateWithTheirValuesAndKeepInvariantProperties() {
+        var states = Map.of("north", "true", "east", "false", "south", "false", "west", "true",
+                "hinge", "right", "age", "7");
+        assertEquals(Map.of("east", "true", "south", "false", "west", "false", "north", "true",
+                "hinge", "right", "age", "7"), ShapeStates.turned(states, 1));
+        assertEquals(states, ShapeStates.turned(ShapeStates.turned(states, 1), 3));
+    }
+
+    @Test
+    void maeNumericRotationUsesSixteenSteps() {
+        assertEquals(Map.of("rotation", "1"), ShapeStates.turned(Map.of("rotation", "13"), 1));
+        assertEquals(Map.of("rotation", "13"), ShapeStates.turned(Map.of("rotation", "13"), 4));
+    }
+
+    @Test
     void axisHalfSlabTypeAndStairShapePass() {
         assertEquals(Map.of("axis", "x"), ShapeStates.of(Map.of("axis", "x")));
         assertEquals(Map.of("half", "top", "shape", "outer_left"),

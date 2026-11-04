@@ -23,6 +23,30 @@ import java.util.Optional;
 /** Eixo, metade e formato saem na posição da planta (ADR-036 19). */
 public class PlanStatesGameTest implements FabricGameTest {
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_plan_states", tickLimit = 20)
+    public void maePredictionKeepsExplicitFacingAtTheBlueprintEdge(TestContext context) {
+        var piece = new BlueprintBlock(new ColonyPos(0, 1, 0), ResourceId.vanilla("oak_fence_gate"), false,
+                Optional.of(com.villagecolony.core.type.Side.WEST), Map.of());
+        context.assertTrue(com.villagecolony.fabric.integration.PaletteStates.planned(piece).get(Properties.HORIZONTAL_FACING) == Direction.WEST,
+                "previsão MAE substituiu facing explícito pela parede mais próxima");
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_plan_states", tickLimit = 20)
+    public void maePredictionRejectsUnknownPropertiesAndInvalidValues(TestContext context) {
+        for (var states : java.util.List.of(Map.of("axis", "diagonal"), Map.of("not_a_property", "x"))) {
+            var piece = planned("oak_log", states);
+            boolean rejected = false;
+            try {
+                com.villagecolony.fabric.integration.PaletteStates.planned(piece);
+            } catch (IllegalArgumentException expected) {
+                rejected = expected.getMessage().startsWith("invalid_structure_property:");
+            }
+            context.assertTrue(rejected, "previsão MAE aceitou propriedade ou valor inválido: " + states);
+        }
+        context.complete();
+    }
+
     private static BlueprintBlock planned(String block, Map<String, String> states) {
         return new BlueprintBlock(new ColonyPos(1, 0, 1), ResourceId.vanilla(block), false, Optional.empty(), states);
     }

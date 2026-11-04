@@ -78,18 +78,27 @@ public final class ShapeStates {
         return of(properties);
     }
 
-    /** Girar a planta um quarto de volta troca o eixo X pelo Z; o resto não muda. */
+    /** Rotação da planta: eixo, conexões cardinais e orientação em dezesseis passos — ADR-046. */
     public static Map<String, String> turned(Map<String, String> states, int turns) {
-        String axis = states.get("axis");
-
-        if (Math.floorMod(turns, 2) == 0 || axis == null || "y".equals(axis)) {
+        int quarters = Math.floorMod(turns, 4);
+        if (quarters == 0 || states.isEmpty()) {
             return states;
         }
-
         Map<String, String> turned = new TreeMap<>(states);
-
-        turned.put("axis", "x".equals(axis) ? "z" : "x");
-
+        String axis = states.get("axis");
+        if (quarters % 2 != 0 && ("x".equals(axis) || "z".equals(axis)))
+            turned.put("axis", "x".equals(axis) ? "z" : "x");
+        String[] sides = {"north", "east", "south", "west"};
+        for (String side : sides) turned.remove(side);
+        for (int i = 0; i < sides.length; i++) {
+            String value = states.get(sides[i]);
+            if (value != null) turned.put(sides[(i + quarters) % 4], value);
+        }
+        if (states.containsKey("rotation")) {
+            int rotation = Integer.parseInt(states.get("rotation"));
+            if (rotation < 0 || rotation > 15) throw new IllegalArgumentException("invalid_structure_rotation");
+            turned.put("rotation", Integer.toString((rotation + 4 * quarters) % 16));
+        }
         return Map.copyOf(turned);
     }
 }

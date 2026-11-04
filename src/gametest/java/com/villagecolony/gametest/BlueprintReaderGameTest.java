@@ -2,6 +2,7 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.BlueprintAccess;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -10,6 +11,14 @@ import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.DoorBlock;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtHelper;
+import net.minecraft.nbt.NbtInt;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.registry.Registries;
+import net.minecraft.structure.StructureTemplate;
+import net.minecraft.util.Identifier;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 
@@ -17,6 +26,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -294,6 +304,145 @@ public class BlueprintReaderGameTest implements FabricGameTest {
         context.assertTrue(nothing.isEmpty(), "uma estrutura inexistente devolveu projeto");
 
         context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "blueprint_reader")
+    public void doorsKeepBothCandidateDirectionsWithoutCertifyingInternalDoors(TestContext context) {
+        NbtCompound nbt = fixture(Blocks.OAK_DOOR.getDefaultState());
+        NbtList entries = nbt.getList("blocks", NbtElement.COMPOUND_TYPE);
+        entries.add(cell(1, 1, 0, 0));
+        entries.add(cell(2, 1, 0, 0));
+        entries.add(cell(1, 1, 3, 0));
+        Blueprint blueprint = fixtureBlueprint(context, "doors", nbt);
+        List<BlueprintAccess> doors = blueprint.accesses().stream()
+                .filter(access -> access.kind() == BlueprintAccess.Kind.DOOR).toList();
+        context.assertTrue(doors.size() == 4, "duas passagens precisam dos dois sentidos candidatos");
+        context.assertTrue(doors.stream().filter(access -> access.opening().size() == 2).count() == 2,
+                "porta dupla deve formar uma passagem em cada sentido");
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "blueprint_reader")
+    public void entranceJigsawSurvivesFilteringButVerticalConnectorDoesNot(TestContext context) {
+        NbtCompound nbt = fixture(Blocks.JIGSAW.getDefaultState());
+        NbtList palette = nbt.getList("palette", NbtElement.COMPOUND_TYPE);
+        NbtCompound verticalState = NbtHelper.fromBlockState(Blocks.JIGSAW.getDefaultState());
+        verticalState.getCompound("Properties").putString("orientation", "up_north");
+        palette.add(verticalState);
+        NbtList entries = nbt.getList("blocks", NbtElement.COMPOUND_TYPE);
+        NbtCompound horizontal = cell(1, 1, 0, 0);
+        NbtCompound data = new NbtCompound();
+        data.putString("name", "minecraft:building_entrance");
+        data.putString("final_state", "minecraft:air");
+        horizontal.put("nbt", data);
+        entries.add(horizontal);
+        NbtCompound vertical = cell(1, 1, 3, 2);
+        vertical.put("nbt", data.copy());
+        entries.add(vertical);
+        Blueprint blueprint = fixtureBlueprint(context, "jigsaw", nbt);
+        context.assertTrue(blueprint.accesses().size() == 1, "somente o conector horizontal é candidato");
+        context.assertTrue(blueprint.accesses().getFirst().opening().equals(List.of(new ColonyPos(1, 2, 0))),
+                "o filtro de blocos perdeu o conector de entrada");
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "blueprint_reader")
+    public void aDeclaredStorageOpeningIsCheckedAgainstTheLoadedTemplate(TestContext context) {
+        ResourceId id = ResourceId.parse("villagecolony:colony/storage_majest");
+        StructureTemplate template = context.getWorld().getStructureTemplateManager()
+                .getTemplateOrBlank(MinecraftTypeAdapter.toIdentifier(id));
+        NbtCompound original = template.writeNbt(new NbtCompound());
+        try {
+            Blueprint storage = StructureBlueprintReader.read(context.getWorld(), id).orElseThrow();
+            context.assertTrue(storage.accesses().stream().anyMatch(access ->
+                    access.kind() == BlueprintAccess.Kind.OPENING), "depósito perdeu o vão inspecionado");
+            NbtCompound obstructed = original.copy();
+            NbtList palette = obstructed.getList("palette", NbtElement.COMPOUND_TYPE);
+            int stone = palette.size();
+            palette.add(NbtHelper.fromBlockState(Blocks.STONE.getDefaultState()));
+            NbtList entries = obstructed.getList("blocks", NbtElement.COMPOUND_TYPE);
+            entries.removeIf(entry -> isAt((NbtCompound) entry, 9, 2, 3));
+            entries.add(cell(9, 2, 3, stone));
+            template.readNbt(Registries.BLOCK.getReadOnlyWrapper(), obstructed);
+            Blueprint blocked = StructureBlueprintReader.read(context.getWorld(), id).orElseThrow();
+            context.assertTrue(blocked.accesses().stream().noneMatch(access ->
+                    access.kind() == BlueprintAccess.Kind.OPENING), "vão obstruído foi aceito por id do modelo");
+        } finally {
+            template.readNbt(Registries.BLOCK.getReadOnlyWrapper(), original);
+        }
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "blueprint_reader")
+    public void upperDoorIsNotAnotherAccessAndFenceGateKeepsItsOwnKind(TestContext context) {
+        NbtCompound nbt = fixture(Blocks.OAK_DOOR.getDefaultState());
+        NbtList palette = nbt.getList("palette", NbtElement.COMPOUND_TYPE);
+        NbtCompound upper = NbtHelper.fromBlockState(Blocks.OAK_DOOR.getDefaultState());
+        upper.getCompound("Properties").putString("half", "upper");
+        palette.add(upper);
+        palette.add(NbtHelper.fromBlockState(Blocks.OAK_FENCE_GATE.getDefaultState()));
+        NbtList entries = nbt.getList("blocks", NbtElement.COMPOUND_TYPE);
+        entries.add(cell(1, 1, 0, 0));
+        entries.add(cell(1, 2, 0, 2));
+        entries.add(cell(4, 1, 3, 3));
+        Blueprint blueprint = fixtureBlueprint(context, "gate_and_upper", nbt);
+        context.assertTrue(blueprint.accesses().size() == 4, "duas peças de passagem, dois sentidos cada");
+        context.assertTrue(blueprint.accesses().stream().filter(access ->
+                access.kind() == BlueprintAccess.Kind.GATE).count() == 2, "portão foi confundido com porta");
+        context.assertTrue(blueprint.accesses().stream().allMatch(access -> access.opening().getFirst().y() == 1),
+                "metade superior virou acesso independente");
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "blueprint_reader")
+    public void everyStyleKeepsItsLoadedHouseAndDeclaredStorageCandidates(TestContext context) {
+        for (String style : List.of("plains", "desert", "savanna", "taiga", "snowy")) {
+            ResourceId house = ResourceId.vanilla("village/" + style + "/houses/" + style + "_small_house_1");
+            context.assertTrue(!StructureBlueprintReader.read(context.getWorld(), house).orElseThrow().accesses().isEmpty(),
+                    "casa sem candidatos: " + style);
+            ResourceId storage = ResourceId.parse("villagecolony:colony/" + style + "/storage_majest");
+            context.assertTrue(StructureBlueprintReader.read(context.getWorld(), storage).orElseThrow().accesses()
+                    .stream().anyMatch(access -> access.kind() == BlueprintAccess.Kind.OPENING),
+                    "depósito sem vão conferido: " + style);
+        }
+        context.complete();
+    }
+
+    private static NbtCompound fixture(net.minecraft.block.BlockState state) {
+        NbtCompound nbt = new NbtCompound();
+        NbtList size = new NbtList();
+        for (int value : new int[]{5, 4, 5}) size.add(NbtInt.of(value));
+        nbt.put("size", size);
+        NbtList palette = new NbtList();
+        palette.add(NbtHelper.fromBlockState(state));
+        palette.add(NbtHelper.fromBlockState(Blocks.STONE.getDefaultState()));
+        nbt.put("palette", palette);
+        NbtList blocks = new NbtList();
+        blocks.add(cell(0, 0, 0, 1));
+        nbt.put("blocks", blocks);
+        nbt.put("entities", new NbtList());
+        return nbt;
+    }
+
+    private static NbtCompound cell(int x, int y, int z, int state) {
+        NbtCompound block = new NbtCompound();
+        NbtList pos = new NbtList();
+        for (int value : new int[]{x, y, z}) pos.add(NbtInt.of(value));
+        block.put("pos", pos);
+        block.putInt("state", state);
+        return block;
+    }
+
+    private static Blueprint fixtureBlueprint(TestContext context, String name, NbtCompound nbt) {
+        Identifier id = Identifier.of("villagecolony", "test/access_" + name);
+        context.getWorld().getStructureTemplateManager().getTemplateOrBlank(id)
+                .readNbt(Registries.BLOCK.getReadOnlyWrapper(), nbt);
+        return StructureBlueprintReader.read(context.getWorld(), ResourceId.parse(id.toString())).orElseThrow();
+    }
+
+    private static boolean isAt(NbtCompound entry, int x, int y, int z) {
+        NbtList pos = entry.getList("pos", NbtElement.INT_TYPE);
+        return pos.size() == 3 && pos.getInt(0) == x && pos.getInt(1) == y && pos.getInt(2) == z;
     }
 
     private static Blueprint read(TestContext context) {

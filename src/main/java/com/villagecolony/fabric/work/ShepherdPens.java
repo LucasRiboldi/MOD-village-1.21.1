@@ -68,6 +68,8 @@ final class ShepherdPens {
     static final List<Item> FENCES = List.of(Items.OAK_FENCE, Items.SPRUCE_FENCE, Items.BIRCH_FENCE,
             Items.JUNGLE_FENCE, Items.ACACIA_FENCE, Items.DARK_OAK_FENCE, Items.MANGROVE_FENCE, Items.CHERRY_FENCE);
 
+    record Access(BlockPos gate, BlockPos inside, BlockPos outside) { }
+
     /**
      * Um cercado.
      *
@@ -76,7 +78,18 @@ final class ShepherdPens {
      * @param outside o chão de fora, de onde o pastor entrega o animal
      * @param reach o chão de dentro inteiro
      */
-    record Pen(BlockPos gate, BlockPos inside, BlockPos outside, Set<BlockPos> reach, boolean large) {
+    record Pen(BlockPos gate, BlockPos inside, BlockPos outside, Set<BlockPos> reach, boolean large,
+               List<Access> accesses) {
+        Pen(BlockPos gate, BlockPos inside, BlockPos outside, Set<BlockPos> reach, boolean large) {
+            this(gate, inside, outside, Set.copyOf(reach), large, List.of(new Access(gate, inside, outside)));
+        }
+        Pen {
+            reach = Set.copyOf(reach);
+            accesses = List.copyOf(accesses);
+        }
+        Pen at(Access access) {
+            return new Pen(access.gate(), access.inside(), access.outside(), reach, large, accesses);
+        }
     }
 
     private static final Map<UUID, List<Pen>> PENS = new HashMap<>();
@@ -95,6 +108,7 @@ final class ShepherdPens {
     static Optional<Pen> withRoom(ServerWorld world, Colony colony, BlockPos from) {
         return pensOf(world, colony).stream()
                 .filter(pen -> hasRoom(world, pen))
+                .flatMap(pen -> nearestAccess(world, pen, from, access -> true).stream())
                 .min(Comparator.comparingDouble(pen -> pen.outside().getSquaredDistance(from)));
     }
 
@@ -129,15 +143,39 @@ final class ShepherdPens {
      */
     static Optional<Pen> forSpecies(ServerWorld world, Colony colony, EntityType<?> species, BlockPos from,
             @Nullable Pen except, boolean onlyOwn) {
+        return forSpecies(world, colony, species, from, except, onlyOwn, access -> true);
+    }
+
+    /** A navegação existente comprova o trajeto do pastor até cada entrada candidata — ADR-046. */
+    static Optional<Pen> forSpecies(ServerWorld world, Colony colony, EntityType<?> species,
+            net.minecraft.entity.passive.VillagerEntity shepherd, @Nullable Pen except, boolean onlyOwn) {
+        return forSpecies(world, colony, species, shepherd.getBlockPos(), except, onlyOwn,
+                access -> canReach(shepherd, access));
+    }
+
+    static Optional<Pen> reachableFrom(ServerWorld world, Pen pen, net.minecraft.entity.passive.VillagerEntity shepherd) {
+        return nearestAccess(world, pen, shepherd.getBlockPos(), access -> canReach(shepherd, access));
+    }
+
+    private static boolean canReach(net.minecraft.entity.passive.VillagerEntity shepherd, Access access) {
+        var path = shepherd.getNavigation().findPathTo(access.outside(), 0);
+        return path != null && path.reachesTarget();
+    }
+
+    private static Optional<Pen> forSpecies(ServerWorld world, Colony colony, EntityType<?> species, BlockPos from,
+            @Nullable Pen except, boolean onlyOwn, java.util.function.Predicate<Access> reachable) {
 
         Pen best = null;
         int bestRank = Integer.MAX_VALUE;
         double bestDistance = Double.MAX_VALUE;
 
-        for (Pen pen : pensOf(world, colony)) {
-            if (pen.equals(except) || !hasRoom(world, pen)) {
+        for (Pen group : pensOf(world, colony)) {
+            if ((except != null && group.reach().equals(except.reach())) || !hasRoom(world, group)) {
                 continue;
             }
+            var selected = nearestAccess(world, group, from, reachable);
+            if (selected.isEmpty()) continue;
+            Pen pen = selected.get();
 
             int rank = rankFor(speciesIn(world, pen), species);
 
@@ -155,6 +193,34 @@ final class ShepherdPens {
         }
 
         return Optional.ofNullable(best);
+    }
+
+    private static Optional<Pen> nearestAccess(ServerWorld world, Pen pen, BlockPos from,
+            java.util.function.Predicate<Access> reachable) {
+        return pen.accesses().stream().filter(access -> world.isChunkLoaded(access.gate())
+                        && world.getBlockState(access.gate()).getBlock() instanceof FenceGateBlock
+                        && world.getBlockState(access.gate().up()).getFluidState().isEmpty()
+                        && world.getBlockState(access.gate().up()).getCollisionShape(world, access.gate().up()).isEmpty()
+                        && standing(world, access.inside()) && standing(world, access.outside()))
+                .sorted(Comparator.comparingDouble((Access access) -> access.outside().getSquaredDistance(from))
+                        .thenComparingLong(access -> access.gate().asLong()))
+                .filter(reachable).findFirst().map(pen::at);
+    }
+
+    private static boolean standing(ServerWorld world, BlockPos feet) {
+        return world.isChunkLoaded(feet) && world.getBlockState(feet.down()).isSideSolidFullSquare(world, feet.down(), Direction.UP)
+                && world.getBlockState(feet).getFluidState().isEmpty() && world.getBlockState(feet.up()).getFluidState().isEmpty()
+                && world.getBlockState(feet).getCollisionShape(world, feet).isEmpty()
+                && world.getBlockState(feet.up()).getCollisionShape(world, feet.up()).isEmpty();
+    }
+
+    /** A caixa acompanha todo o chão, inclusive cantos além de 12 blocos do portão — ADR-046. */
+    static Box areaOf(Pen pen) {
+        if (pen.reach().isEmpty()) return new Box(pen.inside());
+        var xs = pen.reach().stream().mapToInt(BlockPos::getX).summaryStatistics();
+        var ys = pen.reach().stream().mapToInt(BlockPos::getY).summaryStatistics();
+        var zs = pen.reach().stream().mapToInt(BlockPos::getZ).summaryStatistics();
+        return new Box(xs.getMin(), ys.getMin(), zs.getMin(), xs.getMax() + 1, ys.getMax() + 2, zs.getMax() + 1);
     }
 
     /** O pior posto que ainda conta como "o curral da espécie": só ela, ou vazio. */
@@ -178,7 +244,7 @@ final class ShepherdPens {
         Map<EntityType<?>, Integer> count = new HashMap<>();
 
         for (AnimalEntity animal : world.getEntitiesByClass(AnimalEntity.class,
-                new Box(pen.inside()).expand(FencedIn.RADIUS),
+                areaOf(pen),
                 animal -> animal.isAlive() && pen.reach().contains(animal.getBlockPos()))) {
             count.merge(animal.getType(), 1, Integer::sum);
         }
@@ -227,7 +293,18 @@ final class ShepherdPens {
                     BlockPos at = new BlockPos(x, y, z);
 
                     if (world.getBlockState(at).getBlock() instanceof FenceGateBlock) {
-                        penBehind(world, at, pens).ifPresent(pens::add);
+                        penBehind(world, at, pens).ifPresent(found -> {
+                            for (int i = 0; i < pens.size(); i++) {
+                                Pen existing = pens.get(i);
+                                if (!existing.reach().equals(found.reach())) continue;
+                                var accesses = new ArrayList<>(existing.accesses());
+                                if (!accesses.contains(found.accesses().getFirst())) accesses.add(found.accesses().getFirst());
+                                pens.set(i, new Pen(existing.gate(), existing.inside(), existing.outside(), existing.reach(),
+                                        existing.large(), accesses));
+                                return;
+                            }
+                            pens.add(found);
+                        });
                     }
                 }
             }
@@ -237,20 +314,25 @@ final class ShepherdPens {
     }
 
     /**
-     * O cercado do lado de dentro deste portão, se for um e ainda não estiver na lista.
+     * O cercado do lado de dentro deste portão; a varredura agrupa acessos pela área real (ADR-046).
      * Com os dois lados fechados (portão entre dois cercados), o de dentro é o menor.
      */
     static Optional<Pen> penBehind(ServerWorld world, BlockPos gate, List<Pen> known) {
         Pen best = null;
+        var facing = world.getBlockState(gate).get(FenceGateBlock.FACING);
 
         for (Direction way : Direction.Type.HORIZONTAL) {
+            if (way.getAxis() != facing.getAxis()) continue;
             BlockPos inside = gate.offset(way);
+            if (!standing(world, inside)) continue;
 
-            if (known.stream().anyMatch(pen -> pen.reach().contains(inside))) {
-                return Optional.empty();
+            var existing = known.stream().filter(pen -> pen.reach().contains(inside)).findFirst();
+            if (existing.isPresent()) {
+                return Optional.of(new Pen(gate.toImmutable(), inside.toImmutable(),
+                        gate.offset(way.getOpposite()).toImmutable(), existing.get().reach(), existing.get().large()));
             }
 
-            FencedIn.Result pen = FencedIn.check(world, inside);
+            FencedIn.Result pen = FencedIn.check(world, inside, 2 * FencedIn.RADIUS);
 
             if (pen.enclosed() && pen.reach().size() >= 4
                     && (best == null || pen.reach().size() < best.reach().size())) {
@@ -266,12 +348,12 @@ final class ShepherdPens {
         boolean large = VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()
                 .anyMatch(building -> PenPlans.isLargePen(building.blueprint())
                         && building.contains(MinecraftTypeAdapter.toColonyPos(pen.gate())));
-        return large ? new Pen(pen.gate(), pen.inside(), pen.outside(), pen.reach(), true) : pen;
+        return large ? new Pen(pen.gate(), pen.inside(), pen.outside(), pen.reach(), true, pen.accesses()) : pen;
     }
 
     /** Quantos animais estão no chão de dentro deste cercado. */
     static int animalsIn(ServerWorld world, Pen pen) {
-        return world.getEntitiesByClass(AnimalEntity.class, new Box(pen.inside()).expand(FencedIn.RADIUS),
+        return world.getEntitiesByClass(AnimalEntity.class, areaOf(pen),
                 animal -> animal.isAlive() && pen.reach().contains(animal.getBlockPos())).size();
     }
 

@@ -8,9 +8,25 @@ import net.minecraft.test.TestContext;
 /** O mesmo curral amplo em todos os biomas, com piso e iluminação próprios (Regra 72). */
 public final class PenModelGameTest implements FabricGameTest {
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "pen_legacy_model", tickLimit = 20)
+    public void theAutomaticPenKeepsOneGateWhileMaeUsesFour(TestContext context) {
+        var legacy = StructureBlueprintReader.read(context.getWorld(), PenPlans.MODEL).orElseThrow();
+        var supervised = StructureBlueprintReader.readForMae(context.getWorld(), PenPlans.MODEL).orElseThrow();
+        context.assertTrue(legacy.id().equals(supervised.id()), "variante mudou a identidade do curral");
+        context.assertTrue(legacy.blocks().stream().filter(piece -> piece.block().path().equals("oak_fence_gate")).count() == 1
+                        && legacy.accesses().stream().map(com.villagecolony.core.construction.model.BlueprintAccess::opening)
+                                .distinct().count() == 1,
+                "fluxo automático recebeu os quatro portões reservados ao MAE supervisionado");
+        context.assertTrue(supervised.blocks().stream().filter(piece -> piece.block().path().equals("oak_fence_gate")).count() == 4
+                        && supervised.accesses().stream().map(com.villagecolony.core.construction.model.BlueprintAccess::opening)
+                                .distinct().count() == 4,
+                "variante supervisionada perdeu seus quatro acessos");
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "pen_model", tickLimit = 20)
     public void theLargePenHasWaterCropsGrassGateAndPostTorches(TestContext context) {
-        var plan = StructureBlueprintReader.read(context.getWorld(), PenPlans.MODEL).orElseThrow();
+        var plan = StructureBlueprintReader.readForMae(context.getWorld(), PenPlans.MODEL).orElseThrow();
         context.assertTrue(plan.size().x() == 15 && plan.size().z() == 15,
                 "o curral comum deveria ter piso de 15 por 15");
         context.assertTrue(plan.hasStreetLayer() && plan.streetLayer() == 0,
@@ -24,8 +40,17 @@ public final class PenModelGameTest implements FabricGameTest {
         boolean rubble = plan.blocks().stream().anyMatch(block -> block.offset().y() > 0
                 && (block.block().path().equals("dirt") || block.block().path().equals("stone")));
         context.assertTrue(grass == 212 && water == 1 && farmland == 12 && crops == 12
-                        && gates == 1 && torches == 4 && !rubble,
+                        && gates == 4 && torches == 4 && !rubble,
                 "água, cultivos, grama, portão, tochas ou interior do curral divergiram");
+        for (int turn = 0; turn < 4; turn++) {
+            var rotated = plan.rotated(turn);
+            var positions = rotated.blocks().stream().filter(block -> block.block().path().equals("oak_fence_gate"))
+                    .map(com.villagecolony.core.construction.model.BlueprintBlock::offset).collect(java.util.stream.Collectors.toSet());
+            context.assertTrue(positions.equals(java.util.Set.of(
+                    new com.villagecolony.core.type.ColonyPos(7, 1, 0), new com.villagecolony.core.type.ColonyPos(14, 1, 7),
+                    new com.villagecolony.core.type.ColonyPos(7, 1, 14), new com.villagecolony.core.type.ColonyPos(0, 1, 7))),
+                    "rotação perdeu acesso central de um dos quatro lados");
+        }
         context.complete();
     }
 }

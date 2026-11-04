@@ -30,6 +30,13 @@ Efeito ainda depende do próximo playtest; não cria rua nem prepara terreno na 
 A versão **0.4.11** prepara o cálculo da entrada
 de estruturas da [Fase 3 do MAE](docs/technical/MAE-Fase-3.md), ainda sem integração
 automática com obras ou caminhos.
+A [Fase 3 do MAE](docs/technical/MAE-Fase-3.md) está parcialmente implementada
+na linha `codex/mae-structure-access`, conforme a
+[ADR-046](docs/decisions/ADR-046-mae-structure-access.md).
+Inclui metadados, prova local de circulação e leitura estrita dos estados.
+O curral de quatro portões é uma variante exclusiva do MAE supervisionado;
+o fluxo automático conserva o modelo anterior. Writer de edifícios, materiais
+e retomada ainda não estão habilitados. Não há novo JAR dessa fase.
 Na branch de desenvolvimento, a candidata **0.4.9** adiciona a fundação de segurança
 do [MAE, Fase 1](docs/technical/MAE-Fase-1.md): evidência de geração, reserva supervisionada,
 aprovação individual e escrita limitada. Não ativa terraplanagem ou planejamento de ruas.
