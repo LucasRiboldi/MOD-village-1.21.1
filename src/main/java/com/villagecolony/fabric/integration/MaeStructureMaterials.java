@@ -27,9 +27,20 @@ import java.util.Map;
 final class MaeStructureMaterials {
     private MaeStructureMaterials() { }
 
+    /**
+     * Água, solo arado e cultivo surgem no local, sem item, como no construtor legado (BlockShaping, decisões
+     * do autor de 2026-08-27 e 2026-10-14; para o MAE, escolha do autor de 2026-11-04). Registro em
+     * {@code SHAPED_GROUND}.
+     */
+    static boolean shaped(net.minecraft.block.BlockState state) {
+        return state.isOf(Blocks.WATER) || state.isOf(Blocks.FARMLAND)
+                || state.getBlock() instanceof net.minecraft.block.CropBlock;
+    }
+
     /** Itens e quantidades de uma peça, na ordem de retirada; vazio para peça sem origem física. */
     static Map<Item, Integer> of(MaeStructurePieces.Piece piece) {
         var main = piece.main();
+        if (shaped(main)) return Map.of();
         var result = new LinkedHashMap<Item, Integer>();
         if (main.getBlock() instanceof FlowerPotBlock pot && pot.getContent() != Blocks.AIR) {
             Item plant = pot.getContent().asItem();

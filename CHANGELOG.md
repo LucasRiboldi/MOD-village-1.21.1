@@ -23,6 +23,8 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - Vaso com planta no MAE: `flower_pot` e a planta saem juntos dos baús (`contract=2`);
   casa desert e oficina taiga passam a ser aceitas. A prova de acesso aceita alpendre
   entre a porta e o lado de fora.
+- Curral grande no MAE: água, solo arado e trigo surgem no local como no legado
+  (`SHAPED_GROUND`, `contract=2`); a água vem antes das vizinhas para não escorrer.
 
 ## [0.4.16] — obra supervisionada MAE `structure_v3` (2026-11-04, candidato)
 

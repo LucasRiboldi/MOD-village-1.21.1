@@ -67,6 +67,29 @@ public final class MaeSitesRoadGameTest implements FabricGameTest {
         });
     }
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_pen", tickLimit = 2400)
+    public void largePenShapesWaterFarmlandAndRipeWheatInPlace(TestContext context) {
+        var pen = ResourceId.parse("villagecolony:colony/large_animal_pen");
+        var arena = new WideArena(context, pen, 1);
+        arena.guarded(() -> {
+            var origin = arena.fixture.base.add(-1, 1, -1);
+            var status = MaeSites.start(context.getWorld(), arena.writer(), arena.colony(), pen, origin, 0, null);
+            arena.await(status.regionId(), () -> {
+                int water = 0, farmland = 0, wheat = 0;
+                for (BlockPos at : BlockPos.iterate(origin, origin.add(14, 2, 14))) {
+                    var state = context.getWorld().getBlockState(at);
+                    if (state.isOf(Blocks.WATER) && state.getFluidState().isStill()) water++;
+                    if (state.isOf(Blocks.FARMLAND) && state.get(Properties.MOISTURE) == 7) farmland++;
+                    if (state.isOf(Blocks.WHEAT) && state.get(Properties.AGE_7) == 7) wheat++;
+                }
+                context.assertTrue(water == 1 && farmland == 12 && wheat == 12,
+                        "curral sem horta estável: água=" + water + " arado=" + farmland + " trigo=" + wheat);
+                arena.cleanup();
+                context.complete();
+            });
+        });
+    }
+
     /** Plataforma de três de altura em 3×3 chunks, com os recibos de geração recapturados e devolvidos. */
     private static final class WideArena {
         final TestContext context;
@@ -76,6 +99,10 @@ public final class MaeSitesRoadGameTest implements FabricGameTest {
         MaeWorldWriter writer;
 
         WideArena(TestContext context) {
+            this(context, HOUSE, 2);
+        }
+
+        WideArena(TestContext context, ResourceId model, int copies) {
             this.context = context;
             this.fixture = new MaeSafetyGameTest.Fixture(context);
             var base = fixture.base;
@@ -98,7 +125,7 @@ public final class MaeSitesRoadGameTest implements FabricGameTest {
                 ServerChunkEvents.CHUNK_GENERATE.invoker().onChunkGenerate(context.getWorld(), chunk);
             }
             fixture.capture();
-            stock(2);
+            stock(model, copies);
             writer = new MaeWorldWriter(fixture.store, sources());
         }
 
@@ -121,9 +148,9 @@ public final class MaeSitesRoadGameTest implements FabricGameTest {
         }
 
         /** Material de {@code copies} casas, pela regra de peça do contrato 1. */
-        private void stock(int copies) {
+        private void stock(ResourceId model, int copies) {
             var project = ConstructionProject.plan(colony(),
-                    StructureBlueprintReader.readForMae(context.getWorld(), HOUSE).orElseThrow(), new ColonyPos(0, 100, 0));
+                    StructureBlueprintReader.readForMae(context.getWorld(), model).orElseThrow(), new ColonyPos(0, 100, 0));
             Map<Item, Integer> needed = new LinkedHashMap<>();
             for (var piece : MaeStructurePieces.ordered(project)) {
                 MaeStructureMaterials.of(piece).forEach((item, count) -> needed.merge(item, count * copies, Integer::sum));
