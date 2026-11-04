@@ -350,6 +350,7 @@ acesso e conclusão única no registro de edifícios.
 | `desert_small_house_1` | aceito (vaso + cacto, contrato 2) | casa construída e concluída pelo fluxo com terreno |
 | `taiga_masons_house_1` | aceito (vaso + muda, contrato 2) | não exercitado |
 | `colony/large_animal_pen` | aceito (água, solo arado e trigo moldados, contrato 2) | curral construído e concluído pelo fluxo, ligado à rua |
+| Travessia do curral grande MAE | animal entra andando por cada um dos quatro portões; cada um fecha atrás | `PenAccessGameTest` |
 | `colony/storage_majest` e as cinco variantes de estilo | aceito (recriado com porta térrea; conteúdo descartado) | depósito plains construído e concluído pelo fluxo, ligado à rua |
 | `taiga_small_house_1`, `savanna_mason_1`, `snowy_masons_house_1` | aceito (placa, baú e fornalha vazios) | oficina savanna construída pelo fluxo, baú sem loot |
 

@@ -276,6 +276,14 @@ Cada passo é uma peça com todas as suas partes:
   verga com o bloco da parede onde havia ar, e patamar em x=10 (y=0) ligando a
   escada de x=9 ao terreno. Barril e afins com `facing` horizontal de seis
   direções passam a girar pelo mesmo `Side` dos demais blocos.
+- **Travessia do pastor** (escolha do autor, 2026-11-04): o teleporte de um bloco
+  de `ShepherdPens.bringIn`/`bringOut` foi trocado por caminhada. Diante do portão,
+  o pastor o abre (a navegação não abre portão) e solta a corda; o animal anda até
+  uma célula além da primeira de dentro, o último passo pelo controle de movimento.
+  Dentro e sem encostar no portão, este fecha na hora. Na saída do cercado misto,
+  o animal anda para fora e recebe a corda. Sem passar em 200 tiques, o portão
+  fecha e a coleta desiste com log, sem teleporte de reserva. Vale para todo
+  curral, MAE ou não.
 - Teto: plano + histórico ≤ 1.024 registros; acima disso a aprovação recusa
   com `history_budget_exceeded`, sem dividir a obra automaticamente.
 

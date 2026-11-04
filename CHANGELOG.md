@@ -32,6 +32,8 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - Depósito grande (`storage_majest`, seis estilos) recriado com porta térrea no vão leste,
   patamar na escada e lados fechados com o bloco da parede; vale também para o fluxo automático.
   Barril com `facing` horizontal gira junto com a obra.
+- Pastor: o animal entra e sai do curral andando pelo portão aberto, em vez de teleporte de
+  um bloco; o portão fecha assim que o animal o libera. Sem conseguir em 200 tiques, a coleta desiste.
 
 ## [0.4.16] — obra supervisionada MAE `structure_v3` (2026-11-04, candidato)
 

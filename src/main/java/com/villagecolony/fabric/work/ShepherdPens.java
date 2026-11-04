@@ -252,12 +252,40 @@ final class ShepherdPens {
         return count;
     }
 
-    /** Tira o animal pelo portão e o entrega na corda do pastor — a separação dos currais mistos. */
-    static void bringOut(ServerWorld world, Pen pen, AnimalEntity animal, net.minecraft.entity.Entity shepherd) {
+    /** Quanto o animal tem para atravessar o portão andando antes de a coleta desistir. */
+    static final int WALK_LIMIT = 200;
+
+    /**
+     * O animal atravessa o portão andando, sem teleporte — escolha do autor de 2026-11-04 (MAE, item 5).
+     * O portão é aberto pelo pastor (a navegação não abre portão) e fica aberto enquanto o animal passa.
+     */
+    static void walkThrough(ServerWorld world, Pen pen, AnimalEntity animal, BlockPos target) {
         FencedIn.open(world, pen.gate());
-        animal.requestTeleport(pen.outside().getX() + 0.5, pen.outside().getY(), pen.outside().getZ() + 0.5);
-        animal.attachLeash(shepherd, true);
-        FencedIn.closeWhenClear(pen.gate());
+        if (!animal.getNavigation().isIdle()) return;
+        // A navegação dá por chegada a um bloco do alvo e o deixa no portão; o último passo é direto (PenMoves).
+        if (animal.getBlockPos().isWithinDistance(target, 2.5)) {
+            animal.getMoveControl().moveTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5, 1.0);
+        } else {
+            animal.getNavigation().startMovingTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5, 1.0);
+        }
+    }
+
+    /** Já está no chão de dentro deste cercado e não encosta mais no portão, que assim pode fechar. */
+    static boolean isInside(Pen pen, AnimalEntity animal) {
+        return pen.reach().contains(animal.getBlockPos())
+                && !animal.getBoundingBox().intersects(new net.minecraft.util.math.Box(pen.gate()));
+    }
+
+    /** Uma célula além da primeira de dentro, na direção do portão para dentro, para o animal liberar o portão. */
+    static BlockPos deeper(Pen pen) {
+        BlockPos step = pen.inside().add(pen.inside().subtract(pen.gate()));
+        return pen.reach().contains(step) ? step : pen.inside();
+    }
+
+    /** Já saiu do cercado e está junto do lado de fora do portão. */
+    static boolean isOutside(Pen pen, AnimalEntity animal) {
+        return !pen.reach().contains(animal.getBlockPos())
+                && animal.getBlockPos().isWithinDistance(pen.outside(), 2);
     }
 
     /** Os cercados desta colônia, relidos a cada {@link #RESCAN}. */
@@ -357,12 +385,11 @@ final class ShepherdPens {
                 animal -> animal.isAlive() && pen.reach().contains(animal.getBlockPos())).size();
     }
 
-    /** Põe o animal para dentro: abre o portão, ele entra, o portão fecha. */
-    static void bringIn(ServerWorld world, Pen pen, AnimalEntity animal) {
-        FencedIn.open(world, pen.gate());
+    /** Solta a corda diante do portão aberto: daqui o animal entra andando ({@link #walkThrough}). */
+    static void startIn(ServerWorld world, Pen pen, AnimalEntity animal) {
         animal.detachLeash(true, false);
-        animal.requestTeleport(pen.inside().getX() + 0.5, pen.inside().getY(), pen.inside().getZ() + 0.5);
-        FencedIn.closeWhenClear(pen.gate());
+        animal.getNavigation().stop();
+        walkThrough(world, pen, animal, deeper(pen));
     }
 
     /**

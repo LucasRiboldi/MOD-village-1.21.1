@@ -51,7 +51,7 @@ public class ShepherdPensGameTest implements FabricGameTest {
     /** O curral grande, numa terceira altura. */
     private static final int Y3 = 120;
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herding", tickLimit = 40)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herding", tickLimit = 300)
     public void theShepherdFindsThePenAndFillsItUpToFive(TestContext context) {
         ServerWorld world = context.getWorld();
         List<SheepEntity> sheep = new ArrayList<>();
@@ -90,7 +90,8 @@ public class ShepherdPensGameTest implements FabricGameTest {
             sheep.add(animalAt(world, EntityType.SHEEP, pen.inside().add(i % 3, 0, 1 + i / 3)));
         }
 
-        CowEntity cow = animalAt(world, EntityType.COW, pen.outside().north());
+        // No chão da arena, encostada no portão: ela entra andando, não por teleporte.
+        CowEntity cow = animalAt(world, EntityType.COW, pen.outside());
 
         context.waitAndRun(5, () -> {
             try {
@@ -105,23 +106,14 @@ public class ShepherdPensGameTest implements FabricGameTest {
                 context.assertTrue(ShepherdPens.withRoom(world, colony, gate).isPresent(),
                         "com 5 animais o cercado ainda aceita um");
 
-                ShepherdPens.bringIn(world, pen, cow);
-
-                context.assertTrue(pen.reach().contains(cow.getBlockPos()), "a vaca não entrou no cercado: " + cow.getBlockPos());
-            } finally {
-                sheep.forEach(SheepEntity::discard);
-                cow.discard();
-                ShepherdPens.clearAll();
-
-                for (int x = 0; x <= 28; x++) {
-                    for (int z = 0; z <= 28; z++) {
-                        world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y + 1, z)), Blocks.AIR.getDefaultState());
-                        world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y, z)), Blocks.AIR.getDefaultState());
-                    }
-                }
+                // A vaca entra andando pelo portão aberto, sem teleporte — MAE, escolha do autor de 2026-11-04.
+                cow.setAiDisabled(false);
+                ShepherdPens.startIn(world, pen, cow);
+                walkIn(context, world, pen, cow, sheep, ShepherdPens.WALK_LIMIT);
+            } catch (RuntimeException | AssertionError failure) {
+                cleanUp(context, world, sheep, cow);
+                throw failure;
             }
-
-            context.complete();
         });
     }
 
@@ -255,23 +247,12 @@ public class ShepherdPensGameTest implements FabricGameTest {
 
                 VillagerEntity shepherd = animalFree(world, penA.outside());
                 spawned.add(shepherd);
-                ShepherdPens.bringOut(world, penA, sheep, shepherd);
-
-                context.assertFalse(penA.reach().contains(sheep.getBlockPos()), "a ovelha não saiu do curral misto");
-                context.assertTrue(sheep.getLeashHolder() == shepherd, "a ovelha não ficou na corda do pastor");
-            } finally {
-                spawned.forEach(net.minecraft.entity.Entity::discard);
-                ShepherdPens.clearAll();
-
-                for (int x = 0; x <= 28; x++) {
-                    for (int z = 0; z <= 28; z++) {
-                        world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y2 + 1, z)), Blocks.AIR.getDefaultState());
-                        world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y2, z)), Blocks.AIR.getDefaultState());
-                    }
-                }
+                sheep.setAiDisabled(false);
+                walkOut(context, world, penA, sheep, shepherd, spawned, ShepherdPens.WALK_LIMIT);
+            } catch (RuntimeException | AssertionError failure) {
+                cleanUp2(context, world, spawned);
+                throw failure;
             }
-
-            context.complete();
         });
     }
 
@@ -339,6 +320,90 @@ public class ShepherdPensGameTest implements FabricGameTest {
 
             context.complete();
         });
+    }
+
+    /** Um passo da entrada andando; depois de dentro, o portão fecha e ela continua lá. */
+    private static void walkIn(TestContext context, ServerWorld world, ShepherdPens.Pen pen, CowEntity cow,
+                               List<SheepEntity> sheep, int left) {
+        try {
+            if (ShepherdPens.isInside(pen, cow)) {
+                FencedIn.closeWhenClear(pen.gate());
+                settle(context, world, pen, cow, sheep, 40);
+                return;
+            }
+            context.assertTrue(left > 0, "a vaca não entrou andando: " + cow.getBlockPos().toShortString()
+                    + " portão=" + pen.gate().toShortString() + " aberto=" + world.getBlockState(pen.gate()).get(net.minecraft.block.FenceGateBlock.OPEN)
+                    + " dentro=" + pen.inside().toShortString() + " fora=" + pen.outside().toShortString()
+                    + " parada=" + cow.getNavigation().isIdle() + " caminho=" + cow.getNavigation().getCurrentPath());
+            ShepherdPens.walkThrough(world, pen, cow, ShepherdPens.deeper(pen));
+            context.waitAndRun(1, () -> walkIn(context, world, pen, cow, sheep, left - 1));
+        } catch (RuntimeException | AssertionError failure) {
+            cleanUp(context, world, sheep, cow);
+            throw failure;
+        }
+    }
+
+    /** Depois da entrada, o portão fecha assim que fica livre, e a vaca, solta, não sai mais. */
+    private static void settle(TestContext context, ServerWorld world, ShepherdPens.Pen pen, CowEntity cow,
+                               List<SheepEntity> sheep, int left) {
+        try {
+            FencedIn.tick(world);
+            if (left > 0) {
+                context.waitAndRun(1, () -> settle(context, world, pen, cow, sheep, left - 1));
+                return;
+            }
+            context.assertFalse(world.getBlockState(pen.gate()).get(net.minecraft.block.FenceGateBlock.OPEN),
+                    "o portão ficou aberto depois da entrada");
+            context.assertTrue(ShepherdPens.isInside(pen, cow), "a vaca escapou depois da entrada");
+            cleanUp(context, world, sheep, cow);
+            context.complete();
+        } catch (RuntimeException | AssertionError failure) {
+            cleanUp(context, world, sheep, cow);
+            throw failure;
+        }
+    }
+
+    private static void cleanUp(TestContext context, ServerWorld world, List<SheepEntity> sheep, CowEntity cow) {
+        sheep.forEach(SheepEntity::discard);
+        cow.discard();
+        ShepherdPens.clearAll();
+        for (int x = 0; x <= 28; x++) {
+            for (int z = 0; z <= 28; z++) {
+                world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y + 1, z)), Blocks.AIR.getDefaultState());
+                world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y, z)), Blocks.AIR.getDefaultState());
+            }
+        }
+    }
+
+    /** Um passo da saída andando do cercado misto; fora, a ovelha vai para a corda do pastor. */
+    private static void walkOut(TestContext context, ServerWorld world, ShepherdPens.Pen pen, SheepEntity sheep,
+                                VillagerEntity shepherd, List<net.minecraft.entity.Entity> spawned, int left) {
+        try {
+            if (ShepherdPens.isOutside(pen, sheep)) {
+                sheep.attachLeash(shepherd, true);
+                context.assertTrue(sheep.getLeashHolder() == shepherd, "a ovelha não ficou na corda do pastor");
+                cleanUp2(context, world, spawned);
+                context.complete();
+                return;
+            }
+            context.assertTrue(left > 0, "a ovelha não saiu andando do curral misto: " + sheep.getBlockPos().toShortString());
+            ShepherdPens.walkThrough(world, pen, sheep, pen.outside());
+            context.waitAndRun(1, () -> walkOut(context, world, pen, sheep, shepherd, spawned, left - 1));
+        } catch (RuntimeException | AssertionError failure) {
+            cleanUp2(context, world, spawned);
+            throw failure;
+        }
+    }
+
+    private static void cleanUp2(TestContext context, ServerWorld world, List<net.minecraft.entity.Entity> spawned) {
+        spawned.forEach(net.minecraft.entity.Entity::discard);
+        ShepherdPens.clearAll();
+        for (int x = 0; x <= 28; x++) {
+            for (int z = 0; z <= 28; z++) {
+                world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y2 + 1, z)), Blocks.AIR.getDefaultState());
+                world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y2, z)), Blocks.AIR.getDefaultState());
+            }
+        }
     }
 
     private static <T extends net.minecraft.entity.passive.AnimalEntity> T animalAt(

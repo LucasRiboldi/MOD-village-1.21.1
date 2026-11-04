@@ -55,7 +55,8 @@ final class ShepherdHerding {
     /** Animais amarrados numa mesma cerca, no máximo. */
     static final int MAX_TIED = 8;
 
-    enum Phase { FETCH, LEAD }
+    /** {@code EXIT} e {@code ENTER}: o animal atravessa o portão andando, sem corda. */
+    enum Phase { FETCH, EXIT, LEAD, ENTER }
 
     static final class Herd {
         final UUID animal;
@@ -69,6 +70,8 @@ final class ShepherdHerding {
         boolean newPost;
         /** O cercado misto de onde o animal sai para o da espécie dele (Regra 72), ou nulo. */
         ShepherdPens.Pen from;
+        /** Quando o animal começou a atravessar o portão andando. */
+        long walking;
 
         Herd(UUID animal, BlockPos fence, long since) {
             this.animal = animal;
@@ -313,10 +316,56 @@ final class ShepherdHerding {
             WorkTargets.set(shepherdId, herd.from.outside(), REACH - 1);
 
             if (shepherd.getBlockPos().isWithinDistance(herd.from.outside(), REACH)) {
-                ShepherdPens.bringOut(world, herd.from, animal, shepherd);
-                herd.phase = Phase.LEAD;
+                herd.phase = Phase.EXIT;
+                herd.walking = world.getTime();
             }
 
+            return true;
+        }
+
+        if (herd.phase == Phase.EXIT) {
+            if (ShepherdPens.isOutside(herd.from, animal)) {
+                animal.attachLeash(shepherd, true);
+                FencedIn.closeWhenClear(herd.from.gate());
+                herd.phase = Phase.LEAD;
+                return true;
+            }
+            if (world.getTime() - herd.walking > ShepherdPens.WALK_LIMIT) {
+                FencedIn.closeWhenClear(herd.from.gate());
+                VillageColonyMod.LOGGER.info("Shepherd {} gave up: the {} did not walk out of the pen at {}",
+                        shepherdId.toString().substring(0, 8), animal.getType().getUntranslatedName(),
+                        herd.from.gate().toShortString());
+                abort(world, shepherdId, herd);
+                return false;
+            }
+            ShepherdPens.walkThrough(world, herd.from, animal, herd.from.outside());
+            return true;
+        }
+
+        if (herd.phase == Phase.ENTER) {
+            if (ShepherdPens.isInside(herd.pen, animal)) {
+                FencedIn.closeWhenClear(herd.pen.gate());
+                FencedIn.tick(world); // fecha já, se o portão está livre; senão, no próximo ciclo
+
+                // A ovelha no curral também ganha grama, para recriar a lã (PostGrass, autor 2026-10-21).
+                if (animal instanceof net.minecraft.entity.passive.SheepEntity) {
+                    PostGrass.inPen(world, animal.getBlockPos());
+                }
+                VillageColonyMod.LOGGER.info("Shepherd {} brought a {} into the pen at {}",
+                        shepherdId.toString().substring(0, 8), animal.getType().getUntranslatedName(),
+                        herd.pen.gate().toShortString());
+                WorkTargets.clear(shepherdId);
+                return false;
+            }
+            if (world.getTime() - herd.walking > ShepherdPens.WALK_LIMIT) {
+                FencedIn.closeWhenClear(herd.pen.gate());
+                VillageColonyMod.LOGGER.info("Shepherd {} gave up: the {} did not walk into the pen at {}",
+                        shepherdId.toString().substring(0, 8), animal.getType().getUntranslatedName(),
+                        herd.pen.gate().toShortString());
+                abort(world, shepherdId, herd);
+                return false;
+            }
+            ShepherdPens.walkThrough(world, herd.pen, animal, ShepherdPens.deeper(herd.pen));
             return true;
         }
 
@@ -341,17 +390,10 @@ final class ShepherdHerding {
         WorkTargets.set(shepherdId, goal, REACH - 1);
 
         if (herd.pen != null && shepherd.getBlockPos().isWithinDistance(goal, REACH)) {
-            ShepherdPens.bringIn(world, herd.pen, animal);
-            WorkTargets.clear(shepherdId);
-
-            // A ovelha no curral também ganha grama, para recriar a lã (PostGrass, autor 2026-10-21).
-            if (animal instanceof net.minecraft.entity.passive.SheepEntity) {
-                PostGrass.inPen(world, animal.getBlockPos());
-            }
-            VillageColonyMod.LOGGER.info("Shepherd {} brought a {} into the pen at {}",
-                    shepherdId.toString().substring(0, 8), animal.getType().getUntranslatedName(),
-                    herd.pen.gate().toShortString());
-            return false;
+            ShepherdPens.startIn(world, herd.pen, animal);
+            herd.phase = Phase.ENTER;
+            herd.walking = world.getTime();
+            return true;
         }
 
         if (shepherd.getBlockPos().isWithinDistance(herd.fence, REACH)) {
