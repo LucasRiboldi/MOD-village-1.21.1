@@ -1,6 +1,6 @@
 # STATE — 2026-11-04
 
-> **MAE — comando supervisionado (branch `claude/mae-obra-comando`):**
+> **MAE — candidata 0.4.17, comando supervisionado (branch `claude/mae-obra-comando`):**
 > `/vc mae obra <modelo>` (operador, nível 2) dispara uma obra supervisionada:
 > pegada centrada no jogador e rotação pela direção do olhar; `<rotação>` 0–3
 > fixa a rotação; `busca` procura lote nivelado (desnível até 2) num raio de 24.

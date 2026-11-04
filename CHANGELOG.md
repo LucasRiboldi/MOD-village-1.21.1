@@ -12,7 +12,7 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
-## [Não publicado]
+## [0.4.17] — comando e fim do plano MAE (2026-11-04, candidato)
 
 ### Adicionado
 - Comando `/vc mae obra <modelo> [rotação|busca]`, `/vc mae estado` e `/vc mae parar`
