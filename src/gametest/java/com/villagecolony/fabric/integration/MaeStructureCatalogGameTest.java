@@ -37,6 +37,9 @@ public final class MaeStructureCatalogGameTest implements FabricGameTest {
         EXPECTED.put("minecraft:village/plains/houses/plains_animal_pen_1", "ok");
         EXPECTED.put("villagecolony:colony/large_animal_pen", "ok");
         EXPECTED.put("villagecolony:colony/storage_small", "ok");
+        for (String style : java.util.List.of("", "plains/", "savanna/", "taiga/", "snowy/", "desert/")) {
+            EXPECTED.put("villagecolony:colony/" + style + "storage_majest", "ok");
+        }
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_structure_catalog", tickLimit = 20)

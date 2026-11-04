@@ -28,6 +28,11 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - Placa, baú, barril e fornalha entram vazios no MAE: o conteúdo do template é
   descartado, nunca copiado. Casa taiga, oficina savanna e oficina snowy passam a ser aceitas.
 
+### Alterado
+- Depósito grande (`storage_majest`, seis estilos) recriado com porta térrea no vão leste,
+  patamar na escada e lados fechados com o bloco da parede; vale também para o fluxo automático.
+  Barril com `facing` horizontal gira junto com a obra.
+
 ## [0.4.16] — obra supervisionada MAE `structure_v3` (2026-11-04, candidato)
 
 ### Adicionado

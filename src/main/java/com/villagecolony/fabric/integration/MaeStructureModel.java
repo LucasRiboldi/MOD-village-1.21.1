@@ -100,7 +100,8 @@ final class MaeStructureModel {
                 var actual = PaletteStates.planned(result.blocks().get(i));
                 for (int t = 0; t < turn; t++) actual = actual.rotate(BlockRotation.CLOCKWISE_90);
                 if (!actual.equals(PaletteStates.planned(rotated.blocks().get(i))))
-                    throw new IllegalArgumentException("unsupported_structure_rotation");
+                    throw new IllegalArgumentException("unsupported_structure_rotation", new IllegalStateException(
+                            result.blocks().get(i).block() + " " + actual + " / " + PaletteStates.planned(rotated.blocks().get(i))));
             }
         }
         return result;
@@ -113,6 +114,9 @@ final class MaeStructureModel {
         var facing = piece.facing();
         if (state.contains(Properties.HORIZONTAL_FACING)) {
             facing = Optional.of(MinecraftTypeAdapter.toSide(state.get(Properties.HORIZONTAL_FACING)));
+            properties.remove("facing");
+        } else if (state.contains(Properties.FACING) && state.get(Properties.FACING).getAxis().isHorizontal()) {
+            facing = Optional.of(MinecraftTypeAdapter.toSide(state.get(Properties.FACING)));
             properties.remove("facing");
         }
         return new BlueprintBlock(piece.offset(), piece.block(), piece.furniture(), facing, properties);
@@ -132,13 +136,15 @@ final class MaeStructureModel {
     }
 
     /**
-     * Placa, baú, barril e fornalha entram vazios: o conteúdo do template (texto, loot, itens, cozimento) é
+     * Placa, baú, barril, fornalha, pote decorado e estante cinzelada entram vazios: o conteúdo do template
+     * (texto, loot, itens, cozimento, desenhos) é
      * descartado, nunca copiado, e o writer só põe o bloco — ADR-046 item 9, escolha do autor de 2026-11-04.
      */
     static boolean emptied(BlockState state) {
         var block = state.getBlock();
         return block instanceof net.minecraft.block.AbstractSignBlock || block instanceof ChestBlock
-                || block instanceof net.minecraft.block.BarrelBlock || block instanceof net.minecraft.block.AbstractFurnaceBlock;
+                || block instanceof net.minecraft.block.BarrelBlock || block instanceof net.minecraft.block.AbstractFurnaceBlock
+                || block instanceof net.minecraft.block.DecoratedPotBlock || block instanceof net.minecraft.block.ChiseledBookshelfBlock;
     }
 
     private static void safePayload(NbtCompound payload) {

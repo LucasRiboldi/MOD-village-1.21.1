@@ -118,6 +118,22 @@ public final class MaeSitesRoadGameTest implements FabricGameTest {
         });
     }
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_storage_majest", tickLimit = 2400)
+    public void largeStorageEntersByItsNewGroundDoor(TestContext context) {
+        var storage = ResourceId.parse("villagecolony:colony/plains/storage_majest");
+        var arena = new WideArena(context, storage, 1);
+        arena.guarded(() -> {
+            var origin = arena.fixture.base.add(-1, 1, -1);
+            var status = MaeSites.start(context.getWorld(), arena.writer(), arena.colony(), storage, origin, 0, null);
+            arena.await(status.regionId(), () -> {
+                context.assertTrue(context.getWorld().getBlockState(origin.add(8, 1, 3)).isOf(Blocks.OAK_DOOR),
+                        "depósito grande sem a porta térrea");
+                arena.cleanup();
+                context.complete();
+            });
+        });
+    }
+
     /** Plataforma de três de altura em 3×3 chunks, com os recibos de geração recapturados e devolvidos. */
     private static final class WideArena {
         final TestContext context;

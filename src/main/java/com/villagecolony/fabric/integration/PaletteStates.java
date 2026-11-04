@@ -24,6 +24,9 @@ public final class PaletteStates {
                 .orElseThrow(() -> new IllegalArgumentException("unknown_structure_block")).getDefaultState();
         if (block.facing().isPresent() && state.contains(Properties.HORIZONTAL_FACING))
             state = state.with(Properties.HORIZONTAL_FACING, MinecraftTypeAdapter.toDirection(block.facing().orElseThrow()));
+        // Barril e afins: o facing de seis direções, quando horizontal, gira pelo mesmo Side — ADR-046.
+        else if (block.facing().isPresent() && state.contains(Properties.FACING))
+            state = state.with(Properties.FACING, MinecraftTypeAdapter.toDirection(block.facing().orElseThrow()));
         for (var planned : block.states().entrySet()) {
             Property<?> property = state.getBlock().getStateManager().getProperty(planned.getKey());
             if (property == null || property.parse(planned.getValue()).isEmpty())

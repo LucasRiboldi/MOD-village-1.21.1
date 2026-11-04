@@ -268,6 +268,14 @@ Cada passo é uma peça com todas as suas partes:
   aceita o bloco e descarta o conteúdo do template (texto, loot, itens,
   cozimento), sem lê-lo nem copiá-lo; o writer só põe o bloco, que nasce vazio.
   Conteúdo de qualquer outro bloco continua recusado com `unsafe_structure_payload`.
+  Pote decorado e estante cinzelada seguem a mesma regra (desenhos e livros descartados).
+- **Depósito grande** (escolha do autor, 2026-11-04): os seis `storage_majest`
+  foram recriados com porta térrea, substituindo os originais, também no fluxo
+  automático. No vão leste de 3×3 já existente (x=8, z=2..4, y=1..3), porta no
+  meio (z=3, voltada a oeste, da madeira do estilo; selva no deserto), lados e
+  verga com o bloco da parede onde havia ar, e patamar em x=10 (y=0) ligando a
+  escada de x=9 ao terreno. Barril e afins com `facing` horizontal de seis
+  direções passam a girar pelo mesmo `Side` dos demais blocos.
 - Teto: plano + histórico ≤ 1.024 registros; acima disso a aprovação recusa
   com `history_budget_exceeded`, sem dividir a obra automaticamente.
 
