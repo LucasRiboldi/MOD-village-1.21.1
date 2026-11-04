@@ -12,7 +12,7 @@
 - [ ] Confirmar no próximo playtest ausência das falsas derivas e progresso de outras obras.
 - [ ] Quando os testes forem liberados, cobrir busca parcelada, preservação do índice/cursor
       e liberação da fila após volta sem lote no Sentinela Local.
-- [ ] Seguir com navegação e profissões antes da integração supervisionada MAE (ordem A, depois B).
+- [ ] Retomar navegação e profissões após o recorte MAE priorizado pelo autor em 03-11; os diagnósticos anteriores permanecem pendentes.
 
 ## MAE — Fases 1 e 2
 
@@ -39,8 +39,22 @@
 ## MAE — Fase 3
 
 - [x] Auditar plantas, construção, terreno e limites de integração.
-- [ ] Validar acesso físico completo, modelos e dados de block entities.
-- [ ] Integrar reserva, preparação, construção e retomada após cumprir os gates da Fase 2.
+- [x] Conferir branches e detalhar lacunas de acesso físico, conclusão persistida e NBT em `docs/technical/MAE-Fase-3.md`, sem implementar ou executar testes.
+- [x] Detalhar a matriz completa escolhida pelo autor: 143 templates vanilla autorizados e 18 arquivos próprios em `docs/technical/MAE-Fase-3-Matriz.md` e inventário CSV, incluindo currais e depósitos sem porta.
+- [x] Aprovar o contrato A de portas, portões e vãos e a política restrita de conteúdo NBT; registrar quatro portões no curral grande e as escolhas delegadas pelo autor.
+- [x] Formalizar o contrato na ADR-046, liberar implementação e testes focados e abrir `codex/mae-structure-access` da main após o PR #51.
+- [x] Criar variante MAE do curral com três portões adicionais; conservar água, cultivos, tochas e rotações. Opção B: leitura automática preserva o NBT anterior de um portão.
+- [x] Implementar metadados, vãos declarados e validação local prevista/real, sem autorização de escrita ou carga de chunks.
+- [x] Provar estados, limites e partes secundárias de representantes dos cinco estilos; recusar payload não suportado. Resultados atuais somente em `STATE.md`.
+- [x] Cobrir acesso alternativo, agrupamento do cercado e capacidade total 20, preservando a rotina legada.
+- [ ] Provar travessia física do pastor e animal pelos portões; a coleta legada ainda usa teleporte de animais.
+- [x] Detalhar e implementar `structure_v3` no writer existente: materiais, intenção, confirmação, efeitos secundários e retomada ambígua bloqueada (ADR-046, 0.4.16).
+- [x] Concluir obra só com acesso real conferido; registrar o edifício uma vez; retomada volta a conferir.
+- [x] Derivar circulação e destino (`beginFor`) e ligar terreno → acesso → obra (`MaeStructureSite`), terreno plano por prova sem mudança.
+- [x] Exercitar casa, oficina, curral e depósito reais nas quatro rotações (GameTests).
+- [ ] Validar conteúdo funcional e habilitação individual dos demais modelos; vaso com planta, curral grande (água, solo arado, trigo), depósito grande e payloads não tratados continuam recusados.
+- [ ] Escolher lote e origem reais para a obra supervisionada e expor um comando em jogo para disparar `MaeStructureSite`.
+- [ ] Integrar reserva, preparação, construção e retomada à fila automática após cumprir os gates da Fase 2.
 
 ## Playtest de 02-11 — escolhas A aprovadas
 

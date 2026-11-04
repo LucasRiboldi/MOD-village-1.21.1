@@ -29,6 +29,48 @@ class BlueprintRotationTest {
     private static final ResourceId DOOR = new ResourceId(ResourceId.VANILLA, "oak_door");
 
     @Test
+    void elevatedDoubleOpeningFollowsTheSameRectangularPivotAsBlocks() {
+        var entrance = new BlueprintAccess(BlueprintAccess.Kind.DOOR,
+                List.of(new ColonyPos(4, 2, 0), new ColonyPos(3, 2, 0)), Side.NORTH);
+        Blueprint plan = oblong().withAccesses(List.of(entrance)).withStreetLayer(1);
+        List<List<ColonyPos>> expected = List.of(
+                entrance.opening(),
+                List.of(new ColonyPos(2, 2, 4), new ColonyPos(2, 2, 3)),
+                List.of(new ColonyPos(0, 2, 2), new ColonyPos(1, 2, 2)),
+                List.of(new ColonyPos(0, 2, 0), new ColonyPos(0, 2, 1)));
+        List<Side> directions = List.of(Side.NORTH, Side.EAST, Side.SOUTH, Side.WEST);
+
+        for (int turns = 0; turns < 4; turns++) {
+            Blueprint turned = plan.rotated(turns);
+            assertEquals(expected.get(turns), turned.accesses().getFirst().opening());
+            assertEquals(directions.get(turns), turned.accesses().getFirst().outward());
+            assertEquals(BlueprintAccess.Kind.DOOR, turned.accesses().getFirst().kind());
+            assertEquals(plan.materials(), turned.materials());
+            assertEquals(1, turned.streetLayer());
+        }
+    }
+
+    @Test
+    void repeatedQuarterTurnsRestoreEveryAccessIncludingOutsideConnectors() {
+        var door = new BlueprintAccess(BlueprintAccess.Kind.DOOR,
+                List.of(new ColonyPos(4, 2, 0)), Side.NORTH);
+        var gate = new BlueprintAccess(BlueprintAccess.Kind.GATE,
+                List.of(new ColonyPos(0, 1, 2)), Side.SOUTH);
+        var connector = new BlueprintAccess(BlueprintAccess.Kind.OPENING,
+                List.of(new ColonyPos(5, 1, 1)), Side.EAST);
+        Blueprint original = oblong().withAccesses(List.of(door, gate, connector));
+        Blueprint turned = original;
+
+        assertEquals(List.of(new ColonyPos(1, 1, 5)),
+                original.rotated(1).accesses().get(2).opening());
+        for (int i = 0; i < 4; i++) turned = turned.rotated(1);
+        assertEquals(original.blocks(), turned.blocks());
+        assertEquals(original.accesses(), turned.accesses());
+        assertEquals(original.accesses(), original.rotated(-4).accesses());
+        assertEquals(original.rotated(3).accesses(), original.rotated(-1).accesses());
+    }
+
+    @Test
     @DisplayName("meia volta leva a parede do norte para o sul")
     void halfATurnMovesTheNorthWallToTheSouth() {
         Blueprint plan = wall();

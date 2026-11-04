@@ -1,4 +1,22 @@
-# STATE — 2026-11-03
+# STATE — 2026-11-04
+
+> **MAE Fase 3 — candidata 0.4.16:** branch `codex/mae-structure-access`,
+> baseada na `main` `9dc8b4f2`. Contrato `structure_v3` na ADR-046, P1–P4
+> aprovadas pelo autor: envelope `maeWork` v3, material exato dos baús, cursor
+> estrito, retirada antes da escrita. Retomada com escrita pendente bloqueia com
+> `materials_uncertain` ou `partial_parts`, nunca repete. Obra conclui só com a
+> prova de acesso nos blocos reais e entra uma vez no registro de edifícios.
+> `MaeStructureAccess.beginFor` deriva circulação e destino; `MaeStructureSite`
+> liga terreno → acesso → obra; terreno plano entra por prova sem mudança
+> (escolha do autor). Casa, oficina, curral e depósito reais concluem nas quatro
+> rotações. Passaram 105 GameTests `-PgametestOnly=Mae` e 23 unitários
+> (arquitetura e `MaeWorkStoreTest`); bateria completa não executada.
+> Sem comando em jogo nem fila automática; sem playtest. Ativação automática
+> segue bloqueada por carga real e playtest da Fase 2. Travessia física dos
+> animais pelos portões continua pendente.
+> JAR 0.4.16 com SHA-256 idêntico em build, downloads e TLauncher:
+> `9C983881043F6180D05A53F77A21D1958C243D11645D998454B22B3BD785EA26`;
+> 0.4.15 preservada como `.disabled`. Push de `codex/mae-structure-access`; sem PR.
 
 > **Playtest — candidata 0.4.15:** conservação da rota da mina, opção A aprovada.
 > O playtest 0.4.14 confirmou origem na rua e até 30.289 células, com 23/23

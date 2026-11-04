@@ -88,6 +88,12 @@ final class FencedIn {
 
     /** Se ele está cercado, e por quais portões poderia sair. */
     static Result check(ServerWorld world, BlockPos feet) {
+        return check(world, feet, RADIUS);
+    }
+
+    /** Identificação do curral pode partir de sua borda; fuga mantém o raio original — ADR-046. */
+    static Result check(ServerWorld world, BlockPos feet, int radius) {
+        if (radius < 1 || radius > 2 * RADIUS) throw new IllegalArgumentException("invalid_pen_radius");
         BlockPos start = feet.toImmutable();
         Set<BlockPos> seen = new HashSet<>();
         Set<BlockPos> gates = new HashSet<>();
@@ -99,7 +105,7 @@ final class FencedIn {
         while (!open.isEmpty()) {
             BlockPos at = open.poll();
 
-            if (horizontalSquared(at, start) > (long) RADIUS * RADIUS || seen.size() > MAX_VISITED) {
+            if (horizontalSquared(at, start) > (long) radius * radius || seen.size() > MAX_VISITED) {
                 return Result.FREE;
             }
 

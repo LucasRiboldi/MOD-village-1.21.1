@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.WorkArea;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.data.save.ColonySavedData;
@@ -28,6 +29,7 @@ public final class MaeWorldWriter {
     private static final long SLICE_NANOS = 2_000_000;
     private static final Map<ServerWorld, Budget> BUDGETS = new WeakHashMap<>();
     private final MaeWorkStore store;
+    private final MaeStructureExecution.Sources sources;
 
     static {
         com.villagecolony.core.type.ServerMemory.register(MaeWorldWriter.class, MaeWorldWriter::clearAll);
@@ -58,8 +60,15 @@ public final class MaeWorldWriter {
     }
 
     public MaeWorldWriter(MaeWorkStore store) {
-        this.store = store;
+        this(store, MaeStructureExecution.Sources.GAME);
     }
+
+    MaeWorldWriter(MaeWorkStore store, MaeStructureExecution.Sources sources) {
+        this.store = store;
+        this.sources = sources;
+    }
+
+    MaeWorkStore store() { return store; }
 
     /** Chamada explícita representa a aprovação supervisionada da região; ainda não aprova obra — ADR-044. */
     public UUID reserve(ServerWorld world, UUID colonyId, WorkArea area) {
@@ -184,6 +193,22 @@ public final class MaeWorldWriter {
         store.update(region);
     }
 
+    /** Aprovação tipada de edifício sobre terreno concluído da mesma obra; promove o envelope — ADR-046. */
+    void approveStructure(ServerWorld world, UUID regionId, ConstructionProject project, int quarterTurns,
+                          MaeStructureAccess.Selected access) {
+        approveStructure(world, regionId, project, quarterTurns, access, null);
+    }
+
+    /** Terreno já plano entra pela prova sem mudança, nunca por um job vazio — escolha do autor, 2026-11-04. */
+    void approveStructure(ServerWorld world, UUID regionId, ConstructionProject project, int quarterTurns,
+                          MaeStructureAccess.Selected access, MaeTerrainPreparation.@org.jspecify.annotations.Nullable Prepared flat) {
+        NbtCompound region = region(world, regionId);
+        NbtCompound job = MaeStructureExecution.job(world, region, project, quarterTurns, access, flat, sources);
+        MaeSectionLocks.check(world, store, regionId, MaeProtection.margin(area(job)));
+        region.put("job", job);
+        store.approveStructure(region);
+    }
+
     /** Executa somente trabalho aprovado. Orçamento global do mundo, conferido entre operações indivisíveis — ADR-044. */
     public int runSlice(ServerWorld world, UUID regionId) {
         checkThread(world);
@@ -204,7 +229,12 @@ public final class MaeWorldWriter {
             budget.nanos += System.nanoTime() - lookupStarted;
         }
         NbtCompound job = region.getCompound("job");
-        if (!"approved".equals(job.getString("state"))) {
+        boolean structure = MaeStructureExecution.is(job);
+        if (structure ? !MaeStructureExecution.runnable(world, job) : !"approved".equals(job.getString("state"))) {
+            return 0;
+        }
+        if (structure && "built".equals(job.getString("state"))) {
+            MaeStructureExecution.verify(world, region, job, store, sources);
             return 0;
         }
         int written = 0;
@@ -212,11 +242,13 @@ public final class MaeWorldWriter {
             budget.attempts++;
             long started = System.nanoTime();
             try {
-                if (!writeNext(world, region, job)) {
+                if (structure) validateJob(world, region, job);
+                if (!(structure ? MaeStructureExecution.writeNext(world, region, job, store, sources)
+                        : writeNext(world, region, job))) {
                     break;
                 }
                 written++;
-                if ("complete".equals(job.getString("state"))) {
+                if ("complete".equals(job.getString("state")) || "built".equals(job.getString("state"))) {
                     break;
                 }
             } catch (IllegalStateException | IllegalArgumentException failure) {
@@ -246,6 +278,9 @@ public final class MaeWorldWriter {
     public void resume(ServerWorld world, UUID regionId) {
         NbtCompound region = region(world, regionId);
         NbtCompound job = region.getCompound("job");
+        if (MaeStructureExecution.is(job) && List.of("paused", "blocked").contains(job.getString("state"))) {
+            if (MaeStructureExecution.resume(world, region, job, store, sources)) return;
+        }
         if (!List.of("paused", "blocked").contains(job.getString("state")) || job.getBoolean("pendingWrite") || job.getBoolean("pendingPublication")) {
             throw new IllegalStateException("unconfirmed_or_nonresumable_job");
         }
@@ -334,6 +369,7 @@ public final class MaeWorldWriter {
         }
         if (job.contains("type")) {
             if (MaeRoadExecution.TYPE.equals(job.getString("type"))) MaeRoadExecution.validate(world, region, job);
+            else if (MaeStructureExecution.is(job)) MaeStructureExecution.validate(world, region, job);
             else MaeTerrainExecution.validate(world, region, job);
         } else {
             if (region.contains("policy")) throw new IllegalStateException("typed_terrain_job_required");

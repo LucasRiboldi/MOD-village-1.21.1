@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # CLAUDE.md — Village Colony
 
 > Mod Fabric para **Minecraft 1.21.1** que transforma vilas Vanilla em

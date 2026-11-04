@@ -1,6 +1,10 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.core.construction.model.ShapeStates;
+import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import net.minecraft.block.BlockState;
+import net.minecraft.state.property.Property;
 import com.villagecolony.core.type.Side;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.state.property.Properties;
@@ -9,9 +13,28 @@ import java.util.Map;
 import java.util.Optional;
 
 /** O que a planta lê do estado de cada entrada da paleta: lado e forma. */
-final class PaletteStates {
+public final class PaletteStates {
 
     private PaletteStates() {
+    }
+
+    /** Estado MAE explícito, sem inferir a parede nem aceitar propriedade inválida — ADR-046. */
+    public static BlockState planned(BlueprintBlock block) {
+        BlockState state = MinecraftTypeAdapter.toBlock(block.block())
+                .orElseThrow(() -> new IllegalArgumentException("unknown_structure_block")).getDefaultState();
+        if (block.facing().isPresent() && state.contains(Properties.HORIZONTAL_FACING))
+            state = state.with(Properties.HORIZONTAL_FACING, MinecraftTypeAdapter.toDirection(block.facing().orElseThrow()));
+        for (var planned : block.states().entrySet()) {
+            Property<?> property = state.getBlock().getStateManager().getProperty(planned.getKey());
+            if (property == null || property.parse(planned.getValue()).isEmpty())
+                throw new IllegalArgumentException("invalid_structure_property:" + planned.getKey());
+            state = withValue(state, property, planned.getValue());
+        }
+        return state;
+    }
+
+    private static <T extends Comparable<T>> BlockState withValue(BlockState state, Property<T> property, String value) {
+        return state.with(property, property.parse(value).orElseThrow());
     }
 
     /** Eixo, metade e formato da paleta — ADR-036 item 19. */

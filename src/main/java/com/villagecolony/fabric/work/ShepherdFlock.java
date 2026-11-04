@@ -308,10 +308,10 @@ public final class ShepherdFlock {
         return animal.getLeashHolder() instanceof LeashKnotEntity || isPenned(world, animal);
     }
 
-    /** Dentro de curral: cercado e com cerca perto. */
+    /** Dentro de curral: cerca próxima e alcance suficiente para o modelo de 15×15 — ADR-046. */
     static boolean isPenned(ServerWorld world, AnimalEntity animal) {
         return FencedIn.isNearAFence(world, animal.getBlockPos())
-                && FencedIn.check(world, animal.getBlockPos()).enclosed();
+                && FencedIn.check(world, animal.getBlockPos(), 2 * FencedIn.RADIUS).enclosed();
     }
 
     /** Toda comida do jogo que esta espécie aceita, guardada na primeira pergunta. */

@@ -28,7 +28,7 @@ import java.util.WeakHashMap;
 /** Levantamento explícito, sem eventos de execução ou alteração do mundo — MAE Fase 2. */
 public final class MaeTerrainPreparation {
     public static final int MAX_READS_PER_TICK = 256;
-    private static final long SLICE_NANOS = 2_000_000;
+    static final long SLICE_NANOS = 2_000_000;
     private static final Map<ServerWorld, Budget> BUDGETS = new WeakHashMap<>();
 
     static {
@@ -41,15 +41,35 @@ public final class MaeTerrainPreparation {
         BUDGETS.clear();
     }
 
-    private static final class Budget {
+    static final class Budget {
         int tick = -1;
         int reads;
         long nanos;
     }
 
+    static Budget budget(ServerWorld world) {
+        checkThread(world);
+        Budget budget = BUDGETS.computeIfAbsent(world, ignored -> new Budget());
+        if (budget.tick != world.getServer().getTicks()) {
+            budget.tick = world.getServer().getTicks();
+            budget.reads = 0;
+            budget.nanos = 0;
+        }
+        return budget;
+    }
+
     /** Superfícies e corredor vêm do chamador; o levantamento não cria outro grafo — MAE Fase 2. */
     public record Proposal(Building lot, List<ColonyPos> surfaces, ColonyPos entry,
                            @Nullable ColonyPos anchor, List<ColonyPos> corridor, int pathLength) {
+        /** A seleção física substitui a heurística de porta única, sem conceder escrita — ADR-046. */
+        public static Proposal forProject(ConstructionProject project, MaeStructureAccess.Selected access,
+                                          List<ColonyPos> surfaces, @Nullable ColonyPos anchor,
+                                          List<ColonyPos> corridor, int pathLength) {
+            if (!project.id().equals(access.projectId())) throw new IllegalArgumentException("wrong_access_project");
+            ColonyPos entry = MinecraftTypeAdapter.toColonyPos(access.support());
+            if (!surfaces.contains(entry)) throw new IllegalArgumentException("missing_structure_entry_surface");
+            return new Proposal(Building.of(project), surfaces, entry, anchor, corridor, pathLength);
+        }
         /** Deriva o piso adjacente à porta; a validação física continua no levantamento MAE. */
         public static Proposal forProject(ConstructionProject project,
                                           List<ColonyPos> surfaces, @Nullable ColonyPos anchor,
@@ -179,12 +199,7 @@ public final class MaeTerrainPreparation {
         public int runSlice() {
             checkThread(world);
             if (complete()) return 0;
-            Budget budget = BUDGETS.computeIfAbsent(world, ignored -> new Budget());
-            if (budget.tick != world.getServer().getTicks()) {
-                budget.tick = world.getServer().getTicks();
-                budget.reads = 0;
-                budget.nanos = 0;
-            }
+            Budget budget = budget(world);
             if (budget.reads >= MAX_READS_PER_TICK || budget.nanos >= SLICE_NANOS) return 0;
             int reads = 0;
             try {

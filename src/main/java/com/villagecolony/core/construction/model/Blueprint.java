@@ -40,7 +40,11 @@ public final class Blueprint {
 
     private final List<BlueprintBlock> blocks;
 
+    private final List<BlueprintAccess> accesses;
+
     private final ColonyPos size;
+
+    private final boolean templateBounds;
 
     /**
      * A camada que fica na altura da rua, ou {@link #NO_STREET_LAYER} — sessão
@@ -61,10 +65,18 @@ public final class Blueprint {
      */
     private static final String GRASS = "grass_block";
 
-    private Blueprint(ResourceId id, List<BlueprintBlock> blocks, ColonyPos size, int streetLayer) {
+    private Blueprint(ResourceId id, List<BlueprintBlock> blocks, ColonyPos size, int streetLayer,
+                      List<BlueprintAccess> accesses) {
+        this(id, blocks, size, streetLayer, accesses, false);
+    }
+
+    private Blueprint(ResourceId id, List<BlueprintBlock> blocks, ColonyPos size, int streetLayer,
+                      List<BlueprintAccess> accesses, boolean templateBounds) {
         this.id = id;
         this.blocks = blocks;
+        this.accesses = accesses;
         this.size = size;
+        this.templateBounds = templateBounds;
         this.streetLayer = streetLayer;
         this.lowestBlockLayer = blocks.stream()
                 .mapToInt(block -> block.offset().y())
@@ -93,7 +105,29 @@ public final class Blueprint {
             throw new IllegalArgumentException("Blueprint has no blocks: " + id);
         }
 
-        return new Blueprint(id, List.copyOf(blocks), sizeOf(blocks), NO_STREET_LAYER);
+        return new Blueprint(id, List.copyOf(blocks), sizeOf(blocks), NO_STREET_LAYER, List.of());
+    }
+
+    /** Candidatos neutros; a validação física pertence à camada Fabric — ADR-046. */
+    public List<BlueprintAccess> accesses() {
+        return accesses;
+    }
+
+    /** Conserva peças e materiais; candidatos não concedem elegibilidade de terreno — ADR-046. */
+    public Blueprint withAccesses(List<BlueprintAccess> candidates) {
+        return new Blueprint(id, blocks, size, streetLayer, List.copyOf(candidates), templateBounds);
+    }
+
+    /** Conserva o referencial e os vazios do template comprovado, sem criar peças ou materiais — ADR-046. */
+    public Blueprint withTemplateBounds(ColonyPos dimensions) {
+        Objects.requireNonNull(dimensions, "dimensions");
+        if (dimensions.x() <= 0 || dimensions.y() <= 0 || dimensions.z() <= 0
+                || blocks.stream().anyMatch(piece -> piece.offset().x() < 0 || piece.offset().x() >= dimensions.x()
+                || piece.offset().y() < 0 || piece.offset().y() >= dimensions.y()
+                || piece.offset().z() < 0 || piece.offset().z() >= dimensions.z())) {
+            throw new IllegalArgumentException("invalid_template_bounds");
+        }
+        return new Blueprint(id, blocks, dimensions, streetLayer, accesses, true);
     }
 
     /**
@@ -119,7 +153,7 @@ public final class Blueprint {
             throw new IllegalArgumentException("street layer must not be negative: " + layer);
         }
 
-        return new Blueprint(id, blocks, size, layer);
+        return new Blueprint(id, blocks, size, layer, accesses, templateBounds);
     }
 
     /** Se esta planta sabe onde fica a rua. */
@@ -293,28 +327,32 @@ public final class Blueprint {
         int maxZ = size.z() - 1;
 
         for (BlueprintBlock block : blocks) {
-            ColonyPos at = block.offset();
-
-            int x = at.x();
-            int z = at.z();
-
-            for (int turn = 0; turn < turns; turn++) {
-                int spunX = (turn % 2 == 0 ? maxZ : maxX) - z;
-                int spunZ = x;
-
-                x = spunX;
-                z = spunZ;
-            }
-
             turned.add(new BlueprintBlock(
-                    new ColonyPos(x, at.y(), z),
+                    turned(block.offset(), maxX, maxZ, turns),
                     block.block(),
                     block.furniture(),
                     block.facing().map(side -> turned(side, turns)),
                     ShapeStates.turned(block.states(), turns)));
         }
 
-        return new Blueprint(id, List.copyOf(turned), sizeOf(turned), streetLayer);
+        List<BlueprintAccess> turnedAccesses = accesses.stream()
+                .map(access -> new BlueprintAccess(access.kind(), access.opening().stream()
+                        .map(at -> turned(at, maxX, maxZ, turns)).toList(), turned(access.outward(), turns)))
+                .toList();
+        ColonyPos turnedSize = templateBounds
+                ? (turns % 2 == 0 ? size : new ColonyPos(size.z(), size.y(), size.x())) : sizeOf(turned);
+        return new Blueprint(id, List.copyOf(turned), turnedSize, streetLayer, turnedAccesses, templateBounds);
+    }
+
+    private static ColonyPos turned(ColonyPos at, int maxX, int maxZ, int turns) {
+        int x = at.x();
+        int z = at.z();
+        for (int turn = 0; turn < turns; turn++) {
+            int spunX = (turn % 2 == 0 ? maxZ : maxX) - z;
+            z = x;
+            x = spunX;
+        }
+        return new ColonyPos(x, at.y(), z);
     }
 
     private static Side turned(Side side, int turns) {

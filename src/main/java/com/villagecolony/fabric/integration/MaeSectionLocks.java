@@ -24,7 +24,8 @@ final class MaeSectionLocks {
             NbtCompound job = other.getCompound("job");
             boolean known = !job.contains("type") ? !other.contains("policy")
                     : job.getInt("contract") == 1 && (MaeTerrainExecution.TYPE.equals(job.getString("type"))
-                    || MaeRoadExecution.TYPE.equals(job.getString("type")));
+                    || MaeRoadExecution.TYPE.equals(job.getString("type"))
+                    || MaeStructureExecution.TYPE.equals(job.getString("type")));
             var plan = job.getList("plan", NbtElement.COMPOUND_TYPE);
             if (known && !plan.isEmpty() && plan.size() <= 1024
                     && plan.size() == job.getInt("cursor") && "complete".equals(job.getString("state"))

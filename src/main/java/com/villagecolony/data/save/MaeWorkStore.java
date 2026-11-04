@@ -20,7 +20,7 @@ public final class MaeWorkStore {
     public boolean supported() {
         return payload == null || (payload instanceof NbtCompound root
                 && root.contains("version", NbtElement.INT_TYPE)
-                && (root.getInt("version") == 1 || root.getInt("version") == 2)
+                && root.getInt("version") >= 1 && root.getInt("version") <= 3
                 && root.contains("regions", NbtElement.LIST_TYPE)
                 && root.getList("regions", NbtElement.COMPOUND_TYPE).size() == ((NbtList) root.get("regions")).size());
     }
@@ -46,10 +46,14 @@ public final class MaeWorkStore {
         if (!supported()) {
             throw new IllegalStateException("unsupported MAE work payload");
         }
-        if (region.contains("policy") && (payload == null || ((NbtCompound) payload).getInt("version") != 2)) {
+        if (region.contains("policy") && (payload == null || ((NbtCompound) payload).getInt("version") < 2)) {
             throw new IllegalStateException("terrain_reservation_required");
         }
-        update(region, false);
+        if (region.getCompound("job").getString("type").equals("structure_v3")
+                && (payload == null || ((NbtCompound) payload).getInt("version") < 3)) {
+            throw new IllegalStateException("structure_approval_required");
+        }
+        update(region, 1);
     }
 
     /** Somente uma reserva nova explicitamente aceita promove o envelope — desenho MAE Fase 2. */
@@ -60,10 +64,22 @@ public final class MaeWorkStore {
         if (!region.containsUuid("id") || region(region.getUuid("id")).isPresent()) {
             throw new IllegalStateException("new_terrain_reservation_required");
         }
-        update(region, true);
+        update(region, 2);
     }
 
-    private void update(NbtCompound region, boolean promote) {
+    /** A primeira obra structure_v3 promove o envelope; leitores até v2 passam a vê-lo opaco — ADR-046 P1. */
+    public void approveStructure(NbtCompound region) {
+        if (!"terrain_v2".equals(region.getString("policy"))
+                || !"structure_v3".equals(region.getCompound("job").getString("type"))) {
+            throw new IllegalArgumentException("unknown_structure_contract");
+        }
+        if (!region.containsUuid("id") || region(region.getUuid("id")).isEmpty()) {
+            throw new IllegalStateException("terrain_reservation_required");
+        }
+        update(region, 3);
+    }
+
+    private void update(NbtCompound region, int version) {
         if (!region.containsUuid("id")) {
             throw new IllegalArgumentException("MAE region missing identity");
         }
@@ -80,7 +96,7 @@ public final class MaeWorkStore {
         }
         list.add(region.copy());
         NbtCompound root = payload == null ? new NbtCompound() : ((NbtCompound) payload).copy();
-        root.putInt("version", promote || root.getInt("version") == 2 ? 2 : 1);
+        root.putInt("version", Math.max(version, root.contains("version") ? root.getInt("version") : 1));
         root.put("regions", list);
         payload = root;
         changed.run();

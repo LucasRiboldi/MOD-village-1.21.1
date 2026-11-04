@@ -1,5 +1,9 @@
 # Village Colony
 
+Para alternar entre Claude Code e Codex, consulte [HANDOFF.md](HANDOFF.md) e
+[AGENT-SWITCH-SETUP.md](AGENT-SWITCH-SETUP.md). O hook local de pré-commit
+sincroniza as referências `@AGENTS.md`; cada worktree precisa instalá-lo.
+
 Mod Fabric para Minecraft 1.21.1 que transforma vilas Vanilla em colônias
 autônomas. Os aldeões recebem profissões, usam baús reais, produzem recursos,
 plantam, mineram e constroem estruturas do próprio jogo sem exigir menu ou
@@ -30,6 +34,18 @@ Efeito ainda depende do próximo playtest; não cria rua nem prepara terreno na 
 A versão **0.4.11** prepara o cálculo da entrada
 de estruturas da [Fase 3 do MAE](docs/technical/MAE-Fase-3.md), ainda sem integração
 automática com obras ou caminhos.
+A [Fase 3 do MAE](docs/technical/MAE-Fase-3.md) está parcialmente implementada
+na linha `codex/mae-structure-access`, conforme a
+[ADR-046](docs/decisions/ADR-046-mae-structure-access.md).
+Inclui metadados, prova local de circulação e leitura estrita dos estados.
+O curral de quatro portões é uma variante exclusiva do MAE supervisionado;
+o fluxo automático conserva o modelo anterior. A candidata **0.4.16** traz o
+writer de edifícios `structure_v3` (material exato dos baús, retomada que
+bloqueia ambiguidade, conclusão só com acesso conferido no mundo) e o fluxo
+supervisionado `MaeStructureSite` (terreno → acesso → obra), provados por
+GameTests com casa, oficina, curral e depósito reais nas quatro rotações.
+Nada disso é disparado em jogo: não há comando nem fila automática, e o
+playtest continua pendente.
 Na branch de desenvolvimento, a candidata **0.4.9** adiciona a fundação de segurança
 do [MAE, Fase 1](docs/technical/MAE-Fase-1.md): evidência de geração, reserva supervisionada,
 aprovação individual e escrita limitada. Não ativa terraplanagem ou planejamento de ruas.

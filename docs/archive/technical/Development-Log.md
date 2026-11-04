@@ -2,6 +2,29 @@
 
 # Development-Log.md
 
+## 04-11-2026 — MAE Fase 3, acesso e leitura estrita parciais
+
+Implementação e testes focados autorizados; PR #51 integrado e nova linha
+`codex/mae-structure-access` baseada em `9dc8b4f2`. Metadados neutros de acesso,
+vãos declarados, dimensões e pivô do template, prova física prevista/real e
+validação estrita de estados/partes implementados. Modelos com payload não
+tratado continuam recusados, sem transportar inventários ou entidades.
+
+O autor escolheu B: quatro portões exclusivos do asset MAE supervisionado;
+o fluxo automático conserva o asset anterior de um portão. Reconhecimento
+agrupa acessos do mesmo cercado e conserva capacidade 20. A travessia física
+dos animais ainda não foi provada; a rotina legada de recolhimento usa teleporte.
+
+Regressões cobrem isolamento dos leitores, overflow de orçamento e codificação
+NBT do pórtico. Corrigida apenas a codificação de dimensões/posições, mantendo
+164 peças e geometria. O teste de arquitetura apontou dependência circular nova;
+a interpretação estrita passou a `PaletteStates`, preservando a colocação legada.
+
+Execuções finais focadas passaram; comandos no relatório da Fase 3 e contagens
+no `STATE.md`. Inventário e matriz atualizados, sem mudar suites do Sentinela.
+Writer, materiais, retomada e ativação continuam pendentes. Nenhum save do
+jogador foi alterado; sem commit, versão ou JAR desta implementação parcial.
+
 ## 03-11-2026 — origem do mapa de alcance 0.4.14
 
 Autor aprovou A+B+C e testes focados. Quatro medições do playtest 0.4.13
