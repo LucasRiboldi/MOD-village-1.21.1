@@ -222,6 +222,15 @@ olhar, ou busca de lote nivelado pelo mesmo mapa de alturas da casa fundadora
 reservada é a pegada com folga de 5 na horizontal, 7 abaixo e 5 acima. Até 4
 obras simultâneas; `parar` pausa o job aprovado e não desfaz nada.
 
+Ao concluir, a obra pedida por comando liga a entrada à rua: `MaeStructureRoad`
+procura, dentro da região, um trajeto de chão firme até o grafo de ruas MAE
+publicado ou, sem grafo nem índice de ruas, até a semente perto do centro; o
+trajeto passa por `MaeRoadPreparation` e pelo writer (`road_v2`). Sem rua
+certificada ao alcance, a obra termina sem ela, com nota. As ruas MAE só se
+ligam dentro de uma região, então a obra seguinte reaproveita a região ociosa
+da colônia que a comporta. A proteção trata a caixa das obras concluídas na
+própria região como trabalho MAE, derivada do diário, sem campo novo no save.
+
 ### Passo e efeitos planejados
 
 Cada passo é uma peça com todas as suas partes:

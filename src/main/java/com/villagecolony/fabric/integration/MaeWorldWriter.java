@@ -413,7 +413,7 @@ public final class MaeWorldWriter {
             throw new IllegalStateException("unfinished_job");
         }
         MaeRoadEvidence.revalidate(world, region, readOnly);
-        MaeProtection.inspectTerrain(world, region.getUuid("colony"), MaeProtection.margin(work), MaeRoadEvidence.floors(readOnly));
+        MaeProtection.inspectTerrain(world, region.getUuid("colony"), MaeProtection.margin(work), MaeRoadEvidence.floors(readOnly), MaeProtection.ownedCells(region));
         NbtCompound actual = MaeGenerationEvidence.inspect(world, MaeProtection.margin(work), false, 8);
         validateEvidence(world, MaeProtection.margin(work), actual, region.getCompound("ownedSections"));
         return region;

@@ -54,6 +54,7 @@
 - [x] Exercitar casa, oficina, curral e depósito reais nas quatro rotações (GameTests).
 - [ ] Validar conteúdo funcional e habilitação individual dos demais modelos; vaso com planta, curral grande (água, solo arado, trigo), depósito grande e payloads não tratados continuam recusados.
 - [x] Escolher lote e origem reais para a obra supervisionada e expor um comando em jogo para disparar `MaeStructureSite` (`/vc mae obra`, posição do jogador ou `busca`).
+- [x] Ligar a entrada da obra à rua MAE (`road_v2`), semente ou grafo publicado, reaproveitando a região.
 - [ ] Exercitar `/vc mae obra` em jogo e ler `VC_MAE_SITE` no próximo playtest.
 - [ ] Integrar reserva, preparação, construção e retomada à fila automática após cumprir os gates da Fase 2.
 

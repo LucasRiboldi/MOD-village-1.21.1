@@ -7,8 +7,9 @@
 > `/vc mae estado` mostra as obras em andamento e `/vc mae parar` pausa os jobs
 > aprovados, sem desfazer nada. Quem pediu recebe o resultado no chat; o log
 > registra `VC_MAE_SITE`.
-> Passaram 1103 GameTests da bateria completa e a suíte unitária. Ainda não
-> exercitado em jogo.
+> A obra liga a entrada à rua MAE (`road_v2`): semente perto do centro ou ligação
+> ao grafo; a obra seguinte reaproveita a região. Passaram 1104 GameTests da
+> bateria completa e a suíte unitária. Ainda não exercitado em jogo.
 
 > **MAE Fase 3 — candidata 0.4.16:** branch `codex/mae-structure-access`,
 > baseada na `main` `9dc8b4f2`. Contrato `structure_v3` na ADR-046, P1–P4

@@ -72,6 +72,13 @@ public final class MaeSitesGameTest implements FabricGameTest {
             long finished = VillageColonyMod.BUILDINGS.ofColony(arena.fixture.colony.colony().id()).stream()
                     .filter(building -> building.blueprint().equals(HOUSE) && building.finished()).count();
             context.assertTrue(finished == 1, "obra pedida registrou " + finished + " edifícios");
+            // Sem grafo nem índice de ruas, a entrada perto do centro vira a semente da rede MAE.
+            context.assertTrue(MaeRoadExecution.TYPE.equals(job.getString("type")),
+                    "obra pedida não ligou a entrada à rua: " + job.getString("type"));
+            var graph = com.villagecolony.data.save.ColonySavedData.get(context.getWorld().getServer()).roadGraphs()
+                    .graph(arena.fixture.colony.colony().id());
+            context.assertTrue(graph.isPresent() && MaeRoadExecution.allPositions(graph.get()).contains(
+                    MaeStructureSite.entry(arena.project)), "rua publicada não passa pela entrada da obra");
             arena.cleanup();
             context.complete();
         });

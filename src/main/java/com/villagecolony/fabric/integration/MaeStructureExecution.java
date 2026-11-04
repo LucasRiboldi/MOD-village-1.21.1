@@ -127,7 +127,7 @@ final class MaeStructureExecution {
         if (!hash.equals(templateHash(world, project, quarterTurns, sources))) {
             throw new IllegalStateException("template_changed");
         }
-        MaeProtection.inspectStructure(world, region.getUuid("colony"), MaeProtection.margin(box), Set.of());
+        MaeProtection.inspectStructure(world, region.getUuid("colony"), MaeProtection.margin(box), MaeProtection.ownedCells(region));
         NbtCompound actual = MaeGenerationEvidence.inspect(world, MaeProtection.margin(box), false, 8);
         MaeWorldWriter.validateEvidence(world, MaeProtection.margin(box), actual, region.getCompound("ownedSections"));
         NbtList plan = new NbtList();
@@ -219,8 +219,9 @@ final class MaeStructureExecution {
                 || !job.contains("terrain", NbtElement.COMPOUND_TYPE)) {
             throw new IllegalStateException("unknown_structure_contract");
         }
-        MaeProtection.inspectStructure(world, region.getUuid("colony"), MaeProtection.margin(MaeWorldWriter.area(job)),
-                written(job));
+        Set<BlockPos> own = new HashSet<>(written(job));
+        own.addAll(MaeProtection.ownedCells(region));
+        MaeProtection.inspectStructure(world, region.getUuid("colony"), MaeProtection.margin(MaeWorldWriter.area(job)), own);
     }
 
     /** Intenção, retirada, escrita e confirmação; falta de material espera sem intenção — ADR-046. */

@@ -40,7 +40,7 @@ final class MaeRoadExecution {
         var readOnly = job.getCompound("readOnly");
         MaeRoadEvidence.revalidate(world, region, readOnly);
         MaeProtection.inspectTerrain(world, region.getUuid("colony"), MaeProtection.margin(MaeWorldWriter.area(job)),
-                MaeRoadEvidence.floors(readOnly));
+                MaeRoadEvidence.floors(readOnly), MaeProtection.ownedCells(region));
         Set<ColonyPos> positions = surfaces(job);
         var plan = job.getList("plan", NbtElement.COMPOUND_TYPE);
         if (plan.size() != positions.size()) throw new IllegalStateException("invalid_road_plan");

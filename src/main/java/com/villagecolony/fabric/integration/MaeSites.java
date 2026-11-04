@@ -35,6 +35,8 @@ public final class MaeSites {
     /** Raio da busca de lote em volta do jogador. */
     static final int SEARCH_REACH = 24;
     private static final int SLICES_PER_TICK = 3;
+    /** Folga horizontal da região: entrada, margem do terreno e um trecho de rua até a rede. */
+    static final int REGION_REACH = 12;
     private static final Map<UUID, Entry> ACTIVE = new LinkedHashMap<>();
 
     static {
@@ -68,8 +70,9 @@ public final class MaeSites {
                 .orElseThrow(() -> new IllegalStateException("unknown_colony")).center();
         ConstructionProject project = ConstructionProject.plan(colonyId, blueprint(world, model, quarterTurns),
                 MinecraftTypeAdapter.toColonyPos(origin));
-        UUID regionId = writer.reserveTerrain(world, colonyId, regionFor(project));
-        MaeStructureSite site = MaeStructureSite.begin(world, writer, regionId, project, quarterTurns, center);
+        UUID regionId = reusable(world, writer, colonyId, project)
+                .orElseGet(() -> writer.reserveTerrain(world, colonyId, regionFor(project)));
+        MaeStructureSite site = MaeStructureSite.beginWithRoad(world, writer, regionId, project, quarterTurns, center);
         ACTIVE.put(regionId, new Entry(world, writer, model, origin.toImmutable(), quarterTurns, owner, site));
         VillageColonyMod.LOGGER.info("VC_MAE_SITE version=1 colony={} model={} at={} rotation={} result=started",
                 colonyId.toString().substring(0, 8), model, origin.toShortString(), quarterTurns);
@@ -126,11 +129,34 @@ public final class MaeSites {
         return feet.add(-size.x() / 2, 0, -size.z() / 2);
     }
 
-    /** A região reservada cobre pegada, entrada, apoio e margem do levantamento de terreno. */
+    /**
+     * Região já reservada da mesma colônia, ociosa e que comporta a obra com folga de terreno: as ruas MAE só
+     * se ligam dentro de uma região, então a obra seguinte entra nela em vez de reservar outra ao lado.
+     */
+    static java.util.Optional<UUID> reusable(ServerWorld world, MaeWorldWriter writer, UUID colonyId,
+                                             ConstructionProject project) {
+        Building lot = Building.of(project);
+        WorkArea needed = new WorkArea(new ColonyPos(lot.min().x() - 5, lot.min().y() - 7, lot.min().z() - 5),
+                new ColonyPos(lot.max().x() + 5, lot.max().y() + 5, lot.max().z() + 5));
+        String dimension = world.getRegistryKey().getValue().toString();
+        for (var region : writer.store().regions()) {
+            if (!region.containsUuid("id") || ACTIVE.containsKey(region.getUuid("id"))
+                    || !region.containsUuid("colony") || !colonyId.equals(region.getUuid("colony"))
+                    || !dimension.equals(region.getString("dimension"))
+                    || !"terrain_v2".equals(region.getString("policy"))) continue;
+            var job = region.getCompound("job");
+            boolean idle = !region.contains("job") || ("complete".equals(job.getString("state"))
+                    && !job.getBoolean("pendingWrite") && !job.getBoolean("pendingPublication"));
+            if (idle && MaeWorldWriter.area(region).contains(needed)) return java.util.Optional.of(region.getUuid("id"));
+        }
+        return java.util.Optional.empty();
+    }
+
+    /** A região reservada cobre pegada, entrada, apoio, margem do terreno e a ligação à rua. */
     static WorkArea regionFor(ConstructionProject project) {
         Building lot = Building.of(project);
-        return new WorkArea(new ColonyPos(lot.min().x() - 5, lot.min().y() - 7, lot.min().z() - 5),
-                new ColonyPos(lot.max().x() + 5, lot.max().y() + 5, lot.max().z() + 5));
+        return new WorkArea(new ColonyPos(lot.min().x() - REGION_REACH, lot.min().y() - 7, lot.min().z() - REGION_REACH),
+                new ColonyPos(lot.max().x() + REGION_REACH, lot.max().y() + 5, lot.max().z() + REGION_REACH));
     }
 
     private static Blueprint blueprint(ServerWorld world, ResourceId model, int quarterTurns) {
@@ -193,7 +219,7 @@ public final class MaeSites {
 
     private static Status status(UUID regionId, Entry entry) {
         var site = entry.site();
-        String detail = site.failure() != null ? site.failure() : site.waiting();
+        String detail = site.failure() != null ? site.failure() : !site.waiting().isEmpty() ? site.waiting() : site.note();
         return new Status(regionId, entry.model(), entry.origin(), entry.quarterTurns(), site.phase(), detail);
     }
 }

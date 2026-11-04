@@ -18,6 +18,8 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - Comando `/vc mae obra <modelo> [rotação|busca]`, `/vc mae estado` e `/vc mae parar`
   (operador): dispara o fluxo supervisionado `MaeStructureSite` na posição do jogador
   ou num lote nivelado próximo, com no máximo 4 obras simultâneas e aviso no chat.
+- Ligação da entrada da obra à rua MAE (`road_v2`): semente perto do centro ou ligação ao
+  grafo publicado; a obra seguinte reaproveita a região da colônia para a rua se ligar.
 
 ## [0.4.16] — obra supervisionada MAE `structure_v3` (2026-11-04, candidato)
 
