@@ -71,9 +71,18 @@ public final class ReachMap {
         final ArrayDeque<BlockPos> frontier = new ArrayDeque<>();
         final Set<BlockPos> seen = new HashSet<>();
         final VillageBounds area;
+        final BlockPos start;
+        final boolean diagnostic;
+        long outside;
+        long clearance;
+        long blocked;
+        final Map<String, Integer> samples = new LinkedHashMap<>();
+        int sampled;
 
-        Sweep(BlockPos start, VillageBounds area) {
+        Sweep(BlockPos start, VillageBounds area, boolean diagnostic) {
             this.area = area;
+            this.start = start;
+            this.diagnostic = diagnostic;
             frontier.add(start);
             seen.add(start);
         }
@@ -121,10 +130,14 @@ public final class ReachMap {
                 Optional<BlockPos> start = startOf(world, colony);
 
                 if (start.isEmpty()) {
+                    if (now % 1200 == 0) {
+                        VillageColonyMod.LOGGER.info("VC_REACH_START colony={} center={} reason=no_standable_loaded_column",
+                                colony.id().toString().substring(0, 8), colony.center());
+                    }
                     continue;
                 }
 
-                sweep = new Sweep(start.get(), areaOf(colony.bounds().get()));
+                sweep = new Sweep(start.get(), areaOf(colony.bounds().get()), true);
                 SWEEPS.put(colony.id(), sweep);
             }
 
@@ -148,12 +161,26 @@ public final class ReachMap {
                 for (int dy = -1; dy <= 1; dy++) {
                     BlockPos next = at.offset(way).up(dy);
 
-                    if (sweep.seen.contains(next)
-                            || !sweep.area.containsColumn(next.getX(), next.getZ())
-                            || next.getY() < sweep.area.minY() || next.getY() > sweep.area.maxY()
-                            || (dy > 0 && !open(world, at.up(2)))
-                            || (dy < 0 && !open(world, at.offset(way).up()))
-                            || !standable(world, next)) {
+                    if (sweep.seen.contains(next)) {
+                        continue;
+                    }
+                    if (!sweep.area.containsColumn(next.getX(), next.getZ())
+                            || next.getY() < sweep.area.minY() || next.getY() > sweep.area.maxY()) {
+                        if (sweep.diagnostic) sweep.outside++;
+                        continue;
+                    }
+                    if ((dy > 0 && !open(world, at.up(2)))
+                            || (dy < 0 && !open(world, at.offset(way).up()))) {
+                        if (sweep.diagnostic) sweep.clearance++;
+                        continue;
+                    }
+                    if (!standable(world, next)) {
+                        if (sweep.diagnostic) sweep.blocked++;
+                        if (sweep.diagnostic && sweep.sampled < 64) {
+                            sweep.sampled++;
+                            String reason = blockedReason(world, next);
+                            sweep.samples.merge(reason, 1, Integer::sum);
+                        }
                         continue;
                     }
 
@@ -204,7 +231,7 @@ public final class ReachMap {
 
     /** O mapa de um lugar só, inteiro, para o teste: o que se alcança de {@code start} dentro de {@code area}. */
     static Set<BlockPos> measure(ServerWorld world, BlockPos start, VillageBounds area) {
-        Sweep sweep = new Sweep(start, area);
+        Sweep sweep = new Sweep(start, area, false);
 
         while (!step(world, sweep, BUDGET)) {
             // até fechar
@@ -264,6 +291,29 @@ public final class ReachMap {
                 "VC_REACH version=1 colony={} cells={} places={} reached={} unreached={}",
                 colony.id().toString().substring(0, 8), result.cells(), result.places(), result.reached(),
                 String.join(";", unreached).replace(' ', '_'));
+        VillageColonyMod.LOGGER.info(
+                "VC_REACH_DETAIL version=1 colony={} center={} start={} floor={} outside_checks={} clearance_checks={} blocked_checks={} first_blocked_samples={}",
+                colony.id().toString().substring(0, 8), colony.center(), sweep.start.toShortString(),
+                world.getBlockState(sweep.start.down()).getBlock(), sweep.outside, sweep.clearance,
+                sweep.blocked, sweep.samples.toString().replace(' ', '_'));
+    }
+
+    /** Classificação limitada aos primeiros bloqueios; contagens representam verificações, não células. */
+    private static String blockedReason(ServerWorld world, BlockPos at) {
+        if (world.getChunkManager().getWorldChunk(at.getX() >> 4, at.getZ() >> 4) == null) {
+            return "chunk_unloaded";
+        }
+        BlockPos floor = at.down();
+        if (world.getBlockState(floor).getCollisionShape(world, floor).isEmpty()) {
+            return "no_floor";
+        }
+        if (!open(world, at)) {
+            return "feet_obstructed";
+        }
+        if (!open(world, at.up())) {
+            return "head_obstructed";
+        }
+        return world.getFluidState(at).isEmpty() ? "changed" : "fluid";
     }
 
     /** Onde a busca começa: o chão no centro da vila, ou o mais perto dele num raio de 4. */

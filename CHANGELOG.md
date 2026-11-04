@@ -12,6 +12,15 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.13] — diagnóstico do mapa de alcance (2026-11-03, candidato)
+
+### Adicionado
+- Registro da origem, piso e contagem de verificações bloqueadas da busca periódica.
+- Amostra limitada dos primeiros 64 bloqueios e aviso periódico quando não há origem válida.
+
+As contagens representam verificações, não posições únicas. A causa do alcance reduzido
+continua pendente de confirmação no próximo playtest.
+
 ## [0.4.12] — busca local da casa do mineiro (2026-11-03, candidato)
 
 ### Corrigido

@@ -2,6 +2,7 @@
 
 ## Playtest de 03-11 — fila de construção
 
+- [ ] Analisar `VC_REACH_DETAIL` e `VC_REACH_START` no próximo playtest antes de corrigir o mapa.
 - [x] Isolar a busca da casa do mineiro, preservando índice, cursor geral e pontas de rua.
 - [x] Liberar outras obras somente após volta local completa sem lote; manter a casa pendente.
 - [ ] Confirmar no próximo playtest ausência das falsas derivas e progresso de outras obras.

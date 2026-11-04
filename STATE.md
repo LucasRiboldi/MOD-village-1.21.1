@@ -1,5 +1,15 @@
 # STATE — 2026-11-03
 
+> **Playtest — candidata 0.4.13:** instrumentação da busca periódica de alcance.
+> `VC_REACH_DETAIL` registra centro, origem, piso, contagens de verificações fora
+> da área, sem passagem e sem posição válida, além de uma amostra dos primeiros
+> 64 bloqueios. `VC_REACH_START` informa ausência de origem no máximo uma vez por
+> minuto. A hipótese de origem sobre telhado continua sem confirmação. A análise
+> depende do próximo playtest; não altera a escolha de origem nem a navegação.
+> `remapJar` compilou; SHA-256 do JAR:
+> `42F7E6F55F7BF138C8BE5B7FA3364D23BC0BBE3B463453628BFB5B657C16CCD3`.
+> Testes locais suspensos; a instrumentação aguarda validação em jogo.
+
 > **Playtest — candidata 0.4.12:** branch `codex/mine-home-search`, baseada na
 > `main` `adb7630c` (PR #50). Opção A aprovada: busca local da casa do mineiro
 > com cursor independente, sem recentrar o índice nem apagar o progresso geral.

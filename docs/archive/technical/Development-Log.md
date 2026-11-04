@@ -2,6 +2,12 @@
 
 # Development-Log.md
 
+## 03-11-2026 — diagnóstico de alcance 0.4.13
+
+Opção A: registrar a origem do mapa periódico, piso e motivos amostrados de
+bloqueio, sem alterar sua busca. A hipótese de origem sobre telhado aguarda
+evidência em playtest. Consultas síncronas não coletam amostras.
+
 ## 03-11-2026 — MAE, início da Fase 3
 
 Branch `codex/mae-structures` criada sobre `main` `0a7590fc`, merge do PR #49;
