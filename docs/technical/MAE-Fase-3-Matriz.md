@@ -354,8 +354,9 @@ acesso e conclusão única no registro de edifícios.
 
 Limites do exercício: terreno concluído sintético (a cadeia terreno real →
 obra escrita está em `MaeStructureWriteGameTest`); rotação 0; circulação e
-destino útil escolhidos pelo teste, porque ainda não há chamador de produção
-que os derive; ligação local de rua não entra, pois é `road_v2` (Fase 2).
+destino útil derivados por `MaeStructureAccess.beginFor`, mas a superfície
+preparada fora da pegada é posta pelo teste, não pela preparação de terreno;
+ligação local de rua não entra, pois é `road_v2` (Fase 2).
 A obra concluída não prova mobília funcional, reconhecimento pelo pastor
 nem passagem de animais pelos portões.
 

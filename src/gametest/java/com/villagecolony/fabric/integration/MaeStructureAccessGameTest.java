@@ -22,6 +22,40 @@ import java.util.UUID;
 
 /** Circulação prevista não escreve blocos nem concede autorização MAE — ADR-046. */
 public final class MaeStructureAccessGameTest implements FabricGameTest {
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_access_derived", tickLimit = 200)
+    public void derivedGoalCrossesTheDoorAndCirculationLeavesTheFootprint(TestContext context) {
+        var fixture = fixture(context, "oak_door", false);
+        var inside = MinecraftTypeAdapter.toColonyPos(fixture.origin().add(1, 0, 2));
+        context.assertTrue(MaeStructureAccess.circulation(fixture.project(), List.of(inside, fixture.surfaces().getFirst()))
+                .equals(fixture.surfaces()), "superfície sob a obra virou circulação");
+        context.assertTrue(MaeStructureAccess.interiorGoal(fixture.project(), fixture.surfaces())
+                .equals(MinecraftTypeAdapter.toColonyPos(fixture.origin().add(1, 1, 2))), "destino não é a célula depois da porta");
+        await(context, fixture, MaeStructureAccess.beginFor(context.getWorld(), fixture.project(), List.of(),
+                List.of(inside, fixture.surfaces().getFirst()), false), null,
+                survey -> context.assertTrue(survey.result().goal().equals(MaeStructureAccess.interiorGoal(fixture.project(), fixture.surfaces())),
+                        "prova não usou o destino derivado"));
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_access_no_goal", tickLimit = 20)
+    public void aBuildingWithoutWalkableInteriorHasNoDerivedGoal(TestContext context) {
+        var fixture = fixture(context, "oak_door", false);
+        var pieces = new ArrayList<>(fixture.project().blueprint().blocks());
+        for (int x = 1; x <= 4; x++) for (int z = 0; z <= 4; z++) for (int y = 1; y <= 2; y++) {
+            pieces.add(new BlueprintBlock(new ColonyPos(x, y, z), ResourceId.vanilla("oak_planks")));
+        }
+        var plan = Blueprint.of(ResourceId.vanilla("mae_solid_fixture"), pieces)
+                .withAccesses(fixture.project().blueprint().accesses());
+        var project = ConstructionProject.plan(UUID.randomUUID(), plan, fixture.project().origin());
+        boolean refused = false;
+        try {
+            MaeStructureAccess.interiorGoal(project, fixture.surfaces());
+        } catch (IllegalArgumentException expected) {
+            refused = "no_interior_goal".equals(expected.getMessage());
+        }
+        context.assertTrue(refused, "obra maciça ganhou destino interno");
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_access_budget", tickLimit = 20)
     public void extremeCirculationCoordinatesCannotBypassTheReadBudget(TestContext context) {
         var fixture = fixture(context, "oak_door", false);

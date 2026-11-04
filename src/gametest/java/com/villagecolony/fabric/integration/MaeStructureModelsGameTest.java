@@ -113,17 +113,15 @@ public final class MaeStructureModelsGameTest implements FabricGameTest {
                         .sorted(Comparator.comparingInt((BlueprintAccess a) -> exit(lot, a).size())
                                 .thenComparing(a -> a.kind() != BlueprintAccess.Kind.DOOR))
                         .findFirst().orElseThrow();
-                var opening = absolute(access.opening().getFirst());
-                var circulation = new ArrayList<ColonyPos>();
+                var surfaces = new ArrayList<ColonyPos>();
                 for (BlockPos feet : exit(lot, access)) {
                     var floor = feet.down();
-                    circulation.add(pos(floor));
+                    surfaces.add(pos(floor));
                     // Fora do lote o piso é preparado aqui; dentro dele, é peça da planta.
                     if (!lot.contains(pos(floor)) && floor.getY() != fixture.base.getY()) {
                         fixture.set(floor, Blocks.DIRT.getDefaultState());
                     }
                 }
-                var goal = opening.add(-access.outward().offsetX(), 0, -access.outward().offsetZ());
                 for (int i = 0; i < 4; i++) {
                     var chest = fixture.base.add(-5 + i * 2, 20, -5);
                     fixture.set(chest, Blocks.CHEST.getDefaultState());
@@ -143,7 +141,8 @@ public final class MaeStructureModelsGameTest implements FabricGameTest {
                 terrain.putString("state", "complete");
                 region.put("job", terrain);
                 fixture.store.update(region);
-                var survey = MaeStructureAccess.begin(context.getWorld(), project, List.of(), circulation, pos(goal), false);
+                // Circulação e destino saem do código do jogo; o teste só prepara o piso do lado de fora.
+                var survey = MaeStructureAccess.beginFor(context.getWorld(), project, List.of(), surfaces, false);
                 context.waitAndRun(1, () -> survey(survey));
             } catch (RuntimeException | AssertionError failure) {
                 cleanup();

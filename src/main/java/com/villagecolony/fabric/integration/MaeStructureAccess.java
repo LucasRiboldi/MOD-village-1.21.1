@@ -23,6 +23,7 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
+import net.minecraft.world.EmptyBlockView;
 import org.jspecify.annotations.Nullable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -72,6 +73,74 @@ public final class MaeStructureAccess {
                                List<MaeWorldWriter.Change> terrain, List<ColonyPos> circulation,
                                ColonyPos interiorGoal, boolean built) {
         return new Survey(world, project, terrain, circulation, interiorGoal, built);
+    }
+
+    /**
+     * Caminho do jogo: circulação e destino derivados da planta e das superfícies preparadas.
+     * O levantamento continua sendo a prova; a derivação só escolhe a pergunta — ADR-046 item 6.
+     */
+    public static Survey beginFor(ServerWorld world, ConstructionProject project,
+                                  List<MaeWorldWriter.Change> terrain, List<ColonyPos> surfaces, boolean built) {
+        List<ColonyPos> circulation = circulation(project, surfaces);
+        return begin(world, project, terrain, circulation, interiorGoal(project, circulation), built);
+    }
+
+    /** Só a superfície fora da pegada é circulação; a de dentro vira piso da própria obra. */
+    static List<ColonyPos> circulation(ConstructionProject project, List<ColonyPos> surfaces) {
+        Building lot = Building.of(project);
+        return surfaces.stream().filter(at -> at.x() < lot.min().x() || at.x() > lot.max().x()
+                || at.z() < lot.min().z() || at.z() > lot.max().z()).distinct().toList();
+    }
+
+    /**
+     * A primeira célula transitável para dentro de um vão declarado, pelas peças planejadas: porta e portão são
+     * atravessados, não são destino. Primeiro os vãos cuja célula de fora está na circulação — a mesma condição
+     * com que o levantamento aceita um acesso —, depois os demais, na ordem do levantamento. Sem nenhuma, a obra
+     * não tem destino útil.
+     */
+    static ColonyPos interiorGoal(ConstructionProject project, List<ColonyPos> circulation) {
+        Building lot = Building.of(project);
+        Map<BlockPos, BlockState> planned = MaeStructurePieces.planned(project);
+        BlockPos origin = MinecraftTypeAdapter.toBlockPos(project.origin());
+        var outside = new java.util.HashSet<BlockPos>();
+        circulation.forEach(at -> outside.add(MinecraftTypeAdapter.toBlockPos(at).up()));
+        var accesses = sorted(project.blueprint().accesses()).stream().sorted(Comparator.comparing((BlueprintAccess access) -> {
+            var first = access.opening().getFirst();
+            return !outside.contains(origin.add(first.x(), first.y(), first.z())
+                    .offset(MinecraftTypeAdapter.toDirection(access.outward())));
+        })).toList();
+        for (BlueprintAccess access : accesses) {
+            Direction inward = MinecraftTypeAdapter.toDirection(access.outward()).getOpposite();
+            var first = access.opening().getFirst();
+            BlockPos at = origin.add(first.x(), first.y(), first.z());
+            for (int step = 0; step < 6; step++) {
+                at = at.offset(inward);
+                if (!lot.contains(MinecraftTypeAdapter.toColonyPos(at))) break;
+                BlockState feet = planned.getOrDefault(at, Blocks.AIR.getDefaultState());
+                if (interactive(feet)) continue;
+                if (!passable(planned, at) || !passable(planned, at.up())) break;
+                BlockState floor = planned.getOrDefault(at.down(), Blocks.AIR.getDefaultState());
+                if (floor.getFluidState().isEmpty()
+                        && !floor.getCollisionShape(EmptyBlockView.INSTANCE, at.down()).isEmpty()) {
+                    return MinecraftTypeAdapter.toColonyPos(at);
+                }
+            }
+        }
+        throw new IllegalArgumentException("no_interior_goal");
+    }
+
+    private static boolean passable(Map<BlockPos, BlockState> planned, BlockPos at) {
+        BlockState state = planned.getOrDefault(at, Blocks.AIR.getDefaultState());
+        return state.getFluidState().isEmpty() && !(state.getBlock() instanceof CropBlock)
+                && state.getCollisionShape(EmptyBlockView.INSTANCE, at).isEmpty();
+    }
+
+    private static List<BlueprintAccess> sorted(List<BlueprintAccess> accesses) {
+        return accesses.stream().sorted(Comparator
+                .comparingInt((BlueprintAccess access) -> access.opening().getFirst().x())
+                .thenComparingInt(access -> access.opening().getFirst().y())
+                .thenComparingInt(access -> access.opening().getFirst().z())
+                .thenComparing(access -> access.outward().name())).toList();
     }
 
     public static final class Survey {
@@ -128,11 +197,7 @@ public final class MaeStructureAccess {
                     new ColonyPos((int) maxX, (int) maxY, (int) maxZ));
             evidence = MaeGenerationEvidence.inspect(world, area, false, 8);
             positions = BlockPos.iterate((int) minX, (int) minY, (int) minZ, (int) maxX, (int) maxY, (int) maxZ).iterator();
-            candidates = project.blueprint().accesses().stream().sorted(Comparator
-                    .comparingInt((BlueprintAccess access) -> access.opening().getFirst().x())
-                    .thenComparingInt(access -> access.opening().getFirst().y())
-                    .thenComparingInt(access -> access.opening().getFirst().z())
-                    .thenComparing(access -> access.outward().name())).toList();
+            candidates = sorted(project.blueprint().accesses());
             if (!built) {
                 for (var change : terrain) {
                     if (!area.contains(MinecraftTypeAdapter.toColonyPos(change.position()))

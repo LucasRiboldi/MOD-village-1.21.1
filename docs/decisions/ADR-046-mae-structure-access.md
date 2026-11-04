@@ -191,6 +191,14 @@ o de `MaeWorldWriter` (quatro escritas e 2 ms por tick, 1.024 registros).
 | `state`, `reason` | `approved`, `waiting`, `paused`, `blocked`, `built`, `complete` |
 | `pendingWrite`, `expectedSections` | como no writer atual |
 
+A circulação e o destino útil da prova saem de `MaeStructureAccess.beginFor`:
+circulação é a superfície preparada fora da pegada (a de dentro vira piso da
+obra); o destino é a primeira célula transitável, com apoio, para dentro de um
+vão declarado, atravessando porta ou portão. Vãos cuja célula de fora está na
+circulação vêm primeiro, a mesma condição com que o levantamento aceita um
+acesso. Sem célula assim, `no_interior_goal`. A derivação só escolhe a
+pergunta; quem prova a passagem continua sendo o levantamento.
+
 A aprovação exige o job de terreno `complete` e sem pendência, e compara as
 seções atuais com o `expectedSections` final dele pelo diário existente; não
 recaptura evidência como se fosse geração intacta.
