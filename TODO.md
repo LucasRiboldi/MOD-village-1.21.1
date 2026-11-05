@@ -9,12 +9,12 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] trigo: `supplied` em `second_failure`, 3 vezes (corrigido na 0.4.18; conferir que parou)
 - [ ] terra sob caminho voando (`PathSupport`, linha "dirt under the path"): contar no próximo jogo
 
-## 0.4.20 — pedidos do autor de 04-11
+## Abertos do jogo da 0.4.18
 
-- [ ] Sinalizador dos caminhos do MAE no overlay do cliente, com ligar e desligar por comando (só desenvolvimento)
-- [ ] Casa pequena do mineiro ao lado da boca da mina, modelo próprio, ligada ao grafo por caminho andável e reto
-- [ ] Velas por dentro e por fora na casa principal (`BigHouseMOD`)
 - [ ] Spark `btHEJgIYWb`: `MaeGenerationEvidence.onChunkGenerate` custa 6,4% do tempo do servidor
+- [ ] `/vc mae obra` recusada duas vezes dentro da vila: `no_lot:original_structure` e `original_structure`
+- [ ] Caminho voando: origem do vão não achada (`PathSupport` corrige o sintoma); 8 blocos de caminho isolados no save
+- [ ] Conferir em jogo a 0.4.19 e a 0.4.20: pulo, água, ponte, pastor, sinalizador, casa do mineiro, velas
 
 ## Playtest de 03-11 — fila de construção
 

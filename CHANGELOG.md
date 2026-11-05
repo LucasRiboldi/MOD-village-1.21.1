@@ -12,6 +12,19 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.20] — sinalizador dos caminhos, casa do mineiro e velas (2026-11-04, candidato)
+
+### Adicionado
+- `/vc mae mostrar ligar|desligar` (operador): desenha o que a vila guarda como caminho, a até 192 blocos do jogador. Rua
+  principal ciano, secundária amarela, coluna só do índice cinza; nó central vermelho, entrada verde, junção magenta.
+- Casa pequena do mineiro (`colony/miner_house`, um modelo por estilo, `scripts/gen_miner_house.py`): cama, baú e tocha,
+  ao lado da boca da mina, sem exigir rua ao lado do lote. Antes, a busca exigia rua e terminava sem lote.
+- A boca da mina entra na rede de caminhos como uma porta, a partir da borda da folga da escada.
+- Velas acesas na casa principal: 4 por dentro e 6 por fora.
+
+### Alterado
+- O traçado de caminho cobra mais por curva, para sair em linhas retas onde der.
+
 ## [0.4.19] — notas do jogo da 0.4.18: pulo, água, árvores, caminho, pastor e ponte (2026-11-04, candidato)
 
 ### Adicionado

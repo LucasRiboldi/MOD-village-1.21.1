@@ -1,5 +1,9 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.20 (branch `fix/encalhado-falso-solto`):** sinalizador `/vc mae mostrar ligar|desligar`, casa do
+> mineiro ao lado da boca da mina com lote sem exigir rua, boca da mina na rede de caminhos, velas na casa principal
+> e curva mais cara no traçado. Modo temporário: sem testes; candidata até o próximo playtest, junto com a 0.4.19.
+
 > **Candidata 0.4.19, notas do jogo da 0.4.18 (branch `fix/encalhado-falso-solto`):** pulo padrão com o maior
 > só no obstáculo, água 5× com mais de 5 blocos à frente, limpeza da zona em todas as alturas (`TreeClearing`),
 > terra sob caminho voando (`PathSupport`), pastor com prioridade para trazer animais, casa principal em lote

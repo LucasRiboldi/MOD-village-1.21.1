@@ -218,6 +218,8 @@ regra que foi emendada. O corpo de cada regra vive em
 | 172 | **Água aberta** (autor 11-04): com mais de 5 blocos de água à frente, todo aldeão anda cerca de 5× mais rápido que no Vanilla | 11-04 | ✅ feita (0.4.19) | `VillagerMoves` |
 | 173 | **Zona da obra limpa** (autor 11-04): árvore, tronco, folha e flor saem em todas as alturas, com o que encosta, até 16 blocos além da zona e 2.000 blocos; emenda a Regra 22 | 11-04 | ✅ feita (0.4.19) | `TreeClearing` |
 | 174 | **Ponte** (autor 11-04): sem caminho a seco na zona da vila, o construtor atravessa a água, até 64 colunas, com tábua e cerca dos baús; a casa principal prefere lote ligado a seco | 11-04 | ✅ feita (0.4.19) | `BridgeDeck`, `DryLand`, `WorldPathTerrain` |
+| 175 | **Casa do mineiro** (autor 11-04): a primeira casa junto à boca da mina é a casa pequena do mineiro, com lote em chão natural sem exigir rua ao lado; a casa e a boca da mina entram na rede por caminho andável e reto | 11-04 | ✅ feita (0.4.20) | `MineHomePlans`, `MineHomeSiteSearch`, `PathLinks` |
+| 176 | **Sinalizador dos caminhos** (autor 11-04): `/vc mae mostrar ligar\|desligar` desenha o que a vila guarda como caminho; só desenvolvimento, operador, não persiste | 11-04 | ✅ feita (0.4.20) | `RoadMapSync`, `RoadMapRenderer` |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).
