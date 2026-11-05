@@ -12,7 +12,21 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
-## [0.4.22] — grafo de caminhos como mapa de trilhos (2026-11-05, candidato)
+## [0.4.23] — saída em caminho, acesso livre e zona limpa (2026-11-05, candidato)
+
+### Alterado
+- Casa principal: sem velas, com uma tocha comum por fora, acima da porta.
+- O chão em frente a toda porta e portão vira caminho, com ramal reto de até 16 blocos até a linha (`RoadLines`).
+- Todo portão de cerca é nó branco do grafo (`ShepherdPens`).
+- A rota do grafo corta o que está acima do chão: árvore e chão natural, até 5 blocos, sem abrir túnel (`canCut`,
+  `TreeClearing.openColumn`). O construtor corta ao calçar.
+- Zona da obra nova: todo bloco natural acima do piso sai, além da vegetação, só em obra sem nenhuma peça (`clearZone`).
+
+### Adicionado
+- O pedreiro limpa o anel de 2 blocos em volta das construções e nivela o vão entre construções do mesmo nível a até 5
+  blocos, em calombo de até 3 blocos; o resto fica com o alisamento (`BuildingGaps`, Regra 178).
+
+ — grafo de caminhos como mapa de trilhos (2026-11-05, candidato)
 
 ### Alterado
 - O grafo da vila nova sai da linha do meio da rua: uma linha só por corredor, retas, nó só onde linhas se encontram,

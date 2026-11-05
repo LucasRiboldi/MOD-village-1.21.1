@@ -1,5 +1,8 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.23:** tocha na casa principal, saída em caminho, portões no grafo, rota que corta (`canCut`), zona
+> limpa (`clearZone`) e `BuildingGaps` do pedreiro. Modo temporário: sem testes; compilado e nada visto em jogo.
+
 > **Candidata 0.4.22:** grafo de caminhos da vila nova como mapa de trilhos (`RoadLines`), releitura a cada 5 min
 > (`RoadGraphRefresh`, `/vc mae reler`) e calçada do que falta. Rodado fora do jogo sobre o caminho salvo da vila taiga
 > (1.243 blocos): 6 releituras até uma peça só, degrau máximo 1, dois pares de nós a até 2 blocos. Portas lidas ali por script,
