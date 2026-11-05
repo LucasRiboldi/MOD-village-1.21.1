@@ -161,8 +161,8 @@ public final class StrandedEscape {
             return;
         }
 
-        // Quem encalhou abaixo do caminho só sai na altura dele (StrandedWorkers.reachedTheWay).
-        if (isOut(world, feet) && StrandedWorkers.reachedTheWay(workerId, feet)) {
+        // Sai na altura do caminho, e não no ponto onde já foi solto sem se mover (StrandedWorkers.mayLeaveAt).
+        if (isOut(world, feet) && StrandedWorkers.mayLeaveAt(workerId, feet)) {
             VillageColonyMod.LOGGER.info(
                     "Stranded worker {} is out at {} after {} steps — back in the work queue",
                     workerId.toString().substring(0, 8),
