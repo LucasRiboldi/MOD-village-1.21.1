@@ -213,6 +213,7 @@ public class VillageColonyMod implements ModInitializer {
         com.villagecolony.fabric.work.AnalyticsLog.register();
         com.villagecolony.fabric.work.IdleHelps.register();
         com.villagecolony.fabric.work.VillagerMoves.register();
+        com.villagecolony.fabric.work.EveningGathering.register();
         com.villagecolony.fabric.work.PathSupport.register();
         com.villagecolony.fabric.work.RoadGraphRefresh.register();
         PlayerWorldChangeHandler.register();

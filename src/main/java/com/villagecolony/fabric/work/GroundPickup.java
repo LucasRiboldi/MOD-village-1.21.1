@@ -107,6 +107,11 @@ public final class GroundPickup {
 
     /** Regra 48: qualquer trabalhador que passe a cinco blocos guarda itens soltos nos baús públicos. */
     static int collectNearby(ServerWorld world, Colony colony) {
+        // Catar é trabalho: fora do expediente o item espera no chão (Regra 194).
+        if (!com.villagecolony.core.coordination.WorkClock.isWorkTime(world.getTimeOfDay())) {
+            return 0;
+        }
+
         int gathered = 0;
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
             if (!(world.getEntity(worker.villagerId()) instanceof VillagerEntity villager) || !villager.isAlive()) {

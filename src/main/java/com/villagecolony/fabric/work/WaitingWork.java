@@ -326,9 +326,9 @@ public final class WaitingWork {
 
         long days = Math.floorDiv(timeOfDay, WorkClock.DAY)
                 - Math.floorDiv(seen.timeOfDay(), WorkClock.DAY);
-        long end = Math.min(Math.floorMod(timeOfDay, WorkClock.DAY), WorkClock.DUSK);
-        long start = Math.min(Math.floorMod(seen.timeOfDay(), WorkClock.DAY), WorkClock.DUSK);
-        return days * WorkClock.DUSK + end - start;
+        long end = Math.min(Math.floorMod(timeOfDay, WorkClock.DAY), WorkClock.WORK_END);
+        long start = Math.min(Math.floorMod(seen.timeOfDay(), WorkClock.DAY), WorkClock.WORK_END);
+        return days * WorkClock.WORK_END + end - start;
     }
 
     /**
