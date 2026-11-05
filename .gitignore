@@ -110,6 +110,7 @@ graphify-out/
 
 # Relatórios locais do Sentinela de Testes. Cada execução é descartável.
 reports/test-runs/
+reports/sentinel-analysis/
 
 # Checkpoints locais de alternância entre agentes; podem conter contexto privado.
 /.handoff/

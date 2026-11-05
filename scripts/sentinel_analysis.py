@@ -27,7 +27,7 @@ def _read_text(run_dir: Path, relative: str) -> str:
 
 def _signature(result: dict, run_dir: Path) -> tuple[str, str]:
     text = "\n".join(_read_text(run_dir, result.get(key, "")) for key in ("stdout", "stderr"))
-    if "compileJava" in text or "compileGametestJava" in text or re.search(r"\.java:\d+: error:", text):
+    if re.search(r"Task :compile\w*Java FAILED", text) or re.search(r"\.java:\d+: error:", text):
         error = re.search(r"error:\s*([^\n]+)", text)
         return "COMPILATION", "compile: " + (error.group(1).strip() if error else "Gradle Java compilation failed")
     failures = [case for case in result.get("test_cases", []) if case.get("status") in {"FAIL", "ERROR"}]
