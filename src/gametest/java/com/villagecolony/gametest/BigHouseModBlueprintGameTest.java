@@ -87,8 +87,8 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
                 "NBT deve conter as 14 metades de 7 camas, encontrou " + beds);
         context.assertTrue(chests == 7,
                 "NBT deve conter 7 baus, encontrou " + chests);
-        context.assertTrue(placedBlocks == 298,
-                "a base removida deve deixar 298 blocos, encontrou " + placedBlocks);
+        context.assertTrue(placedBlocks == 308,
+                "a base removida com as 10 velas deve dar 308 blocos, encontrou " + placedBlocks);
         context.assertTrue(hasRoadLevelDoor,
                 "a metade inferior da porta precisa ficar no nivel da rua");
         context.complete();
