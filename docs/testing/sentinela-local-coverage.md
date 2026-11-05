@@ -2,7 +2,8 @@
 
 Mapa manual entre regra, prova automatizada e menor perfil do Sentinela Local.
 `scripts/test_lab.py` recusa executar quando uma linha não aponta teste e perfil.
-Ele não agenda testes e não altera CI.
+Ele não agenda testes e não altera CI. O cruzamento de todas as regras com os testes
+está em [`regras-e-testes.md`](regras-e-testes.md).
 
 | funcionalidade | regra | teste | perfil mínimo |
 | --- | --- | --- | --- |

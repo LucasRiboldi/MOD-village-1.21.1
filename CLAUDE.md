@@ -172,6 +172,9 @@ Fabric 1.21.1 · Java 21 · Gradle + Loom
 6. Commits atômicos (Conventional Commits).
 7. Se encontrar bloqueio arquitetural, PARAR e apresentar hipóteses
    antes de improvisar.
+8. Quando houver testes, alimente o Sentinela (autor, 2026-11-05): rode por
+   `python scripts/test_lab.py <perfil>` e depois `python scripts/sentinel_analysis.py`,
+   com o Minecraft fechado. Mudou regra ou teste: `python scripts/rule_coverage.py`.
 
 ### 2.1 Workflow por etapa
 

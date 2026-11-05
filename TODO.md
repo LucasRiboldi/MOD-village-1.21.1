@@ -37,6 +37,7 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 
 ## Testes que faltam (bateria de 2026-11-05: 1123 GameTests e 1745 unitários)
 
+- [ ] 19 regras sem nenhum teste e 95 em que um teste só usa a classe indicada: [`regras-e-testes.md`](docs/testing/regras-e-testes.md)
 - [ ] Sem teste: Regras 181 a 190 (0.4.25 a 0.4.27), 192 (só carpinteiro converte), 193 (mineiro alarga o nível), 194 (coleta só no
   expediente) e a caminhada da reunião (Regra 195, só o relógio tem teste)
 - [ ] `PenAccessGameTest.aTiedAnimalGoesToThePen` falhou em 3 rodadas antes do `stop()` da navegação; a causa não foi provada, só
