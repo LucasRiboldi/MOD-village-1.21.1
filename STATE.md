@@ -4,9 +4,11 @@
 > playtest da 0.4.17 (68 min, 20 TPS) achou o construtor preso 50 min no mesmo bloco,
 > solto pela fuga "after 0 steps" e marcado de novo a cada 2 min. Quem é marcado de novo
 > onde foi solto sem se mover fica na fuga até sair dali (`StrandedWorkers.mayLeaveAt`), e
-> `toSafety` troca a cama colada ao encalhe pelo centro da vila. Modo temporário: sem
-> testes; candidata até o próximo playtest. Outros achados da triagem (mineiro sem ferro,
-> fazendeiro 0/24, lenhador 0/15, curral de 7 portões) seguem abertos.
+> `toSafety` troca a cama colada ao encalhe pelo centro da vila. Também: colheita do
+> fazendeiro conta como progresso; chão do curral bloqueado a não-pastor de fora e saída por
+> portão sem largar a tarefa (Regra 122); linhas por bloco do mineiro em DEBUG. Lenhador 0/15
+> era o mesmo falso solto; lote 41 abaixo veio de save antigo. Modo temporário: sem testes
+> (PenFloorsGameTest ajustado, não executado); candidata até o próximo playtest.
 
 > **MAE — candidata 0.4.17, comando supervisionado (branch `claude/mae-obra-comando`):**
 > `/vc mae obra <modelo>` (operador, nível 2) dispara uma obra supervisionada:

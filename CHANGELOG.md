@@ -21,6 +21,14 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
   ficou 50 min em `-1584, 102, 3565`, solto e marcado de novo a cada 2 min.
 - `BedTeleport.toSafety` não usa a cama quando ela está no mesmo lugar do encalhe: vai ao
   chão do centro da vila (Regra 114).
+- Fazendeiro: colheita guardada conta como progresso; a tarefa de trigo não vence mais aos
+  300 s colhendo, nem recebe trigo criado do nada na segunda falha (0 de 24 na 0.4.17).
+- Curral (Regra 122): o chão é bloqueado para quem não é pastor e está fora; quem entra por
+  portão aberto sai por ele e mantém a tarefa.
+
+### Alterado
+- Linhas por bloco do mineiro e do baú público (`took`, `settle`, `gallery really ends`,
+  `public chests`) passam a DEBUG: eram 65% do `latest.log`.
 
 ## [0.4.17] — comando e fim do plano MAE (2026-11-04, candidato)
 
