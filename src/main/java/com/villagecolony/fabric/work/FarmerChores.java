@@ -313,6 +313,9 @@ final class FarmerChores {
                 replanted ? "replanted" : "nothing left to replant");
         ActionJournal.action(villager.getUuid(), "HARVESTED", "crop", took, job.target, "");
         WorkerStrikes.worked(villager.getUuid(), job.task);
+        if (took > 0) {
+            TaskProgressWatch.progressed(job.task); // colheita guardada é progresso útil, como no lenhador
+        }
 
         FarmerWork.release(villager.getUuid(), job);
     }
