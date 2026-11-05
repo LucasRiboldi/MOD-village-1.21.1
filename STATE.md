@@ -1,5 +1,13 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.18, encalhado falso solto (branch `fix/encalhado-falso-solto`):**
+> playtest da 0.4.17 (68 min, 20 TPS) achou o construtor preso 50 min no mesmo bloco,
+> solto pela fuga "after 0 steps" e marcado de novo a cada 2 min. Quem é marcado de novo
+> onde foi solto sem se mover fica na fuga até sair dali (`StrandedWorkers.mayLeaveAt`), e
+> `toSafety` troca a cama colada ao encalhe pelo centro da vila. Modo temporário: sem
+> testes; candidata até o próximo playtest. Outros achados da triagem (mineiro sem ferro,
+> fazendeiro 0/24, lenhador 0/15, curral de 7 portões) seguem abertos.
+
 > **MAE — candidata 0.4.17, comando supervisionado (branch `claude/mae-obra-comando`):**
 > `/vc mae obra <modelo>` (operador, nível 2) dispara uma obra supervisionada:
 > pegada centrada no jogador e rotação pela direção do olhar; `<rotação>` 0–3

@@ -12,6 +12,16 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.18] — encalhado solto sem sair do lugar (2026-11-04, candidato)
+
+### Corrigido
+- Encalhado solto "after 0 steps" e marcado de novo no mesmo ponto fica na fuga até sair
+  dali: a altura do terreno em volta não prova que ele anda (E47). O `ClimbOut` passa a
+  agir e o prazo de tentativas o leva a um lugar seguro. No playtest da 0.4.17 o construtor
+  ficou 50 min em `-1584, 102, 3565`, solto e marcado de novo a cada 2 min.
+- `BedTeleport.toSafety` não usa a cama quando ela está no mesmo lugar do encalhe: vai ao
+  chão do centro da vila (Regra 114).
+
 ## [0.4.17] — comando e fim do plano MAE (2026-11-04, candidato)
 
 ### Adicionado
