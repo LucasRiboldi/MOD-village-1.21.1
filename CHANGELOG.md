@@ -12,7 +12,17 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
-## [0.4.23] — saída em caminho, acesso livre e zona limpa (2026-11-05, candidato)
+## [0.4.24] — caminho coberto vira terra e MAE fora da vila (2026-11-05, candidato)
+
+### Adicionado
+- `/vc mae obra <modelo> fora`: lote na faixa fora da vila original, perto do jogador. Dentro da vila o MAE recusa com
+  `original_structure`, e a mensagem agora explica.
+
+### Alterado
+- Caminho com bloco em cima vira terra, ou areia no deserto, na releitura do grafo (Regra 180).
+- `toResourceType` sem exceção: 0,6% do servidor no Spark `t6c9nJYaLy`.
+
+ — saída em caminho, acesso livre e zona limpa (2026-11-05, candidato)
 
 ### Alterado
 - Casa principal: sem velas, com uma tocha comum por fora, acima da porta.

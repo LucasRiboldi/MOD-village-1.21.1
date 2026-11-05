@@ -1,5 +1,10 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.24:** caminho coberto vira terra (Regra 180) e `/vc mae obra <modelo> fora`, primeira forma de o MAE
+> construir em jogo: no jogo da 0.4.23 as 5 tentativas deram `original_structure`, porque o lote caía na caixa da vila.
+> Medido nesse jogo: ciclo médio 37 ms, `mspt` 9 a 11, grafo em uma peça, calçada de 313 para 103. Fase 4 segue aberta:
+> falta o MAE construir em jogo, medir a carga e decidir o gate da água. Sem testes; compilado.
+
 > **Candidata 0.4.23:** tocha na casa principal, saída em caminho, portões no grafo, rota que corta (`canCut`), zona
 > limpa (`clearZone`) e `BuildingGaps` do pedreiro. Modo temporário: sem testes; compilado e nada visto em jogo.
 
