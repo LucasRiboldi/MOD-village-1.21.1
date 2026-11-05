@@ -130,7 +130,9 @@ public final class RoadLines {
 
         columns.keySet().retainAll(main);
 
-        return new Result(Optional.of(graphOf(columns, center, doors)), toPave(columns, mask, physical), isolated);
+        // Só a faixa física fechada e as linhas: ligação antiga que o grafo não usou não vira calçada.
+        return new Result(Optional.of(graphOf(columns, center, doors)),
+                toPave(columns, RoadMask.closed(physical, terrain), physical), isolated);
     }
 
     /** Uma passada: a linha do meio de {@code band}, em nós e retas, com as portas. */

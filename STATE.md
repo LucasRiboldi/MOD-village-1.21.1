@@ -2,7 +2,7 @@
 
 > **Candidata 0.4.22:** grafo de caminhos da vila nova como mapa de trilhos (`RoadLines`), releitura a cada 5 min
 > (`RoadGraphRefresh`, `/vc mae reler`) e calçada do que falta. Rodado fora do jogo sobre o caminho salvo da vila taiga
-> (1.243 blocos): 7 releituras até uma peça só, degrau máximo 1, um par de nós a 2 blocos. Portas lidas ali por script,
+> (1.243 blocos): 6 releituras até uma peça só, degrau máximo 1, dois pares de nós a até 2 blocos. Portas lidas ali por script,
 > não pelo `PathLinks`. Modo temporário: sem testes; candidata até o próximo playtest.
 
 > **Candidata 0.4.21:** as capacidades novas da 0.4.19/0.4.20 (terra sob caminho, ponte, mina na rede, limpeza ampliada
