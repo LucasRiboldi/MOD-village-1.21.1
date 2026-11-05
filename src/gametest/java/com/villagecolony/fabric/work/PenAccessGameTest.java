@@ -238,12 +238,14 @@ public final class PenAccessGameTest implements FabricGameTest {
         runway(context, origin, 2);
         var post = origin.add(9, 1, 1);
         context.getWorld().setBlockState(post, Blocks.OAK_FENCE.getDefaultState(), 18);
-        var shepherd = context.spawnEntity(net.minecraft.entity.EntityType.VILLAGER, new BlockPos(11, 77, 5));
-        var cow = context.spawnEntity(net.minecraft.entity.EntityType.COW, new BlockPos(11, 77, 4));
+        var shepherd = com.villagecolony.gametest.ColonyFixture.spawnAtWorld(context, net.minecraft.entity.EntityType.VILLAGER, origin.add(8, 1, 2));
+        var cow = com.villagecolony.gametest.ColonyFixture.spawnAtWorld(context, net.minecraft.entity.EntityType.COW, origin.add(8, 1, 1));
         cow.setAiDisabled(true);
         context.getWorld().setTimeOfDay(1_000);
         context.waitAndRun(10, () -> {
             try {
+                // Fora da caixa do teste o chunk pode ainda não tiquear, e a navegação só sai de quem está no chão.
+                shepherd.setOnGround(true);
                 var knot = net.minecraft.entity.decoration.LeashKnotEntity.getOrCreate(context.getWorld(), post);
                 shepherd.getNavigation().stop();
                 cow.attachLeash(knot, true);
@@ -252,8 +254,8 @@ public final class PenAccessGameTest implements FabricGameTest {
                         + " herd=" + herd.isPresent() + " penned=" + ShepherdFlock.isPenned(context.getWorld(), cow)
                         + " room=" + ShepherdPens.withRoom(context.getWorld(), colony, shepherd.getBlockPos()).isPresent()
                         + " reach=" + ShepherdPens.forSpecies(context.getWorld(), colony, cow.getType(), shepherd, null, false).isPresent()
-                        + " shepherd=" + context.getRelativePos(shepherd.getBlockPos()) + " ground=" + shepherd.isOnGround()
-                        + " cow=" + context.getRelativePos(cow.getBlockPos()));
+                        + " shepherd=" + shepherd.getBlockPos() + " ground=" + shepherd.isOnGround()
+                        + " cow=" + cow.getBlockPos());
                 context.assertTrue(herd.get().pen != null, "o amarrado não foi para o curral");
                 ShepherdHerding.step(context.getWorld(), shepherd.getUuid(), herd.get());
                 context.assertTrue(cow.getLeashHolder() == shepherd, "o pastor não pegou a corda");
@@ -279,11 +281,13 @@ public final class PenAccessGameTest implements FabricGameTest {
         for (var at : BlockPos.iterate(origin.add(8, 1, 1), origin.add(8, 2, 1))) {
             context.getWorld().setBlockState(at, Blocks.AIR.getDefaultState(), 18);
         }
-        var shepherd = context.spawnEntity(net.minecraft.entity.EntityType.VILLAGER, new BlockPos(11, 85, 4));
-        var cow = context.spawnEntity(net.minecraft.entity.EntityType.COW, new BlockPos(11, 85, 8));
+        var shepherd = com.villagecolony.gametest.ColonyFixture.spawnAtWorld(context, net.minecraft.entity.EntityType.VILLAGER, origin.add(8, 1, 1));
+        var cow = com.villagecolony.gametest.ColonyFixture.spawnAtWorld(context, net.minecraft.entity.EntityType.COW, origin.add(8, 1, 5));
         cow.setAiDisabled(true);
         context.waitAndRun(10, () -> {
             try {
+                // O mesmo aqui: sem isto o caminho falharia por não estar no chão, e o teste passaria sem medir nada.
+                shepherd.setOnGround(true);
                 context.assertTrue(ShepherdHerding.start(context.getWorld(), colony, shepherd).isEmpty(),
                         "o pastor preso levaria o animal para um poste, com curral livre na vila");
             } finally {
@@ -296,7 +300,7 @@ public final class PenAccessGameTest implements FabricGameTest {
     }
 
     private static Colony penWithOneGate(TestContext context, BlockPos origin) {
-        // O animal e o pastor ficam fora da caixa do teste: sem isto, em divisa de chunk não tiqueiam nem pousam.
+        // O animal e o pastor ficam fora da caixa do teste, e chunk sem tíquete não os faz tiquear.
         forceChunks(context, origin, true);
         floor(context, origin, 6);
         for (int x = 0; x <= 6; x++) for (int z = 0; z <= 6; z++) {

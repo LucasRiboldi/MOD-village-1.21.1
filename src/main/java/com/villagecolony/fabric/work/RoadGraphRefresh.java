@@ -163,7 +163,7 @@ public final class RoadGraphRefresh {
     }
 
     /** Caminho com bloco em cima deixa de ser caminho — Regra 180: vira terra, ou areia no deserto. */
-    private static void coverPath(ServerWorld world, BlockPos on, BlockState top) {
+    static void coverPath(ServerWorld world, BlockPos on, BlockState top) {
         BlockPos under = on.down();
         BlockState path = world.getBlockState(under);
 

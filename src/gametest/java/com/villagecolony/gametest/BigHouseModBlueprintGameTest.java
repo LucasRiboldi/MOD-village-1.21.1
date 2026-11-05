@@ -137,4 +137,40 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
                 || (x == 4 && z == 7));
     }
 
+
+    /**
+     * Regra 35: o carpinteiro é titular, logo depois do lenhador, com cama e baú à direita da porta e corredor livre.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "big_house_carpenter")
+    public void theCarpenterHasItsPlaceRightOfTheDoor(TestContext context) {
+        var order = com.villagecolony.core.worker.service.ProfessionAssigner.FOUNDATION_ORDER;
+
+        context.assertTrue(order.indexOf(com.villagecolony.core.worker.model.ProfessionType.CARPENTER)
+                        == order.indexOf(com.villagecolony.core.worker.model.ProfessionType.LUMBERJACK) + 1,
+                "Regra 35: o carpinteiro não vem logo depois do lenhador");
+
+        Blueprint blueprint = StructureBlueprintReader.read(context.getWorld(), BIG_HOUSE_MOD)
+                .orElseThrow(() -> new AssertionError("BigHouseMOD nao foi encontrada"));
+        ColonyPos door = blueprint.blocks().stream()
+                .filter(block -> block.block().equals(ResourceId.vanilla("oak_door")))
+                .map(BlueprintBlock::offset)
+                .min(java.util.Comparator.comparingInt(ColonyPos::y))
+                .orElseThrow(() -> new AssertionError("a casa não tem porta"));
+        ColonyPos chest = new ColonyPos(door.x() + 1, door.y(), door.z() + 1);
+        ColonyPos bed = new ColonyPos(door.x() + 1, door.y(), door.z() + 2);
+
+        context.assertTrue(blueprint.blocks().stream().anyMatch(block -> block.offset().equals(chest)
+                && block.block().equals(ResourceId.vanilla("chest"))), "Regra 35: o baú não está à direita da porta");
+        context.assertTrue(blueprint.blocks().stream().anyMatch(block -> block.offset().equals(bed)
+                && block.block().equals(ResourceId.vanilla("white_bed"))), "Regra 35: a cama não está à direita da porta");
+
+        for (int ahead = 1; ahead <= 2; ahead++) {
+            ColonyPos corridor = new ColonyPos(door.x() + ahead, door.y(), door.z());
+
+            context.assertTrue(blueprint.blocks().stream().noneMatch(block -> block.offset().equals(corridor)
+                    && !block.block().equals(ResourceId.vanilla("air"))), "Regra 35: o corredor da porta não está livre");
+        }
+
+        context.complete();
+    }
 }
