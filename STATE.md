@@ -1,5 +1,10 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.22:** grafo de caminhos da vila nova como mapa de trilhos (`RoadLines`), releitura a cada 5 min
+> (`RoadGraphRefresh`, `/vc mae reler`) e calçada do que falta. Rodado fora do jogo sobre o caminho salvo da vila taiga
+> (1.243 blocos): 7 releituras até uma peça só, degrau máximo 1, um par de nós a 2 blocos. Portas lidas ali por script,
+> não pelo `PathLinks`. Modo temporário: sem testes; candidata até o próximo playtest.
+
 > **Candidata 0.4.21:** as capacidades novas da 0.4.19/0.4.20 (terra sob caminho, ponte, mina na rede, limpeza ampliada
 > de árvores) só valem em vila nova (`NewVillage`). O plano mestre do MAE não está concluído: Fases 1 a 3 entregues,
 > 4 e 5 parciais, 6 sem fila automática e nenhum critério de playtest cumprido; "fim do plano MAE" nas notas de 0.4.17

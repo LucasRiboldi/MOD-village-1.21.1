@@ -12,7 +12,25 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
-## [0.4.21] — só região nova (2026-11-05, candidato)
+## [0.4.22] — grafo de caminhos como mapa de trilhos (2026-11-05, candidato)
+
+### Alterado
+- O grafo da vila nova sai da linha do meio da rua: uma linha só por corredor, retas, nó só onde linhas se encontram,
+  sem nó a até 3 blocos de outro, e degrau de no máximo um bloco (`RoadLines`, `RoadMask`, `RoadThinning`, `RoadChains`,
+  `RoadRouting`). Vão de até 2 blocos e buraco cercado de até 25 blocos entram na rua.
+- As partes separadas se ligam à principal pelo caminho mais curto, uma por releitura; a que não se liga fica fora do grafo.
+- Entradas viram nós brancos: porta, portão de curral e o lado de roça, cada uma com um ramal até a linha.
+- O sinalizador usa as cores do desenho do autor: linha amarela, nó rosa, entrada branca.
+
+### Adicionado
+- Releitura do caminho da vila a cada 5 minutos (`RoadGraphRefresh`), e `/vc mae reler`: pega o que o jogador mudou na mão.
+- O construtor calça o que o grafo pede: vãos, buracos e ligações, 64 colunas por plano.
+
+### Corrigido
+- Tronco sem copa dentro da zona da obra sai também (nota do autor no jogo da 0.4.21).
+- A casa do mineiro pronta não volta a ser pedida (`VC_MINE_HOME` repetido).
+
+ — só região nova (2026-11-05, candidato)
 
 ### Alterado
 - Terra sob caminho (`PathSupport`), ponte, ligação da boca da mina e limpeza ampliada de árvores (`TreeClearing`) só
