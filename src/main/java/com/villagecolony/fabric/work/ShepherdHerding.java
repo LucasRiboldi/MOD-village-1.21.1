@@ -154,7 +154,7 @@ final class ShepherdHerding {
         return Optional.ofNullable(HERDS.get(shepherd)).map(herd -> herd.phase);
     }
 
-    /** Dá uma coleta a cada pastor da colônia que está sem tosquia e sem coleta. */
+    /** Dá uma coleta a cada pastor da colônia que não está com ovelha escolhida nem em outra coleta. */
     static void plan(ServerWorld world, Colony colony, Predicate<UUID> shearing) {
         long now = world.getTime();
 
@@ -426,6 +426,9 @@ final class ShepherdHerding {
     }
 
     private static void abort(ServerWorld world, UUID shepherdId, Herd herd) {
+        VillageColonyMod.LOGGER.info("Shepherd {} dropped the herd in phase {} after {} ticks, heading for {}",
+                shepherdId.toString().substring(0, 8), herd.phase, world.getTime() - herd.since,
+                herd.pen != null ? herd.pen.gate().toShortString() : "a post");
         if (world.getEntity(herd.animal) instanceof AnimalEntity animal
                 && animal.getLeashHolder() != null && animal.getLeashHolder().getUuid().equals(shepherdId)) {
             animal.detachLeash(true, false);

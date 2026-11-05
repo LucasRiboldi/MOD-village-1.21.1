@@ -181,9 +181,9 @@ public final class ShepherdWork {
             IdleLog.clear(colony.id(), SUBJECT);
         }
 
-        // Cuidar do rebanho e, sem tosquia, coletar animais — ADR-038 P2b, P2c.
+        // Cuidar do rebanho e coletar animais: só a ovelha já escolhida passa na frente da coleta (ADR-038 P2b, P2c).
         ShepherdFlock.tend(world, colony);
-        ShepherdHerding.plan(world, colony, JOBS::containsKey);
+        ShepherdHerding.plan(world, colony, id -> JOBS.containsKey(id) && JOBS.get(id).sheep != null);
 
         return open;
     }
@@ -223,6 +223,11 @@ public final class ShepherdWork {
                 // O destino morre com a tarefa — ver WorkTargets.clear.
                 WorkTargets.clear(entry.getKey());
 
+                continue;
+            }
+
+            // Com um animal na corda, a tosquia espera a coleta acabar.
+            if (ShepherdHerding.isHerding(entry.getKey())) {
                 continue;
             }
 
