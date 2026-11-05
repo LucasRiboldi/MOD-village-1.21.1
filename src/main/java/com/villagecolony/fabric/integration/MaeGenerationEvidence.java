@@ -78,6 +78,31 @@ public final class MaeGenerationEvidence {
         return result;
     }
 
+    /** A prova destas seções passa a valer a partir de agora: só a limpeza do próprio MAE pede isto — Regra 200, ADR-044. */
+    static void rebase(ServerWorld world, WorkArea area) {
+        for (int x = area.min().x() >> 4; x <= area.max().x() >> 4; x++) {
+            for (int z = area.min().z() >> 4; z <= area.max().z() >> 4; z++) {
+                WorldChunk chunk = world.getChunkManager().getWorldChunk(x, z);
+                NbtCompound receipt = chunk == null ? null : chunk.getAttached(RECEIPT);
+
+                if (chunk == null || receipt == null) {
+                    continue;
+                }
+
+                NbtCompound updated = receipt.copy();
+                NbtCompound sections = updated.getCompound("sections");
+
+                for (int y = area.min().y() >> 4; y <= area.max().y() >> 4; y++) {
+                    sections.putByteArray(Integer.toString(y), fingerprint(chunk, y));
+                }
+
+                updated.put("sections", sections);
+                chunk.setAttached(RECEIPT, updated);
+                chunk.setNeedsSaving(true);
+            }
+        }
+    }
+
     static NbtCompound original(ServerWorld world, WorkArea area) {
         NbtCompound result = inspect(world, area, false, 8);
         for (String key : result.getKeys()) {

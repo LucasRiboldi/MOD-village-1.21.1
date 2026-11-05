@@ -25,7 +25,7 @@ import java.util.UUID;
  */
 public final class MaeStructureSite {
     /** Etapa atual; {@link #FAILED} guarda o motivo em {@link #failure()}. */
-    public enum Phase { TERRAIN, ACCESS, TERRAIN_WRITE, STRUCTURE, ROAD, DONE, FAILED }
+    public enum Phase { CLEARING, TERRAIN, ACCESS, TERRAIN_WRITE, STRUCTURE, ROAD, DONE, FAILED }
 
     private static final List<BlueprintAccess.Kind> KIND_ORDER = List.of(
             BlueprintAccess.Kind.DOOR, BlueprintAccess.Kind.GATE, BlueprintAccess.Kind.OPENING);
@@ -191,6 +191,7 @@ public final class MaeStructureSite {
     public void runSlice() {
         try {
             switch (phase) {
+                case CLEARING -> { }
                 case TERRAIN -> {
                     var survey = java.util.Objects.requireNonNull(terrain, "survey");
                     survey.runSlice();

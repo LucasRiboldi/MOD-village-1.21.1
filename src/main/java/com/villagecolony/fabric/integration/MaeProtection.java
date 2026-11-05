@@ -42,6 +42,11 @@ final class MaeProtection {
         inspect(world, colonyId, area, true, readOnlyRoads, ownWrites);
     }
 
+    /** A pergunta da reserva antes de limpar: o que {@link MaeClearing} pode tirar não barra — Regra 200. */
+    static void inspectClearing(ServerWorld world, UUID colonyId, WorkArea area) {
+        inspect(world, colonyId, area, true, Set.of(), Set.of(), true);
+    }
+
     /** Peças já confirmadas desta obra não contam como volume protegido; o resto segue a regra do terreno — ADR-046. */
     static void inspectStructure(ServerWorld world, UUID colonyId, WorkArea area, Set<BlockPos> ownWrites) {
         inspect(world, colonyId, area, true, Set.of(), ownWrites);
@@ -57,6 +62,11 @@ final class MaeProtection {
 
     private static void inspect(ServerWorld world, UUID colonyId, WorkArea area, boolean lowVegetation,
                                 Set<BlockPos> readOnlyRoads, Set<BlockPos> ownWrites) {
+        inspect(world, colonyId, area, lowVegetation, readOnlyRoads, ownWrites, false);
+    }
+
+    private static void inspect(ServerWorld world, UUID colonyId, WorkArea area, boolean lowVegetation,
+                                Set<BlockPos> readOnlyRoads, Set<BlockPos> ownWrites, boolean clearing) {
         if (!world.getServer().isOnThread()) {
             throw new IllegalStateException("not_server_thread");
         }
@@ -122,6 +132,7 @@ final class MaeProtection {
                 area.max().x(), area.max().y(), area.max().z())) {
             if (ownWrites.contains(pos)) continue;
             BlockState state = world.getBlockState(pos);
+            if (clearing && MaeClearing.isGrowth(world, pos, state)) continue;
             boolean roadColumn = readOnlyRoads.stream().anyMatch(road -> road.getX() == pos.getX() && road.getZ() == pos.getZ());
             boolean roadFloor = readOnlyRoads.contains(pos);
             if (!world.getWorldBorder().contains(pos) || state.hasBlockEntity()

@@ -70,6 +70,12 @@ public final class MaeSites {
 
     static Status start(ServerWorld world, MaeWorldWriter writer, UUID colonyId, ResourceId model, BlockPos origin,
                         int quarterTurns, @Nullable UUID owner) {
+        if (MaeClearing.isBusy()) throw new IllegalStateException("too_many_sites");
+        return start(world, writer, colonyId, model, origin, quarterTurns, owner, true);
+    }
+
+    private static Status start(ServerWorld world, MaeWorldWriter writer, UUID colonyId, ResourceId model, BlockPos origin,
+                                int quarterTurns, @Nullable UUID owner, boolean mayClear) {
         if (ACTIVE.size() >= MAX_ACTIVE) throw new IllegalStateException("too_many_sites");
         if (quarterTurns < 0 || quarterTurns > 3) throw new IllegalArgumentException("invalid_rotation");
         ColonyPos center = VillageColonyMod.COLONIES.find(colonyId)
@@ -77,6 +83,16 @@ public final class MaeSites {
         ConstructionProject project = ConstructionProject.plan(colonyId, blueprint(world, model, quarterTurns),
                 MinecraftTypeAdapter.toColonyPos(origin));
         java.util.Optional<UUID> reused = reusable(world, writer, colonyId, project);
+
+        if (reused.isEmpty() && mayClear) {
+            WorkArea area = regionFor(project);
+            List<BlockPos> growth = MaeClearing.survey(world, writer, colonyId, area);
+
+            if (!growth.isEmpty()) {
+                return clearFirst(world, writer, colonyId, model, origin, quarterTurns, owner, area, growth);
+            }
+        }
+
         UUID regionId = reused.orElseGet(() -> writer.reserveTerrain(world, colonyId, regionFor(project)));
         MaeStructureSite site;
 
@@ -99,6 +115,39 @@ public final class MaeSites {
         VillageColonyMod.LOGGER.info("VC_MAE_SITE version=1 colony={} model={} at={} rotation={} result=started",
                 colonyId.toString().substring(0, 8), model, origin.toShortString(), quarterTurns);
         return status(regionId, ACTIVE.get(regionId));
+    }
+
+    /** Limpa a região agora; a obra começa depois da espera, em {@link #startAfterClearing} — Regra 200. */
+    private static Status clearFirst(ServerWorld world, MaeWorldWriter writer, UUID colonyId, ResourceId model, BlockPos origin,
+                                     int quarterTurns, @Nullable UUID owner, WorkArea area, List<BlockPos> growth) {
+        MaeClearing.clear(world, growth);
+        MaeGenerationEvidence.rebase(world, area);
+        MaeClearing.schedule(new MaeClearing.Pending(world, writer, colonyId, model, origin.toImmutable(), quarterTurns, owner,
+                area, MaeClearing.readyAt(world)));
+        VillageColonyMod.LOGGER.info("VC_MAE_SITE version=1 colony={} model={} at={} rotation={} result=clearing blocks={}",
+                colonyId.toString().substring(0, 8), model, origin.toShortString(), quarterTurns, growth.size());
+        return new Status(UUID.randomUUID(), model, origin.toImmutable(), quarterTurns, MaeStructureSite.Phase.CLEARING,
+                growth.size() + " blocos");
+    }
+
+    private static void startAfterClearing(MinecraftServer server, MaeClearing.Pending due) {
+        Text outcome;
+
+        MaeGenerationEvidence.rebase(due.world(), due.area());
+
+        try {
+            outcome = message(start(due.world(), due.writer(), due.colonyId(), due.model(), due.origin(), due.quarterTurns(),
+                    due.owner(), false));
+        } catch (IllegalStateException | IllegalArgumentException refused) {
+            VillageColonyMod.LOGGER.warn("VC_MAE_SITE version=1 model={} at={} result=refused_after_clearing detail={}",
+                    due.model(), due.origin().toShortString(), refused.getMessage());
+            outcome = Text.literal("Obra MAE recusada depois da limpeza: " + refused.getMessage()).formatted(Formatting.RED);
+        }
+
+        if (due.owner() != null) {
+            var player = server.getPlayerManager().getPlayer(due.owner());
+            if (player != null) player.sendMessage(outcome, false);
+        }
     }
 
     /**
@@ -130,9 +179,13 @@ public final class MaeSites {
         }
         String last = "no_lot";
         int tried = 0;
-        for (var lot : FoundationLotSearch.candidates(heights, growth, width, depth, size.x(), size.z())) {
+        // O lote sem árvore primeiro; a limpeza só quando não há outro (Regra 200).
+        List<FoundationLotSearch.Lot> candidates = new ArrayList<>(
+                FoundationLotSearch.candidates(heights, growth, width, depth, size.x(), size.z()));
+        candidates.sort(java.util.Comparator.comparing(FoundationLotSearch.Lot::clearing));
+
+        for (var lot : candidates) {
             if (tried >= 32) break;
-            if (lot.clearing()) continue;
             tried++;
             try {
                 return start(world, writer, colonyId, model,
@@ -177,6 +230,7 @@ public final class MaeSites {
         }
 
         List<BlockPos> lots = new java.util.ArrayList<>();
+        java.util.Set<BlockPos> toClear = new java.util.HashSet<>();
 
         for (var lot : FoundationLotSearch.candidates(heights, growth, width, depth, size.x(), size.z())) {
             int x = minX + lot.offsetX();
@@ -184,12 +238,20 @@ public final class MaeSites {
             boolean outside = x + size.x() - 1 < box.minX() - clear || x > box.maxX() + clear
                     || z + size.z() - 1 < box.minZ() - clear || z > box.maxZ() + clear;
 
-            if (outside && !lot.clearing()) {
-                lots.add(new BlockPos(x, lot.floor(), z));
+            if (outside) {
+                BlockPos at = new BlockPos(x, lot.floor(), z);
+
+                lots.add(at);
+
+                if (lot.clearing()) {
+                    toClear.add(at);
+                }
             }
         }
 
-        lots.sort(java.util.Comparator.comparingDouble(lot -> lot.getSquaredDistance(near)));
+        // O lote sem árvore primeiro; a limpeza só quando não há outro (Regra 200).
+        lots.sort(java.util.Comparator.<BlockPos, Boolean>comparing(toClear::contains)
+                .thenComparingDouble(lot -> lot.getSquaredDistance(near)));
 
         String last = lots.isEmpty() ? "no_lot_outside_the_village" : "no_lot";
 
@@ -354,6 +416,8 @@ public final class MaeSites {
     }
 
     static void tick(MinecraftServer server) {
+        MaeClearing.takeDue(server.getOverworld().getTime()).ifPresent(due -> startAfterClearing(server, due));
+
         if (server.getTicks() % RESUME_EVERY == 0) {
             resumeInterrupted(server);
         }
