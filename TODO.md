@@ -7,7 +7,19 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] `prismarine_shard` ×16 e `prismarine_crystals` ×16: "drop ingredients appear on their own"
 - [ ] `white_dye` ×12 e `yellow_dye` ×2: idem; caminho possível: flores do bioma, com o pastor
 - [ ] trigo: `supplied` em `second_failure`, 3 vezes (corrigido na 0.4.18; conferir que parou)
-- [ ] terra sob caminho voando (`PathSupport`, linha "dirt under the path"): contar no próximo jogo
+- [ ] terra sob caminho voando (`PathSupport`, linha "dirt under the path"): 0 no jogo da 0.4.24 (6 h)
+- Jogo da 0.4.24, 6 h, `VC_SUPPLY`: `prismarine_shard` ×208, `prismarine_crystals` ×80, `string` ×36, `honeycomb` ×32,
+  `blaze_rod` ×17 e 16 corantes (`white_dye` ×10, `yellow_dye` ×5, os demais de 1 a 3), todos "drop ingredients appear on
+  their own"; `oak_log` ×242, `clay` ×153, `terracotta` ×54, `stripped_oak_log` ×42, `water` ×30, `oak_planks` ×23,
+  `raw_iron` ×21 por exceção de peça que faltou (`MISSING_PIECE`, `WAITED_TOO_LONG`)
+
+## Abertos do jogo da 0.4.24
+
+- [ ] Pastor 86% ocioso: ler `VC_PENS` no próximo jogo e decidir o raio e o teto do `FencedIn` para o cercado grande
+- [ ] Fundidor travado em `minecraft:clay`: 76 `VC_SUPPLY_ERROR` "after four searches of the village's reach found none"
+- [ ] Bocas antigas da mina não são lembradas depois de reiniciar o jogo: `MineEdge.PAST` só vale na sessão
+- [ ] Grafo em retângulos: hoje vem do anel, das retas e da ponta que cresce; sem busca própria que feche quarteirão
+- [ ] Conferir em jogo a 0.4.25: subida da escada da casa principal, ramal da mina, anel, quina, ponta e rua de um bloco
 
 ## Abertos do jogo da 0.4.18
 

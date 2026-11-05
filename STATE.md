@@ -1,5 +1,9 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.25:** Regras 181 a 186: teto no pulo do caminho (causa dos 36 teletransportes da casa principal no jogo
+> da 0.4.24), ramal em vez de boca nova, anel de caminho, quina como entrada, ponta que cresce e rua de um bloco. `VC_PENS`
+> mede o cercado grande antes de corrigir o pastor. Fase 4 do MAE segue aberta, nada novo nela. Sem testes; compilado.
+
 > **Candidata 0.4.24:** caminho coberto vira terra (Regra 180) e `/vc mae obra <modelo> fora`, primeira forma de o MAE
 > construir em jogo: no jogo da 0.4.23 as 5 tentativas deram `original_structure`, porque o lote caía na caixa da vila.
 > Medido nesse jogo: ciclo médio 37 ms, `mspt` 9 a 11, grafo em uma peça, calçada de 313 para 103. Fase 4 segue aberta:

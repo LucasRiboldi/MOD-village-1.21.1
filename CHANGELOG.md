@@ -12,7 +12,25 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
-## [0.4.24] — caminho coberto vira terra e MAE fora da vila (2026-11-05, candidato)
+## [0.4.25] — volta para casa, mina por dentro e rua de um bloco (2026-11-05, candidato)
+
+### Corrigido
+- O caminho do aldeão da colônia pulava 2 blocos embaixo de teto: o nó fora da rua escapava da conferência de cabeça do
+  jogo. Na casa principal todos paravam em frente à escada e pulavam no lugar até o teletransporte (Regra 181).
+
+### Alterado
+- A mina não abre boca nova ao fim da escada: abre um ramal a partir de um salão que já existe, sem cortar degrau. Boca
+  nova só depois de 50 falhas ou com tudo o que resta na água, e nunca perto de outra boca (Regra 182).
+- A rua é uma linha de um bloco: o pedreiro devolve o caminho ao lado da linha ao solo do bioma (Regra 186).
+- O nó central fica no encontro de linhas a até 3 blocos, sem nó colado.
+
+### Adicionado
+- Anel de caminho em volta do chafariz e das plantações, com as quinas fixas no grafo (Regra 183).
+- A quina da plantação mais perto do centro vira entrada a partir da terceira releitura (Regra 184).
+- As pontas mais distantes do grafo avançam um bloco por dia (Regra 185).
+- Linha `VC_PENS` com os cercados achados e os portões que não fecham cercado.
+
+ — caminho coberto vira terra e MAE fora da vila (2026-11-05, candidato)
 
 ### Adicionado
 - `/vc mae obra <modelo> fora`: lote na faixa fora da vila original, perto do jogador. Dentro da vila o MAE recusa com
