@@ -74,6 +74,15 @@ final class GroundSmoothing {
                     "the inside of a pen");
         }
 
+        int trimmed = PathTrim.pass(world, colony);
+
+        if (trimmed > 0) {
+            ActionJournal.action(mason.getUuid(), "LEVELLED", "minecraft:grass_block", trimmed, mason.getBlockPos(),
+                    "the path beside the line");
+
+            return trimmed;
+        }
+
         int gaps = BuildingGaps.pass(world, colony);
 
         if (gaps > 0) {

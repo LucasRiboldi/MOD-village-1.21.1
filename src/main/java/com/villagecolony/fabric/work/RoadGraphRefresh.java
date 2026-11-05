@@ -215,10 +215,25 @@ public final class RoadGraphRefresh {
         }
 
         WorldPathTerrain terrain = new WorldPathTerrain(world, id);
-        RoadLines.Result result = RoadLines.build(cells, PLANNED.getOrDefault(id, Set.of()), colony.center(),
-                entrances(world, colony, terrain), terrain, LINKS_PER_READ, TURNS.merge(id, 1, Integer::sum));
+        int turn = TURNS.merge(id, 1, Integer::sum);
+        Set<ColonyPos> planned = new HashSet<>(PLANNED.getOrDefault(id, Set.of()));
+        Set<ColonyPos> fronts = entrances(world, colony, terrain);
 
-        result.graph().ifPresent(graph -> update(colony, store, graph, result));
+        planned.addAll(RoadShape.rings(world, colony, terrain));
+        planned.addAll(RoadShape.pendingGrowth(id, cells, REFUSED.getOrDefault(id, Set.of())));
+
+        if (turn >= RoadShape.CORNER_AFTER_READS) {
+            fronts.addAll(RoadShape.farmEntrances(world, colony, terrain));
+        }
+
+        RoadLines.Result result = RoadLines.build(cells, planned, colony.center(), fronts,
+                RoadShape.corners(world, colony, terrain), terrain, LINKS_PER_READ, turn);
+
+        result.graph().ifPresent(graph -> {
+            update(colony, store, graph, result);
+            RoadShape.growTips(world, colony, graph, terrain);
+        });
+        PathTrim.offer(id, result.surplus());
 
         return offerRepair(world, id, result.toPave()) || result.isolated() > 0;
     }

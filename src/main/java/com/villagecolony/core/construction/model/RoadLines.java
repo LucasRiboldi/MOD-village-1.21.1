@@ -31,6 +31,11 @@ public final class RoadLines {
     /** O maior ramal reto de uma porta até a linha. */
     static final int MAX_STUB = 16;
 
+    private static final int HUB_SNAP = 3;
+
+    /** Até onde da linha o caminho conta como a sobra da mesma rua. */
+    private static final int SURPLUS_REACH = 3;
+
     /** Quantas vezes o afinamento roda sobre o próprio resultado. */
     private static final int PASSES = 3;
 
@@ -40,8 +45,9 @@ public final class RoadLines {
      * @param graph o grafo, vazio quando não há caminho
      * @param toPave as colunas do grafo e da faixa fechada que ainda não são caminho, em ordem de andar
      * @param isolated componentes que ficaram fora do grafo
+     * @param surplus os blocos de caminho colados à linha que não são a linha: a rua é de um bloco (Regra 186)
      */
-    public record Result(Optional<RoadGraph> graph, List<PathStep> toPave, int isolated) {
+    public record Result(Optional<RoadGraph> graph, List<PathStep> toPave, int isolated, List<ColonyPos> surplus) {
     }
 
     private RoadLines() {
@@ -54,17 +60,18 @@ public final class RoadLines {
      * @param planned as colunas que uma releitura anterior mandou calçar e ainda não são caminho
      * @param center o centro da vila: o nó central é a coluna do grafo mais perto dele
      * @param entrances o chão em frente às portas
+     * @param anchors colunas por onde a linha passa fixa, sem serem entrada: as quinas dos anéis (Regra 183)
      * @param maxLinks quantas componentes separadas tentar ligar nesta passada; cada ligação é uma busca cara
      * @param turn a vez desta passada: a parte que não se ligou agora não segura as outras na próxima
      */
     public static Result build(Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> entrances,
-                               PathTerrain terrain, int maxLinks, int turn) {
+                               Set<ColonyPos> anchors, PathTerrain terrain, int maxLinks, int turn) {
         Map<Long, Integer> physical = new HashMap<>();
 
         cells.forEach(at -> physical.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
 
         if (physical.isEmpty()) {
-            return new Result(Optional.empty(), List.of(), 0);
+            return new Result(Optional.empty(), List.of(), 0, List.of());
         }
 
         Map<Long, Integer> start = new HashMap<>(physical);
@@ -80,8 +87,17 @@ public final class RoadLines {
             start.putIfAbsent(column, door.y());
         }
 
+        Set<Long> fixed = new HashSet<>(doors);
+
+        for (ColonyPos anchor : anchors) {
+            long column = ColonyRoads.column(anchor.x(), anchor.z());
+
+            fixed.add(column);
+            start.putIfAbsent(column, anchor.y());
+        }
+
         Map<Long, Integer> mask = RoadMask.closed(start, terrain);
-        Map<Long, Integer> columns = lines(mask, mask, doors, terrain);
+        Map<Long, Integer> columns = lines(mask, mask, fixed, terrain);
 
         // De novo sobre as próprias linhas: duas retas a até dois blocos viram uma, e os encontros colados, um nó.
         for (int pass = 1; pass < PASSES; pass++) {
@@ -90,7 +106,7 @@ public final class RoadLines {
 
             heights.putAll(band);
 
-            Map<Long, Integer> again = lines(band, heights, doors, terrain);
+            Map<Long, Integer> again = lines(band, heights, fixed, terrain);
 
             if (again.equals(columns)) {
                 break;
@@ -104,7 +120,7 @@ public final class RoadLines {
         parts.sort(Comparator.comparingInt((Set<Long> part) -> -part.size()));
 
         if (parts.isEmpty()) {
-            return new Result(Optional.empty(), List.of(), 0);
+            return new Result(Optional.empty(), List.of(), 0, List.of());
         }
 
         Set<Long> main = new HashSet<>(parts.getFirst());
@@ -137,14 +153,45 @@ public final class RoadLines {
 
         columns.keySet().retainAll(main);
 
-        // Só a faixa física fechada, as linhas e a frente de toda porta: ligação antiga que o grafo não usou não vira calçada.
-        Map<Long, Integer> toLay = RoadMask.closed(physical, terrain);
+        // Só as linhas e a frente de toda porta: a rua é de um bloco (Regra 186).
+        Map<Long, Integer> toLay = new HashMap<>();
 
         for (ColonyPos door : entrances) {
             toLay.putIfAbsent(ColonyRoads.column(door.x(), door.z()), door.y());
         }
 
-        return new Result(Optional.of(graphOf(columns, center, doors)), toPave(columns, toLay, physical), isolated);
+        return new Result(Optional.of(graphOf(columns, center, doors)), toPave(columns, toLay, physical), isolated,
+                surplus(physical, columns, toLay));
+    }
+
+    /** O caminho físico a até {@value #SURPLUS_REACH} blocos da linha que não é linha nem frente de porta. */
+    private static List<ColonyPos> surplus(Map<Long, Integer> physical, Map<Long, Integer> columns, Map<Long, Integer> doors) {
+        List<ColonyPos> surplus = new ArrayList<>();
+
+        physical.forEach((column, y) -> {
+            if (!columns.containsKey(column) && !doors.containsKey(column) && nearTheLine(columns, column)) {
+                surplus.add(new ColonyPos(ColonyRoads.xOf(column), y, ColonyRoads.zOf(column)));
+            }
+        });
+
+        surplus.sort(Comparator.comparingInt(ColonyPos::x).thenComparingInt(ColonyPos::z));
+
+        return surplus;
+    }
+
+    private static boolean nearTheLine(Map<Long, Integer> columns, long column) {
+        int x = ColonyRoads.xOf(column);
+        int z = ColonyRoads.zOf(column);
+
+        for (int dx = -SURPLUS_REACH; dx <= SURPLUS_REACH; dx++) {
+            for (int dz = -SURPLUS_REACH; dz <= SURPLUS_REACH; dz++) {
+                if (columns.containsKey(ColonyRoads.column(x + dx, z + dz))) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /** Uma passada: a linha do meio de {@code band}, em nós e retas, com as portas. */
@@ -185,7 +232,17 @@ public final class RoadLines {
                         .thenComparingInt(ColonyPos::x).thenComparingInt(ColonyPos::z))
                 .orElse(center);
 
-        return RoadGraph.from(positions, hub, entrances);
+        return RoadGraph.from(positions, junctionNear(columns, hub, positions), entrances);
+    }
+
+    /** O encontro de linhas a até {@value #HUB_SNAP} blocos do centro vira o nó central: dois nós não ficam colados. */
+    private static ColonyPos junctionNear(Map<Long, Integer> columns, ColonyPos hub, Set<ColonyPos> positions) {
+        return positions.stream()
+                .filter(at -> Math.abs(at.x() - hub.x()) + Math.abs(at.z() - hub.z()) <= HUB_SNAP
+                        && cardinalDegree(columns, at.x(), at.z()) >= 3)
+                .min(Comparator.comparingInt((ColonyPos at) -> Math.abs(at.x() - hub.x()) + Math.abs(at.z() - hub.z()))
+                        .thenComparingInt(ColonyPos::x).thenComparingInt(ColonyPos::z))
+                .orElse(hub);
     }
 
     /** Tira a quina que dobra a linha num quadrado de quatro colunas: dois encontros colados viram um trecho só. */

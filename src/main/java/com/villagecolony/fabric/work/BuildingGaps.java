@@ -93,6 +93,11 @@ final class BuildingGaps {
         return BUDGET - left[0];
     }
 
+    /** Se esta coluna fica dentro de uma construção da vila. */
+    static boolean insideABuilding(ServerWorld world, Colony colony, int x, int z) {
+        return boxesOf(world, colony).stream().anyMatch(box -> box.contains(x, z));
+    }
+
     private static List<Box> boxesOf(ServerWorld world, Colony colony) {
         long now = world.getTime();
         Read read = READS.get(colony.id());

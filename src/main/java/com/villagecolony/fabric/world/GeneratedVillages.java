@@ -146,6 +146,28 @@ public final class GeneratedVillages {
         return houses;
     }
 
+    /** As caixas das peças da vila gerada que alcança esta coluna cujo nome traz {@code name}; chunk carregado. */
+    public static List<BlockBox> piecesAt(ServerWorld world, int x, int z, String name) {
+        int chunkX = x >> 4;
+        int chunkZ = z >> 4;
+
+        if (!world.isChunkLoaded(chunkX, chunkZ)) {
+            return List.of();
+        }
+
+        List<BlockBox> found = new ArrayList<>();
+
+        for (StructureStart start : villagesReaching(world, chunkX, chunkZ)) {
+            for (var piece : start.getChildren()) {
+                if (piece instanceof PoolStructurePiece pool && pool.getPoolElement().toString().contains(name)) {
+                    found.add(piece.getBoundingBox());
+                }
+            }
+        }
+
+        return found;
+    }
+
     /**
      * Qual vila o jogo gerou nesta coluna ({@code minecraft:village_snowy}, ...), se houver e o
      * chunk estiver carregado. É ela que dá o estilo da colônia — decisão do autor, 2026-10-20.
