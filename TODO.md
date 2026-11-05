@@ -24,9 +24,7 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] Vila sem obra: `project=none` em 10 de 14 relatórios, 23 camas para 18 aldeões; ócio de carpinteiro, pedreiro e construtor
 - [ ] MAE: conferir em jogo a limpeza (`VC_MAE_SITE result=clearing`, fase `clearing` no chat) e a obra seguinte; a prova por
   seção pode recusar por mudança natural: `changed_generation_evidence`. Na região, areia e cascalho podem cair e barrar
-- [ ] Testes a rever do MAE ao liberar: `MaeSitesGameTest`, `MaeSitesRoadGameTest`; criar para as Regras 200 e 201
 - [ ] Mineiros: 0 de 16 tarefas de minério fechadas, `raw_iron` ×57 surgido
-- [ ] Testes a rever ao liberar: `TreeNearestGameTest`, `ShepherdPensGameTest`, `PenAccessGameTest`; criar para as Regras 196 a 199
 
 ## Abertos do jogo da 0.4.30
 
@@ -36,7 +34,13 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] Pastor: 15 `dropped the herd in phase LEAD` e 3 em `ENTER` contra 12 entregas; 2 "did not walk into the pen"
 - [ ] Fundidor: 24 soltas de `smooth_sandstone` e 11 de `terracotta`, 22% bloqueado; vila sem obra (`project=none`, `lots_ok=0`)
 - [ ] Mineiros: 5 de 6 tarefas soltas
-- [ ] Testes a rever ao liberar: os do MAE que esperam recusa por `changed_generation_evidence` na reserva; criar para a Regra 202
+
+## Testes que faltam (bateria de 2026-11-05: 1123 GameTests e 1745 unitários)
+
+- [ ] Sem teste: Regras 181 a 190 (0.4.25 a 0.4.27), 192 (só carpinteiro converte), 193 (mineiro alarga o nível), 194 (coleta só no
+  expediente) e a caminhada da reunião (Regra 195, só o relógio tem teste)
+- [ ] `PenAccessGameTest.aTiedAnimalGoesToThePen` falhou em 3 rodadas antes do `stop()` da navegação; a causa não foi provada, só
+  as 2 rodadas verdes depois
 
 ## MAE: o que falta depois da 0.4.26
 

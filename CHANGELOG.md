@@ -12,6 +12,18 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.32] — candidata, 2026-11-05
+
+### Corrigido
+
+- Pastor: com a folga de 7 blocos ele ia e voltava sem levar o animal. Agora volta aos 9, e quem já chegou amarra ou entra sem
+  voltar ao animal (Regra 196).
+
+### Testes
+
+- Bateria em dia com as Regras 182 a 202: 1123 GameTests, verdes em 2 rodadas seguidas, e 1745 unitários. Os testes novos das
+  Regras 196 a 202 foram vistos falhando com as regras desligadas.
+
 ## [0.4.31] — candidata, 2026-11-05
 
 ### Corrigido

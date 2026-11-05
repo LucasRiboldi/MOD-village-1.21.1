@@ -1,5 +1,9 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.32:** testes aplicados a pedido do autor: 1123 GameTests verdes em 2 rodadas seguidas e 1745 unitários. Os testes
+> novos das Regras 196 a 202 falharam com as regras desligadas (10 de 10). Sem teste ainda: Regras 181 a 190, 192 a 194, e o andar da
+> reunião (Regra 195, só o relógio). Teste verde não é jogo: o MAE continua sem nenhuma obra em jogo.
+
 > **Candidata 0.4.31:** jogo da 0.4.30: 6 de 9 obras MAE recusadas por `changed_generation_evidence`. Medido no save: seção com
 > água corrente diverge do recibo em 100% e com folha em 92%, sem ninguém mexer. A prova agora começa na reserva (Regra 202).
 > Curral confirmado em jogo: 12 entregas (Regra 196). O MAE continua sem nenhuma obra em jogo. Sem testes; compilado.
