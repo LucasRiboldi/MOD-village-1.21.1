@@ -37,6 +37,10 @@ public final class MaeSites {
     private static final int SLICES_PER_TICK = 3;
     /** Folga horizontal da região: entrada, margem do terreno e um trecho de rua até a rede. */
     static final int REGION_REACH = 12;
+    /** A folga que a caixa da estrutura soma às peças da vila. */
+    private static final int STRUCTURE_MARGIN = 12;
+    /** Até onde, além da folga, se procura lote fora da vila. */
+    private static final int OUTSIDE_REACH = 32;
     private static final Map<UUID, Entry> ACTIVE = new LinkedHashMap<>();
 
     static {
@@ -120,6 +124,66 @@ public final class MaeSites {
                 last = refused.getMessage() == null ? "invalid_payload" : refused.getMessage();
             }
         }
+        throw new IllegalStateException("no_lot:" + last);
+    }
+
+    /**
+     * Lote na faixa fora da vila gerada, perto do jogador — plano mestre §3.3: o MAE não edita a vila original, e a
+     * caixa dela, com a folga da estrutura e a da região, recusaria qualquer lote de dentro. Só lê chunk carregado.
+     */
+    public static Status startOutside(ServerWorld world, UUID colonyId, ResourceId model, BlockPos near,
+                                      int quarterTurns, @Nullable UUID owner) {
+        ColonyPos center = VillageColonyMod.COLONIES.find(colonyId)
+                .orElseThrow(() -> new IllegalStateException("unknown_colony")).center();
+        var box = com.villagecolony.fabric.world.GeneratedVillages.boundsAt(world, center.x(), center.z())
+                .orElseThrow(() -> new IllegalStateException("no_generated_village"));
+        MaeWorldWriter writer = MaeWorldWriter.of(world);
+        var size = blueprint(world, model, quarterTurns).size();
+        int clear = STRUCTURE_MARGIN + REGION_REACH + 1;
+        int minX = box.minX() - clear - OUTSIDE_REACH;
+        int minZ = box.minZ() - clear - OUTSIDE_REACH;
+        int width = box.maxX() - box.minX() + 2 * (clear + OUTSIDE_REACH) + 1;
+        int depth = box.maxZ() - box.minZ() + 2 * (clear + OUTSIDE_REACH) + 1;
+        int[] heights = new int[width * depth];
+        boolean[] growth = new boolean[width * depth];
+
+        for (int dz = 0; dz < depth; dz++) {
+            for (int dx = 0; dx < width; dx++) {
+                int x = minX + dx;
+                int z = minZ + dz;
+                boolean loaded = world.isChunkLoaded(x >> 4, z >> 4);
+
+                heights[dz * width + dx] = loaded ? LotGrowth.groundTop(world, x, z) : FoundationLotSearch.UNKNOWN;
+                growth[dz * width + dx] = loaded && LotGrowth.hasGrowth(world, x, z);
+            }
+        }
+
+        List<BlockPos> lots = new java.util.ArrayList<>();
+
+        for (var lot : FoundationLotSearch.candidates(heights, growth, width, depth, size.x(), size.z())) {
+            int x = minX + lot.offsetX();
+            int z = minZ + lot.offsetZ();
+            boolean outside = x + size.x() - 1 < box.minX() - clear || x > box.maxX() + clear
+                    || z + size.z() - 1 < box.minZ() - clear || z > box.maxZ() + clear;
+
+            if (outside && !lot.clearing()) {
+                lots.add(new BlockPos(x, lot.floor(), z));
+            }
+        }
+
+        lots.sort(java.util.Comparator.comparingDouble(lot -> lot.getSquaredDistance(near)));
+
+        String last = lots.isEmpty() ? "no_lot_outside_the_village" : "no_lot";
+
+        for (BlockPos lot : lots.subList(0, Math.min(32, lots.size()))) {
+            try {
+                return start(world, writer, colonyId, model, lot, quarterTurns, owner);
+            } catch (IllegalStateException | IllegalArgumentException refused) {
+                if ("too_many_sites".equals(refused.getMessage())) throw refused;
+                last = refused.getMessage() == null ? "invalid_payload" : refused.getMessage();
+            }
+        }
+
         throw new IllegalStateException("no_lot:" + last);
     }
 

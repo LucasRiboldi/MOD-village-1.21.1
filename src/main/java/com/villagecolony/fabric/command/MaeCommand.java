@@ -27,6 +27,7 @@ import java.util.Optional;
  *   <li>{@code /vc mae obra <modelo>}: pegada centrada no jogador, rotação pela direção do olhar;</li>
  *   <li>{@code /vc mae obra <modelo> <rotação>}: a mesma, com a rotação 0–3 escolhida;</li>
  *   <li>{@code /vc mae obra <modelo> busca}: lote livre e nivelado perto do jogador;</li>
+ *   <li>{@code /vc mae obra <modelo> fora}: lote fora da vila original, perto do jogador;</li>
  *   <li>{@code /vc mae estado} e {@code /vc mae parar}: obras em andamento e interrupção;</li>
  *   <li>{@code /vc mae mostrar ligar|desligar}: o sinalizador dos caminhos guardados ({@code RoadMapSync});</li>
  *   <li>{@code /vc mae reler}: relê o caminho da vila agora ({@code RoadGraphRefresh}).</li>
@@ -56,12 +57,14 @@ public final class MaeCommand {
                                 .then(CommandManager.literal("obra")
                                         .then(CommandManager.argument("modelo", IdentifierArgumentType.identifier())
                                                 .suggests(MODELS)
-                                                .executes(context -> build(context, null, false))
+                                                .executes(context -> build(context, null, Search.HERE))
                                                 .then(CommandManager.literal("busca")
-                                                        .executes(context -> build(context, null, true)))
+                                                        .executes(context -> build(context, null, Search.NEAR)))
+                                                .then(CommandManager.literal("fora")
+                                                        .executes(context -> build(context, null, Search.OUTSIDE)))
                                                 .then(CommandManager.argument("rotacao", IntegerArgumentType.integer(0, 3))
                                                         .executes(context -> build(context,
-                                                                IntegerArgumentType.getInteger(context, "rotacao"), false)))))
+                                                                IntegerArgumentType.getInteger(context, "rotacao"), Search.HERE)))))
                                 .then(CommandManager.literal("estado").executes(MaeCommand::state))
                                 .then(CommandManager.literal("parar").executes(MaeCommand::stop))
                                 .then(CommandManager.literal("reler").executes(MaeCommand::reread))
@@ -71,7 +74,9 @@ public final class MaeCommand {
                                                 .executes(context -> show(context, false)))))));
     }
 
-    private static int build(CommandContext<ServerCommandSource> context, Integer rotation, boolean search) {
+    private enum Search { HERE, NEAR, OUTSIDE }
+
+    private static int build(CommandContext<ServerCommandSource> context, Integer rotation, Search search) {
         ServerCommandSource source = context.getSource();
         if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
             source.sendError(Text.literal("A obra MAE é pedida por um jogador, na posição dele."));
@@ -92,15 +97,19 @@ public final class MaeCommand {
         var world = player.getServerWorld();
         BlockPos feet = player.getBlockPos();
         try {
-            var status = search
-                    ? MaeSites.startNear(world, colony.get().id(), model, feet, quarterTurns, player.getUuid())
-                    : MaeSites.start(world, colony.get().id(), model,
-                            MaeSites.centered(world, model, quarterTurns, feet), quarterTurns, player.getUuid());
+            var status = switch (search) {
+                case NEAR -> MaeSites.startNear(world, colony.get().id(), model, feet, quarterTurns, player.getUuid());
+                case OUTSIDE -> MaeSites.startOutside(world, colony.get().id(), model, feet, quarterTurns, player.getUuid());
+                case HERE -> MaeSites.start(world, colony.get().id(), model,
+                        MaeSites.centered(world, model, quarterTurns, feet), quarterTurns, player.getUuid());
+            };
             source.sendFeedback(() -> MaeSites.message(status), true);
             return 1;
         } catch (IllegalStateException | IllegalArgumentException refused) {
-            source.sendError(Text.literal("Obra MAE recusada: "
-                    + (refused.getMessage() == null ? "invalid_payload" : refused.getMessage())));
+            String why = refused.getMessage() == null ? "invalid_payload" : refused.getMessage();
+
+            source.sendError(Text.literal("Obra MAE recusada: " + why + (why.endsWith("original_structure")
+                    ? " — o MAE não edita a vila original; use \"fora\", perto da borda da vila" : "")));
             return 0;
         }
     }

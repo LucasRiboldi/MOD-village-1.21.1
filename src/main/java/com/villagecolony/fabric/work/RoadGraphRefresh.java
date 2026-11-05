@@ -21,6 +21,8 @@ import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
 import com.villagecolony.fabric.world.GeneratedVillages;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.FenceGateBlock;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockBox;
@@ -147,9 +149,29 @@ public final class RoadGraphRefresh {
         }
 
         BlockPos at = new BlockPos(scan.x, world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, scan.x, scan.z) - 1, scan.z);
+        BlockState top = world.getBlockState(at);
 
-        if (VillageRoad.isPathBlock(world.getBlockState(at)) && RoadGraphMigration.usable(world, at)) {
-            scan.cells.add(MinecraftTypeAdapter.toColonyPos(at));
+        if (VillageRoad.isPathBlock(top)) {
+            if (RoadGraphMigration.usable(world, at)) {
+                scan.cells.add(MinecraftTypeAdapter.toColonyPos(at));
+            }
+
+            return;
+        }
+
+        coverPath(world, at, top);
+    }
+
+    /** Caminho com bloco em cima deixa de ser caminho — Regra 180: vira terra, ou areia no deserto. */
+    private static void coverPath(ServerWorld world, BlockPos on, BlockState top) {
+        BlockPos under = on.down();
+        BlockState path = world.getBlockState(under);
+
+        if (VillageRoad.isPathBlock(path) && !top.getCollisionShape(world, on).isEmpty()
+                && MaeRoadAccess.legacyAllowed(world, under, under)) {
+            world.setBlockState(under, path.isOf(Blocks.DIRT_PATH) ? Blocks.DIRT.getDefaultState() : Blocks.SAND.getDefaultState());
+            VillageColonyMod.LOGGER.info("VC_ROAD_COVERED path at {} under {} is ground again", under.toShortString(),
+                    net.minecraft.registry.Registries.BLOCK.getId(top.getBlock()));
         }
     }
 
