@@ -68,6 +68,8 @@ public class BedTeleportGameTest implements FabricGameTest {
         VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
         ServerWorld world = context.getWorld();
 
+                // A hora do mundo é global: à noite o cérebro o levaria para perto da cama antes da conta de tentativas.
+        villager.setAiDisabled(true);
         villager.getBrain().remember(MemoryModuleType.HOME, GlobalPos.create(world.getRegistryKey(), bed));
 
         return villager;
@@ -172,6 +174,9 @@ public class BedTeleportGameTest implements FabricGameTest {
         BlockPos bed = placeBed(context, BED);
         VillagerEntity villager = villagerHomedAt(context, bed);
 
+        // Este precisa pousar: a IA volta.
+        villager.setAiDisabled(false);
+
         context.waitAndRun(20, () -> {
             context.assertTrue(villager.isOnGround(), "o aldeão ainda não pousou; o controle não mediria nada");
 
@@ -230,8 +235,6 @@ public class BedTeleportGameTest implements FabricGameTest {
         BlockPos bed = placeBed(context, BED);
         VillagerEntity villager = villagerHomedAt(context, bed);
 
-        // A hora do mundo é global: à noite o cérebro o levaria para perto da cama antes da conta de tentativas.
-        villager.setAiDisabled(true);
 
         context.waitAndRun(20, () -> {
             ServerWorld world = context.getWorld();
@@ -258,8 +261,6 @@ public class BedTeleportGameTest implements FabricGameTest {
         BlockPos bed = placeBed(context, BED);
         VillagerEntity villager = villagerHomedAt(context, bed);
 
-        // A hora do mundo é global: à noite o cérebro o levaria para perto da cama antes da conta de tentativas.
-        villager.setAiDisabled(true);
         BlockPos near = new BlockPos(BED.getX() + 2, BED.getY(), BED.getZ());
 
         for (BlockPos door : new BlockPos[] {near}) {

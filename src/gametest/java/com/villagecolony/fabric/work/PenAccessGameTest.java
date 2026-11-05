@@ -296,6 +296,8 @@ public final class PenAccessGameTest implements FabricGameTest {
     }
 
     private static Colony penWithOneGate(TestContext context, BlockPos origin) {
+        // O animal e o pastor ficam fora da caixa do teste: sem isto, em divisa de chunk não tiqueiam nem pousam.
+        forceChunks(context, origin, true);
         floor(context, origin, 6);
         for (int x = 0; x <= 6; x++) for (int z = 0; z <= 6; z++) {
             if (x == 0 || x == 6 || z == 0 || z == 6) {
@@ -316,6 +318,7 @@ public final class PenAccessGameTest implements FabricGameTest {
 
     private static void cleanPen(TestContext context, BlockPos origin) {
         ShepherdPens.clearAll();
+        forceChunks(context, origin, false);
         for (var at : BlockPos.iterate(origin.add(-3, 0, -3), origin.add(36, 4, 9))) {
             context.getWorld().setBlockState(at, Blocks.AIR.getDefaultState(), 18);
         }
