@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.task.model.Task;
@@ -64,6 +65,17 @@ final class SmelterGathers {
 
         UUID colonyId = smelting.colonyId();
         Optional<Colony> colony = VillageColonyMod.COLONIES.find(colonyId);
+
+        // O cru está nos baús e a reserva não deixa assar (StockRules.rawThatMayBeSmelted): buscar ou fazer surgir
+        // não adianta. Larga o pedido e vai fazer outra coisa, em vez de ficar parado na fornalha (Regra 190).
+        if (colony.isPresent() && MinecraftTypeAdapter.toItem(raw.get())
+                .filter(item -> ColonyChests.countIn(world,
+                        ColonyChests.nearestFirst(world, colonyId, colony.get().center()), item) > 0).isPresent()) {
+            smelting.release("the " + raw.get().name().toLowerCase(java.util.Locale.ROOT)
+                    + " in the chests is held by the reserve — the smelter helps elsewhere");
+
+            return true;
+        }
 
         if (raw.get() == ResourceType.SAND && colony.isPresent() && Crusher.covers(world, colony.get())) {
             Crusher.askTheMason(world, colony.get());
