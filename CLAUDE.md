@@ -74,6 +74,9 @@ confirmação. Recomendações atuais: triagem `gpt-6.1-terra`/`medium`;
 diagnóstico delimitado `gpt-6.1-terra`/`high`; implementação entre subsistemas
 `gpt-6.1-sol`/`high`; impasse complexo `gpt-6-astra`/`high`.
 A tabela por atividade está em `docs/technical/Modelos-Codex.md`.
+No Claude Code: triagem Sonnet 5.5/Médio; diagnóstico e implementação entre
+subsistemas Opus 5.5/Alto; impasse complexo Opus 5.5/Extra. Tabela em
+`docs/technical/Modelos-Claude.md`.
 Indique se o perfil local ainda não corresponde à recomendação. A cada mudança
 de etapa, peça novo "ok", mesmo que o modelo recomendado seja o mesmo.
 
