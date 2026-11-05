@@ -46,6 +46,8 @@ pode ser maior, supervisionada, mas cada obra exige aprovação individual.
    Emenda (autor, 2026-11-05, Regra 200): a limpeza de árvore, folha e mato que o
    próprio MAE faz antes da reserva também substitui a referência das seções da
    região, depois de conferir que elas estavam intactas.
+   Emenda (autor, 2026-11-05, Regra 201): o volume aceita o chão natural do bioma e
+   minério, além dos materiais passivos da primeira lista.
 10. Limitar região a 128 × 128 colunas, 262.144 células e 128 seções verificadas;
     lote a 4.096 células e oito seções com margem. Limitar 128 regiões e 1.024
     mudanças históricas por região. Ao atingir limite, bloquear sem truncar.

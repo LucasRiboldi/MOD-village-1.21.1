@@ -6,6 +6,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.util.math.BlockPos;
@@ -159,12 +160,16 @@ final class MaeProtection {
                 || state.isOf(Blocks.CORNFLOWER) || state.isOf(Blocks.LILY_OF_THE_VALLEY);
     }
 
-    /** Somente materiais passivos nesta fundação; vegetação, fluidos e blocos ativos ficam bloqueados — ADR-044. */
+    /** Chão natural do bioma e minério, além do caminho (Regra 201); vegetação, fluidos e blocos ativos ficam de fora — ADR-044. */
     static boolean terrain(BlockState state) {
-        return state.isAir() || state.isOf(Blocks.DIRT) || state.isOf(Blocks.GRASS_BLOCK)
-                || state.isOf(Blocks.COARSE_DIRT) || state.isOf(Blocks.STONE)
+        return state.isAir() || state.isIn(BlockTags.DIRT) || state.isIn(BlockTags.BASE_STONE_OVERWORLD)
+                || state.isIn(BlockTags.SAND) || state.isIn(BlockTags.TERRACOTTA)
+                || state.isOf(Blocks.GRAVEL) || state.isOf(Blocks.CLAY) || state.isOf(Blocks.SNOW_BLOCK)
                 || state.isOf(Blocks.COBBLESTONE) || state.isOf(Blocks.SANDSTONE)
-                || state.isOf(Blocks.RED_SANDSTONE) || state.isOf(Blocks.DIRT_PATH);
+                || state.isOf(Blocks.RED_SANDSTONE) || state.isOf(Blocks.DIRT_PATH)
+                || state.isIn(BlockTags.COAL_ORES) || state.isIn(BlockTags.IRON_ORES) || state.isIn(BlockTags.COPPER_ORES)
+                || state.isIn(BlockTags.GOLD_ORES) || state.isIn(BlockTags.REDSTONE_ORES) || state.isIn(BlockTags.LAPIS_ORES)
+                || state.isIn(BlockTags.DIAMOND_ORES) || state.isIn(BlockTags.EMERALD_ORES);
     }
 
     /**
