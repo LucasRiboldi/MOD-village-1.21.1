@@ -157,6 +157,22 @@ public final class PathPaving {
             return;
         }
 
+        if (BridgeDeck.isOverWater(world, floor)) {
+            if (!BridgeDeck.lay(world, colonyId, paver.getUuid(), step, plan.steps)) {
+                // Sem tábua nos baús: a ponte espera; a vez passa e ele volta a tentar.
+                endTurn(colonyId);
+                return;
+            }
+
+            paver.swingHand(Hand.MAIN_HAND);
+            plan.next++;
+            turn.walked = 0;
+            if (plan.done()) {
+                endTurn(colonyId);
+            }
+            return;
+        }
+
         if (!layAndRecord(world, colonyId, paver.getUuid(), step)) {
             VillageColonyMod.LOGGER.info("Colony {} — the path step at {} no longer fits; the path is traced again",
                     colonyId.toString().substring(0, 8), floor.toShortString());

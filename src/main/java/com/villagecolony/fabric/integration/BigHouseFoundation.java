@@ -208,6 +208,10 @@ public final class BigHouseFoundation {
             }
         }
 
+        // O lote ligado à vila por chão andável ganha; separado por água, só sem nenhum outro (a ponte liga).
+        boolean[] dry = DryLand.from(world, center, minX, minZ, width, depth);
+        Site cutOff = null;
+
         for (FoundationLotSearch.Lot lot
                 : FoundationLotSearch.candidates(heights, growth, width, depth, size.getX(), size.getZ())) {
             int x = minX + lot.offsetX();
@@ -216,11 +220,19 @@ public final class BigHouseFoundation {
 
             if (levelled ? safeAfterLevelling(world, colony, x, lot.floor(), z, size)
                     : safe(world, colony, x, lot.floor(), z, size)) {
-                return Optional.of(new Site(new BlockPos(x, lot.floor(), z), levelled, lot.clearing()));
+                Site site = new Site(new BlockPos(x, lot.floor(), z), levelled, lot.clearing());
+
+                if (DryLand.touches(dry, width, lot.offsetX(), lot.offsetZ(), size.getX(), size.getZ())) {
+                    return Optional.of(site);
+                }
+
+                if (cutOff == null) {
+                    cutOff = site;
+                }
             }
         }
 
-        return Optional.empty();
+        return Optional.ofNullable(cutOff);
     }
 
     /** Até onde procurar: a borda da vila gerada mais a folga, entre os 32 de antes e {@link #MAX_REACH}. */

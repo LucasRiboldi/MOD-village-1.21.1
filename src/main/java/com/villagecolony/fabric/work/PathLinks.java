@@ -185,6 +185,19 @@ public final class PathLinks {
             }
         }
 
+        // Sem saída a seco: ponte, se a travessia cabe (BridgeDeck).
+        if (steps.isEmpty() || steps.get().isEmpty()) {
+            Optional<List<PathStep>> crossing = trace(world, colony.id(), entrance.get(), roads, hub, false, true)
+                    .filter(found -> BridgeDeck.waterColumns(world, found) <= BridgeDeck.MAX_SPAN);
+
+            if (crossing.isPresent() && !crossing.get().isEmpty()) {
+                steps = crossing;
+                VillageColonyMod.LOGGER.info("Colony {} — the door of {} at {} has no dry way: a bridge over {} water columns",
+                        colony.id().toString().substring(0, 8), name, entrance.get().front().toShortString(),
+                        BridgeDeck.waterColumns(world, crossing.get()));
+            }
+        }
+
         long millis = (System.nanoTime() - began) / 1_000_000;
 
         if (steps.isEmpty() || steps.get().isEmpty()) {
@@ -206,7 +219,13 @@ public final class PathLinks {
     /** O traçado da porta até a rede, ou até o chafariz quando ainda não há rede. */
     static Optional<List<PathStep>> trace(ServerWorld world, UUID colonyId, Entrance entrance, Set<Long> roads,
                                           BlockPos hub, boolean toTheHub) {
-        WorldPathTerrain terrain = new WorldPathTerrain(world, colonyId);
+        return trace(world, colonyId, entrance, roads, hub, toTheHub, false);
+    }
+
+    /** O mesmo; com {@code bridging}, a água da zona da vila conta como chão. */
+    static Optional<List<PathStep>> trace(ServerWorld world, UUID colonyId, Entrance entrance, Set<Long> roads,
+                                          BlockPos hub, boolean toTheHub, boolean bridging) {
+        WorldPathTerrain terrain = new WorldPathTerrain(world, colonyId, bridging);
         BlockPos front = entrance.front();
         OptionalInt floor = terrain.groundY(front.getX(), front.getZ(), front.getY() - 1);
 
