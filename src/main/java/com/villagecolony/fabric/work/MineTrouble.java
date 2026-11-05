@@ -200,6 +200,12 @@ public final class MineTrouble {
             return;
         }
 
+        // Antes de culpar a boca, um ramal novo; boca nova só quando nada mais resta (Regra 182).
+        if (!MineBranches.mayOpenNewMouth(colonyId)
+                && (MineBranches.expand(world, colonyId, mine) || !MineBranches.mayOpenNewMouth(colonyId))) {
+            return;
+        }
+
         Side descent = MineCuts.sideOf(colonyId);
 
         // Com a caixa medida, a boca nova também nasce na faixa da borda, longe da
@@ -239,6 +245,7 @@ public final class MineTrouble {
                 mouth.get().toShortString());
 
         VillageColonyMod.MINES.removeOfColony(colonyId);
+        MineBranches.clear(colonyId);
 
         Mine replacement = VillageColonyMod.MINES.open(
                 colonyId,
@@ -322,6 +329,10 @@ public final class MineTrouble {
     public static boolean abandonAtBottom(
             ServerWorld world, UUID colonyId, Mine mine, BlockPos center) {
 
+        if (!MineBranches.mayOpenNewMouth(colonyId)) {
+            return false;
+        }
+
         Side opposite = mine.shaft().isRamp() ? mine.shaft().descent() : mine.shaft().descent().opposite();
 
         Optional<VillageBounds> box = MineEdge.boxOf(colonyId);
@@ -330,6 +341,7 @@ public final class MineTrouble {
         if (waterAccess.isPresent() && walkableFromTheVillage(world, colonyId, waterAccess.get().entry())
                 && waterAccess.get().place(world)) {
             VillageColonyMod.MINES.removeOfColony(colonyId);
+            MineBranches.clear(colonyId);
 
             Mine replacement = VillageColonyMod.MINES.open(
                     colonyId,
@@ -364,6 +376,7 @@ public final class MineTrouble {
         }
 
         VillageColonyMod.MINES.removeOfColony(colonyId);
+        MineBranches.clear(colonyId);
 
         Mine replacement = VillageColonyMod.MINES.open(
                 colonyId,
@@ -410,5 +423,6 @@ public final class MineTrouble {
         // só aqui houve prova de que o desenho se cava. Ver
         // Mine.turnsWithoutAPickaxe.
         VillageColonyMod.MINES.of(colonyId).ifPresent(Mine::pickaxeTook);
+        MineBranches.dug(colonyId);
     }
 }

@@ -178,7 +178,8 @@ public final class MineDigging {
             }
 
             if (advance == Mine.LevelAdvance.EXHAUSTED || advance == Mine.LevelAdvance.BLOCKED) {
-                if (MineTrouble.climbOutAtBottom(colonyId, mine.get(), center)) {
+                if (MineBranches.expand(world, colonyId, mine.get())
+                        || MineTrouble.climbOutAtBottom(colonyId, mine.get(), center)) {
                     IdleLog.clear(colonyId, ARM_SUBJECT);
 
                     return Optional.empty();

@@ -128,10 +128,10 @@ public final class MineEntrance {
         for (int level = 1; level < chain.size(); level++) {
             ColonyPos above = chain.get(level - 1);
             ColonyPos below = chain.get(level);
-            Optional<Side> descent = descentBetween(above, below);
+            Optional<MineShaft> stair = MineBranchStairs.between(above, below);
 
-            if (descent.isPresent()) {
-                MineShaft.from(above, descent.get()).waypoints().stream()
+            if (stair.isPresent()) {
+                stair.get().waypoints().stream()
                         .map(MinecraftTypeAdapter::toBlockPos)
                         .forEach(route::add);
             } else {
@@ -182,20 +182,37 @@ public final class MineEntrance {
 
     /** Se {@code below} é a entrada do nível seguinte ao de {@code above} por algum rumo. */
     private static boolean oneLevelBelow(ColonyPos above, ColonyPos below) {
-        return descentBetween(above, below).isPresent();
+        return MineBranchStairs.between(above, below).isPresent();
     }
 
-    /** O rumo de descida que leva da entrada {@code above} à {@code below}, um nível abaixo. */
-    private static Optional<Side> descentBetween(ColonyPos above, ColonyPos below) {
-        for (Side descent : Side.values()) {
-            ColonyPos step = stepOf(descent);
+    /** Os níveis da escada de agora, da superfície até o atual; a rampa não é nível. */
+    static List<MineShaft> levels(ServerWorld world, UUID colonyId, Mine mine) {
+        List<ColonyPos> chain = chainOf(world, colonyId, mine.shaft());
+        List<MineShaft> levels = new ArrayList<>();
 
-            if (below.equals(new ColonyPos(above.x() + step.x(), above.y() + step.y(), above.z() + step.z()))) {
-                return Optional.of(descent);
-            }
+        for (int level = 1; level < chain.size(); level++) {
+            MineBranchStairs.between(chain.get(level - 1), chain.get(level)).ifPresent(levels::add);
         }
 
-        return Optional.empty();
+        levels.add(mine.shaft());
+
+        return levels;
+    }
+
+    /** Guarda a escada do ramal novo: a do nível de onde ele sai, mais a entrada dele (Regra 182). */
+    static void branched(UUID colonyId, List<ColonyPos> parentChain, ColonyPos entry) {
+        List<ColonyPos> chain = new ArrayList<>(parentChain);
+
+        chain.add(entry);
+        CHAINS.put(colonyId, new Chain(List.copyOf(chain), Long.MAX_VALUE));
+    }
+
+    /** As entradas da superfície até {@code entry}, na escada de agora; vazio se ela não passa por lá. */
+    static List<ColonyPos> chainUpTo(ServerWorld world, UUID colonyId, Mine mine, ColonyPos entry) {
+        List<ColonyPos> chain = chainOf(world, colonyId, mine.shaft());
+        int at = chain.indexOf(entry);
+
+        return at < 0 ? List.of() : List.copyOf(chain.subList(0, at + 1));
     }
 
     /**
@@ -214,7 +231,17 @@ public final class MineEntrance {
             Optional<Side> descent = dugDescentAbove(world, at, keep, cut);
 
             if (descent.isEmpty()) {
-                break;
+                // Sem a escada do ramal zero: talvez este nível saia de outro ramal do nível de cima (Regra 182).
+                Optional<MineShaft> branch = MineBranchStairs.above(world, at, DUG_SHARE, cut);
+
+                if (branch.isEmpty() || aboveTheTerrain(world, branch.get().entry(), cut)) {
+                    break;
+                }
+
+                chain.addFirst(branch.get().entry());
+                at = branch.get().entry();
+                keep = branch.get().descent();
+                continue;
             }
 
             ColonyPos up = above(at, descent.get());
