@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-/** O chão do curral é caro no caminho de quem não é pastor — Regra 122. */
+/** O chão do curral fica fora do caminho de quem não é pastor e está fora dele — Regra 122. */
 public class PenFloorsGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "pen_floors", tickLimit = 20)
@@ -32,7 +32,7 @@ public class PenFloorsGameTest implements FabricGameTest {
         try {
             PenFloors.update(colony, List.of(Set.of(floor)));
 
-            context.assertTrue(cost(miner, floor) == PenFloors.COSTLY, "o mineiro devia ver o curral como caro");
+            context.assertTrue(cost(miner, floor) == PenFloors.CLOSED, "o mineiro de fora devia ver o curral fechado");
             context.assertTrue(cost(shepherd, floor) == PathNodeType.WALKABLE, "o pastor anda no curral como sempre");
             context.assertTrue(cost(stranger, floor) == PathNodeType.WALKABLE,
                     "aldeão de fora da colônia não é afetado");

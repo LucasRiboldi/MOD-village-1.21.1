@@ -298,7 +298,7 @@ final class ShepherdPens {
             READ_AT.put(colony.id(), now);
             PENS.put(colony.id(), colony.bounds().map(box -> scan(world, box).stream()
                     .map(pen -> markLarge(colony, pen)).toList()).orElse(List.of()));
-            // O chão de dentro fica caro no caminho de quem não é pastor (Regra 122).
+            // O chão de dentro sai do caminho de quem não é pastor (Regra 122).
             com.villagecolony.fabric.integration.PenFloors.update(colony.id(),
                     PENS.get(colony.id()).stream().map(Pen::reach).toList());
         }

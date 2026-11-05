@@ -111,7 +111,17 @@ public final class StrandedWorkers {
             return false;
         }
 
-        return strand(workerId, where, "frozen twice on the same spot");
+        BlockPos leftAt = LEFT_IN_PLACE.remove(workerId);
+        boolean marked = strand(workerId, where, "frozen twice on the same spot", true);
+
+        if (marked && leftAt != null && sameSpot(leftAt, where)) {
+            PINNED.put(workerId, leftAt);
+            VillageColonyMod.LOGGER.info("Worker {} is stranded again where it was let go without moving ({})"
+                            + " — it stays in the escape until it leaves that spot",
+                    workerId.toString().substring(0, 8), leftAt.toShortString());
+        }
+
+        return marked;
     }
 
     /**
@@ -121,7 +131,15 @@ public final class StrandedWorkers {
      * @return se esta foi a vez que o marcou
      */
     static boolean strandNow(UUID workerId, BlockPos where, String why) {
-        return !STRANDED.containsKey(workerId) && strand(workerId, where, why);
+        return !STRANDED.containsKey(workerId) && strand(workerId, where, why, true);
+    }
+
+    /**
+     * Marca encalhado sem largar a tarefa: quem cortou caminho por um curral de portão aberto sai
+     * pelo portão em segundos e segue no que fazia (Regra 122). Fora da escala até sair, como os outros.
+     */
+    static boolean strandKeepingWork(UUID workerId, BlockPos where, String why) {
+        return !STRANDED.containsKey(workerId) && strand(workerId, where, why, false);
     }
 
     /** O mesmo, para quem ficou abaixo de {@code way}: só sai ao chegar perto da altura dele. */
@@ -190,26 +208,19 @@ public final class StrandedWorkers {
         return true;
     }
 
-    private static boolean strand(UUID workerId, BlockPos where, String why) {
+    private static boolean strand(UUID workerId, BlockPos where, String why, boolean dropWork) {
         return VillageColonyMod.WORKERS.find(workerId).map(worker -> {
             worker.strand();
             STRANDED.put(workerId, 0);
             LAST_FREEZE.remove(workerId);
 
-            BlockPos leftAt = LEFT_IN_PLACE.remove(workerId);
-
-            if (leftAt != null && sameSpot(leftAt, where)) {
-                PINNED.put(workerId, leftAt);
-                VillageColonyMod.LOGGER.info("Worker {} is stranded again where it was let go without moving ({})"
-                                + " — it stays in the escape until it leaves that spot",
-                        workerId.toString().substring(0, 8), leftAt.toShortString());
-            }
-
             // O trabalho em curso para: a fuga é o único condutor dele
             // enquanto estiver preso. Ver WorkerJobs. No próximo tique, e não
             // aqui: quem chama é o WorkStall, de dentro do laço do ofício, e
             // tirar o trabalho do mapa que ele percorre o quebraria.
-            DROP_JOBS.add(workerId);
+            if (dropWork) {
+                DROP_JOBS.add(workerId);
+            }
 
             worker.profession().ifPresent(profession -> VillageColonyMod.ACTIVITY_TRACES.append(
                     worker.colonyId(),
@@ -223,11 +234,11 @@ public final class StrandedWorkers {
                             0)));
 
             VillageColonyMod.LOGGER.info(
-                    "Worker {} is stranded at {} — {}; it drops its work, leaves the work queue"
-                            + " and climbs its way out",
+                    "Worker {} is stranded at {} — {}; it {}, leaves the work queue and climbs its way out",
                     workerId.toString().substring(0, 8),
                     where.toShortString(),
-                    why);
+                    why,
+                    dropWork ? "drops its work" : "keeps its work");
             ActionJournal.action(workerId, "STRANDED", "", 0, where, why);
 
             return true;

@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * O custo dos nós do caminho do aldeão: o chão do curral é caro para quem não é pastor (Regra 122), e para o aldeão da
+ * O custo dos nós do caminho do aldeão: o chão do curral sai do caminho de quem não é pastor (Regra 122), e para o aldeão da
  * colônia a água é cara e o gramado de dentro da vila custa mais que a rua ({@link ColonyPathing}, autor 2026-10-28).
  *
  * <p>Injeção no retorno, permitida pela ADR-004 §4 Regra 1 com justificativa: o tipo de cada nó do

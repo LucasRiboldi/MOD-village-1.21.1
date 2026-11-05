@@ -222,16 +222,19 @@ public final class PenEscape {
         Escape escape = new Escape(pen.reach(), exits, world.getTime());
         ESCAPES.put(id, escape);
 
+        long gates = exits.stream().filter(FencedIn.Exit::gate).count();
+
         if (villager instanceof VillagerEntity) {
             WalkOverride.hold(id);
 
-            // Preso é preso: larga o trabalho e sai da escala até sair — quem o
-            // devolve é a passagem do encalhado, que o vê fora do curral. Sem
-            // isto o ofício seguia mandando nele, e recebia tarefa nova no meio.
-            StrandedWorkers.strandNow(id, feet, "fenced in");
+            // Sai da escala até sair — quem o devolve é a passagem do encalhado, que o vê fora do
+            // curral. Com portão, a saída é de segundos e ele mantém a tarefa (Regra 122); sem, larga.
+            if (gates > 0) {
+                StrandedWorkers.strandKeepingWork(id, feet, "fenced in");
+            } else {
+                StrandedWorkers.strandNow(id, feet, "fenced in");
+            }
         }
-
-        long gates = exits.stream().filter(FencedIn.Exit::gate).count();
 
         if (gates == 0 && villager instanceof VillagerEntity worker) {
             PenLift.leaveBedInPen(world, worker, pen.reach());
