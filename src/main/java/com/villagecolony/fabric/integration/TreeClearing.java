@@ -60,7 +60,8 @@ final class TreeClearing {
                     BlockPos at = new BlockPos(x, y, z);
                     BlockState state = world.getBlockState(at);
 
-                    if (grows(state) && LotGrowth.isClearableOnSite(world, at, state) && seen.add(at)) {
+                    if (grows(state) && (LotGrowth.isClearableOnSite(world, at, state) || isBareTrunk(world, at, state))
+                            && seen.add(at)) {
                         toClear.add(at);
 
                         if (spreads(state)) {
@@ -105,6 +106,11 @@ final class TreeClearing {
         }
 
         return toClear.size();
+    }
+
+    /** Tronco sem copa dentro da zona: a árvore ficou pela metade, e dentro da zona ela sai também. */
+    private static boolean isBareTrunk(ServerWorld world, BlockPos at, BlockState state) {
+        return LotGrowth.isSolidGrowth(state) && BlockProtection.mayBreak(world, at, state);
     }
 
     /** Tronco, folha, cogumelo, bambu e planta do chão; sem água, que também é "substituível". */

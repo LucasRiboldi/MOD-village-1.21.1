@@ -31,8 +31,8 @@ final class MineHomePlans {
         }
         BlockPos mouth = MinecraftTypeAdapter.toBlockPos(mine.orElseThrow().shaft().entry());
         return VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()
-                .filter(building -> HousePlans.isDwelling(building.blueprint()) || isMinerHouse(building.blueprint()))
-                .noneMatch(building -> near(mouth, building));
+                .noneMatch(building -> isMinerHouse(building.blueprint())
+                        || (HousePlans.isDwelling(building.blueprint()) && near(mouth, building)));
     }
 
     /** A casa pequena do mineiro — Regra 175: a do estilo da vila, ou a de todos os estilos. */

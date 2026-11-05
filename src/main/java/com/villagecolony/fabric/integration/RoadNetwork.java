@@ -39,7 +39,7 @@ public final class RoadNetwork {
     }
 
     /** Até quantas colunas a rede tem. */
-    static final int MAX_COLUMNS = 6_000;
+    public static final int MAX_COLUMNS = 6_000;
 
     /** Até quantos blocos além da caixa a rede segue. */
     static final int MARGIN = 32;

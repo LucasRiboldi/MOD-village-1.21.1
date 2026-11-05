@@ -28,7 +28,8 @@ import java.util.Optional;
  *   <li>{@code /vc mae obra <modelo> <rotação>}: a mesma, com a rotação 0–3 escolhida;</li>
  *   <li>{@code /vc mae obra <modelo> busca}: lote livre e nivelado perto do jogador;</li>
  *   <li>{@code /vc mae estado} e {@code /vc mae parar}: obras em andamento e interrupção;</li>
- *   <li>{@code /vc mae mostrar ligar|desligar}: o sinalizador dos caminhos guardados ({@code RoadMapSync}).</li>
+ *   <li>{@code /vc mae mostrar ligar|desligar}: o sinalizador dos caminhos guardados ({@code RoadMapSync});</li>
+ *   <li>{@code /vc mae reler}: relê o caminho da vila agora ({@code RoadGraphRefresh}).</li>
  * </ul>
  *
  * <p>Operador apenas (nível 2). Reserva, terreno, material e provas de acesso seguem o writer; o comando
@@ -63,6 +64,7 @@ public final class MaeCommand {
                                                                 IntegerArgumentType.getInteger(context, "rotacao"), false)))))
                                 .then(CommandManager.literal("estado").executes(MaeCommand::state))
                                 .then(CommandManager.literal("parar").executes(MaeCommand::stop))
+                                .then(CommandManager.literal("reler").executes(MaeCommand::reread))
                                 .then(CommandManager.literal("mostrar")
                                         .then(CommandManager.literal("ligar").executes(context -> show(context, true)))
                                         .then(CommandManager.literal("desligar")
@@ -113,6 +115,17 @@ public final class MaeCommand {
         };
     }
 
+    private static int reread(CommandContext<ServerCommandSource> context) {
+        ServerCommandSource source = context.getSource();
+
+        for (Colony colony : com.villagecolony.VillageColonyMod.COLONIES.all()) {
+            com.villagecolony.fabric.work.RoadGraphRefresh.requestNow(colony.id());
+        }
+
+        source.sendFeedback(() -> Text.literal("Grafo de caminhos relido na próxima passada.").formatted(Formatting.GRAY), false);
+        return 1;
+    }
+
     private static int show(CommandContext<ServerCommandSource> context, boolean on) {
         ServerCommandSource source = context.getSource();
 
@@ -123,8 +136,7 @@ public final class MaeCommand {
 
         com.villagecolony.fabric.overlay.RoadMapSync.set(player, on);
         source.sendFeedback(() -> Text.literal(on
-                ? "Sinalizador ligado: rua principal ciano, secundária amarela, índice cinza; nó central vermelho,"
-                        + " entrada verde, junção magenta."
+                ? "Sinalizador ligado: linha amarela, nó rosa, entrada branca, nó central vermelho, ponta azul."
                 : "Sinalizador desligado.").formatted(Formatting.GRAY), false);
         return 1;
     }

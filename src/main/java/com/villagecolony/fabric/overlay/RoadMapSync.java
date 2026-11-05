@@ -29,8 +29,8 @@ import java.util.UUID;
  * a vila guarda como caminho, a {@value #RANGE} blocos dele: arestas do grafo das ruas ({@code RoadGraph}), os nós
  * com o papel de cada um, e as colunas do índice de ruas fora do grafo.
  *
- * <p>Cores: rua principal ciano, secundária amarela, índice cinza; nó central vermelho, entrada verde, junção
- * magenta, os demais brancos. Ligado por {@code /vc mae mostrar ligar}; não persiste.
+ * <p>Cores, as do desenho do autor: linha amarela, nó rosa, entrada branca; nó central vermelho, ponta azul, e cinza
+ * só para o índice de ruas de quem ainda não tem grafo. Ligado por {@code /vc mae mostrar ligar}; não persiste.
  */
 public final class RoadMapSync {
 
@@ -46,13 +46,12 @@ public final class RoadMapSync {
     /** O teto de pontos e marcadores de um pacote. */
     static final int MAX_POINTS = 8_000;
 
-    static final int PRIMARY = 0x00FFFF;
-    static final int SECONDARY = 0xFFFF00;
+    static final int LINE = 0xFFFF00;
     static final int INDEX = 0x888888;
     static final int HUB = 0xFF3030;
-    static final int ENTRANCE = 0x30FF30;
+    static final int ENTRANCE = 0xFFFFFF;
     static final int JUNCTION = 0xFF30FF;
-    static final int OTHER = 0xFFFFFF;
+    static final int OTHER = 0x80C0FF;
 
     private static final Map<UUID, RoadMapPayload> WATCHERS = new HashMap<>();
 
@@ -109,11 +108,14 @@ public final class RoadMapSync {
 
         for (Colony colony : VillageColonyMod.COLONIES.all()) {
             Set<Long> inGraph = new HashSet<>();
+            var graph = ColonySavedData.get(world.getServer()).roadGraphs().graph(colony.id());
 
-            ColonySavedData.get(world.getServer()).roadGraphs().graph(colony.id())
-                    .ifPresent(graph -> addGraph(graph, center, lines, markers, inGraph, budget));
-            RoadIndex.roadsOf(colony.id())
-                    .ifPresent(roads -> addIndex(world, roads, center, markers, inGraph, budget));
+            if (graph.isPresent()) {
+                addGraph(graph.get(), center, lines, markers, inGraph, budget);
+            } else {
+                RoadIndex.roadsOf(colony.id())
+                        .ifPresent(roads -> addIndex(world, roads, center, markers, inGraph, budget));
+            }
         }
 
         return new RoadMapPayload(lines, markers);
@@ -134,8 +136,7 @@ public final class RoadMapSync {
             }
 
             if (points.size() > 1) {
-                lines.add(new RoadMapPayload.Line(edge.roadClass() == RoadGraph.RoadClass.PRIMARY ? PRIMARY : SECONDARY,
-                        points));
+                lines.add(new RoadMapPayload.Line(LINE, points));
             }
         }
 

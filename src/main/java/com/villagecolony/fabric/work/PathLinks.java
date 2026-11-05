@@ -65,11 +65,17 @@ public final class PathLinks {
     static final class Plan {
         final UUID building;
         final List<PathStep> steps;
+        final boolean repair;
         int next;
 
         Plan(UUID building, List<PathStep> steps) {
+            this(building, steps, false);
+        }
+
+        Plan(UUID building, List<PathStep> steps, boolean repair) {
             this.building = building;
             this.steps = steps;
+            this.repair = repair;
         }
 
         boolean done() {
@@ -81,12 +87,22 @@ public final class PathLinks {
     record Entrance(BlockPos front, Side out) {
     }
 
+    /** O id do plano de reparo da rede, que não é de nenhuma construção. */
+    private static final UUID REPAIR = UUID.nameUUIDFromBytes("road graph repair".getBytes(StandardCharsets.UTF_8));
+
     private static final Map<UUID, Plan> PLANS = new HashMap<>();
     private static final Map<UUID, Long> PLANNED_AT = new HashMap<>();
     private static final Map<UUID, Long> SET_ASIDE = new HashMap<>();
     private static final Map<UUID, String> SUMMARY = new HashMap<>();
 
     private PathLinks() {
+    }
+
+    /** O grafo pede estas colunas calçadas (Regra 177): vira o plano da vez, se não há outro em curso. */
+    static void offerRepair(UUID colonyId, List<PathStep> steps) {
+        if (planOf(colonyId).isEmpty()) {
+            PLANS.put(colonyId, new Plan(REPAIR, List.copyOf(steps), true));
+        }
     }
 
     /** O traçado em curso desta colônia, se ainda tem passo por assentar. */

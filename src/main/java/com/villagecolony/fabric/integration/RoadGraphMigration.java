@@ -83,7 +83,24 @@ public final class RoadGraphMigration {
         return new Inspection(Optional.of(RoadGraph.from(confirmed, hub, entrances)), pending, missing);
     }
 
-    private static boolean usable(ServerWorld world, BlockPos ground) {
+    /** O piso de caminho mais alto desta coluna, de cima para baixo. Regra 177: coluna ambígua fica com o de cima. */
+    public static Optional<BlockPos> firstFloor(ServerWorld world, int x, int z) {
+        int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+        int bottom = Math.max(world.getBottomY(), top - SEARCH_DEPTH);
+
+        for (int y = top; y >= bottom; y--) {
+            BlockPos candidate = new BlockPos(x, y, z);
+
+            if (usable(world, candidate)) {
+                return Optional.of(candidate);
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /** Material de caminho, com apoio embaixo e dois livres em cima. */
+    public static boolean usable(ServerWorld world, BlockPos ground) {
         BlockPos support = ground.down();
         var state = world.getBlockState(ground);
         // A coluna legada fornece o contexto do material de bioma; consultar estruturas pode carregar chunks — ADR-043.
