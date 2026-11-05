@@ -78,7 +78,10 @@ public final class MaeGenerationEvidence {
         return result;
     }
 
-    /** A prova destas seções passa a valer a partir de agora: só a limpeza do próprio MAE pede isto — Regra 200, ADR-044. */
+    /**
+     * A prova destas seções passa a valer a partir de agora: a reserva {@code terrain_v2} e a limpeza do MAE pedem isto —
+     * Regra 202, ADR-044. O recibo da geração sai antes de a água correr e de a folha se ajustar.
+     */
     static void rebase(ServerWorld world, WorkArea area) {
         for (int x = area.min().x() >> 4; x <= area.max().x() >> 4; x++) {
             for (int z = area.min().z() >> 4; z <= area.max().z() >> 4; z++) {

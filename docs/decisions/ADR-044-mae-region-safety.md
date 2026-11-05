@@ -18,6 +18,11 @@ pode ser maior, supervisionada, mas cada obra exige aprovação individual.
    `ServerChunkEvents.CHUNK_GENERATE`. Usar o attachment persistente Fabric
    `villagecolony:mae_generation`, versão 1. Nunca capturar por `CHUNK_LOAD`;
    nunca substituir recibo existente, inclusive versão desconhecida.
+   Emenda (autor, 2026-11-05, Regra 202): a reserva `terrain_v2` substitui o recibo das
+   seções da região pela impressão daquele momento, depois da conferência bloco a bloco.
+   Medido no save: o recibo sai antes de o mundo assentar, e seção com água corrente
+   diverge em 100% dos casos, e com folha em 92%, sem ninguém mexer. Perde-se a detecção
+   de terra ou pedra posta pelo jogador antes da reserva.
 3. Consultar somente chunks completos já carregados. Origem da vila não substitui
    a prova local. Referência estrutural cuja origem não esteja carregada bloqueia
    sem resolver `StructureAccessor` remotamente. Toda estrutura preexistente
@@ -43,9 +48,8 @@ pode ser maior, supervisionada, mas cada obra exige aprovação individual.
    avançar cursor. Falha bloqueia com causa; retomada é explícita e revalida.
    Intenção sem confirmação nunca é repetida automaticamente. Só hashes confirmados
    pelo MAE podem substituir a referência de geração para uma obra seguinte.
-   Emenda (autor, 2026-11-05, Regra 200): a limpeza de árvore, folha e mato que o
-   próprio MAE faz antes da reserva também substitui a referência das seções da
-   região, depois de conferir que elas estavam intactas.
+   Emenda (autor, 2026-11-05, Regras 200 e 202): a limpeza de árvore, folha e mato que o
+   próprio MAE faz antes da reserva também substitui a referência das seções da região.
    Emenda (autor, 2026-11-05, Regra 201): o volume aceita o chão natural do bioma e
    minério, além dos materiais passivos da primeira lista.
 10. Limitar região a 128 × 128 colunas, 262.144 células e 128 seções verificadas;

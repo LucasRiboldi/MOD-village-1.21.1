@@ -83,7 +83,7 @@ final class MaeClearing {
      */
     static List<BlockPos> survey(ServerWorld world, MaeWorldWriter writer, UUID colonyId, WorkArea area) {
         MaeProtection.inspectClearing(world, colonyId, area);
-        MaeGenerationEvidence.inspect(world, area, true, 128);
+        MaeGenerationEvidence.inspect(world, area, false, 128);
 
         String dimension = world.getRegistryKey().getValue().toString();
 

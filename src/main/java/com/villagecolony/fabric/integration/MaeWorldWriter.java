@@ -88,13 +88,14 @@ public final class MaeWorldWriter {
         } else {
             MaeProtection.inspect(world, colonyId, area);
         }
-        MaeGenerationEvidence.inspect(world, area, true, 128);
+        MaeGenerationEvidence.inspect(world, area, !terrain, 128);
         for (NbtCompound other : store.regions()) {
             validateRegion(other);
             if (!MaeHandover.isHandedOver(other) && dimension(world).equals(other.getString("dimension")) && area.intersects(area(other))) {
                 throw new IllegalStateException("overlapping_region");
             }
         }
+        if (terrain) MaeGenerationEvidence.rebase(world, area);
         NbtCompound region = new NbtCompound();
         UUID id = UUID.randomUUID();
         region.putUuid("id", id);
