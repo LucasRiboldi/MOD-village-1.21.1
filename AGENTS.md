@@ -27,7 +27,7 @@ mina e profissões: `docs/technical/Plano-Playtest-2026-11-02.md`.
 Regra temporária: nenhuma profissão executa atividade de outra, inclusive
 como alternativa ociosa ou ajuda de obra.
 
-Até o autor liberar testes novamente, siga `CLAUDE.md` §0.2.2. Não crie nem execute testes locais. Leia somente recortes do log e dos relatórios `VC_*`, liste achados com evidência, ofereça 2 ou 3 opções e espere a escolha. Depois implemente a menor correção escolhida, revise o diff, faça commit, rode apenas `remapJar`, copie o JAR para `downloads/` e para o TLauncher e compare os SHA-256. Trate o resultado como candidato até o próximo playtest. Não altere o CI.
+Siga `CLAUDE.md` §0.2.2: testes liberados pelo autor em 2026-11-05, rodados por `scripts/test_lab.py`. Leia somente recortes do log e dos relatórios `VC_*`, liste achados com evidência, ofereça 2 ou 3 opções e espere a escolha. Depois implemente a menor correção escolhida, com teste, revise o diff, rode o Sentinela, faça commit, rode `remapJar`, copie o JAR para `downloads/` e para o TLauncher e compare os SHA-256. Trate o resultado como candidato até o próximo playtest. Não altere o CI.
 
 ## Antes de alterar
 
@@ -35,8 +35,8 @@ Até o autor liberar testes novamente, siga `CLAUDE.md` §0.2.2. Não crie nem e
 
 - Identifique o problema, o sistema responsável, os arquivos envolvidos e se há decisão arquitetural.
 - Se a mudança exigir decisão não coberta por ADR, pare e peça deliberação; não invente arquitetura.
-- Fora do modo temporário, antes de editar código, rode `./gradlew build` (Windows: `./gradlew.bat build`). Se a linha de base falhar, registre e pare.
-- Fora do modo temporário, para defeito, reproduza primeiro com teste que falhe pela causa correta; depois implemente e rode o teste novamente.
+- Antes de editar código, rode `./gradlew build` (Windows: `./gradlew.bat build`). Se a linha de base falhar, registre e pare.
+- Para defeito, reproduza primeiro com teste que falhe pela causa correta; depois implemente e rode o teste novamente.
 
 ## Invariantes
 
@@ -50,7 +50,6 @@ Até o autor liberar testes novamente, siga `CLAUDE.md` §0.2.2. Não crie nem e
 
 ## Verificação e conclusão
 
-- No modo temporário, as regras de teste abaixo ficam suspensas; valem revisão de diff, verificações estáticas, `remapJar`, SHA-256 e playtest.
 - `./gradlew test`: unitários; `./gradlew runGametest`: testes Fabric no servidor.
 - Alterações em `fabric/` exigem GameTests. Teste verde não substitui evidência em jogo; declare explicitamente o que ainda depende do playtest do autor.
 - Teste novo deve demonstrar a falha antes da correção. Rode os testes proporcionais ao escopo e relate exatamente o que foi executado.

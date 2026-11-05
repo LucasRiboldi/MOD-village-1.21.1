@@ -63,9 +63,9 @@ a direção técnica.** Contagem de testes, JAR e o que espera playtest: só no
 
 ### 0.2.2 Modo temporário de correção por playtest
 
-Ativo desde 2026-11-01, até o autor liberar testes novamente. Este modo
-substitui temporariamente as exigências de teste das seções 2 e 2.1, sem
-alterar nem desativar o CI do repositório.
+Ativo desde 2026-11-01. **Testes liberados pelo autor em 2026-11-05:** valem de
+novo as exigências das seções 2 e 2.1. O resto deste modo continua: log primeiro,
+escolha do autor, modelo por etapa, um JAR por ciclo.
 
 Antes de iniciar cada etapa de triagem, diagnóstico, implementação ou análise
 complexa, informe ao autor a etapa, o modelo e a força recomendados e aguarde
@@ -90,9 +90,8 @@ de etapa, peça novo "ok", mesmo que o modelo recomendado seja o mesmo.
    repetição e custo anormal. Cada achado deve ter evidência e prioridade.
 3. Localizar a causa e apresentar ao autor 2 ou 3 correções pequenas, com
    efeitos e riscos. Não editar comportamento antes da escolha.
-4. Implementar somente a opção escolhida. Enquanto este modo estiver ativo,
-   não criar nem executar testes unitários, GameTests ou baterias completas.
-5. Revisar o diff e fazer verificações estáticas curtas. Marcar a correção
+4. Implementar somente a opção escolhida, com teste que falhe sem ela.
+5. Revisar o diff e rodar o Sentinela (`scripts/test_lab.py`). Marcar a correção
    como candidata, pendente de confirmação no próximo playtest.
 6. Fazer um commit atômico e gerar o JAR com `./gradlew.bat remapJar`. Copiar
    o JAR para `downloads/` e para a pasta `mods` do TLauncher; conferir o
@@ -100,9 +99,7 @@ de etapa, peça novo "ok", mesmo que o modelo recomendado seja o mesmo.
 7. O autor joga novamente. O próximo ciclo começa pelo novo log e pelos novos
    relatórios.
 
-Falha de teste já conhecida não será investigada durante este modo. Push,
-merge e release continuam exigindo pedido explícito. A ordem do autor para
-"liberar testes" restaura imediatamente o fluxo normal.
+Push, merge e release continuam exigindo pedido explícito.
 
 ### 0.3 Não comece criando classes
 
