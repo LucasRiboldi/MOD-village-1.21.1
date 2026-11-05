@@ -179,9 +179,9 @@ public final class MinerHands {
         job.collected += haul.stored();
         job.toward += haul.wanted();
 
-        // A linha que faltava. Trabalho mudo não se diagnostica — é o
-        // §11, e foi ele que custou quatro sessões à Fase 10.
-        VillageColonyMod.LOGGER.info(
+        // Por bloco, em DEBUG: o diário de ações (MINED, abaixo) e o status
+        // por minuto dos mineiros dizem o trabalho sem inflar o log (§11).
+        VillageColonyMod.LOGGER.debug(
                 "Miner {} took {} from {} — {} this task",
                 villager.getUuid(),
                 haul.stored(),
