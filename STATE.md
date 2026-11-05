@@ -1,5 +1,9 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.26:** adiantamento das Fases 4 a 6 do MAE: obra pronta entrega a região (Regra 187, emenda da ADR-045),
+> porta pelo grafo novo em vila nova, retomada depois de reiniciar, `applied` no `VC_MAE_SITE` e `/vc mae soltar`. O MAE
+> ainda não construiu em jogo; falta a obra, a medida de carga e o gate da água. Sem testes; compilado.
+
 > **Candidata 0.4.25:** Regras 181 a 186: teto no pulo do caminho (causa dos 36 teletransportes da casa principal no jogo
 > da 0.4.24), ramal em vez de boca nova, anel de caminho, quina como entrada, ponta que cresce e rua de um bloco. `VC_PENS`
 > mede o cercado grande antes de corrigir o pastor. Fase 4 do MAE segue aberta, nada novo nela. Sem testes; compilado.

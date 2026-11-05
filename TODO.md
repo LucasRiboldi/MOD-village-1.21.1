@@ -13,6 +13,15 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
   their own"; `oak_log` ×242, `clay` ×153, `terracotta` ×54, `stripped_oak_log` ×42, `water` ×30, `oak_planks` ×23,
   `raw_iron` ×21 por exceção de peça que faltou (`MISSING_PIECE`, `WAITED_TOO_LONG`)
 
+## MAE: o que falta depois da 0.4.26
+
+- [ ] Primeira obra em jogo com `/vc mae obra <modelo> fora`, Spark junto e leitura do `VC_MAE_SITE`
+- [ ] Decidir o gate da água (Fase 4 do plano mestre): decisão do autor
+- [ ] Conferir em jogo: porta ligada pelo grafo, região entregue, retomada depois de reiniciar, `/vc mae soltar`
+- [ ] Quando os testes forem liberados: `MaeSitesGameTest` e `MaeSitesRoadGameTest` esperam `road_v2` e não cobrem a entrega
+- [ ] Obra interrompida em região reaproveitada de vila antiga pode ler o job concluído da obra anterior como pronto
+- [ ] Fase 6: expansão automática no ciclo da colônia, depois da primeira obra em jogo
+
 ## Abertos do jogo da 0.4.24
 
 - [ ] Pastor 86% ocioso: ler `VC_PENS` no próximo jogo e decidir o raio e o teto do `FencedIn` para o cercado grande

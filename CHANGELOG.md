@@ -12,7 +12,22 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
-## [0.4.25] — volta para casa, mina por dentro e rua de um bloco (2026-11-05, candidato)
+## [0.4.26] — obra MAE entrega a região, liga pelo grafo e retoma (2026-11-05, candidato)
+
+### Corrigido
+- A primeira obra MAE parava para sempre a releitura do grafo e o índice de ruas da dimensão, e o caminho comum não entrava
+  na região. Em vila nova, obra pronta agora entrega a região à vila (Regra 187, emenda da ADR-045 item 10).
+- Reserva sem nenhuma escrita não fica presa quando a obra falha ou é recusada ao começar.
+- Obra MAE interrompida por reiniciar o jogo continua da etapa em que estava, quando o chão dela carrega.
+
+### Alterado
+- Em vila nova a porta da obra MAE entra no grafo novo pela releitura, com o construtor calçando, sem `road_v2`.
+- `VC_MAE_SITE` registra as escritas reais (`applied`) e se a região foi entregue (`handedOver`).
+
+### Adicionado
+- `/vc mae soltar`: entrega à vila as regiões paradas; a de escrita sem confirmação fica.
+
+ — volta para casa, mina por dentro e rua de um bloco (2026-11-05, candidato)
 
 ### Corrigido
 - O caminho do aldeão da colônia pulava 2 blocos embaixo de teto: o nó fora da rua escapava da conferência de cabeça do
