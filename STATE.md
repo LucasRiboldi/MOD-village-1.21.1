@@ -1,5 +1,10 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.21:** as capacidades novas da 0.4.19/0.4.20 (terra sob caminho, ponte, mina na rede, limpeza ampliada
+> de árvores) só valem em vila nova (`NewVillage`). O plano mestre do MAE não está concluído: Fases 1 a 3 entregues,
+> 4 e 5 parciais, 6 sem fila automática e nenhum critério de playtest cumprido; "fim do plano MAE" nas notas de 0.4.17
+> vale só para a Fase 3.
+
 > **Candidata 0.4.20 (branch `fix/encalhado-falso-solto`):** sinalizador `/vc mae mostrar ligar|desligar`, casa do
 > mineiro ao lado da boca da mina com lote sem exigir rua, boca da mina na rede de caminhos, velas na casa principal
 > e curva mais cara no traçado. Modo temporário: sem testes; candidata até o próximo playtest, junto com a 0.4.19.

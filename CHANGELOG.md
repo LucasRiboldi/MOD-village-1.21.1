@@ -12,6 +12,13 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.21] — só região nova (2026-11-05, candidato)
+
+### Alterado
+- Terra sob caminho (`PathSupport`), ponte, ligação da boca da mina e limpeza ampliada de árvores (`TreeClearing`) só
+  valem em vila gerada com a política atual (`NewVillage`, plano mestre do MAE §0.2). Vila antiga mantém o comportamento
+  anterior. Escolha do autor, 05-11.
+
 ## [0.4.20] — sinalizador dos caminhos, casa do mineiro e velas (2026-11-04, candidato)
 
 ### Adicionado

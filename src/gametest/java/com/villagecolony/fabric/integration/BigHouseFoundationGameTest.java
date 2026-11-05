@@ -336,7 +336,7 @@ public class BigHouseFoundationGameTest implements FabricGameTest {
             context.assertTrue(BigHouseFoundation.safe(world, colony, floor.getX(), floor.getY(), floor.getZ(), size),
                     "o lote com uma árvore natural foi recusado");
 
-            int cleared = BigHouseFoundation.clear(world, floor, size);
+            int cleared = BigHouseFoundation.clear(world, floor, size, false);
 
             for (BlockPos pos : BlockPos.iterate(floor, floor.add(4, 10, 4))) {
                 net.minecraft.block.BlockState state = world.getBlockState(pos);

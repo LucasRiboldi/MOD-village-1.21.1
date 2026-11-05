@@ -5,6 +5,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.integration.MaeRoadAccess;
+import com.villagecolony.fabric.integration.NewVillage;
 import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.VillageRoad;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -24,7 +25,7 @@ import java.util.UUID;
  *
  * <p>Percorre as colunas da rede de ruas aos poucos ({@value #COLUMNS} por segundo, por colônia). Coluna de caminho
  * com vão de até {@value #MAX_GAP} blocos embaixo ganha terra até o chão. Vão maior ou água fica como está, que é
- * ponte. A terra surge sem origem física: cada coluna fica no log ("dirt under the path").
+ * ponte. Só em vila nova ({@link NewVillage}). A terra surge sem origem física: cada coluna fica no log ("dirt under the path").
  */
 public final class PathSupport {
 
@@ -47,6 +48,10 @@ public final class PathSupport {
         ServerTickEvents.END_WORLD_TICK.register(world -> {
             if (world.getRegistryKey().equals(World.OVERWORLD) && world.getTime() % EVERY == 0) {
                 for (Colony colony : VillageColonyMod.COLONIES.all()) {
+                    if (!NewVillage.is(world, colony)) {
+                        continue;
+                    }
+
                     RoadIndex.roadsOf(colony.id()).ifPresent(roads -> pass(world, colony.id(), roads));
                 }
             }

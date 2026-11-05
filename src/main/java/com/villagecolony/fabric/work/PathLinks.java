@@ -11,6 +11,7 @@ import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.NewVillage;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
 import com.villagecolony.fabric.world.GeneratedVillages;
 import net.minecraft.block.BlockState;
@@ -179,6 +180,10 @@ public final class PathLinks {
             return false;
         }
 
+        if (!NewVillage.is(world, colony)) {
+            return false;
+        }
+
         UUID id = UUID.nameUUIDFromBytes(("mine mouth " + colony.id()).getBytes(StandardCharsets.UTF_8));
 
         if (SET_ASIDE.containsKey(id)) {
@@ -234,7 +239,7 @@ public final class PathLinks {
         }
 
         // Sem saída a seco: ponte, se a travessia cabe (BridgeDeck).
-        if (steps.isEmpty() || steps.get().isEmpty()) {
+        if ((steps.isEmpty() || steps.get().isEmpty()) && NewVillage.is(world, colony)) {
             Optional<List<PathStep>> crossing = trace(world, colony.id(), entrance.get(), roads, hub, false, true)
                     .filter(found -> BridgeDeck.waterColumns(world, found) <= BridgeDeck.MAX_SPAN);
 
