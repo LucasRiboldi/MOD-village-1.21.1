@@ -121,6 +121,11 @@ public final class MineTrouble {
      * errar é a mina inundada.
      */
     public static void flooded(UUID colonyId, UUID workerId, BlockPos at) {
+        // Quem alarga o nível não tem ramal para encerrar (Regra 193).
+        if (MineClaims.armAlreadyHeld(colonyId, workerId).isEmpty()) {
+            return;
+        }
+
         VillageColonyMod.MINES.of(colonyId).ifPresent(mine -> {
             // <b>O ramal de quem cavou</b> — 2026-09-04. A água é do
             // lugar em que a picareta bateu, e só aquele rumo entra nela;
@@ -415,6 +420,11 @@ public final class MineTrouble {
      * quem ia cavar nela.
      */
     public static void pickaxeTook(UUID colonyId, UUID workerId) {
+        // Quem alarga o nível não tem ramal: a pedra dele não prova que a escada se cava (Regra 193).
+        if (MineClaims.armAlreadyHeld(colonyId, workerId).isEmpty()) {
+            return;
+        }
+
         MineDigging.armOf(colonyId, workerId).ifPresent(MineArm::digging);
 
         // <b>E a mina inteira sai da desconfiança</b> — E45, 2026-09-16.

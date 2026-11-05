@@ -229,8 +229,8 @@ public final class MineDigging {
 
             // Cada ramal é de um mineiro só (MineClaims). Quem não achou ramal
             // livre não fica parado: raspa a pedra exposta em volta da vila
-            // até um ramal abrir — ADR-037 M1, cada profissional com sua rotina.
-            return exposedStoneFallback(world, workerId, colonyId, center);
+            // até um ramal abrir — ADR-037 M1; com mina, ele alarga o nível (Regra 193).
+            return MineSideWork.nextCut(world, workerId, colonyId, mine.get());
         }
 
         MineArm arm = mine.get().arm(claimed.getAsInt());
