@@ -12,6 +12,23 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.19] — notas do jogo da 0.4.18: pulo, água, árvores, caminho, pastor e ponte (2026-11-04, candidato)
+
+### Adicionado
+- Ponte da vila: sem caminho a seco na zona da vila, o construtor atravessa a água, até 64 colunas,
+  com eixo de tábua, largura 3 onde o lado é água e cerca nas beiras, gastando dos baús (`BridgeDeck`).
+- Com mais de 5 blocos de água à frente, todo aldeão anda cerca de 5× mais rápido que no Vanilla (`VillagerMoves`).
+
+### Alterado
+- O pulo do aldeão é o padrão; o maior só com obstáculo, cerca, encalhe ou saída de curral (`VillagerMoves`).
+- A casa principal prefere lote ligado à vila a seco (`DryLand`).
+- Pastor busca animais antes de escolher a próxima ovelha: a demanda de lã não o prende mais à tosquia.
+
+### Corrigido
+- Toda vegetação da zona da obra sai em todas as alturas, com tronco e folha encostados, até 16 blocos além
+  da zona e 2.000 blocos (`TreeClearing`).
+- Caminho com vão de até 6 blocos embaixo ganha terra até o chão (`PathSupport`).
+
 ## [0.4.18] — encalhado solto sem sair do lugar (2026-11-04, candidato)
 
 ### Corrigido

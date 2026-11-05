@@ -214,6 +214,10 @@ regra que foi emendada. O corpo de cada regra vive em
 | 168 | **Um curral grande por vila nova:** a vila gerada após esta regra constrói no máximo um curral grande, intercalado com outras obras, para até 20 animais. O modelo único em todos os biomas tem portão, tochas, água, 12 cultivos e grama no interior. Currais pequenos e cercados legados continuam reconhecidos e funcionam; eles não bloqueiam nem substituem o curral grande | 10-31; emenda 11-02 | ✅ código; falta jogo | `PenPlans`, `ShepherdPens`, `colony/large_animal_pen.nbt` |
 | 169 | **Passagem livre:** aldeão da colônia quebra aos poucos as folhas naturais que bloqueiam seu trajeto; folhas persistentes e estruturas protegidas permanecem | 10-31 | ✅ código; falta jogo | `LeafPaths` |
 | 170 | **Lote sem árvores:** ao escolher terreno para qualquer estrutura, remove a árvore natural inteira, copa conectada inclusive, antes da construção; madeira vai aos baús e excesso cai no mundo | 10-31 | ✅ código; falta jogo | `LotGrowth`, `SitePreparation` |
+| 171 | **Pulo do aldeão** (autor 11-04): a altura padrão do jogo; o maior só com obstáculo, cerca, encalhe ou saída de curral | 11-04 | ✅ feita (0.4.19) | `VillagerMoves` |
+| 172 | **Água aberta** (autor 11-04): com mais de 5 blocos de água à frente, todo aldeão anda cerca de 5× mais rápido que no Vanilla | 11-04 | ✅ feita (0.4.19) | `VillagerMoves` |
+| 173 | **Zona da obra limpa** (autor 11-04): árvore, tronco, folha e flor saem em todas as alturas, com o que encosta, até 16 blocos além da zona e 2.000 blocos; emenda a Regra 22 | 11-04 | ✅ feita (0.4.19) | `TreeClearing` |
+| 174 | **Ponte** (autor 11-04): sem caminho a seco na zona da vila, o construtor atravessa a água, até 64 colunas, com tábua e cerca dos baús; a casa principal prefere lote ligado a seco | 11-04 | ✅ feita (0.4.19) | `BridgeDeck`, `DryLand`, `WorldPathTerrain` |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).

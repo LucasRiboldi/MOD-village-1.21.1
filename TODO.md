@@ -1,5 +1,21 @@
 # TODO
 
+## Blocos que surgem sozinhos — buscar fluxo de fabricação (regra do autor, 04-11)
+
+Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo da 0.4.18, 30 min:
+
+- [ ] `prismarine_shard` ×16 e `prismarine_crystals` ×16: "drop ingredients appear on their own"
+- [ ] `white_dye` ×12 e `yellow_dye` ×2: idem; caminho possível: flores do bioma, com o pastor
+- [ ] trigo: `supplied` em `second_failure`, 3 vezes (corrigido na 0.4.18; conferir que parou)
+- [ ] terra sob caminho voando (`PathSupport`, linha "dirt under the path"): contar no próximo jogo
+
+## 0.4.20 — pedidos do autor de 04-11
+
+- [ ] Sinalizador dos caminhos do MAE no overlay do cliente, com ligar e desligar por comando (só desenvolvimento)
+- [ ] Casa pequena do mineiro ao lado da boca da mina, modelo próprio, ligada ao grafo por caminho andável e reto
+- [ ] Velas por dentro e por fora na casa principal (`BigHouseMOD`)
+- [ ] Spark `btHEJgIYWb`: `MaeGenerationEvidence.onChunkGenerate` custa 6,4% do tempo do servidor
+
 ## Playtest de 03-11 — fila de construção
 
 - [x] Analisar `VC_REACH_DETAIL`: origem no telhado, 38 posições e nenhum destino alcançado.

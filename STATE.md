@@ -1,5 +1,13 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.19, notas do jogo da 0.4.18 (branch `fix/encalhado-falso-solto`):** pulo padrão com o maior
+> só no obstáculo, água 5× com mais de 5 blocos à frente, limpeza da zona em todas as alturas (`TreeClearing`),
+> terra sob caminho voando (`PathSupport`), pastor com prioridade para trazer animais, casa principal em lote
+> ligado a seco (`DryLand`) e ponte (`BridgeDeck`). Modo temporário: sem testes; candidata até o próximo
+> playtest. A 0.4.20 traz o sinalizador dos caminhos MAE, a casa do mineiro na boca da mina, as velas da casa
+> principal e o registro de blocos surgidos. Spark `btHEJgIYWb`: `MaeGenerationEvidence.onChunkGenerate` é 6,4%
+> do tempo do servidor, ainda sem ação.
+
 > **Candidata 0.4.18, encalhado falso solto (branch `fix/encalhado-falso-solto`):**
 > playtest da 0.4.17 (68 min, 20 TPS) achou o construtor preso 50 min no mesmo bloco,
 > solto pela fuga "after 0 steps" e marcado de novo a cada 2 min. Quem é marcado de novo

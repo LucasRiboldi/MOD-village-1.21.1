@@ -80,7 +80,10 @@ subsistemas Opus 5.5/Alto; impasse complexo Opus 5.5/Extra. Tabela em
 Indique se o perfil local ainda não corresponde à recomendação. A cada mudança
 de etapa, peça novo "ok", mesmo que o modelo recomendado seja o mesmo.
 
-1. Ler somente o `latest.log` mais recente e os relatórios `VC_*` gerados no
+1. Ler primeiro as notas do autor (`VC_BIOME_NOTE`, de `/vc bioma nota`) e os
+   dados de `/vc dados`, `/vc bioma` e `/vc log`; cada nota é um achado. Contar
+   os blocos que surgiram sozinhos e registrar no `TODO.md` para buscar fluxo de
+   fabricação. Ler somente o `latest.log` mais recente e os relatórios `VC_*` gerados no
    jogo. Usar `time_ledger.py`, `action_report.py`, `cost_ledger.py`, `rg` e
    recortes por horário; não despejar logs inteiros no contexto.
 2. Listar violações de regra, inconsistências, ócio, bloqueio, encalhe,
