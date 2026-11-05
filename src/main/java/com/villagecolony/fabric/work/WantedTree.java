@@ -23,7 +23,7 @@ final class WantedTree {
             java.util.function.Predicate<BlockPos> usable, java.util.function.Predicate<BlockPos> species) {
         java.util.function.Predicate<BlockPos> wanted = usable.and(species);
 
-        Optional<BlockPos> tree = zoned.map(box -> TreeChoice.byZone(world, job, box, wanted))
+        Optional<BlockPos> tree = zoned.map(box -> TreeChoice.byZone(world, job, villager.getBlockPos(), box, wanted))
                 .orElseGet(Optional::empty);
 
         if (tree.isEmpty()) {

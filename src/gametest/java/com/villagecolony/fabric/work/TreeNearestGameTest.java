@@ -44,7 +44,7 @@ public class TreeNearestGameTest implements FabricGameTest {
             VillageTrees.rememberTree(colonyId, centre);
             VillageTrees.rememberTree(colonyId, edge);
 
-            Optional<BlockPos> chosen = TreeChoice.byZone(world, new LumberjackWork.Job(task, centre), box,
+            Optional<BlockPos> chosen = TreeChoice.byZone(world, new LumberjackWork.Job(task, centre), centre, box,
                     log -> true);
 
             context.assertTrue(chosen.map(centre::equals).orElse(false),
