@@ -327,6 +327,7 @@ final class SiteOpening {
         planned.addProperty("origin", project.origin().toString());
         planned.addProperty("fromCenter", straightDistance(project.origin(), colony.center()));
         VillageDiary.event(colony.id(), "build_planned", planned);
+        com.villagecolony.core.coordination.TaskLoopGuard.clear(colony.id());
 
         return Optional.of(project);
     }

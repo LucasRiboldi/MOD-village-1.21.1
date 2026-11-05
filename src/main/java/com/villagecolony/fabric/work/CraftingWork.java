@@ -391,6 +391,13 @@ public final class CraftingWork {
             return forGoal.get();
         }
 
+        // Tora em tábua é do carpinteiro; os outros ofícios fecham e ficam livres (Regra 192).
+        if (job.task.type() != TaskType.CRAFT_WOOD_MATERIAL) {
+            finish(job, villager.getUuid(), "nothing this workshop can make now");
+
+            return false;
+        }
+
         return CraftingSteps.convertOne(world, job, villager.getUuid());
     }
 
@@ -406,6 +413,13 @@ public final class CraftingWork {
         }
 
         TaskProgressWatch.progressed(job.task);
+
+        if (job.crafted > 0) {
+            TaskOutcome.fruitful(job.task);
+        } else {
+            TaskOutcome.fruitless(job.task, why);
+        }
+
         job.task.complete();
         WorkerStrikes.worked(workerId, job.task);
         TaskChain.nextAfter(job.task, job.crafted);

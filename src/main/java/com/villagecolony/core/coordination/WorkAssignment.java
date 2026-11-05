@@ -147,6 +147,8 @@ public final class WorkAssignment {
             BiPredicate<Worker, Task> canReserveTask,
             java.util.@Nullable Comparator<Worker> nearFirst) {
 
+        TaskLoopGuard.aCycleWentBy(colonyId);
+
         int assigned = 0;
         List<Worker> idle = new ArrayList<>(idleWorkers(colonyId, workers, tasks));
 
@@ -316,7 +318,8 @@ public final class WorkAssignment {
             BiPredicate<Worker, Task> canReserveTask,
             Capability capability) {
 
-        Optional<Task> task = tasks.nextFor(colonyId, capability);
+        // O pedido em espera fica na fila e não trava o próximo (Regra 191).
+        Optional<Task> task = tasks.nextFor(colonyId, capability, candidate -> !TaskLoopGuard.isHeld(candidate));
 
         if (task.isEmpty()) {
             return false;
