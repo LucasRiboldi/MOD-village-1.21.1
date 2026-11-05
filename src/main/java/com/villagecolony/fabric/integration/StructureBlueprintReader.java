@@ -172,7 +172,6 @@ public final class StructureBlueprintReader {
                 || name.equals("torch")
                 || name.equals("wall_torch")
                 || name.equals("lantern")
-                || name.equals("candle")
                 || name.equals("chest");
     }
 
