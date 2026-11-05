@@ -239,6 +239,10 @@ regra que foi emendada. O corpo de cada regra vive em
 | 193 | **Mineiro alarga o nível** (autor 11-05): quem espera ramal cava em volta do salão, até 6 anéis e 2 alturas, sem cortar degrau nem o chão dele e sem encostar em fluido | 11-05 | ✅ feita (0.4.28) | `MineSideWork` |
 | 194 | **Coleta no expediente** (autor 11-05): abate do pastor e item do chão só no expediente; emenda a Regra 48 | 11-05 | ✅ feita (0.4.28) | `ShepherdFlock`, `GroundPickup` |
 | 195 | **Reunião do fim do dia** (autor 11-05): o expediente acaba em 10000 tiques; até 11000 os aldeões vão ao sino da vila ou ao centro, menos quem está encalhado, longe ou fundo na mina | 11-05 | ✅ feita (0.4.28) | `WorkClock`, `EveningGathering` |
+| 196 | **Curral antes do poste** (autor 11-05): o pastor leva o animal solto ou amarrado ao curral com lugar; poste só em vila sem curral ou com todos lotados. Curral longe vai por pernas. Portão com rua na saída conta como acesso. | 11-05 |
+| 197 | **Folha no caminho se corta** (autor 11-05): todo aldeão da vila com destino, parado ao lado de folha natural, corta uma por passada. Folha posta à mão e de obra da colônia ficam. | 11-05 |
+| 198 | **Lenhador no interior da vila** (autor 11-05): a árvore é escolhida por faixas de 32 blocos a partir do centro; dentro da faixa, a mais perto dele. | 11-05 |
+| 199 | **Sem muda perto de estrutura** (autor 11-05): árvore a até 3 blocos de casa, obra ou peça da vila gerada não é replantada; rua da vila não conta como estrutura. | 11-05 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).

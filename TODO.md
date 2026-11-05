@@ -12,6 +12,19 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
   `blaze_rod` ×17 e 16 corantes (`white_dye` ×10, `yellow_dye` ×5, os demais de 1 a 3), todos "drop ingredients appear on
   their own"; `oak_log` ×242, `clay` ×153, `terracotta` ×54, `stripped_oak_log` ×42, `water` ×30, `oak_planks` ×23,
   `raw_iron` ×21 por exceção de peça que faltou (`MISSING_PIECE`, `WAITED_TOO_LONG`)
+- Jogo da 0.4.28, 70 min, `VC_SUPPLY` do `latest.log`: `raw_iron` ×57 e `smooth_stone` ×6 por `WAITED_TOO_LONG` (Regra 128);
+  `honeycomb` ×21 e 4 corantes de 1 cada (`AUTOMATIC_DROP`, Regra 41). O ferro é o maior: os 3 mineiros fecharam 0 de 16
+  tarefas de minério no diário
+
+## Abertos do jogo da 0.4.28
+
+- [ ] Conferir em jogo a 0.4.29: "into the pen" no log, `VC_PENS` com animais, nós de corda vazios saindo das cercas
+- [ ] Conferir `CLEARED_LEAF` no diário e o `FELLED_TREE` começando pelo centro; "a structure stands within" no log
+- [ ] Fazendeiro preso na casa de x125–131, z-253…-247: 40 min sem colher; causa não achada (autor: não mexer agora)
+- [ ] Vila sem obra: `project=none` em 10 de 14 relatórios, 23 camas para 18 aldeões; ócio de carpinteiro, pedreiro e construtor
+- [ ] MAE `no_lot:protected_volume`: só o último motivo aparece; o bloco que barrou não é conhecido
+- [ ] Mineiros: 0 de 16 tarefas de minério fechadas, `raw_iron` ×57 surgido
+- [ ] Testes a rever ao liberar: `TreeNearestGameTest`, `ShepherdPensGameTest`, `PenAccessGameTest`; criar para as Regras 196 a 199
 
 ## MAE: o que falta depois da 0.4.26
 

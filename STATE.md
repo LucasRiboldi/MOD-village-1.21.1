@@ -1,5 +1,10 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.29:** jogo da 0.4.28 (70 min): 0 animais levados ao curral. Portão com rua volta a contar e o poste fica só para
+> vila sem curral ou lotada (Regra 196); aldeão corta folha que trava o caminho (Regra 197); lenhador no interior, sem muda a
+> até 3 blocos de estrutura (Regras 198 e 199). Abertos: fazendeiro preso numa casa e recusa `no_lot:protected_volume` do MAE.
+> Sem testes; compilado.
+
 > **Candidata 0.4.28:** Regras 191 a 195: espera para pedido sem resultado (`VC_LOOP`), só carpinteiro converte tora, mineiro alarga
 > o nível, coleta só no expediente e reunião de 10000 a 11000 (`VC_GATHER`). O expediente ficou 9% menor. Sem testes; compilado.
 

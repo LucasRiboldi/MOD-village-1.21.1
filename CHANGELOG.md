@@ -12,6 +12,20 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.29] — candidata, 2026-11-05
+
+### Corrigido
+
+- Pastor: portão com `dirt_path` na saída deixava de contar como acesso, e os currais ficavam vazios (Regra 196).
+
+### Mudado
+
+- Pastor: animal amarrado também vai para o curral; poste só sem curral ou com todos lotados. Curral longe vai por pernas
+  (Regra 196).
+- Todo aldeão corta a folha natural que trava o caminho (Regra 197).
+- Lenhador: interior da vila primeiro, por faixas a partir do centro (Regra 198); sem muda a até 3 blocos de estrutura
+  (Regra 199).
+
 ## [0.4.28] — ofícios sem laço e reunião do fim do dia (2026-11-05, candidato)
 
 ### Corrigido
