@@ -214,6 +214,113 @@ public final class PenAccessGameTest implements FabricGameTest {
         }
     }
 
+    /** Regra 196: o portão com rua na saída é acesso; o caminho não tem a face de cima cheia. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "pen_path_access", tickLimit = 20)
+    public void aGateWithAPathOutsideStillCounts(TestContext context) {
+        var origin = context.getAbsolutePos(new BlockPos(3, 70, 3));
+        var colony = penWithOneGate(context, origin);
+        try {
+            context.getWorld().setBlockState(origin.add(7, 0, 3), Blocks.DIRT_PATH.getDefaultState(), 18);
+            ShepherdPens.clearAll();
+            context.assertTrue(ShepherdPens.withRoom(context.getWorld(), colony, origin.add(8, 1, 3)).isPresent(),
+                    "o portão com caminho na saída foi descartado");
+        } finally {
+            cleanPen(context, origin);
+        }
+        context.complete();
+    }
+
+    /** Regra 196: o amarrado também vai para o curral, e o nó vazio sai da cerca. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "pen_tied", tickLimit = 40)
+    public void aTiedAnimalGoesToThePen(TestContext context) {
+        var origin = context.getAbsolutePos(new BlockPos(3, 76, 3));
+        var colony = penWithOneGate(context, origin);
+        runway(context, origin, 2);
+        var post = origin.add(9, 1, 1);
+        context.getWorld().setBlockState(post, Blocks.OAK_FENCE.getDefaultState(), 18);
+        var shepherd = context.spawnEntity(net.minecraft.entity.EntityType.VILLAGER, new BlockPos(11, 77, 5));
+        var cow = context.spawnEntity(net.minecraft.entity.EntityType.COW, new BlockPos(11, 77, 4));
+        cow.setAiDisabled(true);
+        context.getWorld().setTimeOfDay(1_000);
+        context.waitAndRun(10, () -> {
+            try {
+                var knot = net.minecraft.entity.decoration.LeashKnotEntity.getOrCreate(context.getWorld(), post);
+                shepherd.getNavigation().stop();
+                cow.attachLeash(knot, true);
+                var herd = ShepherdHerding.start(context.getWorld(), colony, shepherd);
+                context.assertTrue(herd.isPresent() && herd.get().animal.equals(cow.getUuid()), "o amarrado não foi escolhido:"
+                        + " herd=" + herd.isPresent() + " penned=" + ShepherdFlock.isPenned(context.getWorld(), cow)
+                        + " room=" + ShepherdPens.withRoom(context.getWorld(), colony, shepherd.getBlockPos()).isPresent()
+                        + " reach=" + ShepherdPens.forSpecies(context.getWorld(), colony, cow.getType(), shepherd, null, false).isPresent()
+                        + " shepherd=" + context.getRelativePos(shepherd.getBlockPos()) + " ground=" + shepherd.isOnGround()
+                        + " cow=" + context.getRelativePos(cow.getBlockPos()));
+                context.assertTrue(herd.get().pen != null, "o amarrado não foi para o curral");
+                ShepherdHerding.step(context.getWorld(), shepherd.getUuid(), herd.get());
+                context.assertTrue(cow.getLeashHolder() == shepherd, "o pastor não pegou a corda");
+                context.assertTrue(knot.isRemoved(), "o nó vazio ficou na cerca");
+            } finally {
+                cow.discard();
+                shepherd.discard();
+                cleanPen(context, origin);
+            }
+            context.complete();
+        });
+    }
+
+    /** Regra 196: curral com lugar que agora não se alcança não vira poste. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "pen_no_post", tickLimit = 40)
+    public void aPenWithRoomMeansNoPost(TestContext context) {
+        var origin = context.getAbsolutePos(new BlockPos(3, 84, 3));
+        var colony = penWithOneGate(context, origin);
+        runway(context, origin, 5);
+        for (var at : BlockPos.iterate(origin.add(7, 1, 0), origin.add(9, 3, 2))) {
+            context.getWorld().setBlockState(at, Blocks.STONE.getDefaultState(), 18);
+        }
+        for (var at : BlockPos.iterate(origin.add(8, 1, 1), origin.add(8, 2, 1))) {
+            context.getWorld().setBlockState(at, Blocks.AIR.getDefaultState(), 18);
+        }
+        var shepherd = context.spawnEntity(net.minecraft.entity.EntityType.VILLAGER, new BlockPos(11, 85, 4));
+        var cow = context.spawnEntity(net.minecraft.entity.EntityType.COW, new BlockPos(11, 85, 8));
+        cow.setAiDisabled(true);
+        context.waitAndRun(10, () -> {
+            try {
+                context.assertTrue(ShepherdHerding.start(context.getWorld(), colony, shepherd).isEmpty(),
+                        "o pastor preso levaria o animal para um poste, com curral livre na vila");
+            } finally {
+                cow.discard();
+                shepherd.discard();
+                cleanPen(context, origin);
+            }
+            context.complete();
+        });
+    }
+
+    private static Colony penWithOneGate(TestContext context, BlockPos origin) {
+        floor(context, origin, 6);
+        for (int x = 0; x <= 6; x++) for (int z = 0; z <= 6; z++) {
+            if (x == 0 || x == 6 || z == 0 || z == 6) {
+                context.getWorld().setBlockState(origin.add(x, 1, z), Blocks.OAK_FENCE.getDefaultState(), 3);
+            }
+        }
+        context.getWorld().setBlockState(origin.add(6, 1, 3), Blocks.OAK_FENCE_GATE.getDefaultState()
+                .with(FenceGateBlock.FACING, Direction.EAST), 3);
+        return colony(origin, 6);
+    }
+
+    /** Sem chão que leve para longe, o animal na ilha da arena conta como cercado ({@code FencedIn}). */
+    private static void runway(TestContext context, BlockPos origin, int z) {
+        for (int x = 10; x <= 36; x++) {
+            context.getWorld().setBlockState(origin.add(x, 0, z), Blocks.GRASS_BLOCK.getDefaultState(), 18);
+        }
+    }
+
+    private static void cleanPen(TestContext context, BlockPos origin) {
+        ShepherdPens.clearAll();
+        for (var at : BlockPos.iterate(origin.add(-3, 0, -3), origin.add(36, 4, 9))) {
+            context.getWorld().setBlockState(at, Blocks.AIR.getDefaultState(), 18);
+        }
+    }
+
     private static Colony colony(BlockPos origin, int size) {
         var colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(origin));
         colony.measure(new VillageBounds(origin.getX(), origin.getY() - 2, origin.getZ(),

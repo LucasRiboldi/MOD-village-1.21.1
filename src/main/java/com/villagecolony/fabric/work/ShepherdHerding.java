@@ -398,14 +398,6 @@ final class ShepherdHerding {
 
         BlockPos goal = herd.pen != null ? herd.pen.outside() : herd.fence;
 
-        if (ShepherdLead.isTooFar(shepherd, animal)) {
-            WorkTargets.set(shepherdId, animal.getBlockPos(), REACH - 1);
-
-            return true;
-        }
-
-        ShepherdLead.walkTo(world, shepherd, goal, REACH - 1);
-
         if (herd.pen != null && shepherd.getBlockPos().isWithinDistance(goal, REACH)) {
             ShepherdPens.startIn(world, herd.pen, animal);
             herd.phase = Phase.ENTER;
@@ -437,6 +429,12 @@ final class ShepherdHerding {
                     shepherdId.toString().substring(0, 8), animal.getType().getUntranslatedName(),
                     herd.fence.toShortString());
             return false;
+        }
+
+        if (ShepherdLead.isTooFar(shepherd, animal)) {
+            WorkTargets.set(shepherdId, animal.getBlockPos(), REACH - 1);
+        } else {
+            ShepherdLead.walkTo(world, shepherd, goal, REACH - 1);
         }
 
         return true;

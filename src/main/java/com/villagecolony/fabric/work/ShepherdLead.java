@@ -12,8 +12,8 @@ import java.util.Optional;
 /** Como o pastor anda com o animal na corda até um curral longe — Regra 196. */
 final class ShepherdLead {
 
-    /** A corda arrebenta aos 10 blocos: a esta distância ele volta para o animal. */
-    private static final int SLACK = 7;
+    /** A corda arrebenta aos 10 blocos e só puxa de 6 em diante: a esta distância ele volta para o animal. */
+    private static final int SLACK = 9;
 
     private ShepherdLead() {
     }
