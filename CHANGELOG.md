@@ -12,7 +12,22 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
-## [0.4.27] — menos trabalho perdido nos ofícios (2026-11-05, candidato)
+## [0.4.28] — ofícios sem laço e reunião do fim do dia (2026-11-05, candidato)
+
+### Corrigido
+- Pedido de oficina ou fornalha que fecha sem resultado entra em espera de 1, 2, 4 até 30 min, com a linha `VC_LOOP`, em vez de
+  voltar a cada ciclo (Regra 191).
+- Só o carpinteiro converte tora em tábua; os outros ofícios fecham a tarefa e ficam livres (Regra 192).
+- Pastor não abate e ninguém cata item do chão fora do expediente (Regra 194).
+
+### Alterado
+- Mineiro que espera ramal alarga o salão do nível, sem cortar degrau nem encostar em fluido (Regra 193).
+- O expediente acaba em 10000 tiques, e não em 11000 (Regra 195).
+
+### Adicionado
+- Reunião do fim do dia, de 10000 a 11000, no sino da vila ou no centro; a linha `VC_GATHER` diz quantos chegaram (Regra 195).
+
+ — menos trabalho perdido nos ofícios (2026-11-05, candidato)
 
 ### Corrigido
 - Pedido de peça de obra só abre quando o baú não cobre o que falta: 709 de 874 tarefas terminavam com 0 peça, cerca de 354

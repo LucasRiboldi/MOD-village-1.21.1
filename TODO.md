@@ -24,11 +24,11 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 
 ## Varredura dos ofícios (jogo da 0.4.24)
 
-- [ ] Mineiro: 54 desistências por distância e 0 tarefas fechadas; conferir no próximo jogo depois da 0.4.25
-- [ ] Pedreiro: pedidos de `dirt` (70) e `sand` (59) em laço; carpinteiro e pedreiro acima de 50% sem trabalhar
-- [ ] "fenced in" 66 vezes no curral da vila gerada (`99..104, 63, -230..-234`), com aldeões de fora do pastor
-- [ ] Pastor trabalha de noite (54 a 99 ações por faixa de 2.000 tiques)
-- [ ] Sem ciclo de reunião no diário: medir o que os aldeões fazem fora do expediente
+- [ ] Mineiro: 54 desistências por distância e nenhuma tarefa fechada; conferir no próximo jogo com a 0.4.25 e a 0.4.28
+- [ ] Conferir `VC_LOOP` e `VC_GATHER` no próximo jogo: carpinteiro e pedreiro acima de 50% sem trabalhar
+- [ ] O guarda de laço cobre oficina e fornalha; coleta (lenhador, superfície) segue só com os prazos de sempre
+- [ ] Quando os testes forem liberados: `WorkClockTest`, `WorkHoursGameTest`, `OffHoursReleaseGameTest` e `BuildProgressGameTest` usam o expediente antigo; `TaskLoopGuard` e `MineSideWork` sem teste
+- "fenced in" no curral da vila gerada: 79 entradas, mediana 25 tiques, 1,7 min em 6 h; não é travamento
 - [ ] Frase "none of N colony chests had" do fundidor mente quando o cru existe e a reserva impede
 
 ## Abertos do jogo da 0.4.24

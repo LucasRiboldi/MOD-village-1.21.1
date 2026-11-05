@@ -1,5 +1,8 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.28:** Regras 191 a 195: espera para pedido sem resultado (`VC_LOOP`), só carpinteiro converte tora, mineiro alarga
+> o nível, coleta só no expediente e reunião de 10000 a 11000 (`VC_GATHER`). O expediente ficou 9% menor. Sem testes; compilado.
+
 > **Candidata 0.4.27:** varredura dos ofícios no jogo da 0.4.24: pedido de peça só do que falta (Regra 188), árvore mais perto
 > do lenhador e machado para quem está sem ofício (Regra 189), fundidor larga o pedido com o cru na reserva (Regra 190). Abertos
 > no `TODO.md`. Sem testes; compilado.

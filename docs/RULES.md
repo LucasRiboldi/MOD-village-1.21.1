@@ -234,6 +234,11 @@ regra que foi emendada. O corpo de cada regra vive em
 | 188 | **Pedido só do que falta** (jogo 11-05): o pedido de peça de obra não abre quando os baús cobrem o que a obra ainda vai pôr | 11-05 | ✅ feita (0.4.27) | `CraftsmanRequest` |
 | 189 | **Madeira** (autor 11-05): dentro da zona de prioridade, o lenhador pega a árvore conhecida mais perto dele; quem está sem ofício vira lenhador quando a obra espera madeira, mesmo sem vaga aberta | 11-05 | ✅ feita (0.4.27) | `TreeChoice`, `HiringQuota` |
 | 190 | **Cru na reserva** (jogo 11-05): com o cru nos baús e a reserva impedindo assar, o fundidor larga o pedido em vez de esperar na fornalha | 11-05 | ✅ feita (0.4.27) | `SmelterGathers` |
+| 191 | **Pedido sem resultado espera** (autor 11-05): 3 fechamentos seguidos sem peça seguram o pedido de oficina ou fornalha por 1 min, dobrando a cada nova falta até 30 min; peça feita zera; o cru aumentar ou obra nova solta a espera | 11-05 | ✅ feita (0.4.28) | `TaskLoopGuard`, `TaskOutcome` |
+| 192 | **Tora é do carpinteiro** (autor 11-05): sem peça a fazer, os outros ofícios fecham a tarefa em vez de converter tora em tábua | 11-05 | ✅ feita (0.4.28) | `CraftingWork` |
+| 193 | **Mineiro alarga o nível** (autor 11-05): quem espera ramal cava em volta do salão, até 6 anéis e 2 alturas, sem cortar degrau nem o chão dele e sem encostar em fluido | 11-05 | ✅ feita (0.4.28) | `MineSideWork` |
+| 194 | **Coleta no expediente** (autor 11-05): abate do pastor e item do chão só no expediente; emenda a Regra 48 | 11-05 | ✅ feita (0.4.28) | `ShepherdFlock`, `GroundPickup` |
+| 195 | **Reunião do fim do dia** (autor 11-05): o expediente acaba em 10000 tiques; até 11000 os aldeões vão ao sino da vila ou ao centro, menos quem está encalhado, longe ou fundo na mina | 11-05 | ✅ feita (0.4.28) | `WorkClock`, `EveningGathering` |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).
