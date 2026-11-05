@@ -133,6 +133,10 @@ public final class PathLinks {
             }
         }
 
+        if (linkTheMine(world, colony, roads, hub, count)) {
+            return;
+        }
+
         // Nada a traçar: diz por quê, uma vez por mudança (a rede ficou muda o playtest 0.3.97 inteiro).
         String summary = count[0] + " doors on the network, " + count[1] + " buildings without a readable door, "
                 + SET_ASIDE.size() + " set aside";
@@ -161,6 +165,50 @@ public final class PathLinks {
             return false;
         }
 
+        return linkEntrance(world, colony, id, name, entrance, roads, hub, count);
+    }
+
+    /**
+     * A boca da mina entra na rede como uma porta — Regra 175: o caminho parte do chão na borda da folga da escada, do
+     * lado mais voltado para o centro da vila que tiver chão, e a folga fica por conta dos pés do mineiro.
+     */
+    private static boolean linkTheMine(ServerWorld world, Colony colony, Set<Long> roads, BlockPos hub, int[] count) {
+        var mine = VillageColonyMod.MINES.of(colony.id());
+
+        if (mine.isEmpty()) {
+            return false;
+        }
+
+        UUID id = UUID.nameUUIDFromBytes(("mine mouth " + colony.id()).getBytes(StandardCharsets.UTF_8));
+
+        if (SET_ASIDE.containsKey(id)) {
+            return false;
+        }
+
+        BlockPos mouth = MinecraftTypeAdapter.toBlockPos(mine.get().shaft().entry());
+        WorldPathTerrain terrain = new WorldPathTerrain(world, colony.id());
+        List<Side> sides = new java.util.ArrayList<>(List.of(Side.values()));
+
+        sides.sort(java.util.Comparator.comparingInt((Side side) ->
+                -(side.offsetX() * (hub.getX() - mouth.getX()) + side.offsetZ() * (hub.getZ() - mouth.getZ()))));
+
+        for (Side side : sides) {
+            int distance = WorldPathTerrain.MINE_CLEARANCE + 1;
+            int x = mouth.getX() + side.offsetX() * distance;
+            int z = mouth.getZ() + side.offsetZ() * distance;
+            OptionalInt ground = terrain.groundY(x, z, mouth.getY());
+
+            if (ground.isPresent() && !terrain.blocked(x, z)) {
+                return linkEntrance(world, colony, id, "the mine mouth",
+                        Optional.of(new Entrance(new BlockPos(x, ground.getAsInt() + 1, z), side)), roads, hub, count);
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean linkEntrance(ServerWorld world, Colony colony, UUID id, String name,
+                                        Optional<Entrance> entrance, Set<Long> roads, BlockPos hub, int[] count) {
         if (linked(roads, entrance.get().front())) {
             count[0]++;
             return false;

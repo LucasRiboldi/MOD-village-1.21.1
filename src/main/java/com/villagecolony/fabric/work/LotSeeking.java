@@ -31,7 +31,7 @@ final class LotSeeking {
 
     static Optional<ConstructionProject> seek(ServerWorld world, Colony colony, int builders) {
         if (MineHomePlans.isOwed(world, colony)) {
-            List<Blueprint> houses = HousePlans.plansFor(world, colony);
+            List<Blueprint> houses = MineHomePlans.planFor(world, colony);
             if (!houses.isEmpty()) {
                 var search = MineHomePlans.findSite(world, colony, houses);
 

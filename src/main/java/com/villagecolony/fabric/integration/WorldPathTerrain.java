@@ -43,7 +43,7 @@ public final class WorldPathTerrain implements PathTerrain {
     static final int BRIDGE_MARGIN = 8;
 
     /** Quanto em volta da entrada da mina o caminho não passa: o caracol e a borda dele. */
-    static final int MINE_CLEARANCE = com.villagecolony.core.construction.model.MineShaft.HELIX_SIDE
+    public static final int MINE_CLEARANCE = com.villagecolony.core.construction.model.MineShaft.HELIX_SIDE
             + com.villagecolony.core.construction.model.MineShaft.STAIR_LANES + 2;
 
     public WorldPathTerrain(ServerWorld world, UUID colonyId) {

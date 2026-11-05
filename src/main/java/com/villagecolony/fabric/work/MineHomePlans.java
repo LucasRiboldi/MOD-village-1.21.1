@@ -18,6 +18,9 @@ import java.util.List;
 final class MineHomePlans {
     static final int RADIUS = 20;
 
+    /** O modelo, gerado por {@code scripts/gen_miner_house.py} — Regra 175. */
+    static final String MODEL = "miner_house";
+
     private MineHomePlans() {
     }
 
@@ -28,8 +31,28 @@ final class MineHomePlans {
         }
         BlockPos mouth = MinecraftTypeAdapter.toBlockPos(mine.orElseThrow().shaft().entry());
         return VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()
-                .filter(building -> HousePlans.isDwelling(building.blueprint()))
+                .filter(building -> HousePlans.isDwelling(building.blueprint()) || isMinerHouse(building.blueprint()))
                 .noneMatch(building -> near(mouth, building));
+    }
+
+    /** A casa pequena do mineiro — Regra 175: a do estilo da vila, ou a de todos os estilos. */
+    static List<Blueprint> planFor(ServerWorld world, Colony colony) {
+        String style = HousePlans.paletteOf(world, colony.center()).style();
+
+        for (String path : List.of("colony/" + style + "/" + MODEL, "colony/" + MODEL)) {
+            var plan = com.villagecolony.fabric.integration.StructureBlueprintReader.read(world,
+                    new com.villagecolony.core.type.ResourceId("villagecolony", path));
+
+            if (plan.isPresent()) {
+                return List.of(plan.get());
+            }
+        }
+
+        return List.of();
+    }
+
+    static boolean isMinerHouse(com.villagecolony.core.type.ResourceId id) {
+        return "villagecolony".equals(id.namespace()) && id.path().endsWith("/" + MODEL);
     }
 
     static MineHomeSiteSearch.Result findSite(ServerWorld world, Colony colony, List<Blueprint> houses) {
