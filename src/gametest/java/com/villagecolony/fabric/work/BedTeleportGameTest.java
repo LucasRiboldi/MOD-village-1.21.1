@@ -230,6 +230,9 @@ public class BedTeleportGameTest implements FabricGameTest {
         BlockPos bed = placeBed(context, BED);
         VillagerEntity villager = villagerHomedAt(context, bed);
 
+        // A hora do mundo é global: à noite o cérebro o levaria para perto da cama antes da conta de tentativas.
+        villager.setAiDisabled(true);
+
         context.waitAndRun(20, () -> {
             ServerWorld world = context.getWorld();
             BlockPos feet = villager.getBlockPos();
@@ -254,6 +257,9 @@ public class BedTeleportGameTest implements FabricGameTest {
     public void goingToBedClosesTheHouseDoor(TestContext context) {
         BlockPos bed = placeBed(context, BED);
         VillagerEntity villager = villagerHomedAt(context, bed);
+
+        // A hora do mundo é global: à noite o cérebro o levaria para perto da cama antes da conta de tentativas.
+        villager.setAiDisabled(true);
         BlockPos near = new BlockPos(BED.getX() + 2, BED.getY(), BED.getZ());
 
         for (BlockPos door : new BlockPos[] {near}) {

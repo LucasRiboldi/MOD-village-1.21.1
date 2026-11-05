@@ -26,7 +26,7 @@ import java.util.UUID;
  * onde a mina recomeça: {@code MineShaft.turned().deepened()}. Boca nova só quando {@value #FAILURES_FOR_A_NEW_MOUTH}
  * tentativas falharam, ou quando tudo o que resta está tomado por água.
  */
-final class MineBranches {
+public final class MineBranches {
 
     static final int FAILURES_FOR_A_NEW_MOUTH = 50;
 
@@ -80,6 +80,11 @@ final class MineBranches {
         Progress progress = PROGRESS.get(colonyId);
 
         return progress != null && (progress.failures >= FAILURES_FOR_A_NEW_MOUTH || progress.onlyWaterLeft);
+    }
+
+    /** A conta de falhas chega ao teto de uma vez. Só a bateria pede isto, para exercitar a boca nova (Regra 182). */
+    public static void allBranchesFailed(UUID colonyId) {
+        PROGRESS.computeIfAbsent(colonyId, ignored -> new Progress()).failures = FAILURES_FOR_A_NEW_MOUTH;
     }
 
     /** A mina mudou de boca: a conta recomeça. */

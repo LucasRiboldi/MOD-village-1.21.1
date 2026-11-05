@@ -142,7 +142,7 @@ public final class MineClaims {
      * uma vez por pedra, e não uma vez por mina — uma reserva que não se
      * renovasse expulsaria o dono na segunda pedra dele.
      */
-    static OptionalInt claimArm(UUID colonyId, UUID workerId, int usable) {
+    public static OptionalInt claimArm(UUID colonyId, UUID workerId, int usable) {
         return claimArm(colonyId, workerId, usable, index -> true);
     }
 

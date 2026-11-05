@@ -383,10 +383,10 @@ public class BuildProgressGameTest implements FabricGameTest {
             clock.setTime(time + night + WorkClock.DAY);
             clock.setTimeOfDay(2L * WorkClock.DAY);
             context.assertFalse(WaitingWork.giveUpIfStalled(context.getWorld(), colony, project),
-                    "um expediente de 11000 tiques gastou a paciência de 12000");
+                    "um expediente de 10000 tiques gastou a paciência de 12000");
 
-            clock.setTime(time + night + WorkClock.DAY + 1_000);
-            clock.setTimeOfDay(2L * WorkClock.DAY + 1_000);
+            clock.setTime(time + night + WorkClock.DAY + 2_000);
+            clock.setTimeOfDay(2L * WorkClock.DAY + 2_000);
             context.assertTrue(WaitingWork.giveUpIfStalled(context.getWorld(), colony, project),
                     "o descanso zerou a espera, permitindo que a obra prendesse a vaga para sempre");
             context.complete();

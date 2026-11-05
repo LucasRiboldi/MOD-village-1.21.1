@@ -39,7 +39,7 @@ import net.minecraft.util.math.GlobalPos;
  *
  * <p><b>Dentro do expediente não é o bastante, e 2026-09-04 mostrou por
  * quê.</b> O relógio continua andando depois daqui: {@link #AFTERNOON}
- * é 10.000 e o {@code WorkClock.DUSK} é 11.000, então a bateria sai
+ * é 9.000 e o {@code WorkClock.WORK_END} é 10.000, então a bateria sai
  * desta classe com mil tiques de pista e cruza para fora do expediente
  * logo adiante — e, mais tarde, vira o dia. Onde cada teste seguinte
  * cai depende de quantos tiques a bateria gastou antes dele, e isso
@@ -71,13 +71,13 @@ public class WorkHoursGameTest implements FabricGameTest {
      * <p>É a hora que a sessão de 2026-08-18 flagrou parada, e é o
      * coração desta regra.
      */
-    private static final int AFTERNOON = 10_000;
+    private static final int AFTERNOON = 9_000;
 
     /**
      * O dia inteiro é expediente, e não só a fatia que o Vanilla chama
      * de WORK.
      *
-     * <p>Rodado contra a regra desligada: às 10.000 o Vanilla responde
+     * <p>Rodado contra a regra desligada: às 9.000 o Vanilla responde
      * MEET, {@code isWorkTime} devolvia falso, e a asserção da tarde
      * falha.
      */

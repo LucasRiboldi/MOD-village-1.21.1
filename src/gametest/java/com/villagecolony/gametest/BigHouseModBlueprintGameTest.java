@@ -103,7 +103,7 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
                 .orElseThrow(() -> new AssertionError("BigHouseMOD nao foi encontrada"));
 
         Set<ResourceId> forbidden = Set.of(
-                ResourceId.vanilla("wall_torch"),
+                // A tocha de parede por fora, acima da porta, é da planta.
                 ResourceId.vanilla("torch"),
                 ResourceId.vanilla("lantern"),
                 ResourceId.vanilla("jigsaw"),

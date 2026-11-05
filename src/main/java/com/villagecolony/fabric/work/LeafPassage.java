@@ -89,7 +89,7 @@ public final class LeafPassage {
         return new Box(bounds.minX(), bounds.minY(), bounds.minZ(), bounds.maxX() + 1, bounds.maxY() + 1, bounds.maxZ() + 1);
     }
 
-    private static void look(ServerWorld world, VillagerEntity villager) {
+    static void look(ServerWorld world, VillagerEntity villager) {
         UUID id = villager.getUuid();
         BlockPos at = villager.getBlockPos();
         Optional<BlockPos> destination = destinationOf(villager);
