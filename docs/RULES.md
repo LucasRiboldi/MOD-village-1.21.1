@@ -231,6 +231,9 @@ regra que foi emendada. O corpo de cada regra vive em
 | 185 | **A ponta cresce** (autor 11-05): por dia, as 2 pontas mais distantes do centro, dentro de 75% da maior distância, avançam um bloco em linha reta; o construtor calça | 11-05 | ✅ feita (0.4.25) | `RoadShape` |
 | 186 | **Rua de um bloco** (autor 11-05): o caminho a até 3 blocos da linha que não é linha nem frente de porta volta ao solo do bioma, pelo pedreiro; emenda a rede de 3 de largura; só em vila nova | 11-05 | ✅ feita (0.4.25) | `RoadLines`, `PathTrim` |
 | 187 | **A região MAE tem fim** (autor 11-05): em vila nova, obra pronta entrega a região à vila e a porta entra no grafo pela releitura; reserva sem escrita é entregue ao falhar; obra interrompida continua depois de reiniciar; escrita sem confirmação nunca é entregue nem repetida; emenda a ADR-045 item 10 | 11-05 | ✅ feita (0.4.26) | `MaeHandover`, `MaeSiteRecord`, `MaeSites`, `MaeStructureSite` |
+| 188 | **Pedido só do que falta** (jogo 11-05): o pedido de peça de obra não abre quando os baús cobrem o que a obra ainda vai pôr | 11-05 | ✅ feita (0.4.27) | `CraftsmanRequest` |
+| 189 | **Madeira** (autor 11-05): dentro da zona de prioridade, o lenhador pega a árvore conhecida mais perto dele; quem está sem ofício vira lenhador quando a obra espera madeira, mesmo sem vaga aberta | 11-05 | ✅ feita (0.4.27) | `TreeChoice`, `HiringQuota` |
+| 190 | **Cru na reserva** (jogo 11-05): com o cru nos baús e a reserva impedindo assar, o fundidor larga o pedido em vez de esperar na fornalha | 11-05 | ✅ feita (0.4.27) | `SmelterGathers` |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).

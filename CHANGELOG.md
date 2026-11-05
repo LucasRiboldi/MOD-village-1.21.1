@@ -12,7 +12,20 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
-## [0.4.26] — obra MAE entrega a região, liga pelo grafo e retoma (2026-11-05, candidato)
+## [0.4.27] — menos trabalho perdido nos ofícios (2026-11-05, candidato)
+
+### Corrigido
+- Pedido de peça de obra só abre quando o baú não cobre o que falta: 709 de 874 tarefas terminavam com 0 peça, cerca de 354
+  min de aldeão no jogo da 0.4.24 (Regra 188).
+- Fundidor não fica parado na fornalha quando o cru está nos baús e a reserva não deixa assar: 6.887 repetições em 5 h no
+  mesmo jogo (Regra 190).
+
+### Alterado
+- O lenhador pega a árvore conhecida mais perto dele, dentro da zona de prioridade, em vez da mais perto do centro: a mediana
+  era de 55 blocos entre uma árvore e a seguinte (Regra 189).
+- Quem está sem ofício vira lenhador quando a obra espera madeira, mesmo sem vaga aberta (Regra 189).
+
+ — obra MAE entrega a região, liga pelo grafo e retoma (2026-11-05, candidato)
 
 ### Corrigido
 - A primeira obra MAE parava para sempre a releitura do grafo e o índice de ruas da dimensão, e o caminho comum não entrava

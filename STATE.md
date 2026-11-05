@@ -1,5 +1,9 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.27:** varredura dos ofícios no jogo da 0.4.24: pedido de peça só do que falta (Regra 188), árvore mais perto
+> do lenhador e machado para quem está sem ofício (Regra 189), fundidor larga o pedido com o cru na reserva (Regra 190). Abertos
+> no `TODO.md`. Sem testes; compilado.
+
 > **Candidata 0.4.26:** adiantamento das Fases 4 a 6 do MAE: obra pronta entrega a região (Regra 187, emenda da ADR-045),
 > porta pelo grafo novo em vila nova, retomada depois de reiniciar, `applied` no `VC_MAE_SITE` e `/vc mae soltar`. O MAE
 > ainda não construiu em jogo; falta a obra, a medida de carga e o gate da água. Sem testes; compilado.

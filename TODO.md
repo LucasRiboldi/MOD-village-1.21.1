@@ -22,6 +22,15 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] Obra interrompida em região reaproveitada de vila antiga pode ler o job concluído da obra anterior como pronto
 - [ ] Fase 6: expansão automática no ciclo da colônia, depois da primeira obra em jogo
 
+## Varredura dos ofícios (jogo da 0.4.24)
+
+- [ ] Mineiro: 54 desistências por distância e 0 tarefas fechadas; conferir no próximo jogo depois da 0.4.25
+- [ ] Pedreiro: pedidos de `dirt` (70) e `sand` (59) em laço; carpinteiro e pedreiro acima de 50% sem trabalhar
+- [ ] "fenced in" 66 vezes no curral da vila gerada (`99..104, 63, -230..-234`), com aldeões de fora do pastor
+- [ ] Pastor trabalha de noite (54 a 99 ações por faixa de 2.000 tiques)
+- [ ] Sem ciclo de reunião no diário: medir o que os aldeões fazem fora do expediente
+- [ ] Frase "none of N colony chests had" do fundidor mente quando o cru existe e a reserva impede
+
 ## Abertos do jogo da 0.4.24
 
 - [ ] Pastor 86% ocioso: ler `VC_PENS` no próximo jogo e decidir o raio e o teto do `FencedIn` para o cercado grande
