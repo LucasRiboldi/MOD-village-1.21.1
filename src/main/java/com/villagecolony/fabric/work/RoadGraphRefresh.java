@@ -265,6 +265,18 @@ public final class RoadGraphRefresh {
                     .ifPresent(entrance -> fronts.add(floorOf(entrance.front())));
         }
 
+        // Todo portão de cerca é entrada (Regra 178), de obra ou da vila gerada.
+        for (ShepherdPens.Pen pen : ShepherdPens.pensOf(world, colony)) {
+            for (ShepherdPens.Access access : pen.accesses()) {
+                BlockPos out = access.outside();
+                OptionalInt ground = terrain.groundY(out.getX(), out.getZ(), out.getY() - 1);
+
+                if (ground.isPresent()) {
+                    fronts.add(new ColonyPos(out.getX(), ground.getAsInt(), out.getZ()));
+                }
+            }
+        }
+
         return fronts;
     }
 

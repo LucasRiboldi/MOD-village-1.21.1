@@ -108,6 +108,44 @@ public final class WorldPathTerrain implements PathTerrain {
         return OptionalInt.empty();
     }
 
+    /** Até onde acima do piso a coluna tem de ficar livre ou natural. */
+    private static final int CUT_HEIGHT = TreeClearing.HEADROOM;
+
+    @Override
+    public boolean canCut(int x, int z, int floorY) {
+        if (bridging || blocked(x, z) || !world.isChunkLoaded(x >> 4, z >> 4)) {
+            return false;
+        }
+
+        BlockPos floor = new BlockPos(x, floorY, z);
+        BlockState ground = world.getBlockState(floor);
+
+        if (!(SiteSurroundings.isNaturalGround(ground) || VillageRoad.isPathBlock(ground))
+                || !BlockProtection.mayDigOut(world, floor, ground)) {
+            return false;
+        }
+
+        for (int up = 1; up <= CUT_HEIGHT; up++) {
+            BlockPos at = floor.up(up);
+            BlockState state = world.getBlockState(at);
+
+            if (state.isAir() || LotGrowth.isLooseGrowth(state)
+                    || (LotGround.isNothing(state) && state.getFluidState().isEmpty())) {
+                continue;
+            }
+
+            if (!state.getFluidState().isEmpty() || !SiteSurroundings.isNaturalGround(state)
+                    || !BlockProtection.mayDigOut(world, at, state)) {
+                return false;
+            }
+        }
+
+        // Chão logo acima do corte é morro: abriria um túnel.
+        BlockState above = world.getBlockState(floor.up(CUT_HEIGHT + 1));
+
+        return !SiteSurroundings.isNaturalGround(above);
+    }
+
     private boolean insideTheZone(int x, int z) {
         return bounds.filter(box -> x >= box.minX() - BRIDGE_MARGIN && x <= box.maxX() + BRIDGE_MARGIN
                 && z >= box.minZ() - BRIDGE_MARGIN && z <= box.maxZ() + BRIDGE_MARGIN).isPresent();

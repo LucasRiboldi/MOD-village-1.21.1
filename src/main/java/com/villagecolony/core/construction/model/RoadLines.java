@@ -28,6 +28,9 @@ public final class RoadLines {
     /** Quantos blocos, no máximo, um trecho de ligação entre componentes atravessa. */
     static final int MAX_LINK = 64;
 
+    /** O maior ramal reto de uma porta até a linha. */
+    static final int MAX_STUB = 16;
+
     /** Quantas vezes o afinamento roda sobre o próprio resultado. */
     private static final int PASSES = 3;
 
@@ -113,10 +116,14 @@ public final class RoadLines {
         java.util.Collections.rotate(others, -turn);
 
         for (Set<Long> part : others) {
-            // Porta sem caminho ainda é com PathLinks, que traça e calça a ligação dela.
             boolean aloneDoor = part.size() == 1 && doors.contains(part.iterator().next());
 
-            if (!aloneDoor && links < maxLinks) {
+            if (aloneDoor && stub(part, main, columns, mask, terrain)) {
+                main.addAll(part);
+                continue;
+            }
+
+            if (links < maxLinks) {
                 links++;
 
                 if (link(part, main, columns, terrain)) {
@@ -130,9 +137,14 @@ public final class RoadLines {
 
         columns.keySet().retainAll(main);
 
-        // Só a faixa física fechada e as linhas: ligação antiga que o grafo não usou não vira calçada.
-        return new Result(Optional.of(graphOf(columns, center, doors)),
-                toPave(columns, RoadMask.closed(physical, terrain), physical), isolated);
+        // Só a faixa física fechada, as linhas e a frente de toda porta: ligação antiga que o grafo não usou não vira calçada.
+        Map<Long, Integer> toLay = RoadMask.closed(physical, terrain);
+
+        for (ColonyPos door : entrances) {
+            toLay.putIfAbsent(ColonyRoads.column(door.x(), door.z()), door.y());
+        }
+
+        return new Result(Optional.of(graphOf(columns, center, doors)), toPave(columns, toLay, physical), isolated);
     }
 
     /** Uma passada: a linha do meio de {@code band}, em nós e retas, com as portas. */
@@ -257,6 +269,53 @@ public final class RoadLines {
         }
 
         return parts;
+    }
+
+    /** O ramal da porta sozinha: a reta mais curta até a linha principal, sem busca — Regra 178. */
+    private static boolean stub(Set<Long> part, Set<Long> main, Map<Long, Integer> columns, Map<Long, Integer> mask,
+                                PathTerrain terrain) {
+        long door = part.iterator().next();
+        Map<Long, Integer> best = null;
+
+        for (Side side : Side.values()) {
+            Map<Long, Integer> ray = new HashMap<>();
+            int x = ColonyRoads.xOf(door);
+            int z = ColonyRoads.zOf(door);
+            int y = columns.getOrDefault(door, 0);
+
+            for (int step = 1; step <= MAX_STUB && (best == null || step < best.size() + 1); step++) {
+                x += side.offsetX();
+                z += side.offsetZ();
+                long column = ColonyRoads.column(x, z);
+                Integer line = main.contains(column) ? columns.get(column) : null;
+
+                if (line != null) {
+                    if (Math.abs(line - y) <= 1) {
+                        best = ray;
+                    }
+                    break;
+                }
+
+                OptionalInt ground = groundOf(mask, terrain, x, z, y);
+
+                if (ground.isPresent() && Math.abs(ground.getAsInt() - y) <= 1) {
+                    y = ground.getAsInt();
+                } else if (!terrain.canCut(x, z, y)) {
+                    break;
+                }
+
+                ray.put(column, y);
+            }
+        }
+
+        if (best == null) {
+            return false;
+        }
+
+        columns.putAll(best);
+        part.addAll(best.keySet());
+
+        return true;
     }
 
     /** Liga esta parte à principal pelo trecho mais curto de chão andável. */

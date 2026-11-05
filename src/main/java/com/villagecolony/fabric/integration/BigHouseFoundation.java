@@ -353,8 +353,15 @@ public final class BigHouseFoundation {
             }
         }
 
-        return cleared + (!sweepTrees ? 0 : TreeClearing.sweep(world, origin.getX(), origin.getZ(),
-                origin.getX() + size.getX() - 1, origin.getZ() + size.getZ() - 1, origin.getY(), java.util.List.of()));
+        if (!sweepTrees) {
+            return cleared;
+        }
+
+        int lastX = origin.getX() + size.getX() - 1;
+        int lastZ = origin.getZ() + size.getZ() - 1;
+
+        return cleared + TreeClearing.sweep(world, origin.getX(), origin.getZ(), lastX, lastZ, origin.getY(), java.util.List.of())
+                + TreeClearing.clearZone(world, origin.getX(), origin.getZ(), lastX, lastZ, origin.getY(), java.util.List.of());
     }
 
     static boolean safe(

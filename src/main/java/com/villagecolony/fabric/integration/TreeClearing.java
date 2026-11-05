@@ -27,7 +27,7 @@ import java.util.Set;
  * chão. A busca para a {@value #REACH} blocos da zona e em {@value #MAX_BLOCKS} blocos: o limite da floresta inteira.
  * Só tira o que a proteção deixa ({@link LotGrowth#isClearableOnSite}).
  */
-final class TreeClearing {
+public final class TreeClearing {
 
     /** Até onde, além da zona, a busca segue a árvore encostada. */
     static final int REACH = 16;
@@ -35,7 +35,69 @@ final class TreeClearing {
     /** Quantos blocos uma obra tira de uma vez. */
     static final int MAX_BLOCKS = 2_000;
 
+    /** Até quantos blocos acima do piso se procura árvore numa coluna. */
+    public static final int TALL = 40;
+
+    /** Quanto a coluna do caminho é cortada acima do piso. */
+    public static final int HEADROOM = 5;
+
     private TreeClearing() {
+    }
+
+    /**
+     * A zona da obra, da altura {@code fromY} para cima, sem chão natural nenhum — Regra 179: a obra não fica por cima
+     * de árvore nem mantém bloco de antes dentro da zona. Só tira o que é natural e a proteção deixa.
+     *
+     * @return quantos blocos saíram
+     */
+    static int clearZone(ServerWorld world, int minX, int minZ, int maxX, int maxZ, int fromY, List<ColonyPos> chests) {
+        int cleared = 0;
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                if (world.isChunkLoaded(x >> 4, z >> 4)) {
+                    for (int y = world.getTopY(Heightmap.Type.WORLD_SURFACE, x, z) - 1; y > fromY; y--) {
+                        cleared += cutIfNatural(world, new BlockPos(x, y, z), chests);
+                    }
+                }
+            }
+        }
+
+        return cleared;
+    }
+
+    /** Se este bloco é tronco ou o que vive como ele. */
+    public static boolean isTree(BlockState state) {
+        return LotGrowth.isSolidGrowth(state);
+    }
+
+    /** A árvore que passa por esta coluna acima do piso, inteira, com o que encosta nela. */
+    public static int growthAbove(ServerWorld world, int x, int z, int floorY, List<ColonyPos> chests) {
+        return sweep(world, x, z, x, z, floorY + 1, chests);
+    }
+
+    /** Abre a coluna do caminho: a árvore e o chão natural acima do piso, até {@value #HEADROOM} blocos — Regra 178. */
+    public static int openColumn(ServerWorld world, int x, int z, int floorY, List<ColonyPos> chests) {
+        int cleared = growthAbove(world, x, z, floorY, chests);
+
+        for (int y = floorY + HEADROOM; y > floorY; y--) {
+            cleared += cutIfNatural(world, new BlockPos(x, y, z), chests);
+        }
+
+        return cleared;
+    }
+
+    private static int cutIfNatural(ServerWorld world, BlockPos at, List<ColonyPos> chests) {
+        BlockState state = world.getBlockState(at);
+
+        if (state.isAir() || !state.getFluidState().isEmpty() || world.getBlockEntity(at) != null
+                || !SiteSurroundings.isNaturalGround(state) || !BlockProtection.mayDigOut(world, at, state)) {
+            return 0;
+        }
+
+        collect(world, at, chests);
+
+        return 1;
     }
 
     /**

@@ -74,6 +74,14 @@ final class GroundSmoothing {
                     "the inside of a pen");
         }
 
+        int gaps = BuildingGaps.pass(world, colony);
+
+        if (gaps > 0) {
+            ActionJournal.action(mason.getUuid(), "LEVELLED", "minecraft:dirt", gaps, mason.getBlockPos(), "around the buildings");
+
+            return gaps;
+        }
+
         VillageBounds box = bounds.get();
         int across = Math.max(1, (box.maxX() - box.minX()) / STEP + 1);
         int down = Math.max(1, (box.maxZ() - box.minZ()) / STEP + 1);

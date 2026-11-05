@@ -28,6 +28,9 @@ final class RoadRouting {
     /** Quantos blocos fora da faixa valem uma dobra a menos: a reta ganha da dobra que só segue a beira. */
     private static final int BEND_COST = 8;
 
+    /** Quanto custa cortar uma coluna: o trajeto limpo ganha quando há. */
+    private static final int CUT_COST = 3;
+
     /** Quantas vezes um trecho se parte, no máximo. */
     private static final int MAX_DEPTH = 10;
 
@@ -302,13 +305,17 @@ final class RoadRouting {
         for (long column : columns) {
             OptionalInt ground = RoadLines.groundOf(mask, terrain, ColonyRoads.xOf(column), ColonyRoads.zOf(column), previous);
 
-            if (ground.isEmpty() || Math.abs(ground.getAsInt() - previous) > 1) {
+            if (ground.isPresent() && Math.abs(ground.getAsInt() - previous) <= 1) {
+                previous = ground.getAsInt();
+                score += mask.containsKey(column) ? 0 : 1;
+            } else if (terrain.canCut(ColonyRoads.xOf(column), ColonyRoads.zOf(column), previous)) {
+                // O que está acima do chão no trajeto sai: o piso segue na altura de antes (Regra 178).
+                score += CUT_COST;
+            } else {
                 return Optional.empty();
             }
 
-            previous = ground.getAsInt();
             heights.put(column, previous);
-            score += mask.containsKey(column) ? 0 : 1;
         }
 
         for (long pixel : chain) {

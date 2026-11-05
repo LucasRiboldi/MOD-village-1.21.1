@@ -178,6 +178,12 @@ public final class PathPaving {
             return;
         }
 
+        if (plan.repair) {
+            com.villagecolony.fabric.integration.TreeClearing.openColumn(world, step.x(), step.z(), step.floorY(),
+                    com.villagecolony.fabric.integration.ColonyChests.nearestFirst(world, colonyId,
+                            new com.villagecolony.core.type.ColonyPos(step.x(), step.floorY(), step.z())));
+        }
+
         if (!layAndRecord(world, colonyId, paver.getUuid(), step)) {
             if (plan.repair) {
                 skipRepairStep(colonyId, turn, plan, step);
