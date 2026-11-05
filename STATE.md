@@ -1,5 +1,9 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.31:** jogo da 0.4.30: 6 de 9 obras MAE recusadas por `changed_generation_evidence`. Medido no save: seção com
+> água corrente diverge do recibo em 100% e com folha em 92%, sem ninguém mexer. A prova agora começa na reserva (Regra 202).
+> Curral confirmado em jogo: 12 entregas (Regra 196). O MAE continua sem nenhuma obra em jogo. Sem testes; compilado.
+
 > **Candidata 0.4.30:** a obra MAE limpa árvore, folha e mato da região antes de reservar (Regra 200) e aceita chão natural e
 > minério no lote (Regra 201). Emendas na ADR-044. O MAE continua sem nenhuma obra em jogo. Sem testes; compilado.
 

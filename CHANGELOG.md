@@ -12,6 +12,13 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.31] — candidata, 2026-11-05
+
+### Corrigido
+
+- MAE: a reserva recusava quase todo lote com `changed_generation_evidence`, porque o recibo da geração sai antes de a água
+  correr e de a folha se ajustar. A prova agora começa na reserva (Regra 202), e a limpeza da Regra 200 passa a poder rodar.
+
 ## [0.4.30] — candidata, 2026-11-05
 
 ### Mudado

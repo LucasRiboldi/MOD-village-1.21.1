@@ -245,6 +245,7 @@ regra que foi emendada. O corpo de cada regra vive em
 | 199 | **Sem muda perto de estrutura** (autor 11-05): árvore a até 3 blocos de casa, obra ou peça da vila gerada não é replantada; rua da vila não conta como estrutura. | 11-05 |
 | 200 | **A obra MAE limpa o próprio terreno** (autor 11-05): árvore natural, folha e mato alto da região não recusam o lote. Tudo é conferido antes do primeiro corte; o tronco cai como item. Lote sem árvore tem preferência, e nunca sai obra da colônia, peça da vila gerada nem o que foi posto à mão. | 11-05 |
 | 201 | **O lote MAE aceita chão natural** (autor 11-05): areia, cascalho, argila, terracota, andesito, diorito, granito, tufo, ardósia, minério e neve compacta não recusam mais o lote. Água continua recusando. | 11-05 |
+| 202 | **A prova do MAE começa na reserva** (autor 11-05): a reserva `terrain_v2` não exige mais a seção igual à da geração; ela grava a impressão daquele momento, depois da conferência bloco a bloco. Terra ou pedra posta pelo jogador antes da reserva não é detectada. | 11-05 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).

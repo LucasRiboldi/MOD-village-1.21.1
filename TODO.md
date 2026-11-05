@@ -28,6 +28,16 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] Mineiros: 0 de 16 tarefas de minério fechadas, `raw_iron` ×57 surgido
 - [ ] Testes a rever ao liberar: `TreeNearestGameTest`, `ShepherdPensGameTest`, `PenAccessGameTest`; criar para as Regras 196 a 199
 
+## Abertos do jogo da 0.4.30
+
+- [ ] MAE: primeira obra em jogo na 0.4.31; durante a obra a prova ainda é por seção, e plantação ou aldeão na mesma seção pode
+  parar com `world_changed_since_approval` ou `changed_prepared_terrain`
+- [ ] MAE: cada comando trava o servidor por cerca de 2,5 s (`MaeSites.start`, 22,6 s em 9 tentativas)
+- [ ] Pastor: 15 `dropped the herd in phase LEAD` e 3 em `ENTER` contra 12 entregas; 2 "did not walk into the pen"
+- [ ] Fundidor: 24 soltas de `smooth_sandstone` e 11 de `terracotta`, 22% bloqueado; vila sem obra (`project=none`, `lots_ok=0`)
+- [ ] Mineiros: 5 de 6 tarefas soltas
+- [ ] Testes a rever ao liberar: os do MAE que esperam recusa por `changed_generation_evidence` na reserva; criar para a Regra 202
+
 ## MAE: o que falta depois da 0.4.26
 
 - [ ] Primeira obra em jogo com `/vc mae obra <modelo> fora`, Spark junto e leitura do `VC_MAE_SITE`
