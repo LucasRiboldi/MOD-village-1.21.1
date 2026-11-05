@@ -178,6 +178,12 @@ public final class RoadGraphRefresh {
     /** Publica o grafo; verdadeiro quando ainda há ligação ou calçada por fazer. */
     private static boolean publish(ServerWorld world, Colony colony, Set<ColonyPos> found) {
         UUID id = colony.id();
+
+        // A obra MAE começou no meio da varredura: nada de índice até ela entregar a região (ADR-045 item 10).
+        if (!MaeRoadAccess.metadataAllowed(world, id)) {
+            return true;
+        }
+
         Set<Long> known = new HashSet<>(RoadIndex.roadsOf(id).map(ColonyRoads::columns).orElse(List.of()));
         Set<Long> scanned = new HashSet<>();
 

@@ -19,8 +19,9 @@ import java.util.UUID;
  * Fluxo supervisionado de uma obra MAE, na ordem do item 7 da ADR-046: levantamento do terreno pela saída
  * escolhida, prova do acesso com o terreno previsto, preparação, escrita da obra e prova real do acesso.
  *
- * <p>Vive só na sessão. O que precisa sobreviver a uma recarga está nos jobs do writer, que bloqueiam
- * sozinhos qualquer retomada ambígua. Não é chamado pela fila automática — ADR-046, Consequências.
+ * <p>Vive só na sessão. O que sobrevive a uma recarga está nos jobs do writer, que bloqueiam sozinhos qualquer retomada
+ * ambígua, e no pedido guardado na região ({@link MaeSiteRecord}), de onde {@link #resume} refaz o condutor na etapa do
+ * job (Regra 187). Não é chamado pela fila automática — ADR-046, Consequências.
  */
 public final class MaeStructureSite {
     /** Etapa atual; {@link #FAILED} guarda o motivo em {@link #failure()}. */
@@ -36,7 +37,10 @@ public final class MaeStructureSite {
     private final int quarterTurns;
     private final ColonyPos entry;
     private final List<ColonyPos> surfaces;
-    private final MaeTerrainPreparation.Survey terrain;
+    private final ColonyPos center;
+    private MaeTerrainPreparation.@Nullable Survey terrain;
+    /** A preparação de terreno veio de antes da recarga: ao fim dela, o levantamento recomeça. */
+    private boolean resumedTerrain;
     private Phase phase = Phase.TERRAIN;
     private @Nullable String failure;
     private MaeStructureAccess.@Nullable Survey access;
@@ -48,6 +52,7 @@ public final class MaeStructureSite {
 
     private MaeStructureSite(ServerWorld world, MaeWorldWriter writer, UUID regionId, ConstructionProject project,
                              int quarterTurns, ColonyPos center, boolean withRoad) {
+        this.center = center;
         this.withRoad = withRoad;
         this.world = world;
         this.writer = writer;
@@ -56,20 +61,82 @@ public final class MaeStructureSite {
         this.quarterTurns = quarterTurns;
         this.entry = entry(project);
         this.surfaces = surfaces(project);
-        this.terrain = MaeTerrainPreparation.begin(world, writer, regionId, List.of(
+    }
+
+    private void survey() {
+        terrain = MaeTerrainPreparation.begin(world, writer, regionId, List.of(
                 new MaeTerrainPreparation.Proposal(Building.of(project), surfaces, entry, null, 0)), center);
+        phase = Phase.TERRAIN;
+    }
+
+    /**
+     * Refaz o condutor na etapa do job depois de reiniciar: escrita sem confirmação fica parada e vira falha; pausado e
+     * bloqueado passam pela retomada do writer, que revalida o mundo (ADR-044).
+     */
+    public static MaeStructureSite resume(ServerWorld world, MaeWorldWriter writer, UUID regionId, ConstructionProject project,
+                                          int quarterTurns, ColonyPos center, boolean withRoad) {
+        MaeStructureSite site = new MaeStructureSite(world, writer, regionId, project, quarterTurns, center, withRoad);
+
+        try {
+            site.continueFromJob();
+        } catch (IllegalStateException | IllegalArgumentException refused) {
+            site.fail("resume:" + (refused.getMessage() == null ? "invalid_payload" : refused.getMessage()));
+        }
+
+        return site;
+    }
+
+    private void continueFromJob() {
+        NbtCompound job = job();
+        String type = job.getString("type");
+        String state = job.getString("state");
+
+        if (job.getBoolean("pendingWrite") || job.getBoolean("pendingPublication")) {
+            fail("resume:unconfirmed_write");
+            return;
+        }
+
+        if (type.isEmpty() || ("complete".equals(state) && MaeTerrainExecution.TYPE.equals(type))) {
+            survey();
+            return;
+        }
+
+        if (List.of("paused", "blocked").contains(state)) {
+            writer.resume(world, regionId);
+            state = job().getString("state");
+        }
+
+        if (MaeStructureExecution.TYPE.equals(type)) {
+            approved = true;
+            phase = "complete".equals(state) ? (withRoad ? road() : Phase.DONE) : Phase.STRUCTURE;
+        } else if (MaeTerrainExecution.TYPE.equals(type)) {
+            resumedTerrain = true;
+            phase = Phase.TERRAIN_WRITE;
+        } else if (MaeRoadExecution.TYPE.equals(type)) {
+            phase = "complete".equals(state) ? Phase.DONE : Phase.ROAD;
+        } else {
+            fail("resume:unknown_job");
+        }
     }
 
     /** A região já reservada com {@code terrain_v2}; o projeto já orientado na rotação informada. */
     public static MaeStructureSite begin(ServerWorld world, MaeWorldWriter writer, UUID regionId,
                                          ConstructionProject project, int quarterTurns, ColonyPos center) {
-        return new MaeStructureSite(world, writer, regionId, project, quarterTurns, center, false);
+        MaeStructureSite site = new MaeStructureSite(world, writer, regionId, project, quarterTurns, center, false);
+
+        site.survey();
+
+        return site;
     }
 
     /** Igual, e ao concluir liga a entrada à rua certificada pelo {@code road_v2} — ADR-046. */
     public static MaeStructureSite beginWithRoad(ServerWorld world, MaeWorldWriter writer, UUID regionId,
                                                  ConstructionProject project, int quarterTurns, ColonyPos center) {
-        return new MaeStructureSite(world, writer, regionId, project, quarterTurns, center, true);
+        MaeStructureSite site = new MaeStructureSite(world, writer, regionId, project, quarterTurns, center, true);
+
+        site.survey();
+
+        return site;
     }
 
     /**
@@ -125,9 +192,10 @@ public final class MaeStructureSite {
         try {
             switch (phase) {
                 case TERRAIN -> {
-                    terrain.runSlice();
-                    if (!terrain.complete()) return;
-                    prepared = terrain.result();
+                    var survey = java.util.Objects.requireNonNull(terrain, "survey");
+                    survey.runSlice();
+                    if (!survey.complete()) return;
+                    prepared = survey.result();
                     access = MaeStructureAccess.beginFor(world, project, prepared.changes(), surfaces, false);
                     phase = Phase.ACCESS;
                 }
@@ -148,7 +216,10 @@ public final class MaeStructureSite {
                     writer.runSlice(world, regionId);
                     String state = job().getString("state");
                     if ("blocked".equals(state)) fail("terrain:" + job().getString("reason"));
-                    else if ("complete".equals(state)) phase = Phase.STRUCTURE;
+                    else if ("complete".equals(state) && resumedTerrain) {
+                        resumedTerrain = false;
+                        survey();
+                    } else if ("complete".equals(state)) phase = Phase.STRUCTURE;
                 }
                 case STRUCTURE -> {
                     if (!approved) {

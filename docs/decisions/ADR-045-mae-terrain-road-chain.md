@@ -82,3 +82,20 @@ redescoberta de metadados além da própria caixa; é a escolha conservadora at�
 existir integração espacial comprovada. Mudança natural na mesma seção também
 invalida a evidência. Medição em carga e playtest continuam necessários antes
 de ativar orquestração automática.
+
+## Emenda de 2026-11-05 ao item 10 (autor) — região entregue
+
+O item 10 valia para qualquer reserva, sem prazo: a primeira obra parava para sempre a redescoberta de ruas e a releitura
+do grafo (Regra 177) em toda a dimensão, e o caminho comum não entrava nas seções da região. A obra pronta nunca se ligava
+à vila, porque `road_v2` só certifica rua dentro da região e o caminho comum não entra nela.
+
+Agora a região tem fim. Em vila nova, obra concluída entrega a região (`MaeHandover`, Regra 187): ela deixa de contar em
+`legacyAllowed`, em `metadataAllowed`, nas travas de seção e na sobreposição, e não recebe outra obra. Reserva sem nenhuma
+escrita também é entregue quando a obra falha. Durante a obra, o item 10 segue igual: pausado, bloqueado ou desconhecido
+mantém a exclusão, e escrita sem confirmação nunca é entregue. `/vc mae soltar` entrega as paradas a pedido do autor.
+
+Consequência: depois da entrega, o caminho comum pode mexer perto da obra, porque o histórico da região fica só como
+registro. Vila antiga não tem entrega automática e continua conservadora.
+
+*Não escolhidas:* manter a região fechada e seguir só com a releitura, o que deixaria a porta sem ligação física; e manter
+o item 10 como estava, o que congelaria o grafo do mundo na primeira obra.

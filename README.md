@@ -47,7 +47,7 @@ GameTests com casa, oficina, curral e depósito reais nas quatro rotações.
 Na `main` depois da 0.4.16, `/vc mae obra <modelo>` (operador, nível 2) dispara uma obra supervisionada:
 pegada centrada no jogador e rotação pela direção do olhar; `<rotação>` 0–3
 fixa a rotação; `busca` procura lote nivelado (desnível até 2) num raio de 24.
-`/vc mae mostrar ligar|desligar` desenha o que a vila guarda como caminho, e `/vc mae reler` relê o caminho da vila agora. `/vc mae obra <modelo> fora` procura lote fora da vila original, que o MAE não edita. `/vc mae estado` mostra as obras em andamento e `/vc mae parar` pausa os jobs
+`/vc mae mostrar ligar|desligar` desenha o que a vila guarda como caminho, e `/vc mae reler` relê o caminho da vila agora. `/vc mae obra <modelo> fora` procura lote fora da vila original, que o MAE não edita. `/vc mae soltar` entrega à vila as regiões paradas. `/vc mae estado` mostra as obras em andamento e `/vc mae parar` pausa os jobs
 aprovados, sem desfazer nada. Quem pediu recebe o resultado no chat; o log
 registra `VC_MAE_SITE`.
 A fila automática continua desligada e o playtest continua pendente.

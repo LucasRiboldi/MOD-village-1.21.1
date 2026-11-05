@@ -24,6 +24,7 @@ public final class MaeRoadAccess {
         try {
             for (NbtCompound region : store.regions()) {
                 WorkArea reserved = validatedArea(region);
+                if (MaeHandover.isHandedOver(region)) continue;
                 if (world.getRegistryKey().getValue().toString().equals(region.getString("dimension"))
                         && (work.min().x() >> 4) <= (reserved.max().x() >> 4)
                         && (work.max().x() >> 4) >= (reserved.min().x() >> 4)
@@ -62,14 +63,15 @@ public final class MaeRoadAccess {
                 new BlockPos(maxX + margin, Math.min(world.getTopY() - 1, maxY + clearance), maxZ + margin));
     }
 
-    /** Sem filtro espacial nos produtores legados, qualquer reserva da dimensão adia a redescoberta — MAE Fase 2. */
+    /** Sem filtro espacial nos produtores legados, qualquer reserva não entregue da dimensão adia a redescoberta — ADR-045 item 10, Regra 187. */
     public static boolean metadataAllowed(ServerWorld world, UUID colonyId) {
         var store = ColonySavedData.get(world.getServer()).maeWork();
         if (!store.supported()) return false;
         try {
             for (NbtCompound region : store.regions()) {
                 validatedArea(region);
-                if (world.getRegistryKey().getValue().toString().equals(region.getString("dimension"))) return false;
+                if (!MaeHandover.isHandedOver(region)
+                        && world.getRegistryKey().getValue().toString().equals(region.getString("dimension"))) return false;
             }
             return true;
         } catch (IllegalArgumentException | IllegalStateException malformed) {

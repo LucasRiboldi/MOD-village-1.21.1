@@ -91,7 +91,7 @@ public final class MaeWorldWriter {
         MaeGenerationEvidence.inspect(world, area, true, 128);
         for (NbtCompound other : store.regions()) {
             validateRegion(other);
-            if (dimension(world).equals(other.getString("dimension")) && area.intersects(area(other))) {
+            if (!MaeHandover.isHandedOver(other) && dimension(world).equals(other.getString("dimension")) && area.intersects(area(other))) {
                 throw new IllegalStateException("overlapping_region");
             }
         }

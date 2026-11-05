@@ -230,6 +230,7 @@ regra que foi emendada. O corpo de cada regra vive em
 | 184 | **Quina é entrada** (autor 11-05): da terceira releitura em diante, a quina da plantação mais perto do centro é entrada do grafo | 11-05 | ✅ feita (0.4.25) | `RoadShape` |
 | 185 | **A ponta cresce** (autor 11-05): por dia, as 2 pontas mais distantes do centro, dentro de 75% da maior distância, avançam um bloco em linha reta; o construtor calça | 11-05 | ✅ feita (0.4.25) | `RoadShape` |
 | 186 | **Rua de um bloco** (autor 11-05): o caminho a até 3 blocos da linha que não é linha nem frente de porta volta ao solo do bioma, pelo pedreiro; emenda a rede de 3 de largura; só em vila nova | 11-05 | ✅ feita (0.4.25) | `RoadLines`, `PathTrim` |
+| 187 | **A região MAE tem fim** (autor 11-05): em vila nova, obra pronta entrega a região à vila e a porta entra no grafo pela releitura; reserva sem escrita é entregue ao falhar; obra interrompida continua depois de reiniciar; escrita sem confirmação nunca é entregue nem repetida; emenda a ADR-045 item 10 | 11-05 | ✅ feita (0.4.26) | `MaeHandover`, `MaeSiteRecord`, `MaeSites`, `MaeStructureSite` |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).

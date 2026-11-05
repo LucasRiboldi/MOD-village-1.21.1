@@ -373,3 +373,14 @@ com envelope v3. A interrupção é simulada pelo estado gravado
 não é executado: sua recusa é inferida do mesmo caminho de envelope
 desconhecido. O cenário de conclusão usa um job de terreno sintético; a
 cadeia terreno real → obra escrita (`built`) é provada em `MaeStructureWriteGameTest`, sem conclusão.
+
+## Emenda de 2026-11-05 (autor) — ligação e retomada em vila nova
+
+Em vila nova, `MaeSites` não usa `road_v2`: a obra pronta entrega a região (ADR-045, emenda do item 10) e a porta entra no
+grafo pela releitura (Regra 177), com o construtor calçando. Assim há uma fonte só para o grafo, e `RoadGraph.from` no
+`MaeRoadExecution` fica para a vila antiga.
+
+`MaeStructureSite` continua só na sessão, mas o pedido da obra fica na região (`MaeSiteRecord`) e `MaeStructureSite.resume`
+refaz o condutor na etapa do job quando o chão dela volta a carregar. Pausado e bloqueado passam por `MaeWorldWriter.resume`,
+que revalida o mundo; escrita ou publicação sem confirmação vira falha, sem repetição (ADR-044). Parar com `/vc mae parar`
+apaga o pedido, e a obra não volta sozinha.
