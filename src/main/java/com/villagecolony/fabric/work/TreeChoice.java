@@ -13,7 +13,6 @@ import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.TreeHarvester;
-import com.villagecolony.fabric.integration.TreeScanner;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -240,50 +239,6 @@ public final class TreeChoice {
         walkTo(world, villager, plan.base());
 
         return LumberjackWork.Outcome.SEARCHED;
-    }
-
-    /** A árvore do miolo da vila primeiro; só sem ela a busca alcança a borda. */
-    static Optional<BlockPos> byZone(ServerWorld world, LumberjackWork.Job job, BlockPos here,
-            com.villagecolony.core.colony.model.VillageBounds box,
-            java.util.function.Predicate<BlockPos> wanted) {
-
-        // Pedido do autor, 2026-11-01: limpar primeiro o miolo, onde árvores atrapalham caminhos e portas; só
-        // então a margem. Dentro de cada zona, a árvore conhecida mais perto dele, sem cruzar a vila (Regra 189).
-        int margin = ResourceSearches.marginOf(job.task.colonyId(), ProfessionType.LUMBERJACK);
-        java.util.function.Predicate<BlockPos> usable = log -> com.villagecolony.core.coordination.VillageZone
-                        .of(box, log.getX(), log.getZ(), margin).withinReach()
-                && !TreeClaims.isTaken(log)
-                && !TreeMarks.isRejected(world, log)
-                && !TreeMarks.isOutOfReach(world, log)
-                && wanted.test(log);
-
-        java.util.function.Predicate<BlockPos> central = log -> box.containsColumn(log.getX(), log.getZ())
-                && usable.test(log);
-
-        Optional<BlockPos> tree = com.villagecolony.fabric.integration.VillageTrees.nearest(
-                world, job.task.colonyId(), here, central);
-
-        if (tree.isEmpty()) {
-            int coreRadius = Math.max(box.sizeX(), box.sizeZ()) / 2;
-            tree = TreeScanner.findNearestLog(world, job.center, coreRadius, central);
-            tree.ifPresent(found -> com.villagecolony.fabric.integration.VillageTrees.rememberTree(
-                    job.task.colonyId(), found));
-        }
-
-        if (tree.isEmpty()) {
-            tree = com.villagecolony.fabric.integration.VillageTrees.nearest(
-                    world, job.task.colonyId(), here, usable);
-        }
-
-        if (tree.isEmpty()) {
-            int radius = Math.max(box.sizeX(), box.sizeZ()) / 2 + margin;
-
-            tree = TreeScanner.findNearestLog(world, job.center, radius, usable);
-            tree.ifPresent(found -> com.villagecolony.fabric.integration.VillageTrees.rememberTree(
-                    job.task.colonyId(), found));
-        }
-
-        return tree;
     }
 
     /**

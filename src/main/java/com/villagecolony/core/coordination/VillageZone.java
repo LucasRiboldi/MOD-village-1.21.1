@@ -5,7 +5,7 @@ import com.villagecolony.core.colony.model.VillageBounds;
 /**
  * Em que faixa da vila uma coluna fica. O lenhador usa só o alcance
  * ({@link #withinReach}): a ordem centro → borda de 2026-10-08 foi trocada pelo autor
- * em 2026-11-01 pela árvore do miolo antes da borda ({@code TreeChoice.byZone}).
+ * em 2026-11-01 pela árvore do miolo antes da borda ({@code WantedTree.byZone}).
  *
  * <p>A distância é medida do centro da caixa da vila (ADR-003 Emenda 6) e dividida
  * pela meia-largura de cada eixo, então a caixa comprida tem faixas compridas: o
