@@ -29,11 +29,12 @@ import java.util.function.Predicate;
 
 /**
  * A coleta de animais do pastor — ADR-038 P2b: sem tosquia, ele procura o
- * animal criável solto mais perto até a borda + 10 e põe a corda (corda
- * infinita: não gasta item). Para onde ele o leva — regra do autor, 2026-10-11
- * ({@link ShepherdPens}): para dentro do cercado com lugar mais perto da casa;
- * sem cercado com lugar, para a cerca mais perto da cama (até {@link #MAX_TIED}
- * por cerca); sem cerca, para um poste que ele põe ao lado da casa.
+ * animal criável solto ou amarrado mais perto até a borda + 10 e põe a corda
+ * (corda infinita: não gasta item). Para onde ele o leva — Regra 196
+ * ({@link ShepherdPens}): para dentro do cercado com lugar mais perto da casa.
+ * Só sem cercado, ou com todos lotados, o solto vai para a cerca mais perto da
+ * cama (até {@link #MAX_TIED} por cerca); sem cerca, para um poste que ele põe ao
+ * lado da casa.
  */
 final class ShepherdHerding {
 
@@ -182,7 +183,8 @@ final class ShepherdHerding {
     /**
      * A coleta deste pastor: o animal solto (ou amarrado em poste) mais perto, para o cercado da espécie
      * dele (Regra 72, {@link ShepherdPens#forSpecies}); sem cercado com lugar, o solto vai para a cerca
-     * mais perto ou para um poste novo ao lado da casa. Sem nada a recolher, separa um curral misto.
+     * mais perto ou para um poste novo ao lado da casa, e só quando a vila não tem cercado com lugar (Regra 196). Sem
+     * nada a recolher, separa um curral misto.
      */
     static Optional<Herd> start(ServerWorld world, Colony colony, VillagerEntity shepherd) {
         BlockPos home = BedTeleport.bedOf(world, shepherd)
@@ -221,8 +223,10 @@ final class ShepherdHerding {
                 return Optional.of(herd);
             }
 
+            // Há cercado com lugar que agora não se comprova: fica para a próxima tentativa, sem amarrar (Regra 196).
             // Sem cercado com lugar: só o solto vai para a cerca ou para o poste novo.
-            if (animal.isLeashed() || ShepherdFlock.isKept(world, animal)) {
+            if (animal.isLeashed() || ShepherdFlock.isKept(world, animal)
+                    || ShepherdPens.withRoom(world, colony, shepherd.getBlockPos()).isPresent()) {
                 continue;
             }
 
@@ -370,10 +374,17 @@ final class ShepherdHerding {
         }
 
         if (herd.phase == Phase.FETCH) {
-            WorkTargets.set(shepherdId, animal.getBlockPos(), REACH - 1);
+            ShepherdLead.walkTo(world, shepherd, animal.getBlockPos(), REACH - 1);
 
             if (shepherd.squaredDistanceTo(animal) <= REACH * REACH) {
+                Entity tiedTo = animal.getLeashHolder();
+
                 animal.attachLeash(shepherd, true);
+
+                if (tiedTo instanceof LeashKnotEntity knot) {
+                    ShepherdLead.removeIfEmpty(world, knot);
+                }
+
                 herd.phase = Phase.LEAD;
             }
 
@@ -387,7 +398,13 @@ final class ShepherdHerding {
 
         BlockPos goal = herd.pen != null ? herd.pen.outside() : herd.fence;
 
-        WorkTargets.set(shepherdId, goal, REACH - 1);
+        if (ShepherdLead.isTooFar(shepherd, animal)) {
+            WorkTargets.set(shepherdId, animal.getBlockPos(), REACH - 1);
+
+            return true;
+        }
+
+        ShepherdLead.walkTo(world, shepherd, goal, REACH - 1);
 
         if (herd.pen != null && shepherd.getBlockPos().isWithinDistance(goal, REACH)) {
             ShepherdPens.startIn(world, herd.pen, animal);

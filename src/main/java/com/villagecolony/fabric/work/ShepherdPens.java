@@ -161,6 +161,11 @@ final class ShepherdPens {
     }
 
     private static boolean canReach(net.minecraft.entity.passive.VillagerEntity shepherd, Access access) {
+        // Além do alcance da navegação não há o que comprovar: ele vai por pernas (WalkLegs), e o prazo da coleta responde.
+        if (!shepherd.getBlockPos().isWithinDistance(access.outside(), WalkLegs.LEG)) {
+            return true;
+        }
+
         var path = shepherd.getNavigation().findPathTo(access.outside(), 0);
         return path != null && path.reachesTarget();
     }
@@ -211,10 +216,17 @@ final class ShepherdPens {
     }
 
     private static boolean standing(ServerWorld world, BlockPos feet) {
-        return world.isChunkLoaded(feet) && world.getBlockState(feet.down()).isSideSolidFullSquare(world, feet.down(), Direction.UP)
+        return world.isChunkLoaded(feet) && isFloor(world, feet.down())
                 && world.getBlockState(feet).getFluidState().isEmpty() && world.getBlockState(feet.up()).getFluidState().isEmpty()
                 && world.getBlockState(feet).getCollisionShape(world, feet).isEmpty()
                 && world.getBlockState(feet.up()).getCollisionShape(world, feet.up()).isEmpty();
+    }
+
+    /** O caminho tem 15/16 de altura e por isso não tem a face de cima cheia, mas é chão: a rua chega ao portão — Regra 196. */
+    private static boolean isFloor(ServerWorld world, BlockPos floor) {
+        BlockState state = world.getBlockState(floor);
+
+        return state.isOf(Blocks.DIRT_PATH) || state.isSideSolidFullSquare(world, floor, Direction.UP);
     }
 
     /** A caixa acompanha todo o chão, inclusive cantos além de 12 blocos do portão — ADR-046. */
