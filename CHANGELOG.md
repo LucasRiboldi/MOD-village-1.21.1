@@ -12,6 +12,13 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.30] — candidata, 2026-11-05
+
+### Mudado
+
+- MAE: a obra limpa árvore natural, folha e mato alto da região antes de reservar, com o tronco caindo como item (Regra 200).
+- MAE: o lote aceita o chão natural do bioma e minério (Regra 201).
+
 ## [0.4.29] — candidata, 2026-11-05
 
 ### Corrigido

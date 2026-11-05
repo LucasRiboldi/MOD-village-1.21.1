@@ -1,5 +1,8 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.30:** a obra MAE limpa árvore, folha e mato da região antes de reservar (Regra 200) e aceita chão natural e
+> minério no lote (Regra 201). Emendas na ADR-044. O MAE continua sem nenhuma obra em jogo. Sem testes; compilado.
+
 > **Candidata 0.4.29:** jogo da 0.4.28 (70 min): 0 animais levados ao curral. Portão com rua volta a contar e o poste fica só para
 > vila sem curral ou lotada (Regra 196); aldeão corta folha que trava o caminho (Regra 197); lenhador no interior, sem muda a
 > até 3 blocos de estrutura (Regras 198 e 199). Abertos: fazendeiro preso numa casa e recusa `no_lot:protected_volume` do MAE.

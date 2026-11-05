@@ -22,7 +22,9 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] Conferir `CLEARED_LEAF` no diário e o `FELLED_TREE` começando pelo centro; "a structure stands within" no log
 - [ ] Fazendeiro preso na casa de x125–131, z-253…-247: 40 min sem colher; causa não achada (autor: não mexer agora)
 - [ ] Vila sem obra: `project=none` em 10 de 14 relatórios, 23 camas para 18 aldeões; ócio de carpinteiro, pedreiro e construtor
-- [ ] MAE `no_lot:protected_volume`: só o último motivo aparece; o bloco que barrou não é conhecido
+- [ ] MAE: conferir em jogo a limpeza (`VC_MAE_SITE result=clearing`, fase `clearing` no chat) e a obra seguinte; a prova por
+  seção pode recusar por mudança natural: `changed_generation_evidence`. Na região, areia e cascalho podem cair e barrar
+- [ ] Testes a rever do MAE ao liberar: `MaeSitesGameTest`, `MaeSitesRoadGameTest`; criar para as Regras 200 e 201
 - [ ] Mineiros: 0 de 16 tarefas de minério fechadas, `raw_iron` ×57 surgido
 - [ ] Testes a rever ao liberar: `TreeNearestGameTest`, `ShepherdPensGameTest`, `PenAccessGameTest`; criar para as Regras 196 a 199
 
