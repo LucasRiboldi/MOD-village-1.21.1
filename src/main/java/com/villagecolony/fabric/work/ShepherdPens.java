@@ -96,6 +96,9 @@ final class ShepherdPens {
 
     private static final Map<UUID, Long> READ_AT = new HashMap<>();
 
+    /** Da última varredura: portões que não fecham um cercado, para o log. */
+    private static List<BlockPos> openGates = List.of();
+
     private ShepherdPens() {
     }
 
@@ -301,6 +304,7 @@ final class ShepherdPens {
             // O chão de dentro sai do caminho de quem não é pastor (Regra 122).
             com.villagecolony.fabric.integration.PenFloors.update(colony.id(),
                     PENS.get(colony.id()).stream().map(Pen::reach).toList());
+            PenLog.write(world, colony, PENS.getOrDefault(colony.id(), List.of()), openGates);
         }
 
         return PENS.getOrDefault(colony.id(), List.of());
@@ -309,6 +313,7 @@ final class ShepherdPens {
     /** Os portões na superfície da caixa e o cercado de dentro de cada um. */
     static List<Pen> scan(ServerWorld world, VillageBounds box) {
         List<Pen> pens = new ArrayList<>();
+        List<BlockPos> open = new ArrayList<>();
 
         for (int x = box.minX() - MARGIN; x <= box.maxX() + MARGIN; x++) {
             for (int z = box.minZ() - MARGIN; z <= box.maxZ() + MARGIN; z++) {
@@ -322,7 +327,13 @@ final class ShepherdPens {
                     BlockPos at = new BlockPos(x, y, z);
 
                     if (world.getBlockState(at).getBlock() instanceof FenceGateBlock) {
-                        penBehind(world, at, pens).ifPresent(found -> {
+                        Optional<Pen> behind = penBehind(world, at, pens);
+
+                        if (behind.isEmpty()) {
+                            open.add(at);
+                        }
+
+                        behind.ifPresent(found -> {
                             for (int i = 0; i < pens.size(); i++) {
                                 Pen existing = pens.get(i);
                                 if (!existing.reach().equals(found.reach())) continue;
@@ -338,6 +349,8 @@ final class ShepherdPens {
                 }
             }
         }
+
+        openGates = List.copyOf(open);
 
         return List.copyOf(pens);
     }
