@@ -41,7 +41,6 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] Teste só parcial: Regra 178 (falta o anel e o nivelamento do pedreiro), 174 (falta `DryLand` e a casa ligada a seco), 172 e 171 (falta o atributo em jogo)
 - [ ] `animalsWalkInThroughEachOfTheFourGates`: 2 falhas em 12 rodadas da bateria inteira, 0 em 7 isolado. Na falha pega, a vaca estava a 9 blocos do portão perto do prazo; causa não achada. Portão fechando foi descartado: fica aberto 600 tiques
 - [ ] `MaeSitesRoadGameTest.largeStorageEntersByItsNewGroundDoor`: estourou 2400 tiques em 3 de 6 rodadas; causa não achada
-- [ ] `MaeSitesRoadGameTest.largePenShapesWaterFarmlandAndRipeWheat`: 1 de 6 parou em `structure:protected_volume` com `applied=5`; suspeita, não provada: a água da obra escorre antes das peças em volta
 - [ ] `GroundPickupGameTest.workerCollectsWhileWalkingPast`: 1 falha em 12; suspeita, não provada: relógio global fora do expediente (Regra 194)
 
 ## MAE: o que falta depois da 0.4.26

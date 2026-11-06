@@ -16,6 +16,7 @@ import net.minecraft.util.Identifier;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * O material de cada peça do {@code structure_v3}: o item exato da planta (P2) e, no vaso com planta, o vaso e
@@ -40,8 +41,14 @@ final class MaeStructureMaterials {
     /** Itens e quantidades de uma peça, na ordem de retirada; vazio para peça sem origem física. */
     static Map<Item, Integer> of(MaeStructurePieces.Piece piece) {
         var main = piece.main();
-        if (shaped(main)) return Map.of();
         var result = new LinkedHashMap<Item, Integer>();
+        if (piece.tank()) {
+            for (var part : piece.parts()) {
+                if (!shaped(part.getValue())) result.merge(part.getValue().getBlock().asItem(), 1, Integer::sum);
+            }
+            return result;
+        }
+        if (shaped(main)) return Map.of();
         if (main.getBlock() instanceof FlowerPotBlock pot && pot.getContent() != Blocks.AIR) {
             Item plant = pot.getContent().asItem();
             if (plant == Items.AIR) return Map.of();
@@ -71,20 +78,32 @@ final class MaeStructureMaterials {
         return !extra.isEmpty();
     }
 
-    /** Lê o material do passo; item desconhecido ou quantidade fora de 1–2 recusa o passo. */
-    static Map<Item, Integer> read(NbtCompound step) {
+    /** Lê o material do passo; item desconhecido ou quantidade fora de 1–2 recusa o passo. No tanque, até 4 (Regra 203). */
+    static Map<Item, Integer> read(NbtCompound step, boolean tank) {
         var result = new LinkedHashMap<Item, Integer>();
-        add(result, step.getCompound("material"));
+        int most = tank ? 4 : 2;
+        add(result, step.getCompound("material"), most);
         var extra = step.getList("extra", NbtElement.COMPOUND_TYPE);
-        if (extra.size() > 1) throw new IllegalStateException("invalid_material_contract");
-        for (int i = 0; i < extra.size(); i++) add(result, extra.getCompound(i));
+        if (extra.size() > (tank ? 3 : 1)) throw new IllegalStateException("invalid_material_contract");
+        for (int i = 0; i < extra.size(); i++) add(result, extra.getCompound(i), most);
         return result;
     }
 
-    private static void add(Map<Item, Integer> result, NbtCompound material) {
+    /** Cada parte moldada no local conta na exceção de suprimento. */
+    static void recordShaped(UUID colony, NbtList parts) {
+        for (int i = 0; i < parts.size(); i++) {
+            var after = MaeWorldWriter.decodeState(parts.getCompound(i).getCompound("after"));
+            if (shaped(after)) {
+                Supplies.record(com.villagecolony.core.coordination.SupplyException.SHAPED_GROUND, colony,
+                        Registries.BLOCK.getId(after.getBlock()).getPath(), 1);
+            }
+        }
+    }
+
+    private static void add(Map<Item, Integer> result, NbtCompound material, int most) {
         Identifier id = Identifier.tryParse(material.getString("item"));
         int count = material.getInt("count");
-        if (id == null || !Registries.ITEM.containsId(id) || count < 1 || count > 2) {
+        if (id == null || !Registries.ITEM.containsId(id) || count < 1 || count > most) {
             throw new IllegalStateException("invalid_material_contract");
         }
         result.merge(Registries.ITEM.get(id), count, Integer::sum);

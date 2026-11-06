@@ -187,7 +187,7 @@ final class MaeStructureExecution {
             part.putLong("position", entry.getKey().asLong());
             part.put("before", NbtHelper.fromBlockState(before));
             part.put("after", NbtHelper.fromBlockState(after));
-            part.putString("role", i == 0 ? "main" : role(after));
+            part.putString("role", i == 0 ? "main" : piece.tank() ? "tank_side" : role(after));
             parts.add(part);
         }
         if (present) return null;
@@ -195,9 +195,8 @@ final class MaeStructureExecution {
         step.put("parts", parts);
         if (MaeStructureMaterials.shaped(piece.main())) {
             step.putString("shaped", Registries.BLOCK.getId(piece.main().getBlock()).toString());
-        } else {
-            MaeStructureMaterials.write(step, MaeStructureMaterials.of(piece));
         }
+        MaeStructureMaterials.write(step, MaeStructureMaterials.of(piece));
         return step;
     }
 
@@ -206,6 +205,7 @@ final class MaeStructureExecution {
         for (var part : piece.parts()) {
             BlockState after = part.getValue();
             if (!after.getFluidState().isEmpty() && !after.isOf(net.minecraft.block.Blocks.WATER)) return false;
+            if (piece.tank() && !MaeStructureMaterials.shaped(after) && after.getBlock().asItem() == net.minecraft.item.Items.AIR) return false;
         }
         return piece.main().isAir() || MaeStructureMaterials.shaped(piece.main())
                 || !MaeStructureMaterials.of(piece).isEmpty();
@@ -233,7 +233,7 @@ final class MaeStructureExecution {
         NbtCompound step = job.getList("plan", NbtElement.COMPOUND_TYPE).getCompound(job.getInt("cursor"));
         NbtList parts = step.getList("parts", NbtElement.COMPOUND_TYPE);
         WorkArea area = MaeWorldWriter.area(job);
-        if (parts.isEmpty() || parts.size() > 2) throw new IllegalStateException("invalid_structure_step");
+        if (parts.isEmpty() || parts.size() > (step.contains("shaped") ? 5 : 2)) throw new IllegalStateException("invalid_structure_step");
         for (int i = 0; i < parts.size(); i++) {
             NbtCompound part = parts.getCompound(i);
             BlockPos at = BlockPos.fromLong(part.getLong("position"));
@@ -249,7 +249,7 @@ final class MaeStructureExecution {
         if (shaped && !MaeStructureMaterials.shaped(MaeWorldWriter.decodeState(parts.getCompound(0).getCompound("after")))) {
             throw new IllegalStateException("invalid_material_contract");
         }
-        var materials = shaped ? java.util.Map.<Item, Integer>of() : MaeStructureMaterials.read(step);
+        var materials = shaped && !step.contains("material") ? java.util.Map.<Item, Integer>of() : MaeStructureMaterials.read(step, shaped);
         UUID colony = region.getUuid("colony");
         List<ColonyPos> chests = sources.chests(world, colony, MinecraftTypeAdapter.toColonyPos(
                 BlockPos.fromLong(job.getLong("origin"))));
@@ -296,10 +296,7 @@ final class MaeStructureExecution {
         NbtCompound actual = MaeGenerationEvidence.inspect(world, MaeProtection.margin(area), false, 8);
         record.putString("result", "applied");
         record.putString("materials", shaped ? "shaped" : "consumed");
-        if (shaped) {
-            Supplies.record(com.villagecolony.core.coordination.SupplyException.SHAPED_GROUND, colony,
-                    Identifier.of(step.getString("shaped")).getPath(), 1);
-        }
+        if (shaped) MaeStructureMaterials.recordShaped(colony, parts);
         history.set(history.size() - 1, record);
         region.put("history", history);
         int cursor = job.getInt("cursor") + 1;

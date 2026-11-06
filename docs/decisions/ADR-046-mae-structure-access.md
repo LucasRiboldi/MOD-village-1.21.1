@@ -259,8 +259,7 @@ Cada passo é uma peça com todas as suas partes:
   fluxo prefere piso até um bloco acima do chão da pegada.
 - **Água, solo arado e cultivo** (escolha do autor, 2026-11-04, igual ao legado):
   surgem no local sem material, com registro `SHAPED_GROUND`; o passo grava
-  `shaped` e a obra, `contract=2`. Na camada, a água vem primeiro e logo as quatro
-  vizinhas, fechando o tanque antes do primeiro tique do fluido; o solo arado nasce
+  `shaped` e a obra, `contract=2`. Na camada, a água e as quatro vizinhas são uma escrita só (Regra 203), para nenhum atraso da obra deixar a água escorrer; o solo arado nasce
   úmido (7) ao lado dela e o trigo do curral grande já é maduro (idade 7), estados
   que não mudam sozinhos e por isso não quebram a evidência. Água um bloco abaixo
   do solo foi considerada e descartada: não umedece o solo arado.

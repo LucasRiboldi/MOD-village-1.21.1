@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 99
+- **Cita a regra:** 100
 - **Só usa a classe indicada:** 95
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 5
@@ -204,11 +204,12 @@ classe prova menos ainda.
 | 192 | Tora é do carpinteiro (autor 11-05): sem peça a fazer, os outros ofícios fecham a tarefa… | classe | ChainRootsGameTest, ColonyFixture, ConstructionProjectTest |
 | 193 | Mineiro alarga o nível (autor 11-05): quem espera ramal cava em volta do salão, até 6 ané… | cita | MinerGameTest |
 | 194 | Coleta no expediente (autor 11-05): abate do pastor e item do chão só no expediente; emen… | classe | FlockWheatGameTest, GardenPiecesGameTest, GroundPickupGameTest |
-| 195 | Reunião do fim do dia (autor 11-05): o expediente acaba em 10000 tiques; até 11000 os ald… | cita | WorkClockTest |
-| 196 | Curral antes do poste (autor 11-05): o pastor leva o animal solto ou amarrado ao curral c… | cita | PenAccessGameTest |
+| 195 | Reunião do fim do dia (autor 11-05): o expediente acaba em 10000 tiques; até 11000 os ald… | cita | ShepherdGameTest, WorkClockTest |
+| 196 | Curral antes do poste (autor 11-05): o pastor leva o animal solto ou amarrado ao curral c… | cita | PenAccessGameTest, ShepherdGameTest |
 | 197 | Folha no caminho se corta (autor 11-05): todo aldeão da vila com destino, parado ao lado… | cita | LeafPassageGameTest |
 | 198 | Lenhador no interior da vila (autor 11-05): a árvore é escolhida por faixas de 32 blocos… | cita | TreeNearestGameTest |
 | 199 | Sem muda perto de estrutura (autor 11-05): árvore a até 3 blocos de casa, obra ou peça da… | cita | TreeReplantingGameTest |
 | 200 | A obra MAE limpa o próprio terreno (autor 11-05): árvore natural, folha e mato alto da re… | cita | MaeTerrainGameTest |
 | 201 | O lote MAE aceita chão natural (autor 11-05): areia, cascalho, argila, terracota, andesit… | cita | MaeTerrainGameTest |
 | 202 | A prova do MAE começa na reserva (autor 11-05): a reserva terrain_v2 não exige mais a seç… | cita | MaeTerrainGameTest |
+| 203 | O tanque da obra nasce fechado (autor 11-05): a água e as quatro vizinhas são uma escrita… | cita | MaeStructureModelGameTest |
