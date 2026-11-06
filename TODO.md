@@ -40,7 +40,6 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] 2 regras sem teste (33 e 47, processo e comportamento do jogo) e 95 em que um teste só usa a classe indicada: [`regras-e-testes.md`](docs/testing/regras-e-testes.md)
 - [ ] Teste só parcial: Regra 178 (falta o anel e o nivelamento do pedreiro), 174 (falta `DryLand` e a casa ligada a seco), 172 e 171 (falta o atributo em jogo)
 - [ ] `animalsWalkInThroughEachOfTheFourGates`: 2 falhas em 12 rodadas da bateria inteira, 0 em 7 isolado. Na falha pega, a vaca estava a 9 blocos do portão perto do prazo; causa não achada. Portão fechando foi descartado: fica aberto 600 tiques
-- [ ] `MaeSitesRoadGameTest.largeStorageEntersByItsNewGroundDoor`: estourou 2400 tiques em 3 de 6 rodadas; causa não achada
 - [ ] `GroundPickupGameTest.workerCollectsWhileWalkingPast`: 1 falha em 12; suspeita, não provada: relógio global fora do expediente (Regra 194)
 
 ## Abertos do jogo da 0.4.36
@@ -54,7 +53,6 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 ## Abertos do jogo da 0.4.35
 
 - [ ] Casas de x=45 a 65, depois do lago: 7 portas térreas com frente certa, mas a parte não liga à rede (`isolated`=4 a 5, de 54 a 87 blocos do grafo). Falta o diagnóstico "MAE e lago"
-- [ ] MAE: 5 obras paradas em `world_changed_since_approval`, 2 a 27 blocos aplicados, região devolvida
 - [ ] Nenhuma obra nova: `project=none lots_ok=0`, construtor `NOT_IN_GAME` por `HousePlans.plansForNext` vazio, 23 camas para 19 aldeões; saturação não verificada
 - [ ] Profissões menos ativas: pedido do autor, ainda sem medir
 - [ ] Surgidos, `VC_SUPPLY`: `grass_block` ×64 (`FOUNDATION_GROUND`), `prismarine_shard` ×9, `honeycomb` ×2
@@ -68,11 +66,12 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 
 ## MAE: o que falta depois da 0.4.26
 
-- [ ] Primeira obra em jogo com `/vc mae obra <modelo> fora`, Spark junto e leitura do `VC_MAE_SITE`
+- [ ] Primeira obra pedida em jogo pela fila do construtor (0.4.38, Regra 213): `/vc mae obra <modelo>`, Spark junto, `VC_MAE_SITE` de `queued` até `done`; conferir porta ligada pelo grafo e retomada depois de reiniciar
+- [ ] Obra longe da vila (`fora`): construtor chega lá? Só provado que a obra não é largada; caminhar até lá depende do jogo
+- [ ] Regra 213 sem teste: a desistência por espera longa (`WaitingWork`) e `MaeSites.move`, a troca de lote
+- [ ] Decidir se `MaeStructureSite`, `MaeStructureExecution`, `MaeTerrainExecution` e `road_v2` saem do código: a obra pedida não os chama mais (ADR-047)
+- [ ] As ruínas das obras MAE falhas de saves anteriores continuam no mundo
 - [ ] Decidir o gate da água (Fase 4 do plano mestre): decisão do autor
-- [ ] Conferir em jogo: porta ligada pelo grafo, região entregue, retomada depois de reiniciar, `/vc mae soltar`
-- [ ] Quando os testes forem liberados: `MaeSitesGameTest` e `MaeSitesRoadGameTest` esperam `road_v2` e não cobrem a entrega
-- [ ] Obra interrompida em região reaproveitada de vila antiga pode ler o job concluído da obra anterior como pronto
 - [ ] Fase 6: expansão automática no ciclo da colônia, depois da primeira obra em jogo
 
 ## Varredura dos ofícios (jogo da 0.4.24)
