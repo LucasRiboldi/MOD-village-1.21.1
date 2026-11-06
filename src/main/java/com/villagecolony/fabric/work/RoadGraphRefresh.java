@@ -176,7 +176,7 @@ public final class RoadGraphRefresh {
     }
 
     /** Publica o grafo; verdadeiro quando ainda há ligação ou calçada por fazer. */
-    private static boolean publish(ServerWorld world, Colony colony, Set<ColonyPos> found) {
+    static boolean publish(ServerWorld world, Colony colony, Set<ColonyPos> found) {
         UUID id = colony.id();
 
         // A obra MAE começou no meio da varredura: nada de índice até ela entregar a região (ADR-045 item 10).
@@ -233,7 +233,7 @@ public final class RoadGraphRefresh {
         }
 
         RoadLines.Result result = RoadLines.build(cells, planned, colony.center(), fronts,
-                RoadShape.corners(world, colony, terrain), terrain, LINKS_PER_READ, turn);
+                RoadShape.farmRings(world, colony, terrain), terrain, LINKS_PER_READ, turn);
 
         result.graph().ifPresent(graph -> {
             update(colony, store, graph, result);
@@ -301,7 +301,8 @@ public final class RoadGraphRefresh {
 
                 doors.forEach(door -> fronts.add(MinecraftTypeAdapter.toColonyPos(door)));
 
-                if (doors.isEmpty()) {
+                // A entrada da plantação é a quina da Regra 184: uma só.
+                if (doors.isEmpty() && !RoadShape.isFarm(building)) {
                     front(world, min, max, hub, terrain).ifPresent(fronts::add);
                 }
             }

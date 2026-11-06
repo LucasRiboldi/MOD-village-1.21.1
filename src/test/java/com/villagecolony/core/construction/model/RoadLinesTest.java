@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** O grafo como mapa de trilhos (Regra 177), a frente de porta (Regra 178), a quina fixa (Regra 183) e a rua de um bloco (Regra 186). */
+/** O grafo como mapa de trilhos (Regra 177), a frente de porta (Regra 178), a rua de um bloco (Regra 186) e a plantação sem anel (Regra 208). */
 @DisplayName("RoadLines")
 class RoadLinesTest {
 
@@ -47,8 +47,8 @@ class RoadLinesTest {
         return cells;
     }
 
-    private static RoadLines.Result build(Set<ColonyPos> cells, ColonyPos center, Set<ColonyPos> entrances, Set<ColonyPos> anchors) {
-        return RoadLines.build(cells, Set.of(), center, entrances, anchors, FLAT, 0, 0);
+    private static RoadLines.Result build(Set<ColonyPos> cells, ColonyPos center, Set<ColonyPos> entrances, Set<ColonyPos> farmRings) {
+        return RoadLines.build(cells, Set.of(), center, entrances, farmRings, FLAT, 0, 0);
     }
 
     private static Set<ColonyPos> columnsOf(RoadLines.Result result) {
@@ -143,12 +143,67 @@ class RoadLinesTest {
         assertTrue(result.toPave().stream().anyMatch(step -> step.x() == 5 && step.z() == 4), "a frente da porta ficou sem caminho");
     }
 
-    @Test
-    @DisplayName("Regra 183: a linha passa pela quina fixa, mesmo fora do centro da faixa")
-    void theLinePassesThroughAnAnchor() {
-        ColonyPos corner = at(5, 1);
+    /** A rua em z=0 e o anel da plantação ligado a ela por dois ramais, nas duas quinas de cima. */
+    private static Set<ColonyPos> streetWithAnOldRing(Set<ColonyPos> ring) {
+        Set<ColonyPos> cells = corridor(-20, 20, 0, 0);
 
-        assertTrue(columnsOf(build(corridor(0, 20, -1, 1), at(10, 0), Set.of(), Set.of(corner))).contains(corner));
+        cells.addAll(ring);
+        cells.addAll(corridor(2, 2, 1, 5));
+        cells.addAll(corridor(10, 10, 1, 5));
+
+        return cells;
+    }
+
+    private static Set<ColonyPos> ring(int minX, int maxX, int minZ, int maxZ) {
+        Set<ColonyPos> ring = new HashSet<>();
+
+        for (int x = minX; x <= maxX; x++) {
+            ring.add(at(x, minZ));
+            ring.add(at(x, maxZ));
+        }
+
+        for (int z = minZ; z <= maxZ; z++) {
+            ring.add(at(minX, z));
+            ring.add(at(maxX, z));
+        }
+
+        return ring;
+    }
+
+    @Test
+    @DisplayName("Regra 208: o anel antigo da plantação sai do grafo e vira sobra, mesmo longe da linha")
+    void anOldFarmRingLeavesTheGraph() {
+        Set<ColonyPos> ring = ring(2, 10, 6, 12);
+        RoadLines.Result result = build(streetWithAnOldRing(ring), at(0, 0), Set.of(), ring);
+        Set<ColonyPos> columns = columnsOf(result);
+
+        assertFalse(columns.contains(at(6, 12)), "o lado de baixo do anel ficou no grafo: " + columns);
+        assertFalse(columns.contains(at(10, 12)), "a quina ficou no grafo: " + columns);
+        assertFalse(columns.contains(at(6, 6)), "o lado de cima do anel ficou no grafo: " + columns);
+        assertTrue(columns.containsAll(List.of(at(-20, 0), at(20, 0))), "a rua saiu junto");
+        assertTrue(result.surplus().containsAll(List.of(at(6, 12), at(10, 12))), "o anel longe da linha não virou sobra: " + result.surplus());
+    }
+
+    @Test
+    @DisplayName("Regra 208: a entrada da plantação fica, com o ramal até a rua")
+    void theFarmEntranceKeepsItsBranch() {
+        ColonyPos door = at(2, 6);
+        Set<ColonyPos> ring = ring(2, 10, 6, 12);
+        RoadLines.Result result = build(streetWithAnOldRing(ring), at(0, 0), Set.of(door), ring);
+        Set<ColonyPos> columns = columnsOf(result);
+
+        assertTrue(result.graph().orElseThrow().nodes().stream().anyMatch(node -> node.position().equals(door)
+                && node.roles().contains(RoadGraph.Role.ENTRANCE)), "a quina de entrada saiu do grafo");
+        assertTrue(columns.containsAll(List.of(at(2, 1), at(2, 5))), "a entrada perdeu o ramal: " + columns);
+        assertFalse(columns.contains(at(6, 12)), "o resto do anel ficou no grafo: " + columns);
+    }
+
+    @Test
+    @DisplayName("Regra 208: o trecho colado na plantação que é a única ligação da rede fica")
+    void aRingSideThatIsTheOnlyLinkStays() {
+        Set<ColonyPos> columns = columnsOf(build(corridor(-20, 40, 0, 0), at(0, 0), Set.of(), ring(5, 15, 0, 6)));
+
+        assertTrue(columns.containsAll(List.of(at(10, 0), at(40, 0))), "a rede partiu: " + columns);
     }
 
     @Test

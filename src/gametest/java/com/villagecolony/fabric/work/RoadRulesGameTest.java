@@ -6,6 +6,7 @@ import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.RoadGraph;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.data.save.ColonySavedData;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
@@ -15,6 +16,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
@@ -23,7 +25,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-/** O chão que o grafo pede: Regras 180, 183, 184, 185 e 186. Tudo em coordenada do mundo: a arena pode vir girada. */
+/** O chão que o grafo pede: Regras 180, 183 a 186 e 208. Tudo em coordenada do mundo: a arena pode vir girada. */
 public class RoadRulesGameTest implements FabricGameTest {
 
     private static final int SIZE = 24;
@@ -89,7 +91,7 @@ public class RoadRulesGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_rings", tickLimit = 20)
-    public void aFarmGetsARingAndItsNearestCornerIsTheEntrance(TestContext context) {
+    public void aFarmHasNoRingAndItsNearestCornerIsTheEntrance(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos origin = context.getAbsolutePos(new BlockPos(1, 94, 1));
         BlockPos min = origin.add(6, 1, 6);
@@ -105,7 +107,6 @@ public class RoadRulesGameTest implements FabricGameTest {
             VillageColonyMod.BUILDINGS.register(farm);
 
             WorldPathTerrain terrain = new WorldPathTerrain(world, colony.id());
-            Set<ColonyPos> ring = RoadShape.rings(world, colony, terrain);
             Set<ColonyPos> expected = new HashSet<>();
 
             for (int x = 5; x <= 9; x++) {
@@ -116,16 +117,80 @@ public class RoadRulesGameTest implements FabricGameTest {
                 }
             }
 
-            context.assertTrue(ring.equals(expected), "Regra 183: o anel não é a volta da plantação: " + ring);
-
-            Set<ColonyPos> corners = RoadShape.corners(world, colony, terrain);
-
-            context.assertTrue(corners.equals(Set.of(cell(origin.add(5, 0, 5)), cell(origin.add(9, 0, 5)),
-                    cell(origin.add(5, 0, 9)), cell(origin.add(9, 0, 9)))), "Regra 183: as quinas não ficaram fixas: " + corners);
+            context.assertTrue(RoadShape.rings(world, colony, terrain).isEmpty(), "Regra 208: a plantação ainda pede anel");
+            context.assertTrue(RoadShape.farmRings(world, colony, terrain).equals(expected), "Regra 208: o chão colado na plantação está errado");
+            context.assertTrue(RoadShape.ringOf(world, terrain, new BlockBox(min.getX(), min.getY(), min.getZ(), max.getX(), max.getY(), max.getZ())).equals(expected),
+                    "Regra 183: o anel não é a volta da caixa");
 
             context.assertTrue(RoadShape.farmEntrances(world, colony, terrain).equals(Set.of(cell(origin.add(5, 0, 5)))),
                     "Regra 184: a entrada não é a quina mais perto do centro");
             context.assertTrue(RoadShape.CORNER_AFTER_READS == 3, "Regra 184: a quina vira entrada na terceira releitura");
+        } finally {
+            VillageColonyMod.BUILDINGS.remove(farm.id());
+            fixture.cleanUp();
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
+
+    /** A rua, um ramal e o anel que uma versão anterior calçou: na terceira releitura só sobra a rua e a entrada da plantação. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_old_ring", tickLimit = 20)
+    public void anOldFarmRingLeavesTheGraphAndTheGround(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 106, 1));
+
+        platform(world, origin);
+
+        ColonyFixture fixture = ColonyFixture.colonyAtWorld(origin.add(11, 1, 2));
+        Colony colony = fixture.colony();
+        Building farm = farmAt(colony.id(), origin.add(8, 1, 8), origin.add(14, 2, 14));
+        Set<ColonyPos> paths = new HashSet<>();
+
+        try {
+            VillageColonyMod.BUILDINGS.register(farm);
+
+            for (BlockPos at : BlockPos.iterate(origin, origin.add(SIZE, 0, SIZE))) {
+                int x = at.getX() - origin.getX();
+                int z = at.getZ() - origin.getZ();
+                boolean street = z == 2 && x >= 1 && x <= 22;
+                boolean branch = x == 11 && z >= 3 && z <= 6;
+                boolean ring = x >= 7 && x <= 15 && z >= 7 && z <= 15 && (x == 7 || x == 15 || z == 7 || z == 15);
+
+                if (street || branch || ring) {
+                    world.setBlockState(at, Blocks.DIRT_PATH.getDefaultState(), 18);
+                    paths.add(cell(at.toImmutable()));
+                }
+            }
+
+            for (int read = 0; read < RoadShape.CORNER_AFTER_READS; read++) {
+                RoadGraphRefresh.publish(world, colony, paths);
+            }
+
+            RoadGraph graph = ColonySavedData.get(world.getServer()).roadGraphs().graph(colony.id()).orElseThrow();
+            Set<ColonyPos> columns = new HashSet<>();
+
+            graph.nodes().forEach(node -> columns.add(node.position()));
+            graph.edges().forEach(edge -> columns.addAll(edge.columns()));
+
+            ColonyPos entrance = cell(origin.add(7, 0, 7));
+
+            context.assertFalse(columns.contains(cell(origin.add(15, 0, 15))), "Regra 208: a quina de longe ficou no grafo");
+            context.assertFalse(columns.contains(cell(origin.add(11, 0, 15))), "Regra 208: o lado de baixo do anel ficou no grafo");
+            context.assertTrue(graph.nodes().stream().anyMatch(node -> node.position().equals(entrance)
+                    && node.roles().contains(RoadGraph.Role.ENTRANCE)), "Regra 184: a plantação ficou sem entrada");
+            context.assertTrue(columns.contains(cell(origin.add(1, 0, 2))) && columns.contains(cell(origin.add(22, 0, 2))), "Regra 208: a rua saiu junto");
+            context.assertTrue(graph.nodes().stream().filter(node -> node.roles().contains(RoadGraph.Role.ENTRANCE)).count() == 1,
+                    "Regra 208: a plantação ficou com mais de uma entrada: " + graph.nodes());
+            context.assertTrue(graph.nodes().stream().noneMatch(node -> node.roles().contains(RoadGraph.Role.ENDPOINT)
+                    && !node.roles().contains(RoadGraph.Role.HUB) && !node.roles().contains(RoadGraph.Role.ENTRANCE)
+                    && node.position().z() != origin.getZ() + 2), "Regra 206: sobrou ponta azul fora da rua: " + graph.nodes());
+
+            for (int pass = 0; pass < 4; pass++) {
+                PathTrim.pass(world, colony);
+            }
+
+            context.assertFalse(VillageRoad.isPathBlock(world.getBlockState(origin.add(15, 0, 15))), "Regra 208: o anel continuou caminho no chão");
         } finally {
             VillageColonyMod.BUILDINGS.remove(farm.id());
             fixture.cleanUp();

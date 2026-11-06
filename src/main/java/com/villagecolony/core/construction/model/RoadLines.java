@@ -60,12 +60,12 @@ public final class RoadLines {
      * @param planned as colunas que uma releitura anterior mandou calçar e ainda não são caminho
      * @param center o centro da vila: o nó central é a coluna do grafo mais perto dele
      * @param entrances o chão em frente às portas
-     * @param anchors colunas por onde a linha passa fixa, sem serem entrada: as quinas dos anéis (Regra 183)
+     * @param farmRings o chão colado nas plantações: o caminho nele sai se a rede continua inteira (Regra 208)
      * @param maxLinks quantas componentes separadas tentar ligar nesta passada; cada ligação é uma busca cara
      * @param turn a vez desta passada: a parte que não se ligou agora não segura as outras na próxima
      */
     public static Result build(Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> entrances,
-                               Set<ColonyPos> anchors, PathTerrain terrain, int maxLinks, int turn) {
+                               Set<ColonyPos> farmRings, PathTerrain terrain, int maxLinks, int turn) {
         Map<Long, Integer> physical = new HashMap<>();
 
         cells.forEach(at -> physical.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
@@ -87,17 +87,8 @@ public final class RoadLines {
             start.putIfAbsent(column, door.y());
         }
 
-        Set<Long> fixed = new HashSet<>(doors);
-
-        for (ColonyPos anchor : anchors) {
-            long column = ColonyRoads.column(anchor.x(), anchor.z());
-
-            fixed.add(column);
-            start.putIfAbsent(column, anchor.y());
-        }
-
         Map<Long, Integer> mask = RoadMask.closed(start, terrain);
-        Map<Long, Integer> columns = lines(mask, mask, fixed, terrain);
+        Map<Long, Integer> columns = lines(mask, mask, doors, terrain);
 
         // De novo sobre as próprias linhas: duas retas a até dois blocos viram uma, e os encontros colados, um nó.
         for (int pass = 1; pass < PASSES; pass++) {
@@ -106,7 +97,7 @@ public final class RoadLines {
 
             heights.putAll(band);
 
-            Map<Long, Integer> again = lines(band, heights, fixed, terrain);
+            Map<Long, Integer> again = lines(band, heights, doors, terrain);
 
             if (again.equals(columns)) {
                 break;
@@ -152,7 +143,14 @@ public final class RoadLines {
         }
 
         columns.keySet().retainAll(main);
-        RoadTips.prune(columns, center, fixed);
+
+        Set<Long> oldRing = new HashSet<>();
+
+        farmRings.forEach(at -> oldRing.add(ColonyRoads.column(at.x(), at.z())));
+        oldRing.retainAll(columns.keySet());
+
+        FarmRingPaths.retire(columns, oldRing, center, doors);
+        RoadTips.prune(columns, center, doors);
 
         // Só as linhas e a frente de toda porta: a rua é de um bloco (Regra 186).
         Map<Long, Integer> toLay = new HashMap<>();
@@ -162,15 +160,20 @@ public final class RoadLines {
         }
 
         return new Result(Optional.of(graphOf(columns, center, doors)), toPave(columns, toLay, physical), isolated,
-                surplus(physical, columns, toLay));
+                surplus(physical, columns, toLay, oldRing));
     }
 
-    /** O caminho físico a até {@value #SURPLUS_REACH} blocos da linha que não é linha nem frente de porta. */
-    private static List<ColonyPos> surplus(Map<Long, Integer> physical, Map<Long, Integer> columns, Map<Long, Integer> doors) {
+    /**
+     * O caminho físico que não é linha nem frente de porta, a até {@value #SURPLUS_REACH} blocos da linha (Regra 186) ou
+     * no anel antigo que saiu do grafo, a qualquer distância (Regra 208).
+     */
+    private static List<ColonyPos> surplus(Map<Long, Integer> physical, Map<Long, Integer> columns, Map<Long, Integer> doors,
+                                           Set<Long> oldRing) {
         List<ColonyPos> surplus = new ArrayList<>();
 
         physical.forEach((column, y) -> {
-            if (!columns.containsKey(column) && !doors.containsKey(column) && nearTheLine(columns, column)) {
+            if (!columns.containsKey(column) && !doors.containsKey(column)
+                    && (oldRing.contains(column) || nearTheLine(columns, column))) {
                 surplus.add(new ColonyPos(ColonyRoads.xOf(column), y, ColonyRoads.zOf(column)));
             }
         });
@@ -293,7 +296,7 @@ public final class RoadLines {
     }
 
     /** As partes ligadas: passo de lado, com degrau de no máximo um bloco. */
-    private static List<Set<Long>> components(Map<Long, Integer> columns) {
+    static List<Set<Long>> components(Map<Long, Integer> columns) {
         List<Set<Long>> parts = new ArrayList<>();
         Set<Long> seen = new HashSet<>();
 

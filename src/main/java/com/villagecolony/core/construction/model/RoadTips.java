@@ -12,8 +12,8 @@ import java.util.Set;
 
 /**
  * As pontas do grafo são os cantos da vila — Regra 206 (autor, 2026-11-05): fica só a ponta mais distante do centro em cada
- * quadrante, no máximo quatro, por onde a vila pode crescer. As outras perdem o trecho morto até o encontro, a entrada ou a
- * quina fixa mais perto. Entrada e centro não são pontas e nunca saem.
+ * quadrante, no máximo quatro, por onde a vila pode crescer. As outras perdem o trecho morto até o encontro ou a entrada mais
+ * perto. Entrada e centro não são pontas e nunca saem.
  */
 final class RoadTips {
 
@@ -74,7 +74,7 @@ final class RoadTips {
         }
     }
 
-    private static List<Long> neighbours(Map<Long, Integer> columns, long column) {
+    static List<Long> neighbours(Map<Long, Integer> columns, long column) {
         List<Long> result = new ArrayList<>();
         int y = java.util.Objects.requireNonNull(columns.get(column));
 
@@ -90,7 +90,7 @@ final class RoadTips {
         return result;
     }
 
-    private static long nearest(Map<Long, Integer> columns, ColonyPos center) {
+    static long nearest(Map<Long, Integer> columns, ColonyPos center) {
         return columns.keySet().stream()
                 .min(Comparator.comparingInt((Long column) -> distance(column, center))
                         .thenComparingInt(ColonyRoads::xOf).thenComparingInt(ColonyRoads::zOf))

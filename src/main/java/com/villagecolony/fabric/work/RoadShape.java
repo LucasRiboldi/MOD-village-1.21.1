@@ -25,8 +25,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * O desenho que a vila pede ao grafo — Regras 183 a 185 (autor, 2026-11-05): anel de caminho em volta do chafariz e das
- * plantações, a quina da plantação como entrada e as pontas mais distantes crescendo com os dias.
+ * O desenho que a vila pede ao grafo — Regras 183 a 185 e 208 (autor): anel de caminho em volta do chafariz, a quina da
+ * plantação como entrada, sem anel em volta dela, e as pontas mais distantes crescendo com os dias.
  *
  * <p>Tudo aqui só propõe colunas ao grafo ({@link RoadGraphRefresh}): quem calça é o construtor, andando até lá.
  */
@@ -55,13 +55,17 @@ final class RoadShape {
     private RoadShape() {
     }
 
+    static boolean isFarm(Building building) {
+        return building.blueprint().path().contains("farm");
+    }
+
     /** As caixas das plantações: da vila gerada e as obras prontas. */
     private static List<BlockBox> farms(ServerWorld world, Colony colony) {
         BlockPos hub = MinecraftTypeAdapter.toBlockPos(colony.center());
         List<BlockBox> boxes = new ArrayList<>(GeneratedVillages.piecesAt(world, hub.getX(), hub.getZ(), "_farm_"));
 
         for (Building building : VillageColonyMod.BUILDINGS.ofColony(colony.id())) {
-            if (building.finished() && building.blueprint().path().contains("farm")) {
+            if (building.finished() && isFarm(building)) {
                 BlockPos min = MinecraftTypeAdapter.toBlockPos(building.min());
                 BlockPos max = MinecraftTypeAdapter.toBlockPos(building.max());
 
@@ -72,44 +76,44 @@ final class RoadShape {
         return boxes;
     }
 
-    /** O chão em volta do chafariz e de cada plantação (Regra 183): um bloco fora da caixa. */
+    /** O chão em volta do chafariz (Regra 183). */
     static Set<ColonyPos> rings(ServerWorld world, Colony colony, WorldPathTerrain terrain) {
         BlockPos hub = MinecraftTypeAdapter.toBlockPos(colony.center());
-        List<BlockBox> boxes = farms(world, colony);
-
-        boxes.addAll(GeneratedVillages.piecesAt(world, hub.getX(), hub.getZ(), "/town_centers/"));
-
         Set<ColonyPos> ring = new HashSet<>();
 
-        for (BlockBox box : boxes) {
-            for (int x = box.getMinX() - 1; x <= box.getMaxX() + 1; x++) {
-                groundAt(world, terrain, x, box.getMinZ() - 1, ring);
-                groundAt(world, terrain, x, box.getMaxZ() + 1, ring);
-            }
-
-            for (int z = box.getMinZ(); z <= box.getMaxZ(); z++) {
-                groundAt(world, terrain, box.getMinX() - 1, z, ring);
-                groundAt(world, terrain, box.getMaxX() + 1, z, ring);
-            }
+        for (BlockBox box : GeneratedVillages.piecesAt(world, hub.getX(), hub.getZ(), "/town_centers/")) {
+            ring.addAll(ringOf(world, terrain, box));
         }
 
         return ring;
     }
 
-    /** As quatro quinas de cada anel: fixas no grafo, para ele ficar retângulo. */
-    static Set<ColonyPos> corners(ServerWorld world, Colony colony, WorldPathTerrain terrain) {
-        BlockPos hub = MinecraftTypeAdapter.toBlockPos(colony.center());
-        List<BlockBox> boxes = farms(world, colony);
+    /** O chão colado nas plantações: não é pedido como caminho, e o que já for caminho nele sai se puder (Regra 208). */
+    static Set<ColonyPos> farmRings(ServerWorld world, Colony colony, WorldPathTerrain terrain) {
+        Set<ColonyPos> ring = new HashSet<>();
 
-        boxes.addAll(GeneratedVillages.piecesAt(world, hub.getX(), hub.getZ(), "/town_centers/"));
-
-        Set<ColonyPos> corners = new HashSet<>();
-
-        for (BlockBox box : boxes) {
-            corners.addAll(cornersOf(world, terrain, box));
+        for (BlockBox box : farms(world, colony)) {
+            ring.addAll(ringOf(world, terrain, box));
         }
 
-        return corners;
+        return ring;
+    }
+
+    /** A volta da caixa, um bloco fora dela. */
+    static Set<ColonyPos> ringOf(ServerWorld world, WorldPathTerrain terrain, BlockBox box) {
+        Set<ColonyPos> ring = new HashSet<>();
+
+        for (int x = box.getMinX() - 1; x <= box.getMaxX() + 1; x++) {
+            groundAt(world, terrain, x, box.getMinZ() - 1, ring);
+            groundAt(world, terrain, x, box.getMaxZ() + 1, ring);
+        }
+
+        for (int z = box.getMinZ(); z <= box.getMaxZ(); z++) {
+            groundAt(world, terrain, box.getMinX() - 1, z, ring);
+            groundAt(world, terrain, box.getMaxX() + 1, z, ring);
+        }
+
+        return ring;
     }
 
     /** A quina de cada plantação mais perto do centro: a entrada dela (Regra 184). */
