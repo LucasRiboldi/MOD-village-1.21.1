@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.38%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.39%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,9 +19,9 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Estado atual: candidata 0.4.38** (não jogada). O estado vivo, a contagem de testes e o que espera
+**Estado atual: candidata 0.4.39** (não jogada). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
-[docs/RULES.md](docs/RULES.md) (1 a 213).
+[docs/RULES.md](docs/RULES.md) (1 a 215).
 
 Desde a 0.4.29, em resumo:
 
@@ -32,6 +32,7 @@ Desde a 0.4.29, em resumo:
 - **Mineiro e velas:** a casa do mineiro acompanha a boca em uso (Regra 211); nenhum aldeão põe tocha sozinho, e vela ou tocha
   soltas não recusam lote (Regra 212).
 - **Obra MAE:** a obra pedida é a próxima do construtor e sempre termina (Regra 213).
+- **Caminho:** em vila nova só o grafo traça, toda entrada aparece na hora (Regra 214), e o pedreiro ocioso ajuda a calçar (Regra 215).
 - **Pastor e lenhador:** o pastor leva os animais amarrados aos pastos e só prende em poste sem curral livre (Regra 196);
   todo aldeão corta folha que trava o caminho (Regra 197); o lenhador prefere o interior da vila e não replanta a menos de
   3 blocos de estrutura (Regras 198 e 199).
@@ -433,6 +434,8 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 211 | **Casa do mineiro na boca em uso** (autor 11-06): a casa do mineiro fica ao lado da boca da superfície da mina de hoje, até uma por mineiro; a mina mudou de boca, e a casa da boca antiga não serve. A cama vai para o mineiro pela Regra 74. Emenda a Regra 175. | 11-06 |
 | 212 | **Sem tocha sozinha, vela não trava obra** (autor 11-06): nenhum aldeão põe tocha da colônia pelo chão da vila; a que já está lá fica. Vela e tocha soltas não recusam o lote e saem quando a obra abre, menos a tocha das almas (Regra 108) e a de dentro da caixa de uma estrutura. Emenda a Regra 127. | 11-06 |
 | 213 | **A obra MAE é a próxima do construtor** (autor 11-06, ADR-047): a obra pedida entra na fila do construtor, antes do reparo e da busca de lote, e é levantada por ele, bloco a bloco, com material dos baús. O mundo vivo não a para. Ela não deixa blocos soltos: não é largada por distância nem por espera, volta para a fila se sumir sem terminar e procura outro lote perto se o dela não abrir. Só o jogador a encerra, com `/vc mae parar` ou a tocha das almas (Regra 108). Regras 187, 203 e 205 sem efeito para a obra pedida. | 11-06 |
+| 214 | **O grafo é quem cuida do caminho em vila nova** (autor 11-06): toda entrada aparece no grafo na hora, branca, mesmo antes de ter caminho; o nó central é sempre da rede. O caminho traçado não é esquecido porque uma releitura deixou de pedi-lo: sai calçado, recusado ou depois de 60 releituras sem ser pedido. O traçado antigo pela porta (Regra 123) só vale em vila antiga. Mina sem portão entra pela borda da folga da escada, do lado do centro. | 11-06 |
+| 215 | **O pedreiro ocioso ajuda no caminho** (autor 11-06): sem tarefa do ofício, ele calça a rede no rodízio com o construtor. É a função secundária dele e exceção à regra temporária de uma profissão não fazer atividade de outra. | 11-06 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).

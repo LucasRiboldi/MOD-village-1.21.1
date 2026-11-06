@@ -6,6 +6,7 @@ import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.PathStep;
+import com.villagecolony.core.construction.model.PlannedPaths;
 import com.villagecolony.core.construction.model.RoadGraph;
 import com.villagecolony.core.construction.model.RoadLines;
 import com.villagecolony.core.type.ColonyPos;
@@ -91,7 +92,7 @@ public final class RoadGraphRefresh {
     private static final Map<UUID, Long> NEXT = new HashMap<>();
     private static final Map<UUID, Scan> SCANS = new HashMap<>();
     private static final Map<UUID, Set<Long>> REFUSED = new HashMap<>();
-    private static final Map<UUID, Set<ColonyPos>> PLANNED = new HashMap<>();
+    private static final Map<UUID, PlannedPaths> PLANNED = new HashMap<>();
     private static final Map<UUID, Integer> TURNS = new HashMap<>();
 
     private RoadGraphRefresh() {
@@ -237,7 +238,7 @@ public final class RoadGraphRefresh {
 
         WorldPathTerrain terrain = new WorldPathTerrain(world, id);
         int turn = TURNS.merge(id, 1, Integer::sum);
-        Set<ColonyPos> planned = new HashSet<>(PLANNED.getOrDefault(id, Set.of()));
+        Set<ColonyPos> planned = PLANNED.computeIfAbsent(id, ignored -> new PlannedPaths()).cells();
         Set<ColonyPos> fronts = entrances(world, colony, terrain);
 
         planned.addAll(RoadShape.rings(world, colony, terrain));
@@ -256,7 +257,7 @@ public final class RoadGraphRefresh {
         });
         PathTrim.offer(id, result.surplus());
 
-        return offerRepair(world, id, result.toPave()) || result.isolated() > 0;
+        return offerRepair(world, id, result.toPave(), turn) || result.isolated() > 0;
     }
 
     private static void update(Colony colony, com.villagecolony.data.save.RoadGraphStore store, RoadGraph graph,
@@ -275,20 +276,21 @@ public final class RoadGraphRefresh {
         }
     }
 
-    private static boolean offerRepair(ServerWorld world, UUID id, List<PathStep> toPave) {
+    private static boolean offerRepair(ServerWorld world, UUID id, List<PathStep> toPave, int read) {
         Set<Long> refused = REFUSED.getOrDefault(id, Set.of());
         List<PathStep> steps = new ArrayList<>();
-        Set<ColonyPos> planned = new HashSet<>();
+        Set<ColonyPos> wanted = new HashSet<>();
 
         for (PathStep step : toPave) {
             if (!refused.contains(ColonyRoads.column(step.x(), step.z())) && !isPaved(world, step)) {
                 steps.add(step);
-                planned.add(new ColonyPos(step.x(), step.floorY(), step.z()));
+                wanted.add(new ColonyPos(step.x(), step.floorY(), step.z()));
             }
         }
 
-        // A ligação traçada continua valendo até ser calçada: a próxima releitura liga outra parte.
-        PLANNED.put(id, planned);
+        // A ligação traçada continua valendo até ser calçada: a próxima releitura liga outra parte (Regra 214).
+        PLANNED.computeIfAbsent(id, ignored -> new PlannedPaths()).read(read, wanted, at -> refused.contains(ColonyRoads.column(at.x(), at.z()))
+                || isPaved(world, new PathStep(at.x(), at.y(), at.z(), com.villagecolony.core.type.Side.NORTH, 0, 0)));
 
         if (steps.isEmpty()) {
             return false;
@@ -335,7 +337,7 @@ public final class RoadGraphRefresh {
             }
         }
 
-        fronts.addAll(MineGates.fronts(world, colony.id(), terrain));
+        fronts.addAll(MineGates.fronts(world, colony, terrain));
 
         // Todo portão de cerca é entrada (Regra 178), de obra ou da vila gerada.
         for (ShepherdPens.Pen pen : ShepherdPens.pensOf(world, colony)) {

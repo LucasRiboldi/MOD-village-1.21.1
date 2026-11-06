@@ -121,6 +121,7 @@
       "com.villagecolony.fabric.work.LeafPassageGameTest",
       "com.villagecolony.fabric.work.RoadRulesGameTest",
       "com.villagecolony.fabric.work.DoorFrontsGameTest",
+      "com.villagecolony.fabric.work.GraphOnlyPathsGameTest",
       "com.villagecolony.fabric.work.StructureEntrancesGameTest",
       "com.villagecolony.fabric.integration.LotLightDecorGameTest",
       "com.villagecolony.fabric.work.VillagerRulesGameTest",

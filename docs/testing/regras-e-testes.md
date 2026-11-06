@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 109
+- **Cita a regra:** 111
 - **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 4
 - **Fora de vigor:** 5
@@ -134,7 +134,7 @@ classe prova menos ainda.
 | 122 | O curral é do pastor (autor 10-27, jogo da 0.3.93: 217 entradas em curral na planície e o… | cita | PenFloorsGameTest |
 | 123 | A rede de caminhos da vila (autor 10-27, estudo docs/research/2026-10-27-rede-de-caminhos… | cita | PathNetworkGameTest, VillagePathPlannerTest |
 | 124 | Construção nova nasce a no mínimo 3 blocos de qualquer construção (autor 10-27, D1): o lo… | cita | PathNetworkGameTest |
-| 125 | Quem assenta o caminho (autor 10-27, D6): o pedreiro, o carpinteiro e o fundidor sem tare… | classe | MaeRoadGateGameTest, PathNetworkGameTest, PathPavingTest |
+| 125 | Quem assenta o caminho (autor 10-27, D6): o pedreiro, o carpinteiro e o fundidor sem tare… | classe | GraphOnlyPathsGameTest, MaeRoadGateGameTest, PathNetworkGameTest |
 | 126 | Peça colorida sai branca (autor 10-27, item 5; jogo da 0.3.93: 64 "cama sem lã" e lã pret… | classe | BigHouseFoundationGameTest, BigHouseModBlueprintGameTest, BlueprintReaderGameTest |
 | 127 | Ajudas de quem está sem tarefa do ofício, cada uma com um ofício fixo (autor 10-27, item… | cita | ColonyTorchesGameTest |
 | 128 | Nenhuma profissão espera mais de 5 minutos por nada (autor 10-27, emenda 11-02): 300 s se… | cita | IdleWatchGameTest |
@@ -184,7 +184,7 @@ classe prova menos ainda.
 | 172 | Água aberta (autor 11-04): com mais de 5 blocos de água à frente, todo aldeão anda cerca… | cita | VillagerRulesGameTest |
 | 173 | Zona da obra limpa (autor 11-04): árvore, tronco, folha e flor saem em todas as alturas,… | cita | TreeClearingGameTest |
 | 174 | Ponte (autor 11-04): sem caminho a seco na zona da vila, o construtor atravessa a água, a… | cita | BridgeDeckGameTest |
-| 175 | Casa do mineiro (autor 11-04): a primeira casa junto à boca da mina é a casa pequena do m… | classe | DoorFrontsGameTest, MineHomePlansTest, PathNetworkGameTest |
+| 175 | Casa do mineiro (autor 11-04): a primeira casa junto à boca da mina é a casa pequena do m… | classe | DoorFrontsGameTest, GraphOnlyPathsGameTest, MineHomePlansTest |
 | 176 | Sinalizador dos caminhos (autor 11-04): /vc mae mostrar ligar\ | cita | RoadMapSyncGameTest |
 | 177 | Grafo como mapa de trilhos (autor 11-05): uma linha contínua por corredor, no bloco centr… | cita | RoadLinesTest |
 | 178 | Acesso livre (autor 11-05): o primeiro bloco fora de toda porta e portão é caminho; portã… | cita | RoadLinesTest, TreeClearingGameTest |
@@ -223,3 +223,5 @@ classe prova menos ainda.
 | 211 | Casa do mineiro na boca em uso (autor 11-06): a casa do mineiro fica ao lado da boca da s… | cita | StructureEntrancesGameTest |
 | 212 | Sem tocha sozinha, vela não trava obra (autor 11-06): nenhum aldeão põe tocha da colônia… | cita | ArchitectureRulesTest, LotLightDecorGameTest |
 | 213 | A obra MAE é a próxima do construtor (autor 11-06, ADR-047): a obra pedida entra na fila… | cita | MaeSitesGameTest |
+| 214 | O grafo é quem cuida do caminho em vila nova (autor 11-06): toda entrada aparece no grafo… | cita | GraphOnlyPathsGameTest, PlannedPathsTest, RoadLinesTest |
+| 215 | O pedreiro ocioso ajuda no caminho (autor 11-06): sem tarefa do ofício, ele calça a rede… | cita | GraphOnlyPathsGameTest |

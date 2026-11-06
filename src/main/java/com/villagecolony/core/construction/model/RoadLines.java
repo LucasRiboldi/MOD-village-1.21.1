@@ -31,8 +31,6 @@ public final class RoadLines {
     /** O maior ramal reto de uma porta até a linha. */
     static final int MAX_STUB = 16;
 
-    private static final int HUB_SNAP = 3;
-
     /** Até onde da linha o caminho conta como a sobra da mesma rua. */
     private static final int SURPLUS_REACH = 3;
 
@@ -159,7 +157,7 @@ public final class RoadLines {
             toLay.putIfAbsent(ColonyRoads.column(door.x(), door.z()), door.y());
         }
 
-        return new Result(Optional.of(graphOf(columns, center, doors)), toPave(columns, toLay, physical), isolated,
+        return new Result(Optional.of(RoadLinesGraph.of(columns, toLay, center, doors)), toPave(columns, toLay, physical), isolated,
                 surplus(physical, columns, toLay, oldRing));
     }
 
@@ -217,38 +215,6 @@ public final class RoadLines {
         return columns;
     }
 
-    private static RoadGraph graphOf(Map<Long, Integer> columns, ColonyPos center, Set<Long> doors) {
-        Set<ColonyPos> positions = new HashSet<>();
-        Set<ColonyPos> entrances = new HashSet<>();
-
-        columns.forEach((column, y) -> {
-            ColonyPos at = new ColonyPos(ColonyRoads.xOf(column), y, ColonyRoads.zOf(column));
-
-            positions.add(at);
-
-            if (doors.contains(column)) {
-                entrances.add(at);
-            }
-        });
-
-        ColonyPos hub = positions.stream()
-                .min(Comparator.comparingInt((ColonyPos at) -> Math.abs(at.x() - center.x()) + Math.abs(at.z() - center.z()))
-                        .thenComparingInt(ColonyPos::x).thenComparingInt(ColonyPos::z))
-                .orElse(center);
-
-        return RoadGraph.from(positions, junctionNear(columns, hub, positions), entrances);
-    }
-
-    /** O encontro de linhas a até {@value #HUB_SNAP} blocos do centro vira o nó central: dois nós não ficam colados. */
-    private static ColonyPos junctionNear(Map<Long, Integer> columns, ColonyPos hub, Set<ColonyPos> positions) {
-        return positions.stream()
-                .filter(at -> Math.abs(at.x() - hub.x()) + Math.abs(at.z() - hub.z()) <= HUB_SNAP
-                        && cardinalDegree(columns, at.x(), at.z()) >= 3)
-                .min(Comparator.comparingInt((ColonyPos at) -> Math.abs(at.x() - hub.x()) + Math.abs(at.z() - hub.z()))
-                        .thenComparingInt(ColonyPos::x).thenComparingInt(ColonyPos::z))
-                .orElse(hub);
-    }
-
     /** Tira a quina que dobra a linha num quadrado de quatro colunas: dois encontros colados viram um trecho só. */
     private static void withoutCorners(Map<Long, Integer> columns, Set<Long> doors) {
         boolean changed = true;
@@ -285,7 +251,7 @@ public final class RoadLines {
         return false;
     }
 
-    private static int cardinalDegree(Map<Long, Integer> columns, int x, int z) {
+    static int cardinalDegree(Map<Long, Integer> columns, int x, int z) {
         int degree = 0;
 
         for (Side side : Side.values()) {

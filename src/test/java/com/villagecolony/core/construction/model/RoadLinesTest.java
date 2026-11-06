@@ -275,4 +275,30 @@ class RoadLinesTest {
         assertFalse(result.surplus().contains(door), "a frente da porta foi tratada como sobra");
         assertFalse(result.surplus().contains(at(5, 0)), "a própria linha foi tratada como sobra");
     }
+
+    @Test
+    @DisplayName("toda entrada é nó do grafo, mesmo longe demais para ligar agora")
+    void anEntranceFarFromTheNetworkIsStillInTheGraph() {
+        ColonyPos far = at(500, 500);
+        RoadLines.Result result = build(corridor(0, 20, 0, 0), at(10, 0), Set.of(far), Set.of());
+        RoadGraph graph = result.graph().orElseThrow();
+
+        assertTrue(graph.nodes().stream().anyMatch(node -> node.position().equals(far) && node.roles().contains(RoadGraph.Role.ENTRANCE)),
+                "Regra 214: a entrada sem ligação sumiu do grafo: " + graph.nodes());
+        assertEquals(1, graph.nodes().stream().filter(node -> node.roles().contains(RoadGraph.Role.HUB)).count(), "um nó central só");
+        assertTrue(graph.nodes().stream().noneMatch(node -> node.position().equals(far) && node.roles().contains(RoadGraph.Role.HUB)),
+                "o centro saiu da rede e foi para a entrada solta");
+    }
+
+    @Test
+    @DisplayName("o centro é da rede, mesmo com uma entrada solta mais perto dele")
+    void theHubStaysOnTheNetworkWhenAnEntranceIsCloser() {
+        ColonyPos center = at(100, 100);
+        ColonyPos door = at(100, 99);
+        RoadLines.Result result = build(corridor(0, 20, 0, 0), center, Set.of(door), Set.of());
+        RoadGraph graph = result.graph().orElseThrow();
+
+        assertTrue(graph.nodes().stream().anyMatch(node -> node.position().equals(door) && node.roles().contains(RoadGraph.Role.ENTRANCE)
+                && !node.roles().contains(RoadGraph.Role.HUB)), "Regra 214: a entrada solta virou centro: " + graph.nodes());
+    }
 }

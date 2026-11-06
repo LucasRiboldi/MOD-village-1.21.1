@@ -49,9 +49,9 @@ public final class PathPaving {
         ServerMemory.register(PathPaving.class, PathPaving::clearAll);
     }
 
-    /** Construção de rua não desvia os ofícios produtivos. */
+    /** O construtor, e o pedreiro quando está ocioso: é a função secundária dele (Regra 215). */
     static final List<ProfessionType> PAVERS =
-            List.of(ProfessionType.BUILDER);
+            List.of(ProfessionType.BUILDER, ProfessionType.MASON);
 
     /** Passos que um assenta antes de passar a vez. */
     static final int STEPS_PER_TURN = 8;
@@ -338,7 +338,7 @@ public final class PathPaving {
                 && VillageColonyMod.TASKS.assignedTo(id).isEmpty()
                 && WorkHours.isWorkTime(world, villager)
                 && !StrandedWorkers.isStranded(id) && !PenEscape.isEscaping(id)
-                && !BuilderPaving.isPaving(id) && !GroundPickup.isHelping(id);
+                && !BuilderPaving.isPaving(id) && !GroundPickup.isHelping(id) && !IdleHelps.isHelping(id) && !SnowShovel.isShoveling(id);
     }
 
     private static void endTurn(UUID colonyId) {
