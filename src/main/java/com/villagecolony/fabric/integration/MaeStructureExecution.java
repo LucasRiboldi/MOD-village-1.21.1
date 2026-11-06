@@ -182,7 +182,8 @@ final class MaeStructureExecution {
             BlockState before = world.getBlockState(entry.getKey());
             BlockState after = entry.getValue();
             present &= before.equals(after);
-            if (!before.isAir() && !before.equals(after)) throw new IllegalStateException("occupied_structure_target");
+            // A peça escreve por cima da planta baixa: o preparo só a tira de coluna que corta ou aterra (Regra 204).
+            if (!before.isAir() && !MaeProtection.vegetation(before) && !before.equals(after)) throw new IllegalStateException("occupied_structure_target");
             NbtCompound part = new NbtCompound();
             part.putLong("position", entry.getKey().asLong());
             part.put("before", NbtHelper.fromBlockState(before));

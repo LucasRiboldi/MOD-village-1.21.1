@@ -373,6 +373,11 @@ não é executado: sua recusa é inferida do mesmo caminho de envelope
 desconhecido. O cenário de conclusão usa um job de terreno sintético; a
 cadeia terreno real → obra escrita (`built`) é provada em `MaeStructureWriteGameTest`, sem conclusão.
 
+## Emenda de 2026-11-05 (autor) — planta baixa
+
+A peça do `structure_v3` aceita ar, o próprio bloco ou planta baixa (`MaeProtection.vegetation`) no lugar, e escreve por cima
+(Regra 204). O preparo só tira a planta de coluna que corta ou aterra, e o lote plano parava em `occupied_structure_target`.
+
 ## Emenda de 2026-11-05 (autor) — ligação e retomada em vila nova
 
 Em vila nova, `MaeSites` não usa `road_v2`: a obra pronta entrega a região (ADR-045, emenda do item 10) e a porta entra no
