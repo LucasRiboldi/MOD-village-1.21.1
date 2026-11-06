@@ -253,6 +253,17 @@ public final class LotClearance {
      * da mesma decisão do autor: recusar um lote de planície por causa
      * de um pé de margarida seria recusar a planície inteira.
      */
+    public static void clearLightDecor(ServerWorld world, ColonyPos origin, ColonyPos size) {
+        BlockPos min = com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(origin);
+        BlockPos max = min.add(size.x() - 1, size.y() - 1, size.z() - 1);
+
+        for (BlockPos at : BlockPos.iterate(min, max)) {
+            if (world.isChunkLoaded(at) && LotGround.isLightDecor(world.getBlockState(at))) {
+                world.setBlockState(at, Blocks.AIR.getDefaultState());
+            }
+        }
+    }
+
     static boolean isClearAbove(
             ServerWorld world, int x, int z, int floor, int height) {
 
@@ -276,7 +287,7 @@ public final class LotClearance {
             // O teto de barreira é inserido pelo GameTest fora da arena e
             // não representa um bloco do mundo. Ele não deve encurtar a
             // janela de 25 blocos que a produção precisa validar.
-            if (!LotGround.isNothing(state) && !state.isOf(Blocks.BARRIER)
+            if (!LotGround.isNothing(state) && !LotGround.isLightDecor(state) && !state.isOf(Blocks.BARRIER)
                     && !(trees && LotGrowth.isClearableOnSite(world, at, state))) {
                 // <b>Qual bloco barrou</b> — P1.6, 2026-09-19. A Regra 22
                 // é 70% das recusas em duas sessões seguidas e não dizia
