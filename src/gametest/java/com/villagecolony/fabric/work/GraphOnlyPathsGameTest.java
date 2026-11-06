@@ -232,4 +232,41 @@ public class GraphOnlyPathsGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /** Quem pergunta pela rede ouve o grafo: a entrada solta e o caminho fora da linha não são rede (Regra 216). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "graph_only_network", tickLimit = 20)
+    public void theNetworkIsTheGraphLines(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 132, 1));
+
+        platform(world, origin);
+
+        ColonyFixture fixture = ColonyFixture.colonyAtWorld(origin.add(20, 1, 2));
+        Colony colony = fixture.colony();
+
+        try {
+            Set<ColonyPos> paths = new java.util.HashSet<>();
+
+            for (int x = 2; x <= 38; x++) {
+                BlockPos at = origin.add(x, 0, 2);
+
+                world.setBlockState(at, Blocks.DIRT_PATH.getDefaultState(), 18);
+                paths.add(cell(at));
+                com.villagecolony.fabric.integration.RoadIndex.remember(colony.id(), at);
+            }
+
+            RoadGraphRefresh.publish(world, colony, paths);
+
+            var network = com.villagecolony.fabric.integration.RoadNetwork.of(colony.id()).orElseThrow();
+            long line = com.villagecolony.core.construction.model.ColonyRoads.column(origin.getX() + 20, origin.getZ() + 2);
+
+            context.assertTrue(network.columns().contains(line), "Regra 216: a linha do grafo não virou rede");
+        } finally {
+            com.villagecolony.fabric.integration.RoadNetwork.publish(colony.id(), colony.center(), List.of());
+            fixture.cleanUp();
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
 }

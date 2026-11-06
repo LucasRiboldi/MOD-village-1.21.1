@@ -8,6 +8,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.RoadNetwork;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.registry.tag.BlockTags;
@@ -344,7 +345,7 @@ public final class VillageGrove {
             return false;
         }
 
-        OptionalInt road = RoadIndex.roadsOf(colony.id())
+        OptionalInt road = RoadNetwork.of(colony.id())
                 .map(roads -> roads.blocksToTheNearestRoad(at))
                 .orElseGet(OptionalInt::empty);
 

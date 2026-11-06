@@ -14,6 +14,7 @@ import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.LotGround;
 import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.RoadNetwork;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.AbstractFurnaceBlockEntity;
@@ -124,7 +125,7 @@ public final class BenchUpkeep {
     /** Tapa um buraco de rua perto da bancada do pedreiro: a coluna mais baixa que as ruas em volta. */
     static Optional<BlockPos> fillARoadHole(ServerWorld world, Colony colony) {
         List<BlockPos> benches = BenchPresence.of(world, colony, ProfessionType.MASON);
-        List<Long> roads = RoadIndex.roadsOf(colony.id()).map(ColonyRoads::columns).orElse(List.of());
+        List<Long> roads = RoadNetwork.of(colony.id()).map(ColonyRoads::columns).orElse(List.of());
 
         if (benches.isEmpty() || roads.isEmpty()) {
             return Optional.empty();

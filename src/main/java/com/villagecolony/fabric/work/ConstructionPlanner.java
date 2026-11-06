@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.RoadNetwork;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
@@ -279,7 +280,7 @@ public final class ConstructionPlanner {
             // centro, de propósito, e medir do centro largava a obra que a
             // própria estrada acabara de alcançar. Sem índice de ruas a
             // pergunta cai no centro, que é o comportamento de antes.
-            OptionalInt toTheRoad = RoadIndex.roadsOf(colony.id())
+            OptionalInt toTheRoad = RoadNetwork.of(colony.id())
                     .map(roads -> roads.blocksToTheNearestRoad(open.get().origin()))
                     .orElseGet(OptionalInt::empty);
 

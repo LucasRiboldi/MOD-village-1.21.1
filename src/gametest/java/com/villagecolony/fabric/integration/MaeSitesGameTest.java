@@ -306,6 +306,27 @@ public final class MaeSitesGameTest implements FabricGameTest {
         });
     }
 
+    /** A árvore natural no lote não recusa a obra: sai antes, e a obra entra na fila depois (Regra 200). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_clear", tickLimit = 40)
+    public void aTreeOnTheLotIsClearedFirst(TestContext context) {
+        var arena = arenaWithBuilder(context);
+
+        arena.guarded(() -> {
+            BlockPos log = arena.origin.add(3, 1, 3);
+
+            arena.fixture.set(log, Blocks.OAK_LOG.getDefaultState());
+            arena.fixture.set(log.up(), Blocks.OAK_LOG.getDefaultState());
+            arena.fixture.set(log.up(2), Blocks.OAK_LEAVES.getDefaultState());
+
+            var status = MaeSites.start(context.getWorld(), arena.fixture.colony.colony().id(), HOUSE, arena.origin, 0, null);
+
+            context.assertTrue(status.phase() == MaeSites.Phase.CLEARING, "Regra 200: a árvore não foi para a limpeza: " + status);
+            context.assertTrue(context.getWorld().getBlockState(log).isAir(), "Regra 200: a árvore ficou no lote");
+            MaeClearing.takeDue(Long.MAX_VALUE);
+            end(context, arena);
+        });
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_refuse", tickLimit = 40)
     public void requestsAreRefusedWithTheirReason(TestContext context) {
         var arena = new Arena(context, HOUSE, false);

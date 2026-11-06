@@ -249,11 +249,20 @@ public final class RoadGraphRefresh {
 
         result.graph().ifPresent(graph -> {
             update(colony, store, graph, result);
+            publishNetwork(colony, graph);
             RoadShape.growTips(world, colony, graph, terrain);
         });
         PathTrim.offer(id, result.surplus());
 
         return offerRepair(world, id, result.toPave(), turn) || result.isolated() > 0;
+    }
+
+    /** As linhas do grafo viram a rede que os outros sistemas consultam (Regra 216); a entrada solta ainda não é rede. */
+    private static void publishNetwork(Colony colony, RoadGraph graph) {
+        Set<Long> lines = new java.util.TreeSet<>();
+
+        graph.edges().forEach(edge -> edge.columns().forEach(at -> lines.add(ColonyRoads.column(at.x(), at.z()))));
+        RoadNetwork.publish(colony.id(), colony.center(), List.copyOf(lines));
     }
 
     private static void update(Colony colony, com.villagecolony.data.save.RoadGraphStore store, RoadGraph graph,

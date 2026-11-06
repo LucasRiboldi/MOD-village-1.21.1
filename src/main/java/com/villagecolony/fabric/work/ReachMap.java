@@ -9,6 +9,7 @@ import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.RoadNetwork;
 import com.villagecolony.fabric.integration.StreetSurface;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.BlockState;
@@ -321,7 +322,7 @@ public final class ReachMap {
 
     /** M2: prefere rua comprovada no mundo, depois chão próximo ao nível do centro; superfície é fallback. */
     static Optional<BlockPos> startOf(ServerWorld world, Colony colony) {
-        Set<Long> roads = RoadIndex.roadsOf(colony.id())
+        Set<Long> roads = RoadNetwork.of(colony.id())
                 .map(index -> Set.copyOf(index.columns())).orElse(Set.of());
         Optional<BlockPos> ground = nearbyGround(world, colony.center(), roads, true);
         if (ground.isEmpty()) {

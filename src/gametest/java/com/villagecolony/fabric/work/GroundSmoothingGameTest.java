@@ -149,7 +149,7 @@ public class GroundSmoothingGameTest implements FabricGameTest {
      * volta da obra aberta.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_smoothing_builder", tickLimit = 20)
-    public void theIdleBuilderLevelsTheGroundAroundTheOpenBuild(TestContext context) {
+    public void theIdleMasonLevelsTheGroundAroundTheOpenBuild(TestContext context) {
         ServerWorld world = context.getWorld();
 
         for (int x = 0; x <= 14; x++) {
@@ -194,7 +194,7 @@ public class GroundSmoothingGameTest implements FabricGameTest {
             int floorY = context.getAbsolutePos(new BlockPos(0, FLOOR, 0)).getY();
 
             context.assertTrue(top(context, 4, 4) == floorY,
-                    "o construtor parado não nivelou o lote: o calombo ficou com topo em " + top(context, 4, 4));
+                    "o pedreiro parado não nivelou o lote: o calombo ficou com topo em " + top(context, 4, 4));
         } finally {
             com.villagecolony.VillageColonyMod.CONSTRUCTIONS.forget(project.id(),
                     com.villagecolony.core.construction.service.RemovalAudit.playerCancellation());
@@ -211,7 +211,7 @@ public class GroundSmoothingGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_smoothing_no_build", tickLimit = 20)
-    public void theBuilderRepairsVillageGroundWithoutAnOpenBuild(TestContext context) {
+    public void theMasonRepairsVillageGroundWithoutAnOpenBuild(TestContext context) {
         for (int x = 0; x < 24; x++) {
             for (int z = 0; z < 24; z++) {
                 context.setBlockState(new BlockPos(x, 1, z), Blocks.DIRT);
@@ -234,7 +234,7 @@ public class GroundSmoothingGameTest implements FabricGameTest {
         try {
             int done = VillageHelpers.helps(context.getWorld(), colony,
                     java.util.Optional.of(com.villagecolony.core.worker.model.ProfessionType.MASON), builder);
-            context.assertTrue(done > 0, "sem obra aberta, o construtor ignorou o terreno danificado; chunk final carregado="
+            context.assertTrue(done > 0, "sem obra aberta, o pedreiro ignorou o terreno danificado; chunk final carregado="
                     + context.getWorld().isChunkLoaded((origin.getX() + 23) >> 4, (origin.getZ() + 23) >> 4));
             context.assertTrue(top(context, 4, 4) == origin.getY(), "o construtor deixou o calombo");
         } finally {
