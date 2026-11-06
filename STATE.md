@@ -1,5 +1,8 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.34:** jogo da 0.4.32: a obra MAE limpou o lote e parou em `occupied_structure_target`, e a região falha congelou
+> o grafo. Agora a peça escreve por cima de planta baixa (Regra 204) e a obra falha devolve a região (Regra 205). Não jogada.
+
 > **Candidata 0.4.33:** o tanque da obra MAE nasce fechado (Regra 203): água e vizinhas numa escrita só. Provado no teste com a obra
 > atrasada de propósito, que antes falhava igual ao jogo. Não jogada.
 

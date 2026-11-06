@@ -12,6 +12,14 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.34] — candidata, 2026-11-05
+
+### Corrigido
+
+- MAE: grama e flor em lote plano paravam a obra em `occupied_structure_target`; a peça agora escreve por cima (Regra 204).
+- MAE: a obra falha segurava a região e congelava o grafo e o índice de ruas; sem escrita por confirmar, ela volta para a vila
+  (Regra 205).
+
 ## [0.4.33] — candidata, 2026-11-05
 
 ### Corrigido
