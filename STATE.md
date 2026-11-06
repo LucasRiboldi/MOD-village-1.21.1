@@ -1,5 +1,9 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.38:** a obra MAE entra na fila do construtor (Regra 213, ADR-047): o aldeão a levanta, o mundo vivo não a para, e ela
+> só acaba pronta ou cancelada pelo jogador. A parada da 0.4.35 foi reproduzida em GameTest: grama coberta vira terra e muda a impressão da
+> seção. Sem obra pedida em jogo ainda.
+
 > **Candidata 0.4.37:** jogo da 0.4.36 (Spark CnNQltY9kb, sem nota do autor no log). Toda estrutura e o portão da mina têm entrada de
 > porta no grafo, sem porta no mundo (Regra 210). Casa do mineiro na boca em uso (Regra 211). As "velas" do chão eram a tocha da colônia do
 > carpinteiro: 13 no chão e 11 em parede no save, e nenhuma vela de verdade na superfície. Ninguém as põe mais, e vela e tocha não recusam

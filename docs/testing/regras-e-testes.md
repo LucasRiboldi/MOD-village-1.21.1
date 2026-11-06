@@ -4,9 +4,9 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 110
+- **Cita a regra:** 109
 - **Só usa a classe indicada:** 94
-- **Sem nenhum teste:** 2
+- **Sem nenhum teste:** 4
 - **Fora de vigor:** 5
 
 | # | regra | grau | testes |
@@ -117,7 +117,7 @@ classe prova menos ainda.
 | 105 | Duas colônias da mesma vila viram uma, e a identidade é a vila gerada, não o centro | classe | ColonyIdentityTest, ColonyMergeTriggerGameTest |
 | 106 | A vila é uma caixa medida pela vila gerada, e não um raio | classe | BedChoiceGameTest, BuilderPavingGameTest, CarpenterWoodGateGameTest |
 | 107 | Marcas no mundo: contorno de chamas no lote, área da vila, dono de cada baú, nome do alde… | classe | BuildSiteGameTest, ChestMarkerGameTest, CraftingLookupGameTest |
-| 108 | A Tocha das Almas cancela a obra: uma tocha das almas (também a de parede) posta pelo jog… | cita | LotLightDecorGameTest |
+| 108 | A Tocha das Almas cancela a obra: uma tocha das almas (também a de parede) posta pelo jog… | cita | LotLightDecorGameTest, MaeSitesGameTest |
 | 109 | A casa fundadora BigHouseMOD: toda vila adotada a recebe uma única vez — cópia editada da… | classe | BedChoiceGameTest, BigHouseFoundationGameTest, ColonyDetectionGameTest |
 | 110 | Nada que a colônia corta some (R-059 do estudo v2, autor 10-22): o que a terraplanagem do… | cita | CuttingsGameTest, LotTerraformGameTest |
 | 111 | Suprimento excepcional só pela lista declarada (R-080 do estudo v2, autor 10-22): o que s… | cita | SupplyExceptionTest, VillageFarmAnimalsGameTest |
@@ -196,7 +196,7 @@ classe prova menos ainda.
 | 184 | Quina é entrada (autor 11-05): da terceira releitura em diante, a quina da plantação mais… | cita | RoadRulesGameTest |
 | 185 | A ponta cresce (autor 11-05): por dia, as 2 pontas mais distantes do centro, dentro de 75… | cita | RoadRulesGameTest |
 | 186 | Rua de um bloco (autor 11-05): o caminho a até 3 blocos da linha que não é linha nem fren… | cita | RoadLinesTest, RoadRulesGameTest |
-| 187 | A região MAE tem fim (autor 11-05): em vila nova, obra pronta entrega a região à vila e a… | classe | MaeSitesGameTest, MaeSitesRoadGameTest, MaeStructureSiteGameTest |
+| 187 | A região MAE tem fim (autor 11-05): em vila nova, obra pronta entrega a região à vila e a… | classe | MaeSitesGameTest, MaeStructureSiteGameTest |
 | 188 | Pedido só do que falta (jogo 11-05): o pedido de peça de obra não abre quando os baús cob… | classe | CraftFamilyGameTest, CraftingGameTest, FurnaceFeedGameTest |
 | 189 | Madeira (autor 11-05): dentro da zona de prioridade, o lenhador pega a árvore conhecida m… | classe | LumberjackGameTest, LumberjackSearchGameTest, TreeChoiceTest |
 | 190 | Cru na reserva (jogo 11-05): com o cru nos baús e a reserva impedindo assar, o fundidor l… | classe | CrusherGameTest, FurnaceFeedGameTest, SmelterGathersGameTest |
@@ -213,8 +213,8 @@ classe prova menos ainda.
 | 201 | O lote MAE aceita chão natural (autor 11-05): areia, cascalho, argila, terracota, andesit… | cita | MaeTerrainGameTest |
 | 202 | A prova do MAE começa na reserva (autor 11-05): a reserva terrain_v2 não exige mais a seç… | cita | MaeTerrainGameTest |
 | 203 | O tanque da obra nasce fechado (autor 11-05): a água e as quatro vizinhas são uma escrita… | cita | MaeStructureModelGameTest |
-| 204 | Planta baixa não barra a obra (autor 11-05): a peça da obra MAE escreve por cima de grama… | cita | MaeSitesRoadGameTest |
-| 205 | Obra falha devolve a região (autor 11-05): sem escrita por confirmar, a região volta para… | cita | MaeSitesRoadGameTest |
+| 204 | Planta baixa não barra a obra (autor 11-05): a peça da obra MAE escreve por cima de grama… | nenhum |  |
+| 205 | Obra falha devolve a região (autor 11-05): sem escrita por confirmar, a região volta para… | nenhum |  |
 | 206 | As pontas do grafo são os cantos da vila (autor 11-05): fica a ponta mais distante do cen… | cita | RoadLinesTest, RoadMapSyncGameTest, RoadRulesGameTest |
 | 207 | Toda porta térrea é entrada (autor 11-05): sai pelo lado de fora da porta, passa por degr… | cita | DoorFrontsGameTest |
 | 208 | Plantação sem anel (autor 11-06): o chão em volta da plantação não é pedido como caminho,… | cita | RoadLinesTest, RoadRulesGameTest |
@@ -222,3 +222,4 @@ classe prova menos ainda.
 | 210 | Toda estrutura tem entrada (autor 11-06): toda estrutura da vila gerada e do mod entra no… | cita | StructureEntrancesGameTest |
 | 211 | Casa do mineiro na boca em uso (autor 11-06): a casa do mineiro fica ao lado da boca da s… | cita | StructureEntrancesGameTest |
 | 212 | Sem tocha sozinha, vela não trava obra (autor 11-06): nenhum aldeão põe tocha da colônia… | cita | ArchitectureRulesTest, LotLightDecorGameTest |
+| 213 | A obra MAE é a próxima do construtor (autor 11-06, ADR-047): a obra pedida entra na fila… | cita | MaeSitesGameTest |

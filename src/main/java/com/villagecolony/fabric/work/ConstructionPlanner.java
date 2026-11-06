@@ -257,6 +257,7 @@ public final class ConstructionPlanner {
      */
     public static Optional<ConstructionProject> plan(ServerWorld world, Colony colony) {
         ConstructionResume.resume(world, colony);
+        MaeRequestedWork.settle(world, colony);
 
         Optional<ConstructionProject> open = VillageColonyMod.CONSTRUCTIONS.openOf(colony.id());
 
@@ -303,7 +304,10 @@ public final class ConstructionPlanner {
                             VillageBounds.IDENTITY_MARGIN))
                     .orElse(false);
 
-            if (!insideTheVillage && !besideARoad && ConstructionReach.isOutOfReach(
+            // A obra pedida pelo jogador fica onde ele pediu (Regra 213).
+            boolean requested = com.villagecolony.fabric.integration.MaeBuildQueue.isRequested(world, open.get());
+
+            if (!requested && !insideTheVillage && !besideARoad && ConstructionReach.isOutOfReach(
                     open.get().origin(), colony.center(), searchRadius(colony), toTheRoad)) {
 
                 VillageColonyMod.LOGGER.info(
@@ -348,6 +352,14 @@ public final class ConstructionPlanner {
             // trabalho é de construção. Repetir "no builder" aqui só
             // alonga a linha.
             return silent(colony, IdleReason.NO_WORKER, "");
+        }
+
+        // A obra pedida é a próxima do construtor (Regra 213).
+        Optional<ConstructionProject> requested = MaeRequestedWork.openNext(world, colony, builders);
+
+        if (requested.isPresent()) {
+            ensureTask(colony, requested.get());
+            return requested;
         }
 
         Optional<ConstructionProject> repair = BuildingRepairPlanner.open(world, colony);

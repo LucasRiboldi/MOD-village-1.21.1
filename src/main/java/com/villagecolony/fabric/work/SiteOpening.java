@@ -234,6 +234,12 @@ final class SiteOpening {
         ConstructionProject project = ConstructionProject.plan(
                 colony.id(), facingTheRoad, facingTheRoad.originFor(site.origin()));
 
+        return openPlanned(world, colony, site, project, builders, drawnFrom);
+    }
+
+    /** A obra já escolhida ocupa a vaga do construtor; é o que a Regra 213 reaproveita. */
+    static Optional<ConstructionProject> openPlanned(ServerWorld world, Colony colony, BuildSiteScanner.Site site,
+                                                     ConstructionProject project, int builders, String drawnFrom) {
         // Vela e tocha soltas saem com a obra (Regra 212).
         com.villagecolony.fabric.integration.LotClearance.clearLightDecor(world, project.origin(), project.blueprint().size());
 
@@ -252,7 +258,7 @@ final class SiteOpening {
         if (unbuildable.isPresent()) {
             VillageColonyMod.LOGGER.warn(
                     "Refused construction for colony {}: {} at {} passed the lot scan but {}",
-                    colony.id(), facingTheRoad.id(), project.origin(), unbuildable.get());
+                    colony.id(), project.blueprint().id(), project.origin(), unbuildable.get());
             return Optional.empty();
         }
 

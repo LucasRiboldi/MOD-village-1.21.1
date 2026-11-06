@@ -158,6 +158,11 @@ public final class WaitingWork {
             return true;
         }
 
+        // A obra pedida sempre termina (Regra 213): espera o material, não desiste.
+        if (com.villagecolony.fabric.integration.MaeBuildQueue.isRequested(world, project)) {
+            return false;
+        }
+
         if (project.state() != ConstructionState.WAITING_RESOURCES) {
             WAITING_SINCE.remove(project.id());
 

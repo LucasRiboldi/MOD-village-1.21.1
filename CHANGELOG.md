@@ -12,6 +12,14 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.38] — candidata, 2026-11-06
+
+### Mudado
+
+- A obra MAE entra na fila do construtor e é a próxima dele: quem a levanta é o aldeão, bloco a bloco, com material dos baús (Regra 213, ADR-047).
+- O mundo vivo não para mais a obra MAE, e ela não deixa blocos soltos: só o jogador a encerra.
+- A obra MAE confere o lote com folga de 3 blocos, e não a região de 12, e o grafo não congela enquanto ela anda.
+
 ## [0.4.37] — candidata, 2026-11-06
 
 ### Novo
