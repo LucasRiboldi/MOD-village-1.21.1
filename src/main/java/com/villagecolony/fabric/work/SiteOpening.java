@@ -412,18 +412,10 @@ final class SiteOpening {
     private static void pavePathTo(ServerWorld world, java.util.UUID colonyId, BuildSiteScanner.Site site) {
         CorridorCut.cut(world, colonyId, site.path());
 
+        // O caminho do lote recuado é pedido ao grafo: quem calça é o aldeão (Regra 214).
         for (ColonyPos cell : site.path()) {
-            net.minecraft.util.math.BlockPos at = MinecraftTypeAdapter.toBlockPos(cell);
-            net.minecraft.block.BlockState ground = world.getBlockState(at);
-
-            if (!VillageRoad.isPaving(world, at) && VillageRoad.isPavableGround(world, at, ground)) {
-                if (!world.getBlockState(at.up()).isAir() && world.getBlockState(at.up()).isReplaceable()) {
-                    world.breakBlock(at.up(), false);
-                }
-
-                world.setBlockState(at, VillageRoad.pavingOn(world, at, ground).getDefaultState());
-                com.villagecolony.fabric.integration.RoadIndex.remember(colonyId, at);
-            }
+            com.villagecolony.fabric.integration.PathProposals.add(colonyId, MinecraftTypeAdapter.toBlockPos(cell));
+            com.villagecolony.fabric.integration.RoadIndex.remember(colonyId, MinecraftTypeAdapter.toBlockPos(cell));
         }
     }
 }

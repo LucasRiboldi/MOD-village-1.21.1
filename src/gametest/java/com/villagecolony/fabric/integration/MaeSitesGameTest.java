@@ -123,7 +123,6 @@ public final class MaeSitesGameTest implements FabricGameTest {
                 arena.fixture.set(at.toImmutable(), Blocks.GRASS_BLOCK.getDefaultState());
             }
 
-            arena.fixture.capture();
             MaeSites.start(context.getWorld(), colony.id(), HOUSE, arena.origin, 0, null);
 
             ConstructionProject project = ConstructionPlanner.plan(context.getWorld(), colony).orElseThrow();
@@ -318,6 +317,11 @@ public final class MaeSitesGameTest implements FabricGameTest {
                     ResourceId.vanilla("village/plains/houses/no_such_house"), arena.origin, 0, null), "unknown_model");
             refused(context, () -> MaeSites.start(context.getWorld(), colony, HOUSE, arena.origin, 4, null), "invalid_rotation");
 
+            // A régua é a do construtor: bloco de construção no volume recusa o lote (Regra 213).
+            arena.fixture.set(arena.origin.add(2, 2, 2), Blocks.OAK_PLANKS.getDefaultState());
+            refused(context, () -> MaeSites.start(context.getWorld(), colony, HOUSE, arena.origin, 0, null), "occupied");
+            arena.fixture.set(arena.origin.add(2, 2, 2), Blocks.AIR.getDefaultState());
+
             var first = MaeSites.start(context.getWorld(), colony, HOUSE, arena.origin, 0, null);
 
             refused(context, () -> MaeSites.start(context.getWorld(), colony, HOUSE, arena.origin, 0, null), "overlapping_request");
@@ -369,8 +373,6 @@ public final class MaeSitesGameTest implements FabricGameTest {
             for (BlockPos at : BlockPos.iterate(fixture.base.add(-5, -2, -5), fixture.base.add(10, 0, 10))) {
                 fixture.set(at.toImmutable(), Blocks.DIRT.getDefaultState());
             }
-
-            fixture.capture();
         }
 
         void guarded(Runnable step) {
@@ -391,17 +393,13 @@ public final class MaeSitesGameTest implements FabricGameTest {
     private static final class Fixture {
         final TestContext context;
         final com.villagecolony.gametest.ColonyFixture colony;
-        final net.minecraft.world.chunk.WorldChunk chunk;
         final BlockPos base;
-        final NbtCompound originalReceipt;
         final java.util.Map<BlockPos, BlockState> changed = new java.util.HashMap<>();
 
         Fixture(TestContext context, int arena) {
             this.context = context;
             base = new BlockPos(100_005 + arena * 256, context.getAbsolutePos(new BlockPos(1, 40, 1)).getY(), 100_005);
             chunks(true);
-            chunk = context.getWorld().getWorldChunk(base);
-            originalReceipt = chunk.getAttached(MaeGenerationEvidence.RECEIPT);
             colony = com.villagecolony.gametest.ColonyFixture.colonyAt(context, base.subtract(context.getAbsolutePos(BlockPos.ORIGIN)));
         }
 
@@ -410,19 +408,8 @@ public final class MaeSitesGameTest implements FabricGameTest {
             context.getWorld().setBlockState(pos, state, net.minecraft.block.Block.NOTIFY_LISTENERS | net.minecraft.block.Block.FORCE_STATE);
         }
 
-        void capture() {
-            chunk.removeAttached(MaeGenerationEvidence.RECEIPT);
-            net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents.CHUNK_GENERATE.invoker().onChunkGenerate(context.getWorld(), chunk);
-        }
-
         void cleanup() {
             changed.forEach((pos, state) -> context.getWorld().setBlockState(pos, state, net.minecraft.block.Block.NOTIFY_LISTENERS | net.minecraft.block.Block.FORCE_STATE));
-
-            if (originalReceipt == null) {
-                chunk.removeAttached(MaeGenerationEvidence.RECEIPT);
-            } else {
-                chunk.setAttached(MaeGenerationEvidence.RECEIPT, originalReceipt);
-            }
 
             colony.cleanUp();
             chunks(false);

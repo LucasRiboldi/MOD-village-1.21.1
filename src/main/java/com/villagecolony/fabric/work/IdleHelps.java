@@ -6,7 +6,6 @@ import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -93,7 +92,7 @@ public final class IdleHelps {
         long now = world.getTime();
         Help help = GROVE.get(colony.id());
 
-        if (help != null && !(world.getEntity(help.worker) instanceof VillagerEntity helper && isFree(world, helper))) {
+        if (help != null && !(world.getEntity(help.worker) instanceof VillagerEntity helper && isFree(world, helper, IdleWorkers.Help.GROVE))) {
             stopGrove(colony.id());
             help = null;
         }
@@ -109,7 +108,7 @@ public final class IdleHelps {
             for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
                 if (worker.profession().filter(ProfessionType.LUMBERJACK::equals).isPresent()
                         && world.getEntity(worker.villagerId()) instanceof VillagerEntity lumberjack
-                        && isFree(world, lumberjack)) {
+                        && isFree(world, lumberjack, IdleWorkers.Help.GROVE)) {
                     help = new Help(lumberjack.getUuid(), target);
                     GROVE.put(colony.id(), help);
                     break;
@@ -151,16 +150,10 @@ public final class IdleHelps {
         }
     }
 
-    static boolean isFree(ServerWorld world, VillagerEntity villager) {
+    static boolean isFree(ServerWorld world, VillagerEntity villager, IdleWorkers.Help own) {
         UUID id = villager.getUuid();
 
-        boolean free = villager.isAlive() && !villager.isSleeping()
-                && VillageColonyMod.TASKS.assignedTo(id).isEmpty()
-                && WorkHours.isWorkTime(world, villager)
-                && !StrandedWorkers.isStranded(id) && !PenEscape.isEscaping(id)
-                && !ShepherdHerding.isHerding(id) && !GroundPickup.isHelping(id);
-
-        if (!free) {
+        if (!IdleWorkers.isFree(world, villager, own)) {
             IDLE_SINCE.remove(id);
             return false;
         }

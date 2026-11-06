@@ -5,16 +5,11 @@ import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ChunkSectionPos;
 import net.minecraft.world.chunk.WorldChunk;
-import com.villagecolony.core.construction.model.WorkArea;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,39 +38,6 @@ public final class MaeGenerationEvidence {
             chunk.setAttached(RECEIPT, receipt);
             chunk.setNeedsSaving(true);
         });
-    }
-
-    /** Nenhuma consulta carrega chunk; a impressão engloba a seção para rejeitar mudanças vizinhas — ADR-044. */
-    static NbtCompound inspect(ServerWorld world, WorkArea area, boolean requireGeneration, int sectionLimit) {
-        NbtCompound result = new NbtCompound();
-        for (int x = area.min().x() >> 4; x <= area.max().x() >> 4; x++) {
-            for (int z = area.min().z() >> 4; z <= area.max().z() >> 4; z++) {
-                WorldChunk chunk = world.getChunkManager().getWorldChunk(x, z);
-                if (chunk == null) {
-                    throw new IllegalStateException("unknown_chunk");
-                }
-                NbtCompound receipt = chunk.getAttached(RECEIPT);
-                if (receipt == null || !receipt.contains("version", NbtElement.INT_TYPE) || receipt.getInt("version") != 1
-                        || !receipt.contains("sections", NbtElement.COMPOUND_TYPE)
-                        || !receipt.contains("chunk", NbtElement.LONG_TYPE)
-                        || receipt.getLong("chunk") != chunk.getPos().toLong()
-                        || !world.getRegistryKey().getValue().toString().equals(receipt.getString("dimension"))) {
-                    throw new IllegalStateException("missing_generation_evidence");
-                }
-                for (int y = area.min().y() >> 4; y <= area.max().y() >> 4; y++) {
-                    byte[] actual = fingerprint(chunk, y);
-                    byte[] original = receipt.getCompound("sections").getByteArray(Integer.toString(y));
-                    if (original.length != 32 || (requireGeneration && !Arrays.equals(original, actual))) {
-                        throw new IllegalStateException("changed_generation_evidence");
-                    }
-                    result.putByteArray(Long.toString(ChunkSectionPos.asLong(x, y, z)), actual);
-                    if (result.getSize() > sectionLimit) {
-                        throw new IllegalStateException("section_budget_exceeded");
-                    }
-                }
-            }
-        }
-        return result;
     }
 
     private static byte[] fingerprint(WorldChunk chunk, int sectionY) {

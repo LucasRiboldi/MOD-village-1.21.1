@@ -68,7 +68,7 @@ public final class MaeSites {
 
         Blueprint blueprint = blueprint(world, model, quarterTurns);
         ColonyPos origin = blueprint.originFor(MinecraftTypeAdapter.toColonyPos(floor));
-        List<BlockPos> growth = inspect(world, colonyId, blueprint, origin, null);
+        List<BlockPos> growth = inspect(world, colonyId, blueprint, origin, floor.getY(), null);
 
         if (mayClear && !growth.isEmpty()) {
             return clearFirst(world, colonyId, model, floor, quarterTurns, owner, growth, lotArea(blueprint, colonyId, origin));
@@ -83,10 +83,23 @@ public final class MaeSites {
         return statusOf(request);
     }
 
-    /** O lote serve? Devolve o que a limpeza tiraria dele; recusa com o motivo. */
-    private static List<BlockPos> inspect(ServerWorld world, UUID colonyId, Blueprint blueprint, ColonyPos origin,
+    /**
+     * O lote serve? A régua é a do construtor (Regra 213): a mesma caixa da busca de lote, a mesma trava da base, e nada de
+     * construção no volume. Devolve o que a limpeza tiraria dele; recusa com o motivo.
+     */
+    private static List<BlockPos> inspect(ServerWorld world, UUID colonyId, Blueprint blueprint, ColonyPos origin, int floorY,
                                           @Nullable UUID except) {
         WorkArea area = lotArea(blueprint, colonyId, origin);
+        ConstructionProject project = ConstructionProject.plan(colonyId, blueprint, origin);
+        Building lot = Building.of(project);
+
+        for (int x = area.min().x() >> 4; x <= area.max().x() >> 4; x++) {
+            for (int z = area.min().z() >> 4; z <= area.max().z() >> 4; z++) {
+                if (world.getChunkManager().getWorldChunk(x, z) == null) {
+                    throw new IllegalStateException("unknown_chunk");
+                }
+            }
+        }
 
         for (MaeBuildQueue.Request other : MaeBuildQueue.all(world)) {
             if (!other.id().equals(except) && colonyId.equals(other.colonyId())
@@ -96,7 +109,33 @@ public final class MaeSites {
             }
         }
 
-        return MaeClearing.survey(world, colonyId, area);
+        if (LotClearance.overlapsVillageStructure(world, lot.min(), lot.max())) {
+            throw new IllegalStateException("original_structure");
+        }
+
+        if (VillageColonyMod.BUILDINGS.anythingBuiltInside(lot.min(), lot.max()) || LotClearance.overlapsFoundationFootprint(lot.min(), lot.max())
+                || LotClearance.overlapsConstructionSite(world, colonyId, lot.min(), lot.max(), null)) {
+            throw new IllegalStateException("occupied");
+        }
+
+        List<BlockPos> growth = MaeClearing.survey(world, area);
+
+        if (growth.isEmpty()) {
+            // Sem árvore no caminho, o resto do volume é construção de alguém (Regra 3); um degrau de chão a obra nivela.
+            for (int x = lot.min().x(); x <= lot.max().x(); x++) {
+                for (int z = lot.min().z(); z <= lot.max().z(); z++) {
+                    if (!LotClearance.isClearAbove(world, x, z, floorY + 1, lot.max().y() - floorY)) {
+                        throw new IllegalStateException("occupied");
+                    }
+                }
+            }
+
+            FoundationPreparation.refusal(world, project).ifPresent(why -> {
+                throw new IllegalStateException("no_base");
+            });
+        }
+
+        return growth;
     }
 
     /** O lote com a folga do anel de chão: é o que a obra toca. */
@@ -268,7 +307,7 @@ public final class MaeSites {
                     Blueprint blueprint = blueprint(world, request.model(), request.quarterTurns());
                     ColonyPos origin = blueprint.originFor(MinecraftTypeAdapter.toColonyPos(lot));
 
-                    if (inspect(world, request.colonyId(), blueprint, origin, request.id()).isEmpty()) {
+                    if (inspect(world, request.colonyId(), blueprint, origin, lot.getY(), request.id()).isEmpty()) {
                         MaeBuildQueue.movedTo(world, request.id(), lot, MinecraftTypeAdapter.toBlockPos(origin));
                         VillageColonyMod.LOGGER.info("VC_MAE_SITE version=2 model={} at={} result=moved to={}",
                                 request.model(), request.floor().toShortString(), lot.toShortString());

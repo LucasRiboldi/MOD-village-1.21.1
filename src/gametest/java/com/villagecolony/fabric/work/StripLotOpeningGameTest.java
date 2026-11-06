@@ -94,9 +94,9 @@ public class StripLotOpeningGameTest implements FabricGameTest {
             BlockPos throughTheGap = context.getAbsolutePos(new BlockPos(9, Y, 7));
             BlockPos gapOther = context.getAbsolutePos(new BlockPos(10, Y, 7));
 
-            context.assertTrue(world.getBlockState(throughTheGap).isOf(Blocks.DIRT_PATH)
-                            || world.getBlockState(gapOther).isOf(Blocks.DIRT_PATH),
-                    "o caminho não foi calçado pela volta da duna");
+            context.assertTrue(com.villagecolony.fabric.integration.PathProposals.isWanted(colony.id(), throughTheGap.getX(), throughTheGap.getZ())
+                            || com.villagecolony.fabric.integration.PathProposals.isWanted(colony.id(), gapOther.getX(), gapOther.getZ()),
+                    "Regra 214: o caminho pela volta da duna não foi pedido ao grafo");
         } finally {
             VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
             VillageExpansion.lotFound(colony.id());

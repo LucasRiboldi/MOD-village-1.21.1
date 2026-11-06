@@ -6,10 +6,8 @@ import com.villagecolony.core.construction.model.PathStep;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
-import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.core.construction.model.VillagePathPlanner;
-import com.villagecolony.fabric.content.ModContent;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.LotGround;
 import com.villagecolony.fabric.integration.RoadIndex;
@@ -17,10 +15,8 @@ import com.villagecolony.fabric.integration.StreetSurface;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.registry.Registries;
-import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
@@ -314,15 +310,8 @@ public final class PathPaving {
         return Optional.empty();
     }
 
-    /** Sem tarefa do ofício, no expediente, solto e sem outra ajuda em curso. */
     private static boolean isFree(ServerWorld world, VillagerEntity villager) {
-        UUID id = villager.getUuid();
-
-        return villager.isAlive() && !villager.isSleeping()
-                && VillageColonyMod.TASKS.assignedTo(id).isEmpty()
-                && WorkHours.isWorkTime(world, villager)
-                && !StrandedWorkers.isStranded(id) && !PenEscape.isEscaping(id)
-                && !BuilderPaving.isPaving(id) && !GroundPickup.isHelping(id) && !IdleHelps.isHelping(id) && !SnowShovel.isShoveling(id);
+        return IdleWorkers.isFree(world, villager, IdleWorkers.Help.PATH);
     }
 
     private static void endTurn(UUID colonyId) {

@@ -8,6 +8,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.PathProposals;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
 import com.villagecolony.gametest.ColonyFixture;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -140,6 +141,91 @@ public class GraphOnlyPathsGameTest implements FabricGameTest {
             context.assertTrue(front.z() < mouth.getZ(), "a entrada não ficou do lado do centro da vila: " + front);
         } finally {
             VillageColonyMod.MINES.removeOfColony(colony.id());
+            fixture.cleanUp();
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
+
+    /** A falha no meio da rua é pedida ao grafo: ninguém calça fora dele (Regra 214). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "graph_only_gap", tickLimit = 20)
+    public void aGapIsAskedOfTheGraphAndNotPaved(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 108, 1));
+
+        platform(world, origin);
+
+        Colony colony = Colony.create(UUID.randomUUID(), cell(origin.add(5, 1, 5)));
+
+        colony.measure(new com.villagecolony.core.colony.model.VillageBounds(origin.getX(), origin.getY() - 2, origin.getZ(),
+                origin.getX() + 12, origin.getY() + 4, origin.getZ() + 12));
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture fixture = ColonyFixture.create().owning(colony);
+        long before = world.getTimeOfDay();
+
+        try {
+            world.setTimeOfDay(2_000);
+
+            var builder = fixture.equippedWorker(context, ProfessionType.BUILDER, BlockPos.ORIGIN.up());
+            BlockPos gap = origin.add(6, 0, 6);
+
+            world.setBlockState(gap.west(), Blocks.DIRT_PATH.getDefaultState(), 18);
+            world.setBlockState(gap.east(), Blocks.DIRT_PATH.getDefaultState(), 18);
+            world.getEntity(builder.villagerId()).refreshPositionAndAngles(gap.getX() + 0.5, gap.getY() + 1, gap.getZ() + 0.5, 0, 0);
+
+            context.assertTrue(BuilderPaving.isGap(world, gap), "a falha não foi vista");
+
+            for (int pass = 0; pass < 3; pass++) {
+                BuilderPaving.pass(world, colony);
+            }
+
+            context.assertTrue(PathProposals.isWanted(colony.id(), gap.getX(), gap.getZ()), "Regra 214: a falha não foi pedida ao grafo");
+            context.assertFalse(world.getBlockState(gap).isOf(Blocks.DIRT_PATH), "Regra 214: o construtor calçou fora do grafo");
+        } finally {
+            world.setTimeOfDay(before);
+            PathProposals.drain(colony.id());
+            fixture.cleanUp();
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
+
+    /** Uma ajuda de cada vez: quem está calçando não está livre para outra, e continua livre para a própria. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "graph_only_idle", tickLimit = 20)
+    public void aWorkerOnAHelpIsNotFreeForAnother(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 120, 1));
+
+        platform(world, origin);
+
+        ColonyFixture fixture = ColonyFixture.colonyAtWorld(origin.add(20, 1, 20));
+        Colony colony = fixture.colony();
+        long before = world.getTimeOfDay();
+
+        try {
+            world.setTimeOfDay(2_000);
+
+            var mason = fixture.equippedWorker(context, ProfessionType.MASON, BlockPos.ORIGIN.up());
+            var entity = (net.minecraft.entity.passive.VillagerEntity) world.getEntity(mason.villagerId());
+            BlockPos far = origin.add(30, 0, 30);
+
+            entity.refreshPositionAndAngles(origin.getX() + 0.5, origin.getY() + 1, origin.getZ() + 0.5, 0, 0);
+
+            context.assertTrue(IdleWorkers.isFree(world, entity, null), "o pedreiro sem tarefa devia estar livre");
+
+            PathLinks.offerRepair(colony.id(), List.of(new PathStep(far.getX(), far.getY(), far.getZ(), Side.EAST, 0, 0)));
+            PathPaving.pass(world, colony);
+
+            context.assertTrue(PathPaving.isPaving(mason.villagerId()), "ele não pegou a calçada");
+            context.assertFalse(IdleWorkers.isFree(world, entity, null), "quem calça ficou livre para outra ajuda");
+            context.assertTrue(IdleWorkers.isFree(world, entity, IdleWorkers.Help.PATH), "quem calça perdeu a própria ajuda");
+        } finally {
+            world.setTimeOfDay(before);
+            PathLinks.drop(colony.id());
+            PathPaving.clearAll();
             fixture.cleanUp();
             clean(world, origin);
         }

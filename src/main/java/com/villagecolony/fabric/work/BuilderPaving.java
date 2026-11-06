@@ -11,10 +11,7 @@ import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.BlockProtection;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.BlockState;
-import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.VillageRoad;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
 import net.minecraft.registry.Registries;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -73,12 +70,10 @@ public final class BuilderPaving {
     /** Um construtor calçando. */
     private static final class Job {
         final BlockPos target;
-        final boolean weed;
         int walked;
 
-        Job(BlockPos target, boolean weed) {
+        Job(BlockPos target) {
             this.target = target;
-            this.weed = weed;
         }
     }
 
@@ -147,7 +142,14 @@ public final class BuilderPaving {
                     continue;
                 }
 
-                job = new Job(gap.get(), !isGap(world, gap.get()));
+                // A falha da rua é pedida ao grafo (Regra 214); aqui só se limpa a faixa de obra.
+                if (isGap(world, gap.get())) {
+                    com.villagecolony.fabric.integration.PathProposals.add(colony.id(), gap.get());
+                    SKIPPED.add(gap.get());
+                    continue;
+                }
+
+                job = new Job(gap.get());
                 JOBS.put(id, job);
             }
 
@@ -161,7 +163,7 @@ public final class BuilderPaving {
     private static void step(ServerWorld world, VillagerEntity builder, Job job) {
         UUID id = builder.getUuid();
 
-        if (job.weed ? !isZoneWeed(world, job.target) : !isGap(world, job.target)) {
+        if (!isZoneWeed(world, job.target)) {
             // Alguém calçou ou limpou, ou o chão mudou: o próximo.
             JOBS.remove(id);
             WorkTargets.clear(id);
@@ -185,36 +187,14 @@ public final class BuilderPaving {
 
         builder.swingHand(Hand.MAIN_HAND);
 
-        if (job.weed) {
-            String cleared = clear(world, id, job.target.up());
-            ActionJournal.action(id, "CLEARED", cleared, 1, job.target.up(), "construction zone");
-            VillageColonyMod.LOGGER.info("Builder {} cleared {} from the construction zone at {}",
-                    id.toString().substring(0, 8), cleared, job.target.up().toShortString());
-        } else {
-            String laid = pave(world, job.target);
-            // O caminho de bioma só é rua no índice (VillageRoad.isPaving por posição).
-            VillageColonyMod.WORKERS.find(id).ifPresent(worker -> RoadIndex.remember(worker.colonyId(), job.target));
-            ActionJournal.action(id, "PAVED", laid, 1, job.target, "");
-            VillageColonyMod.LOGGER.info("Builder {} paved the path at {} while the build waits",
-                    id.toString().substring(0, 8), job.target.toShortString());
-        }
+        String cleared = clear(world, id, job.target.up());
+
+        ActionJournal.action(id, "CLEARED", cleared, 1, job.target.up(), "construction zone");
+        VillageColonyMod.LOGGER.info("Builder {} cleared {} from the construction zone at {}",
+                id.toString().substring(0, 8), cleared, job.target.up().toShortString());
 
         JOBS.remove(id);
         WorkTargets.clear(id);
-    }
-
-    /** Troca o chão pelo caminho natural dele (VillageRoad.pavingOn), tira a planta de cima e diz qual. */
-    static String pave(ServerWorld world, BlockPos ground) {
-        BlockState above = world.getBlockState(ground.up());
-
-        if (!above.isAir() && above.isReplaceable()) {
-            world.breakBlock(ground.up(), false);
-        }
-
-        Block path = VillageRoad.pavingOn(world, ground, world.getBlockState(ground));
-        world.setBlockState(ground, path.getDefaultState());
-
-        return Registries.BLOCK.getId(path).getPath();
     }
 
     /** Tira a planta e guarda o item no baú do construtor; sem lugar, ela cai no chão. */

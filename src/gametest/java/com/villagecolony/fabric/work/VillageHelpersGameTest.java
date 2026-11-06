@@ -29,40 +29,6 @@ import java.util.UUID;
  */
 public class VillageHelpersGameTest implements FabricGameTest {
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_helpers", tickLimit = 40)
-    public void theSmelterHaulsTheMineMouthToThePublicChests(TestContext context) {
-        BlockPos mouth = new BlockPos(6, 1, 6);
-        BlockPos mouthChest = mouth.east();
-        BlockPos publicChest = new BlockPos(1, 1, 1);
-
-        context.setBlockState(mouthChest, Blocks.CHEST);
-        context.setBlockState(publicChest, Blocks.CHEST);
-
-        UUID colonyId = UUID.randomUUID();
-        Colony colony = Colony.create(colonyId, at(context, new BlockPos(4, 1, 4)));
-        colony.measure(VillageBounds.aroundPiece(at(context, BlockPos.ORIGIN), at(context, new BlockPos(8, 4, 8)), 0));
-        VillageColonyMod.COLONIES.register(colony);
-        VillageColonyMod.MINES.restore(Mine.restore(colonyId, MineShaft.from(at(context, mouth), Side.EAST), 0));
-
-        ChestDepositor.deposit(context.getWorld(), at(context, mouthChest), Items.RAW_IRON, 10);
-        VillagerEntity smelter = context.spawnEntity(EntityType.VILLAGER, new BlockPos(2, 2, 2));
-
-        try {
-            VillageHelpers.smelterHelps(context.getWorld(), colony, smelter);
-
-            int atTheMouth = ColonyChests.countIn(context.getWorld(), List.of(at(context, mouthChest)), Items.RAW_IRON);
-            int inThePublic = ColonyChests.countIn(context.getWorld(), List.of(at(context, publicChest)), Items.RAW_IRON);
-
-            context.assertTrue(atTheMouth == 0 && inThePublic == 10,
-                    "o minério devia ir da boca ao baú público: boca " + atTheMouth + ", público " + inThePublic);
-        } finally {
-            VillageColonyMod.MINES.removeOfColony(colonyId);
-            VillageColonyMod.COLONIES.remove(colonyId);
-        }
-
-        context.complete();
-    }
-
     /**
      * O adulto sem profissão vira carregador — O8 (autor, 2026-10-28 e 10-29): leva o que está no baú da boca da mina
      * para os baús públicos.

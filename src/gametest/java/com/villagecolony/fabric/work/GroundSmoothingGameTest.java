@@ -188,7 +188,7 @@ public class GroundSmoothingGameTest implements FabricGameTest {
         try {
             for (int round = 0; round < 10; round++) {
                 VillageHelpers.helps(world, colony, java.util.Optional.of(
-                        com.villagecolony.core.worker.model.ProfessionType.BUILDER), builder);
+                        com.villagecolony.core.worker.model.ProfessionType.MASON), builder);
             }
 
             int floorY = context.getAbsolutePos(new BlockPos(0, FLOOR, 0)).getY();
@@ -233,7 +233,7 @@ public class GroundSmoothingGameTest implements FabricGameTest {
 
         try {
             int done = VillageHelpers.helps(context.getWorld(), colony,
-                    java.util.Optional.of(com.villagecolony.core.worker.model.ProfessionType.BUILDER), builder);
+                    java.util.Optional.of(com.villagecolony.core.worker.model.ProfessionType.MASON), builder);
             context.assertTrue(done > 0, "sem obra aberta, o construtor ignorou o terreno danificado; chunk final carregado="
                     + context.getWorld().isChunkLoaded((origin.getX() + 23) >> 4, (origin.getZ() + 23) >> 4));
             context.assertTrue(top(context, 4, 4) == origin.getY(), "o construtor deixou o calombo");

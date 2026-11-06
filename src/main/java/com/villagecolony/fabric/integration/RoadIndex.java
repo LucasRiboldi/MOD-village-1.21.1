@@ -411,6 +411,10 @@ public final class RoadIndex {
      * espacial. Uma troca manual de bloco jamais cria essa reserva sozinha.
      */
     public static boolean isRoadArea(ServerWorld world, UUID colonyId, BlockPos pos) {
+        if (PathProposals.isWanted(colonyId, pos.getX(), pos.getZ())) {
+            return true;
+        }
+
         BlockState state = world.getBlockState(pos);
         boolean biomePath = VillageRoad.isBiomePath(state);
 

@@ -13,6 +13,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.data.save.ColonySavedData;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.PathProposals;
 import com.villagecolony.fabric.integration.RoadGraphMigration;
 import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.RoadNetwork;
@@ -229,7 +230,11 @@ public final class RoadGraphRefresh {
         WorldPathTerrain terrain = new WorldPathTerrain(world, id);
         WorldPathTerrain bridging = new WorldPathTerrain(world, id, true);
         int turn = TURNS.merge(id, 1, Integer::sum);
-        Set<ColonyPos> planned = PLANNED.computeIfAbsent(id, ignored -> new PlannedPaths()).cells();
+        PlannedPaths paths = PLANNED.computeIfAbsent(id, ignored -> new PlannedPaths());
+
+        paths.read(turn, PathProposals.drain(id), at -> false);
+
+        Set<ColonyPos> planned = paths.cells();
         Set<ColonyPos> fronts = entrances(world, colony, terrain);
 
         planned.addAll(RoadShape.rings(world, colony, terrain));
@@ -280,8 +285,11 @@ public final class RoadGraphRefresh {
         }
 
         // A ligação traçada continua valendo até ser calçada: a próxima releitura liga outra parte (Regra 214).
-        PLANNED.computeIfAbsent(id, ignored -> new PlannedPaths()).read(read, wanted, at -> refused.contains(ColonyRoads.column(at.x(), at.z()))
+        PlannedPaths paths = PLANNED.computeIfAbsent(id, ignored -> new PlannedPaths());
+
+        paths.read(read, wanted, at -> refused.contains(ColonyRoads.column(at.x(), at.z()))
                 || isPaved(world, new PathStep(at.x(), at.y(), at.z(), com.villagecolony.core.type.Side.NORTH, 0, 0)));
+        PathProposals.planned(id, paths.cells());
 
         if (steps.isEmpty()) {
             return false;
