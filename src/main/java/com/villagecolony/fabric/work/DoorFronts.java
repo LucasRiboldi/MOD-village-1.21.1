@@ -15,7 +15,8 @@ import java.util.Optional;
 /**
  * O chão em frente a cada porta térrea da construção — Regra 207 (autor, 2026-11-05): sai pelo lado de fora da porta, passa
  * por degrau e escada, e é o primeiro chão firme fora da caixa. Porta que não dá para fora, a de dentro da casa, não conta;
- * porta dupla conta uma vez.
+ * porta dupla conta uma vez. A caixa da peça pode incluir o quintal: porta cuja saída para em barreira dentro dela só conta
+ * se nenhuma outra da casa sair, no primeiro chão depois da porta, e assoalho não é quintal — Regra 209.
  */
 final class DoorFronts {
 
@@ -27,11 +28,16 @@ final class DoorFronts {
     /** Quantas alturas da caixa, a partir do chão, contam como térreo. */
     private static final int GROUND_FLOOR = 3;
 
+    /** O chão fora da caixa, se a saída chegou lá, e o primeiro chão de quintal do caminho. */
+    private record Walk(Optional<BlockPos> front, Optional<BlockPos> yard) {
+    }
+
     private DoorFronts() {
     }
 
     static List<BlockPos> of(ServerWorld world, BlockPos min, BlockPos max) {
         List<BlockPos> fronts = new ArrayList<>();
+        List<BlockPos> yards = new ArrayList<>();
 
         for (BlockPos at : BlockPos.iterate(min, new BlockPos(max.getX(), Math.min(max.getY(), min.getY() + GROUND_FLOOR), max.getZ()))) {
             if (world.isChunkLoaded(at)) {
@@ -41,40 +47,58 @@ final class DoorFronts {
                     // O facing da porta aponta para dentro: é para onde olhava quem a pôs, do lado de fora.
                     Direction inward = state.get(DoorBlock.FACING);
 
-                    walkOut(world, at, inward.getOpposite(), min, max)
-                            .or(() -> walkOut(world, at, inward, min, max))
-                            .filter(front -> fronts.stream().noneMatch(other -> other.getManhattanDistance(front) <= 1))
-                            .ifPresent(fronts::add);
+                    Walk out = walkOut(world, at, inward.getOpposite(), min, max);
+                    Optional<BlockPos> front = out.front().or(() -> walkOut(world, at, inward, min, max).front());
+
+                    if (front.isPresent()) {
+                        addOnce(fronts, front.get());
+                    } else {
+                        out.yard().ifPresent(yard -> addOnce(yards, yard));
+                    }
                 }
             }
         }
 
-        return fronts;
+        return fronts.isEmpty() ? yards : fronts;
     }
 
-    private static Optional<BlockPos> walkOut(ServerWorld world, BlockPos door, Direction out, BlockPos min, BlockPos max) {
+    private static void addOnce(List<BlockPos> list, BlockPos front) {
+        if (list.stream().noneMatch(other -> other.getManhattanDistance(front) <= 1)) {
+            list.add(front);
+        }
+    }
+
+    private static Walk walkOut(ServerWorld world, BlockPos door, Direction out, BlockPos min, BlockPos max) {
+        Optional<BlockPos> yard = Optional.empty();
+
         for (int step = 1; step <= MAX_WALK; step++) {
             BlockPos column = door.offset(out, step);
 
             if (!world.isChunkLoaded(column)) {
-                return Optional.empty();
+                return new Walk(Optional.empty(), yard);
             }
 
             Optional<BlockPos> floor = floorAt(world, column.up());
 
             if (floor.isEmpty() || (floor.get().getY() >= door.getY() && !isStep(world.getBlockState(floor.get())))) {
-                return Optional.empty();
+                return new Walk(Optional.empty(), yard);
             }
 
             boolean outside = column.getX() < min.getX() || column.getX() > max.getX()
                     || column.getZ() < min.getZ() || column.getZ() > max.getZ();
 
-            if (outside && !isStep(world.getBlockState(floor.get()))) {
-                return floor;
+            BlockState ground = world.getBlockState(floor.get());
+
+            if (outside && !isStep(ground)) {
+                return new Walk(floor, yard);
+            }
+
+            if (yard.isEmpty() && !isStep(ground) && !ground.isIn(BlockTags.PLANKS)) {
+                yard = floor;
             }
         }
 
-        return Optional.empty();
+        return new Walk(Optional.empty(), yard);
     }
 
     /** O primeiro bloco com corpo, de cima para baixo; tapete não conta. */

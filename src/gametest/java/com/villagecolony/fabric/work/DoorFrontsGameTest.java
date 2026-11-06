@@ -140,4 +140,85 @@ public class DoorFrontsGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /** A única porta dá para um quintal fechado, dentro da caixa da peça: a entrada é o primeiro chão depois dela. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_yard", tickLimit = 20)
+    public void theOnlyDoorOfAClosedYardCountsAtItsFirstGround(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 92, 1));
+        BlockPos min = origin.up();
+        BlockPos max = origin.add(8, 4, 4);
+
+        ground(world, origin);
+
+        try {
+            door(world, origin.add(2, 1, 2), Direction.WEST);
+            world.setBlockState(origin.add(1, 1, 2), Blocks.STONE.getDefaultState(), 18);
+            world.setBlockState(origin.add(5, 1, 2), Blocks.GRINDSTONE.getDefaultState(), 18);
+
+            List<BlockPos> fronts = DoorFronts.of(world, min, max);
+
+            context.assertTrue(fronts.equals(List.of(origin.add(3, 0, 2))), "Regra 209: a única porta ficou sem entrada: " + fronts);
+        } finally {
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
+
+    /** O açougue e o pastor da vila gerada: uma porta livre e outra para o quintal cercado. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_yard_other", tickLimit = 20)
+    public void aClosedYardDoesNotCountWhenAnotherDoorIsFree(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 100, 1));
+        BlockPos min = origin.up();
+        BlockPos max = origin.add(8, 4, 4);
+
+        ground(world, origin);
+
+        try {
+            door(world, origin.add(2, 1, 2), Direction.WEST);
+            world.setBlockState(origin.add(1, 1, 2), Blocks.STONE.getDefaultState(), 18);
+            world.setBlockState(origin.add(5, 1, 2), Blocks.OAK_FENCE.getDefaultState(), 18);
+            door(world, origin.add(1, 1, 4), Direction.NORTH);
+
+            List<BlockPos> fronts = DoorFronts.of(world, min, max);
+
+            context.assertTrue(fronts.equals(List.of(origin.add(1, 0, 5))), "Regra 209: o quintal fechado contou como entrada: " + fronts);
+        } finally {
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
+
+    /** Assoalho não é quintal: a porta de dentro, sobre tábua, não vira entrada nem sendo a única. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_floor", tickLimit = 20)
+    public void aWoodFloorIsNotAYard(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 108, 1));
+        BlockPos min = origin.up();
+        BlockPos max = origin.add(8, 4, 4);
+
+        ground(world, origin);
+
+        try {
+            door(world, origin.add(2, 1, 2), Direction.WEST);
+
+            for (BlockPos at : BlockPos.iterate(origin.add(1, 0, 2), origin.add(4, 0, 2))) {
+                world.setBlockState(at, Blocks.OAK_PLANKS.getDefaultState(), 18);
+            }
+
+            world.setBlockState(origin.add(5, 1, 2), Blocks.STONE.getDefaultState(), 18);
+            world.setBlockState(origin.add(1, 1, 2), Blocks.STONE.getDefaultState(), 18);
+
+            List<BlockPos> fronts = DoorFronts.of(world, min, max);
+
+            context.assertTrue(fronts.isEmpty(), "Regra 209: o assoalho virou entrada: " + fronts);
+        } finally {
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
 }
