@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 104
+- **Cita a regra:** 106
 - **Só usa a classe indicada:** 95
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 5
@@ -192,7 +192,7 @@ classe prova menos ainda.
 | 180 | Caminho coberto não é caminho (autor 11-05): bloco de caminho com outro bloco sólido logo… | cita | RoadRulesGameTest |
 | 181 | Pulo confere o teto (jogo 11-05): o caminho do aldeão da colônia só sobe onde o corpo cab… | cita | VillagerRulesGameTest |
 | 182 | A mina cresce por dentro (autor 11-05): fim de escada abre ramal a partir dos salões que… | cita | WaterMineAccessGameTest |
-| 183 | Anel de caminho (autor 11-05): o chão em volta do chafariz e das plantações é caminho, co… | cita | RoadLinesTest, RoadRulesGameTest |
+| 183 | Anel de caminho (autor 11-05): o chão em volta do chafariz é caminho, sem quina fixa no g… | cita | RoadRulesGameTest |
 | 184 | Quina é entrada (autor 11-05): da terceira releitura em diante, a quina da plantação mais… | cita | RoadRulesGameTest |
 | 185 | A ponta cresce (autor 11-05): por dia, as 2 pontas mais distantes do centro, dentro de 75… | cita | RoadRulesGameTest |
 | 186 | Rua de um bloco (autor 11-05): o caminho a até 3 blocos da linha que não é linha nem fren… | cita | RoadLinesTest, RoadRulesGameTest |
@@ -215,5 +215,7 @@ classe prova menos ainda.
 | 203 | O tanque da obra nasce fechado (autor 11-05): a água e as quatro vizinhas são uma escrita… | cita | MaeStructureModelGameTest |
 | 204 | Planta baixa não barra a obra (autor 11-05): a peça da obra MAE escreve por cima de grama… | cita | MaeSitesRoadGameTest |
 | 205 | Obra falha devolve a região (autor 11-05): sem escrita por confirmar, a região volta para… | cita | MaeSitesRoadGameTest |
-| 206 | As pontas do grafo são os cantos da vila (autor 11-05): fica a ponta mais distante do cen… | cita | RoadLinesTest, RoadMapSyncGameTest |
+| 206 | As pontas do grafo são os cantos da vila (autor 11-05): fica a ponta mais distante do cen… | cita | RoadLinesTest, RoadMapSyncGameTest, RoadRulesGameTest |
 | 207 | Toda porta térrea é entrada (autor 11-05): sai pelo lado de fora da porta, passa por degr… | cita | DoorFrontsGameTest |
+| 208 | Plantação sem anel (autor 11-06): o chão em volta da plantação não é pedido como caminho,… | cita | RoadLinesTest, RoadRulesGameTest |
+| 209 | Porta de quintal fechado (autor 11-06): a caixa da peça pode incluir o quintal. Porta cuj… | cita | DoorFrontsGameTest |

@@ -43,11 +43,19 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] `MaeSitesRoadGameTest.largeStorageEntersByItsNewGroundDoor`: estourou 2400 tiques em 3 de 6 rodadas; causa não achada
 - [ ] `GroundPickupGameTest.workerCollectsWhileWalkingPast`: 1 falha em 12; suspeita, não provada: relógio global fora do expediente (Regra 194)
 
+## Abertos do jogo da 0.4.35
+
+- [ ] Casas de x=45 a 65, depois do lago: 7 portas térreas com frente certa, mas a parte não liga à rede (`isolated`=4 a 5, de 54 a 87 blocos do grafo). Falta o diagnóstico "MAE e lago"
+- [ ] MAE: 5 obras paradas em `world_changed_since_approval`, 2 a 27 blocos aplicados, região devolvida
+- [ ] Nenhuma obra nova: `project=none lots_ok=0`, construtor `NOT_IN_GAME` por `HousePlans.plansForNext` vazio, 23 camas para 19 aldeões; saturação não verificada
+- [ ] Profissões menos ativas: pedido do autor, ainda sem medir
+- [ ] Surgidos, `VC_SUPPLY`: `grass_block` ×64 (`FOUNDATION_GROUND`), `prismarine_shard` ×9, `honeycomb` ×2
+- [ ] `LINKS_PER_READ`=1 e a ligação que falha gasta a vez: as partes isoladas atrasam o ramal das outras
+
 ## Abertos do jogo da 0.4.32
 
 - [ ] MAE: conferir em jogo a 0.4.34 (Regras 204 e 205); no save atual, rodar `/vc mae soltar` uma vez para as 2 regiões já falhas
-- [ ] Grafo: conferir em jogo a 0.4.35 (Regras 206 e 207): até 4 azuis, marcador branco em cada porta térrea; rua sem saída que saiu do grafo e voltou a grama
-- [ ] Grafo: as 9 portas das casas de x=50 a 62 não tinham entrada; não se sabe se a parte foi descartada por isolada
+- [ ] Grafo: conferir em jogo a 0.4.36 (Regras 206 a 209): até 4 azuis e nenhum no centro; plantação sem anel e com uma entrada; anel antigo de volta ao solo; ferreiro de armas (121,66,-162) com entrada
 - [ ] Surgidos, `VC_SUPPLY`: `prismarine_crystals` ×80, `prismarine_shard` ×76, `grass_block` ×10 (`FOUNDATION_GROUND`), `honeycomb` ×7, `terracotta` ×2 (`WAITED_TOO_LONG`), corantes de 1 a 2
 
 ## MAE: o que falta depois da 0.4.26
@@ -73,7 +81,7 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] Pastor 86% ocioso: ler `VC_PENS` no próximo jogo e decidir o raio e o teto do `FencedIn` para o cercado grande
 - [ ] Fundidor travado em `minecraft:clay`: 76 `VC_SUPPLY_ERROR` "after four searches of the village's reach found none"
 - [ ] Bocas antigas da mina não são lembradas depois de reiniciar o jogo: `MineEdge.PAST` só vale na sessão
-- [ ] Grafo em retângulos: hoje vem do anel, das retas e da ponta que cresce; sem busca própria que feche quarteirão
+- [ ] Grafo em retângulos: hoje vem do anel do chafariz, das retas e da ponta que cresce; sem busca própria que feche quarteirão
 - [ ] Conferir em jogo a 0.4.25: subida da escada da casa principal, ramal da mina, anel, quina, ponta e rua de um bloco
 
 ## Abertos do jogo da 0.4.18
