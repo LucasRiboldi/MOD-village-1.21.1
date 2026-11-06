@@ -206,7 +206,7 @@ public final class PathLinks {
             return false;
         }
 
-        BlockPos mouth = MinecraftTypeAdapter.toBlockPos(mine.get().shaft().entry());
+        BlockPos mouth = MinecraftTypeAdapter.toBlockPos(MineEntrance.surfaceOf(world, colony.id(), mine.get()));
         WorldPathTerrain terrain = new WorldPathTerrain(world, colony.id());
         List<Side> sides = new java.util.ArrayList<>(List.of(Side.values()));
 

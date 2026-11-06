@@ -3,6 +3,7 @@ package com.villagecolony.fabric.integration;
 import com.villagecolony.VillageColonyMod;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtHelper;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * O portão da entrada da mina — estrutura do autor ({@code data/villagecolony/structure/mine_entrance.nbt}, 2026-10-29),
@@ -35,8 +37,18 @@ public final class MineGate {
     static final int CENTER_X = 4;
     static final int CENTER_Z = 2;
 
+    /** A altura do topo do telhado, no meio do vão: a primeira coisa que a varredura vê do portão. */
+    static final int PEAK_Y = 6;
+
+    /** Quanto da estrutura precisa estar de pé para ser o portão: a Regra 3 pode ter deixado peças de fora. */
+    static final double STANDING_SHARE = 0.75;
+
     /** Um bloco da estrutura, em coordenadas dela. */
     record Piece(int x, int y, int z, BlockState state) {
+    }
+
+    /** Um portão de pé no mundo. */
+    public record Standing(BlockPos mouth, Direction descent) {
     }
 
     private MineGate() {
@@ -75,6 +87,53 @@ public final class MineGate {
         }
 
         return positions;
+    }
+
+    /** Se este bloco pode ser o topo do telhado de um portão. */
+    public static boolean isPeak(BlockState state) {
+        return state.isOf(Blocks.DARK_OAK_LOG);
+    }
+
+    /** O portão cujo topo do telhado é {@code peak}, no giro que mais confere com o mundo — Regra 210. */
+    public static Optional<Standing> standingAt(ServerWorld world, BlockPos peak) {
+        Optional<Standing> best = Optional.empty();
+        int most = 0;
+
+        for (Direction descent : Direction.Type.HORIZONTAL) {
+            BlockPos mouth = peak.down(PEAK_Y).offset(descent.rotateYClockwise());
+            int matched = matched(world, mouth, descent);
+
+            if (matched > most) {
+                most = matched;
+                best = Optional.of(new Standing(mouth, descent));
+            }
+        }
+
+        return most >= Template.PIECES.size() * STANDING_SHARE ? best : Optional.empty();
+    }
+
+    /** Se o portão continua de pé. Chunk fora de memória não desmente. */
+    public static boolean stands(ServerWorld world, Standing gate) {
+        return matched(world, gate.mouth(), gate.descent()) >= Template.PIECES.size() * STANDING_SHARE;
+    }
+
+    private static int matched(ServerWorld world, BlockPos mouth, Direction descent) {
+        int matched = 0;
+
+        for (Piece piece : Template.PIECES) {
+            BlockPos at = at(mouth, descent, piece.x(), piece.y(), piece.z());
+
+            if (!world.isChunkLoaded(at) || world.getBlockState(at).isOf(piece.state().getBlock())) {
+                matched++;
+            }
+        }
+
+        return matched;
+    }
+
+    /** A coluna a {@code blocks} blocos do vão, pelo lado de onde se chega: a escada desce para o outro. */
+    public static BlockPos approach(BlockPos mouth, Direction descent, int blocks) {
+        return at(mouth, descent, CENTER_X, 0, -blocks);
     }
 
     /** Se a posição é bloco do portão: a mina nunca a escava. */

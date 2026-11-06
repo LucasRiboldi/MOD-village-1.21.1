@@ -66,16 +66,25 @@ public final class RoadGraphRefresh {
     /** Cada ligação entre partes é uma busca cara: uma por releitura. */
     private static final int LINKS_PER_READ = 1;
 
+    /** Até onde, fora da caixa da vila, a varredura procura portão de mina: a boca costuma ficar na borda. */
+    private static final int GATE_MARGIN = 32;
+
     private static final class Scan {
+        final UUID colony;
         final VillageBounds box;
         final Set<ColonyPos> cells = new HashSet<>();
         int x;
         int z;
 
-        Scan(VillageBounds box) {
+        Scan(UUID colony, VillageBounds box) {
+            this.colony = colony;
             this.box = box;
-            this.x = box.minX();
-            this.z = box.minZ();
+            this.x = box.minX() - GATE_MARGIN;
+            this.z = box.minZ() - GATE_MARGIN;
+        }
+
+        boolean inTheBox() {
+            return x >= box.minX() && x <= box.maxX() && z >= box.minZ() && z <= box.maxZ();
         }
     }
 
@@ -122,13 +131,13 @@ public final class RoadGraphRefresh {
 
         if (colony.isActive() && colony.isAttended(now) && colony.bounds().isPresent() && NewVillage.is(world, colony)
                 && MaeRoadAccess.metadataAllowed(world, colony.id())) {
-            SCANS.put(colony.id(), new Scan(colony.bounds().orElseThrow()));
+            SCANS.put(colony.id(), new Scan(colony.id(), colony.bounds().orElseThrow()));
         }
     }
 
     private static void advance(ServerWorld world, Colony colony, Scan scan, long now) {
         for (int done = 0; done < COLUMNS_PER_TICK; done++) {
-            if (scan.x > scan.box.maxX()) {
+            if (scan.x > scan.box.maxX() + GATE_MARGIN) {
                 SCANS.remove(colony.id());
                 NEXT.put(colony.id(), publish(world, colony, scan.cells) ? now + SOON : now + EVERY);
                 return;
@@ -136,8 +145,8 @@ public final class RoadGraphRefresh {
 
             read(world, scan);
 
-            if (++scan.z > scan.box.maxZ()) {
-                scan.z = scan.box.minZ();
+            if (++scan.z > scan.box.maxZ() + GATE_MARGIN) {
+                scan.z = scan.box.minZ() - GATE_MARGIN;
                 scan.x++;
             }
         }
@@ -150,6 +159,12 @@ public final class RoadGraphRefresh {
 
         BlockPos at = new BlockPos(scan.x, world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, scan.x, scan.z) - 1, scan.z);
         BlockState top = world.getBlockState(at);
+
+        MineGates.look(world, scan.colony, at, top);
+
+        if (!scan.inTheBox()) {
+            return;
+        }
 
         if (VillageRoad.isPathBlock(top)) {
             if (RoadGraphMigration.usable(world, at)) {
@@ -288,7 +303,7 @@ public final class RoadGraphRefresh {
         return VillageRoad.isPathBlock(world.getBlockState(new BlockPos(step.x(), step.floorY(), step.z())));
     }
 
-    /** O chão em frente às entradas: portas das construções e das casas da vila, portão, e o lado de quem não tem. */
+    /** O chão em frente às entradas de toda estrutura — Regras 207 e 210: porta, portão, o lado aberto e o portão da mina. */
     private static Set<ColonyPos> entrances(ServerWorld world, Colony colony, WorldPathTerrain terrain) {
         Set<ColonyPos> fronts = new HashSet<>();
         BlockPos hub = MinecraftTypeAdapter.toBlockPos(colony.center());
@@ -308,17 +323,19 @@ public final class RoadGraphRefresh {
             }
         }
 
-        for (BlockBox house : GeneratedVillages.housesAt(world, hub.getX(), hub.getZ())) {
-            BlockPos min = new BlockPos(house.getMinX(), house.getMinY(), house.getMinZ());
-            BlockPos max = new BlockPos(house.getMaxX(), house.getMaxY(), house.getMaxZ());
+        for (BlockBox piece : GeneratedVillages.structuresAt(world, hub.getX(), hub.getZ())) {
+            BlockPos min = new BlockPos(piece.getMinX(), piece.getMinY(), piece.getMinZ());
+            BlockPos max = new BlockPos(piece.getMaxX(), piece.getMaxY(), piece.getMaxZ());
             List<BlockPos> doors = DoorFronts.of(world, min, max);
 
             doors.forEach(door -> fronts.add(MinecraftTypeAdapter.toColonyPos(door)));
 
             if (doors.isEmpty()) {
-                PathLinks.entranceOf(world, min, max).ifPresent(entrance -> fronts.add(floorOf(entrance.front())));
+                front(world, min, max, hub, terrain).ifPresent(fronts::add);
             }
         }
+
+        fronts.addAll(MineGates.fronts(world, colony.id(), terrain));
 
         // Todo portão de cerca é entrada (Regra 178), de obra ou da vila gerada.
         for (ShepherdPens.Pen pen : ShepherdPens.pensOf(world, colony)) {
@@ -349,7 +366,7 @@ public final class RoadGraphRefresh {
 
         Optional<ColonyPos> gate = gateFront(world, min, max, terrain);
 
-        return gate.isPresent() ? gate : sideFacing(min, max, hub, terrain);
+        return gate.isPresent() ? gate : EntranceSides.of(world, min, max, hub, terrain);
     }
 
     /** Curral: o lado de fora do primeiro portão da borda. */
@@ -372,28 +389,8 @@ public final class RoadGraphRefresh {
         return Optional.empty();
     }
 
-    /** Roça e o que não tem porta nem portão: o meio do lado virado para o centro da vila. */
-    private static Optional<ColonyPos> sideFacing(BlockPos min, BlockPos max, BlockPos hub, WorldPathTerrain terrain) {
-        int midX = (min.getX() + max.getX()) / 2;
-        int midZ = (min.getZ() + max.getZ()) / 2;
-        int[][] sides = {{midX, min.getZ() - 1}, {midX, max.getZ() + 1}, {min.getX() - 1, midZ}, {max.getX() + 1, midZ}};
-        Optional<ColonyPos> best = Optional.empty();
-        int bestDistance = Integer.MAX_VALUE;
-
-        for (int[] side : sides) {
-            OptionalInt ground = terrain.groundY(side[0], side[1], min.getY());
-            int distance = Math.abs(side[0] - hub.getX()) + Math.abs(side[1] - hub.getZ());
-
-            if (ground.isPresent() && !terrain.blocked(side[0], side[1]) && distance < bestDistance) {
-                bestDistance = distance;
-                best = Optional.of(new ColonyPos(side[0], ground.getAsInt(), side[1]));
-            }
-        }
-
-        return best;
-    }
-
     private static void clearAll() {
+        MineGates.clearAll();
         NEXT.clear();
         SCANS.clear();
         REFUSED.clear();
