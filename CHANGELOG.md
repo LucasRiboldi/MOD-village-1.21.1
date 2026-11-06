@@ -12,6 +12,26 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.37] — candidata, 2026-11-06
+
+### Novo
+
+- Grafo: toda estrutura da vila gerada e do mod tem entrada com o marcador branco de porta, sem porta nova no mundo; sem porta nem portão, é o lado que parece aberto (Regra 210).
+- Grafo: o portão da mina é lido do mundo e vira entrada, do lado de onde se chega (Regra 210).
+
+### Mudado
+
+- A casa do mineiro acompanha a boca em uso da mina, até uma por mineiro (Regra 211).
+- A ligação da boca da mina parte da superfície, e não do nível atual da escada, que dava `no path` a 44 de altura.
+
+### Removido
+
+- O carpinteiro não põe mais a tocha da colônia sozinho pelo chão da vila; o jogador continua podendo fazê-la e pô-la (Regra 212).
+
+### Corrigido
+
+- Vela e tocha soltas não recusam mais o lote, e saem quando a obra abre (Regra 212).
+
 ## [0.4.36] — candidata, 2026-11-06
 
 ### Mudado

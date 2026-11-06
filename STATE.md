@@ -1,5 +1,10 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.37:** jogo da 0.4.36 (Spark CnNQltY9kb, sem nota do autor no log). Toda estrutura e o portão da mina têm entrada de
+> porta no grafo, sem porta no mundo (Regra 210). Casa do mineiro na boca em uso (Regra 211). As "velas" do chão eram a tocha da colônia do
+> carpinteiro: 13 no chão e 11 em parede no save, e nenhuma vela de verdade na superfície. Ninguém as põe mais, e vela e tocha não recusam
+> lote (Regra 212). Não jogada. Abertos: nenhuma obra nova, mineiro em `NO_PATH` (`TODO.md`).
+
 > **Candidata 0.4.36:** jogo da 0.4.35: os 2 azuis centrais eram quinas fixas de anel. Plantação agora não tem anel e fica com uma
 > entrada; o anel antigo sai do grafo se a rede continua inteira (Regra 208). Porta de quintal fechado só conta se for a única da casa
 > (Regra 209). Conta sobre o save: restariam 4 azuis, um por quadrante. Não jogada. Abertos: lago, MAE, falta de obra (`TODO.md`).

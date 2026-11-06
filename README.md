@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.36%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.37%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,15 +19,18 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Estado atual: candidata 0.4.36** (não jogada). O estado vivo, a contagem de testes e o que espera
+**Estado atual: candidata 0.4.37** (não jogada). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
-[docs/RULES.md](docs/RULES.md) (1 a 209).
+[docs/RULES.md](docs/RULES.md) (1 a 212).
 
 Desde a 0.4.29, em resumo:
 
 - **Grafo de ruas:** no máximo 4 pontas azuis, uma por quadrante (Regra 206); toda porta térrea é entrada, pelo lado de fora
   (Regra 207); a plantação não tem anel e fica com uma entrada (Regra 208); porta de quintal fechado só conta se for a única
-  da casa (Regra 209). O chafariz mantém o anel de caminho (Regra 183).
+  da casa (Regra 209). O chafariz mantém o anel de caminho (Regra 183). Toda estrutura da vila e do mod, e o portão da mina,
+  têm entrada de porta no grafo, sem porta no mundo (Regra 210).
+- **Mineiro e velas:** a casa do mineiro acompanha a boca em uso (Regra 211); nenhum aldeão põe tocha sozinho, e vela ou tocha
+  soltas não recusam lote (Regra 212).
 - **Pastor e lenhador:** o pastor leva os animais amarrados aos pastos e só prende em poste sem curral livre (Regra 196);
   todo aldeão corta folha que trava o caminho (Regra 197); o lenhador prefere o interior da vila e não replanta a menos de
   3 blocos de estrutura (Regras 198 e 199).
@@ -342,7 +345,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 124 | **Construção nova nasce a no mínimo 3 blocos de qualquer construção** (autor 10-27, D1): o lote cuja pegada fica a menos de 3 blocos da caixa de outra construção, ou da obra aberta, é recusado (`TOO_CLOSE`); o caminho pode encostar no lote | 10-27 | ✅ feita (0.3.96) | `LotSpacing`, `LotLevel.flatGroundAt` |
 | 125 | **Quem assenta o caminho** (autor 10-27, D6): o pedreiro, o carpinteiro e o fundidor sem tarefa do ofício, no expediente e soltos, um por vez por colônia, revezando nessa ordem a cada 8 passos; cada passo é a seção de 3 colunas — aterro, corte do que está em cima do piso, caminho de terra e 2 livres —, e se o mundo mudou e a seção não serve mais, o traçado sai e é refeito | 10-27 | ✅ feita (0.3.96) | `PathPaving` |
 | 126 | **Peça colorida sai branca** (autor 10-27, item 5; jogo da 0.3.93: 64 "cama sem lã" e lã preta parada por corante): cama, lã, tapete e estandarte de qualquer cor entram na planta brancos, onde ela é montada — a lã que o rebanho dá é branca e nenhum corante é pedido; as outras peças não mudam | 10-27 | ✅ feita (0.3.96) | `WhitePieces`, `StructureBlueprintReader` |
-| 127 | **Ajudas de quem está sem tarefa do ofício, cada uma com um ofício fixo** (autor 10-27, item 8): o pastor colhe e replanta a lavoura madura das roças conhecidas, sem arar terra nova, e guarda a colheita no baú da colônia mais perto (um pastor por colônia por vez); o construtor limpa a faixa de obra (já fazia, `BuilderPaving`); o lenhador sem tarefa vai ao bosque e repõe muda e põe farinha de osso na hora, no máximo a cada meio minuto; o carpinteiro sem tarefa põe a **tocha da colônia** ao lado do caminho onde a luz de bloco é zero, a 8 blocos ou mais de outra — ela surge sem custo, tem luz 15 e um anel de 8 luzes invisíveis a 10 blocos (área clara ~3×), chama e partícula laranja (a luz do jogo não tem cor), e monstro não nasce sozinho a 30 blocos dela (criador de monstro e invasão continuam); quebrada, o anel sai junto; e o pedreiro sem tarefa recolhe com a pá a neve natural da vila quando a obra aberta pede camada ou bloco de neve — uma bola por camada, quatro por bloco, para o baú (item 5) | 10-27 | ✅ feita (0.3.97) | `IdleHelps`, `KnownFarmland`, `ColonyTorchBlock`, `ColonyTorches`, `HostileSpawnMixin`, `SnowShovel` |
+| 127 | **Ajudas de quem está sem tarefa do ofício, cada uma com um ofício fixo** (autor 10-27, item 8): o pastor colhe e replanta a lavoura madura das roças conhecidas, sem arar terra nova, e guarda a colheita no baú da colônia mais perto (um pastor por colônia por vez); o construtor limpa a faixa de obra (já fazia, `BuilderPaving`); o lenhador sem tarefa vai ao bosque e repõe muda e põe farinha de osso na hora, no máximo a cada meio minuto; a **tocha da colônia** é do jogador, que a faz e a põe (nenhum aldeão a põe sozinho: Regra 212) — tem luz 15 e um anel de 8 luzes invisíveis a 10 blocos (área clara ~3×), chama e partícula laranja (a luz do jogo não tem cor), e monstro não nasce sozinho a 30 blocos dela (criador de monstro e invasão continuam); quebrada, o anel sai junto; e o pedreiro sem tarefa recolhe com a pá a neve natural da vila quando a obra aberta pede camada ou bloco de neve — uma bola por camada, quatro por bloco, para o baú (item 5) | 10-27 | ✅ feita (0.3.97) | `IdleHelps`, `KnownFarmland`, `ColonyTorchBlock`, `ColonyTorches`, `HostileSpawnMixin`, `SnowShovel` |
 | 128 | **Nenhuma profissão espera mais de 5 minutos por nada** (autor 10-27, emenda 11-02): 300 s sem progresso útil na tarefa — caminhar não conta — libera a reserva e registra a tentativa diária. Na segunda falha da mesma demanda no dia, o item físico não construtivo pode ser reposto no baú do ofício com `WAITED_TOO_LONG`; obra nunca surge por essa via. Progresso útil reinicia apenas a tarefa que alterou o mundo | 10-27; emenda 11-02 | ✅ código; falta jogo | `TaskProgressWatch`, `DemandRetries` |
 | 129 | **O nome sobre a cabeça tem a cor do estado** (autor 10-27): laranja no ofício, azul em ajuda, vermelho bloqueado ou encalhado há 30 s, branco à toa no expediente, cinza fora dele | 10-27 | ✅ feita | `WorkTime.Badge`, `ProfessionOverlayRenderer` |
 | 130 | **Cinco animais no mesmo poste pedem curral, com prioridade** (autor 10-27): o curral do estilo entra pela fila urgente; pronto, o pastor leva os do poste um a um | 10-27 | ✅ feita | `PenPlans.crowdedPost`, `UrgentPlans` |
@@ -425,6 +428,9 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 207 | **Toda porta térrea é entrada** (autor 11-05): sai pelo lado de fora da porta, passa por degrau e escada, e o marcador branco fica no primeiro chão firme fora da caixa; porta de dentro não conta e porta dupla conta uma vez. O ramal da Regra 177 cobre o que houver entre ele e a rua. Emenda a Regra 178. | 11-05 |
 | 208 | **Plantação sem anel** (autor 11-06): o chão em volta da plantação não é pedido como caminho, e ela tem uma entrada só, a quina da Regra 184, com ramal até a rua. O caminho já colado nela sai do grafo quando a rede continua inteira sem ele e volta ao solo pelo pedreiro, a qualquer distância da linha; encontro, entrada, centro e o trecho que é a única ligação ficam. Emenda a Regra 183. | 11-06 |
 | 209 | **Porta de quintal fechado** (autor 11-06): a caixa da peça pode incluir o quintal. Porta cuja saída para em barreira dentro da caixa, como cerca, portão ou rebolo, só é entrada se nenhuma outra porta da casa sair, e então no primeiro chão depois dela; assoalho de tábua não é quintal. Emenda a Regra 207. | 11-06 |
+| 210 | **Toda estrutura tem entrada** (autor 11-06): toda estrutura da vila gerada e do mod entra no grafo com o marcador branco de porta, sem porta nova no mundo. Porta, portão; sem eles, o lado com a maior parte da borda aberta na altura de quem anda, ou o lado do centro da vila se todos estão fechados. O portão da mina é lido do mundo e tem a entrada do lado de onde se chega, fora da folga da escada. Rua, ponta de rua, árvore e peça que só põe bicho não são estrutura; plantação segue a Regra 184. Emenda a Regra 207. | 11-06 |
+| 211 | **Casa do mineiro na boca em uso** (autor 11-06): a casa do mineiro fica ao lado da boca da superfície da mina de hoje, até uma por mineiro; a mina mudou de boca, e a casa da boca antiga não serve. A cama vai para o mineiro pela Regra 74. Emenda a Regra 175. | 11-06 |
+| 212 | **Sem tocha sozinha, vela não trava obra** (autor 11-06): nenhum aldeão põe tocha da colônia pelo chão da vila; a que já está lá fica. Vela e tocha soltas não recusam o lote e saem quando a obra abre, menos a tocha das almas (Regra 108) e a de dentro da caixa de uma estrutura. Emenda a Regra 127. | 11-06 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).

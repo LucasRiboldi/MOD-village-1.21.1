@@ -4,8 +4,8 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 106
-- **Só usa a classe indicada:** 95
+- **Cita a regra:** 110
+- **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 5
 
@@ -117,7 +117,7 @@ classe prova menos ainda.
 | 105 | Duas colônias da mesma vila viram uma, e a identidade é a vila gerada, não o centro | classe | ColonyIdentityTest, ColonyMergeTriggerGameTest |
 | 106 | A vila é uma caixa medida pela vila gerada, e não um raio | classe | BedChoiceGameTest, BuilderPavingGameTest, CarpenterWoodGateGameTest |
 | 107 | Marcas no mundo: contorno de chamas no lote, área da vila, dono de cada baú, nome do alde… | classe | BuildSiteGameTest, ChestMarkerGameTest, CraftingLookupGameTest |
-| 108 | A Tocha das Almas cancela a obra: uma tocha das almas (também a de parede) posta pelo jog… | classe | ConstructionCancellationGameTest |
+| 108 | A Tocha das Almas cancela a obra: uma tocha das almas (também a de parede) posta pelo jog… | cita | LotLightDecorGameTest |
 | 109 | A casa fundadora BigHouseMOD: toda vila adotada a recebe uma única vez — cópia editada da… | classe | BedChoiceGameTest, BigHouseFoundationGameTest, ColonyDetectionGameTest |
 | 110 | Nada que a colônia corta some (R-059 do estudo v2, autor 10-22): o que a terraplanagem do… | cita | CuttingsGameTest, LotTerraformGameTest |
 | 111 | Suprimento excepcional só pela lista declarada (R-080 do estudo v2, autor 10-22): o que s… | cita | SupplyExceptionTest, VillageFarmAnimalsGameTest |
@@ -164,10 +164,10 @@ classe prova menos ainda.
 | 152 | O solo da vila nasce suave na geração (autor 10-29: crateras e montanhas no meio das vila… | classe | VillageBlendTest, VillageGroundGameTest, VillageSurfaceTest |
 | 153 | Mais ajudas de quem está sem tarefa (autor 10-28, O1/O3/O4/O8; pedido de novo em 10-29),… | classe | GroundSmoothingGameTest, IdleFixesGameTest, ItemStockGameTest |
 | 154 | Lenhador, fundidor e fazendeiro: os ajustes do O5–O7 (autor 10-28; pedido de novo em 10-2… | classe | ChestPlacerGameTest, IdleFixesGameTest, ItemStockGameTest |
-| 155 | A boca da mina ganha o portão do autor (10-29, estrutura mine_entrance.nbt, 9×7×5): no lu… | classe | MinerGameTest, SmelterGameTest |
+| 155 | A boca da mina ganha o portão do autor (10-29, estrutura mine_entrance.nbt, 9×7×5): no lu… | classe | MinerGameTest, SmelterGameTest, StructureEntrancesGameTest |
 | 156 | O pedreiro alisa o chão da vila (autor 10-29): sem falha de rua a tapar, uma vez por minu… | classe | GroundSmoothingGameTest, StreetLightChunkGameTest, VillageBlendTest |
 | 157 | O mineiro não quebra o que segura algo solto (autor 10-29, jogo da 0.3.108: o cascalho pe… | classe | MineGravityGameTest, MineSettlingGameTest, MinerGameTest |
-| 158 | Sem cama no andar de baixo da casa de escada de mão (autor 10-29, jogo da 0.3.108: 9 de 2… | classe | BedChoiceGameTest, BedPlanTest, VillageOriginGameTest |
+| 158 | Sem cama no andar de baixo da casa de escada de mão (autor 10-29, jogo da 0.3.108: 9 de 2… | classe | BedChoiceGameTest, BedPlanTest, StructureEntrancesGameTest |
 | 159 | O aldeão da colônia pula 2 blocos e por cima da cerca (autor 10-29, depois do jogo da 0.3… | cita | LumberjackGameTest, PenEscapeGameTest |
 | 160 | O construtor trabalha do chão, e quem fica num telhado desce (autor 10-29, jogo da 0.3.10… | classe | BuildZoneGameTest, BuilderApproachGameTest, BuilderGameTest |
 | 161 | Comer enche a vida (autor 10-29): todo aldeão que come (a comida do inventário, ou para c… | cita | VillagerRulesGameTest |
@@ -219,3 +219,6 @@ classe prova menos ainda.
 | 207 | Toda porta térrea é entrada (autor 11-05): sai pelo lado de fora da porta, passa por degr… | cita | DoorFrontsGameTest |
 | 208 | Plantação sem anel (autor 11-06): o chão em volta da plantação não é pedido como caminho,… | cita | RoadLinesTest, RoadRulesGameTest |
 | 209 | Porta de quintal fechado (autor 11-06): a caixa da peça pode incluir o quintal. Porta cuj… | cita | DoorFrontsGameTest |
+| 210 | Toda estrutura tem entrada (autor 11-06): toda estrutura da vila gerada e do mod entra no… | cita | StructureEntrancesGameTest |
+| 211 | Casa do mineiro na boca em uso (autor 11-06): a casa do mineiro fica ao lado da boca da s… | cita | StructureEntrancesGameTest |
+| 212 | Sem tocha sozinha, vela não trava obra (autor 11-06): nenhum aldeão põe tocha da colônia… | cita | ArchitectureRulesTest, LotLightDecorGameTest |

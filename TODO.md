@@ -43,6 +43,14 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] `MaeSitesRoadGameTest.largeStorageEntersByItsNewGroundDoor`: estourou 2400 tiques em 3 de 6 rodadas; causa não achada
 - [ ] `GroundPickupGameTest.workerCollectsWhileWalkingPast`: 1 falha em 12; suspeita, não provada: relógio global fora do expediente (Regra 194)
 
+## Abertos do jogo da 0.4.36
+
+- [ ] Conferir em jogo a 0.4.37: entrada branca em toda estrutura e no portão da mina, casa do mineiro ao lado da boca em uso, nenhuma tocha nova no chão, lote aceito com vela e tocha
+- [ ] Ócio de vila parada no jogo da 0.4.36 (`time_ledger`): `MASON` 81%, `CARPENTER` 78%, `SMELTER` 74% e `SHEPHERD` 83%, com `project=none lots_ok=10707`. Falta achar por que nenhuma obra abre
+- [ ] Mineiro: 141 `NO_PATH` e 46 `UNCLASSIFIED`; `VC_MINE_BRANCH` falhou 50 de 50 antes de voltar à boca
+- [ ] Surgidos, `VC_SUPPLY`, para buscar fabricação: `AUTOMATIC_DROP` `prismarine_shard` ×596, `honeycomb` ×417, `string` ×298, `magma_cream` ×64, `black_dye` ×51; `WAITED_TOO_LONG` `raw_iron` ×151; `MISSING_PIECE` `clay` ×8, `decorated_pot` ×4, `anvil` ×3
+- [ ] O carpinteiro faz 16 velas de cada uma das 17 cores para o estoque, e nada as usa; ver se o estoque precisa delas
+
 ## Abertos do jogo da 0.4.35
 
 - [ ] Casas de x=45 a 65, depois do lago: 7 portas térreas com frente certa, mas a parte não liga à rede (`isolated`=4 a 5, de 54 a 87 blocos do grafo). Falta o diagnóstico "MAE e lago"
