@@ -1,5 +1,9 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.39:** toda entrada aparece no grafo na hora, só o grafo traça caminho em vila nova, o caminho traçado não é esquecido
+> (Regra 214) e o pedreiro ocioso ajuda a calçar (Regra 215). Jogo da 0.4.38 (Spark uoFhAtB15p): primeira obra MAE concluída, 151 de 151 peças
+> pelo construtor, e casa do mineiro na boca em uso. Não jogada: a queda de 132 para 114 nós do grafo não teve a causa provada.
+
 > **Candidata 0.4.38:** a obra MAE entra na fila do construtor (Regra 213, ADR-047): o aldeão a levanta, o mundo vivo não a para, e ela
 > só acaba pronta ou cancelada pelo jogador. A parada da 0.4.35 foi reproduzida em GameTest: grama coberta vira terra e muda a impressão da
 > seção. Sem obra pedida em jogo ainda.

@@ -42,6 +42,15 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] `animalsWalkInThroughEachOfTheFourGates`: 2 falhas em 12 rodadas da bateria inteira, 0 em 7 isolado. Na falha pega, a vaca estava a 9 blocos do portão perto do prazo; causa não achada. Portão fechando foi descartado: fica aberto 600 tiques
 - [ ] `GroundPickupGameTest.workerCollectsWhileWalkingPast`: 1 falha em 12; suspeita, não provada: relógio global fora do expediente (Regra 194)
 
+## Abertos do jogo da 0.4.38
+
+- [ ] Conferir em jogo a 0.4.39: marcador branco em toda estrutura e no portão da mina, nenhum `traced a path` em vila nova, pedreiro com `PAVED`, e o grafo sem queda como a de 14:14 (132 para 114 nós)
+- [ ] O plano do caminho vive só na memória: reiniciar o jogo traça de novo, um por releitura
+- [ ] Vila sem obra: `NOT_IN_GAME` com 39 camas para 31 aldeões; ócio de 63% a 89% em carpinteiro, pedreiro e fundidor
+- [ ] `/vc mae obra` recusada mostra só o motivo do último lote testado (`overlapping_request`, `protected_volume`)
+- [ ] Mineiro: 7 desistências em `the way down got no closer`; pastor: 12 vezes `fenced in`
+- [ ] Surgidos, `VC_SUPPLY`: `raw_iron` ×16 (`WAITED_TOO_LONG`), `honeycomb` ×1, enchimento de lote ×37
+
 ## Abertos do jogo da 0.4.36
 
 - [ ] Conferir em jogo a 0.4.37: entrada branca em toda estrutura e no portão da mina, casa do mineiro ao lado da boca em uso, nenhuma tocha nova no chão, lote aceito com vela e tocha

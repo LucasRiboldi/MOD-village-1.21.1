@@ -24,7 +24,7 @@ Antes de cada etapa, informe modelo e força recomendados e aguarde o "ok" do au
 
 Tabela atual: `docs/technical/Modelos-Codex.md`. Plano aprovado de terreno,
 mina e profissões: `docs/technical/Plano-Playtest-2026-11-02.md`.
-Regra temporária: nenhuma profissão executa atividade de outra, inclusive
+Regra temporária (exceção do autor: o pedreiro ocioso calça o caminho, Regra 215): nenhuma profissão executa atividade de outra, inclusive
 como alternativa ociosa ou ajuda de obra.
 
 Siga `CLAUDE.md` §0.2.2: testes liberados pelo autor em 2026-11-05, rodados por `scripts/test_lab.py`. Leia somente recortes do log e dos relatórios `VC_*`, liste achados com evidência, ofereça 2 ou 3 opções e espere a escolha. Depois implemente a menor correção escolhida, com teste, revise o diff, rode o Sentinela, faça commit, rode `remapJar`, copie o JAR para `downloads/` e para o TLauncher e compare os SHA-256. Trate o resultado como candidato até o próximo playtest. Não altere o CI.

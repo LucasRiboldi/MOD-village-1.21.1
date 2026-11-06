@@ -12,6 +12,18 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.39] — candidata, 2026-11-06
+
+### Mudado
+
+- Grafo: toda entrada aparece na hora, com o marcador branco, mesmo antes de ter caminho (Regra 214).
+- Em vila nova só o grafo traça caminho; o traçado antigo pela porta fica para a vila antiga (Regra 214).
+- O pedreiro ocioso ajuda a calçar o caminho, no rodízio com o construtor (Regra 215).
+
+### Corrigido
+
+- O caminho traçado não é mais esquecido quando uma releitura deixa de pedi-lo (Regra 214).
+
 ## [0.4.38] — candidata, 2026-11-06
 
 ### Mudado
