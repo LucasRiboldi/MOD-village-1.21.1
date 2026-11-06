@@ -42,6 +42,9 @@ public class ShepherdGameTest implements FabricGameTest {
     /** A ovelha, ao alcance do braço de quem está no STAND. */
     private static final BlockPos PEN = new BlockPos(4, 2, 3);
 
+    /** A altura da arena da tosquia, acima das cercas das outras arenas. */
+    private static final int HIGH = 24;
+
     /**
      * A lã sai da ovelha e entra no baú, e a ovelha continua viva.
      *
@@ -52,11 +55,22 @@ public class ShepherdGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd",
             tickLimit = 200)
     public void theWoolLeavesTheSheepAndTheSheepStays(TestContext context) {
-        ground(context);
+        // A hora é global: fora do expediente o pastor não trabalha (Regra 195).
+        context.getWorld().setTimeOfDay(1_000);
+        // Acima das outras arenas: a cerca de uma vizinha a até 16 blocos faria ele levar a ovelha (Regra 196).
+        BlockPos chestAt = CHEST.up(HIGH);
+        BlockPos sheepAt = PEN.up(HIGH);
+        BlockPos standAt = STAND.up(HIGH);
 
-        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        for (int x = 0; x <= 6; x++) {
+            for (int z = 0; z <= 6; z++) {
+                context.setBlockState(new BlockPos(x, 1 + HIGH, z), Blocks.DIRT.getDefaultState());
+            }
+        }
 
-        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+        context.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chestAt));
 
         Colony colony = Colony.create(UUID.randomUUID(), chest);
 
@@ -64,12 +78,12 @@ public class ShepherdGameTest implements FabricGameTest {
 
         ColonyFixture owned = ColonyFixture.create().owning(colony);
 
-        SheepEntity sheep = context.spawnEntity(EntityType.SHEEP, PEN);
+        SheepEntity sheep = context.spawnEntity(EntityType.SHEEP, sheepAt);
         sheep.setColor(DyeColor.WHITE);
         sheep.setSheared(false);
         sheep.setBreedingAge(0);
 
-        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, standAt);
         villager.setBreedingAge(0);
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
@@ -96,7 +110,7 @@ public class ShepherdGameTest implements FabricGameTest {
 
         context.runAtTick(150, () -> {
             int wool = ChestInventoryReader
-                    .read(context.getWorld(), context.getAbsolutePos(CHEST))
+                    .read(context.getWorld(), context.getAbsolutePos(chestAt))
                     .amountOfGroup(ResourceGroup.WOOL);
 
             try {
