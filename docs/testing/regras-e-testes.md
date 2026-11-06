@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 100
+- **Cita a regra:** 102
 - **Só usa a classe indicada:** 95
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 5
@@ -213,3 +213,5 @@ classe prova menos ainda.
 | 201 | O lote MAE aceita chão natural (autor 11-05): areia, cascalho, argila, terracota, andesit… | cita | MaeTerrainGameTest |
 | 202 | A prova do MAE começa na reserva (autor 11-05): a reserva terrain_v2 não exige mais a seç… | cita | MaeTerrainGameTest |
 | 203 | O tanque da obra nasce fechado (autor 11-05): a água e as quatro vizinhas são uma escrita… | cita | MaeStructureModelGameTest |
+| 204 | Planta baixa não barra a obra (autor 11-05): a peça da obra MAE escreve por cima de grama… | cita | MaeSitesRoadGameTest |
+| 205 | Obra falha devolve a região (autor 11-05): sem escrita por confirmar, a região volta para… | cita | MaeSitesRoadGameTest |

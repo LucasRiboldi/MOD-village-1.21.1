@@ -46,7 +46,7 @@ pode ser maior, supervisionada, mas cada obra exige aprovação individual.
    pode ultrapassar dois milissegundos; isto não constitui limite de latência rígido.
 9. Registrar intenção antes de escrever e confirmar estado posterior antes de
    avançar cursor. Falha bloqueia com causa; retomada é explícita e revalida.
-   Intenção sem confirmação nunca é repetida automaticamente. Só hashes confirmados
+   Falha sem escrita por confirmar entrega a região, sem desfazer nada (autor, 2026-11-05, Regra 205). Intenção sem confirmação nunca é repetida automaticamente. Só hashes confirmados
    pelo MAE podem substituir a referência de geração para uma obra seguinte.
    Emenda (autor, 2026-11-05, Regras 200 e 202): a limpeza de árvore, folha e mato que o
    próprio MAE faz antes da reserva também substitui a referência das seções da região.

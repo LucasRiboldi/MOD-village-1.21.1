@@ -444,7 +444,8 @@ public final class MaeSites {
     }
 
     /**
-     * Fim da obra: pronta em vila nova, ou falha sem nenhuma escrita, a região volta para a vila; o resto fica reservado.
+     * Fim da obra: pronta em vila nova, ou falha sem escrita por confirmar, a região volta para a vila, e o que já foi
+     * escrito fica como está (Regra 205); o resto fica reservado.
      *
      * @return se a região foi entregue
      */
@@ -453,7 +454,8 @@ public final class MaeSites {
         var region = store.region(regionId);
         boolean newVillage = region.filter(found -> found.containsUuid("colony"))
                 .map(found -> NewVillage.is(entry.world(), found.getUuid("colony"))).orElse(false);
-        boolean handOver = phase == MaeStructureSite.Phase.DONE ? newVillage : region.map(MaeHandover::untouched).orElse(false);
+        boolean handOver = phase == MaeStructureSite.Phase.DONE ? newVillage
+                : region.filter(found -> !MaeHandover.hasUnconfirmedWork(found)).isPresent();
 
         if (handOver) {
             MaeHandover.handOver(store, regionId);

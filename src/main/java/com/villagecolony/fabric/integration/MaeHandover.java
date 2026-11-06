@@ -31,12 +31,6 @@ final class MaeHandover {
         });
     }
 
-    /** Nenhuma escrita registrada e nenhum job em curso: entregar não muda nada no mundo. */
-    static boolean untouched(NbtCompound region) {
-        return appliedChanges(region) == 0 && !hasUnconfirmedWork(region)
-                && !"approved".equals(region.getCompound("job").getString("state"));
-    }
-
     /** Escrita ou publicação sem confirmação: só a análise solta esta região (ADR-044). */
     static boolean hasUnconfirmedWork(NbtCompound region) {
         NbtCompound job = region.getCompound("job");

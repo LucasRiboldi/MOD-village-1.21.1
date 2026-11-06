@@ -247,6 +247,8 @@ regra que foi emendada. O corpo de cada regra vive em
 | 201 | **O lote MAE aceita chão natural** (autor 11-05): areia, cascalho, argila, terracota, andesito, diorito, granito, tufo, ardósia, minério e neve compacta não recusam mais o lote. Água continua recusando. | 11-05 |
 | 202 | **A prova do MAE começa na reserva** (autor 11-05): a reserva `terrain_v2` não exige mais a seção igual à da geração; ela grava a impressão daquele momento, depois da conferência bloco a bloco. Terra ou pedra posta pelo jogador antes da reserva não é detectada. | 11-05 |
 | 203 | **O tanque da obra nasce fechado** (autor 11-05): a água e as quatro vizinhas são uma escrita só, com o material delas, para o atraso da obra não deixar a água escorrer e recusar o volume. | 11-05 |
+| 204 | **Planta baixa não barra a obra** (autor 11-05): a peça da obra MAE escreve por cima de grama e flor; o preparo só as tira de coluna que corta ou aterra. | 11-05 |
+| 205 | **Obra falha devolve a região** (autor 11-05): sem escrita por confirmar, a região volta para a vila e o grafo volta a andar; o que já foi escrito fica como está. Escrita sem confirmação continua presa até a análise. | 11-05 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).
