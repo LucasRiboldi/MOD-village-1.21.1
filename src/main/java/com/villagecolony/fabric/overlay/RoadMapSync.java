@@ -168,7 +168,7 @@ public final class RoadMapSync {
         }
     }
 
-    private static int colorOf(RoadGraph.Node node) {
+    static int colorOf(RoadGraph.Node node) {
         if (node.roles().contains(RoadGraph.Role.HUB)) {
             return HUB;
         }
@@ -177,7 +177,8 @@ public final class RoadMapSync {
             return ENTRANCE;
         }
 
-        return node.roles().contains(RoadGraph.Role.JUNCTION) ? JUNCTION : OTHER;
+        // Azul é só a ponta da vila (Regra 206).
+        return node.roles().contains(RoadGraph.Role.ENDPOINT) ? OTHER : JUNCTION;
     }
 
     private static boolean near(BlockPos center, int x, int z) {

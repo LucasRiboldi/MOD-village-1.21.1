@@ -152,6 +152,7 @@ public final class RoadLines {
         }
 
         columns.keySet().retainAll(main);
+        RoadTips.prune(columns, center, fixed);
 
         // Só as linhas e a frente de toda porta: a rua é de um bloco (Regra 186).
         Map<Long, Integer> toLay = new HashMap<>();

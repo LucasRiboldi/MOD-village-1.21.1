@@ -40,6 +40,12 @@ public class RoadMapSyncGameTest implements FabricGameTest {
             context.assertTrue(map.lines().stream().anyMatch(drawn -> drawn.color() == RoadMapSync.LINE), "Regra 176: a linha amarela não foi desenhada");
             context.assertTrue(map.markers().stream().anyMatch(marker -> marker.color() == RoadMapSync.HUB), "Regra 176: o nó central não saiu vermelho");
             context.assertTrue(map.markers().stream().anyMatch(marker -> marker.color() == RoadMapSync.ENTRANCE), "Regra 176: a entrada não saiu branca");
+            context.assertTrue(map.markers().stream().noneMatch(marker -> marker.color() == RoadMapSync.OTHER), "Regra 206: azul fora de ponta");
+
+            ColonyPos any = new ColonyPos(0, 0, 0);
+
+            context.assertTrue(RoadMapSync.colorOf(new RoadGraph.Node(any, Set.of(RoadGraph.Role.ENDPOINT))) == RoadMapSync.OTHER, "Regra 206: a ponta não saiu azul");
+            context.assertTrue(RoadMapSync.colorOf(new RoadGraph.Node(any, Set.of(RoadGraph.Role.CYCLE_ANCHOR))) == RoadMapSync.JUNCTION, "Regra 206: nó de anel saiu azul");
 
             var mae = world.getServer().getCommandManager().getDispatcher().getRoot().getChild("vc").getChild("mae");
             var source = world.getServer().getCommandSource();

@@ -152,6 +152,65 @@ class RoadLinesTest {
     }
 
     @Test
+    @DisplayName("Regra 206: toco no meio da vila sai do grafo, e o caminho dele vira sobra")
+    void aStubInsideTheVillageLeavesTheGraph() {
+        Set<ColonyPos> cells = corridor(-20, 20, 0, 0);
+
+        cells.addAll(corridor(5, 5, 1, 8));
+
+        RoadLines.Result result = build(cells, at(0, 0), Set.of(), Set.of());
+        Set<ColonyPos> columns = columnsOf(result);
+
+        assertFalse(columns.contains(at(5, 8)), "o toco ficou no grafo: " + columns);
+        assertFalse(columns.contains(at(5, 1)), "o trecho morto ficou no grafo: " + columns);
+        assertTrue(columns.containsAll(List.of(at(-20, 0), at(20, 0))), "as pontas dos cantos saíram");
+        assertTrue(result.surplus().contains(at(5, 1)), "o caminho do toco não virou sobra: " + result.surplus());
+    }
+
+    @Test
+    @DisplayName("Regra 206: no máximo uma ponta por quadrante, a mais distante")
+    void atMostOneTipPerQuadrant() {
+        Set<ColonyPos> cells = corridor(-20, 20, 0, 0);
+
+        cells.addAll(corridor(6, 6, 1, 8));
+        cells.addAll(corridor(12, 12, 1, 3));
+        cells.addAll(corridor(-6, -6, 1, 8));
+        cells.addAll(corridor(6, 6, -8, -1));
+        cells.addAll(corridor(-6, -6, -8, -1));
+
+        RoadGraph graph = build(cells, at(0, 0), Set.of(), Set.of()).graph().orElseThrow();
+        List<RoadGraph.Node> tips = graph.nodes().stream()
+                .filter(node -> node.roles().contains(RoadGraph.Role.ENDPOINT) && !node.roles().contains(RoadGraph.Role.HUB))
+                .toList();
+
+        assertTrue(tips.size() <= 4, "mais de 4 pontas: " + tips);
+        assertEquals(tips.size(), tips.stream().map(node -> (node.position().x() >= 0 ? 1 : 0) + (node.position().z() >= 0 ? 2 : 0)).distinct().count(),
+                "duas pontas no mesmo quadrante: " + tips);
+    }
+
+    @Test
+    @DisplayName("Regra 206: a entrada no fim de um trecho fica")
+    void anEntranceAtTheEndOfAStubStays() {
+        ColonyPos door = at(5, 3);
+        Set<ColonyPos> cells = corridor(-20, 20, 0, 0);
+
+        cells.addAll(corridor(5, 5, 1, 3));
+
+        RoadGraph graph = build(cells, at(0, 0), Set.of(door), Set.of()).graph().orElseThrow();
+
+        assertTrue(graph.nodes().stream().anyMatch(node -> node.position().equals(door)
+                && node.roles().contains(RoadGraph.Role.ENTRANCE)), "a entrada saiu junto com o toco");
+    }
+
+    @Test
+    @DisplayName("Regra 206: linha toda num quadrante não some até o centro")
+    void aLineInOneQuadrantKeepsItsHub() {
+        Set<ColonyPos> columns = columnsOf(build(corridor(5, 20, 5, 5), at(0, 0), Set.of(), Set.of()));
+
+        assertTrue(columns.containsAll(List.of(at(5, 5), at(20, 5))), "a linha foi cortada: " + columns);
+    }
+
+    @Test
     @DisplayName("Regra 186: a sobra ao lado da linha volta ao solo, e a frente de porta fica")
     void theSurplusBesideTheLineGoesAwayButTheDoorStays() {
         ColonyPos door = at(10, 1);
