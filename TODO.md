@@ -43,6 +43,14 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] `MaeSitesRoadGameTest.largeStorageEntersByItsNewGroundDoor`: estourou 2400 tiques em 3 de 6 rodadas; causa não achada
 - [ ] `GroundPickupGameTest.workerCollectsWhileWalkingPast`: 1 falha em 12; suspeita, não provada: relógio global fora do expediente (Regra 194)
 
+## Abertos do jogo da 0.4.32
+
+- [ ] MAE: 2 obras limparam o lote (91 e 55 blocos) e pararam em `structure:occupied_structure_target` (`applied` 10 e 3). Provável: `short_grass` e flor no lote; a limpeza deixa a vegetação baixa e a peça exige ar
+- [ ] MAE: as 2 regiões falhas ficaram sem entrega e `metadataAllowed` congelou o grafo e o índice de ruas: último `VC_ROAD_GRAPH` às 20:35:29, jogo até 21:10
+- [ ] Grafo: 11 pontas azuis (autor: no máximo 4, uma em cada canto, e nenhuma no centro); (118,63,-214) e (135,62,-232) estão a 17 e 18 blocos do centro
+- [ ] Grafo: entrada do lado errado da casa em 4 portas conferidas (`PathLinks.entranceOf` empata e fica com o lado de dentro); só a primeira porta da caixa vira entrada
+- [ ] Surgidos, `VC_SUPPLY`: `prismarine_crystals` ×80, `prismarine_shard` ×76, `grass_block` ×10 (`FOUNDATION_GROUND`), `honeycomb` ×7, `terracotta` ×2 (`WAITED_TOO_LONG`), corantes de 1 a 2
+
 ## MAE: o que falta depois da 0.4.26
 
 - [ ] Primeira obra em jogo com `/vc mae obra <modelo> fora`, Spark junto e leitura do `VC_MAE_SITE`
