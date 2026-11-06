@@ -43,3 +43,7 @@ A ideia do mod é o contrário de um mundo parado: os aldeões constroem, e o mu
   com os testes deles; a remoção é decisão à parte.
 - Fica sem efeito para a obra pedida: Regra 187 (entrega da região), Regra 203 (tanque numa escrita só; a água entra pelo construtor) e
   Regra 205 (obra falha devolve a região).
+
+## Emenda de 2026-11-06 (autor)
+
+A escrita própria do MAE saiu do código (varredura, 4B), e o lote usa só a régua do construtor (8A). A prova de geração continua sendo calculada em chunk novo, sem nenhum leitor: fica até o autor decidir. Região de versão anterior vira pedido e sai do save, mesmo com escrita sem confirmação, porque não há mais quem a analise.

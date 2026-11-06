@@ -1,5 +1,10 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.40:** varredura de conflitos aplicada (ADR-048): todo caminho e toda rede pelo grafo, em toda vila; só aldeão calça; pedreiro ocioso
+> nivela; uma régua de lote, um leitor de porta e uma lista de livres; a escrita própria do MAE saiu do código. Não jogada, e o efeito em save
+> antigo nunca foi visto. A prova de geração ficou calculando sem nenhum leitor.
+> Sentinela `fast`: 1035 GameTests verdes e 1 falha de tamanho de arquivo, corrigida depois com os unitários e os testes da área de novo verdes; a bateria inteira roda na CI. PIT local: 85,8%.
+
 > **Candidata 0.4.39:** toda entrada aparece no grafo na hora, só o grafo traça caminho em vila nova, o caminho traçado não é esquecido
 > (Regra 214) e o pedreiro ocioso ajuda a calçar (Regra 215). Jogo da 0.4.38 (Spark uoFhAtB15p): primeira obra MAE concluída, 151 de 151 peças
 > pelo construtor, e casa do mineiro na boca em uso. Não jogada: a queda de 132 para 114 nós do grafo não teve a causa provada.

@@ -1,7 +1,7 @@
 # Varredura de conflitos e redundância — 2026-11-06
 
-Pedido do autor, depois da Regra 214: todo sistema baseado no grafo. Lido no código da 0.4.39 e no jogo da 0.4.38 (50 min). Nada aqui foi
-alterado: cada item espera a escolha do autor.
+Pedido do autor, depois da Regra 214: todo sistema baseado no grafo. Lido no código da 0.4.39 e no jogo da 0.4.38 (50 min). Escolhas do autor,
+todas aplicadas na 0.4.40: 1A, 2A, 3 (esquecer o que é velho e usar sempre o sistema atual), 4B, 5A, 6A, 7A, 8A e 9A. Ver ADR-048.
 
 ## 1. Caminho que nasce fora do grafo, em vila nova
 

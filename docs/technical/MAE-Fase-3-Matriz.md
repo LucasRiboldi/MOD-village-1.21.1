@@ -1,3 +1,5 @@
+> **Histórico.** Descreve a escrita própria do MAE, que saiu do código em 2026-11-06 (ADR-047).
+
 # MAE — Fase 3: matriz de modelos e contrato de acesso
 
 Auditoria inicial: 2026-11-03. As seções 1–6 conservam essa fotografia histórica.

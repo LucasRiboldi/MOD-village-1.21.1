@@ -1,3 +1,5 @@
+> **Histórico.** Descreve a escrita própria do MAE, que saiu do código em 2026-11-06 (ADR-047).
+
 # MAE — Fase 3: auditoria inicial de estruturas e acesso
 
 Data: 2026-11-03. Base da auditoria inicial: `main` em `0a7590fc` (PR #49).
