@@ -222,12 +222,17 @@ final class RoadChains {
             }
         }
 
-        return new Net(new ArrayList<>(new HashSet<>(nodeOf.values())), withoutTwins(chains));
+        // Nó não tem hashCode próprio: a ordem vem da posição, para a mesma rua dar o mesmo grafo em toda leitura.
+        List<Node> nodes = new ArrayList<>(new HashSet<>(nodeOf.values()));
+
+        nodes.sort(java.util.Comparator.<Node>comparingInt(node -> node.x).thenComparingInt(node -> node.z));
+
+        return new Net(nodes, withoutTwins(chains));
     }
 
     /** Laço curto entre os mesmos dois nós é beira de faixa, não duas ruas. */
     static List<Chain> withoutTwins(List<Chain> chains) {
-        Map<Set<Node>, Chain> shortest = new HashMap<>();
+        Map<Set<Node>, Chain> shortest = new java.util.LinkedHashMap<>();
         List<Chain> kept = new ArrayList<>();
 
         for (Chain chain : chains) {

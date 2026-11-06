@@ -31,6 +31,7 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 ### Corrigido
 
 - Vela e tocha soltas não recusam mais o lote, e saem quando a obra abre (Regra 212).
+- A mesma rua dava grafos diferentes a cada releitura, porque a ordem dos nós vinha da identidade do objeto.
 
 ## [0.4.36] — candidata, 2026-11-06
 

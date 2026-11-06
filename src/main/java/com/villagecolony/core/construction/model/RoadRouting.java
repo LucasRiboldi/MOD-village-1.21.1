@@ -2,7 +2,6 @@ package com.villagecolony.core.construction.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -79,8 +78,9 @@ final class RoadRouting {
 
     /** Alinha os nós ligados por trechos quase retos, no eixo {@code z} (corredor ao longo de x) ou no outro. */
     private static void align(RoadChains.Net net, Map<Long, Integer> mask, PathTerrain terrain, boolean alongX) {
-        Map<RoadChains.Node, RoadChains.Node> parent = new HashMap<>();
-        Map<RoadChains.Node, List<Integer>> samples = new HashMap<>();
+        // Em ordem de chegada: Nó não tem hashCode próprio, e a mesma rua tem de dar o mesmo grafo em toda leitura.
+        Map<RoadChains.Node, RoadChains.Node> parent = new java.util.LinkedHashMap<>();
+        Map<RoadChains.Node, List<Integer>> samples = new java.util.LinkedHashMap<>();
         List<RoadChains.Chain> straight = new ArrayList<>();
 
         for (RoadChains.Chain chain : net.chains()) {
@@ -99,9 +99,9 @@ final class RoadRouting {
             }
         }
 
-        Map<RoadChains.Node, List<RoadChains.Node>> groups = new HashMap<>();
+        Map<RoadChains.Node, List<RoadChains.Node>> groups = new java.util.LinkedHashMap<>();
 
-        for (RoadChains.Node node : new HashSet<>(parent.keySet())) {
+        for (RoadChains.Node node : List.copyOf(parent.keySet())) {
             groups.computeIfAbsent(root(parent, node), ignored -> new ArrayList<>()).add(node);
         }
 
