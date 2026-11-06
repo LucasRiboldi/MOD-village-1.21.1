@@ -46,8 +46,8 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 ## Abertos do jogo da 0.4.32
 
 - [ ] MAE: conferir em jogo a 0.4.34 (Regras 204 e 205); no save atual, rodar `/vc mae soltar` uma vez para as 2 regiões já falhas
-- [ ] Grafo: 11 pontas azuis (autor: no máximo 4, uma em cada canto, e nenhuma no centro); (118,63,-214) e (135,62,-232) estão a 17 e 18 blocos do centro
-- [ ] Grafo: entrada do lado errado da casa em 4 portas conferidas (`PathLinks.entranceOf` empata e fica com o lado de dentro); só a primeira porta da caixa vira entrada
+- [ ] Grafo: conferir em jogo a 0.4.35 (Regras 206 e 207): até 4 azuis, marcador branco em cada porta térrea; rua sem saída que saiu do grafo e voltou a grama
+- [ ] Grafo: as 9 portas das casas de x=50 a 62 não tinham entrada; não se sabe se a parte foi descartada por isolada
 - [ ] Surgidos, `VC_SUPPLY`: `prismarine_crystals` ×80, `prismarine_shard` ×76, `grass_block` ×10 (`FOUNDATION_GROUND`), `honeycomb` ×7, `terracotta` ×2 (`WAITED_TOO_LONG`), corantes de 1 a 2
 
 ## MAE: o que falta depois da 0.4.26

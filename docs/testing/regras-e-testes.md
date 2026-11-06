@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 102
+- **Cita a regra:** 104
 - **Só usa a classe indicada:** 95
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 5
@@ -184,7 +184,7 @@ classe prova menos ainda.
 | 172 | Água aberta (autor 11-04): com mais de 5 blocos de água à frente, todo aldeão anda cerca… | cita | VillagerRulesGameTest |
 | 173 | Zona da obra limpa (autor 11-04): árvore, tronco, folha e flor saem em todas as alturas,… | cita | TreeClearingGameTest |
 | 174 | Ponte (autor 11-04): sem caminho a seco na zona da vila, o construtor atravessa a água, a… | cita | BridgeDeckGameTest |
-| 175 | Casa do mineiro (autor 11-04): a primeira casa junto à boca da mina é a casa pequena do m… | classe | MineHomePlansTest, PathNetworkGameTest |
+| 175 | Casa do mineiro (autor 11-04): a primeira casa junto à boca da mina é a casa pequena do m… | classe | DoorFrontsGameTest, MineHomePlansTest, PathNetworkGameTest |
 | 176 | Sinalizador dos caminhos (autor 11-04): /vc mae mostrar ligar\ | cita | RoadMapSyncGameTest |
 | 177 | Grafo como mapa de trilhos (autor 11-05): uma linha contínua por corredor, no bloco centr… | cita | RoadLinesTest |
 | 178 | Acesso livre (autor 11-05): o primeiro bloco fora de toda porta e portão é caminho; portã… | cita | RoadLinesTest, TreeClearingGameTest |
@@ -215,3 +215,5 @@ classe prova menos ainda.
 | 203 | O tanque da obra nasce fechado (autor 11-05): a água e as quatro vizinhas são uma escrita… | cita | MaeStructureModelGameTest |
 | 204 | Planta baixa não barra a obra (autor 11-05): a peça da obra MAE escreve por cima de grama… | cita | MaeSitesRoadGameTest |
 | 205 | Obra falha devolve a região (autor 11-05): sem escrita por confirmar, a região volta para… | cita | MaeSitesRoadGameTest |
+| 206 | As pontas do grafo são os cantos da vila (autor 11-05): fica a ponta mais distante do cen… | cita | RoadLinesTest, RoadMapSyncGameTest |
+| 207 | Toda porta térrea é entrada (autor 11-05): sai pelo lado de fora da porta, passa por degr… | cita | DoorFrontsGameTest |

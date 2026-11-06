@@ -249,6 +249,8 @@ regra que foi emendada. O corpo de cada regra vive em
 | 203 | **O tanque da obra nasce fechado** (autor 11-05): a água e as quatro vizinhas são uma escrita só, com o material delas, para o atraso da obra não deixar a água escorrer e recusar o volume. | 11-05 |
 | 204 | **Planta baixa não barra a obra** (autor 11-05): a peça da obra MAE escreve por cima de grama e flor; o preparo só as tira de coluna que corta ou aterra. | 11-05 |
 | 205 | **Obra falha devolve a região** (autor 11-05): sem escrita por confirmar, a região volta para a vila e o grafo volta a andar; o que já foi escrito fica como está. Escrita sem confirmação continua presa até a análise. | 11-05 |
+| 206 | **As pontas do grafo são os cantos da vila** (autor 11-05): fica a ponta mais distante do centro em cada quadrante, no máximo 4, e só ela é azul e cresce. As outras perdem o trecho morto até o encontro, a entrada ou a quina fixa; o caminho a até 3 blocos da linha volta ao solo (Regra 186). Emenda a Regra 177. | 11-05 |
+| 207 | **Toda porta térrea é entrada** (autor 11-05): sai pelo lado de fora da porta, passa por degrau e escada, e o marcador branco fica no primeiro chão firme fora da caixa; porta de dentro não conta e porta dupla conta uma vez. O ramal da Regra 177 cobre o que houver entre ele e a rua. Emenda a Regra 178. | 11-05 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).
