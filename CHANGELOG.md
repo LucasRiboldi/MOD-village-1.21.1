@@ -12,6 +12,13 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.33] — candidata, 2026-11-05
+
+### Corrigido
+
+- MAE: a obra do curral grande parava em `protected_volume` quando atrasava, porque a água escorria antes de as vizinhas entrarem.
+  A água e as quatro vizinhas agora são uma escrita só (Regra 203).
+
 ## [0.4.32] — candidata, 2026-11-05
 
 ### Corrigido

@@ -1,5 +1,8 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.33:** o tanque da obra MAE nasce fechado (Regra 203): água e vizinhas numa escrita só. Provado no teste com a obra
+> atrasada de propósito, que antes falhava igual ao jogo. Não jogada.
+
 > **Candidata 0.4.32:** testes aplicados a pedido do autor: 1123 GameTests verdes em 2 rodadas seguidas e 1745 unitários. Os testes
 > novos das Regras 196 a 202 falharam com as regras desligadas (10 de 10). Sem teste ainda: Regras 181 a 190, 192 a 194, e o andar da
 > reunião (Regra 195, só o relógio). Teste verde não é jogo: o MAE continua sem nenhuma obra em jogo.
