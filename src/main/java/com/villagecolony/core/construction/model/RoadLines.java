@@ -64,6 +64,16 @@ public final class RoadLines {
      */
     public static Result build(Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> entrances,
                                Set<ColonyPos> farmRings, PathTerrain terrain, int maxLinks, int turn) {
+        return build(cells, planned, center, entrances, farmRings, terrain, terrain, 0, maxLinks, turn);
+    }
+
+    /**
+     * O mesmo, com a travessia: sem saída a seco, a ligação pode cruzar até {@code maxSpan} colunas sem chão.
+     *
+     * @param bridging o terreno em que a água conta como piso
+     */
+    public static Result build(Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> entrances,
+                               Set<ColonyPos> farmRings, PathTerrain terrain, PathTerrain bridging, int maxSpan, int maxLinks, int turn) {
         Map<Long, Integer> physical = new HashMap<>();
 
         cells.forEach(at -> physical.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
@@ -131,7 +141,7 @@ public final class RoadLines {
             if (links < maxLinks) {
                 links++;
 
-                if (link(part, main, columns, terrain)) {
+                if (link(part, main, columns, terrain, bridging, maxSpan)) {
                     main.addAll(part);
                     continue;
                 }
@@ -346,7 +356,8 @@ public final class RoadLines {
     }
 
     /** Liga esta parte à principal pelo trecho mais curto de chão andável. */
-    private static boolean link(Set<Long> part, Set<Long> main, Map<Long, Integer> columns, PathTerrain terrain) {
+    private static boolean link(Set<Long> part, Set<Long> main, Map<Long, Integer> columns, PathTerrain terrain,
+                                PathTerrain bridging, int maxSpan) {
         long from = part.iterator().next();
         long to = main.iterator().next();
         int best = Integer.MAX_VALUE;
@@ -390,6 +401,12 @@ public final class RoadLines {
 
         Optional<List<PathStep>> steps = VillagePathPlanner.plan(terrain, ColonyRoads.xOf(from),
                 columns.getOrDefault(from, 0), ColonyRoads.zOf(from), headingTo(from, to), goal);
+
+        if ((steps.isEmpty() || steps.get().isEmpty()) && maxSpan > 0) {
+            steps = VillagePathPlanner.plan(bridging, ColonyRoads.xOf(from), columns.getOrDefault(from, 0), ColonyRoads.zOf(from),
+                    headingTo(from, to), goal).filter(found -> found.stream()
+                    .filter(step -> terrain.groundY(step.x(), step.z(), step.floorY()).isEmpty()).count() <= maxSpan);
+        }
 
         if (steps.isEmpty() || steps.get().isEmpty()) {
             return false;

@@ -410,11 +410,6 @@ final class SiteOpening {
 
     /** O caminho do lote recuado até a rua (RoadsideSites.SETBACKS): o chão vira o caminho natural dele. */
     private static void pavePathTo(ServerWorld world, java.util.UUID colonyId, BuildSiteScanner.Site site) {
-        // Corte lateral e planta no topo também pertencem à operação; recusar antes de CorridorCut — MAE Fase 2.
-        if (!com.villagecolony.fabric.integration.MaeRoadAccess.legacyAllowed(world,
-                site.path().stream().map(MinecraftTypeAdapter::toBlockPos).toList(),
-                com.villagecolony.fabric.integration.Corridor.MAX_CUT,
-                2 * com.villagecolony.fabric.integration.Corridor.MAX_CUT + 1)) return;
         CorridorCut.cut(world, colonyId, site.path());
 
         for (ColonyPos cell : site.path()) {

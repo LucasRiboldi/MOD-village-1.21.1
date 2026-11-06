@@ -283,15 +283,6 @@ public final class StructureBlueprintReader {
         return Optional.of(street.isPresent() ? blueprint.withStreetLayer(street.getAsInt()) : blueprint);
     }
 
-    /** Leitura MAE separada da política legada; não concede autorização de escrita — ADR-046. */
-    public static Optional<Blueprint> readForMae(ServerWorld world, ResourceId structure) {
-        // Quatro portões só no exercício supervisionado; fluxo automático conserva o asset legado — ADR-046.
-        ResourceId source = structure.equals(new ResourceId("villagecolony", "colony/large_animal_pen"))
-                ? new ResourceId("villagecolony", "mae/large_animal_pen") : ColonyModels.sourceFor(structure);
-        return read(world, structure, source).map(blueprint -> MaeStructureModel.prove(blueprint,
-                world.getStructureTemplateManager().getTemplate(
-                        MinecraftTypeAdapter.toIdentifier(source)).orElseThrow()));
-    }
 
     /**
      * Os blocos do template, já convertidos e filtrados.

@@ -33,21 +33,21 @@ public final class MaeSitesGameTest implements FabricGameTest {
 
     private static final int RANDOM_TICKS_PER_SECTION = 3;
 
-    private static MaeStructureSiteGameTest.Arena arenaWithBuilder(TestContext context) {
-        var arena = new MaeStructureSiteGameTest.Arena(context, HOUSE, false);
+    private static Arena arenaWithBuilder(TestContext context) {
+        var arena = new Arena(context, HOUSE, false);
 
         arena.fixture.colony.equippedWorker(context, ProfessionType.BUILDER, new BlockPos(1, 2, 1));
 
         return arena;
     }
 
-    private static void end(TestContext context, MaeStructureSiteGameTest.Arena arena) {
+    private static void end(TestContext context, Arena arena) {
         clear(context.getWorld(), arena);
         arena.cleanup();
         context.complete();
     }
 
-    private static void clear(ServerWorld world, MaeStructureSiteGameTest.Arena arena) {
+    private static void clear(ServerWorld world, Arena arena) {
         UUID colony = arena.fixture.colony.colony().id();
 
         MaeBuildQueue.ofColony(world, colony).forEach(request -> MaeBuildQueue.remove(world, request.id()));
@@ -55,7 +55,7 @@ public final class MaeSitesGameTest implements FabricGameTest {
         VillageColonyMod.BUILDINGS.removeOfColony(colony);
     }
 
-    private static MaeBuildQueue.Request onlyRequest(TestContext context, MaeStructureSiteGameTest.Arena arena) {
+    private static MaeBuildQueue.Request onlyRequest(TestContext context, Arena arena) {
         List<MaeBuildQueue.Request> requests = MaeBuildQueue.ofColony(context.getWorld(), arena.fixture.colony.colony().id());
 
         context.assertTrue(requests.size() == 1, "Regra 213: esperava um pedido na fila: " + requests);
@@ -137,7 +137,7 @@ public final class MaeSitesGameTest implements FabricGameTest {
         });
     }
 
-    private static void living(TestContext context, MaeStructureSiteGameTest.Arena arena, ConstructionProject project, int ticksLeft) {
+    private static void living(TestContext context, Arena arena, ConstructionProject project, int ticksLeft) {
         arena.guarded(() -> {
             var colony = arena.fixture.colony.colony();
 
@@ -279,21 +279,37 @@ public final class MaeSitesGameTest implements FabricGameTest {
 
         arena.guarded(() -> {
             var colony = arena.fixture.colony.colony();
-            MaeWorldWriter writer = MaeWorldWriter.of(context.getWorld());
-            UUID region = writer.reserveTerrain(context.getWorld(), colony.id(), MaeSites.lotArea(arena.project.blueprint(), colony.id(), arena.project.origin()));
+            var store = com.villagecolony.data.save.ColonySavedData.get(context.getWorld().getServer()).maeWork();
+            NbtCompound saved = new NbtCompound();
+            NbtCompound work = new NbtCompound();
+            NbtCompound region = new NbtCompound();
+            NbtCompound site = new NbtCompound();
+            net.minecraft.nbt.NbtList regions = new net.minecraft.nbt.NbtList();
 
-            new MaeSiteRecord(HOUSE, arena.origin, 0, null).writeTo(writer.store(), region);
+            site.putString("namespace", HOUSE.namespace());
+            site.putString("path", HOUSE.path());
+            site.putLong("origin", arena.origin.asLong());
+            site.putInt("rotation", 0);
+            region.putUuid("id", UUID.randomUUID());
+            region.putUuid("colony", colony.id());
+            region.put(MaeSiteRecord.KEY, site);
+            regions.add(region);
+            work.putInt("version", 3);
+            work.put("regions", regions);
+            saved.put(MaeWorkStore.KEY, work);
+            store.read(saved);
+
             MaeSites.retireOldRegions(context.getWorld().getServer());
 
             context.assertTrue(onlyRequest(context, arena).model().equals(HOUSE), "Regra 213: a obra antiga não virou pedido");
-            context.assertTrue(MaeHandover.isHandedOver(writer.store().region(region).orElseThrow()), "a região antiga continuou presa");
+            context.assertTrue(store.regions().isEmpty(), "a região antiga continuou no save");
             end(context, arena);
         });
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_refuse", tickLimit = 40)
     public void requestsAreRefusedWithTheirReason(TestContext context) {
-        var arena = new MaeStructureSiteGameTest.Arena(context, HOUSE, false);
+        var arena = new Arena(context, HOUSE, false);
 
         arena.guarded(() -> {
             UUID colony = arena.fixture.colony.colony().id();
@@ -313,7 +329,7 @@ public final class MaeSitesGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_search", tickLimit = 40)
     public void searchFindsALevelLotNearTheRequest(TestContext context) {
-        var arena = new MaeStructureSiteGameTest.Arena(context, HOUSE, false);
+        var arena = new Arena(context, HOUSE, false);
 
         arena.guarded(() -> {
             var status = MaeSites.startNear(context.getWorld(), arena.fixture.colony.colony().id(), HOUSE, arena.fixture.base, 0, null);
@@ -333,5 +349,91 @@ public final class MaeSitesGameTest implements FabricGameTest {
             return;
         }
         context.assertTrue(false, "pedido deveria recusar: " + reason);
+    }
+
+    /** Uma arena longe das colônias de outros testes, no chunk com o recibo de geração recapturado. */
+    private static final class Arena {
+        private static final java.util.concurrent.atomic.AtomicInteger NEXT = new java.util.concurrent.atomic.AtomicInteger();
+        final TestContext context;
+        final Fixture fixture;
+        final BlockPos origin;
+        final ConstructionProject project;
+
+        Arena(TestContext context, ResourceId model, boolean unused) {
+            this.context = context;
+            this.fixture = new Fixture(context, NEXT.getAndIncrement());
+            this.origin = fixture.base.add(-1, 1, -1);
+            this.project = ConstructionProject.plan(fixture.colony.colony().id(), MaeSites.blueprint(context.getWorld(), model, 0),
+                    MinecraftTypeAdapter.toColonyPos(origin));
+
+            for (BlockPos at : BlockPos.iterate(fixture.base.add(-5, -2, -5), fixture.base.add(10, 0, 10))) {
+                fixture.set(at.toImmutable(), Blocks.DIRT.getDefaultState());
+            }
+
+            fixture.capture();
+        }
+
+        void guarded(Runnable step) {
+            try {
+                step.run();
+            } catch (RuntimeException | AssertionError failure) {
+                clear(context.getWorld(), this);
+                cleanup();
+                throw failure;
+            }
+        }
+
+        void cleanup() {
+            fixture.cleanup();
+        }
+    }
+
+    private static final class Fixture {
+        final TestContext context;
+        final com.villagecolony.gametest.ColonyFixture colony;
+        final net.minecraft.world.chunk.WorldChunk chunk;
+        final BlockPos base;
+        final NbtCompound originalReceipt;
+        final java.util.Map<BlockPos, BlockState> changed = new java.util.HashMap<>();
+
+        Fixture(TestContext context, int arena) {
+            this.context = context;
+            base = new BlockPos(100_005 + arena * 256, context.getAbsolutePos(new BlockPos(1, 40, 1)).getY(), 100_005);
+            chunks(true);
+            chunk = context.getWorld().getWorldChunk(base);
+            originalReceipt = chunk.getAttached(MaeGenerationEvidence.RECEIPT);
+            colony = com.villagecolony.gametest.ColonyFixture.colonyAt(context, base.subtract(context.getAbsolutePos(BlockPos.ORIGIN)));
+        }
+
+        void set(BlockPos pos, BlockState state) {
+            changed.putIfAbsent(pos, context.getWorld().getBlockState(pos));
+            context.getWorld().setBlockState(pos, state, net.minecraft.block.Block.NOTIFY_LISTENERS | net.minecraft.block.Block.FORCE_STATE);
+        }
+
+        void capture() {
+            chunk.removeAttached(MaeGenerationEvidence.RECEIPT);
+            net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents.CHUNK_GENERATE.invoker().onChunkGenerate(context.getWorld(), chunk);
+        }
+
+        void cleanup() {
+            changed.forEach((pos, state) -> context.getWorld().setBlockState(pos, state, net.minecraft.block.Block.NOTIFY_LISTENERS | net.minecraft.block.Block.FORCE_STATE));
+
+            if (originalReceipt == null) {
+                chunk.removeAttached(MaeGenerationEvidence.RECEIPT);
+            } else {
+                chunk.setAttached(MaeGenerationEvidence.RECEIPT, originalReceipt);
+            }
+
+            colony.cleanUp();
+            chunks(false);
+        }
+
+        private void chunks(boolean force) {
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    context.getWorld().setChunkForced((base.getX() >> 4) + dx, (base.getZ() >> 4) + dz, force);
+                }
+            }
+        }
     }
 }

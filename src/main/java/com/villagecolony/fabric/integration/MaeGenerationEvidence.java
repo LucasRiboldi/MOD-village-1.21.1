@@ -78,71 +78,14 @@ public final class MaeGenerationEvidence {
         return result;
     }
 
-    /**
-     * A prova destas seções passa a valer a partir de agora: a reserva {@code terrain_v2} e a limpeza do MAE pedem isto —
-     * Regra 202, ADR-044. O recibo da geração sai antes de a água correr e de a folha se ajustar.
-     */
-    static void rebase(ServerWorld world, WorkArea area) {
-        for (int x = area.min().x() >> 4; x <= area.max().x() >> 4; x++) {
-            for (int z = area.min().z() >> 4; z <= area.max().z() >> 4; z++) {
-                WorldChunk chunk = world.getChunkManager().getWorldChunk(x, z);
-                NbtCompound receipt = chunk == null ? null : chunk.getAttached(RECEIPT);
-
-                if (chunk == null || receipt == null) {
-                    continue;
-                }
-
-                NbtCompound updated = receipt.copy();
-                NbtCompound sections = updated.getCompound("sections");
-
-                for (int y = area.min().y() >> 4; y <= area.max().y() >> 4; y++) {
-                    sections.putByteArray(Integer.toString(y), fingerprint(chunk, y));
-                }
-
-                updated.put("sections", sections);
-                chunk.setAttached(RECEIPT, updated);
-                chunk.setNeedsSaving(true);
-            }
-        }
-    }
-
-    static NbtCompound original(ServerWorld world, WorkArea area) {
-        NbtCompound result = inspect(world, area, false, 8);
-        for (String key : result.getKeys()) {
-            long section = Long.parseLong(key);
-            var chunk = world.getChunkManager().getWorldChunk(ChunkSectionPos.unpackX(section),
-                    ChunkSectionPos.unpackZ(section));
-            var receipt = chunk.getAttached(RECEIPT);
-            result.putByteArray(key, receipt.getCompound("sections")
-                    .getByteArray(Integer.toString(ChunkSectionPos.unpackY(section))));
-        }
-        return result;
-    }
-
-    static NbtCompound after(ServerWorld world, WorkArea area, net.minecraft.util.math.BlockPos pos, BlockState state) {
-        NbtCompound result = inspect(world, area, false, 8);
-        int sectionY = pos.getY() >> 4;
-        var chunk = world.getChunkManager().getWorldChunk(pos.getX() >> 4, pos.getZ() >> 4);
-        result.putByteArray(Long.toString(ChunkSectionPos.asLong(pos.getX() >> 4, sectionY, pos.getZ() >> 4)),
-                fingerprint(chunk, sectionY, pos, state));
-        return result;
-    }
-
     private static byte[] fingerprint(WorldChunk chunk, int sectionY) {
-        return fingerprint(chunk, sectionY, null, null);
-    }
-
-    private static byte[] fingerprint(WorldChunk chunk, int sectionY,
-                                     net.minecraft.util.math.BlockPos override, BlockState replacement) {
         MessageDigest digest = sha256();
         Map<BlockState, byte[]> states = new HashMap<>();
         var section = chunk.getSectionArray()[chunk.sectionCoordToIndex(sectionY)];
         for (int y = 0; y < 16; y++) {
             for (int z = 0; z < 16; z++) {
                 for (int x = 0; x < 16; x++) {
-                    BlockState value = override != null && (override.getX() & 15) == x
-                            && (override.getY() & 15) == y && (override.getZ() & 15) == z
-                            ? replacement : section.getBlockState(x, y, z);
+                    BlockState value = section.getBlockState(x, y, z);
                     byte[] state = states.computeIfAbsent(value,
                             block -> sha256().digest(block.toString().getBytes(StandardCharsets.UTF_8)));
                     digest.update(state);

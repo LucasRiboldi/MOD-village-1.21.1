@@ -79,7 +79,7 @@ public final class BigHouseFoundation {
 
         if (site.get().clearing()) {
             VillageColonyMod.LOGGER.info("Colony {} cleared the BigHouseMOD lot at {} — {} blocks of trees and plants",
-                    colony.id(), placedAt.toShortString(), clear(world, placedAt, template.get().getSize(), NewVillage.is(world, colony)));
+                    colony.id(), placedAt.toShortString(), clear(world, placedAt, template.get().getSize(), true));
         }
 
         if (site.get().levelled()) {

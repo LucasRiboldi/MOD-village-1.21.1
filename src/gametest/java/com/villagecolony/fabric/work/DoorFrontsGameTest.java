@@ -51,8 +51,6 @@ public class DoorFrontsGameTest implements FabricGameTest {
             List<BlockPos> fronts = DoorFronts.of(world, min, max);
 
             context.assertTrue(fronts.equals(List.of(origin.add(5, 0, 2))), "Regra 207: não saiu pelo lado de fora: " + fronts);
-            context.assertTrue(PathLinks.entranceOf(world, min, max).orElseThrow().front().getX() == origin.getX() + 5,
-                    "Regra 207: a entrada antiga ficou do lado de dentro");
         } finally {
             clean(world, origin);
         }

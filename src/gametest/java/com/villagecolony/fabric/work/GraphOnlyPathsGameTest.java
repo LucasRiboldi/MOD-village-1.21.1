@@ -2,26 +2,20 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
-import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.construction.model.PathStep;
 import com.villagecolony.core.type.ColonyPos;
-import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
 import com.villagecolony.gametest.ColonyFixture;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.DoorBlock;
-import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 
 import java.util.List;
 import java.util.Set;
@@ -111,52 +105,6 @@ public class GraphOnlyPathsGameTest implements FabricGameTest {
             context.assertFalse(world.getBlockState(floor).isOf(Blocks.DIRT_PATH), "Regra 215: o carpinteiro calçou");
         } finally {
             world.setTimeOfDay(before);
-            PathLinks.drop(colony.id());
-            fixture.cleanUp();
-            clean(world, origin);
-        }
-
-        context.complete();
-    }
-
-    /** A porta sem ligação: em vila nova o sistema antigo não traça, porque o grafo já cuida dela. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "graph_only_tend", tickLimit = 20)
-    public void onlyTheGraphTracesInANewVillage(TestContext context) {
-        ServerWorld world = context.getWorld();
-        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 84, 1));
-
-        platform(world, origin);
-
-        ColonyFixture fixture = ColonyFixture.colonyAtWorld(origin.add(20, 1, 2));
-        Colony colony = fixture.colony();
-        BlockPos min = origin.add(15, 1, 15);
-        BlockPos max = origin.add(19, 3, 19);
-        Building house = new Building(UUID.randomUUID(), colony.id(), ResourceId.vanilla("village/plains/houses/test_house"), cell(min), cell(max), true);
-
-        try {
-            VillageColonyMod.BUILDINGS.register(house);
-
-            var door = Blocks.OAK_DOOR.getDefaultState().with(DoorBlock.FACING, Direction.SOUTH);
-
-            world.setBlockState(origin.add(17, 1, 15), door.with(DoorBlock.HALF, DoubleBlockHalf.LOWER), 18);
-            world.setBlockState(origin.add(17, 2, 15), door.with(DoorBlock.HALF, DoubleBlockHalf.UPPER), 18);
-
-            for (int x = 2; x <= 38; x++) {
-                BlockPos at = origin.add(x, 0, 2);
-
-                world.setBlockState(at, Blocks.DIRT_PATH.getDefaultState(), 18);
-                RoadIndex.remember(colony.id(), at);
-            }
-
-            PathLinks.tend(world, colony, true);
-
-            context.assertTrue(PathLinks.planOf(colony.id()).isEmpty(), "Regra 214: o traçado antigo correu em vila nova");
-
-            PathLinks.tend(world, colony, false);
-
-            context.assertTrue(PathLinks.planOf(colony.id()).isPresent(), "a vila antiga, sem grafo, continua traçando pela porta");
-        } finally {
-            VillageColonyMod.BUILDINGS.remove(house.id());
             PathLinks.drop(colony.id());
             fixture.cleanUp();
             clean(world, origin);

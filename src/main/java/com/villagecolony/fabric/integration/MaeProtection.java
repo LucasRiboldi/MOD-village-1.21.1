@@ -19,55 +19,8 @@ import java.util.UUID;
 final class MaeProtection {
     private MaeProtection() { }
 
-    static WorkArea margin(WorkArea area) {
-        return new WorkArea(new ColonyPos(area.min().x() - 2, area.min().y() - 2, area.min().z() - 2),
-                new ColonyPos(area.max().x() + 2, area.max().y() + 2, area.max().z() + 2));
-    }
-
-    static void inspect(ServerWorld world, UUID colonyId, WorkArea area) {
-        inspect(world, colonyId, area, false);
-    }
-
-    /** Política explícita não altera proteções ou prova; somente admite plantas da lista fechada — MAE Fase 2. */
-    static void inspectTerrain(ServerWorld world, UUID colonyId, WorkArea area) {
-        inspect(world, colonyId, area, true);
-    }
-
-    static void inspectTerrain(ServerWorld world, UUID colonyId, WorkArea area, Set<BlockPos> readOnlyRoads) {
-        inspect(world, colonyId, area, true, readOnlyRoads);
-    }
-
-    /** Terreno e rua ao lado de obra concluída pela própria região: a caixa dela é trabalho MAE, não volume alheio — ADR-046. */
-    static void inspectTerrain(ServerWorld world, UUID colonyId, WorkArea area, Set<BlockPos> readOnlyRoads,
-                               Set<BlockPos> ownWrites) {
-        inspect(world, colonyId, area, true, readOnlyRoads, ownWrites);
-    }
-
-    /** A pergunta da reserva antes de limpar: o que {@link MaeClearing} pode tirar não barra — Regra 200. */
+    /** O lote pedido serve? O que {@link MaeClearing} pode tirar não barra — Regra 200. */
     static void inspectClearing(ServerWorld world, UUID colonyId, WorkArea area) {
-        inspect(world, colonyId, area, true, Set.of(), Set.of(), true);
-    }
-
-    /** Peças já confirmadas desta obra não contam como volume protegido; o resto segue a regra do terreno — ADR-046. */
-    static void inspectStructure(ServerWorld world, UUID colonyId, WorkArea area, Set<BlockPos> ownWrites) {
-        inspect(world, colonyId, area, true, Set.of(), ownWrites);
-    }
-
-    private static void inspect(ServerWorld world, UUID colonyId, WorkArea area, boolean lowVegetation) {
-        inspect(world, colonyId, area, lowVegetation, Set.of());
-    }
-
-    private static void inspect(ServerWorld world, UUID colonyId, WorkArea area, boolean lowVegetation, Set<BlockPos> readOnlyRoads) {
-        inspect(world, colonyId, area, lowVegetation, readOnlyRoads, Set.of());
-    }
-
-    private static void inspect(ServerWorld world, UUID colonyId, WorkArea area, boolean lowVegetation,
-                                Set<BlockPos> readOnlyRoads, Set<BlockPos> ownWrites) {
-        inspect(world, colonyId, area, lowVegetation, readOnlyRoads, ownWrites, false);
-    }
-
-    private static void inspect(ServerWorld world, UUID colonyId, WorkArea area, boolean lowVegetation,
-                                Set<BlockPos> readOnlyRoads, Set<BlockPos> ownWrites, boolean clearing) {
         if (!world.getServer().isOnThread()) {
             throw new IllegalStateException("not_server_thread");
         }
@@ -131,21 +84,17 @@ final class MaeProtection {
         }
         for (BlockPos pos : BlockPos.iterate(area.min().x(), area.min().y(), area.min().z(),
                 area.max().x(), area.max().y(), area.max().z())) {
-            if (ownWrites.contains(pos)) continue;
             BlockState state = world.getBlockState(pos);
-            if (clearing && MaeClearing.isGrowth(world, pos, state)) continue;
-            boolean roadColumn = readOnlyRoads.stream().anyMatch(road -> road.getX() == pos.getX() && road.getZ() == pos.getZ());
-            boolean roadFloor = readOnlyRoads.contains(pos);
+            if (MaeClearing.isGrowth(world, pos, state)) continue;
             if (!world.getWorldBorder().contains(pos) || state.hasBlockEntity()
-                    || !state.getFluidState().isEmpty() || !(terrain(state) || (lowVegetation && vegetation(state))
-                        || (roadFloor && MaeRoadExecution.accepts(state)))
+                    || !state.getFluidState().isEmpty() || !(terrain(state) || vegetation(state))
                     || BlockProtection.isPlayerPlaced(state) || BlockProtection.isColonyBuilt(pos)
                     || BlockProtection.isVillageOriginal(world, pos)
-                    || (!roadColumn && !BlockProtection.mayBreak(world, pos, state))
+                    || !BlockProtection.mayBreak(world, pos, state)
                     || mineCells.contains(MinecraftTypeAdapter.toColonyPos(pos))) {
                 throw new IllegalStateException("protected_volume");
             }
-            if (RoadIndex.isLaidByAColony(pos) && !roadColumn) {
+            if (RoadIndex.isLaidByAColony(pos)) {
                 throw new IllegalStateException("reserved_road");
             }
         }
@@ -170,34 +119,5 @@ final class MaeProtection {
                 || state.isIn(BlockTags.COAL_ORES) || state.isIn(BlockTags.IRON_ORES) || state.isIn(BlockTags.COPPER_ORES)
                 || state.isIn(BlockTags.GOLD_ORES) || state.isIn(BlockTags.REDSTONE_ORES) || state.isIn(BlockTags.LAPIS_ORES)
                 || state.isIn(BlockTags.DIAMOND_ORES) || state.isIn(BlockTags.EMERALD_ORES);
-    }
-
-    /**
-     * A caixa de cada obra {@code structure_v3} desta região que chegou a escrever, derivada do diário (registros
-     * aplicados com {@code parts}), sem campo novo no save. A evidência das seções continua conferida à parte.
-     */
-    static Set<BlockPos> ownedCells(net.minecraft.nbt.NbtCompound region) {
-        java.util.Map<UUID, int[]> boxes = new java.util.HashMap<>();
-        net.minecraft.nbt.NbtList history = region.getList("history", net.minecraft.nbt.NbtElement.COMPOUND_TYPE);
-        for (int i = 0; i < history.size(); i++) {
-            net.minecraft.nbt.NbtCompound record = history.getCompound(i);
-            if (!"applied".equals(record.getString("result")) || !record.containsUuid("operation")
-                    || !record.contains("parts", net.minecraft.nbt.NbtElement.LIST_TYPE)) continue;
-            net.minecraft.nbt.NbtList parts = record.getList("parts", net.minecraft.nbt.NbtElement.COMPOUND_TYPE);
-            for (int p = 0; p < parts.size(); p++) {
-                BlockPos at = BlockPos.fromLong(parts.getCompound(p).getLong("position"));
-                int[] box = boxes.computeIfAbsent(record.getUuid("operation"), ignored -> new int[] {
-                        Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE,
-                        Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE});
-                box[0] = Math.min(box[0], at.getX()); box[1] = Math.min(box[1], at.getY()); box[2] = Math.min(box[2], at.getZ());
-                box[3] = Math.max(box[3], at.getX()); box[4] = Math.max(box[4], at.getY()); box[5] = Math.max(box[5], at.getZ());
-            }
-        }
-        Set<BlockPos> result = new HashSet<>();
-        for (int[] box : boxes.values()) {
-            if ((long) (box[3] - box[0] + 1) * (box[4] - box[1] + 1) * (box[5] - box[2] + 1) > 4096) continue;
-            BlockPos.iterate(box[0], box[1], box[2], box[3], box[4], box[5]).forEach(at -> result.add(at.toImmutable()));
-        }
-        return result;
     }
 }

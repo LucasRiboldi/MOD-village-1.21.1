@@ -61,10 +61,6 @@ public final class RoadIndex {
      * quadrado.
      */
     static void indexWhatWasSeen(ServerWorld world, UUID colonyId, ColonyPos center) {
-        if (!MaeRoadAccess.metadataAllowed(world, colonyId)) {
-            SweepState.BUILDING.remove(colonyId);
-            return;
-        }
         Set<Long> seen = SweepState.BUILDING.remove(colonyId);
 
         // Índice novo é outra lista: a posição guardada falava da

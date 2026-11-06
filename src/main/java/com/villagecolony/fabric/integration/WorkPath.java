@@ -74,7 +74,6 @@ public final class WorkPath {
 
     /** Calça até {@link #STEPS_PER_CYCLE} blocos do corredor, da ponta da rua para a porta. */
     private static int pave(ServerWorld world, UUID colonyId, List<BlockPos> cells, ColonyPos origin) {
-        if (!MaeRoadAccess.legacyAllowed(world, cells, 0, 2)) return 0;
         int laid = 0;
 
         for (int index = cells.size() - 1; index >= 0 && laid < STEPS_PER_CYCLE; index--) {

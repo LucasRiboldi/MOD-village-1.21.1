@@ -28,7 +28,6 @@ import java.util.Optional;
  *   <li>{@code /vc mae obra <modelo> <rotação>}: a mesma, com a rotação 0–3 escolhida;</li>
  *   <li>{@code /vc mae obra <modelo> busca}: lote livre e nivelado perto do jogador;</li>
  *   <li>{@code /vc mae obra <modelo> fora}: lote fora da vila original, perto do jogador;</li>
- *   <li>{@code /vc mae soltar}: entrega à vila as regiões paradas (Regra 187);</li>
  *   <li>{@code /vc mae estado} e {@code /vc mae parar}: obras em andamento e interrupção;</li>
  *   <li>{@code /vc mae mostrar ligar|desligar}: o sinalizador dos caminhos guardados ({@code RoadMapSync});</li>
  *   <li>{@code /vc mae reler}: relê o caminho da vila agora ({@code RoadGraphRefresh}).</li>
@@ -68,7 +67,6 @@ public final class MaeCommand {
                                                                 IntegerArgumentType.getInteger(context, "rotacao"), Search.HERE)))))
                                 .then(CommandManager.literal("estado").executes(MaeCommand::state))
                                 .then(CommandManager.literal("parar").executes(MaeCommand::stop))
-                                .then(CommandManager.literal("soltar").executes(MaeCommand::release))
                                 .then(CommandManager.literal("reler").executes(MaeCommand::reread))
                                 .then(CommandManager.literal("mostrar")
                                         .then(CommandManager.literal("ligar").executes(context -> show(context, true)))
@@ -124,16 +122,6 @@ public final class MaeCommand {
             case WEST -> 3;
             default -> 0;
         };
-    }
-
-    private static int release(CommandContext<ServerCommandSource> context) {
-        int[] counts = MaeSites.releaseIdle(context.getSource().getWorld());
-
-        context.getSource().sendFeedback(() -> Text.literal(counts[0] + " região(ões) MAE entregue(s) à vila"
-                + (counts[1] > 0 ? "; " + counts[1] + " presa(s) por escrita sem confirmação" : "") + ".")
-                .formatted(Formatting.YELLOW), false);
-
-        return counts[0];
     }
 
     private static int reread(CommandContext<ServerCommandSource> context) {

@@ -65,7 +65,7 @@ public final class PenAccessGameTest implements FabricGameTest {
         var origin = context.getAbsolutePos(new BlockPos(3, 90, 3));
         floor(context, origin, 14);
         var colony = colony(origin, 14);
-        var plan = StructureBlueprintReader.readForMae(context.getWorld(), PenPlans.MODEL).orElseThrow();
+        var plan = StructureBlueprintReader.read(context.getWorld(), PenPlans.MODEL).orElseThrow();
         var project = com.villagecolony.core.construction.model.ConstructionProject.plan(colony.id(), plan,
                 MinecraftTypeAdapter.toColonyPos(origin));
         for (var piece : plan.blocks()) {
@@ -133,7 +133,7 @@ public final class PenAccessGameTest implements FabricGameTest {
         forceChunks(context, origin, true);
         floor(context, origin, 14);
         var colony = colony(origin, 14);
-        var plan = StructureBlueprintReader.readForMae(context.getWorld(), PenPlans.MODEL).orElseThrow();
+        var plan = StructureBlueprintReader.read(context.getWorld(), PenPlans.MODEL).orElseThrow();
         for (var piece : plan.blocks()) {
             context.getWorld().setBlockState(origin.add(piece.offset().x(), piece.offset().y(), piece.offset().z()),
                     com.villagecolony.fabric.integration.PaletteStates.planned(piece), 18);

@@ -1,47 +1,17 @@
 package com.villagecolony.fabric.work;
 
-import com.villagecolony.VillageColonyMod;
-import com.villagecolony.core.colony.model.Colony;
-import com.villagecolony.core.construction.model.Building;
-import com.villagecolony.core.construction.model.ColonyRoads;
-import com.villagecolony.core.construction.model.NetworkDetour;
 import com.villagecolony.core.construction.model.PathStep;
-import com.villagecolony.core.construction.model.VillagePathPlanner;
 import com.villagecolony.core.type.ServerMemory;
-import com.villagecolony.core.type.Side;
-import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.integration.RoadIndex;
-import com.villagecolony.fabric.integration.NewVillage;
-import com.villagecolony.fabric.integration.WorldPathTerrain;
-import com.villagecolony.fabric.world.GeneratedVillages;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.DoorBlock;
-import net.minecraft.block.enums.DoubleBlockHalf;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockBox;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.Set;
 import java.util.UUID;
 
 /**
- * As ligações da rede de caminhos — Regra 123: cada construção pronta da colônia, e cada casa da vila original
- * (autor, 2026-10-28), se liga pela porta, com um caminho de 1 bloco, ao ponto mais barato da rede (decisão D5), e a primeira se liga ao centro da vila, o chafariz. Quando o
- * percurso pela rede até o chafariz passa de duas vezes o direto ({@link NetworkDetour}), a ligação é um
- * atalho direto, que ainda reaproveita a rede onde ela serve. O traçado é
- * o {@link VillagePathPlanner}; quem assenta é {@link PathPaving}.
- *
- * <p>Um traçado por colônia por vez. Construção sem porta legível, ou sem traçado possível, fica de lado
- * por {@link #RETRY_AFTER} e volta depois — o terreno muda, a rede cresce.
+ * O trecho do grafo que está sendo calçado agora, por colônia — Regra 214: quem decide o caminho é o grafo
+ * ({@link RoadGraphRefresh}), e quem assenta é o {@link PathPaving}.
  */
 public final class PathLinks {
 
@@ -49,33 +19,13 @@ public final class PathLinks {
         ServerMemory.register(PathLinks.class, PathLinks::clearAll);
     }
 
-    /** De quanto em quanto tempo a colônia procura a próxima construção sem ligação. */
-    static final long PLAN_EVERY = 600;
-
-    /**
-     * Construção sem ligação possível: quanto tempo fica de lado — uma hora de jogo (autor, 2026-10-28:
-     * sem volta, a porta fica sem ligação e é tentada depois).
-     */
-    static final long RETRY_AFTER = 72_000;
-
-    /** A porta mais perto que isto de um caminho já está ligada. */
-    static final int LINKED = 1;
-
-    /** Um traçado em curso: os passos e o próximo a assentar. */
+    /** Um trecho em curso: os passos e o próximo a assentar. */
     static final class Plan {
-        final UUID building;
         final List<PathStep> steps;
-        final boolean repair;
         int next;
 
-        Plan(UUID building, List<PathStep> steps) {
-            this(building, steps, false);
-        }
-
-        Plan(UUID building, List<PathStep> steps, boolean repair) {
-            this.building = building;
+        Plan(List<PathStep> steps) {
             this.steps = steps;
-            this.repair = repair;
         }
 
         boolean done() {
@@ -83,313 +33,29 @@ public final class PathLinks {
         }
     }
 
-    /** A porta de uma construção: o chão em frente a ela e o rumo para fora. */
-    record Entrance(BlockPos front, Side out) {
-    }
-
-    /** O id do plano de reparo da rede, que não é de nenhuma construção. */
-    private static final UUID REPAIR = UUID.nameUUIDFromBytes("road graph repair".getBytes(StandardCharsets.UTF_8));
-
     private static final Map<UUID, Plan> PLANS = new HashMap<>();
-    private static final Map<UUID, Long> PLANNED_AT = new HashMap<>();
-    private static final Map<UUID, Long> SET_ASIDE = new HashMap<>();
-    private static final Map<UUID, String> SUMMARY = new HashMap<>();
 
     private PathLinks() {
     }
 
-    /** O grafo pede estas colunas calçadas (Regra 177): vira o plano da vez, se não há outro em curso. */
+    /** O grafo oferece o que falta calçar; só entra quando o trecho anterior acabou. */
     static void offerRepair(UUID colonyId, List<PathStep> steps) {
         if (planOf(colonyId).isEmpty()) {
-            PLANS.put(colonyId, new Plan(REPAIR, List.copyOf(steps), true));
+            PLANS.put(colonyId, new Plan(List.copyOf(steps)));
         }
     }
 
-    /** O traçado em curso desta colônia, se ainda tem passo por assentar. */
+    /** O trecho em curso desta colônia, se ainda tem passo por assentar. */
     static Optional<Plan> planOf(UUID colonyId) {
         return Optional.ofNullable(PLANS.get(colonyId)).filter(plan -> !plan.done());
     }
 
-    /** O mundo mudou debaixo do traçado: ele sai, e o ciclo seguinte traça de novo. */
+    /** O mundo mudou debaixo do trecho: ele sai, e a próxima releitura oferece outro. */
     static void drop(UUID colonyId) {
         PLANS.remove(colonyId);
     }
 
-    /**
-     * Uma passagem desta colônia: sem traçado em curso, procura a próxima porta sem ligação — primeiro as
-     * construções da colônia, depois as casas da vila original (autor, 2026-10-28: "1 de largura, todas as casas").
-     */
-    static void tend(ServerWorld world, Colony colony) {
-        tend(world, colony, NewVillage.is(world, colony));
-    }
-
-    /** Em vila nova quem traça é o grafo (Regra 214): aqui só a vila antiga, que não tem releitura. */
-    static void tend(ServerWorld world, Colony colony, boolean newVillage) {
-        if (newVillage) {
-            return;
-        }
-
-        long now = world.getTime();
-
-        if (planOf(colony.id()).isPresent() || now - PLANNED_AT.getOrDefault(colony.id(), Long.MIN_VALUE / 2) < PLAN_EVERY) {
-            return;
-        }
-
-        PLANNED_AT.put(colony.id(), now);
-        SET_ASIDE.entrySet().removeIf(entry -> now - entry.getValue() >= RETRY_AFTER);
-
-        Set<Long> roads = roadsOf(world, colony);
-        BlockPos hub = MinecraftTypeAdapter.toBlockPos(colony.center());
-        int[] count = new int[2];
-
-        for (Building building : VillageColonyMod.BUILDINGS.ofColony(colony.id())) {
-            if (building.finished() && link(world, colony, building.id(), building.blueprint().path(),
-                    MinecraftTypeAdapter.toBlockPos(building.min()), MinecraftTypeAdapter.toBlockPos(building.max()),
-                    roads, hub, count)) {
-                return;
-            }
-        }
-
-        for (BlockBox house : GeneratedVillages.housesAt(world, hub.getX(), hub.getZ())) {
-            UUID id = UUID.nameUUIDFromBytes(("village house " + house).getBytes(StandardCharsets.UTF_8));
-
-            if (link(world, colony, id, "village house", new BlockPos(house.getMinX(), house.getMinY(), house.getMinZ()),
-                    new BlockPos(house.getMaxX(), house.getMaxY(), house.getMaxZ()), roads, hub, count)) {
-                return;
-            }
-        }
-
-        // Nada a traçar: diz por quê, uma vez por mudança (a rede ficou muda o playtest 0.3.97 inteiro).
-        String summary = count[0] + " doors on the network, " + count[1] + " buildings without a readable door, "
-                + SET_ASIDE.size() + " set aside";
-        if (!summary.equals(SUMMARY.put(colony.id(), summary))) {
-            VillageColonyMod.LOGGER.info("Colony {} path network — {}", colony.id().toString().substring(0, 8), summary);
-        }
-    }
-
-    /**
-     * Tenta ligar a porta desta casa: já ligada ou sem porta, conta e segue ({@code false}); senão traça — um traçado
-     * por passagem, dê certo ou não ({@code true}): nove portas sem saída no mesmo tique pararam o servidor 12 s no
-     * jogo da 0.3.98.
-     *
-     * @param count {portas na rede, casas sem porta legível}
-     */
-    private static boolean link(ServerWorld world, Colony colony, UUID id, String name, BlockPos min, BlockPos max,
-                                Set<Long> roads, BlockPos hub, int[] count) {
-        if (SET_ASIDE.containsKey(id)) {
-            return false;
-        }
-
-        Optional<Entrance> entrance = entranceOf(world, min, max);
-
-        if (entrance.isEmpty()) {
-            count[1]++;
-            return false;
-        }
-
-        return linkEntrance(world, colony, id, name, entrance, roads, hub, count);
-    }
-
-    private static boolean linkEntrance(ServerWorld world, Colony colony, UUID id, String name,
-                                        Optional<Entrance> entrance, Set<Long> roads, BlockPos hub, int[] count) {
-        if (linked(roads, entrance.get().front())) {
-            count[0]++;
-            return false;
-        }
-
-        long began = System.nanoTime();
-        Optional<List<PathStep>> steps = trace(world, colony.id(), entrance.get(), roads, hub, false);
-
-        // Atalho ao chafariz quando a rede dá volta demais — decisão D5 (2×).
-        if (steps.isPresent() && !steps.get().isEmpty() && !roads.isEmpty()) {
-            PathStep join = steps.get().getLast();
-            BlockPos front = entrance.get().front();
-            int direct = Math.abs(front.getX() - hub.getX()) + Math.abs(front.getZ() - hub.getZ());
-
-            if (NetworkDetour.needsShortcut(steps.get().size(),
-                    NetworkDetour.stepsToHub(roads, join.x(), join.z(), hub.getX(), hub.getZ()), direct)) {
-                Optional<List<PathStep>> shortcut = trace(world, colony.id(), entrance.get(), roads, hub, true);
-
-                if (shortcut.isPresent() && !shortcut.get().isEmpty()) {
-                    steps = shortcut;
-                }
-            }
-        }
-
-        // Sem saída a seco: ponte, se a travessia cabe (BridgeDeck).
-        if ((steps.isEmpty() || steps.get().isEmpty()) && NewVillage.is(world, colony)) {
-            Optional<List<PathStep>> crossing = trace(world, colony.id(), entrance.get(), roads, hub, false, true)
-                    .filter(found -> BridgeDeck.waterColumns(world, found) <= BridgeDeck.MAX_SPAN);
-
-            if (crossing.isPresent() && !crossing.get().isEmpty()) {
-                steps = crossing;
-                VillageColonyMod.LOGGER.info("Colony {} — the door of {} at {} has no dry way: a bridge over {} water columns",
-                        colony.id().toString().substring(0, 8), name, entrance.get().front().toShortString(),
-                        BridgeDeck.waterColumns(world, crossing.get()));
-            }
-        }
-
-        long millis = (System.nanoTime() - began) / 1_000_000;
-
-        if (steps.isEmpty() || steps.get().isEmpty()) {
-            SET_ASIDE.put(id, world.getTime());
-            VillageColonyMod.LOGGER.info("Colony {} — no path from the door of {} at {} to the network yet"
-                            + " ({} ms); it is tried again in an hour",
-                    colony.id().toString().substring(0, 8), name, entrance.get().front().toShortString(), millis);
-            return true;
-        }
-
-        PLANS.put(colony.id(), new Plan(id, steps.get()));
-        VillageColonyMod.LOGGER.info("Colony {} traced a path of {} steps from the door of {} at {} in {} ms"
-                        + " (Regra 123)", colony.id().toString().substring(0, 8), steps.get().size(),
-                name, entrance.get().front().toShortString(), millis);
-
-        return true;
-    }
-
-    /** O traçado da porta até a rede, ou até o chafariz quando ainda não há rede. */
-    static Optional<List<PathStep>> trace(ServerWorld world, UUID colonyId, Entrance entrance, Set<Long> roads,
-                                          BlockPos hub, boolean toTheHub) {
-        return trace(world, colonyId, entrance, roads, hub, toTheHub, false);
-    }
-
-    /** O mesmo; com {@code bridging}, a água da zona da vila conta como chão. */
-    static Optional<List<PathStep>> trace(ServerWorld world, UUID colonyId, Entrance entrance, Set<Long> roads,
-                                          BlockPos hub, boolean toTheHub, boolean bridging) {
-        WorldPathTerrain terrain = new WorldPathTerrain(world, colonyId, bridging);
-        BlockPos front = entrance.front();
-        OptionalInt floor = terrain.groundY(front.getX(), front.getZ(), front.getY() - 1);
-
-        int entranceFloor = front.getY() - 1;
-        if (floor.isEmpty() || terrain.blocked(front.getX(), front.getZ())
-                || floor.getAsInt() - entranceFloor > VillagePathPlanner.MAX_CUT
-                || entranceFloor - floor.getAsInt() > VillagePathPlanner.MAX_FILL) {
-            return Optional.empty();
-        }
-
-        VillagePathPlanner.Goal goal = new VillagePathPlanner.Goal() {
-            @Override
-            public boolean reached(int x, int floorY, int z) {
-                return (!toTheHub && roads.contains(ColonyRoads.column(x, z)))
-                        || (Math.abs(x - hub.getX()) <= 1 && Math.abs(z - hub.getZ()) <= 1);
-            }
-
-            @Override
-            public int estimate(int x, int z) {
-                return toTheHub || roads.isEmpty() ? Math.abs(x - hub.getX()) + Math.abs(z - hub.getZ()) : 0;
-            }
-
-            @Override
-            public boolean isPath(int x, int floorY, int z) {
-                return roads.contains(ColonyRoads.column(x, z));
-            }
-        };
-
-        // A entrada conserva o apoio da porta; o terreno não desloca sua cota — ADR-043.
-        return VillagePathPlanner.plan(terrain, front.getX(), entranceFloor, front.getZ(), entrance.out(), goal)
-                .map(steps -> steps.isEmpty() ? steps : withTheFront(front, entranceFloor, entrance.out(), steps));
-    }
-
-    /** O primeiro passo é o chão em frente à porta, que o traçado parte de cima dele. */
-    private static List<PathStep> withTheFront(BlockPos front, int floorY, Side out, List<PathStep> steps) {
-        List<PathStep> all = new java.util.ArrayList<>();
-        all.add(new PathStep(front.getX(), floorY, front.getZ(), out, 0, 0));
-        all.addAll(steps);
-
-        return List.copyOf(all);
-    }
-
-    /** As colunas de caminho que a colônia conhece. */
-    static Set<Long> roadsOf(ServerWorld world, Colony colony) {
-        return RoadGraphActivation.roads(world, colony).orElseGet(() -> RoadIndex.roadsOf(colony.id())
-                .map(roads -> (Set<Long>) new HashSet<>(roads.columns())).orElseGet(HashSet::new));
-    }
-
-    /** Índice legado para testes de traçado isolado. O ciclo usa {@link #roadsOf(ServerWorld, Colony)}. */
-    static Set<Long> roadsOf(UUID colonyId) {
-        return RoadIndex.roadsOf(colonyId).map(roads -> (Set<Long>) new HashSet<>(roads.columns())).orElseGet(HashSet::new);
-    }
-
-    static boolean linked(Set<Long> roads, BlockPos front) {
-        for (int dx = -LINKED; dx <= LINKED; dx++) {
-            for (int dz = -LINKED; dz <= LINKED; dz++) {
-                if (roads.contains(ColonyRoads.column(front.getX() + dx, front.getZ() + dz))) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * A porta da construção, lida do mundo: a metade de baixo de uma porta na borda da caixa, e o rumo
-     * para o lado de fora dela. Vale também para as casas Vanilla, que não guardam a planta.
-     */
-    static Optional<Entrance> entranceOf(ServerWorld world, Building building) {
-        return entranceOf(world, MinecraftTypeAdapter.toBlockPos(building.min()),
-                MinecraftTypeAdapter.toBlockPos(building.max()));
-    }
-
-    /** A porta na caixa de {@code min} a {@code max} — a construção da colônia ou a casa da vila original. */
-    static Optional<Entrance> entranceOf(ServerWorld world, BlockPos min, BlockPos max) {
-        for (BlockPos at : BlockPos.iterate(min, new BlockPos(max.getX(), Math.min(max.getY(), min.getY() + 3), max.getZ()))) {
-            if (!world.isChunkLoaded(at)) {
-                continue;
-            }
-
-            BlockState state = world.getBlockState(at);
-
-            if (!state.isIn(BlockTags.DOORS) || state.get(DoorBlock.HALF) != DoubleBlockHalf.LOWER) {
-                continue;
-            }
-
-            // A porta pode ficar recuada (a varanda das casas Vanilla): sai pelo lado da porta que chega
-            // à borda com menos obstáculo, e a frente é o primeiro chão fora da caixa.
-            Direction facing = state.get(DoorBlock.FACING);
-            Optional<Entrance> best = Optional.empty();
-            int fewest = Integer.MAX_VALUE;
-
-            // O facing aponta para dentro: no empate, fica o lado de fora (Regra 207).
-            for (Direction out : List.of(facing.getOpposite(), facing)) {
-                int blocked = 0;
-                BlockPos step = at.toImmutable();
-
-                do {
-                    step = step.offset(out);
-                    if (!world.getBlockState(step).getCollisionShape(world, step).isEmpty()) {
-                        blocked++;
-                    }
-                } while (step.getX() >= min.getX() && step.getX() <= max.getX()
-                        && step.getZ() >= min.getZ() && step.getZ() <= max.getZ());
-
-                if (blocked < fewest) {
-                    fewest = blocked;
-                    best = Optional.of(new Entrance(step, sideOf(out)));
-                }
-            }
-
-            if (best.isPresent()) {
-                return best;
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    private static Side sideOf(Direction direction) {
-        return switch (direction) {
-            case NORTH -> Side.NORTH;
-            case SOUTH -> Side.SOUTH;
-            case EAST -> Side.EAST;
-            default -> Side.WEST;
-        };
-    }
-
     static void clearAll() {
         PLANS.clear();
-        PLANNED_AT.clear();
-        SET_ASIDE.clear();
-        SUMMARY.clear();
     }
 }

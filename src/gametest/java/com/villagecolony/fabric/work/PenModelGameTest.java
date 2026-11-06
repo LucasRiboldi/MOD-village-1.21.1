@@ -8,25 +8,9 @@ import net.minecraft.test.TestContext;
 /** O mesmo curral amplo em todos os biomas, com piso e iluminação próprios (Regra 72). */
 public final class PenModelGameTest implements FabricGameTest {
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "pen_legacy_model", tickLimit = 20)
-    public void theAutomaticPenKeepsOneGateWhileMaeUsesFour(TestContext context) {
-        var legacy = StructureBlueprintReader.read(context.getWorld(), PenPlans.MODEL).orElseThrow();
-        var supervised = StructureBlueprintReader.readForMae(context.getWorld(), PenPlans.MODEL).orElseThrow();
-        context.assertTrue(legacy.id().equals(supervised.id()), "variante mudou a identidade do curral");
-        context.assertTrue(legacy.blocks().stream().filter(piece -> piece.block().path().equals("oak_fence_gate")).count() == 1
-                        && legacy.accesses().stream().map(com.villagecolony.core.construction.model.BlueprintAccess::opening)
-                                .distinct().count() == 1,
-                "fluxo automático recebeu os quatro portões reservados ao MAE supervisionado");
-        context.assertTrue(supervised.blocks().stream().filter(piece -> piece.block().path().equals("oak_fence_gate")).count() == 4
-                        && supervised.accesses().stream().map(com.villagecolony.core.construction.model.BlueprintAccess::opening)
-                                .distinct().count() == 4,
-                "variante supervisionada perdeu seus quatro acessos");
-        context.complete();
-    }
-
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "pen_model", tickLimit = 20)
     public void theLargePenHasWaterCropsGrassGateAndPostTorches(TestContext context) {
-        var plan = StructureBlueprintReader.readForMae(context.getWorld(), PenPlans.MODEL).orElseThrow();
+        var plan = StructureBlueprintReader.read(context.getWorld(), PenPlans.MODEL).orElseThrow();
         context.assertTrue(plan.size().x() == 15 && plan.size().z() == 15,
                 "o curral comum deveria ter piso de 15 por 15");
         context.assertTrue(plan.hasStreetLayer() && plan.streetLayer() == 0,

@@ -59,16 +59,6 @@ public final class RoadPaving {
             PavingRefusals refusals) {
 
         // Inclui todo o trecho, bordas e variação acumulada de altura antes de adotar ou limpar — MAE Fase 2.
-        BlockPos last = end.at().offset(end.towards(), RoadExtension.STRETCH);
-        int rise = (RoadExtension.STRETCH + 1) * RoadExtension.MAX_STEP;
-        if (!MaeRoadAccess.legacyAllowed(world,
-                new BlockPos(Math.min(end.at().getX(), last.getX()) - 1, end.at().getY() - rise,
-                        Math.min(end.at().getZ(), last.getZ()) - 1),
-                new BlockPos(Math.max(end.at().getX(), last.getX()) + 1, end.at().getY() + rise + 2,
-                        Math.max(end.at().getZ(), last.getZ()) + 1))) {
-            refusals.record("MAE supervised section or unknown reservation");
-            return List.of();
-        }
         BlockPos previous = end.at();
 
         List<ColonyPos> laid = new ArrayList<>();

@@ -5,7 +5,6 @@ import com.villagecolony.core.construction.model.PathStep;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.LotGround;
-import com.villagecolony.fabric.integration.MaeRoadAccess;
 import com.villagecolony.fabric.integration.RoadIndex;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -78,7 +77,7 @@ final class BridgeDeck {
                 .filter(candidate -> ColonyChests.countIn(world, chests, candidate.planks().asItem()) > 0)
                 .findFirst();
 
-        if (wood.isEmpty() || !MaeRoadAccess.legacyAllowed(world, floor.add(-1, 0, -1), floor.add(1, 3, 1))) {
+        if (wood.isEmpty()) {
             return false;
         }
 

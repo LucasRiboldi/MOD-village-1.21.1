@@ -70,12 +70,6 @@ public final class StreetGaps {
 
     /** A falha que sai desta coluna de rua para este lado, se a linha volta a ser rua logo depois. */
     static int fill(ServerWorld world, UUID colonyId, BlockPos street, Direction side) {
-        BlockPos last = street.offset(side, MAX_GAP + 1);
-        if (!MaeRoadAccess.legacyAllowed(world,
-                new BlockPos(Math.min(street.getX(), last.getX()), street.getY() - 1,
-                        Math.min(street.getZ(), last.getZ())),
-                new BlockPos(Math.max(street.getX(), last.getX()), street.getY() + 3,
-                        Math.max(street.getZ(), last.getZ())))) return 0;
         for (int gap = 1; gap <= MAX_GAP; gap++) {
             Optional<BlockPos> beyond = groundNear(world, street.getX() + side.getOffsetX() * (gap + 1),
                     street.getZ() + side.getOffsetZ() * (gap + 1), street.getY());
@@ -108,7 +102,6 @@ public final class StreetGaps {
     }
 
     private static boolean pave(ServerWorld world, UUID colonyId, BlockPos street, BlockPos hole) {
-        if (!MaeRoadAccess.legacyAllowed(world, hole, hole.up(2))) return false;
         BlockState ground = world.getBlockState(hole);
 
         if (Math.abs(hole.getY() - street.getY()) > 1

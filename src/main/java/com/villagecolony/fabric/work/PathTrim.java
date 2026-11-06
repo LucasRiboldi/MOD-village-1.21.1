@@ -4,7 +4,6 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.integration.MaeRoadAccess;
 import com.villagecolony.fabric.integration.VillageBiomes;
 import com.villagecolony.fabric.integration.VillageRoad;
 import net.minecraft.server.world.ServerWorld;
@@ -49,8 +48,7 @@ final class PathTrim {
             BlockPos at = MinecraftTypeAdapter.toBlockPos(cell);
 
             if (world.isChunkLoaded(at.getX() >> 4, at.getZ() >> 4) && VillageRoad.isPathBlock(world.getBlockState(at))
-                    && !BuildingGaps.insideABuilding(world, colony, at.getX(), at.getZ())
-                    && MaeRoadAccess.legacyAllowed(world, at, at)) {
+                    && !BuildingGaps.insideABuilding(world, colony, at.getX(), at.getZ())) {
                 world.setBlockState(at, VillageBiomes.foundationGroundAt(world, at).getDefaultState());
                 done++;
             }

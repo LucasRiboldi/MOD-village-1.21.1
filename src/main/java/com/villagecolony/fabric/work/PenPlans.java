@@ -31,8 +31,7 @@ final class PenPlans {
      * reconhecidos por {@link ShepherdPens}, mas não contam como este modelo novo.
      */
     static List<Blueprint> forColony(ServerWorld world, Colony colony, List<Building> buildings) {
-        if (!MineHomePlans.isCurrentVillage(world, colony.center())
-                || !ShepherdFlock.hasShepherd(colony) || hasLargePen(buildings)) {
+        if (!ShepherdFlock.hasShepherd(colony) || hasLargePen(buildings)) {
             return List.of();
         }
 

@@ -12,7 +12,6 @@ import com.villagecolony.core.construction.model.VillagePathPlanner;
 import com.villagecolony.fabric.content.ModContent;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.LotGround;
-import com.villagecolony.fabric.integration.MaeRoadAccess;
 import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.StreetSurface;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
@@ -103,7 +102,6 @@ public final class PathPaving {
 
         for (Colony colony : List.copyOf(VillageColonyMod.COLONIES.all())) {
             if (colony.isActive() && colony.isAttended(now)) {
-                PathLinks.tend(world, colony);
                 pass(world, colony);
             }
         }
@@ -149,10 +147,8 @@ public final class PathPaving {
             turn.walked += 10;
 
             if (turn.walked > GIVE_UP_AFTER) {
-                // Coluna de reparo que ele não alcança sai do plano; o traçado de porta é refeito.
-                if (plan.repair) {
-                    skipRepairStep(colonyId, turn, plan, step);
-                }
+                // Coluna que ele não alcança sai do trecho e fica de fora dos próximos (RoadGraphRefresh.refused).
+                skipStep(colonyId, turn, plan, step);
 
                 endTurn(colonyId);
                 return;
@@ -178,22 +174,12 @@ public final class PathPaving {
             return;
         }
 
-        if (plan.repair) {
-            com.villagecolony.fabric.integration.TreeClearing.openColumn(world, step.x(), step.z(), step.floorY(),
-                    com.villagecolony.fabric.integration.ColonyChests.nearestFirst(world, colonyId,
-                            new com.villagecolony.core.type.ColonyPos(step.x(), step.floorY(), step.z())));
-        }
+        com.villagecolony.fabric.integration.TreeClearing.openColumn(world, step.x(), step.z(), step.floorY(),
+                com.villagecolony.fabric.integration.ColonyChests.nearestFirst(world, colonyId,
+                        new com.villagecolony.core.type.ColonyPos(step.x(), step.floorY(), step.z())));
 
         if (!layAndRecord(world, colonyId, paver.getUuid(), step)) {
-            if (plan.repair) {
-                skipRepairStep(colonyId, turn, plan, step);
-                return;
-            }
-
-            VillageColonyMod.LOGGER.info("Colony {} — the path step at {} no longer fits; the path is traced again",
-                    colonyId.toString().substring(0, 8), floor.toShortString());
-            PathLinks.drop(colonyId);
-            endTurn(colonyId);
+            skipStep(colonyId, turn, plan, step);
             return;
         }
 
@@ -211,7 +197,7 @@ public final class PathPaving {
         }
     }
 
-    private static void skipRepairStep(UUID colonyId, Turn turn, PathLinks.Plan plan, PathStep step) {
+    private static void skipStep(UUID colonyId, Turn turn, PathLinks.Plan plan, PathStep step) {
         RoadGraphRefresh.refused(colonyId, step);
         plan.next++;
         turn.walked = 0;
@@ -261,8 +247,6 @@ public final class PathPaving {
      * buraco. Por cima do piso só sai planta.
      */
     static boolean pave(ServerWorld world, UUID colonyId, int x, int z, int ground, int floorY, boolean edge) {
-        if (!MaeRoadAccess.legacyAllowed(world, new BlockPos(x, Math.min(ground, floorY), z),
-                new BlockPos(x, Math.max(ground + 2, floorY + CLEAR + 1), z))) return false;
         BlockPos top = new BlockPos(x, ground, z);
         BlockState surface = world.getBlockState(top);
         BlockPos floor = new BlockPos(x, floorY, z);

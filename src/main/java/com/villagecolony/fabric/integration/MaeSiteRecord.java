@@ -1,7 +1,6 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.core.type.ResourceId;
-import com.villagecolony.data.save.MaeWorkStore;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.util.math.BlockPos;
@@ -17,31 +16,6 @@ import java.util.UUID;
 record MaeSiteRecord(ResourceId model, BlockPos origin, int quarterTurns, @Nullable UUID owner) {
 
     static final String KEY = "site";
-
-    void writeTo(MaeWorkStore store, UUID regionId) {
-        store.region(regionId).ifPresent(region -> {
-            NbtCompound site = new NbtCompound();
-
-            site.putString("namespace", model.namespace());
-            site.putString("path", model.path());
-            site.putLong("origin", origin.asLong());
-            site.putInt("rotation", quarterTurns);
-
-            if (owner != null) {
-                site.putUuid("owner", owner);
-            }
-
-            region.put(KEY, site);
-            store.update(region);
-        });
-    }
-
-    static void clear(MaeWorkStore store, UUID regionId) {
-        store.region(regionId).ifPresent(region -> {
-            region.remove(KEY);
-            store.update(region);
-        });
-    }
 
     /** O pedido desta região; vazio sem ele, ou com ele ilegível, e aí a região só fica como está. */
     static Optional<MaeSiteRecord> of(NbtCompound region) {
