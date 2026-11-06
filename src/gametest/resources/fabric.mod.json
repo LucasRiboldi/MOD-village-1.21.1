@@ -121,6 +121,7 @@
       "com.villagecolony.fabric.work.PenAccessGameTest",
       "com.villagecolony.fabric.work.LeafPassageGameTest",
       "com.villagecolony.fabric.work.RoadRulesGameTest",
+      "com.villagecolony.fabric.work.DoorFrontsGameTest",
       "com.villagecolony.fabric.work.VillagerRulesGameTest",
       "com.villagecolony.fabric.work.BridgeDeckGameTest",
       "com.villagecolony.fabric.integration.TreeClearingGameTest",

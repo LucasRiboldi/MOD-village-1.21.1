@@ -388,7 +388,8 @@ public final class PathLinks {
             Optional<Entrance> best = Optional.empty();
             int fewest = Integer.MAX_VALUE;
 
-            for (Direction out : List.of(facing, facing.getOpposite())) {
+            // O facing aponta para dentro: no empate, fica o lado de fora (Regra 207).
+            for (Direction out : List.of(facing.getOpposite(), facing)) {
                 int blocked = 0;
                 BlockPos step = at.toImmutable();
 

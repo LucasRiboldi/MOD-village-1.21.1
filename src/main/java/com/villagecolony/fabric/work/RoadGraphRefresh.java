@@ -297,15 +297,26 @@ public final class RoadGraphRefresh {
             if (building.finished()) {
                 BlockPos min = MinecraftTypeAdapter.toBlockPos(building.min());
                 BlockPos max = MinecraftTypeAdapter.toBlockPos(building.max());
+                List<BlockPos> doors = DoorFronts.of(world, min, max);
 
-                front(world, min, max, hub, terrain).ifPresent(fronts::add);
+                doors.forEach(door -> fronts.add(MinecraftTypeAdapter.toColonyPos(door)));
+
+                if (doors.isEmpty()) {
+                    front(world, min, max, hub, terrain).ifPresent(fronts::add);
+                }
             }
         }
 
         for (BlockBox house : GeneratedVillages.housesAt(world, hub.getX(), hub.getZ())) {
-            PathLinks.entranceOf(world, new BlockPos(house.getMinX(), house.getMinY(), house.getMinZ()),
-                            new BlockPos(house.getMaxX(), house.getMaxY(), house.getMaxZ()))
-                    .ifPresent(entrance -> fronts.add(floorOf(entrance.front())));
+            BlockPos min = new BlockPos(house.getMinX(), house.getMinY(), house.getMinZ());
+            BlockPos max = new BlockPos(house.getMaxX(), house.getMaxY(), house.getMaxZ());
+            List<BlockPos> doors = DoorFronts.of(world, min, max);
+
+            doors.forEach(door -> fronts.add(MinecraftTypeAdapter.toColonyPos(door)));
+
+            if (doors.isEmpty()) {
+                PathLinks.entranceOf(world, min, max).ifPresent(entrance -> fronts.add(floorOf(entrance.front())));
+            }
         }
 
         // Todo portão de cerca é entrada (Regra 178), de obra ou da vila gerada.
