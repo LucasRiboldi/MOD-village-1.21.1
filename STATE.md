@@ -1,5 +1,9 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.36:** jogo da 0.4.35: os 2 azuis centrais eram quinas fixas de anel. Plantação agora não tem anel e fica com uma
+> entrada; o anel antigo sai do grafo se a rede continua inteira (Regra 208). Porta de quintal fechado só conta se for a única da casa
+> (Regra 209). Conta sobre o save: restariam 4 azuis, um por quadrante. Não jogada. Abertos: lago, MAE, falta de obra (`TODO.md`).
+
 > **Candidata 0.4.35:** grafo com no máximo 4 pontas, uma por quadrante (Regra 206), e entrada em toda porta térrea, pelo lado de
 > fora (Regra 207). Rua sem saída sai do grafo. Não jogada.
 

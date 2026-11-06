@@ -12,6 +12,17 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.36] — candidata, 2026-11-06
+
+### Mudado
+
+- Grafo: plantação sem anel, com uma entrada ligada à rua; o caminho antigo colado nela sai do grafo e volta ao solo quando a rede continua inteira (Regra 208). O chafariz mantém o anel, sem quina fixa (Regra 183).
+- Grafo: porta de quintal fechado só é entrada se for a única saída da casa (Regra 209).
+
+### Corrigido
+
+- As quinas fixas dos anéis seguravam pontas azuis no centro da vila, que a Regra 206 não podia cortar.
+
 ## [0.4.35] — candidata, 2026-11-05
 
 ### Mudado
