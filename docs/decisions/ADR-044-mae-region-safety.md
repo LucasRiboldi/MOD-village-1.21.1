@@ -62,6 +62,7 @@ pode ser maior, supervisionada, mas cada obra exige aprovação individual.
   ou edição vizinha pode invalidar uma área mesmo fora do lote. Isso não autoriza
   recapturar prova. Hash prova coincidência do estado atual com a captura, não
   autoria nem histórico completo de todas as interações anteriores.
+  Emenda (autor, 2026-11-06, ADR-047): a obra pedida por `/vc mae obra` não usa esta prova durante a obra.
 - O attachment exige percorrer seções durante a geração. Reserva e aprovação são
   chamadas supervisionadas síncronas e limitadas; o orçamento por tick cobre a
   execução das mudanças. Medir custo em carga real antes de ativar orquestração.

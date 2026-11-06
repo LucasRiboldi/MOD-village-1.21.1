@@ -34,7 +34,7 @@ import java.util.Optional;
  *   <li>{@code /vc mae reler}: relê o caminho da vila agora ({@code RoadGraphRefresh}).</li>
  * </ul>
  *
- * <p>Operador apenas (nível 2). Reserva, terreno, material e provas de acesso seguem o writer; o comando
+ * <p>Operador apenas (nível 2). A obra vai para a fila do construtor (Regra 213); o comando
  * não contorna recusa nenhuma.
  */
 public final class MaeCommand {
@@ -163,9 +163,9 @@ public final class MaeCommand {
     }
 
     private static int state(CommandContext<ServerCommandSource> context) {
-        var active = MaeSites.active();
+        var active = MaeSites.active(context.getSource().getWorld());
         if (active.isEmpty()) {
-            context.getSource().sendFeedback(() -> Text.literal("Nenhuma obra MAE em andamento.")
+            context.getSource().sendFeedback(() -> Text.literal("Nenhuma obra MAE pedida.")
                     .formatted(Formatting.GRAY), false);
         }
         for (var status : active) context.getSource().sendFeedback(() -> MaeSites.message(status), false);
@@ -174,9 +174,16 @@ public final class MaeCommand {
 
     private static int stop(CommandContext<ServerCommandSource> context) {
         int stopped = 0;
-        for (var status : MaeSites.active()) if (MaeSites.stop(status.regionId())) stopped++;
+        var world = context.getSource().getWorld();
+        for (var request : com.villagecolony.fabric.integration.MaeBuildQueue.all(world)) {
+            // A obra aberta dele é cancelada como a do jogador (Regra 108), e o que foi posto fica.
+            com.villagecolony.VillageColonyMod.CONSTRUCTIONS.openOf(request.colonyId())
+                    .filter(project -> com.villagecolony.fabric.integration.MaeBuildQueue.isOf(request, project))
+                    .ifPresent(com.villagecolony.fabric.event.ConstructionCancellation::cancelProject);
+            if (MaeSites.stop(world, request.id())) stopped++;
+        }
         int count = stopped;
-        context.getSource().sendFeedback(() -> Text.literal(count + " obra(s) MAE parada(s); jobs aprovados ficam pausados.")
+        context.getSource().sendFeedback(() -> Text.literal(count + " obra(s) MAE parada(s); o que já foi posto fica.")
                 .formatted(Formatting.YELLOW), true);
         return count;
     }

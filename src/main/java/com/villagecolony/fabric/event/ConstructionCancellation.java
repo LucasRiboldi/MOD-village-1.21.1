@@ -55,6 +55,8 @@ public final class ConstructionCancellation {
             }
 
             cancelProject(project);
+            com.villagecolony.fabric.integration.MaeBuildQueue.dropAt(world, project.colonyId(),
+                    project.origin().x(), project.origin().y(), project.origin().z());
             return true;
         }
 
@@ -106,7 +108,7 @@ public final class ConstructionCancellation {
         return false;
     }
 
-    private static void cancelProject(ConstructionProject project) {
+    public static void cancelProject(ConstructionProject project) {
         VillageColonyMod.CONSTRUCTIONS.forget(project.id(), RemovalAudit.playerCancellation());
         WaitingWork.forget(project.id());
         cancelTasks(project.colonyId());

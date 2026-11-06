@@ -102,6 +102,35 @@ public final class MaeWorkStore {
         changed.run();
     }
 
+    /** As obras pedidas, na ordem da fila — Regra 213. */
+    public List<NbtCompound> requests() {
+        if (!(payload instanceof NbtCompound root)) {
+            return List.of();
+        }
+
+        return root.getList("requests", NbtElement.COMPOUND_TYPE).stream().map(entry -> ((NbtCompound) entry).copy()).toList();
+    }
+
+    public void setRequests(List<NbtCompound> requests) {
+        if (!supported()) {
+            throw new IllegalStateException("unsupported MAE work payload");
+        }
+
+        NbtCompound root = payload == null ? new NbtCompound() : ((NbtCompound) payload).copy();
+        NbtList list = new NbtList();
+
+        list.addAll(requests);
+
+        if (!root.contains("version", NbtElement.INT_TYPE)) {
+            root.putInt("version", 1);
+            root.put("regions", new NbtList());
+        }
+
+        root.put("requests", list);
+        payload = root;
+        changed.run();
+    }
+
     public void read(NbtCompound root) {
         payload = root.contains(KEY) ? root.get(KEY).copy() : null;
     }

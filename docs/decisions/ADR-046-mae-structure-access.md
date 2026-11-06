@@ -388,3 +388,7 @@ grafo pela releitura (Regra 177), com o construtor calçando. Assim há uma font
 refaz o condutor na etapa do job quando o chão dela volta a carregar. Pausado e bloqueado passam por `MaeWorldWriter.resume`,
 que revalida o mundo; escrita ou publicação sem confirmação vira falha, sem repetição (ADR-044). Parar com `/vc mae parar`
 apaga o pedido, e a obra não volta sozinha.
+
+## Emenda de 2026-11-06 (autor) — a obra vai para o construtor
+
+`MaeSites` não usa mais `MaeStructureSite`: a obra pedida entra na fila do construtor (ADR-047, Regra 213).
