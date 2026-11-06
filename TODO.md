@@ -46,8 +46,7 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 
 - [ ] Conferir em jogo: rua e lote novos com caminho só pedido; casas depois do lago ligadas com ponte; pedreiro com `PAVED` e `LEVELLED`; `/vc mae obra` mais aceita
 - [ ] Save antigo: nunca jogado com a releitura ligada
-- [ ] A prova de geração (`MaeGenerationEvidence`) calcula em chunk novo e ninguém lê: decidir com o autor se sai (custou 6,4% no Spark `btHEJgIYWb`)
-- [ ] `BlueprintAccess` e `StructureAccessReader` não têm mais quem use as entradas que leem; `Corridor` e `StripLot` ainda planejam forma própria de caminho
+- [ ] `Corridor` e `StripLot` ainda planejam forma própria de caminho antes de pedir ao grafo
 - [ ] Sem teste próprio: a desistência por espera longa da obra pedida, `MaeSites.move` e a busca de lote pela rede do grafo
 
 ## Abertos do jogo da 0.4.38

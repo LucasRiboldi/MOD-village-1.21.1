@@ -25,6 +25,7 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 
 ### Removido
 
+- A prova de geração, que pesava em chunk novo sem ninguém ler o resultado.
 - A escrita própria do MAE, as regiões reservadas, `/vc mae soltar`, o traçado antigo pela porta, as bordas da rua de 3 e rotinas sem uso.
 
 ## [0.4.39] — candidata, 2026-11-06

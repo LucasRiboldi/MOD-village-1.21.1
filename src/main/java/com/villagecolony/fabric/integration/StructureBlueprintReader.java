@@ -266,8 +266,7 @@ public final class StructureBlueprintReader {
         // MESMA planta. Trocar mais adiante faria a colônia estocar areia
         // e o construtor assentar arenito, que é o defeito de 08-22.
         // E a peça colorida sai branca (WhitePieces, item 5 de 27-10), no mesmo ponto e pelo mesmo motivo.
-        Blueprint blueprint = Blueprint.of(structure, WhitePieces.baked(DesertSand.baked(structure, blocks)))
-                .withAccesses(StructureAccessReader.read(world, source, template.get()));
+        Blueprint blueprint = Blueprint.of(structure, WhitePieces.baked(DesertSand.baked(structure, blocks)));
 
         // <b>E a altura da rua</b> — sessão de jogo de 2026-09-26. Ver
         // Blueprint.withStreetLayer e StreetLayer.of.

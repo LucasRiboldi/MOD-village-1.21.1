@@ -306,6 +306,15 @@ public final class MaeSitesGameTest implements FabricGameTest {
         });
     }
 
+    /** Chunk novo não ganha mais o recibo de geração: era custo sem leitor (ADR-047). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_no_receipt", tickLimit = 40)
+    public void aNewChunkHasNoGenerationReceipt(TestContext context) {
+        var chunk = context.getWorld().getChunk(context.getAbsolutePos(BlockPos.ORIGIN).add(6_000_000, 0, 6_000_000));
+
+        context.assertFalse(chunk.hasAttached(OldChunkReceipt.TYPE), "chunk novo ainda calcula o recibo de geração");
+        context.complete();
+    }
+
     /** A árvore natural no lote não recusa a obra: sai antes, e a obra entra na fila depois (Regra 200). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_clear", tickLimit = 40)
     public void aTreeOnTheLotIsClearedFirst(TestContext context) {
