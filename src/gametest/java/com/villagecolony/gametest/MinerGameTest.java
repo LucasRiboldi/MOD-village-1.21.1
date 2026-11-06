@@ -4444,6 +4444,9 @@ public class MinerGameTest implements FabricGameTest {
         UUID worker = UUID.randomUUID();
 
         try {
+            // Só quem tem ramal o encerra: quem alarga o nível não tem (Regra 193).
+            MineClaims.claimArm(colony.id(), worker, mine.branchesOpenNow());
+
             MineTrouble.flooded(
                     colony.id(), worker, context.getAbsolutePos(new BlockPos(3, 4, 3)));
 

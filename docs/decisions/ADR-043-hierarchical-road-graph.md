@@ -56,5 +56,18 @@ ligado ao ciclo de planejamento/persistência.
 
 Ainda não há ativação do planejador ou mudança de gameplay. As etapas seguintes estão no plano da rede; a aprovação da arquitetura não declara concluídas migração, execução ou validação no jogo.
 
+## Emenda de 2026-11-05 — o grafo é um mapa de trilhos (Regra 177)
+
+Decisão do autor, com desenho do antes e depois. Vale em vila nova; `RoadGraph.from` e o codec seguem como estão.
+
+- O grafo não contrai mais cada bloco de caminho: `RoadLines` afina a faixa física até a linha do meio e só ela entra em
+  `RoadGraph.from`. Rua larga dá uma linha; nós a até 3 blocos se fundem; a frente de porta nunca se funde.
+- **Muda:** "componentes desconectados não recebem ligações inventadas". Vão de até 2 blocos liga, e parte separada se liga
+  à principal por `VillagePathPlanner`, com o trecho calçado depois; a que não se liga fica fora do grafo.
+- **Muda:** grafo pode citar coluna ainda sem caminho, enquanto o construtor não a calça. Nesse intervalo a publicação de
+  rua do MAE recusa, porque confere cada coluna no mundo.
+- **Muda:** coluna com dois pisos fica com o de cima, em vez de adiar o grafo inteiro.
+- `RoadGraphRefresh` relê a caixa da vila a cada 5 minutos; não relê com trabalho MAE ativo (`metadataAllowed`).
+
 Desenho aprovado: `docs/superpowers/specs/2026-11-01-hierarchical-roads-and-pens-design.md`.
 Plano: `docs/superpowers/plans/2026-11-01-hierarchical-roads.md`.

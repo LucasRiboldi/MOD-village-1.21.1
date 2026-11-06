@@ -149,6 +149,11 @@ public final class PathPaving {
             turn.walked += 10;
 
             if (turn.walked > GIVE_UP_AFTER) {
+                // Coluna de reparo que ele não alcança sai do plano; o traçado de porta é refeito.
+                if (plan.repair) {
+                    skipRepairStep(colonyId, turn, plan, step);
+                }
+
                 endTurn(colonyId);
                 return;
             }
@@ -157,7 +162,34 @@ public final class PathPaving {
             return;
         }
 
+        if (BridgeDeck.isOverWater(world, floor)) {
+            if (!BridgeDeck.lay(world, colonyId, paver.getUuid(), step, plan.steps)) {
+                // Sem tábua nos baús: a ponte espera; a vez passa e ele volta a tentar.
+                endTurn(colonyId);
+                return;
+            }
+
+            paver.swingHand(Hand.MAIN_HAND);
+            plan.next++;
+            turn.walked = 0;
+            if (plan.done()) {
+                endTurn(colonyId);
+            }
+            return;
+        }
+
+        if (plan.repair) {
+            com.villagecolony.fabric.integration.TreeClearing.openColumn(world, step.x(), step.z(), step.floorY(),
+                    com.villagecolony.fabric.integration.ColonyChests.nearestFirst(world, colonyId,
+                            new com.villagecolony.core.type.ColonyPos(step.x(), step.floorY(), step.z())));
+        }
+
         if (!layAndRecord(world, colonyId, paver.getUuid(), step)) {
+            if (plan.repair) {
+                skipRepairStep(colonyId, turn, plan, step);
+                return;
+            }
+
             VillageColonyMod.LOGGER.info("Colony {} — the path step at {} no longer fits; the path is traced again",
                     colonyId.toString().substring(0, 8), floor.toShortString());
             PathLinks.drop(colonyId);
@@ -175,6 +207,16 @@ public final class PathPaving {
                         colonyId.toString().substring(0, 8), plan.steps.size());
             }
 
+            endTurn(colonyId);
+        }
+    }
+
+    private static void skipRepairStep(UUID colonyId, Turn turn, PathLinks.Plan plan, PathStep step) {
+        RoadGraphRefresh.refused(colonyId, step);
+        plan.next++;
+        turn.walked = 0;
+
+        if (plan.done()) {
             endTurn(colonyId);
         }
     }

@@ -259,8 +259,7 @@ Cada passo é uma peça com todas as suas partes:
   fluxo prefere piso até um bloco acima do chão da pegada.
 - **Água, solo arado e cultivo** (escolha do autor, 2026-11-04, igual ao legado):
   surgem no local sem material, com registro `SHAPED_GROUND`; o passo grava
-  `shaped` e a obra, `contract=2`. Na camada, a água vem primeiro e logo as quatro
-  vizinhas, fechando o tanque antes do primeiro tique do fluido; o solo arado nasce
+  `shaped` e a obra, `contract=2`. Na camada, a água e as quatro vizinhas são uma escrita só (Regra 203), para nenhum atraso da obra deixar a água escorrer; o solo arado nasce
   úmido (7) ao lado dela e o trigo do curral grande já é maduro (idade 7), estados
   que não mudam sozinhos e por isso não quebram a evidência. Água um bloco abaixo
   do solo foi considerada e descartada: não umedece o solo arado.
@@ -373,3 +372,19 @@ com envelope v3. A interrupção é simulada pelo estado gravado
 não é executado: sua recusa é inferida do mesmo caminho de envelope
 desconhecido. O cenário de conclusão usa um job de terreno sintético; a
 cadeia terreno real → obra escrita (`built`) é provada em `MaeStructureWriteGameTest`, sem conclusão.
+
+## Emenda de 2026-11-05 (autor) — planta baixa
+
+A peça do `structure_v3` aceita ar, o próprio bloco ou planta baixa (`MaeProtection.vegetation`) no lugar, e escreve por cima
+(Regra 204). O preparo só tira a planta de coluna que corta ou aterra, e o lote plano parava em `occupied_structure_target`.
+
+## Emenda de 2026-11-05 (autor) — ligação e retomada em vila nova
+
+Em vila nova, `MaeSites` não usa `road_v2`: a obra pronta entrega a região (ADR-045, emenda do item 10) e a porta entra no
+grafo pela releitura (Regra 177), com o construtor calçando. Assim há uma fonte só para o grafo, e `RoadGraph.from` no
+`MaeRoadExecution` fica para a vila antiga.
+
+`MaeStructureSite` continua só na sessão, mas o pedido da obra fica na região (`MaeSiteRecord`) e `MaeStructureSite.resume`
+refaz o condutor na etapa do job quando o chão dela volta a carregar. Pausado e bloqueado passam por `MaeWorldWriter.resume`,
+que revalida o mundo; escrita ou publicação sem confirmação vira falha, sem repetição (ADR-044). Parar com `/vc mae parar`
+apaga o pedido, e a obra não volta sozinha.

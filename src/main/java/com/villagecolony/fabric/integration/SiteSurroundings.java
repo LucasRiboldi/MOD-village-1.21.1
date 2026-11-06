@@ -162,6 +162,7 @@ public final class SiteSurroundings {
 
             // A barreira (teto da arena, mapa do jogador) não é chão nem obstáculo do chão: passa por ela.
             if (state.isAir() || state.isOf(Blocks.BARRIER)
+                    || LotGround.isLightDecor(state)
                     || (LotGround.isNothing(state) && state.getFluidState().isEmpty())) {
                 continue;
             }

@@ -19,7 +19,7 @@ final class MaeSectionLocks {
             }
             if (regionId.equals(other.getUuid("id"))
                     || !world.getRegistryKey().getValue().toString().equals(other.getString("dimension"))) continue;
-            if (!other.contains("job")) continue;
+            if (!other.contains("job") || MaeHandover.isHandedOver(other)) continue;
             if (!other.contains("job", NbtElement.COMPOUND_TYPE)) throw new IllegalStateException("invalid_job");
             NbtCompound job = other.getCompound("job");
             boolean known = !job.contains("type") ? !other.contains("policy")

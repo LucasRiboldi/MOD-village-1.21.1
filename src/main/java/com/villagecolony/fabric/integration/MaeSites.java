@@ -37,6 +37,12 @@ public final class MaeSites {
     private static final int SLICES_PER_TICK = 3;
     /** Folga horizontal da região: entrada, margem do terreno e um trecho de rua até a rede. */
     static final int REGION_REACH = 12;
+    /** A folga que a caixa da estrutura soma às peças da vila. */
+    private static final int STRUCTURE_MARGIN = 12;
+    /** Até onde, além da folga, se procura lote fora da vila. */
+    private static final int OUTSIDE_REACH = 32;
+    /** De quanto em quanto tempo se procura obra interrompida com o chão já carregado. */
+    private static final int RESUME_EVERY = 100;
     private static final Map<UUID, Entry> ACTIVE = new LinkedHashMap<>();
 
     static {
@@ -64,19 +70,84 @@ public final class MaeSites {
 
     static Status start(ServerWorld world, MaeWorldWriter writer, UUID colonyId, ResourceId model, BlockPos origin,
                         int quarterTurns, @Nullable UUID owner) {
+        if (MaeClearing.isBusy()) throw new IllegalStateException("too_many_sites");
+        return start(world, writer, colonyId, model, origin, quarterTurns, owner, true);
+    }
+
+    private static Status start(ServerWorld world, MaeWorldWriter writer, UUID colonyId, ResourceId model, BlockPos origin,
+                                int quarterTurns, @Nullable UUID owner, boolean mayClear) {
         if (ACTIVE.size() >= MAX_ACTIVE) throw new IllegalStateException("too_many_sites");
         if (quarterTurns < 0 || quarterTurns > 3) throw new IllegalArgumentException("invalid_rotation");
         ColonyPos center = VillageColonyMod.COLONIES.find(colonyId)
                 .orElseThrow(() -> new IllegalStateException("unknown_colony")).center();
         ConstructionProject project = ConstructionProject.plan(colonyId, blueprint(world, model, quarterTurns),
                 MinecraftTypeAdapter.toColonyPos(origin));
-        UUID regionId = reusable(world, writer, colonyId, project)
-                .orElseGet(() -> writer.reserveTerrain(world, colonyId, regionFor(project)));
-        MaeStructureSite site = MaeStructureSite.beginWithRoad(world, writer, regionId, project, quarterTurns, center);
+        java.util.Optional<UUID> reused = reusable(world, writer, colonyId, project);
+
+        if (reused.isEmpty() && mayClear) {
+            WorkArea area = regionFor(project);
+            List<BlockPos> growth = MaeClearing.survey(world, writer, colonyId, area);
+
+            if (!growth.isEmpty()) {
+                return clearFirst(world, writer, colonyId, model, origin, quarterTurns, owner, area, growth);
+            }
+        }
+
+        UUID regionId = reused.orElseGet(() -> writer.reserveTerrain(world, colonyId, regionFor(project)));
+        MaeStructureSite site;
+
+        try {
+            // Em vila nova a ligação é do grafo, com o construtor; o road_v2 fica para a vila que não tem releitura.
+            site = NewVillage.is(world, colonyId)
+                    ? MaeStructureSite.begin(world, writer, regionId, project, quarterTurns, center)
+                    : MaeStructureSite.beginWithRoad(world, writer, regionId, project, quarterTurns, center);
+        } catch (IllegalStateException | IllegalArgumentException refused) {
+            // Reserva nova sem nenhuma escrita não pode ficar bloqueando a dimensão.
+            if (reused.isEmpty()) {
+                MaeHandover.handOver(writer.store(), regionId);
+            }
+
+            throw refused;
+        }
+
+        new MaeSiteRecord(model, origin.toImmutable(), quarterTurns, owner).writeTo(writer.store(), regionId);
         ACTIVE.put(regionId, new Entry(world, writer, model, origin.toImmutable(), quarterTurns, owner, site));
         VillageColonyMod.LOGGER.info("VC_MAE_SITE version=1 colony={} model={} at={} rotation={} result=started",
                 colonyId.toString().substring(0, 8), model, origin.toShortString(), quarterTurns);
         return status(regionId, ACTIVE.get(regionId));
+    }
+
+    /** Limpa a região agora; a obra começa depois da espera, em {@link #startAfterClearing} — Regra 200. */
+    private static Status clearFirst(ServerWorld world, MaeWorldWriter writer, UUID colonyId, ResourceId model, BlockPos origin,
+                                     int quarterTurns, @Nullable UUID owner, WorkArea area, List<BlockPos> growth) {
+        MaeClearing.clear(world, growth);
+        MaeGenerationEvidence.rebase(world, area);
+        MaeClearing.schedule(new MaeClearing.Pending(world, writer, colonyId, model, origin.toImmutable(), quarterTurns, owner,
+                area, MaeClearing.readyAt(world)));
+        VillageColonyMod.LOGGER.info("VC_MAE_SITE version=1 colony={} model={} at={} rotation={} result=clearing blocks={}",
+                colonyId.toString().substring(0, 8), model, origin.toShortString(), quarterTurns, growth.size());
+        return new Status(UUID.randomUUID(), model, origin.toImmutable(), quarterTurns, MaeStructureSite.Phase.CLEARING,
+                growth.size() + " blocos");
+    }
+
+    private static void startAfterClearing(MinecraftServer server, MaeClearing.Pending due) {
+        Text outcome;
+
+        MaeGenerationEvidence.rebase(due.world(), due.area());
+
+        try {
+            outcome = message(start(due.world(), due.writer(), due.colonyId(), due.model(), due.origin(), due.quarterTurns(),
+                    due.owner(), false));
+        } catch (IllegalStateException | IllegalArgumentException refused) {
+            VillageColonyMod.LOGGER.warn("VC_MAE_SITE version=1 model={} at={} result=refused_after_clearing detail={}",
+                    due.model(), due.origin().toShortString(), refused.getMessage());
+            outcome = Text.literal("Obra MAE recusada depois da limpeza: " + refused.getMessage()).formatted(Formatting.RED);
+        }
+
+        if (due.owner() != null) {
+            var player = server.getPlayerManager().getPlayer(due.owner());
+            if (player != null) player.sendMessage(outcome, false);
+        }
     }
 
     /**
@@ -108,9 +179,13 @@ public final class MaeSites {
         }
         String last = "no_lot";
         int tried = 0;
-        for (var lot : FoundationLotSearch.candidates(heights, growth, width, depth, size.x(), size.z())) {
+        // O lote sem árvore primeiro; a limpeza só quando não há outro (Regra 200).
+        List<FoundationLotSearch.Lot> candidates = new ArrayList<>(
+                FoundationLotSearch.candidates(heights, growth, width, depth, size.x(), size.z()));
+        candidates.sort(java.util.Comparator.comparing(FoundationLotSearch.Lot::clearing));
+
+        for (var lot : candidates) {
             if (tried >= 32) break;
-            if (lot.clearing()) continue;
             tried++;
             try {
                 return start(world, writer, colonyId, model,
@@ -120,6 +195,75 @@ public final class MaeSites {
                 last = refused.getMessage() == null ? "invalid_payload" : refused.getMessage();
             }
         }
+        throw new IllegalStateException("no_lot:" + last);
+    }
+
+    /**
+     * Lote na faixa fora da vila gerada, perto do jogador — plano mestre §3.3: o MAE não edita a vila original, e a
+     * caixa dela, com a folga da estrutura e a da região, recusaria qualquer lote de dentro. Só lê chunk carregado.
+     */
+    public static Status startOutside(ServerWorld world, UUID colonyId, ResourceId model, BlockPos near,
+                                      int quarterTurns, @Nullable UUID owner) {
+        ColonyPos center = VillageColonyMod.COLONIES.find(colonyId)
+                .orElseThrow(() -> new IllegalStateException("unknown_colony")).center();
+        var box = com.villagecolony.fabric.world.GeneratedVillages.boundsAt(world, center.x(), center.z())
+                .orElseThrow(() -> new IllegalStateException("no_generated_village"));
+        MaeWorldWriter writer = MaeWorldWriter.of(world);
+        var size = blueprint(world, model, quarterTurns).size();
+        int clear = STRUCTURE_MARGIN + REGION_REACH + 1;
+        int minX = box.minX() - clear - OUTSIDE_REACH;
+        int minZ = box.minZ() - clear - OUTSIDE_REACH;
+        int width = box.maxX() - box.minX() + 2 * (clear + OUTSIDE_REACH) + 1;
+        int depth = box.maxZ() - box.minZ() + 2 * (clear + OUTSIDE_REACH) + 1;
+        int[] heights = new int[width * depth];
+        boolean[] growth = new boolean[width * depth];
+
+        for (int dz = 0; dz < depth; dz++) {
+            for (int dx = 0; dx < width; dx++) {
+                int x = minX + dx;
+                int z = minZ + dz;
+                boolean loaded = world.isChunkLoaded(x >> 4, z >> 4);
+
+                heights[dz * width + dx] = loaded ? LotGrowth.groundTop(world, x, z) : FoundationLotSearch.UNKNOWN;
+                growth[dz * width + dx] = loaded && LotGrowth.hasGrowth(world, x, z);
+            }
+        }
+
+        List<BlockPos> lots = new java.util.ArrayList<>();
+        java.util.Set<BlockPos> toClear = new java.util.HashSet<>();
+
+        for (var lot : FoundationLotSearch.candidates(heights, growth, width, depth, size.x(), size.z())) {
+            int x = minX + lot.offsetX();
+            int z = minZ + lot.offsetZ();
+            boolean outside = x + size.x() - 1 < box.minX() - clear || x > box.maxX() + clear
+                    || z + size.z() - 1 < box.minZ() - clear || z > box.maxZ() + clear;
+
+            if (outside) {
+                BlockPos at = new BlockPos(x, lot.floor(), z);
+
+                lots.add(at);
+
+                if (lot.clearing()) {
+                    toClear.add(at);
+                }
+            }
+        }
+
+        // O lote sem árvore primeiro; a limpeza só quando não há outro (Regra 200).
+        lots.sort(java.util.Comparator.<BlockPos, Boolean>comparing(toClear::contains)
+                .thenComparingDouble(lot -> lot.getSquaredDistance(near)));
+
+        String last = lots.isEmpty() ? "no_lot_outside_the_village" : "no_lot";
+
+        for (BlockPos lot : lots.subList(0, Math.min(32, lots.size()))) {
+            try {
+                return start(world, writer, colonyId, model, lot, quarterTurns, owner);
+            } catch (IllegalStateException | IllegalArgumentException refused) {
+                if ("too_many_sites".equals(refused.getMessage())) throw refused;
+                last = refused.getMessage() == null ? "invalid_payload" : refused.getMessage();
+            }
+        }
+
         throw new IllegalStateException("no_lot:" + last);
     }
 
@@ -142,7 +286,7 @@ public final class MaeSites {
         for (var region : writer.store().regions()) {
             if (!region.containsUuid("id") || ACTIVE.containsKey(region.getUuid("id"))
                     || !region.containsUuid("colony") || !colonyId.equals(region.getUuid("colony"))
-                    || !dimension.equals(region.getString("dimension"))
+                    || !dimension.equals(region.getString("dimension")) || MaeHandover.isHandedOver(region)
                     || !"terrain_v2".equals(region.getString("policy"))) continue;
             var job = region.getCompound("job");
             boolean idle = !region.contains("job") || ("complete".equals(job.getString("state"))
@@ -178,7 +322,91 @@ public final class MaeSites {
         } catch (IllegalStateException | IllegalArgumentException ignored) {
             // Sem job aprovado não há o que pausar; a reserva continua, sem escrita.
         }
+        // Parada a pedido não volta sozinha ao reiniciar.
+        MaeSiteRecord.clear(entry.writer().store(), regionId);
         return true;
+    }
+
+    /**
+     * Entrega as regiões paradas desta dimensão ao pedido do autor; a de escrita sem confirmação fica (ADR-044).
+     *
+     * @return quantas foram entregues e quantas ficaram, nessa ordem
+     */
+    public static int[] releaseIdle(ServerWorld world) {
+        MaeWorldWriter writer = MaeWorldWriter.of(world);
+        String dimension = world.getRegistryKey().getValue().toString();
+        int released = 0;
+        int kept = 0;
+
+        for (var region : writer.store().regions()) {
+            if (!region.containsUuid("id") || ACTIVE.containsKey(region.getUuid("id"))
+                    || !dimension.equals(region.getString("dimension")) || MaeHandover.isHandedOver(region)) continue;
+
+            if (MaeHandover.hasUnconfirmedWork(region)) {
+                kept++;
+            } else {
+                MaeHandover.handOver(writer.store(), region.getUuid("id"));
+                released++;
+            }
+        }
+
+        return new int[] {released, kept};
+    }
+
+    /** Refaz a obra que o reinício interrompeu, assim que o chão dela estiver carregado (Regra 187). */
+    private static void resumeInterrupted(MinecraftServer server) {
+        ServerWorld world = server.getOverworld();
+        MaeWorldWriter writer = MaeWorldWriter.of(world);
+        String dimension = world.getRegistryKey().getValue().toString();
+
+        if (!writer.store().supported()) return;
+
+        for (var region : writer.store().regions()) {
+            if (ACTIVE.size() >= MAX_ACTIVE) return;
+            if (!region.containsUuid("id") || !region.containsUuid("colony") || ACTIVE.containsKey(region.getUuid("id"))
+                    || !dimension.equals(region.getString("dimension")) || MaeHandover.isHandedOver(region)) continue;
+
+            var record = MaeSiteRecord.of(region);
+
+            if (record.isPresent() && groundIsLoaded(world, region)) {
+                resume(world, writer, region.getUuid("id"), region.getUuid("colony"), record.get());
+            }
+        }
+    }
+
+    private static boolean groundIsLoaded(ServerWorld world, net.minecraft.nbt.NbtCompound region) {
+        try {
+            WorkArea area = MaeWorldWriter.area(region);
+
+            return world.isChunkLoaded(area.min().x() >> 4, area.min().z() >> 4)
+                    && world.isChunkLoaded(area.max().x() >> 4, area.max().z() >> 4);
+        } catch (IllegalStateException | IllegalArgumentException malformed) {
+            return false;
+        }
+    }
+
+    private static void resume(ServerWorld world, MaeWorldWriter writer, UUID regionId, UUID colonyId, MaeSiteRecord record) {
+        var colony = VillageColonyMod.COLONIES.find(colonyId);
+
+        if (colony.isEmpty()) {
+            return;
+        }
+
+        try {
+            ConstructionProject project = ConstructionProject.plan(colonyId, blueprint(world, record.model(), record.quarterTurns()),
+                    MinecraftTypeAdapter.toColonyPos(record.origin()));
+            MaeStructureSite site = MaeStructureSite.resume(world, writer, regionId, project, record.quarterTurns(),
+                    colony.get().center(), !NewVillage.is(world, colonyId));
+
+            ACTIVE.put(regionId, new Entry(world, writer, record.model(), record.origin(), record.quarterTurns(), record.owner(), site));
+            VillageColonyMod.LOGGER.info("VC_MAE_SITE version=1 colony={} model={} at={} rotation={} result=resumed phase={}",
+                    colonyId.toString().substring(0, 8), record.model(), record.origin().toShortString(), record.quarterTurns(),
+                    site.phase());
+        } catch (IllegalStateException | IllegalArgumentException refused) {
+            MaeSiteRecord.clear(writer.store(), regionId);
+            VillageColonyMod.LOGGER.warn("VC_MAE_SITE version=1 colony={} at={} result=not_resumed detail={}",
+                    colonyId.toString().substring(0, 8), record.origin().toShortString(), refused.getMessage());
+        }
     }
 
     public static List<Status> active() {
@@ -188,6 +416,12 @@ public final class MaeSites {
     }
 
     static void tick(MinecraftServer server) {
+        MaeClearing.takeDue(server.getOverworld().getTime()).ifPresent(due -> startAfterClearing(server, due));
+
+        if (server.getTicks() % RESUME_EVERY == 0) {
+            resumeInterrupted(server);
+        }
+
         Iterator<Map.Entry<UUID, Entry>> each = ACTIVE.entrySet().iterator();
         while (each.hasNext()) {
             var item = each.next();
@@ -196,15 +430,49 @@ public final class MaeSites {
             var phase = entry.site().phase();
             if (phase != MaeStructureSite.Phase.DONE && phase != MaeStructureSite.Phase.FAILED) continue;
             each.remove();
-            Status status = status(item.getKey(), entry);
-            VillageColonyMod.LOGGER.info("VC_MAE_SITE version=1 model={} at={} rotation={} result={} detail={}",
+            boolean handedOver = close(item.getKey(), entry, phase);
+            int applied = entry.writer().store().region(item.getKey()).map(MaeHandover::appliedChanges).orElse(0);
+            Status status = closedStatus(item.getKey(), entry, handedOver);
+            VillageColonyMod.LOGGER.info("VC_MAE_SITE version=1 model={} at={} rotation={} result={} detail={} applied={} handedOver={}",
                     entry.model(), entry.origin().toShortString(), entry.quarterTurns(),
-                    phase.name().toLowerCase(java.util.Locale.ROOT), status.detail());
+                    phase.name().toLowerCase(java.util.Locale.ROOT), status.detail(), applied, handedOver);
             if (entry.owner() != null) {
                 var player = server.getPlayerManager().getPlayer(entry.owner());
                 if (player != null) player.sendMessage(message(status), false);
             }
         }
+    }
+
+    /**
+     * Fim da obra: pronta em vila nova, ou falha sem escrita por confirmar, a região volta para a vila, e o que já foi
+     * escrito fica como está (Regra 205); o resto fica reservado.
+     *
+     * @return se a região foi entregue
+     */
+    private static boolean close(UUID regionId, Entry entry, MaeStructureSite.Phase phase) {
+        var store = entry.writer().store();
+        var region = store.region(regionId);
+        boolean newVillage = region.filter(found -> found.containsUuid("colony"))
+                .map(found -> NewVillage.is(entry.world(), found.getUuid("colony"))).orElse(false);
+        boolean handOver = phase == MaeStructureSite.Phase.DONE ? newVillage
+                : region.filter(found -> !MaeHandover.hasUnconfirmedWork(found)).isPresent();
+
+        if (handOver) {
+            MaeHandover.handOver(store, regionId);
+        } else {
+            MaeSiteRecord.clear(store, regionId);
+        }
+
+        return handOver;
+    }
+
+    /** Sem nota de rua, a obra entregue diz quem liga a porta. */
+    private static Status closedStatus(UUID regionId, Entry entry, boolean handedOver) {
+        Status status = status(regionId, entry);
+
+        return status.phase() == MaeStructureSite.Phase.DONE && handedOver && status.detail().isEmpty()
+                ? new Status(status.regionId(), status.model(), status.origin(), status.quarterTurns(), status.phase(), "road_by_graph")
+                : status;
     }
 
     /** A linha que o jogador lê: modelo, posição, etapa e motivo. */

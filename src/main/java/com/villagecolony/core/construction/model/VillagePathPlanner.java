@@ -52,7 +52,7 @@ public final class VillagePathPlanner {
     public static final int MAX_NODES = 20_000;
 
     static final double STEP = 1.0;
-    static final double TURN = 0.5;
+    static final double TURN = 2.0;
     static final double CLIMB = 1.0;
     static final double FILL = 3.0;
     static final double CUT = 4.0;

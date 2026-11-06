@@ -12,6 +12,262 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.37] — candidata, 2026-11-06
+
+### Novo
+
+- Grafo: toda estrutura da vila gerada e do mod tem entrada com o marcador branco de porta, sem porta nova no mundo; sem porta nem portão, é o lado que parece aberto (Regra 210).
+- Grafo: o portão da mina é lido do mundo e vira entrada, do lado de onde se chega (Regra 210).
+
+### Mudado
+
+- A casa do mineiro acompanha a boca em uso da mina, até uma por mineiro (Regra 211).
+- A ligação da boca da mina parte da superfície, e não do nível atual da escada, que dava `no path` a 44 de altura.
+
+### Removido
+
+- O carpinteiro não põe mais a tocha da colônia sozinho pelo chão da vila; o jogador continua podendo fazê-la e pô-la (Regra 212).
+
+### Corrigido
+
+- Vela e tocha soltas não recusam mais o lote, e saem quando a obra abre (Regra 212).
+- A mesma rua dava grafos diferentes a cada releitura, porque a ordem dos nós vinha da identidade do objeto.
+
+## [0.4.36] — candidata, 2026-11-06
+
+### Mudado
+
+- Grafo: plantação sem anel, com uma entrada ligada à rua; o caminho antigo colado nela sai do grafo e volta ao solo quando a rede continua inteira (Regra 208). O chafariz mantém o anel, sem quina fixa (Regra 183).
+- Grafo: porta de quintal fechado só é entrada se for a única saída da casa (Regra 209).
+
+### Corrigido
+
+- As quinas fixas dos anéis seguravam pontas azuis no centro da vila, que a Regra 206 não podia cortar.
+
+## [0.4.35] — candidata, 2026-11-05
+
+### Mudado
+
+- Grafo: no máximo 4 pontas azuis, a mais distante do centro em cada quadrante; os trechos mortos saem (Regra 206).
+- Grafo: toda porta térrea vira entrada, pelo lado de fora, passando por degrau e escada (Regra 207).
+
+### Corrigido
+
+- `PathLinks.entranceOf`: no empate entre os dois lados da porta, ficava o lado de dentro da casa.
+
+## [0.4.34] — candidata, 2026-11-05
+
+### Corrigido
+
+- MAE: grama e flor em lote plano paravam a obra em `occupied_structure_target`; a peça agora escreve por cima (Regra 204).
+- MAE: a obra falha segurava a região e congelava o grafo e o índice de ruas; sem escrita por confirmar, ela volta para a vila
+  (Regra 205).
+
+## [0.4.33] — candidata, 2026-11-05
+
+### Corrigido
+
+- MAE: a obra do curral grande parava em `protected_volume` quando atrasava, porque a água escorria antes de as vizinhas entrarem.
+  A água e as quatro vizinhas agora são uma escrita só (Regra 203).
+
+## [0.4.32] — candidata, 2026-11-05
+
+### Corrigido
+
+- Pastor: com a folga de 7 blocos ele ia e voltava sem levar o animal. Agora volta aos 9, e quem já chegou amarra ou entra sem
+  voltar ao animal (Regra 196).
+
+### Testes
+
+- Bateria em dia com as Regras 182 a 202: 1123 GameTests, verdes em 2 rodadas seguidas, e 1745 unitários. Os testes novos das
+  Regras 196 a 202 foram vistos falhando com as regras desligadas.
+
+## [0.4.31] — candidata, 2026-11-05
+
+### Corrigido
+
+- MAE: a reserva recusava quase todo lote com `changed_generation_evidence`, porque o recibo da geração sai antes de a água
+  correr e de a folha se ajustar. A prova agora começa na reserva (Regra 202), e a limpeza da Regra 200 passa a poder rodar.
+
+## [0.4.30] — candidata, 2026-11-05
+
+### Mudado
+
+- MAE: a obra limpa árvore natural, folha e mato alto da região antes de reservar, com o tronco caindo como item (Regra 200).
+- MAE: o lote aceita o chão natural do bioma e minério (Regra 201).
+
+## [0.4.29] — candidata, 2026-11-05
+
+### Corrigido
+
+- Pastor: portão com `dirt_path` na saída deixava de contar como acesso, e os currais ficavam vazios (Regra 196).
+
+### Mudado
+
+- Pastor: animal amarrado também vai para o curral; poste só sem curral ou com todos lotados. Curral longe vai por pernas
+  (Regra 196).
+- Todo aldeão corta a folha natural que trava o caminho (Regra 197).
+- Lenhador: interior da vila primeiro, por faixas a partir do centro (Regra 198); sem muda a até 3 blocos de estrutura
+  (Regra 199).
+
+## [0.4.28] — ofícios sem laço e reunião do fim do dia (2026-11-05, candidato)
+
+### Corrigido
+- Pedido de oficina ou fornalha que fecha sem resultado entra em espera de 1, 2, 4 até 30 min, com a linha `VC_LOOP`, em vez de
+  voltar a cada ciclo (Regra 191).
+- Só o carpinteiro converte tora em tábua; os outros ofícios fecham a tarefa e ficam livres (Regra 192).
+- Pastor não abate e ninguém cata item do chão fora do expediente (Regra 194).
+
+### Alterado
+- Mineiro que espera ramal alarga o salão do nível, sem cortar degrau nem encostar em fluido (Regra 193).
+- O expediente acaba em 10000 tiques, e não em 11000 (Regra 195).
+
+### Adicionado
+- Reunião do fim do dia, de 10000 a 11000, no sino da vila ou no centro; a linha `VC_GATHER` diz quantos chegaram (Regra 195).
+
+ — menos trabalho perdido nos ofícios (2026-11-05, candidato)
+
+### Corrigido
+- Pedido de peça de obra só abre quando o baú não cobre o que falta: 709 de 874 tarefas terminavam com 0 peça, cerca de 354
+  min de aldeão no jogo da 0.4.24 (Regra 188).
+- Fundidor não fica parado na fornalha quando o cru está nos baús e a reserva não deixa assar: 6.887 repetições em 5 h no
+  mesmo jogo (Regra 190).
+
+### Alterado
+- O lenhador pega a árvore conhecida mais perto dele, dentro da zona de prioridade, em vez da mais perto do centro: a mediana
+  era de 55 blocos entre uma árvore e a seguinte (Regra 189).
+- Quem está sem ofício vira lenhador quando a obra espera madeira, mesmo sem vaga aberta (Regra 189).
+
+ — obra MAE entrega a região, liga pelo grafo e retoma (2026-11-05, candidato)
+
+### Corrigido
+- A primeira obra MAE parava para sempre a releitura do grafo e o índice de ruas da dimensão, e o caminho comum não entrava
+  na região. Em vila nova, obra pronta agora entrega a região à vila (Regra 187, emenda da ADR-045 item 10).
+- Reserva sem nenhuma escrita não fica presa quando a obra falha ou é recusada ao começar.
+- Obra MAE interrompida por reiniciar o jogo continua da etapa em que estava, quando o chão dela carrega.
+
+### Alterado
+- Em vila nova a porta da obra MAE entra no grafo novo pela releitura, com o construtor calçando, sem `road_v2`.
+- `VC_MAE_SITE` registra as escritas reais (`applied`) e se a região foi entregue (`handedOver`).
+
+### Adicionado
+- `/vc mae soltar`: entrega à vila as regiões paradas; a de escrita sem confirmação fica.
+
+ — volta para casa, mina por dentro e rua de um bloco (2026-11-05, candidato)
+
+### Corrigido
+- O caminho do aldeão da colônia pulava 2 blocos embaixo de teto: o nó fora da rua escapava da conferência de cabeça do
+  jogo. Na casa principal todos paravam em frente à escada e pulavam no lugar até o teletransporte (Regra 181).
+
+### Alterado
+- A mina não abre boca nova ao fim da escada: abre um ramal a partir de um salão que já existe, sem cortar degrau. Boca
+  nova só depois de 50 falhas ou com tudo o que resta na água, e nunca perto de outra boca (Regra 182).
+- A rua é uma linha de um bloco: o pedreiro devolve o caminho ao lado da linha ao solo do bioma (Regra 186).
+- O nó central fica no encontro de linhas a até 3 blocos, sem nó colado.
+
+### Adicionado
+- Anel de caminho em volta do chafariz e das plantações, com as quinas fixas no grafo (Regra 183).
+- A quina da plantação mais perto do centro vira entrada a partir da terceira releitura (Regra 184).
+- As pontas mais distantes do grafo avançam um bloco por dia (Regra 185).
+- Linha `VC_PENS` com os cercados achados e os portões que não fecham cercado.
+
+ — caminho coberto vira terra e MAE fora da vila (2026-11-05, candidato)
+
+### Adicionado
+- `/vc mae obra <modelo> fora`: lote na faixa fora da vila original, perto do jogador. Dentro da vila o MAE recusa com
+  `original_structure`, e a mensagem agora explica.
+
+### Alterado
+- Caminho com bloco em cima vira terra, ou areia no deserto, na releitura do grafo (Regra 180).
+- `toResourceType` sem exceção: 0,6% do servidor no Spark `t6c9nJYaLy`.
+
+ — saída em caminho, acesso livre e zona limpa (2026-11-05, candidato)
+
+### Alterado
+- Casa principal: sem velas, com uma tocha comum por fora, acima da porta.
+- O chão em frente a toda porta e portão vira caminho, com ramal reto de até 16 blocos até a linha (`RoadLines`).
+- Todo portão de cerca é nó branco do grafo (`ShepherdPens`).
+- A rota do grafo corta o que está acima do chão: árvore e chão natural, até 5 blocos, sem abrir túnel (`canCut`,
+  `TreeClearing.openColumn`). O construtor corta ao calçar.
+- Zona da obra nova: todo bloco natural acima do piso sai, além da vegetação, só em obra sem nenhuma peça (`clearZone`).
+
+### Adicionado
+- O pedreiro limpa o anel de 2 blocos em volta das construções e nivela o vão entre construções do mesmo nível a até 5
+  blocos, em calombo de até 3 blocos; o resto fica com o alisamento (`BuildingGaps`, Regra 178).
+
+ — grafo de caminhos como mapa de trilhos (2026-11-05, candidato)
+
+### Alterado
+- O grafo da vila nova sai da linha do meio da rua: uma linha só por corredor, retas, nó só onde linhas se encontram,
+  sem nó a até 3 blocos de outro, e degrau de no máximo um bloco (`RoadLines`, `RoadMask`, `RoadThinning`, `RoadChains`,
+  `RoadRouting`). Vão de até 2 blocos e buraco cercado de até 25 blocos entram na rua.
+- As partes separadas se ligam à principal pelo caminho mais curto, uma por releitura; a que não se liga fica fora do grafo.
+- Entradas viram nós brancos: porta, portão de curral e o lado de roça, cada uma com um ramal até a linha.
+- O sinalizador usa as cores do desenho do autor: linha amarela, nó rosa, entrada branca.
+
+### Adicionado
+- Releitura do caminho da vila a cada 5 minutos (`RoadGraphRefresh`), e `/vc mae reler`: pega o que o jogador mudou na mão.
+- O construtor calça o que o grafo pede: vãos, buracos e ligações, 64 colunas por plano.
+
+### Corrigido
+- Tronco sem copa dentro da zona da obra sai também (nota do autor no jogo da 0.4.21).
+- A casa do mineiro pronta não volta a ser pedida (`VC_MINE_HOME` repetido).
+
+ — só região nova (2026-11-05, candidato)
+
+### Alterado
+- Terra sob caminho (`PathSupport`), ponte, ligação da boca da mina e limpeza ampliada de árvores (`TreeClearing`) só
+  valem em vila gerada com a política atual (`NewVillage`, plano mestre do MAE §0.2). Vila antiga mantém o comportamento
+  anterior. Escolha do autor, 05-11.
+
+## [0.4.20] — sinalizador dos caminhos, casa do mineiro e velas (2026-11-04, candidato)
+
+### Adicionado
+- `/vc mae mostrar ligar|desligar` (operador): desenha o que a vila guarda como caminho, a até 192 blocos do jogador. Rua
+  principal ciano, secundária amarela, coluna só do índice cinza; nó central vermelho, entrada verde, junção magenta.
+- Casa pequena do mineiro (`colony/miner_house`, um modelo por estilo, `scripts/gen_miner_house.py`): cama, baú e tocha,
+  ao lado da boca da mina, sem exigir rua ao lado do lote. Antes, a busca exigia rua e terminava sem lote.
+- A boca da mina entra na rede de caminhos como uma porta, a partir da borda da folga da escada.
+- Velas acesas na casa principal: 4 por dentro e 6 por fora.
+
+### Alterado
+- O traçado de caminho cobra mais por curva, para sair em linhas retas onde der.
+
+## [0.4.19] — notas do jogo da 0.4.18: pulo, água, árvores, caminho, pastor e ponte (2026-11-04, candidato)
+
+### Adicionado
+- Ponte da vila: sem caminho a seco na zona da vila, o construtor atravessa a água, até 64 colunas,
+  com eixo de tábua, largura 3 onde o lado é água e cerca nas beiras, gastando dos baús (`BridgeDeck`).
+- Com mais de 5 blocos de água à frente, todo aldeão anda cerca de 5× mais rápido que no Vanilla (`VillagerMoves`).
+
+### Alterado
+- O pulo do aldeão é o padrão; o maior só com obstáculo, cerca, encalhe ou saída de curral (`VillagerMoves`).
+- A casa principal prefere lote ligado à vila a seco (`DryLand`).
+- Pastor busca animais antes de escolher a próxima ovelha: a demanda de lã não o prende mais à tosquia.
+
+### Corrigido
+- Toda vegetação da zona da obra sai em todas as alturas, com tronco e folha encostados, até 16 blocos além
+  da zona e 2.000 blocos (`TreeClearing`).
+- Caminho com vão de até 6 blocos embaixo ganha terra até o chão (`PathSupport`).
+
+## [0.4.18] — encalhado solto sem sair do lugar (2026-11-04, candidato)
+
+### Corrigido
+- Encalhado solto "after 0 steps" e marcado de novo no mesmo ponto fica na fuga até sair
+  dali: a altura do terreno em volta não prova que ele anda (E47). O `ClimbOut` passa a
+  agir e o prazo de tentativas o leva a um lugar seguro. No playtest da 0.4.17 o construtor
+  ficou 50 min em `-1584, 102, 3565`, solto e marcado de novo a cada 2 min.
+- `BedTeleport.toSafety` não usa a cama quando ela está no mesmo lugar do encalhe: vai ao
+  chão do centro da vila (Regra 114).
+- Fazendeiro: colheita guardada conta como progresso; a tarefa de trigo não vence mais aos
+  300 s colhendo, nem recebe trigo criado do nada na segunda falha (0 de 24 na 0.4.17).
+- Curral (Regra 122): o chão é bloqueado para quem não é pastor e está fora; quem entra por
+  portão aberto sai por ele e mantém a tarefa.
+
+### Alterado
+- Linhas por bloco do mineiro e do baú público (`took`, `settle`, `gallery really ends`,
+  `public chests`) passam a DEBUG: eram 65% do `latest.log`.
+
 ## [0.4.17] — comando e fim do plano MAE (2026-11-04, candidato)
 
 ### Adicionado

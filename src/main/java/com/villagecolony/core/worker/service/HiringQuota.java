@@ -50,12 +50,15 @@ final class HiringQuota {
             }
         }
 
-        if (!anySlotOpen) {
+        // Sem vaga aberta, quem está sem ofício ainda pega o machado se a obra espera madeira (Regra 189).
+        boolean onlyWood = !anySlotOpen;
+
+        if (onlyWood && candidate.profession().isPresent()) {
             return Optional.empty();
         }
 
         for (ProfessionType type : ProfessionDemand.of(candidate.colonyId())) {
-            if (!counts.containsKey(type) || !growthOrder.contains(type)
+            if ((onlyWood && type != ProfessionType.LUMBERJACK) || !counts.containsKey(type) || !growthOrder.contains(type)
                     || atMaximum(type, counts, policies) || candidate.isShunning(type)) {
                 continue;
             }

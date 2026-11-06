@@ -272,6 +272,8 @@ public final class ColonyCycle {
             WorkerService workers,
             ProductionHands report) {
 
+        TaskLoopGuard.reviewStock(colonyId, owned);
+
         // A falta da obra, por profissão — 2026-09-30. É o que a
         // contratação olha antes da lista fixa: ver ProfessionDemand.
         Map<ProfessionType, Integer> demand = new EnumMap<>(ProfessionType.class);

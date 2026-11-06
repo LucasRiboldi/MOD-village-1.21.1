@@ -4,7 +4,6 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.RoadGraph;
 import com.villagecolony.data.save.ColonySavedData;
-import com.villagecolony.fabric.integration.RoadGraphMigration;
 import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.MaeRoadAccess;
 import net.minecraft.server.world.ServerWorld;
@@ -13,7 +12,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-/** Ativa o grafo somente depois de confirmar no mundo todo o índice legado — ADR-043. */
+/** As colunas de caminho que o traçado de porta enxerga na vila nova — ADR-043, Regra 177. */
 final class RoadGraphActivation {
     private RoadGraphActivation() {
     }
@@ -31,19 +30,13 @@ final class RoadGraphActivation {
         if (!store.versionSupported(colony.id())) {
             return Optional.of(Set.of());
         }
-        Optional<ColonyRoads> legacy = RoadIndex.roadsOf(colony.id());
-        if (legacy.isEmpty()) {
-            return Optional.of(Set.of());
-        }
-        var inspection = RoadGraphMigration.inspect(world, legacy.get(), Set.of());
-        if (inspection.graph().isEmpty()) {
-            return Optional.of(Set.of());
-        }
-        RoadGraph graph = inspection.graph().orElseThrow();
-        if (!store.graph(colony.id()).equals(Optional.of(graph))) {
-            store.update(colony.id(), graph);
-        }
-        return Optional.of(columnsOf(graph));
+        // A releitura periódica publica o grafo (RoadGraphRefresh). A linha do grafo é a do meio da rua, e o traçado
+        // de porta conta a rua inteira: o índice físico mais o grafo.
+        Set<Long> roads = new HashSet<>(RoadIndex.roadsOf(colony.id()).map(ColonyRoads::columns).orElse(java.util.List.of()));
+
+        store.graph(colony.id()).ifPresent(graph -> roads.addAll(columnsOf(graph)));
+
+        return Optional.of(roads);
     }
 
     static Set<Long> columnsOf(RoadGraph graph) {

@@ -67,7 +67,7 @@ public final class PublicChests {
         }
 
         if (left < amount) {
-            VillageColonyMod.LOGGER.info("Colony {} — {} {} went to the village's public chests",
+            VillageColonyMod.LOGGER.debug("Colony {} — {} {} went to the village's public chests",
                     colonyId.toString().substring(0, 8), amount - left, item);
         }
 

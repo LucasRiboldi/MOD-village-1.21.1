@@ -11,6 +11,7 @@ import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.ColonySupply;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
@@ -72,8 +73,8 @@ public final class CraftsmanRequest {
     public static void askForWhatTheWorkIsWaitingOn(ServerWorld world, Colony colony) {
         VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
                 .filter(project -> project.state() == ConstructionState.WAITING_RESOURCES)
-                .ifPresent(project -> project.remainingMaterials().keySet()  // a lista inteira (A-3, 10-02)
-                        .forEach(wanted -> askTheCraftsmanFor(world, project, wanted)));
+                .ifPresent(project -> project.remainingMaterials()  // a lista inteira (A-3, 10-02)
+                        .forEach((wanted, remaining) -> askTheCraftsmanFor(world, project, wanted, remaining)));
     }
 
     /**
@@ -86,11 +87,11 @@ public final class CraftsmanRequest {
             return;
         }
 
-        project.remainingMaterials().keySet().forEach(wanted -> askTheCraftsmanFor(world, project, wanted)); // A-3
+        project.remainingMaterials().forEach((wanted, remaining) -> askTheCraftsmanFor(world, project, wanted, remaining)); // A-3
     }
 
     private static boolean askTheCraftsmanFor(
-            ServerWorld world, ConstructionProject project, ResourceId wanted) {
+            ServerWorld world, ConstructionProject project, ResourceId wanted, int remaining) {
 
         Optional<Item> piece = MinecraftTypeAdapter.toBlock(wanted).map(Block::asItem);
 
@@ -113,6 +114,13 @@ public final class CraftsmanRequest {
             if (task.type() == type && task.isOpen() && task.targetResource() == NOMINAL) {
                 return false;
             }
+        }
+
+        // O baú já cobre o que a obra ainda vai pôr: não há o que pedir (Regra 188). A mesma conta do
+        // CraftingSteps.produceForWork; sem ela a tarefa nascia, nada se fazia, e o ciclo a abria de novo.
+        if (ColonyChests.countIn(world, ColonyChests.nearestFirst(world, project.colonyId(), project.origin()), piece.get())
+                >= remaining) {
+            return false;
         }
 
         if (WorkAssignment.countCapableOf(

@@ -21,8 +21,11 @@ public final class WorkClock {
     /** Tiques de um dia do jogo. */
     public static final int DAY = 24_000;
 
+    /** O tique em que o expediente acaba e a reunião do fim do dia começa — Regra 195 (autor, 2026-11-05). */
+    public static final int WORK_END = 10_000;
+
     /**
-     * O tique em que o expediente acaba.
+     * O tique em que a reunião acaba.
      *
      * <p>É onde o Vanilla troca de MEET para IDLE, uma hora antes de
      * mandar o aldeão dormir, e a escolha é deliberada: a última hora
@@ -43,7 +46,14 @@ public final class WorkClock {
      *     negativo nunca chega aqui porque o relógio do jogo só cresce
      */
     public static boolean isWorkTime(long timeOfDay) {
-        return Math.floorMod(timeOfDay, DAY) < DUSK;
+        return Math.floorMod(timeOfDay, DAY) < WORK_END;
+    }
+
+    /** É a hora da reunião do fim do dia? */
+    public static boolean isGatheringTime(long timeOfDay) {
+        long hour = Math.floorMod(timeOfDay, DAY);
+
+        return hour >= WORK_END && hour < DUSK;
     }
 
     /** O tique em que o Vanilla manda o aldeão dormir (atividade REST). */

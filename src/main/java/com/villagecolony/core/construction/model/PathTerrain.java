@@ -15,4 +15,12 @@ public interface PathTerrain {
 
     /** A coluna não pode receber caminho: obra, curral, lote reservado, construção. */
     boolean blocked(int x, int z);
+
+    /**
+     * O caminho pode passar nesta coluna com o piso em {@code floorY}, tirando o que está acima: só árvore e chão
+     * natural, e sem morro por cima — Regra 178.
+     */
+    default boolean canCut(int x, int z, int floorY) {
+        return false;
+    }
 }

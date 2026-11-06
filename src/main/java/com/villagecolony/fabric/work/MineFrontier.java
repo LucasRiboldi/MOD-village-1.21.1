@@ -85,7 +85,7 @@ public final class MineFrontier {
         int step = frontier.getAsInt();
         BlockPos at = MinecraftTypeAdapter.toBlockPos(arm.shaft().positionAt(step));
 
-        VillageColonyMod.LOGGER.info(
+        VillageColonyMod.LOGGER.debug(
                 "The gallery really ends at {} — the cursor was {} steps ahead of it",
                 at.toShortString(),
                 arm.cut() - step);

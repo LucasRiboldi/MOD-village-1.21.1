@@ -44,7 +44,7 @@ public class TreeNearestGameTest implements FabricGameTest {
             VillageTrees.rememberTree(colonyId, centre);
             VillageTrees.rememberTree(colonyId, edge);
 
-            Optional<BlockPos> chosen = TreeChoice.byZone(world, new LumberjackWork.Job(task, centre), box,
+            Optional<BlockPos> chosen = WantedTree.byZone(world, new LumberjackWork.Job(task, centre), centre, box,
                     log -> true);
 
             context.assertTrue(chosen.map(centre::equals).orElse(false),
@@ -53,6 +53,38 @@ public class TreeNearestGameTest implements FabricGameTest {
             world.setBlockState(centre, Blocks.AIR.getDefaultState());
             world.setBlockState(edge, Blocks.AIR.getDefaultState());
             lumberjack.discard();
+        }
+
+        context.complete();
+    }
+
+    /** Regra 198: a faixa de dentro vence a árvore que está ao lado dele. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_grove", tickLimit = 20)
+    public void theInnerBandWinsOverTheTreeBesideHim(TestContext context) {
+        ServerWorld world = context.getWorld();
+        UUID colonyId = UUID.randomUUID();
+        BlockPos centre = context.getAbsolutePos(new BlockPos(1, 48, 1));
+        BlockPos inner = centre.east(20);
+        BlockPos beside = centre.east(40);
+        VillageBounds box = new VillageBounds(
+                centre.getX() - 50, centre.getY() - 5, centre.getZ() - 50,
+                centre.getX() + 50, centre.getY() + 5, centre.getZ() + 50);
+        Task task = Task.create(colonyId, TaskType.COLLECT_WOOD, TaskPriority.PRODUCTION, ResourceType.OAK_LOG, 8);
+
+        try {
+            world.setBlockState(inner, Blocks.OAK_LOG.getDefaultState());
+            world.setBlockState(beside, Blocks.OAK_LOG.getDefaultState());
+            VillageTrees.rememberTree(colonyId, inner);
+            VillageTrees.rememberTree(colonyId, beside);
+
+            Optional<BlockPos> chosen = WantedTree.byZone(world, new LumberjackWork.Job(task, centre), beside.east(), box,
+                    log -> log.equals(inner) || log.equals(beside));
+
+            context.assertTrue(chosen.map(inner::equals).orElse(false),
+                    "a árvore da faixa de dentro devia vir antes da que está ao lado dele: " + chosen);
+        } finally {
+            world.setBlockState(inner, Blocks.AIR.getDefaultState());
+            world.setBlockState(beside, Blocks.AIR.getDefaultState());
         }
 
         context.complete();

@@ -6,6 +6,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.util.math.BlockPos;
@@ -42,6 +43,11 @@ final class MaeProtection {
         inspect(world, colonyId, area, true, readOnlyRoads, ownWrites);
     }
 
+    /** A pergunta da reserva antes de limpar: o que {@link MaeClearing} pode tirar não barra — Regra 200. */
+    static void inspectClearing(ServerWorld world, UUID colonyId, WorkArea area) {
+        inspect(world, colonyId, area, true, Set.of(), Set.of(), true);
+    }
+
     /** Peças já confirmadas desta obra não contam como volume protegido; o resto segue a regra do terreno — ADR-046. */
     static void inspectStructure(ServerWorld world, UUID colonyId, WorkArea area, Set<BlockPos> ownWrites) {
         inspect(world, colonyId, area, true, Set.of(), ownWrites);
@@ -57,6 +63,11 @@ final class MaeProtection {
 
     private static void inspect(ServerWorld world, UUID colonyId, WorkArea area, boolean lowVegetation,
                                 Set<BlockPos> readOnlyRoads, Set<BlockPos> ownWrites) {
+        inspect(world, colonyId, area, lowVegetation, readOnlyRoads, ownWrites, false);
+    }
+
+    private static void inspect(ServerWorld world, UUID colonyId, WorkArea area, boolean lowVegetation,
+                                Set<BlockPos> readOnlyRoads, Set<BlockPos> ownWrites, boolean clearing) {
         if (!world.getServer().isOnThread()) {
             throw new IllegalStateException("not_server_thread");
         }
@@ -122,6 +133,7 @@ final class MaeProtection {
                 area.max().x(), area.max().y(), area.max().z())) {
             if (ownWrites.contains(pos)) continue;
             BlockState state = world.getBlockState(pos);
+            if (clearing && MaeClearing.isGrowth(world, pos, state)) continue;
             boolean roadColumn = readOnlyRoads.stream().anyMatch(road -> road.getX() == pos.getX() && road.getZ() == pos.getZ());
             boolean roadFloor = readOnlyRoads.contains(pos);
             if (!world.getWorldBorder().contains(pos) || state.hasBlockEntity()
@@ -148,12 +160,16 @@ final class MaeProtection {
                 || state.isOf(Blocks.CORNFLOWER) || state.isOf(Blocks.LILY_OF_THE_VALLEY);
     }
 
-    /** Somente materiais passivos nesta fundação; vegetação, fluidos e blocos ativos ficam bloqueados — ADR-044. */
+    /** Chão natural do bioma e minério, além do caminho (Regra 201); vegetação, fluidos e blocos ativos ficam de fora — ADR-044. */
     static boolean terrain(BlockState state) {
-        return state.isAir() || state.isOf(Blocks.DIRT) || state.isOf(Blocks.GRASS_BLOCK)
-                || state.isOf(Blocks.COARSE_DIRT) || state.isOf(Blocks.STONE)
+        return state.isAir() || state.isIn(BlockTags.DIRT) || state.isIn(BlockTags.BASE_STONE_OVERWORLD)
+                || state.isIn(BlockTags.SAND) || state.isIn(BlockTags.TERRACOTTA)
+                || state.isOf(Blocks.GRAVEL) || state.isOf(Blocks.CLAY) || state.isOf(Blocks.SNOW_BLOCK)
                 || state.isOf(Blocks.COBBLESTONE) || state.isOf(Blocks.SANDSTONE)
-                || state.isOf(Blocks.RED_SANDSTONE) || state.isOf(Blocks.DIRT_PATH);
+                || state.isOf(Blocks.RED_SANDSTONE) || state.isOf(Blocks.DIRT_PATH)
+                || state.isIn(BlockTags.COAL_ORES) || state.isIn(BlockTags.IRON_ORES) || state.isIn(BlockTags.COPPER_ORES)
+                || state.isIn(BlockTags.GOLD_ORES) || state.isIn(BlockTags.REDSTONE_ORES) || state.isIn(BlockTags.LAPIS_ORES)
+                || state.isIn(BlockTags.DIAMOND_ORES) || state.isIn(BlockTags.EMERALD_ORES);
     }
 
     /**

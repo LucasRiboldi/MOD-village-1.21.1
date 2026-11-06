@@ -27,8 +27,7 @@ colônia vem antes das do jogo (Regra 49).
 
 | Arquivo | Profissão | Existe |
 |---|---|---|
-| `storage_small.nbt` | construtor — armazém pequeno, primeiro (Regra 165; `scripts/gen_storage_small.py`) | ✅ |
-| `storage_majest.nbt` | construtor — armazém grande, depois de um pequeno de pé | ✅ |
+| `storage_majest.nbt` | construtor | ✅ |
 
 ## Estruturas do jogo que a colônia constrói — 143, 0 com modelo do mod
 

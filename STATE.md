@@ -1,5 +1,96 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.37:** jogo da 0.4.36 (Spark CnNQltY9kb, sem nota do autor no log). Toda estrutura e o portão da mina têm entrada de
+> porta no grafo, sem porta no mundo (Regra 210). Casa do mineiro na boca em uso (Regra 211). As "velas" do chão eram a tocha da colônia do
+> carpinteiro: 13 no chão e 11 em parede no save, e nenhuma vela de verdade na superfície. Ninguém as põe mais, e vela e tocha não recusam
+> lote (Regra 212). Não jogada. Abertos: nenhuma obra nova, mineiro em `NO_PATH` (`TODO.md`).
+> O grafo também parou de mudar sem a rua mudar: a ordem dos nós vinha da identidade do objeto. Sentinela `fast`: 1161 GameTests e 1777 unitários verdes.
+> PIT local: 85,6% contra o limite de 85, parte pelo registro de traçado `RoadGeometryPinTest`, que fixa o resultado sem dizer que está certo.
+
+> **Candidata 0.4.36:** jogo da 0.4.35: os 2 azuis centrais eram quinas fixas de anel. Plantação agora não tem anel e fica com uma
+> entrada; o anel antigo sai do grafo se a rede continua inteira (Regra 208). Porta de quintal fechado só conta se for a única da casa
+> (Regra 209). Conta sobre o save: restariam 4 azuis, um por quadrante. Não jogada. Abertos: lago, MAE, falta de obra (`TODO.md`).
+
+> **Candidata 0.4.35:** grafo com no máximo 4 pontas, uma por quadrante (Regra 206), e entrada em toda porta térrea, pelo lado de
+> fora (Regra 207). Rua sem saída sai do grafo. Não jogada.
+
+> **Candidata 0.4.34:** jogo da 0.4.32: a obra MAE limpou o lote e parou em `occupied_structure_target`, e a região falha congelou
+> o grafo. Agora a peça escreve por cima de planta baixa (Regra 204) e a obra falha devolve a região (Regra 205). Não jogada.
+
+> **Candidata 0.4.33:** o tanque da obra MAE nasce fechado (Regra 203): água e vizinhas numa escrita só. Provado no teste com a obra
+> atrasada de propósito, que antes falhava igual ao jogo. Não jogada.
+
+> **Candidata 0.4.32:** testes aplicados a pedido do autor: 1123 GameTests verdes em 2 rodadas seguidas e 1745 unitários. Os testes
+> novos das Regras 196 a 202 falharam com as regras desligadas (10 de 10). Sem teste ainda: Regras 181 a 190, 192 a 194, e o andar da
+> reunião (Regra 195, só o relógio). Teste verde não é jogo: o MAE continua sem nenhuma obra em jogo.
+
+> **Candidata 0.4.31:** jogo da 0.4.30: 6 de 9 obras MAE recusadas por `changed_generation_evidence`. Medido no save: seção com
+> água corrente diverge do recibo em 100% e com folha em 92%, sem ninguém mexer. A prova agora começa na reserva (Regra 202).
+> Curral confirmado em jogo: 12 entregas (Regra 196). O MAE continua sem nenhuma obra em jogo. Sem testes; compilado.
+
+> **Candidata 0.4.30:** a obra MAE limpa árvore, folha e mato da região antes de reservar (Regra 200) e aceita chão natural e
+> minério no lote (Regra 201). Emendas na ADR-044. O MAE continua sem nenhuma obra em jogo. Sem testes; compilado.
+
+> **Candidata 0.4.29:** jogo da 0.4.28 (70 min): 0 animais levados ao curral. Portão com rua volta a contar e o poste fica só para
+> vila sem curral ou lotada (Regra 196); aldeão corta folha que trava o caminho (Regra 197); lenhador no interior, sem muda a
+> até 3 blocos de estrutura (Regras 198 e 199). Abertos: fazendeiro preso numa casa e recusa `no_lot:protected_volume` do MAE.
+> Sem testes; compilado.
+
+> **Candidata 0.4.28:** Regras 191 a 195: espera para pedido sem resultado (`VC_LOOP`), só carpinteiro converte tora, mineiro alarga
+> o nível, coleta só no expediente e reunião de 10000 a 11000 (`VC_GATHER`). O expediente ficou 9% menor. Sem testes; compilado.
+
+> **Candidata 0.4.27:** varredura dos ofícios no jogo da 0.4.24: pedido de peça só do que falta (Regra 188), árvore mais perto
+> do lenhador e machado para quem está sem ofício (Regra 189), fundidor larga o pedido com o cru na reserva (Regra 190). Abertos
+> no `TODO.md`. Sem testes; compilado.
+
+> **Candidata 0.4.26:** adiantamento das Fases 4 a 6 do MAE: obra pronta entrega a região (Regra 187, emenda da ADR-045),
+> porta pelo grafo novo em vila nova, retomada depois de reiniciar, `applied` no `VC_MAE_SITE` e `/vc mae soltar`. O MAE
+> ainda não construiu em jogo; falta a obra, a medida de carga e o gate da água. Sem testes; compilado.
+
+> **Candidata 0.4.25:** Regras 181 a 186: teto no pulo do caminho (causa dos 36 teletransportes da casa principal no jogo
+> da 0.4.24), ramal em vez de boca nova, anel de caminho, quina como entrada, ponta que cresce e rua de um bloco. `VC_PENS`
+> mede o cercado grande antes de corrigir o pastor. Fase 4 do MAE segue aberta, nada novo nela. Sem testes; compilado.
+
+> **Candidata 0.4.24:** caminho coberto vira terra (Regra 180) e `/vc mae obra <modelo> fora`, primeira forma de o MAE
+> construir em jogo: no jogo da 0.4.23 as 5 tentativas deram `original_structure`, porque o lote caía na caixa da vila.
+> Medido nesse jogo: ciclo médio 37 ms, `mspt` 9 a 11, grafo em uma peça, calçada de 313 para 103. Fase 4 segue aberta:
+> falta o MAE construir em jogo, medir a carga e decidir o gate da água. Sem testes; compilado.
+
+> **Candidata 0.4.23:** tocha na casa principal, saída em caminho, portões no grafo, rota que corta (`canCut`), zona
+> limpa (`clearZone`) e `BuildingGaps` do pedreiro. Modo temporário: sem testes; compilado e nada visto em jogo.
+
+> **Candidata 0.4.22:** grafo de caminhos da vila nova como mapa de trilhos (`RoadLines`), releitura a cada 5 min
+> (`RoadGraphRefresh`, `/vc mae reler`) e calçada do que falta. Rodado fora do jogo sobre o caminho salvo da vila taiga
+> (1.243 blocos): 6 releituras até uma peça só, degrau máximo 1, dois pares de nós a até 2 blocos. Portas lidas ali por script,
+> não pelo `PathLinks`. Modo temporário: sem testes; candidata até o próximo playtest.
+
+> **Candidata 0.4.21:** as capacidades novas da 0.4.19/0.4.20 (terra sob caminho, ponte, mina na rede, limpeza ampliada
+> de árvores) só valem em vila nova (`NewVillage`). O plano mestre do MAE não está concluído: Fases 1 a 3 entregues,
+> 4 e 5 parciais, 6 sem fila automática e nenhum critério de playtest cumprido; "fim do plano MAE" nas notas de 0.4.17
+> vale só para a Fase 3.
+
+> **Candidata 0.4.20 (branch `fix/encalhado-falso-solto`):** sinalizador `/vc mae mostrar ligar|desligar`, casa do
+> mineiro ao lado da boca da mina com lote sem exigir rua, boca da mina na rede de caminhos, velas na casa principal
+> e curva mais cara no traçado. Modo temporário: sem testes; candidata até o próximo playtest, junto com a 0.4.19.
+
+> **Candidata 0.4.19, notas do jogo da 0.4.18 (branch `fix/encalhado-falso-solto`):** pulo padrão com o maior
+> só no obstáculo, água 5× com mais de 5 blocos à frente, limpeza da zona em todas as alturas (`TreeClearing`),
+> terra sob caminho voando (`PathSupport`), pastor com prioridade para trazer animais, casa principal em lote
+> ligado a seco (`DryLand`) e ponte (`BridgeDeck`). Modo temporário: sem testes; candidata até o próximo
+> playtest. A 0.4.20 traz o sinalizador dos caminhos MAE, a casa do mineiro na boca da mina, as velas da casa
+> principal e o registro de blocos surgidos. Spark `btHEJgIYWb`: `MaeGenerationEvidence.onChunkGenerate` é 6,4%
+> do tempo do servidor, ainda sem ação.
+
+> **Candidata 0.4.18, encalhado falso solto (branch `fix/encalhado-falso-solto`):**
+> playtest da 0.4.17 (68 min, 20 TPS) achou o construtor preso 50 min no mesmo bloco,
+> solto pela fuga "after 0 steps" e marcado de novo a cada 2 min. Quem é marcado de novo
+> onde foi solto sem se mover fica na fuga até sair dali (`StrandedWorkers.mayLeaveAt`), e
+> `toSafety` troca a cama colada ao encalhe pelo centro da vila. Também: colheita do
+> fazendeiro conta como progresso; chão do curral bloqueado a não-pastor de fora e saída por
+> portão sem largar a tarefa (Regra 122); linhas por bloco do mineiro em DEBUG. Lenhador 0/15
+> era o mesmo falso solto; lote 41 abaixo veio de save antigo. Modo temporário: sem testes
+> (PenFloorsGameTest ajustado, não executado); candidata até o próximo playtest.
+
 > **MAE — candidata 0.4.17, comando supervisionado (branch `claude/mae-obra-comando`):**
 > `/vc mae obra <modelo>` (operador, nível 2) dispara uma obra supervisionada:
 > pegada centrada no jogador e rotação pela direção do olhar; `<rotação>` 0–3

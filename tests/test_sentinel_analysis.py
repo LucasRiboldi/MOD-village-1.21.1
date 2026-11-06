@@ -58,6 +58,18 @@ class SentinelaAnalysisTest(unittest.TestCase):
             self.assertEqual(2, compile_findings[0]["occurrences"])
             self.assertEqual("20260101T010000Z", compile_findings[0]["superseded_by"])
 
+    def test_a_compile_step_that_passed_is_not_a_compile_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            (root / "out.log").write_text("> Task :compileJava\n> Task :runGametest FAILED\n", encoding="utf-8")
+            result = {"stdout": "out.log", "status": "FAIL",
+                      "test_cases": [{"status": "FAIL", "class_name": "PenAccess", "name": "tied"}]}
+
+            category, signature = sentinel_analysis._signature(result, root)
+
+            self.assertEqual("TEST", category)
+            self.assertEqual("test: PenAccess.tied", signature)
+
     def test_reports_bad_json_and_missing_xml_without_stopping_analysis(self):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)

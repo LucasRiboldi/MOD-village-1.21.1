@@ -100,7 +100,7 @@ final class MinerSteps {
                 return false;
             }
 
-            VillageColonyMod.LOGGER.info(
+            VillageColonyMod.LOGGER.debug(
                     "Miner {} let the mined front settle at {} after {} ticks — picking a target again",
                     villager.getUuid().toString().substring(0, 8),
                     job.target.toShortString(),

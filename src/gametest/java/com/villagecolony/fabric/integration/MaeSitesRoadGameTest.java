@@ -90,6 +90,52 @@ public final class MaeSitesRoadGameTest implements FabricGameTest {
         });
     }
 
+    /** A obra que falha depois de escrever o terreno, sem escrita pendente, devolve a região à vila (Regra 205). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_failed_handover", tickLimit = 2400)
+    public void aFailedBuildHandsItsRegionOver(TestContext context) {
+        var arena = new WideArena(context);
+        arena.guarded(() -> {
+            var origin = arena.fixture.base.add(-1, 1, -1);
+            // Um calombo que o preparo corta, para haver escrita, e uma laje dentro do volume da casa, que a peça não aceita.
+            arena.fixture.set(origin.add(1, 0, 1), Blocks.DIRT.getDefaultState());
+            for (BlockPos at : BlockPos.iterate(origin.add(0, 4, 0), origin.add(4, 4, 4))) {
+                arena.fixture.set(at, Blocks.STONE.getDefaultState());
+            }
+            var status = MaeSites.start(context.getWorld(), arena.writer(), arena.colony(), HOUSE, origin, 0, null);
+            awaitIdle(context, status.regionId(), () -> {
+                var region = arena.fixture.store.region(status.regionId()).orElseThrow();
+                context.assertTrue(MaeHandover.appliedChanges(region) > 0, "o cenário devia ter escrito o terreno antes de falhar");
+                context.assertTrue(MaeHandover.isHandedOver(region), "a obra falha continuou segurando a região");
+                arena.cleanup();
+                context.complete();
+            });
+        });
+    }
+
+    private static void awaitIdle(TestContext context, java.util.UUID regionId, Runnable then) {
+        if (MaeSites.active().stream().anyMatch(active -> active.regionId().equals(regionId))) {
+            context.waitAndRun(1, () -> awaitIdle(context, regionId, then));
+            return;
+        }
+        then.run();
+    }
+
+    /** Mato baixo no lote plano não barra a obra (Regra 204). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_low_plants", tickLimit = 2400)
+    public void lowPlantsOnAFlatLotDoNotStopTheBuild(TestContext context) {
+        var arena = new WideArena(context);
+        arena.guarded(() -> {
+            var origin = arena.fixture.base.add(-1, 1, -1);
+            arena.fixture.set(origin.add(2, 0, 2), Blocks.SHORT_GRASS.getDefaultState());
+            arena.fixture.set(origin.add(3, 0, 3), Blocks.POPPY.getDefaultState());
+            var status = MaeSites.start(context.getWorld(), arena.writer(), arena.colony(), HOUSE, origin, 0, null);
+            arena.await(status.regionId(), () -> {
+                arena.cleanup();
+                context.complete();
+            });
+        });
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_loot", tickLimit = 2400)
     public void savannaMasonChestIsBuiltEmptyWithoutTheTemplateLoot(TestContext context) {
         var mason = ResourceId.vanilla("village/savanna/houses/savanna_mason_1");

@@ -232,4 +232,58 @@ public final class MaeStructureModelGameTest implements FabricGameTest {
                 .readNbt(Registries.BLOCK.getReadOnlyWrapper(), nbt);
         return ResourceId.parse(id.toString());
     }
+
+    /** Regra 203: a água e as quatro vizinhas são uma escrita só, para a obra atrasada não deixar a água escorrer. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_model_tank", tickLimit = 20)
+    public void theTankIsOneWriteWithItsFourNeighbours(TestContext context) {
+        var blueprint = StructureBlueprintReader.readForMae(context.getWorld(),
+                ResourceId.parse("villagecolony:colony/large_animal_pen")).orElseThrow();
+        var project = ConstructionProject.plan(UUID.randomUUID(), blueprint, new ColonyPos(0, 0, 0));
+        var pieces = MaeStructurePieces.ordered(project);
+        var tanks = pieces.stream().filter(piece -> piece.main().isOf(Blocks.WATER)).toList();
+
+        context.assertTrue(tanks.size() == 1, "o curral grande tem um tanque só: " + tanks.size());
+
+        var tank = tanks.getFirst();
+        BlockPos water = tank.parts().getFirst().getKey();
+        var positions = tank.parts().stream().map(java.util.Map.Entry::getKey).toList();
+
+        context.assertTrue(tank.parts().size() == 5, "o tanque não fecha numa escrita: " + tank.parts().size() + " partes");
+
+        for (var side : net.minecraft.util.math.Direction.Type.HORIZONTAL) {
+            context.assertTrue(positions.contains(water.offset(side)), "a vizinha ficou de fora: " + side);
+        }
+
+        int parts = pieces.stream().mapToInt(piece -> piece.parts().size()).sum();
+
+        context.assertTrue(parts == MaeStructurePieces.planned(project).size(), "alguma peça saiu duplicada ou perdida");
+        context.assertTrue(pieces.stream().filter(piece -> piece.parts().stream()
+                .anyMatch(part -> part.getKey().equals(water.east()))).count() == 1, "a vizinha continuou como peça própria");
+
+        long grass = tank.parts().stream().skip(1).filter(part -> part.getValue().isOf(Blocks.GRASS_BLOCK)).count();
+        var materials = MaeStructureMaterials.of(tank);
+
+        context.assertTrue(grass > 0 && materials.getOrDefault(net.minecraft.item.Items.GRASS_BLOCK, 0) == grass,
+                "a vizinha de grama saiu sem material: " + materials);
+        context.assertTrue(!materials.containsKey(net.minecraft.item.Items.FARMLAND), "o solo arado não usa item: " + materials);
+        context.assertTrue(MaeStructureExecution.supported(tank), "o tanque foi recusado");
+        context.complete();
+    }
+
+    /** Regra 203: sem peça em volta nada se junta, e outra peça segue sendo uma escrita. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_model_tank_alone", tickLimit = 20)
+    public void waterAloneStaysOnePiece(TestContext context) {
+        var nbt = fixture();
+        add(nbt, 2, 0, 2, Blocks.WATER.getDefaultState());
+        add(nbt, 4, 0, 2, Blocks.DIRT.getDefaultState());
+        var blueprint = StructureBlueprintReader.readForMae(context.getWorld(), load(context, "tank_alone", nbt)).orElseThrow();
+        var pieces = MaeStructurePieces.ordered(ConstructionProject.plan(UUID.randomUUID(), blueprint, new ColonyPos(0, 0, 0)));
+        var water = pieces.stream().filter(piece -> piece.main().isOf(Blocks.WATER)).findFirst().orElseThrow();
+
+        context.assertTrue(water.parts().size() == 1, "juntou o que não encosta na água");
+        context.assertTrue(MaeStructureMaterials.of(water).isEmpty(), "água sem vizinha pediu material");
+        context.assertTrue(pieces.stream().filter(piece -> piece.main().isOf(Blocks.DIRT)).allMatch(piece -> piece.parts().size() == 1),
+                "a peça comum mudou");
+        context.complete();
+    }
 }

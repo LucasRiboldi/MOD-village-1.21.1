@@ -26,16 +26,25 @@ class WorkClockTest {
         assertTrue(WorkClock.isWorkTime(1_000), "a manhã cedo é expediente");
         assertTrue(WorkClock.isWorkTime(2_000), "o WORK do Vanilla é expediente");
 
-        // O coração da regra: às 10.000 o Vanilla já mandou o aldeão
+        // O coração da regra: às 9.000 o Vanilla já mandou o aldeão
         // para MEET, e era aqui que a colônia parava com o sol alto.
-        assertTrue(WorkClock.isWorkTime(10_000), "a tarde é expediente");
+        assertTrue(WorkClock.isWorkTime(9_000), "a tarde é expediente");
     }
 
     @Test
-    @DisplayName("a última hora de sol fica para voltar para casa")
-    void theLastHourOfLightIsNotWorkTime() {
-        assertTrue(WorkClock.isWorkTime(WorkClock.DUSK - 1), "um tique antes ainda é expediente");
-        assertFalse(WorkClock.isWorkTime(WorkClock.DUSK), "o expediente acaba no anoitecer");
+    @DisplayName("o expediente acaba antes da reunião do fim do dia")
+    void workEndsBeforeTheEveningGathering() {
+        assertTrue(WorkClock.isWorkTime(WorkClock.WORK_END - 1), "um tique antes ainda é expediente");
+        assertFalse(WorkClock.isWorkTime(WorkClock.WORK_END), "o expediente acaba às 10.000");
+    }
+
+    @Test
+    @DisplayName("a reunião vai do fim do expediente até o anoitecer (Regra 195)")
+    void theGatheringFillsTheHourBeforeDusk() {
+        assertFalse(WorkClock.isGatheringTime(WorkClock.WORK_END - 1), "ainda é expediente");
+        assertTrue(WorkClock.isGatheringTime(WorkClock.WORK_END), "a reunião começa ao fim do expediente");
+        assertTrue(WorkClock.isGatheringTime(WorkClock.DUSK - 1), "um tique antes do anoitecer ainda é reunião");
+        assertFalse(WorkClock.isGatheringTime(WorkClock.DUSK), "ao anoitecer eles vão para casa");
     }
 
     @Test

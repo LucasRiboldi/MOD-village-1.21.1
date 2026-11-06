@@ -22,7 +22,23 @@ import java.util.Set;
  */
 final class TreeReplanting {
 
+    /** Até esta distância de uma estrutura, em blocos, não se replanta. */
+    private static final int STRUCTURE_CLEARANCE = 3;
+
     private TreeReplanting() {
+    }
+
+    /** Casa ou obra da colônia, ou peça da vila gerada; rua da vila não é estrutura. */
+    private static boolean nearStructure(ServerWorld world, BlockPos base) {
+        for (BlockPos at : BlockPos.iterate(base.add(-STRUCTURE_CLEARANCE, -1, -STRUCTURE_CLEARANCE),
+                base.add(STRUCTURE_CLEARANCE, 3, STRUCTURE_CLEARANCE))) {
+            if (BlockProtection.isColonyBuilt(at)
+                    || (BlockProtection.isVillageOriginal(world, at) && !BlockProtection.isVillageStreet(world, at))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -111,6 +127,17 @@ final class TreeReplanting {
                     "No {} sapling at {} — the spot belongs to a colony build",
                     species,
                     base.toShortString());
+
+            return;
+        }
+
+        // A árvore colada numa estrutura não volta — Regra 199.
+        if (nearStructure(world, base)) {
+            VillageColonyMod.LOGGER.info(
+                    "No {} sapling at {} — a structure stands within {} blocks",
+                    species,
+                    base.toShortString(),
+                    STRUCTURE_CLEARANCE);
 
             return;
         }

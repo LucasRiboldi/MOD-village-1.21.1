@@ -17,12 +17,12 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * O chão de dentro dos currais é caro no caminho de quem não é pastor — Regra 122 (jogo da 0.3.93:
- * 217 entradas em curral só na planície, e o mineiro da taiga 3,5 h cercado).
+ * O chão de dentro dos currais fica fora do caminho de quem não é pastor — Regra 122.
  *
- * <p>O caminho do aldeão de ofício passa por fora quando há volta; atravessar o curral continua
- * possível quando é o único jeito, só não é mais o atalho. O pastor, que trabalha ali, anda como
- * sempre. Os currais são os que o pastor já mede ({@code ShepherdPens.pensOf}).
+ * <p>Para o aldeão de ofício que está fora do curral, o chão de dentro é bloqueado: o portão aberto
+ * na caminhada do pastor não vira atalho. Quem já está dentro anda nele com custo, para poder
+ * sair. O pastor, que trabalha ali, anda como sempre. Os currais são os que o pastor já mede
+ * ({@code ShepherdPens.pensOf}).
  */
 public final class PenFloors {
 
@@ -30,8 +30,11 @@ public final class PenFloors {
         ServerMemory.register(PenFloors.class, PenFloors::clearAll);
     }
 
-    /** Como o chão do curral conta no caminho: o perigo leve, que o Vanilla cobra 8 por bloco. */
+    /** Como o chão do curral conta para quem está dentro: o perigo leve, que o Vanilla cobra 8 por bloco. */
     public static final PathNodeType COSTLY = PathNodeType.DANGER_OTHER;
+
+    /** Como o chão do curral conta para quem está fora: não se anda nele. */
+    public static final PathNodeType CLOSED = PathNodeType.BLOCKED;
 
     private static final Map<UUID, Set<Long>> BY_COLONY = new HashMap<>();
 
@@ -56,8 +59,9 @@ public final class PenFloors {
     }
 
     /**
-     * O tipo do nó para este bicho: o mesmo, ou {@link #COSTLY} quando é chão de curral, o nó seria
-     * andável e quem anda é aldeão de ofício que não é pastor.
+     * O tipo do nó para este bicho: o mesmo, ou, quando é chão de curral, o nó seria andável e quem
+     * anda é aldeão de ofício que não é pastor, {@link #CLOSED} (ele está fora) ou {@link #COSTLY}
+     * (ele está dentro e precisa sair).
      */
     public static PathNodeType forWalker(MobEntity mob, int x, int y, int z, PathNodeType type) {
         if (FLOORS.isEmpty() || type != PathNodeType.WALKABLE || !(mob instanceof VillagerEntity)
@@ -70,7 +74,11 @@ public final class PenFloors {
                 .filter(ProfessionType.SHEPHERD::equals)
                 .isPresent();
 
-        return shepherd || VillageColonyMod.WORKERS.find(mob.getUuid()).isEmpty() ? type : COSTLY;
+        if (shepherd || VillageColonyMod.WORKERS.find(mob.getUuid()).isEmpty()) {
+            return type;
+        }
+
+        return FLOORS.contains(mob.getBlockPos().asLong()) ? COSTLY : CLOSED;
     }
 
     static void clearAll() {

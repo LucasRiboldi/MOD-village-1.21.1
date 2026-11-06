@@ -71,6 +71,7 @@ final class SmelterFallback {
     /** O pedido achou matéria-prima: a contagem recomeça. */
     static void found(UUID taskId) {
         MISSES.remove(taskId);
+        VillageColonyMod.TASKS.find(taskId).ifPresent(TaskOutcome::fruitful);
     }
 
     /** Esquece a contagem de tarefas que já não existem ou foram encerradas. */

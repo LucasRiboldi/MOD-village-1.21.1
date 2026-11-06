@@ -96,6 +96,9 @@ final class ShepherdPens {
 
     private static final Map<UUID, Long> READ_AT = new HashMap<>();
 
+    /** Da última varredura: portões que não fecham um cercado, para o log. */
+    private static List<BlockPos> openGates = List.of();
+
     private ShepherdPens() {
     }
 
@@ -158,6 +161,11 @@ final class ShepherdPens {
     }
 
     private static boolean canReach(net.minecraft.entity.passive.VillagerEntity shepherd, Access access) {
+        // Além do alcance da navegação não há o que comprovar: ele vai por pernas (WalkLegs), e o prazo da coleta responde.
+        if (!shepherd.getBlockPos().isWithinDistance(access.outside(), WalkLegs.LEG)) {
+            return true;
+        }
+
         var path = shepherd.getNavigation().findPathTo(access.outside(), 0);
         return path != null && path.reachesTarget();
     }
@@ -208,10 +216,17 @@ final class ShepherdPens {
     }
 
     private static boolean standing(ServerWorld world, BlockPos feet) {
-        return world.isChunkLoaded(feet) && world.getBlockState(feet.down()).isSideSolidFullSquare(world, feet.down(), Direction.UP)
+        return world.isChunkLoaded(feet) && isFloor(world, feet.down())
                 && world.getBlockState(feet).getFluidState().isEmpty() && world.getBlockState(feet.up()).getFluidState().isEmpty()
                 && world.getBlockState(feet).getCollisionShape(world, feet).isEmpty()
                 && world.getBlockState(feet.up()).getCollisionShape(world, feet.up()).isEmpty();
+    }
+
+    /** O caminho tem 15/16 de altura e por isso não tem a face de cima cheia, mas é chão: a rua chega ao portão — Regra 196. */
+    private static boolean isFloor(ServerWorld world, BlockPos floor) {
+        BlockState state = world.getBlockState(floor);
+
+        return state.isOf(Blocks.DIRT_PATH) || state.isSideSolidFullSquare(world, floor, Direction.UP);
     }
 
     /** A caixa acompanha todo o chão, inclusive cantos além de 12 blocos do portão — ADR-046. */
@@ -298,9 +313,10 @@ final class ShepherdPens {
             READ_AT.put(colony.id(), now);
             PENS.put(colony.id(), colony.bounds().map(box -> scan(world, box).stream()
                     .map(pen -> markLarge(colony, pen)).toList()).orElse(List.of()));
-            // O chão de dentro fica caro no caminho de quem não é pastor (Regra 122).
+            // O chão de dentro sai do caminho de quem não é pastor (Regra 122).
             com.villagecolony.fabric.integration.PenFloors.update(colony.id(),
                     PENS.get(colony.id()).stream().map(Pen::reach).toList());
+            PenLog.write(world, colony, PENS.getOrDefault(colony.id(), List.of()), openGates);
         }
 
         return PENS.getOrDefault(colony.id(), List.of());
@@ -309,6 +325,7 @@ final class ShepherdPens {
     /** Os portões na superfície da caixa e o cercado de dentro de cada um. */
     static List<Pen> scan(ServerWorld world, VillageBounds box) {
         List<Pen> pens = new ArrayList<>();
+        List<BlockPos> open = new ArrayList<>();
 
         for (int x = box.minX() - MARGIN; x <= box.maxX() + MARGIN; x++) {
             for (int z = box.minZ() - MARGIN; z <= box.maxZ() + MARGIN; z++) {
@@ -322,7 +339,13 @@ final class ShepherdPens {
                     BlockPos at = new BlockPos(x, y, z);
 
                     if (world.getBlockState(at).getBlock() instanceof FenceGateBlock) {
-                        penBehind(world, at, pens).ifPresent(found -> {
+                        Optional<Pen> behind = penBehind(world, at, pens);
+
+                        if (behind.isEmpty()) {
+                            open.add(at);
+                        }
+
+                        behind.ifPresent(found -> {
                             for (int i = 0; i < pens.size(); i++) {
                                 Pen existing = pens.get(i);
                                 if (!existing.reach().equals(found.reach())) continue;
@@ -338,6 +361,8 @@ final class ShepherdPens {
                 }
             }
         }
+
+        openGates = List.copyOf(open);
 
         return List.copyOf(pens);
     }

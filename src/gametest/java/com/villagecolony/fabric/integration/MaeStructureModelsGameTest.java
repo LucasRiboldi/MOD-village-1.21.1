@@ -196,7 +196,7 @@ public final class MaeStructureModelsGameTest implements FabricGameTest {
             Map<Item, Integer> needed = new LinkedHashMap<>();
             var plan = fixture.store.region(id).orElseThrow().getCompound("job").getList("plan", NbtElement.COMPOUND_TYPE);
             for (int i = 0; i < plan.size(); i++) {
-                MaeStructureMaterials.read(plan.getCompound(i)).forEach((item, count) -> needed.merge(item, count, Integer::sum));
+                MaeStructureMaterials.read(plan.getCompound(i), plan.getCompound(i).contains("shaped")).forEach((item, count) -> needed.merge(item, count, Integer::sum));
             }
             int slot = 0;
             for (var entry : needed.entrySet()) {

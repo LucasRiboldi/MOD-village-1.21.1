@@ -164,14 +164,12 @@ public final class MinecraftTypeAdapter {
      * não é recurso que a colônia acompanhe, e isso é o normal.
      */
     private static Optional<ResourceType> byName(Item item) {
-        String path = Registries.ITEM.getId(item).getPath();
-
-        try {
-            return Optional.of(ResourceType.valueOf(path.toUpperCase(Locale.ROOT)));
-        } catch (IllegalArgumentException notAResource) {
-            return Optional.empty();
-        }
+        return Optional.ofNullable(RESOURCES_BY_NAME.get(Registries.ITEM.getId(item).getPath().toUpperCase(Locale.ROOT)));
     }
+
+    /** Sem a exceção do {@code valueOf}: o mineiro pergunta por todo bloco que quebra, e quase nenhum é recurso. */
+    private static final java.util.Map<String, ResourceType> RESOURCES_BY_NAME = java.util.Arrays.stream(ResourceType.values())
+            .collect(java.util.stream.Collectors.toUnmodifiableMap(ResourceType::name, type -> type));
 
     /**
      * O lado do horizonte do jogo, no vocabulário do Core.

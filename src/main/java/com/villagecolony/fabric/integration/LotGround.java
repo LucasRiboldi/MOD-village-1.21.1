@@ -124,7 +124,18 @@ public final class LotGround {
 
     /** Vazio para achar o chão: o de {@link #isNothing}, e a vegetação natural onde a obra a limpa. */
     private static boolean isEmptyForGround(BlockState state, boolean trees) {
-        return isNothing(state) || (trees && LotGrowth.isLooseGrowth(state));
+        return isNothing(state) || isLightDecor(state) || (trees && LotGrowth.isLooseGrowth(state));
+    }
+
+    /**
+     * Vela e tocha soltas não escolhem lugar de obra — Regra 212: a obra as tira ao abrir ({@code LotClearance}). A tocha
+     * das almas fica de fora, porque cancela obra (Regra 108), e a da vila gerada e a da obra pronta são barradas pela caixa
+     * de quem as tem.
+     */
+    public static boolean isLightDecor(BlockState state) {
+        return state.isIn(BlockTags.CANDLES) || state.isOf(Blocks.TORCH) || state.isOf(Blocks.WALL_TORCH)
+                || state.isOf(com.villagecolony.fabric.content.ModContent.COLONY_TORCH)
+                || state.isOf(com.villagecolony.fabric.content.ModContent.COLONY_WALL_TORCH);
     }
 
     /**

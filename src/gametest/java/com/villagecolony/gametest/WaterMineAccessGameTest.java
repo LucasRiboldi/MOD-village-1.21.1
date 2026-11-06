@@ -71,6 +71,8 @@ public class WaterMineAccessGameTest implements FabricGameTest {
         VillageColonyMod.MINES.restore(exhausted);
 
         try {
+            // A boca nova só vem depois de esgotar os ramais (Regra 182).
+            com.villagecolony.fabric.work.MineBranches.allBranchesFailed(colonyId);
             MineTrouble.abandonAtBottom(world, colonyId, exhausted, center);
 
             Mine replacement = VillageColonyMod.MINES.of(colonyId).orElseThrow();

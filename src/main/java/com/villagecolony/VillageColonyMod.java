@@ -194,6 +194,9 @@ public class VillageColonyMod implements ModInitializer {
         com.villagecolony.fabric.content.ModContent.register();
         PayloadTypeRegistry.playS2C().register(OverlaySnapshotPayload.ID, OverlaySnapshotPayload.CODEC);
         OverlaySync.register();
+        PayloadTypeRegistry.playS2C().register(com.villagecolony.fabric.overlay.RoadMapPayload.ID,
+                com.villagecolony.fabric.overlay.RoadMapPayload.CODEC);
+        com.villagecolony.fabric.overlay.RoadMapSync.register();
         ServerLifecycleHandler.register();
         com.villagecolony.fabric.work.ActionJournal.register();
         com.villagecolony.fabric.work.ReachMap.register();
@@ -209,6 +212,11 @@ public class VillageColonyMod implements ModInitializer {
         com.villagecolony.fabric.work.VillageHelpers.register();
         com.villagecolony.fabric.work.AnalyticsLog.register();
         com.villagecolony.fabric.work.IdleHelps.register();
+        com.villagecolony.fabric.work.VillagerMoves.register();
+        com.villagecolony.fabric.work.EveningGathering.register();
+        com.villagecolony.fabric.work.LeafPassage.register();
+        com.villagecolony.fabric.work.PathSupport.register();
+        com.villagecolony.fabric.work.RoadGraphRefresh.register();
         PlayerWorldChangeHandler.register();
         VillageDetectionHandler.register();
         VillagerLifecycleHandler.register();

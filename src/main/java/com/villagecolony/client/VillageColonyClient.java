@@ -13,6 +13,9 @@ public final class VillageColonyClient implements ClientModInitializer {
         ClientProfessionPolicies.register();
         ClientPlayNetworking.registerGlobalReceiver(OverlaySnapshotPayload.ID,
                 (payload, context) -> ClientOverlayState.replace(payload));
+        ClientPlayNetworking.registerGlobalReceiver(com.villagecolony.fabric.overlay.RoadMapPayload.ID,
+                (payload, context) -> RoadMapRenderer.replace(payload));
+        RoadMapRenderer.register();
         ProfessionOverlayRenderer.register();
         ConstructionOverlayRenderer.register();
         // A tocha da colônia tem partes transparentes, como a tocha comum.

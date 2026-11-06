@@ -178,7 +178,8 @@ public final class MineDigging {
             }
 
             if (advance == Mine.LevelAdvance.EXHAUSTED || advance == Mine.LevelAdvance.BLOCKED) {
-                if (MineTrouble.climbOutAtBottom(colonyId, mine.get(), center)) {
+                if (MineBranches.expand(world, colonyId, mine.get())
+                        || MineTrouble.climbOutAtBottom(colonyId, mine.get(), center)) {
                     IdleLog.clear(colonyId, ARM_SUBJECT);
 
                     return Optional.empty();
@@ -228,8 +229,8 @@ public final class MineDigging {
 
             // Cada ramal é de um mineiro só (MineClaims). Quem não achou ramal
             // livre não fica parado: raspa a pedra exposta em volta da vila
-            // até um ramal abrir — ADR-037 M1, cada profissional com sua rotina.
-            return exposedStoneFallback(world, workerId, colonyId, center);
+            // até um ramal abrir — ADR-037 M1; com mina, ele alarga o nível (Regra 193).
+            return MineSideWork.nextCut(world, workerId, colonyId, mine.get());
         }
 
         MineArm arm = mine.get().arm(claimed.getAsInt());

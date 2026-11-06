@@ -1,5 +1,104 @@
 # TODO
 
+## Blocos que surgem sozinhos — buscar fluxo de fabricação (regra do autor, 04-11)
+
+Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo da 0.4.18, 30 min:
+
+- [ ] `prismarine_shard` ×16 e `prismarine_crystals` ×16: "drop ingredients appear on their own"
+- [ ] `white_dye` ×12 e `yellow_dye` ×2: idem; caminho possível: flores do bioma, com o pastor
+- [ ] trigo: `supplied` em `second_failure`, 3 vezes (corrigido na 0.4.18; conferir que parou)
+- [ ] terra sob caminho voando (`PathSupport`, linha "dirt under the path"): 0 no jogo da 0.4.24 (6 h)
+- Jogo da 0.4.24, 6 h, `VC_SUPPLY`: `prismarine_shard` ×208, `prismarine_crystals` ×80, `string` ×36, `honeycomb` ×32,
+  `blaze_rod` ×17 e 16 corantes (`white_dye` ×10, `yellow_dye` ×5, os demais de 1 a 3), todos "drop ingredients appear on
+  their own"; `oak_log` ×242, `clay` ×153, `terracotta` ×54, `stripped_oak_log` ×42, `water` ×30, `oak_planks` ×23,
+  `raw_iron` ×21 por exceção de peça que faltou (`MISSING_PIECE`, `WAITED_TOO_LONG`)
+- Jogo da 0.4.28, 70 min, `VC_SUPPLY` do `latest.log`: `raw_iron` ×57 e `smooth_stone` ×6 por `WAITED_TOO_LONG` (Regra 128);
+  `honeycomb` ×21 e 4 corantes de 1 cada (`AUTOMATIC_DROP`, Regra 41). O ferro é o maior: os 3 mineiros fecharam 0 de 16
+  tarefas de minério no diário
+
+## Abertos do jogo da 0.4.28
+
+- [ ] Conferir em jogo a 0.4.29: "into the pen" no log, `VC_PENS` com animais, nós de corda vazios saindo das cercas
+- [ ] Conferir `CLEARED_LEAF` no diário e o `FELLED_TREE` começando pelo centro; "a structure stands within" no log
+- [ ] Fazendeiro preso na casa de x125–131, z-253…-247: 40 min sem colher; causa não achada (autor: não mexer agora)
+- [ ] Vila sem obra: `project=none` em 10 de 14 relatórios, 23 camas para 18 aldeões; ócio de carpinteiro, pedreiro e construtor
+- [ ] MAE: conferir em jogo a limpeza (`VC_MAE_SITE result=clearing`, fase `clearing` no chat) e a obra seguinte; a prova por
+  seção pode recusar por mudança natural: `changed_generation_evidence`. Na região, areia e cascalho podem cair e barrar
+- [ ] Mineiros: 0 de 16 tarefas de minério fechadas, `raw_iron` ×57 surgido
+
+## Abertos do jogo da 0.4.30
+
+- [ ] MAE: primeira obra em jogo na 0.4.31; durante a obra a prova ainda é por seção, e plantação ou aldeão na mesma seção pode
+  parar com `world_changed_since_approval` ou `changed_prepared_terrain`
+- [ ] MAE: cada comando trava o servidor por cerca de 2,5 s (`MaeSites.start`, 22,6 s em 9 tentativas)
+- [ ] Pastor: 15 `dropped the herd in phase LEAD` e 3 em `ENTER` contra 12 entregas; 2 "did not walk into the pen"
+- [ ] Fundidor: 24 soltas de `smooth_sandstone` e 11 de `terracotta`, 22% bloqueado; vila sem obra (`project=none`, `lots_ok=0`)
+- [ ] Mineiros: 5 de 6 tarefas soltas
+
+## Testes que faltam (bateria de 2026-11-05: 1123 GameTests e 1745 unitários)
+
+- [ ] 2 regras sem teste (33 e 47, processo e comportamento do jogo) e 95 em que um teste só usa a classe indicada: [`regras-e-testes.md`](docs/testing/regras-e-testes.md)
+- [ ] Teste só parcial: Regra 178 (falta o anel e o nivelamento do pedreiro), 174 (falta `DryLand` e a casa ligada a seco), 172 e 171 (falta o atributo em jogo)
+- [ ] `animalsWalkInThroughEachOfTheFourGates`: 2 falhas em 12 rodadas da bateria inteira, 0 em 7 isolado. Na falha pega, a vaca estava a 9 blocos do portão perto do prazo; causa não achada. Portão fechando foi descartado: fica aberto 600 tiques
+- [ ] `MaeSitesRoadGameTest.largeStorageEntersByItsNewGroundDoor`: estourou 2400 tiques em 3 de 6 rodadas; causa não achada
+- [ ] `GroundPickupGameTest.workerCollectsWhileWalkingPast`: 1 falha em 12; suspeita, não provada: relógio global fora do expediente (Regra 194)
+
+## Abertos do jogo da 0.4.36
+
+- [ ] Conferir em jogo a 0.4.37: entrada branca em toda estrutura e no portão da mina, casa do mineiro ao lado da boca em uso, nenhuma tocha nova no chão, lote aceito com vela e tocha
+- [ ] Ócio de vila parada no jogo da 0.4.36 (`time_ledger`): `MASON` 81%, `CARPENTER` 78%, `SMELTER` 74% e `SHEPHERD` 83%, com `project=none lots_ok=10707`. Falta achar por que nenhuma obra abre
+- [ ] Mineiro: 141 `NO_PATH` e 46 `UNCLASSIFIED`; `VC_MINE_BRANCH` falhou 50 de 50 antes de voltar à boca
+- [ ] Surgidos, `VC_SUPPLY`, para buscar fabricação: `AUTOMATIC_DROP` `prismarine_shard` ×596, `honeycomb` ×417, `string` ×298, `magma_cream` ×64, `black_dye` ×51; `WAITED_TOO_LONG` `raw_iron` ×151; `MISSING_PIECE` `clay` ×8, `decorated_pot` ×4, `anvil` ×3
+- [ ] O carpinteiro faz 16 velas de cada uma das 17 cores para o estoque, e nada as usa; ver se o estoque precisa delas
+
+## Abertos do jogo da 0.4.35
+
+- [ ] Casas de x=45 a 65, depois do lago: 7 portas térreas com frente certa, mas a parte não liga à rede (`isolated`=4 a 5, de 54 a 87 blocos do grafo). Falta o diagnóstico "MAE e lago"
+- [ ] MAE: 5 obras paradas em `world_changed_since_approval`, 2 a 27 blocos aplicados, região devolvida
+- [ ] Nenhuma obra nova: `project=none lots_ok=0`, construtor `NOT_IN_GAME` por `HousePlans.plansForNext` vazio, 23 camas para 19 aldeões; saturação não verificada
+- [ ] Profissões menos ativas: pedido do autor, ainda sem medir
+- [ ] Surgidos, `VC_SUPPLY`: `grass_block` ×64 (`FOUNDATION_GROUND`), `prismarine_shard` ×9, `honeycomb` ×2
+- [ ] `LINKS_PER_READ`=1 e a ligação que falha gasta a vez: as partes isoladas atrasam o ramal das outras
+
+## Abertos do jogo da 0.4.32
+
+- [ ] MAE: conferir em jogo a 0.4.34 (Regras 204 e 205); no save atual, rodar `/vc mae soltar` uma vez para as 2 regiões já falhas
+- [ ] Grafo: conferir em jogo a 0.4.36 (Regras 206 a 209): até 4 azuis e nenhum no centro; plantação sem anel e com uma entrada; anel antigo de volta ao solo; ferreiro de armas (121,66,-162) com entrada
+- [ ] Surgidos, `VC_SUPPLY`: `prismarine_crystals` ×80, `prismarine_shard` ×76, `grass_block` ×10 (`FOUNDATION_GROUND`), `honeycomb` ×7, `terracotta` ×2 (`WAITED_TOO_LONG`), corantes de 1 a 2
+
+## MAE: o que falta depois da 0.4.26
+
+- [ ] Primeira obra em jogo com `/vc mae obra <modelo> fora`, Spark junto e leitura do `VC_MAE_SITE`
+- [ ] Decidir o gate da água (Fase 4 do plano mestre): decisão do autor
+- [ ] Conferir em jogo: porta ligada pelo grafo, região entregue, retomada depois de reiniciar, `/vc mae soltar`
+- [ ] Quando os testes forem liberados: `MaeSitesGameTest` e `MaeSitesRoadGameTest` esperam `road_v2` e não cobrem a entrega
+- [ ] Obra interrompida em região reaproveitada de vila antiga pode ler o job concluído da obra anterior como pronto
+- [ ] Fase 6: expansão automática no ciclo da colônia, depois da primeira obra em jogo
+
+## Varredura dos ofícios (jogo da 0.4.24)
+
+- [ ] Mineiro: 54 desistências por distância e nenhuma tarefa fechada; conferir no próximo jogo com a 0.4.25 e a 0.4.28
+- [ ] Conferir `VC_LOOP` e `VC_GATHER` no próximo jogo: carpinteiro e pedreiro acima de 50% sem trabalhar
+- [ ] O guarda de laço cobre oficina e fornalha; coleta (lenhador, superfície) segue só com os prazos de sempre
+- [ ] Quando os testes forem liberados: `WorkClockTest`, `WorkHoursGameTest`, `OffHoursReleaseGameTest` e `BuildProgressGameTest` usam o expediente antigo; `TaskLoopGuard` e `MineSideWork` sem teste
+- "fenced in" no curral da vila gerada: 79 entradas, mediana 25 tiques, 1,7 min em 6 h; não é travamento
+- [ ] Frase "none of N colony chests had" do fundidor mente quando o cru existe e a reserva impede
+
+## Abertos do jogo da 0.4.24
+
+- [ ] Pastor 86% ocioso: ler `VC_PENS` no próximo jogo e decidir o raio e o teto do `FencedIn` para o cercado grande
+- [ ] Fundidor travado em `minecraft:clay`: 76 `VC_SUPPLY_ERROR` "after four searches of the village's reach found none"
+- [ ] Bocas antigas da mina não são lembradas depois de reiniciar o jogo: `MineEdge.PAST` só vale na sessão
+- [ ] Grafo em retângulos: hoje vem do anel do chafariz, das retas e da ponta que cresce; sem busca própria que feche quarteirão
+- [ ] Conferir em jogo a 0.4.25: subida da escada da casa principal, ramal da mina, anel, quina, ponta e rua de um bloco
+
+## Abertos do jogo da 0.4.18
+
+- [ ] Spark `btHEJgIYWb`: `MaeGenerationEvidence.onChunkGenerate` custa 6,4% do tempo do servidor
+- [ ] `/vc mae obra` recusada duas vezes dentro da vila: `no_lot:original_structure` e `original_structure`
+- [ ] Caminho voando: origem do vão não achada (`PathSupport` corrige o sintoma); 8 blocos de caminho isolados no save
+- [ ] Conferir em jogo a 0.4.19 e a 0.4.20: pulo, água, ponte, pastor, sinalizador, casa do mineiro, velas
+
 ## Playtest de 03-11 — fila de construção
 
 - [x] Analisar `VC_REACH_DETAIL`: origem no telhado, 38 posições e nenhum destino alcançado.

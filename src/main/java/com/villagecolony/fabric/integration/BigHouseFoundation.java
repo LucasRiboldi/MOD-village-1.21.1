@@ -79,7 +79,7 @@ public final class BigHouseFoundation {
 
         if (site.get().clearing()) {
             VillageColonyMod.LOGGER.info("Colony {} cleared the BigHouseMOD lot at {} — {} blocks of trees and plants",
-                    colony.id(), placedAt.toShortString(), clear(world, placedAt, template.get().getSize()));
+                    colony.id(), placedAt.toShortString(), clear(world, placedAt, template.get().getSize(), NewVillage.is(world, colony)));
         }
 
         if (site.get().levelled()) {
@@ -208,6 +208,10 @@ public final class BigHouseFoundation {
             }
         }
 
+        // O lote ligado à vila por chão andável ganha; separado por água, só sem nenhum outro (a ponte liga).
+        boolean[] dry = DryLand.from(world, center, minX, minZ, width, depth);
+        Site cutOff = null;
+
         for (FoundationLotSearch.Lot lot
                 : FoundationLotSearch.candidates(heights, growth, width, depth, size.getX(), size.getZ())) {
             int x = minX + lot.offsetX();
@@ -216,11 +220,19 @@ public final class BigHouseFoundation {
 
             if (levelled ? safeAfterLevelling(world, colony, x, lot.floor(), z, size)
                     : safe(world, colony, x, lot.floor(), z, size)) {
-                return Optional.of(new Site(new BlockPos(x, lot.floor(), z), levelled, lot.clearing()));
+                Site site = new Site(new BlockPos(x, lot.floor(), z), levelled, lot.clearing());
+
+                if (DryLand.touches(dry, width, lot.offsetX(), lot.offsetZ(), size.getX(), size.getZ())) {
+                    return Optional.of(site);
+                }
+
+                if (cutOff == null) {
+                    cutOff = site;
+                }
             }
         }
 
-        return Optional.empty();
+        return Optional.ofNullable(cutOff);
     }
 
     /** Até onde procurar: a borda da vila gerada mais a folga, entre os 32 de antes e {@link #MAX_REACH}. */
@@ -327,7 +339,7 @@ public final class BigHouseFoundation {
     }
 
     /** Tira do lote a vegetação natural, do chão ao topo da folga e da árvore; devolve os blocos tirados. */
-    static int clear(ServerWorld world, BlockPos origin, Vec3i size) {
+    static int clear(ServerWorld world, BlockPos origin, Vec3i size, boolean sweepTrees) {
         int clearThrough = Math.max(size.getY() - 1, BuildSiteScanner.VERTICAL_CLEARANCE);
         int cleared = 0;
 
@@ -341,7 +353,15 @@ public final class BigHouseFoundation {
             }
         }
 
-        return cleared;
+        if (!sweepTrees) {
+            return cleared;
+        }
+
+        int lastX = origin.getX() + size.getX() - 1;
+        int lastZ = origin.getZ() + size.getZ() - 1;
+
+        return cleared + TreeClearing.sweep(world, origin.getX(), origin.getZ(), lastX, lastZ, origin.getY(), java.util.List.of())
+                + TreeClearing.clearZone(world, origin.getX(), origin.getZ(), lastX, lastZ, origin.getY(), java.util.List.of());
     }
 
     static boolean safe(

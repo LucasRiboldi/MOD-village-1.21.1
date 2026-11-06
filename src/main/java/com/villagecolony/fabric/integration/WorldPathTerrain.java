@@ -36,12 +36,27 @@ public final class WorldPathTerrain implements PathTerrain {
     private final List<Building> buildings;
     private final Optional<ConstructionProject> open;
     private final Optional<ColonyPos> mine;
+    private final boolean bridging;
+    private final Optional<com.villagecolony.core.colony.model.VillageBounds> bounds;
+
+    /** Quanto além da caixa da vila a ponte ainda vai. */
+    static final int BRIDGE_MARGIN = 8;
 
     /** Quanto em volta da entrada da mina o caminho não passa: o caracol e a borda dele. */
-    static final int MINE_CLEARANCE = com.villagecolony.core.construction.model.MineShaft.HELIX_SIDE
+    public static final int MINE_CLEARANCE = com.villagecolony.core.construction.model.MineShaft.HELIX_SIDE
             + com.villagecolony.core.construction.model.MineShaft.STAIR_LANES + 2;
 
     public WorldPathTerrain(ServerWorld world, UUID colonyId) {
+        this(world, colonyId, false);
+    }
+
+    /**
+     * Com {@code bridging}, a água dentro da caixa da vila (mais {@link #BRIDGE_MARGIN}) conta como chão, com o piso
+     * no nível dela: o traçado sem saída a seco atravessa com ponte ({@code BridgeDeck}).
+     */
+    public WorldPathTerrain(ServerWorld world, UUID colonyId, boolean bridging) {
+        this.bridging = bridging;
+        this.bounds = VillageColonyMod.COLONIES.find(colonyId).flatMap(com.villagecolony.core.colony.model.Colony::bounds);
         this.world = world;
         this.buildings = List.copyOf(VillageColonyMod.BUILDINGS.ofColony(colonyId));
         this.open = VillageColonyMod.CONSTRUCTIONS.openOf(colonyId);
@@ -79,7 +94,8 @@ public final class WorldPathTerrain implements PathTerrain {
             }
 
             if (!state.getFluidState().isEmpty()) {
-                return OptionalInt.empty();
+                return bridging && state.getFluidState().isIn(net.minecraft.registry.tag.FluidTags.WATER)
+                        && insideTheZone(x, z) ? OptionalInt.of(y) : OptionalInt.empty();
             }
 
             if (!state.isOf(Blocks.DIRT_PATH) && RoadPaving.refusalOfTheGround(world, at, state).isPresent()) {
@@ -90,6 +106,49 @@ public final class WorldPathTerrain implements PathTerrain {
         }
 
         return OptionalInt.empty();
+    }
+
+    /** Até onde acima do piso a coluna tem de ficar livre ou natural. */
+    private static final int CUT_HEIGHT = TreeClearing.HEADROOM;
+
+    @Override
+    public boolean canCut(int x, int z, int floorY) {
+        if (bridging || blocked(x, z) || !world.isChunkLoaded(x >> 4, z >> 4)) {
+            return false;
+        }
+
+        BlockPos floor = new BlockPos(x, floorY, z);
+        BlockState ground = world.getBlockState(floor);
+
+        if (!(SiteSurroundings.isNaturalGround(ground) || VillageRoad.isPathBlock(ground))
+                || !BlockProtection.mayDigOut(world, floor, ground)) {
+            return false;
+        }
+
+        for (int up = 1; up <= CUT_HEIGHT; up++) {
+            BlockPos at = floor.up(up);
+            BlockState state = world.getBlockState(at);
+
+            if (state.isAir() || LotGrowth.isLooseGrowth(state)
+                    || (LotGround.isNothing(state) && state.getFluidState().isEmpty())) {
+                continue;
+            }
+
+            if (!state.getFluidState().isEmpty() || !SiteSurroundings.isNaturalGround(state)
+                    || !BlockProtection.mayDigOut(world, at, state)) {
+                return false;
+            }
+        }
+
+        // Chão logo acima do corte é morro: abriria um túnel.
+        BlockState above = world.getBlockState(floor.up(CUT_HEIGHT + 1));
+
+        return !SiteSurroundings.isNaturalGround(above);
+    }
+
+    private boolean insideTheZone(int x, int z) {
+        return bounds.filter(box -> x >= box.minX() - BRIDGE_MARGIN && x <= box.maxX() + BRIDGE_MARGIN
+                && z >= box.minZ() - BRIDGE_MARGIN && z <= box.maxZ() + BRIDGE_MARGIN).isPresent();
     }
 
     @Override

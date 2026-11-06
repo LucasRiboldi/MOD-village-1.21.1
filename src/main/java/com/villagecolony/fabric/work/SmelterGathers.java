@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.task.model.Task;
@@ -45,6 +46,7 @@ final class SmelterGathers {
         // O cru que o pedreiro faz pela receita com o que há nos baús (FurnaceFeed, B1): o
         // fundidor ajuda outro ofício até ele chegar, como no britador de areia.
         if (asking.isPresent() && FurnaceFeed.askTheMason(world, asking.get(), raws)) {
+            TaskOutcome.fruitless(smelting, "no raw for the furnace");
             smelting.release("no raw for the furnace in any chest — the mason makes it; the smelter helps elsewhere");
             VillageColonyMod.LOGGER.info("Smelter {} leaves the furnace to help elsewhere — the mason makes its raw",
                     workerId.toString().substring(0, 8));
@@ -65,8 +67,21 @@ final class SmelterGathers {
         UUID colonyId = smelting.colonyId();
         Optional<Colony> colony = VillageColonyMod.COLONIES.find(colonyId);
 
+        // O cru está nos baús e a reserva não deixa assar (StockRules.rawThatMayBeSmelted): buscar ou fazer surgir
+        // não adianta. Larga o pedido e vai fazer outra coisa, em vez de ficar parado na fornalha (Regra 190).
+        if (colony.isPresent() && MinecraftTypeAdapter.toItem(raw.get())
+                .filter(item -> ColonyChests.countIn(world,
+                        ColonyChests.nearestFirst(world, colonyId, colony.get().center()), item) > 0).isPresent()) {
+            TaskOutcome.fruitless(smelting, "raw held by the reserve");
+            smelting.release("the " + raw.get().name().toLowerCase(java.util.Locale.ROOT)
+                    + " in the chests is held by the reserve — the smelter helps elsewhere");
+
+            return true;
+        }
+
         if (raw.get() == ResourceType.SAND && colony.isPresent() && Crusher.covers(world, colony.get())) {
             Crusher.askTheMason(world, colony.get());
+            TaskOutcome.fruitless(smelting, "no sand");
             smelting.release("no sand in any chest — the mason crushes it; the smelter helps elsewhere");
             VillageColonyMod.LOGGER.info("Smelter {} leaves the furnace to help elsewhere — the crusher makes the sand",
                     workerId.toString().substring(0, 8));

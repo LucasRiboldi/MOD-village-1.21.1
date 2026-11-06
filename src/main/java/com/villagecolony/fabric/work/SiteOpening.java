@@ -234,6 +234,9 @@ final class SiteOpening {
         ConstructionProject project = ConstructionProject.plan(
                 colony.id(), facingTheRoad, facingTheRoad.originFor(site.origin()));
 
+        // Vela e tocha soltas saem com a obra (Regra 212).
+        com.villagecolony.fabric.integration.LotClearance.clearLightDecor(world, project.origin(), project.blueprint().size());
+
         // O lote aceito aplainado é aplainado agora, antes da trava da base
         // (terraplanagem, fase 1); o lote que já era plano não muda.
         java.util.Map<net.minecraft.item.Item, Integer> cut = new java.util.LinkedHashMap<>();
@@ -327,6 +330,7 @@ final class SiteOpening {
         planned.addProperty("origin", project.origin().toString());
         planned.addProperty("fromCenter", straightDistance(project.origin(), colony.center()));
         VillageDiary.event(colony.id(), "build_planned", planned);
+        com.villagecolony.core.coordination.TaskLoopGuard.clear(colony.id());
 
         return Optional.of(project);
     }

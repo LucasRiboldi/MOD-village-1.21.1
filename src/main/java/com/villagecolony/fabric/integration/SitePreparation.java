@@ -79,6 +79,16 @@ public final class SitePreparation {
         }
 
         cleared += clearTrees(world, project);
+        // Só em obra sem nenhuma peça: na retomada, tronco e pedra na zona podem ser da própria obra.
+        if (project.remainingCount() == project.blueprint().blockCount() && NewVillage.is(world, project.colonyId())) {
+            cleared += TreeClearing.sweep(world, origin.x() - OUTER_MARGIN, origin.z() - OUTER_MARGIN,
+                    origin.x() + size.x() + OUTER_MARGIN - 1, origin.z() + size.z() + OUTER_MARGIN - 1, origin.y(),
+                    ColonyChests.nearestFirst(world, project.colonyId(), origin));
+            cleared += TreeClearing.clearZone(world, origin.x(), origin.z(), origin.x() + size.x() - 1,
+                    origin.z() + size.z() - 1, origin.y() + (project.blueprint().hasStreetLayer()
+                            ? project.blueprint().streetLayer() : 0),
+                    ColonyChests.nearestFirst(world, project.colonyId(), origin));
+        }
         cleared += removeGrassFromHouseBase(world, project);
 
         if (cleared > 0) {

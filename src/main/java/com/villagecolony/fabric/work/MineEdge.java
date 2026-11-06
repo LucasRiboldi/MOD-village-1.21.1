@@ -1,5 +1,11 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.core.type.ServerMemory;
+import java.util.Set;
+import java.util.Map;
+import java.util.HashSet;
+import java.util.HashMap;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
@@ -99,6 +105,14 @@ final class MineEdge {
 
         VillageBounds box = bounds.get();
         Scored best = new Scored();
+        // Nenhuma boca nasce perto de outra, nem de uma já abandonada (Regra 182).
+        Set<BlockPos> past = PAST.computeIfAbsent(colonyId, ignored -> new HashSet<>());
+
+        if (avoid != null) {
+            past.add(avoid);
+        }
+
+        MineEntrance.rememberedMouth(colonyId).map(MinecraftTypeAdapter::toBlockPos).ifPresent(past::add);
 
         for (int inset : new int[] {1, INSIDE}) {
             for (Side side : Side.values()) {
@@ -110,18 +124,26 @@ final class MineEdge {
                     int x = alongX ? along : side == Side.WEST ? box.minX() + inset : box.maxX() - inset;
                     int z = alongX ? (side == Side.NORTH ? box.minZ() + inset : box.maxZ() - inset) : along;
 
-                    considerMouth(world, center, avoid, side, x, z, best);
+                    considerMouth(world, center, past, side, x, z, best);
                 }
             }
         }
 
         if (best.choice != null) {
+            past.add(best.choice.mouth());
             VillageColonyMod.LOGGER.info("Colony {} picks the new mine mouth at {} on the {} edge — water {}",
                     colonyId, best.choice.mouth().toShortString(), best.choice.side(),
                     best.water >= WATER_LOOK ? "farther than " + WATER_LOOK + " blocks" : best.water + " blocks away");
         }
 
         return Optional.ofNullable(best.choice);
+    }
+
+    /** As bocas que esta colônia já usou ou escolheu nesta sessão. */
+    private static final Map<UUID, Set<BlockPos>> PAST = new HashMap<>();
+
+    static {
+        ServerMemory.register(MineEdge.class, PAST::clear);
     }
 
     /** O melhor candidato achado até agora: a escolha, a pontuação e a distância de água dela. */
@@ -136,10 +158,12 @@ final class MineEdge {
      * Extraído do laço quádruplo de {@link #inside} em 2026-10-15 (F3 do plano) sem mudar o critério.
      */
     private static void considerMouth(
-            ServerWorld world, BlockPos center, BlockPos avoid, Side side, int x, int z, Scored best) {
+            ServerWorld world, BlockPos center, Set<BlockPos> avoid, Side side, int x, int z, Scored best) {
 
-        if (avoid != null && Math.abs(x - avoid.getX()) < AVOID && Math.abs(z - avoid.getZ()) < AVOID) {
-            return;
+        for (BlockPos other : avoid) {
+            if (Math.abs(x - other.getX()) < AVOID && Math.abs(z - other.getZ()) < AVOID) {
+                return;
+            }
         }
 
         Optional<BlockPos> mouth = MineSite.edgeMouth(world, center, x - center.getX(), z - center.getZ(), side);

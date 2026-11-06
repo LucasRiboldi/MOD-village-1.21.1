@@ -121,6 +121,11 @@ public final class MineTrouble {
      * errar é a mina inundada.
      */
     public static void flooded(UUID colonyId, UUID workerId, BlockPos at) {
+        // Quem alarga o nível não tem ramal para encerrar (Regra 193).
+        if (MineClaims.armAlreadyHeld(colonyId, workerId).isEmpty()) {
+            return;
+        }
+
         VillageColonyMod.MINES.of(colonyId).ifPresent(mine -> {
             // <b>O ramal de quem cavou</b> — 2026-09-04. A água é do
             // lugar em que a picareta bateu, e só aquele rumo entra nela;
@@ -200,6 +205,12 @@ public final class MineTrouble {
             return;
         }
 
+        // Antes de culpar a boca, um ramal novo; boca nova só quando nada mais resta (Regra 182).
+        if (!MineBranches.mayOpenNewMouth(colonyId)
+                && (MineBranches.expand(world, colonyId, mine) || !MineBranches.mayOpenNewMouth(colonyId))) {
+            return;
+        }
+
         Side descent = MineCuts.sideOf(colonyId);
 
         // Com a caixa medida, a boca nova também nasce na faixa da borda, longe da
@@ -239,6 +250,7 @@ public final class MineTrouble {
                 mouth.get().toShortString());
 
         VillageColonyMod.MINES.removeOfColony(colonyId);
+        MineBranches.clear(colonyId);
 
         Mine replacement = VillageColonyMod.MINES.open(
                 colonyId,
@@ -322,6 +334,10 @@ public final class MineTrouble {
     public static boolean abandonAtBottom(
             ServerWorld world, UUID colonyId, Mine mine, BlockPos center) {
 
+        if (!MineBranches.mayOpenNewMouth(colonyId)) {
+            return false;
+        }
+
         Side opposite = mine.shaft().isRamp() ? mine.shaft().descent() : mine.shaft().descent().opposite();
 
         Optional<VillageBounds> box = MineEdge.boxOf(colonyId);
@@ -330,6 +346,7 @@ public final class MineTrouble {
         if (waterAccess.isPresent() && walkableFromTheVillage(world, colonyId, waterAccess.get().entry())
                 && waterAccess.get().place(world)) {
             VillageColonyMod.MINES.removeOfColony(colonyId);
+            MineBranches.clear(colonyId);
 
             Mine replacement = VillageColonyMod.MINES.open(
                     colonyId,
@@ -364,6 +381,7 @@ public final class MineTrouble {
         }
 
         VillageColonyMod.MINES.removeOfColony(colonyId);
+        MineBranches.clear(colonyId);
 
         Mine replacement = VillageColonyMod.MINES.open(
                 colonyId,
@@ -402,6 +420,11 @@ public final class MineTrouble {
      * quem ia cavar nela.
      */
     public static void pickaxeTook(UUID colonyId, UUID workerId) {
+        // Quem alarga o nível não tem ramal: a pedra dele não prova que a escada se cava (Regra 193).
+        if (MineClaims.armAlreadyHeld(colonyId, workerId).isEmpty()) {
+            return;
+        }
+
         MineDigging.armOf(colonyId, workerId).ifPresent(MineArm::digging);
 
         // <b>E a mina inteira sai da desconfiança</b> — E45, 2026-09-16.
@@ -410,5 +433,6 @@ public final class MineTrouble {
         // só aqui houve prova de que o desenho se cava. Ver
         // Mine.turnsWithoutAPickaxe.
         VillageColonyMod.MINES.of(colonyId).ifPresent(Mine::pickaxeTook);
+        MineBranches.dug(colonyId);
     }
 }

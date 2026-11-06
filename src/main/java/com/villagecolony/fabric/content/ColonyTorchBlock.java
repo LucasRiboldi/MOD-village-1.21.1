@@ -15,7 +15,7 @@ import java.util.List;
  * A tocha da colônia — Regra 127, item 8 das escolhas do autor (2026-10-27): igual à tocha comum, com a
  * chama laranja e luz 15, e um anel de luz invisível em volta ({@link #lightRing}): a área clara fica cerca
  * de três vezes maior. Monstro não nasce sozinho perto dela ({@code ColonyTorches}). Quem a põe é o
- * carpinteiro sem tarefa, ao lado do caminho escuro. Quebrada, o anel de luz sai junto.
+ * jogador; nenhum aldeão a põe sozinho (Regra 212). Quebrada, o anel de luz sai junto.
  */
 public final class ColonyTorchBlock extends TorchBlock {
 

@@ -79,6 +79,15 @@ public final class StrandedWorkers {
 
     static final long CLIMB_REST = 6_000;
 
+    /** Onde a fuga soltou cada um sem ele ter cavado nem andado: "fora" só pela altura do terreno. */
+    private static final Map<UUID, BlockPos> LEFT_IN_PLACE = new HashMap<>();
+
+    /**
+     * Quem encalhou de novo onde foi solto sem sair do lugar — E47. A altura do terreno em volta não
+     * prova que ele anda; enquanto estiver ali, a fuga não o solta e o {@code ClimbOut} age, até o
+     * prazo de tentativas levá-lo a um lugar seguro ({@code BedTeleport.toSafety}).
+     */
+    private static final Map<UUID, BlockPos> PINNED = new HashMap<>();
 
     private StrandedWorkers() {
     }
@@ -102,7 +111,17 @@ public final class StrandedWorkers {
             return false;
         }
 
-        return strand(workerId, where, "frozen twice on the same spot");
+        BlockPos leftAt = LEFT_IN_PLACE.remove(workerId);
+        boolean marked = strand(workerId, where, "frozen twice on the same spot", true);
+
+        if (marked && leftAt != null && sameSpot(leftAt, where)) {
+            PINNED.put(workerId, leftAt);
+            VillageColonyMod.LOGGER.info("Worker {} is stranded again where it was let go without moving ({})"
+                            + " — it stays in the escape until it leaves that spot",
+                    workerId.toString().substring(0, 8), leftAt.toShortString());
+        }
+
+        return marked;
     }
 
     /**
@@ -112,7 +131,15 @@ public final class StrandedWorkers {
      * @return se esta foi a vez que o marcou
      */
     static boolean strandNow(UUID workerId, BlockPos where, String why) {
-        return !STRANDED.containsKey(workerId) && strand(workerId, where, why);
+        return !STRANDED.containsKey(workerId) && strand(workerId, where, why, true);
+    }
+
+    /**
+     * Marca encalhado sem largar a tarefa: quem cortou caminho por um curral de portão aberto sai
+     * pelo portão em segundos e segue no que fazia (Regra 122). Fora da escala até sair, como os outros.
+     */
+    static boolean strandKeepingWork(UUID workerId, BlockPos where, String why) {
+        return !STRANDED.containsKey(workerId) && strand(workerId, where, why, false);
     }
 
     /** O mesmo, para quem ficou abaixo de {@code way}: só sai ao chegar perto da altura dele. */
@@ -162,7 +189,26 @@ public final class StrandedWorkers {
         return way == null || way.getY() - feet.getY() < MinerSteps.CLIMB_OUT_BELOW;
     }
 
-    private static boolean strand(UUID workerId, BlockPos where, String why) {
+    /**
+     * Se a fuga pode soltá-lo aqui, já no nível do terreno: ele alcançou a altura do caminho
+     * ({@link #reachedTheWay}) e não está preso ao ponto onde foi solto antes sem sair do lugar
+     * ({@link #PINNED}). Soltando sem nenhum degrau cavado, guarda o ponto, para o próximo encalhe ali.
+     */
+    static boolean mayLeaveAt(UUID workerId, BlockPos feet) {
+        BlockPos pin = PINNED.get(workerId);
+
+        if (!reachedTheWay(workerId, feet) || (pin != null && sameSpot(pin, feet))) {
+            return false;
+        }
+
+        if (pin == null && stepsDug(workerId) == 0) {
+            LEFT_IN_PLACE.put(workerId, feet.toImmutable());
+        }
+
+        return true;
+    }
+
+    private static boolean strand(UUID workerId, BlockPos where, String why, boolean dropWork) {
         return VillageColonyMod.WORKERS.find(workerId).map(worker -> {
             worker.strand();
             STRANDED.put(workerId, 0);
@@ -172,7 +218,9 @@ public final class StrandedWorkers {
             // enquanto estiver preso. Ver WorkerJobs. No próximo tique, e não
             // aqui: quem chama é o WorkStall, de dentro do laço do ofício, e
             // tirar o trabalho do mapa que ele percorre o quebraria.
-            DROP_JOBS.add(workerId);
+            if (dropWork) {
+                DROP_JOBS.add(workerId);
+            }
 
             worker.profession().ifPresent(profession -> VillageColonyMod.ACTIVITY_TRACES.append(
                     worker.colonyId(),
@@ -186,11 +234,11 @@ public final class StrandedWorkers {
                             0)));
 
             VillageColonyMod.LOGGER.info(
-                    "Worker {} is stranded at {} — {}; it drops its work, leaves the work queue"
-                            + " and climbs its way out",
+                    "Worker {} is stranded at {} — {}; it {}, leaves the work queue and climbs its way out",
                     workerId.toString().substring(0, 8),
                     where.toShortString(),
-                    why);
+                    why,
+                    dropWork ? "drops its work" : "keeps its work");
             ActionJournal.action(workerId, "STRANDED", "", 0, where, why);
 
             return true;
@@ -241,6 +289,7 @@ public final class StrandedWorkers {
      */
     static void release(UUID workerId) {
         STRANDED.remove(workerId);
+        PINNED.remove(workerId);
         WAYS.remove(workerId);
         STARTS.remove(workerId);
         SINCE.remove(workerId);
@@ -265,6 +314,8 @@ public final class StrandedWorkers {
     /** Esquece um trabalhador que saiu do registro. */
     static void forget(UUID workerId) {
         STRANDED.remove(workerId);
+        PINNED.remove(workerId);
+        LEFT_IN_PLACE.remove(workerId);
         WAYS.remove(workerId);
         STARTS.remove(workerId);
         SINCE.remove(workerId);
@@ -277,6 +328,8 @@ public final class StrandedWorkers {
     /** Esquece tudo. Chamado ao abrir e ao parar o servidor. */
     public static void clearAll() {
         STRANDED.clear();
+        PINNED.clear();
+        LEFT_IN_PLACE.clear();
         WAYS.clear();
         STARTS.clear();
         SINCE.clear();

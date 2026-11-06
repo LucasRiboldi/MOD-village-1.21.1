@@ -56,8 +56,8 @@ public final class MineHomeSiteSearch {
                         CURSORS.put(colonyId, new Sweep(ring, column, mouth));
                         return new Result(Optional.empty(), false);
                     }
-                    Optional<Site> site = RoadsideSites.siteBesideRoadAt(world, colonyId, from,
-                            from.getX() + dx, from.getZ() + dz, from.getY(), footprints, false);
+                    Optional<Site> site = siteAround(world, colonyId, from,
+                            from.getX() + dx, from.getZ() + dz, footprints);
                     if (site.isPresent()) {
                         CURSORS.put(colonyId, new Sweep(ring, column + 1, mouth));
                         return new Result(site, false);
@@ -70,5 +70,42 @@ public final class MineHomeSiteSearch {
         VillageColonyMod.LOGGER.info("VC_MINE_HOME colony={} radius={}: local search complete without lot; "
                 + "home remains pending, allowing other construction", colonyId, radius);
         return new Result(Optional.empty(), true);
+    }
+
+    /**
+     * O lote com a porta virada para esta coluna de chão natural, por onde o caminho vai passar (Regra 175): a boca da
+     * mina fica longe das ruas, e exigir rua ao lado não achava lote nunca. Mesmas recusas do lote à beira da rua, e
+     * fora da folga da escada da mina.
+     */
+    private static Optional<Site> siteAround(ServerWorld world, UUID colonyId, BlockPos mouth, int x, int z,
+                                             List<Footprint> footprints) {
+        Optional<BlockPos> ground = LotGround.groundInColumn(world, x, z, mouth.getY());
+
+        if (ground.isEmpty() || !LotGround.isNaturalGround(world.getBlockState(ground.get()))
+                || !world.getBlockState(ground.get().up()).isReplaceable()) {
+            return Optional.empty();
+        }
+
+        int y = ground.get().getY();
+
+        for (Footprint footprint : footprints) {
+            Optional<Site> site = RoadsideSites.siteFor(world, colonyId, x, z, y, y, footprint.size(), footprint.doorSide())
+                    .filter(found -> clearOfTheShaft(found, footprint, mouth));
+
+            if (site.isPresent()) {
+                return site;
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private static boolean clearOfTheShaft(Site site, Footprint footprint, BlockPos mouth) {
+        int clearance = WorldPathTerrain.MINE_CLEARANCE;
+
+        return site.origin().x() > mouth.getX() + clearance
+                || site.origin().x() + footprint.size().x() < mouth.getX() - clearance
+                || site.origin().z() > mouth.getZ() + clearance
+                || site.origin().z() + footprint.size().z() < mouth.getZ() - clearance;
     }
 }

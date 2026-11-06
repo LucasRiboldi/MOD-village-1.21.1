@@ -63,9 +63,9 @@ a direção técnica.** Contagem de testes, JAR e o que espera playtest: só no
 
 ### 0.2.2 Modo temporário de correção por playtest
 
-Ativo desde 2026-11-01, até o autor liberar testes novamente. Este modo
-substitui temporariamente as exigências de teste das seções 2 e 2.1, sem
-alterar nem desativar o CI do repositório.
+Ativo desde 2026-11-01. **Testes liberados pelo autor em 2026-11-05:** valem de
+novo as exigências das seções 2 e 2.1. O resto deste modo continua: log primeiro,
+escolha do autor, modelo por etapa, um JAR por ciclo.
 
 Antes de iniciar cada etapa de triagem, diagnóstico, implementação ou análise
 complexa, informe ao autor a etapa, o modelo e a força recomendados e aguarde
@@ -74,19 +74,24 @@ confirmação. Recomendações atuais: triagem `gpt-6.1-terra`/`medium`;
 diagnóstico delimitado `gpt-6.1-terra`/`high`; implementação entre subsistemas
 `gpt-6.1-sol`/`high`; impasse complexo `gpt-6-astra`/`high`.
 A tabela por atividade está em `docs/technical/Modelos-Codex.md`.
+No Claude Code: triagem Sonnet 5.5/Médio; diagnóstico e implementação entre
+subsistemas Opus 5.5/Alto; impasse complexo Opus 5.5/Extra. Tabela em
+`docs/technical/Modelos-Claude.md`.
 Indique se o perfil local ainda não corresponde à recomendação. A cada mudança
 de etapa, peça novo "ok", mesmo que o modelo recomendado seja o mesmo.
 
-1. Ler somente o `latest.log` mais recente e os relatórios `VC_*` gerados no
+1. Ler primeiro as notas do autor (`VC_BIOME_NOTE`, de `/vc bioma nota`) e os
+   dados de `/vc dados`, `/vc bioma` e `/vc log`; cada nota é um achado. Contar
+   os blocos que surgiram sozinhos e registrar no `TODO.md` para buscar fluxo de
+   fabricação. Ler somente o `latest.log` mais recente e os relatórios `VC_*` gerados no
    jogo. Usar `time_ledger.py`, `action_report.py`, `cost_ledger.py`, `rg` e
    recortes por horário; não despejar logs inteiros no contexto.
 2. Listar violações de regra, inconsistências, ócio, bloqueio, encalhe,
    repetição e custo anormal. Cada achado deve ter evidência e prioridade.
 3. Localizar a causa e apresentar ao autor 2 ou 3 correções pequenas, com
    efeitos e riscos. Não editar comportamento antes da escolha.
-4. Implementar somente a opção escolhida. Enquanto este modo estiver ativo,
-   não criar nem executar testes unitários, GameTests ou baterias completas.
-5. Revisar o diff e fazer verificações estáticas curtas. Marcar a correção
+4. Implementar somente a opção escolhida, com teste que falhe sem ela.
+5. Revisar o diff e rodar o Sentinela (`scripts/test_lab.py`). Marcar a correção
    como candidata, pendente de confirmação no próximo playtest.
 6. Fazer um commit atômico e gerar o JAR com `./gradlew.bat remapJar`. Copiar
    o JAR para `downloads/` e para a pasta `mods` do TLauncher; conferir o
@@ -94,9 +99,7 @@ de etapa, peça novo "ok", mesmo que o modelo recomendado seja o mesmo.
 7. O autor joga novamente. O próximo ciclo começa pelo novo log e pelos novos
    relatórios.
 
-Falha de teste já conhecida não será investigada durante este modo. Push,
-merge e release continuam exigindo pedido explícito. A ordem do autor para
-"liberar testes" restaura imediatamente o fluxo normal.
+Push, merge e release continuam exigindo pedido explícito.
 
 ### 0.3 Não comece criando classes
 
@@ -166,6 +169,9 @@ Fabric 1.21.1 · Java 21 · Gradle + Loom
 6. Commits atômicos (Conventional Commits).
 7. Se encontrar bloqueio arquitetural, PARAR e apresentar hipóteses
    antes de improvisar.
+8. Quando houver testes, alimente o Sentinela (autor, 2026-11-05): rode por
+   `python scripts/test_lab.py <perfil>` e depois `python scripts/sentinel_analysis.py`,
+   com o Minecraft fechado. Mudou regra ou teste: `python scripts/rule_coverage.py`.
 
 ### 2.1 Workflow por etapa
 

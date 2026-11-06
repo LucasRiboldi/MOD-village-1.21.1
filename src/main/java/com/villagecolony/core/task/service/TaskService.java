@@ -122,6 +122,21 @@ public final class TaskService {
         return Optional.empty();
     }
 
+    /** A próxima tarefa desta capacidade que {@code allowed} aceita. */
+    public Optional<Task> nextFor(UUID colonyId, Capability capability, java.util.function.Predicate<Task> allowed) {
+        if (capability == null) {
+            return Optional.empty();
+        }
+
+        for (Task task : availableFor(colonyId)) {
+            if (task.requiredCapability() == capability && allowed.test(task)) {
+                return Optional.of(task);
+            }
+        }
+
+        return Optional.empty();
+    }
+
     /** As tarefas que um trabalhador assumiu e ainda não encerrou. */
     public List<Task> assignedTo(UUID workerId) {
         Objects.requireNonNull(workerId, "workerId");

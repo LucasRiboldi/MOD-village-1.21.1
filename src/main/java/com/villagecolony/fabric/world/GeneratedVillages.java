@@ -146,6 +146,57 @@ public final class GeneratedVillages {
         return houses;
     }
 
+    /** As caixas das estruturas da vila gerada que alcança esta coluna, com chunk carregado — Regra 210. */
+    public static List<BlockBox> structuresAt(ServerWorld world, int x, int z) {
+        if (!world.isChunkLoaded(x >> 4, z >> 4)) {
+            return List.of();
+        }
+
+        List<BlockBox> structures = new ArrayList<>();
+
+        for (StructureStart start : villagesReaching(world, x >> 4, z >> 4)) {
+            for (var piece : start.getChildren()) {
+                if (piece instanceof PoolStructurePiece pool && isStructure(pool.getPoolElement().toString())) {
+                    structures.add(piece.getBoundingBox());
+                }
+            }
+        }
+
+        return structures;
+    }
+
+    /**
+     * Se a peça é uma estrutura que recebe entrada: casa, poste, poço, chafariz e o que mais a vila erguer. Rua, ponta de rua,
+     * árvore e peça que só põe um bicho não são. Plantação tem a entrada da Regra 184.
+     */
+    public static boolean isStructure(String element) {
+        return element.contains("village/") && !element.contains("farm") && !element.contains("/streets/")
+                && !element.contains("/terminators/") && !element.contains("/villagers/") && !element.contains("/animals/")
+                && !element.contains("iron_golem") && !element.contains("/trees/");
+    }
+
+    /** As caixas das peças da vila gerada que alcança esta coluna cujo nome traz {@code name}; chunk carregado. */
+    public static List<BlockBox> piecesAt(ServerWorld world, int x, int z, String name) {
+        int chunkX = x >> 4;
+        int chunkZ = z >> 4;
+
+        if (!world.isChunkLoaded(chunkX, chunkZ)) {
+            return List.of();
+        }
+
+        List<BlockBox> found = new ArrayList<>();
+
+        for (StructureStart start : villagesReaching(world, chunkX, chunkZ)) {
+            for (var piece : start.getChildren()) {
+                if (piece instanceof PoolStructurePiece pool && pool.getPoolElement().toString().contains(name)) {
+                    found.add(piece.getBoundingBox());
+                }
+            }
+        }
+
+        return found;
+    }
+
     /**
      * Qual vila o jogo gerou nesta coluna ({@code minecraft:village_snowy}, ...), se houver e o
      * chunk estiver carregado. É ela que dá o estilo da colônia — decisão do autor, 2026-10-20.

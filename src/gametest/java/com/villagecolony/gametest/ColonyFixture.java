@@ -70,6 +70,32 @@ public final class ColonyFixture {
         return new ColonyFixture().owning(colony);
     }
 
+    /**
+     * Uma colônia com centro neste ponto do mundo. Para quem monta a arena em coordenada do mundo: {@code
+     * TestContext.getRelativePos} não desfaz {@code getAbsolutePos} em arena girada, e o girar é sorteado.
+     */
+    public static ColonyFixture colonyAtWorld(BlockPos absolute) {
+        Colony colony = Colony.create(java.util.UUID.randomUUID(), com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(absolute));
+
+        com.villagecolony.VillageColonyMod.COLONIES.register(colony);
+
+        return create().owning(colony);
+    }
+
+    /** O bicho neste ponto do mundo, pelo mesmo motivo de {@link #colonyAtWorld}. */
+    public static <T extends net.minecraft.entity.Entity> T spawnAtWorld(TestContext context, net.minecraft.entity.EntityType<T> type, BlockPos absolute) {
+        T entity = type.create(context.getWorld());
+
+        if (entity == null) {
+            throw new AssertionError("não foi possível criar " + type);
+        }
+
+        entity.refreshPositionAndAngles(absolute.getX() + 0.5, absolute.getY(), absolute.getZ() + 0.5, 0, 0);
+        context.getWorld().spawnEntity(entity);
+
+        return entity;
+    }
+
     /** A colônia que este teste possui, ou erro se ele não possui nenhuma. */
     public Colony colony() {
         if (colony == null) {

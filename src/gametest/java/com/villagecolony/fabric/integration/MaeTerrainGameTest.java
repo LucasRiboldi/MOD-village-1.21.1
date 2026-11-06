@@ -142,7 +142,7 @@ public final class MaeTerrainGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_terrain_evidence", tickLimit = 20)
-    public void changedOrMissingEvidenceDoesNotPromoteEnvelope(TestContext context) {
+    public void missingEvidenceRefusesAndTheProofStartsAtTheReservation(TestContext context) {
         var fixture = new MaeSafetyGameTest.Fixture(context);
         try {
             fixture.chunk.removeAttached(MaeGenerationEvidence.RECEIPT);
@@ -150,8 +150,10 @@ public final class MaeTerrainGameTest implements FabricGameTest {
             fixture.set(fixture.base, Blocks.AIR.getDefaultState());
             fixture.capture();
             fixture.set(fixture.base, Blocks.DIRT.getDefaultState());
-            refused(context, () -> reserve(fixture), "changed_generation_evidence");
-            context.assertTrue(fixture.store.regions().isEmpty(), "evidência divergente criou reserva");
+            // A água e a folha mudam a seção sem ninguém mexer: a prova começa na reserva (Regra 202).
+            reserve(fixture);
+            context.assertTrue(fixture.store.regions().size() == 1, "a seção mudada recusou a reserva");
+            MaeGenerationEvidence.inspect(context.getWorld(), area(fixture), true, 128);
         } finally {
             fixture.cleanup();
         }
@@ -175,11 +177,77 @@ public final class MaeTerrainGameTest implements FabricGameTest {
     }
 
     private static UUID reserve(MaeSafetyGameTest.Fixture fixture) {
+        return fixture.writer.reserveTerrain(fixture.context.getWorld(), fixture.colony.colony().id(), area(fixture));
+    }
+
+    private static WorkArea area(MaeSafetyGameTest.Fixture fixture) {
         var min = fixture.base.add(-3, -3, -3);
         var max = fixture.base.add(7, 3, 3);
-        return fixture.writer.reserveTerrain(fixture.context.getWorld(), fixture.colony.colony().id(),
-                new WorkArea(new ColonyPos(min.getX(), min.getY(), min.getZ()),
-                        new ColonyPos(max.getX(), max.getY(), max.getZ())));
+        return new WorkArea(new ColonyPos(min.getX(), min.getY(), min.getZ()),
+                new ColonyPos(max.getX(), max.getY(), max.getZ()));
+    }
+
+    /** Regra 200: árvore e mato recusam a reserva, a limpeza os tira, e a reserva passa. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_clearing", tickLimit = 20)
+    public void theClearingTakesTheTreeAndTheReservationPasses(TestContext context) {
+        var fixture = new MaeSafetyGameTest.Fixture(context);
+        try {
+            BlockPos trunk = fixture.base.add(1, 1, 0);
+            BlockPos crown = trunk.up();
+            BlockPos weed = fixture.base.add(3, 1, 0);
+            fixture.set(trunk, Blocks.OAK_LOG.getDefaultState());
+            fixture.set(crown, Blocks.OAK_LEAVES.getDefaultState());
+            fixture.set(weed, Blocks.TALL_GRASS.getDefaultState());
+            fixture.capture();
+            refused(context, () -> reserve(fixture), "protected_volume");
+
+            var growth = MaeClearing.survey(context.getWorld(), fixture.writer, fixture.colony.colony().id(), area(fixture));
+            context.assertTrue(growth.containsAll(List.of(trunk, crown, weed)), "o levantamento não viu a árvore e o mato: " + growth);
+            context.assertTrue(context.getWorld().getBlockState(trunk).isOf(Blocks.OAK_LOG), "o levantamento cortou a árvore");
+
+            MaeClearing.clear(context.getWorld(), growth);
+            for (BlockPos pos : List.of(trunk, crown, weed)) {
+                context.assertTrue(context.getWorld().getBlockState(pos).isAir(), "sobrou planta em " + pos.toShortString());
+            }
+
+            reserve(fixture);
+            context.assertTrue(fixture.store.regions().size() == 1, "a reserva não passou depois da limpeza");
+        } finally {
+            fixture.cleanup();
+        }
+        context.complete();
+    }
+
+    /** Regra 200: o que não é mato recusa antes de qualquer corte. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_clearing", tickLimit = 20)
+    public void aProtectedBlockRefusesBeforeAnyCut(TestContext context) {
+        var fixture = new MaeSafetyGameTest.Fixture(context);
+        try {
+            BlockPos trunk = fixture.base.add(1, 1, 0);
+            fixture.set(trunk, Blocks.OAK_LOG.getDefaultState());
+            fixture.set(trunk.up(), Blocks.OAK_LEAVES.getDefaultState());
+            fixture.set(fixture.base.add(3, 1, 0), Blocks.CRAFTING_TABLE.getDefaultState());
+            fixture.capture();
+            refused(context, () -> MaeClearing.survey(context.getWorld(), fixture.writer, fixture.colony.colony().id(), area(fixture)),
+                    "protected_volume");
+            context.assertTrue(context.getWorld().getBlockState(trunk).isOf(Blocks.OAK_LOG), "a recusa cortou a árvore");
+        } finally {
+            fixture.cleanup();
+        }
+        context.complete();
+    }
+
+    /** Regra 201: chão natural e minério entram; água e obra ficam de fora. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_clearing", tickLimit = 20)
+    public void naturalGroundAndOreAreTerrain(TestContext context) {
+        for (var block : List.of(Blocks.GRAVEL, Blocks.SAND, Blocks.RED_SAND, Blocks.CLAY, Blocks.ANDESITE, Blocks.DIORITE,
+                Blocks.GRANITE, Blocks.TUFF, Blocks.DEEPSLATE, Blocks.COAL_ORE, Blocks.IRON_ORE, Blocks.TERRACOTTA)) {
+            context.assertTrue(MaeProtection.terrain(block.getDefaultState()), "chão natural recusado: " + block);
+        }
+        for (var block : List.of(Blocks.WATER, Blocks.LAVA, Blocks.OAK_PLANKS, Blocks.CRAFTING_TABLE, Blocks.CHEST)) {
+            context.assertFalse(MaeProtection.terrain(block.getDefaultState()), "não é chão natural: " + block);
+        }
+        context.complete();
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_terrain_survey", tickLimit = 160)

@@ -54,6 +54,15 @@ class ArchitectureRulesTest {
                 "o importador achou só " + mod.size() + " classes — o caminho mudou?");
     }
 
+    /** Regra 212: nenhum aldeão põe a tocha da colônia sozinho; quem a põe é o jogador. */
+    @Test
+    void nobodyInTheModLightsTheVillageByItself() {
+        ArchRule rule = noClasses().should().callMethod("com.villagecolony.fabric.integration.ColonyTorches", "place",
+                "net.minecraft.server.world.ServerWorld", "net.minecraft.util.math.BlockPos");
+
+        rule.check(mod);
+    }
+
     /** ADR-006 §6: o core não conhece Minecraft, nem por nome qualificado. */
     @Test
     void theCoreDoesNotTouchMinecraftOrFabric() {

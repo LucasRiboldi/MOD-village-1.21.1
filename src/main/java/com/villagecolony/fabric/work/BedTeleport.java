@@ -139,11 +139,16 @@ final class BedTeleport {
     /**
      * A cama, e sem ela o chão do centro da vila — Regra 114: quem está preso sem cama não fica
      * preso para sempre (savana, 23-10: o construtor passou 4 h trocando de jeito de subir em y=55).
+     * Cama a até {@link #SAME_PLACE} blocos dele é o mesmo lugar preso: aí vale o centro da vila.
      *
      * @return se ele foi levado a algum lugar
      */
     static boolean toSafety(ServerWorld world, VillagerEntity villager, UUID workerId, String why) {
-        return toBed(world, villager, workerId, why) || toVillage(world, villager, workerId, why);
+        boolean bedIsHere = bedOf(world, villager)
+                .filter(bed -> bed.isWithinDistance(villager.getBlockPos(), SAME_PLACE))
+                .isPresent();
+
+        return (!bedIsHere && toBed(world, villager, workerId, why)) || toVillage(world, villager, workerId, why);
     }
 
     /** O chão livre mais perto do centro da colônia dele. */

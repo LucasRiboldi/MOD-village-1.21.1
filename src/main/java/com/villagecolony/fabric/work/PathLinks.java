@@ -11,6 +11,7 @@ import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.NewVillage;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
 import com.villagecolony.fabric.world.GeneratedVillages;
 import net.minecraft.block.BlockState;
@@ -64,11 +65,17 @@ public final class PathLinks {
     static final class Plan {
         final UUID building;
         final List<PathStep> steps;
+        final boolean repair;
         int next;
 
         Plan(UUID building, List<PathStep> steps) {
+            this(building, steps, false);
+        }
+
+        Plan(UUID building, List<PathStep> steps, boolean repair) {
             this.building = building;
             this.steps = steps;
+            this.repair = repair;
         }
 
         boolean done() {
@@ -80,12 +87,22 @@ public final class PathLinks {
     record Entrance(BlockPos front, Side out) {
     }
 
+    /** O id do plano de reparo da rede, que não é de nenhuma construção. */
+    private static final UUID REPAIR = UUID.nameUUIDFromBytes("road graph repair".getBytes(StandardCharsets.UTF_8));
+
     private static final Map<UUID, Plan> PLANS = new HashMap<>();
     private static final Map<UUID, Long> PLANNED_AT = new HashMap<>();
     private static final Map<UUID, Long> SET_ASIDE = new HashMap<>();
     private static final Map<UUID, String> SUMMARY = new HashMap<>();
 
     private PathLinks() {
+    }
+
+    /** O grafo pede estas colunas calçadas (Regra 177): vira o plano da vez, se não há outro em curso. */
+    static void offerRepair(UUID colonyId, List<PathStep> steps) {
+        if (planOf(colonyId).isEmpty()) {
+            PLANS.put(colonyId, new Plan(REPAIR, List.copyOf(steps), true));
+        }
     }
 
     /** O traçado em curso desta colônia, se ainda tem passo por assentar. */
@@ -133,6 +150,10 @@ public final class PathLinks {
             }
         }
 
+        if (linkTheMine(world, colony, roads, hub, count)) {
+            return;
+        }
+
         // Nada a traçar: diz por quê, uma vez por mudança (a rede ficou muda o playtest 0.3.97 inteiro).
         String summary = count[0] + " doors on the network, " + count[1] + " buildings without a readable door, "
                 + SET_ASIDE.size() + " set aside";
@@ -161,6 +182,54 @@ public final class PathLinks {
             return false;
         }
 
+        return linkEntrance(world, colony, id, name, entrance, roads, hub, count);
+    }
+
+    /**
+     * A boca da mina entra na rede como uma porta — Regra 175: o caminho parte do chão na borda da folga da escada, do
+     * lado mais voltado para o centro da vila que tiver chão, e a folga fica por conta dos pés do mineiro.
+     */
+    private static boolean linkTheMine(ServerWorld world, Colony colony, Set<Long> roads, BlockPos hub, int[] count) {
+        var mine = VillageColonyMod.MINES.of(colony.id());
+
+        if (mine.isEmpty()) {
+            return false;
+        }
+
+        if (!NewVillage.is(world, colony)) {
+            return false;
+        }
+
+        UUID id = UUID.nameUUIDFromBytes(("mine mouth " + colony.id()).getBytes(StandardCharsets.UTF_8));
+
+        if (SET_ASIDE.containsKey(id)) {
+            return false;
+        }
+
+        BlockPos mouth = MinecraftTypeAdapter.toBlockPos(MineEntrance.surfaceOf(world, colony.id(), mine.get()));
+        WorldPathTerrain terrain = new WorldPathTerrain(world, colony.id());
+        List<Side> sides = new java.util.ArrayList<>(List.of(Side.values()));
+
+        sides.sort(java.util.Comparator.comparingInt((Side side) ->
+                -(side.offsetX() * (hub.getX() - mouth.getX()) + side.offsetZ() * (hub.getZ() - mouth.getZ()))));
+
+        for (Side side : sides) {
+            int distance = WorldPathTerrain.MINE_CLEARANCE + 1;
+            int x = mouth.getX() + side.offsetX() * distance;
+            int z = mouth.getZ() + side.offsetZ() * distance;
+            OptionalInt ground = terrain.groundY(x, z, mouth.getY());
+
+            if (ground.isPresent() && !terrain.blocked(x, z)) {
+                return linkEntrance(world, colony, id, "the mine mouth",
+                        Optional.of(new Entrance(new BlockPos(x, ground.getAsInt() + 1, z), side)), roads, hub, count);
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean linkEntrance(ServerWorld world, Colony colony, UUID id, String name,
+                                        Optional<Entrance> entrance, Set<Long> roads, BlockPos hub, int[] count) {
         if (linked(roads, entrance.get().front())) {
             count[0]++;
             return false;
@@ -185,6 +254,19 @@ public final class PathLinks {
             }
         }
 
+        // Sem saída a seco: ponte, se a travessia cabe (BridgeDeck).
+        if ((steps.isEmpty() || steps.get().isEmpty()) && NewVillage.is(world, colony)) {
+            Optional<List<PathStep>> crossing = trace(world, colony.id(), entrance.get(), roads, hub, false, true)
+                    .filter(found -> BridgeDeck.waterColumns(world, found) <= BridgeDeck.MAX_SPAN);
+
+            if (crossing.isPresent() && !crossing.get().isEmpty()) {
+                steps = crossing;
+                VillageColonyMod.LOGGER.info("Colony {} — the door of {} at {} has no dry way: a bridge over {} water columns",
+                        colony.id().toString().substring(0, 8), name, entrance.get().front().toShortString(),
+                        BridgeDeck.waterColumns(world, crossing.get()));
+            }
+        }
+
         long millis = (System.nanoTime() - began) / 1_000_000;
 
         if (steps.isEmpty() || steps.get().isEmpty()) {
@@ -206,7 +288,13 @@ public final class PathLinks {
     /** O traçado da porta até a rede, ou até o chafariz quando ainda não há rede. */
     static Optional<List<PathStep>> trace(ServerWorld world, UUID colonyId, Entrance entrance, Set<Long> roads,
                                           BlockPos hub, boolean toTheHub) {
-        WorldPathTerrain terrain = new WorldPathTerrain(world, colonyId);
+        return trace(world, colonyId, entrance, roads, hub, toTheHub, false);
+    }
+
+    /** O mesmo; com {@code bridging}, a água da zona da vila conta como chão. */
+    static Optional<List<PathStep>> trace(ServerWorld world, UUID colonyId, Entrance entrance, Set<Long> roads,
+                                          BlockPos hub, boolean toTheHub, boolean bridging) {
+        WorldPathTerrain terrain = new WorldPathTerrain(world, colonyId, bridging);
         BlockPos front = entrance.front();
         OptionalInt floor = terrain.groundY(front.getX(), front.getZ(), front.getY() - 1);
 
@@ -300,7 +388,8 @@ public final class PathLinks {
             Optional<Entrance> best = Optional.empty();
             int fewest = Integer.MAX_VALUE;
 
-            for (Direction out : List.of(facing, facing.getOpposite())) {
+            // O facing aponta para dentro: no empate, fica o lado de fora (Regra 207).
+            for (Direction out : List.of(facing.getOpposite(), facing)) {
                 int blocked = 0;
                 BlockPos step = at.toImmutable();
 
