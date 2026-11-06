@@ -27,7 +27,7 @@ classe prova menos ainda.
 | 14 | O construtor alcança o alto da obra — desde a ADR-037 B1, de qualquer lugar da zona da ob… | cita | BuilderGameTest |
 | 15 | A estrada cresce com a vila | cita | BuildSiteGameTest, RoadExtensionGameTest |
 | 16 | Cada casa com espaço em volta | classe | BigHouseFoundationGameTest, BuildSiteGameTest, ColonyRoadsTest |
-| 17 | A casa com uma lateral na estrada | cita | BlueprintRotationTest, BuildSiteGameTest, BuilderGameTest |
+| 17 | A casa com uma lateral na estrada | cita | BlueprintDoorSideTest, BlueprintRotationTest, BuildSiteGameTest |
 | 18 | O dia inteiro é expediente | cita | BuildProgressGameTest, WorkClockTest, WorkHoursGameTest |
 | 19 | O lote fica no nível da estrada | cita | BuildSiteGameTest, LotTerraformGameTest |
 | 20 | Cada vila constrói no estilo do bioma | cita | VillageBiomesGameTest, VillagePaletteTest |
@@ -128,7 +128,7 @@ classe prova menos ainda.
 | 116 | A argila aparece na terceira busca vazia, em todo bioma (autor 10-27, jogo da 0.3.93: na… | cita | LocateFallbackGameTest |
 | 117 | O pastor recebe ração quando o fazendeiro não produziu (autor 10-27, jogo da 0.3.93: "the… | cita | ShepherdWoolDeficitGameTest |
 | 118 | No deserto o bosque do lenhador é o dobro e se espalha pelas bordas (autor 10-27, jogo da… | classe | VillageGroveGameTest |
-| 119 | A mina desce em caracol, abre salão e desce de novo pelos quatro cantos, e o caminho que… | cita | MineEntranceGameTest, MineSecondLevelTest, MineShaftLayoutTest |
+| 119 | A mina desce em caracol, abre salão e desce de novo pelos quatro cantos, e o caminho que… | cita | BlueprintDoorSideTest, MineEntranceGameTest, MineSecondLevelTest |
 | 120 | A tarefa do lenhador fecha concluída quando o alcance esvazia (autor 10-27, jogo da 0.3.9… | cita | TreeFellingGameTest |
 | 121 | A roça conhecida responde primeiro, sempre (autor 10-27, jogo da 0.3.93: 622 "still sweep… | cita | CropRegistryGameTest |
 | 122 | O curral é do pastor (autor 10-27, jogo da 0.3.93: 217 entradas em curral na planície e o… | cita | PenFloorsGameTest |

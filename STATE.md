@@ -4,6 +4,8 @@
 > porta no grafo, sem porta no mundo (Regra 210). Casa do mineiro na boca em uso (Regra 211). As "velas" do chão eram a tocha da colônia do
 > carpinteiro: 13 no chão e 11 em parede no save, e nenhuma vela de verdade na superfície. Ninguém as põe mais, e vela e tocha não recusam
 > lote (Regra 212). Não jogada. Abertos: nenhuma obra nova, mineiro em `NO_PATH` (`TODO.md`).
+> O grafo também parou de mudar sem a rua mudar: a ordem dos nós vinha da identidade do objeto. Sentinela `fast`: 1161 GameTests e 1777 unitários verdes.
+> PIT local: 85,6% contra o limite de 85, parte pelo registro de traçado `RoadGeometryPinTest`, que fixa o resultado sem dizer que está certo.
 
 > **Candidata 0.4.36:** jogo da 0.4.35: os 2 azuis centrais eram quinas fixas de anel. Plantação agora não tem anel e fica com uma
 > entrada; o anel antigo sai do grafo se a rede continua inteira (Regra 208). Porta de quintal fechado só conta se for a única da casa
