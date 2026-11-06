@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.15%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.36%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,59 +19,28 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-Planejamento aprovado para o próximo ciclo: [terreno, mina e profissões](docs/technical/Plano-Playtest-2026-11-02.md).
-A candidata **0.4.15** protege os pisos planejados da mina contra picareta e desvios,
-além dos apoios do rastro de retorno salvo. Revisa perto do mineiro a passagem já
-aberta: repõe no máximo um apoio ausente por passagem, sem substituir blocos ou água.
-Não redesenha minas antigas nem certifica trechos sem geometria ou rastro conhecido.
-O efeito sobre os encalhes depende do próximo playtest.
-A candidata **0.4.14** prefere rua indexada e validada no mundo como origem do mapa de alcance.
-Sem rua próxima, procura chão ao nível do centro antes de recorrer ao topo da superfície.
-A instrumentação da **0.4.13** permanece; navegação real e acesso à mina aguardam playtest.
-A candidata **0.4.12**, incluída nesta versão, separa a busca da casa do mineiro do índice geral da vila.
-Uma busca local completa sem lote permite outras obras e mantém a casa pendente.
-Efeito ainda depende do próximo playtest; não cria rua nem prepara terreno na mina.
-A versão **0.4.11** prepara o cálculo da entrada
-de estruturas da [Fase 3 do MAE](docs/technical/MAE-Fase-3.md), ainda sem integração
-automática com obras ou caminhos.
-A [Fase 3 do MAE](docs/technical/MAE-Fase-3.md) está parcialmente implementada
-na linha `codex/mae-structure-access`, conforme a
-[ADR-046](docs/decisions/ADR-046-mae-structure-access.md).
-Inclui metadados, prova local de circulação e leitura estrita dos estados.
-O curral de quatro portões é uma variante exclusiva do MAE supervisionado;
-o fluxo automático conserva o modelo anterior. A candidata **0.4.16** traz o
-writer de edifícios `structure_v3` (material exato dos baús, retomada que
-bloqueia ambiguidade, conclusão só com acesso conferido no mundo) e o fluxo
-supervisionado `MaeStructureSite` (terreno → acesso → obra), provados por
-GameTests com casa, oficina, curral e depósito reais nas quatro rotações.
-Na `main` depois da 0.4.16, `/vc mae obra <modelo>` (operador, nível 2) dispara uma obra supervisionada:
-pegada centrada no jogador e rotação pela direção do olhar; `<rotação>` 0–3
-fixa a rotação; `busca` procura lote nivelado (desnível até 2) num raio de 24.
-`/vc mae mostrar ligar|desligar` desenha o que a vila guarda como caminho, e `/vc mae reler` relê o caminho da vila agora. `/vc mae obra <modelo> fora` procura lote fora da vila original, que o MAE não edita. `/vc mae soltar` entrega à vila as regiões paradas. `/vc mae estado` mostra as obras em andamento e `/vc mae parar` pausa os jobs
-aprovados, sem desfazer nada. Quem pediu recebe o resultado no chat; o log
-registra `VC_MAE_SITE`.
-A fila automática continua desligada e o playtest continua pendente.
-Na branch de desenvolvimento, a candidata **0.4.9** adiciona a fundação de segurança
-do [MAE, Fase 1](docs/technical/MAE-Fase-1.md): evidência de geração, reserva supervisionada,
-aprovação individual e escrita limitada. Não ativa terraplanagem ou planejamento de ruas.
-A candidata 0.4.10 inclui a [Fase 2](docs/technical/MAE-Fase-2.md) acrescenta
-contratos locais de terreno transitável e ruas com prova encadeada, conforme a
-[ADR-045](docs/decisions/ADR-045-mae-terrain-road-chain.md). Exige aprovação explícita;
-não ativa obras automaticamente; o playtest permanece pendente.
-A candidata 0.4.8 suspende ajudas cruzadas de pedreiro e fundidor em
-`VillageHelpers`; os demais itens e o playtest permanecem pendentes. Tabela operacional:
-[modelos do Codex por atividade](docs/technical/Modelos-Codex.md).
+**Estado atual: candidata 0.4.36** (não jogada). O estado vivo, a contagem de testes e o que espera
+playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
+[docs/RULES.md](docs/RULES.md) (1 a 209).
 
-Estado de desenvolvimento em 02-11-2026: a versão 0.4.9 prepara escrita segura MAE;
-a versão 0.4.8 restringe alternativas
-auxiliares aos ofícios. A 0.4.7 adiciona análise manual
-de evidências e métricas locais ao Sentinela; a 0.4.6 adiciona o Observatório
-local do Sentinela; a 0.4.5 adiciona a janela local; a 0.4.4 prepara o
-fechamento rastreável de entregas; a 0.4.3 consolida o
-watchdog de progresso, o curral grande, a ativação compatível do grafo de ruas e
-as metas ociosas de mina e fundição. O [relatório de falhas e prioridades](docs/audit/2026-11-01-falhas-priorizadas.md)
-separa correções implementadas, relatos ainda sem reprodução e requisitos pendentes.
-GameTests não substituem o playtest dessas situações.
+Desde a 0.4.29, em resumo:
+
+- **Grafo de ruas:** no máximo 4 pontas azuis, uma por quadrante (Regra 206); toda porta térrea é entrada, pelo lado de fora
+  (Regra 207); a plantação não tem anel e fica com uma entrada (Regra 208); porta de quintal fechado só conta se for a única
+  da casa (Regra 209). O chafariz mantém o anel de caminho (Regra 183).
+- **Pastor e lenhador:** o pastor leva os animais amarrados aos pastos e só prende em poste sem curral livre (Regra 196);
+  todo aldeão corta folha que trava o caminho (Regra 197); o lenhador prefere o interior da vila e não replanta a menos de
+  3 blocos de estrutura (Regras 198 e 199).
+- **MAE (obras supervisionadas):** limpa o lote antes de escrever (Regra 200), reserva com a evidência de geração refeita
+  (Regra 202), tanque de água fechado numa escrita só (Regra 203), planta baixa não barra a obra (Regra 204) e a obra que
+  falha devolve a região (Regra 205). Fases 4 a 7 ainda não existem; a fila automática continua desligada.
+- **Verificação:** `python scripts/test_lab.py <perfil>` alimenta o Sentinela; `scripts/rule_coverage.py` lista as regras sem
+  teste (hoje só a 33 e a 47). Teste verde não substitui jogo: toda correção é candidata até o playtest seguinte.
+
+Planejamento do ciclo de correção por playtest: [terreno, mina e profissões](docs/technical/Plano-Playtest-2026-11-02.md).
+Histórico das versões anteriores (0.4.8 a 0.4.16, Fases 1 a 3 do MAE): [CHANGELOG.md](CHANGELOG.md),
+[MAE-Fase-1](docs/technical/MAE-Fase-1.md), [MAE-Fase-2](docs/technical/MAE-Fase-2.md),
+[MAE-Fase-3](docs/technical/MAE-Fase-3.md).
 
 Rede hierárquica e currais têm [desenho aprovado](docs/superpowers/specs/2026-11-01-hierarchical-roads-and-pens-design.md).
 O grafo é ativado somente em vilas novas depois de validar o índice legado; vilas
