@@ -1,5 +1,8 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.35:** grafo com no máximo 4 pontas, uma por quadrante (Regra 206), e entrada em toda porta térrea, pelo lado de
+> fora (Regra 207). Rua sem saída sai do grafo. Não jogada.
+
 > **Candidata 0.4.34:** jogo da 0.4.32: a obra MAE limpou o lote e parou em `occupied_structure_target`, e a região falha congelou
 > o grafo. Agora a peça escreve por cima de planta baixa (Regra 204) e a obra falha devolve a região (Regra 205). Não jogada.
 

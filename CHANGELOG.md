@@ -12,6 +12,17 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.35] — candidata, 2026-11-05
+
+### Mudado
+
+- Grafo: no máximo 4 pontas azuis, a mais distante do centro em cada quadrante; os trechos mortos saem (Regra 206).
+- Grafo: toda porta térrea vira entrada, pelo lado de fora, passando por degrau e escada (Regra 207).
+
+### Corrigido
+
+- `PathLinks.entranceOf`: no empate entre os dois lados da porta, ficava o lado de dentro da casa.
+
 ## [0.4.34] — candidata, 2026-11-05
 
 ### Corrigido
