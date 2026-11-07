@@ -102,6 +102,19 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] Custo: ciclo de 115 ms em média, com `workers` 49 ms, `detect` 32 ms, `population` 13 ms e `planner` 13 ms; pico de 182 ms no tique. Sem pressa: 20 TPS e 13,3 ms por tique
 - [ ] Biblioteca com duas portas a 2 blocos: dois brancos colados, por serem duas portas reais; decidir se viram um
 
+## Jogo da 0.4.43 (Spark u6XC34ZC0k, 63 min, vila nova em 1270, 91)
+
+- [ ] Quina de plantação em cima da rua segue branca: `1242, 63, 66`. `RoadGraph.hasLineNear` ignora toda aresta que termina no ponto, e na rua as duas terminam nele
+- [ ] Branco sem porta em `plains_accessory_1`: `1286, 72, 102`. Decidir se essa peça é enfeite (Regra 223)
+- [ ] Socorro cedo (Regra 222): disparou às 10:09:52 depois de falhar pedreiro e armeiro, e a busca normal abriu obra 29 s depois. O jogador parou a obra às 10:10:09
+- [ ] 230 colunas de rua cobertas (`VC_ROAD_COVERED`), 218 na primeira leitura: grama um bloco acima do caminho antigo. Conferir se o solo suave da geração enterra rua
+- [ ] Madeira: 93 `SET_ASIDE` do construtor (`oak_log` e `stripped_oak_log` 29 cada, `oak_planks` 17), com lenhador 40% ocioso e árvore a 38 blocos na mediana, 171 no máximo
+- [ ] Nenhum nascimento em 63 min: 19 aldeões em todos os `VC_STATE`, com 28 camas. Nenhum `UPKEEP` no diário
+- [ ] Fundidor: 1742 `smooth_stone` fundidos e 538 em estoque; outro preso em `terracotta` 285 s (badge `STUCK`)
+- [ ] Pastor 8 vezes "fenced in", e 45% parado
+- [ ] 344 de 795 colunas de caminho fora da linha, e 118 colunas da linha ainda sem caminho
+- [ ] Blocos que surgiram, `VC_SUPPLY`: `prismarine_crystals` ×80, `prismarine_shard` ×64, `white_terracotta` ×62, `honeycomb` ×29, `oak_log` ×39, `stripped_oak_log` ×16, `glass_pane` ×7, `white_wool` ×7, `string` ×4
+
 ## MAE: o que falta depois da 0.4.26
 
 - [ ] Rodar o PIT: o core mudou na 0.4.43 (`RetiredSpurs`, `RoadSquares`, `RoadGraph`)
