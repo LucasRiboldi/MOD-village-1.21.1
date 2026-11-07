@@ -1,5 +1,9 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.42:** Fase 6 do MAE no recorte escolhido pelo autor (ADR-049, Regra 222): sem lote depois de 2 voltas, a vila pede sozinha
+> uma obra a até 24 blocos da caixa, longe da água, com aviso no chat. O bairro novo do plano mestre fica fora. Não jogada, e a 0.4.41 também não.
+> Sentinela `fast` verde: 1052 GameTests e 1758 unitários. PIT não rodou de novo: nenhuma classe do core mudou.
+
 > **Candidata 0.4.41:** "vila mais viva", pedido do autor sobre o jogo da 0.4.40 (Spark WCWRBHTKlX). Causa dos poucos nascimentos:
 > 201 trigos e 35 comestíveis nos baús, porque só o baú do fazendeiro assava; a ceia assa de qualquer baú (Regra 217). Com um de cada
 > tipo de pé, cada 5 adultos dão uma obra repetida (Regra 218). Rotina à vista de quem está sem tarefa, ainda contada como ócio (Regra 219).

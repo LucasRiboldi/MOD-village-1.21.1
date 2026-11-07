@@ -92,8 +92,9 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] Obra longe da vila (`fora`): construtor chega lá? Só provado que a obra não é largada; caminhar até lá depende do jogo
 - [ ] Regra 213 sem teste: a desistência por espera longa (`WaitingWork`) e `MaeSites.move`, a troca de lote
 - [ ] As ruínas das obras MAE falhas de saves anteriores continuam no mundo
-- [ ] Decidir o gate da água (Fase 4 do plano mestre): decisão do autor
-- [ ] Fase 6: expansão automática no ciclo da colônia, depois da primeira obra em jogo
+- [ ] Gate da água só para a obra pedida pelo jogador: a automática recusa água (ADR-049)
+- [ ] Conferir em jogo o socorro do MAE (Regra 222): `VC_MAE_SITE result=rescue`, custo em ms, porta ligada pelo grafo e desenho da vila
+- [ ] Sem teste próprio: a volta que acha lote zerando a conta dentro de `LotSeeking` (a conta em si tem teste)
 
 ## Varredura dos ofícios (jogo da 0.4.24)
 
@@ -180,7 +181,7 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [x] Escolher lote e origem reais para a obra supervisionada e expor um comando em jogo para disparar `MaeStructureSite` (`/vc mae obra`, posição do jogador ou `busca`).
 - [x] Ligar a entrada da obra à rua MAE (`road_v2`), semente ou grafo publicado, reaproveitando a região.
 - [ ] Exercitar `/vc mae obra` em jogo e ler `VC_MAE_SITE` no próximo playtest.
-- [ ] Integrar reserva, preparação, construção e retomada à fila automática após cumprir os gates da Fase 2.
+- [x] Fila automática pelo socorro do MAE (ADR-049, 0.4.42); bairro novo fora do recorte do autor.
 
 ## Playtest de 02-11 — escolhas A aprovadas
 

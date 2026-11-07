@@ -12,6 +12,12 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.42] — candidata, 2026-11-06
+
+### Adicionado
+
+- O socorro do MAE: sem lote depois de 2 voltas inteiras, a vila pede sozinha uma obra a até 24 blocos da caixa, longe da água, e avisa no chat (Regra 222, ADR-049).
+
 ## [0.4.41] — candidata, 2026-11-06
 
 ### Corrigido

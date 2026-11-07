@@ -224,7 +224,7 @@ public final class MaeSites {
                 .map(lot -> new BlockPos(minX + lot.offsetX(), lot.floor(), minZ + lot.offsetZ())).toList();
     }
 
-    private static void readGround(ServerWorld world, int minX, int minZ, int width, int depth, int[] heights, boolean[] growth) {
+    static void readGround(ServerWorld world, int minX, int minZ, int width, int depth, int[] heights, boolean[] growth) {
         for (int dz = 0; dz < depth; dz++) {
             for (int dx = 0; dx < width; dx++) {
                 int x = minX + dx;

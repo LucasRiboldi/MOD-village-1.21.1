@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.integration.MaeRescue;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.ConstructionProject;
@@ -138,8 +139,17 @@ final class LotSeeking {
             // varredura seguinte é que vai encontrá-lo, e ela recomeça
             // do centro no ciclo que vem. Trinta segundos, e a ordem da
             // regra fica respeitada — estrada primeiro, casa depois.
-            return RoadGrowthPlanning.extendTheRoad(world, colony, blueprint, plans, builders);
+            Optional<ConstructionProject> grown = RoadGrowthPlanning.extendTheRoad(world, colony, blueprint, plans, builders);
+
+            // Nem a rua abriu lote: o socorro do MAE, fora da roça, que precisa ficar ao alcance do fazendeiro — Regra 222.
+            if (grown.isEmpty() && !farming) {
+                MaeRescue.sweptWithoutLot(world, colony, plans);
+            }
+
+            return grown;
         }
+
+        MaeRescue.foundALot(colony.id());
 
         // A recusa de lote sobre casa da colônia morava aqui, e daqui não
         // funcionava. O comentário dizia "a próxima passagem tenta outro

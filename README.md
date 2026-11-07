@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.41%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.42%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,7 +19,7 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Estado atual: candidata 0.4.41** (não jogada). O estado vivo, a contagem de testes e o que espera
+**Estado atual: candidata 0.4.42** (não jogada). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
 [docs/RULES.md](docs/RULES.md) (1 a 216).
 
@@ -440,6 +440,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 219 | **Rotina à vista de quem está sem tarefa** (autor 11-06): no expediente, depois de um minuto sem tarefa, o aldeão vai à bancada, confere o baú, procura um vizinho e anda pela rua, uma coisa de cada vez, a até 32 blocos e dentro da caixa da vila. É aparência: esse tempo continua contando como ócio. Candidata | 11-06 |
 | 220 | **Quem não tem ofício trabalha na vila** (autor 11-06, exceção à regra temporária de 11-02): além de carregar (O8) e recolher o material solto da obra (Regra 48), o adulto sem ofício calça a rede no rodízio com construtor e pedreiro, e tira a neve. Ele não vira profissão nenhuma. Candidata | 11-06 |
 | 221 | **A vila gasta o que produz** (autor 11-06): depois da ceia, cada adulto come 1 ponto de comida do que sobrou. A ferramenta que a colônia entrega dura 3 dias, e a renovada custa 2 tábuas e 3 pedras; sem material ela fica no último ponto e o trabalho segue. Sem tarefa, carpinteiro e pedreiro visitam cada construção uma vez por dia e gastam 4 tábuas ou pedras; com obra aberta ou menos de 36 no estoque, não gastam. Candidata | 11-06 |
+| 222 | **O socorro do MAE** (autor 11-06, ADR-049): depois de 2 voltas inteiras sem lote para a próxima obra, e sem a rua abrir um, a vila procura sozinha um lote a até 24 blocos da borda da caixa, um lado por vez, e pede a obra na fila do construtor (Regra 213), com a porta virada para a vila. Só avisa no chat, sem esperar aprovação; cancela-se com `/vc mae parar` ou a tocha das almas. Lote que toca água é recusado, e roça fica de fora. Candidata | 11-06 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).
