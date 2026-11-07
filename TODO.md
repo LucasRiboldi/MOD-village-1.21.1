@@ -47,7 +47,7 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] Conferir em jogo: nascimentos por dia, obras repetidas, `UPKEEP` no diário e `VC_COST` com a rotina dos ociosos
 - [ ] Conferir em jogo se a manutenção e o desgaste tiram tábua de obra; o trigo assado pode faltar a obra que peça fardo
 - [ ] Sem teste próprio: quem não tem ofício tirando neve (Regra 220)
-- [ ] Instáveis: `workerCollectsWhileWalkingPast` falhou 1 em 5 baterias depois de separar os dois testes em lotes (o item some sem chegar ao baú dele), e `animalsWalkInThroughEachOfTheFourGates` falhou 3 em 9 nesta série; a causa da vaca não foi investigada
+- [ ] Instáveis: `workerCollectsWhileWalkingPast` falhou 1 em 5 baterias depois de separar os dois testes em lotes (o item some sem chegar ao baú dele), e `animalsWalkInThroughEachOfTheFourGates` falhou 3 em 12 nesta série; a causa da vaca não foi investigada
 
 ## Abertos da varredura de 11-06 (0.4.40)
 
