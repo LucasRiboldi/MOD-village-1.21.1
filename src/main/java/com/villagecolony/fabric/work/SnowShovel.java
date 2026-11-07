@@ -77,7 +77,8 @@ final class SnowShovel {
             }
 
             for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
-                if (worker.profession().filter(ProfessionType.MASON::equals).isEmpty()
+                // O pedreiro, e quem não tem ofício — Regra 220.
+                if (worker.profession().filter(trade -> trade != ProfessionType.MASON).isPresent()
                         || !(world.getEntity(worker.villagerId()) instanceof VillagerEntity mason)
                         || !IdleHelps.isFree(world, mason, IdleWorkers.Help.SNOW)) {
                     continue;

@@ -32,7 +32,7 @@ import java.util.UUID;
  * <ul>
  *   <li><b>pedreiro</b>: repara o terreno, começando pelo lote da obra aberta (Regra 215);</li>
  *   <li><b>pastor</b>: alimenta o rebanho;</li>
- *   <li><b>adulto sem profissão</b>: transporta itens e alivia os baús cheios.</li>
+ *   <li><b>adulto sem profissão</b>: transporta itens e alivia os baús cheios; calçar e tirar neve vêm da Regra 220.</li>
  * </ul>
  * As demais ajudas cruzadas da Regra 149 ficam suspensas.
  */

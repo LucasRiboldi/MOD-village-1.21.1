@@ -44,9 +44,9 @@ public final class PathPaving {
         ServerMemory.register(PathPaving.class, PathPaving::clearAll);
     }
 
-    /** O construtor, e o pedreiro quando está ocioso: é a função secundária dele (Regra 215). */
-    static final List<ProfessionType> PAVERS =
-            List.of(ProfessionType.BUILDER, ProfessionType.MASON);
+    /** O construtor, o pedreiro ocioso (Regra 215) e quem não tem ofício (Regra 220), nesta ordem de rodízio. */
+    static final List<Optional<ProfessionType>> PAVERS =
+            List.of(Optional.of(ProfessionType.BUILDER), Optional.of(ProfessionType.MASON), Optional.empty());
 
     /** Passos que um assenta antes de passar a vez. */
     static final int STEPS_PER_TURN = 8;
@@ -293,10 +293,10 @@ public final class PathPaving {
 
         for (int turn = 1; turn <= PAVERS.size(); turn++) {
             int index = (last + turn) % PAVERS.size();
-            ProfessionType profession = PAVERS.get(index);
+            Optional<ProfessionType> profession = PAVERS.get(index);
 
             for (Worker worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
-                if (worker.profession().filter(profession::equals).isEmpty()) {
+                if (!worker.profession().equals(profession)) {
                     continue;
                 }
 
