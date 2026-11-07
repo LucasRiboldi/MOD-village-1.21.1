@@ -185,6 +185,17 @@ final class ConstructionOrder {
         return Optional.empty();
     }
 
+    /** O tipo novo primeiro; tendo de tudo, o repetido — Regra 218. */
+    static Optional<String> nextOrRepeat(
+            List<Building> buildings,
+            Collection<String> types,
+            Map<String, Optional<ProfessionType>> professionOfType,
+            java.util.function.Function<ResourceId, String> typeOf,
+            int adults) {
+        return nextType(buildings, types, professionOfType, typeOf)
+                .or(() -> nextRepeat(buildings, types, typeOf, adults));
+    }
+
     /**
      * O tipo a repetir, com um de cada de pé — Regra 218: o que a vila tem menos, enquanto as repetições de pé couberem
      * na população. Roça e casa de ofício têm conta própria (Regras 67, 163, 49) e ficam de fora, inclusive da soma.
