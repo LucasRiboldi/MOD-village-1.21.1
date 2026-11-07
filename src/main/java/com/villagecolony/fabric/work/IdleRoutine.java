@@ -29,7 +29,8 @@ import java.util.UUID;
 
 /**
  * A rotina à vista de quem está sem tarefa — Regra 219: no expediente ele vai à bancada, confere o baú, procura um vizinho e anda
- * pela rua, uma coisa de cada vez. É aparência: o {@link WorkTime} continua contando esse tempo como ócio.
+ * pela rua, uma coisa de cada vez, depois de um minuto sem tarefa ({@link IdleHelps#HELP_AFTER_IDLE}): quem acabou uma tarefa
+ * espera a próxima onde está. É aparência: o {@link WorkTime} continua contando esse tempo como ócio.
  *
  * <p>Só dá o destino: quem anda é o cérebro do jogo, como na {@link EveningGathering}.
  */
@@ -83,6 +84,7 @@ public final class IdleRoutine {
                     && !villager.isBaby()
                     && NEXT_AT.getOrDefault(id, Long.MIN_VALUE) <= now
                     && IdleWorkers.isFree(world, villager, null)
+                    && IdleHelps.isFree(world, villager, null)
                     && !villager.getBrain().hasMemoryModule(MemoryModuleType.WALK_TARGET)) {
                 sendOut(world, colony, villager);
                 NEXT_AT.put(id, now + LINGER);
@@ -114,7 +116,7 @@ public final class IdleRoutine {
                 case STREET -> streetNear(world, colony, villager);
             };
 
-            if (spot.isPresent() && isInReach(villager.getBlockPos(), spot.get())) {
+            if (spot.isPresent() && isInReach(villager.getBlockPos(), spot.get()) && isInTheVillage(colony, spot.get())) {
                 villager.getBrain().remember(MemoryModuleType.WALK_TARGET, new WalkTarget(spot.get(), SPEED, ARRIVED));
                 neighbour.ifPresent(other -> villager.getBrain().remember(
                         MemoryModuleType.LOOK_TARGET, new EntityLookTarget(other, true)));
@@ -123,6 +125,14 @@ public final class IdleRoutine {
                 return;
             }
         }
+    }
+
+    /** O passeio não sai da caixa da vila; vila ainda sem caixa não passeia. */
+    private static boolean isInTheVillage(Colony colony, BlockPos spot) {
+        return colony.bounds()
+                .filter(box -> spot.getX() >= box.minX() && spot.getX() <= box.maxX()
+                        && spot.getZ() >= box.minZ() && spot.getZ() <= box.maxZ())
+                .isPresent();
     }
 
     private static boolean isInReach(BlockPos from, BlockPos to) {

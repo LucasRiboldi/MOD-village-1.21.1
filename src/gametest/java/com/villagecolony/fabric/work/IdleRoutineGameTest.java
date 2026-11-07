@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
@@ -33,6 +34,8 @@ public class IdleRoutineGameTest implements FabricGameTest {
         Colony colony = fixture.colony();
         long before = world.getTimeOfDay();
 
+        colony.measure(VillageBounds.typicalAround(colony.center(), 0, 200));
+
         try {
             world.setTimeOfDay(2_000);
 
@@ -45,6 +48,11 @@ public class IdleRoutineGameTest implements FabricGameTest {
             VillageColonyMod.STORAGES.register(WorkerStorage.of(worker.villagerId(), MinecraftTypeAdapter.toColonyPos(chest)));
             villager.getBrain().forget(MemoryModuleType.WALK_TARGET);
 
+            IdleRoutine.pass(world, colony);
+
+            context.assertTrue(target(villager) == null, "quem acabou de ficar sem tarefa espera a próxima onde está");
+
+            IdleHelps.idleSince(worker.villagerId(), world.getTime() - IdleHelps.HELP_AFTER_IDLE);
             IdleRoutine.pass(world, colony);
 
             context.assertTrue(chest.equals(target(villager)), "sem bancada, o ocioso devia ir ao baú, e foi a " + target(villager));
@@ -69,12 +77,50 @@ public class IdleRoutineGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** O passeio fica na vila: o baú fora da caixa não é destino, e vila sem caixa não passeia. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_routine_box", tickLimit = 20)
+    public void aStrollStaysInsideTheVillage(TestContext context) {
+        ServerWorld world = context.getWorld();
+        ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(1, 1, 1));
+        Colony colony = fixture.colony();
+        long before = world.getTimeOfDay();
+
+        try {
+            world.setTimeOfDay(2_000);
+
+            Worker worker = fixture.equippedWorker(context, ProfessionType.CARPENTER, new BlockPos(3, 1, 3));
+            VillagerEntity villager = (VillagerEntity) world.getEntity(worker.villagerId());
+            BlockPos chest = context.getAbsolutePos(new BlockPos(5, 1, 7));
+
+            VillageColonyMod.STORAGES.register(WorkerStorage.of(worker.villagerId(), MinecraftTypeAdapter.toColonyPos(chest)));
+            villager.getBrain().forget(MemoryModuleType.WALK_TARGET);
+            IdleHelps.idleSince(worker.villagerId(), world.getTime() - IdleHelps.HELP_AFTER_IDLE);
+
+            IdleRoutine.pass(world, colony);
+
+            context.assertTrue(target(villager) == null, "vila sem caixa não passeia, e ele foi a " + target(villager));
+
+            colony.measure(VillageBounds.block(MinecraftTypeAdapter.toColonyPos(villager.getBlockPos())));
+            IdleRoutine.forgetWaits();
+            IdleRoutine.pass(world, colony);
+
+            context.assertTrue(target(villager) == null, "o baú está fora da caixa, e ele foi a " + target(villager));
+        } finally {
+            world.setTimeOfDay(before);
+            fixture.cleanUp();
+        }
+
+        context.complete();
+    }
+
     /** Dormir é dormir: fora do expediente a rotina não manda ninguém. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_routine_night", tickLimit = 20)
     public void nobodyIsSentOutAfterHours(TestContext context) {
         ServerWorld world = context.getWorld();
         ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(1, 1, 1));
         long before = world.getTimeOfDay();
+
+        fixture.colony().measure(VillageBounds.typicalAround(fixture.colony().center(), 0, 200));
 
         try {
             world.setTimeOfDay(13_000);
@@ -85,6 +131,7 @@ public class IdleRoutineGameTest implements FabricGameTest {
 
             VillageColonyMod.STORAGES.register(WorkerStorage.of(worker.villagerId(), MinecraftTypeAdapter.toColonyPos(chest)));
             villager.getBrain().forget(MemoryModuleType.WALK_TARGET);
+            IdleHelps.idleSince(worker.villagerId(), world.getTime() - IdleHelps.HELP_AFTER_IDLE);
 
             IdleRoutine.pass(world, fixture.colony());
 
