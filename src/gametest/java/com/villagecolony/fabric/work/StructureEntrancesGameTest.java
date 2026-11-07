@@ -245,18 +245,19 @@ public class StructureEntrancesGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** Toda estrutura da vila gerada conta; rua, ponta de rua e peça que só põe bicho não. */
+    /** Estrutura onde se entra conta; rua, ponta de rua, enfeite e peça que só põe bicho não — Regras 210 e 223. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "entrance_pieces", tickLimit = 20)
     public void everyVillageStructureCountsAndStreetsDoNot(TestContext context) {
-        for (String yes : java.util.List.of("minecraft:village/plains/houses/plains_small_house_1", "minecraft:village/plains/plains_lamp_1",
-                "minecraft:village/plains/town_centers/plains_meeting_point_1", "minecraft:village/plains/houses/plains_accessory_1",
+        for (String yes : java.util.List.of("minecraft:village/plains/houses/plains_small_house_1", "minecraft:village/plains/houses/plains_accessory_1",
                 "minecraft:village/desert/houses/desert_temple_1")) {
             context.assertTrue(GeneratedVillages.isStructure("Single[Left[" + yes + "]]"), "Regra 210: faltou " + yes);
         }
 
         for (String no : java.util.List.of("minecraft:village/plains/streets/corner_01", "minecraft:village/plains/terminators/terminator_01",
                 "minecraft:village/plains/villagers/baby", "minecraft:village/common/animals/cows_1", "minecraft:village/common/iron_golem",
-                "minecraft:village/plains/houses/plains_small_farm_1")) {
+                "minecraft:village/plains/houses/plains_small_farm_1", "minecraft:village/plains/plains_lamp_1",
+                "minecraft:village/plains/town_centers/plains_meeting_point_1", "minecraft:village/plains/town_centers/plains_fountain_01",
+                "minecraft:village/common/well_bottom", "minecraft:village/taiga/taiga_lamp_post_1")) {
             context.assertFalse(GeneratedVillages.isStructure("Single[Left[" + no + "]]"), "Regra 210: não devia contar " + no);
         }
 

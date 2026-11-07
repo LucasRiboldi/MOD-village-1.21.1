@@ -114,6 +114,8 @@ public final class RoadLines {
             columns = again;
         }
 
+        RoadSquares.thin(columns, doors);
+
         List<Set<Long>> parts = components(columns);
 
         parts.sort(Comparator.comparingInt((Set<Long> part) -> -part.size()));

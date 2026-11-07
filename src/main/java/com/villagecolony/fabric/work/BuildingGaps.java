@@ -124,7 +124,7 @@ final class BuildingGaps {
 
     /** O piso é o chão em frente à porta; sem porta, a base da caixa. */
     private static Box boxOf(ServerWorld world, BlockPos min, BlockPos max) {
-        int floor = DoorFronts.of(world, min, max).stream().findFirst().map(BlockPos::getY).orElse(min.getY());
+        int floor = DoorFronts.outside(world, min, max).stream().findFirst().map(BlockPos::getY).orElse(min.getY());
 
         return new Box(min.getX(), min.getZ(), max.getX(), max.getZ(), floor);
     }

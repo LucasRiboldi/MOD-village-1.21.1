@@ -165,14 +165,39 @@ public final class GeneratedVillages {
         return structures;
     }
 
+    /** As caixas dos enfeites da vila gerada que alcança esta coluna (Regra 223). */
+    public static List<BlockBox> ornamentsAt(ServerWorld world, int x, int z) {
+        if (!world.isChunkLoaded(x >> 4, z >> 4)) {
+            return List.of();
+        }
+
+        List<BlockBox> ornaments = new ArrayList<>();
+
+        for (StructureStart start : villagesReaching(world, x >> 4, z >> 4)) {
+            for (var piece : start.getChildren()) {
+                if (piece instanceof PoolStructurePiece pool && isOrnament(pool.getPoolElement().toString())) {
+                    ornaments.add(piece.getBoundingBox());
+                }
+            }
+        }
+
+        return ornaments;
+    }
+
     /**
-     * Se a peça é uma estrutura que recebe entrada: casa, poste, poço, chafariz e o que mais a vila erguer. Rua, ponta de rua,
-     * árvore e peça que só põe um bicho não são. Plantação tem a entrada da Regra 184.
+     * Se a peça é uma estrutura que recebe entrada: casa e o que mais a vila erguer para alguém entrar. Rua, ponta de rua,
+     * árvore, enfeite e peça que só põe um bicho não são. Plantação tem a entrada da Regra 184.
      */
     public static boolean isStructure(String element) {
         return element.contains("village/") && !element.contains("farm") && !element.contains("/streets/")
                 && !element.contains("/terminators/") && !element.contains("/villagers/") && !element.contains("/animals/")
-                && !element.contains("iron_golem") && !element.contains("/trees/");
+                && !element.contains("iron_golem") && !element.contains("/trees/") && !isOrnament(element);
+    }
+
+    /** Se a peça é enfeite, onde ninguém entra: poste, poço e chafariz — Regra 223 (autor, 2026-11-07). */
+    public static boolean isOrnament(String element) {
+        return element.contains("lamp") || element.contains("meeting_point") || element.contains("fountain")
+                || element.contains("well_bottom") || element.contains("decoration") || element.contains("campfire");
     }
 
     /** As caixas das peças da vila gerada que alcança esta coluna cujo nome traz {@code name}; chunk carregado. */

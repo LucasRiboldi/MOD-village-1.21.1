@@ -53,6 +53,23 @@ public record RoadGraph(List<Node> nodes, List<Edge> edges) {
         edges = List.copyOf(edges);
     }
 
+    /** Se alguma linha passa a até {@code reach} blocos deste ponto, sem contar o ramal que termina nele — Regra 223. */
+    public boolean hasLineNear(ColonyPos at, int reach) {
+        for (Edge edge : edges) {
+            if (edge.from().equals(at) || edge.to().equals(at)) {
+                continue;
+            }
+
+            for (ColonyPos column : edge.columns()) {
+                if (Math.abs(column.x() - at.x()) + Math.abs(column.z() - at.z()) <= reach) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Contrai ruas confirmadas sem inventar colunas para centro ou entradas ausentes — ADR-043.
      * O chamador confirma apoio, passagem e validade no mundo antes de fornecer as posições.

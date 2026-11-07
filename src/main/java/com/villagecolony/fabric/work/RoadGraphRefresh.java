@@ -3,10 +3,10 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
-import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.PathStep;
 import com.villagecolony.core.construction.model.PlannedPaths;
+import com.villagecolony.core.construction.model.RetiredSpurs;
 import com.villagecolony.core.construction.model.RoadGraph;
 import com.villagecolony.core.construction.model.RoadLines;
 import com.villagecolony.core.type.ColonyPos;
@@ -17,15 +17,13 @@ import com.villagecolony.fabric.integration.PathProposals;
 import com.villagecolony.fabric.integration.RoadGraphMigration;
 import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.RoadNetwork;
+import com.villagecolony.fabric.integration.RoadPaving;
 import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
-import com.villagecolony.fabric.world.GeneratedVillages;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.FenceGateBlock;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Heightmap;
 
@@ -35,7 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
 
@@ -235,13 +232,16 @@ public final class RoadGraphRefresh {
         paths.read(turn, PathProposals.drain(id), at -> false);
 
         Set<ColonyPos> planned = paths.cells();
-        Set<ColonyPos> fronts = entrances(world, colony, terrain);
+        StructureFronts.Reading reading = StructureFronts.read(world, colony, terrain, cells);
+        Set<ColonyPos> fronts = reading.fronts();
+        Set<ColonyPos> retired = reading.retired();
 
+        planned.addAll(reading.ways());
         planned.addAll(RoadShape.rings(world, colony, terrain));
         planned.addAll(RoadShape.pendingGrowth(id, cells, REFUSED.getOrDefault(id, Set.of())));
 
         if (turn >= RoadShape.CORNER_AFTER_READS) {
-            fronts.addAll(RoadShape.farmEntrances(world, colony, terrain));
+            StructureFronts.farmCorners(RoadShape.farmEntrances(world, colony, terrain), store.graph(id), fronts, retired);
         }
 
         RoadLines.Result result = RoadLines.build(cells, planned, colony.center(), fronts,
@@ -252,9 +252,19 @@ public final class RoadGraphRefresh {
             publishNetwork(colony, graph);
             RoadShape.growTips(world, colony, graph, terrain);
         });
-        PathTrim.offer(id, result.surplus());
 
-        return offerRepair(world, id, result.toPave(), turn) || result.isolated() > 0;
+        Set<ColonyPos> surplus = new java.util.LinkedHashSet<>(result.surplus());
+
+        result.graph().ifPresent(graph -> surplus.addAll(RetiredSpurs.of(cells, graph, retired)));
+        PathTrim.offer(id, List.copyOf(surplus));
+
+        // Degrau e assoalho em frente à porta ficam como estão: a linha só passa (Regra 223).
+        Set<Long> atTheDoor = new HashSet<>();
+
+        fronts.forEach(at -> atTheDoor.add(ColonyRoads.column(at.x(), at.z())));
+        reading.ways().forEach(at -> atTheDoor.add(ColonyRoads.column(at.x(), at.z())));
+
+        return offerRepair(world, id, result.toPave(), turn, atTheDoor) || result.isolated() > 0;
     }
 
     /** As linhas do grafo viram a rede que os outros sistemas consultam (Regra 216); a entrada solta ainda não é rede. */
@@ -281,13 +291,15 @@ public final class RoadGraphRefresh {
         }
     }
 
-    private static boolean offerRepair(ServerWorld world, UUID id, List<PathStep> toPave, int read) {
+    private static boolean offerRepair(ServerWorld world, UUID id, List<PathStep> toPave, int read, Set<Long> atTheDoor) {
         Set<Long> refused = REFUSED.getOrDefault(id, Set.of());
         List<PathStep> steps = new ArrayList<>();
         Set<ColonyPos> wanted = new HashSet<>();
 
         for (PathStep step : toPave) {
-            if (!refused.contains(ColonyRoads.column(step.x(), step.z())) && !isPaved(world, step)) {
+            if (!refused.contains(ColonyRoads.column(step.x(), step.z())) && !isPaved(world, step)
+                    && (!atTheDoor.contains(ColonyRoads.column(step.x(), step.z()))
+                    || RoadPaving.takesPath(world, new BlockPos(step.x(), step.floorY(), step.z())))) {
                 steps.add(step);
                 wanted.add(new ColonyPos(step.x(), step.floorY(), step.z()));
             }
@@ -311,83 +323,6 @@ public final class RoadGraphRefresh {
 
     private static boolean isPaved(ServerWorld world, PathStep step) {
         return VillageRoad.isPathBlock(world.getBlockState(new BlockPos(step.x(), step.floorY(), step.z())));
-    }
-
-    /** O chão em frente às entradas de toda estrutura — Regras 207 e 210: porta, portão, o lado aberto e o portão da mina. */
-    private static Set<ColonyPos> entrances(ServerWorld world, Colony colony, WorldPathTerrain terrain) {
-        Set<ColonyPos> fronts = new HashSet<>();
-        BlockPos hub = MinecraftTypeAdapter.toBlockPos(colony.center());
-
-        for (Building building : VillageColonyMod.BUILDINGS.ofColony(colony.id())) {
-            if (building.finished()) {
-                BlockPos min = MinecraftTypeAdapter.toBlockPos(building.min());
-                BlockPos max = MinecraftTypeAdapter.toBlockPos(building.max());
-                List<BlockPos> doors = DoorFronts.of(world, min, max);
-
-                doors.forEach(door -> fronts.add(MinecraftTypeAdapter.toColonyPos(door)));
-
-                // A entrada da plantação é a quina da Regra 184: uma só.
-                if (doors.isEmpty() && !RoadShape.isFarm(building)) {
-                    front(world, min, max, hub, terrain).ifPresent(fronts::add);
-                }
-            }
-        }
-
-        for (BlockBox piece : GeneratedVillages.structuresAt(world, hub.getX(), hub.getZ())) {
-            BlockPos min = new BlockPos(piece.getMinX(), piece.getMinY(), piece.getMinZ());
-            BlockPos max = new BlockPos(piece.getMaxX(), piece.getMaxY(), piece.getMaxZ());
-            List<BlockPos> doors = DoorFronts.of(world, min, max);
-
-            doors.forEach(door -> fronts.add(MinecraftTypeAdapter.toColonyPos(door)));
-
-            if (doors.isEmpty()) {
-                front(world, min, max, hub, terrain).ifPresent(fronts::add);
-            }
-        }
-
-        fronts.addAll(MineGates.fronts(world, colony, terrain));
-
-        // Todo portão de cerca é entrada (Regra 178), de obra ou da vila gerada.
-        for (ShepherdPens.Pen pen : ShepherdPens.pensOf(world, colony)) {
-            for (ShepherdPens.Access access : pen.accesses()) {
-                BlockPos out = access.outside();
-                OptionalInt ground = terrain.groundY(out.getX(), out.getZ(), out.getY() - 1);
-
-                if (ground.isPresent()) {
-                    fronts.add(new ColonyPos(out.getX(), ground.getAsInt(), out.getZ()));
-                }
-            }
-        }
-
-        return fronts;
-    }
-
-    /** Quem não tem porta: o portão da borda, ou o lado que parece aberto (Regra 210). */
-    private static Optional<ColonyPos> front(ServerWorld world, BlockPos min, BlockPos max, BlockPos hub,
-                                             WorldPathTerrain terrain) {
-        Optional<ColonyPos> gate = gateFront(world, min, max, terrain);
-
-        return gate.isPresent() ? gate : EntranceSides.of(world, min, max, hub, terrain);
-    }
-
-    /** Curral: o lado de fora do primeiro portão da borda. */
-    private static Optional<ColonyPos> gateFront(ServerWorld world, BlockPos min, BlockPos max, WorldPathTerrain terrain) {
-        for (BlockPos at : BlockPos.iterate(min.getX(), min.getY(), min.getZ(), max.getX(), min.getY() + 2, max.getZ())) {
-            boolean border = at.getX() == min.getX() || at.getX() == max.getX()
-                    || at.getZ() == min.getZ() || at.getZ() == max.getZ();
-
-            if (border && world.getBlockState(at).getBlock() instanceof FenceGateBlock) {
-                int x = at.getX() == min.getX() ? at.getX() - 1 : at.getX() == max.getX() ? at.getX() + 1 : at.getX();
-                int z = at.getZ() == min.getZ() ? at.getZ() - 1 : at.getZ() == max.getZ() ? at.getZ() + 1 : at.getZ();
-                OptionalInt ground = terrain.groundY(x, z, at.getY() - 1);
-
-                if (ground.isPresent()) {
-                    return Optional.of(new ColonyPos(x, ground.getAsInt(), z));
-                }
-            }
-        }
-
-        return Optional.empty();
     }
 
     private static void clearAll() {

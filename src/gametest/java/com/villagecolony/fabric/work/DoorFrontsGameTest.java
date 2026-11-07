@@ -91,9 +91,9 @@ public class DoorFrontsGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** A porta alta: degrau de escada na frente e o chão firme um bloco abaixo dele. */
+    /** A porta alta: o marcador fica no degrau em frente a ela, e a saída desce até o chão firme. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_stairs", tickLimit = 20)
-    public void itWalksDownTheStepsToTheFirstGround(TestContext context) {
+    public void theMarkerStandsOnTheStepAndTheWayGoesDownToTheGround(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos origin = context.getAbsolutePos(new BlockPos(1, 76, 1));
         BlockPos min = origin.up();
@@ -107,7 +107,9 @@ public class DoorFrontsGameTest implements FabricGameTest {
 
             List<BlockPos> fronts = DoorFronts.of(world, min, max);
 
-            context.assertTrue(fronts.equals(List.of(origin.add(6, 0, 2))), "Regra 207: não desceu o degrau até o chão: " + fronts);
+            context.assertTrue(fronts.equals(List.of(origin.add(5, 1, 2))), "Regra 223: o marcador não ficou no degrau: " + fronts);
+            context.assertTrue(DoorFronts.outside(world, min, max).equals(List.of(origin.add(6, 0, 2))),
+                    "Regra 207: não desceu o degrau até o chão: " + DoorFronts.outside(world, min, max));
         } finally {
             clean(world, origin);
         }
@@ -131,7 +133,9 @@ public class DoorFrontsGameTest implements FabricGameTest {
 
             List<BlockPos> fronts = DoorFronts.of(world, min, max);
 
-            context.assertTrue(fronts.equals(List.of(origin.add(-1, 0, 2))), "Regra 207: com o lado de fora fechado, a porta sumiu: " + fronts);
+            context.assertTrue(fronts.equals(List.of(origin.add(3, 0, 2))), "Regra 207: com o lado de fora fechado, a porta sumiu: " + fronts);
+            context.assertTrue(DoorFronts.outside(world, min, max).equals(List.of(origin.add(-1, 0, 2))),
+                    "Regra 207: a saída não atravessou a caixa: " + DoorFronts.outside(world, min, max));
         } finally {
             clean(world, origin);
         }
@@ -153,10 +157,54 @@ public class DoorFrontsGameTest implements FabricGameTest {
             door(world, origin.add(2, 1, 2), Direction.WEST);
             world.setBlockState(origin.add(1, 1, 2), Blocks.STONE.getDefaultState(), 18);
             world.setBlockState(origin.add(5, 1, 2), Blocks.GRINDSTONE.getDefaultState(), 18);
+            yardWalls(world, origin, 1, 5, 1, 3, -1);
 
             List<BlockPos> fronts = DoorFronts.of(world, min, max);
 
             context.assertTrue(fronts.equals(List.of(origin.add(3, 0, 2))), "Regra 209: a única porta ficou sem entrada: " + fronts);
+        } finally {
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
+
+    /** Paredes em volta do quintal, com um vão opcional no lado norte. */
+    private static void yardWalls(ServerWorld world, BlockPos origin, int fromX, int toX, int fromZ, int toZ, int gapX) {
+        for (int x = fromX; x <= toX; x++) {
+            for (int z = fromZ; z <= toZ; z++) {
+                boolean wall = x == fromX || x == toX || z == fromZ || z == toZ;
+
+                if (wall && !(z == fromZ && x == gapX)) {
+                    world.setBlockState(origin.add(x, 1, z), Blocks.STONE.getDefaultState(), 18);
+                    world.setBlockState(origin.add(x, 2, z), Blocks.STONE.getDefaultState(), 18);
+                }
+            }
+        }
+    }
+
+    /** A oficina do armeiro: a porta dá num quintal murado com um vão; a entrada é onde o quintal encontra a rua. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_yard_gap", tickLimit = 20)
+    public void aYardWithAGapHasItsEntranceWhereItOpens(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 116, 1));
+        BlockPos min = origin.up();
+        BlockPos max = origin.add(8, 4, 4);
+
+        ground(world, origin);
+
+        try {
+            door(world, origin.add(2, 1, 2), Direction.WEST);
+            world.setBlockState(origin.add(1, 1, 2), Blocks.STONE.getDefaultState(), 18);
+            yardWalls(world, origin, 1, 6, 0, 4, 4);
+            world.setBlockState(origin.add(5, 1, 2), Blocks.GRINDSTONE.getDefaultState(), 18);
+
+            // A caixa começa em z=1: o vão em z=0 dá direto para fora dela.
+            BlockPos box = origin.add(0, 1, 1);
+            List<BlockPos> fronts = DoorFronts.of(world, box, max);
+
+            context.assertTrue(fronts.equals(List.of(origin.add(4, 0, 0))), "Regra 223: a entrada não ficou no vão do quintal: " + fronts);
+           
         } finally {
             clean(world, origin);
         }
