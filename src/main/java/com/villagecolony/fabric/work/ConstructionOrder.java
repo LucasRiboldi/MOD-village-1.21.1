@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ConstructionPriority;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.integration.ColonyModels;
@@ -143,8 +144,8 @@ final class ConstructionOrder {
      * O tipo a levantar na vez de "outra", entre os que o catálogo oferece.
      *
      * <p>Primeiro a oficina do primeiro ofício sem oficina; depois o tipo
-     * que a vila ainda não tem; e, tendo de tudo, o primeiro da lista. Quem
-     * chama já tirou o tipo da obra anterior, que é a regra da alternância.
+     * que a vila ainda não tem. Tendo de tudo, quem responde é {@link #nextRepeat}.
+     * Quem chama já tirou o tipo da obra anterior, que é a regra da alternância.
      *
      * @param types os tipos oferecidos, na ordem do catálogo
      * @param typeOf o tipo de uma planta, para comparar com o que existe
@@ -181,7 +182,53 @@ final class ConstructionOrder {
             }
         }
 
-        // Uma casa de cada tipo — autor, 2026-10-12: com todas de pé, nenhuma repetida.
         return Optional.empty();
+    }
+
+    /** O tipo novo primeiro; tendo de tudo, o repetido — Regra 218. */
+    static Optional<String> nextOrRepeat(
+            List<Building> buildings,
+            Collection<String> types,
+            Map<String, Optional<ProfessionType>> professionOfType,
+            java.util.function.Function<ResourceId, String> typeOf,
+            int adults) {
+        return nextType(buildings, types, professionOfType, typeOf)
+                .or(() -> nextRepeat(buildings, types, typeOf, adults));
+    }
+
+    /**
+     * O tipo a repetir, com um de cada de pé — Regra 218: o que a vila tem menos, enquanto as repetições de pé couberem
+     * na população. Roça e casa de ofício têm conta própria (Regras 67, 163, 49) e ficam de fora, inclusive da soma.
+     *
+     * @param types os tipos oferecidos nesta vez, na ordem do catálogo
+     */
+    static Optional<String> nextRepeat(
+            List<Building> buildings,
+            Collection<String> types,
+            java.util.function.Function<ResourceId, String> typeOf,
+            int adults) {
+        Map<String, Integer> standing = new java.util.HashMap<>();
+
+        for (Building building : buildings) {
+            String type = typeOf.apply(building.blueprint());
+
+            if (building.finished() && isRepeatable(type)) {
+                standing.merge(type, 1, Integer::sum);
+            }
+        }
+
+        int repeats = standing.values().stream().mapToInt(count -> count - 1).sum();
+
+        if (repeats >= ConstructionPriority.repeatsFor(adults)) {
+            return Optional.empty();
+        }
+
+        return types.stream()
+                .filter(ConstructionOrder::isRepeatable)
+                .min(java.util.Comparator.comparingInt(type -> standing.getOrDefault(type, 0)));
+    }
+
+    private static boolean isRepeatable(String type) {
+        return !"house".equals(type) && !"farm".equals(type) && !type.startsWith("trade_");
     }
 }

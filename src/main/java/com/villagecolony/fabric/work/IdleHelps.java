@@ -162,6 +162,11 @@ public final class IdleHelps {
         return world.getTime() - since >= HELP_AFTER_IDLE;
     }
 
+    /** Para o teste: há quanto tempo ele está sem tarefa. */
+    static void idleSince(UUID id, long tick) {
+        IDLE_SINCE.put(id, tick);
+    }
+
     static void clearAll() {
         IDLE_SINCE.clear();
         GROVE.clear();

@@ -59,9 +59,8 @@ final class LotSeeking {
         if (plans.isEmpty()) {
             return ConstructionPlanner.silent(
                     colony,
-                    IdleReason.NOT_IN_GAME,
-                    "this game has no buildable village structure for the "
-                            + colony.id() + " style");
+                    IdleReason.VILLAGE_COMPLETE,
+                    "the village has what its people need for now, colony " + colony.id());
         }
 
         Blueprint blueprint = plans.get(0);

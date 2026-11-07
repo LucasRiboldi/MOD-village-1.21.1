@@ -165,6 +165,33 @@ public final class ColonyChests {
     }
 
     /** Quanto deste item a colônia tem, somando todos os baús. */
+    public static int countGroup(ServerWorld world, List<ColonyPos> chests, ResourceGroup group) {
+        int found = 0;
+
+        for (ColonyPos chest : chests) {
+            found += ChestWithdrawer.countGroup(world, chest, group);
+        }
+
+        return found;
+    }
+
+    /** Tira até {@code amount} itens deste grupo, somando entre os baús. @return quantos saíram */
+    public static int withdrawGroup(ServerWorld world, List<ColonyPos> chests, ResourceGroup group, int amount) {
+        int taken = 0;
+
+        for (ColonyPos chest : chests) {
+            if (taken >= amount) {
+                break;
+            }
+
+            for (net.minecraft.item.ItemStack stack : ChestWithdrawer.withdrawGroup(world, chest, group, amount - taken)) {
+                taken += stack.getCount();
+            }
+        }
+
+        return taken;
+    }
+
     public static int countIn(ServerWorld world, List<ColonyPos> chests, Item item) {
         int found = 0;
 

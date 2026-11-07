@@ -6,6 +6,7 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.work.FarmerBakery;
 import com.villagecolony.fabric.work.ShepherdFlock;
 import com.villagecolony.fabric.work.VillageMeals;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -113,6 +114,83 @@ public class VillageMealsGameTest implements FabricGameTest {
         } finally {
             sow.discard();
             boar.discard();
+            scene.fixture().cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /** O trigo guardado em qualquer baú vira a ceia, com fazendeiro na vila, e a reserva do rebanho fica crua — Regra 217. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_meals")
+    public void wheatInAnyChestBecomesSupper(TestContext context) {
+        Scene scene = scene(context, 500);
+        BlockPos otherPos = new BlockPos(2, 1, 6);
+        UUID farmer = UUID.randomUUID();
+
+        context.setBlockState(otherPos, Blocks.CHEST.getDefaultState());
+
+        ChestBlockEntity other = (ChestBlockEntity) context.getBlockEntity(otherPos);
+
+        scene.chest().clear();
+        other.setStack(0, new ItemStack(Items.WHEAT, 26));
+
+        try {
+            VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                    scene.second().getUuid(), MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(otherPos))));
+            VillageColonyMod.WORKERS.register(farmer, scene.colony().id()).assign(ProfessionType.FARMER);
+            VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                    farmer, MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST))));
+            scene.fixture().owning(farmer);
+
+            VillageMeals.serve(context.getWorld(), scene.colony());
+
+            context.assertTrue(scene.first().isReadyToBreed() || scene.second().isReadyToBreed(),
+                    "o trigo do baú alheio não virou ceia de ninguém");
+            context.assertTrue(other.count(Items.WHEAT) == FarmerBakery.WHEAT_RESERVE,
+                    "a reserva é de " + FarmerBakery.WHEAT_RESERVE + " trigos, ficaram " + other.count(Items.WHEAT));
+        } finally {
+            scene.fixture().cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /** Depois da ceia, a vila come um ponto por adulto do que sobrou — Regra 221. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_meals")
+    public void adultsEatFromWhatIsLeftAfterSupper(TestContext context) {
+        Scene scene = scene(context, 500);
+
+        scene.chest().clear();
+        scene.chest().setStack(0, new ItemStack(Items.BREAD, 6));
+        scene.chest().setStack(1, new ItemStack(Items.CARROT, 5));
+
+        try {
+            VillageMeals.serve(context.getWorld(), scene.colony());
+
+            context.assertTrue(scene.first().isReadyToBreed() && scene.second().isReadyToBreed(), "a procriação vem primeiro");
+            context.assertTrue(scene.chest().count(Items.CARROT) == 3,
+                    "dois adultos comem duas cenouras, sobraram " + scene.chest().count(Items.CARROT));
+        } finally {
+            scene.fixture().cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /** Assar é do fazendeiro: sem ele o trigo fica trigo — ADR-037 C7 c. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_meals")
+    public void withoutAFarmerWheatStaysWheat(TestContext context) {
+        Scene scene = scene(context, 500);
+
+        scene.chest().clear();
+        scene.chest().setStack(0, new ItemStack(Items.WHEAT, 26));
+
+        try {
+            int fed = VillageMeals.serve(context.getWorld(), scene.colony());
+
+            context.assertTrue(fed == 0 && scene.chest().count(Items.WHEAT) == 26,
+                    "sem fazendeiro, alguém assou: " + fed + " comeram, " + scene.chest().count(Items.WHEAT) + " trigos");
+        } finally {
             scene.fixture().cleanUp();
         }
 

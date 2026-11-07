@@ -12,6 +12,8 @@ import com.villagecolony.fabric.integration.PathProposals;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
 import com.villagecolony.gametest.ColonyFixture;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
@@ -71,6 +73,44 @@ public class GraphOnlyPathsGameTest implements FabricGameTest {
 
             context.assertTrue(world.getBlockState(floor).isOf(Blocks.DIRT_PATH), "Regra 215: o pedreiro ocioso não calçou; vez=" + PathPaving.isPaving(mason.villagerId()) + " plano=" + PathLinks.planOf(colony.id()).isPresent() + " livre=" + world.getEntity(mason.villagerId()));
             context.assertTrue(mason.profession().filter(ProfessionType.MASON::equals).isPresent(), "o trabalhador não é pedreiro");
+        } finally {
+            world.setTimeOfDay(before);
+            PathLinks.drop(colony.id());
+            fixture.cleanUp();
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
+
+    /** Quem não tem ofício também calça: é o trabalho dele na vila — Regra 220. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "graph_only_none", tickLimit = 20)
+    public void anAdultWithoutATradePavesThePath(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 84, 1));
+
+        platform(world, origin);
+
+        ColonyFixture fixture = ColonyFixture.colonyAtWorld(origin.add(20, 1, 20));
+        Colony colony = fixture.colony();
+        long before = world.getTimeOfDay();
+
+        try {
+            world.setTimeOfDay(2_000);
+
+            VillagerEntity adult = context.spawnEntity(EntityType.VILLAGER, BlockPos.ORIGIN.up());
+
+            adult.setBreedingAge(0);
+            VillageColonyMod.WORKERS.register(adult.getUuid(), colony.id());
+            fixture.owning(adult.getUuid());
+
+            BlockPos floor = origin.add(6, 0, 5);
+
+            adult.refreshPositionAndAngles(floor.getX() - 0.5, floor.getY() + 1, floor.getZ() + 0.5, 0.0F, 0.0F);
+            PathLinks.offerRepair(colony.id(), List.of(new PathStep(floor.getX(), floor.getY(), floor.getZ(), Side.EAST, 0, 0)));
+            PathPaving.pass(world, colony);
+
+            context.assertTrue(world.getBlockState(floor).isOf(Blocks.DIRT_PATH), "Regra 220: quem não tem ofício não calçou");
         } finally {
             world.setTimeOfDay(before);
             PathLinks.drop(colony.id());

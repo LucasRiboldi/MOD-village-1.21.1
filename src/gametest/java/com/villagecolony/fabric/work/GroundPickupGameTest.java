@@ -106,7 +106,7 @@ public final class GroundPickupGameTest implements FabricGameTest {
         });
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_pickup", tickLimit = TICKS)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_pickup_help", tickLimit = TICKS)
     public void aPassingWorkerPicksUpAllGroundItems(TestContext context) {
         context.getWorld().setTimeOfDay(2_000);
 
