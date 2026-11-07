@@ -86,7 +86,25 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] Grafo: conferir em jogo a 0.4.36 (Regras 206 a 209): até 4 azuis e nenhum no centro; plantação sem anel e com uma entrada; anel antigo de volta ao solo; ferreiro de armas (121,66,-162) com entrada
 - [ ] Surgidos, `VC_SUPPLY`: `prismarine_crystals` ×80, `prismarine_shard` ×76, `grass_block` ×10 (`FOUNDATION_GROUND`), `honeycomb` ×7, `terracotta` ×2 (`WAITED_TOO_LONG`), corantes de 1 a 2
 
+## Jogo da 0.4.42 (Spark 7d0PErq0RJ, 2 janelas de 5 min e 9,7 min de diário: amostra curta)
+
+- [ ] Mineiro 61% parado: 9 `GAVE_UP` "has not moved a block", 21 `NO_PROGRESS` e 3 `STRANDED` "frozen twice"
+- [ ] Fundidor 83% parado: 35 tarefas soltas porque a argila está presa pela reserva; 14 sem `clay_ball` no raio; `VC_SUPPLY_ERROR` de `clay_ball` 2 vezes
+- [ ] Pastor 67% parado, e 8 vezes "fenced in", quase todas no curral `105, -231`. Só a 0.4.43 tira de lá o nó do poste; pode haver outra causa
+- [ ] Construtor 38% parado; `VC_SUPPLY_ERROR` de `bricks`: "no route delivered it"
+- [ ] Sem ofício: 94% ocioso, 3017 s. A rotina da Regra 219 conta como ócio; a Regra 51 os deixa de fora
+- [ ] Fazendeiro: 54% andando, 42% esperando e 2% trabalhando; tarefa aberta 580 s sem progresso
+- [ ] Carpinteiro e pedreiro: 33% e 34% esperando; três carpinteiros 100 s sem progresso em `oak_planks`, com `OAK_PLANKS` parado em 51
+- [ ] `COBBLESTONE` no log de estoque foi de 554 a 13.579 em 16 min, enquanto 4 mineiros cavam 73 blocos por minuto. Conferir se é leitura de baús ao carregar ou sobra real, e se falta teto de produção
+- [ ] `VC_REACH`: 3 de 103 lugares fora de alcance, os baús `108,68,-287`, `107,68,-293` e `50,58,-118`
+- [ ] Grafo: `isolated` entre 7 e 11 em todo o jogo, e `toPave` subiu de 26 a 64 no fim
+- [ ] `VC_GATHER`: 13 de 25 na reunião do dia
+- [ ] Custo: ciclo de 115 ms em média, com `workers` 49 ms, `detect` 32 ms, `population` 13 ms e `planner` 13 ms; pico de 182 ms no tique. Sem pressa: 20 TPS e 13,3 ms por tique
+- [ ] Biblioteca com duas portas a 2 blocos: dois brancos colados, por serem duas portas reais; decidir se viram um
+
 ## MAE: o que falta depois da 0.4.26
+
+- [ ] Rodar o PIT: o core mudou na 0.4.43 (`RetiredSpurs`, `RoadSquares`, `RoadGraph`)
 
 - [ ] Primeira obra pedida em jogo pela fila do construtor (0.4.38, Regra 213): `/vc mae obra <modelo>`, Spark junto, `VC_MAE_SITE` de `queued` até `done`; conferir porta ligada pelo grafo e retomada depois de reiniciar
 - [ ] Obra longe da vila (`fora`): construtor chega lá? Só provado que a obra não é largada; caminhar até lá depende do jogo
