@@ -12,6 +12,15 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.43] — candidata, 2026-11-07
+
+### Corrigido
+
+- Marcador branco colado na porta, e não no primeiro chão fora da caixa da peça; porta de quintal marca a abertura do quintal (Regra 223).
+- Poste, poço e chafariz sem marcador branco, nada marcado dentro de curral fechado, e a quina da plantação só sem rua a até 2 blocos.
+- O ramal que perdeu a entrada sai do grafo e do chão, com o nó do encontro; a linha segue o caminho que já sai da porta.
+- A rua não forma mais quadrado de nós.
+
 ## [0.4.42] — candidata, 2026-11-06
 
 ### Adicionado

@@ -1,5 +1,9 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.43:** conceito desenhado pelo autor sobre o jogo da 0.4.42 (Spark 7d0PErq0RJ), Regra 223: branco colado na porta, só onde se entra,
+> sem ramal para quem não tem entrada. Não jogada. A 0.4.42 foi jogada sem disparar o socorro: nenhum `VC_MAE_SITE`.
+> Sentinela `fast`: 1060 GameTests e 1768 unitários; a primeira bateria falhou só no teste instável da vaca, a segunda ficou verde. PIT não rodou nesta versão, e o core mudou (`RetiredSpurs`, `RoadSquares`, `RoadGraph`).
+
 > **Candidata 0.4.42:** Fase 6 do MAE no recorte escolhido pelo autor (ADR-049, Regra 222): sem lote depois de 2 voltas, a vila pede sozinha
 > uma obra a até 24 blocos da caixa, longe da água, com aviso no chat. O bairro novo do plano mestre fica fora. Não jogada, e a 0.4.41 também não.
 > Sentinela `fast` verde: 1052 GameTests e 1758 unitários. PIT não rodou de novo: nenhuma classe do core mudou.

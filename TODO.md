@@ -93,6 +93,9 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 - [ ] Regra 213 sem teste: a desistência por espera longa (`WaitingWork`) e `MaeSites.move`, a troca de lote
 - [ ] As ruínas das obras MAE falhas de saves anteriores continuam no mundo
 - [ ] Gate da água só para a obra pedida pelo jogador: a automática recusa água (ADR-049)
+- [ ] Conferir em jogo a Regra 223 (0.4.43): branco na porta, poste sem branco, ramal voltando a grama, plantação sem quina ao lado da rua, porta com linha até a rua
+- [ ] Chão de pedra em `x 114–119, z -175 a -166` (save Novo mundo): 6×10, uma camada sobre terra. Nenhum código do mod nem o diário explicam; a linha deixa de cruzá-lo, mas ele fica
+- [ ] Cercas tiradas ao lado do portão `105, -231`, entre 00:14 e 00:49 do jogo da 0.4.42: sem registro no diário; saber se foi o autor
 - [ ] Conferir em jogo o socorro do MAE (Regra 222): `VC_MAE_SITE result=rescue`, custo em ms, porta ligada pelo grafo e desenho da vila
 - [ ] Sem teste próprio: a volta que acha lote zerando a conta dentro de `LotSeeking` (a conta em si tem teste)
 

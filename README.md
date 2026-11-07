@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.42%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.43%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,16 +19,16 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Estado atual: candidata 0.4.42** (não jogada). O estado vivo, a contagem de testes e o que espera
+**Estado atual: candidata 0.4.43** (não jogada). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
 [docs/RULES.md](docs/RULES.md) (1 a 216).
 
 Desde a 0.4.29, em resumo:
 
-- **Grafo de ruas:** no máximo 4 pontas azuis, uma por quadrante (Regra 206); toda porta térrea é entrada, pelo lado de fora
+- **Grafo de ruas:** no máximo 4 pontas azuis, uma por quadrante (Regra 206); toda porta térrea é entrada, com o marcador colado nela
   (Regra 207); a plantação não tem anel e fica com uma entrada (Regra 208); porta de quintal fechado só conta se for a única
-  da casa (Regra 209). O chafariz mantém o anel de caminho (Regra 183). Toda estrutura da vila e do mod, e o portão da mina,
-  têm entrada de porta no grafo, sem porta no mundo (Regra 210).
+  da casa (Regra 209). O chafariz mantém o anel de caminho (Regra 183). Toda estrutura onde se entra, e o portão da mina,
+  têm entrada de porta no grafo, sem porta no mundo (Regra 210); poste, poço e chafariz não têm, e o ramal deles sai do chão (Regra 223).
 - **Mineiro e velas:** a casa do mineiro acompanha a boca em uso (Regra 211); nenhum aldeão põe tocha sozinho, e vela ou tocha
   soltas não recusam lote (Regra 212).
 - **Obra MAE:** a obra pedida é a próxima do construtor e sempre termina (Regra 213).
@@ -402,7 +402,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 181 | **Pulo confere o teto** (jogo 11-05): o caminho do aldeão da colônia só sobe onde o corpo cabe, também no nó fora da rua | 11-05 | ✅ feita (0.4.25) | `LandPathNodeMakerMixin` |
 | 182 | **A mina cresce por dentro** (autor 11-05): fim de escada abre ramal a partir dos salões que existem, sem cortar degrau; boca nova só com 50 falhas de ramal ou com tudo o que resta na água, e nunca perto de outra boca; emenda a Regra 53 | 11-05 | ✅ feita (0.4.25) | `MineBranches`, `MineEdge` |
 | 183 | **Anel de caminho** (autor 11-05): o chão em volta do chafariz é caminho, sem quina fixa no grafo. Plantação: Regra 208 | 11-05 | ✅ feita (0.4.25) | `RoadShape` |
-| 184 | **Quina é entrada** (autor 11-05): da terceira releitura em diante, a quina da plantação mais perto do centro é entrada do grafo | 11-05 | ✅ feita (0.4.25) | `RoadShape` |
+| 184 | **Quina é entrada** (autor 11-05): da terceira releitura em diante, a quina da plantação mais perto do centro é entrada do grafo, se nenhuma linha passa a até 2 blocos dela (Regra 223) | 11-05 | ✅ feita (0.4.25) | `RoadShape` |
 | 185 | **A ponta cresce** (autor 11-05): por dia, as 2 pontas mais distantes do centro, dentro de 75% da maior distância, avançam um bloco em linha reta; o construtor calça | 11-05 | ✅ feita (0.4.25) | `RoadShape` |
 | 186 | **Rua de um bloco** (autor 11-05): o caminho a até 3 blocos da linha que não é linha nem frente de porta volta ao solo do bioma, pelo pedreiro | 11-05 | ✅ feita (0.4.25) | `RoadLines`, `PathTrim` |
 | 187 | **Revogada** (autor 11-06, ADR-047). A obra pedida não reserva região | 11-05 | ✅ feita (0.4.26) | `MaeHandover`, `MaeSiteRecord`, `MaeSites`, `MaeStructureSite` |
@@ -425,10 +425,10 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 204 | **Revogada** (autor 11-06, ADR-047). A peça da obra é posta pelo construtor | 11-05 |
 | 205 | **Revogada** (autor 11-06, ADR-047). A obra pedida não reserva região e não falha | 11-05 |
 | 206 | **As pontas do grafo são os cantos da vila** (autor 11-05): fica a ponta mais distante do centro em cada quadrante, no máximo 4, e só ela é azul e cresce. As outras perdem o trecho morto até o encontro ou a entrada; o caminho a até 3 blocos da linha volta ao solo (Regra 186). Emenda a Regra 177. | 11-05 |
-| 207 | **Toda porta térrea é entrada** (autor 11-05): sai pelo lado de fora da porta, passa por degrau e escada, e o marcador branco fica no primeiro chão firme fora da caixa; porta de dentro não conta e porta dupla conta uma vez. O ramal da Regra 177 cobre o que houver entre ele e a rua. Emenda a Regra 178. | 11-05 |
+| 207 | **Toda porta térrea é entrada** (autor 11-05): o marcador branco fica no primeiro bloco em frente à porta, mesmo dentro da caixa ou sobre degrau (Regra 223); porta de dentro não conta e porta dupla conta uma vez. O ramal da Regra 177 cobre o que houver entre ele e a rua. Emenda a Regra 178. | 11-05 |
 | 208 | **Plantação sem anel** (autor 11-06): o chão em volta da plantação não é pedido como caminho, e ela tem uma entrada só, a quina da Regra 184, com ramal até a rua. O caminho já colado nela sai do grafo quando a rede continua inteira sem ele e volta ao solo pelo pedreiro, a qualquer distância da linha; encontro, entrada, centro e o trecho que é a única ligação ficam. Emenda a Regra 183. | 11-06 |
-| 209 | **Porta de quintal fechado** (autor 11-06): a caixa da peça pode incluir o quintal. Porta cuja saída para em barreira dentro da caixa, como cerca, portão ou rebolo, só é entrada se nenhuma outra porta da casa sair, e então no primeiro chão depois dela; assoalho de tábua não é quintal. Emenda a Regra 207. | 11-06 |
-| 210 | **Toda estrutura tem entrada** (autor 11-06): toda estrutura da vila gerada e do mod entra no grafo com o marcador branco de porta, sem porta nova no mundo. Porta, portão; sem eles, o lado com a maior parte da borda aberta na altura de quem anda, ou o lado do centro da vila se todos estão fechados. O portão da mina é lido do mundo e tem a entrada do lado de onde se chega, fora da folga da escada. Rua, ponta de rua, árvore e peça que só põe bicho não são estrutura; plantação segue a Regra 184. Emenda a Regra 207. | 11-06 |
+| 209 | **Porta de quintal fechado** (autor 11-06): a caixa da peça pode incluir o quintal. Porta cuja saída para em barreira dentro da caixa, como cerca, portão ou rebolo, só é entrada se nenhuma outra porta da casa sair, e então onde o quintal abre para fora, ou no primeiro chão depois dela se ele for fechado (Regra 223); assoalho de tábua não é quintal. Emenda a Regra 207. | 11-06 |
+| 210 | **Toda estrutura onde se entra tem entrada** (autor 11-06, 11-07): toda estrutura da vila gerada e do mod entra no grafo com o marcador branco de porta, sem porta nova no mundo, menos os enfeites da Regra 223. Porta, portão; sem eles, o lado com a maior parte da borda aberta na altura de quem anda, ou o lado do centro da vila se todos estão fechados. O portão da mina é lido do mundo e tem a entrada do lado de onde se chega, fora da folga da escada. Rua, ponta de rua, árvore, enfeite e peça que só põe bicho não são estrutura; plantação segue a Regra 184. Emenda a Regra 207. | 11-06 |
 | 211 | **Casa do mineiro na boca em uso** (autor 11-06): a casa do mineiro fica ao lado da boca da superfície da mina de hoje, até uma por mineiro; a mina mudou de boca, e a casa da boca antiga não serve. A cama vai para o mineiro pela Regra 74. Emenda a Regra 175. | 11-06 |
 | 212 | **Sem tocha sozinha, vela não trava obra** (autor 11-06): nenhum aldeão põe tocha da colônia pelo chão da vila; a que já está lá fica. Vela e tocha soltas não recusam o lote e saem quando a obra abre, menos a tocha das almas (Regra 108) e a de dentro da caixa de uma estrutura. Emenda a Regra 127. | 11-06 |
 | 213 | **A obra MAE é a próxima do construtor** (autor 11-06, ADR-047): a obra pedida entra na fila do construtor, antes do reparo e da busca de lote, e é levantada por ele, bloco a bloco, com material dos baús. O lote passa pela régua do construtor: caixa da busca, trava da base e volume livre. O mundo vivo não a para. Ela não deixa blocos soltos: não é largada por distância nem por espera, volta para a fila se sumir sem terminar e procura outro lote perto se o dela não abrir. Só o jogador a encerra, com `/vc mae parar` ou a tocha das almas (Regra 108) | 11-06 |
@@ -441,6 +441,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 220 | **Quem não tem ofício trabalha na vila** (autor 11-06, exceção à regra temporária de 11-02): além de carregar (O8) e recolher o material solto da obra (Regra 48), o adulto sem ofício calça a rede no rodízio com construtor e pedreiro, e tira a neve. Ele não vira profissão nenhuma. Candidata | 11-06 |
 | 221 | **A vila gasta o que produz** (autor 11-06): depois da ceia, cada adulto come 1 ponto de comida do que sobrou. A ferramenta que a colônia entrega dura 3 dias, e a renovada custa 2 tábuas e 3 pedras; sem material ela fica no último ponto e o trabalho segue. Sem tarefa, carpinteiro e pedreiro visitam cada construção uma vez por dia e gastam 4 tábuas ou pedras; com obra aberta ou menos de 36 no estoque, não gastam. Candidata | 11-06 |
 | 222 | **O socorro do MAE** (autor 11-06, ADR-049): depois de 2 voltas inteiras sem lote para a próxima obra, e sem a rua abrir um, a vila procura sozinha um lote a até 24 blocos da borda da caixa, um lado por vez, e pede a obra na fila do construtor (Regra 213), com a porta virada para a vila. Só avisa no chat, sem esperar aprovação; cancela-se com `/vc mae parar` ou a tocha das almas. Lote que toca água é recusado, e roça fica de fora. Candidata | 11-06 |
+| 223 | **Branco só onde se entra** (autor 11-07, desenho sobre o jogo da 0.4.42): o marcador fica colado na porta, e a saída da caixa é só o caminho até ele. Poste, poço e chafariz não têm entrada, e nada dentro de curral fechado tem. Se um caminho já leva da porta para fora da caixa, a linha segue por ele. O ramal que perdeu a entrada sai do grafo e do chão, a qualquer distância, até 32 colunas; trecho maior é rua e fica. Degrau e assoalho em frente à porta levam o branco, mas não viram caminho. A rua não forma quadrado de nós; encontros de ruas diferentes podem ficar lado a lado. Candidata | 11-07 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).

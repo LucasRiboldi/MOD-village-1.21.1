@@ -176,6 +176,11 @@ public final class RoadPaving {
         return Optional.empty();
     }
 
+    /** Se este chão aceita virar caminho; degrau, assoalho e peça da casa não aceitam, e a linha só passa por eles (Regra 223). */
+    public static boolean takesPath(ServerWorld world, BlockPos at) {
+        return refusalOfTheGround(world, at, world.getBlockState(at)).isEmpty();
+    }
+
     /** O que impede este chão de virar caminho, sem olhar o que há em cima — o degrau cortado tira o de cima. */
     static Optional<String> refusalOfTheGround(ServerWorld world, BlockPos at, BlockState state) {
         // <b>O chão do bioma não é peça de vila</b> — pedido do autor,
