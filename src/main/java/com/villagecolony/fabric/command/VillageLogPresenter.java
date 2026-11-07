@@ -225,6 +225,7 @@ final class VillageLogPresenter {
             case NO_TARGET -> "nada a fazer no raio inteiro";
             case SWEEP_INCOMPLETE -> "ainda procurando";
             case NOT_IN_GAME -> "o jogo não tem o que se pede";
+            case VILLAGE_COMPLETE -> "a vila tem o que precisa por enquanto";
             case MISSING_MATERIAL -> "falta o material na colônia";
         };
     }

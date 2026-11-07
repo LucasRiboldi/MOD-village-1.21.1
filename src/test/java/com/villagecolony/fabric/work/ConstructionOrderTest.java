@@ -129,13 +129,54 @@ class ConstructionOrderTest {
         assertEquals(Optional.of("temple"), next(buildings, List.of(BUTCHER, FARM, TEMPLE)));
     }
 
-    /** Uma casa de cada tipo — autor, 2026-10-12: com todas de pé, nenhuma se repete. */
+    /** O tipo novo vem antes de qualquer repetição: a repetição é de {@link ConstructionOrder#nextRepeat} — Regra 218. */
     @Test
-    void withEveryTypeStandingNoWorkshopIsRepeated() {
+    void withEveryTypeStandingTheNextTypeHasNothingToSay() {
         List<Building> buildings = List.of(
                 built(FARM, true), built(MASON, true), built(BUTCHER, true), built(TEMPLE, true));
 
         assertEquals(Optional.empty(), next(buildings, List.of(BUTCHER, FARM, TEMPLE, MASON)));
+    }
+
+    private static Optional<String> repeat(List<Building> buildings, List<ResourceId> offered, int adults) {
+        return ConstructionOrder.nextRepeat(
+                buildings, offered.stream().map(HousePlans::constructionType).distinct().toList(),
+                HousePlans::constructionType, adults);
+    }
+
+    /** Regra 218: a primeira repetição sai no 5º adulto, e não antes. */
+    @Test
+    void theFirstRepeatComesWithTheFifthAdult() {
+        List<Building> buildings = List.of(built(MASON, true), built(BUTCHER, true));
+
+        assertEquals(Optional.empty(), repeat(buildings, List.of(MASON, BUTCHER), 4));
+        assertEquals(Optional.of("mason"), repeat(buildings, List.of(MASON, BUTCHER), 5));
+    }
+
+    /** Regra 218: repete o que a vila tem menos, e cada repetição de pé gasta a sua cota. */
+    @Test
+    void itRepeatsWhatTheVillageHasLeastUntilThePopulationIsServed() {
+        List<Building> buildings = List.of(built(MASON, true), built(MASON, true), built(BUTCHER, true));
+
+        assertEquals(Optional.empty(), repeat(buildings, List.of(MASON, BUTCHER), 9), "a cota de 9 adultos já foi gasta");
+        assertEquals(Optional.of("butcher"), repeat(buildings, List.of(MASON, BUTCHER), 10));
+    }
+
+    /** Regra 218: obra abandonada não gasta a cota. */
+    @Test
+    void anAbandonedWorkDoesNotCountAsARepeat() {
+        List<Building> buildings = List.of(built(MASON, true), built(MASON, false), built(BUTCHER, true));
+
+        assertEquals(Optional.of("mason"), repeat(buildings, List.of(MASON, BUTCHER), 5));
+    }
+
+    /** Regra 218: roça e casa têm conta própria, nem saem nem gastam a cota. */
+    @Test
+    void farmsAndHousesAreNotRepeatsAndDoNotSpendTheQuota() {
+        List<Building> farms = List.of(built(FARM, true), built(FARM, true), built(FARM, true), built(BUTCHER, true));
+
+        assertEquals(Optional.empty(), repeat(farms, List.of(FARM, SMALL_HOUSE), 50));
+        assertEquals(Optional.of("butcher"), repeat(farms, List.of(FARM, BUTCHER), 5));
     }
 
     @Test

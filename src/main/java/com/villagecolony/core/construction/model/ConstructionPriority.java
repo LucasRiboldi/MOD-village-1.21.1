@@ -27,6 +27,14 @@ public enum ConstructionPriority {
     /** Adultos por plantação — Regra 67: uma a cada 15, e o 16º a torna prioridade. */
     public static final int ADULTS_PER_FARM = 15;
 
+    /** Adultos por obra repetida — Regra 218: com um de cada tipo de pé, cada 5 adultos dão direito a mais uma. */
+    public static final int ADULTS_PER_REPEAT = 5;
+
+    /** Quantas obras repetidas a vila comporta com esta população — Regra 218. */
+    public static int repeatsFor(int adults) {
+        return Math.max(0, adults) / ADULTS_PER_REPEAT;
+    }
+
     /** Decide a prioridade sem depender de Minecraft, Fabric ou catálogo de plantas. */
     public static ConstructionPriority decide(
             boolean hasPreviousAttempt, boolean lastAttemptWasHouse, int adults, int beds) {
@@ -114,7 +122,7 @@ public enum ConstructionPriority {
      * Quantas camas a mais que adultos a vila pode ter antes de parar de levantar casa no
      * rodízio — opção 1A do autor, 2026-10-13: o rodízio casa ↔ outro tipo volta, com teto.
      */
-    public static final int HOUSE_SURPLUS = 4;
+    public static final int HOUSE_SURPLUS = 6;
 
     /** Se ainda cabe casa no rodízio: camas abaixo de adultos + {@link #HOUSE_SURPLUS}. */
     public static boolean roomForAHouse(int adults, int beds) {

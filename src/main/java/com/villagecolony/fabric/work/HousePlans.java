@@ -395,7 +395,10 @@ public final class HousePlans {
         Optional<String> chosen = farmOwed && byType.containsKey("farm")
                 ? Optional.of("farm")
                 : ConstructionOrder.nextType(
-                        buildings, byType.keySet(), professionOfType, HousePlans::constructionType);
+                        buildings, byType.keySet(), professionOfType, HousePlans::constructionType)
+                        .or(() -> ConstructionOrder.nextRepeat(
+                                buildings, byType.keySet(), HousePlans::constructionType,
+                                VillageColonyMod.WORKERS.countOfColony(colony.id())));
 
         if (chosen.isPresent()) {
             List<Blueprint> plans = byType.get(chosen.get());

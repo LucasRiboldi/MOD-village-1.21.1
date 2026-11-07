@@ -69,6 +69,9 @@ public enum IdleReason {
     /** O jogo não tem o que a tarefa pede — datapack que saiu, versão que mudou. */
     NOT_IN_GAME("this game does not have what it asks for"),
 
+    /** A vila tem o que a população pede agora — Regra 218: a próxima obra vem com mais gente. */
+    VILLAGE_COMPLETE("the village has what its people need for now"),
+
     /** Falta o material, e a colônia não inventa recurso. */
     MISSING_MATERIAL("the colony has none of the material");
 
