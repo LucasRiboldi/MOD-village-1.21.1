@@ -24,6 +24,7 @@ implementar.
 
 | Ordem | Documento | Por quê |
 |---|---|---|
+| 0º | `HANDOFF.md` | **onde o trabalho parou** — só ao retomar de outro agente ou sessão |
 | 1º | `STATE.md` | **o estado vivo** — P0 aberto, sessão em curso, verificação pendente |
 | 2º | Este arquivo, §1 e §2 | as regras e o workflow |
 | 3º | `docs/PATTERNS.md` | a assinatura do defeito que você está caçando |

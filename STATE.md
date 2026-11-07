@@ -1,7 +1,9 @@
-# STATE — 2026-11-04
+# STATE — 2026-11-07
+
+> **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
 > **Candidata 0.4.43:** conceito desenhado pelo autor sobre o jogo da 0.4.42 (Spark 7d0PErq0RJ), Regra 223: branco colado na porta, só onde se entra,
-> sem ramal para quem não tem entrada. Não jogada. A 0.4.42 foi jogada sem disparar o socorro: nenhum `VC_MAE_SITE`.
+> sem ramal para quem não tem entrada. Publicada, e jogada em 2026-11-07 (Spark u6XC34ZC0k): 0 quadrados de nós e 0 brancos soltos. A 0.4.42 foi jogada sem disparar o socorro: nenhum `VC_MAE_SITE`.
 > Sentinela `fast`: 1060 GameTests e 1768 unitários; a primeira bateria falhou só no teste instável da vaca, a segunda ficou verde. PIT não rodou nesta versão, e o core mudou (`RetiredSpurs`, `RoadSquares`, `RoadGraph`).
 
 > **Candidata 0.4.42:** Fase 6 do MAE no recorte escolhido pelo autor (ADR-049, Regra 222): sem lote depois de 2 voltas, a vila pede sozinha
