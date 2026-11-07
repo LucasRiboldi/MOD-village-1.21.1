@@ -155,6 +155,28 @@ public class VillageMealsGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Depois da ceia, a vila come um ponto por adulto do que sobrou — Regra 221. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_meals")
+    public void adultsEatFromWhatIsLeftAfterSupper(TestContext context) {
+        Scene scene = scene(context, 500);
+
+        scene.chest().clear();
+        scene.chest().setStack(0, new ItemStack(Items.BREAD, 6));
+        scene.chest().setStack(1, new ItemStack(Items.CARROT, 5));
+
+        try {
+            VillageMeals.serve(context.getWorld(), scene.colony());
+
+            context.assertTrue(scene.first().isReadyToBreed() && scene.second().isReadyToBreed(), "a procriação vem primeiro");
+            context.assertTrue(scene.chest().count(Items.CARROT) == 3,
+                    "dois adultos comem duas cenouras, sobraram " + scene.chest().count(Items.CARROT));
+        } finally {
+            scene.fixture().cleanUp();
+        }
+
+        context.complete();
+    }
+
     /** Assar é do fazendeiro: sem ele o trigo fica trigo — ADR-037 C7 c. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_meals")
     public void withoutAFarmerWheatStaysWheat(TestContext context) {

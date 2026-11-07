@@ -145,7 +145,7 @@ public final class WorkTime {
                 StrandedWorkers.isStranded(id) || PenEscape.isEscaping(id),
                 !VillageColonyMod.TASKS.assignedTo(id).isEmpty() || GroundPickup.isHelping(id)
                         || BuilderPaving.isPaving(id) || PathPaving.isPaving(id) || IdleHelps.isHelping(id)
-                        || ShepherdHerding.isHerding(id),
+                        || ShepherdHerding.isHerding(id) || BuildingUpkeep.isVisiting(id),
                 swungSinceLastSample(villager),
                 moved,
                 WorkTargets.of(id).isPresent(),

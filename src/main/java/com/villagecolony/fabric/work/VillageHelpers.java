@@ -4,6 +4,7 @@ import com.villagecolony.fabric.integration.PublicChests;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
@@ -32,6 +33,7 @@ import java.util.UUID;
  * <ul>
  *   <li><b>pedreiro</b>: repara o terreno, começando pelo lote da obra aberta (Regra 215);</li>
  *   <li><b>pastor</b>: alimenta o rebanho;</li>
+ *   <li><b>carpinteiro</b>, e o pedreiro sem terreno a reparar: mantém as construções (Regra 221);</li>
  *   <li><b>adulto sem profissão</b>: transporta itens e alivia os baús cheios; calçar e tirar neve vêm da Regra 220.</li>
  * </ul>
  * As demais ajudas cruzadas da Regra 149 ficam suspensas.
@@ -39,6 +41,9 @@ import java.util.UUID;
 public final class VillageHelpers {
 
     static final int HAUL = 64;
+
+    private static final int UPKEEP_EVERY = 40;
+
     static final int LIGHT_SPACING = 12;
 
     /** Qual construção o pedreiro nivela na próxima vez, por colônia. */
@@ -55,6 +60,10 @@ public final class VillageHelpers {
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             ServerWorld world = server.getOverworld();
             long now = world.getTime();
+
+            if (now % UPKEEP_EVERY == 0) {
+                BuildingUpkeep.tick(world);
+            }
 
             if (now % 1200 != 900) {
                 return;
@@ -98,7 +107,12 @@ public final class VillageHelpers {
 
         return switch (trade.get()) {
             case SHEPHERD -> FlockCare.feed(world, colony, villager);
-            case MASON -> masonHelps(world, colony, villager);
+            case MASON -> {
+                int levelled = masonHelps(world, colony, villager);
+
+                yield levelled > 0 ? levelled : BuildingUpkeep.start(world, colony, villager, ResourceGroup.STONE);
+            }
+            case CARPENTER -> BuildingUpkeep.start(world, colony, villager, ResourceGroup.PLANKS);
             default -> 0;
         };
     }

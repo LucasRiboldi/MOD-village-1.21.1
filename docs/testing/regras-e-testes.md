@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 109
+- **Cita a regra:** 114
 - **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 7
 - **Fora de vigor:** 5
@@ -49,7 +49,7 @@ classe prova menos ainda.
 | 36 | O viveiro (terra enraizada + rebento) é do lenhador | classe | DesertFixesGameTest, LumberjackNurseryTargetTest, TreeNurseryGameTest |
 | 37 | Cada aldeão usa a ferramenta de ferro apropriada para a ação | classe | BetterToolGameTest, LumberjackGameTest, ProfessionReviewGameTest |
 | 38 | Contratar primeiro a profissão de que a demanda depende, depois a lista | classe | BigHouseModBlueprintGameTest, ColonyCycleTest, ColonyDetectionGameTest |
-| 39 | Comida é feita pelo fazendeiro (pão do trigo acima de 32) | classe | ProfessionReviewGameTest |
+| 39 | Comida é feita pelo fazendeiro (pão do trigo acima de 32) | classe | ProfessionReviewGameTest, VillageMealsGameTest |
 | 40 | Piso de fundido só com cadeia do cru | cita | BuilderMaterialsGameTest |
 | 41 | Corante, linha, pó de osso e drops de inimigo e animal aparecem automáticos | classe | BuilderGameTest, BuilderMaterialsGameTest, ConstructionStallGameTest |
 | 42 | Mineiro para de guardar um tipo aos 256 no baú (fora o pedido) | classe | MinerHaulCapGameTest, MinerOverflowGameTest, PublicChestsGameTest |
@@ -138,7 +138,7 @@ classe prova menos ainda.
 | 126 | Peça colorida sai branca (autor 10-27, item 5; jogo da 0.3.93: 64 "cama sem lã" e lã pret… | classe | BigHouseFoundationGameTest, BigHouseModBlueprintGameTest, BlueprintReaderGameTest |
 | 127 | Ajudas de quem está sem tarefa do ofício, cada uma com um ofício fixo (autor 10-27, item… | cita | ColonyTorchesGameTest |
 | 128 | Nenhuma profissão espera mais de 5 minutos por nada (autor 10-27, emenda 11-02): 300 s se… | cita | IdleWatchGameTest |
-| 129 | O nome sobre a cabeça tem a cor do estado (autor 10-27): laranja no ofício, azul em ajuda… | classe | IdleWatchGameTest, VillageLogPresenterTest, WorkTimeSwingGameTest |
+| 129 | O nome sobre a cabeça tem a cor do estado (autor 10-27): laranja no ofício, azul em ajuda… | classe | IdleRoutineGameTest, IdleWatchGameTest, VillageLogPresenterTest |
 | 130 | Cinco animais no mesmo poste pedem curral, com prioridade (autor 10-27): o curral do esti… | cita | CrowdedPostGameTest |
 | 131 | O chão em volta da obra nova fica na altura da rua (autor 10-27): na abertura, um anel de… | cita | DuneCutGameTest, SiteSurroundingsGameTest |
 | 132 | As bancadas do mod têm painel e passivas (autor 10-27): shift+clique mostra titulares, es… | cita | BenchPassivesGameTest |
@@ -224,5 +224,10 @@ classe prova menos ainda.
 | 212 | Sem tocha sozinha, vela não trava obra (autor 11-06): nenhum aldeão põe tocha da colônia… | cita | ArchitectureRulesTest, LotLightDecorGameTest |
 | 213 | A obra MAE é a próxima do construtor (autor 11-06, ADR-047): a obra pedida entra na fila… | cita | MaeSitesGameTest |
 | 214 | Todo caminho é do grafo, em toda vila (autor 11-06, ADR-048): quem quer caminho só pede a… | cita | GraphOnlyPathsGameTest, PlannedPathsTest, RoadExtensionGameTest |
-| 215 | O pedreiro ocioso ajuda no caminho e no chão (autor 11-06): sem tarefa do ofício, ele cal… | cita | GraphOnlyPathsGameTest |
+| 215 | O pedreiro ocioso ajuda no caminho e no chão (autor 11-06): sem tarefa do ofício, ele cal… | cita | GraphOnlyPathsGameTest, PathPavingTest |
 | 216 | A rede é o grafo (autor 11-06, ADR-048): quem pergunta por onde se anda, o que está perto… | cita | GraphOnlyPathsGameTest |
+| 217 | A ceia alimenta com o trigo de qualquer baú (autor 11-06): com fazendeiro na vila, a ceia… | cita | VillageMealsGameTest |
+| 218 | A vila continua construindo (autor 11-06, muda a decisão de 10-12 de não repetir): com um… | cita | ConstructionOrderTest, VillageKeepsBuildingGameTest |
+| 219 | Rotina à vista de quem está sem tarefa (autor 11-06): no expediente, depois de um minuto… | cita | IdleRoutineGameTest |
+| 220 | Quem não tem ofício trabalha na vila (autor 11-06, exceção à regra temporária de 11-02):… | cita | GraphOnlyPathsGameTest, PathPavingTest |
+| 221 | A vila gasta o que produz (autor 11-06): depois da ceia, cada adulto come 1 ponto de comi… | cita | VillageConsumesGameTest, VillageMealsGameTest |

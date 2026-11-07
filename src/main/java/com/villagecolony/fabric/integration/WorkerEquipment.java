@@ -350,7 +350,7 @@ public final class WorkerEquipment {
      * nenhuma profissão pede mais. O que o jogador deu continua dele:
      * picareta de pedra, de ferro, espada, pão, nada disso está aqui.
      */
-    private static boolean isProfessionTool(ItemStack held) {
+    static boolean isProfessionTool(ItemStack held) {
         for (ToolType tool : ToolType.values()) {
             if (tool == ToolType.SILK_TOUCH_IRON_SHOVEL) {
                 if (isColonySilkTouchShovel(held)) {

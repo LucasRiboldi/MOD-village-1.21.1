@@ -10,6 +10,7 @@ import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.fabric.integration.ToolWear;
 
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.inventory.SimpleInventory;
@@ -69,6 +70,13 @@ public final class VillageMeals {
     private static final List<Item> MENU = List.of(
             Items.BREAD, Items.CARROT, Items.POTATO, Items.BEETROOT);
 
+    /** O que a vila come no dia, por adulto. */
+    static final int DAILY_POINTS = 1;
+
+    /** Da mesa, o miúdo vai primeiro: o pão fica para quem vai procriar. */
+    private static final List<Item> TABLE = List.of(
+            Items.CARROT, Items.POTATO, Items.BEETROOT, Items.BREAD);
+
     private static final Map<UUID, Long> SERVED_ON = new HashMap<>();
 
     private static int ticks;
@@ -101,6 +109,7 @@ public final class VillageMeals {
 
             SERVED_ON.put(colony.id(), day);
             serve(world, colony);
+            ToolWear.pass(world, colony);
         }
     }
 
@@ -120,6 +129,7 @@ public final class VillageMeals {
         Map<Item, Integer> keep = ShepherdFlock.breedingFoodToKeep(world, colony);
         // Todo adulto da colônia, com ofício ou sem: o VillagerScanner registra cada aldeão da vila em WORKERS.
         List<VillagerEntity> hungry = new ArrayList<>();
+        int adults = 0;
         boolean farmer = false;
 
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
@@ -127,17 +137,20 @@ public final class VillageMeals {
 
             if (world.getEntity(worker.villagerId()) instanceof VillagerEntity villager
                     && villager.isAlive()
-                    && !villager.isBaby()
-                    && villager.getBreedingAge() == 0
-                    && !villager.isReadyToBreed()) {
-                hungry.add(villager);
+                    && !villager.isBaby()) {
+                adults++;
+
+                if (villager.getBreedingAge() == 0 && !villager.isReadyToBreed()) {
+                    hungry.add(villager);
+                }
             }
         }
 
         // O fazendeiro assa o trigo guardado antes da ceia — ADR-037 C7 c, Regra 217.
         if (farmer) {
             FarmerBakery.bakeForSupper(world, chests,
-                    hungry.size() * BREEDING_FOOD / LOAF_POINTS - ColonyChests.countIn(world, chests, Items.BREAD));
+                    (hungry.size() * BREEDING_FOOD + adults * DAILY_POINTS) / LOAF_POINTS
+                            - ColonyChests.countIn(world, chests, Items.BREAD));
         }
 
         int fed = 0;
@@ -148,6 +161,8 @@ public final class VillageMeals {
             }
         }
 
+        eat(world, chests, adults, keep);
+
         if (fed > 0) {
             VillageColonyMod.LOGGER.info(
                     "Colony {} shared supper with {} villagers ({} living, {} beds)",
@@ -155,6 +170,24 @@ public final class VillageMeals {
         }
 
         return fed;
+    }
+
+    /**
+     * O que a vila come no dia: {@value #DAILY_POINTS} ponto por adulto, do que sobrou da ceia, para a procriação vir primeiro
+     * e a colheita não saturar o estoque — Regra 221. Sem comida ninguém sofre: só não sai nada do baú.
+     */
+    private static void eat(ServerWorld world, List<ColonyPos> chests, int adults, Map<Item, Integer> keep) {
+        int left = adults * DAILY_POINTS;
+
+        for (Item food : TABLE) {
+            int value = VillagerEntity.ITEM_FOOD_VALUES.getOrDefault(food, 0);
+            int spare = ColonyChests.countIn(world, chests, food) - keep.getOrDefault(food, 0);
+            int eaten = value > 0 ? Math.min(spare, (left + value - 1) / value) : 0;
+
+            if (eaten > 0) {
+                left -= value * ColonyChests.withdraw(world, chests, food, eaten);
+            }
+        }
     }
 
     /** Tira do baú até doze pontos de comida, acima do que fica para o rebanho, e põe no inventário dele. */

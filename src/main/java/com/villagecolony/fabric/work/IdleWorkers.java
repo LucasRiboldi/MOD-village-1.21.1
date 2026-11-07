@@ -15,7 +15,7 @@ import java.util.UUID;
 final class IdleWorkers {
 
     /** As ajudas de quem está sem tarefa do ofício. */
-    enum Help { GROVE, SNOW, PATH, ROAD_CLEARING, GROUND_PICKUP }
+    enum Help { GROVE, SNOW, PATH, ROAD_CLEARING, GROUND_PICKUP, UPKEEP }
 
     private IdleWorkers() {
     }
@@ -32,6 +32,7 @@ final class IdleWorkers {
                 && (own == Help.SNOW || !SnowShovel.isShoveling(id))
                 && (own == Help.PATH || !PathPaving.isPaving(id))
                 && (own == Help.ROAD_CLEARING || !BuilderPaving.isPaving(id))
-                && (own == Help.GROUND_PICKUP || !GroundPickup.isHelping(id));
+                && (own == Help.GROUND_PICKUP || !GroundPickup.isHelping(id))
+                && (own == Help.UPKEEP || !BuildingUpkeep.isVisiting(id));
     }
 }

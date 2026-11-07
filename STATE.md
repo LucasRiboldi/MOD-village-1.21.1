@@ -1,5 +1,12 @@
 # STATE — 2026-11-04
 
+> **Candidata 0.4.41:** "vila mais viva", pedido do autor sobre o jogo da 0.4.40 (Spark WCWRBHTKlX). Causa dos poucos nascimentos:
+> 201 trigos e 35 comestíveis nos baús, porque só o baú do fazendeiro assava; a ceia assa de qualquer baú (Regra 217). Com um de cada
+> tipo de pé, cada 5 adultos dão uma obra repetida (Regra 218). Rotina à vista de quem está sem tarefa, ainda contada como ócio (Regra 219).
+> Quem não tem ofício calça e tira neve (Regra 220). A vila gasta comida, ferramenta e manutenção (Regra 221). Não jogada: nascimentos,
+> falta de material e custo por tique só se medem no próximo jogo.
+> Sentinela `fast` verde: 1045 GameTests e 1758 unitários. PIT local: 85,8% (3231 de 3766). Instáveis em aberto no `TODO.md`.
+
 > **Candidata 0.4.40:** varredura de conflitos aplicada (ADR-048): todo caminho e toda rede pelo grafo, em toda vila; só aldeão calça; pedreiro ocioso
 > nivela; uma régua de lote, um leitor de porta e uma lista de livres; a escrita própria do MAE saiu do código. Não jogada, e o efeito em save
 > antigo nunca foi visto. A prova de geração saiu a pedido do autor.

@@ -101,6 +101,27 @@ public final class ChestWithdrawer {
         return found;
     }
 
+    /** Quantos itens deste grupo há no baú, seja qual for a espécie. */
+    public static int countGroup(ServerWorld world, ColonyPos chest, ResourceGroup group) {
+        Inventory inventory = inventoryAt(world, chest);
+
+        if (inventory == null) {
+            return 0;
+        }
+
+        int found = 0;
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            ItemStack stack = inventory.getStack(slot);
+
+            if (!stack.isEmpty() && isOfGroup(stack, group)) {
+                found += stack.getCount();
+            }
+        }
+
+        return found;
+    }
+
     /**
      * Tira até {@code amount} itens deste grupo, seja qual for a espécie.
      *

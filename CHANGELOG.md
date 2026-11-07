@@ -12,6 +12,23 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.41] — candidata, 2026-11-06
+
+### Corrigido
+
+- A ceia assa o trigo de qualquer baú: havia 201 trigos e 35 comestíveis nos baús, e só 3 a 5 adultos por dia ficavam dispostos a procriar (Regra 217).
+- A busca de lote sem nada a levantar deixa de dizer "o jogo não tem o que se pede" e passa a dizer "a vila tem o que precisa por enquanto" (Regra 218).
+
+### Mudado
+
+- A vila continua construindo: com um de cada tipo de pé, cada 5 adultos dão direito a mais uma obra repetida, e o teto de camas sobe de 4 para 6 acima dos adultos (Regra 218).
+- Quem não tem ofício calça a rede e tira neve (Regra 220).
+
+### Adicionado
+
+- Rotina à vista: quem está sem tarefa vai à bancada, ao baú, a um vizinho e à rua, e isso continua contando como ócio (Regra 219).
+- A vila gasta o que produz: comida por adulto, desgaste de ferramenta e manutenção das construções (Regra 221).
+
 ## [0.4.40] — candidata, 2026-11-06
 
 ### Mudado

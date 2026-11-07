@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.40%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.41%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,7 +19,7 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Estado atual: candidata 0.4.40** (não jogada). O estado vivo, a contagem de testes e o que espera
+**Estado atual: candidata 0.4.41** (não jogada). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
 [docs/RULES.md](docs/RULES.md) (1 a 216).
 
@@ -437,8 +437,9 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 216 | **A rede é o grafo** (autor 11-06, ADR-048): quem pergunta por onde se anda, o que está perto da rua ou onde procurar lote ouve as linhas do grafo. O índice físico continua como memória de cada coluna de caminho: é o que a releitura lê, o que o chão não nivela e o que o pedreiro sustenta. Antes da primeira releitura, ele responde. | 11-06 |
 | 217 | **A ceia alimenta com o trigo de qualquer baú** (autor 11-06): com fazendeiro na vila, a ceia assa o trigo guardado em qualquer baú da vila, até o que os adultos sem comida precisam, e deixa a reserva crua do rebanho. Sem isso a colheita ficava em baús alheios, a vila parecia feliz e só 3 a 5 adultos por dia ficavam dispostos a procriar. Candidata | 11-06 |
 | 218 | **A vila continua construindo** (autor 11-06, muda a decisão de 10-12 de não repetir): com um de cada tipo de pé, cada 5 adultos dão direito a mais uma obra repetida, sempre o tipo que a vila tem menos. Roça e casa de ofício têm conta própria. O rodízio aceita até 6 camas além dos adultos (eram 4). Sem nada a levantar, o motivo é "a vila tem o que precisa por enquanto". Candidata | 11-06 |
-| 219 | **Rotina à vista de quem está sem tarefa** (autor 11-06): no expediente, o aldeão sem tarefa vai à bancada, confere o baú, procura um vizinho e anda pela rua, uma coisa de cada vez, a até 32 blocos. É aparência: esse tempo continua contando como ócio. Candidata | 11-06 |
+| 219 | **Rotina à vista de quem está sem tarefa** (autor 11-06): no expediente, depois de um minuto sem tarefa, o aldeão vai à bancada, confere o baú, procura um vizinho e anda pela rua, uma coisa de cada vez, a até 32 blocos e dentro da caixa da vila. É aparência: esse tempo continua contando como ócio. Candidata | 11-06 |
 | 220 | **Quem não tem ofício trabalha na vila** (autor 11-06, exceção à regra temporária de 11-02): além de carregar (O8) e recolher o material solto da obra (Regra 48), o adulto sem ofício calça a rede no rodízio com construtor e pedreiro, e tira a neve. Ele não vira profissão nenhuma. Candidata | 11-06 |
+| 221 | **A vila gasta o que produz** (autor 11-06): depois da ceia, cada adulto come 1 ponto de comida do que sobrou. A ferramenta que a colônia entrega dura 3 dias, e a renovada custa 2 tábuas e 3 pedras; sem material ela fica no último ponto e o trabalho segue. Sem tarefa, carpinteiro e pedreiro visitam cada construção uma vez por dia e gastam 4 tábuas ou pedras; com obra aberta ou menos de 36 no estoque, não gastam. Candidata | 11-06 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).
