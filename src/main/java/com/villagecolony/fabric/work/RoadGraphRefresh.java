@@ -6,14 +6,14 @@ import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.PathStep;
+import com.villagecolony.core.construction.model.PlannedPaths;
 import com.villagecolony.core.construction.model.RoadGraph;
 import com.villagecolony.core.construction.model.RoadLines;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.data.save.ColonySavedData;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.integration.MaeRoadAccess;
-import com.villagecolony.fabric.integration.NewVillage;
+import com.villagecolony.fabric.integration.PathProposals;
 import com.villagecolony.fabric.integration.RoadGraphMigration;
 import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.RoadNetwork;
@@ -43,7 +43,7 @@ import java.util.UUID;
  * Relê o caminho da vila de tempos em tempos e refaz o grafo — Regra 177 (autor, 2026-11-05): o jogador pode corrigir
  * o caminho na mão e criar áreas e estruturas novas.
  *
- * <p>Só em vila nova ({@link NewVillage}). A cada {@value #EVERY} tiques varre a caixa da vila aos poucos, junta o que
+ * <p>A cada {@value #EVERY} tiques varre a caixa da vila aos poucos, junta o que
  * achou ao índice de ruas, lê as entradas das construções e publica o grafo ({@link RoadLines}). O que falta calçar
  * vira um plano para o construtor, {@value #MAX_REPAIR} colunas por vez. Coluna que recusou não volta nesta sessão.
  */
@@ -91,7 +91,7 @@ public final class RoadGraphRefresh {
     private static final Map<UUID, Long> NEXT = new HashMap<>();
     private static final Map<UUID, Scan> SCANS = new HashMap<>();
     private static final Map<UUID, Set<Long>> REFUSED = new HashMap<>();
-    private static final Map<UUID, Set<ColonyPos>> PLANNED = new HashMap<>();
+    private static final Map<UUID, PlannedPaths> PLANNED = new HashMap<>();
     private static final Map<UUID, Integer> TURNS = new HashMap<>();
 
     private RoadGraphRefresh() {
@@ -121,16 +121,15 @@ public final class RoadGraphRefresh {
             if (scan != null) {
                 advance(world, colony, scan, now);
             } else if (now >= NEXT.getOrDefault(colony.id(), Long.MIN_VALUE)) {
-                begin(world, colony, now);
+                begin(colony, now);
             }
         }
     }
 
-    private static void begin(ServerWorld world, Colony colony, long now) {
+    private static void begin(Colony colony, long now) {
         NEXT.put(colony.id(), now + SOON);
 
-        if (colony.isActive() && colony.isAttended(now) && colony.bounds().isPresent() && NewVillage.is(world, colony)
-                && MaeRoadAccess.metadataAllowed(world, colony.id())) {
+        if (colony.isActive() && colony.isAttended(now) && colony.bounds().isPresent()) {
             SCANS.put(colony.id(), new Scan(colony.id(), colony.bounds().orElseThrow()));
         }
     }
@@ -182,8 +181,7 @@ public final class RoadGraphRefresh {
         BlockPos under = on.down();
         BlockState path = world.getBlockState(under);
 
-        if (VillageRoad.isPathBlock(path) && !top.getCollisionShape(world, on).isEmpty()
-                && MaeRoadAccess.legacyAllowed(world, under, under)) {
+        if (VillageRoad.isPathBlock(path) && !top.getCollisionShape(world, on).isEmpty()) {
             world.setBlockState(under, path.isOf(Blocks.DIRT_PATH) ? Blocks.DIRT.getDefaultState() : Blocks.SAND.getDefaultState());
             VillageColonyMod.LOGGER.info("VC_ROAD_COVERED path at {} under {} is ground again", under.toShortString(),
                     net.minecraft.registry.Registries.BLOCK.getId(top.getBlock()));
@@ -193,11 +191,6 @@ public final class RoadGraphRefresh {
     /** Publica o grafo; verdadeiro quando ainda há ligação ou calçada por fazer. */
     static boolean publish(ServerWorld world, Colony colony, Set<ColonyPos> found) {
         UUID id = colony.id();
-
-        // A obra MAE começou no meio da varredura: nada de índice até ela entregar a região (ADR-045 item 10).
-        if (!MaeRoadAccess.metadataAllowed(world, id)) {
-            return true;
-        }
 
         Set<Long> known = new HashSet<>(RoadIndex.roadsOf(id).map(ColonyRoads::columns).orElse(List.of()));
         Set<Long> scanned = new HashSet<>();
@@ -230,14 +223,18 @@ public final class RoadGraphRefresh {
 
         var store = ColonySavedData.get(world.getServer()).roadGraphs();
 
-        if (cells.size() > RoadNetwork.MAX_COLUMNS || !store.versionSupported(id)
-                || !MaeRoadAccess.metadataAllowed(world, id)) {
+        if (cells.size() > RoadNetwork.MAX_COLUMNS || !store.versionSupported(id)) {
             return false;
         }
 
         WorldPathTerrain terrain = new WorldPathTerrain(world, id);
+        WorldPathTerrain bridging = new WorldPathTerrain(world, id, true);
         int turn = TURNS.merge(id, 1, Integer::sum);
-        Set<ColonyPos> planned = new HashSet<>(PLANNED.getOrDefault(id, Set.of()));
+        PlannedPaths paths = PLANNED.computeIfAbsent(id, ignored -> new PlannedPaths());
+
+        paths.read(turn, PathProposals.drain(id), at -> false);
+
+        Set<ColonyPos> planned = paths.cells();
         Set<ColonyPos> fronts = entrances(world, colony, terrain);
 
         planned.addAll(RoadShape.rings(world, colony, terrain));
@@ -248,15 +245,24 @@ public final class RoadGraphRefresh {
         }
 
         RoadLines.Result result = RoadLines.build(cells, planned, colony.center(), fronts,
-                RoadShape.farmRings(world, colony, terrain), terrain, LINKS_PER_READ, turn);
+                RoadShape.farmRings(world, colony, terrain), terrain, bridging, BridgeDeck.MAX_SPAN, LINKS_PER_READ, turn);
 
         result.graph().ifPresent(graph -> {
             update(colony, store, graph, result);
+            publishNetwork(colony, graph);
             RoadShape.growTips(world, colony, graph, terrain);
         });
         PathTrim.offer(id, result.surplus());
 
-        return offerRepair(world, id, result.toPave()) || result.isolated() > 0;
+        return offerRepair(world, id, result.toPave(), turn) || result.isolated() > 0;
+    }
+
+    /** As linhas do grafo viram a rede que os outros sistemas consultam (Regra 216); a entrada solta ainda não é rede. */
+    private static void publishNetwork(Colony colony, RoadGraph graph) {
+        Set<Long> lines = new java.util.TreeSet<>();
+
+        graph.edges().forEach(edge -> edge.columns().forEach(at -> lines.add(ColonyRoads.column(at.x(), at.z()))));
+        RoadNetwork.publish(colony.id(), colony.center(), List.copyOf(lines));
     }
 
     private static void update(Colony colony, com.villagecolony.data.save.RoadGraphStore store, RoadGraph graph,
@@ -275,20 +281,24 @@ public final class RoadGraphRefresh {
         }
     }
 
-    private static boolean offerRepair(ServerWorld world, UUID id, List<PathStep> toPave) {
+    private static boolean offerRepair(ServerWorld world, UUID id, List<PathStep> toPave, int read) {
         Set<Long> refused = REFUSED.getOrDefault(id, Set.of());
         List<PathStep> steps = new ArrayList<>();
-        Set<ColonyPos> planned = new HashSet<>();
+        Set<ColonyPos> wanted = new HashSet<>();
 
         for (PathStep step : toPave) {
             if (!refused.contains(ColonyRoads.column(step.x(), step.z())) && !isPaved(world, step)) {
                 steps.add(step);
-                planned.add(new ColonyPos(step.x(), step.floorY(), step.z()));
+                wanted.add(new ColonyPos(step.x(), step.floorY(), step.z()));
             }
         }
 
-        // A ligação traçada continua valendo até ser calçada: a próxima releitura liga outra parte.
-        PLANNED.put(id, planned);
+        // A ligação traçada continua valendo até ser calçada: a próxima releitura liga outra parte (Regra 214).
+        PlannedPaths paths = PLANNED.computeIfAbsent(id, ignored -> new PlannedPaths());
+
+        paths.read(read, wanted, at -> refused.contains(ColonyRoads.column(at.x(), at.z()))
+                || isPaved(world, new PathStep(at.x(), at.y(), at.z(), com.villagecolony.core.type.Side.NORTH, 0, 0)));
+        PathProposals.planned(id, paths.cells());
 
         if (steps.isEmpty()) {
             return false;
@@ -335,7 +345,7 @@ public final class RoadGraphRefresh {
             }
         }
 
-        fronts.addAll(MineGates.fronts(world, colony.id(), terrain));
+        fronts.addAll(MineGates.fronts(world, colony, terrain));
 
         // Todo portão de cerca é entrada (Regra 178), de obra ou da vila gerada.
         for (ShepherdPens.Pen pen : ShepherdPens.pensOf(world, colony)) {
@@ -352,18 +362,9 @@ public final class RoadGraphRefresh {
         return fronts;
     }
 
-    private static ColonyPos floorOf(BlockPos front) {
-        return MinecraftTypeAdapter.toColonyPos(front.down());
-    }
-
+    /** Quem não tem porta: o portão da borda, ou o lado que parece aberto (Regra 210). */
     private static Optional<ColonyPos> front(ServerWorld world, BlockPos min, BlockPos max, BlockPos hub,
                                              WorldPathTerrain terrain) {
-        Optional<PathLinks.Entrance> door = PathLinks.entranceOf(world, min, max);
-
-        if (door.isPresent()) {
-            return Optional.of(floorOf(door.get().front()));
-        }
-
         Optional<ColonyPos> gate = gateFront(world, min, max, terrain);
 
         return gate.isPresent() ? gate : EntranceSides.of(world, min, max, hub, terrain);

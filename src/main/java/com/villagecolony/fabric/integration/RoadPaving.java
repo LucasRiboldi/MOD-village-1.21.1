@@ -4,9 +4,7 @@ import com.villagecolony.fabric.world.RoadSpill;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.coordination.VillageGrowth;
-import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ColonyPos;
-import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -15,10 +13,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -59,16 +54,6 @@ public final class RoadPaving {
             PavingRefusals refusals) {
 
         // Inclui todo o trecho, bordas e variação acumulada de altura antes de adotar ou limpar — MAE Fase 2.
-        BlockPos last = end.at().offset(end.towards(), RoadExtension.STRETCH);
-        int rise = (RoadExtension.STRETCH + 1) * RoadExtension.MAX_STEP;
-        if (!MaeRoadAccess.legacyAllowed(world,
-                new BlockPos(Math.min(end.at().getX(), last.getX()) - 1, end.at().getY() - rise,
-                        Math.min(end.at().getZ(), last.getZ()) - 1),
-                new BlockPos(Math.max(end.at().getX(), last.getX()) + 1, end.at().getY() + rise + 2,
-                        Math.max(end.at().getZ(), last.getZ()) + 1))) {
-            refusals.record("MAE supervised section or unknown reservation");
-            return List.of();
-        }
         BlockPos previous = end.at();
 
         List<ColonyPos> laid = new ArrayList<>();
@@ -123,13 +108,8 @@ public final class RoadPaving {
                 return grown(world, colonyId, laid);
             }
 
-            // A planta em cima sai junto: rua não tem grama por cima.
-            if (!world.getBlockState(at.up()).isAir()) {
-                world.setBlockState(at.up(), net.minecraft.block.Blocks.AIR.getDefaultState());
-            }
-
-            // O caminho do chão que a rua cobre — o do bioma (VillageRoad.pavingOn).
-            world.setBlockState(at, VillageRoad.pavingOn(world, at, state, paving).getDefaultState());
+            // Quem calça é o aldeão, pelo grafo (Regra 214).
+            PathProposals.add(colonyId, at);
 
             // O índice de ruas precisa saber da beira nova — 2026-08-27.
             // A rua cresce justamente quando não houve lote, e o lote
@@ -137,44 +117,12 @@ public final class RoadPaving {
             // que não soubesse disto nunca mais acharia nada.
             RoadIndex.remember(colonyId, at);
 
-            layEdges(world, colonyId, at, end.towards());
-
             previous = at;
 
             laid.add(MinecraftTypeAdapter.toColonyPos(at));
         }
 
         return grown(world, colonyId, laid);
-    }
-
-    /**
-     * As duas bordas da rua de 3 (Regra 140): a coluna de cada lado do meio, no chão dela a até
-     * {@link RoadExtension#MAX_STEP} do meio, com o caminho do chão ({@link StreetSurface#edge}). A borda que
-     * não cabe — degrau alto, construção, água — fica sem calçar e a rua segue estreita ali.
-     */
-    private static void layEdges(ServerWorld world, UUID colonyId, BlockPos middle, Direction towards) {
-        for (Direction side : List.of(towards.rotateYClockwise(), towards.rotateYCounterclockwise())) {
-            Optional<BlockPos> ground = groundNear(world, middle.offset(side), middle.getY());
-
-            if (ground.isEmpty() || RoadIndex.isRoadArea(world, colonyId, ground.get())) {
-                continue;
-            }
-
-            BlockPos at = ground.get();
-            BlockState state = world.getBlockState(at);
-
-            if (refusalAt(world, at, state).isPresent()) {
-                continue;
-            }
-
-            if (!world.getBlockState(at.up()).isAir()) {
-                world.setBlockState(at.up(), net.minecraft.block.Blocks.AIR.getDefaultState());
-            }
-
-            world.setBlockState(at, StreetSurface.edge(world, at, state));
-
-            RoadIndex.remember(colonyId, at);
-        }
     }
 
     /**

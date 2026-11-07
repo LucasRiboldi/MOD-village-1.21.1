@@ -147,6 +147,9 @@ public final class SweepState {
      */
     static final Map<UUID, ColonyRoads> ROADS = new HashMap<>();
 
+    /** As linhas do grafo, como rede — Regra 216. */
+    static final Map<UUID, ColonyRoads> NETWORK = new HashMap<>();
+
     /**
      * As colônias cujo índice deu a volta inteira sem achar lote — P1.5,
      * 2026-09-19.

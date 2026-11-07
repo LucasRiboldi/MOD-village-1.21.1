@@ -266,8 +266,7 @@ public final class StructureBlueprintReader {
         // MESMA planta. Trocar mais adiante faria a colônia estocar areia
         // e o construtor assentar arenito, que é o defeito de 08-22.
         // E a peça colorida sai branca (WhitePieces, item 5 de 27-10), no mesmo ponto e pelo mesmo motivo.
-        Blueprint blueprint = Blueprint.of(structure, WhitePieces.baked(DesertSand.baked(structure, blocks)))
-                .withAccesses(StructureAccessReader.read(world, source, template.get()));
+        Blueprint blueprint = Blueprint.of(structure, WhitePieces.baked(DesertSand.baked(structure, blocks)));
 
         // <b>E a altura da rua</b> — sessão de jogo de 2026-09-26. Ver
         // Blueprint.withStreetLayer e StreetLayer.of.
@@ -283,15 +282,6 @@ public final class StructureBlueprintReader {
         return Optional.of(street.isPresent() ? blueprint.withStreetLayer(street.getAsInt()) : blueprint);
     }
 
-    /** Leitura MAE separada da política legada; não concede autorização de escrita — ADR-046. */
-    public static Optional<Blueprint> readForMae(ServerWorld world, ResourceId structure) {
-        // Quatro portões só no exercício supervisionado; fluxo automático conserva o asset legado — ADR-046.
-        ResourceId source = structure.equals(new ResourceId("villagecolony", "colony/large_animal_pen"))
-                ? new ResourceId("villagecolony", "mae/large_animal_pen") : ColonyModels.sourceFor(structure);
-        return read(world, structure, source).map(blueprint -> MaeStructureModel.prove(blueprint,
-                world.getStructureTemplateManager().getTemplate(
-                        MinecraftTypeAdapter.toIdentifier(source)).orElseThrow()));
-    }
 
     /**
      * Os blocos do template, já convertidos e filtrados.

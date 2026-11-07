@@ -100,7 +100,7 @@ public final class ColonyPathing {
         }
 
         Optional<Long> next = VillageColonyMod.WORKERS.find(mob.getUuid())
-                .flatMap(worker -> RoadIndex.roadsOf(worker.colonyId()))
+                .flatMap(worker -> RoadNetwork.of(worker.colonyId()))
                 .flatMap(roads -> StreetRoute.nextWaypoint(new HashSet<>(roads.columns()),
                         mob.getBlockX(), mob.getBlockZ(), target.getX(), target.getZ()));
 

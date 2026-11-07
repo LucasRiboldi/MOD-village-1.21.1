@@ -66,7 +66,7 @@ final class SnowShovel {
     static void pass(ServerWorld world, Colony colony) {
         Help help = SNOW.get(colony.id());
 
-        if (help != null && !(world.getEntity(help.worker) instanceof VillagerEntity helper && IdleHelps.isFree(world, helper))) {
+        if (help != null && !(world.getEntity(help.worker) instanceof VillagerEntity helper && IdleHelps.isFree(world, helper, IdleWorkers.Help.SNOW))) {
             stopSnow(colony.id());
             help = null;
         }
@@ -79,7 +79,7 @@ final class SnowShovel {
             for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
                 if (worker.profession().filter(ProfessionType.MASON::equals).isEmpty()
                         || !(world.getEntity(worker.villagerId()) instanceof VillagerEntity mason)
-                        || !IdleHelps.isFree(world, mason) || PathPaving.isPaving(mason.getUuid())) {
+                        || !IdleHelps.isFree(world, mason, IdleWorkers.Help.SNOW)) {
                     continue;
                 }
 

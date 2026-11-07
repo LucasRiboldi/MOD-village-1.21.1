@@ -4,8 +4,6 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.type.ServerMemory;
-import com.villagecolony.fabric.integration.MaeRoadAccess;
-import com.villagecolony.fabric.integration.NewVillage;
 import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.VillageRoad;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -48,10 +46,6 @@ public final class PathSupport {
         ServerTickEvents.END_WORLD_TICK.register(world -> {
             if (world.getRegistryKey().equals(World.OVERWORLD) && world.getTime() % EVERY == 0) {
                 for (Colony colony : VillageColonyMod.COLONIES.all()) {
-                    if (!NewVillage.is(world, colony)) {
-                        continue;
-                    }
-
                     RoadIndex.roadsOf(colony.id()).ifPresent(roads -> pass(world, colony.id(), roads));
                 }
             }
@@ -95,8 +89,7 @@ public final class PathSupport {
         }
 
         // Sem chão ao alcance, ou com água no vão: é ponte. Conferido antes de escrever.
-        if (gap == 0 || gap > MAX_GAP || !world.getFluidState(path.down(gap + 1)).isEmpty()
-                || !MaeRoadAccess.legacyAllowed(world, path.down(gap), path)) {
+        if (gap == 0 || gap > MAX_GAP || !world.getFluidState(path.down(gap + 1)).isEmpty()) {
             return 0;
         }
 

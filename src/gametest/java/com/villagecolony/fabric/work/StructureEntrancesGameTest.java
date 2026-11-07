@@ -227,7 +227,7 @@ public class StructureEntrancesGameTest implements FabricGameTest {
             MineGates.look(world, colony.id(), peak, world.getBlockState(peak));
 
             WorldPathTerrain terrain = new WorldPathTerrain(world, colony.id());
-            Set<ColonyPos> fronts = MineGates.fronts(world, colony.id(), terrain);
+            Set<ColonyPos> fronts = MineGates.fronts(world, colony, terrain);
 
             context.assertTrue(fronts.size() == 1, "Regra 210: o portão ficou sem entrada: " + fronts);
 

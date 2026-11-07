@@ -8,8 +8,6 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.MineHomeSiteSearch;
-import com.villagecolony.fabric.integration.VillageOrigin;
-import com.villagecolony.fabric.world.GeneratedVillages;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
@@ -17,7 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * A casa do mineiro ao lado da boca da mina, só em vila nova — ADR-043. A boca é a da superfície na mina de hoje (Regra 211):
+ * A casa do mineiro ao lado da boca da mina. A boca é a da superfície na mina de hoje (Regra 211):
  * a mina pode mudar de boca, e a casa acompanha, até uma por mineiro.
  */
 final class MineHomePlans {
@@ -31,7 +29,7 @@ final class MineHomePlans {
 
     static boolean isOwed(ServerWorld world, Colony colony) {
         var mine = VillageColonyMod.MINES.of(colony.id());
-        if (!isCurrentVillage(world, colony.center()) || mine.isEmpty()) {
+        if (mine.isEmpty()) {
             return false;
         }
         return isOwedAt(colony.id(), surfaceMouth(world, colony));
@@ -87,8 +85,4 @@ final class MineHomePlans {
         return Math.max(gapX, gapZ) <= RADIUS;
     }
 
-    static boolean isCurrentVillage(ServerWorld world, ColonyPos center) {
-        return GeneratedVillages.villagesReaching(world, center.x() >> 4, center.z() >> 4).stream()
-                .anyMatch(VillageOrigin::isCurrent);
-    }
 }

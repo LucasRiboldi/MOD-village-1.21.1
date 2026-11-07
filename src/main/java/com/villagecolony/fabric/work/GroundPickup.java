@@ -8,7 +8,6 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ColonyChests;
@@ -301,10 +300,8 @@ public final class GroundPickup {
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
             UUID id = worker.villagerId();
 
-            if (HELPING.containsKey(id) || !VillageColonyMod.TASKS.assignedTo(id).isEmpty()
-                    || StrandedWorkers.isStranded(id) || PenEscape.isEscaping(id)
-                    || !(world.getEntity(id) instanceof VillagerEntity villager) || !villager.isAlive()
-                    || villager.isSleeping() || !WorkHours.isWorkTime(world, villager)) {
+            if (HELPING.containsKey(id) || !(world.getEntity(id) instanceof VillagerEntity villager)
+                    || !IdleWorkers.isFree(world, villager, IdleWorkers.Help.GROUND_PICKUP)) {
                 continue;
             }
 

@@ -11,6 +11,6 @@ class PathPavingTest {
 
     @Test
     void onlyTheBuilderPavesPathLinks() {
-        assertEquals(List.of(ProfessionType.BUILDER), PathPaving.PAVERS);
+        assertEquals(List.of(ProfessionType.BUILDER, ProfessionType.MASON), PathPaving.PAVERS);
     }
 }

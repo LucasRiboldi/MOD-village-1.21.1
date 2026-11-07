@@ -1,3 +1,5 @@
+> **Histórico.** Descreve a escrita própria do MAE, que saiu do código em 2026-11-06 (ADR-047).
+
 # MAE — Fase 2: implementação e validação local
 
 ## Estado em 2026-11-03

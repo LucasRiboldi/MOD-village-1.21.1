@@ -12,6 +12,34 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.40] — candidata, 2026-11-06
+
+### Mudado
+
+- Todo caminho nasce do grafo: extensão de rua, corredor do lote e falha de rua só pedem, e os aldeões calçam (Regra 214).
+- O que precisa saber das ruas ouve o grafo, inclusive a busca de lote (Regra 216).
+- Toda vila usa o sistema atual, inclusive as de saves antigos.
+- O pedreiro ocioso nivela o chão; o construtor fica com a obra e a calçada (Regra 215).
+- A obra MAE usa a régua de lote do construtor (Regra 213). O curral grande tem um modelo só, de 4 portões.
+- A ligação do grafo cruza água com ponte quando não há saída a seco.
+
+### Removido
+
+- A prova de geração, que pesava em chunk novo sem ninguém ler o resultado.
+- A escrita própria do MAE, as regiões reservadas, `/vc mae soltar`, o traçado antigo pela porta, as bordas da rua de 3 e rotinas sem uso.
+
+## [0.4.39] — candidata, 2026-11-06
+
+### Mudado
+
+- Grafo: toda entrada aparece na hora, com o marcador branco, mesmo antes de ter caminho (Regra 214).
+- Em vila nova só o grafo traça caminho; o traçado antigo pela porta fica para a vila antiga (Regra 214).
+- O pedreiro ocioso ajuda a calçar o caminho, no rodízio com o construtor (Regra 215).
+
+### Corrigido
+
+- O caminho traçado não é mais esquecido quando uma releitura deixa de pedi-lo (Regra 214).
+
 ## [0.4.38] — candidata, 2026-11-06
 
 ### Mudado

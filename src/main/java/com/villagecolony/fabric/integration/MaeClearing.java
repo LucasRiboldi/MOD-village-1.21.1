@@ -34,7 +34,7 @@ final class MaeClearing {
 
     private static final int TALLEST_TRUNK = 40;
 
-    record Pending(ServerWorld world, MaeWorldWriter writer, UUID colonyId, ResourceId model, BlockPos origin,
+    record Pending(ServerWorld world, UUID colonyId, ResourceId model, BlockPos origin,
                    int quarterTurns, @Nullable UUID owner, WorkArea area, long readyAt) {
     }
 
@@ -78,29 +78,15 @@ final class MaeClearing {
 
     /**
      * O que a limpeza tiraria desta região; nada no mundo muda aqui.
-     *
-     * @throws IllegalStateException com o mesmo motivo da reserva, se a região não serve nem limpa
      */
-    static List<BlockPos> survey(ServerWorld world, MaeWorldWriter writer, UUID colonyId, WorkArea area) {
-        MaeProtection.inspectClearing(world, colonyId, area);
-        MaeGenerationEvidence.inspect(world, area, false, 128);
-
-        String dimension = world.getRegistryKey().getValue().toString();
-
-        for (var other : writer.store().regions()) {
-            if (!MaeHandover.isHandedOver(other) && dimension.equals(other.getString("dimension"))
-                    && area.intersects(MaeWorldWriter.area(other))) {
-                throw new IllegalStateException("overlapping_region");
-            }
-        }
-
+    static List<BlockPos> survey(ServerWorld world, WorkArea area) {
         List<BlockPos> growth = new ArrayList<>();
 
         for (BlockPos pos : BlockPos.iterate(area.min().x(), area.min().y(), area.min().z(),
                 area.max().x(), area.max().y(), area.max().z())) {
             BlockState state = world.getBlockState(pos);
 
-            if (!MaeProtection.terrain(state) && !MaeProtection.vegetation(state) && isGrowth(world, pos, state)) {
+            if (!LotGround.isNothing(state) && isGrowth(world, pos, state)) {
                 growth.add(pos.toImmutable());
             }
         }

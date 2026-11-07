@@ -246,7 +246,7 @@ public final class BuildSiteScanner {
             SweepLog.indexed(colonyId);
 
             RoadScan indexed = RoadIndex.findAmongRoads(
-                    world, colonyId, from, roads, radius, footprints);
+                    world, colonyId, from, RoadNetwork.of(colonyId).orElse(roads), radius, footprints);
             columns = indexed.columns();
             Optional<Site> fromIndex = indexed.site();
 
@@ -430,6 +430,7 @@ public final class BuildSiteScanner {
     public static void clearAll() {
         SweepState.SWEEPS.clear();
         SweepState.ROADS.clear();
+        SweepState.NETWORK.clear();
         SweepState.ROAD_CURSOR.clear();
         SweepState.BUILDING.clear();
         SweepState.EXHAUSTED.clear();

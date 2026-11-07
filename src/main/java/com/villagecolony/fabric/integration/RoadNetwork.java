@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.ColonyRoads;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.server.world.ServerWorld;
@@ -61,7 +62,6 @@ public final class RoadNetwork {
      * @return o índice novo, quando foi traçado agora
      */
     public static Optional<ColonyRoads> indexIfMissing(ServerWorld world, UUID colonyId) {
-        if (!MaeRoadAccess.metadataAllowed(world, colonyId)) return Optional.empty();
         if (SweepState.ROADS.containsKey(colonyId)
                 || world.getTime() - TRACED_AT.getOrDefault(colonyId, Long.MIN_VALUE / 2) < RETRACE_EVERY) {
             return Optional.empty();
@@ -145,5 +145,24 @@ public final class RoadNetwork {
 
     static void clearAll() {
         TRACED_AT.clear();
+    }
+
+    /**
+     * A rede da vila: as linhas do grafo, para quem pergunta por onde se anda e o que está perto da rua — Regra 216. Enquanto
+     * não houve releitura, o índice físico responde; ele continua sendo a memória de cada coluna de caminho.
+     */
+    public static Optional<ColonyRoads> of(UUID colonyId) {
+        ColonyRoads network = colonyId == null ? null : SweepState.NETWORK.get(colonyId);
+
+        return network != null ? Optional.of(network) : RoadIndex.roadsOf(colonyId);
+    }
+
+    /** O grafo publicou estas linhas. */
+    public static void publish(UUID colonyId, ColonyPos from, List<Long> columns) {
+        if (columns.isEmpty()) {
+            SweepState.NETWORK.remove(colonyId);
+        } else {
+            SweepState.NETWORK.put(colonyId, new ColonyRoads(colonyId, from, columns));
+        }
     }
 }

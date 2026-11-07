@@ -80,7 +80,7 @@ public final class SitePreparation {
 
         cleared += clearTrees(world, project);
         // Só em obra sem nenhuma peça: na retomada, tronco e pedra na zona podem ser da própria obra.
-        if (project.remainingCount() == project.blueprint().blockCount() && NewVillage.is(world, project.colonyId())) {
+        if (project.remainingCount() == project.blueprint().blockCount()) {
             cleared += TreeClearing.sweep(world, origin.x() - OUTER_MARGIN, origin.z() - OUTER_MARGIN,
                     origin.x() + size.x() + OUTER_MARGIN - 1, origin.z() + size.z() + OUTER_MARGIN - 1, origin.y(),
                     ColonyChests.nearestFirst(world, project.colonyId(), origin));

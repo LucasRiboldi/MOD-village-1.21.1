@@ -61,10 +61,6 @@ public final class RoadIndex {
      * quadrado.
      */
     static void indexWhatWasSeen(ServerWorld world, UUID colonyId, ColonyPos center) {
-        if (!MaeRoadAccess.metadataAllowed(world, colonyId)) {
-            SweepState.BUILDING.remove(colonyId);
-            return;
-        }
         Set<Long> seen = SweepState.BUILDING.remove(colonyId);
 
         // Índice novo é outra lista: a posição guardada falava da
@@ -415,6 +411,10 @@ public final class RoadIndex {
      * espacial. Uma troca manual de bloco jamais cria essa reserva sozinha.
      */
     public static boolean isRoadArea(ServerWorld world, UUID colonyId, BlockPos pos) {
+        if (PathProposals.isWanted(colonyId, pos.getX(), pos.getZ())) {
+            return true;
+        }
+
         BlockState state = world.getBlockState(pos);
         boolean biomePath = VillageRoad.isBiomePath(state);
 

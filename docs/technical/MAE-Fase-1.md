@@ -1,3 +1,5 @@
+> **Histórico.** Descreve a escrita própria do MAE, que saiu do código em 2026-11-06 (ADR-047).
+
 # MAE — Fase 1: região e escrita segura
 
 Data: 2026-11-02. Versão candidata: 0.4.9. Branch: `codex/mae-region-safety`.

@@ -6,22 +6,17 @@ import com.villagecolony.core.construction.model.PathStep;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
-import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.core.construction.model.VillagePathPlanner;
-import com.villagecolony.fabric.content.ModContent;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.LotGround;
-import com.villagecolony.fabric.integration.MaeRoadAccess;
 import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.StreetSurface;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.registry.Registries;
-import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
@@ -49,9 +44,9 @@ public final class PathPaving {
         ServerMemory.register(PathPaving.class, PathPaving::clearAll);
     }
 
-    /** Construção de rua não desvia os ofícios produtivos. */
+    /** O construtor, e o pedreiro quando está ocioso: é a função secundária dele (Regra 215). */
     static final List<ProfessionType> PAVERS =
-            List.of(ProfessionType.BUILDER);
+            List.of(ProfessionType.BUILDER, ProfessionType.MASON);
 
     /** Passos que um assenta antes de passar a vez. */
     static final int STEPS_PER_TURN = 8;
@@ -103,7 +98,6 @@ public final class PathPaving {
 
         for (Colony colony : List.copyOf(VillageColonyMod.COLONIES.all())) {
             if (colony.isActive() && colony.isAttended(now)) {
-                PathLinks.tend(world, colony);
                 pass(world, colony);
             }
         }
@@ -149,10 +143,8 @@ public final class PathPaving {
             turn.walked += 10;
 
             if (turn.walked > GIVE_UP_AFTER) {
-                // Coluna de reparo que ele não alcança sai do plano; o traçado de porta é refeito.
-                if (plan.repair) {
-                    skipRepairStep(colonyId, turn, plan, step);
-                }
+                // Coluna que ele não alcança sai do trecho e fica de fora dos próximos (RoadGraphRefresh.refused).
+                skipStep(colonyId, turn, plan, step);
 
                 endTurn(colonyId);
                 return;
@@ -178,22 +170,12 @@ public final class PathPaving {
             return;
         }
 
-        if (plan.repair) {
-            com.villagecolony.fabric.integration.TreeClearing.openColumn(world, step.x(), step.z(), step.floorY(),
-                    com.villagecolony.fabric.integration.ColonyChests.nearestFirst(world, colonyId,
-                            new com.villagecolony.core.type.ColonyPos(step.x(), step.floorY(), step.z())));
-        }
+        com.villagecolony.fabric.integration.TreeClearing.openColumn(world, step.x(), step.z(), step.floorY(),
+                com.villagecolony.fabric.integration.ColonyChests.nearestFirst(world, colonyId,
+                        new com.villagecolony.core.type.ColonyPos(step.x(), step.floorY(), step.z())));
 
         if (!layAndRecord(world, colonyId, paver.getUuid(), step)) {
-            if (plan.repair) {
-                skipRepairStep(colonyId, turn, plan, step);
-                return;
-            }
-
-            VillageColonyMod.LOGGER.info("Colony {} — the path step at {} no longer fits; the path is traced again",
-                    colonyId.toString().substring(0, 8), floor.toShortString());
-            PathLinks.drop(colonyId);
-            endTurn(colonyId);
+            skipStep(colonyId, turn, plan, step);
             return;
         }
 
@@ -211,7 +193,7 @@ public final class PathPaving {
         }
     }
 
-    private static void skipRepairStep(UUID colonyId, Turn turn, PathLinks.Plan plan, PathStep step) {
+    private static void skipStep(UUID colonyId, Turn turn, PathLinks.Plan plan, PathStep step) {
         RoadGraphRefresh.refused(colonyId, step);
         plan.next++;
         turn.walked = 0;
@@ -261,8 +243,6 @@ public final class PathPaving {
      * buraco. Por cima do piso só sai planta.
      */
     static boolean pave(ServerWorld world, UUID colonyId, int x, int z, int ground, int floorY, boolean edge) {
-        if (!MaeRoadAccess.legacyAllowed(world, new BlockPos(x, Math.min(ground, floorY), z),
-                new BlockPos(x, Math.max(ground + 2, floorY + CLEAR + 1), z))) return false;
         BlockPos top = new BlockPos(x, ground, z);
         BlockState surface = world.getBlockState(top);
         BlockPos floor = new BlockPos(x, floorY, z);
@@ -330,15 +310,8 @@ public final class PathPaving {
         return Optional.empty();
     }
 
-    /** Sem tarefa do ofício, no expediente, solto e sem outra ajuda em curso. */
     private static boolean isFree(ServerWorld world, VillagerEntity villager) {
-        UUID id = villager.getUuid();
-
-        return villager.isAlive() && !villager.isSleeping()
-                && VillageColonyMod.TASKS.assignedTo(id).isEmpty()
-                && WorkHours.isWorkTime(world, villager)
-                && !StrandedWorkers.isStranded(id) && !PenEscape.isEscaping(id)
-                && !BuilderPaving.isPaving(id) && !GroundPickup.isHelping(id);
+        return IdleWorkers.isFree(world, villager, IdleWorkers.Help.PATH);
     }
 
     private static void endTurn(UUID colonyId) {

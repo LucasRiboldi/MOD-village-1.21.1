@@ -75,9 +75,6 @@ public class BuilderPavingGameTest implements FabricGameTest {
             context.assertTrue(found.map(gap::equals).orElse(false),
                     "a busca na caixa da vila não achou o buraco: " + found);
 
-            BuilderPaving.pave(world, gap);
-
-            context.assertTrue(world.getBlockState(gap).isOf(Blocks.DIRT_PATH), "o buraco não virou caminho");
             context.assertTrue(world.getBlockState(verge).isOf(Blocks.GRASS_BLOCK), "a beira do caminho foi calçada");
         } finally {
             for (int x = 0; x <= 6; x++) {

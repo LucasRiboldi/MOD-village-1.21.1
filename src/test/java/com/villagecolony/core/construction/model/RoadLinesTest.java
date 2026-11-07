@@ -275,4 +275,60 @@ class RoadLinesTest {
         assertFalse(result.surplus().contains(door), "a frente da porta foi tratada como sobra");
         assertFalse(result.surplus().contains(at(5, 0)), "a própria linha foi tratada como sobra");
     }
+
+    @Test
+    @DisplayName("toda entrada é nó do grafo, mesmo longe demais para ligar agora")
+    void anEntranceFarFromTheNetworkIsStillInTheGraph() {
+        ColonyPos far = at(500, 500);
+        RoadLines.Result result = build(corridor(0, 20, 0, 0), at(10, 0), Set.of(far), Set.of());
+        RoadGraph graph = result.graph().orElseThrow();
+
+        assertTrue(graph.nodes().stream().anyMatch(node -> node.position().equals(far) && node.roles().contains(RoadGraph.Role.ENTRANCE)),
+                "Regra 214: a entrada sem ligação sumiu do grafo: " + graph.nodes());
+        assertEquals(1, graph.nodes().stream().filter(node -> node.roles().contains(RoadGraph.Role.HUB)).count(), "um nó central só");
+        assertTrue(graph.nodes().stream().noneMatch(node -> node.position().equals(far) && node.roles().contains(RoadGraph.Role.HUB)),
+                "o centro saiu da rede e foi para a entrada solta");
+    }
+
+    @Test
+    @DisplayName("o centro é da rede, mesmo com uma entrada solta mais perto dele")
+    void theHubStaysOnTheNetworkWhenAnEntranceIsCloser() {
+        ColonyPos center = at(100, 100);
+        ColonyPos door = at(100, 99);
+        RoadLines.Result result = build(corridor(0, 20, 0, 0), center, Set.of(door), Set.of());
+        RoadGraph graph = result.graph().orElseThrow();
+
+        assertTrue(graph.nodes().stream().anyMatch(node -> node.position().equals(door) && node.roles().contains(RoadGraph.Role.ENTRANCE)
+                && !node.roles().contains(RoadGraph.Role.HUB)), "Regra 214: a entrada solta virou centro: " + graph.nodes());
+    }
+
+    /** Duas partes da rua separadas por um riacho de {@code wet} colunas, de x=21 em diante. */
+    private static PathTerrain withWater(int wet, boolean water) {
+        return new PathTerrain() {
+            @Override
+            public OptionalInt groundY(int x, int z, int nearY) {
+                return !water && z >= -2 && z <= 2 && x >= 21 && x < 21 + wet ? OptionalInt.empty() : OptionalInt.of(Y);
+            }
+
+            @Override
+            public boolean blocked(int x, int z) {
+                return Math.abs(z) > 2;
+            }
+        };
+    }
+
+    @Test
+    @DisplayName("sem saída a seco, a ligação atravessa a água até o limite")
+    void aLinkCrossesWaterUpToTheSpan() {
+        Set<ColonyPos> cells = corridor(0, 20, 0, 0);
+
+        cells.addAll(corridor(24, 40, 0, 0));
+
+        RoadLines.Result crossing = RoadLines.build(cells, Set.of(), at(10, 0), Set.of(), Set.of(), withWater(3, false), withWater(3, true), 3, 1, 0);
+        RoadLines.Result tooWide = RoadLines.build(cells, Set.of(), at(10, 0), Set.of(), Set.of(), withWater(3, false), withWater(3, true), 2, 1, 0);
+
+        assertTrue(columnsOf(crossing).contains(at(22, 0)), "a ligação não cruzou o riacho: " + crossing.toPave());
+        assertTrue(crossing.isolated() == 0, "a parte do outro lado ficou solta");
+        assertFalse(columnsOf(tooWide).contains(at(22, 0)), "cruzou mais água do que o limite");
+    }
 }

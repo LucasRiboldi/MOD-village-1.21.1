@@ -95,7 +95,7 @@ public class RoadExtensionGameTest implements FabricGameTest {
             BlockPos laid = ROAD_END.add(step, 0, 0);
 
             context.assertTrue(
-                    context.getBlockState(laid).isOf(Blocks.DIRT_PATH),
+                    asked(context, colony, laid) && !context.getBlockState(laid).isOf(Blocks.DIRT_PATH),
                     "o bloco " + step + " depois da ponta não virou rua");
         }
 
@@ -219,7 +219,7 @@ public class RoadExtensionGameTest implements FabricGameTest {
                         + PavingRefusals.lastOf(colony));
 
         context.assertTrue(
-                context.getBlockState(ROAD_END.add(2, 0, 0)).isOf(Blocks.DIRT_PATH),
+                asked(context, colony, ROAD_END.add(2, 0, 0)),
                 "a terra depois do caminho não foi calçada");
 
         context.complete();
@@ -261,11 +261,8 @@ public class RoadExtensionGameTest implements FabricGameTest {
 
         for (int step = 1; step <= 3; step++) {
             context.assertTrue(
-                    context.getBlockState(ROAD_END.add(step, 0, 0)).isOf(Blocks.DIRT_PATH),
+                    asked(context, colony, ROAD_END.add(step, 0, 0)),
                     "a terra sob a planta " + step + " não virou rua");
-            context.assertTrue(
-                    context.getBlockState(ROAD_END.add(step, 1, 0)).isAir(),
-                    "a planta " + step + " ficou em cima da rua");
         }
 
         context.complete();
@@ -342,7 +339,7 @@ public class RoadExtensionGameTest implements FabricGameTest {
                 "a ponta murada parou a vila em vez de a colônia tentar a próxima: " + outcome);
 
         context.assertTrue(
-                context.getBlockState(ROAD_END.add(1, 0, 0)).isOf(Blocks.DIRT_PATH),
+                asked(context, colony, ROAD_END.add(1, 0, 0)),
                 "a segunda ponta não foi tentada");
 
         context.assertTrue(
@@ -390,7 +387,7 @@ public class RoadExtensionGameTest implements FabricGameTest {
         context.assertTrue(outcome == RoadExtension.Outcome.EXTENDED,
                 "a estrada fechada nao abriu um ramal: " + outcome);
         context.assertTrue(
-                context.getBlockState(new BlockPos(6, 1, 3)).isOf(Blocks.DIRT_PATH),
+                asked(context, colony, new BlockPos(6, 1, 3)),
                 "o ramal nao alcancou o solo novo ao norte");
         context.complete();
     }
@@ -439,7 +436,7 @@ public class RoadExtensionGameTest implements FabricGameTest {
             ConstructionPlanner.plan(context.getWorld(), colony);
 
             context.assertTrue(
-                    context.getBlockState(ROAD_END.add(1, 0, 0)).isOf(Blocks.DIRT_PATH),
+                    asked(context, colony.id(), ROAD_END.add(1, 0, 0)),
                     "o planejamento terminou sem lote e não mandou calçar nada");
         } finally {
             ConstructionPlanner.restoreSearch();
@@ -788,5 +785,12 @@ public class RoadExtensionGameTest implements FabricGameTest {
                 "achou lote e a colônia continuou calçando assim mesmo");
 
         context.complete();
+    }
+
+    /** Quem pede é a rua, e quem calça é o aldeão, pelo grafo (Regra 214). */
+    private static boolean asked(TestContext context, java.util.UUID colony, BlockPos at) {
+        BlockPos world = context.getAbsolutePos(at);
+
+        return com.villagecolony.fabric.integration.PathProposals.isWanted(colony, world.getX(), world.getZ());
     }
 }

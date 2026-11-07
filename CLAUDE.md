@@ -128,7 +128,7 @@ e encalhe no expediente.
   profissão no expediente (sem ofício fica fora). Quem fica sem tarefa entra na
   cadeia de alternativas: tarefa do ofício → manutenção do próprio ofício
   → coleta comum permitida. Pela regra temporária de 02-11, nenhuma profissão
-  assume atividade de outra, inclusive ajuda de obra e reatribuição.
+  assume atividade de outra, inclusive ajuda de obra e reatribuição. Exceção do autor: o pedreiro ocioso calça o caminho (Regra 215).
   Espera acima de 40% é alerta. Análise e alternativas:
   `docs/research/2026-10-08-tempo-ocioso.md`.
 

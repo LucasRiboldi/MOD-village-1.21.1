@@ -7,7 +7,6 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ColonyChests;
-import com.villagecolony.fabric.integration.NewVillage;
 import com.villagecolony.fabric.integration.TreeClearing;
 import com.villagecolony.fabric.world.GeneratedVillages;
 import net.minecraft.block.BlockState;
@@ -63,10 +62,6 @@ final class BuildingGaps {
 
     /** Uma passada do pedreiro; devolve quantas colunas mudaram. */
     static int pass(ServerWorld world, Colony colony) {
-        if (!NewVillage.is(world, colony)) {
-            return 0;
-        }
-
         List<Box> boxes = boxesOf(world, colony);
         Optional<BlockPos> mine = VillageColonyMod.MINES.of(colony.id())
                 .map(found -> MinecraftTypeAdapter.toBlockPos(found.shaft().entry()));
@@ -129,7 +124,7 @@ final class BuildingGaps {
 
     /** O piso é o chão em frente à porta; sem porta, a base da caixa. */
     private static Box boxOf(ServerWorld world, BlockPos min, BlockPos max) {
-        int floor = PathLinks.entranceOf(world, min, max).map(entrance -> entrance.front().getY() - 1).orElse(min.getY());
+        int floor = DoorFronts.of(world, min, max).stream().findFirst().map(BlockPos::getY).orElse(min.getY());
 
         return new Box(min.getX(), min.getZ(), max.getX(), max.getZ(), floor);
     }
