@@ -12,6 +12,7 @@ hook de sincronização estão em `AGENT-SWITCH-SETUP.md` e `HANDOFF.md`.
 
 ## Contexto mínimo
 
+0. Retomando o projeto: leia `HANDOFF.md` primeiro.
 1. Leia `STATE.md` — somente as primeiras 60 linhas.
 2. Leia `CLAUDE.md` e use `docs/PATTERNS.md` na seção correspondente ao sintoma.
 3. Consulte a ADR ou o documento do subsistema que será alterado.

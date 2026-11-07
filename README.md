@@ -19,7 +19,7 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Estado atual: candidata 0.4.43** (não jogada). O estado vivo, a contagem de testes e o que espera
+**Estado atual: 0.4.43 publicada como pré-lançamento, em correção por playtest.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
 [docs/RULES.md](docs/RULES.md) (1 a 216).
 
@@ -649,6 +649,9 @@ Os outros relatórios:
 | Script | O que mostra |
 |---|---|
 | `time_ledger.py` | O tempo por ofício (`VC_TIME`) |
+| `spark_decode.py` | Resumo de um perfil do Spark baixado |
+| `save_read.py` | Grafo e mapa do save, sem abrir o jogo |
+| `gametest_focus.py` | Roda só algumas classes de GameTest |
 | `action_report.py` | O diário de ações por aldeão, com os motivos de recusa |
 | `cost_ledger.py` | O custo por fase do ciclo (`VC_COST`) |
 | `supply_report.py` | O que surgiu sem um ofício obter (`VC_SUPPLY`) |
