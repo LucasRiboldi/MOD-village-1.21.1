@@ -4,8 +4,11 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
+import com.villagecolony.fabric.integration.ColonyChests;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
+
+import java.util.List;
 
 /**
  * O fazendeiro faz o pão — decisão do autor, 2026-09-30: <i>"comida é
@@ -62,6 +65,37 @@ public final class FarmerBakery {
 
             VillageColonyMod.LOGGER.info(
                     "Farmer at {} baked {} bread from {} wheat", chest, baked, baked * WHEAT_PER_BREAD);
+        }
+
+        return baked;
+    }
+
+    /**
+     * A ceia assa o trigo de qualquer baú da vila — Regra 217: a colheita fica espalhada, e só o baú do próprio fazendeiro assava.
+     *
+     * @param most quantos pães a ceia ainda precisa
+     * @return quantos pães entraram nos baús
+     */
+    public static int bakeForSupper(ServerWorld world, List<ColonyPos> chests, int most) {
+        int spare = Math.max(0, ColonyChests.countIn(world, chests, Items.WHEAT) - WHEAT_RESERVE);
+        int left = Math.min(most, spare / WHEAT_PER_BREAD);
+        int baked = 0;
+
+        for (ColonyPos chest : chests) {
+            if (left <= 0) {
+                break;
+            }
+
+            int loaves = Math.min(
+                    Math.min(left, ChestWithdrawer.countIn(world, chest, Items.WHEAT) / WHEAT_PER_BREAD),
+                    ChestDepositor.freeSpaceFor(world, chest, Items.BREAD));
+
+            if (loaves > 0) {
+                ChestWithdrawer.withdraw(world, chest, Items.WHEAT, loaves * WHEAT_PER_BREAD);
+                ChestDepositor.deposit(world, chest, Items.BREAD, loaves);
+                left -= loaves;
+                baked += loaves;
+            }
         }
 
         return baked;

@@ -5,11 +5,12 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.WorkClock;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageFocus;
 import com.villagecolony.fabric.integration.ColonyChests;
-import net.minecraft.entity.Entity;
+
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.Item;
@@ -19,6 +20,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +41,7 @@ import java.util.UUID;
  * ({@link WorkClock#DUSK}), que é quando a agenda Vanilla põe o aldeão à
  * toa até a hora de dormir — e é na hora à toa que ele procria.
  *
- * <p><b>É a reunião da vila</b> — ADR-037 R1: a comida de qualquer baú é
+ * <p><b>É a reunião da vila</b> — ADR-037 R1, Regra 217: a comida de qualquer baú é
  * doada a cada adulto até {@link #BREEDING_FOOD} pontos, com cama sobrando ou
  * não, e antes o fazendeiro assa o trigo guardado ({@link FarmerBakery}).
  * Todos alimentados é o convívio que a felicidade conta ({@link VillageMood}).
@@ -57,6 +59,9 @@ public final class VillageMeals {
 
     /** O fim da hora à toa: depois disso a agenda manda dormir. */
     private static final int REST = 12_000;
+
+    /** O que um pão vale de disposição. */
+    private static final int LOAF_POINTS = 4;
 
     private static final int EVERY_TICKS = 20;
 
@@ -110,33 +115,34 @@ public final class VillageMeals {
         int living = world.getEntitiesByClass(
                 VillagerEntity.class, area, VillagerEntity::isAlive).size();
 
-        // O fazendeiro assa o trigo guardado antes da ceia — ADR-037 C7 c.
-        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
-            if (worker.profession().filter(com.villagecolony.core.worker.model.ProfessionType.FARMER::equals).isPresent()) {
-                VillageColonyMod.STORAGES.of(worker.villagerId())
-                        .ifPresent(storage -> FarmerBakery.bakeSurplus(world, storage.chestPosition()));
-            }
-        }
-
         List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.id(), colony.center());
         // A comida de cria do rebanho fica no baú (ShepherdFlock.breedingFoodToKeep, D2).
         Map<Item, Integer> keep = ShepherdFlock.breedingFoodToKeep(world, colony);
+        // Todo adulto da colônia, com ofício ou sem: o VillagerScanner registra cada aldeão da vila em WORKERS.
+        List<VillagerEntity> hungry = new ArrayList<>();
+        boolean farmer = false;
+
+        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
+            farmer |= worker.profession().filter(ProfessionType.FARMER::equals).isPresent();
+
+            if (world.getEntity(worker.villagerId()) instanceof VillagerEntity villager
+                    && villager.isAlive()
+                    && !villager.isBaby()
+                    && villager.getBreedingAge() == 0
+                    && !villager.isReadyToBreed()) {
+                hungry.add(villager);
+            }
+        }
+
+        // O fazendeiro assa o trigo guardado antes da ceia — ADR-037 C7 c, Regra 217.
+        if (farmer) {
+            FarmerBakery.bakeForSupper(world, chests,
+                    hungry.size() * BREEDING_FOOD / LOAF_POINTS - ColonyChests.countIn(world, chests, Items.BREAD));
+        }
+
         int fed = 0;
 
-        // Todo adulto da colônia, com ofício ou sem: o VillagerScanner
-        // registra cada aldeão da vila em WORKERS, e é de lá que a lista
-        // sai. Conferido em 2026-09-30, quando se suspeitou do contrário.
-        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
-            Entity entity = world.getEntity(worker.villagerId());
-
-            if (!(entity instanceof VillagerEntity villager)
-                    || !villager.isAlive()
-                    || villager.isBaby()
-                    || villager.getBreedingAge() != 0
-                    || villager.isReadyToBreed()) {
-                continue;
-            }
-
+        for (VillagerEntity villager : hungry) {
             if (feed(world, chests, villager, keep) > 0) {
                 fed++;
             }
