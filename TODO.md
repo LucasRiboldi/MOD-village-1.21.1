@@ -104,6 +104,8 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
 
 ## Jogo da 0.4.43 (Spark u6XC34ZC0k, 63 min, vila nova em 1270, 91)
 
+Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2026-11-07-jogo-0443.md`.
+
 - [ ] Quina de plantação em cima da rua segue branca: `1242, 63, 66`. `RoadGraph.hasLineNear` ignora toda aresta que termina no ponto, e na rua as duas terminam nele
 - [ ] Branco sem porta em `plains_accessory_1`: `1286, 72, 102`. Decidir se essa peça é enfeite (Regra 223)
 - [ ] Socorro cedo (Regra 222): disparou às 10:09:52 depois de falhar pedreiro e armeiro, e a busca normal abriu obra 29 s depois. O jogador parou a obra às 10:10:09
