@@ -2,6 +2,11 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
+> **Candidata 0.4.45:** fechamento do MAE (ADR-051, Regras 226 a 228): socorro só quando nem casa cabe, em bairro; `/vc mae obra` com
+> todos os motivos de recusa e tempo em `ms`; a obra do jogador aterra água interna da vila, não mar nem rio aberto; ruína de save antigo
+> sai, só o bloco igual ao da planta. Não jogada. O que falta do MAE é prova em jogo: `TODO.md`, seção do MAE.
+> Sentinela `fast`: 1070 GameTests e 1777 unitários, verde na terceira bateria; nas duas primeiras falhou um instável conhecido em cada (`workerCollectsWhileWalkingPast`, `animalsWalkInThroughEachOfTheFourGates`). PIT local: 85% (3314 de 3897). 9 sabotagens do MAE pegas.
+
 > **Candidata 0.4.44:** grafo estável, pedido do autor em 11-10 (ADR-050, Regras 224 e 225): toda parte solta liga em reta ao ponto mais
 > perto da linha; entra o caminho de fora da caixa que encosta no de dentro; o teto de 6.000 colunas não cala mais o grafo; trecho com 10 dias
 > sem mudar fica fixo. Passo 4 da pesquisa (solo para todo caminho fora do grafo) espera medir `offLine` em jogo. Não jogada.

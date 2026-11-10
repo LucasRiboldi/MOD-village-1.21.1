@@ -95,4 +95,17 @@ public class LotTypeRefusalsGameTest implements FabricGameTest {
 
         context.complete();
     }
+    /** Só a volta sem lote da casa chama o socorro: a oficina sem lote passa a vez para outro tipo (Regra 226). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lot_refusals_rescue", tickLimit = 20)
+    public void onlyAHouseWithoutALotCallsTheRescue(TestContext context) {
+        var world = context.getWorld();
+        Blueprint house = com.villagecolony.fabric.integration.MaeSites.blueprint(world,
+                ResourceId.vanilla("village/plains/houses/plains_small_house_1"), 0);
+        Blueprint armorer = com.villagecolony.fabric.integration.MaeSites.blueprint(world,
+                ResourceId.vanilla("village/plains/houses/plains_armorer_house_1"), 0);
+
+        context.assertTrue(LotSeeking.callsTheRescue(house), "Regra 226: a casa sem lote não chama o socorro");
+        context.assertFalse(LotSeeking.callsTheRescue(armorer), "Regra 226: a oficina sem lote chamou o socorro");
+        context.complete();
+    }
 }

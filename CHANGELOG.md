@@ -12,6 +12,20 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.45] — candidata, 2026-11-10
+
+### Corrigido
+
+- O socorro do MAE só dispara quando nem casa cabe, e não quando falha um tipo de oficina (Regra 226).
+- `/vc mae obra` sem lote diz cada motivo de recusa e quantos lotes recusou (Regra 226).
+
+### Adicionado
+
+- O socorro forma um bairro: a obra seguinte fica do mesmo lado e colada na anterior (Regra 226).
+- A obra pedida pelo jogador aterra lago e poça da zona interna da vila; mar e rio aberto recusam (Regra 227).
+- A ruína de obra MAE de save antigo sai do mundo; só sai o bloco igual ao da planta (Regra 228).
+- `VC_MAE_SITE` mede em `ms` cada pedido e cada recusa.
+
 ## [0.4.44] — candidata, 2026-11-10
 
 ### Adicionado

@@ -62,13 +62,15 @@ public final class MaeSites {
 
     private static Status start(ServerWorld world, UUID colonyId, ResourceId model, BlockPos floor,
                                 int quarterTurns, @Nullable UUID owner, boolean mayClear) {
+        long began = System.nanoTime();
+
         if (quarterTurns < 0 || quarterTurns > 3) throw new IllegalArgumentException("invalid_rotation");
         if (VillageColonyMod.COLONIES.find(colonyId).isEmpty()) throw new IllegalStateException("unknown_colony");
         if (MaeBuildQueue.ofColony(world, colonyId).size() >= MAX_QUEUED) throw new IllegalStateException("too_many_sites");
 
         Blueprint blueprint = blueprint(world, model, quarterTurns);
         ColonyPos origin = blueprint.originFor(MinecraftTypeAdapter.toColonyPos(floor));
-        List<BlockPos> growth = inspect(world, colonyId, blueprint, origin, floor.getY(), null);
+        List<BlockPos> growth = inspectOrFill(world, colonyId, blueprint, origin, floor.getY(), owner);
 
         if (mayClear && !growth.isEmpty()) {
             return clearFirst(world, colonyId, model, floor, quarterTurns, owner, growth, lotArea(blueprint, colonyId, origin));
@@ -77,10 +79,42 @@ public final class MaeSites {
         MaeBuildQueue.Request request = MaeBuildQueue.add(world, new MaeBuildQueue.Request(UUID.randomUUID(), colonyId, model,
                 floor.toImmutable(), MinecraftTypeAdapter.toBlockPos(origin), quarterTurns, owner, false));
 
-        VillageColonyMod.LOGGER.info("VC_MAE_SITE version=2 colony={} model={} at={} rotation={} result=queued",
-                colonyId.toString().substring(0, 8), model, floor.toShortString(), quarterTurns);
+        VillageColonyMod.LOGGER.info("VC_MAE_SITE version=2 colony={} model={} at={} rotation={} result=queued ms={}",
+                colonyId.toString().substring(0, 8), model, floor.toShortString(), quarterTurns, (System.nanoTime() - began) / 1_000_000);
 
         return statusOf(request);
+    }
+
+    /**
+     * O lote do jogador sobre água interna da vila: a água sai, e o lote é conferido de novo — Regra 227. A obra automática,
+     * sem dono, não aterra água (ADR-049).
+     */
+    private static List<BlockPos> inspectOrFill(ServerWorld world, UUID colonyId, Blueprint blueprint, ColonyPos origin,
+                                                int floorY, @Nullable UUID owner) {
+        try {
+            return inspect(world, colonyId, blueprint, origin, floorY, null);
+        } catch (IllegalStateException refused) {
+            var box = VillageColonyMod.COLONIES.find(colonyId).flatMap(com.villagecolony.core.colony.model.Colony::bounds);
+
+            if (owner == null || box.isEmpty() || !("occupied".equals(refused.getMessage()) || "no_base".equals(refused.getMessage()))) {
+                throw refused;
+            }
+
+            Building lot = Building.of(ConstructionProject.plan(colonyId, blueprint, origin));
+            List<BlockPos> water = MaeWater.toFill(world, box.get(), lot.min(), new ColonyPos(lot.max().x(), floorY, lot.max().z()),
+                    floorY);
+
+            if (water.isEmpty()) {
+                throw refused;
+            }
+
+            MaeWater.fill(world, water);
+            VillageColonyMod.LOGGER.info("VC_MAE_SITE version=2 colony={} model={} at={} result=water_filled blocks={}",
+                    colonyId.toString().substring(0, 8), blueprint.id(), MinecraftTypeAdapter.toBlockPos(origin).toShortString(),
+                    water.size());
+
+            return inspect(world, colonyId, blueprint, origin, floorY, null);
+        }
     }
 
     /**
@@ -189,18 +223,38 @@ public final class MaeSites {
      */
     public static Status startNear(ServerWorld world, UUID colonyId, ResourceId model, BlockPos near,
                                    int quarterTurns, @Nullable UUID owner) {
-        String last = "no_lot";
+        return firstThatServes(world, colonyId, model, lotsNear(world, model, near, quarterTurns), quarterTurns, owner, "no_lot");
+    }
 
-        for (BlockPos lot : lotsNear(world, model, near, quarterTurns)) {
+    /** O primeiro lote que serve; sem nenhum, a recusa traz a conta de cada motivo (Regra 226). */
+    private static Status firstThatServes(ServerWorld world, UUID colonyId, ResourceId model, List<BlockPos> lots,
+                                          int quarterTurns, @Nullable UUID owner, String nothing) {
+        long began = System.nanoTime();
+        java.util.Map<String, Integer> reasons = new java.util.LinkedHashMap<>();
+
+        for (BlockPos lot : lots.subList(0, Math.min(LOTS_TRIED, lots.size()))) {
             try {
                 return start(world, colonyId, model, lot, quarterTurns, owner);
             } catch (IllegalStateException | IllegalArgumentException refused) {
                 if ("too_many_sites".equals(refused.getMessage())) throw refused;
-                last = refused.getMessage() == null ? "invalid_payload" : refused.getMessage();
+                reasons.merge(refused.getMessage() == null ? "invalid_payload" : refused.getMessage(), 1, Integer::sum);
             }
         }
 
-        throw new IllegalStateException("no_lot:" + last);
+        String summary = "no_lot:" + (reasons.isEmpty() ? nothing : refusals(reasons));
+
+        VillageColonyMod.LOGGER.info("VC_MAE_SITE version=2 colony={} model={} result=refused detail={} ms={}",
+                colonyId.toString().substring(0, 8), model, summary, (System.nanoTime() - began) / 1_000_000);
+
+        throw new IllegalStateException(summary);
+    }
+
+    /** Cada motivo com quantos lotes recusou, o mais comum primeiro: {@code occupied×5,no_base×2}. */
+    static String refusals(java.util.Map<String, Integer> reasons) {
+        return reasons.entrySet().stream()
+                .sorted((a, b) -> a.getValue().equals(b.getValue()) ? a.getKey().compareTo(b.getKey()) : Integer.compare(b.getValue(), a.getValue()))
+                .map(entry -> entry.getKey() + "×" + entry.getValue())
+                .collect(java.util.stream.Collectors.joining(","));
     }
 
     /** O lote sem árvore primeiro; a limpeza só quando não há outro (Regra 200). */
@@ -220,7 +274,7 @@ public final class MaeSites {
 
         candidates.sort(java.util.Comparator.comparing(FoundationLotSearch.Lot::clearing));
 
-        return candidates.subList(0, Math.min(LOTS_TRIED, candidates.size())).stream()
+        return candidates.stream().limit(LOTS_TRIED)
                 .map(lot -> new BlockPos(minX + lot.offsetX(), lot.floor(), minZ + lot.offsetZ())).toList();
     }
 
@@ -281,18 +335,7 @@ public final class MaeSites {
         lots.sort(java.util.Comparator.<BlockPos, Boolean>comparing(toClear::contains)
                 .thenComparingDouble(lot -> lot.getSquaredDistance(near)));
 
-        String last = lots.isEmpty() ? "no_lot_outside_the_village" : "no_lot";
-
-        for (BlockPos lot : lots.subList(0, Math.min(LOTS_TRIED, lots.size()))) {
-            try {
-                return start(world, colonyId, model, lot, quarterTurns, owner);
-            } catch (IllegalStateException | IllegalArgumentException refused) {
-                if ("too_many_sites".equals(refused.getMessage())) throw refused;
-                last = refused.getMessage() == null ? "invalid_payload" : refused.getMessage();
-            }
-        }
-
-        throw new IllegalStateException("no_lot:" + last);
+        return firstThatServes(world, colonyId, model, lots, quarterTurns, owner, "no_lot_outside_the_village");
     }
 
     /**
@@ -356,18 +399,26 @@ public final class MaeSites {
 
         if (!store.supported() || store.regions().isEmpty()) return;
 
-        for (var region : store.regions()) {
-            if (region.containsUuid("colony") && VillageColonyMod.COLONIES.find(region.getUuid("colony")).isPresent()) {
-                UUID colonyId = region.getUuid("colony");
+        List<net.minecraft.nbt.NbtCompound> waiting = new ArrayList<>();
 
-                MaeSiteRecord.of(region).ifPresent(record -> requeue(world, colonyId, record));
+        for (var region : store.regions()) {
+            var record = MaeSiteRecord.of(region);
+
+            if (record.isEmpty()) {
+                continue;
+            }
+
+            boolean alive = region.containsUuid("colony") && VillageColonyMod.COLONIES.find(region.getUuid("colony")).isPresent();
+
+            if (!(alive && requeue(world, region.getUuid("colony"), record.get())) && !clearRuin(world, record.get())) {
+                waiting.add(region);
             }
         }
 
-        store.clearRegions();
+        store.keepRegions(waiting);
     }
 
-    private static void requeue(ServerWorld world, UUID colonyId, MaeSiteRecord record) {
+    private static boolean requeue(ServerWorld world, UUID colonyId, MaeSiteRecord record) {
         try {
             Blueprint blueprint = blueprint(world, record.model(), record.quarterTurns());
 
@@ -375,10 +426,34 @@ public final class MaeSites {
                     record.origin(), record.quarterTurns(), record.owner(), false));
             VillageColonyMod.LOGGER.info("VC_MAE_SITE version=2 model={} at={} result=requeued blocks={}", record.model(),
                     record.origin().toShortString(), blueprint.blockCount());
+
+            return true;
         } catch (IllegalStateException | IllegalArgumentException refused) {
             VillageColonyMod.LOGGER.warn("VC_MAE_SITE version=2 model={} at={} result=not_requeued detail={}", record.model(),
                     record.origin().toShortString(), refused.getMessage());
+
+            return false;
         }
+    }
+
+    /** A obra antiga que não volta para a fila sai do mundo; falso enquanto o chunk dela não está carregado (Regra 228). */
+    private static boolean clearRuin(ServerWorld world, MaeSiteRecord record) {
+        Blueprint blueprint;
+
+        try {
+            blueprint = blueprint(world, record.model(), record.quarterTurns());
+        } catch (IllegalStateException | IllegalArgumentException unreadable) {
+            // Sem a planta não há como saber o que é da obra: a região sai, e o mundo fica como está.
+            return true;
+        }
+
+        if (!MaeRuins.loaded(world, blueprint, record.origin())) {
+            return false;
+        }
+
+        MaeRuins.clear(world, blueprint, record.origin());
+
+        return true;
     }
 
     public static List<Status> active(ServerWorld world) {

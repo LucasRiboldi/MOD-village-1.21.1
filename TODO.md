@@ -126,13 +126,16 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 
 ## MAE: o que falta depois da 0.4.26
 
+- [x] Socorro só com a vila inteira sem lote, bairro, recusa completa, água interna e ruínas antigas (ADR-051, 0.4.45)
+- [x] Prova por seção durante a obra: fechada sem código, a Regra 202 foi revogada pela ADR-047
+- [ ] Medir em jogo a travada de `/vc mae obra`: `ms=` em `VC_MAE_SITE ... result=queued` e `result=refused`
+- [ ] Sem teste: o pedido do construtor que não desiste por espera longa (`WaitingWork`) e a ligação de `callsTheRescue` dentro de `LotSeeking`
+- [ ] Ruínas de saves que já abriram a 0.4.38 ou depois: as regiões antigas sumiram do save, e o mod não as acha
+
 - [ ] Rodar o PIT: o core mudou na 0.4.43 (`RetiredSpurs`, `RoadSquares`, `RoadGraph`)
 
 - [ ] Primeira obra pedida em jogo pela fila do construtor (0.4.38, Regra 213): `/vc mae obra <modelo>`, Spark junto, `VC_MAE_SITE` de `queued` até `done`; conferir porta ligada pelo grafo e retomada depois de reiniciar
 - [ ] Obra longe da vila (`fora`): construtor chega lá? Só provado que a obra não é largada; caminhar até lá depende do jogo
-- [ ] Regra 213 sem teste: a desistência por espera longa (`WaitingWork`) e `MaeSites.move`, a troca de lote
-- [ ] As ruínas das obras MAE falhas de saves anteriores continuam no mundo
-- [ ] Gate da água só para a obra pedida pelo jogador: a automática recusa água (ADR-049)
 - [ ] Conferir em jogo a Regra 223 (0.4.43): branco na porta, poste sem branco, ramal voltando a grama, plantação sem quina ao lado da rua, porta com linha até a rua
 - [ ] Chão de pedra em `x 114–119, z -175 a -166` (save Novo mundo): 6×10, uma camada sobre terra. Nenhum código do mod nem o diário explicam; a linha deixa de cruzá-lo, mas ele fica
 - [ ] Cercas tiradas ao lado do portão `105, -231`, entre 00:14 e 00:49 do jogo da 0.4.42: sem registro no diário; saber se foi o autor

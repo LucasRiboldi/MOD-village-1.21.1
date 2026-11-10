@@ -227,6 +227,7 @@
       "com.villagecolony.fabric.work.LotTypeRefusalsGameTest",
       "com.villagecolony.fabric.work.VillageKeepsBuildingGameTest",
       "com.villagecolony.fabric.integration.MaeRescueGameTest",
+      "com.villagecolony.fabric.integration.MaeFinishGameTest",
       "com.villagecolony.fabric.work.VillageConsumesGameTest",
       "com.villagecolony.fabric.work.IdleRoutineGameTest",
       "com.villagecolony.fabric.work.MineDescentLeaseGameTest",

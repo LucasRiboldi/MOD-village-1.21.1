@@ -34,6 +34,18 @@ public final class MaeWorkStore {
         return payload == null ? new NbtList() : ((NbtCompound) payload).getList("regions", NbtElement.COMPOUND_TYPE);
     }
 
+    /** Ficam no save só estas regiões: as que esperam chunk carregado para a limpeza da ruína (Regra 228). */
+    public void keepRegions(List<NbtCompound> kept) {
+        NbtCompound root = payload == null ? new NbtCompound() : ((NbtCompound) payload).copy();
+        NbtList list = new NbtList();
+
+        kept.forEach(region -> list.add(region.copy()));
+        root.putInt("version", root.contains("version", NbtElement.INT_TYPE) ? root.getInt("version") : 1);
+        root.put("regions", list);
+        payload = root;
+        changed.run();
+    }
+
     /** As regiões das versões em que o MAE escrevia a obra saem do save — ADR-047. */
     public void clearRegions() {
         NbtCompound root = payload == null ? new NbtCompound() : ((NbtCompound) payload).copy();

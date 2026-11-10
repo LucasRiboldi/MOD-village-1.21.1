@@ -184,6 +184,28 @@ public final class MaeSitesGameTest implements FabricGameTest {
         }
     }
 
+    /** O lote do pedido foi ocupado antes de a obra abrir: a mesma obra vai para outro lote perto (Regra 213). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_move", tickLimit = 40)
+    public void aRequestWhoseLotWasTakenMovesToAnother(TestContext context) {
+        var arena = new Arena(context, HOUSE, false);
+
+        arena.guarded(() -> {
+            var world = context.getWorld();
+
+            MaeSites.start(world, arena.fixture.colony.colony().id(), HOUSE, arena.origin, 0, null);
+
+            MaeBuildQueue.Request request = onlyRequest(context, arena);
+
+            arena.fixture.set(arena.origin.add(2, 2, 2), Blocks.OAK_PLANKS.getDefaultState());
+
+            boolean moved = MaeSites.move(world, request);
+
+            context.assertTrue(moved, "Regra 213: o pedido não achou outro lote");
+            context.assertFalse(onlyRequest(context, arena).floor().equals(request.floor()), "Regra 213: o pedido ficou no lote ocupado");
+            end(context, arena);
+        });
+    }
+
     /** Longe de tudo e sem material: uma obra comum seria largada; a pedida fica até terminar. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mae_sites_far", tickLimit = 40)
     public void aRequestFarFromTheVillageIsNotDropped(TestContext context) {
