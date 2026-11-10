@@ -408,6 +408,11 @@ public final class CraftingWork {
 
     /** Encerra a tarefa e devolve o aldeão à rotina. */
     static void finish(Job job, UUID workerId, String why) {
+        finish(job, workerId, why, job.task.targetResource().name());
+    }
+
+    /** O mesmo, com o item que de fato saiu da bancada: o diário grava o produto, e não o alvo da tarefa (Regra 232). */
+    static void finish(Job job, UUID workerId, String why, String product) {
         if (job.task.state() == TaskState.RESERVED) {
             job.task.start();
         }
@@ -431,7 +436,7 @@ public final class CraftingWork {
                 workerId,
                 job.crafted,
                 why);
-        ActionJournal.action(workerId, "CRAFTED", job.task.targetResource().name(), job.crafted, null, why);
+        ActionJournal.action(workerId, "CRAFTED", product, job.crafted, null, why);
     }
 
     /** Esquece o trabalho de um trabalhador que deixou de existir. */

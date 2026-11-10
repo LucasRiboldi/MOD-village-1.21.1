@@ -11,9 +11,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * As pontas do grafo são os cantos da vila — Regra 206 (autor, 2026-11-05): fica só a ponta mais distante do centro em cada
- * quadrante, no máximo quatro, por onde a vila pode crescer. As outras perdem o trecho morto até o encontro ou a entrada mais
- * perto. Entrada e centro não são pontas e nunca saem.
+ * As pontas do grafo são os lados da vila — Regras 206 e 229 (autor, 2026-11-10): fica só a ponta mais distante do centro em
+ * cada lado, norte, sul, leste e oeste ({@link RoadSides}), no máximo quatro, por onde a vila cresce para fora. As outras perdem
+ * o trecho morto até o encontro ou a entrada mais perto. Entrada e centro não são pontas e nunca saem.
  */
 final class RoadTips {
 
@@ -22,7 +22,8 @@ final class RoadTips {
     private RoadTips() {
     }
 
-    static void prune(Map<Long, Integer> columns, ColonyPos center, Set<Long> fixed) {
+    /** Poda as pontas; a que termina numa coluna de {@code deadEnds}, uma entrada que saiu, nunca é a do lado (Regra 229). */
+    static void prune(Map<Long, Integer> columns, ColonyPos center, Set<Long> fixed, Set<Long> deadEnds) {
         if (columns.isEmpty()) {
             return;
         }
@@ -39,11 +40,11 @@ final class RoadTips {
         ends.sort(Comparator.comparingInt((Long column) -> -distance(column, center))
                 .thenComparingInt(ColonyRoads::xOf).thenComparingInt(ColonyRoads::zOf));
 
-        Set<Integer> quadrants = new HashSet<>();
+        Set<Side> sides = new HashSet<>();
         Set<Long> kept = new HashSet<>();
 
         for (long end : ends) {
-            if (quadrants.add(quadrant(end, center))) {
+            if (!deadEnds.contains(end) && sides.add(RoadSides.of(ColonyRoads.xOf(end), ColonyRoads.zOf(end), center))) {
                 kept.add(end);
             }
         }
@@ -99,9 +100,5 @@ final class RoadTips {
 
     private static int distance(long column, ColonyPos center) {
         return Math.abs(ColonyRoads.xOf(column) - center.x()) + Math.abs(ColonyRoads.zOf(column) - center.z());
-    }
-
-    private static int quadrant(long column, ColonyPos center) {
-        return (ColonyRoads.xOf(column) >= center.x() ? 1 : 0) + (ColonyRoads.zOf(column) >= center.z() ? 2 : 0);
     }
 }

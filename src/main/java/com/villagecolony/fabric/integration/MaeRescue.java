@@ -24,6 +24,9 @@ import java.util.UUID;
  * O socorro da vila sem lote — Regra 222, ADR-049: depois de {@value #SWEEPS_BEFORE} voltas inteiras sem lote para a próxima obra, a
  * vila procura sozinha um lote a até {@value #REACH} blocos da borda da caixa, um lado por vez, e o pedido entra na fila do construtor
  * como o de {@code /vc mae obra} (Regra 213). Avisa o jogador e não espera aprovação. Lote que toca água é recusado.
+ *
+ * <p>Só conta a volta sem lote da casa, quando a vila inteira ficou sem lugar, e as obras seguintes formam um bairro: mesmo
+ * lado, coladas na anterior — Regra 226.
  */
 public final class MaeRescue {
 
@@ -35,13 +38,19 @@ public final class MaeRescue {
     private static final int PLANS_TRIED = 2;
     private static final int LOTS_TRIED = 4;
 
+    /** A última obra do socorro: o bairro cresce em volta dela, do mesmo lado (Regra 226). */
+    private record Anchor(Side side, ColonyPos origin) {
+    }
+
     private static final Map<UUID, Integer> SWEPT = new HashMap<>();
     private static final Map<UUID, Integer> NEXT_SIDE = new HashMap<>();
+    private static final Map<UUID, Anchor> NEIGHBOURHOOD = new HashMap<>();
 
     static {
         ServerMemory.register(MaeRescue.class, () -> {
             SWEPT.clear();
             NEXT_SIDE.clear();
+            NEIGHBOURHOOD.clear();
         });
     }
 
@@ -65,19 +74,35 @@ public final class MaeRescue {
             return Optional.empty();
         }
 
-        Side[] sides = Side.values();
-        int turn = NEXT_SIDE.merge(colony.id(), 1, Integer::sum) - 1;
-        Side side = sides[Math.floorMod(turn, sides.length)];
+        // O bairro: depois da primeira obra, as seguintes ficam do mesmo lado e o mais perto dela; o lado cheio passa a vez.
+        Anchor anchor = NEIGHBOURHOOD.get(colony.id());
+        Side side;
+
+        if (anchor != null) {
+            side = anchor.side();
+        } else {
+            Side[] sides = Side.values();
+            int turn = NEXT_SIDE.merge(colony.id(), 1, Integer::sum) - 1;
+
+            side = sides[Math.floorMod(turn, sides.length)];
+        }
+
         long began = System.nanoTime();
-        Optional<MaeSites.Status> started = openOnSide(world, colony, colony.bounds().get(), side, plans);
+        ColonyPos near = anchor != null ? anchor.origin() : colony.center();
+        Optional<MaeSites.Status> started = openOnSide(world, colony, colony.bounds().get(), side, near, plans);
 
-        VillageColonyMod.LOGGER.info("VC_MAE_SITE version=2 colony={} result=rescue side={} found={} ms={}",
-                colony.id().toString().substring(0, 8), side, started.isPresent(), (System.nanoTime() - began) / 1_000_000);
+        VillageColonyMod.LOGGER.info("VC_MAE_SITE version=2 colony={} result=rescue side={} found={} near={} ms={}",
+                colony.id().toString().substring(0, 8), side, started.isPresent(), anchor != null ? "neighbourhood" : "center",
+                (System.nanoTime() - began) / 1_000_000);
 
-        started.ifPresent(status -> {
+        if (started.isPresent()) {
             SWEPT.remove(colony.id());
-            world.getPlayers().forEach(player -> player.sendMessage(notice(status), false));
-        });
+            NEIGHBOURHOOD.put(colony.id(), new Anchor(side, com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(
+                    started.get().origin())));
+            world.getPlayers().forEach(player -> player.sendMessage(notice(started.get()), false));
+        } else {
+            NEIGHBOURHOOD.remove(colony.id());
+        }
 
         return started;
     }
@@ -91,11 +116,11 @@ public final class MaeRescue {
     }
 
     private static Optional<MaeSites.Status> openOnSide(
-            ServerWorld world, Colony colony, VillageBounds box, Side side, List<Blueprint> plans) {
+            ServerWorld world, Colony colony, VillageBounds box, Side side, ColonyPos near, List<Blueprint> plans) {
         for (Blueprint plan : plans.subList(0, Math.min(PLANS_TRIED, plans.size()))) {
             int quarterTurns = turnFacing(plan, facingTheVillage(side));
 
-            for (BlockPos lot : lotsOnSide(world, colony.center(), box, side, plan.rotated(quarterTurns))) {
+            for (BlockPos lot : lotsOnSide(world, near, box, side, plan.rotated(quarterTurns))) {
                 try {
                     return Optional.of(MaeSites.start(world, colony.id(), plan.id(), lot, quarterTurns, null));
                 } catch (IllegalStateException | IllegalArgumentException refused) {
@@ -109,7 +134,7 @@ public final class MaeRescue {
         return Optional.empty();
     }
 
-    /** Os lotes na faixa deste lado, os sem árvore primeiro e, entre eles, os mais perto do centro. */
+    /** Os lotes na faixa deste lado, os sem árvore primeiro e, entre eles, os mais perto de {@code center}: o centro ou o bairro. */
     private static List<BlockPos> lotsOnSide(ServerWorld world, ColonyPos center, VillageBounds box, Side side, Blueprint plan) {
         int bandMinX = side == Side.EAST ? box.maxX() + 1 : box.minX() - REACH;
         int bandMaxX = side == Side.WEST ? box.minX() - 1 : box.maxX() + REACH;

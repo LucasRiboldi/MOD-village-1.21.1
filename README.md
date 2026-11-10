@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.43%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.47%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,7 +19,7 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Estado atual: 0.4.43 publicada como pré-lançamento, em correção por playtest.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
+**Estado atual: candidata 0.4.47 (grafo estável, fechamento do MAE, pontas que levam a vila e equilíbrio das profissões), não jogada; a última publicada é a 0.4.43.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
 [docs/RULES.md](docs/RULES.md) (1 a 216).
 
@@ -403,7 +403,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 182 | **A mina cresce por dentro** (autor 11-05): fim de escada abre ramal a partir dos salões que existem, sem cortar degrau; boca nova só com 50 falhas de ramal ou com tudo o que resta na água, e nunca perto de outra boca; emenda a Regra 53 | 11-05 | ✅ feita (0.4.25) | `MineBranches`, `MineEdge` |
 | 183 | **Anel de caminho** (autor 11-05): o chão em volta do chafariz é caminho, sem quina fixa no grafo. Plantação: Regra 208 | 11-05 | ✅ feita (0.4.25) | `RoadShape` |
 | 184 | **Quina é entrada** (autor 11-05): da terceira releitura em diante, a quina da plantação mais perto do centro é entrada do grafo, se nenhuma linha passa a até 2 blocos dela (Regra 223) | 11-05 | ✅ feita (0.4.25) | `RoadShape` |
-| 185 | **A ponta cresce** (autor 11-05): por dia, as 2 pontas mais distantes do centro, dentro de 75% da maior distância, avançam um bloco em linha reta; o construtor calça | 11-05 | ✅ feita (0.4.25) | `RoadShape` |
+| 185 | **A ponta cresce** (autor 11-05, emendada 11-10): por dia, as 4 pontas, uma por lado, avançam um bloco para fora (Regra 229); o construtor calça | 11-05 | ✅ feita (0.4.25) | `RoadShape` |
 | 186 | **Rua de um bloco** (autor 11-05): o caminho a até 3 blocos da linha que não é linha nem frente de porta volta ao solo do bioma, pelo pedreiro | 11-05 | ✅ feita (0.4.25) | `RoadLines`, `PathTrim` |
 | 187 | **Revogada** (autor 11-06, ADR-047). A obra pedida não reserva região | 11-05 | ✅ feita (0.4.26) | `MaeHandover`, `MaeSiteRecord`, `MaeSites`, `MaeStructureSite` |
 | 188 | **Pedido só do que falta** (jogo 11-05): o pedido de peça de obra não abre quando os baús cobrem o que a obra ainda vai pôr | 11-05 | ✅ feita (0.4.27) | `CraftsmanRequest` |
@@ -424,7 +424,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 203 | **Revogada** (autor 11-06, ADR-047). A água entra pelo construtor | 11-05 |
 | 204 | **Revogada** (autor 11-06, ADR-047). A peça da obra é posta pelo construtor | 11-05 |
 | 205 | **Revogada** (autor 11-06, ADR-047). A obra pedida não reserva região e não falha | 11-05 |
-| 206 | **As pontas do grafo são os cantos da vila** (autor 11-05): fica a ponta mais distante do centro em cada quadrante, no máximo 4, e só ela é azul e cresce. As outras perdem o trecho morto até o encontro ou a entrada; o caminho a até 3 blocos da linha volta ao solo (Regra 186). Emenda a Regra 177. | 11-05 |
+| 206 | **As pontas do grafo são os lados da vila** (autor 11-05, emendada 11-10): fica a ponta mais distante do centro em cada lado, norte, sul, leste e oeste (Regra 229), no máximo 4, e só ela é azul e cresce. As outras perdem o trecho morto até o encontro ou a entrada; o caminho a até 3 blocos da linha volta ao solo (Regra 186). Emenda a Regra 177. | 11-05 |
 | 207 | **Toda porta térrea é entrada** (autor 11-05): o marcador branco fica no primeiro bloco em frente à porta, mesmo dentro da caixa ou sobre degrau (Regra 223); porta de dentro não conta e porta dupla conta uma vez. O ramal da Regra 177 cobre o que houver entre ele e a rua. Emenda a Regra 178. | 11-05 |
 | 208 | **Plantação sem anel** (autor 11-06): o chão em volta da plantação não é pedido como caminho, e ela tem uma entrada só, a quina da Regra 184, com ramal até a rua. O caminho já colado nela sai do grafo quando a rede continua inteira sem ele e volta ao solo pelo pedreiro, a qualquer distância da linha; encontro, entrada, centro e o trecho que é a única ligação ficam. Emenda a Regra 183. | 11-06 |
 | 209 | **Porta de quintal fechado** (autor 11-06): a caixa da peça pode incluir o quintal. Porta cuja saída para em barreira dentro da caixa, como cerca, portão ou rebolo, só é entrada se nenhuma outra porta da casa sair, e então onde o quintal abre para fora, ou no primeiro chão depois dela se ele for fechado (Regra 223); assoalho de tábua não é quintal. Emenda a Regra 207. | 11-06 |
@@ -442,6 +442,15 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 221 | **A vila gasta o que produz** (autor 11-06): depois da ceia, cada adulto come 1 ponto de comida do que sobrou. A ferramenta que a colônia entrega dura 3 dias, e a renovada custa 2 tábuas e 3 pedras; sem material ela fica no último ponto e o trabalho segue. Sem tarefa, carpinteiro e pedreiro visitam cada construção uma vez por dia e gastam 4 tábuas ou pedras; com obra aberta ou menos de 36 no estoque, não gastam. Candidata | 11-06 |
 | 222 | **O socorro do MAE** (autor 11-06, ADR-049): depois de 2 voltas inteiras sem lote para a próxima obra, e sem a rua abrir um, a vila procura sozinha um lote a até 24 blocos da borda da caixa, um lado por vez, e pede a obra na fila do construtor (Regra 213), com a porta virada para a vila. Só avisa no chat, sem esperar aprovação; cancela-se com `/vc mae parar` ou a tocha das almas. Lote que toca água é recusado, e roça fica de fora. Candidata | 11-06 |
 | 223 | **Branco só onde se entra** (autor 11-07, desenho sobre o jogo da 0.4.42): o marcador fica colado na porta, e a saída da caixa é só o caminho até ele. Poste, poço e chafariz não têm entrada, e nada dentro de curral fechado tem. Se um caminho já leva da porta para fora da caixa, a linha segue por ele. O ramal que perdeu a entrada sai do grafo e do chão, a qualquer distância, até 32 colunas; trecho maior é rua e fica. Degrau e assoalho em frente à porta levam o branco, mas não viram caminho. A rua não forma quadrado de nós; encontros de ruas diferentes podem ficar lado a lado. Candidata | 11-07 |
+| 224 | **Todo caminho conta e liga em reta** (autor 11-10, ADR-050): o grafo lê o caminho da caixa e o de até 32 blocos fora dela que encosta no de dentro. Acima de 6.000 colunas ficam as mais perto do centro, e o corte vai para o log. Toda parte solta liga antes em reta, com uma dobra só, ao ponto mais perto da linha, até 64 blocos; todas na mesma releitura. Candidata | 11-10 |
+| 225 | **O trecho que ficou trava** (autor 11-10, ADR-050): coluna que passa 10 dias de jogo na linha sem sair fica fixa; a releitura não a move, e o resto do traçado se ajeita em volta. Some o caminho dela no mundo, ou ela sai da linha, e a conta recomeça. Candidata | 11-10 |
+| 226 | **Socorro da vila inteira, em bairro** (autor 11-10, ADR-051): só a volta sem lote da casa conta para o socorro da Regra 222; a oficina sem lote passa a vez. A obra seguinte do socorro fica do mesmo lado da anterior e o mais perto dela, formando um bairro. `/vc mae obra` sem lote diz cada motivo e quantos lotes recusou. Emenda a Regra 222. Candidata | 11-10 |
+| 227 | **Água interna sob a obra pedida** (autor 11-10, ADR-051): a obra do jogador aterra a água da zona interna da vila, ligada a no máximo 512 colunas e toda dentro da caixa; mar e rio aberto recusam o lote (`open_water`). A obra automática não aterra água. Candidata | 11-10 |
+| 228 | **Ruína de save antigo sai** (autor 11-10, ADR-051): a obra MAE que uma versão anterior deixou e que não volta para a fila tem a pegada limpa; sai só o bloco igual ao da planta. Com chunk descarregado, espera. Candidata | 11-10 |
+| 229 | **As pontas levam a vila para fora** (autor 11-10, ADR-052): uma ponta azul por lado da caixa, norte, sul, leste e oeste, a mais distante do centro naquele lado. Por dia de jogo, cada uma avança 1 bloco para fora pelo seu lado, e o construtor calça; até 128 blocos além da vila gerada. Ramal que termina numa entrada retirada não é ponta. Emenda as Regras 185 e 206. Candidata | 11-10 |
+| 230 | **A zona alcança a ponta** (autor 11-10, ADR-052): a ponta calçada que sai 7 blocos ou mais da caixa da vila leva a caixa até ela. Candidata | 11-10 |
+| 232 | **A obra manda no artesão** (autor 11-10, sobre a análise `docs/audit/2026-11-10-qualidade-das-profissoes.md`): com a obra aberta parada esperando material, nenhuma ordem de estoque de enfeite abre, e a que está em curso cede a bancada. O item de estoque que não se consegue fazer sai do rodízio por uma hora de jogo. O lenhador que anda até a árvore longe, chegando mais perto, não larga a tarefa por travamento. O diário grava o produto feito. Candidata | 11-10 |
+| 233 | **A vaga segue a falta** (autor 11-10): com comida em falta, o fazendeiro vem primeiro na lista de contratação; com 1.024 pedregulhos ou mais guardados, o mineiro sobra e não ganha vaga nova. Candidata | 11-10 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).

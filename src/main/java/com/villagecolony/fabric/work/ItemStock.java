@@ -49,7 +49,8 @@ import java.util.UUID;
  * {@link CraftFamily}. Cada um vai até {@link #EACH}, em rodízio, sempre abaixo do
  * teto de 64 ({@code StockCeiling}). A obra vem antes: a ordem de estoque é uma
  * tarefa de fabricação, e o artesão atende primeiro a peça que a obra espera
- * ({@code CraftingSteps.produceForWork}).
+ * ({@code CraftingSteps.produceForWork}); com a obra aberta parada esperando material, nenhuma ordem de estoque abre e a
+ * que está em curso cede a bancada (Regra 232).
  *
  * <p>A ordem é nominal ({@link #NOMINAL}), como o pedido de peça de obra: o item mora
  * aqui, não no {@code ResourceType}, que declara só 68 recursos.
@@ -76,8 +77,8 @@ public final class ItemStock {
     /** Releitura das plantas; o estilo da vila não muda. */
     static final long REFRESH = 6_000;
 
-    /** Quanto tempo o item que não se conseguiu fazer fica fora do rodízio. */
-    static final long SKIP_FOR = 6_000;
+    /** Quanto tempo o item que não se conseguiu fazer fica fora do rodízio: uma hora de jogo (Regra 232). */
+    static final long SKIP_FOR = 72_000;
 
     private static final Map<UUID, Map<TaskType, List<Item>>> ITEMS = new HashMap<>();
 
@@ -100,6 +101,13 @@ public final class ItemStock {
         SKIPPED.clear();
     }
 
+    /** Se a obra aberta da colônia está parada esperando material: aí o estoque de enfeite espera (Regra 232). */
+    static boolean buildWaits(UUID colonyId) {
+        return VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
+                .filter(project -> project.state() == com.villagecolony.core.construction.model.ConstructionState.WAITING_RESOURCES)
+                .isPresent();
+    }
+
     /** Os itens de estoque desta colônia, por oficina (para o teste e o relatório). */
     static List<Item> itemsOf(UUID colonyId, TaskType family) {
         return ITEMS.getOrDefault(colonyId, Map.of()).getOrDefault(family, List.of());
@@ -120,7 +128,8 @@ public final class ItemStock {
             boolean busy = VillageColonyMod.TASKS.ofColony(colony.id()).stream()
                     .anyMatch(task -> task.type() == family && task.isOpen());
 
-            if (busy || WorkAssignment.countCapableOf(colony.id(), family.required(), VillageColonyMod.WORKERS) == 0) {
+            if (busy || buildWaits(colony.id())
+                    || WorkAssignment.countCapableOf(colony.id(), family.required(), VillageColonyMod.WORKERS) == 0) {
                 continue;
             }
 
@@ -147,11 +156,19 @@ public final class ItemStock {
             return Optional.empty();
         }
 
+        // A obra manda (Regra 232): com a obra aberta esperando material, a ordem de estoque cede a bancada.
+        if (buildWaits(colony.get().id())) {
+            ORDERS.remove(job.task.id());
+            CraftingWork.finish(job, workerId, "the open build waits for material", pathOf(item));
+
+            return Optional.of(false);
+        }
+
         List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.get().id(), colony.get().center());
 
         if (ColonyChests.countIn(world, chests, item) >= EACH) {
             ORDERS.remove(job.task.id());
-            CraftingWork.finish(job, workerId, "stocked " + EACH + " of " + pathOf(item));
+            CraftingWork.finish(job, workerId, "stocked " + EACH + " of " + pathOf(item), pathOf(item));
 
             return Optional.of(false);
         }
@@ -164,7 +181,7 @@ public final class ItemStock {
         if (!made) {
             SKIPPED.put(item, world.getTime());
             ORDERS.remove(job.task.id());
-            CraftingWork.finish(job, workerId, "could not make " + pathOf(item) + " for the stock");
+            CraftingWork.finish(job, workerId, "could not make " + pathOf(item) + " for the stock", pathOf(item));
 
             return Optional.of(false);
         }

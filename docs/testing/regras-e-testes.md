@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 116
+- **Cita a regra:** 125
 - **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 7
 - **Fora de vigor:** 5
@@ -144,7 +144,7 @@ classe prova menos ainda.
 | 132 | As bancadas do mod têm painel e passivas (autor 10-27): shift+clique mostra titulares, es… | cita | BenchPassivesGameTest |
 | 133 | Estoque cheio vira obra e produto (autor 10-28, jogo da 0.3.99: lenhador 74%, pedreiro 48… | cita | ItemStockGameTest |
 | 134 | O adulto que sobra vai ao ofício que a vila espera (autor 10-28, jogo da 0.3.99: 6 de 18… | classe | BigHouseModBlueprintGameTest, ColonyCycleTest, ColonyDetectionGameTest |
-| 135 | Tarefa só abre quando pode render (autor 10-28, jogo da 0.3.99): a ordem de estoque de pe… | classe | IdleFixesGameTest, ItemStockGameTest, ReservationGateTest |
+| 135 | Tarefa só abre quando pode render (autor 10-28, jogo da 0.3.99): a ordem de estoque de pe… | classe | IdleFixesGameTest, ItemStockGameTest, ProfessionBalanceGameTest |
 | 136 | O fazendeiro alcança como o jogador (autor 10-28, jogo da 0.3.99: roça 2 blocos acima, a… | classe | ColonyFixture, FarmPlanGameTest, FarmerGameTest |
 | 137 | A escada da mina recomeça do topo (autor 10-28, jogo da 0.3.99: o mineiro passou 30 min n… | classe | IdleFixesGameTest |
 | 138 | A rua da colônia é só caminho e é da vila (autor 10-28; depois do jogo da 0.3.104: "volta… | classe | BlockProtectionGameTest, BuildSiteGameTest, LumberjackGameTest |
@@ -194,11 +194,11 @@ classe prova menos ainda.
 | 182 | A mina cresce por dentro (autor 11-05): fim de escada abre ramal a partir dos salões que… | cita | WaterMineAccessGameTest |
 | 183 | Anel de caminho (autor 11-05): o chão em volta do chafariz é caminho, sem quina fixa no g… | cita | RoadRulesGameTest |
 | 184 | Quina é entrada (autor 11-05): da terceira releitura em diante, a quina da plantação mais… | cita | EntrancesAtTheDoorGameTest, RoadRulesGameTest |
-| 185 | A ponta cresce (autor 11-05): por dia, as 2 pontas mais distantes do centro, dentro de 75… | cita | RoadRulesGameTest |
+| 185 | A ponta cresce (autor 11-05, emendada 11-10): por dia, as 4 pontas, uma por lado, avançam… | cita | RoadRulesGameTest |
 | 186 | Rua de um bloco (autor 11-05): o caminho a até 3 blocos da linha que não é linha nem fren… | cita | EntrancesAtTheDoorGameTest, RetiredSpursTest, RoadLinesTest |
-| 187 | Revogada (autor 11-06, ADR-047). A obra pedida não reserva região | classe | MaeRescueGameTest, MaeSitesGameTest |
+| 187 | Revogada (autor 11-06, ADR-047). A obra pedida não reserva região | classe | LotTypeRefusalsGameTest, MaeFinishGameTest, MaeRescueGameTest |
 | 188 | Pedido só do que falta (jogo 11-05): o pedido de peça de obra não abre quando os baús cob… | classe | CraftFamilyGameTest, CraftingGameTest, FurnaceFeedGameTest |
-| 189 | Madeira (autor 11-05): dentro da zona de prioridade, o lenhador pega a árvore conhecida m… | classe | LumberjackGameTest, LumberjackSearchGameTest, TreeChoiceTest |
+| 189 | Madeira (autor 11-05): dentro da zona de prioridade, o lenhador pega a árvore conhecida m… | classe | LumberjackGameTest, LumberjackSearchGameTest, ProfessionBalanceGameTest |
 | 190 | Cru na reserva (jogo 11-05): com o cru nos baús e a reserva impedindo assar, o fundidor l… | classe | CrusherGameTest, FurnaceFeedGameTest, SmelterGathersGameTest |
 | 191 | Pedido sem resultado espera (autor 11-05): 3 fechamentos seguidos sem peça seguram o pedi… | cita | TaskLoopGuardTest |
 | 192 | Tora é do carpinteiro (autor 11-05): sem peça a fazer, os outros ofícios fecham a tarefa… | classe | ChainRootsGameTest, ColonyFixture, ConstructionProjectTest |
@@ -215,7 +215,7 @@ classe prova menos ainda.
 | 203 | Revogada (autor 11-06, ADR-047). A água entra pelo construtor | nenhum |  |
 | 204 | Revogada (autor 11-06, ADR-047). A peça da obra é posta pelo construtor | nenhum |  |
 | 205 | Revogada (autor 11-06, ADR-047). A obra pedida não reserva região e não falha | nenhum |  |
-| 206 | As pontas do grafo são os cantos da vila (autor 11-05): fica a ponta mais distante do cen… | cita | RoadLinesTest, RoadMapSyncGameTest, RoadRulesGameTest |
+| 206 | As pontas do grafo são os lados da vila (autor 11-05, emendada 11-10): fica a ponta mais… | cita | RoadLinesTest, RoadMapSyncGameTest, RoadRulesGameTest |
 | 207 | Toda porta térrea é entrada (autor 11-05): o marcador branco fica no primeiro bloco em fr… | cita | DoorFrontsGameTest |
 | 208 | Plantação sem anel (autor 11-06): o chão em volta da plantação não é pedido como caminho,… | cita | RoadLinesTest, RoadRulesGameTest |
 | 209 | Porta de quintal fechado (autor 11-06): a caixa da peça pode incluir o quintal. Porta cuj… | cita | DoorFrontsGameTest |
@@ -233,3 +233,12 @@ classe prova menos ainda.
 | 221 | A vila gasta o que produz (autor 11-06): depois da ceia, cada adulto come 1 ponto de comi… | cita | VillageConsumesGameTest, VillageMealsGameTest |
 | 222 | O socorro do MAE (autor 11-06, ADR-049): depois de 2 voltas inteiras sem lote para a próx… | cita | MaeRescueGameTest |
 | 223 | Branco só onde se entra (autor 11-07, desenho sobre o jogo da 0.4.42): o marcador fica co… | cita | DoorFrontsGameTest, EntrancesAtTheDoorGameTest, RetiredSpursTest |
+| 224 | Todo caminho conta e liga em reta (autor 11-10, ADR-050): o grafo lê o caminho da caixa e… | cita | GraphStabilityGameTest, GraphStabilityTest, RoadLinesTest |
+| 225 | O trecho que ficou trava (autor 11-10, ADR-050): coluna que passa 10 dias de jogo na linh… | cita | GraphStabilityGameTest, GraphStabilityTest, RoadGraphStoreTest |
+| 226 | Socorro da vila inteira, em bairro (autor 11-10, ADR-051): só a volta sem lote da casa co… | cita | LotTypeRefusalsGameTest, MaeFinishGameTest |
+| 227 | Água interna sob a obra pedida (autor 11-10, ADR-051): a obra do jogador aterra a água da… | cita | MaeFinishGameTest |
+| 228 | Ruína de save antigo sai (autor 11-10, ADR-051): a obra MAE que uma versão anterior deixo… | cita | MaeFinishGameTest |
+| 229 | As pontas levam a vila para fora (autor 11-10, ADR-052): uma ponta azul por lado da caixa… | cita | RoadLinesTest, RoadRulesGameTest |
+| 230 | A zona alcança a ponta (autor 11-10, ADR-052): a ponta calçada que sai 7 blocos ou mais d… | cita | RoadRulesGameTest |
+| 232 | A obra manda no artesão (autor 11-10, sobre a análise docs/audit/2026-11-10-qualidade-das… | cita | ProfessionBalanceGameTest |
+| 233 | A vaga segue a falta (autor 11-10): com comida em falta, o fazendeiro vem primeiro na lis… | cita | ColonyCycleTest, ProfessionDemandTest |

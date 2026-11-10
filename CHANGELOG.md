@@ -12,6 +12,53 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.47] — candidata, 2026-11-10
+
+### Mudado
+
+- A obra manda no artesão: com a obra parada esperando material, o estoque de enfeite espera e cede a bancada (Regra 232).
+- O item de estoque que não se consegue fazer sai do rodízio por uma hora, e não por 5 minutos (Regra 232).
+- Com comida em falta, o fazendeiro vem primeiro na contratação; com pedra sobrando, o mineiro não ganha vaga nova (Regra 233).
+
+### Corrigido
+
+- O lenhador que se aproxima da árvore longe não larga mais a tarefa por "made no progress" (Regra 232).
+- O diário grava o produto feito pelo artesão, e não o alvo da tarefa (`dirt`).
+
+## [0.4.46] — candidata, 2026-11-10
+
+### Mudado
+
+- Uma ponta azul por lado da vila, que cresce 1 bloco por dia para fora, até 128 blocos; antes eram as 2 mais distantes, por quadrante, na direção da linha (Regra 229, ADR-052).
+- A zona da vila alcança a ponta calçada que sai 7 blocos da caixa (Regra 230).
+
+## [0.4.45] — candidata, 2026-11-10
+
+### Corrigido
+
+- O socorro do MAE só dispara quando nem casa cabe, e não quando falha um tipo de oficina (Regra 226).
+- `/vc mae obra` sem lote diz cada motivo de recusa e quantos lotes recusou (Regra 226).
+
+### Adicionado
+
+- O socorro forma um bairro: a obra seguinte fica do mesmo lado e colada na anterior (Regra 226).
+- A obra pedida pelo jogador aterra lago e poça da zona interna da vila; mar e rio aberto recusam (Regra 227).
+- A ruína de obra MAE de save antigo sai do mundo; só sai o bloco igual ao da planta (Regra 228).
+- `VC_MAE_SITE` mede em `ms` cada pedido e cada recusa.
+
+## [0.4.44] — candidata, 2026-11-10
+
+### Adicionado
+
+- Toda parte solta do caminho liga em reta ao ponto mais perto da linha, todas na mesma releitura (Regra 224).
+- O caminho de até 32 blocos fora da caixa que encosta no de dentro entra no grafo (Regra 224).
+- Trecho que passa 10 dias de jogo sem mudar fica fixo (Regra 225, ADR-050).
+- `VC_ROAD_GRAPH` mostra `offLine`, `capped` e `fixed`.
+
+### Corrigido
+
+- Com mais de 6.000 colunas de caminho o grafo deixava de ser publicado, sem log; agora ficam as mais perto do centro.
+
 ## [0.4.43] — candidata, 2026-11-07
 
 ### Corrigido

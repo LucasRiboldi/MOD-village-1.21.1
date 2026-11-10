@@ -201,7 +201,7 @@ public class RoadRulesGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_tips", tickLimit = 20)
-    public void onlyTheFarTipGrowsOncePerDay(TestContext context) {
+    public void everyTipGrowsOutwardOncePerDay(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos origin = context.getAbsolutePos(new BlockPos(1, 98, 1));
 
@@ -212,7 +212,7 @@ public class RoadRulesGameTest implements FabricGameTest {
         long time = world.getTimeOfDay();
 
         try {
-            // A ponta perto fica a 3 do centro e a longe a 10: 3 está abaixo de 75% de 10.
+            // Uma ponta de cada lado, a 3 e a 10 do centro: as duas crescem, cada uma para fora pelo seu lado (Regra 229).
             Set<ColonyPos> line = new HashSet<>();
 
             for (int x = 1; x <= 14; x++) {
@@ -233,12 +233,153 @@ public class RoadRulesGameTest implements FabricGameTest {
             RoadShape.growTips(world, colony, graph, terrain);
 
             ColonyPos next = cell(origin.add(15, 0, 4));
+            ColonyPos west = cell(origin.add(0, 0, 4));
 
-            context.assertTrue(RoadShape.pendingGrowth(colony.id(), Set.of(), Set.of()).equals(Set.of(next)),
-                    "Regra 185: não cresceu só a ponta longe: " + RoadShape.pendingGrowth(colony.id(), Set.of(), Set.of()));
-            context.assertTrue(RoadShape.pendingGrowth(colony.id(), Set.of(next), Set.of()).isEmpty(), "Regra 185: o que foi calçado continuou pendente");
+            context.assertTrue(RoadShape.pendingGrowth(colony.id(), Set.of(), Set.of()).equals(Set.of(next, west)),
+                    "Regra 229: as duas pontas não cresceram para fora: " + RoadShape.pendingGrowth(colony.id(), Set.of(), Set.of()));
+            context.assertTrue(RoadShape.pendingGrowth(colony.id(), Set.of(next, west), Set.of()).isEmpty(), "Regra 185: o que foi calçado continuou pendente");
         } finally {
             world.setTimeOfDay(time);
+            fixture.cleanUp();
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
+
+    /** A ponta cuja linha dobrou para o lado ainda cresce para fora da vila, pelo lado dela (Regra 229). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_tips_outward", tickLimit = 20)
+    public void aTipThatTurnedStillGrowsOutward(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 106, 1));
+
+        platform(world, origin);
+
+        ColonyFixture fixture = ColonyFixture.colonyAtWorld(origin.add(4, 0, 8));
+        Colony colony = fixture.colony();
+        long time = world.getTimeOfDay();
+
+        try {
+            Set<ColonyPos> line = new HashSet<>();
+
+            for (int x = 4; x <= 14; x++) {
+                line.add(cell(origin.add(x, 0, 8)));
+            }
+
+            for (int z = 4; z < 8; z++) {
+                line.add(cell(origin.add(14, 0, z)));
+            }
+
+            RoadGraph graph = RoadGraph.from(line, colony.center(), Set.of());
+            WorldPathTerrain terrain = new WorldPathTerrain(world, colony.id());
+
+            RoadShape.growTips(world, colony, graph, terrain);
+            world.setTimeOfDay(time + 24_000);
+            RoadShape.growTips(world, colony, graph, terrain);
+
+            Set<ColonyPos> grown = RoadShape.pendingGrowth(colony.id(), Set.of(), Set.of());
+
+            context.assertTrue(grown.contains(cell(origin.add(15, 0, 4))), "Regra 229: a ponta não cresceu para fora, para o leste: " + grown);
+            context.assertFalse(grown.contains(cell(origin.add(14, 0, 3))), "Regra 229: a ponta seguiu a dobra, para o norte: " + grown);
+        } finally {
+            world.setTimeOfDay(time);
+            fixture.cleanUp();
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
+
+    /** A ponta calçada que sai 7 blocos da caixa leva a caixa até ela; a 6, não (Regra 230). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_tips_claim", tickLimit = 20)
+    public void aTipSevenBlocksOutTakesTheBoxWithIt(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 110, 1));
+
+        platform(world, origin);
+
+        ColonyFixture fixture = ColonyFixture.colonyAtWorld(origin.add(4, 0, 4));
+        Colony colony = fixture.colony();
+
+        try {
+            colony.measure(new com.villagecolony.core.colony.model.VillageBounds(origin.getX(), origin.getY(), origin.getZ(),
+                    origin.getX() + 8, origin.getY() + 8, origin.getZ() + 8));
+
+            int maxX = colony.bounds().orElseThrow().maxX();
+            Set<ColonyPos> line = new HashSet<>();
+
+            for (int x = origin.getX() + 4; x <= maxX + 6; x++) {
+                BlockPos at = new BlockPos(x, origin.getY(), origin.getZ() + 4);
+
+                world.setBlockState(at, Blocks.DIRT_PATH.getDefaultState(), 18);
+                line.add(cell(at));
+            }
+
+            RoadShape.claimTips(world, colony, RoadGraph.from(line, colony.center(), Set.of()));
+            context.assertTrue(colony.bounds().orElseThrow().maxX() == maxX, "Regra 230: a ponta a 6 blocos já levou a caixa");
+
+            BlockPos seventh = new BlockPos(maxX + 7, origin.getY(), origin.getZ() + 4);
+
+            world.setBlockState(seventh, Blocks.DIRT_PATH.getDefaultState(), 18);
+            line.add(cell(seventh));
+            RoadShape.claimTips(world, colony, RoadGraph.from(line, colony.center(), Set.of()));
+
+            context.assertTrue(colony.bounds().orElseThrow().maxX() >= maxX + 7,
+                    "Regra 230: a ponta a 7 blocos não levou a caixa: " + colony.bounds().orElseThrow());
+        } finally {
+            fixture.cleanUp();
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
+
+    /** Além de 128 blocos da caixa a ponta para de crescer (Regra 229). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_tips_reach", tickLimit = 20)
+    public void aTipStopsAtTheReach(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 114, 1));
+
+        platform(world, origin);
+
+        ColonyFixture fixture = ColonyFixture.colonyAtWorld(origin.add(4, 0, 4));
+        Colony colony = fixture.colony();
+        long time = world.getTimeOfDay();
+        BlockPos far = origin.add(8 + RoadShape.MAX_REACH, 0, 4);
+        BlockPos beyond = far.east();
+
+        world.setChunkForced(beyond.getX() >> 4, beyond.getZ() >> 4, true);
+        world.setBlockState(far, Blocks.GRASS_BLOCK.getDefaultState(), 18);
+        world.setBlockState(beyond, Blocks.GRASS_BLOCK.getDefaultState(), 18);
+
+        try {
+            colony.measure(new com.villagecolony.core.colony.model.VillageBounds(origin.getX(), origin.getY(), origin.getZ(),
+                    origin.getX() + 8, origin.getY() + 8, origin.getZ() + 8));
+
+            // A linha vai do centro até a borda da caixa e salta para a ponta longe, sem precisar de chão no meio.
+            Set<ColonyPos> line = new HashSet<>();
+            int maxX = colony.bounds().orElseThrow().maxX();
+
+            for (int x = origin.getX() + 4; x <= maxX + RoadShape.MAX_REACH; x++) {
+                line.add(new ColonyPos(x, origin.getY(), origin.getZ() + 4));
+            }
+
+            RoadGraph graph = RoadGraph.from(line, colony.center(), Set.of());
+            WorldPathTerrain terrain = new WorldPathTerrain(world, colony.id());
+
+            RoadShape.growTips(world, colony, graph, terrain);
+            world.setTimeOfDay(time + 24_000);
+            RoadShape.growTips(world, colony, graph, terrain);
+
+            context.assertFalse(RoadShape.pendingGrowth(colony.id(), Set.of(), Set.of())
+                            .contains(new ColonyPos(maxX + RoadShape.MAX_REACH + 1, origin.getY(), origin.getZ() + 4)),
+                    "Regra 229: a ponta passou dos " + RoadShape.MAX_REACH + " blocos");
+            context.assertTrue(RoadShape.MAX_REACH == 128, "o limite é de 128 blocos, escolha do autor");
+        } finally {
+            world.setTimeOfDay(time);
+            world.setBlockState(far, Blocks.AIR.getDefaultState(), 18);
+            world.setBlockState(beyond, Blocks.AIR.getDefaultState(), 18);
+            world.setChunkForced(beyond.getX() >> 4, beyond.getZ() >> 4, false);
             fixture.cleanUp();
             clean(world, origin);
         }

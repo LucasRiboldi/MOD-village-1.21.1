@@ -22,6 +22,7 @@ final class RoadGraphSave {
     private static final String VERSION = "version";
     private static final int CURRENT = 1;
     private static final int MAX_COLUMNS = 6000;
+    private static final String SETTLED = "settled";
 
     private RoadGraphSave() { }
 
@@ -71,6 +72,40 @@ final class RoadGraphSave {
         payload.put("edges", edges);
         require(decode(payload).isPresent());
         return payload;
+    }
+
+    /** O dia em que cada coluna entrou na linha, para a trava de trecho — Regra 225, ADR-050. Ausente: nenhum. */
+    static Map<Long, Long> settled(NbtCompound payload) {
+        Map<Long, Long> since = new HashMap<>();
+        int[] values = payload.getIntArray(SETTLED);
+
+        if (values.length % 3 != 0 || values.length > MAX_COLUMNS * 3) {
+            return since;
+        }
+
+        for (int i = 0; i < values.length; i += 3) {
+            since.put(com.villagecolony.core.construction.model.ColonyRoads.column(values[i], values[i + 1]), (long) values[i + 2]);
+        }
+
+        return since;
+    }
+
+    static void putSettled(NbtCompound payload, Map<Long, Long> since) {
+        int[] values = new int[Math.min(since.size(), MAX_COLUMNS) * 3];
+        int i = 0;
+
+        for (Map.Entry<Long, Long> entry : new java.util.TreeMap<>(since).entrySet()) {
+            if (i >= values.length) {
+                break;
+            }
+
+            values[i] = com.villagecolony.core.construction.model.ColonyRoads.xOf(entry.getKey());
+            values[i + 1] = com.villagecolony.core.construction.model.ColonyRoads.zOf(entry.getKey());
+            values[i + 2] = (int) Math.min(Integer.MAX_VALUE, Math.max(0, entry.getValue()));
+            i += 3;
+        }
+
+        payload.putIntArray(SETTLED, values);
     }
 
     static Optional<RoadGraph> decode(NbtCompound payload) {

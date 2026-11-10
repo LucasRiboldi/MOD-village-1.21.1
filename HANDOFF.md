@@ -1,30 +1,36 @@
 # Handoff — Village Colony
 
-Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 2026-11-07, feita pelo Claude Code: reconfira com `git log` e `gh pr list` antes de trabalhar. O handoff anterior, da Fase 3 do MAE, está no histórico do Git.
+Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 2026-11-10, feita pelo Claude Code: reconfira com `git log` e `gh pr list` antes de trabalhar. O handoff anterior, da Fase 3 do MAE, está no histórico do Git.
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.43, publicada como pré-lançamento [`v0.4.43-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.43-alpha). Branch de trabalho: `main`.
+- **Versão:** 0.4.47, candidata, **não jogada**. A última publicada é a [`v0.4.43-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.43-alpha). Branch de trabalho: `main`, depois da PR que traz as 0.4.44 a 0.4.47.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, ele escolhe, teste que falha, correção, Sentinela, commit, JAR.
-- **Última tarefa:** o autor jogou a 0.4.43 e pediu para anotar a análise, para avaliar e corrigir depois. Nada dela foi corrigido.
+- **Entregue desde a 0.4.43 (todas candidatas):**
+  - 0.4.44, ADR-050, Regras 224 e 225: parte solta liga em reta ao ponto mais perto da linha, caminho de fora da caixa entra no grafo, trecho de 10 dias de jogo sem mudar fica fixo.
+  - 0.4.45, ADR-051, Regras 226 a 228: socorro do MAE só quando nem casa cabe e em bairro; recusa de `/vc mae obra` com todos os motivos; água interna aterrada na obra do jogador; ruína de save antigo limpa.
+  - 0.4.46, ADR-052, Regras 229 e 230: uma ponta azul por lado, 1 bloco por dia para fora, até 128 blocos; a caixa da vila alcança a ponta a 7 blocos.
+  - 0.4.47, Regras 232 e 233: a obra manda no artesão, lenhador não larga a árvore que se aproxima, fazendeiro primeiro com comida em falta, mineiro sem vaga nova com pedra sobrando, diário grava o produto.
 
 ## O próximo passo
 
-**Não comece corrigindo.** O autor ainda vai escolher. Leia [`docs/audit/2026-11-07-jogo-0443.md`](docs/audit/2026-11-07-jogo-0443.md) e pergunte qual destas opções ele quer:
+**O autor precisa jogar a 0.4.47 e mandar o Spark.** Sem jogo, o que falta é prova, não código. Ao receber o log, siga `CLAUDE.md` §0.2.2 e confira:
 
-1. Branco e socorro, recomendada: socorro só depois de todos os tipos de obra falharem; quina em cima da rua perde o branco (defeito de `RoadGraph.hasLineNear`); `plains_accessory_1` vira enfeite.
-2. Investigar as 230 colunas de rua cobertas por grama, só diagnóstico.
-3. Diagnosticar falta de madeira e nenhum nascimento em 63 minutos.
+- `VC_ROAD_GRAPH`: `offLine`, `capped`, `fixed` e `isolated`; `VC_ROAD_TIP result=claimed`.
+- `VC_MAE_SITE`: `queued` até `done`, `ms`, `rescue`, `water_filled`, `ruin_cleared`.
+- `time_ledger.py` e `action_report.py`: menos `SET_ASIDE no material`, fundidor e carpinteiro menos ociosos, mais de 1 nascimento por hora.
 
-Em aberto com o autor: a obra do socorro foi parada 17 s depois de pedida. Foi ele? O que viu no lugar?
+Pendente no `TODO.md`: passo 4 do grafo (solo para todo caminho fora do grafo, só depois de medir `offLine`), plantação nova e abate para comida, testes de `WaitingWork`, e o instável `eachSpeciesGetsItsOwnPen`.
+
+Análises feitas: `docs/audit/2026-11-07-jogo-0443.md`, `docs/audit/2026-11-10-qualidade-das-profissoes.md` e `docs/research/2026-11-10-melhorias-do-grafo.md`.
 
 ## Ordem de leitura
 
 1. Este arquivo.
 2. `AGENTS.md`, inteiro no topo; `CLAUDE.md` §0 a §2.1. `CLAUDE.md` vence em conflito.
 3. `STATE.md`, só as primeiras 60 linhas.
-4. `docs/audit/2026-11-07-jogo-0443.md`, e o topo do `TODO.md` mais as seções "Jogo da 0.4.43" e "MAE: o que falta".
-5. `docs/RULES.md`: procure a regra por número. As mais recentes são 222 (socorro) e 223 (branco só onde se entra).
+4. `docs/audit/2026-11-10-qualidade-das-profissoes.md`, e o topo do `TODO.md` mais as seções das versões 0.4.44 a 0.4.47.
+5. `docs/RULES.md`: procure a regra por número. As mais recentes são 224 a 233.
 
 ## Regras do autor que não estão nos outros documentos
 

@@ -98,6 +98,34 @@ class ColonyCycleTest {
     }
 
     @Test
+    void stoneAboveTheCeilingMarksTheMinerAsSurplus() {
+        miner();
+        Map<ResourceType, Integer> goal = Map.of(ResourceType.OAK_LOG, 64);
+
+        ColonyCycle.run(COLONY, ResourceTally.of(Map.of(ResourceType.COBBLESTONE, ColonyCycle.STONE_SURPLUS)), goal, tasks, workers);
+        assertEquals(List.of(ProfessionType.MINER), com.villagecolony.core.worker.service.ProfessionDemand.surplusOf(COLONY),
+                "Regra 233: a pedra no teto não marcou o mineiro");
+
+        ColonyCycle.run(COLONY, ResourceTally.of(Map.of(ResourceType.COBBLESTONE, ColonyCycle.STONE_SURPLUS - 1)), goal, tasks, workers);
+        assertTrue(com.villagecolony.core.worker.service.ProfessionDemand.surplusOf(COLONY).isEmpty(), "Regra 233: abaixo do teto continuou sobrando");
+    }
+
+    @Test
+    void missingFoodPutsTheFarmerFirstInTheHiring() {
+        farmer();
+        miner();
+        Map<ResourceType, Integer> goal = Map.of(ResourceType.WHEAT, 64, ResourceType.COBBLESTONE, 640);
+        Map<ResourceType, Integer> project = Map.of(ResourceType.COBBLESTONE, 640);
+
+        ColonyCycle.run(COLONY, ResourceTally.empty(), goal, tasks, workers,
+                worker -> true, com.villagecolony.core.coordination.ProductionHands.IGNORED, project);
+
+        assertEquals(ProfessionType.FARMER, com.villagecolony.core.worker.service.ProfessionDemand.of(COLONY).getFirst(),
+                "Regra 233: com comida em falta, o fazendeiro não veio primeiro: "
+                        + com.villagecolony.core.worker.service.ProfessionDemand.of(COLONY));
+    }
+
+    @Test
     void dirtNeededByConstructionGoesToTheFarmerFirst() {
         farmer();
         Map<ResourceType, Integer> goal = Map.of(ResourceType.DIRT, 16);

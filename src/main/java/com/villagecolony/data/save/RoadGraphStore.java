@@ -35,7 +35,37 @@ public final class RoadGraphStore {
         if (!versionSupported(colonyId)) {
             throw new IllegalStateException("unsupported future road graph");
         }
-        payloads.put(colonyId, RoadGraphSave.encode(graph));
+        NbtCompound encoded = RoadGraphSave.encode(graph);
+        NbtCompound old = payloads.get(colonyId);
+
+        // A trava de trecho sobrevive à troca do grafo (Regra 225).
+        if (old != null) {
+            RoadGraphSave.putSettled(encoded, RoadGraphSave.settled(old));
+        }
+
+        payloads.put(colonyId, encoded);
+        changed.run();
+    }
+
+    /** O dia em que cada coluna entrou na linha — Regra 225, ADR-050. */
+    public Map<Long, Long> settled(UUID colonyId) {
+        NbtCompound payload = payloads.get(colonyId);
+
+        return payload == null ? Map.of() : RoadGraphSave.settled(payload);
+    }
+
+    /** Grava os dias da trava, só onde já há grafo da versão conhecida. */
+    public void settle(UUID colonyId, Map<Long, Long> since) {
+        NbtCompound payload = payloads.get(colonyId);
+
+        if (payload == null || !RoadGraphSave.supported(payload) || RoadGraphSave.settled(payload).equals(since)) {
+            return;
+        }
+
+        NbtCompound copy = payload.copy();
+
+        RoadGraphSave.putSettled(copy, since);
+        payloads.put(colonyId, copy);
         changed.run();
     }
 

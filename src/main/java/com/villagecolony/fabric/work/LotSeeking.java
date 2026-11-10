@@ -30,6 +30,15 @@ final class LotSeeking {
     private LotSeeking() {
     }
 
+    /**
+     * Se a volta sem lote desta planta conta para o socorro — Regra 226: só a da casa. A oficina sem lote sai da vez
+     * ({@link LotTypeRefusals}) e a vila tenta outro tipo; quando nem a casa cabe, a vila inteira está sem lote. Roça fica
+     * fora: precisa estar ao alcance do fazendeiro.
+     */
+    static boolean callsTheRescue(Blueprint blueprint) {
+        return HousePlans.isHouse(blueprint.id()) && !FarmPlans.isFarm(blueprint.id());
+    }
+
     static Optional<ConstructionProject> seek(ServerWorld world, Colony colony, int builders) {
         if (MineHomePlans.isOwed(world, colony)) {
             List<Blueprint> houses = MineHomePlans.planFor(world, colony);
@@ -141,8 +150,8 @@ final class LotSeeking {
             // regra fica respeitada — estrada primeiro, casa depois.
             Optional<ConstructionProject> grown = RoadGrowthPlanning.extendTheRoad(world, colony, blueprint, plans, builders);
 
-            // Nem a rua abriu lote: o socorro do MAE, fora da roça, que precisa ficar ao alcance do fazendeiro — Regra 222.
-            if (grown.isEmpty() && !farming) {
+            // Nem a rua abriu lote: o socorro do MAE — Regras 222 e 226.
+            if (grown.isEmpty() && callsTheRescue(blueprint)) {
                 MaeRescue.sweptWithoutLot(world, colony, plans);
             }
 

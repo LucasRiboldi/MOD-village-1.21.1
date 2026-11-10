@@ -2,11 +2,15 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.RoadGraph;
+import com.villagecolony.core.construction.model.RoadSides;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
+import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
 import com.villagecolony.fabric.world.GeneratedVillages;
 import net.minecraft.server.world.ServerWorld;
@@ -20,6 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
@@ -35,11 +40,11 @@ final class RoadShape {
     /** Quantas releituras até a quina da plantação virar entrada. */
     static final int CORNER_AFTER_READS = 3;
 
-    /** Quantas pontas crescem por dia, das mais distantes do centro. */
-    private static final int TIPS_PER_DAY = 2;
+    /** Até onde, além da vila gerada, as pontas levam a vila (Regra 229). */
+    static final int MAX_REACH = 128;
 
-    /** A ponta precisa estar a pelo menos esta fração da mais distante, em porcentagem. */
-    private static final int FAR_ENOUGH_PERCENT = 75;
+    /** A ponta calçada que sai da caixa por esta distância leva a caixa até ela (Regra 230). */
+    static final int CLAIM_AFTER = 7;
 
     private static final long DAY = 24_000;
 
@@ -172,7 +177,10 @@ final class RoadShape {
         return left;
     }
 
-    /** Uma vez por dia, as pontas mais distantes do centro avançam um bloco em linha reta (Regra 185). */
+    /**
+     * Uma vez por dia, cada ponta azul, uma por lado da vila, avança um bloco para fora por aquele lado, até
+     * {@value #MAX_REACH} blocos além da vila gerada — Regras 185 e 229. O construtor calça.
+     */
     static void growTips(ServerWorld world, Colony colony, RoadGraph graph, WorldPathTerrain terrain) {
         long day = world.getTimeOfDay() / DAY;
         Long last = LAST_DAY.put(colony.id(), day);
@@ -182,71 +190,67 @@ final class RoadShape {
         }
 
         ColonyPos center = colony.center();
-        List<RoadGraph.Node> tips = new ArrayList<>(graph.nodes().stream()
-                .filter(node -> node.roles().contains(RoadGraph.Role.ENDPOINT)
-                        && !node.roles().contains(RoadGraph.Role.ENTRANCE) && !node.roles().contains(RoadGraph.Role.HUB))
-                .toList());
+        List<RoadGraph.Node> tips = graph.nodes().stream().filter(RoadShape::isTip).toList();
 
-        tips.sort(Comparator.comparingInt((RoadGraph.Node node) -> -distance(node.position(), center)));
+        Optional<VillageBounds> reference = GeneratedVillages.boundsAt(world, center.x(), center.z()).or(colony::bounds);
 
-        if (tips.isEmpty()) {
+        for (RoadGraph.Node tip : tips) {
+            grow(world, colony.id(), tip.position(), center, reference, terrain);
+        }
+    }
+
+    /** A ponta calçada a {@value #CLAIM_AFTER} blocos ou mais fora da caixa leva a caixa da vila até ela (Regra 230). */
+    static void claimTips(ServerWorld world, Colony colony, RoadGraph graph) {
+        Optional<VillageBounds> box = colony.bounds();
+
+        if (box.isEmpty()) {
             return;
         }
 
-        int farthest = distance(tips.getFirst().position(), center);
-        int grown = 0;
+        for (RoadGraph.Node tip : graph.nodes()) {
+            ColonyPos at = tip.position();
 
-        for (RoadGraph.Node tip : tips) {
-            if (grown >= TIPS_PER_DAY || distance(tip.position(), center) * 100 < farthest * FAR_ENOUGH_PERCENT) {
-                break;
-            }
-
-            if (grow(world, colony.id(), graph, tip.position(), terrain)) {
-                grown++;
+            if (isTip(tip) && outsideBy(box.get(), at.x(), at.z()) >= CLAIM_AFTER
+                    && world.isChunkLoaded(at.x() >> 4, at.z() >> 4)
+                    && VillageRoad.isPathBlock(world.getBlockState(MinecraftTypeAdapter.toBlockPos(at)))
+                    && colony.grow(VillageBounds.block(at))) {
+                VillageColonyMod.LOGGER.info("VC_ROAD_TIP colony={} tip={} result=claimed box={}",
+                        colony.id().toString().substring(0, 8), at, colony.bounds().orElseThrow());
             }
         }
     }
 
-    private static int distance(ColonyPos a, ColonyPos b) {
-        return Math.abs(a.x() - b.x()) + Math.abs(a.z() - b.z());
+    private static boolean isTip(RoadGraph.Node node) {
+        return node.roles().contains(RoadGraph.Role.ENDPOINT)
+                && !node.roles().contains(RoadGraph.Role.ENTRANCE) && !node.roles().contains(RoadGraph.Role.HUB);
     }
 
-    private static boolean grow(ServerWorld world, UUID colonyId, RoadGraph graph, ColonyPos tip, WorldPathTerrain terrain) {
-        for (RoadGraph.Edge edge : graph.edges()) {
-            List<ColonyPos> columns = edge.columns();
-            int at = columns.indexOf(tip);
+    /** Quanto a coluna fica fora da caixa, pelo eixo em que mais sai; zero dentro. */
+    static int outsideBy(VillageBounds box, int x, int z) {
+        int dx = Math.max(Math.max(box.minX() - x, x - box.maxX()), 0);
+        int dz = Math.max(Math.max(box.minZ() - z, z - box.maxZ()), 0);
 
-            if (at < 0 || columns.size() < 2 || (at != 0 && at != columns.size() - 1)) {
-                continue;
-            }
+        return Math.max(dx, dz);
+    }
 
-            ColonyPos before = columns.get(at == 0 ? 1 : at - 1);
-            int dx = tip.x() - before.x();
-            int dz = tip.z() - before.z();
+    private static void grow(ServerWorld world, UUID colonyId, ColonyPos tip, ColonyPos center,
+                             Optional<VillageBounds> reference, WorldPathTerrain terrain) {
+        Side outward = RoadSides.of(tip.x(), tip.z(), center);
+        int x = tip.x() + outward.offsetX();
+        int z = tip.z() + outward.offsetZ();
 
-            if (Math.abs(dx) + Math.abs(dz) != 1) {
-                return false;
-            }
-
-            int x = tip.x() + dx;
-            int z = tip.z() + dz;
-
-            if (!world.isChunkLoaded(x >> 4, z >> 4) || terrain.blocked(x, z)) {
-                return false;
-            }
-
-            OptionalInt ground = terrain.groundY(x, z, tip.y());
-
-            if (ground.isEmpty() || Math.abs(ground.getAsInt() - tip.y()) > 1) {
-                return false;
-            }
-
-            GROWTH.computeIfAbsent(colonyId, ignored -> new HashSet<>()).add(new ColonyPos(x, ground.getAsInt(), z));
-
-            return true;
+        if (reference.filter(box -> outsideBy(box, x, z) > MAX_REACH).isPresent()
+                || !world.isChunkLoaded(x >> 4, z >> 4) || terrain.blocked(x, z)) {
+            return;
         }
 
-        return false;
+        OptionalInt ground = terrain.groundY(x, z, tip.y());
+
+        if (ground.isEmpty() || Math.abs(ground.getAsInt() - tip.y()) > 1) {
+            return;
+        }
+
+        GROWTH.computeIfAbsent(colonyId, ignored -> new HashSet<>()).add(new ColonyPos(x, ground.getAsInt(), z));
     }
 
     private static void clearAll() {

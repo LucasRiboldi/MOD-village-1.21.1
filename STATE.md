@@ -1,6 +1,26 @@
-# STATE — 2026-11-07
+# STATE — 2026-11-10
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
+
+> **Candidata 0.4.47:** equilíbrio das profissões, sobre a análise de 11-10 (Regras 232 e 233): a obra manda no artesão; estoque de
+> enfeite espera a obra parada; lenhador não larga a árvore enquanto se aproxima; fazendeiro primeiro com comida em falta; mineiro sem
+> vaga nova com pedra sobrando; diário grava o produto. Não jogada.
+> Sentinela `fast`: 1075 GameTests e 1781 unitários; nas duas baterias caiu um teste instável cada (`workerCollectsWhileWalkingPast`, e
+> `eachSpeciesGetsItsOwnPen` por tempo, que passou 3 de 3 isolado). 5 sabotagens pegas.
+
+> **Candidata 0.4.46:** as pontas levam a vila (ADR-052, Regras 229 e 230): uma ponta azul por lado, 1 bloco por dia para fora, até 128
+> blocos; a caixa alcança a ponta calçada que sai 7 blocos. Não jogada.
+> Sentinela `fast` verde de primeira: 1073 GameTests e 1778 unitários. 5 sabotagens das pontas pegas.
+
+> **Candidata 0.4.45:** fechamento do MAE (ADR-051, Regras 226 a 228): socorro só quando nem casa cabe, em bairro; `/vc mae obra` com
+> todos os motivos de recusa e tempo em `ms`; a obra do jogador aterra água interna da vila, não mar nem rio aberto; ruína de save antigo
+> sai, só o bloco igual ao da planta. Não jogada. O que falta do MAE é prova em jogo: `TODO.md`, seção do MAE.
+> Sentinela `fast`: 1070 GameTests e 1777 unitários, verde na terceira bateria; nas duas primeiras falhou um instável conhecido em cada (`workerCollectsWhileWalkingPast`, `animalsWalkInThroughEachOfTheFourGates`). PIT local: 85% (3314 de 3897). 9 sabotagens do MAE pegas.
+
+> **Candidata 0.4.44:** grafo estável, pedido do autor em 11-10 (ADR-050, Regras 224 e 225): toda parte solta liga em reta ao ponto mais
+> perto da linha; entra o caminho de fora da caixa que encosta no de dentro; o teto de 6.000 colunas não cala mais o grafo; trecho com 10 dias
+> sem mudar fica fixo. Passo 4 da pesquisa (solo para todo caminho fora do grafo) espera medir `offLine` em jogo. Não jogada.
+> Sentinela `fast` verde: 1062 GameTests e 1777 unitários. 10 sabotagens pegas pelos testes. PIT não rodou; o core mudou.
 
 > **Candidata 0.4.43:** conceito desenhado pelo autor sobre o jogo da 0.4.42 (Spark 7d0PErq0RJ), Regra 223: branco colado na porta, só onde se entra,
 > sem ramal para quem não tem entrada. Publicada, e jogada em 2026-11-07 (Spark u6XC34ZC0k): 0 quadrados de nós e 0 brancos soltos. A 0.4.42 foi jogada sem disparar o socorro: nenhum `VC_MAE_SITE`.
