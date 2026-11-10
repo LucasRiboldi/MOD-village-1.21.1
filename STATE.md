@@ -1,4 +1,4 @@
-# STATE — 2026-11-07
+# STATE — 2026-11-10
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
