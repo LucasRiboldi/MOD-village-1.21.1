@@ -117,6 +117,13 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 - [ ] 344 de 795 colunas de caminho fora da linha, e 118 colunas da linha ainda sem caminho
 - [ ] Blocos que surgiram, `VC_SUPPLY`: `prismarine_crystals` ×80, `prismarine_shard` ×64, `white_terracotta` ×62, `honeycomb` ×29, `oak_log` ×39, `stripped_oak_log` ×16, `glass_pane` ×7, `white_wool` ×7, `string` ×4
 
+## Grafo estável (0.4.44, ADR-050)
+
+- [ ] Conferir em jogo: `offLine`, `capped` e `fixed` no `VC_ROAD_GRAPH`; `isolated` perto de 0; o grafo parando de oscilar
+- [ ] Passo 4 da pesquisa: devolver ao solo todo caminho fora do grafo. Decidir depois de medir `offLine` num jogo
+- [ ] A trava de 10 dias só aparece em jogo longo: 240.000 tiques, 3 h 20 min corridos
+- [ ] Obra demolida não solta o ramal fixo enquanto o bloco de caminho existir
+
 ## MAE: o que falta depois da 0.4.26
 
 - [ ] Rodar o PIT: o core mudou na 0.4.43 (`RetiredSpurs`, `RoadSquares`, `RoadGraph`)

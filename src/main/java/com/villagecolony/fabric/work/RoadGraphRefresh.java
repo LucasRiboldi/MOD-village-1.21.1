@@ -7,6 +7,8 @@ import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.PathStep;
 import com.villagecolony.core.construction.model.PlannedPaths;
 import com.villagecolony.core.construction.model.RetiredSpurs;
+import com.villagecolony.core.construction.model.RoadCells;
+import com.villagecolony.core.construction.model.RoadSettling;
 import com.villagecolony.core.construction.model.RoadGraph;
 import com.villagecolony.core.construction.model.RoadLines;
 import com.villagecolony.core.type.ColonyPos;
@@ -70,6 +72,7 @@ public final class RoadGraphRefresh {
         final UUID colony;
         final VillageBounds box;
         final Set<ColonyPos> cells = new HashSet<>();
+        final Set<ColonyPos> outside = new HashSet<>();
         int x;
         int z;
 
@@ -131,11 +134,22 @@ public final class RoadGraphRefresh {
         }
     }
 
+    /** A varredura inteira de uma vez, no lugar da que anda aos poucos: para os testes. */
+    static void scanNow(ServerWorld world, Colony colony) {
+        Scan scan = new Scan(colony.id(), colony.bounds().orElseThrow());
+
+        SCANS.put(colony.id(), scan);
+
+        while (SCANS.get(colony.id()) == scan) {
+            advance(world, colony, scan, world.getTime());
+        }
+    }
+
     private static void advance(ServerWorld world, Colony colony, Scan scan, long now) {
         for (int done = 0; done < COLUMNS_PER_TICK; done++) {
             if (scan.x > scan.box.maxX() + GATE_MARGIN) {
                 SCANS.remove(colony.id());
-                NEXT.put(colony.id(), publish(world, colony, scan.cells) ? now + SOON : now + EVERY);
+                NEXT.put(colony.id(), publish(world, colony, scan.cells, scan.outside, dayOf(world)) ? now + SOON : now + EVERY);
                 return;
             }
 
@@ -158,7 +172,12 @@ public final class RoadGraphRefresh {
 
         MineGates.look(world, scan.colony, at, top);
 
+        // Fora da caixa só conta o caminho que encosta no de dentro (Regra 224): a escolha é feita ao publicar.
         if (!scan.inTheBox()) {
+            if (VillageRoad.isPathBlock(top) && RoadGraphMigration.usable(world, at)) {
+                scan.outside.add(MinecraftTypeAdapter.toColonyPos(at));
+            }
+
             return;
         }
 
@@ -185,9 +204,26 @@ public final class RoadGraphRefresh {
         }
     }
 
+    /** O dia de jogo, pelo relógio do mundo: dormir conta, como para os aldeões. */
+    static long dayOf(ServerWorld world) {
+        return world.getTimeOfDay() / 24_000L;
+    }
+
     /** Publica o grafo; verdadeiro quando ainda há ligação ou calçada por fazer. */
     static boolean publish(ServerWorld world, Colony colony, Set<ColonyPos> found) {
+        return publish(world, colony, found, Set.of(), dayOf(world));
+    }
+
+    /**
+     * O mesmo, com o caminho de fora da caixa e o dia — Regras 224 e 225.
+     *
+     * @param outside os blocos de caminho lidos fora da caixa; só entram os que encostam no de dentro
+     */
+    static boolean publish(ServerWorld world, Colony colony, Set<ColonyPos> inside, Set<ColonyPos> outside, long today) {
         UUID id = colony.id();
+        Set<ColonyPos> found = new HashSet<>(inside);
+
+        found.addAll(RoadCells.touching(inside, outside));
 
         Set<Long> known = new HashSet<>(RoadIndex.roadsOf(id).map(ColonyRoads::columns).orElse(List.of()));
         Set<Long> scanned = new HashSet<>();
@@ -203,7 +239,7 @@ public final class RoadGraphRefresh {
             }
         }
 
-        Set<ColonyPos> cells = new HashSet<>(found);
+        Set<ColonyPos> every = new HashSet<>(found);
 
         for (long column : known) {
             if (!scanned.contains(column)) {
@@ -214,14 +250,37 @@ public final class RoadGraphRefresh {
                     return true;
                 }
 
-                RoadGraphMigration.firstFloor(world, x, z).ifPresent(at -> cells.add(MinecraftTypeAdapter.toColonyPos(at)));
+                RoadGraphMigration.firstFloor(world, x, z).ifPresent(at -> every.add(MinecraftTypeAdapter.toColonyPos(at)));
             }
         }
 
         var store = ColonySavedData.get(world.getServer()).roadGraphs();
 
-        if (cells.size() > RoadNetwork.MAX_COLUMNS || !store.versionSupported(id)) {
+        if (!store.versionSupported(id)) {
             return false;
+        }
+
+        // Acima do teto, os mais perto do centro: o grafo segue, e o corte aparece no log (Regra 224).
+        int capped = Math.max(0, every.size() - RoadNetwork.MAX_COLUMNS);
+
+        Set<ColonyPos> cells = new HashSet<>(RoadCells.nearest(every, colony.center(), RoadNetwork.MAX_COLUMNS));
+
+        // O trecho fixo só vale com o caminho de pé; sumiu, a conta recomeça (Regra 225).
+        Map<Long, ColonyPos> byColumn = new HashMap<>();
+
+        cells.forEach(at -> byColumn.put(ColonyRoads.column(at.x(), at.z()), at));
+
+        Map<Long, Long> since = new HashMap<>(store.settled(id));
+        Set<ColonyPos> fixed = new HashSet<>();
+
+        for (long column : RoadSettling.fixed(since, today)) {
+            ColonyPos at = byColumn.get(column);
+
+            if (at == null) {
+                since.remove(column);
+            } else {
+                fixed.add(at);
+            }
         }
 
         WorldPathTerrain terrain = new WorldPathTerrain(world, id);
@@ -245,10 +304,19 @@ public final class RoadGraphRefresh {
         }
 
         RoadLines.Result result = RoadLines.build(cells, planned, colony.center(), fronts,
-                RoadShape.farmRings(world, colony, terrain), terrain, bridging, BridgeDeck.MAX_SPAN, LINKS_PER_READ, turn);
+                RoadShape.farmRings(world, colony, terrain), terrain, bridging, BridgeDeck.MAX_SPAN, LINKS_PER_READ, turn, fixed);
+        Set<ColonyPos> read = cells;
 
         result.graph().ifPresent(graph -> {
-            update(colony, store, graph, result);
+            Set<Long> line = new HashSet<>();
+
+            graph.nodes().forEach(node -> line.add(ColonyRoads.column(node.position().x(), node.position().z())));
+            graph.edges().forEach(edge -> edge.columns().forEach(at -> line.add(ColonyRoads.column(at.x(), at.z()))));
+
+            long offLine = read.stream().filter(at -> !line.contains(ColonyRoads.column(at.x(), at.z()))).count();
+
+            update(colony, store, graph, result, offLine, capped, fixed.size());
+            store.settle(id, RoadSettling.track(since, line, today));
             publishNetwork(colony, graph);
             RoadShape.growTips(world, colony, graph, terrain);
         });
@@ -276,13 +344,13 @@ public final class RoadGraphRefresh {
     }
 
     private static void update(Colony colony, com.villagecolony.data.save.RoadGraphStore store, RoadGraph graph,
-                               RoadLines.Result result) {
+                               RoadLines.Result result, long offLine, int capped, int fixed) {
         try {
             if (!store.graph(colony.id()).equals(Optional.of(graph))) {
                 store.update(colony.id(), graph);
-                VillageColonyMod.LOGGER.info("VC_ROAD_GRAPH colony={} nodes={} edges={} toPave={} isolated={}",
+                VillageColonyMod.LOGGER.info("VC_ROAD_GRAPH colony={} nodes={} edges={} toPave={} isolated={} offLine={} capped={} fixed={}",
                         colony.id().toString().substring(0, 8), graph.nodes().size(), graph.edges().size(),
-                        result.toPave().size(), result.isolated());
+                        result.toPave().size(), result.isolated(), offLine, capped, fixed);
             }
         } catch (IllegalArgumentException refused) {
             // O grafo anterior continua: formato recusado não derruba o servidor nem o save.

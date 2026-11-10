@@ -12,6 +12,19 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.44] — candidata, 2026-11-10
+
+### Adicionado
+
+- Toda parte solta do caminho liga em reta ao ponto mais perto da linha, todas na mesma releitura (Regra 224).
+- O caminho de até 32 blocos fora da caixa que encosta no de dentro entra no grafo (Regra 224).
+- Trecho que passa 10 dias de jogo sem mudar fica fixo (Regra 225, ADR-050).
+- `VC_ROAD_GRAPH` mostra `offLine`, `capped` e `fixed`.
+
+### Corrigido
+
+- Com mais de 6.000 colunas de caminho o grafo deixava de ser publicado, sem log; agora ficam as mais perto do centro.
+
 ## [0.4.43] — candidata, 2026-11-07
 
 ### Corrigido

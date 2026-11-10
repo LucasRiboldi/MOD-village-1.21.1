@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.43%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.44%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,7 +19,7 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Estado atual: 0.4.43 publicada como pré-lançamento, em correção por playtest.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
+**Estado atual: candidata 0.4.44 (grafo estável, ADR-050), não jogada; a última publicada é a 0.4.43.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
 [docs/RULES.md](docs/RULES.md) (1 a 216).
 
@@ -442,6 +442,8 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 221 | **A vila gasta o que produz** (autor 11-06): depois da ceia, cada adulto come 1 ponto de comida do que sobrou. A ferramenta que a colônia entrega dura 3 dias, e a renovada custa 2 tábuas e 3 pedras; sem material ela fica no último ponto e o trabalho segue. Sem tarefa, carpinteiro e pedreiro visitam cada construção uma vez por dia e gastam 4 tábuas ou pedras; com obra aberta ou menos de 36 no estoque, não gastam. Candidata | 11-06 |
 | 222 | **O socorro do MAE** (autor 11-06, ADR-049): depois de 2 voltas inteiras sem lote para a próxima obra, e sem a rua abrir um, a vila procura sozinha um lote a até 24 blocos da borda da caixa, um lado por vez, e pede a obra na fila do construtor (Regra 213), com a porta virada para a vila. Só avisa no chat, sem esperar aprovação; cancela-se com `/vc mae parar` ou a tocha das almas. Lote que toca água é recusado, e roça fica de fora. Candidata | 11-06 |
 | 223 | **Branco só onde se entra** (autor 11-07, desenho sobre o jogo da 0.4.42): o marcador fica colado na porta, e a saída da caixa é só o caminho até ele. Poste, poço e chafariz não têm entrada, e nada dentro de curral fechado tem. Se um caminho já leva da porta para fora da caixa, a linha segue por ele. O ramal que perdeu a entrada sai do grafo e do chão, a qualquer distância, até 32 colunas; trecho maior é rua e fica. Degrau e assoalho em frente à porta levam o branco, mas não viram caminho. A rua não forma quadrado de nós; encontros de ruas diferentes podem ficar lado a lado. Candidata | 11-07 |
+| 224 | **Todo caminho conta e liga em reta** (autor 11-10, ADR-050): o grafo lê o caminho da caixa e o de até 32 blocos fora dela que encosta no de dentro. Acima de 6.000 colunas ficam as mais perto do centro, e o corte vai para o log. Toda parte solta liga antes em reta, com uma dobra só, ao ponto mais perto da linha, até 64 blocos; todas na mesma releitura. Candidata | 11-10 |
+| 225 | **O trecho que ficou trava** (autor 11-10, ADR-050): coluna que passa 10 dias de jogo na linha sem sair fica fixa; a releitura não a move, e o resto do traçado se ajeita em volta. Some o caminho dela no mundo, ou ela sai da linha, e a conta recomeça. Candidata | 11-10 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).

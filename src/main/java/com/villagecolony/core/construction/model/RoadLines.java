@@ -74,6 +74,17 @@ public final class RoadLines {
      */
     public static Result build(Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> entrances,
                                Set<ColonyPos> farmRings, PathTerrain terrain, PathTerrain bridging, int maxSpan, int maxLinks, int turn) {
+        return build(cells, planned, center, entrances, farmRings, terrain, bridging, maxSpan, maxLinks, turn, Set.of());
+    }
+
+    /**
+     * O mesmo, com os trechos fixos: a linha passa por eles como estão, e o resto se ajeita em volta — Regra 225.
+     *
+     * @param fixed as colunas de trecho que não mudou há {@link RoadSettling#DAYS} dias
+     */
+    public static Result build(Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> entrances,
+                               Set<ColonyPos> farmRings, PathTerrain terrain, PathTerrain bridging, int maxSpan, int maxLinks, int turn,
+                               Set<ColonyPos> fixed) {
         Map<Long, Integer> physical = new HashMap<>();
 
         cells.forEach(at -> physical.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
@@ -95,8 +106,18 @@ public final class RoadLines {
             start.putIfAbsent(column, door.y());
         }
 
+        Map<Long, Integer> settled = new HashMap<>();
+
+        fixed.forEach(at -> settled.put(ColonyRoads.column(at.x(), at.z()), at.y()));
+        settled.forEach(start::putIfAbsent);
+
+        // Porta e trecho fixo não saem do afinamento, nem do corte de quadrado e de ponta.
+        Set<Long> kept = new HashSet<>(doors);
+
+        kept.addAll(settled.keySet());
+
         Map<Long, Integer> mask = RoadMask.closed(start, terrain);
-        Map<Long, Integer> columns = lines(mask, mask, doors, terrain);
+        Map<Long, Integer> columns = lines(mask, mask, doors, kept, terrain);
 
         // De novo sobre as próprias linhas: duas retas a até dois blocos viram uma, e os encontros colados, um nó.
         for (int pass = 1; pass < PASSES; pass++) {
@@ -105,7 +126,7 @@ public final class RoadLines {
 
             heights.putAll(band);
 
-            Map<Long, Integer> again = lines(band, heights, doors, terrain);
+            Map<Long, Integer> again = lines(band, heights, doors, kept, terrain);
 
             if (again.equals(columns)) {
                 break;
@@ -114,7 +135,8 @@ public final class RoadLines {
             columns = again;
         }
 
-        RoadSquares.thin(columns, doors);
+        settled.forEach(columns::putIfAbsent);
+        RoadSquares.thin(columns, kept);
 
         List<Set<Long>> parts = components(columns);
 
@@ -135,7 +157,13 @@ public final class RoadLines {
         for (Set<Long> part : others) {
             boolean aloneDoor = part.size() == 1 && doors.contains(part.iterator().next());
 
-            if (aloneDoor && stub(part, main, columns, mask, terrain)) {
+            // Toda parte solta tenta a reta até o ponto mais perto da linha, sem gastar a busca cara (Regra 224).
+            if (RoadLinks.straight(part, main, columns, mask, terrain)) {
+                main.addAll(part);
+                continue;
+            }
+
+            if (aloneDoor && RoadLinks.stub(part, main, columns, mask, terrain)) {
                 main.addAll(part);
                 continue;
             }
@@ -143,7 +171,7 @@ public final class RoadLines {
             if (links < maxLinks) {
                 links++;
 
-                if (link(part, main, columns, terrain, bridging, maxSpan)) {
+                if (RoadLinks.link(part, main, columns, terrain, bridging, maxSpan)) {
                     main.addAll(part);
                     continue;
                 }
@@ -159,8 +187,8 @@ public final class RoadLines {
         farmRings.forEach(at -> oldRing.add(ColonyRoads.column(at.x(), at.z())));
         oldRing.retainAll(columns.keySet());
 
-        FarmRingPaths.retire(columns, oldRing, center, doors);
-        RoadTips.prune(columns, center, doors);
+        FarmRingPaths.retire(columns, oldRing, center, kept);
+        RoadTips.prune(columns, center, kept);
 
         // Só as linhas e a frente de toda porta: a rua é de um bloco (Regra 186).
         Map<Long, Integer> toLay = new HashMap<>();
@@ -208,10 +236,10 @@ public final class RoadLines {
         return false;
     }
 
-    /** Uma passada: a linha do meio de {@code band}, em nós e retas, com as portas. */
+    /** Uma passada: a linha do meio de {@code band}, em nós e retas, com as portas; {@code kept} não sai do afinamento. */
     private static Map<Long, Integer> lines(Map<Long, Integer> band, Map<Long, Integer> heights, Set<Long> doors,
-                                            PathTerrain terrain) {
-        RoadChains.Net net = RoadChains.of(RoadThinning.skeleton(new HashSet<>(band.keySet()), doors), doors);
+                                            Set<Long> kept, PathTerrain terrain) {
+        RoadChains.Net net = RoadChains.of(RoadThinning.skeleton(new HashSet<>(band.keySet()), kept), doors);
         Map<Long, Integer> columns = RoadRouting.route(net, heights, terrain);
 
         for (long door : doors) {
@@ -308,134 +336,6 @@ public final class RoadLines {
         }
 
         return parts;
-    }
-
-    /** O ramal da porta sozinha: a reta mais curta até a linha principal, sem busca — Regra 178. */
-    private static boolean stub(Set<Long> part, Set<Long> main, Map<Long, Integer> columns, Map<Long, Integer> mask,
-                                PathTerrain terrain) {
-        long door = part.iterator().next();
-        Map<Long, Integer> best = null;
-
-        for (Side side : Side.values()) {
-            Map<Long, Integer> ray = new HashMap<>();
-            int x = ColonyRoads.xOf(door);
-            int z = ColonyRoads.zOf(door);
-            int y = columns.getOrDefault(door, 0);
-
-            for (int step = 1; step <= MAX_STUB && (best == null || step < best.size() + 1); step++) {
-                x += side.offsetX();
-                z += side.offsetZ();
-                long column = ColonyRoads.column(x, z);
-                Integer line = main.contains(column) ? columns.get(column) : null;
-
-                if (line != null) {
-                    if (Math.abs(line - y) <= 1) {
-                        best = ray;
-                    }
-                    break;
-                }
-
-                OptionalInt ground = groundOf(mask, terrain, x, z, y);
-
-                if (ground.isPresent() && Math.abs(ground.getAsInt() - y) <= 1) {
-                    y = ground.getAsInt();
-                } else if (!terrain.canCut(x, z, y)) {
-                    break;
-                }
-
-                ray.put(column, y);
-            }
-        }
-
-        if (best == null) {
-            return false;
-        }
-
-        columns.putAll(best);
-        part.addAll(best.keySet());
-
-        return true;
-    }
-
-    /** Liga esta parte à principal pelo trecho mais curto de chão andável. */
-    private static boolean link(Set<Long> part, Set<Long> main, Map<Long, Integer> columns, PathTerrain terrain,
-                                PathTerrain bridging, int maxSpan) {
-        long from = part.iterator().next();
-        long to = main.iterator().next();
-        int best = Integer.MAX_VALUE;
-
-        for (long a : part) {
-            for (long b : main) {
-                int distance = manhattan(a, b);
-
-                if (distance < best || (distance == best && a < from)) {
-                    best = distance;
-                    from = a;
-                    to = b;
-                }
-            }
-        }
-
-        if (best > MAX_LINK) {
-            return false;
-        }
-
-        long target = to;
-        VillagePathPlanner.Goal goal = new VillagePathPlanner.Goal() {
-            @Override
-            public boolean reached(int x, int floorY, int z) {
-                long column = ColonyRoads.column(x, z);
-                Integer y = columns.get(column);
-
-                return y != null && main.contains(column) && Math.abs(y - floorY) <= 1;
-            }
-
-            @Override
-            public int estimate(int x, int z) {
-                return Math.abs(x - ColonyRoads.xOf(target)) + Math.abs(z - ColonyRoads.zOf(target));
-            }
-
-            @Override
-            public boolean isPath(int x, int floorY, int z) {
-                return columns.containsKey(ColonyRoads.column(x, z));
-            }
-        };
-
-        Optional<List<PathStep>> steps = VillagePathPlanner.plan(terrain, ColonyRoads.xOf(from),
-                columns.getOrDefault(from, 0), ColonyRoads.zOf(from), headingTo(from, to), goal);
-
-        if ((steps.isEmpty() || steps.get().isEmpty()) && maxSpan > 0) {
-            steps = VillagePathPlanner.plan(bridging, ColonyRoads.xOf(from), columns.getOrDefault(from, 0), ColonyRoads.zOf(from),
-                    headingTo(from, to), goal).filter(found -> found.stream()
-                    .filter(step -> terrain.groundY(step.x(), step.z(), step.floorY()).isEmpty()).count() <= maxSpan);
-        }
-
-        if (steps.isEmpty() || steps.get().isEmpty()) {
-            return false;
-        }
-
-        for (PathStep step : steps.get()) {
-            long column = ColonyRoads.column(step.x(), step.z());
-
-            columns.putIfAbsent(column, step.floorY());
-            part.add(column);
-        }
-
-        return true;
-    }
-
-    private static Side headingTo(long from, long to) {
-        int dx = ColonyRoads.xOf(to) - ColonyRoads.xOf(from);
-        int dz = ColonyRoads.zOf(to) - ColonyRoads.zOf(from);
-
-        for (Side side : Side.values()) {
-            if (Math.abs(dx) >= Math.abs(dz) ? side.offsetX() == Integer.signum(dx) && side.offsetZ() == 0
-                    : side.offsetZ() == Integer.signum(dz) && side.offsetX() == 0) {
-                return side;
-            }
-        }
-
-        return Side.NORTH;
     }
 
     private static int manhattan(long a, long b) {

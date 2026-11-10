@@ -109,6 +109,7 @@
       "com.villagecolony.fabric.work.GraphOnlyPathsGameTest",
       "com.villagecolony.fabric.work.StructureEntrancesGameTest",
       "com.villagecolony.fabric.work.EntrancesAtTheDoorGameTest",
+      "com.villagecolony.fabric.work.GraphStabilityGameTest",
       "com.villagecolony.fabric.integration.LotLightDecorGameTest",
       "com.villagecolony.fabric.work.VillagerRulesGameTest",
       "com.villagecolony.fabric.work.BridgeDeckGameTest",

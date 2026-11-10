@@ -92,13 +92,16 @@ class RoadLinesTest {
     }
 
     @Test
-    @DisplayName("Regra 177: vão maior que 2 blocos não liga sozinho")
-    void aWiderGapStaysApart() {
+    @DisplayName("Regras 177 e 224: vão maior que 2 blocos não fecha a faixa, mas liga em reta e o vão vai para calçar")
+    void aWiderGapIsLinkedStraightAndPaved() {
         Set<ColonyPos> cells = corridor(0, 10, 0, 0);
 
         cells.addAll(corridor(20, 30, 0, 0));
 
-        assertEquals(1, build(cells, at(5, 0), Set.of(), Set.of()).isolated());
+        RoadLines.Result result = build(cells, at(5, 0), Set.of(), Set.of());
+
+        assertEquals(0, result.isolated());
+        assertTrue(result.toPave().stream().anyMatch(step -> step.x() == 15 && step.z() == 0), "o vão não foi para calçar");
     }
 
     @Test
