@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 121
+- **Cita a regra:** 123
 - **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 7
 - **Fora de vigor:** 5
@@ -194,7 +194,7 @@ classe prova menos ainda.
 | 182 | A mina cresce por dentro (autor 11-05): fim de escada abre ramal a partir dos salões que… | cita | WaterMineAccessGameTest |
 | 183 | Anel de caminho (autor 11-05): o chão em volta do chafariz é caminho, sem quina fixa no g… | cita | RoadRulesGameTest |
 | 184 | Quina é entrada (autor 11-05): da terceira releitura em diante, a quina da plantação mais… | cita | EntrancesAtTheDoorGameTest, RoadRulesGameTest |
-| 185 | A ponta cresce (autor 11-05): por dia, as 2 pontas mais distantes do centro, dentro de 75… | cita | RoadRulesGameTest |
+| 185 | A ponta cresce (autor 11-05, emendada 11-10): por dia, as 4 pontas, uma por lado, avançam… | cita | RoadRulesGameTest |
 | 186 | Rua de um bloco (autor 11-05): o caminho a até 3 blocos da linha que não é linha nem fren… | cita | EntrancesAtTheDoorGameTest, RetiredSpursTest, RoadLinesTest |
 | 187 | Revogada (autor 11-06, ADR-047). A obra pedida não reserva região | classe | LotTypeRefusalsGameTest, MaeFinishGameTest, MaeRescueGameTest |
 | 188 | Pedido só do que falta (jogo 11-05): o pedido de peça de obra não abre quando os baús cob… | classe | CraftFamilyGameTest, CraftingGameTest, FurnaceFeedGameTest |
@@ -215,7 +215,7 @@ classe prova menos ainda.
 | 203 | Revogada (autor 11-06, ADR-047). A água entra pelo construtor | nenhum |  |
 | 204 | Revogada (autor 11-06, ADR-047). A peça da obra é posta pelo construtor | nenhum |  |
 | 205 | Revogada (autor 11-06, ADR-047). A obra pedida não reserva região e não falha | nenhum |  |
-| 206 | As pontas do grafo são os cantos da vila (autor 11-05): fica a ponta mais distante do cen… | cita | RoadLinesTest, RoadMapSyncGameTest, RoadRulesGameTest |
+| 206 | As pontas do grafo são os lados da vila (autor 11-05, emendada 11-10): fica a ponta mais… | cita | RoadLinesTest, RoadMapSyncGameTest, RoadRulesGameTest |
 | 207 | Toda porta térrea é entrada (autor 11-05): o marcador branco fica no primeiro bloco em fr… | cita | DoorFrontsGameTest |
 | 208 | Plantação sem anel (autor 11-06): o chão em volta da plantação não é pedido como caminho,… | cita | RoadLinesTest, RoadRulesGameTest |
 | 209 | Porta de quintal fechado (autor 11-06): a caixa da peça pode incluir o quintal. Porta cuj… | cita | DoorFrontsGameTest |
@@ -238,3 +238,5 @@ classe prova menos ainda.
 | 226 | Socorro da vila inteira, em bairro (autor 11-10, ADR-051): só a volta sem lote da casa co… | cita | LotTypeRefusalsGameTest, MaeFinishGameTest |
 | 227 | Água interna sob a obra pedida (autor 11-10, ADR-051): a obra do jogador aterra a água da… | cita | MaeFinishGameTest |
 | 228 | Ruína de save antigo sai (autor 11-10, ADR-051): a obra MAE que uma versão anterior deixo… | cita | MaeFinishGameTest |
+| 229 | As pontas levam a vila para fora (autor 11-10, ADR-052): uma ponta azul por lado da caixa… | cita | RoadLinesTest, RoadRulesGameTest |
+| 230 | A zona alcança a ponta (autor 11-10, ADR-052): a ponta calçada que sai 7 blocos ou mais d… | cita | RoadRulesGameTest |

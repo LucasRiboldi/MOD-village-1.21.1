@@ -210,24 +210,35 @@ class RoadLinesTest {
     }
 
     @Test
-    @DisplayName("Regra 206: toco no meio da vila sai do grafo, e o caminho dele vira sobra")
+    @DisplayName("Regras 206 e 229: toco que não é a ponta do lado dele sai do grafo, e o caminho dele vira sobra")
     void aStubInsideTheVillageLeavesTheGraph() {
         Set<ColonyPos> cells = corridor(-20, 20, 0, 0);
 
-        cells.addAll(corridor(5, 5, 1, 8));
+        // Do lado leste, mais perto do centro que a ponta (20, 0).
+        cells.addAll(corridor(12, 12, 1, 3));
 
         RoadLines.Result result = build(cells, at(0, 0), Set.of(), Set.of());
         Set<ColonyPos> columns = columnsOf(result);
 
-        assertFalse(columns.contains(at(5, 8)), "o toco ficou no grafo: " + columns);
-        assertFalse(columns.contains(at(5, 1)), "o trecho morto ficou no grafo: " + columns);
-        assertTrue(columns.containsAll(List.of(at(-20, 0), at(20, 0))), "as pontas dos cantos saíram");
-        assertTrue(result.surplus().contains(at(5, 1)), "o caminho do toco não virou sobra: " + result.surplus());
+        assertFalse(columns.contains(at(12, 3)), "o toco ficou no grafo: " + columns);
+        assertFalse(columns.contains(at(12, 1)), "o trecho morto ficou no grafo: " + columns);
+        assertTrue(columns.containsAll(List.of(at(-20, 0), at(20, 0))), "as pontas dos lados saíram");
+        assertTrue(result.surplus().contains(at(12, 1)), "o caminho do toco não virou sobra: " + result.surplus());
     }
 
     @Test
-    @DisplayName("Regra 206: no máximo uma ponta por quadrante, a mais distante")
-    void atMostOneTipPerQuadrant() {
+    @DisplayName("Regra 229: o toco que é o único do lado sul vira a ponta sul")
+    void theOnlyStubOnASideIsThatSidesTip() {
+        Set<ColonyPos> cells = corridor(-20, 20, 0, 0);
+
+        cells.addAll(corridor(5, 5, 1, 8));
+
+        assertTrue(columnsOf(build(cells, at(0, 0), Set.of(), Set.of())).contains(at(5, 8)), "a ponta sul saiu do grafo");
+    }
+
+    @Test
+    @DisplayName("Regras 206 e 229: no máximo uma ponta por lado da vila, a mais distante")
+    void atMostOneTipPerSide() {
         Set<ColonyPos> cells = corridor(-20, 20, 0, 0);
 
         cells.addAll(corridor(6, 6, 1, 8));
@@ -242,8 +253,9 @@ class RoadLinesTest {
                 .toList();
 
         assertTrue(tips.size() <= 4, "mais de 4 pontas: " + tips);
-        assertEquals(tips.size(), tips.stream().map(node -> (node.position().x() >= 0 ? 1 : 0) + (node.position().z() >= 0 ? 2 : 0)).distinct().count(),
-                "duas pontas no mesmo quadrante: " + tips);
+        assertEquals(tips.size(), tips.stream().map(node -> RoadSides.of(node.position().x(), node.position().z(), at(0, 0))).distinct().count(),
+                "duas pontas no mesmo lado: " + tips);
+        assertTrue(tips.stream().anyMatch(node -> node.position().equals(at(20, 0))), "a ponta leste não é a mais distante: " + tips);
     }
 
     @Test

@@ -304,7 +304,7 @@ public final class RoadGraphRefresh {
         }
 
         RoadLines.Result result = RoadLines.build(cells, planned, colony.center(), fronts,
-                RoadShape.farmRings(world, colony, terrain), terrain, bridging, BridgeDeck.MAX_SPAN, LINKS_PER_READ, turn, fixed);
+                RoadShape.farmRings(world, colony, terrain), terrain, bridging, BridgeDeck.MAX_SPAN, LINKS_PER_READ, turn, fixed, retired);
         Set<ColonyPos> read = cells;
 
         result.graph().ifPresent(graph -> {
@@ -319,6 +319,7 @@ public final class RoadGraphRefresh {
             store.settle(id, RoadSettling.track(since, line, today));
             publishNetwork(colony, graph);
             RoadShape.growTips(world, colony, graph, terrain);
+            RoadShape.claimTips(world, colony, graph);
         });
 
         Set<ColonyPos> surplus = new java.util.LinkedHashSet<>(result.surplus());

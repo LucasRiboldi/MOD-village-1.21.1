@@ -2,6 +2,10 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
+> **Candidata 0.4.46:** as pontas levam a vila (ADR-052, Regras 229 e 230): uma ponta azul por lado, 1 bloco por dia para fora, até 128
+> blocos; a caixa alcança a ponta calçada que sai 7 blocos. Não jogada.
+> Sentinela `fast` verde de primeira: 1073 GameTests e 1778 unitários. 5 sabotagens das pontas pegas.
+
 > **Candidata 0.4.45:** fechamento do MAE (ADR-051, Regras 226 a 228): socorro só quando nem casa cabe, em bairro; `/vc mae obra` com
 > todos os motivos de recusa e tempo em `ms`; a obra do jogador aterra água interna da vila, não mar nem rio aberto; ruína de save antigo
 > sai, só o bloco igual ao da planta. Não jogada. O que falta do MAE é prova em jogo: `TODO.md`, seção do MAE.

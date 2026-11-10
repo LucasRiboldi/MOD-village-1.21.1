@@ -85,6 +85,16 @@ public final class RoadLines {
     public static Result build(Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> entrances,
                                Set<ColonyPos> farmRings, PathTerrain terrain, PathTerrain bridging, int maxSpan, int maxLinks, int turn,
                                Set<ColonyPos> fixed) {
+        return build(cells, planned, center, entrances, farmRings, terrain, bridging, maxSpan, maxLinks, turn, fixed, Set.of());
+    }
+
+    /**
+     * O mesmo, com as colunas que deixaram de ser entrada: a ponta que termina nelas não é ponta de crescer, e sai (Regras 223
+     * e 229).
+     */
+    public static Result build(Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> entrances,
+                               Set<ColonyPos> farmRings, PathTerrain terrain, PathTerrain bridging, int maxSpan, int maxLinks, int turn,
+                               Set<ColonyPos> fixed, Set<ColonyPos> retired) {
         Map<Long, Integer> physical = new HashMap<>();
 
         cells.forEach(at -> physical.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
@@ -188,7 +198,10 @@ public final class RoadLines {
         oldRing.retainAll(columns.keySet());
 
         FarmRingPaths.retire(columns, oldRing, center, kept);
-        RoadTips.prune(columns, center, kept);
+        Set<Long> deadEnds = new HashSet<>();
+
+        retired.forEach(at -> deadEnds.add(ColonyRoads.column(at.x(), at.z())));
+        RoadTips.prune(columns, center, kept, deadEnds);
 
         // Só as linhas e a frente de toda porta: a rua é de um bloco (Regra 186).
         Map<Long, Integer> toLay = new HashMap<>();

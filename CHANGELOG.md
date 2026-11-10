@@ -12,6 +12,13 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.46] — candidata, 2026-11-10
+
+### Mudado
+
+- Uma ponta azul por lado da vila, que cresce 1 bloco por dia para fora, até 128 blocos; antes eram as 2 mais distantes, por quadrante, na direção da linha (Regra 229, ADR-052).
+- A zona da vila alcança a ponta calçada que sai 7 blocos da caixa (Regra 230).
+
 ## [0.4.45] — candidata, 2026-11-10
 
 ### Corrigido

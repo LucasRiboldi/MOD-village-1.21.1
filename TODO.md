@@ -117,6 +117,12 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 - [ ] 344 de 795 colunas de caminho fora da linha, e 118 colunas da linha ainda sem caminho
 - [ ] Blocos que surgiram, `VC_SUPPLY`: `prismarine_crystals` ×80, `prismarine_shard` ×64, `white_terracotta` ×62, `honeycomb` ×29, `oak_log` ×39, `stripped_oak_log` ×16, `glass_pane` ×7, `white_wool` ×7, `string` ×4
 
+## Pontas que levam a vila (0.4.46, ADR-052)
+
+- [ ] Conferir em jogo: 4 pontas azuis, uma por lado; cada uma andando 1 bloco por dia para fora; `VC_ROAD_TIP ... result=claimed` quando a rua sai 7 blocos
+- [ ] Medir o custo da caixa maior: releitura do grafo, busca de lote e baús
+- [ ] Sem teste: a zona só cresce com bloco de caminho de verdade na ponta (a conferência existe, mas nenhum teste a derruba)
+
 ## Grafo estável (0.4.44, ADR-050)
 
 - [ ] Conferir em jogo: `offLine`, `capped` e `fixed` no `VC_ROAD_GRAPH`; `isolated` perto de 0; o grafo parando de oscilar
