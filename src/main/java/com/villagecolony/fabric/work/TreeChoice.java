@@ -270,6 +270,8 @@ public final class TreeChoice {
         if (job.closest - distance >= 1.0) {
             job.closest = distance;
             job.noCloser = 0;
+            // Andar até a árvore longe, chegando mais perto, não é travamento (Regra 232).
+            job.stalled = 0;
 
             return false;
         }

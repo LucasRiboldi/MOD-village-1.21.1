@@ -50,6 +50,17 @@ class ProfessionDemandTest {
     }
 
     @Test
+    void aTradeInSurplusGetsNoNewVacancy() {
+        Worker candidate = Worker.register(UUID.randomUUID(), COLONY);
+        ProfessionDemand.setSurplus(COLONY, List.of(ProfessionType.MINER));
+
+        Optional<ProfessionType> vacancy = ProfessionAssigner.vacancyFor(candidate, colonyWith(candidate), 16);
+
+        ProfessionDemand.setSurplus(COLONY, List.of());
+        org.junit.jupiter.api.Assertions.assertTrue(vacancy.isPresent() && vacancy.get() != ProfessionType.MINER, "Regra 233: o mineiro que sobra ganhou vaga: " + vacancy);
+    }
+
+    @Test
     void theProfessionTheWorkDependsOnComesFirst() {
         Worker candidate = Worker.register(UUID.randomUUID(), COLONY);
         ProfessionDemand.set(COLONY, List.of(ProfessionType.CARPENTER));

@@ -2,6 +2,12 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
+> **Candidata 0.4.47:** equilíbrio das profissões, sobre a análise de 11-10 (Regras 232 e 233): a obra manda no artesão; estoque de
+> enfeite espera a obra parada; lenhador não larga a árvore enquanto se aproxima; fazendeiro primeiro com comida em falta; mineiro sem
+> vaga nova com pedra sobrando; diário grava o produto. Não jogada.
+> Sentinela `fast`: 1075 GameTests e 1781 unitários; nas duas baterias caiu um teste instável cada (`workerCollectsWhileWalkingPast`, e
+> `eachSpeciesGetsItsOwnPen` por tempo, que passou 3 de 3 isolado). 5 sabotagens pegas.
+
 > **Candidata 0.4.46:** as pontas levam a vila (ADR-052, Regras 229 e 230): uma ponta azul por lado, 1 bloco por dia para fora, até 128
 > blocos; a caixa alcança a ponta calçada que sai 7 blocos. Não jogada.
 > Sentinela `fast` verde de primeira: 1073 GameTests e 1778 unitários. 5 sabotagens das pontas pegas.

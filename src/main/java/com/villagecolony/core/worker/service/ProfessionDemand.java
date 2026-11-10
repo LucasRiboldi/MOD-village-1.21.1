@@ -39,7 +39,23 @@ public final class ProfessionDemand {
      */
     private static final Map<UUID, List<ProfessionType>> SPARE = new HashMap<>();
 
+    /** O ofício que já sobra: não ganha vaga nova enquanto sobrar (Regra 233). */
+    private static final Map<UUID, List<ProfessionType>> SURPLUS = new HashMap<>();
+
     private ProfessionDemand() {
+    }
+
+    /** Os ofícios que sobram nesta colônia: a pedra passou do teto, e o mineiro não ganha vaga nova. */
+    public static synchronized void setSurplus(UUID colonyId, List<ProfessionType> trades) {
+        if (trades.isEmpty()) {
+            SURPLUS.remove(colonyId);
+        } else {
+            SURPLUS.put(colonyId, List.copyOf(trades));
+        }
+    }
+
+    public static synchronized List<ProfessionType> surplusOf(@org.jspecify.annotations.Nullable UUID colonyId) {
+        return colonyId == null ? List.of() : SURPLUS.getOrDefault(colonyId, List.of());
     }
 
     /** Substitui o que esta colônia pede, na ordem de urgência. */
@@ -76,5 +92,6 @@ public final class ProfessionDemand {
     public static synchronized void clearAll() {
         DEMAND.clear();
         SPARE.clear();
+        SURPLUS.clear();
     }
 }

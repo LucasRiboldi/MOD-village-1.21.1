@@ -51,6 +51,12 @@ import java.util.function.Predicate;
  */
 public final class ColonyCycle {
 
+    /** O peso que a falta de comida soma ao fazendeiro na lista de contratação: passa qualquer falta de obra (Regra 233). */
+    static final int FOOD_FIRST = 1_000_000;
+
+    /** Pedregulho guardado a partir do qual o mineiro sobra: 16 pilhas (Regra 233). */
+    static final int STONE_SURPLUS = 1_024;
+
     private ColonyCycle() {
     }
 
@@ -328,9 +334,19 @@ public final class ColonyCycle {
             }
         }
 
+        // Comida em falta põe o fazendeiro na frente da contratação: é ela que segura os nascimentos (Regra 233).
+        if (missing.entrySet().stream().anyMatch(entry -> entry.getValue() > 0
+                && entry.getKey().production() == com.villagecolony.core.type.Production.FARMED)) {
+            demand.merge(ProfessionType.FARMER, FOOD_FIRST, Integer::sum);
+        }
+
         List<ProfessionType> urgentFirst = new ArrayList<>(demand.keySet());
         urgentFirst.sort(Comparator.comparing(demand::get, Comparator.reverseOrder()));
         ProfessionDemand.set(colonyId, urgentFirst);
+
+        // Pedra acima do teto: o mineiro sobra e não ganha vaga nova (Regra 233).
+        ProfessionDemand.setSurplus(colonyId, owned.amountOf(ResourceType.COBBLESTONE) >= STONE_SURPLUS
+                ? List.of(ProfessionType.MINER) : List.of());
     }
 
     private static void prioritizeOpenRequests(

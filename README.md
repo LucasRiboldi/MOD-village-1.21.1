@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.46%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.47%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,7 +19,7 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Estado atual: candidata 0.4.46 (grafo estável, fechamento do MAE e pontas que levam a vila, ADR-050 a ADR-052), não jogada; a última publicada é a 0.4.43.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
+**Estado atual: candidata 0.4.47 (grafo estável, fechamento do MAE, pontas que levam a vila e equilíbrio das profissões), não jogada; a última publicada é a 0.4.43.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
 [docs/RULES.md](docs/RULES.md) (1 a 216).
 
@@ -449,6 +449,8 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 228 | **Ruína de save antigo sai** (autor 11-10, ADR-051): a obra MAE que uma versão anterior deixou e que não volta para a fila tem a pegada limpa; sai só o bloco igual ao da planta. Com chunk descarregado, espera. Candidata | 11-10 |
 | 229 | **As pontas levam a vila para fora** (autor 11-10, ADR-052): uma ponta azul por lado da caixa, norte, sul, leste e oeste, a mais distante do centro naquele lado. Por dia de jogo, cada uma avança 1 bloco para fora pelo seu lado, e o construtor calça; até 128 blocos além da vila gerada. Ramal que termina numa entrada retirada não é ponta. Emenda as Regras 185 e 206. Candidata | 11-10 |
 | 230 | **A zona alcança a ponta** (autor 11-10, ADR-052): a ponta calçada que sai 7 blocos ou mais da caixa da vila leva a caixa até ela. Candidata | 11-10 |
+| 232 | **A obra manda no artesão** (autor 11-10, sobre a análise `docs/audit/2026-11-10-qualidade-das-profissoes.md`): com a obra aberta parada esperando material, nenhuma ordem de estoque de enfeite abre, e a que está em curso cede a bancada. O item de estoque que não se consegue fazer sai do rodízio por uma hora de jogo. O lenhador que anda até a árvore longe, chegando mais perto, não larga a tarefa por travamento. O diário grava o produto feito. Candidata | 11-10 |
+| 233 | **A vaga segue a falta** (autor 11-10): com comida em falta, o fazendeiro vem primeiro na lista de contratação; com 1.024 pedregulhos ou mais guardados, o mineiro sobra e não ganha vaga nova. Candidata | 11-10 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).

@@ -117,6 +117,13 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 - [ ] 344 de 795 colunas de caminho fora da linha, e 118 colunas da linha ainda sem caminho
 - [ ] Blocos que surgiram, `VC_SUPPLY`: `prismarine_crystals` ×80, `prismarine_shard` ×64, `white_terracotta` ×62, `honeycomb` ×29, `oak_log` ×39, `stripped_oak_log` ×16, `glass_pane` ×7, `white_wool` ×7, `string` ×4
 
+## Equilíbrio das profissões (0.4.47, Regras 232 e 233)
+
+- [ ] Conferir em jogo com `time_ledger.py` e `action_report.py`: menos `SET_ASIDE no material`, fundidor e carpinteiro menos ociosos, lenhador com menos `made no progress`, um segundo fazendeiro com comida baixa, e nascimentos acima de 1 por hora
+- [ ] Sem teste: o diário com o produto feito (`CraftingWork.finish` com produto)
+- [ ] Instável novo: `eachSpeciesGetsItsOwnPen` esgotou os 40 tiques uma vez na bateria inteira (0.4.47) e passou 3 de 3 isolado
+- [ ] Não feito desta vez: plantação nova a até 32 blocos e o pastor abatendo mais para comida (o abate acima de 6 animais já existe, Regra do `FlockHarvest`)
+
 ## Pontas que levam a vila (0.4.46, ADR-052)
 
 - [ ] Conferir em jogo: 4 pontas azuis, uma por lado; cada uma andando 1 bloco por dia para fora; `VC_ROAD_TIP ... result=claimed` quando a rua sai 7 blocos

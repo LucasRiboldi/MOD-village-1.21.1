@@ -274,6 +274,8 @@ regra que foi emendada. O corpo de cada regra vive em
 | 228 | **Ruína de save antigo sai** (autor 11-10, ADR-051): a obra MAE que uma versão anterior deixou e que não volta para a fila tem a pegada limpa; sai só o bloco igual ao da planta. Com chunk descarregado, espera. Candidata | 11-10 |
 | 229 | **As pontas levam a vila para fora** (autor 11-10, ADR-052): uma ponta azul por lado da caixa, norte, sul, leste e oeste, a mais distante do centro naquele lado. Por dia de jogo, cada uma avança 1 bloco para fora pelo seu lado, e o construtor calça; até 128 blocos além da vila gerada. Ramal que termina numa entrada retirada não é ponta. Emenda as Regras 185 e 206. Candidata | 11-10 |
 | 230 | **A zona alcança a ponta** (autor 11-10, ADR-052): a ponta calçada que sai 7 blocos ou mais da caixa da vila leva a caixa até ela. Candidata | 11-10 |
+| 232 | **A obra manda no artesão** (autor 11-10, sobre a análise `docs/audit/2026-11-10-qualidade-das-profissoes.md`): com a obra aberta parada esperando material, nenhuma ordem de estoque de enfeite abre, e a que está em curso cede a bancada. O item de estoque que não se consegue fazer sai do rodízio por uma hora de jogo. O lenhador que anda até a árvore longe, chegando mais perto, não larga a tarefa por travamento. O diário grava o produto feito. Candidata | 11-10 |
+| 233 | **A vaga segue a falta** (autor 11-10): com comida em falta, o fazendeiro vem primeiro na lista de contratação; com 1.024 pedregulhos ou mais guardados, o mineiro sobra e não ganha vaga nova. Candidata | 11-10 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).

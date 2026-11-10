@@ -279,7 +279,9 @@ public final class ProfessionAssigner {
         }
 
         for (ProfessionType type : growthOrder) {
+            // O ofício que já sobra não ganha vaga nova (Regra 233): a vaga passa ao seguinte.
             if (HiringQuota.atMaximum(type, counts, policies)
+                    || ProfessionDemand.surplusOf(colonyId).contains(type)
                     || counts.getOrDefault(type, 0)
                             >= HiringQuota.targetCount(type, adultPopulation, growthOrder, policies)) {
                 if (colonyId != null) {
@@ -337,7 +339,7 @@ public final class ProfessionAssigner {
         return java.util.stream.Stream.concat(ProfessionDemand.of(candidate.colonyId()).stream(),
                         ProfessionDemand.spareOf(candidate.colonyId()).stream())
                 .filter(type -> growthOrder.contains(type) && !HiringQuota.atMaximum(type, counts, policies)
-                        && !candidate.isShunning(type)
+                        && !candidate.isShunning(type) && !ProfessionDemand.surplusOf(candidate.colonyId()).contains(type)
                         && counts.getOrDefault(type, 0)
                                 < HiringQuota.targetCount(type, adultPopulation, growthOrder, policies) + SPARE_ABOVE)
                 .findFirst();

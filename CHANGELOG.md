@@ -12,6 +12,19 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.47] — candidata, 2026-11-10
+
+### Mudado
+
+- A obra manda no artesão: com a obra parada esperando material, o estoque de enfeite espera e cede a bancada (Regra 232).
+- O item de estoque que não se consegue fazer sai do rodízio por uma hora, e não por 5 minutos (Regra 232).
+- Com comida em falta, o fazendeiro vem primeiro na contratação; com pedra sobrando, o mineiro não ganha vaga nova (Regra 233).
+
+### Corrigido
+
+- O lenhador que se aproxima da árvore longe não larga mais a tarefa por "made no progress" (Regra 232).
+- O diário grava o produto feito pelo artesão, e não o alvo da tarefa (`dirt`).
+
 ## [0.4.46] — candidata, 2026-11-10
 
 ### Mudado
