@@ -243,4 +243,39 @@ public class GroundSmoothingGameTest implements FabricGameTest {
         }
         context.complete();
     }
+
+    /** O construtor sem obra nivela o chão como o pedreiro (Regra 247). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_smoothing_idle_builder", tickLimit = 20)
+    public void theIdleBuilderLevelsTheVillageGround(TestContext context) {
+        for (int x = 0; x < 24; x++) {
+            for (int z = 0; z < 24; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.DIRT);
+                context.setBlockState(new BlockPos(x, FLOOR, z), Blocks.GRASS_BLOCK);
+                for (int y = FLOOR + 1; y <= FLOOR + 20; y++) {
+                    context.setBlockState(new BlockPos(x, y, z), Blocks.AIR);
+                }
+            }
+        }
+        for (int y = FLOOR + 1; y <= FLOOR + 3; y++) {
+            context.setBlockState(new BlockPos(4, y, 4), Blocks.DIRT);
+        }
+        BlockPos origin = context.getAbsolutePos(new BlockPos(0, FLOOR, 0));
+        var colony = com.villagecolony.core.colony.model.Colony.create(java.util.UUID.randomUUID(),
+                com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(origin));
+        colony.measure(new com.villagecolony.core.colony.model.VillageBounds(origin.getX(), origin.getY(), origin.getZ(),
+                origin.getX() + 14, origin.getY() + 5, origin.getZ() + 14));
+        var builder = context.spawnEntity(net.minecraft.entity.EntityType.VILLAGER, new BlockPos(8, FLOOR + 1, 8));
+
+        try {
+            int done = VillageHelpers.helps(context.getWorld(), colony,
+                    java.util.Optional.of(com.villagecolony.core.worker.model.ProfessionType.BUILDER), builder);
+            context.assertTrue(done > 0, "o construtor sem obra não nivelou o chão da vila (Regra 247); chunk final carregado="
+                    + context.getWorld().isChunkLoaded((origin.getX() + 23) >> 4, (origin.getZ() + 23) >> 4));
+            context.assertTrue(top(context, 4, 4) == origin.getY(), "o construtor deixou o calombo");
+        } finally {
+            builder.discard();
+            GroundSmoothing.clearAll();
+        }
+        context.complete();
+    }
 }
