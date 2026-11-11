@@ -117,6 +117,12 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 - [ ] 344 de 795 colunas de caminho fora da linha, e 118 colunas da linha ainda sem caminho
 - [ ] Blocos que surgiram, `VC_SUPPLY`: `prismarine_crystals` ×80, `prismarine_shard` ×64, `white_terracotta` ×62, `honeycomb` ×29, `oak_log` ×39, `stripped_oak_log` ×16, `glass_pane` ×7, `white_wool` ×7, `string` ×4
 
+## Caminho sob laje e ponta na extremidade (0.4.48, Regra 231)
+
+- [ ] Conferir em jogo: caminho debaixo de laje e telhado no grafo; nenhuma ponta azul entre linhas; cada ponta na borda do grafo, apontando para fora
+- [ ] Jogo da 0.4.47 (deserto, 2026-11-10, Spark BVayJOTalV), `time_ledger`: fundidor 59% bloqueado; mineiro 0% trabalhando e 38% esperando; fazendeiro 47% esperando; carpinteiro 68%, pedreiro 62% e pastor 69% ociosos. Diagnóstico não feito
+- [ ] `VC_ROAD_GRAPH` da 0.4.47: `offLine` de 276 a 517 e `toPave` de 142 a 236; `fixed` 0 (a trava de 10 dias não chegou)
+
 ## Equilíbrio das profissões (0.4.47, Regras 232 e 233)
 
 - [ ] Conferir em jogo com `time_ledger.py` e `action_report.py`: menos `SET_ASIDE no material`, fundidor e carpinteiro menos ociosos, lenhador com menos `made no progress`, um segundo fazendeiro com comida baixa, e nascimentos acima de 1 por hora

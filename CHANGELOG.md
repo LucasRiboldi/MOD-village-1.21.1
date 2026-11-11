@@ -12,6 +12,13 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.48] — candidata, 2026-11-10
+
+### Mudado
+
+- O grafo lê o caminho debaixo de laje, telhado ou degrau quando restam 2 blocos livres em cima; com menos, ele vira solo (Regras 180 e 231).
+- A ponta azul fica só na extremidade do grafo no lado dela e aponta para fora; a ponta entre linhas, no meio da vila, sai (Regra 231).
+
 ## [0.4.47] — candidata, 2026-11-10
 
 ### Mudado

@@ -2,6 +2,10 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
+> **Candidata 0.4.48:** pedido do autor sobre o jogo da 0.4.47 (Regra 231): o grafo lê o caminho debaixo de laje e telhado quando
+> restam 2 livres em cima; com menos, vira solo. A ponta azul fica só na extremidade do grafo no lado dela e aponta para fora. Não jogada.
+> Sentinela `fast` verde de primeira: 1076 GameTests e 1783 unitários. 4 sabotagens pegas.
+
 > **Candidata 0.4.47:** equilíbrio das profissões, sobre a análise de 11-10 (Regras 232 e 233): a obra manda no artesão; estoque de
 > enfeite espera a obra parada; lenhador não larga a árvore enquanto se aproxima; fazendeiro primeiro com comida em falta; mineiro sem
 > vaga nova com pedra sobrando; diário grava o produto. Não jogada.

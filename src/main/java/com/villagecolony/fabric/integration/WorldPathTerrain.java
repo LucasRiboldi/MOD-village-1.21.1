@@ -29,8 +29,8 @@ public final class WorldPathTerrain implements PathTerrain {
     static final int ABOVE = 3;
     static final int BELOW = 6;
 
-    /** Quantos blocos acima do chão não podem ser construção: o corte e a altura livre do caminho. */
-    static final int HEADROOM = 3;
+    /** Quantos blocos livres bastam em cima do caminho: com 2 livres o aldeão passa por baixo de laje e telhado (Regra 231). */
+    static final int CLEARANCE = 2;
 
     private final ServerWorld world;
     private final List<Building> buildings;
@@ -184,7 +184,7 @@ public final class WorldPathTerrain implements PathTerrain {
 
     /** Construção em cima do chão, na altura do corte e do caminho: a coluna é de alguém. */
     private boolean builtAbove(BlockPos ground) {
-        for (int up = 1; up <= HEADROOM; up++) {
+        for (int up = 1; up <= CLEARANCE; up++) {
             BlockPos at = ground.up(up);
             BlockState state = world.getBlockState(at);
 
