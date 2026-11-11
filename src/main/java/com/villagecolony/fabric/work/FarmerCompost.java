@@ -4,6 +4,7 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.fabric.integration.CropPatch;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ComposterBlock;
 import net.minecraft.block.CropBlock;
@@ -21,14 +22,15 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * O compostor do fazendeiro — P8b, autossuficiência, 2026-10-11 (escolha do autor).
+ * O compostor do fazendeiro — P8b (autor, 2026-10-11) e Regra 237 (autor, 2026-11-11, opção F2).
  *
  * <p>O local de trabalho do fazendeiro no Vanilla é o compostor. Sem colheita nem
- * canteiro vazio, ele composta a semente que sobra acima de {@link #SEED_RESERVE},
- * com a chance de cada item do próprio jogo ({@code ComposterBlock}, sete níveis
- * por farinha de osso), e usa a farinha de osso da colônia na lavoura verde. O
- * bosque já tira a farinha dos baús antes de criá-la do nada ({@link VillageGrove}).
- * No playtest de 11-10 o fazendeiro passou 47% do expediente sem trabalhar.
+ * canteiro vazio, ele composta a semente que sobra acima da reserva, com a chance de
+ * cada item do próprio jogo ({@code ComposterBlock}, sete níveis por farinha de osso),
+ * e usa a farinha de osso da colônia na lavoura verde. A reserva é uma semente por
+ * canteiro conhecido da roça, e nunca menos de {@value #MIN_SEED_RESERVE}: a reserva
+ * fixa de 32 não sobrava na roça pequena, e o compostor não rodava. O bosque já tira a
+ * farinha dos baús antes de criá-la do nada ({@link VillageGrove}).
  */
 public final class FarmerCompost {
 
@@ -36,8 +38,8 @@ public final class FarmerCompost {
         ServerMemory.register(FarmerCompost.class, FarmerCompost::clearAll);
     }
 
-    /** As sementes que ficam para replantar. Ponto de partida; o playtest diz se basta. */
-    static final int SEED_RESERVE = 32;
+    /** O mínimo de sementes que fica para replantar, mesmo sem roça conhecida (Regra 237). */
+    static final int MIN_SEED_RESERVE = 8;
 
     /** Níveis do compostor por farinha de osso, como no jogo. */
     static final int LEVELS_PER_BONE_MEAL = 7;
@@ -116,10 +118,15 @@ public final class FarmerCompost {
         return false;
     }
 
+    /** As sementes que ficam: uma por canteiro da roça, e nunca menos de {@value #MIN_SEED_RESERVE} (Regra 237). */
+    static int seedReserve(int plots) {
+        return Math.max(MIN_SEED_RESERVE, plots);
+    }
+
     /** Uma semente acima da reserva vai ao compostor; os níveis viram farinha de osso. */
     static boolean compostASeed(ServerWorld world, UUID colonyId, List<ColonyPos> chests, ColonyPos into) {
         for (Item seed : COMPOSTED) {
-            if (ColonyChests.countIn(world, chests, seed) <= SEED_RESERVE
+            if (ColonyChests.countIn(world, chests, seed) <= seedReserve(CropPatch.knownCount(colonyId))
                     || ColonyChests.withdraw(world, chests, seed, 1) == 0) {
                 continue;
             }

@@ -280,6 +280,11 @@ public final class CropPatch {
         return Optional.of(new Field(null, plot, false));
     }
 
+    /** Quantos canteiros a roça desta colônia tem, pelo que a busca já conhece (Regra 237). */
+    public static int knownCount(UUID colonyId) {
+        return KNOWN.getOrDefault(colonyId, new java.util.LinkedHashSet<>()).size();
+    }
+
     /** As roças conhecidas desta colônia, só para leitura — {@link KnownFarmland}. */
     static java.util.Set<BlockPos> knownOf(UUID colonyId) {
         return java.util.Collections.unmodifiableSet(KNOWN.getOrDefault(colonyId, new java.util.LinkedHashSet<>()));

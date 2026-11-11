@@ -20,7 +20,7 @@ public class FarmerCompostGameTest implements FabricGameTest {
 
     private static final BlockPos CHEST = new BlockPos(1, 2, 1);
 
-    /** 64 sementes: 32 vão ao compostor (a reserva fica), e os níveis dão 1 farinha de osso. */
+    /** 64 sementes sem roça conhecida: 56 vão ao compostor, a reserva mínima de 8 fica, e os níveis dão 2 farinhas (Regra 237). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing", tickLimit = 20)
     public void spareSeedsBecomeBoneMealAndTheReserveStays(TestContext context) {
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
@@ -39,10 +39,11 @@ public class FarmerCompostGameTest implements FabricGameTest {
             int seeds = ColonyChests.countIn(context.getWorld(), chests, Items.WHEAT_SEEDS);
             int boneMeal = ColonyChests.countIn(context.getWorld(), chests, Items.BONE_MEAL);
 
-            context.assertTrue(composted == 32 && seeds == FarmerCompost.SEED_RESERVE,
-                    "devia compostar só acima da reserva: " + composted + " compostadas, " + seeds + " restantes");
-            context.assertTrue(boneMeal == 1,
-                    "32 sementes a 30% dão 9,6 níveis: uma farinha de osso, e não " + boneMeal);
+            context.assertTrue(composted == 56 && seeds == FarmerCompost.MIN_SEED_RESERVE,
+                    "Regra 237: devia compostar só acima da reserva: " + composted + " compostadas, " + seeds + " restantes");
+            context.assertTrue(boneMeal == 2,
+                    "56 sementes a 30% dão 16,8 níveis: duas farinhas de osso, e não " + boneMeal);
+            context.assertTrue(FarmerCompost.seedReserve(20) == 20, "Regra 237: a roça de 20 canteiros não guardou 20 sementes");
         } finally {
             FarmerCompost.clearAll();
             context.setBlockState(CHEST, Blocks.AIR.getDefaultState());
