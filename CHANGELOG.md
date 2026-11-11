@@ -12,6 +12,19 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.54] — candidata, 2026-11-11
+
+### Corrigido
+
+- A plantação grande do mod é construída de verdade: no jogo da 0.4.53 ela foi dada como pronta com 0 de 256 peças, porque a
+  areia do deserto ficava "no caminho". A planta da pasta `colony/` que termina em `_farm` agora é roça, e a base dela toma o
+  lugar do chão (Regra 241).
+
+### Testes
+
+- `theLargeFarmReplacesTheSand`: a borda de tora entra no lugar da areia.
+- `aNewDoorLinksToAFixedStretch`: a porta nova liga ao trecho travado do grafo (Regras 224 e 225).
+
 ## [0.4.53] — candidata, 2026-11-11
 
 ### Corrigido

@@ -119,7 +119,7 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 
 ## Jogo da 0.4.53 (deserto, 2026-11-11, Spark Lk0DyOz8CK)
 
-- [ ] Plantação grande "terminada" com 0 de 256 peças: `BlueprintKind.isFarm` exclui a pasta `colony/`, então a camada de baixo de `colony/large_farm` não é base e a areia fica "in the way" (Regra 3). O `LargeFarmGameTest` só lê a planta, sem construí-la. Esperando a escolha do autor
+- [x] Plantação grande "terminada" com 0 de 256 peças: `BlueprintKind.isFarm` excluía a pasta `colony/`, e a areia ficava "in the way". Corrigido na 0.4.54, `theLargeFarmReplacesTheSand`; conferir em jogo
 - [ ] Construtor 70% ocioso: só 3 obras em 79 min, "still sweeping — the budget ran out", 3.562 lotes recusados por `TOO_CLOSE`
 - [ ] Fazendeiro 37% encalhado: "could not reach the crop" 4 vezes, "frozen twice" 3 vezes; lenhador 79% ocioso no deserto
 - [ ] Pastor 34% bloqueado: "fenced in" 4 vezes, "no sheep with wool within the radius" 4 vezes

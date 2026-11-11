@@ -1122,6 +1122,39 @@ public class BuilderGameTest implements FabricGameTest {
                 new ColonyPos(0, 0, 0), MinecraftTypeAdapter.toResourceId(Blocks.DIRT))));
     }
 
+    /**
+     * A plantação grande do mod também constrói a base — Regra 241: a borda de tora toma o lugar da areia do deserto. A planta
+     * fica na pasta {@code colony/} do mod e é roça como as da vila.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_ground",
+            tickLimit = 300)
+    public void theLargeFarmReplacesTheSand(TestContext context) {
+        Fixture fixture = setUp(context, 0, largeFarmBorder(), 1);
+        context.setBlockState(SITE, Blocks.SAND.getDefaultState());
+        ChestDepositor.deposit(context.getWorld(), fixture.chest, Items.OAK_LOG, 1);
+
+        context.runAtTick(120, () -> {
+            try {
+                context.assertTrue(
+                        stateAt(context, SITE).isOf(Blocks.OAK_LOG),
+                        "Regra 241: a borda da plantação grande foi riscada sobre a areia em vez de ser construída: "
+                                + stateAt(context, SITE).getBlock());
+            } finally {
+                fixture.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /** A borda de tora da plantação grande, na camada mais baixa da planta. */
+    private static Blueprint largeFarmBorder() {
+        return Blueprint.of(
+                new ResourceId("villagecolony", "colony/large_farm"),
+                List.of(new BlueprintBlock(
+                        new ColonyPos(0, 0, 0), MinecraftTypeAdapter.toResourceId(Blocks.OAK_LOG))));
+    }
+
     /** Uma base física, no nível inferior de uma planta de roça. */
     private static Blueprint farmFoundation() {
         return Blueprint.of(
