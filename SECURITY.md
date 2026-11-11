@@ -51,6 +51,10 @@ Ao atualizar o Gradle, o Loom, o Fabric ou outra dependência, regenere a verifi
 
 Um hash que mudou sem mudança de versão é sinal de artefato adulterado: investigue antes de aceitar.
 
+O Fabric já republicou artefatos com o mesmo conteúdo e outra data dentro do zip (47 da Fabric API em 2026-11-09).
+Nesse caso, compare o conteúdo do jar antigo com o novo, arquivo por arquivo; só com tudo igual o hash novo entra como
+`<also-trust>` ao lado do antigo. Conteúdo diferente não entra.
+
 ## Antivírus
 
 O `.jar` é um arquivo Java comum, sem ofuscação, sem compactador e sem código nativo próprio. Se um antivírus o
