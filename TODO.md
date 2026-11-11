@@ -117,6 +117,13 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 - [ ] 344 de 795 colunas de caminho fora da linha, e 118 colunas da linha ainda sem caminho
 - [ ] Blocos que surgiram, `VC_SUPPLY`: `prismarine_crystals` ×80, `prismarine_shard` ×64, `white_terracotta` ×62, `honeycomb` ×29, `oak_log` ×39, `stripped_oak_log` ×16, `glass_pane` ×7, `white_wool` ×7, `string` ×4
 
+## Profissões mais ativas (0.4.50, Regras 235 a 238)
+
+- [ ] Conferir em jogo com `time_ledger.py` e `action_report.py`: mineiro do deserto trabalhando na pedreira; fazendeiro compostando; pastores e rebanho
+- [ ] Sem teste próprio: a ligação da pedreira em `MineDigging` (a busca está testada) e o teto de pastor gravado por `ShepherdWork`
+- [ ] M2 (segundo ramal cedo) e C1 (adiantar a próxima obra) esperam decisão do autor: a escada é o único acesso ao nível, e a próxima obra só é escolhida quando o lote aparece
+- [ ] Instável: `animalsWalkInThroughEachOfTheFourGates` caiu duas vezes seguidas na bateria inteira e passou 3 de 3 isolado
+
 ## Trecho travado em verde (0.4.49, Regra 234)
 
 - [ ] Conferir em jogo longo (10 dias de jogo, cerca de 3 h 20 min): trecho verde no `/vc mae mostrar ligar` e `fixed` acima de 0 no `VC_ROAD_GRAPH`

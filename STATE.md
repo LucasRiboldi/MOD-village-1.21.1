@@ -2,6 +2,12 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
+> **Candidata 0.4.50:** opções da análise `docs/audit/2026-11-11-atividade-das-profissoes.md` escolhidas pelo autor (Regras 235 a 238):
+> pastor por rebanho (16 animais por pastor), pedreira de areia e arenito no deserto, composteira pela roça, rebanho até 16 com comida
+> sobrando. M2 e C1 não foram feitos: pedem decisão de arquitetura e voltaram ao autor. Não jogada.
+> Sentinela `fast`: 1079 GameTests e 1784 unitários; em cada bateria caiu um instável conhecido (`workerCollectsWhileWalkingPast`, depois
+> `animalsWalkInThroughEachOfTheFourGates` duas vezes, que passou 3 de 3 isolado). 6 sabotagens pegas.
+
 > **Candidata 0.4.49:** pedido do autor em 11-11 (Regra 234): o sinalizador dos caminhos pinta de verde o trecho já travado pela
 > Regra 225, coluna a coluna. Só desenho; o trecho travado segue na releitura. Não jogada.
 > Sentinela `fast` verde de primeira: 1076 GameTests e 1783 unitários. 3 sabotagens pegas.
