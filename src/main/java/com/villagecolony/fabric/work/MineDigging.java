@@ -229,8 +229,9 @@ public final class MineDigging {
 
             // Cada ramal é de um mineiro só (MineClaims). Quem não achou ramal
             // livre não fica parado: raspa a pedra exposta em volta da vila
-            // até um ramal abrir — ADR-037 M1; com mina, ele alarga o nível (Regra 193).
-            return MineSideWork.nextCut(world, workerId, colonyId, mine.get());
+            // até um ramal abrir — ADR-037 M1; com mina, alarga o nível (Regra 193); no deserto, a pedreira (Regra 236).
+            return MineSideWork.nextCut(world, workerId, colonyId, mine.get())
+                    .or(() -> VillageColonyMod.COLONIES.find(colonyId).flatMap(colony -> DesertQuarry.next(world, colony)));
         }
 
         MineArm arm = mine.get().arm(claimed.getAsInt());
@@ -288,7 +289,6 @@ public final class MineDigging {
 
         return MineVein.exposedStone(world, workerId, colonyId, center);
     }
-
 
     /**
      * O ramal em que este mineiro está cavando — 2026-09-04.

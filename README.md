@@ -454,6 +454,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 233 | **A vaga segue a falta** (autor 11-10): com comida em falta, o fazendeiro vem primeiro na lista de contratação; com 1.024 pedregulhos ou mais guardados, o mineiro sobra e não ganha vaga nova. Candidata | 11-10 |
 | 234 | **O trecho travado sai verde** (autor 11-11): no sinalizador dos caminhos (`/vc mae mostrar ligar`), o passo da linha entre duas colunas já travadas pela Regra 225 é verde, coluna a coluna; o resto segue amarelo. Só desenho: o trecho travado continua na releitura. Candidata | 11-11 |
 | 235 | **Pastor pelo rebanho** (autor 11-11, opção P1 de `docs/audit/2026-11-11-atividade-das-profissoes.md`): o pastor só ganha vaga nova com 16 animais da vila (ovelha, vaca, porco e galinha dentro da caixa) por pastor; sempre há vaga para 1. Quem já é pastor fica. Candidata | 11-11 |
+| 236 | **Pedreira de superfície no deserto** (autor 11-11, opção M1): na vila de deserto, o mineiro sem ramal livre e sem nível a alargar tira areia e arenito da superfície, fora da caixa e a até 32 blocos dela. Só raspa a coluna que não fica abaixo das vizinhas, uma camada por vez, até 4 blocos abaixo do centro, longe da água, de caminho, da vila gerada e do que a colônia construiu. Exceção à Regra 53, só no deserto. Candidata | 11-11 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).
