@@ -13,8 +13,9 @@ class PathPavingTest {
     @Test
     void theBuilderTheMasonAndWhoHasNoTradePave() {
         assertEquals(
-                List.of(Optional.of(ProfessionType.BUILDER), Optional.of(ProfessionType.MASON), Optional.empty()),
+                List.of(Optional.of(ProfessionType.BUILDER), Optional.of(ProfessionType.MASON), Optional.of(ProfessionType.CARPENTER),
+                        Optional.of(ProfessionType.SMELTER), Optional.empty()),
                 PathPaving.PAVERS,
-                "Regras 215 e 220");
+                "Regras 215, 220 e 242");
     }
 }

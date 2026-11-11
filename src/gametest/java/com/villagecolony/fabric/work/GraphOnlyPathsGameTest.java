@@ -121,9 +121,9 @@ public class GraphOnlyPathsGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** O carpinteiro continua de fora: a ajuda é só do pedreiro. */
+    /** O carpinteiro sem tarefa também calça a linha do grafo (Regra 242). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "graph_only_carpenter", tickLimit = 20)
-    public void aCarpenterDoesNotPave(TestContext context) {
+    public void anIdleCarpenterPaves(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos origin = context.getAbsolutePos(new BlockPos(1, 72, 1));
 
@@ -143,7 +143,7 @@ public class GraphOnlyPathsGameTest implements FabricGameTest {
             PathLinks.offerRepair(colony.id(), List.of(new PathStep(floor.getX(), floor.getY(), floor.getZ(), Side.EAST, 0, 0)));
             PathPaving.pass(world, colony);
 
-            context.assertFalse(world.getBlockState(floor).isOf(Blocks.DIRT_PATH), "Regra 215: o carpinteiro calçou");
+            context.assertTrue(world.getBlockState(floor).isOf(Blocks.DIRT_PATH), "Regra 242: o carpinteiro sem tarefa não calçou");
         } finally {
             world.setTimeOfDay(before);
             PathLinks.drop(colony.id());
