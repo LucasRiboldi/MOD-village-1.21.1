@@ -59,7 +59,8 @@ final class HiringQuota {
 
         for (ProfessionType type : ProfessionDemand.of(candidate.colonyId())) {
             if ((onlyWood && type != ProfessionType.LUMBERJACK) || !counts.containsKey(type) || !growthOrder.contains(type)
-                    || atMaximum(type, counts, policies) || candidate.isShunning(type)) {
+                    || atMaximum(type, counts, policies) || candidate.isShunning(type)
+                    || ProfessionDemand.atCap(candidate.colonyId(), type, counts.getOrDefault(type, 0))) {
                 continue;
             }
 

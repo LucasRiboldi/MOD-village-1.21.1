@@ -282,6 +282,7 @@ public final class ProfessionAssigner {
             // O ofício que já sobra não ganha vaga nova (Regra 233): a vaga passa ao seguinte.
             if (HiringQuota.atMaximum(type, counts, policies)
                     || ProfessionDemand.surplusOf(colonyId).contains(type)
+                    || ProfessionDemand.atCap(colonyId, type, counts.getOrDefault(type, 0))
                     || counts.getOrDefault(type, 0)
                             >= HiringQuota.targetCount(type, adultPopulation, growthOrder, policies)) {
                 if (colonyId != null) {

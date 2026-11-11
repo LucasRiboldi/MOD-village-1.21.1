@@ -50,7 +50,13 @@ public final class VillageFarmAnimals {
         Random random = world.getRandom();
         List<AnimalEntity> born = new java.util.ArrayList<>();
 
-        for (EntityType<? extends AnimalEntity> species : SPECIES) {
+        // No deserto, o coelho também nasce com a vila (Regra 239).
+        List<EntityType<? extends AnimalEntity>> founding = VillageStyle.biomeAt(world, colony.center())
+                .equals(net.minecraft.world.biome.BiomeKeys.DESERT)
+                ? java.util.stream.Stream.concat(SPECIES.stream(), java.util.stream.Stream.of(EntityType.RABBIT)).toList()
+                : SPECIES;
+
+        for (EntityType<? extends AnimalEntity> species : founding) {
             for (int index = 0; index < EACH; index++) {
                 Optional<BlockPos> spot = spotFor(world, colony, random);
 

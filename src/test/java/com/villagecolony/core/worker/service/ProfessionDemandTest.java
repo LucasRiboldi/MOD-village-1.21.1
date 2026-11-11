@@ -61,6 +61,23 @@ class ProfessionDemandTest {
     }
 
     @Test
+    void theFlockCapsTheShepherds() {
+        Worker candidate = Worker.register(UUID.randomUUID(), COLONY);
+        ProfessionDemand.set(COLONY, List.of(ProfessionType.SHEPHERD));
+        ProfessionDemand.setCap(COLONY, ProfessionType.SHEPHERD, ProfessionDemand.shepherdsFor(31));
+
+        Optional<ProfessionType> few = ProfessionAssigner.vacancyFor(candidate, colonyWith(candidate), 16);
+
+        ProfessionDemand.setCap(COLONY, ProfessionType.SHEPHERD, ProfessionDemand.shepherdsFor(32));
+
+        org.junit.jupiter.api.Assertions.assertTrue(few.isPresent() && few.get() != ProfessionType.SHEPHERD,
+                "Regra 235: 31 animais deram um segundo pastor: " + few);
+        assertEquals(Optional.of(ProfessionType.SHEPHERD), ProfessionAssigner.vacancyFor(candidate, colonyWith(candidate), 16),
+                "Regra 235: 32 animais não deram o segundo pastor");
+        assertEquals(1, ProfessionDemand.shepherdsFor(0), "Regra 235: a vila sem rebanho perdeu o pastor titular");
+    }
+
+    @Test
     void theProfessionTheWorkDependsOnComesFirst() {
         Worker candidate = Worker.register(UUID.randomUUID(), COLONY);
         ProfessionDemand.set(COLONY, List.of(ProfessionType.CARPENTER));

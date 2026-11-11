@@ -44,9 +44,13 @@ public final class PathPaving {
         ServerMemory.register(PathPaving.class, PathPaving::clearAll);
     }
 
-    /** O construtor, o pedreiro ocioso (Regra 215) e quem não tem ofício (Regra 220), nesta ordem de rodízio. */
-    static final List<Optional<ProfessionType>> PAVERS =
-            List.of(Optional.of(ProfessionType.BUILDER), Optional.of(ProfessionType.MASON), Optional.empty());
+    /**
+     * O construtor, o pedreiro ocioso (Regra 215), o carpinteiro e o fundidor sem tarefa (Regra 242) e quem não tem ofício
+     * (Regra 220), nesta ordem de rodízio.
+     */
+    static final List<Optional<ProfessionType>> PAVERS = List.of(Optional.of(ProfessionType.BUILDER),
+            Optional.of(ProfessionType.MASON), Optional.of(ProfessionType.CARPENTER), Optional.of(ProfessionType.SMELTER),
+            Optional.empty());
 
     /** Passos que um assenta antes de passar a vez. */
     static final int STEPS_PER_TURN = 8;

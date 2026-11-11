@@ -280,8 +280,8 @@ public final class CropPatch {
         return Optional.of(new Field(null, plot, false));
     }
 
-    /** As roças conhecidas desta colônia, só para leitura — {@link KnownFarmland}. */
-    static java.util.Set<BlockPos> knownOf(UUID colonyId) {
+    /** As roças conhecidas desta colônia, só para leitura — {@link KnownFarmland} e a composteira (Regra 237). */
+    public static java.util.Set<BlockPos> knownOf(UUID colonyId) {
         return java.util.Collections.unmodifiableSet(KNOWN.getOrDefault(colonyId, new java.util.LinkedHashSet<>()));
     }
 

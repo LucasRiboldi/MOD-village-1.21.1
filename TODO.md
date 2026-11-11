@@ -117,6 +117,33 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 - [ ] 344 de 795 colunas de caminho fora da linha, e 118 colunas da linha ainda sem caminho
 - [ ] Blocos que surgiram, `VC_SUPPLY`: `prismarine_crystals` ×80, `prismarine_shard` ×64, `white_terracotta` ×62, `honeycomb` ×29, `oak_log` ×39, `stripped_oak_log` ×16, `glass_pane` ×7, `white_wool` ×7, `string` ×4
 
+## Pastor, lã e plantação grande (0.4.51, Regras 239 a 241)
+
+- [ ] Conferir em jogo: coelhos no deserto, pastor procriando outras espécies, tapetes e lã de cor no baú, plantação grande pedida e semeada
+- [ ] Sem corante nos baús a lã só vira tapete da cor que o rebanho deu: decidir uma fonte de corante (flor, cacto) se o autor quiser cores sempre
+- [ ] Melancia, abóbora e jarro fora da plantação grande até o fazendeiro saber colher fruto de caule
+- [ ] Investigar: `animalsWalkInThroughEachOfTheFourGates` caiu nas 4 baterias desde a 0.4.50 e passa isolado; ver se as entidades dos GameTests novos atrasam o passo das vacas
+- [ ] Conferir em jogo a Regra 242 (0.4.52): caminho coberto e caminho sem marca voltando ao solo pelas mãos de pedreiro, carpinteiro e fundidor; `offLine` caindo no `VC_ROAD_GRAPH`; rampa entre as bases sem degrau maior que 1
+- [ ] Sem teste próprio: o fundidor nas ajudas de chão (`VillageHelpers.helps`) e o aterro da rampa entre bases em mundo
+
+## Profissões mais ativas (0.4.50, Regras 235 a 238)
+
+- [ ] Conferir em jogo com `time_ledger.py` e `action_report.py`: mineiro do deserto trabalhando na pedreira; fazendeiro compostando; pastores e rebanho
+- [ ] Sem teste próprio: a ligação da pedreira em `MineDigging` (a busca está testada) e o teto de pastor gravado por `ShepherdWork`
+- [ ] M2 (segundo ramal cedo) e C1 (adiantar a próxima obra) esperam decisão do autor: a escada é o único acesso ao nível, e a próxima obra só é escolhida quando o lote aparece
+- [ ] Instável: `animalsWalkInThroughEachOfTheFourGates` caiu duas vezes seguidas na bateria inteira e passou 3 de 3 isolado
+
+## Trecho travado em verde (0.4.49, Regra 234)
+
+- [ ] Conferir em jogo longo (10 dias de jogo, cerca de 3 h 20 min): trecho verde no `/vc mae mostrar ligar` e `fixed` acima de 0 no `VC_ROAD_GRAPH`
+- [ ] Decisão em aberto: tirar o trecho travado do recálculo (afinamento e rota), conferindo só se o bloco de caminho existe. Muda a ADR-050; decidir depois de medir no Spark o custo da releitura do grafo
+
+## Caminho sob laje e ponta na extremidade (0.4.48, Regra 231)
+
+- [ ] Conferir em jogo: caminho debaixo de laje e telhado no grafo; nenhuma ponta azul entre linhas; cada ponta na borda do grafo, apontando para fora
+- [ ] Jogo da 0.4.47 (deserto, 2026-11-10, Spark BVayJOTalV), `time_ledger`: fundidor 59% bloqueado; mineiro 0% trabalhando e 38% esperando; fazendeiro 47% esperando; carpinteiro 68%, pedreiro 62% e pastor 69% ociosos. Diagnóstico não feito
+- [ ] `VC_ROAD_GRAPH` da 0.4.47: `offLine` de 276 a 517 e `toPave` de 142 a 236; `fixed` 0 (a trava de 10 dias não chegou)
+
 ## Equilíbrio das profissões (0.4.47, Regras 232 e 233)
 
 - [ ] Conferir em jogo com `time_ledger.py` e `action_report.py`: menos `SET_ASIDE no material`, fundidor e carpinteiro menos ociosos, lenhador com menos `made no progress`, um segundo fazendeiro com comida baixa, e nascimentos acima de 1 por hora
@@ -142,7 +169,7 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 - [x] Socorro só com a vila inteira sem lote, bairro, recusa completa, água interna e ruínas antigas (ADR-051, 0.4.45)
 - [x] Prova por seção durante a obra: fechada sem código, a Regra 202 foi revogada pela ADR-047
 - [ ] Medir em jogo a travada de `/vc mae obra`: `ms=` em `VC_MAE_SITE ... result=queued` e `result=refused`
-- [ ] Sem teste: o pedido do construtor que não desiste por espera longa (`WaitingWork`) e a ligação de `callsTheRescue` dentro de `LotSeeking`
+- [x] Testes do pedido que não desiste parado (`WaitingWork`) e da volta sem lote que soma para o socorro (`LotSeeking.afterTheRoad`): `MaePatienceGameTest`, 3 sabotagens pegas
 - [ ] Ruínas de saves que já abriram a 0.4.38 ou depois: as regiões antigas sumiram do save, e o mod não as acha
 
 - [ ] Rodar o PIT: o core mudou na 0.4.43 (`RetiredSpurs`, `RoadSquares`, `RoadGraph`)
@@ -153,7 +180,7 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 - [ ] Chão de pedra em `x 114–119, z -175 a -166` (save Novo mundo): 6×10, uma camada sobre terra. Nenhum código do mod nem o diário explicam; a linha deixa de cruzá-lo, mas ele fica
 - [ ] Cercas tiradas ao lado do portão `105, -231`, entre 00:14 e 00:49 do jogo da 0.4.42: sem registro no diário; saber se foi o autor
 - [ ] Conferir em jogo o socorro do MAE (Regra 222): `VC_MAE_SITE result=rescue`, custo em ms, porta ligada pelo grafo e desenho da vila
-- [ ] Sem teste próprio: a volta que acha lote zerando a conta dentro de `LotSeeking` (a conta em si tem teste)
+- [ ] Sem teste próprio: a volta que acha lote zerando a conta dentro de `LotSeeking` (a conta em si tem teste; a soma da volta sem lote tem `MaePatienceGameTest`)
 
 ## Varredura dos ofícios (jogo da 0.4.24)
 

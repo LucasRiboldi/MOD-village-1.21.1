@@ -168,36 +168,61 @@ public final class RoadGraphRefresh {
         }
 
         BlockPos at = new BlockPos(scan.x, world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, scan.x, scan.z) - 1, scan.z);
-        BlockState top = world.getBlockState(at);
 
-        MineGates.look(world, scan.colony, at, top);
+        MineGates.look(world, scan.colony, at, world.getBlockState(at));
+
+        // O caminho conta mesmo com bloco por cima, se restarem 2 livres acima dele (Regra 231).
+        // Coberto demais, dentro da caixa, vai para a fila de quem arruma o chão: nada muda sozinho (Regra 242).
+        Optional<BlockPos> path = pathInColumn(world, at, scan.inTheBox() ? covered -> PathTrim.cover(scan.colony, covered) : null);
+
+        if (path.isEmpty()) {
+            return;
+        }
 
         // Fora da caixa só conta o caminho que encosta no de dentro (Regra 224): a escolha é feita ao publicar.
-        if (!scan.inTheBox()) {
-            if (VillageRoad.isPathBlock(top) && RoadGraphMigration.usable(world, at)) {
-                scan.outside.add(MinecraftTypeAdapter.toColonyPos(at));
-            }
-
-            return;
-        }
-
-        if (VillageRoad.isPathBlock(top)) {
-            if (RoadGraphMigration.usable(world, at)) {
-                scan.cells.add(MinecraftTypeAdapter.toColonyPos(at));
-            }
-
-            return;
-        }
-
-        coverPath(world, at, top);
+        (scan.inTheBox() ? scan.cells : scan.outside).add(MinecraftTypeAdapter.toColonyPos(path.get()));
     }
 
-    /** Caminho com bloco em cima deixa de ser caminho — Regra 180: vira terra, ou areia no deserto. */
+    /** Até quantos blocos abaixo do topo da coluna se procura o caminho coberto: laje, telhado e degrau (Regra 231). */
+    static final int MAX_OVERHANG = 8;
+
+    /**
+     * O caminho desta coluna que serve ao grafo: o primeiro de cima para baixo, até {@value #MAX_OVERHANG} abaixo do topo,
+     * com apoio e dois blocos livres em cima (Regra 231). O que tem menos que isso vai a {@code covered}, que o devolve ao
+     * solo pelas mãos de um aldeão (Regras 180 e 242); sem {@code covered}, fica como está.
+     */
+    static Optional<BlockPos> pathInColumn(ServerWorld world, BlockPos top,
+                                           java.util.function.@org.jspecify.annotations.Nullable Consumer<BlockPos> covered) {
+        for (int depth = 0; depth <= MAX_OVERHANG; depth++) {
+            BlockPos at = top.down(depth);
+            BlockState state = world.getBlockState(at);
+
+            if (!VillageRoad.isPathBlock(state)) {
+                continue;
+            }
+
+            if (RoadGraphMigration.usable(world, at)) {
+                return Optional.of(at);
+            }
+
+            if (covered != null) {
+                covered.accept(at.toImmutable());
+            }
+
+            return Optional.empty();
+        }
+
+        return Optional.empty();
+    }
+
+    /** Caminho sem 2 blocos livres em cima deixa de ser caminho — Regras 180 e 231: vira terra, ou areia no deserto. */
     static void coverPath(ServerWorld world, BlockPos on, BlockState top) {
         BlockPos under = on.down();
         BlockState path = world.getBlockState(under);
+        boolean blocked = !top.getCollisionShape(world, on).isEmpty()
+                || !world.getBlockState(on.up()).getCollisionShape(world, on.up()).isEmpty();
 
-        if (VillageRoad.isPathBlock(path) && !top.getCollisionShape(world, on).isEmpty()) {
+        if (VillageRoad.isPathBlock(path) && blocked) {
             world.setBlockState(under, path.isOf(Blocks.DIRT_PATH) ? Blocks.DIRT.getDefaultState() : Blocks.SAND.getDefaultState());
             VillageColonyMod.LOGGER.info("VC_ROAD_COVERED path at {} under {} is ground again", under.toShortString(),
                     net.minecraft.registry.Registries.BLOCK.getId(top.getBlock()));
@@ -205,7 +230,7 @@ public final class RoadGraphRefresh {
     }
 
     /** O dia de jogo, pelo relógio do mundo: dormir conta, como para os aldeões. */
-    static long dayOf(ServerWorld world) {
+    public static long dayOf(ServerWorld world) {
         return world.getTimeOfDay() / 24_000L;
     }
 
@@ -324,14 +349,18 @@ public final class RoadGraphRefresh {
 
         Set<ColonyPos> surplus = new java.util.LinkedHashSet<>(result.surplus());
 
-        result.graph().ifPresent(graph -> surplus.addAll(RetiredSpurs.of(cells, graph, retired)));
-        PathTrim.offer(id, List.copyOf(surplus));
-
         // Degrau e assoalho em frente à porta ficam como estão: a linha só passa (Regra 223).
         Set<Long> atTheDoor = new HashSet<>();
 
         fronts.forEach(at -> atTheDoor.add(ColonyRoads.column(at.x(), at.z())));
         reading.ways().forEach(at -> atTheDoor.add(ColonyRoads.column(at.x(), at.z())));
+
+        // E o caminho de dentro da caixa sem nenhuma marca do grafo volta ao solo (Regra 242).
+        result.graph().ifPresent(graph -> {
+            surplus.addAll(RetiredSpurs.of(cells, graph, retired));
+            surplus.addAll(PathTrim.unmarked(inside, graph, atTheDoor, result.toPave(), planned));
+        });
+        PathTrim.offer(id, List.copyOf(surplus));
 
         return offerRepair(world, id, result.toPave(), turn, atTheDoor) || result.isolated() > 0;
     }

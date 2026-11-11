@@ -191,6 +191,11 @@ public final class WaitingWork {
         return false;
     }
 
+    /** A obra parada há {@code ticks} de expediente sem peça nova. Só a bateria pede isto, para não esperar o relógio. */
+    public static void stalledFor(ServerWorld world, ConstructionProject project, long ticks) {
+        BUILDING_SINCE.put(project.id(), new Progress(project.remainingCount(), world.getTime(), world.getTimeOfDay(), ticks));
+    }
+
     /**
      * A obra que está aberta e não anda também sai da frente —
      * 2026-09-19.

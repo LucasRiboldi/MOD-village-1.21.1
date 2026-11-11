@@ -238,10 +238,7 @@ public final class ColonyState {
         village.add("benches", benches);
 
         JsonObject animals = new JsonObject();
-        animals.addProperty("sheep", world.getEntitiesByType(EntityType.SHEEP, area, any -> true).size());
-        animals.addProperty("cow", world.getEntitiesByType(EntityType.COW, area, any -> true).size());
-        animals.addProperty("pig", world.getEntitiesByType(EntityType.PIG, area, any -> true).size());
-        animals.addProperty("chicken", world.getEntitiesByType(EntityType.CHICKEN, area, any -> true).size());
+        VillageAnimals.count(world, area).forEach(animals::addProperty);
         village.add("animals", animals);
 
         return village;

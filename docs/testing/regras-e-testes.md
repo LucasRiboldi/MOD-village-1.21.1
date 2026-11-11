@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 125
+- **Cita a regra:** 135
 - **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 7
 - **Fora de vigor:** 5
@@ -53,7 +53,7 @@ classe prova menos ainda.
 | 40 | Piso de fundido só com cadeia do cru | cita | BuilderMaterialsGameTest |
 | 41 | Corante, linha, pó de osso e drops de inimigo e animal aparecem automáticos | classe | BuilderGameTest, BuilderMaterialsGameTest, ConstructionStallGameTest |
 | 42 | Mineiro para de guardar um tipo aos 256 no baú (fora o pedido) | classe | MinerHaulCapGameTest, MinerOverflowGameTest, PublicChestsGameTest |
-| 43 | O pastor faz o rebanho procriar | classe | FlockWheatGameTest, PenAccessGameTest, ProfessionReviewGameTest |
+| 43 | O pastor faz o rebanho procriar | classe | FlockSurplusGameTest, FlockWheatGameTest, PenAccessGameTest |
 | 44 | Ofício do mod exclui ofício Vanilla | cita | VillagerRulesGameTest |
 | 45 | Os baús da colônia são todos os da vila, e só eles: com a vila medida, todo baú livre den… | cita | GroundPickupGameTest |
 | 46 | A fome não influencia o trabalho: a comida decide só a procriação (Vanilla) | classe | VillageMealsGameTest |
@@ -134,11 +134,11 @@ classe prova menos ainda.
 | 122 | O curral é do pastor (autor 10-27, jogo da 0.3.93: 217 entradas em curral na planície e o… | cita | PenFloorsGameTest |
 | 123 | A rede de caminhos da vila: toda porta se liga à rede pelo grafo, com o trajeto mais curt… | cita | PathNetworkGameTest, VillagePathPlannerTest |
 | 124 | Construção nova nasce a no mínimo 3 blocos de qualquer construção (autor 10-27, D1): o lo… | cita | PathNetworkGameTest |
-| 125 | Quem assenta o caminho (autor 10-27, D6): o pedreiro, o carpinteiro e o fundidor sem tare… | classe | GraphOnlyPathsGameTest, PathNetworkGameTest, PathPavingTest |
+| 125 | Quem assenta o caminho (autor 10-27, D6): o pedreiro, o carpinteiro e o fundidor sem tare… | classe | GraphOnlyPathsGameTest, GroundKeepersTest, PathNetworkGameTest |
 | 126 | Peça colorida sai branca (autor 10-27, item 5; jogo da 0.3.93: 64 "cama sem lã" e lã pret… | classe | BigHouseFoundationGameTest, BigHouseModBlueprintGameTest, BlueprintReaderGameTest |
 | 127 | Ajudas de quem está sem tarefa do ofício, cada uma com um ofício fixo (autor 10-27, item… | cita | ColonyTorchesGameTest |
 | 128 | Nenhuma profissão espera mais de 5 minutos por nada (autor 10-27, emenda 11-02): 300 s se… | cita | IdleWatchGameTest |
-| 129 | O nome sobre a cabeça tem a cor do estado (autor 10-27): laranja no ofício, azul em ajuda… | classe | IdleRoutineGameTest, IdleWatchGameTest, VillageLogPresenterTest |
+| 129 | O nome sobre a cabeça tem a cor do estado (autor 10-27): laranja no ofício, azul em ajuda… | classe | IdleRoutineGameTest, IdleWatchGameTest, LargeFarmGameTest |
 | 130 | Cinco animais no mesmo poste pedem curral, com prioridade (autor 10-27): o curral do esti… | cita | CrowdedPostGameTest |
 | 131 | O chão em volta da obra nova fica na altura da rua (autor 10-27): na abertura, um anel de… | cita | DuneCutGameTest, SiteSurroundingsGameTest |
 | 132 | As bancadas do mod têm painel e passivas (autor 10-27): shift+clique mostra titulares, es… | cita | BenchPassivesGameTest |
@@ -176,7 +176,7 @@ classe prova menos ainda.
 | 164 | Casa de reserva respeita teto de camas (autor 10-30): sem outro tipo com lote, a casa de… | cita | ConstructionPriorityTest, LotTypeRefusalsGameTest |
 | 165 | Armazém pequeno antes do grande (autor 10-30): quando a vila precisa de armazenamento, ab… | cita | StoragePriorityGameTest, test_gen_storage_small |
 | 166 | Transição em volta do lote: após cortar o terreno para a obra, o corredor de seis colunas… | classe | BuildSiteGameTest, DuneCutGameTest, LotTerraformGameTest |
-| 167 | Cuidado físico do rebanho: só pastor vivo a até 5 blocos alimenta ou abate; a passiva da… | classe | FlockHarvestGameTest, FlockHarvestTest, FlockWheatGameTest |
+| 167 | Cuidado físico do rebanho: só pastor vivo a até 5 blocos alimenta ou abate; a passiva da… | classe | FlockHarvestGameTest, FlockHarvestTest, FlockSurplusGameTest |
 | 168 | Um curral grande por vila nova: a vila gerada após esta regra constrói no máximo um curra… | classe | CrowdedPostGameTest, EntrancesAtTheDoorGameTest, PenAccessGameTest |
 | 169 | Passagem livre: aldeão da colônia quebra aos poucos as folhas naturais que bloqueiam seu… | classe | LeafPathsGameTest |
 | 170 | Lote sem árvores: ao escolher terreno para qualquer estrutura, remove a árvore natural in… | classe | BiomeCoverageGameTest, BiomeSiteGameTest, FoundationPreparationGameTest |
@@ -189,7 +189,7 @@ classe prova menos ainda.
 | 177 | Grafo como mapa de trilhos (autor 11-05): uma linha contínua por corredor, no bloco centr… | cita | RoadLinesTest |
 | 178 | Acesso livre (autor 11-05): o primeiro bloco fora de toda porta e portão é caminho; portã… | cita | EntrancesAtTheDoorGameTest, RoadLinesTest, TreeClearingGameTest |
 | 179 | Zona da obra limpa até o céu (autor 11-05): tudo que é natural e desprotegido na pegada,… | classe | FoundationPreparationGameTest, TreeClearingGameTest |
-| 180 | Caminho coberto não é caminho (autor 11-05): bloco de caminho com outro bloco sólido logo… | cita | RoadRulesGameTest |
+| 180 | Caminho coberto não é caminho (autor 11-05; emendada pela Regra 231): bloco de caminho se… | cita | RoadRulesGameTest |
 | 181 | Pulo confere o teto (jogo 11-05): o caminho do aldeão da colônia só sobe onde o corpo cab… | cita | VillagerRulesGameTest |
 | 182 | A mina cresce por dentro (autor 11-05): fim de escada abre ramal a partir dos salões que… | cita | WaterMineAccessGameTest |
 | 183 | Anel de caminho (autor 11-05): o chão em volta do chafariz é caminho, sem quina fixa no g… | cita | RoadRulesGameTest |
@@ -203,7 +203,7 @@ classe prova menos ainda.
 | 191 | Pedido sem resultado espera (autor 11-05): 3 fechamentos seguidos sem peça seguram o pedi… | cita | TaskLoopGuardTest |
 | 192 | Tora é do carpinteiro (autor 11-05): sem peça a fazer, os outros ofícios fecham a tarefa… | classe | ChainRootsGameTest, ColonyFixture, ConstructionProjectTest |
 | 193 | Mineiro alarga o nível (autor 11-05): quem espera ramal cava em volta do salão, até 6 ané… | cita | MinerGameTest |
-| 194 | Coleta no expediente (autor 11-05): abate do pastor e item do chão só no expediente; emen… | classe | FlockWheatGameTest, GardenPiecesGameTest, GroundPickupGameTest |
+| 194 | Coleta no expediente (autor 11-05): abate do pastor e item do chão só no expediente; emen… | classe | FlockSurplusGameTest, FlockWheatGameTest, GardenPiecesGameTest |
 | 195 | Reunião do fim do dia (autor 11-05): o expediente acaba em 10000 tiques; até 11000 os ald… | cita | ShepherdGameTest, WorkClockTest |
 | 196 | Curral antes do poste (autor 11-05): o pastor leva o animal solto ou amarrado ao curral c… | cita | PenAccessGameTest, ShepherdGameTest |
 | 197 | Folha no caminho se corta (autor 11-05): todo aldeão da vila com destino, parado ao lado… | cita | LeafPassageGameTest |
@@ -222,23 +222,33 @@ classe prova menos ainda.
 | 210 | Toda estrutura onde se entra tem entrada (autor 11-06, 11-07): toda estrutura da vila ger… | cita | StructureEntrancesGameTest |
 | 211 | Casa do mineiro na boca em uso (autor 11-06): a casa do mineiro fica ao lado da boca da s… | cita | StructureEntrancesGameTest |
 | 212 | Sem tocha sozinha, vela não trava obra (autor 11-06): nenhum aldeão põe tocha da colônia… | cita | ArchitectureRulesTest, LotLightDecorGameTest |
-| 213 | A obra MAE é a próxima do construtor (autor 11-06, ADR-047): a obra pedida entra na fila… | cita | MaeSitesGameTest |
+| 213 | A obra MAE é a próxima do construtor (autor 11-06, ADR-047): a obra pedida entra na fila… | cita | MaePatienceGameTest, MaeSitesGameTest |
 | 214 | Todo caminho é do grafo, em toda vila (autor 11-06, ADR-048): quem quer caminho só pede a… | cita | GraphOnlyPathsGameTest, PlannedPathsTest, RoadExtensionGameTest |
-| 215 | O pedreiro ocioso ajuda no caminho e no chão (autor 11-06): sem tarefa do ofício, ele cal… | cita | GraphOnlyPathsGameTest, PathPavingTest |
+| 215 | O pedreiro ocioso ajuda no caminho e no chão (autor 11-06): sem tarefa do ofício, ele cal… | cita | GraphOnlyPathsGameTest |
 | 216 | A rede é o grafo (autor 11-06, ADR-048): quem pergunta por onde se anda, o que está perto… | cita | GraphOnlyPathsGameTest |
 | 217 | A ceia alimenta com o trigo de qualquer baú (autor 11-06): com fazendeiro na vila, a ceia… | cita | VillageMealsGameTest |
 | 218 | A vila continua construindo (autor 11-06, muda a decisão de 10-12 de não repetir): com um… | cita | ConstructionOrderTest, VillageKeepsBuildingGameTest |
 | 219 | Rotina à vista de quem está sem tarefa (autor 11-06): no expediente, depois de um minuto… | cita | IdleRoutineGameTest |
-| 220 | Quem não tem ofício trabalha na vila (autor 11-06, exceção à regra temporária de 11-02):… | cita | GraphOnlyPathsGameTest, PathPavingTest |
+| 220 | Quem não tem ofício trabalha na vila (autor 11-06, exceção à regra temporária de 11-02):… | cita | GraphOnlyPathsGameTest |
 | 221 | A vila gasta o que produz (autor 11-06): depois da ceia, cada adulto come 1 ponto de comi… | cita | VillageConsumesGameTest, VillageMealsGameTest |
-| 222 | O socorro do MAE (autor 11-06, ADR-049): depois de 2 voltas inteiras sem lote para a próx… | cita | MaeRescueGameTest |
+| 222 | O socorro do MAE (autor 11-06, ADR-049): depois de 2 voltas inteiras sem lote para a próx… | cita | MaePatienceGameTest, MaeRescueGameTest |
 | 223 | Branco só onde se entra (autor 11-07, desenho sobre o jogo da 0.4.42): o marcador fica co… | cita | DoorFrontsGameTest, EntrancesAtTheDoorGameTest, RetiredSpursTest |
 | 224 | Todo caminho conta e liga em reta (autor 11-10, ADR-050): o grafo lê o caminho da caixa e… | cita | GraphStabilityGameTest, GraphStabilityTest, RoadLinesTest |
 | 225 | O trecho que ficou trava (autor 11-10, ADR-050): coluna que passa 10 dias de jogo na linh… | cita | GraphStabilityGameTest, GraphStabilityTest, RoadGraphStoreTest |
-| 226 | Socorro da vila inteira, em bairro (autor 11-10, ADR-051): só a volta sem lote da casa co… | cita | LotTypeRefusalsGameTest, MaeFinishGameTest |
+| 226 | Socorro da vila inteira, em bairro (autor 11-10, ADR-051): só a volta sem lote da casa co… | cita | LotTypeRefusalsGameTest, MaeFinishGameTest, MaePatienceGameTest |
 | 227 | Água interna sob a obra pedida (autor 11-10, ADR-051): a obra do jogador aterra a água da… | cita | MaeFinishGameTest |
 | 228 | Ruína de save antigo sai (autor 11-10, ADR-051): a obra MAE que uma versão anterior deixo… | cita | MaeFinishGameTest |
 | 229 | As pontas levam a vila para fora (autor 11-10, ADR-052): uma ponta azul por lado da caixa… | cita | RoadLinesTest, RoadRulesGameTest |
 | 230 | A zona alcança a ponta (autor 11-10, ADR-052): a ponta calçada que sai 7 blocos ou mais d… | cita | RoadRulesGameTest |
+| 231 | Caminho sob laje e ponta na extremidade (autor 11-10, sobre o jogo da 0.4.47): o grafo lê… | cita | RoadRulesGameTest, RoadTipsTest |
 | 232 | A obra manda no artesão (autor 11-10, sobre a análise docs/audit/2026-11-10-qualidade-das… | cita | ProfessionBalanceGameTest |
 | 233 | A vaga segue a falta (autor 11-10): com comida em falta, o fazendeiro vem primeiro na lis… | cita | ColonyCycleTest, ProfessionDemandTest |
+| 234 | O trecho travado sai verde (autor 11-11): no sinalizador dos caminhos (/vc mae mostrar li… | cita | RoadMapSyncGameTest |
+| 235 | Pastor pelo rebanho (autor 11-11, opção P1 de docs/audit/2026-11-11-atividade-das-profiss… | cita | ProfessionDemandTest |
+| 236 | Pedreira de superfície no deserto (autor 11-11, opção M1): na vila de deserto, o mineiro… | cita | DesertQuarryGameTest |
+| 237 | Composteira pela roça (autor 11-11, opção F2): o fazendeiro sem colheita nem canteiro com… | cita | FarmerCompostGameTest |
+| 238 | Rebanho cresce com comida sobrando (autor 11-11, opção P2): com 32 ou mais da comida da e… | cita | FlockSurplusGameTest |
+| 239 | Todo animal que procria com comida (autor 11-11, opção P4): o pastor cria ovelha, vaca, p… | cita | FlockSurplusGameTest |
+| 240 | Lã guardada vira peça de lã (autor 11-11, opção P5): o pastor sem tarefa, com mais de 16… | cita | ShepherdWoolGoodsGameTest |
+| 241 | Plantação grande do deserto (autor 11-11): a plantação do mod tem 16x16, borda de tora co… | cita | LargeFarmGameTest |
+| 242 | Quem arruma o chão (autor 11-11): nenhum bloco de caminho muda sozinho. Pedreiro, carpint… | cita | GraphOnlyPathsGameTest, GroundKeepersTest, RoadRulesGameTest |

@@ -4,10 +4,12 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.RoadGraph;
+import com.villagecolony.core.construction.model.RoadSettling;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.data.save.ColonySavedData;
 import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.work.RoadGraphRefresh;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.MinecraftServer;
@@ -30,7 +32,8 @@ import java.util.UUID;
  * com o papel de cada um, e as colunas do índice de ruas fora do grafo.
  *
  * <p>Cores, as do desenho do autor: linha amarela, nó rosa, entrada branca; nó central vermelho, ponta azul, e cinza
- * só para o índice de ruas de quem ainda não tem grafo. Ligado por {@code /vc mae mostrar ligar}; não persiste.
+ * só para o índice de ruas de quem ainda não tem grafo. O trecho da linha já travado pela Regra 225 sai verde, coluna a
+ * coluna (Regra 234). Ligado por {@code /vc mae mostrar ligar}; não persiste.
  */
 public final class RoadMapSync {
 
@@ -47,6 +50,9 @@ public final class RoadMapSync {
     static final int MAX_POINTS = 8_000;
 
     static final int LINE = 0xFFFF00;
+
+    /** O trecho da linha que já travou (Regras 225 e 234). */
+    static final int FIXED = 0x30FF60;
     static final int INDEX = 0x888888;
     static final int HUB = 0xFF3030;
     static final int ENTRANCE = 0xFFFFFF;
@@ -102,16 +108,24 @@ public final class RoadMapSync {
 
     /** O desenho em volta deste ponto. */
     static RoadMapPayload mapAround(ServerWorld world, BlockPos center) {
+        return mapAround(world, center, RoadGraphRefresh.dayOf(world));
+    }
+
+    /** O desenho em volta deste ponto, com a trava contada até {@code today}. */
+    static RoadMapPayload mapAround(ServerWorld world, BlockPos center, long today) {
         List<RoadMapPayload.Line> lines = new ArrayList<>();
         List<RoadMapPayload.Marker> markers = new ArrayList<>();
         int[] budget = {MAX_POINTS};
 
         for (Colony colony : VillageColonyMod.COLONIES.all()) {
             Set<Long> inGraph = new HashSet<>();
-            var graph = ColonySavedData.get(world.getServer()).roadGraphs().graph(colony.id());
+            var store = ColonySavedData.get(world.getServer()).roadGraphs();
+            var graph = store.graph(colony.id());
 
             if (graph.isPresent()) {
-                addGraph(graph.get(), center, lines, markers, inGraph, budget);
+                Set<Long> fixed = RoadSettling.fixed(store.settled(colony.id()), today);
+
+                addGraph(graph.get(), fixed, center, lines, markers, inGraph, budget);
             } else {
                 RoadIndex.roadsOf(colony.id())
                         .ifPresent(roads -> addIndex(world, roads, center, markers, inGraph, budget));
@@ -121,23 +135,25 @@ public final class RoadMapSync {
         return new RoadMapPayload(lines, markers);
     }
 
-    private static void addGraph(RoadGraph graph, BlockPos center, List<RoadMapPayload.Line> lines,
+    private static void addGraph(RoadGraph graph, Set<Long> fixed, BlockPos center, List<RoadMapPayload.Line> lines,
                                  List<RoadMapPayload.Marker> markers, Set<Long> inGraph, int[] budget) {
         for (RoadGraph.Edge edge : graph.edges()) {
             List<Long> points = new ArrayList<>();
+            List<Boolean> held = new ArrayList<>();
 
             for (ColonyPos at : edge.columns()) {
-                inGraph.add(ColonyRoads.column(at.x(), at.z()));
+                long column = ColonyRoads.column(at.x(), at.z());
+
+                inGraph.add(column);
 
                 if (near(center, at.x(), at.z()) && budget[0] > 0) {
                     points.add(BlockPos.asLong(at.x(), at.y(), at.z()));
+                    held.add(fixed.contains(column));
                     budget[0]--;
                 }
             }
 
-            if (points.size() > 1) {
-                lines.add(new RoadMapPayload.Line(LINE, points));
-            }
+            addRuns(points, held, lines);
         }
 
         for (RoadGraph.Node node : graph.nodes()) {
@@ -150,6 +166,37 @@ public final class RoadMapSync {
                 budget[0]--;
             }
         }
+    }
+
+    /**
+     * Parte a aresta em trechos de uma cor: o passo entre duas colunas travadas é verde, os outros são amarelos. Trechos
+     * vizinhos dividem a coluna da troca, e a linha segue inteira na tela (Regra 234).
+     */
+    static void addRuns(List<Long> points, List<Boolean> held, List<RoadMapPayload.Line> lines) {
+        if (points.size() < 2) {
+            return;
+        }
+
+        List<Long> run = new ArrayList<>(List.of(points.getFirst()));
+        int color = colorOfStep(held, 1);
+
+        for (int i = 1; i < points.size(); i++) {
+            int step = colorOfStep(held, i);
+
+            if (step != color) {
+                lines.add(new RoadMapPayload.Line(color, run));
+                run = new ArrayList<>(List.of(points.get(i - 1)));
+                color = step;
+            }
+
+            run.add(points.get(i));
+        }
+
+        lines.add(new RoadMapPayload.Line(color, run));
+    }
+
+    private static int colorOfStep(List<Boolean> held, int to) {
+        return held.get(to - 1) && held.get(to) ? FIXED : LINE;
     }
 
     private static void addIndex(ServerWorld world, ColonyRoads roads, BlockPos center,

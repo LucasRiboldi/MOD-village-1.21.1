@@ -42,7 +42,30 @@ public final class ProfessionDemand {
     /** O ofício que já sobra: não ganha vaga nova enquanto sobrar (Regra 233). */
     private static final Map<UUID, List<ProfessionType>> SURPLUS = new HashMap<>();
 
+    /** O teto de cabeças de um ofício pelo que a vila tem para ele: o pastor pelo rebanho (Regra 235). */
+    private static final Map<UUID, Map<ProfessionType, Integer>> CAPS = new HashMap<>();
+
+    /** Quantos animais da vila cada pastor pede (Regra 235, autor 2026-11-11). */
+    public static final int ANIMALS_PER_SHEPHERD = 16;
+
     private ProfessionDemand() {
+    }
+
+    /** Quantos pastores o rebanho sustenta: 1 a cada {@value #ANIMALS_PER_SHEPHERD} animais, e nunca menos de 1 (Regra 235). */
+    public static int shepherdsFor(int animals) {
+        return Math.max(1, Math.max(0, animals) / ANIMALS_PER_SHEPHERD);
+    }
+
+    /** Grava o teto deste ofício nesta colônia. */
+    public static synchronized void setCap(UUID colonyId, ProfessionType type, int maximum) {
+        CAPS.computeIfAbsent(colonyId, ignored -> new java.util.EnumMap<>(ProfessionType.class)).put(type, maximum);
+    }
+
+    /** Se o ofício já tem as cabeças que a vila sustenta: não ganha vaga nova (Regra 235). */
+    public static synchronized boolean atCap(@org.jspecify.annotations.Nullable UUID colonyId, ProfessionType type, int heads) {
+        Integer maximum = colonyId == null ? null : CAPS.getOrDefault(colonyId, Map.of()).get(type);
+
+        return maximum != null && heads >= maximum;
     }
 
     /** Os ofícios que sobram nesta colônia: a pedra passou do teto, e o mineiro não ganha vaga nova. */
@@ -93,5 +116,6 @@ public final class ProfessionDemand {
         DEMAND.clear();
         SPARE.clear();
         SURPLUS.clear();
+        CAPS.clear();
     }
 }

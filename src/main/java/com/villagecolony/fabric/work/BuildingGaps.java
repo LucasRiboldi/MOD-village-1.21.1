@@ -23,14 +23,18 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * O acesso livre entre as construções — Regra 178 (autor, 2026-11-05): o pedreiro tira o que passa do nível da casa no
- * anel de {@value #RING} blocos em volta dela e nivela o vão entre duas construções do mesmo nível a até
- * {@value #MAX_GAP} blocos. Só calombo de até {@value #MAX_CUT} blocos: morro maior, e casas em níveis diferentes,
- * ficam com o alisamento ({@link GroundSmoothing}), que faz o degrau de um bloco. Só em vila nova.
+ * O acesso livre entre as construções — Regras 178 e 242 (autor, 2026-11-05 e 2026-11-11): quem arruma o chão tira o
+ * que passa do nível da casa no anel de {@value #RING} blocos em volta dela (calombo de até {@value #MAX_CUT}) e nivela o
+ * vão entre duas construções a até {@value #MAX_GAP} blocos uma da outra: o chão do vão vai em rampa da base de uma até a
+ * base da outra, cortando ou aterrando até {@value #LEVEL} blocos por coluna. Morro maior fica com o alisamento
+ * ({@link GroundSmoothing}), que faz o degrau de um bloco.
  */
 final class BuildingGaps {
 
-    static final int MAX_GAP = 5;
+    static final int MAX_GAP = 8;
+
+    /** Quanto o vão entre as bases corta ou aterra por coluna (Regra 242). */
+    static final int LEVEL = 4;
 
     static final int RING = 2;
 
@@ -133,7 +137,7 @@ final class BuildingGaps {
         for (int x = box.minX() - RING; x <= box.maxX() + RING && left[0] > 0; x++) {
             for (int z = box.minZ() - RING; z <= box.maxZ() + RING && left[0] > 0; z++) {
                 if (!box.contains(x, z)) {
-                    cut(world, colony, x, z, box.floor(), boxes, mine, left);
+                    cut(world, colony, x, z, box.floor(), MAX_CUT, boxes, mine, left);
                 }
             }
         }
@@ -141,44 +145,72 @@ final class BuildingGaps {
 
     private static void gap(ServerWorld world, Colony colony, Box a, Box b, List<Box> boxes, Optional<BlockPos> mine,
                             int[] left) {
-        if (Math.abs(a.floor() - b.floor()) > 1) {
-            return;
-        }
-
-        int floor = Math.min(a.floor(), b.floor());
         int fromX = Math.max(a.minX(), b.minX());
         int toX = Math.min(a.maxX(), b.maxX());
         int fromZ = Math.max(a.minZ(), b.minZ());
         int toZ = Math.min(a.maxZ(), b.maxZ());
 
         if (fromX <= toX) {
-            int z1 = Math.min(a.maxZ(), b.maxZ()) + 1;
-            int z2 = Math.max(a.minZ(), b.minZ()) - 1;
+            Box near = a.maxZ() < b.minZ() ? a : b;
+            Box far = near == a ? b : a;
 
-            if (z2 >= z1 && z2 - z1 + 1 <= MAX_GAP) {
-                rect(world, colony, fromX, toX, z1, z2, floor, boxes, mine, left);
+            if (far.minZ() - near.maxZ() - 1 >= 1 && far.minZ() - near.maxZ() - 1 <= MAX_GAP) {
+                for (int z = near.maxZ() + 1; z < far.minZ() && left[0] > 0; z++) {
+                    int floor = rampAt(near.floor(), far.floor(), z - near.maxZ(), far.minZ() - near.maxZ());
+
+                    for (int x = fromX; x <= toX && left[0] > 0; x++) {
+                        level(world, colony, x, z, floor, boxes, mine, left);
+                    }
+                }
             }
         } else if (fromZ <= toZ) {
-            int x1 = Math.min(a.maxX(), b.maxX()) + 1;
-            int x2 = Math.max(a.minX(), b.minX()) - 1;
+            Box near = a.maxX() < b.minX() ? a : b;
+            Box far = near == a ? b : a;
 
-            if (x2 >= x1 && x2 - x1 + 1 <= MAX_GAP) {
-                rect(world, colony, x1, x2, fromZ, toZ, floor, boxes, mine, left);
+            if (far.minX() - near.maxX() - 1 >= 1 && far.minX() - near.maxX() - 1 <= MAX_GAP) {
+                for (int x = near.maxX() + 1; x < far.minX() && left[0] > 0; x++) {
+                    int floor = rampAt(near.floor(), far.floor(), x - near.maxX(), far.minX() - near.maxX());
+
+                    for (int z = fromZ; z <= toZ && left[0] > 0; z++) {
+                        level(world, colony, x, z, floor, boxes, mine, left);
+                    }
+                }
             }
         }
     }
 
-    private static void rect(ServerWorld world, Colony colony, int x1, int x2, int z1, int z2, int floor, List<Box> boxes,
-                             Optional<BlockPos> mine, int[] left) {
-        for (int x = x1; x <= x2 && left[0] > 0; x++) {
-            for (int z = z1; z <= z2 && left[0] > 0; z++) {
-                cut(world, colony, x, z, floor, boxes, mine, left);
-            }
+    /** A altura da rampa na coluna {@code step} de {@code span - 1}, da base {@code from} à base {@code to} (Regra 242). */
+    static int rampAt(int from, int to, int step, int span) {
+        return from + Math.round((float) (to - from) * step / span);
+    }
+
+    /** Corta ou aterra esta coluna do vão até a rampa, até {@value #LEVEL} blocos. */
+    private static void level(ServerWorld world, Colony colony, int x, int z, int floor, List<Box> boxes,
+                              Optional<BlockPos> mine, int[] left) {
+        if (!world.isChunkLoaded(x >> 4, z >> 4) || boxes.stream().anyMatch(box -> box.contains(x, z))
+                || mine.filter(at -> Math.abs(at.getX() - x) <= GroundSmoothing.MINE_GUARD
+                        && Math.abs(at.getZ() - z) <= GroundSmoothing.MINE_GUARD).isPresent()) {
+            return;
+        }
+
+        int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+
+        if (top > floor) {
+            cut(world, colony, x, z, floor, LEVEL, boxes, mine, left);
+
+            return;
+        }
+
+        BlockPos surface = new BlockPos(x, top, z);
+
+        if (top < floor && floor - top <= LEVEL && GroundSmoothing.isGround(world, surface, world.getBlockState(surface))
+                && GroundSmoothing.column(world, x, z, top, floor)) {
+            left[0]--;
         }
     }
 
-    /** Tira a árvore e corta o calombo desta coluna até o piso. */
-    private static void cut(ServerWorld world, Colony colony, int x, int z, int floor, List<Box> boxes,
+    /** Tira a árvore e corta o calombo desta coluna até o piso, se ele não passa de {@code most} blocos. */
+    private static void cut(ServerWorld world, Colony colony, int x, int z, int floor, int most, List<Box> boxes,
                             Optional<BlockPos> mine, int[] left) {
         if (!world.isChunkLoaded(x >> 4, z >> 4) || boxes.stream().anyMatch(box -> box.contains(x, z))
                 || mine.filter(at -> Math.abs(at.getX() - x) <= GroundSmoothing.MINE_GUARD
@@ -202,7 +234,7 @@ final class BuildingGaps {
 
         BlockPos surface = new BlockPos(x, top, z);
         BlockState state = world.getBlockState(surface);
-        boolean bump = top > floor && top - floor <= MAX_CUT && GroundSmoothing.isGround(world, surface, state)
+        boolean bump = top > floor && top - floor <= most && GroundSmoothing.isGround(world, surface, state)
                 && GroundSmoothing.column(world, x, z, top, floor);
 
         if (cleared > 0 || bump) {

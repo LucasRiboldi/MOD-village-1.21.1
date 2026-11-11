@@ -77,6 +77,11 @@ public final class MaeBuildQueue {
         return request;
     }
 
+    /** Um pedido já aberto neste lugar. Só a bateria pede isto: o jogador pede pelo comando (Regra 213). */
+    public static Request requestForTest(ServerWorld world, UUID colonyId, ResourceId model, BlockPos origin) {
+        return add(world, new Request(UUID.randomUUID(), colonyId, model, origin, origin, 0, null, true));
+    }
+
     /** O pedido saiu da fila: obra pronta, parada ou cancelada. */
     public static void remove(ServerWorld world, UUID id) {
         edit(world, requests -> requests.removeIf(request -> request.id().equals(id)));

@@ -12,6 +12,46 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.52] — candidata, 2026-11-11
+
+### Mudado
+
+- Nenhum bloco de caminho muda sozinho: o caminho coberto vai para a fila de quem arruma o chão (Regras 180 e 242).
+- Pedreiro, carpinteiro e fundidor sem tarefa calçam a linha do grafo, devolvem ao solo o caminho de dentro da caixa sem marca do grafo, tapam buraco e nivelam o vão de até 8 blocos entre construções em rampa de uma base à outra, cortando ou aterrando até 4 (Regra 242).
+
+## [0.4.51] — candidata, 2026-11-11
+
+### Adicionado
+
+- Plantação grande do mod, 16x16, com toda a terra arada molhada; no deserto, o fazendeiro parado a pede como obra urgente (Regra 241).
+
+### Mudado
+
+- O pastor cria toda espécie que procria com comida sem doma, 15 no total; no deserto a vila nasce com coelhos (Regra 239).
+- O pastor sem tarefa transforma a lã acima de 16 em tapete e lã tingida, de cor sorteada entre as que dá para fazer (Regra 240).
+
+## [0.4.50] — candidata, 2026-11-11
+
+### Mudado
+
+- O pastor só ganha vaga nova com 16 animais da vila por pastor, e sempre há vaga para 1 (Regra 235).
+- No deserto, o mineiro sem ramal livre raspa areia e arenito da superfície fora da caixa, a até 32 blocos dela (Regra 236).
+- A composteira do fazendeiro guarda uma semente por canteiro da roça, e não 32 fixas: na roça pequena ela volta a rodar (Regra 237).
+- Com 32 ou mais da comida da espécie nos baús, o rebanho cresce até 16 adultos por espécie (Regra 238).
+
+## [0.4.49] — candidata, 2026-11-11
+
+### Mudado
+
+- O sinalizador dos caminhos pinta de verde o trecho da linha que já travou (10 dias sem mudar), coluna a coluna; o resto segue amarelo (Regra 234).
+
+## [0.4.48] — candidata, 2026-11-10
+
+### Mudado
+
+- O grafo lê o caminho debaixo de laje, telhado ou degrau quando restam 2 blocos livres em cima; com menos, ele vira solo (Regras 180 e 231).
+- A ponta azul fica só na extremidade do grafo no lado dela e aponta para fora; a ponta entre linhas, no meio da vila, sai (Regra 231).
+
 ## [0.4.47] — candidata, 2026-11-10
 
 ### Mudado

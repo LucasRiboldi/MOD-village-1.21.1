@@ -90,6 +90,45 @@ public class RoadRulesGameTest implements FabricGameTest {
         context.complete();
     }
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_overhang", tickLimit = 20)
+    public void aPathUnderASlabCountsWithTwoFreeBlocks(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 98, 1));
+        BlockPos under = origin.add(1, 1, 1);
+        BlockPos low = origin.add(3, 1, 1);
+
+        platform(world, origin);
+
+        try {
+            world.setBlockState(under, Blocks.DIRT_PATH.getDefaultState(), 18);
+            world.setBlockState(under.up(3), Blocks.STONE.getDefaultState(), 18);
+            world.setBlockState(low, Blocks.DIRT_PATH.getDefaultState(), 18);
+            world.setBlockState(low.up(2), Blocks.STONE.getDefaultState(), 18);
+
+            List<BlockPos> covered = new ArrayList<>();
+
+            context.assertTrue(RoadGraphRefresh.pathInColumn(world, under.up(3), covered::add).filter(under::equals).isPresent(),
+                    "Regra 231: o caminho com 2 livres sob a laje ficou fora do grafo");
+            context.assertTrue(RoadGraphRefresh.pathInColumn(world, low.up(2), covered::add).isEmpty(),
+                    "Regra 231: o caminho com 1 livre entrou no grafo");
+            context.assertTrue(world.getBlockState(low).isOf(Blocks.DIRT_PATH) && covered.equals(List.of(low)),
+                    "Regra 242: o caminho coberto mudou sozinho, ou não foi para a fila: " + covered);
+
+            Colony colony = Colony.create(UUID.randomUUID(), cell(origin));
+
+            PathTrim.cover(colony.id(), low);
+            PathTrim.pass(world, colony);
+
+            context.assertTrue(world.getBlockState(low).isOf(Blocks.DIRT), "Regra 180: quem arruma o chão não devolveu o coberto à terra");
+            context.assertTrue(PathTrim.coveredOf(colony.id()).isEmpty(), "Regra 242: o coberto ficou na fila depois de feito");
+            context.assertTrue(world.getBlockState(under).isOf(Blocks.DIRT_PATH), "Regra 231: o caminho com 2 livres virou terra");
+        } finally {
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_rings", tickLimit = 20)
     public void aFarmHasNoRingAndItsNearestCornerIsTheEntrance(TestContext context) {
         ServerWorld world = context.getWorld();

@@ -57,6 +57,11 @@ public final class MaeRescue {
     private MaeRescue() {
     }
 
+    /** Quantas voltas sem lote esta colônia já somou para o socorro; a bateria lê. */
+    public static int sweptOf(UUID colonyId) {
+        return SWEPT.getOrDefault(colonyId, 0);
+    }
+
     /** A busca normal achou lote: a conta recomeça. */
     public static void foundALot(UUID colonyId) {
         SWEPT.remove(colonyId);
