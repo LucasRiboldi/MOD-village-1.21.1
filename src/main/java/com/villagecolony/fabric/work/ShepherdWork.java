@@ -144,6 +144,7 @@ public final class ShepherdWork {
      */
     public static int run(ServerWorld world, Colony colony) {
         BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
+        VillageAnimals.capShepherds(world, colony);
 
         int open = 0;
 
