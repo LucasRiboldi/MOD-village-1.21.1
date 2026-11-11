@@ -99,7 +99,17 @@ public final class GroundPickupGameTest implements FabricGameTest {
             if (!done[0]) {
                 String details = "; aldeão=" + villager.getPos() + ", item=" + item.getPos()
                         + ", navegação parada=" + villager.getNavigation().isIdle()
-                        + ", item vivo=" + item.isAlive();
+                        + ", item vivo=" + item.isAlive()
+                        + ", hora=" + context.getWorld().getTimeOfDay()
+                        + ", trabalhando=" + PenEscape.isWorking(context.getWorld(), colony.id())
+                        + ", baús=" + com.villagecolony.fabric.integration.ColonyChests.nearestFirst(context.getWorld(), colony.id(),
+                                MinecraftTypeAdapter.toColonyPos(villager.getBlockPos()))
+                        + ", baú do teste=" + MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST))
+                        + ", dentro de casa fundacional="
+                        + com.villagecolony.fabric.integration.BigHouseFoundation.containsHouseBlock(context.getAbsolutePos(CHEST))
+                        + ", colônias=" + VillageColonyMod.COLONIES.all().size()
+                        + ", trabalhadores da colônia=" + VillageColonyMod.WORKERS.ofColony(colony.id()).size()
+                        + ", coleta agora=" + GroundPickup.collectNearby(context.getWorld(), colony);
                 cleanup.run();
                 context.assertTrue(false, "aldeão não recolheu a terra durante o deslocamento" + details);
             }
