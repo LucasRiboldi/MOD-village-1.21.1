@@ -39,6 +39,14 @@ final class LotSeeking {
         return HousePlans.isHouse(blueprint.id()) && !FarmPlans.isFarm(blueprint.id());
     }
 
+    /** Nem a rua abriu lote: a volta sem lote da casa conta para o socorro do MAE — Regras 222 e 226. */
+    static void afterTheRoad(ServerWorld world, Colony colony, Blueprint blueprint, List<Blueprint> plans,
+                             Optional<ConstructionProject> grown) {
+        if (grown.isEmpty() && callsTheRescue(blueprint)) {
+            MaeRescue.sweptWithoutLot(world, colony, plans);
+        }
+    }
+
     static Optional<ConstructionProject> seek(ServerWorld world, Colony colony, int builders) {
         if (MineHomePlans.isOwed(world, colony)) {
             List<Blueprint> houses = MineHomePlans.planFor(world, colony);
@@ -150,10 +158,7 @@ final class LotSeeking {
             // regra fica respeitada — estrada primeiro, casa depois.
             Optional<ConstructionProject> grown = RoadGrowthPlanning.extendTheRoad(world, colony, blueprint, plans, builders);
 
-            // Nem a rua abriu lote: o socorro do MAE — Regras 222 e 226.
-            if (grown.isEmpty() && callsTheRescue(blueprint)) {
-                MaeRescue.sweptWithoutLot(world, colony, plans);
-            }
+            afterTheRoad(world, colony, blueprint, plans, grown);
 
             return grown;
         }

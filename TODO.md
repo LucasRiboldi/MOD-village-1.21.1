@@ -169,7 +169,7 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 - [x] Socorro só com a vila inteira sem lote, bairro, recusa completa, água interna e ruínas antigas (ADR-051, 0.4.45)
 - [x] Prova por seção durante a obra: fechada sem código, a Regra 202 foi revogada pela ADR-047
 - [ ] Medir em jogo a travada de `/vc mae obra`: `ms=` em `VC_MAE_SITE ... result=queued` e `result=refused`
-- [ ] Sem teste: o pedido do construtor que não desiste por espera longa (`WaitingWork`) e a ligação de `callsTheRescue` dentro de `LotSeeking`
+- [x] Testes do pedido que não desiste parado (`WaitingWork`) e da volta sem lote que soma para o socorro (`LotSeeking.afterTheRoad`): `MaePatienceGameTest`, 3 sabotagens pegas
 - [ ] Ruínas de saves que já abriram a 0.4.38 ou depois: as regiões antigas sumiram do save, e o mod não as acha
 
 - [ ] Rodar o PIT: o core mudou na 0.4.43 (`RetiredSpurs`, `RoadSquares`, `RoadGraph`)
@@ -180,7 +180,7 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 - [ ] Chão de pedra em `x 114–119, z -175 a -166` (save Novo mundo): 6×10, uma camada sobre terra. Nenhum código do mod nem o diário explicam; a linha deixa de cruzá-lo, mas ele fica
 - [ ] Cercas tiradas ao lado do portão `105, -231`, entre 00:14 e 00:49 do jogo da 0.4.42: sem registro no diário; saber se foi o autor
 - [ ] Conferir em jogo o socorro do MAE (Regra 222): `VC_MAE_SITE result=rescue`, custo em ms, porta ligada pelo grafo e desenho da vila
-- [ ] Sem teste próprio: a volta que acha lote zerando a conta dentro de `LotSeeking` (a conta em si tem teste)
+- [ ] Sem teste próprio: a volta que acha lote zerando a conta dentro de `LotSeeking` (a conta em si tem teste; a soma da volta sem lote tem `MaePatienceGameTest`)
 
 ## Varredura dos ofícios (jogo da 0.4.24)
 
