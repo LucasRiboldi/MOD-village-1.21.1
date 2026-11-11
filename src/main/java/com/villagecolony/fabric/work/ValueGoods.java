@@ -124,6 +124,20 @@ public final class ValueGoods {
                 continue;
             }
 
+            // A lã guardada vira tapete e lã tingida, de cor sorteada (Regra 240).
+            if (trade.get() == ProfessionType.SHEPHERD) {
+                Optional<ShepherdWoolGoods.Made> lot = ShepherdWoolGoods.step(world, chests, world.getRandom());
+
+                lot.ifPresent(goods -> {
+                    villager.swingHand(Hand.MAIN_HAND);
+                    ActionJournal.action(worker.villagerId(), "CRAFTED", ActionJournal.idOf(goods.product()), goods.count(), null,
+                            "value goods");
+                });
+                made += lot.isPresent() ? 1 : 0;
+
+                continue;
+            }
+
             Optional<Recipe> recipe = recipeFor(world, chests, trade.get(), item -> ConstructionDemand.materialNeededBy(
                     com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toResourceId(item), colony) > 0);
 

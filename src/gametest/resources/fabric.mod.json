@@ -107,6 +107,7 @@
       "com.villagecolony.fabric.work.RoadRulesGameTest",
       "com.villagecolony.fabric.work.DesertQuarryGameTest",
       "com.villagecolony.gametest.FlockSurplusGameTest",
+      "com.villagecolony.fabric.work.ShepherdWoolGoodsGameTest",
       "com.villagecolony.fabric.work.DoorFrontsGameTest",
       "com.villagecolony.fabric.work.GraphOnlyPathsGameTest",
       "com.villagecolony.fabric.work.StructureEntrancesGameTest",
