@@ -12,6 +12,12 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.49] — candidata, 2026-11-11
+
+### Mudado
+
+- O sinalizador dos caminhos pinta de verde o trecho da linha que já travou (10 dias sem mudar), coluna a coluna; o resto segue amarelo (Regra 234).
+
 ## [0.4.48] — candidata, 2026-11-10
 
 ### Mudado

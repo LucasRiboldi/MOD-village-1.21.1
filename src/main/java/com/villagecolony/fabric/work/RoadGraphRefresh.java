@@ -227,7 +227,7 @@ public final class RoadGraphRefresh {
     }
 
     /** O dia de jogo, pelo relógio do mundo: dormir conta, como para os aldeões. */
-    static long dayOf(ServerWorld world) {
+    public static long dayOf(ServerWorld world) {
         return world.getTimeOfDay() / 24_000L;
     }
 

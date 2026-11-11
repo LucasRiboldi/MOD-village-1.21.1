@@ -38,6 +38,27 @@ public class RoadMapSyncGameTest implements FabricGameTest {
             RoadMapPayload map = RoadMapSync.mapAround(world, hub);
 
             context.assertTrue(map.lines().stream().anyMatch(drawn -> drawn.color() == RoadMapSync.LINE), "Regra 176: a linha amarela não foi desenhada");
+            context.assertTrue(map.lines().stream().noneMatch(drawn -> drawn.color() == RoadMapSync.FIXED), "Regra 234: verde sem trecho travado");
+
+            // Três colunas do meio na linha há 10 dias, as outras há 9: o passo entre duas travadas é verde, o resto amarelo (Regra 234).
+            long today = 20;
+            java.util.Map<Long, Long> since = new java.util.HashMap<>();
+
+            for (int x = 0; x < 6; x++) {
+                since.put(com.villagecolony.core.construction.model.ColonyRoads.column(hub.getX() + x, hub.getZ()),
+                        x >= 1 && x <= 3 ? today - com.villagecolony.core.construction.model.RoadSettling.DAYS : today - 9);
+            }
+
+            store.settle(fixture.colony().id(), since);
+
+            RoadMapPayload held = RoadMapSync.mapAround(world, hub, today);
+            long green = held.lines().stream().filter(drawn -> drawn.color() == RoadMapSync.FIXED)
+                    .mapToLong(drawn -> drawn.points().size()).sum();
+            long yellow = held.lines().stream().filter(drawn -> drawn.color() == RoadMapSync.LINE)
+                    .mapToLong(drawn -> drawn.points().size()).sum();
+
+            context.assertTrue(green == 3, "Regra 234: o trecho travado não saiu verde coluna a coluna: " + green);
+            context.assertTrue(yellow == 5, "Regra 234: o trecho de 9 dias não ficou amarelo, emendado ao verde: " + yellow);
             context.assertTrue(map.markers().stream().anyMatch(marker -> marker.color() == RoadMapSync.HUB), "Regra 176: o nó central não saiu vermelho");
             context.assertTrue(map.markers().stream().anyMatch(marker -> marker.color() == RoadMapSync.ENTRANCE), "Regra 176: a entrada não saiu branca");
             context.assertTrue(map.markers().stream().noneMatch(marker -> marker.color() == RoadMapSync.OTHER), "Regra 206: azul fora de ponta");
@@ -54,6 +75,7 @@ public class RoadMapSyncGameTest implements FabricGameTest {
             context.assertTrue(mae.canUse(source.withLevel(2)), "Regra 176: operador não alcança o sinalizador");
         } finally {
             store.update(fixture.colony().id(), RoadGraph.from(Set.of(), new ColonyPos(hub.getX(), hub.getY(), hub.getZ()), Set.of()));
+            store.settle(fixture.colony().id(), java.util.Map.of());
             fixture.cleanUp();
         }
 

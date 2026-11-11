@@ -2,6 +2,10 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
+> **Candidata 0.4.49:** pedido do autor em 11-11 (Regra 234): o sinalizador dos caminhos pinta de verde o trecho já travado pela
+> Regra 225, coluna a coluna. Só desenho; o trecho travado segue na releitura. Não jogada.
+> Sentinela `fast` verde de primeira: 1076 GameTests e 1783 unitários. 3 sabotagens pegas.
+
 > **Candidata 0.4.48:** pedido do autor sobre o jogo da 0.4.47 (Regra 231): o grafo lê o caminho debaixo de laje e telhado quando
 > restam 2 livres em cima; com menos, vira solo. A ponta azul fica só na extremidade do grafo no lado dela e aponta para fora. Não jogada.
 > Sentinela `fast` verde de primeira: 1076 GameTests e 1783 unitários. 4 sabotagens pegas.

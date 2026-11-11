@@ -117,6 +117,11 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 - [ ] 344 de 795 colunas de caminho fora da linha, e 118 colunas da linha ainda sem caminho
 - [ ] Blocos que surgiram, `VC_SUPPLY`: `prismarine_crystals` ×80, `prismarine_shard` ×64, `white_terracotta` ×62, `honeycomb` ×29, `oak_log` ×39, `stripped_oak_log` ×16, `glass_pane` ×7, `white_wool` ×7, `string` ×4
 
+## Trecho travado em verde (0.4.49, Regra 234)
+
+- [ ] Conferir em jogo longo (10 dias de jogo, cerca de 3 h 20 min): trecho verde no `/vc mae mostrar ligar` e `fixed` acima de 0 no `VC_ROAD_GRAPH`
+- [ ] Decisão em aberto: tirar o trecho travado do recálculo (afinamento e rota), conferindo só se o bloco de caminho existe. Muda a ADR-050; decidir depois de medir no Spark o custo da releitura do grafo
+
 ## Caminho sob laje e ponta na extremidade (0.4.48, Regra 231)
 
 - [ ] Conferir em jogo: caminho debaixo de laje e telhado no grafo; nenhuma ponta azul entre linhas; cada ponta na borda do grafo, apontando para fora
