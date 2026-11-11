@@ -13,7 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Os animais da vila: ovelha, vaca, porco e galinha dentro da caixa. É o rebanho que sustenta os pastores — Regra 235
+ * Os animais da vila: toda espécie que o pastor cria (Regra 239), dentro da caixa. É o rebanho que sustenta os pastores — Regra 235
  * (autor, 2026-11-11): uma vaga de pastor a cada {@value ProfessionDemand#ANIMALS_PER_SHEPHERD} animais, e sempre 1.
  */
 final class VillageAnimals {
@@ -30,14 +30,13 @@ final class VillageAnimals {
                 .orElseGet(() -> new Box(center).expand(48));
     }
 
-    /** Quantos de cada espécie há na área, na ordem ovelha, vaca, porco, galinha. */
+    /** Quantos de cada espécie há na área, na ordem de {@link ShepherdFlock#SPECIES}; a espécie que falta conta 0. */
     static Map<String, Integer> count(ServerWorld world, Box area) {
         Map<String, Integer> animals = new LinkedHashMap<>();
 
-        animals.put("sheep", world.getEntitiesByType(EntityType.SHEEP, area, any -> true).size());
-        animals.put("cow", world.getEntitiesByType(EntityType.COW, area, any -> true).size());
-        animals.put("pig", world.getEntitiesByType(EntityType.PIG, area, any -> true).size());
-        animals.put("chicken", world.getEntitiesByType(EntityType.CHICKEN, area, any -> true).size());
+        for (EntityType<?> species : ShepherdFlock.SPECIES) {
+            animals.put(EntityType.getId(species).getPath(), world.getEntitiesByType(species, area, any -> true).size());
+        }
 
         return animals;
     }

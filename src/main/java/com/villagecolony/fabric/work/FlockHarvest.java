@@ -51,7 +51,9 @@ public final class FlockHarvest {
             EntityType.COW, List.of(new ItemStack(Items.LEATHER, 1), new ItemStack(Items.BEEF, 2)),
             EntityType.PIG, List.of(new ItemStack(Items.PORKCHOP, 2)),
             EntityType.SHEEP, List.of(new ItemStack(Items.MUTTON, 2)),
-            EntityType.CHICKEN, List.of(new ItemStack(Items.CHICKEN, 1), new ItemStack(Items.FEATHER, 1)));
+            EntityType.CHICKEN, List.of(new ItemStack(Items.CHICKEN, 1), new ItemStack(Items.FEATHER, 1)),
+            EntityType.RABBIT, List.of(new ItemStack(Items.RABBIT, 1), new ItemStack(Items.RABBIT_HIDE, 1)),
+            EntityType.MOOSHROOM, List.of(new ItemStack(Items.LEATHER, 1), new ItemStack(Items.BEEF, 2)));
 
     private FlockHarvest() {
     }
@@ -80,7 +82,7 @@ public final class FlockHarvest {
 
         boolean butchered = false;
 
-        for (EntityType<? extends AnimalEntity> species : ShepherdFlock.SPECIES) {
+        for (EntityType<? extends AnimalEntity> species : ShepherdFlock.LIVESTOCK.stream().filter(DROPS::containsKey).toList()) {
             List<? extends AnimalEntity> adults = new ArrayList<>(world.getEntitiesByType(
                     species, area, animal -> animal.isAlive() && !animal.isBaby()));
 

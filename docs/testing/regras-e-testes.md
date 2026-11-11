@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 127
+- **Cita a regra:** 131
 - **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 7
 - **Fora de vigor:** 5
@@ -53,7 +53,7 @@ classe prova menos ainda.
 | 40 | Piso de fundido só com cadeia do cru | cita | BuilderMaterialsGameTest |
 | 41 | Corante, linha, pó de osso e drops de inimigo e animal aparecem automáticos | classe | BuilderGameTest, BuilderMaterialsGameTest, ConstructionStallGameTest |
 | 42 | Mineiro para de guardar um tipo aos 256 no baú (fora o pedido) | classe | MinerHaulCapGameTest, MinerOverflowGameTest, PublicChestsGameTest |
-| 43 | O pastor faz o rebanho procriar | classe | FlockWheatGameTest, PenAccessGameTest, ProfessionReviewGameTest |
+| 43 | O pastor faz o rebanho procriar | classe | FlockSurplusGameTest, FlockWheatGameTest, PenAccessGameTest |
 | 44 | Ofício do mod exclui ofício Vanilla | cita | VillagerRulesGameTest |
 | 45 | Os baús da colônia são todos os da vila, e só eles: com a vila medida, todo baú livre den… | cita | GroundPickupGameTest |
 | 46 | A fome não influencia o trabalho: a comida decide só a procriação (Vanilla) | classe | VillageMealsGameTest |
@@ -176,7 +176,7 @@ classe prova menos ainda.
 | 164 | Casa de reserva respeita teto de camas (autor 10-30): sem outro tipo com lote, a casa de… | cita | ConstructionPriorityTest, LotTypeRefusalsGameTest |
 | 165 | Armazém pequeno antes do grande (autor 10-30): quando a vila precisa de armazenamento, ab… | cita | StoragePriorityGameTest, test_gen_storage_small |
 | 166 | Transição em volta do lote: após cortar o terreno para a obra, o corredor de seis colunas… | classe | BuildSiteGameTest, DuneCutGameTest, LotTerraformGameTest |
-| 167 | Cuidado físico do rebanho: só pastor vivo a até 5 blocos alimenta ou abate; a passiva da… | classe | FlockHarvestGameTest, FlockHarvestTest, FlockWheatGameTest |
+| 167 | Cuidado físico do rebanho: só pastor vivo a até 5 blocos alimenta ou abate; a passiva da… | classe | FlockHarvestGameTest, FlockHarvestTest, FlockSurplusGameTest |
 | 168 | Um curral grande por vila nova: a vila gerada após esta regra constrói no máximo um curra… | classe | CrowdedPostGameTest, EntrancesAtTheDoorGameTest, PenAccessGameTest |
 | 169 | Passagem livre: aldeão da colônia quebra aos poucos as folhas naturais que bloqueiam seu… | classe | LeafPathsGameTest |
 | 170 | Lote sem árvores: ao escolher terreno para qualquer estrutura, remove a árvore natural in… | classe | BiomeCoverageGameTest, BiomeSiteGameTest, FoundationPreparationGameTest |
@@ -203,7 +203,7 @@ classe prova menos ainda.
 | 191 | Pedido sem resultado espera (autor 11-05): 3 fechamentos seguidos sem peça seguram o pedi… | cita | TaskLoopGuardTest |
 | 192 | Tora é do carpinteiro (autor 11-05): sem peça a fazer, os outros ofícios fecham a tarefa… | classe | ChainRootsGameTest, ColonyFixture, ConstructionProjectTest |
 | 193 | Mineiro alarga o nível (autor 11-05): quem espera ramal cava em volta do salão, até 6 ané… | cita | MinerGameTest |
-| 194 | Coleta no expediente (autor 11-05): abate do pastor e item do chão só no expediente; emen… | classe | FlockWheatGameTest, GardenPiecesGameTest, GroundPickupGameTest |
+| 194 | Coleta no expediente (autor 11-05): abate do pastor e item do chão só no expediente; emen… | classe | FlockSurplusGameTest, FlockWheatGameTest, GardenPiecesGameTest |
 | 195 | Reunião do fim do dia (autor 11-05): o expediente acaba em 10000 tiques; até 11000 os ald… | cita | ShepherdGameTest, WorkClockTest |
 | 196 | Curral antes do poste (autor 11-05): o pastor leva o animal solto ou amarrado ao curral c… | cita | PenAccessGameTest, ShepherdGameTest |
 | 197 | Folha no caminho se corta (autor 11-05): todo aldeão da vila com destino, parado ao lado… | cita | LeafPassageGameTest |
@@ -244,3 +244,7 @@ classe prova menos ainda.
 | 232 | A obra manda no artesão (autor 11-10, sobre a análise docs/audit/2026-11-10-qualidade-das… | cita | ProfessionBalanceGameTest |
 | 233 | A vaga segue a falta (autor 11-10): com comida em falta, o fazendeiro vem primeiro na lis… | cita | ColonyCycleTest, ProfessionDemandTest |
 | 234 | O trecho travado sai verde (autor 11-11): no sinalizador dos caminhos (/vc mae mostrar li… | cita | RoadMapSyncGameTest |
+| 235 | Pastor pelo rebanho (autor 11-11, opção P1 de docs/audit/2026-11-11-atividade-das-profiss… | cita | ProfessionDemandTest |
+| 236 | Pedreira de superfície no deserto (autor 11-11, opção M1): na vila de deserto, o mineiro… | cita | DesertQuarryGameTest |
+| 237 | Composteira pela roça (autor 11-11, opção F2): o fazendeiro sem colheita nem canteiro com… | cita | FarmerCompostGameTest |
+| 238 | Rebanho cresce com comida sobrando (autor 11-11, opção P2): com 32 ou mais da comida da e… | cita | FlockSurplusGameTest |

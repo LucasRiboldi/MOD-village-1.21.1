@@ -200,7 +200,7 @@ final class ShepherdHerding {
                 .orElseGet(() -> new Box(center).expand(48));
         List<AnimalEntity> candidates = new java.util.ArrayList<>();
 
-        for (EntityType<? extends AnimalEntity> species : ShepherdFlock.SPECIES) {
+        for (EntityType<? extends AnimalEntity> species : ShepherdFlock.LIVESTOCK) {
             candidates.addAll(world.getEntitiesByType(species, area, candidate -> candidate.isAlive()
                     && candidate.canBeLeashed()
                     && (!candidate.isLeashed() || candidate.getLeashHolder() instanceof LeashKnotEntity)

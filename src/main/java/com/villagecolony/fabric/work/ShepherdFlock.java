@@ -73,11 +73,21 @@ public final class ShepherdFlock {
     /** A ração de cada espécie quando o fazendeiro não produziu nada — Regra 117. */
     static final Map<EntityType<?>, Item> ANIMAL_FEED = Map.of(
             EntityType.SHEEP, Items.WHEAT, EntityType.COW, Items.WHEAT,
-            EntityType.PIG, Items.CARROT, EntityType.CHICKEN, Items.WHEAT_SEEDS);
+            EntityType.PIG, Items.CARROT, EntityType.CHICKEN, Items.WHEAT_SEEDS, EntityType.RABBIT, Items.CARROT);
 
-    /** As espécies que o pastor cria. */
-    static final List<EntityType<? extends AnimalEntity>> SPECIES =
-            List.of(EntityType.SHEEP, EntityType.COW, EntityType.PIG, EntityType.CHICKEN);
+    /**
+     * As espécies que o pastor cria — Regra 239 (autor, 2026-11-11): todo animal do jogo que procria com comida, sem ser
+     * domado antes. Cavalo, burro, lhama, lobo e gato pedem doma, e os do Nether não vivem na vila; ficam de fora.
+     */
+    static final List<EntityType<? extends AnimalEntity>> SPECIES = List.of(
+            EntityType.SHEEP, EntityType.COW, EntityType.PIG, EntityType.CHICKEN, EntityType.RABBIT, EntityType.MOOSHROOM,
+            EntityType.GOAT, EntityType.CAMEL, EntityType.FOX, EntityType.PANDA, EntityType.TURTLE, EntityType.BEE,
+            EntityType.FROG, EntityType.SNIFFER, EntityType.ARMADILLO);
+
+    /** As espécies que o pastor leva ao curral e abate acima da reserva: a criação de corte (Regra 239). */
+    static final List<EntityType<? extends AnimalEntity>> LIVESTOCK = List.of(
+            EntityType.SHEEP, EntityType.COW, EntityType.PIG, EntityType.CHICKEN, EntityType.RABBIT, EntityType.MOOSHROOM,
+            EntityType.GOAT);
 
     /**
      * As comidas que esta espécie aceita, lidas do próprio jogo
