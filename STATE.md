@@ -2,6 +2,10 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
+> **Candidata 0.4.52:** pedido do autor em 11-11 (Regra 242): nenhum caminho muda sozinho; pedreiro, carpinteiro e fundidor sem tarefa
+> calçam a linha, devolvem ao solo o caminho sem marca dentro da caixa e nivelam entre as bases (vão até 8, rampa, corte e aterro até 4).
+> Não jogada. Sentinela `fast`: 1083 GameTests e 1787 unitários; caiu só `workerCollectsWhileWalkingPast`. 3 sabotagens pegas.
+
 > **Candidata 0.4.51:** pedido do autor em 11-11 (Regras 239 a 241): o pastor cria 15 espécies (coelho no deserto), a lã acima de 16
 > vira tapete e lã tingida de cor sorteada, e o fazendeiro parado no deserto pede a plantação grande 16x16 do mod. Não jogada.
 > Sentinela `fast`: 1083 GameTests e 1784 unitários; caíram `workerCollectsWhileWalkingPast` e `animalsWalkInThroughEachOfTheFourGates`,

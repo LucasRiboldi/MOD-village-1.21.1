@@ -12,6 +12,13 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.52] — candidata, 2026-11-11
+
+### Mudado
+
+- Nenhum bloco de caminho muda sozinho: o caminho coberto vai para a fila de quem arruma o chão (Regras 180 e 242).
+- Pedreiro, carpinteiro e fundidor sem tarefa calçam a linha do grafo, devolvem ao solo o caminho de dentro da caixa sem marca do grafo, tapam buraco e nivelam o vão de até 8 blocos entre construções em rampa de uma base à outra, cortando ou aterrando até 4 (Regra 242).
+
 ## [0.4.51] — candidata, 2026-11-11
 
 ### Adicionado

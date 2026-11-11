@@ -123,7 +123,8 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 - [ ] Sem corante nos baús a lã só vira tapete da cor que o rebanho deu: decidir uma fonte de corante (flor, cacto) se o autor quiser cores sempre
 - [ ] Melancia, abóbora e jarro fora da plantação grande até o fazendeiro saber colher fruto de caule
 - [ ] Investigar: `animalsWalkInThroughEachOfTheFourGates` caiu nas 4 baterias desde a 0.4.50 e passa isolado; ver se as entidades dos GameTests novos atrasam o passo das vacas
-- [ ] Pedido do autor em 11-11, aguardando respostas: pedreiro, carpinteiro e fundidor sem obra calçam a linha do grafo, devolvem ao solo o caminho sem marcação, tapam buraco e nivelam o chão entre as bases das estruturas; nenhum bloco de caminho muda sozinho (hoje `RoadGraphRefresh.coverPath` muda)
+- [ ] Conferir em jogo a Regra 242 (0.4.52): caminho coberto e caminho sem marca voltando ao solo pelas mãos de pedreiro, carpinteiro e fundidor; `offLine` caindo no `VC_ROAD_GRAPH`; rampa entre as bases sem degrau maior que 1
+- [ ] Sem teste próprio: o fundidor nas ajudas de chão (`VillageHelpers.helps`) e o aterro da rampa entre bases em mundo
 
 ## Profissões mais ativas (0.4.50, Regras 235 a 238)
 
