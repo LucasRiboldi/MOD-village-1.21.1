@@ -126,7 +126,7 @@ public final class FarmerCompost {
     /** Uma semente acima da reserva vai ao compostor; os níveis viram farinha de osso. */
     static boolean compostASeed(ServerWorld world, UUID colonyId, List<ColonyPos> chests, ColonyPos into) {
         for (Item seed : COMPOSTED) {
-            if (ColonyChests.countIn(world, chests, seed) <= seedReserve(CropPatch.knownCount(colonyId))
+            if (ColonyChests.countIn(world, chests, seed) <= seedReserve(CropPatch.knownOf(colonyId).size())
                     || ColonyChests.withdraw(world, chests, seed, 1) == 0) {
                 continue;
             }
