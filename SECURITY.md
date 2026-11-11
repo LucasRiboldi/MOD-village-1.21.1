@@ -53,8 +53,11 @@ Um hash que mudou sem mudança de versão é sinal de artefato adulterado: inves
 
 Exceção, escolhida pelo autor em 2026-11-11: os jars do grupo `net.fabricmc.fabric-api` não têm o hash conferido. Naquele
 dia o Maven do Fabric servia esses jars com o mesmo conteúdo e outro zip conforme o ponto do CDN: o cache local, um cache
-vazio e a CI receberam três hashes diferentes do mesmo arquivo. O `.pom` deles continua verificado, e todas as outras
-dependências também. Quando o Maven do Fabric voltar a servir um arquivo estável, a regra pode sair do
+vazio e a CI receberam três hashes diferentes do mesmo arquivo. O `.pom` deles continua verificado, e todas as outras dependências
+baixadas também.
+
+O que o Loom gera no próprio computador também fica sem conferência, porque não é download e o hash muda a cada
+geração: os mods remapeados (grupos `remapped.…`) e o Minecraft montado com os mapeamentos (`minecraft-…`). Quando o Maven do Fabric voltar a servir um arquivo estável, a regra pode sair do
 `verification-metadata.xml`.
 
 ## Antivírus
