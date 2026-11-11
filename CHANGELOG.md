@@ -12,6 +12,32 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.55] — candidata, 2026-11-11
+
+Escolhas do autor sobre o jogo da 0.4.53 (`docs/audit/2026-11-11-jogo-0453.md`).
+
+### Mudado
+
+- Baú de qualquer lugar (Regra 243): o baú do trabalhador e o da boca da mina valem mesmo fora da caixa da vila; o
+  aldeão guarda e tira sem andar até ele. Baú em chunk descarregado segue de fora.
+- Cama longe vem para perto (Regra 245): sem trabalho medido e com a cama a mais de 128 blocos do centro, o centro
+  conta como trabalho na troca de camas do amanhecer.
+- Construtor sem obra nivela o chão da vila (Regra 247).
+- Um terço da madeira fica em tora, e não metade (Regra 248).
+
+### Corrigido
+
+- Aldeão fora da simulação de entidades não conta mais como congelado (Regra 244): o fazendeiro ficou 60 min "preso"
+  num chão plano porque o chunk dele estava carregado sem simular entidades.
+- Arrumar o chão da vila conta como trabalho no `WorkTime` (Regra 246): pedreiro, carpinteiro e fundidor apareciam
+  77% a 88% ociosos enquanto nivelavam.
+
+### Testes
+
+- `aWorkersChestOutsideTheVillageIsStillTheColonys`, `aWorkerOutsideTheSimulationIsNotFrozen`,
+  `aFarSleeperWithoutMeasuredWorkMovesTowardTheCenter`, `aWorkerWhoLevelledTheGroundThisMinuteIsWorking`,
+  `theIdleBuilderLevelsTheVillageGround`, `theReserveIsAThirdOfTheLogsMeasuredAgainstThePlanksAlreadyMade`.
+
 ## [0.4.54] — candidata, 2026-11-11
 
 ### Corrigido

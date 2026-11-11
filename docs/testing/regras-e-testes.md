@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 135
+- **Cita a regra:** 141
 - **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 7
 - **Fora de vigor:** 5
@@ -252,3 +252,9 @@ classe prova menos ainda.
 | 240 | Lã guardada vira peça de lã (autor 11-11, opção P5): o pastor sem tarefa, com mais de 16… | cita | ShepherdWoolGoodsGameTest |
 | 241 | Plantação grande do deserto (autor 11-11): a plantação do mod tem 16x16, borda de tora co… | cita | BuilderGameTest, LargeFarmGameTest |
 | 242 | Quem arruma o chão (autor 11-11): nenhum bloco de caminho muda sozinho. Pedreiro, carpint… | cita | BuildingGapsGameTest, GraphOnlyPathsGameTest, GroundKeepersTest |
+| 243 | Baú de qualquer lugar (autor 11-11, opção T4 de docs/audit/2026-11-11-jogo-0453.md): todo… | cita | VillageChestReachGameTest |
+| 244 | Fora da simulação não congela (autor 11-11, opção T1c de docs/audit/2026-11-11-jogo-0453.… | cita | PinnedOnFlatGameTest |
+| 245 | Cama longe vem para perto (autor 11-11, opção T3b): na troca de camas do amanhecer (Regra… | cita | BedPlanTest |
+| 246 | Arrumar o chão é trabalho (autor 11-11, opção O2a): quem nivela, tapa buraco ou devolve a… | cita | WorkTimeTest |
+| 247 | Construtor sem obra arruma o chão (autor 11-11, opção O1b): o construtor sem obra aberta,… | cita | GroundSmoothingGameTest |
+| 248 | Um terço da madeira fica em tora (autor 11-11, opção O2c): o carpinteiro converte em tábu… | cita | ColonyGoalsTest |

@@ -120,11 +120,13 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 ## Jogo da 0.4.53 (deserto, 2026-11-11, Spark Lk0DyOz8CK)
 
 - [x] Plantação grande "terminada" com 0 de 256 peças: `BlueprintKind.isFarm` excluía a pasta `colony/`, e a areia ficava "in the way". Corrigido na 0.4.54, `theLargeFarmReplacesTheSand`; conferir em jogo
-- [ ] Construtor 70% ocioso: só 3 obras em 79 min, "still sweeping — the budget ran out", 3.562 lotes recusados por `TOO_CLOSE`
-- [ ] Fazendeiro 37% encalhado: "could not reach the crop" 4 vezes, "frozen twice" 3 vezes; lenhador 79% ocioso no deserto
-- [ ] Pastor 34% bloqueado: "fenced in" 4 vezes, "no sheep with wool within the radius" 4 vezes
+- [x] Construtor sem obra nivela (Regra 247, 0.4.55); conferir em jogo. Era: construtor 70% ocioso, só 3 obras em 79 min, "still sweeping — the budget ran out", 3.562 lotes recusados por `TOO_CLOSE`
+- [x] Encalhe falso fora da simulação (Regra 244, 0.4.55); conferir em jogo. Era: fazendeiro 37% encalhado: "could not reach the crop" 4 vezes, "frozen twice" 3 vezes; lenhador 79% ocioso no deserto
+- [ ] Pastor 34% bloqueado (o curral não é a causa: sai pelo portão em 4–39 tiques; O4a, Regra 196, já existe): "fenced in" 4 vezes, "no sheep with wool within the radius" 4 vezes
 - [ ] 11 trabalhadores registrados fora do mundo; carpinteiro 9467a1fc e pedreiro 3aab7d8a "not loaded" o jogo inteiro, com tarefa aberta
-- [ ] 3 baús fora de alcance: 2887,86,-3247; 2819,69,-3169; 2878,99,-3425
+- [x] Baú do trabalhador vale de qualquer lugar (Regra 243, 0.4.55). Eram 3 baús fora de alcance: 2887,86,-3247; 2819,69,-3169; 2878,99,-3425
+- [ ] O2b: fundidores gastaram o arenito em segundos; 405 de areia nos baús e ninguém faz arenito; a pedreira (Regra 236) não rodou. Esperando escolha do autor
+- [ ] O3b: no deserto o bosque do lenhador (`lumberjackInTheGrove`) não tem muda; plantar pede muda de fora. Esperando escolha do autor
 - [x] Corte e aterro em volta das construções: caiu de 14.848 para 404 colunas (0.4.53 confirmada em jogo)
 - [x] Ligação nova ao trecho travado (Regra 225): provada por `aNewDoorLinksToAFixedStretch`
 - [x] Spark CverydmXKv substituído pelo Lk0DyOz8CK: 20 TPS, 7 ms por tique, o mod com 1,5% do servidor
