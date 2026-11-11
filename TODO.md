@@ -117,6 +117,14 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 - [ ] 344 de 795 colunas de caminho fora da linha, e 118 colunas da linha ainda sem caminho
 - [ ] Blocos que surgiram, `VC_SUPPLY`: `prismarine_crystals` ×80, `prismarine_shard` ×64, `white_terracotta` ×62, `honeycomb` ×29, `oak_log` ×39, `stripped_oak_log` ×16, `glass_pane` ×7, `white_wool` ×7, `string` ×4
 
+## Pastor, lã e plantação grande (0.4.51, Regras 239 a 241)
+
+- [ ] Conferir em jogo: coelhos no deserto, pastor procriando outras espécies, tapetes e lã de cor no baú, plantação grande pedida e semeada
+- [ ] Sem corante nos baús a lã só vira tapete da cor que o rebanho deu: decidir uma fonte de corante (flor, cacto) se o autor quiser cores sempre
+- [ ] Melancia, abóbora e jarro fora da plantação grande até o fazendeiro saber colher fruto de caule
+- [ ] Investigar: `animalsWalkInThroughEachOfTheFourGates` caiu nas 4 baterias desde a 0.4.50 e passa isolado; ver se as entidades dos GameTests novos atrasam o passo das vacas
+- [ ] Pedido do autor em 11-11, aguardando respostas: pedreiro, carpinteiro e fundidor sem obra calçam a linha do grafo, devolvem ao solo o caminho sem marcação, tapam buraco e nivelam o chão entre as bases das estruturas; nenhum bloco de caminho muda sozinho (hoje `RoadGraphRefresh.coverPath` muda)
+
 ## Profissões mais ativas (0.4.50, Regras 235 a 238)
 
 - [ ] Conferir em jogo com `time_ledger.py` e `action_report.py`: mineiro do deserto trabalhando na pedreira; fazendeiro compostando; pastores e rebanho

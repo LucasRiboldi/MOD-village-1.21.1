@@ -12,6 +12,17 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.51] — candidata, 2026-11-11
+
+### Adicionado
+
+- Plantação grande do mod, 16x16, com toda a terra arada molhada; no deserto, o fazendeiro parado a pede como obra urgente (Regra 241).
+
+### Mudado
+
+- O pastor cria toda espécie que procria com comida sem doma, 15 no total; no deserto a vila nasce com coelhos (Regra 239).
+- O pastor sem tarefa transforma a lã acima de 16 em tapete e lã tingida, de cor sorteada entre as que dá para fazer (Regra 240).
+
 ## [0.4.50] — candidata, 2026-11-11
 
 ### Mudado

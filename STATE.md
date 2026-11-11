@@ -2,6 +2,12 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
+> **Candidata 0.4.51:** pedido do autor em 11-11 (Regras 239 a 241): o pastor cria 15 espécies (coelho no deserto), a lã acima de 16
+> vira tapete e lã tingida de cor sorteada, e o fazendeiro parado no deserto pede a plantação grande 16x16 do mod. Não jogada.
+> Sentinela `fast`: 1083 GameTests e 1784 unitários; caíram `workerCollectsWhileWalkingPast` e `animalsWalkInThroughEachOfTheFourGates`,
+> este em todas as baterias desde a 0.4.50 (passa isolado). O pedido do terreno (calçar, solo fora do grafo, nivelar bases) espera
+> as respostas do autor.
+
 > **Candidata 0.4.50:** opções da análise `docs/audit/2026-11-11-atividade-das-profissoes.md` escolhidas pelo autor (Regras 235 a 238):
 > pastor por rebanho (16 animais por pastor), pedreira de areia e arenito no deserto, composteira pela roça, rebanho até 16 com comida
 > sobrando. M2 e C1 não foram feitos: pedem decisão de arquitetura e voltaram ao autor. Não jogada.
