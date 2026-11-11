@@ -609,6 +609,8 @@ cliente, o mod liga as sobreposições de profissão e de obra, e o Mod Menu
 (opcional) abre a tela de regras de profissão — mudar regras exige operador
 nível 2.
 Use um mundo de teste: o mod corta árvores, minera e coloca blocos no mundo.
+O que o mod grava no computador, como conferir o SHA-256 do JAR e como reportar
+uma falha estão em [`SECURITY.md`](SECURITY.md).
 
 ## Comandos e dados de análise
 
@@ -856,6 +858,8 @@ ficam no [`TODO.md`](TODO.md), seção "Produção futura":
 - [`docs/RULES.md`](docs/RULES.md): todas as regras do autor (fonte da tabela
   acima).
 - [`CHANGELOG.md`](CHANGELOG.md): o que mudou em cada publicação.
+- [`SECURITY.md`](SECURITY.md): o que o mod faz no computador, build verificado e
+  como reportar falha.
 - [`docs/decisions/`](docs/decisions/): decisões arquiteturais.
 - [`docs/behavioral-tests/`](docs/behavioral-tests/): estratégia e falhas de
   GameTest.
