@@ -32,7 +32,9 @@ import java.util.UUID;
  * um par por espécie a cada {@link #BETWEEN_PAIRS}, com a comida que ele aceita,
  * tirada de qualquer baú da vila. O animal solto também come; a coleta
  * ({@code ShepherdHerding}) o traz para a cerca depois. Até {@link #FLOCK_TARGET}
- * adultos de cada espécie: o rebanho tem teto.
+ * adultos de cada espécie; com {@value #SURPLUS_FOOD} ou mais da comida da espécie nos
+ * baús, até {@value #SURPLUS_TARGET} (Regra 238). Acima de {@link #FLOCK_TARGET} só a comida
+ * do fazendeiro serve: a ração que surge sozinha (Regra 117) não passa da meta de antes.
  */
 public final class ShepherdFlock {
 
@@ -42,6 +44,12 @@ public final class ShepherdFlock {
 
     /** Adultos de cada espécie a partir dos quais o pastor para de criar — autor, 2026-10-22 (eram 12). */
     public static final int FLOCK_TARGET = 8;
+
+    /** Comida da espécie nos baús a partir da qual o rebanho cresce além da meta — Regra 238 (autor, 2026-11-11). */
+    public static final int SURPLUS_FOOD = 32;
+
+    /** Adultos de cada espécie com comida sobrando: casa com 16 animais por pastor (Regras 235 e 238). */
+    public static final int SURPLUS_TARGET = 16;
 
     /** Entre uma rodada de comida e a seguinte da mesma colônia: um minuto. */
     static final int BETWEEN_PAIRS = 1_200;
@@ -240,8 +248,10 @@ public final class ShepherdFlock {
             Box area, List<ColonyPos> chests) {
         List<? extends AnimalEntity> adults = world.getEntitiesByType(
                 species, area, animal -> animal.isAlive() && !animal.isBaby());
+        int target = adults.isEmpty() ? FLOCK_TARGET : targetFor(foodOf(species, adults.get(0)).stream()
+                .mapToInt(food -> ColonyChests.countIn(world, chests, food)).sum());
 
-        if (adults.size() >= FLOCK_TARGET) {
+        if (adults.size() >= target) {
             return false;
         }
 
@@ -275,7 +285,7 @@ public final class ShepherdFlock {
             VillageColonyMod.LOGGER.info(
                     "Colony {} — the shepherd fed two {} with {} to breed ({} adults, target {})",
                     colony.id().toString().substring(0, 8), species.getUntranslatedName(),
-                    food, adults.size(), FLOCK_TARGET);
+                    food, adults.size(), target);
             return true;
         }
 
@@ -286,7 +296,7 @@ public final class ShepherdFlock {
         boolean farmMadeSome = foodOf(species, ready.get(0)).stream()
                 .anyMatch(food -> ColonyChests.countIn(world, chests, food) > 0);
 
-        if (feed == null || farmMadeSome) {
+        if (feed == null || farmMadeSome || adults.size() >= FLOCK_TARGET) {
             VillageColonyMod.LOGGER.info("Colony {} — the shepherd has no food for the {} ({} adults)",
                     colony.id().toString().substring(0, 8), species.getUntranslatedName(), adults.size());
             return false;
@@ -303,6 +313,11 @@ public final class ShepherdFlock {
                 colony.id().toString().substring(0, 8), species.getUntranslatedName(), feed, adults.size(),
                 FLOCK_TARGET);
         return true;
+    }
+
+    /** A meta de adultos da espécie pela comida dela nos baús (Regra 238). */
+    public static int targetFor(int food) {
+        return food >= SURPLUS_FOOD ? SURPLUS_TARGET : FLOCK_TARGET;
     }
 
     /** Guardado: amarrado numa cerca, ou dentro de curral (cercado e com cerca perto). */
