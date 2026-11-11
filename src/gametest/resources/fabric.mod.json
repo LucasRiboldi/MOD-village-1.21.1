@@ -110,6 +110,7 @@
       "com.villagecolony.fabric.work.ShepherdWoolGoodsGameTest",
       "com.villagecolony.fabric.work.LargeFarmGameTest",
       "com.villagecolony.fabric.work.MaePatienceGameTest",
+      "com.villagecolony.fabric.work.BuildingGapsGameTest",
       "com.villagecolony.fabric.work.DoorFrontsGameTest",
       "com.villagecolony.fabric.work.GraphOnlyPathsGameTest",
       "com.villagecolony.fabric.work.StructureEntrancesGameTest",

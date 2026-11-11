@@ -25,8 +25,8 @@ import java.util.UUID;
 /**
  * O acesso livre entre as construções — Regras 178 e 242 (autor, 2026-11-05 e 2026-11-11): quem arruma o chão tira o
  * que passa do nível da casa no anel de {@value #RING} blocos em volta dela (calombo de até {@value #MAX_CUT}) e nivela o
- * vão entre duas construções a até {@value #MAX_GAP} blocos uma da outra: o chão do vão vai em rampa da base de uma até a
- * base da outra, cortando ou aterrando até {@value #LEVEL} blocos por coluna. Morro maior fica com o alisamento
+ * vão entre duas construções a até {@value #MAX_GAP} blocos uma da outra: o chão do meio do vão, fora dos anéis, vai em
+ * rampa da base de uma até a base da outra, cortando ou aterrando até {@value #LEVEL} blocos por coluna. Morro maior fica com o alisamento
  * ({@link GroundSmoothing}), que faz o degrau de um bloco.
  */
 final class BuildingGaps {
@@ -179,15 +179,23 @@ final class BuildingGaps {
         }
     }
 
+    /** Se a coluna fica na construção ou no anel de {@value #RING} em volta dela. */
+    private static boolean inRing(Box box, int x, int z) {
+        return x >= box.minX() - RING && x <= box.maxX() + RING && z >= box.minZ() - RING && z <= box.maxZ() + RING;
+    }
+
     /** A altura da rampa na coluna {@code step} de {@code span - 1}, da base {@code from} à base {@code to} (Regra 242). */
     static int rampAt(int from, int to, int step, int span) {
         return from + Math.round((float) (to - from) * step / span);
     }
 
-    /** Corta ou aterra esta coluna do vão até a rampa, até {@value #LEVEL} blocos. */
+    /**
+     * Corta ou aterra esta coluna do vão até a rampa, até {@value #LEVEL} blocos. O anel de {@value #RING} em volta de cada
+     * construção fica com a base dela: a rampa que entrasse nele seria cortada pelo anel na passada seguinte, sem fim.
+     */
     private static void level(ServerWorld world, Colony colony, int x, int z, int floor, List<Box> boxes,
                               Optional<BlockPos> mine, int[] left) {
-        if (!world.isChunkLoaded(x >> 4, z >> 4) || boxes.stream().anyMatch(box -> box.contains(x, z))
+        if (!world.isChunkLoaded(x >> 4, z >> 4) || boxes.stream().anyMatch(box -> inRing(box, x, z))
                 || mine.filter(at -> Math.abs(at.getX() - x) <= GroundSmoothing.MINE_GUARD
                         && Math.abs(at.getZ() - z) <= GroundSmoothing.MINE_GUARD).isPresent()) {
             return;

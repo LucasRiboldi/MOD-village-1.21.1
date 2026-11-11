@@ -117,6 +117,15 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 - [ ] 344 de 795 colunas de caminho fora da linha, e 118 colunas da linha ainda sem caminho
 - [ ] Blocos que surgiram, `VC_SUPPLY`: `prismarine_crystals` ×80, `prismarine_shard` ×64, `white_terracotta` ×62, `honeycomb` ×29, `oak_log` ×39, `stripped_oak_log` ×16, `glass_pane` ×7, `white_wool` ×7, `string` ×4
 
+## Jogo da 0.4.52 (deserto, 2026-11-11, Spark CverydmXKv)
+
+- [x] Corte e aterro sem fim entre construções (Regra 242): corrigido na 0.4.53, `theGapBetweenTwoBasesSettles`
+- [ ] Plantação grande pedida às 09:30 e largada às 09:52 sem nenhum bloco posto: o construtor ficou "walking ... without reaching the block". Conferir no próximo jogo, já sem o chão mudando em volta
+- [ ] `time_ledger` conta como ócio quem arruma o chão (pedreiro, carpinteiro e fundidor): o `LEVELLED` deles não marca trabalho
+- [ ] Pastor 48 vezes "fenced in"; fazendeiro 29% encalhado
+- [ ] MAE ainda sem prova: nenhum `/vc mae obra` no jogo
+- [ ] Spark CverydmXKv não lido
+
 ## Pastor, lã e plantação grande (0.4.51, Regras 239 a 241)
 
 - [ ] Conferir em jogo: coelhos no deserto, pastor procriando outras espécies, tapetes e lã de cor no baú, plantação grande pedida e semeada
