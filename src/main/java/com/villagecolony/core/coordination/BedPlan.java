@@ -53,6 +53,25 @@ public final class BedPlan {
     public record Move(UUID id, ColonyPos from, ColonyPos to) {
     }
 
+    /** A partir de quantos blocos do centro, na horizontal, a cama é longe demais para quem não tem trabalho medido. */
+    public static final int FAR_FROM_CENTER = 128;
+
+    /**
+     * O trabalho que conta para a cama: o medido; sem ele, o centro da vila quando a cama está a mais de
+     * {@link #FAR_FROM_CENTER} blocos dele (Regra 245). Quem mora longe quase não trabalha e nunca juntava ações
+     * bastantes para mudar.
+     */
+    public static @Nullable ColonyPos workOrCenter(@Nullable ColonyPos work, ColonyPos bed, ColonyPos center) {
+        if (work != null) {
+            return work;
+        }
+
+        long dx = (long) bed.x() - center.x();
+        long dz = (long) bed.z() - center.z();
+
+        return dx * dx + dz * dz > (long) FAR_FROM_CENTER * FAR_FROM_CENTER ? center : null;
+    }
+
     /** A distância em linha reta, com a altura: subir e descer é caminhada também. */
     public static double distance(ColonyPos a, ColonyPos b) {
         double dx = a.x() - b.x();

@@ -153,8 +153,10 @@ final class BedChoice {
 
             villagers.put(villager.getUuid(), villager);
             professions.put(villager.getUuid(), worker.profession());
+            // Sem trabalho medido e com a cama longe do centro, o centro vale como trabalho (Regra 245).
             ColonyPos work = worker.profession().isPresent()
-                    ? workOf(villager.getUuid()).map(MinecraftTypeAdapter::toColonyPos).orElse(null)
+                    ? BedPlan.workOrCenter(workOf(villager.getUuid()).map(MinecraftTypeAdapter::toColonyPos).orElse(null),
+                            MinecraftTypeAdapter.toColonyPos(home.get()), colony.center())
                     : null;
             sleepers.add(new BedPlan.Sleeper(villager.getUuid(), MinecraftTypeAdapter.toColonyPos(home.get()), work,
                     !villager.isSleeping()));
