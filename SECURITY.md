@@ -51,9 +51,11 @@ Ao atualizar o Gradle, o Loom, o Fabric ou outra dependência, regenere a verifi
 
 Um hash que mudou sem mudança de versão é sinal de artefato adulterado: investigue antes de aceitar.
 
-O Fabric já republicou artefatos com o mesmo conteúdo e outra data dentro do zip (47 da Fabric API em 2026-11-09).
-Nesse caso, compare o conteúdo do jar antigo com o novo, arquivo por arquivo; só com tudo igual o hash novo entra como
-`<also-trust>` ao lado do antigo. Conteúdo diferente não entra.
+Exceção, escolhida pelo autor em 2026-11-11: os jars do grupo `net.fabricmc.fabric-api` não têm o hash conferido. Naquele
+dia o Maven do Fabric servia esses jars com o mesmo conteúdo e outro zip conforme o ponto do CDN: o cache local, um cache
+vazio e a CI receberam três hashes diferentes do mesmo arquivo. O `.pom` deles continua verificado, e todas as outras
+dependências também. Quando o Maven do Fabric voltar a servir um arquivo estável, a regra pode sair do
+`verification-metadata.xml`.
 
 ## Antivírus
 
