@@ -4,7 +4,7 @@ Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 20
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.52, publicada como [`v0.4.52-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.52-alpha), **não jogada**. Branch de trabalho: `main`.
+- **Versão:** 0.4.53, publicada como [`v0.4.53-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.53-alpha), **não jogada**. A 0.4.52 foi jogada em 2026-11-11 (análise em `docs/audit/2026-11-11-jogo-0452.md`) e não teve release: a 0.4.53 corrige o corte e aterro sem fim entre construções que esse jogo mostrou. Branch de trabalho: `main`.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, ele escolhe, teste que falha, correção, Sentinela, commit, JAR.
 - **Entregue desde a 0.4.47 (todas candidatas):**
   - 0.4.48 e 0.4.49, Regras 231 e 234: caminho sob laje no grafo, ponta azul só na extremidade, trecho travado em verde no sinalizador.
@@ -15,7 +15,7 @@ Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 20
 
 ## O próximo passo
 
-**O autor precisa jogar a 0.4.52 e mandar o Spark.** Sem jogo, o que falta é prova, não código. Ao receber o log, siga `CLAUDE.md` §0.2.2 e confira:
+**O autor precisa jogar a 0.4.53 e mandar o Spark.** Sem jogo, o que falta é prova, não código. Ao receber o log, siga `CLAUDE.md` §0.2.2 e confira:
 
 - `VC_MAE_SITE`: `/vc mae obra <modelo>` de `queued` até `done`, `ms`, retomada depois de reiniciar, obra `fora`, `rescue`. Nos três jogos de 11-09 e 11-10 não houve nenhuma linha.
 - `VC_ROAD_GRAPH`: `offLine` caindo com a Regra 242, `fixed` acima de 0 num jogo longo.
@@ -76,7 +76,7 @@ Triagem no log: `VC_BIOME_NOTE` primeiro, depois `VC_MAE_SITE`, `VC_ROAD_GRAPH`,
 
 **Prova com sabotagem:** teste verde de primeira não prova nada. Depois de implementar, troque um comportamento de cada vez e confira que algum teste falha. Na 0.4.43 isso expôs um teste que passava de qualquer jeito.
 
-## Verificado e não verificado na 0.4.52
+## Verificado e não verificado na 0.4.53
 
 - **Verificado:** Sentinela com 1085 GameTests e 1787 unitários, PIT local de 85%, CI da PR 65 e da `main` verdes, sabotagens pegas em cada versão.
 - **Não verificado:** nada das 0.4.48 a 0.4.52 foi jogado; os efeitos em jogo das Regras 231 a 242 dependem do próximo jogo.
