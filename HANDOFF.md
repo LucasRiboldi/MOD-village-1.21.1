@@ -4,25 +4,24 @@ Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 20
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.47, candidata, **não jogada**. A última publicada é a [`v0.4.43-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.43-alpha). Branch de trabalho: `main`, depois da PR que traz as 0.4.44 a 0.4.47.
+- **Versão:** 0.4.52, publicada como [`v0.4.52-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.52-alpha), **não jogada**. Branch de trabalho: `main`.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, ele escolhe, teste que falha, correção, Sentinela, commit, JAR.
-- **Entregue desde a 0.4.43 (todas candidatas):**
-  - 0.4.44, ADR-050, Regras 224 e 225: parte solta liga em reta ao ponto mais perto da linha, caminho de fora da caixa entra no grafo, trecho de 10 dias de jogo sem mudar fica fixo.
-  - 0.4.45, ADR-051, Regras 226 a 228: socorro do MAE só quando nem casa cabe e em bairro; recusa de `/vc mae obra` com todos os motivos; água interna aterrada na obra do jogador; ruína de save antigo limpa.
-  - 0.4.46, ADR-052, Regras 229 e 230: uma ponta azul por lado, 1 bloco por dia para fora, até 128 blocos; a caixa da vila alcança a ponta a 7 blocos.
-  - 0.4.47, Regras 232 e 233: a obra manda no artesão, lenhador não larga a árvore que se aproxima, fazendeiro primeiro com comida em falta, mineiro sem vaga nova com pedra sobrando, diário grava o produto.
+- **Entregue desde a 0.4.47 (todas candidatas):**
+  - 0.4.48 e 0.4.49, Regras 231 e 234: caminho sob laje no grafo, ponta azul só na extremidade, trecho travado em verde no sinalizador.
+  - 0.4.50, Regras 235 a 238: pastor pelo rebanho, pedreira do deserto, composteira pela roça, rebanho até 16 com comida sobrando.
+  - 0.4.51, Regras 239 a 241: 15 espécies no pastor, lã em peças de cor, plantação grande 16x16 do mod no deserto.
+  - 0.4.52, Regra 242: nenhum caminho muda sozinho; pedreiro, carpinteiro e fundidor sem tarefa arrumam o chão.
+  - Build verificado (wrapper e dependências) e `SECURITY.md`. Ao atualizar uma dependência, regenere a verificação como diz o `SECURITY.md`.
 
 ## O próximo passo
 
-**O autor precisa jogar a 0.4.47 e mandar o Spark.** Sem jogo, o que falta é prova, não código. Ao receber o log, siga `CLAUDE.md` §0.2.2 e confira:
+**O autor precisa jogar a 0.4.52 e mandar o Spark.** Sem jogo, o que falta é prova, não código. Ao receber o log, siga `CLAUDE.md` §0.2.2 e confira:
 
-- `VC_ROAD_GRAPH`: `offLine`, `capped`, `fixed` e `isolated`; `VC_ROAD_TIP result=claimed`.
-- `VC_MAE_SITE`: `queued` até `done`, `ms`, `rescue`, `water_filled`, `ruin_cleared`.
-- `time_ledger.py` e `action_report.py`: menos `SET_ASIDE no material`, fundidor e carpinteiro menos ociosos, mais de 1 nascimento por hora.
+- `VC_MAE_SITE`: `/vc mae obra <modelo>` de `queued` até `done`, `ms`, retomada depois de reiniciar, obra `fora`, `rescue`. Nos três jogos de 11-09 e 11-10 não houve nenhuma linha.
+- `VC_ROAD_GRAPH`: `offLine` caindo com a Regra 242, `fixed` acima de 0 num jogo longo.
+- `time_ledger.py` e `action_report.py`: mineiro do deserto na pedreira, fazendeiro compostando, pastores e rebanho, carpinteiro e fundidor arrumando o chão.
 
-Pendente no `TODO.md`: passo 4 do grafo (solo para todo caminho fora do grafo, só depois de medir `offLine`), plantação nova e abate para comida, testes de `WaitingWork`, e o instável `eachSpeciesGetsItsOwnPen`.
-
-Análises feitas: `docs/audit/2026-11-07-jogo-0443.md`, `docs/audit/2026-11-10-qualidade-das-profissoes.md` e `docs/research/2026-11-10-melhorias-do-grafo.md`.
+Análises feitas: `docs/audit/2026-11-11-atividade-das-profissoes.md`, `docs/audit/2026-11-10-qualidade-das-profissoes.md` e `docs/research/2026-11-10-melhorias-do-grafo.md`.
 
 ## Ordem de leitura
 
@@ -77,10 +76,10 @@ Triagem no log: `VC_BIOME_NOTE` primeiro, depois `VC_MAE_SITE`, `VC_ROAD_GRAPH`,
 
 **Prova com sabotagem:** teste verde de primeira não prova nada. Depois de implementar, troque um comportamento de cada vez e confira que algum teste falha. Na 0.4.43 isso expôs um teste que passava de qualquer jeito.
 
-## Verificado e não verificado na 0.4.43
+## Verificado e não verificado na 0.4.52
 
-- **Verificado:** Sentinela com 1060 GameTests e 1768 unitários, CI da PR 60 verde, 11 sabotagens pegas. No jogo: 0 quadrados de nós e 0 brancos soltos.
-- **Não verificado:** PIT local (o core mudou), a troca de `DoorFronts.of` por `outside` em `BuildingGaps`, e os efeitos em jogo das Regras 217 a 221.
+- **Verificado:** Sentinela com 1085 GameTests e 1787 unitários, PIT local de 85%, CI da PR 65 e da `main` verdes, sabotagens pegas em cada versão.
+- **Não verificado:** nada das 0.4.48 a 0.4.52 foi jogado; os efeitos em jogo das Regras 231 a 242 dependem do próximo jogo.
 - **Testes instáveis:** `animalsWalkInThroughEachOfTheFourGates` e `workerCollectsWhileWalkingPast`, sem causa achada. Veja o `TODO.md`. Repita a bateria antes de culpar a mudança.
 
 ## O que falta no MAE
@@ -88,8 +87,8 @@ Triagem no log: `VC_BIOME_NOTE` primeiro, depois `VC_MAE_SITE`, `VC_ROAD_GRAPH`,
 Lista viva em `TODO.md`, seção "MAE: o que falta depois da 0.4.26". Resumo:
 
 - **Depende de jogo:** `/vc mae obra <modelo>` do `queued` ao `done`, retomada depois de reiniciar, obra `fora`, socorro até o fim (só disparou, e a obra foi parada), carga real.
-- **Depende de código:** testes de `WaitingWork`, `MaeSites.move` e da volta que zera a conta em `LotSeeking`; motivo de recusa de `/vc mae obra`; travada de `MaeSites.start`; prova por seção durante a obra; PIT; plano mestre desatualizado.
-- **Depende do autor:** regra da água para a obra pedida pelo jogador, ruínas de saves antigos e o bairro novo, hoje fora do recorte (ADR-049).
+- **Depende de código:** testes de `MaeSites.move` e da volta que zera a conta em `LotSeeking`; medir de novo o custo de `MaeGenerationEvidence`. Os testes de `WaitingWork` e da soma para o socorro entraram (`MaePatienceGameTest`).
+- **Limitação conhecida:** ruínas de saves que já abriram a 0.4.38 ou depois não são achadas, porque as regiões antigas sumiram do save.
 
 ## Git
 
