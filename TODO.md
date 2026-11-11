@@ -117,10 +117,22 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 - [ ] 344 de 795 colunas de caminho fora da linha, e 118 colunas da linha ainda sem caminho
 - [ ] Blocos que surgiram, `VC_SUPPLY`: `prismarine_crystals` ×80, `prismarine_shard` ×64, `white_terracotta` ×62, `honeycomb` ×29, `oak_log` ×39, `stripped_oak_log` ×16, `glass_pane` ×7, `white_wool` ×7, `string` ×4
 
+## Jogo da 0.4.53 (deserto, 2026-11-11, Spark Lk0DyOz8CK)
+
+- [ ] Plantação grande "terminada" com 0 de 256 peças: `BlueprintKind.isFarm` exclui a pasta `colony/`, então a camada de baixo de `colony/large_farm` não é base e a areia fica "in the way" (Regra 3). O `LargeFarmGameTest` só lê a planta, sem construí-la. Esperando a escolha do autor
+- [ ] Construtor 70% ocioso: só 3 obras em 79 min, "still sweeping — the budget ran out", 3.562 lotes recusados por `TOO_CLOSE`
+- [ ] Fazendeiro 37% encalhado: "could not reach the crop" 4 vezes, "frozen twice" 3 vezes; lenhador 79% ocioso no deserto
+- [ ] Pastor 34% bloqueado: "fenced in" 4 vezes, "no sheep with wool within the radius" 4 vezes
+- [ ] 11 trabalhadores registrados fora do mundo; carpinteiro 9467a1fc e pedreiro 3aab7d8a "not loaded" o jogo inteiro, com tarefa aberta
+- [ ] 3 baús fora de alcance: 2887,86,-3247; 2819,69,-3169; 2878,99,-3425
+- [x] Corte e aterro em volta das construções: caiu de 14.848 para 404 colunas (0.4.53 confirmada em jogo)
+- [x] Ligação nova ao trecho travado (Regra 225): provada por `aNewDoorLinksToAFixedStretch`
+- [x] Spark CverydmXKv substituído pelo Lk0DyOz8CK: 20 TPS, 7 ms por tique, o mod com 1,5% do servidor
+
 ## Jogo da 0.4.52 (deserto, 2026-11-11, Spark CverydmXKv)
 
 - [x] Corte e aterro sem fim entre construções (Regra 242): corrigido na 0.4.53, `theGapBetweenTwoBasesSettles`
-- [ ] Plantação grande pedida às 09:30 e largada às 09:52 sem nenhum bloco posto: o construtor ficou "walking ... without reaching the block". Conferir no próximo jogo, já sem o chão mudando em volta
+- [x] Plantação grande largada sem bloco: a causa é a areia "in the way", ver o jogo da 0.4.53
 - [ ] `time_ledger` conta como ócio quem arruma o chão (pedreiro, carpinteiro e fundidor): o `LEVELLED` deles não marca trabalho
 - [ ] Pastor 48 vezes "fenced in"; fazendeiro 29% encalhado
 - [ ] MAE ainda sem prova: nenhum `/vc mae obra` no jogo

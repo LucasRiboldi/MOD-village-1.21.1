@@ -125,6 +125,20 @@ class GraphStabilityTest {
     }
 
     @Test
+    @DisplayName("a porta nova liga ao trecho fixo, que ganha um nó no encontro")
+    void aNewDoorLinksToAFixedStretch() {
+        Set<ColonyPos> fixed = corridor(0, 40, 0, 0);
+        ColonyPos door = at(20, 10);
+        RoadGraph graph = RoadLines.build(fixed, Set.of(), at(0, 0), Set.of(door), Set.of(), FLAT, FLAT, 0, 0, 0, fixed)
+                .graph().orElseThrow();
+
+        assertTrue(linked(graph, door), "a porta nova ficou solta do trecho fixo: " + graph.edges());
+        assertTrue(lineOf(graph).containsAll(fixed), "a ligação moveu o trecho fixo: " + lineOf(graph));
+        assertTrue(graph.nodes().stream().anyMatch(node -> node.position().z() == 0 && node.position().x() > 0 && node.position().x() < 40),
+                "o encontro com o trecho fixo não virou nó: " + graph.nodes());
+    }
+
+    @Test
     @DisplayName("a coluna fica fixa só depois dos dias da trava, e recomeça ao sair da linha")
     void aColumnSettlesAfterTheDaysAndRestartsWhenItLeaves() {
         long column = ColonyRoads.column(3, 4);
