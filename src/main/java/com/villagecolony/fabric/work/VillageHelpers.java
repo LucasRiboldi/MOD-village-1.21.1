@@ -31,9 +31,10 @@ import java.util.UUID;
  * Uma vez por minuto, no expediente:
  *
  * <ul>
- *   <li><b>pedreiro</b>: repara o terreno, começando pelo lote da obra aberta (Regra 215);</li>
+ *   <li><b>pedreiro, carpinteiro e fundidor</b>: arrumam o terreno, começando pelo lote da obra aberta: tapam buraco,
+ *       nivelam entre as bases, devolvem ao solo o caminho sem marca do grafo (Regras 215 e 242);</li>
  *   <li><b>pastor</b>: alimenta o rebanho;</li>
- *   <li><b>carpinteiro</b>, e o pedreiro sem terreno a reparar: mantém as construções (Regra 221);</li>
+ *   <li><b>carpinteiro e pedreiro</b> sem terreno a reparar: mantêm as construções (Regra 221);</li>
  *   <li><b>adulto sem profissão</b>: transporta itens e alivia os baús cheios; calçar e tirar neve vêm da Regra 220.</li>
  * </ul>
  * As demais ajudas cruzadas da Regra 149 ficam suspensas.
@@ -95,8 +96,8 @@ public final class VillageHelpers {
     }
 
     /**
-     * Alternativas sem troca de ofício: pastor cuida do rebanho (O3), pedreiro nivela (Regra 215), adulto sem
-     * profissão carrega (O8).
+     * Alternativas sem troca de ofício: pastor cuida do rebanho (O3), pedreiro, carpinteiro e fundidor arrumam o chão
+     * (Regras 215 e 242), adulto sem profissão carrega (O8).
      *
      * @return quanto ele fez
      */
@@ -112,7 +113,12 @@ public final class VillageHelpers {
 
                 yield levelled > 0 ? levelled : BuildingUpkeep.start(world, colony, villager, ResourceGroup.STONE);
             }
-            case CARPENTER -> BuildingUpkeep.start(world, colony, villager, ResourceGroup.PLANKS);
+            case CARPENTER -> {
+                int levelled = masonHelps(world, colony, villager);
+
+                yield levelled > 0 ? levelled : BuildingUpkeep.start(world, colony, villager, ResourceGroup.PLANKS);
+            }
+            case SMELTER -> masonHelps(world, colony, villager);
             default -> 0;
         };
     }

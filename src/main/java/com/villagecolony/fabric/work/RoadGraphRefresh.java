@@ -172,7 +172,8 @@ public final class RoadGraphRefresh {
         MineGates.look(world, scan.colony, at, world.getBlockState(at));
 
         // O caminho conta mesmo com bloco por cima, se restarem 2 livres acima dele (Regra 231).
-        Optional<BlockPos> path = pathInColumn(world, at, scan.inTheBox());
+        // Coberto demais, dentro da caixa, vai para a fila de quem arruma o chão: nada muda sozinho (Regra 242).
+        Optional<BlockPos> path = pathInColumn(world, at, scan.inTheBox() ? covered -> PathTrim.cover(scan.colony, covered) : null);
 
         if (path.isEmpty()) {
             return;
@@ -187,9 +188,11 @@ public final class RoadGraphRefresh {
 
     /**
      * O caminho desta coluna que serve ao grafo: o primeiro de cima para baixo, até {@value #MAX_OVERHANG} abaixo do topo,
-     * com apoio e dois blocos livres em cima (Regra 231). O que tem menos que isso, dentro da caixa, vira solo (Regra 180).
+     * com apoio e dois blocos livres em cima (Regra 231). O que tem menos que isso vai a {@code covered}, que o devolve ao
+     * solo pelas mãos de um aldeão (Regras 180 e 242); sem {@code covered}, fica como está.
      */
-    static Optional<BlockPos> pathInColumn(ServerWorld world, BlockPos top, boolean mayCover) {
+    static Optional<BlockPos> pathInColumn(ServerWorld world, BlockPos top,
+                                           java.util.function.@org.jspecify.annotations.Nullable Consumer<BlockPos> covered) {
         for (int depth = 0; depth <= MAX_OVERHANG; depth++) {
             BlockPos at = top.down(depth);
             BlockState state = world.getBlockState(at);
@@ -202,8 +205,8 @@ public final class RoadGraphRefresh {
                 return Optional.of(at);
             }
 
-            if (mayCover) {
-                coverPath(world, at.up(), world.getBlockState(at.up()));
+            if (covered != null) {
+                covered.accept(at.toImmutable());
             }
 
             return Optional.empty();
@@ -346,14 +349,18 @@ public final class RoadGraphRefresh {
 
         Set<ColonyPos> surplus = new java.util.LinkedHashSet<>(result.surplus());
 
-        result.graph().ifPresent(graph -> surplus.addAll(RetiredSpurs.of(cells, graph, retired)));
-        PathTrim.offer(id, List.copyOf(surplus));
-
         // Degrau e assoalho em frente à porta ficam como estão: a linha só passa (Regra 223).
         Set<Long> atTheDoor = new HashSet<>();
 
         fronts.forEach(at -> atTheDoor.add(ColonyRoads.column(at.x(), at.z())));
         reading.ways().forEach(at -> atTheDoor.add(ColonyRoads.column(at.x(), at.z())));
+
+        // E o caminho de dentro da caixa sem nenhuma marca do grafo volta ao solo (Regra 242).
+        result.graph().ifPresent(graph -> {
+            surplus.addAll(RetiredSpurs.of(cells, graph, retired));
+            surplus.addAll(PathTrim.unmarked(inside, graph, atTheDoor, result.toPave(), planned));
+        });
+        PathTrim.offer(id, List.copyOf(surplus));
 
         return offerRepair(world, id, result.toPave(), turn, atTheDoor) || result.isolated() > 0;
     }
