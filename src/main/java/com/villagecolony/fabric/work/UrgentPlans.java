@@ -10,8 +10,8 @@ import java.util.List;
 
 /**
  * O que fura a fila de obras antes do rodízio: o armazém, quando não há baú livre na vila (ADR-036
- * item 9, antes de tudo); depois, com cama para todos (E48), o curral novo, quando todos os currais
- * estão cheios (autor, 2026-10-22).
+ * item 9, antes de tudo); a plantação grande do deserto com o fazendeiro parado (Regra 241); depois, com
+ * cama para todos (E48), o curral novo, quando todos os currais estão cheios (autor, 2026-10-22).
  */
 final class UrgentPlans {
 
@@ -26,6 +26,13 @@ final class UrgentPlans {
             if (!storage.isEmpty()) {
                 return storage;
             }
+        }
+
+        // O fazendeiro do deserto parado pede a plantação grande (Regra 241).
+        List<Blueprint> farm = LargeFarmPlans.forColony(world, colony, buildings);
+
+        if (!farm.isEmpty()) {
+            return farm;
         }
 
         // O poste com 5 animais fura até a fila das camas: o curral entra como prioridade (Regra 130).
