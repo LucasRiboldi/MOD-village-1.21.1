@@ -84,6 +84,15 @@ public final class WorkStall {
 
         BlockPos now = villager.getBlockPos();
 
+        // Fora da simulação de entidades ele não pode andar: o chunk está carregado, mas parado. Contar isso
+        // como congelamento marcava encalhe falso, e a fuga também não roda ali (Regra 244).
+        if (!world.shouldTickEntity(now)) {
+            wasAt = null;
+            still = 0;
+
+            return false;
+        }
+
         if (now.equals(wasAt)) {
             still++;
         } else {
