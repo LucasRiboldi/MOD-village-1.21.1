@@ -143,6 +143,16 @@ public final class VillageHelpers {
      * próxima casa.
      */
     static int masonHelps(ServerWorld world, Colony colony, VillagerEntity mason) {
+        int done = levelGround(world, colony, mason);
+
+        if (done > 0) {
+            WorkTime.groundWork(mason.getUuid(), world.getTime());
+        }
+
+        return done;
+    }
+
+    private static int levelGround(ServerWorld world, Colony colony, VillagerEntity mason) {
         int repaired = GroundSmoothing.aroundTheOpenBuild(world, colony, mason);
 
         if (repaired > 0) {

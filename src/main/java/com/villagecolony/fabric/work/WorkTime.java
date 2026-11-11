@@ -84,6 +84,12 @@ public final class WorkTime {
 
     private static final Map<UUID, Walker> WALKERS = new HashMap<>();
 
+    /** Até quando cada um conta como trabalhando por ter arrumado o chão da vila à distância (Regra 246). */
+    private static final Map<UUID, Long> GROUND_WORK = new HashMap<>();
+
+    /** Quanto vale uma passada de chão: o minuto até a próxima ({@code VillageHelpers}). */
+    static final long GROUND_WORK_TICKS = 1_200;
+
     /** A última janela fechada de cada colônia, para o {@code /vc log} — ADR-041 #4. */
     private static final Map<UUID, Map<String, EnumMap<State, Integer>>> LAST = new HashMap<>();
 
@@ -143,6 +149,7 @@ public final class WorkTime {
 
         return classify(
                 StrandedWorkers.isStranded(id) || PenEscape.isEscaping(id),
+                GROUND_WORK.getOrDefault(id, Long.MIN_VALUE) > villager.getWorld().getTime(),
                 !VillageColonyMod.TASKS.assignedTo(id).isEmpty() || GroundPickup.isHelping(id)
                         || BuilderPaving.isPaving(id) || PathPaving.isPaving(id) || IdleHelps.isHelping(id)
                         || ShepherdHerding.isHerding(id) || BuildingUpkeep.isVisiting(id),
@@ -165,12 +172,27 @@ public final class WorkTime {
         return swung;
     }
 
+    /** Ele nivelou ou calçou o chão da vila agora: conta como trabalho até a próxima passada (Regra 246). */
+    public static void groundWork(UUID id, long now) {
+        GROUND_WORK.put(id, now + GROUND_WORK_TICKS);
+    }
+
     /** A regra da classificação, sem o mundo — para o teste. */
     static State classify(
             boolean stranded, boolean hasTask, boolean swinging, boolean moved, boolean hasTarget, int still) {
+        return classify(stranded, false, hasTask, swinging, moved, hasTarget, still);
+    }
+
+    /** O mesmo, e {@code groundWork}: arrumou o chão da vila na última passada (Regra 246). */
+    static State classify(boolean stranded, boolean groundWork, boolean hasTask, boolean swinging, boolean moved,
+            boolean hasTarget, int still) {
 
         if (stranded) {
             return State.STRANDED;
+        }
+
+        if (groundWork) {
+            return State.WORK;
         }
 
         if (!hasTask) {
@@ -278,6 +300,7 @@ public final class WorkTime {
         WINDOW.clear();
         LAST.clear();
         WALKERS.clear();
+        GROUND_WORK.clear();
         windowStart = Long.MIN_VALUE;
     }
 }
