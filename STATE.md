@@ -2,6 +2,10 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
+> **Candidata 0.4.53:** correção do jogo da 0.4.52 (deserto, Spark CverydmXKv): o anel de cada construção cortava o que a rampa do
+> vão aterrava, 32 colunas por passada, sem fim (cerca de 14.800 colunas em 2 h 40 min). A rampa fica fora dos anéis. Não jogada.
+> Sentinela `fast` verde de primeira: 1086 GameTests e 1787 unitários. Análise do jogo em `docs/audit/2026-11-11-jogo-0452.md`.
+
 > **Candidata 0.4.52:** pedido do autor em 11-11 (Regra 242): nenhum caminho muda sozinho; pedreiro, carpinteiro e fundidor sem tarefa
 > calçam a linha, devolvem ao solo o caminho sem marca dentro da caixa e nivelam entre as bases (vão até 8, rampa, corte e aterro até 4).
 > Não jogada. Sentinela `fast`: 1083 GameTests e 1787 unitários; caiu só `workerCollectsWhileWalkingPast`. 3 sabotagens pegas.

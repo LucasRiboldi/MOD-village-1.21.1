@@ -12,6 +12,12 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.53] — candidata, 2026-11-11
+
+### Corrigido
+
+- O chão entre duas construções de bases diferentes não é mais cortado e aterrado sem fim: a rampa do vão fica fora do anel de 2 blocos de cada construção (Regras 178 e 242). No jogo da 0.4.52 isso mexeu em cerca de 14.800 colunas em 2 h 40 min.
+
 ## [0.4.52] — candidata, 2026-11-11
 
 ### Mudado
