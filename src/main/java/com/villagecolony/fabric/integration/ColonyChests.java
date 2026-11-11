@@ -2,11 +2,9 @@ package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
-import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
-import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -15,10 +13,8 @@ import net.minecraft.server.world.ServerWorld;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -42,19 +38,7 @@ import java.util.UUID;
  */
 public final class ColonyChests {
 
-    static {
-        ServerMemory.register(ColonyChests.class, ColonyChests::clearAll);
-    }
-
-    /** Os baús fora da vila que o log já citou — uma linha por baú, e não uma por consulta. */
-    private static final Set<ColonyPos> OUT_OF_REACH = new HashSet<>();
-
     private ColonyChests() {
-    }
-
-    /** Esquece os baús citados. Chamado ao abrir e ao parar o servidor. */
-    public static void clearAll() {
-        OUT_OF_REACH.clear();
     }
 
     /**
@@ -72,7 +56,6 @@ public final class ColonyChests {
 
         List<ColonyPos> chests = new ArrayList<>();
         Optional<Colony> colony = VillageColonyMod.COLONIES.find(colonyId);
-        Optional<VillageBounds> box = colony.flatMap(Colony::bounds);
 
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
             Optional<WorkerStorage> storage = VillageColonyMod.STORAGES.of(worker.villagerId());
@@ -84,23 +67,8 @@ public final class ColonyChests {
 
         addMineMouth(world, colonyId, chests);
 
-        // <b>Fora da vila é fora de alcance</b> — 2026-10-01, pedido do autor.
-        // Com a vila medida, baú fora da caixa não entra na conta da colônia:
-        // nem o de trabalhador, nem o da boca da mina. Ninguém anda até lá
-        // buscar ou guardar, e o estoque que ninguém alcança não pode fazer a
-        // obra achar que tem material. O baú do próprio trabalhador continua
-        // dele em ownFirst — só deixa de ser da colônia.
-        box.ifPresent(village -> chests.removeIf(chest -> {
-            boolean outside = !VillageChests.isInside(village, chest);
-
-            if (outside && OUT_OF_REACH.add(chest)) {
-                VillageColonyMod.LOGGER.info(
-                        "Chest at {} is outside the village of colony {} ({}) — out of reach, not used",
-                        chest, colonyId.toString().substring(0, 8), village);
-            }
-
-            return outside;
-        }));
+        // O baú do trabalhador e o da boca da mina valem de qualquer lugar, dentro ou fora da caixa da vila (Regra 243):
+        // o aldeão guarda e tira sem andar até ele. Baú em chunk descarregado conta vazio, porque ninguém força o chunk.
 
         // <b>E os baús que estão na vila e não são de ninguém</b> —
         // 2026-09-16, decisão do autor: <i>"permitir que o recurso que
