@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.47%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.68%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,11 +19,26 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Estado atual: candidata 0.4.47 (grafo estável, fechamento do MAE, pontas que levam a vila e equilíbrio das profissões), não jogada; a última publicada é a 0.4.43.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
+**Estado atual: 0.4.68, publicada como `v0.4.68-alpha`, não jogada.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
-[docs/RULES.md](docs/RULES.md) (1 a 216).
+[docs/RULES.md](docs/RULES.md) (1 a 262).
 
-Desde a 0.4.29, em resumo:
+Da 0.4.54 à 0.4.68, em resumo:
+
+- **Terreno da vila:** a rua do jogo nasce no chão novo do solo suave (Regra 250); flor e muda não seguram coluna de pé (Regra 251).
+- **Mina:** patamar de 3 x 3 com tocha de parede nas dobras da escada dos níveis novos (Regra 254, ADR-053); arco de pinheiro
+  descascado na boca, reconhecido pelas peças (Regra 256); casa do mineiro, mina e arco prontos na fundação (Regra 260).
+- **Fundação:** a vila nova nasce com um aldeão de cada um dos oito ofícios (Regra 259).
+- **Luz:** poste de pedra, cerca e tocha da colônia ao longo das ruas fixas, obra do construtor na vaga ociosa (Regra 261).
+- **Biomas:** as estruturas do mod saem na madeira e na pedra do bioma da vila (Regra 262).
+- **Ofícios:** baú de qualquer lugar (Regra 243); construtor e pedreiro nivelam o chão (Regras 246 e 247); fundição sem cru
+  chama o pedreiro (Regra 249); areia e argila sem reserva de cru (Regra 257); o adiantamento lê todas as estruturas da vila
+  (Regra 258); o pastor não amarra com curral na vila (Regra 255); o lenhador só corta árvore com folha (Regra 256);
+  o curral leva terra no solo (Regra 253).
+- **Verificação:** `python scripts/test_lab.py <perfil>` alimenta o Sentinela; `scripts/rule_coverage.py` lista as regras sem
+  teste. Teste verde não substitui jogo: toda correção é candidata até o playtest seguinte.
+
+Da 0.4.29 à 0.4.53, em resumo:
 
 - **Grafo de ruas:** no máximo 4 pontas azuis, uma por quadrante (Regra 206); toda porta térrea é entrada, com o marcador colado nela
   (Regra 207); a plantação não tem anel e fica com uma entrada (Regra 208); porta de quintal fechado só conta se for a única

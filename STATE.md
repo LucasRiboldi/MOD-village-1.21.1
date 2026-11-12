@@ -1,6 +1,6 @@
-# STATE — 2026-11-10
+# STATE — 2026-11-12
 
-> **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
+> **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.68 está publicada (`v0.4.68-alpha`) e integrada na `main`; da 0.4.54 à 0.4.68 nada foi jogado.
 
 > **Candidata 0.4.68:** cada estrutura do mod sai na madeira e na pedra do bioma da vila, e a de pé segue reconhecida (Regra 262). Sentinela `fast` verde de primeira: 1.109 GameTests e 1.803 unitários. Não jogada.
 

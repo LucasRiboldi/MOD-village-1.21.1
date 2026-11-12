@@ -1,27 +1,27 @@
 # Handoff — Village Colony
 
-Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 2026-11-10, feita pelo Claude Code: reconfira com `git log` e `gh pr list` antes de trabalhar. O handoff anterior, da Fase 3 do MAE, está no histórico do Git.
+Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 2026-11-12, feita pelo Claude Code: reconfira com `git log` e `gh pr list` antes de trabalhar. O handoff anterior, da Fase 3 do MAE, está no histórico do Git.
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.53, publicada como [`v0.4.53-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.53-alpha), **não jogada**. A 0.4.52 foi jogada em 2026-11-11 (análise em `docs/audit/2026-11-11-jogo-0452.md`) e não teve release: a 0.4.53 corrige o corte e aterro sem fim entre construções que esse jogo mostrou. Branch de trabalho: `main`.
+- **Versão:** 0.4.68, publicada como [`v0.4.68-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.68-alpha), **não jogada**. A 0.4.57 foi jogada em 2026-11-12 (vila de planície, Spark `6ix0fQIHAT` e `XUNIjGrfB9`); da 0.4.58 em diante nada foi jogado. Branch de trabalho: `main`.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, ele escolhe, teste que falha, correção, Sentinela, commit, JAR.
-- **Entregue desde a 0.4.47 (todas candidatas):**
-  - 0.4.48 e 0.4.49, Regras 231 e 234: caminho sob laje no grafo, ponta azul só na extremidade, trecho travado em verde no sinalizador.
-  - 0.4.50, Regras 235 a 238: pastor pelo rebanho, pedreira do deserto, composteira pela roça, rebanho até 16 com comida sobrando.
-  - 0.4.51, Regras 239 a 241: 15 espécies no pastor, lã em peças de cor, plantação grande 16x16 do mod no deserto.
-  - 0.4.52, Regra 242: nenhum caminho muda sozinho; pedreiro, carpinteiro e fundidor sem tarefa arrumam o chão.
-  - Build verificado (wrapper e dependências) e `SECURITY.md`. Ao atualizar uma dependência, regenere a verificação como diz o `SECURITY.md`.
+- **Entregue desde a 0.4.53 (todas candidatas):**
+  - 0.4.54 a 0.4.56, Regras 243 a 249: plantação grande sobre areia, baú de qualquer lugar, aldeão fora da simulação não congela, cama longe vem para perto, chão nivelado é trabalho, um terço da madeira em tora, fundição sem cru chama o pedreiro.
+  - 0.4.57 a 0.4.59, Regras 250 a 253: rua no chão novo, flor não segura coluna, acessório sem entrada, curral com terra no solo.
+  - 0.4.60 a 0.4.62, Regras 254 a 256: patamar nas dobras da mina (ADR-053), pastor não amarra com curral, arco de pinheiro e lenhador só com folha.
+  - 0.4.63 e 0.4.64, Regras 257 e 258 (reanálise dos logs): areia e argila sem reserva de cru; adiantamento lê todas as estruturas.
+  - 0.4.65 a 0.4.68, Regras 259 a 262 (regras novas do autor de 12-11): oito ofícios na fundação, casa do mineiro na fundação, poste de luz, estruturas por bioma.
 
 ## O próximo passo
 
-**O autor precisa jogar a 0.4.53 e mandar o Spark.** Sem jogo, o que falta é prova, não código. Ao receber o log, siga `CLAUDE.md` §0.2.2 e confira:
+**O autor precisa jogar a 0.4.68 numa vila nova e mandar o Spark.** Ao receber o log, siga `CLAUDE.md` §0.2.2 e confira:
 
-- `VC_MAE_SITE`: `/vc mae obra <modelo>` de `queued` até `done`, `ms`, retomada depois de reiniciar, obra `fora`, `rescue`. Nos três jogos de 11-09 e 11-10 não houve nenhuma linha.
-- `VC_ROAD_GRAPH`: `offLine` caindo com a Regra 242, `fixed` acima de 0 num jogo longo.
-- `time_ledger.py` e `action_report.py`: mineiro do deserto na pedreira, fazendeiro compostando, pastores e rebanho, carpinteiro e fundidor arrumando o chão.
+- Fundação: os oito ofícios, a mina com arco e a casa do mineiro prontos; poste de luz ao longo das ruas fixas (a 30 blocos ou mais).
+- `found no pen for the` (Regra 255): o motivo de o curral não servir; a mina: patamar e tocha de parede nos níveis novos.
+- `time_ledger.py` e `action_report.py`: ócio dos artesãos com o adiantamento ampliado (Regra 258).
 
-Análises feitas: `docs/audit/2026-11-11-atividade-das-profissoes.md`, `docs/audit/2026-11-10-qualidade-das-profissoes.md` e `docs/research/2026-11-10-melhorias-do-grafo.md`.
+Em aberto no `TODO.md`: o mineiro sem ramal livre (pulado pelo autor) e a terra acima da plantação (falta coordenada).
 
 ## Ordem de leitura
 
@@ -29,7 +29,7 @@ Análises feitas: `docs/audit/2026-11-11-atividade-das-profissoes.md`, `docs/aud
 2. `AGENTS.md`, inteiro no topo; `CLAUDE.md` §0 a §2.1. `CLAUDE.md` vence em conflito.
 3. `STATE.md`, só as primeiras 60 linhas.
 4. `docs/audit/2026-11-10-qualidade-das-profissoes.md`, e o topo do `TODO.md` mais as seções das versões 0.4.44 a 0.4.47.
-5. `docs/RULES.md`: procure a regra por número. As mais recentes são 224 a 233.
+5. `docs/RULES.md`: procure a regra por número. As mais recentes são 243 a 262.
 
 ## Regras do autor que não estão nos outros documentos
 
