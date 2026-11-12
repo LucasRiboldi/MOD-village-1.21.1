@@ -176,7 +176,8 @@ final class BuildingRepairPlanner {
 
             // O chão na altura da rua conta como de pé — 2026-09-26: a terra
             // da planta sobre a grama do mundo não é peça faltando.
-            if (world.getBlockState(position).isOf(expected.get())
+            // Peça de outra madeira ou pedra faz o mesmo papel e fica (Regra 262).
+            if (com.villagecolony.fabric.integration.BiomeBlueprints.sameRole(world.getBlockState(position), expected.get())
                     || BuriedPieces.heldByTheGround(world, blueprint, block, position)) {
                 standing.add(MinecraftTypeAdapter.toColonyPos(position));
             }

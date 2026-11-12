@@ -23,9 +23,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * O arco da entrada da mina — Regra 256 (autor, 2026-11-12): dois pilares e uma viga de tora de pinheiro descascada, um
+ * O arco da entrada da mina — Regra 256 (autor, 2026-11-12): dois pilares e uma viga de tora descascada, um
  * degrau em cada ponta da viga com um lampião pendurado, e um baú no chão do lado de fora, à direita de quem entra
- * ({@code data/villagecolony/structure/mine_arch.nbt}). O arco surge sozinho, sem profissão nem material.
+ * ({@code data/villagecolony/structure/mine_arch.nbt}). O arco surge sozinho, sem profissão nem material, na madeira da
+ * vila (Regra 262), e é conferido pelo papel de cada peça.
  *
  * <p>O portão de 2026-10-29 ({@code mine_entrance.nbt}: pilares de pedra, telhado de carvalho escuro) não é mais
  * erguido, mas continua reconhecido onde já está de pé, e a mina continua sem cavar as peças dele.
@@ -142,7 +143,8 @@ public final class MineGate {
         for (Piece piece : template.pieces) {
             BlockPos at = at(mouth, descent, piece.x(), piece.y(), piece.z());
 
-            if (!world.isChunkLoaded(at) || world.getBlockState(at).isOf(piece.state().getBlock())) {
+            // Pelo papel da peça: o arco de outra madeira, de antes da Regra 262 ou de outro bioma, segue reconhecido.
+            if (!world.isChunkLoaded(at) || BiomeBlueprints.sameRole(world.getBlockState(at), piece.state().getBlock())) {
                 matched++;
             }
         }
@@ -170,12 +172,15 @@ public final class MineGate {
 
     /**
      * Ergue o arco onde couber: cada bloco só sobre ar, planta ou chão natural, e nunca sobre casa da vila ou obra da
-     * colônia. Sem atualizar os vizinhos, para o lampião pendurado não cair antes do degrau.
+     * colônia. Sem atualizar os vizinhos, para o lampião pendurado não cair antes do degrau. A madeira é a da vila em volta
+     * da boca (Regra 262).
      *
      * @return se ao menos uma posição do portão tem algo firme depois da passagem — o sinal de que ele não sobe de novo
      */
     static boolean raise(ServerWorld world, BlockPos mouth, Direction descent) {
         BlockRotation rotation = rotationFor(descent);
+        com.villagecolony.core.construction.model.BiomeBlockSwap swap =
+                BiomeBlueprints.swapAt(world, com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(mouth));
         boolean anyFirm = false;
 
         for (Piece piece : ARCH.pieces) {
@@ -186,7 +191,8 @@ public final class MineGate {
                     && !BlockProtection.isColonyBuilt(target));
 
             if (free) {
-                world.setBlockState(target, piece.state().rotate(rotation), Block.NOTIFY_LISTENERS | Block.FORCE_STATE);
+                world.setBlockState(target, BiomeBlueprints.swapped(piece.state(), swap).rotate(rotation),
+                        Block.NOTIFY_LISTENERS | Block.FORCE_STATE);
             }
 
             anyFirm |= !world.getBlockState(target).isReplaceable();

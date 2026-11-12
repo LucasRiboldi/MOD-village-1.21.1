@@ -253,6 +253,7 @@ public final class ItemStock {
 
         for (ResourceId id : VillageStructures.housesFor(style)) {
             HousePlans.READ.computeIfAbsent(id, missing -> StructureBlueprintReader.read(world, missing))
+                    .map(plan -> com.villagecolony.fabric.integration.BiomeBlueprints.styledAt(world, colony.center(), plan))
                     .map(Blueprint::blocks)
                     .ifPresent(blocks -> blocks.forEach(block -> MinecraftTypeAdapter.toBlock(block.block())
                             .map(Block::asItem)

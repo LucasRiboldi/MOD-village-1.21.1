@@ -28,6 +28,7 @@ public final class BlueprintPlacement {
 
         return StructureBlueprintReader.read(world, id)
                 .map(FarmBlueprint::asBuilt)
+                .map(blueprint -> BiomeBlueprints.styled(world, colonyId, blueprint))
                 .map(blueprint -> blueprint.doorSide()
                         .map(door -> blueprint.rotated(
                                 door.turnsTo(roadSideOf(world, colonyId, origin, blueprint))))
@@ -65,7 +66,7 @@ public final class BlueprintPlacement {
         });
     }
 
-    /** Quantas peças desta planta, posta neste lugar, já estão de pé no mundo. */
+    /** Quantas peças desta planta, posta neste lugar, já estão de pé no mundo; de outra madeira também (Regra 262). */
     static int standing(ServerWorld world, Blueprint blueprint, ColonyPos origin) {
         int standing = 0;
 
@@ -74,7 +75,8 @@ public final class BlueprintPlacement {
                     origin.x() + block.offset().x(), origin.y() + block.offset().y(), origin.z() + block.offset().z());
             Optional<Block> expected = MinecraftTypeAdapter.toBlock(block.block());
 
-            if (expected.isPresent() && world.isChunkLoaded(where) && world.getBlockState(where).isOf(expected.get())) {
+            if (expected.isPresent() && world.isChunkLoaded(where)
+                    && BiomeBlueprints.sameRole(world.getBlockState(where), expected.get())) {
                 standing++;
             }
         }

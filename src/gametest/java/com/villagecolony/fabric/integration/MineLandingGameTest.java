@@ -49,8 +49,10 @@ public class MineLandingGameTest implements FabricGameTest {
         for (int lane = 0; lane < 3; lane++) {
             context.assertTrue(world.getBlockState(mouth.east(lane)).isAir(), "o vão está fechado na pista " + lane);
         }
-        context.assertTrue(world.getBlockState(mouth.west(1)).isOf(Blocks.STRIPPED_SPRUCE_LOG), "falta o pilar da direita");
-        context.assertTrue(world.getBlockState(mouth.east(3)).isOf(Blocks.STRIPPED_SPRUCE_LOG), "falta o pilar da esquerda");
+        context.assertTrue(BiomeBlueprints.sameRole(world.getBlockState(mouth.west(1)), Blocks.STRIPPED_SPRUCE_LOG),
+                "falta o pilar da direita");
+        context.assertTrue(BiomeBlueprints.sameRole(world.getBlockState(mouth.east(3)), Blocks.STRIPPED_SPRUCE_LOG),
+                "falta o pilar da esquerda");
         context.assertTrue(world.getBlockState(mouth.west(3)).isOf(Blocks.CHEST), "o baú não está à direita, no chão");
         context.assertTrue(world.getBlockState(mouth.west(2).up(3)).isOf(Blocks.LANTERN), "falta o lampião da direita");
         context.assertTrue(world.getBlockState(mouth.east(4).up(3)).isOf(Blocks.LANTERN), "falta o lampião da esquerda");

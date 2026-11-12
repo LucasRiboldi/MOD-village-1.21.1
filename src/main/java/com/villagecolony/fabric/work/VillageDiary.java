@@ -127,7 +127,8 @@ public final class VillageDiary {
             Optional<Block> wanted = MinecraftTypeAdapter.toBlock(block.block());
             BlockPos at = MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(block));
 
-            if (wanted.isPresent() && world.isChunkLoaded(at) && world.getBlockState(at).isOf(wanted.get())) {
+            if (wanted.isPresent() && world.isChunkLoaded(at)
+                    && com.villagecolony.fabric.integration.BiomeBlueprints.sameRole(world.getBlockState(at), wanted.get())) {
                 found++;
             }
         }

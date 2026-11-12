@@ -1339,7 +1339,9 @@ public class MinerGameTest implements FabricGameTest {
                 world.getBlockState(com.villagecolony.fabric.integration.MineGate.at(mouth, Direction.SOUTH, 1, 3, 2)).isOf(Blocks.LANTERN),
                 "a boca da mina ficou sem a lanterna do portão");
         context.assertTrue(
-                world.getBlockState(com.villagecolony.fabric.integration.MineGate.at(mouth, Direction.SOUTH, 4, 4, 2)).isOf(Blocks.STRIPPED_SPRUCE_LOG),
+                com.villagecolony.fabric.integration.BiomeBlueprints.sameRole(world.getBlockState(
+                        com.villagecolony.fabric.integration.MineGate.at(mouth, Direction.SOUTH, 4, 4, 2)),
+                        Blocks.STRIPPED_SPRUCE_LOG),
                 "o teto do portão não está sobre a boca");
 
         context.complete();
@@ -1445,7 +1447,7 @@ public class MinerGameTest implements FabricGameTest {
         BlockPos lintel = com.villagecolony.fabric.integration.MineGate.at(mouth, Direction.SOUTH, 4, 4, 2);
 
         context.assertTrue(
-                world.getBlockState(lintel).isOf(Blocks.STRIPPED_SPRUCE_LOG),
+                com.villagecolony.fabric.integration.BiomeBlueprints.sameRole(world.getBlockState(lintel), Blocks.STRIPPED_SPRUCE_LOG),
                 "o portão não subiu, e sem ele este caso não mede nada");
 
         // <b>O jogador derruba o portão inteiro.</b> Deixa a boca como se nunca tivesse sido mobiliada, que é
@@ -5841,7 +5843,8 @@ public class MinerGameTest implements FabricGameTest {
 
         MineMouth.furnish(world, at, Direction.NORTH, false);
 
-        context.assertTrue(world.getBlockState(MineGate.at(at, Direction.NORTH, 4, 4, 2)).isOf(Blocks.STRIPPED_SPRUCE_LOG),
+        context.assertTrue(com.villagecolony.fabric.integration.BiomeBlueprints.sameRole(
+                world.getBlockState(MineGate.at(at, Direction.NORTH, 4, 4, 2)), Blocks.STRIPPED_SPRUCE_LOG),
                 "o teto do portão não passa sobre a boca");
         context.assertTrue(world.getBlockState(MineGate.at(at, Direction.NORTH, 1, 3, 2)).isOf(Blocks.LANTERN),
                 "o arco ficou sem o lampião da ponta");

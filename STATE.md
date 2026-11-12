@@ -2,6 +2,8 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
+> **Candidata 0.4.68:** cada estrutura do mod sai na madeira e na pedra do bioma da vila, e a de pé segue reconhecida (Regra 262). Sentinela `fast` verde de primeira: 1.109 GameTests e 1.803 unitários. Não jogada.
+
 > **Candidata 0.4.67:** poste de luz nas ruas fixas, obra do construtor na vaga ociosa (Regra 261). Sentinela `fast`: 1.107 GameTests e 1.798 unitários; caiu só o instável `workerCollectsWhileWalkingPast`. Não jogada.
 
 > **Candidata 0.4.66:** a casa do mineiro, a mina e o arco surgem prontos na fundação da vila (Regra 260). Sentinela `fast` verde de primeira: 1.103 GameTests e 1.795 unitários. Não jogada.

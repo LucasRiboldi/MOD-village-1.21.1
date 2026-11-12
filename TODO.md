@@ -9,8 +9,9 @@
 - [x] **Poste de luz** (0.4.67, Regra 261): pedra do bioma, duas cercas e a tocha da colônia; obra do construtor só na vaga
   ociosa (opção B do autor), ao lado da linha fixa, 2 blocos livres, céu aberto, 30 blocos de outro poste. Conferir em jogo
   `VC_LAMP_POST` e se a tocha da colônia sai da cadeia (tochas + ouro) ou da Regra 128.
-- [ ] **Estruturas por bioma:** troca automática dos blocos (madeira, pedra e o resto pela paleta das casas) ao erguer
-  cada estrutura do mod: arco da mina, currais, plantação grande, celeiro e as demais. Um arquivo serve todos os biomas.
+- [x] **Estruturas por bioma** (0.4.68, Regra 262): troca automática da madeira e da pedra ao erguer cada estrutura do mod;
+  arquivo do estilo vale como está; o que já está de pé segue reconhecido pelo papel da peça. Conferir em jogo um curral e o
+  arco numa vila de taiga, savana ou deserto. O chão de grama do curral e o portão antigo da mina não trocam.
 - [ ] Mineiro sem ramal livre (solução 1 da reanálise de 12-11, pulada pelo autor): "every open branch is taken or
   finished" em todas as versões recentes; no primeiro nível, antes do salão, ele só espera.
 

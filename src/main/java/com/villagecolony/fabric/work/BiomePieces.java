@@ -73,6 +73,7 @@ public final class BiomePieces {
 
         for (ResourceId id : structuresOf(style)) {
             HousePlans.READ.computeIfAbsent(id, missing -> StructureBlueprintReader.read(world, missing))
+                    .map(plan -> com.villagecolony.fabric.integration.BiomeBlueprints.styledAt(world, colony.center(), plan))
                     .ifPresent(plans::add);
         }
 

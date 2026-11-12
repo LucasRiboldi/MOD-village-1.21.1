@@ -12,6 +12,26 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.68] — candidata, 2026-11-12
+
+### Adicionado
+
+- Cada estrutura do mod na versão do bioma da vila (Regra 262, troca automática escolhida pelo autor): ao erguer arco da mina,
+  currais, plantação grande, celeiro e as demais estruturas do mod sem arquivo do estilo, a madeira do arquivo vira a madeira da
+  vila e o pedregulho ou o arenito vira a pedra da paleta das casas, na mesma forma. Um arquivo serve todos os biomas; o arquivo
+  do estilo, onde existe (casa do mineiro, armazém), vale como está.
+
+### Mudado
+
+- A conferência do que está de pé (arco da mina, reparo, retomada da obra, peça da colônia, peça já no lugar) compara o papel
+  da peça: a estrutura de outra madeira, de antes desta versão, segue reconhecida e não é trocada.
+
+### Testes
+
+- `BiomeBlueprintsGameTest` (2 GameTests: o arco no deserto sai da madeira da vila e segue reconhecido, também o antigo de
+  pinheiro; o curral grande na taiga pede cerca de pinheiro, o de carvalho já de pé conta como de pé e o arquivo do estilo da
+  planície fica de carvalho) e `BiomeBlockSwapTest`. Duas mutações pegas: troca desligada e conferência sem papel.
+
 ## [0.4.67] — candidata, 2026-11-12
 
 ### Adicionado

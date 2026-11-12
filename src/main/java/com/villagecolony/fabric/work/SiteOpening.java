@@ -211,7 +211,9 @@ final class SiteOpening {
             return Optional.empty();
         }
 
-        Blueprint facingTheRoad = fitting.get(world.getRandom().nextInt(fitting.size()));
+        // Estrutura do mod sem arquivo do estilo sai com a madeira e a pedra da vila (Regra 262).
+        Blueprint facingTheRoad = com.villagecolony.fabric.integration.BiomeBlueprints.styledAt(
+                world, colony.center(), fitting.get(world.getRandom().nextInt(fitting.size())));
 
         // <b>Quantas concorreram, e é o §11</b> — 2026-09-18. O playtest
         // de 02:25 levantou duas plantas diferentes, e isso <b>não</b>

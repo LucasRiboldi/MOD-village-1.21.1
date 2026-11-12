@@ -100,8 +100,8 @@ public final class BuilderPlacement {
 
         // O bloco da planta já está no lugar — 2026-10-03. Com a terra da base
         // sendo construída, terra sobre terra viraria cavar e repor; aqui ela
-        // conta como assentada, sem tirar material do baú.
-        if (world.getBlockState(target).isOf(material.get())) {
+        // conta como assentada, sem tirar material do baú. Peça de outra madeira também (Regra 262).
+        if (com.villagecolony.fabric.integration.BiomeBlueprints.sameRole(world.getBlockState(target), material.get())) {
             project.markPlaced(block);
 
             return true;
