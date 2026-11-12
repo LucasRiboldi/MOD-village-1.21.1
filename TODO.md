@@ -1,5 +1,17 @@
 # TODO
 
+## Varredura de falhas 12-11
+
+Registro completo, fila e método em [`docs/audit/2026-11-12-varredura-de-falhas.md`](docs/audit/2026-11-12-varredura-de-falhas.md).
+Nenhum crítico; os altos esperam a escolha do autor, um por ciclo.
+
+- 🔴 nenhum
+- [ ] 🟠 VF-001: o primeiro ciclo depois de abrir o mundo leva 471 a 1.212 ms (21 de 31 sessões de novembro); o prazo de 15 ms cerca só a varredura de lote
+- [ ] 🟠 VF-002: `workerCollectsWhileWalkingPast` falha em 11 das últimas 30 baterias, com `trabalhadores da colônia=0` e outra colônia viva
+- [ ] 🟠 VF-003: PIT em 85,17% contra limiar 85% (folga 7 mutantes) e o CI cobra; `MineShaft` tem 33 sobreviventes
+- [ ] 🟠 VF-004: 0.4.54 a 0.4.68 sem jogo; jogar a 0.4.68 antes do próximo ciclo
+- 🟡 VF-005 a VF-014 e 🟢 VF-015 a VF-020: só no registro
+
 ## Regras novas do autor, 12-11 — escolhas feitas, nesta ordem
 
 - [x] **Os 8 ofícios na fundação** (0.4.65, Regra 259): cada profissão (construtor, carpinteiro, fazendeiro, lenhador, pedreiro, mineiro,
