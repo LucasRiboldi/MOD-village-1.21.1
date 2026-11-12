@@ -45,11 +45,10 @@ public final class StockRules {
     /**
      * Quantas toras ainda podem virar tábua sem furar a reserva.
      *
-     * <p><b>A regra do autor</b>, 2026-09-05: <i>"converter somente
-     * aproximadamente metade do estoque de troncos em tábuas e preservar
-     * o restante como troncos"</i>. Vinte toras pedem dez conversões, e
-     * as outras dez ficam — os {@code stripped_oak_log} da casa de
-     * planície saem de tora, e não de tábua.
+     * <p><b>A regra do autor</b> (Regra 248, emenda a de 2026-09-05): um terço
+     * da madeira fica em tora. Vinte toras pedem treze conversões, e as outras
+     * sete ficam — os {@code stripped_oak_log} da casa de planície saem de
+     * tora, e não de tábua.
      *
      * <p><b>Mora aqui, e é chamada de dois lugares</b> — a meta, logo
      * abaixo, e o fabricante, que executa. Os dois têm de dizer o mesmo:
@@ -71,10 +70,11 @@ public final class StockRules {
      * @param storedPlanks quantas tábuas ela guarda, de qualquer espécie
      */
     public static int logsToConvert(int logs, int storedPlanks) {
-        int half = Math.max(0, (logs - storedPlanks / PLANKS_PER_LOG) / 2);
+        // Um terço da madeira, tora e tábua na mesma moeda, fica em tora (Regra 248): converte-se até sobrar isso.
+        int twoThirds = Math.max(0, (2 * logs - storedPlanks / PLANKS_PER_LOG) / 3);
         int roomUnderTheCeiling = Math.max(0, StockCeiling.CRAFTED - storedPlanks);
 
-        return Math.min(half, (roomUnderTheCeiling + PLANKS_PER_LOG - 1) / PLANKS_PER_LOG);
+        return Math.min(twoThirds, (roomUnderTheCeiling + PLANKS_PER_LOG - 1) / PLANKS_PER_LOG);
     }
 
     /**

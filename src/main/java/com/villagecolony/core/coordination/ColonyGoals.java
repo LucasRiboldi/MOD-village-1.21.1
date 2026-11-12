@@ -383,10 +383,9 @@ public final class ColonyGoals {
 
         int appetite = planksForWork > 0 ? planksForWork : (storedPlanks + plankRoom) / 2;
 
-        // <b>Metade da madeira fica em tora</b> — decisão do autor,
-        // 2026-09-05: <i>"converter somente aproximadamente metade do
-        // estoque de troncos em tábuas e preservar o restante como
-        // troncos"</i>.
+        // <b>Um terço da madeira fica em tora</b> — Regra 248, que emenda a
+        // decisão do autor de 2026-09-05 (era metade). A conta mora em
+        // StockRules.logsToConvert.
         //
         // <b>O que ela conserta.</b> Nada acima reservava tronco: o
         // portão era só "tem pelo menos um", e a meta pedia metade da

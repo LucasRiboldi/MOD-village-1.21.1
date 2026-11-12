@@ -39,6 +39,18 @@ class BedPlanTest {
     }
 
     @Test
+    void aFarSleeperWithoutMeasuredWorkMovesTowardTheCenter() {
+        ColonyPos center = at(0, 64, 0);
+        ColonyPos far = at(0, 64, 150);
+        Sleeper idle = new Sleeper(IDLE, far, BedPlan.workOrCenter(null, far, center), true);
+
+        assertEquals(List.of(new Move(IDLE, far, at(0, 64, 10))), BedPlan.plan(List.of(idle), List.of(at(0, 64, 10))),
+                "a cama a 150 blocos do centro, sem trabalho medido, ficou onde estava (Regra 245)");
+        assertEquals(null, BedPlan.workOrCenter(null, at(0, 64, 100), center), "a cama a 100 do centro não muda");
+        assertEquals(at(5, 64, 5), BedPlan.workOrCenter(at(5, 64, 5), far, center), "o trabalho medido vence o centro");
+    }
+
+    @Test
     void aGainBelowTheMinimumIsNotWorthTheMove() {
         Sleeper miner = new Sleeper(MINER, at(20, 60, 0), at(0, 60, 0), true);
 

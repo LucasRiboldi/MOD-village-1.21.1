@@ -57,6 +57,9 @@ public final class SmelterAdvance {
      * @return quantos itens foram fundidos
      */
     public static int smeltForIdleSmelters(ServerWorld world, Colony colony) {
+        // A fundição que ninguém pega por falta de cru chama o pedreiro antes (Regra 249).
+        FurnaceFeed.orderForWaitingSmelts(world, colony);
+
         int smelted = 0;
 
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {

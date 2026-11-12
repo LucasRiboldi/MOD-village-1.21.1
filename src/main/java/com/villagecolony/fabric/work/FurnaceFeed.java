@@ -76,6 +76,30 @@ public final class FurnaceFeed {
     }
 
     /**
+     * A fundição aberta sem cru em nenhum baú chama o pedreiro (Regra 249). A trava {@code SMELT_INPUT} não deixa o
+     * fundidor pegá-la, e o pedido de cru só saía da mão dele ({@link SmelterGathers#handOff}): sem esta passada, o
+     * arenito liso do deserto ficou aberto 78 minutos com 405 areias nos baús.
+     */
+    static void orderForWaitingSmelts(ServerWorld world, Colony colony) {
+        List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.id(), colony.center());
+
+        for (Task task : List.copyOf(VillageColonyMod.TASKS.ofColony(colony.id()))) {
+            if (task.type() != TaskType.SMELT_MATERIAL || !task.isOpen()) {
+                continue;
+            }
+
+            // O cru da própria fundição, e não o das peças de reserva: a areia do vidro não faz arenito liso.
+            List<Item> raws = MinecraftTypeAdapter.toItem(task.targetResource())
+                    .map(made -> CraftingLookup.smeltingInputsFor(world, made))
+                    .orElse(List.of());
+
+            if (!raws.isEmpty() && raws.stream().allMatch(raw -> ColonyChests.countIn(world, chests, raw) == 0)) {
+                askTheMason(world, colony, raws);
+            }
+        }
+    }
+
+    /**
      * Se este pedido de pedreiro é o de insumo da fornalha (o alvo é cru de mina, não peça fabricada).
      *
      * <p>O pedido nominal de peça de obra leva {@link CraftsmanRequest#NOMINAL}, que também é cru de

@@ -55,8 +55,8 @@ import java.util.Set;
  * pedido do autor: <i>"aumentar a zona de varredura dos baús para analisar
  * todos baús dentro da vila, evitar baús fora de alcance"</i>. Com a vila
  * medida (ADR-003 Emenda 6), a varredura cobre a caixa inteira — e não um
- * raio de 64 em volta de um centro que oscila — e só ela: baú fora da caixa
- * está fora de alcance. Dentro da caixa vale o baú de dentro ou de fora de
+ * raio de 64 em volta de um centro que oscila — e só ela: baú livre fora da
+ * caixa não é da vila (o de trabalhador vale de qualquer lugar, Regra 243). Dentro da caixa vale o baú de dentro ou de fora de
  * casa: a regra "só dentro de casa" de 09-16 existia porque o raio solto
  * alcançava a vila vizinha e as arenas do teste, e a caixa já separa as duas.
  * Na altura, a mesma janela das camas da vila — o baú de masmorra embaixo
@@ -276,7 +276,7 @@ public final class VillageChests {
 
     /**
      * Se este baú está na vila medida: na coluna da caixa e na janela de
-     * altura das camas dela. Fora disso ele está fora de alcance.
+     * altura das camas dela. Fora disso o baú livre não é da vila (Regra 45).
      */
     public static boolean isInside(VillageBounds box, BlockPos pos) {
         return box.containsColumn(pos.getX(), pos.getZ())

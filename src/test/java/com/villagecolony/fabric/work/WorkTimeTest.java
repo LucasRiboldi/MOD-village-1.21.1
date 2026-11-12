@@ -94,4 +94,12 @@ class WorkTimeTest {
             WorkTime.clearAll();
         }
     }
+
+    @org.junit.jupiter.api.Test
+    void aWorkerWhoLevelledTheGroundThisMinuteIsWorking() {
+        assertEquals(WorkTime.State.WORK, WorkTime.classify(false, true, false, false, false, false, 0),
+                "nivelar o chão sem tarefa contou como ócio (Regra 246)");
+        assertEquals(WorkTime.State.STRANDED, WorkTime.classify(true, true, false, false, false, false, 0));
+        assertEquals(WorkTime.State.IDLE, WorkTime.classify(false, false, false, false, false, false, 0));
+    }
 }

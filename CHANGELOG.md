@@ -12,6 +12,57 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.56] — candidata, 2026-11-11
+
+### Corrigido
+
+- A fundição sem cru chama o pedreiro sozinha (Regra 249): no jogo da 0.4.53 o arenito liso ficou aberto 78 minutos com
+  405 areias nos baús, porque o pedido de arenito ao pedreiro só saía da mão do fundidor, e a trava do cru não deixava o
+  fundidor pegar a tarefa.
+
+### Testes
+
+- `aSmeltNobodyCanTakeAsksTheMasonForItsRaw`.
+
+## [0.4.55] — candidata, 2026-11-11
+
+Escolhas do autor sobre o jogo da 0.4.53 (`docs/audit/2026-11-11-jogo-0453.md`).
+
+### Mudado
+
+- Baú de qualquer lugar (Regra 243): o baú do trabalhador e o da boca da mina valem mesmo fora da caixa da vila; o
+  aldeão guarda e tira sem andar até ele. Baú em chunk descarregado segue de fora.
+- Cama longe vem para perto (Regra 245): sem trabalho medido e com a cama a mais de 128 blocos do centro, o centro
+  conta como trabalho na troca de camas do amanhecer.
+- Construtor sem obra nivela o chão da vila (Regra 247).
+- Um terço da madeira fica em tora, e não metade (Regra 248).
+
+### Corrigido
+
+- Aldeão fora da simulação de entidades não conta mais como congelado (Regra 244): o fazendeiro ficou 60 min "preso"
+  num chão plano porque o chunk dele estava carregado sem simular entidades.
+- Arrumar o chão da vila conta como trabalho no `WorkTime` (Regra 246): pedreiro, carpinteiro e fundidor apareciam
+  77% a 88% ociosos enquanto nivelavam.
+
+### Testes
+
+- `aWorkersChestOutsideTheVillageIsStillTheColonys`, `aWorkerOutsideTheSimulationIsNotFrozen`,
+  `aFarSleeperWithoutMeasuredWorkMovesTowardTheCenter`, `aWorkerWhoLevelledTheGroundThisMinuteIsWorking`,
+  `theIdleBuilderLevelsTheVillageGround`, `theReserveIsAThirdOfTheLogsMeasuredAgainstThePlanksAlreadyMade`.
+
+## [0.4.54] — candidata, 2026-11-11
+
+### Corrigido
+
+- A plantação grande do mod é construída de verdade: no jogo da 0.4.53 ela foi dada como pronta com 0 de 256 peças, porque a
+  areia do deserto ficava "no caminho". A planta da pasta `colony/` que termina em `_farm` agora é roça, e a base dela toma o
+  lugar do chão (Regra 241).
+
+### Testes
+
+- `theLargeFarmReplacesTheSand`: a borda de tora entra no lugar da areia.
+- `aNewDoorLinksToAFixedStretch`: a porta nova liga ao trecho travado do grafo (Regras 224 e 225).
+
 ## [0.4.53] — candidata, 2026-11-11
 
 ### Corrigido

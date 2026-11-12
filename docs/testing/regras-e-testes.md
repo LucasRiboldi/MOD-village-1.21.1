@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 135
+- **Cita a regra:** 142
 - **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 7
 - **Fora de vigor:** 5
@@ -187,7 +187,7 @@ classe prova menos ainda.
 | 175 | Casa do mineiro: ver Regra 211. A casa e a boca da mina entram na rede pelo grafo (Regra… | classe | EntrancesAtTheDoorGameTest, GraphOnlyPathsGameTest, MineHomePlansTest |
 | 176 | Sinalizador dos caminhos (autor 11-04): /vc mae mostrar ligar\ | cita | RoadMapSyncGameTest |
 | 177 | Grafo como mapa de trilhos (autor 11-05): uma linha contínua por corredor, no bloco centr… | cita | RoadLinesTest |
-| 178 | Acesso livre (autor 11-05): o primeiro bloco fora de toda porta e portão é caminho; portã… | cita | EntrancesAtTheDoorGameTest, RoadLinesTest, TreeClearingGameTest |
+| 178 | Acesso livre (autor 11-05): o primeiro bloco fora de toda porta e portão é caminho; portã… | cita | BuildingGapsGameTest, EntrancesAtTheDoorGameTest, RoadLinesTest |
 | 179 | Zona da obra limpa até o céu (autor 11-05): tudo que é natural e desprotegido na pegada,… | classe | FoundationPreparationGameTest, TreeClearingGameTest |
 | 180 | Caminho coberto não é caminho (autor 11-05; emendada pela Regra 231): bloco de caminho se… | cita | RoadRulesGameTest |
 | 181 | Pulo confere o teto (jogo 11-05): o caminho do aldeão da colônia só sobe onde o corpo cab… | cita | VillagerRulesGameTest |
@@ -250,5 +250,12 @@ classe prova menos ainda.
 | 238 | Rebanho cresce com comida sobrando (autor 11-11, opção P2): com 32 ou mais da comida da e… | cita | FlockSurplusGameTest |
 | 239 | Todo animal que procria com comida (autor 11-11, opção P4): o pastor cria ovelha, vaca, p… | cita | FlockSurplusGameTest |
 | 240 | Lã guardada vira peça de lã (autor 11-11, opção P5): o pastor sem tarefa, com mais de 16… | cita | ShepherdWoolGoodsGameTest |
-| 241 | Plantação grande do deserto (autor 11-11): a plantação do mod tem 16x16, borda de tora co… | cita | LargeFarmGameTest |
-| 242 | Quem arruma o chão (autor 11-11): nenhum bloco de caminho muda sozinho. Pedreiro, carpint… | cita | GraphOnlyPathsGameTest, GroundKeepersTest, RoadRulesGameTest |
+| 241 | Plantação grande do deserto (autor 11-11): a plantação do mod tem 16x16, borda de tora co… | cita | BuilderGameTest, LargeFarmGameTest |
+| 242 | Quem arruma o chão (autor 11-11): nenhum bloco de caminho muda sozinho. Pedreiro, carpint… | cita | BuildingGapsGameTest, GraphOnlyPathsGameTest, GroundKeepersTest |
+| 243 | Baú de qualquer lugar (autor 11-11, opção T4 de docs/audit/2026-11-11-jogo-0453.md): todo… | cita | VillageChestReachGameTest |
+| 244 | Fora da simulação não congela (autor 11-11, opção T1c de docs/audit/2026-11-11-jogo-0453.… | cita | PinnedOnFlatGameTest |
+| 245 | Cama longe vem para perto (autor 11-11, opção T3b): na troca de camas do amanhecer (Regra… | cita | BedPlanTest |
+| 246 | Arrumar o chão é trabalho (autor 11-11, opção O2a): quem nivela, tapa buraco ou devolve a… | cita | WorkTimeTest |
+| 247 | Construtor sem obra arruma o chão (autor 11-11, opção O1b): o construtor sem obra aberta,… | cita | GroundSmoothingGameTest |
+| 248 | Um terço da madeira fica em tora (autor 11-11, opção O2c): o carpinteiro converte em tábu… | cita | ColonyGoalsTest |
+| 249 | Fundição sem cru chama o pedreiro (autor 11-11, opção O2b-1): a cada ciclo, a tarefa de f… | cita | FurnaceFeedGameTest |

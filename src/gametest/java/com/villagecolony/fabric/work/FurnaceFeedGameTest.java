@@ -81,6 +81,38 @@ public class FurnaceFeedGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * A tarefa de fundir que ninguém pega por falta de cru chama o pedreiro sozinha (Regra 249): no jogo da 0.4.53 a
+     * trava SMELT_INPUT deixou o arenito liso aberto 78 minutos, porque o pedido ao pedreiro só saía da mão do fundidor.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "furnace_feed_waiting", tickLimit = 20)
+    public void aSmeltNobodyCanTakeAsksTheMasonForItsRaw(TestContext context) {
+        UUID mason = UUID.randomUUID();
+        ColonyPos chest = chestWithSand(context, 8);
+        Colony colony = colonyWith(chest, mason);
+
+        VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.SMELT_MATERIAL, TaskPriority.CONSTRUCTION_MATERIAL, ResourceType.SMOOTH_SANDSTONE, 6);
+
+        try {
+            VillageColonyMod.WORKERS.find(mason).orElseThrow().assign(ProfessionType.MASON);
+
+            FurnaceFeed.orderForWaitingSmelts(context.getWorld(), colony);
+
+            long orders = VillageColonyMod.TASKS.ofColony(colony.id()).stream()
+                    .filter(task -> task.isOpen() && FurnaceFeed.isOrder(task)
+                            && task.targetResource() == ResourceType.SANDSTONE)
+                    .count();
+
+            context.assertTrue(orders == 1, "a fundição parada sem cru não pediu arenito ao pedreiro: " + orders);
+        } finally {
+            VillageColonyMod.TASKS.ofColony(colony.id()).forEach(task -> VillageColonyMod.TASKS.remove(task.id()));
+            forget(colony, mason);
+        }
+
+        context.complete();
+    }
+
     /** O pedreiro faz o arenito de quatro areias, e guarda no baú dele. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "furnace_feed", tickLimit = 20)
     public void theMasonMakesSandstoneOutOfFourSand(TestContext context) {

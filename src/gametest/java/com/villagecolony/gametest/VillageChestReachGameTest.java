@@ -27,8 +27,8 @@ import java.util.UUID;
  * <ul>
  *   <li>vila medida: todo baú livre dentro da caixa entra, de dentro ou de
  *       fora de casa;</li>
- *   <li>fora da caixa está fora de alcance — o baú dentro de casa, e o do
- *       trabalhador também;</li>
+ *   <li>baú livre fora da caixa não é da vila, mesmo dentro de casa; o baú do
+ *       trabalhador da colônia vale de qualquer lugar (Regra 243);</li>
  *   <li>baú de trabalhador de outra colônia nunca é estoque livre — o canal
  *       pelo qual os testes de carpinteiro e pedreiro, a 13 blocos um do
  *       outro, gastavam o baú um do outro.</li>
@@ -82,8 +82,9 @@ public class VillageChestReachGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** O baú livre fora da caixa não é da vila; o do trabalhador da colônia vale de qualquer lugar (Regra 243). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "chest_reach_outside")
-    public void aChestOutsideTheVillageIsOutOfReachEvenIndoorsOrClaimed(TestContext context) {
+    public void aWorkersChestOutsideTheVillageIsStillTheColonys(TestContext context) {
         ServerWorld world = context.getWorld();
         Colony colony = measuredVillage(context);
         UUID worker = UUID.randomUUID();
@@ -100,7 +101,7 @@ public class VillageChestReachGameTest implements FabricGameTest {
                     at(context, 15, 1, 0), at(context, 19, 4, 4)));
             chest(context, 17, 2, 2);
 
-            // E o baú de um trabalhador da colônia, também fora da caixa.
+            // E o baú de um trabalhador da colônia, também fora da caixa: este vale.
             chest(context, 17, 2, 8);
             VillageColonyMod.WORKERS.register(worker, colony.id());
             VillageColonyMod.STORAGES.register(WorkerStorage.of(worker, at(context, 17, 2, 8)));
@@ -109,8 +110,8 @@ public class VillageChestReachGameTest implements FabricGameTest {
 
             context.assertFalse(chests.contains(at(context, 17, 2, 2)),
                     "o baú de casa fora da vila entrou na conta: " + chests);
-            context.assertFalse(chests.contains(at(context, 17, 2, 8)),
-                    "o baú do trabalhador fora da vila entrou na conta: " + chests);
+            context.assertTrue(chests.contains(at(context, 17, 2, 8)),
+                    "o baú do trabalhador fora da vila ficou de fora da conta: " + chests);
         } finally {
             VillageColonyMod.BUILDINGS.removeOfColony(neighbour);
             owned.cleanUp();

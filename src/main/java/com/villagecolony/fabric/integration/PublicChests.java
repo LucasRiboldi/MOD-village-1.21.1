@@ -33,7 +33,7 @@ public final class PublicChests {
                 .flatMap(at -> MineMouth.chestAt(world, at))
                 .map(MinecraftTypeAdapter::toColonyPos);
 
-        // Fora da caixa é fora de alcance, como em ColonyChests: a varredura lê chunks inteiros.
+        // O baú livre é o de dentro da caixa (Regra 45): a varredura lê chunks inteiros e não sai dela.
         return VillageColonyMod.COLONIES.find(colonyId)
                 .map(colony -> VillageChests.around(world, colony, List.of()).stream()
                         .filter(chest -> colony.bounds().map(box -> VillageChests.isInside(box, chest)).orElse(true))

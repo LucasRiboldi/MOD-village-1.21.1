@@ -33,6 +33,7 @@ import java.util.UUID;
  * <ul>
  *   <li><b>pedreiro, carpinteiro e fundidor</b>: arrumam o terreno, começando pelo lote da obra aberta: tapam buraco,
  *       nivelam entre as bases, devolvem ao solo o caminho sem marca do grafo (Regras 215 e 242);</li>
+ *   <li><b>construtor</b> sem obra: arruma o terreno como o pedreiro (Regra 247);</li>
  *   <li><b>pastor</b>: alimenta o rebanho;</li>
  *   <li><b>carpinteiro e pedreiro</b> sem terreno a reparar: mantêm as construções (Regra 221);</li>
  *   <li><b>adulto sem profissão</b>: transporta itens e alivia os baús cheios; calçar e tirar neve vêm da Regra 220.</li>
@@ -119,6 +120,8 @@ public final class VillageHelpers {
                 yield levelled > 0 ? levelled : BuildingUpkeep.start(world, colony, villager, ResourceGroup.PLANKS);
             }
             case SMELTER -> masonHelps(world, colony, villager);
+            // O construtor sem obra nivela o chão como o pedreiro (Regra 247).
+            case BUILDER -> masonHelps(world, colony, villager);
             default -> 0;
         };
     }
@@ -143,6 +146,16 @@ public final class VillageHelpers {
      * próxima casa.
      */
     static int masonHelps(ServerWorld world, Colony colony, VillagerEntity mason) {
+        int done = levelGround(world, colony, mason);
+
+        if (done > 0) {
+            WorkTime.groundWork(mason.getUuid(), world.getTime());
+        }
+
+        return done;
+    }
+
+    private static int levelGround(ServerWorld world, Colony colony, VillagerEntity mason) {
         int repaired = GroundSmoothing.aroundTheOpenBuild(world, colony, mason);
 
         if (repaired > 0) {
