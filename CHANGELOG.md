@@ -12,6 +12,18 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.57] — candidata, 2026-11-11
+
+### Corrigido
+
+- A rua da vila nasce no chão novo (Regra 250): o solo da vila cortava e aterrava as colunas, mas a altura de geração que
+  a rua do Vanilla segue ficava a de antes, e 275 de 1.303 colunas de caminho do jogo da 0.4.56 ficaram no ar. Só vale
+  para chunks gerados depois desta versão.
+
+### Testes
+
+- `theStreetHeightFollowsTheShapedGround`.
+
 ## [0.4.56] — candidata, 2026-11-11
 
 ### Corrigido

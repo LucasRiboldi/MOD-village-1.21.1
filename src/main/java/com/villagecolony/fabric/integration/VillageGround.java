@@ -30,7 +30,8 @@ import java.util.Map;
 /**
  * O solo da vila na geração do chunk — autor, 2026-10-29. Roda no começo da colocação de estruturas e features de
  * cada chunk ({@code ChunkGenerator.generateFeatures}), com o terreno pronto e antes de as peças da vila serem
- * postas: as ruas do Minecraft seguem o chão que acharem, então nascem sobre o chão novo.
+ * postas: as ruas do Minecraft seguem a altura de geração da coluna, que o corte leva junto (Regra 250), então nascem
+ * sobre o chão novo.
  *
  * <p>A conta é do {@link VillageBlend}: na vila (as peças + {@link #CORE_PAD}), degrau de 1 e buraco tampado; em
  * volta, até {@link #REACH}, a mistura suave do topo de verdade com o nível da vila, numa faixa de 4 vezes o desnível. Calculada uma
@@ -350,6 +351,7 @@ public final class VillageGround {
         }
 
         clearUnsupportedGrass(world, chunk, at, Math.min(top, target) + 1, Math.max(top, target) + 2);
+        GenerationHeights.retrack(chunk, x, z, Math.max(top, target) + 2);
     }
 
     /** Remove flora sem apoio depois de mudar a altura da coluna. */

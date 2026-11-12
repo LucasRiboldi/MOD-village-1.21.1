@@ -2,6 +2,9 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
+> **Candidata 0.4.57:** a rua da vila nasce no chão novo (Regra 250): 21% das colunas de caminho
+> ficavam no ar no jogo da 0.4.56. Só em chunks novos. Não jogada.
+
 > **Candidata 0.4.56:** O2b-1 do autor — a fundição sem cru chama o pedreiro (Regra 249). Não jogada.
 
 > **Candidata 0.4.55:** escolhas do autor sobre o jogo da 0.4.53 — Regras 243 a 248 (baú de qualquer lugar, fora da
