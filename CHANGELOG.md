@@ -12,6 +12,17 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.58] — candidata, 2026-11-12
+
+### Corrigido
+
+- Flor e muda no topo não seguram mais a coluna do solo da vila (Regra 251): a coluna ficava de pé, uma torre, e a rua nascia sobre ela.
+- O acessório da vila gerada (`plains_accessory_1`) não recebe entrada no grafo (Regra 252).
+
+### Testes
+
+- `aFlowerOnTheTopDoesNotHoldTheColumnUp`, `anAccessoryPieceIsAnOrnament`.
+
 ## [0.4.57] — candidata, 2026-11-11
 
 ### Corrigido

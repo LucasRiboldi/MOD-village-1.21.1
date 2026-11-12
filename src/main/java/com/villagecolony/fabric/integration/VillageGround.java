@@ -365,10 +365,14 @@ public final class VillageGround {
         }
     }
 
-    /** Plantas soltas não sobrevivem ao nivelamento; lavoura não é flora espontânea. */
+    /**
+     * Plantas soltas não sobrevivem ao nivelamento; lavoura não é flora espontânea. Flor e muda no topo não são o chão:
+     * a varredura passa por elas, ou a coluna fica de pé (Regra 251).
+     */
     private static boolean isFlora(BlockState state) {
         return state.isOf(Blocks.SHORT_GRASS) || state.isOf(Blocks.TALL_GRASS)
-                || state.isOf(Blocks.FERN) || state.isOf(Blocks.LARGE_FERN) || state.isIn(BlockTags.FLOWERS);
+                || state.isOf(Blocks.FERN) || state.isOf(Blocks.LARGE_FERN) || state.isIn(BlockTags.FLOWERS)
+                || state.isIn(BlockTags.SAPLINGS);
     }
 
     /** Marca água ligada à borda da área gerada: mar e rio ficam; água fechada no miolo pode virar terreno. */
@@ -477,7 +481,8 @@ public final class VillageGround {
                 return at.getY();
             }
 
-            if (!state.isAir() && !state.isReplaceable() && !state.isIn(BlockTags.LEAVES) && !state.isIn(BlockTags.LOGS)) {
+            if (!state.isAir() && !state.isReplaceable() && !state.isIn(BlockTags.LEAVES) && !state.isIn(BlockTags.LOGS)
+                    && !isFlora(state)) {
                 return at.getY();
             }
 

@@ -194,10 +194,11 @@ public final class GeneratedVillages {
                 && !element.contains("iron_golem") && !element.contains("/trees/") && !isOrnament(element);
     }
 
-    /** Se a peça é enfeite, onde ninguém entra: poste, poço e chafariz — Regra 223 (autor, 2026-11-07). */
+    /** Se a peça é enfeite, onde ninguém entra: poste, poço, chafariz e acessório — Regras 223 e 252 (autor). */
     public static boolean isOrnament(String element) {
         return element.contains("lamp") || element.contains("meeting_point") || element.contains("fountain")
-                || element.contains("well_bottom") || element.contains("decoration") || element.contains("campfire");
+                || element.contains("well_bottom") || element.contains("decoration") || element.contains("campfire")
+                || element.contains("accessory");
     }
 
     /** As caixas das peças da vila gerada que alcança esta coluna cujo nome traz {@code name}; chunk carregado. */

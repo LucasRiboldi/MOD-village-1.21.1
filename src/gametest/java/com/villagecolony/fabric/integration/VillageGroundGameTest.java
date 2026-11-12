@@ -102,6 +102,44 @@ public class VillageGroundGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Flor e muda no topo não seguram a coluna: o corte as leva junto (Regra 251). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_ground_height", tickLimit = 5)
+    public void aFlowerOnTheTopDoesNotHoldTheColumnUp(TestContext context) {
+        ServerWorld world = context.getWorld();
+        ProtoChunk chunk = new ProtoChunk(new ChunkPos(90_001, 90_001), UpgradeData.NO_UPGRADE_DATA, world,
+                world.getRegistryManager().get(RegistryKeys.BIOME), null);
+        int x = chunk.getPos().getStartX();
+        int z = chunk.getPos().getStartZ();
+        net.minecraft.block.Block[] plants = {Blocks.POPPY, Blocks.OAK_SAPLING, Blocks.CORNFLOWER};
+
+        for (int dx = 0; dx < plants.length; dx++) {
+            for (int y = 60; y < 70; y++) {
+                chunk.setBlockState(new BlockPos(x + dx, y, z), Blocks.DIRT.getDefaultState(), false);
+            }
+
+            chunk.setBlockState(new BlockPos(x + dx, 70, z), Blocks.GRASS_BLOCK.getDefaultState(), false);
+            chunk.setBlockState(new BlockPos(x + dx, 71, z), plants[dx].getDefaultState(), false);
+
+            int top = VillageGround.topOf(chunk, x + dx, z, 80);
+
+            context.assertTrue(top == 70, plants[dx] + " segurou o topo em " + top + ", não em 70");
+        }
+
+        context.complete();
+    }
+
+    /** O acessório da vila é enfeite: não recebe entrada (Regra 252). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_ground_height", tickLimit = 5)
+    public void anAccessoryPieceIsAnOrnament(TestContext context) {
+        context.assertTrue(com.villagecolony.fabric.world.GeneratedVillages.isOrnament(
+                "village/plains/houses/plains_accessory_1"), "o acessório da planície não é enfeite");
+        context.assertFalse(com.villagecolony.fabric.world.GeneratedVillages.isStructure(
+                "village/plains/houses/plains_accessory_1"), "o acessório da planície recebe entrada");
+        context.assertTrue(com.villagecolony.fabric.world.GeneratedVillages.isStructure(
+                "village/plains/houses/plains_small_house_4"), "a casa deixou de receber entrada");
+        context.complete();
+    }
+
     /**
      * A rua do Vanilla segue {@code WORLD_SURFACE_WG}, que o chunk em geração não acompanha: a coluna cortada ou
      * aterrada leva a altura junto, ou a rua nasce na altura antiga, no ar ou enterrada (Regra 250).
