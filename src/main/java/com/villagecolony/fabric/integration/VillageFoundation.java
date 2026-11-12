@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.type.ColonyPos;
@@ -103,6 +104,7 @@ public final class VillageFoundation {
 
         int bedsPlaced = 0;
         int spawned = 0;
+        @org.jspecify.annotations.Nullable BlockPos firstFoot = null;
 
         for (int index = 0; index < toSpawn; index++) {
             Optional<BlockPos> foot = findAvailableHouseBed(
@@ -137,6 +139,29 @@ public final class VillageFoundation {
             spawned++;
             byId.put(villager.getUuid(), villager);
             colonyVillagerIds.add(villager.getUuid());
+            firstFoot = firstFoot == null ? foot.get() : firstFoot;
+        }
+
+        // Um aldeão de cada profissão (Regra 259): os adultos da vila contam primeiro, e o que falta para os oito
+        // ofícios nasce adulto ao lado da casa, sem cama — a cama dele vem da obra, como a de quem nasce na vila.
+        if (houseJustPlaced && firstFoot != null) {
+            long adults = byId.values().stream().filter(villager -> !villager.isBaby()).count();
+
+            for (long missing = ProfessionType.values().length - adults; missing > 0; missing--) {
+                VillagerEntity villager = EntityType.VILLAGER.create(world);
+
+                if (villager == null) {
+                    break;
+                }
+
+                villager.setBreedingAge(0);
+                villager.refreshPositionAndAngles(firstFoot.up(), 0.0F, 0.0F);
+
+                if (world.spawnEntity(villager)) {
+                    spawned++;
+                    byId.put(villager.getUuid(), villager);
+                }
+            }
         }
 
         // Depois dos nascimentos, e não antes: as camas da casa são dos

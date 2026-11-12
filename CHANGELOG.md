@@ -12,6 +12,17 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.65] — candidata, 2026-11-12
+
+### Mudado
+
+- A vila nova nasce com um aldeão de cada profissão: a fundação faz nascer os adultos que faltam para os oito ofícios
+  (Regra 259). Antes nasciam sete, um por cama, e o fazendeiro só vinha com o crescimento da vila.
+
+### Testes
+
+- `aNewVillageGetsOneVillagerOfEveryProfession`.
+
 ## [0.4.64] — candidata, 2026-11-12
 
 ### Mudado

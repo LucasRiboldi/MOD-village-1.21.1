@@ -1,14 +1,17 @@
 # TODO
 
-## Regras novas do autor, 12-11 — esperam desenho e escolha
+## Regras novas do autor, 12-11 — escolhas feitas, nesta ordem
 
-- [ ] Toda vila nasce com um aldeão de cada profissão.
-- [ ] A casa do mineiro, ao lado da entrada da mina, surge sozinha com o carregamento da vila.
-- [ ] Cada estrutura do mod tem uma versão que combina com o bioma onde está.
-- [ ] Poste de luz da vila, como obra na lista: só depois de existirem caminhos fixos do grafo; no bloco ao lado da linha
-  fixa, na linha do solo, sem estrutura a 2 blocos em volta e sem bloqueio na vertical; só onde a luz de outro poste não
-  chega, e a partir de metade do alcance da luz de um poste, para os postes cobrirem todo o terreno habitado. Usa a
-  tocha do mod.
+- [x] **Os 8 ofícios na fundação** (0.4.65, Regra 259): cada profissão (construtor, carpinteiro, fazendeiro, lenhador, pedreiro, mineiro,
+  pastor, fundidor) recebe um aldeão na fundação; primeiro os da vila, e o que faltar nasce adulto. Só vilas novas.
+- [ ] **Casa do mineiro na fundação:** a fundação escolhe a boca da mina, ergue o arco e a casa do mineiro ao lado,
+  prontos, sem obra e sem material.
+- [ ] **Poste de luz:** base de pedra do bioma, duas cercas da madeira do bioma e a tocha da colônia em cima. Obra na
+  lista, erguida pelo construtor com material. Só depois de existirem linhas fixas do grafo; no bloco ao lado da linha
+  fixa, na linha do solo, sem estrutura a 2 blocos em volta e sem bloqueio na vertical; ao longo das ruas fixas, até a
+  ponta delas; a 30 blocos ou mais de outro poste.
+- [ ] **Estruturas por bioma:** troca automática dos blocos (madeira, pedra e o resto pela paleta das casas) ao erguer
+  cada estrutura do mod: arco da mina, currais, plantação grande, celeiro e as demais. Um arquivo serve todos os biomas.
 - [ ] Mineiro sem ramal livre (solução 1 da reanálise de 12-11, pulada pelo autor): "every open branch is taken or
   finished" em todas as versões recentes; no primeiro nível, antes do salão, ele só espera.
 

@@ -193,6 +193,39 @@ public class VillageFoundationGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** A vila nova nasce com um aldeão de cada profissão: o que falta para os 8 nasce adulto (Regra 259). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
+            batchId = "aaa_village_foundation", tickLimit = 120)
+    public void aNewVillageGetsOneVillagerOfEveryProfession(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos anchor = context.getAbsolutePos(new BlockPos(1, 1, 1))
+                .add(1000000, 0, 1009000);
+        Colony colony = Colony.create(
+                UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(anchor));
+        VillageColonyMod.COLONIES.register(colony);
+        prepareFoundationTerrain(world, anchor);
+
+        try {
+            VillageDetectionHandler.runFoundationNow(world, colony);
+
+            java.util.Set<com.villagecolony.core.worker.model.ProfessionType> trades =
+                    java.util.EnumSet.noneOf(com.villagecolony.core.worker.model.ProfessionType.class);
+
+            VillageColonyMod.WORKERS.ofColony(colony.id())
+                    .forEach(worker -> worker.profession().ifPresent(trades::add));
+
+            for (com.villagecolony.core.worker.model.ProfessionType type
+                    : com.villagecolony.core.worker.model.ProfessionType.values()) {
+                context.assertTrue(trades.contains(type), "a vila nova nasceu sem " + type + ": " + trades
+                        + " em " + VillageColonyMod.WORKERS.ofColony(colony.id()).size() + " aldeões");
+            }
+        } finally {
+            cleanUp(world, colony, anchor);
+        }
+
+        context.complete();
+    }
+
     /** N1, 2026-09-24: quem morre não é reposto pela passagem seguinte. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
             batchId = "aaa_village_foundation", tickLimit = 120)
