@@ -105,7 +105,8 @@ public class ShepherdTetherGameTest implements FabricGameTest {
             colony.measure(new VillageBounds(low.getX(), low.getY(), low.getZ(), high.getX(), high.getY(), high.getZ()));
 
             VillagerEntity shepherd = EntityType.VILLAGER.create(world);
-            BlockPos at = context.getAbsolutePos(new BlockPos(12, Y + 1, 12));
+            // Ao lado do portão, do lado de fora: a busca de caminho até ele não depende da carga da bateria.
+            BlockPos at = context.getAbsolutePos(new BlockPos(6, Y + 1, 0));
             shepherd.refreshPositionAndAngles(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0, 0);
             world.spawnEntity(shepherd);
 
