@@ -234,4 +234,32 @@ public class StreetLevelGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /** O piso de grama do curral sobre pedra do terreno não é "chão já pronto": a pedra sai e vem a terra (Regra 253). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "street_level", tickLimit = 20)
+    public void aPenFloorOnStoneIsNotHeldByTheGround(TestContext context) {
+        List<BlueprintBlock> floor = List.of(new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("grass_block")));
+        Blueprint pen = Blueprint.of(ResourceId.vanilla("large_animal_pen"), floor).withStreetLayer(0);
+        Blueprint house = Blueprint.of(ResourceId.vanilla("test_house"), floor).withStreetLayer(0);
+        BlockPos stone = context.getAbsolutePos(new BlockPos(1, 1, 1));
+        BlockPos grass = context.getAbsolutePos(new BlockPos(3, 1, 1));
+        BlueprintBlock piece = pen.blocks().get(0);
+
+        context.getWorld().setBlockState(stone, Blocks.STONE.getDefaultState());
+        context.getWorld().setBlockState(grass, Blocks.GRASS_BLOCK.getDefaultState());
+
+        context.assertFalse(BuriedPieces.heldByTheGround(context.getWorld(), pen, piece, stone),
+                "a pedra do terreno segurou o piso do curral");
+        context.assertTrue(BuriedPieces.soilOverStone(context.getWorld(), pen, piece, stone),
+                "o curral não tomou o lugar da pedra");
+        context.assertTrue(BuriedPieces.heldByTheGround(context.getWorld(), pen, piece, grass),
+                "a grama deixou de segurar o piso do curral");
+        context.assertFalse(BuriedPieces.soilOverStone(context.getWorld(), pen, piece, grass),
+                "o curral trocou grama por grama");
+        context.assertTrue(BuriedPieces.heldByTheGround(context.getWorld(), house, house.blocks().get(0), stone),
+                "a regra do curral vazou para a casa");
+        context.assertFalse(BuriedPieces.soilOverStone(context.getWorld(), house, house.blocks().get(0), stone),
+                "a casa trocou a pedra");
+        context.complete();
+    }
 }

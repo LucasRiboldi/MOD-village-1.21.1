@@ -117,6 +117,16 @@ public final class BuilderPlacement {
         //
         // Só sobre lugar livre: a Regra 3 continua valendo — bloco posto (planks, peça de vila) não
         // é sobrescrito (BuilderGameTest.farmlandDoesNotReplaceAPlacedBlock).
+        if (BuriedPieces.soilOverStone(world, project.blueprint(), block, target)) {
+            // O piso do curral troca a pedra do terreno pela terra da planta, como o aterro: sem gastar recurso (Regra 253).
+            world.setBlockState(target, state, Block.NOTIFY_ALL);
+            project.markPlaced(block);
+            com.villagecolony.fabric.integration.Supplies.record(com.villagecolony.core.coordination.SupplyException.SHAPED_GROUND, project.colonyId(),
+                    block.block().path(), 1);
+
+            return true;
+        }
+
         boolean mayShapeHere = world.getBlockState(target).isReplaceable()
                 || BuriedPieces.mayReplaceGround(world, project.blueprint(), block, target)
                 || BlockShaping.tillsTheGround(world, state, target);

@@ -2,6 +2,8 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
+> **Candidata 0.4.59:** o curral leva terra no solo, e não a pedra do terreno (Regra 253). Escadaria, marcador da mina, plantação e corda do pastor seguem sem correção. Não jogada.
+
 > **Candidata 0.4.58:** torres de flor no solo da vila (Regra 251) e acessório sem entrada (Regra 252). Escadaria, marcador da mina, plantação, curral grande e corda do pastor esperam diagnóstico. Não jogada.
 
 > **Candidata 0.4.57:** a rua da vila nasce no chão novo (Regra 250): 21% das colunas de caminho

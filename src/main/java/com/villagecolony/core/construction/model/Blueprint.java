@@ -155,6 +155,11 @@ public final class Blueprint {
                 && !isPlantation();
     }
 
+    /** Se a planta é de curral — o curral grande e o pequeno da colônia (Regra 253). */
+    public boolean isPen() {
+        return id.path().contains("animal_pen");
+    }
+
     /** Se a planta é de plantação — a roça das vilas ({@code *_farm_*}). */
     public boolean isPlantation() {
         return id.path().contains("farm");

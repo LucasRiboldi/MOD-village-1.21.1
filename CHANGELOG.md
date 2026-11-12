@@ -12,6 +12,17 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.59] — candidata, 2026-11-12
+
+### Corrigido
+
+- O curral leva terra no solo (Regra 253): o piso de grama da planta de curral sobre pedra do terreno era dado como chão
+  pronto (`BuriedPieces.heldByTheGround`) e a pedra ficava; no jogo da 0.4.57 eram 15 de pedra em 169 células do curral grande.
+
+### Testes
+
+- `aPenFloorOnStoneIsNotHeldByTheGround`.
+
 ## [0.4.58] — candidata, 2026-11-12
 
 ### Corrigido
