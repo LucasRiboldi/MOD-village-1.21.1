@@ -220,10 +220,40 @@ public final class TreeScanner {
             BlockPos pos = new BlockPos(x, y, z);
 
             if (TreeSpecies.isLog(chunk.getBlockState(pos))) {
-                return Optional.of(pos);
+                return hasNaturalLeaves(world, pos) ? Optional.of(pos) : Optional.empty();
             }
         }
 
         return Optional.empty();
+    }
+
+    /** Até onde, do alto do tronco, a folha natural precisa estar. */
+    static final int LEAF_REACH = 3;
+
+    /** O tronco mais alto que se sobe procurando a copa. */
+    private static final int TRUNK_LIMIT = 32;
+
+    /**
+     * Se este tronco é de árvore: há folha natural (que não foi posta) perto do alto dele — Regra 256. O tronco sem folha
+     * é peça de obra, como o topo do portão da mina que o lenhador derrubou no jogo da 0.4.57 ("1 logs and 0 leaves").
+     */
+    static boolean hasNaturalLeaves(ServerWorld world, BlockPos log) {
+        BlockPos.Mutable top = log.mutableCopy();
+
+        for (int climbed = 0; climbed < TRUNK_LIMIT && TreeSpecies.isLog(world.getBlockState(top.up())); climbed++) {
+            top.move(0, 1, 0);
+        }
+
+        for (BlockPos near : BlockPos.iterate(top.add(-LEAF_REACH, -1, -LEAF_REACH),
+                top.add(LEAF_REACH, LEAF_REACH, LEAF_REACH))) {
+            net.minecraft.block.BlockState state = world.getBlockState(near);
+
+            if (state.getBlock() instanceof net.minecraft.block.LeavesBlock
+                    && !state.get(net.minecraft.block.LeavesBlock.PERSISTENT)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

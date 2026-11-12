@@ -12,6 +12,22 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.62] — candidata, 2026-11-12
+
+### Mudado
+
+- A boca da mina ganha um arco de tora de pinheiro descascada, com degrau e lampião nas pontas da viga e baú à direita
+  (Regra 256). O portão de pedra deixa de ser erguido e segue reconhecido onde já está.
+
+### Corrigido
+
+- O grafo reconhece o arco pelas peças na boca da mina, e não só pelo topo; o lenhador só corta tronco com folha natural.
+  No jogo da 0.4.57 ele derrubou o topo do portão, e a mina perdeu a entrada no grafo.
+
+### Testes
+
+- `theArchStandsAndIsKnownByTheMouth`, `aLogWithoutNaturalLeavesIsNotATree`; testes do portão e do lenhador atualizados.
+
 ## [0.4.61] — candidata, 2026-11-12
 
 ### Corrigido

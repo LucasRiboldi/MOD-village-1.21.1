@@ -1334,13 +1334,12 @@ public class MinerGameTest implements FabricGameTest {
                 chest.isPresent(),
                 "a boca da mina voltou a ganhar baú, e o autor mandou retirá-lo");
 
-        // O portão do autor (2026-10-29) no lugar do arco: a lanterna do meio pende do teto, sobre o vão, e o pilar
-        // de tijolo de pedra fica de pé ao lado.
+        // O arco de pinheiro descascado (Regra 256): o lampião pende do degrau da ponta, e a viga passa sobre a boca.
         context.assertTrue(
-                world.getBlockState(com.villagecolony.fabric.integration.MineGate.at(mouth, Direction.SOUTH, 4, 4, 0)).isOf(Blocks.LANTERN),
+                world.getBlockState(com.villagecolony.fabric.integration.MineGate.at(mouth, Direction.SOUTH, 1, 3, 2)).isOf(Blocks.LANTERN),
                 "a boca da mina ficou sem a lanterna do portão");
         context.assertTrue(
-                world.getBlockState(com.villagecolony.fabric.integration.MineGate.at(mouth, Direction.SOUTH, 4, 4, 2)).isOf(Blocks.DARK_OAK_PLANKS),
+                world.getBlockState(com.villagecolony.fabric.integration.MineGate.at(mouth, Direction.SOUTH, 4, 4, 2)).isOf(Blocks.STRIPPED_SPRUCE_LOG),
                 "o teto do portão não está sobre a boca");
 
         context.complete();
@@ -1386,7 +1385,7 @@ public class MinerGameTest implements FabricGameTest {
         MineMouth.furnish(world, mouth, Direction.SOUTH, false);
 
         context.assertTrue(
-                world.getBlockState(com.villagecolony.fabric.integration.MineGate.at(mouth, Direction.SOUTH, 4, 4, 0)).isOf(Blocks.LANTERN),
+                world.getBlockState(com.villagecolony.fabric.integration.MineGate.at(mouth, Direction.SOUTH, 1, 3, 2)).isOf(Blocks.LANTERN),
                 "a boca que já tinha baú ficou sem a lanterna do portão");
 
         // <b>E o baú encostado na boca continua sendo o dela</b>: é o
@@ -1446,7 +1445,7 @@ public class MinerGameTest implements FabricGameTest {
         BlockPos lintel = com.villagecolony.fabric.integration.MineGate.at(mouth, Direction.SOUTH, 4, 4, 2);
 
         context.assertTrue(
-                world.getBlockState(lintel).isOf(Blocks.DARK_OAK_PLANKS),
+                world.getBlockState(lintel).isOf(Blocks.STRIPPED_SPRUCE_LOG),
                 "o portão não subiu, e sem ele este caso não mede nada");
 
         // <b>O jogador derruba o portão inteiro.</b> Deixa a boca como se nunca tivesse sido mobiliada, que é
@@ -1682,8 +1681,9 @@ public class MinerGameTest implements FabricGameTest {
         // este caso cego para a duplicata que ele existe para pegar.
         int lanterns = 0;
 
-        List<BlockPos> gateLanterns = List.of(MineGate.at(mouth, Direction.SOUTH, 1, 4, 0),
-                MineGate.at(mouth, Direction.SOUTH, 4, 4, 0), MineGate.at(mouth, Direction.SOUTH, 7, 4, 0));
+        // Os dois lampiões do arco, pendurados nos degraus das pontas da viga (Regra 256).
+        List<BlockPos> gateLanterns = List.of(MineGate.at(mouth, Direction.SOUTH, 1, 3, 2),
+                MineGate.at(mouth, Direction.SOUTH, 7, 3, 2));
 
         for (int dx = -6; dx <= 6; dx++) {
             for (int dy = -1; dy <= 8; dy++) {
@@ -1758,7 +1758,7 @@ public class MinerGameTest implements FabricGameTest {
         // theMineMouthGetsTheGateAndNoChest —, então a peça que este caso
         // ainda precisa ver posta no lugar certo é ela.
         context.assertTrue(
-                world.getBlockState(com.villagecolony.fabric.integration.MineGate.at(mouth, Direction.WEST, 4, 4, 0)).isOf(Blocks.LANTERN),
+                world.getBlockState(com.villagecolony.fabric.integration.MineGate.at(mouth, Direction.WEST, 1, 3, 2)).isOf(Blocks.LANTERN),
                 "a boca ficou sem a lanterna do portão");
 
         context.complete();
@@ -5841,10 +5841,10 @@ public class MinerGameTest implements FabricGameTest {
 
         MineMouth.furnish(world, at, Direction.NORTH, false);
 
-        context.assertTrue(world.getBlockState(MineGate.at(at, Direction.NORTH, 4, 4, 2)).isOf(Blocks.DARK_OAK_PLANKS),
+        context.assertTrue(world.getBlockState(MineGate.at(at, Direction.NORTH, 4, 4, 2)).isOf(Blocks.STRIPPED_SPRUCE_LOG),
                 "o teto do portão não passa sobre a boca");
-        context.assertTrue(world.getBlockState(MineGate.at(at, Direction.NORTH, 4, 4, 0)).isOf(Blocks.LANTERN),
-                "o portão ficou sem a lanterna do meio");
+        context.assertTrue(world.getBlockState(MineGate.at(at, Direction.NORTH, 1, 3, 2)).isOf(Blocks.LANTERN),
+                "o arco ficou sem o lampião da ponta");
 
         // O vão inteiro sobre as três pistas da escada, que saem da boca para a esquerda da descida.
         Direction lanes = Direction.NORTH.rotateYCounterclockwise();

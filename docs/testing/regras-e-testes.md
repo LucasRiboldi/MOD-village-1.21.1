@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 148
+- **Cita a regra:** 149
 - **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 7
 - **Fora de vigor:** 5
@@ -164,7 +164,7 @@ classe prova menos ainda.
 | 152 | O solo da vila nasce suave na geração (autor 10-29: crateras e montanhas no meio das vila… | classe | VillageBlendTest, VillageGroundGameTest, VillageSurfaceTest |
 | 153 | Mais ajudas de quem está sem tarefa (autor 10-28, O1/O3/O4/O8; pedido de novo em 10-29),… | classe | GroundSmoothingGameTest, IdleFixesGameTest, ItemStockGameTest |
 | 154 | Lenhador, fundidor e fazendeiro: os ajustes do O5–O7 (autor 10-28; pedido de novo em 10-2… | classe | ChestPlacerGameTest, IdleFixesGameTest, ItemStockGameTest |
-| 155 | A boca da mina ganha o portão do autor (10-29, estrutura mine_entrance.nbt, 9×7×5): no lu… | classe | MinerGameTest, SmelterGameTest, StructureEntrancesGameTest |
+| 155 | A boca da mina ganha o portão do autor (10-29, estrutura mine_entrance.nbt, 9×7×5): no lu… | classe | MineLandingGameTest, MinerGameTest, SmelterGameTest |
 | 156 | O pedreiro alisa o chão da vila (autor 10-29, 11-06): sem tarefa, uma vez por minuto ele… | classe | GroundSmoothingGameTest, VillageBlendTest, VillageHelpersGameTest |
 | 157 | O mineiro não quebra o que segura algo solto (autor 10-29, jogo da 0.3.108: o cascalho pe… | classe | MineGravityGameTest, MineSettlingGameTest, MinerGameTest |
 | 158 | Sem cama no andar de baixo da casa de escada de mão (autor 10-29, jogo da 0.3.108: 9 de 2… | classe | BedChoiceGameTest, BedPlanTest, StructureEntrancesGameTest |
@@ -265,3 +265,4 @@ classe prova menos ainda.
 | 253 | O curral leva terra no solo (autor 12-11): o piso de grama da planta de curral sobre pedr… | cita | StreetLevelGameTest |
 | 254 | Patamar nas dobras da escada da mina (autor 12-11, ADR-053): cada dobra do caracol ganha… | cita | MineLandingGameTest, MineSaveTest, MineShaftLayoutTest |
 | 255 | Animal na corda vai para o curral (autor 12-11, opções A e B): com curral na vila, o past… | cita | ShepherdTetherGameTest |
+| 256 | O arco da mina e a árvore com folha (autor 12-11, opções 1 e 2): a boca da mina ganha um… | cita | LumberjackGameTest, MineLandingGameTest, MinerGameTest |
