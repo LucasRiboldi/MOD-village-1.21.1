@@ -2,6 +2,8 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
+> **Candidata 0.4.56:** O2b-1 do autor — a fundição sem cru chama o pedreiro (Regra 249). Não jogada.
+
 > **Candidata 0.4.55:** escolhas do autor sobre o jogo da 0.4.53 — Regras 243 a 248 (baú de qualquer lugar, fora da
 > simulação não congela, cama longe vem para perto, chão é trabalho, construtor nivela, um terço em tora). T2b e O4a já
 > existiam; O2b e O3b esperam nova escolha do autor. Sentinela fast verde (20261111T234010Z): 1.089 GameTests e 1.790 unitários. Não jogada.

@@ -125,7 +125,7 @@ Análise completa, com evidência e opções, para avaliar depois: `docs/audit/2
 - [ ] Pastor 34% bloqueado (o curral não é a causa: sai pelo portão em 4–39 tiques; O4a, Regra 196, já existe): "fenced in" 4 vezes, "no sheep with wool within the radius" 4 vezes
 - [ ] 11 trabalhadores registrados fora do mundo; carpinteiro 9467a1fc e pedreiro 3aab7d8a "not loaded" o jogo inteiro, com tarefa aberta
 - [x] Baú do trabalhador vale de qualquer lugar (Regra 243, 0.4.55). Eram 3 baús fora de alcance: 2887,86,-3247; 2819,69,-3169; 2878,99,-3425
-- [ ] O2b: fundidores gastaram o arenito em segundos; 405 de areia nos baús e ninguém faz arenito; a pedreira (Regra 236) não rodou. Esperando escolha do autor
+- [x] O2b: a fundição sem cru chama o pedreiro (Regra 249, 0.4.56); conferir em jogo. Era: tarefa de arenito liso aberta 78 min com 405 de areia
 - [ ] O3b: no deserto o bosque do lenhador (`lumberjackInTheGrove`) não tem muda; plantar pede muda de fora. Esperando escolha do autor
 - [x] Corte e aterro em volta das construções: caiu de 14.848 para 404 colunas (0.4.53 confirmada em jogo)
 - [x] Ligação nova ao trecho travado (Regra 225): provada por `aNewDoorLinksToAFixedStretch`

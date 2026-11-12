@@ -12,6 +12,18 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.56] — candidata, 2026-11-11
+
+### Corrigido
+
+- A fundição sem cru chama o pedreiro sozinha (Regra 249): no jogo da 0.4.53 o arenito liso ficou aberto 78 minutos com
+  405 areias nos baús, porque o pedido de arenito ao pedreiro só saía da mão do fundidor, e a trava do cru não deixava o
+  fundidor pegar a tarefa.
+
+### Testes
+
+- `aSmeltNobodyCanTakeAsksTheMasonForItsRaw`.
+
 ## [0.4.55] — candidata, 2026-11-11
 
 Escolhas do autor sobre o jogo da 0.4.53 (`docs/audit/2026-11-11-jogo-0453.md`).
