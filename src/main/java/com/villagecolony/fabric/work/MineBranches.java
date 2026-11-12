@@ -228,7 +228,7 @@ public final class MineBranches {
         return dug >= HALL_SAMPLES_DUG;
     }
 
-    /** Os degraus dos níveis conhecidos na faixa de altura deste ramal: caracol do nível e caracol do ramal zero. */
+    /** Os degraus dos níveis conhecidos na faixa de altura deste ramal: caracol do nível e do ramal zero, e os patamares deles. */
     private static Set<ColonyPos> stairsNear(MineShaft branch, List<MineShaft> known) {
         Set<ColonyPos> stairs = new HashSet<>();
         int armStairCells = MineShaft.ARM_STAIRS * MineShaft.STAIR_STEP_BLOCKS;
@@ -244,6 +244,11 @@ public final class MineBranches {
 
             for (int index = 0; index < armStairCells; index++) {
                 stairs.add(level.positionAt(MineShaft.SHARED_BLOCKS + index));
+            }
+
+            // O patamar das dobras é escada também (Regra 254).
+            for (int index = MineShaft.ARM_END; !level.beyondTheArm(index); index++) {
+                stairs.add(level.positionAt(index));
             }
         }
 

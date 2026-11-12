@@ -25,8 +25,13 @@ import java.util.Objects;
  * <p><b>A rampa</b> ({@code ascent > 0}) é o fim da mina no fundo do mundo — ADR-036 item 17: a partir
  * do piso do salão ({@code entry}), {@code ascent} degraus de três pistas por três alturas, um para a
  * frente e um para cima, no rumo {@code descent} (para longe do centro da vila). Um ramal só.
+ *
+ * <p><b>O patamar</b> ({@code landings}, Regra 254, ADR-053): em cada dobra do caracol, as duas fileiras de rocha além
+ * do último degrau do lance abrem na altura dele, um patamar de 3 x 3 com tocha na parede de fora. Nenhuma célula
+ * muda de lugar: o patamar vem no fim da ordem do ramal, depois do salão dele. Só o nível aberto depois da regra o tem;
+ * o que já estava sendo cavado termina sem ele.
  */
-public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent) {
+public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent, boolean landings) {
 
     /** Quatro lances: o caracol dá uma volta inteira. */
     public static final int HELIX_FLIGHTS = 4;
@@ -79,6 +84,22 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
 
     private static final int MINEABLE_BOTTOM = -63;
 
+    /** Fileiras de rocha além do último degrau que o patamar abre: com o degrau, 3 de fundo (Regra 254). */
+    public static final int LANDING_ROWS = 2;
+
+    /** Blocos de um patamar. */
+    public static final int LANDING_BLOCKS = LANDING_ROWS * STAIR_LANES * STAIR_HEADROOM;
+
+    /** Blocos dos patamares de um caracol: um em cada dobra entre lances. */
+    public static final int HELIX_LANDING_BLOCKS = (HELIX_FLIGHTS - 1) * LANDING_BLOCKS;
+
+    /** Onde o ramal sem patamar termina: o caracol, o salão do nível, o caracol do ramal e o salão dele. */
+    public static final int ARM_END = SHARED_BLOCKS + ARM_BLOCKS;
+
+    /** A tocha de parede de um patamar: a posição dela e o lado em que fica a parede que a segura (Regra 254). */
+    public record WallLight(ColonyPos at, Side wall) {
+    }
+
     /** A menor altura do piso do salão do nível que ainda deixa o salão dos ramais acima da rocha-mãe. */
     public static final int DEEPEST = MINEABLE_BOTTOM + ARM_STAIRS - 1;
 
@@ -92,9 +113,14 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
         }
     }
 
-    /** Um nível que desce. */
+    /** Sem patamar: a mina que o save já tinha, e a rampa do fundo. */
+    public MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent) {
+        this(entry, descent, gallery, ascent, false);
+    }
+
+    /** Um nível que desce, sem patamar. */
     public MineShaft(ColonyPos entry, Side descent, Side gallery) {
-        this(entry, descent, gallery, 0);
+        this(entry, descent, gallery, 0, false);
     }
 
     /** A rampa de {@code steps} degraus que sobe do piso {@code floor} rumo a {@code away}. */
@@ -115,24 +141,39 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
         return isRamp() ? entry : hallCenter();
     }
 
-    /** Abre o caracol e posiciona o primeiro ramal no canto oposto ao rumo da descida. */
+    /** Abre o caracol, com patamar, e posiciona o primeiro ramal no canto oposto ao rumo da descida. */
     public static MineShaft from(ColonyPos entry, Side descent) {
-        return new MineShaft(entry, descent, descent.clockwise().clockwise());
+        return new MineShaft(entry, descent, descent.clockwise().clockwise(), 0, true);
     }
 
     /** O mesmo caracol, com o próximo ramal em sentido horário. */
     public MineShaft turned() {
-        return new MineShaft(entry, descent, gallery.clockwise(), ascent);
+        return new MineShaft(entry, descent, gallery.clockwise(), ascent, landings);
     }
 
-    /** Tenta a mesma boca com o caracol orientado para o próximo lado. */
+    /** Tenta a mesma boca com o caracol orientado para o próximo lado, no mesmo formato. */
     public MineShaft rerouted() {
-        return isRamp() ? ramp(entry, descent.clockwise(), ascent) : from(entry, descent.clockwise());
+        return isRamp() ? ramp(entry, descent.clockwise(), ascent)
+                : new MineShaft(entry, descent.clockwise(), descent.clockwise().clockwise().clockwise(), 0, landings);
     }
 
-    /** O próximo nível começa no meio do salão do ramal zero, o do canto de {@code gallery}. */
+    /** O próximo nível começa no meio do salão do ramal zero, o do canto de {@code gallery}, já com patamar. */
     public MineShaft deepened() {
-        return new MineShaft(armHallCenter(), descent, gallery);
+        return new MineShaft(armHallCenter(), descent, gallery, 0, true);
+    }
+
+    /** Se este é o ramal zero, o que abre o caracol do nível: o patamar do caracol do nível é dele. */
+    public boolean isArmZero() {
+        return gallery == descent.clockwise().clockwise();
+    }
+
+    /** Blocos de patamar no fim deste ramal: o do caracol dele e, no ramal zero, o do caracol do nível. */
+    public int landingBlocks() {
+        if (!landings || isRamp()) {
+            return 0;
+        }
+
+        return isArmZero() ? 2 * HELIX_LANDING_BLOCKS : HELIX_LANDING_BLOCKS;
     }
 
     /**
@@ -185,6 +226,10 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
             throw new IllegalArgumentException("Index past the end of the arm: " + index);
         }
 
+        if (index >= ARM_END) {
+            return landingCell(index - ARM_END);
+        }
+
         if (index < CARVED) {
             return helix(entry, descent, index);
         }
@@ -211,7 +256,7 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
      */
     public java.util.Set<ColonyPos> plannedCells() {
         java.util.Set<ColonyPos> cells = new java.util.HashSet<>();
-        int planned = isRamp() ? ascent * STAIR_STEP_BLOCKS : SHARED_BLOCKS + ARM_BLOCKS;
+        int planned = isRamp() ? ascent * STAIR_STEP_BLOCKS : ARM_END + landingBlocks();
 
         for (int index = 0; index < planned; index++) {
             cells.add(positionAt(index));
@@ -222,7 +267,7 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
 
     /** Cada ramal tem exatamente seu caracol e seu salão finitos. */
     public boolean beyondTheArm(int index) {
-        return index >= (isRamp() ? ascent * STAIR_STEP_BLOCKS : SHARED_BLOCKS + ARM_BLOCKS);
+        return index >= (isRamp() ? ascent * STAIR_STEP_BLOCKS : ARM_END + landingBlocks());
     }
 
     /** O degrau da rampa: pés em {@code entry.y + degrau}, um à frente por degrau. */
@@ -245,8 +290,16 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
      * da volta, e o miolo do caracol fica de rocha. O último degrau cai na coluna de {@code top}.
      */
     private static ColonyPos helix(ColonyPos top, Side first, int index) {
-        int flight = index / (HELIX_SIDE * STAIR_STEP_BLOCKS);
-        int within = index % (HELIX_SIDE * STAIR_STEP_BLOCKS);
+        Flight flight = flight(top, first, index / (HELIX_SIDE * STAIR_STEP_BLOCKS));
+
+        return stair(flight.top(), flight.towards(), index % (HELIX_SIDE * STAIR_STEP_BLOCKS));
+    }
+
+    /** O topo de um lance do caracol e o rumo em que ele desce. */
+    private record Flight(ColonyPos top, Side towards) {
+    }
+
+    private static Flight flight(ColonyPos top, Side first, int flight) {
         Side towards = first;
         int x = top.x();
         int z = top.z();
@@ -257,7 +310,64 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent)
             towards = towards.clockwise();
         }
 
-        return stair(new ColonyPos(x, top.y() - flight * HELIX_SIDE, z), towards, within);
+        return new Flight(new ColonyPos(x, top.y() - flight * HELIX_SIDE, z), towards);
+    }
+
+    /** A célula {@code index} dos patamares deste ramal: os do caracol do nível (ramal zero) e depois os do dele. */
+    private ColonyPos landingCell(int index) {
+        if (isArmZero() && index < HELIX_LANDING_BLOCKS) {
+            return landing(entry, descent, index);
+        }
+
+        return landing(corner(), gallery, isArmZero() ? index - HELIX_LANDING_BLOCKS : index);
+    }
+
+    /**
+     * O patamar da dobra depois do lance {@code index / LANDING_BLOCKS} do caracol que começa em {@code top}: as
+     * {@link #LANDING_ROWS} fileiras além do último degrau, nas mesmas três pistas e na altura dele.
+     */
+    private static ColonyPos landing(ColonyPos top, Side first, int index) {
+        Flight flight = flight(top, first, index / LANDING_BLOCKS);
+        int within = index % LANDING_BLOCKS;
+        int row = HELIX_SIDE + 1 + within / STAIR_STEP_BLOCKS;
+        int lane = within % STAIR_STEP_BLOCKS / STAIR_HEADROOM;
+        int layer = within % STAIR_HEADROOM;
+        Side sideways = flight.towards().clockwise().opposite();
+
+        return new ColonyPos(
+                flight.top().x() + flight.towards().offsetX() * row + sideways.offsetX() * lane,
+                flight.top().y() - HELIX_SIDE + 1 + layer,
+                flight.top().z() + flight.towards().offsetZ() * row + sideways.offsetZ() * lane);
+    }
+
+    /**
+     * As tochas de parede dos patamares deste ramal (Regra 254): uma por patamar, na pista do meio, à altura da
+     * cabeça, presa na rocha de fora da dobra, que nenhum nível cava ({@code MineShaftLayoutTest}).
+     */
+    public java.util.List<WallLight> landingLights() {
+        java.util.List<WallLight> lights = new java.util.ArrayList<>();
+
+        if (landingBlocks() > 0) {
+            addLandingLights(corner(), gallery, lights);
+        }
+        if (landingBlocks() > HELIX_LANDING_BLOCKS) {
+            addLandingLights(entry, descent, lights);
+        }
+
+        return lights;
+    }
+
+    private static void addLandingLights(ColonyPos top, Side first, java.util.List<WallLight> lights) {
+        for (int turn = 0; turn < HELIX_FLIGHTS - 1; turn++) {
+            Flight flight = flight(top, first, turn);
+            Side sideways = flight.towards().clockwise().opposite();
+            int row = HELIX_SIDE + LANDING_ROWS;
+
+            lights.add(new WallLight(new ColonyPos(
+                    flight.top().x() + flight.towards().offsetX() * row + sideways.offsetX(),
+                    flight.top().y() - HELIX_SIDE + 2,
+                    flight.top().z() + flight.towards().offsetZ() * row + sideways.offsetZ()), flight.towards()));
+        }
     }
 
     private static ColonyPos stair(ColonyPos top, Side towards, int index) {

@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 146
+- **Cita a regra:** 147
 - **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 7
 - **Fora de vigor:** 5
@@ -263,3 +263,4 @@ classe prova menos ainda.
 | 251 | Flor e muda não seguram a coluna (autor 12-11, opção A): na geração, a varredura do topo… | cita | VillageGroundGameTest |
 | 252 | Acessório é enfeite (autor 12-11, opção A): peça accessory da vila gerada (plains_accesso… | cita | VillageGroundGameTest |
 | 253 | O curral leva terra no solo (autor 12-11): o piso de grama da planta de curral sobre pedr… | cita | StreetLevelGameTest |
+| 254 | Patamar nas dobras da escada da mina (autor 12-11, ADR-053): cada dobra do caracol ganha… | cita | MineLandingGameTest, MineSaveTest, MineShaftLayoutTest |

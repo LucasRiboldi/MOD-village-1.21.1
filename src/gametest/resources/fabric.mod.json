@@ -29,6 +29,7 @@
       "com.villagecolony.fabric.work.MineMouthInsideGameTest",
       "com.villagecolony.fabric.integration.VillageTreesGameTest",
       "com.villagecolony.fabric.integration.VillageGroundGameTest",
+      "com.villagecolony.fabric.integration.MineLandingGameTest",
       "com.villagecolony.fabric.work.RoofDescentGameTest",
       "com.villagecolony.fabric.work.CraftStationGameTest",
       "com.villagecolony.fabric.work.ProfessionBenchGameTest",

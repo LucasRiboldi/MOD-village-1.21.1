@@ -12,6 +12,18 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.60] — candidata, 2026-11-12
+
+### Mudado
+
+- A escada da mina ganha patamar nas dobras (Regra 254, ADR-053): cada dobra do caracol tem um patamar de 3 x 3 na altura do
+  último degrau e uma tocha de parede. Só nos níveis abertos a partir desta versão; o nível em curso termina sem patamar.
+
+### Testes
+
+- `everyLandingIsLevelWithTheLastStepAndBesideIt`, `theWallBehindEveryLandingTorchIsNeverDug`,
+  `aLevelOpenedBeforeTheRuleKeepsItsShape`, `theLandingShapeSurvivesTheRoundTrip`, `theLandingTorchHangsOnTheRockBehindIt`.
+
 ## [0.4.59] — candidata, 2026-11-12
 
 ### Corrigido

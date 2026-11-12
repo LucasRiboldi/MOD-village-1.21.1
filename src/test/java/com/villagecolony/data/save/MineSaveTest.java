@@ -88,6 +88,17 @@ class MineSaveTest {
     }
 
     /** A rampa de subida do fundo atravessa o save (ADR-036 17). */
+    /** O formato do nível volta do save: com patamar e sem ele (Regra 254). */
+    @Test
+    void theLandingShapeSurvivesTheRoundTrip() {
+        UUID colonyId = UUID.randomUUID();
+        Mine landed = Mine.open(colonyId, MineShaft.from(MOUTH, Side.EAST));
+        Mine old = Mine.open(colonyId, new MineShaft(MOUTH, Side.EAST, Side.WEST));
+
+        assertEquals(true, roundTrip(savedWith(colonyAt(colonyId), landed)).mines().get(0).shaft().landings());
+        assertEquals(false, roundTrip(savedWith(colonyAt(colonyId), old)).mines().get(0).shaft().landings());
+    }
+
     @Test
     void theRampSurvivesTheRoundTrip() {
         UUID colonyId = UUID.randomUUID();
