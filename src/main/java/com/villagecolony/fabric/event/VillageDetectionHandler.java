@@ -195,11 +195,9 @@ public final class VillageDetectionHandler {
      * Executa a garantia de fundação para uma colônia já conhecida.
      *
      * <p>É a mesma sequência usada por {@link VillageAdoption#detectAround}: registra os
-     * aldeões existentes, completa a população física e repete o registro
-     * para atribuir profissões e reivindicar os baús. A entrada explícita
-     * da colônia mantém o teste de contrato isolado de outras arenas do
-     * servidor de GameTest; em produção, {@code detectAround} é quem chama
-     * esta sequência.
+     * aldeões existentes, completa a população física, repete o registro para atribuir profissões e reivindicar os
+     * baús, e põe mina, arco e casa do mineiro prontos (Regra 260). A entrada explícita da colônia mantém o teste de
+     * contrato isolado de outras arenas do servidor de GameTest; em produção, {@code detectAround} é quem chama.
      */
     public static void runFoundationNow(ServerWorld world, Colony colony) {
         BigHouseFoundation.Result house = BigHouseFoundation.ensure(world, colony);
@@ -211,6 +209,10 @@ public final class VillageDetectionHandler {
         if (foundation.changed()) {
             VillagerRegistration.registerVillagers(world, colony, colony.center());
             VillagerRegistration.registerVillagers(world, colony, colony.center());
+        }
+
+        if (house.placed()) {
+            com.villagecolony.fabric.work.MinerHomeFoundation.ensure(world, colony);
         }
     }
 

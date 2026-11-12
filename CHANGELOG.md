@@ -12,6 +12,18 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.66] — candidata, 2026-11-12
+
+### Mudado
+
+- A casa do mineiro surge com a vila: na fundação, a mina é aberta na boca escolhida pela regra do mineiro, com o arco, e a casa
+  do mineiro fica pronta ao lado da boca, sem obra e sem material (Regra 260). A escolha da boca saiu do `MineDigging` para o
+  `MineOpening`, sem mudar o mineiro.
+
+### Testes
+
+- `theMinerHomeStandsBesideTheMouthOnFoundation`, `theStampedHomeMatchesTheTurnedPlanInEveryTurn`.
+
 ## [0.4.65] — candidata, 2026-11-12
 
 ### Mudado

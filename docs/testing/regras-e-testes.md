@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 152
+- **Cita a regra:** 153
 - **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 7
 - **Fora de vigor:** 5
@@ -164,7 +164,7 @@ classe prova menos ainda.
 | 152 | O solo da vila nasce suave na geração (autor 10-29: crateras e montanhas no meio das vila… | classe | VillageBlendTest, VillageGroundGameTest, VillageSurfaceTest |
 | 153 | Mais ajudas de quem está sem tarefa (autor 10-28, O1/O3/O4/O8; pedido de novo em 10-29),… | classe | GroundSmoothingGameTest, IdleFixesGameTest, ItemStockGameTest |
 | 154 | Lenhador, fundidor e fazendeiro: os ajustes do O5–O7 (autor 10-28; pedido de novo em 10-2… | classe | ChestPlacerGameTest, IdleFixesGameTest, ItemStockGameTest |
-| 155 | A boca da mina ganha o portão do autor (10-29, estrutura mine_entrance.nbt, 9×7×5): no lu… | classe | MineLandingGameTest, MinerGameTest, SmelterGameTest |
+| 155 | A boca da mina ganha o portão do autor (10-29, estrutura mine_entrance.nbt, 9×7×5): no lu… | classe | MineLandingGameTest, MinerGameTest, MinerHomeFoundationGameTest |
 | 156 | O pedreiro alisa o chão da vila (autor 10-29, 11-06): sem tarefa, uma vez por minuto ele… | classe | GroundSmoothingGameTest, VillageBlendTest, VillageHelpersGameTest |
 | 157 | O mineiro não quebra o que segura algo solto (autor 10-29, jogo da 0.3.108: o cascalho pe… | classe | MineGravityGameTest, MineSettlingGameTest, MinerGameTest |
 | 158 | Sem cama no andar de baixo da casa de escada de mão (autor 10-29, jogo da 0.3.108: 9 de 2… | classe | BedChoiceGameTest, BedPlanTest, StructureEntrancesGameTest |
@@ -269,3 +269,4 @@ classe prova menos ainda.
 | 257 | Areia e argila sem reserva de cru (autor 12-11, solução 3 da reanálise dos logs): areia,… | cita | RawStoneReserveTest |
 | 258 | O adiantamento lê todas as estruturas da vila (autor 12-11, solução 2 da reanálise dos lo… | cita | BiomePiecesGameTest |
 | 259 | Um aldeão de cada profissão na vila nova (autor 12-11): a fundação conta os adultos da vi… | cita | VillageFoundationGameTest |
+| 260 | Casa do mineiro na fundação (autor 12-11): quando a BigHouseMOD acaba de ser posta, a fun… | cita | MinerHomeFoundationGameTest |

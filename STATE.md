@@ -2,6 +2,8 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
+> **Candidata 0.4.66:** a casa do mineiro, a mina e o arco surgem prontos na fundação da vila (Regra 260). Sentinela `fast` verde de primeira: 1.103 GameTests e 1.795 unitários. Não jogada.
+
 > **Candidata 0.4.65:** a vila nova nasce com os oito ofícios (Regra 259). Não jogada.
 
 > **Candidata 0.4.64:** o adiantamento lê todas as estruturas da vila (Regra 258). Quatro regras novas do autor de 12-11 esperam desenho no `TODO.md`. Não jogada.

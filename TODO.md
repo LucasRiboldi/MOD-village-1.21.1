@@ -4,8 +4,8 @@
 
 - [x] **Os 8 ofícios na fundação** (0.4.65, Regra 259): cada profissão (construtor, carpinteiro, fazendeiro, lenhador, pedreiro, mineiro,
   pastor, fundidor) recebe um aldeão na fundação; primeiro os da vila, e o que faltar nasce adulto. Só vilas novas.
-- [ ] **Casa do mineiro na fundação:** a fundação escolhe a boca da mina, ergue o arco e a casa do mineiro ao lado,
-  prontos, sem obra e sem material.
+- [x] **Casa do mineiro na fundação** (0.4.66, Regra 260): a fundação escolhe a boca da mina, ergue o arco e a casa do mineiro
+  ao lado, prontos, sem obra e sem material. Só vilas novas; conferir em jogo.
 - [ ] **Poste de luz:** base de pedra do bioma, duas cercas da madeira do bioma e a tocha da colônia em cima. Obra na
   lista, erguida pelo construtor com material. Só depois de existirem linhas fixas do grafo; no bloco ao lado da linha
   fixa, na linha do solo, sem estrutura a 2 blocos em volta e sem bloqueio na vertical; ao longo das ruas fixas, até a
