@@ -18,8 +18,9 @@ import java.util.Optional;
  * A luz da mina: tocha de chão, a cada {@link MineShaft#LIGHT_SPACING} blocos, no salão do nível e no do
  * ramal ({@link MineShaft#lightSpots}) — escolha do autor, 2026-10-27.
  *
- * <p>Nunca na parede: o mineiro cavava a parede depois e a tocha caía (playtest 0.3.97). Nunca no degrau:
- * a escada é caminho. O chão debaixo de cada tocha não é cavado nem por este nível nem pelo seguinte
+ * <p>Na parede, só a do patamar das dobras (Regra 254): a rocha de fora da dobra, que nenhum nível cava
+ * ({@code MineShaftLayoutTest}). Fora dela, nunca: o mineiro cavava a parede depois e a tocha caía (playtest
+ * 0.3.97). Nunca no degrau: a escada é caminho. O chão debaixo de cada tocha não é cavado nem por este nível nem pelo seguinte
  * ({@code MineShaftLayoutTest}). A tocha não custa material, como a mobília da boca (Regra 30).
  *
  * <p>O mineiro não cava a própria luz: uma posição com luz é espaço aberto ({@link #isLight}), e é por ela
@@ -46,6 +47,17 @@ public final class MineLighting {
      * @return onde a tocha foi posta, ou vazio quando não havia o que fazer
      */
     public static Optional<BlockPos> light(ServerWorld world, Mine mine, MineArm arm) {
+        for (MineShaft.WallLight light : arm.shaft().landingLights()) {
+            BlockPos at = MinecraftTypeAdapter.toBlockPos(light.at());
+
+            if (world.getChunkManager().getWorldChunk(at.getX() >> 4, at.getZ() >> 4) != null
+                    && placeWallTorch(world, at, MinecraftTypeAdapter.toDirection(light.wall()))) {
+                VillageColonyMod.LOGGER.info("Mine {} lit the landing wall at {}", mine.colonyId(), at.toShortString());
+
+                return Optional.of(at);
+            }
+        }
+
         for (ColonyPos spot : arm.shaft().lightSpots()) {
             BlockPos at = MinecraftTypeAdapter.toBlockPos(spot);
 
@@ -62,6 +74,24 @@ public final class MineLighting {
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * A tocha na parede do patamar, presa no bloco do lado {@code wall}: só com o patamar aberto ({@code at} livre) e
+     * a rocha firme atrás. Patamar ainda por cavar não recebe nada.
+     */
+    static boolean placeWallTorch(ServerWorld world, BlockPos at, Direction wall) {
+        BlockPos behind = at.offset(wall);
+
+        if (!world.getBlockState(at).isAir()
+                || !world.getBlockState(behind).isSideSolidFullSquare(world, behind, wall.getOpposite())) {
+            return false;
+        }
+
+        world.setBlockState(at, Blocks.WALL_TORCH.getDefaultState()
+                .with(net.minecraft.block.WallTorchBlock.FACING, wall.getOpposite()));
+
+        return true;
     }
 
     /**

@@ -78,6 +78,7 @@ class MineShaftLayoutTest {
             for (MineShaft arm : armsOf(level)) {
                 stairFloors.addAll(below(stepFeet(arm, 0, STAIR)));
                 stairFloors.addAll(below(stepFeet(arm, MineShaft.SHARED_BLOCKS, ARM_STAIR)));
+                stairFloors.addAll(below(landingFeet(arm)));
             }
 
             Set<ColonyPos> dug = new HashSet<>();
@@ -135,8 +136,10 @@ class MineShaftLayoutTest {
         }
 
         assertEquals(planned, exclusive.size(), "dois ramais cavam a mesma célula");
-        assertTrue(arms.getFirst().beyondTheArm(MineShaft.SHARED_BLOCKS + MineShaft.ARM_BLOCKS));
-        assertFalse(arms.getFirst().beyondTheArm(MineShaft.SHARED_BLOCKS + MineShaft.ARM_BLOCKS - 1));
+        int end = MineShaft.ARM_END + arms.getFirst().landingBlocks();
+
+        assertTrue(arms.getFirst().beyondTheArm(end));
+        assertFalse(arms.getFirst().beyondTheArm(end - 1));
     }
 
     @Test
@@ -146,7 +149,106 @@ class MineShaftLayoutTest {
         assertEquals(60 - MineShaft.DESCENT - MineShaft.ARM_STAIRS, shaft.deepened().entry().y());
     }
 
+    /** O patamar fica na altura do último degrau do lance, encostado nele, com 3 de fundo (Regra 254). */
+    @Test
+    void everyLandingIsLevelWithTheLastStepAndBesideIt() {
+        for (Side descent : Side.values()) {
+            for (MineShaft arm : armsOf(MineShaft.from(new ColonyPos(0, 60, 0), descent))) {
+                List<ColonyPos> landing = landingFeet(arm);
+                Set<ColonyPos> steps = new HashSet<>(stepFeet(arm, 0, STAIR));
+                steps.addAll(stepFeet(arm, MineShaft.SHARED_BLOCKS, ARM_STAIR));
+
+                assertEquals(arm.landingBlocks() / MineShaft.HEADROOM, landing.size(), descent + ": pés do patamar");
+                assertEquals(arm.isArmZero() ? 6 : 3, arm.landingLights().size(), descent + ": uma tocha por patamar");
+
+                for (ColonyPos feet : landing) {
+                    assertTrue(reachesAStep(feet, landing, steps), descent + "/" + arm.gallery()
+                            + ": o patamar em " + feet + " não chega a um degrau na mesma altura");
+                }
+            }
+        }
+    }
+
+    /** A parede que segura a tocha do patamar nunca é cavada: nem por este nível, nem pelo seguinte (Regra 254). */
+    @Test
+    void theWallBehindEveryLandingTorchIsNeverDug() {
+        for (Side descent : Side.values()) {
+            MineShaft level = MineShaft.from(new ColonyPos(0, 60, 0), descent);
+            Set<ColonyPos> dug = new HashSet<>();
+
+            for (MineShaft arm : armsOf(level)) {
+                dug.addAll(arm.plannedCells());
+            }
+            for (MineShaft arm : armsOf(level.deepened())) {
+                dug.addAll(arm.plannedCells());
+            }
+
+            for (MineShaft arm : armsOf(level)) {
+                for (MineShaft.WallLight light : arm.landingLights()) {
+                    ColonyPos wall = new ColonyPos(light.at().x() + light.wall().offsetX(), light.at().y(),
+                            light.at().z() + light.wall().offsetZ());
+
+                    assertTrue(arm.plannedCells().contains(light.at()), descent + ": tocha fora do patamar em " + light.at());
+                    assertFalse(dug.contains(wall), descent + ": a parede da tocha em " + wall + " é cavada");
+                }
+            }
+        }
+    }
+
+    /** O nível que já estava sendo cavado termina sem patamar; o seguinte já o tem (escolha do autor, 12-11). */
+    @Test
+    void aLevelOpenedBeforeTheRuleKeepsItsShape() {
+        MineShaft old = new MineShaft(new ColonyPos(0, 60, 0), Side.NORTH, Side.SOUTH);
+
+        assertEquals(0, old.landingBlocks());
+        assertTrue(old.beyondTheArm(MineShaft.ARM_END));
+        assertTrue(old.landingLights().isEmpty());
+        assertFalse(old.turned().landings());
+        assertTrue(old.deepened().landings());
+        assertTrue(MineShaft.from(new ColonyPos(0, 60, 0), Side.NORTH).rerouted().landings());
+        assertEquals(MineShaft.ARM_END + 2 * MineShaft.HELIX_LANDING_BLOCKS,
+                MineShaft.from(new ColonyPos(0, 60, 0), Side.NORTH).plannedCells().size());
+    }
+
     // ---------------------------------------------------------------------
+
+    /** Os pés do patamar: a camada de baixo de cada coluna dele. */
+    private static List<ColonyPos> landingFeet(MineShaft shaft) {
+        List<ColonyPos> feet = new ArrayList<>();
+
+        for (int index = MineShaft.ARM_END; !shaft.beyondTheArm(index); index += MineShaft.HEADROOM) {
+            feet.add(shaft.positionAt(index));
+        }
+
+        return feet;
+    }
+
+    /** Se, andando pelo patamar na mesma altura, se chega ao lado de um degrau dessa altura. */
+    private static boolean reachesAStep(ColonyPos from, List<ColonyPos> landing, Set<ColonyPos> steps) {
+        Set<ColonyPos> seen = new HashSet<>();
+        java.util.ArrayDeque<ColonyPos> open = new java.util.ArrayDeque<>(List.of(from));
+
+        while (!open.isEmpty()) {
+            ColonyPos at = open.poll();
+
+            if (!seen.add(at)) {
+                continue;
+            }
+
+            for (Side side : Side.values()) {
+                ColonyPos next = new ColonyPos(at.x() + side.offsetX(), at.y(), at.z() + side.offsetZ());
+
+                if (steps.contains(next)) {
+                    return true;
+                }
+                if (landing.contains(next)) {
+                    open.add(next);
+                }
+            }
+        }
+
+        return false;
+    }
 
     private static List<MineShaft> armsOf(MineShaft shaft) {
         List<MineShaft> arms = new ArrayList<>();
@@ -174,9 +276,7 @@ class MineShaftLayoutTest {
     /** O chão de tudo em que se pisa: o bloco sob a camada de baixo de cada degrau e de cada salão. */
     private static Set<ColonyPos> floorsOf(MineShaft shaft) {
         Set<ColonyPos> floors = new HashSet<>();
-        int total = MineShaft.SHARED_BLOCKS + MineShaft.ARM_BLOCKS;
-
-        for (int index = 0; index < total; index += MineShaft.HEADROOM) {
+        for (int index = 0; !shaft.beyondTheArm(index); index += MineShaft.HEADROOM) {
             ColonyPos feet = shaft.positionAt(index);
             floors.add(new ColonyPos(feet.x(), feet.y() - 1, feet.z()));
         }

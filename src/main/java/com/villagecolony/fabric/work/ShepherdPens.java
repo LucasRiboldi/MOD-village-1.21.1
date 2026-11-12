@@ -160,7 +160,7 @@ final class ShepherdPens {
         return nearestAccess(world, pen, shepherd.getBlockPos(), access -> canReach(shepherd, access));
     }
 
-    private static boolean canReach(net.minecraft.entity.passive.VillagerEntity shepherd, Access access) {
+    static boolean canReach(net.minecraft.entity.passive.VillagerEntity shepherd, Access access) {
         // Além do alcance da navegação não há o que comprovar: ele vai por pernas (WalkLegs), e o prazo da coleta responde.
         if (!shepherd.getBlockPos().isWithinDistance(access.outside(), WalkLegs.LEG)) {
             return true;
@@ -203,7 +203,7 @@ final class ShepherdPens {
         return Optional.ofNullable(best);
     }
 
-    private static Optional<Pen> nearestAccess(ServerWorld world, Pen pen, BlockPos from,
+    static Optional<Pen> nearestAccess(ServerWorld world, Pen pen, BlockPos from,
             java.util.function.Predicate<Access> reachable) {
         return pen.accesses().stream().filter(access -> world.isChunkLoaded(access.gate())
                         && world.getBlockState(access.gate()).getBlock() instanceof FenceGateBlock

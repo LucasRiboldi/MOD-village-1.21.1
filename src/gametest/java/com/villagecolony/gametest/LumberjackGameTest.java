@@ -2216,6 +2216,8 @@ public class LumberjackGameTest implements FabricGameTest {
 
         for (BlockPos log : new BlockPos[] {near, middle}) {
             context.setBlockState(log, net.minecraft.block.Blocks.OAK_LOG.getDefaultState());
+            // Árvore tem folha natural no alto (Regra 256).
+            context.setBlockState(log.up(), net.minecraft.block.Blocks.OAK_LEAVES.getDefaultState());
             ours.add(context.getAbsolutePos(log));
         }
 
@@ -2229,6 +2231,7 @@ public class LumberjackGameTest implements FabricGameTest {
 
         // Nova, e mais perto que a do índice.
         context.setBlockState(closer, net.minecraft.block.Blocks.OAK_LOG.getDefaultState());
+        context.setBlockState(closer.up(), net.minecraft.block.Blocks.OAK_LEAVES.getDefaultState());
         ours.add(context.getAbsolutePos(closer));
 
         BlockPos second = TreeScanner.findNearestLog(world, center, 12, accepts).orElse(null);
@@ -2269,6 +2272,9 @@ public class LumberjackGameTest implements FabricGameTest {
                     context.setBlockState(
                             relativeCenter.add(dx, 0, dz),
                             net.minecraft.block.Blocks.OAK_LOG.getDefaultState());
+                    // Árvore tem folha natural no alto (Regra 256).
+                    context.setBlockState(relativeCenter.add(dx, 1, dz),
+                            net.minecraft.block.Blocks.OAK_LEAVES.getDefaultState());
                     planted++;
                 }
             }

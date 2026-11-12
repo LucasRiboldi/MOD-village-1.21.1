@@ -23,9 +23,13 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * O portão da entrada da mina — estrutura do autor ({@code data/villagecolony/structure/mine_entrance.nbt}, 2026-10-29),
- * no lugar do arco de pedregulho: dois pilares de pedra e tijolo, telhado de carvalho escuro, três lanternas
- * penduradas, um baú e um barril de enfeite, e um vão de 3 de largura e 4 de altura no meio.
+ * O arco da entrada da mina — Regra 256 (autor, 2026-11-12): dois pilares e uma viga de tora descascada, um
+ * degrau em cada ponta da viga com um lampião pendurado, e um baú no chão do lado de fora, à direita de quem entra
+ * ({@code data/villagecolony/structure/mine_arch.nbt}). O arco surge sozinho, sem profissão nem material, na madeira da
+ * vila (Regra 262), e é conferido pelo papel de cada peça.
+ *
+ * <p>O portão de 2026-10-29 ({@code mine_entrance.nbt}: pilares de pedra, telhado de carvalho escuro) não é mais
+ * erguido, mas continua reconhecido onde já está de pé, e a mina continua sem cavar as peças dele.
  *
  * <p>A entrada da mina — as três pistas da escada — fica no centro do vão ({@link #CENTER_X}, 0, {@link #CENTER_Z}), e o
  * vão corre no rumo em que a escada desce: o {@code +z} da estrutura vira o rumo da descida. Cada bloco entra só onde há ar ou chão natural, e nunca
@@ -46,6 +50,11 @@ public final class MineGate {
     /** Um bloco da estrutura, em coordenadas dela. */
     record Piece(int x, int y, int z, BlockState state) {
     }
+
+    /** O arco erguido hoje; o portão antigo, só reconhecido. As peças do arco ficam no sistema do portão (z + 2). */
+    private static final Template ARCH = new Template("mine_arch.nbt", CENTER_Z);
+
+    private static final Template OLD = new Template("mine_entrance.nbt", 0);
 
     /** Um portão de pé no mundo. */
     public record Standing(BlockPos mouth, Direction descent) {
@@ -78,18 +87,18 @@ public final class MineGate {
         return center.offset(across, x - CENTER_X).offset(along, z - CENTER_Z).up(y);
     }
 
-    /** As posições de todos os blocos do portão nesta boca. */
+    /** As posições de todos os blocos do arco nesta boca. */
     public static List<BlockPos> positions(BlockPos mouth, Direction descent) {
         List<BlockPos> positions = new ArrayList<>();
 
-        for (Piece piece : Template.PIECES) {
+        for (Piece piece : ARCH.pieces) {
             positions.add(at(mouth, descent, piece.x(), piece.y(), piece.z()));
         }
 
         return positions;
     }
 
-    /** Se este bloco pode ser o topo do telhado de um portão. */
+    /** Se este bloco pode ser o topo do telhado de um portão antigo. */
     public static boolean isPeak(BlockState state) {
         return state.isOf(Blocks.DARK_OAK_LOG);
     }
@@ -101,7 +110,7 @@ public final class MineGate {
 
         for (Direction descent : Direction.Type.HORIZONTAL) {
             BlockPos mouth = peak.down(PEAK_Y).offset(descent.rotateYClockwise());
-            int matched = matched(world, mouth, descent);
+            int matched = matched(world, mouth, descent, OLD);
 
             if (matched > most) {
                 most = matched;
@@ -109,21 +118,33 @@ public final class MineGate {
             }
         }
 
-        return most >= Template.PIECES.size() * STANDING_SHARE ? best : Optional.empty();
+        return most >= OLD.pieces.size() * STANDING_SHARE ? best : Optional.empty();
     }
 
-    /** Se o portão continua de pé. Chunk fora de memória não desmente. */
+    /**
+     * O arco ou o portão de pé nesta boca, lido pelas peças e não pelo topo — Regra 256. A boca vem da mina da colônia:
+     * o arco não precisa de marcador próprio, e uma peça tirada (o lenhador levou o topo do portão antigo) não o apaga.
+     */
+    public static Optional<Standing> standingAtMouth(ServerWorld world, BlockPos mouth, Direction descent) {
+        Standing gate = new Standing(mouth, descent);
+
+        return stands(world, gate) ? Optional.of(gate) : Optional.empty();
+    }
+
+    /** Se o arco ou o portão antigo continua de pé. Chunk fora de memória não desmente. */
     public static boolean stands(ServerWorld world, Standing gate) {
-        return matched(world, gate.mouth(), gate.descent()) >= Template.PIECES.size() * STANDING_SHARE;
+        return matched(world, gate.mouth(), gate.descent(), ARCH) >= ARCH.pieces.size() * STANDING_SHARE
+                || matched(world, gate.mouth(), gate.descent(), OLD) >= OLD.pieces.size() * STANDING_SHARE;
     }
 
-    private static int matched(ServerWorld world, BlockPos mouth, Direction descent) {
+    private static int matched(ServerWorld world, BlockPos mouth, Direction descent, Template template) {
         int matched = 0;
 
-        for (Piece piece : Template.PIECES) {
+        for (Piece piece : template.pieces) {
             BlockPos at = at(mouth, descent, piece.x(), piece.y(), piece.z());
 
-            if (!world.isChunkLoaded(at) || world.getBlockState(at).isOf(piece.state().getBlock())) {
+            // Pelo papel da peça: o arco de outra madeira, de antes da Regra 262 ou de outro bioma, segue reconhecido.
+            if (!world.isChunkLoaded(at) || BiomeBlueprints.sameRole(world.getBlockState(at), piece.state().getBlock())) {
                 matched++;
             }
         }
@@ -136,11 +157,13 @@ public final class MineGate {
         return at(mouth, descent, CENTER_X, 0, -blocks);
     }
 
-    /** Se a posição é bloco do portão: a mina nunca a escava. */
+    /** Se a posição é bloco do arco ou do portão antigo: a mina nunca a escava. */
     public static boolean isPart(BlockPos mouth, Direction descent, BlockPos at) {
-        for (Piece piece : Template.PIECES) {
-            if (at(mouth, descent, piece.x(), piece.y(), piece.z()).equals(at)) {
-                return true;
+        for (Template template : List.of(ARCH, OLD)) {
+            for (Piece piece : template.pieces) {
+                if (at(mouth, descent, piece.x(), piece.y(), piece.z()).equals(at)) {
+                    return true;
+                }
             }
         }
 
@@ -148,16 +171,19 @@ public final class MineGate {
     }
 
     /**
-     * Ergue o portão onde couber: cada bloco só sobre ar, planta ou chão natural, e nunca sobre casa da vila ou obra da
-     * colônia. Sem atualizar os vizinhos, para a lanterna pendurada não cair antes do teto.
+     * Ergue o arco onde couber: cada bloco só sobre ar, planta ou chão natural, e nunca sobre casa da vila ou obra da
+     * colônia. Sem atualizar os vizinhos, para o lampião pendurado não cair antes do degrau. A madeira é a da vila em volta
+     * da boca (Regra 262).
      *
      * @return se ao menos uma posição do portão tem algo firme depois da passagem — o sinal de que ele não sobe de novo
      */
     static boolean raise(ServerWorld world, BlockPos mouth, Direction descent) {
         BlockRotation rotation = rotationFor(descent);
+        com.villagecolony.core.construction.model.BiomeBlockSwap swap =
+                BiomeBlueprints.swapAt(world, com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(mouth));
         boolean anyFirm = false;
 
-        for (Piece piece : Template.PIECES) {
+        for (Piece piece : ARCH.pieces) {
             BlockPos target = at(mouth, descent, piece.x(), piece.y(), piece.z());
             BlockState there = world.getBlockState(target);
             boolean free = there.isReplaceable()
@@ -165,7 +191,8 @@ public final class MineGate {
                     && !BlockProtection.isColonyBuilt(target));
 
             if (free) {
-                world.setBlockState(target, piece.state().rotate(rotation), Block.NOTIFY_LISTENERS | Block.FORCE_STATE);
+                world.setBlockState(target, BiomeBlueprints.swapped(piece.state(), swap).rotate(rotation),
+                        Block.NOTIFY_LISTENERS | Block.FORCE_STATE);
             }
 
             anyFirm |= !world.getBlockState(target).isReplaceable();
@@ -188,15 +215,19 @@ public final class MineGate {
         return list.size() == 3 ? new int[] {list.getInt(0), list.getInt(1), list.getInt(2)} : new int[0];
     }
 
-    /** A estrutura lida uma vez do arquivo do mod. */
+    /** Uma estrutura lida uma vez do arquivo do mod, com o deslocamento em z que a põe no sistema do portão. */
     private static final class Template {
 
-        static final List<Piece> PIECES = load();
+        final List<Piece> pieces;
 
-        private static List<Piece> load() {
-            try (InputStream in = MineGate.class.getResourceAsStream("/data/villagecolony/structure/mine_entrance.nbt")) {
+        Template(String file, int shiftZ) {
+            this.pieces = load(file, shiftZ);
+        }
+
+        private static List<Piece> load(String file, int shiftZ) {
+            try (InputStream in = MineGate.class.getResourceAsStream("/data/villagecolony/structure/" + file)) {
                 if (in == null) {
-                    VillageColonyMod.LOGGER.error("The mine gate structure is missing from the mod");
+                    VillageColonyMod.LOGGER.error("The mine gate structure {} is missing from the mod", file);
                     return List.of();
                 }
 
@@ -212,7 +243,7 @@ public final class MineGate {
                     int[] pos = positionOf(block);
 
                     if (!state.isAir() && pos.length == 3) {
-                        pieces.add(new Piece(pos[0], pos[1], pos[2], state));
+                        pieces.add(new Piece(pos[0], pos[1], pos[2] + shiftZ, state));
                     }
                 }
 
@@ -221,7 +252,7 @@ public final class MineGate {
 
                 return List.copyOf(pieces);
             } catch (IOException failure) {
-                VillageColonyMod.LOGGER.error("The mine gate structure could not be read", failure);
+                VillageColonyMod.LOGGER.error("The mine gate structure {} could not be read", file, failure);
                 return List.of();
             }
         }

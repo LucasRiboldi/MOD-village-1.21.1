@@ -190,7 +190,9 @@ final class ConstructionResume {
 
             Optional<Block> expected = MinecraftTypeAdapter.toBlock(block.block());
 
-            if ((expected.isPresent() && world.getBlockState(where).isOf(expected.get()))
+            // Peça de outra madeira ou pedra faz o mesmo papel e fica (Regra 262).
+            if ((expected.isPresent() && com.villagecolony.fabric.integration.BiomeBlueprints.sameRole(
+                    world.getBlockState(where), expected.get()))
                     || BuriedPieces.heldByTheGround(world, project.blueprint(), block, where)) {
                 project.markPlaced(block);
 

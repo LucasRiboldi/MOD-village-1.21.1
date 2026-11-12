@@ -71,6 +71,13 @@ final class MineSave {
      */
     private static final String ASCENT = "ascent";
 
+    /**
+     * Se o nível tem patamar nas dobras — Regra 254, ADR-053. Ausente é falso: o nível que já estava sendo
+     * cavado termina sem patamar. Fora do {@code SHAPE_VERSION}: o patamar vem depois de tudo o que o nível já
+     * tinha e não muda a posição de nenhuma célula, e a versão de forma zeraria o cursor.
+     */
+    private static final String LANDINGS = "landings";
+
 
     /**
      * Qual geometria de mina escreveu esta fronteira — 2026-08-27.
@@ -138,6 +145,7 @@ final class MineSave {
             entry.putInt(SHAPE, SHAPE_VERSION);
             entry.putBoolean(ARCH, mine.archRaised());
             entry.putInt(ASCENT, mine.shaft().ascent());
+            entry.putBoolean(LANDINGS, mine.shaft().landings());
 
             list.add(entry);
         }
@@ -220,7 +228,8 @@ final class MineSave {
 
             Mine mine = Mine.restore(
                     colonyId,
-                    new MineShaft(entrance, descent.get(), gallery.get(), Math.max(0, entry.getInt(ASCENT))),
+                    new MineShaft(entrance, descent.get(), gallery.get(), Math.max(0, entry.getInt(ASCENT)),
+                            entry.getBoolean(LANDINGS)),
                     cuts);
 
             // Sem chave, getBoolean devolve falso e a abertura permanece

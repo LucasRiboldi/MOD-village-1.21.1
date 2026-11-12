@@ -367,6 +367,11 @@ final class VillageAdoption {
             // A caixa da vila: medida uma vez, depois só cresce.
             VillageMeasure.measure(world, colony, candidate.beds());
 
+            // Com a caixa medida, a boca nasce na borda: mina, arco e casa do mineiro prontos (Regra 260).
+            if (house.placed()) {
+                com.villagecolony.fabric.work.MinerHomeFoundation.ensure(world, colony);
+            }
+
             if (created) {
                 int trees = VillageForest.seedInitial(world, colony);
                 // Dois de cada bicho de criação, sorteados na caixa da vila (regra do autor, 2026-10-20).

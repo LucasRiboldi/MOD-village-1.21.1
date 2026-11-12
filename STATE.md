@@ -1,6 +1,31 @@
-# STATE — 2026-11-10
+# STATE — 2026-11-12
 
-> **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
+> **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.68 está publicada (`v0.4.68-alpha`) e integrada na `main`; da 0.4.54 à 0.4.68 nada foi jogado.
+
+> **Candidata 0.4.68:** cada estrutura do mod sai na madeira e na pedra do bioma da vila, e a de pé segue reconhecida (Regra 262). Sentinela `fast` verde de primeira: 1.109 GameTests e 1.803 unitários. Não jogada.
+
+> **Candidata 0.4.67:** poste de luz nas ruas fixas, obra do construtor na vaga ociosa (Regra 261). Sentinela `fast`: 1.107 GameTests e 1.798 unitários; caiu só o instável `workerCollectsWhileWalkingPast`. Não jogada.
+
+> **Candidata 0.4.66:** a casa do mineiro, a mina e o arco surgem prontos na fundação da vila (Regra 260). Sentinela `fast` verde de primeira: 1.103 GameTests e 1.795 unitários. Não jogada.
+
+> **Candidata 0.4.65:** a vila nova nasce com os oito ofícios (Regra 259). Não jogada.
+
+> **Candidata 0.4.64:** o adiantamento lê todas as estruturas da vila (Regra 258). Quatro regras novas do autor de 12-11 esperam desenho no `TODO.md`. Não jogada.
+
+> **Candidata 0.4.63:** areia, argila e bola de argila vão à fornalha sem a reserva de metade (Regra 257). Não jogada.
+
+> **Candidata 0.4.62:** arco de pinheiro na boca da mina, lido pela boca; lenhador só corta árvore com folha (Regra 256). Não jogada.
+
+> **Candidata 0.4.61:** animal na corda vai para o curral; com curral na vila o pastor não amarra, e o log diz por que o curral não serviu (Regra 255). Não jogada.
+
+> **Candidata 0.4.60:** patamar de 3 x 3 com tocha nas dobras da escada da mina, só nos níveis novos (Regra 254, ADR-053). Não jogada.
+
+> **Candidata 0.4.59:** o curral leva terra no solo, e não a pedra do terreno (Regra 253). Escadaria, marcador da mina, plantação e corda do pastor seguem sem correção. Não jogada.
+
+> **Candidata 0.4.58:** torres de flor no solo da vila (Regra 251) e acessório sem entrada (Regra 252). Escadaria, marcador da mina, plantação, curral grande e corda do pastor esperam diagnóstico. Não jogada.
+
+> **Candidata 0.4.57:** a rua da vila nasce no chão novo (Regra 250): 21% das colunas de caminho
+> ficavam no ar no jogo da 0.4.56. Só em chunks novos. Não jogada.
 
 > **Candidata 0.4.56:** O2b-1 do autor — a fundição sem cru chama o pedreiro (Regra 249). Não jogada.
 

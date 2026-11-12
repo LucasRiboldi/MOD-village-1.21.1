@@ -30,7 +30,8 @@ import java.util.Map;
 /**
  * O solo da vila na geração do chunk — autor, 2026-10-29. Roda no começo da colocação de estruturas e features de
  * cada chunk ({@code ChunkGenerator.generateFeatures}), com o terreno pronto e antes de as peças da vila serem
- * postas: as ruas do Minecraft seguem o chão que acharem, então nascem sobre o chão novo.
+ * postas: as ruas do Minecraft seguem a altura de geração da coluna, que o corte leva junto (Regra 250), então nascem
+ * sobre o chão novo.
  *
  * <p>A conta é do {@link VillageBlend}: na vila (as peças + {@link #CORE_PAD}), degrau de 1 e buraco tampado; em
  * volta, até {@link #REACH}, a mistura suave do topo de verdade com o nível da vila, numa faixa de 4 vezes o desnível. Calculada uma
@@ -350,6 +351,7 @@ public final class VillageGround {
         }
 
         clearUnsupportedGrass(world, chunk, at, Math.min(top, target) + 1, Math.max(top, target) + 2);
+        GenerationHeights.retrack(chunk, x, z, Math.max(top, target) + 2);
     }
 
     /** Remove flora sem apoio depois de mudar a altura da coluna. */
@@ -363,10 +365,14 @@ public final class VillageGround {
         }
     }
 
-    /** Plantas soltas não sobrevivem ao nivelamento; lavoura não é flora espontânea. */
+    /**
+     * Plantas soltas não sobrevivem ao nivelamento; lavoura não é flora espontânea. Flor e muda no topo não são o chão:
+     * a varredura passa por elas, ou a coluna fica de pé (Regra 251).
+     */
     private static boolean isFlora(BlockState state) {
         return state.isOf(Blocks.SHORT_GRASS) || state.isOf(Blocks.TALL_GRASS)
-                || state.isOf(Blocks.FERN) || state.isOf(Blocks.LARGE_FERN) || state.isIn(BlockTags.FLOWERS);
+                || state.isOf(Blocks.FERN) || state.isOf(Blocks.LARGE_FERN) || state.isIn(BlockTags.FLOWERS)
+                || state.isIn(BlockTags.SAPLINGS);
     }
 
     /** Marca água ligada à borda da área gerada: mar e rio ficam; água fechada no miolo pode virar terreno. */
@@ -475,7 +481,8 @@ public final class VillageGround {
                 return at.getY();
             }
 
-            if (!state.isAir() && !state.isReplaceable() && !state.isIn(BlockTags.LEAVES) && !state.isIn(BlockTags.LOGS)) {
+            if (!state.isAir() && !state.isReplaceable() && !state.isIn(BlockTags.LEAVES) && !state.isIn(BlockTags.LOGS)
+                    && !isFlora(state)) {
                 return at.getY();
             }
 

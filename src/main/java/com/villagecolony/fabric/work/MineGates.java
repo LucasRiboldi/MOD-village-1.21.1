@@ -23,8 +23,9 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Os portões de mina de pé em volta da vila, lidos do mundo pela varredura do grafo — Regra 210: o portão entra no grafo como
- * uma porta, sem bloco novo e sem estado em disco. Portão derrubado sai sozinho. A entrada é o primeiro chão do lado de onde se
+ * Os portões de mina de pé em volta da vila, lidos do mundo — Regra 210: o portão entra no grafo como uma porta, sem bloco
+ * novo e sem estado em disco. O arco da boca da mina da colônia é lido pelas peças (Regra 256); o portão antigo também
+ * pelo topo do telhado, na varredura do grafo. Portão derrubado sai sozinho. A entrada é o primeiro chão do lado de onde se
  * chega, fora da folga da escada, que o caminho não pode aterrar.
  */
 final class MineGates {
@@ -54,7 +55,11 @@ final class MineGates {
 
         known.removeIf(gate -> !MineGate.stands(world, gate));
 
-        for (MineGate.Standing gate : known) {
+        // A boca da mina da colônia é o marcador do arco: ele é lido pelas peças, sem depender do topo (Regra 256).
+        Set<MineGate.Standing> gates = new HashSet<>(known);
+        atTheMouth(world, colony).ifPresent(gates::add);
+
+        for (MineGate.Standing gate : gates) {
             for (int blocks = 1; blocks <= WorldPathTerrain.MINE_CLEARANCE + 2; blocks++) {
                 BlockPos out = MineGate.approach(gate.mouth(), gate.descent(), blocks);
                 OptionalInt ground = terrain.groundY(out.getX(), out.getZ(), gate.mouth().getY());
@@ -66,11 +71,21 @@ final class MineGates {
             }
         }
 
-        if (known.isEmpty()) {
+        if (gates.isEmpty()) {
             mouthFront(world, colony, terrain).ifPresent(fronts::add);
         }
 
         return fronts;
+    }
+
+    /** O arco ou o portão de pé na boca da mina desta colônia, se houver. */
+    private static Optional<MineGate.Standing> atTheMouth(ServerWorld world, Colony colony) {
+        return VillageColonyMod.MINES.of(colony.id())
+                .filter(mine -> !mine.shaft().isRamp())
+                .flatMap(mine -> MineGate.standingAtMouth(world,
+                        com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(
+                                MineEntrance.surfaceOf(world, colony.id(), mine)),
+                        com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toDirection(mine.shaft().descent())));
     }
 
     private static Optional<ColonyPos> mouthFront(ServerWorld world, Colony colony, WorldPathTerrain terrain) {

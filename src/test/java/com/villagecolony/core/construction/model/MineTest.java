@@ -160,7 +160,7 @@ class MineTest {
             arm.nextPosition();
         }
 
-        assertEquals(MineShaft.SHARED_BLOCKS + MineShaft.ARM_BLOCKS, arm.cut());
+        assertEquals(MineShaft.ARM_END + arm.shaft().landingBlocks(), arm.cut());
     }
 
     @Test

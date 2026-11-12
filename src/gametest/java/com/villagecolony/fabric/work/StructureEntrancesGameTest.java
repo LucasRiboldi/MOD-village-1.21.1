@@ -123,7 +123,7 @@ public class StructureEntrancesGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** O portão é reconhecido no mundo em todo giro, com a boca e o rumo certos. */
+    /** O arco é reconhecido na boca em todo giro, pelas peças (Regras 210 e 256). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "entrance_gate_read", tickLimit = 20)
     public void theMineGateIsReadFromTheWorldInEveryRotation(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -137,20 +137,17 @@ public class StructureEntrancesGameTest implements FabricGameTest {
             for (Direction descent : Direction.Type.HORIZONTAL) {
                 MineMouth.furnish(world, mouth, descent, false);
 
-                BlockPos peak = MineGate.at(mouth, descent, 4, 6, 2);
-
-                context.assertTrue(MineGate.isPeak(world.getBlockState(peak)), "Regra 210: o topo do portão mudou: " + descent);
-
-                Optional<MineGate.Standing> read = MineGate.standingAt(world, peak);
+                Optional<MineGate.Standing> read = MineGate.standingAtMouth(world, mouth, descent);
 
                 context.assertTrue(read.equals(Optional.of(new MineGate.Standing(mouth, descent))),
-                        "Regra 210: portão lido errado em " + descent + ": " + read);
+                        "Regra 256: arco lido errado em " + descent + ": " + read);
 
                 for (BlockPos at : BlockPos.iterate(origin.add(0, 1, 0), origin.add(SIZE, 9, SIZE))) {
                     world.setBlockState(at, Blocks.AIR.getDefaultState(), 18);
                 }
 
-                context.assertTrue(MineGate.standingAt(world, peak).isEmpty(), "Regra 210: portão derrubado continuou lido");
+                context.assertTrue(MineGate.standingAtMouth(world, mouth, descent).isEmpty(),
+                        "Regra 256: arco derrubado continuou lido");
             }
         } finally {
             clean(world, origin);
@@ -182,21 +179,23 @@ public class StructureEntrancesGameTest implements FabricGameTest {
 
             BlockPos mouth = origin.add(20, 1, 25);
 
+            // A boca da mina da colônia é o marcador do arco (Regra 256).
+            VillageColonyMod.MINES.open(colony.id(), com.villagecolony.core.construction.model.MineShaft.from(cell(mouth),
+                    com.villagecolony.core.type.Side.SOUTH));
             MineMouth.furnish(world, mouth, Direction.SOUTH, false);
-
-            BlockPos peak = MineGate.at(mouth, Direction.SOUTH, 4, 6, 2);
-
-            MineGates.look(world, colony.id(), peak, world.getBlockState(peak));
             RoadGraphRefresh.publish(world, colony, paths);
 
-            BlockPos front = MineGate.approach(mouth, Direction.SOUTH, 1);
-            ColonyPos entrance = new ColonyPos(front.getX(), origin.getY(), front.getZ());
+            // Com a mina aberta, a entrada fica fora da folga da escada (theGateEntranceStaysOutOfTheStairClearance).
+            Set<ColonyPos> fronts = MineGates.fronts(world, colony, new WorldPathTerrain(world, colony.id()));
+            ColonyPos entrance = fronts.stream().findFirst().orElseThrow();
             RoadGraph graph = ColonySavedData.get(world.getServer()).roadGraphs().graph(colony.id()).orElseThrow();
 
+            context.assertTrue(fronts.size() == 1, "Regra 256: o arco não deu uma entrada: " + fronts);
             context.assertTrue(graph.nodes().stream().anyMatch(node -> node.position().equals(entrance)
                     && node.roles().contains(RoadGraph.Role.ENTRANCE)),
                     "Regra 210: o portão da mina não virou entrada em " + entrance + ": " + graph.nodes());
         } finally {
+            VillageColonyMod.MINES.removeOfColony(colony.id());
             fixture.cleanUp();
             clean(world, origin);
         }
@@ -245,17 +244,17 @@ public class StructureEntrancesGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** Estrutura onde se entra conta; rua, ponta de rua, enfeite e peça que só põe bicho não — Regras 210 e 223. */
+    /** Estrutura onde se entra conta; rua, ponta de rua, enfeite (inclui o acessório) e peça que só põe bicho não — Regras 210, 223 e 252. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "entrance_pieces", tickLimit = 20)
     public void everyVillageStructureCountsAndStreetsDoNot(TestContext context) {
-        for (String yes : java.util.List.of("minecraft:village/plains/houses/plains_small_house_1", "minecraft:village/plains/houses/plains_accessory_1",
+        for (String yes : java.util.List.of("minecraft:village/plains/houses/plains_small_house_1",
                 "minecraft:village/desert/houses/desert_temple_1")) {
             context.assertTrue(GeneratedVillages.isStructure("Single[Left[" + yes + "]]"), "Regra 210: faltou " + yes);
         }
 
         for (String no : java.util.List.of("minecraft:village/plains/streets/corner_01", "minecraft:village/plains/terminators/terminator_01",
                 "minecraft:village/plains/villagers/baby", "minecraft:village/common/animals/cows_1", "minecraft:village/common/iron_golem",
-                "minecraft:village/plains/houses/plains_small_farm_1", "minecraft:village/plains/plains_lamp_1",
+                "minecraft:village/plains/houses/plains_small_farm_1", "minecraft:village/plains/plains_lamp_1", "minecraft:village/plains/houses/plains_accessory_1",
                 "minecraft:village/plains/town_centers/plains_meeting_point_1", "minecraft:village/plains/town_centers/plains_fountain_01",
                 "minecraft:village/common/well_bottom", "minecraft:village/taiga/taiga_lamp_post_1")) {
             context.assertFalse(GeneratedVillages.isStructure("Single[Left[" + no + "]]"), "Regra 210: não devia contar " + no);

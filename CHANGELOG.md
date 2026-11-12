@@ -12,6 +12,156 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.68] — candidata, 2026-11-12
+
+### Adicionado
+
+- Cada estrutura do mod na versão do bioma da vila (Regra 262, troca automática escolhida pelo autor): ao erguer arco da mina,
+  currais, plantação grande, celeiro e as demais estruturas do mod sem arquivo do estilo, a madeira do arquivo vira a madeira da
+  vila e o pedregulho ou o arenito vira a pedra da paleta das casas, na mesma forma. Um arquivo serve todos os biomas; o arquivo
+  do estilo, onde existe (casa do mineiro, armazém), vale como está.
+
+### Mudado
+
+- A conferência do que está de pé (arco da mina, reparo, retomada da obra, peça da colônia, peça já no lugar) compara o papel
+  da peça: a estrutura de outra madeira, de antes desta versão, segue reconhecida e não é trocada.
+
+### Testes
+
+- `BiomeBlueprintsGameTest` (2 GameTests: o arco no deserto sai da madeira da vila e segue reconhecido, também o antigo de
+  pinheiro; o curral grande na taiga pede cerca de pinheiro, o de carvalho já de pé conta como de pé e o arquivo do estilo da
+  planície fica de carvalho) e `BiomeBlockSwapTest`. Duas mutações pegas: troca desligada e conferência sem papel.
+
+## [0.4.67] — candidata, 2026-11-12
+
+### Adicionado
+
+- Poste de luz nas ruas fixas (Regra 261, opção B do autor): pedra do bioma, duas cercas da madeira do bioma e a tocha da colônia
+  no topo, erguido pelo construtor com material dos baús quando a busca de lote termina sem obra. Ao lado da linha fixa do grafo,
+  na linha do solo, com 2 blocos livres de estrutura, céu aberto e 30 blocos de outro poste. Log `VC_LAMP_POST`.
+
+### Testes
+
+- `LampPostGameTest` (4 GameTests: linha fixa e lado da linha; 2 blocos e céu aberto; 30 blocos de tocha e de poste; construtor
+  ergue o poste com a tocha da colônia no topo) e `LampPostPlanTest`.
+
+## [0.4.66] — candidata, 2026-11-12
+
+### Mudado
+
+- A casa do mineiro surge com a vila: na fundação, a mina é aberta na boca escolhida pela regra do mineiro, com o arco, e a casa
+  do mineiro fica pronta ao lado da boca, sem obra e sem material (Regra 260). A escolha da boca saiu do `MineDigging` para o
+  `MineOpening`, sem mudar o mineiro.
+
+### Testes
+
+- `theMinerHomeStandsBesideTheMouthOnFoundation`, `theStampedHomeMatchesTheTurnedPlanInEveryTurn`.
+
+## [0.4.65] — candidata, 2026-11-12
+
+### Mudado
+
+- A vila nova nasce com um aldeão de cada profissão: a fundação faz nascer os adultos que faltam para os oito ofícios
+  (Regra 259). Antes nasciam sete, um por cama, e o fazendeiro só vinha com o crescimento da vila.
+
+### Testes
+
+- `aNewVillageGetsOneVillagerOfEveryProfession`.
+
+## [0.4.64] — candidata, 2026-11-12
+
+### Mudado
+
+- O adiantamento dos artesãos lê todas as estruturas que a vila ergue — casas de ofício, armazém, casa do mineiro, curral
+  grande e plantação grande —, e não só as casas do jogo; cada peça segue no teto de 64 (Regra 258).
+
+### Testes
+
+- `theAdvanceReadsEveryStructureOfTheVillage`.
+
+## [0.4.63] — candidata, 2026-11-12
+
+### Corrigido
+
+- O fundidor assa areia, argila e bola de argila sem a reserva de metade; os outros crus seguem com ela (Regra 257).
+
+### Testes
+
+- `sandAndClayAreSmeltedWhole`.
+
+## [0.4.62] — candidata, 2026-11-12
+
+### Mudado
+
+- A boca da mina ganha um arco de tora de pinheiro descascada, com degrau e lampião nas pontas da viga e baú à direita
+  (Regra 256). O portão de pedra deixa de ser erguido e segue reconhecido onde já está.
+
+### Corrigido
+
+- O grafo reconhece o arco pelas peças na boca da mina, e não só pelo topo; o lenhador só corta tronco com folha natural.
+  No jogo da 0.4.57 ele derrubou o topo do portão, e a mina perdeu a entrada no grafo.
+
+### Testes
+
+- `theArchStandsAndIsKnownByTheMouth`, `aLogWithoutNaturalLeavesIsNotATree`; testes do portão e do lenhador atualizados.
+
+## [0.4.61] — candidata, 2026-11-12
+
+### Corrigido
+
+- O animal na corda vai para o curral (Regra 255): com curral na vila, o pastor não amarra mais animal em cerca, e o já
+  amarrado é recolhido antes do solto. Quando o curral não serve, o log diz por quê (`found no pen for the ...`).
+
+### Testes
+
+- `aShepherdDoesNotTieWhileTheVillageHasAPen`, `aTiedAnimalGoesToThePenBeforeALooseOne`.
+
+## [0.4.60] — candidata, 2026-11-12
+
+### Mudado
+
+- A escada da mina ganha patamar nas dobras (Regra 254, ADR-053): cada dobra do caracol tem um patamar de 3 x 3 na altura do
+  último degrau e uma tocha de parede. Só nos níveis abertos a partir desta versão; o nível em curso termina sem patamar.
+
+### Testes
+
+- `everyLandingIsLevelWithTheLastStepAndBesideIt`, `theWallBehindEveryLandingTorchIsNeverDug`,
+  `aLevelOpenedBeforeTheRuleKeepsItsShape`, `theLandingShapeSurvivesTheRoundTrip`, `theLandingTorchHangsOnTheRockBehindIt`.
+
+## [0.4.59] — candidata, 2026-11-12
+
+### Corrigido
+
+- O curral leva terra no solo (Regra 253): o piso de grama da planta de curral sobre pedra do terreno era dado como chão
+  pronto (`BuriedPieces.heldByTheGround`) e a pedra ficava; no jogo da 0.4.57 eram 15 de pedra em 169 células do curral grande.
+
+### Testes
+
+- `aPenFloorOnStoneIsNotHeldByTheGround`.
+
+## [0.4.58] — candidata, 2026-11-12
+
+### Corrigido
+
+- Flor e muda no topo não seguram mais a coluna do solo da vila (Regra 251): a coluna ficava de pé, uma torre, e a rua nascia sobre ela.
+- O acessório da vila gerada (`plains_accessory_1`) não recebe entrada no grafo (Regra 252).
+
+### Testes
+
+- `aFlowerOnTheTopDoesNotHoldTheColumnUp`, `anAccessoryPieceIsAnOrnament`.
+
+## [0.4.57] — candidata, 2026-11-11
+
+### Corrigido
+
+- A rua da vila nasce no chão novo (Regra 250): o solo da vila cortava e aterrava as colunas, mas a altura de geração que
+  a rua do Vanilla segue ficava a de antes, e 275 de 1.303 colunas de caminho do jogo da 0.4.56 ficaram no ar. Só vale
+  para chunks gerados depois desta versão.
+
+### Testes
+
+- `theStreetHeightFollowsTheShapedGround`.
+
 ## [0.4.56] — candidata, 2026-11-11
 
 ### Corrigido

@@ -70,6 +70,8 @@ class MineShaftTest {
         int level = MineShaft.SHARED_BLOCKS + Mine.ARMS * MineShaft.ARM_BLOCKS;
 
         assertTrue(level <= 1_800, "um nível cava " + level + " blocos");
+        // Os patamares das dobras (Regra 254): 3 no caracol do nível e 3 em cada ramal, 270 blocos a mais.
+        assertEquals(270, (1 + Mine.ARMS) * MineShaft.HELIX_LANDING_BLOCKS);
     }
 
     @Test
@@ -106,8 +108,8 @@ class MineShaftTest {
 
         assertEquals(12, MineShaft.ARM_STAIRS);
         assertEquals(MineShaft.SEARCH_AREA_BLOCKS, MineShaft.ARM_AREA_BLOCKS);
-        assertFalse(shaft.beyondTheArm(MineShaft.SHARED_BLOCKS + MineShaft.ARM_BLOCKS - 1));
-        assertTrue(shaft.beyondTheArm(MineShaft.SHARED_BLOCKS + MineShaft.ARM_BLOCKS));
+        assertFalse(shaft.beyondTheArm(MineShaft.ARM_END + shaft.landingBlocks() - 1));
+        assertTrue(shaft.beyondTheArm(MineShaft.ARM_END + shaft.landingBlocks()));
         assertTrue(shaft.positionAt(MineShaft.SHARED_BLOCKS + armStairBlocks).y()
                         < shaft.positionAt(MineShaft.SHARED_BLOCKS).y(),
                 "a área do ramal precisa começar abaixo da sua escada");
@@ -203,7 +205,7 @@ class MineShaftTest {
     @Test
     void thereIsNoPositionPastTheEndOfTheArm() {
         MineShaft shaft = shaft();
-        int end = MineShaft.SHARED_BLOCKS + MineShaft.ARM_BLOCKS;
+        int end = MineShaft.ARM_END + shaft.landingBlocks();
 
         assertThrows(IllegalArgumentException.class, () -> shaft.positionAt(end));
         assertThrows(IllegalArgumentException.class, () -> shaft.positionAt(-1));
@@ -234,7 +236,7 @@ class MineShaftTest {
         assertFalse(cells.contains(new ColonyPos(100, 63, 199)), "a rocha sob o primeiro degrau");
         assertFalse(cells.contains(new ColonyPos(99, 52, 200)), "o piso do salão");
         // O caracol fica fora das colunas do salão, e o ramal fora das dele: nada se repete.
-        assertEquals(MineShaft.SHARED_BLOCKS + MineShaft.ARM_BLOCKS, cells.size(),
+        assertEquals(MineShaft.ARM_END + shaft().landingBlocks(), cells.size(),
                 "o conjunto não tem repetição e não perde célula");
     }
 }

@@ -154,6 +154,17 @@ final class MineSideWork {
                 for (int index = 0; index < armStairCells; index++) {
                     cells.add(heading.positionAt(MineShaft.SHARED_BLOCKS + index));
                 }
+
+                // O patamar das dobras é escada também (Regra 254).
+                for (int index = MineShaft.ARM_END; !heading.beyondTheArm(index); index++) {
+                    cells.add(heading.positionAt(index));
+                }
+
+                // A rocha que segura a tocha do patamar também não sai.
+                for (MineShaft.WallLight light : heading.landingLights()) {
+                    cells.add(new ColonyPos(light.at().x() + light.wall().offsetX(), light.at().y(),
+                            light.at().z() + light.wall().offsetZ()));
+                }
             }
         }
 

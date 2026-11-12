@@ -36,7 +36,24 @@ public final class BuriedPieces {
     public static boolean heldByTheGround(
             ServerWorld world, Blueprint blueprint, BlueprintBlock block, BlockPos where) {
 
-        return blueprint.isBuried(block) && !world.getBlockState(where).isReplaceable();
+        return blueprint.isBuried(block) && !world.getBlockState(where).isReplaceable()
+                && !soilOverStone(world, blueprint, block, where);
+    }
+
+    /**
+     * O piso de grama de curral sobre pedra do terreno: a pedra não é o chão da planta, e o curral leva terra no
+     * solo (Regra 253, autor 2026-11-12). Só pedra natural que a proteção deixa quebrar; casa e outras plantas
+     * seguem a regra do chão já pronto.
+     */
+    public static boolean soilOverStone(
+            ServerWorld world, Blueprint blueprint, BlueprintBlock block, BlockPos where) {
+
+        BlockState state = world.getBlockState(where);
+
+        return blueprint.isBuried(block) && blueprint.isPen()
+                && state.isIn(net.minecraft.registry.tag.BlockTags.BASE_STONE_OVERWORLD)
+                && world.getBlockEntity(where) == null
+                && BlockProtection.mayBuildOver(world, where, state);
     }
 
     /**

@@ -3,10 +3,19 @@ package com.villagecolony.fabric.integration;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.Heightmap;
+import net.minecraft.world.chunk.ChunkStatus;
+import net.minecraft.world.chunk.ProtoChunk;
+import net.minecraft.world.chunk.UpgradeData;
+
+import java.util.EnumSet;
+import java.util.List;
 
 /**
  * A árvore em pé sobre o chão cortado sai inteira — autor, 2026-10-29, depois do jogo da 0.3.108 ("deixou partes
@@ -88,6 +97,81 @@ public class VillageGroundGameTest implements FabricGameTest {
             for (BlockPos at : BlockPos.iterate(cut.add(-2, -1, -2), cut.add(2, 4, 2))) {
                 world.setBlockState(at, Blocks.AIR.getDefaultState(), Block.FORCE_STATE);
             }
+        }
+
+        context.complete();
+    }
+
+    /** Flor e muda no topo não seguram a coluna: o corte as leva junto (Regra 251). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_ground_height", tickLimit = 5)
+    public void aFlowerOnTheTopDoesNotHoldTheColumnUp(TestContext context) {
+        ServerWorld world = context.getWorld();
+        ProtoChunk chunk = new ProtoChunk(new ChunkPos(90_001, 90_001), UpgradeData.NO_UPGRADE_DATA, world,
+                world.getRegistryManager().get(RegistryKeys.BIOME), null);
+        int x = chunk.getPos().getStartX();
+        int z = chunk.getPos().getStartZ();
+        net.minecraft.block.Block[] plants = {Blocks.POPPY, Blocks.OAK_SAPLING, Blocks.CORNFLOWER};
+
+        for (int dx = 0; dx < plants.length; dx++) {
+            for (int y = 60; y < 70; y++) {
+                chunk.setBlockState(new BlockPos(x + dx, y, z), Blocks.DIRT.getDefaultState(), false);
+            }
+
+            chunk.setBlockState(new BlockPos(x + dx, 70, z), Blocks.GRASS_BLOCK.getDefaultState(), false);
+            chunk.setBlockState(new BlockPos(x + dx, 71, z), plants[dx].getDefaultState(), false);
+
+            int top = VillageGround.topOf(chunk, x + dx, z, 80);
+
+            context.assertTrue(top == 70, plants[dx] + " segurou o topo em " + top + ", não em 70");
+        }
+
+        context.complete();
+    }
+
+    /** O acessório da vila é enfeite: não recebe entrada (Regra 252). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_ground_height", tickLimit = 5)
+    public void anAccessoryPieceIsAnOrnament(TestContext context) {
+        context.assertTrue(com.villagecolony.fabric.world.GeneratedVillages.isOrnament(
+                "village/plains/houses/plains_accessory_1"), "o acessório da planície não é enfeite");
+        context.assertFalse(com.villagecolony.fabric.world.GeneratedVillages.isStructure(
+                "village/plains/houses/plains_accessory_1"), "o acessório da planície recebe entrada");
+        context.assertTrue(com.villagecolony.fabric.world.GeneratedVillages.isStructure(
+                "village/plains/houses/plains_small_house_4"), "a casa deixou de receber entrada");
+        context.complete();
+    }
+
+    /**
+     * A rua do Vanilla segue {@code WORLD_SURFACE_WG}, que o chunk em geração não acompanha: a coluna cortada ou
+     * aterrada leva a altura junto, ou a rua nasce na altura antiga, no ar ou enterrada (Regra 250).
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_ground_height", tickLimit = 5)
+    public void theStreetHeightFollowsTheShapedGround(TestContext context) {
+        ServerWorld world = context.getWorld();
+        // Um chunk solto, só em memória, no status em que as features da vila rodam.
+        ProtoChunk chunk = new ProtoChunk(new ChunkPos(90_000, 90_000), UpgradeData.NO_UPGRADE_DATA, world,
+                world.getRegistryManager().get(RegistryKeys.BIOME), null);
+        int x = chunk.getPos().getStartX();
+        int z = chunk.getPos().getStartZ();
+
+        for (int dx = 0; dx < 2; dx++) {
+            for (int y = 60; y < 70; y++) {
+                chunk.setBlockState(new BlockPos(x + dx, y, z), Blocks.DIRT.getDefaultState(), false);
+            }
+
+            chunk.setBlockState(new BlockPos(x + dx, 70, z), Blocks.GRASS_BLOCK.getDefaultState(), false);
+        }
+
+        Heightmap.populateHeightmaps(chunk, EnumSet.of(Heightmap.Type.WORLD_SURFACE_WG, Heightmap.Type.OCEAN_FLOOR_WG));
+        chunk.setStatus(ChunkStatus.CARVERS);
+
+        VillageGround.column(world, chunk, x, z, 70, 66, false);
+        VillageGround.column(world, chunk, x + 1, z, 70, 73, false);
+
+        for (Heightmap.Type type : List.of(Heightmap.Type.WORLD_SURFACE_WG, Heightmap.Type.OCEAN_FLOOR_WG)) {
+            context.assertTrue(chunk.sampleHeightmap(type, 0, 0) == 66,
+                    type + " da coluna cortada ficou em " + chunk.sampleHeightmap(type, 0, 0) + ", não em 66");
+            context.assertTrue(chunk.sampleHeightmap(type, 1, 0) == 73,
+                    type + " da coluna aterrada ficou em " + chunk.sampleHeightmap(type, 1, 0) + ", não em 73");
         }
 
         context.complete();

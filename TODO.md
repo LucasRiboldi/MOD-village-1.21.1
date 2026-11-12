@@ -1,5 +1,20 @@
 # TODO
 
+## Regras novas do autor, 12-11 — escolhas feitas, nesta ordem
+
+- [x] **Os 8 ofícios na fundação** (0.4.65, Regra 259): cada profissão (construtor, carpinteiro, fazendeiro, lenhador, pedreiro, mineiro,
+  pastor, fundidor) recebe um aldeão na fundação; primeiro os da vila, e o que faltar nasce adulto. Só vilas novas.
+- [x] **Casa do mineiro na fundação** (0.4.66, Regra 260): a fundação escolhe a boca da mina, ergue o arco e a casa do mineiro
+  ao lado, prontos, sem obra e sem material. Só vilas novas; conferir em jogo.
+- [x] **Poste de luz** (0.4.67, Regra 261): pedra do bioma, duas cercas e a tocha da colônia; obra do construtor só na vaga
+  ociosa (opção B do autor), ao lado da linha fixa, 2 blocos livres, céu aberto, 30 blocos de outro poste. Conferir em jogo
+  `VC_LAMP_POST` e se a tocha da colônia sai da cadeia (tochas + ouro) ou da Regra 128.
+- [x] **Estruturas por bioma** (0.4.68, Regra 262): troca automática da madeira e da pedra ao erguer cada estrutura do mod;
+  arquivo do estilo vale como está; o que já está de pé segue reconhecido pelo papel da peça. Conferir em jogo um curral e o
+  arco numa vila de taiga, savana ou deserto. O chão de grama do curral e o portão antigo da mina não trocam.
+- [ ] Mineiro sem ramal livre (solução 1 da reanálise de 12-11, pulada pelo autor): "every open branch is taken or
+  finished" em todas as versões recentes; no primeiro nível, antes do salão, ele só espera.
+
 ## Blocos que surgem sozinhos — buscar fluxo de fabricação (regra do autor, 04-11)
 
 Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo da 0.4.18, 30 min:

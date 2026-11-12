@@ -207,7 +207,10 @@ final class ShepherdHerding {
                     && !ShepherdFlock.isPenned(world, candidate)));
         }
 
-        candidates.sort(java.util.Comparator.comparingDouble(animal -> animal.squaredDistanceTo(shepherd)));
+        // O amarrado vai primeiro, e então o mais perto (Regra 255).
+        candidates.sort(java.util.Comparator
+                .comparing((AnimalEntity animal) -> !(animal.getLeashHolder() instanceof LeashKnotEntity))
+                .thenComparingDouble(animal -> animal.squaredDistanceTo(shepherd)));
 
         Optional<BlockPos> fence = Optional.empty();
         Optional<BlockPos> newPost = Optional.empty();
@@ -223,10 +226,15 @@ final class ShepherdHerding {
                 return Optional.of(herd);
             }
 
-            // Há cercado com lugar que agora não se comprova: fica para a próxima tentativa, sem amarrar (Regra 196).
-            // Sem cercado com lugar: só o solto vai para a cerca ou para o poste novo.
-            if (animal.isLeashed() || ShepherdFlock.isKept(world, animal)
-                    || ShepherdPens.withRoom(world, colony, shepherd.getBlockPos()).isPresent()) {
+            // Com curral na vila, nunca amarra: o animal espera a próxima tentativa, e o log diz por que o curral não
+            // serviu (Regra 255). Sem curral nenhum, só o solto vai para a cerca ou para o poste novo (Regra 196).
+            if (!ShepherdPens.pensOf(world, colony).isEmpty()) {
+                PenRefusal.log(world, colony, shepherd, animal);
+
+                return separate(world, colony, shepherd);
+            }
+
+            if (animal.isLeashed() || ShepherdFlock.isKept(world, animal)) {
                 continue;
             }
 

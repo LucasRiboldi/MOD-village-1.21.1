@@ -58,7 +58,9 @@ final class ColonyPieces {
 
             Optional<Block> expected = MinecraftTypeAdapter.toBlock(block.block());
 
-            return expected.isPresent() && world.getBlockState(pos).isOf(expected.get());
+            // A peça de outra madeira, de antes da Regra 262, segue sendo da colônia.
+            return expected.isPresent()
+                    && com.villagecolony.fabric.integration.BiomeBlueprints.sameRole(world.getBlockState(pos), expected.get());
         }
 
         return false;
