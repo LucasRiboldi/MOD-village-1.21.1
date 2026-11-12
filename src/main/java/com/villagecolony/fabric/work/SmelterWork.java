@@ -292,7 +292,7 @@ public final class SmelterWork {
             ServerWorld world, List<ColonyPos> searched, List<Item> raws, Item product,
             ColonyPos output, Job job, UUID workerId) {
 
-        // <b>Metade do cru fica para o pedreiro</b> (StockRules.rawToKeep). A
+        // <b>Metade do cru fica guardada</b>, menos areia e argila (StockRules.rawToKeep, Regra 257). A
         // conta é da colônia inteira e não depende do baú: sai uma vez por
         // cru, fora do laço dos baús. Dentro dele custava baús² leituras por
         // peça, 72% do tempo do mod no Spark de 11-10.
@@ -369,9 +369,9 @@ public final class SmelterWork {
         int rawCount = ColonyChests.countIn(world, chests, raw);
 
         int madeCount = ColonyChests.countIn(world, chests, processed);
-
-        // E o que a obra aberta ainda vai pôr do cru fica fora da fornalha (P3b).
-        return Math.min(StockRules.rawThatMayBeSmelted(rawCount, madeCount), rawCount - buildNeed) > 0;
+        // O que a obra aberta ainda vai pôr fica fora da fornalha (P3b); areia e argila sem a reserva de metade (Regra 257).
+        return Math.min(StockRules.rawThatMayBeSmelted(MinecraftTypeAdapter.toResourceType(raw).orElse(null), rawCount,
+                madeCount), rawCount - buildNeed) > 0;
     }
 
     /**

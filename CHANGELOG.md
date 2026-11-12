@@ -12,6 +12,16 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.63] — candidata, 2026-11-12
+
+### Corrigido
+
+- O fundidor assa areia, argila e bola de argila sem a reserva de metade; os outros crus seguem com ela (Regra 257).
+
+### Testes
+
+- `sandAndClayAreSmeltedWhole`.
+
 ## [0.4.62] — candidata, 2026-11-12
 
 ### Mudado

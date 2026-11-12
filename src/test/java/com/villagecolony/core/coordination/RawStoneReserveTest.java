@@ -94,4 +94,17 @@ class RawStoneReserveTest {
                         + " tipo nunca seria alcancado");
     }
 
+
+    /** Areia, argila e bola de argila vão inteiras à fornalha; os outros crus seguem com a reserva (Regra 257). */
+    @Test
+    void sandAndClayAreSmeltedWhole() {
+        assertEquals(100, StockRules.rawThatMayBeSmelted(com.villagecolony.core.type.ResourceType.SAND, 100, 0));
+        assertEquals(100, StockRules.rawThatMayBeSmelted(com.villagecolony.core.type.ResourceType.CLAY, 100, 40));
+        assertEquals(30, StockRules.rawThatMayBeSmelted(com.villagecolony.core.type.ResourceType.CLAY_BALL, 30, 90));
+        assertEquals(50, StockRules.rawThatMayBeSmelted(com.villagecolony.core.type.ResourceType.SANDSTONE, 100, 0));
+        assertEquals(0, StockRules.rawThatMayBeSmelted(com.villagecolony.core.type.ResourceType.COBBLESTONE, 40, 40));
+        assertEquals(25, StockRules.rawThatMayBeSmelted(com.villagecolony.core.type.ResourceType.STONE, 50, 0));
+        assertEquals(50, StockRules.rawThatMayBeSmelted(com.villagecolony.core.type.ResourceType.RAW_IRON, 100, 0));
+        assertEquals(50, StockRules.rawThatMayBeSmelted(null, 100, 0));
+    }
 }

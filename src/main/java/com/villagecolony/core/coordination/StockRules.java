@@ -252,6 +252,19 @@ public final class StockRules {
         return Math.max(0, raw - rawToKeep(raw, processed));
     }
 
+    /** Os crus sem a reserva de metade: areia, argila e bola de argila (Regra 257). */
+    private static final java.util.Set<ResourceType> SMELTED_WHOLE =
+            java.util.Set.of(ResourceType.SAND, ResourceType.CLAY, ResourceType.CLAY_BALL);
+
+    /**
+     * O mesmo, para o cru {@code type}. Areia, argila e bola de argila não têm uso de pedreiro, e a reserva só deixava
+     * o fundidor parado — 58 pedidos largados "held by the reserve" nos jogos de 11-07 e 11-08: vão à fornalha inteiras
+     * (Regra 257). Os outros crus, e o que a vila não conhece por tipo, seguem com a reserva.
+     */
+    public static int rawThatMayBeSmelted(@org.jspecify.annotations.Nullable ResourceType type, int raw, int processed) {
+        return type != null && SMELTED_WHOLE.contains(type) ? Math.max(0, raw) : rawThatMayBeSmelted(raw, processed);
+    }
+
     /**
      * A partir de quanto cheio o baú chama as outras profissões.
      *
