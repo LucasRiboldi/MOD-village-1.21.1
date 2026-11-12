@@ -12,6 +12,17 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.61] — candidata, 2026-11-12
+
+### Corrigido
+
+- O animal na corda vai para o curral (Regra 255): com curral na vila, o pastor não amarra mais animal em cerca, e o já
+  amarrado é recolhido antes do solto. Quando o curral não serve, o log diz por quê (`found no pen for the ...`).
+
+### Testes
+
+- `aShepherdDoesNotTieWhileTheVillageHasAPen`, `aTiedAnimalGoesToThePenBeforeALooseOne`.
+
 ## [0.4.60] — candidata, 2026-11-12
 
 ### Mudado

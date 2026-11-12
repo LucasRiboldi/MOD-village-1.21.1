@@ -2,6 +2,8 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
+> **Candidata 0.4.61:** animal na corda vai para o curral; com curral na vila o pastor não amarra, e o log diz por que o curral não serviu (Regra 255). Não jogada.
+
 > **Candidata 0.4.60:** patamar de 3 x 3 com tocha nas dobras da escada da mina, só nos níveis novos (Regra 254, ADR-053). Não jogada.
 
 > **Candidata 0.4.59:** o curral leva terra no solo, e não a pedra do terreno (Regra 253). Escadaria, marcador da mina, plantação e corda do pastor seguem sem correção. Não jogada.
