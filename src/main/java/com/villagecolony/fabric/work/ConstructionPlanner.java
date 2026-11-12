@@ -370,7 +370,14 @@ public final class ConstructionPlanner {
             return repair;
         }
 
-        return LotSeeking.seek(world, colony, builders);
+        Optional<ConstructionProject> seeking = LotSeeking.seek(world, colony, builders);
+
+        if (seeking.isPresent()) {
+            return seeking;
+        }
+
+        // A vaga ociosa ergue o poste de luz; a casa nunca atrasa por ele (Regra 261).
+        return LampPostWork.openIfIdle(world, colony, builders);
     }
 
 }

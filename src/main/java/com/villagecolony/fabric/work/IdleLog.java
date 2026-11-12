@@ -7,6 +7,7 @@ import com.villagecolony.core.coordination.IdleReason;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -210,6 +211,11 @@ public final class IdleLog {
         if (previous != null) {
             ActivityLog.recovered(subject, previous);
         }
+    }
+
+    /** O último motivo de parada deste assunto, enquanto ele segue parado. */
+    public static Optional<IdleReason> lastOf(UUID colonyId, String subject) {
+        return Optional.ofNullable(LAST.get(new Key(colonyId, subject)));
     }
 
     /** Esquece tudo. Chamado ao parar o servidor. */

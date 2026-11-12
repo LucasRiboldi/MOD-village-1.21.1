@@ -21,6 +21,11 @@ public final class BlueprintPlacement {
 
     public static Optional<Blueprint> blueprintOf(
             ServerWorld world, UUID colonyId, ResourceId id, ColonyPos origin) {
+        // O poste de luz não tem arquivo: a planta sai do nome, com os materiais do bioma (Regra 261).
+        if (com.villagecolony.core.construction.model.LampPostPlan.isLampPost(id)) {
+            return com.villagecolony.core.construction.model.LampPostPlan.blueprintOf(id);
+        }
+
         return StructureBlueprintReader.read(world, id)
                 .map(FarmBlueprint::asBuilt)
                 .map(blueprint -> blueprint.doorSide()

@@ -6,10 +6,9 @@
   pastor, fundidor) recebe um aldeão na fundação; primeiro os da vila, e o que faltar nasce adulto. Só vilas novas.
 - [x] **Casa do mineiro na fundação** (0.4.66, Regra 260): a fundação escolhe a boca da mina, ergue o arco e a casa do mineiro
   ao lado, prontos, sem obra e sem material. Só vilas novas; conferir em jogo.
-- [ ] **Poste de luz:** base de pedra do bioma, duas cercas da madeira do bioma e a tocha da colônia em cima. Obra na
-  lista, erguida pelo construtor com material. Só depois de existirem linhas fixas do grafo; no bloco ao lado da linha
-  fixa, na linha do solo, sem estrutura a 2 blocos em volta e sem bloqueio na vertical; ao longo das ruas fixas, até a
-  ponta delas; a 30 blocos ou mais de outro poste.
+- [x] **Poste de luz** (0.4.67, Regra 261): pedra do bioma, duas cercas e a tocha da colônia; obra do construtor só na vaga
+  ociosa (opção B do autor), ao lado da linha fixa, 2 blocos livres, céu aberto, 30 blocos de outro poste. Conferir em jogo
+  `VC_LAMP_POST` e se a tocha da colônia sai da cadeia (tochas + ouro) ou da Regra 128.
 - [ ] **Estruturas por bioma:** troca automática dos blocos (madeira, pedra e o resto pela paleta das casas) ao erguer
   cada estrutura do mod: arco da mina, currais, plantação grande, celeiro e as demais. Um arquivo serve todos os biomas.
 - [ ] Mineiro sem ramal livre (solução 1 da reanálise de 12-11, pulada pelo autor): "every open branch is taken or

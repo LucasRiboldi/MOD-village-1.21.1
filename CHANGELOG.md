@@ -12,6 +12,19 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.67] — candidata, 2026-11-12
+
+### Adicionado
+
+- Poste de luz nas ruas fixas (Regra 261, opção B do autor): pedra do bioma, duas cercas da madeira do bioma e a tocha da colônia
+  no topo, erguido pelo construtor com material dos baús quando a busca de lote termina sem obra. Ao lado da linha fixa do grafo,
+  na linha do solo, com 2 blocos livres de estrutura, céu aberto e 30 blocos de outro poste. Log `VC_LAMP_POST`.
+
+### Testes
+
+- `LampPostGameTest` (4 GameTests: linha fixa e lado da linha; 2 blocos e céu aberto; 30 blocos de tocha e de poste; construtor
+  ergue o poste com a tocha da colônia no topo) e `LampPostPlanTest`.
+
 ## [0.4.66] — candidata, 2026-11-12
 
 ### Mudado

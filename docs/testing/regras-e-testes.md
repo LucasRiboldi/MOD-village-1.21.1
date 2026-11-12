@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 153
+- **Cita a regra:** 154
 - **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 7
 - **Fora de vigor:** 5
@@ -232,7 +232,7 @@ classe prova menos ainda.
 | 220 | Quem não tem ofício trabalha na vila (autor 11-06, exceção à regra temporária de 11-02):… | cita | GraphOnlyPathsGameTest |
 | 221 | A vila gasta o que produz (autor 11-06): depois da ceia, cada adulto come 1 ponto de comi… | cita | VillageConsumesGameTest, VillageMealsGameTest |
 | 222 | O socorro do MAE (autor 11-06, ADR-049): depois de 2 voltas inteiras sem lote para a próx… | cita | MaePatienceGameTest, MaeRescueGameTest |
-| 223 | Branco só onde se entra (autor 11-07, desenho sobre o jogo da 0.4.42): o marcador fica co… | cita | DoorFrontsGameTest, EntrancesAtTheDoorGameTest, RetiredSpursTest |
+| 223 | Branco só onde se entra (autor 11-07, desenho sobre o jogo da 0.4.42): o marcador fica co… | cita | DoorFrontsGameTest, EntrancesAtTheDoorGameTest, LampPostPlanTest |
 | 224 | Todo caminho conta e liga em reta (autor 11-10, ADR-050): o grafo lê o caminho da caixa e… | cita | GraphStabilityGameTest, GraphStabilityTest, RoadLinesTest |
 | 225 | O trecho que ficou trava (autor 11-10, ADR-050): coluna que passa 10 dias de jogo na linh… | cita | GraphStabilityGameTest, GraphStabilityTest, RoadGraphStoreTest |
 | 226 | Socorro da vila inteira, em bairro (autor 11-10, ADR-051): só a volta sem lote da casa co… | cita | LotTypeRefusalsGameTest, MaeFinishGameTest, MaePatienceGameTest |
@@ -261,7 +261,7 @@ classe prova menos ainda.
 | 249 | Fundição sem cru chama o pedreiro (autor 11-11, opção O2b-1): a cada ciclo, a tarefa de f… | cita | FurnaceFeedGameTest |
 | 250 | A rua nasce no chão novo (autor 11-11, opção A): na geração, a coluna que o solo da vila… | cita | VillageGroundGameTest |
 | 251 | Flor e muda não seguram a coluna (autor 12-11, opção A): na geração, a varredura do topo… | cita | VillageGroundGameTest |
-| 252 | Acessório é enfeite (autor 12-11, opção A): peça accessory da vila gerada (plains_accesso… | cita | VillageGroundGameTest |
+| 252 | Acessório é enfeite (autor 12-11, opção A): peça accessory da vila gerada (plains_accesso… | cita | LampPostPlanTest, VillageGroundGameTest |
 | 253 | O curral leva terra no solo (autor 12-11): o piso de grama da planta de curral sobre pedr… | cita | StreetLevelGameTest |
 | 254 | Patamar nas dobras da escada da mina (autor 12-11, ADR-053): cada dobra do caracol ganha… | cita | MineLandingGameTest, MineSaveTest, MineShaftLayoutTest |
 | 255 | Animal na corda vai para o curral (autor 12-11, opções A e B): com curral na vila, o past… | cita | ShepherdTetherGameTest |
@@ -270,3 +270,4 @@ classe prova menos ainda.
 | 258 | O adiantamento lê todas as estruturas da vila (autor 12-11, solução 2 da reanálise dos lo… | cita | BiomePiecesGameTest |
 | 259 | Um aldeão de cada profissão na vila nova (autor 12-11): a fundação conta os adultos da vi… | cita | VillageFoundationGameTest |
 | 260 | Casa do mineiro na fundação (autor 12-11): quando a BigHouseMOD acaba de ser posta, a fun… | cita | MinerHomeFoundationGameTest |
+| 261 | Poste de luz nas ruas fixas (autor 12-11, opção B): base de 1 bloco de pedra do bioma (ar… | cita | LampPostGameTest, LampPostPlanTest |
