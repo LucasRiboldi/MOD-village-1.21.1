@@ -1,5 +1,17 @@
 # TODO
 
+## Regras novas do autor, 12-11 — esperam desenho e escolha
+
+- [ ] Toda vila nasce com um aldeão de cada profissão.
+- [ ] A casa do mineiro, ao lado da entrada da mina, surge sozinha com o carregamento da vila.
+- [ ] Cada estrutura do mod tem uma versão que combina com o bioma onde está.
+- [ ] Poste de luz da vila, como obra na lista: só depois de existirem caminhos fixos do grafo; no bloco ao lado da linha
+  fixa, na linha do solo, sem estrutura a 2 blocos em volta e sem bloqueio na vertical; só onde a luz de outro poste não
+  chega, e a partir de metade do alcance da luz de um poste, para os postes cobrirem todo o terreno habitado. Usa a
+  tocha do mod.
+- [ ] Mineiro sem ramal livre (solução 1 da reanálise de 12-11, pulada pelo autor): "every open branch is taken or
+  finished" em todas as versões recentes; no primeiro nível, antes do salão, ele só espera.
+
 ## Blocos que surgem sozinhos — buscar fluxo de fabricação (regra do autor, 04-11)
 
 Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo da 0.4.18, 30 min:

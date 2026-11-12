@@ -12,6 +12,17 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.64] — candidata, 2026-11-12
+
+### Mudado
+
+- O adiantamento dos artesãos lê todas as estruturas que a vila ergue — casas de ofício, armazém, casa do mineiro, curral
+  grande e plantação grande —, e não só as casas do jogo; cada peça segue no teto de 64 (Regra 258).
+
+### Testes
+
+- `theAdvanceReadsEveryStructureOfTheVillage`.
+
 ## [0.4.63] — candidata, 2026-11-12
 
 ### Corrigido

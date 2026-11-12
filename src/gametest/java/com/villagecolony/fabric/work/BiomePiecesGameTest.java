@@ -72,4 +72,22 @@ public class BiomePiecesGameTest implements FabricGameTest {
             blocks.add(new BlueprintBlock(new ColonyPos(blocks.size(), 0, 0), ResourceId.vanilla(block), false, Optional.empty()));
         }
     }
+
+    /**
+     * As filas leem todas as estruturas que a vila ergue, e não só as casas: armazém, casa do mineiro, curral grande e
+     * plantação grande (Regra 258).
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_hours", tickLimit = 20)
+    public void theAdvanceReadsEveryStructureOfTheVillage(TestContext context) {
+        List<ResourceId> read = BiomePieces.structuresOf("plains");
+
+        for (String path : List.of("colony/plains/storage_small", "colony/plains/miner_house", "colony/large_animal_pen",
+                "colony/large_farm")) {
+            context.assertTrue(read.contains(new ResourceId("villagecolony", path)), "o adiantamento não lê " + path + ": " + read);
+        }
+
+        context.assertTrue(read.stream().anyMatch(id -> id.path().startsWith("village/plains/houses/")),
+                "as casas do jogo saíram da leitura");
+        context.complete();
+    }
 }

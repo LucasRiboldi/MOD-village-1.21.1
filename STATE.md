@@ -2,6 +2,8 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.43 está publicada (`v0.4.43-alpha`), e a análise do jogo dela espera a escolha do autor em `docs/audit/2026-11-07-jogo-0443.md`.
 
+> **Candidata 0.4.64:** o adiantamento lê todas as estruturas da vila (Regra 258). Quatro regras novas do autor de 12-11 esperam desenho no `TODO.md`. Não jogada.
+
 > **Candidata 0.4.63:** areia, argila e bola de argila vão à fornalha sem a reserva de metade (Regra 257). Não jogada.
 
 > **Candidata 0.4.62:** arco de pinheiro na boca da mina, lido pela boca; lenhador só corta árvore com folha (Regra 256). Não jogada.

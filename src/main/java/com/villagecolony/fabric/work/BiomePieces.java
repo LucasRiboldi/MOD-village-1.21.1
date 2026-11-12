@@ -71,13 +71,36 @@ public final class BiomePieces {
         String style = HousePlans.paletteOf(world, colony.center()).style();
         List<Blueprint> plans = new java.util.ArrayList<>();
 
-        for (ResourceId id : VillageStructures.housesFor(style)) {
+        for (ResourceId id : structuresOf(style)) {
             HousePlans.READ.computeIfAbsent(id, missing -> StructureBlueprintReader.read(world, missing))
                     .ifPresent(plans::add);
         }
 
         lanesFrom(plans).forEach((lane, pieces) -> AdvanceStock.piecesOfTheVillage(colony.id(), lane, pieces));
         LARGEST.put(colony.id(), largestUse(plans));
+    }
+
+    /**
+     * Todas as estruturas que uma vila deste estilo ergue, e não só as casas: as do jogo, as casas de ofício e o armazém
+     * da colônia, a casa do mineiro, o curral grande e a plantação grande (Regra 258). Com mais peças na fila, o artesão
+     * da vila madura tem o que adiantar abaixo do teto de 64.
+     */
+    static List<ResourceId> structuresOf(String style) {
+        java.util.Set<ResourceId> all = new java.util.LinkedHashSet<>(VillageStructures.housesFor(style));
+
+        all.addAll(com.villagecolony.fabric.integration.ColonyModels.tradeHousesFor(style));
+
+        for (String path : List.of("colony/" + style + "/" + MineHomePlans.MODEL, "colony/" + MineHomePlans.MODEL)) {
+            if (BiomePieces.class.getResource("/data/villagecolony/structure/" + path + ".nbt") != null) {
+                all.add(new ResourceId("villagecolony", path));
+                break;
+            }
+        }
+
+        all.add(PenPlans.MODEL);
+        all.add(LargeFarmPlans.MODEL);
+
+        return List.copyOf(all);
     }
 
     /** O maior uso de cada peça numa só planta: a próxima casa é sorteada, e a maior cobre qualquer uma. */
