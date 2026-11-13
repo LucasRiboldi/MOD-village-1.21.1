@@ -5,6 +5,32 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ---
 
+## KF-014 — `BiomeBlueprintsGameTest.theTaigaLargePenHasSpruceFencesAndTheOakOneStillStands` caiu uma vez na bateria inteira
+
+**ABERTO.** 13-11, `main` em `ac2f1977` (0.4.74, 1.112 GameTests): caiu 1 vez em 3 baterias no mesmo commit (avaliação de
+qualidade, bloco B). Não rodado isolado. Hipótese, não medida: o bioma posto pelo teste (`fillbiome`) volta ao original
+antes da leitura, como na memória do `fillbiome` em GameTest (limite e chunk forçado).
+
+## KF-013 — `ShepherdPensGameTest.eachSpeciesGetsItsOwnPen` estoura os 40 tiques na bateria inteira
+
+**ABERTO.** Visto na 0.4.47 (passou 3 de 3 isolado), em 12-11 e em 13-11 (1 de 3 baterias no mesmo commit, `ac2f1977`).
+Hipótese, não medida: o prazo de 40 tiques é curto quando a bateria cheia atrasa o passo dos animais, o mesmo padrão
+do KF-012.
+
+## KF-012 — `PenAccessGameTest.animalsWalkInThroughEachOfTheFourGates` cai na bateria inteira
+
+**ABERTO.** 12% das baterias inteiras no histórico local do Sentinela (avaliação de 13-11); caiu nas 4 baterias da 0.4.50,
+2 em 12 rodadas e 0 em 7 isolado. Na falha pega, a vaca estava a 9 blocos do portão perto do prazo. O mesmo sintoma
+apareceu em jogo na 0.4.68 ("the cow did not walk into the pen"), tratado pela Regra 269 só no lado do pastor.
+
+## KF-011 — `GroundPickupGameTest.workerCollectsWhileWalkingPast` cai na bateria inteira
+
+**ABERTO.** 23% das baterias inteiras no histórico local do Sentinela (avaliação de 13-11); 1 em 12 e 1 em 5 nas medidas
+anteriores. O aldeão para a 1 bloco do item e o item some sem chegar ao baú. Suspeita, não provada: relógio global fora
+do expediente (Regra 194).
+
+---
+
 ## Interferência por colônia de outro cenário (22-10, 0.3.91)
 
 **ColonyDetection.aVillageBecomesAColony** caía até no CI, que começa limpo. O log diz: *"Bed cluster … (3

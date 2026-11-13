@@ -653,9 +653,10 @@ O detalhe dos IDs e a regra da estrutura própria estão em
 ## Instalação
 
 Requisitos: Minecraft Java 1.21.1, Fabric Loader compatível, Fabric API e
-Java 21. Coloque o JAR e a Fabric API na pasta `mods`. O servidor precisa do
-mod; clientes que entram em um servidor dedicado não precisam instalá-lo. No
-cliente, o mod liga as sobreposições de profissão e de obra, e o Mod Menu
+Java 21. Coloque o JAR e a Fabric API na pasta `mods`, no servidor e em cada
+cliente: o mod registra blocos e itens próprios (as bancadas), que um cliente sem
+ele não conhece. Um cliente sem o mod entrando num servidor com ele ainda não foi
+testado. No cliente, o mod liga as sobreposições de profissão e de obra, e o Mod Menu
 (opcional) abre a tela de regras de profissão — mudar regras exige operador
 nível 2.
 Use um mundo de teste: o mod corta árvores, minera e coloca blocos no mundo.
@@ -840,21 +841,19 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 `runGametest` gera `build/reports/jacoco/gametest/html` (bateria de jogo, que
 é quem exercita a camada `fabric`).
 
-Verificação de 2026-10-31 (0.4.0, promoção de `fix/estruturas-0110`), rodada
-antes da release:
+Verificação de 2026-11-13 (0.4.74, avaliação de qualidade), pelo Sentinela
+(`python scripts/test_lab.py fast`) na `main` em `ac2f1977`:
 
-- 1667 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
+- 1804 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
   de 500 linhas por arquivo).
-- 153 testes Python: aprovados (o CI instala o `nbtlib` e o `pillow` para os
+- 155 testes Python: aprovados (o CI instala o `nbtlib` e o `pillow` para os
   testes das versões do armazém e dos mapas).
-- 940 GameTests: todos aprovados. O
-  `runGametest` começa cada bateria com o mundo de teste apagado, como o CI.
-- `clean build`, `test` e `runGametest`: aprovados; JAR
-  `village-colony-0.4.0.jar`, SHA-256
-  `9E011A3F256C22B1695D2A2AA44366CB4A38AE03DD4C356F138B958B86BF040D`.
-- Regras 161 e 162: sem teste próprio.
-- Mutação (PIT, pacote `core`): medida na 0.3.109, 2514 de 2957 mutações
-  mortas (85%, limiar 85%); não refeita na 0.3.110.
+- 1112 GameTests: todos aprovados numa bateria; em outras duas no mesmo commit
+  caiu um instável diferente em cada. Os instáveis declarados estão no
+  `STATE.md` e em `docs/behavioral-tests/known-failures.md`. O `runGametest`
+  começa cada bateria com o mundo de teste apagado, como o CI.
+- Regras 33 e 47: sem teste próprio (`scripts/rule_coverage.py`).
+- Mutação (PIT, pacote `core`): 85,2% no CI do mesmo commit (limiar 85%).
 - CI do GitHub ("Build and test"): a `main` exige esse check para mesclar.
 
 Para refazer: `scripts/audit/check-tests-green.sh --runs 3` e

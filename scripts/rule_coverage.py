@@ -21,6 +21,7 @@ RANGE = re.compile(r"Regras\s+(\d{1,3})\s+a\s+(\d{1,3})\b")
 PAIR = re.compile(r"Regras\s+(\d{1,3})\s+e\s+(\d{1,3})\b")
 CLASS = re.compile(r"`([A-Z][A-Za-z0-9]+)(?:[.#][A-Za-z_]+)?")
 RETIRED = re.compile(r"❌|↪|substitu|retirada|revogada", re.IGNORECASE)
+SHORT_RETIRED = re.compile(r"^(~~|\*\*(Revogada|Retirada|Substituída|Desfeita)\b)", re.IGNORECASE)
 NAME_LENGTH = 90
 
 
@@ -72,7 +73,8 @@ def classify(rules, tests):
     rows = []
 
     for number, cells in sorted(rules.items()):
-        state = cells[-2] if len(cells) >= 3 else ""
+        # Sem coluna de estado (regra, data), a revogada se diz no começo do próprio texto.
+        state = cells[-2] if len(cells) >= 3 else (cells[0] if SHORT_RETIRED.match(cells[0]) else "")
         classes = sorted(set(CLASS.findall(cells[-1])))
         users = sorted(name for name, text in tests.items()
                        if any(re.search(r"\b" + re.escape(item) + r"\b", text) for item in classes))

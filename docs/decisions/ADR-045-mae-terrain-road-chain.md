@@ -1,7 +1,7 @@
 # ADR-045 — Terreno local e prova encadeada de ruas MAE
 
-Estado: desenho ampliado aprovado pelo autor em 2026-11-02; implementação na
-branch `codex/mae-terrain`, baseada na Fase 1 integrada pelo PR #48.
+Estado: desenho ampliado aprovado pelo autor em 2026-11-02; integrada na `main`. Emendada pela ADR-047 (fila do
+construtor) e pela ADR-048 (todo caminho é do grafo).
 Esta extensão da [ADR-044](ADR-044-mae-region-safety.md) não ativa obras no jogo.
 
 ## Contexto

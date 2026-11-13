@@ -1,4 +1,6 @@
-# ADR-025 — Overlays pixel art no cliente
+# ADR-054 — Overlays pixel art no cliente
+
+> Renumerada em 2026-11-13: era a segunda ADR-025 (a outra é a do mineiro autônomo). O conteúdo não mudou.
 
 **Status:** aceita
 **Data:** 2026-10-02

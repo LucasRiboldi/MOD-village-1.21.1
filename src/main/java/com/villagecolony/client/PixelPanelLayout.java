@@ -3,7 +3,7 @@ package com.villagecolony.client;
 /**
  * Geometria da moldura pixelada do overlay.
  *
- * <p>ADR-025: no painel de profissão, a moldura pertence ao texto e ao ícone.
+ * <p>ADR-054: no painel de profissão, a moldura pertence ao texto e ao ícone.
  * O nome fica à esquerda e o sprite à direita, sempre dentro do mesmo
  * background, para não recriar a plaquinha Vanilla fora da moldura.
  */
