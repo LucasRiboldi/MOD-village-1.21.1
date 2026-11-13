@@ -1,6 +1,6 @@
 # STATE — 2026-11-13
 
-> **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.68 está publicada (`v0.4.68-alpha`) e integrada na `main`; da 0.4.54 à 0.4.68 nada foi jogado.
+> **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.74 está integrada na `main` e publicada como `v0.4.74-alpha`; a 0.4.68 foi jogada em 12-11 (análise em `docs/audit/2026-11-13-jogo-0468.md`), e da 0.4.69 à 0.4.74 nada foi jogado.
 
 > **Candidata 0.4.74:** o prazo do pastor cresce com a distância e o animal largado fica amarrado na cerca mais perto (Regra 269); na 0.4.68 o curral teve no máximo 4 animais. Sentinela `fast`: 1.112 GameTests, caiu só o instável `workerCollectsWhileWalkingPast`. Não jogada.
 

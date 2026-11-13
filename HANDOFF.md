@@ -4,7 +4,7 @@ Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 20
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.74 na branch `claude/jogo-0468-grafo-06c8d9` (sem push), **não jogada**; a última publicada é [`v0.4.68-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.68-alpha), jogada em 2026-11-12 numa planície cercada de água (Spark `El42EuZ5w9`, análise em `docs/audit/2026-11-13-jogo-0468.md`).
+- **Versão:** 0.4.74, integrada na `main` (PR #73) e publicada como [`v0.4.74-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.74-alpha), **não jogada**. A 0.4.68 foi jogada em 2026-11-12 numa planície cercada de água (Spark `El42EuZ5w9`, análise em `docs/audit/2026-11-13-jogo-0468.md`). Branch de trabalho: `main`.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, ele escolhe, teste que falha, correção, Sentinela, commit, JAR.
 - **Entregue desde a 0.4.53 (todas candidatas):**
   - 0.4.54 a 0.4.56, Regras 243 a 249: plantação grande sobre areia, baú de qualquer lugar, aldeão fora da simulação não congela, cama longe vem para perto, chão nivelado é trabalho, um terço da madeira em tora, fundição sem cru chama o pedreiro.

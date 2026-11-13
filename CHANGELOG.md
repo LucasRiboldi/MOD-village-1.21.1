@@ -12,6 +12,32 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.74] — candidata, 2026-11-13
+
+Correções do jogo da 0.4.68 (planície cercada de água, Spark `El42EuZ5w9`, análise em
+`docs/audit/2026-11-13-jogo-0468.md`) e regra nova do autor para o grafo. Inclui da 0.4.69 à 0.4.73.
+
+### Mudado
+
+- 0.4.69: o fundidor funde onde está (Regra 263); sai a exigência de estar em construção registrada (`SmelterLocation`).
+- 0.4.70: o grafo de ruas nunca passa sobre a água (Regra 264, revoga a 174): sai a ponte (`BridgeDeck` e o terreno de
+  ponte do `WorldPathTerrain`), o trecho planejado sem chão seco sai na releitura e o calçador recusa coluna sobre a água.
+  O mesmo filtro tira a linha planejada que uma construção cobriu depois (Regra 265).
+- 0.4.71: uma casa do mineiro pronta basta, mesmo com a boca da mina mudada (Regra 266, emenda a 211).
+- 0.4.72: a plantação grande sai em todo bioma com o fazendeiro parado (Regra 267, emenda a 241).
+- 0.4.73: o bosque do lenhador lê o chão pelo topo do terreno, em qualquer altura (Regra 268).
+- 0.4.74: o prazo da coleta do pastor soma 20 tiques por bloco de caminho, e o animal largado fica amarrado na cerca mais
+  perto (Regra 269, `HerdDeadline`).
+
+### Testes
+
+- `SmelterGameTest.aSmelterOutsideTheBuiltAreaSmeltsWhereItStands`; `RoadLinesTest.aLinkNeverCrossesWater` e
+  `aPlannedColumnOverWaterLeavesTheLine`; `GraphStabilityGameTest.aPlannedStretchUnderABuildingLeavesTheLine`;
+  `StructureEntrancesGameTest.oneReadyMinerHomeIsEnoughWhenTheMouthMoves`;
+  `LargeFarmGameTest.anIdleFarmerOutsideTheDesertAsksForTheLargeFarm`;
+  `VillageGroveGameTest.theGroveFindsGroundHighAboveTheCentre`; `ShepherdHerdingGameTest.aFarPostGivesTheShepherdMoreTime` e
+  `aDroppedAnimalIsTiedToTheNearestFence`. Sai `BridgeDeckGameTest` (Regra 174 revogada). Todos falharam antes da correção.
+
 ## [0.4.68] — candidata, 2026-11-12
 
 ### Adicionado
