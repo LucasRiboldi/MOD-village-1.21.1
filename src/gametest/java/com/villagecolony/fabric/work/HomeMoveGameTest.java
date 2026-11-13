@@ -111,7 +111,7 @@ public class HomeMoveGameTest implements FabricGameTest {
     }
 
     /** Sem cama livre em cima, troca de casa com o vizinho sem ofício de lá; o de ofício não troca. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "home_move", tickLimit = 40)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "home_move_without_a_free_bed_it_swaps_homes_with_an_idle_neighbour_up_there", tickLimit = 40)
     public void withoutAFreeBedItSwapsHomesWithAnIdleNeighbourUpThere(TestContext context) {
         BlockPos low = new BlockPos(1, 2, 6);
         for (BlockPos head : new BlockPos[] {BED, low}) {

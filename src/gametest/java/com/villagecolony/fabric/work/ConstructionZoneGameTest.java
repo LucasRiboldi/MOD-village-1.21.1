@@ -31,7 +31,7 @@ public class ConstructionZoneGameTest implements FabricGameTest {
 
     private static final BlockPos CHEST = new BlockPos(0, 2, 7);
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_grove", tickLimit = 20)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_grove_a_sapling_beside_the_road_is_cleared_and_nothing_is_planted_there", tickLimit = 20)
     public void aSaplingBesideTheRoadIsClearedAndNothingIsPlantedThere(TestContext context) {
         for (int x = 0; x <= 7; x++) {
             for (int z = 0; z <= 7; z++) {

@@ -261,7 +261,7 @@ public class ShepherdPensGameTest implements FabricGameTest {
      * blocos de chão. O curral de 7×7 por dentro leva 12: com 8 ainda cabe (os 5 fixos de antes o davam
      * por cheio), com 12 está cheio, e sendo o único, a vila tem todos os currais cheios.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_pens_size", tickLimit = 40)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_pens_size_the_bigger_pen_holds_more_animals", tickLimit = 40)
     public void theBiggerPenHoldsMoreAnimals(TestContext context) {
         ServerWorld world = context.getWorld();
         List<SheepEntity> sheep = new ArrayList<>();

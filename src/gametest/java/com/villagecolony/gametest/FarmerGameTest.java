@@ -128,7 +128,7 @@ public class FarmerGameTest implements FabricGameTest {
      * na sessão de 2026-09-04, com {@code no ripe crop within 32 blocks}.
      * O que faltava não era distância — era lavoura.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing_the_empty_plot_is_sown_from_the_chest",
             tickLimit = 200)
     public void theEmptyPlotIsSownFromTheChest(TestContext context) {
         context.setBlockState(FIELD.down(), Blocks.FARMLAND.getDefaultState());
@@ -157,7 +157,7 @@ public class FarmerGameTest implements FabricGameTest {
      * vazio; a semente está no baú de outro trabalhador da mesma colônia.
      * No código antigo ele lia só o próprio baú e o canteiro ficava vazio.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing_the_seed_in_another_colony_chest_is_sown_too",
             tickLimit = 200)
     public void theSeedInAnotherColonyChestIsSownToo(TestContext context) {
         BlockPos other = new BlockPos(1, 2, 3);
@@ -209,7 +209,7 @@ public class FarmerGameTest implements FabricGameTest {
      * para quando o baú seca. Um número escrito à mão — "a colônia quer
      * 40 canteiros" — envelheceria na primeira vila diferente.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing_without_seed_the_plot_stays_empty",
             tickLimit = 200)
     public void withoutSeedThePlotStaysEmpty(TestContext context) {
         context.setBlockState(FIELD.down(), Blocks.FARMLAND.getDefaultState());
@@ -241,7 +241,7 @@ public class FarmerGameTest implements FabricGameTest {
      * livre — ver {@code FarmPlans}. O fazendeiro cuida da lavoura; ele
      * não é mais quem decide onde ela fica.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing_loose_soil_next_to_water_is_left_alone",
             tickLimit = 200)
     public void looseSoilNextToWaterIsLeftAlone(TestContext context) {
         context.setBlockState(FIELD.down(), Blocks.DIRT.getDefaultState());
@@ -268,7 +268,7 @@ public class FarmerGameTest implements FabricGameTest {
      * <p>A afirmação inteira da profissão: buscar recurso e guardar no
      * seu baú, que é o que o autor pediu para todas elas.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_harvest",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_harvest_ripe_wheat_ends_up_in_the_farmers_chest",
             tickLimit = 200)
     public void ripeWheatEndsUpInTheFarmersChest(TestContext context) {
         ripeWheat(context, FIELD);
@@ -302,7 +302,7 @@ public class FarmerGameTest implements FabricGameTest {
      * arada vazia e uma refeição só. A muda sai da própria colheita, e
      * por isso não custa estoque.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_harvest",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_harvest_the_field_is_planted_again",
             tickLimit = 200)
     public void theFieldIsPlantedAgain(TestContext context) {
         ripeWheat(context, FIELD);

@@ -191,7 +191,7 @@ public class TreeNurseryGameTest {
      * ao viveiro toda vez que varre o raio sem achar lavoura, o que numa
      * vila sem roça é sempre.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_nursery",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_nursery_the_rhythm_holds_the_next_planting",
             tickLimit = 100)
     public void theRhythmHoldsTheNextPlanting(TestContext context) {
         ServerWorld world = context.getWorld();

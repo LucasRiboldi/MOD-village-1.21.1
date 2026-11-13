@@ -45,7 +45,7 @@ public class CraftStationGameTest implements FabricGameTest {
     }
 
     /** Sem cortador, o pedreiro trabalha em volta do sino (ADR-038 P3c, B3). */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_hours", tickLimit = 20)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_hours_without_a_bench_the_mason_works_at_the_bell", tickLimit = 20)
     public void withoutABenchTheMasonWorksAtTheBell(TestContext context) {
         ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(1, 1, 1));
         UUID mason = UUID.randomUUID();

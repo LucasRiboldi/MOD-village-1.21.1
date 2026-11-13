@@ -48,7 +48,7 @@ public class OwnFarmGameTest implements FabricGameTest {
 
     private static final BlockPos STAND = new BlockPos(4, 2, 3);
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "own_farm", tickLimit = 200)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "own_farm_the_farmer_harvests_his_own_farm_beyond_the_village_sweep", tickLimit = 200)
     public void theFarmerHarvestsHisOwnFarmBeyondTheVillageSweep(TestContext context) {
         context.setBlockState(FIELD.down(), Blocks.FARMLAND.getDefaultState());
         context.setBlockState(FIELD, Blocks.WHEAT.getDefaultState()

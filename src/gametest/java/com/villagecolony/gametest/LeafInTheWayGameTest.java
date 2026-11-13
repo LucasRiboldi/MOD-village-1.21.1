@@ -63,7 +63,7 @@ public class LeafInTheWayGameTest implements FabricGameTest {
     }
 
     /** Controle: a folha persistente é de alguém e fica. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "leaf_in_the_way", tickLimit = 300)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "leaf_in_the_way_a_placed_leaf_stays", tickLimit = 300)
     public void aPlacedLeafStays(TestContext context) {
         ColonyFixture owned = setUp(context, true);
 

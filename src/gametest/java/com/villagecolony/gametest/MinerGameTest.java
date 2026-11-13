@@ -161,7 +161,7 @@ public class MinerGameTest implements FabricGameTest {
      * entrasse no baú sem sair do mundo seria a colônia inventando
      * matéria; um que saísse do mundo sem entrar no baú seria o E3.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_the_stone_leaves_the_world_and_reaches_the_chest",
             tickLimit = 400)
     public void theStoneLeavesTheWorldAndReachesTheChest(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -464,7 +464,7 @@ public class MinerGameTest implements FabricGameTest {
      *
      * <p>Pedido de um: o teste quer a fronteira, e não a resistência.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_the_miner_stops_once_the_order_is_filled",
             tickLimit = 400)
     public void theMinerStopsOnceTheOrderIsFilled(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -1131,7 +1131,7 @@ public class MinerGameTest implements FabricGameTest {
      * global e vaza para os testes vizinhos do mesmo lote — a
      * interferência que já custou um ciclo inteiro a esta bateria.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_off_hours",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_off_hours_the_stall_guard_does_not_count_outside_work_hours",
             tickLimit = 100)
     public void theStallGuardDoesNotCountOutsideWorkHours(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -1230,7 +1230,7 @@ public class MinerGameTest implements FabricGameTest {
      * procura e sem quanto já juntou, a linha volta a não responder as
      * perguntas que a sessão fez.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_report",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_report_the_miner_with_work_leaves_a_line_in_the_log",
             tickLimit = 40)
     public void theMinerWithWorkLeavesALineInTheLog(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -1287,6 +1287,8 @@ public class MinerGameTest implements FabricGameTest {
                     "a linha não diz quanto ele já juntou do que a tarefa pede: " + line.get());
         } finally {
             owned.cleanUp();
+            // O raio curto é do mundo inteiro: sem devolver, valia para os lotes seguintes — VF-016.
+            MineDigging.restoreMineDistance();
         }
 
         context.complete();
@@ -1850,7 +1852,7 @@ public class MinerGameTest implements FabricGameTest {
      * minério ficou marcado como fora de alcance e a veia o devolvia toda passada, 30 mil
      * vezes em 50 minutos, com os três mineiros presos nele.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_vein",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_vein_a_refused_step_is_not_served_again_by_the_vein",
             tickLimit = 20)
     public void aRefusedStepIsNotServedAgainByTheVein(TestContext context) {
         BlockPos taken = new BlockPos(2, 3, 2);
@@ -3105,7 +3107,7 @@ public class MinerGameTest implements FabricGameTest {
      * <p>A montagem se confere antes de afirmar: sem a coluna ideal
      * realmente tapada, o teste passaria por acidente e não diria nada.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth_the_search_tries_more_than_one_column",
             tickLimit = 20)
     public void theSearchTriesMoreThanOneColumn(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -3159,7 +3161,7 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /** A mina substituta no fundo não pode reaparecer em outro lado da vila. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth_the_replacement_mouth_stays_on_the_requested_opposite_side",
             tickLimit = 20)
     public void theReplacementMouthStaysOnTheRequestedOppositeSide(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -3205,7 +3207,7 @@ public class MinerGameTest implements FabricGameTest {
      * <p>Rodado contra a alternativa desligada: {@code nextTarget}
      * devolve vazio, que era o mineiro parado com tarefa aberta.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_surface",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_surface_without_a_mine_mouth_the_stone_comes_from_the_surface",
             tickLimit = 20)
     public void withoutAMineMouthTheStoneComesFromTheSurface(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -3286,7 +3288,7 @@ public class MinerGameTest implements FabricGameTest {
      * deste teste são as duas metades — sem a segunda, um filtro que
      * recusasse o afloramento <b>para sempre</b> passaria igual.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_surface",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_surface_the_refused_outcrop_sits_out_and_then_comes_back",
             tickLimit = 20)
     public void theRefusedOutcropSitsOutAndThenComesBack(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -3418,7 +3420,7 @@ public class MinerGameTest implements FabricGameTest {
      * depende do terreno do mundo da bateria, e o que a decisão manda é
      * ir mais longe, não ir a um lugar específico.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth_without_a_good_mouth_the_search_goes_farther_and_settles",
             tickLimit = 20)
     public void withoutAGoodMouthTheSearchGoesFartherAndSettles(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -3496,7 +3498,7 @@ public class MinerGameTest implements FabricGameTest {
      * divergência dos ramais é o {@code MineTest}, na geometria, e o
      * {@code MineClaimsTest}, na repartição.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_one_digger",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_one_digger_the_shared_pit_still_takes_one_miner_at_a_time",
             tickLimit = 20)
     public void theSharedPitStillTakesOneMinerAtATime(TestContext context) {
         solidRock(context);
@@ -3551,7 +3553,7 @@ public class MinerGameTest implements FabricGameTest {
      * <p>É a lição do E31 aplicada antes de custar sessão: relatório que
      * afirma o que não mediu é pior que relatório que cala.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_one_digger",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_one_digger_the_miner_waiting_for_the_shaft_says_so_in_the_log",
             tickLimit = 40)
     public void theMinerWaitingForTheShaftSaysSoInTheLog(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -3621,7 +3623,7 @@ public class MinerGameTest implements FabricGameTest {
      * pedra não está usando o cursor, e escada que ninguém usa volta a
      * ser de quem quiser.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_one_digger",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_one_digger_the_miner_who_found_no_stone_lets_the_shaft_go",
             tickLimit = 40)
     public void theMinerWhoFoundNoStoneLetsTheShaftGo(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -3686,7 +3688,7 @@ public class MinerGameTest implements FabricGameTest {
      * caiba, em lugar nenhum. Então não há pedra que valha a picareta, e
      * a busca precisa dizer isso em vez de apontar para dentro da rocha.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_one_digger",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_one_digger_stone_with_nowhere_to_stand_is_not_a_target",
             tickLimit = 40)
     public void stoneWithNowhereToStandIsNotATarget(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -3799,7 +3801,7 @@ public class MinerGameTest implements FabricGameTest {
      * bloco onde um aldeão caiba em lugar nenhum, e o minério enterrado
      * nela é inalcançável por construção.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_vein",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_vein_a_vein_with_nowhere_to_stand_is_dropped",
             tickLimit = 20)
     public void aVeinWithNowhereToStandIsDropped(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -4279,7 +4281,7 @@ public class MinerGameTest implements FabricGameTest {
      * responde não para bebê sem que o relógio do mundo mude, e mexer na
      * hora vaza para os testes vizinhos do mesmo lote.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_off_hours",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_off_hours_the_stillness_guard_does_not_count_outside_work_hours",
             tickLimit = 100)
     public void theStillnessGuardDoesNotCountOutsideWorkHours(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -4433,7 +4435,7 @@ public class MinerGameTest implements FabricGameTest {
      * <p>O que se afirma é o mesmo de sempre: depois da água, aquele
      * mineiro não volta a ser mandado para dentro dela.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_flooding",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_flooding_the_branch_turns_away_from_the_water",
             tickLimit = 20)
     public void theBranchTurnsAwayFromTheWater(TestContext context) {
         Colony colony = mineOwner(context);
@@ -4652,7 +4654,7 @@ public class MinerGameTest implements FabricGameTest {
      * A escada não leva tocha: a luz da mina é de chão, nos salões ({@code MineShaft.lightSpots}). A tocha
      * de parede caía quando o mineiro cavava a parede depois (playtest 0.3.97).
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_light",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_light_the_stairs_get_no_wall_torch",
             tickLimit = 20)
     public void theStairsGetNoWallTorch(TestContext context) {
         solidRock(context);
@@ -4712,7 +4714,7 @@ public class MinerGameTest implements FabricGameTest {
      * o {@code nextCut} a trataria como pedra. Uma posição com luz é
      * <b>espaço aberto</b>, não rocha.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_light",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_light_the_miner_does_not_dig_its_own_torch",
             tickLimit = 20)
     public void theMinerDoesNotDigItsOwnTorch(TestContext context) {
         solidRock(context);
@@ -4747,7 +4749,7 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /** A entrada é construída uma vez; quebrá-la não ativa nova construção. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth_a_broken_mine_portal_is_not_rebuilt_on_the_next_mining_pass",
             tickLimit = 20)
     public void aBrokenMinePortalIsNotRebuiltOnTheNextMiningPass(TestContext context) {
         solidRock(context);
@@ -4786,7 +4788,7 @@ public class MinerGameTest implements FabricGameTest {
      * até a tocha <b>toda passagem</b>, e a mina nunca mais passaria
      * dali.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_light",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_light_a_torch_in_the_dig_order_is_not_the_frontier",
             tickLimit = 20)
     public void aTorchInTheDigOrderIsNotTheFrontier(TestContext context) {
         solidRock(context);
@@ -4835,7 +4837,7 @@ public class MinerGameTest implements FabricGameTest {
      * por mineiro por ciclo, gastas para reimprimir um dado que já
      * estava guardado.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_report",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_report_the_line_says_where_he_was_actually_sent",
             tickLimit = 40)
     public void theLineSaysWhereHeWasActuallySent(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -4874,7 +4876,7 @@ public class MinerGameTest implements FabricGameTest {
      * comparar coordenadas com a linha de abertura da mina, dez minutos
      * de log acima. A linha diz por extenso.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_report",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_report_the_line_names_the_mine_mouth_when_he_was_sent_there",
             tickLimit = 40)
     public void theLineNamesTheMineMouthWhenHeWasSentThere(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -4969,7 +4971,7 @@ public class MinerGameTest implements FabricGameTest {
      * <p>Este teste mede o mineiro, que é onde há montagem pronta. O
      * conserto é o mesmo nas sete, e a razão é uma só.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_report",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_report_the_work_target_dies_with_the_task",
             tickLimit = 40)
     public void theWorkTargetDiesWithTheTask(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -5027,7 +5029,7 @@ public class MinerGameTest implements FabricGameTest {
      * demais, caminho que a navegação não traça, e preso. A terceira
      * passou a ter nome.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_report",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_report_the_line_says_when_he_is_trapped_below_the_way_up",
             tickLimit = 40)
     public void theLineSaysWhenHeIsTrappedBelowTheWayUp(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -5233,7 +5235,7 @@ public class MinerGameTest implements FabricGameTest {
      * escada dele é feita. Sem o cubo cheio no cenário, a regra que
      * distingue tijolo de pedregulho nunca é exercitada.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_player_stairs",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_player_stairs_the_miner_does_not_dig_the_players_stone_bricks",
             tickLimit = 20)
     public void theMinerDoesNotDigThePlayersStoneBricks(TestContext context) {
         solidRock(context);
@@ -5269,7 +5271,7 @@ public class MinerGameTest implements FabricGameTest {
         context.complete();
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_player_stairs",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_player_stairs_the_miner_does_not_dig_the_players_staircase",
             tickLimit = 20)
     public void theMinerDoesNotDigThePlayersStaircase(TestContext context) {
         solidRock(context);
@@ -5317,7 +5319,7 @@ public class MinerGameTest implements FabricGameTest {
      * a escolha do alvo pula o degrau, e este afirma que o recuo também
      * o pula. Um sem o outro passa com a mina quebrada.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_player_stairs",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_player_stairs_the_players_step_in_the_dig_order_is_not_the_frontier",
             tickLimit = 20)
     public void thePlayersStepInTheDigOrderIsNotTheFrontier(TestContext context) {
         solidRock(context);
@@ -5370,7 +5372,7 @@ public class MinerGameTest implements FabricGameTest {
      * seguinte, e um sem o outro passa com a mina quebrada — ver o
      * {@code MineFrontier.isStillClosed}.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refused_stone",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refused_stone_the_gallery_steps_past_the_stone_nobody_could_reach",
             tickLimit = 20)
     public void theGalleryStepsPastTheStoneNobodyCouldReach(TestContext context) {
         solidRock(context);
@@ -5491,7 +5493,7 @@ public class MinerGameTest implements FabricGameTest {
      * de mexer é o {@code frontierWhereRockBegins} — e este teste é o que
      * vai falhar primeiro, avisando que a troca está sendo feita.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refused_stone",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refused_stone_the_skipped_stone_stays_behind_once_the_gallery_moved_past",
             tickLimit = 20)
     public void theSkippedStoneStaysBehindOnceTheGalleryMovedPast(TestContext context) {
         solidRock(context);
@@ -5564,7 +5566,7 @@ public class MinerGameTest implements FabricGameTest {
      * rocha e recebem a marca, e o que se afirma é que a mina segue para
      * a décima em vez de recuar até a segunda e encerrar o ramal.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refused_stone",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refused_stone_the_refused_stone_is_not_the_frontier",
             tickLimit = 20)
     public void theRefusedStoneIsNotTheFrontier(TestContext context) {
         solidRock(context);
@@ -5634,7 +5636,7 @@ public class MinerGameTest implements FabricGameTest {
      * pior que não ter teste. A receita correta veio do
      * {@code gauntlet-verifier}, que a montou para provar a lacuna.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refused_stone",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refused_stone_only_the_pickaxe_resets_the_branch_curve",
             tickLimit = 20)
     public void onlyThePickaxeResetsTheBranchCurve(TestContext context) {
         solidRock(context);
@@ -5713,7 +5715,7 @@ public class MinerGameTest implements FabricGameTest {
      * para a marca de bloco — o que fazem é uma coisa só, encher o cubo
      * em volta da fronteira legítima.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refused_stone",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refused_stone_the_neighbourhood_dead_end_is_not_the_tunnel_cursors_question",
             tickLimit = 20)
     public void theNeighbourhoodDeadEndIsNotTheTunnelCursorsQuestion(TestContext context) {
         solidRock(context);
@@ -5871,7 +5873,7 @@ public class MinerGameTest implements FabricGameTest {
      * e o segundo está seco e mais alto; a escolha tem de atravessar a
      * margem e preferir a direção do morro.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth_the_mine_mouth_stays_away_from_water_and_prefers_higher_ground",
             tickLimit = 20)
     public void theMineMouthStaysAwayFromWaterAndPrefersHigherGround(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -5919,7 +5921,7 @@ public class MinerGameTest implements FabricGameTest {
      * vence a plataforma sul no desempate por elevacao. A abertura resultante
      * cava o ar ao redor da vila em vez de entrar no solo.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth_the_mine_mouth_rejects_an_unsupported_raised_pillar",
             tickLimit = 20)
     public void theMineMouthRejectsAnUnsupportedRaisedPillar(TestContext context) {
         ServerWorld world = context.getWorld();

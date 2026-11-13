@@ -1185,7 +1185,7 @@ public class LumberjackGameTest implements FabricGameTest {
     }
 
     /** Colheita pela base: a copa fora do alcance não exige outra aproximação. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_continuous",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_continuous_the_lumberjack_finishes_a_tall_tree_without_leaving_its_base",
             tickLimit = 400)
     public void theLumberjackFinishesATallTreeWithoutLeavingItsBase(TestContext context) {
         assertWholeTreeHarvest(context, 8);
@@ -1308,7 +1308,7 @@ public class LumberjackGameTest implements FabricGameTest {
      * <p>A árvore fica numa torre sem escada, alcançável pela busca e não
      * pelos pés.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_stall_guard",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_stall_guard_the_stall_guard_returns_the_task_and_forgets_the_tree",
             tickLimit = 400)
     public void theStallGuardReturnsTheTaskAndForgetsTheTree(TestContext context) {
         // Alta o bastante para o pulo de 2 (Regra 159) não pôr o tronco ao alcance (LumberjackWork.REACH) do chão.
@@ -1519,7 +1519,7 @@ public class LumberjackGameTest implements FabricGameTest {
      * troncos que cabe aqui. São blocos suficientes para o corte ainda
      * estar em curso quando o guarda antigo falava.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_stall_guard",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_stall_guard_the_stall_guard_does_not_evict_a_lumberjack_who_is_chopping",
             tickLimit = 400)
     public void theStallGuardDoesNotEvictALumberjackWhoIsChopping(TestContext context) {
         BlockPos base = new BlockPos(3, 2, 3);
@@ -2203,7 +2203,7 @@ public class LumberjackGameTest implements FabricGameTest {
      * mais perto do centro: a varredura do zero a acharia primeiro, o índice
      * devolve a que já tinha visto.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_search_index")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_search_index_one_sweep_serves_the_next_trees_from_the_index")
     public void oneSweepServesTheNextTreesFromTheIndex(TestContext context) {
         BlockPos center = context.getAbsolutePos(new BlockPos(1, 2, 1));
         BlockPos near = new BlockPos(4, 2, 1);
@@ -2254,7 +2254,7 @@ public class LumberjackGameTest implements FabricGameTest {
      * de encher um lote util do indice. O Spark de 2026-10-03 mostrou a busca
      * consumindo 62% do tempo do mod mesmo com o lenhador produtivo.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_search_index")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_search_index_a_dense_forest_stops_the_sweep_after_a_useful_indexed_batch")
     public void aDenseForestStopsTheSweepAfterAUsefulIndexedBatch(TestContext context) {
         BlockPos relativeCenter = new BlockPos(8, 2, 8);
         BlockPos center = context.getAbsolutePos(relativeCenter);

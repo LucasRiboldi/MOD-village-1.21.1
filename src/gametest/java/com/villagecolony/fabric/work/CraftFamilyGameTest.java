@@ -37,7 +37,7 @@ import java.util.UUID;
  */
 public class CraftFamilyGameTest implements FabricGameTest {
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock", tickLimit = 300)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock_the_smelter_makes_the_pane_the_build_asks_for", tickLimit = 300)
     public void theSmelterMakesThePaneTheBuildAsksFor(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos chestAt = new BlockPos(2, 2, 2);

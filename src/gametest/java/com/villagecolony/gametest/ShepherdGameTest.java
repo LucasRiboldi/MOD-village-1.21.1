@@ -52,7 +52,7 @@ public class ShepherdGameTest implements FabricGameTest {
      * outras: a lã volta a crescer sozinha, e o rebanho fica. É a Regra 7
      * de graça — quem replanta aqui é o próprio jogo.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_the_wool_leaves_the_sheep_and_the_sheep_stays",
             tickLimit = 200)
     public void theWoolLeavesTheSheepAndTheSheepStays(TestContext context) {
         // A hora é global: fora do expediente o pastor não trabalha (Regra 195).
@@ -216,9 +216,12 @@ public class ShepherdGameTest implements FabricGameTest {
      * 45 pastores presos no curral). A ovelha fica num cercado fechado, a 4 blocos do pastor do lado de fora: o
      * braço não chega, o olho chega (4,5 blocos, como o fazendeiro).
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_the_shepherd_shears_over_the_fence_without_going_in",
             tickLimit = 200)
     public void theShepherdShearsOverTheFenceWithoutGoingIn(TestContext context) {
+        // A tosquia é trabalho: a hora é deste teste, e não a que o lote anterior deixou — VF-011.
+        context.getWorld().setTimeOfDay(1_000);
+
         // Cercado de 7 x 7 fechado, a ovelha no meio: de fora, o pé fica a 4 blocos dela e o braço (3) não chega.
         BlockPos inside = new BlockPos(5, 2, 5);
         BlockPos outside = new BlockPos(5, 2, 9);

@@ -34,7 +34,7 @@ public class VillageGroveGameTest implements FabricGameTest {
      */
     private static final int PATH_X = 11;
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_grove", tickLimit = 100)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_grove_three_saplings_grow_near_the_village_away_from_the_road", tickLimit = 100)
     public void threeSaplingsGrowNearTheVillageAwayFromTheRoad(TestContext context) {
         ServerWorld world = context.getWorld();
 
@@ -125,7 +125,7 @@ public class VillageGroveGameTest implements FabricGameTest {
      * A árvore cortada longe não é replantada lá: a muda vai para o bosque perto da
      * vila, que cresce até o dobro — regra do autor, 2026-10-11.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_grove", tickLimit = 20)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_grove_the_sapling_of_a_far_tree_goes_to_the_grove", tickLimit = 20)
     public void theSaplingOfAFarTreeGoesToTheGrove(TestContext context) {
         BlockPos low = context.getAbsolutePos(new BlockPos(1, Y - 5, 1));
         BlockPos high = context.getAbsolutePos(new BlockPos(5, Y + 5, 5));
