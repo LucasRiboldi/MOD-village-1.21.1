@@ -1,13 +1,17 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.VillageBounds;
+import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.RoadGraph;
 import com.villagecolony.core.construction.model.RoadSettling;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.data.save.ColonySavedData;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.PathProposals;
 import com.villagecolony.gametest.ColonyFixture;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
@@ -19,6 +23,7 @@ import net.minecraft.util.math.BlockPos;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /** O caminho de fora da caixa que encosta no de dentro entra no grafo (Regra 224), e o trecho que ficou trava (Regra 225). */
 public class GraphStabilityGameTest implements FabricGameTest {
@@ -152,6 +157,50 @@ public class GraphStabilityGameTest implements FabricGameTest {
             context.assertTrue(since.getOrDefault(goneColumn, -1L) == RoadSettling.DAYS + 2,
                     "Regra 225: o trecho sem caminho continuou travado: " + since.get(goneColumn));
         } finally {
+            fixture.cleanUp();
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
+
+    /** Regra 265: o trecho planejado que uma construção cobriu depois sai da linha; a linha não atravessa a parede. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "graph_planned_under_building", tickLimit = 20)
+    public void aPlannedStretchUnderABuildingLeavesTheLine(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 100, 1));
+
+        floor(world, origin);
+
+        ColonyFixture fixture = ColonyFixture.colonyAtWorld(origin.add(2, 1, 20));
+        Colony colony = fixture.colony();
+
+        try {
+            Set<ColonyPos> paths = path(world, origin, 2, 15, 20);
+
+            paths.addAll(path(world, origin, 26, 40, 20));
+
+            for (int x = 16; x <= 25; x++) {
+                PathProposals.add(colony.id(), origin.add(x, 0, 20));
+            }
+
+            RoadGraphRefresh.publish(world, colony, paths);
+
+            var store = ColonySavedData.get(world.getServer()).roadGraphs();
+            ColonyPos wall = MinecraftTypeAdapter.toColonyPos(origin.add(20, 0, 20));
+
+            context.assertTrue(lineOf(store.graph(colony.id()).orElseThrow()).contains(wall),
+                    "o trecho planejado não entrou na linha: o teste não mede nada");
+
+            VillageColonyMod.BUILDINGS.register(new Building(UUID.randomUUID(), colony.id(),
+                    ResourceId.vanilla("village/plains/houses/plains_fletcher_house_1"),
+                    MinecraftTypeAdapter.toColonyPos(origin.add(18, 0, 17)), MinecraftTypeAdapter.toColonyPos(origin.add(23, 5, 23)), true));
+            RoadGraphRefresh.publish(world, colony, paths);
+
+            context.assertFalse(lineOf(store.graph(colony.id()).orElseThrow()).contains(wall),
+                    "Regra 265: a linha planejada continuou dentro da construção");
+        } finally {
+            VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
             fixture.cleanUp();
             clean(world, origin);
         }
