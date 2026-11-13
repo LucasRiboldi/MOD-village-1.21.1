@@ -26,7 +26,6 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 - [ ] 🟡 "Recurso que surge" reduzido a exceções declaradas e medidas por jogo (M). No jogo da 0.4.68: trigo ×467,
   lã ×144 (`WAITED_TOO_LONG`); tora ×43, tábua ×20, pedra lisa ×8 e bancadas (`MISSING_PIECE`); terracota ×47
   (`APPEARING_PIECE`); prismarinho ×144, favo ×20 e corantes (`AUTOMATIC_DROP`)
-- [ ] 🟠 ADR-055: sem ofício fora de toda análise de profissão (Regras 219 e 220 seguem valendo)
 - [ ] 🟠 ADR-055: com dois ou mais construtores, uma obra para cada
 - [ ] 🟠 ADR-055: muda que surge no bosque do deserto, em solo preparado
 - [ ] 🟠 ADR-055: corante das flores no ócio do pastor; cor sem flor no bioma, falha ou demora fazem o corante surgir

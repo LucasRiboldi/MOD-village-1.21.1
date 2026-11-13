@@ -121,11 +121,10 @@ public final class WorkTime {
             BADGES.put(id, badgeFor(id, state, now));
             IdleWatch.sample(world, id, state);
             TaskProgressWatch.sample(world, id, state);
-            String profession = worker.profession().map(Enum::name).orElse("NONE");
-
-            WINDOW.computeIfAbsent(worker.colonyId(), ignored -> new TreeMap<>())
-                    .computeIfAbsent(profession, ignored -> new EnumMap<>(State.class))
-                    .merge(state, 1, Integer::sum);
+            // Sem ofício do mod fica fora da conta do expediente (Regra 270): não entra em ócio, Regra 51 nem relatório.
+            worker.profession().ifPresent(profession -> WINDOW.computeIfAbsent(worker.colonyId(), ignored -> new TreeMap<>())
+                    .computeIfAbsent(profession.name(), ignored -> new EnumMap<>(State.class))
+                    .merge(state, 1, Integer::sum));
         }
 
         if (now - windowStart >= REPORT_EVERY) {

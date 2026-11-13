@@ -17,7 +17,7 @@ de 10% bloqueado + encalhado, pede correção de travamento.
 Regra 51 (decisão do autor, 2026-10-08): ocioso + bloqueado + encalhado acima de
 15% reprova a profissão — quem fica sem tarefa tem de entrar na cadeia de
 alternativas (ver docs/research/2026-10-08-tempo-ocioso.md). A espera fica fora da
-conta, e acima de 40% vira alerta. Quem não tem ofício (NONE) fica fora da regra.
+conta, e acima de 40% vira alerta. Quem não tem ofício (NONE) fica fora de toda a conta (Regra 270).
 """
 
 import gzip
@@ -59,22 +59,30 @@ def lines(path):
         yield from handle
 
 
-def main(paths):
+def collect(text_lines):
+    """Segundos por profissão e estado, e quantas janelas; o sem ofício fica fora (Regra 270)."""
     seconds = defaultdict(lambda: defaultdict(float))
     windows = 0
 
-    for path in paths:
-        for text in lines(path):
-            match = LINE.search(text)
-            if not match:
+    for text in text_lines:
+        match = LINE.search(text)
+        if not match:
+            continue
+        windows += 1
+        for profession, total, shares in ENTRY.findall(match.group(3)):
+            if profession == "NONE":
                 continue
-            windows += 1
-            for profession, total, shares in ENTRY.findall(match.group(3)):
-                total = int(total)
-                seconds[profession]["total"] += total
-                for pair in shares.split():
-                    state, share = pair.split("=")
-                    seconds[profession][state] += total * int(share) / 100
+            total = int(total)
+            seconds[profession]["total"] += total
+            for pair in shares.split():
+                state, share = pair.split("=")
+                seconds[profession][state] += total * int(share) / 100
+
+    return seconds, windows
+
+
+def main(paths):
+    seconds, windows = collect(text for path in paths for text in lines(path))
 
     if not seconds:
         print("Nenhuma linha VC_TIME — o JAR é anterior à Regra 50, ou a vila não foi atendida.")

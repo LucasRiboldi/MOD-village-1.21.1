@@ -28,6 +28,14 @@ class Rule51Test(unittest.TestCase):
         self.assertIn("ESPERA (52%)", said)
         self.assertFalse(any(s.startswith("REGRA 51") for s in said), said)
 
+    def test_the_unemployed_are_left_out_of_the_account(self):
+        seconds, windows = time_ledger.collect([
+            "VC_TIME version=1 colony=6d54a0b5 window=300s MINER[s=300 work=50 idle=50] NONE[s=300 idle=100]"])
+
+        self.assertEqual(1, windows)
+        self.assertIn("MINER", seconds)
+        self.assertNotIn("NONE", seconds, "Regra 270: o sem ofício entrou na conta")
+
     def test_the_unemployed_are_outside_the_rule(self):
         said = time_ledger.verdict("NONE", shares(idle=100))
         self.assertFalse(any(s.startswith("REGRA 51") for s in said), said)
