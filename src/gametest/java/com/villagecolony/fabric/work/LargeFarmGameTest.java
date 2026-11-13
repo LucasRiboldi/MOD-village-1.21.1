@@ -1,16 +1,21 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.test.GameTest;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.TestContext;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /** A plantação grande do mod — Regra 241: 16x16, toda terra arada a até 4 blocos de água, pedida com o fazendeiro parado. */
 public class LargeFarmGameTest implements FabricGameTest {
@@ -44,6 +49,24 @@ public class LargeFarmGameTest implements FabricGameTest {
 
         context.assertTrue(LargeFarmPlans.idleEnough(idle), "Regra 241: 71% sem trabalhar não pediu a plantação");
         context.assertFalse(LargeFarmPlans.idleEnough(busy), "Regra 241: 70% sem trabalhar já pediu a plantação");
+        context.complete();
+    }
+
+    /** Regra 267: o fazendeiro parado pede a plantação grande em qualquer bioma, e não só no deserto. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "large_farm_any_biome", tickLimit = 20)
+    public void anIdleFarmerOutsideTheDesertAsksForTheLargeFarm(TestContext context) {
+        ServerWorld world = context.getWorld();
+        Colony colony = Colony.create(UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(1, 1, 1))));
+        Map<WorkTime.State, Integer> idle = Map.of(WorkTime.State.WORK, 10, WorkTime.State.IDLE, 90);
+
+        context.assertFalse(VillageGrove.isDesert(world, colony), "o mundo do teste é deserto: o teste não mede nada");
+
+        LargeFarmPlans.nothingToDo(colony.id(), world.getTime());
+
+        context.assertTrue(LargeFarmPlans.due(world, colony, List.of(), idle),
+                "Regra 267: o fazendeiro parado fora do deserto não pediu a plantação grande");
+
         context.complete();
     }
 }

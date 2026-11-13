@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 158
+- **Cita a regra:** 159
 - **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 7
 - **Fora de vigor:** 6
@@ -127,7 +127,7 @@ classe prova menos ainda.
 | 115 | O armazém do mod sobe do chão e é feito do material do bioma (autor 10-27: o armazém nasc… | cita | ColonyModelsGameTest, ConstructionOrderTest, StreetLevelGameTest |
 | 116 | A argila aparece na terceira busca vazia, em todo bioma (autor 10-27, jogo da 0.3.93: na… | cita | LocateFallbackGameTest |
 | 117 | O pastor recebe ração quando o fazendeiro não produziu (autor 10-27, jogo da 0.3.93: "the… | cita | ShepherdWoolDeficitGameTest |
-| 118 | No deserto o bosque do lenhador é o dobro e se espalha pelas bordas (autor 10-27, jogo da… | classe | VillageGroveGameTest |
+| 118 | No deserto o bosque do lenhador é o dobro e se espalha pelas bordas (autor 10-27, jogo da… | classe | LargeFarmGameTest, VillageGroveGameTest |
 | 119 | A mina desce em caracol, abre salão e desce de novo pelos quatro cantos, e o caminho que… | cita | BlueprintDoorSideTest, MineEntranceGameTest, MineSecondLevelTest |
 | 120 | A tarefa do lenhador fecha concluída quando o alcance esvazia (autor 10-27, jogo da 0.3.9… | cita | TreeFellingGameTest |
 | 121 | A roça conhecida responde primeiro, sempre (autor 10-27, jogo da 0.3.93: 622 "still sweep… | cita | CropRegistryGameTest |
@@ -276,3 +276,4 @@ classe prova menos ainda.
 | 264 | O grafo nunca passa sobre a água (autor 13-11, jogo da 0.4.68): nenhuma linha do grafo de… | cita | RoadLinesTest |
 | 265 | O grafo não atravessa estrutura (autor 13-11, jogo da 0.4.68, opção "parede e casas Vanil… | cita | GraphStabilityGameTest |
 | 266 | Uma casa do mineiro basta (autor 13-11, jogo da 0.4.68): com uma casa do mineiro pronta n… | cita | StructureEntrancesGameTest |
+| 267 | Plantação grande em todo bioma (autor 13-11, jogo da 0.4.68: fazendeiro da planície com 0… | cita | LargeFarmGameTest |
