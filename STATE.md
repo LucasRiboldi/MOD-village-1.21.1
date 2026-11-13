@@ -78,6 +78,8 @@ na bateria não reprova a entrega, mas tem de ser dito; qualquer outro vermelho 
   250 classes, 146 num ciclo. Não bloqueia a 1.0; está em "Depois da 1.0" na avaliação.
 - NullAway só no `core`; `data/save` sem checagem de nulos é o primeiro a cobrir (F2).
 - Teto de 500 linhas virou meta: 44 arquivos entre 450 e 500, 5 em exatamente 500.
+- `MinerProbe`, `EnduranceReport` e `VillageInventoryObserver` estão em `src/main` só como sonda dos GameTests; mover
+  para o conjunto de teste exige separar os unitários que os usam.
 - `runGametest` não filtra por teste; use `scripts/gametest_focus.py` e restaure antes de commitar.
 
 ## Como avaliar e investigar

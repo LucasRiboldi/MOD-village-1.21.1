@@ -1,6 +1,8 @@
 # ADR-024 - Armazém físico por fotografia (WarehouseIndex)
 
-**Status:** Aceita
+**Status:** Retirada em 2026-11-13 (autor, avaliação de qualidade). O `WarehouseIndex` e as classes `Supply*` nunca foram
+ligados ao jogo; só o próprio teste os usava, e saíram do código. O material físico continua com `ColonySupply` e os
+baús da colônia. O texto abaixo fica como registro da decisão original.
 **Data:** 2026-09-24
 
 ## Contexto

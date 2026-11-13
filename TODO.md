@@ -26,8 +26,12 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 - [ ] 🟡 "Recurso que surge" reduzido a exceções declaradas e medidas por jogo (M). No jogo da 0.4.68: trigo ×467,
   lã ×144 (`WAITED_TOO_LONG`); tora ×43, tábua ×20, pedra lisa ×8 e bancadas (`MISSING_PIECE`); terracota ×47
   (`APPEARING_PIECE`); prismarinho ×144, favo ×20 e corantes (`AUTOMATIC_DROP`)
-- [ ] 🟡 Mineiro sem ramal livre: "every open branch is taken or finished"; no primeiro nível ele só espera (pulado pelo
-  autor em 12-11)
+- [ ] 🟠 ADR-055: sem ofício fora de toda análise de profissão (Regras 219 e 220 seguem valendo)
+- [ ] 🟠 ADR-055: com dois ou mais construtores, uma obra para cada
+- [ ] 🟠 ADR-055: muda que surge no bosque do deserto, em solo preparado
+- [ ] 🟠 ADR-055: corante das flores no ócio do pastor; cor sem flor no bioma, falha ou demora fazem o corante surgir
+- [ ] 🟠 ADR-055: mineiro sem ramal livre abre ramal três níveis abaixo do nível em uso
+- [ ] 🟠 ADR-055: troca de cama entre quem trabalha em cima e mora embaixo e quem faz o contrário
 - [ ] 🟡 **Item MAE:** primeira obra pedida em jogo pela fila do construtor (`/vc mae obra <modelo>`, `VC_MAE_SITE` de
   `queued` a `done`), obra longe da vila, socorro (Regra 222) e a recusa que só mostra o motivo do último lote
 - [ ] 🟡 **Nascimentos:** 0 em 63 min na 0.4.43 com 28 camas para 19 aldeões; conferir nascimentos por dia e `UPKEEP`
@@ -139,18 +143,7 @@ desligada não entra como prova. Cenário fora da arena de 8x8 bate na barreira 
 
 ## Decisões do autor que faltam
 
-- [ ] Aldeões sem ofício 100% parados (cota da ADR-011): vagas para todos, ou ajudantes?
-- [ ] Dois construtores na mesma obra.
-- [ ] E5/E6: limites da felicidade e do rebanho (números do agente). E7: texto da Regra 33.
-- [ ] Números do agente na ADR-039 (carvão < 32, ferro < 16, caminho 4/ciclo até 24).
-- [ ] `docs/workers-analysis/`: mover para `docs/research/`, arquivar ou apagar.
-- [ ] Biblioteca com duas portas a 2 blocos: dois brancos colados, por serem duas portas reais; viram um?
-- [ ] O3b: no deserto o bosque do lenhador não tem muda; plantar pede muda de fora.
-- [ ] Fonte de corante (flor, cacto) para a lã ter cor mesmo sem corante nos baús.
-- [ ] M2 (segundo ramal cedo na mina): a escada é o único acesso ao nível.
-- [ ] Tirar o trecho travado do recálculo (afinamento e rota), conferindo só se o bloco existe; muda a ADR-050.
-- [ ] Deserto: quem mora na parte baixa da vila não chega à obra de cima; trocar casa com quem tem ofício ou construir
-  em cima?
+Nenhuma: as 14 de 13-11 estão na ADR-055.
 
 ## Decidido, não fazer
 

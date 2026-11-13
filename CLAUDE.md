@@ -197,4 +197,3 @@ Fabric 1.21.1 · Java 21 · Gradle + Loom
 - `fabric-development` + `minecraft-villager-systems` (implementação)
 - `debugging-strategies` (diagnóstico)
 
-@.fabric/AGENTS.md
