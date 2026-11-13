@@ -15,10 +15,6 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   religar ou retirar (P)
 - [ ] 🟡 Decisão do autor: o `CLAUDE.md` importa `.fabric/AGENTS.md`, que a ferramenta Fabric cria localmente (pasta no
   `.gitignore`) e não existe em nenhum checkout; manter, reinstalar a ferramenta ou tirar o import (P)
-- [ ] 🟠 `scripts/rule_coverage.py` lê o estado das linhas de duas células (regras 201 a 205 revogadas contam como sem
-  teste) e ganha teste (P)
-- [ ] 🟠 README: a frase "clientes não precisam instalar" está errada (o mod registra blocos e itens); contagens de teste
-  velhas (`scripts/audit/docs_drift.py`) (P)
 - [ ] 🟠 Decisão do autor, CI: separar o relatório JaCoCo da bateria do da auditoria (o publicado mostra 7,3% contra 79,0%
   real), "Check whitespace" com base, release só com CI verde do mesmo SHA. Os workflows só mudam com o autor (P)
 - [ ] 🟡 Decisão do autor: fechar ou integrar a PR #45 (`codex/local-test-sentinel`) e as branches locais antigas (P)
