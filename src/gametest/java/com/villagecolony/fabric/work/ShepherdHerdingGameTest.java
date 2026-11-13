@@ -39,7 +39,8 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
 
                 context.assertTrue(herd.isPresent() && herd.get().animal.equals(cow.getUuid()),
                         "o pastor não escolheu a vaca solta: kept=" + ShepherdFlock.isKept(context.getWorld(), cow)
-                                + " leashed=" + cow.isLeashed() + " can=" + cow.canBeLeashed() + " herd=" + herd.isPresent());
+                                + " leashed=" + cow.isLeashed() + " can=" + cow.canBeLeashed() + " herd=" + herd.isPresent()
+                                + herd.map(chosen -> " escolhido=" + context.getWorld().getEntity(chosen.animal)).orElse(""));
                 context.assertTrue(herd.get().fence.equals(context.getAbsolutePos(fence)),
                         "a cerca escolhida não é a mais perto");
 
