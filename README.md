@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.68%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.74%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,9 +19,17 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Estado atual: 0.4.68, publicada como `v0.4.68-alpha`, não jogada.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
+**Estado atual: 0.4.74 na branch `claude/jogo-0468-grafo-06c8d9`, não jogada; a última publicada é `v0.4.68-alpha`.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
-[docs/RULES.md](docs/RULES.md) (1 a 262).
+[docs/RULES.md](docs/RULES.md) (1 a 269).
+
+Da 0.4.69 à 0.4.74 (jogo da 0.4.68, planície, análise em `docs/audit/2026-11-13-jogo-0468.md`):
+
+- **Grafo de ruas:** nenhuma linha sobre a água, nem ponte (Regra 264, revoga a 174); o trecho planejado que uma construção
+  cobriu sai da linha (Regra 265).
+- **Ofícios:** o fundidor funde onde está (Regra 263); uma casa do mineiro basta (Regra 266); a plantação grande sai em todo
+  bioma (Regra 267); o bosque do lenhador acha o chão em qualquer altura (Regra 268); o prazo do pastor cresce com a
+  distância, e o animal largado fica amarrado (Regra 269).
 
 Da 0.4.54 à 0.4.68, em resumo:
 

@@ -31,6 +31,11 @@ Toda análise conta o que nasceu sem origem física e atualiza esta lista. Jogo 
   `honeycomb` ×21 e 4 corantes de 1 cada (`AUTOMATIC_DROP`, Regra 41). O ferro é o maior: os 3 mineiros fecharam 0 de 16
   tarefas de minério no diário
 
+- Jogo da 0.4.68, 2 h, `VC_SUPPLY`: trigo ×467 e lã branca ×144 (`WAITED_TOO_LONG`); tora de carvalho ×43, tábua ×20, pedra
+  lisa ×8, tijolo ×2, vidraça, cortador de pedra, mesa de ferraria, mesa de flecheiro e alto-forno ×1 (`MISSING_PIECE`);
+  terracota branca ×47, argila ×4, terracota ×2 (`APPEARING_PIECE`); prismarinho ×144, favo ×20, corantes ×7
+  (`AUTOMATIC_DROP`). Pedra lisa, vidro e tijolo dependiam do fundidor parado (Regra 263); tora e tábua, do bosque (Regra 268)
+
 ## Abertos do jogo da 0.4.28
 
 - [ ] Conferir em jogo a 0.4.29: "into the pen" no log, `VC_PENS` com animais, nós de corda vazios saindo das cercas
