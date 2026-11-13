@@ -233,4 +233,58 @@ public class VillageGroveGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * Regra 271: a muda do bosque surge (no deserto também, pela madeira de reserva da vila), plantada em terra enraizada,
+     * e entra na conta do que surge ({@code VC_SUPPLY}).
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_grove_supply", tickLimit = 100)
+    public void theGroveSaplingAppearsOnRootedDirtAndIsDeclared(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        for (int x = -9; x <= 15; x++) {
+            for (int z = -9; z <= 15; z++) {
+                world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y, z)), Blocks.SAND.getDefaultState());
+            }
+        }
+
+        BlockPos low = context.getAbsolutePos(new BlockPos(1, Y - 5, 1));
+        BlockPos top = context.getAbsolutePos(new BlockPos(5, Y + 5, 5));
+        Colony colony = Colony.create(UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(3, Y + 1, 3))));
+
+        colony.measure(new VillageBounds(low.getX(), low.getY(), low.getZ(), top.getX(), top.getY(), top.getZ()));
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        try {
+            context.assertTrue(com.villagecolony.fabric.integration.VillageBiomes
+                            .woodFor(net.minecraft.world.biome.BiomeKeys.DESERT).isPresent(),
+                    "Regra 271: o deserto ficou sem madeira de reserva, e o bosque dele sem muda");
+
+            int planted = VillageGrove.tendNow(world, colony);
+            List<BlockPos> grove = VillageGrove.of(colony.id());
+
+            context.assertTrue(planted > 0, "o bosque na areia não recebeu muda");
+            context.assertTrue(grove.stream().allMatch(spot -> world.getBlockState(spot).isOf(TreeNursery.BED)),
+                    "Regra 271: muda fora da terra enraizada: " + grove);
+            context.assertTrue(com.villagecolony.fabric.integration.Supplies.sessionCount(colony.id(),
+                            com.villagecolony.core.coordination.SupplyException.valueOf("GROVE_SAPLING")) == planted,
+                    "Regra 271: a muda que surgiu não entrou no VC_SUPPLY");
+        } finally {
+            for (int x = -9; x <= 15; x++) {
+                for (int z = -9; z <= 15; z++) {
+                    for (int up = 0; up <= 12; up++) {
+                        world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y + up, z)), Blocks.AIR.getDefaultState());
+                    }
+                }
+            }
+
+            owned.cleanUp();
+            VillageGrove.clearAll();
+        }
+
+        context.complete();
+    }
 }

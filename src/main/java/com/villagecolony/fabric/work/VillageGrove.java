@@ -169,6 +169,9 @@ public final class VillageGrove {
 
             grove.add(spot.get());
             planted++;
+            // A muda do bosque surge, também no deserto, e entra na conta do que surge (Regra 271).
+            com.villagecolony.fabric.integration.Supplies.record(com.villagecolony.core.coordination.SupplyException.GROVE_SAPLING,
+                    colony.id(), TreeNursery.idOf(world.getBlockState(spot.get().up()).getBlock()).toString(), 1);
             com.villagecolony.fabric.integration.VillageTrees.rememberSapling(colony.id(), spot.get().up());
 
             VillageColonyMod.LOGGER.info(
