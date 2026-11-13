@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 157
+- **Cita a regra:** 158
 - **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 7
 - **Fora de vigor:** 6
@@ -275,3 +275,4 @@ classe prova menos ainda.
 | 263 | O fundidor funde onde está (autor 13-11, jogo da 0.4.68): a fundição não exige que o fund… | cita | SmelterGameTest |
 | 264 | O grafo nunca passa sobre a água (autor 13-11, jogo da 0.4.68): nenhuma linha do grafo de… | cita | RoadLinesTest |
 | 265 | O grafo não atravessa estrutura (autor 13-11, jogo da 0.4.68, opção "parede e casas Vanil… | cita | GraphStabilityGameTest |
+| 266 | Uma casa do mineiro basta (autor 13-11, jogo da 0.4.68): com uma casa do mineiro pronta n… | cita | StructureEntrancesGameTest |
