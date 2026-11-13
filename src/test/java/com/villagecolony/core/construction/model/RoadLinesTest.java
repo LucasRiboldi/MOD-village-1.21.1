@@ -333,17 +333,28 @@ class RoadLinesTest {
     }
 
     @Test
-    @DisplayName("sem saída a seco, a ligação atravessa a água até o limite")
-    void aLinkCrossesWaterUpToTheSpan() {
+    @DisplayName("Regra 264: sem saída a seco, a ligação não atravessa a água e a parte fica solta")
+    void aLinkNeverCrossesWater() {
         Set<ColonyPos> cells = corridor(0, 20, 0, 0);
 
         cells.addAll(corridor(24, 40, 0, 0));
 
-        RoadLines.Result crossing = RoadLines.build(cells, Set.of(), at(10, 0), Set.of(), Set.of(), withWater(3, false), withWater(3, true), 3, 1, 0);
-        RoadLines.Result tooWide = RoadLines.build(cells, Set.of(), at(10, 0), Set.of(), Set.of(), withWater(3, false), withWater(3, true), 2, 1, 0);
+        RoadLines.Result result = RoadLines.build(cells, Set.of(), at(10, 0), Set.of(), Set.of(), withWater(3, false), 1, 0);
 
-        assertTrue(columnsOf(crossing).contains(at(22, 0)), "a ligação não cruzou o riacho: " + crossing.toPave());
-        assertTrue(crossing.isolated() == 0, "a parte do outro lado ficou solta");
-        assertFalse(columnsOf(tooWide).contains(at(22, 0)), "cruzou mais água do que o limite");
+        assertFalse(columnsOf(result).contains(at(22, 0)), "Regra 264: a linha cruzou o riacho: " + result.toPave());
+        assertEquals(1, result.isolated(), "Regra 264: a parte do outro lado devia ficar solta");
+    }
+
+    @Test
+    @DisplayName("Regra 264: coluna traçada antes sobre a água sai da linha na releitura")
+    void aPlannedColumnOverWaterLeavesTheLine() {
+        Set<ColonyPos> cells = corridor(0, 20, 0, 0);
+        Set<ColonyPos> planned = Set.of(at(21, 0), at(22, 0), at(23, 0));
+
+        cells.addAll(corridor(24, 40, 0, 0));
+
+        RoadLines.Result result = RoadLines.build(cells, planned, at(10, 0), Set.of(), Set.of(), withWater(3, false), 1, 0);
+
+        assertFalse(columnsOf(result).contains(at(22, 0)), "Regra 264: a coluna planejada sobre a água ficou: " + result.toPave());
     }
 }

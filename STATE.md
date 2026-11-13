@@ -2,6 +2,8 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.68 está publicada (`v0.4.68-alpha`) e integrada na `main`; da 0.4.54 à 0.4.68 nada foi jogado.
 
+> **Candidata 0.4.70:** o grafo nunca passa sobre a água (Regra 264, revoga a 174): sai a ponte, o trecho planejado sobre a água sai na releitura e o calçador recusa coluna sobre a água. No save da 0.4.68, 94 das 559 colunas da linha estavam sobre água ou ponte. Sentinela `fast`: 1.107 GameTests, caiu só o instável `animalsWalkInThroughEachOfTheFourGates`. Não jogada.
+
 > **Candidata 0.4.69:** jogo da 0.4.68 (planície, Spark El42EuZ5w9; análise em `docs/audit/2026-11-13-jogo-0468.md`): o fundidor funde onde está (Regra 263); dois de três ficavam parados com o baú numa casa Vanilla. Sentinela `fast`: caiu só o instável `workerCollectsWhileWalkingPast`. Não jogada.
 
 > **Candidata 0.4.68:** cada estrutura do mod sai na madeira e na pedra do bioma da vila, e a de pé segue reconhecida (Regra 262). Sentinela `fast` verde de primeira: 1.109 GameTests e 1.803 unitários. Não jogada.

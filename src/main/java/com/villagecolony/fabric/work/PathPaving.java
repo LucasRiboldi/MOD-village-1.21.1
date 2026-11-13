@@ -158,19 +158,9 @@ public final class PathPaving {
             return;
         }
 
-        if (BridgeDeck.isOverWater(world, floor)) {
-            if (!BridgeDeck.lay(world, colonyId, paver.getUuid(), step, plan.steps)) {
-                // Sem tábua nos baús: a ponte espera; a vez passa e ele volta a tentar.
-                endTurn(colonyId);
-                return;
-            }
-
-            paver.swingHand(Hand.MAIN_HAND);
-            plan.next++;
-            turn.walked = 0;
-            if (plan.done()) {
-                endTurn(colonyId);
-            }
+        // Nada se calça sobre a água (Regra 264): a coluna é recusada e sai do grafo na releitura.
+        if (isOverWater(world, floor)) {
+            skipStep(colonyId, turn, plan, step);
             return;
         }
 
@@ -195,6 +185,12 @@ public final class PathPaving {
 
             endTurn(colonyId);
         }
+    }
+
+    /** O piso deste passo fica na água ou logo acima dela. */
+    static boolean isOverWater(ServerWorld world, BlockPos floor) {
+        return !world.getFluidState(floor).isEmpty()
+                || (world.getBlockState(floor).isAir() && !world.getFluidState(floor.down()).isEmpty());
     }
 
     private static void skipStep(UUID colonyId, Turn turn, PathLinks.Plan plan, PathStep step) {

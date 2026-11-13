@@ -7,7 +7,7 @@ classe prova menos ainda.
 - **Cita a regra:** 156
 - **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 7
-- **Fora de vigor:** 5
+- **Fora de vigor:** 6
 
 | # | regra | grau | testes |
 | --- | --- | --- | --- |
@@ -183,7 +183,7 @@ classe prova menos ainda.
 | 171 | Pulo do aldeão (autor 11-04): a altura padrão do jogo; o maior só com obstáculo, cerca, e… | cita | VillagerRulesGameTest |
 | 172 | Água aberta (autor 11-04): com mais de 5 blocos de água à frente, todo aldeão anda cerca… | cita | VillagerRulesGameTest |
 | 173 | Zona da obra limpa (autor 11-04): árvore, tronco, folha e flor saem em todas as alturas,… | cita | TreeClearingGameTest |
-| 174 | Ponte (autor 11-04): sem caminho a seco na zona da vila, o construtor atravessa a água, a… | cita | BridgeDeckGameTest |
+| 174 | Ponte (autor 11-04): sem caminho a seco na zona da vila, o construtor atravessa a água, a… | fora de vigor |  |
 | 175 | Casa do mineiro: ver Regra 211. A casa e a boca da mina entram na rede pelo grafo (Regra… | classe | EntrancesAtTheDoorGameTest, GraphOnlyPathsGameTest, MineHomePlansTest |
 | 176 | Sinalizador dos caminhos (autor 11-04): /vc mae mostrar ligar\ | cita | RoadMapSyncGameTest |
 | 177 | Grafo como mapa de trilhos (autor 11-05): uma linha contínua por corredor, no bloco centr… | cita | RoadLinesTest |
@@ -273,3 +273,4 @@ classe prova menos ainda.
 | 261 | Poste de luz nas ruas fixas (autor 12-11, opção B): base de 1 bloco de pedra do bioma (ar… | cita | LampPostGameTest, LampPostPlanTest |
 | 262 | Cada estrutura do mod na versão do bioma (autor 12-11, troca automática): ao erguer uma e… | cita | BiomeBlockSwapTest, BiomeBlueprintsGameTest |
 | 263 | O fundidor funde onde está (autor 13-11, jogo da 0.4.68): a fundição não exige que o fund… | cita | SmelterGameTest |
+| 264 | O grafo nunca passa sobre a água (autor 13-11, jogo da 0.4.68): nenhuma linha do grafo de… | cita | RoadLinesTest |

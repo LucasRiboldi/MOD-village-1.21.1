@@ -36,27 +36,13 @@ public final class WorldPathTerrain implements PathTerrain {
     private final List<Building> buildings;
     private final Optional<ConstructionProject> open;
     private final Optional<ColonyPos> mine;
-    private final boolean bridging;
-    private final Optional<com.villagecolony.core.colony.model.VillageBounds> bounds;
-
-    /** Quanto além da caixa da vila a ponte ainda vai. */
-    static final int BRIDGE_MARGIN = 8;
 
     /** Quanto em volta da entrada da mina o caminho não passa: o caracol e a borda dele. */
     public static final int MINE_CLEARANCE = com.villagecolony.core.construction.model.MineShaft.HELIX_SIDE
             + com.villagecolony.core.construction.model.MineShaft.STAIR_LANES + 2;
 
+    /** O terreno do traçado: a água nunca é chão (Regra 264). */
     public WorldPathTerrain(ServerWorld world, UUID colonyId) {
-        this(world, colonyId, false);
-    }
-
-    /**
-     * Com {@code bridging}, a água dentro da caixa da vila (mais {@link #BRIDGE_MARGIN}) conta como chão, com o piso
-     * no nível dela: o traçado sem saída a seco atravessa com ponte ({@code BridgeDeck}).
-     */
-    public WorldPathTerrain(ServerWorld world, UUID colonyId, boolean bridging) {
-        this.bridging = bridging;
-        this.bounds = VillageColonyMod.COLONIES.find(colonyId).flatMap(com.villagecolony.core.colony.model.Colony::bounds);
         this.world = world;
         this.buildings = List.copyOf(VillageColonyMod.BUILDINGS.ofColony(colonyId));
         this.open = VillageColonyMod.CONSTRUCTIONS.openOf(colonyId);
@@ -94,8 +80,7 @@ public final class WorldPathTerrain implements PathTerrain {
             }
 
             if (!state.getFluidState().isEmpty()) {
-                return bridging && state.getFluidState().isIn(net.minecraft.registry.tag.FluidTags.WATER)
-                        && insideTheZone(x, z) ? OptionalInt.of(y) : OptionalInt.empty();
+                return OptionalInt.empty();
             }
 
             if (!state.isOf(Blocks.DIRT_PATH) && RoadPaving.refusalOfTheGround(world, at, state).isPresent()) {
@@ -113,7 +98,7 @@ public final class WorldPathTerrain implements PathTerrain {
 
     @Override
     public boolean canCut(int x, int z, int floorY) {
-        if (bridging || blocked(x, z) || !world.isChunkLoaded(x >> 4, z >> 4)) {
+        if (blocked(x, z) || !world.isChunkLoaded(x >> 4, z >> 4)) {
             return false;
         }
 
@@ -144,11 +129,6 @@ public final class WorldPathTerrain implements PathTerrain {
         BlockState above = world.getBlockState(floor.up(CUT_HEIGHT + 1));
 
         return !SiteSurroundings.isNaturalGround(above);
-    }
-
-    private boolean insideTheZone(int x, int z) {
-        return bounds.filter(box -> x >= box.minX() - BRIDGE_MARGIN && x <= box.maxX() + BRIDGE_MARGIN
-                && z >= box.minZ() - BRIDGE_MARGIN && z <= box.maxZ() + BRIDGE_MARGIN).isPresent();
     }
 
     @Override

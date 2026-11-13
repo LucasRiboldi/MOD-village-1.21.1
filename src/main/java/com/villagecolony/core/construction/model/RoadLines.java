@@ -64,17 +64,7 @@ public final class RoadLines {
      */
     public static Result build(Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> entrances,
                                Set<ColonyPos> farmRings, PathTerrain terrain, int maxLinks, int turn) {
-        return build(cells, planned, center, entrances, farmRings, terrain, terrain, 0, maxLinks, turn);
-    }
-
-    /**
-     * O mesmo, com a travessia: sem saída a seco, a ligação pode cruzar até {@code maxSpan} colunas sem chão.
-     *
-     * @param bridging o terreno em que a água conta como piso
-     */
-    public static Result build(Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> entrances,
-                               Set<ColonyPos> farmRings, PathTerrain terrain, PathTerrain bridging, int maxSpan, int maxLinks, int turn) {
-        return build(cells, planned, center, entrances, farmRings, terrain, bridging, maxSpan, maxLinks, turn, Set.of());
+        return build(cells, planned, center, entrances, farmRings, terrain, maxLinks, turn, Set.of());
     }
 
     /**
@@ -83,9 +73,8 @@ public final class RoadLines {
      * @param fixed as colunas de trecho que não mudou há {@link RoadSettling#DAYS} dias
      */
     public static Result build(Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> entrances,
-                               Set<ColonyPos> farmRings, PathTerrain terrain, PathTerrain bridging, int maxSpan, int maxLinks, int turn,
-                               Set<ColonyPos> fixed) {
-        return build(cells, planned, center, entrances, farmRings, terrain, bridging, maxSpan, maxLinks, turn, fixed, Set.of());
+                               Set<ColonyPos> farmRings, PathTerrain terrain, int maxLinks, int turn, Set<ColonyPos> fixed) {
+        return build(cells, planned, center, entrances, farmRings, terrain, maxLinks, turn, fixed, Set.of());
     }
 
     /**
@@ -93,8 +82,8 @@ public final class RoadLines {
      * e 229).
      */
     public static Result build(Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> entrances,
-                               Set<ColonyPos> farmRings, PathTerrain terrain, PathTerrain bridging, int maxSpan, int maxLinks, int turn,
-                               Set<ColonyPos> fixed, Set<ColonyPos> retired) {
+                               Set<ColonyPos> farmRings, PathTerrain terrain, int maxLinks, int turn, Set<ColonyPos> fixed,
+                               Set<ColonyPos> retired) {
         Map<Long, Integer> physical = new HashMap<>();
 
         cells.forEach(at -> physical.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
@@ -105,7 +94,9 @@ public final class RoadLines {
 
         Map<Long, Integer> start = new HashMap<>(physical);
 
-        planned.forEach(at -> start.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
+        // A linha nunca passa sobre a água (Regra 264): o trecho planejado que perdeu o chão seco sai.
+        planned.stream().filter(at -> terrain.groundY(at.x(), at.z(), at.y()).isPresent())
+                .forEach(at -> start.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
 
         Set<Long> doors = new HashSet<>();
 
@@ -181,7 +172,7 @@ public final class RoadLines {
             if (links < maxLinks) {
                 links++;
 
-                if (RoadLinks.link(part, main, columns, terrain, bridging, maxSpan)) {
+                if (RoadLinks.link(part, main, columns, terrain)) {
                     main.addAll(part);
                     continue;
                 }

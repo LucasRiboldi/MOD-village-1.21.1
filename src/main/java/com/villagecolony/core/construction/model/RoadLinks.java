@@ -156,8 +156,7 @@ final class RoadLinks {
     }
 
     /** Liga esta parte à principal pelo trecho mais curto de chão andável. */
-    static boolean link(Set<Long> part, Set<Long> main, Map<Long, Integer> columns, PathTerrain terrain,
-                                PathTerrain bridging, int maxSpan) {
+    static boolean link(Set<Long> part, Set<Long> main, Map<Long, Integer> columns, PathTerrain terrain) {
         long from = part.iterator().next();
         long to = main.iterator().next();
         int best = Integer.MAX_VALUE;
@@ -201,12 +200,6 @@ final class RoadLinks {
 
         Optional<List<PathStep>> steps = VillagePathPlanner.plan(terrain, ColonyRoads.xOf(from),
                 columns.getOrDefault(from, 0), ColonyRoads.zOf(from), headingTo(from, to), goal);
-
-        if ((steps.isEmpty() || steps.get().isEmpty()) && maxSpan > 0) {
-            steps = VillagePathPlanner.plan(bridging, ColonyRoads.xOf(from), columns.getOrDefault(from, 0), ColonyRoads.zOf(from),
-                    headingTo(from, to), goal).filter(found -> found.stream()
-                    .filter(step -> terrain.groundY(step.x(), step.z(), step.floorY()).isEmpty()).count() <= maxSpan);
-        }
 
         if (steps.isEmpty() || steps.get().isEmpty()) {
             return false;
