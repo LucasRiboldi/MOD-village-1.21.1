@@ -183,4 +183,54 @@ public class VillageGroveGameTest implements FabricGameTest {
         context.assertTrue(others == 3, "em 30 mudas deviam vir 3 de outra espécie, vieram " + others);
         context.complete();
     }
+
+    /**
+     * Regra 268: o bosque acha o chão em qualquer altura. A vila fica num vale e a borda dela, 9 blocos acima do centro:
+     * a busca antiga olhava só de 4 acima a 8 abaixo do centro e não plantava nada (jogo da 0.4.68).
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_grove_high_edge", tickLimit = 100)
+    public void theGroveFindsGroundHighAboveTheCentre(TestContext context) {
+        ServerWorld world = context.getWorld();
+        int high = Y + 9;
+
+        for (int x = -9; x <= 15; x++) {
+            for (int z = -9; z <= 15; z++) {
+                boolean inside = x >= 1 && x <= 5 && z >= 1 && z <= 5;
+
+                world.setBlockState(context.getAbsolutePos(new BlockPos(x, inside ? Y : high, z)), Blocks.GRASS_BLOCK.getDefaultState());
+            }
+        }
+
+        BlockPos low = context.getAbsolutePos(new BlockPos(1, Y - 5, 1));
+        BlockPos top = context.getAbsolutePos(new BlockPos(5, Y + 5, 5));
+        VillageBounds box = new VillageBounds(low.getX(), low.getY(), low.getZ(), top.getX(), top.getY(), top.getZ());
+        Colony colony = Colony.create(UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(3, Y + 1, 3))));
+
+        colony.measure(box);
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        try {
+            int planted = VillageGrove.tendNow(world, colony);
+
+            context.assertTrue(planted > 0, "Regra 268: a borda alta da vila não recebeu nenhuma muda");
+            context.assertTrue(VillageGrove.of(colony.id()).stream().allMatch(spot -> spot.getY() == context.getAbsolutePos(
+                    new BlockPos(0, high, 0)).getY()), "Regra 268: muda fora do chão da borda: " + VillageGrove.of(colony.id()));
+        } finally {
+            for (int x = -9; x <= 15; x++) {
+                for (int z = -9; z <= 15; z++) {
+                    for (int up = 0; up <= 20; up++) {
+                        world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y + up, z)), Blocks.AIR.getDefaultState());
+                    }
+                }
+            }
+
+            owned.cleanUp();
+            VillageGrove.clearAll();
+        }
+
+        context.complete();
+    }
 }

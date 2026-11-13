@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 159
+- **Cita a regra:** 160
 - **Só usa a classe indicada:** 94
 - **Sem nenhum teste:** 7
 - **Fora de vigor:** 6
@@ -277,3 +277,4 @@ classe prova menos ainda.
 | 265 | O grafo não atravessa estrutura (autor 13-11, jogo da 0.4.68, opção "parede e casas Vanil… | cita | GraphStabilityGameTest |
 | 266 | Uma casa do mineiro basta (autor 13-11, jogo da 0.4.68): com uma casa do mineiro pronta n… | cita | StructureEntrancesGameTest |
 | 267 | Plantação grande em todo bioma (autor 13-11, jogo da 0.4.68: fazendeiro da planície com 0… | cita | LargeFarmGameTest |
+| 268 | O bosque acha o chão em qualquer altura (autor 13-11, jogo da 0.4.68: 0 mudas plantadas,… | cita | VillageGroveGameTest |

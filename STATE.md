@@ -2,6 +2,8 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.68 está publicada (`v0.4.68-alpha`) e integrada na `main`; da 0.4.54 à 0.4.68 nada foi jogado.
 
+> **Candidata 0.4.73:** o bosque do lenhador acha o chão em qualquer altura (Regra 268); na 0.4.68 plantou 0 mudas porque o único lado seco ficava 6 a 9 blocos acima do centro. Sentinela `fast`: 1.110 GameTests, caiu só o instável `workerCollectsWhileWalkingPast`. Não jogada.
+
 > **Candidata 0.4.72:** a plantação grande sai em todo bioma com o fazendeiro parado (Regra 267, emenda a 241); na planície da 0.4.68 ele teve 0% de trabalho. Sentinela `fast`: 1.109 GameTests verdes e unitários verdes; a suite `property` caiu por parada externa do daemon do Gradle e passou ao repetir. Não jogada.
 
 > **Candidata 0.4.71:** uma casa do mineiro pronta basta, mesmo com a boca da mina mudada (Regra 266, emenda a 211). A linha que atravessava a parede do flecheiro já sai pela 0.4.70 (Regra 265, teste novo). Sentinela `fast` verde de primeira: 1.108 GameTests. Não jogada.
