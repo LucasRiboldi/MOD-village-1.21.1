@@ -2,6 +2,8 @@
 
 > **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.68 está publicada (`v0.4.68-alpha`) e integrada na `main`; da 0.4.54 à 0.4.68 nada foi jogado.
 
+> **Candidata 0.4.74:** o prazo do pastor cresce com a distância e o animal largado fica amarrado na cerca mais perto (Regra 269); na 0.4.68 o curral teve no máximo 4 animais. Sentinela `fast`: 1.112 GameTests, caiu só o instável `workerCollectsWhileWalkingPast`. Não jogada.
+
 > **Candidata 0.4.73:** o bosque do lenhador acha o chão em qualquer altura (Regra 268); na 0.4.68 plantou 0 mudas porque o único lado seco ficava 6 a 9 blocos acima do centro. Sentinela `fast`: 1.110 GameTests, caiu só o instável `workerCollectsWhileWalkingPast`. Não jogada.
 
 > **Candidata 0.4.72:** a plantação grande sai em todo bioma com o fazendeiro parado (Regra 267, emenda a 241); na planície da 0.4.68 ele teve 0% de trabalho. Sentinela `fast`: 1.109 GameTests verdes e unitários verdes; a suite `property` caiu por parada externa do daemon do Gradle e passou ao repetir. Não jogada.

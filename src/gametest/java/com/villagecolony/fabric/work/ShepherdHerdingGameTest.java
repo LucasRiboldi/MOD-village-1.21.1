@@ -119,4 +119,66 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
             context.complete();
         });
     }
+
+    /** Regra 269: o prazo cresce com a distância; a 90 blocos do poste, 3.000 tiques ainda não estouram. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_deadline", tickLimit = 40)
+    public void aFarPostGivesTheShepherdMoreTime(TestContext context) {
+        ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(4, 1, 4));
+        VillagerEntity shepherd = context.spawnEntity(EntityType.VILLAGER, new BlockPos(2, 1, 2));
+        CowEntity cow = context.spawnEntity(EntityType.COW, new BlockPos(3, 1, 2));
+        context.getWorld().setTimeOfDay(1_000);
+
+        context.waitAndRun(5, () -> {
+            try {
+                fixture.owning(shepherd.getUuid());
+                VillageColonyMod.WORKERS.register(shepherd.getUuid(), fixture.colony().id()).assign(ProfessionType.SHEPHERD);
+                cow.attachLeash(shepherd, true);
+
+                BlockPos farPost = context.getAbsolutePos(new BlockPos(2, 1, 2)).add(60, 0, 30);
+                ShepherdHerding.Herd herd = new ShepherdHerding.Herd(cow.getUuid(), farPost, context.getWorld().getTime() - 3_000);
+                herd.phase = ShepherdHerding.Phase.LEAD;
+
+                context.assertTrue(ShepherdHerding.step(context.getWorld(), shepherd.getUuid(), herd),
+                        "Regra 269: a 90 blocos do poste o pastor desistiu com 3.000 tiques");
+                context.assertTrue(cow.getLeashHolder() == shepherd, "Regra 269: a vaca saiu da corda");
+            } finally {
+                fixture.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /** Regra 269: quando a coleta acaba sem chegar, o animal fica amarrado na cerca mais perto, e não solto. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_deadline", tickLimit = 40)
+    public void aDroppedAnimalIsTiedToTheNearestFence(TestContext context) {
+        ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(4, 1, 4));
+        BlockPos fence = new BlockPos(1, 1, 1);
+        context.setBlockState(fence, Blocks.OAK_FENCE.getDefaultState());
+        VillagerEntity shepherd = context.spawnEntity(EntityType.VILLAGER, new BlockPos(3, 1, 3));
+        CowEntity cow = context.spawnEntity(EntityType.COW, new BlockPos(4, 1, 3));
+        context.getWorld().setTimeOfDay(1_000);
+
+        context.waitAndRun(5, () -> {
+            try {
+                fixture.owning(shepherd.getUuid());
+                VillageColonyMod.WORKERS.register(shepherd.getUuid(), fixture.colony().id()).assign(ProfessionType.SHEPHERD);
+                cow.attachLeash(shepherd, true);
+
+                BlockPos farPost = context.getAbsolutePos(fence).add(60, 0, 30);
+                ShepherdHerding.Herd herd = new ShepherdHerding.Herd(cow.getUuid(), farPost, context.getWorld().getTime() - 100_000);
+                herd.phase = ShepherdHerding.Phase.LEAD;
+
+                context.assertFalse(ShepherdHerding.step(context.getWorld(), shepherd.getUuid(), herd),
+                        "a coleta vencida não acabou");
+                context.assertTrue(cow.getLeashHolder() instanceof LeashKnotEntity knot
+                                && knot.getAttachedBlockPos().equals(context.getAbsolutePos(fence)),
+                        "Regra 269: a vaca ficou solta em vez de amarrada na cerca: " + cow.getLeashHolder());
+            } finally {
+                fixture.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
 }
