@@ -374,3 +374,27 @@ encurtar; se um teste falha antes do `restore…`, o valor curto vaza para o res
 |---|---|---|---|
 | ★ A. **Depois do jogo da 0.4.68**, eu proponho o TODO limpo: o que o jogo conferiu sai, seções de jogos até a 0.4.38 vão para `docs/archive/technical/` com o mesmo texto; o autor aprova antes do commit | Volta a ser "vivo e curto" | Item ainda válido escondido no histórico | Leve (documento) |
 | B. Limpar agora, sem o jogo | Mais cedo | Itens "conferir em jogo" saem sem conferir | Leve |
+
+## Escolhas do autor (12-11)
+
+| ID | Escolha | Quando |
+|---|---|---|
+| VF-001 | A: medir primeiro (Spark do autor + `VC_COST` do primeiro ciclo com subfases) | antes do jogo (só log) |
+| VF-002 | A: só este teste, com 3 aldeões em casa | antes do jogo |
+| VF-003 | A: testes de valor no `MineShaft` | antes do jogo |
+| VF-004 | A: jogar a 0.4.68 antes das correções de comportamento | — |
+| VF-005 | A: esperar a medida do VF-001 | depois do jogo |
+| VF-006 | A: próprio baú, baús da colônia e, sobrando, o chão | depois do jogo |
+| VF-007 | A: medir (posição, distância ao jogador, chunk carregado) | antes do jogo (só log) |
+| VF-008/009 | **Regra nova do autor**: areia e argila que o fundidor não consegue recolher em 5 minutos tentando surgem no baú do fundidor, na quantidade toda que a obra pede, com linha `VC_SUPPLY` como os outros surgidos. Recurso sem origem física: pede emenda à ADR-028/034 | depois do jogo |
+| VF-010/011 | A: lote separado e checagem; no curral, medir antes qual vaca sai | antes do jogo |
+| VF-012 | A: dividir ao tocar | sempre |
+| VF-013 | A: aceitar e registrar | — |
+| VF-014 | **B: rodada nos 6 maiores** (`Corridor.plan`, `SitePreparation.clearTrees`, `LotLevel.flatGroundAt`, `ReachMap.step`, `MineCuts.nextCut`, `VillageGround.plan`) | depois do jogo, um por ciclo |
+| VF-015 | A: autorizado gravar as somas no `verification-metadata.xml` e rodar o SpotBugs | antes do jogo |
+| VF-016 | A: junto do lote separado, devolver em `finally` | antes do jogo |
+| VF-017/018 | Arrumar a tabela de regras; diário só anotado em PATTERNS | antes do jogo |
+| VF-019 | A: GameTest dos 4 comandos de triagem | antes do jogo |
+| VF-020 | A: limpar o TODO depois do jogo | depois do jogo |
+| PATTERNS | Textos propostos aprovados; entram com a primeira correção | — |
+| Ferramentas | Sentinela `fast` e PIT autorizados sempre que a correção pedir | — |
