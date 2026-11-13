@@ -4,10 +4,10 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 161
-- **Só usa a classe indicada:** 94
-- **Sem nenhum teste:** 7
-- **Fora de vigor:** 6
+- **Cita a regra:** 162
+- **Só usa a classe indicada:** 93
+- **Sem nenhum teste:** 2
+- **Fora de vigor:** 11
 
 | # | regra | grau | testes |
 | --- | --- | --- | --- |
@@ -22,7 +22,7 @@ classe prova menos ainda.
 | 9 | Subir e descer para alcançar, e poder voltar | cita | LumberjackGameTest |
 | 10 | O construtor fabrica o que a expansão pede | cita | BuilderGameTest, HouseBillOfMaterialsGameTest, SmelterGameTest |
 | 11 | Uma de cada profissão em cada vila | cita | ProfessionFloorTest |
-| 12 | O centro fica em bloco que existe | classe | BedWindowGameTest, ClusterRejectionTest, ColonyAbandonmentTest |
+| 12 | O centro fica em bloco que existe | cita | test_rule_coverage |
 | 13 | A obra é uma que a colônia consiga fazer | cita | BuildSiteGameTest, ConstructionProjectTest, ConstructionResumeGameTest |
 | 14 | O construtor alcança o alto da obra — desde a ADR-037 B1, de qualquer lugar da zona da ob… | cita | BuilderGameTest |
 | 15 | A estrada cresce com a vila: a ponta pede as colunas ao grafo, e o aldeão calça (Regra 21… | cita | BuildSiteGameTest, RoadExtensionGameTest |
@@ -210,11 +210,11 @@ classe prova menos ainda.
 | 198 | Lenhador no interior da vila (autor 11-05): a árvore é escolhida por faixas de 32 blocos… | cita | TreeNearestGameTest |
 | 199 | Sem muda perto de estrutura (autor 11-05): árvore a até 3 blocos de casa, obra ou peça da… | cita | TreeReplantingGameTest |
 | 200 | A obra pedida limpa o próprio lote (autor 11-05): árvore natural, folha e mato alto não r… | cita | MaeSitesGameTest |
-| 201 | Revogada (autor 11-06, ADR-047). A régua do lote é a do construtor (Regra 213) | nenhum |  |
-| 202 | Revogada (autor 11-06, ADR-047). A obra pedida não usa a prova por seção | nenhum |  |
-| 203 | Revogada (autor 11-06, ADR-047). A água entra pelo construtor | nenhum |  |
-| 204 | Revogada (autor 11-06, ADR-047). A peça da obra é posta pelo construtor | nenhum |  |
-| 205 | Revogada (autor 11-06, ADR-047). A obra pedida não reserva região e não falha | nenhum |  |
+| 201 | Revogada (autor 11-06, ADR-047). A régua do lote é a do construtor (Regra 213) | fora de vigor |  |
+| 202 | Revogada (autor 11-06, ADR-047). A obra pedida não usa a prova por seção | fora de vigor |  |
+| 203 | Revogada (autor 11-06, ADR-047). A água entra pelo construtor | fora de vigor |  |
+| 204 | Revogada (autor 11-06, ADR-047). A peça da obra é posta pelo construtor | fora de vigor |  |
+| 205 | Revogada (autor 11-06, ADR-047). A obra pedida não reserva região e não falha | fora de vigor |  |
 | 206 | As pontas do grafo são os lados da vila (autor 11-05, emendada 11-10): fica a ponta mais… | cita | RoadLinesTest, RoadMapSyncGameTest, RoadRulesGameTest |
 | 207 | Toda porta térrea é entrada (autor 11-05): o marcador branco fica no primeiro bloco em fr… | cita | DoorFrontsGameTest |
 | 208 | Plantação sem anel (autor 11-06): o chão em volta da plantação não é pedido como caminho,… | cita | RoadLinesTest, RoadRulesGameTest |
