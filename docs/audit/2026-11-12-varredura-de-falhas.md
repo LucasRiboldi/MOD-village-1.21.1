@@ -43,7 +43,7 @@ decisão de arquitetura do autor.
 | ID | Sev. | Categoria | Achado | Evidência | Causa provável | Correção sugerida | Custo |
 |---|---|---|---|---|---|---|---|
 | VF-001 | 🟠 | desempenho | O primeiro ciclo da colônia depois de carregar o mundo leva 471 a 1.212 ms — o servidor trava | Em 21 das 31 sessões de novembro com ciclo medido, os primeiros 150 s depois de `Starting integrated` têm um ciclo de 471 a 1.212 ms: `2026-11-06-4 17:47:14` 1.212 ms (planner 401, workers 378, assign 269); `2026-11-12-1 00:07:55` 629 ms (planner 337, workers 216) | `PlanningBudget.DEADLINE_MS` (15 ms) só cerca a varredura de lote (`ColonyCycleRunner.java:280`); o resto do planejador e os trabalhadores reconstroem do zero a memória que o `ServerMemory` apagou ao abrir o mundo (grafo, adiantamento da Regra 258, índices) | Medir por fase o primeiro ciclo (`VC_COST`) e espalhar a reconstrução por vários ciclos, ou estender o prazo ao planejador inteiro | M |
-| VF-002 | 🟠 | teste instável | `GroundPickupGameTest.workerCollectsWhileWalkingPast` falha em 11 das últimas 30 baterias (19 de 78 no total) | Sentinela; nas 8 falhas com diagnóstico desde 12-11: `colônias=2, trabalhadores da colônia=0, coleta agora=0`; nas outras: `a terra recolhida deve chegar ao baú: 0` (item sumiu sem chegar) | O aldeão sai do registro da colônia do teste durante a bateria: há outra colônia viva ao mesmo tempo e o ciclo global (registros estáticos, relógio único) mexe nos dois. O `TODO.md` ainda diz "1 falha em 12" e "relógio global, não provado" | 5 porquês sobre `trabalhadores da colônia=0`: logar quem chama `WORKERS.remove` (`VillagerLifecycleHandler.java:167`) no teste; isolar o lote ou impedir que o ciclo de uma colônia toque o aldeão de outra | M |
+| VF-002 | 🟠 | teste instável | `GroundPickupGameTest.workerCollectsWhileWalkingPast` falha em 11 das últimas 30 baterias (19 de 78 no total) | Sentinela; nas 8 falhas com diagnóstico desde 12-11: `colônias=2, trabalhadores da colônia=0, coleta agora=0`; nas outras: `a terra recolhida deve chegar ao baú: 0` (item sumiu sem chegar) | **Achada na análise de opções:** a sonda de abandono marca a colônia do teste `ABANDONED` (sem vila Vanilla, 1 aldeão contra `PEOPLE_TO_STAY = 3`) e dispensa o aldeão, quando o ciclo de 600 tiques cai dentro do teste. O `TODO.md` ainda diz "1 falha em 12" e "relógio global, não provado" | Ver "Opções de correção" | P |
 | VF-003 | 🟠 | teste / CI | O PIT passa com 85,17% contra limiar 85% (folga 7 mutantes), e o CI cobra o limiar | `build/audit/raw/pitest.log`: `Generated 4067 mutations Killed 3464 (85%)`; `.github/workflows/ci.yml:88` roda `./gradlew pitest` sem `continue-on-error`; `build.gradle:168` `mutationThreshold = 85`. Sobreviventes: `MineShaft` 33 (código novo da 0.4.60: `waypoints:189-197`, `ramp:128`, `rampCell:277`), `RoadRouting` 27, `RoadLines` 24, `VillageSurface` 22, `RoadThinning` 22. 13 `Minion exited abnormally due to TIMED_OUT` | Código novo do `core` entra sem asserção de limite (fronteira, soma/subtração); os tempos esgotados contam como mortos e variam entre rodadas | Escrever asserções de borda para `MineShaft.waypoints` e `ramp` (mata ~10 mutantes de uma vez) antes da próxima mudança no `core` | P |
 | VF-004 | 🟠 | processo | Quinze versões seguidas sem jogo: 0.4.54 a 0.4.68 (Regras 243 a 262) | `STATE.md`, todas "Não jogada"; último log de jogo: 0.4.57 (`latest.log`, 12-11 00:36) | O ciclo corrige mais rápido do que o jogo valida (B3 da varredura de 10-14, que voltou) | Jogar a 0.4.68 antes de abrir o próximo ciclo de correção; a fila desta varredura começa pelo que não depende de jogo | P (jogo do autor) |
 | VF-005 | 🟡 | desempenho | Fora do primeiro ciclo, 870 avisos de ciclo acima de 50 ms em novembro; p50 68 ms, p90 138 ms, 42 acima de 250 ms | Logs de novembro, `Colony cycle took`; maiores em sessão: `2026-11-08-2 14:19:15` 758 ms, `2026-11-02-3 13:05:22` 690 ms; 196 avisos só em `2026-11-06-4` | Mesmo motivo do VF-001 em escala menor: planejador e trabalhadores sem orçamento comum | Depois do VF-001; usar `cost_ledger.py` por fase antes de otimizar (ADR-035 §5) | M |
@@ -112,10 +112,14 @@ Para VF-002, VF-010 e VF-001, antes de corrigir:
 4. Por que o teste não pegou antes? (ambiente compartilhado, prazo)
 5. Por que o processo não pegou? (taxa velha no TODO, falha tratada como "instável conhecido")
 
-Exemplo, VF-002, com o que já se sabe: (1) o aldeão não recolheu → (2) ele não está mais em `WORKERS` da colônia do teste
-(`trabalhadores da colônia=0`) → (3) a confirmar: quem chama `WORKERS.remove` ou reatribui com `colônias=2` → (4) o lote
-`ground_pickup` divide mundo, hora e registros com outra colônia viva → (5) a falha passou a ser lida como ruído desde a
-0.4.50 e a taxa no `TODO.md` ficou em "1 em 12".
+VF-002, feito na análise de opções (seção seguinte): (1) o aldeão não recolheu → (2) ele não está mais em `WORKERS` da
+colônia do teste (`trabalhadores da colônia=0`) → (3) a sonda de abandono declarou a colônia do teste abandonada e o
+dispensou: `[16:20:01] Colony 1f0b0756… is now ABANDONED — was STABLE, probe found no village (probed from
+ColonyPos[x=-14693512…` e `Worker def3f5cc… left the abandoned colony … — profession freed`, na arena da falha
+(`reports/test-runs/20261112T191727Z/suites/attempt-01-gametest.stdout.log`) → (4) a colônia de teste não tem vila Vanilla
+e tem 1 aldeão, menos que `VillageAdoption.PEOPLE_TO_STAY = 3`; a sonda roda no ciclo de detecção (600 tiques) e o teste
+dura 600 tiques, então pegar ou não a sonda depende da fase do relógio do servidor → (5) a falha foi lida como "instável
+conhecido" desde a 0.4.50, com a suspeita do relógio global e a taxa "1 em 12" no `TODO.md`.
 
 ### Texto proposto para `docs/PATTERNS.md` (não aplicado; espera o autor)
 
@@ -124,13 +128,14 @@ Em "Bateria e teste":
 ```markdown
 ### GameTest falha com `trabalhadores da colônia=0` e outra colônia viva
 
-**Causa:** o aldeão do teste saiu do registro da colônia durante a bateria. Os registros
-(`COLONIES`, `WORKERS`) e a hora do mundo são globais, e outra colônia de outro teste
-roda o ciclo ao mesmo tempo.
+**Causa:** a sonda de abandono do ciclo de detecção achou a colônia do teste sem vila
+Vanilla e com menos de 3 aldeões em casa (`VillageAdoption.PEOPLE_TO_STAY`), marcou
+`ABANDONED` e dispensou o aldeão. Só acontece quando o ciclo de 600 tiques cai dentro
+do teste.
 
-**Onde olhar:** quem chama `VillageColonyMod.WORKERS.remove`
-(`VillagerLifecycleHandler`), e `setTimeOfDay` nos testes do mesmo lote.
-`GroundPickupGameTest.workerCollectsWhileWalkingPast`, 11 falhas em 30 baterias (VF-002).
+**Onde olhar:** `is now ABANDONED` e `left the abandoned colony` no stdout da bateria,
+na coordenada da arena que falhou. `GroundPickupGameTest.workerCollectsWhileWalkingPast`,
+11 falhas em 30 baterias (VF-002).
 ```
 
 Em "Ciclo e tempo":
@@ -138,9 +143,11 @@ Em "Ciclo e tempo":
 ```markdown
 ### `Colony cycle took` de 500 a 1.200 ms cerca de 90 s depois de abrir o mundo
 
-**Causa:** primeiro ciclo depois do carregamento; a memória do servidor foi esquecida e o
-planejador e os trabalhadores a reconstroem num ciclo só. O prazo de 15 ms
-(`PlanningBudget.DEADLINE_MS`) cerca só a varredura de lote.
+**Causa:** primeiro ciclo em que a colônia pode trabalhar (tique ~1.800: espera de
+assentamento de 1.200 tiques mais o ciclo de 600). Nele saem a primeira obra, a primeira
+leva de pedidos de fabricação e a primeira distribuição de tarefas, além da memória que o
+servidor esqueceu ao abrir o mundo. O prazo de 15 ms (`PlanningBudget.DEADLINE_MS`) cerca
+só a varredura de lote.
 
 **Onde olhar:** `ColonyCycleRunner` (fase `planner`), `cost_ledger.py` do primeiro ciclo. VF-001.
 ```
@@ -152,3 +159,218 @@ Em "Não é defeito (mas parece)":
 
 Jogo fechado sem gravar o lote final. O `action_report.py` pula a linha. VF-018.
 ```
+
+## Opções de correção
+
+Pedido do autor depois do registro: corrigir todos, com análise de causa e 2 ou 3 opções por achado, pesando o quanto
+cada solução é pesada. Nada foi corrigido; cada opção espera a escolha. A recomendada vem primeiro e marcada com ★.
+
+**Peso** diz o tamanho da mudança: **Leve** = 1 ou 2 arquivos, 1 teste, sem custo de tique, sem ADR; **Média** = 3 a 6
+arquivos ou um subsistema, GameTest novo, custo de tique desprezível; **Pesada** = mais de um subsistema, vários testes,
+custo de tique a medir, ou ADR.
+
+**Ferramenta que muda o build ou demora** (SpotBugs com mudança no `verification-metadata.xml`, PIT, JaCoCo, bateria
+inteira) só roda com permissão do autor; onde uma opção precisa disso, ela diz.
+
+### VF-001 — o primeiro ciclo trava o servidor de 0,5 a 1,2 s
+
+**Causa, mais funda.** O pico cai sempre no tique ~1.800 (em `2026-11-12-1`, `"tick":1817`): é o primeiro ciclo depois
+da espera de assentamento (`Colony.SETTLE_TICKS = 1_200`) somada ao ciclo de 600. Nesse ciclo saem, de uma vez, a
+primeira obra (`build_planned`), a primeira leva de "could not make" para cada peça da casa, o primeiro mapa de alcance
+(`VC_REACH cells=14972`) e a primeira distribuição de tarefas. A fase `planner` do log não é só o `ConstructionPlanner`:
+inclui `PhantomWorkerLog.probe`, `WoodInPieces`, `HousePlans.paletteOf`, `BiomePieces.refresh` e todo o `WorkMaterials`
+(`ColonyCycleRunner.java:255-357`). O prazo de 15 ms cobre só o `ConstructionPlanner.plan`, e só a varredura de lote.
+Sem medida por subfase não dá para dizer qual delas pesa: os `VC_COST` comuns do mesmo jogo têm `planner_us` de 4 a
+19 ms, então o primeiro ciclo custa 20 a 80 vezes o normal.
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Medir primeiro**: o autor grava um Spark do carregamento (`/spark profiler start --timeout 180` ao entrar no mundo) e eu acrescento uma linha `VC_COST` só do primeiro ciclo de cada colônia, com as subfases do `planner` | Diz qual subfase pesa; o comportamento não muda | Nenhum; custa um jogo curto | Leve: `ColonyCycleRunner` (em 500 linhas: extrair uma classe antes) e `CycleCost`; teste unitário da linha |
+| B. **Espalhar o primeiro ciclo**: no ciclo em que a colônia sai do assentamento roda só o planejador; tarefas e trabalho começam no ciclo seguinte | Corta o pico pela metade sem saber a causa exata | A vila nova começa 30 s mais tarde; GameTests que contam com o primeiro ciclo completo podem mudar | Média: `ColonyCycleRunner`, `Colony`; GameTest de cronologia |
+| C. **Prazo para a fase inteira**: o prazo de relógio vale para todo o `planner` (o que estourar fica para o próximo ciclo) | Teto real por ciclo | Demanda calculada pela metade pode pedir material errado; exige decidir o que vale mais | Pesada: `PlanningBudget`, `WorkMaterials`, `ConstructionPlanner`; ADR nova (mexe na ADR-003) |
+
+### VF-002 — `workerCollectsWhileWalkingPast` instável
+
+**Causa achada (5 porquês na seção anterior).** A sonda de abandono do ciclo de detecção (`VillageAdoption.judgeAbandonment`,
+`ColonyAbandonment.judge`) não vê vila Vanilla na arena, e a colônia tem 1 aldeão contra `PEOPLE_TO_STAY = 3`; marca
+`ABANDONED`, e o `VillagerLifecycleHandler.dismissIfAbandoned` tira o aldeão da colônia. Prova: `20261112T191727Z`,
+`[16:20:01] Colony 1f0b0756… is now ABANDONED … probed from ColonyPos[x=-14693512, …]`, na arena da falha. Não é defeito
+do jogo: vila de verdade tem vila Vanilla. O mesmo mecanismo pode derrubar qualquer GameTest com colônia de menos de 3
+aldeões que dure perto de 600 tiques (`20261111T052543Z` mostra outra colônia de teste abandonada às 02:28:38).
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Só o teste**: a colônia do teste ganha 2 aldeões parados (IA desligada) dentro da caixa e longe do item, somando 3 em casa | Fecha este instável sem tocar o código do jogo | Outros testes com colônia pequena seguem expostos | Leve: `GroundPickupGameTest`; prova com a bateria `fast` 3 vezes (com permissão) |
+| B. **A bateria inteira**: o `ColonyFixture` e os testes com colônia própria marcam a colônia como "de teste", e a sonda de abandono a ignora | Fecha a classe de defeito para os ~94 testes com fixture | Um gancho de teste no código do jogo (inerte em jogo); precisa de teste que prove que em jogo nada muda | Média: `ColonyAbandonment` ou `VillageAdoption`, `ColonyFixture`, ~10 testes com colônia própria |
+| C. Desligar a detecção durante a bateria | Some toda interferência da sonda | Os GameTests de detecção e abandono deixam de medir o que medem | Média, e esconde defeito real |
+
+### VF-003 — PIT com folga de 7 mutantes
+
+**Causa.** Código novo do `core` entrou com teste de forma, não de valor. `MineShaft.waypoints` (`MineShaft.java:185-203`)
+não tem teste que confira a lista de pontos; `ramp:128`, `rampCell:277-278` e `floorOf:207` só são exercitados de
+passagem. Os 31 `TIMED_OUT` contam como mortos e variam entre rodadas, então a folga real oscila.
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Testes de valor no `MineShaft`**: a lista exata de `waypoints()` num poço conhecido, as bordas de `ramp` e `rampCell` | Mata ~15 dos 33 sobreviventes; folga sobe para ~20 | Nenhum (só teste) | Leve: `MineShaftTest`; confirmar com PIT (≈8 min, com permissão) |
+| B. A + os sobreviventes de `RoadRouting`, `RoadLines` e `RoadThinning` (73 juntos) | Folga de ~60; o CI deixa a beira | Nenhum; mais tempo de escrita | Média: 3 a 4 classes de teste; PIT com permissão |
+| C. Baixar o limiar para 84 | CI com folga sem teste novo | Esconde o que o PIT mede; contraria a memória `ci-verde-esconde-pit-parado` | Leve, não recomendado |
+
+### VF-004 — quinze versões sem jogo
+
+**Causa.** O ciclo de correção roda mais rápido que o jogo do autor; cada versão é candidata e a próxima empilha.
+Ferramenta nenhuma corrige isto.
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Jogar a 0.4.68 antes** de qualquer correção de comportamento; enquanto isso, só as correções sem efeito no jogo (VF-002, VF-003, VF-015, VF-017) | O jogo confere as Regras 243 a 262 de uma vez e alimenta VF-001 e VF-007 a VF-009 | Atrasa as correções de jogo em um jogo | Leve (tempo do autor) |
+| B. Corrigir tudo e jogar uma versão só no fim | Menos jogos | Se algo quebrar, 20 mudanças a separar | Pesada para diagnosticar depois |
+| C. Um jogo curto (30 min) a cada 3 correções de comportamento | Meio-termo | Jogo curto não pega vila madura | Média |
+
+### VF-005 — ciclos acima de 50 ms ao longo da sessão
+
+**Causa.** Mesma família do VF-001: não há orçamento comum entre `planner`, `assign` e `workers`; em vila grande
+(`2026-11-06-4`, 196 avisos) a fase `workers` passa de 300 ms.
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Esperar o VF-001** e reler com o `cost_ledger.py` do jogo da 0.4.68 | Decisão com número (ADR-035 §5) | Nenhum | Leve |
+| B. Orçamento global por ciclo, repartido entre as fases | Teto em vila grande | Trabalho de aldeão atrasa em vila grande | Pesada: ADR nova |
+
+### VF-006 — item colhido destruído com baú cheio
+
+**Causa.** `FarmerChores.store` (`FarmerChores.java:340`) e `ShepherdWork` (`ShepherdWork.java:365`) chamam
+`ChestDepositor.deposit` só no baú do ofício e descartam a sobra. `ColonyChests.deposit(world, ColonyChests.ownFirst(…),
+item, n)` já existe e faz o próprio baú primeiro e os da colônia depois, que é a Regra 243.
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Próprio baú, depois os da colônia, e a sobra vai ao chão** junto do baú (o `GroundPickup` recolhe) | Zero perda enquanto houver baú; aviso só quando nem o chão serve | Item no chão some em 5 min se ninguém recolher | Leve: `FarmerChores`, `ShepherdWork`; 1 GameTest (baú cheio, outro com lugar) |
+| B. Só os baús da colônia (sem chão) | Igual ao A enquanto houver lugar | Vila toda cheia ainda perde | Leve |
+| C. Parar de colher com o baú cheio | Nada se perde | Fazendeiro e pastor ociosos (Regra 51) | Média |
+
+### VF-007 — trabalhadores "fantasma"
+
+**Causa, até onde o log deixa ver.** `PhantomWorkerLog.probe` chama de ausente quem `world.getEntity` não acha, com a
+colônia ativa. A colônia `9105dea9` tinha 36 trabalhadores e 8 a 11 sempre ausentes, com 5 colônias vizinhas; a caixa é
+maior que a distância de simulação (16 chunks), então "ausente" pode ser só chunk descarregado. O log não diz a distância
+do jogador e não separa os dois casos. A regra do código é "ausência não é morte".
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Medir**: a linha passa a dizer a última posição conhecida, a distância ao jogador e se o chunk está carregado | O próximo jogo diz se é fantasma ou chunk longe | Nenhum | Leve: `PhantomWorkerLog`; teste unitário da linha |
+| B. Comando `/vc fantasmas soltar`, que libera vaga e baú de quem está ausente com o chunk carregado | Conserto manual e seguro | Depende do autor rodar | Média: comando novo + GameTest |
+| C. Poda automática após N dias ausente com o chunk carregado | Conserto automático | Apagar trabalhador legítimo se a regra errar | Pesada: ADR (contraria "ausência não é morte") |
+
+### VF-008 e VF-009 — argila e vidro sem origem; peça sem rota
+
+**Causa.** As duas pontas são a mesma cadeia: a fornalha sem cru. `glass_pane` falta porque `glass` falta (o log de 12-11
+mostra "needs 8 minecraft:glass and has 0" para cada vidro colorido), e `glass` vem de areia na fornalha; a argila
+(`clay`) não existe no raio em muitos biomas e falha 4 buscas. `smooth_sandstone` e `cut_sandstone` (deserto) param pelo
+mesmo motivo do lado do arenito. A Regra 257 (0.4.63) só tirou a reserva de metade; a decisão O2b (pedreiro faz arenito,
+ou a pedreira roda com ramal) segue aberta.
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Conferir no jogo da 0.4.68** (`VC_SUPPLY_ERROR` por peça) e então decidir O2b | Decide com o número da versão atual | Nenhum | Leve |
+| B. A obra troca a peça sem rota pela do mesmo papel que a vila faz (vidro colorido → vidro comum), como a Regra 262 troca a madeira | A casa não espera peça impossível | A casa sai diferente da planta | Média: `BiomeBlockSwap`, conferência por papel; GameTest |
+| C. Fonte nova de areia e argila (pedreira de areia fora do deserto, ou argila pela exceção da Regra 128) | Fecha a cadeia na origem | Recurso sem origem física pede ADR-028/034 | Pesada: ADR |
+
+### VF-010 — `animalsWalkInThroughEachOfTheFourGates` instável
+
+**Causa provável, não provada.** O teste leva 4 vacas, uma por portão, em até 1.200 tiques. São duas falhas diferentes:
+"a vaca não entrou andando" (o caminho do Vanilla não chega no prazo) e "um animal saiu depois de entrar" (uma vaca de
+dentro sai por um portão aberto para a seguinte; a vaca tem o passeio do Vanilla). O lote `pen_large_walk` roda ao mesmo
+tempo que `shepherd_pens_size` e `pen_escape_scan_race` (`20261112T151858Z`, 12:20:36 a 12:20:38).
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Medir no teste**: na falha, dizer qual vaca saiu, por qual portão e se ele estava aberto | Separa as duas causas | Nenhum | Leve: `PenAccessGameTest` |
+| B. Se for o portão aberto: a vaca de dentro fica parada enquanto o portão seguinte abre (só no teste) | Fecha o instável | Pode esconder o mesmo defeito em jogo (animal fugindo do curral) | Leve |
+| C. Se for o portão aberto também em jogo: o `FencedIn` só abre o portão seguinte com o anterior fechado | Corrige jogo e teste | Pastor mais lento com rebanho grande | Média: `FencedIn`, `ShepherdPens`; GameTest |
+
+### VF-011 — relógio e memória globais nos GameTests
+
+**Causa.** Todos os testes dividem um mundo: 101 `setTimeOfDay` em 31 arquivos, ~180 `clearAll()` de estado estático
+(`BuildSiteScanner.clearAll` 34, `MineClaims.clearAll` 30, `LotRefusals.clearAll` 22…) e sete constantes de jogo que os
+testes encurtam e devolvem (`TreeChoice.shortenStallLimitTo`, `SandGathering.shortenSandRadiusTo`…). Lotes rodam ao mesmo
+tempo; o `clearAll` ou o raio curto de um teste vale para o outro.
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Regra de teste nova + checagem**: teste que muda a hora, limpa estado global ou encurta constante roda em lote próprio e sozinho (`batchId` único, conferido por um teste de arquitetura) | Tira a sobreposição sem mexer no jogo | Bateria um pouco mais lenta | Média: ~40 `batchId`, 1 teste de arquitetura |
+| B. Trocar `clearAll()` em teste por limpeza da própria colônia (`forget(colonyId)`) | Remove a raiz | Muitas classes do jogo ganham `forget` | Pesada: ~15 classes de produção, ~180 chamadas |
+| C. Só documentar em PATTERNS e seguir | Nada muda | Instáveis continuam | Leve |
+
+### VF-012 — 31 arquivos no teto de 500 linhas
+
+**Causa.** O `FileSizeRuleTest` congela o teto; quem precisa de linha poda comentário ou espreme.
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Extrair ao tocar**: cada ciclo que mexer num destes arquivos começa extraindo uma classe por responsabilidade | Diminui sem projeto à parte | Ciclo um pouco maior | Leve por vez |
+| B. Uma rodada de extração dos 6 arquivos em 500 exatas (`SurfaceGatheringWork`, `StrandedEscape`, `SmelterWork`, `HousePlans`, `VillageGround`, `ColonyCycleRunner`) | Folga imediata | Refatoração sem defeito a corrigir; regressão possível | Pesada: 6 subsistemas, bateria inteira com permissão |
+
+### VF-013 — 251 classes em `fabric/work`
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Aceitar como dívida registrada** (a divisão foi cancelada de propósito pela visibilidade de pacote; memória `f1-subpacotes-work-nao-fazer`) | Nada muda; o registro diz por quê | Nenhum | Leve (documento) |
+| B. Regra ArchUnit por prefixo de nome (`Mine*` não chama `Builder*` direto, por exemplo) | Fronteira sem mudar pacote | Falsos positivos no começo | Média |
+
+### VF-014 — métodos de complexidade alta
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Reduzir só o método que uma correção tocar**, com teste antes | Sem refatoração solta | Lento | Leve por vez |
+| B. Uma rodada nos 6 maiores (`Corridor.plan` 51, `SitePreparation.clearTrees` 49, `LotLevel.flatGroundAt` 49, `ReachMap.step` 48, `MineCuts.nextCut` 47, `VillageGround.plan` 44) | Complexidade cai já | Regressão em caminho, lote e mina; pede jogo | Pesada |
+
+### VF-015 — SpotBugs não roda
+
+**Causa.** `gradle/verification-metadata.xml` não tem as somas do plugin do SpotBugs e do `kotlin-stdlib` que ele puxa.
+A flag `--dependency-verification=lenient` foi negada pelo controle de permissões desta sessão.
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Gravar as somas** (`./gradlew.bat -I scripts/audit/static-extra.init.gradle --write-verification-metadata sha256 help`) e rodar o SpotBugs; muda o build, **pede permissão** | Mais uma fonte de defeito (NPE, igualdade, concorrência) | Somas novas entram sem revisão manual de cada artefato | Leve: 1 arquivo de build |
+| B. Rodar o SpotBugs pelo JAR solto sobre `build/classes`, sem Gradle | Não toca o build | Baixar o JAR do SpotBugs; pede permissão | Leve |
+| C. Ficar sem SpotBugs | Nada | Perde a fonte | Leve |
+
+### VF-016 — constantes de jogo mutáveis e estáticas
+
+**Causa.** Sete valores (`MineDigging.surfaceRadius`, `SandGathering.sandRadius`, `TreeChoice.stallLimit`,
+`MineSite.mineDistance`, `MinerDetours.perTarget`, `MineLease.limit`, `UnreachablePieces.failed`) existem para o teste
+encurtar; se um teste falha antes do `restore…`, o valor curto vaza para o resto da bateria.
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Junto do VF-011 A**: quem encurta roda em lote próprio e devolve em `finally` (conferir os 7 usos) | Fecha o vazamento | Nenhum | Leve |
+| B. As 7 entram no `ServerMemory` (voltam ao valor de jogo ao trocar de mundo) | Protege o jogo, não a bateria | Nenhum | Leve |
+
+### VF-017 — regras revogadas contadas como "sem teste"
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Dar às linhas 201 a 205 do `RULES.md` a coluna de estado** ("revogada") e uma linha à Regra 52 ("substituída pela 67") | `rule_coverage.py` passa a 2 sem teste (33 e 47, que não pedem teste) | Nenhum | Leve: 1 documento |
+| B. O script aceita "Revogada" em qualquer coluna | Mesmo efeito | Pode esconder texto que só cita "revogada" | Leve |
+
+### VF-018 — diário com bytes nulos
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Nada no código**; entra em PATTERNS como "não é defeito" (texto proposto acima) | — | Nenhum | Leve |
+| B. O `ActionJournal` grava também a cada 5 s | Perde menos linhas num fechamento forçado | Mais escrita em disco | Leve |
+
+### VF-019 — cobertura cega em mixin e comandos
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **GameTest para os comandos de triagem** (`/vc dados`, `/vc bioma`, `/vc log`, `/vc bioma nota`) e aceitar 0% no mixin (o corpo vai para a classe Vanilla) | Os comandos que a triagem usa não quebram calados | Nenhum | Média: 4 GameTests |
+| B. Aceitar como está | — | Comando quebrado só aparece no jogo | Leve |
+
+### VF-020 — `TODO.md` longo
+
+| Opção | Efeito | Risco | Peso |
+|---|---|---|---|
+| ★ A. **Depois do jogo da 0.4.68**, eu proponho o TODO limpo: o que o jogo conferiu sai, seções de jogos até a 0.4.38 vão para `docs/archive/technical/` com o mesmo texto; o autor aprova antes do commit | Volta a ser "vivo e curto" | Item ainda válido escondido no histórico | Leve (documento) |
+| B. Limpar agora, sem o jogo | Mais cedo | Itens "conferir em jogo" saem sem conferir | Leve |
