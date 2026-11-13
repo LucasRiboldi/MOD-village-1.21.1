@@ -4,13 +4,12 @@ Organizado pelo cronograma da avaliação de qualidade (`docs/audit/2026-11-13-a
 seção por fase, prioridade dentro dela (🔴 bloqueia o portão, 🟠 importante, 🟡 melhoria). Só o que está aberto: feito
 sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4 dias, G uma semana ou mais.
 
-- Os 214 abertos do TODO antigo esperam triagem em `docs/technical/TODO-herdado-2026-11-13.md`: cada um entra numa
-  fase abaixo ou é fechado lá com o motivo.
+- Os 214 abertos do TODO antigo foram triados em 13-11: 139 fechados com o motivo e 75 trazidos para cá; o registro
+  está em `docs/technical/TODO-herdado-2026-11-13.md`.
 - O TODO antigo inteiro, por jogo, está em `docs/archive/technical/TODO-ate-2026-11-13.md` (`grep`).
 
 ## F0 — Sinal limpo (1 semana)
 
-- [ ] 🔴 Triar os 214 itens de `docs/technical/TODO-herdado-2026-11-13.md` (M)
 - [ ] 🟠 Decisão do autor: a ADR-024 (índice físico do armazém) é aceita, mas o `WarehouseIndex` não é usado em produção;
   religar ou retirar (P)
 - [ ] 🟡 Decisão do autor: o `CLAUDE.md` importa `.fabric/AGENTS.md`, que a ferramenta Fabric cria localmente (pasta no
@@ -32,6 +31,33 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   (`APPEARING_PIECE`); prismarinho ×144, favo ×20 e corantes (`AUTOMATIC_DROP`)
 - [ ] 🟡 Mineiro sem ramal livre: "every open branch is taken or finished"; no primeiro nível ele só espera (pulado pelo
   autor em 12-11)
+- [ ] 🟡 **Item MAE:** primeira obra pedida em jogo pela fila do construtor (`/vc mae obra <modelo>`, `VC_MAE_SITE` de
+  `queued` a `done`), obra longe da vila, socorro (Regra 222) e a recusa que só mostra o motivo do último lote
+- [ ] 🟡 **Nascimentos:** 0 em 63 min na 0.4.43 com 28 camas para 19 aldeões; conferir nascimentos por dia e `UPKEEP`
+  no diário, e se a manutenção tira tábua da obra
+- [ ] 🟡 **Grafo:** `Corridor` e `StripLot` ainda traçam caminho próprio antes de pedir ao grafo (ADR-048);
+  `LINKS_PER_READ`=1 e a ligação que falha gasta a vez das outras partes; obra demolida não solta o ramal fixo
+- [ ] 🟡 **Velas:** o carpinteiro faz 16 velas de cada uma das 17 cores para o estoque, e nada as usa
+- [ ] 🟡 **Guarda de laço:** cobre oficina e fornalha; a coleta (lenhador, superfície) segue só com os prazos de sempre
+- [ ] 🟡 **Reserva da mina:** reserva exclusiva por bloco e frente exclusiva por mineiro (dois mineiros no mesmo túnel)
+- [ ] 🟡 **Chegada física:** caminho calculado que não vira chegada em 140 tiques, mesmo com `WorkTargets` ativo;
+  separar geometria, tolerância de chegada e interferência do Brain antes de mexer
+- [ ] 🟡 **Medida do diário:** trabalho auxiliar sem marca ainda conta como espera no `time_ledger`; medir `NO_PATH` e
+  `NO_PROGRESS` por ofício
+- [ ] 🟡 **Entrega física da obra:** medir no save a entrega de `CALCITE` pelo mineiro contra as inserções instantâneas;
+  bloco sem catálogo ganha cadeia de profissão ou fica no recurso terminal; reserva sem retirada não deve impedir
+  outra profissão de atender a peça
+- [ ] 🟡 **Biomas** (jogos de bioma do portão Beta):
+  - taiga: casa presa no último bloco por tronco natural no volume e por peça sem apoio (`UNSUPPORTED`);
+  - deserto: mineiros andando 36% da vila alta até a mina do lago; `storage_majest` pedindo deepslate, calcita, folha de
+    acácia e pinheiro; fundidor e fazendeiro esperando 41–42%;
+  - rotas que travam na execução (`STALLED`): arenito liso, cortado e comum no deserto; bloco e camada de neve;
+    vidraça e terracota colorida na savana;
+  - terraplanagem fase 2 (subida de 1 em 1) para ermos e taiga nevada;
+  - lavoura e viveiro com camada de neve em cima do chão;
+  - reserva de madeira onde não há árvore (lenhador 85–88% bloqueado no deserto);
+  - mineiro com alvo alto demais e sem onde pisar (`TOO_HIGH`, `NO_STANDING_POSITION`);
+  - `NO_TASK` de tronco e madeira de acácia na savana; melancia sem rota
 
 ## F2 — Save e desempenho (3 a 4 semanas, em paralelo com a F1)
 
@@ -45,6 +71,16 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 - [ ] 🟠 Overlay recortado pela vila do jogador ou pela distância (hoje manda todos os trabalhadores a todo jogador) (P)
 - [ ] 🟠 Gravação dos ledgers e do diário fora da thread do servidor (P)
 - [ ] 🟡 Perfil "carga" no Sentinela, com N vilas e teto de custo por tique (M)
+- [ ] 🟠 **Estado só em memória:** o plano do caminho (`PlannedPaths`) e as bocas antigas da mina (`MineEdge.PAST`) se
+  perdem ao reiniciar o jogo
+- [ ] 🟡 **Custo do MAE:** cada `/vc mae obra` travava o servidor cerca de 2,5 s (`MaeSites.start`) e a
+  `MaeGenerationEvidence.onChunkGenerate` custava 6,4% do servidor (Spark `btHEJgIYWb`); medir de novo
+- [ ] 🟡 **Estoque sem teto:** pedregulho de 554 a 13.579 em 16 min na 0.4.42 e 2.256 na 0.4.68; ver se falta teto de
+  produção ou se é leitura de baús
+- [ ] 🟡 **Testes do expediente:** `WorkClockTest`, `WorkHoursGameTest`, `OffHoursReleaseGameTest` e
+  `BuildProgressGameTest` usavam o expediente antigo; `TaskLoopGuard` e `MineSideWork` sem teste
+- [ ] 🟡 **Bateria de escassez** (R-158): falta total de madeira, água, semente, animal, combustível, ferramenta, baú
+  livre e lote; esperado: alternativa válida ou bloqueio explícito
 
 ## F3 — Servidor e compatibilidade (2 semanas) → portão versão candidata 0.9.0
 
@@ -61,6 +97,7 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 - [ ] 🔴 `/vc config` com interruptor por vila e pausa da colônia (M)
 - [ ] 🔴 Guia curto do jogador em inglês e português: o que acontece, o que dá para fazer, como parar (M)
 - [ ] 🟠 README de jogador separado do de desenvolvimento; capturas e GIF (P)
+- [ ] 🟡 **Mensagem do fundidor:** "none of N colony chests had" mente quando o cru existe e a reserva impede
 
 ## F5 — Publicação (1 a 2 semanas) → portão 1.0.0
 
@@ -82,6 +119,21 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 - [ ] PIT estendido a pacotes puros de `fabric/work`; 10 a 20 propriedades jqwik nos sistemas com mais sobreviventes (M)
 - [ ] Migração da fronteira da mina entre formas, em vez de descartá-la (G)
 - [ ] `doMobGriefing` ou gamerule própria para o trabalho que altera terreno (M)
+- [ ] **Regras provadas só por classe:** subir as ~95 regras em que o teste só usa a classe indicada para um teste que
+  cita a regra (`docs/testing/regras-e-testes.md`); provas parciais das Regras 178, 172 e 171; sem teste próprio as
+  Regras 220, a desistência da obra pedida, `MaeSites.move`, a busca de lote pela rede, o fundidor nas ajudas de chão, a
+  pedreira em `MineDigging`, o teto de pastor, o diário com produto, a zona que cresce na ponta e o registro de cada
+  suprimento (Regra 111)
+- [ ] **Frutos de caule:** melancia, abóbora e jarro fora da plantação grande até o fazendeiro saber colher
+- [ ] **Quarteirões:** o grafo só fecha retângulo pelo anel, pelas retas e pela ponta; sem busca própria
+- [ ] **Sentinela futuro:** camada visual de cliente em spike isolado, publicação Allure entre máquinas, laboratório
+  serial de carga com JFR (`docs/superpowers/plans/2026-11-02-sentinela-futuro.md`); bancada de bioma mais fiel
+- [ ] **Contratos de tarefa:** ausência com invalidação por evento (R-021/R-027), prazo e critério de sucesso na `Task`
+  (R-047/R-050), estados de disponibilidade (R-019), animal inacessível fora do plantel (R-107)
+- [ ] **Sistemas novos, sem decisão:** transporte físico de itens (R-140 a R-142), itens de outros mods (R-026),
+  adaptador para versões futuras do Minecraft (R-003/R-163)
+- [ ] **Estilo do bioma vizinho** para biomas fora da tabela (ermos, picos de gelo, selva, floresta escura, cerejeira)
+- [ ] **Cobertura:** `fabric.command` em 27% e o cliente em 0% (AUD-11); imports não usados (AUD-15)
 
 ## Regra de teste
 
@@ -95,6 +147,13 @@ desligada não entra como prova. Cenário fora da arena de 8x8 bate na barreira 
 - [ ] E5/E6: limites da felicidade e do rebanho (números do agente). E7: texto da Regra 33.
 - [ ] Números do agente na ADR-039 (carvão < 32, ferro < 16, caminho 4/ciclo até 24).
 - [ ] `docs/workers-analysis/`: mover para `docs/research/`, arquivar ou apagar.
+- [ ] Biblioteca com duas portas a 2 blocos: dois brancos colados, por serem duas portas reais; viram um?
+- [ ] O3b: no deserto o bosque do lenhador não tem muda; plantar pede muda de fora.
+- [ ] Fonte de corante (flor, cacto) para a lã ter cor mesmo sem corante nos baús.
+- [ ] M2 (segundo ramal cedo na mina): a escada é o único acesso ao nível.
+- [ ] Tirar o trecho travado do recálculo (afinamento e rota), conferindo só se o bloco existe; muda a ADR-050.
+- [ ] Deserto: quem mora na parte baixa da vila não chega à obra de cima; trocar casa com quem tem ofício ou construir
+  em cima?
 
 ## Decidido, não fazer
 

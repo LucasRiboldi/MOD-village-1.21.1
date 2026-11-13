@@ -32,7 +32,7 @@ Em aberto no `TODO.md`: o mineiro sem ramal livre (pulado pelo autor) e a terra 
 2. `AGENTS.md`, inteiro no topo; `CLAUDE.md` §0 a §2.1. `CLAUDE.md` vence em conflito.
 3. `STATE.md` (cabe em 150 linhas).
 4. `docs/audit/2026-11-13-avaliacao-qualidade.md`: notas, portões e cronograma até a 1.0. O `TODO.md` segue as fases dele;
-   os abertos antigos esperam triagem em `docs/technical/TODO-herdado-2026-11-13.md`.
+   os abertos antigos foram triados em `docs/technical/TODO-herdado-2026-11-13.md` (cada um diz se fechou ou para onde foi).
 5. `docs/RULES.md`: procure a regra por número. As mais recentes são 263 a 269. ADRs: índice em `docs/decisions/README.md`.
 
 ## Regras do autor que não estão nos outros documentos
