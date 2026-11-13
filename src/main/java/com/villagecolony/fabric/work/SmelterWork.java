@@ -155,10 +155,7 @@ public final class SmelterWork {
                 return true;
             }
 
-            if (!SmelterLocation.isInsideBuiltArea(world, entry.getKey())) {
-                return false;
-            }
-
+            // Funde onde está (Regra 263): baú em casa da vila Vanilla original, fora do registro, não segura a fornalha.
             if (++job.progress < TICKS_PER_PIECE) {
                 return false;
             }

@@ -1,6 +1,18 @@
-# STATE — 2026-11-12
+# STATE — 2026-11-13
 
-> **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.68 está publicada (`v0.4.68-alpha`) e integrada na `main`; da 0.4.54 à 0.4.68 nada foi jogado.
+> **Retomada por outro agente:** comece por `HANDOFF.md`. A 0.4.74 está integrada na `main` e publicada como `v0.4.74-alpha`; a 0.4.68 foi jogada em 12-11 (análise em `docs/audit/2026-11-13-jogo-0468.md`), e da 0.4.69 à 0.4.74 nada foi jogado.
+
+> **Candidata 0.4.74:** o prazo do pastor cresce com a distância e o animal largado fica amarrado na cerca mais perto (Regra 269); na 0.4.68 o curral teve no máximo 4 animais. Sentinela `fast`: 1.112 GameTests, caiu só o instável `workerCollectsWhileWalkingPast`. Não jogada.
+
+> **Candidata 0.4.73:** o bosque do lenhador acha o chão em qualquer altura (Regra 268); na 0.4.68 plantou 0 mudas porque o único lado seco ficava 6 a 9 blocos acima do centro. Sentinela `fast`: 1.110 GameTests, caiu só o instável `workerCollectsWhileWalkingPast`. Não jogada.
+
+> **Candidata 0.4.72:** a plantação grande sai em todo bioma com o fazendeiro parado (Regra 267, emenda a 241); na planície da 0.4.68 ele teve 0% de trabalho. Sentinela `fast`: 1.109 GameTests verdes e unitários verdes; a suite `property` caiu por parada externa do daemon do Gradle e passou ao repetir. Não jogada.
+
+> **Candidata 0.4.71:** uma casa do mineiro pronta basta, mesmo com a boca da mina mudada (Regra 266, emenda a 211). A linha que atravessava a parede do flecheiro já sai pela 0.4.70 (Regra 265, teste novo). Sentinela `fast` verde de primeira: 1.108 GameTests. Não jogada.
+
+> **Candidata 0.4.70:** o grafo nunca passa sobre a água (Regra 264, revoga a 174): sai a ponte, o trecho planejado sobre a água sai na releitura e o calçador recusa coluna sobre a água. No save da 0.4.68, 94 das 559 colunas da linha estavam sobre água ou ponte. Sentinela `fast`: 1.107 GameTests, caiu só o instável `animalsWalkInThroughEachOfTheFourGates`. Não jogada.
+
+> **Candidata 0.4.69:** jogo da 0.4.68 (planície, Spark El42EuZ5w9; análise em `docs/audit/2026-11-13-jogo-0468.md`): o fundidor funde onde está (Regra 263); dois de três ficavam parados com o baú numa casa Vanilla. Sentinela `fast`: caiu só o instável `workerCollectsWhileWalkingPast`. Não jogada.
 
 > **Candidata 0.4.68:** cada estrutura do mod sai na madeira e na pedra do bioma da vila, e a de pé segue reconhecida (Regra 262). Sentinela `fast` verde de primeira: 1.109 GameTests e 1.803 unitários. Não jogada.
 

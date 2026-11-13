@@ -125,7 +125,6 @@
       "com.villagecolony.fabric.work.ProfessionBalanceGameTest",
       "com.villagecolony.fabric.integration.LotLightDecorGameTest",
       "com.villagecolony.fabric.work.VillagerRulesGameTest",
-      "com.villagecolony.fabric.work.BridgeDeckGameTest",
       "com.villagecolony.fabric.integration.TreeClearingGameTest",
       "com.villagecolony.fabric.overlay.RoadMapSyncGameTest",
       "com.villagecolony.fabric.work.SmelterFallbackGameTest",

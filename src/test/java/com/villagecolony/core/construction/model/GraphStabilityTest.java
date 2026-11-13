@@ -114,9 +114,9 @@ class GraphStabilityTest {
         Set<ColonyPos> band = corridor(0, 30, -1, 1);
         Set<ColonyPos> fixed = corridor(0, 30, -1, -1);
 
-        RoadGraph free = RoadLines.build(band, Set.of(), at(0, 0), Set.of(), Set.of(), FLAT, FLAT, 0, 0, 0, Set.of())
+        RoadGraph free = RoadLines.build(band, Set.of(), at(0, 0), Set.of(), Set.of(), FLAT, 0, 0, Set.of())
                 .graph().orElseThrow();
-        RoadGraph held = RoadLines.build(band, Set.of(), at(0, 0), Set.of(), Set.of(), FLAT, FLAT, 0, 0, 0, fixed)
+        RoadGraph held = RoadLines.build(band, Set.of(), at(0, 0), Set.of(), Set.of(), FLAT, 0, 0, fixed)
                 .graph().orElseThrow();
 
         assertTrue(lineOf(free).contains(at(15, 0)), "sem trava a linha é a do meio: " + lineOf(free));
@@ -129,7 +129,7 @@ class GraphStabilityTest {
     void aNewDoorLinksToAFixedStretch() {
         Set<ColonyPos> fixed = corridor(0, 40, 0, 0);
         ColonyPos door = at(20, 10);
-        RoadGraph graph = RoadLines.build(fixed, Set.of(), at(0, 0), Set.of(door), Set.of(), FLAT, FLAT, 0, 0, 0, fixed)
+        RoadGraph graph = RoadLines.build(fixed, Set.of(), at(0, 0), Set.of(door), Set.of(), FLAT, 0, 0, fixed)
                 .graph().orElseThrow();
 
         assertTrue(linked(graph, door), "a porta nova ficou solta do trecho fixo: " + graph.edges());

@@ -44,7 +44,7 @@ final class ShepherdHerding {
 
     static final int REACH = 3;
 
-    /** Quanto a coleta pode durar antes de ele desistir. */
+    /** O prazo mínimo da coleta; a distância soma mais (Regra 269, {@link HerdDeadline}). */
     static final int TIMEOUT = 2_400;
 
     /** Entre uma desistência (ou nada a coletar) e a próxima tentativa. */
@@ -73,6 +73,8 @@ final class ShepherdHerding {
         ShepherdPens.Pen from;
         /** Quando o animal começou a atravessar o portão andando. */
         long walking;
+        /** O prazo desta coleta, em tiques desde {@link #since}; zero até o primeiro passo (Regra 269). */
+        long deadline;
 
         Herd(UUID animal, BlockPos fence, long since) {
             this.animal = animal;
@@ -318,7 +320,7 @@ final class ShepherdHerding {
         if (!(world.getEntity(shepherdId) instanceof VillagerEntity shepherd)
                 || !(animalEntity instanceof AnimalEntity animal) || !animal.isAlive()
                 || !WorkHours.isWorkTime(world, shepherd)
-                || world.getTime() - herd.since > TIMEOUT) {
+                || world.getTime() - herd.since > HerdDeadline.of(herd, shepherd, animal)) {
             abort(world, shepherdId, herd);
             return false;
         }
@@ -453,7 +455,8 @@ final class ShepherdHerding {
                 shepherdId.toString().substring(0, 8), herd.phase, world.getTime() - herd.since,
                 herd.pen != null ? herd.pen.gate().toShortString() : "a post");
         if (world.getEntity(herd.animal) instanceof AnimalEntity animal
-                && animal.getLeashHolder() != null && animal.getLeashHolder().getUuid().equals(shepherdId)) {
+                && animal.getLeashHolder() != null && animal.getLeashHolder().getUuid().equals(shepherdId)
+                && !HerdDeadline.tieNearby(world, animal)) {
             animal.detachLeash(true, false);
         }
 

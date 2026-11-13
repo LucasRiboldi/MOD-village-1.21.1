@@ -19,7 +19,6 @@ import com.villagecolony.core.type.Side;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ColonyChests;
@@ -581,9 +580,12 @@ public class SmelterGameTest implements FabricGameTest {
         });
     }
 
-    /** Fundir fora de casa só agenda o retorno ao baú pessoal. */
+    /**
+     * Regra 263: o fundidor funde onde está. Baú numa casa da vila Vanilla original, fora de qualquer construção
+     * registrada, não segura a fundição.
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "smelter_location", tickLimit = 40)
-    public void aSmelterOutsideTheBuiltAreaReturnsBeforeSmelting(TestContext context) {
+    public void aSmelterOutsideTheBuiltAreaSmeltsWhereItStands(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos outside = new BlockPos(6, 2, 6);
 
@@ -614,13 +616,8 @@ public class SmelterGameTest implements FabricGameTest {
             }
 
             context.assertTrue(
-                    ChestInventoryReader.read(world, context.getAbsolutePos(CHEST)).amountOf(ResourceType.GLASS) == 0,
-                    "o fundidor fora da área construída fundiu antes de voltar");
-            context.assertTrue(
-                    WorkTargets.of(villager.getUuid())
-                            .filter(context.getAbsolutePos(CHEST).up()::equals)
-                            .isPresent(),
-                    "o fundidor fora da área construída não recebeu o retorno ao baú");
+                    ChestInventoryReader.read(world, context.getAbsolutePos(CHEST)).amountOf(ResourceType.GLASS) > 0,
+                    "o fundidor fora de construção registrada não fundiu (Regra 263)");
         } finally {
             owned.cleanUp();
         }

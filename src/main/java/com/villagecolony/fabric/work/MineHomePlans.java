@@ -5,7 +5,6 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.type.ColonyPos;
-import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.MineHomeSiteSearch;
 import net.minecraft.server.world.ServerWorld;
@@ -15,8 +14,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * A casa do mineiro ao lado da boca da mina. A boca é a da superfície na mina de hoje (Regra 211):
- * a mina pode mudar de boca, e a casa acompanha, até uma por mineiro.
+ * A casa do mineiro ao lado da boca da mina. A boca é a da superfície na mina de hoje (Regra 211), e uma casa pronta
+ * basta: a boca que muda não pede outra (Regra 266).
  */
 final class MineHomePlans {
     static final int RADIUS = 20;
@@ -32,17 +31,12 @@ final class MineHomePlans {
         if (mine.isEmpty()) {
             return false;
         }
-        return isOwedAt(colony.id(), surfaceMouth(world, colony));
+        return isOwedAt(colony.id());
     }
 
-    /** Falta casa nesta boca, e o limite de uma casa por mineiro ainda deixa. */
-    static boolean isOwedAt(UUID colonyId, BlockPos mouth) {
-        List<Building> houses = VillageColonyMod.BUILDINGS.ofColony(colonyId).stream()
-                .filter(building -> isMinerHouse(building.blueprint())).toList();
-        long miners = VillageColonyMod.WORKERS.ofColony(colonyId).stream()
-                .filter(worker -> worker.profession().filter(ProfessionType.MINER::equals).isPresent()).count();
-
-        return houses.size() < Math.max(1, miners) && houses.stream().noneMatch(house -> near(mouth, house));
+    /** Falta casa do mineiro na vila: uma pronta basta, mesmo que a boca da mina mude (Regra 266, emenda a 211). */
+    static boolean isOwedAt(UUID colonyId) {
+        return VillageColonyMod.BUILDINGS.ofColony(colonyId).stream().noneMatch(building -> isMinerHouse(building.blueprint()));
     }
 
     private static BlockPos surfaceMouth(ServerWorld world, Colony colony) {

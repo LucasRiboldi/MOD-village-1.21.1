@@ -14,6 +14,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.Heightmap;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -146,7 +147,7 @@ public final class VillageGrove {
         grove.removeIf(ground -> !alive(world, ground));
 
         if (grove.isEmpty()) {
-            grove.addAll(found(world, box.get(), colony.center().y()));
+            grove.addAll(found(world, box.get()));
         }
 
         int planted = 0;
@@ -308,7 +309,7 @@ public final class VillageGrove {
         }
 
         for (int[] cell : ring) {
-            Optional<BlockPos> ground = groundAt(world, cell[0], cell[1], colony.center().y());
+            Optional<BlockPos> ground = groundAt(world, cell[0], cell[1]);
 
             if (ground.isPresent() && fits(world, colony, ground.get(), grove)) {
                 return ground;
@@ -373,7 +374,7 @@ public final class VillageGrove {
     }
 
     /** As mudas do bosque que já estão de pé no anel (depois de reiniciar o servidor). */
-    private static List<BlockPos> found(ServerWorld world, VillageBounds box, int centreY) {
+    private static List<BlockPos> found(ServerWorld world, VillageBounds box) {
         List<BlockPos> found = new ArrayList<>();
 
         for (int x = box.minX() - FAR; x <= box.maxX() + FAR && found.size() < SIZE; x++) {
@@ -382,7 +383,7 @@ public final class VillageGrove {
                     continue;
                 }
 
-                groundAt(world, x, z, centreY)
+                groundAt(world, x, z)
                         .filter(ground -> alive(world, ground))
                         .ifPresent(found::add);
             }
@@ -407,20 +408,15 @@ public final class VillageGrove {
     }
 
     /** O chão nesta coluna, perto da altura da vila; chunk só se carregado. */
-    private static Optional<BlockPos> groundAt(ServerWorld world, int x, int z, int centreY) {
+    private static Optional<BlockPos> groundAt(ServerWorld world, int x, int z) {
         if (world.getChunkManager().getWorldChunk(x >> 4, z >> 4) == null) {
             return Optional.empty();
         }
 
-        for (int y = centreY + 4; y >= centreY - 8; y--) {
-            BlockPos at = new BlockPos(x, y, z);
+        // O topo do terreno, em qualquer altura (Regra 268): a borda da vila pode ficar bem acima ou abaixo do centro.
+        BlockPos at = new BlockPos(x, world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z) - 1, z);
 
-            if (!world.getBlockState(at).isAir() && world.getBlockState(at.up()).isAir()) {
-                return Optional.of(at);
-            }
-        }
-
-        return Optional.empty();
+        return !world.getBlockState(at).isAir() && world.getBlockState(at.up()).isAir() ? Optional.of(at) : Optional.empty();
     }
 
     /** O ângulo do baú do lenhador a partir do centro da vila; zero sem ele. */

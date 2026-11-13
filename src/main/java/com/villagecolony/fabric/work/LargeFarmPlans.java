@@ -14,9 +14,10 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * A plantação grande do mod no deserto — Regra 241 (autor, 2026-11-11): 16x16, a roça da planície com a terra arada toda
- * molhada ({@code scripts/gen_large_farm.py}). Entra na fila como obra urgente, uma por vila, quando o fazendeiro do
- * deserto não acha nada para colher, nem canteiro, nem semente para compostar, e trabalha menos de 30% do expediente.
+ * A plantação grande do mod — Regra 241 (autor, 2026-11-11): 16x16, a roça da planície com a terra arada toda
+ * molhada ({@code scripts/gen_large_farm.py}). Entra na fila como obra urgente, uma por vila, quando o fazendeiro não
+ * acha nada para colher, nem canteiro, nem semente para compostar, e trabalha menos de 30% do expediente. Vale em
+ * todo bioma (Regra 267).
  */
 final class LargeFarmPlans {
 
@@ -49,18 +50,23 @@ final class LargeFarmPlans {
         return total > 0 && 1.0 - (double) farmer.getOrDefault(WorkTime.State.WORK, 0) / total > IDLE_SHARE;
     }
 
-    /** A planta, se a vila do deserto pede a plantação agora; senão, nenhuma. */
+    /** A planta, se a vila pede a plantação agora; senão, nenhuma. */
     static List<Blueprint> forColony(ServerWorld world, Colony colony, List<Building> buildings) {
-        Long nothing = NOTHING.get(colony.id());
-
-        if (nothing == null || world.getTime() - nothing > NOTHING_FOR || !VillageGrove.isDesert(world, colony)
-                || buildings.stream().anyMatch(building -> MODEL.equals(building.blueprint()))
-                || !idleEnough(WorkTime.lastWindowOf(colony.id()).getOrDefault("FARMER", Map.of()))
+        if (!due(world, colony, buildings, WorkTime.lastWindowOf(colony.id()).getOrDefault("FARMER", Map.of()))
                 || PlanRefusals.skip(world, colony.id(), colony.center(), MODEL)) {
             return List.of();
         }
 
         return HousePlans.READ.computeIfAbsent(MODEL, missing -> StructureBlueprintReader.read(world, missing))
                 .map(List::of).orElseGet(List::of);
+    }
+
+    /** Se o fazendeiro parado, sem nada a fazer há pouco, pede a plantação que a vila ainda não tem. */
+    static boolean due(ServerWorld world, Colony colony, List<Building> buildings, Map<WorkTime.State, Integer> farmer) {
+        Long nothing = NOTHING.get(colony.id());
+
+        return nothing != null && world.getTime() - nothing <= NOTHING_FOR
+                && buildings.stream().noneMatch(building -> MODEL.equals(building.blueprint()))
+                && idleEnough(farmer);
     }
 }

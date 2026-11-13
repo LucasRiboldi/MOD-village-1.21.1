@@ -208,7 +208,7 @@ public final class BigHouseFoundation {
             }
         }
 
-        // O lote ligado à vila por chão andável ganha; separado por água, só sem nenhum outro (a ponte liga).
+        // O lote ligado à vila por chão andável ganha; separado por água, só sem nenhum outro (a linha não cruza água, Regra 264).
         boolean[] dry = DryLand.from(world, center, minX, minZ, width, depth);
         Site cutOff = null;
 

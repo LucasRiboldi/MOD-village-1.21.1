@@ -309,7 +309,6 @@ public final class RoadGraphRefresh {
         }
 
         WorldPathTerrain terrain = new WorldPathTerrain(world, id);
-        WorldPathTerrain bridging = new WorldPathTerrain(world, id, true);
         int turn = TURNS.merge(id, 1, Integer::sum);
         PlannedPaths paths = PLANNED.computeIfAbsent(id, ignored -> new PlannedPaths());
 
@@ -329,7 +328,7 @@ public final class RoadGraphRefresh {
         }
 
         RoadLines.Result result = RoadLines.build(cells, planned, colony.center(), fronts,
-                RoadShape.farmRings(world, colony, terrain), terrain, bridging, BridgeDeck.MAX_SPAN, LINKS_PER_READ, turn, fixed, retired);
+                RoadShape.farmRings(world, colony, terrain), terrain, LINKS_PER_READ, turn, fixed, retired);
         Set<ColonyPos> read = cells;
 
         result.graph().ifPresent(graph -> {

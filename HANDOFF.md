@@ -1,10 +1,10 @@
 # Handoff — Village Colony
 
-Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 2026-11-12, feita pelo Claude Code: reconfira com `git log` e `gh pr list` antes de trabalhar. O handoff anterior, da Fase 3 do MAE, está no histórico do Git.
+Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 2026-11-13, feita pelo Claude Code: reconfira com `git log` e `gh pr list` antes de trabalhar. O handoff anterior, da Fase 3 do MAE, está no histórico do Git.
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.68, publicada como [`v0.4.68-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.68-alpha), **não jogada**. A 0.4.57 foi jogada em 2026-11-12 (vila de planície, Spark `6ix0fQIHAT` e `XUNIjGrfB9`); da 0.4.58 em diante nada foi jogado. Branch de trabalho: `main`.
+- **Versão:** 0.4.74, integrada na `main` (PR #73) e publicada como [`v0.4.74-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.74-alpha), **não jogada**. A 0.4.68 foi jogada em 2026-11-12 numa planície cercada de água (Spark `El42EuZ5w9`, análise em `docs/audit/2026-11-13-jogo-0468.md`). Branch de trabalho: `main`.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, ele escolhe, teste que falha, correção, Sentinela, commit, JAR.
 - **Entregue desde a 0.4.53 (todas candidatas):**
   - 0.4.54 a 0.4.56, Regras 243 a 249: plantação grande sobre areia, baú de qualquer lugar, aldeão fora da simulação não congela, cama longe vem para perto, chão nivelado é trabalho, um terço da madeira em tora, fundição sem cru chama o pedreiro.
@@ -12,14 +12,17 @@ Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 20
   - 0.4.60 a 0.4.62, Regras 254 a 256: patamar nas dobras da mina (ADR-053), pastor não amarra com curral, arco de pinheiro e lenhador só com folha.
   - 0.4.63 e 0.4.64, Regras 257 e 258 (reanálise dos logs): areia e argila sem reserva de cru; adiantamento lê todas as estruturas.
   - 0.4.65 a 0.4.68, Regras 259 a 262 (regras novas do autor de 12-11): oito ofícios na fundação, casa do mineiro na fundação, poste de luz, estruturas por bioma.
+  - 0.4.69 a 0.4.74, Regras 263 a 269 (jogo da 0.4.68): fundidor funde onde está, grafo nunca sobre a água (174 revogada), linha planejada sai da construção, uma casa do mineiro basta, plantação grande em todo bioma, bosque em qualquer altura, prazo do pastor pela distância.
 
 ## O próximo passo
 
-**O autor precisa jogar a 0.4.68 numa vila nova e mandar o Spark.** Ao receber o log, siga `CLAUDE.md` §0.2.2 e confira:
+**O autor precisa jogar a 0.4.74 numa vila nova e mandar o Spark.** Ao receber o log, siga `CLAUDE.md` §0.2.2 e confira:
 
-- Fundação: os oito ofícios, a mina com arco e a casa do mineiro prontos; poste de luz ao longo das ruas fixas (a 30 blocos ou mais).
-- `found no pen for the` (Regra 255): o motivo de o curral não servir; a mina: patamar e tocha de parede nos níveis novos.
-- `time_ledger.py` e `action_report.py`: ócio dos artesãos com o adiantamento ampliado (Regra 258).
+- Fundidor (Regra 263): `SMELTED` no diário dos três, e a tarefa `SMELT_MATERIAL` saindo de `RESERVED`.
+- Grafo (Regras 264 e 265): `python scripts/save_read.py map` sem `o`/`+` sobre `~`; nenhum `PAVED bridge` no diário.
+- Fazendeiro (Regra 267): a plantação grande aberta como obra; pastor (Regra 269): "into the pen" e nenhum animal solto.
+- Bosque (Regra 268): linhas `near the village at ... (grove N of M)`; lenhador caminhando menos que 67%.
+- Poste de luz (Regra 261): na 0.4.68 o construtor nunca ficou ocioso, então 0 `VC_LAMP_POST`; conferir de novo.
 
 Em aberto no `TODO.md`: o mineiro sem ramal livre (pulado pelo autor) e a terra acima da plantação (falta coordenada).
 

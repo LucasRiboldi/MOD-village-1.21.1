@@ -295,7 +295,7 @@ public final class FarmerWork {
             FarmerChores.findWork(world, workerId, job, storage.get());
 
             // Sem colheita nem canteiro: um canteiro novo na borda da roça, senão o
-            // compostor e a farinha de osso (P8b); sem nada, a plantação grande do deserto (Regra 241).
+            // compostor e a farinha de osso (P8b); sem nada, a plantação grande (Regras 241 e 267).
             if (job.target == null && !FarmerTill.till(world, villager, job, storage.get())
                     && !FarmerCompost.tend(world, villager, job.task.colonyId(), storage.get())) {
                 LargeFarmPlans.nothingToDo(job.task.colonyId(), world.getTime());

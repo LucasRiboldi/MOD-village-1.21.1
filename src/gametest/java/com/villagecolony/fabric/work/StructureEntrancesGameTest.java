@@ -264,31 +264,28 @@ public class StructureEntrancesGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** A boca mudou: a casa da boca antiga não serve, até uma por mineiro. */
+    /** Uma casa do mineiro pronta basta, mesmo com a boca mudada e mais mineiros (Regra 266, emenda a 211). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "entrance_miner_home", tickLimit = 20)
-    public void theMinerHomeFollowsTheMouthInUse(TestContext context) {
+    public void oneReadyMinerHomeIsEnoughWhenTheMouthMoves(TestContext context) {
         UUID colonyId = UUID.randomUUID();
+        // A casa fica a 200 blocos da boca de hoje: longe dela, e ainda assim basta.
         BlockPos oldMouth = new BlockPos(4_000_000, 70, 4_000_000);
-        BlockPos newMouth = oldMouth.add(200, 0, 0);
 
-        context.assertTrue(MineHomePlans.isOwedAt(colonyId, oldMouth), "Regra 211: a boca sem casa devia pedir uma");
+        context.assertTrue(MineHomePlans.isOwedAt(colonyId), "Regra 266: a vila sem casa do mineiro devia pedir uma");
 
         Building house = new Building(UUID.randomUUID(), colonyId, new ResourceId("villagecolony", "colony/plains/miner_house"),
                 cell(oldMouth.add(14, 0, -24)), cell(oldMouth.add(18, 4, -20)), true);
-        UUID[] miners = {UUID.randomUUID(), UUID.randomUUID()};
+        UUID[] miners = {UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()};
 
         try {
             VillageColonyMod.BUILDINGS.register(house);
-
-            context.assertFalse(MineHomePlans.isOwedAt(colonyId, oldMouth), "Regra 211: a boca com casa pediu outra");
-            context.assertFalse(MineHomePlans.isOwedAt(colonyId, newMouth), "Regra 211: um mineiro só devia ter uma casa");
 
             for (UUID miner : miners) {
                 VillageColonyMod.WORKERS.register(miner, colonyId).assign(com.villagecolony.core.worker.model.ProfessionType.MINER);
             }
 
-            context.assertTrue(MineHomePlans.isOwedAt(colonyId, newMouth), "Regra 211: a casa não acompanhou a boca nova");
-            context.assertFalse(MineHomePlans.isOwedAt(colonyId, oldMouth), "Regra 211: a boca antiga pediu outra casa");
+            context.assertFalse(MineHomePlans.isOwedAt(colonyId),
+                    "Regra 266: com casa do mineiro pronta, a boca nova ou outro mineiro pediu outra");
         } finally {
             VillageColonyMod.BUILDINGS.removeOfColony(colonyId);
             VillageColonyMod.WORKERS.ofColony(colonyId).forEach(worker -> VillageColonyMod.WORKERS.remove(worker.villagerId()));
