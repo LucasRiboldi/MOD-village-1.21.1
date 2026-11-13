@@ -1,6 +1,6 @@
 # ADR-043 — Grafo hierárquico de ruas com migração compatível
 
-Estado: direção e desenho aprovados pelo autor em 2026-11-01; implementação em andamento.
+Estado: aceita pelo autor em 2026-11-01 e implementada na `main` (`RoadLines`, `RoadGraphRefresh`). Emendada pela ADR-050 (persistência do grafo); a ADR-048, a ADR-052 e a Regra 264 (sem ponte) mudam o que o grafo traça.
 
 ## Contexto
 

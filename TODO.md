@@ -11,9 +11,10 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 ## F0 — Sinal limpo (1 semana)
 
 - [ ] 🔴 Triar os 214 itens de `docs/technical/TODO-herdado-2026-11-13.md` (M)
-- [ ] 🟠 Índice de ADRs com estado único (vale, emendada por, substituída por); ADR-025 duplicada renumerada; ADR-043 a
-  046 sem "implementação em andamento"; ADR-024 e o `WarehouseIndex` sem uso decididos (P)
-- [ ] 🟠 `CLAUDE.md` sem o import de `.fabric/AGENTS.md`, que não existe (P)
+- [ ] 🟠 Decisão do autor: a ADR-024 (índice físico do armazém) é aceita, mas o `WarehouseIndex` não é usado em produção;
+  religar ou retirar (P)
+- [ ] 🟡 Decisão do autor: o `CLAUDE.md` importa `.fabric/AGENTS.md`, que a ferramenta Fabric cria localmente (pasta no
+  `.gitignore`) e não existe em nenhum checkout; manter, reinstalar a ferramenta ou tirar o import (P)
 - [ ] 🟠 `scripts/rule_coverage.py` lê o estado das linhas de duas células (regras 201 a 205 revogadas contam como sem
   teste) e ganha teste (P)
 - [ ] 🟠 README: a frase "clientes não precisam instalar" está errada (o mod registra blocos e itens); contagens de teste

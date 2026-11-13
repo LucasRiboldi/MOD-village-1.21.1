@@ -1,7 +1,7 @@
 # ADR-044 — Elegibilidade e escrita supervisionada do MAE
 
-Estado: opção de elegibilidade A aprovada pelo autor em 2026-11-02; implementação
-da Fase 1 em branch, ainda sem integração ou ativação de preparação de terreno.
+Estado: opção de elegibilidade A aprovada pelo autor em 2026-11-02; integrada na `main` (`MaeBuildQueue`, `MaeClearing`,
+`MaeWorkStore`). Emendada pela ADR-047 (fila do construtor).
 
 ## Contexto
 

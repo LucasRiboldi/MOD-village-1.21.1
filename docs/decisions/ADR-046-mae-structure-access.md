@@ -1,7 +1,7 @@
 # ADR-046 — Acesso físico e construção supervisionada de estruturas MAE
 
-Estado: contrato A, implementação e testes focados aprovados pelo autor
-em 2026-11-04. Implementação parcial; escrita de edifícios ainda não habilitada.
+Estado: contrato A, implementação e testes focados aprovados pelo autor em 2026-11-04; integrada na `main`. Emendada
+pela ADR-047 (a obra é posta pelo construtor).
 O esquema `structure_v3` (seção própria abaixo) foi aprovado pelo autor em
 2026-11-04, com P1–P4; ainda não implementado.
 Esta ADR complementa as ADRs [044](ADR-044-mae-region-safety.md) e
