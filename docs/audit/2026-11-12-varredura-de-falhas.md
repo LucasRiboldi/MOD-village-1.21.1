@@ -398,3 +398,39 @@ encurtar; se um teste falha antes do `restore…`, o valor curto vaza para o res
 | VF-020 | A: limpar o TODO depois do jogo | depois do jogo |
 | PATTERNS | Textos propostos aprovados; entram com a primeira correção | — |
 | Ferramentas | Sentinela `fast` e PIT autorizados sempre que a correção pedir | — |
+
+## Progresso das correções (13-11)
+
+Branch `fix/varredura-falhas`, da `main` em `733eb0c1`, sem push. Até aqui só teste, documento e ferramenta: o JAR do
+mod não muda e nada foi gerado nem instalado.
+
+| ID | Commit | Prova |
+|---|---|---|
+| VF-002 | `722f7ec5` | Sentinela `fast` verde (`20261113T023226Z`), nenhuma colônia de teste abandonada no log; PATTERNS.md com as 3 assinaturas aprovadas |
+| VF-017 | `68a47bc0` | `rule_coverage.py`: 262 regras, sem teste só 33 e 47 |
+| VF-003 | `0a6b36cc` | `MineShaftWaypointsTest`, 10 testes; PIT do zero 86,03%, folga 42; `MineShaft` de 33 para 14 sobreviventes, a maioria equivalente (grade de tochas simétrica) |
+| VF-011/016 | `b0e2364f` | 126 GameTests em lote próprio; `GameTestBatchRuleTest` (sabotagem pega); `MinerGameTest` devolve o raio da mina; Sentinela verde (`20261113T031655Z`) |
+| VF-015 | `81689813` | SpotBugs rodou: 111 achados, nenhum defeito confirmado; sobra o campo morto `CraftingWork.stalled` |
+| VF-019 | `df58cc57` | `BiomeCheckCommandGameTest` (3 comandos); Sentinela verde (`20261113T033731Z`), 1.112 GameTests |
+
+**Achados novos no caminho.**
+
+- O PIT local usa histórico incremental (`build/pitHistory.txt`, `enableDefaultIncrementalAnalysis`): o número local
+  pode diferir do CI, que roda do zero. A rodada do zero leva cerca de 29 minutos.
+- A separação de lotes expôs um teste que dependia da hora do vizinho
+  (`ShepherdGameTest.theShepherdShearsOverTheFenceWithoutGoingIn`, corrigido no mesmo commit). Outros 25 GameTests
+  perderam o vizinho que acertava a hora e nenhum caiu nas duas baterias seguintes; ficam aqui para o autor decidir se
+  ganham hora própria: `BiomePiecesGameTest` (3), `CraftStationGameTest`, `HouseDoorsGameTest`,
+  `ShepherdLooseFlockGameTest`, `WorkMemoryGameTest`, `WorkMemorySaveGameTest`, `WorkTimeSwingGameTest`,
+  `WorkHoursGameTest.restingStopsWorkMovementButKeepsHomeAndThePendingJob`, `BuilderRefusedSpotGameTest` (2),
+  `CraftingAdvanceGameTest` (2), `CraftingGameTest`, `ShepherdPensGameTest` (2), `BuildProgressGameTest` (2),
+  `BuilderGameTest` (3), `LeafInTheWayGameTest`, `LumberjackGameTest.theHarvestTakesTimeAndEndsInTheChest`.
+- `ShepherdHerdingGameTest.theShepherdLeadsALooseCowToTheFence` caiu uma vez em 82 rodadas (outro animal escolhido); a
+  mensagem agora diz qual.
+
+**Falta antes do jogo:** VF-001 A (linha de custo por subfase do `planner`; exige extrair uma classe do
+`ColonyCycleRunner`, que está em 500 linhas), VF-007 A (linha do fantasma com posição, distância e chunk) e VF-010 A
+(qual vaca sai do curral). As duas primeiras mudam o JAR: pedem versão nova, JAR e cópia para o TLauncher antes do jogo.
+
+**Depois do jogo:** VF-006 A, VF-008/009 (regra nova do autor), VF-014 B, VF-020, VF-005.
+
