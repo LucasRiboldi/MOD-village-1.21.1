@@ -6,8 +6,8 @@ classe prova menos ainda.
 
 - **Cita a regra:** 155
 - **Só usa a classe indicada:** 94
-- **Sem nenhum teste:** 7
-- **Fora de vigor:** 5
+- **Sem nenhum teste:** 2
+- **Fora de vigor:** 11
 
 | # | regra | grau | testes |
 | --- | --- | --- | --- |
@@ -62,6 +62,7 @@ classe prova menos ainda.
 | 49 | A ordem das obras (consolida 55 e 60, 1A de 13-10): faltando cama, casa; senão a oficina… | cita | ConstructionOrderTest, ConstructionPriorityTest |
 | 50 | Toda verificação mede o tempo dos aldeões — trabalhando, andando, bloqueado, ocioso, enca… | cita | WorkTimeTest |
 | 51 | Peça que falta aparece na 4ª tentativa sem sucesso, no baú da profissão que tentou (colet… | cita | BuilderMaterialsGameTest, test_state_report, test_time_ledger |
+| 52 | ~~Uma roça por fazendeiro~~ | fora de vigor |  |
 | 53 | A boca da mina só nasce na faixa da borda da caixa da vila (até 8 blocos da linha, dentro… | classe | MineEdgeGameTest, MineFluidGameTest, MineLeaseGameTest |
 | 54 | Mina em rede (ADR-042): passada a escadaria e o salão, cada nível é uma grade de nós a ca… | classe | MineAccessGameTest, MineReturnGameTest, MineReturnTest |
 | 55 | Roça grande primeiro; fundidor ocioso adianta o cru; lenhador ocioso planta mudas até 10… | cita | GrowingPiecesGameTest |
@@ -70,7 +71,7 @@ classe prova menos ainda.
 | 58 | Madeira e pedra cruas podem passar dos limites do baú do ofício e do teto por tipo: o exc… | classe | MinerHaulCapGameTest, MinerOverflowGameTest, PublicChestPlacementGameTest |
 | 59 | Ajudam a obra só carpinteiro e pedreiro (fazendeiro e pastor não); o carpinteiro guarda u… | classe | BuilderPavingGameTest, ConstructionZoneGameTest, GraphOnlyPathsGameTest |
 | 60 | O tipo de obra que passa uma volta inteira da varredura sem lote fica 30 min fora da vez;… | classe | BigHouseFoundationGameTest, ColonyModelsGameTest, ConstructionOrderTest |
-| 61 | A colônia só é dada como abandonada sem vila à vista do centro nem dentro da caixa, e com… | classe | ColonyAbandonmentTest, test_graphify_relabel |
+| 61 | A colônia só é dada como abandonada sem vila à vista do centro nem dentro da caixa, e com… | classe | ColonyAbandonmentTest, GroundPickupGameTest, test_graphify_relabel |
 | 62 | A vila trabalha com o jogador dentro da caixa ou a até 48 blocos dela (VillageFocus.PERIM… | classe | AbandonedColonyGameTest, ColonyBoundsTest, DrawnFromTest |
 | 63 | Socorro contra parada com prazo único: o ofício que anda sem chegar ao alvo há 1 minuto d… | classe | WorkRescueTest |
 | 64 | As ruas da vila são medidas como rede de caminhos conectados a partir do centro (de bloco… | classe | GraphOnlyPathsGameTest, RoadNetworkGameTest |
@@ -210,11 +211,11 @@ classe prova menos ainda.
 | 198 | Lenhador no interior da vila (autor 11-05): a árvore é escolhida por faixas de 32 blocos… | cita | TreeNearestGameTest |
 | 199 | Sem muda perto de estrutura (autor 11-05): árvore a até 3 blocos de casa, obra ou peça da… | cita | TreeReplantingGameTest |
 | 200 | A obra pedida limpa o próprio lote (autor 11-05): árvore natural, folha e mato alto não r… | cita | MaeSitesGameTest |
-| 201 | Revogada (autor 11-06, ADR-047). A régua do lote é a do construtor (Regra 213) | nenhum |  |
-| 202 | Revogada (autor 11-06, ADR-047). A obra pedida não usa a prova por seção | nenhum |  |
-| 203 | Revogada (autor 11-06, ADR-047). A água entra pelo construtor | nenhum |  |
-| 204 | Revogada (autor 11-06, ADR-047). A peça da obra é posta pelo construtor | nenhum |  |
-| 205 | Revogada (autor 11-06, ADR-047). A obra pedida não reserva região e não falha | nenhum |  |
+| 201 | Revogada (autor 11-06, ADR-047). A régua do lote é a do construtor (Regra 213) | fora de vigor |  |
+| 202 | Revogada (autor 11-06, ADR-047). A obra pedida não usa a prova por seção | fora de vigor |  |
+| 203 | Revogada (autor 11-06, ADR-047). A água entra pelo construtor | fora de vigor |  |
+| 204 | Revogada (autor 11-06, ADR-047). A peça da obra é posta pelo construtor | fora de vigor |  |
+| 205 | Revogada (autor 11-06, ADR-047). A obra pedida não reserva região e não falha | fora de vigor |  |
 | 206 | As pontas do grafo são os lados da vila (autor 11-05, emendada 11-10): fica a ponta mais… | cita | RoadLinesTest, RoadMapSyncGameTest, RoadRulesGameTest |
 | 207 | Toda porta térrea é entrada (autor 11-05): o marcador branco fica no primeiro bloco em fr… | cita | DoorFrontsGameTest |
 | 208 | Plantação sem anel (autor 11-06): o chão em volta da plantação não é pedido como caminho,… | cita | RoadLinesTest, RoadRulesGameTest |
