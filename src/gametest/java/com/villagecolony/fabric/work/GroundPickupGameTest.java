@@ -60,6 +60,16 @@ public final class GroundPickupGameTest implements FabricGameTest {
         villager.setBreedingAge(0);
         villager.setAiDisabled(true);
         VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        // A arena não tem vila Vanilla: a sonda de abandono do ciclo de detecção só poupa a colônia com
+        // 3 aldeões em casa (VillageAdoption.PEOPLE_TO_STAY). Dois parados, longe do item, completam a conta — VF-002.
+        List<VillagerEntity> stayHome = List.of(
+                context.spawnEntity(EntityType.VILLAGER, new BlockPos(0, 2, 0)),
+                context.spawnEntity(EntityType.VILLAGER, new BlockPos(0, 2, 8)));
+        for (VillagerEntity resident : stayHome) {
+            resident.setBreedingAge(0);
+            resident.setAiDisabled(true);
+            VillageColonyMod.WORKERS.register(resident.getUuid(), colony.id());
+        }
         Vec3d itemPos = Vec3d.ofBottomCenter(context.getAbsolutePos(new BlockPos(11, 2, 5)));
         ItemEntity item = new ItemEntity(context.getWorld(), itemPos.x, itemPos.y, itemPos.z, new ItemStack(Items.DIRT, 5));
         item.setPickupDelayInfinite();
@@ -67,6 +77,10 @@ public final class GroundPickupGameTest implements FabricGameTest {
         boolean[] done = {false};
         Runnable cleanup = () -> {
             VillageColonyMod.WORKERS.remove(villager.getUuid());
+            stayHome.forEach(resident -> {
+                VillageColonyMod.WORKERS.remove(resident.getUuid());
+                resident.discard();
+            });
             VillageColonyMod.COLONIES.remove(colony.id());
             villager.discard();
             item.discard();
@@ -89,7 +103,9 @@ public final class GroundPickupGameTest implements FabricGameTest {
                     if (box.getStack(slot).isOf(Items.DIRT)) dirt += box.getStack(slot).getCount();
                 }
                 double moved = villager.squaredDistanceTo(Vec3d.ofBottomCenter(context.getAbsolutePos(new BlockPos(2, 2, 5))));
+                boolean abandoned = colony.state() == com.villagecolony.core.colony.model.ColonyState.ABANDONED;
                 cleanup.run();
+                context.assertTrue(!abandoned, "a sonda de abandono dispensou a colônia do teste");
                 context.assertTrue(moved > 1, "aldeão deve caminhar antes da coleta");
                 context.assertTrue(dirt == 5, "a terra recolhida deve chegar ao baú: " + dirt);
                 context.complete();
