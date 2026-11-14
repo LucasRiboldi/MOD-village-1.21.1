@@ -85,17 +85,22 @@ public class WorkHoursGameTest implements FabricGameTest {
     public void theWholeDayIsWorkTime(TestContext context) {
         ServerWorld world = context.getWorld();
         VillagerEntity villager = adultAt(context);
+        // O relógio é de todos os testes que rodam juntos: a hora deste teste não fica para os outros.
+        long before = world.getTimeOfDay();
+        boolean morning;
+        boolean afternoon;
 
-        world.setTimeOfDay(EARLY_MORNING);
+        try {
+            world.setTimeOfDay(EARLY_MORNING);
+            morning = WorkHours.isWorkTime(world, villager);
+            world.setTimeOfDay(AFTERNOON);
+            afternoon = WorkHours.isWorkTime(world, villager);
+        } finally {
+            world.setTimeOfDay(before);
+        }
 
-        context.assertTrue(
-                WorkHours.isWorkTime(world, villager),
-                "manhã cedo devia ser expediente, e a colônia disse que não");
-
-        world.setTimeOfDay(AFTERNOON);
-
-        context.assertTrue(
-                WorkHours.isWorkTime(world, villager),
+        context.assertTrue(morning, "manhã cedo devia ser expediente, e a colônia disse que não");
+        context.assertTrue(afternoon,
                 "meio da tarde com sol alto devia ser expediente — é a hora"
                         + " em que a colônia parava, em 2026-08-18");
 
@@ -117,11 +122,17 @@ public class WorkHoursGameTest implements FabricGameTest {
 
         child.setBreedingAge(-24_000);
 
-        world.setTimeOfDay(AFTERNOON);
+        long before = world.getTimeOfDay();
+        boolean works;
 
-        context.assertFalse(
-                WorkHours.isWorkTime(world, child),
-                "criança não trabalha, e a colônia pôs uma para trabalhar");
+        try {
+            world.setTimeOfDay(AFTERNOON);
+            works = WorkHours.isWorkTime(world, child);
+        } finally {
+            world.setTimeOfDay(before);
+        }
+
+        context.assertFalse(works, "criança não trabalha, e a colônia pôs uma para trabalhar");
 
         context.complete();
     }
