@@ -124,8 +124,13 @@ public final class ValueGoods {
                 continue;
             }
 
-            // A lã guardada vira tapete e lã tingida, de cor sorteada (Regra 240).
+            // A lã guardada vira tapete e lã tingida, de cor sorteada (Regra 240); antes, a flor vira corante (Regra 272).
             if (trade.get() == ProfessionType.SHEPHERD) {
+                if (ShepherdDyes.step(world, colony, villager, chests)) {
+                    made++;
+                    continue;
+                }
+
                 Optional<ShepherdWoolGoods.Made> lot = ShepherdWoolGoods.step(world, chests, world.getRandom());
 
                 lot.ifPresent(goods -> {

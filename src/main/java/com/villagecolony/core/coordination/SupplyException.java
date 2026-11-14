@@ -24,7 +24,8 @@ public enum SupplyException {
     ANIMAL_FEED(117, "a ração do par que o pastor vai criar, quando os baús não têm comida do fazendeiro"),
     WAITED_TOO_LONG(128, "o produto da tarefa largada duas vezes em 10 minutos, no baú de quem a largou"),
     END_OF_BUILD(148, "as peças que faltam quando a obra para no fim, postas no lugar para a casa fechar"),
-    GROVE_SAPLING(271, "a muda do bosque do lenhador, em terra enraizada; no deserto, da madeira de reserva da vila");
+    GROVE_SAPLING(271, "a muda do bosque do lenhador, em terra enraizada; no deserto, da madeira de reserva da vila"),
+    FLOWER_DYE(272, "o corante da cor sem flor no bioma, ou quando o pastor não colhe a flor a tempo");
 
     private final int rule;
 

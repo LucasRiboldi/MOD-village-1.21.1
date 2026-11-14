@@ -9,7 +9,7 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.76 nesta linha de trabalho; a publicada é `v0.4.74-alpha`. **Não jogadas.** A última jogada é a 0.4.68
+- **Versão:** 0.4.77 nesta linha de trabalho; a publicada é `v0.4.74-alpha`. **Não jogadas.** A última jogada é a 0.4.68
   (12-11, planície cercada de água, Spark `El42EuZ5w9`; análise em `docs/audit/2026-11-13-jogo-0468.md`).
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
@@ -33,6 +33,7 @@ Cada uma tem teste que falha sem ela; nenhuma foi vista em jogo.
 | 0.4.74 | 269 | o prazo do pastor cresce com a distância; o animal largado fica amarrado na cerca |
 | 0.4.75 | 270 | sem ofício do mod fica fora de toda análise de profissão (tempo, Regra 51, selos, relatórios) |
 | 0.4.76 | 271 | a muda do bosque surge (também no deserto), em terra enraizada, declarada no `VC_SUPPLY` |
+| 0.4.77 | 272 | o pastor colhe flor no ócio e faz corante; cor sem flor, falha ou demora fazem o corante surgir (Sentinela pendente) |
 
 Da 0.4.54 à 0.4.67 (Regras 243 a 261) também não houve confirmação escrita em jogo; a 0.4.68 trouxe as que o jogo de
 12-11 viu funcionar: oito ofícios na fundação, casa do mineiro e mina com arco, patamar com tocha e curral achado.
