@@ -84,7 +84,7 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   usa `HashMap` estático nas threads `Worker-Main`) (P)
 - [ ] 🔴 Servidor dedicado com 2 clientes por 30 minutos, com Spark e `cost_ledger` (M)
 - [ ] 🔴 Matriz mínima com Lithium, FerriteCore, ModernFix e um mod de aldeão: o jogo sobe e o mundo abre (M)
-- [ ] 🟠 **Flowing Fluids** (instalado no jogo do autor, `flowing_fluids 1.0.8`): água finita com deslocamento. No jogo de 13-11 o bloco posto num buraco de água empurrou a água para cima ("enableDisplacement": true); não é defeito do Village Colony, mas ele muda a água que a horta, a plantação grande e a mina esperam. Entra na matriz de compatibilidade (M)
+- [ ] 🟠 **Flowing Fluids** (instalado no jogo do autor, `flowing_fluids 1.0.8`): água finita com deslocamento. No jogo de 13-11 o bloco posto num buraco de água empurrou a água para cima ("enableDisplacement": true); não é defeito do Village Colony, mas ele muda a água que a horta, a plantação grande e a mina esperam. Desativado no jogo do autor em 13-11 (JAR renomeado para `.disabled`, decisão dele); volta na matriz de compatibilidade (M)
 - [ ] 🟠 Permissão de op em `/vc bioma nota` e `/vc dados`, com limite no texto (P)
 - [ ] 🟠 Teto ou rotação do diário e dos ledgers; interruptor das linhas `VC_*` em produção (P)
 
