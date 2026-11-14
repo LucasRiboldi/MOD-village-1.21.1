@@ -29,9 +29,9 @@ própria em `docs/RULES.md` quando é implementado, com o teste que a prova.
 | 9 | Biblioteca e outras casas com duas portas próximas: **uma entrada por porta**, como hoje | feito (sem mudança) |
 | 10 | Deserto: o bosque do lenhador recebe **mudas que surgem** (feito na 0.4.76, Regra 271) (exceção declarada de recurso sem origem física), plantadas em solo preparado para crescer | feito |
 | 11 | (feito na 0.4.77, Regra 272) Corante: o pastor, **no ócio do ofício**, colhe flores em volta da vila e faz corante; as cores cuja flor não existe no bioma **surgem**; se a colheita falhar ou demorar demais, o corante também surge | feito |
-| 12 | Mina: o mineiro sem ramal livre **abre um ramal três níveis abaixo** do nível em uso, em vez de esperar | a implementar |
+| 12 | Mina: o mineiro sem ramal livre não espera. **Revisto no mesmo dia:** a opção "usar os 4 ramais" não cabia (os ramais só abrem quando a escada termina); o autor escolheu a **segunda frente de mina** (com 3 ou mais mineiros, uma frente desce três níveis pela mesma escada e cava lá), com ADR própria | a implementar (ADR nova) |
 | 13 | Grafo: o trecho travado **continua no recálculo** a cada releitura (ADR-050 fica) | feito (sem mudança) |
-| 14 | (coberto pela Regra 74 com trabalho medido, teste em `BedPlanTest`; falta o caso sem trabalho medido) Deserto em duas alturas: quem trabalha em cima e mora embaixo **troca de cama** com um aldeão de outro ofício que mora em cima e trabalha embaixo, quando os dois ganham | em parte |
+| 14 | (feito: Regra 74 com trabalho medido, e Regra 274 na 0.4.79 para o construtor sem trabalho medido) Deserto em duas alturas: quem trabalha em cima e mora embaixo **troca de cama** com um aldeão de outro ofício que mora em cima e trabalha embaixo, quando os dois ganham | feito |
 
 ## Consequências
 

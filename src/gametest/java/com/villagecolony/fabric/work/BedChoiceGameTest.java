@@ -264,4 +264,38 @@ public class BedChoiceGameTest implements FabricGameTest {
 
         VillageColonyMod.COLONIES.remove(colony.id());
     }
+
+    /** Regra 274: o construtor que nunca chegou à obra não tem trabalho medido; a obra aberta vale como o trabalho dele. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "bed_choice_site", tickLimit = 20)
+    public void theBuilderWithoutMeasuredWorkCountsTheOpenSite(TestContext context) {
+        com.villagecolony.gametest.ColonyFixture fixture =
+                com.villagecolony.gametest.ColonyFixture.colonyAt(context, new net.minecraft.util.math.BlockPos(1, 1, 1));
+        com.villagecolony.core.colony.model.Colony colony = fixture.colony();
+        com.villagecolony.core.type.ColonyPos site = com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new net.minecraft.util.math.BlockPos(6, 2, 6)));
+
+        try {
+            com.villagecolony.core.worker.model.Worker builder = com.villagecolony.VillageColonyMod.WORKERS.register(
+                    java.util.UUID.randomUUID(), colony.id());
+
+            builder.assign(com.villagecolony.core.worker.model.ProfessionType.BUILDER);
+            fixture.owning(builder.villagerId());
+            com.villagecolony.VillageColonyMod.CONSTRUCTIONS.register(com.villagecolony.core.construction.model.ConstructionProject.plan(
+                    colony.id(),
+                    com.villagecolony.core.construction.model.Blueprint.of(
+                            com.villagecolony.core.type.ResourceId.vanilla("village/plains/houses/bed_site"),
+                            java.util.List.of(new com.villagecolony.core.construction.model.BlueprintBlock(
+                                    new com.villagecolony.core.type.ColonyPos(0, 0, 0),
+                                    com.villagecolony.core.type.ResourceId.vanilla("oak_planks")))),
+                    site));
+
+            context.assertTrue(java.util.Optional.of(site).equals(BedChoice.workFor(builder, colony)),
+                    "Regra 274: a obra aberta não valeu como trabalho do construtor sem trabalho medido: "
+                            + BedChoice.workFor(builder, colony));
+        } finally {
+            fixture.cleanUp();
+        }
+
+        context.complete();
+    }
 }
