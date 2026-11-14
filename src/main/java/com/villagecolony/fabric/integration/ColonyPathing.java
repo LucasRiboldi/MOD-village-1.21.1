@@ -39,11 +39,12 @@ import java.util.Optional;
 public final class ColonyPathing {
 
     /**
-     * O custo de cada nó de água fora da mina — Regra 278: água só quando não há caminho seco. Alto o bastante para a
-     * busca do jogo preferir um desvio seco de dezenas de blocos; não é proibição, porque sem rota seca ao alcance a
-     * travessia continua possível.
+     * O custo de cada nó de água fora da mina — Regra 278: água só quando não há caminho seco. Cada nó seco fora da
+     * rua também custa ({@link #OFF_STREET_COST}), então o desvio seco paga cerca de 2 por bloco: com 256 ele ganha até
+     * uns cem blocos de volta (com 64 a volta e a água quase empatavam). Não é proibição: sem rota seca ao alcance da
+     * busca a travessia continua possível.
      */
-    public static final float WATER_COST = 64.0F;
+    public static final float WATER_COST = 256.0F;
 
     /**
      * O tipo do nó de gramado dentro da vila: o perigo cauteloso, que o Vanilla só usa para dar custo (0 por padrão)
