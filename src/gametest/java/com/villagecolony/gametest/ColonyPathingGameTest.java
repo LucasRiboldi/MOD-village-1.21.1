@@ -35,12 +35,12 @@ public class ColonyPathingGameTest implements FabricGameTest {
 
     /**
      * Canal de 1 de largura em z 3, de x 0 a 12, com volta a pé pela ponta (x 13..14). No custo do Vanilla nadar sai
-     * por 30 (6 de distância, 8 na água e 8 em cada margem) e a volta por ~34: ele nada. Na colônia a travessia
-     * curta mantém o custo Vanilla. Tudo dentro de x 0..14: além disso a arena não tem chão carregado e a volta não
-     * existe.
+     * por 30 (6 de distância, 8 na água e 8 em cada margem) e a volta por ~34: o Vanilla nada. Na colônia a água só
+     * serve sem caminho seco (Regra 278): ele dá a volta. Tudo dentro de x 0..14: além disso a arena não tem chão
+     * carregado e a volta não existe.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_pathing_water", tickLimit = 40)
-    public void theColonyVillagerCrossesShortWaterInsteadOfTakingALongDetour(TestContext context) {
+    public void theColonyVillagerWalksAroundShortWaterWhenThereIsADryWay(TestContext context) {
         floor(context, Blocks.STONE, 14);
 
         for (int x = 0; x <= 12; x++) {
@@ -65,7 +65,7 @@ public class ColonyPathingGameTest implements FabricGameTest {
                     BlockPos at = path.getNode(i).getBlockPos();
                     crossesChannel |= channel.contains(column(at));
                 }
-                context.assertTrue(crossesChannel, "a travessia curta deveria usar água (custo "
+                context.assertFalse(crossesChannel, "Regra 278: nadou com caminho seco ao lado (custo "
                         + scene.villager().getPathfindingPenalty(net.minecraft.entity.ai.pathing.PathNodeType.WATER)
                         + "): " + nodes(path));
             } finally {
@@ -126,9 +126,9 @@ public class ColonyPathingGameTest implements FabricGameTest {
         });
     }
 
-    /** Mesma geometria fechada nas posições observadas; nenhuma entidade é movida entre as buscas. */
+    /** Mesma geometria fechada nas posições observadas; nenhuma entidade é movida entre as buscas. Regra 278: em todas, a volta seca. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_pathing_water_translation", tickLimit = 40)
-    public void theShortWaterCrossingIsTranslationInvariantAtTheObservedCoordinates(TestContext context) {
+    public void theDryDetourIsTranslationInvariantAtTheObservedCoordinates(TestContext context) {
         Map<BlockPos, BlockState> saved = new HashMap<>();
         Map<BlockPos, Scene> probes = new java.util.LinkedHashMap<>();
         Set<Long> forced = new HashSet<>();
@@ -209,7 +209,7 @@ public class ColonyPathingGameTest implements FabricGameTest {
                 for (int i = 0; i < path.getLength(); i++) {
                     crossesWater |= path.getNode(i).type == net.minecraft.entity.ai.pathing.PathNodeType.WATER;
                 }
-                context.assertTrue(crossesWater, "travessia curta não usou água: " + origin.toShortString());
+                context.assertFalse(crossesWater, "Regra 278: nadou com caminho seco ao lado: " + origin.toShortString());
             }
             } finally {
                 cleanup.run();

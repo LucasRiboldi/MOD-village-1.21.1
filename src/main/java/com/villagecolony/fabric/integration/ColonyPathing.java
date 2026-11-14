@@ -23,8 +23,8 @@ import java.util.Optional;
  * noturnos saíram do meio do lago, e o aldeão cortava pelo gramado). Muda só o custo dos nós da navegação do jogo:
  *
  * <ul>
- *   <li><b>Água:</b> o nó de água custa {@link #WATER_COST}, igual ao Vanilla. A rota seca continua preferível
- *   quando é curta, mas uma travessia curta não bloqueia o trabalho.</li>
+ *   <li><b>Água:</b> o nó de água custa {@link #WATER_COST} (Regra 278): a busca esgota o chão seco antes de entrar
+ *   na água, e só atravessa quando não acha rota seca ao alcance dela.</li>
  *   <li><b>Alçapão em pé:</b> o nó fica fora do caminho ({@link #uprightTrapdoor}, Regra 276).</li>
  *   <li><b>Rua:</b> dentro da caixa da vila, o nó andável sem chão de rua embaixo vira {@link #OFF_STREET}, que
  *   custa {@link #OFF_STREET_COST}. A rua ganha sempre que o desvio por ela não passa de cerca de 2 vezes a
@@ -39,10 +39,11 @@ import java.util.Optional;
 public final class ColonyPathing {
 
     /**
-     * O custo Vanilla de cada nó de água. Mantém a preferência normal por terra sem impedir travessia curta
-     * (decisão do autor, 2026-11-01).
+     * O custo de cada nó de água fora da mina — Regra 278: água só quando não há caminho seco. Alto o bastante para a
+     * busca do jogo preferir um desvio seco de dezenas de blocos; não é proibição, porque sem rota seca ao alcance a
+     * travessia continua possível.
      */
-    public static final float WATER_COST = 8.0F;
+    public static final float WATER_COST = 64.0F;
 
     /**
      * O tipo do nó de gramado dentro da vila: o perigo cauteloso, que o Vanilla só usa para dar custo (0 por padrão)
