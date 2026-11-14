@@ -9,8 +9,8 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.82 nesta linha de trabalho (branch `fix/jogo-0479`, sem push); a publicada é `v0.4.74-alpha`. **Não jogadas.** A última jogada é a 0.4.68
-  (12-11, planície cercada de água, Spark `El42EuZ5w9`; análise em `docs/audit/2026-11-13-jogo-0468.md`).
+- **Versão:** 0.4.82 na `main` (PR #79 e a integração da varredura de falhas de 12-11); a publicada é `v0.4.74-alpha`. **Não jogadas.** A última jogada é a 0.4.79
+  (13-11, taiga, Spark `oujZp2IxmS`; os oito sintomas viraram as Regras 275 a 282).
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
   jogador e publicação.

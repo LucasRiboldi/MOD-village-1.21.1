@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.74%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.82%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,9 +19,21 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Estado atual: 0.4.74, publicada como `v0.4.74-alpha`, não jogada.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
+**Estado atual: 0.4.82 na `main`, não jogada; a última publicada é `v0.4.74-alpha`.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
-[docs/RULES.md](docs/RULES.md) (1 a 269).
+[docs/RULES.md](docs/RULES.md) (1 a 282).
+
+Da 0.4.75 à 0.4.82 (pedidos do autor de 13-11 e jogo da 0.4.79, taiga):
+
+- **Aldeão preso:** soleira de casa não é curral, e "saiu" é pisar fora do que ele alcançava (Regra 275); alçapão em pé
+  se pula e o caminho o evita (Regra 276); solto da fuga de encalhe só quem saiu do lugar (Regra 279).
+- **Caminho:** água só sem caminho seco, custo 64 (Regra 278); a árvore em cima da coluna do caminho sai de onde o
+  calçador estiver (Regra 280); só a rede de ruas reserva chão contra lote, trilha fora dela não (Regra 282).
+- **Ofícios:** o lenhador só derruba encostado no tronco (Regra 277); a vila contrata um construtor por vez (Regra 273),
+  e a obra conta como trabalho dele na troca de cama (Regra 274); a muda do bosque surge, também no deserto (Regra 271);
+  o pastor faz corante de flor no ócio (Regra 272); quem não tem ofício do mod fica fora das análises (Regra 270).
+- **Diagnóstico:** todo tronco posto pelo mod sai na linha `VC_LOG_PLACED` (Regra 281); a fase `planner` sai repartida
+  por colônia em `VC_COST_PHASES` (varredura VF-001).
 
 Da 0.4.69 à 0.4.74 (jogo da 0.4.68, planície, análise em `docs/audit/2026-11-13-jogo-0468.md`):
 
@@ -315,6 +327,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 72 | **Um curral por espécie:** animais iguais ficam no mesmo curral; com mais de um curral na vila, cada tipo vai para o seu — o pastor leva o animal para o curral só daquela espécie, senão um vazio (que passa a ser dela), senão um misto que já a tem, senão qualquer um com lugar; sem animal solto a recolher, tira de um curral misto o animal que tem curral próprio ou vazio com lugar e o leva até lá. **Lotação pelo tamanho:** um animal a cada 4 blocos de chão. Com pares adultos de espécies distintas, constrói currais até haver um por espécie, intercalados com outras obras, contando cercados fechados existentes; todos usam o mesmo `animal_pen.nbt` de 15×15 | 10-22; emenda 10-31 | ✅ código; falta jogo | `ShepherdPens.forSpecies`, `ShepherdHerding.separate`, `ShepherdPens.capacityOf`, `PenPlans`, `UrgentPlans` |
 | 73 | **Caminho de areia:** a vila do deserto tem caminho próprio — cópia do caminho de terra do Vanilla (mesma altura, mesmo comportamento: coberto por bloco sólido volta a ser o chão, aqui areia; quebrado dá areia) com a cor do arenito. No bioma de deserto todo caminho que a colônia assenta (rua, corredor, caminho de obra, buraco fechado pelo construtor) é ele; fora do deserto ele não é usado, e o caminho segue o do chão (Regra 70 e pedido de 10-20). Conta como rua em qualquer lugar | 10-22 | ✅ feita (0.3.89) | `SandPathBlock`, `ModContent.SAND_PATH`, `VillageRoad.pavingOn(world, at, …)`, `VillageRoad.isPathBlock` |
 | 74 | **A cama mais perto do trabalho:** cada aldeão dorme na cama da vila mais perto de onde trabalha de fato (a mediana das últimas 32 ações com lugar do diário; com menos de 8, fica onde está). A vila reavalia uma vez por dia, ao amanhecer, e só muda quem fica ao menos 16 blocos mais perto; quem anda mais escolhe primeiro. Cama livre só vale se se alcança a pé da vila **e tem baú livre ao lado**; cama ocupada troca de dono quando a soma das duas caminhadas cai ao menos 16 blocos, mesmo que o dono passe a andar um pouco mais (o sem ofício sempre cede; autor 10-27, 0.3.97); e a tarefa é oferecida primeiro a quem do ofício mora mais perto do lugar dele — boca da mina, obra aberta, bosque, ou o próprio baú (0.3.97); quem está dormindo não muda nem cede. **A distância é a caminhada pelo mapa a pé** (linha reta só onde o mapa não alcança o trabalho, como a mina). **A mudança é uma transação** (emenda de 10-22, R-043 do estudo v2): antes de mexer, cada mudança tem a cama e o baú que vai com ela — numa troca, cada um fica com o baú do outro, remarcado com o próprio ofício; se falta algo, a mudança cai com a outra metade da troca e ninguém fica sem baú. O `HomeMove` (desistiu 2× abaixo do trabalho) continua como reação imediata | 10-22 | ✅ feita (0.3.92; transação 0.3.93) | `BedPlan`, `BedChoice`, `Walks`, `ChestScanner.freeChestBeside`, `ActionJournal` |
+| 52 | ~~Uma roça por fazendeiro~~ | 10-08 | ↪ substituída pela Regra 67 | — |
 | 53 | A boca da mina só nasce na faixa da borda da caixa da vila (até 8 blocos da linha, dentro ou fora); com a mina aberta, o mineiro sem ramal livre não cava pedra exposta na superfície | 10-11 | ✅ feita (0.3.32) | `MineEdge.nearTheEdge`, `MineDigging.mineOf`, `MineTrouble`, `MineDigging.exposedStoneFallback` |
 | 75 | **Movimentação natural:** só o mineiro remodela o terreno para subir (degrau, túnel); ninguém põe bloco debaixo dos pés, e não há escada fixa | 10-15, 10-21 | ✅ no código (registrada 10-22) | `ClimbPolicy` |
 | 76 | **O encalhado nunca desiste:** larga o ofício e sobe até a superfície; a escada da fuga é tampada depois que ele sai | 10-01 (E47), 09-24 (N10) | ✅ no código (registrada 10-22) | `ClimbOut`, `StrandedEscape`, `EscapeBackfill` |
@@ -442,11 +455,11 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 198 | **Lenhador no interior da vila** (autor 11-05): a árvore é escolhida por faixas de 32 blocos a partir do centro; dentro da faixa, a mais perto dele. | 11-05 |
 | 199 | **Sem muda perto de estrutura** (autor 11-05): árvore a até 3 blocos de casa, obra ou peça da vila gerada não é replantada; rua da vila não conta como estrutura. | 11-05 |
 | 200 | **A obra pedida limpa o próprio lote** (autor 11-05): árvore natural, folha e mato alto não recusam o lote. Lote sem árvore tem preferência, e nunca sai obra da colônia, peça da vila gerada nem o que foi posto à mão | 11-05 |
-| 201 | **Revogada** (autor 11-06, ADR-047). A régua do lote é a do construtor (Regra 213) | 11-05 |
-| 202 | **Revogada** (autor 11-06, ADR-047). A obra pedida não usa a prova por seção | 11-05 |
-| 203 | **Revogada** (autor 11-06, ADR-047). A água entra pelo construtor | 11-05 |
-| 204 | **Revogada** (autor 11-06, ADR-047). A peça da obra é posta pelo construtor | 11-05 |
-| 205 | **Revogada** (autor 11-06, ADR-047). A obra pedida não reserva região e não falha | 11-05 |
+| 201 | **Revogada** (autor 11-06, ADR-047). A régua do lote é a do construtor (Regra 213) | 11-05 | ❌ revogada (ADR-047) | — |
+| 202 | **Revogada** (autor 11-06, ADR-047). A obra pedida não usa a prova por seção | 11-05 | ❌ revogada (ADR-047) | — |
+| 203 | **Revogada** (autor 11-06, ADR-047). A água entra pelo construtor | 11-05 | ❌ revogada (ADR-047) | — |
+| 204 | **Revogada** (autor 11-06, ADR-047). A peça da obra é posta pelo construtor | 11-05 | ❌ revogada (ADR-047) | — |
+| 205 | **Revogada** (autor 11-06, ADR-047). A obra pedida não reserva região e não falha | 11-05 | ❌ revogada (ADR-047) | — |
 | 206 | **As pontas do grafo são os lados da vila** (autor 11-05, emendada 11-10): fica a ponta mais distante do centro em cada lado, norte, sul, leste e oeste (Regra 229), no máximo 4, e só ela é azul e cresce. As outras perdem o trecho morto até o encontro ou a entrada; o caminho a até 3 blocos da linha volta ao solo (Regra 186). Emenda a Regra 177. | 11-05 |
 | 207 | **Toda porta térrea é entrada** (autor 11-05): o marcador branco fica no primeiro bloco em frente à porta, mesmo dentro da caixa ou sobre degrau (Regra 223); porta de dentro não conta e porta dupla conta uma vez. O ramal da Regra 177 cobre o que houver entre ele e a rua. Emenda a Regra 178. | 11-05 |
 | 208 | **Plantação sem anel** (autor 11-06): o chão em volta da plantação não é pedido como caminho, e ela tem uma entrada só, a quina da Regra 184, com ramal até a rua. O caminho já colado nela sai do grafo quando a rede continua inteira sem ele e volta ao solo pelo pedreiro, a qualquer distância da linha; encontro, entrada, centro e o trecho que é a única ligação ficam. Emenda a Regra 183. | 11-06 |
