@@ -275,10 +275,10 @@ class ProfessionShunTest {
 
         ProfessionAssigner.assignMissing(workers, COLONY, everyone(), 30);
 
-        assertEquals(
-                ProfessionType.FARMER,
-                worker.profession().orElse(null),
-                "a linha de reserva não o levou para a vaga que sobrava");
+        // A vaga que sobra depende das cotas (com um construtor só, Regra 273, ela muda de ofício); o que conta é
+        // ele ter sido contratado para outra coisa que não o ofício que largou.
+        assertTrue(worker.profession().filter(trade -> trade != ProfessionType.LUMBERJACK).isPresent(),
+                "a linha de reserva não o levou para a vaga que sobrava: " + worker.profession());
     }
 
     /**

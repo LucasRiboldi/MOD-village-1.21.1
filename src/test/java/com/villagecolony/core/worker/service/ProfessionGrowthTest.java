@@ -70,34 +70,53 @@ class ProfessionGrowthTest {
         assertEquals(1, count(ProfessionType.LUMBERJACK));
     }
 
+    /** Regra 273: mesmo com a política antiga salva no mundo (sem teto), a vila não contrata o segundo construtor. */
     @Test
-    void adultTwentyThreeAddsTheSecondBuilder() {
+    void aSavedPolicyWithoutLimitStillHiresOneBuilder() {
+        java.util.EnumMap<ProfessionType, com.villagecolony.core.worker.model.ProfessionPolicy> old =
+                new java.util.EnumMap<>(ProfessionType.class);
+
+        for (ProfessionType type : ProfessionType.values()) {
+            old.put(type, com.villagecolony.core.worker.model.ProfessionPolicy.defaults());
+        }
+
+        com.villagecolony.core.worker.model.ProfessionPolicySet saved = new com.villagecolony.core.worker.model.ProfessionPolicySet(
+                old, com.villagecolony.core.worker.model.ProfessionPolicySet.defaults().hiringOrder());
+
+        assertTrue(HiringQuota.atMaximum(ProfessionType.BUILDER, java.util.Map.of(ProfessionType.BUILDER, 1), saved),
+                "Regra 273: com a política antiga, o segundo construtor ainda cabia");
+    }
+
+    @Test
+    void adultTwentyThreeSkipsTheBuilderAndAddsAThirdMiner() {
         addWorkers(23);
 
         assign(22);
         assertEquals(15, employedCount());
         assertEquals(1, count(ProfessionType.BUILDER));
 
+        // Uma obra aberta por vila, um construtor (Regra 273): a vaga vai ao próximo da fila.
         assertEquals(1, assign(23));
-        assertEquals(2, count(ProfessionType.BUILDER));
+        assertEquals(1, count(ProfessionType.BUILDER));
+        assertEquals(3, count(ProfessionType.MINER));
     }
 
     @Test
-    void populationThirtyHasTwoOfEachAndAdultThirtyOneAddsThirdMiner() {
+    void populationThirtyHasOneBuilderAndAdultThirtyOneAddsThirdLumberjack() {
         addWorkers(31);
 
         assign(30);
         assertEquals(16, employedCount());
         assertEquals(2, count(ProfessionType.SHEPHERD));
-        assertEquals(2, count(ProfessionType.BUILDER));
+        assertEquals(1, count(ProfessionType.BUILDER));
+        assertEquals(3, count(ProfessionType.MINER));
 
         assertEquals(1, assign(31));
-        assertEquals(3, count(ProfessionType.MINER));
-        assertEquals(2, count(ProfessionType.LUMBERJACK));
+        assertEquals(3, count(ProfessionType.LUMBERJACK));
     }
 
     @Test
-    void adultThirtyTwoAddsThirdLumberjack() {
+    void adultThirtyTwoAddsThirdMason() {
         addWorkers(32);
 
         assign(30);
@@ -105,7 +124,7 @@ class ProfessionGrowthTest {
         assign(32);
 
         assertEquals(3, count(ProfessionType.LUMBERJACK));
-        assertEquals(2, count(ProfessionType.MASON));
+        assertEquals(3, count(ProfessionType.MASON));
     }
 
     @Test

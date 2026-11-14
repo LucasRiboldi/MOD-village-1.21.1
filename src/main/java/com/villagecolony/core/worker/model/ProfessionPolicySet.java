@@ -38,6 +38,11 @@ public final class ProfessionPolicySet {
         for (ProfessionType type : ProfessionType.values()) {
             defaults.put(type, ProfessionPolicy.defaults());
         }
+
+        // Uma obra aberta por vila, um construtor (Regra 273, ADR-055).
+        ProfessionPolicy builder = ProfessionPolicy.defaults();
+
+        defaults.put(ProfessionType.BUILDER, new ProfessionPolicy(builder.enabled(), 1, builder.searchRadius()));
         return new ProfessionPolicySet(defaults, List.of(
                 ProfessionType.MINER, ProfessionType.LUMBERJACK, ProfessionType.MASON,
                 ProfessionType.SMELTER, ProfessionType.CARPENTER, ProfessionType.FARMER,

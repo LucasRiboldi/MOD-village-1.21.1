@@ -75,7 +75,7 @@ public final class ProfessionPolicySavedData extends PersistentState {
         ProfessionPolicySavedData data = new ProfessionPolicySavedData();
         EnumMap<ProfessionType, ProfessionPolicy> read = new EnumMap<>(ProfessionType.class);
         for (ProfessionType type : ProfessionType.values()) {
-            read.put(type, ProfessionPolicy.defaults());
+            read.put(type, ProfessionPolicySet.defaults().policyOf(type));
         }
         for (NbtElement value : nbt.getList(POLICIES, NbtElement.COMPOUND_TYPE)) {
             NbtCompound entry = (NbtCompound) value;

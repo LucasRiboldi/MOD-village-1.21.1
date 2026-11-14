@@ -73,9 +73,18 @@ final class HiringQuota {
         return Optional.empty();
     }
 
+    /** Quantos construtores a vila contrata: um, porque a vila tem uma obra aberta por vez (Regra 273). */
+    static final int BUILDERS = 1;
+
     static boolean atMaximum(ProfessionType type, Map<ProfessionType, Integer> counts,
             ProfessionPolicySet policies) {
         int maximum = policies.policyOf(type).maximumWorkers();
+
+        // Uma obra aberta por vila, um construtor, também em mundo salvo com a política antiga (Regra 273).
+        if (type == ProfessionType.BUILDER && (maximum == 0 || maximum > BUILDERS)) {
+            maximum = BUILDERS;
+        }
+
         return maximum != 0 && counts.getOrDefault(type, 0) >= maximum;
     }
 

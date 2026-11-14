@@ -26,8 +26,7 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 - [ ] 🟡 "Recurso que surge" reduzido a exceções declaradas e medidas por jogo (M). No jogo da 0.4.68: trigo ×467,
   lã ×144 (`WAITED_TOO_LONG`); tora ×43, tábua ×20, pedra lisa ×8 e bancadas (`MISSING_PIECE`); terracota ×47
   (`APPEARING_PIECE`); prismarinho ×144, favo ×20 e corantes (`AUTOMATIC_DROP`)
-- [ ] 🟠 ADR-055: com dois ou mais construtores, uma obra para cada
-- [ ] 🔴 Sentinela `fast` da 0.4.76 em diante com o Minecraft fechado (a 0.4.77 só rodou unitários e GameTests focados)
+- [ ] 🔴 Sentinela `fast` da 0.4.76 em diante com o Minecraft fechado (a 0.4.77 e a 0.4.78 só rodaram unitários e GameTests focados)
 - [ ] 🟠 ADR-055: mineiro sem ramal livre abre ramal três níveis abaixo do nível em uso
 - [ ] 🟠 ADR-055: troca de cama entre quem trabalha em cima e mora embaixo e quem faz o contrário
 - [ ] 🟡 **Item MAE:** primeira obra pedida em jogo pela fila do construtor (`/vc mae obra <modelo>`, `VC_MAE_SITE` de

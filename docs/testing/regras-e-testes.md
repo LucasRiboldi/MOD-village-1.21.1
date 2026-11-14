@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 165
+- **Cita a regra:** 166
 - **Só usa a classe indicada:** 93
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 11
@@ -282,3 +282,4 @@ classe prova menos ainda.
 | 270 | Sem ofício fora das análises (autor 13-11, ADR-055 item 7): o aldeão sem ofício do mod nã… | cita | WorkTimeSwingGameTest, test_action_report, test_time_ledger |
 | 271 | A muda do bosque surge, também no deserto (autor 13-11, ADR-055 item 10): o bosque do len… | cita | VillageGroveGameTest |
 | 272 | Corante das flores (autor 13-11, ADR-055 item 11): no ócio do ofício, o pastor colhe uma… | cita | ShepherdDyesGameTest |
+| 273 | Um construtor por vila (autor 13-11, ADR-055): a vila tem uma obra aberta por vez, então… | cita | ProfessionGrowthTest, ProfessionPolicySetTest, ProfessionShunTest |
