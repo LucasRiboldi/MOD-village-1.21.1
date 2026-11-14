@@ -212,6 +212,8 @@ public final class VillageForest {
                     Blocks.AIR.getDefaultState(),
                     world.getRandom())) {
                 VillageTrees.rememberTree(colony.id(), ground.get().up());
+                PlacedLogs.scan(world, net.minecraft.util.math.BlockBox.create(ground.get().add(-3, 1, -3),
+                        ground.get().add(3, 16, 3)), "village_tree");
                 return Optional.of(ground.get().up());
             }
             restore(world, cleared);

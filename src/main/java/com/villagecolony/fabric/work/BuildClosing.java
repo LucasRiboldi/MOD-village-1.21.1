@@ -73,6 +73,7 @@ final class BuildClosing {
                 if (!now.isOf(material.get()) && now.isReplaceable()) {
                     BlockState state = BuilderPlacement.shaped(world, project, block, material.get(), target);
                     world.setBlockState(target, state, Block.NOTIFY_ALL);
+                    com.villagecolony.fabric.integration.PlacedLogs.note(target, state, "build_closing:" + project.blueprint().id());
                     BlockShaping.placeSecondHalf(world, target, state);
                     surged.merge(material.get().asItem(), 1, Integer::sum);
                 }

@@ -117,11 +117,16 @@ public class MinerCautionGameTest implements FabricGameTest {
         });
     }
 
-    /** Ao ar livre a água volta ao custo do Vanilla, e a volta de onze blocos perde para o fosso de um. */
+    /**
+     * Ao ar livre a água tem o custo da colônia (Regra 278): com a volta seca de onze blocos ao alcance, ele não nada
+     * o fosso de um. Sem caminho seco ele nada — {@link #theMinerSwimsOffABeachWalledIn}.
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_caution", tickLimit = 40)
-    public void underTheSkyTheMinerSwims(TestContext context) {
-        pathAcross(context, true, false, path -> context.assertTrue(path != null && crossesWater(path),
-                "ao ar livre o mineiro não atravessou o fosso"));
+    public void underTheSkyTheMinerWalksRoundWhenThereIsADryWay(TestContext context) {
+        pathAcross(context, true, false, path -> {
+            context.assertTrue(path != null && path.reachesTarget(), "sem caminho — a volta seca existe");
+            context.assertFalse(crossesWater(path), "Regra 278: ao ar livre nadou com a volta seca ao lado");
+        });
     }
 
     /**

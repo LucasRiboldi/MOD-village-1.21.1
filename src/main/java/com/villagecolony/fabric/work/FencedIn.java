@@ -3,6 +3,7 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.core.type.ServerMemory;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.FenceGateBlock;
+import net.minecraft.block.TrapdoorBlock;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
@@ -86,9 +87,23 @@ final class FencedIn {
         static final Result FREE = new Result(false, List.of(), Set.of());
     }
 
-    /** Se ele está cercado, e por quais portões poderia sair. */
+    /**
+     * Se ele está cercado, e por quais portões poderia sair — a pergunta da fuga.
+     *
+     * <p>Regra 275: o que ele alcança passando por uma porta de madeira é casa, não curral, e não há fuga. A soleira
+     * entre muretes, com a copa de uma árvore à frente, prendia o pastor num pulo sem fim. Só a fuga ignora o cercado
+     * com porta; a leitura do curral do pastor ({@link #check(ServerWorld, BlockPos, int)}) segue contando a casa
+     * que fica dentro dele.
+     */
     static Result check(ServerWorld world, BlockPos feet) {
-        return check(world, feet, RADIUS);
+        Result result = check(world, feet, RADIUS);
+
+        if (result.enclosed() && result.reach().stream()
+                .anyMatch(at -> world.getBlockState(at).isIn(BlockTags.WOODEN_DOORS))) {
+            return Result.FREE;
+        }
+
+        return result;
     }
 
     /** Identificação do curral pode partir de sua borda; fuga mantém o raio original — ADR-046. */
@@ -346,7 +361,7 @@ final class FencedIn {
     private static boolean isVaultable(ServerWorld world, BlockPos inside, BlockPos barrier) {
         BlockState state = world.getBlockState(barrier);
 
-        if (!state.isIn(BlockTags.FENCES) && !state.isIn(BlockTags.WALLS)) {
+        if (!state.isIn(BlockTags.FENCES) && !state.isIn(BlockTags.WALLS) && !isUprightTrapdoor(state)) {
             return false;
         }
 
@@ -405,7 +420,12 @@ final class FencedIn {
 
     private static boolean isTall(BlockState state) {
         return state.isIn(BlockTags.FENCES) || state.isIn(BlockTags.WALLS)
-                || state.isIn(BlockTags.FENCE_GATES);
+                || state.isIn(BlockTags.FENCE_GATES) || isUprightTrapdoor(state);
+    }
+
+    /** Regra 276: o alçapão aberto fica em pé e prende como cerca baixa; o aldeão o pula. */
+    static boolean isUprightTrapdoor(BlockState state) {
+        return state.isIn(BlockTags.TRAPDOORS) && state.contains(TrapdoorBlock.OPEN) && state.get(TrapdoorBlock.OPEN);
     }
 
     private static boolean isClosedGate(BlockState state) {
@@ -430,7 +450,8 @@ final class FencedIn {
     static final int NEAR_FENCE = 6;
 
     static boolean isBarrier(BlockState state) {
-        return state.isIn(BlockTags.FENCES) || state.isIn(BlockTags.WALLS) || state.isIn(BlockTags.FENCE_GATES);
+        return state.isIn(BlockTags.FENCES) || state.isIn(BlockTags.WALLS) || state.isIn(BlockTags.FENCE_GATES)
+                || isUprightTrapdoor(state);
     }
 
     static boolean isNearAFence(ServerWorld world, BlockPos feet) {
@@ -438,6 +459,20 @@ final class FencedIn {
                 feet.add(-NEAR_FENCE, -1, -NEAR_FENCE), feet.add(NEAR_FENCE, 1, NEAR_FENCE))) {
 
             if (isBarrier(world.getBlockState(at))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Regra 275: saiu do curral só quem pisa fora das colunas que ele alcançava de dentro. Um bloco
+     * acima do mesmo chão — o pulo no lugar, o degrau — continua dentro.
+     */
+    static boolean isOverTheReach(Set<BlockPos> reach, BlockPos feet) {
+        for (BlockPos at : reach) {
+            if (at.getX() == feet.getX() && at.getZ() == feet.getZ()) {
                 return true;
             }
         }

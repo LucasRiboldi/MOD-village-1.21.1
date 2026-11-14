@@ -120,6 +120,7 @@ public final class BuilderPlacement {
         if (BuriedPieces.soilOverStone(world, project.blueprint(), block, target)) {
             // O piso do curral troca a pedra do terreno pela terra da planta, como o aterro: sem gastar recurso (Regra 253).
             world.setBlockState(target, state, Block.NOTIFY_ALL);
+            com.villagecolony.fabric.integration.PlacedLogs.note(target, state, "build:" + project.blueprint().id());
             project.markPlaced(block);
             com.villagecolony.fabric.integration.Supplies.record(com.villagecolony.core.coordination.SupplyException.SHAPED_GROUND, project.colonyId(),
                     block.block().path(), 1);
@@ -134,6 +135,7 @@ public final class BuilderPlacement {
         if (mayShapeHere && BlockShaping.isShapedFromTheGround(state) && !BlockShaping.isNeverPlaced(state)) {
             BlockShaping.groundFor(world, state, target);
             world.setBlockState(target, state, Block.NOTIFY_ALL);
+            com.villagecolony.fabric.integration.PlacedLogs.note(target, state, "build:" + project.blueprint().id());
             project.markPlaced(block);
             com.villagecolony.fabric.integration.Supplies.record(com.villagecolony.core.coordination.SupplyException.SHAPED_GROUND, project.colonyId(),
                     block.block().path(), 1);
@@ -222,6 +224,7 @@ public final class BuilderPlacement {
         // Terracota, feno e argila que a vila não tem aparecem no lugar (AppearingPieces).
         if (taken.isEmpty() && AppearingPieces.appears(material.get())) {
             world.setBlockState(target, state, Block.NOTIFY_ALL);
+            com.villagecolony.fabric.integration.PlacedLogs.note(target, state, "build:" + project.blueprint().id());
             project.markPlaced(block);
             com.villagecolony.fabric.integration.Supplies.record(com.villagecolony.core.coordination.SupplyException.APPEARING_PIECE, project.colonyId(),
                     block.block().path(), 1);
@@ -267,6 +270,7 @@ public final class BuilderPlacement {
                 : MaterialChoice.dressedLike(state, taken.get());
 
         world.setBlockState(target, placed, Block.NOTIFY_ALL);
+        com.villagecolony.fabric.integration.PlacedLogs.note(target, placed, "build:" + project.blueprint().id());
 
         BlockShaping.placeSecondHalf(world, target, placed);
 

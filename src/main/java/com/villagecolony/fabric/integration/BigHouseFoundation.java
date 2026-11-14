@@ -105,6 +105,8 @@ public final class BigHouseFoundation {
             return new Result(false, Optional.empty());
         }
 
+        PlacedLogs.scan(world, template.get().calculateBoundingBox(placement, placedAt), "big_house");
+
         Vec3i size = template.get().getSize();
         Building building = new Building(
                 UUID.randomUUID(),

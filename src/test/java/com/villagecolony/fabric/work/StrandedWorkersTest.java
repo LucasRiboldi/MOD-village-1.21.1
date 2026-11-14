@@ -71,6 +71,23 @@ class StrandedWorkersTest {
         assertFalse(worker.isStranded());
     }
 
+    /**
+     * Regra 279: solto é quem saiu do ponto onde congelou. O construtor do jogo da 0.4.75 foi dado como "out after 0
+     * steps" sem sair do bloco e ficou mais 18 minutos parado ali, até congelar de novo.
+     */
+    @Test
+    void theEscapeLetsGoOnlyAwayFromWhereItFroze() {
+        Worker worker = mason();
+
+        StrandedWorkers.frozeAt(worker.villagerId(), PIT);
+        StrandedWorkers.frozeAt(worker.villagerId(), PIT);
+
+        assertFalse(StrandedWorkers.mayLeaveAt(worker.villagerId(), PIT),
+                "solto no mesmo bloco em que congelou");
+        assertTrue(StrandedWorkers.mayLeaveAt(worker.villagerId(), PIT.east(5)),
+                "longe do ponto em que congelou e ainda preso");
+    }
+
     @Test
     void releasingPutsTheWorkerBackInTheQueue() {
         Worker worker = mason();

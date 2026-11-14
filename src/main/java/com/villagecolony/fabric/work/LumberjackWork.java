@@ -105,15 +105,8 @@ public final class LumberjackWork {
     }
 
     /**
-     * De que distância ele consegue derrubar.
-     *
-     * <p>Alcance de braço, não de tiro: o trabalhador precisa chegar
-     * perto. É o que faz a tarefa levar tempo em vez de acontecer no
-     * instante em que é criada.
-     *
-     * <p>Medido contra a base da árvore, e não contra cada bloco. Quem
-     * está ao pé do tronco alcança a copa dele; exigir aproximação por
-     * folha poria o aldeão a dar voltas em torno da própria árvore.
+     * Até que distância da base se procura um lugar de pé para ele parar e cortar. Cortar mesmo exige encostar no
+     * tronco ({@link TreeChoice#touches}, Regra 277).
      */
     static final int REACH = 4;
 
@@ -396,7 +389,7 @@ public final class LumberjackWork {
                     TreeChoice.reasonFor(false, job.stall.ticks(), job.stalled));
         }
 
-        if (!villager.getBlockPos().isWithinDistance(job.plan.base(), REACH)) {
+        if (!TreeChoice.touches(world, villager.getBlockPos(), job.plan.base())) {
             if (WorkHours.isWorkTime(world, villager) && TreeChoice.noCloser(job, villager.getBlockPos())) {
                 return TreeChoice.giveUp(world, job, workerId, TreeChoice.gotNoCloser(job.noCloser));
             }

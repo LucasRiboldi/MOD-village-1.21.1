@@ -14,6 +14,7 @@ import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.TreeHarvester;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
@@ -450,4 +451,31 @@ public final class TreeChoice {
         return best;
     }
 
+    /**
+     * Regra 277: ele derruba a árvore só encostado no tronco — numa das oito colunas em volta da base, de um bloco
+     * abaixo a um acima dela. Medido contra a coluna da base, e não contra a tora que ainda está lá: o corte vai tora por
+     * tora, e quem começou encostado continua encostado. No pinheiro de 2 x 2 vale encostar em qualquer das quatro
+     * colunas: a dois blocos da base, só com tora de pé ao lado dos pés e da base.
+     */
+    static boolean touches(ServerWorld world, BlockPos feet, BlockPos base) {
+        int dx = Math.abs(feet.getX() - base.getX());
+        int dz = Math.abs(feet.getZ() - base.getZ());
+
+        if (Math.abs(feet.getY() - base.getY()) > 1 || Math.max(dx, dz) > 2) {
+            return false;
+        }
+
+        if (Math.max(dx, dz) <= 1) {
+            return true;
+        }
+
+        for (BlockPos at : BlockPos.iterate(feet.add(-1, -1, -1), feet.add(1, 1, 1))) {
+            if (Math.abs(at.getX() - base.getX()) <= 1 && Math.abs(at.getZ() - base.getZ()) <= 1
+                    && !at.equals(base) && world.getBlockState(at).isIn(BlockTags.LOGS)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
