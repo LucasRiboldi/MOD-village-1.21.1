@@ -6,6 +6,7 @@ import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.world.GeneratedVillages;
 import com.villagecolony.gametest.ColonyFixture;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.BedBlock;
@@ -35,7 +36,8 @@ public class BiomeBlueprintsGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "biome_blueprints", tickLimit = 40)
     public void theDesertArchIsOfTheVillageWoodAndStillStands(TestContext context) {
         ServerWorld world = context.getWorld();
-        BlockPos mouth = context.getAbsolutePos(new BlockPos(1, 1, 1)).add(1_000_000, 0, 3_300_000);
+        BlockPos mouth = awayFromGeneratedVillages(world,
+                context.getAbsolutePos(new BlockPos(1, 1, 1)).add(1_000_000, 0, 3_300_000));
 
         village(context, mouth, "minecraft:desert");
 
@@ -80,7 +82,8 @@ public class BiomeBlueprintsGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "biome_blueprints", tickLimit = 40)
     public void theTaigaLargePenHasSpruceFencesAndTheOakOneStillStands(TestContext context) {
         ServerWorld world = context.getWorld();
-        BlockPos center = context.getAbsolutePos(new BlockPos(1, 1, 1)).add(1_000_000, 0, 3_400_000);
+        BlockPos center = awayFromGeneratedVillages(world,
+                context.getAbsolutePos(new BlockPos(1, 1, 1)).add(1_000_000, 0, 3_400_000));
 
         village(context, center, "minecraft:taiga");
 
@@ -125,6 +128,23 @@ public class BiomeBlueprintsGameTest implements FabricGameTest {
 
             context.complete();
         });
+    }
+
+    /**
+     * O mundo de teste gera vilas de planície, e a vila gerada no lugar dá o estilo antes das camas (VillageStyle): o
+     * centro anda 2.000 blocos para o sul até sair de qualquer vila gerada.
+     */
+    private static BlockPos awayFromGeneratedVillages(ServerWorld world, BlockPos start) {
+        for (int step = 0; step < 16; step++) {
+            BlockPos at = start.add(0, 0, step * 2_000);
+            world.getChunk(at);
+
+            if (GeneratedVillages.structureAt(world, at.getX(), at.getZ()).isEmpty()) {
+                return at;
+            }
+        }
+
+        throw new AssertionError("16 lugares seguidos dentro de vila gerada a partir de " + start.toShortString());
     }
 
     /** Chão plano e três camas nele: é pelo bioma das camas que a vila sabe o estilo (VillageStyle). */

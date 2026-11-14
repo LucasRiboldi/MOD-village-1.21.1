@@ -2,6 +2,7 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.coordination.WorkClock;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
@@ -273,7 +274,21 @@ public class ShepherdGameTest implements FabricGameTest {
 
         ShepherdWork.run(context.getWorld(), colony);
 
+        // Os testes rodam juntos num mundo só: o relógio e o raio são de todos. A cada tique, o expediente e o raio
+        // voltam a ser os deste teste, até a conferência devolver o raio.
+        boolean[] checked = {false};
+        context.runAtEveryTick(() -> {
+            if (checked[0]) {
+                return;
+            }
+            if (!WorkClock.isWorkTime(context.getWorld().getTimeOfDay())) {
+                context.getWorld().setTimeOfDay(1_000);
+            }
+            ShepherdWork.shortenSearchTo(8);
+        });
+
         context.runAtTick(150, () -> {
+            checked[0] = true;
             try {
                 context.assertTrue(sheep.isSheared(), "a ovelha do cercado continua lanuda: o pastor não tosquiou de fora");
                 BlockPos at = context.getRelativePos(villager.getBlockPos());
