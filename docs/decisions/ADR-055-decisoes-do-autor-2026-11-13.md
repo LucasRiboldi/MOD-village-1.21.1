@@ -24,14 +24,14 @@ própria em `docs/RULES.md` quando é implementado, com o teste que a prova.
 
 | # | Decisão | Estado |
 |---|---|---|
-| 7 | (feito na 0.4.75, Regra 270) Aldeão sem ofício do mod fica **fora de toda análise** de profissão: tempo de ócio, bloqueio, encalhe, Regra 51, relatórios de tempo e de ações. Continua calçando o caminho e tirando neve (Regras 219 e 220 valem) | a implementar |
+| 7 | (feito na 0.4.75, Regra 270) Aldeão sem ofício do mod fica **fora de toda análise** de profissão: tempo de ócio, bloqueio, encalhe, Regra 51, relatórios de tempo e de ações. Continua calçando o caminho e tirando neve (Regras 219 e 220 valem) | feito |
 | 8 | Com dois ou mais construtores, uma obra para cada. **Revisto no mesmo dia:** o mod supõe uma obra aberta por vila em 46 pontos; o autor escolheu o teto de **um construtor por vila** (Regra 273) e obras em paralelo depois da 1.0 | feito (0.4.78) |
 | 9 | Biblioteca e outras casas com duas portas próximas: **uma entrada por porta**, como hoje | feito (sem mudança) |
-| 10 | Deserto: o bosque do lenhador recebe **mudas que surgem** (feito na 0.4.76, Regra 271) (exceção declarada de recurso sem origem física), plantadas em solo preparado para crescer | a implementar |
-| 11 | (feito na 0.4.77, Regra 272) Corante: o pastor, **no ócio do ofício**, colhe flores em volta da vila e faz corante; as cores cuja flor não existe no bioma **surgem**; se a colheita falhar ou demorar demais, o corante também surge | a implementar |
+| 10 | Deserto: o bosque do lenhador recebe **mudas que surgem** (feito na 0.4.76, Regra 271) (exceção declarada de recurso sem origem física), plantadas em solo preparado para crescer | feito |
+| 11 | (feito na 0.4.77, Regra 272) Corante: o pastor, **no ócio do ofício**, colhe flores em volta da vila e faz corante; as cores cuja flor não existe no bioma **surgem**; se a colheita falhar ou demorar demais, o corante também surge | feito |
 | 12 | Mina: o mineiro sem ramal livre **abre um ramal três níveis abaixo** do nível em uso, em vez de esperar | a implementar |
 | 13 | Grafo: o trecho travado **continua no recálculo** a cada releitura (ADR-050 fica) | feito (sem mudança) |
-| 14 | (coberto pela Regra 74 com trabalho medido, teste em `BedPlanTest`; falta o caso sem trabalho medido) Deserto em duas alturas: quem trabalha em cima e mora embaixo **troca de cama** com um aldeão de outro ofício que mora em cima e trabalha embaixo, quando os dois ganham | a implementar |
+| 14 | (coberto pela Regra 74 com trabalho medido, teste em `BedPlanTest`; falta o caso sem trabalho medido) Deserto em duas alturas: quem trabalha em cima e mora embaixo **troca de cama** com um aldeão de outro ofício que mora em cima e trabalha embaixo, quando os dois ganham | em parte |
 
 ## Consequências
 
