@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 169
+- **Cita a regra:** 171
 - **Só usa a classe indicada:** 93
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 11
@@ -286,3 +286,5 @@ classe prova menos ainda.
 | 274 | A obra conta como trabalho do construtor (autor 13-11, ADR-055 item 14): sem trabalho med… | cita | BedChoiceGameTest |
 | 275 | Soleira de casa não é curral (autor 13-11, jogo da 0.4.75): o que se alcança passando por… | cita | FencedInGameTest, PenEscapeOutTest |
 | 276 | Alçapão em pé se pula e se evita (autor 13-11, jogo da 0.4.79): o alçapão aberto prende c… | cita | FencedInGameTest |
+| 277 | O lenhador encosta na árvore (autor 13-11, jogo da 0.4.79; revoga o corte de longe de 202… | cita | TreeChoiceSpeciesGameTest |
+| 278 | Água só sem caminho seco (autor 13-11, jogo da 0.4.75; muda a decisão de 2026-11-01): for… | cita | ColonyPathingGameTest, MinerCautionGameTest |
