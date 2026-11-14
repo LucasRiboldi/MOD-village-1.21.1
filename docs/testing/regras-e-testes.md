@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 167
+- **Cita a regra:** 169
 - **Só usa a classe indicada:** 93
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 11
@@ -160,7 +160,7 @@ classe prova menos ainda.
 | 148 | A obra nunca fica largada meio pronta (autor 10-28, taiga simulada: casa em "0 blocks lef… | cita | BuildClosingGameTest |
 | 149 | Rua sem falha: falha de até 2 blocos de chão natural numa linha reta entre duas colunas d… | cita | HouseSurroundingsGameTest, VillageHelpersGameTest |
 | 150 | O pastor tosquia por cima da cerca (autor 10-28, diagnóstico da 0.3.103: 45 pastores pres… | classe | ColonyFixture, ShepherdGameTest |
-| 151 | O aldeão da colônia prefere a rua e evita a água (autor 10-28, jogo da 0.3.104: 4 de 7 te… | classe | StreetRouteGameTest, StreetRouteTest, WaterTerrainControlGameTest |
+| 151 | O aldeão da colônia prefere a rua e evita a água (autor 10-28, jogo da 0.3.104: 4 de 7 te… | classe | FencedInGameTest, StreetRouteGameTest, StreetRouteTest |
 | 152 | O solo da vila nasce suave na geração (autor 10-29: crateras e montanhas no meio das vila… | classe | VillageBlendTest, VillageGroundGameTest, VillageSurfaceTest |
 | 153 | Mais ajudas de quem está sem tarefa (autor 10-28, O1/O3/O4/O8; pedido de novo em 10-29),… | classe | GroundSmoothingGameTest, IdleFixesGameTest, ItemStockGameTest |
 | 154 | Lenhador, fundidor e fazendeiro: os ajustes do O5–O7 (autor 10-28; pedido de novo em 10-2… | classe | ChestPlacerGameTest, IdleFixesGameTest, ItemStockGameTest |
@@ -284,3 +284,5 @@ classe prova menos ainda.
 | 272 | Corante das flores (autor 13-11, ADR-055 item 11): no ócio do ofício, o pastor colhe uma… | cita | ShepherdDyesGameTest |
 | 273 | Um construtor por vila (autor 13-11, ADR-055): a vila tem uma obra aberta por vez, então… | cita | ProfessionGrowthTest, ProfessionPolicySetTest, ProfessionShunTest |
 | 274 | A obra conta como trabalho do construtor (autor 13-11, ADR-055 item 14): sem trabalho med… | cita | BedChoiceGameTest |
+| 275 | Soleira de casa não é curral (autor 13-11, jogo da 0.4.75): o que se alcança passando por… | cita | FencedInGameTest, PenEscapeOutTest |
+| 276 | Alçapão em pé se pula e se evita (autor 13-11, jogo da 0.4.79): o alçapão aberto prende c… | cita | FencedInGameTest |
