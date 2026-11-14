@@ -33,9 +33,9 @@ Cada uma tem teste que falha sem ela; nenhuma foi vista em jogo.
 | 0.4.74 | 269 | o prazo do pastor cresce com a distância; o animal largado fica amarrado na cerca |
 | 0.4.75 | 270 | sem ofício do mod fica fora de toda análise de profissão (tempo, Regra 51, selos, relatórios) |
 | 0.4.76 | 271 | a muda do bosque surge (também no deserto), em terra enraizada, declarada no `VC_SUPPLY` |
-| 0.4.77 | 272 | o pastor colhe flor no ócio e faz corante; cor sem flor, falha ou demora fazem o corante surgir (Sentinela pendente) |
-| 0.4.78 | 273 | a vila contrata no máximo um construtor (uma obra aberta por vez), também em mundo salvo (Sentinela pendente) |
-| 0.4.79 | 274 | o construtor sem trabalho medido conta a obra aberta como trabalho na troca de cama (Sentinela pendente) |
+| 0.4.77 | 272 | o pastor colhe flor no ócio e faz corante; cor sem flor, falha ou demora fazem o corante surgir |
+| 0.4.78 | 273 | a vila contrata no máximo um construtor (uma obra aberta por vez), também em mundo salvo |
+| 0.4.79 | 274 | o construtor sem trabalho medido conta a obra aberta como trabalho na troca de cama. Sentinela `fast` da 0.4.79 verde de primeira: 1.117 GameTests; JAR instalado |
 
 Da 0.4.54 à 0.4.67 (Regras 243 a 261) também não houve confirmação escrita em jogo; a 0.4.68 trouxe as que o jogo de
 12-11 viu funcionar: oito ofícios na fundação, casa do mineiro e mina com arco, patamar com tocha e curral achado.
