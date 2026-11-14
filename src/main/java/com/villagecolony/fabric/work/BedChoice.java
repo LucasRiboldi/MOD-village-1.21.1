@@ -87,6 +87,21 @@ final class BedChoice {
         }
     }
 
+    /**
+     * O trabalho que conta para a cama deste trabalhador: o medido; sem ele, para o construtor, a obra aberta da vila
+     * (Regra 274) — quem mora embaixo e nunca alcançou a obra de cima também entra na troca da Regra 74.
+     */
+    static Optional<ColonyPos> workFor(com.villagecolony.core.worker.model.Worker worker, Colony colony) {
+        Optional<ColonyPos> measured = workOf(worker.villagerId()).map(MinecraftTypeAdapter::toColonyPos);
+
+        if (measured.isPresent()
+                || worker.profession().filter(com.villagecolony.core.worker.model.ProfessionType.BUILDER::equals).isEmpty()) {
+            return measured;
+        }
+
+        return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).map(com.villagecolony.core.construction.model.ConstructionProject::origin);
+    }
+
     /** Onde este aldeão trabalha: a mediana de cada eixo das últimas ações; vazio sem ações bastantes. */
     static Optional<BlockPos> workOf(UUID worker) {
         Deque<BlockPos> places = WORKED.get(worker);
@@ -155,7 +170,7 @@ final class BedChoice {
             professions.put(villager.getUuid(), worker.profession());
             // Sem trabalho medido e com a cama longe do centro, o centro vale como trabalho (Regra 245).
             ColonyPos work = worker.profession().isPresent()
-                    ? BedPlan.workOrCenter(workOf(villager.getUuid()).map(MinecraftTypeAdapter::toColonyPos).orElse(null),
+                    ? BedPlan.workOrCenter(workFor(worker, colony).orElse(null),
                             MinecraftTypeAdapter.toColonyPos(home.get()), colony.center())
                     : null;
             sleepers.add(new BedPlan.Sleeper(villager.getUuid(), MinecraftTypeAdapter.toColonyPos(home.get()), work,

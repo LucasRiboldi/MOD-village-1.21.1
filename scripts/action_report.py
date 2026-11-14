@@ -68,6 +68,9 @@ def summarize(records):
 
     for r in records:
         prof, worker, action = r.get("prof", "NONE"), r.get("worker", "?"), r.get("action", "?")
+        # Sem ofício do mod fica fora do relatório de profissões (Regra 270).
+        if prof in ("NONE", ""):
+            continue
         p, w = by_prof[prof], by_worker[worker]
         p["workers"].add(worker)
         # O código único de bloqueio (Regra 112), gravado pelo diário desde a 0.3.93.

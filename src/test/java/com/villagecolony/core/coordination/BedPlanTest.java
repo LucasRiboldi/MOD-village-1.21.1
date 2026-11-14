@@ -23,6 +23,24 @@ class BedPlanTest {
         return new ColonyPos(x, y, z);
     }
 
+    /**
+     * ADR-055, item 14 (vila de deserto em duas alturas): o construtor mora embaixo e não chega a pé à obra de cima; o
+     * mineiro mora em cima e trabalha embaixo. Os dois trocam de cama.
+     */
+    @Test
+    void theOneWhoCannotClimbSwapsWithTheOneWhoWorksBelow() {
+        ColonyPos low = at(0, 63, 0);
+        ColonyPos high = at(10, 80, 0);
+        Sleeper builder = new Sleeper(BUILDER, low, at(12, 80, 0), true);
+        Sleeper miner = new Sleeper(MINER, high, at(2, 63, 0), true);
+
+        // Embaixo não se sobe a pé: a caminhada de baixo para o trabalho de cima é infinita.
+        List<Move> moves = BedPlan.plan(List.of(builder, miner), List.of(), (work, bed) ->
+                work.y() >= 80 && bed.y() < 70 ? Double.POSITIVE_INFINITY : BedPlan.distance(work, bed));
+
+        assertEquals(List.of(new Move(BUILDER, low, high), new Move(MINER, high, low)), moves);
+    }
+
     @Test
     void theDistanceCountsTheHeightToo() {
         assertEquals(5.0, BedPlan.distance(at(0, 0, 0), at(3, 4, 0)), 1e-9);

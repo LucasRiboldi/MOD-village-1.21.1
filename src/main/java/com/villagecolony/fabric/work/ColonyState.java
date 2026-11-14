@@ -98,6 +98,12 @@ public final class ColonyState {
 
         for (Worker worker : workers) {
             trades.merge(worker.profession().map(Enum::name).orElse("NONE"), 1, Integer::sum);
+
+            // Selos e encalhados são análise de ofício: o sem ofício fica fora (Regra 270).
+            if (worker.profession().isEmpty()) {
+                continue;
+            }
+
             WorkTime.Badge badge = WorkTime.badgeOf(worker.villagerId());
             badges.merge(badge, 1, Integer::sum);
 

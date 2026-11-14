@@ -28,6 +28,16 @@ LINES = [
 
 class ActionReportTest(unittest.TestCase):
 
+    def test_a_villager_without_trade_is_left_out(self):
+        records = action_report.parse(LINES + [
+            '{"t":500,"colony":"33a6b9c4","worker":"5d6e7f80","prof":"NONE","action":"PAVED","what":"dirt_path","n":1}',
+            '{"t":600,"colony":"33a6b9c4","worker":"5d6e7f81","action":"PAVED","what":"dirt_path","n":1}'])
+        by_prof, by_worker, _ = action_report.summarize(records)
+
+        self.assertNotIn("NONE", by_prof, "Regra 270: o sem ofício entrou no relatório")
+        self.assertNotIn("5d6e7f80", by_worker)
+        self.assertNotIn("5d6e7f81", by_worker)
+
     def test_a_broken_last_line_is_skipped(self):
         self.assertEqual(7, len(action_report.parse(LINES)))
 

@@ -14,6 +14,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ProfessionPolicySetTest {
 
+    /** Regra 273 (ADR-055): a vila contrata no máximo um construtor, porque só há uma obra aberta por vila. */
+    @Test
+    void theVillageHiresAtMostOneBuilder() {
+        assertEquals(1, ProfessionPolicySet.defaults().policyOf(ProfessionType.BUILDER).maximumWorkers(),
+                "Regra 273: o construtor sem teto de 1");
+    }
+
     @Test
     void defaultOrderProjectsToTheHistoricalOrders() {
         ProfessionPolicySet policies = ProfessionPolicySet.defaults();

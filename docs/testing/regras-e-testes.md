@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 162
+- **Cita a regra:** 167
 - **Só usa a classe indicada:** 93
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 11
@@ -101,7 +101,7 @@ classe prova menos ainda.
 | 89 | Degrau na frente da porta do lote que fica um bloco acima da rua | classe | FoundationPreparationGameTest |
 | 90 | Terraplanagem do lote: no legado, corta até 5 e aterra até 2 blocos do chão do bioma, com… | classe | BuildSiteGameTest, DuneCutGameTest, LotTerraformGameTest |
 | 91 | Casa fundadora: primeiro o lote plano exato, depois o aplainável; a vegetação do lote sai | classe | BiomeCoverageGameTest, BiomeSiteGameTest, ColonyDetectionGameTest |
-| 92 | Deserto: a areia da planta vira arenito (emenda à Regra 27), e o chão da vila de areia nã… | classe | DesertGroundGameTest, DesertSandTest, PlanAffordabilityTest |
+| 92 | Deserto: a areia da planta vira arenito (emenda à Regra 27), e o chão da vila de areia nã… | classe | DesertGroundGameTest, DesertSandTest |
 | 93 | Obra abandonada tem retomada limitada antes de a vila aceitar obra nova | classe | FarmPlanGameTest, FoundationRepairGameTest |
 | 94 | Faixa de construção: o lote novo nasce ao lado da rua; muda, flor alta ou arbusto crescen… | cita | VillagerRulesGameTest |
 | 95 | Todo ofício trabalha independente do pedido (produção contínua até os tetos) | classe | StandingWorkTest |
@@ -279,3 +279,8 @@ classe prova menos ainda.
 | 267 | Plantação grande em todo bioma (autor 13-11, jogo da 0.4.68: fazendeiro da planície com 0… | cita | LargeFarmGameTest |
 | 268 | O bosque acha o chão em qualquer altura (autor 13-11, jogo da 0.4.68: 0 mudas plantadas,… | cita | VillageGroveGameTest |
 | 269 | O prazo do pastor pela distância (autor 13-11, jogo da 0.4.68: o curral teve no máximo 4… | cita | ShepherdHerdingGameTest |
+| 270 | Sem ofício fora das análises (autor 13-11, ADR-055 item 7): o aldeão sem ofício do mod nã… | cita | WorkTimeSwingGameTest, test_action_report, test_time_ledger |
+| 271 | A muda do bosque surge, também no deserto (autor 13-11, ADR-055 item 10): o bosque do len… | cita | VillageGroveGameTest |
+| 272 | Corante das flores (autor 13-11, ADR-055 item 11): no ócio do ofício, o pastor colhe uma… | cita | ShepherdDyesGameTest |
+| 273 | Um construtor por vila (autor 13-11, ADR-055): a vila tem uma obra aberta por vez, então… | cita | ProfessionGrowthTest, ProfessionPolicySetTest, ProfessionShunTest |
+| 274 | A obra conta como trabalho do construtor (autor 13-11, ADR-055 item 14): sem trabalho med… | cita | BedChoiceGameTest |

@@ -26,12 +26,7 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 - [ ] 🟡 "Recurso que surge" reduzido a exceções declaradas e medidas por jogo (M). No jogo da 0.4.68: trigo ×467,
   lã ×144 (`WAITED_TOO_LONG`); tora ×43, tábua ×20, pedra lisa ×8 e bancadas (`MISSING_PIECE`); terracota ×47
   (`APPEARING_PIECE`); prismarinho ×144, favo ×20 e corantes (`AUTOMATIC_DROP`)
-- [ ] 🟠 ADR-055: sem ofício fora de toda análise de profissão (Regras 219 e 220 seguem valendo)
-- [ ] 🟠 ADR-055: com dois ou mais construtores, uma obra para cada
-- [ ] 🟠 ADR-055: muda que surge no bosque do deserto, em solo preparado
-- [ ] 🟠 ADR-055: corante das flores no ócio do pastor; cor sem flor no bioma, falha ou demora fazem o corante surgir
-- [ ] 🟠 ADR-055: mineiro sem ramal livre abre ramal três níveis abaixo do nível em uso
-- [ ] 🟠 ADR-055: troca de cama entre quem trabalha em cima e mora embaixo e quem faz o contrário
+- [ ] 🟠 ADR-055 item 12: segunda frente de mina (com 3 ou mais mineiros, desce três níveis pela mesma escada e cava lá); pede ADR nova antes do código (G)
 - [ ] 🟡 **Item MAE:** primeira obra pedida em jogo pela fila do construtor (`/vc mae obra <modelo>`, `VC_MAE_SITE` de
   `queued` a `done`), obra longe da vila, socorro (Regra 222) e a recusa que só mostra o motivo do último lote
 - [ ] 🟡 **Nascimentos:** 0 em 63 min na 0.4.43 com 28 camas para 19 aldeões; conferir nascimentos por dia e `UPKEEP`
@@ -89,6 +84,7 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   usa `HashMap` estático nas threads `Worker-Main`) (P)
 - [ ] 🔴 Servidor dedicado com 2 clientes por 30 minutos, com Spark e `cost_ledger` (M)
 - [ ] 🔴 Matriz mínima com Lithium, FerriteCore, ModernFix e um mod de aldeão: o jogo sobe e o mundo abre (M)
+- [ ] 🟠 **Flowing Fluids** (instalado no jogo do autor, `flowing_fluids 1.0.8`): água finita com deslocamento. No jogo de 13-11 o bloco posto num buraco de água empurrou a água para cima ("enableDisplacement": true); não é defeito do Village Colony, mas ele muda a água que a horta, a plantação grande e a mina esperam. Desativado no jogo do autor em 13-11 (JAR renomeado para `.disabled`, decisão dele); volta na matriz de compatibilidade (M)
 - [ ] 🟠 Permissão de op em `/vc bioma nota` e `/vc dados`, com limite no texto (P)
 - [ ] 🟠 Teto ou rotação do diário e dos ledgers; interruptor das linhas `VC_*` em produção (P)
 
