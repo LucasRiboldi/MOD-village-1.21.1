@@ -347,7 +347,9 @@ public final class PenAccessGameTest implements FabricGameTest {
         }
         context.getWorld().setBlockState(origin.add(6, 1, 3), Blocks.OAK_FENCE_GATE.getDefaultState()
                 .with(FenceGateBlock.FACING, Direction.EAST), 3);
-        return colony(origin, 6);
+        // A caixa cobre o curral e a pista em volta, onde ficam o poste e o pastor: só o que está nela é recolhido
+        // (Regra 283).
+        return colony(origin, 10);
     }
 
     /** Sem chão que leve para longe, o animal na ilha da arena conta como cercado ({@code FencedIn}). */
