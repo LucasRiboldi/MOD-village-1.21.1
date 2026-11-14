@@ -19,11 +19,9 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 
 - [ ] 🔴 Ciclos de playtest até todo ofício ficar abaixo de 40% parado em dois biomas, dois jogos seguidos (G)
 - [ ] 🔴 Conferir em jogo as candidatas 0.4.69 a 0.4.74 (lista no `STATE.md`) (por jogo)
-- [ ] 🔴 Jogo da 0.4.79 (13-11), pendentes com escolha do autor: construtor congelado 20 min em chão aberto
-  (929,63,188; a fuga deu "solto depois de 0 passos") — escolha do autor 14-11: "solto" exige ter saído do bloco, e
-  quem segue no mesmo bloco vai direto à escada ou ao teleporte; ramal da mina recusado na mata (`PathPaving` tira a
-  coluna que não alcança) — escolha do autor 14-11: o calçador derruba a árvore de onde estiver e não recusa a coluna;
-  vila sem lote (`lots_ok=0`, recusa ROAD); linha de log para todo tronco posto pelo mod (M)
+- [ ] 🔴 Jogo da 0.4.79 (13-11), pendentes: vila sem lote (`lots_ok=0`, recusa ROAD, "path of at most 32 blocks to
+  the road") — achar a regra que mais recusa e afrouxar, com teste (escolha do autor); linha de log para todo tronco posto
+  pelo mod (escolha do autor) (M). Construtor congelado e ramal da mina: Regras 279 e 280, na 0.4.81
 - [ ] 🟠 Estado e implementação nas 81 regras de `docs/RULES.md` que não têm essas colunas (M)
 - [ ] 🟠 Número próprio para o teto de 15% de ócio; "Regra 51" hoje tem dois sentidos (P)
 - [ ] 🟠 Fechar os conflitos C-12, C-13 e C-15 de `docs/audit/RULE-RECONCILIATION.md` (P)
