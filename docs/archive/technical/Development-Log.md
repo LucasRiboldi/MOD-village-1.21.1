@@ -11796,3 +11796,13 @@ PASS (20261114T131015Z). SHA-256 do JAR:
 `5C528B791FBE299F0EE2389798F5B9C5E448FF5ECFD8FDEBFD6D26AD1B7C2E69`, em `build/libs/`, `downloads/` e
 TLauncher (0.4.80 como `.disabled`). Sem push. Pendentes: vila sem lote, log de tronco posto. Nada
 visto em jogo.
+
+## 2026-11-14 — 0.4.82: Regras 281 e 282 (jogo da 0.4.79, taiga)
+
+Regra 281: todo tronco posto pelo mod sai na linha `VC_LOG_PLACED` (`PlacedLogs.note` na obra, no
+fechamento de obra, no arco da mina e na árvore da vila; `PlacedLogs.scan` depois da casa do mineiro e da
+casa grande). Regra 282: com a rede publicada pelo grafo, só a coluna dela reserva chão contra lote
+(`RoadIndex.isReservedAgainstLots`); no save da taiga eram 710 colunas de calçamento fora da rede contra 267
+da rede. Vermelho antes nos dois GameTests novos; unitários verdes, Sentinela `fast` PASS
+(20261114T133332Z). SHA-256 do JAR: `0CD248F0C93E7A4A8A881646C9C428DA908D475B2F99059887D4FA076ABDDE22`, em
+`build/libs/`, `downloads/` e TLauncher (0.4.81 como `.disabled`). Sem push. Nada visto em jogo.

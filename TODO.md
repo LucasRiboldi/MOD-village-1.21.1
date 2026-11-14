@@ -19,9 +19,8 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 
 - [ ] 🔴 Ciclos de playtest até todo ofício ficar abaixo de 40% parado em dois biomas, dois jogos seguidos (G)
 - [ ] 🔴 Conferir em jogo as candidatas 0.4.69 a 0.4.74 (lista no `STATE.md`) (por jogo)
-- [ ] 🔴 Jogo da 0.4.79 (13-11), pendentes: vila sem lote (`lots_ok=0`, recusa ROAD, "path of at most 32 blocks to
-  the road") — achar a regra que mais recusa e afrouxar, com teste (escolha do autor); linha de log para todo tronco posto
-  pelo mod (escolha do autor) (M). Construtor congelado e ramal da mina: Regras 279 e 280, na 0.4.81
+- [ ] 🔴 Jogo da 0.4.79 (13-11): no próximo jogo, conferir `lots_ok` acima de 0 (Regra 282) e ler as linhas
+  `VC_LOG_PLACED` para achar a origem dos troncos que o autor viu (Regra 281) (por jogo)
 - [ ] 🟠 Estado e implementação nas 81 regras de `docs/RULES.md` que não têm essas colunas (M)
 - [ ] 🟠 Número próprio para o teto de 15% de ócio; "Regra 51" hoje tem dois sentidos (P)
 - [ ] 🟠 Fechar os conflitos C-12, C-13 e C-15 de `docs/audit/RULE-RECONCILIATION.md` (P)
