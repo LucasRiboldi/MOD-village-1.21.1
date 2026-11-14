@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 177
+- **Cita a regra:** 178
 - **Só usa a classe indicada:** 93
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 12
@@ -295,3 +295,4 @@ classe prova menos ainda.
 | 282 | Só a rede reserva chão contra lote (autor 14-11, jogo da 0.4.79): com a rede publicada pe… | cita | BuildSiteGameTest |
 | 283 | O pastor recolhe só dentro da caixa da vila (autor 14-11, opção B da varredura dos GameTe… | cita | PenAccessGameTest, ShepherdHerdingGameTest |
 | 284 | O animal atravessa o portão amarrado (autor 14-11, VF-010, opção "prender ao portão"): en… | cita | PenTetherGameTest |
+| 285 | Aldeão preso na água sai (autor 14-11, jogo da 0.4.84: vários ofícios presos na água): o… | cita | WaterRescueGameTest |

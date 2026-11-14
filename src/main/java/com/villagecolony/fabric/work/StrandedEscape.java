@@ -76,6 +76,7 @@ public final class StrandedEscape {
         // Quem está num curral sai pelo portão ou pula a cerca, sem esperar
         // ser marcado encalhado — E52, 2026-10-01. Ver PenEscape.
         PenEscape.tick(world);
+        WaterRescue.tick(world); // preso na água a céu aberto: margem, depois gelo sob o pulo (Regra 285)
 
         // Quem foi marcado larga o trabalho, fora do laço do ofício que o
         // marcou; e quem sobe pula e pisa a cada tique — ver ClimbOut.
@@ -99,7 +100,6 @@ public final class StrandedEscape {
         // A vila com jogador dentro não espera o ciclo para continuar a busca
         // de lote — estudo de 01-10, §7-A. Ver SweepCadence.
         SweepCadence.pass(world);
-
 
         HomeMove.pass(world); // quem desistiu abaixo do trabalho muda de casa (2026-10-21)
         BedChoice.pass(world); // ao amanhecer, cada um vai para a cama mais perto do trabalho (Regra 74)
