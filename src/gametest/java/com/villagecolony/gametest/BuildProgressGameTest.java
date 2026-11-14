@@ -77,7 +77,7 @@ public class BuildProgressGameTest implements FabricGameTest {
      * Peça sem apoio não sai da planta como se tivesse sido posta; sem mais nada a pôr, o ciclo a traz
      * de volta e reabre a tarefa, sem fazê-la surgir antes de {@link PieceRescue#TRIES} voltas (Regra 113).
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress_an_unsupported_piece_stays_partial_and_the_rescue_reopens_the_task",
             tickLimit = 100)
     public void anUnsupportedPieceStaysPartialAndTheRescueReopensTheTask(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -143,7 +143,7 @@ public class BuildProgressGameTest implements FabricGameTest {
     }
 
     /** Uma obra sem nenhuma peca colocavel nao cede antes do resgate de apoio e material. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress_a_fully_deferred_project_finishes_instead_of_reopening_forever")
     public void aFullyDeferredProjectFinishesInsteadOfReopeningForever(TestContext context) {
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ORIGIN));
         Colony colony = Colony.create(UUID.randomUUID(), origin);
@@ -189,7 +189,7 @@ public class BuildProgressGameTest implements FabricGameTest {
     }
 
     /** Uma falta que o ofício local consegue atender não vira abandono por tempo. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress_a_local_profession_route_keeps_the_waiting_project_open")
     public void aLocalProfessionRouteKeepsTheWaitingProjectOpen(TestContext context) {
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ORIGIN));
         Colony colony = Colony.create(UUID.randomUUID(), origin);
@@ -239,7 +239,7 @@ public class BuildProgressGameTest implements FabricGameTest {
      * atravessado sem esperar os dez minutos: a bateria adianta a idade
      * do mundo e a restaura na mesma chamada, antes do próximo tique.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress_the_build_that_places_nothing_lets_go_of_the_slot")
     public void theBuildThatPlacesNothingLetsGoOfTheSlot(TestContext context) {
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ORIGIN));
 
@@ -303,7 +303,7 @@ public class BuildProgressGameTest implements FabricGameTest {
      * jogaria fora o que já está de pé. O relógio mede <b>peça
      * assentada</b>, e recomeça a cada uma.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress_the_build_that_keeps_placing_is_left_alone")
     public void theBuildThatKeepsPlacingIsLeftAlone(TestContext context) {
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ORIGIN));
 
@@ -358,7 +358,7 @@ public class BuildProgressGameTest implements FabricGameTest {
         }
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress_the_night_does_not_spend_the_builders_patience")
     public void theNightDoesNotSpendTheBuildersPatience(TestContext context) {
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ORIGIN));
         Colony colony = Colony.create(UUID.randomUUID(), origin);
@@ -397,7 +397,7 @@ public class BuildProgressGameTest implements FabricGameTest {
         }
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress_changing_the_sun_does_not_age_the_build")
     public void changingTheSunDoesNotAgeTheBuild(TestContext context) {
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ORIGIN));
         Colony colony = Colony.create(UUID.randomUUID(), origin);

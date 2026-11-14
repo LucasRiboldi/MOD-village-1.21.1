@@ -20,7 +20,7 @@ public class FarmerTillGameTest implements FabricGameTest {
 
     private static final int Y = 50;
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing", tickLimit = 20)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing_the_farmer_opens_a_nine_by_nine_plot_beside_the_farm", tickLimit = 20)
     public void theFarmerOpensANineByNinePlotBesideTheFarm(TestContext context) {
         ServerWorld world = context.getWorld();
         UUID colonyId = UUID.randomUUID();

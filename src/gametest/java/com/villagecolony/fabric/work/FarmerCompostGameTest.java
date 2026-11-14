@@ -21,7 +21,7 @@ public class FarmerCompostGameTest implements FabricGameTest {
     private static final BlockPos CHEST = new BlockPos(1, 2, 1);
 
     /** 64 sementes sem roça conhecida: 56 vão ao compostor, a reserva mínima de 8 fica, e os níveis dão 2 farinhas (Regra 237). */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing", tickLimit = 20)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing_spare_seeds_become_bone_meal_and_the_reserve_stays", tickLimit = 20)
     public void spareSeedsBecomeBoneMealAndTheReserveStays(TestContext context) {
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));

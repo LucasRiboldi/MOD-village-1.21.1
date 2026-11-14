@@ -103,7 +103,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * jogador preparar o chão com qualquer material de apoio sem criar
      * uma taxonomia geológica paralela.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7_stone_gravel_and_terracotta_outside_a_road_are_lots")
     public void stoneGravelAndTerracottaOutsideARoadAreLots(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
 
@@ -258,7 +258,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * nada fica voando. O que não pode é assentar na rua e deixar a metade
      * alta dentro da casa, nem na metade alta sem aterrar a baixa.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_level")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_level_the_uneven_base_sits_on_its_higher_half")
     public void theUnevenBaseSitsOnItsHigherHalf(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
@@ -332,7 +332,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * começava <i>acima</i> dela. Um prédio cuja caixa cobrisse a coluna
      * em outra altura escapava das duas.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_level")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_level_the_new_lot_never_lands_on_a_finished_house")
     public void theNewLotNeverLandsOnAFinishedHouse(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
@@ -412,7 +412,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * era forçada na altura da rua e deixaria um vão sob a casa. Com a base
      * no próprio chão elevado, não há vão; a porta fica um degrau acima.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_slope_one")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_slope_one_one_block_above_the_road_is_a_lot_one_higher")
     public void oneBlockAboveTheRoadIsALotOneHigher(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
@@ -464,7 +464,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * e sem este caso a casa voltaria a nascer na varanda sem escada que a
      * Regra 19 descreve.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_slope_one")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_slope_one_three_blocks_off_the_road_level_is_still_refused")
     public void threeBlocksOffTheRoadLevelIsStillRefused(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
@@ -530,7 +530,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * <p>O dano é do tipo que não se desfaz sozinho: a comida da vila
      * vira piso de casa, e os aldeões que comiam dali passam fome.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_farmland")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_farmland_farmland_is_never_a_lot")
     public void farmlandIsNeverALot(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
@@ -594,7 +594,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * {@code isClearAbove}. Sem este caso, bastaria a planta estar crescida
      * para a guarda da terra arada ser contornada por cima.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_farmland")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_farmland_a_grown_crop_does_not_hide_the_farm")
     public void aGrownCropDoesNotHideTheFarm(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
@@ -636,7 +636,7 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7_every_reserved_road_material_blocks_the_whole_footprint")
     public void everyReservedRoadMaterialBlocksTheWholeFootprint(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
 
@@ -736,7 +736,7 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7_finding_a_lot_never_terraforms_prepared_ground")
     public void findingALotNeverTerraformsPreparedGround(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
@@ -816,7 +816,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * {@code flatGroundAt} só chega ao fim quando nenhuma coluna dela
      * reprovou.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_the_surviving_columns_are_counted")
     public void theSurvivingColumnsAreCounted(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
@@ -1007,7 +1007,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * de bloco, e chamá-la em sequência mede exatamente o que o ciclo
      * mediria em dezessete ciclos de trinta segundos.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_budget")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_budget_the_sweep_never_asks_the_same_column_twice")
     public void theSweepNeverAsksTheSameColumnTwice(TestContext context) {
         UUID colony = UUID.randomUUID();
 
@@ -1057,7 +1057,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * <p>Sob um prazo folgado, a volta inteira cabe numa chamada. Sem prazo
      * — o teste acima —, o teto continua valendo.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_budget")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_budget_under_a_deadline_the_clock_and_not_the_column_cap_ends_the_pass")
     public void underADeadlineTheClockAndNotTheColumnCapEndsThePass(TestContext context) {
         UUID colony = UUID.randomUUID();
 
@@ -1178,7 +1178,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * varredura viu fora da rede não reserva — na vila de taiga do jogo da 0.4.79 eram 710 colunas assim, contra
      * 267 da rede, e nenhum lote cabia.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7_only_the_network_line_is_a_reserve_against_lots")
     public void onlyTheNetworkLineIsAReserveAgainstLots(TestContext context) {
         BlockPos line = new BlockPos(3, 1, 3);
         BlockPos trail = new BlockPos(5, 1, 3);
@@ -1209,7 +1209,7 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7_the_village_own_paving_is_not_a_reserve_against_lots")
     public void theVillageOwnPavingIsNotAReserveAgainstLots(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
@@ -1239,7 +1239,7 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_refresh")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_refresh_player_road_material_does_not_create_a_road_area")
     public void playerRoadMaterialDoesNotCreateARoadArea(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         paveGround(context, center);
@@ -1261,7 +1261,7 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_refresh")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_refresh_player_edit_does_not_recreate_a_road_area")
     public void playerEditDoesNotRecreateARoadArea(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         paveGround(context, center);
@@ -1288,7 +1288,7 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_refresh")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_refresh_removing_a_player_road_removes_only_that_indexed_column")
     public void removingAPlayerRoadRemovesOnlyThatIndexedColumn(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         paveGround(context, center);
@@ -1426,7 +1426,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * pedregulho — não se corta, fica no espaço vertical da construção e
      * precisa reprovar o lote.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_volume")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_volume_an_elevated_column_inside_the_base_refuses_the_lot")
     public void anElevatedColumnInsideTheBaseRefusesTheLot(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
@@ -1467,7 +1467,7 @@ public class BuildSiteGameTest implements FabricGameTest {
     }
 
     /** Nenhuma coluna do lote pode ter bloco solido nos 25 niveis superiores. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_volume")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_volume_a_block_twenty_five_above_the_lot_refuses_the_lot")
     public void aBlockTwentyFiveAboveTheLotRefusesTheLot(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
@@ -1681,7 +1681,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * <p>Escolhida por lote, e não por vila: onde a grande couber, é ela
      * que sobe. Só desce um degrau onde a grande não cabe.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_fallback")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_fallback_the_biggest_plan_that_fits_is_the_one_chosen")
     public void theBiggestPlanThatFitsIsTheOneChosen(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
@@ -1715,7 +1715,7 @@ public class BuildSiteGameTest implements FabricGameTest {
     }
 
     /** Onde a grande cabe, é a grande — e não a primeira que servir. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_fallback")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_fallback_the_big_plan_wins_where_it_fits")
     public void theBigPlanWinsWhereItFits(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
@@ -2118,7 +2118,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * colunas, e cada coluna dela testa as pegadas das plantas. Com o prazo
      * vencido, ela tem que parar logo depois do piso de colunas.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_the_road_index_stops_when_the_deadline_is_over",
             tickLimit = 20)
     public void theRoadIndexStopsWhenTheDeadlineIsOver(TestContext context) {
         UUID colony = UUID.randomUUID();
@@ -2150,7 +2150,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * <b>Índice maior que uma passagem é aceito.</b> Era recusado, e a
      * recusa é que tirava o atalho da vila grande.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_the_road_index_may_outgrow_one_pass",
             tickLimit = 20)
     public void theRoadIndexMayOutgrowOnePass(TestContext context) {
         UUID colony = UUID.randomUUID();
@@ -2185,7 +2185,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * autoriza a Regra 15 a crescer a rua. Crescer é o que se faz quando
      * não há lote, e quem parou no meio não sabe se há.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_asking_the_road_index_is_paged_and_says_so",
             tickLimit = 20)
     public void askingTheRoadIndexIsPagedAndSaysSo(TestContext context) {
         UUID colony = UUID.randomUUID();
@@ -2238,7 +2238,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * teria desaparecido no próprio conserto dele. O achado é do
      * {@code gauntlet-verifier}, que montou este cenário para provar.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_a_small_village_still_answers_from_the_index_for_free",
             tickLimit = 20)
     public void aSmallVillageStillAnswersFromTheIndexForFree(TestContext context) {
         UUID colony = UUID.randomUUID();
@@ -2294,7 +2294,7 @@ public class BuildSiteGameTest implements FabricGameTest {
      * justamente isso — chão bom, rua boa, e um degrau de um bloco no
      * meio do lote — e afirma que a recusa é contada pelo motivo certo.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_a_lot_refused_for_being_off_level_says_so",
             tickLimit = 20)
     public void aLotRefusedForBeingOffLevelSaysSo(TestContext context) {
         BlockPos center = new BlockPos(6, 1, 6);

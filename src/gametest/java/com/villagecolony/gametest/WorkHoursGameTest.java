@@ -81,7 +81,7 @@ public class WorkHoursGameTest implements FabricGameTest {
      * MEET, {@code isWorkTime} devolvia falso, e a asserção da tarde
      * falha.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_hours")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_hours_the_whole_day_is_work_time")
     public void theWholeDayIsWorkTime(TestContext context) {
         ServerWorld world = context.getWorld();
         VillagerEntity villager = adultAt(context);
@@ -110,7 +110,7 @@ public class WorkHoursGameTest implements FabricGameTest {
      * colônia passa a precisar dizer isto ela mesma — e é o tipo de
      * coisa que se perde numa troca de regra sem que nada reclame.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_hours")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_hours_a_child_never_works")
     public void aChildNeverWorks(TestContext context) {
         ServerWorld world = context.getWorld();
         VillagerEntity child = context.spawnEntity(EntityType.VILLAGER, STAND);

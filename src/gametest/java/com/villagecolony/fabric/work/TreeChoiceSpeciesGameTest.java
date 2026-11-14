@@ -73,7 +73,7 @@ public class TreeChoiceSpeciesGameTest implements FabricGameTest {
     }
 
     /** Regra 277: o lenhador só derruba encostado no tronco, e não a três blocos dele. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_species", tickLimit = 20)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_species_touch", tickLimit = 20)
     public void theLumberjackFellsOnlyTouchingTheTrunk(TestContext context) {
         BlockPos base = context.getAbsolutePos(new BlockPos(4, 2, 4));
 

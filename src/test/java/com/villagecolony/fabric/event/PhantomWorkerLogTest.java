@@ -3,8 +3,12 @@ package com.villagecolony.fabric.event;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.villagecolony.core.type.ColonyPos;
+
+import java.util.OptionalDouble;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -97,5 +101,26 @@ class PhantomWorkerLogTest {
         assertFalse(
                 PhantomWorkerLog.observe(other, false),
                 "a falta de um contou para o outro");
+    }
+
+    /** VF-007 A: aldeão visto, longe do jogador, num chunk descarregado — o vivo fora do alcance. */
+    @Test
+    void theWhereaboutsSayWhereHeWasHowFarThePlayerIsAndWhetherTheChunkIsLoaded() {
+        assertEquals("lastSeen=12,64,-30 nearestPlayer=187 chunkLoaded=false",
+                PhantomWorkerLog.whereabouts(new ColonyPos(12, 64, -30), OptionalDouble.of(186.6), false));
+    }
+
+    /** VF-007 A: sem jogador no servidor, a distância diz que não há com quem medir. */
+    @Test
+    void withoutAPlayerTheDistanceSaysNone() {
+        assertEquals("lastSeen=0,70,0 nearestPlayer=none chunkLoaded=true",
+                PhantomWorkerLog.whereabouts(new ColonyPos(0, 70, 0), OptionalDouble.empty(), true));
+    }
+
+    /** VF-007 A: nunca visto nesta sessão — o registro que nenhuma entidade carregada respondeu. */
+    @Test
+    void neverSeenThisSessionSaysSoInsteadOfInventingAPlace() {
+        assertEquals("lastSeen=none nearestPlayer=unknown chunkLoaded=unknown",
+                PhantomWorkerLog.whereabouts(null, OptionalDouble.of(3), true));
     }
 }

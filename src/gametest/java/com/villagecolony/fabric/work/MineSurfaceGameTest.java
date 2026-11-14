@@ -15,7 +15,7 @@ import java.util.UUID;
 /** Quem raspa a superfície esperando ramal não pega a pedra que é do poço planejado (B1). */
 public class MineSurfaceGameTest implements FabricGameTest {
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_vein", tickLimit = 20)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_vein_the_surface_scraping_leaves_the_shaft_cells_alone", tickLimit = 20)
     public void theSurfaceScrapingLeavesTheShaftCellsAlone(TestContext context) {
         BlockPos stone = context.getAbsolutePos(new BlockPos(3, 1, 3));
         BlockPos center = stone.up();

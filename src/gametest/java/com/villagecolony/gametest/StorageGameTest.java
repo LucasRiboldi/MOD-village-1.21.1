@@ -278,7 +278,7 @@ public class StorageGameTest implements FabricGameTest {
         context.complete();
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "storage_count")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "storage_count_pending_survey_reads_shared_chest_before_profession_storage")
     public void pendingSurveyReadsSharedChestBeforeProfessionStorage(TestContext context) {
         ServerWorld world = context.getWorld();
         UUID colonyId = UUID.randomUUID();

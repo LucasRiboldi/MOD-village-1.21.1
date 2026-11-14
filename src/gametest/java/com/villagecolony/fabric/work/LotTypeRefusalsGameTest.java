@@ -23,7 +23,7 @@ import java.util.UUID;
  */
 public class LotTypeRefusalsGameTest implements FabricGameTest {
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lot_type_refusals", tickLimit = 20)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lot_type_refusals_with_every_missing_workshop_without_a_lot_the_village_builds_a_house", tickLimit = 20)
     public void withEveryMissingWorkshopWithoutALotTheVillageBuildsAHouse(TestContext context) {
         ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(1, 1, 1));
         Colony colony = fixture.colony();
@@ -60,7 +60,7 @@ public class LotTypeRefusalsGameTest implements FabricGameTest {
     }
 
     /** Regra 164: com camas acima do teto, todos os tipos sem lote não fazem a vila levantar casa. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lot_type_refusals", tickLimit = 20)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lot_type_refusals_with_every_type_refused_and_beds_to_spare_no_house_is_planned", tickLimit = 20)
     public void withEveryTypeRefusedAndBedsToSpareNoHouseIsPlanned(TestContext context) {
         ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(1, 1, 1));
         Colony colony = fixture.colony();

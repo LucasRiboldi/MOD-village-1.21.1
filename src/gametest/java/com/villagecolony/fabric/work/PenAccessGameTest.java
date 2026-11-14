@@ -140,9 +140,10 @@ public final class PenAccessGameTest implements FabricGameTest {
         }
         var pen = ShepherdPens.scan(context.getWorld(), colony.bounds().orElseThrow()).getFirst();
         var cows = new java.util.ArrayList<net.minecraft.entity.passive.CowEntity>();
+        var escapes = new java.util.LinkedHashMap<Integer, String>();
         try {
             context.assertTrue(pen.accesses().size() == 4, "curral MAE sem os quatro acessos: " + pen.accesses().size());
-            walkEach(context, origin, pen, pen.accesses(), 0, ShepherdPens.WALK_LIMIT, cows);
+            walkEach(context, origin, pen, pen.accesses(), 0, ShepherdPens.WALK_LIMIT, cows, escapes);
         } catch (RuntimeException | AssertionError failure) {
             clearLargeWalk(context, origin, cows);
             throw failure;
@@ -151,13 +152,15 @@ public final class PenAccessGameTest implements FabricGameTest {
 
     private static void walkEach(TestContext context, BlockPos origin, ShepherdPens.Pen pen,
                                  List<ShepherdPens.Access> accesses, int index, int left,
-                                 java.util.List<net.minecraft.entity.passive.CowEntity> cows) {
+                                 java.util.List<net.minecraft.entity.passive.CowEntity> cows,
+                                 java.util.Map<Integer, String> escapes) {
         try {
             var world = context.getWorld();
             FencedIn.tick(world);
+            watchEscapes(context, origin, pen, accesses, index, cows, escapes);
             if (index == accesses.size()) {
                 context.assertTrue(cows.stream().allMatch(cow -> pen.reach().contains(cow.getBlockPos())),
-                        "um animal saiu depois de entrar");
+                        "um animal saiu depois de entrar: " + escapes.values());
                 context.assertTrue(accesses.stream().noneMatch(access -> world.getBlockState(access.gate()).get(FenceGateBlock.OPEN)),
                         "portão ficou aberto depois das entradas");
                 clearLargeWalk(context, origin, cows);
@@ -178,7 +181,8 @@ public final class PenAccessGameTest implements FabricGameTest {
             if (ShepherdPens.isInside(through, cow)) {
                 FencedIn.closeWhenClear(access.gate());
                 FencedIn.tick(world);
-                context.waitAndRun(1, () -> walkEach(context, origin, pen, accesses, index + 1, ShepherdPens.WALK_LIMIT, cows));
+                context.waitAndRun(1, () -> walkEach(context, origin, pen, accesses, index + 1, ShepherdPens.WALK_LIMIT, cows,
+                        escapes));
                 return;
             }
             context.assertTrue(left > 0, "a vaca não entrou andando pelo portão " + access.gate().subtract(origin).toShortString()
@@ -188,13 +192,46 @@ public final class PenAccessGameTest implements FabricGameTest {
                     + " parada=" + cow.getNavigation().isIdle() + " caminho=" + cow.getNavigation().getCurrentPath()
                     + " chão=" + cow.isOnGround() + " busca=" + cow.getNavigation().findPathTo(ShepherdPens.deeper(through), 0)
                     + " piso=" + world.getBlockState(ShepherdPens.deeper(through).down()) + "/" + world.getBlockState(access.inside().down())
-                    + " fora=" + world.getBlockState(access.outside().down()));
+                    + " fora=" + world.getBlockState(access.outside().down()) + " fugidas=" + escapes.values());
             ShepherdPens.walkThrough(world, through, cow, ShepherdPens.deeper(through));
-            context.waitAndRun(1, () -> walkEach(context, origin, pen, accesses, index, left - 1, cows));
+            context.waitAndRun(1, () -> walkEach(context, origin, pen, accesses, index, left - 1, cows, escapes));
         } catch (RuntimeException | AssertionError failure) {
             clearLargeWalk(context, origin, cows);
             throw failure;
         }
+    }
+
+    /**
+     * VF-010 A, só diagnóstico: anota, no primeiro tique em que cada vaca já entrada aparece fora do chão do curral, qual
+     * vaca é, por qual portão entrou, onde está, o portão mais perto dela e se cada portão estava aberto naquele tique.
+     */
+    private static void watchEscapes(TestContext context, BlockPos origin, ShepherdPens.Pen pen,
+                                     List<ShepherdPens.Access> accesses, int entered,
+                                     java.util.List<net.minecraft.entity.passive.CowEntity> cows,
+                                     java.util.Map<Integer, String> escapes) {
+        var world = context.getWorld();
+        for (int i = 0; i < Math.min(entered, cows.size()); i++) {
+            var cow = cows.get(i);
+            if (escapes.containsKey(i) || pen.reach().contains(cow.getBlockPos())) {
+                continue;
+            }
+            var nearest = accesses.stream()
+                    .min(java.util.Comparator.comparingDouble(access -> access.gate().getSquaredDistance(cow.getPos())))
+                    .orElseThrow();
+            var gates = new StringBuilder();
+            for (var access : accesses) {
+                gates.append(' ').append(access.gate().subtract(origin).toShortString()).append('=').append(gateState(world, access.gate()));
+            }
+            escapes.put(i, "vaca " + i + " (entrou pelo portão " + accesses.get(i).gate().subtract(origin).toShortString()
+                    + ") fora no tique " + world.getTime() + " em " + cow.getBlockPos().subtract(origin).toShortString()
+                    + " viva=" + cow.isAlive() + ", portão mais perto " + nearest.gate().subtract(origin).toShortString()
+                    + " " + gateState(world, nearest.gate()) + "; portões:" + gates);
+        }
+    }
+
+    private static String gateState(net.minecraft.server.world.ServerWorld world, BlockPos gate) {
+        var state = world.getBlockState(gate);
+        return state.contains(FenceGateBlock.OPEN) ? (state.get(FenceGateBlock.OPEN) ? "aberto" : "fechado") : state.toString();
     }
 
     private static void forceChunks(TestContext context, BlockPos origin, boolean force) {

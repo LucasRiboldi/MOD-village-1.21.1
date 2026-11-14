@@ -15,6 +15,18 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 - [ ] 🟡 Decisão do autor: o `CLAUDE.md` importa `.fabric/AGENTS.md`, que a ferramenta Fabric cria localmente (pasta no
   `.gitignore`) e não existe em nenhum checkout; manter, reinstalar a ferramenta ou tirar o import (P)
 
+## Varredura de falhas 12-11
+
+Registro, fila e método em [`docs/audit/2026-11-12-varredura-de-falhas.md`](docs/audit/2026-11-12-varredura-de-falhas.md).
+Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
+
+- [ ] 🟠 VF-001: primeiro ciclo depois de abrir o mundo leva 471 a 1.212 ms; a linha `VC_COST_PHASES` reparte a fase
+  `planner` por colônia — falta ler no próximo jogo (P)
+- [ ] 🟠 VF-002: `workerCollectsWhileWalkingPast` — a colônia de teste deixou de ser dada como abandonada (722f7ec5), mas o
+  teste ainda caiu em baterias de 14-11 (P)
+- [ ] 🟠 VF-003: PIT a 85,17% contra o limiar de 85%; `MineShaftWaypointsTest` cobre o caminho da mina — conferir no CI (P)
+- 🟡 VF-005 a VF-014 e 🟢 VF-015 a VF-020: só no registro
+
 ## F1 — A vila trabalha (3 a 5 semanas) → portão Beta 0.5.0
 
 - [ ] 🔴 Ciclos de playtest até todo ofício ficar abaixo de 40% parado em dois biomas, dois jogos seguidos (G)

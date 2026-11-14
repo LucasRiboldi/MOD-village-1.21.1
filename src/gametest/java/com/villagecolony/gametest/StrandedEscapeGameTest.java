@@ -103,7 +103,7 @@ public class StrandedEscapeGameTest implements FabricGameTest {
      * N10, 2026-09-24: depois que ele sai, a escada volta a ser terreno,
      * com o pedregulho que saiu dela, e nada é assentado onde há alguém.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "stranded_escape")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "stranded_escape_the_escape_stairs_are_backfilled_with_what_came_out_of_them")
     public void theEscapeStairsAreBackfilledWithWhatCameOutOfThem(TestContext context) {
         ground(context, Blocks.STONE);
 

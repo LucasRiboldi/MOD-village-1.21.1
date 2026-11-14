@@ -27,7 +27,7 @@ public class VolumeSampleGameTest {
      * a cada ciclo. O número media a frequência da varredura, não o
      * terreno — e é isso que a segunda metade deste cenário impede.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "volume_sample",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "volume_sample_the_block_in_the_way_is_named_once_per_position",
             tickLimit = 100)
     public void theBlockInTheWayIsNamedOncePerPosition(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -71,7 +71,7 @@ public class VolumeSampleGameTest {
      * limpar o terreno. Somadas numa linha só, escolher o conserto vira
      * chute — e foi o que custou o P1.3 antes do {@code ProtectionSample}.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "volume_sample",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "volume_sample_the_two_causes_are_never_added_together",
             tickLimit = 100)
     public void theTwoCausesAreNeverAddedTogether(TestContext context) {
         ServerWorld world = context.getWorld();

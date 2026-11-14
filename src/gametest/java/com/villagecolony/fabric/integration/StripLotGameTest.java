@@ -82,7 +82,7 @@ public class StripLotGameTest implements FabricGameTest {
      * Com a rua da faixa barrada pela duna na entrada, o lote nasce no fundo da faixa, com a porta para a
      * vila e o caminho contornando a duna.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "strip_lot")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "strip_lot_the_strip_gets_a_deep_lot_with_a_path_around_the_dune")
     public void theStripGetsADeepLotWithAPathAroundTheDune(TestContext context) {
         ServerWorld world = context.getWorld();
 

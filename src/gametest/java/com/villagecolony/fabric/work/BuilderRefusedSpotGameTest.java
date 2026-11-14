@@ -83,7 +83,7 @@ public final class BuilderRefusedSpotGameTest implements FabricGameTest {
         walkTo(context, POCKET, true);
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_refused_spot", tickLimit = 200)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_refused_spot_a_spot_the_builder_can_walk_to_is_kept", tickLimit = 200)
     public void aSpotTheBuilderCanWalkToIsKept(TestContext context) {
         walkTo(context, REACHABLE, false);
     }

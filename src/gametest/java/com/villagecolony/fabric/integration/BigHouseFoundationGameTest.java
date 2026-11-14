@@ -69,7 +69,7 @@ public class BigHouseFoundationGameTest implements FabricGameTest {
     }
 
     /** Um projeto pendente do save já reserva a área antes de {@code resume}. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "big_house_foundation")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "big_house_foundation_a_pending_project_still_reserves_its_saved_box")
     public void aPendingProjectStillReservesItsSavedBox(TestContext context) {
         UUID colonyId = UUID.randomUUID();
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(
@@ -110,7 +110,7 @@ public class BigHouseFoundationGameTest implements FabricGameTest {
     }
 
     /** A casa fundacional pendente reserva a pegada antes da retomada. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "big_house_foundation")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "big_house_foundation_a_pending_big_house_reserves_its_footprint_at_any_height")
     public void aPendingBigHouseReservesItsFootprintAtAnyHeight(TestContext context) {
         UUID colonyId = UUID.randomUUID();
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(

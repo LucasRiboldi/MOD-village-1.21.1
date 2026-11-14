@@ -21,7 +21,7 @@ public class VillageLevelsGameTest implements FabricGameTest {
      * A roça do deserto: borda de arenito e areia um abaixo; o canteiro 9×9 cabe na areia de fora, um abaixo da roça
      * (autor, 2026-10-28: canteiro retangular, {@link FarmPlots}).
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_levels")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_levels_a_new_plot_fits_on_the_sand_beyond_the_border")
     public void aNewPlotFitsOnTheSandBeyondTheBorder(TestContext context) {
         ServerWorld world = context.getWorld();
         java.util.UUID colonyId = java.util.UUID.randomUUID();

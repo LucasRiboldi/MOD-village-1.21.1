@@ -52,7 +52,7 @@ public class CraftingAdvanceGameTest implements FabricGameTest {
     }
 
     /** A peça vai para o baú da profissão, não para o baú de outro ofício no centro da vila (ADR-038 P3c). */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock", tickLimit = 300)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock_the_piece_goes_to_the_profession_chest", tickLimit = 300)
     public void thePieceGoesToTheProfessionChest(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos freeAt = new BlockPos(2, 2, 5);
@@ -101,7 +101,7 @@ public class CraftingAdvanceGameTest implements FabricGameTest {
      * numa caixa de vidro a sete blocos do baú e fabrica mesmo assim; antes ele
      * precisava chegar a 3 blocos da bancada e soltava a tarefa no caminho.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock", tickLimit = 300)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock_the_carpenter_crafts_without_walking_to_its_chest", tickLimit = 300)
     public void theCarpenterCraftsWithoutWalkingToItsChest(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos chestAt = new BlockPos(1, 2, 1);
