@@ -25,10 +25,10 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 - [ ] 🟠 VF-002: `workerCollectsWhileWalkingPast` — a colônia de teste deixou de ser dada como abandonada (722f7ec5), mas o
   teste ainda caiu em baterias de 14-11 (P)
 - [ ] 🟠 VF-003: PIT a 85,17% contra o limiar de 85%; `MineShaftWaypointsTest` cobre o caminho da mina — conferir no CI (P)
-- [ ] 🟠 GameTest instável `theDryDetourIsTranslationInvariantAtTheObservedCoordinates`: caiu 2 vezes em 6 rodadas
-  locais com a água a 256; a falha agora diz o nó de início e onde o aldeão estava — ler na próxima queda (P)
-- [ ] 🟡 VF-010 (`animalsWalkInThroughEachOfTheFourGates`): a falha diz corda, destino e aldeões em volta — ler na
-  próxima queda (P)
+- [ ] 🟡 A* do jogo e água (Regra 278): no cenário do canal, o aldeão que parte de (0, 2, 0) nada sempre e o que parte
+  de (0, 2, 1) vai pelo seco (31 nós). O teste passou a partir de onde o aldeão nasce. Suspeita não provada:
+  `PathNodeNavigator` reescreve `pathLength` antes de conferir melhora e poda a volta pelo alcance de 48. Investigar se
+  aparecer em jogo (aldeão nadando com caminho seco ao lado) (M)
 - 🟡 VF-005 a VF-014 e 🟢 VF-015 a VF-020: só no registro
 
 ## F1 — A vila trabalha (3 a 5 semanas) → portão Beta 0.5.0

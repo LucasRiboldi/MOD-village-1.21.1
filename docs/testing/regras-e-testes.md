@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 176
+- **Cita a regra:** 177
 - **Só usa a classe indicada:** 93
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 12
@@ -67,7 +67,7 @@ classe prova menos ainda.
 | 54 | Mina em rede (ADR-042): passada a escadaria e o salão, cada nível é uma grade de nós a ca… | classe | MineAccessGameTest, MineReturnGameTest, MineReturnTest |
 | 55 | Roça grande primeiro; fundidor ocioso adianta o cru; lenhador ocioso planta mudas até 10… | cita | GrowingPiecesGameTest |
 | 56 | Expansão do terreno: a caixa cresce só com rua e obra, nunca com faixa vazia anexada (0.3… | cita | PublicChestPlacementGameTest, VillageExpansionGameTest, VillageExpansionTest |
-| 57 | O pastor põe no máximo um poste por casa e um por cercado (nenhum poste novo a até 6 bloc… | classe | EntrancesAtTheDoorGameTest, PenAccessGameTest, ShepherdPensGameTest |
+| 57 | O pastor põe no máximo um poste por casa e um por cercado (nenhum poste novo a até 6 bloc… | classe | EntrancesAtTheDoorGameTest, PenAccessGameTest, PenTetherGameTest |
 | 58 | Madeira e pedra cruas podem passar dos limites do baú do ofício e do teto por tipo: o exc… | classe | MinerHaulCapGameTest, MinerOverflowGameTest, PublicChestPlacementGameTest |
 | 59 | Ajudam a obra só carpinteiro e pedreiro (fazendeiro e pastor não); o carpinteiro guarda u… | classe | BuilderPavingGameTest, ConstructionZoneGameTest, GraphOnlyPathsGameTest |
 | 60 | O tipo de obra que passa uma volta inteira da varredura sem lote fica 30 min fora da vez;… | classe | BigHouseFoundationGameTest, ColonyModelsGameTest, ConstructionOrderTest |
@@ -294,3 +294,4 @@ classe prova menos ainda.
 | 281 | Tronco posto sai no log (autor 13-11, jogo da 0.4.79): todo tronco que o mod põe no mundo… | cita | LeafPathsGameTest |
 | 282 | Só a rede reserva chão contra lote (autor 14-11, jogo da 0.4.79): com a rede publicada pe… | cita | BuildSiteGameTest |
 | 283 | O pastor recolhe só dentro da caixa da vila (autor 14-11, opção B da varredura dos GameTe… | cita | PenAccessGameTest, ShepherdHerdingGameTest |
+| 284 | O animal atravessa o portão amarrado (autor 14-11, VF-010, opção "prender ao portão"): en… | cita | PenTetherGameTest |

@@ -11818,3 +11818,16 @@ de vila gerada. Diagnóstico na falha dos portões (VF-010) e do canal de água,
 locais mesmo com custo 256. runGametest 1.127/1.127 três vezes seguidas; build e unitários verdes; Sentinela
 `fast` PASS (20261114T172413Z). SHA-256 do JAR: `E64AEFDF9EB5F0DA4F442EC29028FF16E34F7D5238712CA751FE28AA9154A213`,
 em `build/libs/`, `downloads/` e TLauncher (0.4.82 como `.disabled`). Nada visto em jogo.
+
+## 2026-11-14 — 0.4.84: Regra 284 e os GameTests instáveis restantes
+
+Os lotes de GameTest rodam juntos num mundo só. Quatro instáveis, cada um com a causa provada pelo histórico guardado na
+mensagem de falha. Mineiro: o relógio ficou fora do expediente o teste inteiro (11.162 a 11.442); o teste volta ao
+expediente a cada tique, e `OffHoursReleaseGameTest` e `WorkHoursGameTest` devolvem a hora que encontraram. Vaca solta:
+a caixa de 0 a 12 alcançava a galinha da arena vizinha (13 blocos adiante); caixa de 0 a 10. Canal de água: o A* do
+jogo depende do ponto de partida (de z = 0 nada, de z = 1 vai pelo seco), e o aldeão anda nos 10 tiques de espera; a
+busca parte de onde ele nasceu, e a peculiaridade do A* foi para o TODO. Portões (VF-010): o passeio e o pânico da
+vaca tomavam a navegação; Regra 284 (`PenTether`, `setPositionTarget` a 2 blocos, solta ao entrar, sair ou desistir),
+provada por `PenTetherGameTest`, vermelho antes. runGametest 10/10 baterias verdes; build e unitários verdes; Sentinela
+`fast` PASS (20261114T214110Z). SHA-256 do JAR: `21A694460EA0C6063B187EF87295306B2F27CA04348EAF38F74B7B936C975D80`, em
+`build/libs/`, `downloads/` e TLauncher (0.4.83 como `.disabled`). Nada visto em jogo.

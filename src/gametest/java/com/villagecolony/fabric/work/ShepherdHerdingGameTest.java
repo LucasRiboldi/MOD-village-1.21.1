@@ -107,12 +107,13 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
     }
 
     /**
-     * A caixa da vila vai de 0 a 12: a vaca a (10, 10) fica longe da cerca, solta, e o bicho de outro teste fica fora
-     * (Regra 283).
+     * A caixa da vila vai de 0 a 10: a vaca a (10, 10) fica longe da cerca, solta, e o bicho de outro teste fica fora
+     * (Regra 283). As arenas ficam a 13 blocos uma da outra, e a busca pega o animal cuja borda encosta na caixa: a
+     * caixa de 0 a 12 alcançava a galinha do vizinho em x = 13,2.
      */
     private static void insideTheArena(TestContext context, ColonyFixture fixture) {
         BlockPos from = context.getAbsolutePos(BlockPos.ORIGIN);
-        BlockPos to = context.getAbsolutePos(new BlockPos(12, 4, 12));
+        BlockPos to = context.getAbsolutePos(new BlockPos(10, 4, 10));
         fixture.colony().restoreBounds(new VillageBounds(Math.min(from.getX(), to.getX()), from.getY(),
                 Math.min(from.getZ(), to.getZ()), Math.max(from.getX(), to.getX()), to.getY(),
                 Math.max(from.getZ(), to.getZ())));

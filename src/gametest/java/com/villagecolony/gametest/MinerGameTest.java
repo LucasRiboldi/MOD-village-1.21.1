@@ -1043,6 +1043,10 @@ public class MinerGameTest implements FabricGameTest {
 
         MineDigging.shortenMineDistanceTo(NEARBY);
 
+        if (!com.villagecolony.core.coordination.WorkClock.isWorkTime(world.getTimeOfDay())) {
+            world.setTimeOfDay(1_000);
+        }
+
         MinerWork.run(world, colony);
 
         BlockPos stone = context.getAbsolutePos(target);
@@ -1060,15 +1064,36 @@ public class MinerGameTest implements FabricGameTest {
         int[] closest = { Integer.MAX_VALUE };
         int[] lowest = { Integer.MAX_VALUE };
         int[] tick = { 0 };
+        // A cada 40 tiques: hora, posição, alvo, pedra e caminho. A falha de 14-11 mostrou o relógio fora do expediente
+        // do começo ao fim (11.162 a 11.442).
+        StringBuilder history = new StringBuilder();
 
         context.runAtEveryTick(() -> {
             tick[0]++;
+
+            // Os testes rodam juntos num mundo só e o relógio é de todos: este teste precisa do expediente inteiro.
+            if (!com.villagecolony.core.coordination.WorkClock.isWorkTime(world.getTimeOfDay())) {
+                world.setTimeOfDay(1_000);
+            }
 
             BlockPos at = villager.getBlockPos();
 
             closest[0] = Math.min(
                     closest[0], (int) Math.sqrt(at.getSquaredDistance(stone)));
             lowest[0] = Math.min(lowest[0], at.getY());
+
+            if (tick[0] % 40 == 0) {
+                BlockPos o = context.getAbsolutePos(BlockPos.ORIGIN);
+                history.append(" | t").append(tick[0]).append(" d").append(world.getTimeOfDay() % 24_000)
+                        .append(com.villagecolony.core.coordination.WorkClock.isWorkTime(world.getTimeOfDay()) ? "W" : "OFF")
+                        .append(" p").append(at.subtract(o).toShortString())
+                        .append(" r").append(String.format("%.1f", Math.sqrt(villager.squaredDistanceTo(stone.toCenterPos()))))
+                        .append(" a").append(MinerProbe.targetOf(villager.getUuid()).map(t -> t.subtract(o).toShortString()).orElse("-"))
+                        .append(" s").append(world.getBlockState(stone).getBlock().getTranslationKey().replace("block.minecraft.", ""))
+                        .append(" n").append(villager.getNavigation().getCurrentPath() == null ? "idle"
+                                : villager.getNavigation().getCurrentPath().getTarget().subtract(o).toShortString())
+                        .append(" j").append(MinerProbe.activeJobs());
+            }
 
             if (whenBroken[0] >= 0 || context.getBlockState(target).isOf(rock)) {
                 return;
@@ -1089,7 +1114,7 @@ public class MinerGameTest implements FabricGameTest {
                                 + " travamento=" + MinerProbe.stallOf(villager.getUuid())
                                 + " imobilidade=" + MinerProbe.stillnessOf(villager.getUuid())
                                 + " deriva=" + MinerProbe.adriftOf(villager.getUuid())
-                                + " trabalhos abertos=" + MinerProbe.activeJobs());
+                                + " trabalhos abertos=" + MinerProbe.activeJobs() + history);
 
                 context.assertTrue(
                         whenBroken[0] <= ARM_REACH,

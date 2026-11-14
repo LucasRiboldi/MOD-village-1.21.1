@@ -199,6 +199,14 @@ public final class PenAccessGameTest implements FabricGameTest {
                             : cow.getNavigation().getCurrentPath().getTarget().subtract(origin).toShortString())
                     + " aldeões=" + world.getEntitiesByClass(net.minecraft.entity.passive.VillagerEntity.class,
                             cow.getBoundingBox().expand(16), villager -> true).size());
+            // VF-010: a trilha da vaca a cada 25 tiques (posição e destino do caminho), sob a chave 1000 + índice.
+            if (left % 25 == 0) {
+                escapes.merge(1000 + index, "trilha " + index + ":", (was, none) -> was);
+                escapes.merge(1000 + index, " " + cow.getBlockPos().subtract(origin).toShortString() + ">"
+                        + (cow.getNavigation().getCurrentPath() == null ? "-"
+                                : cow.getNavigation().getCurrentPath().getTarget().subtract(origin).toShortString()),
+                        String::concat);
+            }
             ShepherdPens.walkThrough(world, through, cow, ShepherdPens.deeper(through));
             context.waitAndRun(1, () -> walkEach(context, origin, pen, accesses, index, left - 1, cows, escapes));
         } catch (RuntimeException | AssertionError failure) {
@@ -230,6 +238,8 @@ public final class PenAccessGameTest implements FabricGameTest {
             }
             escapes.put(i, "vaca " + i + " (entrou pelo portão " + accesses.get(i).gate().subtract(origin).toShortString()
                     + ") fora no tique " + world.getTime() + " em " + cow.getBlockPos().subtract(origin).toShortString()
+                    + " y=" + String.format("%.3f", cow.getY() - origin.getY())
+                    + " pisa=" + world.getBlockState(cow.getBlockPos()).getBlock().getTranslationKey().replace("block.minecraft.", "")
                     + " viva=" + cow.isAlive() + ", portão mais perto " + nearest.gate().subtract(origin).toShortString()
                     + " " + gateState(world, nearest.gate()) + "; portões:" + gates);
         }

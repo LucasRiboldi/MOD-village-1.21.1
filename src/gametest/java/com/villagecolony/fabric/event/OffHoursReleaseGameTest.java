@@ -25,6 +25,8 @@ public class OffHoursReleaseGameTest implements FabricGameTest {
         Colony colony = fixture.colony();
         VillagerEntity idle = context.spawnEntity(EntityType.VILLAGER, new BlockPos(2, 1, 2));
         VillagerEntity miner = context.spawnEntity(EntityType.VILLAGER, new BlockPos(4, 1, 2));
+        // O relógio é de todos os testes que rodam juntos: a noite deste teste não fica para os outros.
+        long before = context.getWorld().getTimeOfDay();
 
         try {
             fixture.owning(idle.getUuid()).owning(miner.getUuid());
@@ -45,6 +47,7 @@ public class OffHoursReleaseGameTest implements FabricGameTest {
                             && WorkTargets.of(miner.getUuid()).isEmpty(),
                     "o mineiro continuou andando para o alvo do mod fora do expediente");
         } finally {
+            context.getWorld().setTimeOfDay(before);
             WorkTargets.clear(miner.getUuid());
             fixture.cleanUp();
         }

@@ -337,6 +337,7 @@ final class ShepherdHerding {
 
         if (herd.phase == Phase.EXIT) {
             if (ShepherdPens.isOutside(herd.from, animal)) {
+                PenTether.release(animal);
                 animal.attachLeash(shepherd, true);
                 FencedIn.closeWhenClear(herd.from.gate());
                 herd.phase = Phase.LEAD;
@@ -356,6 +357,7 @@ final class ShepherdHerding {
 
         if (herd.phase == Phase.ENTER) {
             if (ShepherdPens.isInside(herd.pen, animal)) {
+                PenTether.release(animal);
                 FencedIn.closeWhenClear(herd.pen.gate());
                 FencedIn.tick(world); // fecha já, se o portão está livre; senão, no próximo ciclo
 
@@ -452,6 +454,7 @@ final class ShepherdHerding {
         VillageColonyMod.LOGGER.info("Shepherd {} dropped the herd in phase {} after {} ticks, heading for {}",
                 shepherdId.toString().substring(0, 8), herd.phase, world.getTime() - herd.since,
                 herd.pen != null ? herd.pen.gate().toShortString() : "a post");
+        PenTether.release(world.getEntity(herd.animal));
         if (world.getEntity(herd.animal) instanceof AnimalEntity animal
                 && animal.getLeashHolder() != null && animal.getLeashHolder().getUuid().equals(shepherdId)
                 && !HerdDeadline.tieNearby(world, animal)) {
