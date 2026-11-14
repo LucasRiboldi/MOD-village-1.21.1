@@ -19,7 +19,7 @@ import java.util.Optional;
 /** O pastor traz o animal solto na corda e o amarra na cerca (ADR-038 P2b). */
 public class ShepherdHerdingGameTest implements FabricGameTest {
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herding", tickLimit = 60)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herding_the_shepherd_leads_a_loose_cow_to_the_fence", tickLimit = 60)
     public void theShepherdLeadsALooseCowToTheFence(TestContext context) {
         ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(4, 1, 4));
         BlockPos fence = new BlockPos(1, 1, 1);
@@ -39,7 +39,8 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
 
                 context.assertTrue(herd.isPresent() && herd.get().animal.equals(cow.getUuid()),
                         "o pastor não escolheu a vaca solta: kept=" + ShepherdFlock.isKept(context.getWorld(), cow)
-                                + " leashed=" + cow.isLeashed() + " can=" + cow.canBeLeashed() + " herd=" + herd.isPresent());
+                                + " leashed=" + cow.isLeashed() + " can=" + cow.canBeLeashed() + " herd=" + herd.isPresent()
+                                + herd.map(chosen -> " escolhido=" + context.getWorld().getEntity(chosen.animal)).orElse(""));
                 context.assertTrue(herd.get().fence.equals(context.getAbsolutePos(fence)),
                         "a cerca escolhida não é a mais perto");
 
@@ -70,7 +71,7 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
      * O pastor anda até a vaca, volta andando com ela na corda e a amarra (B5): sem teletransporte,
      * pela navegação do jogo, com o tique do servidor rodando a coleta.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herding", tickLimit = 600)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herding_the_shepherd_walks_the_cow_to_the_fence", tickLimit = 600)
     public void theShepherdWalksTheCowToTheFence(TestContext context) {
         for (int x = 0; x <= 7; x++) {
             for (int z = 0; z <= 7; z++) {

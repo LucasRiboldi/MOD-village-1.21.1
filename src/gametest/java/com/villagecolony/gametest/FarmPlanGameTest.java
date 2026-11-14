@@ -287,7 +287,7 @@ public class FarmPlanGameTest implements FabricGameTest {
     }
 
     /** A obra seguinte a uma casa deve ser uma infraestrutura — 2026-09-20. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "construction_rotation")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "construction_rotation_the_next_turn_after_a_house_is_non_residential")
     public void theNextTurnAfterAHouseIsNonResidential(TestContext context) {
         BlockPos center = new BlockPos(16, 1, 16);
 

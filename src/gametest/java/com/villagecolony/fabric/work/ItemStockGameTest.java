@@ -67,7 +67,7 @@ public class ItemStockGameTest implements FabricGameTest {
         context.complete();
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock", tickLimit = 400)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock_the_carpenter_stocks_a_piece_of_the_village_plans", tickLimit = 400)
     public void theCarpenterStocksAPieceOfTheVillagePlans(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos chestAt = new BlockPos(2, 2, 2);

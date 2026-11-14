@@ -92,7 +92,7 @@ public class BiomeSiteGameTest implements FabricGameTest {
      * A árvore que nasce do chão de uma muda da colônia (viveiro, bosque) nunca sai; a de terra
      * enraizada que a colônia não plantou — a cerejeira do Vanilla — sai (controle).
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "biome_site")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "biome_site_a_nursery_tree_is_never_cleared")
     public void aNurseryTreeIsNeverCleared(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos nursery = groundAt(context, 64);

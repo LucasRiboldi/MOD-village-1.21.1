@@ -378,7 +378,7 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
      * ciclos sem progresso e a peça aparece no baú do construtor (era: a contagem esperava uma
      * tarefa da cadeia, e a obra ficava parada; ADR-040, emenda de 2026-10-20).
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials_a_route_without_an_open_task_is_a_stall")
     public void aRouteWithoutAnOpenTaskIsAStall(TestContext context) {
         Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.OAK_PLANKS);
 

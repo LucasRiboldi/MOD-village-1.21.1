@@ -284,7 +284,7 @@ public class BuilderGameTest implements FabricGameTest {
      * <p>Rodado contra a regra desligada: nenhum baú sozinho tem as seis,
      * a fabricação não acontece e a porta não sobe.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_craft",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_craft_the_material_is_gathered_from_more_than_one_chest",
             tickLimit = 300)
     public void theMaterialIsGatheredFromMoreThanOneChest(TestContext context) {
         Fixture fixture = setUpDoorInTwoChests(context);
@@ -1637,7 +1637,7 @@ public class BuilderGameTest implements FabricGameTest {
      * <p>Rodado contra a emenda desligada: a obra fica em
      * {@code WAITING_RESOURCES} e nenhum bloco entra.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_stone",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_stone_the_wall_of_sandstone_goes_up_with_the_cobblestone_the_colony_has",
             tickLimit = 300)
     public void theWallOfSandstoneGoesUpWithTheCobblestoneTheColonyHas(TestContext context) {
         Fixture fixture = setUpStone(context);
@@ -1917,7 +1917,7 @@ public class BuilderGameTest implements FabricGameTest {
      * correção que trocasse a espécie <b>sempre</b> passaria no teste de
      * cima e estaria errada.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_wood",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_wood_the_exact_stair_comes_before_the_substitute",
             tickLimit = 20)
     public void theExactStairComesBeforeTheSubstitute(TestContext context) {
         List<Item> order = MaterialChoice.forBlock(Blocks.OAK_STAIRS);

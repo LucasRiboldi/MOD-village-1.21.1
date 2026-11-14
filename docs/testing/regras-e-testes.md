@@ -7,7 +7,7 @@ classe prova menos ainda.
 - **Cita a regra:** 167
 - **Só usa a classe indicada:** 93
 - **Sem nenhum teste:** 2
-- **Fora de vigor:** 11
+- **Fora de vigor:** 12
 
 | # | regra | grau | testes |
 | --- | --- | --- | --- |
@@ -62,6 +62,7 @@ classe prova menos ainda.
 | 49 | A ordem das obras (consolida 55 e 60, 1A de 13-10): faltando cama, casa; senão a oficina… | cita | ConstructionOrderTest, ConstructionPriorityTest |
 | 50 | Toda verificação mede o tempo dos aldeões — trabalhando, andando, bloqueado, ocioso, enca… | cita | WorkTimeTest |
 | 51 | Peça que falta aparece na 4ª tentativa sem sucesso, no baú da profissão que tentou (colet… | cita | BuilderMaterialsGameTest, test_state_report, test_time_ledger |
+| 52 | ~~Uma roça por fazendeiro~~ | fora de vigor |  |
 | 53 | A boca da mina só nasce na faixa da borda da caixa da vila (até 8 blocos da linha, dentro… | classe | MineEdgeGameTest, MineFluidGameTest, MineLeaseGameTest |
 | 54 | Mina em rede (ADR-042): passada a escadaria e o salão, cada nível é uma grade de nós a ca… | classe | MineAccessGameTest, MineReturnGameTest, MineReturnTest |
 | 55 | Roça grande primeiro; fundidor ocioso adianta o cru; lenhador ocioso planta mudas até 10… | cita | GrowingPiecesGameTest |
@@ -70,7 +71,7 @@ classe prova menos ainda.
 | 58 | Madeira e pedra cruas podem passar dos limites do baú do ofício e do teto por tipo: o exc… | classe | MinerHaulCapGameTest, MinerOverflowGameTest, PublicChestPlacementGameTest |
 | 59 | Ajudam a obra só carpinteiro e pedreiro (fazendeiro e pastor não); o carpinteiro guarda u… | classe | BuilderPavingGameTest, ConstructionZoneGameTest, GraphOnlyPathsGameTest |
 | 60 | O tipo de obra que passa uma volta inteira da varredura sem lote fica 30 min fora da vez;… | classe | BigHouseFoundationGameTest, ColonyModelsGameTest, ConstructionOrderTest |
-| 61 | A colônia só é dada como abandonada sem vila à vista do centro nem dentro da caixa, e com… | classe | ColonyAbandonmentTest, test_graphify_relabel |
+| 61 | A colônia só é dada como abandonada sem vila à vista do centro nem dentro da caixa, e com… | classe | ColonyAbandonmentTest, GroundPickupGameTest, test_graphify_relabel |
 | 62 | A vila trabalha com o jogador dentro da caixa ou a até 48 blocos dela (VillageFocus.PERIM… | classe | AbandonedColonyGameTest, ColonyBoundsTest, DrawnFromTest |
 | 63 | Socorro contra parada com prazo único: o ofício que anda sem chegar ao alvo há 1 minuto d… | classe | WorkRescueTest |
 | 64 | As ruas da vila são medidas como rede de caminhos conectados a partir do centro (de bloco… | classe | GraphOnlyPathsGameTest, RoadNetworkGameTest |

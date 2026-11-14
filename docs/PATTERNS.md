@@ -123,6 +123,31 @@ com medição de contenção/fairness entre jobs.
 
 ---
 
+### GameTest falha com `trabalhadores da colônia=0`
+
+**Causa:** a sonda de abandono do ciclo de detecção achou a colônia do teste sem vila
+Vanilla e com menos de 3 aldeões em casa (`VillageAdoption.PEOPLE_TO_STAY`), marcou
+`ABANDONED` e dispensou o aldeão. Só acontece quando o ciclo de 600 tiques cai dentro
+do teste.
+
+**Onde olhar:** `is now ABANDONED` e `left the abandoned colony` no stdout da bateria,
+na coordenada da arena que falhou. `GroundPickupGameTest.workerCollectsWhileWalkingPast`,
+11 falhas em 30 baterias até a correção (VF-002, `docs/audit/2026-11-12-varredura-de-falhas.md`).
+
+---
+
+### `Colony cycle took` de 500 a 1.200 ms cerca de 90 s depois de abrir o mundo
+
+**Causa:** primeiro ciclo em que a colônia pode trabalhar (tique ~1.800: espera de
+assentamento de 1.200 tiques mais o ciclo de 600). Nele saem a primeira obra, a primeira
+leva de pedidos de fabricação e a primeira distribuição de tarefas, além da memória que o
+servidor esqueceu ao abrir o mundo. O prazo de 15 ms (`PlanningBudget.DEADLINE_MS`) cerca
+só a varredura de lote.
+
+**Onde olhar:** `ColonyCycleRunner` (fase `planner`), `cost_ledger.py` do primeiro ciclo. VF-001.
+
+---
+
 ## Teste vs. jogo
 
 ### Bateria verde, jogo não funciona
@@ -380,6 +405,12 @@ reinicia o cursor que consulta as estradas. GameTests:
 `reconcilingAPlayerRoadChangeUpdatesTheIndex` e
 `removingAPlayerRoadRemovesOnlyThatIndexedColumn`. Isso melhora a descoberta
 de lotes, mas não prova retomada de construção em jogo.
+
+---
+
+### Diário de ações começa com bytes nulos
+
+Jogo fechado sem gravar o lote final. O `action_report.py` pula a linha. VF-018.
 
 ---
 

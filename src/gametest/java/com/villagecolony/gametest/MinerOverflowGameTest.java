@@ -117,7 +117,7 @@ public class MinerOverflowGameTest implements FabricGameTest {
      * mineiro que não cavou nada e um que cavou e perdeu tudo dariam o
      * mesmo baú vazio.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_overflow",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_overflow_the_haul_that_does_not_fit_does_not_enter_another_profession_chest",
             tickLimit = 400)
     public void theHaulThatDoesNotFitDoesNotEnterAnotherProfessionChest(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -237,7 +237,7 @@ public class MinerOverflowGameTest implements FabricGameTest {
      * Antes de cavar e abandonar uma tarefa por baú cheio, o mineiro libera os
      * dez slots reservados no baú comunitário da própria vila.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_overflow",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_overflow_a_community_chest_relieves_the_miner_before_the_haul_is_dropped",
             tickLimit = 400)
     public void aCommunityChestRelievesTheMinerBeforeTheHaulIsDropped(TestContext context) {
         ServerWorld world = context.getWorld();

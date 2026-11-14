@@ -66,7 +66,7 @@ public class IdleWatchGameTest implements FabricGameTest {
         context.complete();
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_watch", tickLimit = 20)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_watch_useful_progress_resets_walking_deadline", tickLimit = 20)
     public void usefulProgressResetsWalkingDeadline(TestContext context) {
         UUID worker = UUID.randomUUID();
         Task task = VillageColonyMod.TASKS.create(UUID.randomUUID(), TaskType.SMELT_MATERIAL,

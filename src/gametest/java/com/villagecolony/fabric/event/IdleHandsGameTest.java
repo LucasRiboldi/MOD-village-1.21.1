@@ -62,7 +62,7 @@ public final class IdleHandsGameTest implements FabricGameTest {
      * 2026-09-30. No playtest, seis fundidores sem areia pegaram e soltaram a
      * tarefa de vidro 6.324 vezes em 18 minutos.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_hands")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_hands_a_released_task_does_not_go_back_to_the_same_worker_between_cycles")
     public void aReleasedTaskDoesNotGoBackToTheSameWorkerBetweenCycles(TestContext context) {
         BlockPos chestAt = new BlockPos(2, 2, 2);
         context.setBlockState(chestAt, Blocks.CHEST.getDefaultState());

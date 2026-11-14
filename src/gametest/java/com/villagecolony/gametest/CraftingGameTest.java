@@ -591,7 +591,7 @@ public class CraftingGameTest implements FabricGameTest {
      * 2026-10-03 a carpintaria fazia quatro escadas, esperava o construtor
      * consumir as quatro e so entao fazia o lote seguinte.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock_the_carpenter_stocks_the_whole_remaining_stair_demand",
             tickLimit = 300)
     public void theCarpenterStocksTheWholeRemainingStairDemand(TestContext context) {
         Fixture fixture = setUpStairDemand(context);
@@ -1010,7 +1010,7 @@ public class CraftingGameTest implements FabricGameTest {
      * baú, pedreiro na vila, obra parada esperando a escada. Se a tarefa
      * do pedreiro nascer, o defeito morreu.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_waiting",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_waiting_the_work_asks_for_a_piece_that_is_not_a_resource",
             tickLimit = 100)
     public void theWorkAsksForAPieceThatIsNotAResource(TestContext context) {
         BlockPos stand = new BlockPos(3, 2, 2);
@@ -1096,7 +1096,7 @@ public class CraftingGameTest implements FabricGameTest {
      * A cadeia declarada já antecipa recursos; esta fecha a lacuna das peças
      * que só existem na planta, como escadas, portas e alçapões.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_waiting",
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_waiting_the_work_asks_for_its_uncatalogued_piece_before_waiting",
             tickLimit = 100)
     public void theWorkAsksForItsUncataloguedPieceBeforeWaiting(TestContext context) {
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());

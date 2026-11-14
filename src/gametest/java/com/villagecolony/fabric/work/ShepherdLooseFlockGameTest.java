@@ -27,7 +27,7 @@ import java.util.UUID;
 /** O animal solto também come para procriar; a coleta o traz depois (ADR-039 E2). */
 public class ShepherdLooseFlockGameTest implements FabricGameTest {
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_hours", tickLimit = 20)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_hours_two_loose_sheep_are_fed_to_breed", tickLimit = 20)
     public void twoLooseSheepAreFedToBreed(TestContext context) {
         BlockPos chestAt = new BlockPos(1, 1, 1);
         context.setBlockState(chestAt, Blocks.CHEST.getDefaultState());

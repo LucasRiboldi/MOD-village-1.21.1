@@ -1,10 +1,14 @@
 package com.villagecolony.fabric.event;
 
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.UUID;
 
@@ -61,6 +65,9 @@ public final class PhantomWorkerLog {
     /** De quem a notícia já saiu, para ela não sair de novo. */
     private static final Set<UUID> ANNOUNCED = new java.util.LinkedHashSet<>();
 
+    /** Onde cada trabalhador foi achado pela última vez nesta sessão do servidor — VF-007 A. */
+    private static final Map<UUID, ColonyPos> LAST_SEEN = new LinkedHashMap<>();
+
     private PhantomWorkerLog() {
     }
 
@@ -100,16 +107,22 @@ public final class PhantomWorkerLog {
         for (var worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
             UUID villagerId = worker.villagerId();
 
-            boolean present = world.getEntity(villagerId) != null;
+            var entity = world.getEntity(villagerId);
+            boolean present = entity != null;
+
+            if (present) {
+                LAST_SEEN.put(villagerId, MinecraftTypeAdapter.toColonyPos(entity.getBlockPos()));
+            }
 
             if (observe(villagerId, present)) {
                 VillageColonyMod.LOGGER.warn(
                         "Worker {} of colony {} has been missing for {} cycles while the colony"
-                                + " was active — it may be a phantom holding a profession slot"
+                                + " was active ({}) — it may be a phantom holding a profession slot"
                                 + " and a chest. See docs/research/estado-que-sobrevive-ao-dono.md",
                         villagerId,
                         colonyId,
-                        MISSES_BEFORE_NEWS);
+                        MISSES_BEFORE_NEWS,
+                        whereabouts(world, LAST_SEEN.get(villagerId)));
             }
         }
 
@@ -125,11 +138,48 @@ public final class PhantomWorkerLog {
 
         MISSES.keySet().retainAll(live);
         ANNOUNCED.retainAll(live);
+        LAST_SEEN.keySet().retainAll(live);
+    }
+
+    /** O paradeiro de {@link #whereabouts(ColonyPos, OptionalDouble, boolean)}, lido do mundo. */
+    private static String whereabouts(net.minecraft.server.world.ServerWorld world, @Nullable ColonyPos lastSeen) {
+        if (lastSeen == null) {
+            return whereabouts(null, OptionalDouble.empty(), false);
+        }
+
+        OptionalDouble nearest = world.getPlayers().stream()
+                .mapToDouble(player -> Math.sqrt(player.squaredDistanceTo(
+                        lastSeen.x() + 0.5, lastSeen.y(), lastSeen.z() + 0.5)))
+                .min();
+
+        return whereabouts(lastSeen, nearest,
+                world.getChunkManager().isChunkLoaded(lastSeen.x() >> 4, lastSeen.z() >> 4));
+    }
+
+    /**
+     * O que se sabe do aldeão sumido, para a linha do fantasma — VF-007 A.
+     *
+     * <p>Separa o aldeão vivo num chunk descarregado (chunk descarregado, jogador longe) do registro sem dono
+     * (chunk carregado e ninguém lá). Pura, para o formato ser afirmado sem servidor.
+     *
+     * @param lastSeen onde o aldeão foi achado pela última vez nesta sessão, ou {@code null} se nunca foi
+     * @param nearestPlayer a distância, em blocos, do jogador mais perto dessa posição; vazia sem jogador
+     * @param chunkLoaded se o chunk dessa posição está carregado
+     */
+    public static String whereabouts(@Nullable ColonyPos lastSeen, OptionalDouble nearestPlayer, boolean chunkLoaded) {
+        if (lastSeen == null) {
+            return "lastSeen=none nearestPlayer=unknown chunkLoaded=unknown";
+        }
+
+        return "lastSeen=" + lastSeen.x() + "," + lastSeen.y() + "," + lastSeen.z()
+                + " nearestPlayer=" + (nearestPlayer.isPresent() ? Math.round(nearestPlayer.getAsDouble()) : "none")
+                + " chunkLoaded=" + chunkLoaded;
     }
 
     /** Esquece as contagens, junto com o resto do estado em memória. */
     public static void clearAll() {
         MISSES.clear();
         ANNOUNCED.clear();
+        LAST_SEEN.clear();
     }
 }

@@ -36,7 +36,7 @@ public final class SandNearWaterGameTest implements FabricGameTest {
     }
 
     /** Com uma praia ao alcance, a planície passa a ter rota para o vidro. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "sand_near_water")
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "sand_near_water_a_beach_gives_the_plains_a_route_to_glass")
     public void aBeachGivesThePlainsARouteToGlass(TestContext context) {
         BlockPos beach = new BlockPos(3, 1, 3);
         context.setBlockState(beach, Blocks.SAND);
