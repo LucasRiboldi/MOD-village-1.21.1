@@ -433,4 +433,3 @@ mod não muda e nada foi gerado nem instalado.
 (qual vaca sai do curral). As duas primeiras mudam o JAR: pedem versão nova, JAR e cópia para o TLauncher antes do jogo.
 
 **Depois do jogo:** VF-006 A, VF-008/009 (regra nova do autor), VF-014 B, VF-020, VF-005.
-
