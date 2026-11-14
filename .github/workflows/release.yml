@@ -2,13 +2,15 @@ name: Release
 
 # Publica o JAR da versão de gradle.properties como pré-lançamento do GitHub
 # (tag v<versão>-alpha), com o SHA-256 e a entrada da versão no CHANGELOG.md.
-# Só compila o JAR (remapJar): a verificação é o trabalho do CI, não deste
-# workflow. Se o release da versão já existe, não faz nada.
+# Só compila o JAR (remapJar): a verificação é o trabalho do CI, e a release só sai
+# se o CI ("Build and test") passou no mesmo commit. Se o release da versão já
+# existe, não faz nada.
 on:
   workflow_dispatch:
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
   group: release
@@ -32,6 +34,18 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      # Sem CI verde no mesmo commit, nada é publicado (avaliação de 13-11).
+      - name: Require green CI on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run=$(gh run list --workflow ci.yml --commit "$GITHUB_SHA" --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          if [ -z "$run" ]; then
+            echo "Nenhum CI verde no commit $GITHUB_SHA; a release não sai. Espere o CI da main passar."
+            exit 1
+          fi
+          echo "ci_run=$run" >> "$GITHUB_ENV"
 
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
@@ -59,7 +73,7 @@ jobs:
           {
             echo "Village Colony ${version} alpha para Minecraft 1.21.1 (Fabric)."
             echo
-            echo "JAR compilado por este workflow no commit \`${GITHUB_SHA}\`, só com \`remapJar\`: os testes não rodaram nesta compilação. A verificação registrada da versão está abaixo e no README."
+            echo "JAR compilado por este workflow no commit \`${GITHUB_SHA}\`, com \`remapJar\`. O CI do mesmo commit passou: [run ${ci_run}](https://github.com/${GITHUB_REPOSITORY}/actions/runs/${ci_run}). A verificação registrada da versão está abaixo e no README."
             echo
             echo "**JAR:** \`village-colony-${version}.jar\`"
             echo "**SHA-256:** \`${sha}\`"

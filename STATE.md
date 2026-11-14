@@ -69,10 +69,7 @@ na bateria não reprova a entrega, mas tem de ser dito; qualquer outro vermelho 
 
 ## Aberto que não é código
 
-- **CI:** o relatório de cobertura publicado mostra 7,3% porque a auditoria sobrescreve o da bateria (79,0% real);
-  o passo "Check whitespace" nunca reprova num checkout limpo; a release não exige CI verde do mesmo SHA. Mexer nos
-  workflows é decisão do autor (`HANDOFF.md`, "CI: não altere os workflows").
-- **PR #45** aberta há tempo e branches locais de outras linhas: fechar ou integrar é decisão do autor.
+- **Branches locais de outras linhas** (as sessões paralelas): cada uma fecha a própria; não apagar a de outra sessão.
 - **Publicação:** declaração de uso de IA, procedência do ícone, das texturas e da `big_house_mod.nbt` (F5).
 
 ## Dívida conhecida
@@ -81,6 +78,8 @@ na bateria não reprova a entrega, mas tem de ser dito; qualquer outro vermelho 
   250 classes, 146 num ciclo. Não bloqueia a 1.0; está em "Depois da 1.0" na avaliação.
 - NullAway só no `core`; `data/save` sem checagem de nulos é o primeiro a cobrir (F2).
 - Teto de 500 linhas virou meta: 44 arquivos entre 450 e 500, 5 em exatamente 500.
+- `MinerProbe`, `EnduranceReport` e `VillageInventoryObserver` estão em `src/main` só como sonda dos GameTests; mover
+  para o conjunto de teste exige separar os unitários que os usam.
 - `runGametest` não filtra por teste; use `scripts/gametest_focus.py` e restaure antes de commitar.
 
 ## Como avaliar e investigar

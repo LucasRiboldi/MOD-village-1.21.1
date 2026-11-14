@@ -844,7 +844,7 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 Verificação de 2026-11-13 (0.4.74, avaliação de qualidade), pelo Sentinela
 (`python scripts/test_lab.py fast`) na `main` em `ac2f1977`:
 
-- 1804 testes unitários: aprovados (`test`, com ArchUnit, Error Prone e o teto
+- 1782 testes unitários: aprovados (22 saíram com as classes sem uso retiradas em 13-11) (`test`, com ArchUnit, Error Prone e o teto
   de 500 linhas por arquivo).
 - 155 testes Python: aprovados (o CI instala o `nbtlib` e o `pillow` para os
   testes das versões do armazém e dos mapas).

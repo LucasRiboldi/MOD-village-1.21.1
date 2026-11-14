@@ -25,6 +25,10 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # O commit de merge do PR (ou o da main) e o pai dele: o pai e a base, e a
+          # checagem de espacos compara os dois.
+          fetch-depth: 2
 
       - name: Set up JDK 21
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
@@ -40,8 +44,11 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
+      # Sem base, "git diff --check" olha so a arvore de trabalho, que no CI e
+      # sempre limpa, e nunca reprovava (avaliacao de 13-11). HEAD^1 e a base do
+      # PR (no commit de merge) ou o commit anterior da main.
       - name: Check whitespace
-        run: git diff --check
+        run: git diff --check HEAD^1 HEAD
 
       - name: Install Python test dependencies
         # nbtlib lê e grava os modelos .nbt do armazém (scripts/storage_variants.py, Regra 115) e as regiões do
@@ -66,6 +73,16 @@ jobs:
       # garante que nenhuma classe fica fora do registro.
       - name: Run Fabric gametests
         run: ./gradlew runGametest --rerun-tasks
+
+      # A auditoria abaixo roda o runGametest de novo e regrava
+      # build/reports/jacoco/gametest com a cobertura dela so (7,3% contra 79%
+      # da bateria, avaliacao de 13-11). A da bateria fica guardada aqui.
+      - name: Keep gametest battery coverage
+        run: |
+          if [ -d build/reports/jacoco/gametest ]; then
+            rm -rf build/reports/jacoco/gametest-battery
+            cp -r build/reports/jacoco/gametest build/reports/jacoco/gametest-battery
+          fi
 
       # Auditoria de suprimento das estruturas Vanilla: ~64 s de servidor, e
       # o resultado so muda com estruturas, catalogo ou regra de suprimento.

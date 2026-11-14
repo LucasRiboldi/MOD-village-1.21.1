@@ -2,7 +2,7 @@
 
 Índice gerado em 2026-11-13 a partir dos arquivos desta pasta. **Estado** é o da decisão hoje; **Emendada por** lista as
 ADRs que dizem emendá-la no próprio cabeçalho. O texto de cada ADR é a fonte: em divergência, vale o arquivo, e o índice
-se corrige. ADR nova pega o próximo número livre (o maior hoje é 054) e entra aqui no mesmo commit.
+se corrige. ADR nova pega o próximo número livre (o maior hoje é 055) e entra aqui no mesmo commit.
 
 | ADR | Título | Estado | Emendada por |
 |---|---|---|---|
@@ -29,7 +29,7 @@ se corrige. ADR nova pega o próximo número livre (o maior hoje é 054) e entra
 | [021](ADR-021-pastor-canonico-e-migracao-do-criador.md) | Pastor canonico e migracao do Criador | Aceita |  |
 | [022](ADR-022-construction-supply-when-biome-has-no-route.md) | Suprimento de construcao sem rota no bioma | Aceita |  |
 | [023](ADR-023-deferred-unsupported-construction-pieces.md) | Pecas de construcao sem apoio permanecem pendentes | Aceita |  |
-| [024](ADR-024-physical-warehouse-index.md) | Armazém físico por fotografia (WarehouseIndex) | Aceita |  |
+| [024](ADR-024-physical-warehouse-index.md) | Armazém físico por fotografia (WarehouseIndex) | Retirada (13-11) |  |
 | [025](ADR-025-mineiro-autonomo.md) | Mineiro autônomo: mina andável, movimento com ações e registro de veios | Aceita |  |
 | [026](ADR-026-bosque-fundacional-da-vila.md) | bosque fundacional da vila | Aceita |  |
 | [027](ADR-027-water-mine-access.md) | Acesso selado de mina sob agua e eixos 3x3 | Aceita |  |
@@ -60,3 +60,4 @@ se corrige. ADR nova pega o próximo número livre (o maior hoje é 054) e entra
 | [052](ADR-052-pontas-levam-a-vila.md) | As pontas azuis levam a vila para fora | Aceita |  |
 | [053](ADR-053-patamar-da-mina.md) | O patamar nas dobras da escada da mina | Aceita |  |
 | [054](ADR-054-client-side-pixel-art-overlays.md) | Overlays pixel art no cliente | Aceita |  |
+| [055](ADR-055-decisoes-do-autor-2026-11-13.md) | Decisões do autor de 13-11 (pendências da avaliação de qualidade) | Aceita |  |
