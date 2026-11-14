@@ -122,7 +122,7 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
     }
 
     /** Regra 269: o prazo cresce com a distância; a 90 blocos do poste, 3.000 tiques ainda não estouram. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_deadline", tickLimit = 40)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_deadline_far_post", tickLimit = 40)
     public void aFarPostGivesTheShepherdMoreTime(TestContext context) {
         ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(4, 1, 4));
         VillagerEntity shepherd = context.spawnEntity(EntityType.VILLAGER, new BlockPos(2, 1, 2));
@@ -151,7 +151,7 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
     }
 
     /** Regra 269: quando a coleta acaba sem chegar, o animal fica amarrado na cerca mais perto, e não solto. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_deadline", tickLimit = 40)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_deadline_tied_animal", tickLimit = 40)
     public void aDroppedAnimalIsTiedToTheNearestFence(TestContext context) {
         ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(4, 1, 4));
         BlockPos fence = new BlockPos(1, 1, 1);
