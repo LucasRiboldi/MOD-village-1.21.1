@@ -139,11 +139,37 @@ public final class PathPaving {
         }
     }
 
+    /**
+     * Regra 280: a árvore (tronco ou folha natural) acima da coluna do caminho, até a altura de passagem, sai inteira,
+     * de onde o calçador estiver. Sem isso a coluna da mata, que ele não alcança, saía do traçado de vez — o ramal da
+     * mina da vila de taiga do jogo da 0.4.75 parou na mata.
+     *
+     * @return quantos blocos saíram; 0 sem árvore na coluna
+     */
+    static int clearTreeOver(ServerWorld world, PathStep step, List<com.villagecolony.core.type.ColonyPos> chests) {
+        for (int up = 1; up <= com.villagecolony.fabric.integration.TreeClearing.HEADROOM; up++) {
+            net.minecraft.block.BlockState state = world.getBlockState(
+                    new BlockPos(step.x(), step.floorY() + up, step.z()));
+
+            if (com.villagecolony.fabric.integration.TreeClearing.isTree(state)
+                    || state.isIn(net.minecraft.registry.tag.BlockTags.LEAVES)) {
+                return com.villagecolony.fabric.integration.TreeClearing.openColumn(
+                        world, step.x(), step.z(), step.floorY(), chests);
+            }
+        }
+
+        return 0;
+    }
+
     private static void step(ServerWorld world, UUID colonyId, VillagerEntity paver, Turn turn, PathLinks.Plan plan) {
         PathStep step = plan.steps.get(plan.next);
         BlockPos floor = new BlockPos(step.x(), step.floorY(), step.z());
 
         if (!paver.getBlockPos().isWithinDistance(floor, REACH + 1)) {
+            // Regra 280: árvore no caminho não tira a coluna do traçado — ele a derruba de onde estiver e segue.
+            clearTreeOver(world, step, com.villagecolony.fabric.integration.ColonyChests.nearestFirst(world, colonyId,
+                    new com.villagecolony.core.type.ColonyPos(step.x(), step.floorY(), step.z())));
+
             turn.walked += 10;
 
             if (turn.walked > GIVE_UP_AFTER) {
