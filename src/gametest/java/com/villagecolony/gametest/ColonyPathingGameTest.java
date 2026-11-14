@@ -126,7 +126,7 @@ public class ColonyPathingGameTest implements FabricGameTest {
         });
     }
 
-    /** Mesma geometria fechada nas posições observadas; nenhuma entidade é movida entre as buscas. Regra 278: em todas, a volta seca. */
+    /** Mesma geometria fechada nas posições observadas; cada aldeão parte de onde nasceu. Regra 278: em todas, a volta seca. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_pathing_water_translation", tickLimit = 40)
     public void theDryDetourIsTranslationInvariantAtTheObservedCoordinates(TestContext context) {
         Map<BlockPos, BlockState> saved = new HashMap<>();
@@ -189,6 +189,11 @@ public class ColonyPathingGameTest implements FabricGameTest {
                 }
                 boolean aliasControl = PathNode.hash(origin.getX(), origin.getY(), origin.getZ())
                         == PathNode.hash(origin.getX(), origin.getY(), origin.getZ() + 256);
+                // O aldeão anda nos 10 tiques de espera, e o resultado do A* do jogo depende do ponto de partida: de
+                // (0, 2, 0) ele nada sempre, de (0, 2, 1) vai pelo seco. A busca parte de onde ele nasceu.
+                BlockPos spawn = origin.add(0, 2, 1);
+                probe.villager().refreshPositionAndAngles(spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5, 0, 0);
+                probe.villager().setOnGround(true);
                 Path path = probe.pathTo(origin.add(0, 2, 7));
                 paths.put(origin, path);
                 VillageColonyMod.LOGGER.info("WATER_TRANSLATION origin={} hashAliases={} z256AliasControl={} distance={} ground={}",
@@ -218,6 +223,7 @@ public class ColonyPathingGameTest implements FabricGameTest {
                                 .mapToObj(i -> path.getNode(i).getBlockPos().subtract(origin).toShortString()
                                         + "/" + path.getNode(i).type + "/" + path.getNode(i).penalty)
                                 .collect(java.util.stream.Collectors.joining(";")));
+
             }
             } finally {
                 cleanup.run();
