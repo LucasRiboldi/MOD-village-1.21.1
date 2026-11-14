@@ -25,6 +25,7 @@ import java.util.Optional;
  * <ul>
  *   <li><b>Água:</b> o nó de água custa {@link #WATER_COST}, igual ao Vanilla. A rota seca continua preferível
  *   quando é curta, mas uma travessia curta não bloqueia o trabalho.</li>
+ *   <li><b>Alçapão em pé:</b> o nó fica fora do caminho ({@link #uprightTrapdoor}, Regra 276).</li>
  *   <li><b>Rua:</b> dentro da caixa da vila, o nó andável sem chão de rua embaixo vira {@link #OFF_STREET}, que
  *   custa {@link #OFF_STREET_COST}. A rua ganha sempre que o desvio por ela não passa de cerca de 2 vezes a
  *   linha reta; perto do alvo ele sai da rua normalmente.</li>
@@ -75,6 +76,10 @@ public final class ColonyPathing {
 
         prepare(mob);
 
+        if (type == PathNodeType.TRAPDOOR) {
+            return uprightTrapdoor(world, x, y, z);
+        }
+
         if (type != PathNodeType.WALKABLE || !insideTheVillage(worker.get(), x, z)) {
             return type;
         }
@@ -86,6 +91,24 @@ public final class ColonyPathing {
         }
 
         return VillageRoad.isPathBlock(floor) || StreetSurface.isStreetMaterial(floor) ? type : OFF_STREET;
+    }
+
+    /**
+     * Regra 276: o nó com alçapão aberto (em pé) nos pés ou na cabeça fica fora do caminho. O jogo dá custo 0 ao
+     * alçapão e nunca pula por cima dele, então o aldeão entrava no canteiro de alçapões e não saía. O alçapão fechado,
+     * deitado, continua andável.
+     */
+    public static PathNodeType uprightTrapdoor(BlockView world, int x, int y, int z) {
+        for (int up = 0; up <= 1; up++) {
+            BlockState state = world.getBlockState(new BlockPos(x, y + up, z));
+
+            if (state.isIn(BlockTags.TRAPDOORS) && state.contains(net.minecraft.block.TrapdoorBlock.OPEN)
+                    && state.get(net.minecraft.block.TrapdoorBlock.OPEN)) {
+                return PathNodeType.BLOCKED;
+            }
+        }
+
+        return PathNodeType.TRAPDOOR;
     }
 
     /**
