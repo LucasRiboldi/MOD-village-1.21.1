@@ -23,8 +23,9 @@ import java.util.Optional;
  * noturnos saíram do meio do lago, e o aldeão cortava pelo gramado). Muda só o custo dos nós da navegação do jogo:
  *
  * <ul>
- *   <li><b>Água:</b> o nó de água custa {@link #WATER_COST}, igual ao Vanilla. A rota seca continua preferível
- *   quando é curta, mas uma travessia curta não bloqueia o trabalho.</li>
+ *   <li><b>Água:</b> o nó de água custa {@link #WATER_COST} (Regra 278): a busca esgota o chão seco antes de entrar
+ *   na água, e só atravessa quando não acha rota seca ao alcance dela.</li>
+ *   <li><b>Alçapão em pé:</b> o nó fica fora do caminho ({@link #uprightTrapdoor}, Regra 276).</li>
  *   <li><b>Rua:</b> dentro da caixa da vila, o nó andável sem chão de rua embaixo vira {@link #OFF_STREET}, que
  *   custa {@link #OFF_STREET_COST}. A rua ganha sempre que o desvio por ela não passa de cerca de 2 vezes a
  *   linha reta; perto do alvo ele sai da rua normalmente.</li>
@@ -38,10 +39,11 @@ import java.util.Optional;
 public final class ColonyPathing {
 
     /**
-     * O custo Vanilla de cada nó de água. Mantém a preferência normal por terra sem impedir travessia curta
-     * (decisão do autor, 2026-11-01).
+     * O custo de cada nó de água fora da mina — Regra 278: água só quando não há caminho seco. Alto o bastante para a
+     * busca do jogo preferir um desvio seco de dezenas de blocos; não é proibição, porque sem rota seca ao alcance a
+     * travessia continua possível.
      */
-    public static final float WATER_COST = 8.0F;
+    public static final float WATER_COST = 64.0F;
 
     /**
      * O tipo do nó de gramado dentro da vila: o perigo cauteloso, que o Vanilla só usa para dar custo (0 por padrão)
@@ -75,6 +77,10 @@ public final class ColonyPathing {
 
         prepare(mob);
 
+        if (type == PathNodeType.TRAPDOOR) {
+            return uprightTrapdoor(world, x, y, z);
+        }
+
         if (type != PathNodeType.WALKABLE || !insideTheVillage(worker.get(), x, z)) {
             return type;
         }
@@ -86,6 +92,24 @@ public final class ColonyPathing {
         }
 
         return VillageRoad.isPathBlock(floor) || StreetSurface.isStreetMaterial(floor) ? type : OFF_STREET;
+    }
+
+    /**
+     * Regra 276: o nó com alçapão aberto (em pé) nos pés ou na cabeça fica fora do caminho. O jogo dá custo 0 ao
+     * alçapão e nunca pula por cima dele, então o aldeão entrava no canteiro de alçapões e não saía. O alçapão fechado,
+     * deitado, continua andável.
+     */
+    public static PathNodeType uprightTrapdoor(BlockView world, int x, int y, int z) {
+        for (int up = 0; up <= 1; up++) {
+            BlockState state = world.getBlockState(new BlockPos(x, y + up, z));
+
+            if (state.isIn(BlockTags.TRAPDOORS) && state.contains(net.minecraft.block.TrapdoorBlock.OPEN)
+                    && state.get(net.minecraft.block.TrapdoorBlock.OPEN)) {
+                return PathNodeType.BLOCKED;
+            }
+        }
+
+        return PathNodeType.TRAPDOOR;
     }
 
     /**

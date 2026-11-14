@@ -423,6 +423,11 @@ public final class RoadIndex {
         }
 
         long column = ColonyRoads.column(pos.getX(), pos.getZ());
+        ColonyRoads network = SweepState.NETWORK.get(colonyId);
+        if (network != null) {
+            return network.columns().contains(column);
+        }
+
         ColonyRoads roads = SweepState.ROADS.get(colonyId);
 
         if (roads != null && roads.columns().contains(column)) {
@@ -457,18 +462,8 @@ public final class RoadIndex {
      * tirar a vila original de ambas faria a colônia deixar de reconhecer
      * as ruas Vanilla, que é justamente por onde ela cresce.
      *
-     * <p><b>A decisão do autor, 2026-09-17:</b> a reserva vale para a rua
-     * que a <b>colônia</b> calçou, e não para o calçamento que já estava
-     * na vila. Numa vila gerada a rua é onde o terreno é plano, e reservar
-     * todo ele era recusar o melhor chão que existe.
-     *
-     * <p><b>O número que decidiu.</b> Playtest de 2026-09-17, 42 minutos:
-     * <b>960.672 colunas testadas e zero aprovadas</b>, com 54,8% das
-     * recusas nesta reserva e 18,5% na Regra 3 — 73% do território
-     * bloqueado por proteção. A linha
-     * {@code lot columns: 0 survived every check} é o instrumento que
-     * separou "não há chão" de "faltou tempo de varredura", e ela
-     * respondeu a primeira.
+     * <p>A reserva vale para a rua que a <b>colônia</b> calçou (autor, 2026-09-17), e com a rede publicada pelo
+     * grafo só para a coluna dela: trilha e caminho fora da rede não seguram chão (Regra 282).
      *
      * <p><b>A Regra 3 continua inteira, e isto não a toca.</b> Quem
      * protege a vila do jogador é a recusa {@code PROTECTED}, uma
@@ -484,6 +479,11 @@ public final class RoadIndex {
         }
 
         long column = ColonyRoads.column(pos.getX(), pos.getZ());
+        ColonyRoads network = SweepState.NETWORK.get(colonyId);
+        if (network != null) {
+            return network.columns().contains(column);
+        }
+
         ColonyRoads roads = SweepState.ROADS.get(colonyId);
 
         if (roads != null && roads.columns().contains(column)) {

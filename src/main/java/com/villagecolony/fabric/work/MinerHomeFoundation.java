@@ -118,8 +118,14 @@ public final class MinerHomeFoundation {
                 .setIgnoreEntities(true)
                 .setInitializeMobs(false);
 
-        return template.get().place(world, corner, corner, placement,
+        boolean placed = template.get().place(world, corner, corner, placement,
                 Random.create(world.getSeed() ^ corner.asLong()), Block.NOTIFY_ALL);
+
+        if (placed) {
+            com.villagecolony.fabric.integration.PlacedLogs.scan(world, template.get().calculateBoundingBox(placement, corner), "miner_home");
+        }
+
+        return placed;
     }
 
     /**

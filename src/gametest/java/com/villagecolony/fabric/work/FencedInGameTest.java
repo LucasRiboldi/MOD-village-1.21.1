@@ -239,4 +239,105 @@ public final class FencedInGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * Regra 275: a soleira de uma casa não é curral. Degrau entre dois muretes, porta atrás e a copa
+     * de um pinheiro na altura da cabeça à frente: quem está ali alcança a casa pela porta, e isso é
+     * casa, não cercado — sem a regra, o pastor pulava o murete sem fim.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "fenced_in")
+    public void aDoorstepBehindLeavesIsNotAPen(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos center = platform(context, 6);
+
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -1; dz <= 4; dz++) {
+                for (int dy = 2; dy <= 3; dy++) {
+                    world.setBlockState(center.add(dx, dy, dz), Blocks.AIR.getDefaultState());
+                }
+            }
+        }
+
+        // A casa: chão de pedregulho um bloco acima do chão de fora, paredes de dois e teto.
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = 1; dz <= 4; dz++) {
+                world.setBlockState(center.add(dx, 0, dz), Blocks.COBBLESTONE.getDefaultState());
+                world.setBlockState(center.add(dx, 3, dz), Blocks.COBBLESTONE.getDefaultState());
+                boolean wall = Math.abs(dx) == 2 || dz == 1 || dz == 4;
+
+                if (wall && !(dx == 0 && dz == 1)) {
+                    world.setBlockState(center.add(dx, 1, dz), Blocks.COBBLESTONE.getDefaultState());
+                    world.setBlockState(center.add(dx, 2, dz), Blocks.COBBLESTONE.getDefaultState());
+                }
+            }
+        }
+
+        world.setBlockState(center.add(0, 1, 1), Blocks.SPRUCE_DOOR.getDefaultState()
+                .with(net.minecraft.block.DoorBlock.FACING, Direction.NORTH));
+        world.setBlockState(center.add(0, 2, 1), Blocks.SPRUCE_DOOR.getDefaultState()
+                .with(net.minecraft.block.DoorBlock.FACING, Direction.NORTH)
+                .with(net.minecraft.block.DoorBlock.HALF, net.minecraft.block.enums.DoubleBlockHalf.UPPER));
+
+        // A soleira: degrau entre dois muretes de dois de altura.
+        world.setBlockState(center, Blocks.COBBLESTONE_STAIRS.getDefaultState()
+                .with(net.minecraft.block.StairsBlock.FACING, Direction.SOUTH));
+
+        for (int dy = 0; dy <= 1; dy++) {
+            world.setBlockState(center.add(-1, dy, 0), Blocks.COBBLESTONE_WALL.getDefaultState());
+            world.setBlockState(center.add(1, dy, 0), Blocks.COBBLESTONE_WALL.getDefaultState());
+        }
+
+        // A copa do pinheiro na altura da cabeça, à frente da soleira.
+        for (int dx = -1; dx <= 1; dx++) {
+            world.setBlockState(center.add(dx, 2, -1), Blocks.SPRUCE_LEAVES.getDefaultState()
+                    .with(net.minecraft.block.LeavesBlock.PERSISTENT, true));
+        }
+
+        FencedIn.Result doorstep = FencedIn.check(world, center.up());
+
+        context.assertFalse(doorstep.enclosed(),
+                "a soleira da casa foi lida como curral: alcance de " + doorstep.reach().size() + " blocos");
+        context.complete();
+    }
+
+    /**
+     * Regra 276: alçapões abertos em volta prendem como cerca baixa — o canteiro da vila de taiga. O aldeão
+     * preso ali tem saída por cima deles, e o caminho da colônia não entra no nó do alçapão em pé.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "fenced_in")
+    public void uprightTrapdoorsAreJumpedAndAvoided(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos center = platform(context, 7);
+
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (dx != 0 || dz != 0) {
+                    world.setBlockState(center.add(dx, 0, dz), Blocks.SPRUCE_TRAPDOOR.getDefaultState()
+                            .with(net.minecraft.block.TrapdoorBlock.OPEN, true)
+                            .with(net.minecraft.block.TrapdoorBlock.FACING, Direction.NORTH));
+                }
+            }
+        }
+
+        FencedIn.Result bed = FencedIn.check(world, center);
+        List<FencedIn.Exit> exits = FencedIn.exits(world, bed, center);
+
+        context.assertTrue(bed.enclosed(), "o canteiro de alçapões não foi lido como cercado");
+        context.assertTrue(!exits.isEmpty() && !exits.get(0).gate(),
+                "sem saída por cima dos alçapões: " + exits);
+
+        BlockPos upright = center.add(1, 0, 0);
+        BlockPos lying = center.add(4, 0, 0);
+        world.setBlockState(lying, Blocks.SPRUCE_TRAPDOOR.getDefaultState());
+
+        context.assertTrue(com.villagecolony.fabric.integration.ColonyPathing.uprightTrapdoor(
+                        world, upright.getX(), upright.getY(), upright.getZ())
+                        == net.minecraft.entity.ai.pathing.PathNodeType.BLOCKED,
+                "o caminho entra no nó do alçapão em pé");
+        context.assertTrue(com.villagecolony.fabric.integration.ColonyPathing.uprightTrapdoor(
+                        world, lying.getX(), lying.getY(), lying.getZ())
+                        == net.minecraft.entity.ai.pathing.PathNodeType.TRAPDOOR,
+                "o alçapão fechado, deitado, deixou de ser andável");
+        context.complete();
+    }
 }

@@ -11773,3 +11773,36 @@ Manifesto confirma versão 0.4.15, Minecraft 1.21.1 e Java 21. SHA-256 do JAR:
 Entrega local em `build/libs/`, `downloads/` e TLauncher; JAR 0.4.14 preservado
 como `.disabled`. Nenhum save do jogador foi aberto. Sem push, merge ou release.
 Bateria completa não executada; retorno e conservação da escadaria aguardam playtest.
+
+## 2026-11-14 — 0.4.80: Regras 275 a 278 (jogo da 0.4.75/0.4.79, taiga)
+
+Triagem dos oito sintomas do autor; escolhas por sintoma. Implementado, com GameTest vermelho antes:
+soleira de casa não é curral (275; a causa era a copa de um pinheiro na altura da cabeça à frente da
+soleira), alçapão em pé se pula e o caminho o evita (276), o lenhador só derruba encostado no tronco
+(277; o desvio continua chegando pelo alcance) e água só sem caminho seco, custo 64 (278).
+Unitários verdes, Sentinela `fast` PASS (20261114T045435Z e 20261114T051248Z). O teste de translação
+da água caiu 2 vezes em 5 rodadas com custo 64. SHA-256 do JAR:
+`358AEF10EC15B7A059C0BAE7F6566CB2476072A512AA0F7D154BDAAD1BF4F9CC`, em `build/libs/`, `downloads/`
+e TLauncher (0.4.79 como `.disabled`). Sem push. Pendentes no `TODO.md`: construtor congelado,
+ramal da mina recusado na mata, vila sem lote, log de tronco posto. Nada visto em jogo.
+
+## 2026-11-14 — 0.4.81: Regras 279 e 280 (jogo da 0.4.75, taiga)
+
+Escolhas do autor sobre o construtor congelado e o ramal da mina. Regra 279: o encalhado por dois
+congelamentos só é solto longe do ponto onde congelou (`StrandedWorkers.frozeAt` marca o ponto já no
+primeiro encalhe). Regra 280: a árvore acima da coluna do caminho sai de onde o calçador estiver
+(`PathPaving.clearTreeOver`). Vermelho antes nos dois testes novos; unitários verdes, Sentinela `fast`
+PASS (20261114T131015Z). SHA-256 do JAR:
+`5C528B791FBE299F0EE2389798F5B9C5E448FF5ECFD8FDEBFD6D26AD1B7C2E69`, em `build/libs/`, `downloads/` e
+TLauncher (0.4.80 como `.disabled`). Sem push. Pendentes: vila sem lote, log de tronco posto. Nada
+visto em jogo.
+
+## 2026-11-14 — 0.4.82: Regras 281 e 282 (jogo da 0.4.79, taiga)
+
+Regra 281: todo tronco posto pelo mod sai na linha `VC_LOG_PLACED` (`PlacedLogs.note` na obra, no
+fechamento de obra, no arco da mina e na árvore da vila; `PlacedLogs.scan` depois da casa do mineiro e da
+casa grande). Regra 282: com a rede publicada pelo grafo, só a coluna dela reserva chão contra lote
+(`RoadIndex.isReservedAgainstLots`); no save da taiga eram 710 colunas de calçamento fora da rede contra 267
+da rede. Vermelho antes nos dois GameTests novos; unitários verdes, Sentinela `fast` PASS
+(20261114T133332Z). SHA-256 do JAR: `0CD248F0C93E7A4A8A881646C9C428DA908D475B2F99059887D4FA076ABDDE22`, em
+`build/libs/`, `downloads/` e TLauncher (0.4.81 como `.disabled`). Sem push. Nada visto em jogo.

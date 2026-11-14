@@ -386,7 +386,7 @@ public final class PenEscape {
     private static boolean isOut(ServerWorld world, MobEntity villager, Escape escape, FencedIn.Exit exit) {
         BlockPos feet = villager.getBlockPos();
 
-        if (!villager.isOnGround() || escape.reach.contains(feet) || feet.equals(exit.barrier())) {
+        if (!villager.isOnGround() || FencedIn.isOverTheReach(escape.reach, feet) || feet.equals(exit.barrier())) {
             return false;
         }
 

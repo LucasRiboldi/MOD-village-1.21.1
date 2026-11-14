@@ -193,6 +193,7 @@ public final class MineGate {
             if (free) {
                 world.setBlockState(target, BiomeBlueprints.swapped(piece.state(), swap).rotate(rotation),
                         Block.NOTIFY_LISTENERS | Block.FORCE_STATE);
+                PlacedLogs.note(target, world.getBlockState(target), "mine_arch");
             }
 
             anyFirm |= !world.getBlockState(target).isReplaceable();

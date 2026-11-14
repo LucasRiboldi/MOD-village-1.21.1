@@ -9,8 +9,8 @@ import net.minecraft.world.Heightmap;
  *
  * <p>Na tabela do Vanilla (1.21.1) água custa 8 e não é proibida: com a volta seca longa, a
  * navegação atravessa nadando. Na mina, é o aldeão entrando no veio que a picareta abriu — lá a
- * água é -1, como a lava. Ao ar livre ele nada como qualquer aldeão, pelo custo do Vanilla: a
- * margem de lago cercada por paredão só se deixa nadando.
+ * água é -1, como a lava. Ao ar livre ele paga o custo de água da colônia, como qualquer aldeão
+ * (Regra 278): só nada sem caminho seco, e a margem cercada por paredão continua se deixando nadando.
  *
  * <p>"Ao ar livre" é nada sólido acima dos pés: o mapa de altura {@code OCEAN_FLOOR} ignora a água,
  * então o mineiro que já nada no lago continua ao ar livre.
@@ -29,7 +29,7 @@ public final class MinerCaution {
     }
 
     public static void keepOutOfWater(VillagerEntity villager) {
-        float wanted = isUnderTheSky(villager) ? PathNodeType.WATER.getDefaultPenalty() : NEVER;
+        float wanted = isUnderTheSky(villager) ? com.villagecolony.fabric.integration.ColonyPathing.WATER_COST : NEVER;
 
         if (villager.getPathfindingPenalty(PathNodeType.WATER) != wanted) {
             villager.setPathfindingPenalty(PathNodeType.WATER, wanted);

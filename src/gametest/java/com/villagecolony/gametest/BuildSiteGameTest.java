@@ -1173,6 +1173,42 @@ public class BuildSiteGameTest implements FabricGameTest {
      * calçamento original — é ela que faz a casa reconhecer a rua Vanilla
      * como rua e encostar nela.
      */
+    /**
+     * Regra 282: com a rede publicada pelo grafo, só a coluna dela reserva chão contra lote. A trilha que a
+     * varredura viu fora da rede não reserva — na vila de taiga do jogo da 0.4.79 eram 710 colunas assim, contra
+     * 267 da rede, e nenhum lote cabia.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7_only_the_network_line_is_a_reserve_against_lots")
+    public void onlyTheNetworkLineIsAReserveAgainstLots(TestContext context) {
+        BlockPos line = new BlockPos(3, 1, 3);
+        BlockPos trail = new BlockPos(5, 1, 3);
+        UUID colony = UUID.randomUUID();
+
+        paveGround(context, line);
+        context.setBlockState(line, Blocks.DIRT_PATH.getDefaultState());
+        context.setBlockState(trail, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoadColumns(context, colony, List.of(line, trail));
+
+        BlockPos lineAt = context.getAbsolutePos(line);
+        BlockPos trailAt = context.getAbsolutePos(trail);
+
+        com.villagecolony.fabric.integration.RoadNetwork.publish(colony, MinecraftTypeAdapter.toColonyPos(lineAt),
+                List.of(ColonyRoads.column(lineAt.getX(), lineAt.getZ())));
+
+        try {
+            context.assertTrue(RoadIndex.isReservedAgainstLots(context.getWorld(), colony, lineAt),
+                    "a linha da rede deixou de reservar o chão");
+            context.assertFalse(RoadIndex.isReservedAgainstLots(context.getWorld(), colony, trailAt),
+                    "a trilha fora da rede ainda reserva o chão contra lote");
+        } finally {
+            com.villagecolony.fabric.integration.RoadNetwork.publish(colony, MinecraftTypeAdapter.toColonyPos(lineAt),
+                    List.of());
+            BuildSiteScanner.clearAll();
+        }
+
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7_the_village_own_paving_is_not_a_reserve_against_lots")
     public void theVillageOwnPavingIsNotAReserveAgainstLots(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
