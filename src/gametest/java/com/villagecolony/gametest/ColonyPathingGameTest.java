@@ -211,7 +211,13 @@ public class ColonyPathingGameTest implements FabricGameTest {
                 }
                 context.assertFalse(crossesWater, "Regra 278: nadou com caminho seco ao lado: " + origin.toShortString()
                         + " início=" + path.getNode(0).getBlockPos().subtract(origin).toShortString()
-                        + " aldeão=" + probes.get(origin).villager().getBlockPos().subtract(origin).toShortString());
+                        + " aldeão=" + probes.get(origin).villager().getBlockPos().subtract(origin).toShortString()
+                        + " custoÁgua=" + probes.get(origin).villager().getPathfindingPenalty(
+                                net.minecraft.entity.ai.pathing.PathNodeType.WATER)
+                        + " nós=" + java.util.stream.IntStream.range(0, path.getLength())
+                                .mapToObj(i -> path.getNode(i).getBlockPos().subtract(origin).toShortString()
+                                        + "/" + path.getNode(i).type + "/" + path.getNode(i).penalty)
+                                .collect(java.util.stream.Collectors.joining(";")));
             }
             } finally {
                 cleanup.run();
