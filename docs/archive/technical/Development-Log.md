@@ -11773,3 +11773,15 @@ Manifesto confirma versão 0.4.15, Minecraft 1.21.1 e Java 21. SHA-256 do JAR:
 Entrega local em `build/libs/`, `downloads/` e TLauncher; JAR 0.4.14 preservado
 como `.disabled`. Nenhum save do jogador foi aberto. Sem push, merge ou release.
 Bateria completa não executada; retorno e conservação da escadaria aguardam playtest.
+
+## 2026-11-14 — 0.4.80: Regras 275 a 278 (jogo da 0.4.75/0.4.79, taiga)
+
+Triagem dos oito sintomas do autor; escolhas por sintoma. Implementado, com GameTest vermelho antes:
+soleira de casa não é curral (275; a causa era a copa de um pinheiro na altura da cabeça à frente da
+soleira), alçapão em pé se pula e o caminho o evita (276), o lenhador só derruba encostado no tronco
+(277; o desvio continua chegando pelo alcance) e água só sem caminho seco, custo 64 (278).
+Unitários verdes, Sentinela `fast` PASS (20261114T045435Z e 20261114T051248Z). O teste de translação
+da água caiu 2 vezes em 5 rodadas com custo 64. SHA-256 do JAR:
+`358AEF10EC15B7A059C0BAE7F6566CB2476072A512AA0F7D154BDAAD1BF4F9CC`, em `build/libs/`, `downloads/`
+e TLauncher (0.4.79 como `.disabled`). Sem push. Pendentes no `TODO.md`: construtor congelado,
+ramal da mina recusado na mata, vila sem lote, log de tronco posto. Nada visto em jogo.
