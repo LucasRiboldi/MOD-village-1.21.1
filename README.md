@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.82%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.83%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,19 +19,19 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Estado atual: 0.4.82 na `main`, não jogada; a última publicada é `v0.4.74-alpha`.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
+**Estado atual: 0.4.83 na `main`, não jogada; a última publicada é `v0.4.74-alpha`.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
-[docs/RULES.md](docs/RULES.md) (1 a 282).
+[docs/RULES.md](docs/RULES.md) (1 a 283).
 
-Da 0.4.75 à 0.4.82 (pedidos do autor de 13-11 e jogo da 0.4.79, taiga):
+Da 0.4.75 à 0.4.83 (pedidos do autor de 13-11 e 14-11, jogo da 0.4.79, taiga):
 
 - **Aldeão preso:** soleira de casa não é curral, e "saiu" é pisar fora do que ele alcançava (Regra 275); alçapão em pé
   se pula e o caminho o evita (Regra 276); solto da fuga de encalhe só quem saiu do lugar (Regra 279).
-- **Caminho:** água só sem caminho seco, custo 64 (Regra 278); a árvore em cima da coluna do caminho sai de onde o
+- **Caminho:** água só sem caminho seco, custo 256 (Regra 278); a árvore em cima da coluna do caminho sai de onde o
   calçador estiver (Regra 280); só a rede de ruas reserva chão contra lote, trilha fora dela não (Regra 282).
 - **Ofícios:** o lenhador só derruba encostado no tronco (Regra 277); a vila contrata um construtor por vez (Regra 273),
   e a obra conta como trabalho dele na troca de cama (Regra 274); a muda do bosque surge, também no deserto (Regra 271);
-  o pastor faz corante de flor no ócio (Regra 272); quem não tem ofício do mod fica fora das análises (Regra 270).
+  o pastor faz corante de flor no ócio (Regra 272) e só recolhe animal dentro da caixa da vila (Regra 283); quem não tem ofício do mod fica fora das análises (Regra 270).
 - **Diagnóstico:** todo tronco posto pelo mod sai na linha `VC_LOG_PLACED` (Regra 281); a fase `planner` sai repartida
   por colônia em `VC_COST_PHASES` (varredura VF-001).
 
@@ -537,6 +537,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 280 | **Árvore no caminho não trava o calçamento** (autor 14-11, jogo da 0.4.75): a árvore (tronco ou folha natural) acima da coluna do caminho sai inteira, de onde o calçador estiver, e a coluna não sai do traçado por isso. O ramal até a mina da vila de taiga parou na mata. Candidata | 14-11 |
 | 281 | **Tronco posto sai no log** (autor 13-11, jogo da 0.4.79): todo tronco que o mod põe no mundo sai na linha `VC_LOG_PLACED`, com a posição, o bloco e quem pôs (obra, fechamento de obra, arco da mina, árvore da vila, casa do mineiro, casa grande da fundação). É instrumentação, para achar a origem dos troncos que o autor viu surgir. Candidata | 14-11 |
 | 282 | **Só a rede reserva chão contra lote** (autor 14-11, jogo da 0.4.79): com a rede publicada pelo grafo, só a coluna dela impede lote; trilha e caminho fora da rede não seguram chão, e a casa pode nascer em cima deles. Na vila de taiga eram 710 colunas de calçamento fora da rede contra 267 da rede, e nenhum lote cabia (`lots_ok=0`). Sem rede publicada, vale o índice de calçamento, como antes. Candidata | 14-11 |
+| 283 | **O pastor recolhe só dentro da caixa da vila** (autor 14-11, opção B da varredura dos GameTests instáveis): o animal solto ou amarrado só é recolhido se estiver na caixa da vila (com 8 blocos de folga na altura); a folga de 10 blocos em volta da caixa deixou de valer para o pastor. A vila sem caixa medida usa 48 blocos em volta do centro, como antes. No CI, o pastor de um teste levava o porco da arena vizinha. Candidata | 14-11 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).

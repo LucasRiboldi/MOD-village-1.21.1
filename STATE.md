@@ -9,7 +9,7 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.82 na `main` (PR #79 e a integração da varredura de falhas de 12-11); a publicada é `v0.4.74-alpha`. **Não jogadas.** A última jogada é a 0.4.79
+- **Versão:** 0.4.83 na branch `fix/gametest-estavel` (sobre a `main` com os PRs #79 e #80); a publicada é `v0.4.74-alpha`. **Não jogadas.** A última jogada é a 0.4.79
   (13-11, taiga, Spark `oujZp2IxmS`; os oito sintomas viraram as Regras 275 a 282).
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
@@ -39,6 +39,7 @@ Cada uma tem teste que falha sem ela; nenhuma foi vista em jogo.
 | 0.4.80 | 275–278 | do jogo da 0.4.75/0.4.79 (taiga): soleira de casa não é curral; alçapão em pé se pula e o caminho o evita; o lenhador só derruba encostado no tronco; água só sem caminho seco (custo 256). Sentinela `fast` PASS |
 | 0.4.81 | 279, 280 | solto da fuga de encalhe só quem saiu do lugar; a árvore em cima da coluna do caminho sai de onde o calçador estiver (ramal da mina na mata). Sentinela `fast` PASS |
 | 0.4.82 | 281, 282 | todo tronco posto pelo mod sai no log (`VC_LOG_PLACED`, com quem pôs); só a rede do grafo reserva chão contra lote (trilha fora da rede não). Sentinela `fast` PASS |
+| 0.4.83 | 283 | o pastor só recolhe animal dentro da caixa da vila (sem a folga de 10 blocos); GameTests do pastor, da tosquia e da taiga sem depender dos vizinhos. 1.127/1.127 três vezes, Sentinela `fast` PASS |
 
 Da 0.4.54 à 0.4.67 (Regras 243 a 261) também não houve confirmação escrita em jogo; a 0.4.68 trouxe as que o jogo de
 12-11 viu funcionar: oito ofícios na fundação, casa do mineiro e mina com arco, patamar com tocha e curral achado.
