@@ -83,9 +83,9 @@ public final class StrandedWorkers {
     private static final Map<UUID, BlockPos> LEFT_IN_PLACE = new HashMap<>();
 
     /**
-     * Quem encalhou de novo onde foi solto sem sair do lugar — E47. A altura do terreno em volta não
-     * prova que ele anda; enquanto estiver ali, a fuga não o solta e o {@code ClimbOut} age, até o
-     * prazo de tentativas levá-lo a um lugar seguro ({@code BedTeleport.toSafety}).
+     * O ponto onde ele congelou duas vezes — E47, Regra 279. A altura do terreno em volta não prova que
+     * ele anda; enquanto estiver ali, a fuga não o solta e o {@code ClimbOut} age, até o prazo de
+     * tentativas levá-lo a um lugar seguro ({@code BedTeleport.toSafety}).
      */
     private static final Map<UUID, BlockPos> PINNED = new HashMap<>();
 
@@ -115,10 +115,15 @@ public final class StrandedWorkers {
         boolean marked = strand(workerId, where, "frozen twice on the same spot", true);
 
         if (marked && leftAt != null && sameSpot(leftAt, where)) {
-            PINNED.put(workerId, leftAt);
             VillageColonyMod.LOGGER.info("Worker {} is stranded again where it was let go without moving ({})"
                             + " — it stays in the escape until it leaves that spot",
                     workerId.toString().substring(0, 8), leftAt.toShortString());
+        }
+
+        // Regra 279: solto é quem saiu do ponto onde congelou, já no primeiro encalhe. A altura do terreno em
+        // volta não prova que ele anda; parado ali, a fuga segue até o ClimbOut e o teleporte.
+        if (marked) {
+            PINNED.put(workerId, where.toImmutable());
         }
 
         return marked;
@@ -191,8 +196,8 @@ public final class StrandedWorkers {
 
     /**
      * Se a fuga pode soltá-lo aqui, já no nível do terreno: ele alcançou a altura do caminho
-     * ({@link #reachedTheWay}) e não está preso ao ponto onde foi solto antes sem sair do lugar
-     * ({@link #PINNED}). Soltando sem nenhum degrau cavado, guarda o ponto, para o próximo encalhe ali.
+     * ({@link #reachedTheWay}) e saiu do ponto onde congelou ({@link #PINNED}, Regra 279). Soltando sem
+     * nenhum degrau cavado, guarda o ponto, para o próximo encalhe ali.
      */
     static boolean mayLeaveAt(UUID workerId, BlockPos feet) {
         BlockPos pin = PINNED.get(workerId);
