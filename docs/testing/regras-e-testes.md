@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 173
+- **Cita a regra:** 175
 - **Só usa a classe indicada:** 93
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 11
@@ -73,7 +73,7 @@ classe prova menos ainda.
 | 61 | A colônia só é dada como abandonada sem vila à vista do centro nem dentro da caixa, e com… | classe | ColonyAbandonmentTest, test_graphify_relabel |
 | 62 | A vila trabalha com o jogador dentro da caixa ou a até 48 blocos dela (VillageFocus.PERIM… | classe | AbandonedColonyGameTest, ColonyBoundsTest, DrawnFromTest |
 | 63 | Socorro contra parada com prazo único: o ofício que anda sem chegar ao alvo há 1 minuto d… | classe | WorkRescueTest |
-| 64 | As ruas da vila são medidas como rede de caminhos conectados a partir do centro (de bloco… | classe | GraphOnlyPathsGameTest, RoadNetworkGameTest |
+| 64 | As ruas da vila são medidas como rede de caminhos conectados a partir do centro (de bloco… | classe | BuildSiteGameTest, GraphOnlyPathsGameTest, RoadNetworkGameTest |
 | 65 | Bancadas exclusivas do mod: três blocos próprios (carpenter_bench, mason_cutter, blacksmi… | classe | BenchApproachTest, BenchPassivesGameTest, BenchUseGameTest |
 | 66 | Cercado no nível da rua: estrutura cuja camada y=0 é só solo natural (grama, terra, areia… | classe | StreetLayerTest |
 | 67 | Plantação por população: uma roça a cada 15 adultos, no mínimo uma desde a fundação; ao p… | cita | ConstructionPriorityTest, FarmOwnersTest, FarmPlanGameTest |
@@ -290,3 +290,5 @@ classe prova menos ainda.
 | 278 | Água só sem caminho seco (autor 13-11, jogo da 0.4.75; muda a decisão de 2026-11-01): for… | cita | ColonyPathingGameTest, MinerCautionGameTest |
 | 279 | Solto é quem saiu do lugar (autor 14-11, jogo da 0.4.75): o encalhado por congelar duas v… | cita | StrandedWorkersTest |
 | 280 | Árvore no caminho não trava o calçamento (autor 14-11, jogo da 0.4.75): a árvore (tronco… | cita | LeafPathsGameTest |
+| 281 | Tronco posto sai no log (autor 13-11, jogo da 0.4.79): todo tronco que o mod põe no mundo… | cita | LeafPathsGameTest |
+| 282 | Só a rede reserva chão contra lote (autor 14-11, jogo da 0.4.79): com a rede publicada pe… | cita | BuildSiteGameTest |
