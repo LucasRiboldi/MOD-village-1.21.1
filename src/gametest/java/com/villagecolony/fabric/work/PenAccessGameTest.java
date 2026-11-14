@@ -192,7 +192,13 @@ public final class PenAccessGameTest implements FabricGameTest {
                     + " parada=" + cow.getNavigation().isIdle() + " caminho=" + cow.getNavigation().getCurrentPath()
                     + " chão=" + cow.isOnGround() + " busca=" + cow.getNavigation().findPathTo(ShepherdPens.deeper(through), 0)
                     + " piso=" + world.getBlockState(ShepherdPens.deeper(through).down()) + "/" + world.getBlockState(access.inside().down())
-                    + " fora=" + world.getBlockState(access.outside().down()) + " fugidas=" + escapes.values());
+                    + " fora=" + world.getBlockState(access.outside().down()) + " fugidas=" + escapes.values()
+                    // VF-010: quem mais mexe nesta vaca — corda, destino do caminho e aldeões por perto.
+                    + " corda=" + cow.getLeashHolder()
+                    + " destino=" + (cow.getNavigation().getCurrentPath() == null ? "nenhum"
+                            : cow.getNavigation().getCurrentPath().getTarget().subtract(origin).toShortString())
+                    + " aldeões=" + world.getEntitiesByClass(net.minecraft.entity.passive.VillagerEntity.class,
+                            cow.getBoundingBox().expand(16), villager -> true).size());
             ShepherdPens.walkThrough(world, through, cow, ShepherdPens.deeper(through));
             context.waitAndRun(1, () -> walkEach(context, origin, pen, accesses, index, left - 1, cows, escapes));
         } catch (RuntimeException | AssertionError failure) {
@@ -347,7 +353,9 @@ public final class PenAccessGameTest implements FabricGameTest {
         }
         context.getWorld().setBlockState(origin.add(6, 1, 3), Blocks.OAK_FENCE_GATE.getDefaultState()
                 .with(FenceGateBlock.FACING, Direction.EAST), 3);
-        return colony(origin, 6);
+        // A caixa cobre o curral e a pista em volta, onde ficam o poste e o pastor: só o que está nela é recolhido
+        // (Regra 283).
+        return colony(origin, 10);
     }
 
     /** Sem chão que leve para longe, o animal na ilha da arena conta como cercado ({@code FencedIn}). */

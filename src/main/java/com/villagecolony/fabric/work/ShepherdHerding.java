@@ -2,7 +2,6 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
-import com.villagecolony.core.coordination.ResourceReach;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
@@ -186,7 +185,8 @@ final class ShepherdHerding {
      * A coleta deste pastor: o animal solto (ou amarrado em poste) mais perto, para o cercado da espécie
      * dele (Regra 72, {@link ShepherdPens#forSpecies}); sem cercado com lugar, o solto vai para a cerca
      * mais perto ou para um poste novo ao lado da casa, e só quando a vila não tem cercado com lugar (Regra 196). Sem
-     * nada a recolher, separa um curral misto.
+     * nada a recolher, separa um curral misto. Só recolhe dentro da caixa da vila; a vila sem caixa usa 48 blocos em
+     * volta do centro (Regra 283).
      */
     static Optional<Herd> start(ServerWorld world, Colony colony, VillagerEntity shepherd) {
         BlockPos home = BedTeleport.bedOf(world, shepherd)
@@ -195,10 +195,8 @@ final class ShepherdHerding {
                 .orElse(shepherd.getBlockPos());
 
         BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
-        int margin = ResourceReach.EDGE_MARGIN;
         Box area = colony.bounds()
-                .map(box -> new Box(box.minX() - margin, box.minY() - 8, box.minZ() - margin,
-                        box.maxX() + margin + 1, box.maxY() + 8, box.maxZ() + margin + 1))
+                .map(box -> new Box(box.minX(), box.minY() - 8, box.minZ(), box.maxX() + 1, box.maxY() + 8, box.maxZ() + 1))
                 .orElseGet(() -> new Box(center).expand(48));
         List<AnimalEntity> candidates = new java.util.ArrayList<>();
 

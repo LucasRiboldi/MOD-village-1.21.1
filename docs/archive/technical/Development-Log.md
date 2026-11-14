@@ -11806,3 +11806,15 @@ casa grande). Regra 282: com a rede publicada pelo grafo, só a coluna dela rese
 da rede. Vermelho antes nos dois GameTests novos; unitários verdes, Sentinela `fast` PASS
 (20261114T133332Z). SHA-256 do JAR: `0CD248F0C93E7A4A8A881646C9C428DA908D475B2F99059887D4FA076ABDDE22`, em
 `build/libs/`, `downloads/` e TLauncher (0.4.81 como `.disabled`). Sem push. Nada visto em jogo.
+
+## 2026-11-14 — 0.4.83: Regra 283 e GameTests instáveis do CI
+
+O CI do #80 caiu a cada rodada num GameTest diferente. Os lotes rodam juntos num mundo só, e o lote próprio
+não isola relógio, animais, estáticos nem vilas geradas. Regra 283 (escolha B do autor): o pastor só recolhe
+animal dentro da caixa da vila (`ShepherdHerding.start`, sem a folga de 10 blocos); provado por
+`theShepherdGathersOnlyInsideTheVillageBox`, vermelho com o código antigo ("porco de fora"). Testes: a vaca
+solta numa caixa de arena; a tosquia repõe expediente e raio a cada tique; o centro da taiga e do deserto sai
+de vila gerada. Diagnóstico na falha dos portões (VF-010) e do canal de água, que caiu 2 vezes em 6 rodadas
+locais mesmo com custo 256. runGametest 1.127/1.127 três vezes seguidas; build e unitários verdes; Sentinela
+`fast` PASS (20261114T172413Z). SHA-256 do JAR: `E64AEFDF9EB5F0DA4F442EC29028FF16E34F7D5238712CA751FE28AA9154A213`,
+em `build/libs/`, `downloads/` e TLauncher (0.4.82 como `.disabled`). Nada visto em jogo.

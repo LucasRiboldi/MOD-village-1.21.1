@@ -25,6 +25,10 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 - [ ] 🟠 VF-002: `workerCollectsWhileWalkingPast` — a colônia de teste deixou de ser dada como abandonada (722f7ec5), mas o
   teste ainda caiu em baterias de 14-11 (P)
 - [ ] 🟠 VF-003: PIT a 85,17% contra o limiar de 85%; `MineShaftWaypointsTest` cobre o caminho da mina — conferir no CI (P)
+- [ ] 🟠 GameTest instável `theDryDetourIsTranslationInvariantAtTheObservedCoordinates`: caiu 2 vezes em 6 rodadas
+  locais com a água a 256; a falha agora diz o nó de início e onde o aldeão estava — ler na próxima queda (P)
+- [ ] 🟡 VF-010 (`animalsWalkInThroughEachOfTheFourGates`): a falha diz corda, destino e aldeões em volta — ler na
+  próxima queda (P)
 - 🟡 VF-005 a VF-014 e 🟢 VF-015 a VF-020: só no registro
 
 ## F1 — A vila trabalha (3 a 5 semanas) → portão Beta 0.5.0
@@ -33,6 +37,8 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 - [ ] 🔴 Conferir em jogo as candidatas 0.4.69 a 0.4.74 (lista no `STATE.md`) (por jogo)
 - [ ] 🔴 Jogo da 0.4.79 (13-11): no próximo jogo, conferir `lots_ok` acima de 0 (Regra 282) e ler as linhas
   `VC_LOG_PLACED` para achar a origem dos troncos que o autor viu (Regra 281) (por jogo)
+- [ ] 🟠 Regra 283 (0.4.83): conferir no jogo que o pastor ainda recolhe o animal solto perto do curral; a folga de
+  10 blocos em volta da caixa saiu (por jogo)
 - [ ] 🟠 Estado e implementação nas 81 regras de `docs/RULES.md` que não têm essas colunas (M)
 - [ ] 🟠 Número próprio para o teto de 15% de ócio; "Regra 51" hoje tem dois sentidos (P)
 - [ ] 🟠 Fechar os conflitos C-12, C-13 e C-15 de `docs/audit/RULE-RECONCILIATION.md` (P)

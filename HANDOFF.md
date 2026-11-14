@@ -4,7 +4,7 @@ Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 20
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.82, integrada na `main` (PRs #79 e a integração da varredura), **não jogada** nem publicada; a última publicada é [`v0.4.74-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.74-alpha). A 0.4.79 foi jogada em 2026-11-13 (taiga, Spark `oujZp2IxmS`); a triagem dos oito sintomas virou as Regras 275 a 282.
+- **Versão:** 0.4.83 na branch `fix/gametest-estavel` (sobre a `main` com os PRs #79 e #80), **não jogada** nem publicada; a última publicada é [`v0.4.74-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.74-alpha). A 0.4.79 foi jogada em 2026-11-13 (taiga, Spark `oujZp2IxmS`); a triagem dos oito sintomas virou as Regras 275 a 282.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, ele escolhe, teste que falha, correção, Sentinela, commit, JAR.
 - **Entregue desde a 0.4.53 (todas candidatas):**
   - 0.4.54 a 0.4.56, Regras 243 a 249: plantação grande sobre areia, baú de qualquer lugar, aldeão fora da simulação não congela, cama longe vem para perto, chão nivelado é trabalho, um terço da madeira em tora, fundição sem cru chama o pedreiro.
@@ -16,16 +16,18 @@ Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 20
   - 0.4.75 a 0.4.79, Regras 270 a 274 (pedidos do autor de 13-11): sem ofício fora das análises, muda do bosque surge, corante das flores, um construtor por vila, obra conta como trabalho do construtor.
   - 0.4.80 a 0.4.82, Regras 275 a 282 (jogo da 0.4.79): soleira não é curral, alçapão em pé, lenhador encosta, água só sem caminho seco, solto só fora do lugar, árvore no caminho sai, log de tronco posto, só a rede reserva chão contra lote.
   - Varredura de falhas de 12-11 (`docs/audit/2026-11-12-varredura-de-falhas.md`): VF-001, VF-007 e VF-010 instrumentados; GameTest que mexe na hora ou na memória do mundo roda no próprio lote.
+  - 0.4.83, Regra 283 (GameTests instáveis de 14-11): o pastor só recolhe dentro da caixa da vila; testes do pastor, da tosquia e da taiga sem depender dos vizinhos (os lotes rodam juntos num mundo só).
 
 ## O próximo passo
 
-**O autor precisa jogar a 0.4.82 numa vila nova e mandar o Spark.** Ao receber o log, siga `CLAUDE.md` §0.2.2 e confira:
+**O autor precisa jogar a 0.4.83 numa vila nova e mandar o Spark.** Ao receber o log, siga `CLAUDE.md` §0.2.2 e confira:
 
 - Lote (Regra 282): `lots_ok` acima de 0 no `VC_BIOME` e obra aberta; o overlay da obra volta com ela.
 - Troncos (Regra 281): ler as linhas `VC_LOG_PLACED` e achar quem pôs os troncos que o autor viu na vila.
 - Encalhe (Regra 279): nenhum "out at ... after 0 steps" seguido de novo encalhe no mesmo ponto.
 - Ramal da mina (Regra 280) e água (Regra 278): o mineiro chega à mina pela rua; nenhum aldeão nadando longe; nenhum afogado.
 - Pastor e alçapões (Regras 275 e 276): nenhum "fenced in" em soleira de casa nem em canteiro de alçapões.
+- Pastor (Regra 283): o animal solto perto do curral ainda é recolhido; nenhum animal de fora da caixa da vila.
 - Varredura: a linha `VC_COST_PHASES` (VF-001) e o fantasma com `lastSeen` (VF-007).
 
 Em aberto no `TODO.md`: VF-001 a VF-003 da varredura e os itens das fases F0 a F5.

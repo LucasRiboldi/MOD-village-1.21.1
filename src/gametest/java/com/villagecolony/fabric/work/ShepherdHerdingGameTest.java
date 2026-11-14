@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.gametest.ColonyFixture;
 
@@ -9,6 +10,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.decoration.LeashKnotEntity;
 import net.minecraft.entity.passive.CowEntity;
+import net.minecraft.entity.passive.PigEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
@@ -22,6 +24,7 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herding_the_shepherd_leads_a_loose_cow_to_the_fence", tickLimit = 60)
     public void theShepherdLeadsALooseCowToTheFence(TestContext context) {
         ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(4, 1, 4));
+        insideTheArena(context, fixture);
         BlockPos fence = new BlockPos(1, 1, 1);
         context.setBlockState(fence, Blocks.OAK_FENCE.getDefaultState());
         VillagerEntity shepherd = context.spawnEntity(EntityType.VILLAGER, new BlockPos(2, 1, 2));
@@ -65,6 +68,54 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
 
             context.complete();
         });
+    }
+
+    /**
+     * Regra 283: o pastor recolhe só o animal dentro da caixa da vila. O porco fora dela, mais perto do pastor que a
+     * vaca de dentro, não é escolhido.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herding_only_inside_the_box", tickLimit = 40)
+    public void theShepherdGathersOnlyInsideTheVillageBox(TestContext context) {
+        ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(4, 1, 4));
+        insideTheArena(context, fixture);
+        context.setBlockState(new BlockPos(1, 1, 1), Blocks.OAK_FENCE.getDefaultState());
+        VillagerEntity shepherd = context.spawnEntity(EntityType.VILLAGER, new BlockPos(2, 1, 2));
+        CowEntity cow = context.spawnEntity(EntityType.COW, new BlockPos(10, 1, 10));
+        PigEntity pig = context.spawnEntity(EntityType.PIG, new BlockPos(2, 1, -3));
+        cow.setAiDisabled(true);
+        pig.setAiDisabled(true);
+
+        context.waitAndRun(3, () -> {
+            Optional<ShepherdHerding.Herd> herd;
+            try {
+                fixture.owning(shepherd.getUuid());
+                VillageColonyMod.WORKERS.register(shepherd.getUuid(), fixture.colony().id())
+                        .assign(ProfessionType.SHEPHERD);
+                herd = ShepherdHerding.start(context.getWorld(), fixture.colony(), shepherd);
+            } finally {
+                fixture.cleanUp();
+                pig.discard();
+                cow.discard();
+            }
+
+            context.assertTrue(herd.isPresent() && herd.get().animal.equals(cow.getUuid()),
+                    "o pastor não ficou com a vaca de dentro da caixa: "
+                            + herd.map(chosen -> chosen.animal.equals(pig.getUuid()) ? "porco de fora" : "outro animal")
+                            .orElse("nenhum"));
+            context.complete();
+        });
+    }
+
+    /**
+     * A caixa da vila vai de 0 a 12: a vaca a (10, 10) fica longe da cerca, solta, e o bicho de outro teste fica fora
+     * (Regra 283).
+     */
+    private static void insideTheArena(TestContext context, ColonyFixture fixture) {
+        BlockPos from = context.getAbsolutePos(BlockPos.ORIGIN);
+        BlockPos to = context.getAbsolutePos(new BlockPos(12, 4, 12));
+        fixture.colony().restoreBounds(new VillageBounds(Math.min(from.getX(), to.getX()), from.getY(),
+                Math.min(from.getZ(), to.getZ()), Math.max(from.getX(), to.getX()), to.getY(),
+                Math.max(from.getZ(), to.getZ())));
     }
 
     /**
