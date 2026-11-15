@@ -290,7 +290,8 @@
       "com.villagecolony.fabric.event.IdleHandsGameTest",
       "com.villagecolony.fabric.event.ProfessionChestOverflowGameTest",
       "com.villagecolony.fabric.integration.SandNearWaterGameTest",
-      "com.villagecolony.gametest.TreeAndLeafGameTest"
+      "com.villagecolony.gametest.TreeAndLeafGameTest",
+      "com.villagecolony.fabric.work.GraphFloorGameTest"
     ]
   },
   "depends": {

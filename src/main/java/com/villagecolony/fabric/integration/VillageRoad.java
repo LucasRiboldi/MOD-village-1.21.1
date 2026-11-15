@@ -148,6 +148,15 @@ public final class VillageRoad {
         return LotGround.isBiomeGround(world, at) || LotGround.isNaturalGround(state);
     }
 
+    /**
+     * Regra 291: a tábua que é rua — a da peça de rua da vila gerada (a ponte de tábua que o Vanilla põe sobre a água)
+     * ou a que uma colônia assentou. O piso de tábua de casa não é rua.
+     */
+    public static boolean isStreetPlank(ServerWorld world, BlockPos pos, BlockState state) {
+        return state.isIn(BlockTags.PLANKS)
+                && (RoadIndex.isLaidByAColony(pos) || BlockProtection.isVillageStreet(world, pos));
+    }
+
     /** Se o bloco é um caminho de bioma, que só é rua onde a colônia o assentou. */
     public static boolean isBiomePath(BlockState state) {
         return BIOME_PATHS.contains(state.getBlock());

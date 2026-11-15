@@ -197,11 +197,15 @@ public final class RoadGraphRefresh {
             BlockPos at = top.down(depth);
             BlockState state = world.getBlockState(at);
 
-            if (!VillageRoad.isPathBlock(state)) {
+            // Regra 291: a tábua de rua também é célula; o PathTrim só mexe no caminho de terra e de areia.
+            boolean plank = !VillageRoad.isPathBlock(state) && VillageRoad.isStreetPlank(world, at, state);
+
+            if (!VillageRoad.isPathBlock(state) && !plank) {
                 continue;
             }
 
-            if (RoadGraphMigration.usable(world, at)) {
+            // A ponte de tábua da vila tem água embaixo: dela só se pede os dois blocos livres em cima.
+            if (plank ? isClearAbove(world, at) : RoadGraphMigration.usable(world, at)) {
                 return Optional.of(at);
             }
 
@@ -213,6 +217,19 @@ public final class RoadGraphRefresh {
         }
 
         return Optional.empty();
+    }
+
+    /** Dois blocos livres e secos em cima: o aldeão passa por esta coluna (Regra 291). */
+    private static boolean isClearAbove(ServerWorld world, BlockPos ground) {
+        for (int up = 1; up <= 2; up++) {
+            BlockPos at = ground.up(up);
+
+            if (!world.getBlockState(at).getCollisionShape(world, at).isEmpty() || !world.getFluidState(at).isEmpty()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /** Caminho sem 2 blocos livres em cima deixa de ser caminho — Regras 180 e 231: vira terra, ou areia no deserto. */
@@ -317,6 +334,7 @@ public final class RoadGraphRefresh {
         Set<ColonyPos> planned = paths.cells();
         StructureFronts.Reading reading = StructureFronts.read(world, colony, terrain, cells);
         Set<ColonyPos> fronts = reading.fronts();
+        terrain.floorAnywhereAt(fronts);
         Set<ColonyPos> retired = reading.retired();
 
         planned.addAll(reading.ways());

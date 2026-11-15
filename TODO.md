@@ -64,10 +64,10 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
   - construtor 42% parado (24% bloqueado), pastor 25%, ferreiro 29% (Regra 51) (M)
 - [ ] 🔴 Jogo da 0.4.86 (15-11, planície, Spark `GHWvjlPaPs`, 37 min, 8 notas), achados da triagem:
   - casas e lampião sobre o lago (notas 10:15 e 10:24): Regra 288 na 0.4.87, candidata; conferir em mundo novo (por jogo);
-  - fazendeiro 0% de trabalho: a Regra 287 abriu o caminho ("could not reach the crop" 0×), mas a plantação grande não
-    nasce arada (`no empty plot` em todo ciclo) e 3 fazendeiros disputam a mesma (`TARGET_RESERVED` 11×); o autor
-    quer no máximo 2 fazendeiros na plantação grande (notas 10:38 e 10:51) (M);
-  - grafo não liga os nós da estrada de tábua nem a casa com saída nela (notas 10:40 e 10:46) (M);
+  - fazendeiro 0%: faltava semente em baú; Regra 289 (candidata) — obra semeada, semente que surge, terra arada,
+    2 fazendeiros por plantação grande;
+  - grafo e tábua: Regra 291 (candidata); a casa do mineiro a cerca de 80 blocos do centro, fora da caixa, segue
+    solta (`door@-278,67,-205`): o caminho fora da caixa só conta se encostar no de dentro (Regra 224) (M);
   - colunas de terra e pedra ("torres") seguem no terreno (nota 10:20); `VC_SMOOTH` recusa por `protected:air` (M);
   - nó de entrada da mina logo à frente do arco (nota 10:18) (P);
   - lenhador 71% parado (`NO_PROGRESS` 7×), construtor 40% (`SET_ASIDE: no material` 132×) (M);

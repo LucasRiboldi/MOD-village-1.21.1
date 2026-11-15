@@ -53,6 +53,18 @@ public final class WorldPathTerrain implements PathTerrain {
     private final java.util.Map<Long, OptionalInt> grounds = new java.util.HashMap<>();
     private final java.util.Map<Long, Boolean> blockedColumns = new java.util.HashMap<>();
 
+    /** As colunas da frente de porta e de portão: chão em qualquer material sólido (Regra 291). */
+    private final java.util.Set<Long> anyFloor = new java.util.HashSet<>();
+
+    /**
+     * Regra 291: a frente de cada porta e portão tem chão para o grafo na altura do piso, seja qual for o material —
+     * pedra, tábua ou outro sólido. A leitura já guardada destas colunas é refeita.
+     */
+    public void floorAnywhereAt(java.util.Collection<com.villagecolony.core.type.ColonyPos> fronts) {
+        fronts.forEach(at -> anyFloor.add(com.villagecolony.core.construction.model.ColonyRoads.column(at.x(), at.z())));
+        grounds.clear();
+    }
+
     @Override
     public OptionalInt groundY(int x, int z, int nearY) {
         long key = ((long) (x & 0x3FFFFFF) << 38) | ((long) (z & 0x3FFFFFF) << 12) | (nearY & 0xFFF);
@@ -83,7 +95,11 @@ public final class WorldPathTerrain implements PathTerrain {
                 return OptionalInt.empty();
             }
 
-            if (!state.isOf(Blocks.DIRT_PATH) && RoadPaving.refusalOfTheGround(world, at, state).isPresent()) {
+            // Regra 291: a frente da porta e a tábua de rua têm chão, mesmo que o calçamento as recuse.
+            boolean floor = anyFloor.contains(com.villagecolony.core.construction.model.ColonyRoads.column(x, z))
+                    || VillageRoad.isStreetPlank(world, at, state);
+
+            if (!state.isOf(Blocks.DIRT_PATH) && !floor && RoadPaving.refusalOfTheGround(world, at, state).isPresent()) {
                 return OptionalInt.empty();
             }
 

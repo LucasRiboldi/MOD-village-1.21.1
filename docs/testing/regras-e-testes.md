@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 183
+- **Cita a regra:** 184
 - **Só usa a classe indicada:** 93
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 12
@@ -301,3 +301,4 @@ classe prova menos ainda.
 | 288 | Nenhuma estrutura da vila nasce sobre água (autor 15-11, jogo da 0.4.86: casas e lampião… | cita | VillageGroundGameTest |
 | 289 | A plantação grande trabalha (autor 15-11, jogo da 0.4.86: 167 canteiros arados e 5 planta… | cita | LargeFarmSeedsGameTest |
 | 290 | Tronco inteiro e folha no caminho (autor 15-11, G7 da ADR-056; jogo da 0.4.85: "sobrou um… | cita | TreeAndLeafGameTest, WaterTerrainControlGameTest |
+| 291 | O grafo pisa na tábua de rua e na frente de toda porta (autor 15-11, G1 e G5 da ADR-056;… | cita | GraphFloorGameTest |
