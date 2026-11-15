@@ -209,6 +209,17 @@ public final class SiteSurroundings {
         return changed;
     }
 
+    /**
+     * Regra 292: o chão natural ou o minério dentro dele — para o solo da vila, que corta a coluna inteira. Fora disso o
+     * minério não é chão: lote, rua e lenhador seguem com {@link #isNaturalGround}.
+     */
+    public static boolean isNaturalOrOre(BlockState state) {
+        return isNaturalGround(state)
+                || state.isIn(BlockTags.COAL_ORES) || state.isIn(BlockTags.IRON_ORES) || state.isIn(BlockTags.COPPER_ORES)
+                || state.isIn(BlockTags.GOLD_ORES) || state.isIn(BlockTags.REDSTONE_ORES) || state.isIn(BlockTags.LAPIS_ORES)
+                || state.isIn(BlockTags.DIAMOND_ORES) || state.isIn(BlockTags.EMERALD_ORES);
+    }
+
     /** Terra, areia, cascalho e pedra do mundo: o que o nivelamento pode cortar. Caminho fica. */
     public static boolean isNaturalGround(BlockState state) {
         Block block = state.getBlock();

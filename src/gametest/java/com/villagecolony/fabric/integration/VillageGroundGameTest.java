@@ -257,4 +257,31 @@ public class VillageGroundGameTest implements FabricGameTest {
                 "o chão seco fora da vila deixou de ser moldado");
         context.complete();
     }
+
+    /** Regra 292: na geração, a coluna com minério desce até o alvo como as outras, e não fica de torre. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_ground_height", tickLimit = 5)
+    public void theGenerationCutsAColumnWithOre(TestContext context) {
+        ServerWorld world = context.getWorld();
+        ProtoChunk chunk = new ProtoChunk(new ChunkPos(90_003, 90_003), UpgradeData.NO_UPGRADE_DATA, world,
+                world.getRegistryManager().get(RegistryKeys.BIOME), null);
+        int x = chunk.getPos().getStartX();
+        int z = chunk.getPos().getStartZ();
+
+        for (int y = 55; y < 70; y++) {
+            chunk.setBlockState(new BlockPos(x, y, z), Blocks.DIRT.getDefaultState(), false);
+        }
+
+        chunk.setBlockState(new BlockPos(x, 66, z), Blocks.COPPER_ORE.getDefaultState(), false);
+        chunk.setBlockState(new BlockPos(x, 70, z), Blocks.GRASS_BLOCK.getDefaultState(), false);
+        Heightmap.populateHeightmaps(chunk, EnumSet.of(Heightmap.Type.WORLD_SURFACE_WG, Heightmap.Type.OCEAN_FLOOR_WG));
+        chunk.setStatus(ChunkStatus.CARVERS);
+
+        VillageGround.column(world, chunk, x, z, 70, 62, false);
+
+        context.assertTrue(chunk.getBlockState(new BlockPos(x, 66, z)).isAir(),
+                "a coluna com minério ficou de pé, como torre");
+        context.assertTrue(chunk.getBlockState(new BlockPos(x, 62, z)).isOf(Blocks.GRASS_BLOCK),
+                "a coluna com minério não desceu até o alvo");
+        context.complete();
+    }
 }

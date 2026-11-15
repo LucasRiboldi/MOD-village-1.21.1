@@ -395,7 +395,10 @@ public final class VillageGround {
                 || state.isIn(BlockTags.SAPLINGS);
     }
 
-    /** Confere o corte e o aterro antes de escrever: blocos de estrutura e líquidos ficam intactos. */
+    /**
+     * Confere o corte e o aterro antes de escrever: blocos de estrutura e líquidos ficam intactos. O minério é chão:
+     * a coluna com ele desce como as vizinhas, e não fica de torre (Regra 292).
+     */
     static boolean safeColumn(Chunk chunk, int x, int z, int top, int target, boolean drainWater) {
         BlockPos.Mutable at = new BlockPos.Mutable(x, top, z);
         for (int y = Math.min(top, target); y <= Math.max(top, target); y++) {
@@ -403,7 +406,7 @@ public final class VillageGround {
             boolean fluid = !state.getFluidState().isEmpty();
             if ((!drainWater && fluid)
                     || (!fluid && !state.isAir() && !state.isReplaceable()
-                    && !SiteSurroundings.isNaturalGround(state))) {
+                    && !SiteSurroundings.isNaturalOrOre(state))) {
                 return false;
             }
         }

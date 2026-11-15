@@ -332,7 +332,8 @@ final class GroundSmoothing {
      * a rua — o telhado de arenito da casa do deserto também é "chão natural" pelo bloco.
      */
     static boolean isGround(ServerWorld world, BlockPos at, BlockState state) {
-        boolean soil = SiteSurroundings.isNaturalGround(state) && !state.isOf(Blocks.FARMLAND);
+        // Regra 292: o minério dentro do chão é chão; a coluna com ele é cortada, e não fica de torre.
+        boolean soil = SiteSurroundings.isNaturalOrOre(state) && !state.isOf(Blocks.FARMLAND);
         boolean path = VillageRoad.isPathBlock(state) || StreetSurface.isStreetMaterial(state);
         boolean villagePiece = BlockProtection.isVillageOriginal(world, at) && !BlockProtection.isVillageStreet(world, at);
 
@@ -407,8 +408,9 @@ final class GroundSmoothing {
             if (BlockProtection.isColonyBuilt(at)) {
                 return "colony_built:" + name(state);
             }
-            if (!BlockProtection.mayBuildOver(world, at, state)) {
-                return "protected:" + name(state);
+            String protection = protection(empty, BlockProtection.mayBuildOver(world, at, state), state);
+            if (protection != null) {
+                return protection;
             }
             if (!empty && !isGround(world, at, state)) {
                 return "not_ground:" + name(state);
@@ -416,6 +418,15 @@ final class GroundSmoothing {
         }
 
         return null;
+    }
+
+    /**
+     * O motivo de proteção do bloco, ou nulo — Regra 292: o ar e a planta substituível sobre chão natural não são peça de
+     * ninguém, nem dentro da caixa de peça da vila; só o bloco que existe é protegido. A casa da vila já fica de fora pela
+     * coluna ({@link #isGround}).
+     */
+    static @Nullable String protection(boolean empty, boolean mayBuildOver, BlockState state) {
+        return empty || mayBuildOver ? null : "protected:" + name(state);
     }
 
     private static String name(BlockState state) {

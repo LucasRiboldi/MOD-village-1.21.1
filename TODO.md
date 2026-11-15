@@ -68,7 +68,8 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
     2 fazendeiros por plantação grande;
   - grafo e tábua: Regra 291 (candidata); a casa do mineiro a cerca de 80 blocos do centro, fora da caixa, segue
     solta (`door@-278,67,-205`): o caminho fora da caixa só conta se encostar no de dentro (Regra 224) (M);
-  - colunas de terra e pedra ("torres") seguem no terreno (nota 10:20); `VC_SMOOTH` recusa por `protected:air` (M);
+  - torres e `protected:air`: Regra 292 (candidata) — a torre era minério na coluna; conferir em mundo novo e com o
+    pedreiro em mundo antigo;
   - nó de entrada da mina logo à frente do arco (nota 10:18) (P);
   - lenhador 71% parado (`NO_PROGRESS` 7×), construtor 40% (`SET_ASIDE: no material` 132×) (M);
   - contagem dos blocos que surgiram sozinhos não feita na triagem (P)
