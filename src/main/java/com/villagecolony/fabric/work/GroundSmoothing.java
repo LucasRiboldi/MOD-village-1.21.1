@@ -204,15 +204,28 @@ final class GroundSmoothing {
                 (int[] cell) -> -Math.abs(surface[cell[0]][cell[1]] - natural[cell[0]][cell[1]])));
 
         int done = 0;
+        Map<String, Integer> refused = new java.util.TreeMap<>();
 
         for (int[] cell : changes) {
             if (done + supported >= budget) {
                 break;
             }
 
-            if (column(world, minX + cell[0], minZ + cell[1], natural[cell[0]][cell[1]], surface[cell[0]][cell[1]])) {
+            int x = minX + cell[0];
+            int z = minZ + cell[1];
+            String why = refusal(world, x, z, natural[cell[0]][cell[1]], surface[cell[0]][cell[1]]);
+
+            if (why != null) {
+                refused.merge(why, 1, Integer::sum);
+            } else if (column(world, x, z, natural[cell[0]][cell[1]], surface[cell[0]][cell[1]])) {
                 done++;
             }
+        }
+
+        // Medida do jogo da 0.4.84 (muros e pilares deixados): o que o alisamento quis mexer, o que mexeu e por que não.
+        if (!changes.isEmpty() && colonyId != null) {
+            VillageColonyMod.LOGGER.info("VC_SMOOTH colony={} window={},{} planned={} done={} supported={} refused={}",
+                    colonyId.toString().substring(0, 8), minX, minZ, changes.size(), done, supported, refused);
         }
 
         return done + supported;
@@ -365,14 +378,19 @@ final class GroundSmoothing {
 
     /** Regra 156: verifica toda a coluna antes de escrever; não corta estrutura nem cria piso sem apoio. */
     private static boolean safeColumn(ServerWorld world, int x, int z, int top, int target) {
+        return refusal(world, x, z, top, target) == null;
+    }
+
+    /** Por que a coluna não pode ser mexida (motivo:bloco), ou nulo se pode — a mesma conferência da Regra 156. */
+    static @Nullable String refusal(ServerWorld world, int x, int z, int top, int target) {
         if (!world.isChunkLoaded(x >> 4, z >> 4)) {
-            return false;
+            return "unloaded";
         }
 
         BlockPos.Mutable at = new BlockPos.Mutable(x, Math.min(top, target) - 1, z);
 
         if (!world.getBlockState(at).isSideSolidFullSquare(world, at, net.minecraft.util.math.Direction.UP)) {
-            return false;
+            return "no_support:" + name(world.getBlockState(at));
         }
 
         for (int y = Math.min(top, target); y <= Math.max(top + 1, target); y++) {
@@ -380,14 +398,28 @@ final class GroundSmoothing {
             BlockState state = world.getBlockState(at);
             boolean empty = state.isAir() || state.isReplaceable();
 
-            if (!state.getFluidState().isEmpty() || world.getBlockEntity(at) != null
-                    || BlockProtection.isColonyBuilt(at) || !BlockProtection.mayBuildOver(world, at, state)
-                    || (!empty && !isGround(world, at, state))) {
-                return false;
+            if (!state.getFluidState().isEmpty()) {
+                return "fluid:" + name(state);
+            }
+            if (world.getBlockEntity(at) != null) {
+                return "block_entity:" + name(state);
+            }
+            if (BlockProtection.isColonyBuilt(at)) {
+                return "colony_built:" + name(state);
+            }
+            if (!BlockProtection.mayBuildOver(world, at, state)) {
+                return "protected:" + name(state);
+            }
+            if (!empty && !isGround(world, at, state)) {
+                return "not_ground:" + name(state);
             }
         }
 
-        return true;
+        return null;
+    }
+
+    private static String name(BlockState state) {
+        return net.minecraft.registry.Registries.BLOCK.getId(state.getBlock()).getPath();
     }
 
     static void clearAll() {

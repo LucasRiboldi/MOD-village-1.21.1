@@ -75,6 +75,8 @@
       "com.villagecolony.fabric.work.ShepherdPensGameTest",
       "com.villagecolony.fabric.work.PenTetherGameTest",
       "com.villagecolony.fabric.work.WaterRescueGameTest",
+      "com.villagecolony.fabric.work.SmoothRefusalGameTest",
+      "com.villagecolony.fabric.integration.LotEdgeGameTest",
       "com.villagecolony.fabric.work.WindowEquivalentGameTest",
       "com.villagecolony.fabric.work.WoodInPiecesGameTest",
       "com.villagecolony.fabric.work.LumberjackDetoursGameTest",
