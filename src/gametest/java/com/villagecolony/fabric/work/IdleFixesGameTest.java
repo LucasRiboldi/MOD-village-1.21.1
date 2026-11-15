@@ -102,6 +102,29 @@ public class IdleFixesGameTest implements FabricGameTest {
         });
     }
 
+    /**
+     * Regra 287: o canteiro vazio é visto pelo lugar da planta, um bloco acima da terra. Mirando o meio da terra
+     * arada, a linha batia na terra vizinha e o fazendeiro não semeava a três blocos com o caminho livre.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_fixes", tickLimit = 40)
+    public void theFarmerSeesAnEmptyPlotThreeBlocksAway(TestContext context) {
+        for (int x = 0; x <= 3; x++) {
+            context.setBlockState(new BlockPos(x, 1, 4), Blocks.DIRT);
+        }
+
+        context.setBlockState(new BlockPos(4, 1, 4), Blocks.FARMLAND);
+        VillagerEntity farmer = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 2, 4));
+        BlockPos plot = context.getAbsolutePos(new BlockPos(4, 1, 4));
+
+        context.runAtTick(5, () -> {
+            context.assertFalse(FarmerWork.reaches(farmer.getBlockPos(), plot), "o braço de 3 não chegava ao canteiro");
+            context.assertTrue(FarmerWork.isWithinReach(context.getWorld(), farmer, plot),
+                    "a linha livre até o lugar da planta, e o fazendeiro não via o canteiro vazio");
+            context.killAllEntities();
+            context.complete();
+        });
+    }
+
     /** Baús da vila a 80% pedem o armazém e um construtor a mais; abaixo de 70% o pedido sai. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_fixes", tickLimit = 20)
     public void fullChestsAskForAStorageHouseAndASecondBuilder(TestContext context) {

@@ -7,12 +7,14 @@ import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.StreetRoute;
 import com.villagecolony.core.worker.model.Worker;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.PillarBlock;
 import net.minecraft.entity.ai.pathing.PathNodeType;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockView;
 
 import java.util.HashSet;
@@ -88,11 +90,20 @@ public final class ColonyPathing {
 
         BlockState floor = world.getBlockState(new BlockPos(x, y - 1, z));
 
-        if (floor.isIn(BlockTags.LEAVES) || floor.isIn(BlockTags.LOGS)) {
+        if (floor.isIn(BlockTags.LEAVES) || isUprightLog(floor)) {
             return PathNodeType.BLOCKED;
         }
 
         return VillageRoad.isPathBlock(floor) || StreetSurface.isStreetMaterial(floor) ? type : OFF_STREET;
+    }
+
+    /**
+     * Regra 287: só a tora em pé (tronco de árvore) fica fora do caminho como chão. A tora deitada é borda de
+     * plantação, viga ou piso de obra, e fechava o miolo da plantação grande ao fazendeiro.
+     */
+    static boolean isUprightLog(BlockState floor) {
+        return floor.isIn(BlockTags.LOGS)
+                && floor.getOrEmpty(PillarBlock.AXIS).map(axis -> axis == Direction.Axis.Y).orElse(true);
     }
 
     /**

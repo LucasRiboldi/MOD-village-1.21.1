@@ -366,11 +366,13 @@ public final class FarmerWork {
     /**
      * O alcance do jogador — escolha do autor, 2026-10-28 (jogo da 0.3.99: roça dois blocos acima, a três de
      * distância, e o fazendeiro desistia 9 vezes): a até 4,5 blocos do olho até o meio da planta, sem bloco
-     * sólido no caminho.
+     * sólido no caminho. No canteiro vazio a mira é o lugar da planta, um bloco acima da terra (Regra 287): o meio da
+     * terra arada fica abaixo do chão vizinho, e a linha batia nele.
      */
     static boolean seesWithinEyeReach(ServerWorld world, VillagerEntity villager, BlockPos target) {
         net.minecraft.util.math.Vec3d eye = villager.getEyePos();
-        net.minecraft.util.math.Vec3d center = net.minecraft.util.math.Vec3d.ofCenter(target);
+        BlockPos plant = CropPatch.isEmptyPlot(world, target) ? target.up() : target;
+        net.minecraft.util.math.Vec3d center = net.minecraft.util.math.Vec3d.ofCenter(plant);
 
         if (eye.squaredDistanceTo(center) > EYE_REACH * EYE_REACH) {
             return false;
@@ -380,7 +382,7 @@ public final class FarmerWork {
                 net.minecraft.world.RaycastContext.ShapeType.COLLIDER, net.minecraft.world.RaycastContext.FluidHandling.NONE,
                 villager));
 
-        return hit.getType() == net.minecraft.util.hit.HitResult.Type.MISS || hit.getBlockPos().equals(target);
+        return hit.getType() == net.minecraft.util.hit.HitResult.Type.MISS || hit.getBlockPos().equals(plant);
     }
 
     /**
