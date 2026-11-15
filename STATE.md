@@ -9,7 +9,7 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.84 na branch `fix/gametest-relogio` (sobre a `main` com os PRs #79 a #81); a publicada é `v0.4.74-alpha`. **Não jogadas.** A última jogada é a 0.4.79
+- **Versão:** 0.4.85 na branch `fix/jogo-0484` (sobre a `main` com os PRs #79 a #83); a publicada é `v0.4.74-alpha`. **Não jogadas.** A última jogada é a 0.4.79
   (13-11, taiga, Spark `oujZp2IxmS`; os oito sintomas viraram as Regras 275 a 282).
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
@@ -41,6 +41,7 @@ Cada uma tem teste que falha sem ela; nenhuma foi vista em jogo.
 | 0.4.82 | 281, 282 | todo tronco posto pelo mod sai no log (`VC_LOG_PLACED`, com quem pôs); só a rede do grafo reserva chão contra lote (trilha fora da rede não). Sentinela `fast` PASS |
 | 0.4.83 | 283 | o pastor só recolhe animal dentro da caixa da vila (sem a folga de 10 blocos); GameTests do pastor, da tosquia e da taiga sem depender dos vizinhos. 1.127/1.127 três vezes, Sentinela `fast` PASS |
 | 0.4.84 | 284 | o animal atravessa o portão do curral amarrado a 2 blocos do destino (`PenTether`); GameTests do mineiro, da vaca solta, do canal de água e dos portões sem depender dos vizinhos. 10/10 baterias verdes, Sentinela `fast` PASS |
+| 0.4.85 | 285, 286 | aldeão preso na água vai à margem e, se não sair, pisa no gelo sob o pulo; o mineiro novo dorme na casa junto da mina assim que ela sobe; diagnósticos `loose=` (grafo), `VC_SMOOTH` e `VC_LOT_EDGE` (terreno). Sentinela `fast` PASS; tosquia instável registrada (KF-015) |
 
 Da 0.4.54 à 0.4.67 (Regras 243 a 261) também não houve confirmação escrita em jogo; a 0.4.68 trouxe as que o jogo de
 12-11 viu funcionar: oito ofícios na fundação, casa do mineiro e mina com arco, patamar com tocha e curral achado.

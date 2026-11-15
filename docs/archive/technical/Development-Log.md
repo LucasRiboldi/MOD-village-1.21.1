@@ -11831,3 +11831,17 @@ vaca tomavam a navegação; Regra 284 (`PenTether`, `setPositionTarget` a 2 bloc
 provada por `PenTetherGameTest`, vermelho antes. runGametest 10/10 baterias verdes; build e unitários verdes; Sentinela
 `fast` PASS (20261114T214110Z). SHA-256 do JAR: `21A694460EA0C6063B187EF87295306B2F27CA04348EAF38F74B7B936C975D80`, em
 `build/libs/`, `downloads/` e TLauncher (0.4.83 como `.disabled`). Nada visto em jogo.
+
+## 2026-11-14 — 0.4.85: Regras 285 e 286 e diagnósticos do jogo da 0.4.84
+
+Jogo da 0.4.84 (planície, 9,5 min de jogo no log): aldeões de vários ofícios presos na água, só 1 encalhe no log,
+mineiro morando a 99 blocos da mina e encalhado na praia sob a falésia, `isolated=7` a 11 no grafo, muros em volta das
+obras. Regra 285 (`WaterRescue`): 10 s na água a céu aberto leva à margem; mais 10 s, cada pulo com os pés fora d'água
+põe gelo embaixo (até 6); `WaterRescueGameTest` vermelho sem a vigia. Regra 286: sem trabalho medido, a boca da mina
+vale como trabalho do mineiro, e as camas são reavaliadas assim que a casa do mineiro sobe; `BedChoiceGameTest`
+vermelho antes. Diagnósticos, sem mudar comportamento: `loose=` no `VC_ROAD_GRAPH`, `VC_SMOOTH` (motivo de cada coluna
+recusada pelo alisamento) e `VC_LOT_EDGE` (degrau em volta do lote). A tosquia passou a cair com os testes novos
+registrados (KF-015, interferência entre lotes); a correção estrutural foi para o TODO. Build e unitários verdes;
+Sentinela `fast` PASS (20261115T023024Z). SHA-256 do JAR:
+`B2F13FD217E72E0D54FDFEFD794496FBF6C5E73CC0021CEF8CC5415B876EC3CF`, em `build/libs/`, `downloads/` e TLauncher (0.4.84
+como `.disabled`). Nada visto em jogo.
