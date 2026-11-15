@@ -48,7 +48,8 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
     plantação no nível do bloco da plantação (nota 7) e entrada de estrutura em solo de pedra (nota 8) (M);
   - terreno: ler `VC_SMOOTH` (motivo de cada coluna recusada; suspeita: flor dentro de peça original da vila sai
     `protected:`) e `VC_LOT_EDGE` (degrau em volta do lote), e escolher a correção dos muros (nota 1) (M);
-  - lagos isolados dentro da vila fechados com terra do bioma na geração (nota 2) — não começado (M);
+  - lagos isolados dentro da vila: a Regra 288 (0.4.87) aterra toda água dentro da vila na geração; conferir em
+    mundo novo (por jogo);
   - mineiro (Regra 286): conferir se dorme na casa junto da mina; a água (Regra 285) resgatou 10 vezes no jogo da
     0.4.85 sem precisar de gelo (por jogo)
 - [ ] 🔴 Jogo da 0.4.85 (15-11, planície, Spark `CxCKzJmQ5r`), achados da triagem ainda sem correção:
@@ -61,6 +62,16 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
   - pedidos novos: arco da mina com piso de pedra de raio 6, baú ao pé e céu livre; casa do mineiro com luz
     externa e telhado medieval (M);
   - construtor 42% parado (24% bloqueado), pastor 25%, ferreiro 29% (Regra 51) (M)
+- [ ] 🔴 Jogo da 0.4.86 (15-11, planície, Spark `GHWvjlPaPs`, 37 min, 8 notas), achados da triagem:
+  - casas e lampião sobre o lago (notas 10:15 e 10:24): Regra 288 na 0.4.87, candidata; conferir em mundo novo (por jogo);
+  - fazendeiro 0% de trabalho: a Regra 287 abriu o caminho ("could not reach the crop" 0×), mas a plantação grande não
+    nasce arada (`no empty plot` em todo ciclo) e 3 fazendeiros disputam a mesma (`TARGET_RESERVED` 11×); o autor
+    quer no máximo 2 fazendeiros na plantação grande (notas 10:38 e 10:51) (M);
+  - grafo não liga os nós da estrada de tábua nem a casa com saída nela (notas 10:40 e 10:46) (M);
+  - colunas de terra e pedra ("torres") seguem no terreno (nota 10:20); `VC_SMOOTH` recusa por `protected:air` (M);
+  - nó de entrada da mina logo à frente do arco (nota 10:18) (P);
+  - lenhador 71% parado (`NO_PROGRESS` 7×), construtor 40% (`SET_ASIDE: no material` 132×) (M);
+  - contagem dos blocos que surgiram sozinhos não feita na triagem (P)
 - [ ] 🟠 Estado e implementação nas 81 regras de `docs/RULES.md` que não têm essas colunas (M)
 - [ ] 🟠 Número próprio para o teto de 15% de ócio; "Regra 51" hoje tem dois sentidos (P)
 - [ ] 🟠 Fechar os conflitos C-12, C-13 e C-15 de `docs/audit/RULE-RECONCILIATION.md` (P)

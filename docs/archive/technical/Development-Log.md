@@ -11856,3 +11856,17 @@ tora em pé bloqueia como chão; a visão até 4,5 blocos mira o lugar da planta
 `theColonyVillagerStepsOverALyingLogBorder` e `theFarmerSeesAnEmptyPlotThreeBlocksAway` vermelhos antes, verdes depois;
 controle `anUprightLogRingStaysClosed` verde nos dois. 1.137 GameTests verdes, build e unitários verdes, Sentinela
 `fast` PASS (20261115T053216Z). Os outros achados do jogo foram para o `TODO.md`. Nada visto em jogo.
+
+## 2026-11-15 — 0.4.87: Regra 288, nenhuma estrutura nasce sobre água
+
+Jogo da 0.4.86 (planície, 37 min, Spark `GHWvjlPaPs`, 8 notas): "could not reach the crop" caiu de 23 para 0 (Regra
+287), mas o fazendeiro seguiu em 0% sem canteiro vazio; as casas e o lampião da vila nasceram sobre o lago. Lendo o
+save: duas casas e o poste com piso em y=63 e água de y=60 a 62 embaixo, todas `fixed` no `VC_GROUND`. Causa:
+`VillageGround.topOf` para na água e `column()` saía sem mexer na coluna com água aberta; a peça fixa nunca era moldada;
+e a drenagem da poça fechada também saía, porque o topo era água. O beard do Vanilla (`StructureWeightSampler`,
+`beard_box`) só soma cerca de 0,5 logo abaixo do piso. Escolhas do autor, B e C. Regra 288: toda água dentro da vila (as
+peças + 4) vira chão até a superfície, com o topo e o subsolo secos mais comuns do chunk (`VillageSoil`); a peça fixa
+sobre água ganha base até o piso; a água fora da vila fica. `reachesGenerationEdge` saiu. GameTests
+`theWaterInsideTheVillageBecomesGround` e `aPieceOverWaterGetsAFoundation` vermelhos antes, verdes depois; 1.139
+GameTests, build e unitários verdes, Sentinela `fast` PASS (20261115T142707Z). README sincronizado com a Regra 287 no PR #85 (o CI tinha caído por isso).
+Nada visto em jogo; só aparece em mundo novo.

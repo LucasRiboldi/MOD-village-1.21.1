@@ -23,7 +23,6 @@ import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.noise.NoiseConfig;
 
-import java.util.ArrayDeque;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -37,8 +36,8 @@ import java.util.Map;
  * volta, até {@link #REACH}, a mistura suave do topo de verdade com o nível da vila, numa faixa de 4 vezes o desnível. Calculada uma
  * vez por vila, com a planta inteira dela e a altura natural do gerador, e guardada: todos os chunks da vila veem a
  * mesma. Cada chunk só mexe nas próprias colunas — corta ou aterra com o bloco de cima e o de baixo da própria
- * coluna, tampa os vãos de caverna logo abaixo, e a árvore em pé sobre o chão cortado sai inteira. Mar, rio e água
- * que alcança a borda da geração não são tocados; poça fechada no miolo vira solo da vila.
+ * coluna, tampa os vãos de caverna logo abaixo, e a árvore em pé sobre o chão cortado sai inteira. A água fora da
+ * vila não é tocada; a de dentro vira chão, e a peça fixa sobre água ganha base até o piso (Regra 288).
  */
 public final class VillageGround {
 
@@ -110,6 +109,16 @@ public final class VillageGround {
         boolean drainsWater(int x, int z) {
             return drainWater[x - minX][z - minZ];
         }
+
+        /** Se a coluna é de peça fixa (casa, lampião, enfeite), que ganha base quando está sobre água (Regra 288). */
+        boolean founds(int x, int z) {
+            return covers(x, z) && kinds[x - minX][z - minZ] == VillageSurface.Kind.FIXED;
+        }
+    }
+
+    /** Regra 288: a água dentro da vila (as peças + {@link #CORE_PAD}) é chão a moldar; só a de fora fica. */
+    static VillageSurface.Kind waterKind(boolean wet, boolean inCore) {
+        return wet && !inCore ? VillageSurface.Kind.WATER : VillageSurface.Kind.FREE;
     }
 
     private static final Map<String, Plan> PLANS = new LinkedHashMap<>(CACHED, 0.75f, true) {
@@ -149,16 +158,23 @@ public final class VillageGround {
             }
 
             Plan plan = planOf(world, start, generator);
+            VillageSoil soil = VillageSoil.of(chunk);
 
             for (int lx = 0; lx < 16; lx++) {
                 for (int lz = 0; lz < 16; lz++) {
                     int x = pos.getStartX() + lx;
                     int z = pos.getStartZ() + lz;
+                    boolean founds = plan.founds(x, z);
 
-                    if (plan.shapes(x, z)) {
+                    if (plan.shapes(x, z) || founds) {
                         int top = topOf(chunk, x, z,
                                 chunk.sampleHeightmap(Heightmap.Type.OCEAN_FLOOR_WG, x & 15, z & 15) + SCAN_ABOVE);
-                        column(world, chunk, x, z, top, plan.targetFor(x, z, top), plan.drainsWater(x, z));
+
+                        if (!founds) {
+                            column(world, chunk, x, z, top, plan.targetFor(x, z, top), plan.drainsWater(x, z), soil);
+                        } else if (VillageSoil.isWet(chunk, x, z, top)) {
+                            soil.fill(chunk, x, z, top, plan.targetFor(x, z, top));
+                        }
                     }
                 }
             }
@@ -222,8 +238,6 @@ public final class VillageGround {
             }
         }
 
-        boolean[][] openWater = reachesGenerationEdge(wet);
-
         for (int x = 0; x < width; x++) {
             for (int z = 0; z < depth; z++) {
                 int i = x / SAMPLE;
@@ -234,12 +248,12 @@ public final class VillageGround {
                         + ground[i][j + 1] * (1 - fx) * fz + ground[i + 1][j + 1] * fx * fz;
                 int nearI = fx < 0.5 ? i : i + 1;
                 int nearJ = fz < 0.5 ? j : j + 1;
-                boolean enclosedCoreWater = wet[x][z] && !openWater[x][z] && core.contains(x, z);
+                boolean inCore = core.contains(x, z);
 
-                natural[x][z] = enclosedCoreWater ? (int) Math.round(floor)
-                        : wet[x][z] ? water[nearI][nearJ] : (int) Math.round(floor);
-                kinds[x][z] = wet[x][z] && !enclosedCoreWater ? VillageSurface.Kind.WATER : VillageSurface.Kind.FREE;
-                drainWater[x][z] = enclosedCoreWater;
+                // Regra 288: a água conta na altura da superfície dela; a de dentro da vila vira chão nessa altura.
+                natural[x][z] = wet[x][z] ? water[nearI][nearJ] : (int) Math.round(floor);
+                kinds[x][z] = waterKind(wet[x][z], inCore);
+                drainWater[x][z] = inCore;
             }
         }
 
@@ -293,24 +307,30 @@ public final class VillageGround {
         return java.util.Objects.requireNonNull(pieces, "a vila sem peças não é moldada");
     }
 
+    /** {@link #column(StructureWorldAccess, Chunk, int, int, int, int, boolean, VillageSoil)} com o solo do chunk. */
+    static void column(StructureWorldAccess world, Chunk chunk, int x, int z, int top, int target, boolean drainWater) {
+        column(world, chunk, x, z, top, target, drainWater, VillageSoil.of(chunk));
+    }
+
     /**
      * Corta ou aterra a coluna de {@code top} até {@code target}, com o bloco de cima e o de baixo que a coluna já
-     * tinha, e tampa os vãos logo abaixo. Água externa fica como está; uma poça fechada no miolo pode ser preenchida.
-     * A árvore em pé sobre o chão cortado sai inteira (autor, 2026-10-29).
+     * tinha, e tampa os vãos logo abaixo. A coluna com água fica como está fora da vila e, dentro dela
+     * ({@code drainWater}), vira chão ({@link VillageSoil#fill}, Regra 288). A árvore em pé sobre o chão cortado sai
+     * inteira (autor, 2026-10-29).
      */
-    static void column(StructureWorldAccess world, Chunk chunk, int x, int z, int top, int target, boolean drainWater) {
+    static void column(StructureWorldAccess world, Chunk chunk, int x, int z, int top, int target, boolean drainWater,
+                       VillageSoil soil) {
         BlockPos.Mutable at = new BlockPos.Mutable(x, top + 1, z);
 
-        if (top <= chunk.getBottomY() || (!drainWater && (!chunk.getFluidState(at.setY(top)).isEmpty()
-                || !chunk.getFluidState(at.setY(top + 1)).isEmpty()))) {
+        if (top <= chunk.getBottomY()) {
             return;
         }
 
-        int waterTop = top;
-        while (drainWater && !chunk.getFluidState(at.setY(waterTop + 1)).isEmpty()) {
-            waterTop++;
-        }
-        if (drainWater && target < waterTop) {
+        if (VillageSoil.isWet(chunk, x, z, top)) {
+            if (drainWater) {
+                soil.fill(chunk, x, z, top, target);
+            }
+
             return;
         }
 
@@ -373,40 +393,6 @@ public final class VillageGround {
         return state.isOf(Blocks.SHORT_GRASS) || state.isOf(Blocks.TALL_GRASS)
                 || state.isOf(Blocks.FERN) || state.isOf(Blocks.LARGE_FERN) || state.isIn(BlockTags.FLOWERS)
                 || state.isIn(BlockTags.SAPLINGS);
-    }
-
-    /** Marca água ligada à borda da área gerada: mar e rio ficam; água fechada no miolo pode virar terreno. */
-    private static boolean[][] reachesGenerationEdge(boolean[][] wet) {
-        int width = wet.length;
-        int depth = wet[0].length;
-        boolean[][] open = new boolean[width][depth];
-        ArrayDeque<BlockPos> pending = new ArrayDeque<>();
-
-        for (int x = 0; x < width; x++) {
-            addWaterEdge(wet, open, pending, x, 0);
-            addWaterEdge(wet, open, pending, x, depth - 1);
-        }
-        for (int z = 1; z < depth - 1; z++) {
-            addWaterEdge(wet, open, pending, 0, z);
-            addWaterEdge(wet, open, pending, width - 1, z);
-        }
-
-        while (!pending.isEmpty()) {
-            BlockPos at = pending.removeFirst();
-            addWaterEdge(wet, open, pending, at.getX() - 1, at.getZ());
-            addWaterEdge(wet, open, pending, at.getX() + 1, at.getZ());
-            addWaterEdge(wet, open, pending, at.getX(), at.getZ() - 1);
-            addWaterEdge(wet, open, pending, at.getX(), at.getZ() + 1);
-        }
-
-        return open;
-    }
-
-    private static void addWaterEdge(boolean[][] wet, boolean[][] open, ArrayDeque<BlockPos> pending, int x, int z) {
-        if (x >= 0 && z >= 0 && x < wet.length && z < wet[0].length && wet[x][z] && !open[x][z]) {
-            open[x][z] = true;
-            pending.addLast(new BlockPos(x, 0, z));
-        }
     }
 
     /** Confere o corte e o aterro antes de escrever: blocos de estrutura e líquidos ficam intactos. */

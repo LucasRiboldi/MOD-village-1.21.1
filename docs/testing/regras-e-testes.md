@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 180
+- **Cita a regra:** 181
 - **Só usa a classe indicada:** 93
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 12
@@ -298,3 +298,4 @@ classe prova menos ainda.
 | 285 | Aldeão preso na água sai (autor 14-11, jogo da 0.4.84: vários ofícios presos na água): o… | cita | WaterRescueGameTest |
 | 286 | O mineiro novo dorme junto da mina (autor 14-11, jogo da 0.4.84: a cama ao lado da mina n… | cita | BedChoiceGameTest |
 | 287 | O fazendeiro entra na plantação de borda de tora (autor 15-11, jogo da 0.4.85: o fazendei… | cita | ColonyPathingGameTest, IdleFixesGameTest |
+| 288 | Nenhuma estrutura da vila nasce sobre água (autor 15-11, jogo da 0.4.86: casas e lampião… | cita | VillageGroundGameTest |

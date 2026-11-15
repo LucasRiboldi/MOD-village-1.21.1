@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.construction.model.VillageBlend;
+import com.villagecolony.core.construction.model.VillageSurface;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
@@ -174,6 +176,85 @@ public class VillageGroundGameTest implements FabricGameTest {
                     type + " da coluna aterrada ficou em " + chunk.sampleHeightmap(type, 1, 0) + ", não em 73");
         }
 
+        context.complete();
+    }
+
+    /**
+     * Regra 288: dentro da vila, a coluna com água vira chão até a superfície da água, com o solo seco do próprio
+     * chunk por cima — também quando a conta da vila a quer mais baixa que a água.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_ground_height", tickLimit = 5)
+    public void theWaterInsideTheVillageBecomesGround(TestContext context) {
+        ServerWorld world = context.getWorld();
+        ProtoChunk chunk = new ProtoChunk(new ChunkPos(90_002, 90_002), UpgradeData.NO_UPGRADE_DATA, world,
+                world.getRegistryManager().get(RegistryKeys.BIOME), null);
+        int x = chunk.getPos().getStartX();
+        int z = chunk.getPos().getStartZ();
+
+        // Duas colunas de lago (leito de areia em 59, água de 60 a 62) e uma seca, de grama, ao lado.
+        for (int dx = 0; dx < 2; dx++) {
+            for (int y = 50; y < 59; y++) {
+                chunk.setBlockState(new BlockPos(x + dx, y, z), Blocks.STONE.getDefaultState(), false);
+            }
+
+            chunk.setBlockState(new BlockPos(x + dx, 59, z), Blocks.SAND.getDefaultState(), false);
+
+            for (int y = 60; y <= 62; y++) {
+                chunk.setBlockState(new BlockPos(x + dx, y, z), Blocks.WATER.getDefaultState(), false);
+            }
+        }
+
+        for (int y = 50; y < 62; y++) {
+            chunk.setBlockState(new BlockPos(x + 3, y, z), Blocks.DIRT.getDefaultState(), false);
+        }
+
+        chunk.setBlockState(new BlockPos(x + 3, 62, z), Blocks.GRASS_BLOCK.getDefaultState(), false);
+        Heightmap.populateHeightmaps(chunk, EnumSet.of(Heightmap.Type.WORLD_SURFACE_WG, Heightmap.Type.OCEAN_FLOOR_WG));
+        chunk.setStatus(ChunkStatus.CARVERS);
+
+        VillageGround.column(world, chunk, x, z, VillageGround.topOf(chunk, x, z, 80), 62, true);
+        VillageGround.column(world, chunk, x + 1, z, VillageGround.topOf(chunk, x + 1, z, 80), 58, true);
+
+        for (int dx = 0; dx < 2; dx++) {
+            for (int y = 60; y <= 62; y++) {
+                context.assertTrue(chunk.getFluidState(new BlockPos(x + dx, y, z)).isEmpty(),
+                        "a água ficou na coluna " + dx + " em y=" + y);
+            }
+
+            context.assertTrue(chunk.getBlockState(new BlockPos(x + dx, 62, z)).isOf(Blocks.GRASS_BLOCK),
+                    "o topo da coluna " + dx + " não é o solo seco do chunk");
+            context.assertTrue(chunk.getBlockState(new BlockPos(x + dx, 61, z)).isOf(Blocks.DIRT),
+                    "o meio da coluna " + dx + " não é o subsolo do chunk");
+            context.assertTrue(chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE_WG, dx, 0) == 62,
+                    "a altura de geração da coluna " + dx + " não acompanhou o chão novo");
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Regra 288: a peça fixa (casa, lampião) sobre água ganha base até o piso dela; o lago dentro da vila é chão, e o
+     * de fora fica.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_ground_height", tickLimit = 5)
+    public void aPieceOverWaterGetsAFoundation(TestContext context) {
+        VillageSurface.Kind free = VillageSurface.Kind.FREE;
+        VillageSurface.Kind piece = VillageSurface.Kind.FIXED;
+        VillageSurface.Kind[][] kinds = {{free, free, free}, {free, piece, free}, {free, free, free}};
+        int[][] natural = {{62, 62, 62}, {62, 63, 62}, {62, 62, 62}};
+        VillageBlend.Area core = new VillageBlend.Area(0, 0, 2, 2);
+        VillageGround.Plan plan = new VillageGround.Plan(0, 0, kinds, new boolean[3][3],
+                VillageBlend.shape(natural, kinds, core, core));
+
+        context.assertTrue(plan.founds(1, 1), "a peça sobre a água fica sem base");
+        context.assertFalse(plan.founds(0, 0), "o chão livre virou base de peça");
+        context.assertTrue(plan.targetFor(1, 1, 62) == 63, "a base não sobe até o piso da peça");
+        context.assertTrue(VillageGround.waterKind(true, true) == VillageSurface.Kind.FREE,
+                "o lago dentro da vila ficou água");
+        context.assertTrue(VillageGround.waterKind(true, false) == VillageSurface.Kind.WATER,
+                "o lago fora da vila virou chão");
+        context.assertTrue(VillageGround.waterKind(false, false) == VillageSurface.Kind.FREE,
+                "o chão seco fora da vila deixou de ser moldado");
         context.complete();
     }
 }
