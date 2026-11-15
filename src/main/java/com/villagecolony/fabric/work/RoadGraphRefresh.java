@@ -377,9 +377,9 @@ public final class RoadGraphRefresh {
         try {
             if (!store.graph(colony.id()).equals(Optional.of(graph))) {
                 store.update(colony.id(), graph);
-                VillageColonyMod.LOGGER.info("VC_ROAD_GRAPH colony={} nodes={} edges={} toPave={} isolated={} offLine={} capped={} fixed={}",
+                VillageColonyMod.LOGGER.info("VC_ROAD_GRAPH colony={} nodes={} edges={} toPave={} isolated={} offLine={} capped={} fixed={} loose={}",
                         colony.id().toString().substring(0, 8), graph.nodes().size(), graph.edges().size(),
-                        result.toPave().size(), result.isolated(), offLine, capped, fixed);
+                        result.toPave().size(), result.isolated(), offLine, capped, fixed, String.join(";", result.loose()));
             }
         } catch (IllegalArgumentException refused) {
             // O grafo anterior continua: formato recusado não derruba o servidor nem o save.

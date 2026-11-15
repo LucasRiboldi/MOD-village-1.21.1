@@ -44,8 +44,14 @@ public final class RoadLines {
      * @param toPave as colunas do grafo e da faixa fechada que ainda não são caminho, em ordem de andar
      * @param isolated componentes que ficaram fora do grafo
      * @param surplus os blocos de caminho colados à linha que não são a linha: a rua é de um bloco (Regra 186)
+     * @param loose cada parte que não se ligou à linha, com a porta sozinha também: "door" ou "part:N" e a coluna
+     *              mais perto do centro (jogo da 0.4.84, diagnóstico das entradas fora do grafo)
      */
-    public record Result(Optional<RoadGraph> graph, List<PathStep> toPave, int isolated, List<ColonyPos> surplus) {
+    public record Result(Optional<RoadGraph> graph, List<PathStep> toPave, int isolated, List<ColonyPos> surplus,
+                         List<String> loose) {
+        public Result(Optional<RoadGraph> graph, List<PathStep> toPave, int isolated, List<ColonyPos> surplus) {
+            this(graph, toPave, isolated, surplus, List.of());
+        }
     }
 
     private RoadLines() {
@@ -150,6 +156,7 @@ public final class RoadLines {
         Set<Long> main = new HashSet<>(parts.getFirst());
         int isolated = 0;
         int links = 0;
+        List<String> loose = new ArrayList<>();
 
         List<Set<Long>> others = new ArrayList<>(parts.subList(1, parts.size()));
 
@@ -179,6 +186,7 @@ public final class RoadLines {
             }
 
             isolated += aloneDoor ? 0 : 1;
+            loose.add(describe(part, columns, center, aloneDoor));
         }
 
         columns.keySet().retainAll(main);
@@ -202,7 +210,18 @@ public final class RoadLines {
         }
 
         return new Result(Optional.of(RoadLinesGraph.of(columns, toLay, center, doors)), toPave(columns, toLay, physical), isolated,
-                surplus(physical, columns, toLay, oldRing));
+                surplus(physical, columns, toLay, oldRing), List.copyOf(loose));
+    }
+
+    /** A parte solta para o log: o tipo e a coluna dela mais perto do centro, com a altura. */
+    private static String describe(Set<Long> part, Map<Long, Integer> columns, ColonyPos center, boolean aloneDoor) {
+        long nearest = part.stream().min(Comparator.comparingLong((Long at) -> {
+            long dx = ColonyRoads.xOf(at) - (long) center.x();
+            long dz = ColonyRoads.zOf(at) - (long) center.z();
+            return dx * dx + dz * dz;
+        })).orElseThrow();
+        return (aloneDoor ? "door" : "part:" + part.size()) + "@" + ColonyRoads.xOf(nearest) + ","
+                + columns.getOrDefault(nearest, center.y()) + "," + ColonyRoads.zOf(nearest);
     }
 
     /**

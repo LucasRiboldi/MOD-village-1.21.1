@@ -167,9 +167,58 @@ public final class LotTerraform {
         if (moved > 0) {
             VillageColonyMod.LOGGER.info("Colony {} levelled the lot of {} at {} — {} blocks cut or filled",
                     project.colonyId(), blueprint.id(), project.origin(), moved);
+            // Medida do jogo da 0.4.84 (lote em pedestal ou em buraco, com muro em volta): o degrau entre a base e o chão.
+            VillageColonyMod.LOGGER.info("VC_LOT_EDGE colony={} blueprint={} base={} {}",
+                    project.colonyId().toString().substring(0, 8), blueprint.id(), baseY,
+                    edgeReport(world, project.origin().x(), project.origin().z(), blueprint.size().x(), blueprint.size().z(), baseY));
         }
 
         return moved;
+    }
+
+    /**
+     * O degrau em volta do lote: para cada coluna do anel a 1, 2 e 3 blocos da pegada, a diferença entre o chão dela e a
+     * base. Diz o maior degrau, quantas colunas do anel de 1 bloco passam de 1 de diferença e onde fica o maior.
+     */
+    static String edgeReport(ServerWorld world, int originX, int originZ, int sizeX, int sizeZ, int baseY) {
+        int worst = 0;
+        int steep = 0;
+        BlockPos worstAt = null;
+
+        for (int ring = 1; ring <= 3; ring++) {
+            for (int x = originX - ring; x < originX + sizeX + ring; x++) {
+                for (int z = originZ - ring; z < originZ + sizeZ + ring; z++) {
+                    boolean onRing = x == originX - ring || x == originX + sizeX + ring - 1
+                            || z == originZ - ring || z == originZ + sizeZ + ring - 1;
+                    if (!onRing || !world.isChunkLoaded(x >> 4, z >> 4)) {
+                        continue;
+                    }
+                    int ground = groundNear(world, x, z, baseY);
+                    int step = Math.abs(ground - (baseY - 1));
+                    if (ring == 1 && step > 1) {
+                        steep++;
+                    }
+                    if (step > worst) {
+                        worst = step;
+                        worstAt = new BlockPos(x, ground, z);
+                    }
+                }
+            }
+        }
+
+        return "maxStep=" + worst + " steepRing1=" + steep + " worstAt=" + (worstAt == null ? "-" : worstAt.toShortString());
+    }
+
+    /** O chão da coluna perto da base: o primeiro bloco sólido, sem folha, de 8 acima a 8 abaixo dela. */
+    private static int groundNear(ServerWorld world, int x, int z, int baseY) {
+        BlockPos.Mutable at = new BlockPos.Mutable(x, baseY + 8, z);
+        for (; at.getY() >= baseY - 8; at.move(0, -1, 0)) {
+            BlockState state = world.getBlockState(at);
+            if (!state.isIn(net.minecraft.registry.tag.BlockTags.LEAVES) && !state.getCollisionShape(world, at).isEmpty()) {
+                return at.getY();
+            }
+        }
+        return baseY - 9;
     }
 
     /** O corredor e a rampa da Regra 131: base junto da casa, subida de um bloco por coluna. */

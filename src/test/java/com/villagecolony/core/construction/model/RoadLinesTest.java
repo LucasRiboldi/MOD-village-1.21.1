@@ -343,6 +343,9 @@ class RoadLinesTest {
 
         assertFalse(columnsOf(result).contains(at(22, 0)), "Regra 264: a linha cruzou o riacho: " + result.toPave());
         assertEquals(1, result.isolated(), "Regra 264: a parte do outro lado devia ficar solta");
+        // Diagnóstico do jogo da 0.4.84: a parte solta sai no log com o tamanho e a coluna mais perto do centro.
+        assertEquals(1, result.loose().size(), "a parte solta não foi descrita: " + result.loose());
+        assertTrue(result.loose().getFirst().matches("part:\\d+@24,-?\\d+,0"), "descrição: " + result.loose());
     }
 
     @Test

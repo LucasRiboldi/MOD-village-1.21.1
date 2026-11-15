@@ -93,13 +93,22 @@ final class BedChoice {
      */
     static Optional<ColonyPos> workFor(com.villagecolony.core.worker.model.Worker worker, Colony colony) {
         Optional<ColonyPos> measured = workOf(worker.villagerId()).map(MinecraftTypeAdapter::toColonyPos);
+        Optional<com.villagecolony.core.worker.model.ProfessionType> trade = worker.profession();
 
-        if (measured.isPresent()
-                || worker.profession().filter(com.villagecolony.core.worker.model.ProfessionType.BUILDER::equals).isEmpty()) {
+        if (measured.isPresent()) {
             return measured;
         }
 
-        return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).map(com.villagecolony.core.construction.model.ConstructionProject::origin);
+        // Sem trabalho medido: a obra aberta é o do construtor (Regra 274) e a boca da mina, o do mineiro (Regra 286).
+        if (trade.filter(com.villagecolony.core.worker.model.ProfessionType.BUILDER::equals).isPresent()) {
+            return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).map(com.villagecolony.core.construction.model.ConstructionProject::origin);
+        }
+
+        if (trade.filter(com.villagecolony.core.worker.model.ProfessionType.MINER::equals).isPresent()) {
+            return VillageColonyMod.MINES.of(colony.id()).map(mine -> mine.shaft().entry());
+        }
+
+        return Optional.empty();
     }
 
     /** Onde este aldeão trabalha: a mediana de cada eixo das últimas ações; vazio sem ações bastantes. */

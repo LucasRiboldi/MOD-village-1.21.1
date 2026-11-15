@@ -265,6 +265,42 @@ public class BedChoiceGameTest implements FabricGameTest {
         VillageColonyMod.COLONIES.remove(colony.id());
     }
 
+    /**
+     * Regra 286: o mineiro recém-contratado ainda não cavou nada, mas a boca da mina vale como o trabalho dele; quando a
+     * casa do mineiro fica de pé ao lado dela, ele vai para a cama de lá no mesmo dia, sem esperar o amanhecer.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "bed_choice_mine_home", tickLimit = 40)
+    public void theNewMinerTakesTheBedByTheMineAsSoonAsTheMinerHomeStands(TestContext context) {
+        floorAndBeds(context, WEST, EAST);
+        context.setBlockState(WEST.west(), Blocks.CHEST.getDefaultState());
+
+        Colony colony = colonyOver(context);
+        VillagerEntity miner = worker(context, colony, ProfessionType.MINER, new BlockPos(4, Y + 1, 4));
+        BlockPos west = context.getAbsolutePos(WEST);
+        BlockPos east = context.getAbsolutePos(EAST);
+
+        context.waitAndRun(5, () -> {
+            boolean moved;
+            Object home;
+            try {
+                VillageFoundation.giveHome(context.getWorld(), miner, east);
+                VillageColonyMod.MINES.open(colony.id(), com.villagecolony.core.construction.model.MineShaft.from(
+                        MinecraftTypeAdapter.toColonyPos(west.east().down()), com.villagecolony.core.type.Side.SOUTH));
+
+                MinerHomeFoundation.settleBeds(context.getWorld(), colony);
+                moved = isHome(miner, west);
+                home = homeOf(miner);
+            } finally {
+                VillageColonyMod.MINES.removeOfColony(colony.id());
+                cleanUp(colony, miner);
+                clearScenario(context);
+            }
+
+            context.assertTrue(moved, "Regra 286: o mineiro novo ficou longe da mina, na cama " + home);
+            context.complete();
+        });
+    }
+
     /** Regra 274: o construtor que nunca chegou à obra não tem trabalho medido; a obra aberta vale como o trabalho dele. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "bed_choice_site", tickLimit = 20)
     public void theBuilderWithoutMeasuredWorkCountsTheOpenSite(TestContext context) {

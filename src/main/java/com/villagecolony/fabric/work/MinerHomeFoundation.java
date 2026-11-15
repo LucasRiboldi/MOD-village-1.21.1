@@ -95,8 +95,14 @@ public final class MinerHomeFoundation {
 
         VillageColonyMod.LOGGER.info("VC_MINE_HOME colony={}: the miner home {} stands at {} on foundation",
                 colony.id(), plan.id(), origin);
+        settleBeds(world, colony);
 
         return true;
+    }
+
+    /** Regra 286: com a casa do mineiro de pé, as camas da vila são reavaliadas já, sem esperar o amanhecer. */
+    static void settleBeds(ServerWorld world, Colony colony) {
+        colony.bounds().ifPresent(box -> BedChoice.reassign(world, colony, box));
     }
 
     /**
