@@ -49,6 +49,18 @@ public final class WorldPathTerrain implements PathTerrain {
         this.mine = VillageColonyMod.MINES.of(colonyId).map(found -> found.shaft().entry());
     }
 
+    /** As colunas que o calçador recusou: a busca da ligação passa por outro lado (Regra 295). */
+    private java.util.Set<Long> refused = java.util.Set.of();
+
+    /**
+     * O terreno do traçado com as colunas recusadas pelo calçador como bloqueio — Regra 295: a ligação achada pela busca
+     * é a que o calçador consegue fazer, e não some na releitura seguinte por ter sido recusada.
+     */
+    public WorldPathTerrain(ServerWorld world, UUID colonyId, java.util.Set<Long> refused) {
+        this(world, colonyId);
+        this.refused = java.util.Set.copyOf(refused);
+    }
+
     /** O que já foi lido neste traçado: cada coluna se lê uma vez (o traçado lia milhões de vezes, Spark S3FcIdzPmh). */
     private final java.util.Map<Long, OptionalInt> grounds = new java.util.HashMap<>();
     private final java.util.Map<Long, Boolean> blockedColumns = new java.util.HashMap<>();
@@ -149,6 +161,10 @@ public final class WorldPathTerrain implements PathTerrain {
 
     @Override
     public boolean blocked(int x, int z) {
+        if (refused.contains(com.villagecolony.core.construction.model.ColonyRoads.column(x, z))) {
+            return true;
+        }
+
         return blockedColumns.computeIfAbsent(com.villagecolony.core.construction.model.ColonyRoads.column(x, z),
                 ignored -> readBlocked(x, z));
     }

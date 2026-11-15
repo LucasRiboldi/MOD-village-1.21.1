@@ -360,4 +360,36 @@ class RoadLinesTest {
 
         assertFalse(columnsOf(result).contains(at(22, 0)), "Regra 264: a coluna planejada sobre a água ficou: " + result.toPave());
     }
+
+    /**
+     * Regra 295: a maior parte solta tenta a ligação cara primeiro, fora do rodízio — a rua do centro liga em toda
+     * releitura, e não só quando chega a vez dela.
+     */
+    @Test
+    void theBiggestLoosePartIsLinkedOnEveryRead() {
+        // Muro em z 5 de x -20 a 50, com uma passagem para cada parte solta fora do alcance da rua (x -8 e x 38), e um muro
+        // em pé em x 17 entre elas: nem reta nem dobra servem, cada uma só liga pela busca, e uma não abre caminho à outra.
+        PathTerrain walled = new PathTerrain() {
+            @Override
+            public OptionalInt groundY(int x, int z, int nearY) {
+                return OptionalInt.of(Y);
+            }
+
+            @Override
+            public boolean blocked(int x, int z) {
+                boolean across = z == 5 && x >= -20 && x <= 50 && x != -8 && x != 38;
+
+                return across || (x == 17 && z >= 6 && z <= 14);
+            }
+        };
+        Set<ColonyPos> cells = new HashSet<>(corridor(0, 30, 0, 0));
+        cells.addAll(corridor(0, 9, 10, 10));
+        cells.addAll(corridor(23, 27, 10, 10));
+
+        for (int turn = 0; turn < 3; turn++) {
+            RoadLines.Result result = RoadLines.build(cells, Set.of(), at(10, 0), Set.of(), Set.of(), walled, 1, turn);
+
+            assertTrue(columnsOf(result).contains(at(5, 10)), "a maior parte solta não ligou na vez " + turn);
+        }
+    }
 }

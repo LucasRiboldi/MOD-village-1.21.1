@@ -160,7 +160,13 @@ public final class RoadLines {
 
         List<Set<Long>> others = new ArrayList<>(parts.subList(1, parts.size()));
 
-        java.util.Collections.rotate(others, -turn);
+        // Regra 295: a maior parte solta tenta primeiro, fora do rodízio; as outras se revezam na busca cara.
+        if (others.size() > 1) {
+            List<Set<Long>> rest = new ArrayList<>(others.subList(1, others.size()));
+            java.util.Collections.rotate(rest, -turn);
+            others = new ArrayList<>(List.of(others.getFirst()));
+            others.addAll(rest);
+        }
 
         for (Set<Long> part : others) {
             boolean aloneDoor = part.size() == 1 && doors.contains(part.iterator().next());

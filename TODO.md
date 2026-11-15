@@ -62,6 +62,13 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
   - pedidos novos: arco da mina com piso de pedra de raio 6, baú ao pé e céu livre; casa do mineiro com luz
     externa e telhado medieval (M);
   - construtor 42% parado (24% bloqueado), pastor 25%, ferreiro 29% (Regra 51) (M)
+- [ ] 🔴 Jogo da 0.4.88 (15-11, mundo novo em montanha, Spark `b28MY9TPEA`), escolhas 1A a 5A do autor:
+  - grafo oscilando e casas fora dele: Regra 295 (candidata); conferir `refused=` e as partes soltas no próximo jogo;
+  - peças da vila em pilar de terra: na geração, a peça desce ou sobe ao solo suavizado (1A) (M);
+  - parede em volta da obra nova: a rampa continua até o terreno (2A) (M);
+  - a fundação dá 1 aldeão por profissão; o resto fica sem ofício (3A) (M);
+  - atividade por profissão: mineiro 39% e construtor 32% parados (61 `SET_ASIDE`); fazendeiro 1% sem plantação
+    grande na vila nova (5A) (M)
 - [ ] 🔴 Jogo da 0.4.86 (15-11, planície, Spark `GHWvjlPaPs`, 37 min, 8 notas), achados da triagem:
   - casas e lampião sobre o lago (notas 10:15 e 10:24): Regra 288 na 0.4.87, candidata; conferir em mundo novo (por jogo);
   - fazendeiro 0%: faltava semente em baú; Regra 289 (candidata) — obra semeada, semente que surge, terra arada,
