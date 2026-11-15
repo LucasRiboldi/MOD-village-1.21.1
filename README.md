@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.85%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.86%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,16 +19,17 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Estado atual: 0.4.85 na `main`, não jogada; a última publicada é `v0.4.74-alpha`.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
+**Estado atual: 0.4.86 na branch `fix/jogo-0485`, não jogada; a última publicada é `v0.4.74-alpha`.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
-[docs/RULES.md](docs/RULES.md) (1 a 286).
+[docs/RULES.md](docs/RULES.md) (1 a 287).
 
-Da 0.4.75 à 0.4.85 (pedidos do autor de 13-11 e 14-11, jogos da 0.4.79 e da 0.4.84):
+Da 0.4.75 à 0.4.86 (pedidos do autor de 13-11 a 15-11, jogos da 0.4.79, 0.4.84 e 0.4.85):
 
 - **Aldeão preso:** soleira de casa não é curral, e "saiu" é pisar fora do que ele alcançava (Regra 275); alçapão em pé
   se pula e o caminho o evita (Regra 276); solto da fuga de encalhe só quem saiu do lugar (Regra 279); quem fica preso na água a céu aberto vai à margem e, se não sair, pisa no gelo posto sob o pulo (Regra 285).
 - **Caminho:** água só sem caminho seco, custo 256 (Regra 278); a árvore em cima da coluna do caminho sai de onde o
-  calçador estiver (Regra 280); só a rede de ruas reserva chão contra lote, trilha fora dela não (Regra 282).
+  calçador estiver (Regra 280); só a rede de ruas reserva chão contra lote, trilha fora dela não (Regra 282); a tora
+  deitada (borda da plantação grande, viga, piso) é chão andável, e só o tronco em pé fica fora (Regra 287).
 - **Ofícios:** o lenhador só derruba encostado no tronco (Regra 277); a vila contrata um construtor por vez (Regra 273),
   e a obra conta como trabalho dele na troca de cama (Regra 274); a muda do bosque surge, também no deserto (Regra 271);
   o pastor faz corante de flor no ócio (Regra 272) e só recolhe animal dentro da caixa da vila (Regra 283); o animal atravessa o portão do curral amarrado a 2 blocos do destino (Regra 284); o mineiro novo dorme na casa junto da mina assim que ela sobe (Regra 286); quem não tem ofício do mod fica fora das análises (Regra 270).

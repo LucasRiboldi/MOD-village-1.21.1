@@ -11845,3 +11845,14 @@ registrados (KF-015, interferência entre lotes); a correção estrutural foi pa
 Sentinela `fast` PASS (20261115T023024Z). SHA-256 do JAR:
 `B2F13FD217E72E0D54FDFEFD794496FBF6C5E73CC0021CEF8CC5415B876EC3CF`, em `build/libs/`, `downloads/` e TLauncher (0.4.84
 como `.disabled`). Nada visto em jogo.
+
+## 2026-11-15 — 0.4.86: Regra 287, o fazendeiro entra na plantação grande
+
+Jogo da 0.4.85 (planície, 80 min, Spark `CxCKzJmQ5r`): a água resgatou 10 aldeões (236 a 316 ticks, sem gelo); o
+fazendeiro trabalhou 1% do expediente, com `NO_PATH` 25× e "could not reach the crop" 23×, os três parados em x=-231.
+Lendo o save: a plantação grande tem borda fechada de `oak_log` deitado no nível da terra, e
+`ColonyPathing.forWalker` dava `BLOCKED` a todo chão de tora (regra de 01-11 contra andar em árvore). Regra 287: só a
+tora em pé bloqueia como chão; a visão até 4,5 blocos mira o lugar da planta no canteiro vazio. GameTests
+`theColonyVillagerStepsOverALyingLogBorder` e `theFarmerSeesAnEmptyPlotThreeBlocksAway` vermelhos antes, verdes depois;
+controle `anUprightLogRingStaysClosed` verde nos dois. 1.137 GameTests verdes, build e unitários verdes, Sentinela
+`fast` PASS (20261115T053216Z). Os outros achados do jogo foram para o `TODO.md`. Nada visto em jogo.
