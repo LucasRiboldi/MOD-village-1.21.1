@@ -9,10 +9,8 @@ import net.minecraft.block.Blocks;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.registry.tag.StructureTags;
-import net.minecraft.structure.PoolStructurePiece;
 import net.minecraft.structure.StructurePiece;
 import net.minecraft.structure.StructureStart;
-import net.minecraft.structure.pool.StructurePool;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -257,41 +255,20 @@ public final class VillageGround {
             }
         }
 
-        // O piso das peças rígidas (as casas): o bloco de baixo do nível de chão da peça.
-        StringBuilder fixed = new StringBuilder();
-
-        for (StructurePiece piece : start.getChildren()) {
-            if (!(piece instanceof PoolStructurePiece pool)
-                    || pool.getPoolElement().getProjection() != StructurePool.Projection.RIGID) {
-                continue;
-            }
-
-            BlockBox box = piece.getBoundingBox();
-            int floor = box.getMinY() + pool.getGroundLevelDelta() - 1;
-
-            for (int x = box.getMinX(); x <= box.getMaxX(); x++) {
-                for (int z = box.getMinZ(); z <= box.getMaxZ(); z++) {
-                    natural[x - minX][z - minZ] = floor;
-                    kinds[x - minX][z - minZ] = VillageSurface.Kind.FIXED;
-                }
-            }
-
-            fixed.append(fixed.length() == 0 ? "" : ",").append('[').append(box.getMinX()).append(',')
-                    .append(box.getMinZ()).append(',').append(box.getMaxX()).append(',').append(box.getMaxZ())
-                    .append(']');
-        }
-
         // O jogo procura a referência a até 8 chunks do início da vila: além disso a geração não alcança.
         ChunkPos origin = start.getPos();
         VillageBlend.Area reach = new VillageBlend.Area(
                 (origin.x - REFERENCE_CHUNKS) * 16 - minX, (origin.z - REFERENCE_CHUNKS) * 16 - minZ,
                 (origin.x + REFERENCE_CHUNKS) * 16 + 15 - minX, (origin.z + REFERENCE_CHUNKS) * 16 + 15 - minZ);
+
+        // As peças rígidas (as casas) descem ou sobem ao solo suavizado e viram o piso fixo (Regra 296).
+        String placed = VillagePieces.settle(start, natural, kinds, core, reach, minX, minZ);
         VillageBlend.Shape shape = VillageBlend.shape(natural, kinds, core, reach);
 
-        // A área moldada, o miolo e as peças fixas, para medir o chão depois (scripts/ground_report.py).
+        // A área moldada, o miolo, as peças fixas e quanto andaram, para medir o chão depois (scripts/ground_report.py).
         VillageColonyMod.LOGGER.info("VC_GROUND {\"minX\":{},\"minZ\":{},\"width\":{},\"depth\":{},\"reach\":{},"
-                        + "\"core\":{},\"ms\":{},\"fixed\":[{}]}", minX, minZ, width, depth, REACH, CORE_PAD,
-                (System.nanoTime() - began) / 1_000_000, fixed);
+                        + "\"core\":{},\"ms\":{},{}}", minX, minZ, width, depth, REACH, CORE_PAD,
+                (System.nanoTime() - began) / 1_000_000, placed);
 
         return new Plan(minX, minZ, kinds, drainWater, shape);
     }

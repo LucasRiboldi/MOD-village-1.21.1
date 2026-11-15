@@ -294,7 +294,8 @@
       "com.villagecolony.fabric.work.GraphFloorGameTest",
       "com.villagecolony.fabric.work.OreTowerGameTest",
       "com.villagecolony.fabric.integration.MineYardGameTest",
-      "com.villagecolony.fabric.work.StrayBlocksGameTest"
+      "com.villagecolony.fabric.work.StrayBlocksGameTest",
+      "com.villagecolony.fabric.integration.VillagePiecesGameTest"
     ]
   },
   "depends": {
