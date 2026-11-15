@@ -25,6 +25,10 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 - [ ] 🟠 VF-002: `workerCollectsWhileWalkingPast` — a colônia de teste deixou de ser dada como abandonada (722f7ec5), mas o
   teste ainda caiu em baterias de 14-11 (P)
 - [ ] 🟠 VF-003: PIT a 85,17% contra o limiar de 85%; `MineShaftWaypointsTest` cobre o caminho da mina — conferir no CI (P)
+- [ ] 🟠 GameTests de aldeão e animal interferem entre si porque os lotes rodam juntos num mundo só (KF-011 a KF-015 e os
+  oito casos corrigidos em 14-11: relógio, raio estático, vila gerada, arena vizinha, ponto de partida do A*, IA da vaca,
+  bicho do vizinho, tosquia). Correção estrutural: lote sequencial próprio ou área que nenhum outro teste alcança.
+  Sobe a nota de D5 (G)
 - [ ] 🟡 A* do jogo e água (Regra 278): no cenário do canal, o aldeão que parte de (0, 2, 0) nada sempre e o que parte
   de (0, 2, 1) vai pelo seco (31 nós). O teste passou a partir de onde o aldeão nasce. Suspeita não provada:
   `PathNodeNavigator` reescreve `pathLength` antes de conferir melhora e poda a volta pelo alcance de 48. Investigar se
@@ -39,6 +43,14 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
   `VC_LOG_PLACED` para achar a origem dos troncos que o autor viu (Regra 281) (por jogo)
 - [ ] 🟠 Regra 283 (0.4.83): conferir no jogo que o pastor ainda recolhe o animal solto perto do curral; a folga de
   10 blocos em volta da caixa saiu (por jogo)
+- [ ] 🔴 Jogo da 0.4.84 (14-11), à espera dos dados do próximo jogo (0.4.85):
+  - grafo: ler `loose=` no `VC_ROAD_GRAPH` e escolher entre tábua de carvalho como caminho (nota 3), entrada da
+    plantação no nível do bloco da plantação (nota 7) e entrada de estrutura em solo de pedra (nota 8) (M);
+  - terreno: ler `VC_SMOOTH` (motivo de cada coluna recusada; suspeita: flor dentro de peça original da vila sai
+    `protected:`) e `VC_LOT_EDGE` (degrau em volta do lote), e escolher a correção dos muros (nota 1) (M);
+  - lagos isolados dentro da vila fechados com terra do bioma na geração (nota 2) — não começado (M);
+  - água (Regra 285) e mineiro (Regra 286): conferir `VC_WATER_RESCUE`, `VC_WATER_ICE` e se o mineiro dorme na casa
+    junto da mina (por jogo)
 - [ ] 🟠 Estado e implementação nas 81 regras de `docs/RULES.md` que não têm essas colunas (M)
 - [ ] 🟠 Número próprio para o teto de 15% de ócio; "Regra 51" hoje tem dois sentidos (P)
 - [ ] 🟠 Fechar os conflitos C-12, C-13 e C-15 de `docs/audit/RULE-RECONCILIATION.md` (P)

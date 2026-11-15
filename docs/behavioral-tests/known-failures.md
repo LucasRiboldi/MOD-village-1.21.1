@@ -5,6 +5,16 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ---
 
+## KF-015 — `ShepherdGameTest.theShepherdShearsOverTheFenceWithoutGoingIn` cai quando muda a vizinhança dos lotes
+
+**ABERTO.** 14-11, branch `fix/jogo-0484` (0.4.85): 0 quedas em 8 baterias na `main` (0.4.84); com os 3 GameTests novos
+da branch registrados, cerca de 1 em 4 (6 em 24); sem eles, 0 em 8; com o teste da água sem relógio, sem ofício e mais
+curto, 1 em 8. Duas formas vistas, pelo histórico na mensagem de falha: o pastor anda desde o tique 20 para um destino
+fora da arena (-18, 10, -7) e encalha fora do curral; ou fica parado onde nasceu, ocioso, com a tarefa reservada. Nenhum
+código da branch manda o pastor andar. Causa provável, não provada: interferência entre lotes que rodam juntos num mundo
+só — os testes novos mudam quem é vizinho de quem. A correção estrutural (lote sequencial ou área isolada para testes de
+aldeão e animal) está no `TODO.md`.
+
 ## KF-014 — `BiomeBlueprintsGameTest.theTaigaLargePenHasSpruceFencesAndTheOakOneStillStands` caiu uma vez na bateria inteira
 
 **ABERTO.** 13-11, `main` em `ac2f1977` (0.4.74, 1.112 GameTests): caiu 1 vez em 3 baterias no mesmo commit (avaliação de

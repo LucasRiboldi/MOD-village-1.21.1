@@ -277,6 +277,9 @@ public class ShepherdGameTest implements FabricGameTest {
         // Os testes rodam juntos num mundo só: o relógio e o raio são de todos. A cada tique, o expediente e o raio
         // voltam a ser os deste teste, até a conferência devolver o raio.
         boolean[] checked = {false};
+        // Diagnóstico da tosquia instável (14-11): a cada 20 tiques, hora, posição do pastor, destino e a tarefa.
+        StringBuilder history = new StringBuilder();
+        int[] tick = {0};
         context.runAtEveryTick(() -> {
             if (checked[0]) {
                 return;
@@ -285,12 +288,31 @@ public class ShepherdGameTest implements FabricGameTest {
                 context.getWorld().setTimeOfDay(1_000);
             }
             ShepherdWork.shortenSearchTo(8);
+            if (++tick[0] % 20 == 0) {
+                BlockPos origin = context.getAbsolutePos(BlockPos.ORIGIN);
+                history.append(" | t").append(tick[0]).append(" d").append(context.getWorld().getTimeOfDay() % 24_000)
+                        .append(" p").append(villager.getBlockPos().subtract(origin).toShortString())
+                        .append(" n").append(villager.getNavigation().getCurrentPath() == null ? "idle"
+                                : villager.getNavigation().getCurrentPath().getTarget().subtract(origin).toShortString())
+                        .append(" alvo=").append(villager.getNavigation().getCurrentPath() == null ? "-"
+                                : context.getWorld().getBlockState(villager.getNavigation().getCurrentPath().getTarget())
+                                        .getBlock().getTranslationKey().replace("block.minecraft.", "")
+                                        .replace("block.villagecolony.", "vc:"))
+                        .append(" mem=").append(villager.getBrain().getOptionalRegisteredMemory(
+                                net.minecraft.entity.ai.brain.MemoryModuleType.WALK_TARGET).isPresent() ? "walk" : "-")
+                        .append(villager.getBrain().getOptionalRegisteredMemory(
+                                net.minecraft.entity.ai.brain.MemoryModuleType.POTENTIAL_JOB_SITE).isPresent() ? "+jobsite" : "")
+                        .append(" task=").append(task.state()).append('/').append(task.executor().map(
+                                id -> id.equals(villager.getUuid()) ? "him" : "other").orElse("none"))
+                        .append(" prof=").append(VillageColonyMod.WORKERS.find(villager.getUuid())
+                                .flatMap(Worker::profession).map(Enum::name).orElse("none"));
+            }
         });
 
         context.runAtTick(150, () -> {
             checked[0] = true;
             try {
-                context.assertTrue(sheep.isSheared(), "a ovelha do cercado continua lanuda: o pastor não tosquiou de fora");
+                context.assertTrue(sheep.isSheared(), "a ovelha do cercado continua lanuda: o pastor não tosquiou de fora" + history);
                 BlockPos at = context.getRelativePos(villager.getBlockPos());
                 boolean inThePen = at.getX() > 2 && at.getX() < 8 && at.getZ() > 2 && at.getZ() < 8;
 

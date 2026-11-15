@@ -1,9 +1,6 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
-import com.villagecolony.core.coordination.WorkClock;
-import com.villagecolony.core.worker.model.ProfessionType;
-import com.villagecolony.gametest.ColonyFixture;
 
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
@@ -12,6 +9,8 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
+
+import java.util.UUID;
 
 /**
  * Regra 285: o aldeão preso na água a céu aberto, com a margem dois blocos acima da água (alta demais para o pulo),
@@ -40,10 +39,13 @@ public class WaterRescueGameTest implements FabricGameTest {
         }
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "water_rescue_ice", tickLimit = 1200)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "water_rescue_ice", tickLimit = 700)
     public void aVillagerStuckInWaterGetsOut(TestContext context) {
         pool(context);
-        ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(1, 4, 1));
+        // Os testes rodam juntos num mundo só: este não mexe no relógio (a vigia não depende do expediente), o aldeão
+        // fica sem ofício e a colônia, fora do ciclo global, para nada dele alcançar a arena vizinha. A vigia trata
+        // colônia desconhecida como vila que trabalha (VillageFocus.isWorking).
+        UUID colonyId = UUID.randomUUID();
         VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(4, 2, 4));
         boolean[] registered = {false};
         boolean[] done = {false};
@@ -52,13 +54,9 @@ public class WaterRescueGameTest implements FabricGameTest {
             if (done[0]) {
                 return;
             }
-            if (!WorkClock.isWorkTime(context.getWorld().getTimeOfDay())) {
-                context.getWorld().setTimeOfDay(1_000);
-            }
             if (!registered[0]) {
                 registered[0] = true;
-                fixture.owning(villager.getUuid());
-                VillageColonyMod.WORKERS.register(villager.getUuid(), fixture.colony().id()).assign(ProfessionType.MASON);
+                VillageColonyMod.WORKERS.register(villager.getUuid(), colonyId);
             }
             BlockPos at = context.getRelativePos(villager.getBlockPos());
             // Saiu: de pé em chão firme, fora d'água (o pulo acima da superfície não conta).
@@ -66,20 +64,22 @@ public class WaterRescueGameTest implements FabricGameTest {
                     && context.getWorld().getFluidState(villager.getBlockPos().down()).isEmpty() && at.getY() >= 3;
             if (out) {
                 done[0] = true;
-                fixture.cleanUp();
+                VillageColonyMod.WORKERS.remove(villager.getUuid());
+                WaterRescue.forget(villager.getUuid());
                 villager.discard();
                 context.complete();
             }
         });
 
-        context.runAtTick(1150, () -> {
+        context.runAtTick(650, () -> {
             if (done[0]) {
                 return;
             }
             done[0] = true;
             BlockPos at = context.getRelativePos(villager.getBlockPos());
             int ticks = WaterRescue.ticksInWater(villager.getUuid());
-            fixture.cleanUp();
+            VillageColonyMod.WORKERS.remove(villager.getUuid());
+            WaterRescue.forget(villager.getUuid());
             villager.discard();
             context.assertTrue(false, "Regra 285: o aldeão continua na água: em " + at.toShortString()
                     + ", " + ticks + " tiques na água");
