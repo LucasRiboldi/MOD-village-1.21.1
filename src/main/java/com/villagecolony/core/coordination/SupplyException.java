@@ -25,7 +25,9 @@ public enum SupplyException {
     WAITED_TOO_LONG(128, "o produto da tarefa largada duas vezes em 10 minutos, no baú de quem a largou"),
     END_OF_BUILD(148, "as peças que faltam quando a obra para no fim, postas no lugar para a casa fechar"),
     GROVE_SAPLING(271, "a muda do bosque do lenhador, em terra enraizada; no deserto, da madeira de reserva da vila"),
-    FLOWER_DYE(272, "o corante da cor sem flor no bioma, ou quando o pastor não colhe a flor a tempo");
+    FLOWER_DYE(272, "o corante da cor sem flor no bioma, ou quando o pastor não colhe a flor a tempo"),
+    SEED_FOR_THE_FARM(289, "a semente da lavoura que a vila tem menos, no baú do fazendeiro dono de roça com canteiro vazio,"
+            + " quando nenhum baú da vila tem semente");
 
     private final int rule;
 

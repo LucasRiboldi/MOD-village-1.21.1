@@ -10,6 +10,7 @@ import com.villagecolony.fabric.integration.WorkMemoryKeys;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockBox;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -46,10 +47,7 @@ public final class FarmOwners {
 
     /** Confere os donos desta colônia e dá roça a quem está sem. Uma vez por ciclo. */
     public static void assign(ServerWorld world, Colony colony) {
-        List<BlockBox> standing = ColonyFarms.of(world, colony).stream()
-                .filter(ColonyFarms.Farm::standing)
-                .map(ColonyFarms.Farm::box)
-                .toList();
+        List<BlockBox> standing = slots(ColonyFarms.of(world, colony));
 
         List<UUID> farmers = VillageColonyMod.WORKERS.ofColony(colony.id()).stream()
                 .filter(worker -> worker.profession().filter(ProfessionType.FARMER::equals).isPresent())
@@ -121,6 +119,63 @@ public final class FarmOwners {
         }
 
         return owners;
+    }
+
+    /**
+     * As vagas de dono: uma por roça de pé, e {@link LargeFarmSeeds#FARMERS} na plantação grande (Regra 289).
+     */
+    static List<BlockBox> slots(List<ColonyFarms.Farm> farms) {
+        List<BlockBox> slots = new ArrayList<>();
+
+        for (ColonyFarms.Farm farm : farms) {
+            if (!farm.standing()) {
+                continue;
+            }
+
+            int places = LargeFarmPlans.MODEL.equals(farm.plan()) ? LargeFarmSeeds.FARMERS : 1;
+
+            for (int place = 0; place < places; place++) {
+                slots.add(farm.box());
+            }
+        }
+
+        return slots;
+    }
+
+    /** Dá esta roça a este fazendeiro fora da conta do ciclo; a conta seguinte a confere. */
+    static void own(UUID farmer, BlockBox farm) {
+        OWNED.put(farmer, farm);
+    }
+
+    /**
+     * Regra 289: se este lugar fica numa roça que já tem {@link LargeFarmSeeds#FARMERS} donos, e nenhum deles é este
+     * fazendeiro — o terceiro não trabalha na plantação grande.
+     */
+    static boolean isFullFor(UUID farmer, BlockPos at) {
+        BlockBox mine = OWNED.get(farmer);
+
+        if (mine != null && covers(mine, at)) {
+            return false;
+        }
+
+        long owners = OWNED.entrySet().stream()
+                .filter(owned -> !owned.getKey().equals(farmer) && covers(owned.getValue(), at))
+                .count();
+
+        return owners >= LargeFarmSeeds.FARMERS;
+    }
+
+    /** Se outro dono da mesma roça vem antes deste na ordem: ele varre a roça do canto oposto (Regra 289). */
+    static boolean isSecondOwner(UUID farmer) {
+        BlockBox mine = OWNED.get(farmer);
+
+        return mine != null && OWNED.entrySet().stream()
+                .anyMatch(owned -> owned.getValue().equals(mine) && owned.getKey().compareTo(farmer) < 0);
+    }
+
+    private static boolean covers(BlockBox box, BlockPos at) {
+        return at.getX() >= box.getMinX() && at.getX() <= box.getMaxX()
+                && at.getZ() >= box.getMinZ() && at.getZ() <= box.getMaxZ();
     }
 
     private static long distanceSquared(BlockBox box, ColonyPos at) {

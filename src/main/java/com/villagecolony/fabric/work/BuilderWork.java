@@ -279,7 +279,7 @@ public final class BuilderWork {
 
         if (next.isEmpty()) {
             if (project.isFinished()) {
-                complete(project, job, workerId);
+                complete(world, project, job, workerId);
             } else if (BuildWait.holds(world, project, workerId)) {
                 return true;
             } else {
@@ -423,7 +423,7 @@ public final class BuilderWork {
      * estados: {@code WAITING_RESOURCES → COMPLETED} continua proibido, e
      * continua certo que esteja.
      */
-    static void complete(ConstructionProject project, Job job, UUID workerId) {
+    static void complete(ServerWorld world, ConstructionProject project, Job job, UUID workerId) {
         if (project.state() == ConstructionState.WAITING_RESOURCES) {
             project.moveTo(ConstructionState.BUILDING);
         }
@@ -435,6 +435,7 @@ public final class BuilderWork {
         Building building = Building.of(project, true);
 
         VillageColonyMod.BUILDINGS.registerOrMerge(building);
+        LargeFarmSeeds.sowAtCompletion(world, project);
 
         // As peças contadas no mundo, não as do último construtor (Regra 147).
         VillageDiary.buildFinished(project, job.placed, workerId);
