@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.PillarBlock;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.ai.pathing.PathNode;
@@ -19,6 +20,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 
 import java.util.HashSet;
 import java.util.HashMap;
@@ -118,6 +120,60 @@ public class ColonyPathingGameTest implements FabricGameTest {
                     context.assertFalse(middle.contains(column(at)), "o caminho cortou pela grama no meio, em "
                             + at.toShortString() + ", e a rua dá a volta: " + nodes(path));
                 }
+            } finally {
+                scene.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * Regra 287: a borda de tora deitada da plantação grande é chão; a tora em pé (tronco) segue fora do caminho.
+     * Anel fechado de x 3..9, z 1..7, terra arada com trigo dentro; o aldeão parte de fora e vai ao meio.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_pathing_log_ring", tickLimit = 40)
+    public void theColonyVillagerStepsOverALyingLogBorder(TestContext context) {
+        theLogRingDecides(context, Direction.Axis.X, true);
+    }
+
+    /** Controle da Regra 287: o mesmo anel de tora em pé continua fechado. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_pathing_log_ring", tickLimit = 40)
+    public void anUprightLogRingStaysClosed(TestContext context) {
+        theLogRingDecides(context, Direction.Axis.Y, false);
+    }
+
+    private static void theLogRingDecides(TestContext context, Direction.Axis axis, boolean open) {
+        floor(context, Blocks.GRASS_BLOCK, 10);
+
+        for (int x = 3; x <= 9; x++) {
+            for (int z = 1; z <= 7; z++) {
+                boolean ring = x == 3 || x == 9 || z == 1 || z == 7;
+                context.setBlockState(new BlockPos(x, 1, z), ring
+                        ? Blocks.OAK_LOG.getDefaultState().with(PillarBlock.AXIS, axis)
+                        : Blocks.FARMLAND.getDefaultState());
+
+                if (!ring) {
+                    context.setBlockState(new BlockPos(x, 2, z), Blocks.WHEAT.getDefaultState());
+                }
+            }
+        }
+
+        Scene scene = scene(context, new BlockPos(1, 2, 4));
+        BlockPos min = context.getAbsolutePos(new BlockPos(0, 0, 0));
+        BlockPos max = context.getAbsolutePos(new BlockPos(10, 4, 8));
+        scene.colony.restoreBounds(new VillageBounds(Math.min(min.getX(), max.getX()), min.getY(),
+                Math.min(min.getZ(), max.getZ()), Math.max(min.getX(), max.getX()), max.getY(),
+                Math.max(min.getZ(), max.getZ())));
+
+        context.waitAndRun(5, () -> {
+            try {
+                Path path = scene.pathTo(context.getAbsolutePos(new BlockPos(6, 2, 4)));
+                boolean reaches = path != null && path.reachesTarget();
+
+                context.assertTrue(reaches == open, (open
+                        ? "a borda de tora deitada fechou a plantação: "
+                        : "o anel de tora em pé deixou passar: ") + (path == null ? "sem caminho" : nodes(path)));
             } finally {
                 scene.owned.cleanUp();
             }

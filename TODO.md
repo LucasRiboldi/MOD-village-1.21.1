@@ -49,8 +49,18 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
   - terreno: ler `VC_SMOOTH` (motivo de cada coluna recusada; suspeita: flor dentro de peça original da vila sai
     `protected:`) e `VC_LOT_EDGE` (degrau em volta do lote), e escolher a correção dos muros (nota 1) (M);
   - lagos isolados dentro da vila fechados com terra do bioma na geração (nota 2) — não começado (M);
-  - água (Regra 285) e mineiro (Regra 286): conferir `VC_WATER_RESCUE`, `VC_WATER_ICE` e se o mineiro dorme na casa
-    junto da mina (por jogo)
+  - mineiro (Regra 286): conferir se dorme na casa junto da mina; a água (Regra 285) resgatou 10 vezes no jogo da
+    0.4.85 sem precisar de gelo (por jogo)
+- [ ] 🔴 Jogo da 0.4.85 (15-11, planície, Spark `CxCKzJmQ5r`), achados da triagem ainda sem correção:
+  - lenhador 46% parado (`has not moved a block` 18×) e tora de baixo deixada na árvore (nota em -238,68,212) (M);
+  - degrau de 2 blocos no meio da vila (nota em -217,68,221); `VC_LOT_EDGE` com `maxStep` até 6 e
+    `VC_SMOOTH` recusando por `protected:air` (M);
+  - portas soltas do grafo: `loose=door@-242,68,210` e `door@-175,70,234` (casa do mineiro) em quase todo ciclo (M);
+  - blocos sem origem: bloco solitário (-228,64,272) e tronco (-232,67,256) (P);
+  - plantação grande: arar toda a estrutura e plantar sementes variadas dos baús, surgindo se faltar (nota) (M);
+  - pedidos novos: arco da mina com piso de pedra de raio 6, baú ao pé e céu livre; casa do mineiro com luz
+    externa e telhado medieval (M);
+  - construtor 42% parado (24% bloqueado), pastor 25%, ferreiro 29% (Regra 51) (M)
 - [ ] 🟠 Estado e implementação nas 81 regras de `docs/RULES.md` que não têm essas colunas (M)
 - [ ] 🟠 Número próprio para o teto de 15% de ócio; "Regra 51" hoje tem dois sentidos (P)
 - [ ] 🟠 Fechar os conflitos C-12, C-13 e C-15 de `docs/audit/RULE-RECONCILIATION.md` (P)
