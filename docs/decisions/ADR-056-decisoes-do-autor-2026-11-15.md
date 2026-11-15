@@ -18,7 +18,7 @@ ADR registra a escolha.
 | G3 | 0.4.84 nº 1; 0.4.85 nº 5; 0.4.86 nº 3 | Corrigir a proteção que faz o `VC_SMOOTH` recusar com `protected:air`; as torres eram minério na coluna, e o autor escolheu T-B (geração e pedreiro cortam a coluna com minério) | feito na Regra 292 |
 | G4 | 0.4.85 nº 6 e 7; 0.4.86 nº 2 | Arco da mina com disco de pedra de raio 6, área limpa sem nada acima, baú ao pé e nó de entrada logo à frente | feito na Regra 293 |
 | G5 | 0.4.84 nº 7 e 8 | O nó de entrada sai do chão em frente à porta ou ao portão, na altura do piso, seja qual for o material | feito na Regra 291 |
-| G6 | 0.4.85 nº 1 e 2 | No ócio, os aldeões retiram da vila o bloco sem vizinhos e a tora isolada | aberto |
+| G6 | 0.4.85 nº 1 e 2 | No ócio, os aldeões retiram da vila o bloco sem vizinhos e a tora isolada | feito na Regra 294 |
 | G7 | 0.4.85 nº 4 | Quem corta árvore, por qualquer motivo do mod, tira todos os troncos; todo aldeão quebra a folha que tranca o caminho dele; o tronco sem copa que já existe fica (A) | feito na Regra 290 |
 | G8 | 0.4.85 nº 8 | Casa do mineiro em modelo medieval novo (telhado, decoração, luz externa) | aberto |
 | G9 | 0.4.84 nº 6 | Regra de processo: a cada leitura de log, analisar a atividade dos aldeões e propor melhorias para que fiquem mais ativos | em vigor |

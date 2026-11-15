@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 186
+- **Cita a regra:** 187
 - **Só usa a classe indicada:** 93
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 12
@@ -304,3 +304,4 @@ classe prova menos ainda.
 | 291 | O grafo pisa na tábua de rua e na frente de toda porta (autor 15-11, G1 e G5 da ADR-056;… | cita | GraphFloorGameTest |
 | 292 | Sem torre de minério e sem ar protegido no alisamento (autor 15-11, G3 da ADR-056, escolh… | cita | OreTowerGameTest, VillageGroundGameTest |
 | 293 | O pátio da boca da mina (autor 15-11, G4 da ADR-056; jogos da 0.4.85 e 0.4.86): com o arc… | cita | MineYardGameTest |
+| 294 | Os ociosos tiram a sobra da vila (autor 15-11, G6 da ADR-056; jogo da 0.4.85: bloco solto… | cita | StrayBlocksGameTest |

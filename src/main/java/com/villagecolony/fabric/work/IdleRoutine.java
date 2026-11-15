@@ -76,6 +76,8 @@ public final class IdleRoutine {
 
     static void pass(ServerWorld world, Colony colony) {
         long now = world.getTime();
+        // Regra 294: uma janela da vila por passada à procura de sobra (bloco solto, toco).
+        StrayBlocks.sweep(world, colony);
 
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
             UUID id = worker.villagerId();
@@ -86,6 +88,12 @@ public final class IdleRoutine {
                     && IdleWorkers.isFree(world, villager, null)
                     && IdleHelps.isFree(world, villager, null)
                     && !villager.getBrain().hasMemoryModule(MemoryModuleType.WALK_TARGET)) {
+                // Regra 294: sobra na vila vem antes do passeio; quem cuida dela volta logo para a próxima.
+                if (StrayBlocks.tend(world, colony, villager)) {
+                    NEXT_AT.put(id, now + EVERY);
+                    continue;
+                }
+
                 sendOut(world, colony, villager);
                 NEXT_AT.put(id, now + LINGER);
             }
