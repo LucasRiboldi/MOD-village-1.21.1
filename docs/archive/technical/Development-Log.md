@@ -11870,3 +11870,21 @@ sobre água ganha base até o piso; a água fora da vila fica. `reachesGeneratio
 `theWaterInsideTheVillageBecomesGround` e `aPieceOverWaterGetsAFoundation` vermelhos antes, verdes depois; 1.139
 GameTests, build e unitários verdes, Sentinela `fast` PASS (20261115T142707Z). README sincronizado com a Regra 287 no PR #85 (o CI tinha caído por isso).
 Nada visto em jogo; só aparece em mundo novo.
+
+## 2026-11-15 — 0.4.88: Regras 289 a 294 (ADR-056, escolhas G1–G7 do autor)
+
+Placar das notas dos jogos da 0.4.79 à 0.4.86 (33 pontos) e escolhas do autor por grupo, registradas na ADR-056.
+- **Regra 289 (G2):** a plantação grande sai semeada, a semente surge quando nenhum baú tem (`SEED_FOR_THE_FARM`), o
+  fazendeiro ara a terra comum e a plantação tem 2 donos. A causa do fazendeiro em 0% era a falta de semente.
+- **Regra 290 (G7):** a limpeza de caminho e de lote desce pelo tronco abaixo do piso, e o aldeão da colônia quebra a
+  folha natural do caminho (custo 8 por nó). Um impasse de testes foi resolvido: a casa grande da fundação de outro
+  teste ficava no `BUILDINGS` e dava `TOO_CLOSE` ao `farmlandIsNeverALot` (ver `withoutForeignBuildings`).
+- **Regra 291 (G1, G5):** o grafo pisa na tábua de rua (sem apoio sólido) e na frente de toda porta; a quina da
+  plantação é lida na altura do canteiro.
+- **Regra 292 (G3):** a torre era minério na coluna; a geração e o pedreiro a cortam, e o ar sobre o chão deixou de ser
+  protegido no alisamento.
+- **Regra 293 (G4):** pátio de pedra de raio 6 na boca da mina, céu livre acima do arco e nó de entrada à frente dele.
+- **Regra 294 (G6):** os ociosos tiram o bloco solto e o toco da vila.
+
+Cada regra com GameTest vermelho antes; baterias de 1.156 verdes duas vezes, Sentinela `fast` PASS em cada uma.
+Nada visto em jogo; a G8 (casa do mineiro medieval) e a casa do mineiro fora da caixa seguem abertas.

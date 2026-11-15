@@ -9,7 +9,7 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.87 na branch `fix/jogo-0486` (sobre a 0.4.86 do PR #85); a publicada é `v0.4.74-alpha`. **Não jogada.** A última jogada é a 0.4.86
+- **Versão:** 0.4.88 na branch `fix/grupos-1115` (sobre a `main` com o PR #86); a publicada é `v0.4.74-alpha`. **Não jogada.** A última jogada é a 0.4.86
   (15-11, planície, Spark `GHWvjlPaPs`, 37 min): a Regra 287 abriu o caminho do fazendeiro, mas ele segue em 0% sem canteiro vazio;
   casas e lampião sobre o lago viraram a Regra 288, que só aparece em mundo novo.
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
@@ -44,6 +44,7 @@ Cada uma tem teste que falha sem ela; nenhuma foi vista em jogo.
 | 0.4.84 | 284 | o animal atravessa o portão do curral amarrado a 2 blocos do destino (`PenTether`); GameTests do mineiro, da vaca solta, do canal de água e dos portões sem depender dos vizinhos. 10/10 baterias verdes, Sentinela `fast` PASS |
 | 0.4.85 | 285, 286 | aldeão preso na água vai à margem e, se não sair, pisa no gelo sob o pulo; o mineiro novo dorme na casa junto da mina assim que ela sobe; diagnósticos `loose=` (grafo), `VC_SMOOTH` e `VC_LOT_EDGE` (terreno). Sentinela `fast` PASS; tosquia instável registrada (KF-015) |
 | 0.4.86 | 287 | a tora deitada é chão do caminho (a borda da plantação grande fechava o miolo ao fazendeiro); a visão do canteiro vazio mira o lugar da planta. 1.137/1.137, Sentinela `fast` PASS |
+| 0.4.88 | 289–294 | escolhas G1–G7 da ADR-056: plantação grande semeada, 2 fazendeiros e semente que surge; tronco inteiro e folha natural quebrada no caminho; grafo na tábua de rua e na frente de toda porta; sem torre de minério e sem ar protegido no alisamento; pátio de pedra na boca da mina; ociosos tiram bloco solto e toco. 1.156/1.156, Sentinela `fast` PASS |
 | 0.4.87 | 288 | na geração, a água dentro da vila vira chão com o solo seco do chunk, e a peça fixa sobre água ganha base até o piso (só em mundo novo). 1.139/1.139, Sentinela `fast` PASS |
 
 Da 0.4.54 à 0.4.67 (Regras 243 a 261) também não houve confirmação escrita em jogo; a 0.4.68 trouxe as que o jogo de

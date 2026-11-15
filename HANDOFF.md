@@ -4,7 +4,7 @@ Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 20
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.87 na branch `fix/jogo-0486` (sobre a 0.4.86 do PR #85), **não jogada** nem publicada; a última publicada é [`v0.4.74-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.74-alpha). A 0.4.79 foi jogada em 2026-11-13 (taiga, Spark `oujZp2IxmS`); a triagem dos oito sintomas virou as Regras 275 a 282.
+- **Versão:** 0.4.88 na branch `fix/grupos-1115` (sobre a `main` com o PR #86), **não jogada** nem publicada; a última publicada é [`v0.4.74-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.74-alpha). A 0.4.79 foi jogada em 2026-11-13 (taiga, Spark `oujZp2IxmS`); a triagem dos oito sintomas virou as Regras 275 a 282.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, ele escolhe, teste que falha, correção, Sentinela, commit, JAR.
 - **Entregue desde a 0.4.53 (todas candidatas):**
   - 0.4.54 a 0.4.56, Regras 243 a 249: plantação grande sobre areia, baú de qualquer lugar, aldeão fora da simulação não congela, cama longe vem para perto, chão nivelado é trabalho, um terço da madeira em tora, fundição sem cru chama o pedreiro.
@@ -16,6 +16,7 @@ Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 20
   - 0.4.75 a 0.4.79, Regras 270 a 274 (pedidos do autor de 13-11): sem ofício fora das análises, muda do bosque surge, corante das flores, um construtor por vila, obra conta como trabalho do construtor.
   - 0.4.80 a 0.4.82, Regras 275 a 282 (jogo da 0.4.79): soleira não é curral, alçapão em pé, lenhador encosta, água só sem caminho seco, solto só fora do lugar, árvore no caminho sai, log de tronco posto, só a rede reserva chão contra lote.
   - Varredura de falhas de 12-11 (`docs/audit/2026-11-12-varredura-de-falhas.md`): VF-001, VF-007 e VF-010 instrumentados; GameTest que mexe na hora ou na memória do mundo roda no próprio lote.
+  - 0.4.88, Regras 289 a 294 (ADR-056, escolhas G1–G7 do autor de 15-11): plantação grande semeada com 2 fazendeiros, tronco inteiro e folha no caminho, grafo na tábua e na frente da porta, sem torre de minério, pátio da mina, sobra tirada pelos ociosos. Falta a G8 (casa do mineiro medieval).
   - 0.4.87, Regra 288 (jogo da 0.4.86): nenhuma estrutura nasce sobre água; a água dentro da vila vira chão na geração (mundo novo).
   - 0.4.86, Regra 287 (jogo da 0.4.85): a tora deitada é chão; o fazendeiro entra na plantação grande.
   - 0.4.85, Regras 285 e 286 (jogo da 0.4.84): água com margem e gelo sob o pulo; mineiro novo na casa junto da mina; diagnósticos do grafo e do terreno.
@@ -24,7 +25,7 @@ Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 20
 
 ## O próximo passo
 
-**O autor precisa jogar a 0.4.87 num mundo novo e mandar o Spark.** A Regra 288 só vale em chunk gerado depois dela. As triagens dos jogos da 0.4.85 e da 0.4.86 deixaram achados abertos no `TODO.md`. Use as notas `/vc bioma nota` e a lista `docs/testing/checklist-jogo-avaliacao.md`. Ao receber o log, siga `CLAUDE.md` §0.2.2 e confira:
+**O autor precisa jogar a 0.4.88 num mundo novo e mandar o Spark.** A Regra 288 só vale em chunk gerado depois dela. As triagens dos jogos da 0.4.85 e da 0.4.86 deixaram achados abertos no `TODO.md`. Use as notas `/vc bioma nota` e a lista `docs/testing/checklist-jogo-avaliacao.md`. Ao receber o log, siga `CLAUDE.md` §0.2.2 e confira:
 
 - Lote (Regra 282): `lots_ok` acima de 0 no `VC_BIOME` e obra aberta; o overlay da obra volta com ela.
 - Troncos (Regra 281): ler as linhas `VC_LOG_PLACED` e achar quem pôs os troncos que o autor viu na vila.
