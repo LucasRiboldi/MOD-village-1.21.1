@@ -292,7 +292,8 @@
       "com.villagecolony.fabric.integration.SandNearWaterGameTest",
       "com.villagecolony.gametest.TreeAndLeafGameTest",
       "com.villagecolony.fabric.work.GraphFloorGameTest",
-      "com.villagecolony.fabric.work.OreTowerGameTest"
+      "com.villagecolony.fabric.work.OreTowerGameTest",
+      "com.villagecolony.fabric.integration.MineYardGameTest"
     ]
   },
   "depends": {

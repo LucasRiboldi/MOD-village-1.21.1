@@ -81,6 +81,12 @@ final class MineFurnishing {
                     mouth.toShortString());
         }
 
+        // O pátio de pedra em volta do arco, uma vez, também na mina de antes (Regra 293).
+        if (mine.archRaised()) {
+            com.villagecolony.fabric.integration.MineYard.layOnce(world, mouth,
+                    MinecraftTypeAdapter.toDirection(mine.shaft().descent()));
+        }
+
         // <b>E a boca não devolve mais baú</b> — decisão do autor,
         // 2026-09-15: <i>"retire o baú da boca da mina, use só o baú de
         // cada mineiro"</i>.

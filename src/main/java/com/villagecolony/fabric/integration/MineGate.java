@@ -157,6 +157,17 @@ public final class MineGate {
         return at(mouth, descent, CENTER_X, 0, -blocks);
     }
 
+    /** Se a posição é bloco do arco de hoje — o que o pátio preserva ao limpar o que fica em cima (Regra 293). */
+    static boolean isArchPiece(BlockPos mouth, Direction descent, BlockPos at) {
+        for (Piece piece : ARCH.pieces) {
+            if (at(mouth, descent, piece.x(), piece.y(), piece.z()).equals(at)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /** Se a posição é bloco do arco ou do portão antigo: a mina nunca a escava. */
     public static boolean isPart(BlockPos mouth, Direction descent, BlockPos at) {
         for (Template template : List.of(ARCH, OLD)) {

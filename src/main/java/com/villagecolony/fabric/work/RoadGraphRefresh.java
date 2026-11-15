@@ -198,7 +198,9 @@ public final class RoadGraphRefresh {
             BlockState state = world.getBlockState(at);
 
             // Regra 291: a tábua de rua também é célula; o PathTrim só mexe no caminho de terra e de areia.
-            boolean plank = !VillageRoad.isPathBlock(state) && VillageRoad.isStreetPlank(world, at, state);
+            // E a pedra do pátio da boca da mina (Regra 293).
+            boolean plank = !VillageRoad.isPathBlock(state)
+                    && (VillageRoad.isStreetPlank(world, at, state) || com.villagecolony.fabric.integration.MineYard.isYard(at, state));
 
             if (!VillageRoad.isPathBlock(state) && !plank) {
                 continue;

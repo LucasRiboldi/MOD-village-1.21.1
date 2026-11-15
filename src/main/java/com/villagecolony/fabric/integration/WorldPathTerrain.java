@@ -97,7 +97,7 @@ public final class WorldPathTerrain implements PathTerrain {
 
             // Regra 291: a frente da porta e a tábua de rua têm chão, mesmo que o calçamento as recuse.
             boolean floor = anyFloor.contains(com.villagecolony.core.construction.model.ColonyRoads.column(x, z))
-                    || VillageRoad.isStreetPlank(world, at, state);
+                    || VillageRoad.isStreetPlank(world, at, state) || MineYard.isYard(at, state);
 
             if (!state.isOf(Blocks.DIRT_PATH) && !floor && RoadPaving.refusalOfTheGround(world, at, state).isPresent()) {
                 return OptionalInt.empty();
@@ -165,8 +165,9 @@ public final class WorldPathTerrain implements PathTerrain {
         }
 
         // A boca da mina é buraco de propósito: o caminho que aterra fecharia a escada (playtest 0.3.97).
+        // Sobre o pátio de pedra da boca a folga não vale: ele já é chão, e o buraco da escada não tem chão (Regra 293).
         if (mine.filter(entry -> Math.abs(x - entry.x()) <= MINE_CLEARANCE
-                && Math.abs(z - entry.z()) <= MINE_CLEARANCE).isPresent()) {
+                && Math.abs(z - entry.z()) <= MINE_CLEARANCE).isPresent() && !MineYard.isYardColumn(world, x, z)) {
             return true;
         }
 

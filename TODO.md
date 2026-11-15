@@ -70,7 +70,7 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
     solta (`door@-278,67,-205`): o caminho fora da caixa só conta se encostar no de dentro (Regra 224) (M);
   - torres e `protected:air`: Regra 292 (candidata) — a torre era minério na coluna; conferir em mundo novo e com o
     pedreiro em mundo antigo;
-  - nó de entrada da mina logo à frente do arco (nota 10:18) (P);
+  - arco da mina: Regra 293 (candidata) — pátio de pedra de raio 6, céu livre, nó de entrada à frente do arco;
   - lenhador 71% parado (`NO_PROGRESS` 7×), construtor 40% (`SET_ASIDE: no material` 132×) (M);
   - contagem dos blocos que surgiram sozinhos não feita na triagem (P)
 - [ ] 🟠 Estado e implementação nas 81 regras de `docs/RULES.md` que não têm essas colunas (M)

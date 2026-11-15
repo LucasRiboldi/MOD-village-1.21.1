@@ -60,6 +60,14 @@ final class MineGates {
         atTheMouth(world, colony).ifPresent(gates::add);
 
         for (MineGate.Standing gate : gates) {
+            // Regra 293: com o pátio de pedra, a entrada é a coluna logo à frente do arco, na altura do disco.
+            BlockPos atTheArch = MineGate.approach(gate.mouth(), gate.descent(), 1).down();
+
+            if (com.villagecolony.fabric.integration.MineYard.isYard(atTheArch, world.getBlockState(atTheArch))) {
+                fronts.add(com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(atTheArch));
+                continue;
+            }
+
             for (int blocks = 1; blocks <= WorldPathTerrain.MINE_CLEARANCE + 2; blocks++) {
                 BlockPos out = MineGate.approach(gate.mouth(), gate.descent(), blocks);
                 OptionalInt ground = terrain.groundY(out.getX(), out.getZ(), gate.mouth().getY());
