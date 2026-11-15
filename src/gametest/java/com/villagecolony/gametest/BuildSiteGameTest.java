@@ -554,12 +554,13 @@ public class BuildSiteGameTest implements FabricGameTest {
         }
 
         try {
-            Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
-                    context.getWorld(),
-                    colony,
-                    MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
-                    0,
-                    SMALL_HOUSE);
+            Optional<BuildSiteScanner.Site> site = withoutForeignBuildings(context, colony, center,
+                    () -> BuildSiteScanner.find(
+                            context.getWorld(),
+                            colony,
+                            MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                            0,
+                            SMALL_HOUSE));
 
             context.assertTrue(
                     site.isEmpty(),
@@ -2004,6 +2005,35 @@ public class BuildSiteGameTest implements FabricGameTest {
                 colony,
                 MinecraftTypeAdapter.toColonyPos(road),
                 List.of(ColonyRoads.column(road.getX(), road.getZ()))));
+    }
+
+    /**
+     * Roda a varredura sem as construções de outras colônias que encostam nesta área, e as devolve em seguida. A área
+     * de teste é reaproveitada, e a casa grande que a fundação de outro teste registrou ali fica para sempre no
+     * registro: o {@code LotSpacing} a lê de qualquer colônia e recusava a roça por {@code TOO_CLOSE} antes do solo.
+     * Tudo no mesmo tique, então nenhum outro teste vê a diferença.
+     */
+    private static <T> T withoutForeignBuildings(TestContext context, UUID colony, BlockPos center,
+                                                 java.util.function.Supplier<T> scan) {
+        BlockPos a = context.getAbsolutePos(center.add(-16, 0, -16));
+        BlockPos b = context.getAbsolutePos(center.add(16, 0, 16));
+        int minX = Math.min(a.getX(), b.getX());
+        int maxX = Math.max(a.getX(), b.getX());
+        int minZ = Math.min(a.getZ(), b.getZ());
+        int maxZ = Math.max(a.getZ(), b.getZ());
+        List<Building> foreign = VillageColonyMod.BUILDINGS.all().stream()
+                .filter(building -> !building.colonyId().equals(colony)
+                        && building.min().x() <= maxX && building.max().x() >= minX
+                        && building.min().z() <= maxZ && building.max().z() >= minZ)
+                .toList();
+
+        foreign.forEach(building -> VillageColonyMod.BUILDINGS.remove(building.id()));
+
+        try {
+            return scan.get();
+        } finally {
+            foreign.forEach(VillageColonyMod.BUILDINGS::register);
+        }
     }
 
     private static void paveGround(TestContext context, BlockPos center) {

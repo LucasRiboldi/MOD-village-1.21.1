@@ -25,7 +25,8 @@ import java.util.Set;
  * <p>Parte de cada coluna da zona e segue por tronco e folha encostados (também na diagonal), para fora da zona.
  * Planta e flor encostadas saem, mas não continuam a busca. O que sai vai para os baús; o que não couber fica no
  * chão. A busca para a {@value #REACH} blocos da zona e em {@value #MAX_BLOCKS} blocos: o limite da floresta inteira.
- * Só tira o que a proteção deixa ({@link LotGrowth#isClearableOnSite}).
+ * Só tira o que a proteção deixa ({@link LotGrowth#isClearableOnSite}). O tronco que passa pela zona sai inteiro,
+ * também abaixo do piso, até o chão (Regra 290).
  */
 public final class TreeClearing {
 
@@ -136,16 +137,22 @@ public final class TreeClearing {
 
         while (!open.isEmpty() && toClear.size() < MAX_BLOCKS) {
             BlockPos from = open.poll();
+            boolean fromLog = world.getBlockState(from).isIn(BlockTags.LOGS);
 
             for (BlockPos near : BlockPos.iterate(from.add(-1, -1, -1), from.add(1, 1, 1))) {
                 if (near.getX() < minX - REACH || near.getX() > maxX + REACH
                         || near.getZ() < minZ - REACH || near.getZ() > maxZ + REACH
-                        || near.getY() < fromY || !world.isChunkLoaded(near.getX() >> 4, near.getZ() >> 4)
+                        || !world.isChunkLoaded(near.getX() >> 4, near.getZ() >> 4)
                         || seen.contains(near)) {
                     continue;
                 }
 
                 BlockState state = world.getBlockState(near);
+
+                // Regra 290: abaixo do piso só desce o tronco, tora encostada em tora, até o chão — nada de toco.
+                if (near.getY() < fromY && !(fromLog && state.isIn(BlockTags.LOGS))) {
+                    continue;
+                }
 
                 if (grows(state) && LotGrowth.isClearableOnSite(world, near, state)) {
                     BlockPos kept = near.toImmutable();

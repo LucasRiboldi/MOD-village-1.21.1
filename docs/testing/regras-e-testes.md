@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 182
+- **Cita a regra:** 183
 - **Só usa a classe indicada:** 93
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 12
@@ -189,7 +189,7 @@ classe prova menos ainda.
 | 176 | Sinalizador dos caminhos (autor 11-04): /vc mae mostrar ligar\ | cita | RoadMapSyncGameTest |
 | 177 | Grafo como mapa de trilhos (autor 11-05): uma linha contínua por corredor, no bloco centr… | cita | RoadLinesTest |
 | 178 | Acesso livre (autor 11-05): o primeiro bloco fora de toda porta e portão é caminho; portã… | cita | BuildingGapsGameTest, EntrancesAtTheDoorGameTest, RoadLinesTest |
-| 179 | Zona da obra limpa até o céu (autor 11-05): tudo que é natural e desprotegido na pegada,… | classe | FoundationPreparationGameTest, TreeClearingGameTest |
+| 179 | Zona da obra limpa até o céu (autor 11-05): tudo que é natural e desprotegido na pegada,… | classe | FoundationPreparationGameTest, TreeAndLeafGameTest, TreeClearingGameTest |
 | 180 | Caminho coberto não é caminho (autor 11-05; emendada pela Regra 231): bloco de caminho se… | cita | RoadRulesGameTest |
 | 181 | Pulo confere o teto (jogo 11-05): o caminho do aldeão da colônia só sobe onde o corpo cab… | cita | VillagerRulesGameTest |
 | 182 | A mina cresce por dentro (autor 11-05): fim de escada abre ramal a partir dos salões que… | cita | WaterMineAccessGameTest |
@@ -300,3 +300,4 @@ classe prova menos ainda.
 | 287 | O fazendeiro entra na plantação de borda de tora (autor 15-11, jogo da 0.4.85: o fazendei… | cita | ColonyPathingGameTest, IdleFixesGameTest |
 | 288 | Nenhuma estrutura da vila nasce sobre água (autor 15-11, jogo da 0.4.86: casas e lampião… | cita | VillageGroundGameTest |
 | 289 | A plantação grande trabalha (autor 15-11, jogo da 0.4.86: 167 canteiros arados e 5 planta… | cita | LargeFarmSeedsGameTest |
+| 290 | Tronco inteiro e folha no caminho (autor 15-11, G7 da ADR-056; jogo da 0.4.85: "sobrou um… | cita | TreeAndLeafGameTest, WaterTerrainControlGameTest |
