@@ -101,6 +101,8 @@ public class WaterTerrainControlGameTest implements FabricGameTest {
             owned.owning(villager.getUuid());
             villager.setPathfindingPenalty(PathNodeType.WATER, ColonyPathing.WATER_COST);
             villager.setPathfindingPenalty(ColonyPathing.OFF_STREET, ColonyPathing.OFF_STREET_COST);
+            // O espelho do ColonyPathing.prepare: a folha natural tem custo (Regra 290).
+            villager.setPathfindingPenalty(PathNodeType.LEAVES, ColonyPathing.LEAF_COST);
         } catch (RuntimeException | AssertionError failure) {
             cleanup.run();
             throw failure;

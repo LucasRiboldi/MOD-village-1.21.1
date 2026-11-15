@@ -81,6 +81,7 @@ final class FarmerChores {
 
         Optional<BlockPos> found = field.ripe();
         Chore chore = Chore.HARVEST;
+        boolean hasSeed = seedChest(world, colonyId, storage.chestPosition()).isPresent();
 
         if (found.isEmpty()) {
             // <b>Sem semente não há o que semear nem por que arar</b> —
@@ -90,7 +91,7 @@ final class FarmerChores {
             // ritmo em que a lavoura paga por ela, e para de crescer
             // quando o baú seca. A semente vale de qualquer baú da colônia,
             // o dele primeiro (seedChest).
-            if (seedChest(world, colonyId, storage.chestPosition()).isPresent()) {
+            if (hasSeed) {
                 found = field.emptyPlot();
                 chore = Chore.SOW;
             }
@@ -112,8 +113,9 @@ final class FarmerChores {
                     colonyId,
                     FarmerWork.SUBJECT,
                     field.incomplete() ? IdleReason.SWEEP_INCOMPLETE : IdleReason.NO_TARGET,
-                    "nothing ripe and no empty plot within "
-                            + searchRadius + " blocks of the village",
+                    hasSeed ? "nothing ripe and no empty plot within " + searchRadius + " blocks of the village"
+                            : "nothing ripe within " + searchRadius + " blocks of the village, and no seed in any"
+                            + " chest to sow",
                     world.getTime());
 
             if (!field.incomplete()) {
@@ -122,6 +124,15 @@ final class FarmerChores {
                 // floresta. Ver LumberjackNursery.
                 FieldRest.sweptAndFoundNothing(colonyId, world.getTime());
             }
+
+            return;
+        }
+
+        // Regra 289: a plantação grande já tem os dois fazendeiros dela; o terceiro não entra. Sem o descanso da
+        // roça (FieldRest), que pararia os donos junto.
+        if (FarmOwners.isFullFor(workerId, found.get())) {
+            IdleLog.recordAt(colonyId, FarmerWork.SUBJECT, IdleReason.NO_TARGET,
+                    "the large farm already has its " + LargeFarmSeeds.FARMERS + " farmers", world.getTime());
 
             return;
         }
@@ -160,9 +171,13 @@ final class FarmerChores {
             return false;
         }
 
+        // Regra 289: sem semente em baú nenhum, ela surge no baú de quem tem canteiro vazio na roça.
+        LargeFarmSeeds.surgeIfOut(world, job.task.colonyId(), workerId, storage.chestPosition());
+
         Optional<OwnFarm.Found> found = FarmOwners.farmOf(workerId).flatMap(farm -> OwnFarm.work(
                 world, farm,
-                seedChest(world, job.task.colonyId(), storage.chestPosition()).isPresent()));
+                seedChest(world, job.task.colonyId(), storage.chestPosition()).isPresent(),
+                FarmOwners.isSecondOwner(workerId)));
 
         if (found.isEmpty()) {
             job.ownFarmQuietUntil = world.getTime() + OwnFarm.QUIET_TICKS;
@@ -260,6 +275,8 @@ final class FarmerChores {
         }
 
         villager.swingHand(Hand.MAIN_HAND);
+        // Regra 289: a terra comum entre os canteiros da roça é arada antes de receber a semente.
+        OwnFarm.tillIfDirt(world, job.target);
 
         if (CropPatch.sow(world, job.target, seed.get())) {
             VillageColonyMod.LOGGER.info(

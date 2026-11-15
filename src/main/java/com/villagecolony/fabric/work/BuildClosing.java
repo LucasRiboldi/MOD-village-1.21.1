@@ -49,7 +49,7 @@ final class BuildClosing {
             return false;
         }
 
-        complete(colony, project, 0, "every piece is in place");
+        complete(world, colony, project, 0, "every piece is in place");
 
         return true;
     }
@@ -93,7 +93,7 @@ final class BuildClosing {
         VillageColonyMod.LOGGER.warn("VC_END_OF_BUILD version=1 colony={} building={} at={} surged={} pieces={}",
                 colony.id().toString().substring(0, 8), project.blueprint().id(), project.origin(), total, surged);
 
-        complete(colony, project, total, total + " pieces surged at the end");
+        complete(world, colony, project, total, total + " pieces surged at the end");
     }
 
     private static boolean isOpen(ConstructionProject project) {
@@ -101,13 +101,15 @@ final class BuildClosing {
                 || project.state() == ConstructionState.WAITING_RESOURCES;
     }
 
-    private static void complete(Colony colony, ConstructionProject project, int surged, String why) {
+    private static void complete(ServerWorld world, Colony colony, ConstructionProject project, int surged,
+                                 String why) {
         if (project.state() == ConstructionState.WAITING_RESOURCES) {
             project.moveTo(ConstructionState.BUILDING);
         }
 
         project.moveTo(ConstructionState.COMPLETED);
         VillageColonyMod.BUILDINGS.registerOrMerge(Building.of(project, true));
+        LargeFarmSeeds.sowAtCompletion(world, project);
         WaitingWork.cancelBuildTasks(colony);
 
         VillageColonyMod.LOGGER.info("Colony {} closes {} at {} — {}",

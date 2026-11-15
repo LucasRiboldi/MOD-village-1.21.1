@@ -4,11 +4,13 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.type.ServerMemory;
+import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.VillageFocus;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.registry.tag.BlockTags;
@@ -27,6 +29,9 @@ import java.util.UUID;
  * Folha no caminho se corta — Regra 197 (autor, 2026-11-05): o caminho do jogo não atravessa folha, e o aldeão que tem
  * destino e parou ao lado dela ficava preso. Todo aldeão da vila corta a folha natural à frente, uma por passada.
  *
+ * <p>E o trabalhador da colônia, em qualquer lugar, quebra a folha natural do próprio caminho antes de chegar nela —
+ * Regra 290 (autor, 2026-11-15): todo aldeão quebra a folha que tranca o caminho dele ({@link #clearAhead}).
+ *
  * <p>Folha posta à mão e folha de obra da colônia ficam ({@link BlockProtection}).
  */
 public final class LeafPassage {
@@ -44,6 +49,15 @@ public final class LeafPassage {
 
     private static final int FORGET_EVERY = 6_000;
 
+    /** De quantos em quantos tiques a folha do caminho em curso é olhada: antes de ele trombar nela. */
+    private static final int PATH_EVERY = 4;
+
+    /** Quantos nós do caminho à frente contam: o atual e os dois seguintes. */
+    private static final int NODES_AHEAD = 3;
+
+    /** Até quantos blocos do aldeão a folha do caminho é quebrada. */
+    private static final int PATH_REACH = 3;
+
     /** A altura em relação aos pés, nesta ordem: pés, cabeça, degrau, chão. */
     private static final int[] HEIGHTS = {0, 1, 2, -1};
 
@@ -60,7 +74,15 @@ public final class LeafPassage {
 
     public static void register() {
         ServerTickEvents.END_WORLD_TICK.register(world -> {
-            if (world.getRegistryKey().equals(World.OVERWORLD) && world.getTime() % EVERY == 0) {
+            if (!world.getRegistryKey().equals(World.OVERWORLD)) {
+                return;
+            }
+
+            if (world.getTime() % PATH_EVERY == 0) {
+                clearPaths(world);
+            }
+
+            if (world.getTime() % EVERY == 0) {
                 pass(world);
             }
         });
@@ -155,6 +177,51 @@ public final class LeafPassage {
         BlockState state = world.getBlockState(pos);
 
         return state.isIn(BlockTags.LEAVES) && !BlockProtection.isPlayerPlaced(state) && !BlockProtection.isColonyBuilt(pos);
+    }
+
+    /**
+     * Regra 290: quebra a folha natural nos próximos {@value #NODES_AHEAD} nós do caminho, nos pés e na cabeça, ao
+     * alcance do aldeão. O caminho do aldeão da colônia passa por folha natural ({@code ColonyPathing.LEAF_COST}).
+     *
+     * @return quantas folhas saíram
+     */
+    public static int clearAhead(ServerWorld world, VillagerEntity villager, Path path) {
+        if (path == null || path.isFinished()) {
+            return 0;
+        }
+
+        int cleared = 0;
+        int last = Math.min(path.getCurrentNodeIndex() + NODES_AHEAD, path.getLength());
+
+        for (int index = path.getCurrentNodeIndex(); index < last; index++) {
+            BlockPos node = path.getNodePos(index);
+
+            for (int up = 0; up <= 1; up++) {
+                BlockPos leaf = node.up(up);
+
+                if (villager.getBlockPos().getSquaredDistance(leaf) <= PATH_REACH * PATH_REACH
+                        && isCuttable(world, leaf)) {
+                    world.breakBlock(leaf, true, villager);
+                    villager.swingHand(Hand.MAIN_HAND);
+                    cleared++;
+
+                    if (VillageColonyMod.WORKERS.find(villager.getUuid()).isPresent()) {
+                        ActionJournal.action(villager.getUuid(), "CLEARED_LEAF", "leaves", 1, leaf, "");
+                    }
+                }
+            }
+        }
+
+        return cleared;
+    }
+
+    /** O trabalhador da colônia com caminho em curso, em qualquer lugar: dentro e fora da caixa da vila. */
+    private static void clearPaths(ServerWorld world) {
+        for (Worker worker : VillageColonyMod.WORKERS.all()) {
+            if (world.getEntity(worker.villagerId()) instanceof VillagerEntity villager && villager.isAlive()) {
+                clearAhead(world, villager, villager.getNavigation().getCurrentPath());
+            }
+        }
     }
 
     private static void clearAll() {

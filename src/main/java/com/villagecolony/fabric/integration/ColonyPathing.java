@@ -28,6 +28,8 @@ import java.util.Optional;
  *   <li><b>Água:</b> o nó de água custa {@link #WATER_COST} (Regra 278): a busca esgota o chão seco antes de entrar
  *   na água, e só atravessa quando não acha rota seca ao alcance dela.</li>
  *   <li><b>Alçapão em pé:</b> o nó fica fora do caminho ({@link #uprightTrapdoor}, Regra 276).</li>
+ *   <li><b>Folha natural:</b> o nó de folha custa {@link #LEAF_COST} e o aldeão a quebra ao chegar
+ *   ({@code LeafPassage}); folha posta ou de obra continua fora do caminho ({@link #naturalLeaves}, Regra 290).</li>
  *   <li><b>Rua:</b> dentro da caixa da vila, o nó andável sem chão de rua embaixo vira {@link #OFF_STREET}, que
  *   custa {@link #OFF_STREET_COST}. A rua ganha sempre que o desvio por ela não passa de cerca de 2 vezes a
  *   linha reta; perto do alvo ele sai da rua normalmente.</li>
@@ -60,6 +62,12 @@ public final class ColonyPathing {
     /** O custo de cada nó fora da rua, dentro da caixa da vila. */
     public static final float OFF_STREET_COST = 1.0F;
 
+    /**
+     * O custo do nó de folha natural — Regra 290: a busca prefere o chão livre, e só atravessa a copa quando a volta
+     * custa mais que uns oito blocos.
+     */
+    public static final float LEAF_COST = 8.0F;
+
     private ColonyPathing() {
     }
 
@@ -84,6 +92,10 @@ public final class ColonyPathing {
             return uprightTrapdoor(world, x, y, z);
         }
 
+        if (type == PathNodeType.LEAVES) {
+            return naturalLeaves(world, x, y, z);
+        }
+
         if (type != PathNodeType.WALKABLE || !insideTheVillage(worker.get(), x, z)) {
             return type;
         }
@@ -104,6 +116,23 @@ public final class ColonyPathing {
     static boolean isUprightLog(BlockState floor) {
         return floor.isIn(BlockTags.LOGS)
                 && floor.getOrEmpty(PillarBlock.AXIS).map(axis -> axis == Direction.Axis.Y).orElse(true);
+    }
+
+    /**
+     * Regra 290: o nó com folha nos pés ou na cabeça só entra no caminho se toda folha dele for natural e de fora das
+     * obras da colônia — a que o aldeão pode quebrar. Folha posta à mão ou de obra fecha o nó.
+     */
+    public static PathNodeType naturalLeaves(BlockView world, int x, int y, int z) {
+        for (int up = 0; up <= 1; up++) {
+            BlockPos at = new BlockPos(x, y + up, z);
+            BlockState state = world.getBlockState(at);
+
+            if (state.isIn(BlockTags.LEAVES) && (BlockProtection.isPlayerPlaced(state) || BlockProtection.isColonyBuilt(at))) {
+                return PathNodeType.BLOCKED;
+            }
+        }
+
+        return PathNodeType.LEAVES;
     }
 
     /**
@@ -187,6 +216,10 @@ public final class ColonyPathing {
 
         if (mob.getPathfindingPenalty(OFF_STREET) != OFF_STREET_COST) {
             mob.setPathfindingPenalty(OFF_STREET, OFF_STREET_COST);
+        }
+
+        if (mob.getPathfindingPenalty(PathNodeType.LEAVES) != LEAF_COST) {
+            mob.setPathfindingPenalty(PathNodeType.LEAVES, LEAF_COST);
         }
 
         // O caminho pode passar por cima da cerca; o pulo para isso é só no obstáculo (VillagerMoves).

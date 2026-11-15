@@ -141,11 +141,25 @@ final class RoadShape {
 
         for (int x : new int[] {box.getMinX() - 1, box.getMaxX() + 1}) {
             for (int z : new int[] {box.getMinZ() - 1, box.getMaxZ() + 1}) {
-                groundAt(world, terrain, x, z, corners);
+                cornerGround(world, terrain, x, z, box.getMinY()).ifPresent(corners::add);
             }
         }
 
         return corners;
+    }
+
+    /**
+     * O chão da quina da plantação, procurado em volta da altura do canteiro {@code farmY}, e não do topo da coluna —
+     * Regra 291: a entrada fica no nível da plantação, e um beiral, telhado ou copa em cima não a leva para o alto.
+     */
+    static java.util.Optional<ColonyPos> cornerGround(ServerWorld world, WorldPathTerrain terrain, int x, int z, int farmY) {
+        if (!world.isChunkLoaded(x >> 4, z >> 4) || terrain.blocked(x, z)) {
+            return java.util.Optional.empty();
+        }
+
+        OptionalInt ground = terrain.groundY(x, z, farmY);
+
+        return ground.isPresent() ? java.util.Optional.of(new ColonyPos(x, ground.getAsInt(), z)) : java.util.Optional.empty();
     }
 
     private static void groundAt(ServerWorld world, WorldPathTerrain terrain, int x, int z, Set<ColonyPos> into) {
