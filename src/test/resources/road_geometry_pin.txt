@@ -28,8 +28,8 @@ cross/0 chains 907:79e240b
 cross/0 line 790:ac34bd5c
 cross/0 mask 3414:fe5cf8d3
 cross/0 routes 1015:3218bbbf
-cross/1 build0 8062:d0ae75f0
-cross/1 build1 6681:d0f11ba0
+cross/1 build0 9628:75285ee5
+cross/1 build1 9470:5e8169f1
 cross/1 chains 907:79e240b
 cross/1 line 790:ac34bd5c
 cross/1 mask 3414:a6d45d9c
@@ -76,8 +76,8 @@ gaps/0 chains 334:4d553b45
 gaps/0 line 299:71e9bdb3
 gaps/0 mask 1767:b4820c4f
 gaps/0 routes 320:8b4acab
-gaps/1 build0 3734:8847a0b0
-gaps/1 build1 3734:8847a0b0
+gaps/1 build0 4464:7593d473
+gaps/1 build1 4464:7593d473
 gaps/1 chains 334:4d553b45
 gaps/1 line 299:71e9bdb3
 gaps/1 mask 1767:ce085a42
@@ -100,7 +100,7 @@ ladder/0 chains 1059:4dc5ff90
 ladder/0 line 946:2f8e719a
 ladder/0 mask 1177:773b42d
 ladder/0 routes 1177:773b42d
-ladder/1 build0 2535:1bf8f8f
+ladder/1 build0 3083:7a89db7f
 ladder/1 build1 3083:7a89db7f
 ladder/1 chains 1059:4dc5ff90
 ladder/1 line 946:2f8e719a
@@ -148,8 +148,8 @@ parts/0 chains 941:f4f79ab2
 parts/0 line 832:f584fc62
 parts/0 mask 1881:2b146cf0
 parts/0 routes 1024:9a6ee002
-parts/1 build0 5234:d848f2a7
-parts/1 build1 5366:c833e3ca
+parts/1 build0 5366:c833e3ca
+parts/1 build1 7415:488c183f
 parts/1 chains 941:f4f79ab2
 parts/1 line 832:f584fc62
 parts/1 mask 1881:75fbc40f
@@ -220,8 +220,8 @@ wander1/0 chains 277:501bfa96
 wander1/0 line 244:ed4ad2aa
 wander1/0 mask 964:3880fb7d
 wander1/0 routes 328:30465aa8
-wander1/1 build0 4451:b7d90f44
-wander1/1 build1 4451:b7d90f44
+wander1/1 build0 5315:34ed22c1
+wander1/1 build1 5315:34ed22c1
 wander1/1 chains 357:d8c87012
 wander1/1 line 257:f90258b7
 wander1/1 mask 964:765c6b08
@@ -316,8 +316,8 @@ wander5/0 chains 1000:9450f83d
 wander5/0 line 847:88727d05
 wander5/0 mask 3176:21605fe3
 wander5/0 routes 1054:e7d33941
-wander5/1 build0 6784:1e3bd6d3
-wander5/1 build1 6864:57c9ece
+wander5/1 build0 7317:f570441f
+wander5/1 build1 7317:f570441f
 wander5/1 chains 1035:bf58ea66
 wander5/1 line 847:88727d05
 wander5/1 mask 3176:561458ca
@@ -328,8 +328,8 @@ wander5/2 chains 1000:9450f83d
 wander5/2 line 847:88727d05
 wander5/2 mask 3176:21605fe3
 wander5/2 routes 1054:e7d33941
-wander5/3 build0 7081:badf8387
-wander5/3 build1 7681:5b48a436
+wander5/3 build0 10257:9020162d
+wander5/3 build1 9609:dff24a69
 wander5/3 chains 1035:bf58ea66
 wander5/3 line 847:88727d05
 wander5/3 mask 3176:b5625ee6
@@ -388,8 +388,8 @@ wander8/0 chains 924:20162dd3
 wander8/0 line 802:28292261
 wander8/0 mask 3683:ace35cb3
 wander8/0 routes 1032:3d036736
-wander8/1 build0 9882:fce87850
-wander8/1 build1 10160:d8cc349
+wander8/1 build0 10454:d1bb1968
+wander8/1 build1 10454:d1bb1968
 wander8/1 chains 924:20162dd3
 wander8/1 line 802:28292261
 wander8/1 mask 3683:8d51eae7

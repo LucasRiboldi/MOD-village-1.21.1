@@ -392,4 +392,62 @@ class RoadLinesTest {
             assertTrue(columnsOf(result).contains(at(5, 10)), "a maior parte solta não ligou na vez " + turn);
         }
     }
+
+    /**
+     * Regra 300: a maior parte solta que não liga não segura a busca das outras — a busca dela não conta no limite, e
+     * as outras seguem no rodízio. Aqui a maior está fechada num muro, e a menor só liga pela busca.
+     */
+    @Test
+    void anUnlinkableBiggestPartDoesNotStarveTheOthers() {
+        PathTerrain walled = new PathTerrain() {
+            @Override
+            public OptionalInt groundY(int x, int z, int nearY) {
+                return OptionalInt.of(Y);
+            }
+
+            @Override
+            public boolean blocked(int x, int z) {
+                boolean across = z == 5 && x >= -20 && x <= 50 && x != -8;
+                boolean box = (x == 58 || x == 72) && z >= 38 && z <= 42 || (z == 38 || z == 42) && x >= 58 && x <= 72;
+
+                return across || box;
+            }
+        };
+        Set<ColonyPos> cells = new HashSet<>(corridor(0, 30, 0, 0));
+        cells.addAll(corridor(60, 70, 40, 40));
+        cells.addAll(corridor(0, 5, 10, 10));
+
+        for (int turn = 0; turn < 3; turn++) {
+            RoadLines.Result result = RoadLines.build(cells, Set.of(), at(10, 0), Set.of(), Set.of(), walled, 1, turn);
+
+            assertTrue(columnsOf(result).contains(at(3, 10)), "a parte que só liga pela busca ficou solta na vez " + turn);
+        }
+    }
+
+    /**
+     * Regra 300: a porta sozinha se junta ao caminho encostado nela, mesmo que ele seja outra parte solta, e liga com
+     * ele; no log ela deixa de aparecer como porta solta.
+     */
+    @Test
+    void aLoneDoorJoinsThePathBesideIt() {
+        PathTerrain walled = new PathTerrain() {
+            @Override
+            public OptionalInt groundY(int x, int z, int nearY) {
+                return OptionalInt.of(Y);
+            }
+
+            @Override
+            public boolean blocked(int x, int z) {
+                return (x == 58 || x == 72) && z >= 36 && z <= 46 || (z == 36 || z == 46) && x >= 58 && x <= 72;
+            }
+        };
+        Set<ColonyPos> cells = new HashSet<>(corridor(0, 30, 0, 0));
+        cells.addAll(corridor(60, 70, 38, 38));
+
+        // Quatro colunas de chão entre a porta e o caminho: a máscara não fecha o vão sozinha.
+        RoadLines.Result result = RoadLines.build(cells, Set.of(), at(10, 0), Set.of(at(65, 43)), Set.of(), walled, 1, 0);
+
+        assertTrue(result.loose().stream().noneMatch(entry -> entry.startsWith("door@")),
+                "a porta ao lado do caminho ficou solta: " + result.loose());
+    }
 }
