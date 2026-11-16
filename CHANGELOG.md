@@ -12,6 +12,52 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.90] — candidata, 2026-11-16
+
+Do jogo da 0.4.74 ao da 0.4.89 (mundos novos em planície e em montanha, Sparks `GHWvjlPaPs`, `b28MY9TPEA` e
+`hYkEcERV1A`). Inclui da 0.4.75 à 0.4.89. O detalhe por versão está no
+[`Development-Log.md`](docs/archive/technical/Development-Log.md), as decisões do autor na ADR-056 e a lista
+de regras em [`docs/RULES.md`](docs/RULES.md). Nada disto foi visto em jogo além do que a seção "Verificado" diz.
+
+### Mudado
+
+- 0.4.75 a 0.4.79 (Regras 270 a 274): sem ofício fora das análises; muda do bosque surge; corante das flores; um
+  construtor por vila; obra conta como trabalho do construtor.
+- 0.4.80 a 0.4.87 (Regras 275 a 288): soleira não é curral, alçapão em pé, lenhador encosta, água só sem caminho seco,
+  tora deitada é chão do caminho, água com margem e gelo sob o pulo, mineiro novo na casa junto da mina; nenhuma
+  estrutura da vila nasce sobre água (Regra 288).
+- 0.4.88 (Regras 289 a 294, ADR-056): plantação grande semeada com 2 fazendeiros e semente que surge; tronco inteiro e
+  folha natural quebrada no caminho; grafo na tábua de rua e na frente de toda porta; sem torre de minério; pátio de
+  pedra na boca da mina; os ociosos tiram bloco solto e toco.
+- 0.4.89 (Regras 295 a 298): a coluna que o calçador recusou bloqueia a busca da ligação e a pedra dentro da colônia
+  vira caminho; as peças da vila nascem no solo suavizado (`VillagePieces`); o chão em volta da obra nova é suavizado
+  numa janela de 12 blocos (`SiteSmoothing`, `VC_SITE_EDGE`); a fundação só completa 8 adultos e a sobra fica sem
+  ofício (a Regra 134 sai).
+- 0.4.90 (Regras 299 a 304):
+  - o abate do excedente não leva o animal na corda ou em coleta, a coleta não escolhe o próximo do abate e a corda só
+    solta no portão (`HerdCandidates`);
+  - a porta sozinha se junta em reta ao caminho de qualquer parte, e a busca da maior parte solta não conta no limite
+    da releitura (corrige a Regra 295);
+  - a argila e a bola de argila aparecem no baú do fundidor na hora do pedido (`ClayOnRequest`, `CLAY_ON_REQUEST`);
+  - o nó de entrada da mina fica no chão sob o arco, com bloco de caminho (`MineYard.underTheArch`);
+  - a frente de cada porta da vila gerada nasce no piso da porta, com caminho (`DoorFronts`);
+  - a coluna sob cada peça fixa é aterrada em chão seco, e o pedreiro ocioso preenche o vão sob as casas do mundo
+    atual (`UnderPieceFill`).
+
+### Verificado
+
+- `./gradlew build` e a bateria `runGametest` verdes (1.170/1.170 duas rodadas seguidas na 0.4.90); Sentinela `fast`
+  PASS em cada regra. Os GameTests `PenAccessGameTest` (VF-010) e `ShepherdGameTest` são instáveis e caíram em
+  rodadas intermediárias, também na linha de base.
+- Visto em jogo (0.4.89): Regras 297 (`maxStep` de 1 a 2 em volta das obras) e 298 (8 ofícios, 1 adulto nascido).
+  As Regras 296 e 299 a 304 são candidatas, sem confirmação em jogo; 296, 298, 303 e 304 (geração) só valem em vila
+  gerada depois delas.
+
+### Pendente
+
+- Nivelamento ao longo do grafo pelo pedreiro (ponto 2 do jogo da 0.4.89); atividade por profissão (mineiro e
+  construtor); casa do mineiro medieval (G8).
+
 ## [0.4.74] — candidata, 2026-11-13
 
 Correções do jogo da 0.4.68 (planície cercada de água, Spark `El42EuZ5w9`, análise em
