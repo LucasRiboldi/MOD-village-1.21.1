@@ -62,8 +62,9 @@ public final class VillageFoundation {
      *
      * <ul>
      *   <li>quando a BigHouseMOD acaba de ser colocada
-     *       ({@code houseJustPlaced}): nasce um aldeão adulto para
-     *       <b>cada cama</b> da casa, com a cama como {@code HOME};</li>
+     *       ({@code houseJustPlaced}): os adultos da vila contam primeiro, e
+     *       nasce um aldeão adulto por cama da casa, com a cama como
+     *       {@code HOME}, só até a vila ter um adulto por ofício (Regra 298);</li>
  *   <li>sem BigHouseMOD, não escreve nada: a próxima tentativa espera até
  *       que exista uma estrutura fechada para receber os moradores.</li>
      * </ul>
@@ -100,7 +101,12 @@ public final class VillageFoundation {
             colonyVillagerIds.add(worker.villagerId());
         }
 
-        int toSpawn = houseJustPlaced ? bedsIn(world, foundationHouse.get()) : 0;
+        // Só o que falta para um adulto por ofício nasce, e nas camas da casa primeiro (Regra 298).
+        long adultsBefore = byId.values().stream().filter(villager -> !villager.isBaby()).count();
+        int toSpawn = houseJustPlaced
+                ? (int) Math.min(bedsIn(world, foundationHouse.get()),
+                        Math.max(0, ProfessionType.values().length - adultsBefore))
+                : 0;
 
         int bedsPlaced = 0;
         int spawned = 0;

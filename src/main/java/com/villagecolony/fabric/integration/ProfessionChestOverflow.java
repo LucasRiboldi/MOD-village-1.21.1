@@ -87,16 +87,12 @@ public final class ProfessionChestOverflow {
         SHARE.put(colony.id(), share);
 
         if (share >= FULL_SHARE && FULL.add(colony.id())) {
-            VillageColonyMod.LOGGER.info("Colony {} — the village chests are {}% full: the next build is a storage house,"
-                    + " and a spare adult becomes a second builder", colony.id().toString().substring(0, 8),
+            VillageColonyMod.LOGGER.info("Colony {} — the village chests are {}% full: the next build is a storage house",
+                    colony.id().toString().substring(0, 8),
                     Math.round(share * 100));
         } else if (share < RELIEVED_SHARE) {
             FULL.remove(colony.id());
         }
-
-        // Baú cheio é estoque parado: mais um construtor gasta o estoque nas obras (autor, 2026-10-28).
-        com.villagecolony.core.worker.service.ProfessionDemand.setSpare(colony.id(), FULL.contains(colony.id())
-                ? List.of(com.villagecolony.core.worker.model.ProfessionType.BUILDER) : List.of());
     }
 
     /**

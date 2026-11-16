@@ -4,10 +4,10 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 190
-- **Só usa a classe indicada:** 93
+- **Cita a regra:** 193
+- **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
-- **Fora de vigor:** 12
+- **Fora de vigor:** 13
 
 | # | regra | grau | testes |
 | --- | --- | --- | --- |
@@ -48,7 +48,7 @@ classe prova menos ainda.
 | 35 | Carpinteiro titular na BigHouseMOD, cama e baú à direita da porta, corredor livre até a e… | cita | BigHouseModBlueprintGameTest |
 | 36 | O viveiro (terra enraizada + rebento) é do lenhador | classe | DesertFixesGameTest, LumberjackNurseryTargetTest, TreeNurseryGameTest |
 | 37 | Cada aldeão usa a ferramenta de ferro apropriada para a ação | classe | BetterToolGameTest, LumberjackGameTest, ProfessionReviewGameTest |
-| 38 | Contratar primeiro a profissão de que a demanda depende, depois a lista | classe | BigHouseModBlueprintGameTest, ColonyCycleTest, ColonyDetectionGameTest |
+| 38 | Contratar primeiro a profissão de que a demanda depende, depois a lista | cita | HiringProperties |
 | 39 | Comida é feita pelo fazendeiro (pão do trigo acima de 32) | classe | ProfessionReviewGameTest, VillageMealsGameTest |
 | 40 | Piso de fundido só com cadeia do cru | cita | BuilderMaterialsGameTest |
 | 41 | Corante, linha, pó de osso e drops de inimigo e animal aparecem automáticos | classe | BuilderGameTest, BuilderMaterialsGameTest, ConstructionStallGameTest |
@@ -144,7 +144,7 @@ classe prova menos ainda.
 | 131 | O chão em volta da obra nova fica na altura da rua (autor 10-27; o anel e a rampa viraram… | cita | DuneCutGameTest |
 | 132 | As bancadas do mod têm painel e passivas (autor 10-27): shift+clique mostra titulares, es… | cita | BenchPassivesGameTest |
 | 133 | Estoque cheio vira obra e produto (autor 10-28, jogo da 0.3.99: lenhador 74%, pedreiro 48… | cita | ItemStockGameTest |
-| 134 | O adulto que sobra vai ao ofício que a vila espera (autor 10-28, jogo da 0.3.99: 6 de 18… | classe | BigHouseModBlueprintGameTest, ColonyCycleTest, ColonyDetectionGameTest |
+| 134 | O adulto que sobra vai ao ofício que a vila espera (autor 10-28, jogo da 0.3.99: 6 de 18… | fora de vigor |  |
 | 135 | Tarefa só abre quando pode render (autor 10-28, jogo da 0.3.99): a ordem de estoque de pe… | classe | IdleFixesGameTest, ItemStockGameTest, ProfessionBalanceGameTest |
 | 136 | O fazendeiro alcança como o jogador (autor 10-28, jogo da 0.3.99: roça 2 blocos acima, a… | classe | ColonyFixture, FarmPlanGameTest, FarmerGameTest |
 | 137 | A escada da mina recomeça do topo (autor 10-28, jogo da 0.3.99: o mineiro passou 30 min n… | classe | IdleFixesGameTest |
@@ -199,7 +199,7 @@ classe prova menos ainda.
 | 186 | Rua de um bloco (autor 11-05): o caminho a até 3 blocos da linha que não é linha nem fren… | cita | EntrancesAtTheDoorGameTest, RetiredSpursTest, RoadLinesTest |
 | 187 | Revogada (autor 11-06, ADR-047). A obra pedida não reserva região | classe | LotTypeRefusalsGameTest, MaeFinishGameTest, MaeRescueGameTest |
 | 188 | Pedido só do que falta (jogo 11-05): o pedido de peça de obra não abre quando os baús cob… | classe | CraftFamilyGameTest, CraftingGameTest, FurnaceFeedGameTest |
-| 189 | Madeira (autor 11-05): dentro da zona de prioridade, o lenhador pega a árvore conhecida m… | classe | LumberjackGameTest, LumberjackSearchGameTest, ProfessionBalanceGameTest |
+| 189 | Madeira (autor 11-05): dentro da zona de prioridade, o lenhador pega a árvore conhecida m… | cita | ProfessionDemandTest |
 | 190 | Cru na reserva (jogo 11-05): com o cru nos baús e a reserva impedindo assar, o fundidor l… | classe | CrusherGameTest, FurnaceFeedGameTest, SmelterGathersGameTest |
 | 191 | Pedido sem resultado espera (autor 11-05): 3 fechamentos seguidos sem peça seguram o pedi… | cita | TaskLoopGuardTest |
 | 192 | Tora é do carpinteiro (autor 11-05): sem peça a fazer, os outros ofícios fecham a tarefa… | classe | ChainRootsGameTest, ColonyFixture, ConstructionProjectTest |
@@ -269,7 +269,7 @@ classe prova menos ainda.
 | 256 | O arco da mina e a árvore com folha (autor 12-11, opções 1 e 2): a boca da mina ganha um… | cita | LumberjackGameTest, MineLandingGameTest, MinerGameTest |
 | 257 | Areia e argila sem reserva de cru (autor 12-11, solução 3 da reanálise dos logs): areia,… | cita | RawStoneReserveTest |
 | 258 | O adiantamento lê todas as estruturas da vila (autor 12-11, solução 2 da reanálise dos lo… | cita | BiomePiecesGameTest |
-| 259 | Um aldeão de cada profissão na vila nova (autor 12-11): a fundação conta os adultos da vi… | cita | VillageFoundationGameTest |
+| 259 | Um aldeão de cada profissão na vila nova (autor 12-11; as camas da casa também contam os… | cita | VillageFoundationGameTest |
 | 260 | Casa do mineiro na fundação (autor 12-11): quando a BigHouseMOD acaba de ser posta, a fun… | cita | MinerHomeFoundationGameTest |
 | 261 | Poste de luz nas ruas fixas (autor 12-11, opção B): base de 1 bloco de pedra do bioma (ar… | cita | LampPostGameTest, LampPostPlanTest |
 | 262 | Cada estrutura do mod na versão do bioma (autor 12-11, troca automática): ao erguer uma e… | cita | BiomeBlockSwapTest, BiomeBlueprintsGameTest |
@@ -308,3 +308,4 @@ classe prova menos ainda.
 | 295 | A ligação do grafo não some na montanha (autor 15-11, jogo da 0.4.88, opção 3: o grafo os… | cita | GraphFloorGameTest, RoadLinesTest |
 | 296 | As estruturas da vila nascem no solo suavizado (autor 15-11, jogo da 0.4.88 em montanha,… | cita | VillageBlendTest, VillagePiecesGameTest |
 | 297 | O chão em volta da obra nova é suavizado como o da vila (autor 15-11, jogo da 0.4.88 em m… | cita | SiteSurroundingsGameTest |
+| 298 | A vila nova nasce enxuta (autor 15-11, jogo da 0.4.88, opção C corrigida: 9 aldeões da vi… | cita | HiringProperties, IdleFixesGameTest, ProfessionDemandTest |

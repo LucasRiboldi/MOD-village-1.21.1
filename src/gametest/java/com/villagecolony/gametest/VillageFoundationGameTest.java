@@ -141,12 +141,13 @@ public class VillageFoundationGameTest implements FabricGameTest {
     }
 
     /**
-     * N1, 2026-09-24: cada cama da BigHouseMOD ganha o seu morador, mesmo
-     * numa vila que já tinha adultos, e a cama sai com o bilhete tomado.
+     * Regra 298: a fundação conta os adultos da vila primeiro e só faz nascer o que falta para os 8 ofícios — com 3 na
+     * vila, nascem 5, cada um numa cama da BigHouseMOD com o bilhete tomado; a cama que sobra pode ir a um titular da
+     * vila.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
             batchId = "aaa_village_foundation", tickLimit = 120)
-    public void everyBedOfTheHouseGetsItsOwnNewborn(TestContext context) {
+    public void theFoundationOnlyFillsUpToEightAdults(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos anchor = context.getAbsolutePos(new BlockPos(1, 1, 1))
                 .add(1000000, 0, 1003000);
@@ -154,43 +155,66 @@ public class VillageFoundationGameTest implements FabricGameTest {
                 UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(anchor));
         VillageColonyMod.COLONIES.register(colony);
         prepareFoundationTerrain(world, anchor);
-
-        for (int index = 0; index < 3; index++) {
-            VillagerEntity local = net.minecraft.entity.EntityType.VILLAGER.create(world);
-            local.refreshPositionAndAngles(anchor.add(-18 + index, 0, -18), 0.0F, 0.0F);
-            world.spawnEntity(local);
-        }
+        spawnLocals(world, anchor, 3);
 
         try {
             VillageDetectionHandler.runFoundationNow(world, colony);
 
             Building house = houseOf(colony);
             List<BlockPos> beds = bedHeads(world, house);
+            long taken = beds.stream().filter(bed -> world.getPointOfInterestStorage().getType(bed).isPresent()
+                    && world.getPointOfInterestStorage().getFreeTickets(bed) == 0).count();
 
             context.assertTrue(beds.size() == 7,
                     "a BigHouseMOD deveria ter 7 camas, tem " + beds.size());
-            context.assertTrue(residents(world, house).size() == beds.size(),
-                    "nasceram " + residents(world, house).size() + " moradores para "
-                            + beds.size() + " camas");
-            context.assertTrue(VillageColonyMod.WORKERS.ofColony(colony.id()).size() >= 10,
-                    "os 3 adultos da vila mais os 7 moradores deveriam somar 10");
+            context.assertTrue(VillageColonyMod.WORKERS.ofColony(colony.id()).size() == 8,
+                    "os 3 adultos da vila e os nascidos deviam somar 8, somam "
+                            + VillageColonyMod.WORKERS.ofColony(colony.id()).size());
+            int residents = residents(world, house).size();
 
-            for (BlockPos bed : beds) {
-                // Sem ponto de interesse, zero bilhete livre é o valor
-                // padrão, e o caso não mediria nada — foi assim que a
-                // primeira versão, olhando o pé da cama, passou vazia.
-                context.assertTrue(
-                        world.getPointOfInterestStorage().getType(bed).isPresent(),
-                        "a cama " + bed.toShortString() + " nao e ponto de interesse");
-                context.assertTrue(
-                        world.getPointOfInterestStorage().getFreeTickets(bed) == 0,
-                        "a cama " + bed.toShortString() + " ficou sem bilhete tomado");
-            }
+            context.assertTrue(residents >= 5 && residents <= beds.size() && taken == residents,
+                    "deviam morar de 5 a 7 nas camas, cada um com a cama tomada: moram " + residents
+                            + " com " + taken + " camas tomadas");
         } finally {
             cleanUp(world, colony, anchor);
         }
 
         context.complete();
+    }
+
+    /** Regra 298: a vila que já tem 9 adultos não ganha ninguém na fundação. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
+            batchId = "aaa_village_foundation", tickLimit = 120)
+    public void aVillageWithEightAdultsGetsNoNewborn(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos anchor = context.getAbsolutePos(new BlockPos(1, 1, 1))
+                .add(1000000, 0, 1006000);
+        Colony colony = Colony.create(
+                UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(anchor));
+        VillageColonyMod.COLONIES.register(colony);
+        prepareFoundationTerrain(world, anchor);
+        spawnLocals(world, anchor, 9);
+
+        try {
+            VillageDetectionHandler.runFoundationNow(world, colony);
+
+            context.assertTrue(VillageColonyMod.WORKERS.ofColony(colony.id()).size() == 9,
+                    "a vila de 9 adultos ganhou gente na fundação: "
+                            + VillageColonyMod.WORKERS.ofColony(colony.id()).size() + " aldeões");
+        } finally {
+            cleanUp(world, colony, anchor);
+        }
+
+        context.complete();
+    }
+
+    /** Adultos da vila, longe da casa e uns ao lado dos outros. */
+    private static void spawnLocals(ServerWorld world, BlockPos anchor, int count) {
+        for (int index = 0; index < count; index++) {
+            VillagerEntity local = net.minecraft.entity.EntityType.VILLAGER.create(world);
+            local.refreshPositionAndAngles(anchor.add(-18 + index, 0, -18), 0.0F, 0.0F);
+            world.spawnEntity(local);
+        }
     }
 
     /** A vila nova nasce com um aldeão de cada profissão: o que falta para os 8 nasce adulto (Regra 259). */

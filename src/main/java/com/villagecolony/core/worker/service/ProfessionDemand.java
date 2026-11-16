@@ -33,12 +33,6 @@ public final class ProfessionDemand {
 
     private static final Map<UUID, List<ProfessionType>> DEMAND = new HashMap<>();
 
-    /**
-     * O que a colônia pede além da obra: com os baús cheios, o construtor — mais mãos na obra gastam o
-     * estoque (escolha do autor, 2026-10-28). Só conta para o adulto que sobra ({@code spareHand}).
-     */
-    private static final Map<UUID, List<ProfessionType>> SPARE = new HashMap<>();
-
     /** O ofício que já sobra: não ganha vaga nova enquanto sobrar (Regra 233). */
     private static final Map<UUID, List<ProfessionType>> SURPLUS = new HashMap<>();
 
@@ -93,20 +87,6 @@ public final class ProfessionDemand {
         }
     }
 
-    /** Liga ou desliga o pedido de mãos a mais desta colônia. */
-    public static synchronized void setSpare(UUID colonyId, List<ProfessionType> trades) {
-        if (trades.isEmpty()) {
-            SPARE.remove(colonyId);
-        } else {
-            SPARE.put(colonyId, List.copyOf(trades));
-        }
-    }
-
-    /** O pedido de mãos a mais desta colônia. */
-    public static synchronized List<ProfessionType> spareOf(UUID colonyId) {
-        return colonyId == null ? List.of() : SPARE.getOrDefault(colonyId, List.of());
-    }
-
     /** O que esta colônia pede agora; vazio quando nada falta à obra. */
     public static synchronized List<ProfessionType> of(UUID colonyId) {
         return colonyId == null ? List.of() : DEMAND.getOrDefault(colonyId, List.of());
@@ -114,7 +94,6 @@ public final class ProfessionDemand {
 
     public static synchronized void clearAll() {
         DEMAND.clear();
-        SPARE.clear();
         SURPLUS.clear();
         CAPS.clear();
     }
