@@ -39,8 +39,11 @@ public class MineYardGameTest implements FabricGameTest {
         try {
             context.assertTrue(MineYard.lay(context.getWorld(), mouth, Direction.SOUTH, TEST_RADIUS) > 0,
                     "o pátio da boca não foi posto");
-            context.assertTrue(context.getWorld().getBlockState(center.down()).isOf(Blocks.STONE),
-                    "o centro do pátio não é pedra");
+            context.assertTrue(context.getWorld().getBlockState(center.down()).isOf(Blocks.DIRT_PATH),
+                    "Regra 302: o chão sob o arco não é caminho");
+            context.assertTrue(context.getWorld().getBlockState(center.down().east()).isOf(Blocks.STONE)
+                    || context.getWorld().getBlockState(center.down().west()).isOf(Blocks.STONE),
+                    "o pátio em volta do caminho não é pedra");
             context.assertTrue(context.getBlockState(new BlockPos(3, 1, 4)).isAir()
                     && context.getBlockState(new BlockPos(3, 0, 4)).isAir(), "o pátio tampou o buraco da escada");
             context.assertTrue(context.getBlockState(new BlockPos(4, 2, 5)).isAir(), "o calombo ficou no pátio");
@@ -48,7 +51,7 @@ public class MineYardGameTest implements FabricGameTest {
                     "a árvore ficou no pátio");
             context.assertTrue(context.getBlockState(new BlockPos(4, 7, 4)).isAir(), "ficou bloco em cima do arco");
             context.assertTrue(MineYard.isYardAt(center.down(), context.getWorld().getBlockState(center.down()),
-                    mouth, Direction.SOUTH), "a pedra do pátio não é reconhecida como pátio");
+                    mouth, Direction.SOUTH), "o caminho sob o arco não é reconhecido como pátio");
             context.assertFalse(MineYard.isYardAt(context.getAbsolutePos(new BlockPos(4, 3, 4)),
                     Blocks.STONE.getDefaultState(), mouth, Direction.SOUTH), "pedra fora da altura do disco virou pátio");
         } finally {

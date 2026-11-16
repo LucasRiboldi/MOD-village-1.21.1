@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 196
+- **Cita a regra:** 197
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -165,7 +165,7 @@ classe prova menos ainda.
 | 152 | O solo da vila nasce suave na geração (autor 10-29: crateras e montanhas no meio das vila… | classe | VillageBlendTest, VillageGroundGameTest, VillagePiecesGameTest |
 | 153 | Mais ajudas de quem está sem tarefa (autor 10-28, O1/O3/O4/O8; pedido de novo em 10-29),… | classe | GroundSmoothingGameTest, IdleFixesGameTest, ItemStockGameTest |
 | 154 | Lenhador, fundidor e fazendeiro: os ajustes do O5–O7 (autor 10-28; pedido de novo em 10-2… | classe | ChestPlacerGameTest, IdleFixesGameTest, ItemStockGameTest |
-| 155 | A boca da mina ganha o portão do autor (10-29, estrutura mine_entrance.nbt, 9×7×5): no lu… | classe | BiomeBlueprintsGameTest, MineLandingGameTest, MinerGameTest |
+| 155 | A boca da mina ganha o portão do autor (10-29, estrutura mine_entrance.nbt, 9×7×5): no lu… | classe | BiomeBlueprintsGameTest, MineLandingGameTest, MineNodeGameTest |
 | 156 | O pedreiro alisa o chão da vila (autor 10-29, 11-06): sem tarefa, uma vez por minuto ele… | classe | GroundSmoothingGameTest, OreTowerGameTest, SmoothRefusalGameTest |
 | 157 | O mineiro não quebra o que segura algo solto (autor 10-29, jogo da 0.3.108: o cascalho pe… | classe | MineGravityGameTest, MineSettlingGameTest, MinerGameTest |
 | 158 | Sem cama no andar de baixo da casa de escada de mão (autor 10-29, jogo da 0.3.108: 9 de 2… | classe | BedChoiceGameTest, BedPlanTest, BiomeBlueprintsGameTest |
@@ -303,7 +303,7 @@ classe prova menos ainda.
 | 290 | Tronco inteiro e folha no caminho (autor 15-11, G7 da ADR-056; jogo da 0.4.85: "sobrou um… | cita | TreeAndLeafGameTest, WaterTerrainControlGameTest |
 | 291 | O grafo pisa na tábua de rua e na frente de toda porta (autor 15-11, G1 e G5 da ADR-056;… | cita | GraphFloorGameTest |
 | 292 | Sem torre de minério e sem ar protegido no alisamento (autor 15-11, G3 da ADR-056, escolh… | cita | OreTowerGameTest, VillageGroundGameTest |
-| 293 | O pátio da boca da mina (autor 15-11, G4 da ADR-056; jogos da 0.4.85 e 0.4.86): com o arc… | cita | MineYardGameTest |
+| 293 | O pátio da boca da mina (autor 15-11, G4 da ADR-056; o nó de entrada passou para sob o ar… | cita | MineYardGameTest |
 | 294 | Os ociosos tiram a sobra da vila (autor 15-11, G6 da ADR-056; jogo da 0.4.85: bloco solto… | cita | StrayBlocksGameTest |
 | 295 | A ligação do grafo não some na montanha (autor 15-11, jogo da 0.4.88, opção 3; o rodízio… | cita | GraphFloorGameTest, RoadLinesTest |
 | 296 | As estruturas da vila nascem no solo suavizado (autor 15-11, jogo da 0.4.88 em montanha,… | cita | VillageBlendTest, VillagePiecesGameTest |
@@ -312,3 +312,4 @@ classe prova menos ainda.
 | 299 | O pastor leva o animal até dentro do curral (autor 15-11, jogo da 0.4.89, opção C: o curr… | cita | FlockHarvestGameTest, ShepherdHerdingGameTest |
 | 300 | A porta e as partes soltas entram no grafo (autor 16-11, jogo da 0.4.89, opção C com o ro… | cita | RoadLinesTest |
 | 301 | A argila aparece na hora pedida (autor 16-11, jogo da 0.4.89: o fundidor parou 30 vezes s… | cita | ClayOnRequestGameTest |
+| 302 | O nó da mina fica sob o arco (autor 16-11, jogo da 0.4.89, opção A; muda o nó de entrada… | cita | MineNodeGameTest, MineYardGameTest |
