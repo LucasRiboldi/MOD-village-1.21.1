@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 197
+- **Cita a regra:** 198
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -313,3 +313,4 @@ classe prova menos ainda.
 | 300 | A porta e as partes soltas entram no grafo (autor 16-11, jogo da 0.4.89, opção C com o ro… | cita | RoadLinesTest |
 | 301 | A argila aparece na hora pedida (autor 16-11, jogo da 0.4.89: o fundidor parou 30 vezes s… | cita | ClayOnRequestGameTest |
 | 302 | O nó da mina fica sob o arco (autor 16-11, jogo da 0.4.89, opção A; muda o nó de entrada… | cita | MineNodeGameTest, MineYardGameTest |
+| 303 | A frente da porta nasce no piso dela (autor 16-11, jogo da 0.4.89, opção A: "não pode exi… | cita | DoorFrontsGameTest |

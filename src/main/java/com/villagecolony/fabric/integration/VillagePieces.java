@@ -34,6 +34,17 @@ final class VillagePieces {
      */
     static String settle(StructureStart start, int[][] natural, VillageSurface.Kind[][] kinds, VillageBlend.Area core,
                          VillageBlend.Area reach, int minX, int minZ) {
+        return settle(start, natural, kinds, core, reach, minX, minZ, null, null, new java.util.HashMap<>());
+    }
+
+    /**
+     * O mesmo, e a frente de cada porta das peças, fora delas, fica fixa no piso da porta e entra em {@code doorFronts}
+     * (Regra 303); sem moldes ({@code templates} nulo), nenhuma porta é lida.
+     */
+    static String settle(StructureStart start, int[][] natural, VillageSurface.Kind[][] kinds, VillageBlend.Area core,
+                         VillageBlend.Area reach, int minX, int minZ,
+                         net.minecraft.structure.StructureTemplateManager templates,
+                         net.minecraft.registry.DynamicRegistryManager registries, java.util.Map<Long, Integer> doorFronts) {
         List<Rigid> rigid = new ArrayList<>();
 
         for (StructurePiece piece : start.getChildren()) {
@@ -89,7 +100,23 @@ final class VillagePieces {
                     .append(area.maxZ() + minZ).append(']');
         }
 
-        return "\"moved\":" + moved + ",\"most\":" + most + ",\"fixed\":[" + fixed + "]";
+        int doors = 0;
+
+        for (int i = 0; templates != null && i < rigid.size(); i++) {
+            for (var front : DoorFronts.of(rigid.get(i).piece(), templates, registries).entrySet()) {
+                int x = com.villagecolony.core.construction.model.ColonyRoads.xOf(front.getKey()) - minX;
+                int z = com.villagecolony.core.construction.model.ColonyRoads.zOf(front.getKey()) - minZ;
+
+                if (x >= 0 && z >= 0 && x < natural.length && z < natural[0].length && !marked[x][z]) {
+                    natural[x][z] = front.getValue();
+                    kinds[x][z] = VillageSurface.Kind.FIXED;
+                    doorFronts.put(front.getKey(), front.getValue());
+                    doors++;
+                }
+            }
+        }
+
+        return "\"moved\":" + moved + ",\"most\":" + most + ",\"doors\":" + doors + ",\"fixed\":[" + fixed + "]";
     }
 
     /** O piso da peça: o bloco de baixo do nível de chão dela. */

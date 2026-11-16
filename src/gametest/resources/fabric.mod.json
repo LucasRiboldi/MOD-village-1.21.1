@@ -297,7 +297,8 @@
       "com.villagecolony.fabric.work.StrayBlocksGameTest",
       "com.villagecolony.fabric.integration.VillagePiecesGameTest",
       "com.villagecolony.fabric.work.ClayOnRequestGameTest",
-      "com.villagecolony.fabric.work.MineNodeGameTest"
+      "com.villagecolony.fabric.work.MineNodeGameTest",
+      "com.villagecolony.fabric.integration.DoorFrontsGameTest"
     ]
   },
   "depends": {
