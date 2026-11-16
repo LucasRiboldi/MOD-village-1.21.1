@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 189
+- **Cita a regra:** 190
 - **Só usa a classe indicada:** 93
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 12
@@ -141,7 +141,7 @@ classe prova menos ainda.
 | 128 | Nenhuma profissão espera mais de 5 minutos por nada (autor 10-27, emenda 11-02): 300 s se… | cita | IdleWatchGameTest |
 | 129 | O nome sobre a cabeça tem a cor do estado (autor 10-27): laranja no ofício, azul em ajuda… | classe | IdleRoutineGameTest, IdleWatchGameTest, LargeFarmGameTest |
 | 130 | Cinco animais no mesmo poste pedem curral, com prioridade (autor 10-27): o curral do esti… | cita | CrowdedPostGameTest |
-| 131 | O chão em volta da obra nova fica na altura da rua (autor 10-27): na abertura, um anel de… | cita | DuneCutGameTest, SiteSurroundingsGameTest |
+| 131 | O chão em volta da obra nova fica na altura da rua (autor 10-27; o anel e a rampa viraram… | cita | DuneCutGameTest |
 | 132 | As bancadas do mod têm painel e passivas (autor 10-27): shift+clique mostra titulares, es… | cita | BenchPassivesGameTest |
 | 133 | Estoque cheio vira obra e produto (autor 10-28, jogo da 0.3.99: lenhador 74%, pedreiro 48… | cita | ItemStockGameTest |
 | 134 | O adulto que sobra vai ao ofício que a vila espera (autor 10-28, jogo da 0.3.99: 6 de 18… | classe | BigHouseModBlueprintGameTest, ColonyCycleTest, ColonyDetectionGameTest |
@@ -307,3 +307,4 @@ classe prova menos ainda.
 | 294 | Os ociosos tiram a sobra da vila (autor 15-11, G6 da ADR-056; jogo da 0.4.85: bloco solto… | cita | StrayBlocksGameTest |
 | 295 | A ligação do grafo não some na montanha (autor 15-11, jogo da 0.4.88, opção 3: o grafo os… | cita | GraphFloorGameTest, RoadLinesTest |
 | 296 | As estruturas da vila nascem no solo suavizado (autor 15-11, jogo da 0.4.88 em montanha,… | cita | VillageBlendTest, VillagePiecesGameTest |
+| 297 | O chão em volta da obra nova é suavizado como o da vila (autor 15-11, jogo da 0.4.88 em m… | cita | SiteSurroundingsGameTest |
