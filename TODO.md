@@ -68,11 +68,9 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
   - atividade por profissão: mineiro 39% e construtor 32% parados (61 `SET_ASIDE`); fazendeiro 1% sem plantação
     grande na vila nova (5A) (M)
 - [ ] 🔴 Jogo da 0.4.89 (15-11, mundo novo, Spark `hYkEcERV1A`, 39 min), triagem:
-  - casa sem solo embaixo (imagem do autor); no save, só 2 de 57 peças da vila têm vão de 1 bloco sob o piso (M);
-  - porta: caminho no chão do lado de fora, no máximo 1 abaixo, nunca 2 (pedido do autor) (M);
-  - arco da mina: nó de entrada sob o arco, no chão, com bloco de caminho; hoje fica 4 blocos à frente (M);
-  - curral grande sem animal: o pastor desistiu 3 vezes no portão (41,80,86), duas no caminho e uma na entrada (M);
-  - grafo: 11 partes soltas e `door@87,73,89` solta em 21 leituras; `door@66,82/83,49` (casa do mineiro) oscila (M);
+  - casa sem solo, frente da porta, nó da mina, curral vazio, porta solta e argila: Regras 299 a 304 na 0.4.90
+    (candidatas; conferir no próximo jogo);
+  - nivelamento ao longo do grafo: o pedreiro aplica a suavização da Regra 297 aos trechos do grafo (opção C) (M);
   - blocos que surgiram (`VC_SUPPLY`): argila ×240 e argila em bola ×8, cerca de carvalho ×40 e tora ×25
     (`MISSING_PIECE`); terracota branca ×47 (`APPEARING_PIECE`); prismarinho ×144 (`AUTOMATIC_DROP`) — buscar o
     fluxo de fabricação de cada um (M)
