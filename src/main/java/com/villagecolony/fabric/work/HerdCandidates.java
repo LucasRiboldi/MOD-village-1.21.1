@@ -1,0 +1,53 @@
+package com.villagecolony.fabric.work;
+
+import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.decoration.LeashKnotEntity;
+import net.minecraft.entity.passive.AnimalEntity;
+import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+
+import java.util.List;
+
+/** Os animais que a coleta do pastor pode levar — Regras 255, 283 e 299. */
+final class HerdCandidates {
+
+    private HerdCandidates() {
+    }
+
+    /** A área da coleta: a caixa da vila, ou 48 blocos em volta do centro na vila sem caixa (Regra 283). */
+    static Box areaOf(Colony colony) {
+        BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
+
+        return colony.bounds()
+                .map(box -> new Box(box.minX(), box.minY() - 8, box.minZ(), box.maxX() + 1, box.maxY() + 8, box.maxZ() + 1))
+                .orElseGet(() -> new Box(center).expand(48));
+    }
+
+    /**
+     * Os animais que a coleta pode levar, o amarrado primeiro e então o mais perto (Regra 255). O próximo do abate do
+     * excedente fica de fora (Regra 299).
+     */
+    static List<AnimalEntity> of(ServerWorld world, Colony colony, VillagerEntity shepherd) {
+        Box area = areaOf(colony);
+        Box flock = ShepherdFlock.areaOf(colony);
+        List<AnimalEntity> candidates = new java.util.ArrayList<>();
+
+        for (EntityType<? extends AnimalEntity> species : ShepherdFlock.LIVESTOCK) {
+            candidates.addAll(world.getEntitiesByType(species, area, candidate -> candidate.isAlive()
+                    && candidate.canBeLeashed()
+                    && (!candidate.isLeashed() || candidate.getLeashHolder() instanceof LeashKnotEntity)
+                    && !ShepherdFlock.isPenned(world, candidate)
+                    && !FlockHarvest.isNextVictim(world, colony, flock, candidate)));
+        }
+
+        candidates.sort(java.util.Comparator
+                .comparing((AnimalEntity animal) -> !(animal.getLeashHolder() instanceof LeashKnotEntity))
+                .thenComparingDouble(animal -> animal.squaredDistanceTo(shepherd)));
+
+        return candidates;
+    }
+}

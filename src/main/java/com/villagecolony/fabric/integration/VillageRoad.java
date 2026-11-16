@@ -141,8 +141,10 @@ public final class VillageRoad {
             return LotGround.isNaturalGround(state);
         }
 
+        // Regra 295: dentro da caixa de uma colônia, a pedra também vira caminho (de cascalho) — a vila na montanha liga
+        // as casas cortando o morro, e a ligação não é recusada pelo calçador.
         if (state.isIn(BlockTags.BASE_STONE_OVERWORLD)) {
-            return world.getBiome(at).getKey().filter(ROCKY::contains).isPresent();
+            return world.getBiome(at).getKey().filter(ROCKY::contains).isPresent() || isInsideAColony(at);
         }
 
         return LotGround.isBiomeGround(world, at) || LotGround.isNaturalGround(state);
@@ -155,6 +157,18 @@ public final class VillageRoad {
     public static boolean isStreetPlank(ServerWorld world, BlockPos pos, BlockState state) {
         return state.isIn(BlockTags.PLANKS)
                 && (RoadIndex.isLaidByAColony(pos) || BlockProtection.isVillageStreet(world, pos));
+    }
+
+    /** Se a posição fica dentro da caixa de alguma colônia. */
+    static boolean isInsideAColony(BlockPos at) {
+        for (com.villagecolony.core.colony.model.Colony colony : com.villagecolony.VillageColonyMod.COLONIES.all()) {
+            if (colony.bounds().filter(box -> at.getX() >= box.minX() && at.getX() <= box.maxX()
+                    && at.getZ() >= box.minZ() && at.getZ() <= box.maxZ()).isPresent()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Se o bloco é um caminho de bioma, que só é rua onde a colônia o assentou. */

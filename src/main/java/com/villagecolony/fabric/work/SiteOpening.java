@@ -295,7 +295,7 @@ final class SiteOpening {
 
         SitePreparation.clear(world, project);
 
-        // E o chão em volta, na altura da rua: anel de 2 e rampa de 3 (Regra 131).
+        // E o chão em volta, suavizado a partir da altura da rua até o terreno (Regras 131 e 297).
         com.villagecolony.fabric.integration.SiteSurroundings.level(world, project);
 
         project.moveTo(ConstructionState.BUILDING);

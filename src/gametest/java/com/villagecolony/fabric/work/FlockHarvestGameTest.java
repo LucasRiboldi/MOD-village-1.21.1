@@ -95,6 +95,25 @@ public class FlockHarvestGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Regra 299: o animal que o pastor leva na corda nunca é abatido, mesmo com excedente. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "flock_harvest_led", tickLimit = 20)
+    public void theLedAnimalIsNeverButchered(TestContext context) {
+        Fixture f = setUp(context);
+        List<CowEntity> cows = spawnCows(context, FlockHarvest.HARVEST_KEEP + 1);
+        VillagerEntity shepherd = (VillagerEntity) context.getWorld().getEntity(f.shepherd);
+        cows.forEach(cow -> cow.attachLeash(shepherd, true));
+
+        try {
+            context.assertFalse(FlockHarvest.step(context.getWorld(), f.colony, f.area, f.chests),
+                    "Regra 299: o pastor abateu um animal que levava na corda");
+            context.assertTrue(cows.stream().allMatch(CowEntity::isAlive), "Regra 299: um animal da corda morreu");
+        } finally {
+            tearDown(context, f, cows);
+        }
+
+        context.complete();
+    }
+
     private record Fixture(Colony colony, ColonyFixture owned, Box area, List<ColonyPos> chests, UUID shepherd) {
     }
 

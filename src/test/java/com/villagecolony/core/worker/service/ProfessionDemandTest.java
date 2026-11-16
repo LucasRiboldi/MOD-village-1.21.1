@@ -96,22 +96,22 @@ class ProfessionDemandTest {
     }
 
     /**
-     * Com todas na meta, o adulto que sobra vai ao ofício que a obra espera — a meta sobe (autor, 2026-10-28);
-     * sem espera nenhuma ele continua sem ofício.
+     * Regra 298: com todas na meta, o adulto que sobra fica sem ofício, mesmo com a obra esperando um — a Regra 134
+     * saiu. Só a madeira ainda leva quem está sem ofício ao machado (Regra 189).
      */
     @Test
-    void theSpareAdultGoesToTheTradeTheBuildWaitsFor() {
+    void theSpareAdultStaysWithoutATradeWhenEveryQuotaIsFull() {
         Worker candidate = Worker.register(UUID.randomUUID(), COLONY);
         List<Worker> colony = colonyWith(candidate);
         colony.add(hired(ProfessionType.FARMER));
         ProfessionDemand.set(COLONY, List.of(ProfessionType.CARPENTER));
 
-        assertEquals(Optional.of(ProfessionType.CARPENTER),
+        assertEquals(Optional.empty(),
                 ProfessionAssigner.vacancyFor(candidate, colony, 8));
 
-        ProfessionDemand.set(COLONY, List.of());
+        ProfessionDemand.set(COLONY, List.of(ProfessionType.LUMBERJACK));
 
-        assertEquals(Optional.empty(),
+        assertEquals(Optional.of(ProfessionType.LUMBERJACK),
                 ProfessionAssigner.vacancyFor(candidate, colony, 8));
     }
 

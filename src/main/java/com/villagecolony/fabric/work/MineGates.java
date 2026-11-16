@@ -60,23 +60,7 @@ final class MineGates {
         atTheMouth(world, colony).ifPresent(gates::add);
 
         for (MineGate.Standing gate : gates) {
-            // Regra 293: com o pátio de pedra, a entrada é a coluna logo à frente do arco, na altura do disco.
-            BlockPos atTheArch = MineGate.approach(gate.mouth(), gate.descent(), 1).down();
-
-            if (com.villagecolony.fabric.integration.MineYard.isYard(atTheArch, world.getBlockState(atTheArch))) {
-                fronts.add(com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(atTheArch));
-                continue;
-            }
-
-            for (int blocks = 1; blocks <= WorldPathTerrain.MINE_CLEARANCE + 2; blocks++) {
-                BlockPos out = MineGate.approach(gate.mouth(), gate.descent(), blocks);
-                OptionalInt ground = terrain.groundY(out.getX(), out.getZ(), gate.mouth().getY());
-
-                if (ground.isPresent() && !terrain.blocked(out.getX(), out.getZ())) {
-                    fronts.add(new ColonyPos(out.getX(), ground.getAsInt(), out.getZ()));
-                    break;
-                }
-            }
+            frontOf(world, gate, terrain).ifPresent(fronts::add);
         }
 
         if (gates.isEmpty()) {
@@ -84,6 +68,28 @@ final class MineGates {
         }
 
         return fronts;
+    }
+
+    /** O chão de entrada deste portão de pé. */
+    static Optional<ColonyPos> frontOf(ServerWorld world, MineGate.Standing gate, WorldPathTerrain terrain) {
+        // Regra 302: com o pátio, a entrada é o chão sob o arco, no meio do vão, com o bloco de caminho.
+        BlockPos underTheArch = com.villagecolony.fabric.integration.MineYard.underTheArch(gate.mouth(), gate.descent());
+
+        if (com.villagecolony.fabric.integration.MineYard.isYardAt(underTheArch, world.getBlockState(underTheArch),
+                gate.mouth(), gate.descent())) {
+            return Optional.of(com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(underTheArch));
+        }
+
+        for (int blocks = 1; blocks <= WorldPathTerrain.MINE_CLEARANCE + 2; blocks++) {
+            BlockPos out = MineGate.approach(gate.mouth(), gate.descent(), blocks);
+            OptionalInt ground = terrain.groundY(out.getX(), out.getZ(), gate.mouth().getY());
+
+            if (ground.isPresent() && !terrain.blocked(out.getX(), out.getZ())) {
+                return Optional.of(new ColonyPos(out.getX(), ground.getAsInt(), out.getZ()));
+            }
+        }
+
+        return Optional.empty();
     }
 
     /** O arco ou o portão de pé na boca da mina desta colônia, se houver. */

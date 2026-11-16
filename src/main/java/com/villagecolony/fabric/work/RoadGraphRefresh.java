@@ -327,7 +327,7 @@ public final class RoadGraphRefresh {
             }
         }
 
-        WorldPathTerrain terrain = new WorldPathTerrain(world, id);
+        WorldPathTerrain terrain = new WorldPathTerrain(world, id, REFUSED.getOrDefault(id, Set.of()));
         int turn = TURNS.merge(id, 1, Integer::sum);
         PlannedPaths paths = PLANNED.computeIfAbsent(id, ignored -> new PlannedPaths());
 
@@ -397,9 +397,11 @@ public final class RoadGraphRefresh {
         try {
             if (!store.graph(colony.id()).equals(Optional.of(graph))) {
                 store.update(colony.id(), graph);
-                VillageColonyMod.LOGGER.info("VC_ROAD_GRAPH colony={} nodes={} edges={} toPave={} isolated={} offLine={} capped={} fixed={} loose={}",
+                // Regra 295: quantas colunas o calçador recusou — a busca da ligação passa longe delas.
+                VillageColonyMod.LOGGER.info("VC_ROAD_GRAPH colony={} nodes={} edges={} toPave={} isolated={} offLine={} capped={} fixed={} refused={} loose={}",
                         colony.id().toString().substring(0, 8), graph.nodes().size(), graph.edges().size(),
-                        result.toPave().size(), result.isolated(), offLine, capped, fixed, String.join(";", result.loose()));
+                        result.toPave().size(), result.isolated(), offLine, capped, fixed,
+                        REFUSED.getOrDefault(colony.id(), Set.of()).size(), String.join(";", result.loose()));
             }
         } catch (IllegalArgumentException refused) {
             // O grafo anterior continua: formato recusado não derruba o servidor nem o save.

@@ -102,6 +102,106 @@ public final class VillageBlend {
     }
 
     /**
+     * O piso de cada peça rígida assentada no solo suavizado — Regra 296: a superfície é calculada como se as peças
+     * não existissem (todas livres), e cada peça ganha como piso a mediana dessa superfície sob a pegada dela. Assim
+     * a peça desce ou sobe até o terreno da vila, e o terreno em volta não vira pilar nem parede.
+     *
+     * <p>As peças se assentam da maior para a menor, e cada uma fica na faixa que as já assentadas deixam: no máximo
+     * o piso delas mais a distância por lado entre as pegadas (o degrau de 1 de {@link VillageSurface}). Sem a faixa,
+     * duas peças chatas numa encosta íngreme ficam mais longe em altura do que o caminho entre elas sobe. A peça cuja
+     * pegada cruza a de uma maior já assentada (o aldeão do molde dentro da casa) anda junto com ela.
+     *
+     * @param footprints a pegada de cada peça, nas coordenadas da grade
+     * @param floors o piso atual de cada peça, na ordem das pegadas
+     * @return o piso novo de cada peça, na ordem das pegadas
+     */
+    public static int[] settle(int[][] natural, VillageSurface.Kind[][] kinds, Area core, Area reach,
+                               java.util.List<Area> footprints, int[] floors) {
+        VillageSurface.Kind[][] free = new VillageSurface.Kind[kinds.length][];
+
+        for (int x = 0; x < kinds.length; x++) {
+            free[x] = kinds[x].clone();
+
+            for (int z = 0; z < free[x].length; z++) {
+                if (free[x][z] == VillageSurface.Kind.FIXED) {
+                    free[x][z] = VillageSurface.Kind.FREE;
+                }
+            }
+        }
+
+        Shape ground = shape(natural, free, core, reach);
+        int[] settledFloors = new int[footprints.size()];
+        java.util.List<Integer> order = new java.util.ArrayList<>();
+
+        for (int i = 0; i < footprints.size(); i++) {
+            order.add(i);
+        }
+
+        order.sort(java.util.Comparator.comparingInt((Integer i) -> -cells(footprints.get(i)))
+                .thenComparingInt(i -> i));
+        java.util.List<Integer> settled = new java.util.ArrayList<>();
+
+        for (int i : order) {
+            Area piece = footprints.get(i);
+            java.util.Optional<Integer> holder = settled.stream()
+                    .filter(j -> crosses(piece, footprints.get(j))).findFirst();
+
+            if (holder.isPresent()) {
+                settledFloors[i] = floors[i] + settledFloors[holder.get()] - floors[holder.get()];
+                continue;
+            }
+
+            int high = Integer.MAX_VALUE;
+            int low = Integer.MIN_VALUE;
+
+            for (int j : settled) {
+                int apart = gap(piece, footprints.get(j));
+                high = Math.min(high, settledFloors[j] + apart);
+                low = Math.max(low, settledFloors[j] - apart);
+            }
+
+            int wanted = median(ground, natural, piece);
+            settledFloors[i] = low > high ? Math.floorDiv(low + high, 2) : Math.max(low, Math.min(high, wanted));
+            settled.add(i);
+        }
+
+        return settledFloors;
+    }
+
+    /** A mediana da superfície livre sob a pegada. */
+    private static int median(Shape ground, int[][] natural, Area piece) {
+        java.util.List<Integer> under = new java.util.ArrayList<>();
+
+        for (int x = Math.max(0, piece.minX()); x <= Math.min(natural.length - 1, piece.maxX()); x++) {
+            for (int z = Math.max(0, piece.minZ()); z <= Math.min(natural[x].length - 1, piece.maxZ()); z++) {
+                under.add(ground.target(x, z, natural[x][z]));
+            }
+        }
+
+        java.util.Collections.sort(under);
+
+        return under.isEmpty() ? 0 : under.get(under.size() / 2);
+    }
+
+    /** Quantos passos por lado separam as duas pegadas; zero se encostam ou se cruzam. */
+    static int gap(Area one, Area other) {
+        int dx = Math.max(0, Math.max(one.minX() - other.maxX(), other.minX() - one.maxX()));
+        int dz = Math.max(0, Math.max(one.minZ() - other.maxZ(), other.minZ() - one.maxZ()));
+
+        return dx + dz;
+    }
+
+    /** Se as duas pegadas têm alguma coluna em comum. */
+    static boolean crosses(Area one, Area other) {
+        return one.minX() <= other.maxX() && other.minX() <= one.maxX()
+                && one.minZ() <= other.maxZ() && other.minZ() <= one.maxZ();
+    }
+
+    private static int cells(Area piece) {
+        return (piece.maxX() - piece.minX() + 1) * (piece.maxZ() - piece.minZ() + 1);
+    }
+
+    /**
      * A conta da vila sobre a altura natural {@code natural} ({@code [x][z]}).
      *
      * @param core a vila — o miolo de degrau 1, dentro da grade

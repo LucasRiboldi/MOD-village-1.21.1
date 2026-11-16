@@ -125,9 +125,9 @@ public class IdleFixesGameTest implements FabricGameTest {
         });
     }
 
-    /** Baús da vila a 80% pedem o armazém e um construtor a mais; abaixo de 70% o pedido sai. */
+    /** Baús da vila a 80% pedem o armazém; abaixo de 70% o pedido sai. A sobra não vira construtor (Regra 298). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_fixes", tickLimit = 20)
-    public void fullChestsAskForAStorageHouseAndASecondBuilder(TestContext context) {
+    public void fullChestsAskForAStorageHouse(TestContext context) {
         Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(0, 64, 0));
         SimpleInventory full = new SimpleInventory(10);
         SimpleInventory empty = new SimpleInventory(10);
@@ -139,14 +139,11 @@ public class IdleFixesGameTest implements FabricGameTest {
         try {
             ProfessionChestOverflow.measureFullness(colony, List.of(full));
             context.assertTrue(ProfessionChestOverflow.needsStorage(colony.id()), "baús a 80% deviam pedir armazém");
-            context.assertTrue(ProfessionDemand.spareOf(colony.id()).contains(ProfessionType.BUILDER),
-                    "baús cheios deviam pedir um construtor a mais");
 
             ProfessionChestOverflow.measureFullness(colony, List.of(full, empty));
             context.assertFalse(ProfessionChestOverflow.needsStorage(colony.id()), "a 40% o pedido devia sair");
-            context.assertTrue(ProfessionDemand.spareOf(colony.id()).isEmpty(), "e o construtor a mais também");
         } finally {
-            ProfessionDemand.setSpare(colony.id(), List.of());
+            ProfessionChestOverflow.measureFullness(colony, List.of(empty));
         }
 
         context.complete();

@@ -147,6 +147,11 @@ public final class RoadLines {
 
         List<Set<Long>> parts = components(columns);
 
+        // Regra 300: a porta sozinha se junta antes ao caminho encostado nela, de qualquer parte, e liga com ela.
+        if (joinLoneDoors(parts, columns, doors, mask, terrain)) {
+            parts = components(columns);
+        }
+
         parts.sort(Comparator.comparingInt((Set<Long> part) -> -part.size()));
 
         if (parts.isEmpty()) {
@@ -160,10 +165,22 @@ public final class RoadLines {
 
         List<Set<Long>> others = new ArrayList<>(parts.subList(1, parts.size()));
 
-        java.util.Collections.rotate(others, -turn);
+        // Regras 295 e 300: a maior parte solta tenta primeiro, sem gastar o limite; as outras se revezam na busca cara.
+        if (others.size() > 1) {
+            List<Set<Long>> rest = new ArrayList<>(others.subList(1, others.size()));
+            java.util.Collections.rotate(rest, -turn);
+            others = new ArrayList<>(List.of(others.getFirst()));
+            others.addAll(rest);
+        }
+
+        boolean biggest = others.size() > 1 && maxLinks > 0;
 
         for (Set<Long> part : others) {
             boolean aloneDoor = part.size() == 1 && doors.contains(part.iterator().next());
+            // A busca da maior parte solta não conta no limite: as outras seguem no rodízio (Regra 300).
+            boolean free = biggest;
+
+            biggest = false;
 
             // Toda parte solta tenta a reta até o ponto mais perto da linha, sem gastar a busca cara (Regra 224).
             if (RoadLinks.straight(part, main, columns, mask, terrain)) {
@@ -176,8 +193,8 @@ public final class RoadLines {
                 continue;
             }
 
-            if (links < maxLinks) {
-                links++;
+            if (free || links < maxLinks) {
+                links += free ? 0 : 1;
 
                 if (RoadLinks.link(part, main, columns, terrain)) {
                     main.addAll(part);
@@ -211,6 +228,25 @@ public final class RoadLines {
 
         return new Result(Optional.of(RoadLinesGraph.of(columns, toLay, center, doors)), toPave(columns, toLay, physical), isolated,
                 surplus(physical, columns, toLay, oldRing), List.copyOf(loose));
+    }
+
+    /** Liga cada porta sozinha ao caminho mais perto em reta, de qualquer parte; diz se alguma ligou. */
+    private static boolean joinLoneDoors(List<Set<Long>> parts, Map<Long, Integer> columns, Set<Long> doors,
+                                         Map<Long, Integer> mask, PathTerrain terrain) {
+        boolean joined = false;
+
+        for (Set<Long> part : parts) {
+            if (part.size() != 1 || !doors.contains(part.iterator().next())) {
+                continue;
+            }
+
+            Set<Long> elsewhere = new HashSet<>(columns.keySet());
+
+            elsewhere.removeAll(part);
+            joined |= RoadLinks.stub(new HashSet<>(part), elsewhere, columns, mask, terrain);
+        }
+
+        return joined;
     }
 
     /** A parte solta para o log: o tipo e a coluna dela mais perto do centro, com a altura. */

@@ -62,6 +62,18 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
   - pedidos novos: arco da mina com piso de pedra de raio 6, baú ao pé e céu livre; casa do mineiro com luz
     externa e telhado medieval (M);
   - construtor 42% parado (24% bloqueado), pastor 25%, ferreiro 29% (Regra 51) (M)
+- [ ] 🔴 Jogo da 0.4.88 (15-11, mundo novo em montanha, Spark `b28MY9TPEA`), escolhas 1A a 5A do autor:
+  - grafo oscilando, peças em pilar, parede em volta da obra e fundação com 16 adultos: Regras 295 a 298 na 0.4.89
+    (candidatas; o jogo da 0.4.89 mostrou 1 por ofício, `maxStep` ≤ 2 em volta das obras e 37 peças assentadas);
+  - atividade por profissão: mineiro 39% e construtor 32% parados (61 `SET_ASIDE`); fazendeiro 1% sem plantação
+    grande na vila nova (5A) (M)
+- [ ] 🔴 Jogo da 0.4.89 (15-11, mundo novo, Spark `hYkEcERV1A`, 39 min), triagem:
+  - casa sem solo, frente da porta, nó da mina, curral vazio, porta solta e argila: Regras 299 a 304 na 0.4.90
+    (candidatas; conferir no próximo jogo);
+  - nivelamento ao longo do grafo: o pedreiro aplica a suavização da Regra 297 aos trechos do grafo (opção C) (M);
+  - blocos que surgiram (`VC_SUPPLY`): argila ×240 e argila em bola ×8, cerca de carvalho ×40 e tora ×25
+    (`MISSING_PIECE`); terracota branca ×47 (`APPEARING_PIECE`); prismarinho ×144 (`AUTOMATIC_DROP`) — buscar o
+    fluxo de fabricação de cada um (M)
 - [ ] 🔴 Jogo da 0.4.86 (15-11, planície, Spark `GHWvjlPaPs`, 37 min, 8 notas), achados da triagem:
   - casas e lampião sobre o lago (notas 10:15 e 10:24): Regra 288 na 0.4.87, candidata; conferir em mundo novo (por jogo);
   - fazendeiro 0%: faltava semente em baú; Regra 289 (candidata) — obra semeada, semente que surge, terra arada,

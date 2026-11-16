@@ -162,6 +162,15 @@ public final class VillageHelpers {
             return repaired;
         }
 
+        // Casa da vila sem solo embaixo: o vão é preenchido com o chão do bioma (Regra 304).
+        int under = com.villagecolony.fabric.integration.UnderPieceFill.pass(world, colony);
+
+        if (under > 0) {
+            ActionJournal.action(mason.getUuid(), "LEVELLED", "village piece", under, null, "under the building");
+
+            return under;
+        }
+
         int smoothed = GroundSmoothing.pass(world, colony, mason);
 
         if (smoothed > 0) {

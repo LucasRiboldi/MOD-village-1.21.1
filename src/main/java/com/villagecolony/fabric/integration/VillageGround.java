@@ -9,10 +9,8 @@ import net.minecraft.block.Blocks;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.registry.tag.StructureTags;
-import net.minecraft.structure.PoolStructurePiece;
 import net.minecraft.structure.StructurePiece;
 import net.minecraft.structure.StructureStart;
-import net.minecraft.structure.pool.StructurePool;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -82,13 +80,21 @@ public final class VillageGround {
         private final VillageSurface.Kind[][] kinds;
         private final boolean[][] drainWater;
         private final VillageBlend.Shape shape;
+        private final Map<Long, Integer> doorFronts;
 
-        Plan(int minX, int minZ, VillageSurface.Kind[][] kinds, boolean[][] drainWater, VillageBlend.Shape shape) {
+        Plan(int minX, int minZ, VillageSurface.Kind[][] kinds, boolean[][] drainWater, VillageBlend.Shape shape,
+             Map<Long, Integer> doorFronts) {
             this.minX = minX;
             this.minZ = minZ;
             this.kinds = kinds;
             this.drainWater = drainWater;
             this.shape = shape;
+            this.doorFronts = Map.copyOf(doorFronts);
+        }
+
+        /** O piso da porta, se a coluna é a frente de uma porta da vila (Regra 303). */
+        Integer doorFloor(int x, int z) {
+            return doorFronts.get(com.villagecolony.core.construction.model.ColonyRoads.column(x, z));
         }
 
         boolean covers(int x, int z) {
@@ -165,19 +171,31 @@ public final class VillageGround {
                     int x = pos.getStartX() + lx;
                     int z = pos.getStartZ() + lz;
                     boolean founds = plan.founds(x, z);
+                    Integer door = plan.doorFloor(x, z);
 
-                    if (plan.shapes(x, z) || founds) {
+                    // A frente da porta fica no piso dela, com o bloco de caminho (Regra 303).
+                    if (door != null) {
+                        DoorFronts.shape(world, chunk, x, z, topOf(chunk, x, z,
+                                chunk.sampleHeightmap(Heightmap.Type.OCEAN_FLOOR_WG, x & 15, z & 15) + SCAN_ABOVE), door, soil);
+                    } else if (plan.shapes(x, z) || founds) {
                         int top = topOf(chunk, x, z,
                                 chunk.sampleHeightmap(Heightmap.Type.OCEAN_FLOOR_WG, x & 15, z & 15) + SCAN_ABOVE);
 
                         if (!founds) {
                             column(world, chunk, x, z, top, plan.targetFor(x, z, top), plan.drainsWater(x, z), soil);
-                        } else if (VillageSoil.isWet(chunk, x, z, top)) {
-                            soil.fill(chunk, x, z, top, plan.targetFor(x, z, top));
+                        } else {
+                            found(chunk, x, z, top, plan.targetFor(x, z, top), soil);
                         }
                     }
                 }
             }
+        }
+    }
+
+    /** A base da peça fixa: o chão sobre água (Regra 288) e o chão seco abaixo do piso (Regra 304) sobem até o piso. */
+    static void found(Chunk chunk, int x, int z, int top, int floor, VillageSoil soil) {
+        if (VillageSoil.isWet(chunk, x, z, top) || top < floor) {
+            soil.fill(chunk, x, z, top, floor);
         }
     }
 
@@ -257,43 +275,24 @@ public final class VillageGround {
             }
         }
 
-        // O piso das peças rígidas (as casas): o bloco de baixo do nível de chão da peça.
-        StringBuilder fixed = new StringBuilder();
-
-        for (StructurePiece piece : start.getChildren()) {
-            if (!(piece instanceof PoolStructurePiece pool)
-                    || pool.getPoolElement().getProjection() != StructurePool.Projection.RIGID) {
-                continue;
-            }
-
-            BlockBox box = piece.getBoundingBox();
-            int floor = box.getMinY() + pool.getGroundLevelDelta() - 1;
-
-            for (int x = box.getMinX(); x <= box.getMaxX(); x++) {
-                for (int z = box.getMinZ(); z <= box.getMaxZ(); z++) {
-                    natural[x - minX][z - minZ] = floor;
-                    kinds[x - minX][z - minZ] = VillageSurface.Kind.FIXED;
-                }
-            }
-
-            fixed.append(fixed.length() == 0 ? "" : ",").append('[').append(box.getMinX()).append(',')
-                    .append(box.getMinZ()).append(',').append(box.getMaxX()).append(',').append(box.getMaxZ())
-                    .append(']');
-        }
-
         // O jogo procura a referência a até 8 chunks do início da vila: além disso a geração não alcança.
         ChunkPos origin = start.getPos();
         VillageBlend.Area reach = new VillageBlend.Area(
                 (origin.x - REFERENCE_CHUNKS) * 16 - minX, (origin.z - REFERENCE_CHUNKS) * 16 - minZ,
                 (origin.x + REFERENCE_CHUNKS) * 16 + 15 - minX, (origin.z + REFERENCE_CHUNKS) * 16 + 15 - minZ);
+
+        // As peças rígidas (as casas) descem ou sobem ao solo suavizado e viram o piso fixo (Regra 296).
+        Map<Long, Integer> doorFronts = new java.util.HashMap<>();
+        String placed = VillagePieces.settle(start, natural, kinds, core, reach, minX, minZ,
+                world.toServerWorld().getStructureTemplateManager(), world.getRegistryManager(), doorFronts);
         VillageBlend.Shape shape = VillageBlend.shape(natural, kinds, core, reach);
 
-        // A área moldada, o miolo e as peças fixas, para medir o chão depois (scripts/ground_report.py).
+        // A área moldada, o miolo, as peças fixas e quanto andaram, para medir o chão depois (scripts/ground_report.py).
         VillageColonyMod.LOGGER.info("VC_GROUND {\"minX\":{},\"minZ\":{},\"width\":{},\"depth\":{},\"reach\":{},"
-                        + "\"core\":{},\"ms\":{},\"fixed\":[{}]}", minX, minZ, width, depth, REACH, CORE_PAD,
-                (System.nanoTime() - began) / 1_000_000, fixed);
+                        + "\"core\":{},\"ms\":{},{}}", minX, minZ, width, depth, REACH, CORE_PAD,
+                (System.nanoTime() - began) / 1_000_000, placed);
 
-        return new Plan(minX, minZ, kinds, drainWater, shape);
+        return new Plan(minX, minZ, kinds, drainWater, shape, doorFronts);
     }
 
     /** A caixa de todas as peças da vila. */

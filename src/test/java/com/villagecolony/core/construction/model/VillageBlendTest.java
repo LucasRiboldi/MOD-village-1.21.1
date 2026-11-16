@@ -235,4 +235,82 @@ class VillageBlendTest {
         assertEquals(offsets[15][11], offsets[45][11]);
         assertEquals(offsets[13][10], offsets[47][10]);
     }
+
+    /**
+     * Regra 296: na encosta íngreme, as peças descem ou sobem ao solo suavizado — o piso novo de cada uma fica a no
+     * máximo 1 bloco do terreno em volta, sem pilar. Antes, cada peça ficava no piso de origem, e o terreno entre duas
+     * peças em alturas que não cabem no degrau de 1 era o meio entre elas.
+     */
+    @org.junit.jupiter.api.Test
+    void piecesSettleOnTheSmoothedSlope() {
+        int size = 24;
+        int[][] natural = new int[size][size];
+        VillageSurface.Kind[][] kinds = new VillageSurface.Kind[size][size];
+
+        for (int x = 0; x < size; x++) {
+            for (int z = 0; z < size; z++) {
+                natural[x][z] = 60 + 3 * x;
+                kinds[x][z] = VillageSurface.Kind.FREE;
+            }
+        }
+
+        VillageBlend.Area core = new VillageBlend.Area(2, 2, size - 3, size - 3);
+        VillageBlend.Area reach = new VillageBlend.Area(0, 0, size - 1, size - 1);
+        java.util.List<VillageBlend.Area> pieces = java.util.List.of(new VillageBlend.Area(5, 10, 7, 12), new VillageBlend.Area(15, 10, 17, 12));
+        int[] floors = VillageBlend.settle(natural, kinds, core, reach, pieces, new int[] {78, 108});
+
+        for (int i = 0; i < pieces.size(); i++) {
+            VillageBlend.Area piece = pieces.get(i);
+
+            for (int x = piece.minX(); x <= piece.maxX(); x++) {
+                for (int z = piece.minZ(); z <= piece.maxZ(); z++) {
+                    natural[x][z] = floors[i];
+                    kinds[x][z] = VillageSurface.Kind.FIXED;
+                }
+            }
+        }
+
+        VillageBlend.Shape shape = VillageBlend.shape(natural, kinds, core, reach);
+
+        for (int i = 0; i < pieces.size(); i++) {
+            VillageBlend.Area piece = pieces.get(i);
+
+            for (int x = piece.minX() - 1; x <= piece.maxX() + 1; x++) {
+                for (int z = piece.minZ() - 1; z <= piece.maxZ() + 1; z++) {
+                    boolean side = (x >= piece.minX() && x <= piece.maxX()) || (z >= piece.minZ() && z <= piece.maxZ());
+
+                    // O degrau de 1 é por lado (VillageSurface.spread): a quina diagonal pode ter 2.
+                    if (side && !piece.contains(x, z)) {
+                        int around = shape.target(x, z, natural[x][z]);
+                        org.junit.jupiter.api.Assertions.assertTrue(Math.abs(around - floors[i]) <= 1,
+                                "a peça " + i + " com piso " + floors[i] + " ficou em pilar: em volta, " + around);
+                    }
+                }
+            }
+        }
+    }
+
+    /** Regra 296: a peça dentro de uma maior (o aldeão do molde na casa) anda junto com ela e guarda a diferença. */
+    @Test
+    void aPieceInsideABiggerOneMovesWithIt() {
+        int size = 24;
+        int[][] natural = new int[size][size];
+        VillageSurface.Kind[][] kinds = new VillageSurface.Kind[size][size];
+
+        for (int x = 0; x < size; x++) {
+            for (int z = 0; z < size; z++) {
+                natural[x][z] = 70;
+                kinds[x][z] = VillageSurface.Kind.FREE;
+            }
+        }
+
+        VillageBlend.Area core = new VillageBlend.Area(2, 2, size - 3, size - 3);
+        VillageBlend.Area reach = new VillageBlend.Area(0, 0, size - 1, size - 1);
+        java.util.List<VillageBlend.Area> pieces = java.util.List.of(
+                new VillageBlend.Area(6, 6, 12, 12), new VillageBlend.Area(8, 8, 8, 8));
+        int[] floors = VillageBlend.settle(natural, kinds, core, reach, pieces, new int[] {80, 84});
+
+        assertEquals(70, floors[0], "a casa não desceu ao chão plano");
+        assertEquals(74, floors[1], "o aldeão do molde não andou junto com a casa");
+    }
 }

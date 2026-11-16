@@ -223,6 +223,8 @@ public final class SmelterWork {
             return false;
         }
 
+        // A argila pedida aparece no baú do fundidor na hora, antes da busca (Regra 301).
+        ClayOnRequest.stockIfMissing(world, job.task.colonyId(), searched, output.get(), raws);
         Optional<Boolean> pending =
                 smeltFrom(world, searched, raws, made.get(), output.get(), job, workerId);
 

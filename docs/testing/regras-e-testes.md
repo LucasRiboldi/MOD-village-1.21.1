@@ -4,10 +4,10 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 187
-- **Só usa a classe indicada:** 93
+- **Cita a regra:** 199
+- **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
-- **Fora de vigor:** 12
+- **Fora de vigor:** 13
 
 | # | regra | grau | testes |
 | --- | --- | --- | --- |
@@ -48,7 +48,7 @@ classe prova menos ainda.
 | 35 | Carpinteiro titular na BigHouseMOD, cama e baú à direita da porta, corredor livre até a e… | cita | BigHouseModBlueprintGameTest |
 | 36 | O viveiro (terra enraizada + rebento) é do lenhador | classe | DesertFixesGameTest, LumberjackNurseryTargetTest, TreeNurseryGameTest |
 | 37 | Cada aldeão usa a ferramenta de ferro apropriada para a ação | classe | BetterToolGameTest, LumberjackGameTest, ProfessionReviewGameTest |
-| 38 | Contratar primeiro a profissão de que a demanda depende, depois a lista | classe | BigHouseModBlueprintGameTest, ColonyCycleTest, ColonyDetectionGameTest |
+| 38 | Contratar primeiro a profissão de que a demanda depende, depois a lista | cita | HiringProperties |
 | 39 | Comida é feita pelo fazendeiro (pão do trigo acima de 32) | classe | ProfessionReviewGameTest, VillageMealsGameTest |
 | 40 | Piso de fundido só com cadeia do cru | cita | BuilderMaterialsGameTest |
 | 41 | Corante, linha, pó de osso e drops de inimigo e animal aparecem automáticos | classe | BuilderGameTest, BuilderMaterialsGameTest, ConstructionStallGameTest |
@@ -141,10 +141,10 @@ classe prova menos ainda.
 | 128 | Nenhuma profissão espera mais de 5 minutos por nada (autor 10-27, emenda 11-02): 300 s se… | cita | IdleWatchGameTest |
 | 129 | O nome sobre a cabeça tem a cor do estado (autor 10-27): laranja no ofício, azul em ajuda… | classe | IdleRoutineGameTest, IdleWatchGameTest, LargeFarmGameTest |
 | 130 | Cinco animais no mesmo poste pedem curral, com prioridade (autor 10-27): o curral do esti… | cita | CrowdedPostGameTest |
-| 131 | O chão em volta da obra nova fica na altura da rua (autor 10-27): na abertura, um anel de… | cita | DuneCutGameTest, SiteSurroundingsGameTest |
+| 131 | O chão em volta da obra nova fica na altura da rua (autor 10-27; o anel e a rampa viraram… | cita | DuneCutGameTest |
 | 132 | As bancadas do mod têm painel e passivas (autor 10-27): shift+clique mostra titulares, es… | cita | BenchPassivesGameTest |
 | 133 | Estoque cheio vira obra e produto (autor 10-28, jogo da 0.3.99: lenhador 74%, pedreiro 48… | cita | ItemStockGameTest |
-| 134 | O adulto que sobra vai ao ofício que a vila espera (autor 10-28, jogo da 0.3.99: 6 de 18… | classe | BigHouseModBlueprintGameTest, ColonyCycleTest, ColonyDetectionGameTest |
+| 134 | O adulto que sobra vai ao ofício que a vila espera (autor 10-28, jogo da 0.3.99: 6 de 18… | fora de vigor |  |
 | 135 | Tarefa só abre quando pode render (autor 10-28, jogo da 0.3.99): a ordem de estoque de pe… | classe | IdleFixesGameTest, ItemStockGameTest, ProfessionBalanceGameTest |
 | 136 | O fazendeiro alcança como o jogador (autor 10-28, jogo da 0.3.99: roça 2 blocos acima, a… | classe | ColonyFixture, FarmPlanGameTest, FarmerGameTest |
 | 137 | A escada da mina recomeça do topo (autor 10-28, jogo da 0.3.99: o mineiro passou 30 min n… | classe | IdleFixesGameTest |
@@ -162,10 +162,10 @@ classe prova menos ainda.
 | 149 | Rua sem falha: falha de até 2 blocos de chão natural numa linha reta entre duas colunas d… | cita | HouseSurroundingsGameTest, VillageHelpersGameTest |
 | 150 | O pastor tosquia por cima da cerca (autor 10-28, diagnóstico da 0.3.103: 45 pastores pres… | classe | ColonyFixture, ShepherdGameTest |
 | 151 | O aldeão da colônia prefere a rua e evita a água (autor 10-28, jogo da 0.3.104: 4 de 7 te… | classe | FencedInGameTest, StreetRouteGameTest, StreetRouteTest |
-| 152 | O solo da vila nasce suave na geração (autor 10-29: crateras e montanhas no meio das vila… | classe | VillageBlendTest, VillageGroundGameTest, VillageSurfaceTest |
+| 152 | O solo da vila nasce suave na geração (autor 10-29: crateras e montanhas no meio das vila… | classe | UnderPieceFillGameTest, VillageBlendTest, VillageGroundGameTest |
 | 153 | Mais ajudas de quem está sem tarefa (autor 10-28, O1/O3/O4/O8; pedido de novo em 10-29),… | classe | GroundSmoothingGameTest, IdleFixesGameTest, ItemStockGameTest |
 | 154 | Lenhador, fundidor e fazendeiro: os ajustes do O5–O7 (autor 10-28; pedido de novo em 10-2… | classe | ChestPlacerGameTest, IdleFixesGameTest, ItemStockGameTest |
-| 155 | A boca da mina ganha o portão do autor (10-29, estrutura mine_entrance.nbt, 9×7×5): no lu… | classe | BiomeBlueprintsGameTest, MineLandingGameTest, MinerGameTest |
+| 155 | A boca da mina ganha o portão do autor (10-29, estrutura mine_entrance.nbt, 9×7×5): no lu… | classe | BiomeBlueprintsGameTest, MineLandingGameTest, MineNodeGameTest |
 | 156 | O pedreiro alisa o chão da vila (autor 10-29, 11-06): sem tarefa, uma vez por minuto ele… | classe | GroundSmoothingGameTest, OreTowerGameTest, SmoothRefusalGameTest |
 | 157 | O mineiro não quebra o que segura algo solto (autor 10-29, jogo da 0.3.108: o cascalho pe… | classe | MineGravityGameTest, MineSettlingGameTest, MinerGameTest |
 | 158 | Sem cama no andar de baixo da casa de escada de mão (autor 10-29, jogo da 0.3.108: 9 de 2… | classe | BedChoiceGameTest, BedPlanTest, BiomeBlueprintsGameTest |
@@ -199,7 +199,7 @@ classe prova menos ainda.
 | 186 | Rua de um bloco (autor 11-05): o caminho a até 3 blocos da linha que não é linha nem fren… | cita | EntrancesAtTheDoorGameTest, RetiredSpursTest, RoadLinesTest |
 | 187 | Revogada (autor 11-06, ADR-047). A obra pedida não reserva região | classe | LotTypeRefusalsGameTest, MaeFinishGameTest, MaeRescueGameTest |
 | 188 | Pedido só do que falta (jogo 11-05): o pedido de peça de obra não abre quando os baús cob… | classe | CraftFamilyGameTest, CraftingGameTest, FurnaceFeedGameTest |
-| 189 | Madeira (autor 11-05): dentro da zona de prioridade, o lenhador pega a árvore conhecida m… | classe | LumberjackGameTest, LumberjackSearchGameTest, ProfessionBalanceGameTest |
+| 189 | Madeira (autor 11-05): dentro da zona de prioridade, o lenhador pega a árvore conhecida m… | cita | ProfessionDemandTest |
 | 190 | Cru na reserva (jogo 11-05): com o cru nos baús e a reserva impedindo assar, o fundidor l… | classe | CrusherGameTest, FurnaceFeedGameTest, SmelterGathersGameTest |
 | 191 | Pedido sem resultado espera (autor 11-05): 3 fechamentos seguidos sem peça seguram o pedi… | cita | TaskLoopGuardTest |
 | 192 | Tora é do carpinteiro (autor 11-05): sem peça a fazer, os outros ofícios fecham a tarefa… | classe | ChainRootsGameTest, ColonyFixture, ConstructionProjectTest |
@@ -269,7 +269,7 @@ classe prova menos ainda.
 | 256 | O arco da mina e a árvore com folha (autor 12-11, opções 1 e 2): a boca da mina ganha um… | cita | LumberjackGameTest, MineLandingGameTest, MinerGameTest |
 | 257 | Areia e argila sem reserva de cru (autor 12-11, solução 3 da reanálise dos logs): areia,… | cita | RawStoneReserveTest |
 | 258 | O adiantamento lê todas as estruturas da vila (autor 12-11, solução 2 da reanálise dos lo… | cita | BiomePiecesGameTest |
-| 259 | Um aldeão de cada profissão na vila nova (autor 12-11): a fundação conta os adultos da vi… | cita | VillageFoundationGameTest |
+| 259 | Um aldeão de cada profissão na vila nova (autor 12-11; as camas da casa também contam os… | cita | VillageFoundationGameTest |
 | 260 | Casa do mineiro na fundação (autor 12-11): quando a BigHouseMOD acaba de ser posta, a fun… | cita | MinerHomeFoundationGameTest |
 | 261 | Poste de luz nas ruas fixas (autor 12-11, opção B): base de 1 bloco de pedra do bioma (ar… | cita | LampPostGameTest, LampPostPlanTest |
 | 262 | Cada estrutura do mod na versão do bioma (autor 12-11, troca automática): ao erguer uma e… | cita | BiomeBlockSwapTest, BiomeBlueprintsGameTest |
@@ -303,5 +303,15 @@ classe prova menos ainda.
 | 290 | Tronco inteiro e folha no caminho (autor 15-11, G7 da ADR-056; jogo da 0.4.85: "sobrou um… | cita | TreeAndLeafGameTest, WaterTerrainControlGameTest |
 | 291 | O grafo pisa na tábua de rua e na frente de toda porta (autor 15-11, G1 e G5 da ADR-056;… | cita | GraphFloorGameTest |
 | 292 | Sem torre de minério e sem ar protegido no alisamento (autor 15-11, G3 da ADR-056, escolh… | cita | OreTowerGameTest, VillageGroundGameTest |
-| 293 | O pátio da boca da mina (autor 15-11, G4 da ADR-056; jogos da 0.4.85 e 0.4.86): com o arc… | cita | MineYardGameTest |
+| 293 | O pátio da boca da mina (autor 15-11, G4 da ADR-056; o nó de entrada passou para sob o ar… | cita | MineYardGameTest |
 | 294 | Os ociosos tiram a sobra da vila (autor 15-11, G6 da ADR-056; jogo da 0.4.85: bloco solto… | cita | StrayBlocksGameTest |
+| 295 | A ligação do grafo não some na montanha (autor 15-11, jogo da 0.4.88, opção 3; o rodízio… | cita | GraphFloorGameTest, RoadLinesTest |
+| 296 | As estruturas da vila nascem no solo suavizado (autor 15-11, jogo da 0.4.88 em montanha,… | cita | VillageBlendTest, VillagePiecesGameTest |
+| 297 | O chão em volta da obra nova é suavizado como o da vila (autor 15-11, jogo da 0.4.88 em m… | cita | SiteSurroundingsGameTest |
+| 298 | A vila nova nasce enxuta (autor 15-11, jogo da 0.4.88, opção C corrigida: 9 aldeões da vi… | cita | HiringProperties, IdleFixesGameTest, ProfessionDemandTest |
+| 299 | O pastor leva o animal até dentro do curral (autor 15-11, jogo da 0.4.89, opção C: o curr… | cita | FlockHarvestGameTest, ShepherdHerdingGameTest |
+| 300 | A porta e as partes soltas entram no grafo (autor 16-11, jogo da 0.4.89, opção C com o ro… | cita | RoadLinesTest |
+| 301 | A argila aparece na hora pedida (autor 16-11, jogo da 0.4.89: o fundidor parou 30 vezes s… | cita | ClayOnRequestGameTest |
+| 302 | O nó da mina fica sob o arco (autor 16-11, jogo da 0.4.89, opção A; muda o nó de entrada… | cita | MineNodeGameTest, MineYardGameTest |
+| 303 | A frente da porta nasce no piso dela (autor 16-11, jogo da 0.4.89, opção A: "não pode exi… | cita | DoorFrontsGameTest |
+| 304 | Casa da vila não fica sem solo (autor 16-11, jogo da 0.4.89, opção A+B: casa suspensa sob… | cita | UnderPieceFillGameTest |

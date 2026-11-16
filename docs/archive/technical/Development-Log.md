@@ -11871,6 +11871,42 @@ sobre água ganha base até o piso; a água fora da vila fica. `reachesGeneratio
 GameTests, build e unitários verdes, Sentinela `fast` PASS (20261115T142707Z). README sincronizado com a Regra 287 no PR #85 (o CI tinha caído por isso).
 Nada visto em jogo; só aparece em mundo novo.
 
+## 2026-11-16 — 0.4.90: Regras 299 a 304 (jogo da 0.4.89)
+
+Jogo da 0.4.89 num mundo novo (colônia `3a39a18c`, Spark `hYkEcERV1A`, 39 min). As Regras 297 (`maxStep` de 1 a 2 em
+volta das obras) e 298 (8 ofícios, 1 adulto nascido) foram vistas funcionando. O autor apontou 6 pontos e pediu a argila
+na hora.
+- **Regra 299 (curral, opção C):** duas das três coletas morreram porque o abate do excedente matou a galinha na corda.
+  O abate pula animal em corda ou coleta, a coleta não escolhe o próximo do abate, e a corda só solta no portão.
+- **Regra 300 (porta solta, C com rodízio):** a porta sozinha se junta em reta ao caminho de qualquer parte; e a maior
+  parte solta gastava a única busca de cada releitura desde a Regra 295 — a busca dela não conta mais no limite.
+- **Regra 301 (argila):** 16 aparecem no baú do fundidor na hora do pedido (`CLAY_ON_REQUEST`).
+- **Regra 302 (nó da mina, A):** o nó fica no chão sob o arco, com bloco de caminho.
+- **Regra 303 (frente da porta, A):** as portas são lidas do molde de cada peça; a frente fica no piso, com caminho.
+- **Regra 304 (casa sem solo, A+B):** a geração aterra o chão seco sob a peça; o pedreiro ocioso preenche o vão no
+  mundo atual.
+
+Cada regra com teste vermelho antes; baterias de 1.163 a 1.170 verdes duas vezes seguidas, Sentinela `fast` PASS em
+cada uma. Os instáveis `PenAccessGameTest` (VF-010) e `ShepherdGameTest` caíram em várias rodadas intermediárias.
+Nada visto em jogo; o ponto 2 (nivelar ao longo do grafo) segue aberto.
+
+## 2026-11-15 — 0.4.89: Regras 295 a 298 (jogo da 0.4.88 em montanha)
+
+Jogo da 0.4.88 num mundo novo em montanha (colônia `b4ed225d`, Spark `b28MY9TPEA`). O autor apontou 4 pontos e escolheu as
+opções recomendadas; a atividade por profissão (ponto 5) ficou para depois.
+- **Regra 295 (ponto 4, opção 3):** o grafo oscilava entre 20 e 35 nós porque a busca da ligação cortava o morro até um
+  piso de pedra que o calçador recusava. Agora a coluna recusada bloqueia a busca, a pedra dentro da colônia vira
+  caminho e a maior parte solta vai primeiro.
+- **Regra 296 (ponto 1, opção A):** as peças rígidas da vila são deslocadas (`translate`) para a mediana do terreno
+  suavizado, dentro da faixa das peças maiores já assentadas; a peça dentro de outra anda junto.
+- **Regra 297 (ponto 2, opção C):** a parede em volta do curral e da plantação (4 a 5 blocos) vinha do anel e da rampa
+  que paravam a 5 blocos e pulavam colunas. A janela de 12 em volta da obra passa pela conta da geração.
+- **Regra 298 (ponto 3, opção C corrigida):** a fundação fazia nascer 7 adultos sem contar os 9 da vila, e a Regra 134
+  dava ofício à sobra. Agora só nasce o que falta para 8 adultos, e a Regra 134 saiu.
+
+Cada regra com teste vermelho antes; baterias de 1.159 e 1.160 verdes duas vezes, Sentinela `fast` PASS em cada uma.
+Nada visto em jogo.
+
 ## 2026-11-15 — 0.4.88: Regras 289 a 294 (ADR-056, escolhas G1–G7 do autor)
 
 Placar das notas dos jogos da 0.4.79 à 0.4.86 (33 pontos) e escolhas do autor por grupo, registradas na ADR-056.
