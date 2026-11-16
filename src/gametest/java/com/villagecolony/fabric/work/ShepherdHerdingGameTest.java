@@ -234,4 +234,83 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
             context.complete();
         });
     }
+
+    /**
+     * Regra 299: a corda só é solta quando o animal chega ao lado de fora do portão. O pastor que chegou antes, com a
+     * vaca ainda a 5 blocos, segue com ela na corda.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_leash_until_the_gate", tickLimit = 40)
+    public void theLeashIsReleasedOnlyWithTheAnimalAtTheGate(TestContext context) {
+        ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(4, 1, 4));
+        VillagerEntity shepherd = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 1, 1));
+        CowEntity cow = context.spawnEntity(EntityType.COW, new BlockPos(6, 1, 1));
+        context.getWorld().setTimeOfDay(1_000);
+
+        context.waitAndRun(5, () -> {
+            try {
+                fixture.owning(shepherd.getUuid());
+                VillageColonyMod.WORKERS.register(shepherd.getUuid(), fixture.colony().id()).assign(ProfessionType.SHEPHERD);
+                cow.attachLeash(shepherd, true);
+
+                BlockPos outside = shepherd.getBlockPos();
+                BlockPos gate = outside.add(0, 0, -1);
+                BlockPos inside = outside.add(0, 0, -2);
+                ShepherdPens.Pen pen = new ShepherdPens.Pen(gate, inside, outside, java.util.Set.of(inside), false);
+                ShepherdHerding.Herd herd = new ShepherdHerding.Herd(cow.getUuid(), gate, context.getWorld().getTime());
+                herd.pen = pen;
+                herd.phase = ShepherdHerding.Phase.LEAD;
+
+                context.assertTrue(ShepherdHerding.step(context.getWorld(), shepherd.getUuid(), herd),
+                        "a coleta acabou com a vaca longe do portão");
+                context.assertTrue(herd.phase == ShepherdHerding.Phase.LEAD && cow.getLeashHolder() == shepherd,
+                        "Regra 299: a corda foi solta com a vaca a 5 blocos do portão (fase " + herd.phase + ")");
+            } finally {
+                fixture.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * Regra 299: a coleta não escolhe o animal que o abate do excedente vai pegar em seguida — a vaca ao lado do
+     * pastor, com o rebanho acima da reserva. Sem cerca no arena, nenhuma vaca conta como cercada.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herd_skips_the_next_harvest", tickLimit = 40)
+    public void theHerdSkipsTheAnimalTheHarvestTakesNext(TestContext context) {
+        ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(4, 1, 4));
+        VillagerEntity shepherd = context.spawnEntity(EntityType.VILLAGER, new BlockPos(0, 1, 0));
+        java.util.List<CowEntity> cows = new java.util.ArrayList<>();
+        cows.add(context.spawnEntity(EntityType.COW, new BlockPos(1, 1, 0)));
+
+        for (BlockPos far : java.util.List.of(new BlockPos(7, 1, 7), new BlockPos(6, 1, 7), new BlockPos(7, 1, 6),
+                new BlockPos(5, 1, 7), new BlockPos(7, 1, 5), new BlockPos(6, 1, 6))) {
+            cows.add(context.spawnEntity(EntityType.COW, far));
+        }
+
+        cows.forEach(cow -> cow.setBreedingAge(0));
+        context.getWorld().setTimeOfDay(1_000);
+
+        context.waitAndRun(5, () -> {
+            try {
+                fixture.owning(shepherd.getUuid());
+                VillageColonyMod.WORKERS.register(shepherd.getUuid(), fixture.colony().id()).assign(ProfessionType.SHEPHERD);
+
+                java.util.List<java.util.UUID> picked = HerdCandidates.of(context.getWorld(), fixture.colony(), shepherd)
+                        .stream().map(net.minecraft.entity.Entity::getUuid).toList();
+
+                context.assertFalse(ShepherdFlock.isPenned(context.getWorld(), cows.get(0)),
+                        "a vaca ao lado do pastor conta como cercada: o teste não mede nada");
+                context.assertTrue(picked.contains(cows.get(1).getUuid()),
+                        "a vaca longe do pastor não entrou na coleta: o teste não mede nada");
+                context.assertFalse(picked.contains(cows.get(0).getUuid()),
+                        "Regra 299: a coleta escolheu a vaca que o abate do excedente vai levar");
+            } finally {
+                cows.forEach(cow -> cow.discard());
+                fixture.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
 }

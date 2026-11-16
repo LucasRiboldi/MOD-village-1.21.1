@@ -245,7 +245,7 @@ public final class ShepherdFlock {
         return colony.bounds().isPresent() ? around.union(areaOf(colony)) : around;
     }
 
-    private static Box areaOf(Colony colony) {
+    static Box areaOf(Colony colony) {
         BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
 
         return colony.bounds()

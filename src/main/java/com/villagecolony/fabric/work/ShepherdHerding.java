@@ -152,6 +152,11 @@ final class ShepherdHerding {
         return HERDS.containsKey(shepherd);
     }
 
+    /** Se este animal está numa coleta em andamento (Regra 299: o abate não o leva). */
+    static boolean isHerded(UUID animal) {
+        return HERDS.values().stream().anyMatch(herd -> herd.animal.equals(animal));
+    }
+
     static Optional<Phase> phaseOf(UUID shepherd) {
         return Optional.ofNullable(HERDS.get(shepherd)).map(herd -> herd.phase);
     }
@@ -194,23 +199,7 @@ final class ShepherdHerding {
                         .map(storage -> MinecraftTypeAdapter.toBlockPos(storage.chestPosition())))
                 .orElse(shepherd.getBlockPos());
 
-        BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
-        Box area = colony.bounds()
-                .map(box -> new Box(box.minX(), box.minY() - 8, box.minZ(), box.maxX() + 1, box.maxY() + 8, box.maxZ() + 1))
-                .orElseGet(() -> new Box(center).expand(48));
-        List<AnimalEntity> candidates = new java.util.ArrayList<>();
-
-        for (EntityType<? extends AnimalEntity> species : ShepherdFlock.LIVESTOCK) {
-            candidates.addAll(world.getEntitiesByType(species, area, candidate -> candidate.isAlive()
-                    && candidate.canBeLeashed()
-                    && (!candidate.isLeashed() || candidate.getLeashHolder() instanceof LeashKnotEntity)
-                    && !ShepherdFlock.isPenned(world, candidate)));
-        }
-
-        // O amarrado vai primeiro, e então o mais perto (Regra 255).
-        candidates.sort(java.util.Comparator
-                .comparing((AnimalEntity animal) -> !(animal.getLeashHolder() instanceof LeashKnotEntity))
-                .thenComparingDouble(animal -> animal.squaredDistanceTo(shepherd)));
+        List<AnimalEntity> candidates = HerdCandidates.of(world, colony, shepherd);
 
         Optional<BlockPos> fence = Optional.empty();
         Optional<BlockPos> newPost = Optional.empty();
@@ -408,10 +397,16 @@ final class ShepherdHerding {
 
         BlockPos goal = herd.pen != null ? herd.pen.outside() : herd.fence;
 
-        if (herd.pen != null && shepherd.getBlockPos().isWithinDistance(goal, REACH)) {
+        // A corda só é solta com o animal no lado de fora do portão (Regra 299); o pastor que chegou antes o espera ali.
+        if (herd.pen != null && animal.getBlockPos().isWithinDistance(goal, REACH)) {
             ShepherdPens.startIn(world, herd.pen, animal);
             herd.phase = Phase.ENTER;
             herd.walking = world.getTime();
+            return true;
+        }
+
+        if (herd.pen != null && shepherd.getBlockPos().isWithinDistance(goal, REACH)) {
+            animal.getNavigation().startMovingTo(goal.getX() + 0.5, goal.getY(), goal.getZ() + 0.5, 1.0);
             return true;
         }
 

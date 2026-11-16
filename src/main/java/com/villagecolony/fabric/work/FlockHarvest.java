@@ -90,9 +90,7 @@ public final class FlockHarvest {
                 continue;
             }
 
-            AnimalEntity victim = adults.stream()
-                    .filter(animal -> ShepherdFlock.nearbyShepherd(world, colony, animal) != null)
-                    .findFirst().orElse(null);
+            AnimalEntity victim = victimAmong(world, colony, adults);
             if (victim == null) {
                 continue;
             }
@@ -110,6 +108,35 @@ public final class FlockHarvest {
         }
 
         return butchered;
+    }
+
+    /**
+     * O próximo animal desta espécie que o abate leva: um adulto ao alcance de um pastor, fora de coleta e de corda de
+     * aldeão (Regra 299), com a espécie acima da reserva viva. Vazio sem excedente.
+     */
+    static java.util.Optional<AnimalEntity> nextVictim(ServerWorld world, Colony colony, Box area,
+                                                       EntityType<? extends AnimalEntity> species) {
+        List<? extends AnimalEntity> adults = world.getEntitiesByType(species, area,
+                animal -> animal.isAlive() && !animal.isBaby());
+
+        return hasSurplus(adults.size()) ? java.util.Optional.ofNullable(victimAmong(world, colony, adults))
+                : java.util.Optional.empty();
+    }
+
+    /** Se este animal é o próximo que o abate leva (Regra 299): a coleta do pastor não o escolhe. */
+    @SuppressWarnings("unchecked")
+    static boolean isNextVictim(ServerWorld world, Colony colony, Box area, AnimalEntity animal) {
+        return DROPS.containsKey(animal.getType()) && nextVictim(world, colony, area,
+                (EntityType<? extends AnimalEntity>) animal.getType()).filter(animal::equals).isPresent();
+    }
+
+    /** O animal que o pastor leva na corda ou numa coleta nunca é abatido (Regra 299). */
+    private static AnimalEntity victimAmong(ServerWorld world, Colony colony, List<? extends AnimalEntity> adults) {
+        return adults.stream()
+                .filter(animal -> !(animal.getLeashHolder() instanceof net.minecraft.entity.passive.VillagerEntity)
+                        && !ShepherdHerding.isHerded(animal.getUuid()))
+                .filter(animal -> ShepherdFlock.nearbyShepherd(world, colony, animal) != null)
+                .findFirst().orElse(null);
     }
 
     private static void depositDrops(ServerWorld world, Colony colony, EntityType<?> species, List<ColonyPos> chests,
