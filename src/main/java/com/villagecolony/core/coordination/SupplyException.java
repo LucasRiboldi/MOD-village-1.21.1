@@ -27,7 +27,9 @@ public enum SupplyException {
     GROVE_SAPLING(271, "a muda do bosque do lenhador, em terra enraizada; no deserto, da madeira de reserva da vila"),
     FLOWER_DYE(272, "o corante da cor sem flor no bioma, ou quando o pastor não colhe a flor a tempo"),
     SEED_FOR_THE_FARM(289, "a semente da lavoura que a vila tem menos, no baú do fazendeiro dono de roça com canteiro vazio,"
-            + " quando nenhum baú da vila tem semente");
+            + " quando nenhum baú da vila tem semente"),
+    CLAY_ON_REQUEST(301, "a argila e a bola de argila que o fundidor pede, no baú dele, na hora do pedido,"
+            + " quando nenhum baú da vila tem");
 
     private final int rule;
 
