@@ -298,7 +298,8 @@
       "com.villagecolony.fabric.integration.VillagePiecesGameTest",
       "com.villagecolony.fabric.work.ClayOnRequestGameTest",
       "com.villagecolony.fabric.work.MineNodeGameTest",
-      "com.villagecolony.fabric.integration.DoorFrontsGameTest"
+      "com.villagecolony.fabric.integration.DoorFrontsGameTest",
+      "com.villagecolony.fabric.integration.UnderPieceFillGameTest"
     ]
   },
   "depends": {
