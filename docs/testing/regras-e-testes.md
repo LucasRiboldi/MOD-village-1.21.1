@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 203
+- **Cita a regra:** 204
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -273,13 +273,13 @@ classe prova menos ainda.
 | 260 | Casa do mineiro na fundação (autor 12-11): quando a BigHouseMOD acaba de ser posta, a fun… | cita | MinerHomeFoundationGameTest |
 | 261 | Poste de luz nas ruas fixas (autor 12-11, opção B): base de 1 bloco de pedra do bioma (ar… | cita | LampPostGameTest, LampPostPlanTest |
 | 262 | Cada estrutura do mod na versão do bioma (autor 12-11, troca automática): ao erguer uma e… | cita | BiomeBlockSwapTest, BiomeBlueprintsGameTest |
-| 263 | O fundidor funde onde está (autor 13-11, jogo da 0.4.68): a fundição não exige que o fund… | cita | SmelterGameTest |
+| 263 | O fundidor funde onde está (autor 13-11, jogo da 0.4.68): a fundição não exige que o fund… | cita | ClayLoopGameTest, SmelterGameTest |
 | 264 | O grafo nunca passa sobre a água (autor 13-11, jogo da 0.4.68): nenhuma linha do grafo de… | cita | RoadLinesTest |
 | 265 | O grafo não atravessa estrutura (autor 13-11, jogo da 0.4.68, opção "parede e casas Vanil… | cita | GraphStabilityGameTest |
 | 266 | Uma casa do mineiro basta (autor 13-11, jogo da 0.4.68): com uma casa do mineiro pronta n… | cita | StructureEntrancesGameTest |
 | 267 | Plantação grande em todo bioma (autor 13-11, jogo da 0.4.68: fazendeiro da planície com 0… | cita | LargeFarmGameTest |
 | 268 | O bosque acha o chão em qualquer altura (autor 13-11, jogo da 0.4.68: 0 mudas plantadas,… | cita | VillageGroveGameTest |
-| 269 | O prazo do pastor pela distância (autor 13-11, jogo da 0.4.68: o curral teve no máximo 4… | cita | ShepherdHerdingGameTest |
+| 269 | O prazo do pastor pela distância (rumo a curral, sem prazo pela Regra 309; autor 13-11, j… | cita | ShepherdHerdingGameTest |
 | 270 | Sem ofício fora das análises (autor 13-11, ADR-055 item 7): o aldeão sem ofício do mod nã… | cita | WorkTimeSwingGameTest, test_action_report, test_time_ledger |
 | 271 | A muda do bosque surge, também no deserto (autor 13-11, ADR-055 item 10): o bosque do len… | cita | VillageGroveGameTest |
 | 272 | Corante das flores (autor 13-11, ADR-055 item 11): no ócio do ofício, o pastor colhe uma… | cita | ShepherdDyesGameTest |
@@ -319,3 +319,4 @@ classe prova menos ainda.
 | 306 | Só a aresta inteira de rosa a rosa fica fixa (autor 17-11, jogo da 0.4.90, opção B: fixed… | cita | GraphStabilityGameTest, LampPostGameTest, RoadMapSyncGameTest |
 | 307 | Telhado não é chão do grafo (autor 17-11, jogo da 0.4.90, opção A: cinco das seis portas… | cita | GraphFloorGameTest |
 | 308 | A fundição para na quantidade pedida, e a argila só surge para a obra (autor 17-11, jogo… | cita | ClayLoopGameTest, ClayOnRequestGameTest |
+| 309 | O pastor leva o animal até o curral, seja qual for a distância (autor 17-11, jogo da 0.4.… | cita | ShepherdHerdingGameTest |

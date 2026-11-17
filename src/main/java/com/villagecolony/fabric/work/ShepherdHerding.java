@@ -304,10 +304,13 @@ final class ShepherdHerding {
     static boolean step(ServerWorld world, UUID shepherdId, Herd herd) {
         Entity animalEntity = world.getEntity(herd.animal);
 
+        // Rumo a um curral, sem prazo e sem expediente: o animal só é solto dentro dele (Regra 309).
+        boolean toPen = herd.pen != null && herd.from == null;
+
         if (!(world.getEntity(shepherdId) instanceof VillagerEntity shepherd)
                 || !(animalEntity instanceof AnimalEntity animal) || !animal.isAlive()
-                || !WorkHours.isWorkTime(world, shepherd)
-                || world.getTime() - herd.since > HerdDeadline.of(herd, shepherd, animal)) {
+                || (!toPen && (!WorkHours.isWorkTime(world, shepherd)
+                        || world.getTime() - herd.since > HerdDeadline.of(herd, shepherd, animal)))) {
             abort(world, shepherdId, herd);
             return false;
         }
@@ -362,6 +365,7 @@ final class ShepherdHerding {
             }
             if (world.getTime() - herd.walking > ShepherdPens.WALK_LIMIT) {
                 FencedIn.closeWhenClear(herd.pen.gate());
+                if (toPen) { herd.phase = Phase.FETCH; return true; } // não entrou: volta à corda e tenta de novo (Regra 309)
                 VillageColonyMod.LOGGER.info("Shepherd {} gave up: the {} did not walk into the pen at {}",
                         shepherdId.toString().substring(0, 8), animal.getType().getUntranslatedName(),
                         herd.pen.gate().toShortString());
@@ -391,6 +395,7 @@ final class ShepherdHerding {
         }
 
         if (animal.getLeashHolder() != shepherd) {
+            if (toPen) { herd.phase = Phase.FETCH; return true; } // a corda soltou: volta para buscar o animal (Regra 309)
             abort(world, shepherdId, herd);
             return false;
         }
