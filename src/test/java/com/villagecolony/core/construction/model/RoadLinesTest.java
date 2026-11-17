@@ -450,4 +450,29 @@ class RoadLinesTest {
         assertTrue(result.loose().stream().noneMatch(entry -> entry.startsWith("door@")),
                 "a porta ao lado do caminho ficou solta: " + result.loose());
     }
+
+    /**
+     * Regra 224: a porta sozinha que não alcança a rede em reta liga em L — duas retas com uma dobra —, sem gastar a busca
+     * cara (a ligação até o ponto mais perto da linha já dobra uma vez; conferido no jogo da 0.4.90). Aqui a rua corre em z = 0 só até x = 10; a porta está em (20, 6), e um muro em z = 3 de x = 11 a 30 fecha as retas.
+     */
+    @Test
+    void aLoneDoorLinksWithAnLShapedStub() {
+        PathTerrain walled = new PathTerrain() {
+            @Override
+            public OptionalInt groundY(int x, int z, int nearY) {
+                return OptionalInt.of(Y);
+            }
+
+            @Override
+            public boolean blocked(int x, int z) {
+                return z == 3 && x >= 11 && x <= 30;
+            }
+        };
+        Set<ColonyPos> cells = new HashSet<>(corridor(0, 10, 0, 0));
+
+        RoadLines.Result result = RoadLines.build(cells, Set.of(), at(5, 0), Set.of(at(20, 6)), Set.of(), walled, 0, 0);
+
+        assertTrue(result.loose().stream().noneMatch(entry -> entry.startsWith("door@")),
+                "Regra 224: a porta que só liga em L ficou solta: " + result.loose());
+    }
 }
