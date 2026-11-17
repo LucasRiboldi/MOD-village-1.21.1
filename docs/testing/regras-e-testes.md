@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 205
+- **Cita a regra:** 206
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -321,3 +321,4 @@ classe prova menos ainda.
 | 308 | A fundição para na quantidade pedida, e a argila só surge para a obra (autor 17-11, jogo… | cita | ClayLoopGameTest, ClayOnRequestGameTest |
 | 309 | O pastor leva o animal até o curral, seja qual for a distância (autor 17-11, jogo da 0.4.… | cita | ShepherdHerdingGameTest |
 | 310 | O fazendeiro põe pó de osso em cada pé, uma volta por vez (autor 17-11, jogo da 0.4.90, o… | cita | BoneMealRoundGameTest, FarmerGameTest |
+| 311 | O pedreiro mói a areia antes de a obra pedir (autor 17-11, jogo da 0.4.90, opção B: 525 p… | cita | CrusherGameTest |

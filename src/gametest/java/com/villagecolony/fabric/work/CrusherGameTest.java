@@ -162,6 +162,84 @@ public class CrusherGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * Regra 311: a obra aberta vai gastar 10 areias (16 vidraças e 4 vidros) e os baús têm 4; sem falta registrada,
+     * o pedreiro já recebe o pedido de moer a diferença.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "crusher_ahead", tickLimit = 20)
+    public void theMasonCrushesTheSandBeforeTheBuildAsks(TestContext context) {
+        UUID mason = UUID.randomUUID();
+        ColonyPos chest = chestWith(context, 64);
+        ChestDepositor.deposit(context.getWorld(), chest, Items.SAND, 4);
+        Colony colony = colonyWith(chest, mason);
+        VillageColonyMod.WORKERS.find(mason).orElseThrow().assign(ProfessionType.MASON);
+        open(context, colony, List.of("glass_pane", 16, "glass", 4));
+
+        try {
+            context.assertTrue(Crusher.sandShortAhead(context.getWorld(), colony) == 6,
+                    "Regra 311: a areia que falta para a obra devia ser 6: " + Crusher.sandShortAhead(context.getWorld(), colony));
+            Crusher.askTheMason(context.getWorld(), colony);
+            Optional<Task> order = sandOrder(colony);
+
+            context.assertTrue(order.isPresent() && order.get().amount() >= 6,
+                    "Regra 311: o pedreiro não recebeu o pedido de areia antes de a obra pedir: " + order);
+        } finally {
+            VillageColonyMod.TASKS.ofColony(colony.id()).forEach(task -> VillageColonyMod.TASKS.remove(task.id()));
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
+            forget(colony, mason);
+        }
+
+        context.complete();
+    }
+
+    /** Regra 311: o pedido cobre o que a obra vai gastar (40 vidros, 40 areias), e não só 8. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "crusher_ahead_amount", tickLimit = 20)
+    public void theOrderCoversWhatTheBuildWillUse(TestContext context) {
+        UUID mason = UUID.randomUUID();
+        ColonyPos chest = chestWith(context, 64);
+        Colony colony = colonyWith(chest, mason);
+        VillageColonyMod.WORKERS.find(mason).orElseThrow().assign(ProfessionType.MASON);
+        open(context, colony, List.of("glass", 40));
+
+        try {
+            Crusher.askTheMason(context.getWorld(), colony);
+            Optional<Task> order = sandOrder(colony);
+
+            context.assertTrue(order.isPresent() && order.get().amount() == 40,
+                    "Regra 311: o pedido devia ser das 40 areias que a obra vai gastar: " + order.map(Task::amount));
+        } finally {
+            VillageColonyMod.TASKS.ofColony(colony.id()).forEach(task -> VillageColonyMod.TASKS.remove(task.id()));
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
+            forget(colony, mason);
+        }
+
+        context.complete();
+    }
+
+    /** Abre uma obra com as peças dadas em pares (nome, quantidade). */
+    private static void open(TestContext context, Colony colony, List<Object> pieces) {
+        List<BlueprintBlock> blocks = new ArrayList<>();
+
+        for (int i = 0; i < pieces.size(); i += 2) {
+            for (int n = 0; n < (Integer) pieces.get(i + 1); n++) {
+                blocks.add(new BlueprintBlock(new ColonyPos(blocks.size(), 0, i), ResourceId.vanilla((String) pieces.get(i))));
+            }
+        }
+
+        ConstructionProject project = ConstructionProject.plan(colony.id(), Blueprint.of(ResourceId.vanilla("test_glass"), blocks),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(4, 2, 4))));
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+    }
+
+    private static Optional<Task> sandOrder(Colony colony) {
+        return VillageColonyMod.TASKS.ofColony(colony.id()).stream()
+                .filter(task -> task.type() == TaskType.CRAFT_STONE_MATERIAL && task.isOpen()
+                        && task.targetResource() == ResourceType.SAND)
+                .findFirst();
+    }
+
     private static ColonyPos chestWith(TestContext context, int cobblestone) {
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
