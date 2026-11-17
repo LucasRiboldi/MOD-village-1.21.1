@@ -40,7 +40,8 @@ public class RoadMapSyncGameTest implements FabricGameTest {
             context.assertTrue(map.lines().stream().anyMatch(drawn -> drawn.color() == RoadMapSync.LINE), "Regra 176: a linha amarela não foi desenhada");
             context.assertTrue(map.lines().stream().noneMatch(drawn -> drawn.color() == RoadMapSync.FIXED), "Regra 234: verde sem trecho travado");
 
-            // Três colunas do meio na linha há 10 dias, as outras há 9: o passo entre duas travadas é verde, o resto amarelo (Regra 234).
+            // Três colunas do meio na linha há 10 dias, as outras há 9: a linha vai do centro à entrada (branca), e nenhum pedaço
+            // dela trava nem sai verde (Regra 306).
             long today = 20;
             java.util.Map<Long, Long> since = new java.util.HashMap<>();
 
@@ -57,8 +58,8 @@ public class RoadMapSyncGameTest implements FabricGameTest {
             long yellow = held.lines().stream().filter(drawn -> drawn.color() == RoadMapSync.LINE)
                     .mapToLong(drawn -> drawn.points().size()).sum();
 
-            context.assertTrue(green == 3, "Regra 234: o trecho travado não saiu verde coluna a coluna: " + green);
-            context.assertTrue(yellow == 5, "Regra 234: o trecho de 9 dias não ficou amarelo, emendado ao verde: " + yellow);
+            context.assertTrue(green == 0, "Regra 306: um pedaço da linha até a entrada saiu verde: " + green);
+            context.assertTrue(yellow > 0, "Regra 234: a linha não saiu amarela: " + yellow);
             context.assertTrue(map.markers().stream().anyMatch(marker -> marker.color() == RoadMapSync.HUB), "Regra 176: o nó central não saiu vermelho");
             context.assertTrue(map.markers().stream().anyMatch(marker -> marker.color() == RoadMapSync.ENTRANCE), "Regra 176: a entrada não saiu branca");
             context.assertTrue(map.markers().stream().noneMatch(marker -> marker.color() == RoadMapSync.OTHER), "Regra 206: azul fora de ponta");

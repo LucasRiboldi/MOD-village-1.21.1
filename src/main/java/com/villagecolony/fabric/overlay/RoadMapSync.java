@@ -32,7 +32,7 @@ import java.util.UUID;
  * com o papel de cada um, e as colunas do índice de ruas fora do grafo.
  *
  * <p>Cores, as do desenho do autor: linha amarela, nó rosa, entrada branca; nó central vermelho, ponta azul, e cinza
- * só para o índice de ruas de quem ainda não tem grafo. O trecho da linha já travado pela Regra 225 sai verde, coluna a
+ * só para o índice de ruas de quem ainda não tem grafo. A aresta já travada (Regras 225 e 306) sai verde, coluna a
  * coluna (Regra 234). Ligado por {@code /vc mae mostrar ligar}; não persiste.
  */
 public final class RoadMapSync {
@@ -123,7 +123,7 @@ public final class RoadMapSync {
             var graph = store.graph(colony.id());
 
             if (graph.isPresent()) {
-                Set<Long> fixed = RoadSettling.fixed(store.settled(colony.id()), today);
+                Set<Long> fixed = RoadSettling.fixed(store.settled(colony.id()), today, graph);
 
                 addGraph(graph.get(), fixed, center, lines, markers, inGraph, budget);
             } else {

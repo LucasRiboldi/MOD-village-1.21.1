@@ -34,7 +34,7 @@ import java.util.Set;
  * Onde o próximo poste de luz fica — Regra 261 (autor, 2026-11-12).
  *
  * <ul>
- *   <li>Só ao lado de coluna fixa do grafo (Regra 225), da mais perto do centro para fora, até a ponta.</li>
+ *   <li>Só ao lado de aresta fixa do grafo (Regras 225 e 306), da mais perto do centro para fora, até a ponta.</li>
  *   <li>No bloco ao lado da linha, na altura dela: a base toma o lugar do solo natural.</li>
  *   <li>Nenhuma estrutura a {@link #CLEAR} blocos em volta: construção da vila, obra aberta e peça da vila gerada.</li>
  *   <li>Céu aberto acima da base; folha conta como bloqueio.</li>
@@ -64,7 +64,7 @@ final class LampPostSites {
             return Optional.empty();
         }
 
-        Set<Long> fixed = RoadSettling.fixed(store.settled(colony.id()), today);
+        Set<Long> fixed = RoadSettling.fixed(store.settled(colony.id()), today, store.graph(colony.id()));
 
         if (fixed.isEmpty()) {
             return Optional.empty();

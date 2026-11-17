@@ -144,14 +144,14 @@ class GraphStabilityTest {
         long column = ColonyRoads.column(3, 4);
         Map<Long, Long> since = RoadSettling.track(Map.of(), Set.of(column), 100);
 
-        assertTrue(RoadSettling.fixed(since, 100 + RoadSettling.DAYS - 1).isEmpty(), "travou cedo");
-        assertEquals(Set.of(column), RoadSettling.fixed(RoadSettling.track(since, Set.of(column), 105), 100 + RoadSettling.DAYS),
+        assertTrue(RoadSettling.settledColumns(since, 100 + RoadSettling.DAYS - 1).isEmpty(), "travou cedo");
+        assertEquals(Set.of(column), RoadSettling.settledColumns(RoadSettling.track(since, Set.of(column), 105), 100 + RoadSettling.DAYS),
                 "não travou no dia certo");
 
         Map<Long, Long> left = RoadSettling.track(since, Set.of(), 105);
         Map<Long, Long> back = RoadSettling.track(left, Set.of(column), 106);
 
-        assertTrue(RoadSettling.fixed(back, 100 + RoadSettling.DAYS).isEmpty(), "a volta guardou o dia antigo");
+        assertTrue(RoadSettling.settledColumns(back, 100 + RoadSettling.DAYS).isEmpty(), "a volta guardou o dia antigo");
         assertEquals(10, RoadSettling.DAYS, "a trava é de 10 dias, pedido do autor");
     }
 

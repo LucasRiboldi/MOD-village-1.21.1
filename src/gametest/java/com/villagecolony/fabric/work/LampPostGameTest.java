@@ -101,9 +101,15 @@ public class LampPostGameTest implements FabricGameTest {
 
         var store = ColonySavedData.get(world.getServer()).roadGraphs();
         ColonyPos hub = MinecraftTypeAdapter.toColonyPos(origin.add(0, 0, LINE_Z));
-        ColonyPos door = MinecraftTypeAdapter.toColonyPos(origin.add(LINE_END, 0, LINE_Z));
+        ColonyPos junction = MinecraftTypeAdapter.toColonyPos(origin.add(LINE_END, 0, LINE_Z));
+        java.util.List<ColonyPos> columns = line.stream()
+                .sorted(java.util.Comparator.comparingInt(ColonyPos::x)).toList();
 
-        store.update(colony.id(), RoadGraph.from(line, hub, Set.of(door)));
+        // Do centro a uma junção: a aresta de rosa a rosa é a que trava (Regra 306).
+        store.update(colony.id(), new RoadGraph(
+                java.util.List.of(new RoadGraph.Node(hub, Set.of(RoadGraph.Role.HUB)),
+                        new RoadGraph.Node(junction, Set.of(RoadGraph.Role.JUNCTION))),
+                java.util.List.of(new RoadGraph.Edge(hub, junction, columns, RoadGraph.RoadClass.PRIMARY))));
         store.settle(colony.id(), since);
     }
 

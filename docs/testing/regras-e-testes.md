@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 200
+- **Cita a regra:** 201
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -235,7 +235,7 @@ classe prova menos ainda.
 | 222 | O socorro do MAE (autor 11-06, ADR-049): depois de 2 voltas inteiras sem lote para a próx… | cita | MaePatienceGameTest, MaeRescueGameTest |
 | 223 | Branco só onde se entra (o nó passou para o primeiro chão fora da estrutura pela Regra 30… | cita | DoorFrontsGameTest, EntrancesAtTheDoorGameTest, LampPostPlanTest |
 | 224 | Todo caminho conta e liga em reta (autor 11-10, ADR-050): o grafo lê o caminho da caixa e… | cita | GraphStabilityGameTest, GraphStabilityTest, RoadLinesTest |
-| 225 | O trecho que ficou trava (autor 11-10, ADR-050): coluna que passa 10 dias de jogo na linh… | cita | GraphStabilityGameTest, GraphStabilityTest, RoadGraphStoreTest |
+| 225 | O trecho que ficou trava (a trava passou a ser por aresta de rosa a rosa pela Regra 306;… | cita | GraphStabilityGameTest, GraphStabilityTest, RoadGraphStoreTest |
 | 226 | Socorro da vila inteira, em bairro (autor 11-10, ADR-051): só a volta sem lote da casa co… | cita | LotTypeRefusalsGameTest, MaeFinishGameTest, MaePatienceGameTest |
 | 227 | Água interna sob a obra pedida (autor 11-10, ADR-051): a obra do jogador aterra a água da… | cita | MaeFinishGameTest |
 | 228 | Ruína de save antigo sai (autor 11-10, ADR-051): a obra MAE que uma versão anterior deixo… | cita | MaeFinishGameTest |
@@ -244,7 +244,7 @@ classe prova menos ainda.
 | 231 | Caminho sob laje e ponta na extremidade (autor 11-10, sobre o jogo da 0.4.47): o grafo lê… | cita | RoadRulesGameTest, RoadTipsTest |
 | 232 | A obra manda no artesão (autor 11-10, sobre a análise docs/audit/2026-11-10-qualidade-das… | cita | ProfessionBalanceGameTest |
 | 233 | A vaga segue a falta (autor 11-10): com comida em falta, o fazendeiro vem primeiro na lis… | cita | ColonyCycleTest, ProfessionDemandTest |
-| 234 | O trecho travado sai verde (autor 11-11): no sinalizador dos caminhos (/vc mae mostrar li… | cita | RoadMapSyncGameTest |
+| 234 | O trecho travado sai verde (só aresta travada pela Regra 306 sai verde; autor 11-11): no… | cita | RoadMapSyncGameTest |
 | 235 | Pastor pelo rebanho (autor 11-11, opção P1 de docs/audit/2026-11-11-atividade-das-profiss… | cita | ProfessionDemandTest |
 | 236 | Pedreira de superfície no deserto (autor 11-11, opção M1): na vila de deserto, o mineiro… | cita | DesertQuarryGameTest |
 | 237 | Composteira pela roça (autor 11-11, opção F2): o fazendeiro sem colheita nem canteiro com… | cita | FarmerCompostGameTest |
@@ -316,3 +316,4 @@ classe prova menos ainda.
 | 303 | A frente da porta nasce no piso dela (a entrada passou para a primeira coluna livre e gan… | cita | DoorFrontsGameTest |
 | 304 | Casa da vila não fica sem solo (autor 16-11, jogo da 0.4.89, opção A+B: casa suspensa sob… | cita | UnderPieceFillGameTest |
 | 305 | A entrada da casa e o patamar em volta ficam no piso (autor 17-11, jogo da 0.4.90, opção… | cita | DoorFrontsGameTest, EntrancesAtTheDoorGameTest, VillagePiecesGameTest |
+| 306 | Só a aresta inteira de rosa a rosa fica fixa (autor 17-11, jogo da 0.4.90, opção B: fixed… | cita | GraphStabilityGameTest, LampPostGameTest, RoadMapSyncGameTest |

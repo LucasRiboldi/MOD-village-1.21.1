@@ -317,12 +317,13 @@ public final class RoadGraphRefresh {
         Map<Long, Long> since = new HashMap<>(store.settled(id));
         Set<ColonyPos> fixed = new HashSet<>();
 
-        for (long column : RoadSettling.fixed(since, today)) {
+        // Caminho que sumiu do mundo recomeça a conta, fixo ou não; e só a aresta inteira de rosa a rosa fixa (Regra 306).
+        since.keySet().removeIf(column -> !byColumn.containsKey(column));
+
+        for (long column : RoadSettling.fixed(since, today, store.graph(id))) {
             ColonyPos at = byColumn.get(column);
 
-            if (at == null) {
-                since.remove(column);
-            } else {
+            if (at != null) {
                 fixed.add(at);
             }
         }
