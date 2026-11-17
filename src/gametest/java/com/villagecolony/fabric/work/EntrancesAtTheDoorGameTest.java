@@ -202,7 +202,10 @@ public class EntrancesAtTheDoorGameTest implements FabricGameTest {
         });
     }
 
-    /** O degrau em frente à porta leva o branco, mas não vira caminho: o construtor não recebe a coluna. */
+    /**
+     * O degrau em frente à porta não é entrada nem vira caminho: o branco fica no primeiro chão depois dele (Regra 305), e o
+     * construtor não recebe a coluna do degrau.
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_entrance_step", tickLimit = 20)
     public void theStepInFrontOfTheDoorIsNotOfferedForPaving(TestContext context) {
         run(context, 120, arena -> {
@@ -216,7 +219,10 @@ public class EntrancesAtTheDoorGameTest implements FabricGameTest {
             RoadGraph graph = arena.publish();
             ColonyPos step = arena.cell(arena.origin.add(14, 1, 7));
 
-            context.assertTrue(isEntrance(graph, step), "Regra 223: o branco não ficou no degrau: " + graph.nodes());
+            context.assertFalse(isEntrance(graph, step), "Regra 305: o branco ficou no degrau: " + graph.nodes());
+            context.assertTrue(graph.nodes().stream().anyMatch(node -> node.position().x() == step.x()
+                            && node.position().z() == step.z() - 1),
+                    "Regra 305: o branco não ficou no primeiro chão depois do degrau: " + graph.nodes());
 
             var plan = PathLinks.planOf(arena.colony.id());
 

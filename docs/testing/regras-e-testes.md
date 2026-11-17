@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 199
+- **Cita a regra:** 200
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -233,7 +233,7 @@ classe prova menos ainda.
 | 220 | Quem não tem ofício trabalha na vila (autor 11-06, exceção à regra temporária de 11-02):… | cita | GraphOnlyPathsGameTest |
 | 221 | A vila gasta o que produz (autor 11-06): depois da ceia, cada adulto come 1 ponto de comi… | cita | VillageConsumesGameTest, VillageMealsGameTest |
 | 222 | O socorro do MAE (autor 11-06, ADR-049): depois de 2 voltas inteiras sem lote para a próx… | cita | MaePatienceGameTest, MaeRescueGameTest |
-| 223 | Branco só onde se entra (autor 11-07, desenho sobre o jogo da 0.4.42): o marcador fica co… | cita | DoorFrontsGameTest, EntrancesAtTheDoorGameTest, LampPostPlanTest |
+| 223 | Branco só onde se entra (o nó passou para o primeiro chão fora da estrutura pela Regra 30… | cita | DoorFrontsGameTest, EntrancesAtTheDoorGameTest, LampPostPlanTest |
 | 224 | Todo caminho conta e liga em reta (autor 11-10, ADR-050): o grafo lê o caminho da caixa e… | cita | GraphStabilityGameTest, GraphStabilityTest, RoadLinesTest |
 | 225 | O trecho que ficou trava (autor 11-10, ADR-050): coluna que passa 10 dias de jogo na linh… | cita | GraphStabilityGameTest, GraphStabilityTest, RoadGraphStoreTest |
 | 226 | Socorro da vila inteira, em bairro (autor 11-10, ADR-051): só a volta sem lote da casa co… | cita | LotTypeRefusalsGameTest, MaeFinishGameTest, MaePatienceGameTest |
@@ -313,5 +313,6 @@ classe prova menos ainda.
 | 300 | A porta e as partes soltas entram no grafo (autor 16-11, jogo da 0.4.89, opção C com o ro… | cita | RoadLinesTest |
 | 301 | A argila aparece na hora pedida (autor 16-11, jogo da 0.4.89: o fundidor parou 30 vezes s… | cita | ClayOnRequestGameTest |
 | 302 | O nó da mina fica sob o arco (autor 16-11, jogo da 0.4.89, opção A; muda o nó de entrada… | cita | MineNodeGameTest, MineYardGameTest |
-| 303 | A frente da porta nasce no piso dela (autor 16-11, jogo da 0.4.89, opção A: "não pode exi… | cita | DoorFrontsGameTest |
+| 303 | A frente da porta nasce no piso dela (a entrada passou para a primeira coluna livre e gan… | cita | DoorFrontsGameTest |
 | 304 | Casa da vila não fica sem solo (autor 16-11, jogo da 0.4.89, opção A+B: casa suspensa sob… | cita | UnderPieceFillGameTest |
+| 305 | A entrada da casa e o patamar em volta ficam no piso (autor 17-11, jogo da 0.4.90, opção… | cita | DoorFrontsGameTest, EntrancesAtTheDoorGameTest, VillagePiecesGameTest |

@@ -34,7 +34,8 @@ final class VillagePieces {
      */
     static String settle(StructureStart start, int[][] natural, VillageSurface.Kind[][] kinds, VillageBlend.Area core,
                          VillageBlend.Area reach, int minX, int minZ) {
-        return settle(start, natural, kinds, core, reach, minX, minZ, null, null, new java.util.HashMap<>());
+        return settle(start, natural, kinds, core, reach, minX, minZ, null, null, new java.util.HashMap<>(),
+                new java.util.HashMap<>());
     }
 
     /**
@@ -44,7 +45,8 @@ final class VillagePieces {
     static String settle(StructureStart start, int[][] natural, VillageSurface.Kind[][] kinds, VillageBlend.Area core,
                          VillageBlend.Area reach, int minX, int minZ,
                          net.minecraft.structure.StructureTemplateManager templates,
-                         net.minecraft.registry.DynamicRegistryManager registries, java.util.Map<Long, Integer> doorFronts) {
+                         net.minecraft.registry.DynamicRegistryManager registries, java.util.Map<Long, Integer> doorFronts,
+                         java.util.Map<Long, Integer> aprons) {
         List<Rigid> rigid = new ArrayList<>();
 
         for (StructurePiece piece : start.getChildren()) {
@@ -101,22 +103,60 @@ final class VillagePieces {
         }
 
         int doors = 0;
+        List<java.util.Map<Long, Integer>> entries = new ArrayList<>();
 
         for (int i = 0; templates != null && i < rigid.size(); i++) {
-            for (var front : DoorFronts.of(rigid.get(i).piece(), templates, registries).entrySet()) {
+            entries.add(DoorFronts.of(rigid.get(i).piece(), templates, registries));
+        }
+
+        // Regra 305: a casa (peça com porta) ganha um patamar de APRON colunas no piso; na disputa, o piso mais alto.
+        for (int i = 0; i < entries.size(); i++) {
+            if (!entries.get(i).isEmpty()) {
+                apron(rigid.get(i).footprint(), floorOf(rigid.get(i).piece()), natural, kinds, marked, minX, minZ, aprons);
+            }
+        }
+
+        // A entrada de cada porta fica no piso, mesmo dentro da caixa do molde, e vale sobre o patamar (Regra 305).
+        for (java.util.Map<Long, Integer> fronts : entries) {
+            for (var front : fronts.entrySet()) {
                 int x = com.villagecolony.core.construction.model.ColonyRoads.xOf(front.getKey()) - minX;
                 int z = com.villagecolony.core.construction.model.ColonyRoads.zOf(front.getKey()) - minZ;
 
-                if (x >= 0 && z >= 0 && x < natural.length && z < natural[0].length && !marked[x][z]) {
+                if (x >= 0 && z >= 0 && x < natural.length && z < natural[0].length) {
                     natural[x][z] = front.getValue();
                     kinds[x][z] = VillageSurface.Kind.FIXED;
                     doorFronts.put(front.getKey(), front.getValue());
+                    aprons.remove(front.getKey());
                     doors++;
                 }
             }
         }
 
         return "\"moved\":" + moved + ",\"most\":" + most + ",\"doors\":" + doors + ",\"fixed\":[" + fixed + "]";
+    }
+
+    /** Quantas colunas de patamar no piso a casa ganha em volta da caixa (Regra 305). */
+    static final int APRON = 2;
+
+    /** O patamar em volta da pegada, no piso: fixo na conta e moldado até o piso; coluna de peça não entra. */
+    private static void apron(VillageBlend.Area footprint, int floor, int[][] natural, VillageSurface.Kind[][] kinds,
+                              boolean[][] marked, int minX, int minZ, java.util.Map<Long, Integer> aprons) {
+        for (int x = footprint.minX() - APRON; x <= footprint.maxX() + APRON; x++) {
+            for (int z = footprint.minZ() - APRON; z <= footprint.maxZ() + APRON; z++) {
+                if (x < 0 || z < 0 || x >= natural.length || z >= natural[0].length || marked[x][z]) {
+                    continue;
+                }
+
+                long column = com.villagecolony.core.construction.model.ColonyRoads.column(x + minX, z + minZ);
+                Integer level = aprons.get(column);
+
+                if (level == null || floor > level) {
+                    aprons.put(column, floor);
+                    natural[x][z] = floor;
+                    kinds[x][z] = VillageSurface.Kind.FIXED;
+                }
+            }
+        }
     }
 
     /** O piso da peça: o bloco de baixo do nível de chão dela. */

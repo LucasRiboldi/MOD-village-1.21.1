@@ -27,7 +27,10 @@ public class DoorFrontsGameTest implements FabricGameTest {
 
     private static final String HOUSE = "minecraft:village/plains/houses/plains_small_house_1";
 
-    /** As frentes lidas do molde encostam numa porta de verdade quando a peça é posta, em qualquer giro. */
+    /**
+     * As entradas lidas do molde (Regra 305), com a peça posta, em qualquer giro: nenhum bloco da estrutura do piso para
+     * cima, e uma porta de verdade em linha reta.
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_read", tickLimit = 5)
     public void theDoorFrontsComeFromTheTemplate(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -51,15 +54,19 @@ public class DoorFrontsGameTest implements FabricGameTest {
             fronts.forEach((column, floor) -> {
                 int x = com.villagecolony.core.construction.model.ColonyRoads.xOf(column);
                 int z = com.villagecolony.core.construction.model.ColonyRoads.zOf(column);
-                boolean beside = false;
+                boolean inLine = false;
 
                 for (Direction side : Direction.Type.HORIZONTAL) {
-                    var state = world.getBlockState(new BlockPos(x, floor + 1, z).offset(side));
-                    beside |= state.getBlock() instanceof DoorBlock && state.get(DoorBlock.HALF) == DoubleBlockHalf.LOWER;
+                    for (int step = 1; step <= DoorFronts.MAX_WALK && !inLine; step++) {
+                        var state = world.getBlockState(new BlockPos(x, floor + 1, z).offset(side, step));
+                        inLine = state.getBlock() instanceof DoorBlock && state.get(DoorBlock.HALF) == DoubleBlockHalf.LOWER;
+                    }
                 }
 
-                context.assertTrue(beside, "Regra 303: a frente " + x + "," + z + " (giro " + rotation
-                        + ") não encosta em porta no piso " + floor);
+                context.assertTrue(inLine && world.getBlockState(new BlockPos(x, floor + 1, z)).isAir()
+                                && world.getBlockState(new BlockPos(x, floor + 2, z)).isAir(),
+                        "Regra 305: a entrada " + x + "," + z + " (giro " + rotation + ") tem bloco acima do piso " + floor
+                                + " ou não vê porta em linha reta");
             });
 
             for (BlockPos at : BlockPos.iterate(box.getMinX() - 2, box.getMinY() - 2, box.getMinZ() - 2,

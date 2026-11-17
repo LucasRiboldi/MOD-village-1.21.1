@@ -17,8 +17,9 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * A entrada de cada porta térrea da construção — Regras 207 e 223 (autor, 2026-11-07): o marcador é o primeiro bloco em frente
- * à porta, mesmo dentro da caixa, e a saída da caixa é só o caminho até ele. Porta que não dá para fora, a de dentro da casa,
+ * A entrada de cada porta térrea da construção — Regras 207, 223 e 305 (autor, 2026-11-17): o nó é o primeiro chão à frente
+ * da porta fora dos blocos da estrutura (degrau, laje e assoalho não contam), com passagem livre acima, mesmo dentro da
+ * caixa, e a saída da caixa é só o caminho até ele. Porta que não dá para fora, a de dentro da casa,
  * não conta; porta dupla conta uma vez. A caixa da peça pode incluir o quintal: porta cuja saída para em barreira dentro dela
  * só conta se nenhuma outra da casa sair, e então a entrada é onde o quintal abre para fora, ou o primeiro chão depois da
  * porta se ele for fechado. Assoalho não é quintal — Regra 209.
@@ -81,7 +82,10 @@ final class DoorFronts {
                     Walk chosen = out.out().isPresent() ? out : walkOut(world, at, inward, min, max);
 
                     if (chosen.out().isPresent()) {
-                        addOnce(fronts, new Entrance(chosen.way().getFirst(), chosen.out().get(), chosen.way()));
+                        int first = firstGround(world, chosen.way());
+                        List<BlockPos> way = chosen.way().subList(first, chosen.way().size());
+
+                        addOnce(fronts, new Entrance(way.getFirst(), chosen.out().get(), List.copyOf(way)));
                     } else {
                         out.yard().ifPresent(yard -> addYardOnce(yards, yard));
                     }
@@ -187,6 +191,23 @@ final class DoorFronts {
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * O nó de entrada: o primeiro chão do trajeto fora dos blocos da estrutura — terra, pedra do mundo ou caminho — com
+     * passagem livre acima (Regra 305). Sem nenhum, o último, que é o chão fora da caixa.
+     */
+    private static int firstGround(ServerWorld world, List<BlockPos> way) {
+        for (int i = 0; i < way.size(); i++) {
+            BlockState state = world.getBlockState(way.get(i));
+
+            if ((com.villagecolony.fabric.integration.SiteSurroundings.isNaturalGround(state)
+                    || com.villagecolony.fabric.integration.VillageRoad.isPathBlock(state)) && hasRoom(world, way.get(i))) {
+                return i;
+            }
+        }
+
+        return way.size() - 1;
     }
 
     private static boolean hasRoom(ServerWorld world, BlockPos floor) {

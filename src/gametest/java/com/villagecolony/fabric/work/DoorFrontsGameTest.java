@@ -91,9 +91,12 @@ public class DoorFrontsGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** A porta alta: o marcador fica no degrau em frente a ela, e a saída desce até o chão firme. */
+    /**
+     * A porta alta: o nó fica na primeira coluna à frente dela fora dos blocos da estrutura — o chão depois do degrau —, e
+     * não no degrau (Regra 305; antes, Regra 223).
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_stairs", tickLimit = 20)
-    public void theMarkerStandsOnTheStepAndTheWayGoesDownToTheGround(TestContext context) {
+    public void theNodeStandsOnTheFirstGroundPastTheStep(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos origin = context.getAbsolutePos(new BlockPos(1, 76, 1));
         BlockPos min = origin.up();
@@ -107,7 +110,8 @@ public class DoorFrontsGameTest implements FabricGameTest {
 
             List<BlockPos> fronts = DoorFronts.of(world, min, max);
 
-            context.assertTrue(fronts.equals(List.of(origin.add(5, 1, 2))), "Regra 223: o marcador não ficou no degrau: " + fronts);
+            context.assertTrue(fronts.equals(List.of(origin.add(6, 0, 2))),
+                    "Regra 305: o nó não ficou no primeiro chão depois do degrau: " + fronts);
             context.assertTrue(DoorFronts.outside(world, min, max).equals(List.of(origin.add(6, 0, 2))),
                     "Regra 207: não desceu o degrau até o chão: " + DoorFronts.outside(world, min, max));
         } finally {

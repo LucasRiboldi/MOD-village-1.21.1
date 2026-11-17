@@ -244,7 +244,7 @@ public class VillageGroundGameTest implements FabricGameTest {
         int[][] natural = {{62, 62, 62}, {62, 63, 62}, {62, 62, 62}};
         VillageBlend.Area core = new VillageBlend.Area(0, 0, 2, 2);
         VillageGround.Plan plan = new VillageGround.Plan(0, 0, kinds, new boolean[3][3],
-                VillageBlend.shape(natural, kinds, core, core), java.util.Map.of());
+                VillageBlend.shape(natural, kinds, core, core), java.util.Map.of(), java.util.Map.of());
 
         context.assertTrue(plan.founds(1, 1), "a peça sobre a água fica sem base");
         context.assertFalse(plan.founds(0, 0), "o chão livre virou base de peça");
