@@ -48,12 +48,13 @@ import java.util.UUID;
  *       {@link #TUNNEL_LENGTH} blocos para o lado e tenta subir dali.
  * </ol>
  *
- * <p>Ninguém põe bloco debaixo dos pés para subir (o pilar saiu por decisão do autor, 2026-10-21).
+ * <p>Na escada e no túnel ninguém põe bloco debaixo dos pés (o pilar saiu por decisão do autor, 2026-10-21).
  *
  * <p><b>Nunca desiste.</b> Esgotados os dois, recomeça pela escada. Só o que
  * a {@code BlockProtection} protege não é quebrado (Regra 3). Cada troca de
  * jeito é uma tentativa; {@link BedTeleport#STUCK_ATTEMPTS} tentativas sem sair
- * do lugar levam o aldeão para a cama dele (ADR-036 item 15).
+ * do lugar levam o aldeão para a cama dele (ADR-036 item 15), e o mineiro para a
+ * subida rumo à borda da vila, que põe bloco onde falta piso ({@link ClimbOutward}, Regra 312).
  *
  * <p><b>Os movimentos são dele, não da navegação.</b> Pisar no degrau e
  * entrar no túnel vão pelo controle de movimento; a navegação Vanilla fica
@@ -68,9 +69,10 @@ final class ClimbOut {
     /**
      * Os jeitos de subir: o degrau (natural, ou cavado pelo mineiro) e o túnel do mineiro. O pilar —
      * pôr bloco debaixo dos pés e subir na vertical — saiu por decisão do autor, 2026-10-21: "a
-     * movimentação precisa ser a mais natural possível".
+     * movimentação precisa ser a mais natural possível". A subida rumo à borda ({@link ClimbOutward}, Regra 312) é a
+     * do mineiro depois de {@link BedTeleport#STUCK_ATTEMPTS} tentativas, e põe bloco onde falta piso.
      */
-    enum Mode { STAIRS, TUNNEL }
+    enum Mode { STAIRS, TUNNEL, OUTWARD }
 
     /** Passagens (uma por segundo) sem subir antes de trocar de jeito. */
     static final int NO_GAIN_PASSES = 6;
@@ -126,6 +128,9 @@ final class ClimbOut {
         boolean breakPieces;
 
         ColonyPos chest;
+
+        /** Para onde a subida rumo à borda mira (Regra 312). */
+        BlockPos outward;
 
         /** Quantos níveis cada jeito subiu, na ordem de {@link Mode}. */
         final Map<Mode, Integer> upBy = new EnumMap<>(Mode.class);
@@ -187,7 +192,11 @@ final class ClimbOut {
             return;
         }
 
-        if (BedTeleport.tooManyAttempts(world, villager, workerId)) {
+        // Regra 312: o mineiro com 5 tentativas no mesmo lugar sobe rumo à borda da vila, em vez de ir para a cama.
+        if (climb.mode != Mode.OUTWARD && ClimbPolicy.mayReshape(workerId)
+                && BedTeleport.attempts(workerId) >= BedTeleport.STUCK_ATTEMPTS) {
+            ClimbOutward.begin(climb, workerId, feet);
+        } else if (climb.mode != Mode.OUTWARD && BedTeleport.tooManyAttempts(world, villager, workerId)) {
             return;
         }
 
@@ -198,7 +207,8 @@ final class ClimbOut {
 
             VillageColonyMod.LOGGER.info("Stranded worker {} climbed to {} by {} — {} level(s) up",
                     shortId(workerId), feet.toShortString(), climb.mode, climb.bestY - climb.startY);
-        } else if (++climb.noGain >= (climb.mode == Mode.TUNNEL ? TUNNEL_PASSES : NO_GAIN_PASSES)) {
+        } else if (++climb.noGain >= (climb.mode == Mode.TUNNEL ? TUNNEL_PASSES : NO_GAIN_PASSES)
+                && climb.mode != Mode.OUTWARD) {
             switchMode(workerId, climb, feet, next(climb.mode, workerId),
                     "no height gained in " + climb.noGain + " s");
         }
@@ -206,6 +216,7 @@ final class ClimbOut {
         switch (climb.mode) {
             case STAIRS -> stairs(world, villager, climb, workerId, feet, home, now);
             case TUNNEL -> ClimbReshape.tunnel(world, villager, climb, workerId, feet, home, now);
+            case OUTWARD -> ClimbOutward.pass(world, villager, climb, workerId, feet, now);
         }
     }
 
@@ -333,6 +344,7 @@ final class ClimbOut {
         return switch (mode) {
             case STAIRS -> Mode.TUNNEL;
             case TUNNEL -> Mode.STAIRS;
+            case OUTWARD -> Mode.OUTWARD;
         };
     }
 

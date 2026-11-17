@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 206
+- **Cita a regra:** 207
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -86,8 +86,8 @@ classe prova menos ainda.
 | 73 | Caminho de areia: a vila do deserto tem caminho próprio — cópia do caminho de terra do Va… | classe | BenchPassivesGameTest, BenchUseGameTest, BiomeSiteGameTest |
 | 74 | A cama mais perto do trabalho: cada aldeão dorme na cama da vila mais perto de onde traba… | cita | BedChoiceGameTest, BedPlanTest, WalksTest |
 | 75 | Movimentação natural: só o mineiro remodela o terreno para subir (degrau, túnel); ninguém… | classe | ClimbReshapeTest |
-| 76 | O encalhado nunca desiste: larga o ofício e sobe até a superfície; a escada da fuga é tam… | classe | ClimbOutGameTest, ClimbReshapeTest, FencedInGameTest |
-| 77 | Cama como último recurso: preso 5 vezes no mesmo lugar, ou sem caminho para casa à noite,… | classe | BedTeleportGameTest, NightHomeRangeGameTest |
+| 76 | O encalhado nunca desiste: larga o ofício e sobe até a superfície; a escada da fuga é tam… | classe | ClimbOutGameTest, ClimbOutwardGameTest, ClimbReshapeTest |
+| 77 | Cama como último recurso: preso 5 vezes no mesmo lugar, ou sem caminho para casa à noite,… | classe | BedTeleportGameTest, ClimbOutwardGameTest, NightHomeRangeGameTest |
 | 78 | Caminhada longa por etapas: um trajeto de 50 a 130 blocos vira etapas na superfície | classe | WalkLegsGameTest |
 | 79 | A pedra é emprestada: o alvo do mineiro vale por um prazo curto, e só o progresso renova | classe | MineDescentLeaseGameTest, MineLeaseGameTest, MineLeaseTest |
 | 80 | Só vira alvo o bloco com posição de trabalho válida e alcançável | classe | MinerPicksTest, MinerRerouteTest, MiningTargetGameTest |
@@ -322,3 +322,4 @@ classe prova menos ainda.
 | 309 | O pastor leva o animal até o curral, seja qual for a distância (autor 17-11, jogo da 0.4.… | cita | ShepherdHerdingGameTest |
 | 310 | O fazendeiro põe pó de osso em cada pé, uma volta por vez (autor 17-11, jogo da 0.4.90, o… | cita | BoneMealRoundGameTest, FarmerGameTest |
 | 311 | O pedreiro mói a areia antes de a obra pedir (autor 17-11, jogo da 0.4.90, opção B: 525 p… | cita | CrusherGameTest |
+| 312 | O mineiro preso sobe rumo à borda da vila (autor 17-11, jogo da 0.4.90: o mineiro ficou p… | cita | ClimbOutwardGameTest |
