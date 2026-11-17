@@ -107,6 +107,11 @@ public final class WorldPathTerrain implements PathTerrain {
                 return OptionalInt.empty();
             }
 
+            // Regra 307: o bloco pendurado (beiral, laje do telhado) com chão apoiado mais abaixo não é chão: segue descendo.
+            if (hangsOverFloor(at, nearY - BELOW)) {
+                continue;
+            }
+
             // Regra 291: a frente da porta e a tábua de rua têm chão, mesmo que o calçamento as recuse.
             boolean floor = anyFloor.contains(com.villagecolony.core.construction.model.ColonyRoads.column(x, z))
                     || VillageRoad.isStreetPlank(world, at, state) || MineYard.isYard(at, state);
@@ -119,6 +124,30 @@ public final class WorldPathTerrain implements PathTerrain {
         }
 
         return OptionalInt.empty();
+    }
+
+    /**
+     * Se o bloco é teto de uma passagem — {@link #CLEARANCE} blocos de ar logo abaixo e um chão sólido mais abaixo, até
+     * {@code lowest}: está pendurado, como o beiral do telhado sobre a frente da porta (Regra 307).
+     */
+    private boolean hangsOverFloor(BlockPos at, int lowest) {
+        for (int gap = 1; gap <= CLEARANCE; gap++) {
+            BlockState below = world.getBlockState(at.down(gap));
+
+            if (!(below.isAir() || LotGround.isNothing(below)) || !below.getFluidState().isEmpty()) {
+                return false;
+            }
+        }
+
+        for (int y = at.getY() - CLEARANCE - 1; y >= lowest; y--) {
+            BlockState state = world.getBlockState(new BlockPos(at.getX(), y, at.getZ()));
+
+            if (!state.isAir() && !LotGround.isNothing(state)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Até onde acima do piso a coluna tem de ficar livre ou natural. */

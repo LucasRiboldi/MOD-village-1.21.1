@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 201
+- **Cita a regra:** 202
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -317,3 +317,4 @@ classe prova menos ainda.
 | 304 | Casa da vila não fica sem solo (autor 16-11, jogo da 0.4.89, opção A+B: casa suspensa sob… | cita | UnderPieceFillGameTest |
 | 305 | A entrada da casa e o patamar em volta ficam no piso (autor 17-11, jogo da 0.4.90, opção… | cita | DoorFrontsGameTest, EntrancesAtTheDoorGameTest, VillagePiecesGameTest |
 | 306 | Só a aresta inteira de rosa a rosa fica fixa (autor 17-11, jogo da 0.4.90, opção B: fixed… | cita | GraphStabilityGameTest, LampPostGameTest, RoadMapSyncGameTest |
+| 307 | Telhado não é chão do grafo (autor 17-11, jogo da 0.4.90, opção A: cinco das seis portas… | cita | GraphFloorGameTest |

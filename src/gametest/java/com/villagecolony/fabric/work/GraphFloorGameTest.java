@@ -93,6 +93,33 @@ public class GraphFloorGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * Regra 307: o beiral do telhado sobre a frente da porta, com ar embaixo, não é chão do grafo — a leitura desce até o
+     * chão apoiado (jogo da 0.4.90: cinco portas soltas lidas no telhado, 4 a 6 blocos acima do caminho).
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "graph_floor", tickLimit = 5)
+    public void aRoofOverTheDoorFrontIsNotItsFloor(TestContext context) {
+        BlockPos ground = context.getAbsolutePos(new BlockPos(3, 1, 3));
+
+        context.setBlockState(new BlockPos(3, 0, 3), Blocks.DIRT);
+        context.setBlockState(new BlockPos(3, 1, 3), Blocks.GRASS_BLOCK);
+        context.setBlockState(new BlockPos(3, 5, 3), Blocks.OAK_PLANKS);
+
+        try {
+            WorldPathTerrain terrain = new WorldPathTerrain(context.getWorld(), UUID.randomUUID());
+            terrain.floorAnywhereAt(Set.of(MinecraftTypeAdapter.toColonyPos(ground)));
+            OptionalInt floor = terrain.groundY(ground.getX(), ground.getZ(), ground.getY() + 1);
+
+            context.assertTrue(floor.isPresent() && floor.getAsInt() == ground.getY(),
+                    "Regra 307: o telhado sobre a frente da porta virou o chão do grafo: " + floor + " (chão em "
+                            + ground.getY() + ")");
+        } finally {
+            clearArena(context);
+        }
+
+        context.complete();
+    }
+
     /** A quina da plantação é lida na altura do canteiro, e não no topo da coluna (um beiral em cima). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "graph_floor", tickLimit = 5)
     public void theFarmCornerIsAtTheFarmLevel(TestContext context) {
