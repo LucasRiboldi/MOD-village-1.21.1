@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 202
+- **Cita a regra:** 203
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -311,10 +311,11 @@ classe prova menos ainda.
 | 298 | A vila nova nasce enxuta (autor 15-11, jogo da 0.4.88, opção C corrigida: 9 aldeões da vi… | cita | HiringProperties, IdleFixesGameTest, ProfessionDemandTest |
 | 299 | O pastor leva o animal até dentro do curral (autor 15-11, jogo da 0.4.89, opção C: o curr… | cita | FlockHarvestGameTest, ShepherdHerdingGameTest |
 | 300 | A porta e as partes soltas entram no grafo (autor 16-11, jogo da 0.4.89, opção C com o ro… | cita | RoadLinesTest |
-| 301 | A argila aparece na hora pedida (autor 16-11, jogo da 0.4.89: o fundidor parou 30 vezes s… | cita | ClayOnRequestGameTest |
+| 301 | A argila aparece na hora pedida (só para obra e com teto de 64 guardadas pela Regra 308;… | cita | ClayLoopGameTest, ClayOnRequestGameTest |
 | 302 | O nó da mina fica sob o arco (autor 16-11, jogo da 0.4.89, opção A; muda o nó de entrada… | cita | MineNodeGameTest, MineYardGameTest |
 | 303 | A frente da porta nasce no piso dela (a entrada passou para a primeira coluna livre e gan… | cita | DoorFrontsGameTest |
 | 304 | Casa da vila não fica sem solo (autor 16-11, jogo da 0.4.89, opção A+B: casa suspensa sob… | cita | UnderPieceFillGameTest |
 | 305 | A entrada da casa e o patamar em volta ficam no piso (autor 17-11, jogo da 0.4.90, opção… | cita | DoorFrontsGameTest, EntrancesAtTheDoorGameTest, VillagePiecesGameTest |
 | 306 | Só a aresta inteira de rosa a rosa fica fixa (autor 17-11, jogo da 0.4.90, opção B: fixed… | cita | GraphStabilityGameTest, LampPostGameTest, RoadMapSyncGameTest |
 | 307 | Telhado não é chão do grafo (autor 17-11, jogo da 0.4.90, opção A: cinco das seis portas… | cita | GraphFloorGameTest |
+| 308 | A fundição para na quantidade pedida, e a argila só surge para a obra (autor 17-11, jogo… | cita | ClayLoopGameTest, ClayOnRequestGameTest |

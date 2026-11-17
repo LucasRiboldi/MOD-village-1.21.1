@@ -224,7 +224,8 @@ public final class SmelterWork {
         }
 
         // A argila pedida aparece no baú do fundidor na hora, antes da busca (Regra 301).
-        ClayOnRequest.stockIfMissing(world, job.task.colonyId(), searched, output.get(), raws);
+        ClayOnRequest.stockIfMissing(world, job.task.colonyId(), searched, output.get(), raws,
+                job.task.priority() == com.villagecolony.core.task.model.TaskPriority.CONSTRUCTION_MATERIAL);
         Optional<Boolean> pending =
                 smeltFrom(world, searched, raws, made.get(), output.get(), job, workerId);
 
@@ -291,10 +292,8 @@ public final class SmelterWork {
             ServerWorld world, List<ColonyPos> searched, List<Item> raws, Item product,
             ColonyPos output, Job job, UUID workerId) {
 
-        // <b>Metade do cru fica guardada</b>, menos areia e argila (StockRules.rawToKeep, Regra 257). A
-        // conta é da colônia inteira e não depende do baú: sai uma vez por
-        // cru, fora do laço dos baús. Dentro dele custava baús² leituras por
-        // peça, 72% do tempo do mod no Spark de 11-10.
+        // Metade do cru fica guardada, menos areia e argila (StockRules.rawToKeep, Regra 257): a conta é da colônia
+        // inteira, uma vez por cru, fora do laço dos baús (dentro, custava 72% do mod no Spark de 11-10).
         Optional<Colony> colony = VillageColonyMod.COLONIES.find(job.task.colonyId());
         List<Item> allowed = raws.stream()
                 .filter(raw -> mayStillSmelt(world, searched, raw, product,
@@ -474,7 +473,8 @@ public final class SmelterWork {
         WorkerStrikes.worked(workerId, job.task);
         if (world.getEntity(workerId) instanceof VillagerEntity smelter) { smelter.swingHand(Hand.MAIN_HAND); }
 
-        return true;
+        // A tarefa termina na quantidade pedida, e não quando o cru acaba (Regra 308).
+        return !SmeltDone.reached(job.task, made.getItem(), made.getCount() - leftOver);
     }
 
     private static void finish(Job job, UUID workerId, String why) {
