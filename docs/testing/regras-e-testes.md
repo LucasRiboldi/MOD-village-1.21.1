@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 204
+- **Cita a regra:** 205
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -41,7 +41,7 @@ classe prova menos ainda.
 | 28 | ~~Barreira de teste: casa pequena, mobília dispensada~~ | fora de vigor |  |
 | 29 | A mina em escada, duas salas, galeria sem fim | cita | MinerGameTest |
 | 30 | O mineiro recolhe tudo, e a boca tem endereço | cita | MinerGameTest, SmelterGameTest |
-| 31 | O fazendeiro planta o que tem e colhe o que está pronto | classe | ColonyFixture, CropPatchKnownFieldGameTest, CropRegistryGameTest |
+| 31 | O fazendeiro planta o que tem e colhe o que está pronto | classe | BoneMealRoundGameTest, ColonyFixture, CropPatchKnownFieldGameTest |
 | 32 | ~~Móveis e cama entram depois da casa pronta~~ — substituída em 10-22 pela 21 (C-02, auto… | fora de vigor |  |
 | 33 | Pedido de commit+push também atualiza o JAR local | nenhum |  |
 | 34 | A lava nunca surge automática | classe | BuilderGameTest, ChainRootsGameTest, ConstructionSupplyAuditGameTest |
@@ -146,14 +146,14 @@ classe prova menos ainda.
 | 133 | Estoque cheio vira obra e produto (autor 10-28, jogo da 0.3.99: lenhador 74%, pedreiro 48… | cita | ItemStockGameTest |
 | 134 | O adulto que sobra vai ao ofício que a vila espera (autor 10-28, jogo da 0.3.99: 6 de 18… | fora de vigor |  |
 | 135 | Tarefa só abre quando pode render (autor 10-28, jogo da 0.3.99): a ordem de estoque de pe… | classe | IdleFixesGameTest, ItemStockGameTest, ProfessionBalanceGameTest |
-| 136 | O fazendeiro alcança como o jogador (autor 10-28, jogo da 0.3.99: roça 2 blocos acima, a… | classe | ColonyFixture, FarmPlanGameTest, FarmerGameTest |
+| 136 | O fazendeiro alcança como o jogador (autor 10-28, jogo da 0.3.99: roça 2 blocos acima, a… | classe | BoneMealRoundGameTest, ColonyFixture, FarmPlanGameTest |
 | 137 | A escada da mina recomeça do topo (autor 10-28, jogo da 0.3.99: o mineiro passou 30 min n… | classe | IdleFixesGameTest |
 | 138 | A rua da colônia é só caminho e é da vila (autor 10-28; depois do jogo da 0.3.104: "volta… | classe | BlockProtectionGameTest, BuildSiteGameTest, LumberjackGameTest |
 | 139 | O lote sai do mapa de interesse (autor 10-28, jogo da 0.3.102: casa a 140 blocos, 24 acim… | cita | LotScoreMemoryTest |
 | 140 | A rua estica pela ponta mais perto do centro, com um bloco de largura (Regra 186), pedind… | cita | RoadExtensionGameTest |
 | 141 | O centro da vila não muda (autor 10-28, taiga simulada: o curral sem lote foi a 98 blocos… | cita | ColonyBoundsTest, ColonySavedDataTest, ConstructionPlannerReachTest |
 | 142 | À noite só o preso vai à cama (autor 10-28, taiga simulada: 114 teleportes, um por aldeão… | cita | BedTeleportGameTest, NightHomeRangeGameTest |
-| 143 | O baú público enche inteiro (autor 10-28, taiga simulada: 27 vezes o lenhador largou tora… | classe | BuildProgressGameTest, BuildReserveGameTest, BuilderGameTest |
+| 143 | O baú público enche inteiro (autor 10-28, taiga simulada: 27 vezes o lenhador largou tora… | classe | BoneMealRoundGameTest, BuildProgressGameTest, BuildReserveGameTest |
 | 144 | Alvo de coleta inalcançável sai da memória (autor 10-28, taiga simulada: 3 fazendeiros vo… | cita | SurfaceHitsTest |
 | 145 | As camas da vila são as da caixa (autor 10-28, taiga simulada: a sonda de 64 blocos via p… | cita | ColonyBoundsTest, VillageDiaryGameTest |
 | 146 | Fundidor e pedreiro produzem mais (autor 10-28, taiga simulada: fundidor 80% e pedreiro 6… | cita | IdleFixesGameTest |
@@ -247,7 +247,7 @@ classe prova menos ainda.
 | 234 | O trecho travado sai verde (só aresta travada pela Regra 306 sai verde; autor 11-11): no… | cita | RoadMapSyncGameTest |
 | 235 | Pastor pelo rebanho (autor 11-11, opção P1 de docs/audit/2026-11-11-atividade-das-profiss… | cita | ProfessionDemandTest |
 | 236 | Pedreira de superfície no deserto (autor 11-11, opção M1): na vila de deserto, o mineiro… | cita | DesertQuarryGameTest |
-| 237 | Composteira pela roça (autor 11-11, opção F2): o fazendeiro sem colheita nem canteiro com… | cita | FarmerCompostGameTest |
+| 237 | Composteira pela roça (autor 11-11, opção F2): o fazendeiro sem colheita, canteiro nem la… | cita | FarmerCompostGameTest |
 | 238 | Rebanho cresce com comida sobrando (autor 11-11, opção P2): com 32 ou mais da comida da e… | cita | FlockSurplusGameTest |
 | 239 | Todo animal que procria com comida (autor 11-11, opção P4): o pastor cria ovelha, vaca, p… | cita | FlockSurplusGameTest |
 | 240 | Lã guardada vira peça de lã (autor 11-11, opção P5): o pastor sem tarefa, com mais de 16… | cita | ShepherdWoolGoodsGameTest |
@@ -320,3 +320,4 @@ classe prova menos ainda.
 | 307 | Telhado não é chão do grafo (autor 17-11, jogo da 0.4.90, opção A: cinco das seis portas… | cita | GraphFloorGameTest |
 | 308 | A fundição para na quantidade pedida, e a argila só surge para a obra (autor 17-11, jogo… | cita | ClayLoopGameTest, ClayOnRequestGameTest |
 | 309 | O pastor leva o animal até o curral, seja qual for a distância (autor 17-11, jogo da 0.4.… | cita | ShepherdHerdingGameTest |
+| 310 | O fazendeiro põe pó de osso em cada pé, uma volta por vez (autor 17-11, jogo da 0.4.90, o… | cita | BoneMealRoundGameTest, FarmerGameTest |

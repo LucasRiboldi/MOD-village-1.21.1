@@ -29,7 +29,9 @@ public enum SupplyException {
     SEED_FOR_THE_FARM(289, "a semente da lavoura que a vila tem menos, no baú do fazendeiro dono de roça com canteiro vazio,"
             + " quando nenhum baú da vila tem semente"),
     CLAY_ON_REQUEST(301, "a argila e a bola de argila que o fundidor pede, no baú dele, na hora do pedido,"
-            + " quando nenhum baú da vila tem");
+            + " quando nenhum baú da vila tem"),
+    BONE_MEAL_FOR_THE_FARM(310, "o pó de osso que o fazendeiro põe na plantação, quando a composteira dele não está cheia"
+            + " e os baús da vila não têm mais que 16");
 
     private final int rule;
 

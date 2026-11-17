@@ -137,11 +137,16 @@ public class FarmerGameTest implements FabricGameTest {
 
         putInChest(context, new ItemStack(Items.WHEAT_SEEDS, 4));
 
-        context.runAtTick(120, () -> {
-            context.assertTrue(
-                    context.getBlockState(FIELD).getBlock() instanceof CropBlock,
-                    "o canteiro continuou vazio: " + context.getBlockState(FIELD).getBlock());
+        // Conferido no primeiro tique com a planta: em seguida vêm o pó de osso e a colheita (Regra 310), que mexem nas
+        // sementes do baú. Sem planta até o fim, o canteiro continuou vazio e o teste cai por tempo.
+        boolean[] checked = {false};
 
+        context.runAtEveryTick(() -> {
+            if (checked[0] || !(context.getBlockState(FIELD).getBlock() instanceof CropBlock)) {
+                return;
+            }
+
+            checked[0] = true;
             context.assertTrue(
                     countInChest(context, Items.WHEAT_SEEDS) == 3,
                     "a semente plantada não saiu do baú — a colônia duplicou o item");
