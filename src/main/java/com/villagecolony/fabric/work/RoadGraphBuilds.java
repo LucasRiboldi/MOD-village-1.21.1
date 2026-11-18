@@ -25,8 +25,8 @@ final class RoadGraphBuilds {
         ServerMemory.register(RoadGraphBuilds.class, RoadGraphBuilds::clearAll);
     }
 
-    /** Modo 2: a última impressão digital de cada quadrado, por colônia. */
-    private static final Map<UUID, Map<Long, Integer>> PRINTS = new HashMap<>();
+    /** Modos 2 e 3: a impressão aceita de cada quadrado e o que mudou na releitura anterior, por colônia (Regra 319). */
+    private static final Map<UUID, RoadRegions.Memory> PRINTS = new HashMap<>();
 
     /** Modo 3: as ligações traçadas, por colônia. */
     private static final Map<UUID, com.villagecolony.core.construction.model.NeighborhoodRoads.Routes> ROUTES = new HashMap<>();
@@ -64,9 +64,11 @@ final class RoadGraphBuilds {
     private static RoadLines.Result regions(Input in) {
         Set<Long> dirty = dirty(in);
         Set<ColonyPos> frozen = in.previous().map(graph -> RoadRegions.frozen(graph, dirty)).orElse(Set.of());
+        RoadLines.Result built = RoadLines.build(in.cells(), in.planned(), in.center(), in.fronts(), in.farmRings(),
+                in.terrain(), in.maxLinks(), in.turn(), frozen, in.retired());
 
-        return RoadLines.build(in.cells(), in.planned(), in.center(), in.fronts(), in.farmRings(), in.terrain(),
-                in.maxLinks(), in.turn(), frozen, in.retired());
+        // O quadrado limpo sai igual ao grafo anterior: a montagem só vale nos refeitos (Regra 319).
+        return RoadRegions.settle(built, in.previous().orElse(null), dirty, in.center(), in.fronts(), in.cells());
     }
 
     /**
@@ -81,14 +83,16 @@ final class RoadGraphBuilds {
                         ignored -> new com.villagecolony.core.construction.model.NeighborhoodRoads.Routes()), dirty);
     }
 
-    /** Os quadrados sujos desde a última montagem desta colônia: impressão mudada ou bloco marcado (Regra 319). */
+    /**
+     * Os quadrados a refazer nesta montagem: mudados em duas releituras seguidas, ou marcados por bloco na anterior
+     * (Regra 319). Sem grafo anterior, todos.
+     */
     private static Set<Long> dirty(Input in) {
-        Set<ColonyPos> previous = in.previous().map(RoadRegions::columnsOf).orElse(Set.of());
-        Map<Long, Integer> prints = RoadRegions.fingerprints(in.cells(), in.planned(), in.fronts(), previous, in.terrain());
-        Set<Long> dirty = RoadRegions.dirty(PRINTS.getOrDefault(in.colonyId(), Map.of()), prints,
-                RoadRegionEvents.drain(in.colonyId()));
+        RoadRegions.Memory memory = PRINTS.computeIfAbsent(in.colonyId(), ignored -> new RoadRegions.Memory());
+        Map<Long, Integer> prints = RoadRegions.fingerprints(in.cells(), in.planned(), in.fronts(), in.terrain());
+        Set<Long> dirty = RoadRegions.confirm(memory, prints, RoadRegionEvents.drain(in.colonyId()),
+                in.previous().isEmpty());
 
-        PRINTS.put(in.colonyId(), prints);
         LAST_DIRTY.put(in.colonyId(), dirty.size());
 
         return dirty;

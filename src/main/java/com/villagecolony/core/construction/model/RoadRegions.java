@@ -10,9 +10,10 @@ import java.util.OptionalInt;
 import java.util.Set;
 
 /**
- * As regiões do modo 2 do grafo — ADR-057: quadrados de {@value #SIZE} × {@value #SIZE} com impressão digital. O quadrado
- * cuja impressão não mudou é limpo, e as linhas do grafo anterior que passam por ele entram fixas na montagem; só o sujo
- * se ajeita. Puro: o chão vem por {@link PathTerrain}.
+ * As regiões do modo 2 do grafo — ADR-057, Regra 319: quadrados de {@value #SIZE} × {@value #SIZE} com impressão digital
+ * do que vem de fora do grafo (caminho, planejado, entradas e chão). O quadrado só é refeito quando a impressão fica
+ * diferente da última aceita em duas releituras seguidas, ou na releitura depois de um bloco marcado; o quadrado limpo sai
+ * igual ao grafo anterior. Puro: o chão vem por {@link PathTerrain}.
  */
 public final class RoadRegions {
 
@@ -27,21 +28,105 @@ public final class RoadRegions {
         return ColonyRoads.column(Math.floorDiv(x, SIZE), Math.floorDiv(z, SIZE));
     }
 
+    /** O que um quadrado precisa lembrar entre releituras: a impressão aceita e o que mudou na releitura anterior. */
+    public static final class Memory {
+
+        private final Map<Long, Integer> accepted = new HashMap<>();
+
+        private final Set<Long> pending = new HashSet<>();
+
+        private final Set<Long> pendingMarked = new HashSet<>();
+    }
+
     /**
      * A impressão digital de cada quadrado que tem alguma coisa: os blocos de caminho, o planejado, as entradas e a altura
-     * do chão em cada uma dessas colunas e nas do grafo anterior. Mudou qualquer um, mudou a impressão.
+     * do chão nessas colunas. O grafo não entra: ele muda porque foi refeito, e entrar faria o quadrado se sujar sozinho.
      */
     public static Map<Long, Integer> fingerprints(Collection<ColonyPos> cells, Collection<ColonyPos> planned,
-                                                  Collection<ColonyPos> fronts, Collection<ColonyPos> previous,
-                                                  PathTerrain terrain) {
+                                                  Collection<ColonyPos> fronts, PathTerrain terrain) {
         Map<Long, Integer> prints = new HashMap<>();
 
         mix(prints, cells, 1, terrain);
         mix(prints, planned, 2, terrain);
         mix(prints, fronts, 3, terrain);
-        mix(prints, previous, 4, terrain);
 
         return prints;
+    }
+
+    /**
+     * Os quadrados a refazer agora. Mudou em relação à impressão aceita nesta releitura e na anterior, ou um bloco foi
+     * marcado na anterior: refaz, e a impressão de agora vira a aceita. Mudou só agora: espera a próxima. Voltou ao que era:
+     * esquece. Na primeira montagem, tudo.
+     */
+    public static Set<Long> confirm(Memory memory, Map<Long, Integer> now, Set<Long> marked, boolean firstBuild) {
+        if (firstBuild) {
+            memory.accepted.clear();
+            memory.accepted.putAll(now);
+            memory.pending.clear();
+            memory.pendingMarked.clear();
+
+            return Set.copyOf(now.keySet());
+        }
+
+        Set<Long> changed = new HashSet<>(dirty(memory.accepted, now, Set.of()));
+        Set<Long> rebuild = new HashSet<>(memory.pendingMarked);
+
+        changed.stream().filter(memory.pending::contains).forEach(rebuild::add);
+
+        for (long region : rebuild) {
+            Integer print = now.get(region);
+
+            if (print == null) {
+                memory.accepted.remove(region);
+            } else {
+                memory.accepted.put(region, print);
+            }
+        }
+
+        memory.pending.clear();
+        changed.stream().filter(region -> !rebuild.contains(region)).forEach(memory.pending::add);
+        memory.pendingMarked.clear();
+        marked.stream().filter(region -> !rebuild.contains(region)).forEach(memory.pendingMarked::add);
+
+        return rebuild;
+    }
+
+    /**
+     * O grafo com o quadrado limpo igual ao anterior: as colunas da montagem nos quadrados refeitos e as do grafo anterior
+     * nos outros, remontadas num grafo só. Sem grafo anterior, a montagem fica como está.
+     */
+    public static RoadLines.Result settle(RoadLines.Result built, @org.jspecify.annotations.Nullable RoadGraph previous,
+                                          Set<Long> rebuilt, ColonyPos center, Set<ColonyPos> fronts, Set<ColonyPos> cells) {
+        if (previous == null || built.graph().isEmpty()) {
+            return built;
+        }
+
+        Map<Long, Integer> columns = new HashMap<>();
+
+        for (ColonyPos at : columnsOf(built.graph().get())) {
+            if (rebuilt.contains(regionOf(at.x(), at.z()))) {
+                columns.put(ColonyRoads.column(at.x(), at.z()), at.y());
+            }
+        }
+
+        for (ColonyPos at : columnsOf(previous)) {
+            if (!rebuilt.contains(regionOf(at.x(), at.z()))) {
+                columns.put(ColonyRoads.column(at.x(), at.z()), at.y());
+            }
+        }
+
+        Map<Long, Integer> toLay = new HashMap<>();
+        Set<Long> doors = new HashSet<>();
+        Map<Long, Integer> physical = new HashMap<>();
+
+        fronts.forEach(at -> {
+            toLay.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y());
+            doors.add(ColonyRoads.column(at.x(), at.z()));
+        });
+        cells.forEach(at -> physical.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
+
+        return new RoadLines.Result(java.util.Optional.of(RoadLinesGraph.of(columns, toLay, center, doors)),
+                RoadLines.toPave(columns, toLay, physical), built.isolated(), built.surplus(), built.loose());
     }
 
     private static void mix(Map<Long, Integer> prints, Collection<ColonyPos> cells, int kind, PathTerrain terrain) {

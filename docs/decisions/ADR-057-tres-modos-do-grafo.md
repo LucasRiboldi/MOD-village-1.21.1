@@ -77,3 +77,22 @@ Cada alternativa traz um risco próprio:
   - a porta e o caminho do jogador no grafo (a porta térrea fora de construção registrada como entrada, e a memória do
     que a colônia calçou), que vêm numa regra própria depois dos modos;
   - a trilha de desejo (modo 4 da pesquisa).
+
+## Emenda de 2026-11-18 — o modo 2 oscilava (opções A, B e D do autor)
+
+A simulação de 3 dias mediu 32 a 37 mudanças do grafo por dia no modo 2, contra 10 a 15 no atual. O rastro mostrou duas
+causas:
+
+- **Realimentação:** a impressão digital incluía o próprio grafo anterior. Mais da metade dos quadrados sujos só estava
+  suja porque o grafo mudou ali.
+- **Vazamento:** em média 2,7 quadrados limpos mudavam por montagem, porque o afinamento acrescentava ou tirava colunas em
+  volta das linhas fixas.
+
+Correção:
+
+- **A:** a impressão leva só o que vem de fora do grafo.
+- **B:** depois da montagem, o quadrado limpo volta a ser exatamente o do grafo anterior, e o grafo é remontado com isso.
+- **D:** o quadrado só é refeito quando a mudança dura duas releituras seguidas, contadas contra a impressão da última
+  montagem aceita, ou na releitura depois de um bloco marcado pelo mixin.
+
+A regra de duas releituras vale também para as ligações guardadas do modo 3.
