@@ -109,10 +109,13 @@ final class VillagePieces {
             entries.add(DoorFronts.of(rigid.get(i).piece(), templates, registries));
         }
 
-        // Regra 305: a casa (peça com porta) ganha um patamar de APRON colunas no piso; na disputa, o piso mais alto.
+        // Regra 305: a casa (peça com porta) ganha um patamar de APRON colunas no piso; na disputa, o piso mais alto. Com
+        // degrau na porta, o patamar fica um abaixo, com a entrada (Regra 313).
         for (int i = 0; i < entries.size(); i++) {
             if (!entries.get(i).isEmpty()) {
-                apron(rigid.get(i).footprint(), floorOf(rigid.get(i).piece()), natural, kinds, marked, minX, minZ, aprons);
+                int floor = floorOf(rigid.get(i).piece());
+                int level = Math.max(floor - 1, entries.get(i).values().stream().mapToInt(Integer::intValue).min().orElse(floor));
+                apron(rigid.get(i).footprint(), level, natural, kinds, marked, minX, minZ, aprons);
             }
         }
 

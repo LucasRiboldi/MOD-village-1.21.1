@@ -17,6 +17,7 @@ import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -56,10 +57,13 @@ public class DoorFrontsGameTest implements FabricGameTest {
                 int z = com.villagecolony.core.construction.model.ColonyRoads.zOf(column);
                 boolean inLine = false;
 
-                for (Direction side : Direction.Type.HORIZONTAL) {
-                    for (int step = 1; step <= DoorFronts.MAX_WALK && !inLine; step++) {
-                        var state = world.getBlockState(new BlockPos(x, floor + 1, z).offset(side, step));
-                        inLine = state.getBlock() instanceof DoorBlock && state.get(DoorBlock.HALF) == DoubleBlockHalf.LOWER;
+                // A porta fica um acima da entrada, ou dois depois do degrau (Regra 313).
+                for (int up = 1; up <= 2 && !inLine; up++) {
+                    for (Direction side : Direction.Type.HORIZONTAL) {
+                        for (int step = 1; step <= DoorFronts.MAX_WALK && !inLine; step++) {
+                            var state = world.getBlockState(new BlockPos(x, floor + up, z).offset(side, step));
+                            inLine = state.getBlock() instanceof DoorBlock && state.get(DoorBlock.HALF) == DoubleBlockHalf.LOWER;
+                        }
                     }
                 }
 
@@ -78,9 +82,9 @@ public class DoorFrontsGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** O degrau de 2 e o morro de 3 na frente da porta viram o piso dela, com caminho no topo. */
+    /** O degrau de 2 e o morro de 3 na frente da porta viram a altura da entrada, com o solo no topo (Regra 313). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_shape", tickLimit = 5)
-    public void theDoorFrontIsAtTheFloorWithAPath(TestContext context) {
+    public void theDoorFrontIsAtItsLevelWithSoil(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos base = context.getAbsolutePos(BlockPos.ORIGIN).add(2_300_000, 20, 2_300_000);
         int floor = base.getY();
@@ -97,12 +101,88 @@ public class DoorFrontsGameTest implements FabricGameTest {
 
             DoorFronts.shape(world, chunk, at.getX(), at.getZ(), floor + column[1], floor, VillageSoil.of(chunk));
 
-            context.assertTrue(world.getBlockState(at.withY(floor)).isOf(Blocks.DIRT_PATH)
+            context.assertTrue(!world.getBlockState(at.withY(floor)).isOf(Blocks.DIRT_PATH)
+                            && SiteSurroundings.isNaturalGround(world.getBlockState(at.withY(floor)))
                             && world.getBlockState(at.withY(floor + 1)).isAir(),
-                    "Regra 303: a frente da porta com topo " + column[1] + " não ficou no piso com caminho: "
+                    "Regra 313: a frente da porta com topo " + column[1] + " não ficou na altura com o solo: "
                             + world.getBlockState(at.withY(floor)) + " / " + world.getBlockState(at.withY(floor + 1)));
         }
 
+        context.complete();
+    }
+
+    /** Casas da planície que a vila gera, para medir o degrau da porta. */
+    private static final List<String> HOUSES = List.of(
+            "plains_small_house_1", "plains_small_house_2", "plains_small_house_3", "plains_small_house_4",
+            "plains_small_house_5", "plains_small_house_6", "plains_small_house_7", "plains_small_house_8",
+            "plains_medium_house_1", "plains_medium_house_2", "plains_butcher_shop_1", "plains_library_1",
+            "plains_tannery_1", "plains_fisher_cottage_1");
+
+    /**
+     * Regra 313: depois do degrau do molde (escada ou laje no piso da porta), a entrada fica um abaixo do piso, no chão; sem
+     * degrau, no piso. No jogo da 0.4.91 a entrada ficava no piso depois da escada, um bloco acima do chão em volta.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_step", tickLimit = 5)
+    public void afterTheStepTheEntryIsOneBelowTheFloor(TestContext context) {
+        ServerWorld world = context.getWorld();
+        StructureTemplateManager templates = world.getStructureTemplateManager();
+        BlockPos base = context.getAbsolutePos(BlockPos.ORIGIN).add(2_400_000, 10, 2_400_000);
+        int steps = 0;
+
+        for (int i = 0; i < HOUSES.size(); i++) {
+            BlockPos pos = base.add(i * 24, 0, 0);
+            StructurePoolElement element = StructurePoolElement.ofSingle("minecraft:village/plains/houses/" + HOUSES.get(i))
+                    .apply(StructurePool.Projection.RIGID);
+            BlockBox box = element.getBoundingBox(templates, pos, BlockRotation.NONE);
+            PoolStructurePiece piece = new PoolStructurePiece(templates, element, pos, 1, BlockRotation.NONE, box,
+                    StructureLiquidSettings.APPLY_WATERLOGGING);
+            Map<Long, Integer> fronts = DoorFronts.of(piece, templates, world.getRegistryManager());
+
+            world.getChunk(pos);
+            piece.generate(world, world.getStructureAccessor(), world.getChunkManager().getChunkGenerator(),
+                    world.getRandom(), box.expand(2), new net.minecraft.util.math.ChunkPos(pos), pos);
+
+            for (var front : fronts.entrySet()) {
+                BlockPos entry = new BlockPos(com.villagecolony.core.construction.model.ColonyRoads.xOf(front.getKey()),
+                        front.getValue(), com.villagecolony.core.construction.model.ColonyRoads.zOf(front.getKey()));
+                BlockPos door = null;
+                Direction toDoor = null;
+
+                for (int up = 1; up <= 2 && door == null; up++) {
+                    for (Direction side : Direction.Type.HORIZONTAL) {
+                        for (int step = 1; step <= DoorFronts.MAX_WALK && door == null; step++) {
+                            BlockPos at = entry.up(up).offset(side, step);
+                            var state = world.getBlockState(at);
+
+                            if (state.getBlock() instanceof DoorBlock && state.get(DoorBlock.HALF) == DoubleBlockHalf.LOWER) {
+                                door = at;
+                                toDoor = side;
+                            }
+                        }
+                    }
+                }
+
+                context.assertTrue(door != null, "Regra 313: a entrada " + entry.toShortString() + " de " + HOUSES.get(i)
+                        + " não vê porta em linha reta");
+                int floor = door.getY() - 1;
+                var before = world.getBlockState(entry.offset(toDoor).withY(floor));
+                boolean step = before.getBlock() instanceof net.minecraft.block.StairsBlock
+                        || before.getBlock() instanceof net.minecraft.block.SlabBlock;
+
+                steps += step ? 1 : 0;
+                context.assertTrue(front.getValue() == (step ? floor - 1 : floor),
+                        "Regra 313: em " + HOUSES.get(i) + ", a entrada " + entry.toShortString() + " ficou em "
+                                + front.getValue() + " com piso " + floor + (step ? " depois do degrau " : " sem degrau ")
+                                + before);
+            }
+
+            for (BlockPos at : BlockPos.iterate(box.getMinX() - 2, box.getMinY() - 2, box.getMinZ() - 2,
+                    box.getMaxX() + 2, box.getMaxY() + 2, box.getMaxZ() + 2)) {
+                world.setBlockState(at.toImmutable(), Blocks.AIR.getDefaultState(), net.minecraft.block.Block.NOTIFY_LISTENERS);
+            }
+        }
+
+        context.assertTrue(steps > 0, "Regra 313: nenhuma das casas medidas tinha degrau na porta");
         context.complete();
     }
 }

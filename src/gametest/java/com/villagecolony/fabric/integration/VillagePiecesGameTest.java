@@ -115,8 +115,10 @@ public class VillagePiecesGameTest implements FabricGameTest {
         int floor = box.getMinY() + house.getGroundLevelDelta() - 1;
 
         context.assertFalse(doors.isEmpty(), "Regra 305: a casa ficou sem coluna de entrada");
-        doors.values().forEach(level -> context.assertTrue(level == floor,
-                "Regra 305: a entrada não ficou no piso " + floor + ", ficou em " + level));
+        doors.values().forEach(level -> context.assertTrue(level == floor || level == floor - 1,
+                "Regra 313: a entrada não ficou no piso " + floor + " nem um abaixo, ficou em " + level));
+        // O patamar acompanha a entrada mais baixa: um abaixo do piso quando a porta tem degrau (Regra 313).
+        int apron = Math.max(floor - 1, doors.values().stream().mapToInt(Integer::intValue).min().orElse(floor));
 
         for (int x = box.getMinX() - 2; x <= box.getMaxX() + 2; x++) {
             for (int z = box.getMinZ() - 2; z <= box.getMaxZ() + 2; z++) {
@@ -124,9 +126,10 @@ public class VillagePiecesGameTest implements FabricGameTest {
 
                 if (ring) {
                     long column = com.villagecolony.core.construction.model.ColonyRoads.column(x, z);
-                    context.assertTrue(kinds[x][z] == VillageSurface.Kind.FIXED && natural[x][z] == floor
+                    context.assertTrue(kinds[x][z] == VillageSurface.Kind.FIXED
+                                    && natural[x][z] == (doors.get(column) != null ? doors.get(column) : apron)
                                     && (aprons.get(column) != null || doors.get(column) != null),
-                            "Regra 305: o patamar em " + x + "," + z + " não ficou no piso " + floor + ": " + natural[x][z]);
+                            "Regra 305: o patamar em " + x + "," + z + " não ficou em " + apron + ": " + natural[x][z]);
                 }
             }
         }
