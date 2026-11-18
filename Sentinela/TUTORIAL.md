@@ -125,6 +125,11 @@ depois de uma rodada aceita, rode `python scripts/sim_gate.py plains desert taig
 `docs/testing/sim-baseline.json`. A rodada leva cerca de 15 a 30 minutos por alvo. Feche o Minecraft antes, e não edite
 `src` enquanto ela roda.
 
+**Modos do grafo (ADR-057).** `python scripts/biome_sim.py plains desert taiga --days 3 --graph-mode regioes` liga o
+modo pelo RCON (`/vc grafo modo`) e grava em `run/biome-sim/reports/<alvo>@<modo>/`. Depois,
+`python scripts/sim_gate.py plains@regioes desert@regioes taiga@regioes` compara com a base do alvo, que é a do modo
+`atual`.
+
 ## Analisar execuções já concluídas
 
 Depois de rodar testes, clique `Analisar relatórios` na janela ou execute:

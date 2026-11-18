@@ -219,7 +219,8 @@ def main(argv):
         with open(os.path.join(args.reports, target, "metrics.json"), "w", encoding="utf-8", newline="\n") as out:
             json.dump(current, out, ensure_ascii=False, indent=2)
 
-        base = baseline.get(target)
+        # <alvo>@<modo> (ADR-057) compara com a base do alvo, que é a do modo atual.
+        base = baseline.get(target.split("@")[0])
         usable = comparable(current, base)
         print(f"## {target} (semente {current['semente']}, {current['dias']} dias)\n")
 
