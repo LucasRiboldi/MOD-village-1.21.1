@@ -129,6 +129,7 @@ public final class MinerHomeFoundation {
 
         if (placed) {
             com.villagecolony.fabric.integration.PlacedLogs.scan(world, template.get().calculateBoundingBox(placement, corner), "miner_home");
+            com.villagecolony.fabric.integration.DoorPaths.pave(world, template.get().calculateBoundingBox(placement, corner));
         }
 
         return placed;
