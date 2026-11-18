@@ -111,6 +111,8 @@ public final class RoadGraphRefresh {
         CHANGES.clear();
         NEXT.clear();
         SCANS.clear();
+        RoadGraphBuilds.clearAll();
+        com.villagecolony.fabric.integration.RoadRegionEvents.clearAll();
     }
 
     /** Pede a releitura na próxima passada. */
@@ -363,7 +365,7 @@ public final class RoadGraphRefresh {
         // ADR-057: o modo ligado monta o grafo; os três entregam o mesmo resultado.
         com.villagecolony.core.construction.model.RoadGraphMode mode =
                 com.villagecolony.data.save.GraphModeSavedData.get(world.getServer()).mode();
-        RoadLines.Result result = RoadGraphBuilds.build(mode, new RoadGraphBuilds.Input(cells, planned, colony.center(),
+        RoadLines.Result result = RoadGraphBuilds.build(mode, new RoadGraphBuilds.Input(id, cells, planned, colony.center(),
                 fronts, RoadShape.farmRings(world, colony, terrain), terrain, LINKS_PER_READ, turn, fixed, retired,
                 store.graph(id)));
         Set<ColonyPos> read = cells;
@@ -417,11 +419,11 @@ public final class RoadGraphRefresh {
                 store.update(colony.id(), graph);
                 // Regra 295: quantas colunas o calçador recusou — a busca da ligação passa longe delas.
                 // Regra 317: quantas vezes o grafo mudou hoje — a medida do laço (estudo do grafo, §8).
-                VillageColonyMod.LOGGER.info("VC_ROAD_GRAPH colony={} nodes={} edges={} toPave={} isolated={} offLine={} capped={} fixed={} refused={} changes={} loose={} mode={}",
+                VillageColonyMod.LOGGER.info("VC_ROAD_GRAPH colony={} nodes={} edges={} toPave={} isolated={} offLine={} capped={} fixed={} refused={} changes={} loose={} mode={} dirty={}",
                         colony.id().toString().substring(0, 8), graph.nodes().size(), graph.edges().size(),
                         result.toPave().size(), result.isolated(), offLine, capped, fixed,
                         REFUSED.getOrDefault(colony.id(), Set.of()).size(), changedOn(colony.id(), today),
-                        String.join(";", result.loose()), mode.id());
+                        String.join(";", result.loose()), mode.id(), RoadGraphBuilds.lastDirty(colony.id()));
             }
         } catch (IllegalArgumentException refused) {
             // O grafo anterior continua: formato recusado não derruba o servidor nem o save.

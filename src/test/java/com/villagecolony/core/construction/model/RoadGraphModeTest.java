@@ -7,7 +7,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** ADR-057: os três modos do grafo têm nome de comando e cor de aresta própria. */
+/** Regra 318 (ADR-057): os três modos do grafo têm nome de comando e cor de aresta própria. */
 class RoadGraphModeTest {
 
     @Test

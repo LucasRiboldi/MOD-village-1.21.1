@@ -8,7 +8,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** ADR-057: a aresta sai com a cor do modo ligado; o trecho travado segue verde. */
+/** Regra 318 (ADR-057): a aresta sai com a cor do modo ligado; o trecho travado segue verde. */
 class RoadMapRunsTest {
 
     @Test

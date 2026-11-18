@@ -304,7 +304,8 @@
       "com.villagecolony.fabric.work.BoneMealRoundGameTest",
       "com.villagecolony.fabric.work.ClimbOutwardGameTest",
       "com.villagecolony.fabric.integration.DoorPathsGameTest",
-      "com.villagecolony.gametest.FarmerTillLoopGameTest"
+      "com.villagecolony.gametest.FarmerTillLoopGameTest",
+      "com.villagecolony.fabric.integration.RoadRegionEventsGameTest"
     ]
   },
   "depends": {
