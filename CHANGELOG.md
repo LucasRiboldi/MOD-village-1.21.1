@@ -12,6 +12,20 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.92] — candidata, 2026-11-17
+
+Do jogo da 0.4.91 (17-11, Spark `pkfBfAxYsv`). Nada visto em jogo.
+
+### Corrigido
+
+- Regra 313: depois do degrau da porta (a escada da soleira nasce de um encaixe do molde), a entrada e o patamar ficam no
+  chão, um abaixo do piso, com o solo no topo — antes ficava um bloco de caminho sozinho, um acima do chão.
+- Regra 314: a BigHouseMOD e a casa do mineiro nascem com caminho rente ao chão na porta.
+
+### Verificado
+
+- `./gradlew.bat build` verde; `runGametest` 1.187/1.187 em duas rodadas seguidas; Sentinela `fast` PASS.
+
 ## [0.4.91] — candidata, 2026-11-17
 
 Do jogo da 0.4.90 (16-11, Spark `91TxnT5c0X`). Regras 305 a 312 em [`docs/RULES.md`](docs/RULES.md); nada visto em

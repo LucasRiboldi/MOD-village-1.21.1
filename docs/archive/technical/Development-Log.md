@@ -11871,6 +11871,17 @@ sobre água ganha base até o piso; a água fora da vila fica. `reachesGeneratio
 GameTests, build e unitários verdes, Sentinela `fast` PASS (20261115T142707Z). README sincronizado com a Regra 287 no PR #85 (o CI tinha caído por isso).
 Nada visto em jogo; só aparece em mundo novo.
 
+## 2026-11-17 — 0.4.92: Regras 313 e 314 (jogo da 0.4.91)
+
+Jogo da 0.4.91 (17-11, mundo novo, colônia 29a51a62, Spark `pkfBfAxYsv`, 6 min). Medida das 21 portas da vila no save:
+15 com escada no piso da porta, entrada no piso e chão um abaixo. A escada é o `final_state` de um encaixe do molde, que
+a leitura da Regra 305 pulava.
+
+- 313 (b335a26c): o encaixe conta pelo bloco que vira; depois do degrau, entrada e patamar um abaixo, solo no topo.
+- 314 (a02ff748): `DoorPaths.pave` na BigHouseMOD e na casa do mineiro.
+
+Verificado: `runGametest` 1.187/1.187 duas vezes, Sentinela `fast` PASS. Instável visto: `ShepherdGameTest` (1 rodada).
+
 ## 2026-11-17 — 0.4.91: Regras 305 a 312 (jogo da 0.4.90)
 
 Jogo da 0.4.90 (16-11, colônia 4108746a, Spark `91TxnT5c0X`, 248 min, TPS 19,95). Escolhas do autor e commits na

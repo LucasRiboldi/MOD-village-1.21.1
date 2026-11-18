@@ -74,6 +74,12 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
   - blocos que surgiram (`VC_SUPPLY`): argila ×240 e argila em bola ×8, cerca de carvalho ×40 e tora ×25
     (`MISSING_PIECE`); terracota branca ×47 (`APPEARING_PIECE`); prismarinho ×144 (`AUTOMATIC_DROP`) — buscar o
     fluxo de fabricação de cada um (M)
+- [ ] 🔴 Jogo da 0.4.91 (17-11, mundo novo, Spark `pkfBfAxYsv`, 6 min), triagem e escolhas do autor:
+  - bloco de caminho alto na frente das portas (15 de 17 portas no save) e BigHouseMOD sem caminho na porta: Regras 313
+    e 314 na 0.4.92 (candidatas; só em vila gerada depois);
+  - jogo curto: sem `VC_TIME`; as Regras 305 a 312 seguem sem medida em jogo;
+  - blocos que surgiram (`VC_SUPPLY`): pó de osso ×16 (`BONE_MEAL_FOR_THE_FARM`, declarado) e terra arada ×9
+    (`SHAPED_GROUND`) — nenhum novo a buscar fabricação (P)
 - [ ] 🔴 Jogo da 0.4.90 (16-11, Spark `91TxnT5c0X`, 248 min), triagem e escolhas do autor:
   - entrada da casa (`doors:0`), aresta fixa, telhado como chão, argila em laço, curral vazio, fazendeiro parado,
     construtor sem areia e mineiro encalhado 14 vezes: Regras 305 a 312 na 0.4.91 (candidatas; conferir no próximo jogo);
