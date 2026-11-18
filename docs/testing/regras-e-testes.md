@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 217
+- **Cita a regra:** 218
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -333,3 +333,4 @@ classe prova menos ainda.
 | 320 | Modo vizinhanca: o grafo nasce das entradas, liga todas e cresce (autor 18-11, ADR-057, m… | cita | NeighborhoodRoadsTest |
 | 321 | A porta do jogador é entrada do grafo (autor 18-11, para todos os modos do grafo; cumpre… | cita | PlayerDoorsGameTest |
 | 322 | Só se calça a aresta estável (autor 18-11, para todos os modos do grafo, junto da ideia d… | cita | EntrancesAtTheDoorGameTest, RoadStabilityTest |
+| 323 | O terreno da vila inteira arrumado pelos aldeões (autor 18-11, escolha "a vila inteira":… | cita | TerrainDefectsTest, TerrainQueueGameTest |
