@@ -50,6 +50,11 @@ public final class NeighborhoodRoads {
 
         private final Map<List<Long>, List<ColonyPos>> byPair = new HashMap<>();
 
+        /** Por lado, o caminho mais distante da última vez e o dia em que a ponta andou (Regra 320). */
+        private final Map<Integer, ColonyPos> lastEdge = new HashMap<>();
+
+        private final Map<Integer, Long> lastDay = new HashMap<>();
+
         /** Quantas ligações estão guardadas. */
         public int size() {
             return byPair.size();
@@ -59,48 +64,58 @@ public final class NeighborhoodRoads {
     private NeighborhoodRoads() {
     }
 
-    /** O grafo do modo 3. */
+    /** Quantos pares mais próximos cada parte solta tenta para chegar à parte do centro. */
+    static final int LINK_TRIES = 3;
+
+    /** As quatro direções para fora da vila: leste, oeste, sul e norte. */
+    private static final int[][] SIDES = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+
+    /**
+     * O grafo do modo 3. Depois das ligações de vizinhança, toda parte que não chega ao centro liga pelo par mais próximo,
+     * sem o limite de {@value #MAX_EDGE} blocos. Em cada lado, o caminho mais distante do centro vira nó, e um bloco além
+     * dele vira a ponta: ela anda no máximo um bloco por dia e não passa de {@code limit} ({minX, minZ, maxX, maxZ}).
+     */
     public static RoadLines.Result build(Set<ColonyPos> cells, ColonyPos center, Set<ColonyPos> fronts, PathTerrain terrain,
-                                         Routes routes, Set<Long> dirty) {
+                                         Routes routes, Set<Long> dirty, int[] limit, long today) {
         Map<Long, Integer> physical = new HashMap<>();
 
         cells.forEach(at -> physical.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
 
         Map<Long, ColonyPos> nodes = new TreeMap<>();
         int hubY = terrain.groundY(center.x(), center.z(), center.y()).orElse(center.y());
+        long hub = ColonyRoads.column(center.x(), center.z());
 
-        nodes.put(ColonyRoads.column(center.x(), center.z()), new ColonyPos(center.x(), hubY, center.z()));
+        nodes.put(hub, new ColonyPos(center.x(), hubY, center.z()));
         fronts.forEach(at -> nodes.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at));
 
-        List<List<Long>> pairs = neighborhood(nodes);
+        ColonyPos[] frontier = frontiers(cells, center);
+
+        for (ColonyPos edge : frontier) {
+            if (edge != null) {
+                nodes.putIfAbsent(ColonyRoads.column(edge.x(), edge.z()), edge);
+            }
+        }
+
         Map<Long, Integer> columns = new LinkedHashMap<>();
-        Set<Long> linked = new HashSet<>();
-        int routed = 0;
+        Map<Long, Long> parent = new HashMap<>();
+        Set<List<Long>> used = new HashSet<>();
+        int[] routed = {0};
 
-        routes.byPair.keySet().retainAll(new HashSet<>(pairs));
+        nodes.keySet().forEach(node -> parent.put(node, node));
 
-        for (List<Long> pair : pairs) {
-            List<ColonyPos> route = routes.byPair.get(pair);
-            boolean stale = route == null || route.stream().anyMatch(at -> dirty.contains(RoadRegions.regionOf(at.x(), at.z())));
-
-            ColonyPos first = nodes.get(pair.get(0));
-            ColonyPos second = nodes.get(pair.get(1));
-
-            if (stale && routed < ROUTES_PER_BUILD && first != null && second != null) {
-                routed++;
-                route = route(first, second, physical, terrain).orElse(null);
-
-                if (route == null) {
-                    routes.byPair.remove(pair);
-                } else {
-                    routes.byPair.put(pair, route);
-                }
+        for (List<Long> pair : neighborhood(nodes)) {
+            if (link(pair, nodes, physical, terrain, routes, dirty, routed, true, columns)) {
+                used.add(pair);
+                union(parent, pair.get(0), pair.get(1));
             }
+        }
 
-            if (route != null) {
-                route.forEach(at -> columns.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
-                linked.addAll(pair);
-            }
+        connect(nodes, hub, parent, physical, terrain, routes, dirty, routed, columns, used);
+        routes.byPair.keySet().retainAll(used);
+
+        for (int side = 0; side < SIDES.length; side++) {
+            tip(side, frontier[side], physical, terrain, routes, limit, today, parent, hub).ifPresent(stub ->
+                    columns.putIfAbsent(ColonyRoads.column(stub.x(), stub.z()), stub.y()));
         }
 
         Map<Long, Integer> toLay = new HashMap<>();
@@ -114,9 +129,12 @@ public final class NeighborhoodRoads {
         });
 
         List<String> loose = new ArrayList<>();
+        long main = find(parent, hub);
 
         for (ColonyPos front : fronts) {
-            if (!linked.contains(ColonyRoads.column(front.x(), front.z()))) {
+            long column = ColonyRoads.column(front.x(), front.z());
+
+            if (find(parent, column) != main) {
                 loose.add("door@" + front.x() + "," + front.y() + "," + front.z() + ":no-route");
             }
         }
@@ -127,6 +145,147 @@ public final class NeighborhoodRoads {
 
         return new RoadLines.Result(Optional.of(RoadLinesGraph.of(columns, toLay, center, doors)),
                 RoadLines.toPave(columns, toLay, physical), 0, List.of(), List.copyOf(loose));
+    }
+
+    /** Uma ligação: a guardada, se nenhum quadrado sujo a cruza, ou uma nova pelo A*; diz se ligou. */
+    private static boolean link(List<Long> pair, Map<Long, ColonyPos> nodes, Map<Long, Integer> physical,
+                                PathTerrain terrain, Routes routes, Set<Long> dirty, int[] routed, boolean budgeted,
+                                Map<Long, Integer> columns) {
+        List<ColonyPos> route = routes.byPair.get(pair);
+        boolean stale = route == null || route.stream().anyMatch(at -> dirty.contains(RoadRegions.regionOf(at.x(), at.z())));
+        ColonyPos first = nodes.get(pair.get(0));
+        ColonyPos second = nodes.get(pair.get(1));
+
+        if (stale && (!budgeted || routed[0] < ROUTES_PER_BUILD) && first != null && second != null) {
+            routed[0] += budgeted ? 1 : 0;
+            route = route(first, second, physical, terrain).orElse(null);
+
+            if (route == null) {
+                routes.byPair.remove(pair);
+            } else {
+                routes.byPair.put(pair, route);
+            }
+        }
+
+        if (route == null) {
+            return false;
+        }
+
+        route.forEach(at -> columns.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
+
+        return true;
+    }
+
+    /** Toda parte que não chega ao centro tenta os {@value #LINK_TRIES} pares mais próximos com a parte do centro. */
+    private static void connect(Map<Long, ColonyPos> nodes, long hub, Map<Long, Long> parent, Map<Long, Integer> physical,
+                                PathTerrain terrain, Routes routes, Set<Long> dirty, int[] routed,
+                                Map<Long, Integer> columns, Set<List<Long>> used) {
+        for (long node : nodes.keySet()) {
+            if (find(parent, node) == find(parent, hub)) {
+                continue;
+            }
+
+            long part = find(parent, node);
+            List<List<Long>> candidates = new ArrayList<>();
+
+            for (long inPart : nodes.keySet()) {
+                if (find(parent, inPart) != part) {
+                    continue;
+                }
+
+                for (long inMain : nodes.keySet()) {
+                    if (find(parent, inMain) == find(parent, hub)) {
+                        candidates.add(List.of(Math.min(inPart, inMain), Math.max(inPart, inMain)));
+                    }
+                }
+            }
+
+            candidates.sort(Comparator.comparingLong(pair -> squaredColumns(pair.get(0), pair.get(1))));
+
+            for (List<Long> pair : candidates.subList(0, Math.min(LINK_TRIES, candidates.size()))) {
+                if (link(pair, nodes, physical, terrain, routes, dirty, routed, false, columns)) {
+                    used.add(pair);
+                    union(parent, pair.get(0), pair.get(1));
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * O caminho mais distante do centro em cada lado (leste, oeste, sul, norte), dentro do cone daquele lado; nulo no lado
+     * sem caminho.
+     */
+    static ColonyPos[] frontiers(Set<ColonyPos> cells, ColonyPos center) {
+        ColonyPos[] best = new ColonyPos[SIDES.length];
+        int[] reach = new int[SIDES.length];
+
+        for (ColonyPos at : cells) {
+            int dx = at.x() - center.x();
+            int dz = at.z() - center.z();
+
+            for (int side = 0; side < SIDES.length; side++) {
+                int along = dx * SIDES[side][0] + dz * SIDES[side][1];
+                int across = Math.abs(SIDES[side][0] == 0 ? dx : dz);
+
+                if (along > 0 && across <= along && (best[side] == null || along > reach[side])) {
+                    best[side] = at;
+                    reach[side] = along;
+                }
+            }
+        }
+
+        return best;
+    }
+
+    /**
+     * A ponta deste lado: um bloco além do caminho mais distante, no chão, a até 1 bloco de degrau, dentro do limite. Anda
+     * no máximo um bloco por dia: com o caminho mais distante novo no mesmo dia em que a ponta andou, espera o dia seguinte.
+     */
+    private static Optional<ColonyPos> tip(int side, ColonyPos edge, Map<Long, Integer> physical, PathTerrain terrain,
+                                           Routes routes, int[] limit, long today, Map<Long, Long> parent, long hub) {
+        if (edge == null || find(parent, ColonyRoads.column(edge.x(), edge.z())) != find(parent, hub)) {
+            return Optional.empty();
+        }
+
+        ColonyPos last = routes.lastEdge.get(side);
+
+        if (!edge.equals(last)) {
+            if (last != null && today <= routes.lastDay.getOrDefault(side, Long.MIN_VALUE)) {
+                return Optional.empty();
+            }
+
+            routes.lastEdge.put(side, edge);
+            routes.lastDay.put(side, today);
+        }
+
+        int x = edge.x() + SIDES[side][0];
+        int z = edge.z() + SIDES[side][1];
+
+        if (x < limit[0] || z < limit[1] || x > limit[2] || z > limit[3] || physical.containsKey(ColonyRoads.column(x, z))
+                || terrain.blocked(x, z)) {
+            return Optional.empty();
+        }
+
+        OptionalInt ground = terrain.groundY(x, z, edge.y());
+
+        return ground.isPresent() && Math.abs(ground.getAsInt() - edge.y()) <= 1
+                ? Optional.of(new ColonyPos(x, ground.getAsInt(), z))
+                : Optional.empty();
+    }
+
+    private static long find(Map<Long, Long> parent, long node) {
+        long root = node;
+
+        while (parent.getOrDefault(root, root) != root) {
+            root = parent.getOrDefault(root, root);
+        }
+
+        return root;
+    }
+
+    private static void union(Map<Long, Long> parent, long a, long b) {
+        parent.put(find(parent, a), find(parent, b));
     }
 
     /** Os pares do grafo de vizinhança relativa entre os nós, até {@value #MAX_EDGE} blocos, cada par em ordem. */
@@ -264,6 +423,13 @@ public final class NeighborhoodRoads {
         }
 
         return path.reversed();
+    }
+
+    private static long squaredColumns(long a, long b) {
+        long dx = (long) ColonyRoads.xOf(a) - ColonyRoads.xOf(b);
+        long dz = (long) ColonyRoads.zOf(a) - ColonyRoads.zOf(b);
+
+        return dx * dx + dz * dz;
     }
 
     private static long squared(ColonyPos a, ColonyPos b) {

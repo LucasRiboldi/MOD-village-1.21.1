@@ -103,6 +103,12 @@ public final class RoadGraphRefresh {
         ServerTickEvents.END_SERVER_TICK.register(server -> tick(server.getOverworld()));
     }
 
+    /** Até onde a ponta do modo 3 anda: a caixa da colônia mais 128 blocos de cada lado (Regras 229 e 320). */
+    private static List<Integer> growthLimit(Colony colony) {
+        return colony.bounds().map(box -> List.of(box.minX() - 128, box.minZ() - 128, box.maxX() + 128, box.maxZ() + 128))
+                .orElse(List.of(0, 0, -1, -1));
+    }
+
     /** O modo do grafo mudou (ADR-057): o plano em memória sai, e toda colônia relê já. */
     public static void modeChanged() {
         PLANNED.clear();
@@ -367,7 +373,7 @@ public final class RoadGraphRefresh {
                 com.villagecolony.data.save.GraphModeSavedData.get(world.getServer()).mode();
         RoadLines.Result result = RoadGraphBuilds.build(mode, new RoadGraphBuilds.Input(id, cells, planned, colony.center(),
                 fronts, RoadShape.farmRings(world, colony, terrain), terrain, LINKS_PER_READ, turn, fixed, retired,
-                store.graph(id)));
+                store.graph(id), growthLimit(colony), today));
         Set<ColonyPos> read = cells;
 
         result.graph().ifPresent(graph -> {

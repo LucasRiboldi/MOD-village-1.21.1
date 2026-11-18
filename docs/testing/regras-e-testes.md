@@ -330,6 +330,6 @@ classe prova menos ainda.
 | 317 | O log conta as mudanças do grafo no dia (autor 18-11, estudo do grafo §8 e §9 passo 2): a… | cita | RoadGraphChangesTest |
 | 318 | Três modos do grafo, um ligado por vez (autor 18-11, ADR-057): o grafo de ruas é montado… | cita | RoadGraphModeTest, RoadMapRunsTest |
 | 319 | Modo regioes: o grafo refeito só onde mudou (autor 18-11, ADR-057, modo 2; emendada no me… | cita | RoadRegionEventsGameTest, RoadRegionsTest |
-| 320 | Modo vizinhanca: o grafo nasce das entradas (autor 18-11, ADR-057, modo 3): os nós são o… | cita | NeighborhoodRoadsTest |
+| 320 | Modo vizinhanca: o grafo nasce das entradas, liga todas e cresce (autor 18-11, ADR-057, m… | cita | NeighborhoodRoadsTest |
 | 321 | A porta do jogador é entrada do grafo (autor 18-11, para todos os modos do grafo; cumpre… | cita | PlayerDoorsGameTest |
 | 322 | Só se calça a aresta estável (autor 18-11, para todos os modos do grafo, junto da ideia d… | cita | EntrancesAtTheDoorGameTest, RoadStabilityTest |

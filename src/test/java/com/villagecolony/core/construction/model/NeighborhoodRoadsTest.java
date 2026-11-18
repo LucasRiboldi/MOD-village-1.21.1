@@ -22,6 +22,9 @@ class NeighborhoodRoadsTest {
 
     private static final PathTerrain FLAT = terrain(Set.of());
 
+    /** Sem crescimento: o limite fica nos próprios nós. */
+    private static final int[] NO_GROWTH = {0, 0, -1, -1};
+
     /** Chão plano, com água (sem chão) nas colunas dadas. */
     private static PathTerrain terrain(Set<Long> water) {
         return new PathTerrain() {
@@ -59,7 +62,7 @@ class NeighborhoodRoadsTest {
     @Test
     void everyEntranceGetsLinkedToTheCenter() {
         RoadLines.Result result = NeighborhoodRoads.build(Set.of(), at(0, 0), Set.of(at(12, 0), at(0, 15), at(-10, -6)), FLAT,
-                new NeighborhoodRoads.Routes(), Set.of());
+                new NeighborhoodRoads.Routes(), Set.of(), NO_GROWTH, 0);
         Set<ColonyPos> columns = columnsOf(result);
 
         assertTrue(result.loose().isEmpty(), "entrada sem ligação: " + result.loose());
@@ -97,18 +100,60 @@ class NeighborhoodRoadsTest {
         NeighborhoodRoads.Routes routes = new NeighborhoodRoads.Routes();
         Set<ColonyPos> fronts = Set.of(at(30, 0));
 
-        NeighborhoodRoads.build(Set.of(), at(0, 0), fronts, FLAT, routes, Set.of());
+        NeighborhoodRoads.build(Set.of(), at(0, 0), fronts, FLAT, routes, Set.of(), NO_GROWTH, 0);
         assertEquals(1, routes.size());
 
         RoadLines.Result again = NeighborhoodRoads.build(Set.of(), at(0, 0), fronts, terrain(Set.of(ColonyRoads.column(15, 0))),
-                routes, Set.of());
+                routes, Set.of(), NO_GROWTH, 0);
 
         assertTrue(columnsOf(again).contains(at(15, 0)), "sem quadrado sujo, a ligação guardada devia ficar como estava");
 
         RoadLines.Result dirty = NeighborhoodRoads.build(Set.of(), at(0, 0), fronts, terrain(Set.of(ColonyRoads.column(15, 0))),
-                routes, Set.of(RoadRegions.regionOf(15, 0)));
+                routes, Set.of(RoadRegions.regionOf(15, 0)), NO_GROWTH, 0);
 
         assertFalse(columnsOf(dirty).contains(at(15, 0)), "com o quadrado sujo, a ligação devia desviar da água nova");
         assertSame(dirty.loose().isEmpty(), true);
+    }
+
+    @Test
+    void anEntranceBeyondTheNeighborhoodReachStillGetsLinked() {
+        RoadLines.Result result = NeighborhoodRoads.build(Set.of(), at(0, 0), Set.of(at(10, 0), at(150, 0)), FLAT,
+                new NeighborhoodRoads.Routes(), Set.of(), NO_GROWTH, 0);
+
+        assertTrue(result.loose().isEmpty(), "Regra 320: entrada a 150 blocos ficou solta: " + result.loose());
+        assertTrue(columnsOf(result).contains(at(150, 0)), "Regra 320: a entrada distante não entrou no grafo");
+    }
+
+    @Test
+    void theEastTipGrowsOneBlockADay() {
+        NeighborhoodRoads.Routes routes = new NeighborhoodRoads.Routes();
+        int[] limit = {-200, -200, 200, 200};
+        Set<ColonyPos> street = new HashSet<>();
+
+        for (int x = 0; x <= 20; x++) {
+            street.add(at(x, 0));
+        }
+
+        assertTrue(columnsOf(NeighborhoodRoads.build(street, at(0, 0), Set.of(), FLAT, routes, Set.of(), limit, 0))
+                .contains(at(21, 0)), "Regra 320: a ponta leste não ganhou o bloco de fora");
+
+        street.add(at(21, 0));
+
+        assertFalse(columnsOf(NeighborhoodRoads.build(street, at(0, 0), Set.of(), FLAT, routes, Set.of(), limit, 0))
+                .contains(at(22, 0)), "Regra 320: a ponta andou dois blocos no mesmo dia");
+        assertTrue(columnsOf(NeighborhoodRoads.build(street, at(0, 0), Set.of(), FLAT, routes, Set.of(), limit, 1))
+                .contains(at(22, 0)), "Regra 320: a ponta não andou no dia seguinte");
+    }
+
+    @Test
+    void theTipStopsAtTheLimit() {
+        Set<ColonyPos> street = new HashSet<>();
+
+        for (int x = 0; x <= 20; x++) {
+            street.add(at(x, 0));
+        }
+
+        assertFalse(columnsOf(NeighborhoodRoads.build(street, at(0, 0), Set.of(), FLAT, new NeighborhoodRoads.Routes(),
+                Set.of(), new int[] {-200, -200, 20, 200}, 0)).contains(at(21, 0)), "Regra 320: a ponta passou do limite");
     }
 }

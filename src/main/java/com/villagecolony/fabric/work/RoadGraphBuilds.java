@@ -43,7 +43,7 @@ final class RoadGraphBuilds {
     /** O que a releitura leu, igual para os três modos. */
     record Input(UUID colonyId, Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> fronts,
                  Set<ColonyPos> farmRings, PathTerrain terrain, int maxLinks, int turn, Set<ColonyPos> fixed,
-                 Set<ColonyPos> retired, Optional<RoadGraph> previous) {
+                 Set<ColonyPos> retired, Optional<RoadGraph> previous, java.util.List<Integer> limit, long today) {
     }
 
     /** O grafo pelo modo; a trava de dias (Regras 225 e 306) só vale no modo atual. */
@@ -83,7 +83,7 @@ final class RoadGraphBuilds {
 
         return com.villagecolony.core.construction.model.NeighborhoodRoads.build(in.cells(), in.center(), in.fronts(),
                 in.terrain(), ROUTES.computeIfAbsent(in.colonyId(),
-                        ignored -> new com.villagecolony.core.construction.model.NeighborhoodRoads.Routes()), dirty);
+                        ignored -> new com.villagecolony.core.construction.model.NeighborhoodRoads.Routes()), dirty, in.limit().stream().mapToInt(Integer::intValue).toArray(), in.today());
     }
 
     /**
