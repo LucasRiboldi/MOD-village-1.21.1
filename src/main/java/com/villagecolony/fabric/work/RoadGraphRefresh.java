@@ -93,6 +93,8 @@ public final class RoadGraphRefresh {
     private static final Map<UUID, Set<Long>> REFUSED = new HashMap<>();
     private static final Map<UUID, PlannedPaths> PLANNED = new HashMap<>();
     private static final Map<UUID, Integer> TURNS = new HashMap<>();
+    /** Por colônia: o dia de jogo e quantas vezes o grafo mudou nele (Regra 317). */
+    private static final Map<UUID, long[]> CHANGES = new HashMap<>();
 
     private RoadGraphRefresh() {
     }
@@ -360,7 +362,7 @@ public final class RoadGraphRefresh {
 
             long offLine = read.stream().filter(at -> !line.contains(ColonyRoads.column(at.x(), at.z()))).count();
 
-            update(colony, store, graph, result, offLine, capped, fixed.size());
+            update(colony, store, graph, result, offLine, capped, fixed.size(), today);
             store.settle(id, RoadSettling.track(since, line, today));
             publishNetwork(colony, graph);
             RoadShape.growTips(world, colony, graph, terrain);
@@ -394,15 +396,17 @@ public final class RoadGraphRefresh {
     }
 
     private static void update(Colony colony, com.villagecolony.data.save.RoadGraphStore store, RoadGraph graph,
-                               RoadLines.Result result, long offLine, int capped, int fixed) {
+                               RoadLines.Result result, long offLine, int capped, int fixed, long today) {
         try {
             if (!store.graph(colony.id()).equals(Optional.of(graph))) {
                 store.update(colony.id(), graph);
                 // Regra 295: quantas colunas o calçador recusou — a busca da ligação passa longe delas.
-                VillageColonyMod.LOGGER.info("VC_ROAD_GRAPH colony={} nodes={} edges={} toPave={} isolated={} offLine={} capped={} fixed={} refused={} loose={}",
+                // Regra 317: quantas vezes o grafo mudou hoje — a medida do laço (estudo do grafo, §8).
+                VillageColonyMod.LOGGER.info("VC_ROAD_GRAPH colony={} nodes={} edges={} toPave={} isolated={} offLine={} capped={} fixed={} refused={} changes={} loose={}",
                         colony.id().toString().substring(0, 8), graph.nodes().size(), graph.edges().size(),
                         result.toPave().size(), result.isolated(), offLine, capped, fixed,
-                        REFUSED.getOrDefault(colony.id(), Set.of()).size(), String.join(";", result.loose()));
+                        REFUSED.getOrDefault(colony.id(), Set.of()).size(), changedOn(colony.id(), today),
+                        String.join(";", result.loose()));
             }
         } catch (IllegalArgumentException refused) {
             // O grafo anterior continua: formato recusado não derruba o servidor nem o save.
@@ -445,8 +449,21 @@ public final class RoadGraphRefresh {
         return VillageRoad.isPathBlock(world.getBlockState(new BlockPos(step.x(), step.floorY(), step.z())));
     }
 
+    /** Mais uma mudança do grafo desta colônia no dia {@code today}; devolve quantas houve no dia (Regra 317). */
+    static long changedOn(UUID colonyId, long today) {
+        long[] day = CHANGES.computeIfAbsent(colonyId, ignored -> new long[] {today, 0});
+
+        if (day[0] != today) {
+            day[0] = today;
+            day[1] = 0;
+        }
+
+        return ++day[1];
+    }
+
     private static void clearAll() {
         MineGates.clearAll();
+        CHANGES.clear();
         NEXT.clear();
         SCANS.clear();
         REFUSED.clear();

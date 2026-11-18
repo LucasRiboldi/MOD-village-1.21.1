@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 211
+- **Cita a regra:** 212
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -327,3 +327,4 @@ classe prova menos ainda.
 | 314 | A casa do mod nasce com caminho na porta (autor 17-11, jogo da 0.4.91, opção 2A: a porta… | cita | DoorPathsGameTest |
 | 315 | O fazendeiro semeia a terra comum até o fim, e o alvo recusado fica de lado (autor 18-11,… | cita | FarmerSetAsideTest, FarmerTillLoopGameTest |
 | 316 | A rua da vila gerada não é sobra (autor 18-11, estudo do grafo §3.4, corte do laço: a pas… | cita | RoadRulesGameTest |
+| 317 | O log conta as mudanças do grafo no dia (autor 18-11, estudo do grafo §8 e §9 passo 2): a… | cita | RoadGraphChangesTest |
