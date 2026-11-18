@@ -309,7 +309,8 @@ public final class FarmerWork {
         }
 
         if (!stillWorth(world, job, storage.get())) {
-            // Alguém colheu entre planejar e chegar, ou o bloco mudou.
+            // Alguém colheu entre planejar e chegar, ou o bloco mudou: ele fica de lado um tempo (Regra 315).
+            FarmerSetAside.refuse(workerId, job.target, world.getTime());
             release(workerId, job);
 
             return;
@@ -349,14 +350,14 @@ public final class FarmerWork {
      *
      * <p>A pergunta é a do próprio trabalho, e é por isso que ela mora
      * aqui e não no {@code step}: colher pede lavoura madura, semear pede
-     * canteiro vazio <b>e</b> semente no baú, arar pede a terra ainda de
+     * canteiro vazio ou a terra comum da roça (Regra 315) <b>e</b> semente no baú, arar pede a terra ainda de
      * pé. Perguntar sempre "está maduro?" mandaria o semeador embora na
      * primeira passagem.
      */
     private static boolean stillWorth(ServerWorld world, Job job, WorkerStorage storage) {
         return switch (job.chore) {
             case HARVEST -> CropPatch.isRipe(world.getBlockState(job.target));
-            case SOW -> CropPatch.isEmptyPlot(world, job.target)
+            case SOW -> (CropPatch.isEmptyPlot(world, job.target) || OwnFarm.isTillable(world, job.target))
                     && FarmerChores.seedChest(world, job.task.colonyId(), storage.chestPosition()).isPresent();
             case FERTILIZE -> BoneMealRound.isGreen(world.getBlockState(job.target));
         };

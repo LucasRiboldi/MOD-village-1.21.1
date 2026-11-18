@@ -137,6 +137,11 @@ final class FarmerChores {
             return;
         }
 
+        // O alvo que a conferência acabou de recusar fica de lado (Regra 315).
+        if (FarmerSetAside.isSetAside(workerId, found.get(), world.getTime())) {
+            return;
+        }
+
         // Achou: o campo voltou a render, e o descanso não vale mais.
         FieldRest.thereIsWorkAgain(colonyId);
 
@@ -179,7 +184,7 @@ final class FarmerChores {
                 seedChest(world, job.task.colonyId(), storage.chestPosition()).isPresent(),
                 FarmOwners.isSecondOwner(workerId)));
 
-        if (found.isEmpty()) {
+        if (found.isEmpty() || FarmerSetAside.isSetAside(workerId, found.get().at(), world.getTime())) {
             job.ownFarmQuietUntil = world.getTime() + OwnFarm.QUIET_TICKS;
 
             return false;
