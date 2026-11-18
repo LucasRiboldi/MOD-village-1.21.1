@@ -47,7 +47,13 @@ public final class FarmOwners {
 
     /** Confere os donos desta colônia e dá roça a quem está sem. Uma vez por ciclo. */
     public static void assign(ServerWorld world, Colony colony) {
-        List<BlockBox> standing = slots(ColonyFarms.of(world, colony));
+        List<ColonyFarms.Farm> farms = ColonyFarms.of(world, colony);
+
+        // Os canteiros do molde da plantação grande, para o fazendeiro arar o que voltou a ser grama (Regra 325).
+        farms.stream().filter(farm -> LargeFarmPlans.MODEL.equals(farm.plan()))
+                .forEach(farm -> LargeFarmBeds.remember(world, farm.box()));
+
+        List<BlockBox> standing = slots(farms);
 
         List<UUID> farmers = VillageColonyMod.WORKERS.ofColony(colony.id()).stream()
                 .filter(worker -> worker.profession().filter(ProfessionType.FARMER::equals).isPresent())
