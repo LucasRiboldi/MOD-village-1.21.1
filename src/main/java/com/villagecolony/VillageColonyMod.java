@@ -224,6 +224,7 @@ public class VillageColonyMod implements ModInitializer {
         VillageChests.register();
         SiteSignJanitor.register();
         VillageLogCommand.register();
+        com.villagecolony.fabric.command.GraphModeCommand.register();
         com.villagecolony.fabric.command.BiomeCheck.register();
         com.villagecolony.fabric.command.MaeCommand.register();
         com.villagecolony.fabric.integration.MaeSites.register();

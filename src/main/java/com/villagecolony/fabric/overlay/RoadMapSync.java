@@ -125,7 +125,8 @@ public final class RoadMapSync {
             if (graph.isPresent()) {
                 Set<Long> fixed = RoadSettling.fixed(store.settled(colony.id()), today, graph);
 
-                addGraph(graph.get(), fixed, center, lines, markers, inGraph, budget);
+                addGraph(graph.get(), fixed, center, lines, markers, inGraph, budget,
+                        com.villagecolony.data.save.GraphModeSavedData.get(world.getServer()).mode().edgeColor());
             } else {
                 RoadIndex.roadsOf(colony.id())
                         .ifPresent(roads -> addIndex(world, roads, center, markers, inGraph, budget));
@@ -136,7 +137,7 @@ public final class RoadMapSync {
     }
 
     private static void addGraph(RoadGraph graph, Set<Long> fixed, BlockPos center, List<RoadMapPayload.Line> lines,
-                                 List<RoadMapPayload.Marker> markers, Set<Long> inGraph, int[] budget) {
+                                 List<RoadMapPayload.Marker> markers, Set<Long> inGraph, int[] budget, int line) {
         for (RoadGraph.Edge edge : graph.edges()) {
             List<Long> points = new ArrayList<>();
             List<Boolean> held = new ArrayList<>();
@@ -153,7 +154,7 @@ public final class RoadMapSync {
                 }
             }
 
-            addRuns(points, held, lines);
+            addRuns(points, held, lines, line);
         }
 
         for (RoadGraph.Node node : graph.nodes()) {
@@ -173,15 +174,20 @@ public final class RoadMapSync {
      * vizinhos dividem a coluna da troca, e a linha segue inteira na tela (Regra 234).
      */
     static void addRuns(List<Long> points, List<Boolean> held, List<RoadMapPayload.Line> lines) {
+        addRuns(points, held, lines, LINE);
+    }
+
+    /** O mesmo, com a cor da aresta do modo do grafo (ADR-057): amarelo, laranja ou roxo. */
+    static void addRuns(List<Long> points, List<Boolean> held, List<RoadMapPayload.Line> lines, int line) {
         if (points.size() < 2) {
             return;
         }
 
         List<Long> run = new ArrayList<>(List.of(points.getFirst()));
-        int color = colorOfStep(held, 1);
+        int color = colorOfStep(held, 1, line);
 
         for (int i = 1; i < points.size(); i++) {
-            int step = colorOfStep(held, i);
+            int step = colorOfStep(held, i, line);
 
             if (step != color) {
                 lines.add(new RoadMapPayload.Line(color, run));
@@ -195,8 +201,8 @@ public final class RoadMapSync {
         lines.add(new RoadMapPayload.Line(color, run));
     }
 
-    private static int colorOfStep(List<Boolean> held, int to) {
-        return held.get(to - 1) && held.get(to) ? FIXED : LINE;
+    private static int colorOfStep(List<Boolean> held, int to, int line) {
+        return held.get(to - 1) && held.get(to) ? FIXED : line;
     }
 
     private static void addIndex(ServerWorld world, ColonyRoads roads, BlockPos center,
