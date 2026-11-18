@@ -100,7 +100,8 @@ class MainTest(unittest.TestCase):
             worse = LOG.replace("work=50 walk=10 wait=10 blocked=20", "work=10 walk=10 wait=10 blocked=60")
             (target / "latest.log").write_text(worse, encoding="utf-8")
 
-            self.assertEqual(sim_gate.main(args), 1)
+            self.assertEqual(sim_gate.main(args), 0, "indicativo: sem --strict, só informa")
+            self.assertEqual(sim_gate.main(args + ["--strict"]), 1)
 
 
 if __name__ == "__main__":

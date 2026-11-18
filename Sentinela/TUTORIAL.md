@@ -118,7 +118,9 @@ O GameTest prova o mecanismo; o perfil `longo` mede o efeito, sem playtest manua
 | `surgidos_dia` (VC_SUPPLY por dia) | menor | 16 |
 | `encalhes_dia` | menor | 1 |
 
-A suite `sim-gate` reprova quando um número piora além da folga. Sem base comparável, ela só informa. Para gravar a base
+A suite `sim-gate` é **indicativa** (autor, 2026-11-18): a mesma semente varia muito entre rodadas, porque o comportamento
+dos aldeões tem acaso, e a folga fixa reprovava por ruído. Ela marca `pior` e `melhor`, mas só reprova com
+`python scripts/sim_gate.py ... --strict`. Para gravar a base
 depois de uma rodada aceita, rode `python scripts/sim_gate.py plains desert taiga --write-baseline` e faça commit de
 `docs/testing/sim-baseline.json`. A rodada leva cerca de 15 a 30 minutos por alvo. Feche o Minecraft antes, e não edite
 `src` enquanto ela roda.

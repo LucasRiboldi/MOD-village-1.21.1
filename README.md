@@ -894,8 +894,8 @@ no Sentinela atualizam esse tutorial no mesmo commit.
 - `full`: `fast` mais auditoria GameTest e PIT.
 - `longo`: simulação sem jogador de 3 dias de jogo em planície, deserto e taiga (`scripts/biome_sim.py`, semente
   fixa) e comparação com a linha de base `docs/testing/sim-baseline.json` (`scripts/sim_gate.py`): trabalho,
-  travado, obras, mudanças do grafo, partes soltas, blocos surgidos e encalhes por dia. Reprova quando um número piora
-  além da folga.
+  travado, obras, mudanças do grafo, partes soltas, blocos surgidos e encalhes por dia. Indicativo: marca o que piorou e
+  o que melhorou, e só reprova com `--strict` (a mesma semente varia muito entre rodadas).
 
 Os casos MAE de elegibilidade, proteção, interrupção e persistência entram nas
 suites `unit` e `gametest` existentes. Comandos focados e limites constam no

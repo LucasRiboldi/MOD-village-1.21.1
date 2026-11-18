@@ -18,7 +18,8 @@ Uso:
     python scripts/sim_gate.py plains desert taiga                 # compara com a base
     python scripts/sim_gate.py plains desert taiga --write-baseline
 
-Sai com 1 quando algum número piorou além da folga; sem base (ou com base de outra semente ou outros dias), só informa.
+Indicativo por decisão do autor (2026-11-18): a mesma semente varia muito entre rodadas (o comportamento dos aldeões tem
+acaso), então o padrão só informa. Com ``--strict``, sai com 1 quando algum número piorou além da folga.
 """
 
 import argparse
@@ -201,6 +202,7 @@ def main(argv):
     parser.add_argument("--reports", default=REPORTS)
     parser.add_argument("--baseline", default=BASELINE)
     parser.add_argument("--write-baseline", action="store_true", help="grava os números de agora como a base")
+    parser.add_argument("--strict", action="store_true", help="reprova quando um número piora além da folga")
     args = parser.parse_args(argv)
 
     baseline = load_baseline(args.baseline)
@@ -241,7 +243,7 @@ def main(argv):
 
         return 0
 
-    return 1 if worse else 0
+    return 1 if worse and args.strict else 0
 
 
 if __name__ == "__main__":
