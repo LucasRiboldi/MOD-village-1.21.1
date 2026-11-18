@@ -394,6 +394,11 @@ public final class LumberjackWork {
                 return TreeChoice.giveUp(world, job, workerId, TreeChoice.gotNoCloser(job.noCloser));
             }
 
+            // Copa baixa: a folha dos pés e da cabeça na coluna encostada sai ao chegar perto (Regra 324).
+            if (TrunkStand.clear(world, villager, job.plan.base()) > 0) {
+                job.stall.reset();
+            }
+
             TreeChoice.walkTo(world, villager, job.plan.base());
 
             return Outcome.WORKED;
