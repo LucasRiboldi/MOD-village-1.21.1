@@ -187,6 +187,13 @@ final class TerrainQueue {
         return box.minZ() + (index / across) * SQUARE;
     }
 
+    /** As colunas que os aldeões mudaram hoje na colônia. */
+    static int levelledToday(UUID colonyId, long today) {
+        State state = STATES.get(colonyId);
+
+        return state == null ? 0 : state.daily.used(today);
+    }
+
     static void clearAll() {
         STATES.clear();
     }

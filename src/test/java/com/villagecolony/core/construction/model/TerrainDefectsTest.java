@@ -100,6 +100,8 @@ class TerrainDefectsTest {
         assertEquals(3, daily.allowance(5, 32), "o teto do dia não segurou");
         daily.spend(5, 3);
         assertEquals(0, daily.allowance(5, 32));
+        assertEquals(TerrainDefects.DAILY_COLUMNS, daily.used(5), "a medida do dia não somou o que foi feito");
         assertEquals(32, daily.allowance(6, 32), "o teto não voltou no dia seguinte");
+        assertEquals(0, daily.used(6), "a medida não zerou no dia seguinte");
     }
 }

@@ -51,6 +51,13 @@ public final class TerrainDefects {
             return Math.max(0, Math.min(wanted, DAILY_COLUMNS - used));
         }
 
+        /** Quanto já foi feito hoje. */
+        public int used(long today) {
+            allowance(today, 0);
+
+            return used;
+        }
+
         /** Conta o que foi feito hoje. */
         public void spend(long today, int done) {
             allowance(today, 0);
