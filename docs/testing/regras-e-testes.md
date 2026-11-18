@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 214
+- **Cita a regra:** 215
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -330,3 +330,4 @@ classe prova menos ainda.
 | 317 | O log conta as mudanças do grafo no dia (autor 18-11, estudo do grafo §8 e §9 passo 2): a… | cita | RoadGraphChangesTest |
 | 318 | Três modos do grafo, um ligado por vez (autor 18-11, ADR-057): o grafo de ruas é montado… | cita | RoadGraphModeTest, RoadMapRunsTest |
 | 319 | Modo regioes: o grafo refeito só onde mudou (autor 18-11, ADR-057, modo 2): a caixa da vi… | cita | RoadRegionEventsGameTest, RoadRegionsTest |
+| 320 | Modo vizinhanca: o grafo nasce das entradas (autor 18-11, ADR-057, modo 3): os nós são o… | cita | NeighborhoodRoadsTest |

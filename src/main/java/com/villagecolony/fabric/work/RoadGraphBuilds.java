@@ -28,7 +28,10 @@ final class RoadGraphBuilds {
     /** Modo 2: a última impressão digital de cada quadrado, por colônia. */
     private static final Map<UUID, Map<Long, Integer>> PRINTS = new HashMap<>();
 
-    /** Quantos quadrados a última montagem refez, por colônia; -1 fora do modo 2. */
+    /** Modo 3: as ligações traçadas, por colônia. */
+    private static final Map<UUID, com.villagecolony.core.construction.model.NeighborhoodRoads.Routes> ROUTES = new HashMap<>();
+
+    /** Quantos quadrados a última montagem refez, por colônia; -1 no modo 1. */
     private static final Map<UUID, Integer> LAST_DIRTY = new HashMap<>();
 
     private RoadGraphBuilds() {
@@ -42,7 +45,7 @@ final class RoadGraphBuilds {
 
     /** O grafo pelo modo; a trava de dias (Regras 225 e 306) só vale no modo atual. */
     static RoadLines.Result build(RoadGraphMode mode, Input in) {
-        if (mode != RoadGraphMode.REGIOES) {
+        if (mode == RoadGraphMode.ATUAL) {
             LAST_DIRTY.remove(in.colonyId());
         }
 
@@ -50,8 +53,7 @@ final class RoadGraphBuilds {
             case ATUAL -> RoadLines.build(in.cells(), in.planned(), in.center(), in.fronts(), in.farmRings(), in.terrain(),
                     in.maxLinks(), in.turn(), in.fixed(), in.retired());
             case REGIOES -> regions(in);
-            case VIZINHANCA -> RoadLines.build(in.cells(), in.planned(), in.center(), in.fronts(), in.farmRings(),
-                    in.terrain(), in.maxLinks(), in.turn(), Set.of(), in.retired());
+            case VIZINHANCA -> neighborhood(in);
         };
     }
 
@@ -60,20 +62,39 @@ final class RoadGraphBuilds {
      * anterior nos quadrados limpos entram fixas, e só os sujos se ajeitam em volta.
      */
     private static RoadLines.Result regions(Input in) {
-        Set<ColonyPos> previous = in.previous().map(RoadRegions::columnsOf).orElse(Set.of());
-        Map<Long, Integer> prints = RoadRegions.fingerprints(in.cells(), in.planned(), in.fronts(), previous, in.terrain());
-        Set<Long> dirty = RoadRegions.dirty(PRINTS.getOrDefault(in.colonyId(), Map.of()), prints,
-                RoadRegionEvents.drain(in.colonyId()));
+        Set<Long> dirty = dirty(in);
         Set<ColonyPos> frozen = in.previous().map(graph -> RoadRegions.frozen(graph, dirty)).orElse(Set.of());
-
-        PRINTS.put(in.colonyId(), prints);
-        LAST_DIRTY.put(in.colonyId(), dirty.size());
 
         return RoadLines.build(in.cells(), in.planned(), in.center(), in.fronts(), in.farmRings(), in.terrain(),
                 in.maxLinks(), in.turn(), frozen, in.retired());
     }
 
-    /** Quantos quadrados a última montagem desta colônia refez no modo 2; -1 nos outros modos. */
+    /**
+     * Modo 3: vizinhança relativa entre o centro e as entradas, cada ligação por A*; a ligação guardada só é refeita
+     * quando um quadrado sujo a cruza (Regra 320).
+     */
+    private static RoadLines.Result neighborhood(Input in) {
+        Set<Long> dirty = dirty(in);
+
+        return com.villagecolony.core.construction.model.NeighborhoodRoads.build(in.cells(), in.center(), in.fronts(),
+                in.terrain(), ROUTES.computeIfAbsent(in.colonyId(),
+                        ignored -> new com.villagecolony.core.construction.model.NeighborhoodRoads.Routes()), dirty);
+    }
+
+    /** Os quadrados sujos desde a última montagem desta colônia: impressão mudada ou bloco marcado (Regra 319). */
+    private static Set<Long> dirty(Input in) {
+        Set<ColonyPos> previous = in.previous().map(RoadRegions::columnsOf).orElse(Set.of());
+        Map<Long, Integer> prints = RoadRegions.fingerprints(in.cells(), in.planned(), in.fronts(), previous, in.terrain());
+        Set<Long> dirty = RoadRegions.dirty(PRINTS.getOrDefault(in.colonyId(), Map.of()), prints,
+                RoadRegionEvents.drain(in.colonyId()));
+
+        PRINTS.put(in.colonyId(), prints);
+        LAST_DIRTY.put(in.colonyId(), dirty.size());
+
+        return dirty;
+    }
+
+    /** Quantos quadrados a última montagem desta colônia achou sujos nos modos 2 e 3; -1 no modo 1. */
     static int lastDirty(UUID colonyId) {
         return LAST_DIRTY.getOrDefault(colonyId, -1);
     }
@@ -81,5 +102,6 @@ final class RoadGraphBuilds {
     static void clearAll() {
         PRINTS.clear();
         LAST_DIRTY.clear();
+        ROUTES.clear();
     }
 }
