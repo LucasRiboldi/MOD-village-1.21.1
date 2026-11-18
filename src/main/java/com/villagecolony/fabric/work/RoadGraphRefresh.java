@@ -400,7 +400,9 @@ public final class RoadGraphRefresh {
         });
         PathTrim.offer(id, List.copyOf(surplus));
 
-        return offerRepair(world, id, result.toPave(), turn, atTheDoor) || result.isolated() > 0;
+        // Só a aresta estável é calçada (Regra 322); o resto espera, e a releitura segue curta enquanto houver o que calçar.
+        return offerRepair(world, id, RoadGraphBuilds.stableSteps(id, result.graph(), result.toPave()), turn, atTheDoor)
+                || !result.toPave().isEmpty() || result.isolated() > 0;
     }
 
     /** As linhas do grafo viram a rede que os outros sistemas consultam (Regra 216); a entrada solta ainda não é rede. */

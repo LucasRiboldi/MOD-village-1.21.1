@@ -216,7 +216,13 @@ public class EntrancesAtTheDoorGameTest implements FabricGameTest {
             arena.world.setBlockState(arena.origin.add(14, 1, 7), Blocks.OAK_STAIRS.getDefaultState(), 18);
             arena.door(arena.origin.add(14, 2, 8));
 
+            // Só a aresta igual em 3 releituras é calçada (Regra 322).
             RoadGraph graph = arena.publish();
+
+            for (int read = 1; read < com.villagecolony.core.construction.model.RoadStability.READS; read++) {
+                graph = arena.publish();
+            }
+
             ColonyPos step = arena.cell(arena.origin.add(14, 1, 7));
 
             context.assertFalse(isEntrance(graph, step), "Regra 305: o branco ficou no degrau: " + graph.nodes());

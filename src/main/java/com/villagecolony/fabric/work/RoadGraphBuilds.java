@@ -31,6 +31,9 @@ final class RoadGraphBuilds {
     /** Modo 3: as ligações traçadas, por colônia. */
     private static final Map<UUID, com.villagecolony.core.construction.model.NeighborhoodRoads.Routes> ROUTES = new HashMap<>();
 
+    /** A conta de releituras iguais de cada aresta, por colônia (Regra 322). */
+    private static final Map<UUID, com.villagecolony.core.construction.model.RoadStability.Memory> STABILITY = new HashMap<>();
+
     /** Quantos quadrados a última montagem refez, por colônia; -1 no modo 1. */
     private static final Map<UUID, Integer> LAST_DIRTY = new HashMap<>();
 
@@ -103,7 +106,26 @@ final class RoadGraphBuilds {
         return LAST_DIRTY.getOrDefault(colonyId, -1);
     }
 
+    /**
+     * Só o que é da aresta estável vai para quem calça (Regra 322, todos os modos): a aresta igual em
+     * {@link com.villagecolony.core.construction.model.RoadStability#READS} releituras seguidas.
+     */
+    static java.util.List<com.villagecolony.core.construction.model.PathStep> stableSteps(UUID colonyId,
+            Optional<RoadGraph> graph, java.util.List<com.villagecolony.core.construction.model.PathStep> toPave) {
+        if (graph.isEmpty()) {
+            return java.util.List.of();
+        }
+
+        Set<Long> stable = com.villagecolony.core.construction.model.RoadStability.stableColumns(STABILITY.computeIfAbsent(
+                colonyId, ignored -> new com.villagecolony.core.construction.model.RoadStability.Memory()), graph.get());
+
+        return toPave.stream()
+                .filter(step -> stable.contains(com.villagecolony.core.construction.model.ColonyRoads.column(step.x(), step.z())))
+                .toList();
+    }
+
     static void clearAll() {
+        STABILITY.clear();
         PRINTS.clear();
         LAST_DIRTY.clear();
         ROUTES.clear();
