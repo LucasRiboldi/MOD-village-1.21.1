@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Varredura manual de testes locais do Village Colony.
 
-Uso: python scripts/test_lab.py {quick,fast,full} [--repeat N] [--dry-run]
+Uso: python scripts/test_lab.py {quick,fast,full,longo} [--repeat N] [--dry-run]
      python scripts/test_lab.py --list
      python scripts/test_lab.py --resume <UTC-id>
 
@@ -34,6 +34,9 @@ ROOT = Path(__file__).resolve().parent.parent
 REPORTS = ROOT / "reports" / "test-runs"
 GRADLEW = ROOT / ("gradlew.bat" if os.name == "nt" else "gradlew")
 
+SIM_TARGETS = ("plains", "desert", "taiga")
+SIM_DAYS = 3
+
 PROFILES = {
     "quick": [("unit", ["test"]), ("property", ["propertyTest"])],
     "fast": [
@@ -47,6 +50,12 @@ PROFILES = {
         ("gametest", ["runGametest", "--rerun-tasks"]),
         ("gametest-audit", ["runGametest", "--rerun-tasks", "-PgametestAudit=only"]),
         ("mutation", ["pitest"]),
+    ],
+    # Simulação longa sem jogador (autor, 2026-11-18): 3 dias de jogo em planície, deserto e taiga, semente fixa, e a
+    # comparação com a linha de base (`docs/testing/sim-baseline.json`). Suite que começa com "@python" roda um script.
+    "longo": [
+        ("sim", ["@python", "scripts/biome_sim.py", *SIM_TARGETS, "--days", str(SIM_DAYS)]),
+        ("sim-gate", ["@python", "scripts/sim_gate.py", *SIM_TARGETS]),
     ],
 }
 
@@ -254,13 +263,20 @@ def test_cases_from_artifacts(destination: Path, name: str, attempt: int) -> lis
     return cases
 
 
+def suite_command(tasks: list[str]) -> list[str]:
+    """O comando da suite: tarefas do Gradle, ou um script Python quando a lista começa com "@python"."""
+    if tasks and tasks[0] == "@python":
+        return [sys.executable, *tasks[1:]]
+    return [str(GRADLEW), *tasks, "--console=plain"]
+
+
 def run_suite(name: str, tasks: list[str], attempt: int, run_dir: Path) -> dict:
     suite_dir = run_dir / "suites"
     suite_dir.mkdir(exist_ok=True)
     label = f"attempt-{attempt:02d}-{name}"
     stdout_path = suite_dir / f"{label}.stdout.log"
     stderr_path = suite_dir / f"{label}.stderr.log"
-    command = [str(GRADLEW), *tasks, "--console=plain"]
+    command = suite_command(tasks)
     before = snapshot_artifacts()
     started = time.monotonic()
     sampler = MetricSampler()

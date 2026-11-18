@@ -38,6 +38,7 @@ relatório recebe `INTERRUPTED` e pode ser retomado depois.
 | `quick` | `unit`, `property` | lógica rápida e propriedades jqwik |
 | `fast` | `quick` + `gametest` | alteração que toca mundo ou Fabric |
 | `full` | `fast` + `gametest-audit`, `mutation` | validação manual completa |
+| `longo` | `sim`, `sim-gate` | efeito em jogo: 3 dias de jogo sem jogador em planície, deserto e taiga, comparados com a base |
 
 Suites indisponíveis no perfil ficam desativadas na janela. Na linha de comando,
 `--only` só aceita suites do perfil escolhido.
@@ -51,6 +52,7 @@ python scripts/test_lab.py --list
 python scripts/test_lab.py quick --dry-run
 python scripts/test_lab.py fast --only unit,property --repeat 100
 python scripts/test_lab.py full --budget-minutes 120
+python scripts/test_lab.py longo
 python scripts/test_lab.py --resume 20261102T120000Z
 ```
 
@@ -94,6 +96,32 @@ duração observada em nanossegundos. Leituras internas de hash/proteção não 
 no contador incremental. Uma operação síncrona pode exceder dois milissegundos;
 o registro não demonstra SLA nem desempenho de uma vila completa. Os testes
 de arquitetura existentes também devem passar após mudanças entre camadas.
+
+## Perfil longo: o efeito em jogo
+
+O GameTest prova o mecanismo; o perfil `longo` mede o efeito, sem playtest manual (autor, 2026-11-18).
+
+- **`sim`:** `scripts/biome_sim.py plains desert taiga --days 3` sobe o servidor sem jogador
+  (`gradlew runBiomeSim`), força os chunks da vila e acelera o tempo. Os relatórios ficam em
+  `run/biome-sim/reports/<alvo>/`.
+- **`sim-gate`:** `scripts/sim_gate.py plains desert taiga` tira os números de cada alvo e grava `metrics.json`.
+  Depois compara com `docs/testing/sim-baseline.json`, na mesma semente e no mesmo número de dias.
+
+| Número | Melhor | Folga |
+| --- | --- | --- |
+| `trabalho` (média de trabalho no expediente) | maior | 3 pontos |
+| `travado` (bloqueado + encalhado) | menor | 3 pontos |
+| `sem_tarefa` e `espera` | só informam | — |
+| `obras_dia` | maior | 0,25 |
+| `grafo_dia` (mudanças do grafo por dia) | menor | 2 |
+| `soltas` (partes e portas fora do grafo) | menor | 1 |
+| `surgidos_dia` (VC_SUPPLY por dia) | menor | 16 |
+| `encalhes_dia` | menor | 1 |
+
+A suite `sim-gate` reprova quando um número piora além da folga. Sem base comparável, ela só informa. Para gravar a base
+depois de uma rodada aceita, rode `python scripts/sim_gate.py plains desert taiga --write-baseline` e faça commit de
+`docs/testing/sim-baseline.json`. A rodada leva cerca de 15 a 30 minutos por alvo. Feche o Minecraft antes, e não edite
+`src` enquanto ela roda.
 
 ## Analisar execuções já concluídas
 

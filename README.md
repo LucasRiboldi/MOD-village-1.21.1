@@ -868,6 +868,7 @@ preserva logs, XMLs e um resumo em
 python scripts/test_lab.py quick --dry-run
 python scripts/test_lab.py fast --only unit,property --repeat 100
 python scripts/test_lab.py full --budget-minutes 120
+python scripts/test_lab.py longo
 python scripts/test_lab.py --list
 python scripts/test_lab.py quick
 python scripts/test_lab.ps1 fast --repeat 3
@@ -890,6 +891,10 @@ no Sentinela atualizam esse tutorial no mesmo commit.
 - `quick`: JUnit e propriedades jqwik.
 - `fast`: `quick` mais GameTests em servidor.
 - `full`: `fast` mais auditoria GameTest e PIT.
+- `longo`: simulação sem jogador de 3 dias de jogo em planície, deserto e taiga (`scripts/biome_sim.py`, semente
+  fixa) e comparação com a linha de base `docs/testing/sim-baseline.json` (`scripts/sim_gate.py`): trabalho,
+  travado, obras, mudanças do grafo, partes soltas, blocos surgidos e encalhes por dia. Reprova quando um número piora
+  além da folga.
 
 Os casos MAE de elegibilidade, proteção, interrupção e persistência entram nas
 suites `unit` e `gametest` existentes. Comandos focados e limites constam no

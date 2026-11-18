@@ -80,6 +80,29 @@ class CoverageManifestTest(unittest.TestCase):
                              test_lab.coverage_errors(manifest))
 
 
+class LongProfileTest(unittest.TestCase):
+    """Perfil longo (autor, 2026-11-18): simulação de 3 dias e comparação com a base, por script Python."""
+
+    def test_long_profile_runs_the_simulation_then_the_gate_with_python(self):
+        suites = dict(test_lab.PROFILES["longo"])
+
+        self.assertEqual(list(suites), ["sim", "sim-gate"])
+        sim = test_lab.suite_command(suites["sim"])
+        gate = test_lab.suite_command(suites["sim-gate"])
+
+        self.assertEqual(sim[0], test_lab.sys.executable)
+        self.assertIn("scripts/biome_sim.py", sim)
+        self.assertEqual(sim[-2:], ["--days", "3"])
+        self.assertIn("scripts/sim_gate.py", gate)
+        self.assertEqual(set(test_lab.SIM_TARGETS), {"plains", "desert", "taiga"})
+
+    def test_gradle_suites_keep_the_wrapper(self):
+        command = test_lab.suite_command(["test"])
+
+        self.assertTrue(command[0].endswith(("gradlew", "gradlew.bat")))
+        self.assertEqual(command[1:], ["test", "--console=plain"])
+
+
 class MetricsTest(unittest.TestCase):
 
     def test_unavailable_gpu_is_metadata_and_does_not_change_suite_status(self):
