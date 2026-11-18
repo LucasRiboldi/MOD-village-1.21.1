@@ -459,4 +459,43 @@ public class RoadRulesGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * Regra 316: a sobra que é rua da vila gerada fica; só sai a sobra que a vila não gerou. Antes, a passada do pedreiro
+     * devolvia ao solo todo caminho sem marca do grafo, e a rua de 3 da vila gerada virava rua de 1.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_trim_village", tickLimit = 20)
+    public void theGeneratedVillageStreetIsNotTrimmed(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 102, 1));
+        BlockPos street = origin.add(2, 0, 2);
+        BlockPos other = origin.add(5, 0, 2);
+
+        platform(world, origin);
+
+        ColonyFixture fixture = ColonyFixture.colonyAtWorld(origin.add(1, 1, 1));
+        Colony colony = fixture.colony();
+        var keep = PathTrim.keep;
+
+        try {
+            world.setBlockState(street, Blocks.DIRT_PATH.getDefaultState(), 18);
+            world.setBlockState(other, Blocks.DIRT_PATH.getDefaultState(), 18);
+            // A vila gerada é a coluna da rua: a pergunta do jogo (BlockProtection.isVillageOriginal) pede estrutura de
+            // verdade no chunk, que o arena não tem.
+            PathTrim.keep = (w, at) -> at.equals(street);
+            PathTrim.offer(colony.id(), List.of(cell(street), cell(other)));
+            PathTrim.pass(world, colony);
+
+            context.assertTrue(VillageRoad.isPathBlock(world.getBlockState(street)),
+                    "Regra 316: a rua da vila gerada foi devolvida ao solo");
+            context.assertFalse(VillageRoad.isPathBlock(world.getBlockState(other)),
+                    "Regra 186: a sobra que a vila não gerou continuou caminho");
+        } finally {
+            PathTrim.keep = keep;
+            fixture.cleanUp();
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
 }

@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 210
+- **Cita a regra:** 211
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -196,7 +196,7 @@ classe prova menos ainda.
 | 183 | Anel de caminho (autor 11-05): o chão em volta do chafariz é caminho, sem quina fixa no g… | cita | RoadRulesGameTest |
 | 184 | Quina é entrada (autor 11-05): da terceira releitura em diante, a quina da plantação mais… | cita | EntrancesAtTheDoorGameTest, RoadRulesGameTest |
 | 185 | A ponta cresce (autor 11-05, emendada 11-10): por dia, as 4 pontas, uma por lado, avançam… | cita | RoadRulesGameTest |
-| 186 | Rua de um bloco (autor 11-05): o caminho a até 3 blocos da linha que não é linha nem fren… | cita | EntrancesAtTheDoorGameTest, RetiredSpursTest, RoadLinesTest |
+| 186 | Rua de um bloco (autor 11-05; a rua da vila gerada fica, Regra 316): o caminho a até 3 bl… | cita | EntrancesAtTheDoorGameTest, RetiredSpursTest, RoadLinesTest |
 | 187 | Revogada (autor 11-06, ADR-047). A obra pedida não reserva região | classe | LotTypeRefusalsGameTest, MaeFinishGameTest, MaeRescueGameTest |
 | 188 | Pedido só do que falta (jogo 11-05): o pedido de peça de obra não abre quando os baús cob… | classe | CraftFamilyGameTest, CraftingGameTest, FurnaceFeedGameTest |
 | 189 | Madeira (autor 11-05): dentro da zona de prioridade, o lenhador pega a árvore conhecida m… | cita | ProfessionDemandTest |
@@ -252,7 +252,7 @@ classe prova menos ainda.
 | 239 | Todo animal que procria com comida (autor 11-11, opção P4): o pastor cria ovelha, vaca, p… | cita | FlockSurplusGameTest |
 | 240 | Lã guardada vira peça de lã (autor 11-11, opção P5): o pastor sem tarefa, com mais de 16… | cita | ShepherdWoolGoodsGameTest |
 | 241 | Plantação grande do deserto (autor 11-11): a plantação do mod tem 16x16, borda de tora co… | cita | BuilderGameTest, LargeFarmGameTest |
-| 242 | Quem arruma o chão (autor 11-11): nenhum bloco de caminho muda sozinho. Pedreiro, carpint… | cita | BuildingGapsGameTest, GraphOnlyPathsGameTest, GroundKeepersTest |
+| 242 | Quem arruma o chão (autor 11-11; a sobra da vila gerada fica, Regra 316): nenhum bloco de… | cita | BuildingGapsGameTest, GraphOnlyPathsGameTest, GroundKeepersTest |
 | 243 | Baú de qualquer lugar (autor 11-11, opção T4 de docs/audit/2026-11-11-jogo-0453.md): todo… | cita | VillageChestReachGameTest |
 | 244 | Fora da simulação não congela (autor 11-11, opção T1c de docs/audit/2026-11-11-jogo-0453.… | cita | PinnedOnFlatGameTest |
 | 245 | Cama longe vem para perto (autor 11-11, opção T3b): na troca de camas do amanhecer (Regra… | cita | BedPlanTest |
@@ -326,3 +326,4 @@ classe prova menos ainda.
 | 313 | Depois do degrau da porta, a entrada fica no chão (autor 17-11, jogo da 0.4.91, opção 1A:… | cita | DoorFrontsGameTest, VillagePiecesGameTest |
 | 314 | A casa do mod nasce com caminho na porta (autor 17-11, jogo da 0.4.91, opção 2A: a porta… | cita | DoorPathsGameTest |
 | 315 | O fazendeiro semeia a terra comum até o fim, e o alvo recusado fica de lado (autor 18-11,… | cita | FarmerSetAsideTest, FarmerTillLoopGameTest |
+| 316 | A rua da vila gerada não é sobra (autor 18-11, estudo do grafo §3.4, corte do laço: a pas… | cita | RoadRulesGameTest |
