@@ -11871,6 +11871,25 @@ sobre água ganha base até o piso; a água fora da vila fica. `reachesGeneratio
 GameTests, build e unitários verdes, Sentinela `fast` PASS (20261115T142707Z). README sincronizado com a Regra 287 no PR #85 (o CI tinha caído por isso).
 Nada visto em jogo; só aparece em mundo novo.
 
+## 2026-11-17 — 0.4.91: Regras 305 a 312 (jogo da 0.4.90)
+
+Jogo da 0.4.90 (16-11, colônia 4108746a, Spark `91TxnT5c0X`, 248 min, TPS 19,95). Escolhas do autor e commits na
+branch `fix/jogo-0490`:
+
+- 305 (d136fe40): `doors:0` porque as 86 frentes de porta dos moldes caíam dentro da caixa; a entrada vai ao primeiro
+  bloco fora do molde, no piso, e a casa ganha patamar de 2.
+- 306 (0e284d9d): a trava de 10 dias passou de coluna a aresta inteira entre nós rosa.
+- 307 (3b1e2554): o nó da porta era lido no beiral; teto com 2 de ar embaixo não é chão. Teste do ramal em L (f70596ea).
+- 308 (50399453): o `SmelterWork` nunca concluía a tarefa; `SmeltDone` conclui na quantidade, e a argila surge só para
+  a obra, com teto de 64 guardadas.
+- 309 (6a950511): rumo a curral, a coleta do pastor não tem prazo nem expediente.
+- 310 (ad3af093): `BoneMealRound`, volta de pó de osso por colônia, fontes em ordem e uma aplicação por segundo.
+- 311 (d87f6b8b): `Crusher.sandShortAhead` pede ao pedreiro a areia da obra antes da falta.
+- 312 (60b3945c): `ClimbOutward`, subida do mineiro rumo à borda depois de 5 tentativas.
+
+Verificado: build e unitários verdes, `runGametest` 1.184/1.184 duas vezes, Sentinela `fast` PASS. Instáveis vistos:
+`ShepherdGameTest` (coleta de poste pega animal do vizinho) e `BiomeBlueprintsGameTest` da taiga (KF-014).
+
 ## 2026-11-16 — 0.4.90: Regras 299 a 304 (jogo da 0.4.89)
 
 Jogo da 0.4.89 num mundo novo (colônia `3a39a18c`, Spark `hYkEcERV1A`, 39 min). As Regras 297 (`maxStep` de 1 a 2 em

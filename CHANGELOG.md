@@ -12,6 +12,28 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.91] — candidata, 2026-11-17
+
+Do jogo da 0.4.90 (16-11, Spark `91TxnT5c0X`). Regras 305 a 312 em [`docs/RULES.md`](docs/RULES.md); nada visto em
+jogo.
+
+### Mudado
+
+- Regra 305: a entrada de cada porta nasce no primeiro bloco fora da estrutura, no piso e sem nada acima; a casa ganha
+  um patamar de 2 colunas no piso em volta.
+- Regra 306: só a aresta inteira de rosa a rosa fica fixa; ponta azul, entrada e lado de L nunca.
+- Regra 307: telhado sobre a frente da porta não é chão do grafo.
+- Regra 308: a fundição para na quantidade pedida; a argila só surge para a obra, até 64 guardadas.
+- Regra 309: o pastor leva o animal até o curral sem prazo e só o solta dentro.
+- Regra 310: o fazendeiro põe pó de osso em cada pé, uma volta por vez; o pó vem da composteira, dos baús acima de 16
+  e, sem nenhum, surge (`BONE_MEAL_FOR_THE_FARM`).
+- Regra 311: o pedreiro mói a areia que a obra vai gastar antes de ela pedir.
+- Regra 312: o mineiro preso 5 vezes no mesmo lugar cava a subida rumo à borda da vila, pondo bloco onde falta piso.
+
+### Verificado
+
+- `./gradlew.bat build` verde; `runGametest` 1.184/1.184 em duas rodadas seguidas; Sentinela `fast` PASS.
+
 ## [0.4.90] — candidata, 2026-11-16
 
 Do jogo da 0.4.74 ao da 0.4.89 (mundos novos em planície e em montanha, Sparks `GHWvjlPaPs`, `b28MY9TPEA` e

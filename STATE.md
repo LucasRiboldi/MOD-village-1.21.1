@@ -9,9 +9,10 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.90 na branch `fix/jogo-0488` (sobre a `main` com o PR #87); a publicada é `v0.4.74-alpha`. **Não jogada.** A última jogada é a 0.4.89
-  (15-11, mundo novo, Spark `hYkEcERV1A`): as Regras 297 e 298 funcionaram; curral vazio, porta solta, argila, nó da mina,
-  frente da porta e casa sem solo viraram as Regras 299 a 304; o nivelamento ao longo do grafo (ponto 2) segue aberto.
+- **Versão:** 0.4.91 na branch `fix/jogo-0490` (sobre a `main` com o PR #88), sem push; a publicada é `v0.4.90-alpha`.
+  **Não jogada.** A última jogada é a 0.4.90 (16-11, Spark `91TxnT5c0X`, 248 min): entrada da casa no piso, grafo com
+  aresta fixa só de rosa a rosa, telhado fora do chão do grafo, argila, curral, fazendeiro, construtor e mineiro viraram
+  as Regras 305 a 312, todas candidatas.
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
   jogador e publicação.
@@ -45,6 +46,7 @@ Cada uma tem teste que falha sem ela; nenhuma foi vista em jogo.
 | 0.4.85 | 285, 286 | aldeão preso na água vai à margem e, se não sair, pisa no gelo sob o pulo; o mineiro novo dorme na casa junto da mina assim que ela sobe; diagnósticos `loose=` (grafo), `VC_SMOOTH` e `VC_LOT_EDGE` (terreno). Sentinela `fast` PASS; tosquia instável registrada (KF-015) |
 | 0.4.86 | 287 | a tora deitada é chão do caminho (a borda da plantação grande fechava o miolo ao fazendeiro); a visão do canteiro vazio mira o lugar da planta. 1.137/1.137, Sentinela `fast` PASS |
 | 0.4.88 | 289–294 | escolhas G1–G7 da ADR-056: plantação grande semeada, 2 fazendeiros e semente que surge; tronco inteiro e folha natural quebrada no caminho; grafo na tábua de rua e na frente de toda porta; sem torre de minério e sem ar protegido no alisamento; pátio de pedra na boca da mina; ociosos tiram bloco solto e toco. 1.156/1.156, Sentinela `fast` PASS |
+| 0.4.91 | 305–312 | jogo da 0.4.90: a entrada da casa e um patamar de 2 em volta nascem no piso; só a aresta inteira de rosa a rosa fica fixa; telhado não é chão do grafo; a fundição para na quantidade pedida e a argila só surge para a obra; o pastor leva o animal ao curral sem prazo; o fazendeiro põe pó de osso em volta (surge sem composteira nem baú acima de 16); o pedreiro mói a areia da obra antes; o mineiro preso cava a subida rumo à borda. 1.184/1.184 duas vezes, Sentinela `fast` PASS |
 | 0.4.90 | 299–304 | jogo da 0.4.89: o abate não leva o animal na corda e a corda só solta no portão; a porta sozinha se junta ao caminho e as partes soltas voltam ao rodízio (corrige a 295); a argila aparece na hora pedida; o nó da mina fica sob o arco; a frente da porta nasce no piso dela; casa da vila não fica sem solo. 1.170/1.170 duas vezes, Sentinela `fast` PASS |
 | 0.4.89 | 295–298 | jogo da 0.4.88: a coluna recusada pelo calçador bloqueia a busca da ligação e a pedra dentro da colônia vira caminho; as peças da vila nascem no solo suavizado; o chão em volta da obra nova é suavizado numa janela de 12; a fundação só completa 8 adultos e a sobra fica sem ofício (Regra 134 retirada). 1.160/1.160 duas vezes, Sentinela `fast` PASS |
 | 0.4.87 | 288 | na geração, a água dentro da vila vira chão com o solo seco do chunk, e a peça fixa sobre água ganha base até o piso (só em mundo novo). 1.139/1.139, Sentinela `fast` PASS |

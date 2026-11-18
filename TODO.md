@@ -74,6 +74,12 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
   - blocos que surgiram (`VC_SUPPLY`): argila ×240 e argila em bola ×8, cerca de carvalho ×40 e tora ×25
     (`MISSING_PIECE`); terracota branca ×47 (`APPEARING_PIECE`); prismarinho ×144 (`AUTOMATIC_DROP`) — buscar o
     fluxo de fabricação de cada um (M)
+- [ ] 🔴 Jogo da 0.4.90 (16-11, Spark `91TxnT5c0X`, 248 min), triagem e escolhas do autor:
+  - entrada da casa (`doors:0`), aresta fixa, telhado como chão, argila em laço, curral vazio, fazendeiro parado,
+    construtor sem areia e mineiro encalhado 14 vezes: Regras 305 a 312 na 0.4.91 (candidatas; conferir no próximo jogo);
+  - blocos que surgiram (`VC_SUPPLY`): areia ×127 (`MISSING_PIECE`, para vidro), tora ×18 e pedregulho ×6
+    (`MISSING_PIECE`), argila ×225 e bola de argila ×149 (`CLAY_ON_REQUEST`), terracota branca ×47
+    (`APPEARING_PIECE`), grama ×87 (`SHAPED_GROUND`) — buscar o fluxo de fabricação da tora e do pedregulho (M)
 - [ ] 🔴 Jogo da 0.4.86 (15-11, planície, Spark `GHWvjlPaPs`, 37 min, 8 notas), achados da triagem:
   - casas e lampião sobre o lago (notas 10:15 e 10:24): Regra 288 na 0.4.87, candidata; conferir em mundo novo (por jogo);
   - fazendeiro 0%: faltava semente em baú; Regra 289 (candidata) — obra semeada, semente que surge, terra arada,
