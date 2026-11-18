@@ -1,0 +1,274 @@
+{
+  "desert": {
+    "dias": 3,
+    "encalhes_dia": 3.0,
+    "espera": 11.6,
+    "grafo_dia": 15.3,
+    "obras_dia": 1.0,
+    "por_profissao": {
+      "BUILDER": {
+        "blocked": 18.4,
+        "idle": 11.4,
+        "stranded": 0.0,
+        "wait": 0.2,
+        "walk": 15.9,
+        "work": 54.4
+      },
+      "CARPENTER": {
+        "blocked": 1.2,
+        "idle": 8.3,
+        "stranded": 0.0,
+        "wait": 22.9,
+        "walk": 38.1,
+        "work": 29.3
+      },
+      "FARMER": {
+        "blocked": 0.7,
+        "idle": 2.1,
+        "stranded": 0.0,
+        "wait": 0.0,
+        "walk": 6.2,
+        "work": 90.9
+      },
+      "LUMBERJACK": {
+        "blocked": 5.9,
+        "idle": 23.7,
+        "stranded": 0.0,
+        "wait": 2.0,
+        "walk": 60.0,
+        "work": 8.2
+      },
+      "MASON": {
+        "blocked": 0.4,
+        "idle": 3.3,
+        "stranded": 0.0,
+        "wait": 35.4,
+        "walk": 32.7,
+        "work": 28.0
+      },
+      "MINER": {
+        "blocked": 2.4,
+        "idle": 9.0,
+        "stranded": 0.0,
+        "wait": 0.0,
+        "walk": 18.7,
+        "work": 70.1
+      },
+      "SHEPHERD": {
+        "blocked": 54.5,
+        "idle": 5.4,
+        "stranded": 1.9,
+        "wait": 0.4,
+        "walk": 37.5,
+        "work": 0.4
+      },
+      "SMELTER": {
+        "blocked": 3.1,
+        "idle": 2.1,
+        "stranded": 0.0,
+        "wait": 32.2,
+        "walk": 13.1,
+        "work": 49.7
+      }
+    },
+    "sem_tarefa": 8.2,
+    "semente": "20261020",
+    "soltas": 11,
+    "surgidos": {
+      "APPEARING_PIECE": 1,
+      "AUTOMATIC_DROP": 201,
+      "BONE_MEAL_FOR_THE_FARM": 1296,
+      "FLOWER_DYE": 15,
+      "FOUNDATION_GROUND": 260,
+      "FOUNDING_ANIMALS": 30,
+      "GRASS_FOR_THE_SHEEP": 3,
+      "GROVE_SAPLING": 12,
+      "MISSING_PIECE": 121,
+      "SHAPED_GROUND": 27
+    },
+    "surgidos_dia": 655.3,
+    "trabalho": 41.4,
+    "travado": 11.1
+  },
+  "plains": {
+    "dias": 3,
+    "encalhes_dia": 1.7,
+    "espera": 10.7,
+    "grafo_dia": 10.0,
+    "obras_dia": 1.0,
+    "por_profissao": {
+      "BUILDER": {
+        "blocked": 15.5,
+        "idle": 11.2,
+        "stranded": 0.0,
+        "wait": 1.6,
+        "walk": 14.7,
+        "work": 57.5
+      },
+      "CARPENTER": {
+        "blocked": 0.4,
+        "idle": 15.4,
+        "stranded": 0.4,
+        "wait": 30.3,
+        "walk": 27.9,
+        "work": 25.4
+      },
+      "FARMER": {
+        "blocked": 48.1,
+        "idle": 22.8,
+        "stranded": 6.8,
+        "wait": 5.9,
+        "walk": 8.0,
+        "work": 8.7
+      },
+      "LUMBERJACK": {
+        "blocked": 14.2,
+        "idle": 33.0,
+        "stranded": 6.7,
+        "wait": 0.0,
+        "walk": 42.2,
+        "work": 3.8
+      },
+      "MASON": {
+        "blocked": 0.0,
+        "idle": 4.3,
+        "stranded": 0.0,
+        "wait": 27.1,
+        "walk": 29.5,
+        "work": 39.4
+      },
+      "MINER": {
+        "blocked": 2.0,
+        "idle": 26.4,
+        "stranded": 0.0,
+        "wait": 0.0,
+        "walk": 22.5,
+        "work": 49.2
+      },
+      "SHEPHERD": {
+        "blocked": 29.4,
+        "idle": 4.1,
+        "stranded": 0.3,
+        "wait": 0.0,
+        "walk": 62.4,
+        "work": 3.7
+      },
+      "SMELTER": {
+        "blocked": 0.0,
+        "idle": 23.8,
+        "stranded": 0.0,
+        "wait": 20.7,
+        "walk": 16.9,
+        "work": 38.6
+      }
+    },
+    "sem_tarefa": 17.6,
+    "semente": "20261020",
+    "soltas": 12,
+    "surgidos": {
+      "APPEARING_PIECE": 21,
+      "AUTOMATIC_DROP": 165,
+      "BONE_MEAL_FOR_THE_FARM": 112,
+      "CLAY_ON_REQUEST": 32,
+      "FLOWER_DYE": 4,
+      "FOUNDATION_GROUND": 107,
+      "FOUNDING_ANIMALS": 24,
+      "GROVE_SAPLING": 6,
+      "MISSING_PIECE": 255,
+      "SHAPED_GROUND": 25
+    },
+    "surgidos_dia": 250.3,
+    "trabalho": 28.3,
+    "travado": 15.5
+  },
+  "taiga": {
+    "dias": 3,
+    "encalhes_dia": 4.0,
+    "espera": 10.1,
+    "grafo_dia": 9.7,
+    "obras_dia": 1.67,
+    "por_profissao": {
+      "BUILDER": {
+        "blocked": 14.0,
+        "idle": 0.4,
+        "stranded": 0.0,
+        "wait": 0.0,
+        "walk": 29.3,
+        "work": 56.1
+      },
+      "CARPENTER": {
+        "blocked": 0.6,
+        "idle": 3.9,
+        "stranded": 0.4,
+        "wait": 12.4,
+        "walk": 54.5,
+        "work": 28.7
+      },
+      "FARMER": {
+        "blocked": 69.7,
+        "idle": 8.5,
+        "stranded": 0.0,
+        "wait": 11.9,
+        "walk": 8.7,
+        "work": 1.1
+      },
+      "LUMBERJACK": {
+        "blocked": 5.5,
+        "idle": 26.8,
+        "stranded": 0.1,
+        "wait": 0.0,
+        "walk": 57.4,
+        "work": 10.2
+      },
+      "MASON": {
+        "blocked": 16.9,
+        "idle": 2.5,
+        "stranded": 0.0,
+        "wait": 33.6,
+        "walk": 10.2,
+        "work": 36.9
+      },
+      "MINER": {
+        "blocked": 1.0,
+        "idle": 2.2,
+        "stranded": 0.0,
+        "wait": 0.0,
+        "walk": 15.4,
+        "work": 81.5
+      },
+      "SHEPHERD": {
+        "blocked": 17.5,
+        "idle": 2.1,
+        "stranded": 0.0,
+        "wait": 0.7,
+        "walk": 77.4,
+        "work": 2.4
+      },
+      "SMELTER": {
+        "blocked": 0.0,
+        "idle": 5.0,
+        "stranded": 0.0,
+        "wait": 22.2,
+        "walk": 31.1,
+        "work": 41.7
+      }
+    },
+    "sem_tarefa": 6.4,
+    "semente": "20261020",
+    "soltas": 11,
+    "surgidos": {
+      "AUTOMATIC_DROP": 176,
+      "FLOWER_DYE": 4,
+      "FOUNDATION_GROUND": 20,
+      "FOUNDING_ANIMALS": 24,
+      "GROVE_SAPLING": 7,
+      "MISSING_PIECE": 34,
+      "SHAPED_GROUND": 47,
+      "UNREACHABLE_PIECE": 3,
+      "WAITED_TOO_LONG": 161
+    },
+    "surgidos_dia": 158.7,
+    "trabalho": 32.3,
+    "travado": 15.7
+  }
+}
