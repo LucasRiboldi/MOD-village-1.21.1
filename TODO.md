@@ -74,6 +74,19 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
   - blocos que surgiram (`VC_SUPPLY`): argila ×240 e argila em bola ×8, cerca de carvalho ×40 e tora ×25
     (`MISSING_PIECE`); terracota branca ×47 (`APPEARING_PIECE`); prismarinho ×144 (`AUTOMATIC_DROP`) — buscar o
     fluxo de fabricação de cada um (M)
+- [ ] 🔴 Jogo da 0.4.93 (19-11, montanha, colônia b66aecbf, Spark `0SMEEkMLGP`, ~35 min), triagem e escolhas do autor:
+  - a vila foi medida em 175 × 152 com y de 82 a 173; o centro ficou em 195, 133, 57, no ar, e a BigHouseMOD em
+    124, 149, 5, uns 60 blocos acima das casas (y 87 a 90). A boca da mina (151, 136, -18) nunca foi alcançada
+    (`VC_REACH unreached`), a casa do mineiro ficou 41 min sem lote e saiu em 141, 160, -17; mineiro 0% de trabalho,
+    10 `NO_PATH`. Escolha A: centro e BigHouseMOD saem da altura dos prédios existentes, não do meio da caixa (G);
+  - blocos de terreno voando acima das casas (print do autor): o save ao sair não tem nenhum pedaço de terreno solto
+    na caixa da vila; causa não provada. Escolha D: linha diária `VC_FLOAT` que conta os pedaços soltos (M);
+  - Regra 51 em todos os ofícios: mineiro 73%, fundidor 55% esperando, fazendeiro 40%, construtor 31%, pastor 22%
+    (12% bloqueado), pedreiro 20%, lenhador 19% (76% andando) (M);
+  - blocos que surgiram (`VC_SUPPLY`): pó de osso ×672 (`BONE_MEAL_FOR_THE_FARM`, declarado), pedregulho ×36, tora
+    descascada ×30 e tora ×10 (`MISSING_PIECE`), terracota branca ×31 (`APPEARING_PIECE`), pedra ×16
+    (`WAITED_TOO_LONG`) — buscar o fluxo de fabricação do pedregulho, da tora descascada e da pedra; o pó de osso
+    ×672 em 35 min pede teto (M); nenhuma nota `VC_BIOME_NOTE`
 - [ ] 🔴 Simulação de 3 dias da 0.4.92 (18-11, planície, modo `vizinhanca`, colônia 58cb0273), achados:
   - fila do terreno, lenhador encostado no tronco e plantação grande: Regras 323 a 325 na 0.4.93 (candidatas);
   - fila do terreno parada no dia 1 (`levelled=0`): ninguém chegou à fila (M);

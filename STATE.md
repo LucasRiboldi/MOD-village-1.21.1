@@ -9,10 +9,10 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.93 na `main` (branch `fix/jogo-0490` integrada por PR), publicada como `v0.4.93-alpha`.
-  **Não jogada;** a 0.4.93 saiu das simulações de 3 dias da 0.4.92 (Regras 315 a 325, ADR-057). A última jogada é a 0.4.91 (17-11, Spark `pkfBfAxYsv`, 6 min): bloco de caminho alto na frente das
-  portas e BigHouseMOD sem caminho viraram as Regras 313 e 314. As Regras 305 a 312 (jogo da 0.4.90) seguem candidatas;
-  o jogo curto não as mediu.
+- **Versão:** 0.4.93 na `main`, publicada como `v0.4.93-alpha` (Regras 315 a 325, ADR-057). **Jogada em 19-11**
+  (montanha, Spark `0SMEEkMLGP`, ~35 min): boca da mina e BigHouseMOD no alto da montanha, longe das casas, e blocos de
+  terreno voando no print do autor. Triagem no `TODO.md`; o autor escolheu A (centro e BigHouseMOD pela altura dos
+  prédios) e D (linha `VC_FLOAT`), ainda não feitas. As Regras 305 a 325 seguem candidatas.
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
   jogador e publicação.
