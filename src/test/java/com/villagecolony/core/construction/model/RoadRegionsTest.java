@@ -189,6 +189,126 @@ class RoadRegionsTest {
                 "Regra 319: o bloco marcado não refez o quadrado na releitura seguinte");
     }
 
+    @Test
+    void theAcceptedSquareStaysAcceptedAfterTheRebuild() {
+        RoadRegions.Memory memory = new RoadRegions.Memory();
+        Map<Long, Integer> first = RoadRegions.fingerprints(street(), Set.of(), Set.of(), FLAT);
+        Set<ColonyPos> bumped = new HashSet<>(street());
+
+        bumped.add(at(35, 9));
+
+        Map<Long, Integer> changed = RoadRegions.fingerprints(bumped, Set.of(), Set.of(), FLAT);
+
+        RoadRegions.confirm(memory, first, Set.of(), true);
+        RoadRegions.confirm(memory, changed, Set.of(), false);
+        RoadRegions.confirm(memory, changed, Set.of(), false);
+
+        assertTrue(RoadRegions.confirm(memory, changed, Set.of(), false).isEmpty());
+        assertTrue(RoadRegions.confirm(memory, changed, Set.of(), false).isEmpty(),
+                "Regra 319: o quadrado refeito não ficou com a impressão aceita");
+        assertTrue(RoadRegions.confirm(memory, first, Set.of(), false).isEmpty(),
+                "Regra 319: o quadrado refeito voltou e refez na primeira releitura");
+    }
+
+    @Test
+    void aChangeThatWentAwayDoesNotCountTowardsTheNextOne() {
+        RoadRegions.Memory memory = new RoadRegions.Memory();
+        Map<Long, Integer> first = RoadRegions.fingerprints(street(), Set.of(), Set.of(), FLAT);
+        Set<ColonyPos> bumped = new HashSet<>(street());
+
+        bumped.add(at(35, 9));
+
+        Map<Long, Integer> changed = RoadRegions.fingerprints(bumped, Set.of(), Set.of(), FLAT);
+
+        RoadRegions.confirm(memory, first, Set.of(), true);
+        RoadRegions.confirm(memory, changed, Set.of(), false);
+        RoadRegions.confirm(memory, first, Set.of(), false);
+
+        assertTrue(RoadRegions.confirm(memory, changed, Set.of(), false).isEmpty(),
+                "Regra 319: a mudança que sumiu contou como primeira releitura da seguinte");
+    }
+
+    @Test
+    void aMarkedSquareIsRebuiltOnceEvenWhenMarkedTwice() {
+        RoadRegions.Memory memory = new RoadRegions.Memory();
+        Map<Long, Integer> prints = RoadRegions.fingerprints(street(), Set.of(), Set.of(), FLAT);
+        long marked = RoadRegions.regionOf(20, 8);
+
+        RoadRegions.confirm(memory, prints, Set.of(), true);
+        RoadRegions.confirm(memory, prints, Set.of(marked), false);
+
+        assertEquals(Set.of(marked), RoadRegions.confirm(memory, prints, Set.of(marked), false));
+        assertTrue(RoadRegions.confirm(memory, prints, Set.of(), false).isEmpty(),
+                "Regra 319: o bloco marcado refez o quadrado mais de uma vez");
+        assertTrue(RoadRegions.confirm(memory, prints, Set.of(), false).isEmpty());
+    }
+
+    @Test
+    void theFirstBuildForgetsWhatWasPending() {
+        RoadRegions.Memory memory = new RoadRegions.Memory();
+        Set<ColonyPos> wide = new HashSet<>(street());
+
+        wide.add(at(80, 8));
+
+        Map<Long, Integer> old = RoadRegions.fingerprints(wide, Set.of(), Set.of(), FLAT);
+        Map<Long, Integer> first = RoadRegions.fingerprints(street(), Set.of(), Set.of(), FLAT);
+        Set<ColonyPos> bumped = new HashSet<>(street());
+
+        bumped.add(at(35, 9));
+
+        Map<Long, Integer> changed = RoadRegions.fingerprints(bumped, Set.of(), Set.of(), FLAT);
+
+        RoadRegions.confirm(memory, old, Set.of(), true);
+        RoadRegions.confirm(memory, changed, Set.of(RoadRegions.regionOf(20, 8)), false);
+        RoadRegions.confirm(memory, first, Set.of(), true);
+
+        assertTrue(RoadRegions.confirm(memory, changed, Set.of(), false).isEmpty(),
+                "Regra 319: a montagem inteira não esqueceu a releitura pendente");
+        assertTrue(RoadRegions.confirm(memory, first, Set.of(), false).isEmpty(),
+                "Regra 319: a montagem inteira não esqueceu o quadrado que sumiu");
+        assertTrue(RoadRegions.confirm(memory, first, Set.of(), false).isEmpty());
+    }
+
+    @Test
+    void aSquareThatLostEverythingIsDirty() {
+        Map<Long, Integer> before = RoadRegions.fingerprints(street(), Set.of(), Set.of(), FLAT);
+
+        assertEquals(before.keySet(), RoadRegions.dirty(before, Map.of(), Set.of()));
+    }
+
+    @Test
+    void thePlannedAndTheEntrancesAreInTheFingerprint() {
+        Map<Long, Integer> bare = RoadRegions.fingerprints(street(), Set.of(), Set.of(), FLAT);
+
+        assertEquals(Set.of(RoadRegions.regionOf(3, 3)),
+                RoadRegions.dirty(bare, RoadRegions.fingerprints(street(), Set.of(at(3, 3)), Set.of(), FLAT), Set.of()));
+        assertEquals(Set.of(RoadRegions.regionOf(3, 3)),
+                RoadRegions.dirty(bare, RoadRegions.fingerprints(street(), Set.of(), Set.of(at(3, 3)), FLAT), Set.of()));
+    }
+
+    @Test
+    void aLoneNodeIsAColumnOfTheGraphAndStaysFrozenInACleanSquare() {
+        List<ColonyPos> line = new java.util.ArrayList<>();
+
+        for (int x = 0; x <= 40; x++) {
+            line.add(at(x, 8));
+        }
+
+        ColonyPos lone = at(100, 200);
+        RoadGraph graph = new RoadGraph(
+                List.of(new RoadGraph.Node(at(0, 8), Set.of(RoadGraph.Role.HUB)),
+                        new RoadGraph.Node(at(40, 8), Set.of(RoadGraph.Role.ENDPOINT)),
+                        new RoadGraph.Node(lone, Set.of(RoadGraph.Role.ENTRANCE))),
+                List.of(new RoadGraph.Edge(at(0, 8), at(40, 8), line, RoadGraph.RoadClass.PRIMARY)));
+        Set<Long> dirty = Set.of(RoadRegions.regionOf(20, 8));
+        Set<ColonyPos> expected = new HashSet<>(clean(new HashSet<>(line), dirty));
+
+        expected.add(lone);
+
+        assertTrue(RoadRegions.columnsOf(graph).contains(lone), "o nó sem aresta ficou fora das colunas do grafo");
+        assertEquals(expected, RoadRegions.frozen(graph, dirty));
+    }
+
     private static Set<ColonyPos> clean(Set<ColonyPos> columns, Set<Long> dirty) {
         Set<ColonyPos> kept = new HashSet<>();
 

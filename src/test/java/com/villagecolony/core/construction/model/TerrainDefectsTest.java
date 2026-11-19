@@ -92,6 +92,43 @@ class TerrainDefectsTest {
     }
 
     @Test
+    void theIsolatedColumnKeepsItsPlaceInsideTheSquare() {
+        int[][] top = flat();
+
+        top[2][5] = 67;
+        top[SIDE][SIDE] = 61;
+
+        TerrainDefects.Survey survey = TerrainDefects.survey(top, all(true), all(false));
+
+        assertEquals(2, survey.isolated().size(), "a coluna da última linha do quadrado ficou de fora");
+        assertTrue(survey.isolated().stream().anyMatch(at -> java.util.Arrays.equals(at, new int[] {1, 4, 64})),
+                "o bloco único saiu fora do lugar");
+        assertTrue(survey.isolated().stream().anyMatch(at -> java.util.Arrays.equals(at, new int[] {SIDE - 1, SIDE - 1, 64})),
+                "o buraco do canto saiu fora do lugar");
+    }
+
+    @Test
+    void theStepAgainstTheNextSquareCountsOncePerColumn() {
+        int[][] east = flat();
+        int[][] south = flat();
+
+        for (int i = 0; i < SIDE + 2; i++) {
+            east[SIDE + 1][i] = 67;
+            south[i][SIDE + 1] = 67;
+        }
+
+        assertEquals(SIDE, TerrainDefects.survey(east, all(true), all(false)).steps(),
+                "o degrau contra o quadrado de leste não contou uma vez por coluna");
+        assertEquals(SIDE, TerrainDefects.survey(south, all(true), all(false)).steps(),
+                "o degrau contra o quadrado de sul não contou uma vez por coluna");
+    }
+
+    @Test
+    void theScoreWeighsIsolatedThenPathThenTheRest() {
+        assertEquals(1_002_003L, new TerrainDefects.Survey(java.util.List.of(new int[] {0, 0, 0}), 2, 3).score());
+    }
+
+    @Test
     void theDailyCapStopsAndResetsTheNextDay() {
         TerrainDefects.Daily daily = new TerrainDefects.Daily();
 

@@ -156,4 +156,36 @@ class NeighborhoodRoadsTest {
         assertFalse(columnsOf(NeighborhoodRoads.build(street, at(0, 0), Set.of(), FLAT, new NeighborhoodRoads.Routes(),
                 Set.of(), new int[] {-200, -200, 20, 200}, 0)).contains(at(21, 0)), "Regra 320: a ponta passou do limite");
     }
+
+    /** Leste, oeste, sul, norte: a ordem dos lados de {@code frontiers}. */
+    private static ColonyPos[] sides(ColonyPos east, ColonyPos west, ColonyPos south, ColonyPos north) {
+        return new ColonyPos[] {east, west, south, north};
+    }
+
+    private static ColonyPos near(int dx, int dz) {
+        return new ColonyPos(100 + dx, Y, 100 + dz);
+    }
+
+    @Test
+    void eachSideTakesTheFarthestPathInsideItsCone() {
+        Set<ColonyPos> cells = new java.util.LinkedHashSet<>(List.of(near(3, 0), near(6, 4), near(-5, 1), near(2, 7),
+                near(0, -4)));
+
+        assertEquals(java.util.Arrays.asList(sides(near(6, 4), near(-5, 1), near(2, 7), near(0, -4))),
+                java.util.Arrays.asList(NeighborhoodRoads.frontiers(cells, near(0, 0))), "Regra 320: o caminho mais distante de cada lado");
+    }
+
+    @Test
+    void theConeIsTheDiagonalAndTheFirstOfATieStays() {
+        ColonyPos center = near(0, 0);
+
+        assertEquals(java.util.Arrays.asList(sides(null, null, near(3, 5), null)),
+                java.util.Arrays.asList(NeighborhoodRoads.frontiers(Set.of(near(3, 5)), center)), "fora do cone de leste");
+        assertEquals(java.util.Arrays.asList(sides(near(4, 4), null, near(4, 4), null)),
+                java.util.Arrays.asList(NeighborhoodRoads.frontiers(Set.of(near(4, 4)), center)), "a diagonal é dos dois lados");
+        assertEquals(java.util.Arrays.asList(sides(null, null, null, null)),
+                java.util.Arrays.asList(NeighborhoodRoads.frontiers(Set.of(center), center)), "o centro não é ponta de lado nenhum");
+        assertEquals(near(5, 0), NeighborhoodRoads.frontiers(new java.util.LinkedHashSet<>(List.of(near(5, 0), near(5, 1))),
+                center)[0], "no empate, o primeiro fica");
+    }
 }
