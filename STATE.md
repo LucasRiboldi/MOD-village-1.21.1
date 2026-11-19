@@ -9,8 +9,8 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.92 na branch `fix/jogo-0490` (sobre a `main` com o PR #88), sem push; a publicada é `v0.4.90-alpha`.
-  **Não jogada.** A última jogada é a 0.4.91 (17-11, Spark `pkfBfAxYsv`, 6 min): bloco de caminho alto na frente das
+- **Versão:** 0.4.93 na branch `fix/jogo-0490` (sobre a `main` com o PR #88), sem push; a publicada é `v0.4.90-alpha`.
+  **Não jogada;** a 0.4.93 saiu das simulações de 3 dias da 0.4.92 (Regras 315 a 325, ADR-057). A última jogada é a 0.4.91 (17-11, Spark `pkfBfAxYsv`, 6 min): bloco de caminho alto na frente das
   portas e BigHouseMOD sem caminho viraram as Regras 313 e 314. As Regras 305 a 312 (jogo da 0.4.90) seguem candidatas;
   o jogo curto não as mediu.
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
@@ -46,6 +46,7 @@ Cada uma tem teste que falha sem ela; nenhuma foi vista em jogo.
 | 0.4.85 | 285, 286 | aldeão preso na água vai à margem e, se não sair, pisa no gelo sob o pulo; o mineiro novo dorme na casa junto da mina assim que ela sobe; diagnósticos `loose=` (grafo), `VC_SMOOTH` e `VC_LOT_EDGE` (terreno). Sentinela `fast` PASS; tosquia instável registrada (KF-015) |
 | 0.4.86 | 287 | a tora deitada é chão do caminho (a borda da plantação grande fechava o miolo ao fazendeiro); a visão do canteiro vazio mira o lugar da planta. 1.137/1.137, Sentinela `fast` PASS |
 | 0.4.88 | 289–294 | escolhas G1–G7 da ADR-056: plantação grande semeada, 2 fazendeiros e semente que surge; tronco inteiro e folha natural quebrada no caminho; grafo na tábua de rua e na frente de toda porta; sem torre de minério e sem ar protegido no alisamento; pátio de pedra na boca da mina; ociosos tiram bloco solto e toco. 1.156/1.156, Sentinela `fast` PASS |
+| 0.4.93 | 315–325 | simulações de 3 dias da 0.4.92: fazendeiro semeia a terra comum; rua da vila gerada fica; `changes=` no grafo; três modos do grafo (ADR-057, `/vc grafo modo`); porta do jogador é entrada; só se calça aresta estável; terreno da vila inteira por fila (`VC_TERRAIN`); lenhador tira a folha do carvalho baixo; plantação grande arada e semeada inteira pelo molde. 1.197/1.197, Sentinela `fast` PASS |
 | 0.4.92 | 313, 314 | jogo da 0.4.91: depois do degrau da porta (escada do encaixe do molde), a entrada e o patamar ficam no chão, com o solo no topo; a BigHouseMOD e a casa do mineiro nascem com caminho rente ao chão na porta. 1.187/1.187 duas vezes, Sentinela `fast` PASS |
 | 0.4.91 | 305–312 | jogo da 0.4.90: a entrada da casa e um patamar de 2 em volta nascem no piso; só a aresta inteira de rosa a rosa fica fixa; telhado não é chão do grafo; a fundição para na quantidade pedida e a argila só surge para a obra; o pastor leva o animal ao curral sem prazo; o fazendeiro põe pó de osso em volta (surge sem composteira nem baú acima de 16); o pedreiro mói a areia da obra antes; o mineiro preso cava a subida rumo à borda. 1.184/1.184 duas vezes, Sentinela `fast` PASS |
 | 0.4.90 | 299–304 | jogo da 0.4.89: o abate não leva o animal na corda e a corda só solta no portão; a porta sozinha se junta ao caminho e as partes soltas voltam ao rodízio (corrige a 295); a argila aparece na hora pedida; o nó da mina fica sob o arco; a frente da porta nasce no piso dela; casa da vila não fica sem solo. 1.170/1.170 duas vezes, Sentinela `fast` PASS |
@@ -63,7 +64,7 @@ parado (espera + bloqueio + ócio + encalhe) e nenhum travado; a meta da 1.0 é 
 
 ## O que o próximo jogo precisa mostrar
 
-Vila nova com a 0.4.74. Depois de jogar: `time_ledger.py`, `action_report.py`, `cost_ledger.py` e o Spark (§0.4).
+Vila nova com a 0.4.93; os itens 1 a 6 vêm da 0.4.74 e seguem sem medida. Depois de jogar: `time_ledger.py`, `action_report.py`, `cost_ledger.py` e o Spark (§0.4).
 
 | # | Item | Sinal |
 |---|---|---|
@@ -73,6 +74,9 @@ Vila nova com a 0.4.74. Depois de jogar: `time_ledger.py`, `action_report.py`, `
 | 4 | Bosque (Regra 268) | linhas `near the village at ... (grove N of M)`; lenhador andando menos de 67% |
 | 5 | Pastor (Regra 269) | "into the pen"; nenhum animal largado solto |
 | 6 | Poste de luz (Regra 261) | `VC_LAMP_POST` quando o construtor fica ocioso (na 0.4.68 nunca ficou) |
+| 7 | Terreno (Regra 323) | `VC_TERRAIN`: `levelled` acima de 0 todo dia e `isolated` caindo |
+| 8 | Lenhador (Regra 324) | `CLEARED_LEAVES` no diário; nenhum `released` do guarda de 300 tiques |
+| 9 | Plantação grande (Regra 325) | a plantação entregue inteira semeada, com as quatro lavouras |
 
 ## Instáveis declarados
 

@@ -12,6 +12,41 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.93] — candidata, 2026-11-18
+
+Das simulações de 3 dias da 0.4.92 (perfil longo do Sentinela) e das escolhas do autor de 18-11. Regras 315 a 325 e
+ADR-057 em [`docs/RULES.md`](docs/RULES.md); nada visto em jogo.
+
+### Adicionado
+
+- ADR-057, Regras 318 a 320: três modos de montar o grafo de ruas, um ligado por vez (`atual`, o padrão; `regioes`,
+  refeito só nos quadrados de 16 × 16 que mudaram; `vizinhanca`, nascido das entradas com A*). `/vc grafo modo` mostra
+  e troca o modo; a aresta sai no overlay com a cor do modo.
+- Regra 317: `VC_ROAD_GRAPH` sai só quando o grafo muda e traz `changes=`, as mudanças do dia.
+- Regra 323: o terreno da vila inteira é arrumado por fila de quadrados de 16 × 16, buraco e bloco isolados primeiro,
+  até 256 colunas por dia; a linha diária `VC_TERRAIN` mede a fila (quadrados, isolados, passos, nivelados no dia).
+- Sentinela: perfil longo, simulação de 3 dias comparada com a base da 0.4.92, indicativo (reprova só com `--strict`);
+  a bancada roda cada modo do grafo e compara com a base do alvo.
+
+### Corrigido
+
+- Regra 315: o fazendeiro semeia a terra comum até o fim, e o alvo recusado fica de lado por 30 s (na simulação ele
+  ficava 55% travado na planície e 70% na taiga).
+- Regra 316: a rua de 3 da vila gerada não é sobra do grafo e não volta ao solo.
+- Regra 321: a porta do jogador é entrada do grafo, em todos os modos.
+- Regra 322: só se calça a aresta que ficou igual em 3 releituras seguidas, em todos os modos.
+- Regra 324: no carvalho de copa baixa, o lenhador tira a folha da coluna encostada no tronco e corta dali (antes o
+  lugar caía a 2 blocos, a Regra 277 não deixava cortar e o guarda de 300 tiques soltava a tarefa).
+- Regra 325: a plantação grande sai arada e semeada inteira pelo molde, cada canteiro com a lavoura que a vila tem
+  menos; o fazendeiro ara o canteiro do molde que voltou a ser grama (emenda a Regra 289).
+
+### Verificado
+
+- `runGametest` 1.197/1.197; Sentinela `fast` PASS; 181 testes Python.
+- Simulação de 3 dias na planície, modo `vizinhanca`, antes das Regras 324 e 325: a fila do terreno nivelou 19, 0 e 256
+  colunas por dia (no dia 1 ninguém chegou à fila); lenhador 5% trabalhando e 59% andando, pastor 53% bloqueado.
+- Instável visto: `ShepherdGameTest.theShepherdShearsOverTheFenceWithoutGoingIn` (1 rodada, passou no Sentinela).
+
 ## [0.4.92] — candidata, 2026-11-17
 
 Do jogo da 0.4.91 (17-11, Spark `pkfBfAxYsv`). Nada visto em jogo.

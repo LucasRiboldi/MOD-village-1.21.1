@@ -11871,6 +11871,23 @@ sobre água ganha base até o piso; a água fora da vila fica. `reachesGeneratio
 GameTests, build e unitários verdes, Sentinela `fast` PASS (20261115T142707Z). README sincronizado com a Regra 287 no PR #85 (o CI tinha caído por isso).
 Nada visto em jogo; só aparece em mundo novo.
 
+## 2026-11-18 — 0.4.93: Regras 315 a 325 e ADR-057 (simulações da 0.4.92)
+
+Simulações de 3 dias da 0.4.92 pelo perfil longo novo do Sentinela (base gravada em e6548661) e escolhas do autor de 18-11.
+
+- 315 (a439f653): o fazendeiro semeia a terra comum; alvo recusado de lado 30 s.
+- 316 (82c7ffcb) e 317 (2ad6cf98): a rua da vila gerada fica; `changes=` no `VC_ROAD_GRAPH`.
+- ADR-057, 318 a 320 (1df8db6c, b28f9a37, 6fc373f6, 0a128fec, 72d2d0a3, 64269e53): três modos do grafo.
+- 321 (142c4159) e 322 (ef49edc6): porta do jogador é entrada; só aresta estável é calçada.
+- 323 (22387426, 1ac3f67c): terreno da vila inteira por fila; linha `VC_TERRAIN`. Planície/`vizinhanca`, 110 quadrados:
+  nivelados 19, 0 e 256 por dia.
+- 324 (08763328): rastreio do lenhador (sonda temporária, não commitada): em 3 de 4 solturas do guarda, as 8 colunas do
+  tronco tinham folha; o lugar caía a 2 blocos. `TrunkStand` escolhe a coluna encostada e tira a folha.
+- 325 (424f6762): canteiros pelo molde `colony/large_farm`; antes, 25 canteiros com grama ficavam sem arar.
+
+Verificado: `runGametest` 1.197/1.197, Sentinela `fast` PASS, 181 testes Python. Instável visto: `ShepherdGameTest`
+(1 rodada). As Regras 324 e 325 não passaram por simulação.
+
 ## 2026-11-17 — 0.4.92: Regras 313 e 314 (jogo da 0.4.91)
 
 Jogo da 0.4.91 (17-11, mundo novo, colônia 29a51a62, Spark `pkfBfAxYsv`, 6 min). Medida das 21 portas da vila no save:

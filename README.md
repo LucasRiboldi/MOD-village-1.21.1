@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.92%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.93%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,11 +19,11 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Estado atual: 0.4.92 na branch `fix/jogo-0490`, não jogada; a última publicada é `v0.4.90-alpha`.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
+**Estado atual: 0.4.93 na branch `fix/jogo-0490`, não jogada; a última publicada é `v0.4.90-alpha`.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
-[docs/RULES.md](docs/RULES.md) (1 a 287).
+[docs/RULES.md](docs/RULES.md) (1 a 325).
 
-Da 0.4.75 à 0.4.92 (pedidos do autor de 13-11 a 17-11, jogos da 0.4.79, 0.4.84, 0.4.85, 0.4.86, 0.4.88, 0.4.89, 0.4.90 e 0.4.91):
+Da 0.4.75 à 0.4.93 (pedidos do autor de 13-11 a 18-11, jogos da 0.4.79, 0.4.84, 0.4.85, 0.4.86, 0.4.88, 0.4.89, 0.4.90 e 0.4.91, simulações da 0.4.92):
 
 - **Aldeão preso:** soleira de casa não é curral, e "saiu" é pisar fora do que ele alcançava (Regra 275); alçapão em pé
   se pula e o caminho o evita (Regra 276); solto da fuga de encalhe só quem saiu do lugar (Regra 279); quem fica preso na água a céu aberto vai à margem e, se não sair, pisa no gelo posto sob o pulo (Regra 285).
@@ -35,6 +35,11 @@ Da 0.4.75 à 0.4.92 (pedidos do autor de 13-11 a 17-11, jogos da 0.4.79, 0.4.84,
   o pastor faz corante de flor no ócio (Regra 272) e só recolhe animal dentro da caixa da vila (Regra 283); o animal atravessa o portão do curral amarrado a 2 blocos do destino (Regra 284); o mineiro novo dorme na casa junto da mina assim que ela sobe (Regra 286); quem não tem ofício do mod fica fora das análises (Regra 270).
 - **Terreno:** nenhuma estrutura da vila nasce sobre água; na geração, a água dentro da vila vira chão com o solo seco
   do chunk, e a casa ou o lampião sobre água ganha base até o piso; só em mundo novo (Regra 288).
+- **0.4.93 (simulações de 3 dias da 0.4.92):** três modos do grafo, um ligado por vez, trocados com `/vc grafo modo`
+  (ADR-057, Regras 318 a 320); a porta do jogador é entrada e só a aresta estável é calçada (Regras 321 e 322); o
+  terreno da vila inteira é arrumado por fila, com a linha `VC_TERRAIN` (Regra 323); o fazendeiro semeia a terra comum
+  (Regra 315) e a plantação grande sai inteira pelo molde (Regra 325); o lenhador tira a folha do carvalho baixo
+  (Regra 324).
 - **0.4.92 (jogo da 0.4.91):** depois do degrau da porta, a entrada e o patamar ficam no chão, com o solo no topo
   (Regra 313); a casa do mod nasce com caminho rente ao chão na porta (Regra 314).
 - **0.4.91 (jogo da 0.4.90):** a entrada da casa e um patamar em volta nascem no piso (Regra 305); só a aresta inteira
