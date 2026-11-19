@@ -11971,3 +11971,17 @@ Placar das notas dos jogos da 0.4.79 à 0.4.86 (33 pontos) e escolhas do autor p
 
 Cada regra com GameTest vermelho antes; baterias de 1.156 verdes duas vezes, Sentinela `fast` PASS em cada uma.
 Nada visto em jogo; a G8 (casa do mineiro medieval) e a casa do mineiro fora da caixa seguem abertas.
+
+## 2026-11-19 — 0.4.94: árvore sai inteira (Regra 326)
+
+Jogo da 0.4.93 em planície (colônia ccac8347, Spark `AYGQ78wh44`): o calçador sem ofício derrubava a árvore do
+caminho e deixava tronco. O GameTest `PathTreeClearingGameTest` gera carvalho, carvalho grande e bétula pelo Vanilla
+e corta cada um pela coluna do caminho; sem a correção, o carvalho grande deixava galho (4 de 98 cortes).
+
+- **Causa:** `TreeClearing.sweep` só aceitava tronco vizinho com `LotGrowth.isClearable`, que exige folha natural no
+  topo do tronco reto ou ao lado dele (`reachesNaturalLeaves`); o galho do carvalho grande encosta em tronco, não em folha.
+- **Regra 326 (escolha A, "tronco por ligação"):** tronco encostado em tronco ou folha já aceitos entra pela
+  `LotGrowth.isLimbOnSite`, que mantém fora o descascado, o do viveiro, a obra da colônia, a peça da vila gerada e o que
+  a proteção guarda.
+
+Nada visto em jogo.

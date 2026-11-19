@@ -137,7 +137,9 @@ public final class TreeClearing {
 
         while (!open.isEmpty() && toClear.size() < MAX_BLOCKS) {
             BlockPos from = open.poll();
-            boolean fromLog = world.getBlockState(from).isIn(BlockTags.LOGS);
+            BlockState fromState = world.getBlockState(from);
+            boolean fromLog = fromState.isIn(BlockTags.LOGS);
+            boolean fromTree = fromLog || fromState.isIn(BlockTags.LEAVES);
 
             for (BlockPos near : BlockPos.iterate(from.add(-1, -1, -1), from.add(1, 1, 1))) {
                 if (near.getX() < minX - REACH || near.getX() > maxX + REACH
@@ -154,7 +156,9 @@ public final class TreeClearing {
                     continue;
                 }
 
-                if (grows(state) && LotGrowth.isClearableOnSite(world, near, state)) {
+                // Regra 326: tronco ligado à árvore aceita é dela, mesmo sem folha no topo (galho do carvalho grande).
+                if (grows(state) && (LotGrowth.isClearableOnSite(world, near, state)
+                        || (fromTree && LotGrowth.isLimbOnSite(world, near, state)))) {
                     BlockPos kept = near.toImmutable();
 
                     seen.add(kept);
