@@ -9,7 +9,7 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.93 na branch `fix/jogo-0490` (sobre a `main` com o PR #88), sem push; a publicada é `v0.4.90-alpha`.
+- **Versão:** 0.4.93 na `main` (branch `fix/jogo-0490` integrada por PR), publicada como `v0.4.93-alpha`.
   **Não jogada;** a 0.4.93 saiu das simulações de 3 dias da 0.4.92 (Regras 315 a 325, ADR-057). A última jogada é a 0.4.91 (17-11, Spark `pkfBfAxYsv`, 6 min): bloco de caminho alto na frente das
   portas e BigHouseMOD sem caminho viraram as Regras 313 e 314. As Regras 305 a 312 (jogo da 0.4.90) seguem candidatas;
   o jogo curto não as mediu.
