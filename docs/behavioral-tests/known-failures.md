@@ -5,6 +5,11 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ---
 
+## KF-016 — `BuilderGameTest.theProjectThatRanOutOfMaterialWakesWhenTheChestIsFilled` caiu uma vez no CI
+
+**ABERTO.** 19-11, CI do PR #89 em `d0eb4a6e` (0.4.93, 1.197 GameTests): caiu 1 vez; o commit só mexia em testes de
+unidade, e o mesmo GameTest passou no CI anterior e na repetição do job. Não rodado isolado nem diagnosticado.
+
 ## KF-015 — `ShepherdGameTest.theShepherdShearsOverTheFenceWithoutGoingIn` cai quando muda a vizinhança dos lotes
 
 **ABERTO.** 14-11, branch `fix/jogo-0484` (0.4.85): 0 quedas em 8 baterias na `main` (0.4.84); com os 3 GameTests novos
