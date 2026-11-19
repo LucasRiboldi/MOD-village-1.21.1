@@ -67,6 +67,16 @@ final class LotGrowth {
         return isSolidGrowth(state) || (state.isIn(BlockTags.LEAVES) && !BlockProtection.isPlayerPlaced(state));
     }
 
+    /**
+     * Tronco encostado num pedaço de árvore que a limpeza já aceitou: é galho ou tronco da mesma árvore, mesmo sem
+     * folha no topo, como no carvalho grande (Regra 326). Fica de fora o descascado, o do viveiro, a obra da colônia,
+     * a peça da vila gerada e o que a proteção não deixa quebrar.
+     */
+    static boolean isLimbOnSite(ServerWorld world, BlockPos pos, BlockState state) {
+        return state.isIn(BlockTags.LOGS) && !isStripped(state) && !growsFromNursery(world, pos)
+                && BlockProtection.mayBreak(world, pos, state);
+    }
+
     /** O mesmo de {@link #isClearable}, mais o que não é do mato: peça da vila gerada e obra da colônia. */
     static boolean isClearableOnSite(ServerWorld world, BlockPos pos, BlockState state) {
         return isClearable(world, pos, state)

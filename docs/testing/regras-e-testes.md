@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 220
+- **Cita a regra:** 221
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -290,7 +290,7 @@ classe prova menos ainda.
 | 277 | O lenhador encosta na árvore (autor 13-11, jogo da 0.4.79; revoga o corte de longe de 202… | cita | TreeChoiceSpeciesGameTest, TrunkStandGameTest |
 | 278 | Água só sem caminho seco (autor 13-11, jogo da 0.4.75; muda a decisão de 2026-11-01): for… | cita | ColonyPathingGameTest, MinerCautionGameTest |
 | 279 | Solto é quem saiu do lugar (autor 14-11, jogo da 0.4.75): o encalhado por congelar duas v… | cita | StrandedWorkersTest |
-| 280 | Árvore no caminho não trava o calçamento (autor 14-11, jogo da 0.4.75): a árvore (tronco… | cita | LeafPathsGameTest |
+| 280 | Árvore no caminho não trava o calçamento (autor 14-11, jogo da 0.4.75): a árvore (tronco… | cita | LeafPathsGameTest, PathTreeClearingGameTest |
 | 281 | Tronco posto sai no log (autor 13-11, jogo da 0.4.79): todo tronco que o mod põe no mundo… | cita | LeafPathsGameTest |
 | 282 | Só a rede reserva chão contra lote (autor 14-11, jogo da 0.4.79): com a rede publicada pe… | cita | BuildSiteGameTest |
 | 283 | O pastor recolhe só dentro da caixa da vila (autor 14-11, opção B da varredura dos GameTe… | cita | PenAccessGameTest, ShepherdHerdingGameTest |
@@ -336,3 +336,4 @@ classe prova menos ainda.
 | 323 | O terreno da vila inteira arrumado pelos aldeões (autor 18-11, escolha "a vila inteira":… | cita | TerrainDefectsTest, TerrainQueueGameTest |
 | 324 | O lenhador encosta no carvalho de copa baixa (autor 18-11, escolha "tirar a folha"): quan… | cita | TrunkStandGameTest |
 | 325 | A plantação grande arada e semeada inteira (autor 18-11, escolha "ler o molde e semear es… | cita | LargeFarmBedsGameTest |
+| 326 | A árvore sai inteira, com galho e tronco ligados (autor 19-11, jogo da 0.4.93, escolha "t… | cita | PathTreeClearingGameTest |

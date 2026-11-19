@@ -12,6 +12,17 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.94] — candidata, 2026-11-19
+
+Do jogo da 0.4.93 em planície (19-11, colônia ccac8347) e da escolha do autor "tronco por ligação". Regra 326 em
+[`docs/RULES.md`](docs/RULES.md); nada visto em jogo.
+
+### Corrigido
+
+- Regra 326: a árvore tirada do caminho ou da zona da obra sai inteira. O tronco que encosta num tronco ou numa folha
+  já aceitos dela sai junto, mesmo sem folha no topo; no carvalho grande a copa saía e ficavam galho e tronco. O
+  GameTest `PathTreeClearingGameTest` corta carvalho, carvalho grande e bétula gerados pelo Vanilla.
+
 ## [0.4.93] — candidata, 2026-11-18
 
 Das simulações de 3 dias da 0.4.92 (perfil longo do Sentinela) e das escolhas do autor de 18-11. Regras 315 a 325 e
