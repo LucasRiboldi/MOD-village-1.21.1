@@ -81,15 +81,22 @@ public final class VillageGround {
         private final boolean[][] drainWater;
         private final VillageBlend.Shape shape;
         private final Map<Long, Integer> doorFronts;
+        private final Map<Long, Integer> aprons;
 
         Plan(int minX, int minZ, VillageSurface.Kind[][] kinds, boolean[][] drainWater, VillageBlend.Shape shape,
-             Map<Long, Integer> doorFronts) {
+             Map<Long, Integer> doorFronts, Map<Long, Integer> aprons) {
+            this.aprons = Map.copyOf(aprons);
             this.minX = minX;
             this.minZ = minZ;
             this.kinds = kinds;
             this.drainWater = drainWater;
             this.shape = shape;
             this.doorFronts = Map.copyOf(doorFronts);
+        }
+
+        /** O piso da casa, se a coluna é do patamar em volta dela (Regra 305). */
+        Integer apronFloor(int x, int z) {
+            return aprons.get(com.villagecolony.core.construction.model.ColonyRoads.column(x, z));
         }
 
         /** O piso da porta, se a coluna é a frente de uma porta da vila (Regra 303). */
@@ -172,20 +179,22 @@ public final class VillageGround {
                     int z = pos.getStartZ() + lz;
                     boolean founds = plan.founds(x, z);
                     Integer door = plan.doorFloor(x, z);
+                    Integer apron = plan.apronFloor(x, z);
 
-                    // A frente da porta fica no piso dela, com o bloco de caminho (Regra 303).
+                    if (door == null && apron == null && !plan.shapes(x, z) && !founds) {
+                        continue;
+                    }
+
+                    int top = topOf(chunk, x, z, chunk.sampleHeightmap(Heightmap.Type.OCEAN_FLOOR_WG, x & 15, z & 15) + SCAN_ABOVE);
+
+                    // A entrada da porta, com caminho, e o patamar da casa ficam no piso (Regras 303 e 305).
                     if (door != null) {
-                        DoorFronts.shape(world, chunk, x, z, topOf(chunk, x, z,
-                                chunk.sampleHeightmap(Heightmap.Type.OCEAN_FLOOR_WG, x & 15, z & 15) + SCAN_ABOVE), door, soil);
-                    } else if (plan.shapes(x, z) || founds) {
-                        int top = topOf(chunk, x, z,
-                                chunk.sampleHeightmap(Heightmap.Type.OCEAN_FLOOR_WG, x & 15, z & 15) + SCAN_ABOVE);
-
-                        if (!founds) {
-                            column(world, chunk, x, z, top, plan.targetFor(x, z, top), plan.drainsWater(x, z), soil);
-                        } else {
-                            found(chunk, x, z, top, plan.targetFor(x, z, top), soil);
-                        }
+                        DoorFronts.shape(world, chunk, x, z, top, door, soil);
+                    } else if (apron != null || !founds) {
+                        column(world, chunk, x, z, top, apron != null ? apron : plan.targetFor(x, z, top),
+                                plan.drainsWater(x, z), soil);
+                    } else {
+                        found(chunk, x, z, top, plan.targetFor(x, z, top), soil);
                     }
                 }
             }
@@ -283,8 +292,9 @@ public final class VillageGround {
 
         // As peças rígidas (as casas) descem ou sobem ao solo suavizado e viram o piso fixo (Regra 296).
         Map<Long, Integer> doorFronts = new java.util.HashMap<>();
+        Map<Long, Integer> aprons = new java.util.HashMap<>();
         String placed = VillagePieces.settle(start, natural, kinds, core, reach, minX, minZ,
-                world.toServerWorld().getStructureTemplateManager(), world.getRegistryManager(), doorFronts);
+                world.toServerWorld().getStructureTemplateManager(), world.getRegistryManager(), doorFronts, aprons);
         VillageBlend.Shape shape = VillageBlend.shape(natural, kinds, core, reach);
 
         // A área moldada, o miolo, as peças fixas e quanto andaram, para medir o chão depois (scripts/ground_report.py).
@@ -292,7 +302,7 @@ public final class VillageGround {
                         + "\"core\":{},\"ms\":{},{}}", minX, minZ, width, depth, REACH, CORE_PAD,
                 (System.nanoTime() - began) / 1_000_000, placed);
 
-        return new Plan(minX, minZ, kinds, drainWater, shape, doorFronts);
+        return new Plan(minX, minZ, kinds, drainWater, shape, doorFronts, aprons);
     }
 
     /** A caixa de todas as peças da vila. */

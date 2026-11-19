@@ -427,11 +427,12 @@ def measure_ground(report, x, z, half=50):
     print(f"  solo: {line}")
 
 
-def simulate(name, days, seed, keep_world, near=(0, 0), snapshot=False):
+def simulate(name, days, seed, keep_world, near=(0, 0), snapshot=False, graph_mode=None):
     mode, biome, locate, place = TARGETS[name]
     level = f"sim-{name}"
     password = secrets.token_hex(12)
-    report = os.path.join(REPORTS, name)
+    # Com o modo do grafo (ADR-057), o relatório fica em <alvo>@<modo>, ao lado do de sempre.
+    report = os.path.join(REPORTS, f"{name}@{graph_mode}" if graph_mode else name)
 
     shutil.rmtree(os.path.join(RUN, level), ignore_errors=True)
     shutil.rmtree(report, ignore_errors=True)
@@ -456,6 +457,9 @@ def simulate(name, days, seed, keep_world, near=(0, 0), snapshot=False):
     try:
         wait_for(latest, r"RCON running on", process, timeout=900)
         rcon = Rcon(RCON_PORT, password)
+
+        if graph_mode:
+            print("  " + rcon.run(f"vc grafo modo {graph_mode}").strip())
 
         x, z = locate_or_place(rcon, locate, place, near)
         print(f"  vila em ({x}, {z})")
@@ -530,7 +534,7 @@ def simulate(name, days, seed, keep_world, near=(0, 0), snapshot=False):
     signals = count_signals(log)
 
     with open(os.path.join(report, "signals.txt"), "w", encoding="utf-8") as out:
-        out.write(f"alvo={name} modo={mode} bioma={biome} vila=({x}, {z}) dias={days} semente={seed}\n")
+        out.write(f"alvo={name} modo={mode} bioma={biome} vila=({x}, {z}) dias={days} semente={seed} grafo={graph_mode or 'atual'}\n")
         out.write(f"aldeões: {before} no início, {after} no fim\n")
 
         for key, value in signals.items():
@@ -554,6 +558,8 @@ def main(argv):
     parser.add_argument("--keep-world", action="store_true", help="não apaga o mundo depois")
     parser.add_argument("--snapshot", action="store_true",
                         help="guarda as regiões do dia 0 e do fim no relatório (para o village_map.py)")
+    parser.add_argument("--graph-mode", choices=("atual", "regioes", "vizinhanca"),
+                        help="liga este modo do grafo (ADR-057) pelo RCON; o relatório fica em <alvo>@<modo>")
     parser.add_argument("--near", default="0,0",
                         help="X,Z de onde procurar a vila: a do jogo do autor, com a mesma --seed")
     args = parser.parse_args(argv)
@@ -574,7 +580,7 @@ def main(argv):
     for name in chosen:
         try:
             summary[name] = simulate(name, args.days, args.seed, args.keep_world,
-                                     tuple(int(v) for v in args.near.split(",")), args.snapshot)
+                                     tuple(int(v) for v in args.near.split(",")), args.snapshot, args.graph_mode)
         except Exception as failure:  # um alvo que falha não derruba os outros
             print(f"[{name}] FALHOU: {failure}")
             summary[name] = {"falha": str(failure)}

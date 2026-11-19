@@ -425,9 +425,11 @@ public final class TreeChoice {
      *
      * <p>O alvo antigo era o próprio tronco. Em barranco ou copa baixa a
      * navegação podia escolher um ponto ruim, passar o expediente andando
-     * e só então marcar a árvore. Para cortar, basta um lugar de pé
-     * dentro do alcance do braço; se nenhum aparece, preserva o alvo
-     * antigo e deixa o guarda de travamento decidir.
+     * e só então marcar a árvore. O lugar de pé mais perto do tronco é o
+     * escolhido; quando ele não encosta no tronco (Regra 277), vale a
+     * coluna encostada que só tem folha natural no caminho, que o
+     * lenhador tira ao chegar (Regra 324). Se nenhum aparece, preserva o
+     * alvo antigo e deixa o guarda de travamento decidir.
      */
     public static BlockPos approachTo(ServerWorld world, BlockPos tree) {
         BlockPos best = tree;
@@ -448,7 +450,7 @@ public final class TreeChoice {
             }
         }
 
-        return best;
+        return touches(world, best, tree) ? best : TrunkStand.leafy(world, tree).orElse(best);
     }
 
     /**

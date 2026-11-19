@@ -110,7 +110,10 @@ public final class FarmerWork {
         HARVEST,
 
         /** Canteiro arado e vazio: plantar semente do baú. */
-        SOW
+        SOW,
+
+        /** Lavoura verde: uma aplicação de pó de osso na volta ({@link BoneMealRound}, Regra 310). */
+        FERTILIZE
     }
 
     static final class Job {
@@ -294,9 +297,10 @@ public final class FarmerWork {
         if (job.target == null) {
             FarmerChores.findWork(world, workerId, job, storage.get());
 
-            // Sem colheita nem canteiro: um canteiro novo na borda da roça, senão o
-            // compostor e a farinha de osso (P8b); sem nada, a plantação grande (Regras 241 e 267).
+            // Sem colheita nem canteiro: um canteiro novo na borda da roça, senão o pó de osso na lavoura verde
+            // (Regra 310), senão o compostor (P8b); sem nada, a plantação grande (Regras 241 e 267).
             if (job.target == null && !FarmerTill.till(world, villager, job, storage.get())
+                    && !BoneMealRound.aim(world, villager, job)
                     && !FarmerCompost.tend(world, villager, job.task.colonyId(), storage.get())) {
                 LargeFarmPlans.nothingToDo(job.task.colonyId(), world.getTime());
             }
@@ -305,7 +309,8 @@ public final class FarmerWork {
         }
 
         if (!stillWorth(world, job, storage.get())) {
-            // Alguém colheu entre planejar e chegar, ou o bloco mudou.
+            // Alguém colheu entre planejar e chegar, ou o bloco mudou: ele fica de lado um tempo (Regra 315).
+            FarmerSetAside.refuse(workerId, job.target, world.getTime());
             release(workerId, job);
 
             return;
@@ -321,9 +326,7 @@ public final class FarmerWork {
                 job.stalled++;
             }
 
-            // Parado no mesmo bloco há quinze segundos de expediente —
-            // 2026-09-03. Oito vezes mais rápido que o guarda de baixo, e
-            // é o mesmo defeito. Ver WorkStall.
+            // Parado no mesmo bloco há quinze segundos de expediente: ver WorkStall.
             if (job.stall.stuck(world, villager) || job.stalled >= STALL_LIMIT) {
                 giveUp(workerId, job, villager);
             }
@@ -338,6 +341,7 @@ public final class FarmerWork {
         switch (job.chore) {
             case HARVEST -> FarmerChores.harvest(world, villager, job, storage.get());
             case SOW -> FarmerChores.sow(world, villager, job, storage.get());
+            case FERTILIZE -> BoneMealRound.apply(world, villager, job, storage.get());
         }
     }
 
@@ -346,15 +350,16 @@ public final class FarmerWork {
      *
      * <p>A pergunta é a do próprio trabalho, e é por isso que ela mora
      * aqui e não no {@code step}: colher pede lavoura madura, semear pede
-     * canteiro vazio <b>e</b> semente no baú, arar pede a terra ainda de
+     * canteiro vazio ou a terra comum da roça (Regra 315) <b>e</b> semente no baú, arar pede a terra ainda de
      * pé. Perguntar sempre "está maduro?" mandaria o semeador embora na
      * primeira passagem.
      */
     private static boolean stillWorth(ServerWorld world, Job job, WorkerStorage storage) {
         return switch (job.chore) {
             case HARVEST -> CropPatch.isRipe(world.getBlockState(job.target));
-            case SOW -> CropPatch.isEmptyPlot(world, job.target)
+            case SOW -> (CropPatch.isEmptyPlot(world, job.target) || OwnFarm.isTillable(world, job.target))
                     && FarmerChores.seedChest(world, job.task.colonyId(), storage.chestPosition()).isPresent();
+            case FERTILIZE -> BoneMealRound.isGreen(world.getBlockState(job.target));
         };
     }
 
@@ -399,10 +404,7 @@ public final class FarmerWork {
         job.stalled = 0;
         MineApproachPath.forget(workerId);
         FarmerStand.forget(workerId);
-
-        // O guarda de imobilidade sobrevive a largar a lavoura — E36.
-        // Ver findWork. Quem zera é o ramo de trabalho, antes do harvest.
-
+        // O guarda de imobilidade sobrevive a largar a lavoura (E36): quem zera é o ramo de trabalho.
         WorkTargets.clear(workerId);
     }
 
@@ -434,10 +436,7 @@ public final class FarmerWork {
             job.task.release("could not reach the crop");
         }
 
-        // A desistência passa a contar — 2026-09-10. Ver WorkerStrikes:
-        // até aqui o fazendeiro devolvia a tarefa sem deixar rastro no
-        // trabalhador, e repetia o mesmo lote fora de alcance a cada
-        // ciclo.
+        // A desistência conta no trabalhador: ver WorkerStrikes.
         WorkerStrikes.gaveUp(workerId, job.task, job.target);
 
         release(workerId, job);

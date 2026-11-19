@@ -111,7 +111,10 @@ public class GraphStabilityGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** Dez dias sem mudar travam o trecho; a trava sobrevive a um grafo novo, e sai quando o caminho some do mundo. */
+    /**
+     * A idade de cada coluna conta dez dias e sobrevive a um grafo novo, e recomeça quando o caminho some do mundo; a linha que
+     * chega à ponta nunca trava (Regras 225 e 306).
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "graph_settle", tickLimit = 20)
     public void aStretchSettlesAfterTenDaysAndLetsGoWhenThePathIsGone(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -132,10 +135,11 @@ public class GraphStabilityGameTest implements FabricGameTest {
 
             long middle = ColonyRoads.column(origin.getX() + 20, origin.getZ() + 20);
 
-            context.assertTrue(RoadSettling.fixed(store.settled(colony.id()), RoadSettling.DAYS).contains(middle),
-                    "Regra 225: o trecho não travou em " + RoadSettling.DAYS + " dias: " + store.settled(colony.id()).size());
-            context.assertTrue(RoadSettling.fixed(store.settled(colony.id()), RoadSettling.DAYS - 1).isEmpty(),
-                    "Regra 225: travou antes dos " + RoadSettling.DAYS + " dias");
+            // A rua reta vai do centro à ponta (nó azul): a idade conta, mas a aresta nunca trava (Regra 306).
+            context.assertTrue(store.settled(colony.id()).getOrDefault(middle, -1L) == 0L,
+                    "Regra 225: a idade do trecho não foi guardada: " + store.settled(colony.id()).size());
+            context.assertFalse(RoadSettling.fixed(store.settled(colony.id()), RoadSettling.DAYS, store.graph(colony.id()))
+                    .contains(middle), "Regra 306: a linha até a ponta travou");
 
             paths.addAll(path(world, origin, 20, 20, 21));
             paths.addAll(path(world, origin, 20, 20, 22));

@@ -29,8 +29,8 @@ import java.util.UUID;
  * A plantação grande trabalha — Regra 289:
  *
  * <ul>
- *   <li>Ao fechar a obra da plantação grande, todo canteiro sai semeado, alternando trigo, cenoura, batata e
- *   beterraba (cultivo moldado no local, Regra 69).</li>
+ *   <li>Ao fechar a obra da plantação grande, todo canteiro do molde sai arado e semeado, cada um com a lavoura que a
+ *   vila tem menos (Regra 325; cultivo moldado no local, Regra 69).</li>
  *   <li>Sem semente em baú nenhum, e com canteiro vazio na roça do fazendeiro, {@link #SURGE} sementes da lavoura que a
  *   vila tem menos surgem no baú dele ({@code SEED_FOR_THE_FARM}); de novo, só depois de {@link #AGAIN}.</li>
  *   <li>A plantação grande tem {@link #FARMERS} vagas de dono ({@link FarmOwners#slots}).</li>
@@ -54,7 +54,7 @@ final class LargeFarmSeeds {
     /** As sementes da vila, na ordem do desempate. */
     private static final List<Item> SEEDS = List.of(Items.WHEAT_SEEDS, Items.CARROT, Items.POTATO, Items.BEETROOT_SEEDS);
 
-    /** As lavouras da obra semeada, em faixas diagonais. */
+    /** As lavouras da obra semeada, na ordem de {@link #SEEDS}. */
     private static final List<Block> CROPS = List.of(Blocks.WHEAT, Blocks.CARROTS, Blocks.POTATOES, Blocks.BEETROOTS);
 
     private static final Map<UUID, Long> LAST = new HashMap<>();
@@ -120,39 +120,71 @@ final class LargeFarmSeeds {
         return best;
     }
 
-    /** Semeia a plantação grande que acabou de fechar e declara o cultivo moldado (Regra 69). */
+    /** Ara e semeia a plantação grande que acabou de fechar e declara o cultivo moldado (Regra 69). */
     static void sowAtCompletion(ServerWorld world, ConstructionProject project) {
         BlockBox box = ColonyFarms.boxOf(com.villagecolony.core.construction.model.Building.of(project, true));
-        int sown = sowAtCompletion(world, project.blueprint().id(), box);
+        Map<Item, Integer> have = new HashMap<>();
+        List<ColonyPos> chests = ColonyChests.nearestFirst(world, project.colonyId(), project.origin());
+
+        for (Item seed : SEEDS) {
+            have.put(seed, ColonyChests.countIn(world, chests, FarmerChores.cropOf(seed)));
+        }
+
+        int sown = sowAtCompletion(world, project.blueprint().id(), box, have);
 
         if (sown > 0) {
             Supplies.record(SupplyException.SHAPED_GROUND, project.colonyId(), "crop", sown);
-            VillageColonyMod.LOGGER.info("Colony {} handed the large farm at {} sown — {} plots (Regra 289)",
+            VillageColonyMod.LOGGER.info("Colony {} handed the large farm at {} sown — {} plots (Regras 289 e 325)",
                     project.colonyId().toString().substring(0, 8), project.origin(), sown);
         }
     }
 
+    /** Como {@link #sowAtCompletion(ServerWorld, ResourceId, BlockBox, Map)}, com os baús da vila vazios. */
+    static int sowAtCompletion(ServerWorld world, ResourceId blueprint, BlockBox box) {
+        return sowAtCompletion(world, blueprint, box, new HashMap<>());
+    }
+
     /**
-     * Planta em todo canteiro vazio de {@code box}, se a obra é a plantação grande.
+     * Ara todo canteiro do molde e planta em todo canteiro vazio de {@code box}, se a obra é a plantação grande — Regra
+     * 325: cada canteiro recebe a lavoura que a vila tem menos, contando o que já está nos baús ({@code have}, por
+     * semente) e o que esta mesma plantação já recebeu; no empate, a primeira de {@link #SEEDS}.
      *
      * @return quantos canteiros foram semeados
      */
-    static int sowAtCompletion(ServerWorld world, ResourceId blueprint, BlockBox box) {
+    static int sowAtCompletion(ServerWorld world, ResourceId blueprint, BlockBox box, Map<Item, Integer> have) {
         if (!LargeFarmPlans.MODEL.equals(blueprint)) {
             return 0;
         }
 
+        LargeFarmBeds.tillAll(world, box);
+
+        Map<Item, Integer> count = new HashMap<>(have);
         int sown = 0;
 
         for (BlockPos at : BlockPos.iterate(box.getMinX(), box.getMinY() - 1, box.getMinZ(),
                 box.getMaxX(), box.getMaxY(), box.getMaxZ())) {
             if (CropPatch.isEmptyPlot(world, at)) {
-                Block crop = CROPS.get(Math.floorMod(at.getX() + at.getZ(), CROPS.size()));
-                world.setBlockState(at.up(), crop.getDefaultState(), Block.NOTIFY_ALL);
+                int pick = scarcestIndex(count);
+
+                world.setBlockState(at.up(), CROPS.get(pick).getDefaultState(), Block.NOTIFY_ALL);
+                count.merge(SEEDS.get(pick), 1, Integer::sum);
                 sown++;
             }
         }
 
         return sown;
+    }
+
+    /** A posição em {@link #SEEDS} da semente com a menor conta; no empate, a primeira. */
+    private static int scarcestIndex(Map<Item, Integer> count) {
+        int best = 0;
+
+        for (int index = 1; index < SEEDS.size(); index++) {
+            if (count.getOrDefault(SEEDS.get(index), 0) < count.getOrDefault(SEEDS.get(best), 0)) {
+                best = index;
+            }
+        }
+
+        return best;
     }
 }

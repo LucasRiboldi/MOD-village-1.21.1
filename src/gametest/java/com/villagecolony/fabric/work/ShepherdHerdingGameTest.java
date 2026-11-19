@@ -313,4 +313,48 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
             context.complete();
         });
     }
+
+    /**
+     * Regra 309: rumo a um curral, a coleta não tem prazo nem expediente, e a corda que se solta é refeita — o pastor leva
+     * o animal até o curral seja qual for a distância e só o solta dentro dele.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_pen_no_deadline", tickLimit = 40)
+    public void aHerdToAPenNeverGivesUp(TestContext context) {
+        ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(4, 1, 4));
+        VillagerEntity shepherd = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 1, 1));
+        CowEntity cow = context.spawnEntity(EntityType.COW, new BlockPos(3, 1, 1));
+
+        context.waitAndRun(5, () -> {
+            try {
+                fixture.owning(shepherd.getUuid());
+                VillageColonyMod.WORKERS.register(shepherd.getUuid(), fixture.colony().id()).assign(ProfessionType.SHEPHERD);
+                cow.attachLeash(shepherd, true);
+
+                // O curral a 90 blocos, a coleta começada há 100.000 tiques, e de noite.
+                BlockPos outside = shepherd.getBlockPos().add(60, 0, 30);
+                BlockPos gate = outside.add(0, 0, 1);
+                BlockPos inside = outside.add(0, 0, 2);
+                ShepherdPens.Pen pen = new ShepherdPens.Pen(gate, inside, outside, java.util.Set.of(inside), true);
+                ShepherdHerding.Herd herd = new ShepherdHerding.Herd(cow.getUuid(), gate, context.getWorld().getTime() - 100_000);
+                herd.pen = pen;
+                herd.phase = ShepherdHerding.Phase.LEAD;
+                context.getWorld().setTimeOfDay(18_000);
+
+                context.assertTrue(ShepherdHerding.step(context.getWorld(), shepherd.getUuid(), herd),
+                        "Regra 309: a coleta rumo ao curral desistiu por prazo ou fora do expediente");
+                context.assertTrue(cow.getLeashHolder() == shepherd, "Regra 309: a vaca foi solta fora do curral");
+
+                cow.detachLeash(true, false);
+
+                context.assertTrue(ShepherdHerding.step(context.getWorld(), shepherd.getUuid(), herd)
+                                && herd.phase == ShepherdHerding.Phase.FETCH,
+                        "Regra 309: com a corda solta, o pastor não voltou para buscar a vaca (fase " + herd.phase + ")");
+            } finally {
+                context.getWorld().setTimeOfDay(1_000);
+                fixture.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
 }

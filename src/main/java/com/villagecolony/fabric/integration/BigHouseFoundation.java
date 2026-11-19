@@ -106,6 +106,7 @@ public final class BigHouseFoundation {
         }
 
         PlacedLogs.scan(world, template.get().calculateBoundingBox(placement, placedAt), "big_house");
+        DoorPaths.pave(world, template.get().calculateBoundingBox(placement, placedAt)); // caminho na porta, Regra 314
 
         Vec3i size = template.get().getSize();
         Building building = new Building(

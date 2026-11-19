@@ -74,6 +74,24 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
   - blocos que surgiram (`VC_SUPPLY`): argila ×240 e argila em bola ×8, cerca de carvalho ×40 e tora ×25
     (`MISSING_PIECE`); terracota branca ×47 (`APPEARING_PIECE`); prismarinho ×144 (`AUTOMATIC_DROP`) — buscar o
     fluxo de fabricação de cada um (M)
+- [ ] 🔴 Simulação de 3 dias da 0.4.92 (18-11, planície, modo `vizinhanca`, colônia 58cb0273), achados:
+  - fila do terreno, lenhador encostado no tronco e plantação grande: Regras 323 a 325 na 0.4.93 (candidatas);
+  - fila do terreno parada no dia 1 (`levelled=0`): ninguém chegou à fila (M);
+  - lenhador 59% andando e 26% ocioso; `STRANDED` "fenced in" 10× num curral; espera "no task open for it" depois de
+    cada soltura (M);
+  - pastor 53% bloqueado (M)
+- [ ] 🔴 Jogo da 0.4.91 (17-11, mundo novo, Spark `pkfBfAxYsv`, 6 min), triagem e escolhas do autor:
+  - bloco de caminho alto na frente das portas (15 de 17 portas no save) e BigHouseMOD sem caminho na porta: Regras 313
+    e 314 na 0.4.92 (candidatas; só em vila gerada depois);
+  - jogo curto: sem `VC_TIME`; as Regras 305 a 312 seguem sem medida em jogo;
+  - blocos que surgiram (`VC_SUPPLY`): pó de osso ×16 (`BONE_MEAL_FOR_THE_FARM`, declarado) e terra arada ×9
+    (`SHAPED_GROUND`) — nenhum novo a buscar fabricação (P)
+- [ ] 🔴 Jogo da 0.4.90 (16-11, Spark `91TxnT5c0X`, 248 min), triagem e escolhas do autor:
+  - entrada da casa (`doors:0`), aresta fixa, telhado como chão, argila em laço, curral vazio, fazendeiro parado,
+    construtor sem areia e mineiro encalhado 14 vezes: Regras 305 a 312 na 0.4.91 (candidatas; conferir no próximo jogo);
+  - blocos que surgiram (`VC_SUPPLY`): areia ×127 (`MISSING_PIECE`, para vidro), tora ×18 e pedregulho ×6
+    (`MISSING_PIECE`), argila ×225 e bola de argila ×149 (`CLAY_ON_REQUEST`), terracota branca ×47
+    (`APPEARING_PIECE`), grama ×87 (`SHAPED_GROUND`) — buscar o fluxo de fabricação da tora e do pedregulho (M)
 - [ ] 🔴 Jogo da 0.4.86 (15-11, planície, Spark `GHWvjlPaPs`, 37 min, 8 notas), achados da triagem:
   - casas e lampião sobre o lago (notas 10:15 e 10:24): Regra 288 na 0.4.87, candidata; conferir em mundo novo (por jogo);
   - fazendeiro 0%: faltava semente em baú; Regra 289 (candidata) — obra semeada, semente que surge, terra arada,

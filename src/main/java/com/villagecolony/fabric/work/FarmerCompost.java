@@ -5,16 +5,12 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.CropPatch;
-import net.minecraft.block.BlockState;
 import net.minecraft.block.ComposterBlock;
-import net.minecraft.block.CropBlock;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldEvents;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,13 +20,11 @@ import java.util.UUID;
 /**
  * O compostor do fazendeiro — P8b (autor, 2026-10-11) e Regra 237 (autor, 2026-11-11, opção F2).
  *
- * <p>O local de trabalho do fazendeiro no Vanilla é o compostor. Sem colheita nem
- * canteiro vazio, ele composta a semente que sobra acima da reserva, com a chance de
- * cada item do próprio jogo ({@code ComposterBlock}, sete níveis por farinha de osso),
- * e usa a farinha de osso da colônia na lavoura verde. A reserva é uma semente por
- * canteiro conhecido da roça, e nunca menos de {@value #MIN_SEED_RESERVE}: a reserva
- * fixa de 32 não sobrava na roça pequena, e o compostor não rodava. O bosque já tira a
- * farinha dos baús antes de criá-la do nada ({@link VillageGrove}).
+ * <p>O local de trabalho do fazendeiro no Vanilla é o compostor. Sem colheita, canteiro
+ * vazio nem lavoura verde ({@link BoneMealRound}, Regra 310), ele composta a semente que
+ * sobra acima da reserva, com a chance de cada item do próprio jogo ({@code ComposterBlock},
+ * sete níveis por farinha de osso). A reserva é uma semente por canteiro conhecido da roça,
+ * e nunca menos de {@value #MIN_SEED_RESERVE}.
  */
 public final class FarmerCompost {
 
@@ -47,9 +41,6 @@ public final class FarmerCompost {
     /** Um gesto a cada segundo. */
     static final int EVERY = 20;
 
-    /** Até onde ele alcança a lavoura verde a partir de onde está. */
-    static final int REACH = 8;
-
     private static final List<Item> COMPOSTED = List.of(Items.WHEAT_SEEDS, Items.BEETROOT_SEEDS);
 
     private static final Map<UUID, Double> LEVELS = new HashMap<>();
@@ -65,8 +56,7 @@ public final class FarmerCompost {
     }
 
     /**
-     * Um gesto do fazendeiro sem colheita nem canteiro: farinha de osso na lavoura
-     * verde, ou semente sobrando no compostor.
+     * Um gesto do fazendeiro sem colheita, canteiro nem lavoura verde: semente sobrando no compostor.
      *
      * @return se ele trabalhou
      */
@@ -82,37 +72,10 @@ public final class FarmerCompost {
 
         List<ColonyPos> chests = ColonyChests.ownFirst(world, colonyId, storage.chestPosition());
 
-        if (fertilizeACrop(world, villager.getBlockPos(), chests)
-                || compostASeed(world, colonyId, chests, storage.chestPosition())) {
+        if (compostASeed(world, colonyId, chests, storage.chestPosition())) {
             villager.swingHand(Hand.MAIN_HAND, true);
 
             return true;
-        }
-
-        return false;
-    }
-
-    /** Uma farinha de osso dos baús na lavoura verde mais perto. */
-    static boolean fertilizeACrop(ServerWorld world, BlockPos from, List<ColonyPos> chests) {
-        if (ColonyChests.countIn(world, chests, Items.BONE_MEAL) == 0) {
-            return false;
-        }
-
-        for (BlockPos at : BlockPos.iterateOutwards(from, REACH, 2, REACH)) {
-            BlockState state = world.getBlockState(at);
-
-            if (state.getBlock() instanceof CropBlock crop && !crop.isMature(state)) {
-                if (ColonyChests.withdraw(world, chests, Items.BONE_MEAL, 1) == 0) {
-                    return false;
-                }
-
-                BlockPos cropAt = at.toImmutable();
-
-                crop.grow(world, world.getRandom(), cropAt, state);
-                world.syncWorldEvent(WorldEvents.BONE_MEAL_USED, cropAt, 15);
-
-                return true;
-            }
         }
 
         return false;

@@ -402,7 +402,7 @@ public final class RoadLines {
     }
 
     /** O que falta calçar: a faixa fechada e as colunas do grafo, numa ordem de andar coluna a coluna. */
-    private static List<PathStep> toPave(Map<Long, Integer> columns, Map<Long, Integer> mask,
+    static List<PathStep> toPave(Map<Long, Integer> columns, Map<Long, Integer> mask,
                                          Map<Long, Integer> physical) {
         Map<Long, Integer> missing = new HashMap<>(mask);
 

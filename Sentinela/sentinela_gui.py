@@ -18,11 +18,12 @@ RUNNER = ROOT / "scripts" / "test_lab.py"
 ANALYSER = ROOT / "scripts" / "sentinel_analysis.py"
 REPORTS = ROOT / "reports" / "test-runs"
 ANALYSIS_REPORTS = ROOT / "reports" / "sentinel-analysis"
-PROFILES = ("quick", "fast", "full")
+PROFILES = ("quick", "fast", "full", "longo")
 PROFILE_SUITES = {
     "quick": {"unit", "property"},
     "fast": {"unit", "property", "gametest"},
     "full": {"unit", "property", "gametest", "gametest-audit", "mutation"},
+    "longo": {"sim", "sim-gate"},
 }
 
 
@@ -44,7 +45,7 @@ class SentinelaGui(tk.Tk):
         self.dry_run = tk.BooleanVar(value=False)
         self.resume = tk.StringVar()
         self.suites = {name: tk.BooleanVar(value=name in PROFILE_SUITES["quick"])
-                       for name in ("unit", "property", "gametest", "gametest-audit", "mutation")}
+                       for name in ("unit", "property", "gametest", "gametest-audit", "mutation", "sim", "sim-gate")}
         self.status = tk.StringVar(value="Pronto. Nenhum teste foi iniciado.")
         self.events: queue.Queue[tuple[str, str | int]] = queue.Queue()
         self.process: subprocess.Popen[str] | None = None
@@ -72,7 +73,7 @@ class SentinelaGui(tk.Tk):
                                      command=self._profile_changed)
             button.grid(column=index, row=0, padx=(0, 18), sticky="w")
             self.profile_buttons.append(button)
-        ttk.Label(profiles, text="quick: unitários e propriedades; fast: inclui GameTests; full: inclui auditoria e PIT.").grid(
+        ttk.Label(profiles, text="quick: unitários e propriedades; fast: inclui GameTests; full: inclui auditoria e PIT; longo: simulação de 3 dias.").grid(
             column=0, row=1, columnspan=3, sticky="w", pady=(6, 0))
 
         ttk.Label(frame, text="Repetições:").grid(column=0, row=3, sticky="w", pady=(12, 0))

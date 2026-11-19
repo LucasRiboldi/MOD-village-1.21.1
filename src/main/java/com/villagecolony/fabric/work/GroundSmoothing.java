@@ -21,7 +21,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,9 +31,9 @@ import java.util.UUID;
  * com degrau de no máximo 1, pondo e tirando solo; qualquer tamanho e qualquer altura. Nunca mexe em construção, peça da
  * vila, obra ou bloco do jogador, em roça e água, nem na boca e na escada da mina.
  *
- * <p>Uma janela de {@link #WINDOW}×{@link #WINDOW} por passada, que varre a caixa da vila em faixas com sobreposição; nela,
- * a mesma superfície do solo da geração ({@link VillageSurface}) com o anel da janela fixo, e só {@link #EDITS} colunas
- * por passada, as de maior diferença primeiro.
+ * <p>Uma janela de {@link #WINDOW}×{@link #WINDOW} por passada, escolhida pela fila de quadrados da Regra 323
+ * ({@link TerrainQueue}); nela, a mesma superfície do solo da geração ({@link VillageSurface}) com o anel da janela fixo, e
+ * só {@link #EDITS} colunas por passada, as de maior diferença primeiro.
  */
 final class GroundSmoothing {
 
@@ -45,16 +44,11 @@ final class GroundSmoothing {
     /** O lado da janela. */
     static final int WINDOW = 24;
 
-    /** O passo entre janelas: elas se sobrepõem para a borda de uma ser alisada pela outra. */
-    static final int STEP = WINDOW - 6;
-
     /** Colunas mexidas por passada. */
     static final int EDITS = 32;
 
     /** Em volta da boca da mina nada é mexido: o buraco e a escada ficam. */
     static final int MINE_GUARD = 8;
-
-    private static final Map<UUID, Integer> CURSOR = new HashMap<>();
 
     private GroundSmoothing() {
     }
@@ -91,22 +85,8 @@ final class GroundSmoothing {
             return gaps;
         }
 
-        VillageBounds box = bounds.get();
-        int across = Math.max(1, (box.maxX() - box.minX()) / STEP + 1);
-        int down = Math.max(1, (box.maxZ() - box.minZ()) / STEP + 1);
-        int index = CURSOR.getOrDefault(colony.id(), 0) % (across * down);
-        CURSOR.put(colony.id(), index + 1);
-        int minX = box.minX() + (index % across) * STEP;
-        int minZ = box.minZ() + (index / across) * STEP;
-        int size = Math.min(WINDOW, Math.min(box.maxX() - box.minX() + 1, box.maxZ() - box.minZ() + 1));
-        int edits = smoothWindow(world, colony.id(), minX, minZ, size, EDITS);
-
-        if (edits > 0) {
-            ActionJournal.action(mason.getUuid(), "LEVELLED", "minecraft:dirt", edits,
-                    new BlockPos(minX + WINDOW / 2, mason.getBlockY(), minZ + WINDOW / 2), "village ground");
-        }
-
-        return edits;
+        // O resto da caixa vai pela fila de quadrados, do pior para o melhor (Regra 323).
+        return TerrainQueue.pass(world, colony, mason);
     }
 
     /** Quanto em volta da obra o construtor parado nivela. */
@@ -434,6 +414,6 @@ final class GroundSmoothing {
     }
 
     static void clearAll() {
-        CURSOR.clear();
+        TerrainQueue.clearAll();
     }
 }

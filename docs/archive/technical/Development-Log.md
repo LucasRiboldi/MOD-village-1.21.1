@@ -11871,6 +11871,53 @@ sobre água ganha base até o piso; a água fora da vila fica. `reachesGeneratio
 GameTests, build e unitários verdes, Sentinela `fast` PASS (20261115T142707Z). README sincronizado com a Regra 287 no PR #85 (o CI tinha caído por isso).
 Nada visto em jogo; só aparece em mundo novo.
 
+## 2026-11-18 — 0.4.93: Regras 315 a 325 e ADR-057 (simulações da 0.4.92)
+
+Simulações de 3 dias da 0.4.92 pelo perfil longo novo do Sentinela (base gravada em e6548661) e escolhas do autor de 18-11.
+
+- 315 (a439f653): o fazendeiro semeia a terra comum; alvo recusado de lado 30 s.
+- 316 (82c7ffcb) e 317 (2ad6cf98): a rua da vila gerada fica; `changes=` no `VC_ROAD_GRAPH`.
+- ADR-057, 318 a 320 (1df8db6c, b28f9a37, 6fc373f6, 0a128fec, 72d2d0a3, 64269e53): três modos do grafo.
+- 321 (142c4159) e 322 (ef49edc6): porta do jogador é entrada; só aresta estável é calçada.
+- 323 (22387426, 1ac3f67c): terreno da vila inteira por fila; linha `VC_TERRAIN`. Planície/`vizinhanca`, 110 quadrados:
+  nivelados 19, 0 e 256 por dia.
+- 324 (08763328): rastreio do lenhador (sonda temporária, não commitada): em 3 de 4 solturas do guarda, as 8 colunas do
+  tronco tinham folha; o lugar caía a 2 blocos. `TrunkStand` escolhe a coluna encostada e tira a folha.
+- 325 (424f6762): canteiros pelo molde `colony/large_farm`; antes, 25 canteiros com grama ficavam sem arar.
+
+Verificado: `runGametest` 1.197/1.197, Sentinela `fast` PASS, 181 testes Python. Instável visto: `ShepherdGameTest`
+(1 rodada). As Regras 324 e 325 não passaram por simulação.
+
+## 2026-11-17 — 0.4.92: Regras 313 e 314 (jogo da 0.4.91)
+
+Jogo da 0.4.91 (17-11, mundo novo, colônia 29a51a62, Spark `pkfBfAxYsv`, 6 min). Medida das 21 portas da vila no save:
+15 com escada no piso da porta, entrada no piso e chão um abaixo. A escada é o `final_state` de um encaixe do molde, que
+a leitura da Regra 305 pulava.
+
+- 313 (b335a26c): o encaixe conta pelo bloco que vira; depois do degrau, entrada e patamar um abaixo, solo no topo.
+- 314 (a02ff748): `DoorPaths.pave` na BigHouseMOD e na casa do mineiro.
+
+Verificado: `runGametest` 1.187/1.187 duas vezes, Sentinela `fast` PASS. Instável visto: `ShepherdGameTest` (1 rodada).
+
+## 2026-11-17 — 0.4.91: Regras 305 a 312 (jogo da 0.4.90)
+
+Jogo da 0.4.90 (16-11, colônia 4108746a, Spark `91TxnT5c0X`, 248 min, TPS 19,95). Escolhas do autor e commits na
+branch `fix/jogo-0490`:
+
+- 305 (d136fe40): `doors:0` porque as 86 frentes de porta dos moldes caíam dentro da caixa; a entrada vai ao primeiro
+  bloco fora do molde, no piso, e a casa ganha patamar de 2.
+- 306 (0e284d9d): a trava de 10 dias passou de coluna a aresta inteira entre nós rosa.
+- 307 (3b1e2554): o nó da porta era lido no beiral; teto com 2 de ar embaixo não é chão. Teste do ramal em L (f70596ea).
+- 308 (50399453): o `SmelterWork` nunca concluía a tarefa; `SmeltDone` conclui na quantidade, e a argila surge só para
+  a obra, com teto de 64 guardadas.
+- 309 (6a950511): rumo a curral, a coleta do pastor não tem prazo nem expediente.
+- 310 (ad3af093): `BoneMealRound`, volta de pó de osso por colônia, fontes em ordem e uma aplicação por segundo.
+- 311 (d87f6b8b): `Crusher.sandShortAhead` pede ao pedreiro a areia da obra antes da falta.
+- 312 (60b3945c): `ClimbOutward`, subida do mineiro rumo à borda depois de 5 tentativas.
+
+Verificado: build e unitários verdes, `runGametest` 1.184/1.184 duas vezes, Sentinela `fast` PASS. Instáveis vistos:
+`ShepherdGameTest` (coleta de poste pega animal do vizinho) e `BiomeBlueprintsGameTest` da taiga (KF-014).
+
 ## 2026-11-16 — 0.4.90: Regras 299 a 304 (jogo da 0.4.89)
 
 Jogo da 0.4.89 num mundo novo (colônia `3a39a18c`, Spark `hYkEcERV1A`, 39 min). As Regras 297 (`maxStep` de 1 a 2 em

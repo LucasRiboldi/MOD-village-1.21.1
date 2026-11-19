@@ -54,7 +54,13 @@ final class StructureFronts {
 
         paths.forEach(at -> columns.add(ColonyRoads.column(at.x(), at.z())));
 
+        // As caixas conhecidas: construção registrada e peça da vila gerada; a porta fora delas é do jogador (Regra 321).
+        java.util.List<BlockBox> known = new java.util.ArrayList<>();
+
         for (Building building : VillageColonyMod.BUILDINGS.ofColony(colony.id())) {
+            known.add(BlockBox.create(MinecraftTypeAdapter.toBlockPos(building.min()),
+                    MinecraftTypeAdapter.toBlockPos(building.max())));
+
             if (building.finished()) {
                 BlockPos min = MinecraftTypeAdapter.toBlockPos(building.min());
                 BlockPos max = MinecraftTypeAdapter.toBlockPos(building.max());
@@ -68,6 +74,7 @@ final class StructureFronts {
         }
 
         for (BlockBox piece : GeneratedVillages.structuresAt(world, hub.getX(), hub.getZ())) {
+            known.add(piece);
             BlockPos min = new BlockPos(piece.getMinX(), piece.getMinY(), piece.getMinZ());
             BlockPos max = new BlockPos(piece.getMaxX(), piece.getMaxY(), piece.getMaxZ());
 
@@ -77,10 +84,12 @@ final class StructureFronts {
         }
 
         for (BlockBox piece : GeneratedVillages.ornamentsAt(world, hub.getX(), hub.getZ())) {
+            known.add(piece);
             EntranceSides.of(world, new BlockPos(piece.getMinX(), piece.getMinY(), piece.getMinZ()),
                     new BlockPos(piece.getMaxX(), piece.getMaxY(), piece.getMaxZ()), hub, terrain).ifPresent(retired::add);
         }
 
+        fronts.addAll(PlayerDoors.fronts(world, colony, terrain, known));
         fronts.addAll(MineGates.fronts(world, colony, terrain));
 
         List<ShepherdPens.Pen> pens = ShepherdPens.pensOf(world, colony);

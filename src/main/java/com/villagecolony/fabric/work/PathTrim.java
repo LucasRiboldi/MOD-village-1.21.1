@@ -21,7 +21,7 @@ import java.util.UUID;
  * nenhuma marca do grafo (linha, nó, entrada, o que falta calçar e o que está planejado) volta a ser o solo do bioma,
  * relva na planície; o caminho coberto, sem 2 livres em cima, vira terra (Regra 180). Nenhum bloco de caminho muda
  * sozinho: é trabalho de quem arruma o chão (pedreiro, carpinteiro e fundidor sem tarefa), {@value #BUDGET} colunas por
- * passada; porta e construção ficam.
+ * passada; porta e construção ficam, e a rua e as peças da vila gerada também (Regra 316).
  */
 final class PathTrim {
 
@@ -77,6 +77,13 @@ final class PathTrim {
                 .toList();
     }
 
+    /**
+     * A sobra que fica: o caminho da vila gerada, rua ou peça (Regra 316). O teste troca a pergunta, porque o arena não tem
+     * estrutura de vila no chunk.
+     */
+    static java.util.function.BiPredicate<ServerWorld, BlockPos> keep =
+            com.villagecolony.fabric.integration.BlockProtection::isVillageOriginal;
+
     private PathTrim() {
     }
 
@@ -107,7 +114,7 @@ final class PathTrim {
             BlockPos at = MinecraftTypeAdapter.toBlockPos(cell);
 
             if (world.isChunkLoaded(at.getX() >> 4, at.getZ() >> 4) && VillageRoad.isPathBlock(world.getBlockState(at))
-                    && !BuildingGaps.insideABuilding(world, colony, at.getX(), at.getZ())) {
+                    && !BuildingGaps.insideABuilding(world, colony, at.getX(), at.getZ()) && !keep.test(world, at)) {
                 world.setBlockState(at, VillageBiomes.foundationGroundAt(world, at).getDefaultState());
                 done++;
             }

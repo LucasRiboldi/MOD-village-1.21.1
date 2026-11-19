@@ -6,7 +6,6 @@ import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ColonyChests;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.CropBlock;
 import net.minecraft.item.Items;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
@@ -47,32 +46,6 @@ public class FarmerCompostGameTest implements FabricGameTest {
         } finally {
             FarmerCompost.clearAll();
             context.setBlockState(CHEST, Blocks.AIR.getDefaultState());
-        }
-
-        context.complete();
-    }
-
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing", tickLimit = 20)
-    public void boneMealGrowsTheGreenWheat(TestContext context) {
-        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
-        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
-        ChestDepositor.deposit(context.getWorld(), chest, Items.BONE_MEAL, 1);
-
-        BlockPos wheat = new BlockPos(4, 2, 4);
-        context.setBlockState(wheat.down(), Blocks.FARMLAND.getDefaultState());
-        context.setBlockState(wheat, Blocks.WHEAT.getDefaultState());
-
-        try {
-            boolean used = FarmerCompost.fertilizeACrop(
-                    context.getWorld(), context.getAbsolutePos(new BlockPos(3, 2, 3)), List.of(chest));
-            int age = ((CropBlock) Blocks.WHEAT).getAge(context.getBlockState(wheat));
-
-            context.assertTrue(used && age > 0, "a farinha de osso não fez o trigo crescer (idade " + age + ")");
-            context.assertTrue(ColonyChests.countIn(context.getWorld(), List.of(chest), Items.BONE_MEAL) == 0,
-                    "a farinha de osso usada não saiu do baú");
-        } finally {
-            context.setBlockState(CHEST, Blocks.AIR.getDefaultState());
-            context.setBlockState(wheat, Blocks.AIR.getDefaultState());
         }
 
         context.complete();

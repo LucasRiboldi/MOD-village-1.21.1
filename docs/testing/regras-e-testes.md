@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 199
+- **Cita a regra:** 220
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -41,7 +41,7 @@ classe prova menos ainda.
 | 28 | ~~Barreira de teste: casa pequena, mobília dispensada~~ | fora de vigor |  |
 | 29 | A mina em escada, duas salas, galeria sem fim | cita | MinerGameTest |
 | 30 | O mineiro recolhe tudo, e a boca tem endereço | cita | MinerGameTest, SmelterGameTest |
-| 31 | O fazendeiro planta o que tem e colhe o que está pronto | classe | ColonyFixture, CropPatchKnownFieldGameTest, CropRegistryGameTest |
+| 31 | O fazendeiro planta o que tem e colhe o que está pronto | classe | BoneMealRoundGameTest, ColonyFixture, CropPatchKnownFieldGameTest |
 | 32 | ~~Móveis e cama entram depois da casa pronta~~ — substituída em 10-22 pela 21 (C-02, auto… | fora de vigor |  |
 | 33 | Pedido de commit+push também atualiza o JAR local | nenhum |  |
 | 34 | A lava nunca surge automática | classe | BuilderGameTest, ChainRootsGameTest, ConstructionSupplyAuditGameTest |
@@ -86,8 +86,8 @@ classe prova menos ainda.
 | 73 | Caminho de areia: a vila do deserto tem caminho próprio — cópia do caminho de terra do Va… | classe | BenchPassivesGameTest, BenchUseGameTest, BiomeSiteGameTest |
 | 74 | A cama mais perto do trabalho: cada aldeão dorme na cama da vila mais perto de onde traba… | cita | BedChoiceGameTest, BedPlanTest, WalksTest |
 | 75 | Movimentação natural: só o mineiro remodela o terreno para subir (degrau, túnel); ninguém… | classe | ClimbReshapeTest |
-| 76 | O encalhado nunca desiste: larga o ofício e sobe até a superfície; a escada da fuga é tam… | classe | ClimbOutGameTest, ClimbReshapeTest, FencedInGameTest |
-| 77 | Cama como último recurso: preso 5 vezes no mesmo lugar, ou sem caminho para casa à noite,… | classe | BedTeleportGameTest, NightHomeRangeGameTest |
+| 76 | O encalhado nunca desiste: larga o ofício e sobe até a superfície; a escada da fuga é tam… | classe | ClimbOutGameTest, ClimbOutwardGameTest, ClimbReshapeTest |
+| 77 | Cama como último recurso: preso 5 vezes no mesmo lugar, ou sem caminho para casa à noite,… | classe | BedTeleportGameTest, ClimbOutwardGameTest, NightHomeRangeGameTest |
 | 78 | Caminhada longa por etapas: um trajeto de 50 a 130 blocos vira etapas na superfície | classe | WalkLegsGameTest |
 | 79 | A pedra é emprestada: o alvo do mineiro vale por um prazo curto, e só o progresso renova | classe | MineDescentLeaseGameTest, MineLeaseGameTest, MineLeaseTest |
 | 80 | Só vira alvo o bloco com posição de trabalho válida e alcançável | classe | MinerPicksTest, MinerRerouteTest, MiningTargetGameTest |
@@ -146,14 +146,14 @@ classe prova menos ainda.
 | 133 | Estoque cheio vira obra e produto (autor 10-28, jogo da 0.3.99: lenhador 74%, pedreiro 48… | cita | ItemStockGameTest |
 | 134 | O adulto que sobra vai ao ofício que a vila espera (autor 10-28, jogo da 0.3.99: 6 de 18… | fora de vigor |  |
 | 135 | Tarefa só abre quando pode render (autor 10-28, jogo da 0.3.99): a ordem de estoque de pe… | classe | IdleFixesGameTest, ItemStockGameTest, ProfessionBalanceGameTest |
-| 136 | O fazendeiro alcança como o jogador (autor 10-28, jogo da 0.3.99: roça 2 blocos acima, a… | classe | ColonyFixture, FarmPlanGameTest, FarmerGameTest |
+| 136 | O fazendeiro alcança como o jogador (autor 10-28, jogo da 0.3.99: roça 2 blocos acima, a… | classe | BoneMealRoundGameTest, ColonyFixture, FarmPlanGameTest |
 | 137 | A escada da mina recomeça do topo (autor 10-28, jogo da 0.3.99: o mineiro passou 30 min n… | classe | IdleFixesGameTest |
 | 138 | A rua da colônia é só caminho e é da vila (autor 10-28; depois do jogo da 0.3.104: "volta… | classe | BlockProtectionGameTest, BuildSiteGameTest, LumberjackGameTest |
 | 139 | O lote sai do mapa de interesse (autor 10-28, jogo da 0.3.102: casa a 140 blocos, 24 acim… | cita | LotScoreMemoryTest |
 | 140 | A rua estica pela ponta mais perto do centro, com um bloco de largura (Regra 186), pedind… | cita | RoadExtensionGameTest |
 | 141 | O centro da vila não muda (autor 10-28, taiga simulada: o curral sem lote foi a 98 blocos… | cita | ColonyBoundsTest, ColonySavedDataTest, ConstructionPlannerReachTest |
 | 142 | À noite só o preso vai à cama (autor 10-28, taiga simulada: 114 teleportes, um por aldeão… | cita | BedTeleportGameTest, NightHomeRangeGameTest |
-| 143 | O baú público enche inteiro (autor 10-28, taiga simulada: 27 vezes o lenhador largou tora… | classe | BuildProgressGameTest, BuildReserveGameTest, BuilderGameTest |
+| 143 | O baú público enche inteiro (autor 10-28, taiga simulada: 27 vezes o lenhador largou tora… | classe | BoneMealRoundGameTest, BuildProgressGameTest, BuildReserveGameTest |
 | 144 | Alvo de coleta inalcançável sai da memória (autor 10-28, taiga simulada: 3 fazendeiros vo… | cita | SurfaceHitsTest |
 | 145 | As camas da vila são as da caixa (autor 10-28, taiga simulada: a sonda de 64 blocos via p… | cita | ColonyBoundsTest, VillageDiaryGameTest |
 | 146 | Fundidor e pedreiro produzem mais (autor 10-28, taiga simulada: fundidor 80% e pedreiro 6… | cita | IdleFixesGameTest |
@@ -196,7 +196,7 @@ classe prova menos ainda.
 | 183 | Anel de caminho (autor 11-05): o chão em volta do chafariz é caminho, sem quina fixa no g… | cita | RoadRulesGameTest |
 | 184 | Quina é entrada (autor 11-05): da terceira releitura em diante, a quina da plantação mais… | cita | EntrancesAtTheDoorGameTest, RoadRulesGameTest |
 | 185 | A ponta cresce (autor 11-05, emendada 11-10): por dia, as 4 pontas, uma por lado, avançam… | cita | RoadRulesGameTest |
-| 186 | Rua de um bloco (autor 11-05): o caminho a até 3 blocos da linha que não é linha nem fren… | cita | EntrancesAtTheDoorGameTest, RetiredSpursTest, RoadLinesTest |
+| 186 | Rua de um bloco (autor 11-05; a rua da vila gerada fica, Regra 316): o caminho a até 3 bl… | cita | EntrancesAtTheDoorGameTest, RetiredSpursTest, RoadLinesTest |
 | 187 | Revogada (autor 11-06, ADR-047). A obra pedida não reserva região | classe | LotTypeRefusalsGameTest, MaeFinishGameTest, MaeRescueGameTest |
 | 188 | Pedido só do que falta (jogo 11-05): o pedido de peça de obra não abre quando os baús cob… | classe | CraftFamilyGameTest, CraftingGameTest, FurnaceFeedGameTest |
 | 189 | Madeira (autor 11-05): dentro da zona de prioridade, o lenhador pega a árvore conhecida m… | cita | ProfessionDemandTest |
@@ -233,9 +233,9 @@ classe prova menos ainda.
 | 220 | Quem não tem ofício trabalha na vila (autor 11-06, exceção à regra temporária de 11-02):… | cita | GraphOnlyPathsGameTest |
 | 221 | A vila gasta o que produz (autor 11-06): depois da ceia, cada adulto come 1 ponto de comi… | cita | VillageConsumesGameTest, VillageMealsGameTest |
 | 222 | O socorro do MAE (autor 11-06, ADR-049): depois de 2 voltas inteiras sem lote para a próx… | cita | MaePatienceGameTest, MaeRescueGameTest |
-| 223 | Branco só onde se entra (autor 11-07, desenho sobre o jogo da 0.4.42): o marcador fica co… | cita | DoorFrontsGameTest, EntrancesAtTheDoorGameTest, LampPostPlanTest |
+| 223 | Branco só onde se entra (o nó passou para o primeiro chão fora da estrutura pela Regra 30… | cita | DoorFrontsGameTest, EntrancesAtTheDoorGameTest, LampPostPlanTest |
 | 224 | Todo caminho conta e liga em reta (autor 11-10, ADR-050): o grafo lê o caminho da caixa e… | cita | GraphStabilityGameTest, GraphStabilityTest, RoadLinesTest |
-| 225 | O trecho que ficou trava (autor 11-10, ADR-050): coluna que passa 10 dias de jogo na linh… | cita | GraphStabilityGameTest, GraphStabilityTest, RoadGraphStoreTest |
+| 225 | O trecho que ficou trava (a trava passou a ser por aresta de rosa a rosa pela Regra 306;… | cita | GraphStabilityGameTest, GraphStabilityTest, RoadGraphStoreTest |
 | 226 | Socorro da vila inteira, em bairro (autor 11-10, ADR-051): só a volta sem lote da casa co… | cita | LotTypeRefusalsGameTest, MaeFinishGameTest, MaePatienceGameTest |
 | 227 | Água interna sob a obra pedida (autor 11-10, ADR-051): a obra do jogador aterra a água da… | cita | MaeFinishGameTest |
 | 228 | Ruína de save antigo sai (autor 11-10, ADR-051): a obra MAE que uma versão anterior deixo… | cita | MaeFinishGameTest |
@@ -244,15 +244,15 @@ classe prova menos ainda.
 | 231 | Caminho sob laje e ponta na extremidade (autor 11-10, sobre o jogo da 0.4.47): o grafo lê… | cita | RoadRulesGameTest, RoadTipsTest |
 | 232 | A obra manda no artesão (autor 11-10, sobre a análise docs/audit/2026-11-10-qualidade-das… | cita | ProfessionBalanceGameTest |
 | 233 | A vaga segue a falta (autor 11-10): com comida em falta, o fazendeiro vem primeiro na lis… | cita | ColonyCycleTest, ProfessionDemandTest |
-| 234 | O trecho travado sai verde (autor 11-11): no sinalizador dos caminhos (/vc mae mostrar li… | cita | RoadMapSyncGameTest |
+| 234 | O trecho travado sai verde (só aresta travada pela Regra 306 sai verde; autor 11-11): no… | cita | RoadMapSyncGameTest |
 | 235 | Pastor pelo rebanho (autor 11-11, opção P1 de docs/audit/2026-11-11-atividade-das-profiss… | cita | ProfessionDemandTest |
 | 236 | Pedreira de superfície no deserto (autor 11-11, opção M1): na vila de deserto, o mineiro… | cita | DesertQuarryGameTest |
-| 237 | Composteira pela roça (autor 11-11, opção F2): o fazendeiro sem colheita nem canteiro com… | cita | FarmerCompostGameTest |
+| 237 | Composteira pela roça (autor 11-11, opção F2): o fazendeiro sem colheita, canteiro nem la… | cita | FarmerCompostGameTest |
 | 238 | Rebanho cresce com comida sobrando (autor 11-11, opção P2): com 32 ou mais da comida da e… | cita | FlockSurplusGameTest |
 | 239 | Todo animal que procria com comida (autor 11-11, opção P4): o pastor cria ovelha, vaca, p… | cita | FlockSurplusGameTest |
 | 240 | Lã guardada vira peça de lã (autor 11-11, opção P5): o pastor sem tarefa, com mais de 16… | cita | ShepherdWoolGoodsGameTest |
 | 241 | Plantação grande do deserto (autor 11-11): a plantação do mod tem 16x16, borda de tora co… | cita | BuilderGameTest, LargeFarmGameTest |
-| 242 | Quem arruma o chão (autor 11-11): nenhum bloco de caminho muda sozinho. Pedreiro, carpint… | cita | BuildingGapsGameTest, GraphOnlyPathsGameTest, GroundKeepersTest |
+| 242 | Quem arruma o chão (autor 11-11; a sobra da vila gerada fica, Regra 316): nenhum bloco de… | cita | BuildingGapsGameTest, GraphOnlyPathsGameTest, GroundKeepersTest |
 | 243 | Baú de qualquer lugar (autor 11-11, opção T4 de docs/audit/2026-11-11-jogo-0453.md): todo… | cita | VillageChestReachGameTest |
 | 244 | Fora da simulação não congela (autor 11-11, opção T1c de docs/audit/2026-11-11-jogo-0453.… | cita | PinnedOnFlatGameTest |
 | 245 | Cama longe vem para perto (autor 11-11, opção T3b): na troca de camas do amanhecer (Regra… | cita | BedPlanTest |
@@ -273,13 +273,13 @@ classe prova menos ainda.
 | 260 | Casa do mineiro na fundação (autor 12-11): quando a BigHouseMOD acaba de ser posta, a fun… | cita | MinerHomeFoundationGameTest |
 | 261 | Poste de luz nas ruas fixas (autor 12-11, opção B): base de 1 bloco de pedra do bioma (ar… | cita | LampPostGameTest, LampPostPlanTest |
 | 262 | Cada estrutura do mod na versão do bioma (autor 12-11, troca automática): ao erguer uma e… | cita | BiomeBlockSwapTest, BiomeBlueprintsGameTest |
-| 263 | O fundidor funde onde está (autor 13-11, jogo da 0.4.68): a fundição não exige que o fund… | cita | SmelterGameTest |
+| 263 | O fundidor funde onde está (autor 13-11, jogo da 0.4.68): a fundição não exige que o fund… | cita | ClayLoopGameTest, SmelterGameTest |
 | 264 | O grafo nunca passa sobre a água (autor 13-11, jogo da 0.4.68): nenhuma linha do grafo de… | cita | RoadLinesTest |
 | 265 | O grafo não atravessa estrutura (autor 13-11, jogo da 0.4.68, opção "parede e casas Vanil… | cita | GraphStabilityGameTest |
 | 266 | Uma casa do mineiro basta (autor 13-11, jogo da 0.4.68): com uma casa do mineiro pronta n… | cita | StructureEntrancesGameTest |
 | 267 | Plantação grande em todo bioma (autor 13-11, jogo da 0.4.68: fazendeiro da planície com 0… | cita | LargeFarmGameTest |
 | 268 | O bosque acha o chão em qualquer altura (autor 13-11, jogo da 0.4.68: 0 mudas plantadas,… | cita | VillageGroveGameTest |
-| 269 | O prazo do pastor pela distância (autor 13-11, jogo da 0.4.68: o curral teve no máximo 4… | cita | ShepherdHerdingGameTest |
+| 269 | O prazo do pastor pela distância (rumo a curral, sem prazo pela Regra 309; autor 13-11, j… | cita | ShepherdHerdingGameTest |
 | 270 | Sem ofício fora das análises (autor 13-11, ADR-055 item 7): o aldeão sem ofício do mod nã… | cita | WorkTimeSwingGameTest, test_action_report, test_time_ledger |
 | 271 | A muda do bosque surge, também no deserto (autor 13-11, ADR-055 item 10): o bosque do len… | cita | VillageGroveGameTest |
 | 272 | Corante das flores (autor 13-11, ADR-055 item 11): no ócio do ofício, o pastor colhe uma… | cita | ShepherdDyesGameTest |
@@ -287,7 +287,7 @@ classe prova menos ainda.
 | 274 | A obra conta como trabalho do construtor (autor 13-11, ADR-055 item 14): sem trabalho med… | cita | BedChoiceGameTest |
 | 275 | Soleira de casa não é curral (autor 13-11, jogo da 0.4.75): o que se alcança passando por… | cita | FencedInGameTest, PenEscapeOutTest |
 | 276 | Alçapão em pé se pula e se evita (autor 13-11, jogo da 0.4.79): o alçapão aberto prende c… | cita | FencedInGameTest |
-| 277 | O lenhador encosta na árvore (autor 13-11, jogo da 0.4.79; revoga o corte de longe de 202… | cita | TreeChoiceSpeciesGameTest |
+| 277 | O lenhador encosta na árvore (autor 13-11, jogo da 0.4.79; revoga o corte de longe de 202… | cita | TreeChoiceSpeciesGameTest, TrunkStandGameTest |
 | 278 | Água só sem caminho seco (autor 13-11, jogo da 0.4.75; muda a decisão de 2026-11-01): for… | cita | ColonyPathingGameTest, MinerCautionGameTest |
 | 279 | Solto é quem saiu do lugar (autor 14-11, jogo da 0.4.75): o encalhado por congelar duas v… | cita | StrandedWorkersTest |
 | 280 | Árvore no caminho não trava o calçamento (autor 14-11, jogo da 0.4.75): a árvore (tronco… | cita | LeafPathsGameTest |
@@ -299,7 +299,7 @@ classe prova menos ainda.
 | 286 | O mineiro novo dorme junto da mina (autor 14-11, jogo da 0.4.84: a cama ao lado da mina n… | cita | BedChoiceGameTest |
 | 287 | O fazendeiro entra na plantação de borda de tora (autor 15-11, jogo da 0.4.85: o fazendei… | cita | ColonyPathingGameTest, IdleFixesGameTest |
 | 288 | Nenhuma estrutura da vila nasce sobre água (autor 15-11, jogo da 0.4.86: casas e lampião… | cita | VillageGroundGameTest |
-| 289 | A plantação grande trabalha (autor 15-11, jogo da 0.4.86: 167 canteiros arados e 5 planta… | cita | LargeFarmSeedsGameTest |
+| 289 | A plantação grande trabalha (autor 15-11, jogo da 0.4.86: 167 canteiros arados e 5 planta… | cita | FarmerTillLoopGameTest, LargeFarmSeedsGameTest |
 | 290 | Tronco inteiro e folha no caminho (autor 15-11, G7 da ADR-056; jogo da 0.4.85: "sobrou um… | cita | TreeAndLeafGameTest, WaterTerrainControlGameTest |
 | 291 | O grafo pisa na tábua de rua e na frente de toda porta (autor 15-11, G1 e G5 da ADR-056;… | cita | GraphFloorGameTest |
 | 292 | Sem torre de minério e sem ar protegido no alisamento (autor 15-11, G3 da ADR-056, escolh… | cita | OreTowerGameTest, VillageGroundGameTest |
@@ -311,7 +311,28 @@ classe prova menos ainda.
 | 298 | A vila nova nasce enxuta (autor 15-11, jogo da 0.4.88, opção C corrigida: 9 aldeões da vi… | cita | HiringProperties, IdleFixesGameTest, ProfessionDemandTest |
 | 299 | O pastor leva o animal até dentro do curral (autor 15-11, jogo da 0.4.89, opção C: o curr… | cita | FlockHarvestGameTest, ShepherdHerdingGameTest |
 | 300 | A porta e as partes soltas entram no grafo (autor 16-11, jogo da 0.4.89, opção C com o ro… | cita | RoadLinesTest |
-| 301 | A argila aparece na hora pedida (autor 16-11, jogo da 0.4.89: o fundidor parou 30 vezes s… | cita | ClayOnRequestGameTest |
+| 301 | A argila aparece na hora pedida (só para obra e com teto de 64 guardadas pela Regra 308;… | cita | ClayLoopGameTest, ClayOnRequestGameTest |
 | 302 | O nó da mina fica sob o arco (autor 16-11, jogo da 0.4.89, opção A; muda o nó de entrada… | cita | MineNodeGameTest, MineYardGameTest |
-| 303 | A frente da porta nasce no piso dela (autor 16-11, jogo da 0.4.89, opção A: "não pode exi… | cita | DoorFrontsGameTest |
+| 303 | A frente da porta nasce no piso dela (a entrada passou para a primeira coluna livre e gan… | cita | DoorFrontsGameTest |
 | 304 | Casa da vila não fica sem solo (autor 16-11, jogo da 0.4.89, opção A+B: casa suspensa sob… | cita | UnderPieceFillGameTest |
+| 305 | A entrada da casa e o patamar em volta ficam no piso (autor 17-11, jogo da 0.4.90, opção… | cita | DoorFrontsGameTest, EntrancesAtTheDoorGameTest, VillagePiecesGameTest |
+| 306 | Só a aresta inteira de rosa a rosa fica fixa (autor 17-11, jogo da 0.4.90, opção B: fixed… | cita | GraphStabilityGameTest, LampPostGameTest, RoadMapSyncGameTest |
+| 307 | Telhado não é chão do grafo (autor 17-11, jogo da 0.4.90, opção A: cinco das seis portas… | cita | GraphFloorGameTest |
+| 308 | A fundição para na quantidade pedida, e a argila só surge para a obra (autor 17-11, jogo… | cita | ClayLoopGameTest, ClayOnRequestGameTest |
+| 309 | O pastor leva o animal até o curral, seja qual for a distância (autor 17-11, jogo da 0.4.… | cita | ShepherdHerdingGameTest |
+| 310 | O fazendeiro põe pó de osso em cada pé, uma volta por vez (autor 17-11, jogo da 0.4.90, o… | cita | BoneMealRoundGameTest, FarmerGameTest |
+| 311 | O pedreiro mói a areia antes de a obra pedir (autor 17-11, jogo da 0.4.90, opção B: 525 p… | cita | CrusherGameTest |
+| 312 | O mineiro preso sobe rumo à borda da vila (autor 17-11, jogo da 0.4.90: o mineiro ficou p… | cita | ClimbOutwardGameTest |
+| 313 | Depois do degrau da porta, a entrada fica no chão (autor 17-11, jogo da 0.4.91, opção 1A:… | cita | DoorFrontsGameTest, VillagePiecesGameTest |
+| 314 | A casa do mod nasce com caminho na porta (autor 17-11, jogo da 0.4.91, opção 2A: a porta… | cita | DoorPathsGameTest |
+| 315 | O fazendeiro semeia a terra comum até o fim, e o alvo recusado fica de lado (autor 18-11,… | cita | FarmerSetAsideTest, FarmerTillLoopGameTest |
+| 316 | A rua da vila gerada não é sobra (autor 18-11, estudo do grafo §3.4, corte do laço: a pas… | cita | RoadRulesGameTest |
+| 317 | O log conta as mudanças do grafo no dia (autor 18-11, estudo do grafo §8 e §9 passo 2): a… | cita | RoadGraphChangesTest |
+| 318 | Três modos do grafo, um ligado por vez (autor 18-11, ADR-057): o grafo de ruas é montado… | cita | RoadGraphModeTest, RoadMapRunsTest |
+| 319 | Modo regioes: o grafo refeito só onde mudou (autor 18-11, ADR-057, modo 2; emendada no me… | cita | RoadRegionEventsGameTest, RoadRegionsTest |
+| 320 | Modo vizinhanca: o grafo nasce das entradas, liga todas e cresce (autor 18-11, ADR-057, m… | cita | NeighborhoodRoadsTest |
+| 321 | A porta do jogador é entrada do grafo (autor 18-11, para todos os modos do grafo; cumpre… | cita | PlayerDoorsGameTest |
+| 322 | Só se calça a aresta estável (autor 18-11, para todos os modos do grafo, junto da ideia d… | cita | EntrancesAtTheDoorGameTest, RoadStabilityTest |
+| 323 | O terreno da vila inteira arrumado pelos aldeões (autor 18-11, escolha "a vila inteira":… | cita | TerrainDefectsTest, TerrainQueueGameTest |
+| 324 | O lenhador encosta no carvalho de copa baixa (autor 18-11, escolha "tirar a folha"): quan… | cita | TrunkStandGameTest |
+| 325 | A plantação grande arada e semeada inteira (autor 18-11, escolha "ler o molde e semear es… | cita | LargeFarmBedsGameTest |

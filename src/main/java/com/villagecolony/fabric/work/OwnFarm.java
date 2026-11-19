@@ -75,9 +75,14 @@ final class OwnFarm {
 
     /**
      * Regra 289: terra ou grama com ar em cima e canteiro arado ao lado — o canteiro que voltou a ser terra comum,
-     * dentro da roça. A terra solta, longe de canteiro, não é roça.
+     * dentro da roça. A terra solta, longe de canteiro, não é roça. Na plantação grande, todo canteiro do molde é roça,
+     * mesmo longe de terra arada e com mato em cima (Regra 325).
      */
     static boolean isTillable(ServerWorld world, BlockPos at) {
+        if (LargeFarmBeds.isFallowBed(world, at)) {
+            return true;
+        }
+
         if (!(world.getBlockState(at).isOf(Blocks.DIRT) || world.getBlockState(at).isOf(Blocks.GRASS_BLOCK))
                 || !world.getBlockState(at.up()).isAir()) {
             return false;
@@ -92,10 +97,14 @@ final class OwnFarm {
         return false;
     }
 
-    /** Ara a terra comum da roça antes de semear; diz se arou. */
+    /** Ara a terra comum da roça antes de semear, tirando o mato de cima; diz se arou. */
     static boolean tillIfDirt(ServerWorld world, BlockPos at) {
         if (!isTillable(world, at)) {
             return false;
+        }
+
+        if (!world.getBlockState(at.up()).isAir()) {
+            world.breakBlock(at.up(), false);
         }
 
         world.setBlockState(at, Blocks.FARMLAND.getDefaultState());

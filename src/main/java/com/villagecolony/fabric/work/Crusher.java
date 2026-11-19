@@ -21,7 +21,7 @@ import java.util.UUID;
 /**
  * O britador do pedreiro — P2c, autossuficiência, 2026-10-11 (escolha do autor).
  *
- * <p>Quando a areia falta, o pedreiro mói
+ * <p>Quando a areia falta, ou antes, quando a obra aberta vai gastar mais do que os baús têm (Regra 311), o pedreiro mói
  * pedregulho em cascalho e cascalho em areia, dois para um em cada passo (a
  * proporção do britador do MineColonies). É uma rota de produção que a vila
  * sustenta em qualquer bioma: a mina traz o pedregulho. Ele não mói o
@@ -34,6 +34,14 @@ public final class Crusher {
 
     /** Quanta areia um pedido ao pedreiro pede. */
     static final int ORDER = 8;
+
+    /** O maior pedido de areia de uma vez, o de antes da obra pedir (Regra 311). */
+    static final int MAX_ORDER = 64;
+
+    /** A receita da vidraça: 6 vidros fazem 16. */
+    private static final int PANE_GLASS = 6;
+
+    private static final int PANES = 16;
 
     private Crusher() {
     }
@@ -49,8 +57,10 @@ public final class Crusher {
      */
     public static void askTheMason(ServerWorld world, Colony colony) {
         UUID colonyId = colony.id();
+        // Regra 311: a areia que a obra aberta vai gastar é moída antes de ela pedir, e o pedido cobre a falta.
+        int ahead = sandShortAhead(world, colony);
 
-        if (!(LastShortage.stillMissing(colonyId, ResourceType.SAND) || buildWaitsForGlass(world, colony))
+        if (!(ahead > 0 || LastShortage.stillMissing(colonyId, ResourceType.SAND) || buildWaitsForGlass(world, colony))
                 || !covers(world, colony)) {
             return;
         }
@@ -62,12 +72,29 @@ public final class Crusher {
             }
         }
 
+        int amount = Math.min(MAX_ORDER, Math.max(ORDER, ahead));
+
         VillageColonyMod.TASKS.create(
-                colonyId, TaskType.CRAFT_STONE_MATERIAL, TaskPriority.CONSTRUCTION_MATERIAL, ResourceType.SAND, ORDER);
+                colonyId, TaskType.CRAFT_STONE_MATERIAL, TaskPriority.CONSTRUCTION_MATERIAL, ResourceType.SAND, amount);
 
         VillageColonyMod.LOGGER.info(
-                "Colony {} has no sand in reach — the mason crushes {} out of stone, {} to 1 a step",
-                colonyId, ORDER, RATIO);
+                "Colony {} is short of {} sand for the open build — the mason crushes {} out of stone, {} to 1 a step",
+                colonyId, Math.max(0, ahead), amount, RATIO);
+    }
+
+    /**
+     * A areia que falta guardada para a obra aberta (Regra 311): a peça de areia e o vidro que ela ainda vai pôr, menos
+     * o vidro e a areia nos baús. Vidro e vidro tingido gastam uma areia cada; 16 vidraças, 6 vidros.
+     */
+    static int sandShortAhead(ServerWorld world, Colony colony) {
+        List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.id(), colony.center());
+        int panes = ConstructionDemand.materialNeededBy(id -> id.path().endsWith("glass_pane"), colony);
+        int glass = ConstructionDemand.materialNeededBy(id -> id.path().endsWith("glass"), colony)
+                + (panes * PANE_GLASS + PANES - 1) / PANES;
+        int sand = ConstructionDemand.materialNeededBy(id -> id.path().equals("sand"), colony)
+                + Math.max(0, glass - ColonyChests.countIn(world, chests, Items.GLASS));
+
+        return sand - ColonyChests.countIn(world, chests, Items.SAND);
     }
 
     /** A obra aberta espera vidro (bloco ou vidraça) e não há areia em baú nenhum da colônia. */

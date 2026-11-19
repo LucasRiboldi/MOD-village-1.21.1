@@ -82,6 +82,61 @@ public class VillagePiecesGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * Regra 305: a casa ganha um patamar de 2 colunas no piso em volta, e a entrada de cada porta é a primeira coluna à
+     * frente dela sem bloco da estrutura, também no piso — mesmo dentro da caixa do molde.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_pieces_apron", tickLimit = 5)
+    public void aHouseGetsAnApronAndAnEntryOnItsFloor(TestContext context) {
+        StructureTemplateManager templates = context.getWorld().getStructureTemplateManager();
+        int size = 40;
+        PoolStructurePiece house = house(templates, new BlockPos(15, 80, 15));
+        StructureStart start = new StructureStart(
+                context.getWorld().getRegistryManager().get(RegistryKeys.STRUCTURE).get(StructureKeys.VILLAGE_PLAINS),
+                new ChunkPos(0, 0), 0, new StructurePiecesList(List.<StructurePiece>of(house)));
+        int[][] natural = new int[size][size];
+        VillageSurface.Kind[][] kinds = new VillageSurface.Kind[size][size];
+
+        for (int x = 0; x < size; x++) {
+            for (int z = 0; z < size; z++) {
+                natural[x][z] = 60 + x;
+                kinds[x][z] = VillageSurface.Kind.FREE;
+            }
+        }
+
+        VillageBlend.Area all = new VillageBlend.Area(0, 0, size - 1, size - 1);
+        java.util.Map<Long, Integer> doors = new java.util.HashMap<>();
+        java.util.Map<Long, Integer> aprons = new java.util.HashMap<>();
+
+        VillagePieces.settle(start, natural, kinds, all, all, 0, 0, templates, context.getWorld().getRegistryManager(),
+                doors, aprons);
+
+        BlockBox box = house.getBoundingBox();
+        int floor = box.getMinY() + house.getGroundLevelDelta() - 1;
+
+        context.assertFalse(doors.isEmpty(), "Regra 305: a casa ficou sem coluna de entrada");
+        doors.values().forEach(level -> context.assertTrue(level == floor || level == floor - 1,
+                "Regra 313: a entrada não ficou no piso " + floor + " nem um abaixo, ficou em " + level));
+        // O patamar acompanha a entrada mais baixa: um abaixo do piso quando a porta tem degrau (Regra 313).
+        int apron = Math.max(floor - 1, doors.values().stream().mapToInt(Integer::intValue).min().orElse(floor));
+
+        for (int x = box.getMinX() - 2; x <= box.getMaxX() + 2; x++) {
+            for (int z = box.getMinZ() - 2; z <= box.getMaxZ() + 2; z++) {
+                boolean ring = x < box.getMinX() || x > box.getMaxX() || z < box.getMinZ() || z > box.getMaxZ();
+
+                if (ring) {
+                    long column = com.villagecolony.core.construction.model.ColonyRoads.column(x, z);
+                    context.assertTrue(kinds[x][z] == VillageSurface.Kind.FIXED
+                                    && natural[x][z] == (doors.get(column) != null ? doors.get(column) : apron)
+                                    && (aprons.get(column) != null || doors.get(column) != null),
+                            "Regra 305: o patamar em " + x + "," + z + " não ficou em " + apron + ": " + natural[x][z]);
+                }
+            }
+        }
+
+        context.complete();
+    }
+
     private static PoolStructurePiece house(StructureTemplateManager templates, BlockPos pos) {
         StructurePoolElement element = StructurePoolElement.ofSingle(HOUSE).apply(StructurePool.Projection.RIGID);
         BlockBox box = element.getBoundingBox(templates, pos, BlockRotation.NONE);

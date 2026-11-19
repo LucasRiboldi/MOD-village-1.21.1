@@ -10,7 +10,8 @@
     "LandPathNodeMakerMixin",
     "MoveToTargetTaskMixin",
     "VillagerDataMixin",
-    "VillagerEntityMixin"
+    "VillagerEntityMixin",
+    "WorldChunkBlockChangeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

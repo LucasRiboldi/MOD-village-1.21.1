@@ -36,7 +36,8 @@ import java.util.UUID;
  *   <li><b>construtor</b> sem obra: arruma o terreno como o pedreiro (Regra 247);</li>
  *   <li><b>pastor</b>: alimenta o rebanho;</li>
  *   <li><b>carpinteiro e pedreiro</b> sem terreno a reparar: mantêm as construções (Regra 221);</li>
- *   <li><b>adulto sem profissão</b>: transporta itens e alivia os baús cheios; calçar e tirar neve vêm da Regra 220.</li>
+ *   <li><b>adulto sem profissão</b>: transporta itens e alivia os baús cheios e, sem nada a carregar, arruma o terreno
+ *       (Regra 323); calçar e tirar neve vêm da Regra 220.</li>
  * </ul>
  * As demais ajudas cruzadas da Regra 149 ficam suspensas.
  */
@@ -128,7 +129,7 @@ public final class VillageHelpers {
 
     /**
      * O adulto sem profissão é o carregador da vila — O8 (autor, 2026-10-28): leva o baú da boca da mina para os baús
-     * públicos e alivia os baús de profissão quase cheios.
+     * públicos e alivia os baús de profissão quase cheios; sem nada a carregar, arruma o terreno (Regra 323).
      */
     static int haulerHelps(ServerWorld world, Colony colony, VillagerEntity hauler) {
         int carried = haulFromTheMine(world, colony, hauler);
@@ -138,7 +139,8 @@ public final class VillageHelpers {
             ActionJournal.action(hauler.getUuid(), "HAULED", "minecraft:chest", spread, null, "full chests to the village");
         }
 
-        return carried + spread;
+        // Sem nada a carregar, arruma o terreno da vila como o pedreiro (Regra 323).
+        return carried + spread > 0 ? carried + spread : masonHelps(world, colony, hauler);
     }
 
     /**

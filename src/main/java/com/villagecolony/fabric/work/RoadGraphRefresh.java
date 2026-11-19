@@ -93,12 +93,32 @@ public final class RoadGraphRefresh {
     private static final Map<UUID, Set<Long>> REFUSED = new HashMap<>();
     private static final Map<UUID, PlannedPaths> PLANNED = new HashMap<>();
     private static final Map<UUID, Integer> TURNS = new HashMap<>();
+    /** Por colônia: o dia de jogo e quantas vezes o grafo mudou nele (Regra 317). */
+    private static final Map<UUID, long[]> CHANGES = new HashMap<>();
 
     private RoadGraphRefresh() {
     }
 
     public static void register() {
         ServerTickEvents.END_SERVER_TICK.register(server -> tick(server.getOverworld()));
+    }
+
+    /** Até onde a ponta do modo 3 anda: a caixa da colônia mais 128 blocos de cada lado (Regras 229 e 320). */
+    private static List<Integer> growthLimit(Colony colony) {
+        return colony.bounds().map(box -> List.of(box.minX() - 128, box.minZ() - 128, box.maxX() + 128, box.maxZ() + 128))
+                .orElse(List.of(0, 0, -1, -1));
+    }
+
+    /** O modo do grafo mudou (ADR-057): o plano em memória sai, e toda colônia relê já. */
+    public static void modeChanged() {
+        PLANNED.clear();
+        TURNS.clear();
+        REFUSED.clear();
+        CHANGES.clear();
+        NEXT.clear();
+        SCANS.clear();
+        RoadGraphBuilds.clearAll();
+        com.villagecolony.fabric.integration.RoadRegionEvents.clearAll();
     }
 
     /** Pede a releitura na próxima passada. */
@@ -317,12 +337,13 @@ public final class RoadGraphRefresh {
         Map<Long, Long> since = new HashMap<>(store.settled(id));
         Set<ColonyPos> fixed = new HashSet<>();
 
-        for (long column : RoadSettling.fixed(since, today)) {
+        // Caminho que sumiu do mundo recomeça a conta, fixo ou não; e só a aresta inteira de rosa a rosa fixa (Regra 306).
+        since.keySet().removeIf(column -> !byColumn.containsKey(column));
+
+        for (long column : RoadSettling.fixed(since, today, store.graph(id))) {
             ColonyPos at = byColumn.get(column);
 
-            if (at == null) {
-                since.remove(column);
-            } else {
+            if (at != null) {
                 fixed.add(at);
             }
         }
@@ -347,8 +368,12 @@ public final class RoadGraphRefresh {
             StructureFronts.farmCorners(RoadShape.farmEntrances(world, colony, terrain), store.graph(id), fronts, retired);
         }
 
-        RoadLines.Result result = RoadLines.build(cells, planned, colony.center(), fronts,
-                RoadShape.farmRings(world, colony, terrain), terrain, LINKS_PER_READ, turn, fixed, retired);
+        // ADR-057: o modo ligado monta o grafo; os três entregam o mesmo resultado.
+        com.villagecolony.core.construction.model.RoadGraphMode mode =
+                com.villagecolony.data.save.GraphModeSavedData.get(world.getServer()).mode();
+        RoadLines.Result result = RoadGraphBuilds.build(mode, new RoadGraphBuilds.Input(id, cells, planned, colony.center(),
+                fronts, RoadShape.farmRings(world, colony, terrain), terrain, LINKS_PER_READ, turn, fixed, retired,
+                store.graph(id), growthLimit(colony), today));
         Set<ColonyPos> read = cells;
 
         result.graph().ifPresent(graph -> {
@@ -359,7 +384,7 @@ public final class RoadGraphRefresh {
 
             long offLine = read.stream().filter(at -> !line.contains(ColonyRoads.column(at.x(), at.z()))).count();
 
-            update(colony, store, graph, result, offLine, capped, fixed.size());
+            update(colony, store, graph, result, offLine, capped, fixed.size(), today, mode);
             store.settle(id, RoadSettling.track(since, line, today));
             publishNetwork(colony, graph);
             RoadShape.growTips(world, colony, graph, terrain);
@@ -381,7 +406,9 @@ public final class RoadGraphRefresh {
         });
         PathTrim.offer(id, List.copyOf(surplus));
 
-        return offerRepair(world, id, result.toPave(), turn, atTheDoor) || result.isolated() > 0;
+        // Só a aresta estável é calçada (Regra 322); o resto espera, e a releitura segue curta enquanto houver o que calçar.
+        return offerRepair(world, id, RoadGraphBuilds.stableSteps(id, result.graph(), result.toPave()), turn, atTheDoor)
+                || !result.toPave().isEmpty() || result.isolated() > 0;
     }
 
     /** As linhas do grafo viram a rede que os outros sistemas consultam (Regra 216); a entrada solta ainda não é rede. */
@@ -393,15 +420,18 @@ public final class RoadGraphRefresh {
     }
 
     private static void update(Colony colony, com.villagecolony.data.save.RoadGraphStore store, RoadGraph graph,
-                               RoadLines.Result result, long offLine, int capped, int fixed) {
+                               RoadLines.Result result, long offLine, int capped, int fixed, long today,
+                               com.villagecolony.core.construction.model.RoadGraphMode mode) {
         try {
             if (!store.graph(colony.id()).equals(Optional.of(graph))) {
                 store.update(colony.id(), graph);
                 // Regra 295: quantas colunas o calçador recusou — a busca da ligação passa longe delas.
-                VillageColonyMod.LOGGER.info("VC_ROAD_GRAPH colony={} nodes={} edges={} toPave={} isolated={} offLine={} capped={} fixed={} refused={} loose={}",
+                // Regra 317: quantas vezes o grafo mudou hoje — a medida do laço (estudo do grafo, §8).
+                VillageColonyMod.LOGGER.info("VC_ROAD_GRAPH colony={} nodes={} edges={} toPave={} isolated={} offLine={} capped={} fixed={} refused={} changes={} loose={} mode={} dirty={}",
                         colony.id().toString().substring(0, 8), graph.nodes().size(), graph.edges().size(),
                         result.toPave().size(), result.isolated(), offLine, capped, fixed,
-                        REFUSED.getOrDefault(colony.id(), Set.of()).size(), String.join(";", result.loose()));
+                        REFUSED.getOrDefault(colony.id(), Set.of()).size(), changedOn(colony.id(), today),
+                        String.join(";", result.loose()), mode.id(), RoadGraphBuilds.lastDirty(colony.id()));
             }
         } catch (IllegalArgumentException refused) {
             // O grafo anterior continua: formato recusado não derruba o servidor nem o save.
@@ -444,8 +474,21 @@ public final class RoadGraphRefresh {
         return VillageRoad.isPathBlock(world.getBlockState(new BlockPos(step.x(), step.floorY(), step.z())));
     }
 
+    /** Mais uma mudança do grafo desta colônia no dia {@code today}; devolve quantas houve no dia (Regra 317). */
+    static long changedOn(UUID colonyId, long today) {
+        long[] day = CHANGES.computeIfAbsent(colonyId, ignored -> new long[] {today, 0});
+
+        if (day[0] != today) {
+            day[0] = today;
+            day[1] = 0;
+        }
+
+        return ++day[1];
+    }
+
     private static void clearAll() {
         MineGates.clearAll();
+        CHANGES.clear();
         NEXT.clear();
         SCANS.clear();
         REFUSED.clear();
