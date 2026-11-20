@@ -422,7 +422,7 @@ public final class RoadGraphRefresh {
     private static void update(Colony colony, com.villagecolony.data.save.RoadGraphStore store, RoadGraph graph,
                                RoadLines.Result result, long offLine, int capped, int fixed, long today,
                                com.villagecolony.core.construction.model.RoadGraphMode mode) {
-        GroundKeeper.graphRead(colony.id(), result.toPave().size(), offLine); // VC_GROUND, Regra 330
+        GroundKeeper.graphRead(colony.id(), result.toPave().size(), offLine); // VC_KEEPER, Regra 330
         try {
             if (!store.graph(colony.id()).equals(Optional.of(graph))) {
                 store.update(colony.id(), graph);

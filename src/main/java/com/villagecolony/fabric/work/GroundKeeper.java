@@ -32,7 +32,7 @@ import java.util.UUID;
  *   <li>a fila de quadrados do terreno, com desnível de até 1 ({@link TerrainQueue}, Regra 323);</li>
  *   <li>a neve que a obra pede ({@link SnowShovel}).</li>
  * </ol>
- * No fim do expediente, a linha {@code VC_GROUND} conta o que falta e o que ele fez no dia ({@link TerrainReport}).
+ * No fim do expediente, a linha {@code VC_KEEPER} conta o que falta e o que ele fez no dia ({@link TerrainReport}).
  */
 public final class GroundKeeper {
 
@@ -203,7 +203,7 @@ public final class GroundKeeper {
         long[] graph = GRAPH.getOrDefault(colony.id(), new long[2]);
         long keepers = VillageColonyMod.WORKERS.ofColony(colony.id()).stream().filter(GroundKeeper::isKeeper).count();
 
-        VillageColonyMod.LOGGER.info("VC_GROUND version=1 colony={} day={} keepers={} toPave={} offLine={} steps={} "
+        VillageColonyMod.LOGGER.info("VC_KEEPER version=1 colony={} day={} keepers={} toPave={} offLine={} steps={} "
                         + "paved={} trimmed={} levelled={}", colony.id().toString().substring(0, 8), day, keepers,
                 graph[0], graph[1], steps, done[1], done[2], done[3]);
     }

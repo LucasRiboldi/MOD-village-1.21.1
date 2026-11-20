@@ -32,13 +32,13 @@ atividade de outra").
    Uma passada a cada 10 segundos, quando ele não está calçando.
 5. **O feno no caminho** (Regra 331). O grafo atravessa o fardo de feno como ar (`WorldPathTerrain`), e o Zelador, ao
    calçar a coluna, leva o fardo para os baús. O fardo posto pela colônia numa obra fica.
-6. **`VC_GROUND`**, uma linha por dia no fim do expediente, junto da `VC_TERRAIN`: Zeladores, trechos a calçar
+6. **`VC_KEEPER`**, uma linha por dia no fim do expediente, junto da `VC_TERRAIN`: Zeladores, trechos a calçar
    (`toPave`), caminho fora da linha (`offLine`), degraus maiores que 1 (`steps`) e o que ele calçou, devolveu ao solo e
    nivelou no dia.
 
 ## Consequências
 
-- O chão tem dono, e o efeito é medido no jogo pela `VC_GROUND`.
+- O chão tem dono, e o efeito é medido no jogo pela `VC_KEEPER` (era `VC_GROUND`, nome que já era da geração do solo; trocado em 20-11).
 - Vila com até oito adultos não tem Zelador, e ninguém cuida do chão até nascer o nono adulto.
 - Uma versão anterior do mod lê o `GROUNDSKEEPER` do save como profissão desconhecida e recontrata o aldeão. A ordem de
   contratação salva no mundo ganha o Zelador no fim.
