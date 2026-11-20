@@ -12,6 +12,17 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.101] — candidata, 2026-11-20
+
+Do jogo da 0.4.93 em montanha (blocos de terreno voando acima das casas, no print do autor). Regra 337; nada visto em
+jogo.
+
+### Corrigido
+
+- Regra 337: na geração, a coluna da casa (e de toda peça fixa da vila) fica livre acima do piso antes de a peça ser
+  posta. A casa desce ao solo suavizado (Regra 296), e na montanha o morro acima do piso ficava solto em cima dela:
+  pedra, terra, caminho, árvore. A base da peça saiu do `VillageGround` para o `PieceGround`.
+
 ## [0.4.100] — candidata, 2026-11-20
 
 Do jogo da 0.4.93 em planície (mineiro com 33% do expediente sem trabalhar) e da escolha A3 do autor. Regra 336 e

@@ -9,7 +9,7 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.100 na branch `fix/descida-cavada` (Regra 336, ADR-061), não jogada; 0.4.99 na `main`, publicada como `v0.4.99-alpha` (Regras 326 a 335, ADR-058 a ADR-060, do jogo da
+- **Versão:** 0.4.101 na branch `fix/terreno-solto` (Regra 337), não jogada; 0.4.100 na `main` (Regra 336, ADR-061), não jogada; 0.4.99 publicada como `v0.4.99-alpha` (Regras 326 a 335, ADR-058 a ADR-060, do jogo da
   0.4.93 em planície); a anterior publicada é a `v0.4.93-alpha` (Regras 315 a 325, ADR-057), **jogada em 19-11**
   (montanha, Spark `0SMEEkMLGP`, ~35 min): boca da mina e BigHouseMOD no alto da montanha, longe das casas, e blocos de
   terreno voando no print do autor. Triagem no `TODO.md`; o autor escolheu A (centro e BigHouseMOD pela altura dos
@@ -47,6 +47,7 @@ Cada uma tem teste que falha sem ela; nenhuma foi vista em jogo.
 | 0.4.85 | 285, 286 | aldeão preso na água vai à margem e, se não sair, pisa no gelo sob o pulo; o mineiro novo dorme na casa junto da mina assim que ela sobe; diagnósticos `loose=` (grafo), `VC_SMOOTH` e `VC_LOT_EDGE` (terreno). Sentinela `fast` PASS; tosquia instável registrada (KF-015) |
 | 0.4.86 | 287 | a tora deitada é chão do caminho (a borda da plantação grande fechava o miolo ao fazendeiro); a visão do canteiro vazio mira o lugar da planta. 1.137/1.137, Sentinela `fast` PASS |
 | 0.4.88 | 289–294 | escolhas G1–G7 da ADR-056: plantação grande semeada, 2 fazendeiros e semente que surge; tronco inteiro e folha natural quebrada no caminho; grafo na tábua de rua e na frente de toda porta; sem torre de minério e sem ar protegido no alisamento; pátio de pedra na boca da mina; ociosos tiram bloco solto e toco. 1.156/1.156, Sentinela `fast` PASS |
+| 0.4.101 | 337 | na geração, a coluna da peça fixa da vila fica livre acima do piso: nada do morro solto em cima da casa que desce |
 | 0.4.100 | 336 | a descida cavada: o mineiro com o alvo da descida no pé ou na rocha cava o degrau de 3 por 3 e desce por ele; piso de pedra no vão de caverna (ADR-061) |
 | 0.4.99 | 335 | só a porta do térreo vira entrada do grafo; a porta solta sai no `VC_ROAD_GRAPH` com o chão lido em volta; `VC_KEEPER` no lugar do `VC_GROUND` do Zelador |
 | 0.4.98 | 334 | o chão que o jogador cavou ou pôs fica: nivelamento e calçada não mexem na coluna dele (marca no save) |

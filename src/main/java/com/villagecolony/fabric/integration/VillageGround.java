@@ -194,17 +194,10 @@ public final class VillageGround {
                         column(world, chunk, x, z, top, apron != null ? apron : plan.targetFor(x, z, top),
                                 plan.drainsWater(x, z), soil);
                     } else {
-                        found(chunk, x, z, top, plan.targetFor(x, z, top), soil);
+                        PieceGround.found(world, chunk, x, z, top, plan.targetFor(x, z, top), soil);
                     }
                 }
             }
-        }
-    }
-
-    /** A base da peça fixa: o chão sobre água (Regra 288) e o chão seco abaixo do piso (Regra 304) sobem até o piso. */
-    static void found(Chunk chunk, int x, int z, int top, int floor, VillageSoil soil) {
-        if (VillageSoil.isWet(chunk, x, z, top) || top < floor) {
-            soil.fill(chunk, x, z, top, floor);
         }
     }
 

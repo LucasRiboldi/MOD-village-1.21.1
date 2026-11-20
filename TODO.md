@@ -80,7 +80,8 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
     (`VC_REACH unreached`), a casa do mineiro ficou 41 min sem lote e saiu em 141, 160, -17; mineiro 0% de trabalho,
     10 `NO_PATH`. Escolha A: centro e BigHouseMOD saem da altura dos prédios existentes, não do meio da caixa (G);
   - blocos de terreno voando acima das casas (print do autor): o save ao sair não tem nenhum pedaço de terreno solto
-    na caixa da vila; causa não provada. Escolha D: linha diária `VC_FLOAT` que conta os pedaços soltos (M);
+    na caixa da vila; causa: a casa desce ao solo suavizado e a coluna dela não era cortada acima do piso. O autor trocou a D (linha
+    `VC_FLOAT`) por limpar na geração: Regra 337 na 0.4.101 (candidata; conferir no próximo jogo em montanha);
   - Regra 51 em todos os ofícios: mineiro 73%, fundidor 55% esperando, fazendeiro 40%, construtor 31%, pastor 22%
     (12% bloqueado), pedreiro 20%, lenhador 19% (76% andando) (M);
   - blocos que surgiram (`VC_SUPPLY`): pó de osso ×672 (`BONE_MEAL_FOR_THE_FARM`, declarado), pedregulho ×36, tora
