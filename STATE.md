@@ -1,4 +1,4 @@
-# STATE — 2026-11-15
+# STATE — 2026-11-20
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula; teto de 150 linhas.** O que saiu daqui mora em
 > [`docs/archive/technical/Historico-2026-11.md`](docs/archive/technical/Historico-2026-11.md) (o STATE de 13-11 inteiro,
@@ -9,8 +9,8 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.99 na branch `fix/no-da-casa` (Regra 335); 0.4.94 a 0.4.98 (Regras 326 a 334) estão na `main` local,
-  sem push; a publicada é a `v0.4.93-alpha` (Regras 315 a 325, ADR-057). **Jogada em 19-11**
+- **Versão:** 0.4.99 na `main`, publicada como `v0.4.99-alpha` (Regras 326 a 335, ADR-058 a ADR-060, do jogo da
+  0.4.93 em planície); a anterior publicada é a `v0.4.93-alpha` (Regras 315 a 325, ADR-057), **jogada em 19-11**
   (montanha, Spark `0SMEEkMLGP`, ~35 min): boca da mina e BigHouseMOD no alto da montanha, longe das casas, e blocos de
   terreno voando no print do autor. Triagem no `TODO.md`; o autor escolheu A (centro e BigHouseMOD pela altura dos
   prédios) e D (linha `VC_FLOAT`), ainda não feitas. As Regras 305 a 325 seguem candidatas.
@@ -71,7 +71,7 @@ parado (espera + bloqueio + ócio + encalhe) e nenhum travado; a meta da 1.0 é 
 
 ## O que o próximo jogo precisa mostrar
 
-Vila nova com a 0.4.93; os itens 1 a 6 vêm da 0.4.74 e seguem sem medida. Depois de jogar: `time_ledger.py`, `action_report.py`, `cost_ledger.py` e o Spark (§0.4).
+Vila nova com a 0.4.99; os itens 1 a 6 vêm da 0.4.74 e seguem sem medida. Depois de jogar: `time_ledger.py`, `action_report.py`, `cost_ledger.py` e o Spark (§0.4).
 
 | # | Item | Sinal |
 |---|---|---|

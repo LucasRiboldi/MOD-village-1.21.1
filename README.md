@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.93%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.99%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,11 +19,19 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Estado atual: 0.4.93 na `main`, publicada como [`v0.4.93-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.93-alpha), não jogada.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
+**Estado atual: 0.4.99 na `main`, publicada como [`v0.4.99-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.99-alpha), não jogada.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
-[docs/RULES.md](docs/RULES.md) (1 a 325).
+[docs/RULES.md](docs/RULES.md) (1 a 335).
 
-Da 0.4.75 à 0.4.93 (pedidos do autor de 13-11 a 18-11, jogos da 0.4.79, 0.4.84, 0.4.85, 0.4.86, 0.4.88, 0.4.89, 0.4.90 e 0.4.91, simulações da 0.4.92):
+Da 0.4.75 à 0.4.99 (pedidos do autor de 13-11 a 20-11, jogos da 0.4.79, 0.4.84, 0.4.85, 0.4.86, 0.4.88, 0.4.89, 0.4.90, 0.4.91 e 0.4.93, simulações da 0.4.92):
+
+- **0.4.94 a 0.4.99 (jogo da 0.4.93 em planície):** a árvore tirada do caminho sai inteira, com galho e tronco
+  (Regra 326); o pastor trata o curral como lugar, desiste do animal que não alcança e faz uma ronda por dia (Regras 327
+  a 329, ADR-058); o **Zelador**, profissão nova sem bancada, é o único dono do chão: calça a linha do grafo, devolve ao
+  solo o caminho fora dela, nivela entre as construções e tira a neve, com a linha `VC_KEEPER` (Regras 330 e 331,
+  ADR-059); o fazendeiro faz a ronda da roça sem pedido na fila e não mira o trigo do curral (Regras 332 e 333,
+  ADR-060); o chão que o jogador mexeu fica como ele deixou (Regra 334); o grafo nunca busca porta do andar de cima
+  (Regra 335).
 
 - **Aldeão preso:** soleira de casa não é curral, e "saiu" é pisar fora do que ele alcançava (Regra 275); alçapão em pé
   se pula e o caminho o evita (Regra 276); solto da fuga de encalhe só quem saiu do lugar (Regra 279); quem fica preso na água a céu aberto vai à margem e, se não sair, pisa no gelo posto sob o pulo (Regra 285).
