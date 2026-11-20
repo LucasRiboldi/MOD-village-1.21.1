@@ -11,13 +11,17 @@ import java.util.List;
  * <p>Plano exato primeiro, numa área até a borda da vila; sem plano exato, o lote mais nivelado,
  * com desnível de até {@link #MAX_SPREAD} blocos, que a fundação aplaina. No mesmo desnível, o lote
  * sem vegetação antes do que precisa de árvore cortada (G1, 2026-10-20), e então o mais perto do
- * centro. Puro: quem lê o mundo e confere a segurança do lote é
- * {@link BigHouseFoundation}.
+ * centro. Antes de tudo, o lote com piso a até {@link #HEIGHT_BAND} da altura das casas da vila (Regra 338): o platô
+ * plano no alto do morro só vence quando não há lote nenhum na altura delas. Puro: quem lê o mundo e confere a segurança
+ * do lote é {@link BigHouseFoundation}.
  */
 final class FoundationLotSearch {
 
     /** O maior desnível que a fundação aplaina. */
     static final int MAX_SPREAD = 2;
+
+    /** Quanto o piso da casa pode ficar acima ou abaixo da altura das casas da vila (Regra 338). */
+    static final int HEIGHT_BAND = 8;
 
     /** Coluna fora do mundo carregado: o lote que a toca não é candidato. */
     static final int UNKNOWN = Integer.MIN_VALUE;
@@ -34,8 +38,9 @@ final class FoundationLotSearch {
      * @param spread o desnível entre a coluna mais alta e a mais baixa
      * @param ring a distância (em anel) do meio do lote ao centro do mapa
      * @param clearing se alguma coluna do lote tem vegetação a tirar
+     * @param offLevel se o piso fica a mais de {@link #HEIGHT_BAND} da altura das casas (Regra 338)
      */
-    record Lot(int offsetX, int offsetZ, int floor, int spread, int ring, boolean clearing) {
+    record Lot(int offsetX, int offsetZ, int floor, int spread, int ring, boolean clearing, boolean offLevel) {
     }
 
     /**
@@ -47,6 +52,16 @@ final class FoundationLotSearch {
      * @param width colunas do mapa; o centro dele é o centro da colônia
      */
     static List<Lot> candidates(int[] heights, boolean[] growth, int width, int depth, int sizeX, int sizeZ) {
+        return candidates(heights, growth, width, depth, sizeX, sizeZ, UNKNOWN);
+    }
+
+    /**
+     * Os lotes na ordem de preferência, com a altura das casas da vila.
+     *
+     * @param level a altura típica do piso das casas, ou {@link #UNKNOWN} sem casas: então a altura não conta
+     */
+    static List<Lot> candidates(int[] heights, boolean[] growth, int width, int depth, int sizeX, int sizeZ,
+                                int level) {
         List<Lot> lots = new ArrayList<>();
         int[] footprint = new int[sizeX * sizeZ];
         int middleX = (width - 1) / 2;
@@ -66,12 +81,15 @@ final class FoundationLotSearch {
                 }
 
                 int ring = Math.max(Math.abs(ox + sizeX / 2 - middleX), Math.abs(oz + sizeZ / 2 - middleZ));
-                lots.add(new Lot(ox, oz, footprint[(footprint.length - 1) / 2], spread, ring,
-                        anyGrowth(growth, width, ox, oz, sizeX, sizeZ)));
+                int floor = footprint[(footprint.length - 1) / 2];
+
+                lots.add(new Lot(ox, oz, floor, spread, ring, anyGrowth(growth, width, ox, oz, sizeX, sizeZ),
+                        level != UNKNOWN && Math.abs(floor - level) > HEIGHT_BAND));
             }
         }
 
-        lots.sort(Comparator.comparingInt(Lot::spread)
+        lots.sort(Comparator.comparing(Lot::offLevel)
+                .thenComparingInt(Lot::spread)
                 .thenComparing(Lot::clearing)
                 .thenComparingInt(Lot::ring));
 

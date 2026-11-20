@@ -146,6 +146,34 @@ public final class GeneratedVillages {
         return houses;
     }
 
+    /**
+     * O piso das casas da vila gerada que alcança esta coluna — Regra 338: {x do meio, altura livre acima do chão da
+     * peça, z do meio} de cada peça {@code village/<estilo>/houses/...}, se o chunk estiver carregado.
+     */
+    public static List<int[]> houseFloorsAt(ServerWorld world, int x, int z) {
+        int chunkX = x >> 4;
+        int chunkZ = z >> 4;
+
+        if (!world.isChunkLoaded(chunkX, chunkZ)) {
+            return List.of();
+        }
+
+        List<int[]> floors = new ArrayList<>();
+
+        for (StructureStart start : villagesReaching(world, chunkX, chunkZ)) {
+            for (var piece : start.getChildren()) {
+                if (piece instanceof PoolStructurePiece pool && pool.getPoolElement().toString().contains("/houses/")) {
+                    BlockBox box = piece.getBoundingBox();
+
+                    floors.add(new int[] {box.getCenter().getX(), box.getMinY() + pool.getGroundLevelDelta(),
+                            box.getCenter().getZ()});
+                }
+            }
+        }
+
+        return floors;
+    }
+
     /** As caixas das estruturas da vila gerada que alcança esta coluna, com chunk carregado — Regra 210. */
     public static List<BlockBox> structuresAt(ServerWorld world, int x, int z) {
         if (!world.isChunkLoaded(x >> 4, z >> 4)) {
