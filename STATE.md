@@ -9,8 +9,8 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.97 na branch `fix/fazendeiro` (Regras 332 e 333, ADR-060); 0.4.94 a 0.4.96 (Regras 326 a 331) estão
-  na `main` local, sem push; a publicada é a `v0.4.93-alpha` (Regras 315 a 325, ADR-057). **Jogada em 19-11**
+- **Versão:** 0.4.98 na branch `fix/terra-do-jogador` (Regra 334); 0.4.94 a 0.4.97 (Regras 326 a 333) estão na `main`
+  local, sem push; a publicada é a `v0.4.93-alpha` (Regras 315 a 325, ADR-057). **Jogada em 19-11**
   (montanha, Spark `0SMEEkMLGP`, ~35 min): boca da mina e BigHouseMOD no alto da montanha, longe das casas, e blocos de
   terreno voando no print do autor. Triagem no `TODO.md`; o autor escolheu A (centro e BigHouseMOD pela altura dos
   prédios) e D (linha `VC_FLOAT`), ainda não feitas. As Regras 305 a 325 seguem candidatas.
@@ -47,6 +47,7 @@ Cada uma tem teste que falha sem ela; nenhuma foi vista em jogo.
 | 0.4.85 | 285, 286 | aldeão preso na água vai à margem e, se não sair, pisa no gelo sob o pulo; o mineiro novo dorme na casa junto da mina assim que ela sobe; diagnósticos `loose=` (grafo), `VC_SMOOTH` e `VC_LOT_EDGE` (terreno). Sentinela `fast` PASS; tosquia instável registrada (KF-015) |
 | 0.4.86 | 287 | a tora deitada é chão do caminho (a borda da plantação grande fechava o miolo ao fazendeiro); a visão do canteiro vazio mira o lugar da planta. 1.137/1.137, Sentinela `fast` PASS |
 | 0.4.88 | 289–294 | escolhas G1–G7 da ADR-056: plantação grande semeada, 2 fazendeiros e semente que surge; tronco inteiro e folha natural quebrada no caminho; grafo na tábua de rua e na frente de toda porta; sem torre de minério e sem ar protegido no alisamento; pátio de pedra na boca da mina; ociosos tiram bloco solto e toco. 1.156/1.156, Sentinela `fast` PASS |
+| 0.4.98 | 334 | o chão que o jogador cavou ou pôs fica: nivelamento e calçada não mexem na coluna dele (marca no save) |
 | 0.4.97 | 332, 333 | ADR-060: o pasto do curral não é roça; sem tarefa de comida, o fazendeiro faz a ronda da roça e, sem nada a fazer, a vila pede a plantação grande |
 | 0.4.96 | 330, 331 | ADR-059: o Zelador, dono do chão (sem bancada, nono adulto); só ele calça, devolve ao solo, nivela e tira neve, com `VC_GROUND` diária; o grafo atravessa o feno e o Zelador o leva |
 | 0.4.95 | 327–329 | jogo da 0.4.93 em planície, ADR-058: o curral é um lugar (porteira aberta não o desfaz, animal de dentro não é levado de novo); o pastor larga por 5 min o animal que não alcança; ronda diária com `VC_ROUND` e separação do misto 1× por dia |

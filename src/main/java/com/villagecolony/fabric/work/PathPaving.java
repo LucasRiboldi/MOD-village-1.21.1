@@ -273,9 +273,11 @@ public final class PathPaving {
         BlockState surface = world.getBlockState(top);
         BlockPos floor = new BlockPos(x, floorY, z);
 
-        // Toda recusa precede a primeira escrita; caminho exige apoio físico — ADR-043.
+        // Toda recusa precede a primeira escrita; caminho exige apoio físico — ADR-043. No chão que o jogador mexeu, o
+        // caminho fica no nível em que está, sem corte nem aterro (Regra 334).
         BlockPos support = floor.down();
-        if (!world.getBlockState(support).isSideSolidFullSquare(world, support, net.minecraft.util.math.Direction.UP)
+        if ((floorY != ground && com.villagecolony.fabric.integration.PlayerGround.isMarked(x, z))
+                || !world.getBlockState(support).isSideSolidFullSquare(world, support, net.minecraft.util.math.Direction.UP)
                 || !BlockProtection.mayBuildOver(world, floor, world.getBlockState(floor))
                 || (floorY < ground && !BlockProtection.mayDigOut(world, top, surface))
                 || (floorY > ground && !LotGround.isNothing(world.getBlockState(floor)))) {

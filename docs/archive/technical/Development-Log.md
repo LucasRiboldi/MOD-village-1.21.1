@@ -12035,3 +12035,17 @@ só abre pela falta no estoque, e o trigo do curral grande o prendia. O autor es
   `FarmerWork` caber em 500 linhas.
 
 `FarmRoundGameTest`: os 2 casos falham sem `PenFloors.isPenFloor` e sem a oferta da ronda. Nada visto em jogo.
+
+## 2026-11-20 — 0.4.98: o chão do jogador (Regra 334)
+
+Quatro notas do jogo da 0.4.93: a terra que o autor tirou voltou. O diário mostrou `LEVELLED minecraft:dirt "around the
+buildings"` (o vão entre construções, Regra 242) e a fila do terreno (Regra 323) tapando o buraco. O mod só lembrava a
+planta que o jogador tirou (Regra 104). O autor escolheu A e C.
+
+- `PlayerGround` marca a coluna em que o jogador quebrou chão natural (`PlayerBlockBreakEvents.AFTER`) ou pôs chão
+  natural (`PlayerWorldChangeHandler.afterWorldTick`), com teto de 16.384 colunas e save em `WorkMarksSavedData`.
+- Respeitam a marca: `GroundSmoothing.refusal` (e com ela `column`, `TerrainQueue` e `BuildingGaps`),
+  `repairShallowSupport`, `UnderPieceFill`, `SiteSmoothing.levelTo`, `PathSupport` e `PathPaving.pave`, que só calça
+  no nível em que a coluna está.
+
+`PlayerGroundGameTest`: os 2 casos falham sem a marca. Nada visto em jogo.
