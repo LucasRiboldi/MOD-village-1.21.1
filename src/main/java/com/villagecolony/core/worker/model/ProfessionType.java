@@ -57,5 +57,11 @@ public enum ProfessionType {
      * {@code ConstructionPlanner}. Não responde por material nenhum, mas é
      * titular da casa fundacional (ADR-018).
      */
-    BUILDER
+    BUILDER,
+
+    /**
+     * O Zelador: o dono do chão da vila (Regra 330, ADR-059). Calça a linha do grafo, devolve ao solo o caminho fora
+     * dela, nivela entre as construções e arruma o terreno. Não tem bancada nem tarefa da fila; uma vaga por vila.
+     */
+    GROUNDSKEEPER
 }

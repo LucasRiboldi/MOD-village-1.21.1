@@ -12,7 +12,7 @@ import net.minecraft.util.math.Box;
 
 import java.util.List;
 
-/** Os animais que a coleta do pastor pode levar — Regras 255, 283 e 299. */
+/** Os animais que a coleta do pastor pode levar — Regras 255, 283, 299, 327 e 328. */
 final class HerdCandidates {
 
     private HerdCandidates() {
@@ -41,6 +41,8 @@ final class HerdCandidates {
                     && candidate.canBeLeashed()
                     && (!candidate.isLeashed() || candidate.getLeashHolder() instanceof LeashKnotEntity)
                     && !ShepherdFlock.isPenned(world, candidate)
+                    && !isInAnyPen(world, colony, candidate)
+                    && !HerdPatience.isSetAside(world, candidate)
                     && !FlockHarvest.isNextVictim(world, colony, flock, candidate)));
         }
 
@@ -49,5 +51,10 @@ final class HerdCandidates {
                 .thenComparingDouble(animal -> animal.squaredDistanceTo(shepherd)));
 
         return candidates;
+    }
+
+    /** Se o animal está no chão de dentro de algum curral conhecido da vila: guardado, com a porteira como estiver (Regra 327). */
+    static boolean isInAnyPen(ServerWorld world, Colony colony, AnimalEntity animal) {
+        return ShepherdPens.pensOf(world, colony).stream().anyMatch(pen -> pen.reach().contains(animal.getBlockPos()));
     }
 }

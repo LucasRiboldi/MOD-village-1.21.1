@@ -95,6 +95,7 @@ public final class ServerLifecycleHandler {
 
         com.villagecolony.fabric.integration.PlayerClearedPlants.restore(
                 WorkMarksSavedData.get(server).playerCleared());
+        com.villagecolony.fabric.integration.PlayerGround.restore(WorkMarksSavedData.get(server).playerGround());
 
         // O caminho de volta de quem estava debaixo da terra — F-3, 2026-10-02.
         MineReturn.restore(WorkMarksSavedData.get(server).mineTrails().stream()
@@ -303,6 +304,7 @@ public final class ServerLifecycleHandler {
                 BiomeConstructionSupply.treeWaitAttempts());
         WorkMarksSavedData.get(server).syncPlayerCleared(
                 com.villagecolony.fabric.integration.PlayerClearedPlants.snapshot());
+        WorkMarksSavedData.get(server).syncPlayerGround(com.villagecolony.fabric.integration.PlayerGround.snapshot());
         WorkMarksSavedData.get(server).syncMineTrails(MineReturn.snapshot().entrySet().stream()
                 .map(trail -> new WorkMarksSavedData.WorkerTrail(trail.getKey(),
                         java.util.Arrays.stream(trail.getValue()).boxed().toList()))

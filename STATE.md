@@ -1,4 +1,4 @@
-# STATE — 2026-11-15
+# STATE — 2026-11-20
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula; teto de 150 linhas.** O que saiu daqui mora em
 > [`docs/archive/technical/Historico-2026-11.md`](docs/archive/technical/Historico-2026-11.md) (o STATE de 13-11 inteiro,
@@ -9,7 +9,8 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.93 na `main`, publicada como `v0.4.93-alpha` (Regras 315 a 325, ADR-057). **Jogada em 19-11**
+- **Versão:** 0.4.99 na `main`, publicada como `v0.4.99-alpha` (Regras 326 a 335, ADR-058 a ADR-060, do jogo da
+  0.4.93 em planície); a anterior publicada é a `v0.4.93-alpha` (Regras 315 a 325, ADR-057), **jogada em 19-11**
   (montanha, Spark `0SMEEkMLGP`, ~35 min): boca da mina e BigHouseMOD no alto da montanha, longe das casas, e blocos de
   terreno voando no print do autor. Triagem no `TODO.md`; o autor escolheu A (centro e BigHouseMOD pela altura dos
   prédios) e D (linha `VC_FLOAT`), ainda não feitas. As Regras 305 a 325 seguem candidatas.
@@ -46,6 +47,12 @@ Cada uma tem teste que falha sem ela; nenhuma foi vista em jogo.
 | 0.4.85 | 285, 286 | aldeão preso na água vai à margem e, se não sair, pisa no gelo sob o pulo; o mineiro novo dorme na casa junto da mina assim que ela sobe; diagnósticos `loose=` (grafo), `VC_SMOOTH` e `VC_LOT_EDGE` (terreno). Sentinela `fast` PASS; tosquia instável registrada (KF-015) |
 | 0.4.86 | 287 | a tora deitada é chão do caminho (a borda da plantação grande fechava o miolo ao fazendeiro); a visão do canteiro vazio mira o lugar da planta. 1.137/1.137, Sentinela `fast` PASS |
 | 0.4.88 | 289–294 | escolhas G1–G7 da ADR-056: plantação grande semeada, 2 fazendeiros e semente que surge; tronco inteiro e folha natural quebrada no caminho; grafo na tábua de rua e na frente de toda porta; sem torre de minério e sem ar protegido no alisamento; pátio de pedra na boca da mina; ociosos tiram bloco solto e toco. 1.156/1.156, Sentinela `fast` PASS |
+| 0.4.99 | 335 | só a porta do térreo vira entrada do grafo; a porta solta sai no `VC_ROAD_GRAPH` com o chão lido em volta; `VC_KEEPER` no lugar do `VC_GROUND` do Zelador |
+| 0.4.98 | 334 | o chão que o jogador cavou ou pôs fica: nivelamento e calçada não mexem na coluna dele (marca no save) |
+| 0.4.97 | 332, 333 | ADR-060: o pasto do curral não é roça; sem tarefa de comida, o fazendeiro faz a ronda da roça e, sem nada a fazer, a vila pede a plantação grande |
+| 0.4.96 | 330, 331 | ADR-059: o Zelador, dono do chão (sem bancada, nono adulto); só ele calça, devolve ao solo, nivela e tira neve, com `VC_KEEPER` diária; o grafo atravessa o feno e o Zelador o leva |
+| 0.4.95 | 327–329 | jogo da 0.4.93 em planície, ADR-058: o curral é um lugar (porteira aberta não o desfaz, animal de dentro não é levado de novo); o pastor larga por 5 min o animal que não alcança; ronda diária com `VC_ROUND` e separação do misto 1× por dia |
+| 0.4.94 | 326 | jogo da 0.4.93 em planície: a árvore tirada do caminho ou da obra sai com galho e tronco ligados (carvalho grande deixava tronco) |
 | 0.4.93 | 315–325 | simulações de 3 dias da 0.4.92: fazendeiro semeia a terra comum; rua da vila gerada fica; `changes=` no grafo; três modos do grafo (ADR-057, `/vc grafo modo`); porta do jogador é entrada; só se calça aresta estável; terreno da vila inteira por fila (`VC_TERRAIN`); lenhador tira a folha do carvalho baixo; plantação grande arada e semeada inteira pelo molde. 1.197/1.197, Sentinela `fast` PASS |
 | 0.4.92 | 313, 314 | jogo da 0.4.91: depois do degrau da porta (escada do encaixe do molde), a entrada e o patamar ficam no chão, com o solo no topo; a BigHouseMOD e a casa do mineiro nascem com caminho rente ao chão na porta. 1.187/1.187 duas vezes, Sentinela `fast` PASS |
 | 0.4.91 | 305–312 | jogo da 0.4.90: a entrada da casa e um patamar de 2 em volta nascem no piso; só a aresta inteira de rosa a rosa fica fixa; telhado não é chão do grafo; a fundição para na quantidade pedida e a argila só surge para a obra; o pastor leva o animal ao curral sem prazo; o fazendeiro põe pó de osso em volta (surge sem composteira nem baú acima de 16); o pedreiro mói a areia da obra antes; o mineiro preso cava a subida rumo à borda. 1.184/1.184 duas vezes, Sentinela `fast` PASS |
@@ -64,7 +71,7 @@ parado (espera + bloqueio + ócio + encalhe) e nenhum travado; a meta da 1.0 é 
 
 ## O que o próximo jogo precisa mostrar
 
-Vila nova com a 0.4.93; os itens 1 a 6 vêm da 0.4.74 e seguem sem medida. Depois de jogar: `time_ledger.py`, `action_report.py`, `cost_ledger.py` e o Spark (§0.4).
+Vila nova com a 0.4.99; os itens 1 a 6 vêm da 0.4.74 e seguem sem medida. Depois de jogar: `time_ledger.py`, `action_report.py`, `cost_ledger.py` e o Spark (§0.4).
 
 | # | Item | Sinal |
 |---|---|---|

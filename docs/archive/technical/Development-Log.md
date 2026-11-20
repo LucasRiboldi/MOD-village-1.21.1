@@ -11971,3 +11971,96 @@ Placar das notas dos jogos da 0.4.79 à 0.4.86 (33 pontos) e escolhas do autor p
 
 Cada regra com GameTest vermelho antes; baterias de 1.156 verdes duas vezes, Sentinela `fast` PASS em cada uma.
 Nada visto em jogo; a G8 (casa do mineiro medieval) e a casa do mineiro fora da caixa seguem abertas.
+
+## 2026-11-19 — 0.4.94: árvore sai inteira (Regra 326)
+
+Jogo da 0.4.93 em planície (colônia ccac8347, Spark `AYGQ78wh44`): o calçador sem ofício derrubava a árvore do
+caminho e deixava tronco. O GameTest `PathTreeClearingGameTest` gera carvalho, carvalho grande e bétula pelo Vanilla
+e corta cada um pela coluna do caminho; sem a correção, o carvalho grande deixava galho (4 de 98 cortes).
+
+- **Causa:** `TreeClearing.sweep` só aceitava tronco vizinho com `LotGrowth.isClearable`, que exige folha natural no
+  topo do tronco reto ou ao lado dele (`reachesNaturalLeaves`); o galho do carvalho grande encosta em tronco, não em folha.
+- **Regra 326 (escolha A, "tronco por ligação"):** tronco encostado em tronco ou folha já aceitos entra pela
+  `LotGrowth.isLimbOnSite`, que mantém fora o descascado, o do viveiro, a obra da colônia, a peça da vila gerada e o que
+  a proteção guarda.
+
+Nada visto em jogo.
+
+## 2026-11-19 — 0.4.95: o pastor trabalha como um pastor (Regras 327 a 329, ADR-058)
+
+Jogo da 0.4.93 em planície: pastor `58c6bd06` bloqueado de 62% a 96% em 13 de 21 janelas, 23 entregas (16 de porco)
+com o curral grande parado em 2 ou 3 animais, nenhuma desistência em 3 h. O autor pediu que as opções partissem do
+trabalho real de um pastor e escolheu o pacote B.
+
+- **Regra 327:** `FencedIn.penAt` lê o curral com todo portão como parede; `HerdCandidates` deixa de fora o animal no chão
+  de qualquer curral conhecido (`ShepherdPens.isInAnyPen`).
+- **Regra 328:** `HerdPatience`: 600 tiques sem chegar um bloco mais perto, ou 3 entradas que falharam, e o animal fica
+  6.000 tiques fora da coleta.
+- **Regra 329:** `ShepherdRound`, uma ronda por dia com `VC_ROUND`; `PenRegroup` (saída de `ShepherdHerding`) separa o
+  curral misto uma vez por dia.
+
+`ShepherdRoundGameTest`: 3 dos 5 casos falham sem a leitura do curral e o filtro do desgarrado. O caso do curral grande
+pedia uma arena de 29 × 29: com o chão menor, a borda da arena fechava o lado de fora e o lado de fora era lido como
+curral. Nada visto em jogo.
+
+## 2026-11-19 — 0.4.96: o Zelador (Regras 330 e 331, ADR-059)
+
+O autor pediu uma profissão só para o chão da vila, com o nome Zelador e sem bancada (pesquisa em
+`docs/research/2026-11-19-profissao-do-chao.md`; quem não tinha ofício fazia 86% do nivelamento e 96% da calçada).
+
+- **Regra 330:** `ProfessionType.GROUNDSKEEPER` com `Capability.MAINTAIN_GROUND`, sem bancada (`ModContent.benchBlock`
+  nulo) e de mão vazia. Vaga do nono adulto em `ProfessionAssigner`; a fundação continua nos oito ofícios
+  (`GROWTH_ORDER`). `PathPaving.PAVERS`, `BuilderPaving.PAVERS` e `SnowShovel` passaram a ser só dele;
+  `VillageHelpers` perdeu o nivelamento, que foi para `GroundKeeper` (dia em ordem, passada a cada 200 tiques,
+  `VC_GROUND` no `TerrainReport`). `GroundSmoothing.pass` saiu.
+- **Regra 331:** `PathObstacles`: o feno é ar para `WorldPathTerrain` (chão, corte e "construído em cima") e sai para os
+  baús em `PathPaving.step`.
+- A pá de ferro como ferramenta do ofício fez a colônia encantar a pá do jogador (`WorkerEquipmentGameTest`); o Zelador
+  ficou de mão vazia.
+
+`GroundKeeperGameTest` falha sem o `PathObstacles`. Os testes de calçada e de nivelamento passaram a afirmar que
+pedreiro, carpinteiro, construtor e quem não tem ofício não calçam nem nivelam. Nada visto em jogo.
+
+## 2026-11-19 — 0.4.97: a roça sem a fila (Regras 332 e 333, ADR-060)
+
+Pesquisa `docs/research/2026-11-19-logica-do-fazendeiro.md`: o dia do fazendeiro dependia da tarefa `COLLECT_FOOD`, que
+só abre pela falta no estoque, e o trigo do curral grande o prendia. O autor escolheu o pacote B.
+
+- **Regra 332:** `PenFloors.isPenFloor`; `CropPatch` não vê o maduro, a terra arada nem o canteiro vazio no chão de
+  curral, e tira da memória a terra arada conhecida que está nele.
+- **Regra 333:** `FarmRound` cria uma tarefa de ronda fora da fila (64 de trigo, `RESERVED`→`EXECUTING`) para o
+  fazendeiro livre; `FarmerWork.run` troca a ronda pela tarefa da fila quando ela chega, e o "nada a fazer" encerra a
+  ronda, pede a plantação grande e dá 1 minuto de descanso. `WorkTime` conta a ronda como tarefa, `IdleWorkers` a vê,
+  e a desistência nela não vai para `WorkerStrikes`. O javadoc histórico do `giveUp` foi enxugado para o
+  `FarmerWork` caber em 500 linhas.
+
+`FarmRoundGameTest`: os 2 casos falham sem `PenFloors.isPenFloor` e sem a oferta da ronda. Nada visto em jogo.
+
+## 2026-11-20 — 0.4.98: o chão do jogador (Regra 334)
+
+Quatro notas do jogo da 0.4.93: a terra que o autor tirou voltou. O diário mostrou `LEVELLED minecraft:dirt "around the
+buildings"` (o vão entre construções, Regra 242) e a fila do terreno (Regra 323) tapando o buraco. O mod só lembrava a
+planta que o jogador tirou (Regra 104). O autor escolheu A e C.
+
+- `PlayerGround` marca a coluna em que o jogador quebrou chão natural (`PlayerBlockBreakEvents.AFTER`) ou pôs chão
+  natural (`PlayerWorldChangeHandler.afterWorldTick`), com teto de 16.384 colunas e save em `WorkMarksSavedData`.
+- Respeitam a marca: `GroundSmoothing.refusal` (e com ela `column`, `TerrainQueue` e `BuildingGaps`),
+  `repairShallowSupport`, `UnderPieceFill`, `SiteSmoothing.levelTo`, `PathSupport` e `PathPaving.pave`, que só calça
+  no nível em que a coluna está.
+
+`PlayerGroundGameTest`: os 2 casos falham sem a marca. Nada visto em jogo.
+
+## 2026-11-20 — 0.4.99: só a porta do térreo (Regra 335)
+
+A entrada da BigHouseMOD (`door@410,69,-199`) ficou solta nas 212 leituras do grafo do jogo da 0.4.93. O molde da casa
+tem uma porta só, no térreo, e o `BigHouseEntranceGameTest` com o molde real (chão plano e a rua `---.#---E` do save)
+liga a entrada: a falha não se reproduziu fora do terreno daquela vila. O autor decidiu a Regra 335 e a linha de
+diagnóstico.
+
+- `GroundFloorDoors.isGroundFloor`: o primeiro chão de fora a até 3 colunas, descendo por assoalho e sacada, fica a
+  até 2 abaixo do piso da porta. Usado por `DoorFronts` (construção) e `PlayerDoors`; na geração, `DoorFronts` da
+  integração só lê porta das 3 primeiras alturas da peça.
+- `RoadLines.describe` acrescenta à porta solta o chão lido nela e nas 4 vizinhas.
+- `VC_KEEPER` substitui o `VC_GROUND` do Zelador (commit 159dbf7f).
+
+O caso da sacada falha sem o filtro (duas entradas, a de cima a 3 do chão). Nada visto em jogo.

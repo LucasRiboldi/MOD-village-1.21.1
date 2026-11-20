@@ -9,7 +9,6 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
 import net.minecraft.entity.decoration.LeashKnotEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -169,10 +168,15 @@ final class ShepherdHerding {
             UUID id = worker.villagerId();
 
             if (worker.profession().filter(ProfessionType.SHEPHERD::equals).isEmpty()
-                    || shearing.test(id) || HERDS.containsKey(id)
+                    || shearing.test(id) || HERDS.containsKey(id) || ShepherdRound.isWalking(id)
                     || now < NEXT_TRY.getOrDefault(id, Long.MIN_VALUE)
                     || !(world.getEntity(id) instanceof VillagerEntity shepherd)
                     || !WorkHours.isWorkTime(world, shepherd)) {
+                continue;
+            }
+
+            // A ronda do dia vem antes da coleta (Regra 329).
+            if (ShepherdRound.due(world, id) && ShepherdRound.start(world, colony, shepherd)) {
                 continue;
             }
 
@@ -220,7 +224,7 @@ final class ShepherdHerding {
             if (!ShepherdPens.pensOf(world, colony).isEmpty()) {
                 PenRefusal.log(world, colony, shepherd, animal);
 
-                return separate(world, colony, shepherd);
+                return PenRegroup.separate(world, colony, shepherd);
             }
 
             if (animal.isLeashed() || ShepherdFlock.isKept(world, animal)) {
@@ -244,48 +248,9 @@ final class ShepherdHerding {
             return Optional.of(herd);
         }
 
-        return separate(world, colony, shepherd);
+        return PenRegroup.separate(world, colony, shepherd);
     }
 
-    /**
-     * A separação dos currais mistos — Regra 72: um animal de um cercado com mais de uma espécie, para o
-     * cercado só da espécie dele (ou um vazio) com lugar, para que cada tipo acabe no seu quando a vila tem
-     * vários currais. Um por vez, e só quando não há animal solto a recolher.
-     */
-    private static Optional<Herd> separate(ServerWorld world, Colony colony, VillagerEntity shepherd) {
-        for (ShepherdPens.Pen group : ShepherdPens.pensOf(world, colony)) {
-            var source = ShepherdPens.reachableFrom(world, group, shepherd);
-            if (source.isEmpty()) continue;
-            var mixed = source.get();
-            Map<EntityType<?>, Integer> inside = ShepherdPens.speciesIn(world, mixed);
-
-            if (inside.size() < 2) {
-                continue;
-            }
-
-            for (AnimalEntity animal : world.getEntitiesByClass(AnimalEntity.class,
-                    ShepherdPens.areaOf(mixed),
-                    candidate -> candidate.isAlive() && candidate.canBeLeashed() && !candidate.isLeashed()
-                            && mixed.reach().contains(candidate.getBlockPos()))) {
-                Optional<ShepherdPens.Pen> own =
-                        ShepherdPens.forSpecies(world, colony, animal.getType(), shepherd, mixed, true);
-
-                if (own.isPresent()) {
-                    Herd herd = new Herd(animal.getUuid(), own.get().gate(), world.getTime());
-                    herd.pen = own.get();
-                    herd.from = mixed;
-
-                    VillageColonyMod.LOGGER.info("Colony {} separates the pens — a {} goes from the pen at {} to the one at {}",
-                            colony.id().toString().substring(0, 8), animal.getType().getUntranslatedName(),
-                            mixed.gate().toShortString(), own.get().gate().toShortString());
-
-                    return Optional.of(herd);
-                }
-            }
-        }
-
-        return Optional.empty();
-    }
 
     /** Um passo de cada coleta, a cada cinco tiques. */
     static void tick(ServerWorld world) {
@@ -293,7 +258,15 @@ final class ShepherdHerding {
             return;
         }
 
-        HERDS.entrySet().removeIf(entry -> !step(world, entry.getKey(), entry.getValue()));
+        HERDS.entrySet().removeIf(entry -> {
+            boolean goesOn = step(world, entry.getKey(), entry.getValue());
+
+            if (!goesOn) {
+                HerdPatience.forget(entry.getKey());
+            }
+
+            return !goesOn;
+        });
     }
 
     /**
@@ -304,7 +277,8 @@ final class ShepherdHerding {
     static boolean step(ServerWorld world, UUID shepherdId, Herd herd) {
         Entity animalEntity = world.getEntity(herd.animal);
 
-        // Rumo a um curral, sem prazo e sem expediente: o animal só é solto dentro dele (Regra 309).
+        // Rumo a um curral, sem prazo e sem expediente: o animal só é solto dentro dele (Regra 309); a ida até o animal
+        // tem a paciência da Regra 328.
         boolean toPen = herd.pen != null && herd.from == null;
 
         if (!(world.getEntity(shepherdId) instanceof VillagerEntity shepherd)
@@ -365,7 +339,14 @@ final class ShepherdHerding {
             }
             if (world.getTime() - herd.walking > ShepherdPens.WALK_LIMIT) {
                 FencedIn.closeWhenClear(herd.pen.gate());
-                if (toPen) { herd.phase = Phase.FETCH; return true; } // não entrou: volta à corda e tenta de novo (Regra 309)
+                // Não entrou: volta à corda e tenta de novo (Regra 309), até a terceira vez (Regra 328).
+                if (toPen && !HerdPatience.failedEntry(shepherdId, herd.animal, world.getTime())) {
+                    herd.phase = Phase.FETCH;
+                    return true;
+                }
+                if (toPen) {
+                    HerdPatience.setAside(world, shepherdId, herd.animal, "it did not walk into the pen");
+                }
                 VillageColonyMod.LOGGER.info("Shepherd {} gave up: the {} did not walk into the pen at {}",
                         shepherdId.toString().substring(0, 8), animal.getType().getUntranslatedName(),
                         herd.pen.gate().toShortString());
@@ -378,6 +359,14 @@ final class ShepherdHerding {
 
         if (herd.phase == Phase.FETCH) {
             ShepherdLead.walkTo(world, shepherd, animal.getBlockPos(), REACH - 1);
+
+            // Regra 328: o desgarrado que ele não alcança fica para depois, e ele passa ao próximo.
+            if (HerdPatience.losesPatience(shepherdId, herd.animal, Math.sqrt(shepherd.squaredDistanceTo(animal)),
+                    world.getTime())) {
+                HerdPatience.setAside(world, shepherdId, herd.animal, "it got no closer to it");
+                abort(world, shepherdId, herd);
+                return false;
+            }
 
             if (shepherd.squaredDistanceTo(animal) <= REACH * REACH) {
                 Entity tiedTo = animal.getLeashHolder();

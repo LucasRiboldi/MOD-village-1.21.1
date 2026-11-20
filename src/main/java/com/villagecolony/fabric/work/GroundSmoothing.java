@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * O pedreiro alisa o chão da vila — autor, 2026-10-29: tapar buraco, tirar calombo e deixar todo chão, caminho inclusive,
+ * O Zelador alisa o chão da vila (Regra 330; autor, 2026-10-29): tapar buraco, tirar calombo e deixar todo chão, caminho inclusive,
  * com degrau de no máximo 1, pondo e tirando solo; qualquer tamanho e qualquer altura. Nunca mexe em construção, peça da
  * vila, obra ou bloco do jogador, em roça e água, nem na boca e na escada da mina.
  *
@@ -51,42 +51,6 @@ final class GroundSmoothing {
     static final int MINE_GUARD = 8;
 
     private GroundSmoothing() {
-    }
-
-    /** Uma passada do pedreiro: a próxima janela da caixa da vila. */
-    static int pass(ServerWorld world, Colony colony, VillagerEntity mason) {
-        Optional<VillageBounds> bounds = colony.bounds();
-
-        if (bounds.isEmpty()) {
-            return 0;
-        }
-
-        int cleared = clearPens(world, colony.id());
-
-        if (cleared > 0) {
-            ActionJournal.action(mason.getUuid(), "LEVELLED", "minecraft:grass_block", cleared, mason.getBlockPos(),
-                    "the inside of a pen");
-        }
-
-        int trimmed = PathTrim.pass(world, colony);
-
-        if (trimmed > 0) {
-            ActionJournal.action(mason.getUuid(), "LEVELLED", "minecraft:grass_block", trimmed, mason.getBlockPos(),
-                    "the path beside the line");
-
-            return trimmed;
-        }
-
-        int gaps = BuildingGaps.pass(world, colony);
-
-        if (gaps > 0) {
-            ActionJournal.action(mason.getUuid(), "LEVELLED", "minecraft:dirt", gaps, mason.getBlockPos(), "around the buildings");
-
-            return gaps;
-        }
-
-        // O resto da caixa vai pela fila de quadrados, do pior para o melhor (Regra 323).
-        return TerrainQueue.pass(world, colony, mason);
     }
 
     /** Quanto em volta da obra o construtor parado nivela. */
@@ -214,7 +178,8 @@ final class GroundSmoothing {
     /** Repara apenas um vazio seco de até três blocos sob chão natural, apoiado por solo firme. */
     static boolean repairShallowSupport(ServerWorld world, BlockPos surface) {
         if (!world.isChunkLoaded(surface.getX() >> 4, surface.getZ() >> 4)
-                || !isGround(world, surface, world.getBlockState(surface))) {
+                || !isGround(world, surface, world.getBlockState(surface))
+                || com.villagecolony.fabric.integration.PlayerGround.isMarked(surface.getX(), surface.getZ())) {
             return false;
         }
         int gap = 0;
@@ -366,6 +331,11 @@ final class GroundSmoothing {
     static @Nullable String refusal(ServerWorld world, int x, int z, int top, int target) {
         if (!world.isChunkLoaded(x >> 4, z >> 4)) {
             return "unloaded";
+        }
+
+        // O chão que o jogador mexeu fica como ele deixou (Regra 334).
+        if (com.villagecolony.fabric.integration.PlayerGround.isMarked(x, z)) {
+            return "player:ground";
         }
 
         BlockPos.Mutable at = new BlockPos.Mutable(x, Math.min(top, target) - 1, z);

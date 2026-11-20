@@ -283,6 +283,7 @@ class HiringLogTest {
         gaveUpAndWaited(candidate, ProfessionType.LUMBERJACK);
 
         List<Worker> colony = new ArrayList<>(foundationFilled());
+        colony.add(hired(ProfessionType.GROUNDSKEEPER)); // a vaga do Zelador já está ocupada (Regra 330)
         colony.add(candidate);
 
         assertEquals(

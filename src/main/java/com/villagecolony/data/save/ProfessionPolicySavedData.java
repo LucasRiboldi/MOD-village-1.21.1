@@ -87,8 +87,14 @@ public final class ProfessionPolicySavedData extends PersistentState {
                 // Save editado ou de versão futura: mantém o padrão seguro.
             }
         }
-        List<ProfessionType> order = nbt.getList(ORDER, NbtElement.STRING_TYPE).stream()
-                .map(element -> parseType(element.asString())).flatMap(java.util.Optional::stream).toList();
+        List<ProfessionType> order = new java.util.ArrayList<>(nbt.getList(ORDER, NbtElement.STRING_TYPE).stream()
+                .map(element -> parseType(element.asString())).flatMap(java.util.Optional::stream).toList());
+        // Profissão nova, ausente do save antigo, entra no fim da ordem do jogador (o Zelador, Regra 330).
+        for (ProfessionType type : ProfessionType.values()) {
+            if (!order.isEmpty() && !order.contains(type)) {
+                order.add(type);
+            }
+        }
         // Ordem estragada volta ao padrão sem levar junto as regras de cada
         // profissão, que o jogador configurou no Mod Menu — AUD-11.
         data.policies = policySet(read, order)

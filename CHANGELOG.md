@@ -12,6 +12,89 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.99] — candidata, 2026-11-20
+
+Do jogo da 0.4.93 em planície (a entrada da BigHouseMOD solta nas 212 leituras do grafo) e da regra do autor. Regra 335;
+nada visto em jogo.
+
+### Mudado
+
+- Regra 335: o grafo nunca busca porta do andar de cima. Só a porta do térreo vira entrada, na construção da colônia,
+  na peça da vila gerada e na porta do jogador.
+- A porta solta sai no `VC_ROAD_GRAPH` com o chão lido nela e nas 4 vizinhas, para achar a causa no próximo jogo.
+- A linha diária do Zelador passa a se chamar `VC_KEEPER`; `VC_GROUND` era o nome da linha da geração do solo.
+
+## [0.4.98] — candidata, 2026-11-20
+
+Do jogo da 0.4.93 em planície (4 notas de terra tirada pelo jogador que voltou) e das escolhas A e C do autor. Regra
+334; nada visto em jogo.
+
+### Corrigido
+
+- Regra 334: o chão que o jogador cavou ou pôs fica como ele deixou. O Zelador e todo nivelamento da vila não tapam o
+  buraco nem cortam o calombo do jogador, e a calçada passa ali sem aterrar. A marca vai ao save.
+
+## [0.4.97] — candidata, 2026-11-19
+
+Do jogo da 0.4.93 em planície (fazendeiro entre 0% e 2% de trabalho) e da escolha do autor, o pacote B da ADR-060.
+Regras 332 e 333; nada visto em jogo.
+
+### Corrigido
+
+- Regra 332: a lavoura no chão de um curral é pasto do rebanho e fica fora da busca do fazendeiro, que mirava o trigo
+  do curral grande, não chegava e ficava cercado.
+
+### Adicionado
+
+- Regra 333: a ronda da roça. Sem tarefa de comida na fila, o fazendeiro colhe, ara, semeia, composta e põe pó de osso
+  na roça dele; sem nada a fazer, a vila pode pedir a plantação grande, e ele descansa 1 minuto.
+
+## [0.4.96] — candidata, 2026-11-19
+
+Escolha do autor depois do jogo da 0.4.93 em planície: o pacote B da ADR-059, uma profissão própria para o chão da vila.
+Regras 330 e 331; nada visto em jogo.
+
+### Adicionado
+
+- Regra 330: o **Zelador**, sem bancada e com uma vaga por vila (o nono adulto). Só ele calça e cuida do chão: a linha
+  do grafo, o caminho fora da linha de volta ao solo, o chão entre as construções, a fila do terreno e a neve, nessa
+  ordem. A linha diária `VC_GROUND` mede o que falta e o que ele fez. Ícone no overlay e nome nas três línguas.
+- Regra 331: o grafo atravessa o fardo de feno no chão, e o Zelador o leva para os baús ao calçar a coluna.
+
+### Mudado
+
+- Pedreiro, carpinteiro, fundidor, construtor e o adulto sem ofício deixam de calçar, nivelar e tirar neve (revoga a
+  parte do chão das Regras 215, 220, 242 e 247).
+- A fundação faz nascer só os oito ofícios, como antes; o Zelador sai do adulto que passa deles.
+
+## [0.4.95] — candidata, 2026-11-19
+
+Do jogo da 0.4.93 em planície (pastor travado e curral que não enchia) e da escolha do autor, o pacote B da ADR-058.
+Regras 327 a 329; nada visto em jogo.
+
+### Corrigido
+
+- Regra 327: o curral é um lugar. A porteira aberta não o desfaz na leitura, e o animal de dentro, mesmo no meio do
+  curral grande, não é levado de novo.
+- Regra 328: o pastor desiste do animal que não alcança (30 segundos sem chegar mais perto, ou 3 entradas que falharam
+  rumo ao curral) e o deixa 5 minutos fora da coleta; com o animal na corda, segue sem prazo (emenda a Regra 309).
+
+### Adicionado
+
+- Regra 329: a ronda do pastor, uma vez por dia. Ele passa pelos currais, conta o rebanho, fecha a porteira deixada
+  aberta e registra a linha `VC_ROUND`. A separação do curral misto (Regra 72) acontece no máximo uma vez por dia.
+
+## [0.4.94] — candidata, 2026-11-19
+
+Do jogo da 0.4.93 em planície (19-11, colônia ccac8347) e da escolha do autor "tronco por ligação". Regra 326 em
+[`docs/RULES.md`](docs/RULES.md); nada visto em jogo.
+
+### Corrigido
+
+- Regra 326: a árvore tirada do caminho ou da zona da obra sai inteira. O tronco que encosta num tronco ou numa folha
+  já aceitos dela sai junto, mesmo sem folha no topo; no carvalho grande a copa saía e ficavam galho e tronco. O
+  GameTest `PathTreeClearingGameTest` corta carvalho, carvalho grande e bétula gerados pelo Vanilla.
+
 ## [0.4.93] — candidata, 2026-11-18
 
 Das simulações de 3 dias da 0.4.92 (perfil longo do Sentinela) e das escolhas do autor de 18-11. Regras 315 a 325 e

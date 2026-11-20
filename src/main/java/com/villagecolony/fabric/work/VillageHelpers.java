@@ -5,12 +5,10 @@ import com.villagecolony.fabric.integration.PublicChests;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.type.ResourceGroup;
-import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.MineMouth;
-import com.villagecolony.fabric.integration.SiteSurroundings;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -19,11 +17,8 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * As alternativas do próprio ofício — regra temporária do autor de 2026-11-02
@@ -31,14 +26,11 @@ import java.util.UUID;
  * Uma vez por minuto, no expediente:
  *
  * <ul>
- *   <li><b>pedreiro, carpinteiro e fundidor</b>: arrumam o terreno, começando pelo lote da obra aberta: tapam buraco,
- *       nivelam entre as bases, devolvem ao solo o caminho sem marca do grafo (Regras 215 e 242);</li>
- *   <li><b>construtor</b> sem obra: arruma o terreno como o pedreiro (Regra 247);</li>
  *   <li><b>pastor</b>: alimenta o rebanho;</li>
- *   <li><b>carpinteiro e pedreiro</b> sem terreno a reparar: mantêm as construções (Regra 221);</li>
- *   <li><b>adulto sem profissão</b>: transporta itens e alivia os baús cheios e, sem nada a carregar, arruma o terreno
- *       (Regra 323); calçar e tirar neve vêm da Regra 220.</li>
+ *   <li><b>carpinteiro e pedreiro</b>: mantêm as construções (Regra 221);</li>
+ *   <li><b>adulto sem profissão</b>: transporta itens e alivia os baús cheios.</li>
  * </ul>
+ * Calçar, nivelar e tirar neve são do Zelador (Regra 330, {@link GroundKeeper}).
  * As demais ajudas cruzadas da Regra 149 ficam suspensas.
  */
 public final class VillageHelpers {
@@ -48,13 +40,6 @@ public final class VillageHelpers {
     private static final int UPKEEP_EVERY = 40;
 
     static final int LIGHT_SPACING = 12;
-
-    /** Qual construção o pedreiro nivela na próxima vez, por colônia. */
-    private static final Map<UUID, Integer> NEXT_BUILDING = new HashMap<>();
-
-    static {
-        com.villagecolony.core.type.ServerMemory.register(VillageHelpers.class, NEXT_BUILDING::clear);
-    }
 
     private VillageHelpers() {
     }
@@ -98,8 +83,8 @@ public final class VillageHelpers {
     }
 
     /**
-     * Alternativas sem troca de ofício: pastor cuida do rebanho (O3), pedreiro, carpinteiro e fundidor arrumam o chão
-     * (Regras 215 e 242), adulto sem profissão carrega (O8).
+     * Alternativas sem troca de ofício: pastor cuida do rebanho (O3), pedreiro e carpinteiro mantêm as construções
+     * (Regra 221), adulto sem profissão carrega (O8). O chão é só do Zelador (Regra 330, {@link GroundKeeper}).
      *
      * @return quanto ele fez
      */
@@ -110,26 +95,15 @@ public final class VillageHelpers {
 
         return switch (trade.get()) {
             case SHEPHERD -> FlockCare.feed(world, colony, villager);
-            case MASON -> {
-                int levelled = masonHelps(world, colony, villager);
-
-                yield levelled > 0 ? levelled : BuildingUpkeep.start(world, colony, villager, ResourceGroup.STONE);
-            }
-            case CARPENTER -> {
-                int levelled = masonHelps(world, colony, villager);
-
-                yield levelled > 0 ? levelled : BuildingUpkeep.start(world, colony, villager, ResourceGroup.PLANKS);
-            }
-            case SMELTER -> masonHelps(world, colony, villager);
-            // O construtor sem obra nivela o chão como o pedreiro (Regra 247).
-            case BUILDER -> masonHelps(world, colony, villager);
+            case MASON -> BuildingUpkeep.start(world, colony, villager, ResourceGroup.STONE);
+            case CARPENTER -> BuildingUpkeep.start(world, colony, villager, ResourceGroup.PLANKS);
             default -> 0;
         };
     }
 
     /**
      * O adulto sem profissão é o carregador da vila — O8 (autor, 2026-10-28): leva o baú da boca da mina para os baús
-     * públicos e alivia os baús de profissão quase cheios; sem nada a carregar, arruma o terreno (Regra 323).
+     * públicos e alivia os baús de profissão quase cheios.
      */
     static int haulerHelps(ServerWorld world, Colony colony, VillagerEntity hauler) {
         int carried = haulFromTheMine(world, colony, hauler);
@@ -139,63 +113,7 @@ public final class VillageHelpers {
             ActionJournal.action(hauler.getUuid(), "HAULED", "minecraft:chest", spread, null, "full chests to the village");
         }
 
-        // Sem nada a carregar, arruma o terreno da vila como o pedreiro (Regra 323).
-        return carried + spread > 0 ? carried + spread : masonHelps(world, colony, hauler);
-    }
-
-    /**
-     * A função secundária do pedreiro ocioso (Regra 215): alisa o chão da vila, conserta o lote da obra aberta e nivela em volta da
-     * próxima casa.
-     */
-    static int masonHelps(ServerWorld world, Colony colony, VillagerEntity mason) {
-        int done = levelGround(world, colony, mason);
-
-        if (done > 0) {
-            WorkTime.groundWork(mason.getUuid(), world.getTime());
-        }
-
-        return done;
-    }
-
-    private static int levelGround(ServerWorld world, Colony colony, VillagerEntity mason) {
-        int repaired = GroundSmoothing.aroundTheOpenBuild(world, colony, mason);
-
-        if (repaired > 0) {
-            return repaired;
-        }
-
-        // Casa da vila sem solo embaixo: o vão é preenchido com o chão do bioma (Regra 304).
-        int under = com.villagecolony.fabric.integration.UnderPieceFill.pass(world, colony);
-
-        if (under > 0) {
-            ActionJournal.action(mason.getUuid(), "LEVELLED", "village piece", under, null, "under the building");
-
-            return under;
-        }
-
-        int smoothed = GroundSmoothing.pass(world, colony, mason);
-
-        if (smoothed > 0) {
-            return smoothed;
-        }
-
-        List<Building> standing = VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()
-                .filter(Building::finished)
-                .toList();
-
-        if (standing.isEmpty()) {
-            return 0;
-        }
-
-        int next = NEXT_BUILDING.merge(colony.id(), 1, Integer::sum) % standing.size();
-        int levelled = SiteSurroundings.level(world, standing.get(next));
-
-        if (levelled > 0) {
-            ActionJournal.action(mason.getUuid(), "LEVELLED", standing.get(next).blueprint().toString(), levelled, null,
-                    "around the house");
-        }
-
-        return levelled;
+        return carried + spread;
     }
 
     private static int haulFromTheMine(ServerWorld world, Colony colony, VillagerEntity carrier) {

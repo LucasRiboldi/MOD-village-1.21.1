@@ -203,7 +203,7 @@ public final class RoadLines {
             }
 
             isolated += aloneDoor ? 0 : 1;
-            loose.add(describe(part, columns, center, aloneDoor));
+            loose.add(describe(part, columns, center, aloneDoor, terrain));
         }
 
         columns.keySet().retainAll(main);
@@ -250,14 +250,32 @@ public final class RoadLines {
     }
 
     /** A parte solta para o log: o tipo e a coluna dela mais perto do centro, com a altura. */
-    private static String describe(Set<Long> part, Map<Long, Integer> columns, ColonyPos center, boolean aloneDoor) {
+    private static String describe(Set<Long> part, Map<Long, Integer> columns, ColonyPos center, boolean aloneDoor,
+                                   PathTerrain terrain) {
         long nearest = part.stream().min(Comparator.comparingLong((Long at) -> {
             long dx = ColonyRoads.xOf(at) - (long) center.x();
             long dz = ColonyRoads.zOf(at) - (long) center.z();
             return dx * dx + dz * dz;
         })).orElseThrow();
-        return (aloneDoor ? "door" : "part:" + part.size()) + "@" + ColonyRoads.xOf(nearest) + ","
-                + columns.getOrDefault(nearest, center.y()) + "," + ColonyRoads.zOf(nearest);
+        int x = ColonyRoads.xOf(nearest);
+        int z = ColonyRoads.zOf(nearest);
+        int y = columns.getOrDefault(nearest, center.y());
+        String at = (aloneDoor ? "door" : "part:" + part.size()) + "@" + x + "," + y + "," + z;
+
+        // A porta solta diz o chão lido nela e nas 4 vizinhas (oeste, leste, norte, sul): B bloqueada, - sem chão.
+        return aloneDoor ? at + ":g" + ground(terrain, x, z, y) + "[w" + ground(terrain, x - 1, z, y) + " e"
+                + ground(terrain, x + 1, z, y) + " n" + ground(terrain, x, z - 1, y) + " s" + ground(terrain, x, z + 1, y) + "]"
+                : at;
+    }
+
+    private static String ground(PathTerrain terrain, int x, int z, int nearY) {
+        if (terrain.blocked(x, z)) {
+            return "B";
+        }
+
+        java.util.OptionalInt read = terrain.groundY(x, z, nearY);
+
+        return read.isPresent() ? String.valueOf(read.getAsInt()) : "-";
     }
 
     /**

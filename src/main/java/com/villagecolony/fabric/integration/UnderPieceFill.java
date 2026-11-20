@@ -117,8 +117,8 @@ public final class UnderPieceFill {
                     gap.add(at);
                 }
 
-                // Sem chão firme ao alcance, é buraco de verdade (mina, ravina): fica.
-                if (gap.size() == DEPTH) {
+                // Sem chão firme ao alcance, é buraco de verdade (mina, ravina): fica; o do jogador também (Regra 334).
+                if (gap.size() == DEPTH || PlayerGround.isMarked(x, z)) {
                     continue;
                 }
 

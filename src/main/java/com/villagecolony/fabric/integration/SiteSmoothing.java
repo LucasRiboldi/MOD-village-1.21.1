@@ -160,6 +160,11 @@ final class SiteSmoothing {
         int changed = 0;
         int top = column.top();
 
+        // O chão que o jogador mexeu fica como ele deixou (Regra 334).
+        if (PlayerGround.isMarked(x, z)) {
+            return 0;
+        }
+
         if (target < top) {
             int y = top;
 

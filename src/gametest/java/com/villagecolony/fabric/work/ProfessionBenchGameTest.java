@@ -97,8 +97,8 @@ public class ProfessionBenchGameTest implements FabricGameTest {
         context.assertTrue(ModContent.BLACKSMITH_FORGE.getDefaultState().getLuminance() == ModContent.LIGHT,
                 "a forja do ferreiro não emite luz " + ModContent.LIGHT);
 
-        // Todas as oito bancadas emitem luz — nenhuma profissão fica de fora.
-        for (ProfessionType profession : ProfessionType.values()) {
+        // As oito bancadas emitem luz; o Zelador não tem bancada (Regra 330).
+        for (ProfessionType profession : ModContent.benches().keySet()) {
             context.assertTrue(
                     ModContent.benchBlock(profession).getDefaultState().getLuminance() == ModContent.LIGHT,
                     "a bancada de " + profession + " não emite luz " + ModContent.LIGHT);
@@ -121,10 +121,10 @@ public class ProfessionBenchGameTest implements FabricGameTest {
         fixture.owning(miner);
         VillageColonyMod.WORKERS.register(miner, fixture.colony().id()).assign(ProfessionType.MINER);
 
-        // Cada profissão tem bancada: nenhum benchBlock é nulo.
+        // Cada ofício tem bancada; só o Zelador não tem (Regra 330).
         for (ProfessionType profession : ProfessionType.values()) {
-            context.assertTrue(ModContent.benchBlock(profession) != null,
-                    "a profissão " + profession + " ficou sem bancada do mod");
+            context.assertTrue((ModContent.benchBlock(profession) != null) == (profession != ProfessionType.GROUNDSKEEPER),
+                    "a profissão " + profession + " ficou com a bancada errada");
         }
 
         context.assertTrue(ModBenchBonus.factor(context.getWorld(), miner, chest) == 1,

@@ -48,6 +48,8 @@ public final class ProfessionRegistry {
         define(ProfessionType.FARMER, ToolType.IRON_HOE,
                 Capability.MAINTAIN_FOOD, Capability.COLLECT_SOIL, Capability.CRAFT_FARM);
         define(ProfessionType.BUILDER, ToolType.NONE, Capability.BUILD_STRUCTURE);
+        // O Zelador trabalha de mão vazia, como o pedreiro (Regra 330).
+        define(ProfessionType.GROUNDSKEEPER, ToolType.NONE, Capability.MAINTAIN_GROUND);
     }
 
     private ProfessionRegistry() {

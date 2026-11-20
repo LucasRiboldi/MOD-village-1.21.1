@@ -280,6 +280,7 @@ final class VillageLogPresenter {
             case FARMER -> "Fazendeiro";
             case SHEPHERD -> "Pastor";
             case BUILDER -> "Construtor";
+            case GROUNDSKEEPER -> "Zelador";
             case UNKNOWN -> "Profissional";
         };
     }

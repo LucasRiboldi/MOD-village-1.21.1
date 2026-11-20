@@ -43,6 +43,11 @@ public final class PenFloors {
     private PenFloors() {
     }
 
+    /** Se este lugar é chão de dentro de um curral: a lavoura dali é pasto do rebanho, não roça (Regra 332). */
+    public static boolean isPenFloor(BlockPos at) {
+        return FLOORS.contains(at.asLong());
+    }
+
     /** O chão de dentro de cada curral desta colônia, relido. */
     public static void update(UUID colonyId, List<? extends Set<BlockPos>> reaches) {
         Set<Long> floors = new HashSet<>();

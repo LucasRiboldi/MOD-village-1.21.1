@@ -63,7 +63,7 @@ class ProfessionGrowthTest {
         addWorkers(16);
 
         assign(15);
-        assertEquals(8, employedCount());
+        assertEquals(9, employedCount()); // as oito da primeira leva e o Zelador (Regra 330)
 
         assertEquals(1, assign(16));
         assertEquals(2, count(ProfessionType.MINER));
@@ -92,7 +92,7 @@ class ProfessionGrowthTest {
         addWorkers(23);
 
         assign(22);
-        assertEquals(15, employedCount());
+        assertEquals(16, employedCount()); // com o Zelador (Regra 330)
         assertEquals(1, count(ProfessionType.BUILDER));
 
         // Uma obra aberta por vila, um construtor (Regra 273): a vaga vai ao próximo da fila.
@@ -106,7 +106,7 @@ class ProfessionGrowthTest {
         addWorkers(31);
 
         assign(30);
-        assertEquals(16, employedCount());
+        assertEquals(17, employedCount()); // com o Zelador (Regra 330)
         assertEquals(2, count(ProfessionType.SHEPHERD));
         assertEquals(1, count(ProfessionType.BUILDER));
         assertEquals(3, count(ProfessionType.MINER));
@@ -142,7 +142,7 @@ class ProfessionGrowthTest {
         shepherd.assign(ProfessionType.SHEPHERD);
         addWorkers(15);
 
-        assertEquals(7, assign(15));
+        assertEquals(8, assign(15)); // as outras sete e o Zelador (Regra 330)
         assertEquals(1, count(ProfessionType.SHEPHERD));
     }
 

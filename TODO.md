@@ -87,6 +87,18 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
     descascada ×30 e tora ×10 (`MISSING_PIECE`), terracota branca ×31 (`APPEARING_PIECE`), pedra ×16
     (`WAITED_TOO_LONG`) — buscar o fluxo de fabricação do pedregulho, da tora descascada e da pedra; o pó de osso
     ×672 em 35 min pede teto (M); nenhuma nota `VC_BIOME_NOTE`
+- [ ] 🔴 Jogo da 0.4.93 (19-11, planície, colônia ccac8347, Spark `AYGQ78wh44`, TPS 20, ~3 h), triagem:
+  - o calçador sem ofício deixava tronco do carvalho grande no caminho: Regra 326 na 0.4.94 (candidata);
+  - o pastor levava de novo o animal já no curral e ficava travado com nome vermelho: Regras 327 a 329 na 0.4.95
+    (ADR-058, candidatas);
+  - a terra tirada pelo jogador voltava: Regra 334 na 0.4.98 (candidata);
+  - o nó da casa do mod fora do grafo (410, 65, -199): a Regra 335 (0.4.99) tira porta de cima, mas o teste com a
+    BigHouseMOD real em chão plano liga a entrada; a causa no terreno da vila sai da porta solta no `VC_ROAD_GRAPH`
+    (`door@...:g...[...]`) do próximo jogo (M);
+  - fazendeiro 66% sem trabalhar (29× "could not reach the crop" no trigo do curral, 17× "fenced in"): Regras 332 e
+    333 na 0.4.97 (ADR-060, candidatas); fardo de feno e culturas novas (opção C) ficam para depois (M);
+  - Regra 51: mineiro 33%, fundidor 48% e carpinteiro 42% sem trabalhar (M);
+  - `dirt_path` sem receita e posto como `SHAPED_GROUND` (Regra 69, declarado)
 - [ ] 🔴 Simulação de 3 dias da 0.4.92 (18-11, planície, modo `vizinhanca`, colônia 58cb0273), achados:
   - fila do terreno, lenhador encostado no tronco e plantação grande: Regras 323 a 325 na 0.4.93 (candidatas);
   - fila do terreno parada no dia 1 (`levelled=0`): ninguém chegou à fila (M);

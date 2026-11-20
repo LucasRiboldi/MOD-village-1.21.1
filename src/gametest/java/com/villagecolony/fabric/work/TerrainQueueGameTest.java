@@ -45,7 +45,9 @@ public class TerrainQueueGameTest implements FabricGameTest {
         VillagerEntity mason = context.spawnEntity(EntityType.VILLAGER, new BlockPos(14, FLOOR + 1, 4));
 
         try {
-            VillageHelpers.helps(context.getWorld(), colony, Optional.of(ProfessionType.MASON), mason);
+            context.assertTrue(VillageHelpers.helps(context.getWorld(), colony, Optional.of(ProfessionType.MASON), mason) == 0,
+                    "Regra 330: o pedreiro ainda nivela");
+            GroundKeeper.day(context.getWorld(), colony, mason);
 
             context.assertTrue(top(context, 20, 20) == context.getAbsolutePos(hole).getY(),
                     "o buraco isolado ficou atrás dos degraus do planalto: topo em " + top(context, 20, 20));
@@ -67,10 +69,12 @@ public class TerrainQueueGameTest implements FabricGameTest {
         VillagerEntity idle = context.spawnEntity(EntityType.VILLAGER, new BlockPos(4, FLOOR + 1, 4));
 
         try {
-            int done = VillageHelpers.helps(context.getWorld(), colony, Optional.empty(), idle);
+            context.assertTrue(VillageHelpers.helps(context.getWorld(), colony, Optional.empty(), idle) == 0,
+                    "Regra 330: quem não tem ofício ainda nivela");
+            int done = GroundKeeper.day(context.getWorld(), colony, idle);
 
             context.assertTrue(done > 0 && top(context, 6, 18) == context.getAbsolutePos(bump).getY() - 1,
-                    "quem não tem ofício deixou o bloco isolado: fez " + done + ", topo em " + top(context, 6, 18));
+                    "o Zelador deixou o bloco isolado: fez " + done + ", topo em " + top(context, 6, 18));
         } finally {
             idle.discard();
             TerrainQueue.clearAll();

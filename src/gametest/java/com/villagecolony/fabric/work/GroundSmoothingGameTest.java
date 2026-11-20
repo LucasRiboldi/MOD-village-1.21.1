@@ -187,14 +187,13 @@ public class GroundSmoothingGameTest implements FabricGameTest {
 
         try {
             for (int round = 0; round < 10; round++) {
-                VillageHelpers.helps(world, colony, java.util.Optional.of(
-                        com.villagecolony.core.worker.model.ProfessionType.MASON), builder);
+                GroundKeeper.day(world, colony, builder); // o Zelador arruma o lote da obra (Regra 330)
             }
 
             int floorY = context.getAbsolutePos(new BlockPos(0, FLOOR, 0)).getY();
 
             context.assertTrue(top(context, 4, 4) == floorY,
-                    "o pedreiro parado não nivelou o lote: o calombo ficou com topo em " + top(context, 4, 4));
+                    "o Zelador não nivelou o lote da obra: o calombo ficou com topo em " + top(context, 4, 4));
         } finally {
             com.villagecolony.VillageColonyMod.CONSTRUCTIONS.forget(project.id(),
                     com.villagecolony.core.construction.service.RemovalAudit.playerCancellation());
@@ -232,11 +231,10 @@ public class GroundSmoothingGameTest implements FabricGameTest {
         var builder = context.spawnEntity(net.minecraft.entity.EntityType.VILLAGER, new BlockPos(8, FLOOR + 1, 8));
 
         try {
-            int done = VillageHelpers.helps(context.getWorld(), colony,
-                    java.util.Optional.of(com.villagecolony.core.worker.model.ProfessionType.MASON), builder);
-            context.assertTrue(done > 0, "sem obra aberta, o pedreiro ignorou o terreno danificado; chunk final carregado="
+            int done = GroundKeeper.day(context.getWorld(), colony, builder);
+            context.assertTrue(done > 0, "sem obra aberta, o Zelador ignorou o terreno danificado; chunk final carregado="
                     + context.getWorld().isChunkLoaded((origin.getX() + 23) >> 4, (origin.getZ() + 23) >> 4));
-            context.assertTrue(top(context, 4, 4) == origin.getY(), "o construtor deixou o calombo");
+            context.assertTrue(top(context, 4, 4) == origin.getY(), "o Zelador deixou o calombo");
         } finally {
             builder.discard();
             GroundSmoothing.clearAll();
@@ -244,7 +242,7 @@ public class GroundSmoothingGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** O construtor sem obra nivela o chão como o pedreiro (Regra 247). */
+    /** O construtor sem obra não nivela: o chão é do Zelador (Regra 330, fim da Regra 247). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_smoothing_idle_builder", tickLimit = 20)
     public void theIdleBuilderLevelsTheVillageGround(TestContext context) {
         for (int x = 0; x < 24; x++) {
@@ -269,9 +267,9 @@ public class GroundSmoothingGameTest implements FabricGameTest {
         try {
             int done = VillageHelpers.helps(context.getWorld(), colony,
                     java.util.Optional.of(com.villagecolony.core.worker.model.ProfessionType.BUILDER), builder);
-            context.assertTrue(done > 0, "o construtor sem obra não nivelou o chão da vila (Regra 247); chunk final carregado="
+            context.assertTrue(done == 0, "Regra 330: o construtor sem obra ainda nivela o chão da vila; chunk final carregado="
                     + context.getWorld().isChunkLoaded((origin.getX() + 23) >> 4, (origin.getZ() + 23) >> 4));
-            context.assertTrue(top(context, 4, 4) == origin.getY(), "o construtor deixou o calombo");
+            context.assertTrue(top(context, 4, 4) > origin.getY(), "Regra 330: o construtor tirou o calombo");
         } finally {
             builder.discard();
             GroundSmoothing.clearAll();

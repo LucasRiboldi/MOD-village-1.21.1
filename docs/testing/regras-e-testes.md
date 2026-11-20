@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 220
+- **Cita a regra:** 230
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -67,7 +67,7 @@ classe prova menos ainda.
 | 54 | Mina em rede (ADR-042): passada a escadaria e o salão, cada nível é uma grade de nós a ca… | classe | MineAccessGameTest, MineReturnGameTest, MineReturnTest |
 | 55 | Roça grande primeiro; fundidor ocioso adianta o cru; lenhador ocioso planta mudas até 10… | cita | GrowingPiecesGameTest |
 | 56 | Expansão do terreno: a caixa cresce só com rua e obra, nunca com faixa vazia anexada (0.3… | cita | PublicChestPlacementGameTest, VillageExpansionGameTest, VillageExpansionTest |
-| 57 | O pastor põe no máximo um poste por casa e um por cercado (nenhum poste novo a até 6 bloc… | classe | EntrancesAtTheDoorGameTest, PenAccessGameTest, PenTetherGameTest |
+| 57 | O pastor põe no máximo um poste por casa e um por cercado (nenhum poste novo a até 6 bloc… | classe | EntrancesAtTheDoorGameTest, FarmRoundGameTest, PenAccessGameTest |
 | 58 | Madeira e pedra cruas podem passar dos limites do baú do ofício e do teto por tipo: o exc… | classe | MinerHaulCapGameTest, MinerOverflowGameTest, PublicChestPlacementGameTest |
 | 59 | Ajudam a obra só carpinteiro e pedreiro (fazendeiro e pastor não); o carpinteiro guarda u… | classe | BuilderPavingGameTest, ConstructionZoneGameTest, GraphOnlyPathsGameTest |
 | 60 | O tipo de obra que passa uma volta inteira da varredura sem lote fica 30 min fora da vez;… | classe | BigHouseFoundationGameTest, ColonyModelsGameTest, ConstructionOrderTest |
@@ -82,7 +82,7 @@ classe prova menos ainda.
 | 69 | A horta da casa surge sem gastar recurso: os blocos de chão da planta que não têm item ne… | cita | GardenPiecesGameTest |
 | 70 | Forma do caminho: um bloco de largura, reto a partir da porta, virando só em ângulo reto.… | fora de vigor |  |
 | 71 | O mineiro não constrói para fora da montanha: o desvio dele não põe bloco ao céu aberto (… | cita | DetourCostsTest, MinerCautionGameTest |
-| 72 | Um curral por espécie: animais iguais ficam no mesmo curral; com mais de um curral na vil… | cita | PenModelGameTest, ShepherdPensGameTest |
+| 72 | Um curral por espécie: animais iguais ficam no mesmo curral; com mais de um curral na vil… | cita | PenModelGameTest, ShepherdPensGameTest, ShepherdRoundGameTest |
 | 73 | Caminho de areia: a vila do deserto tem caminho próprio — cópia do caminho de terra do Va… | classe | BenchPassivesGameTest, BenchUseGameTest, BiomeSiteGameTest |
 | 74 | A cama mais perto do trabalho: cada aldeão dorme na cama da vila mais perto de onde traba… | cita | BedChoiceGameTest, BedPlanTest, WalksTest |
 | 75 | Movimentação natural: só o mineiro remodela o terreno para subir (degrau, túnel); ninguém… | classe | ClimbReshapeTest |
@@ -116,7 +116,7 @@ classe prova menos ainda.
 | 103 | Grama ao pé do poste da ovelha amarrada, e o golem sai do curral pela porteira | classe | DesertFixesGameTest, PostGrassGameTest |
 | 104 | O que o jogador tirou não volta: árvore, muda ou flor quebrada pelo jogador não é replant… | classe | ConstructionZoneGameTest |
 | 105 | Duas colônias da mesma vila viram uma, e a identidade é a vila gerada, não o centro | classe | ColonyIdentityTest, ColonyMergeTriggerGameTest |
-| 106 | A vila é uma caixa medida pela vila gerada, e não um raio | classe | BedChoiceGameTest, BuilderPavingGameTest, CarpenterWoodGateGameTest |
+| 106 | A vila é uma caixa medida pela vila gerada, e não um raio | classe | BedChoiceGameTest, BigHouseEntranceGameTest, BuilderPavingGameTest |
 | 107 | Marcas no mundo: contorno de chamas no lote, área da vila, dono de cada baú, nome do alde… | classe | BuildSiteGameTest, ChestMarkerGameTest, CraftingLookupGameTest |
 | 108 | A Tocha das Almas cancela a obra: uma tocha das almas (também a de parede) posta pelo jog… | cita | LotLightDecorGameTest, MaeSitesGameTest |
 | 109 | A casa fundadora BigHouseMOD: toda vila adotada a recebe uma única vez — cópia editada da… | classe | BedChoiceGameTest, BigHouseFoundationGameTest, ColonyDetectionGameTest |
@@ -135,8 +135,8 @@ classe prova menos ainda.
 | 122 | O curral é do pastor (autor 10-27, jogo da 0.3.93: 217 entradas em curral na planície e o… | cita | PenFloorsGameTest |
 | 123 | A rede de caminhos da vila: toda porta se liga à rede pelo grafo, com o trajeto mais curt… | cita | PathNetworkGameTest, VillagePathPlannerTest |
 | 124 | Construção nova nasce a no mínimo 3 blocos de qualquer construção (autor 10-27, D1): o lo… | cita | PathNetworkGameTest |
-| 125 | Quem assenta o caminho (autor 10-27, D6): o pedreiro, o carpinteiro e o fundidor sem tare… | classe | GraphOnlyPathsGameTest, GroundKeepersTest, LeafPathsGameTest |
-| 126 | Peça colorida sai branca (autor 10-27, item 5; jogo da 0.3.93: 64 "cama sem lã" e lã pret… | classe | BigHouseFoundationGameTest, BigHouseModBlueprintGameTest, BiomeBlueprintsGameTest |
+| 125 | Quem assenta o caminho (autor 10-27, D6): o pedreiro, o carpinteiro e o fundidor sem tare… | classe | GraphOnlyPathsGameTest, GroundKeeperGameTest, GroundKeepersTest |
+| 126 | Peça colorida sai branca (autor 10-27, item 5; jogo da 0.3.93: 64 "cama sem lã" e lã pret… | classe | BigHouseEntranceGameTest, BigHouseFoundationGameTest, BigHouseModBlueprintGameTest |
 | 127 | Ajudas de quem está sem tarefa do ofício, cada uma com um ofício fixo (autor 10-27, item… | cita | ColonyTorchesGameTest |
 | 128 | Nenhuma profissão espera mais de 5 minutos por nada (autor 10-27, emenda 11-02): 300 s se… | cita | IdleWatchGameTest |
 | 129 | O nome sobre a cabeça tem a cor do estado (autor 10-27): laranja no ofício, azul em ajuda… | classe | IdleRoutineGameTest, IdleWatchGameTest, LargeFarmGameTest |
@@ -166,26 +166,26 @@ classe prova menos ainda.
 | 153 | Mais ajudas de quem está sem tarefa (autor 10-28, O1/O3/O4/O8; pedido de novo em 10-29),… | classe | GroundSmoothingGameTest, IdleFixesGameTest, ItemStockGameTest |
 | 154 | Lenhador, fundidor e fazendeiro: os ajustes do O5–O7 (autor 10-28; pedido de novo em 10-2… | classe | ChestPlacerGameTest, IdleFixesGameTest, ItemStockGameTest |
 | 155 | A boca da mina ganha o portão do autor (10-29, estrutura mine_entrance.nbt, 9×7×5): no lu… | classe | BiomeBlueprintsGameTest, MineLandingGameTest, MineNodeGameTest |
-| 156 | O pedreiro alisa o chão da vila (autor 10-29, 11-06): sem tarefa, uma vez por minuto ele… | classe | GroundSmoothingGameTest, OreTowerGameTest, SmoothRefusalGameTest |
+| 156 | O pedreiro alisa o chão da vila (autor 10-29, 11-06): sem tarefa, uma vez por minuto ele… | classe | GroundSmoothingGameTest, OreTowerGameTest, PlayerGroundGameTest |
 | 157 | O mineiro não quebra o que segura algo solto (autor 10-29, jogo da 0.3.108: o cascalho pe… | classe | MineGravityGameTest, MineSettlingGameTest, MinerGameTest |
 | 158 | Sem cama no andar de baixo da casa de escada de mão (autor 10-29, jogo da 0.3.108: 9 de 2… | classe | BedChoiceGameTest, BedPlanTest, BiomeBlueprintsGameTest |
 | 159 | O aldeão da colônia pula 2 blocos e por cima da cerca (autor 10-29, depois do jogo da 0.3… | cita | LumberjackGameTest, PenEscapeGameTest |
 | 160 | O construtor trabalha do chão, e quem fica num telhado desce (autor 10-29, jogo da 0.3.10… | classe | BuildZoneGameTest, BuilderApproachGameTest, BuilderGameTest |
 | 161 | Comer enche a vida (autor 10-29): todo aldeão que come (a comida do inventário, ou para c… | cita | VillagerRulesGameTest |
-| 162 | O miolo do cercado fica livre (autor 10-29, jogo da 0.3.110: o cercado nasceu com blocos… | classe | GroundSmoothingGameTest, OreTowerGameTest, SmoothRefusalGameTest |
+| 162 | O miolo do cercado fica livre (autor 10-29, jogo da 0.3.110: o cercado nasceu com blocos… | classe | GroundSmoothingGameTest, OreTowerGameTest, PlayerGroundGameTest |
 | 163 | Roça por fazendeiro e pela maior das contas (autor 10-30): a vila abre uma roça para cada… | cita | ConstructionPriorityTest, FarmOwnersTest |
 | 164 | Casa de reserva respeita teto de camas (autor 10-30): sem outro tipo com lote, a casa de… | cita | ConstructionPriorityTest, LotTypeRefusalsGameTest |
 | 165 | Armazém pequeno antes do grande (autor 10-30): quando a vila precisa de armazenamento, ab… | cita | StoragePriorityGameTest, test_gen_storage_small |
 | 166 | Transição em volta do lote: após cortar o terreno para a obra, o corredor de seis colunas… | classe | BuildSiteGameTest, DuneCutGameTest, LotEdgeGameTest |
 | 167 | Cuidado físico do rebanho: só pastor vivo a até 5 blocos alimenta ou abate; a passiva da… | classe | FlockHarvestGameTest, FlockHarvestTest, FlockSurplusGameTest |
-| 168 | Um curral grande por vila nova: a vila gerada após esta regra constrói no máximo um curra… | classe | CrowdedPostGameTest, EntrancesAtTheDoorGameTest, PenAccessGameTest |
+| 168 | Um curral grande por vila nova: a vila gerada após esta regra constrói no máximo um curra… | classe | CrowdedPostGameTest, EntrancesAtTheDoorGameTest, FarmRoundGameTest |
 | 169 | Passagem livre: aldeão da colônia quebra aos poucos as folhas naturais que bloqueiam seu… | classe | LeafPathsGameTest |
 | 170 | Lote sem árvores: ao escolher terreno para qualquer estrutura, remove a árvore natural in… | classe | BiomeCoverageGameTest, BiomeSiteGameTest, FoundationPreparationGameTest |
 | 171 | Pulo do aldeão (autor 11-04): a altura padrão do jogo; o maior só com obstáculo, cerca, e… | cita | VillagerRulesGameTest |
 | 172 | Água aberta (autor 11-04): com mais de 5 blocos de água à frente, todo aldeão anda cerca… | cita | VillagerRulesGameTest |
 | 173 | Zona da obra limpa (autor 11-04): árvore, tronco, folha e flor saem em todas as alturas,… | cita | TreeClearingGameTest |
 | 174 | Ponte (autor 11-04): sem caminho a seco na zona da vila, o construtor atravessa a água, a… | fora de vigor |  |
-| 175 | Casa do mineiro: ver Regra 211. A casa e a boca da mina entram na rede pelo grafo (Regra… | classe | EntrancesAtTheDoorGameTest, GraphOnlyPathsGameTest, MineHomePlansTest |
+| 175 | Casa do mineiro: ver Regra 211. A casa e a boca da mina entram na rede pelo grafo (Regra… | classe | EntrancesAtTheDoorGameTest, GraphOnlyPathsGameTest, GroundKeeperGameTest |
 | 176 | Sinalizador dos caminhos (autor 11-04): /vc mae mostrar ligar\ | cita | RoadMapSyncGameTest |
 | 177 | Grafo como mapa de trilhos (autor 11-05): uma linha contínua por corredor, no bloco centr… | cita | RoadLinesTest |
 | 178 | Acesso livre (autor 11-05): o primeiro bloco fora de toda porta e portão é caminho; portã… | cita | BuildingGapsGameTest, EntrancesAtTheDoorGameTest, RoadLinesTest |
@@ -290,10 +290,10 @@ classe prova menos ainda.
 | 277 | O lenhador encosta na árvore (autor 13-11, jogo da 0.4.79; revoga o corte de longe de 202… | cita | TreeChoiceSpeciesGameTest, TrunkStandGameTest |
 | 278 | Água só sem caminho seco (autor 13-11, jogo da 0.4.75; muda a decisão de 2026-11-01): for… | cita | ColonyPathingGameTest, MinerCautionGameTest |
 | 279 | Solto é quem saiu do lugar (autor 14-11, jogo da 0.4.75): o encalhado por congelar duas v… | cita | StrandedWorkersTest |
-| 280 | Árvore no caminho não trava o calçamento (autor 14-11, jogo da 0.4.75): a árvore (tronco… | cita | LeafPathsGameTest |
+| 280 | Árvore no caminho não trava o calçamento (autor 14-11, jogo da 0.4.75): a árvore (tronco… | cita | LeafPathsGameTest, PathTreeClearingGameTest |
 | 281 | Tronco posto sai no log (autor 13-11, jogo da 0.4.79): todo tronco que o mod põe no mundo… | cita | LeafPathsGameTest |
 | 282 | Só a rede reserva chão contra lote (autor 14-11, jogo da 0.4.79): com a rede publicada pe… | cita | BuildSiteGameTest |
-| 283 | O pastor recolhe só dentro da caixa da vila (autor 14-11, opção B da varredura dos GameTe… | cita | PenAccessGameTest, ShepherdHerdingGameTest |
+| 283 | O pastor recolhe só dentro da caixa da vila (autor 14-11, opção B da varredura dos GameTe… | cita | PenAccessGameTest, ShepherdGameTest, ShepherdHerdingGameTest |
 | 284 | O animal atravessa o portão amarrado (autor 14-11, VF-010, opção "prender ao portão"): en… | cita | PenTetherGameTest |
 | 285 | Aldeão preso na água sai (autor 14-11, jogo da 0.4.84: vários ofícios presos na água): o… | cita | WaterRescueGameTest |
 | 286 | O mineiro novo dorme junto da mina (autor 14-11, jogo da 0.4.84: a cama ao lado da mina n… | cita | BedChoiceGameTest |
@@ -336,3 +336,13 @@ classe prova menos ainda.
 | 323 | O terreno da vila inteira arrumado pelos aldeões (autor 18-11, escolha "a vila inteira":… | cita | TerrainDefectsTest, TerrainQueueGameTest |
 | 324 | O lenhador encosta no carvalho de copa baixa (autor 18-11, escolha "tirar a folha"): quan… | cita | TrunkStandGameTest |
 | 325 | A plantação grande arada e semeada inteira (autor 18-11, escolha "ler o molde e semear es… | cita | LargeFarmBedsGameTest |
+| 326 | A árvore sai inteira, com galho e tronco ligados (autor 19-11, jogo da 0.4.93, escolha "t… | cita | PathTreeClearingGameTest |
+| 327 | O curral é um lugar (autor 19-11, jogo da 0.4.93 em planície, ADR-058, pacote B): na leit… | cita | ShepherdRoundGameTest |
+| 328 | O pastor desiste do desgarrado que não alcança (autor 19-11, ADR-058; emenda a Regra 309)… | cita | ShepherdRoundGameTest |
+| 329 | A ronda do pastor (autor 19-11, ADR-058; emenda a Regra 72): uma vez por dia, no expedien… | cita | ShepherdRoundGameTest |
+| 330 | O Zelador, dono do chão da vila (autor 19-11, ADR-059, pacote B; nome "Zelador", sem banc… | cita | GraphOnlyPathsGameTest, GroundKeepersTest, GroundSmoothingGameTest |
+| 331 | O caminho atravessa o feno (autor 19-11, ADR-059): no cálculo do grafo, o fardo de feno s… | cita | GroundKeeperGameTest |
+| 332 | O pasto do curral não é roça (autor 19-11, jogo da 0.4.93 em planície, ADR-060; emenda a… | cita | FarmRoundGameTest |
+| 333 | A ronda da roça (autor 19-11, ADR-060, pacote B; emenda a Regra 267): sem tarefa de comid… | cita | FarmRoundGameTest |
+| 334 | O chão que o jogador mexeu fica como ele deixou (autor 20-11, jogo da 0.4.93 em planície,… | cita | PlayerGroundGameTest |
+| 335 | O grafo nunca busca porta do andar de cima (autor 20-11, jogo da 0.4.93 em planície: a en… | cita | BigHouseEntranceGameTest |

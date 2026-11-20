@@ -37,6 +37,7 @@ class ProfessionDemandTest {
         List<Worker> colony = new ArrayList<>(
                 ProfessionAssigner.FOUNDATION_ORDER.stream()
                         .map(ProfessionDemandTest::hired).toList());
+        colony.add(hired(ProfessionType.GROUNDSKEEPER)); // a vaga do Zelador já está ocupada (Regra 330)
         colony.add(candidate);
         return colony;
     }
