@@ -65,6 +65,7 @@
       "com.villagecolony.fabric.work.SmelterGathersGameTest",
       "com.villagecolony.fabric.work.SmelterReleaseGameTest",
       "com.villagecolony.fabric.work.BlockLedgerGameTest",
+      "com.villagecolony.fabric.work.TaskTraceGameTest",
       "com.villagecolony.fabric.work.TreeChoiceSpeciesGameTest",
       "com.villagecolony.fabric.work.TrunkStandGameTest",
       "com.villagecolony.fabric.work.LargeFarmBedsGameTest",

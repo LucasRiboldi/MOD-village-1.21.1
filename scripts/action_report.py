@@ -23,6 +23,7 @@ TASK_EVENTS = ("TASK_TAKEN", "TASK_STARTED", "TASK_DONE", "TASK_RELEASED", "TASK
 TASK_STATES = ("AVAILABLE", "RESERVED", "EXECUTING", "COMPLETED", "CANCELLED")
 TICKS_PER_MINUTE = 1200
 REASON_ACTIONS = ("TARGET_REJECTED", "GAVE_UP", "SET_ASIDE", "STRANDED")
+ITEM_ACTIONS = ("CRAFTED", "SMELTED", "SET_ASIDE", "GAVE_UP")
 
 
 def newest_journal():
@@ -158,6 +159,33 @@ def render(by_prof, by_worker, minutes):
     return "\n".join(out)
 
 
+def by_item(records):
+    """Regra 344, telemetria T4: por item, quanto saiu da bancada e da fornalha, e cada desfecho com o motivo."""
+    items = defaultdict(lambda: {"made": 0, "outcomes": Counter()})
+    for record in records:
+        action = record.get("action")
+        if action not in ITEM_ACTIONS:
+            continue
+        row = items[(record.get("what") or "?").lower()]
+        if action in ("CRAFTED", "SMELTED"):
+            row["made"] += record.get("n", 0) or 0
+        row["outcomes"][action + ": " + reason_of(record.get("detail", ""))] += 1
+    return items
+
+
+def render_items(items, limit=15):
+    """Os itens com mais desfechos, e os 3 motivos de cada um."""
+    if not items:
+        return ""
+    out = ["", "Por item (Regra 344): feitas, e os desfechos mais comuns:"]
+    ordered = sorted(items.items(), key=lambda kv: -sum(kv[1]["outcomes"].values()))
+    for item, row in ordered[:limit]:
+        out.append(f"  {item:<28} feitas {row['made']:>5}")
+        for outcome, n in row["outcomes"].most_common(3):
+            out.append(f"      {n:>4}× {outcome}")
+    return chr(10).join(out)
+
+
 def main(argv):
     paths = argv[1:] or newest_journal()
     if not paths:
@@ -168,6 +196,7 @@ def main(argv):
         with open(path, encoding="utf-8") as handle:
             records.extend(parse(handle))
     print(render(*summarize(records)))
+    print(render_items(by_item(records)))
     return 0
 
 
