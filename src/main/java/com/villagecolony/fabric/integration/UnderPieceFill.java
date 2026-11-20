@@ -26,7 +26,7 @@ import java.util.UUID;
  * Casa da vila não fica sem solo — Regra 304 (autor, 2026-11-16, jogo da 0.4.89: "casas não podem nascer sem solo, se
  * precisar preencha-o com blocos de solo do bioma"). No mundo já gerado, o pedreiro ocioso pega uma peça rígida da vila
  * por vez e preenche o vão logo abaixo da camada mais baixa dela, coluna a coluna, com o chão do bioma, até o chão firme
- * (no máximo {@link #DEPTH} blocos). A geração faz o mesmo antes de pôr a peça ({@link VillageGround#found}).
+ * (no máximo {@link #DEPTH} blocos). A geração faz o mesmo antes de pôr a peça ({@link PieceGround#found}).
  */
 public final class UnderPieceFill {
 

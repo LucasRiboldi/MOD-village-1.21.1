@@ -310,6 +310,7 @@
       "com.villagecolony.fabric.work.MineNodeGameTest",
       "com.villagecolony.fabric.integration.DoorFrontsGameTest",
       "com.villagecolony.fabric.integration.UnderPieceFillGameTest",
+      "com.villagecolony.fabric.integration.ClearAbovePieceGameTest",
       "com.villagecolony.gametest.ClayLoopGameTest",
       "com.villagecolony.fabric.work.BoneMealRoundGameTest",
       "com.villagecolony.fabric.work.ClimbOutwardGameTest",
