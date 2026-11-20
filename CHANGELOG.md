@@ -12,6 +12,23 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.95] — candidata, 2026-11-19
+
+Do jogo da 0.4.93 em planície (pastor travado e curral que não enchia) e da escolha do autor, o pacote B da ADR-058.
+Regras 327 a 329; nada visto em jogo.
+
+### Corrigido
+
+- Regra 327: o curral é um lugar. A porteira aberta não o desfaz na leitura, e o animal de dentro, mesmo no meio do
+  curral grande, não é levado de novo.
+- Regra 328: o pastor desiste do animal que não alcança (30 segundos sem chegar mais perto, ou 3 entradas que falharam
+  rumo ao curral) e o deixa 5 minutos fora da coleta; com o animal na corda, segue sem prazo (emenda a Regra 309).
+
+### Adicionado
+
+- Regra 329: a ronda do pastor, uma vez por dia. Ele passa pelos currais, conta o rebanho, fecha a porteira deixada
+  aberta e registra a linha `VC_ROUND`. A separação do curral misto (Regra 72) acontece no máximo uma vez por dia.
+
 ## [0.4.94] — candidata, 2026-11-19
 
 Do jogo da 0.4.93 em planície (19-11, colônia ccac8347) e da escolha do autor "tronco por ligação". Regra 326 em

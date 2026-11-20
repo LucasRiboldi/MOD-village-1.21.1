@@ -11985,3 +11985,20 @@ e corta cada um pela coluna do caminho; sem a correção, o carvalho grande deix
   a proteção guarda.
 
 Nada visto em jogo.
+
+## 2026-11-19 — 0.4.95: o pastor trabalha como um pastor (Regras 327 a 329, ADR-058)
+
+Jogo da 0.4.93 em planície: pastor `58c6bd06` bloqueado de 62% a 96% em 13 de 21 janelas, 23 entregas (16 de porco)
+com o curral grande parado em 2 ou 3 animais, nenhuma desistência em 3 h. O autor pediu que as opções partissem do
+trabalho real de um pastor e escolheu o pacote B.
+
+- **Regra 327:** `FencedIn.penAt` lê o curral com todo portão como parede; `HerdCandidates` deixa de fora o animal no chão
+  de qualquer curral conhecido (`ShepherdPens.isInAnyPen`).
+- **Regra 328:** `HerdPatience`: 600 tiques sem chegar um bloco mais perto, ou 3 entradas que falharam, e o animal fica
+  6.000 tiques fora da coleta.
+- **Regra 329:** `ShepherdRound`, uma ronda por dia com `VC_ROUND`; `PenRegroup` (saída de `ShepherdHerding`) separa o
+  curral misto uma vez por dia.
+
+`ShepherdRoundGameTest`: 3 dos 5 casos falham sem a leitura do curral e o filtro do desgarrado. O caso do curral grande
+pedia uma arena de 29 × 29: com o chão menor, a borda da arena fechava o lado de fora e o lado de fora era lido como
+curral. Nada visto em jogo.
