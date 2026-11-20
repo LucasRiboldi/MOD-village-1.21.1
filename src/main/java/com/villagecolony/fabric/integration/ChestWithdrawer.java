@@ -70,6 +70,26 @@ public final class ChestWithdrawer {
         return taken;
     }
 
+    /** Tudo o que o baú guarda, por item (Regra 342, o registro de blocos). */
+    public static java.util.Map<Item, Integer> contents(ServerWorld world, ColonyPos chest) {
+        java.util.Map<Item, Integer> found = new java.util.HashMap<>();
+        Inventory inventory = inventoryAt(world, chest);
+
+        if (inventory == null) {
+            return found;
+        }
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            ItemStack stack = inventory.getStack(slot);
+
+            if (!stack.isEmpty()) {
+                found.merge(stack.getItem(), stack.getCount(), Integer::sum);
+            }
+        }
+
+        return found;
+    }
+
     /**
      * Quantos itens deste tipo o baú tem, sem tirar nenhum.
      *

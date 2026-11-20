@@ -24,7 +24,7 @@ import java.util.Optional;
  * o fundidor). No playtest 0.3.35 os fundidores ficaram 58% esperando.
  *
  * <p>A cada ciclo, o fundidor sem tarefa repõe blocos de receitas de fornalha até
- * {@link ItemStock#EACH} por tipo. Depois reserva somente lingotes de minérios físicos,
+ * a reserva da classe de cada tipo ({@link StockReserve}, Regra 340). Depois reserva somente lingotes de minérios físicos,
  * até {@link #INGOT_RESERVE} por tipo. Fica nos baús o que a obra aberta pede do cru e
  * mais {@link #KEEP}. Sem lugar para o produto, o cru volta.
  */
@@ -78,15 +78,17 @@ public final class SmelterAdvance {
 
         for (var entry : world.getRecipeManager().listAllOfType(RecipeType.SMELTING)) {
             Item made = entry.value().getResult(world.getRegistryManager()).getItem();
-            if (!(made instanceof BlockItem) || ColonyChests.countIn(world, chests, made) >= ItemStock.EACH) {
+            if (!(made instanceof BlockItem) || ColonyChests.countIn(world, chests, made) >= StockReserve.of(made)) {
                 continue;
             }
             for (var ingredient : entry.value().getIngredients()) {
                 for (ItemStack option : ingredient.getMatchingStacks()) {
                     Item raw = option.getItem();
                     int keep = raw == Items.COBBLESTONE || raw == Items.COBBLED_DEEPSLATE ? MINE_FILL : KEEP;
-                    int spare = ColonyChests.countIn(world, chests, raw) - BuildReserve.buildNeedOf(colony, raw) - keep;
-                    int room = ItemStock.EACH - ColonyChests.countIn(world, chests, made);
+                    int free = ColonyChests.countIn(world, chests, raw) - BuildReserve.buildNeedOf(colony, raw);
+                    KeepLedger.atMost(keep == KEEP ? "smelter_raw" : "mine_fill", free, keep);
+                    int spare = free - keep;
+                    int room = StockReserve.of(made) - ColonyChests.countIn(world, chests, made);
                     int amount = Math.min(PER_SMELTER, Math.min(spare, room));
                     if (amount <= 0) {
                         continue;
@@ -114,8 +116,12 @@ public final class SmelterAdvance {
             if (made instanceof BlockItem) {
                 continue;
             }
-            int spare = ColonyChests.countIn(world, chests, raw) - BuildReserve.buildNeedOf(colony, raw) - KEEP;
-            int room = INGOT_RESERVE - ColonyChests.countIn(world, chests, made);
+            int free = ColonyChests.countIn(world, chests, raw) - BuildReserve.buildNeedOf(colony, raw);
+            int ingots = ColonyChests.countIn(world, chests, made);
+            KeepLedger.atMost("smelter_raw", free, KEEP);
+            KeepLedger.atLeast("ingot", ingots, INGOT_RESERVE);
+            int spare = free - KEEP;
+            int room = INGOT_RESERVE - ingots;
             int amount = Math.min(PER_SMELTER, Math.min(spare, room));
 
             if (amount <= 0) {

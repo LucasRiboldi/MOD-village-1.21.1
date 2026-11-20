@@ -8,9 +8,9 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * O teto geral do estoque da vila — regra do autor, 2026-10-11: <i>"64 blocos a
- * partir de outros blocos (exemplo: degrau de madeira), blocos crus limite de 256
- * (exemplo: tora de madeira)"</i>.
+ * O teto geral do estoque da vila — ADR-062, Regra 340: o fabricado vai até a reserva
+ * da classe dele ({@link BlockReserve}: 4, 12 ou 1), o cru até 256 (regra do autor de
+ * 2026-10-11).
  *
  * <p>No playtest da 0.3.26 a vila guardava 363 escadas, 330 lajes de pedra lisa e
  * 382 tábuas, e as metas pediam 751 toras. Nenhuma meta passa do teto, a não ser
@@ -20,21 +20,15 @@ import java.util.Objects;
  */
 public final class StockCeiling {
 
-    /** Bloco fabricado de outros blocos (bancada ou fornalha). */
-    public static final int CRAFTED = 64;
-
     /** Bloco cru: colhido, minerado, cortado, tosquiado. */
-    public static final int RAW = 256;
+    public static final int RAW = BlockReserve.RAW_CEILING;
 
     private StockCeiling() {
     }
 
-    /** O teto deste recurso, sem obra. */
+    /** O teto deste recurso, sem obra: a reserva da classe dele (ADR-062, Regra 340), 256 para o cru. */
     public static int base(ResourceType type) {
-        return switch (type.production()) {
-            case CRAFTED_WOOD, CRAFTED_STONE, SMELTED -> CRAFTED;
-            case HARVESTED, FARMED, MINED, SURFACE_GATHERED, SOIL_GATHERED, SHEARED -> RAW;
-        };
+        return BlockReserve.reserveOf(type);
     }
 
     /**

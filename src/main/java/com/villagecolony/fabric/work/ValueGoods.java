@@ -30,7 +30,8 @@ import java.util.Optional;
  * escada e laje da tora que a vila tem mais (O4); o que a obra aberta pede vem primeiro (O1); o fazendeiro faz composto da
  * semente de sobra (O7); o fundidor funde o
  * minério cru, assa a carne, e faz pedra, pedra lisa, vidro, vidraça (T5, autor 2026-10-29), tijolo e terracota. Cada receita guarda uma
- * reserva do cru ({@link Recipe#keep}) e para com o produto em {@link #CAP}: o estoque das obras vem primeiro.
+ * reserva do cru ({@link Recipe#keep}) e para com o produto na reserva da classe dele ({@link StockReserve}, Regra 340):
+ * o estoque das obras vem primeiro.
  */
 public final class ValueGoods {
 
@@ -39,9 +40,6 @@ public final class ValueGoods {
 
     /** A reserva de cru das matérias que as obras também usam. */
     static final int KEEP_RAW = 64;
-
-    /** Estoque auxiliar por tipo; repõe conforme o consumo (Regra 133, emenda 31-10). */
-    static final int CAP = 16;
 
     /** Uma receita: {@code in} do cru dão {@code out} do produto; o cru nunca desce de {@code keep}. */
     record Recipe(Item raw, int in, Item product, int out, int keep) {
@@ -182,8 +180,8 @@ public final class ValueGoods {
         ordered.sort(java.util.Comparator.comparing(recipe -> !wanted.test(recipe.product())));
 
         for (Recipe recipe : ordered) {
-            if (ColonyChests.countIn(world, chests, recipe.raw()) >= recipe.keep() + recipe.in()
-                    && ColonyChests.countIn(world, chests, recipe.product()) + recipe.out() <= CAP) {
+            if (!KeepLedger.below("value_raw", ColonyChests.countIn(world, chests, recipe.raw()), recipe.keep() + recipe.in())
+                    && ColonyChests.countIn(world, chests, recipe.product()) < StockReserve.of(recipe.product())) {
                 return Optional.of(recipe);
             }
         }
@@ -268,9 +266,11 @@ public final class ValueGoods {
      */
     static int batch(ServerWorld world, List<ColonyPos> chests, Recipe recipe) {
         int spare = ColonyChests.countIn(world, chests, recipe.raw()) - recipe.keep();
-        // O lote é de BATCH do cru, ou de uma receita quando ela pede mais que isso (o composto).
+        // O lote é de BATCH do cru, ou de uma receita quando ela pede mais que isso (o composto). Abaixo da reserva sai ao
+        // menos uma receita, mesmo que ela renda mais que a reserva (4 tijolos de pedra para a reserva de 1, Regra 340).
+        int missing = StockReserve.of(recipe.product()) - ColonyChests.countIn(world, chests, recipe.product());
         int crafts = Math.min(Math.min(Math.max(BATCH, recipe.in()), spare) / recipe.in(),
-                (CAP - ColonyChests.countIn(world, chests, recipe.product())) / recipe.out());
+                (missing + recipe.out() - 1) / recipe.out());
 
         if (crafts <= 0) {
             return 0;

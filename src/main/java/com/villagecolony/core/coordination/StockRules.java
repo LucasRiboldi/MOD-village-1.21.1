@@ -43,12 +43,8 @@ public final class StockRules {
     public static final int PLANKS_PER_LOG = 4;
 
     /**
-     * Quantas toras ainda podem virar tábua sem furar a reserva.
-     *
-     * <p><b>A regra do autor</b> (Regra 248, emenda a de 2026-09-05): um terço
-     * da madeira fica em tora. Vinte toras pedem treze conversões, e as outras
-     * sete ficam — os {@code stripped_oak_log} da casa de planície saem de
-     * tora, e não de tábua.
+     * Quantas toras ainda podem virar tábua para o estoque: até a reserva da
+     * tábua (ADR-062, Regra 340, que tirou a tora guardada das Regras 5 e 248).
      *
      * <p><b>Mora aqui, e é chamada de dois lugares</b> — a meta, logo
      * abaixo, e o fabricante, que executa. Os dois têm de dizer o mesmo:
@@ -57,29 +53,22 @@ public final class StockRules {
      * original com outro nome. É o mesmo argumento que
      * {@code ColonySupply.canProvide} escreve para o par dele.
      *
-     * <p>Zero quando a colônia já tem tábua bastante: {@code storedPlanks}
-     * é convertido de volta a toras equivalentes, e o que se compara são
-     * duas medidas da mesma madeira.
-     *
-     * <p><b>E nunca acima do teto do estoque</b> ({@link StockCeiling#CRAFTED}): sem
-     * ele a tábua seguia a tora para sempre — 960 tábuas no playtest 0.3.31, os baús
-     * pessoais cheios e o carpinteiro abrindo tarefa de 0 peça a cada ciclo. O que a
-     * obra pede passa do teto pela outra parcela de {@link #logsThatMayBeConverted}.
+     * <p>Zero quando a colônia já tem a reserva da tábua. O que a obra pede passa
+     * da reserva pela outra parcela de {@link #logsThatMayBeConverted}.
      *
      * @param logs quantas toras a colônia guarda, de qualquer espécie
      * @param storedPlanks quantas tábuas ela guarda, de qualquer espécie
      */
     public static int logsToConvert(int logs, int storedPlanks) {
-        // Um terço da madeira, tora e tábua na mesma moeda, fica em tora (Regra 248): converte-se até sobrar isso.
-        int twoThirds = Math.max(0, (2 * logs - storedPlanks / PLANKS_PER_LOG) / 3);
-        int roomUnderTheCeiling = Math.max(0, StockCeiling.CRAFTED - storedPlanks);
+        // Sem tora guardada (ADR-062, Regra 340): converte-se até a reserva da tábua, e o resto fica em tora.
+        int roomUnderTheReserve = Math.max(0, BlockReserve.reserveOf(ResourceType.OAK_PLANKS) - storedPlanks);
 
-        return Math.min(twoThirds, (roomUnderTheCeiling + PLANKS_PER_LOG - 1) / PLANKS_PER_LOG);
+        return Math.min(Math.max(0, logs), (roomUnderTheReserve + PLANKS_PER_LOG - 1) / PLANKS_PER_LOG);
     }
 
     /**
-     * Quantas toras podem virar tábua sem gastar a metade reservada nem as
-     * toras brutas que a obra aberta ainda vai assentar ou descascar.
+     * Quantas toras podem virar tábua sem gastar as toras brutas que a obra
+     * aberta ainda vai assentar ou descascar.
      *
      * <p>A reserva da obra é deliberadamente coletiva entre espécies: a
      * construção usa {@code MaterialChoice} para aceitar a madeira que o
@@ -100,11 +89,8 @@ public final class StockRules {
      * O mesmo, em números — e a conta que a meta e o fabricante fazem juntos
      * (A-1, decisão do autor de 2026-10-02).
      *
-     * <p><i>"Permitindo que as obras utilizem todos os recursos de todos os
-     * baús; a reserva de metade do conteúdo é para utilização de outras
-     * profissões em criações de outros blocos."</i> A obra pode converter toda
-     * a tora de que precisa para as tábuas dela, sem a reserva da metade; fora
-     * dela, a metade continua guardada para os outros ofícios. Só a tora que a
+     * <p>A obra converte toda a tora de que precisa para as tábuas dela; fora
+     * dela, o estoque vai até a reserva da tábua (Regra 340). Só a tora que a
      * própria obra pede bruta não vira tábua.
      *
      * <p><b>A meta e o fabricante usam esta mesma conta.</b> Até 02-10 a meta
@@ -209,60 +195,11 @@ public final class StockRules {
     }
 
     /**
-     * Quanto do cru fica sem ser assado, para o pedreiro lavrar.
-     *
-     * <p><b>Decisão do autor por simetria com a madeira</b>, 2026-09-19.
-     * A regra de 09-05 manda <i>"converter somente aproximadamente
-     * metade do estoque de troncos em tábuas e preservar o restante como
-     * troncos"</i>, e a pedra não tinha equivalente.
-     *
-     * <p><b>O que isto conserta, medido na sessão de 17:15.</b> A obra
-     * parou <b>39 vezes</b> esperando {@code cut_sandstone}, e o baú da
-     * colônia tinha <b>139 arenitos LISOS e zero arenito cru</b>. O
-     * fundidor assou o estoque inteiro; o arenito cortado sai do
-     * <b>cru</b>, e não sobrou nenhum. É o mesmo defeito que a reserva de
-     * tronco corrigiu do lado da madeira, com outro material.
-     *
-     * <p>Metade, como a madeira: a proporção não se move, e o ponto de
-     * equilíbrio é o que o autor chamou de metade.
-     */
-    public static int rawToKeep(int raw, int processed) {
-        // <b>A reserva é metade do TOTAL, e não metade da diferença</b> —
-        // e esta linha saiu errada na primeira versão, com o próprio
-        // teste a cobrando. Com {@code (raw - processed) / 2}, um
-        // estoque empatado — 40 crus e 40 processados — reservava ZERO e
-        // liberava os 40 para a fornalha, que é o oposto de equilibrar.
-        //
-        // Contando o total, o ponto de equilíbrio fica parado: 40 e 40
-        // somam 80, metade é 40, e é exatamente o que já está cru. Não
-        // se assa mais nada, que é o que a regra quer dizer.
-        int both = raw + processed;
-
-        return Math.max(0, Math.min(raw, both / 2));
-    }
-
-    /**
-     * Quanto do cru ainda pode ir à fornalha sem furar a reserva.
-     *
-     * <p>Zero quando o processado já empata o cru: aí a colônia tem
-     * tanto de um quanto do outro, e assar mais desequilibraria para o
-     * lado que já está servido.
-     */
-    public static int rawThatMayBeSmelted(int raw, int processed) {
-        return Math.max(0, raw - rawToKeep(raw, processed));
-    }
-
-    /** Os crus sem a reserva de metade: areia, argila e bola de argila (Regra 257). */
-    private static final java.util.Set<ResourceType> SMELTED_WHOLE =
-            java.util.Set.of(ResourceType.SAND, ResourceType.CLAY, ResourceType.CLAY_BALL);
-
-    /**
-     * O mesmo, para o cru {@code type}. Areia, argila e bola de argila não têm uso de pedreiro, e a reserva só deixava
-     * o fundidor parado — 58 pedidos largados "held by the reserve" nos jogos de 11-07 e 11-08: vão à fornalha inteiras
-     * (Regra 257). Os outros crus, e o que a vila não conhece por tipo, seguem com a reserva.
+     * Quanto do cru {@code type} pode ir à fornalha: todo (ADR-062, Regra 340). A reserva de metade do cru (Regra 5) e a
+     * exceção da areia e da argila (Regra 257) saíram; o que segura a fornalha é a reserva pequena do fabricado.
      */
     public static int rawThatMayBeSmelted(@org.jspecify.annotations.Nullable ResourceType type, int raw, int processed) {
-        return type != null && SMELTED_WHOLE.contains(type) ? Math.max(0, raw) : rawThatMayBeSmelted(raw, processed);
+        return Math.max(0, raw);
     }
 
     /**

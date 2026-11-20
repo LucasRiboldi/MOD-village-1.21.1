@@ -12109,3 +12109,78 @@ margem maior e escolheu a B-1.
   rampa): os dois falham sem a faixa (o GameTest pôs a casa em y 125 com a vila em 101).
 
 Nada visto em jogo.
+## 2026-11-20 — 0.4.103: o ofício não segura pedido impossível (Regra 339)
+
+Pesquisa `docs/research/2026-11-20-oficios-sempre-ativos.md`: no jogo da 0.4.93 em planície o fundidor (34% espera) e o
+carpinteiro (31%) seguravam tarefa sem poder cumprir, e as alternativas de quem está sem tarefa (`ValueGoods`,
+`SmelterAdvance`, `BuildingUpkeep`) nunca rodavam. O autor escolheu O1 + O4, fase 1 de 4 (depois: reserva por classe,
+registro de blocos e medida das travas pequenas).
+
+- `SmelterWork`: depois das faltas e sem nada para as obras, solta o pedido e conta para o guarda de laço.
+- `CraftBarrier` + `CraftingWork.finish`: parada pela tora guardada ou sem tora não se encadeia (`TaskChain`) e conta
+  como sem resultado, mesmo com peça feita.
+- `WaitReasons`: `VC_TIME_WAIT` a cada janela; `time_ledger.py` soma (`collect_waits`).
+- `SmelterReleaseGameTest` e `CraftBarrierTest` falham sem a correção; `WaitReasonsTest` e o teste Python do ledger
+  (o Python falhou antes; o Java não compilava sem a classe).
+
+Nada visto em jogo.
+## 2026-11-20 — 0.4.104: a reserva por classe de bloco (Regra 340, ADR-062)
+
+Fase 2 do plano de ofícios e reservas. O autor trocou as reservas do estoque por classe: CRU (o que o aldeão
+recolhe) até 256, FABRICADO 4, VILA 12, ESPECIAL 1, com a contagem dos blocos das estruturas das vilas geradas.
+
+- `BlockReserve` (core) lê `data/villagecolony/stock/village_blocks.json` e `natural_blocks.json`; `StockReserve`
+  (fabric) dá a reserva de um item. `StockCeiling.base`, `ItemStock`, `ValueGoods`, `SmelterAdvance`,
+  `SmelterFallback` e `ShepherdWoolGoods` passam a usá-la.
+- Sai a tora guardada: `StockRules.logsToConvert` vai até a reserva da tábua; `rawThatMayBeSmelted` devolve o
+  cru inteiro; saem `halfTheWoodMayStillBeConverted`, `ItemStock.woodHeldInLogs` e `CraftBarrier.LOGS_KEPT`.
+- `ValueGoods` e `ShepherdWoolGoods`: abaixo da reserva sai ao menos uma receita (o primeiro Sentinela mostrou o tijolo
+  de pedra e a vidraça que nunca saíam, receita maior que a reserva).
+- `FurnaceGoals`: o pedido da obra vence o adiantamento (a reserva menor mostrou que o vidro da obra ficava em 4).
+- Testes: `BlockReserveTest`, `RawWithoutReserveTest` (no lugar do `RawStoneReserveTest`), `StockCeilingTest`; os
+  que cobravam a metade, o terço, 16 e 64 foram reescritos para a regra nova (`ColonyGoalsTest`,
+  `AdvanceStockTest`, `ColonyCycleTest`, `ItemStockGameTest`, `SmelterFallbackGameTest`); saíram os que só
+  provavam a porta da tora (`CarpenterWoodGateGameTest` e um caso de `IdleFixesGameTest` e `WoodInPiecesGameTest`).
+
+Nada visto em jogo.
+## 2026-11-20 — 0.4.105: o contratado perde o ofício Vanilla (Regra 341)
+
+O autor viu um trabalhador do mod ganhar roupa de ofício Vanilla. A trava do `setVillagerData` (Regra 44) barra
+quem já é do mod; o buraco era a ordem da varredura (`VillagerScanner` limpava, `ProfessionAssigner.assignMissing`
+contratava depois) e o alcance dela (64 blocos do centro, só na detecção). No log da fundação em montanha, a segunda
+passada da varredura tirou a roupa do fazendeiro que virou mineiro.
+
+- `VanillaProfessionGuard.sweep`: todo trabalhador do mod da colônia, em qualquer lugar; chamado depois de
+  contratar (`VillagerRegistration`) e a cada ciclo (`ColonyCycleRunner.runOngoingWork`).
+- `VC_VANILLA_JOB` em `filter` (`blocked`) e `strip` (`stripped`).
+- `VanillaTradeAfterHireGameTest`: falha sem a limpeza ("o lenhador contratado ficou com o ofício e a roupa de
+  fazendeiro").
+
+Também: análise das roupas próprias das profissões (`docs/research/2026-11-20-skins-das-profissoes.md`).
+
+Nada visto em jogo.
+## 2026-11-20 — 0.4.106: o registro de blocos (Regra 342)
+
+Fase 3 do plano de ofícios e reservas: medir o gasto de cada bloco para ajustar a reserva por classe (ADR-062).
+
+- `BlockLedger`: conta por dia o `PLACED` e o `SET_ASIDE` do diário (`ActionJournal.action`) e o `VC_SUPPLY`
+  (`Supplies.takeItems`, sem ciclo de pacotes integration ↔ work); no fim do expediente, `VC_BLOCKS` com classe, reserva e estoque (`ChestWithdrawer.contents`).
+- `StockReserve.classOf`: a classe do item pelo livro de receitas do jogo (lido uma vez por servidor).
+- `BlockCommand`: `/vc blocos`.
+- `BlockLedgerTest` e `BlockLedgerGameTest` (a semente é item de bloco no jogo; o teste usa o graveto).
+
+Nada visto em jogo.
+## 2026-11-20 — 0.4.107: a medida das travas de cru (Regra 343)
+
+Fase 4, a última, do plano de ofícios e reservas. As travas pequenas de cru ficaram de fora da ADR-062 até a medida.
+
+- `KeepLedger`: `below`, `atMost` e `atLeast` contam consultas, barradas e o menor estoque, sem mudar a decisão;
+  ligado na lã (`ShepherdWoolGoods`), farinha de osso (`BoneMealRound`), manutenção (`BuildingUpkeep`), trigo
+  (`FarmerBakery`), semente (`FarmerCompost`), cru da fornalha, pedregulho da mina e lingote (`SmelterAdvance`) e
+  cru dos produtos de valor (`ValueGoods`). A areia (`StandingWork`) e as peças de bioma (`BiomePieces`) são piso e
+  folga, não barram, e ficam de fora.
+- `VC_KEEP` no fim do expediente; `scripts/stock_report.py` (com `tests/test_stock_report.py`) lê `VC_BLOCKS` e
+  `VC_KEEP`; o cru tem teto, não alvo, e a falta dele é de coleta. Entra na rotina de análise (`CLAUDE.md` §0.4).
+- `KeepLedgerTest`.
+
+Nada visto em jogo.

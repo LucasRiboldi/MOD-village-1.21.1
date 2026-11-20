@@ -216,6 +216,8 @@ public class VillageColonyMod implements ModInitializer {
         com.villagecolony.fabric.work.VillagerMoves.register();
         com.villagecolony.fabric.work.EveningGathering.register();
         com.villagecolony.fabric.work.TerrainReport.register();
+        com.villagecolony.fabric.work.BlockLedger.register();
+        com.villagecolony.fabric.work.KeepLedger.register();
         com.villagecolony.fabric.work.IdleRoutine.register();
         com.villagecolony.fabric.work.LeafPassage.register();
         com.villagecolony.fabric.work.PathSupport.register();
@@ -226,6 +228,7 @@ public class VillageColonyMod implements ModInitializer {
         VillageChests.register();
         SiteSignJanitor.register();
         VillageLogCommand.register();
+        com.villagecolony.fabric.command.BlockCommand.register();
         com.villagecolony.fabric.command.GraphModeCommand.register();
         com.villagecolony.fabric.command.BiomeCheck.register();
         com.villagecolony.fabric.command.MaeCommand.register();

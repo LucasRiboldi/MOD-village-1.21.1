@@ -158,7 +158,7 @@ public final class CraftingWork {
         /** A ida até a bancada desta tarefa; criada na primeira passagem dela. Ver {@link CraftStation.Approach}. */
         CraftStation.@Nullable Approach approach;
 
-        private Job(Task task) {
+        Job(Task task) {
             this.task = task;
         }
     }
@@ -419,7 +419,11 @@ public final class CraftingWork {
 
         TaskProgressWatch.progressed(job.task);
 
-        if (job.crafted > 0) {
+        // Parada na barreira não é pedido cumprido, nem com uma peça feita (Regra 339): o mesmo pedido pararia no
+        // mesmo lugar. Conta para o guarda de laço e não se reabre na hora.
+        boolean barred = CraftBarrier.stopped(why);
+
+        if (job.crafted > 0 && !barred) {
             TaskOutcome.fruitful(job.task);
         } else {
             TaskOutcome.fruitless(job.task, why);
@@ -427,7 +431,10 @@ public final class CraftingWork {
 
         job.task.complete();
         WorkerStrikes.worked(workerId, job.task);
-        TaskChain.nextAfter(job.task, job.crafted);
+
+        if (!barred) {
+            TaskChain.nextAfter(job.task, job.crafted);
+        }
 
         WorkTargets.clear(workerId);
 

@@ -27,6 +27,8 @@ import sys
 from collections import defaultdict
 
 LINE = re.compile(r"VC_TIME version=1 colony=(\w+) window=(\d+)s(.*)")
+WAIT_LINE = re.compile(r"VC_TIME_WAIT version=1 colony=(\w+) window=(\d+)s(.*)")
+WAIT_ENTRY = re.compile(r"(\w+)\[s=\d+((?: [^\]=]+=\d+)*)\]")
 ENTRY = re.compile(r"(\w+)\[s=(\d+) ([^\]]*)\]")
 STATES = ("work", "walk", "wait", "blocked", "idle", "stranded")
 
@@ -81,8 +83,25 @@ def collect(text_lines):
     return seconds, windows
 
 
+def collect_waits(text_lines):
+    """Segundos de espera por profissão e motivo (Regra 339): o pedido que o aldeão segurava parado, ou HELP."""
+    reasons = defaultdict(lambda: defaultdict(int))
+
+    for text in text_lines:
+        match = WAIT_LINE.search(text)
+        if not match:
+            continue
+        for profession, pairs in WAIT_ENTRY.findall(match.group(3)):
+            for pair in pairs.split():
+                reason, seconds = pair.rsplit("=", 1)
+                reasons[profession][reason] += int(seconds)
+
+    return reasons
+
+
 def main(paths):
-    seconds, windows = collect(text for path in paths for text in lines(path))
+    text = [line for path in paths for line in lines(path)]
+    seconds, windows = collect(text)
 
     if not seconds:
         print("Nenhuma linha VC_TIME — o JAR é anterior à Regra 50, ou a vila não foi atendida.")
@@ -100,6 +119,13 @@ def main(paths):
         said = verdict(profession, pct)
         print(f"{profession:<12}{row['total']:>9.0f}" + "".join(f"{pct[s]:>9.0f}%" for s in STATES)
               + "   " + ("; ".join(said) or "ok"))
+
+    waits = collect_waits(text)
+    if waits:
+        print("\nEspera por motivo (Regra 339), os 3 mais longos de cada ofício, em segundos:")
+        for profession in sorted(waits):
+            top = sorted(waits[profession].items(), key=lambda kv: (-kv[1], kv[0]))[:3]
+            print(f"  {profession:<12}" + "  ".join(f"{reason}={secs}" for reason, secs in top))
 
     return 0
 

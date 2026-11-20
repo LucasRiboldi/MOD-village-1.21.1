@@ -12,6 +12,74 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.107] — candidata, 2026-11-20
+
+Fase 4, a última, do plano de ofícios e reservas. Regra 343; nada visto em jogo.
+
+### Adicionado
+
+- Regra 343: a linha diária `VC_KEEP` mede cada trava pequena de cru (consultas, barradas, menor estoque).
+- `scripts/stock_report.py`: lê `VC_BLOCKS` e `VC_KEEP` e sugere o que fazer com cada reserva e cada trava.
+
+## [0.4.106] — candidata, 2026-11-20
+
+Fase 3 do plano de ofícios e reservas. Regra 342; nada visto em jogo.
+
+### Adicionado
+
+- Regra 342: o registro de blocos. A linha diária `VC_BLOCKS` diz, por bloco, a classe, a reserva, o estoque
+  nos baús e o que a obra pôs, esperou e viu surgir no dia; o comando `/vc blocos` mostra a tabela na hora.
+
+## [0.4.105] — candidata, 2026-11-20
+
+O autor viu um trabalhador do mod ganhar roupa de ofício Vanilla. Regra 341; nada visto em jogo.
+
+### Corrigido
+
+- Regra 341: o aldeão que pegou ofício Vanilla antes de ser contratado pela colônia perde o ofício e a roupa
+  logo depois da contratação (a varredura limpava antes de contratar), e todo trabalhador do mod é conferido a
+  cada ciclo, em qualquer lugar do mundo (a varredura só via 64 blocos em volta do centro).
+
+### Adicionado
+
+- Linha `VC_VANILLA_JOB` (`blocked` e `stripped`).
+
+## [0.4.104] — candidata, 2026-11-20
+
+Fase 2 do plano de ofícios e reservas, ADR-062. Regra 340; nada visto em jogo.
+
+### Mudado
+
+- Regra 340: a reserva de cada bloco nos baús segue a classe dele: CRU até 256, FABRICADO 4, VILA (10 ou mais
+  nas vilas geradas) 12 e ESPECIAL (menos de 10) 1. Substitui o "um pouco de tudo" de 16, os produtos de valor
+  até 16 e o teto de 64 do fabricado. As bancadas do mod nunca entram na fabricação das profissões.
+- Sai a tora guardada (Regras 5 e 248) e a reserva de metade do cru da fornalha (a exceção da Regra 257 vira a
+  regra): a tora vira tábua até a reserva da tábua, e o cru vai inteiro à fornalha.
+
+### Corrigido
+
+- O pedido de fornalha da obra vence o adiantamento já posto na meta (`FurnaceGoals`): o vidro pedido pela obra
+  ficava no número do adiantamento.
+
+### Adicionado
+
+- `scripts/village_block_counts.py` e `data/villagecolony/stock/` (contagem das vilas e naturais com receita).
+
+## [0.4.103] — candidata, 2026-11-20
+
+Do jogo da 0.4.93 em planície (fundidor 48% e carpinteiro 42% sem trabalhar) e das opções O1 e O4 escolhidas pelo
+autor. Regra 339; nada visto em jogo.
+
+### Corrigido
+
+- Regra 339: o fundidor solta o pedido sem o cru em nenhum baú (segurou o de ferro sem minério ~28 mil tiques), e a
+  oficina parada pela tora guardada ou pela falta de tora não recebe o mesmo pedido de volta na hora (63 reaberturas
+  no jogo). Livres, os dois fazem o que o ofício já faz sem tarefa.
+
+### Adicionado
+
+- Linha `VC_TIME_WAIT`: a espera de cada ofício por motivo; o `time_ledger.py` mostra os 3 mais longos.
+
 ## [0.4.102] — candidata, 2026-11-20
 
 Do jogo da 0.4.93 em montanha (BigHouseMOD e mina uns 60 blocos acima das casas) e da escolha B-1 do autor. Regra

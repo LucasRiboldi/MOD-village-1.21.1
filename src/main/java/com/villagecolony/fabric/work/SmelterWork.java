@@ -270,14 +270,15 @@ public final class SmelterWork {
             return false;
         }
 
-        // A espera por cru é transitória: manter a reserva impede que o
-        // próximo ciclo reapresente a mesma tarefa sem produzir. StopLog
-        // registra a transição e limita repetições enquanto o pedido espera.
+        // Sem o cru e nada para as obras: solta o pedido e fica livre (Regra 339, SmelterFallback.letGo).
+        if (SmelterFallback.isDue(world, job.task)) {
+            SmelterFallback.letGo(workerId, job.task, lookedButFound(searched.size(), names(raws)));
+            return false;
+        }
+
+        // Antes das faltas do SmelterFallback ele segura o pedido: a falta pode ser passageira (Regra 339).
         StopLog.stopped("Smelter", workerId, lookedButFound(searched.size(), names(raws))
-                + (SmelterFallback.isDue(world, job.task)
-                        ? " — and nothing the village builds need could be smelted either"
-                        : " (" + misses + " of " + SmelterFallback.MISSES_BEFORE_FALLBACK
-                                + " before working for the builds)"));
+                + " (" + misses + " of " + SmelterFallback.MISSES_BEFORE_FALLBACK + " before working for the builds)");
 
         return true;
     }
@@ -292,8 +293,8 @@ public final class SmelterWork {
             ServerWorld world, List<ColonyPos> searched, List<Item> raws, Item product,
             ColonyPos output, Job job, UUID workerId) {
 
-        // Metade do cru fica guardada, menos areia e argila (StockRules.rawToKeep, Regra 257): a conta é da colônia
-        // inteira, uma vez por cru, fora do laço dos baús (dentro, custava 72% do mod no Spark de 11-10).
+        // O cru vai inteiro à fornalha (StockRules.rawThatMayBeSmelted, Regra 340): a conta é da colônia inteira, uma vez
+        // por cru, fora do laço dos baús (dentro, custava 72% do mod no Spark de 11-10).
         Optional<Colony> colony = VillageColonyMod.COLONIES.find(job.task.colonyId());
         List<Item> allowed = raws.stream()
                 .filter(raw -> mayStillSmelt(world, searched, raw, product,
@@ -367,7 +368,7 @@ public final class SmelterWork {
         int rawCount = ColonyChests.countIn(world, chests, raw);
 
         int madeCount = ColonyChests.countIn(world, chests, processed);
-        // O que a obra aberta ainda vai pôr fica fora da fornalha (P3b); areia e argila sem a reserva de metade (Regra 257).
+        // O que a obra aberta ainda vai pôr fica fora da fornalha (P3b); o resto do cru vai inteiro (Regra 340).
         return Math.min(StockRules.rawThatMayBeSmelted(MinecraftTypeAdapter.toResourceType(raw).orElse(null), rawCount,
                 madeCount), rawCount - buildNeed) > 0;
     }

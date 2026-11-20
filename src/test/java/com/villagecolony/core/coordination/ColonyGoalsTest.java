@@ -63,7 +63,7 @@ class ColonyGoalsTest {
 
         Map<ResourceType, Integer> goal = ColonyGoals.of(colony(), stock, 0, 1000);
 
-        assertEquals(52, goal.get(ResourceType.OAK_PLANKS), "vinte toras: treze viram tábua, sete ficam (Regra 248)");
+        assertEquals(12, goal.get(ResourceType.OAK_PLANKS), "Regra 340: vinte toras dão só as 12 tábuas da reserva");
     }
 
     /**
@@ -129,10 +129,10 @@ class ColonyGoalsTest {
         assertEquals(80, goal.get(ResourceType.OAK_PLANKS));
     }
 
-    /** Sem obra, a metade continua guardada para os outros ofícios (A-1). */
+    /** Sem obra, a tora vira tábua só até a reserva da tábua (Regra 340). */
     @Test
-    void withoutAWorkAThirdOfTheLogsStayLogs() {
-        assertEquals(13, StockRules.logsThatMayBeConverted(20, 0, 0, 0));
+    void withoutAWorkOnlyThePlankReserveIsConverted() {
+        assertEquals(3, StockRules.logsThatMayBeConverted(20, 0, 0, 0));
     }
 
     /** A obra converte o que precisa, além da metade — mas não a tora que ela pede bruta (A-1). */
@@ -140,7 +140,7 @@ class ColonyGoalsTest {
     void theWorkConvertsPastTheHalfButKeepsItsRawLogs() {
         assertEquals(15, StockRules.logsThatMayBeConverted(20, 0, 0, 60), "60 tábuas pedem 15 toras");
         assertEquals(4, StockRules.logsThatMayBeConverted(20, 0, 16, 60), "16 toras brutas da obra ficam toras");
-        assertEquals(13, StockRules.logsThatMayBeConverted(20, 0, 0, 8), "pedido pequeno não baixa o terço guardado");
+        assertEquals(3, StockRules.logsThatMayBeConverted(20, 0, 0, 8), "pedido pequeno: vale a reserva da tábua (Regra 340)");
     }
 
     /**
@@ -168,24 +168,22 @@ class ColonyGoalsTest {
         }
     }
 
-    /** A conta da reserva, sozinha e sem colônia em volta: um terço da madeira fica em tora (Regra 248). */
+    /** Sem tora guardada (Regra 340): a tora vira tábua até a reserva da tábua, 12, e o resto fica em tora. */
     @Test
-    void theReserveIsAThirdOfTheLogsMeasuredAgainstThePlanksAlreadyMade() {
-        assertEquals(13, StockRules.logsToConvert(20, 0), "vinte toras guardam sete");
-        assertEquals(3, StockRules.logsToConvert(10, 40), "dez toras e quarenta tábuas guardam sete toras");
-        assertEquals(0, StockRules.logsToConvert(5, 40), "cinco toras e quarenta tábuas já estão abaixo de um terço");
+    void logsBecomePlanksOnlyUpToThePlankReserve() {
+        assertEquals(3, StockRules.logsToConvert(20, 0), "vinte toras dão as 12 tábuas da reserva com três");
+        assertEquals(0, StockRules.logsToConvert(10, 40), "quarenta tábuas já passam da reserva");
         assertEquals(0, StockRules.logsToConvert(135, 1257));
         assertEquals(0, StockRules.logsToConvert(0, 0));
     }
 
-    /** Sem obra pedindo, a tábua para no teto do estoque (playtest 0.3.31: 960 tábuas). */
+    /** Sem obra pedindo, a tábua para na reserva; a obra passa dela. */
     @Test
-    void withoutAWorkThePlanksStopAtTheStockCeiling() {
+    void withoutAWorkThePlanksStopAtTheReserve() {
         assertEquals(0, StockRules.logsToConvert(347, 1232), "o estoque do playtest ainda pedia conversão");
-        assertEquals(1, StockRules.logsToConvert(400, StockCeiling.CRAFTED - 2), "falta uma tora até o teto");
-        assertEquals(0, StockRules.logsToConvert(400, StockCeiling.CRAFTED), "no teto, nada");
-        assertEquals(30, StockRules.logsThatMayBeConverted(400, StockCeiling.CRAFTED, 0, StockCeiling.CRAFTED + 120),
-                "a obra passa do teto");
+        assertEquals(1, StockRules.logsToConvert(400, 10), "falta uma tora até a reserva");
+        assertEquals(0, StockRules.logsToConvert(400, 12), "na reserva, nada");
+        assertEquals(30, StockRules.logsThatMayBeConverted(400, 12, 0, 132), "a obra passa da reserva");
     }
 
     @Test
@@ -426,7 +424,7 @@ class ColonyGoalsTest {
         Map<ResourceType, Integer> goal = ColonyGoals.of(
                 colony(), owned(ResourceType.OAK_LOG, 8), 0, 200);
 
-        assertEquals(20, goal.get(ResourceType.OAK_PLANKS));
+        assertEquals(12, goal.get(ResourceType.OAK_PLANKS), "Regra 340: a reserva da tábua");
     }
 
     /**
@@ -541,7 +539,7 @@ class ColonyGoalsTest {
         Map<ResourceType, Integer> missing = ResourceDemand.deficit(
                 ColonyGoals.of(colony(), stock, 0, 200), stock);
 
-        assertEquals(20, missing.get(ResourceType.OAK_PLANKS));
+        assertEquals(12, missing.get(ResourceType.OAK_PLANKS), "Regra 340: a reserva da tábua");
     }
 
     // --- a segunda metade da Regra 5: a obra manda ---
@@ -563,7 +561,7 @@ class ColonyGoalsTest {
         assertEquals(33, goal.get(ResourceType.OAK_PLANKS));
     }
 
-    /** Sem obra, continua valendo a reserva: um terço da madeira em tora (Regra 248). */
+    /** Sem obra, vale a reserva da tábua (Regra 340). */
     @Test
     void withoutWorkTheReserveStillRules() {
         Map<ResourceType, Integer> counts = new EnumMap<>(ResourceType.class);
@@ -573,7 +571,7 @@ class ColonyGoalsTest {
         Map<ResourceType, Integer> goal =
                 ColonyGoals.of(colony(), ResourceTally.of(counts), 0, 100, 0);
 
-        assertEquals(28, goal.get(ResourceType.OAK_PLANKS), "dez toras e quatro tábuas: seis viram tábua");
+        assertEquals(12, goal.get(ResourceType.OAK_PLANKS), "dez toras e quatro tábuas: duas viram tábua até 12");
     }
 
     /**
@@ -646,7 +644,8 @@ class ColonyGoalsTest {
                 ResourceTally.of(new EnumMap<>(ResourceType.class)), 0);
 
         // Sem janela na obra, o vidro é só o adiantamento do fundidor — ADR-038 P2a.
-        assertEquals(AdvanceStock.BATCH, goal.get(ResourceType.GLASS));
+        assertEquals(Math.min(AdvanceStock.BATCH, BlockReserve.reserveOf(ResourceType.GLASS)),
+                goal.get(ResourceType.GLASS));
         assertFalse(goal.containsKey(ResourceType.SAND));
     }
 
@@ -874,7 +873,7 @@ class ColonyGoalsTest {
         Map<ResourceType, Integer> goal = ColonyGoals.of(
                 colony(), owned(ResourceType.OAK_LOG, 100), 0, 40, WorkDemand.none());
 
-        assertEquals(20, goal.get(ResourceType.OAK_PLANKS));
+        assertEquals(12, goal.get(ResourceType.OAK_PLANKS), "Regra 340: a reserva da tábua, abaixo da metade do espaço");
     }
 
     /** Lã só vira meta quando alguma casa está sem cama. */
@@ -928,8 +927,9 @@ class ColonyGoalsTest {
                 .get(ResourceType.GLASS));
         // Sem pedido, o adiantamento do fundidor, cinco — ADR-038 P2a.
         AdvanceStock.clearAll();
-        assertEquals(AdvanceStock.BATCH, goalFor(work(0, 0, Map.of(ResourceType.GLASS, 0), Map.of()))
-                .get(ResourceType.GLASS));
+        assertEquals(Math.min(AdvanceStock.BATCH, BlockReserve.reserveOf(ResourceType.GLASS)),
+                goalFor(work(0, 0, Map.of(ResourceType.GLASS, 0), Map.of())).get(ResourceType.GLASS),
+                "Regra 340: o adiantamento para na reserva do vidro");
     }
 
     /** Obra pequena não abaixa o piso do que o catálogo da fornalha já pede. */

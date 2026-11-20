@@ -43,27 +43,28 @@ public class ItemStockGameTest implements FabricGameTest {
         context.assertTrue(catalog.getOrDefault(TaskType.CRAFT_METAL_MATERIAL, List.of())
                         .containsAll(List.of(Items.CUT_COPPER_STAIRS, Items.IRON_TRAPDOOR)),
                 "o fundidor não mantém peças de metal fora das plantas da vila");
-        context.assertTrue(ItemStock.EACH == 16, "a reserva deve ser de 16 por tipo");
+        context.assertTrue(StockReserve.of(Items.OAK_STAIRS) == 12 && StockReserve.of(Items.CRAFTING_TABLE) == 1
+                        && StockReserve.of(Items.POLISHED_TUFF) == 4,
+                "Regra 340: a reserva devia ser 12 na peça das vilas, 1 na especial e 4 no fabricado");
         context.complete();
     }
 
-    /** O trabalho livre repõe só o que falta até 16, sem acumular centenas (Regra 133). */
+    /** O trabalho livre repõe só até a reserva da classe (Regra 340): o tijolo de pedra das vilas é especial, 1. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock_catalog", tickLimit = 20)
-    public void valueGoodsRefillsOnlyTheConsumedStoneBrick(TestContext context) {
+    public void valueGoodsRefillsOnlyUpToTheReserveOfTheClass(TestContext context) {
         BlockPos chestAt = new BlockPos(2, 2, 2);
         context.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chestAt));
         ServerWorld world = context.getWorld();
         ChestDepositor.deposit(world, chest, Items.STONE, 80);
-        ChestDepositor.deposit(world, chest, Items.STONE_BRICKS, 15);
+        ChestDepositor.deposit(world, chest, Items.STONE_BRICKS, 1);
         List<ColonyPos> chests = List.of(chest);
 
-        ValueGoods.Recipe recipe = ValueGoods.recipeFor(world, chests, ProfessionType.MASON).orElseThrow();
-        context.assertTrue(recipe.product() == Items.STONE_BRICKS, "o pedreiro escolheu outra peça");
-        context.assertTrue(ValueGoods.batch(world, chests, recipe) == 1,
-                "o lote não respeitou o déficit de uma unidade");
-        context.assertTrue(ColonyChests.countIn(world, chests, Items.STONE_BRICKS) == 16,
-                "o estoque passou de 16 tijolos de pedra");
+        context.assertTrue(ValueGoods.recipeFor(world, chests, ProfessionType.MASON)
+                        .map(recipe -> recipe.product() != Items.STONE_BRICKS).orElse(true),
+                "Regra 340: com o tijolo de pedra na reserva (1), o pedreiro ainda faria mais");
+        context.assertTrue(ColonyChests.countIn(world, chests, Items.STONE_BRICKS) == 1,
+                "o estoque passou da reserva do tijolo de pedra");
         context.complete();
     }
 

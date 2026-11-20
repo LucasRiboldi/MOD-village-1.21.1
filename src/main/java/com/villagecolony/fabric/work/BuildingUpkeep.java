@@ -69,7 +69,7 @@ public final class BuildingUpkeep {
      */
     static int start(ServerWorld world, Colony colony, VillagerEntity worker, ResourceGroup material) {
         if (VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isPresent()
-                || ColonyChests.countGroup(world, chests(world, colony), material) < RESERVE + ITEMS) {
+                || KeepLedger.below("upkeep", ColonyChests.countGroup(world, chests(world, colony), material), RESERVE + ITEMS)) {
             return 0;
         }
 
@@ -125,7 +125,7 @@ public final class BuildingUpkeep {
 
         List<ColonyPos> chests = chests(world, colony.get());
 
-        if (ColonyChests.countGroup(world, chests, visit.material()) < RESERVE + ITEMS) {
+        if (KeepLedger.below("upkeep", ColonyChests.countGroup(world, chests, visit.material()), RESERVE + ITEMS)) {
             return;
         }
 

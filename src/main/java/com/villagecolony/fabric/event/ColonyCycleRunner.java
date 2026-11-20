@@ -392,6 +392,9 @@ final class ColonyCycleRunner {
             }
         }
 
+        // Todo trabalhador do mod sem ofício Vanilla, em qualquer lugar do mundo, a cada ciclo (Regra 341).
+        com.villagecolony.fabric.integration.VanillaProfessionGuard.sweep(world, colony.id());
+
         LumberjackWork.run(world, colony);
         MinerWork.run(world, colony);
         SmelterWork.run(world, colony);

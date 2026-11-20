@@ -1,6 +1,5 @@
 package com.villagecolony.fabric.work;
 
-import com.villagecolony.core.coordination.StockCeiling;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -38,11 +37,11 @@ public final class SmelterFallbackGameTest implements FabricGameTest {
         Inventory chest = (Inventory) context.getWorld().getBlockEntity(context.getAbsolutePos(local));
 
         try {
-            chest.setStack(0, new ItemStack(Items.COAL, 10));
+            chest.setStack(0, new ItemStack(Items.COAL, StockReserve.of(Items.CHARCOAL) - 1));
             context.assertFalse(SmelterFallback.stocked(context.getWorld(), chests, Items.CHARCOAL),
-                    "com 10 carvões a vila ainda está abaixo do teto");
+                    "abaixo da reserva do carvão vegetal a vila ainda o faria");
 
-            chest.setStack(0, new ItemStack(Items.COAL, StockCeiling.CRAFTED));
+            chest.setStack(0, new ItemStack(Items.COAL, StockReserve.of(Items.CHARCOAL)));
             context.assertTrue(SmelterFallback.stocked(context.getWorld(), chests, Items.CHARCOAL),
                     "com o carvão no teto, o carvão vegetal ainda seria feito");
         } finally {

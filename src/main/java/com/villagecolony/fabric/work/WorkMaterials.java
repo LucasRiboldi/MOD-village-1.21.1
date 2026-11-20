@@ -133,8 +133,8 @@ public final class WorkMaterials {
      *
      * <p><b>A pergunta é "quem mais pede por ele?"</b>, e a resposta
      * divide o mundo em dois. A <b>tábua</b> tem meta própria em
-     * {@code ColonyGoals}, com teto de armazém e a regra de deixar
-     * metade da madeira em tora; deixá-la passar aqui sobrescreveria
+     * {@code ColonyGoals}, com teto de armazém e a reserva da tábua
+     * (Regra 340); deixá-la passar aqui sobrescreveria
      * aquela meta pela conta crua da obra, e as duas contas não são a
      * mesma. Todo o resto que sai de fornalha ou de bancada <b>não tem
      * ninguém</b> — e é por isso que precisa passar.
