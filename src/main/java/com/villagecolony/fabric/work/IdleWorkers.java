@@ -27,7 +27,7 @@ final class IdleWorkers {
         return villager.isAlive() && !villager.isSleeping()
                 && VillageColonyMod.TASKS.assignedTo(id).isEmpty()
                 && WorkHours.isWorkTime(world, villager)
-                && !StrandedWorkers.isStranded(id) && !PenEscape.isEscaping(id) && !ShepherdHerding.isHerding(id) && !ShepherdRound.isWalking(id)
+                && !StrandedWorkers.isStranded(id) && !PenEscape.isEscaping(id) && !ShepherdHerding.isHerding(id) && !ShepherdRound.isWalking(id) && !FarmRound.isOnRound(id)
                 && (own == Help.GROVE || !IdleHelps.isHelping(id))
                 && (own == Help.SNOW || !SnowShovel.isShoveling(id))
                 && (own == Help.PATH || !PathPaving.isPaving(id))

@@ -175,16 +175,16 @@ public final class CropPatch {
                 BlockPos column = new BlockPos(at.getX(), center.getY() + dy, at.getZ());
                 BlockState state = chunk.getBlockState(column);
 
-                if (isRipe(state)) {
+                if (isRipe(state) && !PenFloors.isPenFloor(column)) { // o pasto do curral não é roça (Regra 332)
                     learn(colonyId, column.down());
                     return Optional.of(column);
                 }
 
-                if (isFarmland(state)) {
+                if (isFarmland(state) && !PenFloors.isPenFloor(column.up())) {
                     learn(colonyId, column);
                 }
 
-                if (plot[0] == null && isEmptyPlot(chunk, column)) {
+                if (plot[0] == null && isEmptyPlot(chunk, column) && !PenFloors.isPenFloor(column.up())) {
                     plot[0] = column.toImmutable();
                 }
             }
@@ -248,7 +248,7 @@ public final class CropPatch {
                 continue;
             }
 
-            if (!isFarmland(chunk.getBlockState(cell))) {
+            if (!isFarmland(chunk.getBlockState(cell)) || PenFloors.isPenFloor(cell.up())) {
                 it.remove();
                 index--;
                 continue;

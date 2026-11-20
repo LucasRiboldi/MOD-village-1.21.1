@@ -93,7 +93,9 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
     (ADR-058, candidatas);
   - notas do autor: o nó da casa do mod fora do grafo (410, 65, -199); o fazendeiro roda no mesmo lugar (386, 67, -187); a terra tirada pelo
     jogador volta em 4 pontos (398, 64, -174 / 414, 64, -161 / 437, 64, -155 / 403, 68, -224) (M);
-  - Regra 51: fazendeiro 66% sem trabalhar (29× "could not reach the crop", 17× "fenced in"), mineiro 33%, fundidor 48% e carpinteiro 42% sem trabalhar (M);
+  - fazendeiro 66% sem trabalhar (29× "could not reach the crop" no trigo do curral, 17× "fenced in"): Regras 332 e
+    333 na 0.4.97 (ADR-060, candidatas); fardo de feno e culturas novas (opção C) ficam para depois (M);
+  - Regra 51: mineiro 33%, fundidor 48% e carpinteiro 42% sem trabalhar (M);
   - `dirt_path` sem receita e posto como `SHAPED_GROUND` (Regra 69, declarado)
 - [ ] 🔴 Simulação de 3 dias da 0.4.92 (18-11, planície, modo `vizinhanca`, colônia 58cb0273), achados:
   - fila do terreno, lenhador encostado no tronco e plantação grande: Regras 323 a 325 na 0.4.93 (candidatas);
