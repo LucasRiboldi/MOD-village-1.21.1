@@ -12,6 +12,17 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.102] — candidata, 2026-11-20
+
+Do jogo da 0.4.93 em montanha (BigHouseMOD e mina uns 60 blocos acima das casas) e da escolha B-1 do autor. Regra
+338; nada visto em jogo.
+
+### Corrigido
+
+- Regra 338: a busca do lote da BigHouseMOD parte do meio das casas da vila gerada e prefere o piso a até 8 blocos da
+  altura delas; o platô plano no alto do morro só vence sem lote nenhum nessa faixa. A busca vai até 32 além da vila,
+  com teto de 128 (antes 16 e 96). Linha nova `VC_BIGHOUSE_SEARCH`.
+
 ## [0.4.101] — candidata, 2026-11-20
 
 Do jogo da 0.4.93 em montanha (blocos de terreno voando acima das casas, no print do autor). Regra 337; nada visto em

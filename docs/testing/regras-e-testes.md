@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 232
+- **Cita a regra:** 233
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -101,7 +101,7 @@ classe prova menos ainda.
 | 88 | Terracota, feno, argila, gelo e neve aparecem quando a obra pede (gelo, gelo compactado e… | classe | BuilderGameTest, DesertFixesGameTest, GardenPiecesGameTest |
 | 89 | Degrau na frente da porta do lote que fica um bloco acima da rua | classe | FoundationPreparationGameTest |
 | 90 | Terraplanagem do lote: no legado, corta até 5 e aterra até 2 blocos do chão do bioma, com… | classe | BuildSiteGameTest, DuneCutGameTest, LotEdgeGameTest |
-| 91 | Casa fundadora: primeiro o lote plano exato, depois o aplainável; a vegetação do lote sai | classe | BiomeCoverageGameTest, BiomeSiteGameTest, ColonyDetectionGameTest |
+| 91 | Casa fundadora: primeiro o lote plano exato, depois o aplainável; a vegetação do lote sai | classe | BigHouseLevelGameTest, BiomeCoverageGameTest, BiomeSiteGameTest |
 | 92 | Deserto: a areia da planta vira arenito (emenda à Regra 27), e o chão da vila de areia nã… | classe | DesertGroundGameTest, DesertSandTest |
 | 93 | Obra abandonada tem retomada limitada antes de a vila aceitar obra nova | classe | FarmPlanGameTest, FoundationRepairGameTest |
 | 94 | Faixa de construção: o lote novo nasce ao lado da rua; muda, flor alta ou arbusto crescen… | cita | VillagerRulesGameTest |
@@ -119,7 +119,7 @@ classe prova menos ainda.
 | 106 | A vila é uma caixa medida pela vila gerada, e não um raio | classe | BedChoiceGameTest, BigHouseEntranceGameTest, BuilderPavingGameTest |
 | 107 | Marcas no mundo: contorno de chamas no lote, área da vila, dono de cada baú, nome do alde… | classe | BuildSiteGameTest, ChestMarkerGameTest, CraftingLookupGameTest |
 | 108 | A Tocha das Almas cancela a obra: uma tocha das almas (também a de parede) posta pelo jog… | cita | LotLightDecorGameTest, MaeSitesGameTest |
-| 109 | A casa fundadora BigHouseMOD: toda vila adotada a recebe uma única vez — cópia editada da… | classe | BedChoiceGameTest, BigHouseFoundationGameTest, ColonyDetectionGameTest |
+| 109 | A casa fundadora BigHouseMOD: toda vila adotada a recebe uma única vez — cópia editada da… | classe | BedChoiceGameTest, BigHouseFoundationGameTest, BigHouseLevelGameTest |
 | 110 | Nada que a colônia corta some (R-059 do estudo v2, autor 10-22): o que a terraplanagem do… | cita | CuttingsGameTest, LotTerraformGameTest |
 | 111 | Suprimento excepcional só pela lista declarada (R-080 do estudo v2, autor 10-22): o que s… | cita | SupplyExceptionTest, VillageFarmAnimalsGameTest |
 | 112 | Vocabulário único de bloqueio (R-052 do estudo v2, autor 10-22): toda soltura, desistênci… | cita | BlockCodeTest |
@@ -348,3 +348,4 @@ classe prova menos ainda.
 | 335 | O grafo nunca busca porta do andar de cima (autor 20-11, jogo da 0.4.93 em planície: a en… | cita | BigHouseEntranceGameTest |
 | 336 | A descida cavada (autor 20-11, jogo da 0.4.93 em planície, escolha A3 da pesquisa docs/re… | cita | MineStepDownGameTest |
 | 337 | Nada solto em cima da peça da vila (autor 20-11, jogo da 0.4.93 em montanha: pedra, terra… | cita | ClearAbovePieceGameTest |
+| 338 | A BigHouseMOD nasce na altura das casas (autor 20-11, jogo da 0.4.93 em montanha, escolha… | cita | BigHouseLevelGameTest, FoundationLotSearchTest |
