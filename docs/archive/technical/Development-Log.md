@@ -12109,3 +12109,18 @@ margem maior e escolheu a B-1.
   rampa): os dois falham sem a faixa (o GameTest pôs a casa em y 125 com a vila em 101).
 
 Nada visto em jogo.
+## 2026-11-20 — 0.4.103: o ofício não segura pedido impossível (Regra 339)
+
+Pesquisa `docs/research/2026-11-20-oficios-sempre-ativos.md`: no jogo da 0.4.93 em planície o fundidor (34% espera) e o
+carpinteiro (31%) seguravam tarefa sem poder cumprir, e as alternativas de quem está sem tarefa (`ValueGoods`,
+`SmelterAdvance`, `BuildingUpkeep`) nunca rodavam. O autor escolheu O1 + O4, fase 1 de 4 (depois: reserva por classe,
+registro de blocos e medida das travas pequenas).
+
+- `SmelterWork`: depois das faltas e sem nada para as obras, solta o pedido e conta para o guarda de laço.
+- `CraftBarrier` + `CraftingWork.finish`: parada pela tora guardada ou sem tora não se encadeia (`TaskChain`) e conta
+  como sem resultado, mesmo com peça feita.
+- `WaitReasons`: `VC_TIME_WAIT` a cada janela; `time_ledger.py` soma (`collect_waits`).
+- `SmelterReleaseGameTest` e `CraftBarrierTest` falham sem a correção; `WaitReasonsTest` e o teste Python do ledger
+  (o Python falhou antes; o Java não compilava sem a classe).
+
+Nada visto em jogo.

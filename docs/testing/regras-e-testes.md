@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 233
+- **Cita a regra:** 234
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -349,3 +349,4 @@ classe prova menos ainda.
 | 336 | A descida cavada (autor 20-11, jogo da 0.4.93 em planície, escolha A3 da pesquisa docs/re… | cita | MineStepDownGameTest |
 | 337 | Nada solto em cima da peça da vila (autor 20-11, jogo da 0.4.93 em montanha: pedra, terra… | cita | ClearAbovePieceGameTest |
 | 338 | A BigHouseMOD nasce na altura das casas (autor 20-11, jogo da 0.4.93 em montanha, escolha… | cita | BigHouseLevelGameTest, FoundationLotSearchTest |
+| 339 | O ofício não segura pedido impossível (autor 20-11, jogo da 0.4.93 em planície, opções O1… | cita | CraftBarrierTest, SmelterReleaseGameTest, WaitReasonsTest |

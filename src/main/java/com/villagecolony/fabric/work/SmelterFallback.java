@@ -68,6 +68,19 @@ final class SmelterFallback {
         return MISSES.merge(taskId, 1, Integer::sum);
     }
 
+    /**
+     * Regra 339: sem o cru do pedido em nenhum baú e nada a fundir para as obras, o fundidor solta o pedido. Ele conta como
+     * pedido sem resultado para o guarda de laço (Regra 191), que o segura e o solta quando o cru aparecer nos baús; livre,
+     * o fundidor faz o que o ofício faz sem tarefa.
+     */
+    static void letGo(UUID workerId, com.villagecolony.core.task.model.Task task, String looked) {
+        String why = looked + " — the order waits for it, the smelter is free";
+
+        TaskOutcome.fruitless(task, why);
+        StopLog.stopped("Smelter", workerId, why);
+        task.release(why);
+    }
+
     /** O pedido achou matéria-prima: a contagem recomeça. */
     static void found(UUID taskId) {
         MISSES.remove(taskId);

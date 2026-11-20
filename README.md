@@ -21,7 +21,7 @@ SHA-256 do JAR na descrição.
 
 **Estado atual: 0.4.99 na `main`, publicada como [`v0.4.99-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.99-alpha), não jogada.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
-[docs/RULES.md](docs/RULES.md) (1 a 338).
+[docs/RULES.md](docs/RULES.md) (1 a 339).
 
 Da 0.4.75 à 0.4.99 (pedidos do autor de 13-11 a 20-11, jogos da 0.4.79, 0.4.84, 0.4.85, 0.4.86, 0.4.88, 0.4.89, 0.4.90, 0.4.91 e 0.4.93, simulações da 0.4.92):
 
@@ -33,7 +33,8 @@ Da 0.4.75 à 0.4.99 (pedidos do autor de 13-11 a 20-11, jogos da 0.4.79, 0.4.84,
   ADR-060); o chão que o jogador mexeu fica como ele deixou (Regra 334); o grafo nunca busca porta do andar de cima
   (Regra 335); o mineiro cava a descida que não alcança andando, em degraus de 3 por 3 (Regra 336, 0.4.100); na geração, nada do morro fica
   solto em cima da casa que desce ao solo suavizado (Regra 337, 0.4.101); a BigHouseMOD nasce na altura das casas, não no platô do
-  morro (Regra 338, 0.4.102).
+  morro (Regra 338, 0.4.102); o fundidor e o carpinteiro não seguram pedido
+  impossível, e a espera sai por motivo (Regra 339, 0.4.103).
 
 - **Aldeão preso:** soleira de casa não é curral, e "saiu" é pisar fora do que ele alcançava (Regra 275); alçapão em pé
   se pula e o caminho o evita (Regra 276); solto da fuga de encalhe só quem saiu do lugar (Regra 279); quem fica preso na água a céu aberto vai à margem e, se não sair, pisa no gelo posto sob o pulo (Regra 285).
@@ -630,6 +631,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 336 | **A descida cavada** (autor 20-11, jogo da 0.4.93 em planície, escolha A3 da pesquisa `docs/research/2026-11-20-descida-cavada-do-mineiro.md`: o mineiro ficou 27% ocioso por 13 desistências, 11 delas com o alvo da descida no próprio pé ou na rocha embaixo dele; ADR-061, emenda as Regras 82 e 119): o mineiro só pisa no degrau já aberto. Quando o alvo da descida é o pé dele, fica embaixo dele ou dentro da rocha, ele cava o próximo degrau de pé no último, no formato da escada da mina: 3 pistas de largura, à esquerda de quem desce, por 3 de altura, um bloco à frente e um abaixo, cortado de cima para baixo. Vai rumo à pedra pelo eixo mais longo; em cima dela, desce em caracol, virando à direita a cada 3 degraus. Com degrau cavado, nunca vira à esquerda nem volta. O degrau sem chão embaixo (vão de caverna) ganha piso de pedra, só dentro da montanha (Regra 71); lado com bloco protegido, líquido ou bloco que segura líquido não se cava. Enquanto cava, os guardas de travamento não correm. Candidata | 20-11 |
 | 337 | **Nada solto em cima da peça da vila** (autor 20-11, jogo da 0.4.93 em montanha: pedra, terra e caminho voando acima das casas; emenda as Regras 296 e 304): na geração do chunk, antes de a peça fixa da vila (casa, poste, enfeite) ser posta, a coluna dela fica livre acima do piso: todo bloco sai, natural ou não (pedra, terra, caminho, líquido, árvore com o tronco ali, que sai inteira), do alto do mapa de altura da geração até o bloco de cima do piso. Vale só na geração; o mundo já gerado não muda. Candidata | 20-11 |
 | 338 | **A BigHouseMOD nasce na altura das casas** (autor 20-11, jogo da 0.4.93 em montanha, escolha B-1: a casa e a mina ficaram uns 60 blocos acima das casas, num platô plano; emenda a busca da casa fundadora de 2026-10-20): a busca do lote parte do meio das casas da vila gerada (mediana dos meios delas) e lê até a borda da vila mais 32, com teto de 128. Lote com piso a mais de 8 blocos da mediana do piso das casas só vence quando não há lote nenhum nessa faixa; dentro dela, a ordem continua: menor desnível, sem mato, mais perto. Sem vila gerada, a busca parte do centro da colônia, com a altura dele. A linha `VC_BIGHOUSE_SEARCH` diz quantas casas leu, a altura, o centro e o alcance. Candidata | 20-11 |
+| 339 | **O ofício não segura pedido impossível** (autor 20-11, jogo da 0.4.93 em planície, opções O1 e O4 da pesquisa `docs/research/2026-11-20-oficios-sempre-ativos.md`: fundidor 34% e carpinteiro 31% esperando com tarefa na mão): o fundidor que não acha o cru do pedido (nem o cru do cru) em nenhum baú e não tem nada a fundir para as obras solta o pedido, que conta como pedido sem resultado para o guarda de laço (Regra 191) e volta quando o cru aparecer; livre, ele faz o que o ofício faz sem tarefa. A oficina parada por barreira (a tora guardada, a tora que acabou) não reabre o mesmo pedido na hora e conta como pedido sem resultado, mesmo com uma peça feita. A espera sai dividida por motivo na linha `VC_TIME_WAIT` (o pedido que o aldeão segurava parado, ou `HELP`), somada pelo `time_ledger.py`. Candidata | 20-11 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).

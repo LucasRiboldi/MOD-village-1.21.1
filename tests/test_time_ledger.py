@@ -43,3 +43,16 @@ class Rule51Test(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class WaitReasonTest(unittest.TestCase):
+    """Regra 339: a linha VC_TIME_WAIT diz em que pedido cada ofício esperou."""
+
+    def test_wait_reasons_are_summed_by_profession(self):
+        log = [
+            "VC_TIME_WAIT version=1 colony=ab12cd34 window=300s SMELTER[s=90 SMELT_MATERIAL:IRON_INGOT=80 HELP=10]",
+            "VC_TIME_WAIT version=1 colony=ab12cd34 window=300s SMELTER[s=20 SMELT_MATERIAL:IRON_INGOT=20]",
+        ]
+        reasons = time_ledger.collect_waits(log)
+        self.assertEqual(100, reasons["SMELTER"]["SMELT_MATERIAL:IRON_INGOT"])
+        self.assertEqual(10, reasons["SMELTER"]["HELP"])

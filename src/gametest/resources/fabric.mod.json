@@ -63,6 +63,7 @@
       "com.villagecolony.fabric.work.MinerTerrainGameTest",
       "com.villagecolony.fabric.work.MineAccessGameTest",
       "com.villagecolony.fabric.work.SmelterGathersGameTest",
+      "com.villagecolony.fabric.work.SmelterReleaseGameTest",
       "com.villagecolony.fabric.work.TreeChoiceSpeciesGameTest",
       "com.villagecolony.fabric.work.TrunkStandGameTest",
       "com.villagecolony.fabric.work.LargeFarmBedsGameTest",

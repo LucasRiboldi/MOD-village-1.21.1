@@ -12,6 +12,21 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.103] — candidata, 2026-11-20
+
+Do jogo da 0.4.93 em planície (fundidor 48% e carpinteiro 42% sem trabalhar) e das opções O1 e O4 escolhidas pelo
+autor. Regra 339; nada visto em jogo.
+
+### Corrigido
+
+- Regra 339: o fundidor solta o pedido sem o cru em nenhum baú (segurou o de ferro sem minério ~28 mil tiques), e a
+  oficina parada pela tora guardada ou pela falta de tora não recebe o mesmo pedido de volta na hora (63 reaberturas
+  no jogo). Livres, os dois fazem o que o ofício já faz sem tarefa.
+
+### Adicionado
+
+- Linha `VC_TIME_WAIT`: a espera de cada ofício por motivo; o `time_ledger.py` mostra os 3 mais longos.
+
 ## [0.4.102] — candidata, 2026-11-20
 
 Do jogo da 0.4.93 em montanha (BigHouseMOD e mina uns 60 blocos acima das casas) e da escolha B-1 do autor. Regra

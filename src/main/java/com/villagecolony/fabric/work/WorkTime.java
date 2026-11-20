@@ -125,10 +125,15 @@ public final class WorkTime {
             worker.profession().ifPresent(profession -> WINDOW.computeIfAbsent(worker.colonyId(), ignored -> new TreeMap<>())
                     .computeIfAbsent(profession.name(), ignored -> new EnumMap<>(State.class))
                     .merge(state, 1, Integer::sum));
+
+            if (state == State.WAIT) {
+                worker.profession().ifPresent(profession -> WaitReasons.sample(worker.colonyId(), profession.name(), id));
+            }
         }
 
         if (now - windowStart >= REPORT_EVERY) {
             report(now - windowStart);
+            WaitReasons.report(now - windowStart);
             VillageDiary.addWindows(WINDOW);
             LAST.clear();
             WINDOW.forEach((colony, trades) -> LAST.put(colony, copyOf(trades)));

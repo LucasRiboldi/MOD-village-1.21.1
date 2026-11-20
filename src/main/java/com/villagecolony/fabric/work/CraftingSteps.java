@@ -363,7 +363,7 @@ final class CraftingSteps {
      */
     static boolean convertOne(ServerWorld world, Job job, UUID workerId) {
         if (!halfTheWoodMayStillBeConverted(world, job.task.colonyId())) {
-            CraftingWork.finish(job, workerId, "half of the colony's wood stays in logs");
+            CraftingWork.finish(job, workerId, CraftBarrier.LOGS_KEPT);
 
             return false;
         }
@@ -399,7 +399,7 @@ final class CraftingSteps {
         }
 
         if (logs.isEmpty()) {
-            CraftingWork.finish(job, workerId, "no logs left in the colony chests");
+            CraftingWork.finish(job, workerId, CraftBarrier.NO_LOGS);
 
             return false;
         }
