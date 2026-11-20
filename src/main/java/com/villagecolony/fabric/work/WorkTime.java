@@ -117,12 +117,14 @@ public final class WorkTime {
 
                 if (world.getEntity(id) instanceof VillagerEntity off && off.isAlive()) {
                     VillagerTimeline.sample(id, "OFF", now, off.getBlockPos(), "");
+                    VillagerDay.sample(off, false);
                 }
 
                 continue;
             }
 
             State state = stateOf(id, villager);
+            VillagerDay.sample(villager, true);
             VillagerTimeline.sample(id, state.name(), now, villager.getBlockPos(),
                     state == State.WAIT || state == State.BLOCKED ? WaitReasons.reasonOf(id) : "");
             BADGES.put(id, badgeFor(id, state, now));

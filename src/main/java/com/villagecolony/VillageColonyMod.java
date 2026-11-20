@@ -218,6 +218,8 @@ public class VillageColonyMod implements ModInitializer {
         com.villagecolony.fabric.work.TerrainReport.register();
         com.villagecolony.fabric.work.BlockLedger.register();
         com.villagecolony.fabric.work.KeepLedger.register();
+        com.villagecolony.fabric.integration.ItemFlow.register();
+        com.villagecolony.fabric.work.VillagerDay.register();
         com.villagecolony.fabric.work.IdleRoutine.register();
         com.villagecolony.fabric.work.LeafPassage.register();
         com.villagecolony.fabric.work.PathSupport.register();

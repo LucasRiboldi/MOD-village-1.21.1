@@ -12,6 +12,19 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.108] — candidata, 2026-11-20
+
+A telemetria dos aldeões e dos itens (plano T1 a T6). Regra 344; só registra, nada muda no comportamento.
+
+### Adicionado
+
+- T1: número da tarefa no diário de ações e `scripts/task_report.py`.
+- T2: linha `STATE` no diário (a mudança de estado firmada de cada aldeão) e `scripts/villager_timeline.py`.
+- T3: balanço diário dos itens nos baús, `VC_FLOW`, e `scripts/flow_report.py`.
+- T4: tentativas e falhas por item no `action_report.py`.
+- T5: `VC_VILLAGER_DAY` (expediente, sono, acordado, sem cama, vida) e `VC_VILLAGER_DEATH`.
+- T6: `scripts/game_report.py`, o relatório único de cada jogo.
+
 ## [0.4.107] — candidata, 2026-11-20
 
 Fase 4, a última, do plano de ofícios e reservas. Regra 343; nada visto em jogo.
