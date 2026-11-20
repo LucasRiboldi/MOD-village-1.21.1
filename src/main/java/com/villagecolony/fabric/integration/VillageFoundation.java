@@ -1,7 +1,6 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
-import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.type.ColonyPos;
@@ -105,7 +104,7 @@ public final class VillageFoundation {
         long adultsBefore = byId.values().stream().filter(villager -> !villager.isBaby()).count();
         int toSpawn = houseJustPlaced
                 ? (int) Math.min(bedsIn(world, foundationHouse.get()),
-                        Math.max(0, ProfessionType.values().length - adultsBefore))
+                        Math.max(0, com.villagecolony.core.worker.service.ProfessionAssigner.GROWTH_ORDER.size() - adultsBefore))
                 : 0;
 
         int bedsPlaced = 0;
@@ -153,7 +152,9 @@ public final class VillageFoundation {
         if (houseJustPlaced && firstFoot != null) {
             long adults = byId.values().stream().filter(villager -> !villager.isBaby()).count();
 
-            for (long missing = ProfessionType.values().length - adults; missing > 0; missing--) {
+            // Os oito ofícios da primeira leva; o Zelador vem de quem passa deles (Regra 330).
+            for (long missing = com.villagecolony.core.worker.service.ProfessionAssigner.GROWTH_ORDER.size() - adults;
+                    missing > 0; missing--) {
                 VillagerEntity villager = EntityType.VILLAGER.create(world);
 
                 if (villager == null) {

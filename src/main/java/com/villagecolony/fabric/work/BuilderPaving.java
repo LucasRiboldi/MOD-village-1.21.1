@@ -53,10 +53,8 @@ public final class BuilderPaving {
     /** Até onde ele conta como "ao lado" do bloco a calçar. */
     static final int REACH = 3;
 
-    /**
-     * Só o construtor calça a rua: ofícios permanecem na própria atividade.
-     */
-    static final Set<ProfessionType> PAVERS = java.util.EnumSet.of(ProfessionType.BUILDER);
+    /** Só o Zelador calça a rua (Regra 330): o construtor fica na obra. */
+    static final Set<ProfessionType> PAVERS = java.util.EnumSet.of(ProfessionType.GROUNDSKEEPER);
 
     /** Quanto ele anda até um bloco antes de desistir dele. */
     static final int GIVE_UP_AFTER = 600;

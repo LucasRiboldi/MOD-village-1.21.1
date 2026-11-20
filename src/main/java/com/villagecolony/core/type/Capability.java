@@ -63,5 +63,8 @@ public enum Capability {
     MAINTAIN_FOOD,
 
     /** Erguer as estruturas de uma expansão. */
-    BUILD_STRUCTURE
+    BUILD_STRUCTURE,
+
+    /** Manter o chão da vila: calçada do grafo e terreno (Regra 330). */
+    MAINTAIN_GROUND
 }

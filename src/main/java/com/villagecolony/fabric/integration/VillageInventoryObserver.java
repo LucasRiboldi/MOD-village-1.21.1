@@ -94,6 +94,7 @@ public final class VillageInventoryObserver {
             case FARMER -> ColonyProfession.FARMER;
             case SHEPHERD -> ColonyProfession.SHEPHERD;
             case BUILDER -> ColonyProfession.BUILDER;
+            case GROUNDSKEEPER -> ColonyProfession.GROUNDSKEEPER;
         };
     }
 

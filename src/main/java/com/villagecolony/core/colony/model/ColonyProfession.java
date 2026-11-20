@@ -24,5 +24,7 @@ public enum ColonyProfession {
     CARPENTER,
     FARMER,
     SHEPHERD,
-    BUILDER
+    BUILDER,
+    /** O Zelador (Regra 330). */
+    GROUNDSKEEPER
 }

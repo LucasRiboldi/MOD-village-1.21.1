@@ -122,8 +122,8 @@ class WorkerTest {
 
     @Test
     void everyProfessionOfTheProductionChainExists() {
-        // Sete profissões produtoras e a função fundacional de construção.
-        assertEquals(8, ProfessionType.values().length);
+        // Sete profissões produtoras, a função fundacional de construção e o Zelador (Regra 330).
+        assertEquals(9, ProfessionType.values().length);
 
         // A ordem é a da cadeia produtiva, e ela importa: o distribuidor
         // preenche nessa sequência, então quem colhe vem antes de quem

@@ -238,8 +238,9 @@ public class VillageFoundationGameTest implements FabricGameTest {
             VillageColonyMod.WORKERS.ofColony(colony.id())
                     .forEach(worker -> worker.profession().ifPresent(trades::add));
 
+            // Os oito ofícios da primeira leva; o Zelador vem do adulto que passa deles (Regra 330).
             for (com.villagecolony.core.worker.model.ProfessionType type
-                    : com.villagecolony.core.worker.model.ProfessionType.values()) {
+                    : com.villagecolony.core.worker.service.ProfessionAssigner.GROWTH_ORDER) {
                 context.assertTrue(trades.contains(type), "a vila nova nasceu sem " + type + ": " + trades
                         + " em " + VillageColonyMod.WORKERS.ofColony(colony.id()).size() + " aldeões");
             }

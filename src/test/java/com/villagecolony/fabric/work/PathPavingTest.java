@@ -11,11 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class PathPavingTest {
 
     @Test
-    void theBuilderTheMasonAndWhoHasNoTradePave() {
-        assertEquals(
-                List.of(Optional.of(ProfessionType.BUILDER), Optional.of(ProfessionType.MASON), Optional.of(ProfessionType.CARPENTER),
-                        Optional.of(ProfessionType.SMELTER), Optional.empty()),
-                PathPaving.PAVERS,
-                "Regras 215, 220 e 242");
+    void onlyTheGroundskeeperPaves() {
+        assertEquals(List.of(Optional.of(ProfessionType.GROUNDSKEEPER)), PathPaving.PAVERS, "Regra 330");
     }
 }

@@ -365,6 +365,7 @@ public final class ChestMarker {
             case CARPENTER -> Items.CRAFTING_TABLE;
             case MASON -> Items.STONECUTTER;
             case BUILDER -> Items.BRICKS;
+            case GROUNDSKEEPER -> Items.IRON_SHOVEL;
         };
     }
 
@@ -379,6 +380,7 @@ public final class ChestMarker {
             case CARPENTER -> "Baú do Carpinteiro";
             case MASON -> "Baú do Pedreiro";
             case BUILDER -> "Baú do Construtor";
+            case GROUNDSKEEPER -> "Baú do Zelador";
         };
     }
 

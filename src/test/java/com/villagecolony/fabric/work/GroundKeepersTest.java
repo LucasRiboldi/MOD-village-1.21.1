@@ -66,9 +66,11 @@ class GroundKeepersTest {
     }
 
     @Test
-    @DisplayName("o carpinteiro e o fundidor entram no rodízio de quem calça")
-    void carpenterAndSmelterPave() {
-        assertTrue(PathPaving.PAVERS.containsAll(List.of(Optional.of(ProfessionType.CARPENTER), Optional.of(ProfessionType.SMELTER))),
-                "Regra 242: carpinteiro ou fundidor fora do rodízio do calçamento");
+    @DisplayName("só o Zelador calça: os outros ofícios saíram do rodízio")
+    void onlyTheKeeperPaves() {
+        assertEquals(List.of(Optional.of(ProfessionType.GROUNDSKEEPER)), PathPaving.PAVERS,
+                "Regra 330: outro ofício no rodízio do calçamento");
+        assertEquals(java.util.EnumSet.of(ProfessionType.GROUNDSKEEPER), BuilderPaving.PAVERS,
+                "Regra 330: o construtor ainda calça a rua");
     }
 }

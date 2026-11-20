@@ -46,7 +46,7 @@ public final class ProfessionPolicySet {
         return new ProfessionPolicySet(defaults, List.of(
                 ProfessionType.MINER, ProfessionType.LUMBERJACK, ProfessionType.MASON,
                 ProfessionType.SMELTER, ProfessionType.CARPENTER, ProfessionType.FARMER,
-                ProfessionType.SHEPHERD, ProfessionType.BUILDER));
+                ProfessionType.SHEPHERD, ProfessionType.BUILDER, ProfessionType.GROUNDSKEEPER));
     }
 
     public ProfessionPolicy policyOf(ProfessionType type) {

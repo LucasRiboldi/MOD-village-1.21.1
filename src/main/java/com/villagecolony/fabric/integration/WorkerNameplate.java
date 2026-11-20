@@ -160,6 +160,7 @@ public final class WorkerNameplate {
             case MASON -> "Pedreiro";
             case FARMER -> "Fazendeiro";
             case BUILDER -> "Construtor";
+            case GROUNDSKEEPER -> "Zelador";
         };
     }
 }

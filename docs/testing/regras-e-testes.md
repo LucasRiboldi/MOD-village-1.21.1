@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 224
+- **Cita a regra:** 226
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -135,7 +135,7 @@ classe prova menos ainda.
 | 122 | O curral é do pastor (autor 10-27, jogo da 0.3.93: 217 entradas em curral na planície e o… | cita | PenFloorsGameTest |
 | 123 | A rede de caminhos da vila: toda porta se liga à rede pelo grafo, com o trajeto mais curt… | cita | PathNetworkGameTest, VillagePathPlannerTest |
 | 124 | Construção nova nasce a no mínimo 3 blocos de qualquer construção (autor 10-27, D1): o lo… | cita | PathNetworkGameTest |
-| 125 | Quem assenta o caminho (autor 10-27, D6): o pedreiro, o carpinteiro e o fundidor sem tare… | classe | GraphOnlyPathsGameTest, GroundKeepersTest, LeafPathsGameTest |
+| 125 | Quem assenta o caminho (autor 10-27, D6): o pedreiro, o carpinteiro e o fundidor sem tare… | classe | GraphOnlyPathsGameTest, GroundKeeperGameTest, GroundKeepersTest |
 | 126 | Peça colorida sai branca (autor 10-27, item 5; jogo da 0.3.93: 64 "cama sem lã" e lã pret… | classe | BigHouseFoundationGameTest, BigHouseModBlueprintGameTest, BiomeBlueprintsGameTest |
 | 127 | Ajudas de quem está sem tarefa do ofício, cada uma com um ofício fixo (autor 10-27, item… | cita | ColonyTorchesGameTest |
 | 128 | Nenhuma profissão espera mais de 5 minutos por nada (autor 10-27, emenda 11-02): 300 s se… | cita | IdleWatchGameTest |
@@ -185,7 +185,7 @@ classe prova menos ainda.
 | 172 | Água aberta (autor 11-04): com mais de 5 blocos de água à frente, todo aldeão anda cerca… | cita | VillagerRulesGameTest |
 | 173 | Zona da obra limpa (autor 11-04): árvore, tronco, folha e flor saem em todas as alturas,… | cita | TreeClearingGameTest |
 | 174 | Ponte (autor 11-04): sem caminho a seco na zona da vila, o construtor atravessa a água, a… | fora de vigor |  |
-| 175 | Casa do mineiro: ver Regra 211. A casa e a boca da mina entram na rede pelo grafo (Regra… | classe | EntrancesAtTheDoorGameTest, GraphOnlyPathsGameTest, MineHomePlansTest |
+| 175 | Casa do mineiro: ver Regra 211. A casa e a boca da mina entram na rede pelo grafo (Regra… | classe | EntrancesAtTheDoorGameTest, GraphOnlyPathsGameTest, GroundKeeperGameTest |
 | 176 | Sinalizador dos caminhos (autor 11-04): /vc mae mostrar ligar\ | cita | RoadMapSyncGameTest |
 | 177 | Grafo como mapa de trilhos (autor 11-05): uma linha contínua por corredor, no bloco centr… | cita | RoadLinesTest |
 | 178 | Acesso livre (autor 11-05): o primeiro bloco fora de toda porta e portão é caminho; portã… | cita | BuildingGapsGameTest, EntrancesAtTheDoorGameTest, RoadLinesTest |
@@ -340,3 +340,5 @@ classe prova menos ainda.
 | 327 | O curral é um lugar (autor 19-11, jogo da 0.4.93 em planície, ADR-058, pacote B): na leit… | cita | ShepherdRoundGameTest |
 | 328 | O pastor desiste do desgarrado que não alcança (autor 19-11, ADR-058; emenda a Regra 309)… | cita | ShepherdRoundGameTest |
 | 329 | A ronda do pastor (autor 19-11, ADR-058; emenda a Regra 72): uma vez por dia, no expedien… | cita | ShepherdRoundGameTest |
+| 330 | O Zelador, dono do chão da vila (autor 19-11, ADR-059, pacote B; nome "Zelador", sem banc… | cita | GraphOnlyPathsGameTest, GroundKeepersTest, GroundSmoothingGameTest |
+| 331 | O caminho atravessa o feno (autor 19-11, ADR-059): no cálculo do grafo, o fardo de feno s… | cita | GroundKeeperGameTest |

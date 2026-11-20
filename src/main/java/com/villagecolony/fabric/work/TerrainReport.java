@@ -80,5 +80,6 @@ public final class TerrainReport {
         VillageColonyMod.LOGGER.info("VC_TERRAIN version=1 colony={} day={} squares={} isolated={} pathSteps={} steps={} "
                         + "levelled={}", colony.id().toString().substring(0, 8), day, count, isolated, pathSteps, steps,
                 TerrainQueue.levelledToday(colony.id(), day));
+        GroundKeeper.report(world, colony, day, steps);
     }
 }

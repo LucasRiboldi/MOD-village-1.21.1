@@ -121,7 +121,7 @@ public class ShepherdRoundGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_round", tickLimit = 20)
     public void anAnimalInsideAKnownPenIsNotAStray(TestContext context) {
         ServerWorld world = context.getWorld();
-        int y = 80;
+        int y = 190; // altura que nenhum outro teste usa: os bichos dos vizinhos não entram na conta do abate
         BlockPos gate = pen(context, y, 13, true);
         Colony colony = colony(context, y, gate);
         List<Entity> spawned = new ArrayList<>();
@@ -153,7 +153,7 @@ public class ShepherdRoundGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_round", tickLimit = 20)
     public void theShepherdSetsAsideAStrayHeCannotReach(TestContext context) {
         ServerWorld world = context.getWorld();
-        int y = 100;
+        int y = 210; // idem
         BlockPos gate = pen(context, y, 5, false);
         Colony colony = colony(context, y, gate);
         List<Entity> spawned = new ArrayList<>();

@@ -25,5 +25,7 @@ public enum ActivityProfession {
     FARMER,
     SHEPHERD,
     BUILDER,
+    /** O Zelador (Regra 330). */
+    GROUNDSKEEPER,
     UNKNOWN
 }

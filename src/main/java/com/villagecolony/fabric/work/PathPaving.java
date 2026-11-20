@@ -44,13 +44,8 @@ public final class PathPaving {
         ServerMemory.register(PathPaving.class, PathPaving::clearAll);
     }
 
-    /**
-     * O construtor, o pedreiro ocioso (Regra 215), o carpinteiro e o fundidor sem tarefa (Regra 242) e quem não tem ofício
-     * (Regra 220), nesta ordem de rodízio.
-     */
-    static final List<Optional<ProfessionType>> PAVERS = List.of(Optional.of(ProfessionType.BUILDER),
-            Optional.of(ProfessionType.MASON), Optional.of(ProfessionType.CARPENTER), Optional.of(ProfessionType.SMELTER),
-            Optional.empty());
+    /** Só o Zelador calça a linha do grafo (Regra 330); com mais de um, eles se revezam. */
+    static final List<Optional<ProfessionType>> PAVERS = List.of(Optional.of(ProfessionType.GROUNDSKEEPER));
 
     /** Passos que um assenta antes de passar a vez. */
     static final int STEPS_PER_TURN = 8;
@@ -190,9 +185,13 @@ public final class PathPaving {
             return;
         }
 
-        com.villagecolony.fabric.integration.TreeClearing.openColumn(world, step.x(), step.z(), step.floorY(),
-                com.villagecolony.fabric.integration.ColonyChests.nearestFirst(world, colonyId,
-                        new com.villagecolony.core.type.ColonyPos(step.x(), step.floorY(), step.z())));
+        List<com.villagecolony.core.type.ColonyPos> chests = com.villagecolony.fabric.integration.ColonyChests.nearestFirst(
+                world, colonyId, new com.villagecolony.core.type.ColonyPos(step.x(), step.floorY(), step.z()));
+
+        com.villagecolony.fabric.integration.TreeClearing.openColumn(world, step.x(), step.z(), step.floorY(), chests);
+        // Regra 331: o fardo de feno na coluna vai para os baús.
+        com.villagecolony.fabric.integration.PathObstacles.clearAbove(world, step.x(), step.z(), step.floorY(),
+                com.villagecolony.fabric.integration.TreeClearing.HEADROOM, chests);
 
         if (!layAndRecord(world, colonyId, paver.getUuid(), step)) {
             skipStep(colonyId, turn, plan, step);
@@ -240,6 +239,7 @@ public final class PathPaving {
         if (!before.equals(after)) {
             ActionJournal.action(workerId, "PAVED", Registries.BLOCK.getId(after.getBlock()).getPath(), 1,
                     floor, "path network");
+            GroundKeeper.paved(world, colonyId, 1);
         }
         return true;
     }

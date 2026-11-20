@@ -129,7 +129,7 @@ e encalhe no expediente.
   profissão no expediente (sem ofício fica fora). Quem fica sem tarefa entra na
   cadeia de alternativas: tarefa do ofício → manutenção do próprio ofício
   → coleta comum permitida. Pela regra temporária de 02-11, nenhuma profissão
-  assume atividade de outra, inclusive ajuda de obra e reatribuição. Exceções do autor: o pedreiro ocioso calça o caminho (Regra 215), e quem não tem ofício calça e tira neve (Regra 220).
+  assume atividade de outra, inclusive ajuda de obra e reatribuição. O chão da vila (calçar, nivelar, tirar neve) é do Zelador, profissão própria (Regra 330, ADR-059).
   Espera acima de 40% é alerta. Análise e alternativas:
   `docs/research/2026-10-08-tempo-ocioso.md`.
 
