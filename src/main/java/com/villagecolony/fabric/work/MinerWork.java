@@ -232,6 +232,9 @@ public final class MinerWork {
         /** Se o desvio em curso é o acesso cavado da vila até o nível da mina ({@link MineAccess}). */
         boolean accessDetour;
 
+        /** A descida cavada em curso, degrau a degrau (Regra 336). Ver MinerDetours. */
+        MineStepDown stepDown;
+
         Job(Task task, BlockPos center) {
             this.task = task;
             this.center = center;

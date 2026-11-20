@@ -12064,3 +12064,20 @@ diagnóstico.
 - `VC_KEEPER` substitui o `VC_GROUND` do Zelador (commit 159dbf7f).
 
 O caso da sacada falha sem o filtro (duas entradas, a de cima a 3 do chão). Nada visto em jogo.
+
+## 2026-11-20 — 0.4.100: a descida cavada (Regra 336, ADR-061)
+
+O mineiro do jogo da 0.4.93 ficou 27% ocioso: cada uma das 13 desistências deu 2.400 tiques de descanso. Em 11 delas
+o alvo da descida era a própria boca, com ele em cima, ou um ponto 2 blocos embaixo dele. O autor pediu a pesquisa do
+formato (`docs/research/2026-11-20-descida-cavada-do-mineiro.md`) e escolheu a A3.
+
+- `MineStepDown`: cava o degrau de 3 pistas (à esquerda de quem desce) por 3 de altura, 1 à frente e 1 abaixo, de cima
+  para baixo; rumo à pedra e, em cima dela, em caracol; só em frente ou à direita com degrau cavado; piso de pedra no
+  vão dentro da montanha.
+- `MinerDetours.digTheWayDown` dispara quando o alvo da descida é o pé, fica embaixo ou não tem lugar de pé;
+  `MinerDetours.stepDown` roda a descida antes dos guardas.
+- `MineStepDownGameTest`: a boca com a escada por cavar (o mineiro desce 4 ou mais sem devolver a pedra) e o degrau
+  sobre caverna (piso posto). Os dois falham sem a correção. O teste da boca precisa de chunk forçado: sem tique de
+  entidade o aldeão não anda e o teste passa ou falha por sorte.
+
+Nada visto em jogo.

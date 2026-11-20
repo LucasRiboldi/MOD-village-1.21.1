@@ -127,6 +127,11 @@ final class MinerSteps {
             return false;
         }
 
+        // A descida cavada anda como o desvio: cava o degrau e pisa nele (Regra 336).
+        if (MinerDetours.stepDown(world, villager, job, storage.get())) {
+            return false;
+        }
+
         if (!MinerWork.isWithinReach(villager, job.target)) {
             // Só conta tique de expediente — 2026-08-27, e é o molde do
             // lenhador, que esta classe segue de propósito. O guarda pune
@@ -317,8 +322,12 @@ final class MinerSteps {
             // Boca longe numa vila grande: anda por etapas até lá, por caminhos reais da navegação, em
             // vez de mirar a boca a ~95 blocos e ficar "walking to nowhere" (2026-10-14). A falha e a
             // liberação ficam com o guarda de descida (job.descent).
-            WorkTargets.set(workerId,
-                    MineApproachPath.toward(world, villager, down.get()), MinerReach.ARRIVAL);
+            BlockPos leg = MineApproachPath.toward(world, villager, down.get());
+
+            // A descida que o pé não alcança é cavada (Regra 336).
+            if (!MinerDetours.digTheWayDown(world, villager, job, leg)) {
+                WorkTargets.set(workerId, leg, MinerReach.ARRIVAL);
+            }
 
             return;
         }
@@ -445,6 +454,7 @@ final class MinerSteps {
         job.stalled = 0;
         job.detours = 0;
         job.detour = null;
+        job.stepDown = null;
 
         // <b>E o prazo de aproximação recomeça</b> — E44, 2026-09-10, e
         // aqui alvo novo É motivo, ao contrário do guarda de

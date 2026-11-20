@@ -97,7 +97,10 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
     (`door@...:g...[...]`) do próximo jogo (M);
   - fazendeiro 66% sem trabalhar (29× "could not reach the crop" no trigo do curral, 17× "fenced in"): Regras 332 e
     333 na 0.4.97 (ADR-060, candidatas); fardo de feno e culturas novas (opção C) ficam para depois (M);
-  - Regra 51: mineiro 33%, fundidor 48% e carpinteiro 42% sem trabalhar (M);
+  - Regra 51: mineiro 33% (27% era descanso de 13 desistências, 11 com o alvo da descida no pé ou na rocha): Regra 336
+    na 0.4.100 (ADR-061, candidata; conferir no próximo jogo); fundidor 48% e carpinteiro 42% sem trabalhar (M);
+  - o caracol girado com degrau cavado (ADR-037 M1) recomeça a escada; com a Regra 336 o mineiro desce cavando, mas
+    a escada antiga fica (G);
   - `dirt_path` sem receita e posto como `SHAPED_GROUND` (Regra 69, declarado)
 - [ ] 🔴 Simulação de 3 dias da 0.4.92 (18-11, planície, modo `vizinhanca`, colônia 58cb0273), achados:
   - fila do terreno, lenhador encostado no tronco e plantação grande: Regras 323 a 325 na 0.4.93 (candidatas);
