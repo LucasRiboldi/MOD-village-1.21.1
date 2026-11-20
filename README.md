@@ -21,7 +21,7 @@ SHA-256 do JAR na descrição.
 
 **Estado atual: 0.4.99 na `main`, publicada como [`v0.4.99-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.99-alpha), não jogada.** Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
-[docs/RULES.md](docs/RULES.md) (1 a 335).
+[docs/RULES.md](docs/RULES.md) (1 a 336).
 
 Da 0.4.75 à 0.4.99 (pedidos do autor de 13-11 a 20-11, jogos da 0.4.79, 0.4.84, 0.4.85, 0.4.86, 0.4.88, 0.4.89, 0.4.90, 0.4.91 e 0.4.93, simulações da 0.4.92):
 
@@ -31,7 +31,7 @@ Da 0.4.75 à 0.4.99 (pedidos do autor de 13-11 a 20-11, jogos da 0.4.79, 0.4.84,
   solo o caminho fora dela, nivela entre as construções e tira a neve, com a linha `VC_KEEPER` (Regras 330 e 331,
   ADR-059); o fazendeiro faz a ronda da roça sem pedido na fila e não mira o trigo do curral (Regras 332 e 333,
   ADR-060); o chão que o jogador mexeu fica como ele deixou (Regra 334); o grafo nunca busca porta do andar de cima
-  (Regra 335).
+  (Regra 335); o mineiro cava a descida que não alcança andando, em degraus de 3 por 3 (Regra 336, 0.4.100).
 
 - **Aldeão preso:** soleira de casa não é curral, e "saiu" é pisar fora do que ele alcançava (Regra 275); alçapão em pé
   se pula e o caminho o evita (Regra 276); solto da fuga de encalhe só quem saiu do lugar (Regra 279); quem fica preso na água a céu aberto vai à margem e, se não sair, pisa no gelo posto sob o pulo (Regra 285).
@@ -625,6 +625,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 333 | **A ronda da roça** (autor 19-11, ADR-060, pacote B; emenda a Regra 267): sem tarefa de comida na fila, o fazendeiro livre faz a ronda da roça dele no expediente, com o mesmo trabalho de sempre: colhe o maduro e guarda, ara e semeia o canteiro, composta e põe pó de osso. A ronda é uma tarefa só dele, fora da fila, de 64 colheitas. Acaba quando chega a tarefa da fila, no fim do expediente, ou quando não há nada a fazer; aí a vila pode pedir a plantação grande, e ele descansa 1 minuto antes da próxima. A desistência na ronda não pune o fazendeiro, e o tempo da ronda conta como trabalho. No jogo, ele ficou entre 0% e 2% de trabalho em 19 de 20 janelas, e a plantação grande nunca foi pedida. Candidata | 19-11 |
 | 334 | **O chão que o jogador mexeu fica como ele deixou** (autor 20-11, jogo da 0.4.93 em planície, escolhas A e C: 4 notas de terra tirada pelo jogador que voltou): a coluna onde o jogador quebrou chão natural (terra, grama, pedra, areia e afins) ou pôs chão natural fica marcada para sempre, guardada no save como a planta da Regra 104. O Zelador e todo nivelamento da vila (fila do terreno, vão entre construções, solo sob a peça da vila, volta das casas, apoio da calçada) não cortam nem aterram essa coluna, e a calçada passa por ela no nível em que está, sem corte nem aterro. A obra de construção segue como antes. Candidata | 20-11 |
 | 335 | **O grafo nunca busca porta do andar de cima** (autor 20-11, jogo da 0.4.93 em planície: a entrada da BigHouseMOD ficou solta nas 212 leituras do grafo): só a porta do térreo vira entrada. É do térreo a porta em que, a até 3 blocos à frente, descendo por assoalho, degrau e sacada, o primeiro chão de fora (chão natural, caminho ou tábua de rua) fica no máximo 2 abaixo do piso dela; na geração, a porta das 3 primeiras alturas da peça. Porta de sacada, de mezanino e de andar de cima nunca vira entrada, em construção da colônia, em peça da vila gerada e em porta do jogador (Regra 321). A porta solta passa a sair no `VC_ROAD_GRAPH` com o chão lido nela e nas 4 vizinhas (`door@x,y,z:gY[wY eY nY sY]`, B bloqueada, - sem chão), para achar a causa da entrada que não liga. Candidata | 20-11 |
+| 336 | **A descida cavada** (autor 20-11, jogo da 0.4.93 em planície, escolha A3 da pesquisa `docs/research/2026-11-20-descida-cavada-do-mineiro.md`: o mineiro ficou 27% ocioso por 13 desistências, 11 delas com o alvo da descida no próprio pé ou na rocha embaixo dele; ADR-061, emenda as Regras 82 e 119): o mineiro só pisa no degrau já aberto. Quando o alvo da descida é o pé dele, fica embaixo dele ou dentro da rocha, ele cava o próximo degrau de pé no último, no formato da escada da mina: 3 pistas de largura, à esquerda de quem desce, por 3 de altura, um bloco à frente e um abaixo, cortado de cima para baixo. Vai rumo à pedra pelo eixo mais longo; em cima dela, desce em caracol, virando à direita a cada 3 degraus. Com degrau cavado, nunca vira à esquerda nem volta. O degrau sem chão embaixo (vão de caverna) ganha piso de pedra, só dentro da montanha (Regra 71); lado com bloco protegido, líquido ou bloco que segura líquido não se cava. Enquanto cava, os guardas de travamento não correm. Candidata | 20-11 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).

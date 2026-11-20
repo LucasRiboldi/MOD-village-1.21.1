@@ -178,4 +178,78 @@ public final class MinerDetours {
 
         return true;
     }
+
+    /**
+     * A descida que ele não alcança andando vira descida cavada (Regra 336): o alvo da descida é o próprio pé, fica
+     * embaixo dele ou dentro da rocha, e ele cava o próximo degrau rumo à pedra.
+     *
+     * @return se a descida cavada começou
+     */
+    static boolean digTheWayDown(ServerWorld world, VillagerEntity villager, Job job, BlockPos leg) {
+        BlockPos feet = villager.getBlockPos();
+
+        if (!MineStepDown.cannotWalkTo(world, feet, leg)) {
+            return false;
+        }
+
+        Optional<MineStepDown> descent = MineStepDown.start(world, feet, job.target,
+                MineStepDown.heading(feet, job.target, villager.getHorizontalFacing()));
+
+        if (descent.isEmpty()) {
+            return false;
+        }
+
+        job.stepDown = descent.get();
+        WorkTargets.clear(villager.getUuid());
+
+        VillageColonyMod.LOGGER.info(
+                "Miner {} digs the way down from {} toward the stone at {} — the walk led to {}",
+                villager.getUuid().toString().substring(0, 8), feet.toShortString(), job.target.toShortString(),
+                leg.toShortString());
+
+        return true;
+    }
+
+    /**
+     * Um tique da descida cavada em curso. Enquanto ele cava, os guardas de travamento esperam: cavar é sair do lugar.
+     *
+     * @return se a descida usou o tique
+     */
+    static boolean stepDown(ServerWorld world, VillagerEntity villager, Job job, WorkerStorage storage) {
+        if (job.stepDown == null) {
+            return false;
+        }
+
+        if (!WorkHours.isWorkTime(world, villager)) {
+            return true;
+        }
+
+        MineStepDown descent = job.stepDown;
+        MineStepDown.Status status = descent.tick(world, villager, storage.chestPosition());
+
+        job.stall.reset();
+        job.lease.reset();
+        job.descent.reset();
+        job.stalled = 0;
+
+        if (status == MineStepDown.Status.DIGGING) {
+            return true;
+        }
+
+        job.stepDown = null;
+
+        if (status == MineStepDown.Status.DONE) {
+            ActionJournal.action(villager.getUuid(), "DUG_STAIRS", "stairs", descent.steps(), villager.getBlockPos(),
+                    descent.dug() + " dug, " + descent.placed() + " floor");
+            VillageColonyMod.LOGGER.info("Miner {} dug {} steps down to {} — {} dug, {} floor placed",
+                    villager.getUuid().toString().substring(0, 8), descent.steps(),
+                    villager.getBlockPos().toShortString(), descent.dug(), descent.placed());
+
+            return false;
+        }
+
+        MinerHands.giveUp(world, villager.getUuid(), job, "its dug way down stopped — " + descent.why());
+
+        return true;
+    }
 }

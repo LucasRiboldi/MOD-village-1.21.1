@@ -12,6 +12,18 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.100] — candidata, 2026-11-20
+
+Do jogo da 0.4.93 em planície (mineiro com 33% do expediente sem trabalhar) e da escolha A3 do autor. Regra 336 e
+ADR-061; nada visto em jogo.
+
+### Corrigido
+
+- Regra 336: a descida cavada. O mineiro que tem o alvo da descida no próprio pé, embaixo dele ou dentro da rocha cava
+  o próximo degrau, de 3 pistas por 3 de altura, e desce por ele, em vez de ficar parado até devolver a pedra. O degrau
+  sobre caverna ganha piso de pedra dentro da montanha. No jogo, 11 das 14 desistências do mineiro eram esse caso, e
+  cada uma custava 2.400 tiques de descanso.
+
 ## [0.4.99] — candidata, 2026-11-20
 
 Do jogo da 0.4.93 em planície (a entrada da BigHouseMOD solta nas 212 leituras do grafo) e da regra do autor. Regra 335;
