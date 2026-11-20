@@ -12,6 +12,27 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.104] — candidata, 2026-11-20
+
+Fase 2 do plano de ofícios e reservas, ADR-062. Regra 340; nada visto em jogo.
+
+### Mudado
+
+- Regra 340: a reserva de cada bloco nos baús segue a classe dele: CRU até 256, FABRICADO 4, VILA (10 ou mais
+  nas vilas geradas) 12 e ESPECIAL (menos de 10) 1. Substitui o "um pouco de tudo" de 16, os produtos de valor
+  até 16 e o teto de 64 do fabricado. As bancadas do mod nunca entram na fabricação das profissões.
+- Sai a tora guardada (Regras 5 e 248) e a reserva de metade do cru da fornalha (a exceção da Regra 257 vira a
+  regra): a tora vira tábua até a reserva da tábua, e o cru vai inteiro à fornalha.
+
+### Corrigido
+
+- O pedido de fornalha da obra vence o adiantamento já posto na meta (`FurnaceGoals`): o vidro pedido pela obra
+  ficava no número do adiantamento.
+
+### Adicionado
+
+- `scripts/village_block_counts.py` e `data/villagecolony/stock/` (contagem das vilas e naturais com receita).
+
 ## [0.4.103] — candidata, 2026-11-20
 
 Do jogo da 0.4.93 em planície (fundidor 48% e carpinteiro 42% sem trabalhar) e das opções O1 e O4 escolhidas pelo

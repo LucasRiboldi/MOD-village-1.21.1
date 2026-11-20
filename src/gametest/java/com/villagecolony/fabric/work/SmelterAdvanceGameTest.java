@@ -42,11 +42,11 @@ public class SmelterAdvanceGameTest implements FabricGameTest {
             for (int i = 0; i < 2; i++) {
                 SmelterAdvance.smeltForIdleSmelters(world, colony);
             }
-            context.assertTrue(ColonyChests.countIn(world, List.of(chest), Items.TERRACOTTA) == 16,
-                    "o fundidor não estocou 16 terracotas");
+            context.assertTrue(ColonyChests.countIn(world, List.of(chest), Items.TERRACOTTA) == StockReserve.of(Items.TERRACOTTA),
+                    "o fundidor não estocou a reserva da terracota (Regra 340)");
             ColonyChests.withdraw(world, List.of(chest), Items.TERRACOTTA, 5);
             SmelterAdvance.smeltForIdleSmelters(world, colony);
-            context.assertTrue(ColonyChests.countIn(world, List.of(chest), Items.TERRACOTTA) == 16,
+            context.assertTrue(ColonyChests.countIn(world, List.of(chest), Items.TERRACOTTA) == StockReserve.of(Items.TERRACOTTA),
                     "o fundidor não repôs o consumo");
         } finally {
             ((Inventory) world.getBlockEntity(chestAt)).clear();

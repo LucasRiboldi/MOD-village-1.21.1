@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Regra 339: o pedido de oficina parado por uma barreira (a tora guardada, a tora que acabou) não se reabre na hora e
+ * Regra 339: o pedido de oficina parado por uma barreira (a tora que acabou) não se reabre na hora e
  * conta como pedido sem resultado, mesmo com uma peça feita — o carpinteiro do jogo da 0.4.93 pegava, fazia 0 ou 1 peça,
  * parava e recebia o mesmo pedido de volta o dia inteiro.
  */
@@ -54,12 +54,12 @@ class CraftBarrierTest {
     }
 
     @Test
-    void aRequestStoppedByTheLogReserveIsNotChainedEvenWithOnePieceMade() {
+    void aRequestStoppedForLackOfLogsIsNotChainedEvenWithOnePieceMade() {
         LastShortage.measured(COLONY, Set.of(ResourceType.OAK_STAIRS));
 
-        CraftingWork.finish(stairs(1), UUID.randomUUID(), "half of the colony's wood stays in logs");
+        CraftingWork.finish(stairs(1), UUID.randomUUID(), CraftBarrier.NO_LOGS);
 
-        assertEquals(0, waitingStairs(), "Regra 339: o pedido barrado pela tora guardada se reabriu na hora");
+        assertEquals(0, waitingStairs(), "Regra 339: o pedido barrado pela falta de tora se reabriu na hora");
     }
 
     @Test

@@ -35,10 +35,10 @@ final class FurnaceGoals {
         // E o que a obra pede e a fornalha NÃO faz — um material cuja
         // produção declarada mudou, ou que chegou por datapack — continua
         // entrando pela lista da obra. O laço acima cobre o catálogo do
-        // jogo; esta linha cobre o que a obra sabe e ele não.
+        // jogo; esta linha cobre o que a obra sabe e ele não. O pedido da obra passa do adiantamento já posto (Regra 340).
         work.smelted().forEach((made, amount) -> {
-            if (amount > 0 && !goals.containsKey(made)) {
-                goals.put(made, amount);
+            if (amount > 0) {
+                goals.merge(made, amount, Math::max);
             }
         });
 

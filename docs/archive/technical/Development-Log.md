@@ -12124,3 +12124,22 @@ registro de blocos e medida das travas pequenas).
   (o Python falhou antes; o Java não compilava sem a classe).
 
 Nada visto em jogo.
+## 2026-11-20 — 0.4.104: a reserva por classe de bloco (Regra 340, ADR-062)
+
+Fase 2 do plano de ofícios e reservas. O autor trocou as reservas do estoque por classe: CRU (o que o aldeão
+recolhe) até 256, FABRICADO 4, VILA 12, ESPECIAL 1, com a contagem dos blocos das estruturas das vilas geradas.
+
+- `BlockReserve` (core) lê `data/villagecolony/stock/village_blocks.json` e `natural_blocks.json`; `StockReserve`
+  (fabric) dá a reserva de um item. `StockCeiling.base`, `ItemStock`, `ValueGoods`, `SmelterAdvance`,
+  `SmelterFallback` e `ShepherdWoolGoods` passam a usá-la.
+- Sai a tora guardada: `StockRules.logsToConvert` vai até a reserva da tábua; `rawThatMayBeSmelted` devolve o
+  cru inteiro; saem `halfTheWoodMayStillBeConverted`, `ItemStock.woodHeldInLogs` e `CraftBarrier.LOGS_KEPT`.
+- `ValueGoods` e `ShepherdWoolGoods`: abaixo da reserva sai ao menos uma receita (o primeiro Sentinela mostrou o tijolo
+  de pedra e a vidraça que nunca saíam, receita maior que a reserva).
+- `FurnaceGoals`: o pedido da obra vence o adiantamento (a reserva menor mostrou que o vidro da obra ficava em 4).
+- Testes: `BlockReserveTest`, `RawWithoutReserveTest` (no lugar do `RawStoneReserveTest`), `StockCeilingTest`; os
+  que cobravam a metade, o terço, 16 e 64 foram reescritos para a regra nova (`ColonyGoalsTest`,
+  `AdvanceStockTest`, `ColonyCycleTest`, `ItemStockGameTest`, `SmelterFallbackGameTest`); saíram os que só
+  provavam a porta da tora (`CarpenterWoodGateGameTest` e um caso de `IdleFixesGameTest` e `WoodInPiecesGameTest`).
+
+Nada visto em jogo.

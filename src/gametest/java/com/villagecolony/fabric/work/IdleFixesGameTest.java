@@ -64,27 +64,6 @@ public class IdleFixesGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** O carpinteiro não recebe a ordem de estoque de peça de tábua quando a madeira tem de ficar em tora. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_fixes", tickLimit = 20)
-    public void aWoodOrderIsNotOpenedWhenTheLogsMustStay(TestContext context) {
-        Colony colony = colonyWithChest(context);
-        List<ColonyPos> chests = List.of(chest(context));
-
-        try {
-            ChestDepositor.deposit(context.getWorld(), chest(context), Items.ACACIA_LOG, 4);
-            context.assertTrue(ItemStock.woodHeldInLogs(context.getWorld(), colony, chests, Items.ACACIA_FENCE),
-                    "sem tábua e com a tora reservada a ordem de cerca não devia abrir");
-
-            ChestDepositor.deposit(context.getWorld(), chest(context), Items.ACACIA_PLANKS, 16);
-            context.assertFalse(ItemStock.woodHeldInLogs(context.getWorld(), colony, chests, Items.ACACIA_FENCE),
-                    "com tábua no baú a ordem pode abrir");
-        } finally {
-            VillageColonyMod.COLONIES.remove(colony.id());
-        }
-
-        context.complete();
-    }
-
     /** O fazendeiro alcança a planta dois blocos acima a três de distância, como o jogador. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "idle_fixes", tickLimit = 40)
     public void theFarmerReachesACropOnATerraceLikeAPlayer(TestContext context) {
@@ -161,9 +140,12 @@ public class IdleFixesGameTest implements FabricGameTest {
         ChestDepositor.deposit(context.getWorld(), chest(context), Items.STONE, ValueGoods.KEEP_RAW + ValueGoods.BATCH);
         var recipe = ValueGoods.recipeFor(context.getWorld(), chests, ProfessionType.MASON).orElseThrow();
 
-        context.assertTrue(ValueGoods.batch(context.getWorld(), chests, recipe) == ValueGoods.BATCH, "o lote não saiu");
+        // Regra 340: o tijolo de pedra é especial (reserva 1); abaixo dela sai uma receita, e não o lote inteiro.
+        int made = ValueGoods.batch(context.getWorld(), chests, recipe);
+
+        context.assertTrue(made > 0 && made <= recipe.out(), "o lote não saiu como uma receita: " + made);
         context.assertTrue(com.villagecolony.fabric.integration.ColonyChests.countIn(context.getWorld(), chests,
-                Items.STONE_BRICKS) == ValueGoods.BATCH, "o lote devia virar 8 tijolos de pedra");
+                Items.STONE_BRICKS) == made, "o tijolo de pedra feito não ficou no baú");
         context.complete();
     }
 
@@ -181,7 +163,8 @@ public class IdleFixesGameTest implements FabricGameTest {
         var ore = ValueGoods.recipeFor(world, chests, ProfessionType.SMELTER).orElseThrow();
 
         context.assertTrue(ore.product() == Items.IRON_INGOT, "o fundidor devia fundir o ferro primeiro: " + ore);
-        context.assertTrue(ValueGoods.batch(world, chests, ore) == 5, "os 5 ferros crus deviam virar 5 lingotes");
+        context.assertTrue(ValueGoods.batch(world, chests, ore) == StockReserve.of(Items.IRON_INGOT),
+                "os ferros crus deviam virar lingotes até a reserva do lingote (Regra 340)");
 
         var stairs = ValueGoods.RECIPES.get(ProfessionType.MASON).stream()
                 .filter(recipe -> recipe.product() == Items.COBBLESTONE_STAIRS).findFirst().orElseThrow();

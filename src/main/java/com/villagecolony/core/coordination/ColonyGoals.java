@@ -383,8 +383,8 @@ public final class ColonyGoals {
 
         int appetite = planksForWork > 0 ? planksForWork : (storedPlanks + plankRoom) / 2;
 
-        // <b>Um terço da madeira fica em tora</b> — Regra 248, que emenda a
-        // decisão do autor de 2026-09-05 (era metade). A conta mora em
+        // <b>A tábua vai até a reserva dela</b> — Regra 340 (ADR-062), que tirou
+        // a tora guardada das Regras 5 e 248. A conta mora em
         // StockRules.logsToConvert.
         //
         // <b>O que ela conserta.</b> Nada acima reservava tronco: o

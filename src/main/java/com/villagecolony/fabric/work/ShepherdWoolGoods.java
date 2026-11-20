@@ -15,7 +15,8 @@ import java.util.List;
 /**
  * A lã guardada vira peça de lã — Regra 240 (autor, 2026-11-11, opção P5): o pastor sem tarefa, com mais de
  * {@value #KEEP} lãs nos baús, faz tapete (2 lãs dão 3) e tinge lã branca com o corante que a vila tiver. A cor de cada
- * lote é sorteada entre as que dá para fazer agora; cada peça para em {@value ValueGoods#CAP}, e a lã nunca desce de
+ * lote é sorteada entre as que dá para fazer agora; cada peça para na reserva da classe dela ({@link StockReserve},
+ * Regra 340), e a lã nunca desce de
  * {@value #KEEP}. Sem corante nos baús, só a cor da lã que o rebanho deu.
  */
 final class ShepherdWoolGoods {
@@ -48,7 +49,7 @@ final class ShepherdWoolGoods {
             Item dye = item(color, "dye");
 
             if (wool - 2 >= KEEP && ColonyChests.countIn(world, chests, fleece) >= 2
-                    && ColonyChests.countIn(world, chests, carpet) + 3 <= ValueGoods.CAP) {
+                    && ColonyChests.countIn(world, chests, carpet) < StockReserve.of(carpet)) {
                 results.add(new Made(carpet, 3));
                 lots.add(() -> {
                     ColonyChests.withdraw(world, chests, fleece, 2);
@@ -58,7 +59,7 @@ final class ShepherdWoolGoods {
 
             if (color != DyeColor.WHITE && wool > KEEP && ColonyChests.countIn(world, chests, dye) > 0
                     && ColonyChests.countIn(world, chests, white) > 0
-                    && ColonyChests.countIn(world, chests, fleece) < ValueGoods.CAP) {
+                    && ColonyChests.countIn(world, chests, fleece) < StockReserve.of(fleece)) {
                 results.add(new Made(fleece, 1));
                 lots.add(() -> {
                     ColonyChests.withdraw(world, chests, white, 1);

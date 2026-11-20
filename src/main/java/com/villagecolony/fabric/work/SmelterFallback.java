@@ -6,7 +6,6 @@ import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
-import com.villagecolony.core.coordination.StockCeiling;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ServerMemory;
@@ -175,7 +174,7 @@ final class SmelterFallback {
     }
 
     /**
-     * Se a vila já guarda este produto até o teto do estoque ({@link StockCeiling#CRAFTED}):
+     * Se a vila já guarda este produto até a reserva da classe dele ({@link StockReserve}, Regra 340):
      * aí o fundidor não o faz "para as obras". O carvão vegetal conta junto com o
      * mineral, que serve às mesmas receitas — no playtest 0.3.31 ele fez 238 carvões
      * vegetais com 446 de carvão nos baús.
@@ -184,7 +183,7 @@ final class SmelterFallback {
         int have = ColonyChests.countIn(world, chests, product)
                 + (product == Items.CHARCOAL ? ColonyChests.countIn(world, chests, Items.COAL) : 0);
 
-        return have >= StockCeiling.CRAFTED;
+        return have >= StockReserve.of(product);
     }
 
     /** O item de fornalha de cada material, ou do ingrediente dele. */

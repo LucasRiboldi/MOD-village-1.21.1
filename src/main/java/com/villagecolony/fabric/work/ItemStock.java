@@ -46,8 +46,8 @@ import java.util.UUID;
  * descendo a receita até {@link #DEPTH} degraus, e todas as peças de madeira do jogo
  * ({@link #isWoodPiece}, autor 2026-10-12: "um pouco de todas as peças de madeira"); entram também os blocos
  * fabricáveis de pedra e metal (autor 2026-10-31), pela divisão do
- * {@link CraftFamily}. Cada um vai até {@link #EACH}, em rodízio, sempre abaixo do
- * teto de 64 ({@code StockCeiling}). A obra vem antes: a ordem de estoque é uma
+ * {@link CraftFamily}. Cada um vai até a reserva da classe dele ({@link StockReserve}, ADR-062, Regra 340: 4, 12 ou 1;
+ * a bancada do mod nunca), em rodízio. A obra vem antes: a ordem de estoque é uma
  * tarefa de fabricação, e o artesão atende primeiro a peça que a obra espera
  * ({@code CraftingSteps.produceForWork}); com a obra aberta parada esperando material, nenhuma ordem de estoque abre e a
  * que está em curso cede a bancada (Regra 232).
@@ -60,9 +60,6 @@ public final class ItemStock {
     static {
         ServerMemory.register(ItemStock.class, ItemStock::clearAll);
     }
-
-    /** Quantos de cada item (16 desde 2026-10-13, item 2 do autor; eram 8). */
-    public static final int EACH = 16;
 
     /** Os ofícios que guardam um pouco de tudo. */
     static final List<TaskType> FAMILIES = List.of(TaskType.CRAFT_WOOD_MATERIAL, TaskType.CRAFT_STONE_MATERIAL,
@@ -134,11 +131,13 @@ public final class ItemStock {
             }
 
             next(world, colony, family, now).ifPresent(item -> {
-                Task order = VillageColonyMod.TASKS.create(colony.id(), family, TaskPriority.PRODUCTION, NOMINAL, EACH);
+                Task order = VillageColonyMod.TASKS.create(colony.id(), family, TaskPriority.PRODUCTION, NOMINAL,
+                        StockReserve.of(item));
 
                 ORDERS.put(order.id(), item);
                 VillageColonyMod.LOGGER.info("Colony {} asks the {} to stock {} of {}",
-                        colony.id().toString().substring(0, 8), CraftFamily.subjectOf(family), EACH, pathOf(item));
+                        colony.id().toString().substring(0, 8), CraftFamily.subjectOf(family), StockReserve.of(item),
+                        pathOf(item));
             });
         }
     }
@@ -166,17 +165,19 @@ public final class ItemStock {
 
         List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.get().id(), colony.get().center());
 
-        if (ColonyChests.countIn(world, chests, item) >= EACH) {
+        int reserve = StockReserve.of(item);
+
+        if (ColonyChests.countIn(world, chests, item) >= reserve) {
             ORDERS.remove(job.task.id());
-            CraftingWork.finish(job, workerId, "stocked " + EACH + " of " + pathOf(item), pathOf(item));
+            CraftingWork.finish(job, workerId, "stocked " + reserve + " of " + pathOf(item), pathOf(item));
 
             return Optional.of(false);
         }
 
         Optional<ColonyPos> own = VillageColonyMod.STORAGES.of(workerId).map(WorkerStorage::chestPosition);
         boolean made = own.isPresent()
-                ? ColonySupply.stockToward(world, colony.get().id(), colony.get().center(), item, EACH, own.get())
-                : ColonySupply.stockToward(world, colony.get().id(), colony.get().center(), item, EACH);
+                ? ColonySupply.stockToward(world, colony.get().id(), colony.get().center(), item, reserve, own.get())
+                : ColonySupply.stockToward(world, colony.get().id(), colony.get().center(), item, reserve);
 
         if (!made) {
             SKIPPED.put(item, world.getTime());
@@ -191,7 +192,7 @@ public final class ItemStock {
         return Optional.of(true);
     }
 
-    /** O próximo item da oficina, em rodízio, abaixo de {@link #EACH} e que a colônia consegue fazer. */
+    /** O próximo item da oficina, em rodízio, abaixo da reserva dele e que a colônia consegue fazer. */
     private static Optional<Item> next(ServerWorld world, Colony colony, TaskType family, long now) {
         List<Item> items = itemsOf(colony.id(), family);
 
@@ -209,9 +210,8 @@ public final class ItemStock {
             Long skipped = SKIPPED.get(item);
 
             if ((skipped != null && now - skipped < SKIP_FOR)
-                    || ColonyChests.countIn(world, chests, item) >= EACH
-                    || !ColonySupply.canProvide(world, colony.id(), colony.center(), item)
-                    || woodHeldInLogs(world, colony, chests, item)) {
+                    || ColonyChests.countIn(world, chests, item) >= StockReserve.of(item)
+                    || !ColonySupply.canProvide(world, colony.id(), colony.center(), item)) {
                 continue;
             }
 
@@ -221,28 +221,6 @@ public final class ItemStock {
         }
 
         return Optional.empty();
-    }
-
-    /**
-     * A peça de tábua sem tábua bastante no baú, quando a reserva de metade em tora não deixa converter:
-     * a ordem abriria e o carpinteiro a fecharia com 0 peça (69 vezes no jogo da 0.3.99). Não abre.
-     */
-    static boolean woodHeldInLogs(ServerWorld world, Colony colony, List<ColonyPos> chests, Item item) {
-        var bill = CraftingLookup.billFor(world, item, any -> true);
-
-        if (bill.isEmpty()) {
-            return false;
-        }
-
-        for (var ingredient : bill.get().ingredients().entrySet()) {
-            if (ingredient.getKey().getDefaultStack().isIn(net.minecraft.registry.tag.ItemTags.PLANKS)
-                    && ColonyChests.countIn(world, chests, ingredient.getKey()) < ingredient.getValue()
-                    && !CraftingSteps.halfTheWoodMayStillBeConverted(world, colony.id())) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /** Os itens das plantas do estilo da vila e os ingredientes deles, por oficina. */

@@ -362,12 +362,6 @@ final class CraftingSteps {
      * mesma resposta.
      */
     static boolean convertOne(ServerWorld world, Job job, UUID workerId) {
-        if (!halfTheWoodMayStillBeConverted(world, job.task.colonyId())) {
-            CraftingWork.finish(job, workerId, CraftBarrier.LOGS_KEPT);
-
-            return false;
-        }
-
         Optional<ColonyPos> output = VillageColonyMod.STORAGES.of(workerId)
                 .map(WorkerStorage::chestPosition);
 
@@ -434,50 +428,5 @@ final class CraftingSteps {
         job.crafted++;
 
         return true;
-    }
-
-    /**
-     * A colônia ainda pode moer tora, ou a reserva já bateu — 2026-09-05.
-     *
-     * <p><b>Por que o portão é aqui, e não só na meta.</b> A meta de
-     * tábua do {@link ColonyGoals} passou a respeitar a reserva no mesmo
-     * dia, e sozinha ela não segura nada: o {@code ColonyCycle} só
-     * cancela tarefa <b>ainda disponível</b> — <i>"quem já começou
-     * termina"</i> —, e esta aqui converte a cada vinte tiques até não
-     * sobrar tronco. Um fabricante que pegasse a tarefa antes de a meta
-     * baixar moeria o estoque inteiro dentro do mesmo ciclo, e a reserva
-     * existiria só no papel.
-     *
-     * <p><b>Lido dos baús na hora</b>, pelo argumento que o próprio
-     * {@code ChestInventoryReader} escreve: o jogador tira madeira do baú
-     * quando quer, e um total em cache erraria sem avisar. É a mesma
-     * varredura que este método já faria logo abaixo para achar o tronco.
-     *
-     * <p>Baú que não pôde ser lido conta como vazio, e isso é conservador
-     * na direção certa: menos madeira vista é menos conversão liberada,
-     * e o pior caso é a colônia guardar tora a mais.
-     */
-    static boolean halfTheWoodMayStillBeConverted(ServerWorld world, UUID colonyId) {
-        // <b>Os mesmos baús da meta</b> — playtest de 2026-10-03. A meta lê
-        // todos os baús da vila (VillageInventoryObserver, Regra 45) e este
-        // portão lia só os de trabalhador: tora num baú sem dono abria tarefa
-        // de tábua que o carpinteiro fechava com 0 peça — 12 vezes em meia
-        // hora, e 603 linhas de "stays in logs" desde 30-09. A tora também
-        // sai de qualquer baú da vila (convertOne), então é esta a conta.
-        ResourceTally owned = VillageColonyMod.COLONIES.find(colonyId)
-                .map(colony -> ChestInventoryReader.survey(
-                        world, ColonyChests.nearestFirst(world, colonyId, colony.center())).resources().total())
-                .orElseGet(ResourceTally::empty);
-
-        Map<ResourceId, Integer> stillNeeded = VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
-                .map(ConstructionProject::remainingMaterials)
-                .orElseGet(Map::of);
-
-        // A tábua da obra inclui a das escadas, lajes e cercas dela (P7c).
-        return StockRules.logsThatMayBeConverted(
-                owned.amountOfGroup(ResourceGroup.WOOD),
-                owned.amountOfGroup(ResourceGroup.PLANKS),
-                StockRules.rawWoodIn(stillNeeded),
-                StockRules.planksIn(stillNeeded) + WoodInPieces.planksIn(world, stillNeeded)) > 0;
     }
 }

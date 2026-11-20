@@ -84,7 +84,7 @@ class ColonyCycleTest {
         workers.register(UUID.randomUUID(), COLONY).assign(ProfessionType.MASON);
         workers.register(UUID.randomUUID(), COLONY).assign(ProfessionType.MASON);
         Map<ResourceType, Integer> goal = Map.of(ResourceType.SMOOTH_STONE_SLAB, 64);
-        Map<ResourceType, Integer> project = Map.of(ResourceType.SMOOTH_STONE_SLAB, 8);
+        Map<ResourceType, Integer> project = Map.of(ResourceType.SMOOTH_STONE_SLAB, 4);
 
         ColonyCycle.run(COLONY, ResourceTally.empty(), goal, tasks, workers,
                 worker -> true, com.villagecolony.core.coordination.ProductionHands.IGNORED, project);

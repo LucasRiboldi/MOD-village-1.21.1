@@ -4,10 +4,10 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 234
-- **Só usa a classe indicada:** 90
+- **Cita a regra:** 233
+- **Só usa a classe indicada:** 91
 - **Sem nenhum teste:** 2
-- **Fora de vigor:** 13
+- **Fora de vigor:** 14
 
 | # | regra | grau | testes |
 | --- | --- | --- | --- |
@@ -15,7 +15,7 @@ classe prova menos ainda.
 | 2 | Colher no tempo de um jogador com ferro | cita | LumberjackGameTest, ProfessionRegistryTest |
 | 3 | Nunca destruir construções da vila original, da colônia ou do jogador | cita | ArchitectureRulesTest, BuildSiteGameTest, BuilderGameTest |
 | 4 | Dois trabalhadores por profissão | fora de vigor |  |
-| 5 | Fabricar até metade do armazém | cita | ColonyGoalsTest, CraftingGameTest |
+| 5 | Fabricar até metade do armazém | fora de vigor |  |
 | 6 | Estrada primeiro, casa ligada a ela | cita | BuildSiteGameTest |
 | 7 | O lenhador planta onde cortou | cita | FarmerGameTest, ShepherdGameTest |
 | 8 | Um baú ao lado de cada cama — em toda casa (da vila e construída), encostado na parede, n… | cita | ChestPlacerGameTest |
@@ -143,7 +143,7 @@ classe prova menos ainda.
 | 130 | Cinco animais no mesmo poste pedem curral, com prioridade (autor 10-27): o curral do esti… | cita | CrowdedPostGameTest |
 | 131 | O chão em volta da obra nova fica na altura da rua (autor 10-27; o anel e a rampa viraram… | cita | DuneCutGameTest |
 | 132 | As bancadas do mod têm painel e passivas (autor 10-27): shift+clique mostra titulares, es… | cita | BenchPassivesGameTest |
-| 133 | Estoque cheio vira obra e produto (autor 10-28, jogo da 0.3.99: lenhador 74%, pedreiro 48… | cita | ItemStockGameTest |
+| 133 | Estoque cheio vira obra e produto (autor 10-28, jogo da 0.3.99: lenhador 74%, pedreiro 48… | classe | ColonyCycleTest, HiringProperties, IdleFixesGameTest |
 | 134 | O adulto que sobra vai ao ofício que a vila espera (autor 10-28, jogo da 0.3.99: 6 de 18… | fora de vigor |  |
 | 135 | Tarefa só abre quando pode render (autor 10-28, jogo da 0.3.99): a ordem de estoque de pe… | classe | IdleFixesGameTest, ItemStockGameTest, ProfessionBalanceGameTest |
 | 136 | O fazendeiro alcança como o jogador (autor 10-28, jogo da 0.3.99: roça 2 blocos acima, a… | classe | BoneMealRoundGameTest, ColonyFixture, FarmPlanGameTest |
@@ -258,7 +258,7 @@ classe prova menos ainda.
 | 245 | Cama longe vem para perto (autor 11-11, opção T3b): na troca de camas do amanhecer (Regra… | cita | BedPlanTest |
 | 246 | Arrumar o chão é trabalho (autor 11-11, opção O2a): quem nivela, tapa buraco ou devolve a… | cita | WorkTimeTest |
 | 247 | Construtor sem obra arruma o chão (autor 11-11, opção O1b): o construtor sem obra aberta,… | cita | GroundSmoothingGameTest |
-| 248 | Um terço da madeira fica em tora (autor 11-11, opção O2c): o carpinteiro converte em tábu… | cita | ColonyGoalsTest |
+| 248 | Um terço da madeira fica em tora (autor 11-11, opção O2c): o carpinteiro converte em tábu… | cita | ColonyGoalsTest, RawWithoutReserveTest |
 | 249 | Fundição sem cru chama o pedreiro (autor 11-11, opção O2b-1): a cada ciclo, a tarefa de f… | cita | FurnaceFeedGameTest |
 | 250 | A rua nasce no chão novo (autor 11-11, opção A): na geração, a coluna que o solo da vila… | cita | VillageGroundGameTest |
 | 251 | Flor e muda não seguram a coluna (autor 12-11, opção A): na geração, a varredura do topo… | cita | VillageGroundGameTest |
@@ -267,7 +267,7 @@ classe prova menos ainda.
 | 254 | Patamar nas dobras da escada da mina (autor 12-11, ADR-053): cada dobra do caracol ganha… | cita | MineLandingGameTest, MineSaveTest, MineShaftLayoutTest |
 | 255 | Animal na corda vai para o curral (autor 12-11, opções A e B): com curral na vila, o past… | cita | ShepherdTetherGameTest |
 | 256 | O arco da mina e a árvore com folha (autor 12-11, opções 1 e 2): a boca da mina ganha um… | cita | LumberjackGameTest, MineLandingGameTest, MinerGameTest |
-| 257 | Areia e argila sem reserva de cru (autor 12-11, solução 3 da reanálise dos logs): areia,… | cita | RawStoneReserveTest |
+| 257 | Areia e argila sem reserva de cru (autor 12-11, solução 3 da reanálise dos logs): areia,… | cita | RawWithoutReserveTest |
 | 258 | O adiantamento lê todas as estruturas da vila (autor 12-11, solução 2 da reanálise dos lo… | cita | BiomePiecesGameTest |
 | 259 | Um aldeão de cada profissão na vila nova (autor 12-11; as camas da casa também contam os… | cita | VillageFoundationGameTest |
 | 260 | Casa do mineiro na fundação (autor 12-11): quando a BigHouseMOD acaba de ser posta, a fun… | cita | MinerHomeFoundationGameTest |
@@ -350,3 +350,4 @@ classe prova menos ainda.
 | 337 | Nada solto em cima da peça da vila (autor 20-11, jogo da 0.4.93 em montanha: pedra, terra… | cita | ClearAbovePieceGameTest |
 | 338 | A BigHouseMOD nasce na altura das casas (autor 20-11, jogo da 0.4.93 em montanha, escolha… | cita | BigHouseLevelGameTest, FoundationLotSearchTest |
 | 339 | O ofício não segura pedido impossível (autor 20-11, jogo da 0.4.93 em planície, opções O1… | cita | CraftBarrierTest, SmelterReleaseGameTest, WaitReasonsTest |
+| 340 | A reserva por classe de bloco (autor 20-11, fase 2 do plano de ofícios e reservas, ADR-06… | cita | AdvanceStockTest, BlockReserveTest, ColonyGoalsTest |
