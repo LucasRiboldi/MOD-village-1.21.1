@@ -12081,4 +12081,3 @@ formato (`docs/research/2026-11-20-descida-cavada-do-mineiro.md`) e escolheu a A
   entidade o aldeão não anda e o teste passa ou falha por sorte.
 
 Nada visto em jogo.
-
