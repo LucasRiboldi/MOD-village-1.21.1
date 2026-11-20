@@ -78,7 +78,8 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
   - a vila foi medida em 175 × 152 com y de 82 a 173; o centro ficou em 195, 133, 57, no ar, e a BigHouseMOD em
     124, 149, 5, uns 60 blocos acima das casas (y 87 a 90). A boca da mina (151, 136, -18) nunca foi alcançada
     (`VC_REACH unreached`), a casa do mineiro ficou 41 min sem lote e saiu em 141, 160, -17; mineiro 0% de trabalho,
-    10 `NO_PATH`. Escolha A: centro e BigHouseMOD saem da altura dos prédios existentes, não do meio da caixa (G);
+    10 `NO_PATH`. Escolha A refeita (B-1): a BigHouseMOD nasce na altura das casas, Regra 338 na 0.4.102 (candidata); o
+    centro em x e z já caía no meio das casas, e o y dele quase não pesa (G);
   - blocos de terreno voando acima das casas (print do autor): o save ao sair não tem nenhum pedaço de terreno solto
     na caixa da vila; causa: a casa desce ao solo suavizado e a coluna dela não era cortada acima do piso. O autor trocou a D (linha
     `VC_FLOAT`) por limpar na geração: Regra 337 na 0.4.101 (candidata; conferir no próximo jogo em montanha);

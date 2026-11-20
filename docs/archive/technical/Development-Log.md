@@ -12095,3 +12095,17 @@ ficava, e as colunas vizinhas desciam. O autor pediu que tudo acima das estrutur
   solto 14 acima do piso; falha sem a correção ("ficou Block{minecraft:dirt} 1 acima do piso da peça").
 
 Nada visto em jogo.
+## 2026-11-20 — 0.4.102: a BigHouseMOD nasce na altura das casas (Regra 338)
+
+No jogo da 0.4.93 em montanha a casa saiu em 124,149,5 e a mina ao lado dela, uns 60 acima das casas, no mesmo instante
+em que a colônia nasceu. O log mostrou que o centro já caía, em x e z, no meio das casas (195,57); o defeito era a ordem
+dos lotes (`FoundationLotSearch`: desnível, mato, distância), que dava ao platô plano do alto a vitória. O autor pediu
+margem maior e escolheu a B-1.
+
+- `GeneratedVillages.houseFloorsAt`: meio e piso de cada casa da vila gerada.
+- `BigHouseFoundation`: a busca parte da mediana das casas; `BEYOND_VILLAGE` 32, `MAX_REACH` 128; `VC_BIGHOUSE_SEARCH`.
+- `FoundationLotSearch`: lote a mais de `HEIGHT_BAND` (8) da altura das casas vai para o fim da fila.
+- `FoundationLotSearchTest` (platô em 149 contra vale em 88) e `BigHouseLevelGameTest` (platô 24 acima, ligado por
+  rampa): os dois falham sem a faixa (o GameTest pôs a casa em y 125 com a vila em 101).
+
+Nada visto em jogo.

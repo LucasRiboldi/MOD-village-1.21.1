@@ -16,6 +16,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.math.random.Random;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,10 +27,10 @@ public final class BigHouseFoundation {
     private static final int SEARCH_RADIUS = 32;
 
     /** Além da borda da vila gerada, quanto ainda se procura lote. */
-    private static final int BEYOND_VILLAGE = 16;
+    private static final int BEYOND_VILLAGE = 32;
 
     /** O teto da busca: o custo é uma leitura de altura por coluna da área, uma vez por tentativa. */
-    private static final int MAX_REACH = 96;
+    private static final int MAX_REACH = 128;
 
     private BigHouseFoundation() {
     }
@@ -183,6 +184,9 @@ public final class BigHouseFoundation {
     /**
      * Procura onde assentar a casa — decisão do autor, 2026-10-20.
      *
+     * <p>A busca parte do meio das casas da vila gerada e prefere o piso na altura delas (Regra 338): sem isso, o platô
+     * plano no alto do morro vencia o lote ao lado das casas.
+     *
      * <p>Plano exato primeiro, numa área até a borda da vila gerada mais {@link #BEYOND_VILLAGE};
      * sem plano exato, o lote mais nivelado com desnível até {@link FoundationLotSearch#MAX_SPREAD},
      * que {@link #level} aplaina. A altura é a do chão, sem a vegetação de pé nele; lote com árvore
@@ -190,8 +194,15 @@ public final class BigHouseFoundation {
      * chunk descarregado o carregaria no tique.
      */
     private static Optional<Site> findSafeOrigin(ServerWorld world, Colony colony, Vec3i size) {
-        BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
+        BlockPos detected = MinecraftTypeAdapter.toBlockPos(colony.center());
+        List<int[]> houses = GeneratedVillages.houseFloorsAt(world, detected.getX(), detected.getZ());
+        BlockPos center = houses.isEmpty() ? detected
+                : new BlockPos(median(houses, 0), median(houses, 1), median(houses, 2));
         int reach = reachOf(world, center);
+
+        VillageColonyMod.LOGGER.info("VC_BIGHOUSE_SEARCH colony={} houses={} level={} center={} reach={}",
+                colony.id().toString().substring(0, 8), houses.size(), center.getY(), center.toShortString(), reach);
+
         int width = 2 * reach + size.getX();
         int depth = 2 * reach + size.getZ();
         int minX = center.getX() - reach - size.getX() / 2;
@@ -216,7 +227,8 @@ public final class BigHouseFoundation {
         Site cutOff = null;
 
         for (FoundationLotSearch.Lot lot
-                : FoundationLotSearch.candidates(heights, growth, width, depth, size.getX(), size.getZ())) {
+                : FoundationLotSearch.candidates(heights, growth, width, depth, size.getX(), size.getZ(),
+                        center.getY())) {
             int x = minX + lot.offsetX();
             int z = minZ + lot.offsetZ();
             boolean levelled = lot.spread() > 0;
@@ -236,6 +248,18 @@ public final class BigHouseFoundation {
         }
 
         return Optional.ofNullable(cutOff);
+    }
+
+    /** O canto do lote que a busca escolhe, sem pôr a casa — para o teste (Regra 338). */
+    static Optional<BlockPos> siteFor(ServerWorld world, Colony colony, Vec3i size) {
+        return findSafeOrigin(world, colony, size).map(Site::origin);
+    }
+
+    /** A mediana de uma coordenada das casas: uma casa isolada no alto ou longe não puxa o meio (Regra 338). */
+    static int median(List<int[]> houses, int axis) {
+        int[] values = houses.stream().mapToInt(house -> house[axis]).sorted().toArray();
+
+        return values[(values.length - 1) / 2];
     }
 
     /** Até onde procurar: a borda da vila gerada mais a folga, entre os 32 de antes e {@link #MAX_REACH}. */

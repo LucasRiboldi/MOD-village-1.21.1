@@ -123,4 +123,39 @@ class FoundationLotSearchTest {
         assertTrue(first.clearing());
         assertEquals(0, first.ring());
     }
+
+    /** Regra 338: o platô plano no alto do morro perde para o lote quase plano na altura das casas. */
+    @Test
+    void aHighFlatPlateauLosesToALevelledLotAtTheHeightOfTheHouses() {
+        int[] heights = new int[SIDE * SIDE];
+
+        for (int z = 0; z < SIDE; z++) {
+            for (int x = 0; x < SIDE; x++) {
+                heights[z * SIDE + x] = 88 + x % 2; // o vale das casas, ondulado de 1
+            }
+        }
+
+        for (int z = 3; z < 6; z++) {
+            for (int x = 3; x < 6; x++) {
+                set(heights, x, z, 149); // o platô, plano e no meio do mapa
+            }
+        }
+
+        FoundationLotSearch.Lot first =
+                FoundationLotSearch.candidates(heights, new boolean[SIDE * SIDE], SIDE, SIDE, 3, 3, 88).get(0);
+
+        assertTrue(Math.abs(first.floor() - 88) <= FoundationLotSearch.HEIGHT_BAND,
+                "Regra 338: a casa foi para o piso " + first.floor() + ", longe das casas em 88");
+        assertEquals(1, first.spread());
+    }
+
+    /** Regra 338: sem lote na faixa da altura das casas, o mais plano de qualquer altura ainda serve. */
+    @Test
+    void withoutALotAtTheHeightOfTheHousesTheFlattestAnywhereStillServes() {
+        FoundationLotSearch.Lot first =
+                FoundationLotSearch.candidates(flat(149), new boolean[SIDE * SIDE], SIDE, SIDE, 3, 3, 88).get(0);
+
+        assertEquals(149, first.floor());
+        assertEquals(0, first.ring());
+    }
 }
