@@ -9,7 +9,7 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.107 na branch `fix/oficios-e-reservas` (Regras 339 a 343; as 4 fases, ADR-062), não jogada; 0.4.100 a 0.4.102 na `main` (Regras 336 a 338, ADR-061), não jogadas; 0.4.99 publicada como `v0.4.99-alpha` (Regras 326 a 335, ADR-058 a ADR-060, do jogo da
+- **Versão:** 0.4.107 na `main`, publicada como `v0.4.107-alpha` (Regras 336 a 343, ADR-061 e ADR-062), não jogada; roteiro de jogo em `docs/testing/roteiro-de-jogo-0.4.107.md`; 0.4.100 a 0.4.102 na `main` (Regras 336 a 338, ADR-061), não jogadas; 0.4.99 publicada como `v0.4.99-alpha` (Regras 326 a 335, ADR-058 a ADR-060, do jogo da
   0.4.93 em planície); a anterior publicada é a `v0.4.93-alpha` (Regras 315 a 325, ADR-057), **jogada em 19-11**
   (montanha, Spark `0SMEEkMLGP`, ~35 min): boca da mina e BigHouseMOD no alto da montanha, longe das casas, e blocos de
   terreno voando no print do autor. Triagem no `TODO.md`; o autor escolheu A (centro e BigHouseMOD pela altura dos
