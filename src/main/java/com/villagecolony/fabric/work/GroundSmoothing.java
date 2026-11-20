@@ -200,6 +200,7 @@ final class GroundSmoothing {
         }
         for (int depth = 1; depth <= gap; depth++) {
             world.setBlockState(surface.down(depth), Blocks.DIRT.getDefaultState(), Block.NOTIFY_ALL);
+            com.villagecolony.fabric.integration.EditLedger.mod(world, surface.down(depth).toImmutable(), Blocks.DIRT.getDefaultState(), "nivelamento"); // Regra 345
         }
         return true;
     }
@@ -236,6 +237,7 @@ final class GroundSmoothing {
 
                         if (plant || SiteSurroundings.isNaturalGround(state)) {
                             world.setBlockState(at, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+                            com.villagecolony.fabric.integration.EditLedger.mod(world, at.toImmutable(), Blocks.AIR.getDefaultState(), "nivelamento"); // Regra 345
                             cleared++;
                         }
                     }
@@ -308,16 +310,20 @@ final class GroundSmoothing {
             // A planta de cima sai junto com o chão que a segura.
             if (world.getBlockState(at).isReplaceable() && !world.getBlockState(at).isAir()) {
                 world.setBlockState(at, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+                com.villagecolony.fabric.integration.EditLedger.mod(world, at.toImmutable(), Blocks.AIR.getDefaultState(), "nivelamento"); // Regra 345
             }
 
             world.setBlockState(at.setY(y), Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+            com.villagecolony.fabric.integration.EditLedger.mod(world, at.setY(y).toImmutable(), Blocks.AIR.getDefaultState(), "nivelamento"); // Regra 345
         }
 
         for (int y = top; y < target; y++) {
             world.setBlockState(at.setY(y), fill, Block.NOTIFY_ALL);
+            com.villagecolony.fabric.integration.EditLedger.mod(world, at.setY(y).toImmutable(), fill, "nivelamento"); // Regra 345
         }
 
         world.setBlockState(at.setY(target), surface, Block.NOTIFY_ALL);
+        com.villagecolony.fabric.integration.EditLedger.mod(world, at.setY(target).toImmutable(), surface, "nivelamento"); // Regra 345
 
         return true;
     }

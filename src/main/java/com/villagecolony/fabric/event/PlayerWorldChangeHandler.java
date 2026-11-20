@@ -54,6 +54,12 @@ public final class PlayerWorldChangeHandler {
             com.villagecolony.fabric.integration.PlayerGround.broke(pos, state);
 
             if (world instanceof ServerWorld serverWorld) {
+                // O conflito com o mod (Regra 345): o que o jogador quebrou na vila.
+                if (com.villagecolony.fabric.integration.EditLedger.inAnyVillage(pos)) {
+                    com.villagecolony.fabric.integration.EditLedger.player(serverWorld, pos, state,
+                            net.minecraft.block.Blocks.AIR.getDefaultState());
+                }
+
                 onBlockChanged(serverWorld, pos);
             }
         });
@@ -108,6 +114,11 @@ public final class PlayerWorldChangeHandler {
 
             // O chão natural que o jogador pôs também fica (Regra 334).
             com.villagecolony.fabric.integration.PlayerGround.placed(pos, entry.getValue(), world.getBlockState(pos));
+
+            // O conflito com o mod (Regra 345): o que o jogador pôs ou trocou na vila.
+            if (com.villagecolony.fabric.integration.EditLedger.inAnyVillage(pos)) {
+                com.villagecolony.fabric.integration.EditLedger.player(world, pos, entry.getValue(), world.getBlockState(pos));
+            }
 
             worldChanged(world, pos, world.getBlockState(pos));
         }

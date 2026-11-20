@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 236
+- **Cita a regra:** 238
 - **Só usa a classe indicada:** 91
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -354,3 +354,5 @@ classe prova menos ainda.
 | 341 | O contratado perde o ofício Vanilla na hora (autor 20-11: viu um trabalhador do mod ganha… | cita | VanillaTradeAfterHireGameTest |
 | 342 | O registro de blocos (autor 20-11, fase 3 do plano de ofícios e reservas, ADR-062): por c… | cita | BlockLedgerGameTest, BlockLedgerTest, test_stock_report |
 | 343 | A medida das travas de cru (autor 20-11, fase 4 do plano de ofícios e reservas, ADR-062):… | cita | KeepLedgerTest, test_stock_report |
+| 344 | A telemetria dos aldeões e dos itens (autor 20-11, plano docs/research/2026-11-20-telemet… | cita | ItemFlowGameTest, TaskTraceGameTest, VillagerDayGameTest |
+| 345 | O conflito com o jogador e a reafirmação (autor 20-11, telemetria F1 a F3b do plano docs/… | cita | EditLedgerGameTest, test_player_report |

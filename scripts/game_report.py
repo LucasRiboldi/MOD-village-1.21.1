@@ -4,6 +4,7 @@
 Junta, num arquivo só, o que os relatórios do projeto dizem sobre o log e o diário de ações mais recentes, e põe no
 topo os achados mais graves, em ordem:
 
+0. o jogador refez o que o mod desfez (``VC_PLAYER_INSIST``, Regra 345): "Para corrigir — o jogador insistiu";
 1. ofício fora da régua de tempo: Regra 51 (ocioso + bloqueado + encalhado > 15%), espera acima de 40%,
    travamento (bloqueado + encalhado > 10%) e fluxo (mais de 40% sem trabalhar, Regra 50);
 2. aldeão morto (``VC_VILLAGER_DEATH``) e aldeão sem cama (``VC_VILLAGER_DAY``);
@@ -36,6 +37,7 @@ sys.path.insert(0, HERE)
 
 import action_report  # noqa: E402
 import flow_report  # noqa: E402
+import player_report  # noqa: E402
 import stock_report  # noqa: E402
 import task_report  # noqa: E402
 import time_ledger  # noqa: E402
@@ -65,6 +67,10 @@ def villager_days(text_lines):
 def findings(log_lines, records):
     """Os achados, do mais grave ao menos, cada um uma frase."""
     found = []
+
+    # A reafirmação do jogador vem antes de tudo: é o que ele quer, dito com a mão (Regra 345).
+    for serious, text in player_report.to_fix(player_report.collect(log_lines)):
+        found.append((0, ("🔴 " if serious else "⚠ ") + "Para corrigir — " + text))
 
     seconds, _windows = time_ledger.collect(log_lines)
     for profession, row in sorted(seconds.items()):
@@ -133,6 +139,8 @@ def build(log_lines, records, when):
                                                         + action_report.render_items(action_report.by_item(records)))))
     out.append(section("Balanço dos itens", lambda: print(flow_report.render(flow_report.collect(log_lines)))))
     out.append(section("Blocos e travas", lambda: stock_print(log_lines)))
+    out.append(section("Interferência do jogador",
+                       lambda: print(player_report.render(player_report.collect(log_lines)))))
     return "\n".join(out)
 
 

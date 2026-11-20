@@ -116,7 +116,9 @@ código antes de responder:
 
 ### 0.4 Toda verificação mede o tempo dos aldeões (Regra 50)
 
-Pedido do autor, 2026-10-02. Depois de qualquer playtest, rode
+Pedido do autor, 2026-10-02. Depois de qualquer playtest, rode primeiro
+`python scripts/game_report.py` (Regras 344 e 345): o relatório único, com os achados mais graves no topo
+(a começar pelo que o jogador insistiu) e as tabelas de todos os outros. Depois, o detalhe:
 `python scripts/time_ledger.py` (lê as linhas `VC_TIME` do `WorkTime`). Por
 profissão, ele dá a proporção de trabalho, caminhada, espera, bloqueio, ócio
 e encalhe no expediente.

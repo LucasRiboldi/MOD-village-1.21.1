@@ -295,6 +295,7 @@ public final class PathPaving {
 
         if (floorY < ground) {
             world.breakBlock(top, false);
+            com.villagecolony.fabric.integration.EditLedger.mod(world, top, net.minecraft.block.Blocks.AIR.getDefaultState(), "calcada"); // Regra 345
         }
 
         for (int y = floorY + 1; y <= floorY + CLEAR; y++) {
@@ -303,6 +304,7 @@ public final class PathPaving {
 
             if (!state.isAir() && LotGround.isNothing(state) && state.getFluidState().isEmpty()) {
                 world.breakBlock(above, false);
+                com.villagecolony.fabric.integration.EditLedger.mod(world, above, net.minecraft.block.Blocks.AIR.getDefaultState(), "calcada"); // Regra 345
             }
         }
 
@@ -312,6 +314,7 @@ public final class PathPaving {
             return false;
         }
         RoadIndex.remember(colonyId, floor);
+        com.villagecolony.fabric.integration.EditLedger.mod(world, floor, paving, "calcada"); // Regra 345
         return true;
     }
 

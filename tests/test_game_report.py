@@ -15,6 +15,7 @@ LOG = [
     "VC_VILLAGER_DAY version=1 colony=ab12cd34 day=3 villagers=1 aa11bb22=MINER,9000,0,100,300,12",
     "VC_FLOW version=1 day=3 items=1 oak_planks=10,3,0,40,52,5",
     "VC_VANILLA_JOB version=1 action=stripped worker=cc33dd44 trade=farmer",
+    "VC_PLAYER_INSIST version=1 system=obra block=air target=construcao count=1 gap=400 at=10, 64, 5",
 ]
 
 
@@ -23,7 +24,8 @@ class GameReportTest(unittest.TestCase):
 
     def test_the_findings_come_in_order_of_weight(self):
         found = [text for _rank, text in game_report.findings(LOG, [])]
-        self.assertTrue(all(text.startswith("SMELTER: ") for text in found[:2]), found)
+        self.assertTrue(found[0].startswith("⚠ Para corrigir — o jogador refez 1× em 10, 64, 5"), found)
+        self.assertTrue(all(text.startswith("SMELTER: ") for text in found[1:3]), found)
         self.assertTrue(any(text.startswith("SMELTER: REGRA 51") for text in found), found)
         self.assertTrue(any("morreu: fall" in text for text in found), found)
         self.assertTrue(any("300 s sem cama" in text for text in found), found)
@@ -34,5 +36,5 @@ class GameReportTest(unittest.TestCase):
         report = game_report.build(LOG, [], "2026-11-20 20:00")
         self.assertIn("## Achados, do mais grave ao menos", report)
         for title in ("Tempo por ofício", "Tarefas", "Linha do tempo dos aldeões", "Balanço dos itens",
-                      "Blocos e travas"):
+                      "Blocos e travas", "Interferência do jogador"):
             self.assertIn("## " + title, report)

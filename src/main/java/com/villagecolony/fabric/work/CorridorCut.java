@@ -134,6 +134,7 @@ final class CorridorCut {
 
         if (top > floor.getY() && !world.getBlockState(plant).isAir() && LotGround.isNothing(world.getBlockState(plant))) {
             world.setBlockState(plant, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+            com.villagecolony.fabric.integration.EditLedger.mod(world, plant.toImmutable(), Blocks.AIR.getDefaultState(), "corredor"); // Regra 345
         }
 
         for (int y = top; y > floor.getY(); y--) {
@@ -151,6 +152,7 @@ final class CorridorCut {
             }
 
             world.setBlockState(pos, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+            com.villagecolony.fabric.integration.EditLedger.mod(world, pos.toImmutable(), Blocks.AIR.getDefaultState(), "corredor"); // Regra 345
             moved++;
         }
 
@@ -170,8 +172,10 @@ final class CorridorCut {
 
         if (surface.isOf(Blocks.GRASS_BLOCK) && now.isIn(net.minecraft.registry.tag.BlockTags.DIRT)) {
             world.setBlockState(step, Blocks.GRASS_BLOCK.getDefaultState(), Block.NOTIFY_ALL);
+            com.villagecolony.fabric.integration.EditLedger.mod(world, step.toImmutable(), Blocks.GRASS_BLOCK.getDefaultState(), "corredor"); // Regra 345
         } else if (surface.isOf(Blocks.SNOW_BLOCK) || surface.isOf(Blocks.PODZOL) || surface.isOf(Blocks.COARSE_DIRT)) {
             world.setBlockState(step, surface, Block.NOTIFY_ALL);
+            com.villagecolony.fabric.integration.EditLedger.mod(world, step.toImmutable(), surface, "corredor"); // Regra 345
         }
     }
 
