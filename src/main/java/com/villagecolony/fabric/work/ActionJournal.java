@@ -243,7 +243,7 @@ public final class ActionJournal {
     }
 
     /** O lote vai para o disco; falha de disco desliga o diário, nunca o jogo. */
-    static void flush() {
+    public static void flush() {
         Path target = file;
 
         if (target == null || PENDING.isEmpty()) {

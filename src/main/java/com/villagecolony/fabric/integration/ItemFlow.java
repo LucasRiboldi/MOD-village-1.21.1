@@ -88,6 +88,15 @@ public final class ItemFlow {
 
     /** A linha do dia e o recomeço da conta: o estoque de hoje vira o de ontem do próximo balanço. */
     public static String report(ServerWorld world, long day) {
+        return balance(world, day, true);
+    }
+
+    /** A linha do dia até agora, sem recomeçar a conta — para o {@code /vc salvar} (Regra 346). */
+    public static String peek(ServerWorld world, long day) {
+        return balance(world, day, false);
+    }
+
+    private static String balance(ServerWorld world, long day, boolean commit) {
         Map<String, Integer> stock = stockOf(world);
         List<String> entries = new ArrayList<>();
         Set<String> keys = new TreeSet<>(DAY.keySet());
@@ -116,9 +125,11 @@ public final class ItemFlow {
                     + "," + now + "," + outside);
         }
 
-        DAY.clear();
-        lastStock = stock;
-        known = true;
+        if (commit) {
+            DAY.clear();
+            lastStock = stock;
+            known = true;
+        }
 
         return "VC_FLOW version=1 day=" + day + " items=" + entries.size()
                 + (entries.isEmpty() ? "" : " " + String.join(" ", entries));

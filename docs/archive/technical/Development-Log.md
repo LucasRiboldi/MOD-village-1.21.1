@@ -12201,3 +12201,12 @@ O autor perguntou se o mod sabe tudo dos itens e de cada aldeão, e pediu també
 - Os testes de `VillagerDay` e `EditLedger` foram escritos junto com as classes: não houve vermelho antes.
 
 Nada visto em jogo.
+## 2026-11-20 — 0.4.110: `/vc salvar` (Regra 346)
+
+O autor pediu um comando que rode todos os `/vc` e salve as análises. Na 1.21.1, o comando chamado de dentro de
+outro vai para a fila (`CommandExecutionContext.enqueueCommand`) e só roda depois dele: o `/vc salvar` agenda, e no
+fim do tique roda cada comando com a saída capturada (`ServerCommandSource.withOutput`), junta as linhas parciais
+(`BlockLedger.report`, `KeepLedger.peek`, `ItemFlow.peek`, `VillagerDay.peek`, sem zerar) e grava
+`snapshot-*.txt` na pasta de análise do mundo. `SnapshotCommandGameTest`.
+
+Nada visto em jogo.

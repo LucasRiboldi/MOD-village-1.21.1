@@ -232,6 +232,7 @@ public class VillageColonyMod implements ModInitializer {
         SiteSignJanitor.register();
         VillageLogCommand.register();
         com.villagecolony.fabric.command.BlockCommand.register();
+        com.villagecolony.fabric.command.SnapshotCommand.register();
         com.villagecolony.fabric.command.GraphModeCommand.register();
         com.villagecolony.fabric.command.BiomeCheck.register();
         com.villagecolony.fabric.command.MaeCommand.register();

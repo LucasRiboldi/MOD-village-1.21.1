@@ -122,6 +122,11 @@ public final class VillagerDay {
                 + " villagers=" + entries.size() + (entries.isEmpty() ? "" : " " + String.join(" ", entries));
     }
 
+    /** A linha do dia até agora, sem zerar a conta — para o {@code /vc salvar} (Regra 346). */
+    public static String peek(java.util.UUID colonyId, long day) {
+        return line(colonyId, day);
+    }
+
     /** Para o teste. */
     static void forget(UUID villagerId) {
         DAY.remove(villagerId);

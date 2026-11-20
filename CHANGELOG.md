@@ -12,6 +12,15 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.110] — candidata, 2026-11-20
+
+Regra 346; nada visto em jogo.
+
+### Adicionado
+
+- `/vc salvar`: roda os comandos `/vc` de leitura e as linhas de análise do dia e grava tudo num arquivo só,
+  na pasta de análise do mundo.
+
 ## [0.4.109] — candidata, 2026-11-20
 
 O conflito entre o jogador e o mod (telemetria F1 a F3b). Regra 345; só registra.
