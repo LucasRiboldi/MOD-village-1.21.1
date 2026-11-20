@@ -386,7 +386,7 @@ final class ShepherdPens {
                         gate.offset(way.getOpposite()).toImmutable(), existing.get().reach(), existing.get().large()));
             }
 
-            FencedIn.Result pen = FencedIn.check(world, inside, 2 * FencedIn.RADIUS);
+            FencedIn.Result pen = FencedIn.penAt(world, inside);
 
             if (pen.enclosed() && pen.reach().size() >= 4
                     && (best == null || pen.reach().size() < best.reach().size())) {

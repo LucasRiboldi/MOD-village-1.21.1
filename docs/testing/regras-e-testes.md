@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 221
+- **Cita a regra:** 224
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -82,7 +82,7 @@ classe prova menos ainda.
 | 69 | A horta da casa surge sem gastar recurso: os blocos de chão da planta que não têm item ne… | cita | GardenPiecesGameTest |
 | 70 | Forma do caminho: um bloco de largura, reto a partir da porta, virando só em ângulo reto.… | fora de vigor |  |
 | 71 | O mineiro não constrói para fora da montanha: o desvio dele não põe bloco ao céu aberto (… | cita | DetourCostsTest, MinerCautionGameTest |
-| 72 | Um curral por espécie: animais iguais ficam no mesmo curral; com mais de um curral na vil… | cita | PenModelGameTest, ShepherdPensGameTest |
+| 72 | Um curral por espécie: animais iguais ficam no mesmo curral; com mais de um curral na vil… | cita | PenModelGameTest, ShepherdPensGameTest, ShepherdRoundGameTest |
 | 73 | Caminho de areia: a vila do deserto tem caminho próprio — cópia do caminho de terra do Va… | classe | BenchPassivesGameTest, BenchUseGameTest, BiomeSiteGameTest |
 | 74 | A cama mais perto do trabalho: cada aldeão dorme na cama da vila mais perto de onde traba… | cita | BedChoiceGameTest, BedPlanTest, WalksTest |
 | 75 | Movimentação natural: só o mineiro remodela o terreno para subir (degrau, túnel); ninguém… | classe | ClimbReshapeTest |
@@ -337,3 +337,6 @@ classe prova menos ainda.
 | 324 | O lenhador encosta no carvalho de copa baixa (autor 18-11, escolha "tirar a folha"): quan… | cita | TrunkStandGameTest |
 | 325 | A plantação grande arada e semeada inteira (autor 18-11, escolha "ler o molde e semear es… | cita | LargeFarmBedsGameTest |
 | 326 | A árvore sai inteira, com galho e tronco ligados (autor 19-11, jogo da 0.4.93, escolha "t… | cita | PathTreeClearingGameTest |
+| 327 | O curral é um lugar (autor 19-11, jogo da 0.4.93 em planície, ADR-058, pacote B): na leit… | cita | ShepherdRoundGameTest |
+| 328 | O pastor desiste do desgarrado que não alcança (autor 19-11, ADR-058; emenda a Regra 309)… | cita | ShepherdRoundGameTest |
+| 329 | A ronda do pastor (autor 19-11, ADR-058; emenda a Regra 72): uma vez por dia, no expedien… | cita | ShepherdRoundGameTest |

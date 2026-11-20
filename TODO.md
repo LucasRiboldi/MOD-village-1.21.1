@@ -89,11 +89,11 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
     ×672 em 35 min pede teto (M); nenhuma nota `VC_BIOME_NOTE`
 - [ ] 🔴 Jogo da 0.4.93 (19-11, planície, colônia ccac8347, Spark `AYGQ78wh44`, TPS 20, ~3 h), triagem:
   - o calçador sem ofício deixava tronco do carvalho grande no caminho: Regra 326 na 0.4.94 (candidata);
-  - notas do autor: o nó da casa do mod fora do grafo (410, 65, -199); o pastor não leva o animal ao curral e fica
-    travado com nome vermelho (379, 66, -182); o fazendeiro roda no mesmo lugar (386, 67, -187); a terra tirada pelo
+  - o pastor levava de novo o animal já no curral e ficava travado com nome vermelho: Regras 327 a 329 na 0.4.95
+    (ADR-058, candidatas);
+  - notas do autor: o nó da casa do mod fora do grafo (410, 65, -199); o fazendeiro roda no mesmo lugar (386, 67, -187); a terra tirada pelo
     jogador volta em 4 pontos (398, 64, -174 / 414, 64, -161 / 437, 64, -155 / 403, 68, -224) (M);
-  - Regra 51: fazendeiro 66% sem trabalhar (29× "could not reach the crop", 17× "fenced in"), pastor 51% bloqueado,
-    mineiro 33%, fundidor 48% e carpinteiro 42% sem trabalhar (M);
+  - Regra 51: fazendeiro 66% sem trabalhar (29× "could not reach the crop", 17× "fenced in"), mineiro 33%, fundidor 48% e carpinteiro 42% sem trabalhar (M);
   - `dirt_path` sem receita e posto como `SHAPED_GROUND` (Regra 69, declarado)
 - [ ] 🔴 Simulação de 3 dias da 0.4.92 (18-11, planície, modo `vizinhanca`, colônia 58cb0273), achados:
   - fila do terreno, lenhador encostado no tronco e plantação grande: Regras 323 a 325 na 0.4.93 (candidatas);

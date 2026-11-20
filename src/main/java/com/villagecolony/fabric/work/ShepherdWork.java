@@ -206,6 +206,7 @@ public final class ShepherdWork {
     /** Um tique de trabalho para cada pastor com ovelha em vista. */
     public static void tick(ServerWorld world) {
         ShepherdHerding.tick(world);
+        ShepherdRound.tick(world);
 
         if (JOBS.isEmpty()) {
             return;
@@ -227,8 +228,8 @@ public final class ShepherdWork {
                 continue;
             }
 
-            // Com um animal na corda, a tosquia espera a coleta acabar.
-            if (ShepherdHerding.isHerding(entry.getKey())) {
+            // Com um animal na corda ou na ronda do dia (Regra 329), a tosquia espera.
+            if (ShepherdHerding.isHerding(entry.getKey()) || ShepherdRound.isWalking(entry.getKey())) {
                 continue;
             }
 

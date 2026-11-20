@@ -76,6 +76,7 @@
       "com.villagecolony.fabric.work.StockWholeOrderGameTest",
       "com.villagecolony.fabric.work.TreeNearestGameTest",
       "com.villagecolony.fabric.work.ShepherdPensGameTest",
+      "com.villagecolony.fabric.work.ShepherdRoundGameTest",
       "com.villagecolony.fabric.work.PenTetherGameTest",
       "com.villagecolony.fabric.work.WaterRescueGameTest",
       "com.villagecolony.fabric.work.SmoothRefusalGameTest",
