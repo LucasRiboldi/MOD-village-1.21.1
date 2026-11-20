@@ -12002,3 +12002,21 @@ trabalho real de um pastor e escolheu o pacote B.
 `ShepherdRoundGameTest`: 3 dos 5 casos falham sem a leitura do curral e o filtro do desgarrado. O caso do curral grande
 pedia uma arena de 29 × 29: com o chão menor, a borda da arena fechava o lado de fora e o lado de fora era lido como
 curral. Nada visto em jogo.
+
+## 2026-11-19 — 0.4.96: o Zelador (Regras 330 e 331, ADR-059)
+
+O autor pediu uma profissão só para o chão da vila, com o nome Zelador e sem bancada (pesquisa em
+`docs/research/2026-11-19-profissao-do-chao.md`; quem não tinha ofício fazia 86% do nivelamento e 96% da calçada).
+
+- **Regra 330:** `ProfessionType.GROUNDSKEEPER` com `Capability.MAINTAIN_GROUND`, sem bancada (`ModContent.benchBlock`
+  nulo) e de mão vazia. Vaga do nono adulto em `ProfessionAssigner`; a fundação continua nos oito ofícios
+  (`GROWTH_ORDER`). `PathPaving.PAVERS`, `BuilderPaving.PAVERS` e `SnowShovel` passaram a ser só dele;
+  `VillageHelpers` perdeu o nivelamento, que foi para `GroundKeeper` (dia em ordem, passada a cada 200 tiques,
+  `VC_GROUND` no `TerrainReport`). `GroundSmoothing.pass` saiu.
+- **Regra 331:** `PathObstacles`: o feno é ar para `WorldPathTerrain` (chão, corte e "construído em cima") e sai para os
+  baús em `PathPaving.step`.
+- A pá de ferro como ferramenta do ofício fez a colônia encantar a pá do jogador (`WorkerEquipmentGameTest`); o Zelador
+  ficou de mão vazia.
+
+`GroundKeeperGameTest` falha sem o `PathObstacles`. Os testes de calçada e de nivelamento passaram a afirmar que
+pedreiro, carpinteiro, construtor e quem não tem ofício não calçam nem nivelam. Nada visto em jogo.

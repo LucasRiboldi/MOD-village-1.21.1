@@ -85,6 +85,9 @@ public final class ProfessionAssigner {
 
     static final int ADULTS_PER_BATCH = 15;
 
+    /** Quantos Zeladores a vila contrata: um (Regra 330). */
+    static final int GROUNDSKEEPERS = 1;
+
     private ProfessionAssigner() {
     }
 
@@ -278,6 +281,18 @@ public final class ProfessionAssigner {
             return demanded;
         }
 
+        // Uma vaga de Zelador por vila, para o adulto que passa das oito funções da primeira leva, antes da segunda
+        // leva e depois da falta de comida (Regra 330).
+        if (adultPopulation > GROWTH_ORDER.size() && policies.policyOf(ProfessionType.GROUNDSKEEPER).enabled()
+                && counts.getOrDefault(ProfessionType.GROUNDSKEEPER, 0) < GROUNDSKEEPERS
+                && (candidate == null || !candidate.isShunning(ProfessionType.GROUNDSKEEPER))) {
+            if (colonyId != null) {
+                HiringLog.record(colonyId, ProfessionType.GROUNDSKEEPER, HiringLog.Outcome.FILLED);
+            }
+
+            return Optional.of(ProfessionType.GROUNDSKEEPER);
+        }
+
         for (ProfessionType type : growthOrder) {
             // O ofício que já sobra não ganha vaga nova (Regra 233): a vaga passa ao seguinte.
             if (HiringQuota.atMaximum(type, counts, policies)
@@ -306,7 +321,8 @@ public final class ProfessionAssigner {
         }
 
         // Todas na meta: o adulto que sobra fica sem ofício (Regra 298). A vaga a mais só vem pela demanda acima,
-        // e quem está sem ofício calça, tira neve (Regra 220) e pega o machado quando a obra espera madeira (Regra 189).
+        // e quem está sem ofício carrega e pega o machado quando a obra espera madeira (Regra 189); o chão é do Zelador
+        // (Regra 330).
         if (colonyId != null) {
             // Nenhuma profissão serviu a este candidato. A conta por
             // profissão acima já disse quais e por quê; esta linha existe

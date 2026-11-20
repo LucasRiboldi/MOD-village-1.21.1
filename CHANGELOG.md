@@ -12,6 +12,24 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.96] — candidata, 2026-11-19
+
+Escolha do autor depois do jogo da 0.4.93 em planície: o pacote B da ADR-059, uma profissão própria para o chão da vila.
+Regras 330 e 331; nada visto em jogo.
+
+### Adicionado
+
+- Regra 330: o **Zelador**, sem bancada e com uma vaga por vila (o nono adulto). Só ele calça e cuida do chão: a linha
+  do grafo, o caminho fora da linha de volta ao solo, o chão entre as construções, a fila do terreno e a neve, nessa
+  ordem. A linha diária `VC_GROUND` mede o que falta e o que ele fez. Ícone no overlay e nome nas três línguas.
+- Regra 331: o grafo atravessa o fardo de feno no chão, e o Zelador o leva para os baús ao calçar a coluna.
+
+### Mudado
+
+- Pedreiro, carpinteiro, fundidor, construtor e o adulto sem ofício deixam de calçar, nivelar e tirar neve (revoga a
+  parte do chão das Regras 215, 220, 242 e 247).
+- A fundação faz nascer só os oito ofícios, como antes; o Zelador sai do adulto que passa deles.
+
 ## [0.4.95] — candidata, 2026-11-19
 
 Do jogo da 0.4.93 em planície (pastor travado e curral que não enchia) e da escolha do autor, o pacote B da ADR-058.

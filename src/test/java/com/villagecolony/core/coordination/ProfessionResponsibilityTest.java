@@ -208,7 +208,9 @@ class ProfessionResponsibilityTest {
         for (Profession profession : ProfessionRegistry.all()) {
             boolean answers = profession.capabilities().stream().anyMatch(answeredFor::contains);
 
-            if (!answers && !profession.capabilities().contains(Capability.BUILD_STRUCTURE)) {
+            // O construtor responde pela obra, e o Zelador pelo chão da vila, sem tarefa da fila (Regra 330).
+            if (!answers && !profession.capabilities().contains(Capability.BUILD_STRUCTURE)
+                    && !profession.capabilities().contains(Capability.MAINTAIN_GROUND)) {
                 idle.add(profession.type() + " " + profession.capabilities());
             }
         }

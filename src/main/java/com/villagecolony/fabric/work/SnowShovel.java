@@ -62,7 +62,7 @@ final class SnowShovel {
         return SNOW.values().stream().anyMatch(help -> help.worker.equals(workerId));
     }
 
-    /** O pedreiro sem tarefa recolhe neve com a pá quando a obra aberta pede peça de neve. */
+    /** O Zelador recolhe neve com a pá quando a obra aberta pede peça de neve (Regra 330). */
     static void pass(ServerWorld world, Colony colony) {
         Help help = SNOW.get(colony.id());
 
@@ -77,8 +77,8 @@ final class SnowShovel {
             }
 
             for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
-                // O pedreiro, e quem não tem ofício — Regra 220.
-                if (worker.profession().filter(trade -> trade != ProfessionType.MASON).isPresent()
+                // Só o Zelador (Regra 330).
+                if (worker.profession().filter(ProfessionType.GROUNDSKEEPER::equals).isEmpty()
                         || !(world.getEntity(worker.villagerId()) instanceof VillagerEntity mason)
                         || !IdleHelps.isFree(world, mason, IdleWorkers.Help.SNOW)) {
                     continue;

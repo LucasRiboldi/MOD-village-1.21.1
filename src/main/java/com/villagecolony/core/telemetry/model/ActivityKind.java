@@ -19,6 +19,8 @@ public enum ActivityKind {
     FARMING,
     SHEPHERDING,
     BUILDING,
+    /** O Zelador arrumando o chão da vila (Regra 330). */
+    GROUNDKEEPING,
     COORDINATION,
     UNKNOWN
 }

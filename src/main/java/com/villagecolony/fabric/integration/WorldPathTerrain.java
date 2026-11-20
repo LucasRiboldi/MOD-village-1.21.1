@@ -99,7 +99,9 @@ public final class WorldPathTerrain implements PathTerrain {
             BlockPos at = new BlockPos(x, y, z);
             BlockState state = world.getBlockState(at);
 
-            if (state.isAir() || (LotGround.isNothing(state) && state.getFluidState().isEmpty())) {
+            // Regra 331: o fardo de feno no chão é atravessado, como ar.
+            if (state.isAir() || (LotGround.isNothing(state) && state.getFluidState().isEmpty())
+                    || PathObstacles.isCrossable(at, state)) {
                 continue;
             }
 
@@ -171,7 +173,7 @@ public final class WorldPathTerrain implements PathTerrain {
             BlockPos at = floor.up(up);
             BlockState state = world.getBlockState(at);
 
-            if (state.isAir() || LotGrowth.isLooseGrowth(state)
+            if (state.isAir() || LotGrowth.isLooseGrowth(state) || PathObstacles.isCrossable(at, state)
                     || (LotGround.isNothing(state) && state.getFluidState().isEmpty())) {
                 continue;
             }
@@ -230,7 +232,7 @@ public final class WorldPathTerrain implements PathTerrain {
             BlockPos at = ground.up(up);
             BlockState state = world.getBlockState(at);
 
-            if (state.isAir() || LotGround.isNothing(state)) {
+            if (state.isAir() || LotGround.isNothing(state) || PathObstacles.isCrossable(at, state)) {
                 continue;
             }
 

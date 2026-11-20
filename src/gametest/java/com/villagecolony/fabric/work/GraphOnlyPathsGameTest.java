@@ -47,9 +47,9 @@ public class GraphOnlyPathsGameTest implements FabricGameTest {
         return MinecraftTypeAdapter.toColonyPos(at);
     }
 
-    /** O construtor está ausente: o pedreiro sem tarefa pega a calçada. */
+    /** Só o Zelador calça a linha do grafo (Regra 330). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "graph_only_mason", tickLimit = 20)
-    public void anIdleMasonPavesThePath(TestContext context) {
+    public void theGroundskeeperPavesThePath(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos origin = context.getAbsolutePos(new BlockPos(1, 60, 1));
 
@@ -62,7 +62,7 @@ public class GraphOnlyPathsGameTest implements FabricGameTest {
         try {
             world.setTimeOfDay(2_000);
 
-            var mason = fixture.equippedWorker(context, ProfessionType.MASON, BlockPos.ORIGIN.up());
+            var mason = fixture.equippedWorker(context, ProfessionType.GROUNDSKEEPER, BlockPos.ORIGIN.up());
             BlockPos floor = origin.add(6, 0, 5);
 
             // A arena pode vir girada: a posição vem do mundo.
@@ -71,8 +71,8 @@ public class GraphOnlyPathsGameTest implements FabricGameTest {
             PathLinks.offerRepair(colony.id(), List.of(new PathStep(floor.getX(), floor.getY(), floor.getZ(), Side.EAST, 0, 0)));
             PathPaving.pass(world, colony);
 
-            context.assertTrue(world.getBlockState(floor).isOf(Blocks.DIRT_PATH), "Regra 215: o pedreiro ocioso não calçou; vez=" + PathPaving.isPaving(mason.villagerId()) + " plano=" + PathLinks.planOf(colony.id()).isPresent() + " livre=" + world.getEntity(mason.villagerId()));
-            context.assertTrue(mason.profession().filter(ProfessionType.MASON::equals).isPresent(), "o trabalhador não é pedreiro");
+            context.assertTrue(world.getBlockState(floor).isOf(Blocks.DIRT_PATH), "Regra 330: o Zelador não calçou; vez=" + PathPaving.isPaving(mason.villagerId()) + " plano=" + PathLinks.planOf(colony.id()).isPresent() + " livre=" + world.getEntity(mason.villagerId()));
+            context.assertTrue(mason.profession().filter(ProfessionType.GROUNDSKEEPER::equals).isPresent(), "o trabalhador não é Zelador");
         } finally {
             world.setTimeOfDay(before);
             PathLinks.drop(colony.id());
@@ -83,9 +83,9 @@ public class GraphOnlyPathsGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** Quem não tem ofício também calça: é o trabalho dele na vila — Regra 220. */
+    /** Quem não tem ofício não calça: o chão é do Zelador (Regra 330, fim da Regra 220 na calçada). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "graph_only_none", tickLimit = 20)
-    public void anAdultWithoutATradePavesThePath(TestContext context) {
+    public void anAdultWithoutATradeNoLongerPaves(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos origin = context.getAbsolutePos(new BlockPos(1, 84, 1));
 
@@ -110,7 +110,7 @@ public class GraphOnlyPathsGameTest implements FabricGameTest {
             PathLinks.offerRepair(colony.id(), List.of(new PathStep(floor.getX(), floor.getY(), floor.getZ(), Side.EAST, 0, 0)));
             PathPaving.pass(world, colony);
 
-            context.assertTrue(world.getBlockState(floor).isOf(Blocks.DIRT_PATH), "Regra 220: quem não tem ofício não calçou");
+            context.assertFalse(world.getBlockState(floor).isOf(Blocks.DIRT_PATH), "Regra 330: quem não tem ofício calçou");
         } finally {
             world.setTimeOfDay(before);
             PathLinks.drop(colony.id());
@@ -121,9 +121,9 @@ public class GraphOnlyPathsGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** O carpinteiro sem tarefa também calça a linha do grafo (Regra 242). */
+    /** O carpinteiro sem tarefa não calça: o chão é do Zelador (Regra 330, fim da Regra 242 na calçada). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "graph_only_carpenter", tickLimit = 20)
-    public void anIdleCarpenterPaves(TestContext context) {
+    public void anIdleCarpenterNoLongerPaves(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos origin = context.getAbsolutePos(new BlockPos(1, 72, 1));
 
@@ -143,7 +143,7 @@ public class GraphOnlyPathsGameTest implements FabricGameTest {
             PathLinks.offerRepair(colony.id(), List.of(new PathStep(floor.getX(), floor.getY(), floor.getZ(), Side.EAST, 0, 0)));
             PathPaving.pass(world, colony);
 
-            context.assertTrue(world.getBlockState(floor).isOf(Blocks.DIRT_PATH), "Regra 242: o carpinteiro sem tarefa não calçou");
+            context.assertFalse(world.getBlockState(floor).isOf(Blocks.DIRT_PATH), "Regra 330: o carpinteiro calçou");
         } finally {
             world.setTimeOfDay(before);
             PathLinks.drop(colony.id());
@@ -208,7 +208,7 @@ public class GraphOnlyPathsGameTest implements FabricGameTest {
         try {
             world.setTimeOfDay(2_000);
 
-            var builder = fixture.equippedWorker(context, ProfessionType.BUILDER, BlockPos.ORIGIN.up());
+            var builder = fixture.equippedWorker(context, ProfessionType.GROUNDSKEEPER, BlockPos.ORIGIN.up());
             BlockPos gap = origin.add(6, 0, 6);
 
             world.setBlockState(gap.west(), Blocks.DIRT_PATH.getDefaultState(), 18);
@@ -222,7 +222,7 @@ public class GraphOnlyPathsGameTest implements FabricGameTest {
             }
 
             context.assertTrue(PathProposals.isWanted(colony.id(), gap.getX(), gap.getZ()), "Regra 214: a falha não foi pedida ao grafo");
-            context.assertFalse(world.getBlockState(gap).isOf(Blocks.DIRT_PATH), "Regra 214: o construtor calçou fora do grafo");
+            context.assertFalse(world.getBlockState(gap).isOf(Blocks.DIRT_PATH), "Regra 214: o Zelador calçou fora do grafo");
         } finally {
             world.setTimeOfDay(before);
             PathProposals.drain(colony.id());
@@ -248,13 +248,13 @@ public class GraphOnlyPathsGameTest implements FabricGameTest {
         try {
             world.setTimeOfDay(2_000);
 
-            var mason = fixture.equippedWorker(context, ProfessionType.MASON, BlockPos.ORIGIN.up());
+            var mason = fixture.equippedWorker(context, ProfessionType.GROUNDSKEEPER, BlockPos.ORIGIN.up());
             var entity = (net.minecraft.entity.passive.VillagerEntity) world.getEntity(mason.villagerId());
             BlockPos far = origin.add(30, 0, 30);
 
             entity.refreshPositionAndAngles(origin.getX() + 0.5, origin.getY() + 1, origin.getZ() + 0.5, 0, 0);
 
-            context.assertTrue(IdleWorkers.isFree(world, entity, null), "o pedreiro sem tarefa devia estar livre");
+            context.assertTrue(IdleWorkers.isFree(world, entity, null), "o Zelador sem tarefa devia estar livre");
 
             PathLinks.offerRepair(colony.id(), List.of(new PathStep(far.getX(), far.getY(), far.getZ(), Side.EAST, 0, 0)));
             PathPaving.pass(world, colony);

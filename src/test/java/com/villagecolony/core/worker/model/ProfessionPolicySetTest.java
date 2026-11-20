@@ -130,6 +130,6 @@ class ProfessionPolicySetTest {
         ProfessionPolicySet policies = new ProfessionPolicySet(map, ProfessionPolicySet.defaults().hiringOrder());
 
         assertEquals("MINER, LUMBERJACK max 2 radius 48, MASON off, SMELTER, CARPENTER, FARMER,"
-                + " SHEPHERD, BUILDER", policies.summary());
+                + " SHEPHERD, BUILDER, GROUNDSKEEPER", policies.summary());
     }
 }

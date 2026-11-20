@@ -193,7 +193,7 @@ public final class ModContent {
         return RegistryKey.of(RegistryKeys.POINT_OF_INTEREST_TYPE, id);
     }
 
-    /** O bloco da bancada do mod desta profissão, se ela tem uma. */
+    /** O bloco da bancada do mod desta profissão, ou nulo para o Zelador, que não tem (Regra 330). */
     public static Block benchBlock(ProfessionType profession) {
         return switch (profession) {
             case CARPENTER -> CARPENTER_BENCH;
@@ -204,10 +204,12 @@ public final class ModContent {
             case SHEPHERD -> SHEPHERD_BENCH;
             case BUILDER -> BUILDER_BENCH;
             case MINER -> MINER_BENCH;
+            // O Zelador não tem bancada (Regra 330).
+            case GROUNDSKEEPER -> null;
         };
     }
 
-    /** O POI da bancada do mod desta profissão, se ela tem uma. */
+    /** O POI da bancada do mod desta profissão, ou nulo para o Zelador, que não tem (Regra 330). */
     public static RegistryKey<PointOfInterestType> benchPoi(ProfessionType profession) {
         return switch (profession) {
             case CARPENTER -> carpenterPoi;
@@ -218,10 +220,11 @@ public final class ModContent {
             case SHEPHERD -> shepherdPoi;
             case BUILDER -> builderPoi;
             case MINER -> minerPoi;
+            case GROUNDSKEEPER -> null;
         };
     }
 
-    /** As profissões que têm bancada do mod e o bloco de cada uma — todas as oito. */
+    /** As profissões que têm bancada do mod e o bloco de cada uma — as oito de ofício; o Zelador não tem (Regra 330). */
     public static Map<ProfessionType, Block> benches() {
         return Map.of(
                 ProfessionType.CARPENTER, CARPENTER_BENCH,

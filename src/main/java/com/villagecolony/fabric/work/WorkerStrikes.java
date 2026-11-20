@@ -148,6 +148,7 @@ public final class WorkerStrikes {
             case FARMER -> ActivityProfession.FARMER;
             case SHEPHERD -> ActivityProfession.SHEPHERD;
             case BUILDER -> ActivityProfession.BUILDER;
+            case GROUNDSKEEPER -> ActivityProfession.GROUNDSKEEPER;
         };
     }
 
@@ -161,6 +162,7 @@ public final class WorkerStrikes {
             case CRAFT_STONE, CRAFT_TEXTILE, CRAFT_FARM -> ActivityKind.CRAFTING;
             case CRAFT_METAL -> ActivityKind.SMELTING;
             case BUILD_STRUCTURE -> ActivityKind.BUILDING;
+            case MAINTAIN_GROUND -> ActivityKind.GROUNDKEEPING;
         };
     }
 
@@ -173,7 +175,7 @@ public final class WorkerStrikes {
             case SMELT_ITEMS, CRAFT_METAL -> TargetKind.ORE;
             case CRAFT_TEXTILE -> TargetKind.ANIMAL;
             case CRAFT_FARM -> TargetKind.CROP;
-            case BUILD_STRUCTURE -> TargetKind.CONSTRUCTION;
+            case BUILD_STRUCTURE, MAINTAIN_GROUND -> TargetKind.CONSTRUCTION;
         };
     }
 }
