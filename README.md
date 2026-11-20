@@ -794,14 +794,36 @@ uma falha estão em [`SECURITY.md`](SECURITY.md).
 
 ## Comandos e dados de análise
 
-Todos os comandos são abertos a qualquer jogador e respondem sobre a vila em que você está.
+### Todos os comandos do mod
 
-| Comando | O que mostra ou faz |
+Todo comando começa por `/vc` e responde sobre a vila em que você está (a busca ignora a altura). Os de **jogador**
+funcionam para qualquer um; os de **operador** pedem permissão de operador (nível 2, `/op <nome>` ou um mundo com
+comandos ativados).
+
+**Comandos de jogador**
+
+| Comando | O que faz |
 |---|---|
-| `/vc log` | Situação da vila: prioridade das obras, felicidade, **estado agora** (quem está no ofício, ajudando, travado — com os travados nomeados —, estoque e baús cheios, obra aberta, tarefas, mina, ruas, bancadas e animais), atividades recentes, o que a obra espera e a cadeia que a traz, alcance a pé, tempo dos ofícios na última janela de 5 min (Regra 51) e esperas longas |
-| `/vc bioma` | Boletim do bioma (estilo, camas, aldeões, lotes e recusas, peças que surgiram, ofícios acima da Regra 51) e o mesmo retrato completo do `/vc log` |
-| `/vc bioma nota <texto>` | Anota uma observação sua, com posição e bioma, no log (`VC_BIOME_NOTE`) e no arquivo de análise do mundo |
+| `/vc log` | Mostra a situação da vila: prioridade das obras, felicidade, **estado agora** (quem está no ofício, ajudando ou travado, com os travados nomeados; estoque e baús cheios; obra aberta; tarefas; mina; ruas; bancadas e animais), atividades recentes, o que a obra espera e a cadeia que a traz, alcance a pé, tempo dos ofícios na última janela de 5 min (Regra 51) e esperas longas |
+| `/vc bioma` | Mostra o boletim do bioma (estilo, camas, aldeões, lotes e recusas, peças que surgiram, ofícios acima da Regra 51) e o mesmo retrato completo do `/vc log` |
+| `/vc bioma nota <texto>` | Anota uma observação sua, com posição e bioma, no log (`VC_BIOME_NOTE`) e no arquivo de análise do mundo. É a melhor forma de contar o que você viu: cada nota vira um achado na próxima análise |
 | `/vc dados` | Grava agora o retrato completo da vila no arquivo de análise e diz onde ficou |
+| `/vc blocos` | Mostra a tabela de blocos da vila (Regra 342): classe (cru, fabricado, vila, especial), reserva, estoque nos baús e quanto a obra pôs, esperou e viu surgir hoje. Os mais movimentados vêm primeiro, e em vermelho o que está abaixo da reserva |
+
+**Comandos de operador**
+
+| Comando | O que faz |
+|---|---|
+| `/vc grafo modo` | Mostra qual modo do grafo de ruas está ligado neste mundo (Regra 318) |
+| `/vc grafo modo <atual\|regioes\|vizinhanca>` | Liga outro modo do grafo de ruas: `atual` (o de sempre, padrão), `regioes` (refaz só os quadrados de 16 × 16 que mudaram) ou `vizinhanca` (liga as entradas vizinhas por A* com custo de terreno). Trocar refaz o grafo na releitura seguinte |
+| `/vc mae obra <modelo>` | Pede uma construção do catálogo (modelo do mod ou estrutura Vanilla) na fila do construtor, com a pegada centrada em você e a frente para onde você olha (ADR-046, Regra 213). O nome do modelo tem sugestão com Tab |
+| `/vc mae obra <modelo> <0-3>` | O mesmo, com a rotação escolhida (0 a 3, de 90 em 90 graus) |
+| `/vc mae obra <modelo> busca` | O mesmo, num lote livre e nivelado perto de você |
+| `/vc mae obra <modelo> fora` | O mesmo, num lote fora da vila original, perto de você |
+| `/vc mae estado` | Lista as obras pedidas que estão em andamento |
+| `/vc mae parar` | Encerra a obra pedida em andamento (a tocha das almas, Regra 108, faz o mesmo) |
+| `/vc mae mostrar ligar\|desligar` | Liga ou desliga o desenho dos caminhos que a vila guarda (Regras 176 e 234): amarelo, laranja ou roxo conforme o modo do grafo, e verde o trecho travado. Só para desenvolvimento |
+| `/vc mae reler` | Relê agora o caminho da vila (o grafo de ruas), sem esperar a releitura do ciclo |
 
 **O retrato da vila (`VC_STATE`).** A cada 5 minutos, por vila com jogador perto, o mod registra num
 JSON só:
@@ -857,6 +879,7 @@ Os outros relatórios:
 | `cost_ledger.py` | O custo por fase do ciclo (`VC_COST`) |
 | `supply_report.py` | O que surgiu sem um ofício obter (`VC_SUPPLY`) |
 | `biome_report.py` | O boletim por bioma (`VC_BIOME`) |
+| `stock_report.py` | Reservas de bloco e travas de cru (`VC_BLOCKS`, `VC_KEEP`): o que subir, descer ou tirar |
 
 ## Desenvolvimento e verificação
 
