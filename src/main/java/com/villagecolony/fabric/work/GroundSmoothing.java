@@ -178,7 +178,8 @@ final class GroundSmoothing {
     /** Repara apenas um vazio seco de até três blocos sob chão natural, apoiado por solo firme. */
     static boolean repairShallowSupport(ServerWorld world, BlockPos surface) {
         if (!world.isChunkLoaded(surface.getX() >> 4, surface.getZ() >> 4)
-                || !isGround(world, surface, world.getBlockState(surface))) {
+                || !isGround(world, surface, world.getBlockState(surface))
+                || com.villagecolony.fabric.integration.PlayerGround.isMarked(surface.getX(), surface.getZ())) {
             return false;
         }
         int gap = 0;
@@ -330,6 +331,11 @@ final class GroundSmoothing {
     static @Nullable String refusal(ServerWorld world, int x, int z, int top, int target) {
         if (!world.isChunkLoaded(x >> 4, z >> 4)) {
             return "unloaded";
+        }
+
+        // O chão que o jogador mexeu fica como ele deixou (Regra 334).
+        if (com.villagecolony.fabric.integration.PlayerGround.isMarked(x, z)) {
+            return "player:ground";
         }
 
         BlockPos.Mutable at = new BlockPos.Mutable(x, Math.min(top, target) - 1, z);

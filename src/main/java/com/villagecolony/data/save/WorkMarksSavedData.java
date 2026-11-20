@@ -44,8 +44,10 @@ public final class WorkMarksSavedData extends PersistentState {
 
     /** As colunas em que o jogador tirou planta — regra do autor, 2026-10-11. */
     static final String PLAYER_CLEARED = "playerClearedPlants";
+    static final String PLAYER_GROUND = "playerGround";
 
     private final List<Long> playerCleared = new ArrayList<>();
+    private final List<Long> playerGround = new ArrayList<>();
 
     /**
      * O caminho da boca da mina até onde ele estava, em posições compactadas
@@ -152,6 +154,18 @@ public final class WorkMarksSavedData extends PersistentState {
         return List.copyOf(playerCleared);
     }
 
+    /** As colunas de chão que o jogador mexeu (Regra 334). */
+    public void syncPlayerGround(Collection<Long> current) {
+        playerGround.clear();
+        playerGround.addAll(current);
+
+        markDirty();
+    }
+
+    public List<Long> playerGround() {
+        return List.copyOf(playerGround);
+    }
+
     @Override
     public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
         NbtList list = new NbtList();
@@ -196,6 +210,7 @@ public final class WorkMarksSavedData extends PersistentState {
 
         nbt.put(MINE_TRAILS, trails);
         nbt.putLongArray(PLAYER_CLEARED, playerCleared.stream().mapToLong(Long::longValue).toArray());
+        nbt.putLongArray(PLAYER_GROUND, playerGround.stream().mapToLong(Long::longValue).toArray());
 
         return nbt;
     }
@@ -246,6 +261,10 @@ public final class WorkMarksSavedData extends PersistentState {
 
         for (long column : nbt.getLongArray(PLAYER_CLEARED)) {
             data.playerCleared.add(column);
+        }
+
+        for (long column : nbt.getLongArray(PLAYER_GROUND)) {
+            data.playerGround.add(column);
         }
 
         NbtCompound attempts = nbt.getCompound(SUPPLY_ATTEMPTS);

@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 228
+- **Cita a regra:** 229
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -166,13 +166,13 @@ classe prova menos ainda.
 | 153 | Mais ajudas de quem está sem tarefa (autor 10-28, O1/O3/O4/O8; pedido de novo em 10-29),… | classe | GroundSmoothingGameTest, IdleFixesGameTest, ItemStockGameTest |
 | 154 | Lenhador, fundidor e fazendeiro: os ajustes do O5–O7 (autor 10-28; pedido de novo em 10-2… | classe | ChestPlacerGameTest, IdleFixesGameTest, ItemStockGameTest |
 | 155 | A boca da mina ganha o portão do autor (10-29, estrutura mine_entrance.nbt, 9×7×5): no lu… | classe | BiomeBlueprintsGameTest, MineLandingGameTest, MineNodeGameTest |
-| 156 | O pedreiro alisa o chão da vila (autor 10-29, 11-06): sem tarefa, uma vez por minuto ele… | classe | GroundSmoothingGameTest, OreTowerGameTest, SmoothRefusalGameTest |
+| 156 | O pedreiro alisa o chão da vila (autor 10-29, 11-06): sem tarefa, uma vez por minuto ele… | classe | GroundSmoothingGameTest, OreTowerGameTest, PlayerGroundGameTest |
 | 157 | O mineiro não quebra o que segura algo solto (autor 10-29, jogo da 0.3.108: o cascalho pe… | classe | MineGravityGameTest, MineSettlingGameTest, MinerGameTest |
 | 158 | Sem cama no andar de baixo da casa de escada de mão (autor 10-29, jogo da 0.3.108: 9 de 2… | classe | BedChoiceGameTest, BedPlanTest, BiomeBlueprintsGameTest |
 | 159 | O aldeão da colônia pula 2 blocos e por cima da cerca (autor 10-29, depois do jogo da 0.3… | cita | LumberjackGameTest, PenEscapeGameTest |
 | 160 | O construtor trabalha do chão, e quem fica num telhado desce (autor 10-29, jogo da 0.3.10… | classe | BuildZoneGameTest, BuilderApproachGameTest, BuilderGameTest |
 | 161 | Comer enche a vida (autor 10-29): todo aldeão que come (a comida do inventário, ou para c… | cita | VillagerRulesGameTest |
-| 162 | O miolo do cercado fica livre (autor 10-29, jogo da 0.3.110: o cercado nasceu com blocos… | classe | GroundSmoothingGameTest, OreTowerGameTest, SmoothRefusalGameTest |
+| 162 | O miolo do cercado fica livre (autor 10-29, jogo da 0.3.110: o cercado nasceu com blocos… | classe | GroundSmoothingGameTest, OreTowerGameTest, PlayerGroundGameTest |
 | 163 | Roça por fazendeiro e pela maior das contas (autor 10-30): a vila abre uma roça para cada… | cita | ConstructionPriorityTest, FarmOwnersTest |
 | 164 | Casa de reserva respeita teto de camas (autor 10-30): sem outro tipo com lote, a casa de… | cita | ConstructionPriorityTest, LotTypeRefusalsGameTest |
 | 165 | Armazém pequeno antes do grande (autor 10-30): quando a vila precisa de armazenamento, ab… | cita | StoragePriorityGameTest, test_gen_storage_small |
@@ -344,3 +344,4 @@ classe prova menos ainda.
 | 331 | O caminho atravessa o feno (autor 19-11, ADR-059): no cálculo do grafo, o fardo de feno s… | cita | GroundKeeperGameTest |
 | 332 | O pasto do curral não é roça (autor 19-11, jogo da 0.4.93 em planície, ADR-060; emenda a… | cita | FarmRoundGameTest |
 | 333 | A ronda da roça (autor 19-11, ADR-060, pacote B; emenda a Regra 267): sem tarefa de comid… | cita | FarmRoundGameTest |
+| 334 | O chão que o jogador mexeu fica como ele deixou (autor 20-11, jogo da 0.4.93 em planície,… | cita | PlayerGroundGameTest |

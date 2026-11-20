@@ -72,7 +72,8 @@ public final class PathSupport {
 
     /** Põe terra embaixo do caminho desta coluna, se ele voa; devolve quantos blocos. */
     static int support(ServerWorld world, UUID colonyId, int x, int z) {
-        if (!world.isChunkLoaded(x >> 4, z >> 4)) {
+        // O chão que o jogador mexeu fica como ele deixou (Regra 334).
+        if (!world.isChunkLoaded(x >> 4, z >> 4) || com.villagecolony.fabric.integration.PlayerGround.isMarked(x, z)) {
             return 0;
         }
 

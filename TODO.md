@@ -91,8 +91,8 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
   - o calçador sem ofício deixava tronco do carvalho grande no caminho: Regra 326 na 0.4.94 (candidata);
   - o pastor levava de novo o animal já no curral e ficava travado com nome vermelho: Regras 327 a 329 na 0.4.95
     (ADR-058, candidatas);
-  - notas do autor: o nó da casa do mod fora do grafo (410, 65, -199); o fazendeiro roda no mesmo lugar (386, 67, -187); a terra tirada pelo
-    jogador volta em 4 pontos (398, 64, -174 / 414, 64, -161 / 437, 64, -155 / 403, 68, -224) (M);
+  - a terra tirada pelo jogador voltava: Regra 334 na 0.4.98 (candidata);
+  - nota do autor ainda aberta: o nó da casa do mod fora do grafo (410, 65, -199) (M);
   - fazendeiro 66% sem trabalhar (29× "could not reach the crop" no trigo do curral, 17× "fenced in"): Regras 332 e
     333 na 0.4.97 (ADR-060, candidatas); fardo de feno e culturas novas (opção C) ficam para depois (M);
   - Regra 51: mineiro 33%, fundidor 48% e carpinteiro 42% sem trabalhar (M);

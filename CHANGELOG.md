@@ -12,6 +12,16 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.98] — candidata, 2026-11-20
+
+Do jogo da 0.4.93 em planície (4 notas de terra tirada pelo jogador que voltou) e das escolhas A e C do autor. Regra
+334; nada visto em jogo.
+
+### Corrigido
+
+- Regra 334: o chão que o jogador cavou ou pôs fica como ele deixou. O Zelador e todo nivelamento da vila não tapam o
+  buraco nem cortam o calombo do jogador, e a calçada passa ali sem aterrar. A marca vai ao save.
+
 ## [0.4.97] — candidata, 2026-11-19
 
 Do jogo da 0.4.93 em planície (fazendeiro entre 0% e 2% de trabalho) e da escolha do autor, o pacote B da ADR-060.

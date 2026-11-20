@@ -50,6 +50,8 @@ public final class PlayerWorldChangeHandler {
         PlayerBlockBreakEvents.AFTER.register((world, player, pos, state, blockEntity) -> {
             // A planta que o jogador tirou não volta ali (regra do autor, 2026-10-11).
             com.villagecolony.fabric.integration.PlayerClearedPlants.observe(pos, state);
+            // O chão que o jogador cavou fica como ele deixou (Regra 334).
+            com.villagecolony.fabric.integration.PlayerGround.broke(pos, state);
 
             if (world instanceof ServerWorld serverWorld) {
                 onBlockChanged(serverWorld, pos);
@@ -103,6 +105,9 @@ public final class PlayerWorldChangeHandler {
             if (!world.isChunkLoaded(pos) || entry.getValue().equals(world.getBlockState(pos))) {
                 continue;
             }
+
+            // O chão natural que o jogador pôs também fica (Regra 334).
+            com.villagecolony.fabric.integration.PlayerGround.placed(pos, entry.getValue(), world.getBlockState(pos));
 
             worldChanged(world, pos, world.getBlockState(pos));
         }
