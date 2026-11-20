@@ -92,7 +92,9 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
   - o pastor levava de novo o animal já no curral e ficava travado com nome vermelho: Regras 327 a 329 na 0.4.95
     (ADR-058, candidatas);
   - a terra tirada pelo jogador voltava: Regra 334 na 0.4.98 (candidata);
-  - nota do autor ainda aberta: o nó da casa do mod fora do grafo (410, 65, -199) (M);
+  - o nó da casa do mod fora do grafo (410, 65, -199): a Regra 335 (0.4.99) tira porta de cima, mas o teste com a
+    BigHouseMOD real em chão plano liga a entrada; a causa no terreno da vila sai da porta solta no `VC_ROAD_GRAPH`
+    (`door@...:g...[...]`) do próximo jogo (M);
   - fazendeiro 66% sem trabalhar (29× "could not reach the crop" no trigo do curral, 17× "fenced in"): Regras 332 e
     333 na 0.4.97 (ADR-060, candidatas); fardo de feno e culturas novas (opção C) ficam para depois (M);
   - Regra 51: mineiro 33%, fundidor 48% e carpinteiro 42% sem trabalhar (M);

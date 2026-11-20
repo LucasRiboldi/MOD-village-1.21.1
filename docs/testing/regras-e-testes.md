@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 229
+- **Cita a regra:** 230
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -116,7 +116,7 @@ classe prova menos ainda.
 | 103 | Grama ao pé do poste da ovelha amarrada, e o golem sai do curral pela porteira | classe | DesertFixesGameTest, PostGrassGameTest |
 | 104 | O que o jogador tirou não volta: árvore, muda ou flor quebrada pelo jogador não é replant… | classe | ConstructionZoneGameTest |
 | 105 | Duas colônias da mesma vila viram uma, e a identidade é a vila gerada, não o centro | classe | ColonyIdentityTest, ColonyMergeTriggerGameTest |
-| 106 | A vila é uma caixa medida pela vila gerada, e não um raio | classe | BedChoiceGameTest, BuilderPavingGameTest, CarpenterWoodGateGameTest |
+| 106 | A vila é uma caixa medida pela vila gerada, e não um raio | classe | BedChoiceGameTest, BigHouseEntranceGameTest, BuilderPavingGameTest |
 | 107 | Marcas no mundo: contorno de chamas no lote, área da vila, dono de cada baú, nome do alde… | classe | BuildSiteGameTest, ChestMarkerGameTest, CraftingLookupGameTest |
 | 108 | A Tocha das Almas cancela a obra: uma tocha das almas (também a de parede) posta pelo jog… | cita | LotLightDecorGameTest, MaeSitesGameTest |
 | 109 | A casa fundadora BigHouseMOD: toda vila adotada a recebe uma única vez — cópia editada da… | classe | BedChoiceGameTest, BigHouseFoundationGameTest, ColonyDetectionGameTest |
@@ -136,7 +136,7 @@ classe prova menos ainda.
 | 123 | A rede de caminhos da vila: toda porta se liga à rede pelo grafo, com o trajeto mais curt… | cita | PathNetworkGameTest, VillagePathPlannerTest |
 | 124 | Construção nova nasce a no mínimo 3 blocos de qualquer construção (autor 10-27, D1): o lo… | cita | PathNetworkGameTest |
 | 125 | Quem assenta o caminho (autor 10-27, D6): o pedreiro, o carpinteiro e o fundidor sem tare… | classe | GraphOnlyPathsGameTest, GroundKeeperGameTest, GroundKeepersTest |
-| 126 | Peça colorida sai branca (autor 10-27, item 5; jogo da 0.3.93: 64 "cama sem lã" e lã pret… | classe | BigHouseFoundationGameTest, BigHouseModBlueprintGameTest, BiomeBlueprintsGameTest |
+| 126 | Peça colorida sai branca (autor 10-27, item 5; jogo da 0.3.93: 64 "cama sem lã" e lã pret… | classe | BigHouseEntranceGameTest, BigHouseFoundationGameTest, BigHouseModBlueprintGameTest |
 | 127 | Ajudas de quem está sem tarefa do ofício, cada uma com um ofício fixo (autor 10-27, item… | cita | ColonyTorchesGameTest |
 | 128 | Nenhuma profissão espera mais de 5 minutos por nada (autor 10-27, emenda 11-02): 300 s se… | cita | IdleWatchGameTest |
 | 129 | O nome sobre a cabeça tem a cor do estado (autor 10-27): laranja no ofício, azul em ajuda… | classe | IdleRoutineGameTest, IdleWatchGameTest, LargeFarmGameTest |
@@ -293,7 +293,7 @@ classe prova menos ainda.
 | 280 | Árvore no caminho não trava o calçamento (autor 14-11, jogo da 0.4.75): a árvore (tronco… | cita | LeafPathsGameTest, PathTreeClearingGameTest |
 | 281 | Tronco posto sai no log (autor 13-11, jogo da 0.4.79): todo tronco que o mod põe no mundo… | cita | LeafPathsGameTest |
 | 282 | Só a rede reserva chão contra lote (autor 14-11, jogo da 0.4.79): com a rede publicada pe… | cita | BuildSiteGameTest |
-| 283 | O pastor recolhe só dentro da caixa da vila (autor 14-11, opção B da varredura dos GameTe… | cita | PenAccessGameTest, ShepherdHerdingGameTest |
+| 283 | O pastor recolhe só dentro da caixa da vila (autor 14-11, opção B da varredura dos GameTe… | cita | PenAccessGameTest, ShepherdGameTest, ShepherdHerdingGameTest |
 | 284 | O animal atravessa o portão amarrado (autor 14-11, VF-010, opção "prender ao portão"): en… | cita | PenTetherGameTest |
 | 285 | Aldeão preso na água sai (autor 14-11, jogo da 0.4.84: vários ofícios presos na água): o… | cita | WaterRescueGameTest |
 | 286 | O mineiro novo dorme junto da mina (autor 14-11, jogo da 0.4.84: a cama ao lado da mina n… | cita | BedChoiceGameTest |
@@ -345,3 +345,4 @@ classe prova menos ainda.
 | 332 | O pasto do curral não é roça (autor 19-11, jogo da 0.4.93 em planície, ADR-060; emenda a… | cita | FarmRoundGameTest |
 | 333 | A ronda da roça (autor 19-11, ADR-060, pacote B; emenda a Regra 267): sem tarefa de comid… | cita | FarmRoundGameTest |
 | 334 | O chão que o jogador mexeu fica como ele deixou (autor 20-11, jogo da 0.4.93 em planície,… | cita | PlayerGroundGameTest |
+| 335 | O grafo nunca busca porta do andar de cima (autor 20-11, jogo da 0.4.93 em planície: a en… | cita | BigHouseEntranceGameTest |

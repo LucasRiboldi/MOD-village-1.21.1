@@ -43,6 +43,9 @@ final class DoorFronts {
     /** Até quantas colunas da porta para fora se procura a primeira sem bloco da estrutura. */
     static final int MAX_WALK = 16;
 
+    /** Quantas alturas da peça, a partir de baixo, contam como térreo (Regra 335). */
+    static final int GROUND_FLOOR = 3;
+
     /**
      * A coluna de entrada de cada porta desta peça, com o piso da porta (o bloco de baixo dela) — Regra 305: a primeira
      * coluna à frente da porta sem nenhum bloco da estrutura do piso para cima, mesmo dentro da caixa do molde. Dos dois
@@ -69,7 +72,10 @@ final class DoorFronts {
             for (StructureTemplate.StructureBlockInfo info : template.get().getInfosForBlock(piece.getPos(), placement, door)) {
                 BlockState state = info.state();
 
-                if (!state.contains(DoorBlock.HALF) || state.get(DoorBlock.HALF) != DoubleBlockHalf.LOWER) {
+                // O grafo nunca busca porta do andar de cima: na geração, só a porta das 3 primeiras alturas da peça
+                // (Regra 335).
+                if (!state.contains(DoorBlock.HALF) || state.get(DoorBlock.HALF) != DoubleBlockHalf.LOWER
+                        || info.pos().getY() - piece.getBoundingBox().getMinY() > GROUND_FLOOR) {
                     continue;
                 }
 

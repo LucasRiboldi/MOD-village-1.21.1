@@ -75,7 +75,10 @@ final class DoorFronts {
             if (world.isChunkLoaded(at)) {
                 BlockState state = world.getBlockState(at);
 
-                if (state.isIn(BlockTags.DOORS) && state.get(DoorBlock.HALF) == DoubleBlockHalf.LOWER) {
+                if (state.isIn(BlockTags.DOORS) && state.get(DoorBlock.HALF) == DoubleBlockHalf.LOWER
+                        // O grafo nunca busca porta do andar de cima (Regra 335).
+                        && (GroundFloorDoors.isGroundFloor(world, at, state.get(DoorBlock.FACING).getOpposite())
+                        || GroundFloorDoors.isGroundFloor(world, at, state.get(DoorBlock.FACING)))) {
                     // O facing da porta aponta para dentro: é para onde olhava quem a pôs, do lado de fora.
                     Direction inward = state.get(DoorBlock.FACING);
                     Walk out = walkOut(world, at, inward.getOpposite(), min, max);

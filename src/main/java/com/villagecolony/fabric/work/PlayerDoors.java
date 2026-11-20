@@ -64,7 +64,10 @@ final class PlayerDoors {
                         BlockState state = section.getBlockState(at.getX() & 15, at.getY() & 15, at.getZ() & 15);
 
                         if (state.isIn(BlockTags.DOORS) && state.get(DoorBlock.HALF) == DoubleBlockHalf.LOWER
-                                && inside(box, at) && known.stream().noneMatch(piece -> piece.contains(at))) {
+                                && inside(box, at) && known.stream().noneMatch(piece -> piece.contains(at))
+                                // O grafo nunca busca porta do andar de cima (Regra 335).
+                                && (GroundFloorDoors.isGroundFloor(world, at, state.get(DoorBlock.FACING).getOpposite())
+                                || GroundFloorDoors.isGroundFloor(world, at, state.get(DoorBlock.FACING)))) {
                             front(world, terrain, at.toImmutable(), state.get(DoorBlock.FACING)).ifPresent(fronts::add);
                         }
                     }

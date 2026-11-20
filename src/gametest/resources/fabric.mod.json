@@ -128,6 +128,7 @@
       "com.villagecolony.fabric.work.GroundKeeperGameTest",
       "com.villagecolony.fabric.work.FarmRoundGameTest",
       "com.villagecolony.fabric.work.PlayerGroundGameTest",
+      "com.villagecolony.fabric.work.BigHouseEntranceGameTest",
       "com.villagecolony.fabric.work.PathTreeClearingGameTest",
       "com.villagecolony.fabric.work.StructureEntrancesGameTest",
       "com.villagecolony.fabric.work.MinerHomeFoundationGameTest",

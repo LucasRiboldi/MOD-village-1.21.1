@@ -12,6 +12,18 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.99] — candidata, 2026-11-20
+
+Do jogo da 0.4.93 em planície (a entrada da BigHouseMOD solta nas 212 leituras do grafo) e da regra do autor. Regra 335;
+nada visto em jogo.
+
+### Mudado
+
+- Regra 335: o grafo nunca busca porta do andar de cima. Só a porta do térreo vira entrada, na construção da colônia,
+  na peça da vila gerada e na porta do jogador.
+- A porta solta sai no `VC_ROAD_GRAPH` com o chão lido nela e nas 4 vizinhas, para achar a causa no próximo jogo.
+- A linha diária do Zelador passa a se chamar `VC_KEEPER`; `VC_GROUND` era o nome da linha da geração do solo.
+
 ## [0.4.98] — candidata, 2026-11-20
 
 Do jogo da 0.4.93 em planície (4 notas de terra tirada pelo jogador que voltou) e das escolhas A e C do autor. Regra

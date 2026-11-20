@@ -12049,3 +12049,18 @@ planta que o jogador tirou (Regra 104). O autor escolheu A e C.
   no nível em que a coluna está.
 
 `PlayerGroundGameTest`: os 2 casos falham sem a marca. Nada visto em jogo.
+
+## 2026-11-20 — 0.4.99: só a porta do térreo (Regra 335)
+
+A entrada da BigHouseMOD (`door@410,69,-199`) ficou solta nas 212 leituras do grafo do jogo da 0.4.93. O molde da casa
+tem uma porta só, no térreo, e o `BigHouseEntranceGameTest` com o molde real (chão plano e a rua `---.#---E` do save)
+liga a entrada: a falha não se reproduziu fora do terreno daquela vila. O autor decidiu a Regra 335 e a linha de
+diagnóstico.
+
+- `GroundFloorDoors.isGroundFloor`: o primeiro chão de fora a até 3 colunas, descendo por assoalho e sacada, fica a
+  até 2 abaixo do piso da porta. Usado por `DoorFronts` (construção) e `PlayerDoors`; na geração, `DoorFronts` da
+  integração só lê porta das 3 primeiras alturas da peça.
+- `RoadLines.describe` acrescenta à porta solta o chão lido nela e nas 4 vizinhas.
+- `VC_KEEPER` substitui o `VC_GROUND` do Zelador (commit 159dbf7f).
+
+O caso da sacada falha sem o filtro (duas entradas, a de cima a 3 do chão). Nada visto em jogo.
