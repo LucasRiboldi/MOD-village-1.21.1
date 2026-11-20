@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 226
+- **Cita a regra:** 228
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -67,7 +67,7 @@ classe prova menos ainda.
 | 54 | Mina em rede (ADR-042): passada a escadaria e o salão, cada nível é uma grade de nós a ca… | classe | MineAccessGameTest, MineReturnGameTest, MineReturnTest |
 | 55 | Roça grande primeiro; fundidor ocioso adianta o cru; lenhador ocioso planta mudas até 10… | cita | GrowingPiecesGameTest |
 | 56 | Expansão do terreno: a caixa cresce só com rua e obra, nunca com faixa vazia anexada (0.3… | cita | PublicChestPlacementGameTest, VillageExpansionGameTest, VillageExpansionTest |
-| 57 | O pastor põe no máximo um poste por casa e um por cercado (nenhum poste novo a até 6 bloc… | classe | EntrancesAtTheDoorGameTest, PenAccessGameTest, PenTetherGameTest |
+| 57 | O pastor põe no máximo um poste por casa e um por cercado (nenhum poste novo a até 6 bloc… | classe | EntrancesAtTheDoorGameTest, FarmRoundGameTest, PenAccessGameTest |
 | 58 | Madeira e pedra cruas podem passar dos limites do baú do ofício e do teto por tipo: o exc… | classe | MinerHaulCapGameTest, MinerOverflowGameTest, PublicChestPlacementGameTest |
 | 59 | Ajudam a obra só carpinteiro e pedreiro (fazendeiro e pastor não); o carpinteiro guarda u… | classe | BuilderPavingGameTest, ConstructionZoneGameTest, GraphOnlyPathsGameTest |
 | 60 | O tipo de obra que passa uma volta inteira da varredura sem lote fica 30 min fora da vez;… | classe | BigHouseFoundationGameTest, ColonyModelsGameTest, ConstructionOrderTest |
@@ -178,7 +178,7 @@ classe prova menos ainda.
 | 165 | Armazém pequeno antes do grande (autor 10-30): quando a vila precisa de armazenamento, ab… | cita | StoragePriorityGameTest, test_gen_storage_small |
 | 166 | Transição em volta do lote: após cortar o terreno para a obra, o corredor de seis colunas… | classe | BuildSiteGameTest, DuneCutGameTest, LotEdgeGameTest |
 | 167 | Cuidado físico do rebanho: só pastor vivo a até 5 blocos alimenta ou abate; a passiva da… | classe | FlockHarvestGameTest, FlockHarvestTest, FlockSurplusGameTest |
-| 168 | Um curral grande por vila nova: a vila gerada após esta regra constrói no máximo um curra… | classe | CrowdedPostGameTest, EntrancesAtTheDoorGameTest, PenAccessGameTest |
+| 168 | Um curral grande por vila nova: a vila gerada após esta regra constrói no máximo um curra… | classe | CrowdedPostGameTest, EntrancesAtTheDoorGameTest, FarmRoundGameTest |
 | 169 | Passagem livre: aldeão da colônia quebra aos poucos as folhas naturais que bloqueiam seu… | classe | LeafPathsGameTest |
 | 170 | Lote sem árvores: ao escolher terreno para qualquer estrutura, remove a árvore natural in… | classe | BiomeCoverageGameTest, BiomeSiteGameTest, FoundationPreparationGameTest |
 | 171 | Pulo do aldeão (autor 11-04): a altura padrão do jogo; o maior só com obstáculo, cerca, e… | cita | VillagerRulesGameTest |
@@ -342,3 +342,5 @@ classe prova menos ainda.
 | 329 | A ronda do pastor (autor 19-11, ADR-058; emenda a Regra 72): uma vez por dia, no expedien… | cita | ShepherdRoundGameTest |
 | 330 | O Zelador, dono do chão da vila (autor 19-11, ADR-059, pacote B; nome "Zelador", sem banc… | cita | GraphOnlyPathsGameTest, GroundKeepersTest, GroundSmoothingGameTest |
 | 331 | O caminho atravessa o feno (autor 19-11, ADR-059): no cálculo do grafo, o fardo de feno s… | cita | GroundKeeperGameTest |
+| 332 | O pasto do curral não é roça (autor 19-11, jogo da 0.4.93 em planície, ADR-060; emenda a… | cita | FarmRoundGameTest |
+| 333 | A ronda da roça (autor 19-11, ADR-060, pacote B; emenda a Regra 267): sem tarefa de comid… | cita | FarmRoundGameTest |

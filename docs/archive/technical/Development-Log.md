@@ -12020,3 +12020,18 @@ O autor pediu uma profissão só para o chão da vila, com o nome Zelador e sem 
 
 `GroundKeeperGameTest` falha sem o `PathObstacles`. Os testes de calçada e de nivelamento passaram a afirmar que
 pedreiro, carpinteiro, construtor e quem não tem ofício não calçam nem nivelam. Nada visto em jogo.
+
+## 2026-11-19 — 0.4.97: a roça sem a fila (Regras 332 e 333, ADR-060)
+
+Pesquisa `docs/research/2026-11-19-logica-do-fazendeiro.md`: o dia do fazendeiro dependia da tarefa `COLLECT_FOOD`, que
+só abre pela falta no estoque, e o trigo do curral grande o prendia. O autor escolheu o pacote B.
+
+- **Regra 332:** `PenFloors.isPenFloor`; `CropPatch` não vê o maduro, a terra arada nem o canteiro vazio no chão de
+  curral, e tira da memória a terra arada conhecida que está nele.
+- **Regra 333:** `FarmRound` cria uma tarefa de ronda fora da fila (64 de trigo, `RESERVED`→`EXECUTING`) para o
+  fazendeiro livre; `FarmerWork.run` troca a ronda pela tarefa da fila quando ela chega, e o "nada a fazer" encerra a
+  ronda, pede a plantação grande e dá 1 minuto de descanso. `WorkTime` conta a ronda como tarefa, `IdleWorkers` a vê,
+  e a desistência nela não vai para `WorkerStrikes`. O javadoc histórico do `giveUp` foi enxugado para o
+  `FarmerWork` caber em 500 linhas.
+
+`FarmRoundGameTest`: os 2 casos falham sem `PenFloors.isPenFloor` e sem a oferta da ronda. Nada visto em jogo.

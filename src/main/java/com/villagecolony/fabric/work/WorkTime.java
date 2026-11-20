@@ -151,7 +151,7 @@ public final class WorkTime {
                 GROUND_WORK.getOrDefault(id, Long.MIN_VALUE) > villager.getWorld().getTime(),
                 !VillageColonyMod.TASKS.assignedTo(id).isEmpty() || GroundPickup.isHelping(id)
                         || BuilderPaving.isPaving(id) || PathPaving.isPaving(id) || IdleHelps.isHelping(id)
-                        || ShepherdHerding.isHerding(id) || ShepherdRound.isWalking(id) || BuildingUpkeep.isVisiting(id),
+                        || ShepherdHerding.isHerding(id) || ShepherdRound.isWalking(id) || FarmRound.isOnRound(id) || BuildingUpkeep.isVisiting(id),
                 swungSinceLastSample(villager),
                 moved,
                 WorkTargets.of(id).isPresent(),

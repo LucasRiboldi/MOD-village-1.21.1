@@ -203,12 +203,20 @@ public final class FarmerWork {
                 continue;
             }
 
-            JOBS.computeIfAbsent(
-                    worker.get(),
-                    id -> new Job(task, MinecraftTypeAdapter.toBlockPos(colony.center())));
+            // A tarefa da fila toma o lugar da ronda da roça (Regra 333).
+            Job current = JOBS.get(worker.get());
+
+            if (current == null || FarmRound.isRound(current.task)) {
+                FarmRound.end(worker.get());
+                JOBS.put(worker.get(), new Job(task, MinecraftTypeAdapter.toBlockPos(colony.center())));
+            }
 
             working++;
         }
+
+        // Sem tarefa da fila, o fazendeiro livre faz a ronda da roça (Regra 333).
+        FarmRound.offer(world, colony, JOBS.keySet()).forEach((id, round) ->
+                JOBS.put(id, new Job(round, MinecraftTypeAdapter.toBlockPos(colony.center()))));
 
         if (working == 0) {
             reportIdle(colony);
@@ -303,6 +311,7 @@ public final class FarmerWork {
                     && !BoneMealRound.aim(world, villager, job)
                     && !FarmerCompost.tend(world, villager, job.task.colonyId(), storage.get())) {
                 LargeFarmPlans.nothingToDo(job.task.colonyId(), world.getTime());
+                FarmRound.nothingLeft(world, workerId);
             }
 
             return;
@@ -409,20 +418,8 @@ public final class FarmerWork {
     }
 
     /**
-     * Devolve a tarefa quando o fazendeiro não chega à lavoura.
-     *
-     * <p><b>Quem responde se ela pode ser devolvida é a própria tarefa</b>
-     * — {@link Task#isHeld()}. É a mesma lição que o {@code BuilderWork}
-     * registrou depois de derrubar o servidor duas vezes, e o fazendeiro
-     * a repetiu em 2026-09-05: uma tarefa que já voltou para a fila é
-     * AVAILABLE, que não está encerrada e também não está na mão de
-     * ninguém.
-     *
-     * <p>O laço que levava até aqui foi fechado no {@link #tick}, e este
-     * guarda é a segunda linha: nem todo caminho que solta uma tarefa
-     * passa pelo laço do tique — morte, zumbificação e dispensa soltam
-     * pelo {@code VillagerLifecycleHandler}, e podem cair no meio de uma
-     * passagem.
+     * Devolve a tarefa quando o fazendeiro não chega à lavoura; quem responde se ela pode ser devolvida é a própria
+     * tarefa ({@link Task#isHeld()}). A ronda da roça não pune o fazendeiro (Regra 333).
      */
     private static void giveUp(UUID workerId, Job job, VillagerEntity villager) {
         VillageColonyMod.LOGGER.info(
@@ -437,7 +434,9 @@ public final class FarmerWork {
         }
 
         // A desistência conta no trabalhador: ver WorkerStrikes.
-        WorkerStrikes.gaveUp(workerId, job.task, job.target);
+        if (!FarmRound.isRound(job.task)) {
+            WorkerStrikes.gaveUp(workerId, job.task, job.target);
+        }
 
         release(workerId, job);
     }
