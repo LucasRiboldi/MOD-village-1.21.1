@@ -12143,3 +12143,19 @@ recolhe) até 256, FABRICADO 4, VILA 12, ESPECIAL 1, com a contagem dos blocos d
   provavam a porta da tora (`CarpenterWoodGateGameTest` e um caso de `IdleFixesGameTest` e `WoodInPiecesGameTest`).
 
 Nada visto em jogo.
+## 2026-11-20 — 0.4.105: o contratado perde o ofício Vanilla (Regra 341)
+
+O autor viu um trabalhador do mod ganhar roupa de ofício Vanilla. A trava do `setVillagerData` (Regra 44) barra
+quem já é do mod; o buraco era a ordem da varredura (`VillagerScanner` limpava, `ProfessionAssigner.assignMissing`
+contratava depois) e o alcance dela (64 blocos do centro, só na detecção). No log da fundação em montanha, a segunda
+passada da varredura tirou a roupa do fazendeiro que virou mineiro.
+
+- `VanillaProfessionGuard.sweep`: todo trabalhador do mod da colônia, em qualquer lugar; chamado depois de
+  contratar (`VillagerRegistration`) e a cada ciclo (`ColonyCycleRunner.runOngoingWork`).
+- `VC_VANILLA_JOB` em `filter` (`blocked`) e `strip` (`stripped`).
+- `VanillaTradeAfterHireGameTest`: falha sem a limpeza ("o lenhador contratado ficou com o ofício e a roupa de
+  fazendeiro").
+
+Também: análise das roupas próprias das profissões (`docs/research/2026-11-20-skins-das-profissoes.md`).
+
+Nada visto em jogo.

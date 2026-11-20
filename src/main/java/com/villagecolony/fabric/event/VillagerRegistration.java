@@ -169,6 +169,8 @@ final class VillagerRegistration {
         if (assigned > 0) {
             VillageColonyMod.LOGGER.info(
                     "Assigned {} professions in colony {}", assigned, colony.id());
+            // A trava da varredura roda antes de contratar: o contratado agora perde o ofício Vanilla (Regra 341).
+            com.villagecolony.fabric.integration.VanillaProfessionGuard.sweep(world, colony.id());
         }
 
         // <b>E por que as outras não saíram</b> — 2026-09-18. A linha

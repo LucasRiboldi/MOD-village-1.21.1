@@ -9,7 +9,7 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.104 na branch `fix/oficios-e-reservas` (Regras 339 e 340, fases 1 e 2 de 4, ADR-062), não jogada; 0.4.100 a 0.4.102 na `main` (Regras 336 a 338, ADR-061), não jogadas; 0.4.99 publicada como `v0.4.99-alpha` (Regras 326 a 335, ADR-058 a ADR-060, do jogo da
+- **Versão:** 0.4.105 na branch `fix/oficios-e-reservas` (Regras 339 a 341; fases 1 e 2 de 4, ADR-062), não jogada; 0.4.100 a 0.4.102 na `main` (Regras 336 a 338, ADR-061), não jogadas; 0.4.99 publicada como `v0.4.99-alpha` (Regras 326 a 335, ADR-058 a ADR-060, do jogo da
   0.4.93 em planície); a anterior publicada é a `v0.4.93-alpha` (Regras 315 a 325, ADR-057), **jogada em 19-11**
   (montanha, Spark `0SMEEkMLGP`, ~35 min): boca da mina e BigHouseMOD no alto da montanha, longe das casas, e blocos de
   terreno voando no print do autor. Triagem no `TODO.md`; o autor escolheu A (centro e BigHouseMOD pela altura dos
@@ -47,6 +47,7 @@ Cada uma tem teste que falha sem ela; nenhuma foi vista em jogo.
 | 0.4.85 | 285, 286 | aldeão preso na água vai à margem e, se não sair, pisa no gelo sob o pulo; o mineiro novo dorme na casa junto da mina assim que ela sobe; diagnósticos `loose=` (grafo), `VC_SMOOTH` e `VC_LOT_EDGE` (terreno). Sentinela `fast` PASS; tosquia instável registrada (KF-015) |
 | 0.4.86 | 287 | a tora deitada é chão do caminho (a borda da plantação grande fechava o miolo ao fazendeiro); a visão do canteiro vazio mira o lugar da planta. 1.137/1.137, Sentinela `fast` PASS |
 | 0.4.88 | 289–294 | escolhas G1–G7 da ADR-056: plantação grande semeada, 2 fazendeiros e semente que surge; tronco inteiro e folha natural quebrada no caminho; grafo na tábua de rua e na frente de toda porta; sem torre de minério e sem ar protegido no alisamento; pátio de pedra na boca da mina; ociosos tiram bloco solto e toco. 1.156/1.156, Sentinela `fast` PASS |
+| 0.4.105 | 341 | o contratado perde o ofício e a roupa Vanilla na hora; conferência a cada ciclo; `VC_VANILLA_JOB` |
 | 0.4.104 | 340 | reserva por classe de bloco (cru 256, fabricado 4, vila 12, especial 1), sem a tora guardada; bancada do mod fora da fabricação (ADR-062) |
 | 0.4.103 | 339 | o fundidor solta o pedido sem cru em nenhum baú; a oficina barrada pela tora não recebe o mesmo pedido na hora; `VC_TIME_WAIT` |
 | 0.4.102 | 338 | a BigHouseMOD nasce na altura das casas da vila (faixa de 8), com a busca partindo do meio delas e indo até 128 |

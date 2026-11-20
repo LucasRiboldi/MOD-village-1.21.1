@@ -89,6 +89,11 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
     descascada ×30 e tora ×10 (`MISSING_PIECE`), terracota branca ×31 (`APPEARING_PIECE`), pedra ×16
     (`WAITED_TOO_LONG`) — buscar o fluxo de fabricação do pedregulho, da tora descascada e da pedra; o pó de osso
     ×672 em 35 min pede teto (M); nenhuma nota `VC_BIOME_NOTE`
+- [ ] 🔴 Regra 44 vazou (autor 20-11): o trabalhador do mod ganhou roupa de ofício Vanilla. Causa: a varredura
+  limpava antes de contratar e só via 64 blocos do centro. Regra 341 na 0.4.105 (candidata); conferir no
+  próximo jogo que `VC_VANILLA_JOB` não mostra `stripped` repetido do mesmo aldeão (M)
+- [ ] 🟢 Roupa própria das profissões do mod: análise em `docs/research/2026-11-20-skins-das-profissoes.md` (viável,
+  caminho S1: camada no cliente com a profissão sincronizada; texturas por script Pillow com prévia) (G)
 - [ ] 🔴 Jogo da 0.4.93 (19-11, planície, colônia ccac8347, Spark `AYGQ78wh44`, TPS 20, ~3 h), triagem:
   - o calçador sem ofício deixava tronco do carvalho grande no caminho: Regra 326 na 0.4.94 (candidata);
   - o pastor levava de novo o animal já no curral e ficava travado com nome vermelho: Regras 327 a 329 na 0.4.95

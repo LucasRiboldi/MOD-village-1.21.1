@@ -12,6 +12,20 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.105] — candidata, 2026-11-20
+
+O autor viu um trabalhador do mod ganhar roupa de ofício Vanilla. Regra 341; nada visto em jogo.
+
+### Corrigido
+
+- Regra 341: o aldeão que pegou ofício Vanilla antes de ser contratado pela colônia perde o ofício e a roupa
+  logo depois da contratação (a varredura limpava antes de contratar), e todo trabalhador do mod é conferido a
+  cada ciclo, em qualquer lugar do mundo (a varredura só via 64 blocos em volta do centro).
+
+### Adicionado
+
+- Linha `VC_VANILLA_JOB` (`blocked` e `stripped`).
+
 ## [0.4.104] — candidata, 2026-11-20
 
 Fase 2 do plano de ofícios e reservas, ADR-062. Regra 340; nada visto em jogo.

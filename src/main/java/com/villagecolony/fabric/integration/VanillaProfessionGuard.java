@@ -42,6 +42,9 @@ public final class VanillaProfessionGuard {
             return data;
         }
 
+        VillageColonyMod.LOGGER.info("VC_VANILLA_JOB version=1 action=blocked worker={} trade={}",
+                villager.getUuid().toString().substring(0, 8), data.getProfession());
+
         return data.withProfession(VillagerProfession.NONE);
     }
 
@@ -66,6 +69,8 @@ public final class VanillaProfessionGuard {
             VillageColonyMod.LOGGER.info(
                     "Villager {} leaves the vanilla trade {} — it works for the colony",
                     villager.getUuid(), vanilla);
+            VillageColonyMod.LOGGER.info("VC_VANILLA_JOB version=1 action=stripped worker={} trade={}",
+                    villager.getUuid().toString().substring(0, 8), vanilla);
         }
 
         if (villager.getBrain().hasMemoryModule(MemoryModuleType.JOB_SITE)
@@ -86,6 +91,25 @@ public final class VanillaProfessionGuard {
         }
 
         return changed;
+    }
+
+    /**
+     * Regra 341: todo trabalhador do mod desta colônia, em qualquer lugar do mundo, sem ofício Vanilla. Roda depois de
+     * contratar e a cada ciclo: quem pegou o ofício Vanilla antes de ser do mod não fica com a roupa dele.
+     *
+     * @return quantos perderam alguma coisa agora
+     */
+    public static int sweep(net.minecraft.server.world.ServerWorld world, java.util.UUID colonyId) {
+        int stripped = 0;
+
+        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
+            if (worker.profession().isPresent()
+                    && world.getEntity(worker.villagerId()) instanceof VillagerEntity villager && strip(villager)) {
+                stripped++;
+            }
+        }
+
+        return stripped;
     }
 
     private static boolean blocks(VillagerEntity villager, VillagerProfession profession) {

@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 233
+- **Cita a regra:** 234
 - **Só usa a classe indicada:** 91
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -351,3 +351,4 @@ classe prova menos ainda.
 | 338 | A BigHouseMOD nasce na altura das casas (autor 20-11, jogo da 0.4.93 em montanha, escolha… | cita | BigHouseLevelGameTest, FoundationLotSearchTest |
 | 339 | O ofício não segura pedido impossível (autor 20-11, jogo da 0.4.93 em planície, opções O1… | cita | CraftBarrierTest, SmelterReleaseGameTest, WaitReasonsTest |
 | 340 | A reserva por classe de bloco (autor 20-11, fase 2 do plano de ofícios e reservas, ADR-06… | cita | AdvanceStockTest, BlockReserveTest, ColonyGoalsTest |
+| 341 | O contratado perde o ofício Vanilla na hora (autor 20-11: viu um trabalhador do mod ganha… | cita | VanillaTradeAfterHireGameTest |
