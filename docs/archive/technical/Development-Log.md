@@ -12081,3 +12081,17 @@ formato (`docs/research/2026-11-20-descida-cavada-do-mineiro.md`) e escolheu a A
   entidade o aldeão não anda e o teste passa ou falha por sorte.
 
 Nada visto em jogo.
+## 2026-11-20 — 0.4.101: nada solto em cima da peça da vila (Regra 337)
+
+No jogo da 0.4.93 em montanha o autor viu pedra, terra e caminho voando acima das casas. Na geração, a casa desce ao
+solo suavizado (Regra 296) e a coluna dela só era aterrada embaixo (`found`, Regras 288 e 304); o morro acima do piso
+ficava, e as colunas vizinhas desciam. O autor pediu que tudo acima das estruturas suma na geração, no lugar da linha
+`VC_FLOAT` (escolha D).
+
+- `PieceGround` (sai do `VillageGround`, que passava de 500 linhas): `found` limpa a coluna da peça fixa acima do piso
+  antes de aterrar embaixo; `clearAbove` tira todo bloco do alto do mapa de altura da geração (+16) até o piso, com a
+  árvore inteira quando há tronco na coluna, e refaz o mapa de altura.
+- `ClearAbovePieceGameTest`: coluna com terra, pedra, caminho, pedregulho, calcita, cascalho, grama, tronco e um pedaço
+  solto 14 acima do piso; falha sem a correção ("ficou Block{minecraft:dirt} 1 acima do piso da peça").
+
+Nada visto em jogo.

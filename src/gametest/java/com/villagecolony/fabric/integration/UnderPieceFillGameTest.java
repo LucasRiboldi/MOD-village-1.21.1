@@ -34,7 +34,7 @@ public class UnderPieceFillGameTest implements FabricGameTest {
             world.setBlockState(at.withY(y), y <= floor - 3 ? Blocks.DIRT.getDefaultState() : Blocks.AIR.getDefaultState());
         }
 
-        VillageGround.found(chunk, at.getX(), at.getZ(), floor - 3, floor, VillageSoil.of(chunk));
+        PieceGround.found(world, chunk, at.getX(), at.getZ(), floor - 3, floor, VillageSoil.of(chunk));
 
         for (int y = floor - 2; y <= floor; y++) {
             context.assertFalse(world.getBlockState(at.withY(y)).isAir(),

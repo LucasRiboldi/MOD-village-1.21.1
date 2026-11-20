@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 231
+- **Cita a regra:** 232
 - **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 13
@@ -162,7 +162,7 @@ classe prova menos ainda.
 | 149 | Rua sem falha: falha de até 2 blocos de chão natural numa linha reta entre duas colunas d… | cita | HouseSurroundingsGameTest, VillageHelpersGameTest |
 | 150 | O pastor tosquia por cima da cerca (autor 10-28, diagnóstico da 0.3.103: 45 pastores pres… | classe | ColonyFixture, ShepherdGameTest |
 | 151 | O aldeão da colônia prefere a rua e evita a água (autor 10-28, jogo da 0.3.104: 4 de 7 te… | classe | FencedInGameTest, StreetRouteGameTest, StreetRouteTest |
-| 152 | O solo da vila nasce suave na geração (autor 10-29: crateras e montanhas no meio das vila… | classe | UnderPieceFillGameTest, VillageBlendTest, VillageGroundGameTest |
+| 152 | O solo da vila nasce suave na geração (autor 10-29: crateras e montanhas no meio das vila… | classe | ClearAbovePieceGameTest, VillageBlendTest, VillageGroundGameTest |
 | 153 | Mais ajudas de quem está sem tarefa (autor 10-28, O1/O3/O4/O8; pedido de novo em 10-29),… | classe | GroundSmoothingGameTest, IdleFixesGameTest, ItemStockGameTest |
 | 154 | Lenhador, fundidor e fazendeiro: os ajustes do O5–O7 (autor 10-28; pedido de novo em 10-2… | classe | ChestPlacerGameTest, IdleFixesGameTest, ItemStockGameTest |
 | 155 | A boca da mina ganha o portão do autor (10-29, estrutura mine_entrance.nbt, 9×7×5): no lu… | classe | BiomeBlueprintsGameTest, MineLandingGameTest, MineNodeGameTest |
@@ -347,3 +347,4 @@ classe prova menos ainda.
 | 334 | O chão que o jogador mexeu fica como ele deixou (autor 20-11, jogo da 0.4.93 em planície,… | cita | PlayerGroundGameTest |
 | 335 | O grafo nunca busca porta do andar de cima (autor 20-11, jogo da 0.4.93 em planície: a en… | cita | BigHouseEntranceGameTest |
 | 336 | A descida cavada (autor 20-11, jogo da 0.4.93 em planície, escolha A3 da pesquisa docs/re… | cita | MineStepDownGameTest |
+| 337 | Nada solto em cima da peça da vila (autor 20-11, jogo da 0.4.93 em montanha: pedra, terra… | cita | ClearAbovePieceGameTest |
