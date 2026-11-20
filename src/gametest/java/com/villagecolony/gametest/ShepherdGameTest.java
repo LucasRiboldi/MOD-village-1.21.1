@@ -244,6 +244,11 @@ public class ShepherdGameTest implements FabricGameTest {
 
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(pastureChest));
         Colony colony = Colony.create(UUID.randomUUID(), chest);
+        // A caixa é a arena: sem ela o pastor recolhia bicho de outro teste a até 48 blocos (Regra 283, KF-011).
+        BlockPos low = context.getAbsolutePos(new BlockPos(0, 0, 0));
+        BlockPos high = context.getAbsolutePos(new BlockPos(10, 4, 10));
+        colony.measure(new com.villagecolony.core.colony.model.VillageBounds(Math.min(low.getX(), high.getX()), low.getY(),
+                Math.min(low.getZ(), high.getZ()), Math.max(low.getX(), high.getX()), high.getY(), Math.max(low.getZ(), high.getZ())));
 
         VillageColonyMod.COLONIES.register(colony);
 
