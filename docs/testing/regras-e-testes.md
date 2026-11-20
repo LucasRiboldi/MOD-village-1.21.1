@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 234
+- **Cita a regra:** 235
 - **Só usa a classe indicada:** 91
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -153,7 +153,7 @@ classe prova menos ainda.
 | 140 | A rua estica pela ponta mais perto do centro, com um bloco de largura (Regra 186), pedind… | cita | RoadExtensionGameTest |
 | 141 | O centro da vila não muda (autor 10-28, taiga simulada: o curral sem lote foi a 98 blocos… | cita | ColonyBoundsTest, ColonySavedDataTest, ConstructionPlannerReachTest |
 | 142 | À noite só o preso vai à cama (autor 10-28, taiga simulada: 114 teleportes, um por aldeão… | cita | BedTeleportGameTest, NightHomeRangeGameTest |
-| 143 | O baú público enche inteiro (autor 10-28, taiga simulada: 27 vezes o lenhador largou tora… | classe | BoneMealRoundGameTest, BuildProgressGameTest, BuildReserveGameTest |
+| 143 | O baú público enche inteiro (autor 10-28, taiga simulada: 27 vezes o lenhador largou tora… | classe | BlockLedgerGameTest, BoneMealRoundGameTest, BuildProgressGameTest |
 | 144 | Alvo de coleta inalcançável sai da memória (autor 10-28, taiga simulada: 3 fazendeiros vo… | cita | SurfaceHitsTest |
 | 145 | As camas da vila são as da caixa (autor 10-28, taiga simulada: a sonda de 64 blocos via p… | cita | ColonyBoundsTest, VillageDiaryGameTest |
 | 146 | Fundidor e pedreiro produzem mais (autor 10-28, taiga simulada: fundidor 80% e pedreiro 6… | cita | IdleFixesGameTest |
@@ -352,3 +352,4 @@ classe prova menos ainda.
 | 339 | O ofício não segura pedido impossível (autor 20-11, jogo da 0.4.93 em planície, opções O1… | cita | CraftBarrierTest, SmelterReleaseGameTest, WaitReasonsTest |
 | 340 | A reserva por classe de bloco (autor 20-11, fase 2 do plano de ofícios e reservas, ADR-06… | cita | AdvanceStockTest, BlockReserveTest, ColonyGoalsTest |
 | 341 | O contratado perde o ofício Vanilla na hora (autor 20-11: viu um trabalhador do mod ganha… | cita | VanillaTradeAfterHireGameTest |
+| 342 | O registro de blocos (autor 20-11, fase 3 do plano de ofícios e reservas, ADR-062): por c… | cita | BlockLedgerGameTest, BlockLedgerTest |

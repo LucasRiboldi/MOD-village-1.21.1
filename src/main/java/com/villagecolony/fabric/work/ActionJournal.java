@@ -135,6 +135,7 @@ public final class ActionJournal {
             String detail) {
         append(worker, action, "", what, amount, at, -1, detail);
         BedChoice.worked(worker, action, at);
+        BlockLedger.action(worker, action, what, amount);
     }
 
     /** O nome curto de um item, para a coluna {@code what}. */

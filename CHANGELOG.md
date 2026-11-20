@@ -12,6 +12,15 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.106] — candidata, 2026-11-20
+
+Fase 3 do plano de ofícios e reservas. Regra 342; nada visto em jogo.
+
+### Adicionado
+
+- Regra 342: o registro de blocos. A linha diária `VC_BLOCKS` diz, por bloco, a classe, a reserva, o estoque
+  nos baús e o que a obra pôs, esperou e viu surgir no dia; o comando `/vc blocos` mostra a tabela na hora.
+
 ## [0.4.105] — candidata, 2026-11-20
 
 O autor viu um trabalhador do mod ganhar roupa de ofício Vanilla. Regra 341; nada visto em jogo.

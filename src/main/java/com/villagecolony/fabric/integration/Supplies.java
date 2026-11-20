@@ -26,6 +26,9 @@ public final class Supplies {
 
     private static final Map<UUID, Map<SupplyException, Integer>> SESSION = new HashMap<>();
 
+    /** O que surgiu por item, até o registro de blocos ler (Regra 342). */
+    private static final Map<UUID, Map<String, Integer>> ITEMS = new HashMap<>();
+
     private Supplies() {
     }
 
@@ -45,6 +48,14 @@ public final class Supplies {
         SESSION.computeIfAbsent(colony, id -> new EnumMap<>(SupplyException.class)).merge(exception, count, Integer::sum);
         VillageColonyMod.LOGGER.info("VC_SUPPLY version=1 exception={} rule={} colony={} item={} count={}",
                 exception, exception.rule(), colony.toString().substring(0, 8), what, count);
+        ITEMS.computeIfAbsent(colony, id -> new HashMap<>()).merge(what, count, Integer::sum);
+    }
+
+    /** O que surgiu nesta colônia desde a última leitura, por item — para o registro de blocos (Regra 342). */
+    public static Map<String, Integer> takeItems(UUID colonyId) {
+        Map<String, Integer> items = ITEMS.remove(colonyId);
+
+        return items == null ? Map.of() : items;
     }
 
     /** Quanto surgiu nesta colônia, nesta sessão, por esta exceção. */
@@ -54,5 +65,6 @@ public final class Supplies {
 
     public static void clearAll() {
         SESSION.clear();
+        ITEMS.clear();
     }
 }

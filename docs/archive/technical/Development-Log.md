@@ -12159,3 +12159,14 @@ passada da varredura tirou a roupa do fazendeiro que virou mineiro.
 Também: análise das roupas próprias das profissões (`docs/research/2026-11-20-skins-das-profissoes.md`).
 
 Nada visto em jogo.
+## 2026-11-20 — 0.4.106: o registro de blocos (Regra 342)
+
+Fase 3 do plano de ofícios e reservas: medir o gasto de cada bloco para ajustar a reserva por classe (ADR-062).
+
+- `BlockLedger`: conta por dia o `PLACED` e o `SET_ASIDE` do diário (`ActionJournal.action`) e o `VC_SUPPLY`
+  (`Supplies.takeItems`, sem ciclo de pacotes integration ↔ work); no fim do expediente, `VC_BLOCKS` com classe, reserva e estoque (`ChestWithdrawer.contents`).
+- `StockReserve.classOf`: a classe do item pelo livro de receitas do jogo (lido uma vez por servidor).
+- `BlockCommand`: `/vc blocos`.
+- `BlockLedgerTest` e `BlockLedgerGameTest` (a semente é item de bloco no jogo; o teste usa o graveto).
+
+Nada visto em jogo.
