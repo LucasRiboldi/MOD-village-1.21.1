@@ -12,6 +12,15 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.107] — candidata, 2026-11-20
+
+Fase 4, a última, do plano de ofícios e reservas. Regra 343; nada visto em jogo.
+
+### Adicionado
+
+- Regra 343: a linha diária `VC_KEEP` mede cada trava pequena de cru (consultas, barradas, menor estoque).
+- `scripts/stock_report.py`: lê `VC_BLOCKS` e `VC_KEEP` e sugere o que fazer com cada reserva e cada trava.
+
 ## [0.4.106] — candidata, 2026-11-20
 
 Fase 3 do plano de ofícios e reservas. Regra 342; nada visto em jogo.

@@ -140,6 +140,8 @@ No mesmo playtest, rode `python scripts/action_report.py` (o diário de ações 
 `python scripts/cost_ledger.py` (linhas `VC_COST`,
 ADR-035 §5): média, p95 e máximo de cada fase do ciclo por faixa de colônias.
 Nenhuma otimização de desempenho começa sem esse número.
+E `python scripts/stock_report.py` (linhas `VC_BLOCKS` e `VC_KEEP`, Regras 342 e 343): por bloco, se a reserva sobe,
+desce ou falta cru; por trava de cru, se ela não age ou segura demais.
 Toda análise de Spark mostra ao autor também a saída do `action_report.py`, com os motivos de
 recusa e desistência por profissão (pedido do autor, 2026-10-08).
 

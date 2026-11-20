@@ -12170,3 +12170,17 @@ Fase 3 do plano de ofícios e reservas: medir o gasto de cada bloco para ajustar
 - `BlockLedgerTest` e `BlockLedgerGameTest` (a semente é item de bloco no jogo; o teste usa o graveto).
 
 Nada visto em jogo.
+## 2026-11-20 — 0.4.107: a medida das travas de cru (Regra 343)
+
+Fase 4, a última, do plano de ofícios e reservas. As travas pequenas de cru ficaram de fora da ADR-062 até a medida.
+
+- `KeepLedger`: `below`, `atMost` e `atLeast` contam consultas, barradas e o menor estoque, sem mudar a decisão;
+  ligado na lã (`ShepherdWoolGoods`), farinha de osso (`BoneMealRound`), manutenção (`BuildingUpkeep`), trigo
+  (`FarmerBakery`), semente (`FarmerCompost`), cru da fornalha, pedregulho da mina e lingote (`SmelterAdvance`) e
+  cru dos produtos de valor (`ValueGoods`). A areia (`StandingWork`) e as peças de bioma (`BiomePieces`) são piso e
+  folga, não barram, e ficam de fora.
+- `VC_KEEP` no fim do expediente; `scripts/stock_report.py` (com `tests/test_stock_report.py`) lê `VC_BLOCKS` e
+  `VC_KEEP`; o cru tem teto, não alvo, e a falta dele é de coleta. Entra na rotina de análise (`CLAUDE.md` §0.4).
+- `KeepLedgerTest`.
+
+Nada visto em jogo.

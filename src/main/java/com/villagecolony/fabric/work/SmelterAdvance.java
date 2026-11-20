@@ -85,7 +85,9 @@ public final class SmelterAdvance {
                 for (ItemStack option : ingredient.getMatchingStacks()) {
                     Item raw = option.getItem();
                     int keep = raw == Items.COBBLESTONE || raw == Items.COBBLED_DEEPSLATE ? MINE_FILL : KEEP;
-                    int spare = ColonyChests.countIn(world, chests, raw) - BuildReserve.buildNeedOf(colony, raw) - keep;
+                    int free = ColonyChests.countIn(world, chests, raw) - BuildReserve.buildNeedOf(colony, raw);
+                    KeepLedger.atMost(keep == KEEP ? "smelter_raw" : "mine_fill", free, keep);
+                    int spare = free - keep;
                     int room = StockReserve.of(made) - ColonyChests.countIn(world, chests, made);
                     int amount = Math.min(PER_SMELTER, Math.min(spare, room));
                     if (amount <= 0) {
@@ -114,8 +116,12 @@ public final class SmelterAdvance {
             if (made instanceof BlockItem) {
                 continue;
             }
-            int spare = ColonyChests.countIn(world, chests, raw) - BuildReserve.buildNeedOf(colony, raw) - KEEP;
-            int room = INGOT_RESERVE - ColonyChests.countIn(world, chests, made);
+            int free = ColonyChests.countIn(world, chests, raw) - BuildReserve.buildNeedOf(colony, raw);
+            int ingots = ColonyChests.countIn(world, chests, made);
+            KeepLedger.atMost("smelter_raw", free, KEEP);
+            KeepLedger.atLeast("ingot", ingots, INGOT_RESERVE);
+            int spare = free - KEEP;
+            int room = INGOT_RESERVE - ingots;
             int amount = Math.min(PER_SMELTER, Math.min(spare, room));
 
             if (amount <= 0) {

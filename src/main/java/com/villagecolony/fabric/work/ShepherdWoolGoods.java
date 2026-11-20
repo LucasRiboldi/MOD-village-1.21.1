@@ -48,7 +48,7 @@ final class ShepherdWoolGoods {
             Item carpet = item(color, "carpet");
             Item dye = item(color, "dye");
 
-            if (wool - 2 >= KEEP && ColonyChests.countIn(world, chests, fleece) >= 2
+            if (!KeepLedger.below("wool", wool - 2, KEEP) && ColonyChests.countIn(world, chests, fleece) >= 2
                     && ColonyChests.countIn(world, chests, carpet) < StockReserve.of(carpet)) {
                 results.add(new Made(carpet, 3));
                 lots.add(() -> {
@@ -57,7 +57,7 @@ final class ShepherdWoolGoods {
                 });
             }
 
-            if (color != DyeColor.WHITE && wool > KEEP && ColonyChests.countIn(world, chests, dye) > 0
+            if (color != DyeColor.WHITE && !KeepLedger.atMost("wool", wool, KEEP) && ColonyChests.countIn(world, chests, dye) > 0
                     && ColonyChests.countIn(world, chests, white) > 0
                     && ColonyChests.countIn(world, chests, fleece) < StockReserve.of(fleece)) {
                 results.add(new Made(fleece, 1));

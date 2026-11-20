@@ -180,7 +180,7 @@ public final class ValueGoods {
         ordered.sort(java.util.Comparator.comparing(recipe -> !wanted.test(recipe.product())));
 
         for (Recipe recipe : ordered) {
-            if (ColonyChests.countIn(world, chests, recipe.raw()) >= recipe.keep() + recipe.in()
+            if (!KeepLedger.below("value_raw", ColonyChests.countIn(world, chests, recipe.raw()), recipe.keep() + recipe.in())
                     && ColonyChests.countIn(world, chests, recipe.product()) < StockReserve.of(recipe.product())) {
                 return Optional.of(recipe);
             }

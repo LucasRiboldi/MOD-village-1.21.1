@@ -264,7 +264,7 @@ final class BoneMealRound {
             }
         }
 
-        if (ColonyChests.countIn(world, chests, Items.BONE_MEAL) > CHEST_RESERVE
+        if (!KeepLedger.atMost("bone_meal", ColonyChests.countIn(world, chests, Items.BONE_MEAL), CHEST_RESERVE)
                 && ColonyChests.withdraw(world, chests, Items.BONE_MEAL, 1) == 1) {
             return Source.CHEST;
         }

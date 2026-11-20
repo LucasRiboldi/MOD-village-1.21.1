@@ -44,6 +44,7 @@ public final class FarmerBakery {
      */
     public static int bakeSurplus(ServerWorld world, ColonyPos chest) {
         int wheat = ChestWithdrawer.countIn(world, chest, Items.WHEAT);
+        KeepLedger.atMost("wheat", wheat, WHEAT_RESERVE);
         int loaves = Math.min(MOST_PER_PASS, Math.max(0, wheat - WHEAT_RESERVE) / WHEAT_PER_BREAD);
 
         loaves = Math.min(loaves, ChestDepositor.freeSpaceFor(world, chest, Items.BREAD));
@@ -77,7 +78,9 @@ public final class FarmerBakery {
      * @return quantos pães entraram nos baús
      */
     public static int bakeForSupper(ServerWorld world, List<ColonyPos> chests, int most) {
-        int spare = Math.max(0, ColonyChests.countIn(world, chests, Items.WHEAT) - WHEAT_RESERVE);
+        int wheat = ColonyChests.countIn(world, chests, Items.WHEAT);
+        KeepLedger.atMost("wheat", wheat, WHEAT_RESERVE);
+        int spare = Math.max(0, wheat - WHEAT_RESERVE);
         int left = Math.min(most, spare / WHEAT_PER_BREAD);
         int baked = 0;
 
