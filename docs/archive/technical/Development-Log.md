@@ -2,6 +2,12 @@
 
 # Development-Log.md
 
+## 21-11-2026 — Ruas após união de colônias
+
+A colônia que permanece recebe as ruas já conhecidas dos dois lados e pede a releitura do
+grafo. `VC_ROAD_MERGE` registra quantas colunas estavam disponíveis na união. No GameTest,
+o aldeão usou a rede unida para cruzar a antiga divisa e chegou ao destino.
+
 ## 21-11-2026 — Corte da escada que segura líquido
 
 A escada única mantém o cursor no bloqueio e volta a oferecer a pedra depois que o líquido sai.
