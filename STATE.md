@@ -1,4 +1,4 @@
-# STATE — 2026-11-20
+# STATE — 2026-11-21
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula; teto de 150 linhas.** O que saiu daqui mora em
 > [`docs/archive/technical/Historico-2026-11.md`](docs/archive/technical/Historico-2026-11.md) (o STATE de 13-11 inteiro,
@@ -9,11 +9,8 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.110 na `main`, publicada como `v0.4.110-alpha` (Regras 344 a 346: telemetria, conflito com o jogador e `/vc salvar`), não jogada; a anterior publicada é a `v0.4.107-alpha` (Regras 336 a 343); roteiro de jogo em `docs/testing/roteiro-de-jogo-0.4.107.md`;
-  0.4.93 em planície); a anterior publicada é a `v0.4.93-alpha` (Regras 315 a 325, ADR-057), **jogada em 19-11**
-  (montanha, Spark `0SMEEkMLGP`, ~35 min): boca da mina e BigHouseMOD no alto da montanha, longe das casas, e blocos de
-  terreno voando no print do autor. Triagem no `TODO.md`; o autor escolheu A (centro e BigHouseMOD pela altura dos
-  prédios) e D (linha `VC_FLOAT`), ainda não feitas. As Regras 305 a 325 seguem candidatas.
+- **Versão:** 0.4.110 na `main`, publicada como `v0.4.110-alpha` (Regras 344 a 346), pendente de playtest. Use o roteiro em `docs/testing/roteiro-de-jogo-0.4.107.md` e encerre com `/vc salvar`.
+- **Montanha:** no jogo da 0.4.93 (Spark `0SMEEkMLGP`), a BigHouseMOD e a boca da mina ficaram no alto, longe das casas, e houve terreno suspenso. As Regras 338 (altura da BigHouseMOD) e 337 (limpeza acima das casas) aguardam confirmação em jogo. A triagem detalhada está no `TODO.md`.
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
   jogador e publicação.
