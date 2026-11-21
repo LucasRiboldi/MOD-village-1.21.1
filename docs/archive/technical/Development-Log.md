@@ -12271,3 +12271,24 @@ que o pedregulho continua sendo recolhido e que a coleta de terra volta abaixo d
 
 O Sentinela `fast` passou em unitários, propriedade e todos os 1.224 GameTests. A confirmação
 em jogo fica para o playtest do ciclo.
+
+## 2026-11-21 — A9, grama, caminho e autoria do conflito (Regra 351)
+
+No jogo de 20-11, o vigia atribuiu 189 alterações de grama e caminho a `mod?natural`.
+No Vanilla 1.21.1, `SpreadableBlock.randomTick` muda terra e grama, e
+`DirtPathBlock.scheduledTick` converte o caminho em terra. O vigia ignora essas transições
+sem autor declarado, inclusive quando só observa o resultado depois de a grama se espalhar.
+`player_report.py` exclui o ruído equivalente dos logs antigos e preserva escritas com autor.
+
+Três reafirmações perto do açougue ocorreram após a suavização do entorno. O log indica
+diretamente o reparo sob a passagem em `121, 69, -125`, às 23:27:42. Os dois sistemas passam a
+registrar `entorno_obra` e `piso_mina` na escrita. A identificação permanece pendente para
+eventos históricos que só gravaram `mod?outro`.
+
+As regressões falharam sem a classificação ou sem a atribuição que exercitam. Com a correção,
+passaram oito GameTests focados e 196 testes Python. O relatório combinado do jogo de 20-11 foi
+gerado novamente e excluiu as transições esperadas, preservando as quatro reafirmações históricas.
+
+O primeiro `fast` falhou na ovelha desgarrada. O segundo falhou na cerca da taiga e no trânsito
+pelos quatro portões do curral MAE. Na terceira execução, unitários, propriedade e os 1.225 GameTests
+passaram. O build final passou. A candidata espera o playtest em mundo novo.

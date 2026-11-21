@@ -13,18 +13,24 @@ Na retomada de 21-11, `GameTestBatchRuleTest` falhou porque dois testes de `Grou
 |---|---|
 | A8 travas de cru | **Candidata (Regra 349).** `BoneMealRound.CHEST_RESERVE` e `SmelterAdvance.KEEP` passam a 4. `SmelterAdvance.MINE_FILL` e `ValueGoods.KEEP_RAW` passam a 16. `ingot` sai do `VC_KEEP`; teto de 64 por lingote e trava `wool` de 16 em vigor. Cinco dos 21 GameTests focados falharam sob mutação, e os 21 passaram após restaurar a regra. Falta confirmação no próximo jogo. |
 | A7 terra | **Candidata (Regra 350).** `GroundPickup.collectNearby` consulta `EarthSurplus` antes de guardar terra. O cenário registra dois baús públicos para atingir 256 unidades sem esbarrar no limite por baú. Sem o filtro, o teste falhou porque a terra foi recolhida no teto. Com o filtro, os três GameTests focados passaram. Falta confirmação no próximo jogo. |
+| A9 telemetria | **Candidata (Regra 351).** O vigia ignora transições de grama e caminho sem autor declarado. O relatório histórico desconsidera as equivalentes atribuídas a `mod?natural`. O nivelamento em volta da obra e o reparo do piso da mina registram `entorno_obra` e `piso_mina` ao escrever. As regressões falharam sem a correção. Com ela, passaram oito GameTests focados e 196 testes Python. Falta confirmação no próximo jogo. |
 
 Sentinela `fast` de 21-11 (`20261121T040824Z`): unitários e propriedade passaram. Dos 1.224 GameTests, só o cenário do A7 falhou. A análise foi gerada em `reports/sentinel-analysis/20261121T041222Z/`. A matriz de regras inclui a 349, e a suíte Python passou após limpar a variável de configuração Git herdada.
 
 Após o A7, o Sentinela `fast` (`20261121T042100Z`) passou em unitários, propriedade e 1.224 GameTests. Análise em `reports/sentinel-analysis/20261121T042503Z/`. A matriz inclui a Regra 350, e a suíte Python passou.
 
+No A9, os dois primeiros `fast` passaram em unitários e propriedade. Nos 1.225 GameTests, a primeira
+execução (`20261121T044555Z`) falhou no teste da ovelha desgarrada, já observado em `20261120T021714Z`.
+A segunda (`20261121T045021Z`) falhou no teste da cerca da taiga e no dos quatro portões do curral MAE.
+A terceira (`20261121T045420Z`) passou em unitários, propriedade e todos os 1.225 GameTests.
+A análise está em `reports/sentinel-analysis/20261121T045745Z/`. O build final também passou.
+
 ## O que falta fazer, na ordem
 
 1. **A8**: candidata, ver estado acima.
 2. **A7**: candidata, ver estado acima.
-3. **A9** (telemetria): grama que se espalha e caminho que volta a grama não contam como "o mod desfez o jogador".
-   Origem: `EditLedger` (`mod?natural: dirt→grass_block` 99×, `grass_block→dirt` 45×, `dirt_path→grass_block` 45×);
-   ver `scripts/player_report.py` e `EditLedgerGameTest`. Também dar dono ao sistema `mod?outro` (4 reafirmações 🔴).
+3. **A9**: Regra 351, ver estado acima. As três reafirmações perto do açougue aparecem após a suavização do entorno,
+   e o log confirma o reparo do piso em `121, 69, -125`. Os quatro eventos históricos mantêm o rótulo original do log.
 4. **A6**: onde não há argila ao alcance, terracota sai dos pedidos e vira tijolo ou pedra (`VC_SUPPLY_ERROR clay NOT_FOUND`
    ×9; `white_terracotta` pedida pelas obras). Achar onde a obra pede terracota (`StructureBlueprintReader`, rotas de
    fabricação) e a rota que faz tijolo. Muda o visual das casas: dizer ao autor.

@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.integration;
 
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
@@ -15,6 +16,41 @@ import java.util.List;
  * desfazer ({@code VC_PLAYER_INSIST}): o ponto de atenção que vira item a corrigir.
  */
 public class EditLedgerGameTest implements FabricGameTest {
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "edit_ledger", tickLimit = 20)
+    public void theWatcherIgnoresNaturalGrassAndPathTransitions(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos pos = context.getAbsolutePos(new BlockPos(2, 2, 2));
+
+        try {
+            assertRedo(context, world, pos, Blocks.DIRT, Blocks.GRASS_BLOCK, null, false);
+            assertRedo(context, world, pos, Blocks.GRASS_BLOCK, Blocks.DIRT, null, false);
+            assertRedo(context, world, pos, Blocks.DIRT_PATH, Blocks.DIRT, null, false);
+            assertRedo(context, world, pos, Blocks.DIRT_PATH, Blocks.GRASS_BLOCK, null, false);
+            assertRedo(context, world, pos, Blocks.DIRT, Blocks.GRASS_BLOCK, "nivelamento", true);
+            assertRedo(context, world, pos, Blocks.GRASS_BLOCK, Blocks.AIR, null, true);
+        } finally {
+            EditLedger.clear();
+        }
+        context.complete();
+    }
+
+    private static void assertRedo(TestContext context, ServerWorld world, BlockPos pos, Block placed, Block observed,
+                                   String system, boolean conflict) {
+        EditLedger.clear();
+        EditLedger.player(world, pos, Blocks.STONE.getDefaultState(), placed.getDefaultState());
+        world.setBlockState(pos, observed.getDefaultState(), Block.FORCE_STATE);
+        if (system != null) {
+            EditLedger.mod(world, pos, world.getBlockState(pos), system);
+        }
+        EditLedger.watch(world);
+
+        List<String> events = EditLedger.player(world, pos, observed.getDefaultState(), placed.getDefaultState());
+        context.assertTrue(conflict == events.stream().anyMatch(event -> event.startsWith("VC_PLAYER_INSIST")),
+                "Regra 351: classificação incorreta de " + placed + " para " + observed + ": " + events);
+        context.assertFalse(events.stream().anyMatch(event -> event.startsWith("VC_PLAYER_UNDO")),
+                "Regra 351: a repetição virou desfazer: " + events);
+    }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "edit_ledger", tickLimit = 20)
     public void thePlayerRedoingWhatTheModUndidIsAnInsistence(TestContext context) {

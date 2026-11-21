@@ -2,6 +2,7 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.EditLedger;
 import com.villagecolony.fabric.integration.MineFloor;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
@@ -42,12 +43,19 @@ public class MineFloorGameTest implements FabricGameTest {
     public void aCaveUnderThePassageGetsAFloor(TestContext context) {
         rockWithTheCellDug(context);
         context.setBlockState(DUG.down(), Blocks.AIR.getDefaultState());
+        var world = context.getWorld();
+        BlockPos floor = context.getAbsolutePos(DUG.down());
+        EditLedger.player(world, floor, Blocks.COBBLESTONE.getDefaultState(), Blocks.AIR.getDefaultState());
 
         boolean patched = MineFloor.patch(
                 context.getWorld(), context.getAbsolutePos(DUG), Set.of(colonyPos(context, DUG)));
 
         context.assertTrue(patched, "o vão sob a passagem ficou aberto");
         context.expectBlock(Blocks.COBBLESTONE, DUG.down());
+        var redo = EditLedger.player(world, floor, world.getBlockState(floor), Blocks.AIR.getDefaultState());
+        context.assertTrue(redo.stream().anyMatch(event -> event.startsWith("VC_PLAYER_INSIST")
+                        && event.contains("system=piso_mina ")),
+                "Regra 351: o reparo do piso perdeu o sistema: " + redo);
         context.complete();
     }
 

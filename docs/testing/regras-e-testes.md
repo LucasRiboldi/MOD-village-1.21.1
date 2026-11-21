@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 243
+- **Cita a regra:** 244
 - **Só usa a classe indicada:** 91
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -361,3 +361,4 @@ classe prova menos ainda.
 | 348 | Uma descida por arco (autor 20-11, jogo da 0.4.111: muitas aberturas de mina em volta do… | cita | MineDigLimitTest, MineLooseGameTest, MineOneDescentTest |
 | 349 | Menos matéria-prima retida nos baús (autor 21-11, análise A8, ADR-062): a reserva de pó d… | cita | BoneMealRoundGameTest, IdleFixesGameTest, SmelterAdvanceGameTest |
 | 350 | A terra excedente fica no chão (autor 21-11, análise A7, exceção à Regra 48): ao passar p… | cita | GroundPickupGameTest |
+| 351 | Grama e caminho na telemetria (autor 21-11, análise A9, emenda à Regra 345): sem autor de… | cita | EditLedgerGameTest, MineFloorGameTest, SiteSurroundingsGameTest |

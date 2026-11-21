@@ -177,7 +177,7 @@ final class SiteSmoothing {
                 }
 
                 cut.merge(state.getBlock().asItem(), 1, Integer::sum);
-                world.setBlockState(at, Blocks.AIR.getDefaultState());
+                writeGround(world, at, Blocks.AIR.getDefaultState());
                 changed++;
             }
 
@@ -193,7 +193,7 @@ final class SiteSmoothing {
                     break;
                 }
 
-                world.setBlockState(at, VillageBiomes.foundationGroundAt(world, at).getDefaultState());
+                writeGround(world, at, VillageBiomes.foundationGroundAt(world, at).getDefaultState());
                 changed++;
                 filled[0]++;
             }
@@ -210,7 +210,14 @@ final class SiteSmoothing {
 
         if (surface.isIn(BlockTags.DIRT) && !now.isOf(surface.getBlock()) && SiteSurroundings.isNaturalGround(now)
                 && BlockProtection.mayDigOut(world, at, now)) {
-            world.setBlockState(at, surface);
+            writeGround(world, at, surface);
+        }
+    }
+
+    /** Regra 351: atribui a alteração ao preparo do entorno da obra. */
+    private static void writeGround(ServerWorld world, BlockPos at, BlockState state) {
+        if (world.setBlockState(at, state)) {
+            EditLedger.mod(world, at, world.getBlockState(at), "entorno_obra");
         }
     }
 
