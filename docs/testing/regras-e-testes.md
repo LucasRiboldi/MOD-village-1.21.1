@@ -41,7 +41,7 @@ classe prova menos ainda.
 | 28 | ~~Barreira de teste: casa pequena, mobília dispensada~~ | fora de vigor |  |
 | 29 | A mina em escada, duas salas, galeria sem fim | cita | MinerGameTest |
 | 30 | O mineiro recolhe tudo, e a boca tem endereço | cita | MinerGameTest, SmelterGameTest |
-| 31 | O fazendeiro planta o que tem e colhe o que está pronto | classe | BoneMealRoundGameTest, ColonyFixture, CropPatchKnownFieldGameTest |
+| 31 | O fazendeiro planta o que tem e colhe o que está pronto | classe | ActionJournalGameTest, BoneMealRoundGameTest, ColonyFixture |
 | 32 | ~~Móveis e cama entram depois da casa pronta~~ — substituída em 10-22 pela 21 (C-02, auto… | fora de vigor |  |
 | 33 | Pedido de commit+push também atualiza o JAR local | nenhum |  |
 | 34 | A lava nunca surge automática | classe | BuilderGameTest, ChainRootsGameTest, ConstructionSupplyAuditGameTest |
@@ -146,7 +146,7 @@ classe prova menos ainda.
 | 133 | Estoque cheio vira obra e produto (autor 10-28, jogo da 0.3.99: lenhador 74%, pedreiro 48… | classe | ColonyCycleTest, HiringProperties, IdleFixesGameTest |
 | 134 | O adulto que sobra vai ao ofício que a vila espera (autor 10-28, jogo da 0.3.99: 6 de 18… | fora de vigor |  |
 | 135 | Tarefa só abre quando pode render (autor 10-28, jogo da 0.3.99): a ordem de estoque de pe… | classe | IdleFixesGameTest, ItemStockGameTest, ProfessionBalanceGameTest |
-| 136 | O fazendeiro alcança como o jogador (autor 10-28, jogo da 0.3.99: roça 2 blocos acima, a… | classe | BoneMealRoundGameTest, ColonyFixture, FarmPlanGameTest |
+| 136 | O fazendeiro alcança como o jogador (autor 10-28, jogo da 0.3.99: roça 2 blocos acima, a… | classe | ActionJournalGameTest, BoneMealRoundGameTest, ColonyFixture |
 | 137 | A escada da mina recomeça do topo (autor 10-28, jogo da 0.3.99: o mineiro passou 30 min n… | classe | IdleFixesGameTest |
 | 138 | A rua da colônia é só caminho e é da vila (autor 10-28; depois do jogo da 0.3.104: "volta… | classe | BlockProtectionGameTest, BuildSiteGameTest, LumberjackGameTest |
 | 139 | O lote sai do mapa de interesse (autor 10-28, jogo da 0.3.102: casa a 140 blocos, 24 acim… | cita | LotScoreMemoryTest |
@@ -160,7 +160,7 @@ classe prova menos ainda.
 | 147 | O diário da vila bate com o jogo (autor 10-28): cada fato vira VC_EVENT (obra aberta e fe… | cita | VillageDiaryGameTest |
 | 148 | A obra nunca fica largada meio pronta (autor 10-28, taiga simulada: casa em "0 blocks lef… | cita | BuildClosingGameTest |
 | 149 | Rua sem falha: falha de até 2 blocos de chão natural numa linha reta entre duas colunas d… | cita | HouseSurroundingsGameTest, VillageHelpersGameTest |
-| 150 | O pastor tosquia por cima da cerca (autor 10-28, diagnóstico da 0.3.103: 45 pastores pres… | classe | ColonyFixture, ShepherdGameTest |
+| 150 | O pastor tosquia por cima da cerca (autor 10-28, diagnóstico da 0.3.103: 45 pastores pres… | classe | ActionJournalGameTest, ColonyFixture, ShepherdGameTest |
 | 151 | O aldeão da colônia prefere a rua e evita a água (autor 10-28, jogo da 0.3.104: 4 de 7 te… | classe | FencedInGameTest, StreetRouteGameTest, StreetRouteTest |
 | 152 | O solo da vila nasce suave na geração (autor 10-29: crateras e montanhas no meio das vila… | classe | ClearAbovePieceGameTest, VillageBlendTest, VillageCoreTest |
 | 153 | Mais ajudas de quem está sem tarefa (autor 10-28, O1/O3/O4/O8; pedido de novo em 10-29),… | classe | GroundSmoothingGameTest, IdleFixesGameTest, ItemStockGameTest |
@@ -356,7 +356,7 @@ classe prova menos ainda.
 | 343 | A medida das travas de cru (autor 20-11, fase 4 do plano de ofícios e reservas, ADR-062):… | cita | KeepLedgerTest, test_stock_report |
 | 344 | A telemetria dos aldeões e dos itens (autor 20-11, plano docs/research/2026-11-20-telemet… | cita | ItemFlowGameTest, TaskTraceGameTest, VillagerDayGameTest |
 | 345 | O conflito com o jogador e a reafirmação (autor 20-11, telemetria F1 a F3b do plano docs/… | cita | EditLedgerGameTest, test_player_report |
-| 346 | Salvar todas as análises de uma vez (autor 20-11): /vc salvar, comando de jogador, roda o… | cita | SnapshotCommandGameTest |
+| 346 | Salvar todas as análises de uma vez (autor 20-11): /vc salvar, comando de jogador, reúne… | cita | SnapshotCommandGameTest |
 | 347 | O miolo da vila segue a forma das peças (autor 20-11, jogo da 0.4.110: "terreno quadrado… | cita | VillageCoreTest |
 | 348 | Uma descida por arco (autor 20-11, jogo da 0.4.111: muitas aberturas de mina em volta do… | cita | MineDigLimitTest, MineLooseGameTest, MineOneDescentTest |
 | 349 | Menos matéria-prima retida nos baús (autor 21-11, análise A8, ADR-062): a reserva de pó d… | cita | BoneMealRoundGameTest, IdleFixesGameTest, SmelterAdvanceGameTest |

@@ -78,8 +78,10 @@ GameTests focados passaram com a regra restaurada.
 9. **R1 `/vc salvar` completo**: o retrato passa a trazer também estado da mina (hélices, recusas, nível), a última
    `VC_ROAD_GRAPH`, obras e peças postas de lado, `VC_TIME` do jogo inteiro (não só a última janela), mortes,
    `VC_LOOP`, `VC_SUPPLY_ERROR`, `VC_PLAYER_*` e a lista **inteira** de `/vc blocos` (hoje corta em 15). Origem:
-   `SnapshotCommand` (Regra 346), `SnapshotCommandGameTest`. Alternativa mais barata: gravar a saída de
-   `scripts/game_report.py`.
+   `SnapshotCommand` (Regra 346), `SnapshotCommandGameTest`. Implementado no comando: o histórico é da colônia
+   e começa ao abrir o mundo. O teste detecta a falta das seções e o corte da tabela em 15 linhas. O Sentinela
+   apontou um ciclo entre pacotes na primeira execução (`20261121T070947Z`). Depois de mover o histórico para
+   integração, o teste de arquitetura, o Sentinela `fast` (`20261121T071551Z`, 1.230 GameTests) e o build passaram.
 
 ## Ao fechar o ciclo
 

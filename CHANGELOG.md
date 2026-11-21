@@ -12,7 +12,7 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
-## [0.4.113] — em desenvolvimento
+## [0.4.113] — candidata, 2026-11-21
 
 ### Alterado
 
@@ -29,6 +29,9 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
   As tochas geram o anel de luz e bloqueiam o nascimento natural de monstros nas proximidades.
 - Regra 354: o bosque perto da vila mantém cinco mudas por lenhador e usa o estoque primeiro.
   A falta de pó de osso para adubação é suprida em lotes de 16, registrados no `VC_SUPPLY`.
+- Regra 346: `/vc salvar` inclui a lista completa de blocos, mina, obras, peças deixadas de lado,
+  último grafo, tempo de todas as janelas e eventos registrados desde que o mundo foi aberto.
+- O diário registra as posições e o motivo quando fazendeiro e pastor desistem de se aproximar.
 
 ## [0.4.112] — candidata, 2026-11-20
 

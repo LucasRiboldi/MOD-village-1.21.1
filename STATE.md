@@ -22,7 +22,8 @@
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, teste que falha, correção,
   Sentinela, commit, JAR.
 - **Ciclo 0.4.113:** A8, A7, A9, A6, A2 e A3a (Regras 349 a 354) passaram em 21, 3, 8, 18, 6 e 9 GameTests focados, respectivamente.
-  A4 e A5 registram as posições e o motivo das desistências do fazendeiro e do pastor. O Sentinela `fast` passou; próximo item R1. Retomada no [plano do ciclo](docs/technical/Proximo-ciclo-0113.md).
+  A4 e A5 registram as posições e o motivo das desistências do fazendeiro e do pastor. R1 amplia o arquivo de `/vc salvar`
+  com as análises da sessão. As nove escolhas aguardam o próximo jogo em mundo novo. [Plano do ciclo](docs/technical/Proximo-ciclo-0113.md).
 
 ## Candidatas que esperam jogo
 
@@ -49,6 +50,7 @@ Cada uma tem teste que falha sem ela; nenhuma foi vista em jogo.
 | 0.4.85 | 285, 286 | aldeão preso na água vai à margem e, se não sair, pisa no gelo sob o pulo; o mineiro novo dorme na casa junto da mina assim que ela sobe; diagnósticos `loose=` (grafo), `VC_SMOOTH` e `VC_LOT_EDGE` (terreno). Sentinela `fast` PASS; tosquia instável registrada (KF-015) |
 | 0.4.86 | 287 | a tora deitada é chão do caminho (a borda da plantação grande fechava o miolo ao fazendeiro); a visão do canteiro vazio mira o lugar da planta. 1.137/1.137, Sentinela `fast` PASS |
 | 0.4.88 | 289–294 | escolhas G1–G7 da ADR-056: plantação grande semeada, 2 fazendeiros e semente que surge; tronco inteiro e folha natural quebrada no caminho; grafo na tábua de rua e na frente de toda porta; sem torre de minério e sem ar protegido no alisamento; pátio de pedra na boca da mina; ociosos tiram bloco solto e toco. 1.156/1.156, Sentinela `fast` PASS |
+| 0.4.113 | 346, 349–354 | relatório da sessão, travas de estoque, diagnóstico de fazendeiro e pastor, substituição da terracota, iluminação na mina e bosque |
 | 0.4.112 | 348 | uma descida por arco: dois níveis sem braço, sem escada girada e sem cavar fora do desenho; pedra com solto em cima fora da escolha |
 | 0.4.111 | 347 | o miolo da vila segue a forma das peças: sem chão quadrado, lago e morro entre peças afastadas ficam |
 | 0.4.110 | 346 | `/vc salvar`: todas as análises da vila num arquivo só |

@@ -58,7 +58,7 @@ public final class SupplyGapLedger {
      */
     public static void report(ServerWorld world, UUID colonyId, Item item, int count,
             ProfessionType profession, int attempts, String reason, String why) {
-        VillageColonyMod.LOGGER.warn("VC_SUPPLY_ERROR version=2 piece={} profession={} attempts={} gap={} reason={}",
+        SnapshotHistory.warn(colonyId, "VC_SUPPLY_ERROR version=2 piece={} profession={} attempts={} gap={} reason={}",
                 Registries.ITEM.getId(item), profession, attempts, reason, why);
         record(world, colonyId, item, count, profession, reason, why);
         Supplies.record(com.villagecolony.core.coordination.SupplyException.MISSING_PIECE, colonyId,

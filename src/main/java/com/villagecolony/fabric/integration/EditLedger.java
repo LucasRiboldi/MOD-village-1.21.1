@@ -116,6 +116,13 @@ public final class EditLedger {
         spot.playerBlock = block;
         spot.playerAt = now;
 
+        if (world == world.getServer().getOverworld()) {
+            for (Colony colony : VillageColonyMod.COLONIES.all()) {
+                if (containsColumn(colony, pos)) {
+                    lines.forEach(line -> SnapshotHistory.remember(colony.id(), line));
+                }
+            }
+        }
         return lines;
     }
 
@@ -243,10 +250,14 @@ public final class EditLedger {
     /** Se a posição está na caixa de alguma vila (onde a edição do jogador interessa). */
     public static boolean inAnyVillage(BlockPos pos) {
         for (Colony colony : VillageColonyMod.COLONIES.all()) {
-            if (colony.bounds().map(box -> box.containsColumn(pos.getX(), pos.getZ())).orElse(false)) {
+            if (containsColumn(colony, pos)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static boolean containsColumn(Colony colony, BlockPos pos) {
+        return colony.bounds().map(box -> box.containsColumn(pos.getX(), pos.getZ())).orElse(false);
     }
 }

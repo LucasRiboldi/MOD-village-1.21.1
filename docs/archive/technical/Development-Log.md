@@ -2,6 +2,16 @@
 
 # Development-Log.md
 
+## 21-11-2026 — R1, relatório completo e candidata 0.4.113
+
+`/vc salvar` reúne a lista completa de blocos, o estado da mina, construções e peças postas de lado,
+o último grafo e o histórico de tempo, mortes, laços, suprimento e edições da colônia na sessão.
+O GameTest detectou a falta das seções e, sob mutação, o corte da tabela em 15 linhas. Passou com
+a lista completa e confirmou que os registros de outra colônia ficam fora. O Sentinela detectou um
+ciclo entre integração e trabalho. O histórico ficou em integração e o teste de arquitetura passou.
+O Sentinela `fast` (`reports/test-runs/20261121T071551Z/`), os 1.230 GameTests, a análise, a suíte
+Python de 196 casos e o build passaram. O playtest segue pendente.
+
 ## 21-11-2026 — A5, diagnóstico da aproximação do pastor
 
 O diário registra as posições da ovelha e do pastor quando ele desiste, além de imobilidade ou prazo esgotado.

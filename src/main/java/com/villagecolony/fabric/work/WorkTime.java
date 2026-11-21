@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.fabric.integration.SnapshotHistory;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.brain.WorkHours;
@@ -229,15 +230,19 @@ public final class WorkTime {
 
     private static void report(long ticks) {
         for (Map.Entry<UUID, Map<String, EnumMap<State, Integer>>> colony : WINDOW.entrySet()) {
-            StringBuilder line = new StringBuilder();
-
-            for (Map.Entry<String, EnumMap<State, Integer>> profession : colony.getValue().entrySet()) {
-                line.append(' ').append(describe(profession.getKey(), profession.getValue()));
-            }
-
-            VillageColonyMod.LOGGER.info("VC_TIME version=1 colony={} window={}s{}",
-                    colony.getKey().toString().substring(0, 8), ticks / 20, line);
+            SnapshotHistory.info(colony.getKey(), line(colony.getKey(), ticks, colony.getValue()));
         }
+    }
+
+    public static java.util.Optional<String> currentLine(UUID colony, long now) {
+        return java.util.Optional.ofNullable(WINDOW.get(colony)).map(trades -> line(colony, now - windowStart, trades));
+    }
+
+    private static String line(UUID colony, long ticks, Map<String, EnumMap<State, Integer>> trades) {
+        StringBuilder line = new StringBuilder("VC_TIME version=1 colony=")
+                .append(colony.toString(), 0, 8).append(" window=").append(ticks / 20).append('s');
+        trades.forEach((profession, seconds) -> line.append(' ').append(describe(profession, seconds)));
+        return line.toString();
     }
 
     /**

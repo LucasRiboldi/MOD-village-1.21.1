@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.fabric.integration.SnapshotHistory;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.ColonyRoads;
@@ -428,7 +429,7 @@ public final class RoadGraphRefresh {
                 store.update(colony.id(), graph);
                 // Regra 295: quantas colunas o calçador recusou — a busca da ligação passa longe delas.
                 // Regra 317: quantas vezes o grafo mudou hoje — a medida do laço (estudo do grafo, §8).
-                VillageColonyMod.LOGGER.info("VC_ROAD_GRAPH colony={} nodes={} edges={} toPave={} isolated={} offLine={} capped={} fixed={} refused={} changes={} loose={} mode={} dirty={}",
+                SnapshotHistory.info(colony.id(), "VC_ROAD_GRAPH colony={} nodes={} edges={} toPave={} isolated={} offLine={} capped={} fixed={} refused={} changes={} loose={} mode={} dirty={}",
                         colony.id().toString().substring(0, 8), graph.nodes().size(), graph.edges().size(),
                         result.toPave().size(), result.isolated(), offLine, capped, fixed,
                         REFUSED.getOrDefault(colony.id(), Set.of()).size(), changedOn(colony.id(), today),
@@ -436,7 +437,7 @@ public final class RoadGraphRefresh {
             }
         } catch (IllegalArgumentException refused) {
             // O grafo anterior continua: formato recusado não derruba o servidor nem o save.
-            VillageColonyMod.LOGGER.warn("VC_ROAD_GRAPH colony={} refused by the save format: {}",
+            SnapshotHistory.warn(colony.id(), "VC_ROAD_GRAPH colony={} refused by the save format: {}",
                     colony.id().toString().substring(0, 8), refused.getMessage());
         }
     }

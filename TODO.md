@@ -67,8 +67,8 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
     (candidatas; o jogo da 0.4.89 mostrou 1 por ofício, `maxStep` ≤ 2 em volta das obras e 37 peças assentadas);
   - atividade por profissão: mineiro 39% e construtor 32% parados (61 `SET_ASIDE`); fazendeiro 1% sem plantação
     grande na vila nova (5A) (M)
-- [ ] 🔴 Próximo ciclo 0.4.113 — escolhas do autor de 21-11 (A8, A7, A9, A6, A2, A3a, A4, A5, R1), plano e estado
-  em `docs/technical/Proximo-ciclo-0113.md` (A8, A7, A9, A6, A2 e A3a esperam jogo) (G)
+- [ ] 🔴 Playtest da 0.4.113 em mundo novo — as nove escolhas de 21-11 (A8, A7, A9, A6, A2, A3a, A4, A5, R1)
+  estão no [plano do ciclo](docs/technical/Proximo-ciclo-0113.md). Rodar `/vc salvar` antes de sair e conferir o arquivo (G)
 - [ ] 🔴 Jogo da 0.4.111 (20-11, planície, colônia e8ee5291, 106 min), análise em
   `docs/audit/2026-11-21-analise-jogo-0111.md`:
   - mina com muitas aberturas e o laço do bloco solto: Regra 348 na 0.4.112 (candidata; conferir no próximo jogo);

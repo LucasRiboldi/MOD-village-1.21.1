@@ -8,10 +8,14 @@ import com.villagecolony.core.coordination.WorkClock;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.integration.ItemFlow;
+import com.villagecolony.fabric.integration.SnapshotHistory;
 import com.villagecolony.fabric.work.ActionJournal;
 import com.villagecolony.fabric.work.BlockLedger;
 import com.villagecolony.fabric.work.KeepLedger;
+import com.villagecolony.fabric.work.MineEntrance;
+import com.villagecolony.fabric.work.MineMarks;
 import com.villagecolony.fabric.work.VillagerDay;
+import com.villagecolony.fabric.work.WorkTime;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.MinecraftServer;
@@ -42,7 +46,7 @@ import java.util.Optional;
  * {@code <mundo>/villagecolony/analytics/snapshot-AAAAMMDD-HHMMSS.txt}. Roda os comandos {@code /vc} de leitura (os de
  * jogador e, só leitura, o modo do grafo e o estado das obras pedidas), captura o que cada um responderia no chat, junta
  * as linhas de análise do dia até agora ({@code VC_BLOCKS}, {@code VC_KEEP}, {@code VC_FLOW}, {@code VC_VILLAGER_DAY}),
- * sem zerar as contas diárias, e grava o diário de ações pendente.
+ * sem zerar as contas diárias, acrescenta mina, obras e o histórico da sessão e grava o diário de ações pendente.
  *
  * <p>Na 1.21.1 o comando chamado de dentro de outro vai para a fila e só roda depois dele
  * ({@code CommandExecutionContext.enqueueCommand}); por isso o {@code /vc salvar} só agenda, e o trabalho sai no fim do
@@ -63,7 +67,10 @@ public final class SnapshotCommand {
     private static @Nullable Path last;
 
     static {
-        ServerMemory.register(SnapshotCommand.class, PENDING::clear);
+        ServerMemory.register(SnapshotCommand.class, () -> {
+            PENDING.clear();
+            last = null;
+        });
     }
 
     private SnapshotCommand() {
@@ -124,7 +131,14 @@ public final class SnapshotCommand {
                 .append(player.getBlockPos().toShortString()).append("\n\n");
 
         for (String command : PLAYER_READS) {
-            run(server, source, command, text);
+            if ("vc blocos".equals(command)) {
+                text.append("== /vc blocos\n");
+                BlockCommand.showRows(world, colony.get(), Integer.MAX_VALUE,
+                        line -> text.append(line.getString()).append('\n'));
+                text.append('\n');
+            } else {
+                run(server, source, command, text);
+            }
         }
 
         for (String command : OPERATOR_READS) {
@@ -137,6 +151,8 @@ public final class SnapshotCommand {
                 .append(ItemFlow.peek(world, day)).append('\n')
                 .append(VillagerDay.peek(colony.get().id(), day)).append('\n');
 
+        appendWorks(world, colony.get(), text);
+        SnapshotHistory.append(colony.get().id(), WorkTime.currentLine(colony.get().id(), world.getTime()), text);
         ActionJournal.flush();
 
         try {
@@ -153,6 +169,33 @@ public final class SnapshotCommand {
             VillageColonyMod.LOGGER.warn("Could not save the analysis snapshot", failure);
             source.sendError(Text.literal("Não foi possível gravar a análise: " + failure.getMessage()));
         }
+    }
+
+    private static void appendWorks(ServerWorld world, Colony colony, StringBuilder text) {
+        var id = colony.id();
+        text.append("\n== mina\n");
+        VillageColonyMod.MINES.of(id).ifPresentOrElse(mine -> text.append("entrada=").append(mine.entry())
+                .append(" níveis=").append(MineEntrance.levelsDown(world, id, mine))
+                .append(" hélices=").append(mine.helicesTried())
+                .append(" recusas ativas no traçado=").append(MineMarks.activeIn(world, mine))
+                .append(" cortes por braço=").append(java.util.Arrays.toString(mine.cuts())).append('\n'),
+                () -> text.append("Nenhuma mina aberta.\n"));
+
+        text.append("\n== obras e peças postas de lado\n");
+        var buildings = VillageColonyMod.BUILDINGS.ofColony(id);
+        text.append("Construções registradas: ").append(buildings.size()).append('\n');
+        buildings.forEach(building -> text.append(building.blueprint()).append(" em ").append(building.min())
+                .append(" pronta=").append(building.finished()).append('\n'));
+        var projects = VillageColonyMod.CONSTRUCTIONS.ofColony(id);
+        text.append("Obras registradas: ").append(projects.size()).append('\n');
+        for (var project : projects) {
+            text.append(project.blueprint().id()).append(" em ").append(project.origin())
+                    .append(" estado=").append(project.state()).append(" faltam=").append(project.remainingCount())
+                    .append(" de lado=").append(project.deferredPieces().size()).append('\n');
+            project.deferredPieces().forEach(piece -> text.append("  ").append(piece.block())
+                    .append(" em ").append(piece.position()).append(" motivo=").append(piece.reason()).append('\n'));
+        }
+        text.append('\n');
     }
 
     /** Roda um comando e põe no texto o que ele responderia no chat. */

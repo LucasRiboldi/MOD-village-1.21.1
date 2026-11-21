@@ -4,8 +4,9 @@ Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 20
 
 ## Retomada de 2026-11-21 (leia isto primeiro; o resto deste arquivo é de 11-15)
 
-- **Plano a seguir:** `docs/technical/Proximo-ciclo-0113.md` — 9 itens com ordem, arquivos e critério (A8, A7, A9, A6, A2, A3a, A4, A5, R1).
-- **A5, candidato:** desistência do pastor registra posições da ovelha e do pastor e imobilidade ou prazo esgotado. Teste falhou antes da mudança e sob mutação; quatro GameTests focados e Sentinela `fast` passaram. Relatório em `reports/test-runs/20261121T064752Z/`. Próximo item R1. Confirmar o diagnóstico no próximo jogo.
+- **Plano do ciclo:** `docs/technical/Proximo-ciclo-0113.md` — as nove escolhas (A8, A7, A9, A6, A2, A3a, A4, A5, R1) estão implementadas. Próxima verificação em mundo novo, com `/vc salvar` antes de sair.
+- **R1, candidato (Regra 346):** relatório da sessão com a tabela completa de blocos, mina, obras, último grafo, janelas de tempo e eventos da colônia. GameTest focado passou e detectou a restauração do limite de 15 linhas.
+- **A5, candidato:** desistência do pastor registra posições da ovelha e do pastor e imobilidade ou prazo esgotado. Teste falhou antes da mudança e sob mutação; quatro GameTests focados e Sentinela `fast` passaram. Relatório em `reports/test-runs/20261121T064752Z/`. Confirmar o diagnóstico no próximo jogo.
 - **A4, candidato:** desistência do fazendeiro registra canteiro, posição do aldeão e imobilidade ou prazo esgotado. Teste falhou antes da mudança e sob mutação; três GameTests focados passaram. Sentinela `fast` passou em `reports/test-runs/20261121T063830Z/`. Confirmar o diagnóstico no próximo jogo.
 - **Branch:** `fix/miolo-pelas-pecas`, sem push, à frente da `main` (0.4.111 Regra 347 e 0.4.112 Regra 348, não jogadas). JAR 0.4.112 `ae11f4e1` já em `downloads/` e no TLauncher.
 - **A8, candidata (Regra 349):** quatro reservas reduzidas, `ingot` removido só da medição e `wool` preservado. Cinco regressões falharam com a mutação, e os 21 GameTests focados passaram com a regra restaurada.
