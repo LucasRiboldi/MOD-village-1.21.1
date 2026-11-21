@@ -38,7 +38,9 @@ Da 0.4.75 à 0.4.99 (pedidos do autor de 13-11 a 20-11, jogos da 0.4.79, 0.4.84,
   fabricado 4, peça das vilas 12, especial 1), sem a tora guardada (Regra 340, ADR-062, 0.4.104); o contratado perde a roupa de ofício Vanilla na hora
   (Regra 341, 0.4.105); o registro de blocos sai por dia no `VC_BLOCKS` e no `/vc blocos`
   (Regra 342, 0.4.106); as travas de cru são medidas no `VC_KEEP`, e o
-  `stock_report.py` sugere o ajuste (Regra 343, 0.4.107).
+  `stock_report.py` sugere o ajuste (Regra 343, 0.4.107); a telemetria segue cada tarefa, cada aldeão e cada item, e o
+  `game_report.py` junta tudo num relatório por jogo (Regra 344, 0.4.108); o conflito com o jogador e a
+  reafirmação dele viram itens a corrigir (Regra 345, 0.4.109); `/vc salvar` grava todas as análises num arquivo (Regra 346, 0.4.110).
 
 - **Aldeão preso:** soleira de casa não é curral, e "saiu" é pisar fora do que ele alcançava (Regra 275); alçapão em pé
   se pula e o caminho o evita (Regra 276); solto da fuga de encalhe só quem saiu do lugar (Regra 279); quem fica preso na água a céu aberto vai à margem e, se não sair, pisa no gelo posto sob o pulo (Regra 285).
@@ -640,6 +642,9 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 341 | **O contratado perde o ofício Vanilla na hora** (autor 20-11: viu um trabalhador do mod ganhar roupa de ofício Vanilla; emenda a Regra 44): o aldeão que pegou ofício Vanilla antes de ser do mod perde o ofício, a roupa e o posto de trabalho logo depois de contratado, e todo trabalhador do mod da colônia, em qualquer lugar do mundo, é conferido a cada ciclo. A varredura limpava antes de contratar e só via quem estava a até 64 blocos do centro. A linha `VC_VANILLA_JOB` diz cada vez que a trava barra (`blocked`) ou limpa (`stripped`) um ofício Vanilla. Candidata | 20-11 |
 | 342 | **O registro de blocos** (autor 20-11, fase 3 do plano de ofícios e reservas, ADR-062): por colônia e por dia, cada bloco conta o que a obra pôs, quantas vezes ela o deixou de lado por falta e quanto dele surgiu (`VC_SUPPLY`). No fim do expediente sai a linha `VC_BLOCKS` com a classe, a reserva e o estoque nos baús de todo bloco guardado ou movimentado (`id=classe,reserva,estoque,posto,esperou,surgiu`); o `/vc blocos` mostra a mesma tabela na hora, os mais movimentados primeiro e em vermelho o que está abaixo da reserva. É a base para subir ou descer a reserva de cada tipo. Candidata | 20-11 |
 | 343 | **A medida das travas de cru** (autor 20-11, fase 4 do plano de ofícios e reservas, ADR-062): cada trava pequena de cru (lã 16, farinha de osso 16, trigo 8, semente 8 ou um por canteiro, cru da fornalha 16, pedregulho da mina, lingote 64, cru dos produtos de valor 64, manutenção 32 + 4) conta no dia quantas vezes foi consultada, quantas vezes barrou o ofício e o menor estoque visto. No fim do expediente sai a linha `VC_KEEP`; o `scripts/stock_report.py` lê ela e a `VC_BLOCKS` e sugere, por trava, NÃO AGE (pode sair), SEGURA DEMAIS (descer) ou ok, e por bloco SUBIR, DESCER, FALTA CRU ou ok. Nenhuma trava muda: a decisão é do autor, depois do jogo. A areia 16 e as peças de bioma 32 são piso de meta e folga de teto, não barram ofício, e ficam de fora. Candidata | 20-11 |
+| 344 | **A telemetria dos aldeões e dos itens** (autor 20-11, plano `docs/research/2026-11-20-telemetria-dos-aldeoes.md`, peças T1 a T6): só registra, nenhum comportamento muda. T1: cada passo de tarefa e cada ação feita com ela levam o número curto da tarefa no diário (`task_report.py`). T2: o diário ganha a linha `STATE` quando o estado do aldeão muda e se firma por 5 amostras, com o anterior, a duração, o lugar e o motivo (`villager_timeline.py`). T3: as portas dos baús contam o que entrou, saiu e não coube, e a linha diária `VC_FLOW` fecha a conta de cada item com o estoque (`flow_report.py`). T4: o `action_report.py` soma por item o que foi feito e cada desfecho. T5: a linha diária `VC_VILLAGER_DAY` dá, por aldeão de profissão, expediente, sono, acordado fora do expediente, sem cama e menor vida, e `VC_VILLAGER_DEATH` a morte com a causa. T6: o `game_report.py` junta tudo num relatório por jogo, com os achados mais graves primeiro. Candidata | 20-11 |
+| 345 | **O conflito com o jogador e a reafirmação** (autor 20-11, telemetria F1 a F3b do plano `docs/research/2026-11-20-telemetria-dos-aldeoes.md` §4): só registra. Cada edição do jogador na vila sai em `VC_PLAYER_EDIT`, com o alvo (construção, rua, plantação, baú, bancada, peça Vanilla, terreno natural). O jogador mexer num bloco que um sistema do mod mudou há menos de um dia sai em `VC_PLAYER_UNDO`; o mod mudar um bloco que o jogador deixou sai em `VC_MOD_OVERRIDE`. O jogador refazer o que tinha feito depois de o mod desfazer é a **reafirmação** (`VC_PLAYER_INSIST`): o ponto de atenção que vira item a corrigir, no topo do `game_report.py` ("Para corrigir — o jogador insistiu"); duas no mesmo lugar, ou três do mesmo sistema, é achado grave. A obra, a calçada, o nivelamento e o corredor dizem o próprio nome; a mudança sem dono numa posição do jogador é achada por um vigia e sai como `mundo` ou `mod?<alvo>`. `player_report.py` lê tudo. Candidata | 20-11 |
+| 346 | **Salvar todas as análises de uma vez** (autor 20-11): `/vc salvar`, comando de jogador, roda os comandos `/vc` de leitura (`/vc log`, `/vc bioma`, `/vc blocos`, `/vc dados` e, só leitura, `/vc grafo modo` e `/vc mae estado`), junta as linhas de análise do dia até agora (`VC_BLOCKS`, `VC_KEEP`, `VC_FLOW`, `VC_VILLAGER_DAY`) sem zerar as contas diárias, grava o diário de ações pendente e salva tudo num arquivo só, `<mundo>/villagecolony/analytics/snapshot-AAAAMMDD-HHMMSS.txt` (linha `VC_SNAPSHOT` no log). Como o comando chamado de dentro de outro só roda depois dele, o trabalho sai no fim do tique. Candidata | 20-11 |
 
 Das 75 às 109 são decisões do autor que já estavam no código sem número; foram registradas em 2026-10-22
 (levantamento em `docs/research/2026-10-22-logicas-candidatas-a-regra.md`; a 108 e a 109 vieram do README).
@@ -809,6 +814,7 @@ comandos ativados).
 | `/vc bioma nota <texto>` | Anota uma observação sua, com posição e bioma, no log (`VC_BIOME_NOTE`) e no arquivo de análise do mundo. É a melhor forma de contar o que você viu: cada nota vira um achado na próxima análise |
 | `/vc dados` | Grava agora o retrato completo da vila no arquivo de análise e diz onde ficou |
 | `/vc blocos` | Mostra a tabela de blocos da vila (Regra 342): classe (cru, fabricado, vila, especial), reserva, estoque nos baús e quanto a obra pôs, esperou e viu surgir hoje. Os mais movimentados vêm primeiro, e em vermelho o que está abaixo da reserva |
+| `/vc salvar` | **Salva todas as análises de uma vez** (Regra 346): roda os outros comandos `/vc` de leitura, junta as linhas de análise do dia até agora e grava tudo num arquivo só, `<mundo>/villagecolony/analytics/snapshot-AAAAMMDD-HHMMSS.txt`. Use no fim de cada jogo, antes de sair |
 
 **Comandos de operador**
 
@@ -880,6 +886,11 @@ Os outros relatórios:
 | `supply_report.py` | O que surgiu sem um ofício obter (`VC_SUPPLY`) |
 | `biome_report.py` | O boletim por bioma (`VC_BIOME`) |
 | `stock_report.py` | Reservas de bloco e travas de cru (`VC_BLOCKS`, `VC_KEEP`): o que subir, descer ou tirar |
+| `game_report.py` | **O relatório único do jogo:** roda todos os outros e põe no topo os achados mais graves, a começar pelo que o jogador insistiu (Regras 344 e 345) |
+| `task_report.py` | Cada tarefa pelo número: tempo até começar, até a 1ª peça e até o fim; por que foi solta |
+| `villager_timeline.py` | O dia de cada aldeão: parte de cada estado e os trechos parados mais longos, com lugar e motivo |
+| `flow_report.py` | O balanço dos itens nos baús (`VC_FLOW`): entrou, saiu, recusado e o que mudou por fora |
+| `player_report.py` | A interferência do jogador: o que ele mexeu, quem desfez quem e as reafirmações a corrigir |
 
 ## Desenvolvimento e verificação
 

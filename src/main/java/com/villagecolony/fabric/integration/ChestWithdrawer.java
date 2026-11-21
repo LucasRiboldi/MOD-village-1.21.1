@@ -65,6 +65,7 @@ public final class ChestWithdrawer {
 
         if (taken > 0) {
             inventory.markDirty();
+            ItemFlow.out(item, taken); // o balanço do dia (Regra 344)
         }
 
         return taken;
@@ -175,6 +176,7 @@ public final class ChestWithdrawer {
 
         if (count > 0) {
             inventory.markDirty();
+            taken.forEach(stack -> ItemFlow.out(stack.getItem(), stack.getCount())); // o balanço do dia (Regra 344)
         }
 
         return List.copyOf(taken);
@@ -315,6 +317,7 @@ public final class ChestWithdrawer {
             }
 
             inventory.markDirty();
+            ItemFlow.out(item, 1); // o balanço do dia (Regra 344)
 
             return 1;
         }

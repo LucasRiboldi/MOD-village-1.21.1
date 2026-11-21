@@ -59,6 +59,9 @@ public final class ActionJournal {
     /** Quando cada tarefa foi pega, para a linha de fim dizer quanto durou. */
     private static final Map<UUID, Long> TAKEN_AT = new HashMap<>();
 
+    /** A tarefa que cada aldeão segura agora: o número dela vai em cada ação dele (Regra 344, telemetria T1). */
+    private static final Map<UUID, UUID> HOLDING = new HashMap<>();
+
     private static @Nullable Path file;
 
     private static long now;
@@ -119,8 +122,14 @@ public final class ActionJournal {
                 ? task.releaseReason()
                 : from.name();
 
+        if (to == TaskState.RESERVED || to == TaskState.EXECUTING) {
+            HOLDING.put(worker, task.id());
+        } else {
+            HOLDING.remove(worker, task.id());
+        }
+
         append(worker, action, task.type().name(), task.targetResource().name(), task.amount(), null,
-                since == null ? -1 : now - since, detail);
+                since == null ? -1 : now - since, detail, task.id());
     }
 
     /**
@@ -133,9 +142,18 @@ public final class ActionJournal {
      */
     public static void action(UUID worker, String action, String what, int amount, @Nullable BlockPos at,
             String detail) {
-        append(worker, action, "", what, amount, at, -1, detail);
+        append(worker, action, "", what, amount, at, -1, detail, HOLDING.get(worker));
         BedChoice.worked(worker, action, at);
         BlockLedger.action(worker, action, what, amount);
+    }
+
+    /**
+     * Uma mudança de estado firmada (Regra 344, telemetria T2): {@code what} é o estado novo, {@code ticks} quanto o de
+     * antes durou, {@code detail} o de antes e o motivo.
+     */
+    static void state(UUID worker, String from, String to, long ticks, BlockPos at, String reason) {
+        append(worker, "STATE", "", to, 0, at, ticks, "from " + from + (reason.isEmpty() ? "" : " " + reason),
+                HOLDING.get(worker));
     }
 
     /** O nome curto de um item, para a coluna {@code what}. */
@@ -148,7 +166,7 @@ public final class ActionJournal {
             "TASK_RELEASED", "GAVE_UP", "SET_ASIDE", "TARGET_REJECTED", "STRANDED", "SKIPPED", "REFUSED");
 
     private static void append(UUID worker, String action, String task, String what, int amount,
-            @Nullable BlockPos at, long ticks, String detail) {
+            @Nullable BlockPos at, long ticks, String detail, @Nullable UUID taskId) {
 
         if (file == null) {
             return;
@@ -170,6 +188,11 @@ public final class ActionJournal {
                 .append("\",\"action\":\"").append(action).append('"');
 
         field(line, "task", task);
+
+        if (taskId != null) {
+            line.append(",\"id\":\"").append(taskId.toString(), 0, 8).append('"');
+        }
+
         field(line, "what", what.toLowerCase(Locale.ROOT));
 
         if (amount != 0) {
@@ -220,7 +243,7 @@ public final class ActionJournal {
     }
 
     /** O lote vai para o disco; falha de disco desliga o diário, nunca o jogo. */
-    static void flush() {
+    public static void flush() {
         Path target = file;
 
         if (target == null || PENDING.isEmpty()) {
@@ -258,5 +281,6 @@ public final class ActionJournal {
         flush();
         PENDING.clear();
         TAKEN_AT.clear();
+        HOLDING.clear();
     }
 }

@@ -12184,3 +12184,29 @@ Fase 4, a última, do plano de ofícios e reservas. As travas pequenas de cru fi
 - `KeepLedgerTest`.
 
 Nada visto em jogo.
+## 2026-11-20 — 0.4.108 e 0.4.109: a telemetria e o conflito com o jogador (Regras 344 e 345)
+
+O autor perguntou se o mod sabe tudo dos itens e de cada aldeão, e pediu também medir a interferência do jogador
+(`docs/research/2026-11-20-telemetria-dos-aldeoes.md`).
+
+- 0.4.108, T1 a T6: `id` da tarefa no diário (`TaskTraceGameTest`, `task_report.py`); `VillagerTimeline` e a linha
+  `STATE` (`villager_timeline.py`); `ItemFlow` nas portas dos baús e `VC_FLOW` (`ItemFlowGameTest`, `flow_report.py`);
+  falhas por item no `action_report.py`; `VillagerDay` com `VC_VILLAGER_DAY` e `VC_VILLAGER_DEATH`
+  (`VillagerDayGameTest`); `game_report.py`.
+- 0.4.109, F1 a F3b: `EditLedger` guarda por posição a última edição do jogador e a do mod; o
+  `PlayerWorldChangeHandler` passa as edições do jogador (comparadas pelo tipo de bloco, para porta e alçapão não
+  contarem); obra (`BuilderPlacement`), calçada (`PathPaving`), nivelamento (`GroundSmoothing`) e corredor
+  (`CorridorCut`) dizem o próprio nome; o vigia acha a mudança sem dono a cada 5 s. `EditLedgerGameTest` (a
+  reafirmação da janela que a obra fechou; os dois lados; pedra natural sem conflito) e `player_report.py`.
+- Os testes de `VillagerDay` e `EditLedger` foram escritos junto com as classes: não houve vermelho antes.
+
+Nada visto em jogo.
+## 2026-11-20 — 0.4.110: `/vc salvar` (Regra 346)
+
+O autor pediu um comando que rode todos os `/vc` e salve as análises. Na 1.21.1, o comando chamado de dentro de
+outro vai para a fila (`CommandExecutionContext.enqueueCommand`) e só roda depois dele: o `/vc salvar` agenda, e no
+fim do tique roda cada comando com a saída capturada (`ServerCommandSource.withOutput`), junta as linhas parciais
+(`BlockLedger.report`, `KeepLedger.peek`, `ItemFlow.peek`, `VillagerDay.peek`, sem zerar) e grava
+`snapshot-*.txt` na pasta de análise do mundo. `SnapshotCommandGameTest`.
+
+Nada visto em jogo.

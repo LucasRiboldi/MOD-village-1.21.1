@@ -92,6 +92,9 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 - [ ] 🔴 Regra 44 vazou (autor 20-11): o trabalhador do mod ganhou roupa de ofício Vanilla. Causa: a varredura
   limpava antes de contratar e só via 64 blocos do centro. Regra 341 na 0.4.105 (candidata); conferir no
   próximo jogo que `VC_VANILLA_JOB` não mostra `stripped` repetido do mesmo aldeão (M)
+- [ ] 🟠 Telemetria da interferência do jogador (F1–F9) e a **reafirmação** (F3b: o jogador refaz o que o mod desfez,
+  ponto de atenção que vira item a corrigir): plano em `docs/research/2026-11-20-telemetria-dos-aldeoes.md` §4 (M)
+- [ ] 🟡 Próximas telemetrias A–E (movimento, fila, produção, mundo, a própria medida): mesmo plano, §4 (M)
 - [ ] 🟢 Roupa própria das profissões do mod: análise em `docs/research/2026-11-20-skins-das-profissoes.md` (viável,
   caminho S1: camada no cliente com a profissão sincronizada; texturas por script Pillow com prévia) (G)
 - [ ] 🔴 Jogo da 0.4.93 (19-11, planície, colônia ccac8347, Spark `AYGQ78wh44`, TPS 20, ~3 h), triagem:

@@ -108,3 +108,20 @@ class ActionReportTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ByItemTest(unittest.TestCase):
+    """Regra 344, telemetria T4: tentativas e falhas somadas por item."""
+
+    def test_each_item_counts_what_was_made_and_why_it_stopped(self):
+        records = action_report.parse([
+            '{"t":1,"worker":"aa","prof":"CARPENTER","action":"CRAFTED","what":"oak_stairs","n":4,'
+            '"detail":"made the oak_stairs it was asked"}',
+            '{"t":2,"worker":"aa","prof":"CARPENTER","action":"CRAFTED","what":"oak_stairs","n":0,'
+            '"detail":"no logs left in the colony chests"}',
+            '{"t":3,"worker":"bb","prof":"BUILDER","action":"SET_ASIDE","what":"oak_stairs","n":1,"detail":"no material"}',
+        ])
+        items = action_report.by_item(records)
+        self.assertEqual(4, items["oak_stairs"]["made"])
+        self.assertEqual(1, items["oak_stairs"]["outcomes"]["CRAFTED: no logs left in the colony chests"])
+        self.assertEqual(1, items["oak_stairs"]["outcomes"]["SET_ASIDE: no material"])

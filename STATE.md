@@ -9,7 +9,7 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.107 na `main`, publicada como `v0.4.107-alpha` (Regras 336 a 343, ADR-061 e ADR-062), não jogada; roteiro de jogo em `docs/testing/roteiro-de-jogo-0.4.107.md`; 0.4.100 a 0.4.102 na `main` (Regras 336 a 338, ADR-061), não jogadas; 0.4.99 publicada como `v0.4.99-alpha` (Regras 326 a 335, ADR-058 a ADR-060, do jogo da
+- **Versão:** 0.4.110 na branch `feat/telemetria-aldeoes` (Regras 344 a 346, telemetria e `/vc salvar`), não jogada; 0.4.107 na `main`, publicada como `v0.4.107-alpha` (Regras 336 a 343), não jogada; roteiro de jogo em `docs/testing/roteiro-de-jogo-0.4.107.md`;
   0.4.93 em planície); a anterior publicada é a `v0.4.93-alpha` (Regras 315 a 325, ADR-057), **jogada em 19-11**
   (montanha, Spark `0SMEEkMLGP`, ~35 min): boca da mina e BigHouseMOD no alto da montanha, longe das casas, e blocos de
   terreno voando no print do autor. Triagem no `TODO.md`; o autor escolheu A (centro e BigHouseMOD pela altura dos
@@ -47,6 +47,9 @@ Cada uma tem teste que falha sem ela; nenhuma foi vista em jogo.
 | 0.4.85 | 285, 286 | aldeão preso na água vai à margem e, se não sair, pisa no gelo sob o pulo; o mineiro novo dorme na casa junto da mina assim que ela sobe; diagnósticos `loose=` (grafo), `VC_SMOOTH` e `VC_LOT_EDGE` (terreno). Sentinela `fast` PASS; tosquia instável registrada (KF-015) |
 | 0.4.86 | 287 | a tora deitada é chão do caminho (a borda da plantação grande fechava o miolo ao fazendeiro); a visão do canteiro vazio mira o lugar da planta. 1.137/1.137, Sentinela `fast` PASS |
 | 0.4.88 | 289–294 | escolhas G1–G7 da ADR-056: plantação grande semeada, 2 fazendeiros e semente que surge; tronco inteiro e folha natural quebrada no caminho; grafo na tábua de rua e na frente de toda porta; sem torre de minério e sem ar protegido no alisamento; pátio de pedra na boca da mina; ociosos tiram bloco solto e toco. 1.156/1.156, Sentinela `fast` PASS |
+| 0.4.110 | 346 | `/vc salvar`: todas as análises da vila num arquivo só |
+| 0.4.109 | 345 | conflito com o jogador: `VC_PLAYER_EDIT`, `VC_PLAYER_UNDO`, `VC_MOD_OVERRIDE` e a reafirmação `VC_PLAYER_INSIST`; `player_report.py` |
+| 0.4.108 | 344 | telemetria: tarefa com número, linha do tempo de cada aldeão, balanço dos itens, falhas por item, dia do aldeão e relatório único (`game_report.py`) |
 | 0.4.107 | 343 | medida das travas de cru: `VC_KEEP` diária e `stock_report.py` |
 | 0.4.106 | 342 | registro de blocos: `VC_BLOCKS` diária e `/vc blocos` |
 | 0.4.105 | 341 | o contratado perde o ofício e a roupa Vanilla na hora; conferência a cada ciclo; `VC_VANILLA_JOB` |

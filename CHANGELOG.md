@@ -12,6 +12,40 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.110] — candidata, 2026-11-20
+
+Regra 346; nada visto em jogo.
+
+### Adicionado
+
+- `/vc salvar`: roda os comandos `/vc` de leitura e as linhas de análise do dia e grava tudo num arquivo só,
+  na pasta de análise do mundo.
+
+## [0.4.109] — candidata, 2026-11-20
+
+O conflito entre o jogador e o mod (telemetria F1 a F3b). Regra 345; só registra.
+
+### Adicionado
+
+- `VC_PLAYER_EDIT`: cada edição do jogador na vila, com o alvo.
+- `VC_PLAYER_UNDO` (o jogador desfez o mod) e `VC_MOD_OVERRIDE` (o mod desfez o jogador).
+- `VC_PLAYER_INSIST`: o jogador refez o que o mod desfez, a reafirmação, no topo do `game_report.py` como
+  "Para corrigir — o jogador insistiu".
+- `scripts/player_report.py`.
+
+## [0.4.108] — candidata, 2026-11-20
+
+A telemetria dos aldeões e dos itens (plano T1 a T6). Regra 344; só registra, nada muda no comportamento.
+
+### Adicionado
+
+- T1: número da tarefa no diário de ações e `scripts/task_report.py`.
+- T2: linha `STATE` no diário (a mudança de estado firmada de cada aldeão) e `scripts/villager_timeline.py`.
+- T3: balanço diário dos itens nos baús, `VC_FLOW`, e `scripts/flow_report.py`.
+- T4: tentativas e falhas por item no `action_report.py`.
+- T5: `VC_VILLAGER_DAY` (expediente, sono, acordado, sem cama, vida) e `VC_VILLAGER_DEATH`.
+- T6: `scripts/game_report.py`, o relatório único de cada jogo.
+
 ## [0.4.107] — candidata, 2026-11-20
 
 Fase 4, a última, do plano de ofícios e reservas. Regra 343; nada visto em jogo.

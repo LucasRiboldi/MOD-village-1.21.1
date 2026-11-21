@@ -106,6 +106,11 @@ public final class KeepLedger {
         return lock + "=" + counts[LIMIT] + "," + counts[CHECKS] + "," + counts[BARRED] + "," + counts[LOWEST];
     }
 
+    /** A linha do dia até agora, sem zerar a conta — para o {@code /vc salvar} (Regra 346). */
+    public static String peek(long day) {
+        return line(day);
+    }
+
     /** A linha {@code VC_KEEP} do dia. */
     static String line(long day) {
         List<String> entries = new ArrayList<>();

@@ -72,6 +72,9 @@ public final class ChestDepositor {
                         handle.named() || uncapped));
 
         inventory.markDirty();
+        // O balanço do dia (Regra 344): o que entrou e o que não coube.
+        ItemFlow.in(item, amount - remaining);
+        ItemFlow.refused(item, remaining);
 
         return remaining;
     }
@@ -101,6 +104,7 @@ public final class ChestDepositor {
             if (inventory.getStack(slot).isEmpty()) {
                 inventory.setStack(slot, stack.copy());
                 inventory.markDirty();
+                ItemFlow.in(stack.getItem(), stack.getCount()); // o balanço do dia (Regra 344)
 
                 return true;
             }

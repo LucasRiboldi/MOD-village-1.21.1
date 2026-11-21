@@ -20,7 +20,8 @@ os testes automáticos provam o mecanismo, e só o jogo prova o efeito.
 
    Exemplo: `/vc bioma nota mineiro parado na boca da mina`. Cada nota vira um item da próxima análise.
 
-6. No fim, antes de sair: `/vc dados`. Depois feche o jogo normalmente (sem forçar).
+6. No fim, antes de sair: `/vc salvar` (grava todas as análises num arquivo só). Depois feche o jogo
+   normalmente (sem forçar).
 
 ## O que olhar
 

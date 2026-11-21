@@ -53,6 +53,7 @@ public final class VillagerLifecycleHandler {
 
     private static void onDeath(LivingEntity entity, net.minecraft.entity.damage.DamageSource cause) {
         if (entity instanceof VillagerEntity villager) {
+            com.villagecolony.fabric.work.VillagerDay.died(villager, cause.getName()); // Regra 344, telemetria T5
             unmarkChestOf(villager);
 
             forget(villager.getUuid(), "died");
