@@ -31,7 +31,7 @@ def stretches(records):
         detail = record.get("detail", "")
         if not detail.startswith("from "):
             continue
-        parts = detail.split(" ", 2)
+        parts = detail.split(" | para ", 1)[0].split(" ", 2)
         before = parts[1] if len(parts) > 1 else "?"
         reason = parts[2] if len(parts) > 2 else ""
         lasted = record.get("ticks", 0) / TICKS_PER_SECOND

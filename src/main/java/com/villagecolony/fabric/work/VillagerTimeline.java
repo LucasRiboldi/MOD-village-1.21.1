@@ -92,12 +92,16 @@ public final class VillagerTimeline {
         }
 
         long elapsed = track.candidateSince - track.since;
-        ActionJournal.state(id, track.state, state, elapsed, at, describe(track.reason, track.destination));
+        String previousDetail = describe(track.reason, track.destination);
+        String nextDetail = describe(reason, destination);
+        String journalDetail = nextDetail.isEmpty() ? previousDetail
+                : "%s | para %s %s".formatted(previousDetail, state, nextDetail).strip();
+        ActionJournal.state(id, track.state, state, elapsed, at, journalDetail);
         if (track.recent.size() == RECENT_LIMIT) {
             track.recent.removeFirst();
         }
-        track.recent.addLast(track.candidateSince + ": " + track.state + " (" + elapsed / 20 + " s) "
-                + describe(track.reason, track.destination) + " -> " + state + " em " + at.toShortString());
+        track.recent.addLast("%d: %s (%d s) %s -> %s em %s %s".formatted(track.candidateSince,
+                track.state, elapsed / 20, previousDetail, state, at.toShortString(), nextDetail).stripTrailing());
         track.reason = reason;
         track.destination = destination;
         track.state = state;
