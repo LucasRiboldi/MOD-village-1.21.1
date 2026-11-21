@@ -4,6 +4,8 @@ import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ai.brain.MemoryModuleType;
+import net.minecraft.entity.ai.brain.WalkTarget;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
@@ -15,6 +17,28 @@ import net.minecraft.util.math.BlockPos;
  * 5 blocos acima do chão, e a fuga o dava por solto sem ele andar.
  */
 public class RoofDescentGameTest implements FabricGameTest {
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "roof_stale_target", tickLimit = 40)
+    public void roofRescueClearsPreviousWalkTarget(TestContext context) {
+        scene(context, Blocks.OAK_PLANKS);
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(5, ROOF + 1, 5));
+        context.waitAndRun(5, () -> {
+            try {
+                BlockPos oldTarget = context.getAbsolutePos(new BlockPos(5, ROOF + 3, 5));
+                villager.getBrain().remember(MemoryModuleType.WALK_TARGET, new WalkTarget(oldTarget, 0.5f, 0));
+                for (int attempt = 0; attempt <= RoofDescent.LEAPS; attempt++) {
+                    context.assertTrue(RoofDescent.check(context.getWorld(), villager), "não resgatou do telhado");
+                }
+                context.assertFalse(villager.getBrain().hasMemoryModule(MemoryModuleType.WALK_TARGET),
+                        "o destino anterior continua ativo depois do resgate");
+            } finally {
+                villager.discard();
+                clear(context);
+                RoofDescent.clearAll();
+            }
+            context.complete();
+        });
+    }
 
     private static final int GROUND = 1;
 

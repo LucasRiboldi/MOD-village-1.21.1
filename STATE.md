@@ -19,6 +19,8 @@
   jogador e publicação.
 - **Fase do cronograma:** F0, sinal limpo (documentos nos tetos, instáveis declarados, ferramentas de régua corrigidas).
   Depois vêm F1 (a vila trabalha) e o portão Beta 0.5.0.
+- **Candidata local 0.4.115:** resgate de telhado limpa a memória de caminhada anterior; GameTest reproduziu a memória
+  persistente e passou após a correção. Sentinela `fast` passou; confirmar em jogo se evita o retorno ao telhado.
 - **Candidata local 0.4.114:** `/vc salvar` reúne as últimas mudanças por aldeão, com destino, sono e motivo
   da parada. A mina espera na pedra que segura líquido e registra o saldo físico de pedregulho. A união de
   colônias reaproveita as duas redes de ruas antes de uma nova leitura. Falta validar no jogo do autor.

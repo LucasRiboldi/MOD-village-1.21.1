@@ -37,6 +37,8 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 
 ## F1 — A vila trabalha (3 a 5 semanas) → portão Beta 0.5.0
 
+- [ ] 🟠 Jogo da 0.4.114: conferir se a candidata 0.4.115 impede o retorno ao mesmo telhado após o resgate;
+  a memória de caminhada persistente foi reproduzida em GameTest, mas sua relação com o retorno ainda depende do jogo (P)
 - [ ] 🔴 Ciclos de playtest até todo ofício ficar abaixo de 40% parado em dois biomas, dois jogos seguidos (G)
 - [ ] 🔴 Conferir em jogo as candidatas 0.4.69 a 0.4.74 (lista no `STATE.md`) (por jogo)
 - [ ] 🔴 Jogo da 0.4.79 (13-11): no próximo jogo, conferir `lots_ok` acima de 0 (Regra 282) e ler as linhas

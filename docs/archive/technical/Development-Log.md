@@ -2,6 +2,12 @@
 
 # Development-Log.md
 
+## 21-11-2026 — Memória de caminhada no resgate do telhado
+
+O GameTest mostrou que o destino de caminhada permanecia após a descida. O resgate agora limpa essa memória.
+O teste falhou antes e passou depois; Sentinela `fast` passou. O retorno repetido visto no jogo da 0.4.114
+ainda precisa ser conferido no próximo playtest: a memória residual é uma hipótese para esse retorno.
+
 ## 21-11-2026 — Ruas após união de colônias
 
 A colônia que permanece recebe as ruas já conhecidas dos dois lados e pede a releitura do

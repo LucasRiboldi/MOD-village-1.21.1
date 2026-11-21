@@ -12,6 +12,11 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.115] — candidata, 2026-11-21
+
+- O resgate de telhado limpa a memória de caminhada anterior antes de parar a navegação.
+  A correção aguarda confirmação em jogo para o retorno repetido ao telhado.
+
 ## [0.4.114] — candidata, 2026-11-21
 
 - `/vc salvar` mostra as mudanças recentes por aldeão, o motivo do estado encerrado,

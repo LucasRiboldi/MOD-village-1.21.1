@@ -4,6 +4,9 @@ Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 20
 
 ## Retomada de 2026-11-21 (leia isto primeiro; o resto deste arquivo é de 11-15)
 
+- **Candidata 0.4.115:** resgate de telhado limpa a memória de caminhada anterior. O teste da memória falhou antes
+  e passou depois; Sentinela `fast` passou em `reports/test-runs/20261121T143122Z/`. Confirmar em jogo se o aldeão
+  deixa de retornar ao telhado; a causa completa do retorno ainda não está comprovada.
 - **Candidata local 0.4.114:** diário conserva os motivos de entrada e de saída, e `/vc salvar` mostra
   as mudanças recentes, sono e destino. A mina espera no corte que segura líquido, e a união de
   colônias reaproveita as duas redes. Sentinela `fast` passou com 1.232 GameTests
