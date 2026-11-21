@@ -1,8 +1,19 @@
 # Handoff — Village Colony
 
-Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 2026-11-15, feita pelo Claude Code: reconfira com `git log` e `gh pr list` antes de trabalhar. O handoff anterior, da Fase 3 do MAE, está no histórico do Git.
+Ponto de retomada para Codex ou Claude Code, atualizado em 2026-11-21. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar.
 
 ## Onde o projeto está
+
+- A versão publicada é [`v0.4.110-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.110-alpha), pendente de playtest. As Regras 344 a 346 incluem telemetria de tarefas e itens, conflito com o jogador e o comando `/vc salvar`. Veja [STATE.md](STATE.md) e as [notas da versão](docs/releases/v0.4.110.md).
+- O fluxo de correção por logs está versionado em [`vc-log-driven-fix`](.agents/skills/vc-log-driven-fix/SKILL.md). Siga `CLAUDE.md` §0.2.2 para os gates de modelo, diagnóstico e escolha do autor.
+
+## Próximo playtest
+
+1. Use a 0.4.110 e siga o [roteiro da 0.4.107](docs/testing/roteiro-de-jogo-0.4.107.md). Num cenário de montanha com vila recém-gerada, confira a altura da BigHouseMOD e se ficou terreno suspenso acima das casas (Regras 338 e 337).
+2. Anote sintomas com `/vc bioma nota`. Ao fim, rode `/vc salvar` e recolha os recortes do log e dos relatórios. Comece a análise por `python scripts/game_report.py`.
+3. Compare com as pendências em [TODO.md](TODO.md), apresente achados com evidência e espere o autor escolher a intervenção.
+
+## Histórico até a 0.4.93
 
 - **Versão:** 0.4.93 na `main` (branch `fix/jogo-0490` integrada por PR), **não jogada**; publicada como [`v0.4.93-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.93-alpha). A 0.4.79 foi jogada em 2026-11-13 (taiga, Spark `oujZp2IxmS`); a triagem dos oito sintomas virou as Regras 275 a 282.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, ele escolhe, teste que falha, correção, Sentinela, commit, JAR.
@@ -28,7 +39,7 @@ Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 20
   - 0.4.84, Regra 284 (VF-010): o animal atravessa o portão amarrado; relógio, vaca solta e canal de água estáveis nos GameTests.
   - 0.4.83, Regra 283 (GameTests instáveis de 14-11): o pastor só recolhe dentro da caixa da vila; testes do pastor, da tosquia e da taiga sem depender dos vizinhos (os lotes rodam juntos num mundo só).
 
-## O próximo passo
+### Roteiro histórico da 0.4.93
 
 **O autor precisa jogar a 0.4.93 num mundo novo e mandar o Spark,** num jogo longo (o da 0.4.91 durou 6 min e não gerou `VC_TIME`). Confira `VC_TERRAIN` com nivelados todo dia (Regra 323), `CLEARED_LEAVES` do lenhador (324) e a plantação grande entregue inteira semeada (325); o modo do grafo é `atual` até o autor trocar com `/vc grafo modo`. Da 0.4.92: Confira a frente das portas no nível do chão (Regra 313) e o caminho na porta da BigHouseMOD (Regra 314). Da 0.4.91: Confira `doors` acima de 0 no `VC_GROUND` (Regra 305), `fixed=` e `loose=` no `VC_ROAD_GRAPH` (306 e 307), `CLAY_ON_REQUEST` e `BONE_MEAL_FOR_THE_FARM` no `VC_SUPPLY` (308 e 310), animais no curral grande (309), `MISSING_PIECE` de areia (311) e o mineiro sem voltar a encalhar no mesmo ponto (312). Da 0.4.90: As Regras 288, 296, 298, 303 e 304 (geração) só valem em chunk e vila gerados depois delas; confira também `doors` no `VC_GROUND`, `VC_PENS` com animais no curral grande e `CLAY_ON_REQUEST` no `VC_SUPPLY`; confira `refused=` no `VC_ROAD_GRAPH`, `moved`/`most` no `VC_GROUND` e `maxStep` no `VC_SITE_EDGE`. As triagens dos jogos da 0.4.85 e da 0.4.86 deixaram achados abertos no `TODO.md`. Use as notas `/vc bioma nota` e a lista `docs/testing/checklist-jogo-avaliacao.md`. Ao receber o log, siga `CLAUDE.md` §0.2.2 e confira:
 
@@ -54,7 +65,7 @@ Em aberto no `TODO.md`: VF-001 a VF-003 da varredura e os itens das fases F0 a F
 3. `STATE.md` (cabe em 150 linhas).
 4. `docs/audit/2026-11-13-avaliacao-qualidade.md`: notas, portões e cronograma até a 1.0. O `TODO.md` segue as fases dele;
    os abertos antigos foram triados em `docs/technical/TODO-herdado-2026-11-13.md` (cada um diz se fechou ou para onde foi).
-5. `docs/RULES.md`: procure a regra por número. As mais recentes são 263 a 269. ADRs: índice em `docs/decisions/README.md`.
+5. `docs/RULES.md`: procure a regra por número. ADRs ficam no índice `docs/decisions/README.md`.
 
 ## Regras do autor que não estão nos outros documentos
 
