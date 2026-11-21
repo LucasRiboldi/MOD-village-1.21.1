@@ -12449,3 +12449,23 @@ O build passou. A análise está em `reports/sentinel-analysis/20261121T060022Z/
 A mutação removeu as tochas da escada e voltou à tocha comum no patamar. As duas
 regressões falharam pelas causas esperadas. Com a correção restaurada, os 6 testes
 focados passaram novamente.
+
+## 2026-11-21 — Lote A (N12/N28), reconexão da mina e da casa do mineiro
+
+Na base 0.4.116, uma recusa do Zelador excluía a coluna da busca durante a sessão.
+A regressão montou as duas entradas do outro lado de uma passagem alagada. O grafo
+manteve os nós isolados após secar a passagem. O teste falhou por essa recusa antiga.
+
+Na 0.4.117, mudanças no piso, no apoio ou na passagem próxima liberam a recusa.
+O grafo volta a avaliar o terreno na releitura. O teste preserva a recusa após
+uma edição fora da altura da passagem e preserva o bloqueio físico por água.
+
+O PR #101 integrou a 0.4.116 na `main` após o CI passar. O teste de releitura de regiões
+detectou os dois mutantes que deixavam de conservar a entrada ou o piso já calçado.
+
+Passaram 16 GameTests focados. A primeira bateria local sobre a `main` passou na
+reconexão e repetiu a falha conhecida dos quatro portões do curral MAE
+(`20261121T233148Z`). Na bateria final passaram 1.886 testes unitários, uma suite de
+propriedades e 1.238 GameTests no Sentinela `fast` (`20261121T233603Z`). A análise final
+ficou em `reports/sentinel-analysis/20261121T234042Z/`. O build passou. A reconexão
+e o pastor aguardam o próximo jogo descrito no plano de 21-11.

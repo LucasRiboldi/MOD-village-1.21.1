@@ -21,6 +21,7 @@ import com.villagecolony.fabric.integration.RoadGraphMigration;
 import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.RoadNetwork;
 import com.villagecolony.fabric.integration.RoadPaving;
+import com.villagecolony.fabric.integration.RoadRegionEvents;
 import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -45,7 +46,7 @@ import java.util.UUID;
  *
  * <p>A cada {@value #EVERY} tiques varre a caixa da vila aos poucos, junta o que
  * achou ao índice de ruas, lê as entradas das construções e publica o grafo ({@link RoadLines}). O que falta calçar
- * vira um plano para o construtor, {@value #MAX_REPAIR} colunas por vez. Coluna que recusou não volta nesta sessão.
+ * vira um plano para o Zelador, {@value #MAX_REPAIR} colunas por vez (Regra 330).
  */
 public final class RoadGraphRefresh {
 
@@ -91,7 +92,6 @@ public final class RoadGraphRefresh {
 
     private static final Map<UUID, Long> NEXT = new HashMap<>();
     private static final Map<UUID, Scan> SCANS = new HashMap<>();
-    private static final Map<UUID, Set<Long>> REFUSED = new HashMap<>();
     private static final Map<UUID, PlannedPaths> PLANNED = new HashMap<>();
     private static final Map<UUID, Integer> TURNS = new HashMap<>();
     /** Por colônia: o dia de jogo e quantas vezes o grafo mudou nele (Regra 317). */
@@ -114,23 +114,17 @@ public final class RoadGraphRefresh {
     public static void modeChanged() {
         PLANNED.clear();
         TURNS.clear();
-        REFUSED.clear();
         CHANGES.clear();
         NEXT.clear();
         SCANS.clear();
         RoadGraphBuilds.clearAll();
-        com.villagecolony.fabric.integration.RoadRegionEvents.clearAll();
+        RoadRegionEvents.clearAll();
     }
 
     /** Pede a releitura na próxima passada. */
     public static void requestNow(UUID colonyId) {
         NEXT.put(colonyId, Long.MIN_VALUE);
         SCANS.remove(colonyId);
-    }
-
-    /** Esta coluna não aceitou caminho: fica fora dos próximos planos. */
-    static void refused(UUID colonyId, PathStep step) {
-        REFUSED.computeIfAbsent(colonyId, ignored -> new HashSet<>()).add(ColonyRoads.column(step.x(), step.z()));
     }
 
     private static void tick(ServerWorld world) {
@@ -349,7 +343,8 @@ public final class RoadGraphRefresh {
             }
         }
 
-        WorldPathTerrain terrain = new WorldPathTerrain(world, id, REFUSED.getOrDefault(id, Set.of()));
+        Set<Long> refused = RoadRegionEvents.refusedColumns(id);
+        WorldPathTerrain terrain = new WorldPathTerrain(world, id, refused);
         int turn = TURNS.merge(id, 1, Integer::sum);
         PlannedPaths paths = PLANNED.computeIfAbsent(id, ignored -> new PlannedPaths());
 
@@ -363,7 +358,7 @@ public final class RoadGraphRefresh {
 
         planned.addAll(reading.ways());
         planned.addAll(RoadShape.rings(world, colony, terrain));
-        planned.addAll(RoadShape.pendingGrowth(id, cells, REFUSED.getOrDefault(id, Set.of())));
+        planned.addAll(RoadShape.pendingGrowth(id, cells, refused));
 
         if (turn >= RoadShape.CORNER_AFTER_READS) {
             StructureFronts.farmCorners(RoadShape.farmEntrances(world, colony, terrain), store.graph(id), fronts, retired);
@@ -432,7 +427,7 @@ public final class RoadGraphRefresh {
                 SnapshotHistory.info(colony.id(), "VC_ROAD_GRAPH colony={} nodes={} edges={} toPave={} isolated={} offLine={} capped={} fixed={} refused={} changes={} loose={} mode={} dirty={}",
                         colony.id().toString().substring(0, 8), graph.nodes().size(), graph.edges().size(),
                         result.toPave().size(), result.isolated(), offLine, capped, fixed,
-                        REFUSED.getOrDefault(colony.id(), Set.of()).size(), changedOn(colony.id(), today),
+                        RoadRegionEvents.refusedColumns(colony.id()).size(), changedOn(colony.id(), today),
                         String.join(";", result.loose()), mode.id(), RoadGraphBuilds.lastDirty(colony.id()));
             }
         } catch (IllegalArgumentException refused) {
@@ -443,7 +438,7 @@ public final class RoadGraphRefresh {
     }
 
     private static boolean offerRepair(ServerWorld world, UUID id, List<PathStep> toPave, int read, Set<Long> atTheDoor) {
-        Set<Long> refused = REFUSED.getOrDefault(id, Set.of());
+        Set<Long> refused = RoadRegionEvents.refusedColumns(id);
         List<PathStep> steps = new ArrayList<>();
         Set<ColonyPos> wanted = new HashSet<>();
 
@@ -493,7 +488,6 @@ public final class RoadGraphRefresh {
         CHANGES.clear();
         NEXT.clear();
         SCANS.clear();
-        REFUSED.clear();
         PLANNED.clear();
         TURNS.clear();
     }

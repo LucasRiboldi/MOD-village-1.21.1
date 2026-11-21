@@ -1,6 +1,6 @@
 # Plano de correção — jogo da 0.4.115 em 21-11-2026
 
-Status: autor escolheu a opção 2, pastor primeiro (Lote B: N05, N26 e N27). Correção candidata 0.4.116; regressões focadas, bateria completa e build passaram. Demais lotes continuam na fila. Nenhum resultado futuro de jogo está validado.
+Status: a candidata 0.4.117 trata a reconexão da mina e da casa do mineiro (Lote A, N12/N28) e inclui a correção do pastor da 0.4.116 (Lote B, N05/N26/N27). As duas correções aguardam playtest. Os demais itens continuam na fila.
 
 ## Evidência e limites
 
@@ -99,14 +99,28 @@ As duas opções preservam o inventário completo; escolher uma determina a prim
 - Revisão encerrada sem bloqueios após corrigir o cleanup da checagem antecipada. Análise histórica em `reports/sentinel-analysis/20261121T191903Z/`; inclui execuções de diagnóstico e mutação, com resultados antigos preservados.
 - JAR candidato: `village-colony-0.4.116.jar`, gerado com `remapJar` após o commit `7a07b38f`. Versão no `fabric.mod.json` conferida. As cópias em `build/libs/`, `downloads/` e `mods/` têm SHA-256 `702fda50d734e8a8c77baab8a809c83a489955d37a866829fdf4ac97426ce01a`. A 0.4.115 foi desativada no TLauncher.
 
-### Próxima correção após o playtest
+### Decisão após o Lote B
 
-Se a 0.4.116 confirmar a tosquia e a travessia, iniciar pelo Lote A. Montar duas casas em alturas diferentes e uma rota ligada à mina. Alterar o terreno e recarregar o mundo. Conferir caminhada real e reconexão de entradas válidas, preservando portas e fundações. Se a rota ficar fisicamente impossível, registrar o impedimento. Investigar em separado a autoria do corte do arco, os ramais redundantes e a cobertura da manutenção pelo Zelador. Se o pastor ainda falhar, recolher o cenário e o log da 0.4.116 para retomar o Lote B.
+O autor escolheu avançar para N12/N28 enquanto a validação do pastor seguia pendente. A autoria do corte no arco, os desníveis entre casas, os ramais redundantes e a cobertura da manutenção pelo Zelador continuam abertos.
 
-### Roteiro do próximo jogo — 0.4.116
+### Roteiro do pastor — 0.4.116
 
 1. Reinicie o Minecraft após a instalação e confirme `villagecolony 0.4.116` no `latest.log`. Comece em mundo novo, em planície, para comparar com o jogo anterior; repita depois em terreno irregular.
 2. Com pastor e demanda por lã, observe ovelha a aproximadamente quatro blocos e separada pela cerca. Ela deve conservar a lã até o pastor chegar junto; a tosquia deve gerar lã no baú.
 3. Observe uma coleta com vaca do lado externo, em desnível lateral de um bloco, e porteira inicialmente fechada. O pastor deve abrir, aproximar o animal da frente e entrar mantendo a corda enquanto necessário. O animal deve cruzar pela porteira.
 4. Confira se a corda solta depois do alinhamento/entrada, o vão fecha quando livre e o pastor segue para outra atividade. Registre se continuar girando, preso à cerca ou repetindo o mesmo destino; não considere somente a cor do nome como prova de travamento.
 5. Registre cada resultado com `/vc bioma nota` e gere `/vc salvar` antes de sair. Informe qual cenário falhou e anexe a imagem correspondente. O novo relatório permitirá comparar bloqueio e ócio com a sessão 0.4.115.
+
+## Lote A — candidata 0.4.117 (N12/N28)
+
+- **Causa reproduzida:** uma recusa do Zelador mantinha a coluna fora da busca até a sessão ou o modo do grafo mudar. O GameTest montou a mina e a casa do mineiro do outro lado de uma única passagem. Registrou a recusa e confirmou que os nós permaneceram isolados mesmo após secar a passagem.
+- **Correção:** o evento de bloco reaproveita a região já monitorada e libera a recusa quando muda o piso, o apoio ou a passagem na coluna ou em uma vizinha direta. A releitura usa a verificação de terreno existente. A regressão também confirma que uma edição acima da passagem preserva a recusa e que trocar o apoio libera a busca enquanto a água ainda impede a conexão.
+- **Prova:** a regressão falhou pela recusa antiga. Passaram 16 GameTests focados e as três suites do Sentinela `fast` (`20261121T233603Z`). A causa exata da desconexão registrada no playtest segue sem confirmação.
+
+### Roteiro da mina e da casa — 0.4.117
+
+1. Reinicie o jogo e confira `villagecolony 0.4.117` no `latest.log`. Use um mundo de teste ou uma cópia da vila. Em `/vc grafo modo`, confira o modo `atual`. Ative o mesmo desenho do grafo do playtest anterior.
+2. Localize o arco da mina e a casa do mineiro. Confira se ambos têm ligação com a rua e se você consegue caminhar da rua até cada entrada.
+3. Alague um trecho da única passagem. Registre se os nós ficam isolados e se o log `VC_ROAD_GRAPH` mostra uma recusa. Retire a água e recoloque o apoio firme. Aguarde a releitura com a vila carregada. A varredura normal começa a cada 6.000 tiques, cerca de cinco minutos a 20 TPS. O arco e a casa devem voltar à rede principal. Se a água ainda bloquear o trecho e não houver desvio, os nós devem continuar isolados.
+4. Caminhe até as duas entradas e confira portas, escadas e fundações. Salve e reabra o mundo. Confirme se as conexões aparecem de novo e anote quanto tempo demoraram.
+5. Na mesma candidata, repita os passos de tosquia e condução do roteiro do pastor. Use `/vc bioma nota` para anotar resultados. Execute `/vc salvar` antes de salvar e sair, e de novo ao concluir o teste após reabrir.
