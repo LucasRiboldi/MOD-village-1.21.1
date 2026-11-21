@@ -12,6 +12,15 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.114] — candidata, 2026-11-21
+
+- `/vc salvar` mostra as mudanças recentes por aldeão, o motivo do estado encerrado,
+  a meta de caminhada quando conhecida e o sono.
+- A escada da mina espera na primeira pedra que segura líquido. O relatório mostra
+  a posição do bloqueio e o pedregulho nos baús da colônia.
+- Na união de colônias, as duas redes de ruas ficam disponíveis de imediato. O
+  relatório guarda o evento `VC_ROAD_MERGE` até o mundo fechar.
+
 ## [0.4.113] — candidata, 2026-11-21
 
 ### Alterado

@@ -96,4 +96,15 @@ GameTests focados passaram com a regra restaurada.
 
 **Entrega local de 21-11:** candidata 0.4.113 instalada no TLauncher e copiada em `downloads/`. A 0.4.112
 foi desativada. SHA-256 igual em `build/libs/`, `downloads/` e `mods/`: `928eaaf4e1a2a63525a7e14b1def77fa584be01ac27487476a1e523ea5afae99`.
-Análise final em `reports/sentinel-analysis/20261121T072003Z/`. Gradle encerrado. Falta o jogo em mundo novo.
+Análise final da 0.4.113 em `reports/sentinel-analysis/20261121T072003Z/`. O registro da sessão
+seguinte está no `TODO.md`.
+
+**Candidata seguinte, 0.4.114:** três escolhas do autor. O diário preserva a causa da espera e o
+`/vc salvar` mostra até oito mudanças por aldeão. A mina espera no corte bloqueado por líquido
+e o relatório mostra o saldo físico de pedregulho. A união de colônias reúne as redes conhecidas,
+registra `VC_ROAD_MERGE` e pede nova leitura do grafo. O aldeão cruzou a antiga divisa em GameTest.
+
+Sentinela `fast` passou com 1.232 GameTests (`reports/test-runs/20261121T125319Z/`), assim como os
+196 testes Python, a análise (`reports/sentinel-analysis/20261121T125835Z/`), o build e o
+`remapJar`. A 0.4.114 substituiu a 0.4.113 no TLauncher. O SHA-256 coincide nas três cópias
+(`10ebc1116c15bb8fda82bd23feaf876dbb3848fa7961930b769ce765ab17dfce`). Falta o playtest do autor.

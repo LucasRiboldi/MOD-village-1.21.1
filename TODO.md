@@ -69,6 +69,12 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
     grande na vila nova (5A) (M)
 - [ ] 🔴 Playtest da 0.4.113 em mundo novo — as nove escolhas de 21-11 (A8, A7, A9, A6, A2, A3a, A4, A5, R1)
   estão no [plano do ciclo](docs/technical/Proximo-ciclo-0113.md). Rodar `/vc salvar` antes de sair e conferir o arquivo (G)
+  - Sessão de 21-11, 04:41–05:10, `VC_SUPPLY`: pedregulho ×127 (`MISSING_PIECE`, 3 entregas alternativas),
+    pó de osso ×144 (9 lotes para o bosque), mudas ×8, fundação ×87 (79 de lote e 8 de talude) e caminho de terra ×1.
+    Buscar fluxo físico de pedregulho e pó de osso. Distinguir os 52 drops declarados (16 corantes, 20 cristais e
+    16 fragmentos de prismarinho) e os 48 animais iniciais das peças da obra.
+- [ ] Jogo da 0.4.114: acompanhar o motivo da espera e a retomada por aldeão, a posição da pedra
+  que a escada espera para cavar e o trânsito entre as duas redes após uma união. Salvar com `/vc salvar`.
 - [ ] 🔴 Jogo da 0.4.111 (20-11, planície, colônia e8ee5291, 106 min), análise em
   `docs/audit/2026-11-21-analise-jogo-0111.md`:
   - mina com muitas aberturas e o laço do bloco solto: Regra 348 na 0.4.112 (candidata; conferir no próximo jogo);

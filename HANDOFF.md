@@ -4,6 +4,12 @@ Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 20
 
 ## Retomada de 2026-11-21 (leia isto primeiro; o resto deste arquivo é de 11-15)
 
+- **Candidata local 0.4.114:** diário conserva os motivos de entrada e de saída, e `/vc salvar` mostra
+  as mudanças recentes, sono e destino. A mina espera no corte que segura líquido, e a união de
+  colônias reaproveita as duas redes. Sentinela `fast` passou com 1.232 GameTests
+  (`reports/test-runs/20261121T125319Z/`); análise em `reports/sentinel-analysis/20261121T125835Z/`.
+  `build` e `remapJar` passaram. Cópias em `build/libs/`, `downloads/` e `mods/` com SHA-256
+  `10ebc1116c15bb8fda82bd23feaf876dbb3848fa7961930b769ce765ab17dfce`. A 0.4.113 foi desativada. Falta o jogo do autor.
 - **Plano do ciclo:** `docs/technical/Proximo-ciclo-0113.md` — as nove escolhas (A8, A7, A9, A6, A2, A3a, A4, A5, R1) estão implementadas. Próxima verificação em mundo novo, com `/vc salvar` antes de sair.
 - **R1, candidato (Regra 346):** relatório da sessão com a tabela completa de blocos, mina, obras, último grafo, janelas de tempo e eventos da colônia. GameTest focado passou e detectou a restauração do limite de 15 linhas.
 - **A5, candidato:** desistência do pastor registra posições da ovelha e do pastor e imobilidade ou prazo esgotado. Teste falhou antes da mudança e sob mutação; quatro GameTests focados e Sentinela `fast` passaram. Relatório em `reports/test-runs/20261121T064752Z/`. Confirmar o diagnóstico no próximo jogo.
