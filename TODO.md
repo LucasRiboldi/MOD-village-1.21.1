@@ -40,6 +40,7 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 - [ ] 🔴 Jogo da 0.4.115 (21-11): 28 notas e seis imagens no [plano integral](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
   Lote B implementado na candidata 0.4.116: tosquia junto da ovelha e condução pela porteira (N05, N26, N27); aguarda jogo.
   Lotes A (terreno/grafo), C (implantação/moradia), D (regras/experiência) e E (fluxo/custo) continuam abertos;
+  próximo após validar o pastor: reproduzir o desnível entre casas e a perda de conexão do nó da mina/casa (Lote A).
   sucessos N01–N04 e N06 devem ser preservados. Não executar decisões arquiteturais pendentes sem deliberação.
 - [ ] 🟠 Jogo da 0.4.114: conferir se a candidata 0.4.115 impede o retorno ao mesmo telhado após o resgate;
   a memória de caminhada persistente foi reproduzida em GameTest, mas sua relação com o retorno ainda depende do jogo (P)

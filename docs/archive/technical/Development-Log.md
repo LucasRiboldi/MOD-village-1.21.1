@@ -43,6 +43,12 @@ O gatilho de `vc-log-driven-fix` para relatos de jogo e a instalação obrigató
 cada versão no TLauncher foram registrados em `CLAUDE.md`/`AGENTS.md` e na skill.
 A correção é candidata: o efeito sobre bloqueio e ócio depende do próximo jogo do autor.
 
+Após o commit `7a07b38f`, `remapJar` passou novamente. O JAR foi copiado para
+`downloads/` e instalado no TLauncher. Os três SHA-256 conferem com o hash acima.
+A 0.4.115 ficou desativada. O checkpoint de retomada mantém a candidata e o plano
+na branch `fix/miolo-pelas-pecas`. Após validar o pastor em jogo, a próxima
+reprodução indicada é a do acesso e da conectividade do Lote A.
+
 
 ## 21-11-2026 — Memória de caminhada no resgate do telhado
 

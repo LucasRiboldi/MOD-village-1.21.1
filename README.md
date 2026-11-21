@@ -19,7 +19,7 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Linha local: candidata 0.4.116, correção do pastor após o jogo da 0.4.115.** A `main` permanece na 0.4.110; candidata local não equivale a release publicada. Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
+**Candidata 0.4.116 na branch `fix/miolo-pelas-pecas`.** Corrige o pastor após o jogo da 0.4.115 e aguarda playtest. A release na linha `main` é a 0.4.110. Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
 [docs/RULES.md](docs/RULES.md). As 28 notas e seis imagens do último jogo estão no
 [plano de correção](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md); o autor escolheu pastor primeiro.

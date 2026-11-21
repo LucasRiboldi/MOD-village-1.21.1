@@ -75,7 +75,7 @@ Horários são os do log. P1: acesso, integridade e fluxo bloqueado. P2: comport
 
 Cada lote será dividido em uma tarefa por commit. Antes de código: confirmar branch/PR concorrentes e regras atuais na base 0.4.115 ou posterior, baseline `build`, GameTest que falhe pela causa correta, menor correção escolhida, teste verde, revisão e Sentinela. Atualizar regra/ADR quando aplicável. Após os gates, gerar candidata, instalar no TLauncher e em `downloads/`, conferir hashes. Resultado de jogo só pode ser declarado depois do próximo playtest.
 
-## Escolha para a próxima etapa
+## Opções apresentadas no início do ciclo
 
 **Opção 1 — acesso primeiro (recomendada).** Evidência: N08/N09/N25/N28, imagens 2/4/6 e nós isolados. Investigar e corrigir o Lote A, mantendo todos os outros itens na fila. Verificação: GameTests de transição de altura e conectividade após mudança/recarga, seguidos de playtest. Risco médio: terreno, proteção e grafo interagem.
 
@@ -90,13 +90,18 @@ As duas opções preservam o inventário completo; escolher uma determina a prim
 - **Escopo:** `ShepherdWork` e `ShepherdHerding`; sem novo mixin, sistema de salto ou tarefa de outra profissão. O salto de cercas já existia em `ColonyPathing`/`VillagerMoves`; a tosquia verifica aproximação física, sem impor uma rota única ao aldeão. O animal continua atravessando o portão.
 - **Prova da regressão:** com somente os dois arquivos de produção devolvidos à 0.4.115, cinco dos nove GameTests falharam pelas causas esperadas (`reports/test-runs/20261121T191211Z/`). A vaca continuou na fase LEAD com idade crescente, comprovando simulação física ativa. Com a correção, os 23 testes focados passaram (`20261121T191032Z`).
 - **Montagem dos testes:** arenas físicas usam `Arena.forceChunks` e conferem idade das entidades, pois uma origem aleatória podia deixar o animal sem ticks. A cadência da condução é de cinco ticks e a do fechamento é de vinte, como na produção. Não há teleporte no teste físico de travessia.
+- **O que foi descartado durante a investigação:** a distância em coordenadas de bloco deixava um caso lateral na fronteira sem avançar. Medir a posição real do animal resolveu essa transição no cenário reproduzido. A hipótese de precisar de um salto novo perdeu força ao verificar o salto de cerca existente e a tosquia física no GameTest. As primeiras falhas da arena sem ticks foram descartadas como prova da regressão.
 - **Pendente de jogo:** repetir a tosquia com ovelha distante e dentro de curral fechado; levar vaca do desnível lateral e conferir entrada, soltura da corda, porteira fechada e continuidade do trabalho. Gerar `/vc salvar` antes de sair. A melhora do tempo bloqueado/ocioso só pode ser medida no próximo playtest.
 
 ### Verificação e artefato
 
 - `python scripts/test_lab.py fast`: PASS nas três suites, `reports/test-runs/20261121T191357Z/`: 1.885 unitários, uma suite de propriedades e 1.237 GameTests. Os 196 testes Python passaram; README gerado e escopo conferidos. `./gradlew.bat build`: PASS.
 - Revisão encerrada sem bloqueios após corrigir o cleanup da checagem antecipada. Análise histórica em `reports/sentinel-analysis/20261121T191903Z/`; inclui execuções de diagnóstico e mutação, com resultados antigos preservados.
-- JAR candidato: `village-colony-0.4.116.jar`; versão do `fabric.mod.json` conferida. SHA-256 do build: `702fda50d734e8a8c77baab8a809c83a489955d37a866829fdf4ac97426ce01a`. A entrega deve conferir igualdade com `downloads/` e `mods/`.
+- JAR candidato: `village-colony-0.4.116.jar`, gerado com `remapJar` após o commit `7a07b38f`. Versão no `fabric.mod.json` conferida. As cópias em `build/libs/`, `downloads/` e `mods/` têm SHA-256 `702fda50d734e8a8c77baab8a809c83a489955d37a866829fdf4ac97426ce01a`. A 0.4.115 foi desativada no TLauncher.
+
+### Próxima correção após o playtest
+
+Se a 0.4.116 confirmar a tosquia e a travessia, iniciar pelo Lote A. Montar duas casas em alturas diferentes e uma rota ligada à mina. Alterar o terreno e recarregar o mundo. Conferir caminhada real e reconexão de entradas válidas, preservando portas e fundações. Se a rota ficar fisicamente impossível, registrar o impedimento. Investigar em separado a autoria do corte do arco, os ramais redundantes e a cobertura da manutenção pelo Zelador. Se o pastor ainda falhar, recolher o cenário e o log da 0.4.116 para retomar o Lote B.
 
 ### Roteiro do próximo jogo — 0.4.116
 

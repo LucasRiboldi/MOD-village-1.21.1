@@ -1,24 +1,29 @@
 # Handoff — Village Colony
 
-Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 2026-11-15, feita pelo Claude Code: reconfira com `git log` e `gh pr list` antes de trabalhar. O handoff anterior, da Fase 3 do MAE, está no histórico do Git.
+Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
-## Retomada de 2026-11-21 (leia isto primeiro; o resto deste arquivo é de 11-15)
+## Retomada de 2026-11-21
 
 - **Prioridade atual:** autor jogou a 0.4.115 e escolheu a opção 2, pastor primeiro (N05/N26/N27).
   As 28 notas, seis imagens e demais pendências estão em `docs/technical/Plano-Playtest-0.4.115-2026-11-21.md`;
   o relatório é `docs/testing/relatorios/jogo-0.4.115-2026-11-21.md`. Não descartar os outros lotes.
-- **Worktree da correção:** `C:/Users/lucas/Desktop/MOD-village-1.21.1`, branch `fix/miolo-pelas-pecas`.
-  Continuação autorizada da base 0.4.115 (`ae2ed2ab`); candidata 0.4.116 verificada, aguarda playtest.
-  A worktree `70b9` está na base 0.4.110 com documentos locais preservados: não gerar um JAR dela.
+- **Branch de retomada:** `fix/miolo-pelas-pecas`. Busque essa branch no GitHub para retomar em outra máquina.
+  O código da candidata 0.4.116 está no commit `7a07b38f`, sobre a base 0.4.115 (`ae2ed2ab`).
+  A cópia usada para gerar o JAR fica em `C:/Users/lucas/Desktop/MOD-village-1.21.1`.
+  A worktree `70b9` conserva a base 0.4.110 e documentos locais.
 - **Prova da 0.4.116:** `fast` PASS em `reports/test-runs/20261121T191357Z/`: 1.885 unitários,
   uma suite de propriedades e 1.237 GameTests. Build passou; 196 testes Python passaram.
   Mutação para a produção 0.4.115: cinco regressões falharam em `20261121T191211Z`; 23 focados verdes em `20261121T191032Z`.
   A revisão foi concluída, inclusive cleanup antecipado da arena. A análise histórica está em
   `reports/sentinel-analysis/20261121T191903Z/`; inclui falhas antigas e mutações, não é um relatório sem achados.
-- **Artefato 0.4.116:** `village-colony-0.4.116.jar`, metadado Fabric conferido. SHA-256 do build:
-  `702fda50d734e8a8c77baab8a809c83a489955d37a866829fdf4ac97426ce01a`. As cópias em `downloads/` e `mods/` devem ter esse mesmo hash.
-  Para retomar, conferir instalação/versão, acompanhar o roteiro do plano e analisar o próximo jogo;
-  não implementar os outros lotes nem interpretar o verde automático como confirmação visual.
+- **Artefato 0.4.116:** `remapJar` passou após `7a07b38f`. As cópias em `build/libs/`, `downloads/` e
+  `mods/` têm SHA-256 `702fda50d734e8a8c77baab8a809c83a489955d37a866829fdf4ac97426ce01a`.
+  A 0.4.116 é o único JAR ativo do Village Colony no TLauncher. A 0.4.115 ficou como `.jar.disabled`.
+  Os relatórios brutos sob `reports/` são locais. O plano registra o resumo e a identificação das execuções.
+- **Próximo passo:** validar o pastor em jogo com a 0.4.116 e coletar `/vc salvar`. O último carregamento
+  registrado no log consultado ainda era 0.4.115. Se o pastor passar, a próxima correção indicada é o Lote A,
+  começando por duas casas em alturas diferentes e pela reconexão do nó da mina/casa após editar o terreno.
+  Lotes C, D e E seguem no plano. A autoria do corte no arco ainda precisa de evidência.
 - **Regras do autor:** relato de que entrou no jogo/testou sempre usa `vc-log-driven-fix`.
   Toda versão nova deve atualizar `downloads/` e `%APPDATA%/.minecraft/mods`, com SHA-256 igual ao build
   e apenas um `village-colony-*.jar` ativo; anteriores ficam `.jar.disabled`.
