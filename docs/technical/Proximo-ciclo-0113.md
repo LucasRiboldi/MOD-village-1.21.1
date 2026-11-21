@@ -93,3 +93,7 @@ GameTests focados passaram com a regra restaurada.
   `%APPDATA%/.minecraft/mods`, SHA-256 das três cópias.
 - Mutação conferida em cada teste novo (vermelho sem a mudança).
 - Lembrar o autor: 0.4.111 (chão pela forma das peças) e 0.4.112 (uma descida por arco) ainda **não foram jogadas**; mundo novo.
+
+**Entrega local de 21-11:** candidata 0.4.113 instalada no TLauncher e copiada em `downloads/`. A 0.4.112
+foi desativada. SHA-256 igual em `build/libs/`, `downloads/` e `mods/`: `928eaaf4e1a2a63525a7e14b1def77fa584be01ac27487476a1e523ea5afae99`.
+Análise final em `reports/sentinel-analysis/20261121T072003Z/`. Gradle encerrado. Falta o jogo em mundo novo.
