@@ -9,7 +9,7 @@
 
 ## Onde o projeto está
 
-- **Versão:** 0.4.110 na branch `feat/telemetria-aldeoes` (Regras 344 a 346, telemetria e `/vc salvar`), não jogada; 0.4.107 na `main`, publicada como `v0.4.107-alpha` (Regras 336 a 343), não jogada; roteiro de jogo em `docs/testing/roteiro-de-jogo-0.4.107.md`;
+- **Versão:** 0.4.110 na `main`, publicada como `v0.4.110-alpha` (Regras 344 a 346: telemetria, conflito com o jogador e `/vc salvar`), não jogada; a anterior publicada é a `v0.4.107-alpha` (Regras 336 a 343); roteiro de jogo em `docs/testing/roteiro-de-jogo-0.4.107.md`;
   0.4.93 em planície); a anterior publicada é a `v0.4.93-alpha` (Regras 315 a 325, ADR-057), **jogada em 19-11**
   (montanha, Spark `0SMEEkMLGP`, ~35 min): boca da mina e BigHouseMOD no alto da montanha, longe das casas, e blocos de
   terreno voando no print do autor. Triagem no `TODO.md`; o autor escolheu A (centro e BigHouseMOD pela altura dos
