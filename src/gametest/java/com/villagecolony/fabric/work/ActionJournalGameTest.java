@@ -113,4 +113,47 @@ public class ActionJournalGameTest implements FabricGameTest {
 
         context.complete();
     }
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_refusal_journal", tickLimit = 20)
+    public void farmerRefusalRecordsCropWorkerAndReason(TestContext context) throws Exception {
+        Path before = ActionJournal.file();
+        Path journal = Files.createTempFile("farmer-refusal", ".jsonl");
+        var farmer = com.villagecolony.gametest.ColonyFixture.spawnAtWorld(context,
+                net.minecraft.entity.EntityType.VILLAGER, context.getAbsolutePos(new BlockPos(1, 2, 1)));
+        BlockPos crop = context.getAbsolutePos(new BlockPos(8, 2, 8));
+
+        try {
+            ActionJournal.flush();
+            ActionJournal.writeTo(journal);
+            Task task = Task.create(UUID.randomUUID(), TaskType.COLLECT_FOOD, TaskPriority.PRODUCTION, ResourceType.WHEAT, 1);
+            var constructor = FarmerWork.Job.class.getDeclaredConstructor(Task.class, BlockPos.class);
+            constructor.setAccessible(true);
+            var job = constructor.newInstance(task, crop);
+            job.target = crop;
+            var giveUp = FarmerWork.class.getDeclaredMethod("giveUp", UUID.class, FarmerWork.Job.class,
+                    net.minecraft.entity.passive.VillagerEntity.class);
+            giveUp.setAccessible(true);
+            giveUp.invoke(null, farmer.getUuid(), job, farmer);
+            ActionJournal.flush();
+            String content = Files.readString(journal, StandardCharsets.UTF_8);
+            context.assertTrue(content.contains("GAVE_UP") && content.contains("approach timeout")
+                            && content.contains(farmer.getBlockPos().toShortString())
+                            && content.contains("\"x\":" + crop.getX())
+                            && content.contains("\"y\":" + crop.getY())
+                            && content.contains("\"z\":" + crop.getZ()),
+                    "a recusa deve registrar canteiro, posição do aldeão e motivo: " + content);
+            job.target = crop;
+            var still = WorkStall.class.getDeclaredField("still");
+            still.setAccessible(true);
+            still.setInt(job.stall, WorkStall.LIMIT);
+            giveUp.invoke(null, farmer.getUuid(), job, farmer);
+            ActionJournal.flush();
+            context.assertTrue(Files.readString(journal, StandardCharsets.UTF_8).contains("stationary"),
+                    "a recusa por imobilidade deve informar o motivo");
+        } finally {
+            ActionJournal.writeTo(before);
+            farmer.discard();
+            Files.deleteIfExists(journal);
+        }
+        context.complete();
+    }
 }

@@ -2,6 +2,13 @@
 
 # Development-Log.md
 
+## 21-11-2026 — A4, diagnóstico da aproximação do fazendeiro
+
+Ao desistir da lavoura, o diário registra o canteiro, a posição do aldeão e se ele ficou imóvel ou esgotou o prazo.
+O log também informa o motivo. O teste falhou antes da alteração e sob mutação, e três GameTests focados passaram.
+O Sentinela `fast` passou em `reports/test-runs/20261121T063830Z/`, após reduzir o arquivo ao limite de 500 linhas.
+O build final passou. O próximo jogo deve fornecer o diagnóstico das recusas observadas pelo autor.
+
 ## 21-11-2026 — A3a, estoque e adubação do bosque
 
 O log do jogo registrou seis mudas surgidas no primeiro plantio e cinco

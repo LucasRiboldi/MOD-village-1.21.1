@@ -66,9 +66,11 @@ GameTests focados passaram com a regra restaurada.
    surge** para fazê-las crescer, como o `BONE_MEAL_FOR_THE_FARM` do fazendeiro (declarado no `VC_SUPPLY`, `BoneMealRound.SURGE`).
    Hoje: lenhador 67% andando, 5 tarefas soltas `got no closer to the tree`, estoque de tora 0, obra pondo 124 peças de
    lado (`SET_ASIDE: no material`, cerca 52×, tora ~70×). Ver `Lumberjack*`/`TreeMarks`/`GroveSapling` (`VC_SUPPLY GROVE_SAPLING`).
-7. **A4** (diagnóstico, sem mudar comportamento): fazendeiro soltou 16 `could not reach the crop`, 0 colheitas
+7. **A4 — candidata** (diagnóstico, sem mudar comportamento): fazendeiro soltou 16 `could not reach the crop`, 0 colheitas
    entregues, 7 `STRANDED frozen twice`. Gravar, por recusa, a posição do canteiro, a do aldeão e o motivo no diário/log;
-   pedir o resultado no próximo jogo.
+   pedir o resultado no próximo jogo. O diário agora identifica imobilidade ou prazo esgotado e ambas as posições.
+   Três GameTests focados passaram. O teste falhou antes da mudança e sob mutação. Sentinela `fast` passou em
+   `reports/test-runs/20261121T063830Z/`, após corrigir o limite de linhas identificado na primeira execução.
 8. **A5** (diagnóstico): pastor soltou 6 de 6 (`could not reach the sheep`, `fenced in`), 252 s BLOCKED perto do
    portão do curral grande (76, 68, -210). Mesma instrumentação do A4.
 9. **R1 `/vc salvar` completo**: o retrato passa a trazer também estado da mina (hélices, recusas, nível), a última
