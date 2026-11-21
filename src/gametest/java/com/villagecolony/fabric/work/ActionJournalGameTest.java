@@ -156,4 +156,63 @@ public class ActionJournalGameTest implements FabricGameTest {
         }
         context.complete();
     }
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_refusal_journal", tickLimit = 20)
+    public void shepherdRefusalRecordsSheepWorkerAndReason(TestContext context) throws Exception {
+        Path before = ActionJournal.file();
+        Path journal = Files.createTempFile("shepherd-refusal", ".jsonl");
+        var shepherd = com.villagecolony.gametest.ColonyFixture.spawnAtWorld(context,
+                net.minecraft.entity.EntityType.VILLAGER, context.getAbsolutePos(new BlockPos(1, 2, 1)));
+        var sheep = com.villagecolony.gametest.ColonyFixture.spawnAtWorld(context,
+                net.minecraft.entity.EntityType.SHEEP, context.getAbsolutePos(new BlockPos(8, 2, 8)));
+        try {
+            ActionJournal.flush();
+            ActionJournal.writeTo(journal);
+            Task task = Task.create(UUID.randomUUID(), TaskType.COLLECT_WOOL, TaskPriority.PRODUCTION, ResourceType.WHITE_WOOL, 1);
+            task.reserveFor(shepherd.getUuid());
+            task.start();
+            Class<?> jobClass = Class.forName("com.villagecolony.fabric.work.ShepherdWork$Job");
+            var constructor = jobClass.getDeclaredConstructor(Task.class, net.minecraft.util.math.Box.class);
+            constructor.setAccessible(true);
+            Object job = constructor.newInstance(task, sheep.getBoundingBox());
+            var target = jobClass.getDeclaredField("sheep");
+            target.setAccessible(true);
+            target.set(job, sheep.getUuid());
+            var giveUp = java.util.Arrays.stream(ShepherdWork.class.getDeclaredMethods())
+                    .filter(method -> method.getName().equals("giveUp")).findFirst().orElseThrow();
+            giveUp.setAccessible(true);
+            if (giveUp.getParameterCount() == 2) {
+                giveUp.invoke(null, shepherd.getUuid(), job);
+            } else {
+                giveUp.invoke(null, shepherd.getUuid(), job, shepherd, sheep);
+            }
+            ActionJournal.flush();
+            String content = Files.readString(journal, StandardCharsets.UTF_8);
+            context.assertTrue(content.contains("GAVE_UP") && content.contains("approach timeout")
+                            && content.contains(shepherd.getBlockPos().toShortString())
+                            && content.contains("\"x\":" + sheep.getBlockPos().getX())
+                            && content.contains("\"y\":" + sheep.getBlockPos().getY())
+                            && content.contains("\"z\":" + sheep.getBlockPos().getZ()),
+                    "a recusa deve registrar ovelha, pastor e motivo: " + content);
+            Task second = Task.create(UUID.randomUUID(), TaskType.COLLECT_WOOL, TaskPriority.PRODUCTION, ResourceType.WHITE_WOOL, 1);
+            second.reserveFor(shepherd.getUuid());
+            second.start();
+            Object stalledJob = constructor.newInstance(second, sheep.getBoundingBox());
+            target.set(stalledJob, sheep.getUuid());
+            var stall = jobClass.getDeclaredField("stall");
+            stall.setAccessible(true);
+            var still = WorkStall.class.getDeclaredField("still");
+            still.setAccessible(true);
+            still.setInt(stall.get(stalledJob), WorkStall.LIMIT);
+            giveUp.invoke(null, shepherd.getUuid(), stalledJob, shepherd, sheep);
+            ActionJournal.flush();
+            context.assertTrue(Files.readString(journal, StandardCharsets.UTF_8).contains("stationary"),
+                    "a recusa por imobilidade deve informar o motivo");
+        } finally {
+            ActionJournal.writeTo(before);
+            shepherd.discard();
+            sheep.discard();
+            Files.deleteIfExists(journal);
+        }
+        context.complete();
+    }
 }

@@ -22,7 +22,7 @@
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, teste que falha, correção,
   Sentinela, commit, JAR.
 - **Ciclo 0.4.113:** A8, A7, A9, A6, A2 e A3a (Regras 349 a 354) passaram em 21, 3, 8, 18, 6 e 9 GameTests focados, respectivamente.
-  A4 registra no diário a posição da lavoura, a posição do fazendeiro e o motivo da desistência. O Sentinela `fast` passou; próximo item A5. Retomada no [plano do ciclo](docs/technical/Proximo-ciclo-0113.md).
+  A4 e A5 registram as posições e o motivo das desistências do fazendeiro e do pastor. O Sentinela `fast` passou; próximo item R1. Retomada no [plano do ciclo](docs/technical/Proximo-ciclo-0113.md).
 
 ## Candidatas que esperam jogo
 

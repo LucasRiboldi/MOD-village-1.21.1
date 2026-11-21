@@ -71,8 +71,10 @@ GameTests focados passaram com a regra restaurada.
    pedir o resultado no próximo jogo. O diário agora identifica imobilidade ou prazo esgotado e ambas as posições.
    Três GameTests focados passaram. O teste falhou antes da mudança e sob mutação. Sentinela `fast` passou em
    `reports/test-runs/20261121T063830Z/`, após corrigir o limite de linhas identificado na primeira execução.
-8. **A5** (diagnóstico): pastor soltou 6 de 6 (`could not reach the sheep`, `fenced in`), 252 s BLOCKED perto do
-   portão do curral grande (76, 68, -210). Mesma instrumentação do A4.
+8. **A5 — candidata** (diagnóstico): pastor soltou 6 de 6 (`could not reach the sheep`, `fenced in`), 252 s BLOCKED perto do
+   portão do curral grande (76, 68, -210). O diário registra as posições da ovelha e do pastor e o motivo da desistência.
+   Quatro GameTests focados passaram; o teste falhou antes da alteração e sob mutação. Sentinela `fast` passou em
+   `reports/test-runs/20261121T064752Z/`. Confirmar no próximo jogo.
 9. **R1 `/vc salvar` completo**: o retrato passa a trazer também estado da mina (hélices, recusas, nível), a última
    `VC_ROAD_GRAPH`, obras e peças postas de lado, `VC_TIME` do jogo inteiro (não só a última janela), mortes,
    `VC_LOOP`, `VC_SUPPLY_ERROR`, `VC_PLAYER_*` e a lista **inteira** de `/vc blocos` (hoje corta em 15). Origem:

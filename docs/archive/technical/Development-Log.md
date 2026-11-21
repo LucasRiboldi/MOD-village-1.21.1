@@ -2,6 +2,12 @@
 
 # Development-Log.md
 
+## 21-11-2026 — A5, diagnóstico da aproximação do pastor
+
+O diário registra as posições da ovelha e do pastor quando ele desiste, além de imobilidade ou prazo esgotado.
+O teste falhou antes da alteração e sob mutação. Passaram quatro GameTests focados, o Sentinela `fast`
+(`reports/test-runs/20261121T064752Z/`) e o build final. O diagnóstico depende do próximo jogo do autor.
+
 ## 21-11-2026 — A4, diagnóstico da aproximação do fazendeiro
 
 Ao desistir da lavoura, o diário registra o canteiro, a posição do aldeão e se ele ficou imóvel ou esgotou o prazo.
