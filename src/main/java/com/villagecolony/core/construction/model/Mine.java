@@ -135,6 +135,9 @@ public final class Mine {
     /** De onde a escada deste nível desce: o ponto de agora ou os deslocados ({@link MineStairPoints}). */
     private final MineStairPoints stairPoints = new MineStairPoints();
 
+    /** Nível do topo, de uma descida só: ramais 1 a 3 fechados (Regra 348). Lido do mundo, fora do save. */
+    private boolean oneDescent;
+
     private Mine(UUID colonyId, MineShaft shaft, int[] cuts) {
         this.colonyId = Objects.requireNonNull(colonyId, "colonyId");
         this.shaft = Objects.requireNonNull(shaft, "shaft");
@@ -237,15 +240,12 @@ public final class Mine {
     }
 
     /**
-     * Quantos ramais podem ser repartidos agora. A escada ({@link MineShaft#CARVED})
-     * e a sala comum apontam para as mesmas posições em todos os ramais: repartir
-     * ali daria o mesmo bloco a dois mineiros (defeito de 2026-08-26). A escada é
-     * de um só; aberta ela, os outros três entram pulando a sala, que fica com o
-     * ramal zero ({@link #skipTheSharedHall}) — regra do autor, 2026-10-11 (dois
-     * mineiros esperavam enquanto um cavava os 300 blocos da sala).
+     * Quantos ramais podem ser repartidos agora: a escada ({@link MineShaft#CARVED}) é de um só; aberta ela, os outros
+     * três entram pulando a sala, que fica com o ramal zero ({@link #skipTheSharedHall}, autor 2026-10-11). No nível
+     * do topo, só o ramal zero, que leva ao nível seguinte (Regra 348).
      */
     public int branchesOpenNow() {
-        if (shaft.isRamp()) {
+        if (shaft.isRamp() || oneDescent) {
             return 1;
         }
 
@@ -419,26 +419,26 @@ public final class Mine {
         return turnsWithoutAPickaxe;
     }
 
+    /** Marca se este nível é do topo, de uma descida só (Regra 348). */
+    public void keepOneDescent(boolean topLevel) {
+        oneDescent = topLevel;
+    }
+
+    /** Recomeça os ramais na mesma escada, sem girar e sem contar hélice (Regra 348). */
+    public void retryTheStair() {
+        turnsWithoutAPickaxe = 0;
+        restartArmsOn(shaft);
+    }
+
     /**
-     * Gira a hélice sem descer, ou muda a escada de ponto a cada volta completa, e recomeça os ramais
-     * nela — E45 (girar primeiro, decisão de 2026-09-16) e {@link MineStairPoints} (2026-10-22). Esgotadas
-     * as partidas, {@link #mouthIsHopeless()} culpa a boca. Zera a conta de voltas: cobrar do desenho
-     * novo o que o anterior não cavou faria a mina desistir sem ter tentado.
+     * Gira a hélice ou muda a escada de ponto e recomeça os ramais nela (E45, {@link MineStairPoints}); esgotadas as
+     * partidas, {@link #mouthIsHopeless()} culpa a boca. Zera a conta de voltas. Só abaixo do topo (Regra 348).
      */
     public void reroute() {
         helicesTried++;
 
-        shaft = stairPoints.next(shaft, helicesTried);
-
         turnsWithoutAPickaxe = 0;
-
-        MineShaft heading = shaft;
-
-        for (MineArm arm : arms) {
-            arm.restartAt(heading);
-
-            heading = heading.turned();
-        }
+        restartArmsOn(stairPoints.next(shaft, helicesTried));
     }
 
     /**

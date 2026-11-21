@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.movement.DetourMoves;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.brain.WorkHours;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.work.MinerWork.Job;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -67,7 +68,9 @@ public final class MinerDetours {
         BlockPos aim = aimFor(villager.getUuid(), stone);
 
         // Regra do autor de 2026-10-22: nada de piso no ar para fora da montanha (MinerTerrain), e se
-        // precisar construir, desce antes de ir de lado (DetourMoves.Costs.MINER).
+        // precisar construir, desce antes de ir de lado (DetourMoves.Costs.MINER). Nos níveis do topo, nada de
+        // túnel fora do desenho da mina (Regra 348).
+        MineDigLimit limit = MineDigLimit.of(world, job.task.colonyId());
         Optional<DetourWalker> walker = DetourWalker.plan(
                 world,
                 villager.getUuid(),
@@ -76,7 +79,7 @@ public final class MinerDetours {
                 feet -> reached(feet, aim, stone),
                 Set.of(stone),
                 false,
-                MinerTerrain::of,
+                at -> limit.over(MinerTerrain.of(at)),
                 false,
                 DetourMoves.Costs.MINER);
 
@@ -192,8 +195,10 @@ public final class MinerDetours {
             return false;
         }
 
+        MineDigLimit limit = MineDigLimit.of(world, job.task.colonyId());
         Optional<MineStepDown> descent = MineStepDown.start(world, feet, job.target,
-                MineStepDown.heading(feet, job.target, villager.getHorizontalFacing()));
+                MineStepDown.heading(feet, job.target, villager.getHorizontalFacing()),
+                cell -> limit.mayCut(MinecraftTypeAdapter.toColonyPos(cell)));
 
         if (descent.isEmpty()) {
             return false;

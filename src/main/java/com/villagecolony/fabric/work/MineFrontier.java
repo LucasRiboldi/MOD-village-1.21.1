@@ -136,7 +136,7 @@ public final class MineFrontier {
         // pedra, esta busca recuaria o cursor de volta para ela na
         // passagem seguinte, e o laço voltaria pela porta do recuo. É o
         // par de sempre, e ele tem o par de testes que pede.
-        if (MineMarks.isOutOfReach(world, at)) {
+        if (MineMarks.isOutOfReach(world, at) || MineSettling.looseAbove(world, at)) {
             return false;
         }
 

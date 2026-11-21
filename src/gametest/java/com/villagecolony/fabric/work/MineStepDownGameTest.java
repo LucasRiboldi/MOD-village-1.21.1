@@ -45,7 +45,10 @@ public class MineStepDownGameTest implements FabricGameTest {
 
     private static final int GROUND = 60;
 
-    /** Do jogo da 0.4.93: na boca, com a escada por cavar, o mineiro não se mexia e devolvia a pedra. */
+    /**
+     * Do jogo da 0.4.93: na boca, com a escada por cavar, o mineiro não se mexia e devolvia a pedra. Regra 348 (jogo da
+     * 0.4.111): ele desce cavando, mas só a escada do desenho que sai da boca — nenhum bloco fora dela sai do morro.
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_step_down", tickLimit = 1400)
     public void theMinerDigsTheStairsDownFromTheMouth(TestContext context) {
         context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
@@ -110,17 +113,26 @@ public class MineStepDownGameTest implements FabricGameTest {
             }
         });
 
+        java.util.Set<BlockPos> planned = new java.util.HashSet<>();
+
+        MineShaft.from(mouthAt, Side.EAST).plannedCells().forEach(at -> planned.add(MinecraftTypeAdapter.toBlockPos(at)));
+        VillageColonyMod.MINES.of(colony.id()).orElseThrow().plannedCells()
+                .forEach(at -> planned.add(MinecraftTypeAdapter.toBlockPos(at)));
+
         context.runAtTick(1300, () -> {
             try {
-                context.assertTrue(releasedAt[0] < 0, "Regra 336: o mineiro devolveu a pedra no tique "
-                        + releasedAt[0] + ", parado na boca: " + MinerReport.report(world, colony).orElse("(sem relatório)"));
                 context.assertTrue(lowest[0] <= mouth.getY() - 4, "Regra 336: o mineiro não desceu a escada que"
-                        + " faltava; o mais baixo foi y " + lowest[0] + ", a boca em y " + mouth.getY());
+                        + " faltava; o mais baixo foi y " + lowest[0] + ", a boca em y " + mouth.getY()
+                        + "; devolveu a pedra no tique " + releasedAt[0]);
 
-                BlockPos feet = villager.getBlockPos();
+                for (BlockPos at : BlockPos.iterate(low, low.add(SIDE - 1, DEPTH - 1, SIDE - 1))) {
+                    boolean opened = at.getX() >= level.getX() - 1 && at.getX() <= level.getX() + 1
+                            && at.getZ() >= level.getZ() - 1 && at.getZ() <= level.getZ() + 1
+                            && at.getY() >= level.getY() && at.getY() <= level.getY() + 2;
 
-                context.assertTrue(isThreeByThree(world, feet), "Regra 336: o degrau em que ele está não tem 3 de"
-                        + " largura por 3 de altura em " + feet.toShortString());
+                    context.assertTrue(opened || planned.contains(at) || !world.getBlockState(at).isAir(),
+                            "Regra 348: o mineiro cavou fora da escada do desenho em " + at.toShortString());
+                }
             } finally {
                 MinerProbe.targetOf(minerId).ifPresent(MineMarks::dug);
                 MineEntrance.forget(colony.id());

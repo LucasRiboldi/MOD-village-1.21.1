@@ -158,7 +158,9 @@ public final class MineCuts {
             boolean tooHigh = MiningTarget.quick(world, at, miner).rejection()
                     == MiningTarget.Rejection.TOO_HIGH;
 
-            if (tooHigh || MineMarks.isOutOfReach(world, at)) {
+            // Regra 348: o que tem solto pendurado em cima fica fora da escolha até o solto sair; a marca de recusa
+            // não basta, porque cavar a pedra vizinha a apaga (MineMarks.dug).
+            if (tooHigh || MineMarks.isOutOfReach(world, at) || MineSettling.looseAbove(world, at)) {
                 // <b>Já cobrou o preço e não foi alcançada</b> — E44,
                 // 2026-09-10. Um mineiro andou os 2.400 tiques de
                 // expediente até aqui e não chegou; enquanto o prazo

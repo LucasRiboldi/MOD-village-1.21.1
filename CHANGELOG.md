@@ -12,6 +12,17 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.112] — candidata, 2026-11-20
+
+Regra 348; nada visto em jogo.
+
+### Corrigido
+
+- Uma descida por arco: nos dois primeiros níveis a mina não gira a escada, não muda de ponto, não abre os
+  outros três ramais e o mineiro só cava células do desenho, na descida cavada e no desvio. Os braços abrem do
+  terceiro nível para baixo.
+- O mineiro não volta à pedra com areia, cascalho ou líquido pendurado em cima até o solto sair.
+
 ## [0.4.111] — candidata, 2026-11-20
 
 Regra 347; nada visto em jogo.

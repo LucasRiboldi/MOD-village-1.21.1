@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 240
+- **Cita a regra:** 241
 - **Só usa a classe indicada:** 91
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -93,7 +93,7 @@ classe prova menos ainda.
 | 80 | Só vira alvo o bloco com posição de trabalho válida e alcançável | classe | MinerPicksTest, MinerRerouteTest, MiningTargetGameTest |
 | 81 | Ramal com dono: cada ramal da mina é reservado a um mineiro, com o estado dito pelo nome | classe | MineBranchTest, MineRampGameTest, MineRegistryTest |
 | 82 | O mineiro memoriza a entrada da mina e chega por ela, por etapas, até o nível de agora | classe | IdleFixesGameTest, MineAccessGameTest, MineApproachProgressTest |
-| 83 | Espera a areia assentar antes de voltar a cavar | classe | MineGravityGameTest, MineSettlingGameTest |
+| 83 | Espera a areia assentar antes de voltar a cavar | classe | MineGravityGameTest, MineLooseGameTest, MineSettlingGameTest |
 | 84 | Tapa e escora com o bloco do bioma (arenito no deserto) | classe | BiomeCoverageGameTest, MineGravityGameTest |
 | 85 | O ferro descansa onde a mina não o tem: o piso de ferro cru não força busca sem veio | classe | DesertGroundGameTest |
 | 86 | A peça que o construtor não alcança surge no lugar | classe | UnreachablePiecesGameTest |
@@ -167,7 +167,7 @@ classe prova menos ainda.
 | 154 | Lenhador, fundidor e fazendeiro: os ajustes do O5–O7 (autor 10-28; pedido de novo em 10-2… | classe | ChestPlacerGameTest, IdleFixesGameTest, ItemStockGameTest |
 | 155 | A boca da mina ganha o portão do autor (10-29, estrutura mine_entrance.nbt, 9×7×5): no lu… | classe | BiomeBlueprintsGameTest, MineLandingGameTest, MineNodeGameTest |
 | 156 | O pedreiro alisa o chão da vila (autor 10-29, 11-06): sem tarefa, uma vez por minuto ele… | classe | GroundSmoothingGameTest, OreTowerGameTest, PlayerGroundGameTest |
-| 157 | O mineiro não quebra o que segura algo solto (autor 10-29, jogo da 0.3.108: o cascalho pe… | classe | MineGravityGameTest, MineSettlingGameTest, MinerGameTest |
+| 157 | O mineiro não quebra o que segura algo solto (autor 10-29, jogo da 0.3.108: o cascalho pe… | classe | MineGravityGameTest, MineLooseGameTest, MineSettlingGameTest |
 | 158 | Sem cama no andar de baixo da casa de escada de mão (autor 10-29, jogo da 0.3.108: 9 de 2… | classe | BedChoiceGameTest, BedPlanTest, BiomeBlueprintsGameTest |
 | 159 | O aldeão da colônia pula 2 blocos e por cima da cerca (autor 10-29, depois do jogo da 0.3… | cita | LumberjackGameTest, PenEscapeGameTest |
 | 160 | O construtor trabalha do chão, e quem fica num telhado desce (autor 10-29, jogo da 0.3.10… | classe | BuildZoneGameTest, BuilderApproachGameTest, BuilderGameTest |
@@ -358,3 +358,4 @@ classe prova menos ainda.
 | 345 | O conflito com o jogador e a reafirmação (autor 20-11, telemetria F1 a F3b do plano docs/… | cita | EditLedgerGameTest, test_player_report |
 | 346 | Salvar todas as análises de uma vez (autor 20-11): /vc salvar, comando de jogador, roda o… | cita | SnapshotCommandGameTest |
 | 347 | O miolo da vila segue a forma das peças (autor 20-11, jogo da 0.4.110: "terreno quadrado… | cita | VillageCoreTest |
+| 348 | Uma descida por arco (autor 20-11, jogo da 0.4.111: muitas aberturas de mina em volta do… | cita | MineDigLimitTest, MineLooseGameTest, MineOneDescentTest |

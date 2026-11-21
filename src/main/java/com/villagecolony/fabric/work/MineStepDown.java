@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * A descida cavada — Regra 336, ADR-061. O mineiro só pisa no degrau já aberto; o próximo, ele cava de pé no último,
@@ -87,10 +88,18 @@ final class MineStepDown {
 
     private String why = "";
 
-    private MineStepDown(BlockPos feet, BlockPos aim, Direction side) {
+    /** A rocha que este degrau pode tirar: nos níveis do topo, só a do desenho da mina (Regra 348). */
+    private final Predicate<BlockPos> mayCut;
+
+    /** Se a rocha é travada pelo desenho: o primeiro degrau procura a pista da escada planejada. */
+    private final boolean restricted;
+
+    private MineStepDown(BlockPos feet, BlockPos aim, Direction side, Predicate<BlockPos> mayCut, boolean restricted) {
         this.feet = feet.toImmutable();
         this.aim = aim.toImmutable();
         this.side = side;
+        this.mayCut = mayCut;
+        this.restricted = restricted;
     }
 
     /**
@@ -100,15 +109,28 @@ final class MineStepDown {
      */
     static Optional<MineStepDown> start(ServerWorld world, BlockPos feet, BlockPos aim, Direction preferred) {
         MineStepDown descent = new MineStepDown(feet, aim,
-                preferred.getAxis().isHorizontal() ? preferred : Direction.EAST);
+                preferred.getAxis().isHorizontal() ? preferred : Direction.EAST, cell -> true, false);
 
-        if (descent.arrived()) {
+        return descent.begin(world);
+    }
+
+    /** O mesmo, com cada célula do degrau onde {@code mayCut} deixa (Regra 348). */
+    static Optional<MineStepDown> start(ServerWorld world, BlockPos feet, BlockPos aim, Direction preferred,
+                                        Predicate<BlockPos> mayCut) {
+        MineStepDown descent = new MineStepDown(feet, aim,
+                preferred.getAxis().isHorizontal() ? preferred : Direction.EAST, mayCut, true);
+
+        return descent.begin(world);
+    }
+
+    private Optional<MineStepDown> begin(ServerWorld world) {
+        if (arrived()) {
             return Optional.empty();
         }
 
-        descent.step = descent.plan(world);
+        step = plan(world);
 
-        return descent.step == null ? Optional.empty() : Optional.of(descent);
+        return step == null ? Optional.empty() : Optional.of(this);
     }
 
     /** O degrau que ele não alcança andando: o alvo é o próprio pé, fica embaixo dele ou dentro da rocha. */
@@ -236,7 +258,29 @@ final class MineStepDown {
     }
 
     private Optional<Step> build(ServerWorld world, Direction toward) {
-        BlockPos next = feet.offset(toward).down();
+        Direction across = toward.rotateYCounterclockwise();
+        BlockPos down = feet.offset(toward).down();
+
+        if (!restricted || steps > 0) {
+            return buildAt(world, toward, down);
+        }
+
+        // Regra 348: o primeiro degrau acha a escada do desenho — ele pode estar em qualquer das três pistas, e o
+        // primeiro degrau do caracol fica na altura da boca.
+        for (BlockPos level : List.of(down, feet.offset(toward))) {
+            for (int lane = 0; lane < LANES; lane++) {
+                Optional<Step> found = buildAt(world, toward, level.offset(across, -lane));
+
+                if (found.isPresent()) {
+                    return found;
+                }
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private Optional<Step> buildAt(ServerWorld world, Direction toward, BlockPos next) {
         // As pistas ficam à esquerda de quem desce, como no caracol (Regra 119): a virada à direita entra em rocha nova.
         Direction across = toward.rotateYCounterclockwise();
         List<BlockPos> cells = new ArrayList<>(LANES * HEADROOM);
@@ -246,7 +290,8 @@ final class MineStepDown {
             for (int lane = 0; lane < LANES; lane++) {
                 BlockPos cell = next.offset(across, lane).up(height);
 
-                if (!mayOpen(world, cell)) {
+                // Regra 348: com a rocha travada, cada célula do degrau é do desenho, até a de ar — senão a escada desvia.
+                if (!mayOpen(world, cell) || (restricted && !mayCut.test(cell))) {
                     return Optional.empty();
                 }
 

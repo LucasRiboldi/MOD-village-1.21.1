@@ -12222,3 +12222,23 @@ entre duas casas afastadas ficava dentro do retângulo e virava terra (vermelho 
 continua lago.
 
 Nada visto em jogo; vale só para chunks gerados depois.
+
+## 2026-11-20 — 0.4.112: uma descida por arco (Regra 348)
+
+Jogo da 0.4.111: o autor viu muitas aberturas de mina em volta do arco. O log mostra uma boca só
+(`opens a mine at 129, 71, -125`), mas nove hélices giradas e deslocadas a partir da superfície
+(`closed its stair before the hall — turning the helix … (helix 9 of 20)`), uma escada paralela de 15
+degraus pela descida cavada (`dug 15 steps down to 110, 48, -128 — 88 dug`) e desvios rasos perto do arco. A
+escada fechava porque o mineiro recusava 12 posições do salão com solto em cima (2.652 linhas, ~180 por
+posição): `MineMarks.dug` apaga as marcas a 8 blocos de cada pedra cavada, e o cursor servia a mesma pedra de
+novo. Mineiro com 84% sem trabalhar.
+
+Escolha C do autor. `Mine.keepOneDescent` fecha os ramais 1 a 3 nos dois primeiros níveis (lidos da cadeia
+de `MineEntrance.levelsDown`); a escada fechada ali recomeça igual (`Mine.retryTheStair`, a cada
+`MineBottomRetry.RETRY_TICKS`), sem girar. `MineDigLimit` trava a rocha fora do desenho da mina nesses dois
+níveis para a descida cavada (`MineStepDown`, que agora acha a pista da escada planejada no primeiro degrau)
+e para o desvio (`MinerDetours`). `MineCuts` e `MineFrontier` deixam de fora a pedra com solto em cima
+(`MineSettling.looseAbove`). Testes: `MineOneDescentTest`, `MineDigLimitTest`, `MineLooseGameTest` e o
+`MineStepDownGameTest` reescrito; todos vermelhos sem a mudança (mutação conferida) e verdes com ela.
+
+Nada visto em jogo.
