@@ -22,6 +22,7 @@ import com.villagecolony.core.type.Side;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.content.ModContent;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.WorkerEquipment;
@@ -4721,7 +4722,7 @@ public class MinerGameTest implements FabricGameTest {
             Optional<BlockPos> lit = com.villagecolony.fabric.integration.MineLighting.light(world, mine, mine.arms().getFirst());
 
             context.assertTrue(lit.isPresent() && lit.get().equals(spot), "o salão aberto ficou sem tocha: " + lit);
-            context.assertTrue(world.getBlockState(spot).isOf(Blocks.TORCH), "a tocha devia ser de chão");
+            context.assertTrue(world.getBlockState(spot).isOf(ModContent.COLONY_TORCH), "esperava tocha da colônia de chão");
         } finally {
             for (BlockPos at : List.of(spot.down(), spot, spot.up())) {
                 world.setBlockState(at, Blocks.AIR.getDefaultState());

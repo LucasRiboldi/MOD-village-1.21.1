@@ -5,6 +5,7 @@ import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.MineLighting;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -160,8 +161,8 @@ final class MineSideWork {
                     cells.add(heading.positionAt(index));
                 }
 
-                // A rocha que segura a tocha do patamar também não sai.
-                for (MineShaft.WallLight light : heading.landingLights()) {
+                // A rocha que segura as tochas da escada e do patamar também fica (Regra 353).
+                for (MineShaft.WallLight light : MineLighting.wallLights(heading)) {
                     cells.add(new ColonyPos(light.at().x() + light.wall().offsetX(), light.at().y(),
                             light.at().z() + light.wall().offsetZ()));
                 }

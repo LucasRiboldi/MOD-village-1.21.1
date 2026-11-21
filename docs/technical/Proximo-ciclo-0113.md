@@ -15,6 +15,7 @@ Na retomada de 21-11, `GameTestBatchRuleTest` falhou porque dois testes de `Grou
 | A7 terra | **Candidata (Regra 350).** `GroundPickup.collectNearby` consulta `EarthSurplus` antes de guardar terra. O cenário registra dois baús públicos para atingir 256 unidades sem esbarrar no limite por baú. Sem o filtro, o teste falhou porque a terra foi recolhida no teto. Com o filtro, os três GameTests focados passaram. Falta confirmação no próximo jogo. |
 | A9 telemetria | **Candidata (Regra 351).** O vigia ignora transições de grama e caminho sem autor declarado. O relatório histórico desconsidera as equivalentes atribuídas a `mod?natural`. O nivelamento em volta da obra e o reparo do piso da mina registram `entorno_obra` e `piso_mina` ao escrever. As regressões falharam sem a correção. Com ela, passaram oito GameTests focados e 196 testes Python. Falta confirmação no próximo jogo. |
 | A6 terracota | **Candidata (Regra 352).** Sem argila nos baús acessíveis ou exposta na área de coleta carregada, a planta pede tijolos de pedra e o estoque deixa de pedir terracota. A leitura da obra reconhece as peças já assentadas. Os dois testes novos falharam sob mutação. Com a regra restaurada, passaram 18 GameTests focados e 196 testes Python. Falta confirmação no próximo jogo. |
+| A2 luz da mina | **Candidata (Regra 353).** O mineiro usa tochas da colônia na parede da escada a cada seis degraus, em cada patamar e no chão dos salões em grade de seis blocos. As duas regressões falharam no código anterior e sob mutação. Com a correção, passaram 6 GameTests focados e 196 testes Python. Falta confirmação no próximo jogo. |
 
 Sentinela `fast` de 21-11 (`20261121T040824Z`): unitários e propriedade passaram. Dos 1.224 GameTests, só o cenário do A7 falhou. A análise foi gerada em `reports/sentinel-analysis/20261121T041222Z/`. A matriz de regras inclui a 349, e a suíte Python passou após limpar a variável de configuração Git herdada.
 
@@ -35,6 +36,13 @@ ovelha inacessível. A análise está em `reports/sentinel-analysis/20261121T051
 A terceira (`20261121T052007Z`) passou em unitários, propriedade e todos os 1.227
 GameTests. A análise está em `reports/sentinel-analysis/20261121T052316Z/`. O build final passou.
 
+No A2, o primeiro `fast` (`20261121T055043Z`) apontou que o teste da escada compartilhou um lote
+embora limpasse o cache global. A suíte de GameTests repetiu a falha conhecida dos quatro portões do
+curral MAE. A análise está em `reports/sentinel-analysis/20261121T055449Z/`.
+Depois de isolar esse cenário no lote `mine_stair_colony_torches`, passaram os testes unitários,
+de propriedade e os 1.228 GameTests (`20261121T055553Z`). A análise está em
+`reports/sentinel-analysis/20261121T060022Z/`. O build final passou.
+
 ## O que falta fazer, na ordem
 
 1. **A8**: candidata, ver estado acima.
@@ -43,13 +51,10 @@ GameTests. A análise está em `reports/sentinel-analysis/20261121T052316Z/`. O 
    e o log confirma o reparo do piso em `121, 69, -125`. Os quatro eventos históricos mantêm o rótulo original do log.
 4. **A6**: Regra 352, ver estado acima. Em vilas sem argila, os trechos afetados das casas ficam com a cor e a textura dos
    tijolos de pedra. Conferir o visual e os pedidos do fundidor no próximo jogo.
-5. **A2 (A2a + A2z)**: o mineiro põe a **tocha da colônia** (`ModContent.COLONY_TORCH` e `COLONY_WALL_TORCH`,
-   `ColonyTorchBlock`, com anel de luz e sem nascer monstro perto) na escada, nos patamares e no salão, a cada 6 blocos,
-   sem custo, só dentro da mina. **Exceção à Regra 212** ("nenhum aldeão põe a tocha da colônia sozinho"): editar a 212
-   e todo comentário que a cita (`grep "Regra 212"`). Hoje o salão só ganha luz de chão (`MineFurnishing`,
-   `lit the hall floor`; `MineShaft.lightSpots`/`landingLights`). Motivo: o mineiro morreu para um zumbi no salão
-   (`VC_VILLAGER_DEATH … mob at=129, 58, -124`). Cuidado: `MineShaft.plannedCells` e a `MineDigLimit` (Regra 348)
-   — a tocha em parede não pode virar célula fora do desenho.
+5. **A2 (A2a + A2z)**: Regra 353, ver estado acima. O mineiro morreu para um zumbi no salão
+   (`VC_VILLAGER_DEATH … mob at=129, 58, -124`). A tocha instalada pelo mineiro acende o anel de luz
+   e bloqueia o nascimento natural nas proximidades. As posições saem do traçado da mina e o limite
+   de escavação segue a Regra 348.
 6. **A3a**: o lenhador **planta 5 mudas** perto da vila (88 mudas paradas no estoque; `oak_sapling`) e o **pó de osso
    surge** para fazê-las crescer, como o `BONE_MEAL_FOR_THE_FARM` do fazendeiro (declarado no `VC_SUPPLY`, `BoneMealRound.SURGE`).
    Hoje: lenhador 67% andando, 5 tarefas soltas `got no closer to the tree`, estoque de tora 0, obra pondo 124 peças de

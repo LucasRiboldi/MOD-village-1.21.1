@@ -5,23 +5,23 @@ import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.content.ModContent;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
+import net.minecraft.block.WallTorchBlock;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
- * A luz da mina: tocha de chão, a cada {@link MineShaft#LIGHT_SPACING} blocos, no salão do nível e no do
- * ramal ({@link MineShaft#lightSpots}) — escolha do autor, 2026-10-27.
- *
- * <p>Na parede, só a do patamar das dobras (Regra 254): a rocha de fora da dobra, que nenhum nível cava
- * ({@code MineShaftLayoutTest}). Fora dela, nunca: o mineiro cavava a parede depois e a tocha caía (playtest
- * 0.3.97). Nunca no degrau: a escada é caminho. O chão debaixo de cada tocha não é cavado nem por este nível nem pelo seguinte
- * ({@code MineShaftLayoutTest}). A tocha não custa material, como a mobília da boca (Regra 30).
+ * O mineiro põe tochas da colônia sem custo dentro da mina (Regra 353, exceção à Regra 212).
+ * Na escada e no salão o espaçamento é de seis blocos. Cada patamar mantém a tocha na parede
+ * de fora (Regra 254). A escada recebe a tocha na parede, acima dos pés, para deixar o degrau livre.
  *
  * <p>O mineiro não cava a própria luz: uma posição com luz é espaço aberto ({@link #isLight}), e é por ela
  * que {@code MineRock} pula a tocha em vez de tratá-la como pedra.
@@ -41,18 +41,17 @@ public final class MineLighting {
     }
 
     /**
-     * Uma tocha de chão no primeiro lugar da grade deste ramal que já está aberto e ainda está escuro.
+     * Uma tocha da colônia na primeira posição aberta com apoio neste ramal (Regra 353).
      * Idempotente: o lugar com tocha não está mais vazio. Chamada a cada passagem em que a mina existe.
      *
      * @return onde a tocha foi posta, ou vazio quando não havia o que fazer
      */
     public static Optional<BlockPos> light(ServerWorld world, Mine mine, MineArm arm) {
-        for (MineShaft.WallLight light : arm.shaft().landingLights()) {
+        for (MineShaft.WallLight light : wallLights(arm.shaft())) {
             BlockPos at = MinecraftTypeAdapter.toBlockPos(light.at());
 
-            if (world.getChunkManager().getWorldChunk(at.getX() >> 4, at.getZ() >> 4) != null
-                    && placeWallTorch(world, at, MinecraftTypeAdapter.toDirection(light.wall()))) {
-                VillageColonyMod.LOGGER.info("Mine {} lit the landing wall at {}", mine.colonyId(), at.toShortString());
+            if (placeWallTorch(world, at, MinecraftTypeAdapter.toDirection(light.wall()))) {
+                VillageColonyMod.LOGGER.info("Mine {} lit the mine wall at {}", mine.colonyId(), at.toShortString());
 
                 return Optional.of(at);
             }
@@ -76,22 +75,47 @@ public final class MineLighting {
         return Optional.empty();
     }
 
+    /** Posições da escada e dos patamares. O trabalho lateral também usa a lista para proteger os apoios. */
+    public static List<MineShaft.WallLight> wallLights(MineShaft shaft) {
+        List<MineShaft.WallLight> lights = new ArrayList<>(shaft.landingLights());
+
+        if (shaft.isRamp()) {
+            addStairLights(shaft, 0, shaft.ascent(), lights);
+            return lights;
+        }
+        if (shaft.isArmZero()) {
+            addStairLights(shaft, 0, MineShaft.DESCENT, lights);
+        }
+        addStairLights(shaft, MineShaft.SHARED_BLOCKS, MineShaft.ARM_STAIRS, lights);
+
+        return lights;
+    }
+
+    private static void addStairLights(MineShaft shaft, int start, int steps, List<MineShaft.WallLight> lights) {
+        for (int step = MineShaft.LIGHT_SPACING; step <= steps; step += MineShaft.LIGHT_SPACING) {
+            // A posição fica na pista de fora, um bloco acima dos pés, dentro das células da escada.
+            int head = start + (step - 1) * MineShaft.STAIR_STEP_BLOCKS + 1;
+            ColonyPos inner = shaft.positionAt(head);
+            ColonyPos outer = shaft.positionAt(head + (MineShaft.STAIR_LANES - 1) * MineShaft.STAIR_HEADROOM);
+            Side wall = Side.awayFrom(inner, outer, shaft.descent());
+
+            lights.add(new MineShaft.WallLight(outer, wall));
+        }
+    }
+
     /**
-     * A tocha na parede do patamar, presa no bloco do lado {@code wall}: só com o patamar aberto ({@code at} livre) e
-     * a rocha firme atrás. Patamar ainda por cavar não recebe nada.
+     * A tocha na parede, presa no bloco do lado {@code wall}, vai em célula aberta com rocha firme atrás.
      */
     static boolean placeWallTorch(ServerWorld world, BlockPos at, Direction wall) {
         BlockPos behind = at.offset(wall);
 
-        if (!world.getBlockState(at).isAir()
+        if (!world.isChunkLoaded(at) || !world.isChunkLoaded(behind) || !world.getBlockState(at).isAir()
                 || !world.getBlockState(behind).isSideSolidFullSquare(world, behind, wall.getOpposite())) {
             return false;
         }
 
-        world.setBlockState(at, Blocks.WALL_TORCH.getDefaultState()
-                .with(net.minecraft.block.WallTorchBlock.FACING, wall.getOpposite()));
-
-        return true;
+        return ColonyTorches.place(world, at,
+                ModContent.COLONY_WALL_TORCH.getDefaultState().with(WallTorchBlock.FACING, wall.getOpposite()));
     }
 
     /**
@@ -109,8 +133,6 @@ public final class MineLighting {
             return false;
         }
 
-        world.setBlockState(at, Blocks.TORCH.getDefaultState());
-
-        return true;
+        return ColonyTorches.place(world, at, ModContent.COLONY_TORCH.getDefaultState());
     }
 }

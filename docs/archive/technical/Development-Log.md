@@ -12311,3 +12311,27 @@ Os dois novos GameTests falharam ao forçar a presença de argila. Com a versão
 Os dois primeiros `fast` repetiram falhas de pastoreio registradas no dia anterior.
 Na terceira execução, passaram os testes unitários, de propriedade e os 1.227 GameTests.
 O build final passou. A candidata espera o playtest em mundo novo.
+
+## 2026-11-21 — A2, tochas da colônia na mina (Regra 353)
+
+O jogo registrou `VC_VILLAGER_DEATH` do mineiro por ataque de monstro em `129, 58, -124`.
+Antes da correção, os GameTests encontraram uma tocha comum no patamar e nenhuma no
+sexto degrau da escada preparada.
+
+O mineiro instala sem custo tochas da colônia em células previstas e abertas, com apoio firme.
+Usa a parede da escada a cada seis degraus, a parede externa de cada patamar e o chão dos
+salões, em grade de seis blocos. A colocação usa o anel da tocha da colônia e invalida o
+cache de nascimento natural. O trabalho lateral preserva os apoios previstos das tochas.
+
+Passaram 6 GameTests focados e 196 testes Python. O cenário da escada verifica o sexto e o
+décimo segundo degraus, o anel, o bloqueio de nascimento natural após a colocação e que a
+tocha fica dentro do traçado. A candidata espera o playtest em mundo novo.
+
+O primeiro `fast` encontrou o teste da escada no mesmo lote de outros testes apesar da
+limpeza do cache global. Também repetiu a falha conhecida dos quatro portões do curral MAE.
+Com lote próprio para a escada, passaram unitários, propriedade e 1.228 GameTests.
+O build passou. A análise está em `reports/sentinel-analysis/20261121T060022Z/`.
+
+A mutação removeu as tochas da escada e voltou à tocha comum no patamar. As duas
+regressões falharam pelas causas esperadas. Com a correção restaurada, os 6 testes
+focados passaram novamente.

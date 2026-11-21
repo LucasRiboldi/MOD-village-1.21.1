@@ -26,7 +26,7 @@ public class ColonyTorchesGameTest implements FabricGameTest {
                 }
             }
 
-            ColonyTorches.place(world, torch);
+            world.setBlockState(torch, ModContent.COLONY_TORCH.getDefaultState());
 
             context.assertTrue(world.getBlockState(torch).isOf(ModContent.COLONY_TORCH), "a tocha não foi posta");
             context.assertTrue(lightsAround(world, torch) == com.villagecolony.fabric.content.ColonyTorchBlock.RING.size(),

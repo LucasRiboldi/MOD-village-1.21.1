@@ -54,11 +54,14 @@ class ArchitectureRulesTest {
                 "o importador achou só " + mod.size() + " classes — o caminho mudou?");
     }
 
-    /** Regra 212: nenhum aldeão põe a tocha da colônia sozinho; quem a põe é o jogador. */
+    /** Regra 212: a colocação autônoma de tocha solta é exclusiva da mina (Regra 353). */
     @Test
     void nobodyInTheModLightsTheVillageByItself() {
-        ArchRule rule = noClasses().should().callMethod("com.villagecolony.fabric.integration.ColonyTorches", "place",
-                "net.minecraft.server.world.ServerWorld", "net.minecraft.util.math.BlockPos");
+        ArchRule rule = noClasses().that()
+                .doNotHaveFullyQualifiedName("com.villagecolony.fabric.integration.MineLighting")
+                .should().callMethod("com.villagecolony.fabric.integration.ColonyTorches", "place",
+                        "net.minecraft.server.world.ServerWorld", "net.minecraft.util.math.BlockPos",
+                        "net.minecraft.block.BlockState");
 
         rule.check(mod);
     }

@@ -23,9 +23,10 @@ pediu a dobra com 3 blocos de profundidade e uma tocha na parede.
 - **Formato por nível:** `MineShaft.landings`. `from` e `deepened` abrem com patamar; `turned` e `rerouted` mantêm o formato; a rampa do
   fundo não tem. O save grava `landings`; ausente é falso. Fica fora do `SHAPE_VERSION`, porque nenhuma célula antiga mudou e a versão
   de forma zeraria o cursor.
-- **Tocha (`MineLighting`):** uma por patamar, na pista do meio, à altura da cabeça, presa na rocha de fora da dobra. É a única tocha de
-  parede da mina: o `MineShaftLayoutTest` prova que nenhum ramal deste nível nem do seguinte cava essa rocha, e o trabalho lateral
-  (`MineSideWork`) a protege como protege os degraus.
+- **Tocha (`MineLighting`):** uma por patamar, na pista do meio, à altura da cabeça, presa na rocha de fora da dobra. O
+  `MineShaftLayoutTest` prova que nenhum ramal deste nível nem do seguinte cava essa rocha, e o trabalho lateral
+  (`MineSideWork`) a protege como protege os degraus. A Regra 353 troca a tocha do patamar pela tocha da colônia e
+  acrescenta tochas da colônia na parede da escada a cada seis degraus.
 - **Escada protegida:** os conjuntos de degraus de `MineBranches` e `MineSideWork` incluem o patamar.
 
 ## Consequências

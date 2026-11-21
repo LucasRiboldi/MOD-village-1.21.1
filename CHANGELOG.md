@@ -25,6 +25,8 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
   O nivelamento do entorno da obra e o reparo do piso da mina identificam suas próprias alterações.
 - Regra 352: vilas sem argila disponível usam tijolos de pedra nas partes das obras que pediam terracota.
   Os catálogos de adiantamento e estoque acompanham a troca, e as peças já assentadas ficam de pé.
+- Regra 353: o mineiro ilumina a escada, os patamares e os salões com tochas da colônia sem custo.
+  As tochas geram o anel de luz e bloqueiam o nascimento natural de monstros nas proximidades.
 
 ## [0.4.112] — candidata, 2026-11-20
 
