@@ -36,7 +36,7 @@ public final class GroundPickupGameTest implements FabricGameTest {
     private static final int TICKS = 600;
 
     /** Regra 350: com o teto de terra nos baús, a terra solta fica no chão; abaixo dele, é guardada. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_pickup", tickLimit = 40)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_pickup_earth_ceiling", tickLimit = 40)
     public void earthAboveTheCeilingStaysOnTheGround(TestContext context) {
         context.getWorld().setTimeOfDay(2_000);
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());

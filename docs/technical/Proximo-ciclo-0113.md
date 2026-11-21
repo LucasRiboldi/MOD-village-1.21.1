@@ -7,7 +7,7 @@ Numeração: Regras 349 em diante (a 348 é a descida única).
 
 ## Estado ao parar (WIP no commit `733133e2`)
 
-Na retomada de 21-11, a linha de base `gradlew.bat build` com JDK 21 no commit `5375d9dc` falhou (1 de 1.885 testes). `GameTestBatchRuleTest` apontou que `earthAboveTheCeilingStaysOnTheGround` e `workerCollectsWhileWalkingPast` chamam `setTimeOfDay` no mesmo lote `ground_pickup`. A linha de base precisa voltar a passar antes do A8. `ColonyGoalsTest` passou (56 testes); GameTests focados, mutações e Sentinela ficaram pendentes.
+Na retomada de 21-11, `GameTestBatchRuleTest` falhou porque dois testes de `GroundPickupGameTest` alteravam o relógio global no mesmo lote. O novo teste agora roda em `ground_pickup_earth_ceiling` e `gradlew.bat build` passou com JDK 21. `ColonyGoalsTest` passou os 56 casos. GameTests focados, mutações e Sentinela ficaram pendentes.
 
 | Item | Estado |
 |---|---|
