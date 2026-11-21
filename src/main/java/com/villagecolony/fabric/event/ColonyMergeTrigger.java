@@ -6,6 +6,9 @@ import com.villagecolony.core.coordination.ColonyIdentity;
 import com.villagecolony.core.coordination.ColonyMerge;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.RoadNetwork;
+import com.villagecolony.fabric.integration.SnapshotHistory;
+import com.villagecolony.fabric.work.RoadGraphRefresh;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.util.math.BlockPos;
@@ -68,6 +71,11 @@ final class ColonyMergeTrigger {
                 result.isPresent();
                 result = mergeOnePair(world, attended)) {
             ColonyMerge.Result done = result.get();
+            Colony survivor = VillageColonyMod.COLONIES.find(done.survivor()).orElseThrow();
+            int columns = RoadNetwork.merge(survivor, done.absorbed());
+            RoadGraphRefresh.requestNow(done.survivor());
+            SnapshotHistory.info(done.survivor(), "VC_ROAD_MERGE version=1 colony={} absorbed={} route_columns={}",
+                    done.survivor(), done.absorbed(), columns);
 
             VillageColonyMod.LOGGER.info(
                     "Colony {} absorbed colony {} — they touched or shared the same village;"

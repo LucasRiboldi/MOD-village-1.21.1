@@ -296,6 +296,23 @@ public final class MineTrouble {
     }
 
     /**
+     * A escada do topo fechou antes do salão — Regra 348: a mina não gira a escada nem abre outra; a cada
+     * {@link MineBottomRetry#RETRY_TICKS} tiques os ramais recomeçam na mesma escada, que sai dos três blocos sob o
+     * arco.
+     */
+    static void retryTheStair(UUID colonyId, Mine mine, long now) {
+        if (!MineBottomRetry.isDue(colonyId, now)) {
+            return;
+        }
+
+        MineBottomRetry.defer(colonyId, now);
+        mine.retryTheStair();
+
+        VillageColonyMod.LOGGER.info("Mine {} closed its stair before the hall — it keeps its one stair under the arch"
+                        + " and tries it again", colonyId.toString().substring(0, 8));
+    }
+
+    /**
      * No fundo do mundo a mina não para: anda para longe do centro da vila e
      * sobe em rampa até a altura do centro — ADR-036 item 17.
      *

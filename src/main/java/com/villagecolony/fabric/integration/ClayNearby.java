@@ -1,5 +1,9 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageBounds;
+import com.villagecolony.core.coordination.GatheringReach;
+import com.villagecolony.core.coordination.ResourceReach;
 import com.villagecolony.core.type.ServerMemory;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -18,6 +22,9 @@ import java.util.UUID;
  */
 public final class ClayNearby {
 
+    /** Margem da coleta de argila (Regra 154). */
+    public static final int SEARCH_MARGIN = 2 * ResourceReach.WIDE_MARGIN;
+
     static {
         ServerMemory.register(ClayNearby.class, ClayNearby::clearAll);
     }
@@ -30,25 +37,28 @@ public final class ClayNearby {
     private ClayNearby() {
     }
 
-    public static boolean around(ServerWorld world, UUID colonyId, BlockPos center, int radius) {
+    public static boolean around(ServerWorld world, Colony colony) {
+        UUID colonyId = colony.id();
         Answer answer = ANSWERS.get(colonyId);
 
         if (answer != null && world.getTime() - answer.at() < SandNearWater.RECHECK_TICKS) {
             return answer.found();
         }
 
-        boolean found = within(world, center, radius);
+        int radius = GatheringReach.radius(colony.observedBeds(), SandNearWater.RADIUS);
+        VillageBounds bounds = colony.bounds()
+                .map(box -> ResourceReach.limit(box, ResourceReach.search(box, colony.center(), 0, SEARCH_MARGIN).radius()))
+                .orElseGet(() -> ResourceReach.limit(VillageBounds.block(colony.center()), radius));
+        boolean found = within(world, bounds, colony.center().y());
         ANSWERS.put(colonyId, new Answer(found, world.getTime()));
 
         return found;
     }
 
-    /** A mesma pergunta, sem guardar: para a bateria. */
-    public static boolean within(ServerWorld world, BlockPos center, int radius) {
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dz = -radius; dz <= radius; dz++) {
-                if (ClayPatch.in(world, new BlockPos(center.getX() + dx, center.getY(), center.getZ() + dz),
-                        center.getY()).isPresent()) {
+    private static boolean within(ServerWorld world, VillageBounds bounds, int y) {
+        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
+            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
+                if (ClayPatch.in(world, new BlockPos(x, y, z), y).isPresent()) {
                     return true;
                 }
             }

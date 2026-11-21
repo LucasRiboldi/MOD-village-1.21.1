@@ -35,7 +35,7 @@ import java.util.UUID;
 
 /**
  * Regra 310: o fazendeiro põe pó de osso em cada pé da plantação, um por volta; fechada a volta, colhe o que cresceu
- * e começa outra; a cada dia, tudo de novo. O pó sai da composteira, depois dos baús da vila acima de 16, e só sem
+ * e começa outra; a cada dia, tudo de novo. O pó sai da composteira, depois dos baús da vila acima de 4 (Regra 349), e só sem
  * nenhum ele surge.
  */
 public class BoneMealRoundGameTest implements FabricGameTest {
@@ -95,12 +95,12 @@ public class BoneMealRoundGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** A composteira primeiro, depois o baú até sobrarem 16, e só então o pó surge. */
+    /** A composteira primeiro, depois o baú até sobrarem quatro, e só então o pó surge (Regras 310 e 349). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "bone_meal_round_sources", tickLimit = 20)
-    public void theComposterThenTheChestsAboveSixteenThenItAppears(TestContext context) {
+    public void theComposterThenTheChestsAboveFourThenItAppears(TestContext context) {
         UUID colony = UUID.randomUUID();
         List<BlockPos> crops = plant(context);
-        List<ColonyPos> chests = chest(context, 17);
+        List<ColonyPos> chests = chest(context, 5);
         context.setBlockState(COMPOSTER, Blocks.COMPOSTER.getDefaultState().with(ComposterBlock.LEVEL, 8));
         Optional<BlockPos> composter = Optional.of(context.getAbsolutePos(COMPOSTER));
         long before = Supplies.sessionCount(colony, SupplyException.BONE_MEAL_FOR_THE_FARM);
@@ -114,12 +114,12 @@ public class BoneMealRoundGameTest implements FabricGameTest {
 
             context.assertTrue(first.equals(Optional.of(BoneMealRound.Source.COMPOSTER)) && level == 0,
                     "Regra 310: a composteira cheia não foi a primeira: " + first + ", nível " + level);
-            context.assertTrue(second.equals(Optional.of(BoneMealRound.Source.CHEST)) && inChest == 16,
-                    "Regra 310: o baú não deu o pó acima de 16: " + second + ", " + inChest + " no baú");
+            context.assertTrue(second.equals(Optional.of(BoneMealRound.Source.CHEST)) && inChest == 4,
+                    "Regra 349: o baú não deu o pó acima de 4: " + second + ", " + inChest + " no baú");
             context.assertTrue(third.equals(Optional.of(BoneMealRound.Source.APPEARED))
-                            && ColonyChests.countIn(context.getWorld(), chests, Items.BONE_MEAL) == 16
+                            && ColonyChests.countIn(context.getWorld(), chests, Items.BONE_MEAL) == 4
                             && Supplies.sessionCount(colony, SupplyException.BONE_MEAL_FOR_THE_FARM) > before,
-                    "Regra 310: com 16 no baú, o pó devia surgir e os 16 ficar: " + third);
+                    "Regra 349: com 4 no baú, o pó devia surgir e os 4 ficar: " + third);
         } finally {
             BoneMealRound.forget(colony);
             context.setBlockState(COMPOSTER, Blocks.AIR.getDefaultState());

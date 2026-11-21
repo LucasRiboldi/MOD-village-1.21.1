@@ -32,6 +32,6 @@ public record WorldEvidence(BooleanSupplier sandNearWater, BooleanSupplier woodN
         return new WorldEvidence(
                 () -> SandNearWater.around(world, colony.id(), center, reach),
                 () -> WoodNearby.around(world, colony.id(), center, reach),
-                () -> ClayNearby.around(world, colony.id(), center, reach));
+                () -> ClayNearby.around(world, colony));
     }
 }

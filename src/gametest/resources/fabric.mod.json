@@ -173,6 +173,7 @@
       "com.villagecolony.gametest.MineFloorGameTest",
       "com.villagecolony.gametest.MinerCautionGameTest",
       "com.villagecolony.gametest.MineFluidGameTest",
+      "com.villagecolony.gametest.MineLooseGameTest",
       "com.villagecolony.gametest.WaterMineAccessGameTest",
       "com.villagecolony.gametest.DetourWalkerGameTest",
       "com.villagecolony.gametest.LumberjackSearchGameTest",

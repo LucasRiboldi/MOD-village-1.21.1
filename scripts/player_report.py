@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A interferência do jogador e o conflito com o mod — Regra 345, telemetria F1 a F3b.
+"""A interferência do jogador e o conflito com o mod — Regras 345 e 351, telemetria F1 a F3b.
 
 Lê do log:
 
@@ -28,6 +28,8 @@ INSIST = re.compile(r"VC_PLAYER_INSIST version=1 system=(\S+) block=(\S+) target
 #: Uma reafirmação é atenção; duas no mesmo lugar, ou três do mesmo sistema, é achado grave.
 SAME_PLACE = 2
 SAME_SYSTEM = 3
+GRASS_TRANSITIONS = {("dirt", "grass_block"), ("grass_block", "dirt"),
+                     ("dirt_path", "dirt"), ("dirt_path", "grass_block")}
 
 
 def lines(path):
@@ -39,6 +41,7 @@ def lines(path):
 def collect(text_lines):
     """As edições por alvo e ação, os desfazeres dos dois lados e as reafirmações."""
     data = {"edits": Counter(), "undo": Counter(), "override": Counter(), "insist": [], "insist_by_system": Counter()}
+    natural_at = {}
     for text in text_lines:
         match = EDIT.search(text)
         if match:
@@ -46,17 +49,31 @@ def collect(text_lines):
             continue
         match = UNDO.search(text)
         if match:
-            data["undo"][(match.group(1), match.group(4))] += 1
+            system, _block, before, target, _gap, where = match.groups()
+            natural = natural_at.pop(where.strip(), None)
+            if natural is None or (system, before) != natural[:2]:
+                data["undo"][(system, target)] += 1
             continue
         match = OVERRIDE.search(text)
         if match:
-            data["override"][(match.group(1), match.group(3) + "→" + match.group(2))] += 1
+            system, after, before, _gap, where = match.groups()
+            where = where.strip()
+            natural_at.pop(where, None)
+            # Regra 351: logs antigos atribuíam essas transições observadas ao terreno do mod.
+            if system == "mod?natural" and (before, after) in GRASS_TRANSITIONS:
+                natural_at[where] = (system, after, before)
+            else:
+                data["override"][(system, before + "→" + after)] += 1
             continue
         match = INSIST.search(text)
         if match:
             system, block, target, count, _gap, where = match.groups()
+            where = where.strip()
+            natural = natural_at.pop(where, None)
+            if natural is not None and (system, block) == (natural[0], natural[2]):
+                continue
             data["insist"].append({"system": system, "block": block, "target": target, "count": int(count),
-                                   "at": where.strip()})
+                                   "at": where})
             data["insist_by_system"][system] += 1
     return data
 

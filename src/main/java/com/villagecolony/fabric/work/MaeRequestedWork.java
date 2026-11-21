@@ -95,7 +95,9 @@ final class MaeRequestedWork {
         }
 
         blueprint = com.villagecolony.fabric.integration.BiomeBlueprints.styledAt(world, colony.center(), blueprint);
-        ConstructionProject project = ConstructionProject.plan(colony.id(), blueprint, MinecraftTypeAdapter.toColonyPos(request.origin()));
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(request.origin());
+        blueprint = com.villagecolony.fabric.integration.ConstructionPalette.atSite(world, colony, blueprint, origin);
+        ConstructionProject project = ConstructionProject.plan(colony.id(), blueprint, origin);
         Direction door = blueprint.doorSide().map(MinecraftTypeAdapter::toDirection).orElse(Direction.SOUTH);
         BuildSiteScanner.Site site = new BuildSiteScanner.Site(MinecraftTypeAdapter.toColonyPos(request.floor()), door, blueprint.size());
         Optional<ConstructionProject> opened = SiteOpening.openPlanned(world, colony, site, project, builders, "a request");

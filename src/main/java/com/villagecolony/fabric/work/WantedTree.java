@@ -31,7 +31,7 @@ final class WantedTree {
 
         if (tree.isEmpty()) {
             // O bosque é reserva: árvores no miolo agora têm prioridade para liberar a vila.
-            tree = VillageGrove.matureTree(job.task.colonyId(), job.center,
+            tree = VillageGrove.matureTree(job.task.colonyId(), villager.getBlockPos(),
                     log -> species.test(log) && !TreeClaims.isTaken(log) && !TreeMarks.isRejected(world, log)
                             && !TreeMarks.isOutOfReach(world, log), world);
         }

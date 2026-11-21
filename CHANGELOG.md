@@ -12,6 +12,72 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.116] — candidata, 2026-11-21
+
+- O pastor precisa chegar junto da ovelha para tosquiar; a caminhada deixa de parar longe dela.
+- Na coleta de animais, abre a porteira antes de entrar, conserva a corda até alinhar o animal
+  e limpa a caminhada antiga na entrega à travessia. O portão fecha quando o vão fica livre.
+- As 28 notas e seis imagens do jogo da 0.4.115 têm um plano integral. Este JAR trata o Lote B
+  (N05/N26/N27); os demais lotes continuam pendentes. A correção aguarda o playtest do autor.
+- Relatos de jogo acionam `vc-log-driven-fix`; toda nova versão deve atualizar o JAR do TLauncher,
+  com comparação de SHA-256 entre build, `downloads/` e `mods/`.
+
+## [0.4.115] — candidata, 2026-11-21
+
+- O resgate de telhado limpa a memória de caminhada anterior antes de parar a navegação.
+  A correção aguarda confirmação em jogo para o retorno repetido ao telhado.
+
+## [0.4.114] — candidata, 2026-11-21
+
+- `/vc salvar` mostra as mudanças recentes por aldeão, o motivo do estado encerrado,
+  a meta de caminhada quando conhecida e o sono.
+- A escada da mina espera na primeira pedra que segura líquido. O relatório mostra
+  a posição do bloqueio e o pedregulho nos baús da colônia.
+- Na união de colônias, as duas redes de ruas ficam disponíveis de imediato. O
+  relatório guarda o evento `VC_ROAD_MERGE` até o mundo fechar.
+
+## [0.4.113] — candidata, 2026-11-21
+
+### Alterado
+
+- Regra 349: pó de osso e cru da fornalha guardam 4 unidades. Pedregulho da mina e cru
+  geral dos produtos de valor guardam 16. `ingot` sai do `VC_KEEP`, com o teto de 64
+  por lingote mineral em vigor. A trava de lã branca continua em 16.
+- Regra 350: ao passar por terra caída, o aldeão deixa a pilha no chão quando os baús da
+  colônia já somam 256 unidades daquele tipo.
+- Regra 351: transições de grama e caminho sem autor declarado saem da contagem de conflitos.
+  O nivelamento do entorno da obra e o reparo do piso da mina identificam suas próprias alterações.
+- Regra 352: vilas sem argila disponível usam tijolos de pedra nas partes das obras que pediam terracota.
+  Os catálogos de adiantamento e estoque acompanham a troca, e as peças já assentadas ficam de pé.
+- Regra 353: o mineiro ilumina a escada, os patamares e os salões com tochas da colônia sem custo.
+  As tochas geram o anel de luz e bloqueiam o nascimento natural de monstros nas proximidades.
+- Regra 354: o bosque perto da vila mantém cinco mudas por lenhador e usa o estoque primeiro.
+  A falta de pó de osso para adubação é suprida em lotes de 16, registrados no `VC_SUPPLY`.
+- Regra 346: `/vc salvar` inclui a lista completa de blocos, mina, obras, peças deixadas de lado,
+  último grafo, tempo de todas as janelas e eventos registrados desde que o mundo foi aberto.
+- O diário registra as posições e o motivo quando fazendeiro e pastor desistem de se aproximar.
+
+## [0.4.112] — candidata, 2026-11-20
+
+Regra 348; nada visto em jogo.
+
+### Corrigido
+
+- Uma descida por arco: nos dois primeiros níveis a mina não gira a escada, não muda de ponto, não abre os
+  outros três ramais e o mineiro só cava células do desenho, na descida cavada e no desvio. Os braços abrem do
+  terceiro nível para baixo.
+- O mineiro não volta à pedra com areia, cascalho ou líquido pendurado em cima até o solto sair.
+
+## [0.4.111] — candidata, 2026-11-20
+
+Regra 347; nada visto em jogo.
+
+### Corrigido
+
+- O chão da vila deixa de nascer quadrado: o miolo plano, onde a água vira chão, é a soma das peças com 4 blocos de
+  folga, e não o retângulo que cerca todas. Lago, mar e morro entre peças afastadas ficam no cenário, e a mistura
+  suave parte da beira de cada peça. Só em mundo novo.
+
 ## [0.4.110] — candidata, 2026-11-20
 
 Regra 346; nada visto em jogo.

@@ -1,17 +1,62 @@
 # Handoff — Village Colony
 
-Ponto de retomada para Codex ou Claude Code, atualizado em 2026-11-21. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar.
+Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
-## Onde o projeto está
+## Retomada de 2026-11-21
 
-- A versão publicada é [`v0.4.110-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.110-alpha), pendente de playtest. As Regras 344 a 346 incluem telemetria de tarefas e itens, conflito com o jogador e o comando `/vc salvar`. Veja [STATE.md](STATE.md) e as [notas da versão](docs/releases/v0.4.110.md).
-- O fluxo de correção por logs está versionado em [`vc-log-driven-fix`](.agents/skills/vc-log-driven-fix/SKILL.md). Siga `CLAUDE.md` §0.2.2 para os gates de modelo, diagnóstico e escolha do autor.
-
-## Próximo playtest
-
-1. Use a 0.4.110 e siga o [roteiro da 0.4.107](docs/testing/roteiro-de-jogo-0.4.107.md). Num cenário de montanha com vila recém-gerada, confira a altura da BigHouseMOD e se ficou terreno suspenso acima das casas (Regras 338 e 337).
-2. Anote sintomas com `/vc bioma nota`. Ao fim, rode `/vc salvar` e recolha os recortes do log e dos relatórios. Comece a análise por `python scripts/game_report.py`.
-3. Compare com as pendências em [TODO.md](TODO.md), apresente achados com evidência e espere o autor escolher a intervenção.
+- **Prioridade atual:** autor escolheu a reconexão da mina e da casa do mineiro no Lote A (N12/N28).
+  O ciclo anterior tratou o pastor (N05/N26/N27) na candidata 0.4.116.
+  As 28 notas, seis imagens e demais pendências estão em `docs/technical/Plano-Playtest-0.4.115-2026-11-21.md`;
+  o relatório é `docs/testing/relatorios/jogo-0.4.115-2026-11-21.md`. Não descartar os outros lotes.
+- **Branch de retomada:** `fix/miolo-pelas-pecas`. Busque essa branch no GitHub para retomar em outra máquina.
+  O código da candidata 0.4.116 está no commit `7a07b38f`, sobre a base 0.4.115 (`ae2ed2ab`).
+  A cópia usada para gerar o JAR fica em `C:/Users/lucas/Desktop/MOD-village-1.21.1`.
+  A worktree `70b9` conserva a base 0.4.110 e documentos locais.
+- **Prova da 0.4.116:** `fast` PASS em `reports/test-runs/20261121T191357Z/`: 1.885 unitários,
+  uma suite de propriedades e 1.237 GameTests. Build passou; 196 testes Python passaram.
+  Mutação para a produção 0.4.115: cinco regressões falharam em `20261121T191211Z`; 23 focados verdes em `20261121T191032Z`.
+  A revisão foi concluída, inclusive cleanup antecipado da arena. A análise histórica está em
+  `reports/sentinel-analysis/20261121T191903Z/`; inclui falhas antigas e mutações, não é um relatório sem achados.
+- **Artefato 0.4.116:** `remapJar` passou após `7a07b38f`. As cópias em `build/libs/`, `downloads/` e
+  `mods/` têm SHA-256 `702fda50d734e8a8c77baab8a809c83a489955d37a866829fdf4ac97426ce01a`.
+  A 0.4.116 é o único JAR ativo do Village Colony no TLauncher. A 0.4.115 ficou como `.jar.disabled`.
+  Os relatórios brutos sob `reports/` são locais. O plano registra o resumo e a identificação das execuções.
+- **Próximo passo:** reproduzir em GameTest a perda de conexão após mudança de terreno na opção escolhida do Lote A.
+  O pastor da 0.4.116 ainda aguarda playtest. Ao final do próximo jogo, use `/vc salvar`.
+  Lotes C, D e E seguem no plano. A autoria do corte no arco ainda precisa de evidência.
+- **Regras do autor:** relato de que entrou no jogo/testou sempre usa `vc-log-driven-fix`.
+  Toda versão nova deve atualizar `downloads/` e `%APPDATA%/.minecraft/mods`, com SHA-256 igual ao build
+  e apenas um `village-colony-*.jar` ativo; anteriores ficam `.jar.disabled`.
+- **Candidata 0.4.115:** resgate de telhado limpa a memória de caminhada anterior. O teste da memória falhou antes
+  e passou depois; Sentinela `fast` passou em `reports/test-runs/20261121T143122Z/`. Confirmar em jogo se o aldeão
+  deixa de retornar ao telhado; a causa completa do retorno ainda não está comprovada.
+- **Candidata local 0.4.114:** diário conserva os motivos de entrada e de saída, e `/vc salvar` mostra
+  as mudanças recentes, sono e destino. A mina espera no corte que segura líquido, e a união de
+  colônias reaproveita as duas redes. Sentinela `fast` passou com 1.232 GameTests
+  (`reports/test-runs/20261121T125319Z/`); análise em `reports/sentinel-analysis/20261121T125835Z/`.
+  `build` e `remapJar` passaram. Cópias em `build/libs/`, `downloads/` e `mods/` com SHA-256
+  `10ebc1116c15bb8fda82bd23feaf876dbb3848fa7961930b769ce765ab17dfce`. A 0.4.113 foi desativada. Falta o jogo do autor.
+- **Plano do ciclo:** `docs/technical/Proximo-ciclo-0113.md` — as nove escolhas (A8, A7, A9, A6, A2, A3a, A4, A5, R1) estão implementadas. Próxima verificação em mundo novo, com `/vc salvar` antes de sair.
+- **R1, candidato (Regra 346):** relatório da sessão com a tabela completa de blocos, mina, obras, último grafo, janelas de tempo e eventos da colônia. GameTest focado passou e detectou a restauração do limite de 15 linhas.
+- **A5, candidato:** desistência do pastor registra posições da ovelha e do pastor e imobilidade ou prazo esgotado. Teste falhou antes da mudança e sob mutação; quatro GameTests focados e Sentinela `fast` passaram. Relatório em `reports/test-runs/20261121T064752Z/`. Confirmar o diagnóstico no próximo jogo.
+- **A4, candidato:** desistência do fazendeiro registra canteiro, posição do aldeão e imobilidade ou prazo esgotado. Teste falhou antes da mudança e sob mutação; três GameTests focados passaram. Sentinela `fast` passou em `reports/test-runs/20261121T063830Z/`. Confirmar o diagnóstico no próximo jogo.
+- **Branch:** `fix/miolo-pelas-pecas`, sem push, à frente da `main` (0.4.111 Regra 347 e 0.4.112 Regra 348, não jogadas).
+- **Entrega local:** candidata 0.4.113 em `downloads/` e no TLauncher, com a 0.4.112 desativada. SHA-256 igual nas três cópias, `928eaaf4e1a2a63525a7e14b1def77fa584be01ac27487476a1e523ea5afae99`. Sentinela `fast`, análise e build passaram. O Gradle foi encerrado.
+- **A8, candidata (Regra 349):** quatro reservas reduzidas, `ingot` removido só da medição e `wool` preservado. Cinco regressões falharam com a mutação, e os 21 GameTests focados passaram com a regra restaurada.
+- **Sentinela `fast` após o A9:** unitários, propriedade e 1.225 GameTests passaram na terceira execução. Relatório local em `reports/test-runs/20261121T045420Z/`. As duas primeiras execuções estão registradas no plano.
+- **A7, candidata (Regra 350):** o cenário registra dois baús públicos com 256 terras no total. Sem o filtro, o aldeão recolhe terra com o estoque no teto. Com o filtro, os três GameTests focados passaram, cobrindo também a coleta de pedregulho e a retomada da coleta de terra abaixo de 256.
+- **Análise do último jogo:** `docs/audit/2026-11-21-analise-jogo-0111.md` (achados A1 a A9, R1).
+- **Linha de base restabelecida em 21-11:** `gradlew.bat build` passou com JDK 21 após isolar `earthAboveTheCeilingStaysOnTheGround` no lote `ground_pickup_earth_ceiling`.
+- **A9, candidata (Regra 351):** os oito GameTests focados e os 196 testes Python passaram. Grama e caminho sem autor declarado saem do conflito. Entorno de obra e piso da mina têm autoria explícita.
+- **A6, candidata (Regra 352):** sem argila disponível, a obra pede tijolos de pedra e o estoque exclui terracota. A retomada preserva peças assentadas. Os dois testes novos falharam sob mutação e os 18 focados passaram.
+- **A2, candidata (Regra 353):** a escada, os patamares e o salão recebem tochas da colônia sem custo. As duas regressões falharam antes da correção e os 6 GameTests focados passaram depois.
+- **Sentinela `fast` após o A2:** unitários, propriedade e 1.228 GameTests passaram após isolar o teste que limpa o cache. Relatório em `reports/test-runs/20261121T055553Z/`. O build final passou.
+- **A3a, candidata (Regra 354):** cinco mudas no bosque por lenhador, primeiro do estoque da espécie escolhida. Adubação usa excedente da reserva de quatro ou lotes de 16 declarados no `VC_SUPPLY`. O GameTest reproduziu o estoque intacto antes da correção e sob mutação. Os 9 GameTests focados e 196 testes Python passaram.
+- **Sentinela `fast` após o A3a:** unitários, propriedade e 1.228 GameTests passaram na primeira execução. Relatório em `reports/test-runs/20261121T061045Z/`. O build final passou.
+- **Sentinela `fast` após o A6:** unitários, propriedade e 1.227 GameTests passaram na terceira execução. Relatório em `reports/test-runs/20261121T052007Z/`. O build final passou. As duas primeiras execuções repetiram falhas conhecidas de pastoreio.
+- **Regras do modo:** `CLAUDE.md` §0.2.2 (escolha do autor antes de código, teste que falha primeiro, Sentinela, um JAR por ciclo, push só se o autor pedir). Responder em português. Build: `JAVA_HOME` do JDK 21, `./gradlew.bat build`; GameTests focados por `python scripts/gametest_focus.py <classe…>` (+ `restore`); em Bash no Windows, escreva scripts Python em arquivo em vez de heredoc com aspas.
+- **Armadilhas já vistas:** ErrorProne com `-Werror` (parênteses, campos não lidos); `FileSizeRuleTest` (500 linhas); `ArchitectureRulesTest` (sem ciclo de pacote); `MineMarks.dug` apaga marcas a 8 blocos; a escada planejada da mina começa na altura da boca.
+- **Avisar o autor:** a trava `wool` foi mantida contra o "saem" dele (é lógica, protege a lã branca); a tocha da colônia na mina abre exceção à Regra 212.
 
 ## Histórico até a 0.4.93
 

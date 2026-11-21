@@ -106,6 +106,15 @@ public final class MineMarks {
      */
     private static final Map<BlockPos, Refusal> REFUSED = new HashMap<>();
 
+    /** Regra 346: recusas ainda ativas no traçado da mina. */
+    public static long activeIn(ServerWorld world, com.villagecolony.core.construction.model.Mine mine) {
+        var planned = mine.plannedCells();
+        return REFUSED.keySet().stream()
+                .filter(pos -> isOutOfReachAt(world.getTime(), pos))
+                .filter(pos -> planned.contains(com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(pos)))
+                .count();
+    }
+
     /**
      * Por quantos tiques uma pedra fica de fora na primeira recusa.
      *

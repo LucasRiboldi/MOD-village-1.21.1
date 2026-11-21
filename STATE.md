@@ -8,16 +8,24 @@
 > **Retomada por outro agente:** comece por `HANDOFF.md`.
 
 ## Onde o projeto está
-
-- **Versão:** 0.4.110 na `main`, publicada como `v0.4.110-alpha` (Regras 344 a 346), pendente de playtest. Use o roteiro em `docs/testing/roteiro-de-jogo-0.4.107.md` e encerre com `/vc salvar`.
-- **Montanha:** no jogo da 0.4.93 (Spark `0SMEEkMLGP`), a BigHouseMOD e a boca da mina ficaram no alto, longe das casas, e houve terreno suspenso. As Regras 338 (altura da BigHouseMOD) e 337 (limpeza acima das casas) aguardam confirmação em jogo. A triagem detalhada está no `TODO.md`.
+- **Ciclo atual:** jogo da 0.4.115 analisado em 21-11 (28 notas e seis imagens). Autor escolheu o Lote B,
+  pastor primeiro, no [plano integral](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
+  Candidata 0.4.116 instalada no TLauncher e à espera de playtest. Autor escolheu iniciar o Lote A pela reconexão (N12/N28). C, D e E seguem abertos.
+- **Versões:** release publicada `v0.4.110-alpha`. Candidata 0.4.116, código em `7a07b38f`.
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
   jogador e publicação.
 - **Fase do cronograma:** F0, sinal limpo (documentos nos tetos, instáveis declarados, ferramentas de régua corrigidas).
   Depois vêm F1 (a vila trabalha) e o portão Beta 0.5.0.
+- **0.4.115 jogada:** resgate de telhado limpa a memória de caminhada anterior; GameTest reproduziu a memória
+  persistente e passou após a correção. O jogo novo gerou o plano integral acima; não comprova sozinho todo caso de telhado.
+- **0.4.116:** `fast` PASS: 1.885 unitários, uma suite de propriedades e 1.237 GameTests (`20261121T191357Z`); build PASS.
+  Cinco regressões falham na produção antiga. SHA-256 e roteiro de jogo em `HANDOFF.md` e no plano integral.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, teste que falha, correção,
   Sentinela, commit, JAR.
+- **Ciclo 0.4.113:** A8, A7, A9, A6, A2 e A3a (Regras 349 a 354) passaram em 21, 3, 8, 18, 6 e 9 GameTests focados, respectivamente.
+  A4 e A5 registram as posições e o motivo das desistências do fazendeiro e do pastor. R1 amplia o arquivo de `/vc salvar`
+  com as análises da sessão. As nove escolhas aguardam o próximo jogo em mundo novo. [Plano do ciclo](docs/technical/Proximo-ciclo-0113.md).
 
 ## Candidatas que esperam jogo
 
@@ -44,6 +52,9 @@ Cada uma tem teste que falha sem ela; nenhuma foi vista em jogo.
 | 0.4.85 | 285, 286 | aldeão preso na água vai à margem e, se não sair, pisa no gelo sob o pulo; o mineiro novo dorme na casa junto da mina assim que ela sobe; diagnósticos `loose=` (grafo), `VC_SMOOTH` e `VC_LOT_EDGE` (terreno). Sentinela `fast` PASS; tosquia instável registrada (KF-015) |
 | 0.4.86 | 287 | a tora deitada é chão do caminho (a borda da plantação grande fechava o miolo ao fazendeiro); a visão do canteiro vazio mira o lugar da planta. 1.137/1.137, Sentinela `fast` PASS |
 | 0.4.88 | 289–294 | escolhas G1–G7 da ADR-056: plantação grande semeada, 2 fazendeiros e semente que surge; tronco inteiro e folha natural quebrada no caminho; grafo na tábua de rua e na frente de toda porta; sem torre de minério e sem ar protegido no alisamento; pátio de pedra na boca da mina; ociosos tiram bloco solto e toco. 1.156/1.156, Sentinela `fast` PASS |
+| 0.4.113 | 346, 349–354 | relatório da sessão, travas de estoque, diagnóstico de fazendeiro e pastor, substituição da terracota, iluminação na mina e bosque |
+| 0.4.112 | 348 | uma descida por arco: dois níveis sem braço, sem escada girada e sem cavar fora do desenho; pedra com solto em cima fora da escolha |
+| 0.4.111 | 347 | o miolo da vila segue a forma das peças: sem chão quadrado, lago e morro entre peças afastadas ficam |
 | 0.4.110 | 346 | `/vc salvar`: todas as análises da vila num arquivo só |
 | 0.4.109 | 345 | conflito com o jogador: `VC_PLAYER_EDIT`, `VC_PLAYER_UNDO`, `VC_MOD_OVERRIDE` e a reafirmação `VC_PLAYER_INSIST`; `player_report.py` |
 | 0.4.108 | 344 | telemetria: tarefa com número, linha do tempo de cada aldeão, balanço dos itens, falhas por item, dia do aldeão e relatório único (`game_report.py`) |

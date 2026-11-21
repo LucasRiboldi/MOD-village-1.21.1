@@ -51,8 +51,8 @@ final class BoneMealRound {
         ServerMemory.register(BoneMealRound.class, BoneMealRound::clearAll);
     }
 
-    /** O pó de osso que os baús da vila guardam sempre. */
-    static final int CHEST_RESERVE = 16;
+    /** O pó de osso que os baús da vila guardam sempre (Regra 349). */
+    static final int CHEST_RESERVE = 4;
 
     /** Quanto pó surge de cada vez, para a linha {@code VC_SUPPLY} não sair a cada aplicação. */
     static final int SURGE = 16;

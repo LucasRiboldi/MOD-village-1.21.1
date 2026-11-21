@@ -100,6 +100,20 @@ de etapa, peça novo "ok", mesmo que o modelo recomendado seja o mesmo.
 7. O autor joga novamente. O próximo ciclo começa pelo novo log e pelos novos
    relatórios.
 
+**Instalação obrigatória a cada nova versão gerada (autor, 2026-11-21):**
+atualize sempre o JAR em `%APPDATA%\.minecraft\mods` do TLauncher, mesmo
+quando o pedido mencionar apenas gerar a versão. Use `bash scripts/install-mod.sh`
+após `remapJar`, mantenha a cópia em `downloads/` e compare o SHA-256 das três
+cópias. Deixe apenas um `village-colony-*.jar` ativo; preserve os anteriores
+como `.jar.disabled`. Se a instalação falhar, informe a falha e não declare a
+versão pronta para jogar. Confira a versão já instalada antes de copiar para
+não substituir uma versão mais recente por um build de worktree antigo.
+
+**Gatilho de playtest (autor, 2026-11-21):** quando o autor disser que entrou no
+jogo ou testou o Village Colony, use sempre `.agents/skills/vc-log-driven-fix/SKILL.md`.
+Procure a evidência local mesmo sem anexos, confirme a versão carregada e inclua
+todas as notas e a comparação com imagens no plano antes de propor correções.
+
 Push, merge e release continuam exigindo pedido explícito.
 
 ### 0.3 Não comece criando classes

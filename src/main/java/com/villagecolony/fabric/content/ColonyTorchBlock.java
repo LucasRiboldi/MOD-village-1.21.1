@@ -14,8 +14,8 @@ import java.util.List;
 /**
  * A tocha da colônia — Regra 127, item 8 das escolhas do autor (2026-10-27): igual à tocha comum, com a
  * chama laranja e luz 15, e um anel de luz invisível em volta ({@link #lightRing}): a área clara fica cerca
- * de três vezes maior. Monstro não nasce sozinho perto dela ({@code ColonyTorches}). Quem a põe é o
- * jogador; nenhum aldeão a põe sozinho (Regra 212). Quebrada, o anel de luz sai junto.
+ * de três vezes maior. Monstro não nasce sozinho perto dela ({@code ColonyTorches}). O jogador pode colocá-la.
+ * O mineiro põe tochas soltas apenas dentro da mina (Regras 212 e 353). Quebrada, o anel de luz sai junto.
  */
 public final class ColonyTorchBlock extends TorchBlock {
 
@@ -77,7 +77,7 @@ public final class ColonyTorchBlock extends TorchBlock {
         ringOnReplaced(state, world, pos, newState);
     }
 
-    /** O anel acende quando a tocha (de chão ou de parede) chega, seja quem a pôs: o carpinteiro ou o jogador. */
+    /** O anel acende quando chega uma tocha da colônia, de chão ou de parede. */
     static void ringOnAdded(BlockState state, World world, BlockPos pos, BlockState oldState) {
         if (!oldState.isOf(state.getBlock()) && world instanceof ServerWorld server) {
             lightRing(server, pos);

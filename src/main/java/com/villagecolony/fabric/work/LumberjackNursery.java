@@ -108,7 +108,7 @@ public final class LumberjackNursery {
     }
 
     private static int plant(ServerWorld world, UUID colonyId, BlockPos centre, int wanted) {
-        // Primeiro o bosque de três mudas perto da vila (pedido do autor, 2026-10-08).
+        // Primeiro o bosque perto da vila (Regra 354).
         VillageGrove.tend(world, colonyId);
 
         if (!isTime(colonyId, world.getTime())) {

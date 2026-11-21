@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.fabric.work.BuilderWork.Job;
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.fabric.integration.SnapshotHistory;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.Building;
@@ -173,7 +174,7 @@ public final class BuilderPlacement {
 
         if (!state.canPlaceAt(world, target) && project.failsForTheLastTime(block)) {
             // Quinta falha ao pôr: a peça é pulada e o erro fica no log — ADR-036 item 6.
-            VillageColonyMod.LOGGER.warn(
+            SnapshotHistory.warn(project.colonyId(),
                     "VC_SUPPLY_ERROR version=1 piece={} profession=BUILDER attempts={} reason=placement failed at {}",
                     block.block(), ConstructionProject.PLACEMENT_FAILURES_BEFORE_SKIP, target.toShortString());
 

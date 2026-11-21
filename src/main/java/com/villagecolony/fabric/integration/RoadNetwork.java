@@ -157,6 +157,28 @@ public final class RoadNetwork {
         return network != null ? Optional.of(network) : RoadIndex.roadsOf(colonyId);
     }
 
+    /** ADR-007: as ruas conhecidas pelos dois lados continuam disponíveis até a releitura da vila. */
+    public static int merge(Colony survivor, UUID absorbed) {
+        UUID id = survivor.id();
+        Set<Long> physical = new LinkedHashSet<>();
+        RoadIndex.roadsOf(id).ifPresent(roads -> physical.addAll(roads.columns()));
+        RoadIndex.roadsOf(absorbed).ifPresent(roads -> physical.addAll(roads.columns()));
+
+        Set<Long> network = new LinkedHashSet<>();
+        of(id).ifPresent(roads -> network.addAll(roads.columns()));
+        of(absorbed).ifPresent(roads -> network.addAll(roads.columns()));
+
+        if (!physical.isEmpty()) {
+            SweepPersistence.restore(new ColonyRoads(id, survivor.center(), List.copyOf(physical)));
+        }
+        SweepState.ROADS.remove(absorbed);
+        SweepState.ROAD_CURSOR.remove(absorbed);
+        SweepState.NETWORK.remove(absorbed);
+        TRACED_AT.remove(absorbed);
+        publish(id, survivor.center(), List.copyOf(network));
+        return network.size();
+    }
+
     /** O grafo publicou estas linhas. */
     public static void publish(UUID colonyId, ColonyPos from, List<Long> columns) {
         if (columns.isEmpty()) {

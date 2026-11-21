@@ -68,7 +68,9 @@ public final class MineFloor {
             return false;
         }
 
-        world.setBlockState(below, com.villagecolony.fabric.world.MineFill.fillAt(world, below));
+        if (world.setBlockState(below, com.villagecolony.fabric.world.MineFill.fillAt(world, below))) {
+            EditLedger.mod(world, below, world.getBlockState(below), "piso_mina"); // Regra 351
+        }
 
         VillageColonyMod.LOGGER.info(
                 "The mine floored {} — the pick opened the passage over a gap",

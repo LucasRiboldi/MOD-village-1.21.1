@@ -391,16 +391,24 @@ final class ShepherdHerding {
 
         BlockPos goal = herd.pen != null ? herd.pen.outside() : herd.fence;
 
-        // A corda só é solta com o animal no lado de fora do portão (Regra 299); o pastor que chegou antes o espera ali.
-        if (herd.pen != null && animal.getBlockPos().isWithinDistance(goal, REACH)) {
+        // Regra 299: alinhar o animal à entrada evita o corte diagonal pela cerca ao soltar a corda.
+        if (herd.pen != null && (ShepherdPens.isInside(herd.pen, animal)
+                || animal.squaredDistanceTo(goal.getX() + 0.5, goal.getY(), goal.getZ() + 0.5) <= 0.75 * 0.75)) {
+            WorkTargets.clear(shepherdId);
+            shepherd.getNavigation().stop();
             ShepherdPens.startIn(world, herd.pen, animal);
             herd.phase = Phase.ENTER;
             herd.walking = world.getTime();
             return true;
         }
 
-        if (herd.pen != null && shepherd.getBlockPos().isWithinDistance(goal, REACH)) {
-            animal.getNavigation().startMovingTo(goal.getX() + 0.5, goal.getY(), goal.getZ() + 0.5, 1.0);
+        if (herd.pen != null && (shepherd.getBlockPos().isWithinDistance(goal, REACH)
+                || herd.pen.reach().contains(shepherd.getBlockPos()))) {
+            FencedIn.open(world, herd.pen.gate());
+            // Regra 299, N27: aproxima pelo lado de fora antes de entrar; a corda Vanilla segue o pastor.
+            BlockPos approach = animal.squaredDistanceTo(goal.getX() + 0.5, goal.getY(), goal.getZ() + 0.5) <= REACH * REACH
+                    ? ShepherdPens.deeper(herd.pen) : goal;
+            ShepherdLead.walkTo(world, shepherd, approach, 0);
             return true;
         }
 

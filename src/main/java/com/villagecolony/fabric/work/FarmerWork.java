@@ -422,22 +422,24 @@ public final class FarmerWork {
      * tarefa ({@link Task#isHeld()}). A ronda da roça não pune o fazendeiro (Regra 333).
      */
     private static void giveUp(UUID workerId, Job job, VillagerEntity villager) {
+        String reason = job.stall.ticks() >= WorkStall.LIMIT ? "stationary" : "approach timeout";
+        ActionJournal.action(workerId, "GAVE_UP", "crop", 0, job.target,
+                reason + "; farmer at " + villager.getBlockPos().toShortString());
         VillageColonyMod.LOGGER.info(
-                "Farmer {} could not reach the crop at {} — task back to the queue (it stands at {}, {} blocks away)",
+                "Farmer {} could not reach the crop at {} — task back to the queue (it stands at {}, {} blocks away, {})",
                 workerId,
                 job.target.toShortString(),
                 villager.getBlockPos().toShortString(),
-                (int) Math.sqrt(villager.getBlockPos().getSquaredDistance(job.target)));
+                (int) Math.sqrt(villager.getBlockPos().getSquaredDistance(job.target)),
+                reason);
 
         if (job.task.isHeld()) {
             job.task.release("could not reach the crop");
         }
-
         // A desistência conta no trabalhador: ver WorkerStrikes.
         if (!FarmRound.isRound(job.task)) {
             WorkerStrikes.gaveUp(workerId, job.task, job.target);
         }
-
         release(workerId, job);
     }
 

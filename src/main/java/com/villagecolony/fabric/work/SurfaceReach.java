@@ -7,7 +7,7 @@ import com.villagecolony.core.type.ResourceType;
 final class SurfaceReach {
 
     /** Quanto além da borda da vila o fundidor busca areia e argila — O6 (autor, 2026-10-28). */
-    static final int SMELTER_MARGIN = 2 * ResourceReach.WIDE_MARGIN;
+    static final int SMELTER_MARGIN = com.villagecolony.fabric.integration.ClayNearby.SEARCH_MARGIN;
 
     private SurfaceReach() {
     }

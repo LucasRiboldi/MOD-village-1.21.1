@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.fabric.integration.SiteSurroundings;
 import com.villagecolony.fabric.integration.VillageRoad;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -69,6 +70,7 @@ public final class RoofDescent {
             return false;
         }
 
+        villager.getBrain().forget(MemoryModuleType.WALK_TARGET);
         villager.getNavigation().stop();
         int tried = TRIED.merge(villager.getUuid(), 1, Integer::sum);
 

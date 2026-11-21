@@ -2,6 +2,7 @@ package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.VillageBlend;
+import com.villagecolony.core.construction.model.VillageCore;
 import com.villagecolony.core.construction.model.VillageSurface;
 import com.villagecolony.core.type.ServerMemory;
 import net.minecraft.block.BlockState;
@@ -30,7 +31,7 @@ import java.util.Map;
  * postas: as ruas do Minecraft seguem a altura de geração da coluna, que o corte leva junto (Regra 250), então nascem
  * sobre o chão novo.
  *
- * <p>A conta é do {@link VillageBlend}: na vila (as peças + {@link #CORE_PAD}), degrau de 1 e buraco tampado; em
+ * <p>A conta é do {@link VillageBlend}: na vila (cada peça + {@link #CORE_PAD}, Regra 347), degrau de 1 e buraco tampado; em
  * volta, até {@link #REACH}, a mistura suave do topo de verdade com o nível da vila, numa faixa de 4 vezes o desnível. Calculada uma
  * vez por vila, com a planta inteira dela e a altura natural do gerador, e guardada: todos os chunks da vila veem a
  * mesma. Cada chunk só mexe nas próprias colunas — corta ou aterra com o bloco de cima e o de baixo da própria
@@ -46,7 +47,7 @@ public final class VillageGround {
     /** Até onde, além das peças, o chão da vila mistura com o terreno natural — e a vila referencia os chunks. */
     public static final int REACH = VillageBlend.MAX_WIDTH;
 
-    /** O miolo de degrau 1: as peças e mais esta folga. */
+    /** O miolo de degrau 1: cada peça e mais esta folga em volta dela (Regra 347). */
     static final int CORE_PAD = 4;
 
     /** Até quantos chunks do início da vila o jogo procura a referência ({@code addStructureReferences}). */
@@ -129,9 +130,9 @@ public final class VillageGround {
         }
     }
 
-    /** Regra 288: a água dentro da vila (as peças + {@link #CORE_PAD}) é chão a moldar; só a de fora fica. */
+    /** Regra 288: a água dentro da vila (cada peça + {@link #CORE_PAD}, Regra 347) é chão a moldar; só a de fora fica. */
     static VillageSurface.Kind waterKind(boolean wet, boolean inCore) {
-        return wet && !inCore ? VillageSurface.Kind.WATER : VillageSurface.Kind.FREE;
+        return VillageCore.waterKind(wet, inCore);
     }
 
     private static final Map<String, Plan> PLANS = new LinkedHashMap<>(CACHED, 0.75f, true) {
@@ -230,8 +231,7 @@ public final class VillageGround {
         VillageSurface.Kind[][] kinds = new VillageSurface.Kind[width][depth];
         boolean[][] wet = new boolean[width][depth];
         boolean[][] drainWater = new boolean[width][depth];
-        VillageBlend.Area core = new VillageBlend.Area(REACH - CORE_PAD, REACH - CORE_PAD,
-                width - 1 - REACH + CORE_PAD, depth - 1 - REACH + CORE_PAD);
+        VillageCore core = VillagePieces.coreOf(start, minX, minZ, CORE_PAD, width, depth);
         int samplesX = (width - 1) / SAMPLE + 2;
         int samplesZ = (depth - 1) / SAMPLE + 2;
         int[][] ground = new int[samplesX][samplesZ];

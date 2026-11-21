@@ -51,7 +51,13 @@ public class SiteSurroundingsGameTest implements FabricGameTest {
             ConstructionProject project = ConstructionProject.plan(UUID.randomUUID(), house,
                     new ColonyPos(origin.getX(), origin.getY(), origin.getZ()));
 
+            BlockPos cut = origin.add(3, 4, 0);
+            EditLedger.player(world, cut, Blocks.AIR.getDefaultState(), Blocks.GRASS_BLOCK.getDefaultState());
             SiteSurroundings.level(world, project);
+            var redo = EditLedger.player(world, cut, world.getBlockState(cut), Blocks.GRASS_BLOCK.getDefaultState());
+            context.assertTrue(redo.stream().anyMatch(event -> event.startsWith("VC_PLAYER_INSIST")
+                            && event.contains("system=entorno_obra ")),
+                    "Regra 351: o corte ao lado da obra perdeu o sistema: " + redo);
 
             context.assertTrue(world.getBlockState(path.withY(roadY)).isOf(Blocks.DIRT_PATH),
                     "o caminho calçado não pode ser cortado");

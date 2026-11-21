@@ -2,6 +2,120 @@
 
 # Development-Log.md
 
+## 21-11-2026 — Pastor após o jogo da 0.4.115; candidata 0.4.116
+
+O relatório reuniu as 28 notas e comparou as seis imagens. O autor escolheu a opção 2,
+Lote B (N05/N26/N27), e autorizou continuar a linha 0.4.115 na branch desktop
+`fix/miolo-pelas-pecas`, base `ae2ed2ab`. A worktree `70b9`, na base 0.4.110,
+conserva seus documentos e não deve gerar o próximo JAR. O plano completo está em
+`docs/technical/Plano-Playtest-0.4.115-2026-11-21.md`; nenhum dos outros lotes foi descartado.
+
+O build da linha de base passou antes das mudanças. `ShepherdWork` agora exige contato
+com a ovelha (caixas com tolerância de 0,25 bloco), com chegada zero na caminhada.
+`ShepherdHerding` abre a porteira, aproxima pela célula externa e entra mais fundo sem
+soltar a corda com o animal ainda de lado. Ao entregar o animal à travessia existente,
+limpa o destino antigo e para a navegação do pastor. O fechamento existente espera o vão livre.
+Regras 150 e 299 atualizadas; sem nova arquitetura, mixin, dependência ou alteração no CI.
+
+A montagem dos testes físicos foi corrigida antes da conclusão: `Arena.forceChunks`
+mantém a simulação ativa; a idade das entidades também é verificada. A cadência de
+condução/fechamento acompanha a produção. O teste físico não teleporta o animal.
+Passaram 23 GameTests focados em `reports/test-runs/20261121T191032Z/`.
+A mutação dos dois arquivos para a produção 0.4.115 fez cinco dos nove testes falharem
+pelas causas esperadas em `20261121T191211Z/`, inclusive a vaca lateral parada na fase
+LEAD, com idade crescente. A correção foi restaurada antes da bateria completa.
+
+A revisão retirou a hipótese de acesso impossível para tosquia: o salto de cerca já
+existe em `ColonyPathing`/`VillagerMoves`. Nenhum helper de acesso foi acrescentado.
+A revisão também pediu cleanup se a conferência inicial do alcance falhar; aplicado.
+Os 196 testes Python passaram com `GIT_CONFIG_COUNT=0`; três falhas anteriores eram
+causadas pela configuração Git herdada inválida. Esse ajuste é local ao processo.
+
+O Sentinela `fast` completo passou em `reports/test-runs/20261121T191357Z/`: 1.885
+unitários, uma suite de propriedades e 1.237 GameTests; o último hunk do cleanup foi
+compilado nessa execução. O build final também passou. README gerado, 196 testes Python
+e escopo passaram; `STATE.md` ficou em 150 linhas. A análise histórica é
+`reports/sentinel-analysis/20261121T191903Z/`, preservando os diagnósticos e as mutações.
+O artefato tem versão Fabric 0.4.116 e SHA-256
+`702fda50d734e8a8c77baab8a809c83a489955d37a866829fdf4ac97426ce01a`.
+
+O gatilho de `vc-log-driven-fix` para relatos de jogo e a instalação obrigatória de
+cada versão no TLauncher foram registrados em `CLAUDE.md`/`AGENTS.md` e na skill.
+A correção é candidata: o efeito sobre bloqueio e ócio depende do próximo jogo do autor.
+
+Após o commit `7a07b38f`, `remapJar` passou novamente. O JAR foi copiado para
+`downloads/` e instalado no TLauncher. Os três SHA-256 conferem com o hash acima.
+A 0.4.115 ficou desativada. O checkpoint de retomada mantém a candidata e o plano
+na branch `fix/miolo-pelas-pecas`. Após validar o pastor em jogo, a próxima
+reprodução indicada é a do acesso e da conectividade do Lote A.
+
+
+## 21-11-2026 — Memória de caminhada no resgate do telhado
+
+O GameTest mostrou que o destino de caminhada permanecia após a descida. O resgate agora limpa essa memória.
+O teste falhou antes e passou depois; Sentinela `fast` passou. O retorno repetido visto no jogo da 0.4.114
+ainda precisa ser conferido no próximo playtest: a memória residual é uma hipótese para esse retorno.
+
+## 21-11-2026 — Ruas após união de colônias
+
+A colônia que permanece recebe as ruas já conhecidas dos dois lados e pede a releitura do
+grafo. `VC_ROAD_MERGE` registra quantas colunas estavam disponíveis na união. No GameTest,
+o aldeão usou a rede unida para cruzar a antiga divisa e chegou ao destino.
+
+## 21-11-2026 — Corte da escada que segura líquido
+
+A escada única mantém o cursor no bloqueio e volta a oferecer a pedra depois que o líquido sai.
+O teste reproduziu o salto do corte e conferiu a retomada. O relatório da vila mostra as coordenadas
+do bloqueio e o saldo físico de pedregulho dos baús consultados.
+
+## 21-11-2026 — Linha do tempo por aldeão
+
+O diário associa o motivo ao período encerrado. `/vc salvar` inclui oito mudanças recentes por
+aldeão, com destino de navegação quando disponível e sono distinto do tempo fora do expediente.
+O GameTest reproduziu a perda do motivo na retomada e a bateria focada passou após a correção.
+
+## 21-11-2026 — R1, relatório completo e candidata 0.4.113
+
+`/vc salvar` reúne a lista completa de blocos, o estado da mina, construções e peças postas de lado,
+o último grafo e o histórico de tempo, mortes, laços, suprimento e edições da colônia na sessão.
+O GameTest detectou a falta das seções e, sob mutação, o corte da tabela em 15 linhas. Passou com
+a lista completa e confirmou que os registros de outra colônia ficam fora. O Sentinela detectou um
+ciclo entre integração e trabalho. O histórico ficou em integração e o teste de arquitetura passou.
+O Sentinela `fast` (`reports/test-runs/20261121T071551Z/`), os 1.230 GameTests, a análise, a suíte
+Python de 196 casos e o build passaram. O playtest segue pendente.
+
+## 21-11-2026 — A5, diagnóstico da aproximação do pastor
+
+O diário registra as posições da ovelha e do pastor quando ele desiste, além de imobilidade ou prazo esgotado.
+O teste falhou antes da alteração e sob mutação. Passaram quatro GameTests focados, o Sentinela `fast`
+(`reports/test-runs/20261121T064752Z/`) e o build final. O diagnóstico depende do próximo jogo do autor.
+
+## 21-11-2026 — A4, diagnóstico da aproximação do fazendeiro
+
+Ao desistir da lavoura, o diário registra o canteiro, a posição do aldeão e se ele ficou imóvel ou esgotou o prazo.
+O log também informa o motivo. O teste falhou antes da alteração e sob mutação, e três GameTests focados passaram.
+O Sentinela `fast` passou em `reports/test-runs/20261121T063830Z/`, após reduzir o arquivo ao limite de 500 linhas.
+O build final passou. O próximo jogo deve fornecer o diagnóstico das recusas observadas pelo autor.
+
+## 21-11-2026 — A3a, estoque e adubação do bosque
+
+O log do jogo registrou seis mudas surgidas no primeiro plantio e cinco
+desistências por falta de aproximação. O relatório mostrou 88 mudas guardadas,
+estoque de toras zerado e 67% do tempo do lenhador em caminhada.
+
+A Regra 354 passa a usar cinco mudas por lenhador, com retirada do estoque
+da espécie escolhida após o plantio. A Regra 271 cobre a falta da muda, e o
+pó de osso do bosque que surge é declarado em lotes de 16. O atendimento
+do bosque ocorre também com pedido de madeira em curso. A busca de reserva
+do bosque mede a distância a partir do lenhador.
+
+O GameTest reproduziu o estoque intacto no código anterior. A regressão
+cobre retirada do baú, limite do bosque, reserva de pó de osso, contagem
+dos itens que surgiram e avanço do crescimento Vanilla em `SaplingBlock`.
+O teste falhou sob mutação. Passaram nove GameTests focados, 196 testes
+Python, o build final e o Sentinela `fast` com 1.228 GameTests.
+O efeito nas caminhadas e na entrega de toras depende do próximo jogo.
+
 ## 04-11-2026 — MAE Fase 3, acesso e leitura estrita parciais
 
 Implementação e testes focados autorizados; PR #51 integrado e nova linha
@@ -12210,3 +12324,128 @@ fim do tique roda cada comando com a saída capturada (`ServerCommandSource.with
 `snapshot-*.txt` na pasta de análise do mundo. `SnapshotCommandGameTest`.
 
 Nada visto em jogo.
+
+## 2026-11-20 — 0.4.111: o miolo da vila segue a forma das peças (Regra 347)
+
+No jogo da 0.4.110 as três vilas nasceram num chão quadrado: o miolo era o retângulo que cerca todas as peças + 4,
+e dentro dele toda água virava chão e o terreno virava degrau de 1, com paredes de água retas e terraços em linha
+reta na borda do retângulo (`VC_GROUND` ×3, `VC_BIOME_NOTE` ×2). Escolha A do autor: o miolo passa a ser a soma das
+caixas de cada peça + 4 (`VillageCore`, montado por `VillagePieces.coreOf`). O `VillageBlend` lê dele se a coluna é
+do miolo, a distância até ele e a coluna do miolo mais perto, de onde vem o nível da vila. `VillageCoreTest`: o lago
+entre duas casas afastadas ficava dentro do retângulo e virava terra (vermelho com o miolo retangular), e agora
+continua lago.
+
+Nada visto em jogo; vale só para chunks gerados depois.
+
+## 2026-11-20 — 0.4.112: uma descida por arco (Regra 348)
+
+Jogo da 0.4.111: o autor viu muitas aberturas de mina em volta do arco. O log mostra uma boca só
+(`opens a mine at 129, 71, -125`), mas nove hélices giradas e deslocadas a partir da superfície
+(`closed its stair before the hall — turning the helix … (helix 9 of 20)`), uma escada paralela de 15
+degraus pela descida cavada (`dug 15 steps down to 110, 48, -128 — 88 dug`) e desvios rasos perto do arco. A
+escada fechava porque o mineiro recusava 12 posições do salão com solto em cima (2.652 linhas, ~180 por
+posição): `MineMarks.dug` apaga as marcas a 8 blocos de cada pedra cavada, e o cursor servia a mesma pedra de
+novo. Mineiro com 84% sem trabalhar.
+
+Escolha C do autor. `Mine.keepOneDescent` fecha os ramais 1 a 3 nos dois primeiros níveis (lidos da cadeia
+de `MineEntrance.levelsDown`); a escada fechada ali recomeça igual (`Mine.retryTheStair`, a cada
+`MineBottomRetry.RETRY_TICKS`), sem girar. `MineDigLimit` trava a rocha fora do desenho da mina nesses dois
+níveis para a descida cavada (`MineStepDown`, que agora acha a pista da escada planejada no primeiro degrau)
+e para o desvio (`MinerDetours`). `MineCuts` e `MineFrontier` deixam de fora a pedra com solto em cima
+(`MineSettling.looseAbove`). Testes: `MineOneDescentTest`, `MineDigLimitTest`, `MineLooseGameTest` e o
+`MineStepDownGameTest` reescrito; todos vermelhos sem a mudança (mutação conferida) e verdes com ela.
+
+Nada visto em jogo.
+
+## 2026-11-21 — ciclo 0.4.113, reservas de cru (A8, Regra 349)
+
+A auditoria registrou as travas que seguravam matéria-prima demais. A escolha do autor baixou
+pó de osso e cru da fornalha de 16 para 4 e pedregulho da mina e cru geral dos produtos de valor
+de 64 para 16. O teto de 64 por lingote segue em vigor e `ingot` saiu do `VC_KEEP`. A trava
+`wool` continua protegendo 16 unidades de lã branca.
+
+`BoneMealRoundGameTest`, `IdleFixesGameTest`, `SmelterAdvanceGameTest` e
+`ShepherdWoolGoodsGameTest` somaram 21 casos. Cinco falharam com os limites antigos e a
+medição de `ingot` restaurada. Os 21 passaram com a Regra 349. A confirmação em jogo fica para
+o playtest do ciclo.
+
+O Sentinela `fast` passou em unitários e propriedade. A bateria de 1.224 GameTests falhou no
+cenário já conhecido do A7, que ainda precisa do registro do baú da colônia.
+
+## 2026-11-21 — ciclo 0.4.113, terra solta (A7, Regra 350)
+
+A escolha do autor deixa a terra no chão quando os baús que o aldeão pode usar já somam 256
+unidades daquele tipo. O teste agora registra dois baús públicos de 128 unidades cada.
+Assim o cenário respeita o limite de três pilhas por item em cada baú e ainda deixa espaço
+para que o recolhimento indevido apareça sob mutação.
+
+Com o filtro desligado, `earthAboveTheCeilingStaysOnTheGround` falhou porque o aldeão recolheu
+terra no teto. Com o filtro, os três casos de `GroundPickupGameTest` passaram. O teste comprova
+que o pedregulho continua sendo recolhido e que a coleta de terra volta abaixo de 256.
+
+O Sentinela `fast` passou em unitários, propriedade e todos os 1.224 GameTests. A confirmação
+em jogo fica para o playtest do ciclo.
+
+## 2026-11-21 — A9, grama, caminho e autoria do conflito (Regra 351)
+
+No jogo de 20-11, o vigia atribuiu 189 alterações de grama e caminho a `mod?natural`.
+No Vanilla 1.21.1, `SpreadableBlock.randomTick` muda terra e grama, e
+`DirtPathBlock.scheduledTick` converte o caminho em terra. O vigia ignora essas transições
+sem autor declarado, inclusive quando só observa o resultado depois de a grama se espalhar.
+`player_report.py` exclui o ruído equivalente dos logs antigos e preserva escritas com autor.
+
+Três reafirmações perto do açougue ocorreram após a suavização do entorno. O log indica
+diretamente o reparo sob a passagem em `121, 69, -125`, às 23:27:42. Os dois sistemas passam a
+registrar `entorno_obra` e `piso_mina` na escrita. A identificação permanece pendente para
+eventos históricos que só gravaram `mod?outro`.
+
+As regressões falharam sem a classificação ou sem a atribuição que exercitam. Com a correção,
+passaram oito GameTests focados e 196 testes Python. O relatório combinado do jogo de 20-11 foi
+gerado novamente e excluiu as transições esperadas, preservando as quatro reafirmações históricas.
+
+O primeiro `fast` falhou na ovelha desgarrada. O segundo falhou na cerca da taiga e no trânsito
+pelos quatro portões do curral MAE. Na terceira execução, unitários, propriedade e os 1.225 GameTests
+passaram. O build final passou. A candidata espera o playtest em mundo novo.
+
+## 2026-11-21 — A6, terracota em vilas sem argila (Regra 352)
+
+No último jogo, o fundidor ficou parado 71% do tempo e o log registrou nove
+`VC_SUPPLY_ERROR` de argila com `NOT_FOUND`. O cenário de GameTest com a casa
+`plains_small_house_2` reproduziu a demanda por 31 terracotas brancas sem argila.
+
+A obra troca as posições de terracota por tijolos de pedra quando falta argila nos
+baús acessíveis e nas colunas carregadas da coleta. A argila exposta usa a mesma
+sondagem da coleta. O adiantamento passa a pedir o substituto e o catálogo de
+oficinas deixa de pedir terracota. Na retomada, a planta reconhece terracota e tijolos
+de pedra já assentados nas posições previstas.
+
+Os dois novos GameTests falharam ao forçar a presença de argila. Com a versão correta,
+18 GameTests focados e 196 testes Python passaram. A matriz de testes inclui a Regra 352.
+
+Os dois primeiros `fast` repetiram falhas de pastoreio registradas no dia anterior.
+Na terceira execução, passaram os testes unitários, de propriedade e os 1.227 GameTests.
+O build final passou. A candidata espera o playtest em mundo novo.
+
+## 2026-11-21 — A2, tochas da colônia na mina (Regra 353)
+
+O jogo registrou `VC_VILLAGER_DEATH` do mineiro por ataque de monstro em `129, 58, -124`.
+Antes da correção, os GameTests encontraram uma tocha comum no patamar e nenhuma no
+sexto degrau da escada preparada.
+
+O mineiro instala sem custo tochas da colônia em células previstas e abertas, com apoio firme.
+Usa a parede da escada a cada seis degraus, a parede externa de cada patamar e o chão dos
+salões, em grade de seis blocos. A colocação usa o anel da tocha da colônia e invalida o
+cache de nascimento natural. O trabalho lateral preserva os apoios previstos das tochas.
+
+Passaram 6 GameTests focados e 196 testes Python. O cenário da escada verifica o sexto e o
+décimo segundo degraus, o anel, o bloqueio de nascimento natural após a colocação e que a
+tocha fica dentro do traçado. A candidata espera o playtest em mundo novo.
+
+O primeiro `fast` encontrou o teste da escada no mesmo lote de outros testes apesar da
+limpeza do cache global. Também repetiu a falha conhecida dos quatro portões do curral MAE.
+Com lote próprio para a escada, passaram unitários, propriedade e 1.228 GameTests.
+O build passou. A análise está em `reports/sentinel-analysis/20261121T060022Z/`.
+
+A mutação removeu as tochas da escada e voltou à tocha comum no patamar. As duas
+regressões falharam pelas causas esperadas. Com a correção restaurada, os 6 testes
+focados passaram novamente.

@@ -69,11 +69,11 @@ public final class VillageBlend {
 
     /** A conta de uma vila: a superfície do miolo e o peso de cada coluna em volta. */
     public static final class Shape {
-        private final Area core;
+        private final VillageCore core;
         private final int[][] village;
         private final double[][] weight;
 
-        Shape(Area core, int[][] village, double[][] weight) {
+        Shape(VillageCore core, int[][] village, double[][] weight) {
             this.core = core;
             this.village = village;
             this.weight = weight;
@@ -89,9 +89,7 @@ public final class VillageBlend {
          * {@code (1 − w)·topo + w·nível da vila} — colada na vila encontra o nível dela, longe não muda.
          */
         public int target(int x, int z, int top) {
-            int nearX = Math.max(core.minX(), Math.min(core.maxX(), x));
-            int nearZ = Math.max(core.minZ(), Math.min(core.maxZ(), z));
-            int level = village[nearX - core.minX()][nearZ - core.minZ()];
+            int level = levelNear(core, village, x, z);
 
             if (core.contains(x, z)) {
                 return level;
@@ -116,6 +114,13 @@ public final class VillageBlend {
      * @return o piso novo de cada peça, na ordem das pegadas
      */
     public static int[] settle(int[][] natural, VillageSurface.Kind[][] kinds, Area core, Area reach,
+                               java.util.List<Area> footprints, int[] floors) {
+        return settle(natural, kinds, VillageCore.of(core, natural.length, natural[0].length), reach, footprints,
+                floors);
+    }
+
+    /** O mesmo, com o miolo feito das peças (Regra 347). */
+    public static int[] settle(int[][] natural, VillageSurface.Kind[][] kinds, VillageCore core, Area reach,
                                java.util.List<Area> footprints, int[] floors) {
         VillageSurface.Kind[][] free = new VillageSurface.Kind[kinds.length][];
 
@@ -208,6 +213,11 @@ public final class VillageBlend {
      * @param reach o que a geração alcança; fora dele nada muda
      */
     public static Shape shape(int[][] natural, VillageSurface.Kind[][] kinds, Area core, Area reach) {
+        return shape(natural, kinds, VillageCore.of(core, natural.length, natural[0].length), reach);
+    }
+
+    /** O mesmo, com o miolo feito das peças (Regra 347). */
+    public static Shape shape(int[][] natural, VillageSurface.Kind[][] kinds, VillageCore core, Area reach) {
         int width = natural.length;
         int depth = natural[0].length;
         int[][] village = coreSurface(natural, kinds, core);
@@ -236,6 +246,11 @@ public final class VillageBlend {
 
     /** Quanto cada coluna sobe (positivo) ou desce, se o topo de verdade for o natural. */
     public static int[][] offsets(int[][] natural, VillageSurface.Kind[][] kinds, Area core, Area reach) {
+        return offsets(natural, kinds, VillageCore.of(core, natural.length, natural[0].length), reach);
+    }
+
+    /** O mesmo, com o miolo feito das peças (Regra 347). */
+    public static int[][] offsets(int[][] natural, VillageSurface.Kind[][] kinds, VillageCore core, Area reach) {
         Shape shape = shape(natural, kinds, core, reach);
         int[][] offsets = new int[natural.length][natural[0].length];
 
@@ -288,17 +303,18 @@ public final class VillageBlend {
         return distance;
     }
 
-    /** A superfície de degrau 1 do miolo, nas coordenadas do miolo. */
-    private static int[][] coreSurface(int[][] natural, VillageSurface.Kind[][] kinds, Area core) {
-        int width = core.maxX() - core.minX() + 1;
-        int depth = core.maxZ() - core.minZ() + 1;
+    /** A superfície de degrau 1 do retângulo que cerca o miolo, nas coordenadas desse retângulo. */
+    private static int[][] coreSurface(int[][] natural, VillageSurface.Kind[][] kinds, VillageCore core) {
+        Area bounds = core.bounds();
+        int width = bounds.maxX() - bounds.minX() + 1;
+        int depth = bounds.maxZ() - bounds.minZ() + 1;
         int[][] subNatural = new int[width][depth];
         VillageSurface.Kind[][] subKinds = new VillageSurface.Kind[width][depth];
 
         for (int x = 0; x < width; x++) {
             for (int z = 0; z < depth; z++) {
-                subNatural[x][z] = natural[core.minX() + x][core.minZ() + z];
-                subKinds[x][z] = kinds[core.minX() + x][core.minZ() + z];
+                subNatural[x][z] = natural[bounds.minX() + x][bounds.minZ() + z];
+                subKinds[x][z] = kinds[bounds.minX() + x][bounds.minZ() + z];
             }
         }
 
@@ -306,15 +322,19 @@ public final class VillageBlend {
     }
 
     /** O nível da vila na coluna do miolo mais perto, menos o natural desta coluna. */
-    private static int delta(int[][] natural, int[][] village, Area core, int x, int z) {
-        int nearX = Math.max(core.minX(), Math.min(core.maxX(), x));
-        int nearZ = Math.max(core.minZ(), Math.min(core.maxZ(), z));
+    private static int delta(int[][] natural, int[][] village, VillageCore core, int x, int z) {
+        return levelNear(core, village, x, z) - natural[x][z];
+    }
 
-        return village[nearX - core.minX()][nearZ - core.minZ()] - natural[x][z];
+    /** O nível da vila na coluna do miolo mais perto. */
+    private static int levelNear(VillageCore core, int[][] village, int x, int z) {
+        Area bounds = core.bounds();
+
+        return village[core.nearX(x, z) - bounds.minX()][core.nearZ(x, z) - bounds.minZ()];
     }
 
     /** O peso desta coluna antes do desfoque: a curva da faixa vezes o amaciamento até a beira do alcance. */
-    private static double rawWeight(int[][] natural, int[][] village, Area core, Area reach, int x, int z) {
+    private static double rawWeight(int[][] natural, int[][] village, VillageCore core, Area reach, int x, int z) {
         int band = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, PER_STEP * Math.abs(delta(natural, village, core, x, z))));
 
         return (1 - smoothstep(core.distance(x, z) / band)) * smoothstep((double) reach.inset(x, z) / EDGE_FADE);

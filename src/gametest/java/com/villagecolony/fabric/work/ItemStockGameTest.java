@@ -49,6 +49,19 @@ public class ItemStockGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Regra 352: o adiantamento de estoque acompanha a disponibilidade de argila. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock_catalog", tickLimit = 20)
+    public void theMasonCatalogDropsTerracottaWithoutClay(TestContext context) {
+        BlockPos center = context.getAbsolutePos(new BlockPos(2, 2, 2)).withY(200);
+        Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(center));
+        List<Item> catalog = ItemStock.read(context.getWorld(), colony)
+                .getOrDefault(TaskType.CRAFT_STONE_MATERIAL, List.of());
+
+        context.assertTrue(catalog.contains(Items.STONE_BRICKS) && !catalog.contains(Items.WHITE_TERRACOTTA),
+                "sem argila, o estoque deveria pedir tijolos de pedra e excluir terracota branca");
+        context.complete();
+    }
+
     /** O trabalho livre repõe só até a reserva da classe (Regra 340): o tijolo de pedra das vilas é especial, 1. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock_catalog", tickLimit = 20)
     public void valueGoodsRefillsOnlyUpToTheReserveOfTheClass(TestContext context) {

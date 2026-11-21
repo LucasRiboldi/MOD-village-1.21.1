@@ -108,7 +108,8 @@ public class VillagePiecesGameTest implements FabricGameTest {
         java.util.Map<Long, Integer> doors = new java.util.HashMap<>();
         java.util.Map<Long, Integer> aprons = new java.util.HashMap<>();
 
-        VillagePieces.settle(start, natural, kinds, all, all, 0, 0, templates, context.getWorld().getRegistryManager(),
+        VillagePieces.settle(start, natural, kinds, com.villagecolony.core.construction.model.VillageCore.of(all, size,
+                size), all, 0, 0, templates, context.getWorld().getRegistryManager(),
                 doors, aprons);
 
         BlockBox box = house.getBoundingBox();

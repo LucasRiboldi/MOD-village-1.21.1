@@ -37,6 +37,13 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 
 ## F1 — A vila trabalha (3 a 5 semanas) → portão Beta 0.5.0
 
+- [ ] 🔴 Jogo da 0.4.115 (21-11): 28 notas e seis imagens no [plano integral](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
+  Lote B implementado na candidata 0.4.116: tosquia junto da ovelha e condução pela porteira (N05, N26, N27); aguarda jogo.
+  Lotes A (terreno/grafo), C (implantação/moradia), D (regras/experiência) e E (fluxo/custo) continuam abertos;
+  próximo após validar o pastor: reproduzir o desnível entre casas e a perda de conexão do nó da mina/casa (Lote A).
+  sucessos N01–N04 e N06 devem ser preservados. Não executar decisões arquiteturais pendentes sem deliberação.
+- [ ] 🟠 Jogo da 0.4.114: conferir se a candidata 0.4.115 impede o retorno ao mesmo telhado após o resgate;
+  a memória de caminhada persistente foi reproduzida em GameTest, mas sua relação com o retorno ainda depende do jogo (P)
 - [ ] 🔴 Ciclos de playtest até todo ofício ficar abaixo de 40% parado em dois biomas, dois jogos seguidos (G)
 - [ ] 🔴 Conferir em jogo as candidatas 0.4.69 a 0.4.74 (lista no `STATE.md`) (por jogo)
 - [ ] 🔴 Jogo da 0.4.79 (13-11): no próximo jogo, conferir `lots_ok` acima de 0 (Regra 282) e ler as linhas
@@ -67,6 +74,27 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
     (candidatas; o jogo da 0.4.89 mostrou 1 por ofício, `maxStep` ≤ 2 em volta das obras e 37 peças assentadas);
   - atividade por profissão: mineiro 39% e construtor 32% parados (61 `SET_ASIDE`); fazendeiro 1% sem plantação
     grande na vila nova (5A) (M)
+- [ ] 🔴 Playtest da 0.4.113 em mundo novo — as nove escolhas de 21-11 (A8, A7, A9, A6, A2, A3a, A4, A5, R1)
+  estão no [plano do ciclo](docs/technical/Proximo-ciclo-0113.md). Rodar `/vc salvar` antes de sair e conferir o arquivo (G)
+  - Sessão de 21-11, 04:41–05:10, `VC_SUPPLY`: pedregulho ×127 (`MISSING_PIECE`, 3 entregas alternativas),
+    pó de osso ×144 (9 lotes para o bosque), mudas ×8, fundação ×87 (79 de lote e 8 de talude) e caminho de terra ×1.
+    Buscar fluxo físico de pedregulho e pó de osso. Distinguir os 52 drops declarados (16 corantes, 20 cristais e
+    16 fragmentos de prismarinho) e os 48 animais iniciais das peças da obra.
+- [ ] Jogo da 0.4.114: acompanhar o motivo da espera e a retomada por aldeão, a posição da pedra
+  que a escada espera para cavar e o trânsito entre as duas redes após uma união. Salvar com `/vc salvar`.
+- [ ] 🔴 Jogo da 0.4.111 (20-11, planície, colônia e8ee5291, 106 min), análise em
+  `docs/audit/2026-11-21-analise-jogo-0111.md`:
+  - mina com muitas aberturas e o laço do bloco solto: Regra 348 na 0.4.112 (candidata; conferir no próximo jogo);
+  - o mineiro morreu para um zumbi no salão do primeiro nível (A2) (G);
+  - cadeia da tora: 124 peças postas de lado, tora em estoque 0, carpinteiro e pedreiro esperando (A3) (G);
+  - fazendeiro 0 colheitas entregues e pastor 6 de 6 tarefas soltas: diagnósticos A4 e A5 esperam jogo (M);
+  - fundidor 71% parado: argila não achada 9× (A6, Regra 352 candidata), nenhum minério de ferro (A1) (M);
+  - terra 868 no estoque, 314 recusadas (A7); travas `smelter_raw`, `bone_meal`, `value_raw`, `mine_fill` seguram
+    demais, `ingot` e `wool` não agem (A8); grama espalhando conta como "o mod desfez o jogador" (A9) (P);
+  - o `/vc salvar` não traz mina, grafo, obras, mortes, laços nem o jogo inteiro (R1) (M);
+  - blocos que surgiram (`VC_SUPPLY`): pó de osso ×736 (`BONE_MEAL_FOR_THE_FARM`, declarado), lã branca ×117
+    (`WAITED_TOO_LONG`), argila ×72 e tora ×64 (`MISSING_PIECE`), argila em bola ×32 (`CLAY_ON_REQUEST`), terracota
+    branca ×10 (`APPEARING_PIECE`) — buscar o fluxo de fabricação da lã, da argila e da tora (M)
 - [ ] 🔴 Jogo da 0.4.89 (15-11, mundo novo, Spark `hYkEcERV1A`, 39 min), triagem:
   - casa sem solo, frente da porta, nó da mina, curral vazio, porta solta e argila: Regras 299 a 304 na 0.4.90
     (candidatas; conferir no próximo jogo);

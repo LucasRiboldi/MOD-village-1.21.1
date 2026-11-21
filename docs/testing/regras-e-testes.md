@@ -4,8 +4,8 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 239
-- **Só usa a classe indicada:** 91
+- **Cita a regra:** 249
+- **Só usa a classe indicada:** 89
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
 
@@ -41,7 +41,7 @@ classe prova menos ainda.
 | 28 | ~~Barreira de teste: casa pequena, mobília dispensada~~ | fora de vigor |  |
 | 29 | A mina em escada, duas salas, galeria sem fim | cita | MinerGameTest |
 | 30 | O mineiro recolhe tudo, e a boca tem endereço | cita | MinerGameTest, SmelterGameTest |
-| 31 | O fazendeiro planta o que tem e colhe o que está pronto | classe | BoneMealRoundGameTest, ColonyFixture, CropPatchKnownFieldGameTest |
+| 31 | O fazendeiro planta o que tem e colhe o que está pronto | classe | ActionJournalGameTest, BoneMealRoundGameTest, ColonyFixture |
 | 32 | ~~Móveis e cama entram depois da casa pronta~~ — substituída em 10-22 pela 21 (C-02, auto… | fora de vigor |  |
 | 33 | Pedido de commit+push também atualiza o JAR local | nenhum |  |
 | 34 | A lava nunca surge automática | classe | BuilderGameTest, ChainRootsGameTest, ConstructionSupplyAuditGameTest |
@@ -74,7 +74,7 @@ classe prova menos ainda.
 | 61 | A colônia só é dada como abandonada sem vila à vista do centro nem dentro da caixa, e com… | classe | ColonyAbandonmentTest, GroundPickupGameTest, test_graphify_relabel |
 | 62 | A vila trabalha com o jogador dentro da caixa ou a até 48 blocos dela (VillageFocus.PERIM… | classe | AbandonedColonyGameTest, ColonyBoundsTest, DrawnFromTest |
 | 63 | Socorro contra parada com prazo único: o ofício que anda sem chegar ao alvo há 1 minuto d… | classe | WorkRescueTest |
-| 64 | As ruas da vila são medidas como rede de caminhos conectados a partir do centro (de bloco… | classe | BuildSiteGameTest, GraphOnlyPathsGameTest, RoadNetworkGameTest |
+| 64 | As ruas da vila são medidas como rede de caminhos conectados a partir do centro (de bloco… | classe | BuildSiteGameTest, ColonyMergeTriggerGameTest, GraphOnlyPathsGameTest |
 | 65 | Bancadas exclusivas do mod: três blocos próprios (carpenter_bench, mason_cutter, blacksmi… | classe | BenchApproachTest, BenchPassivesGameTest, BenchUseGameTest |
 | 66 | Cercado no nível da rua: estrutura cuja camada y=0 é só solo natural (grama, terra, areia… | classe | StreetLayerTest |
 | 67 | Plantação por população: uma roça a cada 15 adultos, no mínimo uma desde a fundação; ao p… | cita | ConstructionPriorityTest, FarmOwnersTest, FarmPlanGameTest |
@@ -93,12 +93,12 @@ classe prova menos ainda.
 | 80 | Só vira alvo o bloco com posição de trabalho válida e alcançável | classe | MinerPicksTest, MinerRerouteTest, MiningTargetGameTest |
 | 81 | Ramal com dono: cada ramal da mina é reservado a um mineiro, com o estado dito pelo nome | classe | MineBranchTest, MineRampGameTest, MineRegistryTest |
 | 82 | O mineiro memoriza a entrada da mina e chega por ela, por etapas, até o nível de agora | classe | IdleFixesGameTest, MineAccessGameTest, MineApproachProgressTest |
-| 83 | Espera a areia assentar antes de voltar a cavar | classe | MineGravityGameTest, MineSettlingGameTest |
+| 83 | Espera a areia assentar antes de voltar a cavar | classe | MineGravityGameTest, MineLooseGameTest, MineSettlingGameTest |
 | 84 | Tapa e escora com o bloco do bioma (arenito no deserto) | classe | BiomeCoverageGameTest, MineGravityGameTest |
 | 85 | O ferro descansa onde a mina não o tem: o piso de ferro cru não força busca sem veio | classe | DesertGroundGameTest |
 | 86 | A peça que o construtor não alcança surge no lugar | classe | UnreachablePiecesGameTest |
 | 87 | Peça equivalente: sem a exata e sem tag do jogo, vale a equivalente da tabela | classe | EquivalentPiecesTest |
-| 88 | Terracota, feno, argila, gelo e neve aparecem quando a obra pede (gelo, gelo compactado e… | classe | BuilderGameTest, DesertFixesGameTest, GardenPiecesGameTest |
+| 88 | Terracota, feno, argila, gelo e neve aparecem quando a obra pede (a Regra 352 retira a te… | classe | BuilderGameTest, DesertFixesGameTest, GardenPiecesGameTest |
 | 89 | Degrau na frente da porta do lote que fica um bloco acima da rua | classe | FoundationPreparationGameTest |
 | 90 | Terraplanagem do lote: no legado, corta até 5 e aterra até 2 blocos do chão do bioma, com… | classe | BuildSiteGameTest, DuneCutGameTest, LotEdgeGameTest |
 | 91 | Casa fundadora: primeiro o lote plano exato, depois o aplainável; a vegetação do lote sai | classe | BigHouseLevelGameTest, BiomeCoverageGameTest, BiomeSiteGameTest |
@@ -146,7 +146,7 @@ classe prova menos ainda.
 | 133 | Estoque cheio vira obra e produto (autor 10-28, jogo da 0.3.99: lenhador 74%, pedreiro 48… | classe | ColonyCycleTest, HiringProperties, IdleFixesGameTest |
 | 134 | O adulto que sobra vai ao ofício que a vila espera (autor 10-28, jogo da 0.3.99: 6 de 18… | fora de vigor |  |
 | 135 | Tarefa só abre quando pode render (autor 10-28, jogo da 0.3.99): a ordem de estoque de pe… | classe | IdleFixesGameTest, ItemStockGameTest, ProfessionBalanceGameTest |
-| 136 | O fazendeiro alcança como o jogador (autor 10-28, jogo da 0.3.99: roça 2 blocos acima, a… | classe | BoneMealRoundGameTest, ColonyFixture, FarmPlanGameTest |
+| 136 | O fazendeiro alcança como o jogador (autor 10-28, jogo da 0.3.99: roça 2 blocos acima, a… | classe | ActionJournalGameTest, BoneMealRoundGameTest, ColonyFixture |
 | 137 | A escada da mina recomeça do topo (autor 10-28, jogo da 0.3.99: o mineiro passou 30 min n… | classe | IdleFixesGameTest |
 | 138 | A rua da colônia é só caminho e é da vila (autor 10-28; depois do jogo da 0.3.104: "volta… | classe | BlockProtectionGameTest, BuildSiteGameTest, LumberjackGameTest |
 | 139 | O lote sai do mapa de interesse (autor 10-28, jogo da 0.3.102: casa a 140 blocos, 24 acim… | cita | LotScoreMemoryTest |
@@ -160,14 +160,14 @@ classe prova menos ainda.
 | 147 | O diário da vila bate com o jogo (autor 10-28): cada fato vira VC_EVENT (obra aberta e fe… | cita | VillageDiaryGameTest |
 | 148 | A obra nunca fica largada meio pronta (autor 10-28, taiga simulada: casa em "0 blocks lef… | cita | BuildClosingGameTest |
 | 149 | Rua sem falha: falha de até 2 blocos de chão natural numa linha reta entre duas colunas d… | cita | HouseSurroundingsGameTest, VillageHelpersGameTest |
-| 150 | O pastor tosquia por cima da cerca (autor 10-28, diagnóstico da 0.3.103: 45 pastores pres… | classe | ColonyFixture, ShepherdGameTest |
-| 151 | O aldeão da colônia prefere a rua e evita a água (autor 10-28, jogo da 0.3.104: 4 de 7 te… | classe | FencedInGameTest, StreetRouteGameTest, StreetRouteTest |
-| 152 | O solo da vila nasce suave na geração (autor 10-29: crateras e montanhas no meio das vila… | classe | ClearAbovePieceGameTest, VillageBlendTest, VillageGroundGameTest |
+| 150 | O pastor só tosquia junto da ovelha (autor 21-11, N05 do jogo da 0.4.115; substitui o alc… | cita | ShepherdGameTest |
+| 151 | O aldeão da colônia prefere a rua e evita a água (autor 10-28, jogo da 0.3.104: 4 de 7 te… | classe | ColonyMergeTriggerGameTest, FencedInGameTest, StreetRouteGameTest |
+| 152 | O solo da vila nasce suave na geração (autor 10-29: crateras e montanhas no meio das vila… | classe | ClearAbovePieceGameTest, VillageBlendTest, VillageCoreTest |
 | 153 | Mais ajudas de quem está sem tarefa (autor 10-28, O1/O3/O4/O8; pedido de novo em 10-29),… | classe | GroundSmoothingGameTest, IdleFixesGameTest, ItemStockGameTest |
-| 154 | Lenhador, fundidor e fazendeiro: os ajustes do O5–O7 (autor 10-28; pedido de novo em 10-2… | classe | ChestPlacerGameTest, IdleFixesGameTest, ItemStockGameTest |
+| 154 | Lenhador, fundidor e fazendeiro: os ajustes do O5–O7 (autor 10-28; pedido de novo em 10-2… | cita | VillageGroveGameTest |
 | 155 | A boca da mina ganha o portão do autor (10-29, estrutura mine_entrance.nbt, 9×7×5): no lu… | classe | BiomeBlueprintsGameTest, MineLandingGameTest, MineNodeGameTest |
 | 156 | O pedreiro alisa o chão da vila (autor 10-29, 11-06): sem tarefa, uma vez por minuto ele… | classe | GroundSmoothingGameTest, OreTowerGameTest, PlayerGroundGameTest |
-| 157 | O mineiro não quebra o que segura algo solto (autor 10-29, jogo da 0.3.108: o cascalho pe… | classe | MineGravityGameTest, MineSettlingGameTest, MinerGameTest |
+| 157 | O mineiro não quebra o que segura algo solto (autor 10-29, jogo da 0.3.108: o cascalho pe… | classe | MineGravityGameTest, MineLooseGameTest, MineSettlingGameTest |
 | 158 | Sem cama no andar de baixo da casa de escada de mão (autor 10-29, jogo da 0.3.108: 9 de 2… | classe | BedChoiceGameTest, BedPlanTest, BiomeBlueprintsGameTest |
 | 159 | O aldeão da colônia pula 2 blocos e por cima da cerca (autor 10-29, depois do jogo da 0.3… | cita | LumberjackGameTest, PenEscapeGameTest |
 | 160 | O construtor trabalha do chão, e quem fica num telhado desce (autor 10-29, jogo da 0.3.10… | classe | BuildZoneGameTest, BuilderApproachGameTest, BuilderGameTest |
@@ -281,7 +281,7 @@ classe prova menos ainda.
 | 268 | O bosque acha o chão em qualquer altura (autor 13-11, jogo da 0.4.68: 0 mudas plantadas,… | cita | VillageGroveGameTest |
 | 269 | O prazo do pastor pela distância (rumo a curral, sem prazo pela Regra 309; autor 13-11, j… | cita | ShepherdHerdingGameTest |
 | 270 | Sem ofício fora das análises (autor 13-11, ADR-055 item 7): o aldeão sem ofício do mod nã… | cita | WorkTimeSwingGameTest, test_action_report, test_time_ledger |
-| 271 | A muda do bosque surge, também no deserto (autor 13-11, ADR-055 item 10): o bosque do len… | cita | VillageGroveGameTest |
+| 271 | A muda do bosque surge se faltar no estoque, também no deserto (autor 13-11, ADR-055 item… | cita | VillageGroveGameTest |
 | 272 | Corante das flores (autor 13-11, ADR-055 item 11): no ócio do ofício, o pastor colhe uma… | cita | ShepherdDyesGameTest |
 | 273 | Um construtor por vila (autor 13-11, ADR-055): a vila tem uma obra aberta por vez, então… | cita | ProfessionGrowthTest, ProfessionPolicySetTest, ProfessionShunTest |
 | 274 | A obra conta como trabalho do construtor (autor 13-11, ADR-055 item 14): sem trabalho med… | cita | BedChoiceGameTest |
@@ -309,7 +309,7 @@ classe prova menos ainda.
 | 296 | As estruturas da vila nascem no solo suavizado (autor 15-11, jogo da 0.4.88 em montanha,… | cita | VillageBlendTest, VillagePiecesGameTest |
 | 297 | O chão em volta da obra nova é suavizado como o da vila (autor 15-11, jogo da 0.4.88 em m… | cita | SiteSurroundingsGameTest |
 | 298 | A vila nova nasce enxuta (autor 15-11, jogo da 0.4.88, opção C corrigida: 9 aldeões da vi… | cita | HiringProperties, IdleFixesGameTest, ProfessionDemandTest |
-| 299 | O pastor leva o animal até dentro do curral (autor 15-11, jogo da 0.4.89, opção C: o curr… | cita | FlockHarvestGameTest, ShepherdHerdingGameTest |
+| 299 | O pastor leva o animal até dentro do curral (autor 15-11, opção C; emenda de 21-11, N26/N… | cita | FlockHarvestGameTest, ShepherdHerdingGameTest |
 | 300 | A porta e as partes soltas entram no grafo (autor 16-11, jogo da 0.4.89, opção C com o ro… | cita | RoadLinesTest |
 | 301 | A argila aparece na hora pedida (só para obra e com teto de 64 guardadas pela Regra 308;… | cita | ClayLoopGameTest, ClayOnRequestGameTest |
 | 302 | O nó da mina fica sob o arco (autor 16-11, jogo da 0.4.89, opção A; muda o nó de entrada… | cita | MineNodeGameTest, MineYardGameTest |
@@ -356,4 +356,12 @@ classe prova menos ainda.
 | 343 | A medida das travas de cru (autor 20-11, fase 4 do plano de ofícios e reservas, ADR-062):… | cita | KeepLedgerTest, test_stock_report |
 | 344 | A telemetria dos aldeões e dos itens (autor 20-11, plano docs/research/2026-11-20-telemet… | cita | ItemFlowGameTest, TaskTraceGameTest, VillagerDayGameTest |
 | 345 | O conflito com o jogador e a reafirmação (autor 20-11, telemetria F1 a F3b do plano docs/… | cita | EditLedgerGameTest, test_player_report |
-| 346 | Salvar todas as análises de uma vez (autor 20-11): /vc salvar, comando de jogador, roda o… | cita | SnapshotCommandGameTest |
+| 346 | Salvar todas as análises de uma vez (autor 20-11): /vc salvar, comando de jogador, reúne… | cita | SnapshotCommandGameTest |
+| 347 | O miolo da vila segue a forma das peças (autor 20-11, jogo da 0.4.110: "terreno quadrado… | cita | VillageCoreTest |
+| 348 | Uma descida por arco (autor 20-11, jogo da 0.4.111: muitas aberturas de mina em volta do… | cita | MineDigLimitTest, MineLooseGameTest, MineOneDescentTest |
+| 349 | Menos matéria-prima retida nos baús (autor 21-11, análise A8, ADR-062): a reserva de pó d… | cita | BoneMealRoundGameTest, IdleFixesGameTest, SmelterAdvanceGameTest |
+| 350 | A terra excedente fica no chão (autor 21-11, análise A7, exceção à Regra 48): ao passar p… | cita | GroundPickupGameTest |
+| 351 | Grama e caminho na telemetria (autor 21-11, análise A9, emenda à Regra 345): sem autor de… | cita | EditLedgerGameTest, MineFloorGameTest, SiteSurroundingsGameTest |
+| 352 | Tijolos de pedra quando falta argila (autor 21-11, análise A6, emenda à Regra 88): sem ar… | cita | BiomeBlueprintsGameTest, ItemStockGameTest |
+| 353 | Tochas da colônia na mina (autor 21-11, análise A2, exceção à Regra 212): o mineiro insta… | cita | ArchitectureRulesTest, MineLandingGameTest |
+| 354 | Cinco mudas por lenhador no bosque perto da vila (autor 21-11, análise A3a): o lenhador u… | cita | VillageGroveGameTest |

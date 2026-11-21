@@ -33,14 +33,11 @@ public final class SmelterAdvance {
     /** Quantos cada fundidor ocioso funde por ciclo. */
     static final int PER_SMELTER = 8;
 
-    /** Quanto do cru fica nos baús além do que a obra pede. */
-    static final int KEEP = 16;
+    /** Quanto do cru fica nos baús além do que a obra pede (Regra 349). */
+    static final int KEEP = 4;
 
-    /**
-     * O pedregulho que fica para a mina, além da obra: é o enchimento do piso e da
-     * beirada (playtest 0.3.36: a vila fundiu e cortou todo pedregulho e a mina parou).
-     */
-    static final int MINE_FILL = 64;
+    /** O pedregulho que fica para o piso e a beirada da mina, além da obra (Regra 349). */
+    static final int MINE_FILL = 16;
 
     /** Somente minérios físicos viram reserva ociosa; demais itens seguem estoque padrão. */
     static final List<Item> INGOT_RAWS = List.of(Items.RAW_IRON, Items.RAW_COPPER, Items.RAW_GOLD);
@@ -119,7 +116,6 @@ public final class SmelterAdvance {
             int free = ColonyChests.countIn(world, chests, raw) - BuildReserve.buildNeedOf(colony, raw);
             int ingots = ColonyChests.countIn(world, chests, made);
             KeepLedger.atMost("smelter_raw", free, KEEP);
-            KeepLedger.atLeast("ingot", ingots, INGOT_RESERVE);
             int spare = free - KEEP;
             int room = INGOT_RESERVE - ingots;
             int amount = Math.min(PER_SMELTER, Math.min(spare, room));

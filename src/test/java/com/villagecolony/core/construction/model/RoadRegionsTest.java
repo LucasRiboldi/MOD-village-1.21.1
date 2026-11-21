@@ -146,6 +146,28 @@ class RoadRegionsTest {
     }
 
     @Test
+    void theRebuiltSquareKeepsTheReconnectedEntranceAndItsPaving() {
+        ColonyPos hub = at(14, 8);
+        ColonyPos edge = at(15, 8);
+        ColonyPos reopened = at(16, 8);
+        ColonyPos entrance = at(17, 8);
+        Set<ColonyPos> street = Set.of(hub, edge, reopened, entrance);
+        Set<ColonyPos> fronts = Set.of(entrance);
+        RoadGraph previous = RoadGraph.from(Set.of(hub, edge), hub, Set.of());
+        RoadLines.Result built = RoadLines.build(street, Set.of(), hub, fronts, Set.of(), FLAT, 0, 0);
+        Set<Long> rebuilt = Set.of(RoadRegions.regionOf(reopened.x(), reopened.z()));
+
+        RoadLines.Result settled = RoadRegions.settle(built, previous, rebuilt, hub, fronts, street);
+        RoadGraph graph = settled.graph().orElseThrow();
+
+        assertTrue(graph.nodes().stream().anyMatch(node ->
+                node.position().equals(entrance) && node.roles().contains(RoadGraph.Role.ENTRANCE)));
+        assertTrue(graph.edges().stream().anyMatch(line ->
+                line.roadClass() == RoadGraph.RoadClass.PRIMARY && line.columns().contains(entrance)));
+        assertTrue(settled.toPave().isEmpty(), "O trecho já calçado não deve voltar ao plano");
+    }
+
+    @Test
     void aSquareIsRebuiltOnlyWhenItStaysChangedForTwoReads() {
         RoadRegions.Memory memory = new RoadRegions.Memory();
         long square = RoadRegions.regionOf(35, 8);

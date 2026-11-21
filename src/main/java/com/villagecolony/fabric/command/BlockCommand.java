@@ -9,11 +9,13 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * {@code /vc blocos} — Regra 342: a tabela do registro de blocos da vila em volta do jogador, agora. Os mais movimentados
@@ -53,19 +55,21 @@ public final class BlockCommand {
             return 1;
         }
 
-        List<BlockLedger.Row> rows = BlockLedger.rows(player.getServerWorld(), colony.get());
+        showRows(player.getServerWorld(), colony.get(), LINES, line -> source.sendFeedback(() -> line, false));
+        return 1;
+    }
 
-        source.sendFeedback(() -> Text.literal("Blocos da vila (" + rows.size() + "): classe, reserva, estoque,"
-                + " posto, esperou, surgiu").formatted(Formatting.AQUA, Formatting.BOLD), false);
+    static void showRows(ServerWorld world, Colony colony, int limit, Consumer<Text> output) {
+        List<BlockLedger.Row> rows = BlockLedger.rows(world, colony);
+        output.accept(Text.literal("Blocos da vila (" + rows.size() + "): classe, reserva, estoque,"
+                + " posto, esperou, surgiu").formatted(Formatting.AQUA, Formatting.BOLD));
 
-        for (BlockLedger.Row row : rows.subList(0, Math.min(LINES, rows.size()))) {
+        for (BlockLedger.Row row : rows.subList(0, Math.min(limit, rows.size()))) {
             String line = row.key() + "  " + row.stockClass() + "  reserva " + row.reserve() + "  estoque "
                     + row.stock() + "  posto " + row.used() + "  esperou " + row.waited() + "  surgiu " + row.surged();
 
-            source.sendFeedback(() -> Text.literal(line).formatted(
-                    row.stock() < row.reserve() ? Formatting.RED : Formatting.GRAY), false);
+            output.accept(Text.literal(line).formatted(
+                    row.stock() < row.reserve() ? Formatting.RED : Formatting.GRAY));
         }
-
-        return 1;
     }
 }

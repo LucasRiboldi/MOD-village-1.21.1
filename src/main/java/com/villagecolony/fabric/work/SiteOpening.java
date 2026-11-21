@@ -233,8 +233,10 @@ final class SiteOpening {
         // <b>A camada da rua vai no chão</b> — sessão de jogo de 2026-09-26.
         // O lote diz onde fica o piso; a planta do jogo diz em que camada a
         // rua está, e é ela que desce ao chão. Ver Blueprint.originFor.
-        ConstructionProject project = ConstructionProject.plan(
-                colony.id(), facingTheRoad, facingTheRoad.originFor(site.origin()));
+        ColonyPos origin = facingTheRoad.originFor(site.origin());
+        Blueprint materials = com.villagecolony.fabric.integration.ConstructionPalette.atSite(
+                world, colony, facingTheRoad, origin);
+        ConstructionProject project = ConstructionProject.plan(colony.id(), materials, origin);
 
         return openPlanned(world, colony, site, project, builders, drawnFrom);
     }

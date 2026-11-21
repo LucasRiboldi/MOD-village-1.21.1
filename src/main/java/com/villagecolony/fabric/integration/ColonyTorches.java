@@ -5,6 +5,7 @@ import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.content.ColonyTorchBlock;
 import com.villagecolony.fabric.content.ModContent;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -47,10 +48,13 @@ public final class ColonyTorches {
     private ColonyTorches() {
     }
 
-    /** Põe a tocha da colônia em {@code at}; o anel de luz acende com ela ({@link ColonyTorchBlock#lightRing}). */
-    public static void place(ServerWorld world, BlockPos at) {
-        world.setBlockState(at, ModContent.COLONY_TORCH.getDefaultState());
+    /** Instala uma tocha da mina e invalida o cache de nascimento (Regra 353). */
+    static boolean place(ServerWorld world, BlockPos at, BlockState torch) {
+        if (!world.setBlockState(at, torch)) {
+            return false;
+        }
         NEAR.clear();
+        return true;
     }
 
     /** Até onde da boca a mina é segura com a bancada do mineiro na vila (Regra 132). */

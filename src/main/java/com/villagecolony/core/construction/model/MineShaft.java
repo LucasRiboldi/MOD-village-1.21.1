@@ -96,7 +96,7 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent,
     /** Onde o ramal sem patamar termina: o caracol, o salão do nível, o caracol do ramal e o salão dele. */
     public static final int ARM_END = SHARED_BLOCKS + ARM_BLOCKS;
 
-    /** A tocha de parede de um patamar: a posição dela e o lado em que fica a parede que a segura (Regra 254). */
+    /** A posição da tocha de parede e o lado que a segura (Regras 254 e 353). */
     public record WallLight(ColonyPos at, Side wall) {
     }
 
@@ -448,14 +448,14 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery, int ascent,
                 corner.z() + along.offsetZ() * row + gallery.offsetZ() * sideways);
     }
 
-    /** De quantos em quantos blocos vai a tocha de chão do salão (autor, 2026-10-27). */
-    public static final int LIGHT_SPACING = 12;
+    /** Espaçamento das tochas da colônia na escada e no salão (Regra 353). */
+    public static final int LIGHT_SPACING = 6;
 
     /**
      * Onde vão as tochas de chão deste ramal, nos pés: uma grade de {@link #LIGHT_SPACING} no salão do
      * nível e no do ramal, nunca no degrau. A grade fica a metade do espaçamento do meio de cada salão, sem
      * passar da borda dele, longe do caracol do nível seguinte (que desce do meio do salão do ramal) e dos cantos
-     * de onde saem os ramais. A rampa do fundo não leva tocha.
+     * de onde saem os ramais. A rampa do fundo não tem salão.
      */
     public java.util.List<ColonyPos> lightSpots() {
         if (isRamp()) {

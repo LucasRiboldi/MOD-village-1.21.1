@@ -38,8 +38,8 @@ public final class ValueGoods {
     /** Quantos do cru um lote gasta, no máximo. */
     static final int BATCH = 8;
 
-    /** A reserva de cru das matérias que as obras também usam. */
-    static final int KEEP_RAW = 64;
+    /** A reserva de cru das matérias que as obras também usam (Regra 349). */
+    static final int KEEP_RAW = 16;
 
     /** Uma receita: {@code in} do cru dão {@code out} do produto; o cru nunca desce de {@code keep}. */
     record Recipe(Item raw, int in, Item product, int out, int keep) {

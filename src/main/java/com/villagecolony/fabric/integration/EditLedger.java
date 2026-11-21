@@ -9,6 +9,7 @@ import com.villagecolony.fabric.world.GeneratedVillages;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.ChestBlock;
 import net.minecraft.block.CropBlock;
 import net.minecraft.block.FallingBlock;
@@ -38,7 +39,8 @@ import java.util.Map;
  *       o sinal mais forte do que ele quer e o primeiro item a corrigir.</li>
  * </ul>
  * O mod que escreve blocos diz o sistema ({@link #mod}); a mudança sem dono numa posição do jogador é achada pelo vigia
- * (a cada 5 s) e sai como {@code mundo} (crescimento, queda, fogo) ou {@code mod?<alvo>}. Só registra: nada muda no jogo.
+ * (a cada 5 s) e sai como {@code mundo} (crescimento, queda, fogo) ou {@code mod?<alvo>}.
+ * O vigia encerra a comparação para transições naturais de grama e caminho da Regra 351. Só registra: nada muda no jogo.
  * O tempo entre os passos vale até um dia de jogo.
  */
 public final class EditLedger {
@@ -114,6 +116,13 @@ public final class EditLedger {
         spot.playerBlock = block;
         spot.playerAt = now;
 
+        if (world == world.getServer().getOverworld()) {
+            for (Colony colony : VillageColonyMod.COLONIES.all()) {
+                if (containsColumn(colony, pos)) {
+                    lines.forEach(line -> SnapshotHistory.remember(colony.id(), line));
+                }
+            }
+        }
         return lines;
     }
 
@@ -141,7 +150,7 @@ public final class EditLedger {
     }
 
     /** As posições do jogador que mudaram sem ninguém dizer quem: o mundo, ou um sistema do mod sem nome. */
-    private static void watch(ServerWorld world) {
+    static void watch(ServerWorld world) {
         long now = world.getTime();
 
         for (Iterator<Map.Entry<Long, Spot>> spots = new ArrayList<>(SPOTS.entrySet()).iterator(); spots.hasNext(); ) {
@@ -160,10 +169,22 @@ public final class EditLedger {
 
             BlockState state = world.getBlockState(pos);
 
-            if (!nameOf(state).equals(spot.playerBlock)) {
+            if (isGrassTransition(spot.playerBlock, state)) {
+                spot.playerBlock = null;
+            } else if (!nameOf(state).equals(spot.playerBlock)) {
                 mod(world, pos, state, isNatural(state) ? "mundo" : "mod?" + targetOf(world, pos, state));
             }
         }
+    }
+
+    /** Regra 351: caminho vira terra antes de poder receber grama novamente. */
+    private static boolean isGrassTransition(String before, BlockState after) {
+        return switch (before) {
+            case "dirt" -> after.isOf(Blocks.GRASS_BLOCK);
+            case "grass_block" -> after.isOf(Blocks.DIRT);
+            case "dirt_path" -> after.isOf(Blocks.DIRT) || after.isOf(Blocks.GRASS_BLOCK);
+            default -> false;
+        };
     }
 
     /** O que o jogador atingiu: o que dá sentido à edição. */
@@ -229,10 +250,14 @@ public final class EditLedger {
     /** Se a posição está na caixa de alguma vila (onde a edição do jogador interessa). */
     public static boolean inAnyVillage(BlockPos pos) {
         for (Colony colony : VillageColonyMod.COLONIES.all()) {
-            if (colony.bounds().map(box -> box.containsColumn(pos.getX(), pos.getZ())).orElse(false)) {
+            if (containsColumn(colony, pos)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static boolean containsColumn(Colony colony, BlockPos pos) {
+        return colony.bounds().map(box -> box.containsColumn(pos.getX(), pos.getZ())).orElse(false);
     }
 }

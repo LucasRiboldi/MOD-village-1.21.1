@@ -139,6 +139,10 @@ public final class MineDigging {
 
         IdleLog.clear(colonyId, SURFACE_SUBJECT);
 
+        // Regra 348: nos níveis do topo a mina é uma descida só, sem braço e sem escada girada.
+        boolean top = MineEntrance.levelsDown(world, colonyId, mine.get()) < MineDigLimit.ONE_DESCENT_LEVELS;
+        mine.get().keepOneDescent(top);
+
         // O ramal novo vai para o minério que a vila precisa — ADR-039 D3.
         int[] order = MineClaims.armAlreadyHeld(colonyId, workerId).isPresent()
                 ? new int[] {0, 1, 2, 3}
@@ -161,6 +165,13 @@ public final class MineDigging {
                 VillageDiary.event(colonyId, "mine_level", new com.google.gson.JsonObject());
 
                 IdleLog.clear(colonyId, ARM_SUBJECT);
+
+                return Optional.empty();
+            }
+
+            // Escada do topo fechada antes do salão: a mesma escada de novo, com pausa — Regra 348.
+            if (advance == Mine.LevelAdvance.BLOCKED && top) {
+                MineTrouble.retryTheStair(colonyId, mine.get(), world.getTime());
 
                 return Optional.empty();
             }
@@ -209,7 +220,11 @@ public final class MineDigging {
             if (MineClaims.diggersIn(colonyId) == 0
                     && mine.get().turnedWithoutAPickaxe()) {
 
-                MineTrouble.rerouteOrBlameTheMouth(world, colonyId, mine.get(), center);
+                if (top) {
+                    MineTrouble.retryTheStair(colonyId, mine.get(), world.getTime());
+                } else {
+                    MineTrouble.rerouteOrBlameTheMouth(world, colonyId, mine.get(), center);
+                }
 
                 return Optional.empty();
             }
@@ -234,7 +249,7 @@ public final class MineDigging {
         IdleLog.clear(colonyId, ARM_SUBJECT);
 
         Optional<BlockPos> found = MineVein.followingTheVein(world, mine.get(), arm)
-                .or(() -> MineCuts.nextCut(world, workerId, mine.get(), arm));
+                .or(() -> MineCuts.nextCut(world, workerId, mine.get(), arm, top));
 
         if (found.isEmpty()) {
             // <b>Escada que ninguém está usando volta a ser de quem

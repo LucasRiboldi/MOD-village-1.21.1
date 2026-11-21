@@ -15,7 +15,7 @@ import java.util.TreeMap;
 
 /**
  * A medida das travas pequenas de cru — Regra 343, fase 4 do plano de ofícios e reservas (ADR-062). Cada trava (lã,
- * farinha de osso, trigo, semente, cru da fornalha, pedregulho da mina, lingote, cru dos produtos de valor, manutenção)
+ * pó de osso, trigo, semente, cru da fornalha, pedregulho da mina, cru dos produtos de valor, manutenção)
  * conta no dia quantas vezes foi consultada, quantas vezes barrou o ofício e o menor estoque visto. No fim do expediente
  * sai a linha {@code VC_KEEP}; o {@code stock_report.py} diz qual trava nunca age, qual segura demais e qual está bem.
  * Nenhuma trava muda aqui: a decisão de subir, descer ou tirar é do autor, depois do jogo.

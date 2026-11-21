@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.fabric.integration.SnapshotHistory;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.WorkClock;
 import com.villagecolony.core.type.ServerMemory;
@@ -94,7 +95,7 @@ public final class VillagerDay {
 
     /** A morte, na hora, com a causa e o lugar. */
     public static void died(VillagerEntity villager, String cause) {
-        VillageColonyMod.WORKERS.find(villager.getUuid()).ifPresent(worker -> VillageColonyMod.LOGGER.info(
+        VillageColonyMod.WORKERS.find(villager.getUuid()).ifPresent(worker -> SnapshotHistory.info(worker.colonyId(),
                 "VC_VILLAGER_DEATH version=1 colony={} worker={} prof={} cause={} at={}",
                 worker.colonyId().toString().substring(0, 8), villager.getUuid().toString().substring(0, 8),
                 worker.profession().map(Enum::name).orElse("NONE"), cause, villager.getBlockPos().toShortString()));

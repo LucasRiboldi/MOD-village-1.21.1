@@ -61,14 +61,8 @@ public final class ShepherdWork {
         ServerMemory.register(ShepherdWork.class, ShepherdWork::clearAll);
     }
 
-    /** Até onde ele anda: para a 3 blocos da ovelha, e não no bloco dela — com a ovelha no curral, ficava preso lá dentro. */
-    private static final int REACH = 3;
-
-    /**
-     * Até onde ele tosquia: 4,5 blocos do olho ao meio da ovelha, como o fazendeiro — por cima da cerca, sem entrar
-     * no curral (T2 do diagnóstico da 0.3.103, autor 2026-10-28: 45 pastores presos no curral).
-     */
-    static final double EYE_REACH = 4.5;
+    /** Regra 150: a caminhada chega à ovelha; a tosquia exige contato com folga de um quarto de bloco. */
+    private static final int REACH = 0;
 
     /** Até onde ele procura rebanho. */
     private static final int SEARCH_RADIUS = 32;
@@ -277,7 +271,7 @@ public final class ShepherdWork {
             // rápido que os dois minutos de baixo. Ver WorkStall, que faz a
             // pergunta do expediente por conta própria.
             if (job.stall.stuck(world, villager) || job.stalled >= STALL_LIMIT) {
-                giveUp(workerId, job);
+                giveUp(workerId, job, villager, sheep);
             } else {
                 WorkTargets.set(workerId, sheep.getBlockPos(), REACH);
             }
@@ -293,7 +287,7 @@ public final class ShepherdWork {
         shear(world, villager, sheep, job, storage.get());
     }
 
-    /** A ovelha com lã mais próxima do pastor; assim ele tosquia pela cerca antes de tentar entrar. */
+    /** A ovelha com lã mais próxima do pastor; a caminhada deve chegar junto dela (Regra 150). */
     private static void findSheep(ServerWorld world, UUID workerId, Job job, VillagerEntity villager) {
         List<SheepEntity> flock = world.getEntitiesByClass(
                 SheepEntity.class, job.area, ShepherdWork::isWoolly);
@@ -333,7 +327,7 @@ public final class ShepherdWork {
         // sempre fizeram. O de 2.400 continua por alvo, porque é isso que
         // ele mede: andei demais até ESTE alvo.
 
-        WorkTargets.set(workerId, nearest.getBlockPos());
+        WorkTargets.set(workerId, nearest.getBlockPos(), REACH);
     }
 
     /**
@@ -420,7 +414,7 @@ public final class ShepherdWork {
     }
 
     private static boolean isWithinReach(VillagerEntity villager, SheepEntity sheep) {
-        return villager.getEyePos().squaredDistanceTo(sheep.getBoundingBox().getCenter()) <= EYE_REACH * EYE_REACH;
+        return villager.getBoundingBox().expand(0.25).intersects(sheep.getBoundingBox());
     }
 
     private static void release(UUID workerId, Job job) {
@@ -446,15 +440,16 @@ public final class ShepherdWork {
         }
     }
 
-    private static void giveUp(UUID workerId, Job job) {
+    private static void giveUp(UUID workerId, Job job, VillagerEntity villager, SheepEntity sheep) {
+        String reason = job.stall.ticks() >= WorkStall.LIMIT ? "stationary" : "approach timeout";
+        ActionJournal.action(workerId, "GAVE_UP", "sheep", 0, sheep.getBlockPos(),
+                reason + "; shepherd at " + villager.getBlockPos().toShortString());
         VillageColonyMod.LOGGER.info(
-                "Shepherd {} could not reach the sheep — task back to the queue", workerId);
-
+                "Shepherd {} could not reach the sheep at {} — shepherd at {}, {}", workerId,
+                sheep.getBlockPos().toShortString(), villager.getBlockPos().toShortString(), reason);
         job.task.release("could not reach the sheep");
-
         // A desistência passa a contar — 2026-09-10. Ver WorkerStrikes.
         WorkerStrikes.gaveUp(workerId, job.task);
-
         release(workerId, job);
     }
 

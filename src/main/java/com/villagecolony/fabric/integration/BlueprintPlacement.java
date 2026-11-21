@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ColonyPos;
@@ -20,6 +21,12 @@ public final class BlueprintPlacement {
     }
 
     public static Optional<Blueprint> blueprintOf(
+            ServerWorld world, UUID colonyId, ResourceId id, ColonyPos origin) {
+        return orientedBlueprintOf(world, colonyId, id, origin)
+                .map(plan -> withLocalMaterials(world, colonyId, origin, plan));
+    }
+
+    private static Optional<Blueprint> orientedBlueprintOf(
             ServerWorld world, UUID colonyId, ResourceId id, ColonyPos origin) {
         // O poste de luz não tem arquivo: a planta sai do nome, com os materiais do bioma (Regra 261).
         if (com.villagecolony.core.construction.model.LampPostPlan.isLampPost(id)) {
@@ -48,12 +55,12 @@ public final class BlueprintPlacement {
      */
     public static Optional<Blueprint> resumedBlueprintOf(
             ServerWorld world, UUID colonyId, ResourceId id, ColonyPos origin) {
-        return blueprintOf(world, colonyId, id, origin).map(byRoad -> {
-            Blueprint best = byRoad;
-            int bestStanding = standing(world, byRoad, origin);
+        return orientedBlueprintOf(world, colonyId, id, origin).map(byRoad -> {
+            Blueprint best = withLocalMaterials(world, colonyId, origin, byRoad);
+            int bestStanding = standing(world, best, origin);
 
             for (int turns = 1; turns < 4; turns++) {
-                Blueprint turned = byRoad.rotated(turns);
+                Blueprint turned = withLocalMaterials(world, colonyId, origin, byRoad.rotated(turns));
                 int standing = standing(world, turned, origin);
 
                 if (standing > bestStanding) {
@@ -64,6 +71,12 @@ public final class BlueprintPlacement {
 
             return best;
         });
+    }
+
+    private static Blueprint withLocalMaterials(ServerWorld world, UUID colonyId, ColonyPos origin, Blueprint plan) {
+        return VillageColonyMod.COLONIES.find(colonyId)
+                .map(colony -> ConstructionPalette.atSite(world, colony, plan, origin))
+                .orElse(plan);
     }
 
     /** Quantas peças desta planta, posta neste lugar, já estão de pé no mundo; de outra madeira também (Regra 262). */

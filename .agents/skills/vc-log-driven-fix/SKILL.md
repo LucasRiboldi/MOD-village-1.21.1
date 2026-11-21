@@ -1,10 +1,10 @@
 ---
 name: vc-log-driven-fix
 description: >-
-  Use quando o autor fornecer evidência de uma falha do Village Colony (Fabric 1.21.1)
-  em latest.log, crash-report, saída de teste ou relatório VC_* e pedir diagnóstico
-  ou correção. Features, refatorações e ajustes de documentação sem falha associada
-  ficam fora deste fluxo.
+  Use sempre que o autor disser que entrou no jogo ou testou o Village Colony,
+  mesmo sem anexar logs. Use também com falha em latest.log, crash-report,
+  saída de teste ou relatório VC_* quando pedir diagnóstico ou correção.
+  Features isoladas, refatorações e documentação sem playtest ou falha ficam fora.
 ---
 
 # Correção orientada a logs do Village Colony
@@ -12,6 +12,8 @@ description: >-
 Siga `CLAUDE.md` §§0.2.2, 2 e 2.1 e o fluxo de playtest do `AGENTS.md`. Antes de cada etapa coberta pelo §0.2.2, recomende modelo e esforço e aguarde `ok`. A escolha numerada autoriza o escopo da correção.
 
 ## 1. Recortar a evidência
+
+Os relatos "entrei no jogo" e "testei", e suas variações no contexto do Village Colony, acionam este fluxo obrigatoriamente. Procure o log e os relatórios locais mais recentes e confirme a versão efetivamente carregada. Cruze todas as notas com as imagens anexas, usando o nome original de cada arquivo para evitar confundir numeração de anexos. Inclua cada nota no plano: confirmação positiva como regressão, defeito como correção e pedido novo como mudança proposta. Não trate hipótese ou pedido novo como defeito já reproduzido. Se os arquivos não estiverem acessíveis, peça a evidência que falta. O gatilho autoriza a análise; a correção continua dependente da escolha do autor.
 
 Use trechos do `logs/latest.log` mais recente, `crash-reports/crash-*.txt`, saída de testes ou relatórios `VC_*`. Em playtest, comece pelas notas `VC_BIOME_NOTE` e pelos dados de `/vc dados`, `/vc bioma` e `/vc log`. Confira a versão, o horário e o cenário. Isole as linhas do sintoma e a cadeia `ERROR` / `Exception` / `Caused by` relevante.
 
