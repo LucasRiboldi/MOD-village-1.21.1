@@ -124,6 +124,9 @@ public final class GroundPickup {
             for (ItemEntity item : world.getEntitiesByClass(ItemEntity.class,
                     villager.getBoundingBox().expand(PASSING_REACH),
                     drop -> drop.isAlive() && villager.squaredDistanceTo(drop) <= PASSING_REACH * PASSING_REACH)) {
+                if (EarthSurplus.full(world, chests, item.getStack().getItem())) {
+                    continue;
+                }
                 int left = item.getStack().getCount();
                 for (ColonyPos chest : chests) {
                     left = ChestDepositor.deposit(world, chest, item.getStack().getItem(), left);

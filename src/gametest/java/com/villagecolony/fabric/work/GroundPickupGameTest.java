@@ -35,6 +35,47 @@ public final class GroundPickupGameTest implements FabricGameTest {
 
     private static final int TICKS = 600;
 
+    /** Regra 350: com o teto de terra nos baús, a terra solta fica no chão; abaixo dele, é guardada. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_pickup", tickLimit = 40)
+    public void earthAboveTheCeilingStaysOnTheGround(TestContext context) {
+        context.getWorld().setTimeOfDay(2_000);
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST)));
+        VillageColonyMod.COLONIES.register(colony);
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(2, 2, 4));
+        villager.setBreedingAge(0);
+        villager.setAiDisabled(true);
+        VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        Vec3d at = Vec3d.ofBottomCenter(context.getAbsolutePos(new BlockPos(2, 2, 5)));
+        ItemEntity earth = new ItemEntity(context.getWorld(), at.x, at.y, at.z, new ItemStack(Items.DIRT, 5));
+        ItemEntity stone = new ItemEntity(context.getWorld(), at.x, at.y, at.z, new ItemStack(Items.COBBLESTONE, 5));
+        earth.setPickupDelayInfinite();
+        stone.setPickupDelayInfinite();
+        context.getWorld().spawnEntity(earth);
+        context.getWorld().spawnEntity(stone);
+
+        try {
+            List<ColonyPos> chests = ColonyChests.nearestFirst(context.getWorld(), colony.id(),
+                    MinecraftTypeAdapter.toColonyPos(villager.getBlockPos()));
+
+            context.assertTrue(!chests.isEmpty(), "o cenário não tem baú da colônia");
+            com.villagecolony.fabric.integration.ChestDepositor.deposit(context.getWorld(), chests.get(0), Items.DIRT,
+                    com.villagecolony.core.coordination.StockCeiling.RAW);
+            GroundPickup.collectNearby(context.getWorld(), colony);
+
+            context.assertTrue(earth.isAlive(), "Regra 350: a terra acima do teto foi guardada");
+            context.assertTrue(!stone.isAlive(), "o controle: a pedra solta devia ser guardada");
+        } finally {
+            VillageColonyMod.WORKERS.remove(villager.getUuid());
+            VillageColonyMod.COLONIES.remove(colony.id());
+            villager.discard();
+            earth.discard();
+            stone.discard();
+        }
+
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_pickup", tickLimit = TICKS)
     public void workerCollectsWhileWalkingPast(TestContext context) {
         context.getWorld().setTimeOfDay(2_000);
