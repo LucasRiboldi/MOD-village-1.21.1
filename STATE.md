@@ -21,8 +21,8 @@
   Depois vêm F1 (a vila trabalha) e o portão Beta 0.5.0.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, teste que falha, correção,
   Sentinela, commit, JAR.
-- **Ciclo 0.4.113:** A8, A7, A9, A6 e A2 (Regras 349 a 353) passaram em 21, 3, 8, 18 e 6 GameTests focados, respectivamente.
-  O Sentinela passou com 1.228 GameTests após o A2. O próximo item é A3a. Retomada no [plano do ciclo](docs/technical/Proximo-ciclo-0113.md).
+- **Ciclo 0.4.113:** A8, A7, A9, A6, A2 e A3a (Regras 349 a 354) passaram em 21, 3, 8, 18, 6 e 9 GameTests focados, respectivamente.
+  O Sentinela passou com 1.228 GameTests após o A3a. O próximo item é A4. Retomada no [plano do ciclo](docs/technical/Proximo-ciclo-0113.md).
 
 ## Candidatas que esperam jogo
 

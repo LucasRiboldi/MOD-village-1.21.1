@@ -4,8 +4,8 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 246
-- **Só usa a classe indicada:** 91
+- **Cita a regra:** 248
+- **Só usa a classe indicada:** 90
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
 
@@ -164,7 +164,7 @@ classe prova menos ainda.
 | 151 | O aldeão da colônia prefere a rua e evita a água (autor 10-28, jogo da 0.3.104: 4 de 7 te… | classe | FencedInGameTest, StreetRouteGameTest, StreetRouteTest |
 | 152 | O solo da vila nasce suave na geração (autor 10-29: crateras e montanhas no meio das vila… | classe | ClearAbovePieceGameTest, VillageBlendTest, VillageCoreTest |
 | 153 | Mais ajudas de quem está sem tarefa (autor 10-28, O1/O3/O4/O8; pedido de novo em 10-29),… | classe | GroundSmoothingGameTest, IdleFixesGameTest, ItemStockGameTest |
-| 154 | Lenhador, fundidor e fazendeiro: os ajustes do O5–O7 (autor 10-28; pedido de novo em 10-2… | classe | ChestPlacerGameTest, IdleFixesGameTest, ItemStockGameTest |
+| 154 | Lenhador, fundidor e fazendeiro: os ajustes do O5–O7 (autor 10-28; pedido de novo em 10-2… | cita | VillageGroveGameTest |
 | 155 | A boca da mina ganha o portão do autor (10-29, estrutura mine_entrance.nbt, 9×7×5): no lu… | classe | BiomeBlueprintsGameTest, MineLandingGameTest, MineNodeGameTest |
 | 156 | O pedreiro alisa o chão da vila (autor 10-29, 11-06): sem tarefa, uma vez por minuto ele… | classe | GroundSmoothingGameTest, OreTowerGameTest, PlayerGroundGameTest |
 | 157 | O mineiro não quebra o que segura algo solto (autor 10-29, jogo da 0.3.108: o cascalho pe… | classe | MineGravityGameTest, MineLooseGameTest, MineSettlingGameTest |
@@ -281,7 +281,7 @@ classe prova menos ainda.
 | 268 | O bosque acha o chão em qualquer altura (autor 13-11, jogo da 0.4.68: 0 mudas plantadas,… | cita | VillageGroveGameTest |
 | 269 | O prazo do pastor pela distância (rumo a curral, sem prazo pela Regra 309; autor 13-11, j… | cita | ShepherdHerdingGameTest |
 | 270 | Sem ofício fora das análises (autor 13-11, ADR-055 item 7): o aldeão sem ofício do mod nã… | cita | WorkTimeSwingGameTest, test_action_report, test_time_ledger |
-| 271 | A muda do bosque surge, também no deserto (autor 13-11, ADR-055 item 10): o bosque do len… | cita | VillageGroveGameTest |
+| 271 | A muda do bosque surge se faltar no estoque, também no deserto (autor 13-11, ADR-055 item… | cita | VillageGroveGameTest |
 | 272 | Corante das flores (autor 13-11, ADR-055 item 11): no ócio do ofício, o pastor colhe uma… | cita | ShepherdDyesGameTest |
 | 273 | Um construtor por vila (autor 13-11, ADR-055): a vila tem uma obra aberta por vez, então… | cita | ProfessionGrowthTest, ProfessionPolicySetTest, ProfessionShunTest |
 | 274 | A obra conta como trabalho do construtor (autor 13-11, ADR-055 item 14): sem trabalho med… | cita | BedChoiceGameTest |
@@ -364,3 +364,4 @@ classe prova menos ainda.
 | 351 | Grama e caminho na telemetria (autor 21-11, análise A9, emenda à Regra 345): sem autor de… | cita | EditLedgerGameTest, MineFloorGameTest, SiteSurroundingsGameTest |
 | 352 | Tijolos de pedra quando falta argila (autor 21-11, análise A6, emenda à Regra 88): sem ar… | cita | BiomeBlueprintsGameTest, ItemStockGameTest |
 | 353 | Tochas da colônia na mina (autor 21-11, análise A2, exceção à Regra 212): o mineiro insta… | cita | ArchitectureRulesTest, MineLandingGameTest |
+| 354 | Cinco mudas por lenhador no bosque perto da vila (autor 21-11, análise A3a): o lenhador u… | cita | VillageGroveGameTest |

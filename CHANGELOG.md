@@ -27,6 +27,8 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
   Os catálogos de adiantamento e estoque acompanham a troca, e as peças já assentadas ficam de pé.
 - Regra 353: o mineiro ilumina a escada, os patamares e os salões com tochas da colônia sem custo.
   As tochas geram o anel de luz e bloqueiam o nascimento natural de monstros nas proximidades.
+- Regra 354: o bosque perto da vila mantém cinco mudas por lenhador e usa o estoque primeiro.
+  A falta de pó de osso para adubação é suprida em lotes de 16, registrados no `VC_SUPPLY`.
 
 ## [0.4.112] — candidata, 2026-11-20
 

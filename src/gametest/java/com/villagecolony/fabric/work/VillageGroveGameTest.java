@@ -3,20 +3,34 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
+import com.villagecolony.core.coordination.SupplyException;
+import com.villagecolony.core.storage.model.WorkerStorage;
+import com.villagecolony.core.task.model.TaskPriority;
+import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.ChestDepositor;
+import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.fabric.integration.Supplies;
 import com.villagecolony.gametest.ColonyFixture;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.SaplingBlock;
+import net.minecraft.item.Items;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
- * Pedido do autor de 2026-10-08: o lenhador planta seis mudas perto da vila, onde
+ * Regras 154 e 354: o lenhador planta cinco mudas perto da vila, onde
  * não atrapalham obra futura — fora da caixa da vila, longe da rua (o lote novo
  * nasce ao lado dela) e afastadas entre si.
  *
@@ -34,8 +48,8 @@ public class VillageGroveGameTest implements FabricGameTest {
      */
     private static final int PATH_X = 11;
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_grove_three_saplings_grow_near_the_village_away_from_the_road", tickLimit = 100)
-    public void threeSaplingsGrowNearTheVillageAwayFromTheRoad(TestContext context) {
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_grove_stock_and_bone_meal", tickLimit = 100)
+    public void theGrovePlantsFiveFromStockAndDeclaresItsBoneMeal(TestContext context) {
         ServerWorld world = context.getWorld();
 
         for (int x = -9; x <= 15; x++) {
@@ -56,13 +70,32 @@ public class VillageGroveGameTest implements FabricGameTest {
 
         ColonyFixture owned = ColonyFixture.create().owning(colony);
         int pathX = context.getAbsolutePos(new BlockPos(PATH_X, Y, 0)).getX();
+        UUID worker = UUID.randomUUID();
+        owned.owning(worker);
+        VillageColonyMod.WORKERS.register(worker, colony.id()).assign(ProfessionType.LUMBERJACK);
+        BlockPos chestPos = context.getAbsolutePos(new BlockPos(3, Y + 1, 3));
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(chestPos);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(worker, chest));
+        world.setBlockState(chestPos, Blocks.CHEST.getDefaultState());
+        ChestDepositor.deposit(world, chest, Items.OAK_SAPLING, 88);
+        ChestDepositor.deposit(world, chest, Items.BONE_MEAL, 5);
+        VillageColonyMod.TASKS.create(colony.id(), TaskType.COLLECT_WOOD, TaskPriority.PRODUCTION, ResourceType.OAK_LOG, 8)
+                .reserveFor(worker);
 
         try {
-            int planted = VillageGrove.tendNow(world, colony);
+            context.assertTrue(LumberjackWork.run(world, colony) == 1, "o lenhador devia estar com pedido de madeira ativo");
             List<BlockPos> grove = VillageGrove.of(colony.id());
 
-            context.assertTrue(planted == 6 && grove.size() == 6,
-                    "o bosque não ficou com seis mudas: " + planted + " " + grove);
+            context.assertTrue(ColonyChests.countIn(world, List.of(chest), Items.OAK_SAPLING) == 83,
+                    "A3a: o lenhador não usou cinco das 88 mudas do estoque");
+            context.assertTrue(grove.size() == 5, "A3a: o bosque não ficou com cinco mudas: " + grove);
+            context.assertTrue(Supplies.sessionCount(colony.id(), SupplyException.GROVE_SAPLING) == 0,
+                    "A3a: o VC_SUPPLY contou mudas do estoque como surgidas");
+            context.assertTrue(ColonyChests.countIn(world, List.of(chest), Items.BONE_MEAL) == 4,
+                    "A3a: a adubação não preservou a reserva de quatro pós de osso");
+            context.assertTrue(Supplies.sessionCount(colony.id(), SupplyException.BONE_MEAL_FOR_THE_GROVE) == 16
+                            && Supplies.takeItems(colony.id()).equals(Map.of("bone_meal", 16)),
+                    "A3a: o pó de osso do bosque não foi declarado em um lote de 16");
 
             for (BlockPos spot : grove) {
                 context.assertTrue(!box.containsColumn(spot.getX(), spot.getZ(), VillageGrove.NEAR - 1),
@@ -72,8 +105,8 @@ public class VillageGroveGameTest implements FabricGameTest {
                 context.assertTrue(Math.abs(spot.getX() - pathX) >= VillageGrove.ROAD_CLEARANCE,
                         "uma muda nasceu ao lado da rua, onde os lotes nascem: " + spot);
                 // A farinha de osso pode já ter feito a muda virar árvore.
-                context.assertTrue(world.getBlockState(spot.up()).isIn(net.minecraft.registry.tag.BlockTags.SAPLINGS)
-                                || world.getBlockState(spot.up()).isIn(net.minecraft.registry.tag.BlockTags.LOGS),
+                context.assertTrue(world.getBlockState(spot.up()).isIn(BlockTags.SAPLINGS)
+                                || world.getBlockState(spot.up()).isIn(BlockTags.LOGS),
                         "não há muda nem árvore em " + spot);
 
                 for (BlockPos other : grove) {
@@ -85,9 +118,18 @@ public class VillageGroveGameTest implements FabricGameTest {
 
             context.assertTrue(VillageGrove.tendNow(world, colony) == 0,
                     "com o bosque cheio o lenhador plantou mais");
+            context.assertTrue(Supplies.takeItems(colony.id()).isEmpty(),
+                    "A3a: o bosque abriu outro lote de pó de osso com o primeiro ainda disponível");
+
+            for (int round = 0; round < 8; round++) {
+                VillageGrove.tendNow(world, colony);
+            }
+            context.assertTrue(grove.stream().map(spot -> world.getBlockState(spot.up()))
+                            .anyMatch(state -> state.isIn(BlockTags.LOGS) || state.getOrEmpty(SaplingBlock.STAGE).orElse(0) > 0),
+                    "A3a: o pó de osso não adiantou o crescimento de nenhuma muda");
 
             // P7a, bosque-fazenda: a árvore madura do bosque é a escolhida, e o
-            // bosque tem seis mudas por lenhador.
+            // bosque tem cinco mudas por lenhador (Regra 354).
             BlockPos grown = grove.get(0).up();
             world.setBlockState(grown, Blocks.OAK_LOG.getDefaultState());
 
@@ -95,12 +137,9 @@ public class VillageGroveGameTest implements FabricGameTest {
                             .filter(grown::equals).isPresent(),
                     "o tronco que cresceu no bosque não foi o escolhido");
 
-            for (int i = 0; i < 2; i++) {
-                UUID lumberjack = UUID.randomUUID();
-                VillageColonyMod.WORKERS.register(lumberjack, colony.id())
-                        .assign(com.villagecolony.core.worker.model.ProfessionType.LUMBERJACK);
-                owned.owning(lumberjack);
-            }
+            UUID lumberjack = UUID.randomUUID();
+            VillageColonyMod.WORKERS.register(lumberjack, colony.id()).assign(ProfessionType.LUMBERJACK);
+            owned.owning(lumberjack);
 
             context.assertTrue(VillageGrove.sizeFor(colony.id()) == 2 * VillageGrove.SIZE,
                     "dois lenhadores, e o bosque não dobrou: " + VillageGrove.sizeFor(colony.id()));

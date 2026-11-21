@@ -16,6 +16,7 @@ Na retomada de 21-11, `GameTestBatchRuleTest` falhou porque dois testes de `Grou
 | A9 telemetria | **Candidata (Regra 351).** O vigia ignora transições de grama e caminho sem autor declarado. O relatório histórico desconsidera as equivalentes atribuídas a `mod?natural`. O nivelamento em volta da obra e o reparo do piso da mina registram `entorno_obra` e `piso_mina` ao escrever. As regressões falharam sem a correção. Com ela, passaram oito GameTests focados e 196 testes Python. Falta confirmação no próximo jogo. |
 | A6 terracota | **Candidata (Regra 352).** Sem argila nos baús acessíveis ou exposta na área de coleta carregada, a planta pede tijolos de pedra e o estoque deixa de pedir terracota. A leitura da obra reconhece as peças já assentadas. Os dois testes novos falharam sob mutação. Com a regra restaurada, passaram 18 GameTests focados e 196 testes Python. Falta confirmação no próximo jogo. |
 | A2 luz da mina | **Candidata (Regra 353).** O mineiro usa tochas da colônia na parede da escada a cada seis degraus, em cada patamar e no chão dos salões em grade de seis blocos. As duas regressões falharam no código anterior e sob mutação. Com a correção, passaram 6 GameTests focados e 196 testes Python. Falta confirmação no próximo jogo. |
+| A3a bosque | **Candidata (Regra 354).** Cinco mudas por lenhador, inclusive durante pedido de madeira. O cenário usa cinco das 88 mudas de carvalho, preserva a reserva de quatro pós de osso e confirma o lote de 16 no `VC_SUPPLY` e o avanço do crescimento. A busca do bosque usa a posição do lenhador. Falta medir as caminhadas e a entrega de toras no próximo jogo. |
 
 Sentinela `fast` de 21-11 (`20261121T040824Z`): unitários e propriedade passaram. Dos 1.224 GameTests, só o cenário do A7 falhou. A análise foi gerada em `reports/sentinel-analysis/20261121T041222Z/`. A matriz de regras inclui a 349, e a suíte Python passou após limpar a variável de configuração Git herdada.
 
@@ -42,6 +43,12 @@ curral MAE. A análise está em `reports/sentinel-analysis/20261121T055449Z/`.
 Depois de isolar esse cenário no lote `mine_stair_colony_torches`, passaram os testes unitários,
 de propriedade e os 1.228 GameTests (`20261121T055553Z`). A análise está em
 `reports/sentinel-analysis/20261121T060022Z/`. O build final passou.
+
+Após o A3a, o Sentinela `fast` (`20261121T061045Z`) passou na primeira
+execução em unitários, propriedade e 1.228 GameTests. A análise está em
+`reports/sentinel-analysis/20261121T061527Z/`. O build final e os 196 testes
+Python passaram. A regressão do estoque falhou sob mutação e os nove
+GameTests focados passaram com a regra restaurada.
 
 ## O que falta fazer, na ordem
 

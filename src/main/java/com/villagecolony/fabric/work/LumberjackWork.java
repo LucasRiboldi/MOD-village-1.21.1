@@ -243,6 +243,7 @@ public final class LumberjackWork {
             }
             LumberjackReport.reportIdle(colony);
         } else {
+            VillageGrove.tend(world, colony.id());
             IdleLog.clear(colony.id(), SUBJECT);
         }
 

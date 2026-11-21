@@ -31,7 +31,8 @@ public enum SupplyException {
     CLAY_ON_REQUEST(301, "a argila e a bola de argila que o fundidor pede, no baú dele, na hora do pedido,"
             + " quando nenhum baú da vila tem"),
     BONE_MEAL_FOR_THE_FARM(310, "o pó de osso que o fazendeiro põe na plantação, quando a composteira dele não está cheia"
-            + " e os baús da vila não têm mais que 16");
+            + " e os baús da vila não têm mais que 16"),
+    BONE_MEAL_FOR_THE_GROVE(354, "o pó de osso que o lenhador usa no bosque, sem excedente nos baús da vila");
 
     private final int rule;
 

@@ -4,17 +4,24 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.coordination.SupplyException;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.RoadNetwork;
+import com.villagecolony.fabric.integration.Supplies;
+import com.villagecolony.fabric.integration.VillageTrees;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.Fertilizable;
+import net.minecraft.item.Items;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Heightmap;
+import net.minecraft.world.WorldEvents;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -26,8 +33,7 @@ import java.util.OptionalInt;
 import java.util.UUID;
 
 /**
- * O bosque do lenhador perto da vila — pedido do autor, 2026-10-08: <i>"plantar
- * três mudas perto da vila em espaços que não atrapalhariam"</i>, longe de onde a
+ * O bosque do lenhador perto da vila (Regras 154, 271 e 354), longe de onde a
  * vila vai construir.
  *
  * <p>No playtest de 08-10 nenhuma árvore ficava no miolo da vila; as 32 cortadas
@@ -42,9 +48,9 @@ import java.util.UUID;
  * muda fica a {@link #ROAD_CLEARANCE} dela —, e as outras mudas do bosque a
  * {@link #SPACING}. Mantém {@link #SIZE} vivas: a cortada é reposta.
  *
- * <p><b>E cresce logo</b> (A8): a cada conferência, uma farinha de osso em cada muda
- * do bosque — do baú da colônia se houver, senão ela aparece, como todo ingrediente
- * de drop (decisão do autor de 2026-09-30, {@code DropIngredients}).
+ * <p>Regra 354: usa a muda da espécie escolhida do estoque quando disponível.
+ * A cada conferência, aplica pó de osso em cada muda, acima da reserva da Regra 349
+ * ou de um lote declarado no {@code VC_SUPPLY}.
  */
 public final class VillageGrove {
 
@@ -52,8 +58,8 @@ public final class VillageGrove {
         ServerMemory.register(VillageGrove.class, VillageGrove::clearAll);
     }
 
-    /** Quantas mudas o bosque tem — eram 3; o autor pediu mais (A8, 2026-10-08). */
-    public static final int SIZE = 6;
+    /** Quantas mudas o bosque tem por lenhador (Regra 354). */
+    public static final int SIZE = 5;
 
     /** A distância mínima e máxima da borda da vila — o bosque perto da vila (O5, autor 2026-10-28; era até 10). */
     static final int NEAR = 4;
@@ -109,6 +115,7 @@ public final class VillageGrove {
     }
 
     private static final Map<UUID, Long> CHECKED = new HashMap<>();
+    private static final Map<UUID, Integer> APPEARED_BONE_MEAL = new HashMap<>();
 
     /** Mudas que vieram de árvores cortadas longe, a mais no bosque — regra do autor, 2026-10-11. */
     private static final Map<UUID, Integer> MOVED = new HashMap<>();
@@ -130,7 +137,7 @@ public final class VillageGrove {
     }
 
     /**
-     * Repõe o bosque até {@link #SIZE}, sem o relógio — para o teste.
+     * Repõe o bosque e aduba as mudas. Quem chama controla o intervalo.
      *
      * @return quantas mudas foram plantadas agora
      */
@@ -153,6 +160,7 @@ public final class VillageGrove {
         int planted = 0;
         int size = sizeFor(colony.id()) * (isDesert(world, colony) ? DESERT_FACTOR : 1);
 
+        List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.id(), colony.center());
         while (grove.size() < size) {
             Optional<BlockPos> spot = spotFor(world, colony, box.get(), grove);
 
@@ -169,10 +177,11 @@ public final class VillageGrove {
 
             grove.add(spot.get());
             planted++;
-            // A muda do bosque surge, também no deserto, e entra na conta do que surge (Regra 271).
-            com.villagecolony.fabric.integration.Supplies.record(com.villagecolony.core.coordination.SupplyException.GROVE_SAPLING,
-                    colony.id(), TreeNursery.idOf(world.getBlockState(spot.get().up()).getBlock()).toString(), 1);
-            com.villagecolony.fabric.integration.VillageTrees.rememberSapling(colony.id(), spot.get().up());
+            Block placed = world.getBlockState(spot.get().up()).getBlock();
+            if (ColonyChests.withdraw(world, chests, placed.asItem(), 1) == 0) {
+                Supplies.record(SupplyException.GROVE_SAPLING, colony.id(), TreeNursery.idOf(placed).toString(), 1);
+            }
+            VillageTrees.rememberSapling(colony.id(), spot.get().up());
 
             VillageColonyMod.LOGGER.info(
                     "Colony {} — the lumberjack planted {} near the village at {} (grove {} of {})",
@@ -181,41 +190,38 @@ public final class VillageGrove {
                     spot.get().toShortString(), grove.size(), size);
         }
 
-        fertilize(world, colony, grove);
+        fertilize(world, colony.id(), grove, chests);
 
         return planted;
     }
 
     /** Uma farinha de osso em cada muda do bosque. */
-    private static void fertilize(ServerWorld world, Colony colony, List<BlockPos> grove) {
-        java.util.List<ColonyPos> chests = null;
-
+    private static void fertilize(ServerWorld world, UUID colonyId, List<BlockPos> grove, List<ColonyPos> chests) {
         for (BlockPos ground : grove) {
             BlockPos sapling = ground.up();
-            net.minecraft.block.BlockState state = world.getBlockState(sapling);
+            BlockState state = world.getBlockState(sapling);
 
-            if (!(state.getBlock() instanceof net.minecraft.block.Fertilizable plant)
+            if (!(state.getBlock() instanceof Fertilizable plant)
                     || !state.isIn(BlockTags.SAPLINGS)
                     || !plant.isFertilizable(world, sapling, state)) {
                 continue;
             }
 
-            if (chests == null) {
-                chests = com.villagecolony.fabric.integration.ColonyChests.nearestFirst(
-                        world, colony.id(), colony.center());
-            }
-
-            if (com.villagecolony.fabric.integration.ColonyChests.countIn(
-                    world, chests, net.minecraft.item.Items.BONE_MEAL) > 0) {
-                com.villagecolony.fabric.integration.ColonyChests.withdraw(
-                        world, chests, net.minecraft.item.Items.BONE_MEAL, 1);
+            if (KeepLedger.atMost("bone_meal", ColonyChests.countIn(world, chests, Items.BONE_MEAL), BoneMealRound.CHEST_RESERVE)
+                    || ColonyChests.withdraw(world, chests, Items.BONE_MEAL, 1) == 0) {
+                int left = APPEARED_BONE_MEAL.getOrDefault(colonyId, 0);
+                if (left == 0) {
+                    Supplies.record(SupplyException.BONE_MEAL_FOR_THE_GROVE, colonyId, "bone_meal", BoneMealRound.SURGE);
+                    left = BoneMealRound.SURGE;
+                }
+                APPEARED_BONE_MEAL.put(colonyId, left - 1);
             }
 
             if (plant.canGrow(world, world.getRandom(), sapling, state)) {
                 plant.grow(world, world.getRandom(), sapling, state);
             }
 
-            world.syncWorldEvent(net.minecraft.world.WorldEvents.BONE_MEAL_USED, sapling, 15);
+            world.syncWorldEvent(WorldEvents.BONE_MEAL_USED, sapling, 15);
         }
     }
 
@@ -266,6 +272,7 @@ public final class VillageGrove {
 
         return GROVES.getOrDefault(colonyId, List.of()).stream()
                 .map(BlockPos::up)
+                .filter(world::isChunkLoaded)
                 .filter(log -> world.getBlockState(log).isIn(BlockTags.LOGS))
                 .filter(usable)
                 .min(java.util.Comparator.comparingDouble(log -> log.getSquaredDistance(from)));
@@ -464,6 +471,7 @@ public final class VillageGrove {
     public static void clearAll() {
         GROVES.clear();
         CHECKED.clear();
+        APPEARED_BONE_MEAL.clear();
         MOVED.clear();
         PLANTED.clear();
     }

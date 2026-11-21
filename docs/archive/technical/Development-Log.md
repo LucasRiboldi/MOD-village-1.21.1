@@ -2,6 +2,25 @@
 
 # Development-Log.md
 
+## 21-11-2026 — A3a, estoque e adubação do bosque
+
+O log do jogo registrou seis mudas surgidas no primeiro plantio e cinco
+desistências por falta de aproximação. O relatório mostrou 88 mudas guardadas,
+estoque de toras zerado e 67% do tempo do lenhador em caminhada.
+
+A Regra 354 passa a usar cinco mudas por lenhador, com retirada do estoque
+da espécie escolhida após o plantio. A Regra 271 cobre a falta da muda, e o
+pó de osso do bosque que surge é declarado em lotes de 16. O atendimento
+do bosque ocorre também com pedido de madeira em curso. A busca de reserva
+do bosque mede a distância a partir do lenhador.
+
+O GameTest reproduziu o estoque intacto no código anterior. A regressão
+cobre retirada do baú, limite do bosque, reserva de pó de osso, contagem
+dos itens que surgiram e avanço do crescimento Vanilla em `SaplingBlock`.
+O teste falhou sob mutação. Passaram nove GameTests focados, 196 testes
+Python, o build final e o Sentinela `fast` com 1.228 GameTests.
+O efeito nas caminhadas e na entrega de toras depende do próximo jogo.
+
 ## 04-11-2026 — MAE Fase 3, acesso e leitura estrita parciais
 
 Implementação e testes focados autorizados; PR #51 integrado e nova linha
