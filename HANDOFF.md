@@ -4,7 +4,8 @@ Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e
 
 ## Retomada de 2026-11-21
 
-- **Prioridade atual:** autor jogou a 0.4.115 e escolheu a opção 2, pastor primeiro (N05/N26/N27).
+- **Prioridade atual:** autor escolheu a reconexão da mina e da casa do mineiro no Lote A (N12/N28).
+  O ciclo anterior tratou o pastor (N05/N26/N27) na candidata 0.4.116.
   As 28 notas, seis imagens e demais pendências estão em `docs/technical/Plano-Playtest-0.4.115-2026-11-21.md`;
   o relatório é `docs/testing/relatorios/jogo-0.4.115-2026-11-21.md`. Não descartar os outros lotes.
 - **Branch de retomada:** `fix/miolo-pelas-pecas`. Busque essa branch no GitHub para retomar em outra máquina.
@@ -20,9 +21,8 @@ Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e
   `mods/` têm SHA-256 `702fda50d734e8a8c77baab8a809c83a489955d37a866829fdf4ac97426ce01a`.
   A 0.4.116 é o único JAR ativo do Village Colony no TLauncher. A 0.4.115 ficou como `.jar.disabled`.
   Os relatórios brutos sob `reports/` são locais. O plano registra o resumo e a identificação das execuções.
-- **Próximo passo:** validar o pastor em jogo com a 0.4.116 e coletar `/vc salvar`. O último carregamento
-  registrado no log consultado ainda era 0.4.115. Se o pastor passar, a próxima correção indicada é o Lote A,
-  começando por duas casas em alturas diferentes e pela reconexão do nó da mina/casa após editar o terreno.
+- **Próximo passo:** reproduzir em GameTest a perda de conexão após mudança de terreno na opção escolhida do Lote A.
+  O pastor da 0.4.116 ainda aguarda playtest. Ao final do próximo jogo, use `/vc salvar`.
   Lotes C, D e E seguem no plano. A autoria do corte no arco ainda precisa de evidência.
 - **Regras do autor:** relato de que entrou no jogo/testou sempre usa `vc-log-driven-fix`.
   Toda versão nova deve atualizar `downloads/` e `%APPDATA%/.minecraft/mods`, com SHA-256 igual ao build
@@ -58,7 +58,7 @@ Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e
 - **Armadilhas já vistas:** ErrorProne com `-Werror` (parênteses, campos não lidos); `FileSizeRuleTest` (500 linhas); `ArchitectureRulesTest` (sem ciclo de pacote); `MineMarks.dug` apaga marcas a 8 blocos; a escada planejada da mina começa na altura da boca.
 - **Avisar o autor:** a trava `wool` foi mantida contra o "saem" dele (é lógica, protege a lã branca); a tocha da colônia na mina abre exceção à Regra 212.
 
-## Onde o projeto está
+## Histórico até a 0.4.93
 
 - **Versão:** 0.4.93 na `main` (branch `fix/jogo-0490` integrada por PR), **não jogada**; publicada como [`v0.4.93-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.93-alpha). A 0.4.79 foi jogada em 2026-11-13 (taiga, Spark `oujZp2IxmS`); a triagem dos oito sintomas virou as Regras 275 a 282.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, ele escolhe, teste que falha, correção, Sentinela, commit, JAR.
@@ -84,7 +84,7 @@ Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e
   - 0.4.84, Regra 284 (VF-010): o animal atravessa o portão amarrado; relógio, vaca solta e canal de água estáveis nos GameTests.
   - 0.4.83, Regra 283 (GameTests instáveis de 14-11): o pastor só recolhe dentro da caixa da vila; testes do pastor, da tosquia e da taiga sem depender dos vizinhos (os lotes rodam juntos num mundo só).
 
-## O próximo passo
+### Roteiro histórico da 0.4.93
 
 **O autor precisa jogar a 0.4.93 num mundo novo e mandar o Spark,** num jogo longo (o da 0.4.91 durou 6 min e não gerou `VC_TIME`). Confira `VC_TERRAIN` com nivelados todo dia (Regra 323), `CLEARED_LEAVES` do lenhador (324) e a plantação grande entregue inteira semeada (325); o modo do grafo é `atual` até o autor trocar com `/vc grafo modo`. Da 0.4.92: Confira a frente das portas no nível do chão (Regra 313) e o caminho na porta da BigHouseMOD (Regra 314). Da 0.4.91: Confira `doors` acima de 0 no `VC_GROUND` (Regra 305), `fixed=` e `loose=` no `VC_ROAD_GRAPH` (306 e 307), `CLAY_ON_REQUEST` e `BONE_MEAL_FOR_THE_FARM` no `VC_SUPPLY` (308 e 310), animais no curral grande (309), `MISSING_PIECE` de areia (311) e o mineiro sem voltar a encalhar no mesmo ponto (312). Da 0.4.90: As Regras 288, 296, 298, 303 e 304 (geração) só valem em chunk e vila gerados depois delas; confira também `doors` no `VC_GROUND`, `VC_PENS` com animais no curral grande e `CLAY_ON_REQUEST` no `VC_SUPPLY`; confira `refused=` no `VC_ROAD_GRAPH`, `moved`/`most` no `VC_GROUND` e `maxStep` no `VC_SITE_EDGE`. As triagens dos jogos da 0.4.85 e da 0.4.86 deixaram achados abertos no `TODO.md`. Use as notas `/vc bioma nota` e a lista `docs/testing/checklist-jogo-avaliacao.md`. Ao receber o log, siga `CLAUDE.md` §0.2.2 e confira:
 
@@ -110,7 +110,7 @@ Em aberto no `TODO.md`: VF-001 a VF-003 da varredura e os itens das fases F0 a F
 3. `STATE.md` (cabe em 150 linhas).
 4. `docs/audit/2026-11-13-avaliacao-qualidade.md`: notas, portões e cronograma até a 1.0. O `TODO.md` segue as fases dele;
    os abertos antigos foram triados em `docs/technical/TODO-herdado-2026-11-13.md` (cada um diz se fechou ou para onde foi).
-5. `docs/RULES.md`: procure a regra por número. As mais recentes são 263 a 269. ADRs: índice em `docs/decisions/README.md`.
+5. `docs/RULES.md`: procure a regra por número. ADRs ficam no índice `docs/decisions/README.md`.
 
 ## Regras do autor que não estão nos outros documentos
 

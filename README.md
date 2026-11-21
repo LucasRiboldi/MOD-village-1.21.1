@@ -19,7 +19,7 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Candidata 0.4.116 na branch `fix/miolo-pelas-pecas`.** Corrige o pastor após o jogo da 0.4.115 e aguarda playtest. A release na linha `main` é a 0.4.110. Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
+**Candidata 0.4.116.** Corrige o pastor após o jogo da 0.4.115 e aguarda playtest. A versão publicada é [`v0.4.110-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.110-alpha). Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
 [docs/RULES.md](docs/RULES.md). As 28 notas e seis imagens do último jogo estão no
 [plano de correção](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md); o autor escolheu pastor primeiro.
@@ -914,6 +914,7 @@ Os perfis de trabalho e as skills utilizadas neste repositório estão em
 - `minecraft-villager-systems` e `minecraft-code-research` para profissão,
   rotina, caminho, estoque e diagnóstico de aldeões.
 - `minecraft-testing` para testes unitários e GameTests.
+- [`vc-log-driven-fix`](.agents/skills/vc-log-driven-fix/SKILL.md) para diagnosticar falhas com recortes de log, apresentar opções ao autor e verificar a correção escolhida.
 - `minecraft-resource-pack` e `minecraft-world-generation` só quando a tarefa for
   textura ou geração de mundo.
 - Skills fora do escopo de um mod Fabric (Paper, servidor, datapack, multiloader…)

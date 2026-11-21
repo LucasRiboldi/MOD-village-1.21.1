@@ -61,6 +61,7 @@ Siga `CLAUDE.md` §0.2.2: testes liberados pelo autor em 2026-11-05, rodados por
 ## Skills
 
 - Relato de que "entrei no jogo" ou "testei" o Village Colony: acione sempre [`vc-log-driven-fix`](.agents/skills/vc-log-driven-fix/SKILL.md), mesmo sem anexos; procure os logs locais e cruze todas as notas com as imagens para montar o plano.
+- Log, falha de teste ou relatório `VC_*`: use a mesma skill quando o autor pedir diagnóstico ou correção.
 - Código Fabric/aldeões: use `fabric-development` e, conforme o escopo, `minecraft-villager-systems`, `minecraft-code-research` e `minecraft-testing`.
 - CI/CD e release: siga `.github/workflows/` (a skill `minecraft-ci-release` está em `docs/archive/skills/`) e mantenha a classificação **categoria 1.9** nas auditorias relacionadas.
 - Carregue skills sob demanda; não abra instruções de áreas que a tarefa não toca.

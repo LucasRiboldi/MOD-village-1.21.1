@@ -10,8 +10,8 @@
 ## Onde o projeto está
 - **Ciclo atual:** jogo da 0.4.115 analisado em 21-11 (28 notas e seis imagens). Autor escolheu o Lote B,
   pastor primeiro, no [plano integral](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
-  Candidata 0.4.116 instalada no TLauncher e à espera de playtest. Lote A é o próximo após essa validação. C, D e E seguem abertos.
-- **Versões:** release `v0.4.110-alpha` na linha `main`. Candidata 0.4.116 na branch `fix/miolo-pelas-pecas`, código em `7a07b38f`.
+  Candidata 0.4.116 instalada no TLauncher e à espera de playtest. Autor escolheu iniciar o Lote A pela reconexão (N12/N28). C, D e E seguem abertos.
+- **Versões:** release publicada `v0.4.110-alpha`. Candidata 0.4.116, código em `7a07b38f`.
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
   jogador e publicação.
