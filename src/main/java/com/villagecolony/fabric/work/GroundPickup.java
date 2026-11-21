@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Regra 48: todo trabalhador recolhe qualquer item solto a cinco blocos ao passar.
+ * Regra 48: todo trabalhador recolhe itens soltos a cinco blocos ao passar, com a exceção de terra da Regra 350.
  * Quem está livre também pode ir buscar material que falta à obra.
  *
  * <p><b>Quem.</b> Um trabalhador da colônia sem tarefa, no expediente, solto
@@ -37,7 +37,7 @@ import java.util.UUID;
  * o pedreiro e o fundidor parados por desenho; esta é a primeira coisa que eles
  * fazem nesse tempo.
  *
- * <p><b>O quê.</b> Perto de qualquer trabalhador, todo item. A busca ativa do
+ * <p><b>O quê.</b> Perto de qualquer trabalhador, itens soltos com a exceção de terra da Regra 350. A busca ativa do
  * ajudante livre continua restrita ao material da obra aberta, dentro da caixa
  * da vila (ou a {@link #REACH} blocos da obra, sem caixa).
  *
@@ -104,7 +104,7 @@ public final class GroundPickup {
         }
     }
 
-    /** Regra 48: qualquer trabalhador que passe a cinco blocos guarda itens soltos nos baús públicos. */
+    /** Recolhe itens soltos até cinco blocos, respeitando o teto da terra (Regras 48 e 350). */
     static int collectNearby(ServerWorld world, Colony colony) {
         // Catar é trabalho: fora do expediente o item espera no chão (Regra 194).
         if (!com.villagecolony.core.coordination.WorkClock.isWorkTime(world.getTimeOfDay())) {

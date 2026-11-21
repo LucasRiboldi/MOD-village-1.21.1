@@ -21,8 +21,8 @@
   Depois vêm F1 (a vila trabalha) e o portão Beta 0.5.0.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, teste que falha, correção,
   Sentinela, commit, JAR.
-- **Ciclo 0.4.113:** A8 (Regra 349) passou em 21 GameTests focados. A7 ainda tem erro no cenário do baú.
-  O [plano do ciclo](docs/technical/Proximo-ciclo-0113.md) registra as verificações e a ordem de retomada.
+- **Ciclo 0.4.113:** A8 (Regra 349) e A7 (Regra 350) passaram em 21 e 3 GameTests focados, respectivamente.
+  O Sentinela `fast` passou após o A7, com 1.224 GameTests. Retomada no [plano do ciclo](docs/technical/Proximo-ciclo-0113.md).
 
 ## Candidatas que esperam jogo
 

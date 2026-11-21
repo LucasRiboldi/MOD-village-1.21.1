@@ -11,9 +11,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * A terra que sobra — Regra 350 (autor, 2026-11-21, jogo da 0.4.111: 868 de terra nos baús, 314 recusadas): quem passa
- * por terra solta no chão só a guarda enquanto os baús da vila têm menos que o teto do cru ({@link StockCeiling#RAW});
- * acima disso ela fica onde caiu e some sozinha. A terra do nivelamento e da descida da mina não tem outro uso.
+ * Regra 350: quem passa por terra solta só a recolhe enquanto o total daquele tipo nos baús acessíveis
+ * estiver abaixo de {@link StockCeiling#RAW}. Ao atingir o teto, a pilha fica no chão.
  */
 final class EarthSurplus {
 

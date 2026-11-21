@@ -2,12 +2,16 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.coordination.StockCeiling;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.ChestDepositor;
+import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.ColonyChests;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
@@ -26,8 +30,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Quem está à toa recolhe do chão o que a obra espera, e só isso — B-1 e Regra
- * 48, decisões do autor de 2026-10-02.
+ * Regras 48 e 350: trabalhadores recolhem itens ao passar e respeitam o teto para terra.
+ * A busca ativa atende ao material da obra.
  */
 public final class GroundPickupGameTest implements FabricGameTest {
 
@@ -35,13 +39,12 @@ public final class GroundPickupGameTest implements FabricGameTest {
 
     private static final int TICKS = 600;
 
-    /** Regra 350: com o teto de terra nos baús, a terra solta fica no chão; abaixo dele, é guardada. */
+    /** Regra 350: a terra solta fica no chão ao atingir o teto e volta a ser recolhida abaixo dele. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ground_pickup_earth_ceiling", tickLimit = 40)
     public void earthAboveTheCeilingStaysOnTheGround(TestContext context) {
         context.getWorld().setTimeOfDay(2_000);
-        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
-        Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST)));
-        VillageColonyMod.COLONIES.register(colony);
+        context.setBlockState(new BlockPos(5, 2, 2), Blocks.CHEST.getDefaultState());
+        Colony colony = colonyWithPublicChest(context);
         VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(2, 2, 4));
         villager.setBreedingAge(0);
         villager.setAiDisabled(true);
@@ -58,13 +61,23 @@ public final class GroundPickupGameTest implements FabricGameTest {
             List<ColonyPos> chests = ColonyChests.nearestFirst(context.getWorld(), colony.id(),
                     MinecraftTypeAdapter.toColonyPos(villager.getBlockPos()));
 
-            context.assertTrue(!chests.isEmpty(), "o cenário não tem baú da colônia");
-            com.villagecolony.fabric.integration.ChestDepositor.deposit(context.getWorld(), chests.get(0), Items.DIRT,
-                    com.villagecolony.core.coordination.StockCeiling.RAW);
-            GroundPickup.collectNearby(context.getWorld(), colony);
+            context.assertTrue(chests.size() == 2, "o cenário deve ter dois baús públicos da colônia");
+            var world = context.getWorld();
+            ColonyPos chest = chests.getFirst();
+            ChestDepositor.deposit(world, chest, Items.DIRT, 128);
+            ChestDepositor.deposit(world, chests.getLast(), Items.DIRT, 128);
+            context.assertTrue(ColonyChests.countIn(world, chests, Items.DIRT) == StockCeiling.RAW,
+                    "o cenário deve somar o teto de terra nos dois baús");
+            GroundPickup.collectNearby(world, colony);
 
-            context.assertTrue(earth.isAlive(), "Regra 350: a terra acima do teto foi guardada");
+            context.assertTrue(earth.isAlive() && earth.getStack().getCount() == 5,
+                    "Regra 350: a terra foi recolhida com o estoque já no teto");
             context.assertTrue(!stone.isAlive(), "o controle: a pedra solta devia ser guardada");
+
+            ChestWithdrawer.withdraw(world, chest, Items.DIRT, 5);
+            GroundPickup.collectNearby(world, colony);
+            context.assertTrue(!earth.isAlive() && ColonyChests.countIn(world, chests, Items.DIRT) == StockCeiling.RAW,
+                    "Regra 350: abaixo do teto a terra devia voltar a ser guardada");
         } finally {
             VillageColonyMod.WORKERS.remove(villager.getUuid());
             VillageColonyMod.COLONIES.remove(colony.id());
@@ -86,16 +99,8 @@ public final class GroundPickupGameTest implements FabricGameTest {
                 context.setBlockState(new BlockPos(x, 3, z), Blocks.AIR.getDefaultState());
             }
         }
-        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
-        Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST)));
-        BlockPos a = context.getAbsolutePos(new BlockPos(0, 0, 0));
-        BlockPos b = context.getAbsolutePos(new BlockPos(14, 6, 8));
-        colony.measure(new com.villagecolony.core.colony.model.VillageBounds(
-                Math.min(a.getX(), b.getX()), Math.min(a.getY(), b.getY()), Math.min(a.getZ(), b.getZ()),
-                Math.max(a.getX(), b.getX()), Math.max(a.getY(), b.getY()), Math.max(a.getZ(), b.getZ())));
+        Colony colony = colonyWithPublicChest(context);
         long now = context.getWorld().getTime();
-        for (long tick = now - Colony.SETTLE_TICKS; tick <= now; tick += 20) colony.attend(tick);
-        VillageColonyMod.COLONIES.register(colony);
 
         VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(2, 2, 5));
         villager.setBreedingAge(0);
@@ -301,6 +306,22 @@ public final class GroundPickupGameTest implements FabricGameTest {
             context.assertTrue(false, "o pedregulho que a obra espera ficou no chão; o aldeão está em " + where
                     + ", ajudando=" + helping);
         });
+    }
+
+    private static Colony colonyWithPublicChest(TestContext context) {
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST)));
+        BlockPos a = context.getAbsolutePos(new BlockPos(0, 0, 0));
+        BlockPos b = context.getAbsolutePos(new BlockPos(14, 6, 8));
+        colony.measure(new VillageBounds(
+                Math.min(a.getX(), b.getX()), Math.min(a.getY(), b.getY()), Math.min(a.getZ(), b.getZ()),
+                Math.max(a.getX(), b.getX()), Math.max(a.getY(), b.getY()), Math.max(a.getZ(), b.getZ())));
+        long now = context.getWorld().getTime();
+        for (long tick = now - Colony.SETTLE_TICKS; tick <= now; tick += 20) {
+            colony.attend(tick);
+        }
+        VillageColonyMod.COLONIES.register(colony);
+        return colony;
     }
 
     /** Regra 48: o diagnóstico mostra todos os destinos públicos sem relaxar as asserções. */

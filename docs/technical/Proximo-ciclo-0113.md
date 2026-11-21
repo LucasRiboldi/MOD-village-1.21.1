@@ -12,14 +12,16 @@ Na retomada de 21-11, `GameTestBatchRuleTest` falhou porque dois testes de `Grou
 | Item | Estado |
 |---|---|
 | A8 travas de cru | **Candidata (Regra 349).** `BoneMealRound.CHEST_RESERVE` e `SmelterAdvance.KEEP` passam a 4. `SmelterAdvance.MINE_FILL` e `ValueGoods.KEEP_RAW` passam a 16. `ingot` sai do `VC_KEEP`; teto de 64 por lingote e trava `wool` de 16 em vigor. Cinco dos 21 GameTests focados falharam sob mutação, e os 21 passaram após restaurar a regra. Falta confirmação no próximo jogo. |
-| A7 terra | **Editado, teste vermelho pelo cenário.** `EarthSurplus` (novo) + filtro em `GroundPickup.collectNearby`; GameTest `earthAboveTheCeilingStaysOnTheGround` falha com "o cenário não tem baú da colônia": falta registrar o baú da colônia como o `workerCollectsWhileWalkingPast` faz (`colony.measure(VillageBounds…)`, `colony.attend(...)` em loop, baú em `CHEST`) antes de `ColonyChests.nearestFirst`. Depois: provar o vermelho tirando o filtro. Regra 350. |
+| A7 terra | **Candidata (Regra 350).** `GroundPickup.collectNearby` consulta `EarthSurplus` antes de guardar terra. O cenário registra dois baús públicos para atingir 256 unidades sem esbarrar no limite por baú. Sem o filtro, o teste falhou porque a terra foi recolhida no teto. Com o filtro, os três GameTests focados passaram. Falta confirmação no próximo jogo. |
 
 Sentinela `fast` de 21-11 (`20261121T040824Z`): unitários e propriedade passaram. Dos 1.224 GameTests, só o cenário do A7 falhou. A análise foi gerada em `reports/sentinel-analysis/20261121T041222Z/`. A matriz de regras inclui a 349, e a suíte Python passou após limpar a variável de configuração Git herdada.
+
+Após o A7, o Sentinela `fast` (`20261121T042100Z`) passou em unitários, propriedade e 1.224 GameTests. Análise em `reports/sentinel-analysis/20261121T042503Z/`. A matriz inclui a Regra 350, e a suíte Python passou.
 
 ## O que falta fazer, na ordem
 
 1. **A8**: candidata, ver estado acima.
-2. **A7**: consertar o cenário do teste. Regra 350 (terra acima de 256 nos baús fica no chão).
+2. **A7**: candidata, ver estado acima.
 3. **A9** (telemetria): grama que se espalha e caminho que volta a grama não contam como "o mod desfez o jogador".
    Origem: `EditLedger` (`mod?natural: dirt→grass_block` 99×, `grass_block→dirt` 45×, `dirt_path→grass_block` 45×);
    ver `scripts/player_report.py` e `EditLedgerGameTest`. Também dar dono ao sistema `mod?outro` (4 reafirmações 🔴).

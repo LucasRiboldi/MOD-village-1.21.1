@@ -19,6 +19,8 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - Regra 349: pó de osso e cru da fornalha guardam 4 unidades. Pedregulho da mina e cru
   geral dos produtos de valor guardam 16. `ingot` sai do `VC_KEEP`, com o teto de 64
   por lingote mineral em vigor. A trava de lã branca continua em 16.
+- Regra 350: ao passar por terra caída, o aldeão deixa a pilha no chão quando os baús da
+  colônia já somam 256 unidades daquele tipo.
 
 ## [0.4.112] — candidata, 2026-11-20
 

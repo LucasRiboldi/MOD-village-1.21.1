@@ -12257,3 +12257,17 @@ o playtest do ciclo.
 
 O Sentinela `fast` passou em unitários e propriedade. A bateria de 1.224 GameTests falhou no
 cenário já conhecido do A7, que ainda precisa do registro do baú da colônia.
+
+## 2026-11-21 — ciclo 0.4.113, terra solta (A7, Regra 350)
+
+A escolha do autor deixa a terra no chão quando os baús que o aldeão pode usar já somam 256
+unidades daquele tipo. O teste agora registra dois baús públicos de 128 unidades cada.
+Assim o cenário respeita o limite de três pilhas por item em cada baú e ainda deixa espaço
+para que o recolhimento indevido apareça sob mutação.
+
+Com o filtro desligado, `earthAboveTheCeilingStaysOnTheGround` falhou porque o aldeão recolheu
+terra no teto. Com o filtro, os três casos de `GroundPickupGameTest` passaram. O teste comprova
+que o pedregulho continua sendo recolhido e que a coleta de terra volta abaixo de 256.
+
+O Sentinela `fast` passou em unitários, propriedade e todos os 1.224 GameTests. A confirmação
+em jogo fica para o playtest do ciclo.
