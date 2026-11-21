@@ -5,18 +5,20 @@ Branch de trabalho: `fix/miolo-pelas-pecas` (0.4.111 e 0.4.112 empilhadas, sem p
 Modo temporário §0.2.2: um commit atômico por correção, um JAR no fim, Sentinela `fast`, nada de push sem pedido.
 Numeração: Regras 349 em diante (a 348 é a descida única).
 
-## Estado ao parar (WIP no commit `733133e2`)
+## Estado ao parar
 
-Na retomada de 21-11, `GameTestBatchRuleTest` falhou porque dois testes de `GroundPickupGameTest` alteravam o relógio global no mesmo lote. O novo teste agora roda em `ground_pickup_earth_ceiling` e `gradlew.bat build` passou com JDK 21. `ColonyGoalsTest` passou os 56 casos. GameTests focados, mutações e Sentinela ficaram pendentes.
+Na retomada de 21-11, `GameTestBatchRuleTest` falhou porque dois testes de `GroundPickupGameTest` alteravam o relógio global no mesmo lote. O novo teste agora roda em `ground_pickup_earth_ceiling` e `gradlew.bat build` passou com JDK 21. `ColonyGoalsTest` passou os 56 casos.
 
 | Item | Estado |
 |---|---|
-| A8 travas de cru | **Editado, sem teste novo.** `BoneMealRound.CHEST_RESERVE` 16→4, `SmelterAdvance.KEEP` 16→4, `SmelterAdvance.MINE_FILL` 64→16, `ValueGoods.KEEP_RAW` 64→16, linha `KeepLedger.atLeast("ingot", …)` removida. Falta: rodar `ColonyGoalsTest`, `IdleFixesGameTest`, `SmelterAdvanceGameTest`, `ShepherdWoolGoodsGameTest` e corrigir o que codificava os valores velhos; Regra 349 no `docs/RULES.md`. A trava `wool` **foi mantida** (é lógica, não só medida: protege a lã branca), contra o "saem" do autor — dizer isso a ele. |
+| A8 travas de cru | **Candidata (Regra 349).** `BoneMealRound.CHEST_RESERVE` e `SmelterAdvance.KEEP` passam a 4. `SmelterAdvance.MINE_FILL` e `ValueGoods.KEEP_RAW` passam a 16. `ingot` sai do `VC_KEEP`; teto de 64 por lingote e trava `wool` de 16 em vigor. Cinco dos 21 GameTests focados falharam sob mutação, e os 21 passaram após restaurar a regra. Falta confirmação no próximo jogo. |
 | A7 terra | **Editado, teste vermelho pelo cenário.** `EarthSurplus` (novo) + filtro em `GroundPickup.collectNearby`; GameTest `earthAboveTheCeilingStaysOnTheGround` falha com "o cenário não tem baú da colônia": falta registrar o baú da colônia como o `workerCollectsWhileWalkingPast` faz (`colony.measure(VillageBounds…)`, `colony.attend(...)` em loop, baú em `CHEST`) antes de `ColonyChests.nearestFirst`. Depois: provar o vermelho tirando o filtro. Regra 350. |
+
+Sentinela `fast` de 21-11 (`20261121T040824Z`): unitários e propriedade passaram. Dos 1.224 GameTests, só o cenário do A7 falhou. A análise foi gerada em `reports/sentinel-analysis/20261121T041222Z/`. A matriz de regras inclui a 349, e a suíte Python passou após limpar a variável de configuração Git herdada.
 
 ## O que falta fazer, na ordem
 
-1. **A8**: terminar como acima. Regra 349 (limites a um quarto; `ingot` sai da medição).
+1. **A8**: candidata, ver estado acima.
 2. **A7**: consertar o cenário do teste. Regra 350 (terra acima de 256 nos baús fica no chão).
 3. **A9** (telemetria): grama que se espalha e caminho que volta a grama não contam como "o mod desfez o jogador".
    Origem: `EditLedger` (`mod?natural: dirt→grass_block` 99×, `grass_block→dirt` 45×, `dirt_path→grass_block` 45×);

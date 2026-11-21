@@ -12242,3 +12242,18 @@ e para o desvio (`MinerDetours`). `MineCuts` e `MineFrontier` deixam de fora a p
 `MineStepDownGameTest` reescrito; todos vermelhos sem a mudança (mutação conferida) e verdes com ela.
 
 Nada visto em jogo.
+
+## 2026-11-21 — ciclo 0.4.113, reservas de cru (A8, Regra 349)
+
+A auditoria registrou as travas que seguravam matéria-prima demais. A escolha do autor baixou
+pó de osso e cru da fornalha de 16 para 4 e pedregulho da mina e cru geral dos produtos de valor
+de 64 para 16. O teto de 64 por lingote segue em vigor e `ingot` saiu do `VC_KEEP`. A trava
+`wool` continua protegendo 16 unidades de lã branca.
+
+`BoneMealRoundGameTest`, `IdleFixesGameTest`, `SmelterAdvanceGameTest` e
+`ShepherdWoolGoodsGameTest` somaram 21 casos. Cinco falharam com os limites antigos e a
+medição de `ingot` restaurada. Os 21 passaram com a Regra 349. A confirmação em jogo fica para
+o playtest do ciclo.
+
+O Sentinela `fast` passou em unitários e propriedade. A bateria de 1.224 GameTests falhou no
+cenário já conhecido do A7, que ainda precisa do registro do baú da colônia.

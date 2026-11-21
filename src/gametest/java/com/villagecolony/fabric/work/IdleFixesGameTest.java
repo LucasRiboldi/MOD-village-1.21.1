@@ -168,11 +168,12 @@ public class IdleFixesGameTest implements FabricGameTest {
 
         var stairs = ValueGoods.RECIPES.get(ProfessionType.MASON).stream()
                 .filter(recipe -> recipe.product() == Items.COBBLESTONE_STAIRS).findFirst().orElseThrow();
-        ChestDepositor.deposit(world, chest(context), Items.COBBLESTONE, ValueGoods.KEEP_RAW + 7);
+        ChestDepositor.deposit(world, chest(context), Items.COBBLESTONE, 23);
 
-        context.assertTrue(ValueGoods.batch(world, chests, stairs) == 4, "7 de sobra fazem uma receita: 4 degraus");
+        context.assertTrue(ValueGoods.batch(world, chests, stairs) == 4,
+                "Regra 349: acima da reserva de 16, 7 pedregulhos permitem fazer 4 degraus");
         context.assertTrue(com.villagecolony.fabric.integration.ColonyChests.countIn(world, chests, Items.COBBLESTONE)
-                == ValueGoods.KEEP_RAW + 1, "a reserva e a sobra que não fez receita deviam ficar");
+                == 17, "a reserva e a sobra que não fez receita deviam ficar");
         context.complete();
     }
 

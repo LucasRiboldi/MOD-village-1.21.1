@@ -12,6 +12,14 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.113] — em desenvolvimento
+
+### Alterado
+
+- Regra 349: pó de osso e cru da fornalha guardam 4 unidades. Pedregulho da mina e cru
+  geral dos produtos de valor guardam 16. `ingot` sai do `VC_KEEP`, com o teto de 64
+  por lingote mineral em vigor. A trava de lã branca continua em 16.
+
 ## [0.4.112] — candidata, 2026-11-20
 
 Regra 348; nada visto em jogo.

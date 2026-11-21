@@ -48,6 +48,11 @@ public class SmelterAdvanceGameTest implements FabricGameTest {
             SmelterAdvance.smeltForIdleSmelters(world, colony);
             context.assertTrue(ColonyChests.countIn(world, List.of(chest), Items.TERRACOTTA) == StockReserve.of(Items.TERRACOTTA),
                     "o fundidor não repôs o consumo");
+            ((Inventory) world.getBlockEntity(chestAt)).clear();
+            ((Inventory) world.getBlockEntity(chestAt)).setStack(0, new ItemStack(Items.COBBLESTONE, 17));
+            context.assertTrue(SmelterAdvance.smeltForIdleSmelters(world, colony) == 1
+                            && ColonyChests.countIn(world, List.of(chest), Items.COBBLESTONE) == 16,
+                    "Regra 349: o fundidor deve deixar 16 pedregulhos para a mina");
         } finally {
             ((Inventory) world.getBlockEntity(chestAt)).clear();
             world.setBlockState(chestAt, Blocks.AIR.getDefaultState());
@@ -69,12 +74,14 @@ public class SmelterAdvanceGameTest implements FabricGameTest {
         owned.owning(smelter);
         VillageColonyMod.STORAGES.register(WorkerStorage.of(smelter, chest));
         world.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
-        ((Inventory) world.getBlockEntity(chestAt)).setStack(0, new ItemStack(Items.WHITE_TERRACOTTA, 40));
+        ((Inventory) world.getBlockEntity(chestAt)).setStack(0, new ItemStack(Items.WHITE_TERRACOTTA, 12));
         try {
             context.assertTrue(SmelterAdvance.smeltForIdleSmelters(world, colony) == 8,
                     "o fundidor ignorou a receita de cerâmica vidrada");
             context.assertTrue(ColonyChests.countIn(world, List.of(chest), Items.WHITE_GLAZED_TERRACOTTA) == 8,
                     "a cerâmica vidrada não entrou no baú");
+            context.assertTrue(ColonyChests.countIn(world, List.of(chest), Items.WHITE_TERRACOTTA) == 4,
+                    "Regra 349: o fundidor deve deixar 4 terracotas cruas");
         } finally {
             ((Inventory) world.getBlockEntity(chestAt)).clear();
             world.setBlockState(chestAt, Blocks.AIR.getDefaultState());
@@ -112,6 +119,8 @@ public class SmelterAdvanceGameTest implements FabricGameTest {
                     "reserva de lingotes deveria parar em 64, veio " + ingots);
             context.assertTrue(SmelterAdvance.smeltForIdleSmelters(world, colony) == 0,
                     "não deveria fundir além da reserva de lingotes");
+            context.assertTrue(!KeepLedger.today().containsKey("ingot"),
+                    "Regra 349: o teto de lingotes continua em vigor, mas saiu do VC_KEEP");
         } finally {
             ((Inventory) world.getBlockEntity(chestAt)).clear();
             world.setBlockState(chestAt, Blocks.AIR.getDefaultState());

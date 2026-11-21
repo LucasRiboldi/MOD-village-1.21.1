@@ -36,10 +36,7 @@ public final class SmelterAdvance {
     /** Quanto do cru fica nos baús além do que a obra pede (Regra 349). */
     static final int KEEP = 4;
 
-    /**
-     * O pedregulho que fica para a mina, além da obra: é o enchimento do piso e da
-     * beirada (playtest 0.3.36: a vila fundiu e cortou todo pedregulho e a mina parou).
-     */
+    /** O pedregulho que fica para o piso e a beirada da mina, além da obra (Regra 349). */
     static final int MINE_FILL = 16;
 
     /** Somente minérios físicos viram reserva ociosa; demais itens seguem estoque padrão. */

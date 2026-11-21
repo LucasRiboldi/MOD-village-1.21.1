@@ -6,9 +6,11 @@ Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 20
 
 - **Plano a seguir:** `docs/technical/Proximo-ciclo-0113.md` — 9 itens com ordem, arquivos e critério (A8, A7, A9, A6, A2, A3a, A4, A5, R1).
 - **Branch:** `fix/miolo-pelas-pecas`, sem push, à frente da `main` (0.4.111 Regra 347 e 0.4.112 Regra 348, não jogadas). JAR 0.4.112 `ae11f4e1` já em `downloads/` e no TLauncher.
-- **Trabalho em andamento, commitado como `wip` (A7 com GameTest vermelho; compila):** `BoneMealRound`, `SmelterAdvance`, `ValueGoods` (A8, sem teste rodado), `EarthSurplus` novo, `GroundPickup` e `GroundPickupGameTest` (A7, GameTest vermelho por cenário sem baú da colônia). Não dar o A7 por pronto antes de o teste ficar verde e provado vermelho sem o filtro.
+- **A8, candidata (Regra 349):** quatro reservas reduzidas, `ingot` removido só da medição e `wool` preservado. Cinco regressões falharam com a mutação, e os 21 GameTests focados passaram com a regra restaurada.
+- **Sentinela `fast` do A8:** unitários e propriedade passaram. A bateria de 1.224 GameTests falhou só no cenário do A7. Relatório local em `reports/test-runs/20261121T040824Z/`.
+- **A7 em andamento:** `EarthSurplus`, `GroundPickup` e `GroundPickupGameTest` estão no WIP `733133e2`. O GameTest precisa do registro do baú e da prova por mutação do filtro.
 - **Análise do último jogo:** `docs/audit/2026-11-21-analise-jogo-0111.md` (achados A1 a A9, R1).
-- **Linha de base restabelecida em 21-11:** `gradlew.bat build` passou com JDK 21 após isolar `earthAboveTheCeilingStaysOnTheGround` no lote `ground_pickup_earth_ceiling`. Próximo passo: validar A8. A7 ainda precisa do registro do baú e da prova por mutação.
+- **Linha de base restabelecida em 21-11:** `gradlew.bat build` passou com JDK 21 após isolar `earthAboveTheCeilingStaysOnTheGround` no lote `ground_pickup_earth_ceiling`. Próximo passo: corrigir e validar A7.
 - **Regras do modo:** `CLAUDE.md` §0.2.2 (escolha do autor antes de código, teste que falha primeiro, Sentinela, um JAR por ciclo, push só se o autor pedir). Responder em português. Build: `JAVA_HOME` do JDK 21, `./gradlew.bat build`; GameTests focados por `python scripts/gametest_focus.py <classe…>` (+ `restore`); em Bash no Windows, escreva scripts Python em arquivo em vez de heredoc com aspas.
 - **Armadilhas já vistas:** ErrorProne com `-Werror` (parênteses, campos não lidos); `FileSizeRuleTest` (500 linhas); `ArchitectureRulesTest` (sem ciclo de pacote); `MineMarks.dug` apaga marcas a 8 blocos; a escada planejada da mina começa na altura da boca.
 - **Avisar o autor:** a trava `wool` foi mantida contra o "saem" dele (é lógica, protege a lã branca); a tocha da colônia na mina abre exceção à Regra 212.

@@ -1,4 +1,4 @@
-# STATE — 2026-11-20
+# STATE — 2026-11-21
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula; teto de 150 linhas.** O que saiu daqui mora em
 > [`docs/archive/technical/Historico-2026-11.md`](docs/archive/technical/Historico-2026-11.md) (o STATE de 13-11 inteiro,
@@ -21,6 +21,8 @@
   Depois vêm F1 (a vila trabalha) e o portão Beta 0.5.0.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, teste que falha, correção,
   Sentinela, commit, JAR.
+- **Ciclo 0.4.113:** A8 (Regra 349) passou em 21 GameTests focados. A7 ainda tem erro no cenário do baú.
+  O [plano do ciclo](docs/technical/Proximo-ciclo-0113.md) registra as verificações e a ordem de retomada.
 
 ## Candidatas que esperam jogo
 
