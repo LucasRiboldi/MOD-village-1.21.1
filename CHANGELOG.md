@@ -12,6 +12,16 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.116] — candidata, 2026-11-21
+
+- O pastor precisa chegar junto da ovelha para tosquiar; a caminhada deixa de parar longe dela.
+- Na coleta de animais, abre a porteira antes de entrar, conserva a corda até alinhar o animal
+  e limpa a caminhada antiga na entrega à travessia. O portão fecha quando o vão fica livre.
+- As 28 notas e seis imagens do jogo da 0.4.115 têm um plano integral. Este JAR trata o Lote B
+  (N05/N26/N27); os demais lotes continuam pendentes. A correção aguarda o playtest do autor.
+- Relatos de jogo acionam `vc-log-driven-fix`; toda nova versão deve atualizar o JAR do TLauncher,
+  com comparação de SHA-256 entre build, `downloads/` e `mods/`.
+
 ## [0.4.115] — candidata, 2026-11-21
 
 - O resgate de telhado limpa a memória de caminhada anterior antes de parar a navegação.

@@ -8,22 +8,19 @@
 > **Retomada por outro agente:** comece por `HANDOFF.md`.
 
 ## Onde o projeto está
-
-- **Versão:** 0.4.110 na `main`, publicada como `v0.4.110-alpha` (Regras 344 a 346: telemetria, conflito com o jogador e `/vc salvar`), não jogada; a anterior publicada é a `v0.4.107-alpha` (Regras 336 a 343); roteiro de jogo em `docs/testing/roteiro-de-jogo-0.4.107.md`;
-  0.4.93 em planície); a anterior publicada é a `v0.4.93-alpha` (Regras 315 a 325, ADR-057), **jogada em 19-11**
-  (montanha, Spark `0SMEEkMLGP`, ~35 min): boca da mina e BigHouseMOD no alto da montanha, longe das casas, e blocos de
-  terreno voando no print do autor. Triagem no `TODO.md`; o autor escolheu A (centro e BigHouseMOD pela altura dos
-  prédios) e D (linha `VC_FLOAT`), ainda não feitas. As Regras 305 a 325 seguem candidatas.
+- **Ciclo atual:** jogo da 0.4.115 analisado em 21-11 (28 notas e seis imagens). Autor escolheu o Lote B,
+  pastor primeiro, no [plano integral](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
+  Candidata 0.4.116 verificada; aguarda playtest. Lotes A, C, D e E continuam pendentes.
+- **Versão publicada:** `main` em `v0.4.110-alpha`; linha local 0.4.115 jogada em 21-11 e candidata 0.4.116 em verificação.
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
   jogador e publicação.
 - **Fase do cronograma:** F0, sinal limpo (documentos nos tetos, instáveis declarados, ferramentas de régua corrigidas).
   Depois vêm F1 (a vila trabalha) e o portão Beta 0.5.0.
-- **Candidata local 0.4.115:** resgate de telhado limpa a memória de caminhada anterior; GameTest reproduziu a memória
-  persistente e passou após a correção. Sentinela `fast` passou; confirmar em jogo se evita o retorno ao telhado.
-- **Candidata local 0.4.114:** `/vc salvar` reúne as últimas mudanças por aldeão, com destino, sono e motivo
-  da parada. A mina espera na pedra que segura líquido e registra o saldo físico de pedregulho. A união de
-  colônias reaproveita as duas redes de ruas antes de uma nova leitura. Falta validar no jogo do autor.
+- **0.4.115 jogada:** resgate de telhado limpa a memória de caminhada anterior; GameTest reproduziu a memória
+  persistente e passou após a correção. O jogo novo gerou o plano integral acima; não comprova sozinho todo caso de telhado.
+- **0.4.116:** `fast` PASS: 1.885 unitários, uma suite de propriedades e 1.237 GameTests (`20261121T191357Z`); build PASS.
+  Cinco regressões falham na produção antiga. SHA-256 e roteiro de jogo em `HANDOFF.md` e no plano integral.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, teste que falha, correção,
   Sentinela, commit, JAR.
 - **Ciclo 0.4.113:** A8, A7, A9, A6, A2 e A3a (Regras 349 a 354) passaram em 21, 3, 8, 18, 6 e 9 GameTests focados, respectivamente.

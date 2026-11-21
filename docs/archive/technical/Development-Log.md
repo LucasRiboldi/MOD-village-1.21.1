@@ -2,6 +2,48 @@
 
 # Development-Log.md
 
+## 21-11-2026 — Pastor após o jogo da 0.4.115; candidata 0.4.116
+
+O relatório reuniu as 28 notas e comparou as seis imagens. O autor escolheu a opção 2,
+Lote B (N05/N26/N27), e autorizou continuar a linha 0.4.115 na branch desktop
+`fix/miolo-pelas-pecas`, base `ae2ed2ab`. A worktree `70b9`, na base 0.4.110,
+conserva seus documentos e não deve gerar o próximo JAR. O plano completo está em
+`docs/technical/Plano-Playtest-0.4.115-2026-11-21.md`; nenhum dos outros lotes foi descartado.
+
+O build da linha de base passou antes das mudanças. `ShepherdWork` agora exige contato
+com a ovelha (caixas com tolerância de 0,25 bloco), com chegada zero na caminhada.
+`ShepherdHerding` abre a porteira, aproxima pela célula externa e entra mais fundo sem
+soltar a corda com o animal ainda de lado. Ao entregar o animal à travessia existente,
+limpa o destino antigo e para a navegação do pastor. O fechamento existente espera o vão livre.
+Regras 150 e 299 atualizadas; sem nova arquitetura, mixin, dependência ou alteração no CI.
+
+A montagem dos testes físicos foi corrigida antes da conclusão: `Arena.forceChunks`
+mantém a simulação ativa; a idade das entidades também é verificada. A cadência de
+condução/fechamento acompanha a produção. O teste físico não teleporta o animal.
+Passaram 23 GameTests focados em `reports/test-runs/20261121T191032Z/`.
+A mutação dos dois arquivos para a produção 0.4.115 fez cinco dos nove testes falharem
+pelas causas esperadas em `20261121T191211Z/`, inclusive a vaca lateral parada na fase
+LEAD, com idade crescente. A correção foi restaurada antes da bateria completa.
+
+A revisão retirou a hipótese de acesso impossível para tosquia: o salto de cerca já
+existe em `ColonyPathing`/`VillagerMoves`. Nenhum helper de acesso foi acrescentado.
+A revisão também pediu cleanup se a conferência inicial do alcance falhar; aplicado.
+Os 196 testes Python passaram com `GIT_CONFIG_COUNT=0`; três falhas anteriores eram
+causadas pela configuração Git herdada inválida. Esse ajuste é local ao processo.
+
+O Sentinela `fast` completo passou em `reports/test-runs/20261121T191357Z/`: 1.885
+unitários, uma suite de propriedades e 1.237 GameTests; o último hunk do cleanup foi
+compilado nessa execução. O build final também passou. README gerado, 196 testes Python
+e escopo passaram; `STATE.md` ficou em 150 linhas. A análise histórica é
+`reports/sentinel-analysis/20261121T191903Z/`, preservando os diagnósticos e as mutações.
+O artefato tem versão Fabric 0.4.116 e SHA-256
+`702fda50d734e8a8c77baab8a809c83a489955d37a866829fdf4ac97426ce01a`.
+
+O gatilho de `vc-log-driven-fix` para relatos de jogo e a instalação obrigatória de
+cada versão no TLauncher foram registrados em `CLAUDE.md`/`AGENTS.md` e na skill.
+A correção é candidata: o efeito sobre bloqueio e ócio depende do próximo jogo do autor.
+
+
 ## 21-11-2026 — Memória de caminhada no resgate do telhado
 
 O GameTest mostrou que o destino de caminhada permanecia após a descida. O resgate agora limpa essa memória.

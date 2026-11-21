@@ -4,8 +4,8 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 248
-- **Só usa a classe indicada:** 90
+- **Cita a regra:** 249
+- **Só usa a classe indicada:** 89
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
 
@@ -74,7 +74,7 @@ classe prova menos ainda.
 | 61 | A colônia só é dada como abandonada sem vila à vista do centro nem dentro da caixa, e com… | classe | ColonyAbandonmentTest, GroundPickupGameTest, test_graphify_relabel |
 | 62 | A vila trabalha com o jogador dentro da caixa ou a até 48 blocos dela (VillageFocus.PERIM… | classe | AbandonedColonyGameTest, ColonyBoundsTest, DrawnFromTest |
 | 63 | Socorro contra parada com prazo único: o ofício que anda sem chegar ao alvo há 1 minuto d… | classe | WorkRescueTest |
-| 64 | As ruas da vila são medidas como rede de caminhos conectados a partir do centro (de bloco… | classe | BuildSiteGameTest, GraphOnlyPathsGameTest, RoadNetworkGameTest |
+| 64 | As ruas da vila são medidas como rede de caminhos conectados a partir do centro (de bloco… | classe | BuildSiteGameTest, ColonyMergeTriggerGameTest, GraphOnlyPathsGameTest |
 | 65 | Bancadas exclusivas do mod: três blocos próprios (carpenter_bench, mason_cutter, blacksmi… | classe | BenchApproachTest, BenchPassivesGameTest, BenchUseGameTest |
 | 66 | Cercado no nível da rua: estrutura cuja camada y=0 é só solo natural (grama, terra, areia… | classe | StreetLayerTest |
 | 67 | Plantação por população: uma roça a cada 15 adultos, no mínimo uma desde a fundação; ao p… | cita | ConstructionPriorityTest, FarmOwnersTest, FarmPlanGameTest |
@@ -160,8 +160,8 @@ classe prova menos ainda.
 | 147 | O diário da vila bate com o jogo (autor 10-28): cada fato vira VC_EVENT (obra aberta e fe… | cita | VillageDiaryGameTest |
 | 148 | A obra nunca fica largada meio pronta (autor 10-28, taiga simulada: casa em "0 blocks lef… | cita | BuildClosingGameTest |
 | 149 | Rua sem falha: falha de até 2 blocos de chão natural numa linha reta entre duas colunas d… | cita | HouseSurroundingsGameTest, VillageHelpersGameTest |
-| 150 | O pastor tosquia por cima da cerca (autor 10-28, diagnóstico da 0.3.103: 45 pastores pres… | classe | ActionJournalGameTest, ColonyFixture, ShepherdGameTest |
-| 151 | O aldeão da colônia prefere a rua e evita a água (autor 10-28, jogo da 0.3.104: 4 de 7 te… | classe | FencedInGameTest, StreetRouteGameTest, StreetRouteTest |
+| 150 | O pastor só tosquia junto da ovelha (autor 21-11, N05 do jogo da 0.4.115; substitui o alc… | cita | ShepherdGameTest |
+| 151 | O aldeão da colônia prefere a rua e evita a água (autor 10-28, jogo da 0.3.104: 4 de 7 te… | classe | ColonyMergeTriggerGameTest, FencedInGameTest, StreetRouteGameTest |
 | 152 | O solo da vila nasce suave na geração (autor 10-29: crateras e montanhas no meio das vila… | classe | ClearAbovePieceGameTest, VillageBlendTest, VillageCoreTest |
 | 153 | Mais ajudas de quem está sem tarefa (autor 10-28, O1/O3/O4/O8; pedido de novo em 10-29),… | classe | GroundSmoothingGameTest, IdleFixesGameTest, ItemStockGameTest |
 | 154 | Lenhador, fundidor e fazendeiro: os ajustes do O5–O7 (autor 10-28; pedido de novo em 10-2… | cita | VillageGroveGameTest |
@@ -309,7 +309,7 @@ classe prova menos ainda.
 | 296 | As estruturas da vila nascem no solo suavizado (autor 15-11, jogo da 0.4.88 em montanha,… | cita | VillageBlendTest, VillagePiecesGameTest |
 | 297 | O chão em volta da obra nova é suavizado como o da vila (autor 15-11, jogo da 0.4.88 em m… | cita | SiteSurroundingsGameTest |
 | 298 | A vila nova nasce enxuta (autor 15-11, jogo da 0.4.88, opção C corrigida: 9 aldeões da vi… | cita | HiringProperties, IdleFixesGameTest, ProfessionDemandTest |
-| 299 | O pastor leva o animal até dentro do curral (autor 15-11, jogo da 0.4.89, opção C: o curr… | cita | FlockHarvestGameTest, ShepherdHerdingGameTest |
+| 299 | O pastor leva o animal até dentro do curral (autor 15-11, opção C; emenda de 21-11, N26/N… | cita | FlockHarvestGameTest, ShepherdHerdingGameTest |
 | 300 | A porta e as partes soltas entram no grafo (autor 16-11, jogo da 0.4.89, opção C com o ro… | cita | RoadLinesTest |
 | 301 | A argila aparece na hora pedida (só para obra e com teto de 64 guardadas pela Regra 308;… | cita | ClayLoopGameTest, ClayOnRequestGameTest |
 | 302 | O nó da mina fica sob o arco (autor 16-11, jogo da 0.4.89, opção A; muda o nó de entrada… | cita | MineNodeGameTest, MineYardGameTest |

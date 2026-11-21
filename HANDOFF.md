@@ -4,6 +4,24 @@ Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 20
 
 ## Retomada de 2026-11-21 (leia isto primeiro; o resto deste arquivo é de 11-15)
 
+- **Prioridade atual:** autor jogou a 0.4.115 e escolheu a opção 2, pastor primeiro (N05/N26/N27).
+  As 28 notas, seis imagens e demais pendências estão em `docs/technical/Plano-Playtest-0.4.115-2026-11-21.md`;
+  o relatório é `docs/testing/relatorios/jogo-0.4.115-2026-11-21.md`. Não descartar os outros lotes.
+- **Worktree da correção:** `C:/Users/lucas/Desktop/MOD-village-1.21.1`, branch `fix/miolo-pelas-pecas`.
+  Continuação autorizada da base 0.4.115 (`ae2ed2ab`); candidata 0.4.116 verificada, aguarda playtest.
+  A worktree `70b9` está na base 0.4.110 com documentos locais preservados: não gerar um JAR dela.
+- **Prova da 0.4.116:** `fast` PASS em `reports/test-runs/20261121T191357Z/`: 1.885 unitários,
+  uma suite de propriedades e 1.237 GameTests. Build passou; 196 testes Python passaram.
+  Mutação para a produção 0.4.115: cinco regressões falharam em `20261121T191211Z`; 23 focados verdes em `20261121T191032Z`.
+  A revisão foi concluída, inclusive cleanup antecipado da arena. A análise histórica está em
+  `reports/sentinel-analysis/20261121T191903Z/`; inclui falhas antigas e mutações, não é um relatório sem achados.
+- **Artefato 0.4.116:** `village-colony-0.4.116.jar`, metadado Fabric conferido. SHA-256 do build:
+  `702fda50d734e8a8c77baab8a809c83a489955d37a866829fdf4ac97426ce01a`. As cópias em `downloads/` e `mods/` devem ter esse mesmo hash.
+  Para retomar, conferir instalação/versão, acompanhar o roteiro do plano e analisar o próximo jogo;
+  não implementar os outros lotes nem interpretar o verde automático como confirmação visual.
+- **Regras do autor:** relato de que entrou no jogo/testou sempre usa `vc-log-driven-fix`.
+  Toda versão nova deve atualizar `downloads/` e `%APPDATA%/.minecraft/mods`, com SHA-256 igual ao build
+  e apenas um `village-colony-*.jar` ativo; anteriores ficam `.jar.disabled`.
 - **Candidata 0.4.115:** resgate de telhado limpa a memória de caminhada anterior. O teste da memória falhou antes
   e passou depois; Sentinela `fast` passou em `reports/test-runs/20261121T143122Z/`. Confirmar em jogo se o aldeão
   deixa de retornar ao telhado; a causa completa do retorno ainda não está comprovada.
