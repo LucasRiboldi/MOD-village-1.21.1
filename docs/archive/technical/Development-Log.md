@@ -2,6 +2,12 @@
 
 # Development-Log.md
 
+## 21-11-2026 — Linha do tempo por aldeão
+
+O diário associa o motivo ao período encerrado. `/vc salvar` inclui oito mudanças recentes por
+aldeão, com destino de navegação quando disponível e sono distinto do tempo fora do expediente.
+O GameTest reproduziu a perda do motivo na retomada e a bateria focada passou após a correção.
+
 ## 21-11-2026 — R1, relatório completo e candidata 0.4.113
 
 `/vc salvar` reúne a lista completa de blocos, o estado da mina, construções e peças postas de lado,

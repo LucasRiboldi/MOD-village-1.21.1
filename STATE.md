@@ -19,6 +19,7 @@
   jogador e publicação.
 - **Fase do cronograma:** F0, sinal limpo (documentos nos tetos, instáveis declarados, ferramentas de régua corrigidas).
   Depois vêm F1 (a vila trabalha) e o portão Beta 0.5.0.
+- **Telemetria em preparação:** `/vc salvar` reúne as últimas mudanças por aldeão, com destino e sono. Playtest pendente.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, teste que falha, correção,
   Sentinela, commit, JAR.
 - **Ciclo 0.4.113:** A8, A7, A9, A6, A2 e A3a (Regras 349 a 354) passaram em 21, 3, 8, 18, 6 e 9 GameTests focados, respectivamente.

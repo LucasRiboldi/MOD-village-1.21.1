@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from action_report import newest_journal, parse  # noqa: E402
 
 TICKS_PER_SECOND = 20
-STATES = ("WORK", "WALK", "WAIT", "BLOCKED", "IDLE", "STRANDED", "OFF")
+STATES = ("WORK", "WALK", "WAIT", "BLOCKED", "IDLE", "STRANDED", "OFF", "SLEEP")
 STOPPED = ("WAIT", "BLOCKED", "IDLE", "STRANDED")
 
 

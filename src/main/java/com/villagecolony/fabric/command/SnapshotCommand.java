@@ -15,6 +15,7 @@ import com.villagecolony.fabric.work.KeepLedger;
 import com.villagecolony.fabric.work.MineEntrance;
 import com.villagecolony.fabric.work.MineMarks;
 import com.villagecolony.fabric.work.VillagerDay;
+import com.villagecolony.fabric.work.VillagerTimeline;
 import com.villagecolony.fabric.work.WorkTime;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -151,6 +152,7 @@ public final class SnapshotCommand {
                 .append(ItemFlow.peek(world, day)).append('\n')
                 .append(VillagerDay.peek(colony.get().id(), day)).append('\n');
 
+        VillagerTimeline.append(colony.get().id(), world.getTime(), text);
         appendWorks(world, colony.get(), text);
         SnapshotHistory.append(colony.get().id(), WorkTime.currentLine(colony.get().id(), world.getTime()), text);
         ActionJournal.flush();

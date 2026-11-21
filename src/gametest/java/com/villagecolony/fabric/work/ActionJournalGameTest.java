@@ -24,6 +24,41 @@ import java.util.UUID;
  */
 public class ActionJournalGameTest implements FabricGameTest {
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "timeline_reason", tickLimit = 20)
+    public void resumingWorkRecordsTheReasonForThePreviousStop(TestContext context) throws IOException {
+        Path before = ActionJournal.file();
+        Path journal = Files.createTempFile("timeline-reason", ".jsonl");
+        UUID worker = UUID.randomUUID();
+        UUID colony = UUID.randomUUID();
+        BlockPos position = new BlockPos(1, 2, 3);
+        try {
+            ActionJournal.flush();
+            ActionJournal.writeTo(journal);
+            VillageColonyMod.WORKERS.register(worker, colony).assign(ProfessionType.MINER);
+            VillagerTimeline.sample(worker, "BLOCKED", 0, position, "lava");
+            for (int i = 1; i <= VillagerTimeline.SETTLE; i++) {
+                VillagerTimeline.sample(worker, "WALK", i * 20L, position, "");
+            }
+            ActionJournal.flush();
+            String contents = Files.readString(journal, StandardCharsets.UTF_8);
+            context.assertTrue(contents.contains("from BLOCKED lava"), "o motivo deve pertencer à parada encerrada: " + contents);
+            for (int i = 6; i <= 10; i++) {
+                VillagerTimeline.sample(worker, "SLEEP", i * 20L, position, "");
+            }
+            StringBuilder snapshot = new StringBuilder();
+            VillagerTimeline.append(colony, 200, snapshot);
+            context.assertTrue(snapshot.toString().contains("BLOCKED (1 s) lava -> WALK")
+                            && snapshot.toString().contains("atual: SLEEP"),
+                    "o relatório deve mostrar a retomada e o sono: " + snapshot);
+            context.complete();
+        } finally {
+            ActionJournal.writeTo(before);
+            VillagerTimeline.forget(worker);
+            VillageColonyMod.WORKERS.remove(worker);
+            Files.deleteIfExists(journal);
+        }
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "action_journal", tickLimit = 20)
     public void theJournalWritesEveryStepWithTheProfession(TestContext context) {
         Path before = ActionJournal.file();

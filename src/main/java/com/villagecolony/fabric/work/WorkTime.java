@@ -117,7 +117,8 @@ public final class WorkTime {
                 STUCK_SINCE.remove(id);
 
                 if (world.getEntity(id) instanceof VillagerEntity off && off.isAlive()) {
-                    VillagerTimeline.sample(id, "OFF", now, off.getBlockPos(), "");
+                    VillagerTimeline.sample(id, off.isSleeping() ? "SLEEP" : "OFF", now, off.getBlockPos(), "",
+                            off.getNavigation().isFollowingPath() ? off.getNavigation().getTargetPos() : null);
                     VillagerDay.sample(off, false);
                 }
 
@@ -127,7 +128,8 @@ public final class WorkTime {
             State state = stateOf(id, villager);
             VillagerDay.sample(villager, true);
             VillagerTimeline.sample(id, state.name(), now, villager.getBlockPos(),
-                    state == State.WAIT || state == State.BLOCKED ? WaitReasons.reasonOf(id) : "");
+                    state == State.WAIT || state == State.BLOCKED ? WaitReasons.reasonOf(id) : "",
+                    villager.getNavigation().isFollowingPath() ? villager.getNavigation().getTargetPos() : null);
             BADGES.put(id, badgeFor(id, state, now));
             IdleWatch.sample(world, id, state);
             TaskProgressWatch.sample(world, id, state);
