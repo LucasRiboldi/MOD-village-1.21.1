@@ -7,6 +7,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.WorkClock;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.ItemFlow;
 import com.villagecolony.fabric.integration.SnapshotHistory;
 import com.villagecolony.fabric.work.ActionJournal;
@@ -19,6 +20,7 @@ import com.villagecolony.fabric.work.VillagerTimeline;
 import com.villagecolony.fabric.work.WorkTime;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.item.Items;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.CommandOutput;
@@ -182,6 +184,10 @@ public final class SnapshotCommand {
                 .append(" recusas ativas no traçado=").append(MineMarks.activeIn(world, mine))
                 .append(" cortes por braço=").append(java.util.Arrays.toString(mine.cuts())).append('\n'),
                 () -> text.append("Nenhuma mina aberta.\n"));
+        var chests = ColonyChests.nearestFirst(world, id, colony.center());
+        text.append("Pedregulho nos baús acessíveis da colônia: ")
+                .append(ColonyChests.countIn(world, chests, Items.COBBLESTONE))
+                .append(" (").append(chests.size()).append(" baús consultados)\n");
 
         text.append("\n== obras e peças postas de lado\n");
         var buildings = VillageColonyMod.BUILDINGS.ofColony(id);

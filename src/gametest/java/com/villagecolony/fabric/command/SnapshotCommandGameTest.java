@@ -97,7 +97,8 @@ public class SnapshotCommandGameTest implements FabricGameTest {
                 }
 
                 for (String section : List.of("== mina", "== obras", "== último VC_ROAD_GRAPH",
-                        "== VC_TIME da sessão", "== mortes, laços, suprimento e edições da sessão")) {
+                        "== VC_TIME da sessão", "== mortes, laços, suprimento e edições da sessão",
+                        "Pedregulho nos baús acessíveis da colônia:")) {
                     context.assertTrue(text.contains(section), "Faltou a seção " + section);
                 }
                 context.assertTrue(text.lines().filter(line -> line.startsWith("snapshot_test_")).count() == 20,

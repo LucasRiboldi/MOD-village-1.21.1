@@ -77,8 +77,14 @@ public class MineFluidGameTest implements FabricGameTest {
 
         context.assertFalse(target.isPresent() && target.get().equals(first),
                 "o mineiro recebeu a pedra que segura a água em " + first.toShortString());
-        context.assertTrue(target.isEmpty() || !MineFlooding.holdsBackFluid(context.getWorld(), target.get()),
-                "o alvo servido no lugar dela também segura líquido");
+        context.assertTrue(target.isEmpty(),
+                "com a escada única bloqueada, o mineiro deve aguardar neste corte: " + target);
+        Mine mine = VillageColonyMod.MINES.of(colony.id()).orElseThrow();
+        context.assertTrue(mine.arm(0).cut() == 0, "a escada pulou o corte que segura a água");
+        context.getWorld().setBlockState(spring, Blocks.STONE.getDefaultState());
+        Optional<BlockPos> resumed = MineDigging.nextTarget(
+                context.getWorld(), UUID.randomUUID(), colony.id(), context.getAbsolutePos(ENTRY));
+        context.assertTrue(resumed.filter(first::equals).isPresent(), "o corte seguro devia voltar: " + resumed);
         context.complete();
     }
 

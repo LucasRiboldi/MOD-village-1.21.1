@@ -2,6 +2,12 @@
 
 # Development-Log.md
 
+## 21-11-2026 — Corte da escada que segura líquido
+
+A escada única mantém o cursor no bloqueio e volta a oferecer a pedra depois que o líquido sai.
+O teste reproduziu o salto do corte e conferiu a retomada. O relatório da vila mostra as coordenadas
+do bloqueio e o saldo físico de pedregulho dos baús consultados.
+
 ## 21-11-2026 — Linha do tempo por aldeão
 
 O diário associa o motivo ao período encerrado. `/vc salvar` inclui oito mudanças recentes por

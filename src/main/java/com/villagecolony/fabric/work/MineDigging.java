@@ -249,7 +249,7 @@ public final class MineDigging {
         IdleLog.clear(colonyId, ARM_SUBJECT);
 
         Optional<BlockPos> found = MineVein.followingTheVein(world, mine.get(), arm)
-                .or(() -> MineCuts.nextCut(world, workerId, mine.get(), arm));
+                .or(() -> MineCuts.nextCut(world, workerId, mine.get(), arm, top));
 
         if (found.isEmpty()) {
             // <b>Escada que ninguém está usando volta a ser de quem

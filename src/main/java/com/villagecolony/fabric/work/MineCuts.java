@@ -15,6 +15,7 @@ import com.villagecolony.fabric.integration.MineLighting;
 import com.villagecolony.fabric.integration.MineMouth;
 import com.villagecolony.fabric.integration.OreVein;
 import com.villagecolony.fabric.integration.RingSweep;
+import com.villagecolony.fabric.integration.SnapshotHistory;
 import com.villagecolony.fabric.integration.StonePatch;
 import net.minecraft.block.BlockState;
 import net.minecraft.server.world.ServerWorld;
@@ -30,6 +31,8 @@ import java.util.UUID;
  */
 public final class MineCuts {
 
+    private static final String STAIR_FLUID = "mine stair fluid";
+
     private MineCuts() {
     }
 
@@ -40,7 +43,7 @@ public final class MineCuts {
      * a curva da galeria.
      */
     static Optional<BlockPos> nextCut(
-            ServerWorld world, UUID workerId, Mine mine, MineArm arm) {
+            ServerWorld world, UUID workerId, Mine mine, MineArm arm, boolean top) {
         MineFrontier.findTheFrontier(world, mine, arm);
 
         // De onde ele vem: a pedra só serve se tiver lugar de pé que ele alcance (E1).
@@ -116,6 +119,16 @@ public final class MineCuts {
                 // 2026-09-25: "não deixar o mineiro quebrar o bloco que tem
                 // líquido atrás". Conta para a curva como o bedrock: a
                 // galeria contorna a nascente em vez de abri-la.
+                if (top && arm.cut() <= MineShaft.CARVED + arm.shaft().landingBlocks()) {
+                    arm.holdPosition();
+                    if (IdleLog.record(mine.colonyId(), STAIR_FLUID, IdleReason.NO_TARGET,
+                            "the only stair is waiting at " + at.toShortString() + " (holds back water or lava)")) {
+                        ActionJournal.action(workerId, "STAIR_BLOCKED", "stone", 0, at, "holds back water or lava");
+                        SnapshotHistory.remember(mine.colonyId(), "VC_MINE_STAIR_BLOCKED tick=" + world.getTime()
+                                + " at=" + at.toShortString() + " reason=fluid");
+                    }
+                    return Optional.empty();
+                }
                 if (hitUndiggable(arm, workerId, "stone that holds back water or lava")) {
                     break;
                 }
@@ -123,6 +136,7 @@ public final class MineCuts {
                 continue;
             }
 
+            IdleLog.clear(mine.colonyId(), STAIR_FLUID);
             if (MineVein.nowhereToStand(world, at)) {
                 // Abre o lugar de pé ao lado e volta a esta pedra — ADR-038 P6.
                 Optional<BlockPos> room = MineVein.roomBeside(world, mine, at);
