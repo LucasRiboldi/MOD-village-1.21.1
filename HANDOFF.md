@@ -2,6 +2,16 @@
 
 Ponto de retomada para outro agente (Codex) a partir do GitHub. Fotografia de 2026-11-15, feita pelo Claude Code: reconfira com `git log` e `gh pr list` antes de trabalhar. O handoff anterior, da Fase 3 do MAE, está no histórico do Git.
 
+## Retomada de 2026-11-21 (leia isto primeiro; o resto deste arquivo é de 11-15)
+
+- **Plano a seguir:** `docs/technical/Proximo-ciclo-0113.md` — 9 itens com ordem, arquivos e critério (A8, A7, A9, A6, A2, A3a, A4, A5, R1).
+- **Branch:** `fix/miolo-pelas-pecas`, sem push, à frente da `main` (0.4.111 Regra 347 e 0.4.112 Regra 348, não jogadas). JAR 0.4.112 `ae11f4e1` já em `downloads/` e no TLauncher.
+- **Edições soltas na árvore de trabalho (de propósito não commitadas, uma está vermelha):** `BoneMealRound`, `SmelterAdvance`, `ValueGoods` (A8, sem teste rodado), `EarthSurplus` novo, `GroundPickup` e `GroundPickupGameTest` (A7, GameTest vermelho por cenário sem baú da colônia). Não perca: `git status` mostra todas. Não commitar o A7 antes de o teste ficar verde e provado vermelho sem o filtro.
+- **Análise do último jogo:** `docs/audit/2026-11-21-analise-jogo-0111.md` (achados A1 a A9, R1).
+- **Regras do modo:** `CLAUDE.md` §0.2.2 (escolha do autor antes de código, teste que falha primeiro, Sentinela, um JAR por ciclo, push só se o autor pedir). Responder em português. Build: `JAVA_HOME` do JDK 21, `./gradlew.bat build`; GameTests focados por `python scripts/gametest_focus.py <classe…>` (+ `restore`); em Bash no Windows, escreva scripts Python em arquivo em vez de heredoc com aspas.
+- **Armadilhas já vistas:** ErrorProne com `-Werror` (parênteses, campos não lidos); `FileSizeRuleTest` (500 linhas); `ArchitectureRulesTest` (sem ciclo de pacote); `MineMarks.dug` apaga marcas a 8 blocos; a escada planejada da mina começa na altura da boca.
+- **Avisar o autor:** a trava `wool` foi mantida contra o "saem" dele (é lógica, protege a lã branca); a tocha da colônia na mina abre exceção à Regra 212.
+
 ## Onde o projeto está
 
 - **Versão:** 0.4.93 na `main` (branch `fix/jogo-0490` integrada por PR), **não jogada**; publicada como [`v0.4.93-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.93-alpha). A 0.4.79 foi jogada em 2026-11-13 (taiga, Spark `oujZp2IxmS`); a triagem dos oito sintomas virou as Regras 275 a 282.
