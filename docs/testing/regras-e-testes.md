@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 244
+- **Cita a regra:** 245
 - **Só usa a classe indicada:** 91
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -98,7 +98,7 @@ classe prova menos ainda.
 | 85 | O ferro descansa onde a mina não o tem: o piso de ferro cru não força busca sem veio | classe | DesertGroundGameTest |
 | 86 | A peça que o construtor não alcança surge no lugar | classe | UnreachablePiecesGameTest |
 | 87 | Peça equivalente: sem a exata e sem tag do jogo, vale a equivalente da tabela | classe | EquivalentPiecesTest |
-| 88 | Terracota, feno, argila, gelo e neve aparecem quando a obra pede (gelo, gelo compactado e… | classe | BuilderGameTest, DesertFixesGameTest, GardenPiecesGameTest |
+| 88 | Terracota, feno, argila, gelo e neve aparecem quando a obra pede (a Regra 352 retira a te… | classe | BuilderGameTest, DesertFixesGameTest, GardenPiecesGameTest |
 | 89 | Degrau na frente da porta do lote que fica um bloco acima da rua | classe | FoundationPreparationGameTest |
 | 90 | Terraplanagem do lote: no legado, corta até 5 e aterra até 2 blocos do chão do bioma, com… | classe | BuildSiteGameTest, DuneCutGameTest, LotEdgeGameTest |
 | 91 | Casa fundadora: primeiro o lote plano exato, depois o aplainável; a vegetação do lote sai | classe | BigHouseLevelGameTest, BiomeCoverageGameTest, BiomeSiteGameTest |
@@ -362,3 +362,4 @@ classe prova menos ainda.
 | 349 | Menos matéria-prima retida nos baús (autor 21-11, análise A8, ADR-062): a reserva de pó d… | cita | BoneMealRoundGameTest, IdleFixesGameTest, SmelterAdvanceGameTest |
 | 350 | A terra excedente fica no chão (autor 21-11, análise A7, exceção à Regra 48): ao passar p… | cita | GroundPickupGameTest |
 | 351 | Grama e caminho na telemetria (autor 21-11, análise A9, emenda à Regra 345): sem autor de… | cita | EditLedgerGameTest, MineFloorGameTest, SiteSurroundingsGameTest |
+| 352 | Tijolos de pedra quando falta argila (autor 21-11, análise A6, emenda à Regra 88): sem ar… | cita | BiomeBlueprintsGameTest, ItemStockGameTest |

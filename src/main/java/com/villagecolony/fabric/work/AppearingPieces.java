@@ -1,15 +1,12 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.integration.ConstructionPalette;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.tag.BlockTags;
 
 /**
- * As peças que aparecem quando a obra pede — decisão do autor, 2026-10-21: terracota (todas as cores
- * e a vitrificada), fardo de feno e argila. No deserto jogado elas não tinham rota (terracota
- * verde-limão 4×, feno, argila, terracota branca vitrificada), a obra as punha de lado e o carpinteiro
- * e o construtor ficavam esperando.
+ * As peças que aparecem quando a obra pede (Regra 88): terracota de todas as cores, inclusive vitrificada,
+ * fardo de feno e argila. Sem argila ao alcance nem nos baús, a planta pede tijolos de pedra (Regra 352).
  *
  * <p>E o gelo — gelo, gelo compactado e gelo azul (autor, 2026-10-28, T1 do diagnóstico da 0.3.103: 162 gelos
  * compactados postos de lado na vila da neve): o jogo só o dá com toque suave, e nenhuma profissão o obtém.
@@ -24,8 +21,7 @@ final class AppearingPieces {
 
     /** Se esta peça aparece quando a obra a pede, sem esperar material. */
     static boolean appears(Block block) {
-        return block.getDefaultState().isIn(BlockTags.TERRACOTTA)
-                || Registries.BLOCK.getId(block).getPath().endsWith("_glazed_terracotta")
+        return ConstructionPalette.isTerracotta(block)
                 || block == Blocks.HAY_BLOCK
                 || block == Blocks.CLAY
                 || block == Blocks.ICE

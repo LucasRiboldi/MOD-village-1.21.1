@@ -16,10 +16,12 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.ColonySupply;
+import com.villagecolony.fabric.integration.ConstructionPalette;
 import com.villagecolony.fabric.integration.CraftingLookup;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.VillageStructures;
 import net.minecraft.block.Block;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.registry.tag.ItemTags;
@@ -258,8 +260,13 @@ public final class ItemStock {
 
         // Todas as peças de madeira do jogo, além das do estilo — autor, 2026-10-12.
         Registries.ITEM.stream().filter(ItemStock::isWoodPiece).forEach(seen::add);
-        Registries.ITEM.stream().filter(item -> item instanceof net.minecraft.item.BlockItem)
+        Registries.ITEM.stream().filter(item -> item instanceof BlockItem)
                 .filter(item -> FAMILIES.contains(CraftFamily.of(pathOf(item)))).forEach(seen::add);
+
+        // Sem argila, a reserva das oficinas acompanha a troca da obra (Regra 352).
+        if (!ConstructionPalette.hasClay(world, colony)) {
+            seen.removeIf(item -> item instanceof BlockItem block && ConstructionPalette.isTerracotta(block.getBlock()));
+        }
 
         Map<TaskType, List<Item>> byFamily = new HashMap<>();
 

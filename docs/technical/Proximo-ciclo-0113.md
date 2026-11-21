@@ -14,6 +14,7 @@ Na retomada de 21-11, `GameTestBatchRuleTest` falhou porque dois testes de `Grou
 | A8 travas de cru | **Candidata (Regra 349).** `BoneMealRound.CHEST_RESERVE` e `SmelterAdvance.KEEP` passam a 4. `SmelterAdvance.MINE_FILL` e `ValueGoods.KEEP_RAW` passam a 16. `ingot` sai do `VC_KEEP`; teto de 64 por lingote e trava `wool` de 16 em vigor. Cinco dos 21 GameTests focados falharam sob mutação, e os 21 passaram após restaurar a regra. Falta confirmação no próximo jogo. |
 | A7 terra | **Candidata (Regra 350).** `GroundPickup.collectNearby` consulta `EarthSurplus` antes de guardar terra. O cenário registra dois baús públicos para atingir 256 unidades sem esbarrar no limite por baú. Sem o filtro, o teste falhou porque a terra foi recolhida no teto. Com o filtro, os três GameTests focados passaram. Falta confirmação no próximo jogo. |
 | A9 telemetria | **Candidata (Regra 351).** O vigia ignora transições de grama e caminho sem autor declarado. O relatório histórico desconsidera as equivalentes atribuídas a `mod?natural`. O nivelamento em volta da obra e o reparo do piso da mina registram `entorno_obra` e `piso_mina` ao escrever. As regressões falharam sem a correção. Com ela, passaram oito GameTests focados e 196 testes Python. Falta confirmação no próximo jogo. |
+| A6 terracota | **Candidata (Regra 352).** Sem argila nos baús acessíveis ou exposta na área de coleta carregada, a planta pede tijolos de pedra e o estoque deixa de pedir terracota. A leitura da obra reconhece as peças já assentadas. Os dois testes novos falharam sob mutação. Com a regra restaurada, passaram 18 GameTests focados e 196 testes Python. Falta confirmação no próximo jogo. |
 
 Sentinela `fast` de 21-11 (`20261121T040824Z`): unitários e propriedade passaram. Dos 1.224 GameTests, só o cenário do A7 falhou. A análise foi gerada em `reports/sentinel-analysis/20261121T041222Z/`. A matriz de regras inclui a 349, e a suíte Python passou após limpar a variável de configuração Git herdada.
 
@@ -25,15 +26,23 @@ A segunda (`20261121T045021Z`) falhou no teste da cerca da taiga e no dos quatro
 A terceira (`20261121T045420Z`) passou em unitários, propriedade e todos os 1.225 GameTests.
 A análise está em `reports/sentinel-analysis/20261121T045745Z/`. O build final também passou.
 
+No A6, o primeiro `fast` (`20261121T051201Z`) passou em unitários e propriedade. Dois
+dos 1.227 GameTests falharam em `ShepherdRoundGameTest` (animal dentro do curral e ovelha
+inacessível). Os mesmos testes já falharam em `20261120T021714Z`. A análise está em
+`reports/sentinel-analysis/20261121T051606Z/`.
+A segunda execução (`20261121T051630Z`) passou em unitários e propriedade e falhou só na
+ovelha inacessível. A análise está em `reports/sentinel-analysis/20261121T051948Z/`.
+A terceira (`20261121T052007Z`) passou em unitários, propriedade e todos os 1.227
+GameTests. A análise está em `reports/sentinel-analysis/20261121T052316Z/`. O build final passou.
+
 ## O que falta fazer, na ordem
 
 1. **A8**: candidata, ver estado acima.
 2. **A7**: candidata, ver estado acima.
 3. **A9**: Regra 351, ver estado acima. As três reafirmações perto do açougue aparecem após a suavização do entorno,
    e o log confirma o reparo do piso em `121, 69, -125`. Os quatro eventos históricos mantêm o rótulo original do log.
-4. **A6**: onde não há argila ao alcance, terracota sai dos pedidos e vira tijolo ou pedra (`VC_SUPPLY_ERROR clay NOT_FOUND`
-   ×9; `white_terracotta` pedida pelas obras). Achar onde a obra pede terracota (`StructureBlueprintReader`, rotas de
-   fabricação) e a rota que faz tijolo. Muda o visual das casas: dizer ao autor.
+4. **A6**: Regra 352, ver estado acima. Em vilas sem argila, os trechos afetados das casas ficam com a cor e a textura dos
+   tijolos de pedra. Conferir o visual e os pedidos do fundidor no próximo jogo.
 5. **A2 (A2a + A2z)**: o mineiro põe a **tocha da colônia** (`ModContent.COLONY_TORCH` e `COLONY_WALL_TORCH`,
    `ColonyTorchBlock`, com anel de luz e sem nascer monstro perto) na escada, nos patamares e no salão, a cada 6 blocos,
    sem custo, só dentro da mina. **Exceção à Regra 212** ("nenhum aldeão põe a tocha da colônia sozinho"): editar a 212

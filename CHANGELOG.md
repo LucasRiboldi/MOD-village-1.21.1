@@ -23,6 +23,8 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
   colônia já somam 256 unidades daquele tipo.
 - Regra 351: transições de grama e caminho sem autor declarado saem da contagem de conflitos.
   O nivelamento do entorno da obra e o reparo do piso da mina identificam suas próprias alterações.
+- Regra 352: vilas sem argila disponível usam tijolos de pedra nas partes das obras que pediam terracota.
+  Os catálogos de adiantamento e estoque acompanham a troca, e as peças já assentadas ficam de pé.
 
 ## [0.4.112] — candidata, 2026-11-20
 

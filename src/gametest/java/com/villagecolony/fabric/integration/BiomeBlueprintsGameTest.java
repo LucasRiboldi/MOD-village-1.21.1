@@ -32,6 +32,58 @@ public class BiomeBlueprintsGameTest implements FabricGameTest {
 
     private static final ResourceId PLAINS_STORAGE = new ResourceId("villagecolony", "colony/plains/storage_small");
 
+    /** Regra 352: a planta local troca terracota na falta de argila e preserva peças assentadas. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "biome_blueprints", tickLimit = 40)
+    public void aHouseWithoutClayAsksForStoneBricksAndKeepsStandingTerracotta(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 1, 1)).withY(200);
+        ResourceId terracotta = ResourceId.vanilla("white_terracotta");
+        ResourceId bricks = ResourceId.vanilla("stone_bricks");
+        Blueprint house = StructureBlueprintReader.read(
+                world, ResourceId.vanilla("village/plains/houses/plains_small_house_2")).orElseThrow();
+        ColonyFixture dry = ColonyFixture.colonyAtWorld(origin);
+        BlockPos wetOrigin = origin.up(25);
+        ColonyFixture wet = ColonyFixture.colonyAtWorld(wetOrigin);
+        BlockPos clay = wetOrigin.west(2);
+        BlockPos standing = null;
+
+        try {
+            ColonyPos at = MinecraftTypeAdapter.toColonyPos(origin);
+            Blueprint dryHouse = BlueprintPlacement.blueprintOf(world, dry.colony().id(), house.id(), at)
+                    .orElseThrow();
+            context.assertTrue(!dryHouse.materials().containsKey(terracotta)
+                            && dryHouse.materials().getOrDefault(bricks, 0) >= house.materials().get(terracotta),
+                    "sem argila, a obra ainda pede terracota branca: " + dryHouse.materials());
+
+            Blueprint byRoad = house.doorSide().map(door -> house.rotated(door.turnsTo(
+                    BlueprintPlacement.roadSideOf(world, dry.colony().id(), at, house)))).orElse(house);
+            BlueprintBlock replaced = byRoad.blocks().stream()
+                    .filter(block -> block.block().equals(terracotta)).findFirst().orElseThrow();
+            standing = origin.add(replaced.offset().x(), replaced.offset().y(), replaced.offset().z());
+            world.setBlockState(standing, Blocks.WHITE_TERRACOTTA.getDefaultState());
+            Blueprint resumed = BlueprintPlacement.resumedBlueprintOf(world, dry.colony().id(), house.id(), at)
+                    .orElseThrow();
+            context.assertTrue(resumed.materials().getOrDefault(terracotta, 0) == 1
+                            && BlueprintPlacement.standing(world, resumed, at) == 1,
+                    "a retomada deveria reconhecer a terracota já assentada");
+
+            world.setBlockState(clay, Blocks.CLAY.getDefaultState());
+            Blueprint wetHouse = BlueprintPlacement.blueprintOf(world, wet.colony().id(), house.id(),
+                    MinecraftTypeAdapter.toColonyPos(wetOrigin)).orElseThrow();
+            context.assertTrue(wetHouse.materials().equals(house.materials()),
+                    "argila exposta ao alcance deveria conservar a paleta original");
+        } finally {
+            if (standing != null) {
+                world.removeBlock(standing, false);
+            }
+            world.removeBlock(clay, false);
+            dry.cleanUp();
+            wet.cleanUp();
+        }
+
+        context.complete();
+    }
+
     /** O arco do deserto sai da madeira da vila do deserto, e não do pinheiro do arquivo; o arco antigo segue de pé. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "biome_blueprints", tickLimit = 40)
     public void theDesertArchIsOfTheVillageWoodAndStillStands(TestContext context) {

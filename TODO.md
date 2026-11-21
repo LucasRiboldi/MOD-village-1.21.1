@@ -68,14 +68,14 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
   - atividade por profissão: mineiro 39% e construtor 32% parados (61 `SET_ASIDE`); fazendeiro 1% sem plantação
     grande na vila nova (5A) (M)
 - [ ] 🔴 Próximo ciclo 0.4.113 — escolhas do autor de 21-11 (A8, A7, A9, A6, A2, A3a, A4, A5, R1), plano e estado
-  em `docs/technical/Proximo-ciclo-0113.md` (A8, A7 e A9 passaram na regressão focada e esperam jogo) (G)
+  em `docs/technical/Proximo-ciclo-0113.md` (A8, A7, A9 e A6 esperam jogo) (G)
 - [ ] 🔴 Jogo da 0.4.111 (20-11, planície, colônia e8ee5291, 106 min), análise em
   `docs/audit/2026-11-21-analise-jogo-0111.md`:
   - mina com muitas aberturas e o laço do bloco solto: Regra 348 na 0.4.112 (candidata; conferir no próximo jogo);
   - o mineiro morreu para um zumbi no salão do primeiro nível (A2) (G);
   - cadeia da tora: 124 peças postas de lado, tora em estoque 0, carpinteiro e pedreiro esperando (A3) (G);
   - fazendeiro 0 colheitas entregues (`could not reach the crop` 16×) e pastor 6 de 6 tarefas soltas (A4, A5) (M);
-  - fundidor 71% parado: argila não achada 9× e nenhum minério de ferro (A6) (M);
+  - fundidor 71% parado: argila não achada 9× (A6, Regra 352 candidata), nenhum minério de ferro (A1) (M);
   - terra 868 no estoque, 314 recusadas (A7); travas `smelter_raw`, `bone_meal`, `value_raw`, `mine_fill` seguram
     demais, `ingot` e `wool` não agem (A8); grama espalhando conta como "o mod desfez o jogador" (A9) (P);
   - o `/vc salvar` não traz mina, grafo, obras, mortes, laços nem o jogo inteiro (R1) (M);

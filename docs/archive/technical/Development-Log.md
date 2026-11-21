@@ -12292,3 +12292,22 @@ gerado novamente e excluiu as transições esperadas, preservando as quatro reaf
 O primeiro `fast` falhou na ovelha desgarrada. O segundo falhou na cerca da taiga e no trânsito
 pelos quatro portões do curral MAE. Na terceira execução, unitários, propriedade e os 1.225 GameTests
 passaram. O build final passou. A candidata espera o playtest em mundo novo.
+
+## 2026-11-21 — A6, terracota em vilas sem argila (Regra 352)
+
+No último jogo, o fundidor ficou parado 71% do tempo e o log registrou nove
+`VC_SUPPLY_ERROR` de argila com `NOT_FOUND`. O cenário de GameTest com a casa
+`plains_small_house_2` reproduziu a demanda por 31 terracotas brancas sem argila.
+
+A obra troca as posições de terracota por tijolos de pedra quando falta argila nos
+baús acessíveis e nas colunas carregadas da coleta. A argila exposta usa a mesma
+sondagem da coleta. O adiantamento passa a pedir o substituto e o catálogo de
+oficinas deixa de pedir terracota. Na retomada, a planta reconhece terracota e tijolos
+de pedra já assentados nas posições previstas.
+
+Os dois novos GameTests falharam ao forçar a presença de argila. Com a versão correta,
+18 GameTests focados e 196 testes Python passaram. A matriz de testes inclui a Regra 352.
+
+Os dois primeiros `fast` repetiram falhas de pastoreio registradas no dia anterior.
+Na terceira execução, passaram os testes unitários, de propriedade e os 1.227 GameTests.
+O build final passou. A candidata espera o playtest em mundo novo.
