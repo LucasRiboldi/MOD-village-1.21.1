@@ -5,7 +5,9 @@ Branch de trabalho: `fix/miolo-pelas-pecas` (0.4.111 e 0.4.112 empilhadas, sem p
 Modo temporário §0.2.2: um commit atômico por correção, um JAR no fim, Sentinela `fast`, nada de push sem pedido.
 Numeração: Regras 349 em diante (a 348 é a descida única).
 
-## Estado ao parar (não commitado)
+## Estado ao parar (WIP no commit `733133e2`)
+
+Na retomada de 21-11, a linha de base `gradlew.bat build` com JDK 21 no commit `5375d9dc` falhou (1 de 1.885 testes). `GameTestBatchRuleTest` apontou que `earthAboveTheCeilingStaysOnTheGround` e `workerCollectsWhileWalkingPast` chamam `setTimeOfDay` no mesmo lote `ground_pickup`. A linha de base precisa voltar a passar antes do A8. `ColonyGoalsTest` passou (56 testes); GameTests focados, mutações e Sentinela ficaram pendentes.
 
 | Item | Estado |
 |---|---|
