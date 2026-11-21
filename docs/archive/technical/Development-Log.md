@@ -12210,3 +12210,15 @@ fim do tique roda cada comando com a saída capturada (`ServerCommandSource.with
 `snapshot-*.txt` na pasta de análise do mundo. `SnapshotCommandGameTest`.
 
 Nada visto em jogo.
+
+## 2026-11-20 — 0.4.111: o miolo da vila segue a forma das peças (Regra 347)
+
+No jogo da 0.4.110 as três vilas nasceram num chão quadrado: o miolo era o retângulo que cerca todas as peças + 4,
+e dentro dele toda água virava chão e o terreno virava degrau de 1, com paredes de água retas e terraços em linha
+reta na borda do retângulo (`VC_GROUND` ×3, `VC_BIOME_NOTE` ×2). Escolha A do autor: o miolo passa a ser a soma das
+caixas de cada peça + 4 (`VillageCore`, montado por `VillagePieces.coreOf`). O `VillageBlend` lê dele se a coluna é
+do miolo, a distância até ele e a coluna do miolo mais perto, de onde vem o nível da vila. `VillageCoreTest`: o lago
+entre duas casas afastadas ficava dentro do retângulo e virava terra (vermelho com o miolo retangular), e agora
+continua lago.
+
+Nada visto em jogo; vale só para chunks gerados depois.

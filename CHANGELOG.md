@@ -12,6 +12,16 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.111] — candidata, 2026-11-20
+
+Regra 347; nada visto em jogo.
+
+### Corrigido
+
+- O chão da vila deixa de nascer quadrado: o miolo plano, onde a água vira chão, é a soma das peças com 4 blocos de
+  folga, e não o retângulo que cerca todas. Lago, mar e morro entre peças afastadas ficam no cenário, e a mistura
+  suave parte da beira de cada peça. Só em mundo novo.
+
 ## [0.4.110] — candidata, 2026-11-20
 
 Regra 346; nada visto em jogo.

@@ -47,6 +47,7 @@ Cada uma tem teste que falha sem ela; nenhuma foi vista em jogo.
 | 0.4.85 | 285, 286 | aldeão preso na água vai à margem e, se não sair, pisa no gelo sob o pulo; o mineiro novo dorme na casa junto da mina assim que ela sobe; diagnósticos `loose=` (grafo), `VC_SMOOTH` e `VC_LOT_EDGE` (terreno). Sentinela `fast` PASS; tosquia instável registrada (KF-015) |
 | 0.4.86 | 287 | a tora deitada é chão do caminho (a borda da plantação grande fechava o miolo ao fazendeiro); a visão do canteiro vazio mira o lugar da planta. 1.137/1.137, Sentinela `fast` PASS |
 | 0.4.88 | 289–294 | escolhas G1–G7 da ADR-056: plantação grande semeada, 2 fazendeiros e semente que surge; tronco inteiro e folha natural quebrada no caminho; grafo na tábua de rua e na frente de toda porta; sem torre de minério e sem ar protegido no alisamento; pátio de pedra na boca da mina; ociosos tiram bloco solto e toco. 1.156/1.156, Sentinela `fast` PASS |
+| 0.4.111 | 347 | o miolo da vila segue a forma das peças: sem chão quadrado, lago e morro entre peças afastadas ficam |
 | 0.4.110 | 346 | `/vc salvar`: todas as análises da vila num arquivo só |
 | 0.4.109 | 345 | conflito com o jogador: `VC_PLAYER_EDIT`, `VC_PLAYER_UNDO`, `VC_MOD_OVERRIDE` e a reafirmação `VC_PLAYER_INSIST`; `player_report.py` |
 | 0.4.108 | 344 | telemetria: tarefa com número, linha do tempo de cada aldeão, balanço dos itens, falhas por item, dia do aldeão e relatório único (`game_report.py`) |

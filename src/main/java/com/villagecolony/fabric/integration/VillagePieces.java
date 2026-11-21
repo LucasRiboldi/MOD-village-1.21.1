@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.core.construction.model.VillageBlend;
+import com.villagecolony.core.construction.model.VillageCore;
 import com.villagecolony.core.construction.model.VillageSurface;
 import net.minecraft.structure.PoolStructurePiece;
 import net.minecraft.structure.StructurePiece;
@@ -34,15 +35,31 @@ final class VillagePieces {
      */
     static String settle(StructureStart start, int[][] natural, VillageSurface.Kind[][] kinds, VillageBlend.Area core,
                          VillageBlend.Area reach, int minX, int minZ) {
-        return settle(start, natural, kinds, core, reach, minX, minZ, null, null, new java.util.HashMap<>(),
-                new java.util.HashMap<>());
+        return settle(start, natural, kinds, VillageCore.of(core, natural.length, natural[0].length), reach, minX, minZ,
+                null, null, new java.util.HashMap<>(), new java.util.HashMap<>());
+    }
+
+    /**
+     * O miolo da vila — Regra 347: a caixa de cada peça, nas coordenadas da grade e com a folga {@code pad} em volta,
+     * somadas; o espaço entre peças afastadas fica fora.
+     */
+    static VillageCore coreOf(StructureStart start, int minX, int minZ, int pad, int width, int depth) {
+        List<VillageBlend.Area> parts = new ArrayList<>();
+
+        for (StructurePiece piece : start.getChildren()) {
+            BlockBox box = piece.getBoundingBox();
+            parts.add(new VillageBlend.Area(box.getMinX() - minX - pad, box.getMinZ() - minZ - pad,
+                    box.getMaxX() - minX + pad, box.getMaxZ() - minZ + pad));
+        }
+
+        return VillageCore.of(parts, width, depth);
     }
 
     /**
      * O mesmo, e a frente de cada porta das peças, fora delas, fica fixa no piso da porta e entra em {@code doorFronts}
      * (Regra 303); sem moldes ({@code templates} nulo), nenhuma porta é lida.
      */
-    static String settle(StructureStart start, int[][] natural, VillageSurface.Kind[][] kinds, VillageBlend.Area core,
+    static String settle(StructureStart start, int[][] natural, VillageSurface.Kind[][] kinds, VillageCore core,
                          VillageBlend.Area reach, int minX, int minZ,
                          net.minecraft.structure.StructureTemplateManager templates,
                          net.minecraft.registry.DynamicRegistryManager registries, java.util.Map<Long, Integer> doorFronts,
