@@ -9,6 +9,8 @@
 
 ## Onde o projeto está
 
+- **Último jogo observado:** 0.4.115, 21-11, vila de planície `c5cd8b44`, confirmado no log carregado. Há 28 notas do autor e seis imagens no [plano de correção](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md). Restam 23 pontos: 18 sem correção implementada e 5 corrigidos nas candidatas 0.4.116/0.4.117, ainda sem confirmação em jogo. Este checkout ainda tem `mod_version=0.4.110`; não gerar JAR dele sobre a instalação 0.4.115.
+
 - **Versão:** 0.4.110 na `main`, publicada como `v0.4.110-alpha` (Regras 344 a 346), pendente de playtest. Use o roteiro em `docs/testing/roteiro-de-jogo-0.4.107.md` e encerre com `/vc salvar`.
 - **Montanha:** no jogo da 0.4.93 (Spark `0SMEEkMLGP`), a BigHouseMOD e a boca da mina ficaram no alto, longe das casas, e houve terreno suspenso. As Regras 338 (altura da BigHouseMOD) e 337 (limpeza acima das casas) aguardam confirmação em jogo. A triagem detalhada está no `TODO.md`.
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma

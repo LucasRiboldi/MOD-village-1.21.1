@@ -2,12 +2,37 @@
 
 Ponto de retomada para Codex ou Claude Code, atualizado em 2026-11-21. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar.
 
+## Relatório de erros atualizado — 2026-11-21
+
+- O último `latest.log` carregou 0.4.115. Não usar esse log para declarar 0.4.116/0.4.117 validadas.
+- Restam 23 pontos no plano: 18 sem correção implementada e 5 com código candidato aguardando jogo.
+- Próximo gate: jogar 0.4.117 e conferir N05, N12, N26, N27 e N28.
+- Próxima correção após o gate: N07 + N08, protegendo e tornando acessível o arco da mina.
+- Registro completo: `docs/technical/Plano-Playtest-0.4.115-2026-11-21.md` e `docs/testing/relatorios/jogo-0.4.115-2026-11-21.md`.
+
+## Retomada atual — 0.4.116 (2026-11-21)
+
+- A correção escolhida pelo autor (opção 2: pastor, N05/N26/N27) foi concluída como candidata em `C:/Users/lucas/Desktop/MOD-village-1.21.1`, branch `fix/miolo-pelas-pecas`, commit `7a07b38f520c26cafbb749aa68e529c07209d850`.
+- **Retome pelo `HANDOFF.md` desse diretório do desktop.** Esta worktree `70b9` continua na base antiga, com documentos locais preservados. Não compilar nem instalar JAR a partir desta árvore.
+- A 0.4.116 está instalada em `%APPDATA%/.minecraft/mods`; a 0.4.115 foi preservada como `.jar.disabled`. `build/libs/`, `downloads/` e `mods/` têm SHA-256 `702fda50d734e8a8c77baab8a809c83a489955d37a866829fdf4ac97426ce01a`.
+- Sentinela `fast`: 1.885 unitários, uma suite de propriedades e 1.237 GameTests passaram. Também passaram 196 testes Python, build e `remapJar` após o commit. Cinco regressões detectaram a produção anterior; 23 testes focados passaram na correção.
+- As 28 notas, seis imagens, demais lotes pendentes e o roteiro da 0.4.116 estão no plano `docs/technical/Plano-Playtest-0.4.115-2026-11-21.md` **do desktop**. Aguardar o playtest do autor antes de confirmar o resultado em jogo.
+- Relatos de que o autor entrou no jogo ou testou sempre acionam `vc-log-driven-fix`. Toda versão nova deve atualizar o JAR do TLauncher e comparar as três cópias.
+- As seções abaixo preservam o contexto anterior. Para versão, branch, evidências e próximos passos, prevalece esta retomada.
+
 ## Onde o projeto está
 
 - A versão publicada é [`v0.4.110-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.110-alpha), pendente de playtest. As Regras 344 a 346 incluem telemetria de tarefas e itens, conflito com o jogador e o comando `/vc salvar`. Veja [STATE.md](STATE.md) e as [notas da versão](docs/releases/v0.4.110.md).
 - O fluxo de correção por logs está versionado em [`vc-log-driven-fix`](.agents/skills/vc-log-driven-fix/SKILL.md). Siga `CLAUDE.md` §0.2.2 para os gates de modelo, diagnóstico e escolha do autor.
 
 ## Próximo playtest
+
+**Atualização de 21-11:** o autor jogou a **0.4.115**, confirmada em `latest.log`.
+As 28 notas e as seis imagens foram triadas no
+[plano da 0.4.115](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
+Leia esse plano antes de usar o roteiro antigo abaixo. A implementação ainda
+depende da escolha do autor; existe outra worktree em `fix/miolo-pelas-pecas`
+na 0.4.115. Confira o estado e coordene antes de editar os mesmos sistemas.
 
 1. Use a 0.4.110 e siga o [roteiro da 0.4.107](docs/testing/roteiro-de-jogo-0.4.107.md). Num cenário de montanha com vila recém-gerada, confira a altura da BigHouseMOD e se ficou terreno suspenso acima das casas (Regras 338 e 337).
 2. Anote sintomas com `/vc bioma nota`. Ao fim, rode `/vc salvar` e recolha os recortes do log e dos relatórios. Comece a análise por `python scripts/game_report.py`.
@@ -88,6 +113,7 @@ Elas viviam só na memória local do Claude Code. O que está em `CLAUDE.md` e `
 - **Compilar:** `./gradlew.bat compileJava compileTestJava compileGametestJava -q`. ErrorProne roda com `-Werror`, então aviso reprova.
 - **Sentinela:** `python scripts/test_lab.py fast`, depois `python scripts/sentinel_analysis.py`, com o Minecraft fechado. Mudou regra ou teste: `python scripts/rule_coverage.py`. Mudou `docs/RULES.md`: `python scripts/rules_to_readme.py`.
 - **Instalar para o autor jogar:** `./gradlew.bat remapJar`, copie `build/libs/village-colony-<versão>.jar` para `downloads/` e para `%APPDATA%\.minecraft\mods` (TLauncher), renomeie o anterior para `.jar.disabled` e compare o SHA-256 das três cópias.
+- **Sempre que gerar versão nova:** a instalação no TLauncher é obrigatória, inclusive se o pedido disser apenas gerar o JAR. Use `bash scripts/install-mod.sh` para instalar e conferir o hash contra o build; confira também a cópia de `downloads/`. Verifique antes a versão ativa para não instalar um build antigo sobre uma versão mais recente. Falha na cópia deve ser relatada; a versão ainda não está pronta para jogar.
 - **Publicar:** com `docs/releases/v<versão>.md` na `main`, `gh workflow run Release --ref main`. O workflow compila outro JAR, com outro SHA-256.
 
 ### Só existe na máquina do autor, fora do GitHub

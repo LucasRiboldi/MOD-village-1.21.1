@@ -11954,6 +11954,10 @@ opções recomendadas; a atividade por profissão (ponto 5) ficou para depois.
 Cada regra com teste vermelho antes; baterias de 1.159 e 1.160 verdes duas vezes, Sentinela `fast` PASS em cada uma.
 Nada visto em jogo.
 
+## 2026-11-21 — atualização do relatório do playtest 0.4.115
+
+O relatório do jogo e o plano de correção foram atualizados após a leitura do `latest.log` e do diário mais recente. O log ainda carrega 0.4.115. A triagem mantém 23 pontos abertos: 18 sem correção implementada e cinco corrigidos nas candidatas 0.4.116/0.4.117, aguardando confirmação em jogo. O próximo gate é jogar 0.4.117; a próxima correção de código recomendada é N07 + N08, integridade e acesso ao arco da mina. O corte do arco não foi atribuído ao Mineiro porque o log não registra autoria suficiente.
+
 ## 2026-11-15 — 0.4.88: Regras 289 a 294 (ADR-056, escolhas G1–G7 do autor)
 
 Placar das notas dos jogos da 0.4.79 à 0.4.86 (33 pontos) e escolhas do autor por grupo, registradas na ADR-056.

@@ -10,6 +10,8 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 
 ## F0 — Sinal limpo (1 semana)
 
+- [ ] 🟠 Jogo 0.4.115: o [plano com as 28 notas e seis imagens](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md) deixou 23 pontos abertos. N07–N11, N13–N25 (18 pontos) ainda não têm correção implementada; N05, N12, N26, N27 e N28 têm código candidato, mas aguardam confirmação em jogo. Priorizar validação da 0.4.117 e depois N07 + N08. N01–N04 e N06 são regressões positivas a preservar.
+
 - [ ] 🟠 Decisão do autor: a ADR-024 (índice físico do armazém) é aceita, mas o `WarehouseIndex` não é usado em produção;
   religar ou retirar (P)
 - [ ] 🟡 Decisão do autor: o `CLAUDE.md` importa `.fabric/AGENTS.md`, que a ferramenta Fabric cria localmente (pasta no
