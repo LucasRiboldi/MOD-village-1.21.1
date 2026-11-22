@@ -12,6 +12,12 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.118] — candidata local, 2026-11-21
+
+- A placa do baú da moradia prioriza a passagem livre até a porta e pode mudar de face
+  em baús antigos. N14, orientação da placa.
+- O empacotamento local inclui a reconexão da mina e da casa do mineiro da 0.4.117 (N12/N28).
+
 ## [0.4.116] — candidata, 2026-11-21
 
 - O pastor precisa chegar junto da ovelha para tosquiar; a caminhada deixa de parar longe dela.

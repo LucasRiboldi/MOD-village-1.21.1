@@ -2,6 +2,23 @@
 
 # Development-Log.md
 
+## 21-11-2026 — Placa do baú da moradia (N14)
+
+O autor escolheu adiantar a placa enquanto o Lote A (N12/N28) aguarda playtest.
+A branch `codex/n14-placa-bau` saiu da `main` em `6aa5cacf`. O build da
+linha de base passou. Com a produção antiga, o GameTest
+`workerBadgeMovesToTheDoorSideWhenItBecomesFree` falhou no reposicionamento da placa.
+A marcação periódica e a troca de cama passaram a usar a passagem interna da moradia.
+O quadro antigo é retirado após o servidor aceitar o substituto. Quando não há acesso
+reconhecido, a marca segue a regra da face livre. Passaram os 17 GameTests focados
+de `ChestMarkerGameTest` e `BedChoiceGameTest`.
+O Sentinela `fast` passou em `20261122T002039Z`: 1.886 unitários, uma suíte de
+propriedades e 1.238 GameTests. A candidata local 0.4.118 é montada com o delta
+de código e teste do Lote A (`eb222eba`) para preservar a reconexão da 0.4.117.
+
+O atraso na criação do baú continua em investigação. N10 aguarda o Lote A.
+O pedido N24 permanece para decisão separada.
+
 ## 21-11-2026 — Pastor após o jogo da 0.4.115; candidata 0.4.116
 
 O relatório reuniu as 28 notas e comparou as seis imagens. O autor escolheu a opção 2,

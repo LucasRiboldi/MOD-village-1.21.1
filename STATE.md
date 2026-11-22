@@ -8,6 +8,11 @@
 > **Retomada por outro agente:** comece por `HANDOFF.md`.
 
 ## Onde o projeto está
+- **N14, placa do baú:** código na branch `codex/n14-placa-bau`. A placa da moradia prioriza a passagem livre
+  até a porta e pode mudar de face em casas existentes. A hipótese de atraso na criação do baú segue aberta.
+  N10 aguarda a integração do Lote A (N12/N28). N24 segue para deliberação separada.
+  Sentinela `fast` passou com 1.886 unitários, uma suíte de propriedades e 1.238 GameTests
+  (`20261122T002039Z`). A candidata local 0.4.118 tem roteiro no plano integral.
 - **Ciclo atual:** jogo da 0.4.115 analisado em 21-11 (28 notas e seis imagens). Autor escolheu o Lote B,
   pastor primeiro, no [plano integral](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
   Candidata 0.4.116 instalada no TLauncher e à espera de playtest. Autor escolheu iniciar o Lote A pela reconexão (N12/N28). C, D e E seguem abertos.

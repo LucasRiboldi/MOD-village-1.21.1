@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.116%20candidata-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.118%20candidata-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,7 +19,7 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Candidata 0.4.116.** Corrige o pastor após o jogo da 0.4.115 e aguarda playtest. A versão publicada é [`v0.4.110-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.110-alpha). Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
+**Candidata local 0.4.118.** Corrige a orientação da placa do baú da moradia (N14) e inclui a reconexão da 0.4.117 no JAR de teste. A versão publicada é [`v0.4.110-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.110-alpha). Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
 [docs/RULES.md](docs/RULES.md). As 28 notas e seis imagens do último jogo estão no
 [plano de correção](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md); o autor escolheu pastor primeiro.
