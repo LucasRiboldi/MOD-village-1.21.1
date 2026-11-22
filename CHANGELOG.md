@@ -14,6 +14,8 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 
 ## [0.4.118] — candidata, 2026-11-22
 
+[Notas da pré-release v0.4.118-alpha](docs/releases/v0.4.118.md).
+
 - A placa do baú da moradia prioriza a passagem livre até a porta e pode mudar de face
   em baús antigos (N14). A candidata também inclui a reconexão da 0.4.117 (N12/N28).
 
