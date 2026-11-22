@@ -8,7 +8,7 @@
 > **Retomada por outro agente:** comece por `HANDOFF.md`.
 
 ## Onde o projeto está
-- **N14, placa do baú:** código integrado com N12/N28 na branch `codex/entrega-04118`. A placa da moradia prioriza a passagem livre
+- **N14, placa do baú:** código integrado com N12/N28 na `main` pelo PR #102. A placa da moradia prioriza a passagem livre
   até a porta e pode mudar de face em casas existentes. A hipótese de atraso na criação do baú segue aberta.
   N10 segue aberto. O Lote A (N12/N28) entrou na `main` pelo PR #102 e aguarda playtest.
   N24 segue para deliberação separada.
