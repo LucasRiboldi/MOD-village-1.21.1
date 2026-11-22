@@ -8,17 +8,18 @@
 > **Retomada por outro agente:** comece por `HANDOFF.md`.
 
 ## Onde o projeto está
-- **N14, placa do baú:** código integrado com N12/N28 na branch `codex/entrega-04118`. A placa da moradia prioriza a passagem livre
+- **N14, placa do baú:** código integrado com N12/N28 na `main` pelo PR #102. A placa da moradia prioriza a passagem livre
   até a porta e pode mudar de face em casas existentes. A hipótese de atraso na criação do baú segue aberta.
-  N10 aguarda a integração do Lote A (N12/N28). N24 segue para deliberação separada.
+  N10 segue aberto. O Lote A (N12/N28) entrou na `main` pelo PR #102 e aguarda playtest.
+  N24 segue para deliberação separada.
   Sentinela `fast` passou com 1.886 unitários, uma suíte de propriedades e 1.238 GameTests
   (`20261122T002039Z`). A candidata local 0.4.118 tem roteiro no plano integral.
 - **Ciclo atual:** jogo da 0.4.115 analisado em 21-11 (28 notas e seis imagens). Autor escolheu o Lote B,
   pastor primeiro, no [plano integral](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
   A 0.4.117 trata a reconexão (N12/N28) do Lote A e incorpora o pastor da 0.4.116. Ambas as correções aguardam
   playtest. Os demais pontos do Lote A e os lotes C, D e E seguem abertos.
-- **Versões:** release publicada `v0.4.110-alpha`. Candidata de playtest 0.4.118. Entrega sem nova rodada de testes
-  locais por decisão do autor. O CI do GitHub foi autorizado para a integração.
+- **Versões:** candidata de playtest 0.4.118. As [notas da versão](docs/releases/v0.4.118.md) acompanham a
+  pré-release `v0.4.118-alpha`. O autor dispensou novos testes locais e autorizou o CI do GitHub.
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
   jogador e publicação.
