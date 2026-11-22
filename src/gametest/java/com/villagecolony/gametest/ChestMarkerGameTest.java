@@ -7,6 +7,8 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestMarker;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.DoorBlock;
+import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.ItemStack;
@@ -17,6 +19,7 @@ import net.minecraft.test.TestContext;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Direction;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,6 +55,48 @@ public class ChestMarkerGameTest implements FabricGameTest {
 
         return context.getWorld().getEntitiesByClass(
                 ItemFrameEntity.class, new Box(absolute).expand(2.0), frame -> true).size();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "marker_door")
+    public void workerBadgeMovesToTheDoorSideWhenItBecomesFree(TestContext context) {
+        BlockPos chest = new BlockPos(3, 2, 3);
+        BlockPos passage = chest.north();
+        BlockPos door = passage.north();
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+        context.setBlockState(chest.east(), Blocks.STONE.getDefaultState());
+        context.setBlockState(chest.west(), Blocks.STONE.getDefaultState());
+        context.setBlockState(passage.down(), Blocks.STONE.getDefaultState());
+        context.setBlockState(passage, Blocks.STONE.getDefaultState());
+        context.setBlockState(door.down(), Blocks.STONE.getDefaultState());
+        var lower = Blocks.OAK_DOOR.getDefaultState().with(DoorBlock.FACING, Direction.SOUTH);
+        context.setBlockState(door, lower);
+        context.setBlockState(door.up(), lower.with(DoorBlock.HALF, DoubleBlockHalf.UPPER));
+
+        ServerWorld world = context.getWorld();
+        BlockPos absolute = context.getAbsolutePos(chest);
+        context.assertTrue(ChestMarker.markAt(world, absolute, ProfessionType.LUMBERJACK),
+                "não montou a placa antiga na lateral disponível");
+        context.setBlockState(passage, Blocks.AIR.getDefaultState());
+
+        ItemFrameEntity playerFrame = new ItemFrameEntity(world, absolute.north(), Direction.NORTH);
+        context.assertTrue(world.spawnEntity(playerFrame), "não montou a decoração do jogador");
+        var workers = lumberjack();
+        var storage = at(context, chest);
+        context.assertTrue(ChestMarker.mark(world, workers, storage) == 0,
+                "reposicionou a placa sobre um quadro do jogador");
+        context.assertTrue(framesAround(context, chest) == 2 && !playerFrame.isRemoved(),
+                "mexeu na decoração do jogador");
+        playerFrame.discard();
+
+        context.assertTrue(ChestMarker.mark(world, workers, storage) == 1,
+                "a placa antiga deveria mudar para a passagem livre voltada para a porta");
+        var frames = world.getEntitiesByClass(ItemFrameEntity.class, new Box(absolute).expand(2.0), frame -> true);
+        context.assertTrue(frames.size() == 1 && frames.get(0).getHorizontalFacing() == Direction.NORTH,
+                "a placa antiga foi duplicada ou não ficou voltada para a porta");
+        context.assertTrue(ChestMarker.professionAt(world, absolute).equals(Optional.of(ProfessionType.LUMBERJACK)),
+                "a mudança perdeu a profissão do baú");
+        context.assertTrue(ChestMarker.mark(world, workers, storage) == 0, "a placa mudou de novo");
+        context.complete();
     }
 
     /**

@@ -1,6 +1,7 @@
 # Plano de correção — jogo da 0.4.115 em 21-11-2026
 
-Status: autor escolheu a opção 2, pastor primeiro (Lote B: N05, N26 e N27). Correção candidata 0.4.116; regressões focadas, bateria completa e build passaram. Demais lotes continuam na fila. Nenhum resultado futuro de jogo está validado.
+Status: a candidata local 0.4.118 aguarda playtest da orientação da placa (N14), da reconexão da 0.4.117
+(N12/N28) e do pastor da 0.4.116 (N05/N26/N27). O atraso na criação do baú continua em investigação.
 
 ## Evidência e limites
 
@@ -41,7 +42,7 @@ Horários são os do log. P1: acesso, integridade e fluxo bloqueado. P2: comport
 | N11 · 14:36:23 · 2462 · P2 | “entrada ... fazenda ... canto mai proximo da linha do grafo”; 3.jpg | Selecionar canto acessível mais próximo de um segmento do grafo, com ramal curto. Testar as rotações da fazenda e distância ao segmento, não só ao nó. |
 | N12 · 14:38:32 · 2521 · P1 | “no de grafo do arco ... nao se conecta” | Investigar geração/registro/reconexão da entrada da mina. Testar caminho no grafo desde o arco até a rede principal, antes e depois da recarga. |
 | N13 · 14:41:03 · 2575 · P2 | “conectar a aresta mais proxima ... evitando arestas paralelas”; 4.jpg | Revisar inserção de ramais para aproveitar segmento existente e evitar duplicação próxima; preservar acesso de todos os nós. Testar geometria com duas ruas próximas e obstáculos. |
-| N14 · 14:44:00 · 2706 · P2 | “bau ... depois ... nasceu”; “placa ... apontando para a porta”; 5.jpg | Separar investigação do atraso de criação do baú e correção da orientação da placa. Testar momento de colocação após atribuição da casa e placa legível voltada para espaço livre em direção à porta, sem ocupar cama/passagem. |
+| N14 · 14:44:00 · 2706 · P2 | “bau ... depois ... nasceu”; “placa ... apontando para a porta”; 5.jpg | Orientação corrigida em código, com GameTest de reposicionamento. Aguardar playtest. O atraso na criação do baú segue aberto e precisa ser reproduzido após a atribuição da cama. |
 | N15 · 14:47:30 · 2957 · P2 | “caracol ... descendo mais uns 7 blocos ... plato de 3x3x3 ... mais 7 para direita” | Mudança de geometria da mina: revisar `MineStairPoints`/`MineArm` e ADR do patamar antes de alterar. Provar largura, altura livre, patamares e rotação sem cortar arco/casa. Antes da implementação, fixar se “7 blocos” é avanço ou queda vertical; a nota não define isso inequivocamente. |
 | N16 · 14:51:04 · 3838 · P2 | “lista inicial ... 1° fazenda grande ... 2° curral grande ... 3° ... casas ... .nbt cada” | Planejar fila experimental fazenda → curral → casas específicas com NBT por profissão. Definir relação com estruturas obrigatórias de fundação, material físico, retomada e moradia. Testar ordem sem pular por falta de material e não duplicar após reinício. Exige revisão das regras/ADR antes do comportamento. |
 | N17 · 14:51:43 · 3940 · P1 | “zelador caminha muito ... não ... fazendo nada” | Correlacionar ação física e contador de trabalho com deslocamento; distinguir pavimentação e nivelamento. Relatório: 65% trabalho, 33% caminhada; não concluir ócio com base apenas na impressão. Teste de cenário com desnível deve registrar bloco alterado e queda de defeitos. |
@@ -56,6 +57,21 @@ Horários são os do log. P1: acesso, integridade e fluxo bloqueado. P2: comport
 | N26 · 15:14:07 · 6840 · P1 | “pastor travado, segurando animal, animal girando”; 7.jpg | Reproduzir cerca, desnível e animal na guia. Investigar `ShepherdPens`, `PenTether`, `PenGate` e replanejamento. GameTest deve levar animal pelo portão e encerrar tarefa, sem repetição indefinida. |
 | N27 · 15:16:06 · 7102 · P1 | “talvez ... abrir ... primeiro ... depois ... pular ... animal ... porteira” | Tratar como proposta do autor para N26, ainda não causa provada. Testar abrir antes de atravessar e manter aberto até animal passar. Avaliar salto do pastor como alternativa condicionada; animal continua atravessando a porteira. Não tornar teleporte uma solução implícita. |
 | N28 · 15:17:21 · 7137 · P1 | “nó da casa do mineiro ... conectada ... deixou ... todos nos ... sempre ... conectados” | Regressão de conectividade após terreno/obra/reconstrução do grafo. Verificar todos os nós de entrada válidos, incluindo mina e casa, com reconexão após mudanças e recarga. Se não houver rota física, registrar impedimento, sem desenhar ligação fictícia. |
+
+## N14 — Roteiro da placa do baú
+
+1. Reinicie o jogo e confirme `villagecolony 0.4.118` no `latest.log`.
+   Abra uma cópia da vila do teste anterior. Entre pela porta da casa do carpinteiro e confira
+   se a placa do baú fica visível pela passagem. Aguarde um ciclo da colônia se o baú já tinha placa.
+2. Confira se há um só quadro do mod, com o mesmo ícone e nome. Salve, reabra o mundo e confira de novo.
+3. Repita numa casa recém-atribuída. Se o baú demorar, anote o horário, as coordenadas, o ofício e
+   os instantes em que a cama foi atribuída, o baú apareceu e a placa ficou visível.
+4. Se a face voltada para a porta já tiver um quadro seu, confira se a decoração é preservada.
+
+O GameTest liberou a passagem de um baú com placa legada, verificou o respeito ao quadro do jogador
+e confirmou a troca para a face norte sem duplicar a placa nem perder a profissão. A busca da porta
+usa piso livre no mesmo nível, até seis blocos de distância do baú. Sem uma rota reconhecida,
+o quadro existente é mantido ou, para um baú sem placa, vale a primeira face lateral livre.
 
 ## Evidência adicional e hipóteses de trabalho
 
@@ -99,14 +115,28 @@ As duas opções preservam o inventário completo; escolher uma determina a prim
 - Revisão encerrada sem bloqueios após corrigir o cleanup da checagem antecipada. Análise histórica em `reports/sentinel-analysis/20261121T191903Z/`; inclui execuções de diagnóstico e mutação, com resultados antigos preservados.
 - JAR candidato: `village-colony-0.4.116.jar`, gerado com `remapJar` após o commit `7a07b38f`. Versão no `fabric.mod.json` conferida. As cópias em `build/libs/`, `downloads/` e `mods/` têm SHA-256 `702fda50d734e8a8c77baab8a809c83a489955d37a866829fdf4ac97426ce01a`. A 0.4.115 foi desativada no TLauncher.
 
-### Próxima correção após o playtest
+### Decisão após o Lote B
 
-Se a 0.4.116 confirmar a tosquia e a travessia, iniciar pelo Lote A. Montar duas casas em alturas diferentes e uma rota ligada à mina. Alterar o terreno e recarregar o mundo. Conferir caminhada real e reconexão de entradas válidas, preservando portas e fundações. Se a rota ficar fisicamente impossível, registrar o impedimento. Investigar em separado a autoria do corte do arco, os ramais redundantes e a cobertura da manutenção pelo Zelador. Se o pastor ainda falhar, recolher o cenário e o log da 0.4.116 para retomar o Lote B.
+O autor escolheu avançar para N12/N28 enquanto a validação do pastor seguia pendente. A autoria do corte no arco, os desníveis entre casas, os ramais redundantes e a cobertura da manutenção pelo Zelador continuam abertos.
 
-### Roteiro do próximo jogo — 0.4.116
+### Roteiro do pastor — 0.4.116
 
 1. Reinicie o Minecraft após a instalação e confirme `villagecolony 0.4.116` no `latest.log`. Comece em mundo novo, em planície, para comparar com o jogo anterior; repita depois em terreno irregular.
 2. Com pastor e demanda por lã, observe ovelha a aproximadamente quatro blocos e separada pela cerca. Ela deve conservar a lã até o pastor chegar junto; a tosquia deve gerar lã no baú.
 3. Observe uma coleta com vaca do lado externo, em desnível lateral de um bloco, e porteira inicialmente fechada. O pastor deve abrir, aproximar o animal da frente e entrar mantendo a corda enquanto necessário. O animal deve cruzar pela porteira.
 4. Confira se a corda solta depois do alinhamento/entrada, o vão fecha quando livre e o pastor segue para outra atividade. Registre se continuar girando, preso à cerca ou repetindo o mesmo destino; não considere somente a cor do nome como prova de travamento.
 5. Registre cada resultado com `/vc bioma nota` e gere `/vc salvar` antes de sair. Informe qual cenário falhou e anexe a imagem correspondente. O novo relatório permitirá comparar bloqueio e ócio com a sessão 0.4.115.
+
+## Lote A — candidata 0.4.117 (N12/N28)
+
+- **Causa reproduzida:** uma recusa do Zelador mantinha a coluna fora da busca até a sessão ou o modo do grafo mudar. O GameTest montou a mina e a casa do mineiro do outro lado de uma única passagem. Registrou a recusa e confirmou que os nós permaneceram isolados mesmo após secar a passagem.
+- **Correção:** o evento de bloco reaproveita a região já monitorada e libera a recusa quando muda o piso, o apoio ou a passagem na coluna ou em uma vizinha direta. A releitura usa a verificação de terreno existente. A regressão também confirma que uma edição acima da passagem preserva a recusa e que trocar o apoio libera a busca enquanto a água ainda impede a conexão.
+- **Prova:** a regressão falhou pela recusa antiga. Passaram 16 GameTests focados e as três suites do Sentinela `fast` (`20261121T233603Z`). A causa exata da desconexão registrada no playtest segue sem confirmação.
+
+### Roteiro da mina e da casa — 0.4.117
+
+1. Reinicie o jogo e confira `villagecolony 0.4.117` no `latest.log`. Use um mundo de teste ou uma cópia da vila. Em `/vc grafo modo`, confira o modo `atual`. Ative o mesmo desenho do grafo do playtest anterior.
+2. Localize o arco da mina e a casa do mineiro. Confira se ambos têm ligação com a rua e se você consegue caminhar da rua até cada entrada.
+3. Alague um trecho da única passagem. Registre se os nós ficam isolados e se o log `VC_ROAD_GRAPH` mostra uma recusa. Retire a água e recoloque o apoio firme. Aguarde a releitura com a vila carregada. A varredura normal começa a cada 6.000 tiques, cerca de cinco minutos a 20 TPS. O arco e a casa devem voltar à rede principal. Se a água ainda bloquear o trecho e não houver desvio, os nós devem continuar isolados.
+4. Caminhe até as duas entradas e confira portas, escadas e fundações. Salve e reabra o mundo. Confirme se as conexões aparecem de novo e anote quanto tempo demoraram.
+5. Na mesma candidata, repita os passos de tosquia e condução do roteiro do pastor. Use `/vc bioma nota` para anotar resultados. Execute `/vc salvar` antes de salvar e sair, e de novo ao concluir o teste após reabrir.

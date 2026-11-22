@@ -39,9 +39,13 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 
 - [ ] 🔴 Jogo da 0.4.115 (21-11): 28 notas e seis imagens no [plano integral](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
   Lote B implementado na candidata 0.4.116: tosquia junto da ovelha e condução pela porteira (N05, N26, N27); aguarda jogo.
-  Lotes A (terreno/grafo), C (implantação/moradia), D (regras/experiência) e E (fluxo/custo) continuam abertos;
-  próximo após validar o pastor: reproduzir o desnível entre casas e a perda de conexão do nó da mina/casa (Lote A).
-  sucessos N01–N04 e N06 devem ser preservados. Não executar decisões arquiteturais pendentes sem deliberação.
+  Lote A, N12/N28: a 0.4.117 trata a recusa que persistia após mudar a passagem. Confirmar reconexão da mina e da
+  casa do mineiro em jogo e após reabrir o mundo. Os outros pontos do Lote A e os lotes C (implantação/moradia),
+  D (regras/experiência) e E (fluxo/custo) continuam abertos. Preservar os sucessos N01–N04 e N06.
+  Decisões arquiteturais pendentes exigem deliberação.
+- [ ] 🟠 N14: validar em jogo a orientação da placa em moradias novas e existentes. Medir separadamente
+  quando a cama é atribuída, quando o baú aparece e quando ganha placa para reproduzir o atraso relatado (P).
+- [ ] N23: inventariar os estados que chegam ao overlay e revisar as cores das placas. Aguardar a escolha do autor.
 - [ ] 🟠 Jogo da 0.4.114: conferir se a candidata 0.4.115 impede o retorno ao mesmo telhado após o resgate;
   a memória de caminhada persistente foi reproduzida em GameTest, mas sua relação com o retorno ainda depende do jogo (P)
 - [ ] 🔴 Ciclos de playtest até todo ofício ficar abaixo de 40% parado em dois biomas, dois jogos seguidos (G)

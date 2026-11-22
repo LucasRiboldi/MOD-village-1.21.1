@@ -12,6 +12,17 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.118] — candidata, 2026-11-22
+
+- A placa do baú da moradia prioriza a passagem livre até a porta e pode mudar de face
+  em baús antigos (N14). A candidata também inclui a reconexão da 0.4.117 (N12/N28).
+
+## [0.4.117] — candidata, 2026-11-21
+
+- O grafo reconsidera uma coluna recusada pelo Zelador quando o piso, o apoio ou a passagem próxima muda. Uma
+  rota seca pode voltar a ligar a mina e a casa do mineiro à rua na releitura (Lote A, N12/N28).
+- Água e obstáculos continuam sujeitos às verificações do terreno. A reconexão aguarda confirmação em jogo.
+
 ## [0.4.116] — candidata, 2026-11-21
 
 - O pastor precisa chegar junto da ovelha para tosquiar; a caminhada deixa de parar longe dela.

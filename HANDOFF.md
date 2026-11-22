@@ -2,28 +2,58 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
-## Retomada de 2026-11-21
+## Retomada da entrega 0.4.118 (2026-11-22)
 
-- **Prioridade atual:** autor escolheu a reconexão da mina e da casa do mineiro no Lote A (N12/N28).
-  O ciclo anterior tratou o pastor (N05/N26/N27) na candidata 0.4.116.
+- No Claude Code, use a `main` quando ela contiver a candidata 0.4.118.
+  Até lá, abra a branch `codex/entrega-04118`. Ela integra o Lote A
+  (`eb222eba`, N12/N28) e a orientação da placa do baú (`a9999d09`, N14)
+  sobre a base que já inclui a correção do pastor (N05/N26/N27, PR #101).
+- `remapJar` passou em `91241a66`. O JAR da 0.4.118 é o único ativo no
+  TLauncher. Os arquivos em `build/libs/`, `downloads/` do checkout do
+  desktop e `mods/` conferem com SHA-256
+  `ED7D96FEC95A398C08E7E8DECDA881713E07CC5003D09995BC7D5651E4E6C4F5`.
+- O autor dispensou novos testes locais e autorizou o CI do GitHub para
+  a integração via PR. Consulte o resultado do CI antes da release.
+- Continue pelo [plano do playtest](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md)
+  e pelo [TODO](TODO.md). Confirme N05/N12/N14/N26/N27/N28 no jogo da 0.4.118.
+  O atraso do baú segue aberto. N23 (cores das placas) segue pendente.
+
+## Histórico do N14
+
+- A branch local `codex/n14-placa-bau` contém a correção da placa e saiu da `main` em
+  `6aa5cacf`. O atraso na criação do baú continua aberto. N10 aguarda o Lote A e N24
+  requer decisão separada.
+- O roteiro está no [plano do playtest](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md#n14--roteiro-da-placa-do-baú).
+  Os focados `ChestMarkerGameTest` e `BedChoiceGameTest` passaram (17 casos).
+  Sentinela `fast`: 1.886 unitários, uma suíte de propriedades e 1.238 GameTests
+  (`reports/test-runs/20261122T002039Z/`, relatório local).
+- Para montar a candidata local 0.4.118, acrescente à revisão desta branch apenas o delta
+  de `6aa5cacf..eb222eba` sob `src/` em uma área de build temporária. Isso inclui a
+  reconexão da 0.4.117 (Lote A, N12/N28) e seu teste. As duas branches seguem separadas.
+- A combinação passou em `build`, `remapJar` e 25 GameTests focados. A 0.4.118 é o
+  único JAR ativo do mod no TLauncher. A 0.4.117 fica como `.jar.disabled`.
+  O SHA-256 em `build/libs/`, `downloads/` e `mods/` é
+  `ed7d96fec95a398c08e7e8decda881713e07cc5003d09995bc7d5651e4e6c4f5`.
+
+## Histórico da reconexão 0.4.117 e do pastor 0.4.116
+
+- **Prioridade atual:** validar em jogo a reconexão da mina e da casa do mineiro na 0.4.117 (Lote A, N12/N28).
+  A candidata inclui a correção do pastor (N05/N26/N27) da 0.4.116.
   As 28 notas, seis imagens e demais pendências estão em `docs/technical/Plano-Playtest-0.4.115-2026-11-21.md`;
   o relatório é `docs/testing/relatorios/jogo-0.4.115-2026-11-21.md`. Não descartar os outros lotes.
-- **Branch de retomada:** `fix/miolo-pelas-pecas`. Busque essa branch no GitHub para retomar em outra máquina.
-  O código da candidata 0.4.116 está no commit `7a07b38f`, sobre a base 0.4.115 (`ae2ed2ab`).
+- **Branch de retomada:** `codex/lote-a-reconexao`, criada sobre a `main` com a 0.4.116 integrada no PR #101.
   A cópia usada para gerar o JAR fica em `C:/Users/lucas/Desktop/MOD-village-1.21.1`.
-  A worktree `70b9` conserva a base 0.4.110 e documentos locais.
+- **Prova da 0.4.117:** a recusa antiga bloqueou a única passagem seca em GameTest. Com a correção,
+  os 16 casos focados passaram. `fast` PASS em `reports/test-runs/20261121T233603Z/`.
 - **Prova da 0.4.116:** `fast` PASS em `reports/test-runs/20261121T191357Z/`: 1.885 unitários,
   uma suite de propriedades e 1.237 GameTests. Build passou; 196 testes Python passaram.
   Mutação para a produção 0.4.115: cinco regressões falharam em `20261121T191211Z`; 23 focados verdes em `20261121T191032Z`.
   A revisão foi concluída, inclusive cleanup antecipado da arena. A análise histórica está em
   `reports/sentinel-analysis/20261121T191903Z/`; inclui falhas antigas e mutações, não é um relatório sem achados.
-- **Artefato 0.4.116:** `remapJar` passou após `7a07b38f`. As cópias em `build/libs/`, `downloads/` e
-  `mods/` têm SHA-256 `702fda50d734e8a8c77baab8a809c83a489955d37a866829fdf4ac97426ce01a`.
-  A 0.4.116 é o único JAR ativo do Village Colony no TLauncher. A 0.4.115 ficou como `.jar.disabled`.
-  Os relatórios brutos sob `reports/` são locais. O plano registra o resumo e a identificação das execuções.
-- **Próximo passo:** reproduzir em GameTest a perda de conexão após mudança de terreno na opção escolhida do Lote A.
-  O pastor da 0.4.116 ainda aguarda playtest. Ao final do próximo jogo, use `/vc salvar`.
-  Lotes C, D e E seguem no plano. A autoria do corte no arco ainda precisa de evidência.
+- **Artefato da 0.4.117:** use `village-colony-0.4.117.jar` para o próximo jogo. A entrega usa `remapJar`,
+  `downloads/` e a pasta `mods` do TLauncher, com comparação de SHA-256.
+- **Próximo passo:** seguir o roteiro do plano para mina, casa e pastor. Ao final do jogo, use `/vc salvar`.
+  Desnível entre casas, autoria do corte no arco, demais itens do Lote A e lotes C, D e E seguem no plano.
 - **Regras do autor:** relato de que entrou no jogo/testou sempre usa `vc-log-driven-fix`.
   Toda versão nova deve atualizar `downloads/` e `%APPDATA%/.minecraft/mods`, com SHA-256 igual ao build
   e apenas um `village-colony-*.jar` ativo; anteriores ficam `.jar.disabled`.
@@ -40,7 +70,7 @@ Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e
 - **R1, candidato (Regra 346):** relatório da sessão com a tabela completa de blocos, mina, obras, último grafo, janelas de tempo e eventos da colônia. GameTest focado passou e detectou a restauração do limite de 15 linhas.
 - **A5, candidato:** desistência do pastor registra posições da ovelha e do pastor e imobilidade ou prazo esgotado. Teste falhou antes da mudança e sob mutação; quatro GameTests focados e Sentinela `fast` passaram. Relatório em `reports/test-runs/20261121T064752Z/`. Confirmar o diagnóstico no próximo jogo.
 - **A4, candidato:** desistência do fazendeiro registra canteiro, posição do aldeão e imobilidade ou prazo esgotado. Teste falhou antes da mudança e sob mutação; três GameTests focados passaram. Sentinela `fast` passou em `reports/test-runs/20261121T063830Z/`. Confirmar o diagnóstico no próximo jogo.
-- **Branch:** `fix/miolo-pelas-pecas`, sem push, à frente da `main` (0.4.111 Regra 347 e 0.4.112 Regra 348, não jogadas).
+- **Histórico da 0.4.113:** `fix/miolo-pelas-pecas` reunia também a 0.4.111 (Regra 347) e a 0.4.112 (Regra 348).
 - **Entrega local:** candidata 0.4.113 em `downloads/` e no TLauncher, com a 0.4.112 desativada. SHA-256 igual nas três cópias, `928eaaf4e1a2a63525a7e14b1def77fa584be01ac27487476a1e523ea5afae99`. Sentinela `fast`, análise e build passaram. O Gradle foi encerrado.
 - **A8, candidata (Regra 349):** quatro reservas reduzidas, `ingot` removido só da medição e `wool` preservado. Cinco regressões falharam com a mutação, e os 21 GameTests focados passaram com a regra restaurada.
 - **Sentinela `fast` após o A9:** unitários, propriedade e 1.225 GameTests passaram na terceira execução. Relatório local em `reports/test-runs/20261121T045420Z/`. As duas primeiras execuções estão registradas no plano.

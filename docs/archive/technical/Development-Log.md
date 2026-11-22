@@ -2,6 +2,36 @@
 
 # Development-Log.md
 
+## 22-11-2026 — Integração da candidata 0.4.118 e retomada no Claude Code
+
+A branch `codex/entrega-04118` reuniu o Lote A (N12/N28) e a orientação
+da placa do baú (N14) sobre a base com o pastor (N05/N26/N27). README,
+histórico de versões, estado, pendências e plano de playtest foram conciliados.
+Por decisão do autor, a entrega dispensa nova execução de testes locais e CI.
+O push da branch preserva o trabalho. PR, merge na `main` e release pública
+aguardam autorização para o CI. N23 ficou na fila.
+
+`remapJar` concluiu em `91241a66`. O JAR reproduz o SHA-256 da candidata
+já instalada: `ED7D96FEC95A398C08E7E8DECDA881713E07CC5003D09995BC7D5651E4E6C4F5`.
+As cópias em `build/libs/`, `downloads/` do desktop e `mods/` conferem.
+
+## 21-11-2026 — Placa do baú da moradia (N14)
+
+O autor escolheu adiantar a placa enquanto o Lote A (N12/N28) aguarda playtest.
+A branch `codex/n14-placa-bau` saiu da `main` em `6aa5cacf`. O build da
+linha de base passou. Com a produção antiga, o GameTest
+`workerBadgeMovesToTheDoorSideWhenItBecomesFree` falhou no reposicionamento da placa.
+A marcação periódica e a troca de cama passaram a usar a passagem interna da moradia.
+O quadro antigo é retirado após o servidor aceitar o substituto. Quando não há acesso
+reconhecido, a marca segue a regra da face livre. Passaram os 17 GameTests focados
+de `ChestMarkerGameTest` e `BedChoiceGameTest`.
+O Sentinela `fast` passou em `20261122T002039Z`: 1.886 unitários, uma suíte de
+propriedades e 1.238 GameTests. A candidata local 0.4.118 é montada com o delta
+de código e teste do Lote A (`eb222eba`) para preservar a reconexão da 0.4.117.
+
+O atraso na criação do baú continua em investigação. N10 aguarda o Lote A.
+O pedido N24 permanece para decisão separada.
+
 ## 21-11-2026 — Pastor após o jogo da 0.4.115; candidata 0.4.116
 
 O relatório reuniu as 28 notas e comparou as seis imagens. O autor escolheu a opção 2,
@@ -12449,3 +12479,23 @@ O build passou. A análise está em `reports/sentinel-analysis/20261121T060022Z/
 A mutação removeu as tochas da escada e voltou à tocha comum no patamar. As duas
 regressões falharam pelas causas esperadas. Com a correção restaurada, os 6 testes
 focados passaram novamente.
+
+## 2026-11-21 — Lote A (N12/N28), reconexão da mina e da casa do mineiro
+
+Na base 0.4.116, uma recusa do Zelador excluía a coluna da busca durante a sessão.
+A regressão montou as duas entradas do outro lado de uma passagem alagada. O grafo
+manteve os nós isolados após secar a passagem. O teste falhou por essa recusa antiga.
+
+Na 0.4.117, mudanças no piso, no apoio ou na passagem próxima liberam a recusa.
+O grafo volta a avaliar o terreno na releitura. O teste preserva a recusa após
+uma edição fora da altura da passagem e preserva o bloqueio físico por água.
+
+O PR #101 integrou a 0.4.116 na `main` após o CI passar. O teste de releitura de regiões
+detectou os dois mutantes que deixavam de conservar a entrada ou o piso já calçado.
+
+Passaram 16 GameTests focados. A primeira bateria local sobre a `main` passou na
+reconexão e repetiu a falha conhecida dos quatro portões do curral MAE
+(`20261121T233148Z`). Na bateria final passaram 1.886 testes unitários, uma suite de
+propriedades e 1.238 GameTests no Sentinela `fast` (`20261121T233603Z`). A análise final
+ficou em `reports/sentinel-analysis/20261121T234042Z/`. O build passou. A reconexão
+e o pastor aguardam o próximo jogo descrito no plano de 21-11.

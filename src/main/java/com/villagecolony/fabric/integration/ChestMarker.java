@@ -5,6 +5,9 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.DoorBlock;
+import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.Item;
@@ -19,10 +22,12 @@ import net.minecraft.world.chunk.WorldChunk;
 
 import com.villagecolony.VillageColonyMod;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
 
 /**
@@ -39,9 +44,9 @@ import java.util.Set;
  * identidade: uma vila tem um lenhador, e o baú com o machado é o dele.
  *
  * <p><b>O que este código não faz.</b> Não quebra bloco, não move item e
- * não toca no que o jogador construiu. Ele só acrescenta um quadro numa
- * face vazia; se não houver face vazia, o baú fica sem marca e isso não é
- * erro — é o mod não abrindo espaço na construção de quem joga.
+ * não toca no que o jogador construiu. Só pendura sua marca em uma face livre.
+ * Nos baús dos trabalhadores, prioriza a passagem interna em direção à porta
+ * (N14 do playtest de 21-11-2026).
  */
 public final class ChestMarker {
 
@@ -59,6 +64,7 @@ public final class ChestMarker {
      * decoração alheia.
      */
     private static final String TAG = "villagecolony:storage";
+    private static final int DOOR_RADIUS = 6;
 
     /**
      * Os baús sobre os quais o log já reclamou de falta de espaço.
@@ -81,9 +87,7 @@ public final class ChestMarker {
      * Marca os baús destes trabalhadores, e corrige os que mudaram de
      * dono.
      *
-     * <p>Chamável a cada ciclo: baú já marcado com a profissão certa não
-     * gera nada. Quem trocou de profissão tem o item do quadro trocado,
-     * em vez de ganhar um segundo quadro.
+     * <p>Chamável a cada ciclo: a marca acompanha o ofício e a passagem livre da moradia.
      *
      * @return quantas marcas foram postas ou corrigidas agora
      */
@@ -105,7 +109,7 @@ public final class ChestMarker {
                 continue;
             }
 
-            if (markOne(world, MinecraftTypeAdapter.toBlockPos(chest.get()), profession.get())) {
+            if (markHomeAt(world, MinecraftTypeAdapter.toBlockPos(chest.get()), profession.get())) {
                 marked++;
             }
         }
@@ -129,7 +133,12 @@ public final class ChestMarker {
      * marca só alcançaria baú com dono.
      */
     public static boolean markAt(ServerWorld world, BlockPos chest, ProfessionType profession) {
-        return markOne(world, chest, profession);
+        return markOne(world, chest, profession, false);
+    }
+
+    /** Marca o baú da moradia, usando a passagem interna para orientar o quadro (N14). */
+    public static boolean markHomeAt(ServerWorld world, BlockPos chest, ProfessionType profession) {
+        return markOne(world, chest, profession, true);
     }
 
     /**
@@ -201,7 +210,8 @@ public final class ChestMarker {
      *
      * @return true se algo mudou no mundo
      */
-    private static boolean markOne(ServerWorld world, BlockPos chest, ProfessionType profession) {
+    private static boolean markOne(
+            ServerWorld world, BlockPos chest, ProfessionType profession, boolean home) {
         if (chunkAt(world, chest) == null) {
             // Chunk descarregado. Nunca forçar carregamento de dentro do
             // ciclo do servidor — ver §11.
@@ -211,6 +221,14 @@ public final class ChestMarker {
         ItemStack badge = badgeOf(profession);
 
         Optional<ItemFrameEntity> existing = existingMarkerAt(world, chest);
+
+        if (home) {
+            Optional<ItemFrameEntity> preferred = towardDoor(world, chest, existing);
+            if (preferred.isPresent() && !preferred.equals(existing) && spawn(world, preferred.get(), badge)) {
+                existing.ifPresent(ItemFrameEntity::discard);
+                return true;
+            }
+        }
 
         if (existing.isPresent()) {
             ItemFrameEntity frame = existing.get();
@@ -230,6 +248,58 @@ public final class ChestMarker {
     }
 
     /**
+     * Procura a porta mais perto por piso livre no mesmo nível, a partir das
+     * faces que comportam um quadro (N14). A busca fica no entorno do baú e
+     * só aceita a porta quando chega pelo lado interno indicado pelo bloco.
+     */
+    private static Optional<ItemFrameEntity> towardDoor(
+            ServerWorld world, BlockPos chest, Optional<ItemFrameEntity> existing) {
+        Queue<BadgeRoute> pending = new ArrayDeque<>();
+        Set<BlockPos> seen = new HashSet<>();
+
+        for (Direction facing : Direction.Type.HORIZONTAL) {
+            BlockPos front = chest.offset(facing);
+            if (isPassage(world, front)) {
+                existing.filter(frame -> frame.getHorizontalFacing() == facing)
+                        .or(() -> availableFrame(world, chest, facing))
+                        .ifPresent(frame -> {
+                            seen.add(front);
+                            pending.add(new BadgeRoute(front, frame));
+                        });
+            }
+        }
+
+        while (!pending.isEmpty()) {
+            BadgeRoute route = pending.remove();
+            for (Direction direction : Direction.Type.HORIZONTAL) {
+                BlockPos next = route.position().offset(direction);
+                if (next.getManhattanDistance(chest) > DOOR_RADIUS || !world.isChunkLoaded(next)) {
+                    continue;
+                }
+                BlockState state = world.getBlockState(next);
+                if (state.getBlock() instanceof DoorBlock && state.get(DoorBlock.HALF) == DoubleBlockHalf.LOWER
+                        && state.get(DoorBlock.FACING) == direction.getOpposite()) {
+                    return Optional.of(route.frame());
+                }
+                if (seen.add(next) && isPassage(world, next)) {
+                    pending.add(new BadgeRoute(next, route.frame()));
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private record BadgeRoute(BlockPos position, ItemFrameEntity frame) {
+    }
+
+    private static boolean isPassage(ServerWorld world, BlockPos pos) {
+        BlockPos floor = pos.down();
+        return world.isChunkLoaded(pos) && world.getBlockState(pos).isAir()
+                && world.getBlockState(pos.up()).isAir()
+                && world.getBlockState(floor).isSideSolidFullSquare(world, floor, Direction.UP);
+    }
+
+    /**
      * Pendura o quadro na primeira face livre.
      *
      * <p>Só as quatro faces laterais. Em cima do baú fica a tampa, e um
@@ -237,26 +307,10 @@ public final class ChestMarker {
      */
     private static boolean place(ServerWorld world, BlockPos chest, ItemStack badge) {
         for (Direction facing : Direction.Type.HORIZONTAL) {
-            BlockPos front = chest.offset(facing);
-            WorldChunk chunk = chunkAt(world, front);
-
-            if (chunk == null || !chunk.getBlockState(front).isAir()) {
-                continue;
+            Optional<ItemFrameEntity> frame = availableFrame(world, chest, facing);
+            if (frame.isPresent() && spawn(world, frame.get(), badge)) {
+                return true;
             }
-
-            ItemFrameEntity frame = new ItemFrameEntity(world, front, facing);
-
-            if (!frame.canStayAttached()) {
-                continue;
-            }
-
-            frame.setHeldItemStack(badge, false);
-            frame.setInvulnerable(true);
-            frame.setCustomName(Text.literal(TAG));
-
-            world.spawnEntity(frame);
-
-            return true;
         }
 
         // Baú cercado por todos os lados. Fica sem marca, e o mod não
@@ -274,6 +328,23 @@ public final class ChestMarker {
         }
 
         return false;
+    }
+
+    private static Optional<ItemFrameEntity> availableFrame(ServerWorld world, BlockPos chest, Direction facing) {
+        BlockPos front = chest.offset(facing);
+        WorldChunk chunk = chunkAt(world, front);
+        if (chunk == null || !chunk.getBlockState(front).isAir()) {
+            return Optional.empty();
+        }
+        ItemFrameEntity frame = new ItemFrameEntity(world, front, facing);
+        return frame.canStayAttached() ? Optional.of(frame) : Optional.empty();
+    }
+
+    private static boolean spawn(ServerWorld world, ItemFrameEntity frame, ItemStack badge) {
+        frame.setHeldItemStack(badge, false);
+        frame.setInvulnerable(true);
+        frame.setCustomName(Text.literal(TAG));
+        return world.spawnEntity(frame);
     }
 
     /**

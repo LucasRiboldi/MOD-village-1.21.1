@@ -11,6 +11,7 @@ import com.villagecolony.core.construction.model.VillagePathPlanner;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.LotGround;
 import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.RoadRegionEvents;
 import com.villagecolony.fabric.integration.StreetSurface;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -29,7 +30,7 @@ import java.util.OptionalInt;
 import java.util.UUID;
 
 /**
- * Quem assenta a rede de caminhos: somente o construtor, quando não há obra aberta.
+ * Quem assenta a rede de caminhos: somente o Zelador (Regra 330).
  * Os demais ofícios permanecem na própria atividade.
  *
  * <p>Cada passo é uma coluna de caminho ({@link #layStep}, 1 de largura desde 2026-10-28), <b>rente ao chão</b> (autor,
@@ -168,7 +169,7 @@ public final class PathPaving {
             turn.walked += 10;
 
             if (turn.walked > GIVE_UP_AFTER) {
-                // Coluna que ele não alcança sai do trecho e fica de fora dos próximos (RoadGraphRefresh.refused).
+                // Coluna inalcançável sai do trecho até uma mudança relevante no terreno (Regras 177 e 295).
                 skipStep(colonyId, turn, plan, step);
 
                 endTurn(colonyId);
@@ -219,7 +220,7 @@ public final class PathPaving {
     }
 
     private static void skipStep(UUID colonyId, Turn turn, PathLinks.Plan plan, PathStep step) {
-        RoadGraphRefresh.refused(colonyId, step);
+        RoadRegionEvents.refused(colonyId, step);
         plan.next++;
         turn.walked = 0;
 

@@ -4,11 +4,17 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ColonyRoads;
+import com.villagecolony.core.construction.model.MineShaft;
+import com.villagecolony.core.construction.model.PathStep;
 import com.villagecolony.core.construction.model.RoadGraph;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.core.type.Side;
 import com.villagecolony.data.save.ColonySavedData;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.MineMouth;
+import com.villagecolony.fabric.integration.RoadRegionEvents;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
 import com.villagecolony.gametest.ColonyFixture;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -152,6 +158,64 @@ public class EntrancesAtTheDoorGameTest implements FabricGameTest {
             context.assertFalse(isEntrance(graph, arena.cell(14, 4)), "Regra 223: o branco ainda fica fora da caixa: " + graph.nodes());
             context.assertTrue(isLinked(graph, front), "Regra 223: a porta ficou sem linha até a rua: " + graph.edges());
             context.assertTrue(onALine(graph, arena.cell(14, 5)), "Regra 223: a linha não saiu pela frente da porta: " + graph.edges());
+        });
+    }
+
+    /** Regra 295: a recusa dura até mudar o acesso. Água continua sem linha (Regras 177 e 264). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "entrance_reconnection", tickLimit = 20)
+    public void theHouseAndMineReconnectAfterTheirOnlyCrossingDries(TestContext context) {
+        run(context, 100, arena -> {
+            arena.path(2, 38, 2, 2);
+            arena.building("village/plains/houses/test_house", arena.origin.add(9, 1, 12), arena.origin.add(17, 5, 19));
+            arena.door(arena.origin.add(13, 1, 15));
+            ColonyPos door = arena.cell(13, 14);
+            BlockPos mouth = arena.origin.add(26, 1, 25);
+            UUID id = arena.colony.id();
+            VillageColonyMod.MINES.open(id, MineShaft.from(arena.cell(mouth), Side.SOUTH));
+            MineMouth.furnish(arena.world, mouth, Direction.SOUTH, false);
+
+            BlockPos crossing = arena.origin.add(20, 0, 8);
+            for (BlockPos floor : BlockPos.iterate(arena.origin.add(0, 0, 8), arena.origin.add(SIZE, 0, 10))) {
+                if (floor.getX() != crossing.getX()) {
+                    arena.world.setBlockState(floor, Blocks.AIR.getDefaultState(), 18);
+                }
+            }
+
+            arena.world.setBlockState(crossing, Blocks.WATER.getDefaultState(), 18);
+            ColonyPos passage = arena.cell(crossing);
+            PathStep refused = new PathStep(passage.x(), passage.y(), passage.z(), Side.NORTH, 0, 0);
+            RoadRegionEvents.refused(id, refused);
+            RoadGraph wet = arena.publish();
+            Set<ColonyPos> mineFronts = MineGates.fronts(arena.world, arena.colony, new WorldPathTerrain(arena.world, id));
+            context.assertTrue(mineFronts.size() == 1, "O arco precisa ter uma entrada no cenário");
+            ColonyPos gate = mineFronts.iterator().next();
+            context.assertTrue(isEntrance(wet, door) && isEntrance(wet, gate), "Água não deve apagar os nós de entrada");
+            context.assertFalse(onALine(wet, passage), "O grafo não pode atravessar a água");
+
+            arena.world.setBlockState(crossing.up(8), Blocks.STONE_BRICKS.getDefaultState(), 18);
+            context.assertTrue(RoadRegionEvents.refusedColumns(id).contains(ColonyRoads.column(passage.x(), passage.z())),
+                    "Uma edição acima da passagem não deve apagar a recusa");
+            BlockPos support = crossing.down();
+            var previousSupport = arena.world.getBlockState(support);
+            arena.world.setBlockState(support, Blocks.GRASS_BLOCK.getDefaultState(), 18);
+            try {
+                context.assertTrue(RoadRegionEvents.refusedColumns(id).isEmpty(), "O apoio alterado deve liberar nova busca");
+                context.assertFalse(onALine(arena.publish(), passage), "Reler o terreno não libera a água");
+                RoadRegionEvents.refused(id, refused);
+                arena.world.setBlockState(crossing, Blocks.GRASS_BLOCK.getDefaultState(), 18);
+                for (int read = 0; read < 3; read++) {
+                    arena.publish();
+                }
+                RoadGraph dry = arena.publish();
+                context.assertTrue(onALine(dry, passage), "A recusa antiga ainda bloqueia a única passagem seca");
+                for (ColonyPos front : List.of(door, gate)) {
+                    context.assertTrue(dry.edges().stream().anyMatch(edge -> edge.roadClass() == RoadGraph.RoadClass.PRIMARY
+                                    && (edge.from().equals(front) || edge.to().equals(front))),
+                            "A entrada não voltou à rede principal: " + front);
+                }
+            } finally {
+                arena.world.setBlockState(support, previousSupport, 18);
+            }
         });
     }
 

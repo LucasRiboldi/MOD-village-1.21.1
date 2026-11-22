@@ -1,4 +1,4 @@
-# STATE — 2026-11-21
+# STATE — 2026-11-22
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula; teto de 150 linhas.** O que saiu daqui mora em
 > [`docs/archive/technical/Historico-2026-11.md`](docs/archive/technical/Historico-2026-11.md) (o STATE de 13-11 inteiro,
@@ -8,10 +8,17 @@
 > **Retomada por outro agente:** comece por `HANDOFF.md`.
 
 ## Onde o projeto está
+- **N14, placa do baú:** código integrado com N12/N28 na branch `codex/entrega-04118`. A placa da moradia prioriza a passagem livre
+  até a porta e pode mudar de face em casas existentes. A hipótese de atraso na criação do baú segue aberta.
+  N10 aguarda a integração do Lote A (N12/N28). N24 segue para deliberação separada.
+  Sentinela `fast` passou com 1.886 unitários, uma suíte de propriedades e 1.238 GameTests
+  (`20261122T002039Z`). A candidata local 0.4.118 tem roteiro no plano integral.
 - **Ciclo atual:** jogo da 0.4.115 analisado em 21-11 (28 notas e seis imagens). Autor escolheu o Lote B,
   pastor primeiro, no [plano integral](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
-  Candidata 0.4.116 instalada no TLauncher e à espera de playtest. Autor escolheu iniciar o Lote A pela reconexão (N12/N28). C, D e E seguem abertos.
-- **Versões:** release publicada `v0.4.110-alpha`. Candidata 0.4.116, código em `7a07b38f`.
+  A 0.4.117 trata a reconexão (N12/N28) do Lote A e incorpora o pastor da 0.4.116. Ambas as correções aguardam
+  playtest. Os demais pontos do Lote A e os lotes C, D e E seguem abertos.
+- **Versões:** release publicada `v0.4.110-alpha`. Candidata de playtest 0.4.118. Entrega sem nova rodada de testes
+  locais por decisão do autor. O CI do GitHub foi autorizado para a integração.
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
   jogador e publicação.
@@ -19,8 +26,10 @@
   Depois vêm F1 (a vila trabalha) e o portão Beta 0.5.0.
 - **0.4.115 jogada:** resgate de telhado limpa a memória de caminhada anterior; GameTest reproduziu a memória
   persistente e passou após a correção. O jogo novo gerou o plano integral acima; não comprova sozinho todo caso de telhado.
+- **0.4.117:** `fast` PASS: 1.886 unitários, uma suite de propriedades e 1.238 GameTests (`20261121T233603Z`).
+  A regressão falhou com a recusa permanente. O roteiro da mina e da casa está no plano integral.
 - **0.4.116:** `fast` PASS: 1.885 unitários, uma suite de propriedades e 1.237 GameTests (`20261121T191357Z`); build PASS.
-  Cinco regressões falham na produção antiga. SHA-256 e roteiro de jogo em `HANDOFF.md` e no plano integral.
+  Cinco regressões falham na produção antiga. SHA-256 e roteiro de jogo no plano integral.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, teste que falha, correção,
   Sentinela, commit, JAR.
 - **Ciclo 0.4.113:** A8, A7, A9, A6, A2 e A3a (Regras 349 a 354) passaram em 21, 3, 8, 18, 6 e 9 GameTests focados, respectivamente.
