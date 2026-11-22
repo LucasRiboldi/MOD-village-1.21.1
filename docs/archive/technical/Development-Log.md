@@ -2,6 +2,19 @@
 
 # Development-Log.md
 
+## 22-11-2026 — Integração da candidata 0.4.118 e retomada no Claude Code
+
+A branch `codex/entrega-04118` reuniu o Lote A (N12/N28) e a orientação
+da placa do baú (N14) sobre a base com o pastor (N05/N26/N27). README,
+histórico de versões, estado, pendências e plano de playtest foram conciliados.
+Por decisão do autor, a entrega dispensa nova execução de testes locais e CI.
+O push da branch preserva o trabalho. PR, merge na `main` e release pública
+aguardam autorização para o CI. N23 ficou na fila.
+
+`remapJar` concluiu em `91241a66`. O JAR reproduz o SHA-256 da candidata
+já instalada: `ED7D96FEC95A398C08E7E8DECDA881713E07CC5003D09995BC7D5651E4E6C4F5`.
+As cópias em `build/libs/`, `downloads/` do desktop e `mods/` conferem.
+
 ## 21-11-2026 — Placa do baú da moradia (N14)
 
 O autor escolheu adiantar a placa enquanto o Lote A (N12/N28) aguarda playtest.

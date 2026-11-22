@@ -2,7 +2,23 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
-## Retomada do N14
+## Retomada da entrega 0.4.118 (2026-11-22)
+
+- No Claude Code, abra a branch `codex/entrega-04118`. Ela integra o Lote A
+  (`eb222eba`, N12/N28) e a orientação da placa do baú (`a9999d09`, N14)
+  sobre a base que já inclui a correção do pastor (N05/N26/N27, PR #101).
+- `remapJar` passou em `91241a66`. O JAR da 0.4.118 é o único ativo no
+  TLauncher. Os arquivos em `build/libs/`, `downloads/` do checkout do
+  desktop e `mods/` conferem com SHA-256
+  `ED7D96FEC95A398C08E7E8DECDA881713E07CC5003D09995BC7D5651E4E6C4F5`.
+- Por decisão do autor, esta entrega não executa testes locais nem CI. A
+  `main` e a release aguardam autorização para o CI obrigatório. Preserve
+  os workflows e use PR quando o autor liberar.
+- Continue pelo [plano do playtest](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md)
+  e pelo [TODO](TODO.md). Confirme N05/N12/N14/N26/N27/N28 no jogo da 0.4.118.
+  O atraso do baú segue aberto. N23 (cores das placas) segue pendente.
+
+## Histórico do N14
 
 - A branch local `codex/n14-placa-bau` contém a correção da placa e saiu da `main` em
   `6aa5cacf`. O atraso na criação do baú continua aberto. N10 aguarda o Lote A e N24
@@ -19,7 +35,7 @@ Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e
   O SHA-256 em `build/libs/`, `downloads/` e `mods/` é
   `ed7d96fec95a398c08e7e8decda881713e07cc5003d09995bc7d5651e4e6c4f5`.
 
-## Retomada anterior — 0.4.116
+## Histórico da reconexão 0.4.117 e do pastor 0.4.116
 
 - **Prioridade atual:** validar em jogo a reconexão da mina e da casa do mineiro na 0.4.117 (Lote A, N12/N28).
   A candidata inclui a correção do pastor (N05/N26/N27) da 0.4.116.
