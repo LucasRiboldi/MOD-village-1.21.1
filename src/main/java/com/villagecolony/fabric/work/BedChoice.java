@@ -312,7 +312,7 @@ final class BedChoice {
             VillageFoundation.giveHome(world, villager, to);
             VillageColonyMod.STORAGES.register(WorkerStorage.of(move.id(), MinecraftTypeAdapter.toColonyPos(chest)));
             professions.getOrDefault(move.id(), Optional.empty())
-                    .ifPresent(profession -> ChestMarker.markAt(world, chest, profession));
+                    .ifPresent(profession -> ChestMarker.markHomeAt(world, chest, profession));
 
             String work = workOf(move.id()).map(BlockPos::toShortString).orElse("nowhere — it gives its bed up");
             VillageColonyMod.LOGGER.info("Worker {} moves home from {} to {}, with the chest at {} — its work is at {}",

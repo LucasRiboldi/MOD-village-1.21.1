@@ -12,6 +12,11 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.118] — candidata, 2026-11-22
+
+- A placa do baú da moradia prioriza a passagem livre até a porta e pode mudar de face
+  em baús antigos (N14). A candidata também inclui a reconexão da 0.4.117 (N12/N28).
+
 ## [0.4.117] — candidata, 2026-11-21
 
 - O grafo reconsidera uma coluna recusada pelo Zelador quando o piso, o apoio ou a passagem próxima muda. Uma

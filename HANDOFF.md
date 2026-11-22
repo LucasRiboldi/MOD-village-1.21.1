@@ -2,7 +2,24 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
-## Retomada de 2026-11-21
+## Retomada do N14
+
+- A branch local `codex/n14-placa-bau` contém a correção da placa e saiu da `main` em
+  `6aa5cacf`. O atraso na criação do baú continua aberto. N10 aguarda o Lote A e N24
+  requer decisão separada.
+- O roteiro está no [plano do playtest](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md#n14--roteiro-da-placa-do-baú).
+  Os focados `ChestMarkerGameTest` e `BedChoiceGameTest` passaram (17 casos).
+  Sentinela `fast`: 1.886 unitários, uma suíte de propriedades e 1.238 GameTests
+  (`reports/test-runs/20261122T002039Z/`, relatório local).
+- Para montar a candidata local 0.4.118, acrescente à revisão desta branch apenas o delta
+  de `6aa5cacf..eb222eba` sob `src/` em uma área de build temporária. Isso inclui a
+  reconexão da 0.4.117 (Lote A, N12/N28) e seu teste. As duas branches seguem separadas.
+- A combinação passou em `build`, `remapJar` e 25 GameTests focados. A 0.4.118 é o
+  único JAR ativo do mod no TLauncher. A 0.4.117 fica como `.jar.disabled`.
+  O SHA-256 em `build/libs/`, `downloads/` e `mods/` é
+  `ed7d96fec95a398c08e7e8decda881713e07cc5003d09995bc7d5651e4e6c4f5`.
+
+## Retomada anterior — 0.4.116
 
 - **Prioridade atual:** validar em jogo a reconexão da mina e da casa do mineiro na 0.4.117 (Lote A, N12/N28).
   A candidata inclui a correção do pastor (N05/N26/N27) da 0.4.116.
