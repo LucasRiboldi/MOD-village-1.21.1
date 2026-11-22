@@ -22,7 +22,7 @@ SHA-256 do JAR na descrição.
 **Candidata local 0.4.118.** Reúne a orientação da placa do baú (N14), a reconexão da mina e da casa do mineiro
 (N12/N28) e os ajustes do pastor (N05/N26/N27). Aguarda confirmação em jogo. A versão publicada é
 [`v0.4.110-alpha`](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases/tag/v0.4.110-alpha).
-O merge na `main` e a release aguardam autorização para o CI obrigatório.
+A integração e a publicação da candidata dependem do CI do GitHub.
 Para continuar o trabalho, comece por [`HANDOFF.md`](HANDOFF.md). O estado vivo, a contagem de testes e o que espera
 playtest ficam só no [STATE.md](STATE.md); o que está aberto, no [TODO.md](TODO.md); as regras, em
 [docs/RULES.md](docs/RULES.md). As 28 notas e seis imagens do último jogo estão no

@@ -18,7 +18,7 @@
   A 0.4.117 trata a reconexão (N12/N28) do Lote A e incorpora o pastor da 0.4.116. Ambas as correções aguardam
   playtest. Os demais pontos do Lote A e os lotes C, D e E seguem abertos.
 - **Versões:** release publicada `v0.4.110-alpha`. Candidata de playtest 0.4.118. Entrega sem nova rodada de testes
-  por decisão do autor. Merge na `main` e release dependem da autorização para o CI.
+  locais por decisão do autor. O CI do GitHub foi autorizado para a integração.
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
   jogador e publicação.
