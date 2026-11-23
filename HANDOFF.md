@@ -7,6 +7,7 @@ Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e
 - A branch `codex/playtest-04126` reúne a 0.4.125 e os ajustes N10 e N14. A porta da moradia nova prioriza o centro se a mesma pegada permite acesso pela rua. A varredura usa o limite de dois para baús criados.
 - As regressões de abertura da obra, passagem da porta recuada e criação do baú falharam antes dos ajustes e passaram na versão corrigida. A rodada focada da candidata passou em 32 dos 33 GameTests. A saída espontânea do curral antes da varredura foi a exceção. O mesmo teste falhou na 0.4.125 (`bd7abd57`), antes de N10 e N14.
 - O Sentinela `fast` (`20261123T184500Z`) passou em unitários e propriedades. Passaram 1.249 de 1.251 GameTests. As falhas foram a saída do curral e a tosquia N05 já registrada no TODO.
+- JAR gerado por `remapJar`, copiado para `downloads/` e conferido nas três cópias. SHA-256 `C9B887359298C407B336A2C0BD77AAB5724078B6228F8786D679ED01830065F1`. Cópia no TLauncher preparada como `village-colony-0.4.126.jar.disabled`. Feche o jogo antes de substituir os JARs ativos 0.4.124 e 0.4.125.
 - Use o [roteiro da moradia](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md#n10-e-n14--roteiro-da-moradia) para verificar acesso, recarga da obra, cama, baú e placa. As outras pendências continuam no [TODO](TODO.md).
 
 ## Candidata local 0.4.125 (2026-11-23)
