@@ -2,9 +2,9 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
-## Candidata local 0.4.122 (2026-11-22)
+## Entrega 0.4.122-alpha (2026-11-22)
 
-- A branch `codex/n12-n28-road-heights` contém a correção do grafo sobre a main (`ab4ef803`). A branch `codex/candidata-04122` reúne essa correção e as mudanças do pastor da 0.4.121 para playtest local. Os 17 GameTests focados passaram na candidata.
+- A entrega reúne a correção do grafo e as mudanças do pastor da série 0.4.119–0.4.121. Os 17 GameTests do grafo passaram na candidata. Consulte as [notas da entrega](docs/releases/v0.4.122.md) e o [TODO](TODO.md) para a próxima rodada.
 - Confirme as três colunas observadas na 0.4.118 e os casos originais da mina e da casa do mineiro. Siga o [roteiro de jogo](docs/technical/Playtest-0.4.118-2026-11-22.md).
 
 ## Histórico da candidata local 0.4.121 (2026-11-22)

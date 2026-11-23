@@ -2,6 +2,10 @@
 
 # Development-Log.md
 
+## 22-11-2026 — Entrega 0.4.122-alpha
+
+A entrega reúne o trabalho do pastor das versões 0.4.119–0.4.121 e a correção da altura das entradas do grafo. As evidências permanecem nas notas da versão e os pontos ainda abertos constam do roteiro e do TODO.
+
 ## 22-11-2026 — Altura das entradas no grafo (N12/N28)
 
 O log da 0.4.118 registrou três nós isolados em colunas com tábuas acima de caminhos. Um GameTest reproduziu a perda de ligação no piso térreo quando havia uma rua acima da porta. A correção preservou o piso válido da entrada em duas publicações do grafo. A mina e a casa do mineiro aguardam confirmação no mundo jogado.
