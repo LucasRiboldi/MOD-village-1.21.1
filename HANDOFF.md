@@ -2,6 +2,13 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Candidata local 0.4.125 (2026-11-23)
+
+- Na branch `codex/fix-villager-jumps-04125`, `VillagerMoves` mantém o pulo padrão diante de obstáculo previsto. O pulo maior só ativa após colisão horizontal confirmada; encalhe e saída de curral continuam exceções.
+- A regressão de degrau de dois blocos e cerca passou com 6/6 GameTests focados. `build` final passou; PMD mantém 177 avisos preexistentes.
+- JAR 0.4.125 copiado para `downloads/` e TLauncher. SHA-256: `D26EA2D70579B0117C599E28649471704892CB4055E75BF14E5D5B3092C08A74`. O 0.4.124 do TLauncher segue ativo enquanto o processo Java o mantém bloqueado; desative-o após fechar o jogo.
+- Aguarde playtest em degraus e cercas. Confirme que o aldeão tenta o salto normal antes do maior e não fica preso.
+
 ## Candidata local 0.4.124 (2026-11-23)
 
 - A branch `codex/playtest-04124` reúne o resgate de telhado (`c8b32ace`) e a correção do rebanho (`07afdcdc` na branch `codex/pastor-rebanho-nos-currais`, incorporado como `cd6924f9`).

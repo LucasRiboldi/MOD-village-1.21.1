@@ -40,6 +40,7 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 ### Pendências do playtest 0.4.122-alpha
 
 - [ ] **Prioridade em jogo.** Confirmar na candidata 0.4.124 se o aldeão sai vivo do telhado e volta à escala (Regra 160). O resgate agora coloca o aldeão direto no piso se a queda excede a distância segura. A origem da subida e do retorno ao mesmo telhado segue aberta. As sete notas e o roteiro estão no [relatório da 0.4.122](docs/technical/Playtest-0.4.122-2026-11-23.md).
+- [ ] **Validar salto progressivo na 0.4.125.** Em degraus e cercas, o aldeão deve tentar o pulo padrão primeiro; o pulo maior só após colisão horizontal. Encalhe e saída de curral seguem exceções.
 - [ ] **Verificar a travessia após fusão.** A segunda tentativa de [CI do PR #104](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/runs/45117483717/attempts/2) falhou em `aVillagerWalksBetweenTheTwoOldRoadNetworks`. N26 e a tosquia passaram nessa tentativa.
 
 - [ ] **Verificar em jogo.** Três colunas do grafo com piso sobreposto, arco da mina (N12) e casa do mineiro (N28), incluindo recarga do mundo.

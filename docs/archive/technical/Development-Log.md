@@ -2,6 +2,10 @@
 
 # Development-Log.md
 
+## 23-11-2026 — Salto progressivo, candidata 0.4.125
+
+`VillagerMoves` previa degrau e cerca pelo caminho e ativava o pulo maior antes da colisão. A correção mantém o pulo padrão primeiro e libera o modificador maior somente após colisão horizontal confirmada. Encalhe e saída de curral permanecem exceções. A regressão de degrau e cerca passou com 6/6 GameTests focados. Falta gerar o JAR e confirmar o comportamento em jogo.
+
 ## 23-11-2026 — Candidata local 0.4.124
 
 A candidata reúne a correção do rebanho e o resgate de telhado da 0.4.123. Unitários e propriedades passaram no Sentinela `fast` (`20261123T170632Z`). A bateria de 1.247 GameTests teve três falhas, na tosquia N05 e em duas seleções de animal desgarrado. Os 20 GameTests da repetição focada passaram. Dessas linhas de log, `BIRTH` e `DEATH` mostram o mesmo filhote, e `VC_FLOCK_HARVEST` registra nove adultos antes e oito depois na vila, com três antes e dois depois no curral da vítima. O JAR instalado e o roteiro estão no `HANDOFF.md`.

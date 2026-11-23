@@ -55,13 +55,23 @@ public class VillagerRulesGameTest implements FabricGameTest {
             context.assertFalse(VillagerMoves.needsHighJump(world, villager), "Regra 171: no plano, pulo maior");
 
             villager.getNavigation().startMovingAlong(pathThrough(feet.east(4), feet.east().up(2), feet.east(2).up(2)), 0.5);
-            context.assertTrue(VillagerMoves.needsHighJump(world, villager), "Regra 171: degrau de 2 sem pulo maior");
+            context.assertFalse(VillagerMoves.needsHighJump(world, villager),
+                    "Regra 171: degrau previsto ativou o pulo maior antes da colisão");
+            villager.horizontalCollision = true;
+            context.assertTrue(VillagerMoves.needsHighJump(world, villager),
+                    "Regra 171: colisão no degrau não ativou o pulo maior");
+            villager.horizontalCollision = false;
 
             BlockPos fence = feet.east();
 
             world.setBlockState(fence, Blocks.OAK_FENCE.getDefaultState(), 18);
             villager.getNavigation().startMovingAlong(pathThrough(feet.east(5), fence.up(), feet.east(3)), 0.5);
-            context.assertTrue(VillagerMoves.needsHighJump(world, villager), "Regra 171: cerca no caminho sem pulo maior");
+            context.assertFalse(VillagerMoves.needsHighJump(world, villager),
+                    "Regra 171: obstáculo previsto ativou o pulo maior antes da colisão");
+
+            villager.horizontalCollision = true;
+            context.assertTrue(VillagerMoves.needsHighJump(world, villager),
+                    "Regra 171: colisão confirmada não ativou o pulo maior");
         } finally {
             world.setBlockState(feet.east(), Blocks.AIR.getDefaultState(), 18);
             villager.discard();

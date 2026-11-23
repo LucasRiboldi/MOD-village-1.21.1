@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.122%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.125%20candidate-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,7 +19,8 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Versão 0.4.122-alpha.** O grafo usa o piso válido da entrada quando há uma rua acima na mesma coluna.
+**Versão 0.4.125 candidata.** O aldeão tenta o pulo padrão antes de usar pulo maior; colisão horizontal confirmada,
+encalhe e saída de curral liberam o pulo maior. O grafo usa o piso válido da entrada quando há uma rua acima na mesma coluna.
 Em acessos laterais, o pastor se reposiciona diante da porteira para manter o animal andando. O pastor pula a cerca nos dois sentidos. O animal entra pela porteira
 e fica na guia até ela fechar. Os demais aldeões contornam o curral. Para abater, o pastor precisa de
 três adultos da mesma espécie no curral da vítima. A sessão mais recente está no [relatório de jogo da candidata 0.4.122](docs/technical/Playtest-0.4.122-2026-11-23.md).

@@ -12,6 +12,11 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.125] — candidata, 2026-11-23
+
+- O aldeão tenta o pulo padrão antes de qualquer pulo maior. O modificador maior só entra após colisão horizontal confirmada; resgate de encalhe e saída de curral continuam exceções.
+- A regressão de degrau e cerca confirma que previsão de obstáculo não antecipa o pulo maior.
+
 ## [0.4.124] — candidata, 2026-11-23
 
 - O pastor usa pares da mesma espécie no mesmo curral para a reprodução de animais de corte. A criação de animais soltos continua disponível antes de haver curral.
