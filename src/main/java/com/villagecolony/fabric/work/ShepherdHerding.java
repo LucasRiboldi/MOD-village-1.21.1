@@ -12,11 +12,9 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.LeashKnotEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.VillagerEntity;
-import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.HashMap;
 import java.util.List;
@@ -47,9 +45,6 @@ final class ShepherdHerding {
 
     /** Entre uma desistência (ou nada a coletar) e a próxima tentativa. */
     static final int COOLDOWN = 1_200;
-
-    /** Até onde da cama procurar a cerca. */
-    static final int FENCE_RADIUS = 16;
 
     /** Animais amarrados numa mesma cerca, no máximo. */
     static final int MAX_TIED = 8;
@@ -480,26 +475,8 @@ final class ShepherdHerding {
         NEXT_TRY.put(shepherdId, world.getTime() + COOLDOWN);
     }
 
-    /** A cerca mais perto deste ponto, até {@link #FENCE_RADIUS}. */
     static Optional<BlockPos> nearestFence(ServerWorld world, BlockPos from) {
-        BlockPos best = null;
-        double bestDistance = Double.MAX_VALUE;
-
-        for (BlockPos at : BlockPos.iterate(from.add(-FENCE_RADIUS, -3, -FENCE_RADIUS),
-                from.add(FENCE_RADIUS, 3, FENCE_RADIUS))) {
-            WorldChunk chunk = world.getChunkManager().getWorldChunk(at.getX() >> 4, at.getZ() >> 4);
-
-            if (chunk != null && chunk.getBlockState(at).isIn(BlockTags.FENCES)) {
-                double distance = at.getSquaredDistance(from);
-
-                if (distance < bestDistance) {
-                    bestDistance = distance;
-                    best = at.toImmutable();
-                }
-            }
-        }
-
-        return Optional.ofNullable(best);
+        return NearbyFences.nearestFence(world, from);
     }
 
     /** Quantos animais estão amarrados nesta cerca. */
