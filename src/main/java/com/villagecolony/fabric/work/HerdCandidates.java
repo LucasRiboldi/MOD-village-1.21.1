@@ -27,13 +27,9 @@ final class HerdCandidates {
                 .orElseGet(() -> new Box(center).expand(48));
     }
 
-    /**
-     * Os animais que a coleta pode levar, o amarrado primeiro e então o mais perto (Regra 255). O próximo do abate do
-     * excedente fica de fora (Regra 299).
-     */
+    /** Os animais que a coleta pode levar, o amarrado primeiro e então o mais perto (Regra 255). */
     static List<AnimalEntity> of(ServerWorld world, Colony colony, VillagerEntity shepherd) {
         Box area = areaOf(colony);
-        Box flock = ShepherdFlock.areaOf(colony);
         List<AnimalEntity> candidates = new java.util.ArrayList<>();
 
         for (EntityType<? extends AnimalEntity> species : ShepherdFlock.LIVESTOCK) {
@@ -42,8 +38,8 @@ final class HerdCandidates {
                     && (!candidate.isLeashed() || candidate.getLeashHolder() instanceof LeashKnotEntity)
                     && !ShepherdFlock.isPenned(world, candidate)
                     && !isInAnyPen(world, colony, candidate)
-                    && !HerdPatience.isSetAside(world, candidate)
-                    && !FlockHarvest.isNextVictim(world, colony, flock, candidate)));
+                    && !sheltersAnimal(world, candidate.getBlockPos())
+                    && !HerdPatience.isSetAside(world, candidate)));
         }
 
         candidates.sort(java.util.Comparator
@@ -51,6 +47,23 @@ final class HerdCandidates {
                 .thenComparingDouble(animal -> animal.squaredDistanceTo(shepherd)));
 
         return candidates;
+    }
+
+    /** A porta de uma casa coberta delimita o recinto, aberta ou fechada. Animais não operam portas. */
+    static boolean sheltersAnimal(ServerWorld world, BlockPos feet) {
+        if (world.isSkyVisible(feet)) {
+            return false;
+        }
+
+        var room = FencedIn.check(world, feet, FencedIn.RADIUS, true, true);
+        return room.enclosed() && room.reach().stream().anyMatch(at -> {
+            for (var way : net.minecraft.util.math.Direction.Type.HORIZONTAL) {
+                if (world.getBlockState(at.offset(way)).isIn(net.minecraft.registry.tag.BlockTags.DOORS)) {
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 
     /** Se o animal está no chão de dentro de algum curral conhecido da vila: guardado, com a porteira como estiver (Regra 327). */

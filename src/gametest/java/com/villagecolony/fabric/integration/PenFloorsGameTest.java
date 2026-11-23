@@ -34,8 +34,8 @@ public class PenFloorsGameTest implements FabricGameTest {
 
             context.assertTrue(cost(miner, floor) == PenFloors.CLOSED, "o mineiro de fora devia ver o curral fechado");
             context.assertTrue(cost(shepherd, floor) == PathNodeType.WALKABLE, "o pastor anda no curral como sempre");
-            context.assertTrue(cost(stranger, floor) == PathNodeType.WALKABLE,
-                    "aldeão de fora da colônia não é afetado");
+            context.assertTrue(cost(stranger, floor) == PenFloors.CLOSED,
+                    "aldeão sem cadastro também deve contornar o curral");
             context.assertTrue(cost(miner, outside) == PathNodeType.WALKABLE, "fora do curral nada muda");
             context.assertTrue(PenFloors.forWalker(miner, floor.getX(), floor.getY(), floor.getZ(), PathNodeType.BLOCKED)
                     == PathNodeType.BLOCKED, "o que já é bloqueado continua bloqueado");

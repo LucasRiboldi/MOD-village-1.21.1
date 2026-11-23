@@ -104,14 +104,17 @@ public final class RoadLines {
         planned.stream().filter(at -> terrain.groundY(at.x(), at.z(), at.y()).isPresent())
                 .forEach(at -> start.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
 
-        Set<Long> doors = new HashSet<>();
+        Map<Long, Integer> frontHeights = new HashMap<>();
 
         for (ColonyPos door : entrances) {
             long column = ColonyRoads.column(door.x(), door.z());
 
-            doors.add(column);
-            start.putIfAbsent(column, door.y());
+            frontHeights.merge(column, door.y(), Math::min);
         }
+
+        // Regra 305: a altura da entrada vem do chão da porta, mesmo se a varredura leu rua acima.
+        start.putAll(frontHeights);
+        Set<Long> doors = frontHeights.keySet();
 
         Map<Long, Integer> settled = new HashMap<>();
 
@@ -220,14 +223,9 @@ public final class RoadLines {
         RoadTips.prune(columns, center, kept, deadEnds);
 
         // Só as linhas e a frente de toda porta: a rua é de um bloco (Regra 186).
-        Map<Long, Integer> toLay = new HashMap<>();
-
-        for (ColonyPos door : entrances) {
-            toLay.putIfAbsent(ColonyRoads.column(door.x(), door.z()), door.y());
-        }
-
-        return new Result(Optional.of(RoadLinesGraph.of(columns, toLay, center, doors)), toPave(columns, toLay, physical), isolated,
-                surplus(physical, columns, toLay, oldRing), List.copyOf(loose));
+        return new Result(Optional.of(RoadLinesGraph.of(columns, frontHeights, center, doors)),
+                toPave(columns, frontHeights, physical), isolated,
+                surplus(physical, columns, frontHeights, oldRing), List.copyOf(loose));
     }
 
     /** Liga cada porta sozinha ao caminho mais perto em reta, de qualquer parte; diz se alguma ligou. */

@@ -161,6 +161,38 @@ public class EntrancesAtTheDoorGameTest implements FabricGameTest {
         });
     }
 
+    /** Regra 305: a rua em outro nível da mesma coluna não muda o chão da entrada. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_entrance_height", tickLimit = 20)
+    public void theEntranceStaysOnTheGroundFloorUnderAHigherPath(TestContext context) {
+        run(context, 65, arena -> {
+            arena.path(2, 38, 2, 2);
+            arena.path(14, 14, 3, 6);
+            BlockPos min = arena.origin.add(10, 1, 5);
+            BlockPos max = arena.origin.add(18, 5, 12);
+            BlockPos front = arena.origin.add(14, 0, 7);
+            arena.building("village/plains/houses/test_house", min, max);
+            arena.door(front.south().up());
+            BlockPos upper = front.up(4);
+            arena.world.setBlockState(upper.down(), Blocks.STONE.getDefaultState(), 18);
+            arena.world.setBlockState(upper, Blocks.DIRT_PATH.getDefaultState(), 18);
+
+            context.assertTrue(DoorFronts.of(arena.world, min, max).contains(front), "A leitura da porta deve achar o piso térreo");
+            BlockPos scanned = RoadGraphRefresh.pathInColumn(arena.world, upper, null).orElseThrow();
+            context.assertTrue(scanned.equals(upper), "A leitura da rua deve achar o piso superior na mesma coluna");
+            arena.paths.add(arena.cell(scanned));
+
+            for (int read = 0; read < 2; read++) {
+                RoadGraph graph = arena.publish();
+                ColonyPos entrance = arena.cell(front);
+                context.assertTrue(isEntrance(graph, entrance), "O grafo perdeu a altura do piso térreo: " + graph.nodes());
+                context.assertFalse(isEntrance(graph, arena.cell(upper)), "A rua elevada ganhou um nó de entrada");
+                context.assertTrue(graph.edges().stream().anyMatch(edge -> edge.roadClass() == RoadGraph.RoadClass.PRIMARY
+                                && (edge.from().equals(entrance) || edge.to().equals(entrance))),
+                        "A entrada térrea ficou fora da rede principal");
+            }
+        });
+    }
+
     /** Regra 295: a recusa dura até mudar o acesso. Água continua sem linha (Regras 177 e 264). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "entrance_reconnection", tickLimit = 20)
     public void theHouseAndMineReconnectAfterTheirOnlyCrossingDries(TestContext context) {

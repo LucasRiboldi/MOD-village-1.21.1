@@ -25,6 +25,36 @@ final class ShepherdLead {
         WorkTargets.set(shepherd.getUuid(), leg.orElse(goal), leg.isPresent() ? 2 : arrival);
     }
 
+    /**
+     * Na aproximação lateral, o pastor atravessa a frente da porteira para que a guia
+     * mantenha o animal andando até a passagem, mesmo ao descer um degrau (Regra 299).
+     */
+    static BlockPos gateWaitingSpot(ServerWorld world, ShepherdPens.Pen pen, AnimalEntity animal) {
+        BlockPos outside = pen.outside();
+        BlockPos animalPos = animal.getBlockPos();
+        boolean gateRunsAlongX = outside.getZ() != pen.gate().getZ();
+        int offset = gateRunsAlongX ? animalPos.getX() - outside.getX() : animalPos.getZ() - outside.getZ();
+        if (Math.abs(offset) < ShepherdHerding.REACH) {
+            return outside;
+        }
+        int step = -Integer.signum(offset);
+        BlockPos across = gateRunsAlongX ? outside.add(step, 0, 0) : outside.add(0, 0, step);
+        return BuilderApproach.standable(world, across) ? across : outside;
+    }
+
+    /** Guia o animal até a célula externa pela navegação dele, ainda na corda (Regra 299). */
+    static void alignAtGate(AnimalEntity animal, BlockPos outside) {
+        var navigation = animal.getNavigation();
+        if (!navigation.isIdle() && outside.equals(navigation.getTargetPos())) {
+            return;
+        }
+
+        var path = navigation.findPathTo(outside, 0);
+        if (path != null && path.reachesTarget()) {
+            navigation.startMovingAlong(path, 1.0);
+        }
+    }
+
     static boolean isTooFar(VillagerEntity shepherd, AnimalEntity animal) {
         return shepherd.squaredDistanceTo(animal) > SLACK * SLACK;
     }

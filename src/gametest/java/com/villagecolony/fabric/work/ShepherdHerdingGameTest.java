@@ -21,6 +21,41 @@ import java.util.Optional;
 /** O pastor traz o animal solto na corda e o amarra na cerca (ADR-038 P2b). */
 public class ShepherdHerdingGameTest implements FabricGameTest {
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_protects_housed_animals", tickLimit = 40)
+    public void theShepherdLeavesAnAnimalInsideAHouse(TestContext context) {
+        BlockPos door = new BlockPos(4, 1, 2);
+        for (BlockPos at : BlockPos.iterate(new BlockPos(2, 0, 2), new BlockPos(6, 3, 6))) {
+            if (at.equals(door) || at.equals(door.up())) continue;
+            if (at.getY() == 0 || at.getY() == 3 || at.getX() == 2 || at.getX() == 6
+                    || at.getZ() == 2 || at.getZ() == 6) {
+                context.setBlockState(at, Blocks.STONE.getDefaultState());
+            }
+        }
+        var closed = Blocks.OAK_DOOR.getDefaultState();
+        context.setBlockState(door, closed);
+        context.setBlockState(door.up(), closed.with(net.minecraft.block.DoorBlock.HALF,
+                net.minecraft.block.enums.DoubleBlockHalf.UPPER));
+
+        ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(4, 1, 4));
+        insideTheArena(context, fixture);
+        VillagerEntity shepherd = context.spawnEntity(EntityType.VILLAGER, new BlockPos(4, 1, 1));
+        CowEntity housed = context.spawnEntity(EntityType.COW, new BlockPos(4, 1, 4));
+        CowEntity loose = context.spawnEntity(EntityType.COW, new BlockPos(8, 1, 2));
+        context.waitAndRun(5, () -> {
+            try {
+                var candidates = HerdCandidates.of(context.getWorld(), fixture.colony(), shepherd);
+                context.assertFalse(candidates.contains(housed), "o pastor escolheu uma vaca dentro da casa fechada");
+                context.assertTrue(candidates.contains(loose), "a vaca do lado de fora deixou de ser candidata");
+                context.complete();
+            } finally {
+                fixture.cleanUp();
+                shepherd.discard();
+                housed.discard();
+                loose.discard();
+            }
+        });
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herding_the_shepherd_leads_a_loose_cow_to_the_fence", tickLimit = 60)
     public void theShepherdLeadsALooseCowToTheFence(TestContext context) {
         ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(4, 1, 4));
@@ -255,6 +290,7 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
                 BlockPos outside = shepherd.getBlockPos();
                 BlockPos gate = outside.add(0, 0, -1);
                 BlockPos inside = outside.add(0, 0, -2);
+                context.getWorld().setBlockState(gate, Blocks.OAK_FENCE_GATE.getDefaultState());
                 ShepherdPens.Pen pen = new ShepherdPens.Pen(gate, inside, outside, java.util.Set.of(inside), false);
                 ShepherdHerding.Herd herd = new ShepherdHerding.Herd(cow.getUuid(), gate, context.getWorld().getTime());
                 herd.pen = pen;
@@ -272,12 +308,9 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
         });
     }
 
-    /**
-     * Regra 299: a coleta não escolhe o animal que o abate do excedente vai pegar em seguida — a vaca ao lado do
-     * pastor, com o rebanho acima da reserva. Sem cerca no arena, nenhuma vaca conta como cercada.
-     */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herd_skips_the_next_harvest", tickLimit = 40)
-    public void theHerdSkipsTheAnimalTheHarvestTakesNext(TestContext context) {
+    /** Regra 167: o excedente solto continua disponível para coleta, pois o abate exige um curral. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herd_collects_loose_surplus", tickLimit = 40)
+    public void theClosestStrayCanBeCollectedEvenWithAnAdultSurplus(TestContext context) {
         ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(4, 1, 4));
         VillagerEntity shepherd = context.spawnEntity(EntityType.VILLAGER, new BlockPos(0, 1, 0));
         java.util.List<CowEntity> cows = new java.util.ArrayList<>();
@@ -296,15 +329,11 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
                 fixture.owning(shepherd.getUuid());
                 VillageColonyMod.WORKERS.register(shepherd.getUuid(), fixture.colony().id()).assign(ProfessionType.SHEPHERD);
 
-                java.util.List<java.util.UUID> picked = HerdCandidates.of(context.getWorld(), fixture.colony(), shepherd)
-                        .stream().map(net.minecraft.entity.Entity::getUuid).toList();
-
-                context.assertFalse(ShepherdFlock.isPenned(context.getWorld(), cows.get(0)),
-                        "a vaca ao lado do pastor conta como cercada: o teste não mede nada");
-                context.assertTrue(picked.contains(cows.get(1).getUuid()),
-                        "a vaca longe do pastor não entrou na coleta: o teste não mede nada");
-                context.assertFalse(picked.contains(cows.get(0).getUuid()),
-                        "Regra 299: a coleta escolheu a vaca que o abate do excedente vai levar");
+                var picked = HerdCandidates.of(context.getWorld(), fixture.colony(), shepherd);
+                context.assertFalse(ShepherdFlock.isPenned(context.getWorld(), cows.getFirst()),
+                        "a vaca ao lado do pastor deve estar solta");
+                context.assertTrue(!picked.isEmpty() && picked.getFirst().equals(cows.getFirst()),
+                        "o pastor deve escolher a vaca solta mais próxima mesmo com excedente");
             } finally {
                 cows.forEach(cow -> cow.discard());
                 fixture.cleanUp();

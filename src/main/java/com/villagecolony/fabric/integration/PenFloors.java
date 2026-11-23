@@ -19,7 +19,7 @@ import java.util.UUID;
 /**
  * O chão de dentro dos currais fica fora do caminho de quem não é pastor — Regra 122.
  *
- * <p>Para o aldeão de ofício que está fora do curral, o chão de dentro é bloqueado: o portão aberto
+ * <p>Para o aldeão que está fora do curral, o chão de dentro é bloqueado: o portão aberto
  * na caminhada do pastor não vira atalho. Quem já está dentro anda nele com custo, para poder
  * sair. O pastor, que trabalha ali, anda como sempre. Os currais são os que o pastor já mede
  * ({@code ShepherdPens.pensOf}).
@@ -65,25 +65,32 @@ public final class PenFloors {
 
     /**
      * O tipo do nó para este bicho: o mesmo, ou, quando é chão de curral, o nó seria andável e quem
-     * anda é aldeão de ofício que não é pastor, {@link #CLOSED} (ele está fora) ou {@link #COSTLY}
+     * anda é aldeão que não é pastor, {@link #CLOSED} (ele está fora) ou {@link #COSTLY}
      * (ele está dentro e precisa sair).
      */
     public static PathNodeType forWalker(MobEntity mob, int x, int y, int z, PathNodeType type) {
-        if (FLOORS.isEmpty() || type != PathNodeType.WALKABLE || !(mob instanceof VillagerEntity)
-                || !FLOORS.contains(BlockPos.asLong(x, y, z))) {
+        if (FLOORS.isEmpty() || !(mob instanceof VillagerEntity)
+                || !mob.getWorld().getRegistryKey().equals(net.minecraft.world.World.OVERWORLD)) {
             return type;
         }
+
+        boolean targetInside = FLOORS.contains(BlockPos.asLong(x, y, z));
+        boolean inside = FLOORS.contains(mob.getBlockPos().asLong());
+        if (!targetInside && !(inside && mob.getWorld().getBlockState(new BlockPos(x, y, z)).getBlock()
+                instanceof net.minecraft.block.FenceGateBlock)) return type;
 
         boolean shepherd = VillageColonyMod.WORKERS.find(mob.getUuid())
                 .flatMap(Worker::profession)
                 .filter(ProfessionType.SHEPHERD::equals)
                 .isPresent();
 
-        if (shepherd || VillageColonyMod.WORKERS.find(mob.getUuid()).isEmpty()) {
-            return type;
+        if (shepherd) {
+            return inside && !targetInside ? CLOSED : type;
         }
 
-        return FLOORS.contains(mob.getBlockPos().asLong()) ? COSTLY : CLOSED;
+        if (!targetInside) return type;
+        if (!inside) return CLOSED;
+        return type == PathNodeType.WALKABLE ? COSTLY : type;
     }
 
     static void clearAll() {

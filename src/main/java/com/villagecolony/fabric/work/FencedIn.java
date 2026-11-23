@@ -108,15 +108,15 @@ final class FencedIn {
 
     /** Identificação do curral pode partir de sua borda; fuga mantém o raio original — ADR-046. */
     static Result check(ServerWorld world, BlockPos feet, int radius) {
-        return check(world, feet, radius, false);
+        return check(world, feet, radius, false, false);
     }
 
     /** O curral lido como lugar: todo portão é parede, aberto ou fechado (Regra 327). */
     static Result penAt(ServerWorld world, BlockPos feet) {
-        return check(world, feet, 2 * RADIUS, true);
+        return check(world, feet, 2 * RADIUS, true, false);
     }
 
-    private static Result check(ServerWorld world, BlockPos feet, int radius, boolean gatesAreWalls) {
+    static Result check(ServerWorld world, BlockPos feet, int radius, boolean gatesAreWalls, boolean doorsAreWalls) {
         if (radius < 1 || radius > 2 * RADIUS) throw new IllegalArgumentException("invalid_pen_radius");
         BlockPos start = feet.toImmutable();
         Set<BlockPos> seen = new HashSet<>();
@@ -149,7 +149,7 @@ final class FencedIn {
                 }
 
                 stepTo(world, at, ahead).ifPresent(next -> {
-                    if (seen.add(next)) {
+                    if ((!doorsAreWalls || !world.getBlockState(next).isIn(BlockTags.DOORS)) && seen.add(next)) {
                         open.add(next);
                     }
                 });
@@ -290,6 +290,19 @@ final class FencedIn {
         return true;
     }
 
+    /** A ronda respeita a porteira durante toda a entrega, inclusive quando ela já estava aberta. */
+    static void holdForDelivery(ServerWorld world, BlockPos gate) {
+        if (open(world, gate)) OPENED.put(gate.toImmutable(), world.getTime() + OPEN_TICKS);
+    }
+
+    /** Regra 299: só libera a guia quando a porteira está fisicamente fechada. */
+    static boolean closeForDelivery(ServerWorld world, BlockPos gate) {
+        if (isClosedGate(world.getBlockState(gate))) return true;
+        OPENED.put(gate.toImmutable(), 0L);
+        tick(world);
+        return isClosedGate(world.getBlockState(gate));
+    }
+
     /** Se este portão foi aberto para alguém passar e ainda espera fechar. */
     static boolean isHeldOpen(BlockPos gate) {
         return OPENED.containsKey(gate);
@@ -374,7 +387,7 @@ final class FencedIn {
 
     // Cerca ou muro na altura dos pés, com o ar livre por cima dela e por
     // cima dele até onde o pulo leva a cabeça.
-    private static boolean isVaultable(ServerWorld world, BlockPos inside, BlockPos barrier) {
+    static boolean isVaultable(ServerWorld world, BlockPos inside, BlockPos barrier) {
         BlockState state = world.getBlockState(barrier);
 
         if (!state.isIn(BlockTags.FENCES) && !state.isIn(BlockTags.WALLS) && !isUprightTrapdoor(state)) {
@@ -400,7 +413,7 @@ final class FencedIn {
 
     // Onde ele pisa do lado de fora: no mesmo nível, um degrau acima ou até
     // dois abaixo — e fora do que ele alcança de dentro.
-    private static Optional<BlockPos> landing(ServerWorld world, BlockPos ahead, Set<BlockPos> reach) {
+    static Optional<BlockPos> landing(ServerWorld world, BlockPos ahead, Set<BlockPos> reach) {
         for (int dy = 1; dy >= -2; dy--) {
             BlockPos feet = ahead.up(dy);
 
@@ -455,31 +468,13 @@ final class FencedIn {
         return dx * dx + dz * dz;
     }
 
-    /**
-     * A que distância de uma cerca, portão ou muro vale a pena medir.
-     *
-     * <p>Seis, e não dois: com dois, quem fica parado no meio de um curral de
-     * 7 × 7 — três blocos de cada cerca — nunca era medido. Seis cobre o
-     * meio de um curral de 13 × 13; num maior, quem quer sair anda até a
-     * cerca e é visto lá.
-     */
-    static final int NEAR_FENCE = 6;
-
     static boolean isBarrier(BlockState state) {
         return state.isIn(BlockTags.FENCES) || state.isIn(BlockTags.WALLS) || state.isIn(BlockTags.FENCE_GATES)
                 || isUprightTrapdoor(state);
     }
 
     static boolean isNearAFence(ServerWorld world, BlockPos feet) {
-        for (BlockPos at : BlockPos.iterate(
-                feet.add(-NEAR_FENCE, -1, -NEAR_FENCE), feet.add(NEAR_FENCE, 1, NEAR_FENCE))) {
-
-            if (isBarrier(world.getBlockState(at))) {
-                return true;
-            }
-        }
-
-        return false;
+        return NearbyFences.isNearAFence(world, feet);
     }
 
     /**

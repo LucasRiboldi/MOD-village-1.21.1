@@ -2,6 +2,26 @@
 
 # Development-Log.md
 
+## 23-11-2026 — Aproximação lateral da porteira (N26)
+
+A guia Vanilla recalcula o caminho do animal com margem de chegada de um bloco. No desnível lateral, a vaca parava na fase `LEAD` com a guia presa. O pastor passa a aguardar do lado oposto da abertura se houver piso acessível. O GameTest de travessia passou na bateria local completa. A tosquia apresentou uma falha na mesma rodada e segue no TODO.
+
+## 22-11-2026 — Entrega 0.4.122-alpha
+
+A entrega reúne o trabalho do pastor das versões 0.4.119–0.4.121 e a correção da altura das entradas do grafo. As evidências permanecem nas notas da versão e os pontos ainda abertos constam do roteiro e do TODO.
+
+## 22-11-2026 — Altura das entradas no grafo (N12/N28)
+
+O log da 0.4.118 registrou três nós isolados em colunas com tábuas acima de caminhos. Um GameTest reproduziu a perda de ligação no piso térreo quando havia uma rua acima da porta. A correção preservou o piso válido da entrada em duas publicações do grafo. A mina e a casa do mineiro aguardam confirmação no mundo jogado.
+
+## 22-11-2026 — Candidata 0.4.121
+
+O autor definiu uma reserva por espécie em cada curral. A validação usa o chão dos cercados reconhecidos pela vila. A regressão falhou na seleção antiga e passou com a exigência de três adultos da mesma espécie no curral da vítima. O primeiro commit recuperou o build ao extrair buscas de cercas que faziam duas classes exceder o limite de linhas.
+
+## 22-11-2026 — Candidata 0.4.120
+
+A emenda da ADR-058 registra a opção 3 do autor. A entrega mantém a guia até o fechamento da porteira e usa a física de salto do curral. O relatório do jogo da 0.4.118 contém o roteiro da nova candidata.
+
 ## 22-11-2026 — Integração da candidata 0.4.118 e retomada no Claude Code
 
 A branch `codex/entrega-04118` reuniu o Lote A (N12/N28) e a orientação
@@ -12499,3 +12519,17 @@ reconexão e repetiu a falha conhecida dos quatro portões do curral MAE
 propriedades e 1.238 GameTests no Sentinela `fast` (`20261121T233603Z`). A análise final
 ficou em `reports/sentinel-analysis/20261121T234042Z/`. O build passou. A reconexão
 e o pastor aguardam o próximo jogo descrito no plano de 21-11.
+
+## 2026-11-22 — 0.4.119, condução na porteira e animais em recintos
+
+O [jogo da 0.4.118](../../technical/Playtest-0.4.118-2026-11-22.md) registrou seis notas.
+O teste de condução reproduziu uma galinha fora, na guia, sem destino à frente da
+porteira. A navegação da ave agora busca essa célula antes da travessia. Outro teste
+reproduziu a escolha de uma vaca dentro de uma casa. A leitura do recinto coberto
+passou a tratar a porta como limite para a coleta, a separação e o abate.
+
+O curral grande voltou a zero na sessão. `VC_FLOCK_HARVEST` passou a registrar a posição
+do animal abatido para cruzar com a contagem. A causa da queda, as entradas de
+casa sem ligação e o relato do lenhador na obra aguardam evidência do próximo jogo.
+
+Sentinela `fast` passou com 1.886 testes unitários, uma suíte de propriedades e 1.241 GameTests (`20261123T004749Z`).
