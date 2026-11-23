@@ -307,12 +307,9 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
         });
     }
 
-    /**
-     * Regra 299: a coleta não escolhe o animal que o abate do excedente vai pegar em seguida — a vaca ao lado do
-     * pastor, com o rebanho acima da reserva. Sem cerca no arena, nenhuma vaca conta como cercada.
-     */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herd_skips_the_next_harvest", tickLimit = 40)
-    public void theHerdSkipsTheAnimalTheHarvestTakesNext(TestContext context) {
+    /** Regra 167: o excedente solto continua disponível para coleta, pois o abate exige um curral. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_herd_collects_loose_surplus", tickLimit = 40)
+    public void theClosestStrayCanBeCollectedEvenWithAnAdultSurplus(TestContext context) {
         ColonyFixture fixture = ColonyFixture.colonyAt(context, new BlockPos(4, 1, 4));
         VillagerEntity shepherd = context.spawnEntity(EntityType.VILLAGER, new BlockPos(0, 1, 0));
         java.util.List<CowEntity> cows = new java.util.ArrayList<>();
@@ -331,15 +328,11 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
                 fixture.owning(shepherd.getUuid());
                 VillageColonyMod.WORKERS.register(shepherd.getUuid(), fixture.colony().id()).assign(ProfessionType.SHEPHERD);
 
-                java.util.List<java.util.UUID> picked = HerdCandidates.of(context.getWorld(), fixture.colony(), shepherd)
-                        .stream().map(net.minecraft.entity.Entity::getUuid).toList();
-
-                context.assertFalse(ShepherdFlock.isPenned(context.getWorld(), cows.get(0)),
-                        "a vaca ao lado do pastor conta como cercada: o teste não mede nada");
-                context.assertTrue(picked.contains(cows.get(1).getUuid()),
-                        "a vaca longe do pastor não entrou na coleta: o teste não mede nada");
-                context.assertFalse(picked.contains(cows.get(0).getUuid()),
-                        "Regra 299: a coleta escolheu a vaca que o abate do excedente vai levar");
+                var picked = HerdCandidates.of(context.getWorld(), fixture.colony(), shepherd);
+                context.assertFalse(ShepherdFlock.isPenned(context.getWorld(), cows.getFirst()),
+                        "a vaca ao lado do pastor deve estar solta");
+                context.assertTrue(!picked.isEmpty() && picked.getFirst().equals(cows.getFirst()),
+                        "o pastor deve escolher a vaca solta mais próxima mesmo com excedente");
             } finally {
                 cows.forEach(cow -> cow.discard());
                 fixture.cleanUp();

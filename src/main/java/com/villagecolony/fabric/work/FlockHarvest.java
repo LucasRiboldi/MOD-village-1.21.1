@@ -3,7 +3,6 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.type.ColonyPos;
-import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.CraftingLookup;
@@ -28,7 +27,8 @@ import java.util.UUID;
  * {@link #FLOCK_FULL} adultos por espécie ({@link ShepherdFlock}); aqui ele <b>abate o excedente
  * acima de {@link #HARVEST_KEEP}</b>, um animal por ciclo, deixando sempre a reserva viva. A faixa
  * {@code HARVEST_KEEP}→{@code FLOCK_FULL} é a de colheita: a criação para em {@link #FLOCK_FULL} e o
- * abate para em {@link #HARVEST_KEEP}, com folga, então um não desfaz o outro.
+ * abate para em {@link #HARVEST_KEEP}, com folga, então um não desfaz o outro. O curral
+ * da vítima também precisa ter pelo menos {@link #MIN_PEN_ADULTS} adultos da espécie (Regra 167).
  *
  * <p>O drop de cada espécie é depositado direto no baú (o padrão da tosquia em
  * {@link ShepherdWork}, não a loot table caindo no chão), e a <b>carne crua acima da reserva de
@@ -42,6 +42,9 @@ public final class FlockHarvest {
 
     /** Abaixo disto o pastor nunca abate: a reserva viva por espécie — autor, 2026-10-22 (eram 8). */
     static final int HARVEST_KEEP = 6;
+
+    /** Adultos da espécie exigidos no curral antes do abate, para preservar dois (Regra 167). */
+    private static final int MIN_PEN_ADULTS = 3;
 
     /** Quanto de cada item fica sempre guardado no baú antes de cozinhar/processar o excedente. */
     static final int ITEM_KEEP = 16;
@@ -90,7 +93,7 @@ public final class FlockHarvest {
                 continue;
             }
 
-            AnimalEntity victim = victimAmong(world, colony, adults);
+            AnimalEntity victim = victimAmong(world, colony, species, adults);
             if (victim == null) {
                 continue;
             }
@@ -114,29 +117,17 @@ public final class FlockHarvest {
         return butchered;
     }
 
-    /**
-     * O próximo animal desta espécie que o abate leva: um adulto ao alcance de um pastor, fora de coleta e de corda de
-     * aldeão (Regra 299), com a espécie acima da reserva viva. Vazio sem excedente.
-     */
-    static java.util.Optional<AnimalEntity> nextVictim(ServerWorld world, Colony colony, Box area,
-                                                       EntityType<? extends AnimalEntity> species) {
-        List<? extends AnimalEntity> adults = world.getEntitiesByType(species, area,
-                animal -> animal.isAlive() && !animal.isBaby());
+    /** Só abate dentro de um curral com reserva local (Regra 167), fora de guia e coleta (Regra 299). */
+    private static AnimalEntity victimAmong(ServerWorld world, Colony colony,
+            EntityType<? extends AnimalEntity> species, List<? extends AnimalEntity> adults) {
+        List<ShepherdPens.Pen> eligiblePens = ShepherdPens.pensOf(world, colony).stream()
+                .filter(pen -> world.getEntitiesByType(species, ShepherdPens.areaOf(pen),
+                        animal -> animal.isAlive() && !animal.isBaby()
+                                && pen.reach().contains(animal.getBlockPos())).size() >= MIN_PEN_ADULTS)
+                .toList();
 
-        return hasSurplus(adults.size()) ? java.util.Optional.ofNullable(victimAmong(world, colony, adults))
-                : java.util.Optional.empty();
-    }
-
-    /** Se este animal é o próximo que o abate leva (Regra 299): a coleta do pastor não o escolhe. */
-    @SuppressWarnings("unchecked")
-    static boolean isNextVictim(ServerWorld world, Colony colony, Box area, AnimalEntity animal) {
-        return DROPS.containsKey(animal.getType()) && nextVictim(world, colony, area,
-                (EntityType<? extends AnimalEntity>) animal.getType()).filter(animal::equals).isPresent();
-    }
-
-    /** O animal que o pastor leva na corda ou numa coleta nunca é abatido (Regra 299). */
-    private static AnimalEntity victimAmong(ServerWorld world, Colony colony, List<? extends AnimalEntity> adults) {
         return adults.stream()
+                .filter(animal -> eligiblePens.stream().anyMatch(pen -> pen.reach().contains(animal.getBlockPos())))
                 .filter(animal -> !(animal.getLeashHolder() instanceof net.minecraft.entity.passive.VillagerEntity)
                         && !ShepherdHerding.isHerded(animal.getUuid()))
                 .filter(animal -> ShepherdFlock.nearbyShepherd(world, colony, animal) != null)

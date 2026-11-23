@@ -2,9 +2,15 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
-## Candidata local 0.4.120 (2026-11-22)
+## Candidata local 0.4.121 (2026-11-22)
 
-A opção 3 do autor está em `ShepherdDelivery` na branch `codex/pastor-curral-04119`. A física do salto reutiliza `PenMoves`. A medição do curral continua em `ShepherdPens`. A confirmação no mundo do autor está pendente. Siga o roteiro do relatório da 0.4.118, atualizado para o JAR 0.4.120.
+Na branch `codex/pastor-curral-04119`, `FlockHarvest` exige três adultos da espécie no curral da vítima e preserva dois. A reserva de seis na área da vila continua valendo. `FlockHarvestGameTest` cobre dois currais, animais soltos, outra espécie e um filhote. O [roteiro da candidata](docs/technical/Playtest-0.4.118-2026-11-22.md) cobre a validação em jogo e a investigação da queda na contagem.
+
+Os testes da reserva passaram. A rodada focada confirmou na 0.4.120 a falha de guia longe da porteira. O cenário da vaca no desnível lateral falhou na bateria completa e passou isolado. Consulte o `STATE.md` antes de mexer na condução.
+
+## Histórico da candidata 0.4.120 (2026-11-22)
+
+A opção 3 do autor está em `ShepherdDelivery` na branch `codex/pastor-curral-04119`. A física do salto reutiliza `PenMoves`. A medição do curral continua em `ShepherdPens`. A confirmação no mundo do autor está pendente. O roteiro do relatório da 0.4.118 segue na candidata atual.
 
 ## Histórico da candidata 0.4.119 (2026-11-22)
 

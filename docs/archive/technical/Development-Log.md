@@ -2,6 +2,10 @@
 
 # Development-Log.md
 
+## 22-11-2026 — Candidata 0.4.121
+
+O autor definiu uma reserva por espécie em cada curral. A validação usa o chão dos cercados reconhecidos pela vila. A regressão falhou na seleção antiga e passou com a exigência de três adultos da mesma espécie no curral da vítima. O primeiro commit recuperou o build ao extrair buscas de cercas que faziam duas classes exceder o limite de linhas.
+
 ## 22-11-2026 — Candidata 0.4.120
 
 A emenda da ADR-058 registra a opção 3 do autor. A entrega mantém a guia até o fechamento da porteira e usa a física de salto do curral. O relatório do jogo da 0.4.118 contém o roteiro da nova candidata.

@@ -27,13 +27,9 @@ final class HerdCandidates {
                 .orElseGet(() -> new Box(center).expand(48));
     }
 
-    /**
-     * Os animais que a coleta pode levar, o amarrado primeiro e então o mais perto (Regra 255). O próximo do abate do
-     * excedente fica de fora (Regra 299).
-     */
+    /** Os animais que a coleta pode levar, o amarrado primeiro e então o mais perto (Regra 255). */
     static List<AnimalEntity> of(ServerWorld world, Colony colony, VillagerEntity shepherd) {
         Box area = areaOf(colony);
-        Box flock = ShepherdFlock.areaOf(colony);
         List<AnimalEntity> candidates = new java.util.ArrayList<>();
 
         for (EntityType<? extends AnimalEntity> species : ShepherdFlock.LIVESTOCK) {
@@ -43,8 +39,7 @@ final class HerdCandidates {
                     && !ShepherdFlock.isPenned(world, candidate)
                     && !isInAnyPen(world, colony, candidate)
                     && !sheltersAnimal(world, candidate.getBlockPos())
-                    && !HerdPatience.isSetAside(world, candidate)
-                    && !FlockHarvest.isNextVictim(world, colony, flock, candidate)));
+                    && !HerdPatience.isSetAside(world, candidate)));
         }
 
         candidates.sort(java.util.Comparator
