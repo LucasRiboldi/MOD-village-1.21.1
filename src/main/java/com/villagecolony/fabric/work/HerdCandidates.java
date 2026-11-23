@@ -42,6 +42,7 @@ final class HerdCandidates {
                     && (!candidate.isLeashed() || candidate.getLeashHolder() instanceof LeashKnotEntity)
                     && !ShepherdFlock.isPenned(world, candidate)
                     && !isInAnyPen(world, colony, candidate)
+                    && !sheltersAnimal(world, candidate.getBlockPos())
                     && !HerdPatience.isSetAside(world, candidate)
                     && !FlockHarvest.isNextVictim(world, colony, flock, candidate)));
         }
@@ -51,6 +52,23 @@ final class HerdCandidates {
                 .thenComparingDouble(animal -> animal.squaredDistanceTo(shepherd)));
 
         return candidates;
+    }
+
+    /** A porta de uma casa coberta delimita o recinto, aberta ou fechada. Animais não operam portas. */
+    static boolean sheltersAnimal(ServerWorld world, BlockPos feet) {
+        if (world.isSkyVisible(feet)) {
+            return false;
+        }
+
+        var room = FencedIn.check(world, feet, FencedIn.RADIUS, true, true);
+        return room.enclosed() && room.reach().stream().anyMatch(at -> {
+            for (var way : net.minecraft.util.math.Direction.Type.HORIZONTAL) {
+                if (world.getBlockState(at.offset(way)).isIn(net.minecraft.registry.tag.BlockTags.DOORS)) {
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 
     /** Se o animal está no chão de dentro de algum curral conhecido da vila: guardado, com a porteira como estiver (Regra 327). */

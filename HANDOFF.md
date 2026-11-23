@@ -2,16 +2,25 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
-## Retomada da entrega 0.4.118 (2026-11-22)
+## Candidata local 0.4.119 (2026-11-22)
+
+- A branch `codex/pastor-curral-04119` parte de `606eb0f6`. A coleta, a separação e o abate respeitam
+  recintos cobertos com porta. A navegação do animal alinha a entrada da porteira enquanto a guia continua presa.
+- Sentinela `fast` passou com 1.886 testes unitários, uma suíte de propriedades e 1.241 GameTests (`20261123T004749Z`).
+- O [relatório do jogo da 0.4.118](docs/technical/Playtest-0.4.118-2026-11-22.md) contém as seis notas e o roteiro
+  da próxima sessão. Priorize confirmar a condução e cruzar a contagem do curral grande com `VC_FLOCK_HARVEST`.
+  As entradas de casa e a autoria de blocos na obra continuam na fila.
+
+## Histórico da entrega 0.4.118 (2026-11-22)
 
 - No Claude Code, atualize a `main` antes de retomar. O PR #102 integrou o Lote A
   (`eb222eba`, N12/N28) e a orientação da placa do baú (`a9999d09`, N14).
   A correção do pastor (N05/N26/N27) já estava na `main` pelo PR #101.
-- `remapJar` passou em `91241a66`. O JAR da 0.4.118 é o único ativo no
+- `remapJar` passou em `91241a66`. O JAR da 0.4.118 foi instalado como único ativo no
   TLauncher. Os arquivos em `build/libs/`, `downloads/` do checkout do
   desktop e `mods/` conferem com SHA-256
   `ED7D96FEC95A398C08E7E8DECDA881713E07CC5003D09995BC7D5651E4E6C4F5`.
-- O autor dispensou novos testes locais e autorizou o CI do GitHub. As
+- O autor dispensou novos testes locais nessa entrega. As
   [notas da 0.4.118](docs/releases/v0.4.118.md) registram as evidências e o roteiro.
 - Continue pelo [plano do playtest](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md)
   e pelo [TODO](TODO.md). Confirme N05/N12/N14/N26/N27/N28 no jogo da 0.4.118.

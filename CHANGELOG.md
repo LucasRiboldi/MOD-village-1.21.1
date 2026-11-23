@@ -12,6 +12,13 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.119] — candidata, 2026-11-22
+
+- A navegação do animal o leva até a frente da porteira enquanto ele continua na guia.
+- Animais em recintos cobertos delimitados por porta ficam protegidos da coleta, da separação e do abate.
+- `VC_FLOCK_HARVEST` registra espécie, posição, total de adultos da espécie e presença em curral conhecido.
+- As seis notas do jogo anterior e o roteiro estão no [relatório da 0.4.118](docs/technical/Playtest-0.4.118-2026-11-22.md).
+
 ## [0.4.118] — candidata, 2026-11-22
 
 [Notas da pré-release v0.4.118-alpha](https://github.com/LucasRiboldi/MOD-village-1.21.1/blob/main/docs/releases/v0.4.118.md).

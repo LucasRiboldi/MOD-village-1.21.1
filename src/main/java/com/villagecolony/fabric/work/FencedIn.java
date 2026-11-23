@@ -108,15 +108,15 @@ final class FencedIn {
 
     /** Identificação do curral pode partir de sua borda; fuga mantém o raio original — ADR-046. */
     static Result check(ServerWorld world, BlockPos feet, int radius) {
-        return check(world, feet, radius, false);
+        return check(world, feet, radius, false, false);
     }
 
     /** O curral lido como lugar: todo portão é parede, aberto ou fechado (Regra 327). */
     static Result penAt(ServerWorld world, BlockPos feet) {
-        return check(world, feet, 2 * RADIUS, true);
+        return check(world, feet, 2 * RADIUS, true, false);
     }
 
-    private static Result check(ServerWorld world, BlockPos feet, int radius, boolean gatesAreWalls) {
+    static Result check(ServerWorld world, BlockPos feet, int radius, boolean gatesAreWalls, boolean doorsAreWalls) {
         if (radius < 1 || radius > 2 * RADIUS) throw new IllegalArgumentException("invalid_pen_radius");
         BlockPos start = feet.toImmutable();
         Set<BlockPos> seen = new HashSet<>();
@@ -149,7 +149,7 @@ final class FencedIn {
                 }
 
                 stepTo(world, at, ahead).ifPresent(next -> {
-                    if (seen.add(next)) {
+                    if ((!doorsAreWalls || !world.getBlockState(next).isIn(BlockTags.DOORS)) && seen.add(next)) {
                         open.add(next);
                     }
                 });

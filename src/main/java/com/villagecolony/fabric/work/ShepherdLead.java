@@ -25,6 +25,30 @@ final class ShepherdLead {
         WorkTargets.set(shepherd.getUuid(), leg.orElse(goal), leg.isPresent() ? 2 : arrival);
     }
 
+    static void walkAtGate(ServerWorld world, VillagerEntity shepherd, AnimalEntity animal, ShepherdPens.Pen pen,
+                           double reach) {
+        BlockPos outside = pen.outside();
+        if (animal.squaredDistanceTo(outside.getX() + 0.5, outside.getY(), outside.getZ() + 0.5) <= reach * reach) {
+            alignAtGate(animal, outside);
+            walkTo(world, shepherd, ShepherdPens.deeper(pen), 0);
+        } else {
+            walkTo(world, shepherd, outside, 0);
+        }
+    }
+
+    /** Guia o animal até a célula externa pela navegação dele, ainda na corda (Regra 299). */
+    private static void alignAtGate(AnimalEntity animal, BlockPos outside) {
+        var navigation = animal.getNavigation();
+        if (!navigation.isIdle() && outside.equals(navigation.getTargetPos())) {
+            return;
+        }
+
+        var path = navigation.findPathTo(outside, 0);
+        if (path != null && path.reachesTarget()) {
+            navigation.startMovingAlong(path, 1.0);
+        }
+    }
+
     static boolean isTooFar(VillagerEntity shepherd, AnimalEntity animal) {
         return shepherd.squaredDistanceTo(animal) > SLACK * SLACK;
     }

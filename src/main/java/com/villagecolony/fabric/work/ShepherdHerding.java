@@ -369,6 +369,10 @@ final class ShepherdHerding {
             }
 
             if (shepherd.squaredDistanceTo(animal) <= REACH * REACH) {
+                if (HerdCandidates.sheltersAnimal(world, animal.getBlockPos())) {
+                    abort(world, shepherdId, herd);
+                    return false;
+                }
                 Entity tiedTo = animal.getLeashHolder();
 
                 animal.attachLeash(shepherd, true);
@@ -406,9 +410,7 @@ final class ShepherdHerding {
                 || herd.pen.reach().contains(shepherd.getBlockPos()))) {
             FencedIn.open(world, herd.pen.gate());
             // Regra 299, N27: aproxima pelo lado de fora antes de entrar; a corda Vanilla segue o pastor.
-            BlockPos approach = animal.squaredDistanceTo(goal.getX() + 0.5, goal.getY(), goal.getZ() + 0.5) <= REACH * REACH
-                    ? ShepherdPens.deeper(herd.pen) : goal;
-            ShepherdLead.walkTo(world, shepherd, approach, 0);
+            ShepherdLead.walkAtGate(world, shepherd, animal, herd.pen, REACH);
             return true;
         }
 

@@ -12499,3 +12499,17 @@ reconexão e repetiu a falha conhecida dos quatro portões do curral MAE
 propriedades e 1.238 GameTests no Sentinela `fast` (`20261121T233603Z`). A análise final
 ficou em `reports/sentinel-analysis/20261121T234042Z/`. O build passou. A reconexão
 e o pastor aguardam o próximo jogo descrito no plano de 21-11.
+
+## 2026-11-22 — 0.4.119, condução na porteira e animais em recintos
+
+O [jogo da 0.4.118](../../technical/Playtest-0.4.118-2026-11-22.md) registrou seis notas.
+O teste de condução reproduziu uma galinha fora, na guia, sem destino à frente da
+porteira. A navegação da ave agora busca essa célula antes da travessia. Outro teste
+reproduziu a escolha de uma vaca dentro de uma casa. A leitura do recinto coberto
+passou a tratar a porta como limite para a coleta, a separação e o abate.
+
+O curral grande voltou a zero na sessão. `VC_FLOCK_HARVEST` passou a registrar a posição
+do animal abatido para cruzar com a contagem. A causa da queda, as entradas de
+casa sem ligação e o relato do lenhador na obra aguardam evidência do próximo jogo.
+
+Sentinela `fast` passou com 1.886 testes unitários, uma suíte de propriedades e 1.241 GameTests (`20261123T004749Z`).

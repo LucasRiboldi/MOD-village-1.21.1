@@ -37,6 +37,9 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 
 ## F1 — A vila trabalha (3 a 5 semanas) → portão Beta 0.5.0
 
+- [ ] 🔴 [Jogo da 0.4.118](docs/technical/Playtest-0.4.118-2026-11-22.md) (22-11). Validar na 0.4.119 a proteção
+  de animais em recintos e a entrada da galinha. Investigar a queda na contagem do curral grande com o novo
+  log de abate. Identificar as duas portas isoladas e rastrear a atividade do lenhador na obra.
 - [ ] 🔴 Jogo da 0.4.115 (21-11): 28 notas e seis imagens no [plano integral](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
   Lote B implementado na candidata 0.4.116: tosquia junto da ovelha e condução pela porteira (N05, N26, N27); aguarda jogo.
   Lote A, N12/N28: a 0.4.117 trata a recusa que persistia após mudar a passagem. Confirmar reconexão da mina e da

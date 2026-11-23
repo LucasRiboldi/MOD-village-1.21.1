@@ -97,6 +97,10 @@ public final class FlockHarvest {
 
             depositDrops(world, colony, species, chests,
                     ShepherdFlock.nearbyShepherd(world, colony, victim).getUuid());
+            var at = victim.getBlockPos();
+            VillageColonyMod.LOGGER.info("VC_FLOCK_HARVEST version=1 colony={} species={} at={} adults={} in_pen={}",
+                    colony.id().toString().substring(0, 8), species.getUntranslatedName(), at.toShortString(),
+                    adults.size(), HerdCandidates.isInAnyPen(world, colony, victim));
             victim.kill();
             butchered = true;
 
@@ -136,6 +140,7 @@ public final class FlockHarvest {
                 .filter(animal -> !(animal.getLeashHolder() instanceof net.minecraft.entity.passive.VillagerEntity)
                         && !ShepherdHerding.isHerded(animal.getUuid()))
                 .filter(animal -> ShepherdFlock.nearbyShepherd(world, colony, animal) != null)
+                .filter(animal -> !HerdCandidates.sheltersAnimal(world, animal.getBlockPos()))
                 .findFirst().orElse(null);
     }
 

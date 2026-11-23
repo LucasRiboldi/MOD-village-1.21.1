@@ -113,6 +113,36 @@ public class PenTetherGameTest implements FabricGameTest {
         context.complete();
     }
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "pen_lead_chicken_alignment", tickLimit = 20)
+    public void theLeashedChickenWalksTowardsTheGateFront(TestContext context) {
+        for (BlockPos at : BlockPos.iterate(new BlockPos(1, 0, 0), new BlockPos(6, 0, 5))) {
+            context.setBlockState(at, Blocks.STONE.getDefaultState());
+        }
+        ShepherdPens.Pen pen = pen(context);
+        VillagerEntity shepherd = context.spawnEntity(EntityType.VILLAGER, new BlockPos(3, 1, 4));
+        var chicken = context.spawnEntity(EntityType.CHICKEN, new BlockPos(5, 1, 1));
+        context.waitAndRun(5, () -> {
+            chicken.attachLeash(shepherd, true);
+            ShepherdHerding.Herd herd = new ShepherdHerding.Herd(chicken.getUuid(), pen.gate(), context.getWorld().getTime());
+            herd.pen = pen;
+            herd.phase = ShepherdHerding.Phase.LEAD;
+            try {
+                ShepherdHerding.step(context.getWorld(), shepherd.getUuid(), herd);
+                context.assertTrue(chicken.getLeashHolder() == shepherd, "a galinha perdeu a corda antes de alinhar");
+                context.assertTrue(!chicken.getNavigation().isIdle()
+                                && pen.outside().equals(chicken.getNavigation().getTargetPos()),
+                        "a galinha no lado de fora não caminhou até a frente da porteira: "
+                                + chicken.getPos() + " outside=" + pen.outside() + " shepherd=" + shepherd.getPos()
+                                + " phase=" + herd.phase + " grounded=" + chicken.isOnGround());
+                context.complete();
+            } finally {
+                WorkTargets.clear(shepherd.getUuid());
+                shepherd.discard();
+                chicken.discard();
+            }
+        });
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "pen_lead_slope", tickLimit = 280)
     public void theAnimalWalksFromASideLedgeThroughTheGate(TestContext context) {
         int height = 160;

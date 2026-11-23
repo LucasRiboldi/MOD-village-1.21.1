@@ -59,7 +59,8 @@ final class PenRegroup {
             for (AnimalEntity animal : world.getEntitiesByClass(AnimalEntity.class,
                     ShepherdPens.areaOf(mixed),
                     candidate -> candidate.isAlive() && candidate.canBeLeashed() && !candidate.isLeashed()
-                            && mixed.reach().contains(candidate.getBlockPos()))) {
+                            && mixed.reach().contains(candidate.getBlockPos())
+                            && !HerdCandidates.sheltersAnimal(world, candidate.getBlockPos()))) {
                 Optional<ShepherdPens.Pen> own =
                         ShepherdPens.forSpecies(world, colony, animal.getType(), shepherd, mixed, true);
 

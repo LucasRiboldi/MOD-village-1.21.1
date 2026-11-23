@@ -8,34 +8,21 @@
 > **Retomada por outro agente:** comece por `HANDOFF.md`.
 
 ## Onde o projeto está
-- **N14, placa do baú:** código integrado com N12/N28 na `main` pelo PR #102. A placa da moradia prioriza a passagem livre
-  até a porta e pode mudar de face em casas existentes. A hipótese de atraso na criação do baú segue aberta.
-  N10 segue aberto. O Lote A (N12/N28) entrou na `main` pelo PR #102 e aguarda playtest.
-  N24 segue para deliberação separada.
-  Sentinela `fast` passou com 1.886 unitários, uma suíte de propriedades e 1.238 GameTests
-  (`20261122T002039Z`). A candidata local 0.4.118 tem roteiro no plano integral.
-- **Ciclo atual:** jogo da 0.4.115 analisado em 21-11 (28 notas e seis imagens). Autor escolheu o Lote B,
-  pastor primeiro, no [plano integral](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
-  A 0.4.117 trata a reconexão (N12/N28) do Lote A e incorpora o pastor da 0.4.116. Ambas as correções aguardam
-  playtest. Os demais pontos do Lote A e os lotes C, D e E seguem abertos.
-- **Versões:** candidata de playtest 0.4.118. As [notas da versão](docs/releases/v0.4.118.md) acompanham a
-  pré-release `v0.4.118-alpha`. O autor dispensou novos testes locais e autorizou o CI do GitHub.
+- **PR #102:** N12/N28 (reconexão) e N14 (placa voltada para a passagem livre) integrados. N10 e o atraso do baú seguem abertos. N24 aguarda deliberação.
+- **Ciclo atual:** o [jogo da 0.4.118](docs/technical/Playtest-0.4.118-2026-11-22.md) gerou seis notas.
+  A candidata 0.4.119 trata a condução lateral de galinha e protege animais abrigados. A queda na contagem do
+  curral grande, as duas entradas de casa e a atividade do lenhador na obra seguem em investigação.
+  Os demais itens estão no [plano da 0.4.115](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
+- **Validação da 0.4.119:** Sentinela `fast` passou com 1.886 testes unitários, uma suíte de propriedades e 1.241 GameTests (`20261123T004749Z`).
+- **Versões:** 0.4.119 é a candidata local. A pré-release publicada é a [0.4.118-alpha](docs/releases/v0.4.118.md).
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
   jogador e publicação.
 - **Fase do cronograma:** F0, sinal limpo (documentos nos tetos, instáveis declarados, ferramentas de régua corrigidas).
   Depois vêm F1 (a vila trabalha) e o portão Beta 0.5.0.
-- **0.4.115 jogada:** resgate de telhado limpa a memória de caminhada anterior; GameTest reproduziu a memória
-  persistente e passou após a correção. O jogo novo gerou o plano integral acima; não comprova sozinho todo caso de telhado.
-- **0.4.117:** `fast` PASS: 1.886 unitários, uma suite de propriedades e 1.238 GameTests (`20261121T233603Z`).
-  A regressão falhou com a recusa permanente. O roteiro da mina e da casa está no plano integral.
-- **0.4.116:** `fast` PASS: 1.885 unitários, uma suite de propriedades e 1.237 GameTests (`20261121T191357Z`); build PASS.
-  Cinco regressões falham na produção antiga. SHA-256 e roteiro de jogo no plano integral.
-- **Modo:** correção por playtest (`CLAUDE.md` §0.2.2): log primeiro, opções ao autor, teste que falha, correção,
-  Sentinela, commit, JAR.
-- **Ciclo 0.4.113:** A8, A7, A9, A6, A2 e A3a (Regras 349 a 354) passaram em 21, 3, 8, 18, 6 e 9 GameTests focados, respectivamente.
-  A4 e A5 registram as posições e o motivo das desistências do fazendeiro e do pastor. R1 amplia o arquivo de `/vc salvar`
-  com as análises da sessão. As nove escolhas aguardam o próximo jogo em mundo novo. [Plano do ciclo](docs/technical/Proximo-ciclo-0113.md).
+- **0.4.115 jogada:** o resgate limpa a memória de caminhada anterior em GameTest. O retorno ao telhado ainda requer observação em jogo.
+- **Validação histórica:** [CHANGELOG](CHANGELOG.md) registra 0.4.116 a 0.4.118. O [plano da 0.4.113](docs/technical/Proximo-ciclo-0113.md) registra seus nove itens.
+- **Modo:** correção por playtest (`CLAUDE.md` §0.2.2).
 
 ## Candidatas que esperam jogo
 
