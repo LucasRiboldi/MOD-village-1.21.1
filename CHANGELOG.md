@@ -12,6 +12,14 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.124] — candidata, 2026-11-23
+
+- O pastor usa pares da mesma espécie no mesmo curral para a reprodução de animais de corte. A criação de animais soltos continua disponível antes de haver curral.
+- O abate exige adultos da mesma espécie acima da meta da vila (8 ou 16). O curral da vítima precisa de pelo menos três adultos e preserva dois após o abate.
+- Os logs registram coleta, entrega, entradas e saídas observadas, alimentação, nascimentos associados aos pares alimentados e mortes nos currais. Os relatórios mostram adultos e filhotes por espécie.
+- A candidata inclui o resgate de telhado da 0.4.123. Quando o salto oferece risco de queda, o aldeão desce diretamente para um piso seguro.
+- [Roteiro de jogo do rebanho e do telhado](docs/technical/Playtest-0.4.122-2026-11-23.md).
+
 ## [0.4.122] — alpha, 2026-11-22
 
 - O grafo preserva o piso da entrada quando uma rua ocupa outro nível da mesma coluna (N12/N28).

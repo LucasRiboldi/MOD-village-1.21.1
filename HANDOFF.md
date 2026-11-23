@@ -2,9 +2,12 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
-## Correção do rebanho nos currais (2026-11-23)
+## Candidata local 0.4.124 (2026-11-23)
 
-- A branch `codex/pastor-rebanho-nos-currais` reúne a opção 2 aprovada. A coleta e a entrega registram os animais por UUID. A reprodução de corte usa pares do mesmo curral, e o abate usa a meta vigente no total da vila e a reserva do curral da vítima.
+- A branch `codex/playtest-04124` reúne o resgate de telhado (`c8b32ace`) e a correção do rebanho (`07afdcdc` na branch `codex/pastor-rebanho-nos-currais`, incorporado como `cd6924f9`).
+- A coleta e a entrega registram os animais por UUID. A reprodução de corte usa pares do mesmo curral. O abate usa a meta vigente no total da vila e a reserva do curral da vítima.
+- JAR instalado em `downloads/` do checkout do Desktop e na pasta `mods/` do TLauncher. As cópias e o build têm SHA-256 `53E341158D3963E0D1A7724A1B0AA0394593E906CA4C190E3AE07E128AC43FF8`. A 0.4.123 ficou como cópia desativada.
+- No Sentinela `fast` (`20261123T170632Z`), unitários e propriedades passaram. Dos 1.247 GameTests, 1.244 passaram. Falharam a tosquia N05 e dois cenários de coleta de `ShepherdRoundGameTest`. Na repetição focada de rebanho, telhado, ronda e tosquia, os 20 passaram. O log confirmou nascimento e morte por queda do mesmo filhote, e abate com dois adultos preservados no curral da vítima.
 - Retome pelo [roteiro do rebanho](docs/technical/Playtest-0.4.122-2026-11-23.md#próximo-playtest-do-rebanho) e pelo [TODO](TODO.md). A sessão anterior não tinha informação suficiente para explicar toda a perda de animais.
 
 ## Candidata local 0.4.123 (2026-11-23)

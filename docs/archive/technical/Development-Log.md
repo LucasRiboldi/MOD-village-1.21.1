@@ -2,6 +2,10 @@
 
 # Development-Log.md
 
+## 23-11-2026 — Candidata local 0.4.124
+
+A candidata reúne a correção do rebanho e o resgate de telhado da 0.4.123. Unitários e propriedades passaram no Sentinela `fast` (`20261123T170632Z`). A bateria de 1.247 GameTests teve três falhas, na tosquia N05 e em duas seleções de animal desgarrado. Os 20 GameTests da repetição focada passaram. Dessas linhas de log, `BIRTH` e `DEATH` mostram o mesmo filhote, e `VC_FLOCK_HARVEST` registra nove adultos antes e oito depois na vila, com três antes e dois depois no curral da vítima. O JAR instalado e o roteiro estão no `HANDOFF.md`.
+
 ## 23-11-2026 — Reprodução e abate nos currais
 
 O cenário que acrescentava uma vaca solta a oito adultas no curral reproduziu o abate indevido. A criação de corte passou a usar pares do mesmo recinto e um total de adultos somado nos currais da vila. O abate usa esse total, acima da meta de criação vigente, e preserva dois adultos no curral da vítima. A rodada focada passou oito GameTests. No Sentinela `fast` (`20261123T165821Z`), unitários e propriedades passaram, e a tosquia N05 foi a única falha dos 1.246 GameTests. A instrumentação por animal aguarda o próximo playtest.
