@@ -2,6 +2,10 @@
 
 # Development-Log.md
 
+## 22-11-2026 — Altura das entradas no grafo (N12/N28)
+
+O log da 0.4.118 registrou três nós isolados em colunas com tábuas acima de caminhos. Um GameTest reproduziu a perda de ligação no piso térreo quando havia uma rua acima da porta. A correção preservou o piso válido da entrada em duas publicações do grafo. A mina e a casa do mineiro aguardam confirmação no mundo jogado.
+
 ## 22-11-2026 — Candidata 0.4.121
 
 O autor definiu uma reserva por espécie em cada curral. A validação usa o chão dos cercados reconhecidos pela vila. A regressão falhou na seleção antiga e passou com a exigência de três adultos da mesma espécie no curral da vítima. O primeiro commit recuperou o build ao extrair buscas de cercas que faziam duas classes exceder o limite de linhas.

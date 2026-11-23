@@ -140,3 +140,11 @@ O autor escolheu avançar para N12/N28 enquanto a validação do pastor seguia p
 3. Alague um trecho da única passagem. Registre se os nós ficam isolados e se o log `VC_ROAD_GRAPH` mostra uma recusa. Retire a água e recoloque o apoio firme. Aguarde a releitura com a vila carregada. A varredura normal começa a cada 6.000 tiques, cerca de cinco minutos a 20 TPS. O arco e a casa devem voltar à rede principal. Se a água ainda bloquear o trecho e não houver desvio, os nós devem continuar isolados.
 4. Caminhe até as duas entradas e confira portas, escadas e fundações. Salve e reabra o mundo. Confirme se as conexões aparecem de novo e anote quanto tempo demoraram.
 5. Na mesma candidata, repita os passos de tosquia e condução do roteiro do pastor. Use `/vc bioma nota` para anotar resultados. Execute `/vc salvar` antes de salvar e sair, e de novo ao concluir o teste após reabrir.
+
+
+## Lote A — altura das entradas na candidata 0.4.122
+
+- **Evidência da 0.4.118.** O `VC_ROAD_GRAPH` mostrou três nós isolados em `(351,86,675)`, `(339,82,697)` e `(339,82,699)`. Na cópia do mundo, as três colunas têm caminho no piso inferior (Y79, Y78 e Y78) e tábuas no nível dos nós isolados. O índice de ruas registra cada coluna por XZ.
+- **Correção.** Quando a leitura da porta retorna um piso válido, o grafo adota essa altura na coluna, mesmo com uma rua cadastrada acima. Se duas entradas válidas ocuparem a mesma coluna, prevalece a mais baixa. Mantém-se um nível por coluna.
+- **Verificação.** O GameTest falhou antes da correção porque o piso térreo ficou isolado. Depois, o nó da entrada integrou a rede principal em duas publicações do grafo. Os 17 GameTests focados passaram na branch da correção.
+- **Pendente.** Aplicar o [roteiro da 0.4.122](Playtest-0.4.118-2026-11-22.md) às três colunas e aos casos originais do arco da mina (N12) e da casa do mineiro (N28). A evidência das três colunas ainda não explica os dois casos originais.

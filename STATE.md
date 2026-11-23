@@ -8,15 +8,17 @@
 > **Retomada por outro agente:** comece por `HANDOFF.md`.
 
 ## Onde o projeto está
+- **Altura das entradas (N12/N28).** O grafo preserva o piso válido da porta quando há uma rua acima na mesma coluna. Os 17 GameTests focados passaram. A mina e a casa do mineiro aguardam [confirmação em jogo](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
+- **Verificação do grafo.** O Sentinela `fast` passou nas três suítes, incluindo 1.240 GameTests, na branch da correção sobre a main (`20261123T021932Z`).
 - **PR #102:** N12/N28 (reconexão) e N14 (placa voltada para a passagem livre) integrados. N10 e o atraso do baú seguem abertos. N24 aguarda deliberação.
 - **Ciclo atual:** o [jogo da 0.4.118](docs/technical/Playtest-0.4.118-2026-11-22.md) gerou seis notas.
   A candidata 0.4.119 trata a condução lateral de galinha e protege animais abrigados. A queda na contagem do
-  curral grande, as duas entradas de casa e a atividade do lenhador na obra seguem em investigação.
+  curral grande e a atividade do lenhador na obra seguem em investigação.
   Os demais itens estão no [plano da 0.4.115](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
 - **Validação da 0.4.119:** Sentinela `fast` passou com 1.886 testes unitários, uma suíte de propriedades e 1.241 GameTests (`20261123T004749Z`).
 - **Candidata 0.4.121:** o abate exige pelo menos três adultos da espécie no próprio curral e preserva dois. A reserva de seis na área da vila continua valendo. A regressão de dois currais reproduziu a falha e passou após a correção.
 - **Verificação da 0.4.121:** 1.886 unitários e a suíte de propriedades passaram. O Sentinela `fast` (`20261123T014911Z`) encontrou três falhas nos 1.242 GameTests. Após atualizar a expectativa antiga de coleta, os cinco testes de abate e o teste de coleta do excedente passaram na rodada focada (20/21). A falha da guia também ocorre na 0.4.120. A falha no desnível lateral só apareceu na bateria completa.
-- **Versões:** 0.4.121 é a candidata local. A reserva por curral, a entrega por salto e a exclusão dos demais aldeões aguardam playtest. A pré-release publicada é a [0.4.118-alpha](docs/releases/v0.4.118.md).
+- **Versões:** 0.4.122 é a candidata local. A reserva por curral, a entrega por salto e a exclusão dos demais aldeões aguardam playtest. A pré-release publicada é a [0.4.118-alpha](docs/releases/v0.4.118.md).
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
   jogador e publicação.

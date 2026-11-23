@@ -12,6 +12,14 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.122] — candidata, 2026-11-22
+
+- O grafo preserva o piso da entrada quando uma rua ocupa outro nível da mesma coluna (N12/N28).
+
+## [0.4.121] — candidata, 2026-11-22
+
+- O abate exige três adultos da espécie no curral da vítima e preserva dois.
+
 ## [0.4.120] — candidata, 2026-11-22
 
 - Na entrega, o pastor salta a cerca, alinha-se por dentro e segue em direção ao centro. O animal cruza a porteira na guia. O pastor libera a guia após o fechamento e salta de volta.
