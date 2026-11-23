@@ -8,13 +8,12 @@
 > **Retomada por outro agente:** comece por `HANDOFF.md`.
 
 ## Onde o projeto está
+- **Candidata 0.4.123.** O resgate de telhado usa descida direta para um piso válido quando o salto excederia a distância segura de queda do aldeão (Regra 160). O Sentinela `fast` passou nas três suítes, com 1.244 GameTests (`20261123T152335Z`). A saída com vida e a retomada do trabalho aguardam o [playtest](docs/technical/Playtest-0.4.122-2026-11-23.md).
 - **Altura das entradas (N12/N28).** O grafo preserva o piso válido da porta quando há uma rua acima na mesma coluna. Os 17 GameTests focados passaram. A mina e a casa do mineiro aguardam [confirmação em jogo](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
 - **Verificação do grafo.** O Sentinela `fast` passou nas três suítes, incluindo 1.240 GameTests, na branch da correção sobre a main (`20261123T021932Z`).
 - **PR #102:** N12/N28 (reconexão) e N14 (placa voltada para a passagem livre) integrados. N10 e o atraso do baú seguem abertos. N24 aguarda deliberação.
-- **Ciclo atual:** o [jogo da 0.4.118](docs/technical/Playtest-0.4.118-2026-11-22.md) gerou seis notas.
-  A candidata 0.4.119 trata a condução lateral de galinha e protege animais abrigados. A queda na contagem do
-  curral grande e a atividade do lenhador na obra seguem em investigação.
-  Os demais itens estão no [plano da 0.4.115](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
+- **Jogo da 0.4.118:** [seis notas](docs/technical/Playtest-0.4.118-2026-11-22.md). A 0.4.119 trata a condução lateral de galinha e protege animais abrigados.
+  A queda na contagem do curral grande e a atividade do lenhador na obra seguem em investigação. Os demais itens estão no [plano da 0.4.115](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
 - **Validação da 0.4.119:** Sentinela `fast` passou com 1.886 testes unitários, uma suíte de propriedades e 1.241 GameTests (`20261123T004749Z`).
 - **Candidata 0.4.121:** o abate exige pelo menos três adultos da espécie no próprio curral e preserva dois. A reserva de seis na área da vila continua valendo. A regressão de dois currais reproduziu a falha e passou após a correção.
 - **Verificação da 0.4.121:** 1.886 unitários e a suíte de propriedades passaram. O Sentinela `fast` (`20261123T014911Z`) encontrou três falhas nos 1.242 GameTests. Após atualizar a expectativa antiga de coleta, os cinco testes de abate e o teste de coleta do excedente passaram na rodada focada (20/21). A falha da guia também ocorre na 0.4.120. A falha no desnível lateral só apareceu na bateria completa.

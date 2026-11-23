@@ -5,6 +5,7 @@ import com.villagecolony.fabric.integration.SiteSurroundings;
 import com.villagecolony.fabric.integration.VillageRoad;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
+import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -17,10 +18,9 @@ import java.util.Optional;
  * subir ou escalar"): o construtor ficou 3 vezes preso no telhado de uma casa, a queda até o chão era de 5 blocos, e a
  * fuga o dava por solto "after 0 steps" — ela só pergunta se o terreno em volta não está acima dele.
  *
- * <p>Telhado é: pé sobre o que não é chão natural nem rua, e ao menos {@link #DROPS} das oito colunas a {@link #RING}
- * blocos com o chão {@link #DROP} ou mais abaixo do pé. Ele se joga do telhado rumo ao lugar de pé sobre chão mais
- * perto, até {@link #SEARCH} blocos (autor, 2026-10-29: "aldeão deve se atirar dos telhados"); só depois de
- * {@link #LEAPS} pulos sem sair é posto no chão, como quem é tirado do curral ({@code PenLift}).
+ * <p>Regra 160: resgata para o chão natural ou rua mais próxima que permita ficar de pé. Em um desnível
+ * curto, tenta até {@link #LEAPS} pulos. Se o desnível excede a distância segura de queda do aldeão,
+ * já com a margem do pulo, ou se as tentativas se esgotam, coloca o aldeão no chão.
  */
 public final class RoofDescent {
 
@@ -39,8 +39,9 @@ public final class RoofDescent {
     /** Quantos pulos antes de ser posto no chão. */
     static final int LEAPS = 3;
 
-    /** A força do pulo para fora do telhado, para o lado e para cima. */
-    static final double LEAP = 0.5;
+    /** Impulsos do pulo curto. Com impulso vertical de 0,3 o pulo sobe menos de um bloco. */
+    private static final double LEAP_OUTWARD = 0.5;
+    private static final double LEAP_UPWARD = 0.3;
 
     static {
         com.villagecolony.core.type.ServerMemory.register(RoofDescent.class, RoofDescent::clearAll);
@@ -55,7 +56,7 @@ public final class RoofDescent {
         TRIED.clear();
     }
 
-    /** Se ele está num telhado e foi posto no chão. */
+    /** Se iniciou um pulo curto ou colocou o aldeão no chão. */
     static boolean check(ServerWorld world, VillagerEntity villager) {
         BlockPos feet = villager.getBlockPos();
 
@@ -70,30 +71,37 @@ public final class RoofDescent {
             return false;
         }
 
+        BlockPos landing = ground.get();
         villager.getBrain().forget(MemoryModuleType.WALK_TARGET);
         villager.getNavigation().stop();
-        int tried = TRIED.merge(villager.getUuid(), 1, Integer::sum);
+        int tried = TRIED.getOrDefault(villager.getUuid(), 0) + 1;
+        double fallWithLeap = villager.getY() - landing.getY() + 1.0;
+        double safeFall = villager.getAttributeValue(EntityAttributes.GENERIC_SAFE_FALL_DISTANCE);
 
-        if (tried <= LEAPS) {
-            double dx = ground.get().getX() + 0.5 - villager.getX();
-            double dz = ground.get().getZ() + 0.5 - villager.getZ();
+        if (tried <= LEAPS && fallWithLeap <= safeFall) {
+            TRIED.put(villager.getUuid(), tried);
+            double dx = landing.getX() + 0.5 - villager.getX();
+            double dz = landing.getZ() + 0.5 - villager.getZ();
             double length = Math.max(0.001, Math.sqrt(dx * dx + dz * dz));
 
-            villager.setVelocity(dx / length * LEAP, LEAP, dz / length * LEAP);
+            villager.setVelocity(dx / length * LEAP_OUTWARD, LEAP_UPWARD, dz / length * LEAP_OUTWARD);
             villager.velocityModified = true;
             VillageColonyMod.LOGGER.info("Worker {} leaps off the roof at {} towards the ground at {} ({} of {})",
-                    villager.getUuid().toString().substring(0, 8), feet.toShortString(), ground.get().toShortString(),
+                    villager.getUuid().toString().substring(0, 8), feet.toShortString(), landing.toShortString(),
                     tried, LEAPS);
-            ActionJournal.action(villager.getUuid(), "LEAPT", "", tried, ground.get(), "off a roof");
+            ActionJournal.action(villager.getUuid(), "LEAPT", "", tried, landing, "off a roof");
 
             return true;
         }
 
         TRIED.remove(villager.getUuid());
-        villager.requestTeleport(ground.get().getX() + 0.5, ground.get().getY(), ground.get().getZ() + 0.5);
+        villager.requestTeleport(landing.getX() + 0.5, landing.getY(), landing.getZ() + 0.5);
+        villager.setVelocity(0.0, 0.0, 0.0);
+        villager.velocityModified = true;
+        villager.onLanding();
         VillageColonyMod.LOGGER.info("Worker {} was let down from the roof at {} to the ground at {}",
-                villager.getUuid().toString().substring(0, 8), feet.toShortString(), ground.get().toShortString());
-        ActionJournal.action(villager.getUuid(), "LET_DOWN", "", 1, ground.get(), "from a roof");
+                villager.getUuid().toString().substring(0, 8), feet.toShortString(), landing.toShortString());
+        ActionJournal.action(villager.getUuid(), "LET_DOWN", "", 1, landing, "from a roof");
 
         return true;
     }

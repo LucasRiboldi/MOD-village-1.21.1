@@ -43,6 +43,10 @@ O snapshot final registrou 11 aldeões, 9 com ofício e 15 camas. O servidor mar
 1. **Correção menor, recomendada.** Fazer o resgate escolher uma aterrissagem segura e impedir tentativas repetidas para o mesmo ponto perigoso. Reproduzir a queda da casa e verificar que o aldeão sai vivo e retoma o trabalho.
 2. **Correção média.** Fazer a opção 1 e corrigir a rota que leva os aldeões ao mesmo telhado. A reprodução deve demonstrar como eles sobem, impedir o retorno e preservar subidas legítimas, como as do curral.
 
+## Conferência da candidata 0.4.123
+
+O autor escolheu a opção 1. No mesmo mundo, observe a casa junto de `338,86,1414`. Se um aldeão encalhar no telhado, confirme que sai vivo e volta ao trabalho. Num resgate com sete a oito blocos de desnível, procure `LET_DOWN` no diário de ações. Anote se o mesmo aldeão voltar ao telhado e exporte os relatórios com `/vc salvar`.
+
 ## Fontes
 
 - Log do cliente preservado, linhas 5596, 6003, 8742, 9370–9426, 9733, 9916, 10251, 10478–10593, 10821 e 11005.

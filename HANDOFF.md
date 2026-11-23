@@ -2,6 +2,12 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Candidata local 0.4.123 (2026-11-23)
+
+- Na branch `codex/resgate-telhado-04123`, a opção 1 protege o resgate de telhado. Um salto curto usa a distância segura de queda do aldeão. Para o desnível alto, o resgate o coloca em um piso natural ou rua com espaço livre, zerando a velocidade e a distância de queda.
+- A regressão de oito blocos falhou antes da mudança. Os oito GameTests focados passaram após a correção, e o Sentinela `fast` passou nas três suítes (`20261123T152335Z`, 1.244 GameTests).
+- Use o [roteiro do telhado](docs/technical/Playtest-0.4.122-2026-11-23.md) para conferir a chegada ao chão e a volta ao trabalho. O [TODO](TODO.md) mantém a investigação da subida e do retorno.
+
 ## Candidata 0.4.122-alpha (2026-11-23)
 
 - A entrega reúne a correção do grafo e as mudanças do pastor da série 0.4.119–0.4.121. Os 17 GameTests do grafo passaram na candidata. Consulte as [notas da entrega](docs/releases/v0.4.122.md) e o [TODO](TODO.md) para a próxima rodada.

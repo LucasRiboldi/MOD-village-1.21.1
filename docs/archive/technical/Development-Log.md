@@ -2,6 +2,10 @@
 
 # Development-Log.md
 
+## 23-11-2026 — Resgate de telhado na candidata 0.4.123
+
+Três fazendeiros morreram após saltos de resgate de sete a oito blocos no playtest. O GameTest de oito blocos reproduziu o lançamento para fora do telhado. Com a opção 1, `RoofDescent` mantém o salto em desnível curto e usa o piso válido mais próximo para a descida direta quando a queda excederia a distância segura. A descida direta zera a velocidade e a distância de queda. Os oito GameTests focados de telhado e fuga passaram, incluindo um aldeão com um ponto de vida em cada tipo de descida. A causa da subida e a retomada do trabalho no mundo jogado seguem no TODO.
+
 ## 23-11-2026 — Aproximação lateral da porteira (N26)
 
 A guia Vanilla recalcula o caminho do animal com margem de chegada de um bloco. No desnível lateral, a vaca parava na fase `LEAD` com a guia presa. O pastor passa a aguardar do lado oposto da abertura se houver piso acessível. O GameTest de travessia passou na bateria local completa. A tosquia apresentou uma falha na mesma rodada e segue no TODO.
