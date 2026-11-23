@@ -63,6 +63,8 @@ final class ShepherdDelivery {
                 VillageColonyMod.LOGGER.info("Shepherd {} brought a {} into the pen at {}",
                         shepherd.getUuidAsString().substring(0, 8), animal.getType().getUntranslatedName(),
                         pen.gate().toShortString());
+                PenLog.herdEvent(world, shepherd.getUuid(), animal.getUuid(), pen.gate(), "DELIVER",
+                        "gate_closed_and_leash_released");
                 herd.phase = ShepherdHerding.Phase.JUMP_OUT;
                 reset();
             }

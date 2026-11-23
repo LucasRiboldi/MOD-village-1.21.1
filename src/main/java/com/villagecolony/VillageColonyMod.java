@@ -209,6 +209,7 @@ public class VillageColonyMod implements ModInitializer {
         com.villagecolony.fabric.work.ValueGoods.register();
         com.villagecolony.fabric.work.BoxBeds.register();
         com.villagecolony.fabric.work.VillageDiary.register();
+        com.villagecolony.fabric.work.PenLog.register();
         com.villagecolony.fabric.work.VillageHelpers.register();
         com.villagecolony.fabric.work.GroundKeeper.register();
         com.villagecolony.fabric.work.AnalyticsLog.register();

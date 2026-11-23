@@ -2,6 +2,10 @@
 
 # Development-Log.md
 
+## 23-11-2026 — Reprodução e abate nos currais
+
+O cenário que acrescentava uma vaca solta a oito adultas no curral reproduziu o abate indevido. A criação de corte passou a usar pares do mesmo recinto e um total de adultos somado nos currais da vila. O abate usa esse total, acima da meta de criação vigente, e preserva dois adultos no curral da vítima. A rodada focada passou oito GameTests. No Sentinela `fast` (`20261123T165821Z`), unitários e propriedades passaram, e a tosquia N05 foi a única falha dos 1.246 GameTests. A instrumentação por animal aguarda o próximo playtest.
+
 ## 23-11-2026 — Resgate de telhado na candidata 0.4.123
 
 Três fazendeiros morreram após saltos de resgate de sete a oito blocos no playtest. O GameTest de oito blocos reproduziu o lançamento para fora do telhado. Com a opção 1, `RoofDescent` mantém o salto em desnível curto e usa o piso válido mais próximo para a descida direta quando a queda excederia a distância segura. A descida direta zera a velocidade e a distância de queda. Os oito GameTests focados de telhado e fuga passaram, incluindo um aldeão com um ponto de vida em cada tipo de descida. A causa da subida e a retomada do trabalho no mundo jogado seguem no TODO.

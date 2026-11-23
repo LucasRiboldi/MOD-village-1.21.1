@@ -47,6 +47,14 @@ O snapshot final registrou 11 aldeões, 9 com ofício e 15 camas. O servidor mar
 
 O autor escolheu a opção 1. No mesmo mundo, observe a casa junto de `338,86,1414`. Se um aldeão encalhar no telhado, confirme que sai vivo e volta ao trabalho. Num resgate com sete a oito blocos de desnível, procure `LET_DOWN` no diário de ações. Anote se o mesmo aldeão voltar ao telhado e exporte os relatórios com `/vc salvar`.
 
+## Próximo playtest do rebanho
+
+1. Abra um mundo com dois currais reconhecidos e um pastor. Anote a versão, o UUID curto da vila e as coordenadas das porteiras.
+2. Acompanhe uma coleta até a entrega. A linha `FETCH` identifica o animal e `LEASHED` confirma a captura. `DELIVER` confirma que a porteira fechou e a guia foi solta. Se parar, salve a linha `ABANDON` com fase, motivo e posições.
+3. Deixe dois adultos da mesma espécie no mesmo curral e observe alimentação e nascimento. `FED` mostra o par, a comida e a meta. `BREED_WAIT` registra espera por par pronto ao alcance ou comida disponível. `BIRTH` identifica o filhote associado ao par alimentado pelo mod. `VC_PENS` mostra adultos e filhotes por espécie no recinto e no conjunto dos currais carregados.
+4. Com oito adultos da espécie nos currais e comida abaixo de 32, confirme que um adulto solto não autoriza abate. Acima de oito, o abate pode ocorrer se o curral da vítima começar com três adultos da espécie. Repita com 32 ou mais itens de alimento aceito, quando a meta sobe para 16.
+5. Compare `VC_PENS` antes e depois. `VC_FLOCK_HARVEST` informa os adultos das duas reservas antes e depois e o número de filhotes preservados. `DEATH` registra mortes observadas nos currais. `EXIT` indica uma saída observada. `UNOBSERVED` indica que o animal ou o recinto ficou indisponível. Ao final, execute `/vc salvar`.
+
 ## Fontes
 
 - Log do cliente preservado, linhas 5596, 6003, 8742, 9370–9426, 9733, 9916, 10251, 10478–10593, 10821 e 11005.

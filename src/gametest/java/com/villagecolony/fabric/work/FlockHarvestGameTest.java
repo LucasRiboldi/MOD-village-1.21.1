@@ -21,11 +21,12 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * O pastor colhe o excedente do rebanho — decisão do autor, 2026-10-14. Abate um adulto por ciclo
- * acima de {@link FlockHarvest#HARVEST_KEEP}, deixando sempre a reserva viva, e deposita couro/carne.
+ * acima de {@link ShepherdFlock#FLOCK_TARGET}, deixando sempre a reserva viva, e deposita couro/carne.
  * A regra pura (quanto abater) é exercitada em unidade ({@code FlockHarvestTest}); aqui o efeito no
  * mundo, com a área restrita à arena para o teste ser determinístico (a bateria roda arenas juntas).
  */
@@ -37,20 +38,20 @@ public class FlockHarvestGameTest implements FabricGameTest {
     private static final BlockPos CHEST = new BlockPos(2, FEET_Y, 2);
     private static final BlockPos STAND = new BlockPos(3, FEET_Y, 3);
 
-    /** Acima da reserva (HARVEST_KEEP+1): abate um, deixa a reserva, e põe couro+carne no baú. */
+    /** Acima da reserva (FLOCK_TARGET + 1): abate um, deixa a reserva, e põe couro+carne no baú. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "flock_harvest_surplus", tickLimit = 20)
     public void surplusCattleAreButcheredDownToTheReserve(TestContext context) {
         Fixture f = setUp(context);
-        int herd = FlockHarvest.HARVEST_KEEP + 1;
+        int herd = ShepherdFlock.FLOCK_TARGET + 1;
         List<CowEntity> cows = spawnCows(context, herd);
 
         try {
-            boolean butchered = FlockHarvest.step(context.getWorld(), f.colony, f.area, f.chests);
+            boolean butchered = harvest(context, f);
 
             context.assertTrue(butchered, "havia excedente e nada foi abatido");
             long alive = cows.stream().filter(c -> c.isAlive()).count();
-            context.assertTrue(alive == FlockHarvest.HARVEST_KEEP,
-                    "devia sobrar a reserva viva (" + FlockHarvest.HARVEST_KEEP + "), sobraram " + alive);
+            context.assertTrue(alive == ShepherdFlock.FLOCK_TARGET,
+                    "devia sobrar a reserva viva (" + ShepherdFlock.FLOCK_TARGET + "), sobraram " + alive);
             context.assertTrue(countIn(context, f, net.minecraft.item.Items.LEATHER) > 0,
                     "o couro da vaca abatida não entrou no baú");
             context.assertTrue(countIn(context, f, net.minecraft.item.Items.BEEF) > 0
@@ -63,38 +64,48 @@ public class FlockHarvestGameTest implements FabricGameTest {
         context.complete();
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "flock_harvest_pens", tickLimit = 20)
-    public void adultsInOtherPensAndOutsideDoNotMakeASurplus(TestContext context) {
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "flock_harvest_loose", tickLimit = 20)
+    public void looseAdultsDoNotAuthorizeHarvestAtThePenTarget(TestContext context) {
         Fixture f = setUp(context);
-        List<CowEntity> cows = spawnCows(context, FlockHarvest.HARVEST_KEEP + 2);
+        int target = ShepherdFlock.FLOCK_TARGET;
+        List<CowEntity> cows = spawnCows(context, target + 1);
+        cows.getLast().setPosition(context.getAbsolutePos(new BlockPos(4, FEET_Y, 3)).toCenterPos());
+
+        try {
+            context.assertFalse(harvest(context, f),
+                    "uma vaca solta não libera abate com a meta de criação guardada");
+            context.assertTrue(cows.stream().allMatch(CowEntity::isAlive), "a meta do curral foi tocada");
+        } finally {
+            tearDown(context, f, cows);
+        }
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "flock_harvest_pens", tickLimit = 20)
+    public void villageSurplusKeepsTwoAdultsInTheVictimsPen(TestContext context) {
+        Fixture f = setUp(context);
+        List<CowEntity> cows = spawnCows(context, ShepherdFlock.FLOCK_TARGET + 2);
         var sheep = context.spawnEntity(EntityType.SHEEP, new BlockPos(6, FEET_Y, 7));
         sheep.setBreedingAge(0);
 
         try {
             for (int i = 2; i < cows.size() - 1; i++) {
-                BlockPos at = i < 4 ? new BlockPos(9, FEET_Y, 5 + i % 2) : new BlockPos(4, FEET_Y, 3);
-                cows.get(i).setPosition(context.getAbsolutePos(at).toCenterPos());
+                cows.get(i).setPosition(context.getAbsolutePos(new BlockPos(10, FEET_Y, 5 + i % 3)).toCenterPos());
             }
             cows.getLast().setBreedingAge(-24_000);
-            var pens = ShepherdPens.pensOf(context.getWorld(), f.colony).stream()
-                    .filter(pen -> f.area.contains(pen.gate().toCenterPos())).toList();
-            context.assertTrue(pens.size() == 2 && pens.stream()
-                    .mapToInt(pen -> ShepherdPens.animalsIn(context.getWorld(), pen)).sum() == 6,
-                    "o cenário precisa de dois currais, quatro vacas adultas, um filhote e uma ovelha");
-            context.assertFalse(FlockHarvest.step(context.getWorld(), f.colony, f.area, f.chests),
-                    "abateu sem três adultos da mesma espécie no curral da vítima");
+            PenFlock flock = PenFlock.read(context.getWorld(), f.colony);
+            context.assertTrue(flock.pens().size() == 2
+                            && flock.adults(EntityType.COW).size() == ShepherdFlock.FLOCK_TARGET + 1,
+                    "o cenário precisa ter excedente de vacas adultas somado entre dois currais");
+            context.assertFalse(harvest(context, f), "duas vacas, um filhote e uma ovelha não liberam abate local");
             context.assertTrue(cows.stream().allMatch(CowEntity::isAlive), "a reserva local foi tocada");
 
-            cows.get(4).setPosition(context.getAbsolutePos(new BlockPos(10, FEET_Y, 5)).toCenterPos());
-            context.getWorld().getEntity(f.shepherd)
-                    .setPosition(context.getAbsolutePos(new BlockPos(8, FEET_Y, 3)).toCenterPos());
-            context.assertTrue(FlockHarvest.step(context.getWorld(), f.colony, f.area, f.chests),
-                    "o segundo curral agora tem três vacas adultas e permite um abate");
-            context.assertTrue(cows.subList(2, 5).stream().filter(CowEntity::isAlive).count() == 2,
-                    "o segundo curral precisa manter duas vacas adultas");
-            context.assertTrue(cows.subList(0, 2).stream().allMatch(CowEntity::isAlive)
-                            && cows.subList(5, cows.size()).stream().allMatch(CowEntity::isAlive),
-                    "somente uma das três vacas adultas do segundo curral pode ser abatida");
+            cows.get(2).setPosition(context.getAbsolutePos(new BlockPos(5, FEET_Y, 5)).toCenterPos());
+            context.assertTrue(harvest(context, f), "três adultas no primeiro curral liberam o excedente da vila");
+            context.assertTrue(cows.subList(0, 3).stream().filter(CowEntity::isAlive).count() == 2,
+                    "o primeiro curral precisa manter duas vacas adultas");
+            context.assertTrue(cows.subList(3, cows.size()).stream().allMatch(CowEntity::isAlive),
+                    "vacas do outro curral e o filhote devem permanecer vivos");
         } finally {
             sheep.discard();
             tearDown(context, f, cows);
@@ -103,18 +114,73 @@ public class FlockHarvestGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** Na reserva (HARVEST_KEEP): nada é abatido. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "flock_breed_pens", tickLimit = 20)
+    public void pairRequiresTwoAdultsInTheSamePen(TestContext context) {
+        Fixture f = setUp(context);
+        List<CowEntity> cows = spawnCows(context, 3);
+        var first = cows.getFirst();
+        var second = cows.get(1);
+        var loose = cows.getLast();
+        second.setPosition(context.getAbsolutePos(new BlockPos(9, FEET_Y, 5)).toCenterPos());
+        loose.setPosition(context.getAbsolutePos(new BlockPos(4, FEET_Y, 3)).toCenterPos());
+        var shepherd = context.getWorld().getEntity(f.shepherd);
+        shepherd.setPosition(context.getAbsolutePos(new BlockPos(7, FEET_Y, 3)).toCenterPos());
+
+        try {
+            context.assertFalse(ShepherdFlock.tend(context.getWorld(), f.colony),
+                    "dois currais e um animal solto não formam par");
+            context.assertTrue(!first.isInLove() && !second.isInLove() && !loose.isInLove(),
+                    "nenhuma vaca deve receber comida entre currais ou solta");
+        } finally {
+            tearDown(context, f, cows);
+        }
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "flock_breed_birth", tickLimit = 20)
+    public void looseAdultsDoNotPreventThePennedPairFromBreeding(TestContext context) {
+        Fixture f = setUp(context);
+        List<CowEntity> cows = spawnCows(context, ShepherdFlock.FLOCK_TARGET + 1);
+        var first = cows.getFirst();
+        var second = cows.get(1);
+        var loose = cows.subList(2, cows.size());
+        loose.forEach(cow -> cow.setPosition(context.getAbsolutePos(new BlockPos(4, FEET_Y, 3)).toCenterPos()));
+        try {
+            PenLog.observe(context.getWorld(), f.colony);
+            context.assertTrue(ShepherdFlock.tend(context.getWorld(), f.colony),
+                    "o pastor alimenta o par no mesmo curral");
+            context.assertTrue(first.isInLove() && second.isInLove() && loose.stream().noneMatch(CowEntity::isInLove),
+                    "só o par dentro do curral deve receber comida");
+            first.breed(context.getWorld(), second);
+            var calves = PenFlock.read(context.getWorld(), f.colony).pens().stream()
+                    .flatMap(stock -> stock.animals().stream()).filter(CowEntity.class::isInstance)
+                    .filter(animal -> animal.isBaby()).toList();
+            context.assertTrue(calves.size() == 1, "o par alimentado deve gerar um filhote no curral");
+            var calf = calves.getFirst();
+            try {
+                calf.damage(context.getWorld().getDamageSources().fall(), 100.0f);
+                context.assertTrue(!calf.isAlive(), "a queda deve matar o filhote dentro do curral");
+            } finally {
+                calf.discard();
+            }
+        } finally {
+            tearDown(context, f, cows);
+        }
+        context.complete();
+    }
+
+    /** Na reserva (FLOCK_TARGET): nada é abatido. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "flock_harvest_reserve", tickLimit = 20)
     public void theLiveReserveIsNeverButchered(TestContext context) {
         Fixture f = setUp(context);
-        List<CowEntity> cows = spawnCows(context, FlockHarvest.HARVEST_KEEP);
+        List<CowEntity> cows = spawnCows(context, ShepherdFlock.FLOCK_TARGET);
 
         try {
-            boolean butchered = FlockHarvest.step(context.getWorld(), f.colony, f.area, f.chests);
+            boolean butchered = harvest(context, f);
 
             context.assertFalse(butchered, "abateu abaixo/na reserva viva");
             long alive = cows.stream().filter(c -> c.isAlive()).count();
-            context.assertTrue(alive == FlockHarvest.HARVEST_KEEP, "a reserva viva foi tocada: " + alive);
+            context.assertTrue(alive == ShepherdFlock.FLOCK_TARGET, "a reserva viva foi tocada: " + alive);
         } finally {
             tearDown(context, f, cows);
         }
@@ -126,11 +192,11 @@ public class FlockHarvestGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "flock_harvest_distance", tickLimit = 20)
     public void distantShepherdDoesNotButcherCattle(TestContext context) {
         Fixture f = setUp(context);
-        List<CowEntity> cows = spawnCows(context, FlockHarvest.HARVEST_KEEP + 1);
+        List<CowEntity> cows = spawnCows(context, ShepherdFlock.FLOCK_TARGET + 1);
         context.getWorld().getEntity(f.shepherd).setPosition(context.getAbsolutePos(new BlockPos(11, FEET_Y, 11)).toCenterPos());
 
         try {
-            context.assertFalse(FlockHarvest.step(context.getWorld(), f.colony, f.area, f.chests),
+            context.assertFalse(harvest(context, f),
                     "pastor distante abateu o rebanho");
             context.assertTrue(cows.stream().allMatch(CowEntity::isAlive), "um animal morreu sem pastor próximo");
         } finally {
@@ -144,12 +210,12 @@ public class FlockHarvestGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "flock_harvest_led", tickLimit = 20)
     public void theLedAnimalIsNeverButchered(TestContext context) {
         Fixture f = setUp(context);
-        List<CowEntity> cows = spawnCows(context, FlockHarvest.HARVEST_KEEP + 1);
+        List<CowEntity> cows = spawnCows(context, ShepherdFlock.FLOCK_TARGET + 1);
         VillagerEntity shepherd = (VillagerEntity) context.getWorld().getEntity(f.shepherd);
         cows.forEach(cow -> cow.attachLeash(shepherd, true));
 
         try {
-            context.assertFalse(FlockHarvest.step(context.getWorld(), f.colony, f.area, f.chests),
+            context.assertFalse(harvest(context, f),
                     "Regra 299: o pastor abateu um animal que levava na corda");
             context.assertTrue(cows.stream().allMatch(CowEntity::isAlive), "Regra 299: um animal da corda morreu");
         } finally {
@@ -157,6 +223,12 @@ public class FlockHarvestGameTest implements FabricGameTest {
         }
 
         context.complete();
+    }
+
+    private boolean harvest(TestContext context, Fixture f) {
+        var world = context.getWorld();
+        return FlockHarvest.step(world, f.colony, PenFlock.read(world, f.colony), f.chests,
+                Map.of(EntityType.COW, ShepherdFlock.FLOCK_TARGET));
     }
 
     private record Fixture(Colony colony, ColonyFixture owned, Box area, List<ColonyPos> chests, UUID shepherd) {

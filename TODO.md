@@ -46,13 +46,13 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 - [ ] **Verificar em jogo.** Tosquia e condução (N05, N26, N27), reserva de abate por espécie e curral, e orientação da placa do baú (N14).
 - [ ] **Confirmar N26 no desnível lateral.** A vaca parava na fase `LEAD` com a guia presa. O pastor agora usa o lado oposto da abertura para manter a condução. O GameTest passou na bateria local completa após o ajuste.
 - [ ] **Investigar a instabilidade de N05.** `theShepherdOnlyShearsAfterReachingTheSheep` falhou na bateria local e na primeira rodada do CI, mas passou no teste focado e na repetição do CI. Registrar a posição, o destino e a duração da tarefa na próxima falha.
-- [ ] **Investigar.** Queda da contagem no curral grande. A sessão da 0.4.122 registrou um abate bovino e a quantidade de adultos na área. Registrar adultos e filhotes por espécie no curral da vítima, antes e depois, para verificar a reserva. O teste da guia longe da porteira passou com a porteira instalada no cenário.
+- [ ] **Validar o crescimento do rebanho em jogo.** Conferir quantos adultos e filhotes entram, nascem, saem ou morrem em cada curral e se a vila acumula animais antes de abater. Cruzar `VC_PENS`, `VC_FLOCK_EVENT` e `VC_FLOCK_HARVEST` no próximo jogo. A causa da queda observada na 0.4.122 segue em investigação.
 - [ ] **Investigar ou corrigir.** N10, atraso de criação do baú (N14), lenhador na obra e pendências de terreno e acesso do Lote A. Conferir as evidências no [plano de 28 notas](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
 - [ ] **Deliberar.** Cores das placas (N23) e proposta de N24.
 
 - [ ] 🔴 [Jogo da 0.4.118](docs/technical/Playtest-0.4.118-2026-11-22.md) (22-11). Validar na 0.4.122 a reserva de abate por curral, a proteção
-  de animais em recintos, os dois saltos, o fechamento antes da soltura e o desvio dos demais aldeões. Investigar a queda na contagem do curral grande com o novo
-  log de abate. Reproduzir a entrada da vaca a partir do desnível lateral. Confirmar as três colunas de entrada do grafo e rastrear a atividade do lenhador na obra.
+  de animais em recintos, os dois saltos, o fechamento antes da soltura e o desvio dos demais aldeões. Investigar a queda na contagem do curral grande com os
+  novos eventos. Reproduzir a entrada da vaca a partir do desnível lateral. Confirmar as três colunas de entrada do grafo e rastrear a atividade do lenhador na obra.
 - [ ] 🔴 Jogo da 0.4.115 (21-11): 28 notas e seis imagens no [plano integral](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
   Lote B implementado na candidata 0.4.116: tosquia junto da ovelha e condução pela porteira (N05, N26, N27); aguarda jogo.
   Lote A, N12/N28: a 0.4.117 trata a recusa após mudar a passagem. A 0.4.122 preserva a altura do piso da entrada. Confirmar reconexão da mina e da

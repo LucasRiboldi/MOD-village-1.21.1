@@ -12,9 +12,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.Box;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,12 +21,8 @@ import java.util.UUID;
 /**
  * O pastor colhe couro e carne do excedente do rebanho — decisão do autor, 2026-10-14.
  *
- * <p>Manutenção do ofício (não toca a obra, Regra 59): o pastor já cria até
- * {@link #FLOCK_FULL} adultos por espécie ({@link ShepherdFlock}); aqui ele <b>abate o excedente
- * acima de {@link #HARVEST_KEEP}</b>, um animal por ciclo, deixando sempre a reserva viva. A faixa
- * {@code HARVEST_KEEP}→{@code FLOCK_FULL} é a de colheita: a criação para em {@link #FLOCK_FULL} e o
- * abate para em {@link #HARVEST_KEEP}, com folga, então um não desfaz o outro. O curral
- * da vítima também precisa ter pelo menos {@link #MIN_PEN_ADULTS} adultos da espécie (Regra 167).
+ * <p>Abate um adulto por ciclo quando o total da espécie nos currais excede a meta de criação.
+ * O curral da vítima precisa ter ao menos três adultos da espécie antes do abate (Regras 167 e 238).
  *
  * <p>O drop de cada espécie é depositado direto no baú (o padrão da tosquia em
  * {@link ShepherdWork}, não a loot table caindo no chão), e a <b>carne crua acima da reserva de
@@ -36,12 +30,6 @@ import java.util.UUID;
  * galinha já larga no chão sozinha (Vanilla); quem o recolhe é a coleta do chão, não esta classe.
  */
 public final class FlockHarvest {
-
-    /** Teto do rebanho que a criação busca ({@link ShepherdFlock#FLOCK_TARGET}). */
-    static final int FLOCK_FULL = ShepherdFlock.FLOCK_TARGET;
-
-    /** Abaixo disto o pastor nunca abate: a reserva viva por espécie — autor, 2026-10-22 (eram 8). */
-    static final int HARVEST_KEEP = 6;
 
     /** Adultos da espécie exigidos no curral antes do abate, para preservar dois (Regra 167). */
     private static final int MIN_PEN_ADULTS = 3;
@@ -61,78 +49,65 @@ public final class FlockHarvest {
     private FlockHarvest() {
     }
 
-    /** Quantos adultos excedem a reserva viva (nunca negativo) — lógica pura, ver {@code FlockHarvestTest}. */
-    static int surplus(int adults) {
-        return Math.max(0, adults - HARVEST_KEEP);
+    /** Quantos adultos excedem a meta de criação da espécie. */
+    static int surplus(int adults, int target) {
+        return Math.max(0, adults - target);
     }
 
-    /** Se há excedente para abater. */
-    static boolean hasSurplus(int adults) {
-        return surplus(adults) > 0;
-    }
-
-    /**
-     * Uma passagem do abate: para a primeira espécie com excedente, abate um adulto e deposita o
-     * drop; depois cozinha a carne crua que passa da reserva de item. Uma ação por ciclo, como a
-     * criação de {@link ShepherdFlock}.
-     *
-     * @return se algo foi abatido
-     */
-    static boolean step(ServerWorld world, Colony colony, Box area, List<ColonyPos> chests) {
+    /** Abate um adulto excedente e guarda os produtos no baú. */
+    static boolean step(ServerWorld world, Colony colony, PenFlock flock, List<ColonyPos> chests,
+            Map<EntityType<?>, Integer> targets) {
         if (!ShepherdFlock.hasShepherd(colony)) {
             return false;
         }
 
-        boolean butchered = false;
-
-        for (EntityType<? extends AnimalEntity> species : ShepherdFlock.LIVESTOCK.stream().filter(DROPS::containsKey).toList()) {
-            List<? extends AnimalEntity> adults = new ArrayList<>(world.getEntitiesByType(
-                    species, area, animal -> animal.isAlive() && !animal.isBaby()));
-
-            if (!hasSurplus(adults.size())) {
+        for (var species : ShepherdFlock.LIVESTOCK) {
+            if (!DROPS.containsKey(species)) {
+                continue;
+            }
+            List<AnimalEntity> adults = flock.adults(species);
+            int target = targets.getOrDefault(species, ShepherdFlock.FLOCK_TARGET);
+            if (surplus(adults.size(), target) == 0) {
                 continue;
             }
 
-            AnimalEntity victim = victimAmong(world, colony, species, adults);
-            if (victim == null) {
-                continue;
+            for (PenFlock.Stock stock : flock.pens()) {
+                List<AnimalEntity> local = stock.adults(species);
+                if (local.size() < MIN_PEN_ADULTS) {
+                    continue;
+                }
+                for (AnimalEntity victim : local) {
+                    if (!canButcher(world, victim)) {
+                        continue;
+                    }
+                    var shepherd = ShepherdFlock.nearbyShepherd(world, colony, victim);
+                    if (shepherd == null) {
+                        continue;
+                    }
+                    depositDrops(world, colony, species, chests, shepherd.getUuid());
+                    victim.kill();
+                    VillageColonyMod.LOGGER.info(
+                            "VC_FLOCK_HARVEST version=2 colony={} animal={} species={} gate={} at={} "
+                                    + "adults={} adults_after={} target={} pen_adults={} pen_adults_after={} "
+                                    + "young={} pen_young={} in_pen=true",
+                            colony.id().toString().substring(0, 8), victim.getUuid(), species.getUntranslatedName(),
+                            stock.pen().gate().toShortString(), victim.getBlockPos().toShortString(),
+                            adults.size(), adults.size() - 1, target, local.size(), local.size() - 1,
+                            flock.young(species), stock.young(species));
+                    cookSurplusMeat(world, chests);
+                    return true;
+                }
             }
-
-            depositDrops(world, colony, species, chests,
-                    ShepherdFlock.nearbyShepherd(world, colony, victim).getUuid());
-            var at = victim.getBlockPos();
-            VillageColonyMod.LOGGER.info("VC_FLOCK_HARVEST version=1 colony={} species={} at={} adults={} in_pen={}",
-                    colony.id().toString().substring(0, 8), species.getUntranslatedName(), at.toShortString(),
-                    adults.size(), HerdCandidates.isInAnyPen(world, colony, victim));
-            victim.kill();
-            butchered = true;
-
-            break;
         }
-
-        if (butchered) {
-            cookSurplusMeat(world, chests);
-        }
-
-        return butchered;
+        return false;
     }
 
-    /** Só abate dentro de um curral com reserva local (Regra 167), fora de guia e coleta (Regra 299). */
-    private static AnimalEntity victimAmong(ServerWorld world, Colony colony,
-            EntityType<? extends AnimalEntity> species, List<? extends AnimalEntity> adults) {
-        List<ShepherdPens.Pen> eligiblePens = ShepherdPens.pensOf(world, colony).stream()
-                .filter(pen -> world.getEntitiesByType(species, ShepherdPens.areaOf(pen),
-                        animal -> animal.isAlive() && !animal.isBaby()
-                                && pen.reach().contains(animal.getBlockPos())).size() >= MIN_PEN_ADULTS)
-                .toList();
-
-        return adults.stream()
-                .filter(animal -> eligiblePens.stream().anyMatch(pen -> pen.reach().contains(animal.getBlockPos())))
-                .filter(animal -> !(animal.getLeashHolder() instanceof net.minecraft.entity.passive.VillagerEntity)
-                        && !ShepherdHerding.isHerded(animal.getUuid()))
-                .filter(animal -> ShepherdFlock.nearbyShepherd(world, colony, animal) != null)
-                .filter(animal -> !HerdCandidates.sheltersAnimal(world, animal.getBlockPos()))
-                .findFirst().orElse(null);
+    /** Regra 299: poupa animais em condução, abrigados ou já selecionados para reprodução. */
+    private static boolean canButcher(ServerWorld world, AnimalEntity animal) {
+        return !animal.isInLove()
+                && !(animal.getLeashHolder() instanceof net.minecraft.entity.passive.VillagerEntity)
+                && !ShepherdHerding.isHerded(animal.getUuid())
+                && !HerdCandidates.sheltersAnimal(world, animal.getBlockPos());
     }
 
     private static void depositDrops(ServerWorld world, Colony colony, EntityType<?> species, List<ColonyPos> chests,

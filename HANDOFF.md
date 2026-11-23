@@ -2,6 +2,11 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Correção do rebanho nos currais (2026-11-23)
+
+- A branch `codex/pastor-rebanho-nos-currais` reúne a opção 2 aprovada. A coleta e a entrega registram os animais por UUID. A reprodução de corte usa pares do mesmo curral, e o abate usa a meta vigente no total da vila e a reserva do curral da vítima.
+- Retome pelo [roteiro do rebanho](docs/technical/Playtest-0.4.122-2026-11-23.md#próximo-playtest-do-rebanho) e pelo [TODO](TODO.md). A sessão anterior não tinha informação suficiente para explicar toda a perda de animais.
+
 ## Candidata local 0.4.123 (2026-11-23)
 
 - Na branch `codex/resgate-telhado-04123`, a opção 1 protege o resgate de telhado. Um salto curto usa a distância segura de queda do aldeão. Para o desnível alto, o resgate o coloca em um piso natural ou rua com espaço livre, zerando a velocidade e a distância de queda.

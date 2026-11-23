@@ -177,6 +177,7 @@ public final class ShepherdWork {
         }
 
         // Cuidar do rebanho e coletar animais: só a ovelha já escolhida passa na frente da coleta (ADR-038 P2b, P2c).
+        PenLog.observe(world, colony);
         ShepherdFlock.tend(world, colony);
         ShepherdHerding.plan(world, colony, id -> JOBS.containsKey(id) && JOBS.get(id).sheep != null);
 
