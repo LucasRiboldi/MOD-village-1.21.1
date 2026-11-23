@@ -41,14 +41,13 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 
 - [ ] **Verificar em jogo.** Três colunas do grafo com piso sobreposto, arco da mina (N12) e casa do mineiro (N28), incluindo recarga do mundo.
 - [ ] **Verificar em jogo.** Tosquia e condução (N05, N26, N27), reserva de abate por espécie e curral, e orientação da placa do baú (N14).
-- [ ] **Investigar.** Queda da contagem no curral grande, cenário da guia longe da porteira e entrada da vaca no desnível lateral. Usar o roteiro e cruzar as contagens com `VC_FLOCK_HARVEST`.
+- [ ] **Investigar.** Queda da contagem no curral grande e entrada da vaca no desnível lateral. O teste da guia longe da porteira passou com a porteira instalada no cenário. Usar o roteiro e cruzar as contagens com `VC_FLOCK_HARVEST`.
 - [ ] **Investigar ou corrigir.** N10, atraso de criação do baú (N14), lenhador na obra e pendências de terreno e acesso do Lote A. Conferir as evidências no [plano de 28 notas](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
 - [ ] **Deliberar.** Cores das placas (N23) e proposta de N24.
 
 - [ ] 🔴 [Jogo da 0.4.118](docs/technical/Playtest-0.4.118-2026-11-22.md) (22-11). Validar na 0.4.122 a reserva de abate por curral, a proteção
   de animais em recintos, os dois saltos, o fechamento antes da soltura e o desvio dos demais aldeões. Investigar a queda na contagem do curral grande com o novo
-  log de abate. Reproduzir a entrada da vaca a partir do desnível lateral. Revisar o cenário da guia a cinco blocos da
-  porteira, que também falha na 0.4.120. Confirmar as três colunas de entrada do grafo e rastrear a atividade do lenhador na obra.
+  log de abate. Reproduzir a entrada da vaca a partir do desnível lateral. Confirmar as três colunas de entrada do grafo e rastrear a atividade do lenhador na obra.
 - [ ] 🔴 Jogo da 0.4.115 (21-11): 28 notas e seis imagens no [plano integral](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
   Lote B implementado na candidata 0.4.116: tosquia junto da ovelha e condução pela porteira (N05, N26, N27); aguarda jogo.
   Lote A, N12/N28: a 0.4.117 trata a recusa após mudar a passagem. A 0.4.122 preserva a altura do piso da entrada. Confirmar reconexão da mina e da

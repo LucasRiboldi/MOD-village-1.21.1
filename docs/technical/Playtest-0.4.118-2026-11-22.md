@@ -22,6 +22,8 @@ Os cinco GameTests de abate e a coleta do excedente solto passaram. O Sentinela 
 
 ## Roteiro da candidata 0.4.122
 
+Na entrega 0.4.122-alpha, o cenário de guia a cinco blocos passou após receber uma porteira real. A rodada focada do pastor passou com 16 GameTests. O cenário de desnível lateral segue no roteiro de jogo.
+
 1. Observe uma entrega com a vaca em desnível ou a galinha deslocada para o lado. O pastor abre a porteira, salta a cerca, alinha-se por dentro e segue em direção ao centro. Confira que o animal atravessa pela abertura, a porteira fecha antes da soltura e o pastor sai por salto. Com a porteira aberta, confira também o trajeto de um aldeão de outro ofício e de um aldeão sem cadastro.
 2. Coloque um animal em uma construção coberta e outro do lado de fora. O pastor deve deixar o primeiro no recinto e continuar a coleta dos desgarrados.
 3. Conte os animais do curral grande por vários dias do jogo e após salvar e reabrir. Se a contagem cair, registre a hora, a espécie e a porteira para cruzar com o log de abate.

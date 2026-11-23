@@ -290,6 +290,7 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
                 BlockPos outside = shepherd.getBlockPos();
                 BlockPos gate = outside.add(0, 0, -1);
                 BlockPos inside = outside.add(0, 0, -2);
+                context.getWorld().setBlockState(gate, Blocks.OAK_FENCE_GATE.getDefaultState());
                 ShepherdPens.Pen pen = new ShepherdPens.Pen(gate, inside, outside, java.util.Set.of(inside), false);
                 ShepherdHerding.Herd herd = new ShepherdHerding.Herd(cow.getUuid(), gate, context.getWorld().getTime());
                 herd.pen = pen;
