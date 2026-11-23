@@ -402,7 +402,7 @@ final class ShepherdHerding {
                 ShepherdLead.alignAtGate(animal, goal);
                 if (!herd.pen.reach().contains(shepherd.getBlockPos()) && !ShepherdPens.isInside(herd.pen, animal)
                         && animal.squaredDistanceTo(net.minecraft.util.math.Vec3d.ofBottomCenter(goal)) > REACH * REACH) {
-                    ShepherdLead.walkTo(world, shepherd, goal, 0);
+                    ShepherdLead.walkTo(world, shepherd, ShepherdLead.gateWaitingSpot(world, herd.pen, animal), 0);
                     return true;
                 }
                 WorkTargets.clear(shepherdId);

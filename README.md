@@ -20,7 +20,7 @@ do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
 **Versão 0.4.122-alpha.** O grafo usa o piso válido da entrada quando há uma rua acima na mesma coluna.
-O pastor pula a cerca nos dois sentidos. O animal entra pela porteira
+Em acessos laterais, o pastor se reposiciona diante da porteira para manter o animal andando. O pastor pula a cerca nos dois sentidos. O animal entra pela porteira
 e fica na guia até ela fechar. Os demais aldeões contornam o curral. Para abater, o pastor precisa de
 três adultos da mesma espécie no curral da vítima. O jogo anterior está no [relatório da 0.4.118](docs/technical/Playtest-0.4.118-2026-11-22.md).
 Consulte as [notas da 0.4.122-alpha](docs/releases/v0.4.122.md) e os [JARs no GitHub](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases).

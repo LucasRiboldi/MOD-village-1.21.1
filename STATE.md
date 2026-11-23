@@ -18,7 +18,7 @@
 - **Validação da 0.4.119:** Sentinela `fast` passou com 1.886 testes unitários, uma suíte de propriedades e 1.241 GameTests (`20261123T004749Z`).
 - **Candidata 0.4.121:** o abate exige pelo menos três adultos da espécie no próprio curral e preserva dois. A reserva de seis na área da vila continua valendo. A regressão de dois currais reproduziu a falha e passou após a correção.
 - **Verificação da 0.4.121:** 1.886 unitários e a suíte de propriedades passaram. O Sentinela `fast` (`20261123T014911Z`) encontrou três falhas nos 1.242 GameTests. Após atualizar a expectativa antiga de coleta, os cinco testes de abate e o teste de coleta do excedente passaram na rodada focada (20/21). A falha da guia também ocorre na 0.4.120. A falha no desnível lateral só apareceu na bateria completa.
-- **Candidata de publicação.** [0.4.122-alpha](docs/releases/v0.4.122.md). O PR #104 reproduziu N26 no CI completo. A pré-release publicada segue na 0.4.118-alpha.
+- **Entrega 0.4.122-alpha.** O pastor se reposiciona na frente da porteira em acessos laterais (N26). A regressão que falhou no CI passou na bateria local completa, que teve uma falha de tosquia (N05). A confirmação em jogo está no [roteiro](docs/releases/v0.4.122.md) e a publicação consta da [página de versões](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases).
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
   jogador e publicação.

@@ -205,6 +205,7 @@ public class PenTetherGameTest implements FabricGameTest {
             }, () -> shepherd.getBrain().forget(net.minecraft.entity.ai.brain.MemoryModuleType.WALK_TARGET));
             if (context.getWorld().getTime() % 20 == 0) FencedIn.tick(context.getWorld());
             if (++ticks[0] % 80 == 0) {
+                history.setLength(0);
                 history.append(" | t=").append(ticks[0]).append(" idade=").append(cow.age).append(" fase=").append(herd.phase)
                         .append(" posição=").append(cow.getPos().subtract(
                                 net.minecraft.util.math.Vec3d.of(context.getAbsolutePos(BlockPos.ORIGIN))))

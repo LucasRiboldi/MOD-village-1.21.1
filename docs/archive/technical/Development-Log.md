@@ -2,6 +2,10 @@
 
 # Development-Log.md
 
+## 23-11-2026 — Aproximação lateral da porteira (N26)
+
+A guia Vanilla recalcula o caminho do animal com margem de chegada de um bloco. No desnível lateral, a vaca parava na fase `LEAD` com a guia presa. O pastor passa a aguardar do lado oposto da abertura se houver piso acessível. O GameTest de travessia passou na bateria local completa. A tosquia apresentou uma falha na mesma rodada e segue no TODO.
+
 ## 22-11-2026 — Entrega 0.4.122-alpha
 
 A entrega reúne o trabalho do pastor das versões 0.4.119–0.4.121 e a correção da altura das entradas do grafo. As evidências permanecem nas notas da versão e os pontos ainda abertos constam do roteiro e do TODO.

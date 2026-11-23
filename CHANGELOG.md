@@ -15,6 +15,7 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 ## [0.4.122] — alpha, 2026-11-22
 
 - O grafo preserva o piso da entrada quando uma rua ocupa outro nível da mesma coluna (N12/N28).
+- Na aproximação lateral, o pastor atravessa a frente da porteira para manter o animal andando na guia (N26).
 - A entrega inclui as mudanças do pastor da série 0.4.119–0.4.121 e o [roteiro de confirmação em jogo](docs/releases/v0.4.122.md).
 
 ## [0.4.121] — candidata, 2026-11-22
