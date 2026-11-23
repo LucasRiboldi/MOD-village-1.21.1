@@ -1,4 +1,4 @@
-# STATE — 2026-11-22
+# STATE — 2026-11-23
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula; teto de 150 linhas.** O que saiu daqui mora em
 > [`docs/archive/technical/Historico-2026-11.md`](docs/archive/technical/Historico-2026-11.md) (o STATE de 13-11 inteiro,
@@ -18,7 +18,7 @@
 - **Validação da 0.4.119:** Sentinela `fast` passou com 1.886 testes unitários, uma suíte de propriedades e 1.241 GameTests (`20261123T004749Z`).
 - **Candidata 0.4.121:** o abate exige pelo menos três adultos da espécie no próprio curral e preserva dois. A reserva de seis na área da vila continua valendo. A regressão de dois currais reproduziu a falha e passou após a correção.
 - **Verificação da 0.4.121:** 1.886 unitários e a suíte de propriedades passaram. O Sentinela `fast` (`20261123T014911Z`) encontrou três falhas nos 1.242 GameTests. Após atualizar a expectativa antiga de coleta, os cinco testes de abate e o teste de coleta do excedente passaram na rodada focada (20/21). A falha da guia também ocorre na 0.4.120. A falha no desnível lateral só apareceu na bateria completa.
-- **Entrega 0.4.122-alpha.** O pastor se reposiciona na frente da porteira em acessos laterais (N26). A regressão que falhou no CI passou na bateria local completa, que teve uma falha de tosquia (N05). A confirmação em jogo está no [roteiro](docs/releases/v0.4.122.md) e a publicação consta da [página de versões](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases).
+- **Candidata 0.4.122 com N26.** A condução lateral passou localmente e nas duas rodadas do CI de `1a841653`. A primeira falhou na tosquia (N05). A segunda passou a tosquia e falhou na travessia entre redes após fusão de colônias. O [jogo com o JAR anterior](docs/technical/Playtest-0.4.122-2026-11-23.md) registrou três mortes de fazendeiros após resgate de telhado e a entrada do mineiro ainda solta (N28).
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
   jogador e publicação.

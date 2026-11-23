@@ -2,11 +2,12 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
-## Entrega 0.4.122-alpha (2026-11-22)
+## Candidata 0.4.122-alpha (2026-11-23)
 
 - A entrega reúne a correção do grafo e as mudanças do pastor da série 0.4.119–0.4.121. Os 17 GameTests do grafo passaram na candidata. Consulte as [notas da entrega](docs/releases/v0.4.122.md) e o [TODO](TODO.md) para a próxima rodada.
 - Confirme as três colunas observadas na 0.4.118 e os casos originais da mina e da casa do mineiro. Siga o [roteiro de jogo](docs/technical/Playtest-0.4.118-2026-11-22.md).
-- O [CI do PR #104](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/runs/45101176577) reproduziu N26 no desnível lateral. Após reposicionar o pastor, o teste passou na bateria local completa. Confira o [PR #104](https://github.com/LucasRiboldi/MOD-village-1.21.1/pull/104) para o estado da integração e use o [TODO](TODO.md) para acompanhar também a tosquia (N05).
+- O [CI do PR #104](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/runs/45101176577) reproduziu N26 no desnível lateral. Após reposicionar o pastor, o teste passou na bateria local completa. O N26 passou nas duas rodadas do CI de `1a841653`. A primeira rodada falhou na tosquia (N05) e a segunda na travessia entre redes viárias após fusão de colônias. Confira o [PR #104](https://github.com/LucasRiboldi/MOD-village-1.21.1/pull/104) para o estado da integração.
+- O JAR de `1a841653` foi instalado no TLauncher e em `downloads/` com SHA-256 `2CFB3FD629A42E03C19AF44064313CD1A815BD9B54D55123D07195BD7B85396B`. O [playtest de 23-11](docs/technical/Playtest-0.4.122-2026-11-23.md) usou o JAR anterior. Prioridade em jogo é impedir as mortes no resgate do telhado. O [TODO](TODO.md) mantém os demais pontos.
 
 ## Histórico da candidata local 0.4.121 (2026-11-22)
 

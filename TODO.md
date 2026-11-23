@@ -39,11 +39,14 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 
 ### Pendências do playtest 0.4.122-alpha
 
+- [ ] **Prioridade em jogo.** Três mortes de fazendeiros por queda após resgate do mesmo telhado (Regra 160). Reproduzir a aterrissagem e rastrear a subida e o retorno. As sete notas, com solo sobre as fazendas e salto padrão antes do maior, estão no [relatório da 0.4.122](docs/technical/Playtest-0.4.122-2026-11-23.md).
+- [ ] **Verificar a travessia após fusão.** A segunda tentativa de [CI do PR #104](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/runs/45117483717/attempts/2) falhou em `aVillagerWalksBetweenTheTwoOldRoadNetworks`. N26 e a tosquia passaram nessa tentativa.
+
 - [ ] **Verificar em jogo.** Três colunas do grafo com piso sobreposto, arco da mina (N12) e casa do mineiro (N28), incluindo recarga do mundo.
 - [ ] **Verificar em jogo.** Tosquia e condução (N05, N26, N27), reserva de abate por espécie e curral, e orientação da placa do baú (N14).
 - [ ] **Confirmar N26 no desnível lateral.** A vaca parava na fase `LEAD` com a guia presa. O pastor agora usa o lado oposto da abertura para manter a condução. O GameTest passou na bateria local completa após o ajuste.
-- [ ] **Investigar N05 se a tosquia falhar novamente.** Na bateria local da 0.4.122, `theShepherdOnlyShearsAfterReachingTheSheep` parou com o aldeão longe da ovelha. Registrar a posição, o destino e a duração da tarefa no próximo caso.
-- [ ] **Investigar.** Queda da contagem no curral grande. Cruzar as contagens com `VC_FLOCK_HARVEST`. O teste da guia longe da porteira passou com a porteira instalada no cenário.
+- [ ] **Investigar a instabilidade de N05.** `theShepherdOnlyShearsAfterReachingTheSheep` falhou na bateria local e na primeira rodada do CI, mas passou no teste focado e na repetição do CI. Registrar a posição, o destino e a duração da tarefa na próxima falha.
+- [ ] **Investigar.** Queda da contagem no curral grande. A sessão da 0.4.122 registrou um abate bovino e a quantidade de adultos na área. Registrar adultos e filhotes por espécie no curral da vítima, antes e depois, para verificar a reserva. O teste da guia longe da porteira passou com a porteira instalada no cenário.
 - [ ] **Investigar ou corrigir.** N10, atraso de criação do baú (N14), lenhador na obra e pendências de terreno e acesso do Lote A. Conferir as evidências no [plano de 28 notas](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
 - [ ] **Deliberar.** Cores das placas (N23) e proposta de N24.
 
