@@ -13,6 +13,7 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.StripLot;
+import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.SweepPersistence;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -118,6 +119,36 @@ public class StripLotOpeningGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "house_center_door")
     public void aNewHouseKeepsTheOriginalAccessWhenTheCenterSideIsBlocked(TestContext context) {
         assertHouseDirection(context, false, Side.SOUTH);
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "house_center_door")
+    public void theSmallHouseRecessedDoorCanReachTheStreet(TestContext context) {
+        ServerWorld world = context.getWorld();
+        Blueprint house = StructureBlueprintReader.read(world, StructureBlueprintReader.PLAINS_SMALL_HOUSE)
+                .orElseThrow();
+        Blueprint facingNorth = house.rotated(house.doorSide().orElseThrow().turnsTo(Side.NORTH));
+        ColonyPos door = facingNorth.blocks().stream()
+                .filter(block -> block.block().path().endsWith("_door"))
+                .findFirst().orElseThrow().offset();
+        context.assertTrue(door.z() > 0, "a planta precisa ter uma porta recuada");
+
+        BlockPos origin = new BlockPos(2, Y + 1, 2);
+        for (int z = 0; z < door.z(); z++) {
+            context.setBlockState(origin.add(door.x(), -1, z), Blocks.DIRT);
+        }
+        BlockPos road = origin.add(door.x(), -1, -1);
+        context.setBlockState(road, Blocks.DIRT_PATH);
+
+        ColonyPos lot = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(origin));
+        Colony colony = Colony.create(UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(road.north())));
+        BlockPos absoluteRoad = context.getAbsolutePos(road);
+        SweepPersistence.restore(new ColonyRoads(colony.id(), colony.center(),
+                List.of(ColonyRoads.column(absoluteRoad.getX(), absoluteRoad.getZ()))));
+
+        context.assertTrue(PlanPlacement.hasDirectRoadAccess(world, colony.id(), lot, facingNorth, Side.NORTH),
+                "a passagem da porta recuada deveria alcançar a rua");
+        context.complete();
     }
 
     private static void assertHouseDirection(TestContext context, boolean northOpen, Side expected) {

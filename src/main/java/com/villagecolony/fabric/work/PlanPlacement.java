@@ -162,16 +162,24 @@ public final class PlanPlacement {
 
         Direction outward = MinecraftTypeAdapter.toDirection(side);
         ColonyPos offset = door.get().offset();
-        int frontX = offset.x() + outward.getOffsetX();
-        int frontZ = offset.z() + outward.getOffsetZ();
-        if (frontX >= 0 && frontX < house.size().x() && frontZ >= 0 && frontZ < house.size().z()) {
+        int floorLayer = lot.y() - house.originFor(lot).y();
+        if (Math.abs(offset.y() - floorLayer) > 1) {
             return false;
         }
 
-        int doorY = house.originFor(lot).y() + offset.y();
+        int frontX = offset.x() + outward.getOffsetX();
+        int frontZ = offset.z() + outward.getOffsetZ();
+        // A porta pode ficar recuada. O piso do lote será nivelado pela Regra 19.
+        while (frontX >= 0 && frontX < house.size().x() && frontZ >= 0 && frontZ < house.size().z()) {
+            if (hasPlannedObstacle(house, frontX, frontZ, floorLayer, Math.max(floorLayer, offset.y()) + 1)) {
+                return false;
+            }
+            frontX += outward.getOffsetX();
+            frontZ += outward.getOffsetZ();
+        }
+
         BlockPos road = new BlockPos(lot.x() + frontX, lot.y() - 1, lot.z() + frontZ);
-        if (Math.abs(doorY - (road.getY() + 1)) > 1
-                || !world.getChunkManager().isChunkLoaded(road.getX() >> 4, road.getZ() >> 4)
+        if (!world.getChunkManager().isChunkLoaded(road.getX() >> 4, road.getZ() >> 4)
                 || !VillageRoad.isPaving(world, road)
                 || !RoadIndex.isRoadArea(world, colonyId, road)) {
             return false;
@@ -183,6 +191,11 @@ public final class PlanPlacement {
                 && world.getBlockState(head).getCollisionShape(world, head).isEmpty()
                 && world.getFluidState(feet).isEmpty()
                 && world.getFluidState(head).isEmpty();
+    }
+
+    private static boolean hasPlannedObstacle(Blueprint house, int x, int z, int floorLayer, int headLayer) {
+        return house.blocks().stream().map(BlueprintBlock::offset)
+                .anyMatch(pos -> pos.x() == x && pos.z() == z && pos.y() >= floorLayer && pos.y() <= headLayer);
     }
 
     /**
