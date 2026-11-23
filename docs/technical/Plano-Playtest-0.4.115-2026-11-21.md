@@ -1,7 +1,6 @@
 # Plano de correção — jogo da 0.4.115 em 21-11-2026
 
-Status: a candidata local 0.4.118 aguarda playtest da orientação da placa (N14), da reconexão da 0.4.117
-(N12/N28) e do pastor da 0.4.116 (N05/N26/N27). O atraso na criação do baú continua em investigação.
+Status: a candidata local 0.4.126 aguarda playtest da porta (N10), da criação do baú e da orientação da placa (N14). A validação do grafo (N12/N28) e do pastor (N05/N26/N27) continua no [TODO](../../TODO.md).
 
 ## Evidência e limites
 
@@ -38,11 +37,11 @@ Horários são os do log. P1: acesso, integridade e fluxo bloqueado. P2: comport
 | N07 · 14:30:50 · 1842 · P1 | “um bloco do portal da mina foi cortado” | Rastrear edição no diário por posição e agente; conferir proteção do arco contra escavação, limpeza e terreno. Teste preserva todos os blocos estruturais. EVIDÊNCIA_INSUFICIENTE sobre quem cortou e qual bloco: não atribuir ao mineiro sem prova. |
 | N08 · 14:31:36 · 2046 · P1 | “terreno em volta do arco ... paredes intranspoviveis” | Preparar acesso ao redor da boca da mina por smoothing do Zelador, preservando arco, fundações e alterações do jogador. Testar percurso transitável dos dois lados, sem saltos de dois blocos. |
 | N09 · 14:33:35 · 2355 · P1 | “entre uma construção e outra ... dois bloco ... no maximo 1 bloco”; 2.jpg | Nivelar as transições entre construções, não apenas o piso do lote. Prova: rota entre portas com diferença de altura de no máximo um bloco por passo e navegação real. |
-| N10 · 14:34:28 · 2402 · P2 | “porta da casa do MOD ... virada para o centro” | Requisito novo de orientação dos modelos. Testar rotações do NBT e alinhamento da entrada ao centro, mantendo acesso; registrar deliberação se conflitar com orientação vigente. |
+| N10 · 14:34:28 · 2402 · P2 | “porta da casa do MOD ... virada para o centro” | Candidata 0.4.126 prioriza rotação no mesmo lote com rua transitável diante da porta. GameTests verificam preferência, preservação do acesso original quando o lado do centro está bloqueado e passagem da porta recuada da casa pequena de planície. Aguardar jogo. |
 | N11 · 14:36:23 · 2462 · P2 | “entrada ... fazenda ... canto mai proximo da linha do grafo”; 3.jpg | Selecionar canto acessível mais próximo de um segmento do grafo, com ramal curto. Testar as rotações da fazenda e distância ao segmento, não só ao nó. |
 | N12 · 14:38:32 · 2521 · P1 | “no de grafo do arco ... nao se conecta” | Investigar geração/registro/reconexão da entrada da mina. Testar caminho no grafo desde o arco até a rede principal, antes e depois da recarga. |
 | N13 · 14:41:03 · 2575 · P2 | “conectar a aresta mais proxima ... evitando arestas paralelas”; 4.jpg | Revisar inserção de ramais para aproveitar segmento existente e evitar duplicação próxima; preservar acesso de todos os nós. Testar geometria com duas ruas próximas e obstáculos. |
-| N14 · 14:44:00 · 2706 · P2 | “bau ... depois ... nasceu”; “placa ... apontando para a porta”; 5.jpg | Orientação corrigida em código, com GameTest de reposicionamento. Aguardar playtest. O atraso na criação do baú segue aberto e precisa ser reproduzido após a atribuição da cama. |
+| N14 · 14:44:00 · 2706 · P2 | “bau ... depois ... nasceu”; “placa ... apontando para a porta”; 5.jpg | Orientação corrigida em código, com GameTest de reposicionamento. Aguardar playtest. O atraso foi reproduzido quando duas tentativas sem moradia consumiram as vagas da varredura. A 0.4.126 conta somente baús criados. Aguardar jogo com cama e espaço para o baú. |
 | N15 · 14:47:30 · 2957 · P2 | “caracol ... descendo mais uns 7 blocos ... plato de 3x3x3 ... mais 7 para direita” | Mudança de geometria da mina: revisar `MineStairPoints`/`MineArm` e ADR do patamar antes de alterar. Provar largura, altura livre, patamares e rotação sem cortar arco/casa. Antes da implementação, fixar se “7 blocos” é avanço ou queda vertical; a nota não define isso inequivocamente. |
 | N16 · 14:51:04 · 3838 · P2 | “lista inicial ... 1° fazenda grande ... 2° curral grande ... 3° ... casas ... .nbt cada” | Planejar fila experimental fazenda → curral → casas específicas com NBT por profissão. Definir relação com estruturas obrigatórias de fundação, material físico, retomada e moradia. Testar ordem sem pular por falta de material e não duplicar após reinício. Exige revisão das regras/ADR antes do comportamento. |
 | N17 · 14:51:43 · 3940 · P1 | “zelador caminha muito ... não ... fazendo nada” | Correlacionar ação física e contador de trabalho com deslocamento; distinguir pavimentação e nivelamento. Relatório: 65% trabalho, 33% caminhada; não concluir ócio com base apenas na impressão. Teste de cenário com desnível deve registrar bloco alterado e queda de defeitos. |
@@ -58,12 +57,20 @@ Horários são os do log. P1: acesso, integridade e fluxo bloqueado. P2: comport
 | N27 · 15:16:06 · 7102 · P1 | “talvez ... abrir ... primeiro ... depois ... pular ... animal ... porteira” | Tratar como proposta do autor para N26, ainda não causa provada. Testar abrir antes de atravessar e manter aberto até animal passar. Avaliar salto do pastor como alternativa condicionada; animal continua atravessando a porteira. Não tornar teleporte uma solução implícita. |
 | N28 · 15:17:21 · 7137 · P1 | “nó da casa do mineiro ... conectada ... deixou ... todos nos ... sempre ... conectados” | Regressão de conectividade após terreno/obra/reconstrução do grafo. Verificar todos os nós de entrada válidos, incluindo mina e casa, com reconexão após mudanças e recarga. Se não houver rota física, registrar impedimento, sem desenhar ligação fictícia. |
 
-## N14 — Roteiro da placa do baú
+## N10 e N14 — Roteiro da moradia
 
-1. Reinicie o jogo e confirme `villagecolony 0.4.118` no `latest.log`.
-   Abra uma cópia da vila do teste anterior. Entre pela porta da casa do carpinteiro e confira
-   se a placa do baú fica visível pela passagem. Aguarde um ciclo da colônia se o baú já tinha placa.
-2. Confira se há um só quadro do mod, com o mesmo ícone e nome. Salve, reabra o mundo e confira de novo.
+Reinicie e confirme `villagecolony 0.4.126` no `latest.log`.
+
+### N10 — Porta da casa nova
+
+1. Observe uma obra de moradia do mod em um lote com rua transitável dos dois lados. A porta deve apontar para o centro se a rotação couber no lote.
+2. Em outro lote sem acesso pelo lado do centro, confira se a casa usa a entrada disponível.
+3. Salve e reabra uma obra em andamento. Confira se a orientação da porta foi preservada.
+
+### N14 — Cama, baú e placa
+
+1. Observe a atribuição de uma cama enquanto outros trabalhadores estão sem moradia. Com espaço livre, o baú deve aparecer na primeira varredura elegível. Anote os instantes da cama, do baú e da placa.
+2. Abra uma cópia da vila do teste anterior. Entre na casa do carpinteiro e confira se a placa fica visível pela passagem. Aguarde um ciclo da colônia se o baú já tinha placa. Confira se há um só quadro do mod, com o mesmo ícone e nome. Salve, reabra o mundo e confira de novo.
 3. Repita numa casa recém-atribuída. Se o baú demorar, anote o horário, as coordenadas, o ofício e
    os instantes em que a cama foi atribuída, o baú apareceu e a placa ficou visível.
 4. Se a face voltada para a porta já tiver um quadro seu, confira se a decoração é preservada.

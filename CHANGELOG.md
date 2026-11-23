@@ -12,6 +12,12 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.126] — candidata, 2026-11-23
+
+- Casas novas priorizam a porta voltada ao centro quando a rotação cabe no mesmo lote e há rua transitável diante da porta (N10).
+- A varredura de moradores desconta a vaga somente quando cria um baú, evitando que tentativas anteriores sem moradia atrasem o baú de um morador elegível (N14).
+- Inclui as mudanças anteriores de rebanho, resgate de telhado e salto progressivo.
+
 ## [0.4.125] — candidata, 2026-11-23
 
 - O aldeão tenta o pulo padrão antes de qualquer pulo maior. O modificador maior só entra após colisão horizontal confirmada; resgate de encalhe e saída de curral continuam exceções.

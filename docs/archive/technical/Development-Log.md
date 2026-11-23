@@ -2,6 +2,10 @@
 
 # Development-Log.md
 
+## 23-11-2026 — Orientação de moradia e criação de baú, candidata 0.4.126
+
+A casa de teste manteve a porta voltada para fora mesmo com rua livre para o centro. A abertura da obra agora prefere uma rotação com a mesma pegada e rua transitável diante da porta, preservando o acesso original se esse giro não for viável. Uma porta recuada usa a mesma preferência se a faixa entre a porta e a rua ficar livre na planta. O caso foi reproduzido com a casa pequena de planície do catálogo. Na varredura, duas tentativas sem moradia consumiam o limite antes de um trabalhador com cama. O limite de dois agora conta os baús realmente criados. As duas regressões falharam antes dos ajustes. Os 12 GameTests focados passaram no primeiro ajuste. Com a casa de porta recuada, a rodada focada passou em 32 de 33 e o Sentinela passou em 1.249 de 1.251 GameTests. A saída do curral falhou nessas duas rodadas e também em um teste focado da 0.4.125. A tosquia N05 repetiu a falha intermitente na bateria completa. Unitários e propriedades passaram. O plano da 0.4.115 contém o roteiro de confirmação da orientação da porta e os três marcos de N14, cama, baú e placa.
+
 ## 23-11-2026 — Salto progressivo, candidata 0.4.125
 
 `VillagerMoves` previa degrau e cerca pelo caminho e ativava o pulo maior antes da colisão. A correção mantém o pulo padrão primeiro e libera o modificador maior somente após colisão horizontal confirmada. Encalhe e saída de curral permanecem exceções. A regressão de degrau e cerca passou com 6/6 GameTests focados. Falta gerar o JAR e confirmar o comportamento em jogo.

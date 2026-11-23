@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.125%20candidate-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.126%20candidate-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,7 +19,9 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Versão 0.4.125 candidata.** O aldeão tenta o pulo padrão antes de usar pulo maior; colisão horizontal confirmada,
+**Versão 0.4.126 candidata.** Casas novas priorizam a porta voltada ao centro quando o mesmo lote tem acesso direto pela rua.
+Tentativas sem baú criado deixam a vaga de criação disponível para moradores elegíveis na mesma varredura.
+O aldeão tenta o pulo padrão antes de usar pulo maior; colisão horizontal confirmada,
 encalhe e saída de curral liberam o pulo maior. O grafo usa o piso válido da entrada quando há uma rua acima na mesma coluna.
 Em acessos laterais, o pastor se reposiciona diante da porteira para manter o animal andando. O pastor pula a cerca nos dois sentidos. O animal entra pela porteira
 e fica na guia até ela fechar. Os demais aldeões contornam o curral. Para abater, o pastor precisa de

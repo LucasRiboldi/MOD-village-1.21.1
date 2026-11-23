@@ -2,6 +2,13 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Candidata local 0.4.126 (2026-11-23)
+
+- A branch `codex/playtest-04126` reúne a 0.4.125 e os ajustes N10 e N14. A porta da moradia nova prioriza o centro se a mesma pegada permite acesso pela rua. A varredura usa o limite de dois para baús criados.
+- As regressões de abertura da obra, passagem da porta recuada e criação do baú falharam antes dos ajustes e passaram na versão corrigida. A rodada focada da candidata passou em 32 dos 33 GameTests. A saída espontânea do curral antes da varredura foi a exceção. O mesmo teste falhou na 0.4.125 (`bd7abd57`), antes de N10 e N14.
+- O Sentinela `fast` (`20261123T184500Z`) passou em unitários e propriedades. Passaram 1.249 de 1.251 GameTests. As falhas foram a saída do curral e a tosquia N05 já registrada no TODO.
+- Use o [roteiro da moradia](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md#n10-e-n14--roteiro-da-moradia) para verificar acesso, recarga da obra, cama, baú e placa. As outras pendências continuam no [TODO](TODO.md).
+
 ## Candidata local 0.4.125 (2026-11-23)
 
 - Na branch `codex/fix-villager-jumps-04125`, `VillagerMoves` mantém o pulo padrão diante de obstáculo previsto. O pulo maior só ativa após colisão horizontal confirmada; encalhe e saída de curral continuam exceções.
