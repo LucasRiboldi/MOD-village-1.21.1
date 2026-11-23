@@ -5,6 +5,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.coordination.VillageExpansion;
 import com.villagecolony.core.type.ColonyPos;
@@ -12,12 +13,15 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.StripLot;
+import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.SweepPersistence;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -102,6 +106,61 @@ public class StripLotOpeningGameTest implements FabricGameTest {
             VillageExpansion.lotFound(colony.id());
             VillageColonyMod.COLONIES.remove(colony.id());
             StripLot.clearAll();
+        }
+
+        context.complete();
+    }
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "house_center_door")
+    public void aNewHouseFacesTheCenterWithAnAccessibleStreet(TestContext context) {
+        assertHouseDirection(context, true, Side.NORTH);
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "house_center_door")
+    public void aNewHouseKeepsTheOriginalAccessWhenTheCenterSideIsBlocked(TestContext context) {
+        assertHouseDirection(context, false, Side.SOUTH);
+    }
+
+    private static void assertHouseDirection(TestContext context, boolean northOpen, Side expected) {
+        ServerWorld world = context.getWorld();
+        for (int x = 0; x <= 6; x++) {
+            for (int z = 0; z <= 6; z++) {
+                context.setBlockState(new BlockPos(x, Y, z), Blocks.DIRT);
+            }
+        }
+
+        BlockPos north = new BlockPos(3, Y, 1);
+        BlockPos south = new BlockPos(3, Y, 5);
+        context.setBlockState(north, Blocks.DIRT_PATH);
+        context.setBlockState(south, Blocks.DIRT_PATH);
+        if (!northOpen) {
+            context.setBlockState(north.up(), Blocks.STONE);
+        }
+
+        Colony colony = Colony.create(UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(3, Y + 1, 0))));
+        List<Long> roadColumns = List.of(north, south).stream()
+                .map(context::getAbsolutePos)
+                .map(pos -> ColonyRoads.column(pos.getX(), pos.getZ()))
+                .toList();
+        SweepPersistence.restore(new ColonyRoads(colony.id(), colony.center(), roadColumns));
+
+        Blueprint plan = Blueprint.of(ResourceId.vanilla("test_center_house"), List.of(
+                new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("oak_planks")),
+                new BlueprintBlock(new ColonyPos(2, 0, 2), ResourceId.vanilla("oak_planks")),
+                new BlueprintBlock(new ColonyPos(1, 1, 2), ResourceId.vanilla("oak_door"),
+                        true, Optional.of(Side.SOUTH)),
+                new BlueprintBlock(new ColonyPos(1, 2, 2), ResourceId.vanilla("oak_door"),
+                        true, Optional.of(Side.SOUTH))));
+        ColonyPos lot = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(2, Y + 1, 2)));
+        BuildSiteScanner.Site site = new BuildSiteScanner.Site(lot, Direction.SOUTH, plan.size());
+
+        try {
+            Optional<ConstructionProject> project = SiteOpening.open(world, colony, site, List.of(plan), plan, 1);
+            context.assertTrue(project.isPresent(), "a moradia não abriu no lote aprovado");
+            context.assertTrue(project.orElseThrow().blueprint().doorSide().filter(expected::equals).isPresent(),
+                    "a porta da moradia deveria apontar para " + expected);
+        } finally {
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
         }
 
         context.complete();

@@ -48,7 +48,7 @@ regra que foi emendada. O corpo de cada regra vive em
 | 14 | O construtor alcança o alto da obra — desde a ADR-037 B1, de qualquer lugar da zona da obra (pegada + 4) | 08-18 | ✅ feita | `BuilderApproach.isWithinReach`, `BuilderApproach.isInsideZone` |
 | 15 | A estrada cresce com a vila: a ponta pede as colunas ao grafo, e o aldeão calça (Regra 214) | 08-18 | ✅ feita | `RoadExtension` |
 | 16 | Cada casa com espaço em volta | 08-18 | ⚠️ parcial | volume no `BuildSiteScanner` |
-| 17 | A casa com uma lateral na estrada | 08-19 | ✅ feita | `Blueprint.doorSide`, `rotated` |
+| 17 | A casa com uma lateral na estrada. Em moradias novas, priorizar a porta voltada ao centro se o mesmo lote oferecer rua transitável diante da porta. Sem esse acesso, manter a orientação original. | 08-19, 11-23 (N10) | Candidata | `Blueprint.doorSide`, `SiteOpening`, `PlanPlacement` |
 | 18 | O dia inteiro é expediente | 08-19 | ✅ feita | `WorkClock`, `WorkHours` |
 | 18-e1 | **Emenda 1:** ninguém para de trabalhar por chuva, e não há pausa ao meio-dia (R-6 e R-7 do estudo de 10-02 recusadas) | 10-02 | ✅ é o que já acontece | `WorkHours` não olha o tempo |
 | 19 | O lote fica no nível da estrada | 08-19 | ✅ feita | `LotLevel.flatGroundAt` |
