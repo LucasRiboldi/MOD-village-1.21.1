@@ -2,7 +2,11 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
-## Candidata local 0.4.119 (2026-11-22)
+## Candidata local 0.4.120 (2026-11-22)
+
+A opção 3 do autor está em `ShepherdDelivery` na branch `codex/pastor-curral-04119`. A física do salto reutiliza `PenMoves`. A medição do curral continua em `ShepherdPens`. A confirmação no mundo do autor está pendente. Siga o roteiro do relatório da 0.4.118, atualizado para o JAR 0.4.120.
+
+## Histórico da candidata 0.4.119 (2026-11-22)
 
 - A branch `codex/pastor-curral-04119` parte de `606eb0f6`. A coleta, a separação e o abate respeitam
   recintos cobertos com porta. A navegação do animal alinha a entrada da porteira enquanto a guia continua presa.

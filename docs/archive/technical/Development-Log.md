@@ -2,6 +2,10 @@
 
 # Development-Log.md
 
+## 22-11-2026 — Candidata 0.4.120
+
+A emenda da ADR-058 registra a opção 3 do autor. A entrega mantém a guia até o fechamento da porteira e usa a física de salto do curral. O relatório do jogo da 0.4.118 contém o roteiro da nova candidata.
+
 ## 22-11-2026 — Integração da candidata 0.4.118 e retomada no Claude Code
 
 A branch `codex/entrega-04118` reuniu o Lote A (N12/N28) e a orientação

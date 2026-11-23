@@ -14,7 +14,8 @@
   curral grande, as duas entradas de casa e a atividade do lenhador na obra seguem em investigação.
   Os demais itens estão no [plano da 0.4.115](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
 - **Validação da 0.4.119:** Sentinela `fast` passou com 1.886 testes unitários, uma suíte de propriedades e 1.241 GameTests (`20261123T004749Z`).
-- **Versões:** 0.4.119 é a candidata local. A pré-release publicada é a [0.4.118-alpha](docs/releases/v0.4.118.md).
+- **Empacotamento da 0.4.120:** `remapJar` e `compileGametestJava` concluídos. Os cenários dos saltos, da guia e dos demais aldeões aguardam execução. O JAR de build, a cópia em `downloads/` e o único Village Colony ativo no TLauncher têm SHA-256 `E64EC720FFD310AF7639AB042A5B1308DE40AF0CE1E4E1302DF7EA190ADE1CD4`.
+- **Versões:** 0.4.120 é a candidata local. A entrega por salto e a exclusão dos demais aldeões aguardam playtest. A pré-release publicada é a [0.4.118-alpha](docs/releases/v0.4.118.md).
 - **Qualidade:** nota 5,0/10 pela ISO/IEC 25010 (`docs/audit/2026-11-13-avaliacao-qualidade.md`), com a meta de uma
   1.0 pública. Seis dimensões bloqueiam a 1.0: regras de negócio, save, desempenho, compatibilidade, experiência do
   jogador e publicação.

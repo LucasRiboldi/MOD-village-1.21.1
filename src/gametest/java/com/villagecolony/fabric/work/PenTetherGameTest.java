@@ -46,7 +46,7 @@ public class PenTetherGameTest implements FabricGameTest {
         herd.phase = ShepherdHerding.Phase.LEAD;
         try {
             ShepherdHerding.step(context.getWorld(), shepherd.getUuid(), herd);
-            context.assertTrue(herd.phase == ShepherdHerding.Phase.LEAD && cow.getLeashHolder() == shepherd,
+            context.assertTrue(cow.getLeashHolder() == shepherd,
                     "N26: a corda soltou com o animal dois blocos ao lado da entrada");
         } finally {
             WorkTargets.clear(shepherd.getUuid());
@@ -77,7 +77,7 @@ public class PenTetherGameTest implements FabricGameTest {
             BlockPos near = pen.outside().east(2);
             cow.refreshPositionAndAngles(near.getX() + 0.5, near.getY(), near.getZ() + 0.5, 0, 0);
             ShepherdHerding.step(context.getWorld(), shepherd.getUuid(), herd);
-            context.assertTrue(WorkTargets.of(shepherd.getUuid()).filter(ShepherdPens.deeper(pen)::equals).isPresent()
+            context.assertTrue(herd.phase == ShepherdHerding.Phase.JUMP_IN && WorkTargets.of(shepherd.getUuid()).isEmpty()
                             && cow.getLeashHolder() == shepherd,
                     "N27: com o animal perto, o pastor não entra primeiro mantendo a corda");
         } finally {
@@ -100,8 +100,8 @@ public class PenTetherGameTest implements FabricGameTest {
         herd.phase = ShepherdHerding.Phase.LEAD;
         try {
             ShepherdHerding.step(context.getWorld(), shepherd.getUuid(), herd);
-            context.assertTrue(herd.phase == ShepherdHerding.Phase.ENTER && cow.hasPositionTarget(),
-                    "o animal alinhado não iniciou a entrada com a amarra do curral");
+            context.assertTrue(herd.phase == ShepherdHerding.Phase.JUMP_IN && cow.getLeashHolder() == shepherd,
+                    "a guia soltou antes do salto de entrada");
             context.assertTrue(WorkTargets.of(shepherd.getUuid()).isEmpty(),
                     "N26: o pastor continua perseguindo o animal durante a entrada");
         } finally {
@@ -143,7 +143,7 @@ public class PenTetherGameTest implements FabricGameTest {
         });
     }
 
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "pen_lead_slope", tickLimit = 280)
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "pen_lead_slope", tickLimit = 520)
     public void theAnimalWalksFromASideLedgeThroughTheGate(TestContext context) {
         int height = 160;
         com.villagecolony.gametest.Arena.forceChunks(context, BlockPos.ORIGIN, new BlockPos(10, 0, 9), true);
@@ -179,13 +179,21 @@ public class PenTetherGameTest implements FabricGameTest {
         herd.pen = pen;
         herd.phase = ShepherdHerding.Phase.LEAD;
         boolean[] finished = {false};
+        boolean[] jumped = new boolean[2];
+        boolean[] releasedEarly = {false};
         context.getWorld().setTimeOfDay(1_000);
         StringBuilder history = new StringBuilder();
         int[] ticks = {0};
         context.runAtEveryTick(() -> {
-            if (!finished[0] && context.getWorld().getTime() % 5 == 0) {
+            if (!finished[0] && (ShepherdHerding.atGate(herd.phase) || context.getWorld().getTime() % 5 == 0)) {
+                if (shepherd.getY() > gate.getY() + 1.5) {
+                    if (herd.phase == ShepherdHerding.Phase.JUMP_IN) jumped[0] = true;
+                    if (herd.phase == ShepherdHerding.Phase.JUMP_OUT) jumped[1] = true;
+                }
                 finished[0] = !ShepherdHerding.step(context.getWorld(), shepherd.getUuid(), herd);
             }
+            if (cow.getLeashHolder() != shepherd && (!ShepherdPens.isInside(pen, cow)
+                    || context.getWorld().getBlockState(gate).get(FenceGateBlock.OPEN))) releasedEarly[0] = true;
             // Mesma chegada do destino público e mesma cadência de fechamento da produção.
             WorkTargets.of(shepherd.getUuid()).ifPresentOrElse(target -> {
                 var memory = net.minecraft.entity.ai.brain.MemoryModuleType.WALK_TARGET;
@@ -200,18 +208,22 @@ public class PenTetherGameTest implements FabricGameTest {
                 history.append(" | t=").append(ticks[0]).append(" idade=").append(cow.age).append(" fase=").append(herd.phase)
                         .append(" posição=").append(cow.getPos().subtract(
                                 net.minecraft.util.math.Vec3d.of(context.getAbsolutePos(BlockPos.ORIGIN))))
+                        .append(" pastor=").append(shepherd.getPos()).append(" gate=").append(gate)
                         .append(" chão=").append(cow.isOnGround())
                         .append(" destino=").append(cow.getNavigation().getTargetPos())
                         .append(" parado=").append(cow.getNavigation().isIdle())
                         .append(" corda=").append(cow.getLeashHolder() == shepherd);
             }
         });
-        context.runAtTick(240, () -> {
+        context.runAtTick(490, () -> {
             try {
                 context.assertTrue(cow.age > 100, "a arena não manteve a vaca ativa" + history);
                 context.assertTrue(finished[0] && ShepherdPens.isInside(pen, cow),
                         "N26: a vaca não entrou andando a partir do desnível lateral; fase=" + herd.phase
                                 + history);
+                context.assertTrue(jumped[0] && jumped[1] && !pen.reach().contains(shepherd.getBlockPos()),
+                        "o pastor deve pular a cerca nos dois sentidos" + history);
+                context.assertFalse(releasedEarly[0], "a guia soltou antes do fechamento" + history);
                 context.assertTrue(cow.getLeashHolder() == null && !cow.hasPositionTarget(),
                         "a entrada terminou mas deixou corda ou amarra no animal");
                 context.assertFalse(context.getWorld().getBlockState(gate).get(FenceGateBlock.OPEN),
@@ -264,6 +276,7 @@ public class PenTetherGameTest implements FabricGameTest {
                 VillageColonyMod.WORKERS.register(shepherd.getUuid(), fixture.colony().id()).assign(ProfessionType.SHEPHERD);
 
                 ShepherdPens.startIn(context.getWorld(), pen, cow);
+                cow.attachLeash(shepherd, true);
                 tethered = cow.hasPositionTarget();
 
                 // Entrou: está no lugar de dentro e não encosta mais no portão.

@@ -54,13 +54,14 @@ final class ShepherdHerding {
     /** Animais amarrados numa mesma cerca, no máximo. */
     static final int MAX_TIED = 8;
 
-    /** {@code EXIT} e {@code ENTER}: o animal atravessa o portão andando, sem corda. */
-    enum Phase { FETCH, EXIT, LEAD, ENTER }
+    /** {@code EXIT} e {@code ENTER}: o animal atravessa a porteira andando (Regra 299). */
+    enum Phase { FETCH, EXIT, LEAD, JUMP_IN, ALIGN, ENTER, JUMP_OUT }
 
     static final class Herd {
         final UUID animal;
         /** A cerca onde amarrar, o poste a pôr, ou o portão do cercado. */
         final BlockPos fence;
+        final ShepherdDelivery delivery = new ShepherdDelivery();
         Phase phase = Phase.FETCH;
         final long since;
         /** O cercado de destino, ou nulo. */
@@ -106,6 +107,7 @@ final class ShepherdHerding {
             entry.putUuid("animal", herd.animal);
             entry.putLong("fence", herd.fence.asLong());
             entry.putString("phase", herd.phase.name());
+            entry.putBoolean("vaultDelivery", true);
             entry.putLong("since", herd.since);
             entry.putBoolean("newPost", herd.newPost);
 
@@ -135,7 +137,16 @@ final class ShepherdHerding {
             }
 
             Herd herd = new Herd(entry.getUuid("animal"), BlockPos.fromLong(entry.getLong("fence")), entry.getLong("since"));
-            herd.phase = "LEAD".equals(entry.getString("phase")) ? Phase.LEAD : Phase.FETCH;
+            String saved = entry.getString("phase");
+            if (entry.getBoolean("vaultDelivery") && entry.contains("inside")) {
+                herd.phase = switch (saved) {
+                    case "JUMP_IN", "ALIGN", "ENTER" -> Phase.LEAD;
+                    case "JUMP_OUT" -> Phase.JUMP_OUT;
+                    default -> "LEAD".equals(saved) ? Phase.LEAD : Phase.FETCH;
+                };
+            } else if ("LEAD".equals(saved)) {
+                herd.phase = Phase.LEAD;
+            }
             herd.newPost = entry.getBoolean("newPost");
 
             if (entry.contains("inside")) {
@@ -145,6 +156,10 @@ final class ShepherdHerding {
 
             HERDS.put(shepherd, herd);
         }
+    }
+
+    static boolean atGate(Phase phase) {
+        return phase == Phase.JUMP_IN || phase == Phase.ALIGN || phase == Phase.ENTER || phase == Phase.JUMP_OUT;
     }
 
     static boolean isHerding(UUID shepherd) {
@@ -168,7 +183,7 @@ final class ShepherdHerding {
             UUID id = worker.villagerId();
 
             if (worker.profession().filter(ProfessionType.SHEPHERD::equals).isEmpty()
-                    || shearing.test(id) || HERDS.containsKey(id) || ShepherdRound.isWalking(id)
+                    || PenEscape.isEscaping(id) || shearing.test(id) || HERDS.containsKey(id) || ShepherdRound.isWalking(id)
                     || now < NEXT_TRY.getOrDefault(id, Long.MIN_VALUE)
                     || !(world.getEntity(id) instanceof VillagerEntity shepherd)
                     || !WorkHours.isWorkTime(world, shepherd)) {
@@ -252,13 +267,14 @@ final class ShepherdHerding {
     }
 
 
-    /** Um passo de cada coleta, a cada cinco tiques. */
+    /** Condução a cada cinco tiques e travessia a cada tique para acompanhar a física do salto. */
     static void tick(ServerWorld world) {
-        if (HERDS.isEmpty() || world.getTime() % 5 != 0) {
+        if (HERDS.isEmpty()) {
             return;
         }
 
         HERDS.entrySet().removeIf(entry -> {
+            if (!atGate(entry.getValue().phase) && world.getTime() % 5 != 0) return false;
             boolean goesOn = step(world, entry.getKey(), entry.getValue());
 
             if (!goesOn) {
@@ -276,6 +292,18 @@ final class ShepherdHerding {
      */
     static boolean step(ServerWorld world, UUID shepherdId, Herd herd) {
         Entity animalEntity = world.getEntity(herd.animal);
+
+        if (herd.pen != null && herd.pen.reach().isEmpty()) {
+            var enclosure = FencedIn.penAt(world, herd.pen.inside());
+            if (!enclosure.enclosed() || !enclosure.gates().contains(herd.fence)) {
+                abort(world, shepherdId, herd);
+                return false;
+            }
+            herd.pen = new ShepherdPens.Pen(herd.fence, herd.pen.inside(), herd.pen.outside(), enclosure.reach(), false);
+        }
+        if (herd.phase == Phase.JUMP_OUT && world.getEntity(shepherdId) instanceof VillagerEntity leaving) {
+            return !herd.delivery.cross(world, leaving, herd.pen, false);
+        }
 
         // Rumo a um curral, sem prazo e sem expediente: o animal só é solto dentro dele (Regra 309); a ida até o animal
         // tem a paciência da Regra 328.
@@ -306,6 +334,7 @@ final class ShepherdHerding {
                 PenTether.release(animal);
                 animal.attachLeash(shepherd, true);
                 FencedIn.closeWhenClear(herd.from.gate());
+                herd.from = null;
                 herd.phase = Phase.LEAD;
                 return true;
             }
@@ -318,42 +347,6 @@ final class ShepherdHerding {
                 return false;
             }
             ShepherdPens.walkThrough(world, herd.from, animal, herd.from.outside());
-            return true;
-        }
-
-        if (herd.phase == Phase.ENTER) {
-            if (ShepherdPens.isInside(herd.pen, animal)) {
-                PenTether.release(animal);
-                FencedIn.closeWhenClear(herd.pen.gate());
-                FencedIn.tick(world); // fecha já, se o portão está livre; senão, no próximo ciclo
-
-                // A ovelha no curral também ganha grama, para recriar a lã (PostGrass, autor 2026-10-21).
-                if (animal instanceof net.minecraft.entity.passive.SheepEntity) {
-                    PostGrass.inPen(world, animal.getBlockPos());
-                }
-                VillageColonyMod.LOGGER.info("Shepherd {} brought a {} into the pen at {}",
-                        shepherdId.toString().substring(0, 8), animal.getType().getUntranslatedName(),
-                        herd.pen.gate().toShortString());
-                WorkTargets.clear(shepherdId);
-                return false;
-            }
-            if (world.getTime() - herd.walking > ShepherdPens.WALK_LIMIT) {
-                FencedIn.closeWhenClear(herd.pen.gate());
-                // Não entrou: volta à corda e tenta de novo (Regra 309), até a terceira vez (Regra 328).
-                if (toPen && !HerdPatience.failedEntry(shepherdId, herd.animal, world.getTime())) {
-                    herd.phase = Phase.FETCH;
-                    return true;
-                }
-                if (toPen) {
-                    HerdPatience.setAside(world, shepherdId, herd.animal, "it did not walk into the pen");
-                }
-                VillageColonyMod.LOGGER.info("Shepherd {} gave up: the {} did not walk into the pen at {}",
-                        shepherdId.toString().substring(0, 8), animal.getType().getUntranslatedName(),
-                        herd.pen.gate().toShortString());
-                abort(world, shepherdId, herd);
-                return false;
-            }
-            ShepherdPens.walkThrough(world, herd.pen, animal, ShepherdPens.deeper(herd.pen));
             return true;
         }
 
@@ -388,33 +381,56 @@ final class ShepherdHerding {
         }
 
         if (animal.getLeashHolder() != shepherd) {
-            if (toPen) { herd.phase = Phase.FETCH; return true; } // a corda soltou: volta para buscar o animal (Regra 309)
+            if (toPen) {
+                // A corda soltou: volta para buscar o animal (Regra 309).
+                herd.delivery.reset();
+                PenTether.release(animal);
+                herd.phase = Phase.FETCH;
+                return true;
+            }
             abort(world, shepherdId, herd);
             return false;
         }
 
         BlockPos goal = herd.pen != null ? herd.pen.outside() : herd.fence;
 
-        // Regra 299: alinhar o animal à entrada evita o corte diagonal pela cerca ao soltar a corda.
-        if (herd.pen != null && (ShepherdPens.isInside(herd.pen, animal)
-                || animal.squaredDistanceTo(goal.getX() + 0.5, goal.getY(), goal.getZ() + 0.5) <= 0.75 * 0.75)) {
-            WorkTargets.clear(shepherdId);
-            shepherd.getNavigation().stop();
-            ShepherdPens.startIn(world, herd.pen, animal);
-            herd.phase = Phase.ENTER;
-            herd.walking = world.getTime();
-            return true;
-        }
-
-        if (herd.pen != null && (shepherd.getBlockPos().isWithinDistance(goal, REACH)
+        if (herd.pen != null && (atGate(herd.phase) || shepherd.getBlockPos().isWithinDistance(goal, REACH)
                 || herd.pen.reach().contains(shepherd.getBlockPos()))) {
-            FencedIn.open(world, herd.pen.gate());
-            // Regra 299, N27: aproxima pelo lado de fora antes de entrar; a corda Vanilla segue o pastor.
-            ShepherdLead.walkAtGate(world, shepherd, animal, herd.pen, REACH);
+            if (!(world.getBlockState(herd.fence).getBlock() instanceof net.minecraft.block.FenceGateBlock)) {
+                abort(world, shepherdId, herd);
+                return false;
+            }
+            if (herd.phase == Phase.LEAD) {
+                if (HERDS.values().stream().anyMatch(other -> other != herd && other.fence.equals(herd.fence)
+                        && atGate(other.phase))) return true;
+                FencedIn.holdForDelivery(world, herd.fence);
+                ShepherdLead.alignAtGate(animal, goal);
+                if (!herd.pen.reach().contains(shepherd.getBlockPos()) && !ShepherdPens.isInside(herd.pen, animal)
+                        && animal.squaredDistanceTo(net.minecraft.util.math.Vec3d.ofBottomCenter(goal)) > REACH * REACH) {
+                    ShepherdLead.walkTo(world, shepherd, goal, 0);
+                    return true;
+                }
+                WorkTargets.clear(shepherdId);
+                herd.phase = Phase.JUMP_IN;
+                herd.walking = world.getTime();
+            }
+            if (world.getTime() - herd.walking > ShepherdPens.WALK_LIMIT * 3L) {
+                FencedIn.closeWhenClear(herd.fence);
+                PenTether.release(animal);
+                if (HerdPatience.failedEntry(shepherdId, herd.animal, world.getTime())) {
+                    HerdPatience.setAside(world, shepherdId, herd.animal, "no clear crossing into the pen");
+                    abort(world, shepherdId, herd);
+                    return false;
+                }
+                herd.delivery.reset();
+                herd.phase = Phase.LEAD;
+                return true;
+            }
+            herd.delivery.advance(world, shepherd, animal, herd);
             return true;
         }
 
-        if (shepherd.getBlockPos().isWithinDistance(herd.fence, REACH)) {
+        if (herd.pen == null && shepherd.getBlockPos().isWithinDistance(herd.fence, REACH)) {
             // Sem poste ali: ele põe um, com a cerca do baú.
             boolean posted = !herd.newPost || VillageColonyMod.WORKERS.find(shepherdId)
                     .map(worker -> ShepherdPens.placePost(world, worker.colonyId(), herd.fence))

@@ -182,6 +182,7 @@ public final class PenEscape {
     static boolean check(ServerWorld world, MobEntity villager) {
         UUID id = villager.getUuid();
 
+        if (ShepherdHerding.isHerding(id)) return false;
         if (ESCAPES.containsKey(id)) {
             return true;
         }
@@ -198,8 +199,13 @@ public final class PenEscape {
             return false;
         }
 
-        FencedIn.Result pen = FencedIn.check(world, feet);
+        boolean shepherdInPen = com.villagecolony.fabric.integration.PenFloors.isPenFloor(feet)
+                && VillageColonyMod.WORKERS.find(id).flatMap(Worker::profession)
+                        .filter(com.villagecolony.core.worker.model.ProfessionType.SHEPHERD::equals).isPresent();
+        FencedIn.Result pen = shepherdInPen ? FencedIn.penAt(world, feet) : FencedIn.check(world, feet);
         List<FencedIn.Exit> exits = pen.enclosed() ? FencedIn.exits(world, pen, feet) : List.of();
+
+        if (shepherdInPen) exits = exits.stream().filter(exit -> !exit.gate()).toList();
 
         if (PenGolems.isWide(villager)) {
             // Porteira simples não passa o golem: só a dupla, e a cerca.
@@ -236,7 +242,7 @@ public final class PenEscape {
             }
         }
 
-        if (gates == 0 && villager instanceof VillagerEntity worker) {
+        if (pen.gates().isEmpty() && villager instanceof VillagerEntity worker) {
             PenLift.leaveBedInPen(world, worker, pen.reach());
         }
 

@@ -41,6 +41,10 @@ dentro da cerca está guardado, com a porteira como estiver.
    desgarrados, as porteiras fechadas e a conta por espécie. A tosquia espera a ronda acabar.
 4. **A separação do curral misto** (Regra 72) acontece no máximo uma vez por dia em cada vila.
 
+### Emenda de 22-11-2026 — entrega escolhida pelo autor
+
+O pastor abre a porteira, pula a cerca, alinha-se diante da abertura pelo lado de dentro e caminha em direção ao centro do curral. O animal atravessa na guia, pela porteira. Com o animal dentro e a passagem desocupada, a porteira fecha, o pastor solta o animal e sai pulando a cerca. Os demais aldeões contornam o curral, inclusive quando a porteira está aberta.
+
 ## Consequências
 
 - O pastor deixa de levar de novo o animal que já está no curral, e a contagem do curral passa a subir com as entregas.

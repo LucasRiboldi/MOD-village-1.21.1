@@ -12,6 +12,11 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.120] — candidata, 2026-11-22
+
+- Na entrega, o pastor salta a cerca, alinha-se por dentro e segue em direção ao centro. O animal cruza a porteira na guia. O pastor libera a guia após o fechamento e salta de volta.
+- O bloqueio de navegação no interior do curral também alcança aldeões sem cadastro na colônia.
+
 ## [0.4.119] — candidata, 2026-11-22
 
 - A navegação do animal o leva até a frente da porteira enquanto ele continua na guia.

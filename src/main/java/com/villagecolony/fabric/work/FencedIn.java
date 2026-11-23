@@ -290,6 +290,19 @@ final class FencedIn {
         return true;
     }
 
+    /** A ronda respeita a porteira durante toda a entrega, inclusive quando ela já estava aberta. */
+    static void holdForDelivery(ServerWorld world, BlockPos gate) {
+        if (open(world, gate)) OPENED.put(gate.toImmutable(), world.getTime() + OPEN_TICKS);
+    }
+
+    /** Regra 299: só libera a guia quando a porteira está fisicamente fechada. */
+    static boolean closeForDelivery(ServerWorld world, BlockPos gate) {
+        if (isClosedGate(world.getBlockState(gate))) return true;
+        OPENED.put(gate.toImmutable(), 0L);
+        tick(world);
+        return isClosedGate(world.getBlockState(gate));
+    }
+
     /** Se este portão foi aberto para alguém passar e ainda espera fechar. */
     static boolean isHeldOpen(BlockPos gate) {
         return OPENED.containsKey(gate);
@@ -374,7 +387,7 @@ final class FencedIn {
 
     // Cerca ou muro na altura dos pés, com o ar livre por cima dela e por
     // cima dele até onde o pulo leva a cabeça.
-    private static boolean isVaultable(ServerWorld world, BlockPos inside, BlockPos barrier) {
+    static boolean isVaultable(ServerWorld world, BlockPos inside, BlockPos barrier) {
         BlockState state = world.getBlockState(barrier);
 
         if (!state.isIn(BlockTags.FENCES) && !state.isIn(BlockTags.WALLS) && !isUprightTrapdoor(state)) {
@@ -400,7 +413,7 @@ final class FencedIn {
 
     // Onde ele pisa do lado de fora: no mesmo nível, um degrau acima ou até
     // dois abaixo — e fora do que ele alcança de dentro.
-    private static Optional<BlockPos> landing(ServerWorld world, BlockPos ahead, Set<BlockPos> reach) {
+    static Optional<BlockPos> landing(ServerWorld world, BlockPos ahead, Set<BlockPos> reach) {
         for (int dy = 1; dy >= -2; dy--) {
             BlockPos feet = ahead.up(dy);
 
