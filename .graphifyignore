@@ -6,3 +6,14 @@
 #
 # .graphifyignore é lido depois do .gitignore e só exclui mais, nunca re-inclui.
 .claude/
+
+# Skills e configs de outros agentes, relatorios e dados de ferramentas: nao sao codigo do mod.
+.agents/
+.codex/
+.serena/
+reports/
+downloads/
+
+# Documentacao e historico: texto, nao codigo. Mantem o grafo so de codigo.
+docs/
+CHANGELOG.md
