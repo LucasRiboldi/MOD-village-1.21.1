@@ -12,6 +12,11 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.128] — candidata, 2026-11-24
+
+- O grafo lê o arenito das ruas Vanilla do deserto mesmo com o índice vazio. A identificação usa a peça de rua registrada no mundo e preserva o pavimento existente.
+- O registro das casas colocadas inteiras na fundação aciona a releitura do grafo.
+
 ## [0.4.127] — candidata, 2026-11-24
 
 - Curral grande prioritário para qualquer espécie, sem limite de animais imposto pelo mod.

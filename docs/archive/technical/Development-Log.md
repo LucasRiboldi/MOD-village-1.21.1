@@ -2,6 +2,12 @@
 
 # Development-Log.md
 
+## 24-11-2026 — Grafo no deserto, candidata 0.4.128
+
+Na colônia `ea1997ba`, o log alternou entre 3 e 25 arestas. A frente da porta Vanilla em `844,62,319` e as quatro vizinhas tinham arenito liso no save. O piso fica dentro da peça `village/desert/streets/straight_02`. A regressão reproduziu a omissão da rua pela leitura do grafo com o índice vazio. A leitura agora usa a peça registrada para reconhecer o pavimento já existente. O cenário da BigHouseMOD verifica a entrada em piso de areia e a ligação contornando o desnível depois da caixa. As fundações pedem nova leitura depois do registro da construção. As nove notas da sessão estão agrupadas por assunto no `TODO.md`.
+
+A primeira rodada do Sentinela expôs um ciclo novo entre os pacotes de integração e de trabalho. O aviso passou a usar `RoadRegionEvents`. Os seis testes de arquitetura e os 57 GameTests focados de grafo e fundação passaram na branch da correção.
+
 ## 24-11-2026 — Currais temáticos e prioridade do curral grande, candidata 0.4.127
 
 A análise da 0.4.126 encontrou seis acessos externos recusados e pares prontos que o pastor não alcançava. O autor aprovou curral grande prioritário sem lotação e seis modelos médios por grupo. O catálogo de construção e o grafo agora usam a porteira da obra. A classificação usa o modelo registrado e identifica currais Vanilla para preservar seu manejo. O pastor passa ao próximo desgarrado quando o destino da primeira espécie é recusado. Os casos iniciais reproduziram a ausência dos modelos do catálogo, a prioridade indevida do curral próximo, a separação incorreta e a falta de entrada no grafo. O roteiro para confirmar a acumulação em jogo está no `HANDOFF.md`.

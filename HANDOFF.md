@@ -2,6 +2,13 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Candidata local 0.4.128 (2026-11-24)
+
+- A branch `codex/currais-tematicos-04127` reúne os currais temáticos e a correção do grafo (`6638482f`, `604c8b5e`). O arenito de uma peça de rua Vanilla entra no grafo desde a primeira leitura. O registro da BigHouseMOD e da casa do mineiro pede releitura.
+- A regressão reproduziu a rua de arenito ignorada com o índice vazio. Os 57 GameTests de grafo e fundação e os seis testes de arquitetura passaram na branch da correção. O cenário da BigHouseMOD verifica a saída pelo piso de areia da porta e a ligação à rede em volta de um desnível.
+- No TLauncher, use a vila do deserto da 0.4.127. Confira a linha ligada aos nós ao lado de `845,63,319` e `885,64,272`. Saia e reabra o mundo. Em uma vila nova no deserto, confira se a primeira leitura inclui as ruas de arenito e se as entradas das fundações ganham ramal. Compare `VC_ROAD_GRAPH`, em especial `edges=` e `loose=`.
+- A mina, o trajeto do pastor com guia, as placas, os baús e o piso do curral grande estão nas [pendências do playtest do deserto](TODO.md#pendências-do-playtest-do-deserto-04127).
+
 ## Candidata local 0.4.127 (2026-11-24)
 
 - A branch `codex/currais-tematicos-04127` parte da 0.4.126 (`1961a279`). Os seis NBTs em `data/villagecolony/structure/colony/` entram no rodízio de obras de vilas com pastor. O interior é plano, com 100 blocos de grama, faixa livre junto à cerca e uma porteira ligada à rede de caminhos.

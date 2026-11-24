@@ -37,6 +37,15 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 
 ## F1 — A vila trabalha (3 a 5 semanas) → portão Beta 0.5.0
 
+### Pendências do playtest do deserto 0.4.127
+
+- [ ] **Confirmar o grafo na 0.4.128.** Colônia `ea1997ba`. A rua Vanilla usa arenito (12:45:34, `873,75,309`); as entradas soltas foram anotadas em `845,63,319` (13:47:54) e na BigHouseMOD em `885,64,272` (13:48:25). Conferir as ligações na vila existente e a primeira leitura em vila nova.
+- [ ] **Investigar a boca da mina fechada.** Às 12:47:11, o mineiro entrou, mas a escadaria parecia fechada (`905,68,326`). Às 13:47:19 o fechamento reapareceu (`905,68,335`), e a descida registrou `WORK_STALLED` em `901,59,329`. Verificar a abertura visível e a interrupção da descida.
+- [ ] **Investigar o trajeto do pastor com guia.** Às 12:49:58, o pastor entrou com a vaca numa casa e encostou em outro aldeão (`874,64,275`). Avaliar o desvio de interiores e o pedido sobre interação de profissionais no horário de trabalho.
+- [ ] **Deliberar sobre a placa externa da moradia.** O autor pediu uma placa indicando quem dorme na estrutura (`847,64,298`, 12:51:27).
+- [ ] **Rever posição e orientação do baú.** A nota de 13:49:41 (`878,63,245`) pede baú encostado na parede e placa voltada para o centro da casa pequena. Cruzar com N14.
+- [ ] **Corrigir o piso do curral grande no deserto.** O autor viu areia (`897,66,272`, 13:50:29) e pediu grama em todo o piso, em qualquer bioma.
+
 ### Pendências do playtest 0.4.122-alpha
 
 - [ ] **Prioridade em jogo.** Confirmar na candidata 0.4.126 se o aldeão sai vivo do telhado e volta à escala (Regra 160). O resgate agora coloca o aldeão direto no piso se a queda excede a distância segura. A origem da subida e do retorno ao mesmo telhado segue aberta. As sete notas e o roteiro estão no [relatório da 0.4.122](docs/technical/Playtest-0.4.122-2026-11-23.md).

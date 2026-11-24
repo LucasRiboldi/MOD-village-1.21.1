@@ -5,7 +5,7 @@
 > **Retomada por outro agente:** comece por `HANDOFF.md`.
 
 ## Onde o projeto está
-- **Candidata local 0.4.127.** O pastor prioriza o curral grande para todas as espécies manejadas, sem limite de lotação. Se o acesso falhar, usa o médio do grupo correspondente ou o cercado comum elegível. Os seis médios têm 10×10 de grama, uma porteira e entrada ligada ao grafo. O roteiro e os resultados estão no [handoff](HANDOFF.md). O playtest do autor segue pendente.
+- **Candidata local 0.4.128.** A rua Vanilla de arenito entra no grafo desde a primeira leitura. BigHouseMOD e casa do mineiro pedem releitura após a fundação. O [handoff](HANDOFF.md) contém o roteiro do deserto. Os seis currais médios de grama e a prioridade do curral grande vieram da 0.4.127 e seguem em validação no [TODO](TODO.md).
 - **Candidata local 0.4.126.** N10 prioriza a porta voltada ao centro com rua transitável no mesmo lote. N14 preserva as vagas de criação de baús quando uma tentativa falha. Os GameTests de moradia e baú passaram. O [roteiro da moradia](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md#n10-e-n14--roteiro-da-moradia) aguarda confirmação em jogo.
 - **Sentinela da 0.4.126.** Unitários e propriedades passaram. Dos 1.251 GameTests, passaram 1.249 (`20261123T184500Z`). Falharam a tosquia N05 e a saída do curral entre varreduras, reproduzida também na 0.4.125.
 - **Candidata local 0.4.125.** O aldeão tenta o pulo padrão antes do maior; colisão horizontal confirmada, encalhe e saída de curral liberam o pulo maior. Os 6 GameTests focados passaram. A candidata anterior de rebanho e telhado segue aguardando [playtest](docs/technical/Playtest-0.4.122-2026-11-23.md).
