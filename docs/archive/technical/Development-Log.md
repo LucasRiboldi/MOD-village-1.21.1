@@ -12567,3 +12567,22 @@ do animal abatido para cruzar com a contagem. A causa da queda, as entradas de
 casa sem ligação e o relato do lenhador na obra aguardam evidência do próximo jogo.
 
 Sentinela `fast` passou com 1.886 testes unitários, uma suíte de propriedades e 1.241 GameTests (`20261123T004749Z`).
+
+## 2026-11-24 — 0.4.129, condução externa e expediente
+
+No item 6 do jogo do deserto da 0.4.127, a nota das 12:49:58 em `874,64,275`
+relatou que o pastor passou por uma casa com uma vaca na guia e encostou em um
+aldeão. As regressões reproduziram o atalho e a escolha de parceiro social durante
+o expediente. A sessão não estabelece a causa do contato físico.
+
+A opção 2 descarta a rota anterior no início da condução e exclui portas abertas
+e fechadas da busca. A porteira do curral continua disponível. A Regra 18 agora
+restringe a conversa se qualquer participante tiver ofício na colônia e estiver
+em expediente. O [handoff](../../HANDOFF.md) indica como repetir o caso em jogo.
+
+O build passou. Os 14 GameTests focados passaram, incluindo o desvio e a transição
+entre expediente e descanso.
+No Sentinela `fast` (`20261124T175259Z`), passaram 1.886 testes unitários, uma
+suíte de propriedades e 1.258 de 1.259 GameTests. A única falha repetiu
+`PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`, registrada
+nas candidatas 0.4.125 a 0.4.128.

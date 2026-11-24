@@ -57,8 +57,9 @@ public final class WorkTargets {
      * @param at para onde ir
      * @param arrival a que distância a navegação pode parar e ainda
      *     dizer que chegou
+     * @param leadingAnimal se a rota precisa permanecer fora das casas durante a condução
      */
-    private record Destination(BlockPos at, int arrival) {
+    private record Destination(BlockPos at, int arrival, boolean leadingAnimal) {
     }
 
     /**
@@ -85,7 +86,17 @@ public final class WorkTargets {
      * e o que sobra é nada.
      */
     public static void set(UUID villagerId, BlockPos target, int arrival) {
-        TARGETS.put(villagerId, new Destination(target.toImmutable(), arrival));
+        TARGETS.put(villagerId, new Destination(target.toImmutable(), arrival, false));
+    }
+
+    /** O pastor leva um animal na guia e precisa de uma rota sem portas (ADR-004). */
+    public static void setLeadingAnimal(UUID villagerId, BlockPos target, int arrival) {
+        TARGETS.put(villagerId, new Destination(target.toImmutable(), arrival, true));
+    }
+
+    public static boolean isLeadingAnimal(UUID villagerId) {
+        Destination destination = TARGETS.get(villagerId);
+        return destination != null && destination.leadingAnimal();
     }
 
     public static Optional<BlockPos> of(UUID villagerId) {

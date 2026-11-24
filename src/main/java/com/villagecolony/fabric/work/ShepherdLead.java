@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.brain.WorkRest;
 import com.villagecolony.fabric.brain.WorkTargets;
 import net.minecraft.entity.decoration.LeashKnotEntity;
 import net.minecraft.entity.passive.AnimalEntity;
@@ -20,9 +21,47 @@ final class ShepherdLead {
 
     /** Longe, por pernas: a navegação não traça o caminho inteiro de uma vez. */
     static void walkTo(ServerWorld world, VillagerEntity shepherd, BlockPos goal, int arrival) {
-        Optional<BlockPos> leg = WalkLegs.towards(world, shepherd.getBlockPos(), goal);
+        walkTo(world, shepherd, goal, arrival, false);
+    }
 
-        WorkTargets.set(shepherd.getUuid(), leg.orElse(goal), leg.isPresent() ? 2 : arrival);
+    /** Usa a navegação externa durante a condução (ADR-004). */
+    static void leadTo(ServerWorld world, VillagerEntity shepherd, BlockPos goal, int arrival) {
+        walkTo(world, shepherd, goal, arrival, true);
+    }
+
+    private static void walkTo(ServerWorld world, VillagerEntity shepherd, BlockPos goal,
+            int arrival, boolean leadingAnimal) {
+        Optional<BlockPos> leg = WalkLegs.towards(world, shepherd.getBlockPos(), goal);
+        BlockPos destination = leg.orElse(goal);
+        int tolerance = leg.isPresent() ? 2 : arrival;
+
+        if (leadingAnimal) {
+            if (!WorkTargets.isLeadingAnimal(shepherd.getUuid())) {
+                // A navegação Vanilla pode reutilizar o caminho feito antes de prender a guia (ADR-004).
+                WorkRest.release(shepherd);
+            }
+            WorkTargets.setLeadingAnimal(shepherd.getUuid(), destination, tolerance);
+        } else {
+            WorkTargets.set(shepherd.getUuid(), destination, tolerance);
+        }
+    }
+
+    static boolean reachedOutsideAnimal(ServerWorld world, VillagerEntity shepherd, AnimalEntity animal) {
+        int reach = ShepherdHerding.REACH;
+        if (shepherd.squaredDistanceTo(animal) > reach * reach) {
+            return false;
+        }
+        if (HerdCandidates.sheltersAnimal(world, shepherd.getBlockPos())) {
+            WorkTargets.set(shepherd.getUuid(), animal.getBlockPos(), 0);
+            return false;
+        }
+        return true;
+    }
+
+    static void takeLeash(VillagerEntity shepherd, AnimalEntity animal) {
+        WorkTargets.clear(shepherd.getUuid());
+        WorkRest.release(shepherd);
+        animal.attachLeash(shepherd, true);
     }
 
     /**

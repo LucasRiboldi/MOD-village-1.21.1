@@ -49,7 +49,7 @@ regra que foi emendada. O corpo de cada regra vive em
 | 15 | A estrada cresce com a vila: a ponta pede as colunas ao grafo, e o aldeão calça (Regra 214) | 08-18 | ✅ feita | `RoadExtension` |
 | 16 | Cada casa com espaço em volta | 08-18 | ⚠️ parcial | volume no `BuildSiteScanner` |
 | 17 | A casa com uma lateral na estrada. Em moradias novas, priorizar a porta voltada ao centro se o mesmo lote oferecer rua transitável diante da porta. Sem esse acesso, manter a orientação original. | 08-19, 11-23 (N10) | Candidata | `Blueprint.doorSide`, `SiteOpening`, `PlanPlacement` |
-| 18 | O dia inteiro é expediente | 08-19 | ✅ feita | `WorkClock`, `WorkHours` |
+| 18 | O dia inteiro é expediente. Durante o expediente, adultos com ofício na colônia não iniciam nem participam de conversas entre aldeões. | 08-19, emenda 11-24 | ✅ feita. Emenda candidata 0.4.129 | `WorkClock`, `WorkHours` |
 | 18-e1 | **Emenda 1:** ninguém para de trabalhar por chuva, e não há pausa ao meio-dia (R-6 e R-7 do estudo de 10-02 recusadas) | 10-02 | ✅ é o que já acontece | `WorkHours` não olha o tempo |
 | 19 | O lote fica no nível da estrada | 08-19 | ✅ feita | `LotLevel.flatGroundAt` |
 | 20 | Cada vila constrói no estilo do bioma | 08-19 | ✅ feita | `VillagePalette`, `VillageBiomesGameTest` |
@@ -240,7 +240,7 @@ regra que foi emendada. O corpo de cada regra vive em
 | 193 | **Mineiro alarga o nível** (autor 11-05): quem espera ramal cava em volta do salão, até 6 anéis e 2 alturas, sem cortar degrau nem o chão dele e sem encostar em fluido | 11-05 | ✅ feita (0.4.28) | `MineSideWork` |
 | 194 | **Coleta no expediente** (autor 11-05): abate do pastor e item do chão só no expediente; emenda a Regra 48 | 11-05 | ✅ feita (0.4.28) | `ShepherdFlock`, `GroundPickup` |
 | 195 | **Reunião do fim do dia** (autor 11-05): o expediente acaba em 10000 tiques; até 11000 os aldeões vão ao sino da vila ou ao centro, menos quem está encalhado, longe ou fundo na mina | 11-05 | ✅ feita (0.4.28) | `WorkClock`, `EveningGathering` |
-| 196 | **Curral antes do poste** (autor 11-05): o pastor leva o animal solto ou amarrado ao curral com lugar; poste só em vila sem curral ou com todos lotados. Curral longe vai por pernas. Portão com rua na saída conta como acesso. Emendada pela Regra 255: com curral na vila, nunca amarra, e o amarrado vai primeiro. | 11-05 |
+| 196 | **Curral antes do poste** (autor 11-05): o pastor leva o animal solto ou amarrado ao curral com lugar; poste só em vila sem curral ou com todos lotados. Curral longe vai por pernas. Portão com rua na saída conta como acesso. Emendada pela Regra 255: com curral na vila, nunca amarra, e o amarrado vai primeiro. Durante a condução na guia, o pastor não usa portas como atalho até o curral. | 11-05, emenda 11-24 |
 | 197 | **Folha no caminho se corta** (autor 11-05): todo aldeão da vila com destino, parado ao lado de folha natural, corta uma por passada. Folha posta à mão e de obra da colônia ficam. A folha do caminho em curso, em qualquer lugar: Regra 290. | 11-05 |
 | 198 | **Lenhador no interior da vila** (autor 11-05): a árvore é escolhida por faixas de 32 blocos a partir do centro; dentro da faixa, a mais perto dele. | 11-05 |
 | 199 | **Sem muda perto de estrutura** (autor 11-05): árvore a até 3 blocos de casa, obra ou peça da vila gerada não é replantada; rua da vila não conta como estrutura. | 11-05 |

@@ -3,11 +3,15 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.gametest.ColonyFixture;
-
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.DoorBlock;
+import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ai.pathing.MobNavigation;
+import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.decoration.LeashKnotEntity;
 import net.minecraft.entity.passive.CowEntity;
 import net.minecraft.entity.passive.PigEntity;
@@ -15,11 +19,84 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 
 import java.util.Optional;
 
 /** O pastor traz o animal solto na corda e o amarra na cerca (ADR-038 P2b). */
 public class ShepherdHerdingGameTest implements FabricGameTest {
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_lead_avoids_house")
+    public void theShepherdWithACowTakesTheOutsideRoute(TestContext context) {
+        for (BlockPos at : BlockPos.iterate(new BlockPos(0, 0, 0), new BlockPos(7, 0, 7))) {
+            context.setBlockState(at, Blocks.STONE);
+        }
+        for (BlockPos at : BlockPos.iterate(new BlockPos(2, 1, 3), new BlockPos(4, 3, 5))) {
+            if (at.getY() == 3 || at.getX() == 2 || at.getX() == 4 || at.getZ() == 3 || at.getZ() == 5) {
+                context.setBlockState(at, Blocks.STONE);
+            }
+        }
+        BlockPos front = new BlockPos(2, 1, 4);
+        BlockPos back = new BlockPos(4, 1, 4);
+        putDoor(context, front, true);
+        putDoor(context, back, true);
+        VillagerEntity shepherd = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 1, 4));
+        shepherd.setOnGround(true);
+        CowEntity cow = context.spawnEntity(EntityType.COW, new BlockPos(1, 1, 5));
+        BlockPos goal = context.getAbsolutePos(new BlockPos(6, 1, 4));
+        var navigation = (MobNavigation) shepherd.getNavigation();
+        navigation.setCanPathThroughDoors(true);
+        navigation.setCanEnterOpenDoors(true);
+        long previousHour = context.getWorld().getTimeOfDay();
+        try {
+            context.getWorld().setTimeOfDay(1_000);
+            var shortcut = navigation.findPathTo(goal, 0);
+            BlockPos absoluteFront = context.getAbsolutePos(front);
+            context.assertTrue(shortcut != null && shortcut.reachesTarget() && includes(shortcut, absoluteFront),
+                    "o cenário precisa oferecer um atalho pela casa");
+            context.assertTrue(navigation.startMovingAlong(shortcut, 0.5), "o atalho precisa estar em uso antes da guia");
+
+            var herd = new ShepherdHerding.Herd(cow.getUuid(), goal, context.getWorld().getTime());
+            cow.attachLeash(shepherd, true);
+            herd.phase = ShepherdHerding.Phase.LEAD;
+            context.assertTrue(ShepherdHerding.step(context.getWorld(), shepherd.getUuid(), herd),
+                    "a condução precisa continuar");
+
+            var outsideRoute = navigation.findPathTo(goal, 0);
+            context.assertTrue(outsideRoute != null && outsideRoute.reachesTarget(), "faltou uma rota externa");
+            context.assertFalse(includes(outsideRoute, absoluteFront) || includes(outsideRoute, context.getAbsolutePos(back)),
+                    "o pastor com a vaca cortou caminho pela casa");
+
+            putDoor(context, front, false);
+            var withClosedDoor = navigation.findPathTo(goal, 0);
+            context.assertTrue(withClosedDoor != null && withClosedDoor.reachesTarget()
+                    && !includes(withClosedDoor, absoluteFront), "a condução tentou abrir a porta");
+
+            WorkTargets.clear(shepherd.getUuid());
+            var ordinaryRoute = navigation.findPathTo(goal, 0);
+            context.assertTrue(ordinaryRoute != null && ordinaryRoute.reachesTarget()
+                    && includes(ordinaryRoute, absoluteFront), "a restrição continuou após o fim da condução");
+        } finally {
+            context.getWorld().setTimeOfDay(previousHour);
+            WorkTargets.clear(shepherd.getUuid());
+            cow.discard();
+            shepherd.discard();
+        }
+        context.complete();
+    }
+
+    private static boolean includes(Path path, BlockPos pos) {
+        for (int index = 0; index < path.getLength(); index++) {
+            if (path.getNodePos(index).equals(pos)) return true;
+        }
+        return false;
+    }
+
+    private static void putDoor(TestContext context, BlockPos pos, boolean open) {
+        var door = Blocks.OAK_DOOR.getDefaultState().with(DoorBlock.FACING, Direction.EAST).with(DoorBlock.OPEN, open);
+        context.setBlockState(pos, door);
+        context.setBlockState(pos.up(), door.with(DoorBlock.HALF, DoubleBlockHalf.UPPER));
+    }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_protects_housed_animals", tickLimit = 40)
     public void theShepherdLeavesAnAnimalInsideAHouse(TestContext context) {

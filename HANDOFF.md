@@ -2,6 +2,17 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Candidata local 0.4.129 (2026-11-24)
+
+- A branch `codex/pastor-rota-expediente` inclui as candidatas 0.4.127 e 0.4.128. No item 6 do deserto, a opção 2 evita portas no trajeto com animal na guia e aplica a regra social aos dois participantes da conversa.
+- Ao prender a guia, o pastor descarta a rota anterior. O filtro de portas abertas ou fechadas vale durante a condução, incluindo a aproximação da porteira. O acesso ao curral segue as regras de entrega vigentes.
+- Adultos com profissão na colônia ficam fora das conversas de aproximação, encontro no sino e troca de itens durante o expediente. Conversas em andamento são reavaliadas no início do expediente. A [ADR-004](docs/decisions/ADR-004-Mixin-Policy.md) registra as injeções.
+- Os 14 GameTests focados passaram. As regressões reproduziram o atalho pela casa e a aproximação social indevida antes da correção.
+- Build aprovado. No Sentinela `fast` (`20261124T175259Z`), passaram 1.886 unitários, a suíte de propriedades e 1.258 de 1.259 GameTests. A única falha foi `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`, já registrada desde a 0.4.125.
+- Candidata `village-colony-0.4.129.jar` com SHA-256 `A8BF59A2A628147BED3F52A6B7E048B07CDAE5874D7DCE38BF122FCBB52A04DA`. O JAR está em `downloads/` e ativo no TLauncher. As três cópias têm o mesmo hash. A 0.4.128 ficou desativada para retorno.
+- No próximo jogo, volte à vila do deserto perto de `874,64,275`. Observe o pastor buscar uma vaca com uma casa entre ela e o curral, primeiro com a porta aberta e depois fechada. Confira o desvio pela rua, a travessia do animal pela porteira e o fechamento antes de soltar a guia. Compare as posições em `VC_FLOCK_EVENT`.
+- Observe as conversas entre aldeões antes e depois do tique 10.000. Durante o expediente, um aldeão livre também deve ignorar um trabalhador como parceiro de conversa. O comportamento em mundo real segue no [TODO](TODO.md#pendências-do-playtest-do-deserto-04127).
+
 ## Candidata local 0.4.128 (2026-11-24)
 
 - A branch `codex/currais-tematicos-04127` reúne os currais temáticos e a correção do grafo (`6638482f`, `604c8b5e`). O arenito de uma peça de rua Vanilla entra no grafo desde a primeira leitura. O registro da BigHouseMOD e da casa do mineiro pede releitura.

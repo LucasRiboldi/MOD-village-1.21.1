@@ -330,7 +330,7 @@ final class ShepherdHerding {
         if (herd.phase == Phase.EXIT) {
             if (ShepherdPens.isOutside(herd.from, animal)) {
                 PenTether.release(animal);
-                animal.attachLeash(shepherd, true);
+                ShepherdLead.takeLeash(shepherd, animal);
                 PenLog.herdEvent(world, shepherdId, herd.animal, herd.fence, "LEASHED", "from_pen");
                 FencedIn.closeWhenClear(herd.from.gate());
                 herd.from = null;
@@ -360,14 +360,14 @@ final class ShepherdHerding {
                 return false;
             }
 
-            if (shepherd.squaredDistanceTo(animal) <= REACH * REACH) {
+            if (ShepherdLead.reachedOutsideAnimal(world, shepherd, animal)) {
                 if (HerdCandidates.sheltersAnimal(world, animal.getBlockPos())) {
                     abort(world, shepherdId, herd, "animal_in_shelter");
                     return false;
                 }
                 Entity tiedTo = animal.getLeashHolder();
 
-                animal.attachLeash(shepherd, true);
+                ShepherdLead.takeLeash(shepherd, animal);
                 PenLog.herdEvent(world, shepherdId, herd.animal, herd.fence, "LEASHED", "from_fetch");
 
                 if (tiedTo instanceof LeashKnotEntity knot) {
@@ -408,7 +408,7 @@ final class ShepherdHerding {
                 ShepherdLead.alignAtGate(animal, goal);
                 if (!herd.pen.reach().contains(shepherd.getBlockPos()) && !ShepherdPens.isInside(herd.pen, animal)
                         && animal.squaredDistanceTo(net.minecraft.util.math.Vec3d.ofBottomCenter(goal)) > REACH * REACH) {
-                    ShepherdLead.walkTo(world, shepherd, ShepherdLead.gateWaitingSpot(world, herd.pen, animal), 0);
+                    ShepherdLead.leadTo(world, shepherd, ShepherdLead.gateWaitingSpot(world, herd.pen, animal), 0);
                     return true;
                 }
                 WorkTargets.clear(shepherdId);
@@ -458,9 +458,9 @@ final class ShepherdHerding {
         }
 
         if (ShepherdLead.isTooFar(shepherd, animal)) {
-            WorkTargets.set(shepherdId, animal.getBlockPos(), REACH - 1);
+            ShepherdLead.leadTo(world, shepherd, animal.getBlockPos(), REACH - 1);
         } else {
-            ShepherdLead.walkTo(world, shepherd, goal, REACH - 1);
+            ShepherdLead.leadTo(world, shepherd, goal, REACH - 1);
         }
 
         return true;

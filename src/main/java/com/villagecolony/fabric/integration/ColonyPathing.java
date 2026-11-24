@@ -6,6 +6,7 @@ import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.StreetRoute;
 import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.fabric.brain.WorkTargets;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.PillarBlock;
 import net.minecraft.entity.ai.pathing.PathNodeType;
@@ -71,6 +72,11 @@ public final class ColonyPathing {
     private ColonyPathing() {
     }
 
+    private static boolean isDoor(PathNodeType type) {
+        return type == PathNodeType.DOOR_OPEN || type == PathNodeType.WALKABLE_DOOR
+                || type == PathNodeType.DOOR_WOOD_CLOSED || type == PathNodeType.DOOR_IRON_CLOSED;
+    }
+
     /**
      * O tipo do nó para este bicho: o mesmo, ou {@link #OFF_STREET} quando é aldeão da colônia, o nó é andável, fica
      * dentro da caixa da vila dele e o chão embaixo não é de rua. Prepara os custos do aldeão na passagem.
@@ -78,6 +84,11 @@ public final class ColonyPathing {
     public static PathNodeType forWalker(BlockView world, MobEntity mob, int x, int y, int z, PathNodeType type) {
         if (!(mob instanceof VillagerEntity)) {
             return type;
+        }
+
+        // A guia fica do lado de fora, inclusive quando o aldeão poderia abrir a porta (ADR-004).
+        if (isDoor(type) && WorkTargets.isLeadingAnimal(mob.getUuid())) {
+            return PathNodeType.BLOCKED;
         }
 
         Optional<Worker> worker = VillageColonyMod.WORKERS.find(mob.getUuid());
