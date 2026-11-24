@@ -2,6 +2,16 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Candidata local 0.4.127 (2026-11-24)
+
+- A branch `codex/currais-tematicos-04127` parte da 0.4.126 (`1961a279`). Os seis NBTs em `data/villagecolony/structure/colony/` entram no rodízio de obras de vilas com pastor. O interior é plano, com 100 blocos de grama, faixa livre junto à cerca e uma porteira ligada à rede de caminhos.
+- O curral grande aceita todas as espécies manejadas e tem prioridade sem limite de lotação. Sem acesso ao grande, o pastor tenta o médio compatível ou segue as regras do cercado comum. A contagem lê todos os currais. O abate preserva dois adultos da espécie no curral da vítima e continua exigindo excedente na vila.
+- Os 50 GameTests focados e os três testes de NBT passaram. Nos currais novos do mod, a abertura ganha espaço durante a entrega de animais largos. O fechamento reconecta a cerca antes de soltar a guia.
+- Sentinela `fast` final (`20261124T090817Z`): unitários e propriedades passaram. Passaram 1.254 de 1.255 GameTests. A única falha, `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`, também ocorreu na 0.4.125 e na 0.4.126.
+- O playtest da 0.4.126 registrou, na colônia `4dac0976`, três animais no grande e nove num cercado sem classificação. Houve seis rejeições de acesso externo e `BREED_WAIT ... no_reachable_ready_pair`. A sessão deixou a causa da baixa acumulação em aberto.
+- O JAR `village-colony-0.4.127.jar` gerado por `remapJar` está em `downloads/` e ativo no TLauncher. As três cópias têm SHA-256 `5099153313BEFAF9F602F83735F28C785C0E05DEE5B4CB53EDA940C8E102E67C`. O JAR da 0.4.126 ficou desativado para retorno.
+- No próximo jogo, confirme a ligação das porteiras à rua e observe a entrega ao curral grande. Bloqueie seus acessos num mundo de teste para verificar o destino temático. Observe o pastor pular a cerca, o animal caminhar pela porteira e a porteira fechar antes de soltar a guia. Acompanhe contagem, nascimentos e abates com `VC_PENS`, `VC_ROUND`, `VC_FLOCK_EVENT` e `VC_FLOCK_HARVEST`. Registre as pendências no [TODO](TODO.md).
+
 ## Candidata local 0.4.126 (2026-11-23)
 
 - A branch `codex/playtest-04126` reúne a 0.4.125 e os ajustes N10 e N14. A porta da moradia nova prioriza o centro se a mesma pegada permite acesso pela rua. A varredura usa o limite de dois para baús criados.

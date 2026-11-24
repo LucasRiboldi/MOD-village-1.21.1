@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.BlueprintKind;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BlockProtection;
@@ -42,7 +43,7 @@ public final class BuriedPieces {
 
     /**
      * O piso de grama de curral sobre pedra do terreno: a pedra não é o chão da planta, e o curral leva terra no
-     * solo (Regra 253, autor 2026-11-12). Só pedra natural que a proteção deixa quebrar; casa e outras plantas
+     * solo (Regra 253, autor 2026-11-12). Os médios também substituem solo natural por grama (Regra 168). As outras plantas
      * seguem a regra do chão já pronto.
      */
     public static boolean soilOverStone(
@@ -51,7 +52,10 @@ public final class BuriedPieces {
         BlockState state = world.getBlockState(where);
 
         return blueprint.isBuried(block) && blueprint.isPen()
-                && state.isIn(net.minecraft.registry.tag.BlockTags.BASE_STONE_OVERWORLD)
+                && (state.isIn(net.minecraft.registry.tag.BlockTags.BASE_STONE_OVERWORLD)
+                    || (BlueprintKind.isMediumPen(blueprint.id())
+                        && !state.isOf(net.minecraft.block.Blocks.GRASS_BLOCK)
+                        && com.villagecolony.fabric.integration.SiteSurroundings.isNaturalGround(state)))
                 && world.getBlockEntity(where) == null
                 && BlockProtection.mayBuildOver(world, where, state);
     }

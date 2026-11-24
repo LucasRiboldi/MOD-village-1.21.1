@@ -11,6 +11,12 @@ public final class BlueprintKind {
     /** Na pasta do mod, roça é a planta que termina assim: a plantação grande (Regra 241). */
     private static final String COLONY_FARM_SUFFIX = "_farm";
 
+    /** As seis plantas temáticas usam a portinhola como frente da obra (Regra 168). */
+    public static boolean isMediumPen(ResourceId id) {
+        return id != null && COLONY_NAMESPACE.equals(id.namespace())
+                && id.path().startsWith(COLONY_FOLDER + "medium_animal_pen_");
+    }
+
     private BlueprintKind() {
     }
 

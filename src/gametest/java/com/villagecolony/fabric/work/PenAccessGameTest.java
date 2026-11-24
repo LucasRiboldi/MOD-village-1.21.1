@@ -90,7 +90,7 @@ public final class PenAccessGameTest implements FabricGameTest {
             context.assertTrue(ShepherdPens.animalsIn(context.getWorld(), pens.getFirst()) == 1,
                     "animal no canto não entrou na contagem");
             var pen = ShepherdPens.pensOf(context.getWorld(), colony).getFirst();
-            context.assertTrue(ShepherdPens.capacityOf(pen) == 20 && pen.accesses().size() == 4,
+            context.assertTrue(pen.large() && pen.accesses().size() == 4,
                     "registro perdeu capacidade ou acessos do curral único");
             for (var at : pen.reach().stream().filter(at -> context.getWorld().getBlockState(at.down()).isOf(Blocks.GRASS_BLOCK))
                     .filter(at -> !at.equals(cow.getBlockPos())).sorted(java.util.Comparator.comparingLong(BlockPos::asLong))
@@ -103,7 +103,7 @@ public final class PenAccessGameTest implements FabricGameTest {
                 animals.add(animal);
             }
             context.assertTrue(ShepherdPens.animalsIn(context.getWorld(), pen) == 20
-                    && !ShepherdPens.hasRoom(context.getWorld(), pen), "quatro entradas multiplicaram a lotação total de 20");
+                    && ShepherdPens.hasRoom(context.getWorld(), pen), "o curral grande recusou o próximo animal após 20");
             // A vaca já está dentro: a entrega abre o portão principal e ele fecha assim que fica livre.
             ShepherdPens.startIn(context.getWorld(), pen, cow);
             context.assertTrue(ShepherdPens.isInside(pen, cow), "vaca do canto não conta como dentro");

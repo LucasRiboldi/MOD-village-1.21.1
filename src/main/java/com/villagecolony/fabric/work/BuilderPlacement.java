@@ -119,7 +119,7 @@ public final class BuilderPlacement {
         // Só sobre lugar livre: a Regra 3 continua valendo — bloco posto (planks, peça de vila) não
         // é sobrescrito (BuilderGameTest.farmlandDoesNotReplaceAPlacedBlock).
         if (BuriedPieces.soilOverStone(world, project.blueprint(), block, target)) {
-            // O piso do curral troca a pedra do terreno pela terra da planta, como o aterro: sem gastar recurso (Regra 253).
+            // O piso do curral molda o terreno natural sem gastar recurso, como o aterro (Regras 168 e 253).
             world.setBlockState(target, state, Block.NOTIFY_ALL);
             com.villagecolony.fabric.integration.EditLedger.mod(world, target.toImmutable(), state, "obra"); // Regra 345
             com.villagecolony.fabric.integration.PlacedLogs.note(target, state, "build:" + project.blueprint().id());

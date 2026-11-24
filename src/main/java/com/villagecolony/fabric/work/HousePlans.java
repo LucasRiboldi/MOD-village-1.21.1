@@ -363,7 +363,7 @@ public final class HousePlans {
         boolean farmOwed = ColonyFarms.owedToTheFarmers(world, colony);
 
         // A lâmpada fica em `village/<style>/`; oficinas e roças, na pasta de lotes.
-        for (ResourceId id : VillageStructures.buildableFor(style)) {
+        for (ResourceId id : PenPlans.withMediumPens(colony, buildings, VillageStructures.buildableFor(style))) {
             String type = constructionType(id);
 
             if ("house".equals(type)

@@ -228,8 +228,8 @@ public final class Blueprint {
      * bloco da parede oeste, com o encaixe de rua do gerador do mesmo
      * lado. A conta acerta os dois.
      *
-     * <p>Vazio quando não há porta. Não é erro: uma planta de cerca ou
-     * de poço não tem por onde entrar, e girar não faria diferença.
+     * <p>Nos currais médios, a portinhola única define a frente (Regra 168).
+     * Outras plantas sem porta conservam a orientação original.
      *
      * <p>Empate resolvido pela ordem norte, sul, oeste, leste. Só
      * acontece em planta de largura ímpar com a porta no meio exato, e
@@ -237,8 +237,9 @@ public final class Blueprint {
      * variar entre sessões.
      */
     public Optional<Side> doorSide() {
+        String entrance = BlueprintKind.isMediumPen(id) ? "_fence_gate" : "_door";
         return blocks.stream()
-                .filter(block -> block.block().path().endsWith("_door"))
+                .filter(block -> block.block().path().endsWith(entrance))
                 .map(BlueprintBlock::offset)
                 .findFirst()
                 .map(this::nearestWall);

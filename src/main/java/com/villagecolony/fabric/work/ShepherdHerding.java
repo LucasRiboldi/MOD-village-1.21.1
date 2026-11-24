@@ -219,6 +219,7 @@ final class ShepherdHerding {
         Optional<BlockPos> fence = Optional.empty();
         Optional<BlockPos> newPost = Optional.empty();
         boolean fenceRead = false;
+        boolean hasPens = !ShepherdPens.pensOf(world, colony).isEmpty();
 
         for (AnimalEntity animal : candidates) {
             Optional<ShepherdPens.Pen> pen = ShepherdPens.forSpecies(world, colony, animal.getType(), shepherd, null, false);
@@ -232,10 +233,8 @@ final class ShepherdHerding {
 
             // Com curral na vila, nunca amarra: o animal espera a próxima tentativa, e o log diz por que o curral não
             // serviu (Regra 255). Sem curral nenhum, só o solto vai para a cerca ou para o poste novo (Regra 196).
-            if (!ShepherdPens.pensOf(world, colony).isEmpty()) {
-                PenRefusal.log(world, colony, shepherd, animal);
-
-                return PenRegroup.separate(world, colony, shepherd);
+            if (hasPens) {
+                continue;
             }
 
             if (animal.isLeashed() || ShepherdFlock.isKept(world, animal)) {
@@ -259,6 +258,9 @@ final class ShepherdHerding {
             return Optional.of(herd);
         }
 
+        if (hasPens && !candidates.isEmpty()) {
+            PenRefusal.log(world, colony, shepherd, candidates.getFirst());
+        }
         return PenRegroup.separate(world, colony, shepherd);
     }
 

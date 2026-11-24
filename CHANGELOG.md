@@ -12,6 +12,13 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.127] — candidata, 2026-11-24
+
+- Curral grande prioritário para qualquer espécie, sem limite de animais imposto pelo mod.
+- Seis currais médios temáticos com 10×10 de grama plana, porteira única, acesso ao grafo, vegetação, iluminação e alimentação decorativa.
+- Currais Vanilla mantêm o manejo padrão. O pastor conta o rebanho de todos os cercados da vila.
+- Na entrega de animais largos ao curral grande ou médio, a cerca abre espaço junto à porteira e volta a conectar quando ela fecha.
+
 ## [0.4.126] — candidata, 2026-11-23
 
 - Casas novas priorizam a porta voltada ao centro quando a rotação cabe no mesmo lote e há rua transitável diante da porta (N10).
