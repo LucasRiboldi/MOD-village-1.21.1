@@ -488,12 +488,8 @@ public class ChestPlacerGameTest implements FabricGameTest {
         world.addBlockEntity(BlockEntity.createFromNbt(source, originalState, savedChest, registries));
         context.assertTrue(ChestPlacer.placeForOriginalVillageBed(world, bed, room).chest().orElseThrow().equals(source),
                 "a adoção não deve criar outro baú enquanto o primeiro aguarda reparo");
-        // Diagnóstico temporário: a migração só aceita destino no mesmo chunk da origem.
-        String chunks = "origem=" + source.toShortString() + " chunk=" + new net.minecraft.util.math.ChunkPos(source)
-                + " destino=" + target.toShortString() + " chunk=" + new net.minecraft.util.math.ChunkPos(target);
-        VillageColonyMod.LOGGER.info("VC_DIAG_CHEST_REPAIR {}", chunks);
         context.assertTrue(HomeChestMoves.repair(world, storages, worker, bed, room),
-                "o baú do mod deveria migrar para a parede livre após recarregar o NBT (" + chunks + ")");
+                "o baú do mod deveria migrar para a parede livre após recarregar o NBT");
         BlockPos destination = MinecraftTypeAdapter.toBlockPos(storages.of(worker).orElseThrow().chestPosition());
         context.assertTrue(!source.equals(destination) && world.getBlockState(source).isAir(),
                 "o registro precisa apontar para o novo baú, e o baú antigo deve sumir");
