@@ -131,6 +131,10 @@ public final class RoadGraphRefresh {
         long now = world.getTime();
 
         for (Colony colony : List.copyOf(VillageColonyMod.COLONIES.all())) {
+            if (RoadRegionEvents.takeBuildingPlaced(colony.id())) {
+                requestNow(colony.id());
+            }
+
             Scan scan = SCANS.get(colony.id());
 
             if (scan != null) {

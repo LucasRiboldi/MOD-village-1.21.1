@@ -37,8 +37,19 @@ public final class RoadRegionEvents {
     /** Por colônia, os quadrados marcados desde a última montagem. */
     private static final Map<UUID, Set<Long>> MARKED = new HashMap<>();
     private static final Map<UUID, Map<Long, Integer>> REFUSED = new HashMap<>();
+    private static final Set<UUID> BUILDINGS_PLACED = new HashSet<>();
 
     private RoadRegionEvents() {
+    }
+
+    /** Uma construção foi colocada inteira na fundação. As entradas já podem ser lidas (Regra 223). */
+    public static void buildingPlaced(UUID colonyId) {
+        BUILDINGS_PLACED.add(colonyId);
+    }
+
+    /** Consome o pedido de releitura depois de registrar as entradas da fundação. */
+    public static boolean takeBuildingPlaced(UUID colonyId) {
+        return BUILDINGS_PLACED.remove(colonyId);
     }
 
     /** Exclui o passo da busca até mudar seu piso, apoio ou passagem (Regra 295). */
@@ -130,5 +141,6 @@ public final class RoadRegionEvents {
     public static void clearAll() {
         MARKED.clear();
         REFUSED.clear();
+        BUILDINGS_PLACED.clear();
     }
 }

@@ -5,7 +5,6 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.work.RoadGraphRefresh;
 import com.villagecolony.fabric.world.GeneratedVillages;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -122,7 +121,7 @@ public final class BigHouseFoundation {
                         placedAt.getZ() + size.getZ() - 1),
                 true);
         VillageColonyMod.BUILDINGS.register(building);
-        RoadGraphRefresh.requestNow(colony.id());
+        RoadRegionEvents.buildingPlaced(colony.id());
 
         VillageColonyMod.LOGGER.info(
                 "Placed BigHouseMOD for colony {} at {}",
