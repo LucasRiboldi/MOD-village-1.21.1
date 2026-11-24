@@ -2,6 +2,15 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega para outro agente — 0.4.134 (2026-11-24)
+
+- **Branch:** `fix/pulo-grande-todo-tique`, criada da `main` em `f8f2c459` (0.4.133 já integrada pelo PR #105).
+- **Causa da falha fixa do `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`:** desde a 0.4.125 (`bd7abd57`, pulo padrão primeiro) o teste falhou em 15 de 15 execuções do CI de 24-11 e em 5 de 5 isolado. O `PEN_DIAG` mostrou dois pulos padrão perdidos na cerca (t=9 e t=22) e o maior só em t=35: `VillagerMoves.needsHighJump` era conferido a cada 2 tiques e devolvia falso sem caminho, e a navegação larga o caminho na queda.
+- **Correção (escolha 1 do autor):** colisão conferida a todo tique e com ou sem caminho. O teste do pulo (`VillagerRulesGameTest.theHighJumpIsOnlyForObstacles`) ganhou o caso sem caminho; falhou antes e com a produção antiga (mutação), passa depois.
+- **Teste do curral (escolha 1 do autor):** com o pulo padrão primeiro, a saída leva 41 tiques e não cabe na janela de 39 da inspeção. O teste cobra a saída sozinha em até 60 tiques, sem o `PenEscape` conduzir. Com a produção antiga ele também passa (54 tiques): sozinho, não prova a melhoria.
+- **Verificação:** 27 GameTests focados (pulo, curral, guia, condução). Sentinela `fast` `20261124T234447Z`: 1.886 unitários, propriedades e 1.264 de 1.265 GameTests; a falha foi `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder`, com os dois chunks carregados e o baú sem migrar.
+- **Outros instáveis medidos no CI de 24-11 (15 execuções):** baú na borda 5×, travessia após fusão 4×, N26 4×, N05 3×, `MineStepDownGameTest` 1× (5 de 5 verdes isolado).
+
 ## Entrega para outro agente — 0.4.133 (2026-11-24)
 
 - **Branch:** `claude/resgate-telhado-seguro`, criada de `codex/piso-curral-grande` e com o PR #106 (baú na borda do chunk) já mesclado nela. **PR #107** foi mesclado pelo autor em `codex/piso-curral-grande` (merge `c76aadc5`, 2026-11-24 22:09 UTC); este bloco de handoff entrou depois, pelo PR #109. O PR #105 (`codex/piso-curral-grande` → `main`) também segue aberto.

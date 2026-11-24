@@ -8,6 +8,11 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   está em `docs/technical/TODO-herdado-2026-11-13.md`.
 - O TODO antigo inteiro, por jogo, está em `docs/archive/technical/TODO-ate-2026-11-13.md` (`grep`).
 
+## Estado de integração — 0.4.134 (2026-11-24)
+
+- [ ] PR de `fix/pulo-grande-todo-tique` para a `main`, CI verde e pré-release. A saída do curral (`PenEscapeGameTest`) voltou a passar; no Sentinela `20261124T234447Z` a única falha foi `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder`, com os dois chunks carregados e o baú sem migrar (mensagem no relatório).
+- [ ] Conferir em jogo que o trabalhador sai do curral pela cerca com um pulo padrão perdido, não dois (Regra 171).
+
 ## Estado de integração — 0.4.133 (2026-11-24)
 
 - [ ] CI verde em `codex/piso-curral-grande` e pré-release `v0.4.133-alpha` (o PR #108 entrou, mas não estabilizou o `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder`).
@@ -18,7 +23,6 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 - [ ] Publicar a candidata na `main`: a branch `codex/piso-curral-grande` contém o código e a documentação da 0.4.131; falta PR, CI verde, merge e release `v0.4.131-alpha`.
 - [ ] Playtest do item 9 no deserto: conferir grama no piso de circulação do curral grande, os 12 blocos de canteiro e água nas posições da planta. Retomada de obra iniciada também precisa ser observada após reabrir o mundo.
 - [ ] 🔴 `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder` (PR #106) falha às vezes no CI (2 vezes em 8) e trava o portão da release. A hipótese dos chunks descarregados (PR #108) foi enfraquecida: falhou de novo com todos os chunks carregados. Ler a mensagem no `gametest-report.xml` da execução 45498542870; detalhes no [HANDOFF](HANDOFF.md).
-- [ ] Repetir `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`: falha conhecida nas candidatas 0.4.125–0.4.131; investigar a saída pela cerca antes da varredura agendada.
 - [ ] Depois do playtest, registrar versão efetivamente carregada, notas `/vc bioma nota`, `/vc salvar`, `VC_PENS`, `VC_ROUND`, `VC_FLOCK_EVENT` e `VC_FLOCK_HARVEST` no próximo relatório.
 
 ## F0 — Sinal limpo (1 semana)
@@ -62,7 +66,6 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 ### Pendências do playtest 0.4.122-alpha
 
 - [ ] **Prioridade em jogo.** Confirmar na candidata 0.4.133 se o aldeão sai vivo do telhado, volta à escala e não retorna ao mesmo telhado (Regras 151 e 160). O resgate coloca o aldeão direto no piso se a queda excede a distância segura; o trecho da rede de ruas não para mais no topo de chaminé, muro ou telhado. No log, `338,87,1412` não deve voltar como destino. As sete notas e o roteiro estão no [relatório da 0.4.122](docs/technical/Playtest-0.4.122-2026-11-23.md).
-- [ ] **Investigar a saída do curral entre varreduras.** `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan` falhou nas candidatas 0.4.125 a 0.4.131. Conferir a saída pela cerca quando a navegação normal chega antes da varredura agendada.
 - [ ] **Validar salto progressivo na 0.4.126.** Em degraus e cercas, o aldeão deve tentar o pulo padrão primeiro; o pulo maior só após colisão horizontal. Encalhe e saída de curral seguem exceções.
 - [ ] **Verificar a travessia após fusão.** A segunda tentativa de [CI do PR #104](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/runs/45117483717/attempts/2) falhou em `aVillagerWalksBetweenTheTwoOldRoadNetworks`. N26 e a tosquia passaram nessa tentativa.
 

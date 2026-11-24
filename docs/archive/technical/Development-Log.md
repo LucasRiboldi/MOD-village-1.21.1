@@ -12655,3 +12655,9 @@ jogo perto do jogador, roda o reparo no tick seguinte e registra em
 O jogo da 0.4.122 teve três fazendeiros mortos por queda depois de resgates do mesmo telhado. A 0.4.123 já punha o aldeão direto no piso quando o salto passava da queda segura. Faltava a volta: o destino `338,87,1412` seguia o topo da chaminé (pedregulho e muro do construtor), e `ColonyPathing.standingOn` aceitava qualquer chão firme como lugar de pé do trecho da rede de ruas. Agora o trecho só para em chão de rua, caminho ou chão natural (Regras 151 e 160).
 
 `StreetRouteGameTest.aStreetColumnUnderAChimneyIsNotALeg` falhou antes da correção com "o topo da chaminé virou lugar de pé do trecho da rede". O `ColonyMergeTriggerGameTest` calçava a rede com pedregulho e passou a usar `dirt_path`. Os 120 GameTests focados (rota, telhado, mina, água, fusão, cerca, encalhe) passaram.
+
+## 2026-11-24 — 0.4.134, pulo maior na colisão seguinte
+
+`PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan` falhava sempre desde a 0.4.125 (15 de 15 no CI de 24-11, 5 de 5 isolado), não de vez em quando. O `PEN_DIAG` mostrou o aldeão perder dois pulos padrão na cerca: `VillagerMoves.needsHighJump` rodava a cada 2 tiques e saía falso sem caminho antes de ler `horizontalCollision`, e a navegação larga o caminho quando o aldeão cai do pulo. Agora a colisão vale a todo tique, com ou sem caminho (Regra 171); o pulo maior sai em t=22 em vez de t=35.
+
+O teste do curral não cabia mais em 39 tiques com o pulo padrão primeiro (saída em 41). Por escolha do autor, cobra a saída sozinha em até 60 tiques, sem o `PenEscape`. Mutação: com a produção antiga, `VillagerRulesGameTest.theHighJumpIsOnlyForObstacles` cai ("colisão sem caminho ativo não ativou o pulo maior"); o teste do curral passa em 54 tiques. Sentinela `fast` `20261124T234447Z`: 1.264 de 1.265 GameTests, falha só no baú na borda do chunk.

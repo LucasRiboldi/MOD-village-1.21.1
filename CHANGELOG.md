@@ -12,6 +12,11 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.134] — candidata, 2026-11-24
+
+- O pulo maior entra no pulo seguinte ao que bateu: a colisão é conferida a todo tique e vale mesmo quando a navegação largou o caminho na queda (Regra 171). Na cerca do curral, um pulo padrão perdido em vez de dois.
+- `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan` cobra a saída sozinha pela cerca em até 60 tiques, sem o socorro do curral; o prazo de 39 não cabia com o pulo padrão primeiro.
+
 ## [0.4.133] — candidata, 2026-11-24
 
 - O trecho da rede de ruas só para sobre chão de rua, caminho ou chão natural. A coluna coberta por chaminé, muro ou telhado não leva mais o aldeão de volta ao telhado de onde foi resgatado (Regras 151 e 160).

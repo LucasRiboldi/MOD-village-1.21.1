@@ -181,7 +181,7 @@ classe prova menos ainda.
 | 168 | Currais da colônia: um grande misto prioritário por vila e seis modelos médios no rodízio… | cita | PenModelGameTest |
 | 169 | Passagem livre: aldeão da colônia quebra aos poucos as folhas naturais que bloqueiam seu… | classe | LeafPathsGameTest |
 | 170 | Lote sem árvores: ao escolher terreno para qualquer estrutura, remove a árvore natural in… | classe | BiomeCoverageGameTest, BiomeSiteGameTest, FoundationPreparationGameTest |
-| 171 | Pulo do aldeão (autor 11-04): a altura padrão do jogo; o maior só com obstáculo, cerca, e… | cita | VillagerRulesGameTest |
+| 171 | Pulo do aldeão (autor 11-04; pulo padrão primeiro desde a 0.4.125): a altura padrão do jo… | cita | PenEscapeGameTest, VillagerRulesGameTest |
 | 172 | Água aberta (autor 11-04): com mais de 5 blocos de água à frente, todo aldeão anda cerca… | cita | VillagerRulesGameTest |
 | 173 | Zona da obra limpa (autor 11-04): árvore, tronco, folha e flor saem em todas as alturas,… | cita | TreeClearingGameTest |
 | 174 | Ponte (autor 11-04): sem caminho a seco na zona da vila, o construtor atravessa a água, a… | fora de vigor |  |
