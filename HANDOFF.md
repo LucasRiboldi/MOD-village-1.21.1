@@ -2,7 +2,14 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
-## Candidata local 0.4.133 (2026-11-24)
+## Teste do baú na borda do chunk — PR #108 (2026-11-24)
+
+- O PR #106 (já em `codex/piso-curral-grande`) deixa o baú residencial migrar para o chunk vizinho, desde que carregado. Antes, `HomeChestMoves.repair` exigia o mesmo chunk, e `ChestPlacerGameTest.repairsAProvenChestWithoutDroppingContents` falhava quando o GameTest caía com a borda entre os dois lados da cama.
+- O teste novo `repairsAProvenChestAcrossAChunkBorder` falhou depois em 1 de 6 execuções do CI (45489203898, 2ª rodada), com origem e destino já em chunks vizinhos. A causa **não está provada**. Hipótese: o deslocamento de até 8 blocos tira a casa da área que o GameTest mantém carregada, e `repair` exige a casa inteira carregada (`Homes.isLoaded`).
+- O PR #108 (branch `claude/project-thread-02gx49`, só teste e Development-Log) força os chunks da casa, roda o reparo no tick seguinte e registra os que estavam descarregados. O CI 45495565158 passou neste teste (única falha: a conhecida do `PenEscapeGameTest`). Falta o merge com squash pelo autor.
+- Se voltar a falhar: a mensagem da falha traz `descarregados antes de forçar=[...]`, e o log traz `VC_TEST_CHEST_BORDER_UNLOADED`. Lista vazia com falha derruba a hipótese; aí investigar as outras condições de `HomeChestMoves.repair` e `ChestPlacer.repairSlot` (parede, porta, escada, `world.isSpaceEmpty`). O ambiente de nuvem não compila o mod; leia os logs com `get_job_logs` e `grep`.
+- Em nenhuma execução que passou apareceu `VC_HOME_CHEST_MOVED` para este teste (o teste original registra a linha normalmente). Motivo desconhecido; conferir ao investigar.
+
 
 - Branch `claude/resgate-telhado-seguro`, criada de `codex/piso-curral-grande` (0.4.131) por escolha do autor; sem push. Integra-se depois da 0.4.131.
 - O trecho da rede de ruas (`ColonyPathing.standingOn`) só para em chão de rua, caminho ou chão natural (Regras 151 e 160). Completa o resgate de telhado da 0.4.123: o fazendeiro não volta ao topo da chaminé em `338,87,1412`.
