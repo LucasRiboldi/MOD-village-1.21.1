@@ -4,8 +4,8 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 252
-- **Só usa a classe indicada:** 86
+- **Cita a regra:** 254
+- **Só usa a classe indicada:** 84
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
 
@@ -161,7 +161,7 @@ classe prova menos ainda.
 | 148 | A obra nunca fica largada meio pronta (autor 10-28, taiga simulada: casa em "0 blocks lef… | cita | BuildClosingGameTest |
 | 149 | Rua sem falha: falha de até 2 blocos de chão natural numa linha reta entre duas colunas d… | cita | HouseSurroundingsGameTest, VillageHelpersGameTest |
 | 150 | O pastor só tosquia junto da ovelha (autor 21-11, N05 do jogo da 0.4.115; substitui o alc… | cita | ShepherdGameTest |
-| 151 | O aldeão da colônia prefere a rua e evita a água (autor 10-28, jogo da 0.3.104: 4 de 7 te… | classe | ColonyMergeTriggerGameTest, FencedInGameTest, StreetRouteGameTest |
+| 151 | O aldeão da colônia prefere a rua e evita a água (autor 10-28, jogo da 0.3.104: 4 de 7 te… | cita | ColonyMergeTriggerGameTest, StreetRouteGameTest |
 | 152 | O solo da vila nasce suave na geração (autor 10-29: crateras e montanhas no meio das vila… | classe | ClearAbovePieceGameTest, VillageBlendTest, VillageCoreTest |
 | 153 | Mais ajudas de quem está sem tarefa (autor 10-28, O1/O3/O4/O8; pedido de novo em 10-29),… | classe | GroundSmoothingGameTest, IdleFixesGameTest, ItemStockGameTest |
 | 154 | Lenhador, fundidor e fazendeiro: os ajustes do O5–O7 (autor 10-28; pedido de novo em 10-2… | cita | VillageGroveGameTest |
@@ -170,7 +170,7 @@ classe prova menos ainda.
 | 157 | O mineiro não quebra o que segura algo solto (autor 10-29, jogo da 0.3.108: o cascalho pe… | classe | MineGravityGameTest, MineLooseGameTest, MineSettlingGameTest |
 | 158 | Sem cama no andar de baixo da casa de escada de mão (autor 10-29, jogo da 0.3.108: 9 de 2… | classe | BedChoiceGameTest, BedPlanTest, BiomeBlueprintsGameTest |
 | 159 | O aldeão da colônia pula 2 blocos e por cima da cerca (autor 10-29, depois do jogo da 0.3… | cita | LumberjackGameTest, PenEscapeGameTest |
-| 160 | O construtor trabalha do chão, e quem fica num telhado desce. Da zona da obra (pegada + 4… | classe | BuildZoneGameTest, BuilderApproachGameTest, BuilderGameTest |
+| 160 | O construtor trabalha do chão, e quem fica num telhado desce. Da zona da obra (pegada + 4… | cita | StreetRouteGameTest |
 | 161 | Comer enche a vida (autor 10-29): todo aldeão que come (a comida do inventário, ou para c… | cita | VillagerRulesGameTest |
 | 162 | O miolo do cercado fica livre (autor 10-29, jogo da 0.3.110: o cercado nasceu com blocos… | classe | GroundSmoothingGameTest, OreTowerGameTest, PlayerGroundGameTest |
 | 163 | Roça por fazendeiro e pela maior das contas (autor 10-30): a vila abre uma roça para cada… | cita | ConstructionPriorityTest, FarmOwnersTest |
