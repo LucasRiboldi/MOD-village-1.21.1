@@ -2,13 +2,18 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
-## Candidata local 0.4.133 (2026-11-24)
+## Entrega para outro agente — 0.4.133 (2026-11-24)
 
-- Branch `claude/resgate-telhado-seguro`, criada de `codex/piso-curral-grande` (0.4.131) por escolha do autor; sem push. Integra-se depois da 0.4.131.
-- O trecho da rede de ruas (`ColonyPathing.standingOn`) só para em chão de rua, caminho ou chão natural (Regras 151 e 160). Completa o resgate de telhado da 0.4.123: o fazendeiro não volta ao topo da chaminé em `338,87,1412`.
-- `StreetRouteGameTest.aStreetColumnUnderAChimneyIsNotALeg` falhou antes e passa depois; 120 GameTests focados passaram; depois do merge do PR #106, 34 focados (rota, telhado, fusão, encalhe, baú) passaram. Sentinela `fast` (`20261124T204300Z`, já com o PR #106): 1.886 unitários, propriedades e 1.264 de 1.265 GameTests, com a falha conhecida do `PenEscapeGameTest`.
-- `village-colony-0.4.133.jar` instalado no TLauncher e copiado para `downloads/`; SHA-256 `FAC43A023956DF59C615BD3039DD9281113AAC6D31C2DBE14547682B1AAB3998` nas três cópias. As anteriores ficaram `.jar.disabled`.
-- No jogo: observar a casa junto de `338,86,1414`. Nenhum fazendeiro deve morrer por queda nem repetir resgate ali; `338,87,1412` não deve aparecer como destino no diário.
+- **Branch:** `claude/resgate-telhado-seguro`, criada de `codex/piso-curral-grande` e com o PR #106 (baú na borda do chunk) já mesclado nela. **PR #107** (para `codex/piso-curral-grande`, não para a `main`) está aberto e espera o merge manual do autor: o `gh pr merge` foi bloqueado pelo modo automático do Claude Code. O PR #105 (`codex/piso-curral-grande` → `main`) também segue aberto.
+- **O que a 0.4.133 traz:** resgate de telhado sem queda perigosa (`RoofDescent`, commit `c8b32ace`) e trecho da rede de ruas que só para em chão de rua, caminho ou chão natural (`ColonyPathing.standingOn`), Regras 151 e 160. Inclui o baú residencial na borda do chunk (PR #106).
+- **Instalado:** `village-colony-0.4.133.jar` no TLauncher e em `downloads/`, SHA-256 `FAC43A023956DF59C615BD3039DD9281113AAC6D31C2DBE14547682B1AAB3998` nas três cópias; as anteriores ficaram `.jar.disabled`.
+- **Testes:** `StreetRouteGameTest.aStreetColumnUnderAChimneyIsNotALeg` falhou antes e passa depois. Sentinela `fast` `20261124T204300Z`: 1.886 unitários, propriedades e 1.264 de 1.265 GameTests (falha conhecida do `PenEscapeGameTest`). CI do PR #107, duas tentativas, com falhas que mudam de rodada: `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`, N05 (`ShepherdGameTest.theShepherdOnlyShearsAfterReachingTheSheep`), N26 (`PenTetherGameTest.theAnimalWalksFromASideLedgeThroughTheGate`) e `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder`. Este último está sendo corrigido no PR #108, no tópico do baú.
+- **Pré-release `v0.4.133-alpha`:** adiada por escolha do autor até os testes instáveis ficarem verdes. O workflow Release exige CI verde no mesmo commit.
+- **A confirmar em jogo:** nenhum fazendeiro morre de queda nem é resgatado de novo perto de `338,86,1414`; `338,87,1412` não aparece como destino no diário.
+- **Hipótese não provada:** a coluna `338,1412` pertence à rede de ruas; o GameTest só reproduz a geometria. **Risco:** coluna da rede sobre piso de construção (tábuas) deixa de servir de trecho, e o aldeão vai direto ao destino.
+- **Próximos passos:** (1) merge do PR #107; (2) trazer o PR #108 depois que ele entrar; (3) CI verde e pré-release `v0.4.133-alpha`; (4) PR #105 para a `main`.
+- **Logs de playtest:** `%APPDATA%\.minecraft\logs` (`latest.log` e `.log.gz`) e `%APPDATA%\.minecraft\saves\Novo mundo\villagecolony\analytics` (diário de ações, relatórios `VC_*`).
+- **Ao falar com o autor:** linguagem simples, sem jargão; ele prefere saber o que está pronto e o que falta.
 
 ## Entrega preparada para outro agente — 0.4.131 (2026-11-24)
 

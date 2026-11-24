@@ -8,6 +8,12 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   está em `docs/technical/TODO-herdado-2026-11-13.md`.
 - O TODO antigo inteiro, por jogo, está em `docs/archive/technical/TODO-ate-2026-11-13.md` (`grep`).
 
+## Estado de integração — 0.4.133 (2026-11-24)
+
+- [ ] Mesclar o PR #107 (`claude/resgate-telhado-seguro` → `codex/piso-curral-grande`): espera o autor; o merge automático foi bloqueado.
+- [ ] Trazer o PR #108 (estabilidade de `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder`) quando entrar; depois CI verde e pré-release `v0.4.133-alpha`.
+- [ ] Estabilizar N05 (`ShepherdGameTest.theShepherdOnlyShearsAfterReachingTheSheep`) e N26 (`PenTetherGameTest.theAnimalWalksFromASideLedgeThroughTheGate`): falharam no CI do PR #107 em rodadas diferentes.
+
 ## Estado de integração — 0.4.131 (2026-11-24)
 
 - [ ] Publicar a candidata na `main`: a branch `codex/piso-curral-grande` contém o código e a documentação da 0.4.131; falta PR, CI verde, merge e release `v0.4.131-alpha`.

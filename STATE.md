@@ -5,7 +5,7 @@
 > **Retomada por outro agente:** comece por `HANDOFF.md`.
 
 ## Onde o projeto está
-- **Candidata local 0.4.133 (Regras 151 e 160).** Mortes do jogo da 0.4.122: o resgate de telhado já usava descida direta acima da queda segura (0.4.123). Agora o trecho da rede de ruas só para em chão de rua, caminho ou chão natural; a coluna coberta pela chaminé (pedregulho e muro em `338,85–86,1412`) deixa de mandar o fazendeiro de volta ao telhado. Branch `claude/resgate-telhado-seguro`, sobre a 0.4.131 com o PR #106 (baú na borda do chunk). Sentinela `fast` (`20261124T204300Z`): 1.886 unitários, propriedades e 1.264 de 1.265 GameTests; a falha é a conhecida `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`. JAR instalado, SHA-256 `FAC43A023956DF59C615BD3039DD9281113AAC6D31C2DBE14547682B1AAB3998`. Aguarda [playtest](docs/technical/Playtest-0.4.122-2026-11-23.md).
+- **Candidata 0.4.133, instalada (Regras 151 e 160).** Resgate de telhado sem queda perigosa e trecho da rede de ruas só sobre chão de rua ou natural, mais o baú na borda do chunk (PR #106). JAR SHA-256 `FAC43A023956DF59C615BD3039DD9281113AAC6D31C2DBE14547682B1AAB3998`. PR #107 para `codex/piso-curral-grande` espera merge manual do autor; pré-release adiada até os testes instáveis (PenEscape, N05, N26, ChestPlacer na borda — PR #108) ficarem verdes. Aguarda [playtest](docs/technical/Playtest-0.4.122-2026-11-23.md) perto de `338,86,1414`. Detalhes no [HANDOFF](HANDOFF.md).
 - **Candidata local 0.4.131.** Obras novas ou retomadas do curral grande moldam o piso de circulação em grama no terreno natural do bioma. Água e canteiros seguem a planta. O item 9 aguarda o [playtest](HANDOFF.md#candidata-local-04131-2026-11-24).
 - **Entrega preparada.** O código e os documentos estão na branch `codex/piso-curral-grande`. PR, CI, merge e `v0.4.131-alpha` ainda são etapas de integração; o roteiro está no topo de [`HANDOFF.md`](HANDOFF.md) e a lista viva no topo de [`TODO.md`](TODO.md).
 - **Desde a 0.4.130.** Placas externas acompanham as camas atribuídas. Quadros de baús em casas pequenas preferem o centro. Baús residenciais com recibo de colocação podem migrar para uma parede livre. Os itens 7 e 8 aguardam o [playtest](HANDOFF.md#candidata-local-04130-2026-11-24).
@@ -15,8 +15,6 @@
 - **Sentinela da 0.4.126.** Unitários e propriedades passaram. Dos 1.251 GameTests, passaram 1.249 (`20261123T184500Z`). Falharam a tosquia N05 e a saída do curral entre varreduras, reproduzida também na 0.4.125.
 - **Candidata local 0.4.125.** O aldeão tenta o pulo padrão antes do maior; colisão horizontal confirmada, encalhe e saída de curral liberam o pulo maior. Os 6 GameTests focados passaram. A candidata anterior de rebanho e telhado segue aguardando [playtest](docs/technical/Playtest-0.4.122-2026-11-23.md).
 - **Altura das entradas (N12/N28).** O grafo preserva o piso válido da porta quando há uma rua acima na mesma coluna. Os 17 GameTests focados passaram. A mina e a casa do mineiro aguardam [confirmação em jogo](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
-- **Verificação do grafo.** O Sentinela `fast` passou nas três suítes, incluindo 1.240 GameTests, na branch da correção sobre a main (`20261123T021932Z`).
-- **PR #102:** N12/N28 (reconexão) e N14 (placa voltada para a passagem livre) integrados. A placa aguarda confirmação em jogo. N24 aguarda deliberação.
 - **Jogo da 0.4.118:** [seis notas](docs/technical/Playtest-0.4.118-2026-11-22.md). A 0.4.119 trata a condução lateral de galinha e protege animais abrigados.
   A queda na contagem do curral grande e a atividade do lenhador na obra seguem em investigação. Os demais itens estão no [plano da 0.4.115](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
 - **Verificação da 0.4.121:** 1.886 unitários e a suíte de propriedades passaram. O Sentinela `fast` (`20261123T014911Z`) encontrou três falhas nos 1.242 GameTests. Após atualizar a expectativa antiga de coleta, os cinco testes de abate e o teste de coleta do excedente passaram na rodada focada (20/21). A falha da guia também ocorre na 0.4.120. A falha no desnível lateral só apareceu na bateria completa.
@@ -26,8 +24,6 @@
   jogador e publicação.
 - **Fase do cronograma:** F0, sinal limpo (documentos nos tetos, instáveis declarados, ferramentas de régua corrigidas).
   Depois vêm F1 (a vila trabalha) e o portão Beta 0.5.0.
-- **0.4.115 jogada:** o resgate limpa a memória de caminhada anterior em GameTest. O retorno ao telhado ainda requer observação em jogo.
-- **Validação histórica:** [CHANGELOG](CHANGELOG.md) registra 0.4.116 a 0.4.118. O [plano da 0.4.113](docs/technical/Proximo-ciclo-0113.md) registra seus nove itens.
 - **Modo:** correção por playtest (`CLAUDE.md` §0.2.2).
 
 ## Candidatas que esperam jogo
