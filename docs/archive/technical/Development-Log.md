@@ -12642,3 +12642,10 @@ chunk o teste passa; com a casa montada sobre a borda, falha.
 Por escolha do autor, o destino pode estar no chunk vizinho, desde que carregado; o
 `repair` já exige a casa inteira carregada. `repairsAProvenChestAcrossAChunkBorder`
 desloca a casa até a borda e prova a migração com os itens no mesmo slot.
+
+O teste da borda falhou depois em 1 de 6 execuções do CI (PR #107, execução
+45489203898, 2ª rodada), já com origem e destino em chunks vizinhos. Hipótese não
+verificada: o deslocamento leva a casa para fora da área carregada do GameTest, e
+`repair` exige a casa inteira carregada. O teste passa a forçar esses chunks, como em
+jogo perto do jogador, roda o reparo no tick seguinte e registra em
+`VC_TEST_CHEST_BORDER_UNLOADED` os chunks que estavam descarregados.

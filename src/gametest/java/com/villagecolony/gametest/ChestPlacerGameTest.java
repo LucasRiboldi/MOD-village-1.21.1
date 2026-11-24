@@ -27,6 +27,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -464,6 +465,11 @@ public class ChestPlacerGameTest implements FabricGameTest {
      * casa (Regra 3 e ADR-036 item 4). A casa é deslocada até que cama+1, a
      * origem, fique na primeira coluna de um chunk e cama−1, o destino, no
      * chunk anterior.
+     *
+     * <p>O deslocamento pode levar a casa para fora da área que o GameTest
+     * mantém carregada, e {@code repair} exige a casa inteira carregada. Os
+     * chunks da casa são forçados como em jogo, perto do jogador, e o reparo
+     * roda no tick seguinte; os que estavam descarregados vão na mensagem.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "placer_move_chunk")
     public void repairsAProvenChestAcrossAChunkBorder(TestContext context) {
@@ -472,6 +478,37 @@ public class ChestPlacerGameTest implements FabricGameTest {
             shift -= 16;
         }
         BlockPos relativeBed = BED.add(shift, 0, 0);
+        var world = context.getWorld();
+        BlockPos bed = context.getAbsolutePos(relativeBed);
+
+        // Mesma janela que Homes.isLoaded confere: a casa (cama ± 2) e mais um bloco.
+        List<String> unloaded = new ArrayList<>();
+        List<ChunkPos> forced = new ArrayList<>();
+        for (int cx = (bed.getX() - 3) >> 4; cx <= (bed.getX() + 3) >> 4; cx++) {
+            for (int cz = (bed.getZ() - 3) >> 4; cz <= (bed.getZ() + 3) >> 4; cz++) {
+                if (!world.getChunkManager().isChunkLoaded(cx, cz)) {
+                    unloaded.add(new ChunkPos(cx, cz).toString());
+                }
+                if (!world.getForcedChunks().contains(ChunkPos.toLong(cx, cz))) {
+                    world.setChunkForced(cx, cz, true);
+                    forced.add(new ChunkPos(cx, cz));
+                }
+            }
+        }
+        if (!unloaded.isEmpty()) {
+            VillageColonyMod.LOGGER.info("VC_TEST_CHEST_BORDER_UNLOADED bed={} chunks={}", bed.toShortString(), unloaded);
+        }
+
+        context.waitAndRun(1, () -> {
+            try {
+                moveAcrossTheBorder(context, relativeBed, unloaded);
+            } finally {
+                forced.forEach(chunk -> world.setChunkForced(chunk.x, chunk.z, false));
+            }
+        });
+    }
+
+    private static void moveAcrossTheBorder(TestContext context, BlockPos relativeBed, List<String> unloaded) {
         layBed(context, relativeBed);
         var world = context.getWorld();
         BlockPos bed = context.getAbsolutePos(relativeBed);
@@ -490,7 +527,8 @@ public class ChestPlacerGameTest implements FabricGameTest {
                 Blocks.STONE.getDefaultState());
 
         String where = "origem=" + source.toShortString() + " chunk=" + new ChunkPos(source)
-                + " destino=" + target.toShortString() + " chunk=" + new ChunkPos(target);
+                + " destino=" + target.toShortString() + " chunk=" + new ChunkPos(target)
+                + " descarregados antes de forçar=" + unloaded;
         context.assertFalse(new ChunkPos(source).equals(new ChunkPos(target)),
                 "o cenário devia cruzar a borda do chunk (" + where + ")");
         context.assertTrue(HomeChestMoves.repair(world, storages, worker, bed, room),
