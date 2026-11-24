@@ -21,20 +21,16 @@ import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * O pastor cuida do rebanho — ADR-038 P2c e ADR-039 E2: alimenta para procriar,
- * um par por espécie a cada {@link #BETWEEN_PAIRS}, com a comida que ele aceita,
- * tirada de qualquer baú da vila. O animal solto também come; a coleta
- * ({@code ShepherdHerding}) o traz para a cerca depois. Até {@link #FLOCK_TARGET}
- * adultos de cada espécie; com {@value #SURPLUS_FOOD} ou mais da comida da espécie nos
- * baús, até {@value #SURPLUS_TARGET} (Regra 238). Acima de {@link #FLOCK_TARGET} só a comida
- * do fazendeiro serve: a ração que surge sozinha (Regra 117) não passa da meta de antes.
+ * O pastor alimenta pares com a comida que a espécie aceita (ADR-038 P2c e ADR-039 E2).
+ * Com currais, as espécies de corte formam pares no mesmo recinto. A meta de adultos por
+ * espécie soma todos os currais e sobe de 8 para 16 com pelo menos 32 itens de alimento
+ * aceito nos baús (Regra 238). A ração da Regra 117 só atende a meta de 8.
  */
 public final class ShepherdFlock {
 
@@ -103,7 +99,7 @@ public final class ShepherdFlock {
     }
 
     /**
-     * Um par por espécie, se a vila tem pastor, comida e animais guardados.
+     * Alimenta até dois pares por espécie quando um pastor alcança os dois animais.
      *
      * @return se algum par foi posto para procriar
      */
@@ -121,12 +117,18 @@ public final class ShepherdFlock {
         LAST.put(colony.id(), now);
 
         Box area = areaOf(colony);
+        PenFlock flock = PenFlock.read(world, colony);
         List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.id(), colony.center());
         boolean paired = false;
+        Map<EntityType<?>, Integer> targets = new HashMap<>();
 
         for (EntityType<? extends AnimalEntity> species : SPECIES) {
+            List<List<AnimalEntity>> groups = breedingGroups(world, species, area, flock);
+            List<AnimalEntity> adults = groups.stream().flatMap(List::stream).toList();
+            int target = creationTarget(world, species, adults, chests);
+            targets.put(species, target);
             for (int pair = 0; pair < PAIRS_PER_ROUND; pair++) {
-                if (!pairOf(world, colony, species, area, chests)) {
+                if (!pairOf(world, colony, species, groups, adults.size(), target, chests, null)) {
                     break;
                 }
 
@@ -134,10 +136,9 @@ public final class ShepherdFlock {
             }
         }
 
-        // Colher o excedente do rebanho (couro/carne) e cozinhar a carne crua — 2026-10-14.
-        // Um abate por ciclo, deixando sempre a reserva viva; não toca a obra (Regra 59). Só no expediente (Regra 194).
+        // Abate um adulto por rodada no expediente, preservando as reservas da vila e do curral (Regras 68 e 194).
         if (com.villagecolony.core.coordination.WorkClock.isWorkTime(world.getTimeOfDay())) {
-            FlockHarvest.step(world, colony, area, chests);
+            FlockHarvest.step(world, colony, flock, chests, targets);
         }
 
         return paired;
@@ -159,13 +160,14 @@ public final class ShepherdFlock {
         }
 
         Box area = areaOf(colony);
+        PenFlock flock = PenFlock.read(world, colony);
         Map<Item, Integer> keep = new HashMap<>();
 
         for (EntityType<? extends AnimalEntity> species : SPECIES) {
-            List<? extends AnimalEntity> adults = world.getEntitiesByType(
-                    species, area, animal -> animal.isAlive() && !animal.isBaby());
+            List<List<AnimalEntity>> groups = breedingGroups(world, species, area, flock);
+            List<AnimalEntity> adults = groups.stream().flatMap(List::stream).toList();
 
-            if (adults.size() < 2 || adults.size() >= FLOCK_TARGET) {
+            if (adults.size() >= FLOCK_TARGET || groups.stream().noneMatch(group -> group.size() >= 2)) {
                 continue;
             }
 
@@ -191,10 +193,14 @@ public final class ShepherdFlock {
 
     /** Regra 68: alimentar e abater exigem um pastor vivo a até cinco blocos do animal. */
     static VillagerEntity nearbyShepherd(ServerWorld world, Colony colony, AnimalEntity animal) {
+        return nearbyShepherd(world, colony, animal, animal);
+    }
+
+    private static VillagerEntity nearbyShepherd(ServerWorld world, Colony colony, AnimalEntity first, AnimalEntity second) {
         for (var worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
             if (worker.profession().filter(ProfessionType.SHEPHERD::equals).isPresent()
                     && world.getEntity(worker.villagerId()) instanceof VillagerEntity shepherd
-                    && shepherd.isAlive() && shepherd.squaredDistanceTo(animal) <= ACTION_REACH_SQUARED) {
+                    && shepherd.isAlive() && reachesBoth(shepherd, first, second)) {
                 return shepherd;
             }
         }
@@ -217,9 +223,8 @@ public final class ShepherdFlock {
     }
 
     static boolean breedForWool(ServerWorld world, Colony colony, Box area, List<ColonyPos> chests) {
-        int sheep = world.getEntitiesByType(EntityType.SHEEP, area,
-                animal -> animal.isAlive() && !animal.isBaby()).size();
-
+        List<List<AnimalEntity>> groups = breedingGroups(world, EntityType.SHEEP, area, PenFlock.read(world, colony));
+        int sheep = groups.stream().mapToInt(List::size).sum();
         if (sheep >= FLOCK_TARGET) {
             VillageColonyMod.LOGGER.info(
                     "Colony {} — no wool and the flock is full ({} sheep): the wool grows back on its own",
@@ -227,7 +232,14 @@ public final class ShepherdFlock {
             return false;
         }
 
-        return pairOf(world, colony, EntityType.SHEEP, area, chests);
+        return pairOf(world, colony, EntityType.SHEEP, groups, sheep, FLOCK_TARGET, chests, null);
+    }
+
+    /** A ajuda ociosa usa o mesmo rebanho, o próprio pastor e somente trigo dos baús. */
+    static boolean feedSheep(ServerWorld world, Colony colony, VillagerEntity shepherd, List<ColonyPos> chests) {
+        var groups = breedingGroups(world, EntityType.SHEEP, areaOf(colony), PenFlock.read(world, colony));
+        int adults = groups.stream().mapToInt(List::size).sum();
+        return pairOf(world, colony, EntityType.SHEEP, groups, adults, FLOCK_TARGET, chests, shepherd);
     }
 
     /**
@@ -254,75 +266,101 @@ public final class ShepherdFlock {
                 .orElseGet(() -> new Box(center).expand(RADIUS));
     }
 
-    private static boolean pairOf(ServerWorld world, Colony colony, EntityType<? extends AnimalEntity> species,
-            Box area, List<ColonyPos> chests) {
-        List<? extends AnimalEntity> adults = world.getEntitiesByType(
-                species, area, animal -> animal.isAlive() && !animal.isBaby());
-        int target = adults.isEmpty() ? FLOCK_TARGET : targetFor(foodOf(species, adults.get(0)).stream()
+    /** Criação de corte por curral. A criação anterior à obra e as demais espécies usam a área da vila. */
+    private static List<List<AnimalEntity>> breedingGroups(ServerWorld world,
+            EntityType<? extends AnimalEntity> species, Box area, PenFlock flock) {
+        if (LIVESTOCK.contains(species) && !flock.pens().isEmpty()) {
+            return flock.pens().stream().map(stock -> stock.adults(species)).toList();
+        }
+        return List.of(world.getEntitiesByType(species, area, animal -> animal.isAlive() && !animal.isBaby())
+                .stream().map(AnimalEntity.class::cast).toList());
+    }
+
+    private static int creationTarget(ServerWorld world, EntityType<?> species,
+            List<AnimalEntity> adults, List<ColonyPos> chests) {
+        return adults.isEmpty() ? FLOCK_TARGET : targetFor(foodOf(species, adults.getFirst()).stream()
                 .mapToInt(food -> ColonyChests.countIn(world, chests, food)).sum());
+    }
 
-        if (adults.size() >= target) {
+    private record Pair(VillagerEntity shepherd, AnimalEntity first, AnimalEntity second) {
+    }
+
+    private static Pair readyPair(ServerWorld world, Colony colony, List<List<AnimalEntity>> groups,
+            VillagerEntity helper) {
+        for (List<AnimalEntity> group : groups) {
+            List<AnimalEntity> ready = group.stream().filter(animal -> animal.getBreedingAge() == 0
+                    && !animal.isInLove() && !ShepherdHerding.isHerded(animal.getUuid())).toList();
+            for (int i = 0; i < ready.size(); i++) {
+                AnimalEntity first = ready.get(i);
+                for (int j = i + 1; j < ready.size(); j++) {
+                    AnimalEntity second = ready.get(j);
+                    if (first.squaredDistanceTo(second) > 64.0) {
+                        continue;
+                    }
+                    if (helper != null) {
+                        if (reachesBoth(helper, first, second)) {
+                            return new Pair(helper, first, second);
+                        }
+                    } else {
+                        VillagerEntity shepherd = nearbyShepherd(world, colony, first, second);
+                        if (shepherd != null) {
+                            return new Pair(shepherd, first, second);
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean reachesBoth(VillagerEntity shepherd, AnimalEntity first, AnimalEntity second) {
+        return shepherd.squaredDistanceTo(first) <= ACTION_REACH_SQUARED
+                && shepherd.squaredDistanceTo(second) <= ACTION_REACH_SQUARED;
+    }
+
+    private static boolean pairOf(ServerWorld world, Colony colony, EntityType<? extends AnimalEntity> species,
+            List<List<AnimalEntity>> groups, int adults, int target, List<ColonyPos> chests, VillagerEntity helper) {
+        if (adults < 2 || adults >= target) {
+            return false;
+        }
+        Pair pair = readyPair(world, colony, groups, helper);
+        if (pair == null) {
+            if (helper == null) {
+                PenLog.breedingWait(colony, species, adults, target, "no_reachable_ready_pair");
+            }
             return false;
         }
 
-        List<AnimalEntity> ready = new ArrayList<>();
-        for (AnimalEntity animal : adults) {
-            if (animal.getBreedingAge() == 0 && !animal.isInLove()
-                    && nearbyShepherd(world, colony, animal) != null) {
-                ready.add(animal);
-            }
-            if (ready.size() == 2) {
-                break;
+        List<Item> foods = helper == null ? foodOf(species, pair.first()) : List.of(Items.WHEAT);
+        for (Item food : foods) {
+            if (mayFeed(world, chests, food) && ColonyChests.withdraw(world, chests, food, PAIR_FOOD) == PAIR_FOOD) {
+                feed(world, colony, pair, food, adults, target, "chest");
+                return true;
             }
         }
 
-        if (ready.size() < 2 || nearbyShepherd(world, colony, ready.get(0))
-                != nearbyShepherd(world, colony, ready.get(1))) {
+        // Regra 117: a ração só completa a meta base e só entra quando a fazenda não entregou nada.
+        Item ration = ANIMAL_FEED.get(species);
+        if (helper != null || ration == null || adults >= FLOCK_TARGET
+                || foods.stream().anyMatch(food -> ColonyChests.countIn(world, chests, food) > 0)) {
+            if (helper == null) {
+                PenLog.breedingWait(colony, species, adults, target, "no_available_food");
+            }
             return false;
         }
 
-        for (Item food : foodOf(species, ready.get(0))) {
-            if (!mayFeed(world, chests, food)) {
-                continue;
-            }
-
-            ColonyChests.withdraw(world, chests, food, PAIR_FOOD);
-
-            for (AnimalEntity animal : ready) {
-                animal.lovePlayer(null);
-            }
-
-            VillageColonyMod.LOGGER.info(
-                    "Colony {} — the shepherd fed two {} with {} to breed ({} adults, target {})",
-                    colony.id().toString().substring(0, 8), species.getUntranslatedName(),
-                    food, adults.size(), target);
-            return true;
-        }
-
-        // Sem nada do fazendeiro nos baús, a ração vem sozinha — Regra 117 (jogo da 0.3.93: "the
-        // shepherd has no food" milhares de vezes em todo bioma, e o rebanho parado abaixo da meta).
-        // Só sem nada: com um pouco do fazendeiro guardado, o par espera a colheita.
-        Item feed = ANIMAL_FEED.get(species);
-        boolean farmMadeSome = foodOf(species, ready.get(0)).stream()
-                .anyMatch(food -> ColonyChests.countIn(world, chests, food) > 0);
-
-        if (feed == null || farmMadeSome || adults.size() >= FLOCK_TARGET) {
-            VillageColonyMod.LOGGER.info("Colony {} — the shepherd has no food for the {} ({} adults)",
-                    colony.id().toString().substring(0, 8), species.getUntranslatedName(), adults.size());
-            return false;
-        }
-
-        for (AnimalEntity animal : ready) {
-            animal.lovePlayer(null);
-        }
-
-        Supplies.record(SupplyException.ANIMAL_FEED, colony.id(), Registries.ITEM.getId(feed).getPath(), PAIR_FOOD);
-        VillageColonyMod.LOGGER.info(
-                "Colony {} — the farmer made no food for the {}, so animal feed ({}) came in for a pair"
-                        + " ({} adults, target {})",
-                colony.id().toString().substring(0, 8), species.getUntranslatedName(), feed, adults.size(),
-                FLOCK_TARGET);
+        Supplies.record(SupplyException.ANIMAL_FEED, colony.id(), Registries.ITEM.getId(ration).getPath(), PAIR_FOOD);
+        feed(world, colony, pair, ration, adults, target, "ration");
         return true;
+    }
+
+    private static void feed(ServerWorld world, Colony colony, Pair pair, Item food, int adults, int target,
+            String source) {
+        pair.first().lovePlayer(null);
+        pair.second().lovePlayer(null);
+        PenLog.fed(world, colony, pair.shepherd(), pair.first(), pair.second(), food, adults, target, source);
+        ActionJournal.action(pair.shepherd().getUuid(), "FED", ActionJournal.idOf(food), PAIR_FOOD,
+                pair.first().getBlockPos(), "the flock breeds");
     }
 
     /** A meta de adultos da espécie pela comida dela nos baús (Regra 238). */

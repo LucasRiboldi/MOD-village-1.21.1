@@ -43,11 +43,15 @@ dentro da cerca está guardado, com a porteira como estiver.
 
 ### Emenda de 22-11-2026 — entrega escolhida pelo autor
 
-O pastor abre a porteira, pula a cerca, alinha-se diante da abertura pelo lado de dentro e caminha em direção ao centro do curral. O animal atravessa na guia, pela porteira. Com o animal dentro e a passagem desocupada, a porteira fecha, o pastor solta o animal e sai pulando a cerca. Os demais aldeões contornam o curral, inclusive quando a porteira está aberta.
+O pastor abre a porteira, pula a cerca, alinha-se diante da abertura pelo lado de dentro e caminha em direção ao centro do curral. O animal atravessa na guia, pela porteira. No curral grande ou médio, os braços da cerca voltados à porteira se retraem durante a passagem de animais largos e voltam a conectar ao fechar. Com o animal dentro e a passagem desocupada, a porteira fecha, o pastor solta o animal e sai pulando a cerca. Os demais aldeões contornam o curral, inclusive quando a porteira está aberta.
 
 ### Emenda de 22-11-2026 — reserva para abate
 
 Em qualquer curral da vila, o pastor só abate um adulto quando há pelo menos três adultos da mesma espécie dentro daquele cercado. Restam pelo menos dois adultos da espécie no curral. A reserva de seis adultos por espécie na área da vila continua valendo (Regra 167).
+
+### Destino do rebanho e currais temáticos (2026-11-24)
+
+O pastor prioriza qualquer acesso alcançável do curral grande registrado, que é misto e sem limite de animais. Os médios aceitam apenas os seus grupos. Na ronda, o pastor pode realocar um animal fora do grupo do médio, respeitando o limite de uma separação por dia. Currais Vanilla mantêm seu manejo padrão. A contagem considera todos os cercados da vila e a reprodução procura pares adultos da mesma espécie e do mesmo curral.
 
 ## Consequências
 

@@ -121,6 +121,7 @@ public final class BigHouseFoundation {
                         placedAt.getZ() + size.getZ() - 1),
                 true);
         VillageColonyMod.BUILDINGS.register(building);
+        RoadRegionEvents.buildingPlaced(colony.id());
 
         VillageColonyMod.LOGGER.info(
                 "Placed BigHouseMOD for colony {} at {}",

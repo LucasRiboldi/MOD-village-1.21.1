@@ -7,6 +7,7 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import net.minecraft.server.world.ServerWorld;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -40,6 +41,22 @@ final class PenPlans {
         }
         return HousePlans.READ.computeIfAbsent(MODEL, missing -> StructureBlueprintReader.read(world, missing))
                 .map(List::of).orElseGet(List::of);
+    }
+
+    static List<ResourceId> withMediumPens(Colony colony, List<Building> buildings, List<ResourceId> catalog) {
+        if (!ShepherdFlock.hasShepherd(colony)) return catalog;
+        List<ResourceId> candidates = new ArrayList<>(catalog);
+        candidates.addAll(missingMediumPens(buildings));
+        return candidates;
+    }
+
+    /** Uma variante de cada tema no rodízio normal das vilas com pastor (Regra 168). */
+    static List<ResourceId> missingMediumPens(List<Building> buildings) {
+        return java.util.Arrays.stream(MediumPenType.values())
+                .map(MediumPenType::model)
+                .filter(id -> buildings.stream().noneMatch(building -> building.blueprint().equals(id)
+                        && building.finished()))
+                .toList();
     }
 
     /** Uma obra terminada ou abandonada deste modelo ocupa a única vaga de curral grande. */

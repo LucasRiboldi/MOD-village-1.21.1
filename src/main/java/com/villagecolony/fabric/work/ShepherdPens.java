@@ -1,6 +1,5 @@
 package com.villagecolony.fabric.work;
 
-import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.type.ColonyPos;
@@ -79,16 +78,19 @@ final class ShepherdPens {
      * @param reach o chão de dentro inteiro
      */
     record Pen(BlockPos gate, BlockPos inside, BlockPos outside, Set<BlockPos> reach, boolean large,
-               List<Access> accesses) {
+               List<Access> accesses, Optional<MediumPenType> theme, boolean vanilla) {
         Pen(BlockPos gate, BlockPos inside, BlockPos outside, Set<BlockPos> reach, boolean large) {
-            this(gate, inside, outside, Set.copyOf(reach), large, List.of(new Access(gate, inside, outside)));
+            this(gate, inside, outside, reach, large, List.of(new Access(gate, inside, outside)));
+        }
+        Pen(BlockPos gate, BlockPos inside, BlockPos outside, Set<BlockPos> reach, boolean large, List<Access> accesses) {
+            this(gate, inside, outside, reach, large, accesses, Optional.empty(), false);
         }
         Pen {
             reach = Set.copyOf(reach);
             accesses = List.copyOf(accesses);
         }
         Pen at(Access access) {
-            return new Pen(access.gate(), access.inside(), access.outside(), reach, large, accesses);
+            return new Pen(access.gate(), access.inside(), access.outside(), reach, large, accesses, theme, vanilla);
         }
     }
 
@@ -112,16 +114,17 @@ final class ShepherdPens {
         return pensOf(world, colony).stream()
                 .filter(pen -> hasRoom(world, pen))
                 .flatMap(pen -> nearestAccess(world, pen, from, access -> true).stream())
-                .min(Comparator.comparingDouble(pen -> pen.outside().getSquaredDistance(from)));
+                .min(Comparator.comparing((Pen pen) -> !pen.large())
+                        .thenComparingDouble(pen -> pen.outside().getSquaredDistance(from)));
     }
 
-    /** Curral grande registrado leva 20; cercados legados usam área de chão. */
+    /** Regra 72: o grande não tem lotação; os demais usam a área de chão. */
     static int capacityOf(Pen pen) {
-        return pen.large() ? 20 : Math.max(1, pen.reach().size() / FLOOR_PER_ANIMAL);
+        return pen.large() ? Integer.MAX_VALUE : Math.max(1, pen.reach().size() / FLOOR_PER_ANIMAL);
     }
 
     static boolean hasRoom(ServerWorld world, Pen pen) {
-        return animalsIn(world, pen) < capacityOf(pen);
+        return pen.large() || animalsIn(world, pen) < capacityOf(pen);
     }
 
     /**
@@ -135,14 +138,11 @@ final class ShepherdPens {
     }
 
     /**
-     * O cercado para um animal desta espécie — Regra 72, autor de 2026-10-22: <i>"deixar animais iguais no
-     * mesmo curral; se tiver mais de um curral na vila, colocar um tipo de animal em um curral e outro em
-     * outro"</i>. Entre os que têm lugar, na ordem: o que só tem animais desta espécie; o vazio (que passa a
-     * ser dela); o misto que já a tem; qualquer um. No empate, o mais perto de {@code from}. Com um curral
-     * só, todos vão para ele, como antes.
+     * Regra 72: primeiro o grande, depois o médio compatível e então o cercado legado.
+     * Entre legados, agrupa por espécie quando possível. Em empate, escolhe a entrada mais próxima.
      *
      * @param except o cercado de onde o animal está saindo, ou nulo
-     * @param onlyOwn só o cercado desta espécie ou o vazio — a separação dos currais mistos
+     * @param onlyOwn restringe a separação aos currais compatíveis e legados da mesma espécie ou vazios
      */
     static Optional<Pen> forSpecies(ServerWorld world, Colony colony, EntityType<?> species, BlockPos from,
             @Nullable Pen except, boolean onlyOwn) {
@@ -178,16 +178,18 @@ final class ShepherdPens {
         double bestDistance = Double.MAX_VALUE;
 
         for (Pen group : pensOf(world, colony)) {
-            if ((except != null && group.reach().equals(except.reach())) || !hasRoom(world, group)) {
+            if ((except != null && group.reach().equals(except.reach())) || !hasRoom(world, group)
+                    || group.theme().filter(theme -> !theme.accepts(species)).isPresent()
+                    || (onlyOwn && group.vanilla())) {
                 continue;
             }
             var selected = nearestAccess(world, group, from, reachable);
             if (selected.isEmpty()) continue;
             Pen pen = selected.get();
 
-            int rank = rankFor(speciesIn(world, pen), species);
+            int rank = destinationRank(world, pen, species);
 
-            if (onlyOwn && rank > OWN_OR_EMPTY) {
+            if (onlyOwn && rank > 2 + OWN_OR_EMPTY) {
                 continue;
             }
 
@@ -201,6 +203,12 @@ final class ShepherdPens {
         }
 
         return Optional.ofNullable(best);
+    }
+
+    private static int destinationRank(ServerWorld world, Pen pen, EntityType<?> species) {
+        if (pen.large()) return 0;
+        if (pen.theme().isPresent()) return 1;
+        return 2 + rankFor(speciesIn(world, pen), species);
     }
 
     static Optional<Pen> nearestAccess(ServerWorld world, Pen pen, BlockPos from,
@@ -277,6 +285,7 @@ final class ShepherdPens {
     static void walkThrough(ServerWorld world, Pen pen, AnimalEntity animal, BlockPos target) {
         FencedIn.open(world, pen.gate());
         PenTether.hold(animal, target); // o passeio e o pânico ficam a 2 blocos do alvo (Regra 284); a navegação volta a cada passo
+        if (PenGateClearance.guideWideAnimal(world, pen, animal, target)) return;
         if (!animal.getNavigation().isIdle() && target.equals(animal.getNavigation().getTargetPos())) return;
         // A navegação dá por chegada a um bloco do alvo e o deixa no portão; o último passo é direto (PenMoves).
         if (animal.getBlockPos().isWithinDistance(target, 2.5)) {
@@ -311,8 +320,7 @@ final class ShepherdPens {
 
         if (read == null || now - read >= RESCAN) {
             READ_AT.put(colony.id(), now);
-            PENS.put(colony.id(), colony.bounds().map(box -> scan(world, box).stream()
-                    .map(pen -> markLarge(colony, pen)).toList()).orElse(List.of()));
+            PENS.put(colony.id(), colony.bounds().map(box -> PenClassification.of(world, colony, scan(world, box))).orElse(List.of()));
             // O chão de dentro sai do caminho de quem não é pastor (Regra 122).
             com.villagecolony.fabric.integration.PenFloors.update(colony.id(),
                     PENS.get(colony.id()).stream().map(Pen::reach).toList());
@@ -396,13 +404,6 @@ final class ShepherdPens {
         }
 
         return Optional.ofNullable(best);
-    }
-
-    private static Pen markLarge(Colony colony, Pen pen) {
-        boolean large = VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()
-                .anyMatch(building -> PenPlans.isLargePen(building.blueprint())
-                        && building.contains(MinecraftTypeAdapter.toColonyPos(pen.gate())));
-        return large ? new Pen(pen.gate(), pen.inside(), pen.outside(), pen.reach(), true, pen.accesses()) : pen;
     }
 
     /** Quantos animais estão no chão de dentro deste cercado. */

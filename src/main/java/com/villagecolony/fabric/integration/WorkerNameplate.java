@@ -150,7 +150,7 @@ public final class WorkerNameplate {
         return false;
     }
 
-    private static String nameFor(ProfessionType profession) {
+    static String nameFor(ProfessionType profession) {
         return switch (profession) {
             case LUMBERJACK -> "Lenhador";
             case MINER -> "Mineiro";

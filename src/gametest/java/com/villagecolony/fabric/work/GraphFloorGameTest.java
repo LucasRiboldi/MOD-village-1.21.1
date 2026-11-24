@@ -6,15 +6,28 @@ import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.SweepPersistence;
 import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.integration.WorldPathTerrain;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.structure.PoolStructurePiece;
+import net.minecraft.structure.StructureLiquidSettings;
+import net.minecraft.structure.StructurePiecesList;
+import net.minecraft.structure.StructureStart;
+import net.minecraft.structure.pool.StructurePool;
+import net.minecraft.structure.pool.StructurePoolElement;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
+import net.minecraft.util.BlockRotation;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.gen.structure.StructureKeys;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.Set;
@@ -66,6 +79,49 @@ public class GraphFloorGameTest implements FabricGameTest {
             context.assertTrue(RoadGraphRefresh.pathInColumn(context.getWorld(), plank.up(), null).isEmpty(),
                     "o piso de tábua virou célula de rua");
         } finally {
+            clearArena(context);
+        }
+
+        context.complete();
+    }
+
+    /** A rua Vanilla do deserto entra na primeira leitura, sem esperar pelo índice de lotes. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "desert_street_floor", tickLimit = 5)
+    public void aGeneratedDesertStreetIsReadWithoutAnIndex(TestContext context) {
+        var world = context.getWorld();
+        BlockPos street = context.getAbsolutePos(new BlockPos(3, 2, 3));
+        BlockPos houseFloor = street.up(4);
+        var chunk = world.getChunk(street);
+        var village = world.getRegistryManager().get(RegistryKeys.STRUCTURE).get(StructureKeys.VILLAGE_DESERT);
+        var element = StructurePoolElement.ofSingle("minecraft:village/desert/streets/straight_02")
+                .apply(StructurePool.Projection.TERRAIN_MATCHING);
+        var piece = new PoolStructurePiece(world.getStructureTemplateManager(), element, street, 1,
+                BlockRotation.NONE, BlockBox.create(street, street), StructureLiquidSettings.APPLY_WATERLOGGING);
+        var start = new StructureStart(village, chunk.getPos(), 0, new StructurePiecesList(List.of(piece)));
+
+        var previousStarts = new HashMap<>(chunk.getStructureStarts());
+        var previousReferences = new HashMap<>(chunk.getStructureReferences());
+        previousReferences.computeIfPresent(village, (key, references) ->
+                new LongOpenHashSet(references));
+        chunk.setStructureStart(village, start);
+        chunk.addStructureReference(village, chunk.getPos().toLong());
+        world.setBlockState(street.down(), Blocks.SANDSTONE.getDefaultState());
+        world.setBlockState(street, Blocks.SMOOTH_SANDSTONE.getDefaultState());
+        world.setBlockState(houseFloor.down(), Blocks.SANDSTONE.getDefaultState());
+        world.setBlockState(houseFloor, Blocks.SMOOTH_SANDSTONE.getDefaultState());
+
+        try {
+            context.assertTrue(BlockProtection.isVillageStreet(world, street),
+                    "a fixture não registrou a rua Vanilla");
+            context.assertTrue(RoadGraphRefresh.pathInColumn(world, houseFloor, null).filter(street::equals).isPresent(),
+                    "a leitura ignorou a rua Vanilla de arenito ou promoveu o piso de arenito acima dela");
+            OptionalInt ground = new WorldPathTerrain(world, UUID.randomUUID())
+                    .groundY(street.getX(), street.getZ(), street.getY());
+            context.assertTrue(ground.orElse(Integer.MIN_VALUE) == street.getY(),
+                    "o traçado recusou a rua Vanilla de arenito: " + ground);
+        } finally {
+            chunk.setStructureStarts(previousStarts);
+            chunk.setStructureReferences(previousReferences);
             clearArena(context);
         }
 

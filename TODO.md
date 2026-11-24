@@ -8,6 +8,19 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   está em `docs/technical/TODO-herdado-2026-11-13.md`.
 - O TODO antigo inteiro, por jogo, está em `docs/archive/technical/TODO-ate-2026-11-13.md` (`grep`).
 
+## Estado de integração — 0.4.133 (2026-11-24)
+
+- [ ] CI verde em `codex/piso-curral-grande` e pré-release `v0.4.133-alpha` (o PR #108 entrou, mas não estabilizou o `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder`).
+- [ ] Estabilizar N05 (`ShepherdGameTest.theShepherdOnlyShearsAfterReachingTheSheep`) e N26 (`PenTetherGameTest.theAnimalWalksFromASideLedgeThroughTheGate`): falharam no CI do PR #107 em rodadas diferentes.
+
+## Estado de integração — 0.4.131 (2026-11-24)
+
+- [ ] Publicar a candidata na `main`: a branch `codex/piso-curral-grande` contém o código e a documentação da 0.4.131; falta PR, CI verde, merge e release `v0.4.131-alpha`.
+- [ ] Playtest do item 9 no deserto: conferir grama no piso de circulação do curral grande, os 12 blocos de canteiro e água nas posições da planta. Retomada de obra iniciada também precisa ser observada após reabrir o mundo.
+- [ ] 🔴 `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder` (PR #106) falha às vezes no CI (2 vezes em 8) e trava o portão da release. A hipótese dos chunks descarregados (PR #108) foi enfraquecida: falhou de novo com todos os chunks carregados. Ler a mensagem no `gametest-report.xml` da execução 45498542870; detalhes no [HANDOFF](HANDOFF.md).
+- [ ] Repetir `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`: falha conhecida nas candidatas 0.4.125–0.4.131; investigar a saída pela cerca antes da varredura agendada.
+- [ ] Depois do playtest, registrar versão efetivamente carregada, notas `/vc bioma nota`, `/vc salvar`, `VC_PENS`, `VC_ROUND`, `VC_FLOCK_EVENT` e `VC_FLOCK_HARVEST` no próximo relatório.
+
 ## F0 — Sinal limpo (1 semana)
 
 - [ ] 🟠 Decisão do autor: a ADR-024 (índice físico do armazém) é aceita, mas o `WarehouseIndex` não é usado em produção;
@@ -37,30 +50,43 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 
 ## F1 — A vila trabalha (3 a 5 semanas) → portão Beta 0.5.0
 
+### Pendências do playtest do deserto 0.4.127
+
+- [ ] **Confirmar o grafo desde a 0.4.128.** Colônia `ea1997ba`. A rua Vanilla usa arenito (12:45:34, `873,75,309`); as entradas soltas foram anotadas em `845,63,319` (13:47:54) e na BigHouseMOD em `885,64,272` (13:48:25). Conferir as ligações na vila existente e a primeira leitura em vila nova.
+- [ ] **Investigar a boca da mina fechada.** Às 12:47:11, o mineiro entrou, mas a escadaria parecia fechada (`905,68,326`). Às 13:47:19 o fechamento reapareceu (`905,68,335`), e a descida registrou `WORK_STALLED` em `901,59,329`. Verificar a abertura visível e a interrupção da descida.
+- [ ] **Confirmar o item 6 na 0.4.129.** Às 12:49:58, o pastor entrou com a vaca numa casa e encostou em outro aldeão (`874,64,275`). Confira o desvio pela rua com a guia, a entrega pela porteira e o bloqueio de conversas entre aldeões quando um deles trabalha. O relato de contato físico não identifica a causa.
+- [ ] **Validar placa externa do item 7 na 0.4.130.** Na casa de `847,64,298`, confira uma placa na fachada com os moradores das camas da estrutura. Confira a atualização após troca de cama e ao reabrir o mundo.
+- [ ] **Validar quadro e baú do item 8 (N14) na 0.4.130.** Na casa pequena de `878,63,245`, confira o quadro voltado para o centro quando a face está livre. O log registra a atribuição do baú antigo ao mineiro, com origem indeterminada. Para validar a migração automática, use uma cópia do mundo e um baú criado a partir desta versão, com itens e posição segura junto à parede no mesmo cômodo (o chunk vizinho também vale).
+- [ ] **Validar o item 9 na 0.4.131.** O autor encontrou areia no curral grande (`897,66,272`, 13:50:29). Construa um novo no deserto ou retome uma obra em andamento. Confira grama na circulação, os 12 blocos de canteiro e a água nas posições da planta. A opção 1 vale para obras novas ou retomadas.
+
 ### Pendências do playtest 0.4.122-alpha
 
-- [ ] **Prioridade em jogo.** Três mortes de fazendeiros por queda após resgate do mesmo telhado (Regra 160). Reproduzir a aterrissagem e rastrear a subida e o retorno. As sete notas, com solo sobre as fazendas e salto padrão antes do maior, estão no [relatório da 0.4.122](docs/technical/Playtest-0.4.122-2026-11-23.md).
+- [ ] **Prioridade em jogo.** Confirmar na candidata 0.4.133 se o aldeão sai vivo do telhado, volta à escala e não retorna ao mesmo telhado (Regras 151 e 160). O resgate coloca o aldeão direto no piso se a queda excede a distância segura; o trecho da rede de ruas não para mais no topo de chaminé, muro ou telhado. No log, `338,87,1412` não deve voltar como destino. As sete notas e o roteiro estão no [relatório da 0.4.122](docs/technical/Playtest-0.4.122-2026-11-23.md).
+- [ ] **Investigar a saída do curral entre varreduras.** `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan` falhou nas candidatas 0.4.125 a 0.4.131. Conferir a saída pela cerca quando a navegação normal chega antes da varredura agendada.
+- [ ] **Validar salto progressivo na 0.4.126.** Em degraus e cercas, o aldeão deve tentar o pulo padrão primeiro; o pulo maior só após colisão horizontal. Encalhe e saída de curral seguem exceções.
 - [ ] **Verificar a travessia após fusão.** A segunda tentativa de [CI do PR #104](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/runs/45117483717/attempts/2) falhou em `aVillagerWalksBetweenTheTwoOldRoadNetworks`. N26 e a tosquia passaram nessa tentativa.
 
 - [ ] **Verificar em jogo.** Três colunas do grafo com piso sobreposto, arco da mina (N12) e casa do mineiro (N28), incluindo recarga do mundo.
 - [ ] **Verificar em jogo.** Tosquia e condução (N05, N26, N27), reserva de abate por espécie e curral, e orientação da placa do baú (N14).
 - [ ] **Confirmar N26 no desnível lateral.** A vaca parava na fase `LEAD` com a guia presa. O pastor agora usa o lado oposto da abertura para manter a condução. O GameTest passou na bateria local completa após o ajuste.
 - [ ] **Investigar a instabilidade de N05.** `theShepherdOnlyShearsAfterReachingTheSheep` falhou na bateria local e na primeira rodada do CI, mas passou no teste focado e na repetição do CI. Registrar a posição, o destino e a duração da tarefa na próxima falha.
-- [ ] **Investigar.** Queda da contagem no curral grande. A sessão da 0.4.122 registrou um abate bovino e a quantidade de adultos na área. Registrar adultos e filhotes por espécie no curral da vítima, antes e depois, para verificar a reserva. O teste da guia longe da porteira passou com a porteira instalada no cenário.
-- [ ] **Investigar ou corrigir.** N10, atraso de criação do baú (N14), lenhador na obra e pendências de terreno e acesso do Lote A. Conferir as evidências no [plano de 28 notas](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
+- [ ] **Investigar a coleta na bateria completa.** Na 0.4.124, `anAnimalInsideAKnownPenIsNotAStray` e `theShepherdSetsAsideAStrayHeCannotReach` não encontraram o animal de fora entre os candidatos. Ambos passaram na repetição focada. Cruzar o local de teste, as entidades carregadas e a área de busca se repetirem.
+- [ ] **Validar os currais temáticos na 0.4.127.** Conferir os seis lotes, piso 10×10 nivelado, porteira livre, entrada no grafo e circulação. Observar o destino de cada grupo quando a entrada do curral grande está indisponível, inclusive a passagem de cavalos, lhamas e cabras. Comparar contagens, nascimentos, fugas e abates em `VC_PENS` e `VC_ROUND`.
+- [ ] **Validar o crescimento do rebanho em jogo.** Na 0.4.127, conferir quantos adultos e filhotes entram, nascem, saem ou morrem em cada curral e se a vila acumula animais antes de abater. Cruzar `VC_PENS`, `VC_FLOCK_EVENT` e `VC_FLOCK_HARVEST` no próximo jogo. A causa da queda observada na 0.4.122 segue em investigação.
+- [ ] **Investigar ou corrigir.** Lenhador na obra e pendências de terreno e acesso do Lote A. Conferir as evidências no [plano de 28 notas](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
 - [ ] **Deliberar.** Cores das placas (N23) e proposta de N24.
 
-- [ ] 🔴 [Jogo da 0.4.118](docs/technical/Playtest-0.4.118-2026-11-22.md) (22-11). Validar na 0.4.122 a reserva de abate por curral, a proteção
-  de animais em recintos, os dois saltos, o fechamento antes da soltura e o desvio dos demais aldeões. Investigar a queda na contagem do curral grande com o novo
-  log de abate. Reproduzir a entrada da vaca a partir do desnível lateral. Confirmar as três colunas de entrada do grafo e rastrear a atividade do lenhador na obra.
+- [ ] 🔴 [Jogo da 0.4.118](docs/technical/Playtest-0.4.118-2026-11-22.md) (22-11). Validar na 0.4.126 a reserva de abate por curral, a proteção
+  de animais em recintos, os dois saltos, o fechamento antes da soltura e o desvio dos demais aldeões. Investigar a queda na contagem do curral grande com os
+  novos eventos. Reproduzir a entrada da vaca a partir do desnível lateral. Confirmar as três colunas de entrada do grafo e rastrear a atividade do lenhador na obra.
 - [ ] 🔴 Jogo da 0.4.115 (21-11): 28 notas e seis imagens no [plano integral](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md).
   Lote B implementado na candidata 0.4.116: tosquia junto da ovelha e condução pela porteira (N05, N26, N27); aguarda jogo.
   Lote A, N12/N28: a 0.4.117 trata a recusa após mudar a passagem. A 0.4.122 preserva a altura do piso da entrada. Confirmar reconexão da mina e da
   casa do mineiro em jogo e após reabrir o mundo. Os outros pontos do Lote A e os lotes C (implantação/moradia),
   D (regras/experiência) e E (fluxo/custo) continuam abertos. Preservar os sucessos N01–N04 e N06.
   Decisões arquiteturais pendentes exigem deliberação.
-- [ ] 🟠 N14: validar em jogo a orientação da placa em moradias novas e existentes. Medir separadamente
-  quando a cama é atribuída, quando o baú aparece e quando ganha placa para reproduzir o atraso relatado (P).
+- [ ] 🟠 N10: confirmar na 0.4.126 que a casa nova olha para o centro quando a rua é acessível no mesmo lote. Conferir um lote bloqueado e recarregar uma obra em andamento (P).
+- [ ] 🟠 N14: confirmar na 0.4.126 o baú na primeira varredura elegível com espaço disponível. Registrar separadamente a atribuição da cama, a criação do baú e a orientação da placa em casas novas e existentes (P).
 - [ ] N23: inventariar os estados que chegam ao overlay e revisar as cores das placas. Aguardar a escolha do autor.
 - [ ] 🟠 Jogo da 0.4.114: conferir se a candidata 0.4.115 impede o retorno ao mesmo telhado após o resgate;
   a memória de caminhada persistente foi reproduzida em GameTest, mas sua relação com o retorno ainda depende do jogo (P)

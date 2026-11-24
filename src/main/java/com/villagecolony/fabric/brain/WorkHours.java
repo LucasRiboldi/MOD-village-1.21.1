@@ -1,7 +1,13 @@
 package com.villagecolony.fabric.brain;
 
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.coordination.WorkClock;
+import com.villagecolony.core.worker.model.Worker;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.Activity;
+import net.minecraft.entity.ai.brain.EntityLookTarget;
+import net.minecraft.entity.ai.brain.MemoryModuleType;
+import net.minecraft.entity.ai.brain.WalkTarget;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 
@@ -54,5 +60,35 @@ public final class WorkHours {
         }
 
         return WorkClock.isWorkTime(world.getTimeOfDay());
+    }
+
+    /** Profissionais da colônia ficam fora das interações sociais durante o expediente (ADR-004). */
+    public static boolean canSocialize(LivingEntity entity) {
+        return !(entity instanceof VillagerEntity villager
+                && villager.getWorld() instanceof ServerWorld world
+                && isWorkTime(world, villager)
+                && VillageColonyMod.WORKERS.find(villager.getUuid()).flatMap(Worker::profession).isPresent());
+    }
+
+    /** Reavalia também conversas que já estavam em curso quando o expediente começou. */
+    public static boolean canTalkToCurrentTarget(VillagerEntity villager) {
+        var target = villager.getBrain().getOptionalRegisteredMemory(MemoryModuleType.INTERACTION_TARGET);
+        if (target.orElse(null) instanceof VillagerEntity partner
+                && (!canSocialize(villager) || !canSocialize(partner))) {
+            dropSocialWalk(villager, partner);
+            dropSocialWalk(partner, villager);
+            return false;
+        }
+        return true;
+    }
+
+    private static void dropSocialWalk(VillagerEntity villager, VillagerEntity partner) {
+        var brain = villager.getBrain();
+        var target = brain.getOptionalRegisteredMemory(MemoryModuleType.WALK_TARGET).map(WalkTarget::getLookTarget);
+        if (target.orElse(null) instanceof EntityLookTarget look && look.getEntity() == partner
+                && brain.getOptionalRegisteredMemory(MemoryModuleType.BREED_TARGET).orElse(null) != partner) {
+            brain.forget(MemoryModuleType.WALK_TARGET);
+            villager.getNavigation().stop();
+        }
     }
 }

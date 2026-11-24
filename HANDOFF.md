@@ -2,6 +2,112 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega para outro agente — 0.4.133 (2026-11-24)
+
+- **Branch:** `claude/resgate-telhado-seguro`, criada de `codex/piso-curral-grande` e com o PR #106 (baú na borda do chunk) já mesclado nela. **PR #107** foi mesclado pelo autor em `codex/piso-curral-grande` (merge `c76aadc5`, 2026-11-24 22:09 UTC); este bloco de handoff entrou depois, pelo PR #109. O PR #105 (`codex/piso-curral-grande` → `main`) também segue aberto.
+- **O que a 0.4.133 traz:** resgate de telhado sem queda perigosa (`RoofDescent`, commit `c8b32ace`) e trecho da rede de ruas que só para em chão de rua, caminho ou chão natural (`ColonyPathing.standingOn`), Regras 151 e 160. Inclui o baú residencial na borda do chunk (PR #106).
+- **Instalado:** `village-colony-0.4.133.jar` no TLauncher e em `downloads/`, SHA-256 `FAC43A023956DF59C615BD3039DD9281113AAC6D31C2DBE14547682B1AAB3998` nas três cópias; as anteriores ficaram `.jar.disabled`.
+- **Testes:** `StreetRouteGameTest.aStreetColumnUnderAChimneyIsNotALeg` falhou antes e passa depois. Sentinela `fast` `20261124T204300Z`: 1.886 unitários, propriedades e 1.264 de 1.265 GameTests (falha conhecida do `PenEscapeGameTest`). CI do PR #107, duas tentativas, com falhas que mudam de rodada: `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`, N05 (`ShepherdGameTest.theShepherdOnlyShearsAfterReachingTheSheep`), N26 (`PenTetherGameTest.theAnimalWalksFromASideLedgeThroughTheGate`) e `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder`. Este último segue instável mesmo depois do PR #108 (ver a seção do PR #108 abaixo).
+- **Pré-release `v0.4.133-alpha`:** adiada por escolha do autor até os testes instáveis ficarem verdes. O workflow Release exige CI verde no mesmo commit.
+- **A confirmar em jogo:** nenhum fazendeiro morre de queda nem é resgatado de novo perto de `338,86,1414`; `338,87,1412` não aparece como destino no diário.
+- **Hipótese não provada:** a coluna `338,1412` pertence à rede de ruas; o GameTest só reproduz a geometria. **Risco:** coluna da rede sobre piso de construção (tábuas) deixa de servir de trecho, e o aldeão vai direto ao destino.
+- **Próximos passos:** (1) estabilizar os GameTests instáveis acima; (2) CI verde e pré-release `v0.4.133-alpha`; (3) PR #105 para a `main`; (4) confirmar em jogo a correção do telhado.
+- **Logs de playtest:** `%APPDATA%\.minecraft\logs` (`latest.log` e `.log.gz`) e `%APPDATA%\.minecraft\saves\Novo mundo\villagecolony\analytics` (diário de ações, relatórios `VC_*`).
+- **Ao falar com o autor:** linguagem simples, sem jargão; ele prefere saber o que está pronto e o que falta.
+
+## Teste do baú na borda do chunk — PR #108 (2026-11-24)
+
+- O PR #106 (já em `codex/piso-curral-grande`) deixa o baú residencial migrar para o chunk vizinho, desde que carregado. Antes, `HomeChestMoves.repair` exigia o mesmo chunk, e `ChestPlacerGameTest.repairsAProvenChestWithoutDroppingContents` falhava quando o GameTest caía com a borda entre os dois lados da cama.
+- O teste novo `repairsAProvenChestAcrossAChunkBorder` falhou depois em 1 de 6 execuções do CI (45489203898, 2ª rodada), com origem e destino já em chunks vizinhos. A causa **não está provada**. Hipótese: o deslocamento de até 8 blocos tira a casa da área que o GameTest mantém carregada, e `repair` exige a casa inteira carregada (`Homes.isLoaded`).
+- O PR #108 (branch `claude/project-thread-02gx49`, só teste e documentação) força os chunks da casa, roda o reparo no tick seguinte e registra os que estavam descarregados. O CI 45495565158 passou neste teste, mas o 45498542870 **falhou de novo** sem nenhuma linha `VC_TEST_CHEST_BORDER_UNLOADED`: todos os chunks já estavam carregados. A hipótese dos chunks está, portanto, enfraquecida e o PR #108 **não corrige** a instabilidade; ele só acrescenta o registro.
+- Como a falha agora ocorre dentro de `waitAndRun`, a mensagem da asserção não sai no log do job; ela fica em `build/gametest-report.xml`, no artefato `ci-reports-<run>` (o ambiente de nuvem não baixa artefatos; baixe pelo navegador ou no PC do autor).
+- Próximo passo: ler a mensagem no `gametest-report.xml` da execução 45498542870 e investigar as outras condições de `HomeChestMoves.repair` e `ChestPlacer.repairSlot` (parede, porta, escada, `world.isSpaceEmpty`). O ambiente de nuvem não compila o mod; leia os logs com `get_job_logs` e `grep`.
+- Em nenhuma execução que passou apareceu `VC_HOME_CHEST_MOVED` para este teste (o teste original registra a linha normalmente). Motivo desconhecido; conferir ao investigar.
+
+## Entrega preparada para outro agente — 0.4.131 (2026-11-24)
+
+- Branch de origem: `codex/piso-curral-grande`. Código, testes focados e documentação estão reunidos nesta linha; `.serena/` local não faz parte da entrega.
+- Próximo fluxo: `git fetch origin`, conferir PR contra `main`, aguardar CI verde do mesmo commit, fazer merge e disparar `Release` em `main`. O workflow publica `v0.4.131-alpha` e recompila o JAR no commit mesclado.
+- Não declarar item 9 como confirmado: o código tem prova automatizada, mas o jogo ainda precisa confirmar o curral grande no deserto e a retomada de obra após recarga.
+- Pendências ativas e ordem de trabalho estão no topo de [`TODO.md`](TODO.md). A falha conhecida de `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan` não foi atribuída ao item 9.
+- Para retomar: leia este bloco, depois [`STATE.md`](STATE.md), o topo de [`TODO.md`](TODO.md) e [`docs/releases/v0.4.131.md`](docs/releases/v0.4.131.md). Não use históricos antigos como estado atual.
+
+## Candidata local 0.4.131 (2026-11-24)
+
+- A branch `codex/piso-curral-grande` inclui a candidata 0.4.130. No item 9, a opção 1 molda grama sobre o terreno natural nas posições de circulação da planta. Água e canteiros seguem o modelo.
+- O preparo funciona na construção normal, em peças adiadas por alcance e no fechamento da obra. Ao reabrir o mundo, o curral grande com obra iniciada continua apto à retomada.
+- As regressões reproduziram o defeito. Os 22 GameTests focados passaram. No Sentinela `fast` (`20261124T185435Z`), passaram 1.886 testes unitários, a suíte de propriedades e 1.262 dos 1.263 GameTests. A única falha repetiu `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`.
+- O build passou. O JAR para `downloads/` e TLauncher é `village-colony-0.4.131.jar`, com SHA-256 `87B20C3C46E222A788171427DFA7772AEFADB075FF3301C654443AC5077FCE5E`.
+- Construa um curral grande no deserto. Confira grama na circulação, os 12 blocos de canteiro e a água da planta. Se quiser testar a retomada, saia depois de uma porteira ou cerca ser assentada e confira a conclusão ao reabrir. Currais concluídos ficam fora do escopo da mudança. O item segue no [TODO](TODO.md#pendências-do-playtest-do-deserto-04127).
+
+## Candidata local 0.4.130 (2026-11-24)
+
+- A branch `codex/moradia-placas-e-baus` parte da candidata 0.4.129. A placa da fachada lista os aldeões pelas camas atribuídas. O quadro interno da casa pequena prefere a face com passagem voltada ao centro.
+- O recibo persistente marca baús colocados pelo mod a partir desta versão. A migração exige outro ponto livre junto à parede no mesmo cômodo; o destino pode estar no chunk vizinho, desde que carregado. O baú conserva os itens e o vínculo com o aldeão. Baús anteriores de origem indeterminada ficam no lugar.
+- Build aprovado e 38 GameTests focados passaram. No Sentinela `fast` (`20261124T182652Z`), passaram 1.886 unitários, a suíte de propriedades e 1.260 de 1.261 GameTests. A única falha foi `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`, também presente na 0.4.129.
+- O `village-colony-0.4.130.jar` foi copiado para `downloads/` e instalado no TLauncher. As três cópias tinham SHA-256 `1B6B59F895BA73D2EDD798FAFAC55FF9E139E18564209AD7F3147C50684BBEE0`. A 0.4.129 ficou desativada para retorno.
+- No deserto, confira a placa da casa perto de `847,64,298` e o quadro do baú perto de `878,63,245`. Verifique uma troca de cama e reabra a partida. Para o teste de migração, use uma cópia do mundo, um baú criado nesta versão e um ponto seguro afastado de porta e escada.
+- Procure `VC_HOME_SIGN` e `VC_HOME_CHEST_MOVED` no próximo log. Os itens do playtest continuam no [TODO](TODO.md#pendências-do-playtest-do-deserto-04127).
+
+## Candidata local 0.4.129 (2026-11-24)
+
+- A branch `codex/pastor-rota-expediente` inclui as candidatas 0.4.127 e 0.4.128. No item 6 do deserto, a opção 2 evita portas no trajeto com animal na guia e aplica a regra social aos dois participantes da conversa.
+- Ao prender a guia, o pastor descarta a rota anterior. O filtro de portas abertas ou fechadas vale durante a condução, incluindo a aproximação da porteira. O acesso ao curral segue as regras de entrega vigentes.
+- Adultos com profissão na colônia ficam fora das conversas de aproximação, encontro no sino e troca de itens durante o expediente. Conversas em andamento são reavaliadas no início do expediente. A [ADR-004](docs/decisions/ADR-004-Mixin-Policy.md) registra as injeções.
+- Os 14 GameTests focados passaram. As regressões reproduziram o atalho pela casa e a aproximação social indevida antes da correção.
+- Build aprovado. No Sentinela `fast` (`20261124T175259Z`), passaram 1.886 unitários, a suíte de propriedades e 1.258 de 1.259 GameTests. A única falha foi `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`, já registrada desde a 0.4.125.
+- Candidata `village-colony-0.4.129.jar` com SHA-256 `A8BF59A2A628147BED3F52A6B7E048B07CDAE5874D7DCE38BF122FCBB52A04DA`. O JAR está em `downloads/` e ativo no TLauncher. As três cópias têm o mesmo hash. A 0.4.128 ficou desativada para retorno.
+- No próximo jogo, volte à vila do deserto perto de `874,64,275`. Observe o pastor buscar uma vaca com uma casa entre ela e o curral, primeiro com a porta aberta e depois fechada. Confira o desvio pela rua, a travessia do animal pela porteira e o fechamento antes de soltar a guia. Compare as posições em `VC_FLOCK_EVENT`.
+- Observe as conversas entre aldeões antes e depois do tique 10.000. Durante o expediente, um aldeão livre também deve ignorar um trabalhador como parceiro de conversa. O comportamento em mundo real segue no [TODO](TODO.md#pendências-do-playtest-do-deserto-04127).
+
+## Candidata local 0.4.128 (2026-11-24)
+
+- A branch `codex/currais-tematicos-04127` reúne os currais temáticos e a correção do grafo (`6638482f`, `604c8b5e`). O arenito de uma peça de rua Vanilla entra no grafo desde a primeira leitura. O registro da BigHouseMOD e da casa do mineiro pede releitura.
+- A regressão reproduziu a rua de arenito ignorada com o índice vazio. Os 57 GameTests de grafo e fundação e os seis testes de arquitetura passaram na branch da correção. O cenário da BigHouseMOD verifica a saída pelo piso de areia da porta e a ligação à rede em volta de um desnível.
+- Na revisão entregue, os unitários e propriedades passaram no Sentinela (`20261124T172635Z`) e passaram 57 GameTests focados. A última bateria completa (`20261124T172158Z`), anterior ao ajuste de conversão de coordenadas, passou em 1.255 de 1.257 GameTests. Repetiram as falhas da saída do curral entre varreduras e da tosquia N05.
+- O JAR `village-colony-0.4.128.jar` está em `downloads/` e ativo no TLauncher. As três cópias têm SHA-256 `13FCA22D112B85AAAC04624B8CA0A55AB895A17C6179C7F061FAF55EB9DC1CAF`. A 0.4.127 ficou desativada para retorno.
+- No TLauncher, use a vila do deserto da 0.4.127. Confira a linha ligada aos nós ao lado de `845,63,319` e `885,64,272`. Saia e reabra o mundo. Em uma vila nova no deserto, confira se a primeira leitura inclui as ruas de arenito e se as entradas das fundações ganham ramal. Compare `VC_ROAD_GRAPH`, em especial `edges=` e `loose=`.
+- A mina, o trajeto do pastor com guia, as placas, os baús e o piso do curral grande estão nas [pendências do playtest do deserto](TODO.md#pendências-do-playtest-do-deserto-04127).
+
+## Candidata local 0.4.127 (2026-11-24)
+
+- A branch `codex/currais-tematicos-04127` parte da 0.4.126 (`1961a279`). Os seis NBTs em `data/villagecolony/structure/colony/` entram no rodízio de obras de vilas com pastor. O interior é plano, com 100 blocos de grama, faixa livre junto à cerca e uma porteira ligada à rede de caminhos.
+- O curral grande aceita todas as espécies manejadas e tem prioridade sem limite de lotação. Sem acesso ao grande, o pastor tenta o médio compatível ou segue as regras do cercado comum. A contagem lê todos os currais. O abate preserva dois adultos da espécie no curral da vítima e continua exigindo excedente na vila.
+- Os 50 GameTests focados e os três testes de NBT passaram. Nos currais novos do mod, a abertura ganha espaço durante a entrega de animais largos. O fechamento reconecta a cerca antes de soltar a guia.
+- Sentinela `fast` final (`20261124T090817Z`): unitários e propriedades passaram. Passaram 1.254 de 1.255 GameTests. A única falha, `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`, também ocorreu na 0.4.125 e na 0.4.126.
+- O playtest da 0.4.126 registrou, na colônia `4dac0976`, três animais no grande e nove num cercado sem classificação. Houve seis rejeições de acesso externo e `BREED_WAIT ... no_reachable_ready_pair`. A sessão deixou a causa da baixa acumulação em aberto.
+- O JAR `village-colony-0.4.127.jar` gerado por `remapJar` está em `downloads/` e ativo no TLauncher. As três cópias têm SHA-256 `5099153313BEFAF9F602F83735F28C785C0E05DEE5B4CB53EDA940C8E102E67C`. O JAR da 0.4.126 ficou desativado para retorno.
+- No próximo jogo, confirme a ligação das porteiras à rua e observe a entrega ao curral grande. Bloqueie seus acessos num mundo de teste para verificar o destino temático. Observe o pastor pular a cerca, o animal caminhar pela porteira e a porteira fechar antes de soltar a guia. Acompanhe contagem, nascimentos e abates com `VC_PENS`, `VC_ROUND`, `VC_FLOCK_EVENT` e `VC_FLOCK_HARVEST`. Registre as pendências no [TODO](TODO.md).
+
+## Candidata local 0.4.126 (2026-11-23)
+
+- A branch `codex/playtest-04126` reúne a 0.4.125 e os ajustes N10 e N14. A porta da moradia nova prioriza o centro se a mesma pegada permite acesso pela rua. A varredura usa o limite de dois para baús criados.
+- As regressões de abertura da obra, passagem da porta recuada e criação do baú falharam antes dos ajustes e passaram na versão corrigida. A rodada focada da candidata passou em 32 dos 33 GameTests. A saída espontânea do curral antes da varredura foi a exceção. O mesmo teste falhou na 0.4.125 (`bd7abd57`), antes de N10 e N14.
+- O Sentinela `fast` (`20261123T184500Z`) passou em unitários e propriedades. Passaram 1.249 de 1.251 GameTests. As falhas foram a saída do curral e a tosquia N05 já registrada no TODO.
+- JAR gerado por `remapJar`, copiado para `downloads/` e conferido nas três cópias. SHA-256 `C9B887359298C407B336A2C0BD77AAB5724078B6228F8786D679ED01830065F1`. Cópia no TLauncher preparada como `village-colony-0.4.126.jar.disabled`. Feche o jogo antes de substituir os JARs ativos 0.4.124 e 0.4.125.
+- Use o [roteiro da moradia](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md#n10-e-n14--roteiro-da-moradia) para verificar acesso, recarga da obra, cama, baú e placa. As outras pendências continuam no [TODO](TODO.md).
+
+## Candidata local 0.4.125 (2026-11-23)
+
+- Na branch `codex/fix-villager-jumps-04125`, `VillagerMoves` mantém o pulo padrão diante de obstáculo previsto. O pulo maior só ativa após colisão horizontal confirmada; encalhe e saída de curral continuam exceções.
+- A regressão de degrau de dois blocos e cerca passou com 6/6 GameTests focados. `build` final passou; PMD mantém 177 avisos preexistentes.
+- JAR 0.4.125 copiado para `downloads/` e TLauncher. SHA-256: `D26EA2D70579B0117C599E28649471704892CB4055E75BF14E5D5B3092C08A74`. O 0.4.124 do TLauncher segue ativo enquanto o processo Java o mantém bloqueado; desative-o após fechar o jogo.
+- Aguarde playtest em degraus e cercas. Confirme que o aldeão tenta o salto normal antes do maior e não fica preso.
+
+## Candidata local 0.4.124 (2026-11-23)
+
+- A branch `codex/playtest-04124` reúne o resgate de telhado (`c8b32ace`) e a correção do rebanho (`07afdcdc` na branch `codex/pastor-rebanho-nos-currais`, incorporado como `cd6924f9`).
+- A coleta e a entrega registram os animais por UUID. A reprodução de corte usa pares do mesmo curral. O abate usa a meta vigente no total da vila e a reserva do curral da vítima.
+- JAR instalado em `downloads/` do checkout do Desktop e na pasta `mods/` do TLauncher. As cópias e o build têm SHA-256 `53E341158D3963E0D1A7724A1B0AA0394593E906CA4C190E3AE07E128AC43FF8`. A 0.4.123 ficou como cópia desativada.
+- No Sentinela `fast` (`20261123T170632Z`), unitários e propriedades passaram. Dos 1.247 GameTests, 1.244 passaram. Falharam a tosquia N05 e dois cenários de coleta de `ShepherdRoundGameTest`. Na repetição focada de rebanho, telhado, ronda e tosquia, os 20 passaram. O log confirmou nascimento e morte por queda do mesmo filhote, e abate com dois adultos preservados no curral da vítima.
+- Retome pelo [roteiro do rebanho](docs/technical/Playtest-0.4.122-2026-11-23.md#próximo-playtest-do-rebanho) e pelo [TODO](TODO.md). A sessão anterior não tinha informação suficiente para explicar toda a perda de animais.
+
+## Candidata local 0.4.123 (2026-11-23)
+
+- Na branch `codex/resgate-telhado-04123`, a opção 1 protege o resgate de telhado. Um salto curto usa a distância segura de queda do aldeão. Para o desnível alto, o resgate o coloca em um piso natural ou rua com espaço livre, zerando a velocidade e a distância de queda.
+- A regressão de oito blocos falhou antes da mudança. Os oito GameTests focados passaram após a correção, e o Sentinela `fast` passou nas três suítes (`20261123T152335Z`, 1.244 GameTests).
+- Use o [roteiro do telhado](docs/technical/Playtest-0.4.122-2026-11-23.md) para conferir a chegada ao chão e a volta ao trabalho. O [TODO](TODO.md) mantém a investigação da subida e do retorno.
+
 ## Candidata 0.4.122-alpha (2026-11-23)
 
 - A entrega reúne a correção do grafo e as mudanças do pastor da série 0.4.119–0.4.121. Os 17 GameTests do grafo passaram na candidata. Consulte as [notas da entrega](docs/releases/v0.4.122.md) e o [TODO](TODO.md) para a próxima rodada.

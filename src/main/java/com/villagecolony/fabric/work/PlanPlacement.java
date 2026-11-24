@@ -1,10 +1,14 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.fabric.integration.BlueprintPlacement;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.VillageRoad;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ColonyPos;
@@ -15,6 +19,8 @@ import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.VillageStructures;
 import com.villagecolony.fabric.integration.VillageBiomes;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -141,6 +147,55 @@ public final class PlanPlacement {
     public static Optional<Blueprint> blueprintOf(
             ServerWorld world, UUID colonyId, ResourceId id, ColonyPos origin) {
         return BlueprintPlacement.blueprintOf(world, colonyId, id, origin);
+    }
+
+    /** Na Regra 17, o giro para o centro exige uma rua transitável diante da porta no mesmo lote. */
+    static boolean hasDirectRoadAccess(
+            ServerWorld world, UUID colonyId, ColonyPos lot, Blueprint house, Side side) {
+        Optional<BlueprintBlock> door = house.blocks().stream()
+                .filter(block -> block.block().path().endsWith("_door"))
+                .filter(block -> !"upper".equals(block.states().get("half")))
+                .findFirst();
+        if (door.isEmpty() || house.doorSide().filter(side::equals).isEmpty()) {
+            return false;
+        }
+
+        Direction outward = MinecraftTypeAdapter.toDirection(side);
+        ColonyPos offset = door.get().offset();
+        int floorLayer = lot.y() - house.originFor(lot).y();
+        if (Math.abs(offset.y() - floorLayer) > 1) {
+            return false;
+        }
+
+        int frontX = offset.x() + outward.getOffsetX();
+        int frontZ = offset.z() + outward.getOffsetZ();
+        // A porta pode ficar recuada. O piso do lote será nivelado pela Regra 19.
+        while (frontX >= 0 && frontX < house.size().x() && frontZ >= 0 && frontZ < house.size().z()) {
+            if (hasPlannedObstacle(house, frontX, frontZ, floorLayer, Math.max(floorLayer, offset.y()) + 1)) {
+                return false;
+            }
+            frontX += outward.getOffsetX();
+            frontZ += outward.getOffsetZ();
+        }
+
+        BlockPos road = new BlockPos(lot.x() + frontX, lot.y() - 1, lot.z() + frontZ);
+        if (!world.getChunkManager().isChunkLoaded(road.getX() >> 4, road.getZ() >> 4)
+                || !VillageRoad.isPaving(world, road)
+                || !RoadIndex.isRoadArea(world, colonyId, road)) {
+            return false;
+        }
+
+        BlockPos feet = road.up();
+        BlockPos head = feet.up();
+        return world.getBlockState(feet).getCollisionShape(world, feet).isEmpty()
+                && world.getBlockState(head).getCollisionShape(world, head).isEmpty()
+                && world.getFluidState(feet).isEmpty()
+                && world.getFluidState(head).isEmpty();
+    }
+
+    private static boolean hasPlannedObstacle(Blueprint house, int x, int z, int floorLayer, int headLayer) {
+        return house.blocks().stream().map(BlueprintBlock::offset)
+                .anyMatch(pos -> pos.x() == x && pos.z() == z && pos.y() >= floorLayer && pos.y() <= headLayer);
     }
 
     /**

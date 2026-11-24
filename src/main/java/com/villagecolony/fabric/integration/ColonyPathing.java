@@ -6,6 +6,7 @@ import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.StreetRoute;
 import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.fabric.brain.WorkTargets;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.PillarBlock;
 import net.minecraft.entity.ai.pathing.PathNodeType;
@@ -71,6 +72,11 @@ public final class ColonyPathing {
     private ColonyPathing() {
     }
 
+    private static boolean isDoor(PathNodeType type) {
+        return type == PathNodeType.DOOR_OPEN || type == PathNodeType.WALKABLE_DOOR
+                || type == PathNodeType.DOOR_WOOD_CLOSED || type == PathNodeType.DOOR_IRON_CLOSED;
+    }
+
     /**
      * O tipo do nó para este bicho: o mesmo, ou {@link #OFF_STREET} quando é aldeão da colônia, o nó é andável, fica
      * dentro da caixa da vila dele e o chão embaixo não é de rua. Prepara os custos do aldeão na passagem.
@@ -78,6 +84,11 @@ public final class ColonyPathing {
     public static PathNodeType forWalker(BlockView world, MobEntity mob, int x, int y, int z, PathNodeType type) {
         if (!(mob instanceof VillagerEntity)) {
             return type;
+        }
+
+        // A guia fica do lado de fora, inclusive quando o aldeão poderia abrir a porta (ADR-004).
+        if (isDoor(type) && WorkTargets.isLeadingAnimal(mob.getUuid())) {
+            return PathNodeType.BLOCKED;
         }
 
         Optional<Worker> worker = VillageColonyMod.WORKERS.find(mob.getUuid());
@@ -189,16 +200,19 @@ public final class ColonyPathing {
     }
 
     /**
-     * Onde se fica de pé nesta coluna, o mais perto da altura {@code aroundY}: chão firme e 2 livres em cima. Pela
-     * altura dele e não pelo topo do mundo — a rua debaixo de uma ponte ou de um beiral também é rua.
+     * Onde se fica de pé nesta coluna, o mais perto da altura {@code aroundY}: chão de rua ou chão natural, e 2 livres
+     * em cima (Regras 151 e 160). Pela altura dele e não pelo topo do mundo — a rua debaixo de uma ponte ou de um
+     * beiral também é rua. O topo de uma construção (chaminé, muro, telhado) não serve: a coluna coberta por ela não dá
+     * trecho.
      */
-    private static Optional<BlockPos> standingOn(ServerWorld world, int x, int z, int aroundY) {
+    static Optional<BlockPos> standingOn(ServerWorld world, int x, int z, int aroundY) {
         for (int step = 0; step <= 2 * STAND_SEARCH; step++) {
             // 0, -1, +1, -2, +2...: o chão mais perto da altura dele ganha.
             int y = aroundY + (step % 2 == 0 ? step / 2 : -(step + 1) / 2);
             BlockPos feet = new BlockPos(x, y, z);
+            BlockState floor = world.getBlockState(feet.down());
 
-            if (!world.getBlockState(feet.down()).getCollisionShape(world, feet.down()).isEmpty()
+            if (isLegGround(floor) && !floor.getCollisionShape(world, feet.down()).isEmpty()
                     && world.getBlockState(feet).getCollisionShape(world, feet).isEmpty()
                     && world.getBlockState(feet.up()).getCollisionShape(world, feet.up()).isEmpty()) {
                 return Optional.of(feet);
@@ -206,6 +220,12 @@ public final class ColonyPathing {
         }
 
         return Optional.empty();
+    }
+
+    /** Chão em que o trecho da rede pode parar: rua, caminho ou chão natural. */
+    static boolean isLegGround(BlockState floor) {
+        return VillageRoad.isPathBlock(floor) || StreetSurface.isStreetMaterial(floor)
+                || SiteSurroundings.isNaturalGround(floor);
     }
 
     /** Os custos do aldeão da colônia; só escreve quando ainda não estão lá. */

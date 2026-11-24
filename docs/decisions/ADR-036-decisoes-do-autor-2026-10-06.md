@@ -24,7 +24,7 @@ registra decisão que confirma o que já existe.
 
 | # | Decisão | Código |
 |---|---|---|
-| 4 | Toda casa — da vila original ou construída — tem baú ao lado da cama, **encostado na parede**, nunca na frente de porta ou escada | colocação do baú de cama |
+| 4 | Toda casa — da vila original ou construída — tem baú ao lado da cama, **encostado na parede**, nunca na frente de porta ou escada. A placa externa acompanha as camas atribuídas. Na casa pequena o quadro do baú aponta para o centro quando há face livre. A migração exige prova de que o mod colocou o baú e destino seguro | placas residenciais e colocação do baú de cama |
 | 5 | **Desfaz a Regra 25** (a maior planta que couber) | ordem das plantas deixa de ser por tamanho; a primeira casa continua a menor |
 | 6 | Peça que depende de profissão: na **4ª** tentativa sem sucesso aparece **no baú da profissão** e o erro vai ao log. Peça cuja profissão devolve erro **5 vezes** é pulada | suprimento da obra e barreira |
 | 7 | Os conflitos regra × código são listados e decididos pelo autor, um a um | lista na reanálise |

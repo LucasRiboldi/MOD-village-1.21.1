@@ -2,6 +2,40 @@
 
 # Development-Log.md
 
+## 24-11-2026 — Grafo no deserto, candidata 0.4.128
+
+Na colônia `ea1997ba`, o log alternou entre 3 e 25 arestas. A frente da porta Vanilla em `844,62,319` e as quatro vizinhas tinham arenito liso no save. O piso fica dentro da peça `village/desert/streets/straight_02`. A regressão reproduziu a omissão da rua pela leitura do grafo com o índice vazio. A leitura agora usa a peça registrada para reconhecer o pavimento já existente. O cenário da BigHouseMOD verifica a entrada em piso de areia e a ligação contornando o desnível depois da caixa. As fundações pedem nova leitura depois do registro da construção. As nove notas da sessão estão agrupadas por assunto no `TODO.md`.
+
+A primeira rodada do Sentinela expôs um ciclo novo entre os pacotes de integração e de trabalho. O aviso passou a usar `RoadRegionEvents`. Os seis testes de arquitetura e os 57 GameTests focados de grafo e fundação passaram na branch da correção.
+
+O limite de tamanho moveu a verificação do pavimento para `RoadPaving`. O adaptador converte a posição usada nessa consulta. A última bateria completa, antes dessa conversão, passou em 1.255 de 1.257 GameTests. Repetiram as falhas da saída do curral entre varreduras e da tosquia N05. A travessia após fusão reapareceu na rodada anterior e passou na última. No código entregue, os unitários e propriedades do Sentinela e os 57 GameTests focados passaram. O `HANDOFF.md` registra o JAR instalado e o roteiro do deserto.
+
+## 24-11-2026 — Currais temáticos e prioridade do curral grande, candidata 0.4.127
+
+A análise da 0.4.126 encontrou seis acessos externos recusados e pares prontos que o pastor não alcançava. O autor aprovou curral grande prioritário sem lotação e seis modelos médios por grupo. O catálogo de construção e o grafo agora usam a porteira da obra. A classificação usa o modelo registrado e identifica currais Vanilla para preservar seu manejo. O pastor passa ao próximo desgarrado quando o destino da primeira espécie é recusado. Os casos iniciais reproduziram a ausência dos modelos do catálogo, a prioridade indevida do curral próximo, a separação incorreta e a falta de entrada no grafo. O roteiro para confirmar a acumulação em jogo está no `HANDOFF.md`.
+
+A regressão com cavalo e o NBT real mostrou bloqueio na abertura padrão. Na entrega aos currais novos do mod, os braços voltados à porteira se retraem enquanto ela está aberta para o animal largo. O fechamento os reconecta. Os 50 GameTests focados conferiram a travessia, o fechamento, os destinos e o grafo. Os três testes do gerador conferiram as áreas internas, a decoração e a geração determinística. O Sentinela inicial apontou três classes acima de 500 linhas. A classificação e a passagem de animais largos ganharam classes próprias. O catálogo dos currais médios passou a ser composto em `PenPlans`. A rodada seguinte (`20261124T090817Z`) passou em unitários e propriedades. Dos 1.255 GameTests, passaram 1.254. A única falha foi a saída do curral antes da varredura, já reproduzida nas duas versões anteriores.
+
+## 23-11-2026 — Orientação de moradia e criação de baú, candidata 0.4.126
+
+A casa de teste manteve a porta voltada para fora mesmo com rua livre para o centro. A abertura da obra agora prefere uma rotação com a mesma pegada e rua transitável diante da porta, preservando o acesso original se esse giro não for viável. Uma porta recuada usa a mesma preferência se a faixa entre a porta e a rua ficar livre na planta. O caso foi reproduzido com a casa pequena de planície do catálogo. Na varredura, duas tentativas sem moradia consumiam o limite antes de um trabalhador com cama. O limite de dois agora conta os baús realmente criados. As duas regressões falharam antes dos ajustes. Os 12 GameTests focados passaram no primeiro ajuste. Com a casa de porta recuada, a rodada focada passou em 32 de 33 e o Sentinela passou em 1.249 de 1.251 GameTests. A saída do curral falhou nessas duas rodadas e também em um teste focado da 0.4.125. A tosquia N05 repetiu a falha intermitente na bateria completa. Unitários e propriedades passaram. O plano da 0.4.115 contém o roteiro de confirmação da orientação da porta e os três marcos de N14, cama, baú e placa.
+
+## 23-11-2026 — Salto progressivo, candidata 0.4.125
+
+`VillagerMoves` previa degrau e cerca pelo caminho e ativava o pulo maior antes da colisão. A correção mantém o pulo padrão primeiro e libera o modificador maior somente após colisão horizontal confirmada. Encalhe e saída de curral permanecem exceções. A regressão de degrau e cerca passou com 6/6 GameTests focados. Falta gerar o JAR e confirmar o comportamento em jogo.
+
+## 23-11-2026 — Candidata local 0.4.124
+
+A candidata reúne a correção do rebanho e o resgate de telhado da 0.4.123. Unitários e propriedades passaram no Sentinela `fast` (`20261123T170632Z`). A bateria de 1.247 GameTests teve três falhas, na tosquia N05 e em duas seleções de animal desgarrado. Os 20 GameTests da repetição focada passaram. Dessas linhas de log, `BIRTH` e `DEATH` mostram o mesmo filhote, e `VC_FLOCK_HARVEST` registra nove adultos antes e oito depois na vila, com três antes e dois depois no curral da vítima. O JAR instalado e o roteiro estão no `HANDOFF.md`.
+
+## 23-11-2026 — Reprodução e abate nos currais
+
+O cenário que acrescentava uma vaca solta a oito adultas no curral reproduziu o abate indevido. A criação de corte passou a usar pares do mesmo recinto e um total de adultos somado nos currais da vila. O abate usa esse total, acima da meta de criação vigente, e preserva dois adultos no curral da vítima. A rodada focada passou oito GameTests. No Sentinela `fast` (`20261123T165821Z`), unitários e propriedades passaram, e a tosquia N05 foi a única falha dos 1.246 GameTests. A instrumentação por animal aguarda o próximo playtest.
+
+## 23-11-2026 — Resgate de telhado na candidata 0.4.123
+
+Três fazendeiros morreram após saltos de resgate de sete a oito blocos no playtest. O GameTest de oito blocos reproduziu o lançamento para fora do telhado. Com a opção 1, `RoofDescent` mantém o salto em desnível curto e usa o piso válido mais próximo para a descida direta quando a queda excederia a distância segura. A descida direta zera a velocidade e a distância de queda. Os oito GameTests focados de telhado e fuga passaram, incluindo um aldeão com um ponto de vida em cada tipo de descida. A causa da subida e a retomada do trabalho no mundo jogado seguem no TODO.
+
 ## 23-11-2026 — Aproximação lateral da porteira (N26)
 
 A guia Vanilla recalcula o caminho do animal com margem de chegada de um bloco. No desnível lateral, a vaca parava na fase `LEAD` com a guia presa. O pastor passa a aguardar do lado oposto da abertura se houver piso acessível. O GameTest de travessia passou na bateria local completa. A tosquia apresentou uma falha na mesma rodada e segue no TODO.
@@ -12533,3 +12567,91 @@ do animal abatido para cruzar com a contagem. A causa da queda, as entradas de
 casa sem ligação e o relato do lenhador na obra aguardam evidência do próximo jogo.
 
 Sentinela `fast` passou com 1.886 testes unitários, uma suíte de propriedades e 1.241 GameTests (`20261123T004749Z`).
+
+## 2026-11-24 — 0.4.129, condução externa e expediente
+
+No item 6 do jogo do deserto da 0.4.127, a nota das 12:49:58 em `874,64,275`
+relatou que o pastor passou por uma casa com uma vaca na guia e encostou em um
+aldeão. As regressões reproduziram o atalho e a escolha de parceiro social durante
+o expediente. A sessão não estabelece a causa do contato físico.
+
+A opção 2 descarta a rota anterior no início da condução e exclui portas abertas
+e fechadas da busca. A porteira do curral continua disponível. A Regra 18 agora
+restringe a conversa se qualquer participante tiver ofício na colônia e estiver
+em expediente. O [handoff](../../HANDOFF.md) indica como repetir o caso em jogo.
+
+O build passou. Os 14 GameTests focados passaram, incluindo o desvio e a transição
+entre expediente e descanso.
+No Sentinela `fast` (`20261124T175259Z`), passaram 1.886 testes unitários, uma
+suíte de propriedades e 1.258 de 1.259 GameTests. A única falha repetiu
+`PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`, registrada
+nas candidatas 0.4.125 a 0.4.128.
+
+## 2026-11-24 — 0.4.130, placas externas e baús de moradia
+
+As notas do deserto da 0.4.127 pediram uma placa na fachada em `847,64,298`
+e o baú com quadro voltado ao centro em `878,63,245`. O registro de 13:09:15
+associa o segundo baú ao mineiro e informa a cama em `877,63,246`. A instalação
+desse baú não foi registrada.
+
+A opção 2 inclui um painel de texto Vanilla por moradia e adapta o quadro
+interno pela direção do centro da casa pequena. A colocação de baús residenciais
+passa a guardar um recibo persistente. Quando perde o apoio, um baú com recibo
+pode mudar para uma posição livre junto à parede no mesmo chunk, preservando a
+associação e o inventário. Baús de origem incerta, com nome, abertos ou com
+quadro do jogador permanecem no lugar. O movimento e a placa podem ser
+verificados por `VC_HOME_CHEST_MOVED` e `VC_HOME_SIGN`.
+
+O build e os 38 GameTests focados passaram. O Sentinela `fast`
+(`20261124T182652Z`) passou nos 1.886 testes unitários, na suíte de propriedades
+e em 1.260 dos 1.261 GameTests. Repetiu a falha da 0.4.129 em
+`PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`.
+O JAR foi instalado no TLauncher e copiado para `downloads/`. A validação
+visual das duas casas continua pendente no playtest.
+
+## 2026-11-24 — 0.4.131, piso do curral grande
+
+O item 9 veio da nota `VC_BIOME_NOTE` da 0.4.127 às 13:50:29 no deserto, em
+`897,66,272`. A inspeção do curral pronto encontrou 83 blocos de areia, 64 de
+arenito e nenhum de grama nas posições previstas para o piso de grama.
+
+A opção 1 usa o reconhecimento de terreno dos lotes para moldar a grama da
+planta, sem gastar estoque. A mesma regra se aplica na colocação normal, às
+peças adiadas por alcance e no fechamento da obra. Água e canteiros seguem
+seus próprios blocos na planta. O carregamento volta a reconhecer o curral
+grande em construção como infraestrutura ativa. Currais concluídos ficam fora
+da correção.
+
+As duas regressões falharam antes da correção. Os 22 GameTests focados passaram
+depois, incluindo a retomada com uma porteira já assentada e a proteção de um
+baú na conclusão. A conferência visual em uma obra no deserto segue no TODO.
+
+O Sentinela `fast` (`20261124T185435Z`) passou nos 1.886 unitários, na suíte de
+propriedades e em 1.262 dos 1.263 GameTests. A falha conhecida de
+`PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan` se repetiu.
+
+## 2026-11-24 — migração do baú residencial na borda do chunk
+
+O CI do PR 105 reprovou `ChestPlacerGameTest.repairsAProvenChestWithoutDroppingContents`
+na execução 45466588791, embora o Sentinela local tenha passado. O GameTest monta o
+cenário em coordenadas diferentes a cada execução, e `HomeChestMoves.repair` só aceitava
+destino no mesmo chunk da origem. Quando a borda caía entre os dois lados da cama, o
+reparo recusava. O diagnóstico no CI (execuções 709 e 710) registrou os chunks: no mesmo
+chunk o teste passa; com a casa montada sobre a borda, falha.
+
+Por escolha do autor, o destino pode estar no chunk vizinho, desde que carregado; o
+`repair` já exige a casa inteira carregada. `repairsAProvenChestAcrossAChunkBorder`
+desloca a casa até a borda e prova a migração com os itens no mesmo slot.
+
+O teste da borda falhou depois em 1 de 6 execuções do CI (PR #107, execução
+45489203898, 2ª rodada), já com origem e destino em chunks vizinhos. Hipótese não
+verificada: o deslocamento leva a casa para fora da área carregada do GameTest, e
+`repair` exige a casa inteira carregada. O teste passa a forçar esses chunks, como em
+jogo perto do jogador, roda o reparo no tick seguinte e registra em
+`VC_TEST_CHEST_BORDER_UNLOADED` os chunks que estavam descarregados.
+
+## 2026-11-24 — 0.4.133, trecho da rede fora do telhado
+
+O jogo da 0.4.122 teve três fazendeiros mortos por queda depois de resgates do mesmo telhado. A 0.4.123 já punha o aldeão direto no piso quando o salto passava da queda segura. Faltava a volta: o destino `338,87,1412` seguia o topo da chaminé (pedregulho e muro do construtor), e `ColonyPathing.standingOn` aceitava qualquer chão firme como lugar de pé do trecho da rede de ruas. Agora o trecho só para em chão de rua, caminho ou chão natural (Regras 151 e 160).
+
+`StreetRouteGameTest.aStreetColumnUnderAChimneyIsNotALeg` falhou antes da correção com "o topo da chaminé virou lugar de pé do trecho da rede". O `ColonyMergeTriggerGameTest` calçava a rede com pedregulho e passou a usar `dirt_path`. Os 120 GameTests focados (rota, telhado, mina, água, fusão, cerca, encalhe) passaram.

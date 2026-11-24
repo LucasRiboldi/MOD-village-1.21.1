@@ -3,7 +3,6 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.worker.model.Worker;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.minecraft.block.BlockState;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.attribute.EntityAttributeInstance;
@@ -21,9 +20,8 @@ import net.minecraft.world.World;
  * O pulo e o nado do aldeão — autor, 2026-11-04.
  *
  * <ul>
- *   <li><b>Pulo:</b> a altura padrão do jogo. O maior ({@link #JUMP_GAIN}) só com obstáculo: o próximo trecho do
- *   caminho sobe mais que um bloco ou passa por cerca, ou ele bate em algo andando, está encalhado ou sai de um
- *   curral.</li>
+ *   <li><b>Pulo:</b> a altura padrão do jogo primeiro. O maior ({@link #JUMP_GAIN}) só após colisão confirmada,
+ *   encalhe ou saída de um curral; obstáculo previsto recebe o pulo padrão.</li>
  *   <li><b>Água:</b> com mais de {@value #WATER_AHEAD_MIN} blocos de água à frente, anda 5× mais rápido que no
  *   Vanilla, pelo atributo de eficiência na água, para todo aldeão.</li>
  * </ul>
@@ -33,12 +31,6 @@ public final class VillagerMoves {
     private static final int JUMP_EVERY = 2;
 
     private static final int WATER_EVERY = 5;
-
-    /** Quantos trechos do caminho à frente contam para o pulo maior: o atual e o seguinte. */
-    private static final int NODES_AHEAD = 2;
-
-    /** O degrau que o pulo padrão vence: até 1 bloco, pois ele sobe 1,25. */
-    private static final int NORMAL_RISE = 1;
 
     /**
      * Quanto o pulo maior ganha: de 0,42 para 0,62, uns 2,2 blocos de altura — o bastante para o degrau de
@@ -100,27 +92,7 @@ public final class VillagerMoves {
             return true;
         }
 
-        BlockPos feet = villager.getBlockPos();
-        int last = Math.min(path.getCurrentNodeIndex() + NODES_AHEAD, path.getLength());
-
-        for (int index = path.getCurrentNodeIndex(); index < last; index++) {
-            BlockPos node = path.getNodePos(index);
-
-            if (node.getY() - feet.getY() > NORMAL_RISE || standsOnTallBlock(world, node)) {
-                return true;
-            }
-        }
-
         return false;
-    }
-
-    /** O chão do nó passa de um bloco de altura: a cerca, o muro, o portão fechado. */
-    private static boolean standsOnTallBlock(ServerWorld world, BlockPos node) {
-        BlockPos under = node.down();
-        BlockState state = world.getBlockState(under);
-        var shape = state.getCollisionShape(world, under);
-
-        return !shape.isEmpty() && shape.getMax(net.minecraft.util.math.Direction.Axis.Y) > 1.0;
     }
 
     /** Se há mais de 5 blocos de água seguidos na direção em que ele anda ou olha. */

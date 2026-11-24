@@ -3,7 +3,6 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.type.ServerMemory;
-import net.minecraft.entity.EntityType;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -14,10 +13,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * A separação dos currais mistos — Regra 72, com a emenda da Regra 329: um animal de um cercado com mais de uma
- * espécie vai para o cercado só da espécie dele (ou um vazio) com lugar, para que cada tipo acabe no seu quando a vila
- * tem vários currais. Um por vez, só quando não há animal solto a recolher, e no máximo uma separação por dia em cada
- * vila.
+ * Regras 72 e 329: retira animais fora do grupo de um médio e separa cercados legados mistos.
+ * A mistura do grande e os currais Vanilla ficam fora dessa ronda. Uma transferência por dia por vila,
+ * depois de atender a coleta dos animais soltos.
  */
 final class PenRegroup {
 
@@ -47,12 +45,11 @@ final class PenRegroup {
         }
 
         for (ShepherdPens.Pen group : ShepherdPens.pensOf(world, colony)) {
+            if (group.large() || group.vanilla()) continue;
             var source = ShepherdPens.reachableFrom(world, group, shepherd);
             if (source.isEmpty()) continue;
             var mixed = source.get();
-            Map<EntityType<?>, Integer> inside = ShepherdPens.speciesIn(world, mixed);
-
-            if (inside.size() < 2) {
+            if (mixed.theme().isEmpty() && ShepherdPens.speciesIn(world, mixed).size() < 2) {
                 continue;
             }
 
@@ -60,6 +57,7 @@ final class PenRegroup {
                     ShepherdPens.areaOf(mixed),
                     candidate -> candidate.isAlive() && candidate.canBeLeashed() && !candidate.isLeashed()
                             && mixed.reach().contains(candidate.getBlockPos())
+                            && mixed.theme().filter(theme -> theme.accepts(candidate.getType())).isEmpty()
                             && !HerdCandidates.sheltersAnimal(world, candidate.getBlockPos()))) {
                 Optional<ShepherdPens.Pen> own =
                         ShepherdPens.forSpecies(world, colony, animal.getType(), shepherd, mixed, true);

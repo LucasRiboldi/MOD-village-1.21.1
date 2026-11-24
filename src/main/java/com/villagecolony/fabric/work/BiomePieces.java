@@ -100,6 +100,9 @@ public final class BiomePieces {
         }
 
         all.add(PenPlans.MODEL);
+        for (MediumPenType theme : MediumPenType.values()) {
+            all.add(theme.model());
+        }
         all.add(LargeFarmPlans.MODEL);
 
         return List.copyOf(all);

@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.construction.model.BlueprintKind;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.RoadGraph;
@@ -65,7 +66,9 @@ final class StructureFronts {
                 BlockPos min = MinecraftTypeAdapter.toBlockPos(building.min());
                 BlockPos max = MinecraftTypeAdapter.toBlockPos(building.max());
 
-                if (GeneratedVillages.isOrnament(building.blueprint().path())) {
+                if (BlueprintKind.isMediumPen(building.blueprint())) {
+                    mediumPenFront(world, min, max, terrain).ifPresent(fronts::add);
+                } else if (GeneratedVillages.isOrnament(building.blueprint().path())) {
                     EntranceSides.of(world, min, max, hub, terrain).ifPresent(retired::add);
                 } else if (!doors(world, min, max, columns, fronts, ways, retired) && !RoadShape.isFarm(building)) {
                     front(world, min, max, hub, terrain).ifPresent(fronts::add);
@@ -99,12 +102,7 @@ final class StructureFronts {
         // Todo portão de cerca é entrada (Regra 178), de obra ou da vila gerada.
         for (ShepherdPens.Pen pen : pens) {
             for (ShepherdPens.Access access : pen.accesses()) {
-                BlockPos out = access.outside();
-                OptionalInt ground = terrain.groundY(out.getX(), out.getZ(), out.getY() - 1);
-
-                if (ground.isPresent()) {
-                    fronts.add(new ColonyPos(out.getX(), ground.getAsInt(), out.getZ()));
-                }
+                accessFront(access.outside(), terrain).ifPresent(fronts::add);
             }
         }
 
@@ -188,6 +186,24 @@ final class StructureFronts {
         Optional<ColonyPos> gate = gateFront(world, min, max, terrain);
 
         return gate.isPresent() ? gate : EntranceSides.of(world, min, max, hub, terrain);
+    }
+
+    /** Regra 168: nos médios, a faixa de caminho ocupa a borda, um bloco antes da porteira. */
+    private static Optional<ColonyPos> mediumPenFront(ServerWorld world, BlockPos min, BlockPos max,
+                                                       WorldPathTerrain terrain) {
+        for (BlockPos at : BlockPos.iterate(min.getX(), min.getY(), min.getZ(), max.getX(), min.getY() + 2, max.getZ())) {
+            if (world.isChunkLoaded(at) && world.getBlockState(at).getBlock() instanceof FenceGateBlock) {
+                return ShepherdPens.penBehind(world, at, List.of())
+                        .flatMap(pen -> accessFront(pen.outside(), terrain));
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<ColonyPos> accessFront(BlockPos out, WorldPathTerrain terrain) {
+        OptionalInt ground = terrain.groundY(out.getX(), out.getZ(), out.getY() - 1);
+        return ground.isPresent() ? Optional.of(new ColonyPos(out.getX(), ground.getAsInt(), out.getZ()))
+                : Optional.empty();
     }
 
     /** Curral: o lado de fora do primeiro portão da borda. */

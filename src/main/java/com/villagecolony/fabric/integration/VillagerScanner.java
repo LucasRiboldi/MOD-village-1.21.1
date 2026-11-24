@@ -203,11 +203,13 @@ public final class VillagerScanner {
                 // lenhador e o mineiro ficaram 4h45 sem baú, e sem baú não há
                 // tarefa.
                 if (claimed.isEmpty() && !storages.hasStorage(villager.getUuid()) && chestsToSpawn > 0) {
-                    chestsToSpawn--;
                     ChestSpawner.ChestAttempt attempt = ChestSpawner.ensureChestAttempt(
                             world, villager, storages, colony.id(),
                             professionOf(workers, villager.getUuid()).map(Object::toString).orElse("worker"));
                     claimed = attempt.storage();
+                    if (claimed.isPresent()) {
+                        chestsToSpawn--;
+                    }
                     if (attempt.needsHousing()) {
                         housingNeeded.add(villager.getUuid());
                     }

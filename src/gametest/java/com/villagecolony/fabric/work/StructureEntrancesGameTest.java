@@ -16,11 +16,15 @@ import com.villagecolony.gametest.ColonyFixture;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.structure.StructurePlacementData;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
+import net.minecraft.util.BlockRotation;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.random.Random;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -58,6 +62,65 @@ public class StructureEntrancesGameTest implements FabricGameTest {
 
     private static ColonyPos cell(BlockPos at) {
         return MinecraftTypeAdapter.toColonyPos(at);
+    }
+
+    /** Regra 223: só a passagem da porteira recuada liga o curral temático à rua. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "medium_pen_entrance", tickLimit = 20)
+    public void thematicGatesLinkToTheStreet(TestContext context) {
+        var themes = java.util.List.of("cattle", "sheep", "pig", "poultry", "horse", "camelid");
+        BlockRotation[] rotations = BlockRotation.values();
+        for (int i = 0; i < themes.size(); i++) {
+            checkPenApproach(context, themes.get(i), rotations[i % rotations.length]);
+        }
+        context.complete();
+    }
+
+    private static void checkPenApproach(TestContext context, String theme, BlockRotation rotation) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 120, 1));
+        BlockPos pivot = origin.add(20, 0, 20);
+        ResourceId id = new ResourceId("villagecolony", "colony/medium_animal_pen_" + theme);
+        var template = world.getStructureTemplateManager().getTemplate(Identifier.of(id.namespace(), id.path())).orElseThrow();
+        var size = template.getSize();
+        BlockPos far = new BlockPos(size.getX() - 1, size.getY() - 1, size.getZ() - 1);
+        BlockBox box = BlockBox.create(pivot, pivot.add(far.rotate(rotation)));
+        BlockPos front = pivot.add(new BlockPos(6, 0, 0).rotate(rotation));
+        Direction out = rotation.rotate(Direction.NORTH);
+        BlockPos street = front.offset(out, 5);
+        ColonyFixture fixture = ColonyFixture.colonyAtWorld(street.up());
+        platform(world, origin);
+        try {
+            template.place(world, pivot, pivot, new StructurePlacementData().setRotation(rotation), Random.create(1), 18);
+            Colony colony = fixture.colony();
+            VillageColonyMod.BUILDINGS.register(new Building(UUID.randomUUID(), colony.id(), id,
+                    new ColonyPos(box.getMinX(), box.getMinY(), box.getMinZ()),
+                    new ColonyPos(box.getMaxX(), box.getMaxY(), box.getMaxZ())));
+            for (int distance = -6; distance <= 6; distance++) {
+                world.setBlockState(street.offset(out.rotateYClockwise(), distance), Blocks.DIRT_PATH.getDefaultState(), 18);
+            }
+            Set<ColonyPos> paths = new HashSet<>();
+            for (BlockPos floor : BlockPos.iterate(origin, origin.add(SIZE, 0, SIZE))) {
+                if (world.getBlockState(floor).isOf(Blocks.DIRT_PATH)) {
+                    paths.add(cell(floor));
+                }
+            }
+            RoadGraphRefresh.publish(world, colony, paths);
+            RoadGraph graph = ColonySavedData.get(world.getServer()).roadGraphs().graph(colony.id()).orElseThrow();
+            var entrances = graph.nodes().stream().filter(node -> node.roles().contains(RoadGraph.Role.ENTRANCE))
+                    .map(RoadGraph.Node::position).toList();
+            String scenario = theme + " / " + rotation;
+            context.assertTrue(entrances.equals(java.util.List.of(cell(front))), scenario + ": entradas " + entrances);
+            context.assertTrue(graph.edges().stream().anyMatch(edge -> edge.columns().contains(cell(front))
+                            && edge.columns().stream().map(MinecraftTypeAdapter::toBlockPos)
+                                    .anyMatch(at -> at.subtract(street).getComponentAlongAxis(out.getAxis()) == 0)),
+                    scenario + ": a passagem da porteira ficou sem ligação exterior à rua");
+            context.assertFalse(graph.edges().stream().flatMap(edge -> edge.columns().stream())
+                            .map(MinecraftTypeAdapter::toBlockPos).anyMatch(at -> box.contains(at) && box.contains(at.offset(out))),
+                    scenario + ": o grafo traçou rua para dentro do curral");
+        } finally {
+            fixture.cleanUp();
+            clean(world, origin);
+        }
     }
 
     /** Três paredes e um lado aberto: a entrada é o lado aberto, mesmo com o centro da vila atrás de uma parede. */

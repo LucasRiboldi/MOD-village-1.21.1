@@ -1,19 +1,29 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.coordination.WorkClock;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkRest;
 import com.villagecolony.fabric.brain.WorkTargets;
-import net.minecraft.entity.ai.brain.BlockPosLookTarget;
-import net.minecraft.entity.ai.brain.MemoryModuleType;
-import net.minecraft.entity.ai.brain.WalkTarget;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ai.brain.BlockPosLookTarget;
+import net.minecraft.entity.ai.brain.LivingTargetCache;
+import net.minecraft.entity.ai.brain.MemoryModuleType;
+import net.minecraft.entity.ai.brain.WalkTarget;
+import net.minecraft.entity.ai.brain.task.FindEntityTask;
+import net.minecraft.entity.ai.brain.task.GatherItemsVillagerTask;
+import net.minecraft.entity.ai.brain.task.MeetVillagerTask;
+import net.minecraft.entity.ai.brain.task.MultiTickTask;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
+
+import java.util.List;
 
 /**
  * O expediente da colônia — a Regra 18.
@@ -35,7 +45,7 @@ import net.minecraft.util.math.GlobalPos;
  * mundo é global e a bateria roda testes concorrentes. A primeira
  * versão desta classe punha o relógio às 14.000 para afirmar "à noite
  * ninguém trabalha", e derrubou três testes de lenhador que rodavam
- * junto. As horas usadas aqui estão todas <b>dentro</b> do expediente.
+ * junto. O teste social muda a hora e restaura o valor no mesmo tique.
  *
  * <p><b>Dentro do expediente não é o bastante, e 2026-09-04 mostrou por
  * quê.</b> O relógio continua andando depois daqui: {@link #AFTERNOON}
@@ -165,6 +175,66 @@ public class WorkHoursGameTest implements FabricGameTest {
                 "o repouso apagou a tarefa que deveria ser retomada de manhã");
         WorkTargets.clear(villager.getUuid());
         context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_hours_villager_social")
+    public void workHoursProtectBothSidesOfAVillagerConversation(TestContext context) {
+        ServerWorld world = context.getWorld();
+        VillagerEntity worker = adultAt(context);
+        VillagerEntity neighbor = context.spawnEntity(EntityType.VILLAGER, STAND.east(2));
+        ColonyFixture fixture = ColonyFixture.colonyAt(context, STAND);
+        fixture.owning(worker.getUuid());
+        VillageColonyMod.WORKERS.register(worker.getUuid(), fixture.colony().id()).assign(ProfessionType.SHEPHERD);
+        worker.getBrain().remember(MemoryModuleType.VISIBLE_MOBS, new LivingTargetCache(worker, List.of(neighbor)));
+        neighbor.getBrain().remember(MemoryModuleType.VISIBLE_MOBS, new LivingTargetCache(neighbor, List.of(worker)));
+        var meetingPoint = GlobalPos.create(world.getRegistryKey(), context.getAbsolutePos(STAND));
+        worker.getBrain().remember(MemoryModuleType.MEETING_POINT, meetingPoint);
+        neighbor.getBrain().remember(MemoryModuleType.MEETING_POINT, meetingPoint);
+        long previousHour = world.getTimeOfDay();
+        var find = FindEntityTask.create(EntityType.VILLAGER, 8, MemoryModuleType.INTERACTION_TARGET, 0.5f, 2);
+        try {
+            world.setTimeOfDay(WorkClock.WORK_END - 1);
+            context.assertFalse(find.tryStarting(world, worker, world.getTime()), "o trabalhador iniciou conversa");
+            context.assertFalse(find.tryStarting(world, neighbor, world.getTime()), "o vizinho buscou conversa com quem trabalha");
+            tryMeeting(world, neighbor);
+            context.assertFalse(neighbor.getBrain().hasMemoryModule(MemoryModuleType.INTERACTION_TARGET),
+                    "o sino permitiu buscar o trabalhador");
+            neighbor.getBrain().remember(MemoryModuleType.INTERACTION_TARGET, worker);
+            context.assertFalse(new GatherItemsVillagerTask().tryStarting(world, neighbor, world.getTime()),
+                    "um alvo anterior permitiu conversa com quem trabalha");
+
+            world.setTimeOfDay(WorkClock.WORK_END);
+            context.assertTrue(find.tryStarting(world, worker, world.getTime()), "o trabalhador não pôde socializar no descanso");
+            var conversation = new GatherItemsVillagerTask();
+            context.assertTrue(conversation.tryStarting(world, neighbor, world.getTime()), "a conversa não voltou no descanso");
+
+            world.setTimeOfDay(0);
+            conversation.tick(world, neighbor, world.getTime());
+            context.assertEquals(MultiTickTask.Status.STOPPED, conversation.getStatus(), "a conversa atravessou o expediente");
+            context.assertFalse(worker.getBrain().hasMemoryModule(MemoryModuleType.WALK_TARGET),
+                    "o trabalhador ficou com o destino social");
+            context.assertFalse(neighbor.getBrain().hasMemoryModule(MemoryModuleType.WALK_TARGET),
+                    "o vizinho ficou seguindo o trabalhador");
+
+            world.setTimeOfDay(WorkClock.WORK_END);
+            tryMeeting(world, neighbor);
+            context.assertTrue(neighbor.getBrain().hasMemoryModule(MemoryModuleType.INTERACTION_TARGET),
+                    "o sino não permitiu socializar no descanso");
+        } finally {
+            world.setTimeOfDay(previousHour);
+            fixture.cleanUp();
+            neighbor.discard();
+            worker.discard();
+        }
+        context.complete();
+    }
+
+    private static void tryMeeting(ServerWorld world, VillagerEntity villager) {
+        var meeting = MeetVillagerTask.create();
+        // A cada tentativa, a tarefa Vanilla tem 1% de chance de buscar um parceiro.
+        for (int attempt = 0; attempt < 3_000 && !meeting.tryStarting(world, villager, world.getTime()); attempt++) {
+            // A memória indica se a busca retornou um parceiro disponível.
+        }
     }
 
     private static VillagerEntity adultAt(TestContext context) {

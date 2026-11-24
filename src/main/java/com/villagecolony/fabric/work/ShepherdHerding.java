@@ -194,6 +194,7 @@ final class ShepherdHerding {
 
             if (herd.isPresent()) {
                 HERDS.put(id, herd.get());
+                PenLog.herdEvent(world, id, herd.get().animal, herd.get().fence, "FETCH", "assigned");
             } else {
                 NEXT_TRY.put(id, now + COOLDOWN);
             }
@@ -218,6 +219,7 @@ final class ShepherdHerding {
         Optional<BlockPos> fence = Optional.empty();
         Optional<BlockPos> newPost = Optional.empty();
         boolean fenceRead = false;
+        boolean hasPens = !ShepherdPens.pensOf(world, colony).isEmpty();
 
         for (AnimalEntity animal : candidates) {
             Optional<ShepherdPens.Pen> pen = ShepherdPens.forSpecies(world, colony, animal.getType(), shepherd, null, false);
@@ -231,10 +233,8 @@ final class ShepherdHerding {
 
             // Com curral na vila, nunca amarra: o animal espera a próxima tentativa, e o log diz por que o curral não
             // serviu (Regra 255). Sem curral nenhum, só o solto vai para a cerca ou para o poste novo (Regra 196).
-            if (!ShepherdPens.pensOf(world, colony).isEmpty()) {
-                PenRefusal.log(world, colony, shepherd, animal);
-
-                return PenRegroup.separate(world, colony, shepherd);
+            if (hasPens) {
+                continue;
             }
 
             if (animal.isLeashed() || ShepherdFlock.isKept(world, animal)) {
@@ -258,6 +258,9 @@ final class ShepherdHerding {
             return Optional.of(herd);
         }
 
+        if (hasPens && !candidates.isEmpty()) {
+            PenRefusal.log(world, colony, shepherd, candidates.getFirst());
+        }
         return PenRegroup.separate(world, colony, shepherd);
     }
 
@@ -291,7 +294,7 @@ final class ShepherdHerding {
         if (herd.pen != null && herd.pen.reach().isEmpty()) {
             var enclosure = FencedIn.penAt(world, herd.pen.inside());
             if (!enclosure.enclosed() || !enclosure.gates().contains(herd.fence)) {
-                abort(world, shepherdId, herd);
+                abort(world, shepherdId, herd, "pen_invalid");
                 return false;
             }
             herd.pen = new ShepherdPens.Pen(herd.fence, herd.pen.inside(), herd.pen.outside(), enclosure.reach(), false);
@@ -308,7 +311,7 @@ final class ShepherdHerding {
                 || !(animalEntity instanceof AnimalEntity animal) || !animal.isAlive()
                 || (!toPen && (!WorkHours.isWorkTime(world, shepherd)
                         || world.getTime() - herd.since > HerdDeadline.of(herd, shepherd, animal)))) {
-            abort(world, shepherdId, herd);
+            abort(world, shepherdId, herd, "animal_or_shepherd_unavailable_or_deadline");
             return false;
         }
 
@@ -327,7 +330,8 @@ final class ShepherdHerding {
         if (herd.phase == Phase.EXIT) {
             if (ShepherdPens.isOutside(herd.from, animal)) {
                 PenTether.release(animal);
-                animal.attachLeash(shepherd, true);
+                ShepherdLead.takeLeash(shepherd, animal);
+                PenLog.herdEvent(world, shepherdId, herd.animal, herd.fence, "LEASHED", "from_pen");
                 FencedIn.closeWhenClear(herd.from.gate());
                 herd.from = null;
                 herd.phase = Phase.LEAD;
@@ -338,7 +342,7 @@ final class ShepherdHerding {
                 VillageColonyMod.LOGGER.info("Shepherd {} gave up: the {} did not walk out of the pen at {}",
                         shepherdId.toString().substring(0, 8), animal.getType().getUntranslatedName(),
                         herd.from.gate().toShortString());
-                abort(world, shepherdId, herd);
+                abort(world, shepherdId, herd, "exit_timeout");
                 return false;
             }
             ShepherdPens.walkThrough(world, herd.from, animal, herd.from.outside());
@@ -352,18 +356,19 @@ final class ShepherdHerding {
             if (HerdPatience.losesPatience(shepherdId, herd.animal, Math.sqrt(shepherd.squaredDistanceTo(animal)),
                     world.getTime())) {
                 HerdPatience.setAside(world, shepherdId, herd.animal, "it got no closer to it");
-                abort(world, shepherdId, herd);
+                abort(world, shepherdId, herd, "no_progress");
                 return false;
             }
 
-            if (shepherd.squaredDistanceTo(animal) <= REACH * REACH) {
+            if (ShepherdLead.reachedOutsideAnimal(world, shepherd, animal)) {
                 if (HerdCandidates.sheltersAnimal(world, animal.getBlockPos())) {
-                    abort(world, shepherdId, herd);
+                    abort(world, shepherdId, herd, "animal_in_shelter");
                     return false;
                 }
                 Entity tiedTo = animal.getLeashHolder();
 
-                animal.attachLeash(shepherd, true);
+                ShepherdLead.takeLeash(shepherd, animal);
+                PenLog.herdEvent(world, shepherdId, herd.animal, herd.fence, "LEASHED", "from_fetch");
 
                 if (tiedTo instanceof LeashKnotEntity knot) {
                     ShepherdLead.removeIfEmpty(world, knot);
@@ -378,12 +383,13 @@ final class ShepherdHerding {
         if (animal.getLeashHolder() != shepherd) {
             if (toPen) {
                 // A corda soltou: volta para buscar o animal (Regra 309).
+                PenLog.herdEvent(world, shepherdId, herd.animal, herd.fence, "RETRY", "leash_lost");
                 herd.delivery.reset();
                 PenTether.release(animal);
                 herd.phase = Phase.FETCH;
                 return true;
             }
-            abort(world, shepherdId, herd);
+            abort(world, shepherdId, herd, "leash_lost");
             return false;
         }
 
@@ -392,7 +398,7 @@ final class ShepherdHerding {
         if (herd.pen != null && (atGate(herd.phase) || shepherd.getBlockPos().isWithinDistance(goal, REACH)
                 || herd.pen.reach().contains(shepherd.getBlockPos()))) {
             if (!(world.getBlockState(herd.fence).getBlock() instanceof net.minecraft.block.FenceGateBlock)) {
-                abort(world, shepherdId, herd);
+                abort(world, shepherdId, herd, "gate_missing");
                 return false;
             }
             if (herd.phase == Phase.LEAD) {
@@ -402,7 +408,7 @@ final class ShepherdHerding {
                 ShepherdLead.alignAtGate(animal, goal);
                 if (!herd.pen.reach().contains(shepherd.getBlockPos()) && !ShepherdPens.isInside(herd.pen, animal)
                         && animal.squaredDistanceTo(net.minecraft.util.math.Vec3d.ofBottomCenter(goal)) > REACH * REACH) {
-                    ShepherdLead.walkTo(world, shepherd, ShepherdLead.gateWaitingSpot(world, herd.pen, animal), 0);
+                    ShepherdLead.leadTo(world, shepherd, ShepherdLead.gateWaitingSpot(world, herd.pen, animal), 0);
                     return true;
                 }
                 WorkTargets.clear(shepherdId);
@@ -414,7 +420,7 @@ final class ShepherdHerding {
                 PenTether.release(animal);
                 if (HerdPatience.failedEntry(shepherdId, herd.animal, world.getTime())) {
                     HerdPatience.setAside(world, shepherdId, herd.animal, "no clear crossing into the pen");
-                    abort(world, shepherdId, herd);
+                    abort(world, shepherdId, herd, "entry_timeout");
                     return false;
                 }
                 herd.delivery.reset();
@@ -432,7 +438,7 @@ final class ShepherdHerding {
                     .orElse(false);
 
             if (!posted) {
-                abort(world, shepherdId, herd);
+                abort(world, shepherdId, herd, "no_post");
                 return false;
             }
 
@@ -452,15 +458,17 @@ final class ShepherdHerding {
         }
 
         if (ShepherdLead.isTooFar(shepherd, animal)) {
-            WorkTargets.set(shepherdId, animal.getBlockPos(), REACH - 1);
+            ShepherdLead.leadTo(world, shepherd, animal.getBlockPos(), REACH - 1);
         } else {
-            ShepherdLead.walkTo(world, shepherd, goal, REACH - 1);
+            ShepherdLead.leadTo(world, shepherd, goal, REACH - 1);
         }
 
         return true;
     }
 
-    private static void abort(ServerWorld world, UUID shepherdId, Herd herd) {
+    private static void abort(ServerWorld world, UUID shepherdId, Herd herd, String reason) {
+        PenLog.herdEvent(world, shepherdId, herd.animal, herd.fence, "ABANDON",
+                herd.phase + ":" + reason);
         VillageColonyMod.LOGGER.info("Shepherd {} dropped the herd in phase {} after {} ticks, heading for {}",
                 shepherdId.toString().substring(0, 8), herd.phase, world.getTime() - herd.since,
                 herd.pen != null ? herd.pen.gate().toShortString() : "a post");

@@ -191,6 +191,8 @@ public class VillageColonyMod implements ModInitializer {
     @Override
     public void onInitialize() {
         com.villagecolony.fabric.integration.OldChunkReceipt.register();
+        com.villagecolony.fabric.integration.HomeChestMoves.register();
+        com.villagecolony.fabric.integration.HomeDisplays.register();
         com.villagecolony.fabric.content.ModContent.register();
         PayloadTypeRegistry.playS2C().register(OverlaySnapshotPayload.ID, OverlaySnapshotPayload.CODEC);
         OverlaySync.register();
@@ -209,6 +211,7 @@ public class VillageColonyMod implements ModInitializer {
         com.villagecolony.fabric.work.ValueGoods.register();
         com.villagecolony.fabric.work.BoxBeds.register();
         com.villagecolony.fabric.work.VillageDiary.register();
+        com.villagecolony.fabric.work.PenLog.register();
         com.villagecolony.fabric.work.VillageHelpers.register();
         com.villagecolony.fabric.work.GroundKeeper.register();
         com.villagecolony.fabric.work.AnalyticsLog.register();

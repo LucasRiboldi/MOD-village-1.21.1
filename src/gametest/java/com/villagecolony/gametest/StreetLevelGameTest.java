@@ -250,15 +250,15 @@ public class StreetLevelGameTest implements FabricGameTest {
 
         context.assertFalse(BuriedPieces.heldByTheGround(context.getWorld(), pen, piece, stone),
                 "a pedra do terreno segurou o piso do curral");
-        context.assertTrue(BuriedPieces.soilOverStone(context.getWorld(), pen, piece, stone),
+        context.assertTrue(BuriedPieces.mayShapePenFloor(context.getWorld(), pen, piece, stone),
                 "o curral não tomou o lugar da pedra");
         context.assertTrue(BuriedPieces.heldByTheGround(context.getWorld(), pen, piece, grass),
                 "a grama deixou de segurar o piso do curral");
-        context.assertFalse(BuriedPieces.soilOverStone(context.getWorld(), pen, piece, grass),
+        context.assertFalse(BuriedPieces.mayShapePenFloor(context.getWorld(), pen, piece, grass),
                 "o curral trocou grama por grama");
         context.assertTrue(BuriedPieces.heldByTheGround(context.getWorld(), house, house.blocks().get(0), stone),
                 "a regra do curral vazou para a casa");
-        context.assertFalse(BuriedPieces.soilOverStone(context.getWorld(), house, house.blocks().get(0), stone),
+        context.assertFalse(BuriedPieces.mayShapePenFloor(context.getWorld(), house, house.blocks().get(0), stone),
                 "a casa trocou a pedra");
         context.complete();
     }

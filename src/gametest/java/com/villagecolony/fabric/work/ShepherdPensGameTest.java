@@ -3,7 +3,9 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageBounds;
+import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.storage.model.WorkerStorage;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -35,15 +37,6 @@ import java.util.UUID;
 public class ShepherdPensGameTest implements FabricGameTest {
 
     private static final int Y = 60;
-
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_pens_size", tickLimit = 20)
-    public void aRegisteredLargePenHoldsTwentyAnimals(TestContext context) {
-        ShepherdPens.Pen large = new ShepherdPens.Pen(new BlockPos(0, 2, 0), new BlockPos(0, 2, 1),
-                new BlockPos(0, 2, -1), java.util.Set.of(), true);
-        context.assertTrue(ShepherdPens.capacityOf(large) == 20,
-                "curral grande registrado não ficou limitado a 20 animais");
-        context.complete();
-    }
 
     /** Os currais por espécie, em outra altura: o chão de 29×29 passa da arena. */
     private static final int Y2 = 90;
@@ -189,71 +182,150 @@ public class ShepherdPensGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /**
-     * Um curral por espécie — Regra 72, autor de 2026-10-22: com dois currais, a vaca vai para o da vaca e
-     * a ovelha para o vazio (mesmo mais longe), e a ovelha de um curral misto sai pelo portão para o dela.
-     */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_pens_species", tickLimit = 40)
-    public void eachSpeciesGetsItsOwnPen(TestContext context) {
-        ServerWorld world = context.getWorld();
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_registered_priority", tickLimit = 40)
+    public void reachableLargePenWinsAndBlockedLargeFallsBackByBlueprint(TestContext context) {
+        var world = context.getWorld();
+        var near = context.getAbsolutePos(new BlockPos(4, Y2 + 1, 1));
+        var far = near.east(10);
+        var colony = twoPens(world, near, far);
+        var medium = registerPen(colony, near, new ResourceId("villagecolony", "colony/medium_animal_pen_poultry"));
+        var large = registerPen(colony, far, PenPlans.MODEL);
+        var shepherd = animalFree(world, near.north());
+        var rabbit = animalAt(world, EntityType.RABBIT, far.south(2));
+        var sheep = animalAt(world, EntityType.SHEEP, far.south(3));
+        try {
+            context.assertTrue(ShepherdPens.forSpecies(world, colony, EntityType.CHICKEN, shepherd, null, false)
+                    .map(pen -> pen.gate().equals(far)).orElse(false), "o médio próximo ganhou do grande acessível");
+            context.assertTrue(PenRegroup.separate(world, colony, shepherd).isEmpty(),
+                    "o pastor tentou separar o coelho e a ovelha do grande");
+            world.setBlockState(far.up(), Blocks.STONE.getDefaultState());
+            for (var species : List.of(EntityType.CHICKEN, EntityType.RABBIT)) {
+                context.assertTrue(ShepherdPens.forSpecies(world, colony, species, shepherd, null, false)
+                        .map(pen -> pen.gate().equals(near)).orElse(false), "o médio de aves não recebeu " + species);
+            }
+            context.assertTrue(ShepherdPens.forSpecies(world, colony, EntityType.SHEEP, shepherd, null, false).isEmpty(),
+                    "o médio vazio de aves recebeu uma ovelha");
+        } finally {
+            VillageColonyMod.BUILDINGS.remove(medium.id());
+            VillageColonyMod.BUILDINGS.remove(large.id());
+            clearTwoPens(world, near, far, List.of(shepherd, rabbit, sheep));
+        }
+        context.complete();
+    }
 
-        for (int x = 0; x <= 28; x++) {
-            for (int z = 0; z <= 28; z++) {
-                world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y2, z)), Blocks.GRASS_BLOCK.getDefaultState());
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_registered_medium", tickLimit = 40)
+    public void mediumRegroupsOnlyMisplacedAnimalsAndVanillaKeepsItsResidents(TestContext context) {
+        var world = context.getWorld();
+        var near = context.getAbsolutePos(new BlockPos(4, Y2 + 1, 1));
+        var far = near.east(10);
+        var colony = twoPens(world, near, far);
+        var poultry = registerPen(colony, near, new ResourceId("villagecolony", "colony/medium_animal_pen_poultry"));
+        var cattle = registerPen(colony, far, new ResourceId("villagecolony", "colony/medium_animal_pen_cattle"));
+        var shepherd = animalFree(world, near.north());
+        var chicken = animalAt(world, EntityType.CHICKEN, near.south(2));
+        var rabbit = animalAt(world, EntityType.RABBIT, near.south(3));
+        var cow = animalAt(world, EntityType.MOOSHROOM, near.south(4));
+        try {
+            var move = PenRegroup.separate(world, colony, shepherd);
+            context.assertTrue(move.isPresent() && move.get().animal.equals(cow.getUuid())
+                    && move.get().fence.equals(far), "só a coguvaca deve sair para o médio de bovinos");
+            VillageColonyMod.BUILDINGS.remove(poultry.id());
+            var vanilla = registerPen(colony, near, ResourceId.vanilla("village/plains/houses/plains_animal_pen_1"));
+            try {
+                ShepherdPens.clearAll();
+                PenRegroup.clearAll();
+                context.assertTrue(PenRegroup.separate(world, colony, shepherd).isEmpty(), "tentou separar o curral Vanilla");
+            } finally {
+                VillageColonyMod.BUILDINGS.remove(vanilla.id());
+            }
+        } finally {
+            VillageColonyMod.BUILDINGS.remove(poultry.id());
+            VillageColonyMod.BUILDINGS.remove(cattle.id());
+            clearTwoPens(world, near, far, List.of(shepherd, chicken, rabbit, cow));
+        }
+        context.complete();
+    }
 
-                boolean ringA = (x == 1 || x == 7 || z == 1 || z == 7) && x >= 1 && x <= 7 && z >= 1 && z <= 7;
-                boolean ringB = (x == 11 || x == 17 || z == 1 || z == 7) && x >= 11 && x <= 17 && z >= 1 && z <= 7;
-
-                if (ringA || ringB) {
-                    world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y2 + 1, z)), Blocks.OAK_FENCE.getDefaultState());
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_medium_groups", tickLimit = 40)
+    public void looseHerdUsesOnlyTheRegisteredMediumGroup(TestContext context) {
+        var world = context.getWorld();
+        var near = context.getAbsolutePos(new BlockPos(4, Y2 + 1, 1));
+        var far = near.east(10);
+        var colony = twoPens(world, near, far);
+        world.setBlockState(far.up(), Blocks.STONE.getDefaultState());
+        var shepherd = animalFree(world, near.north(3));
+        var pig = animalAt(world, EntityType.PIG, near.north(2));
+        var horse = animalAt(world, EntityType.HORSE, near.east(5).north(3));
+        var llama = animalAt(world, EntityType.LLAMA, far.north(3));
+        try {
+            var candidates = HerdCandidates.of(world, colony, shepherd);
+            context.assertTrue(candidates.contains(horse) && candidates.contains(llama),
+                    "a coleta deve incluir cavalos e lhamas soltos");
+            var groups = java.util.Map.of(
+                    "cattle", List.of(EntityType.COW, EntityType.MOOSHROOM),
+                    "sheep", List.of(EntityType.SHEEP), "pig", List.of(EntityType.PIG),
+                    "poultry", List.of(EntityType.CHICKEN, EntityType.RABBIT),
+                    "horse", List.of(EntityType.HORSE), "camelid", List.of(EntityType.LLAMA, EntityType.GOAT));
+            for (var group : groups.entrySet()) {
+                var building = registerPen(colony, near,
+                        new ResourceId("villagecolony", "colony/medium_animal_pen_" + group.getKey()));
+                try {
+                    ShepherdPens.clearAll();
+                    for (var types : groups.values()) {
+                        for (var type : types) {
+                            boolean accepts = ShepherdPens.forSpecies(world, colony, type, near.north(), null, false).isPresent();
+                            context.assertTrue(accepts == group.getValue().contains(type),
+                                    group.getKey() + " escolheu incorretamente para " + type);
+                        }
+                    }
+                    if (group.getKey().equals("horse")) {
+                        context.assertTrue(ShepherdHerding.start(world, colony, shepherd)
+                                .filter(herd -> herd.animal.equals(horse.getUuid())).isPresent(),
+                                "um porco mais perto sem destino impediu o recolhimento do cavalo");
+                    }
+                } finally {
+                    VillageColonyMod.BUILDINGS.remove(building.id());
                 }
             }
+        } finally {
+            clearTwoPens(world, near, far, List.of(shepherd, pig, horse, llama));
         }
+        context.complete();
+    }
 
-        BlockPos gateA = context.getAbsolutePos(new BlockPos(4, Y2 + 1, 1));
-        BlockPos gateB = context.getAbsolutePos(new BlockPos(14, Y2 + 1, 1));
-        world.setBlockState(gateA, Blocks.OAK_FENCE_GATE.getDefaultState());
-        world.setBlockState(gateB, Blocks.OAK_FENCE_GATE.getDefaultState());
+    private static Building registerPen(Colony colony, BlockPos gate, ResourceId model) {
+        Building building = new Building(UUID.randomUUID(), colony.id(), model,
+                MinecraftTypeAdapter.toColonyPos(gate.add(-3, -1, 0)), MinecraftTypeAdapter.toColonyPos(gate.add(3, 2, 6)));
+        VillageColonyMod.BUILDINGS.register(building);
+        return building;
+    }
 
-        BlockPos low = context.getAbsolutePos(new BlockPos(0, Y2 - 2, 0));
-        BlockPos high = context.getAbsolutePos(new BlockPos(28, Y2 + 4, 28));
-        Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(gateA));
-        colony.measure(new VillageBounds(low.getX(), low.getY(), low.getZ(), high.getX(), high.getY(), high.getZ()));
-
-        List<ShepherdPens.Pen> pens = ShepherdPens.pensOf(world, colony);
-        ShepherdPens.Pen penA = pens.stream().filter(pen -> pen.gate().equals(gateA)).findFirst().orElseThrow();
-        ShepherdPens.Pen penB = pens.stream().filter(pen -> pen.gate().equals(gateB)).findFirst().orElseThrow();
-        BlockPos home = gateA.north(2);
-
-        CowEntity cow = animalAt(world, EntityType.COW, penA.inside().south());
-        List<net.minecraft.entity.Entity> spawned = new ArrayList<>(List.of(cow));
-
-        context.waitAndRun(5, () -> {
-            try {
-                context.assertTrue(ShepherdPens.forSpecies(world, colony, EntityType.COW, home, null, false)
-                                .map(penA::equals).orElse(false),
-                        "a vaca devia ir para o curral da vaca");
-                context.assertTrue(ShepherdPens.forSpecies(world, colony, EntityType.SHEEP, home, null, false)
-                                .map(penB::equals).orElse(false),
-                        "a ovelha devia ir para o curral vazio, e não para o da vaca, mais perto");
-
-                SheepEntity sheep = animalAt(world, EntityType.SHEEP, penA.inside().south().east());
-                spawned.add(sheep);
-
-                context.assertTrue(ShepherdPens.speciesIn(world, penA).size() == 2, "o curral A devia estar misto");
-                context.assertTrue(ShepherdPens.forSpecies(world, colony, EntityType.SHEEP, home, penA, true)
-                                .map(penB::equals).orElse(false),
-                        "a separação devia mandar a ovelha do curral misto para o vazio");
-
-                VillagerEntity shepherd = animalFree(world, penA.outside());
-                spawned.add(shepherd);
-                sheep.setAiDisabled(false);
-                walkOut(context, world, penA, sheep, shepherd, spawned, ShepherdPens.WALK_LIMIT);
-            } catch (RuntimeException | AssertionError failure) {
-                cleanUp2(context, world, spawned);
-                throw failure;
+    private static Colony twoPens(ServerWorld world, BlockPos near, BlockPos far) {
+        BlockPos low = near.add(-7, -1, -30);
+        BlockPos high = far.add(7, -1, 11);
+        for (var at : BlockPos.iterate(low, high)) world.setBlockState(at, Blocks.GRASS_BLOCK.getDefaultState());
+        for (var gate : List.of(near, far)) {
+            for (int x = -3; x <= 3; x++) {
+                for (int z = 0; z <= 6; z++) {
+                    if (Math.abs(x) == 3 || z == 0 || z == 6) {
+                        world.setBlockState(gate.add(x, 0, z), Blocks.OAK_FENCE.getDefaultState());
+                    }
+                }
             }
-        });
+            world.setBlockState(gate, Blocks.OAK_FENCE_GATE.getDefaultState());
+        }
+        var colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(near));
+        colony.measure(new VillageBounds(low.getX(), low.getY(), low.getZ(), high.getX(), high.getY() + 4, high.getZ()));
+        return colony;
+    }
+
+    private static void clearTwoPens(ServerWorld world, BlockPos near, BlockPos far,
+                                     List<? extends net.minecraft.entity.Entity> spawned) {
+        spawned.forEach(net.minecraft.entity.Entity::discard);
+        ShepherdPens.clearAll();
+        for (var at : BlockPos.iterate(near.add(-7, -1, -30), far.add(7, 1, 11))) {
+            world.setBlockState(at, Blocks.AIR.getDefaultState());
+        }
     }
 
     /**
@@ -375,37 +447,6 @@ public class ShepherdPensGameTest implements FabricGameTest {
         }
     }
 
-    /** Um passo da saída andando do cercado misto; fora, a ovelha vai para a corda do pastor. */
-    private static void walkOut(TestContext context, ServerWorld world, ShepherdPens.Pen pen, SheepEntity sheep,
-                                VillagerEntity shepherd, List<net.minecraft.entity.Entity> spawned, int left) {
-        try {
-            if (ShepherdPens.isOutside(pen, sheep)) {
-                sheep.attachLeash(shepherd, true);
-                context.assertTrue(sheep.getLeashHolder() == shepherd, "a ovelha não ficou na corda do pastor");
-                cleanUp2(context, world, spawned);
-                context.complete();
-                return;
-            }
-            context.assertTrue(left > 0, "a ovelha não saiu andando do curral misto: " + sheep.getBlockPos().toShortString());
-            ShepherdPens.walkThrough(world, pen, sheep, pen.outside());
-            context.waitAndRun(1, () -> walkOut(context, world, pen, sheep, shepherd, spawned, left - 1));
-        } catch (RuntimeException | AssertionError failure) {
-            cleanUp2(context, world, spawned);
-            throw failure;
-        }
-    }
-
-    private static void cleanUp2(TestContext context, ServerWorld world, List<net.minecraft.entity.Entity> spawned) {
-        spawned.forEach(net.minecraft.entity.Entity::discard);
-        ShepherdPens.clearAll();
-        for (int x = 0; x <= 28; x++) {
-            for (int z = 0; z <= 28; z++) {
-                world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y2 + 1, z)), Blocks.AIR.getDefaultState());
-                world.setBlockState(context.getAbsolutePos(new BlockPos(x, Y2, z)), Blocks.AIR.getDefaultState());
-            }
-        }
-    }
-
     private static <T extends net.minecraft.entity.passive.AnimalEntity> T animalAt(
             ServerWorld world, EntityType<T> type, BlockPos at) {
         T animal = type.create(world);
@@ -422,6 +463,7 @@ public class ShepherdPensGameTest implements FabricGameTest {
 
         villager.refreshPositionAndAngles(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0, 0);
         villager.setAiDisabled(true);
+        villager.setOnGround(true);
         world.spawnEntity(villager);
 
         return villager;

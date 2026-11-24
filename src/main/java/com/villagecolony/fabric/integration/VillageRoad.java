@@ -176,6 +176,11 @@ public final class VillageRoad {
         return BIOME_PATHS.contains(state.getBlock());
     }
 
+    /** Material de bioma na peça de rua Vanilla, inclusive antes de existir índice (Regra 291). */
+    public static boolean isNativeBiomeStreet(ServerWorld world, BlockPos pos, BlockState state) {
+        return isBiomePath(state) && BlockProtection.isVillageStreet(world, pos);
+    }
+
     /**
      * Se o bloco desta posição é rua: o material oficial em qualquer lugar, e o caminho de bioma só
      * onde a colônia o assentou (índice de ruas de qualquer colônia) ou na peça de rua da vila gerada.

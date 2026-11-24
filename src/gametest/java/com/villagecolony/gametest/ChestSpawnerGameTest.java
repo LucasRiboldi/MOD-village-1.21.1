@@ -1,12 +1,17 @@
 package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.core.worker.service.WorkerService;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestSpawner;
+import com.villagecolony.fabric.integration.VillageFoundation;
+import com.villagecolony.fabric.integration.VillagerScanner;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.enums.BedPart;
@@ -19,6 +24,9 @@ import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.GlobalPos;
+import net.minecraft.util.math.Box;
+
+import java.util.List;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -116,6 +124,53 @@ public class ChestSpawnerGameTest implements FabricGameTest {
         } finally {
             VillageColonyMod.BUILDINGS.removeOfColony(colony);
         }
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "chest_spawn_budget")
+    public void failedAttemptsDoNotDelayTheChestOfAWorkerWithAHome(TestContext context) {
+        floor(context);
+        closedHouse(context);
+        BlockPos bed = new BlockPos(3, 2, 4);
+        context.setBlockState(bed, Blocks.RED_BED.getDefaultState()
+                .with(Properties.BED_PART, BedPart.FOOT).with(Properties.HORIZONTAL_FACING, Direction.NORTH));
+        context.setBlockState(bed.north(), Blocks.RED_BED.getDefaultState()
+                .with(Properties.BED_PART, BedPart.HEAD).with(Properties.HORIZONTAL_FACING, Direction.NORTH));
+        context.setBlockState(bed.east(2), Blocks.STONE.getDefaultState());
+
+        BlockPos spawn = new BlockPos(3, 2, 1);
+        for (int i = 0; i < 3; i++) {
+            context.spawnEntity(EntityType.VILLAGER, spawn);
+        }
+        BlockPos absoluteSpawn = context.getAbsolutePos(spawn);
+        var world = context.getWorld();
+        List<VillagerEntity> villagers = world.getEntitiesByClass(VillagerEntity.class,
+                Box.of(absoluteSpawn.toCenterPos(), 3, 3, 3), VillagerEntity::isAlive);
+        context.assertTrue(villagers.size() == 3, "o cenário precisa dos três trabalhadores");
+        VillagerEntity resident = villagers.getLast();
+        BlockPos absoluteBed = context.getAbsolutePos(bed);
+        VillageFoundation.giveHome(world, resident, absoluteBed);
+        context.assertTrue(world.getPointOfInterestStorage().getFreeTickets(absoluteBed.north()) == 0,
+                "a cama do morador precisa estar reservada");
+
+        Colony colony = Colony.create(UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(absoluteSpawn));
+        WorkerService workers = new WorkerService();
+        StorageRegistry storages = new StorageRegistry();
+        villagers.forEach(villager -> workers.register(villager.getUuid(), colony.id())
+                .assign(ProfessionType.LUMBERJACK));
+        VillageColonyMod.BUILDINGS.register(new Building(
+                UUID.randomUUID(), colony.id(), ResourceId.vanilla("test/worker_house"),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(1, 1, 2))),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(6, 4, 6)))));
+        try {
+            VillagerScanner.scan(world, colony, workers, storages);
+            context.assertTrue(storages.hasStorage(resident.getUuid()),
+                    "duas tentativas sem moradia consumiram a vaga do trabalhador com cama");
+        } finally {
+            VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
+            villagers.forEach(villager -> ChestSpawner.forget(villager.getUuid()));
+        }
+
         context.complete();
     }
 

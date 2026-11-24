@@ -15,6 +15,10 @@ import java.util.List;
 /** Os animais que a coleta do pastor pode levar — Regras 255, 283, 299, 327 e 328. */
 final class HerdCandidates {
 
+    /** Além da criação de corte, a Regra 72 autoriza recolher cavalos e lhamas. */
+    private static final List<EntityType<? extends AnimalEntity>> HERDABLE = java.util.stream.Stream.concat(
+            ShepherdFlock.LIVESTOCK.stream(), java.util.stream.Stream.of(EntityType.HORSE, EntityType.LLAMA)).toList();
+
     private HerdCandidates() {
     }
 
@@ -32,7 +36,7 @@ final class HerdCandidates {
         Box area = areaOf(colony);
         List<AnimalEntity> candidates = new java.util.ArrayList<>();
 
-        for (EntityType<? extends AnimalEntity> species : ShepherdFlock.LIVESTOCK) {
+        for (EntityType<? extends AnimalEntity> species : HERDABLE) {
             candidates.addAll(world.getEntitiesByType(species, area, candidate -> candidate.isAlive()
                     && candidate.canBeLeashed()
                     && (!candidate.isLeashed() || candidate.getLeashHolder() instanceof LeashKnotEntity)

@@ -203,6 +203,20 @@ final class SiteOpening {
         }
 
         List<Blueprint> fitting = fittingPlans(candidates, road, site.size());
+        ColonyPos lot = site.origin();
+        ColonyPos midpoint = new ColonyPos(lot.x() + (site.size().x() - 1) / 2, lot.y(),
+                lot.z() + (site.size().z() - 1) / 2);
+        Side towardCenter = Side.awayFrom(midpoint, colony.center(), road);
+
+        if (HousePlans.isHouse(blueprint.id()) && towardCenter != road) {
+            List<Blueprint> facingCenter = fittingPlans(candidates, towardCenter, site.size()).stream()
+                    .filter(plan -> PlanPlacement.hasDirectRoadAccess(world, colony.id(), lot, plan, towardCenter))
+                    .toList();
+            if (!facingCenter.isEmpty()) {
+                fitting = facingCenter;
+                site = new BuildSiteScanner.Site(lot, MinecraftTypeAdapter.toDirection(towardCenter), site.size());
+            }
+        }
 
         if (fitting.isEmpty()) {
             VillageColonyMod.LOGGER.warn(

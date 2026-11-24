@@ -27,11 +27,11 @@ O snapshot final registrou 11 aldeões, 9 com ofício e 15 camas. O servidor mar
 | 02:16:01 | Outro aldeão travou sobre a casa. | O mesmo ponto aparece em tentativas posteriores de alcançar plantações. Rastrear a rota de entrada e as tentativas após o resgate. |
 | 02:17:07 | Curral quase vazio e suspeita de abate abaixo do mínimo. | O log marcou um abate de vaca no curral às 02:18:47. O registro de 11 adultos agrega a área e não demonstra a reserva daquele curral. |
 | 02:18:13 | Terceiro aldeão, com nome azul, parado no telhado. | A nota cita `339,86,1414`. Pouco antes, a terceira morte de fazendeiro por queda ocorreu em `338,78,1408`. O nome azul, por si só, não identifica o aldeão nos registros. |
-| 02:20:00 | Todos tentam o salto padrão primeiro. Salto maior só depois de travar. | A inspeção de `VillagerMoves` mostra que a lógica pode antecipar salto alto ao enxergar um obstáculo. Reproduzir em degraus e colisões, preservando manobras específicas de resgate e do curral. |
+| 02:20:00 | Todos tentam o salto padrão primeiro. Salto maior só depois de travar. | A candidata 0.4.125 remove a previsão de degrau e cerca: o salto maior só ativa após colisão horizontal confirmada. Resgate de encalhe e saída de curral permanecem exceções. Confirmar em jogo. |
 
 ## Erros e melhorias ordenados por impacto
 
-1. **Telhado e quedas.** Três fazendeiros morreram por queda junto da casa, às 01:16:42, 01:59:28 e 02:18:01. Cada morte ocorreu cerca de dois segundos após o primeiro salto do respectivo resgate, que mirava um piso de sete a oito blocos abaixo. O diário tem 23 registros de salto de resgate nessa colônia. Houve ainda uma queda fatal do pastor em outro ponto, sem ligação confirmada com esse telhado. O estado final de zero encalhados é a leitura de um instante.
+1. **Telhado e quedas.** Três fazendeiros morreram por queda junto da casa, às 01:16:42, 01:59:28 e 02:18:01. Cada morte ocorreu cerca de dois segundos após o primeiro salto do respectivo resgate, que mirava um piso de sete a oito blocos abaixo. O diário tem 23 registros de salto de resgate nessa colônia. Houve ainda uma queda fatal do pastor em outro ponto, sem ligação confirmada com esse telhado. O estado final de zero encalhados é a leitura de um instante. A 0.4.125 trata apenas a antecipação do pulo maior em obstáculos previstos.
 2. **Abate e reprodução.** No final havia 1 ovelha, 10 vacas, 11 porcos e 4 galinhas no total da vila. Instrumentar a contagem por espécie e curral, com adultos e filhotes antes e depois de cada abate, além de registrar nascimentos e saídas. Antes do abate, exigir três adultos da espécie no curral da vítima e preservar pelo menos dois animais dessa espécie nesse curral.
 3. **Acesso do mineiro e grafo.** O último grafo registrou quatro componentes isolados, além da entrada solta. A porta `306,91,1491`, próxima à casa registrada do mineiro, continuou em `loose`. Isso sustenta reabrir a verificação de N28. A mineração ocorreu, mas a conexão do arco com a rede antes e depois de recarregar ainda depende de prova específica para N12. Dois baús também ficaram fora das rotas a pé a partir do centro.
 4. **Condução na busca.** O pastor abandonou nove tentativas na fase `FETCH` com destino a `304,89,1473`. Investigar tempo e rota nessa etapa. N26 trata a fase `LEAD`, com guia já presa, e continua aguardando playtest do JAR corrigido.
@@ -42,6 +42,22 @@ O snapshot final registrou 11 aldeões, 9 com ofício e 15 camas. O servidor mar
 
 1. **Correção menor, recomendada.** Fazer o resgate escolher uma aterrissagem segura e impedir tentativas repetidas para o mesmo ponto perigoso. Reproduzir a queda da casa e verificar que o aldeão sai vivo e retoma o trabalho.
 2. **Correção média.** Fazer a opção 1 e corrigir a rota que leva os aldeões ao mesmo telhado. A reprodução deve demonstrar como eles sobem, impedir o retorno e preservar subidas legítimas, como as do curral.
+
+## Conferência do resgate de telhado
+
+O resgate da 0.4.123 também está na candidata 0.4.124. No mesmo mundo, observe a casa junto de `338,86,1414`. Se um aldeão encalhar no telhado, confirme que sai vivo e volta ao trabalho. Num resgate com sete a oito blocos de desnível, procure `LET_DOWN` no diário de ações. Anote se o mesmo aldeão voltar ao telhado e exporte os relatórios com `/vc salvar`.
+
+## Próximo playtest do rebanho
+
+1. Abra a candidata 0.4.125 em um mundo com dois currais reconhecidos e um pastor. Anote a versão, o UUID curto da vila e as coordenadas das porteiras.
+2. Acompanhe uma coleta até a entrega. A linha `FETCH` identifica o animal e `LEASHED` confirma a captura. `DELIVER` confirma que a porteira fechou e a guia foi solta. Se parar, salve a linha `ABANDON` com fase, motivo e posições.
+3. Deixe dois adultos da mesma espécie no mesmo curral e observe alimentação e nascimento. `FED` mostra o par, a comida e a meta. `BREED_WAIT` registra espera por par pronto ao alcance ou comida disponível. `BIRTH` identifica o filhote associado ao par alimentado pelo mod. `VC_PENS` mostra adultos e filhotes por espécie no recinto e no conjunto dos currais carregados.
+4. Com oito adultos da espécie nos currais e comida abaixo de 32, confirme que um adulto solto não autoriza abate. Acima de oito, o abate pode ocorrer se o curral da vítima começar com três adultos da espécie. Repita com 32 ou mais itens de alimento aceito, quando a meta sobe para 16.
+5. Compare `VC_PENS` antes e depois. `VC_FLOCK_HARVEST` informa os adultos das duas reservas antes e depois e o número de filhotes preservados. `DEATH` registra mortes observadas nos currais. `EXIT` indica uma saída observada. `UNOBSERVED` indica que o animal ou o recinto ficou indisponível. Ao final, execute `/vc salvar`.
+
+## Retorno ao telhado — candidata 0.4.133
+
+A opção 2 completa a opção 1. O diário mostrou 66 destinos de navegação em `338,87,1412` depois dos resgates. A altura acompanhava o topo da chaminé da `plains_armorer_house_1`: era `338,85,1412` antes do construtor pôr pedregulho em `338,85,1412` e muro em `338,86,1412`. A hipótese é que essa coluna pertence à rede de ruas: no trajeto de 24 blocos ou mais, `ColonyPathing.legToward` parava no lugar de pé mais perto da altura do aldeão, sem conferir o chão. A 0.4.133 só aceita chão de rua, caminho ou chão natural; a coluna coberta por construção não dá trecho. No próximo jogo, `338,87,1412` não deve aparecer como destino, e nenhum fazendeiro deve repetir o resgate na mesma casa. Que a coluna era da rede não foi confirmado no save; o GameTest reproduz a geometria.
 
 ## Fontes
 

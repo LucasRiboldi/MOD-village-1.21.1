@@ -509,3 +509,23 @@ repõe.
 Se algum dia um dado da colônia precisar viajar dentro do save do
 aldeão, a memória customizada volta à mesa — e com ela o segundo mixin,
 que exige nova ADR.
+
+## Emenda de 2026-11-24 — socialização no expediente
+
+O expediente da Regra 18 torna os profissionais da colônia inelegíveis para aproximação social,
+conversa e troca de itens entre aldeões. A regra vale para quem inicia e quem recebe a interação.
+Ao fim do expediente, os aldeões voltam a participar dessas tarefas Vanilla.
+
+O jogo não oferece evento para filtrar os participantes nestas tarefas. São autorizadas três
+injeções que delegam a decisão a `WorkHours`:
+
+- `FindEntityTaskMixin` acrescenta a condição aos predicados da busca de `INTERACTION_TARGET`
+  entre aldeões em IDLE e PLAY.
+- `MeetVillagerTaskMixin` acrescenta a condição à seleção de um parceiro junto ao sino.
+- `GatherItemsVillagerTaskMixin` verifica a dupla ao iniciar ou continuar uma conversa, inclusive
+  quando o alvo foi escolhido antes do começo do expediente.
+
+As tarefas e as atividades Vanilla permanecem registradas no Brain. O filtro incide nos
+participantes das tarefas sociais e respeita a reprodução, o comércio com jogadores e as
+atividades de sobrevivência. A navegação do pastor com guia usa o mixin de custo já existente
+em `LandPathNodeMaker` para excluir portas do trajeto durante a condução.

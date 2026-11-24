@@ -82,9 +82,9 @@ portões no curral grande e delegou as escolhas compatíveis com as regras atuai
 - Reutilizar abertura e fechamento de `FencedIn`. O pastor escolhe um portão
   fisicamente válido; não presumir que o pathfinding o abre automaticamente.
   Reconhecer os quatro acessos como um único cercado, sem multiplicar capacidade.
-- Preservar água, 12 cultivos, quatro tochas, capacidade de 20 animais e limite
-  de um curral grande por vila. Currais pequenos e extras existentes continuam
-  funcionais, conforme as regras já aprovadas.
+- Preservar água, 12 cultivos, quatro tochas e limite de um curral grande por vila.
+  A emenda de 2026-11-24 retirou o limite de animais. A porteira única dos seis
+  currais médios da Regra 168 se conecta ao grafo pelo caminho de terra externo.
 - Opção B escolhida pelo autor em 2026-11-04: os quatro portões ficam restritos
   ao MAE supervisionado. O marcador de origem atual não distingue a geração
   desta fase; por isso não autoriza trocar o asset do fluxo automático.

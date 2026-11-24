@@ -2,21 +2,32 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.storage.model.WorkerStorage;
+import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestPlacer;
+import com.villagecolony.fabric.integration.HomeChestMoves;
 import com.villagecolony.fabric.integration.VanillaBedChests;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.state.property.Properties;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,17 +52,21 @@ public class ChestPlacerGameTest implements FabricGameTest {
      * outra, e é justamente esse o vizinho que o placer tem de recusar.
      */
     private static void layBed(TestContext context) {
+        layBed(context, BED);
+    }
+
+    private static void layBed(TestContext context, BlockPos bed) {
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
-                context.setBlockState(BED.add(dx, -1, dz), Blocks.STONE.getDefaultState());
+                context.setBlockState(bed.add(dx, -1, dz), Blocks.STONE.getDefaultState());
             }
         }
 
-        context.setBlockState(BED, Blocks.RED_BED.getDefaultState()
+        context.setBlockState(bed, Blocks.RED_BED.getDefaultState()
                 .with(Properties.BED_PART, BedPart.FOOT)
                 .with(Properties.HORIZONTAL_FACING, Direction.NORTH));
 
-        context.setBlockState(BED.north(), Blocks.RED_BED.getDefaultState()
+        context.setBlockState(bed.north(), Blocks.RED_BED.getDefaultState()
                 .with(Properties.BED_PART, BedPart.HEAD)
                 .with(Properties.HORIZONTAL_FACING, Direction.NORTH));
     }
@@ -61,7 +76,11 @@ public class ChestPlacerGameTest implements FabricGameTest {
     }
 
     private static BlockBox room(TestContext context) {
-        BlockPos origin = context.getAbsolutePos(BED);
+        return room(context, BED);
+    }
+
+    private static BlockBox room(TestContext context, BlockPos bed) {
+        BlockPos origin = context.getAbsolutePos(bed);
         BlockBox box = new BlockBox(
                 origin.getX() - 2, origin.getY() - 1, origin.getZ() - 2,
                 origin.getX() + 2, origin.getY() + 2, origin.getZ() + 2);
@@ -438,6 +457,142 @@ public class ChestPlacerGameTest implements FabricGameTest {
 
         context.assertFalse(context.getWorld().getBlockState(bed.east()).isOf(Blocks.CHEST),
                 "o baú foi posto no pé da escada: " + result.chest().map(BlockPos::toShortString));
+        context.complete();
+    }
+
+    /**
+     * O baú que perdeu a parede pode migrar para outro chunk carregado da mesma
+     * casa (Regra 3 e ADR-036 item 4). A casa é deslocada até que cama+1, a
+     * origem, fique na primeira coluna de um chunk e cama−1, o destino, no
+     * chunk anterior.
+     *
+     * <p>O deslocamento pode levar a casa para fora da área que o GameTest
+     * mantém carregada, e {@code repair} exige a casa inteira carregada. Os
+     * chunks da casa são forçados como em jogo, perto do jogador, e o reparo
+     * roda no tick seguinte; os que estavam descarregados vão na mensagem.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "placer_move_chunk")
+    public void repairsAProvenChestAcrossAChunkBorder(TestContext context) {
+        int shift = Math.floorMod(-(context.getAbsolutePos(BED).getX() + 1), 16);
+        if (shift > 7) {
+            shift -= 16;
+        }
+        BlockPos relativeBed = BED.add(shift, 0, 0);
+        var world = context.getWorld();
+        BlockPos bed = context.getAbsolutePos(relativeBed);
+
+        // Mesma janela que Homes.isLoaded confere: a casa (cama ± 2) e mais um bloco.
+        List<String> unloaded = new ArrayList<>();
+        List<ChunkPos> forced = new ArrayList<>();
+        for (int cx = (bed.getX() - 3) >> 4; cx <= (bed.getX() + 3) >> 4; cx++) {
+            for (int cz = (bed.getZ() - 3) >> 4; cz <= (bed.getZ() + 3) >> 4; cz++) {
+                if (!world.getChunkManager().isChunkLoaded(cx, cz)) {
+                    unloaded.add(new ChunkPos(cx, cz).toString());
+                }
+                if (!world.getForcedChunks().contains(ChunkPos.toLong(cx, cz))) {
+                    world.setChunkForced(cx, cz, true);
+                    forced.add(new ChunkPos(cx, cz));
+                }
+            }
+        }
+        if (!unloaded.isEmpty()) {
+            VillageColonyMod.LOGGER.info("VC_TEST_CHEST_BORDER_UNLOADED bed={} chunks={}", bed.toShortString(), unloaded);
+        }
+
+        context.waitAndRun(1, () -> {
+            try {
+                moveAcrossTheBorder(context, relativeBed, unloaded);
+            } finally {
+                forced.forEach(chunk -> world.setChunkForced(chunk.x, chunk.z, false));
+            }
+        });
+    }
+
+    private static void moveAcrossTheBorder(TestContext context, BlockPos relativeBed, List<String> unloaded) {
+        layBed(context, relativeBed);
+        var world = context.getWorld();
+        BlockPos bed = context.getAbsolutePos(relativeBed);
+        BlockBox room = room(context, relativeBed);
+        BlockPos source = ChestPlacer.placeForOriginalVillageBed(world, bed, room).chest().orElseThrow();
+        ((ChestBlockEntity) world.getBlockEntity(source)).setStack(4, new ItemStack(Items.EMERALD, 5));
+        var worker = UUID.randomUUID();
+        var storages = new StorageRegistry();
+        storages.register(WorkerStorage.of(worker, MinecraftTypeAdapter.toColonyPos(source)));
+
+        Direction backing = world.getBlockState(source).get(Properties.HORIZONTAL_FACING).getOpposite();
+        world.setBlockState(source.offset(backing), Blocks.AIR.getDefaultState());
+        BlockPos target = bed.offset(source.getX() > bed.getX() ? Direction.WEST : Direction.EAST);
+        world.setBlockState(target, Blocks.AIR.getDefaultState());
+        world.setBlockState(target.offset(target.getX() > bed.getX() ? Direction.EAST : Direction.WEST),
+                Blocks.STONE.getDefaultState());
+
+        String where = "origem=" + source.toShortString() + " chunk=" + new ChunkPos(source)
+                + " destino=" + target.toShortString() + " chunk=" + new ChunkPos(target)
+                + " descarregados antes de forçar=" + unloaded;
+        context.assertFalse(new ChunkPos(source).equals(new ChunkPos(target)),
+                "o cenário devia cruzar a borda do chunk (" + where + ")");
+        context.assertTrue(HomeChestMoves.repair(world, storages, worker, bed, room),
+                "o baú do mod deveria migrar para a parede livre do chunk vizinho (" + where + ")");
+        BlockPos destination = MinecraftTypeAdapter.toBlockPos(storages.of(worker).orElseThrow().chestPosition());
+        context.assertTrue(destination.equals(target) && world.getBlockState(source).isAir(),
+                "o registro precisa apontar para o baú novo (" + where + ")");
+        var after = (ChestBlockEntity) world.getBlockEntity(destination);
+        context.assertTrue(after.getStack(4).isOf(Items.EMERALD) && after.getStack(4).getCount() == 5,
+                "a migração entre chunks precisa preservar a pilha no mesmo slot");
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "placer_move")
+    public void repairsAProvenChestWithoutDroppingContents(TestContext context) {
+        layBed(context);
+        var world = context.getWorld();
+        BlockPos bed = context.getAbsolutePos(BED);
+        BlockBox room = room(context);
+        BlockPos source = ChestPlacer.placeForOriginalVillageBed(world, bed, room).chest().orElseThrow();
+        var before = (ChestBlockEntity) world.getBlockEntity(source);
+        before.setStack(7, new ItemStack(Items.DIAMOND, 13));
+        var worker = UUID.randomUUID();
+        var storages = new StorageRegistry();
+        storages.register(WorkerStorage.of(
+                worker, MinecraftTypeAdapter.toColonyPos(source)));
+
+        // Retira o apoio original e deixa o outro lado da cama disponível.
+        Direction backing = world.getBlockState(source).get(Properties.HORIZONTAL_FACING).getOpposite();
+        world.setBlockState(source.offset(backing), Blocks.AIR.getDefaultState());
+        BlockPos target = bed.offset(source.getX() > bed.getX() ? Direction.WEST : Direction.EAST);
+        world.setBlockState(target, Blocks.AIR.getDefaultState());
+        world.setBlockState(target.offset(target.getX() > bed.getX() ? Direction.EAST : Direction.WEST),
+                Blocks.STONE.getDefaultState());
+
+        var registries = world.getRegistryManager();
+        var originalState = world.getBlockState(source);
+        var savedChest = before.createNbtWithId(registries);
+        world.removeBlockEntity(source);
+        // Um baú atribuído sem recibo não pode ser tratado como instalação do mod.
+        var unknown = new ChestBlockEntity(source, originalState);
+        unknown.setStack(7, new ItemStack(Items.GOLD_INGOT, 3));
+        world.addBlockEntity(unknown);
+        context.assertFalse(HomeChestMoves.repair(world, storages, worker, bed, room),
+                "um baú sem origem comprovada precisa ficar no lugar");
+        context.assertTrue(unknown.getStack(7).isOf(Items.GOLD_INGOT), "o baú sem recibo perdeu itens");
+
+        world.removeBlockEntity(source);
+        world.addBlockEntity(BlockEntity.createFromNbt(source, originalState, savedChest, registries));
+        context.assertTrue(ChestPlacer.placeForOriginalVillageBed(world, bed, room).chest().orElseThrow().equals(source),
+                "a adoção não deve criar outro baú enquanto o primeiro aguarda reparo");
+        context.assertTrue(HomeChestMoves.repair(world, storages, worker, bed, room),
+                "o baú do mod deveria migrar para a parede livre após recarregar o NBT");
+        BlockPos destination = MinecraftTypeAdapter.toBlockPos(storages.of(worker).orElseThrow().chestPosition());
+        context.assertTrue(!source.equals(destination) && world.getBlockState(source).isAir(),
+                "o registro precisa apontar para o novo baú, e o baú antigo deve sumir");
+        var after = (ChestBlockEntity) world.getBlockEntity(destination);
+        context.assertTrue(after.getStack(7).isOf(Items.DIAMOND) && after.getStack(7).getCount() == 13,
+                "a transferência precisa preservar a pilha inteira no mesmo slot");
+        context.assertTrue(world.getEntitiesByClass(ItemEntity.class,
+                new Box(source).expand(3), item -> true).isEmpty(),
+                "a migração não deve derrubar o inventário no mundo");
+        context.assertFalse(HomeChestMoves.repair(
+                world, storages, worker, bed, room), "a migração precisa ser idempotente");
         context.complete();
     }
 

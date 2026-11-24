@@ -5,9 +5,12 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "ChunkGeneratorMixin",
+    "FindEntityTaskMixin",
+    "GatherItemsVillagerTaskMixin",
     "HostileSpawnMixin",
     "ItemStackCraftMixin",
     "LandPathNodeMakerMixin",
+    "MeetVillagerTaskMixin",
     "MoveToTargetTaskMixin",
     "VillagerDataMixin",
     "VillagerEntityMixin",

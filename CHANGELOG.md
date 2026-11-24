@@ -12,6 +12,56 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.133] — candidata, 2026-11-24
+
+- O trecho da rede de ruas só para sobre chão de rua, caminho ou chão natural. A coluna coberta por chaminé, muro ou telhado não leva mais o aldeão de volta ao telhado de onde foi resgatado (Regras 151 e 160).
+- O baú residencial com recibo pode migrar para uma parede no chunk vizinho, desde que carregado (PR #106).
+
+## [0.4.131] — candidata, 2026-11-24
+
+- Em obras novas ou retomadas do curral grande, o piso de circulação é moldado em grama, inclusive sobre areia e arenito do deserto. Os canteiros e os pontos de água seguem a planta.
+
+## [0.4.130] — candidata, 2026-11-24
+
+- Uma placa externa lista os moradores que têm cama atribuída na casa. A lista muda quando os aldeões trocam de cama.
+- Nas casas pequenas, o quadro do baú usa uma face livre voltada ao centro. O mod pode mover um baú residencial que perdeu a parede de apoio quando a origem é comprovada e há destino seguro. A mudança conserva o inventário e a associação do aldeão.
+
+## [0.4.129] — candidata, 2026-11-24
+
+- Com o animal na guia, o pastor recalcula a rota e contorna portas abertas ou fechadas ao levar o animal ao curral.
+- Durante o expediente, trabalhadores da colônia não iniciam nem participam de conversas entre aldeões. A tarefa também encerra uma conversa em curso quando começa o expediente.
+
+## [0.4.128] — candidata, 2026-11-24
+
+- O grafo lê o arenito das ruas Vanilla do deserto mesmo com o índice vazio. A identificação usa a peça de rua registrada no mundo e preserva o pavimento existente.
+- O registro das casas colocadas inteiras na fundação aciona a releitura do grafo.
+
+## [0.4.127] — candidata, 2026-11-24
+
+- Curral grande prioritário para qualquer espécie, sem limite de animais imposto pelo mod.
+- Seis currais médios temáticos com 10×10 de grama plana, porteira única, acesso ao grafo, vegetação, iluminação e alimentação decorativa.
+- Currais Vanilla mantêm o manejo padrão. O pastor conta o rebanho de todos os cercados da vila.
+- Na entrega de animais largos ao curral grande ou médio, a cerca abre espaço junto à porteira e volta a conectar quando ela fecha.
+
+## [0.4.126] — candidata, 2026-11-23
+
+- Casas novas priorizam a porta voltada ao centro quando a rotação cabe no mesmo lote e há rua transitável diante da porta (N10).
+- A varredura de moradores desconta a vaga somente quando cria um baú, evitando que tentativas anteriores sem moradia atrasem o baú de um morador elegível (N14).
+- Inclui as mudanças anteriores de rebanho, resgate de telhado e salto progressivo.
+
+## [0.4.125] — candidata, 2026-11-23
+
+- O aldeão tenta o pulo padrão antes de qualquer pulo maior. O modificador maior só entra após colisão horizontal confirmada; resgate de encalhe e saída de curral continuam exceções.
+- A regressão de degrau e cerca confirma que previsão de obstáculo não antecipa o pulo maior.
+
+## [0.4.124] — candidata, 2026-11-23
+
+- O pastor usa pares da mesma espécie no mesmo curral para a reprodução de animais de corte. A criação de animais soltos continua disponível antes de haver curral.
+- O abate exige adultos da mesma espécie acima da meta da vila (8 ou 16). O curral da vítima precisa de pelo menos três adultos e preserva dois após o abate.
+- Os logs registram coleta, entrega, entradas e saídas observadas, alimentação, nascimentos associados aos pares alimentados e mortes nos currais. Os relatórios mostram adultos e filhotes por espécie.
+- A candidata inclui o resgate de telhado da 0.4.123. Quando o salto oferece risco de queda, o aldeão desce diretamente para um piso seguro.
+- [Roteiro de jogo do rebanho e do telhado](docs/technical/Playtest-0.4.122-2026-11-23.md).
+
 ## [0.4.122] — alpha, 2026-11-22
 
 - O grafo preserva o piso da entrada quando uma rua ocupa outro nível da mesma coluna (N12/N28).
