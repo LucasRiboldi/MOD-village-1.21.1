@@ -463,7 +463,7 @@ public final class RoadGraphRefresh {
         PlannedPaths paths = PLANNED.computeIfAbsent(id, ignored -> new PlannedPaths());
 
         paths.read(read, wanted, at -> refused.contains(ColonyRoads.column(at.x(), at.z()))
-                || RoadPaving.isAlreadyPaved(world, new BlockPos(at.x(), at.y(), at.z())));
+                || RoadPaving.isAlreadyPaved(world, MinecraftTypeAdapter.toBlockPos(at)));
         PathProposals.planned(id, paths.cells());
 
         if (steps.isEmpty()) {
