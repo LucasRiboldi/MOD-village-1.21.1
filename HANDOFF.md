@@ -9,6 +9,7 @@ Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e
 - **Correção (escolha 1 do autor):** colisão conferida a todo tique e com ou sem caminho. O teste do pulo (`VillagerRulesGameTest.theHighJumpIsOnlyForObstacles`) ganhou o caso sem caminho; falhou antes e com a produção antiga (mutação), passa depois.
 - **Teste do curral (escolha 1 do autor):** com o pulo padrão primeiro, a saída leva 41 tiques e não cabe na janela de 39 da inspeção. O teste cobra a saída sozinha em até 60 tiques, sem o `PenEscape` conduzir. Com a produção antiga ele também passa (54 tiques): sozinho, não prova a melhoria.
 - **Verificação:** 27 GameTests focados (pulo, curral, guia, condução). Sentinela `fast` `20261124T234447Z`: 1.886 unitários, propriedades e 1.264 de 1.265 GameTests; a falha foi `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder`, com os dois chunks carregados e o baú sem migrar.
+- **Instalado:** `village-colony-0.4.134.jar` em `build/libs/`, `downloads/` e no TLauncher, SHA-256 `F8ADE9D409AEC4D58512FAF787BC5844A3FECA732B20F4359E109B85F28453A4` nas três cópias; a 0.4.133 ficou `.jar.disabled`. Nada enviado ao GitHub.
 - **Outros instáveis medidos no CI de 24-11 (15 execuções):** baú na borda 5×, travessia após fusão 4×, N26 4×, N05 3×, `MineStepDownGameTest` 1× (5 de 5 verdes isolado).
 
 ## Entrega para outro agente — 0.4.133 (2026-11-24)
