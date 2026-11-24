@@ -99,4 +99,40 @@ public class StreetRouteGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * Regras 151 e 160: a coluna da rede coberta por uma chaminé (pedregulho e muro em cima) não dá lugar de pé no topo
+     * dela; a coluna de rua de verdade, no gramado ou no caminho, continua dando o chão.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "street_route_chimney", tickLimit = 20)
+    public void aStreetColumnUnderAChimneyIsNotALeg(TestContext context) {
+        var world = context.getWorld();
+
+        for (int x = 0; x <= 6; x++) {
+            for (int z = 0; z <= 6; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.GRASS_BLOCK);
+            }
+        }
+
+        // Chaminé: pedregulho de y=2 a y=6 e muro em y=7; o aldeão está em y=8, ao lado.
+        for (int y = 2; y <= 6; y++) {
+            context.setBlockState(new BlockPos(3, y, 3), Blocks.COBBLESTONE);
+        }
+        context.setBlockState(new BlockPos(3, 7, 3), Blocks.COBBLESTONE_WALL);
+        context.setBlockState(new BlockPos(5, 1, 3), Blocks.DIRT_PATH);
+
+        BlockPos chimney = context.getAbsolutePos(new BlockPos(3, 0, 3));
+        BlockPos street = context.getAbsolutePos(new BlockPos(5, 2, 3));
+        BlockPos grass = context.getAbsolutePos(new BlockPos(1, 2, 1));
+        int aroundY = context.getAbsolutePos(new BlockPos(0, 8, 0)).getY();
+
+        context.assertTrue(ColonyPathing.standingOn(world, chimney.getX(), chimney.getZ(), aroundY).isEmpty(),
+                "o topo da chaminé virou lugar de pé do trecho da rede");
+        context.assertTrue(ColonyPathing.standingOn(world, street.getX(), street.getZ(), aroundY)
+                .filter(street::equals).isPresent(), "o caminho devia dar o lugar de pé do trecho");
+        context.assertTrue(ColonyPathing.standingOn(world, grass.getX(), grass.getZ(), aroundY)
+                .filter(grass::equals).isPresent(), "o gramado devia dar o lugar de pé do trecho");
+
+        context.complete();
+    }
 }

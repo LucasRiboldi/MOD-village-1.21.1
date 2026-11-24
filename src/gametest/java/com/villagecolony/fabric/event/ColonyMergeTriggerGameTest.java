@@ -110,11 +110,12 @@ public final class ColonyMergeTriggerGameTest implements FabricGameTest {
         VillageColonyMod.COLONIES.register(east);
         List<Long> westRoad = new ArrayList<>();
         List<Long> eastRoad = new ArrayList<>();
+        // Calçada de caminho: o trecho da rede só para sobre chão de rua ou natural (Regra 151).
         for (int step = -2; step <= 30; step++) {
             BlockPos pavement = start.east(step).down();
             for (int dz = -3; dz <= 3; dz++) {
                 BlockPos floor = pavement.south(dz);
-                context.getWorld().setBlockState(floor, Blocks.COBBLESTONE.getDefaultState());
+                context.getWorld().setBlockState(floor, Blocks.DIRT_PATH.getDefaultState());
                 context.getWorld().setBlockState(floor.up(), Blocks.AIR.getDefaultState());
                 context.getWorld().setBlockState(floor.up(2), Blocks.AIR.getDefaultState());
             }
