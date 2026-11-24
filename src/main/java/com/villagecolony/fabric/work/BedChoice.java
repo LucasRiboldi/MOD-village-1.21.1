@@ -221,7 +221,7 @@ final class BedChoice {
             moves.addAll(BedPlan.plan(after, rest, walks::between));
         }
 
-        return apply(world, villagers, professions, sleepers, moves);
+        return apply(world, colony.id(), villagers, professions, sleepers, moves);
     }
 
     /** As camas no andar de baixo das casas de escada de mão da vila ({@link GeneratedVillages#ladderLowerFloorsAt}). */
@@ -254,7 +254,7 @@ final class BedChoice {
      * falha cai junto com a outra metade da troca, e quem não muda fica como estava. Só então as camas se
      * soltam, se dão, e o baú é registrado e marcado com o ofício do novo dono.
      */
-    private static int apply(ServerWorld world, Map<UUID, VillagerEntity> villagers,
+    private static int apply(ServerWorld world, UUID colonyId, Map<UUID, VillagerEntity> villagers,
             Map<UUID, Optional<ProfessionType>> professions, List<BedPlan.Sleeper> sleepers,
             List<BedPlan.Move> moves) {
 
@@ -312,7 +312,7 @@ final class BedChoice {
             VillageFoundation.giveHome(world, villager, to);
             VillageColonyMod.STORAGES.register(WorkerStorage.of(move.id(), MinecraftTypeAdapter.toColonyPos(chest)));
             professions.getOrDefault(move.id(), Optional.empty())
-                    .ifPresent(profession -> ChestMarker.markHomeAt(world, chest, profession));
+                    .ifPresent(profession -> ChestMarker.markHomeAt(world, chest, profession, villager, colonyId));
 
             String work = workOf(move.id()).map(BlockPos::toShortString).orElse("nowhere — it gives its bed up");
             VillageColonyMod.LOGGER.info("Worker {} moves home from {} to {}, with the chest at {} — its work is at {}",

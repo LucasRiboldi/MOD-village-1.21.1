@@ -29,6 +29,9 @@ import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ChestMarker;
+import com.villagecolony.fabric.integration.HomeChestMoves;
+import com.villagecolony.fabric.integration.HomeDisplays;
+import com.villagecolony.fabric.integration.Homes;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.SiteMarker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -60,6 +63,7 @@ import com.villagecolony.fabric.work.CraftingWork;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -219,12 +223,21 @@ final class VillagerRegistration {
                     "Equipped {} workers in colony {}", equipped, colony.id());
         }
 
+        var residents = VillageColonyMod.WORKERS.ofColony(colony.id());
+        HomeDisplays.reconcile(world, colony.id(), MinecraftTypeAdapter.toBlockPos(around), residents);
+        for (var resident : residents) {
+            if (world.getEntity(resident.villagerId()) instanceof VillagerEntity villager) {
+                Homes.assignedBed(world, villager).ifPresent(bed ->
+                        Homes.containing(world, colony.id(), bed).ifPresent(house ->
+                                HomeChestMoves.repair(world, VillageColonyMod.STORAGES, resident.villagerId(), bed, house)));
+            }
+        }
+
         // A marca do baú acompanha a profissão, e por isso vem depois
         // dela: um trabalhador que acabou de perder a função não pode
         // deixar o machado pendurado no baú.
         int marked = ChestMarker.mark(
-                world,
-                VillageColonyMod.WORKERS.ofColony(colony.id()),
+                world, residents,
                 workerId -> VillageColonyMod.STORAGES.of(workerId)
                         .map(WorkerStorage::chestPosition));
 

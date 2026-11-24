@@ -10,11 +10,13 @@ import net.minecraft.block.DoorBlock;
 import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.decoration.ItemFrameEntity;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
@@ -109,7 +111,10 @@ public final class ChestMarker {
                 continue;
             }
 
-            if (markHomeAt(world, MinecraftTypeAdapter.toBlockPos(chest.get()), profession.get())) {
+            BlockPos position = MinecraftTypeAdapter.toBlockPos(chest.get());
+            if (world.getEntity(worker.villagerId()) instanceof VillagerEntity villager
+                    ? markHomeAt(world, position, profession.get(), villager, worker.colonyId())
+                    : markHomeAt(world, position, profession.get())) {
                 marked++;
             }
         }
@@ -133,12 +138,21 @@ public final class ChestMarker {
      * marca só alcançaria baú com dono.
      */
     public static boolean markAt(ServerWorld world, BlockPos chest, ProfessionType profession) {
-        return markOne(world, chest, profession, false);
+        return markOne(world, chest, profession, false, Optional.empty());
     }
 
     /** Marca o baú da moradia, usando a passagem interna para orientar o quadro (N14). */
     public static boolean markHomeAt(ServerWorld world, BlockPos chest, ProfessionType profession) {
-        return markOne(world, chest, profession, true);
+        return markOne(world, chest, profession, true, Optional.empty());
+    }
+
+    /** Nas casas compactas, prefere a face que olha para o centro da moradia. */
+    public static boolean markHomeAt(ServerWorld world, BlockPos chest, ProfessionType profession,
+                                     VillagerEntity villager, java.util.UUID colony) {
+        Optional<BlockBox> house = Homes.assignedBed(world, villager)
+                .flatMap(bed -> Homes.containing(world, colony, bed))
+                .filter(box -> box.contains(chest) && box.getBlockCountX() <= 9 && box.getBlockCountZ() <= 9);
+        return markOne(world, chest, profession, true, house);
     }
 
     /**
@@ -211,7 +225,7 @@ public final class ChestMarker {
      * @return true se algo mudou no mundo
      */
     private static boolean markOne(
-            ServerWorld world, BlockPos chest, ProfessionType profession, boolean home) {
+            ServerWorld world, BlockPos chest, ProfessionType profession, boolean home, Optional<BlockBox> house) {
         if (chunkAt(world, chest) == null) {
             // Chunk descarregado. Nunca forçar carregamento de dentro do
             // ciclo do servidor — ver §11.
@@ -223,7 +237,8 @@ public final class ChestMarker {
         Optional<ItemFrameEntity> existing = existingMarkerAt(world, chest);
 
         if (home) {
-            Optional<ItemFrameEntity> preferred = towardDoor(world, chest, existing);
+            Optional<ItemFrameEntity> preferred = house.flatMap(box -> towardCenter(world, chest, box, existing))
+                    .or(() -> towardDoor(world, chest, existing));
             if (preferred.isPresent() && !preferred.equals(existing) && spawn(world, preferred.get(), badge)) {
                 existing.ifPresent(ItemFrameEntity::discard);
                 return true;
@@ -284,6 +299,21 @@ public final class ChestMarker {
                 if (seen.add(next) && isPassage(world, next)) {
                     pending.add(new BadgeRoute(next, route.frame()));
                 }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<ItemFrameEntity> towardCenter(
+            ServerWorld world, BlockPos chest, BlockBox house, Optional<ItemFrameEntity> existing) {
+        for (Direction facing : Homes.centerFaces(house, chest)) {
+            if (!isPassage(world, chest.offset(facing))) {
+                continue;
+            }
+            var candidate = existing.filter(frame -> frame.getHorizontalFacing() == facing)
+                    .or(() -> availableFrame(world, chest, facing));
+            if (candidate.isPresent()) {
+                return candidate;
             }
         }
         return Optional.empty();
@@ -382,6 +412,11 @@ public final class ChestMarker {
         Text name = frame.getCustomName();
 
         return name != null && TAG.equals(name.getString()) && chest.equals(wallOf(frame));
+    }
+
+    static boolean hasForeignFrame(ServerWorld world, BlockPos chest) {
+        return !world.getEntitiesByClass(ItemFrameEntity.class, new Box(chest).expand(1.0),
+                frame -> chest.equals(wallOf(frame)) && !isOurs(frame, chest)).isEmpty();
     }
 
     /** O bloco em que este quadro está pregado. */

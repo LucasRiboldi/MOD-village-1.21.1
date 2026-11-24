@@ -2,19 +2,28 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.storage.model.WorkerStorage;
+import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestPlacer;
+import com.villagecolony.fabric.integration.HomeChestMoves;
 import com.villagecolony.fabric.integration.VanillaBedChests;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.state.property.Properties;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 
 import java.util.List;
@@ -438,6 +447,60 @@ public class ChestPlacerGameTest implements FabricGameTest {
 
         context.assertFalse(context.getWorld().getBlockState(bed.east()).isOf(Blocks.CHEST),
                 "o baú foi posto no pé da escada: " + result.chest().map(BlockPos::toShortString));
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "placer_move")
+    public void repairsAProvenChestWithoutDroppingContents(TestContext context) {
+        layBed(context);
+        var world = context.getWorld();
+        BlockPos bed = context.getAbsolutePos(BED);
+        BlockBox room = room(context);
+        BlockPos source = ChestPlacer.placeForOriginalVillageBed(world, bed, room).chest().orElseThrow();
+        var before = (ChestBlockEntity) world.getBlockEntity(source);
+        before.setStack(7, new ItemStack(Items.DIAMOND, 13));
+        var worker = UUID.randomUUID();
+        var storages = new StorageRegistry();
+        storages.register(WorkerStorage.of(
+                worker, MinecraftTypeAdapter.toColonyPos(source)));
+
+        // Retira o apoio original e deixa o outro lado da cama disponível.
+        Direction backing = world.getBlockState(source).get(Properties.HORIZONTAL_FACING).getOpposite();
+        world.setBlockState(source.offset(backing), Blocks.AIR.getDefaultState());
+        BlockPos target = bed.offset(source.getX() > bed.getX() ? Direction.WEST : Direction.EAST);
+        world.setBlockState(target, Blocks.AIR.getDefaultState());
+        world.setBlockState(target.offset(target.getX() > bed.getX() ? Direction.EAST : Direction.WEST),
+                Blocks.STONE.getDefaultState());
+
+        var registries = world.getRegistryManager();
+        var originalState = world.getBlockState(source);
+        var savedChest = before.createNbtWithId(registries);
+        world.removeBlockEntity(source);
+        // Um baú atribuído sem recibo não pode ser tratado como instalação do mod.
+        var unknown = new ChestBlockEntity(source, originalState);
+        unknown.setStack(7, new ItemStack(Items.GOLD_INGOT, 3));
+        world.addBlockEntity(unknown);
+        context.assertFalse(HomeChestMoves.repair(world, storages, worker, bed, room),
+                "um baú sem origem comprovada precisa ficar no lugar");
+        context.assertTrue(unknown.getStack(7).isOf(Items.GOLD_INGOT), "o baú sem recibo perdeu itens");
+
+        world.removeBlockEntity(source);
+        world.addBlockEntity(BlockEntity.createFromNbt(source, originalState, savedChest, registries));
+        context.assertTrue(ChestPlacer.placeForOriginalVillageBed(world, bed, room).chest().orElseThrow().equals(source),
+                "a adoção não deve criar outro baú enquanto o primeiro aguarda reparo");
+        context.assertTrue(HomeChestMoves.repair(world, storages, worker, bed, room),
+                "o baú do mod deveria migrar para a parede livre após recarregar o NBT");
+        BlockPos destination = MinecraftTypeAdapter.toBlockPos(storages.of(worker).orElseThrow().chestPosition());
+        context.assertTrue(!source.equals(destination) && world.getBlockState(source).isAir(),
+                "o registro precisa apontar para o novo baú, e o baú antigo deve sumir");
+        var after = (ChestBlockEntity) world.getBlockEntity(destination);
+        context.assertTrue(after.getStack(7).isOf(Items.DIAMOND) && after.getStack(7).getCount() == 13,
+                "a transferência precisa preservar a pilha inteira no mesmo slot");
+        context.assertTrue(world.getEntitiesByClass(ItemEntity.class,
+                new Box(source).expand(3), item -> true).isEmpty(),
+                "a migração não deve derrubar o inventário no mundo");
+        context.assertFalse(HomeChestMoves.repair(
+                world, storages, worker, bed, room), "a migração precisa ser idempotente");
         context.complete();
     }
 

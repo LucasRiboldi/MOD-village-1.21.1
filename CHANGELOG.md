@@ -12,6 +12,11 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.130] — candidata, 2026-11-24
+
+- Uma placa externa lista os moradores que têm cama atribuída na casa. A lista muda quando os aldeões trocam de cama.
+- Nas casas pequenas, o quadro do baú usa uma face livre voltada ao centro. O mod pode mover um baú residencial que perdeu a parede de apoio quando a origem é comprovada e há destino seguro. A mudança conserva o inventário e a associação do aldeão.
+
 ## [0.4.129] — candidata, 2026-11-24
 
 - Com o animal na guia, o pastor recalcula a rota e contorna portas abertas ou fechadas ao levar o animal ao curral.

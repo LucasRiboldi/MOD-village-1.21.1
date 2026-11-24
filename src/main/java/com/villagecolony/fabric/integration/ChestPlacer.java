@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * Posiciona o baú privado de uma cama de vila vanilla já confirmada.
@@ -106,7 +107,15 @@ public final class ChestPlacer {
             return new Result(Optional.empty(), Outcome.SKIPPED_NO_SAFE_POSITION);
         }
 
-        for (BlockPos spot : candidates(bed.get())) {
+        List<BlockPos> spots = candidates(bed.get());
+        // Um baú assente pelo mod pode estar aguardando correção após perder a parede.
+        for (BlockPos spot : spots) {
+            if (structure.contains(spot) && HomeChestMoves.placedFor(world, spot, bed.get().foot())) {
+                return new Result(Optional.of(spot), Outcome.ALREADY_PRESENT);
+            }
+        }
+
+        for (BlockPos spot : spots) {
             if (!structure.contains(spot) || isDoorApproach(world, spot) || isStairApproach(world, spot)) {
                 continue;
             }
@@ -126,12 +135,43 @@ public final class ChestPlacer {
                 continue;
             }
 
-            world.setBlockState(spot, Blocks.CHEST.getDefaultState()
-                    .with(Properties.HORIZONTAL_FACING, opening));
-            return new Result(Optional.of(spot), Outcome.PLACED);
+            if (world.setBlockState(spot, Blocks.CHEST.getDefaultState()
+                    .with(Properties.HORIZONTAL_FACING, opening))) {
+                HomeChestMoves.recordPlacement(world, spot, bed.get().foot());
+                return new Result(Optional.of(spot), Outcome.PLACED);
+            }
         }
 
         return new Result(Optional.empty(), Outcome.SKIPPED_NO_SAFE_POSITION);
+    }
+
+    /** Procura uma célula vazia, com parede, para o baú que perdeu o apoio. */
+    static Optional<RepairSlot> repairSlot(ServerWorld world, BlockPos bedPoi, BlockBox house, BlockPos source,
+                                           Predicate<BlockPos> available) {
+        Optional<Bed> bed = completeBed(world, bedPoi);
+        if (wallBeside(world, source).isPresent() || bed.isEmpty() || !isEnclosedRoom(world, bed.get(), house)) {
+            return Optional.empty();
+        }
+
+        List<BlockPos> spots = candidates(bed.get());
+        if (!spots.contains(source)) {
+            return Optional.empty();
+        }
+        for (BlockPos spot : spots) {
+            if (!house.contains(spot) || !world.getBlockState(spot).isAir()
+                    || isDoorApproach(world, spot) || isStairApproach(world, spot)
+                    || !isSafeEmptyChestSpot(world, spot) || !available.test(spot)) {
+                continue;
+            }
+            Optional<Direction> wall = wallBeside(world, spot);
+            if (wall.isPresent()) {
+                return Optional.of(new RepairSlot(spot, wall.get().getOpposite(), bed.get().foot()));
+            }
+        }
+        return Optional.empty();
+    }
+
+    record RepairSlot(BlockPos position, Direction opening, BlockPos bedFoot) {
     }
 
     /** Se este baú é a posição privada e conforme de uma cama vanilla — a mesma regra (b). */

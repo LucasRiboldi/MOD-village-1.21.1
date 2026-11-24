@@ -12586,3 +12586,25 @@ No Sentinela `fast` (`20261124T175259Z`), passaram 1.886 testes unitários, uma
 suíte de propriedades e 1.258 de 1.259 GameTests. A única falha repetiu
 `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`, registrada
 nas candidatas 0.4.125 a 0.4.128.
+
+## 2026-11-24 — 0.4.130, placas externas e baús de moradia
+
+As notas do deserto da 0.4.127 pediram uma placa na fachada em `847,64,298`
+e o baú com quadro voltado ao centro em `878,63,245`. O registro de 13:09:15
+associa o segundo baú ao mineiro e informa a cama em `877,63,246`. A instalação
+desse baú não foi registrada.
+
+A opção 2 inclui um painel de texto Vanilla por moradia e adapta o quadro
+interno pela direção do centro da casa pequena. A colocação de baús residenciais
+passa a guardar um recibo persistente. Quando perde o apoio, um baú com recibo
+pode mudar para uma posição livre junto à parede no mesmo chunk, preservando a
+associação e o inventário. Baús de origem incerta, com nome, abertos ou com
+quadro do jogador permanecem no lugar. O movimento e a placa podem ser
+verificados por `VC_HOME_CHEST_MOVED` e `VC_HOME_SIGN`.
+
+O build e os 38 GameTests focados passaram. O Sentinela `fast`
+(`20261124T182652Z`) passou nos 1.886 testes unitários, na suíte de propriedades
+e em 1.260 dos 1.261 GameTests. Repetiu a falha da 0.4.129 em
+`PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`.
+O JAR foi instalado no TLauncher e copiado para `downloads/`. A validação
+visual das duas casas continua pendente no playtest.
