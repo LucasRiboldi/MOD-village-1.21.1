@@ -161,6 +161,32 @@ public class EntrancesAtTheDoorGameTest implements FabricGameTest {
         });
     }
 
+    /** A saída da BigHouseMOD vira para a rua quando há um desnível logo depois do chão da porta (Regra 223). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "desert_house_entrance", tickLimit = 20)
+    public void theDesertBigHouseLinksAroundADropOutsideItsBox(TestContext context) {
+        run(context, 63, arena -> {
+            arena.path(2, 38, 2, 2);
+            BlockPos front = arena.origin.add(14, 0, 9);
+            arena.building("bighousemod", arena.origin.add(10, 0, 9), arena.origin.add(18, 5, 19));
+            arena.door(front.south().up());
+            for (BlockPos at : List.of(front, front.north())) {
+                arena.world.setBlockState(at, Blocks.SAND.getDefaultState(), 18);
+            }
+            for (BlockPos at : BlockPos.iterate(front.north(2).west(2), front.north(2).east(2))) {
+                arena.world.setBlockState(at, Blocks.AIR.getDefaultState(), 18);
+            }
+
+            RoadGraph graph = arena.publish();
+            ColonyPos entrance = arena.cell(front);
+
+            context.assertTrue(isEntrance(graph, entrance), "A entrada saiu da frente da porta");
+            context.assertTrue(onALine(graph, arena.cell(front.north())), "A linha não saiu da caixa");
+            context.assertTrue(graph.edges().stream().anyMatch(edge -> edge.roadClass() == RoadGraph.RoadClass.PRIMARY
+                            && (edge.from().equals(entrance) || edge.to().equals(entrance))),
+                    "A casa não alcançou a rua principal");
+        });
+    }
+
     /** Regra 305: a rua em outro nível da mesma coluna não muda o chão da entrada. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_entrance_height", tickLimit = 20)
     public void theEntranceStaysOnTheGroundFloorUnderAHigherPath(TestContext context) {

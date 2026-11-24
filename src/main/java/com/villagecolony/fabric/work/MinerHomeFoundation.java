@@ -92,6 +92,7 @@ public final class MinerHomeFoundation {
         ColonyPos max = new ColonyPos(origin.x() + turned.size().x() - 1, origin.y() + turned.size().y() - 1,
                 origin.z() + turned.size().z() - 1);
         VillageColonyMod.BUILDINGS.register(new Building(UUID.randomUUID(), colony.id(), plan.id(), origin, max, true));
+        RoadGraphRefresh.requestNow(colony.id());
 
         VillageColonyMod.LOGGER.info("VC_MINE_HOME colony={}: the miner home {} stands at {} on foundation",
                 colony.id(), plan.id(), origin);

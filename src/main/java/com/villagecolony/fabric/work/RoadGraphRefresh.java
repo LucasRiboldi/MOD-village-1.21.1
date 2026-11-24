@@ -212,12 +212,14 @@ public final class RoadGraphRefresh {
             BlockPos at = top.down(depth);
             BlockState state = world.getBlockState(at);
 
+            boolean path = VillageRoad.isPathBlock(state);
+
             // Regra 291: a tábua de rua também é célula; o PathTrim só mexe no caminho de terra e de areia.
             // E a pedra do pátio da boca da mina (Regra 293).
-            boolean plank = !VillageRoad.isPathBlock(state)
+            boolean plank = !path
                     && (VillageRoad.isStreetPlank(world, at, state) || com.villagecolony.fabric.integration.MineYard.isYard(at, state));
 
-            if (!VillageRoad.isPathBlock(state) && !plank) {
+            if (!path && !plank && !VillageRoad.isNativeBiomeStreet(world, at, state)) {
                 continue;
             }
 
@@ -226,7 +228,7 @@ public final class RoadGraphRefresh {
                 return Optional.of(at);
             }
 
-            if (covered != null) {
+            if (path && covered != null) {
                 covered.accept(at.toImmutable());
             }
 
@@ -468,7 +470,10 @@ public final class RoadGraphRefresh {
     }
 
     private static boolean isPaved(ServerWorld world, PathStep step) {
-        return VillageRoad.isPathBlock(world.getBlockState(new BlockPos(step.x(), step.floorY(), step.z())));
+        BlockPos at = new BlockPos(step.x(), step.floorY(), step.z());
+        BlockState state = world.getBlockState(at);
+
+        return VillageRoad.isPathBlock(state) || VillageRoad.isNativeBiomeStreet(world, at, state);
     }
 
     /** Mais uma mudança do grafo desta colônia no dia {@code today}; devolve quantas houve no dia (Regra 317). */

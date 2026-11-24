@@ -114,9 +114,10 @@ public final class WorldPathTerrain implements PathTerrain {
                 continue;
             }
 
-            // Regra 291: a frente da porta e a tábua de rua têm chão, mesmo que o calçamento as recuse.
+            // Regra 291: a frente da porta e o piso da rua têm chão, mesmo que o calçamento os recuse.
             boolean floor = anyFloor.contains(com.villagecolony.core.construction.model.ColonyRoads.column(x, z))
-                    || VillageRoad.isStreetPlank(world, at, state) || MineYard.isYard(at, state);
+                    || VillageRoad.isStreetPlank(world, at, state) || MineYard.isYard(at, state)
+                    || VillageRoad.isNativeBiomeStreet(world, at, state);
 
             if (!state.isOf(Blocks.DIRT_PATH) && !floor && RoadPaving.refusalOfTheGround(world, at, state).isPresent()) {
                 return OptionalInt.empty();
