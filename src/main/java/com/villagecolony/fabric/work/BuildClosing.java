@@ -67,6 +67,11 @@ final class BuildClosing {
             BlockPos target = MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(block));
 
             if (material.isPresent() && world.isChunkLoaded(target)) {
+                if (BuriedPieces.shapeLargePenFloor(world, project, block, target)) {
+                    project.markPlaced(block);
+                    continue;
+                }
+
                 BlockState now = world.getBlockState(target);
 
                 // Bloco que já está ali, ou que não é substituível (peça de vila, coisa do jogador), fica.

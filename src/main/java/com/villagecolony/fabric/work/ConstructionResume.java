@@ -304,6 +304,7 @@ final class ConstructionResume {
     }
 
     private static boolean isRetiredColonyModel(ResourceId id) {
-        return ColonyModels.isColonyModel(id) && ColonyModels.professionOf(id).isEmpty();
+        // O curral grande segue no catálogo como infraestrutura, sem profissão associada (Regras 130 e 253).
+        return !PenPlans.isLargePen(id) && ColonyModels.isColonyModel(id) && ColonyModels.professionOf(id).isEmpty();
     }
 }

@@ -48,8 +48,8 @@ final class UnreachablePieces {
 
     /**
      * Assenta a peça no lugar, sem o construtor, e a risca da obra. Bloco que já está ali, ou que não é
-     * substituível (peça de vila, coisa do jogador), não é sobrescrito: a peça é riscada como a obra já
-     * faz com o que está no caminho.
+     * substituível (peça de vila, coisa do jogador), fica no lugar. O piso do curral grande pode
+     * moldar o terreno quando a proteção permite (Regra 253).
      */
     static void surge(ServerWorld world, ConstructionProject project, ConstructionProject.DeferredPiece piece) {
         surge(world, project, piece, SupplyException.UNREACHABLE_PIECE);
@@ -69,9 +69,9 @@ final class UnreachablePieces {
 
         BlockPos target = MinecraftTypeAdapter.toBlockPos(piece.position());
         BlockState now = world.getBlockState(target);
-        boolean placed = false;
+        boolean placed = BuriedPieces.shapeLargePenFloor(world, project, block.get(), target);
 
-        if (!now.isOf(material.get()) && now.isReplaceable()) {
+        if (!placed && !now.isOf(material.get()) && now.isReplaceable()) {
             BlockState state = BuilderPlacement.shaped(world, project, block.get(), material.get(), target);
             world.setBlockState(target, state, Block.NOTIFY_ALL);
             BlockShaping.placeSecondHalf(world, target, state);

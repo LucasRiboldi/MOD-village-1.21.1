@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.130%20candidate-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.131%20candidate-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,7 +19,7 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Versão 0.4.130 candidata.** A placa externa mostra quem tem cama atribuída na moradia. Em casas pequenas, o quadro do baú prefere a face voltada ao centro. Baús residenciais com origem comprovada podem ser encostados na parede sem perder o conteúdo.
+**Versão 0.4.131 candidata.** O curral grande ganha piso de grama em obras novas ou retomadas em qualquer bioma. A placa externa mostra quem tem cama atribuída na moradia. Em casas pequenas, o quadro do baú prefere a face voltada ao centro. Baús residenciais com origem comprovada podem ser encostados na parede sem perder o conteúdo.
 
 O pastor contorna casas com o animal na guia. Trabalhadores ficam fora de conversas durante o expediente. O grafo lê as ruas Vanilla de arenito do deserto desde a primeira varredura. A fundação da BigHouseMOD e da casa do mineiro solicita uma releitura do grafo.
 O pastor dá prioridade ao curral grande misto, sem limite imposto pelo mod. As vilas com pastor podem erguer seis currais médios temáticos e ligar suas porteiras ao grafo. Casas novas priorizam a porta voltada ao centro quando o mesmo lote tem acesso direto pela rua.
@@ -307,7 +307,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 5-e1 | **Emenda 1:** a obra usa todos os recursos de todos os baús — a tora vira a tábua que a obra pede, além da reserva; a reserva de um terço em tora (Regra 248) vale só para os outros ofícios. A meta e o fabricante fazem a mesma conta | 10-02 | ✅ feita | `StockRules.logsThatMayBeConverted`, `WorkDemand.rawLogs` |
 | 6 | Estrada primeiro, casa ligada a ela | 08-14 | ✅ feita | `RoadExtension`, `BuildSiteScanner` |
 | 7 | O lenhador planta onde cortou | 08-15 | ✅ feita | `LumberjackWork.closePlan` |
-| 8 | Um baú ao lado de cada cama — **em toda casa** (da vila e construída), encostado na parede, nunca diante de porta ou escada (ADR-036 item 4) | 08-15, 10-06 | ✅ feita | `ChestPlacer` (porta, escada, parede), `VanillaBedChests.ensure` (vila e casas da colônia) |
+| 8 | Um baú ao lado de cada cama — **em toda casa** (da vila e construída), encostado na parede, nunca diante de porta ou escada (ADR-036 item 4). A placa externa lista os moradores com cama atribuída. Em casa pequena, o quadro do baú prefere uma face livre voltada ao centro. Só migra baú com origem comprovada e destino seguro | 08-15, 10-06, 11-24 | Candidata 0.4.130 | `ChestPlacer`, `VanillaBedChests.ensure`, `HomeDisplays`, `HomeChestMoves`, `ChestMarker` |
 | 9 | Subir e descer para alcançar, e poder voltar | 08-15 | ✅ feita | `BuilderApproach`, `TreeMarks` |
 | 10 | O construtor fabrica o que a expansão pede | 08-15 | ✅ feita | `CraftingLookup.billFor`, `ColonyChests` |
 | 11 | Uma de cada profissão em cada vila | 08-15 | ✅ feita | `ProfessionAssigner`, `ProfessionFloorTest` |
@@ -316,7 +316,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 14 | O construtor alcança o alto da obra — desde a ADR-037 B1, de qualquer lugar da zona da obra (pegada + 4) | 08-18 | ✅ feita | `BuilderApproach.isWithinReach`, `BuilderApproach.isInsideZone` |
 | 15 | A estrada cresce com a vila: a ponta pede as colunas ao grafo, e o aldeão calça (Regra 214) | 08-18 | ✅ feita | `RoadExtension` |
 | 16 | Cada casa com espaço em volta | 08-18 | ⚠️ parcial | volume no `BuildSiteScanner` |
-| 17 | A casa com uma lateral na estrada | 08-19 | ✅ feita | `Blueprint.doorSide`, `rotated` |
+| 17 | A casa com uma lateral na estrada. Em moradias novas, priorizar a porta voltada ao centro se o mesmo lote oferecer rua transitável diante da porta. Sem esse acesso, manter a orientação original. | 08-19, 11-23 (N10) | Candidata | `Blueprint.doorSide`, `SiteOpening`, `PlanPlacement` |
 | 18 | O dia inteiro é expediente. Durante o expediente, adultos com ofício na colônia não iniciam nem participam de conversas entre aldeões. | 08-19, emenda 11-24 | ✅ feita. Emenda candidata 0.4.129 | `WorkClock`, `WorkHours` |
 | 18-e1 | **Emenda 1:** ninguém para de trabalhar por chuva, e não há pausa ao meio-dia (R-6 e R-7 do estudo de 10-02 recusadas) | 10-02 | ✅ é o que já acontece | `WorkHours` não olha o tempo |
 | 19 | O lote fica no nível da estrada | 08-19 | ✅ feita | `LotLevel.flatGroundAt` |
@@ -565,7 +565,7 @@ edita à mão (`--check` acusa quando ela ficou para trás).
 | 250 | **A rua nasce no chão novo** (autor 11-11, opção A): na geração, a coluna que o solo da vila corta ou aterra leva junto a altura de geração (`WORLD_SURFACE_WG`, `OCEAN_FLOOR_WG`), que o chunk em geração não acompanha sozinho; a rua do Vanilla segue essa altura e antes nascia na altura de antes do corte, no ar ou enterrada (21% das colunas de caminho no jogo da 0.4.56). Vale para chunks gerados daqui em diante. Candidata | 11-11 |
 | 251 | **Flor e muda não seguram a coluna** (autor 12-11, opção A): na geração, a varredura do topo do solo da vila passa por flor e muda, como já passava por folha e tronco; antes a flor virava o "topo", o corte recusava a coluna e ela ficava de pé, e a rua do Vanilla nascia sobre ela. Candidata | 12-11 |
 | 252 | **Acessório é enfeite** (autor 12-11, opção A): peça `accessory` da vila gerada (`plains_accessory_1`) não recebe entrada nem nó no grafo, como poste, poço e chafariz (Regra 223). Candidata | 12-11 |
-| 253 | **O curral leva terra no solo** (autor 12-11): o piso de grama da planta de curral sobre pedra do terreno não conta como chão já pronto (Regra 5-d, 10-03): o construtor troca a pedra natural pela terra da planta, sem gastar recurso, e o reparo refaz o curral já construído sobre pedra. No jogo da 0.4.57, o curral grande tinha 15 de pedra e 3 de terra comum de 169 células de piso. Casa e outras plantas seguem a regra do chão já pronto. Candidata | 12-11 |
+| 253 | **O curral leva terra no solo** (autor 12-11): o piso de grama da planta de curral sobre pedra do terreno não conta como chão já pronto (Regra 5-d, 10-03): o construtor troca a pedra natural por grama nas posições da planta, sem gastar recurso. No jogo da 0.4.57, o curral grande tinha 15 de pedra e 3 de terra comum de 169 células de piso. Em obras novas ou retomadas do curral grande, a moldagem se aplica ao terreno natural de qualquer bioma, inclusive quando a peça está adiada por alcance ou no fechamento da obra. Canteiros e água seguem a planta. Casa e outras plantas seguem a regra do chão já pronto. Candidata | 12-11 |
 | 254 | **Patamar nas dobras da escada da mina** (autor 12-11, ADR-053): cada dobra do caracol ganha um patamar plano de 3 x 3 na altura do último degrau, com uma tocha da colônia (Regra 353) na parede de fora, presa em rocha que nenhum nível cava. Só nos níveis novos: o que já está sendo cavado termina sem patamar. O patamar é cavado no fim do ramal; o nível passa de 1.755 para 2.025 blocos. Emenda a Regra 119. Candidata | 12-11 |
 | 255 | **Animal na corda vai para o curral** (autor 12-11, opções A e B): com curral na vila, o pastor nunca amarra animal em cerca ou poste; o animal espera a próxima tentativa, e o log diz por que o curral não serviu (cheio, portão sem chão livre dos dois lados, ou sem caminho). O animal já amarrado é recolhido antes do solto. No jogo da 0.4.57 o pastor amarrou 17 animais com o curral grande na vila, e 8 ficaram presos. Emenda a Regra 196. Candidata | 12-11 |
 | 256 | **O arco da mina e a árvore com folha** (autor 12-11, opções 1 e 2): a boca da mina ganha um arco de tora descascada (pinheiro no arquivo; a madeira da vila pela Regra 262) — dois pilares e uma viga sobre o vão de 3 x 4, um degrau em cada ponta da viga com um lampião pendurado, e um baú no chão do lado de fora, à direita de quem entra (`mine_arch.nbt`). O arco surge sozinho, sem profissão nem material. O portão de pedra de 10-29 (`mine_entrance.nbt`) não é mais erguido, mas segue reconhecido e protegido onde está de pé. O grafo reconhece o arco pelas peças na boca da mina da colônia, e não só pelo topo. O lenhador só corta tronco com folha natural perto do alto: no jogo da 0.4.57 ele levou o topo do portão ("1 logs and 0 leaves") e o grafo perdeu a entrada. Emenda a Regra 210. Candidata | 12-11 |

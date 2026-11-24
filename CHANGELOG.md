@@ -12,6 +12,10 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.131] — candidata, 2026-11-24
+
+- Em obras novas ou retomadas do curral grande, o piso de circulação é moldado em grama, inclusive sobre areia e arenito do deserto. Os canteiros e os pontos de água seguem a planta.
+
 ## [0.4.130] — candidata, 2026-11-24
 
 - Uma placa externa lista os moradores que têm cama atribuída na casa. A lista muda quando os aldeões trocam de cama.

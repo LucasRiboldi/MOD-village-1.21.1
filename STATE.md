@@ -5,7 +5,8 @@
 > **Retomada por outro agente:** comece por `HANDOFF.md`.
 
 ## Onde o projeto está
-- **Candidata local 0.4.130.** Placas externas acompanham as camas atribuídas. Quadros de baús em casas pequenas preferem o centro. Baús residenciais com recibo de colocação podem migrar para uma parede livre. Os itens 7 e 8 aguardam o [playtest](HANDOFF.md#candidata-local-04130-2026-11-24).
+- **Candidata local 0.4.131.** Obras novas ou retomadas do curral grande moldam o piso de circulação em grama no terreno natural do bioma. Água e canteiros seguem a planta. O item 9 aguarda o [playtest](HANDOFF.md#candidata-local-04131-2026-11-24).
+- **Desde a 0.4.130.** Placas externas acompanham as camas atribuídas. Quadros de baús em casas pequenas preferem o centro. Baús residenciais com recibo de colocação podem migrar para uma parede livre. Os itens 7 e 8 aguardam o [playtest](HANDOFF.md#candidata-local-04130-2026-11-24).
 - **Candidata local 0.4.129.** O pastor evita portas com animal na guia. Trabalhadores ficam fora de conversas entre aldeões no expediente. Falta confirmar o item 6 no [jogo do deserto](HANDOFF.md#candidata-local-04129-2026-11-24).
 - **Grafo na 0.4.128.** A rua Vanilla de arenito entra no grafo desde a primeira leitura. BigHouseMOD e casa do mineiro pedem releitura após a fundação. O [handoff](HANDOFF.md) contém o roteiro do deserto. Os seis currais médios de grama e a prioridade do curral grande vieram da 0.4.127 e seguem em validação no [TODO](TODO.md).
 - **Candidata local 0.4.126.** N10 prioriza a porta voltada ao centro com rua transitável no mesmo lote. N14 preserva as vagas de criação de baús quando uma tentativa falha. Os GameTests de moradia e baú passaram. O [roteiro da moradia](docs/technical/Plano-Playtest-0.4.115-2026-11-21.md#n10-e-n14--roteiro-da-moradia) aguarda confirmação em jogo.

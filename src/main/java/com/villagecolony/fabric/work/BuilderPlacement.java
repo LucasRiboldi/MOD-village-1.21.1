@@ -108,6 +108,11 @@ public final class BuilderPlacement {
             return true;
         }
 
+        if (BuriedPieces.shapePenFloor(world, project, block, target)) {
+            project.markPlaced(block);
+            return true;
+        }
+
         BlockState state = shaped(world, project, block, material.get(), target);
 
         // A horta surge, sem gastar recurso da vila — decisão do autor, 2026-10-14. Canteiro
@@ -118,18 +123,6 @@ public final class BuilderPlacement {
         //
         // Só sobre lugar livre: a Regra 3 continua valendo — bloco posto (planks, peça de vila) não
         // é sobrescrito (BuilderGameTest.farmlandDoesNotReplaceAPlacedBlock).
-        if (BuriedPieces.soilOverStone(world, project.blueprint(), block, target)) {
-            // O piso do curral molda o terreno natural sem gastar recurso, como o aterro (Regras 168 e 253).
-            world.setBlockState(target, state, Block.NOTIFY_ALL);
-            com.villagecolony.fabric.integration.EditLedger.mod(world, target.toImmutable(), state, "obra"); // Regra 345
-            com.villagecolony.fabric.integration.PlacedLogs.note(target, state, "build:" + project.blueprint().id());
-            project.markPlaced(block);
-            com.villagecolony.fabric.integration.Supplies.record(com.villagecolony.core.coordination.SupplyException.SHAPED_GROUND, project.colonyId(),
-                    block.block().path(), 1);
-
-            return true;
-        }
-
         boolean mayShapeHere = world.getBlockState(target).isReplaceable()
                 || BuriedPieces.mayReplaceGround(world, project.blueprint(), block, target)
                 || BlockShaping.tillsTheGround(world, state, target);

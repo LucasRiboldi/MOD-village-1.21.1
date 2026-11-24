@@ -12608,3 +12608,24 @@ e em 1.260 dos 1.261 GameTests. Repetiu a falha da 0.4.129 em
 `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`.
 O JAR foi instalado no TLauncher e copiado para `downloads/`. A validação
 visual das duas casas continua pendente no playtest.
+
+## 2026-11-24 — 0.4.131, piso do curral grande
+
+O item 9 veio da nota `VC_BIOME_NOTE` da 0.4.127 às 13:50:29 no deserto, em
+`897,66,272`. A inspeção do curral pronto encontrou 83 blocos de areia, 64 de
+arenito e nenhum de grama nas posições previstas para o piso de grama.
+
+A opção 1 usa o reconhecimento de terreno dos lotes para moldar a grama da
+planta, sem gastar estoque. A mesma regra se aplica na colocação normal, às
+peças adiadas por alcance e no fechamento da obra. Água e canteiros seguem
+seus próprios blocos na planta. O carregamento volta a reconhecer o curral
+grande em construção como infraestrutura ativa. Currais concluídos ficam fora
+da correção.
+
+As duas regressões falharam antes da correção. Os 22 GameTests focados passaram
+depois, incluindo a retomada com uma porteira já assentada e a proteção de um
+baú na conclusão. A conferência visual em uma obra no deserto segue no TODO.
+
+O Sentinela `fast` (`20261124T185435Z`) passou nos 1.886 unitários, na suíte de
+propriedades e em 1.262 dos 1.263 GameTests. A falha conhecida de
+`PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan` se repetiu.
