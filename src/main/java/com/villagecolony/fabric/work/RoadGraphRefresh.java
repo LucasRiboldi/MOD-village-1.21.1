@@ -449,9 +449,11 @@ public final class RoadGraphRefresh {
         Set<ColonyPos> wanted = new HashSet<>();
 
         for (PathStep step : toPave) {
-            if (!refused.contains(ColonyRoads.column(step.x(), step.z())) && !isPaved(world, step)
-                    && (!atTheDoor.contains(ColonyRoads.column(step.x(), step.z()))
-                    || RoadPaving.takesPath(world, new BlockPos(step.x(), step.floorY(), step.z())))) {
+            long column = ColonyRoads.column(step.x(), step.z());
+            BlockPos at = new BlockPos(step.x(), step.floorY(), step.z());
+
+            if (!refused.contains(column) && !RoadPaving.isAlreadyPaved(world, at)
+                    && (!atTheDoor.contains(column) || RoadPaving.takesPath(world, at))) {
                 steps.add(step);
                 wanted.add(new ColonyPos(step.x(), step.floorY(), step.z()));
             }
@@ -461,7 +463,7 @@ public final class RoadGraphRefresh {
         PlannedPaths paths = PLANNED.computeIfAbsent(id, ignored -> new PlannedPaths());
 
         paths.read(read, wanted, at -> refused.contains(ColonyRoads.column(at.x(), at.z()))
-                || isPaved(world, new PathStep(at.x(), at.y(), at.z(), com.villagecolony.core.type.Side.NORTH, 0, 0)));
+                || RoadPaving.isAlreadyPaved(world, new BlockPos(at.x(), at.y(), at.z())));
         PathProposals.planned(id, paths.cells());
 
         if (steps.isEmpty()) {
@@ -471,13 +473,6 @@ public final class RoadGraphRefresh {
         PathLinks.offerRepair(id, steps.subList(0, Math.min(MAX_REPAIR, steps.size())));
 
         return true;
-    }
-
-    private static boolean isPaved(ServerWorld world, PathStep step) {
-        BlockPos at = new BlockPos(step.x(), step.floorY(), step.z());
-        BlockState state = world.getBlockState(at);
-
-        return VillageRoad.isPathBlock(state) || VillageRoad.isNativeBiomeStreet(world, at, state);
     }
 
     /** Mais uma mudança do grafo desta colônia no dia {@code today}; devolve quantas houve no dia (Regra 317). */

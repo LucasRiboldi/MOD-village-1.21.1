@@ -181,6 +181,13 @@ public final class RoadPaving {
         return refusalOfTheGround(world, at, world.getBlockState(at)).isEmpty();
     }
 
+    /** Piso de caminho ou rua Vanilla de bioma (Regra 291). */
+    public static boolean isAlreadyPaved(ServerWorld world, BlockPos at) {
+        BlockState state = world.getBlockState(at);
+
+        return VillageRoad.isPathBlock(state) || VillageRoad.isNativeBiomeStreet(world, at, state);
+    }
+
     /** O que impede este chão de virar caminho, sem olhar o que há em cima — o degrau cortado tira o de cima. */
     static Optional<String> refusalOfTheGround(ServerWorld world, BlockPos at, BlockState state) {
         // <b>O chão do bioma não é peça de vila</b> — pedido do autor,
