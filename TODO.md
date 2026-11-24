@@ -8,6 +8,13 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   está em `docs/technical/TODO-herdado-2026-11-13.md`.
 - O TODO antigo inteiro, por jogo, está em `docs/archive/technical/TODO-ate-2026-11-13.md` (`grep`).
 
+## Estado de integração — 0.4.131 (2026-11-24)
+
+- [ ] Publicar a candidata na `main`: a branch `codex/piso-curral-grande` contém o código e a documentação da 0.4.131; falta PR, CI verde, merge e release `v0.4.131-alpha`.
+- [ ] Playtest do item 9 no deserto: conferir grama no piso de circulação do curral grande, os 12 blocos de canteiro e água nas posições da planta. Retomada de obra iniciada também precisa ser observada após reabrir o mundo.
+- [ ] Repetir `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`: falha conhecida nas candidatas 0.4.125–0.4.131; investigar a saída pela cerca antes da varredura agendada.
+- [ ] Depois do playtest, registrar versão efetivamente carregada, notas `/vc bioma nota`, `/vc salvar`, `VC_PENS`, `VC_ROUND`, `VC_FLOCK_EVENT` e `VC_FLOCK_HARVEST` no próximo relatório.
+
 ## F0 — Sinal limpo (1 semana)
 
 - [ ] 🟠 Decisão do autor: a ADR-024 (índice físico do armazém) é aceita, mas o `WarehouseIndex` não é usado em produção;

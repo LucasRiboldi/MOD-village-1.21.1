@@ -2,6 +2,14 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega preparada para outro agente — 0.4.131 (2026-11-24)
+
+- Branch de origem: `codex/piso-curral-grande`. Código, testes focados e documentação estão reunidos nesta linha; `.serena/` local não faz parte da entrega.
+- Próximo fluxo: `git fetch origin`, conferir PR contra `main`, aguardar CI verde do mesmo commit, fazer merge e disparar `Release` em `main`. O workflow publica `v0.4.131-alpha` e recompila o JAR no commit mesclado.
+- Não declarar item 9 como confirmado: o código tem prova automatizada, mas o jogo ainda precisa confirmar o curral grande no deserto e a retomada de obra após recarga.
+- Pendências ativas e ordem de trabalho estão no topo de [`TODO.md`](TODO.md). A falha conhecida de `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan` não foi atribuída ao item 9.
+- Para retomar: leia este bloco, depois [`STATE.md`](STATE.md), o topo de [`TODO.md`](TODO.md) e [`docs/releases/v0.4.131.md`](docs/releases/v0.4.131.md). Não use históricos antigos como estado atual.
+
 ## Candidata local 0.4.131 (2026-11-24)
 
 - A branch `codex/piso-curral-grande` inclui a candidata 0.4.130. No item 9, a opção 1 molda grama sobre o terreno natural nas posições de circulação da planta. Água e canteiros seguem o modelo.
