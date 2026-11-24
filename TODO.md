@@ -12,7 +12,7 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 
 - [ ] Publicar a candidata na `main`: a branch `codex/piso-curral-grande` contém o código e a documentação da 0.4.131; falta PR, CI verde, merge e release `v0.4.131-alpha`.
 - [ ] Playtest do item 9 no deserto: conferir grama no piso de circulação do curral grande, os 12 blocos de canteiro e água nas posições da planta. Retomada de obra iniciada também precisa ser observada após reabrir o mundo.
-- [ ] Fazer merge com squash do PR #108 e acompanhar `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder` no CI: falhou 1 vez em 6 antes do PR; a causa provável (chunks da casa descarregados) não está provada. Se falhar, ler `descarregados antes de forçar` na mensagem; detalhes no [HANDOFF](HANDOFF.md).
+- [ ] 🔴 `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder` (PR #106) falha às vezes no CI (2 vezes em 8) e trava o portão da release. A hipótese dos chunks descarregados (PR #108) foi enfraquecida: falhou de novo com todos os chunks carregados. Ler a mensagem no `gametest-report.xml` da execução 45498542870; detalhes no [HANDOFF](HANDOFF.md).
 - [ ] Repetir `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`: falha conhecida nas candidatas 0.4.125–0.4.131; investigar a saída pela cerca antes da varredura agendada.
 - [ ] Depois do playtest, registrar versão efetivamente carregada, notas `/vc bioma nota`, `/vc salvar`, `VC_PENS`, `VC_ROUND`, `VC_FLOCK_EVENT` e `VC_FLOCK_HARVEST` no próximo relatório.
 
