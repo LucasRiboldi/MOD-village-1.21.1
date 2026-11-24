@@ -200,16 +200,19 @@ public final class ColonyPathing {
     }
 
     /**
-     * Onde se fica de pé nesta coluna, o mais perto da altura {@code aroundY}: chão firme e 2 livres em cima. Pela
-     * altura dele e não pelo topo do mundo — a rua debaixo de uma ponte ou de um beiral também é rua.
+     * Onde se fica de pé nesta coluna, o mais perto da altura {@code aroundY}: chão de rua ou chão natural, e 2 livres
+     * em cima (Regras 151 e 160). Pela altura dele e não pelo topo do mundo — a rua debaixo de uma ponte ou de um
+     * beiral também é rua. O topo de uma construção (chaminé, muro, telhado) não serve: a coluna coberta por ela não dá
+     * trecho.
      */
-    private static Optional<BlockPos> standingOn(ServerWorld world, int x, int z, int aroundY) {
+    static Optional<BlockPos> standingOn(ServerWorld world, int x, int z, int aroundY) {
         for (int step = 0; step <= 2 * STAND_SEARCH; step++) {
             // 0, -1, +1, -2, +2...: o chão mais perto da altura dele ganha.
             int y = aroundY + (step % 2 == 0 ? step / 2 : -(step + 1) / 2);
             BlockPos feet = new BlockPos(x, y, z);
+            BlockState floor = world.getBlockState(feet.down());
 
-            if (!world.getBlockState(feet.down()).getCollisionShape(world, feet.down()).isEmpty()
+            if (isLegGround(floor) && !floor.getCollisionShape(world, feet.down()).isEmpty()
                     && world.getBlockState(feet).getCollisionShape(world, feet).isEmpty()
                     && world.getBlockState(feet.up()).getCollisionShape(world, feet.up()).isEmpty()) {
                 return Optional.of(feet);
@@ -217,6 +220,12 @@ public final class ColonyPathing {
         }
 
         return Optional.empty();
+    }
+
+    /** Chão em que o trecho da rede pode parar: rua, caminho ou chão natural. */
+    static boolean isLegGround(BlockState floor) {
+        return VillageRoad.isPathBlock(floor) || StreetSurface.isStreetMaterial(floor)
+                || SiteSurroundings.isNaturalGround(floor);
     }
 
     /** Os custos do aldeão da colônia; só escreve quando ainda não estão lá. */

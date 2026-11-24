@@ -12649,3 +12649,9 @@ verificada: o deslocamento leva a casa para fora da área carregada do GameTest,
 `repair` exige a casa inteira carregada. O teste passa a forçar esses chunks, como em
 jogo perto do jogador, roda o reparo no tick seguinte e registra em
 `VC_TEST_CHEST_BORDER_UNLOADED` os chunks que estavam descarregados.
+
+## 2026-11-24 — 0.4.133, trecho da rede fora do telhado
+
+O jogo da 0.4.122 teve três fazendeiros mortos por queda depois de resgates do mesmo telhado. A 0.4.123 já punha o aldeão direto no piso quando o salto passava da queda segura. Faltava a volta: o destino `338,87,1412` seguia o topo da chaminé (pedregulho e muro do construtor), e `ColonyPathing.standingOn` aceitava qualquer chão firme como lugar de pé do trecho da rede de ruas. Agora o trecho só para em chão de rua, caminho ou chão natural (Regras 151 e 160).
+
+`StreetRouteGameTest.aStreetColumnUnderAChimneyIsNotALeg` falhou antes da correção com "o topo da chaminé virou lugar de pé do trecho da rede". O `ColonyMergeTriggerGameTest` calçava a rede com pedregulho e passou a usar `dirt_path`. Os 120 GameTests focados (rota, telhado, mina, água, fusão, cerca, encalhe) passaram.

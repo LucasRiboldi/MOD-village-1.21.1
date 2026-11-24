@@ -2,6 +2,14 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Candidata local 0.4.133 (2026-11-24)
+
+- Branch `claude/resgate-telhado-seguro`, criada de `codex/piso-curral-grande` (0.4.131) por escolha do autor; sem push. Integra-se depois da 0.4.131.
+- O trecho da rede de ruas (`ColonyPathing.standingOn`) só para em chão de rua, caminho ou chão natural (Regras 151 e 160). Completa o resgate de telhado da 0.4.123: o fazendeiro não volta ao topo da chaminé em `338,87,1412`.
+- `StreetRouteGameTest.aStreetColumnUnderAChimneyIsNotALeg` falhou antes e passa depois; 120 GameTests focados passaram; depois do merge do PR #106, 34 focados (rota, telhado, fusão, encalhe, baú) passaram. Sentinela `fast` (`20261124T204300Z`, já com o PR #106): 1.886 unitários, propriedades e 1.264 de 1.265 GameTests, com a falha conhecida do `PenEscapeGameTest`.
+- `village-colony-0.4.133.jar` instalado no TLauncher e copiado para `downloads/`; SHA-256 `FAC43A023956DF59C615BD3039DD9281113AAC6D31C2DBE14547682B1AAB3998` nas três cópias. As anteriores ficaram `.jar.disabled`.
+- No jogo: observar a casa junto de `338,86,1414`. Nenhum fazendeiro deve morrer por queda nem repetir resgate ali; `338,87,1412` não deve aparecer como destino no diário.
+
 ## Entrega preparada para outro agente — 0.4.131 (2026-11-24)
 
 - Branch de origem: `codex/piso-curral-grande`. Código, testes focados e documentação estão reunidos nesta linha; `.serena/` local não faz parte da entrega.

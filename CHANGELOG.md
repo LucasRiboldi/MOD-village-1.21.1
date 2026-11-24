@@ -12,6 +12,11 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.133] — candidata, 2026-11-24
+
+- O trecho da rede de ruas só para sobre chão de rua, caminho ou chão natural. A coluna coberta por chaminé, muro ou telhado não leva mais o aldeão de volta ao telhado de onde foi resgatado (Regras 151 e 160).
+- O baú residencial com recibo pode migrar para uma parede no chunk vizinho, desde que carregado (PR #106).
+
 ## [0.4.131] — candidata, 2026-11-24
 
 - Em obras novas ou retomadas do curral grande, o piso de circulação é moldado em grama, inclusive sobre areia e arenito do deserto. Os canteiros e os pontos de água seguem a planta.
