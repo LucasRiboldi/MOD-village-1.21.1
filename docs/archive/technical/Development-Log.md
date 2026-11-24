@@ -12630,7 +12630,20 @@ O Sentinela `fast` (`20261124T185435Z`) passou nos 1.886 unitários, na suíte d
 propriedades e em 1.262 dos 1.263 GameTests. A falha conhecida de
 `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan` se repetiu.
 
-## 2026-11-24 — 0.4.132, trecho da rede fora do telhado
+## 2026-11-24 — migração do baú residencial na borda do chunk
+
+O CI do PR 105 reprovou `ChestPlacerGameTest.repairsAProvenChestWithoutDroppingContents`
+na execução 45466588791, embora o Sentinela local tenha passado. O GameTest monta o
+cenário em coordenadas diferentes a cada execução, e `HomeChestMoves.repair` só aceitava
+destino no mesmo chunk da origem. Quando a borda caía entre os dois lados da cama, o
+reparo recusava. O diagnóstico no CI (execuções 709 e 710) registrou os chunks: no mesmo
+chunk o teste passa; com a casa montada sobre a borda, falha.
+
+Por escolha do autor, o destino pode estar no chunk vizinho, desde que carregado; o
+`repair` já exige a casa inteira carregada. `repairsAProvenChestAcrossAChunkBorder`
+desloca a casa até a borda e prova a migração com os itens no mesmo slot.
+
+## 2026-11-24 — 0.4.133, trecho da rede fora do telhado
 
 O jogo da 0.4.122 teve três fazendeiros mortos por queda depois de resgates do mesmo telhado. A 0.4.123 já punha o aldeão direto no piso quando o salto passava da queda segura. Faltava a volta: o destino `338,87,1412` seguia o topo da chaminé (pedregulho e muro do construtor), e `ColonyPathing.standingOn` aceitava qualquer chão firme como lugar de pé do trecho da rede de ruas. Agora o trecho só para em chão de rua, caminho ou chão natural (Regras 151 e 160).
 

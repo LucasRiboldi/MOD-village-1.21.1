@@ -29,7 +29,7 @@ Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e
 ## Candidata local 0.4.130 (2026-11-24)
 
 - A branch `codex/moradia-placas-e-baus` parte da candidata 0.4.129. A placa da fachada lista os aldeões pelas camas atribuídas. O quadro interno da casa pequena prefere a face com passagem voltada ao centro.
-- O recibo persistente marca baús colocados pelo mod a partir desta versão. A migração exige outro ponto livre junto à parede no mesmo cômodo e chunk. O baú conserva os itens e o vínculo com o aldeão. Baús anteriores de origem indeterminada ficam no lugar.
+- O recibo persistente marca baús colocados pelo mod a partir desta versão. A migração exige outro ponto livre junto à parede no mesmo cômodo; o destino pode estar no chunk vizinho, desde que carregado. O baú conserva os itens e o vínculo com o aldeão. Baús anteriores de origem indeterminada ficam no lugar.
 - Build aprovado e 38 GameTests focados passaram. No Sentinela `fast` (`20261124T182652Z`), passaram 1.886 unitários, a suíte de propriedades e 1.260 de 1.261 GameTests. A única falha foi `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`, também presente na 0.4.129.
 - O `village-colony-0.4.130.jar` foi copiado para `downloads/` e instalado no TLauncher. As três cópias tinham SHA-256 `1B6B59F895BA73D2EDD798FAFAC55FF9E139E18564209AD7F3147C50684BBEE0`. A 0.4.129 ficou desativada para retorno.
 - No deserto, confira a placa da casa perto de `847,64,298` e o quadro do baú perto de `878,63,245`. Verifique uma troca de cama e reabra a partida. Para o teste de migração, use uma cópia do mundo, um baú criado nesta versão e um ponto seguro afastado de porta e escada.
