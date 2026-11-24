@@ -8,6 +8,8 @@ Na colônia `ea1997ba`, o log alternou entre 3 e 25 arestas. A frente da porta V
 
 A primeira rodada do Sentinela expôs um ciclo novo entre os pacotes de integração e de trabalho. O aviso passou a usar `RoadRegionEvents`. Os seis testes de arquitetura e os 57 GameTests focados de grafo e fundação passaram na branch da correção.
 
+O limite de tamanho moveu a verificação do pavimento para `RoadPaving`. O adaptador converte a posição usada nessa consulta. A última bateria completa, antes dessa conversão, passou em 1.255 de 1.257 GameTests. Repetiram as falhas da saída do curral entre varreduras e da tosquia N05. A travessia após fusão reapareceu na rodada anterior e passou na última. No código entregue, os unitários e propriedades do Sentinela e os 57 GameTests focados passaram. O `HANDOFF.md` registra o JAR instalado e o roteiro do deserto.
+
 ## 24-11-2026 — Currais temáticos e prioridade do curral grande, candidata 0.4.127
 
 A análise da 0.4.126 encontrou seis acessos externos recusados e pares prontos que o pastor não alcançava. O autor aprovou curral grande prioritário sem lotação e seis modelos médios por grupo. O catálogo de construção e o grafo agora usam a porteira da obra. A classificação usa o modelo registrado e identifica currais Vanilla para preservar seu manejo. O pastor passa ao próximo desgarrado quando o destino da primeira espécie é recusado. Os casos iniciais reproduziram a ausência dos modelos do catálogo, a prioridade indevida do curral próximo, a separação incorreta e a falta de entrada no grafo. O roteiro para confirmar a acumulação em jogo está no `HANDOFF.md`.

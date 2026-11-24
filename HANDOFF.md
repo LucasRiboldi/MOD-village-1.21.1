@@ -6,6 +6,8 @@ Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e
 
 - A branch `codex/currais-tematicos-04127` reúne os currais temáticos e a correção do grafo (`6638482f`, `604c8b5e`). O arenito de uma peça de rua Vanilla entra no grafo desde a primeira leitura. O registro da BigHouseMOD e da casa do mineiro pede releitura.
 - A regressão reproduziu a rua de arenito ignorada com o índice vazio. Os 57 GameTests de grafo e fundação e os seis testes de arquitetura passaram na branch da correção. O cenário da BigHouseMOD verifica a saída pelo piso de areia da porta e a ligação à rede em volta de um desnível.
+- Na revisão entregue, os unitários e propriedades passaram no Sentinela (`20261124T172635Z`) e passaram 57 GameTests focados. A última bateria completa (`20261124T172158Z`), anterior ao ajuste de conversão de coordenadas, passou em 1.255 de 1.257 GameTests. Repetiram as falhas da saída do curral entre varreduras e da tosquia N05.
+- O JAR `village-colony-0.4.128.jar` está em `downloads/` e ativo no TLauncher. As três cópias têm SHA-256 `13FCA22D112B85AAAC04624B8CA0A55AB895A17C6179C7F061FAF55EB9DC1CAF`. A 0.4.127 ficou desativada para retorno.
 - No TLauncher, use a vila do deserto da 0.4.127. Confira a linha ligada aos nós ao lado de `845,63,319` e `885,64,272`. Saia e reabra o mundo. Em uma vila nova no deserto, confira se a primeira leitura inclui as ruas de arenito e se as entradas das fundações ganham ramal. Compare `VC_ROAD_GRAPH`, em especial `edges=` e `loose=`.
 - A mina, o trajeto do pastor com guia, as placas, os baús e o piso do curral grande estão nas [pendências do playtest do deserto](TODO.md#pendências-do-playtest-do-deserto-04127).
 
