@@ -16,7 +16,6 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.ChunkPos;
 
 import java.util.UUID;
 
@@ -61,8 +60,9 @@ public final class HomeChestMoves {
             return false;
         }
 
+        // A casa inteira já está carregada; o destino pode cair no chunk vizinho.
         var candidate = ChestPlacer.repairSlot(world, bed, house, source, at ->
-                new ChunkPos(source).equals(new ChunkPos(at))
+                world.getChunkManager().isChunkLoaded(at.getX() >> 4, at.getZ() >> 4)
                         && !storages.isTaken(MinecraftTypeAdapter.toColonyPos(at))
                         && world.isSpaceEmpty(new Box(at)));
         if (candidate.isEmpty()) {
