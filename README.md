@@ -11,7 +11,7 @@ mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.132%20candidate-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.4.133%20candidate-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
@@ -19,7 +19,7 @@ Download: na [página de versões](https://github.com/LucasRiboldi/MOD-village-1
 do GitHub — o JAR saiu do repositório (ADR-036, item 26). Cada versão traz o
 SHA-256 do JAR na descrição.
 
-**Versão 0.4.132 candidata.** O aldeão resgatado de um telhado não volta a ele pela rede de ruas: o trecho só para em chão de rua ou natural. O curral grande ganha piso de grama em obras novas ou retomadas em qualquer bioma. A placa externa mostra quem tem cama atribuída na moradia. Em casas pequenas, o quadro do baú prefere a face voltada ao centro. Baús residenciais com origem comprovada podem ser encostados na parede sem perder o conteúdo.
+**Versão 0.4.133 candidata.** O aldeão resgatado de um telhado não volta a ele pela rede de ruas: o trecho só para em chão de rua ou natural. O curral grande ganha piso de grama em obras novas ou retomadas em qualquer bioma. A placa externa mostra quem tem cama atribuída na moradia. Em casas pequenas, o quadro do baú prefere a face voltada ao centro. Baús residenciais com origem comprovada podem ser encostados na parede sem perder o conteúdo.
 
 O pastor contorna casas com o animal na guia. Trabalhadores ficam fora de conversas durante o expediente. O grafo lê as ruas Vanilla de arenito do deserto desde a primeira varredura. A fundação da BigHouseMOD e da casa do mineiro solicita uma releitura do grafo.
 O pastor dá prioridade ao curral grande misto, sem limite imposto pelo mod. As vilas com pastor podem erguer seis currais médios temáticos e ligar suas porteiras ao grafo. Casas novas priorizam a porta voltada ao centro quando o mesmo lote tem acesso direto pela rua.

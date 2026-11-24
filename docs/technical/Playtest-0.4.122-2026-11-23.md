@@ -55,9 +55,9 @@ O resgate da 0.4.123 também está na candidata 0.4.124. No mesmo mundo, observe
 4. Com oito adultos da espécie nos currais e comida abaixo de 32, confirme que um adulto solto não autoriza abate. Acima de oito, o abate pode ocorrer se o curral da vítima começar com três adultos da espécie. Repita com 32 ou mais itens de alimento aceito, quando a meta sobe para 16.
 5. Compare `VC_PENS` antes e depois. `VC_FLOCK_HARVEST` informa os adultos das duas reservas antes e depois e o número de filhotes preservados. `DEATH` registra mortes observadas nos currais. `EXIT` indica uma saída observada. `UNOBSERVED` indica que o animal ou o recinto ficou indisponível. Ao final, execute `/vc salvar`.
 
-## Retorno ao telhado — candidata 0.4.132
+## Retorno ao telhado — candidata 0.4.133
 
-A opção 2 completa a opção 1. O diário mostrou 66 destinos de navegação em `338,87,1412` depois dos resgates. A altura acompanhava o topo da chaminé da `plains_armorer_house_1`: era `338,85,1412` antes do construtor pôr pedregulho em `338,85,1412` e muro em `338,86,1412`. A hipótese é que essa coluna pertence à rede de ruas: no trajeto de 24 blocos ou mais, `ColonyPathing.legToward` parava no lugar de pé mais perto da altura do aldeão, sem conferir o chão. A 0.4.132 só aceita chão de rua, caminho ou chão natural; a coluna coberta por construção não dá trecho. No próximo jogo, `338,87,1412` não deve aparecer como destino, e nenhum fazendeiro deve repetir o resgate na mesma casa. Que a coluna era da rede não foi confirmado no save; o GameTest reproduz a geometria.
+A opção 2 completa a opção 1. O diário mostrou 66 destinos de navegação em `338,87,1412` depois dos resgates. A altura acompanhava o topo da chaminé da `plains_armorer_house_1`: era `338,85,1412` antes do construtor pôr pedregulho em `338,85,1412` e muro em `338,86,1412`. A hipótese é que essa coluna pertence à rede de ruas: no trajeto de 24 blocos ou mais, `ColonyPathing.legToward` parava no lugar de pé mais perto da altura do aldeão, sem conferir o chão. A 0.4.133 só aceita chão de rua, caminho ou chão natural; a coluna coberta por construção não dá trecho. No próximo jogo, `338,87,1412` não deve aparecer como destino, e nenhum fazendeiro deve repetir o resgate na mesma casa. Que a coluna era da rede não foi confirmado no save; o GameTest reproduz a geometria.
 
 ## Fontes
 
