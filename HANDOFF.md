@@ -7,6 +7,7 @@ Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e
 - **Branch:** `fix/areia-que-cai` (continua da 0.4.137), sem push.
 - **Fase 3 da ADR-063 (Regra 357):** `GradeWork` executa o plano de alturas no dia do Zelador, no lugar da fila de quadrados (`TerrainQueue` ficou só como medida da `VC_TERRAIN`); sai o alisamento em volta da casa pronta. Orçamento `GradeCrew.perDay` (256 + pendentes/4, até 1.024) e segunda vaga de Zelador com o atraso parado 3 dias (`GradeCrew.keepers`, em `core.worker.service`; `ProfessionAssigner` usa no lugar da constante). O plano corta calombo e tapa buraco de até 4 colunas, termina por corte mínimo e vale só dentro da caixa da vila.
 - **Prova:** `GradeWorkGameTest` (porta alcançada a pé do alto de um paredão de 3; falhou com o esboço), `GradeCrewTest`, `ProfessionAssignerTest.aStalledGroundOpensTheSecondGroundskeeper` (mutação cai), `GradePlanTest` (8) e `GradePlanProperties` (3). `TerrainQueueGameTest` e `GroundSmoothingGameTest` (buraco e calombo isolados) passam pelo plano. Sentinela `fast` `20261125T184036Z`: unitários, propriedades e 1.274/1.274.
+- **Instalado:** `village-colony-0.4.139.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `B6C2970EB0A5D37351A2CADACEE1C5121CD3441D2891C3FE654444DACB6B7420`; 0.4.138 `.jar.disabled`.
 - **Em jogo:** `VC_GRADE` com `pending` caindo dia a dia e `keepers=`; porta do curral grande e das casas alcançáveis; nada mexido fora da caixa da vila.
 
 ## Entrega — 0.4.137 (2026-11-25)
