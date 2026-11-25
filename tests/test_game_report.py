@@ -16,6 +16,8 @@ LOG = [
     "VC_FLOW version=1 day=3 items=1 oak_planks=10,3,0,40,52,5",
     "VC_VANILLA_JOB version=1 action=stripped worker=cc33dd44 trade=farmer",
     "VC_PLAYER_INSIST version=1 system=obra block=air target=construcao count=1 gap=400 at=10, 64, 5",
+    "VC_GRADE version=1 colony=ab12cd34 day=3 columns=900 anchors=120 doors=4 out=200 path=60 steps=75 pending=310 "
+    "conflicts=2 ms=14",
 ]
 
 
@@ -36,5 +38,11 @@ class GameReportTest(unittest.TestCase):
         report = game_report.build(LOG, [], "2026-11-20 20:00")
         self.assertIn("## Achados, do mais grave ao menos", report)
         for title in ("Tempo por ofício", "Tarefas", "Linha do tempo dos aldeões", "Balanço dos itens",
-                      "Blocos e travas", "Interferência do jogador"):
+                      "Blocos e travas", "Interferência do jogador", "Plano de alturas"):
             self.assertIn("## " + title, report)
+
+    def test_the_grade_plan_shows_one_row_per_day(self):
+        report = game_report.build(LOG, [], "2026-11-25 20:00")
+        section = report.split("## Plano de alturas", 1)[1]
+        self.assertIn("ab12cd34", section)
+        self.assertRegex(section, r"ab12cd34\s+3\s+900\s+120\s+4\s+200\s+60\s+75\s+310\s+2\s+14")

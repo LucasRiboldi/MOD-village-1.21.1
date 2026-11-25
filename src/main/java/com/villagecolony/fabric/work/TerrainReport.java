@@ -19,7 +19,7 @@ import java.util.UUID;
 /**
  * A medida diária do terreno da vila — Regra 323: no fim do expediente, uma linha {@code VC_TERRAIN} por colônia com os
  * defeitos que a fila de quadrados ({@link TerrainQueue}) ainda tem na caixa inteira e as colunas que os aldeões mudaram
- * no dia. Só lê; quem arruma é a fila.
+ * no dia, e a linha {@code VC_GRADE} do plano de alturas ({@link GradeSurvey}, ADR-063). Só lê; quem arruma é a fila.
  */
 public final class TerrainReport {
 
@@ -81,5 +81,7 @@ public final class TerrainReport {
                         + "levelled={}", colony.id().toString().substring(0, 8), day, count, isolated, pathSteps, steps,
                 TerrainQueue.levelledToday(colony.id(), day));
         GroundKeeper.report(world, colony, day, steps);
+        // O plano de alturas, só lido: o que ele mexeria hoje (ADR-063, fase 2).
+        GradeSurvey.read(world, colony).ifPresent(survey -> VillageColonyMod.LOGGER.info(survey.line(colony.id(), day)));
     }
 }

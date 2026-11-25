@@ -14,9 +14,16 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 
 ## Não publicado — verificação
 
-- Plano de alturas, fase 1 da ADR-063: `GradePlan` calcula a altura-alvo de cada coluna da vila (envelope das âncoras contornando o que fica fora, degrau de no máximo 1, caminho plano onde cabe, conflitos entre âncoras). Ainda não é usado no jogo. `GradePlanTest` e `GradePlanProperties` (jqwik).
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
+
+## [0.4.138] — candidata, 2026-11-25
+
+Plano de alturas da vila (ADR-063, G5 do jogo da 0.4.136), fases 1 e 2: só lê, nenhum bloco muda.
+
+- `GradePlan` calcula a altura-alvo de cada coluna: envelope das âncoras contornando o que fica fora, degrau de no máximo 1, caminho plano onde cabe e os conflitos entre âncoras (`GradePlanTest`, `GradePlanProperties` com jqwik).
+- `GradeSurvey` lê o mundo para o plano: fora a pegada das construções e das peças da vila, a boca da mina, o chão do jogador, a água e o que não é chão; âncora a frente de cada porta, a faixa em volta de cada estrutura (2 blocos no curral grande) e a borda; caminho o bloco de caminho e de rua.
+- No fim do expediente sai a linha `VC_GRADE` (colunas, âncoras, portas, fora, caminho, degraus maiores que 1, colunas a mexer, conflitos, ms), e o `game_report.py` ganhou a seção "Plano de alturas".
 
 ## [0.4.137] — candidata, 2026-11-25
 

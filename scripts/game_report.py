@@ -141,6 +141,7 @@ def build(log_lines, records, when):
     out.append(section("Blocos e travas", lambda: stock_print(log_lines)))
     out.append(section("Interferência do jogador",
                        lambda: print(player_report.render(player_report.collect(log_lines)))))
+    out.append(section("Plano de alturas (ADR-063)", lambda: grade_print(log_lines)))
     return "\n".join(out)
 
 
@@ -152,6 +153,24 @@ def time_ledger_print(log_lines):
         pct = {state: 100 * row[state] / total for state in time_ledger.STATES}
         print(f"{profession:<12}" + "".join(f"{state} {pct[state]:.0f}%  " for state in time_ledger.STATES)
               + "; ".join(time_ledger.verdict(profession, pct)))
+
+
+GRADE_LINE = re.compile(r"VC_GRADE version=1 colony=(\w+) day=(\d+) columns=(\d+) anchors=(\d+) doors=(\d+) "
+                        r"out=(\d+) path=(\d+) steps=(\d+) pending=(\d+) conflicts=(\d+) ms=(\d+)")
+
+
+def grade_print(log_lines):
+    """O plano de alturas por dia: o que ele mexeria e quantos degraus maiores que 1 o chão tem (ADR-063)."""
+    rows = [match.groups() for match in map(GRADE_LINE.search, log_lines) if match]
+    if not rows:
+        print("Sem linha VC_GRADE.")
+        return
+    print(f"{'colônia':<9} {'dia':>4} {'colunas':>8} {'âncoras':>8} {'portas':>6} {'fora':>6} {'caminho':>8} "
+          f"{'degraus':>8} {'a mexer':>8} {'conflitos':>9} {'ms':>5}")
+    for colony, *numbers in rows:
+        day, columns, anchors, doors, out, path, steps, pending, conflicts, millis = numbers
+        print(f"{colony:<9} {day:>4} {columns:>8} {anchors:>8} {doors:>6} {out:>6} {path:>8} {steps:>8} {pending:>8} "
+              f"{conflicts:>9} {millis:>5}")
 
 
 def stock_print(log_lines):

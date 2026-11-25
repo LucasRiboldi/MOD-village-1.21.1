@@ -1,8 +1,8 @@
 # ADR-063 — O plano de alturas da vila
 
 **Estado:** aceita pelo autor em 2026-11-25 (G5 do jogo da 0.4.136, as quatro decisões 🅲), sobre a pesquisa
-`docs/research/2026-11-25-plano-de-alturas.md`. Implementação em fases (abaixo); a regra nasce com a fase 1 que chega ao
-jogo. Substitui a fila de quadrados da Regra 323 e o alisamento em volta da casa pronta da Regra 297. Emenda a ADR-059
+`docs/research/2026-11-25-plano-de-alturas.md`. Implementação em fases (abaixo); as fases 1 e 2 só leem (0.4.138, linha `VC_GRADE`), e a regra nasce com a fase 3,
+que mexe no chão. Substitui a fila de quadrados da Regra 323 e o alisamento em volta da casa pronta da Regra 297. Emenda a ADR-059
 (item 2: uma vaga de Zelador por vila).
 
 ## Contexto
