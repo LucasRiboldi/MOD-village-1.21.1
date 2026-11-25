@@ -45,3 +45,43 @@ inteira nessa faixa de 8 blocos.
 
 Fora da conta: a casa sobre pilares ou em dois níveis exigiria plantas novas, e a busca de lote fora da rua mudaria a
 Regra 17 (a porta dá para a rua).
+
+## Revisão pedida pelo autor: dois lados acessíveis
+
+Pedido (25-11): afrouxar no sentido de que a estrutura seja acessível, com degrau de 1, por pelo menos 2 lados, e o
+da entrada sempre seja um deles.
+
+### Outra causa, achada na revisão
+
+Durante os 15 minutos inteiros (12 vezes, de 16:12 a 16:24), o construtor esperou com "still sweeping — the budget ran
+out before an answer — local search for the miner home is still in progress". A busca local da casa do mineiro roda em
+volta da boca da mina, e a boca estava enterrada a 22 blocos do topo (E2). A janela de altura em volta de y 127,
+dentro do morro, só acha `NO_GROUND`. A busca terminou 26 vezes sem lote e ocupou o orçamento da varredura. A Regra 359
+(0.4.140) já põe a boca no chão aberto; isso deve destravar esta parte, mas só o próximo jogo confirma.
+
+### Como a regra fica
+
+- A pegada continua com a base na altura da rua, e a porta dá para ela (Regras 17 e 19).
+- Cada coluna da pegada pode ser cortada até `CUT` acima e aterrada até `FILL` abaixo, só com o chão do bioma (Regra 111).
+- A régua por coluna da borda acaba. No lugar, conta-se quantos lados são acessíveis:
+  - o lado da entrada é acessível por construção, porque encosta na rua;
+  - outro lado é acessível se uma coluna logo fora dele está a até 1 da base e dela se anda, com degrau de no máximo 1,
+    até a rua da entrada sem passar pela pegada, em até 16 passos.
+- O lote vale com 2 lados acessíveis ou mais. Os outros lados podem ser barranco; o plano de alturas (Regra 357) os marca
+  como conflito para a rampa da fase 4.
+
+### Simulação no save do mundo 1
+
+Os scripts `scripts/research/lot_terrain_dump.py` e `scripts/research/lot_two_sides_sim.py` leem o topo de cada coluna da
+caixa da vila no save e testam pegadas quadradas encostadas em cada coluna de rua (3 posições ao longo dela).
+
+| Pegada | Régua de hoje | 2 lados, aterro 4, corte 8 | 2 lados, aterro 8, corte 8 | 3 lados, 8 e 8 |
+|---|---|---|---|---|
+| 5×5 | 228 | 350 | 466 | 329 |
+| 7×7 | 64 | 235 | 367 | 252 |
+| 9×9 | 16 | 124 | 224 | 143 |
+
+Limite da simulação: a régua de hoje deu 228 lotes 5×5 no modelo, e o jogo achou 0. O modelo é mais generoso que o mod:
+ele toma toda coluna de arenito liso ao nível da areia como rua, não confere o espaçamento entre obras, a reserva de rua
+nem a Regra 3 bloco a bloco, e não sofre o orçamento da varredura. Os números servem para comparar as réguas entre si,
+não como previsão de quantos lotes o jogo vai achar.
