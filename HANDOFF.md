@@ -2,6 +2,18 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.140 (2026-11-25)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commit `0dd1449d`.
+- **Jogo da 0.4.139 (dois mundos no deserto):** triagem no topo do `TODO.md`. Escolhas do autor: E1 🅰️, E2 🅲, E3 pesquisar, E4 🅱️.
+- **Regra 358:** `GroundKeeper.mayWork` usa `IdleWorkers.isFree(..., Help.PATH)`: o Zelador que calça também faz a porta, a escada da mina e o plano de alturas.
+- **Regra 359:** `MineSite.openEdgeMouth` (busca até 32 acima, sem morro por cima, `MineSky.overhang`), `MineEdge` mais denso (insets 1, 3, 5; passo 3) e preferindo a boca alcançada a pé (`MineSky.reach`); `MineStairClearing.clearSky` tira o chão natural até 6 acima da boca, sem tocar no arco; `VC_MINE_MOUTH`.
+- **Regra 360:** `DoorFronts` põe a entrada da porta sem saída reta na frente dela (quintal ou areia); `RoadShape.farmEntrances` usa o meio do lado mais perto da rua calçada (sem contar o anel). Emenda as Regras 184 e 223.
+- **Prova:** `GroundKeeperPavingGameTest`, `MineMouthSurfaceGameTest` (2) e `DoorFrontsGameTest.aBuriedDoorKeepsItsEntranceInFront` falharam antes; mutação do `overSky` cai. Testes antigos atualizados para as regras novas: `MineMouthInsideGameTest`, `DoorFrontsGameTest` (vão do quintal), `RoadRulesGameTest`, `EntrancesAtTheDoorGameTest`, `FallingSandGuardGameTest`. Sentinela `fast` `20261125T211453Z`: unitários, propriedades e 1.278/1.278.
+- **Instalado:** `village-colony-0.4.140.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `AE735405E5EC097A3C0B79A320BE904C4DDB769F4D35CB07E4B7BAD9806D22EB`; 0.4.139 `.jar.disabled`.
+- **Em jogo:** `VC_GRADE` com `pending` caindo; `VC_DOOR_CLEAR`; `VC_MINE_MOUTH reached=true` e o arco à vista no morro; nós na frente das portas e no meio do lado das plantações.
+- **Próximo:** pesquisa do E3 (lote no morro), depois a fila G1 → G3 → G4 e a fase 4 da ADR-063.
+
 ## Entrega — 0.4.139 (2026-11-25)
 
 - **Branch:** `fix/areia-que-cai` (continua da 0.4.137), sem push.
