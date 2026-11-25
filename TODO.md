@@ -19,7 +19,7 @@ colônia 5bbe35c7). Spark F6a96gp9tG e tvlhbPHSc9. Escolhas do autor: E1 🅰️
   com `reached=true` e o arco visível.
 - [x] E4 🅱️ — notas "nó na frente da porta" (563,67,56) e "fazenda no meio do lado" (595,70,69): Regra 360 na 0.4.140.
 - [ ] 🟠 E3 — mundo 1: nenhum lote coube no morro (544 portas, 0 lotes, sem caminho de até 32); construtor 100% parado e
-  a casa do mineiro sem lote. Pesquisar alternativas (pedido do autor).
+  a casa do mineiro sem lote. Pesquisa em `docs/research/2026-11-25-lote-no-morro.md`; espera a escolha do autor.
 - [ ] 🟡 E5 — pico de 8,3 s no começo do mundo 2 em `BigHouseFoundation.findSafeOrigin` (TPS mínimo 8,25).
 - [ ] 🟡 E6 — fundidor d852b6e9 sufocado em parede em 396,136,375 um minuto depois do início, sem casa. Evidência
   insuficiente.
