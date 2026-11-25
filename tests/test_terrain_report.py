@@ -61,6 +61,25 @@ class TerrainReportTest(unittest.TestCase):
         self.assertEqual(2, by["jogador"])
         self.assertEqual(3, volume["jogador"])
 
+    def test_photos_of_different_boxes_are_compared_by_column(self):
+        first = terrain_report.Snapshot(photo("start", cliff))
+        grown = photo("last", lambda x, z: 0, day=2)
+        grown.update({"minX": -2, "width": SIZE + 2})
+        grown["y"] = [cliff(x, z) for x in range(-2, SIZE) for z in range(SIZE)]
+        grown["kind"] = [1] * len(grown["y"])
+        grown["edit"] = [0] * len(grown["y"])
+        grown["target"] = [64] * len(grown["y"])
+        by, volume = terrain_report.earthwork(first, terrain_report.Snapshot(grown))
+
+        self.assertEqual(0, sum(by.values()), "a caixa maior não mudou o chão de ninguém")
+
+    def test_the_door_inside_the_box_is_reached_through_its_neighbour(self):
+        data = photo("start", cliff)
+        data["doors"] = [[2, 64, 3, 0]]
+        snap = terrain_report.Snapshot(data)
+
+        self.assertTrue(terrain_report.structure_access(snap, terrain_report.reach(snap))[0]["door"])
+
     def test_the_summary_reads_the_files_of_the_log_folder(self):
         with tempfile.TemporaryDirectory() as logs:
             for label, data in (("start", photo("start", cliff)), ("day3", photo("day3", lambda x, z: 64, day=3))):

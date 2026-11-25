@@ -154,7 +154,9 @@ def structure_access(snap, reached):
                  "oeste": [(x0 - 1, z) for z in range(z0, z1 + 1)], "leste": [(x1 + 1, z) for z in range(z0, z1 + 1)]}
         open_sides = [side for side in SIDES
                       if any(c in reached and abs(snap.at(*c) - level) <= 1 for c in rings[side])]
-        door_ok = not own or any((d[0], d[2]) in reached for d in own)
+        door_ok = not own or any((d[0], d[2]) in reached
+                                 or any(n in reached and abs(snap.at(*n) - d[1]) <= 1 for n in neighbours(d[0], d[2]))
+                                 for d in own)
         result.append({"index": index, "source": s["source"], "blueprint": s.get("blueprint", ""), "min": s["min"],
                        "sides": open_sides, "door": door_ok})
     return result
@@ -224,8 +226,10 @@ def earthwork(first, last):
     """Colunas que mudaram de altura e o volume, por quem mexeu (o que a última foto sabe)."""
     by = Counter()
     volume = Counter()
-    for i, (a, b) in enumerate(zip(first.y, last.y)):
-        if a == NO_HEIGHT or b == NO_HEIGHT or a == b:
+    for i, b in enumerate(last.y):
+        x, z = last.min_x + i // last.depth, last.min_z + i % last.depth
+        a = first.at(x, z)
+        if a is None or b == NO_HEIGHT or a == b:
             continue
         flags = last.edit[i]
         who = "jogador" if flags & PLAYER else "mod" if flags & MOD else "mundo" if flags & WORLD else "sem dono"
