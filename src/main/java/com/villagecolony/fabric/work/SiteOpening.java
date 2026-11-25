@@ -311,7 +311,9 @@ final class SiteOpening {
 
         SitePreparation.clear(world, project);
 
-        // O chão em volta da obra é do Zelador, pelo plano de alturas (Regras 357 e 364): a abertura não alisa mais.
+        // E o chão em volta, suavizado a partir da altura da rua até o terreno (Regras 131 e 297): a obra nova cuida do
+        // terreno dela, como sempre (Regra 364).
+        com.villagecolony.fabric.integration.SiteSurroundings.level(world, project);
 
         project.moveTo(ConstructionState.BUILDING);
 

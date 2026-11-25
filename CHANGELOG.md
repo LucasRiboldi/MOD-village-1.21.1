@@ -17,6 +17,10 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.143] — candidata, 2026-11-25
+
+- A obra nova volta a cuidar do terreno dela como antes: o alisamento em volta na abertura (Regra 297) voltou, a pedido do autor antes do jogo. A Regra 364 continua para o Zelador: ele só sobe ou desce chão natural, e a rua e o caminho ficam onde estão.
+
 ## [0.4.142] — candidata, 2026-11-25
 
 Do jogo da 0.4.141 no deserto: G1 🅲, N2 🅲 (com a calçada e o lote) e N4 🅲. Regras 362, 363 e 364.
