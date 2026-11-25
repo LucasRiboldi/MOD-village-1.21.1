@@ -15,8 +15,10 @@ Escolhas do autor: G1 🅲, G2 🅲, G3 🅱️, G4 🅲, G5 🅲; ordem G2 → 
 
 - [x] G2 🅲 — areia que cai: Regra 356 na 0.4.137 (candidata). Conferir em jogo: porta do mineiro (-185,64,148) livre, mina
   (-189,?,148) alcançável, `VC_DOOR_CLEAR` e `VC_MINE_STAIR_CLEAR` no log, fazenda de -202,70,150 sem vão embaixo.
-- [ ] 🟠 G5 🅲 — vila inteira em degraus de 1 (curral grande com faixa de solo do bioma): pesquisa em documento para o autor
-  aprovar; os degraus maiores que 1 subiram de 518 para 1.909 no jogo.
+- [ ] 🟠 G5 🅲 — vila inteira em degraus de 1 (curral grande com faixa de solo do bioma): pesquisa em
+  `docs/research/2026-11-25-plano-de-alturas.md`, com as 4 decisões do autor (🅲 em todas: orçamento pelo atraso, rampa e
+  depois escada, peças da vila e paredão, praia com contorno natural). Falta ADR, cálculo no `core/` e execução pelo
+  Zelador. Os degraus maiores que 1 subiram de 518 para 1.909 no jogo.
 - [ ] 🟠 G1 🅲 — terra e grama no deserto: `GroundSmoothing.column` e `fillGap` aterram com terra sob areia;
   `MineYard.fillBelow` também; a geração usa grama quando o chunk é todo água (`VillageSoil.GRASS`).
 - [ ] 🟠 G3 🅱️ — obra fechada pela metade: `desert_farm_2` em -318,63,152 com 18 de 66 peças (48 pulos "sand/sandstone is in

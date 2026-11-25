@@ -1,7 +1,6 @@
 # Plano de alturas — a vila inteira em degraus de 1
 
-**Pesquisa de 2026-11-25** para a escolha G5 🅲 do autor, no jogo da 0.4.136 no deserto. **Espera aprovação do autor
-antes de virar código.** Pesquisa anterior do mesmo tema, sobre por que a vila não crescia: [`terraplanagem-da-vila.md`](terraplanagem-da-vila.md)
+**Pesquisa de 2026-11-25** para a escolha G5 🅲 do autor, no jogo da 0.4.136 no deserto. **Decisões do autor tomadas em 25-11; próximo passo é a ADR.** Pesquisa anterior do mesmo tema, sobre por que a vila não crescia: [`terraplanagem-da-vila.md`](terraplanagem-da-vila.md)
 (09-11).
 
 ## O pedido
@@ -71,14 +70,18 @@ de propriedade (jqwik) que prova "nenhum vizinho com diferença > 1 e toda ânco
   cortados e aterrados. A meta é a contagem de degraus cair dia a dia; o `game_report.py` passa a mostrar a curva.
 - **Simulação longa:** o perfil `longo` do Sentinela compara degraus e portas alcançáveis nos três biomas.
 
-## Decisões que ficam com o autor
+## Decisões do autor (2026-11-25)
 
-1. **Orçamento do Zelador:** hoje são 256 colunas por dia. O plano deixa o trabalho mais certeiro, mas a vila do jogo
-   tinha cerca de 1.900 degraus. Mais um Zelador por tamanho de vila, ou mais colunas por dia?
-2. **Âncora incompatível:** escada de blocos de escada no caminho, ou só marcar e deixar o degrau?
-3. **Peças da vila gerada:** o perímetro também vale em volta delas? Isso mexe no chão em volta de casas que o jogo
-   gerou, mas nunca nas casas.
-4. **Água:** a margem entra como âncora na altura da água (praia) ou fica de fora, como hoje?
+1. **Orçamento cresce com o atraso (🅲).** O Zelador nivela 256 colunas por dia mais um tanto proporcional aos degraus
+   pendentes, até 1.024. Se o atraso não cai em 3 dias, a vila contrata um segundo Zelador. A linha `VC_GRADE` mostra a
+   curva por dia.
+2. **Rampa, depois escada (🅲).** Entre âncoras que não cabem em degrau 1, primeiro uma rampa mais longa, desviando dentro
+   da folga (zigue-zague). Só sem rampa possível, escada de blocos de escada do bioma no caminho. Cada caso sai em
+   `VC_GRADE_CONFLICT`.
+3. **Tudo, e arruma o paredão (🅲).** A faixa vale em volta de toda estrutura, também das peças da vila gerada, e o
+   paredão que a geração deixou dentro da faixa vira degraus. Os blocos das peças nunca são mexidos.
+4. **Praia com o contorno natural (🅲).** A margem vira praia de solo do bioma em degraus até a água. Isso se junta ao
+   plano do contorno natural da vila junto da água (`TODO.md`, PR #113), sem parede reta.
 
 ## Riscos
 
@@ -90,5 +93,5 @@ de propriedade (jqwik) que prova "nenhum vizinho com diferença > 1 e toda ânco
 
 ## Próximo passo
 
-Com a aprovação do autor e as 4 decisões acima: uma ADR (plano de alturas substitui a fila de quadrados da Regra 323),
+Com as 4 decisões acima: uma ADR (plano de alturas substitui a fila de quadrados da Regra 323),
 a regra nova, o cálculo no `core/` com testes, e depois a execução pelo Zelador com o GameTest de acesso.
