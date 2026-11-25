@@ -66,7 +66,9 @@ final class FarmerStand {
                     BlockPos spot = crop.add(dx, dy, dz);
                     double distance = spot.getSquaredDistance(worker);
 
-                    if (distance < bestDistance && BuilderApproach.standable(world, spot)) {
+                    // Em cima do composter não se fica: é bloco de trabalho, e o pé ali parecia telhado (Regra 362).
+                    if (distance < bestDistance && BuilderApproach.standable(world, spot)
+                            && !RoofDescent.isWorkBlock(world.getBlockState(spot.down()))) {
                         best = spot;
                         bestDistance = distance;
                     }

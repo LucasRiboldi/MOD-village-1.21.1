@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 260
+- **Cita a regra:** 261
 - **Só usa a classe indicada:** 85
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -372,3 +372,4 @@ classe prova menos ainda.
 | 359 | A boca da mina nasce no chão aberto e alcançado a pé (autor 25-11, jogo da 0.4.139 no des… | cita | MineMouthInsideGameTest, MineMouthSurfaceGameTest |
 | 360 | O nó de entrada fica na frente da porta, e o da plantação no meio do lado (autor 25-11, n… | cita | DoorFrontsGameTest, EntrancesAtTheDoorGameTest, FallingSandGuardGameTest |
 | 361 | A foto do terreno da vila (autor 25-11, ADR-064, programa 🅲: medições profundas do estado… | cita | TerrainSnapshotGameTest |
+| 362 | Bloco de trabalho não é telhado, e a descida não vira laço (autor 25-11, nota do jogo da… | cita | RoofDescentGameTest |
