@@ -2,6 +2,12 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.143 (2026-11-25)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commit `c8f438bb`.
+- A obra nova volta a alisar o chão em volta na abertura (`SiteOpening` chama `SiteSurroundings.level` de novo, Regra 297), a pedido do autor antes do jogo. O resto da Regra 364 fica: o Zelador só mexe em chão natural.
+- Sentinela `fast` `20261125T233800Z`: 1.285/1.285. Instalado: `village-colony-0.4.143.jar` (build, `downloads/`, TLauncher), SHA-256 `BB2877859A77ED23BD0E7115E4767D035812884D9C0D959708A055FED4679226`; 0.4.142 `.jar.disabled`.
+
 ## Entrega — 0.4.142 (2026-11-25)
 
 - **Branch:** `fix/areia-que-cai`, sem push. Commits `a2f840bb` (Regra 362), `ea498555` (Regra 363), `25e40239` (Regra 364), `c47f6537` (relatório do terreno).

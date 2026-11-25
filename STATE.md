@@ -5,6 +5,7 @@
 > **Retomada por outro agente:** comece por `HANDOFF.md`.
 
 ## Onde o projeto está
+- **Candidata 0.4.143 (branch `fix/areia-que-cai`, sem push).** A obra nova volta a alisar em volta na abertura (Regra 297). JAR SHA-256 `BB287785…9226` instalado. Sentinela `20261125T233800Z`: 1.285/1.285.
 - **Candidata 0.4.142 (branch `fix/areia-que-cai`, sem push).** Do jogo da 0.4.141: composter não é telhado (Regra 362), aterro com o chão do bioma e o Zelador devolve a areia (Regra 363), só o Zelador muda o terreno e só chão natural (Regra 364). Sentinela `fast` `20261125T232035Z`: 1.285/1.285. JAR SHA-256 `709A9613…B926` instalado. Detalhes no [HANDOFF](HANDOFF.md).
 - **Candidata 0.4.141 (branch `fix/areia-que-cai`, sem push).** Foto do terreno da vila e relatório do terreno (Regra 361, ADR-064 etapa 1); nada muda no jogo. Sentinela `fast` `20261125T221026Z`: 1.279/1.279. JAR SHA-256 `8FA52E0D…DCED` instalado. Detalhes no [HANDOFF](HANDOFF.md).
 - **Candidata 0.4.140 (branch `fix/areia-que-cai`, sem push).** Do jogo da 0.4.139: o Zelador nivela e limpa a porta mesmo calçando (Regra 358), a boca da mina nasce no chão aberto e alcançado a pé (Regra 359), e o nó de entrada fica na frente da porta e no meio do lado da plantação (Regra 360). Sentinela `fast` `20261125T211453Z`: 1.278/1.278. JAR SHA-256 `AE735405…22EB` instalado. E3 (lote no morro) em pesquisa. Detalhes no [HANDOFF](HANDOFF.md).
