@@ -203,9 +203,13 @@ final class GroundSmoothing {
                 return false;
             }
         }
+        // Sob areia, arenito; terra só fora do deserto (Regra 363).
+        BlockState fill = com.villagecolony.fabric.integration.BiomeSoil.fillUnder(world, surface,
+                world.getBlockState(surface), world.getBlockState(below));
+
         for (int depth = 1; depth <= gap; depth++) {
-            world.setBlockState(surface.down(depth), Blocks.DIRT.getDefaultState(), Block.NOTIFY_ALL);
-            com.villagecolony.fabric.integration.EditLedger.mod(world, surface.down(depth).toImmutable(), Blocks.DIRT.getDefaultState(), "nivelamento"); // Regra 345
+            world.setBlockState(surface.down(depth), fill, Block.NOTIFY_ALL);
+            com.villagecolony.fabric.integration.EditLedger.mod(world, surface.down(depth).toImmutable(), fill, "nivelamento"); // Regra 345
         }
         return true;
     }
@@ -305,9 +309,8 @@ final class GroundSmoothing {
         BlockPos.Mutable at = new BlockPos.Mutable(x, top, z);
         BlockState surface = world.getBlockState(at);
         BlockState below = world.getBlockState(at.setY(top - 1));
-        BlockState fill = SiteSurroundings.isNaturalGround(below) && !below.isOf(Blocks.FARMLAND)
-                && !(below.getBlock() instanceof net.minecraft.block.FallingBlock)
-                ? below : Blocks.DIRT.getDefaultState();
+        // Sob areia, arenito; terra só fora do deserto (Regra 363).
+        BlockState fill = com.villagecolony.fabric.integration.BiomeSoil.fillUnder(world, at.toImmutable(), surface, below);
 
         for (int y = top; y > target; y--) {
             at.setY(y + 1);

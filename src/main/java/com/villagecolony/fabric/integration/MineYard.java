@@ -149,7 +149,9 @@ public final class MineYard {
                 break;
             }
 
-            world.setBlockState(disc.down(depth), Blocks.DIRT.getDefaultState(), Block.NOTIFY_LISTENERS);
+            // Sob areia, arenito; terra só fora do deserto (Regra 363).
+            world.setBlockState(disc.down(depth), BiomeSoil.fillUnder(world, disc, world.getBlockState(disc),
+                    world.getBlockState(disc.down(depth + 1))), Block.NOTIFY_LISTENERS);
             changed++;
         }
 

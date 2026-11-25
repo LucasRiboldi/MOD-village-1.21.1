@@ -94,8 +94,12 @@ public final class PathSupport {
             return 0;
         }
 
+        // Sob areia, arenito; terra só fora do deserto (Regra 363).
+        net.minecraft.block.BlockState fill = com.villagecolony.fabric.integration.BiomeSoil.fillUnder(world, path,
+                world.getBlockState(path), world.getBlockState(path.down(gap + 1)));
+
         for (int depth = 1; depth <= gap; depth++) {
-            world.setBlockState(path.down(depth), Blocks.DIRT.getDefaultState());
+            world.setBlockState(path.down(depth), fill);
         }
 
         VillageColonyMod.LOGGER.info("Colony {} put {} dirt under the path at {}",

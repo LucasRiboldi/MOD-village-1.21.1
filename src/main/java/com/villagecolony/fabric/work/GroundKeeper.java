@@ -112,6 +112,16 @@ public final class GroundKeeper {
             return doors;
         }
 
+        // A terra no chão de areia volta ao bloco do bioma (Regra 363).
+        int soil = SoilRestore.pass(world, colony);
+
+        if (soil > 0) {
+            ActionJournal.action(keeper.getUuid(), "LEVELLED", "minecraft:sand", soil, keeper.getBlockPos(),
+                    "the soil of the biome");
+            count(world, colony.id(), 3, soil);
+            return soil;
+        }
+
         int trimmed = PathTrim.pass(world, colony);
 
         if (trimmed > 0) {
