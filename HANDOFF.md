@@ -2,6 +2,15 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.136 (2026-11-25)
+
+- **Branch e PR:** `fix/pulo-grande-todo-tique`, PR #111.
+- **Causa do N05 (`ShepherdGameTest.theShepherdOnlyShearsAfterReachingTheSheep`):** o histórico novo de trocas mostrou, no tique 84, o pastor recém-pousado no cercado assumido pelo `PenEscape` (tarefa `AVAILABLE`, `WalkOverride` preso) e posto para fora no tique 107; de novo em 244 e 270. Só o pastor que conduz animal era exceção (`ShepherdHerding.isHerding`).
+- **Escolha 🅲 do autor, Regra 355:** `ShepherdPenGrace` — pastor com `COLLECT_WOOL` reservada ou em execução, cercado, espera até 600 tiques desde que o socorro o vê assim; depois, ou sem a tosquia, o socorro age. `VC_PEN_WORKING state=started|expired`.
+- **Prova:** `ShepherdPenGraceGameTest` falhou com a regra vazia ("o pastor com a tosquia reservada foi tirado do cercado") e passa com ela, cobrindo também o fim do prazo e o pastor sem tosquia. A primeira bateria pegou uma corrida no próprio teste (tosquia reservada depois da espera); a tosquia passou a ser reservada no nascimento. Sentinela `fast` `20261125T031151Z`: 1.886 unitários, propriedades e 1.266/1.266.
+- **Instalado:** `village-colony-0.4.136.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `AC31A265ECB90D47D64C38AAD7224853DF2C384A8B7CE6E9D6EAE83AC03DE74C`; 0.4.135 `.jar.disabled`.
+- **Em jogo:** procurar `VC_PEN_WORKING`; nenhuma das mudanças da 0.4.133 à 0.4.136 foi jogada.
+
 ## Entrega — 0.4.135 (2026-11-24)
 
 - **Branch e PR:** `fix/pulo-grande-todo-tique`, PR #111 (junto com a 0.4.134).

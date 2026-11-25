@@ -12,6 +12,11 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.136] — candidata, 2026-11-25
+
+- O pastor que entrou no cercado para tosquiar não é tirado pelo socorro do curral por até 30 segundos (Regra 355); passado o prazo, ou sem a tosquia reservada, o socorro age como antes. `VC_PEN_WORKING` registra início e fim do prazo. O N05 (`ShepherdGameTest.theShepherdOnlyShearsAfterReachingTheSheep`) caía quando o socorro pegava o pastor recém-pousado no cercado.
+- `ShepherdGameTest` registra cada troca de tarefa e de condução do pastor no histórico da falha.
+
 ## [0.4.135] — candidata, 2026-11-24
 
 - `VC_HOME_CHEST_STAY`: o baú residencial que perdeu a parede e não mudou de lugar sai no log com o motivo (lugar ocupado, sem chão, sem ar acima, baú ao lado, sem recibo e outros), uma vez por mudança de motivo. O baú segue a mesma regra de antes.

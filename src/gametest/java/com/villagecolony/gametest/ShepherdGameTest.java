@@ -302,6 +302,7 @@ public class ShepherdGameTest implements FabricGameTest {
         // Diagnóstico da tosquia: hora, idade, posição do pastor, destino e tarefa, em recorte de 80 tiques.
         StringBuilder history = new StringBuilder();
         int[] tick = {0};
+        String[] lastChange = {""};
         context.runAtEveryTick(() -> {
             if (checked[0]) {
                 return;
@@ -310,6 +311,14 @@ public class ShepherdGameTest implements FabricGameTest {
                 context.getWorld().setTimeOfDay(1_000);
             }
             ShepherdWork.shortenSearchTo(8);
+            // Cada troca de tarefa ou de condução por outro (socorro do curral, WalkOverride) entra no histórico.
+            String change = task.state() + "/" + com.villagecolony.fabric.brain.WalkOverride.isHeld(villager.getUuid());
+            if (!change.equals(lastChange[0])) {
+                lastChange[0] = change;
+                history.append(" | t").append(tick[0] + 1).append(" troca task/conduzido=").append(change)
+                        .append(" p").append(villager.getBlockPos().subtract(context.getAbsolutePos(BlockPos.ORIGIN))
+                                .toShortString());
+            }
             if (++tick[0] % 80 == 0) {
                 BlockPos origin = context.getAbsolutePos(BlockPos.ORIGIN);
                 history.append(" | t").append(tick[0]).append(" d").append(context.getWorld().getTimeOfDay() % 24_000)

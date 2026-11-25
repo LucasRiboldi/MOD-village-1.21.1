@@ -12669,3 +12669,8 @@ O `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder` falhava 1 em 5 iso
 ## 2026-11-25 — teste da fusão de colônias guiado como no jogo
 
 `ColonyMergeTriggerGameTest.aVillagerWalksBetweenTheTwoOldRoadNetworks` falhava 2 em 5 isolado: em metade das falhas o aldeão caía da rua, na outra travava. O rastro novo mostrou o caminho de 29 passos trocado no tique 40 por um de 14 que voltava, sem o teste pedir: o teste empurrava a navegação, e o Brain do aldeão a sobrescrevia. Por escolha do autor (🅲), o teste usa `WorkTargets.set` no expediente, como o ciclo da colônia, com chão firme em volta da rua e o rastro `VC_TEST_MERGE_WALK`. 10 de 10 isolado; mutação sem `RoadNetwork.merge` cai. Sentinela `20261125T022823Z` 1.264/1.265 (falha só N05).
+
+## 2026-11-25 — 0.4.136, o pastor que tosquia dentro do cercado
+
+O N05 caía 1 em 8 isolado e 3 em 15 no CI. O histórico de trocas acrescentado ao `ShepherdGameTest` mostrou o `PenEscape` assumir o pastor no tique em que ele pousou dentro do cercado e pô-lo para fora, com a tarefa largada. Por escolha do autor (🅲), a Regra 355 dá ao pastor com a tosquia reservada até 600 tiques cercado (`ShepherdPenGrace`, `VC_PEN_WORKING`). `ShepherdPenGraceGameTest` falhou sem a regra e passa com ela; Sentinela `20261125T031151Z` 1.266/1.266.
+

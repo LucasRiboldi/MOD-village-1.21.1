@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 254
+- **Cita a regra:** 255
 - **Só usa a classe indicada:** 84
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -365,3 +365,4 @@ classe prova menos ainda.
 | 352 | Tijolos de pedra quando falta argila (autor 21-11, análise A6, emenda à Regra 88): sem ar… | cita | BiomeBlueprintsGameTest, ItemStockGameTest |
 | 353 | Tochas da colônia na mina (autor 21-11, análise A2, exceção à Regra 212): o mineiro insta… | cita | ArchitectureRulesTest, MineLandingGameTest |
 | 354 | Cinco mudas por lenhador no bosque perto da vila (autor 21-11, análise A3a): o lenhador u… | cita | VillageGroveGameTest |
+| 355 | O pastor que tosquia dentro do cercado está trabalhando (autor 25-11, escolha C do N05):… | cita | ShepherdPenGraceGameTest |
