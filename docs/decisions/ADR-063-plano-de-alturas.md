@@ -35,8 +35,10 @@ A colônia calcula um **plano de alturas** para a caixa da vila mais uma margem,
 - **Envelope de degrau 1:** em cada coluna livre, `L = max(âncora − passos)` e `U = min(âncora + passos)`. Os passos
   contam 4 vizinhos e contornam o que está fora do plano. Toda superfície entre `L` e `U` tem degrau de no máximo 1 e toca
   cada âncora na altura dela.
-- **Alvo:** `alvo = limitar(natural, L, U)`. A coluna fica onde está, se cabe; senão sobe até `L` ou desce até `U`. Isso
-  é o mínimo de terra movida para o degrau 1 caber.
+- **Partida:** `limitar(natural, L, U)`. A coluna fica onde está, se cabe; senão sobe até `L` ou desce até `U`.
+- **Alvo:** a média entre o maior relevo de degrau 1 abaixo da partida (o corte) e o menor acima dela (o aterro). Os dois
+  têm degrau 1, então a média também; o paredão longe das âncoras vira encosta, metade cortada e metade aterrada, e o
+  chão que já anda de 1 em 1 fica onde está (`GradePlan`).
 - **Caminho plano:** a coluna do grafo toma a altura da vizinha de caminho já decidida, quando cabe no envelope. Assim o
   caminho só sobe 1 onde precisa.
 - **Paredão** (decisão 3): o paredão de geração dentro da faixa de uma estrutura vira degraus pelo próprio envelope. Os
