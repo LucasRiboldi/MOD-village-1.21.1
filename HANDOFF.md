@@ -2,6 +2,15 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.141 (2026-11-25)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commit `6337ef02`.
+- **Programa 🅲 do chão (ADR-064), etapa 1 — Regra 361:** `TerrainSnapshot` grava a foto do terreno em `logs/villagecolony-terrain-<colônia>-<rótulo>.json.gz` (`start` ao medir a vila, `day<N>` no fim do expediente, `last` em `/vc salvar` e ao fechar); `TerrainEdits` soma quem mexeu por coluna pelo `EditLedger`; `GradeSurvey.targets()` dá o alvo do plano. `scripts/terrain_report.py` (acesso a pé, degraus, lados, terra mexida, o que o jogador quis, mapa PNG); seção "Terreno (ADR-064)" no `game_report.py`; `scripts/research/save_to_terrain.py` converte save antigo.
+- **Prova:** `TerrainSnapshotGameTest` (mutação sem "quem mexeu" cai), `tests/test_terrain_report.py` (4). Sentinela `fast` `20261125T221026Z`: 1.279/1.279; Python 206 OK.
+- **Instalado:** `village-colony-0.4.141.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `8FA52E0D0E9B349116325F8A7095BEF23A4226D647920576FF9A06F1C31DFCED`; 0.4.140 `.jar.disabled`.
+- **Em jogo:** arquivos `villagecolony-terrain-*` na pasta logs, linhas `VC_TERRAIN_SNAPSHOT` (colunas e ms); depois `python scripts/terrain_report.py`.
+- **Próximo:** etapa 2 (banco de terrenos), depois do jogo.
+
 ## Entrega — 0.4.140 (2026-11-25)
 
 - **Branch:** `fix/areia-que-cai`, sem push. Commit `0dd1449d`.
