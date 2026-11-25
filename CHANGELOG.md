@@ -17,6 +17,14 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.142] — candidata, 2026-11-25
+
+Do jogo da 0.4.141 no deserto: G1 🅲, N2 🅲 (com a calçada e o lote) e N4 🅲. Regras 362, 363 e 364.
+
+- O composter e os outros blocos de trabalho não contam como telhado, e o fazendeiro não escolhe ficar em cima deles; a terceira descida seguida do mesmo telhado põe o aldeão no chão e solta a tarefa (`VC_ROOF_LOOP`). No jogo, o fazendeiro pulou 32 vezes do composter (Regra 362, `RoofDescentGameTest`).
+- Todo aterro usa o chão do bioma: arenito debaixo de areia, terra debaixo de grama; a geração aterra o chunk todo de água com o chão do bioma, e não com grama. O Zelador devolve a areia à terra que ficou no deserto (`VC_SOIL_RESTORE`) (Regra 363, `BiomeSoilGameTest`).
+- Só o Zelador muda o terreno depois da geração, além do lote e do corredor da obra; ele só sobe ou desce chão natural, e a rua e o caminho ficam onde estão — antes, o arenito liso da rua era copiado para o alto. A abertura da obra não alisa mais o chão em volta (Regra 364, `StreetKeptGameTest`).
+
 ## [0.4.141] — candidata, 2026-11-25
 
 Medição do terreno da vila (ADR-064, etapa 1 do programa 🅲). Regra 361. Não muda nada no jogo.

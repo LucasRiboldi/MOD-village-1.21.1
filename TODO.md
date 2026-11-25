@@ -8,6 +8,15 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   está em `docs/technical/TODO-herdado-2026-11-13.md`.
 - O TODO antigo inteiro, por jogo, está em `docs/archive/technical/TODO-ate-2026-11-13.md` (`grep`).
 
+## Jogo da 0.4.141 no deserto (2026-11-25)
+
+Colônia 1577f7f0, 30 min, 4 notas e 4 fotos do terreno. Confirmou a 0.4.140: o plano nivelou 660 colunas (pendente 353 → 98) e a boca da mina nasceu no chão aberto (`reached=true`).
+
+- [x] N1 e N3 — terra no deserto: G1 🅲, Regra 363 na 0.4.142.
+- [x] N2 🅲 — arenito liso copiado para o alto pelo Zelador; só o Zelador muda o terreno, e só chão natural: Regra 364 na 0.4.142.
+- [x] N4 🅲 — fazendeiro preso no composter (32 pulos): Regra 362 na 0.4.142.
+- [ ] 🟡 Construtor 51% sem trabalhar (38% travado) e carpinteiro 51%: olhar no próximo jogo.
+
 ## Jogo da 0.4.139 no deserto (2026-11-25)
 
 Dois mundos no mesmo `latest.log`: mundo 1 (16:10–16:25, colônia f6350e62, deserto na montanha) e mundo 2 (16:25–17:12,
@@ -44,7 +53,7 @@ Escolhas do autor: G1 🅲, G2 🅲, G3 🅱️, G4 🅲, G5 🅲; ordem G2 → 
   depois escada, peças da vila e paredão, praia com contorno natural) e na ADR-063, em 5 fases. Fases 1 a 3 feitas (0.4.138 e 0.4.139, Regra 357: o Zelador
   executa o plano); faltam a rampa e a escada (fase 4) e a praia (fase 5). Conferir no jogo a curva de `VC_GRADE`
   (colunas a mexer caindo, degraus, conflitos, `keepers=`, ms) e se a porta do curral grande ficou acessível. Os degraus maiores que 1 subiram de 518 para 1.909 no jogo.
-- [ ] 🟠 G1 🅲 — terra e grama no deserto: `GroundSmoothing.column` e `fillGap` aterram com terra sob areia;
+- [x] G1 🅲 — feito na 0.4.142 (Regra 363). Era: terra e grama no deserto: `GroundSmoothing.column` e `fillGap` aterram com terra sob areia;
   `MineYard.fillBelow` também; a geração usa grama quando o chunk é todo água (`VillageSoil.GRASS`).
 - [ ] 🟠 G3 🅱️ — obra fechada pela metade: `desert_farm_2` em -318,63,152 com 18 de 66 peças (48 pulos "sand/sandstone is in
   the way"); a obra só fecha com 95% das peças e o construtor tira o chão natural da peça.

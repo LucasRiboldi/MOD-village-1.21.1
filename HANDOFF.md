@@ -2,6 +2,17 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.142 (2026-11-25)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commits `a2f840bb` (Regra 362), `ea498555` (Regra 363), `25e40239` (Regra 364), `c47f6537` (relatório do terreno).
+- **Jogo da 0.4.141:** triagem no topo do `TODO.md`; confirmou a 0.4.140 (plano 353 → 98 pendentes, boca `reached=true`).
+- **Regra 362:** `RoofDescent.isWorkBlock` (ponto de interesse do Vanilla não é telhado), `FarmerStand` evita pisar nele, `LOOPS` = 3 descidas do mesmo lugar põem no chão e soltam a tarefa (`VC_ROOF_LOOP`).
+- **Regra 363:** `BiomeSoil.fillUnder` em `GroundSmoothing.column`, vão raso, `MineYard`, `PathSupport` e `VillageGround`; `VillageSoil.fallback` pelo bioma; `SoilRestore` no dia do Zelador (`VC_SOIL_RESTORE`).
+- **Regra 364:** `GroundSmoothing.column` recusa topo que não é chão natural; `GradeSurvey` ancora o caminho na altura de hoje; `SiteOpening` não chama mais `SiteSurroundings.level`; `GradeWork` relê o plano quando a obra abre.
+- **Prova:** `RoofDescentGameTest` (2 novos), `BiomeSoilGameTest` (2), `StreetKeptGameTest` (2), vermelhos antes. Sentinela `fast` `20261125T232035Z`: 1.285/1.285; Python 208 OK.
+- **Instalado:** `village-colony-0.4.142.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `709A9613C43DDA2E3B13AB3B85AC8BB9663CBB9892F0738CAB17F84F7C60B926`; 0.4.141 `.jar.disabled`.
+- **Em jogo:** nada de arenito liso subindo nem terra no deserto; `VC_SOIL_RESTORE`; fazendeiro sem pular do composter; ruas na mesma altura; `terrain_report.py` com a comparação.
+
 ## Entrega — 0.4.141 (2026-11-25)
 
 - **Branch:** `fix/areia-que-cai`, sem push. Commit `6337ef02`.
