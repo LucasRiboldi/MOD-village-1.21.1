@@ -83,8 +83,13 @@ public final class TerrainReport {
                 GradeWork.doneToday(colony.id(), day));
         GroundKeeper.report(world, colony, day, steps);
         // O plano de alturas: o que falta mexer e, com o atraso parado, a segunda vaga de Zelador (Regra 357, ADR-063).
-        GradeSurvey.read(world, colony).ifPresent(survey -> VillageColonyMod.LOGGER.info("{} keepers={}",
+        Optional<GradeSurvey.Survey> plan = GradeSurvey.read(world, colony);
+
+        plan.ifPresent(survey -> VillageColonyMod.LOGGER.info("{} keepers={}",
                 survey.line(colony.id(), day),
                 com.villagecolony.core.worker.service.GradeCrew.endOfDay(colony.id(), survey.pending())));
+        // A foto do terreno do dia, com o plano já lido (ADR-064).
+        TerrainSnapshot.start(world, colony);
+        TerrainSnapshot.save(world, colony, "day" + day, plan);
     }
 }

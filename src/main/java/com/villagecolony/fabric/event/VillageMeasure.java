@@ -63,6 +63,8 @@ final class VillageMeasure {
                 measured,
                 generated.isPresent() ? "the generated village" : "the typical size",
                 colony.center());
+        // A foto do terreno do começo, antes de a colônia mexer no chão (ADR-064).
+        com.villagecolony.fabric.work.TerrainSnapshot.start(world, colony);
     }
 
     /** O meio das construções terminadas desta colônia, se há alguma. */

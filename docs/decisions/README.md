@@ -63,3 +63,4 @@ se corrige. ADR nova pega o próximo número livre (o maior hoje é 055) e entra
 | [055](ADR-055-decisoes-do-autor-2026-11-13.md) | Decisões do autor de 13-11 (pendências da avaliação de qualidade) | Aceita |  |
 | [056](ADR-056-decisoes-do-autor-2026-11-15.md) | Decisões do autor de 15-11 (notas dos jogos da 0.4.79 à 0.4.86) | Aceita |  |
 | [063](ADR-063-plano-de-alturas.md) | O plano de alturas da vila: degrau de 1 em toda a vila, executado pelo Zelador | Aceita, em fases | |
+| [064](ADR-064-medicao-do-terreno.md) | A medição do terreno da vila e o chão decidido pelo plano | Aceita, em etapas | |

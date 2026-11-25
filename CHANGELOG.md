@@ -17,6 +17,14 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.141] — candidata, 2026-11-25
+
+Medição do terreno da vila (ADR-064, etapa 1 do programa 🅲). Regra 361. Não muda nada no jogo.
+
+- A colônia grava uma foto do terreno em `logs/villagecolony-terrain-<colônia>-<rótulo>.json.gz`: ao medir a vila (`start`), no fim do expediente (`day<N>`), em `/vc salvar` e ao fechar o servidor (`last`). Cada coluna da caixa da vila mais 16 leva a altura, o bloco, o tipo, quem mexeu desde que o servidor abriu e a altura-alvo do plano; mais as estruturas, as portas e as bocas da mina (`TerrainSnapshotGameTest`).
+- `scripts/terrain_report.py` compara a primeira foto com a última: acesso a pé do centro com degrau de até 1, degraus maiores que 1, lados alcançados de cada estrutura, terra mexida por quem, o que o jogador quis (passagem aberta ou fechada, desnível, mod desfeito, aplainado) e o mapa em PNG. O `game_report.py` ganhou a seção "Terreno (ADR-064)".
+- `scripts/research/save_to_terrain.py` faz a foto a partir do save, para os jogos de antes.
+
 ## [0.4.140] — candidata, 2026-11-25
 
 Do jogo da 0.4.139 (dois mundos no deserto), escolhas E1 🅰️, E2 🅲 e E4 🅱️. Regras 358, 359 e 360.

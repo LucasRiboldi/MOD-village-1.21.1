@@ -39,6 +39,7 @@ import action_report  # noqa: E402
 import flow_report  # noqa: E402
 import player_report  # noqa: E402
 import stock_report  # noqa: E402
+import terrain_report  # noqa: E402
 import task_report  # noqa: E402
 import time_ledger  # noqa: E402
 import villager_timeline  # noqa: E402
@@ -124,7 +125,7 @@ def section(title, render):
     return f"## {title}\n\n```text\n{buffer.getvalue().rstrip()}\n```\n"
 
 
-def build(log_lines, records, when):
+def build(log_lines, records, when, terrain_logs=None, log_paths=()):
     found = findings(log_lines, records)
     out = [f"# Relatório do jogo — {when}", "", "## Achados, do mais grave ao menos", ""]
     out += [f"{n}. {text}" for n, (_rank, text) in enumerate(found[:30], start=1)] or ["Nenhum achado."]
@@ -142,7 +143,16 @@ def build(log_lines, records, when):
     out.append(section("Interferência do jogador",
                        lambda: print(player_report.render(player_report.collect(log_lines)))))
     out.append(section("Plano de alturas (ADR-063)", lambda: grade_print(log_lines)))
+    out.append(section("Terreno (ADR-064)", lambda: terrain_print(terrain_logs, log_paths)))
     return "\n".join(out)
+
+
+def terrain_print(terrain_logs, log_paths):
+    """O resumo das fotos do terreno; o detalhe e o mapa saem do terrain_report.py."""
+    lines = []
+    if terrain_logs and os.path.isdir(terrain_logs):
+        lines = terrain_report.summary_lines(terrain_logs, list(log_paths))
+    print("\n".join(lines) if lines else "sem foto do terreno (ADR-064)")
 
 
 def time_ledger_print(log_lines):
@@ -204,7 +214,8 @@ def main(argv):
                                    "jogo-" + datetime.datetime.now().strftime("%Y%m%d-%H%M") + ".md")
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     with open(out, "w", encoding="utf-8") as handle:
-        handle.write(build(log_lines, records, when))
+        handle.write(build(log_lines, records, when, os.path.dirname(os.path.abspath(args.log)),
+                           [args.log] if os.path.exists(args.log) else []))
     print(f"Relatório: {os.path.abspath(out)}")
     return 0
 

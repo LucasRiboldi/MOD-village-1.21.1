@@ -111,6 +111,19 @@ public final class GradeSurvey {
             };
         }
 
+        /** A altura-alvo de cada coluna da caixa, {@code [x - minX][z - minZ]} (ADR-064: a foto do terreno). */
+        public int[][] targets() {
+            return result.target();
+        }
+
+        public int minX() {
+            return minX;
+        }
+
+        public int minZ() {
+            return minZ;
+        }
+
         public GradePlan.Kind kind(int x, int z) {
             return inside(x, z) ? kinds[x - minX][z - minZ] : GradePlan.Kind.OUT;
         }

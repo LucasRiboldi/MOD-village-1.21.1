@@ -89,3 +89,17 @@ o plano de alturas (Regra 357). No morro, a primeira recusa tudo, e a segunda n�
    autor escolhe se eles viram constante. Nenhum número muda sozinho.
 
 Isso pede uma ADR nova (escolha de lote pelo plano), porque muda as Regras 19 e 111 e a fase 1 da terraplanagem.
+
+## Primeira medida (jogo da 0.4.139, pelo save)
+
+Sem foto do começo, só o estado final, convertido do save por `scripts/research/save_to_terrain.py` (sem as caixas das
+estruturas, os telhados contam como chão). Saída em `reports/terrain/jogo-0139/`.
+
+| | mundo 1 (montanha) | mundo 2 |
+|---|---|---|
+| colunas alcançadas a pé do centro | 19.553 de 20.068 (97%) | 15.259 de 16.067 (95%) |
+| degraus maiores que 1 | 2.289 | 944 |
+| … em caminho | 22 | 54 |
+| colunas que o jogador mexeu | 139 | 398 |
+| … desfazendo o mod | 0 | 59 (nivelamento 23, volta da obra 21, calçada 14, outro 1) |
+

@@ -20,6 +20,9 @@ colônia 5bbe35c7). Spark F6a96gp9tG e tvlhbPHSc9. Escolhas do autor: E1 🅰️
 - [x] E4 🅱️ — notas "nó na frente da porta" (563,67,56) e "fazenda no meio do lado" (595,70,69): Regra 360 na 0.4.140.
 - [ ] 🟠 E3 — mundo 1: nenhum lote coube no morro (544 portas, 0 lotes, sem caminho de até 32); construtor 100% parado e
   a casa do mineiro sem lote. Pesquisa em `docs/research/2026-11-25-lote-no-morro.md`; espera a escolha do autor.
+- [ ] 🟠 Programa 🅲 do chão (ADR-064): etapa 1 feita na 0.4.141 (foto do terreno e `terrain_report.py`, Regra 361);
+  falta conferir as fotos no próximo jogo. Depois: etapa 2 (banco de terrenos no `core`), etapa 3 (lote pelo plano, ADR
+  própria, com 2 lados acessíveis e a volta inteira), etapa 4 (fases 4 e 5 da ADR-063). Um jogo do autor entre elas.
 - [ ] 🟡 E5 — pico de 8,3 s no começo do mundo 2 em `BigHouseFoundation.findSafeOrigin` (TPS mínimo 8,25).
 - [ ] 🟡 E6 — fundidor d852b6e9 sufocado em parede em 396,136,375 um minuto depois do início, sem casa. Evidência
   insuficiente.
