@@ -24,7 +24,7 @@ import java.util.UUID;
  * <ol>
  *   <li>a frente da porta e a escada da mina tapadas ({@link DoorClearing}, {@link MineStairClearing}, Regra 356);</li>
  *   <li>a linha do grafo a calçar, com o fardo de feno no caminho tirado para os baús ({@link PathPaving}, que tem a
- *       vez enquanto há trecho a calçar);</li>
+ *       vez enquanto há trecho a calçar, sem parar o resto desta lista — Regra 358);</li>
  *   <li>o caminho fora da linha volta ao solo do bioma, para ficar uma linha só ({@link PathTrim});</li>
  *   <li>entre as construções: o lote da obra aberta, o vão sob a peça da vila, o vão entre as bases e a volta das
  *       casas, na altura da rua da construção e com o excesso limpo;</li>
@@ -74,10 +74,18 @@ public final class GroundKeeper {
         return worker.profession().filter(ProfessionType.GROUNDSKEEPER::equals).isPresent();
     }
 
+    /**
+     * Se o Zelador pode fazer o dia dele agora. Calçar não tira a vez: a porta tapada, a escada da mina e o plano de
+     * alturas andam junto com a calçada, no mesmo orçamento do dia (Regra 358).
+     */
+    static boolean mayWork(ServerWorld world, VillagerEntity keeper) {
+        return IdleWorkers.isFree(world, keeper, IdleWorkers.Help.PATH);
+    }
+
     static void pass(ServerWorld world, Colony colony) {
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
             if (!isKeeper(worker) || !(world.getEntity(worker.villagerId()) instanceof VillagerEntity keeper)
-                    || !IdleWorkers.isFree(world, keeper, null)) {
+                    || !mayWork(world, keeper)) {
                 continue;
             }
 

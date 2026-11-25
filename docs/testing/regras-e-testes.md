@@ -4,8 +4,8 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 257
-- **Só usa a classe indicada:** 84
+- **Cita a regra:** 259
+- **Só usa a classe indicada:** 85
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
 
@@ -135,7 +135,7 @@ classe prova menos ainda.
 | 122 | O curral é do pastor (autor 10-27, jogo da 0.3.93: 217 entradas em curral na planície e o… | cita | PenFloorsGameTest |
 | 123 | A rede de caminhos da vila: toda porta se liga à rede pelo grafo, com o trajeto mais curt… | cita | PathNetworkGameTest, VillagePathPlannerTest |
 | 124 | Construção nova nasce a no mínimo 3 blocos de qualquer construção (autor 10-27, D1): o lo… | cita | PathNetworkGameTest |
-| 125 | Quem assenta o caminho (autor 10-27, D6): o pedreiro, o carpinteiro e o fundidor sem tare… | classe | GraphOnlyPathsGameTest, GroundKeeperGameTest, GroundKeepersTest |
+| 125 | Quem assenta o caminho (autor 10-27, D6): o pedreiro, o carpinteiro e o fundidor sem tare… | classe | GraphOnlyPathsGameTest, GroundKeeperGameTest, GroundKeeperPavingGameTest |
 | 126 | Peça colorida sai branca (autor 10-27, item 5; jogo da 0.3.93: 64 "cama sem lã" e lã pret… | classe | BigHouseEntranceGameTest, BigHouseFoundationGameTest, BigHouseModBlueprintGameTest |
 | 127 | Ajudas de quem está sem tarefa do ofício, cada uma com um ofício fixo (autor 10-27, item… | cita | ColonyTorchesGameTest |
 | 128 | Nenhuma profissão espera mais de 5 minutos por nada (autor 10-27, emenda 11-02): 300 s se… | cita | IdleWatchGameTest |
@@ -194,7 +194,7 @@ classe prova menos ainda.
 | 181 | Pulo confere o teto (jogo 11-05): o caminho do aldeão da colônia só sobe onde o corpo cab… | cita | VillagerRulesGameTest |
 | 182 | A mina cresce por dentro (autor 11-05): fim de escada abre ramal a partir dos salões que… | cita | WaterMineAccessGameTest |
 | 183 | Anel de caminho (autor 11-05): o chão em volta do chafariz é caminho, sem quina fixa no g… | cita | RoadRulesGameTest |
-| 184 | Quina é entrada (autor 11-05): da terceira releitura em diante, a quina da plantação mais… | cita | EntrancesAtTheDoorGameTest, RoadRulesGameTest |
+| 184 | Quina é entrada (autor 11-05): da terceira releitura em diante, a quina da plantação mais… | classe | EntrancesAtTheDoorGameTest, GraphFloorGameTest, RoadRulesGameTest |
 | 185 | A ponta cresce (autor 11-05, emendada 11-10): por dia, as 4 pontas, uma por lado, avançam… | cita | RoadRulesGameTest |
 | 186 | Rua de um bloco (autor 11-05; a rua da vila gerada fica, Regra 316): o caminho a até 3 bl… | cita | EntrancesAtTheDoorGameTest, RetiredSpursTest, RoadLinesTest |
 | 187 | Revogada (autor 11-06, ADR-047). A obra pedida não reserva região | classe | LotTypeRefusalsGameTest, MaeFinishGameTest, MaeRescueGameTest |
@@ -368,3 +368,6 @@ classe prova menos ainda.
 | 355 | O pastor que tosquia dentro do cercado está trabalhando (autor 25-11, escolha C do N05):… | cita | ShepherdPenGraceGameTest |
 | 356 | O chão que o Zelador mexe não estraga a vila (autor 25-11, jogo da 0.4.136 no deserto, es… | cita | FallingSandGuardGameTest |
 | 357 | O plano de alturas da vila (autor 25-11, ADR-063, G5 do jogo da 0.4.136, decisões 🅲: "a v… | cita | GradeWorkGameTest, ProfessionAssignerTest |
+| 358 | Calçar não tira a vez do resto do chão (autor 25-11, jogo da 0.4.139, escolha E1 🅰️: o Ze… | cita | GroundKeeperPavingGameTest |
+| 359 | A boca da mina nasce no chão aberto e alcançado a pé (autor 25-11, jogo da 0.4.139 no des… | cita | MineMouthInsideGameTest, MineMouthSurfaceGameTest |
+| 360 | O nó de entrada fica na frente da porta, e o da plantação no meio do lado (autor 25-11, n… | cita | DoorFrontsGameTest, EntrancesAtTheDoorGameTest, FallingSandGuardGameTest |

@@ -17,6 +17,14 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.140] — candidata, 2026-11-25
+
+Do jogo da 0.4.139 (dois mundos no deserto), escolhas E1 🅰️, E2 🅲 e E4 🅱️. Regras 358, 359 e 360.
+
+- O Zelador que está calçando também limpa a porta tapada e a escada da mina e leva o plano de alturas adiante, no mesmo orçamento do dia. No jogo, o plano rodou 3 vezes em 45 minutos porque a calçada tirava a vez (Regra 358, `GroundKeeperPavingGameTest`).
+- A boca da mina nasce no chão aberto para o céu e alcançado a pé da vila: a busca na faixa da borda ficou mais densa (1, 3 e 5 blocos para dentro, a cada 3), olha até 32 acima do centro e pula o oco de caverna com morro por cima. O Zelador tira o chão natural por cima da boca, até 6 acima, sem tocar no arco. `VC_MINE_MOUTH` mostra a altura, os blocos por cima e se foi alcançada a pé (Regra 359, `MineMouthSurfaceGameTest`).
+- O nó de entrada da porta sem saída reta (quintal murado ou frente tapada por areia) fica na frente dela, e não no vão do quintal nem ao lado; o da plantação fica no meio do lado mais perto da rua, e não na quina (Regra 360, emenda as Regras 184 e 223; `DoorFrontsGameTest`, `RoadRulesGameTest`).
+
 ## [0.4.139] — candidata, 2026-11-25
 
 Plano de alturas da vila (ADR-063), fase 3: o Zelador mexe no chão. Regra 357.

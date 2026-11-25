@@ -87,6 +87,8 @@
       "com.villagecolony.fabric.work.FallingSandGuardGameTest",
       "com.villagecolony.fabric.work.GradeSurveyGameTest",
       "com.villagecolony.fabric.work.GradeWorkGameTest",
+      "com.villagecolony.fabric.work.GroundKeeperPavingGameTest",
+      "com.villagecolony.fabric.work.MineMouthSurfaceGameTest",
       "com.villagecolony.fabric.integration.LotEdgeGameTest",
       "com.villagecolony.fabric.work.WindowEquivalentGameTest",
       "com.villagecolony.fabric.work.WoodInPiecesGameTest",

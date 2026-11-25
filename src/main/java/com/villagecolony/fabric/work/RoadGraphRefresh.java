@@ -367,7 +367,8 @@ public final class RoadGraphRefresh {
         planned.addAll(RoadShape.pendingGrowth(id, cells, refused));
 
         if (turn >= RoadShape.CORNER_AFTER_READS) {
-            StructureFronts.farmCorners(RoadShape.farmEntrances(world, colony, terrain), store.graph(id), fronts, retired);
+            StructureFronts.farmCorners(RoadShape.farmEntrances(world, colony, terrain, cells), store.graph(id), fronts,
+                    retired);
         }
 
         // ADR-057: o modo ligado monta o grafo; os três entregam o mesmo resultado.

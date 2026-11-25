@@ -187,7 +187,36 @@ public class DoorFrontsGameTest implements FabricGameTest {
         }
     }
 
-    /** A oficina do armeiro: a porta dá num quintal murado com um vão; a entrada é onde o quintal encontra a rua. */
+    /** A areia tapou a porta dos dois lados: a entrada continua na frente dela, e o Zelador acerta o chão (Regra 360). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_buried", tickLimit = 20)
+    public void aBuriedDoorKeepsItsEntranceInFront(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 124, 1));
+        BlockPos min = origin.up();
+        BlockPos max = origin.add(4, 4, 4);
+
+        ground(world, origin);
+
+        try {
+            door(world, origin.add(4, 1, 2), Direction.WEST);
+            world.setBlockState(origin.add(5, 1, 2), Blocks.SANDSTONE.getDefaultState(), 18);
+            world.setBlockState(origin.add(3, 1, 2), Blocks.SANDSTONE.getDefaultState(), 18);
+
+            List<BlockPos> fronts = DoorFronts.of(world, min, max);
+
+            context.assertTrue(fronts.equals(List.of(origin.add(5, 0, 2))),
+                    "Regra 360: com a porta tapada, a entrada saiu da frente dela: " + fronts);
+        } finally {
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
+
+    /**
+     * A oficina do armeiro: a porta dá num quintal murado com um vão; a entrada fica na frente da porta, e o caminho chega
+     * nela pelo vão (Regra 360).
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_yard_gap", tickLimit = 20)
     public void aYardWithAGapHasItsEntranceWhereItOpens(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -207,7 +236,7 @@ public class DoorFrontsGameTest implements FabricGameTest {
             BlockPos box = origin.add(0, 1, 1);
             List<BlockPos> fronts = DoorFronts.of(world, box, max);
 
-            context.assertTrue(fronts.equals(List.of(origin.add(4, 0, 0))), "Regra 223: a entrada não ficou no vão do quintal: " + fronts);
+            context.assertTrue(fronts.equals(List.of(origin.add(3, 0, 2))), "Regra 360: a entrada não ficou na frente da porta: " + fronts);
            
         } finally {
             clean(world, origin);

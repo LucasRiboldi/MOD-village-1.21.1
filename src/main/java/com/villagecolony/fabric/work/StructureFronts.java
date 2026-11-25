@@ -26,11 +26,12 @@ import java.util.Set;
 /**
  * As entradas das estruturas da vila, lidas do mundo — Regras 207, 210 e 223 (autor, 2026-11-07): branco só onde se entra.
  * Porta, portão e o portão da mina; sem eles, o lado aberto de quem precisa ser alcançado. Poste, poço e chafariz não têm
- * entrada, nem curral fechado por dentro, e a quina da plantação só vale sem rua a até {@value #FARM_ROAD_REACH} blocos.
+ * entrada, nem curral fechado por dentro, e a entrada da plantação (o meio do lado, Regra 360) só vale sem rua a até
+ * {@value #FARM_ROAD_REACH} blocos.
  */
 final class StructureFronts {
 
-    /** Com linha a até esta distância da quina, a plantação já está na rua. */
+    /** Com linha a até esta distância da entrada, a plantação já está na rua. */
     static final int FARM_ROAD_REACH = 2;
 
     /**
@@ -111,7 +112,7 @@ final class StructureFronts {
         return new Reading(fronts, ways, retired);
     }
 
-    /** A quina da plantação que ainda não tem rua ao lado (Regras 184 e 223); a outra entra em {@code retired}. */
+    /** A entrada da plantação que ainda não tem rua ao lado (Regras 223 e 360); a outra entra em {@code retired}. */
     static void farmCorners(Set<ColonyPos> corners, Optional<RoadGraph> graph, Set<ColonyPos> fronts, Set<ColonyPos> retired) {
         for (ColonyPos corner : corners) {
             if (graph.filter(lines -> lines.hasLineNear(corner, FARM_ROAD_REACH)).isPresent()) {

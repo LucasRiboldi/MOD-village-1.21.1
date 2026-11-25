@@ -354,6 +354,16 @@ public final class PathPaving {
         }
     }
 
+    /** Dá a vez de calçar desta colônia a este aldeão, como o rodízio faria. */
+    static void giveTurn(UUID colonyId, UUID workerId) {
+        TURNS.put(colonyId, new Turn(workerId));
+    }
+
+    /** Encerra a vez de calçar desta colônia. */
+    static void takeTurn(UUID colonyId) {
+        endTurn(colonyId);
+    }
+
     static void clearAll() {
         TURNS.clear();
         LAST.clear();

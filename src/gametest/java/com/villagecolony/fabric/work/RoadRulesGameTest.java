@@ -130,7 +130,7 @@ public class RoadRulesGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_rings", tickLimit = 20)
-    public void aFarmHasNoRingAndItsNearestCornerIsTheEntrance(TestContext context) {
+    public void aFarmHasNoRingAndTheMiddleOfItsSideIsTheEntrance(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos origin = context.getAbsolutePos(new BlockPos(1, 94, 1));
         BlockPos min = origin.add(6, 1, 6);
@@ -161,9 +161,12 @@ public class RoadRulesGameTest implements FabricGameTest {
             context.assertTrue(RoadShape.ringOf(world, terrain, new BlockBox(min.getX(), min.getY(), min.getZ(), max.getX(), max.getY(), max.getZ())).equals(expected),
                     "Regra 183: o anel não é a volta da caixa");
 
-            context.assertTrue(RoadShape.farmEntrances(world, colony, terrain).equals(Set.of(cell(origin.add(5, 0, 5)))),
-                    "Regra 184: a entrada não é a quina mais perto do centro");
-            context.assertTrue(RoadShape.CORNER_AFTER_READS == 3, "Regra 184: a quina vira entrada na terceira releitura");
+            context.assertTrue(RoadShape.farmEntrances(world, colony, terrain, Set.of()).equals(Set.of(cell(origin.add(5, 0, 7)))),
+                    "Regra 360: sem rua, a entrada não é o meio do lado mais perto do centro");
+            context.assertTrue(RoadShape.farmEntrances(world, colony, terrain, Set.of(cell(origin.add(7, 0, 12))))
+                            .equals(Set.of(cell(origin.add(7, 0, 9)))),
+                    "Regra 360: a entrada não é o meio do lado mais perto da rua");
+            context.assertTrue(RoadShape.CORNER_AFTER_READS == 3, "Regra 360: a entrada da plantação vale na terceira releitura");
         } finally {
             VillageColonyMod.BUILDINGS.remove(farm.id());
             fixture.cleanUp();
@@ -212,12 +215,12 @@ public class RoadRulesGameTest implements FabricGameTest {
             graph.nodes().forEach(node -> columns.add(node.position()));
             graph.edges().forEach(edge -> columns.addAll(edge.columns()));
 
-            ColonyPos entrance = cell(origin.add(7, 0, 7));
+            ColonyPos entrance = cell(origin.add(11, 0, 7));
 
             context.assertFalse(columns.contains(cell(origin.add(15, 0, 15))), "Regra 208: a quina de longe ficou no grafo");
             context.assertFalse(columns.contains(cell(origin.add(11, 0, 15))), "Regra 208: o lado de baixo do anel ficou no grafo");
             context.assertTrue(graph.nodes().stream().anyMatch(node -> node.position().equals(entrance)
-                    && node.roles().contains(RoadGraph.Role.ENTRANCE)), "Regra 184: a plantação ficou sem entrada");
+                    && node.roles().contains(RoadGraph.Role.ENTRANCE)), "Regra 360: a plantação ficou sem entrada no meio do lado");
             context.assertTrue(columns.contains(cell(origin.add(1, 0, 2))) && columns.contains(cell(origin.add(22, 0, 2))), "Regra 208: a rua saiu junto");
             context.assertTrue(graph.nodes().stream().filter(node -> node.roles().contains(RoadGraph.Role.ENTRANCE)).count() == 1,
                     "Regra 208: a plantação ficou com mais de uma entrada: " + graph.nodes());

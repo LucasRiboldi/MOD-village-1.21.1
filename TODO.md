@@ -8,6 +8,27 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   está em `docs/technical/TODO-herdado-2026-11-13.md`.
 - O TODO antigo inteiro, por jogo, está em `docs/archive/technical/TODO-ate-2026-11-13.md` (`grep`).
 
+## Jogo da 0.4.139 no deserto (2026-11-25)
+
+Dois mundos no mesmo `latest.log`: mundo 1 (16:10–16:25, colônia f6350e62, deserto na montanha) e mundo 2 (16:25–17:12,
+colônia 5bbe35c7). Spark F6a96gp9tG e tvlhbPHSc9. Escolhas do autor: E1 🅰️, E2 🅲, E3 pesquisar, E4 🅱️.
+
+- [x] E1 🅰️ — o Zelador calçou o jogo inteiro e o plano de alturas rodou 3 vezes (pendente 1.972 → 2.137): Regra 358 na
+  0.4.140. Conferir `VC_GRADE` caindo e linhas `VC_DOOR_CLEAR` no próximo jogo.
+- [x] E2 🅲 — boca da mina no oco da caverna (406,127,326, topo em ~149): Regra 359 na 0.4.140. Conferir `VC_MINE_MOUTH`
+  com `reached=true` e o arco visível.
+- [x] E4 🅱️ — notas "nó na frente da porta" (563,67,56) e "fazenda no meio do lado" (595,70,69): Regra 360 na 0.4.140.
+- [ ] 🟠 E3 — mundo 1: nenhum lote coube no morro (544 portas, 0 lotes, sem caminho de até 32); construtor 100% parado e
+  a casa do mineiro sem lote. Pesquisar alternativas (pedido do autor).
+- [ ] 🟡 E5 — pico de 8,3 s no começo do mundo 2 em `BigHouseFoundation.findSafeOrigin` (TPS mínimo 8,25).
+- [ ] 🟡 E6 — fundidor d852b6e9 sufocado em parede em 396,136,375 um minuto depois do início, sem casa. Evidência
+  insuficiente.
+- [ ] 🟡 E7 — ócio no mundo 2: fundidor 53% à toa (sem pedra nem minério; a trava `smelter_raw` barrou 1.427 de 1.429),
+  pastor sem alcançar ovelha 5×, 3 sem ofício sem cama por 1.659 s, construtor 223 s sem tábua com o carpinteiro sem tora.
+- [ ] 🟡 Blocos que surgiram sozinhos no mundo 2 (buscar fluxo de fabricação): bone_meal 928, grass_block 212,
+  farmland 12, wheat 12, oak_sapling 9, granite 7, clay 1, acacia_sapling 1, os corantes (gray, light_blue, lime, magenta,
+  orange, pink, white, yellow) 1 cada; mundo 1: jungle_sapling, oak_sapling e os corantes light_blue, magenta, orange, white.
+
 ## Jogo da 0.4.136 no deserto (2026-11-25)
 
 Triagem: `docs/testing/relatorios/jogo-20261125-1320.md`; imagens locais em `reports/imagens-autor/2026-11-25/jogo-0136/`.

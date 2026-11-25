@@ -35,8 +35,11 @@ import java.util.UUID;
  */
 final class MineEdge {
 
-    /** De quantos em quantos blocos da borda se testa uma boca. */
-    static final int STEP = 6;
+    /** De quantos em quantos blocos da borda se testa uma boca (Regra 359). */
+    static final int STEP = 3;
+
+    /** Quanto pesa cada bloco natural que o Zelador terá de tirar de cima da boca (Regra 359). */
+    static final int OVERHANG_COST = 8;
 
     /** Até onde se procura água em volta de cada boca. */
     static final int WATER_LOOK = 16;
@@ -104,7 +107,10 @@ final class MineEdge {
         }
 
         VillageBounds box = bounds.get();
+        // A boca vale onde a vila chega a pé (Regra 359); sem nenhuma assim, a escolha de antes, perto do nível do centro.
+        Set<Long> reach = MineSky.reach(world, center, box, EDGE_BAND);
         Scored best = new Scored();
+        Scored fallback = new Scored();
         // Nenhuma boca nasce perto de outra, nem de uma já abandonada (Regra 182).
         Set<BlockPos> past = PAST.computeIfAbsent(colonyId, ignored -> new HashSet<>());
 
@@ -114,7 +120,7 @@ final class MineEdge {
 
         MineEntrance.rememberedMouth(colonyId).map(MinecraftTypeAdapter::toBlockPos).ifPresent(past::add);
 
-        for (int inset : new int[] {1, INSIDE}) {
+        for (int inset : new int[] {1, 3, INSIDE}) {
             for (Side side : Side.values()) {
                 boolean alongX = side == Side.NORTH || side == Side.SOUTH;
                 int from = (alongX ? box.minX() : box.minZ()) + inset;
@@ -124,19 +130,25 @@ final class MineEdge {
                     int x = alongX ? along : side == Side.WEST ? box.minX() + inset : box.maxX() - inset;
                     int z = alongX ? (side == Side.NORTH ? box.minZ() + inset : box.maxZ() - inset) : along;
 
-                    considerMouth(world, center, past, side, x, z, best);
+                    considerMouth(world, center, past, side, x, z, reach, best, fallback);
                 }
             }
         }
 
-        if (best.choice != null) {
-            past.add(best.choice.mouth());
+        Scored chosen = best.choice != null ? best : fallback;
+
+        if (chosen.choice != null) {
+            past.add(chosen.choice.mouth());
             VillageColonyMod.LOGGER.info("Colony {} picks the new mine mouth at {} on the {} edge — water {}",
-                    colonyId, best.choice.mouth().toShortString(), best.choice.side(),
-                    best.water >= WATER_LOOK ? "farther than " + WATER_LOOK + " blocks" : best.water + " blocks away");
+                    colonyId, chosen.choice.mouth().toShortString(), chosen.choice.side(),
+                    chosen.water >= WATER_LOOK ? "farther than " + WATER_LOOK + " blocks" : chosen.water + " blocks away");
+            VillageColonyMod.LOGGER.info("VC_MINE_MOUTH version=1 colony={} at={} side={} rise={} overhang={} reached={}"
+                    + " walkable={} rule=359", colonyId.toString().substring(0, 8), chosen.choice.mouth().toShortString(),
+                    chosen.choice.side(), chosen.choice.mouth().getY() - center.getY(), chosen.overhang,
+                    chosen == best, reach.size());
         }
 
-        return Optional.ofNullable(best.choice);
+        return Optional.ofNullable(chosen.choice);
     }
 
     /** As bocas que esta colônia já usou ou escolheu nesta sessão. */
@@ -151,14 +163,16 @@ final class MineEdge {
         Choice choice;
         int score = Integer.MIN_VALUE;
         int water;
+        int overhang;
     }
 
     /**
-     * Pontua a boca na coluna (x, z) deste lado e atualiza {@code best} se ela for a melhor até agora.
-     * Extraído do laço quádruplo de {@link #inside} em 2026-10-15 (F3 do plano) sem mudar o critério.
+     * Pontua a boca na coluna (x, z) deste lado: alcançada a pé, disputa {@code best}; senão, perto do nível do centro,
+     * disputa {@code fallback}. Cada bloco a tirar de cima dela pesa {@value #OVERHANG_COST} (Regra 359).
      */
     private static void considerMouth(
-            ServerWorld world, BlockPos center, Set<BlockPos> avoid, Side side, int x, int z, Scored best) {
+            ServerWorld world, BlockPos center, Set<BlockPos> avoid, Side side, int x, int z, Set<Long> reach,
+            Scored best, Scored fallback) {
 
         for (BlockPos other : avoid) {
             if (Math.abs(x - other.getX()) < AVOID && Math.abs(z - other.getZ()) < AVOID) {
@@ -166,20 +180,30 @@ final class MineEdge {
             }
         }
 
-        Optional<BlockPos> mouth = MineSite.edgeMouth(world, center, x - center.getX(), z - center.getZ(), side);
+        Optional<BlockPos> mouth = MineSite.openEdgeMouth(world, center, x - center.getX(), z - center.getZ(), side);
 
         if (mouth.isEmpty()) {
             return;
         }
 
+        boolean reached = reach.contains(mouth.get().up().asLong());
+
+        // Sem chegar a pé, só o que a busca de antes acharia: perto do nível do centro, e não o morro de fora da vila.
+        if (!reached && mouth.get().getY() - center.getY() > MineSite.LOOK_UP) {
+            return;
+        }
+
         int water = waterDistance(world, mouth.get());
         int hill = Math.max(0, Math.min(HILL_CAP, mouth.get().getY() - center.getY()));
-        int score = score(water, hill);
+        int overhang = MineSky.overhang(world, mouth.get());
+        int score = score(water, hill) - overhang * OVERHANG_COST;
+        Scored target = reached ? best : fallback;
 
-        if (score > best.score) {
-            best.score = score;
-            best.water = water;
-            best.choice = new Choice(mouth.get(), side);
+        if (score > target.score) {
+            target.score = score;
+            target.water = water;
+            target.overhang = overhang;
+            target.choice = new Choice(mouth.get(), side);
         }
     }
 

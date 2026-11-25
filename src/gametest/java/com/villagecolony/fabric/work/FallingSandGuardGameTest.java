@@ -128,8 +128,9 @@ public class FallingSandGuardGameTest implements FabricGameTest {
         context.waitAndRun(2, () -> {
             BlockPos outside = context.getAbsolutePos(new BlockPos(3, 0, 4));
 
-            context.assertFalse(DoorFronts.of(world, min, max).contains(outside),
-                    "a porta já tinha a entrada na frente antes da limpeza: o teste não mede nada");
+            // A entrada já fica na frente da porta tapada (Regra 360); aqui se mede a limpeza.
+            context.assertTrue(context.getBlockState(new BlockPos(3, 1, 4)).isOf(Blocks.SAND),
+                    "a areia não tapava a porta: o teste não mede nada");
 
             int cleared = DoorClearing.clear(world, min, max, 16);
             List<BlockPos> fronts = DoorFronts.of(world, min, max);

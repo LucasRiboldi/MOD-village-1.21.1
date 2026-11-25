@@ -34,10 +34,11 @@ public class MineMouthInsideGameTest implements FabricGameTest {
                 }
             }
 
-            // Morro de pedra de 4 de altura na faixa leste, dentro da caixa.
+            // Morro de pedra de 4 de altura na faixa leste, dentro da caixa, com subida de 1 em 1 (Regra 359: a boca
+            // vale onde a vila chega a pé).
             for (int x = 18; x <= 23; x++) {
                 for (int z = 1; z <= 23; z++) {
-                    for (int y = 1; y <= 4; y++) {
+                    for (int y = 1; y <= Math.min(4, x - 17); y++) {
                         world.setBlockState(origin.add(x, y - 1, z), Blocks.STONE.getDefaultState());
                     }
                 }

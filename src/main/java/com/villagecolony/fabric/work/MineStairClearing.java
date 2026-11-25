@@ -24,7 +24,8 @@ import java.util.Optional;
  * A escada da boca da mina fica aberta — Regra 356 (autor, 2026-11-25, jogo da 0.4.136: "o portal da mina se fechou
  * sozinho"). Depois que a mina desce abaixo do primeiro nível, o caracol da boca já foi cavado; o chão natural e a pedra
  * que aparecem nele — areia que caiu, aterro, o pátio refeito — são tirados pelo Zelador, de cima para baixo. Enquanto o
- * mineiro ainda cava o primeiro nível, a escada é dele.
+ * mineiro ainda cava o primeiro nível, a escada é dele. O chão natural por cima da boca sai desde o primeiro dia, sem
+ * tocar no arco (Regra 359).
  */
 final class MineStairClearing {
 
@@ -45,6 +46,9 @@ final class MineStairClearing {
         int cleared = 0;
 
         for (Map.Entry<BlockPos, Direction> mouth : MineMouths.of(colony.id()).entrySet()) {
+            // O céu da boca fica aberto desde o primeiro dia (Regra 359).
+            cleared += clearSky(world, mouth.getKey(), mouth.getValue(), BUDGET - cleared);
+
             // O mineiro ainda está no primeiro nível: a escada é dele.
             if (mine.get().entry().y() > mouth.getKey().getY() - MineShaft.DESCENT) {
                 continue;
@@ -54,7 +58,7 @@ final class MineStairClearing {
         }
 
         if (cleared > 0) {
-            VillageColonyMod.LOGGER.info("VC_MINE_STAIR_CLEAR version=1 colony={} blocks={} rule=356",
+            VillageColonyMod.LOGGER.info("VC_MINE_STAIR_CLEAR version=1 colony={} blocks={} rule=356,359",
                     colony.id().toString().substring(0, 8), cleared);
         }
 
@@ -83,6 +87,46 @@ final class MineStairClearing {
         }
 
         return cleared;
+    }
+
+    /**
+     * Tira o chão natural por cima da boca, até {@link MineSky#OVERHANG_TOP} acima dela, na coluna da boca e nas do
+     * caracol — areia que caiu e a sobra do morro —, de cima para baixo e sem tocar no arco (Regra 359).
+     *
+     * @return quantos blocos tirou, até {@code budget}
+     */
+    static int clearSky(ServerWorld world, BlockPos mouth, Direction descent, int budget) {
+        java.util.Set<Long> columns = new java.util.LinkedHashSet<>();
+
+        columns.add(BlockPos.asLong(mouth.getX(), 0, mouth.getZ()));
+        MineMouths.stairCells(mouth, descent).forEach(cell -> columns.add(BlockPos.asLong(cell.getX(), 0, cell.getZ())));
+
+        int cleared = 0;
+
+        for (int dy = MineSky.OVERHANG_TOP; dy >= 1 && cleared < budget; dy--) {
+            for (long column : columns) {
+                BlockPos cell = new BlockPos(BlockPos.unpackLongX(column), mouth.getY() + dy, BlockPos.unpackLongZ(column));
+
+                if (cleared >= budget || !world.isChunkLoaded(cell) || !overSky(world, mouth, descent, cell)) {
+                    continue;
+                }
+
+                world.setBlockState(cell, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+                EditLedger.mod(world, cell, Blocks.AIR.getDefaultState(), "mina"); // Regra 345
+                cleared++;
+            }
+        }
+
+        return cleared;
+    }
+
+    /** Chão natural por cima da boca, que não é peça do arco nem obra de ninguém. */
+    private static boolean overSky(ServerWorld world, BlockPos mouth, Direction descent, BlockPos cell) {
+        BlockState state = world.getBlockState(cell);
+
+        return SiteSurroundings.isNaturalGround(state) && world.getBlockEntity(cell) == null
+                && !MineGate.isPart(mouth, descent, cell) && !BlockProtection.isColonyBuilt(cell)
+                && BlockProtection.mayBreak(world, cell, state);
     }
 
     /** O que entrou na escada cavada: chão natural ou pedra, que não é peça do arco nem obra de ninguém. */

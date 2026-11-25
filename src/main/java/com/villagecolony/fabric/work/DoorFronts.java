@@ -8,21 +8,17 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * A entrada de cada porta térrea da construção — Regras 207, 223 e 305 (autor, 2026-11-17): o nó é o primeiro chão à frente
  * da porta fora dos blocos da estrutura (degrau, laje e assoalho não contam), com passagem livre acima, mesmo dentro da
  * caixa, e a saída da caixa é só o caminho até ele. Porta que não dá para fora, a de dentro da casa,
  * não conta; porta dupla conta uma vez. A caixa da peça pode incluir o quintal: porta cuja saída para em barreira dentro dela
- * só conta se nenhuma outra da casa sair, e então a entrada é onde o quintal abre para fora, ou o primeiro chão depois da
- * porta se ele for fechado. Assoalho não é quintal — Regra 209.
+ * só conta se nenhuma outra da casa sair, e então a entrada é o chão logo na frente dela, no quintal ou tapado pelo chão
+ * natural, que o Zelador acerta (Regra 360). Assoalho não é quintal — Regra 209.
  */
 final class DoorFronts {
 
@@ -37,13 +33,10 @@ final class DoorFronts {
     /** Quantos blocos livres acima do chão fazem uma passagem. */
     private static final int HEADROOM = 2;
 
-    /** Quantas colunas do quintal se olham à procura da abertura. */
-    private static final int MAX_YARD = 256;
-
     /**
      * A entrada de uma porta.
      *
-     * @param front o bloco em frente à porta, ou a abertura do quintal
+     * @param front o bloco em frente à porta (Regra 360)
      * @param outside o primeiro chão fora da caixa, em linha reta da porta
      * @param way as colunas entre {@code front} e {@code outside}, as duas inclusive; vazio quando já está fora
      */
@@ -91,7 +84,7 @@ final class DoorFronts {
 
     static List<Entrance> entrances(ServerWorld world, BlockPos min, BlockPos max) {
         List<Entrance> fronts = new ArrayList<>();
-        List<BlockPos> yards = new ArrayList<>();
+        List<Entrance> blocked = new ArrayList<>();
 
         for (BlockPos at : BlockPos.iterate(min, new BlockPos(max.getX(), Math.min(max.getY(), min.getY() + GROUND_FLOOR), max.getZ()))) {
             if (world.isChunkLoaded(at)) {
@@ -111,37 +104,38 @@ final class DoorFronts {
                         List<BlockPos> way = chosen.way().subList(first, chosen.way().size());
 
                         addOnce(fronts, new Entrance(way.getFirst(), chosen.out().get(), List.copyOf(way)));
-                    } else {
-                        out.yard().ifPresent(yard -> addYardOnce(yards, yard));
+                    } else if (out.yard().isPresent() || isBuried(world, at, inward.getOpposite())) {
+                        // Sem saída reta: a entrada fica na frente da porta, e não onde o quintal abre (Regra 360).
+                        BlockPos front = frontOf(world, at, inward.getOpposite());
+
+                        addOnce(blocked, new Entrance(front, front, List.of()));
                     }
                 }
             }
         }
 
-        if (!fronts.isEmpty()) {
-            return fronts;
-        }
+        return fronts.isEmpty() ? blocked : fronts;
+    }
 
-        List<Entrance> open = new ArrayList<>();
+    /** O chão logo na frente da porta: o de baixo dela, quando o chão natural tapa a passagem (Regra 360). */
+    private static BlockPos frontOf(ServerWorld world, BlockPos door, Direction out) {
+        BlockPos column = door.offset(out);
+        Optional<BlockPos> floor = floorAt(world, column.up());
 
-        for (BlockPos yard : yards) {
-            BlockPos front = openingOf(world, yard, min, max).orElse(yard);
+        return floor.filter(at -> at.getY() < door.getY()).orElse(column.down());
+    }
 
-            addOnce(open, new Entrance(front, front, List.of()));
-        }
+    /** Se o chão natural tapa a frente da porta, na altura dela. */
+    private static boolean isBuried(ServerWorld world, BlockPos door, Direction out) {
+        BlockPos front = door.offset(out);
 
-        return open;
+        return world.isChunkLoaded(front)
+                && com.villagecolony.fabric.integration.SiteSurroundings.isNaturalGround(world.getBlockState(front));
     }
 
     private static void addOnce(List<Entrance> list, Entrance entrance) {
         if (list.stream().noneMatch(other -> other.front().getManhattanDistance(entrance.front()) <= 1)) {
             list.add(entrance);
-        }
-    }
-
-    private static void addYardOnce(List<BlockPos> list, BlockPos yard) {
-        if (list.stream().noneMatch(other -> other.getManhattanDistance(yard) <= 1)) {
-            list.add(yard);
         }
     }
 
@@ -181,41 +175,6 @@ final class DoorFronts {
         }
 
         return new Walk(Optional.empty(), way, yard);
-    }
-
-    /** Onde o quintal abre para fora da caixa: o primeiro chão de fora que se alcança andando desde a porta. */
-    private static Optional<BlockPos> openingOf(ServerWorld world, BlockPos yard, BlockPos min, BlockPos max) {
-        Set<BlockPos> seen = new HashSet<>(Set.of(yard));
-        Deque<BlockPos> open = new ArrayDeque<>(List.of(yard));
-
-        while (!open.isEmpty() && seen.size() <= MAX_YARD) {
-            BlockPos at = open.poll();
-
-            for (Direction way : Direction.Type.HORIZONTAL) {
-                BlockPos column = at.offset(way);
-
-                if (!world.isChunkLoaded(column)) {
-                    continue;
-                }
-
-                Optional<BlockPos> floor = floorAt(world, column.up(2));
-
-                if (floor.isEmpty() || Math.abs(floor.get().getY() - at.getY()) > 1 || !hasRoom(world, floor.get())
-                        || world.getBlockState(floor.get()).isIn(BlockTags.PLANKS)) {
-                    continue;
-                }
-
-                if (isOutside(column, min, max)) {
-                    return floor;
-                }
-
-                if (seen.add(floor.get())) {
-                    open.add(floor.get());
-                }
-            }
-        }
-
-        return Optional.empty();
     }
 
     /**
