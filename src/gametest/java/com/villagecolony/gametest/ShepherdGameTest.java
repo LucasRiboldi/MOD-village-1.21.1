@@ -2,7 +2,6 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
-import com.villagecolony.core.coordination.WorkClock;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
@@ -59,7 +58,7 @@ public class ShepherdGameTest implements FabricGameTest {
             tickLimit = 200)
     public void theWoolLeavesTheSheepAndTheSheepStays(TestContext context) {
         // A hora é global: fora do expediente o pastor não trabalha (Regra 195).
-        context.getWorld().setTimeOfDay(1_000);
+        Arena.holdWorkTime(context, 1_000);
         // Acima das outras arenas: a cerca de uma vizinha a até 16 blocos faria ele levar a ovelha (Regra 196).
         BlockPos chestAt = CHEST.up(HIGH);
         BlockPos sheepAt = PEN.up(HIGH);
@@ -222,7 +221,7 @@ public class ShepherdGameTest implements FabricGameTest {
             tickLimit = 360)
     public void theShepherdOnlyShearsAfterReachingTheSheep(TestContext context) {
         // A tosquia é trabalho: a hora é deste teste, e não a que o lote anterior deixou — VF-011.
-        context.getWorld().setTimeOfDay(1_000);
+        Arena.holdWorkTime(context, 1_000);
 
         // Cercado fechado e isolado em altura: depois da conferência do alcance, o pastor deve chegar junto da ovelha.
         int height = 96;
@@ -306,9 +305,6 @@ public class ShepherdGameTest implements FabricGameTest {
         context.runAtEveryTick(() -> {
             if (checked[0]) {
                 return;
-            }
-            if (!WorkClock.isWorkTime(context.getWorld().getTimeOfDay())) {
-                context.getWorld().setTimeOfDay(1_000);
             }
             ShepherdWork.shortenSearchTo(8);
             // Cada troca de tarefa ou de condução por outro (socorro do curral, WalkOverride) entra no histórico.

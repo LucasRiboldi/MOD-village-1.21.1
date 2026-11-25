@@ -11,7 +11,6 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 ## Estado de integração — 0.4.134 (2026-11-24)
 
 - [ ] Conferir em jogo a Regra 355 (0.4.136): `VC_PEN_WORKING state=started` seguido da tosquia, e quantas vezes sai `state=expired`. Se fazendeiro ou lenhador aparecerem em `fenced in` com trabalho dentro do cercado, avaliar a regra geral (opção B do N05).
-- [ ] 🟡 Relógio global nos GameTests: cerca de 45 testes acertam o expediente só no início e podem perder o horário quando outro lote muda a hora (provado no `MineStepDownGameTest`). Ferramenta comum que segure o expediente (opção B de 25-11) (M)
 - [ ] Observar `ShepherdHerdingGameTest.theClosestStrayCanBeCollectedEvenWithAnAdultSurplus`, que caiu 1 vez numa rodada conjunta local (3/3 sozinho).
 - [ ] PR #111 (`fix/pulo-grande-todo-tique`) para a `main`, CI verde e pré-release. Saída do curral (0.4.134) e baú na borda do chunk (0.4.135) corrigidos; Sentinela `20261125T010329Z` 1.265/1.265.
 - [ ] Conferir em jogo que o trabalhador sai do curral pela cerca com um pulo padrão perdido, não dois (Regra 171).

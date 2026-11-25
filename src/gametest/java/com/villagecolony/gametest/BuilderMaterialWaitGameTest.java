@@ -57,7 +57,7 @@ public class BuilderMaterialWaitGameTest implements FabricGameTest {
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
         context.setBlockState(HOPPER_SITE.down(), Blocks.STONE.getDefaultState());
         context.setBlockState(STONE_SITE.down(), Blocks.STONE.getDefaultState());
-        world.setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
 

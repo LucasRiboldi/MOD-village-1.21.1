@@ -2,6 +2,13 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Relógio global nos GameTests (2026-11-25)
+
+- **Branch:** `fix/relogio-global-gametests`, da `main` em `c761df9d` (PR #111 integrado).
+- **Escolha 🅲 do autor:** `Arena.holdWorkTime(context, hora)` põe a hora e, a cada tique fora do expediente, a repõe e registra `VC_TEST_CLOCK_RESET test=... found=...`. Aplicada em 33 GameTests com `tickLimit` ≥ 200 que acertavam o expediente só no início (18 arquivos) e nos 3 que faziam a reposição à mão (`ShepherdGameTest` N05, `MinerGameTest`, `MineStepDownGameTest`). Os testes que usam a noite mudam e devolvem a hora no mesmo tique (conferido em todos), então não brigam com ela; `GameTestState.tick` para as tarefas quando o teste termina.
+- **Verificação:** Sentinela `fast` `20261125T052435Z`: 1.886 unitários, propriedades e 1.265/1.266; a falha foi `BiomeBlueprintsGameTest.theTaigaLargePenHasSpruceFencesAndTheOakOneStillStands` (KF-014, declarada, sem relação). Nenhum `VC_TEST_CLOCK_RESET` antes do log ficar mudo.
+- **Log mudo (escolha 🅲 do autor):** o `Captured.attached()` do `LumberjackGameTest` chamava `addAppender` no logger do mod sem configuração própria; o log4j criava uma `LoggerConfig` sem repasse ao raiz, e nenhuma linha do mod saía no resto da bateria (provado: rodando só o lenhador, o log parava no tique do anexo e as linhas capturadas não iam ao console). Agora a nova configuração repassa (`setAdditive(true)`) e é removida no `detach()`. `sentinel_analysis.py` acusa `LOG_SILENCED` (> 30 s mudo antes do fim); nas baterias `20261125T043943Z` e `20261125T052435Z` acusou 107 s e 84 s. Sentinela `20261125T053911Z`: 1.266/1.266, log vivo até o fim, 0 `VC_TEST_CLOCK_RESET`.
+
 ## Entrega — 0.4.136 (2026-11-25)
 
 - **Branch e PR:** `fix/pulo-grande-todo-tique`, PR #111.

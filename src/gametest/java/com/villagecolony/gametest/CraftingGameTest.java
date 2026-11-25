@@ -332,7 +332,7 @@ public class CraftingGameTest implements FabricGameTest {
         BlockPos stand = new BlockPos(3, 2, 2);
 
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ServerWorld world = context.getWorld();
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
@@ -615,7 +615,7 @@ public class CraftingGameTest implements FabricGameTest {
     /** Colonia com quatro escadas prontas e demanda total de doze. */
     private static Fixture setUpStairDemand(TestContext context) {
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ServerWorld world = context.getWorld();
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));

@@ -79,6 +79,31 @@ def _write_outputs(destination: Path, report: dict) -> None:
     (destination / "dashboard.html").write_text(document, encoding="utf-8")
 
 
+SILENCE_LIMIT_SECONDS = 30
+_STAMP = re.compile(r"^\[(\d\d):(\d\d):(\d\d)\]")
+
+
+def _seconds(line: str) -> int | None:
+    match = _STAMP.match(line)
+    return None if not match else int(match[1]) * 3600 + int(match[2]) * 60 + int(match[3])
+
+
+def _log_silence(run_dir: Path) -> int | None:
+    """Segundos entre a última linha do mod e o fim dos GameTests, quando o log do mod emudece antes."""
+    for log in sorted((run_dir / "suites").glob("attempt-*-gametest.stdout.log")):
+        last_mod = end = None
+        for line in log.read_text(encoding="utf-8", errors="replace").splitlines():
+            if "(villagecolony)" in line:
+                last_mod = _seconds(line)
+            elif "GAME TESTS COMPLETE" in line:
+                end = _seconds(line)
+        if last_mod is not None and end is not None:
+            gap = (end - last_mod) % 86_400
+            if gap > SILENCE_LIMIT_SECONDS:
+                return gap
+    return None
+
+
 def analyse_reports(runs_root: Path, output_root: Path) -> dict:
     """Lê relatórios imutáveis e gera uma análise nova em ``output_root``."""
     findings: dict[tuple[str, str], dict] = {}
@@ -107,6 +132,13 @@ def analyse_reports(runs_root: Path, output_root: Path) -> dict:
                 for key, values in metric_values.items():
                     if isinstance(sample.get(key), (int, float)):
                         values.append(float(sample[key]))
+        silence = _log_silence(run_dir)
+        if silence is not None:
+            # O log do mod emudecido esconde todo VC_* do resto da bateria (appender de teste esquecido).
+            key = ("LOG_SILENCED", f"mod log silent for the last {silence} s of the GameTests")
+            findings.setdefault(key, {"category": key[0], "signature": key[1], "occurrences": 0, "runs": [], "superseded_by": None})
+            findings[key]["occurrences"] += 1
+            findings[key]["runs"].append(run_dir.name)
         if report.get("status") == "RUNNING":
             key = ("INCOMPLETE", "run marked RUNNING; live process state is unavailable from saved evidence")
             findings.setdefault(key, {"category": key[0], "signature": key[1], "occurrences": 0, "runs": [], "superseded_by": None})

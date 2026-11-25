@@ -277,7 +277,7 @@ public class MinerGameTest implements FabricGameTest {
 
         ground(context);
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
-        world.setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
         Block rock = MinecraftTypeAdapter
@@ -1044,9 +1044,8 @@ public class MinerGameTest implements FabricGameTest {
 
         MineDigging.shortenMineDistanceTo(NEARBY);
 
-        if (!com.villagecolony.core.coordination.WorkClock.isWorkTime(world.getTimeOfDay())) {
-            world.setTimeOfDay(1_000);
-        }
+        // Os testes rodam juntos num mundo só e o relógio é de todos: este teste precisa do expediente inteiro.
+        Arena.holdWorkTime(context, 1_000);
 
         MinerWork.run(world, colony);
 
@@ -1071,11 +1070,6 @@ public class MinerGameTest implements FabricGameTest {
 
         context.runAtEveryTick(() -> {
             tick[0]++;
-
-            // Os testes rodam juntos num mundo só e o relógio é de todos: este teste precisa do expediente inteiro.
-            if (!com.villagecolony.core.coordination.WorkClock.isWorkTime(world.getTimeOfDay())) {
-                world.setTimeOfDay(1_000);
-            }
 
             BlockPos at = villager.getBlockPos();
 
@@ -3971,7 +3965,7 @@ public class MinerGameTest implements FabricGameTest {
         // O relógio é do mundo inteiro e a bateria o faz andar: sem
         // fixá-lo, onde este teste cai no dia depende de quantos
         // tiques a bateria gastou antes dele. Ver 2026-09-04.
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ServerWorld world = context.getWorld();
 

@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.gametest.Arena;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.coordination.WorkClock;
 import com.villagecolony.fabric.brain.WorkTargets;
@@ -182,7 +183,7 @@ public class PenTetherGameTest implements FabricGameTest {
         boolean[] jumped = new boolean[2];
         boolean[] releasedEarly = {false};
         StringBuilder firstRelease = new StringBuilder();
-        context.getWorld().setTimeOfDay(1_000);
+        Arena.holdWorkTime(context, 1_000);
         StringBuilder history = new StringBuilder();
         int[] ticks = {0};
         context.runAtEveryTick(() -> {

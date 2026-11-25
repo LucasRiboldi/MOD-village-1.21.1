@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.gametest.Arena;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
@@ -95,7 +96,7 @@ public final class BuilderRefusedSpotGameTest implements FabricGameTest {
     private static void walkTo(TestContext context, BlockPos spot, boolean sealed) {
         ServerWorld world = context.getWorld();
 
-        world.setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         for (int x = 0; x <= 12; x++) {
             for (int z = 0; z <= 12; z++) {

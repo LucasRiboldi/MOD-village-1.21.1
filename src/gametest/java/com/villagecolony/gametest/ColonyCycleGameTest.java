@@ -196,7 +196,7 @@ public class ColonyCycleGameTest implements FabricGameTest {
 
         context.setBlockState(base.up(3).north(), Blocks.OAK_LEAVES.getDefaultState());
         context.setBlockState(chest, Blocks.CHEST.getDefaultState());
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ServerWorld world = context.getWorld();
         ColonyPos chestPos = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest));

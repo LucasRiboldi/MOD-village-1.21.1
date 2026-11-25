@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.gametest.Arena;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
@@ -178,7 +179,7 @@ public class FurnaceFeedGameTest implements FabricGameTest {
     public void theMasonAtWorkFillsTheSandstoneOrder(TestContext context) {
         ServerWorld world = context.getWorld();
         ColonyPos chest = chestWithSand(context, 8);
-        world.setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(3, 2, 2));
         villager.setBreedingAge(0);

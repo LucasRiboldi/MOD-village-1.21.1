@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.gametest.Arena;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
@@ -42,7 +43,7 @@ public class CraftFamilyGameTest implements FabricGameTest {
         ServerWorld world = context.getWorld();
         BlockPos chestAt = new BlockPos(2, 2, 2);
         context.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
-        world.setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chestAt));
         ChestDepositor.deposit(world, chest, Items.GLASS, 6);

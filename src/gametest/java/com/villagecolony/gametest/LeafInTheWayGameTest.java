@@ -85,7 +85,7 @@ public class LeafInTheWayGameTest implements FabricGameTest {
         ServerWorld world = context.getWorld();
 
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
-        world.setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
         context.setBlockState(SITE.down(), Blocks.STONE.getDefaultState());
         context.setBlockState(SITE.down().east(), Blocks.STONE.getDefaultState());
         // O tronco ao lado segura a folha natural: sem ele ela secaria sozinha e o teste passaria à toa.

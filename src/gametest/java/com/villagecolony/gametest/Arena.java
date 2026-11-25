@@ -1,5 +1,7 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.coordination.WorkClock;
 import net.minecraft.block.BlockState;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
@@ -40,5 +42,30 @@ public final class Arena {
                 context.setBlockState(new BlockPos(x, y, z), block);
             }
         }
+    }
+
+    /**
+     * Põe a hora do mundo no expediente e a segura nele até o fim do teste.
+     *
+     * <p>Os lotes rodam juntos num mundo só, e o relógio é de todos: o teste que acerta a hora só no início perde
+     * o expediente quando outro lote a muda, e o trabalhador para no meio (o mineiro do
+     * {@code MineStepDownGameTest} ficava na boca). A cada tique fora do expediente a hora volta a
+     * {@code timeOfDay}, e cada reposição sai no log como {@code VC_TEST_CLOCK_RESET}, com o teste e a hora
+     * achada, para mostrar quem mexe no relógio dos outros. Teste que precisa da noite muda e devolve a hora no
+     * mesmo tique, e por isso não briga com este.
+     */
+    public static void holdWorkTime(TestContext context, long timeOfDay) {
+        String test = StackWalker.getInstance().walk(frames -> frames.skip(1).findFirst()
+                .map(frame -> frame.getClassName().substring(frame.getClassName().lastIndexOf('.') + 1)
+                        + "." + frame.getMethodName()).orElse("?"));
+        context.getWorld().setTimeOfDay(timeOfDay);
+        context.runAtEveryTick(() -> {
+            long found = context.getWorld().getTimeOfDay();
+            if (!WorkClock.isWorkTime(found)) {
+                VillageColonyMod.LOGGER.info("VC_TEST_CLOCK_RESET test={} tick={} found={}", test,
+                        context.getWorld().getTime(), found % 24_000);
+                context.getWorld().setTimeOfDay(timeOfDay);
+            }
+        });
     }
 }

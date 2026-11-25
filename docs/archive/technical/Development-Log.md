@@ -12681,3 +12681,11 @@ O `PenTetherGameTest.theAnimalWalksFromASideLedgeThroughTheGate` caía 1 em 10 i
 ## 2026-11-25 — escada da mina e o relógio dos outros lotes
 
 O `MineStepDownGameTest.theMinerDigsTheStairsDownFromTheMouth` caiu 1 em 15 no CI com o mineiro parado na boca. Hipótese: outro lote mudava a hora do mundo e o expediente acabava. Experimento com a noite posta no tique 50: sem proteção, a mesma mensagem do CI e `expediente=false`; com o expediente reposto a cada tique, passa. Por escolha do autor (🅲), o teste repõe o expediente e registra hora, expediente, altura e tarefa a cada 100 tiques.
+
+## 2026-11-25 — o relógio global dos GameTests
+
+Os lotes rodam juntos num mundo só, e 33 GameTests longos acertavam o expediente só no início. Por escolha do autor (🅲), `Arena.holdWorkTime` segura o expediente até o fim e registra cada reposição em `VC_TEST_CLOCK_RESET`; os 3 testes que repunham à mão passaram a usá-la. Nenhum teste precisa da noite por mais de um tique. Sentinela `20261125T052435Z` 1.265/1.266 (KF-014). Na mesma leitura: as linhas do mod somem do log no segundo em que começa o `LumberjackGameTest` do guarda de travamento, que anexa um appender ao logger do mod.
+
+## 2026-11-25 — o log do mod que emudecia nos GameTests
+
+As linhas `(villagecolony)` sumiam do log no segundo em que começava o `LumberjackGameTest` do guarda de travamento. O teste anexa um appender ao logger do mod; sem configuração própria, o log4j cria uma ao anexar, e ela não repassava ao raiz. Rodando só o lenhador, o log parava no anexo e as linhas capturadas não chegavam ao console. Por escolha do autor (🅲), a configuração nova repassa e é removida no fim, e a análise do Sentinela acusa `LOG_SILENCED`. Sentinela `20261125T053911Z` 1.266/1.266 com o log vivo até o fim.

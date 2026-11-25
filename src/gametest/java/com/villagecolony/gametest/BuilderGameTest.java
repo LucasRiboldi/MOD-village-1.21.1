@@ -316,7 +316,7 @@ public class BuilderGameTest implements FabricGameTest {
 
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
         context.setBlockState(second, Blocks.CHEST.getDefaultState());
-        world.setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         context.setBlockState(SITE.down(), Blocks.STONE.getDefaultState());
 
@@ -760,7 +760,7 @@ public class BuilderGameTest implements FabricGameTest {
         ServerWorld world = context.getWorld();
 
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
-        world.setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         context.setBlockState(SITE.down(), Blocks.STONE.getDefaultState());
 
@@ -1296,7 +1296,7 @@ public class BuilderGameTest implements FabricGameTest {
         ServerWorld world = context.getWorld();
 
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
-        world.setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         context.setBlockState(SITE.down(), Blocks.STONE.getDefaultState());
         context.setBlockState(SITE.down().east(), Blocks.STONE.getDefaultState());
@@ -1667,7 +1667,7 @@ public class BuilderGameTest implements FabricGameTest {
         ServerWorld world = context.getWorld();
 
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
-        world.setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         context.setBlockState(SITE.down(), Blocks.STONE.getDefaultState());
 

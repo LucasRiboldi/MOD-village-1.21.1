@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.gametest.Arena;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.worker.model.ProfessionType;
@@ -250,7 +251,7 @@ public class ShepherdHerdingGameTest implements FabricGameTest {
         VillagerEntity shepherd = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 1, 2));
         CowEntity cow = context.spawnEntity(EntityType.COW, new BlockPos(7, 1, 7));
         cow.setAiDisabled(true);
-        context.getWorld().setTimeOfDay(1_000);
+        Arena.holdWorkTime(context, 1_000);
 
         context.waitAndRun(5, () -> {
             fixture.owning(shepherd.getUuid());
