@@ -24,6 +24,7 @@ import java.util.UUID;
  *
  * <p>O dia dele, na ordem do que mais atrapalha quem anda:
  * <ol>
+ *   <li>a frente da porta e a escada da mina tapadas ({@link DoorClearing}, {@link MineStairClearing}, Regra 356);</li>
  *   <li>a linha do grafo a calçar, com o fardo de feno no caminho tirado para os baús ({@link PathPaving}, que tem a
  *       vez enquanto há trecho a calçar);</li>
  *   <li>o caminho fora da linha volta ao solo do bioma, para ficar uma linha só ({@link PathTrim});</li>
@@ -97,6 +98,16 @@ public final class GroundKeeper {
      * @return quanto ele fez
      */
     static int day(ServerWorld world, Colony colony, VillagerEntity keeper) {
+        // A porta tapada e a escada da mina tapada vêm antes de tudo: sem elas ninguém entra (Regra 356).
+        int doors = DoorClearing.pass(world, colony) + MineStairClearing.pass(world, colony);
+
+        if (doors > 0) {
+            ActionJournal.action(keeper.getUuid(), "LEVELLED", "minecraft:air", doors, keeper.getBlockPos(),
+                    "the front of a door or the mine stair");
+            count(world, colony.id(), 3, doors);
+            return doors;
+        }
+
         int trimmed = PathTrim.pass(world, colony);
 
         if (trimmed > 0) {

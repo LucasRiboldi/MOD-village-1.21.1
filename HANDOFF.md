@@ -2,6 +2,15 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.137 (2026-11-25)
+
+- **Branch:** `fix/areia-que-cai`, da `main` em `86d39c3d` (PR #112 integrado). Sem push.
+- **Jogo da 0.4.136 no deserto:** triagem em `docs/testing/relatorios/jogo-20261125-1320.md` e no topo do `TODO.md`. Escolhas do autor: G1 🅲, G2 🅲, G3 🅱️, G4 🅲, G5 🅲; ordem G2 → G5 → G1 → G3 → G4, depois a pesquisa dos pontos sem escolha.
+- **G2 🅲 feita (Regra 356):** recusas `under_building` e `mine_mouth` no `GroundSmoothing.refusal`; `MineMouths` guarda as bocas da superfície (arco, escada, arco erguido); `MineYard.lay` pula o caracol; o Zelador abre o dia com `DoorClearing` e `MineStairClearing` (`VC_DOOR_CLEAR`, `VC_MINE_STAIR_CLEAR`); `UnderPieceFill.fillBuilding` aterra sob a construção da colônia, de baixo para cima.
+- **Prova:** `FallingSandGuardGameTest` (6 testes; 4 falharam antes, 2 conferidos por mutação). Sentinela `fast` `20261125T170427Z`: unitários, propriedades e 1.272/1.272; também `20261125T170005Z` 1.272/1.272.
+- **G5 🅲:** pesquisa em `docs/research/2026-11-25-plano-de-alturas.md`, com 4 decisões do autor pendentes. Nada implementado.
+- **Em jogo:** porta do mineiro (-185,64,148) livre, mina alcançável, fazenda de -202,70,150 sem vão.
+
 ## Relógio global nos GameTests (2026-11-25)
 
 - **Branch:** `fix/relogio-global-gametests`, da `main` em `c761df9d` (PR #111 integrado).

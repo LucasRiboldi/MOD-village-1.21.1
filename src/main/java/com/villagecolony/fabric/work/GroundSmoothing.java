@@ -50,6 +50,9 @@ final class GroundSmoothing {
     /** Em volta da boca da mina nada é mexido: o buraco e a escada ficam. */
     static final int MINE_GUARD = 8;
 
+    /** Até quantos blocos acima do chão da coluna uma construção a protege do corte (Regra 356). */
+    static final int UNDER_BUILDING_REACH = 16;
+
     private GroundSmoothing() {
     }
 
@@ -108,8 +111,9 @@ final class GroundSmoothing {
                 BlockPos at = new BlockPos(x, top, z);
                 BlockState state = world.getBlockState(at);
                 boolean ring = dx == 0 || dz == 0 || dx == size - 1 || dz == size - 1;
-                boolean nearMine = mine.isPresent() && Math.abs(mine.get().getX() - x) <= MINE_GUARD
-                        && Math.abs(mine.get().getZ() - z) <= MINE_GUARD;
+                boolean nearMine = (mine.isPresent() && Math.abs(mine.get().getX() - x) <= MINE_GUARD
+                        && Math.abs(mine.get().getZ() - z) <= MINE_GUARD)
+                        || com.villagecolony.fabric.integration.MineMouths.isNear(x, z);
 
                 natural[dx][dz] = top;
 
@@ -344,7 +348,21 @@ final class GroundSmoothing {
             return "player:ground";
         }
 
-        BlockPos.Mutable at = new BlockPos.Mutable(x, Math.min(top, target) - 1, z);
+        // A boca da mina fica aberta: o buraco da escada é a coluna mais baixa da volta (Regra 356).
+        if (com.villagecolony.fabric.integration.MineMouths.isNear(x, z)) {
+            return "mine_mouth";
+        }
+
+        // Nada se corta nem aterra debaixo de construção da colônia, nem acima da faixa da coluna: a peça que fica
+        // mais alta que o corte ficaria voando (Regra 356).
+        int low = Math.min(top, target);
+
+        if (VillageColonyMod.BUILDINGS.anythingBuiltInside(new com.villagecolony.core.type.ColonyPos(x, low, z),
+                new com.villagecolony.core.type.ColonyPos(x, low + UNDER_BUILDING_REACH, z))) {
+            return "under_building";
+        }
+
+        BlockPos.Mutable at = new BlockPos.Mutable(x, low - 1, z);
 
         if (!world.getBlockState(at).isSideSolidFullSquare(world, at, net.minecraft.util.math.Direction.UP)) {
             return "no_support:" + name(world.getBlockState(at));

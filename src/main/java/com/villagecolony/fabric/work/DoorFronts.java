@@ -67,6 +67,28 @@ final class DoorFronts {
         return entrances(world, min, max).stream().map(Entrance::outside).toList();
     }
 
+    /** Uma porta térrea e o lado de fora dela: o oposto de para onde olhava quem a pôs. */
+    record GroundDoor(BlockPos at, Direction out) {
+    }
+
+    /** As portas térreas da caixa: cada metade de baixo conta, também na porta dupla (Regra 356). */
+    static List<GroundDoor> groundDoors(ServerWorld world, BlockPos min, BlockPos max) {
+        List<GroundDoor> doors = new ArrayList<>();
+
+        for (BlockPos at : BlockPos.iterate(min, new BlockPos(max.getX(), Math.min(max.getY(), min.getY() + GROUND_FLOOR), max.getZ()))) {
+            if (world.isChunkLoaded(at)) {
+                BlockState state = world.getBlockState(at);
+
+                if (state.isIn(BlockTags.DOORS) && state.get(DoorBlock.HALF) == DoubleBlockHalf.LOWER
+                        && GroundFloorDoors.isGroundFloor(world, at, state.get(DoorBlock.FACING).getOpposite())) {
+                    doors.add(new GroundDoor(at.toImmutable(), state.get(DoorBlock.FACING).getOpposite()));
+                }
+            }
+        }
+
+        return doors;
+    }
+
     static List<Entrance> entrances(ServerWorld world, BlockPos min, BlockPos max) {
         List<Entrance> fronts = new ArrayList<>();
         List<BlockPos> yards = new ArrayList<>();

@@ -42,8 +42,11 @@ final class MineGates {
     /** Confere o topo de uma coluna. */
     static void look(ServerWorld world, UUID colonyId, BlockPos top, BlockState state) {
         if (MineGate.isPeak(state)) {
-            MineGate.standingAt(world, top)
-                    .ifPresent(gate -> KNOWN.computeIfAbsent(colonyId, ignored -> new HashSet<>()).add(gate));
+            MineGate.standingAt(world, top).ifPresent(gate -> {
+                KNOWN.computeIfAbsent(colonyId, ignored -> new HashSet<>()).add(gate);
+                // A boca da superfície fica guardada: a folga e a escada valem também depois que a mina desce (Regra 356).
+                com.villagecolony.fabric.integration.MineMouths.remember(colonyId, gate.mouth(), gate.descent());
+            });
         }
     }
 
@@ -57,7 +60,10 @@ final class MineGates {
 
         // A boca da mina da colônia é o marcador do arco: ele é lido pelas peças, sem depender do topo (Regra 256).
         Set<MineGate.Standing> gates = new HashSet<>(known);
-        atTheMouth(world, colony).ifPresent(gates::add);
+        atTheMouth(world, colony).ifPresent(gate -> {
+            gates.add(gate);
+            com.villagecolony.fabric.integration.MineMouths.remember(colonyId, gate.mouth(), gate.descent());
+        });
 
         for (MineGate.Standing gate : gates) {
             frontOf(world, gate, terrain).ifPresent(fronts::add);

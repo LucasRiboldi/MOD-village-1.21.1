@@ -167,8 +167,9 @@ final class TerrainQueue {
                 top[dx][dz] = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
                 BlockPos at = new BlockPos(x, top[dx][dz], z);
                 BlockState state = world.getBlockState(at);
-                boolean nearMine = mine.isPresent() && Math.abs(mine.get().getX() - x) <= GroundSmoothing.MINE_GUARD
-                        && Math.abs(mine.get().getZ() - z) <= GroundSmoothing.MINE_GUARD;
+                boolean nearMine = (mine.isPresent() && Math.abs(mine.get().getX() - x) <= GroundSmoothing.MINE_GUARD
+                        && Math.abs(mine.get().getZ() - z) <= GroundSmoothing.MINE_GUARD)
+                        || com.villagecolony.fabric.integration.MineMouths.isNear(x, z);
 
                 ground[dx][dz] = state.getFluidState().isEmpty() && !nearMine
                         && !GroundSmoothing.insideAny(footprints, x, z) && GroundSmoothing.isGround(world, at, state);

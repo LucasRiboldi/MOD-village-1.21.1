@@ -79,6 +79,8 @@ public final class MineYard {
         BlockPos center = centerOf(mouth, descent);
         int discY = mouth.getY() - 1;
         int changed = 0;
+        // O caracol da boca nunca vira pátio: tapado por areia, ele não está aberto, e a pedra o selava (Regra 356).
+        java.util.Set<BlockPos> stair = new java.util.HashSet<>(MineMouths.stairCells(mouth, descent));
 
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
@@ -91,8 +93,8 @@ public final class MineYard {
 
                 BlockPos disc = new BlockPos(x, discY, z);
 
-                // O buraco da escada: ar no disco e logo abaixo dele — fica aberto.
-                if (isOpen(world, disc) && isOpen(world, disc.down())) {
+                // O buraco da escada: ar no disco e logo abaixo dele, ou célula do caracol — fica aberto.
+                if ((isOpen(world, disc) && isOpen(world, disc.down())) || stair.contains(disc) || stair.contains(disc.down())) {
                     continue;
                 }
 

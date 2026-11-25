@@ -8,6 +8,27 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   está em `docs/technical/TODO-herdado-2026-11-13.md`.
 - O TODO antigo inteiro, por jogo, está em `docs/archive/technical/TODO-ate-2026-11-13.md` (`grep`).
 
+## Jogo da 0.4.136 no deserto (2026-11-25)
+
+Triagem: `docs/testing/relatorios/jogo-20261125-1320.md`; imagens locais em `reports/imagens-autor/2026-11-25/jogo-0136/`.
+Escolhas do autor: G1 🅲, G2 🅲, G3 🅱️, G4 🅲, G5 🅲; ordem G2 → G5 → G1 → G3 → G4, depois a pesquisa dos pontos sem escolha.
+
+- [x] G2 🅲 — areia que cai: Regra 356 na 0.4.137 (candidata). Conferir em jogo: porta do mineiro (-185,64,148) livre, mina
+  (-189,?,148) alcançável, `VC_DOOR_CLEAR` e `VC_MINE_STAIR_CLEAR` no log, fazenda de -202,70,150 sem vão embaixo.
+- [ ] 🟠 G5 🅲 — vila inteira em degraus de 1 (curral grande com faixa de solo do bioma): pesquisa em documento para o autor
+  aprovar; os degraus maiores que 1 subiram de 518 para 1.909 no jogo.
+- [ ] 🟠 G1 🅲 — terra e grama no deserto: `GroundSmoothing.column` e `fillGap` aterram com terra sob areia;
+  `MineYard.fillBelow` também; a geração usa grama quando o chunk é todo água (`VillageSoil.GRASS`).
+- [ ] 🟠 G3 🅱️ — obra fechada pela metade: `desert_farm_2` em -318,63,152 com 18 de 66 peças (48 pulos "sand/sandstone is in
+  the way"); a obra só fecha com 95% das peças e o construtor tira o chão natural da peça.
+- [ ] 🟠 G4 🅲 — obras longe: o socorro em bairro (`MaeRescue`, Regras 222/226) ancora na obra anterior e subiu de z 118 a 15.
+- [ ] 🟡 G6 — casas e fazenda sem nó no grafo (notas em -221,63,191 e -229,63,167): investigar depois da G2.
+- [ ] 🟡 Dois carpinteiros afogados no mesmo ponto (-217,61,160); mineiro morto por queda em -216,63,171.
+- [ ] 🟡 Árvore cortada sem o lenhador encostar (nota em -300,63,176); golem deve boiar e pular (pedido novo).
+- [ ] 🟡 Ócio acima de 60% em construtor, carpinteiro, lenhador, pedreiro, pastor e fundidor (92%, sem minério).
+- [ ] 🟡 Blocos surgidos sozinhos a buscar fluxo de fabricação: farinha de osso 40.144, arenito liso 592, trigo 506,
+  ferro cru 469, arenito 392, grama 198, carvão 161.
+
 ## Estado de integração — 0.4.134 (2026-11-24)
 
 - [ ] Conferir em jogo a Regra 355 (0.4.136): `VC_PEN_WORKING state=started` seguido da tosquia, e quantas vezes sai `state=expired`. Se fazendeiro ou lenhador aparecerem em `fenced in` com trabalho dentro do cercado, avaliar a regra geral (opção B do N05).

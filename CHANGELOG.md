@@ -17,6 +17,16 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.137] — candidata, 2026-11-25
+
+Do jogo da 0.4.136 no deserto (G2 🅲: fazenda voando, porta do mineiro tapada por areia, boca da mina fechada). Regra 356.
+
+- O nivelamento não corta nem aterra a coluna com construção da colônia acima dela, até 16 blocos (`under_building` no `VC_SMOOTH`). Antes, a conferência só olhava a faixa entre o topo e o alvo da coluna.
+- A folga da boca da mina (`mine_mouth`) vale também em volta da boca da superfície, guardada pelo arco e pela escada enquanto a colônia tem mina; o caminho olha só as bocas da própria colônia. As guardas do nivelamento, do terreno e do caminho usavam só a entrada do nível atual, que se afasta da boca quando a mina desce.
+- O pátio da boca refeito nunca põe pedra no caracol do primeiro nível. Com areia dentro, a escada não parecia aberta e era selada.
+- O Zelador começa o dia limpando a porta térrea tapada por chão natural (altura da porta e da cabeça, 2 colunas de fora, com a areia de cima) e, com a mina abaixo do primeiro nível, o caracol da boca (`VC_DOOR_CLEAR`, `VC_MINE_STAIR_CLEAR`).
+- O vão sob a construção pronta da colônia é aterrado como o da peça da vila (Regra 304), de baixo para cima, para a areia não cair.
+
 ## [0.4.136] — candidata, 2026-11-25
 
 - O pastor que entrou no cercado para tosquiar não é tirado pelo socorro do curral por até 30 segundos (Regra 355); passado o prazo, ou sem a tosquia reservada, o socorro age como antes. `VC_PEN_WORKING` registra início e fim do prazo. O N05 (`ShepherdGameTest.theShepherdOnlyShearsAfterReachingTheSheep`) caía quando o socorro pegava o pastor recém-pousado no cercado.

@@ -33,6 +33,7 @@ public final class WorldPathTerrain implements PathTerrain {
     static final int CLEARANCE = 2;
 
     private final ServerWorld world;
+    private final UUID colonyId;
     private final List<Building> buildings;
     private final Optional<ConstructionProject> open;
     private final Optional<ColonyPos> mine;
@@ -44,6 +45,7 @@ public final class WorldPathTerrain implements PathTerrain {
     /** O terreno do traçado: a água nunca é chão (Regra 264). */
     public WorldPathTerrain(ServerWorld world, UUID colonyId) {
         this.world = world;
+        this.colonyId = colonyId;
         this.buildings = List.copyOf(VillageColonyMod.BUILDINGS.ofColony(colonyId));
         this.open = VillageColonyMod.CONSTRUCTIONS.openOf(colonyId);
         this.mine = VillageColonyMod.MINES.of(colonyId).map(found -> found.shaft().entry());
@@ -214,8 +216,10 @@ public final class WorldPathTerrain implements PathTerrain {
 
         // A boca da mina é buraco de propósito: o caminho que aterra fecharia a escada (playtest 0.3.97).
         // Sobre o pátio de pedra da boca a folga não vale: ele já é chão, e o buraco da escada não tem chão (Regra 293).
-        if (mine.filter(entry -> Math.abs(x - entry.x()) <= MINE_CLEARANCE
-                && Math.abs(z - entry.z()) <= MINE_CLEARANCE).isPresent() && !MineYard.isYardColumn(world, x, z)) {
+        // A boca da superfície também, depois que a mina desce (Regra 356).
+        if ((mine.filter(entry -> Math.abs(x - entry.x()) <= MINE_CLEARANCE
+                && Math.abs(z - entry.z()) <= MINE_CLEARANCE).isPresent() || MineMouths.isNear(colonyId, x, z))
+                && !MineYard.isYardColumn(world, x, z)) {
             return true;
         }
 
