@@ -12,6 +12,10 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## Não publicado — verificação
+
+- `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
+
 ## [0.4.136] — candidata, 2026-11-25
 
 - O pastor que entrou no cercado para tosquiar não é tirado pelo socorro do curral por até 30 segundos (Regra 355); passado o prazo, ou sem a tosquia reservada, o socorro age como antes. `VC_PEN_WORKING` registra início e fim do prazo. O N05 (`ShepherdGameTest.theShepherdOnlyShearsAfterReachingTheSheep`) caía quando o socorro pegava o pastor recém-pousado no cercado.

@@ -58,7 +58,7 @@ public class LumberjackSearchGameTest implements FabricGameTest {
         }
 
         context.setBlockState(chest, Blocks.CHEST.getDefaultState());
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, stand);
         villager.setBreedingAge(0);

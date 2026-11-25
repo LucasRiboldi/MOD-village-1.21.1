@@ -918,7 +918,7 @@ public class LumberjackGameTest implements FabricGameTest {
             }
         }
 
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, start);
         BlockPos absoluteTarget = context.getAbsolutePos(target);
@@ -1202,7 +1202,7 @@ public class LumberjackGameTest implements FabricGameTest {
         }
         context.setBlockState(base.up(logCount - 1).north(), Blocks.OAK_LEAVES.getDefaultState());
         context.setBlockState(chest, Blocks.CHEST.getDefaultState());
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ServerWorld world = context.getWorld();
 
@@ -1331,7 +1331,7 @@ public class LumberjackGameTest implements FabricGameTest {
         plantTree(context, marooned);
 
         context.setBlockState(chest, Blocks.CHEST.getDefaultState());
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ServerWorld world = context.getWorld();
 
@@ -1544,7 +1544,7 @@ public class LumberjackGameTest implements FabricGameTest {
         }
 
         context.setBlockState(chest, Blocks.CHEST.getDefaultState());
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ServerWorld world = context.getWorld();
 
@@ -1703,7 +1703,7 @@ public class LumberjackGameTest implements FabricGameTest {
         plantTree(context, far);
 
         context.setBlockState(chest, Blocks.CHEST.getDefaultState());
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ServerWorld world = context.getWorld();
 
@@ -1792,7 +1792,7 @@ public class LumberjackGameTest implements FabricGameTest {
 
         plantTree(context, base);
         context.setBlockState(chest, Blocks.CHEST.getDefaultState());
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ServerWorld world = context.getWorld();
 
@@ -1861,7 +1861,7 @@ public class LumberjackGameTest implements FabricGameTest {
 
         plantTree(context, base);
         context.setBlockState(chest, Blocks.CHEST.getDefaultState());
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ServerWorld world = context.getWorld();
 
@@ -1964,7 +1964,7 @@ public class LumberjackGameTest implements FabricGameTest {
 
         plantTree(context, first);
         plantTree(context, second);
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ServerWorld world = context.getWorld();
 
@@ -2115,7 +2115,7 @@ public class LumberjackGameTest implements FabricGameTest {
         BlockPos chest = new BlockPos(1, 2, 3);
 
         context.setBlockState(chest, Blocks.CHEST.getDefaultState());
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ServerWorld world = context.getWorld();
 
@@ -2371,7 +2371,7 @@ public class LumberjackGameTest implements FabricGameTest {
         plantTree(context, base);
         context.setBlockState(own, Blocks.CHEST.getDefaultState());
         context.setBlockState(spare, Blocks.CHEST.getDefaultState());
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ServerWorld world = context.getWorld();
 

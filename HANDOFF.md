@@ -2,6 +2,13 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Relógio global nos GameTests (2026-11-25)
+
+- **Branch:** `fix/relogio-global-gametests`, da `main` em `c761df9d` (PR #111 integrado).
+- **Escolha 🅲 do autor:** `Arena.holdWorkTime(context, hora)` põe a hora e, a cada tique fora do expediente, a repõe e registra `VC_TEST_CLOCK_RESET test=... found=...`. Aplicada em 33 GameTests com `tickLimit` ≥ 200 que acertavam o expediente só no início (18 arquivos) e nos 3 que faziam a reposição à mão (`ShepherdGameTest` N05, `MinerGameTest`, `MineStepDownGameTest`). Os testes que usam a noite mudam e devolvem a hora no mesmo tique (conferido em todos), então não brigam com ela; `GameTestState.tick` para as tarefas quando o teste termina.
+- **Verificação:** Sentinela `fast` `20261125T052435Z`: 1.886 unitários, propriedades e 1.265/1.266; a falha foi `BiomeBlueprintsGameTest.theTaigaLargePenHasSpruceFencesAndTheOakOneStillStands` (KF-014, declarada, sem relação). Nenhum `VC_TEST_CLOCK_RESET` antes do log ficar mudo.
+- **Achado:** o log do mod fica mudo no segundo em que começa `LumberjackGameTest.theStallGuardReturnsTheTaskAndForgetsTheTree` (appender `Captured`); ver TODO.
+
 ## Entrega — 0.4.136 (2026-11-25)
 
 - **Branch e PR:** `fix/pulo-grande-todo-tique`, PR #111.

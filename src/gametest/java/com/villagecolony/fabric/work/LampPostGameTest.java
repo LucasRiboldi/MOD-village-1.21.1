@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.gametest.Arena;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
@@ -259,7 +260,7 @@ public class LampPostGameTest implements FabricGameTest {
         BlockPos origin = originOf(context, 3);
 
         floor(world, origin);
-        world.setTimeOfDay(net.minecraft.entity.ai.brain.Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, net.minecraft.entity.ai.brain.Schedule.WORK_TIME);
 
         ColonyFixture fixture = colonyAt(origin);
         Colony colony = fixture.colony();

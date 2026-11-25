@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.gametest.Arena;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.CraftFamily;
@@ -88,7 +89,7 @@ public class ItemStockGameTest implements FabricGameTest {
         BlockPos spareAt = new BlockPos(2, 2, 4);
         context.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
         context.setBlockState(spareAt, Blocks.CHEST.getDefaultState());
-        world.setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chestAt));
         ColonyPos spare = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(spareAt));

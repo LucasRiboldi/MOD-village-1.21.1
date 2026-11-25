@@ -58,7 +58,7 @@ public class CraftingAdvanceGameTest implements FabricGameTest {
         BlockPos freeAt = new BlockPos(2, 2, 5);
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
         context.setBlockState(freeAt, Blocks.CHEST.getDefaultState());
-        world.setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ColonyPos own = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
         ColonyPos free = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(freeAt));
@@ -118,7 +118,7 @@ public class CraftingAdvanceGameTest implements FabricGameTest {
             }
         }
 
-        world.setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chestAt));
         ChestDepositor.deposit(world, chest, Items.OAK_PLANKS, 64);
 

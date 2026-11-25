@@ -103,7 +103,7 @@ public final class ColonyMergeTriggerGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_merge_roads", tickLimit = 360)
     public void aVillagerWalksBetweenTheTwoOldRoadNetworks(TestContext context) {
         // O destino da colônia só move o aldeão no expediente (WorkHours).
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
         BlockPos start = context.getAbsolutePos(new BlockPos(1, 2, 1));
         BlockPos end = start.east(28);
         BlockPos low = new BlockPos(-4, 0, -5);

@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.gametest.Arena;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Mine;
@@ -51,7 +52,8 @@ public class MineStepDownGameTest implements FabricGameTest {
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_step_down", tickLimit = 1400)
     public void theMinerDigsTheStairsDownFromTheMouth(TestContext context) {
-        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+        // Os lotes rodam juntos num mundo só: o relógio é de todos, e o expediente fica o deste teste.
+        Arena.holdWorkTime(context, Schedule.WORK_TIME);
 
         ServerWorld world = context.getWorld();
         // Longe da grade dos testes: o morro de 41 blocos invadia a arena dos vizinhos na bateria inteira.
@@ -102,17 +104,11 @@ public class MineStepDownGameTest implements FabricGameTest {
         int[] lowest = { mouth.getY() };
         int[] releasedAt = { -1 };
         int[] passes = { 0 };
-        int[] clockResets = { 0 };
         // Hora, expediente, altura e tarefa a cada 100 tiques: explica o mineiro que fica na boca.
         StringBuilder trail = new StringBuilder();
 
         context.runAtEveryTick(() -> {
             passes[0]++;
-            // Os lotes rodam juntos num mundo só: o relógio é de todos, e o expediente volta a ser o deste teste.
-            if (!com.villagecolony.core.coordination.WorkClock.isWorkTime(world.getTimeOfDay())) {
-                clockResets[0]++;
-                world.setTimeOfDay(Schedule.WORK_TIME);
-            }
             if (passes[0] % 100 == 0) {
                 trail.append(" | t").append(passes[0]).append(" d").append(world.getTimeOfDay() % 24_000)
                         .append(" expediente=").append(com.villagecolony.fabric.brain.WorkHours.isWorkTime(world, villager))
@@ -136,8 +132,7 @@ public class MineStepDownGameTest implements FabricGameTest {
             try {
                 context.assertTrue(lowest[0] <= mouth.getY() - 4, "Regra 336: o mineiro não desceu a escada que"
                         + " faltava; o mais baixo foi y " + lowest[0] + ", a boca em y " + mouth.getY()
-                        + "; devolveu a pedra no tique " + releasedAt[0] + "; relógio reposto " + clockResets[0]
-                        + "x" + trail);
+                        + "; devolveu a pedra no tique " + releasedAt[0] + trail);
 
                 for (BlockPos at : BlockPos.iterate(low, low.add(SIDE - 1, DEPTH - 1, SIDE - 1))) {
                     boolean opened = at.getX() >= level.getX() - 1 && at.getX() <= level.getX() + 1
