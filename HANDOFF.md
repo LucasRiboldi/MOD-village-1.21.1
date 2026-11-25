@@ -9,6 +9,7 @@ Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e
 - **G2 🅲 feita (Regra 356):** recusas `under_building` e `mine_mouth` no `GroundSmoothing.refusal`; `MineMouths` guarda as bocas da superfície (arco, escada, arco erguido); `MineYard.lay` pula o caracol; o Zelador abre o dia com `DoorClearing` e `MineStairClearing` (`VC_DOOR_CLEAR`, `VC_MINE_STAIR_CLEAR`); `UnderPieceFill.fillBuilding` aterra sob a construção da colônia, de baixo para cima.
 - **Prova:** `FallingSandGuardGameTest` (6 testes; 4 falharam antes, 2 conferidos por mutação). Sentinela `fast` `20261125T170427Z`: unitários, propriedades e 1.272/1.272; também `20261125T170005Z` 1.272/1.272.
 - **G5 🅲:** pesquisa em `docs/research/2026-11-25-plano-de-alturas.md`, com 4 decisões do autor pendentes. Nada implementado.
+- **Instalado:** `village-colony-0.4.137.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `D00803A865216FDA65058BF5AB51C1C2682AE40929E29A956DD5EB08C92A7675`; 0.4.136 `.jar.disabled`.
 - **Em jogo:** porta do mineiro (-185,64,148) livre, mina alcançável, fazenda de -202,70,150 sem vão.
 
 ## Relógio global nos GameTests (2026-11-25)
