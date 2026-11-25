@@ -10,7 +10,8 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 
 ## Estado de integração — 0.4.134 (2026-11-24)
 
-- [ ] PR de `fix/pulo-grande-todo-tique` para a `main`, CI verde e pré-release. A saída do curral (`PenEscapeGameTest`) voltou a passar; no Sentinela `20261124T234447Z` a única falha foi `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder`, com os dois chunks carregados e o baú sem migrar (mensagem no relatório).
+- [ ] PR #111 (`fix/pulo-grande-todo-tique`) para a `main`, CI verde e pré-release. Saída do curral (0.4.134) e baú na borda do chunk (0.4.135) corrigidos; Sentinela `20261125T010329Z` 1.265/1.265.
+- [ ] Estabilizar `ColonyMergeTriggerGameTest.aVillagerWalksBetweenTheTwoOldRoadNetworks` (4 de 15 no CI de 24-11): em 2 falhas o aldeão saiu da rua e caiu um bloco, a 7 e 12 blocos de lado; a rua de 33 blocos passa pela área dos testes vizinhos (hipótese).
 - [ ] Conferir em jogo que o trabalhador sai do curral pela cerca com um pulo padrão perdido, não dois (Regra 171).
 
 ## Estado de integração — 0.4.133 (2026-11-24)
@@ -22,7 +23,6 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 
 - [ ] Publicar a candidata na `main`: a branch `codex/piso-curral-grande` contém o código e a documentação da 0.4.131; falta PR, CI verde, merge e release `v0.4.131-alpha`.
 - [ ] Playtest do item 9 no deserto: conferir grama no piso de circulação do curral grande, os 12 blocos de canteiro e água nas posições da planta. Retomada de obra iniciada também precisa ser observada após reabrir o mundo.
-- [ ] 🔴 `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder` (PR #106) falha às vezes no CI (2 vezes em 8) e trava o portão da release. A hipótese dos chunks descarregados (PR #108) foi enfraquecida: falhou de novo com todos os chunks carregados. Ler a mensagem no `gametest-report.xml` da execução 45498542870; detalhes no [HANDOFF](HANDOFF.md).
 - [ ] Depois do playtest, registrar versão efetivamente carregada, notas `/vc bioma nota`, `/vc salvar`, `VC_PENS`, `VC_ROUND`, `VC_FLOCK_EVENT` e `VC_FLOCK_HARVEST` no próximo relatório.
 
 ## F0 — Sinal limpo (1 semana)

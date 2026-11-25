@@ -2,6 +2,15 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.135 (2026-11-24)
+
+- **Branch e PR:** `fix/pulo-grande-todo-tique`, PR #111 (junto com a 0.4.134).
+- **Escolha 2 do autor (diagnóstico no jogo):** `HomeChestMoves.move` devolve o motivo da desistência, e `repair` registra `VC_HOME_CHEST_STAY` quando o baú perdeu a parede e não mudou, uma vez por mudança de motivo de cada morador. `ChestPlacer.repairSlot` anota a recusa de cada lugar (`occupied`, `unsafe(above=...)`, `unsafe(chest_beside)` e outros). O comportamento do baú não muda.
+- **Causa da instabilidade do `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder`:** a casa deslocada até 7 blocos para cruzar a borda caía às vezes sob a barreira da arena; o destino era recusado por `unsafe(above=minecraft:barrier)`. **Escolha 1 do autor:** o teste esvazia o volume da casa antes de montar. Antes, 1 falha em 5 isolado; depois, 15 de 15.
+- **Verificação:** Sentinela `fast` `20261125T010329Z` 1.886 unitários, propriedades e 1.265/1.265 GameTests. Na bateria, `VC_HOME_CHEST_STAY` saiu 5 vezes, uma por morador, com `no_placement_receipt`.
+- **Instalado:** `village-colony-0.4.135.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `51167A1024B8E645BA0CCCC5282204FF948611573BA4817F26FF9EFEBCF86FA4`; a 0.4.134 ficou `.jar.disabled`.
+- **Próximo:** `ColonyMergeTriggerGameTest.aVillagerWalksBetweenTheTwoOldRoadNetworks` (ver TODO).
+
 ## Entrega para outro agente — 0.4.134 (2026-11-24)
 
 - **Branch:** `fix/pulo-grande-todo-tique`, criada da `main` em `f8f2c459` (0.4.133 já integrada pelo PR #105).
@@ -287,7 +296,8 @@ Em aberto no `TODO.md`: VF-001 a VF-003 da varredura e os itens das fases F0 a F
 
 Elas viviam só na memória local do Claude Code. O que está em `CLAUDE.md` e `AGENTS.md` continua valendo.
 
-- **Idioma:** sempre português do Brasil. Ao perguntar ou oferecer opções, frases completas, de modo leigo. Ele quer opções para decidir: 2 ou 3, com efeito e risco, e a recomendada primeiro.
+- **Idioma:** sempre português do Brasil. Ao perguntar ou oferecer opções, frases completas, de modo leigo.
+- **Formato (autor, 2026-11-24):** resposta visual e colorida (emojis de cor, tabelas curtas), com a etapa atual sempre visível. Toda decisão de correção traz **3 opções** — a mais simples, uma maior e uma com melhorias —, com efeito, risco e a recomendada marcada. Espera do autor bem marcada ("aguarde" contra "sua vez"). Ao fechar uma correção, buscar sozinho a próxima correção ou melhoria e trazê-la já diagnosticada; editar comportamento continua exigindo a escolha dele.
 - **"commit push":** commite, envie e responda só `commit push realizado`. Se algo falhar, não diga a frase: diga o que houve.
 - **"relatorio commit":** ciclo completo: estado atual, revisão, testes de verdade, README, `TODO.md` por prioridade, higiene, commit, push e relatório `✅ CICLO ENCERRADO`. Separe "tem teste" de "foi verificado rodando de verdade".
 - **Merge na `main`:** autorizado sem perguntar quando é o próximo passo, com CI verde e sem conflito (`gh pr merge N --merge`). **Release e tag exigem pedido.** Nunca `--force`.

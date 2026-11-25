@@ -12,6 +12,11 @@ publicado está no histórico do `STATE.md`
 2026-09-24 está em [`docs/archive/technical/Development-Log.md`](docs/archive/technical/Development-Log.md)
 e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Historico-2026-09.md).
 
+## [0.4.135] — candidata, 2026-11-24
+
+- `VC_HOME_CHEST_STAY`: o baú residencial que perdeu a parede e não mudou de lugar sai no log com o motivo (lugar ocupado, sem chão, sem ar acima, baú ao lado, sem recibo e outros), uma vez por mudança de motivo. O baú segue a mesma regra de antes.
+- `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder` esvazia o volume da casa antes de montá-la: a casa deslocada para cruzar a borda do chunk caía às vezes sob a barreira da arena, e o destino era recusado por não ter ar acima.
+
 ## [0.4.134] — candidata, 2026-11-24
 
 - O pulo maior entra no pulo seguinte ao que bateu: a colisão é conferida a todo tique e vale mesmo quando a navegação largou o caminho na queda (Regra 171). Na cerca do curral, um pulo padrão perdido em vez de dois.

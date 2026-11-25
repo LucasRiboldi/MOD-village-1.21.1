@@ -466,10 +466,10 @@ public class ChestPlacerGameTest implements FabricGameTest {
      * origem, fique na primeira coluna de um chunk e cama−1, o destino, no
      * chunk anterior.
      *
-     * <p>O deslocamento pode levar a casa para fora da área que o GameTest
-     * mantém carregada, e {@code repair} exige a casa inteira carregada. Os
-     * chunks da casa são forçados como em jogo, perto do jogador, e o reparo
-     * roda no tick seguinte; os que estavam descarregados vão na mensagem.
+     * <p>O deslocamento leva a casa para fora da arena: os chunks dela são
+     * forçados como em jogo, perto do jogador, o reparo roda no tick seguinte,
+     * e o volume da casa é esvaziado antes de montar, porque a barreira da
+     * arena acima do destino recusava o lugar ({@code unsafe(above=barrier)}).
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "placer_move_chunk")
     public void repairsAProvenChestAcrossAChunkBorder(TestContext context) {
@@ -509,9 +509,14 @@ public class ChestPlacerGameTest implements FabricGameTest {
     }
 
     private static void moveAcrossTheBorder(TestContext context, BlockPos relativeBed, List<String> unloaded) {
-        layBed(context, relativeBed);
         var world = context.getWorld();
         BlockPos bed = context.getAbsolutePos(relativeBed);
+        // A casa deslocada pode cair sobre a barreira em volta da arena ou sobre sobra de outro teste: o volume dela
+        // começa vazio, senão o lugar acima do destino deixa de ser ar.
+        for (BlockPos at : BlockPos.iterate(bed.add(-2, -1, -2), bed.add(2, 2, 2))) {
+            world.setBlockState(at, Blocks.AIR.getDefaultState());
+        }
+        layBed(context, relativeBed);
         BlockBox room = room(context, relativeBed);
         BlockPos source = ChestPlacer.placeForOriginalVillageBed(world, bed, room).chest().orElseThrow();
         ((ChestBlockEntity) world.getBlockEntity(source)).setStack(4, new ItemStack(Items.EMERALD, 5));
@@ -531,8 +536,9 @@ public class ChestPlacerGameTest implements FabricGameTest {
                 + " descarregados antes de forçar=" + unloaded;
         context.assertFalse(new ChunkPos(source).equals(new ChunkPos(target)),
                 "o cenário devia cruzar a borda do chunk (" + where + ")");
-        context.assertTrue(HomeChestMoves.repair(world, storages, worker, bed, room),
-                "o baú do mod deveria migrar para a parede livre do chunk vizinho (" + where + ")");
+        var refusal = HomeChestMoves.move(world, storages, worker, bed, room);
+        context.assertTrue(refusal.isEmpty(), "o baú do mod deveria migrar para a parede livre do chunk vizinho ("
+                + where + " cama=" + bed.toShortString() + " motivo=" + refusal.orElse("-") + ")");
         BlockPos destination = MinecraftTypeAdapter.toBlockPos(storages.of(worker).orElseThrow().chestPosition());
         context.assertTrue(destination.equals(target) && world.getBlockState(source).isAir(),
                 "o registro precisa apontar para o baú novo (" + where + ")");
