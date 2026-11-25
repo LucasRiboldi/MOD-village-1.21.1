@@ -17,6 +17,15 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.139] — candidata, 2026-11-25
+
+Plano de alturas da vila (ADR-063), fase 3: o Zelador mexe no chão. Regra 357.
+
+- O Zelador leva cada coluna da caixa da vila à altura do plano, nesta ordem: frente de porta, caminho, faixa em volta das estruturas, calombo e buraco pequenos, o resto. Substitui a fila de quadrados (Regra 323) e o alisamento em volta da casa pronta (Regra 297).
+- O plano corta calombos e tapa buracos de até 4 colunas e anda até o chão sem abrir degrau maior que 1 (corte mínimo); fora da caixa da vila nada muda.
+- O trabalho do dia cresce com o atraso: 256 colunas mais 1 a cada 4 pendentes, até 1.024. Com o atraso parado 3 dias, a vila abre a segunda vaga de Zelador (`GradeCrew`); a linha `VC_GRADE` mostra `keepers=`.
+- `GradeWorkGameTest`: do alto de um paredão de 3 até a porta da casa embaixo, a pé, com degrau de no máximo 1.
+
 ## [0.4.138] — candidata, 2026-11-25
 
 Plano de alturas da vila (ADR-063, G5 do jogo da 0.4.136), fases 1 e 2: só lê, nenhum bloco muda.

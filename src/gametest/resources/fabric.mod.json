@@ -86,6 +86,7 @@
       "com.villagecolony.fabric.work.SmoothRefusalGameTest",
       "com.villagecolony.fabric.work.FallingSandGuardGameTest",
       "com.villagecolony.fabric.work.GradeSurveyGameTest",
+      "com.villagecolony.fabric.work.GradeWorkGameTest",
       "com.villagecolony.fabric.integration.LotEdgeGameTest",
       "com.villagecolony.fabric.work.WindowEquivalentGameTest",
       "com.villagecolony.fabric.work.WoodInPiecesGameTest",

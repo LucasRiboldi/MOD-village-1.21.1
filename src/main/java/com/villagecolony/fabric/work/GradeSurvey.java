@@ -23,24 +23,21 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * A leitura do mundo para o plano de alturas — ADR-063, fase 2. Monta o {@link GradePlan} da caixa da vila mais
- * {@value #MARGIN} blocos e diz o que ele mexeria, sem pôr nem tirar bloco nenhum:
+ * A leitura do mundo para o plano de alturas — ADR-063, fase 2. Monta o {@link GradePlan} da caixa da vila e diz o que
+ * ele mexeria, sem pôr nem tirar bloco nenhum. Fora da caixa nada muda nem puxa o plano: a ribanceira ao lado da vila não
+ * a arrasta para baixo.
  *
  * <ul>
  *   <li><b>fora:</b> a pegada das construções da colônia e das peças da vila gerada, a folga da boca da mina, o chão do
  *   jogador, a água e o que não é chão (árvore, telhado);</li>
- *   <li><b>âncora:</b> a frente de cada porta, na altura do piso dela; a faixa de {@value #RING} bloco em volta de cada
- *   estrutura ({@value #LARGE_PEN_RING} no curral grande), na altura da entrada dela; e a borda da margem, no chão
- *   natural;</li>
+ *   <li><b>âncora:</b> a frente de cada porta, na altura do piso dela, e a faixa de {@value #RING} bloco em volta de
+ *   cada estrutura ({@value #LARGE_PEN_RING} no curral grande), na altura da entrada dela;</li>
  *   <li><b>caminho:</b> o bloco de caminho e o material de rua no topo da coluna.</li>
  * </ul>
  *
  * A linha diária {@code VC_GRADE} sai no fim do expediente, junto da {@code VC_TERRAIN} ({@link TerrainReport}).
  */
 public final class GradeSurvey {
-
-    /** Quanto o plano passa da caixa da vila: a borda dele é chão natural e não muda. */
-    public static final int MARGIN = 8;
 
     /** A faixa em volta de cada estrutura. */
     static final int RING = 1;
@@ -63,20 +60,55 @@ public final class GradeSurvey {
         private final GradePlan.Kind[][] kinds;
         private final int[][] anchors;
         private final int[][] natural;
+        private final boolean[][] fronts;
         private final GradePlan.Result result;
         private final int doors;
         private final long millis;
 
-        Survey(int minX, int minZ, GradePlan.Kind[][] kinds, int[][] anchors, int[][] natural, GradePlan.Result result,
-               int doors, long millis) {
+        Survey(int minX, int minZ, GradePlan.Kind[][] kinds, int[][] anchors, int[][] natural, boolean[][] fronts,
+               GradePlan.Result result, int doors, long millis) {
             this.minX = minX;
             this.minZ = minZ;
             this.kinds = kinds;
             this.anchors = anchors;
             this.natural = natural;
+            this.fronts = fronts;
             this.result = result;
             this.doors = doors;
             this.millis = millis;
+        }
+
+        /**
+         * As colunas fora do alvo, na ordem do Zelador (ADR-063 §3): frente de porta, caminho, faixa das estruturas,
+         * calombo e buraco pequenos, o resto. Cada item é {x, z, alvo, ordem}.
+         */
+        public List<int[]> work() {
+            int[][] target = result.target();
+            List<int[]> work = new ArrayList<>();
+
+            for (int x = 0; x < kinds.length; x++) {
+                for (int z = 0; z < kinds[0].length; z++) {
+                    if (kinds[x][z] != GradePlan.Kind.OUT && target[x][z] != natural[x][z]) {
+                        work.add(new int[] {minX + x, minZ + z, target[x][z], rank(x, z)});
+                    }
+                }
+            }
+
+            work.sort(java.util.Comparator.comparingInt((int[] item) -> item[3]));
+
+            return work;
+        }
+
+        private int rank(int x, int z) {
+            if (fronts[x][z]) {
+                return 0;
+            }
+
+            return switch (kinds[x][z]) {
+                case PATH -> 1;
+                case ANCHOR -> 2;
+                default -> result.isSmallFeature(x, z) ? 3 : 4;
+            };
         }
 
         public GradePlan.Kind kind(int x, int z) {
@@ -155,10 +187,10 @@ public final class GradeSurvey {
 
         long began = System.nanoTime();
         VillageBounds box = bounds.get();
-        int minX = box.minX() - MARGIN;
-        int minZ = box.minZ() - MARGIN;
-        int width = box.maxX() + MARGIN - minX + 1;
-        int depth = box.maxZ() + MARGIN - minZ + 1;
+        int minX = box.minX();
+        int minZ = box.minZ();
+        int width = box.maxX() - minX + 1;
+        int depth = box.maxZ() - minZ + 1;
 
         if (width > MAX_SIDE || depth > MAX_SIDE) {
             VillageColonyMod.LOGGER.info("VC_GRADE version=1 colony={} skipped=too_large width={} depth={}",
@@ -174,12 +206,11 @@ public final class GradeSurvey {
         readColumns(world, colony, minX, minZ, kinds, natural, structures);
 
         int doors = 0;
+        boolean[][] fronts = new boolean[width][depth];
 
         for (Structure structure : structures) {
-            doors += anchorStructure(world, structure, minX, minZ, kinds, anchors, natural);
+            doors += anchorStructure(world, structure, minX, minZ, kinds, anchors, natural, fronts);
         }
-
-        anchorBorder(kinds, anchors, natural);
 
         GradePlan plan = new GradePlan(width, depth);
 
@@ -196,7 +227,7 @@ public final class GradeSurvey {
             }
         }
 
-        return Optional.of(new Survey(minX, minZ, kinds, anchors, natural, plan.plan(), doors,
+        return Optional.of(new Survey(minX, minZ, kinds, anchors, natural, fronts, plan.plan(), doors,
                 (System.nanoTime() - began) / 1_000_000));
     }
 
@@ -277,7 +308,7 @@ public final class GradeSurvey {
      * @return quantas portas a estrutura tem
      */
     private static int anchorStructure(ServerWorld world, Structure structure, int minX, int minZ, GradePlan.Kind[][] kinds,
-                                       int[][] anchors, int[][] natural) {
+                                       int[][] anchors, int[][] natural, boolean[][] fronts) {
         BlockBox box = structure.box();
         List<DoorFronts.Entrance> entrances = DoorFronts.entrances(world, new BlockPos(box.getMinX(), box.getMinY(),
                 box.getMinZ()), new BlockPos(box.getMaxX(), box.getMaxY(), box.getMaxZ()));
@@ -311,24 +342,11 @@ public final class GradeSurvey {
             if (dx >= 0 && dz >= 0 && dx < kinds.length && dz < kinds[0].length) {
                 kinds[dx][dz] = GradePlan.Kind.ANCHOR;
                 anchors[dx][dz] = entrance.front().getY();
+                fronts[dx][dz] = true;
             }
         }
 
         return entrances.size();
-    }
-
-    /** A borda do plano fica no chão natural. */
-    private static void anchorBorder(GradePlan.Kind[][] kinds, int[][] anchors, int[][] natural) {
-        for (int x = 0; x < kinds.length; x++) {
-            for (int z = 0; z < kinds[0].length; z++) {
-                boolean edge = x == 0 || z == 0 || x == kinds.length - 1 || z == kinds[0].length - 1;
-
-                if (edge && (kinds[x][z] == GradePlan.Kind.FREE || kinds[x][z] == GradePlan.Kind.PATH)) {
-                    kinds[x][z] = GradePlan.Kind.ANCHOR;
-                    anchors[x][z] = natural[x][z];
-                }
-            }
-        }
     }
 
     private static int median(List<int[]> band, int[][] natural) {

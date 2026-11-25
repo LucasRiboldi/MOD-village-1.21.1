@@ -69,8 +69,8 @@ public class GradeSurveyGameTest implements FabricGameTest {
             world.setBlockState(base.add(6, 1, z), Blocks.DIRT_PATH.getDefaultState());
         }
 
-        BlockPos min = base.add(9, 0, 9);
-        BlockPos max = base.add(14, 4, 14);
+        BlockPos min = base.add(2, 0, 2);
+        BlockPos max = base.add(21, 4, 21);
         Colony colony = Colony.create(colonyId, MinecraftTypeAdapter.toColonyPos(base.add(12, 1, 12)));
         colony.restoreBounds(new VillageBounds(min.getX(), min.getY(), min.getZ(), max.getX(), max.getY(), max.getZ()));
         VillageColonyMod.BUILDINGS.register(new Building(houseId, colonyId, ResourceId.vanilla("house"),

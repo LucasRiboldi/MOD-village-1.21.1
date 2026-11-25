@@ -53,7 +53,7 @@ public class TerrainQueueGameTest implements FabricGameTest {
                     "o buraco isolado ficou atrás dos degraus do planalto: topo em " + top(context, 20, 20));
         } finally {
             mason.discard();
-            TerrainQueue.clearAll();
+            GradeWork.clearAll();
             GroundSmoothing.clearAll();
         }
 
@@ -77,7 +77,7 @@ public class TerrainQueueGameTest implements FabricGameTest {
                     "o Zelador deixou o bloco isolado: fez " + done + ", topo em " + top(context, 6, 18));
         } finally {
             idle.discard();
-            TerrainQueue.clearAll();
+            GradeWork.clearAll();
             GroundSmoothing.clearAll();
         }
 

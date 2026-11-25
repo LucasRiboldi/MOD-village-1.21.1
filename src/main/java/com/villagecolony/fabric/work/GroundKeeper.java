@@ -2,12 +2,10 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
-import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.coordination.WorkClock;
-import com.villagecolony.fabric.integration.SiteSurroundings;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -30,7 +28,7 @@ import java.util.UUID;
  *   <li>o caminho fora da linha volta ao solo do bioma, para ficar uma linha só ({@link PathTrim});</li>
  *   <li>entre as construções: o lote da obra aberta, o vão sob a peça da vila, o vão entre as bases e a volta das
  *       casas, na altura da rua da construção e com o excesso limpo;</li>
- *   <li>a fila de quadrados do terreno, com desnível de até 1 ({@link TerrainQueue}, Regra 323);</li>
+ *   <li>o plano de alturas da vila inteira, com degrau de até 1 ({@link GradeWork}, Regra 357, ADR-063);</li>
  *   <li>a neve que a obra pede ({@link SnowShovel}).</li>
  * </ol>
  * No fim do expediente, a linha {@code VC_KEEPER} conta o que falta e o que ele fez no dia ({@link TerrainReport}).
@@ -46,8 +44,6 @@ public final class GroundKeeper {
     /** Colônia → [trechos a calçar, caminho fora da linha], da última leitura do grafo. */
     private static final Map<UUID, long[]> GRAPH = new HashMap<>();
 
-    /** Qual construção ele arruma em volta na próxima vez, por colônia. */
-    private static final Map<UUID, Integer> NEXT_BUILDING = new HashMap<>();
 
     static {
         ServerMemory.register(GroundKeeper.class, GroundKeeper::clearAll);
@@ -124,16 +120,19 @@ public final class GroundKeeper {
             return between;
         }
 
-        int levelled = TerrainQueue.pass(world, colony, keeper);
+        // O plano de alturas da vila inteira (Regra 357, ADR-063): substitui a fila de quadrados da Regra 323.
+        int levelled = GradeWork.pass(world, colony);
 
         if (levelled > 0) {
+            ActionJournal.action(keeper.getUuid(), "LEVELLED", "minecraft:dirt", levelled, keeper.getBlockPos(),
+                    "the height plan");
             count(world, colony.id(), 3, levelled);
         }
 
         return levelled;
     }
 
-    /** O chão entre as construções, na altura da rua de cada uma e com o excesso limpo (Regras 242, 297 e 304). */
+    /** O chão entre as construções: o lote da obra aberta, o vão sob a peça, o miolo do curral e o vão entre as bases. */
     private static int betweenBuildings(ServerWorld world, Colony colony, VillagerEntity keeper) {
         int repaired = GroundSmoothing.aroundTheOpenBuild(world, colony, keeper);
 
@@ -164,23 +163,8 @@ public final class GroundKeeper {
             return gaps;
         }
 
-        List<Building> standing = VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()
-                .filter(Building::finished)
-                .toList();
-
-        if (standing.isEmpty()) {
-            return 0;
-        }
-
-        Building next = standing.get(NEXT_BUILDING.merge(colony.id(), 1, Integer::sum) % standing.size());
-        int levelled = SiteSurroundings.level(world, next);
-
-        if (levelled > 0) {
-            ActionJournal.action(keeper.getUuid(), "LEVELLED", next.blueprint().toString(), levelled, null,
-                    "around the house");
-        }
-
-        return levelled;
+        // A volta da casa pronta não é mais alisada aqui: o plano de alturas manda nela (Regra 357, ADR-063).
+        return 0;
     }
 
     /** O Zelador calçou {@code blocks} da linha do grafo. */
@@ -222,6 +206,5 @@ public final class GroundKeeper {
     static void clearAll() {
         DAY.clear();
         GRAPH.clear();
-        NEXT_BUILDING.clear();
     }
 }

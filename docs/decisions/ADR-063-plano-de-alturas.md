@@ -1,8 +1,8 @@
 # ADR-063 — O plano de alturas da vila
 
 **Estado:** aceita pelo autor em 2026-11-25 (G5 do jogo da 0.4.136, as quatro decisões 🅲), sobre a pesquisa
-`docs/research/2026-11-25-plano-de-alturas.md`. Implementação em fases (abaixo); as fases 1 e 2 só leem (0.4.138, linha `VC_GRADE`), e a regra nasce com a fase 3,
-que mexe no chão. Substitui a fila de quadrados da Regra 323 e o alisamento em volta da casa pronta da Regra 297. Emenda a ADR-059
+`docs/research/2026-11-25-plano-de-alturas.md`. Implementação em fases (abaixo); as fases 1 e 2 só leem (0.4.138, linha `VC_GRADE`), e a fase 3 (0.4.139) é a
+Regra 357, que mexe no chão. Substitui a fila de quadrados da Regra 323 e o alisamento em volta da casa pronta da Regra 297. Emenda a ADR-059
 (item 2: uma vaga de Zelador por vila).
 
 ## Contexto
@@ -21,14 +21,14 @@ volta de cada estrutura, a começar pelo curral grande.
 
 ### 1. Uma altura-alvo para cada coluna, calculada de uma vez
 
-A colônia calcula um **plano de alturas** para a caixa da vila mais uma margem, e o Zelador só executa o plano.
+A colônia calcula um **plano de alturas** para a caixa da vila, e o Zelador só executa o plano. Fora da caixa nada muda
+nem puxa o plano: a ribanceira ao lado da vila não a arrasta para baixo.
 
 - **Altura de uma coluna:** o `y` do bloco de chão de cima, onde se pisa.
 - **Âncora:** coluna cuja altura não se discute:
   - a frente de cada porta e portão, na altura do piso da entrada;
   - a faixa em volta de cada estrutura, de 1 bloco (2 no curral grande), na altura do chão de entrada dela. Vale para a
     construção da colônia e para a peça da vila gerada (decisão 3);
-  - a borda da margem, no chão natural;
   - a margem da água, na altura da água (decisão 4).
 - **Fora do plano:** a pegada das estruturas, a obra aberta e o lote dela, a folga da boca da mina (Regra 356), o chão
   do jogador (Regra 334) e a água.
@@ -36,9 +36,11 @@ A colônia calcula um **plano de alturas** para a caixa da vila mais uma margem,
   contam 4 vizinhos e contornam o que está fora do plano. Toda superfície entre `L` e `U` tem degrau de no máximo 1 e toca
   cada âncora na altura dela.
 - **Partida:** `limitar(natural, L, U)`. A coluna fica onde está, se cabe; senão sobe até `L` ou desce até `U`.
-- **Alvo:** a média entre o maior relevo de degrau 1 abaixo da partida (o corte) e o menor acima dela (o aterro). Os dois
-  têm degrau 1, então a média também; o paredão longe das âncoras vira encosta, metade cortada e metade aterrada, e o
-  chão que já anda de 1 em 1 fica onde está (`GradePlan`).
+- **Calombo e buraco pequenos:** antes da conta, o grupo de até 4 colunas que se destaca do terreno em volta vai ao
+  nível em volta (o que a Regra 323 pedia), menos o que encosta no que fica fora do plano.
+- **Alvo:** parte da média entre o maior relevo de degrau 1 abaixo da partida (o corte) e o menor acima dela (o aterro),
+  e cada coluna anda até o chão sem abrir degrau maior que 1 nem sair do envelope (corte mínimo). O paredão vira encosta
+  e o chão que já anda de 1 em 1 fica onde está (`GradePlan`).
 - **Caminho plano:** a coluna do grafo toma a altura da vizinha de caminho já decidida, quando cabe no envelope. Assim o
   caminho só sobe 1 onde precisa.
 - **Paredão** (decisão 3): o paredão de geração dentro da faixa de uma estrutura vira degraus pelo próprio envelope. Os
@@ -73,9 +75,9 @@ junto da água (`TODO.md`, PR #113), sem parede reta. A fase 5 espera a escolha 
 
 | Fase | O que entra | Prova |
 |---|---|---|
-| 1 | cálculo do plano no `core/` (sem Minecraft): âncoras, envelope, alvo, caminho plano, conflitos | teste de unidade e de propriedade (jqwik): nenhum vizinho com diferença > 1 fora dos conflitos, toda âncora na altura dela, coluna que cabe não se mexe |
-| 2 | leitura do mundo para o plano (`fabric/`): alturas, âncoras, o que fica fora; `VC_GRADE` diário | GameTest: plano lido de uma arena com casa, curral, caminho e mina |
-| 3 | o Zelador executa o plano, com o orçamento pelo atraso e o segundo Zelador; sai a fila de quadrados (Regra 323) e a Regra 297 na casa pronta | GameTest de acesso: depois do plano, uma busca a pé (degrau ≤ 1) do centro alcança todas as portas |
+| 1 ✅ 0.4.138 | cálculo do plano no `core/` (sem Minecraft): âncoras, envelope, alvo, caminho plano, conflitos | teste de unidade e de propriedade (jqwik): nenhum vizinho com diferença > 1 fora dos conflitos, toda âncora na altura dela, coluna que cabe não se mexe |
+| 2 ✅ 0.4.138 | leitura do mundo para o plano (`fabric/`): alturas, âncoras, o que fica fora; `VC_GRADE` diário | GameTest: plano lido de uma arena com casa, curral, caminho e mina |
+| 3 ✅ 0.4.139 | o Zelador executa o plano, com o orçamento pelo atraso e o segundo Zelador; sai a fila de quadrados (Regra 323) e a Regra 297 na casa pronta (Regra 357) | GameTest de acesso: depois do plano, uma busca a pé (degrau ≤ 1) do centro alcança todas as portas |
 | 4 | rampa e escada nos conflitos | GameTest: duas portas a 4 de altura e 3 passos ficam ligadas por rampa ou escada |
 | 5 | praia na margem, com o contorno natural | depende da escolha do plano da água |
 

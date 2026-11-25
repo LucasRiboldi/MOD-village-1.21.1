@@ -58,7 +58,7 @@ class GradePlanProperties {
         }
     }
 
-    /** Sem conflito, todo vizinho dentro do plano fica a no máximo 1, e toda âncora na altura dela. */
+    /** Sem conflito, todo vizinho dentro do plano fica a no máximo 1 (menos entre duas âncoras), e toda âncora na altura dela. */
     @Property(tries = 400)
     void withoutConflictEveryStepIsAtMostOne(@ForAll("grids") Grid grid) {
         GradePlan.Result result = grid.toPlan().plan();
@@ -79,10 +79,15 @@ class GradePlanProperties {
                 if (grid.role()[x][z] == 2 && target[x][z] != grid.anchor()[x][z]) {
                     throw new AssertionError("âncora fora da altura em " + x + "," + z);
                 }
-                if (x + 1 < target.length && grid.role()[x + 1][z] != 3 && Math.abs(target[x + 1][z] - target[x][z]) > 1) {
+                boolean anchored = grid.role()[x][z] == 2;
+
+                // Duas âncoras vizinhas mandam nas duas colunas: o degrau entre elas é delas, não do plano.
+                if (x + 1 < target.length && grid.role()[x + 1][z] != 3 && !(anchored && grid.role()[x + 1][z] == 2)
+                        && Math.abs(target[x + 1][z] - target[x][z]) > 1) {
                     throw new AssertionError("degrau maior que 1 entre " + x + "," + z + " e o vizinho em x");
                 }
-                if (z + 1 < target[0].length && grid.role()[x][z + 1] != 3 && Math.abs(target[x][z + 1] - target[x][z]) > 1) {
+                if (z + 1 < target[0].length && grid.role()[x][z + 1] != 3 && !(anchored && grid.role()[x][z + 1] == 2)
+                        && Math.abs(target[x][z + 1] - target[x][z]) > 1) {
                     throw new AssertionError("degrau maior que 1 entre " + x + "," + z + " e o vizinho em z");
                 }
             }

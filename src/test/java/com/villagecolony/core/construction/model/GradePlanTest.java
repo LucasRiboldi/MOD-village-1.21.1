@@ -102,4 +102,38 @@ class GradePlanTest {
         assertEquals(70, result.target()[0][0]);
         assertEquals(64, result.target()[3][0]);
     }
+
+    /** O calombo de uma coluna desce ao chão em volta, sem levantar as vizinhas (Regra 323). */
+    @Test
+    void aSmallBumpIsCutDownWithoutRaisingItsNeighbours() {
+        GradePlan plan = new GradePlan(7, 7);
+
+        plan.ground(3, 3, 3).anchor(0, 0, 0);
+
+        GradePlan.Result result = plan.plan();
+        int[][] target = result.target();
+
+        for (int x = 0; x < 7; x++) {
+            for (int z = 0; z < 7; z++) {
+                assertEquals(0, target[x][z], "o calombo deixou o chão em " + x + "," + z + ": "
+                        + java.util.Arrays.deepToString(target));
+            }
+        }
+        assertTrue(result.isSmallFeature(3, 3), "o calombo não foi marcado para ir antes");
+    }
+
+    /** O buraco de uma coluna sobe ao chão em volta (Regra 323). */
+    @Test
+    void aSmallPitIsFilled() {
+        GradePlan plan = new GradePlan(7, 7);
+
+        for (int x = 0; x < 7; x++) {
+            for (int z = 0; z < 7; z++) {
+                plan.ground(x, z, 5);
+            }
+        }
+        plan.ground(3, 3, 4).anchor(0, 0, 5);
+
+        assertEquals(5, plan.plan().target()[3][3]);
+    }
 }

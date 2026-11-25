@@ -16,10 +16,13 @@ import java.util.PriorityQueue;
  *   <li><b>Envelope das âncoras:</b> em cada coluna, {@code L = max(âncora − passos)} e {@code U = min(âncora + passos)},
  *   com os passos contornando o que fica fora do plano. Onde {@code L > U}, duas âncoras estão mais longe em altura do que
  *   em passos: é um {@link Conflict}, para a rampa ou a escada.</li>
- *   <li><b>Partida:</b> a coluna livre fica no chão natural se ele cabe no envelope; senão vai à borda dele.</li>
+ *   <li><b>Calombo e buraco pequenos:</b> o grupo de até {@link VillageSurface#SMALL_BUMP} colunas que se destaca do
+ *   terreno em volta, para cima ou para baixo, vai ao nível em volta (Regra 323: nada de buraco ou bloco isolado).</li>
+ *   <li><b>Partida:</b> a coluna livre fica nesse chão se ele cabe no envelope; senão vai à borda dele.</li>
  *   <li><b>Degrau 1:</b> a média entre o maior relevo de degrau 1 abaixo da partida (o corte) e o menor acima dela (o
- *   aterro). Os dois têm degrau 1, então a média também tem; o paredão vira encosta, metade cortada e metade aterrada, e
- *   o chão que já anda de 1 em 1 fica onde está.</li>
+ *   aterro). Os dois têm degrau 1, então a média também tem.</li>
+ *   <li><b>Corte mínimo:</b> partindo da média, cada coluna anda até o chão sem sair de vizinha mais alta − 1 e mais
+ *   baixa + 1 nem do envelope; o paredão vira encosta e o chão que já anda de 1 em 1 fica onde está.</li>
  *   <li><b>Caminho plano:</b> a coluna de caminho toma a altura da vizinha de caminho ou âncora quando isso não abre
  *   degrau maior que 1 com nenhuma vizinha e cabe no envelope. O caminho só sobe onde precisa.</li>
  * </ol>
@@ -45,13 +48,20 @@ public final class GradePlan {
     /** O plano calculado. */
     public static final class Result {
         private final int[][] target;
+        private final boolean[][] small;
         private final List<Conflict> conflicts;
         private final int pending;
 
-        Result(int[][] target, List<Conflict> conflicts, int pending) {
+        Result(int[][] target, boolean[][] small, List<Conflict> conflicts, int pending) {
             this.target = target;
+            this.small = small;
             this.conflicts = List.copyOf(conflicts);
             this.pending = pending;
+        }
+
+        /** Se a coluna é de um calombo ou buraco pequeno: o Zelador começa por eles, depois das âncoras e do caminho. */
+        public boolean isSmallFeature(int x, int z) {
+            return small[x][z];
         }
 
         /** A altura-alvo de cada coluna ({@code [x][z]}); a de fora do plano é a natural. */
@@ -77,6 +87,9 @@ public final class GradePlan {
 
     /** Quantas passadas o caminho plano faz, no máximo. */
     static final int PATH_PASSES = 8;
+
+    /** Quantas passadas o corte mínimo faz, no máximo. */
+    static final int DESCENT_PASSES = 64;
 
     private static final int FAR = 1 << 24;
 
@@ -127,6 +140,7 @@ public final class GradePlan {
     }
 
     public Result plan() {
+        int[][] base = withoutSmallFeatures();
         int[][] low = spread(seedAnchors(-FAR), -1);
         int[][] high = spread(seedAnchors(FAR), 1);
         List<Conflict> conflicts = new ArrayList<>();
@@ -134,16 +148,18 @@ public final class GradePlan {
 
         for (int x = 0; x < width; x++) {
             for (int z = 0; z < depth; z++) {
-                start[x][z] = startOf(x, z, low[x][z], high[x][z], conflicts);
+                start[x][z] = startOf(x, z, base[x][z], low[x][z], high[x][z], conflicts);
             }
         }
 
         int[][] cut = spread(start, 1);
         int[][] fill = spread(start, -1);
         int[][] target = new int[width][depth];
+        boolean[][] small = new boolean[width][depth];
 
         for (int x = 0; x < width; x++) {
             for (int z = 0; z < depth; z++) {
+                small[x][z] = base[x][z] != natural[x][z];
                 target[x][z] = switch (kinds[x][z]) {
                     case OUT -> natural[x][z];
                     case ANCHOR -> anchors[x][z];
@@ -152,29 +168,157 @@ public final class GradePlan {
             }
         }
 
+        descend(target, base, low, high);
         flattenPaths(target, low, high);
 
-        return new Result(target, conflicts, pending(target));
+        return new Result(target, small, conflicts, pending(target));
     }
 
-    private int startOf(int x, int z, int low, int high, List<Conflict> conflicts) {
-        if (kinds[x][z] == Kind.OUT) {
-            return natural[x][z];
+    /** O chão natural com os calombos e buracos de até {@link VillageSurface#SMALL_BUMP} colunas no nível em volta. */
+    private int[][] withoutSmallFeatures() {
+        VillageSurface.Kind[][] roles = new VillageSurface.Kind[width][depth];
+        int[][] ground = new int[width][depth];
+        int[][] sunk = new int[width][depth];
+
+        for (int x = 0; x < width; x++) {
+            for (int z = 0; z < depth; z++) {
+                roles[x][z] = switch (kinds[x][z]) {
+                    case OUT -> VillageSurface.Kind.SKIP;
+                    case ANCHOR -> VillageSurface.Kind.FIXED;
+                    default -> VillageSurface.Kind.FREE;
+                };
+                ground[x][z] = kinds[x][z] == Kind.ANCHOR ? anchors[x][z] : natural[x][z];
+            }
         }
 
-        if (low > high) {
-            conflicts.add(new Conflict(x, z, low, high));
+        int[][] cut = VillageSurface.cutSmallBumps(ground, roles);
+
+        for (int x = 0; x < width; x++) {
+            for (int z = 0; z < depth; z++) {
+                sunk[x][z] = -cut[x][z];
+            }
+        }
+
+        int[][] filled = VillageSurface.cutSmallBumps(sunk, roles);
+
+        for (int x = 0; x < width; x++) {
+            for (int z = 0; z < depth; z++) {
+                filled[x][z] = kinds[x][z] == Kind.OUT ? natural[x][z] : -filled[x][z];
+            }
+        }
+
+        keepWhatLeansOnTheOut(filled, ground);
+
+        return filled;
+    }
+
+    /**
+     * O grupo corrigido que encosta no que fica fora do plano volta ao chão: a coluna entre a pegada de uma casa e a
+     * encosta não é calombo, só não se vê o chão do outro lado.
+     */
+    private void keepWhatLeansOnTheOut(int[][] corrected, int[][] ground) {
+        boolean[][] seen = new boolean[width][depth];
+
+        for (int x = 0; x < width; x++) {
+            for (int z = 0; z < depth; z++) {
+                if (seen[x][z] || corrected[x][z] == ground[x][z]) {
+                    continue;
+                }
+
+                List<int[]> group = new ArrayList<>();
+                Deque<int[]> open = new ArrayDeque<>();
+                boolean leans = false;
+
+                seen[x][z] = true;
+                open.add(new int[] {x, z});
+
+                while (!open.isEmpty()) {
+                    int[] at = open.poll();
+                    group.add(at);
+
+                    for (int[] side : SIDES) {
+                        int nx = at[0] + side[0];
+                        int nz = at[1] + side[1];
+
+                        if (nx < 0 || nz < 0 || nx >= width || nz >= depth) {
+                            continue;
+                        }
+                        if (kinds[nx][nz] == Kind.OUT) {
+                            leans = true;
+                        } else if (!seen[nx][nz] && corrected[nx][nz] != ground[nx][nz]) {
+                            seen[nx][nz] = true;
+                            open.add(new int[] {nx, nz});
+                        }
+                    }
+                }
+
+                if (leans) {
+                    for (int[] at : group) {
+                        corrected[at[0]][at[1]] = ground[at[0]][at[1]];
+                    }
+                }
+            }
+        }
+    }
+
+    /** O corte mínimo: cada coluna anda até o chão sem abrir degrau maior que 1 nem sair do envelope. */
+    private void descend(int[][] target, int[][] base, int[][] low, int[][] high) {
+        for (int pass = 0; pass < DESCENT_PASSES; pass++) {
+            boolean changed = false;
+
+            for (int x = 0; x < width; x++) {
+                for (int z = 0; z < depth; z++) {
+                    if (kinds[x][z] == Kind.OUT || kinds[x][z] == Kind.ANCHOR || low[x][z] > high[x][z]) {
+                        continue;
+                    }
+
+                    int floor = low[x][z];
+                    int ceiling = high[x][z];
+
+                    for (int[] side : SIDES) {
+                        int nx = x + side[0];
+                        int nz = z + side[1];
+
+                        if (nx >= 0 && nz >= 0 && nx < width && nz < depth && kinds[nx][nz] != Kind.OUT) {
+                            floor = Math.max(floor, target[nx][nz] - 1);
+                            ceiling = Math.min(ceiling, target[nx][nz] + 1);
+                        }
+                    }
+
+                    int want = Math.max(floor, Math.min(ceiling, base[x][z]));
+
+                    if (floor <= ceiling && want != target[x][z]) {
+                        target[x][z] = want;
+                        changed = true;
+                    }
+                }
+            }
+
+            if (!changed) {
+                return;
+            }
+        }
+    }
+
+    private int startOf(int x, int z, int ground, int low, int high, List<Conflict> conflicts) {
+        if (kinds[x][z] == Kind.OUT) {
+            return natural[x][z];
         }
 
         if (kinds[x][z] == Kind.ANCHOR) {
             return anchors[x][z];
         }
 
+        // Só a coluna que o plano molda: duas âncoras vizinhas fora do degrau 1 não têm onde pôr rampa.
+        if (low > high) {
+            conflicts.add(new Conflict(x, z, low, high));
+        }
+
         if (low > high) {
             return Math.floorDiv(low + high, 2);
         }
 
-        return Math.max(low, Math.min(high, natural[x][z]));
+        return Math.max(low, Math.min(high, ground));
     }
 
     /** A altura das âncoras, e {@code empty} no resto. */

@@ -31,9 +31,10 @@ import java.util.UUID;
  * com degrau de no máximo 1, pondo e tirando solo; qualquer tamanho e qualquer altura. Nunca mexe em construção, peça da
  * vila, obra ou bloco do jogador, em roça e água, nem na boca e na escada da mina.
  *
- * <p>Uma janela de {@link #WINDOW}×{@link #WINDOW} por passada, escolhida pela fila de quadrados da Regra 323
- * ({@link TerrainQueue}); nela, a mesma superfície do solo da geração ({@link VillageSurface}) com o anel da janela fixo, e
- * só {@link #EDITS} colunas por passada, as de maior diferença primeiro.
+ * <p>A janela de {@link #WINDOW}×{@link #WINDOW} (o lote da obra aberta, Regra 297) usa a mesma superfície do solo da
+ * geração ({@link VillageSurface}) com o anel da janela fixo, e só {@link #EDITS} colunas por passada, as de maior diferença
+ * primeiro. O chão da vila inteira é do plano de alturas ({@link GradeWork}, Regra 357), que leva cada coluna pela
+ * {@link #column} daqui.
  */
 final class GroundSmoothing {
 
@@ -408,6 +409,6 @@ final class GroundSmoothing {
     }
 
     static void clearAll() {
-        TerrainQueue.clearAll();
+        GradeWork.clearAll();
     }
 }
