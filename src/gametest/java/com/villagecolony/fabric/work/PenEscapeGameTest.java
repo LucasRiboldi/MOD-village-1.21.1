@@ -42,6 +42,9 @@ public final class PenEscapeGameTest implements FabricGameTest {
 
     private static final BlockPos GATE = new BlockPos(HIGH, 2, 5);
 
+    /** Prazo da saída sozinha pela cerca: um pulo padrão perdido, o maior e a descida pelo outro lado. */
+    private static final int LEAVE_ALONE_TICKS = 60;
+
     /**
      * Os chunks do cenário ficam forçados enquanto o teste corre. Sem isso, o
      * aldeão que pula a cerca pode cair num chunk vizinho que não tica
@@ -353,8 +356,12 @@ public final class PenEscapeGameTest implements FabricGameTest {
             context.complete();
         });
     }
-    /** Regra 159: isola a janela de inspeção com alvo fixo, navegação e salto reais. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "pen_escape_scan_race", tickLimit = 100)
+    /**
+     * Regras 159 e 171: com alvo fixo, navegação e salto reais, o aldeão sai do curral pela cerca sozinho, sem o
+     * {@link PenEscape} conduzir. O primeiro pulo é o padrão e bate na cerca (Regra 171), então a saída passa da
+     * primeira inspeção agendada; o prazo é {@link #LEAVE_ALONE_TICKS}.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "pen_escape_scan_race", tickLimit = 140)
     public void normalFenceNavigationCanLeaveBeforeTheScheduledScan(TestContext context) {
         pen(context, true);
         BlockPos floorMin = new BlockPos(-8, 0, -8);
@@ -410,7 +417,7 @@ public final class PenEscapeGameTest implements FabricGameTest {
             boolean outside = villager.getBoundingBox().maxX < fenceWest && villager.isOnGround()
                     && Math.abs(villager.getY() - target.getY()) < 0.001
                     && context.getWorld().getBlockState(villager.getBlockPos().down()).isOf(Blocks.STONE);
-            if (!outside && elapsed < 39) {
+            if (!outside && elapsed < LEAVE_ALONE_TICKS) {
                 // O alvo é a variável controlada; o motor continua calculando caminho e movendo o corpo.
                 villager.getBrain().remember(MemoryModuleType.WALK_TARGET, new WalkTarget(target, 1.0f, 0));
                 villager.getNavigation().startMovingTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5, 1.0);
@@ -418,8 +425,8 @@ public final class PenEscapeGameTest implements FabricGameTest {
             }
             finished[0] = true;
             try {
-                context.assertTrue(outside && airborne[0] && elapsed < 39,
-                        "saída completa antes da inspeção não demonstrada; elapsed=" + elapsed + "; veja PEN_DIAG");
+                context.assertTrue(outside && airborne[0] && elapsed < LEAVE_ALONE_TICKS,
+                        "saída pela cerca sem socorro não demonstrada; elapsed=" + elapsed + "; veja PEN_DIAG");
                 context.assertFalse(escaping[0], "PenEscape conduziu o experimento");
                 context.assertTrue("ok".equals(fenceIntegrity(context, true)), "cerca ou portão alterados");
                 context.assertFalse(context.getBlockState(GATE).get(FenceGateBlock.OPEN), "portão abriu");

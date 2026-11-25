@@ -148,27 +148,51 @@ public final class ChestPlacer {
     /** Procura uma célula vazia, com parede, para o baú que perdeu o apoio. */
     static Optional<RepairSlot> repairSlot(ServerWorld world, BlockPos bedPoi, BlockBox house, BlockPos source,
                                            Predicate<BlockPos> available) {
+        return repairSlot(world, bedPoi, house, source, available, new ArrayList<>());
+    }
+
+    /** Como {@link #repairSlot}, anotando em {@code why} por que cada lugar foi recusado. */
+    static Optional<RepairSlot> repairSlot(ServerWorld world, BlockPos bedPoi, BlockBox house, BlockPos source,
+                                           Predicate<BlockPos> available, List<String> why) {
         Optional<Bed> bed = completeBed(world, bedPoi);
-        if (wallBeside(world, source).isPresent() || bed.isEmpty() || !isEnclosedRoom(world, bed.get(), house)) {
+        if (wallBeside(world, source).isPresent()) {
+            why.add("source_has_wall");
+            return Optional.empty();
+        }
+        if (bed.isEmpty()) {
+            why.add("bed_incomplete");
+            return Optional.empty();
+        }
+        if (!isEnclosedRoom(world, bed.get(), house)) {
+            why.add("room_not_enclosed");
             return Optional.empty();
         }
 
         List<BlockPos> spots = candidates(bed.get());
         if (!spots.contains(source)) {
+            why.add("source_not_beside_bed");
             return Optional.empty();
         }
         for (BlockPos spot : spots) {
-            if (!house.contains(spot) || !world.getBlockState(spot).isAir()
-                    || isDoorApproach(world, spot) || isStairApproach(world, spot)
-                    || !isSafeEmptyChestSpot(world, spot) || !available.test(spot)) {
-                continue;
+            String refused = !house.contains(spot) ? "outside_house"
+                    : !world.getBlockState(spot).isAir() ? "occupied"
+                    : isDoorApproach(world, spot) ? "door_approach"
+                    : isStairApproach(world, spot) ? "stair_approach"
+                    : !isSafeEmptyChestSpot(world, spot) ? "unsafe(" + unsafePart(world, spot) + ")"
+                    : !available.test(spot) ? "unavailable"
+                    : wallBeside(world, spot).isEmpty() ? "no_wall" : null;
+            if (refused == null) {
+                Direction wall = wallBeside(world, spot).orElseThrow();
+                return Optional.of(new RepairSlot(spot, wall.getOpposite(), bed.get().foot()));
             }
-            Optional<Direction> wall = wallBeside(world, spot);
-            if (wall.isPresent()) {
-                return Optional.of(new RepairSlot(spot, wall.get().getOpposite(), bed.get().foot()));
-            }
+            why.add(spot.toShortString() + ":" + refused);
         }
         return Optional.empty();
+    }
+
+    /** Se o baú ainda encosta numa parede; sem ela, a casa pede o reparo. */
+    static boolean leansOnWall(ServerWorld world, BlockPos chest) {
+        return wallBeside(world, chest).isPresent();
     }
 
     record RepairSlot(BlockPos position, Direction opening, BlockPos bedFoot) {
@@ -386,6 +410,17 @@ public final class ChestPlacer {
                 && world.getBlockState(spot.down()).isSolidBlock(world, spot.down())
                 && world.getBlockState(spot.up()).isAir()
                 && noAdjacentChest(world, spot);
+    }
+
+    /** Qual parte de {@link #isSafeEmptyChestSpot} falhou, para o registro da recusa. */
+    private static String unsafePart(ServerWorld world, BlockPos spot) {
+        if (!world.getBlockState(spot.down()).isSolidBlock(world, spot.down())) {
+            return "floor=" + world.getBlockState(spot.down()).getBlock();
+        }
+        if (!world.getBlockState(spot.up()).isAir()) {
+            return "above=" + world.getBlockState(spot.up()).getBlock();
+        }
+        return noAdjacentChest(world, spot) ? "replaceable" : "chest_beside";
     }
 
     private static boolean noAdjacentChest(ServerWorld world, BlockPos spot) {

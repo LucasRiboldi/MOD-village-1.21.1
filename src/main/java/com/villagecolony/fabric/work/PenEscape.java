@@ -218,9 +218,12 @@ public final class PenEscape {
             // Solto, ou preso por outra coisa que não cerca — buraco é do E47.
             SEEN_FREE.put(id, feet.toImmutable());
             PenLift.forget(id);
+            ShepherdPenGrace.forget(id);
 
             return false;
         }
+        // Regra 355: o pastor que entrou para tosquiar está trabalhando, até o prazo.
+        if (ShepherdPenGrace.holds(world, villager)) return false;
 
         // Para onde ia, antes de a fuga trocar o destino — estudo de 01-10, §8-A.
         PenEntryLog.record(world, villager, who(villager), feet, SEEN_FREE.remove(id));

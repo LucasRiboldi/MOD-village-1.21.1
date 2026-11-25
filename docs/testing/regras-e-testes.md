@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 254
+- **Cita a regra:** 255
 - **Só usa a classe indicada:** 84
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -181,7 +181,7 @@ classe prova menos ainda.
 | 168 | Currais da colônia: um grande misto prioritário por vila e seis modelos médios no rodízio… | cita | PenModelGameTest |
 | 169 | Passagem livre: aldeão da colônia quebra aos poucos as folhas naturais que bloqueiam seu… | classe | LeafPathsGameTest |
 | 170 | Lote sem árvores: ao escolher terreno para qualquer estrutura, remove a árvore natural in… | classe | BiomeCoverageGameTest, BiomeSiteGameTest, FoundationPreparationGameTest |
-| 171 | Pulo do aldeão (autor 11-04): a altura padrão do jogo; o maior só com obstáculo, cerca, e… | cita | VillagerRulesGameTest |
+| 171 | Pulo do aldeão (autor 11-04; pulo padrão primeiro desde a 0.4.125): a altura padrão do jo… | cita | PenEscapeGameTest, VillagerRulesGameTest |
 | 172 | Água aberta (autor 11-04): com mais de 5 blocos de água à frente, todo aldeão anda cerca… | cita | VillagerRulesGameTest |
 | 173 | Zona da obra limpa (autor 11-04): árvore, tronco, folha e flor saem em todas as alturas,… | cita | TreeClearingGameTest |
 | 174 | Ponte (autor 11-04): sem caminho a seco na zona da vila, o construtor atravessa a água, a… | fora de vigor |  |
@@ -365,3 +365,4 @@ classe prova menos ainda.
 | 352 | Tijolos de pedra quando falta argila (autor 21-11, análise A6, emenda à Regra 88): sem ar… | cita | BiomeBlueprintsGameTest, ItemStockGameTest |
 | 353 | Tochas da colônia na mina (autor 21-11, análise A2, exceção à Regra 212): o mineiro insta… | cita | ArchitectureRulesTest, MineLandingGameTest |
 | 354 | Cinco mudas por lenhador no bosque perto da vila (autor 21-11, análise A3a): o lenhador u… | cita | VillageGroveGameTest |
+| 355 | O pastor que tosquia dentro do cercado está trabalhando (autor 25-11, escolha C do N05):… | cita | ShepherdPenGraceGameTest |

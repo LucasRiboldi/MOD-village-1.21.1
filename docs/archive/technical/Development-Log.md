@@ -12655,3 +12655,29 @@ jogo perto do jogador, roda o reparo no tick seguinte e registra em
 O jogo da 0.4.122 teve três fazendeiros mortos por queda depois de resgates do mesmo telhado. A 0.4.123 já punha o aldeão direto no piso quando o salto passava da queda segura. Faltava a volta: o destino `338,87,1412` seguia o topo da chaminé (pedregulho e muro do construtor), e `ColonyPathing.standingOn` aceitava qualquer chão firme como lugar de pé do trecho da rede de ruas. Agora o trecho só para em chão de rua, caminho ou chão natural (Regras 151 e 160).
 
 `StreetRouteGameTest.aStreetColumnUnderAChimneyIsNotALeg` falhou antes da correção com "o topo da chaminé virou lugar de pé do trecho da rede". O `ColonyMergeTriggerGameTest` calçava a rede com pedregulho e passou a usar `dirt_path`. Os 120 GameTests focados (rota, telhado, mina, água, fusão, cerca, encalhe) passaram.
+
+## 2026-11-24 — 0.4.134, pulo maior na colisão seguinte
+
+`PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan` falhava sempre desde a 0.4.125 (15 de 15 no CI de 24-11, 5 de 5 isolado), não de vez em quando. O `PEN_DIAG` mostrou o aldeão perder dois pulos padrão na cerca: `VillagerMoves.needsHighJump` rodava a cada 2 tiques e saía falso sem caminho antes de ler `horizontalCollision`, e a navegação larga o caminho quando o aldeão cai do pulo. Agora a colisão vale a todo tique, com ou sem caminho (Regra 171); o pulo maior sai em t=22 em vez de t=35.
+
+O teste do curral não cabia mais em 39 tiques com o pulo padrão primeiro (saída em 41). Por escolha do autor, cobra a saída sozinha em até 60 tiques, sem o `PenEscape`. Mutação: com a produção antiga, `VillagerRulesGameTest.theHighJumpIsOnlyForObstacles` cai ("colisão sem caminho ativo não ativou o pulo maior"); o teste do curral passa em 54 tiques. Sentinela `fast` `20261124T234447Z`: 1.264 de 1.265 GameTests, falha só no baú na borda do chunk.
+
+## 2026-11-24 — 0.4.135, motivo do baú que fica e teste da borda do chunk
+
+O `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder` falhava 1 em 5 isolado. Por escolha do autor, o reparo passou a dizer o motivo (`HomeChestMoves.move`, `VC_HOME_CHEST_STAY`, recusa por lugar em `ChestPlacer.repairSlot`). A falha seguinte mostrou `unsafe(above=minecraft:barrier)` no destino: a casa deslocada para cruzar a borda caía sob a barreira da arena. O teste esvazia o volume da casa antes de montar (15 de 15 isolado; Sentinela `20261125T010329Z` 1.265/1.265). Prova da causa pelo próprio motivo registrado; não há teste que falhe sem o esvaziamento de forma determinística, porque a barreira depende da posição da arena.
+
+## 2026-11-25 — teste da fusão de colônias guiado como no jogo
+
+`ColonyMergeTriggerGameTest.aVillagerWalksBetweenTheTwoOldRoadNetworks` falhava 2 em 5 isolado: em metade das falhas o aldeão caía da rua, na outra travava. O rastro novo mostrou o caminho de 29 passos trocado no tique 40 por um de 14 que voltava, sem o teste pedir: o teste empurrava a navegação, e o Brain do aldeão a sobrescrevia. Por escolha do autor (🅲), o teste usa `WorkTargets.set` no expediente, como o ciclo da colônia, com chão firme em volta da rua e o rastro `VC_TEST_MERGE_WALK`. 10 de 10 isolado; mutação sem `RoadNetwork.merge` cai. Sentinela `20261125T022823Z` 1.264/1.265 (falha só N05).
+
+## 2026-11-25 — 0.4.136, o pastor que tosquia dentro do cercado
+
+O N05 caía 1 em 8 isolado e 3 em 15 no CI. O histórico de trocas acrescentado ao `ShepherdGameTest` mostrou o `PenEscape` assumir o pastor no tique em que ele pousou dentro do cercado e pô-lo para fora, com a tarefa largada. Por escolha do autor (🅲), a Regra 355 dá ao pastor com a tosquia reservada até 600 tiques cercado (`ShepherdPenGrace`, `VC_PEN_WORKING`). `ShepherdPenGraceGameTest` falhou sem a regra e passa com ela; Sentinela `20261125T031151Z` 1.266/1.266.
+
+## 2026-11-25 — N26: "dentro do curral" no teste da porteira
+
+O `PenTetherGameTest.theAnimalWalksFromASideLedgeThroughTheGate` caía 1 em 10 isolado com "a guia soltou antes do fechamento". O registro do primeiro tique sem guia mostrou a vaca dentro, encostada na porteira já fechada, e `ShepherdPens.isInside` falso, porque a pergunta também exige folga da porteira para fechar. Por escolha do autor (🅲), o teste mede dentro pelo bloco da vaca nas duas checagens e mantém o registro. 15 de 15 isolado; mutação com a guia solta na fase `ENTER` cai.
+
+## 2026-11-25 — escada da mina e o relógio dos outros lotes
+
+O `MineStepDownGameTest.theMinerDigsTheStairsDownFromTheMouth` caiu 1 em 15 no CI com o mineiro parado na boca. Hipótese: outro lote mudava a hora do mundo e o expediente acabava. Experimento com a noite posta no tique 50: sem proteção, a mesma mensagem do CI e `expediente=false`; com o expediente reposto a cada tique, passa. Por escolha do autor (🅲), o teste repõe o expediente e registra hora, expediente, altura e tarefa a cada 100 tiques.

@@ -4,7 +4,6 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.worker.model.Worker;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.attribute.EntityAttributeInstance;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
@@ -20,15 +19,17 @@ import net.minecraft.world.World;
  * O pulo e o nado do aldeão — autor, 2026-11-04.
  *
  * <ul>
- *   <li><b>Pulo:</b> a altura padrão do jogo primeiro. O maior ({@link #JUMP_GAIN}) só após colisão confirmada,
- *   encalhe ou saída de um curral; obstáculo previsto recebe o pulo padrão.</li>
+ *   <li><b>Pulo (Regra 171):</b> a altura padrão do jogo primeiro. O maior ({@link #JUMP_GAIN}) só após colisão
+ *   confirmada (conferida a todo tique, com ou sem caminho), encalhe ou saída de um curral; obstáculo previsto
+ *   recebe o pulo padrão.</li>
  *   <li><b>Água:</b> com mais de {@value #WATER_AHEAD_MIN} blocos de água à frente, anda 5× mais rápido que no
  *   Vanilla, pelo atributo de eficiência na água, para todo aldeão.</li>
  * </ul>
  */
 public final class VillagerMoves {
 
-    private static final int JUMP_EVERY = 2;
+    /** A colisão dura um tique: conferida a cada 2, a do tique ímpar passava e custava outro pulo padrão. */
+    private static final int JUMP_EVERY = 1;
 
     private static final int WATER_EVERY = 5;
 
@@ -82,17 +83,8 @@ public final class VillagerMoves {
             return true;
         }
 
-        Path path = villager.getNavigation().getCurrentPath();
-
-        if (path == null || path.isFinished()) {
-            return false;
-        }
-
-        if (villager.horizontalCollision) {
-            return true;
-        }
-
-        return false;
+        // A colisão vale mesmo sem caminho: o pulo padrão que bate na cerca faz a navegação largar o caminho.
+        return villager.horizontalCollision;
     }
 
     /** Se há mais de 5 blocos de água seguidos na direção em que ele anda ou olha. */

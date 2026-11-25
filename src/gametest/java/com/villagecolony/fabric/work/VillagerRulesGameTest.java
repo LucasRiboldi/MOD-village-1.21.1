@@ -72,6 +72,11 @@ public class VillagerRulesGameTest implements FabricGameTest {
             villager.horizontalCollision = true;
             context.assertTrue(VillagerMoves.needsHighJump(world, villager),
                     "Regra 171: colisão confirmada não ativou o pulo maior");
+
+            // Depois do pulo padrão que bate na cerca, a navegação larga o caminho; a colisão ainda vale.
+            villager.getNavigation().stop();
+            context.assertTrue(VillagerMoves.needsHighJump(world, villager),
+                    "Regra 171: colisão sem caminho ativo não ativou o pulo maior");
         } finally {
             world.setBlockState(feet.east(), Blocks.AIR.getDefaultState(), 18);
             villager.discard();

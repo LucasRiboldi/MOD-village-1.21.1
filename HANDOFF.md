@@ -2,6 +2,37 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.136 (2026-11-25)
+
+- **Branch e PR:** `fix/pulo-grande-todo-tique`, PR #111.
+- **Causa do N05 (`ShepherdGameTest.theShepherdOnlyShearsAfterReachingTheSheep`):** o histórico novo de trocas mostrou, no tique 84, o pastor recém-pousado no cercado assumido pelo `PenEscape` (tarefa `AVAILABLE`, `WalkOverride` preso) e posto para fora no tique 107; de novo em 244 e 270. Só o pastor que conduz animal era exceção (`ShepherdHerding.isHerding`).
+- **Escolha 🅲 do autor, Regra 355:** `ShepherdPenGrace` — pastor com `COLLECT_WOOL` reservada ou em execução, cercado, espera até 600 tiques desde que o socorro o vê assim; depois, ou sem a tosquia, o socorro age. `VC_PEN_WORKING state=started|expired`.
+- **Prova:** `ShepherdPenGraceGameTest` falhou com a regra vazia ("o pastor com a tosquia reservada foi tirado do cercado") e passa com ela, cobrindo também o fim do prazo e o pastor sem tosquia. A primeira bateria pegou uma corrida no próprio teste (tosquia reservada depois da espera); a tosquia passou a ser reservada no nascimento. Sentinela `fast` `20261125T031151Z`: 1.886 unitários, propriedades e 1.266/1.266.
+- **Instalado:** `village-colony-0.4.136.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `AC31A265ECB90D47D64C38AAD7224853DF2C384A8B7CE6E9D6EAE83AC03DE74C`; 0.4.135 `.jar.disabled`.
+- **Em jogo:** procurar `VC_PEN_WORKING`; nenhuma das mudanças da 0.4.133 à 0.4.136 foi jogada.
+- **Escada da mina (escolha 🅲 do autor, só teste):** `MineStepDownGameTest` acertava o expediente só no início. Experimento: noite posta no tique 50 sem a proteção reproduz a falha do CI ("o mais baixo foi y 61, a boca em y 61; devolveu a pedra no tique -1", `expediente=false`); com a reposição a cada tique, passa. A mensagem traz agora quantas vezes o relógio foi reposto e o rastro a cada 100 tiques. Outros ~45 testes têm o mesmo risco (TODO).
+- **N26 (escolha 🅲 do autor, só teste):** o registro da primeira soltura mostrou, no tique 349, a vaca no bloco (5,3) de dentro, porteira fechada, com `ShepherdPens.isInside` falso: a vaca encostava por dentro na porteira e `isInside` exige folga dela (pergunta de "pode fechar"). O teste usa `pen.reach().contains` nas duas checagens. 1 falha em 10 isolado antes; 15 de 15 depois. Mutação: guia solta na fase `ENTER` faz o teste cair; soltar no mesmo tique do fechamento é equivalente e não aparece.
+
+## Entrega — 0.4.135 (2026-11-24)
+
+- **Branch e PR:** `fix/pulo-grande-todo-tique`, PR #111 (junto com a 0.4.134).
+- **Escolha 2 do autor (diagnóstico no jogo):** `HomeChestMoves.move` devolve o motivo da desistência, e `repair` registra `VC_HOME_CHEST_STAY` quando o baú perdeu a parede e não mudou, uma vez por mudança de motivo de cada morador. `ChestPlacer.repairSlot` anota a recusa de cada lugar (`occupied`, `unsafe(above=...)`, `unsafe(chest_beside)` e outros). O comportamento do baú não muda.
+- **Causa da instabilidade do `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder`:** a casa deslocada até 7 blocos para cruzar a borda caía às vezes sob a barreira da arena; o destino era recusado por `unsafe(above=minecraft:barrier)`. **Escolha 1 do autor:** o teste esvazia o volume da casa antes de montar. Antes, 1 falha em 5 isolado; depois, 15 de 15.
+- **Verificação:** Sentinela `fast` `20261125T010329Z` 1.886 unitários, propriedades e 1.265/1.265 GameTests. Na bateria, `VC_HOME_CHEST_STAY` saiu 5 vezes, uma por morador, com `no_placement_receipt`.
+- **Instalado:** `village-colony-0.4.135.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `51167A1024B8E645BA0CCCC5282204FF948611573BA4817F26FF9EFEBCF86FA4`; a 0.4.134 ficou `.jar.disabled`.
+- **Fusão de colônias (escolha 🅲 do autor):** o rastro mostrou o caminho de 29 passos trocado por outro de 14 no tique 40, sem o teste pedir: o teste empurrava a navegação por fora do Brain. Agora usa `WorkTargets.set` no expediente, chão firme em volta da rua e rastro `VC_TEST_MERGE_WALK` (posição, `WALK_TARGET`, atividade, caminho). Original 2/5 falhas; chão firme 1/10; com `WorkTargets` 10/10. Mutação: sem `RoadNetwork.merge` cai em "a rota deve entrar na rede". Sentinela `20261125T022823Z`: 1.264/1.265, falha só N05.
+- **Próximo:** N05, tosquia (ver TODO).
+
+## Entrega para outro agente — 0.4.134 (2026-11-24)
+
+- **Branch:** `fix/pulo-grande-todo-tique`, criada da `main` em `f8f2c459` (0.4.133 já integrada pelo PR #105).
+- **Causa da falha fixa do `PenEscapeGameTest.normalFenceNavigationCanLeaveBeforeTheScheduledScan`:** desde a 0.4.125 (`bd7abd57`, pulo padrão primeiro) o teste falhou em 15 de 15 execuções do CI de 24-11 e em 5 de 5 isolado. O `PEN_DIAG` mostrou dois pulos padrão perdidos na cerca (t=9 e t=22) e o maior só em t=35: `VillagerMoves.needsHighJump` era conferido a cada 2 tiques e devolvia falso sem caminho, e a navegação larga o caminho na queda.
+- **Correção (escolha 1 do autor):** colisão conferida a todo tique e com ou sem caminho. O teste do pulo (`VillagerRulesGameTest.theHighJumpIsOnlyForObstacles`) ganhou o caso sem caminho; falhou antes e com a produção antiga (mutação), passa depois.
+- **Teste do curral (escolha 1 do autor):** com o pulo padrão primeiro, a saída leva 41 tiques e não cabe na janela de 39 da inspeção. O teste cobra a saída sozinha em até 60 tiques, sem o `PenEscape` conduzir. Com a produção antiga ele também passa (54 tiques): sozinho, não prova a melhoria.
+- **Verificação:** 27 GameTests focados (pulo, curral, guia, condução). Sentinela `fast` `20261124T234447Z`: 1.886 unitários, propriedades e 1.264 de 1.265 GameTests; a falha foi `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder`, com os dois chunks carregados e o baú sem migrar.
+- **Instalado:** `village-colony-0.4.134.jar` em `build/libs/`, `downloads/` e no TLauncher, SHA-256 `F8ADE9D409AEC4D58512FAF787BC5844A3FECA732B20F4359E109B85F28453A4` nas três cópias; a 0.4.133 ficou `.jar.disabled`. Nada enviado ao GitHub.
+- **Outros instáveis medidos no CI de 24-11 (15 execuções):** baú na borda 5×, travessia após fusão 4×, N26 4×, N05 3×, `MineStepDownGameTest` 1× (5 de 5 verdes isolado).
+
 ## Entrega para outro agente — 0.4.133 (2026-11-24)
 
 - **Branch:** `claude/resgate-telhado-seguro`, criada de `codex/piso-curral-grande` e com o PR #106 (baú na borda do chunk) já mesclado nela. **PR #107** foi mesclado pelo autor em `codex/piso-curral-grande` (merge `c76aadc5`, 2026-11-24 22:09 UTC); este bloco de handoff entrou depois, pelo PR #109. O PR #105 (`codex/piso-curral-grande` → `main`) também segue aberto.
@@ -277,7 +308,8 @@ Em aberto no `TODO.md`: VF-001 a VF-003 da varredura e os itens das fases F0 a F
 
 Elas viviam só na memória local do Claude Code. O que está em `CLAUDE.md` e `AGENTS.md` continua valendo.
 
-- **Idioma:** sempre português do Brasil. Ao perguntar ou oferecer opções, frases completas, de modo leigo. Ele quer opções para decidir: 2 ou 3, com efeito e risco, e a recomendada primeiro.
+- **Idioma:** sempre português do Brasil. Ao perguntar ou oferecer opções, frases completas, de modo leigo.
+- **Formato (autor, 2026-11-24):** resposta visual e colorida (emojis de cor, tabelas curtas), com a etapa atual sempre visível. Toda decisão de correção traz **3 opções** — a mais simples, uma maior e uma com melhorias —, com efeito, risco e a recomendada marcada. Espera do autor bem marcada ("aguarde" contra "sua vez"). Ao fechar uma correção, buscar sozinho a próxima correção ou melhoria e trazê-la já diagnosticada; editar comportamento continua exigindo a escolha dele.
 - **"commit push":** commite, envie e responda só `commit push realizado`. Se algo falhar, não diga a frase: diga o que houve.
 - **"relatorio commit":** ciclo completo: estado atual, revisão, testes de verdade, README, `TODO.md` por prioridade, higiene, commit, push e relatório `✅ CICLO ENCERRADO`. Separe "tem teste" de "foi verificado rodando de verdade".
 - **Merge na `main`:** autorizado sem perguntar quando é o próximo passo, com CI verde e sem conflito (`gh pr merge N --merge`). **Release e tag exigem pedido.** Nunca `--force`.

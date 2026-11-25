@@ -8,6 +8,7 @@ import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ColonyPathing;
 import com.villagecolony.fabric.integration.RoadNetwork;
 import com.villagecolony.gametest.Arena;
@@ -15,6 +16,8 @@ import com.villagecolony.gametest.ColonyFixture;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ai.brain.MemoryModuleType;
+import net.minecraft.entity.ai.brain.Schedule;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
@@ -99,10 +102,12 @@ public final class ColonyMergeTriggerGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_merge_roads", tickLimit = 360)
     public void aVillagerWalksBetweenTheTwoOldRoadNetworks(TestContext context) {
+        // O destino da colônia só move o aldeão no expediente (WorkHours).
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
         BlockPos start = context.getAbsolutePos(new BlockPos(1, 2, 1));
         BlockPos end = start.east(28);
-        BlockPos low = new BlockPos(-1, 0, -3);
-        BlockPos high = new BlockPos(41, 5, 5);
+        BlockPos low = new BlockPos(-4, 0, -5);
+        BlockPos high = new BlockPos(41, 5, 7);
         Arena.forceChunks(context, low, high, true);
         Colony west = Colony.create(UUID.randomUUID(), at(start, 0));
         Colony east = Colony.create(UUID.randomUUID(), at(start, 24));
@@ -110,12 +115,16 @@ public final class ColonyMergeTriggerGameTest implements FabricGameTest {
         VillageColonyMod.COLONIES.register(east);
         List<Long> westRoad = new ArrayList<>();
         List<Long> eastRoad = new ArrayList<>();
-        // Calçada de caminho: o trecho da rede só para sobre chão de rua ou natural (Regra 151).
-        for (int step = -2; step <= 30; step++) {
+        // Calçada de caminho: o trecho da rede só para sobre chão de rua ou natural (Regra 151). Em volta, grama no
+        // mesmo nível: a rua solta um bloco acima do chão da arena derrubava quem pisava na beira.
+        for (int step = -4; step <= 32; step++) {
             BlockPos pavement = start.east(step).down();
-            for (int dz = -3; dz <= 3; dz++) {
+            for (int dz = -5; dz <= 5; dz++) {
                 BlockPos floor = pavement.south(dz);
-                context.getWorld().setBlockState(floor, Blocks.DIRT_PATH.getDefaultState());
+                boolean road = step >= -2 && step <= 30 && Math.abs(dz) <= 3;
+                context.getWorld().setBlockState(floor.down(), Blocks.DIRT.getDefaultState());
+                context.getWorld().setBlockState(floor,
+                        road ? Blocks.DIRT_PATH.getDefaultState() : Blocks.GRASS_BLOCK.getDefaultState());
                 context.getWorld().setBlockState(floor.up(), Blocks.AIR.getDefaultState());
                 context.getWorld().setBlockState(floor.up(2), Blocks.AIR.getDefaultState());
             }
@@ -129,6 +138,7 @@ public final class ColonyMergeTriggerGameTest implements FabricGameTest {
         var villager = ColonyFixture.spawnAtWorld(context, EntityType.VILLAGER, spawn);
         VillageColonyMod.WORKERS.register(villager.getUuid(), west.id());
         Runnable clean = () -> {
+            WorkTargets.clear(villager.getUuid());
             VillageColonyMod.WORKERS.remove(villager.getUuid());
             villager.discard();
             RoadNetwork.publish(west.id(), west.center(), List.of());
@@ -155,19 +165,31 @@ public final class ColonyMergeTriggerGameTest implements FabricGameTest {
                 context.throwGameTestException("a rota deve entrar na rede que une as duas vilas: " + waypoint
                         + ", início " + start + ", aldeão " + villager.getBlockPos());
             }
-            villager.getNavigation().startMovingAlong(villager.getNavigation().findPathTo(waypoint, 0), 1.0);
+            // Como no jogo: o destino da colônia, que o Brain segue pela rede unida (GoToWorkTargetTask).
+            WorkTargets.set(villager.getUuid(), end, 1);
         });
+        // Rastro da caminhada, relativo ao início: posição, alvo que o Brain segue e caminho, para explicar quem trava.
+        List<String> trail = new ArrayList<>();
         context.runAtEveryTick(() -> {
             if (context.getTick() > 10 && villager.getBlockPos().isWithinDistance(end, 2)) {
                 clean.run();
                 context.complete();
             } else if (context.getTick() >= 340) {
                 clean.run();
+                String last = String.join(" | ", trail.subList(Math.max(0, trail.size() - 12), trail.size()));
+                trail.forEach(step -> VillageColonyMod.LOGGER.info("VC_TEST_MERGE_WALK {}", step));
                 context.throwGameTestException("o aldeão deve chegar à antiga rua da vila absorvida: "
-                        + villager.getBlockPos());
-            } else if (context.getTick() > 10 && context.getTick() % 5 == 0 && villager.getNavigation().isIdle()) {
-                BlockPos leg = ColonyPathing.legToward(villager, end);
-                villager.getNavigation().startMovingAlong(villager.getNavigation().findPathTo(leg, 0), 1.0);
+                        + villager.getBlockPos() + "; rastro: " + last);
+            } else if (context.getTick() > 10 && context.getTick() % 5 == 0) {
+                var now = villager.getNavigation().getCurrentPath();
+                String walk = villager.getBrain().getOptionalRegisteredMemory(MemoryModuleType.WALK_TARGET)
+                        .map(target -> offset(target.getLookTarget().getBlockPos(), start)).orElse("-");
+                trail.add(String.format(java.util.Locale.ROOT, "t%d pos=%.1f,%.1f,%.1f ground=%s hit=%s walk=%s"
+                                + " activity=%s path=%s", context.getTick(), villager.getX() - start.getX(),
+                        villager.getY() - start.getY(), villager.getZ() - start.getZ(), villager.isOnGround(),
+                        villager.horizontalCollision, walk,
+                        villager.getBrain().getFirstPossibleNonCoreActivity().map(Object::toString).orElse("-"),
+                        now == null ? "-" : now.getCurrentNodeIndex() + "/" + now.getLength()));
             }
         });
     }
@@ -194,6 +216,10 @@ public final class ColonyMergeTriggerGameTest implements FabricGameTest {
         }
 
         context.complete();
+    }
+
+    private static String offset(BlockPos at, BlockPos origin) {
+        return (at.getX() - origin.getX()) + "," + (at.getY() - origin.getY()) + "," + (at.getZ() - origin.getZ());
     }
 
     private static ColonyPos at(BlockPos base, int dx) {

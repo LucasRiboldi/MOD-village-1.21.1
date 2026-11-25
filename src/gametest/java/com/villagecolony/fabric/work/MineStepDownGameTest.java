@@ -102,9 +102,22 @@ public class MineStepDownGameTest implements FabricGameTest {
         int[] lowest = { mouth.getY() };
         int[] releasedAt = { -1 };
         int[] passes = { 0 };
+        int[] clockResets = { 0 };
+        // Hora, expediente, altura e tarefa a cada 100 tiques: explica o mineiro que fica na boca.
+        StringBuilder trail = new StringBuilder();
 
         context.runAtEveryTick(() -> {
             passes[0]++;
+            // Os lotes rodam juntos num mundo só: o relógio é de todos, e o expediente volta a ser o deste teste.
+            if (!com.villagecolony.core.coordination.WorkClock.isWorkTime(world.getTimeOfDay())) {
+                clockResets[0]++;
+                world.setTimeOfDay(Schedule.WORK_TIME);
+            }
+            if (passes[0] % 100 == 0) {
+                trail.append(" | t").append(passes[0]).append(" d").append(world.getTimeOfDay() % 24_000)
+                        .append(" expediente=").append(com.villagecolony.fabric.brain.WorkHours.isWorkTime(world, villager))
+                        .append(" y=").append(villager.getBlockY()).append(" tarefa=").append(task.state());
+            }
             MinerWork.run(world, colony);
             lowest[0] = Math.min(lowest[0], villager.getBlockY());
 
@@ -123,7 +136,8 @@ public class MineStepDownGameTest implements FabricGameTest {
             try {
                 context.assertTrue(lowest[0] <= mouth.getY() - 4, "Regra 336: o mineiro não desceu a escada que"
                         + " faltava; o mais baixo foi y " + lowest[0] + ", a boca em y " + mouth.getY()
-                        + "; devolveu a pedra no tique " + releasedAt[0]);
+                        + "; devolveu a pedra no tique " + releasedAt[0] + "; relógio reposto " + clockResets[0]
+                        + "x" + trail);
 
                 for (BlockPos at : BlockPos.iterate(low, low.add(SIDE - 1, DEPTH - 1, SIDE - 1))) {
                     boolean opened = at.getX() >= level.getX() - 1 && at.getX() <= level.getX() + 1
