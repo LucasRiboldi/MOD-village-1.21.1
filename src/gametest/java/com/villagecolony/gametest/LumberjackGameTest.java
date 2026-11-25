@@ -1622,25 +1622,46 @@ public class LumberjackGameTest implements FabricGameTest {
 
         private final List<String> lines = new ArrayList<>();
 
+        /** Se o logger do mod já tinha configuração própria antes de o teste anexar. */
+        private boolean ownConfigBefore;
+
         private Captured() {
             super("village-colony-gametest-capture", null, null, true, Property.EMPTY_ARRAY);
         }
 
+        private static org.apache.logging.log4j.core.Logger modLogger() {
+            return (org.apache.logging.log4j.core.Logger) LogManager.getLogger(VillageColonyMod.MOD_ID);
+        }
+
+        /**
+         * Anexa ao logger do mod. Sem configuração própria, o log4j cria uma ao anexar, e ela não repassa ao
+         * logger raiz: o resto da bateria ficava sem nenhuma linha do mod. A nova repassa, e sai no
+         * {@link #detach()}.
+         */
         static Captured attached() {
             Captured captured = new Captured();
+            var logger = modLogger();
+            var config = logger.getContext().getConfiguration();
 
+            captured.ownConfigBefore = config.getLoggers().containsKey(VillageColonyMod.MOD_ID);
             captured.start();
-
-            ((org.apache.logging.log4j.core.Logger)
-                    LogManager.getLogger(VillageColonyMod.MOD_ID)).addAppender(captured);
+            logger.addAppender(captured);
+            if (!captured.ownConfigBefore) {
+                config.getLoggerConfig(VillageColonyMod.MOD_ID).setAdditive(true);
+                logger.getContext().updateLoggers();
+            }
 
             return captured;
         }
 
         void detach() {
-            ((org.apache.logging.log4j.core.Logger)
-                    LogManager.getLogger(VillageColonyMod.MOD_ID)).removeAppender(this);
+            var logger = modLogger();
 
+            logger.removeAppender(this);
+            if (!ownConfigBefore) {
+                logger.getContext().getConfiguration().removeLogger(VillageColonyMod.MOD_ID);
+                logger.getContext().updateLoggers();
+            }
             stop();
         }
 

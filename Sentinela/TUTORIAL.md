@@ -143,6 +143,9 @@ lê `reports/test-runs/` e cria `reports/sentinel-analysis/<UTC-id>/` com
 `analysis.json`, `analysis.md` e `dashboard.html`. A análise agrupa falhas de
 compilação, teste e infraestrutura; marca `RUNNING` como evidência incompleta;
 e aponta ausência de XML como lacuna de evidência, sem inventar casos de teste.
+Também acusa `LOG_SILENCED` quando a última linha `(villagecolony)` do log de
+GameTest fica mais de 30 s antes do fim da bateria: com o log do mod mudo, todo
+`VC_*` do resto da bateria se perde (foi o appender de captura de um teste).
 
 Cada suite nova também grava `metrics.json` com amostras locais de CPU, RAM e
 memória Java. GPU depende de `nvidia-smi`; se não existir, fica explicitamente

@@ -11,7 +11,6 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 ## Estado de integração — 0.4.134 (2026-11-24)
 
 - [ ] Conferir em jogo a Regra 355 (0.4.136): `VC_PEN_WORKING state=started` seguido da tosquia, e quantas vezes sai `state=expired`. Se fazendeiro ou lenhador aparecerem em `fenced in` com trabalho dentro do cercado, avaliar a regra geral (opção B do N05).
-- [ ] 🔴 Log do mod mudo na bateria de GameTests: as linhas `(villagecolony)` param no segundo em que começa `LumberjackGameTest.theStallGuardReturnsTheTaskAndForgetsTheTree` (KF-004), que pendura o appender `Captured` no logger do mod; nada do mod sai depois, nem `VC_TEST_CLOCK_RESET`. Mecanismo dentro do log4j não provado (P)
 - [ ] Observar `ShepherdHerdingGameTest.theClosestStrayCanBeCollectedEvenWithAnAdultSurplus`, que caiu 1 vez numa rodada conjunta local (3/3 sozinho).
 - [ ] PR #111 (`fix/pulo-grande-todo-tique`) para a `main`, CI verde e pré-release. Saída do curral (0.4.134) e baú na borda do chunk (0.4.135) corrigidos; Sentinela `20261125T010329Z` 1.265/1.265.
 - [ ] Conferir em jogo que o trabalhador sai do curral pela cerca com um pulo padrão perdido, não dois (Regra 171).

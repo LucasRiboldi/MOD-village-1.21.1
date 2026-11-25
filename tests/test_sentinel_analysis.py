@@ -17,7 +17,44 @@ sentinela_gui = importlib.util.module_from_spec(GUI_SPEC)
 GUI_SPEC.loader.exec_module(sentinela_gui)
 
 
+def _gametest_run(root, log):
+    run = root / "test-runs" / "20260101T000000Z"
+    (run / "suites").mkdir(parents=True)
+    (run / "suites" / "attempt-01-gametest.stdout.log").write_text(log, encoding="utf-8")
+    (run / "summary.json").write_text(json.dumps({"status": "PASS", "results": [
+        {"name": "gametest", "attempt": 1, "status": "PASS", "seconds": 1, "test_cases": [{}]}]}),
+        encoding="utf-8")
+    return root / "test-runs"
+
+
 class SentinelaAnalysisTest(unittest.TestCase):
+
+    def test_flags_the_mod_log_that_goes_silent_before_the_gametests_end(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            runs = _gametest_run(root, "\n".join([
+                "[10:00:00] [Server thread/INFO] (villagecolony) VC_SUPPLY a",
+                "[10:00:05] [Server thread/INFO] (Minecraft) Running test batch 'x:0' (1 tests)...",
+                "[10:02:00] [Server thread/INFO] (Minecraft) ========= 9 GAME TESTS COMPLETE IN 2 min ===",
+                ""]))
+
+            report = sentinel_analysis.analyse_reports(runs, root / "analysis")
+
+            silenced = [item for item in report["findings"] if item["category"] == "LOG_SILENCED"]
+            self.assertEqual(1, len(silenced))
+            self.assertIn("120 s", silenced[0]["signature"])
+
+    def test_a_mod_log_alive_until_the_end_is_not_flagged(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            runs = _gametest_run(root, "\n".join([
+                "[10:01:50] [Server thread/INFO] (villagecolony) VC_SUPPLY a",
+                "[10:02:00] [Server thread/INFO] (Minecraft) ========= 9 GAME TESTS COMPLETE IN 2 min ===",
+                ""]))
+
+            report = sentinel_analysis.analyse_reports(runs, root / "analysis")
+
+            self.assertFalse([item for item in report["findings"] if item["category"] == "LOG_SILENCED"])
 
     def test_gui_analysis_command_never_calls_gradle(self):
         command = sentinela_gui.analysis_command()
