@@ -16,6 +16,7 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 
 - O pastor que entrou no cercado para tosquiar não é tirado pelo socorro do curral por até 30 segundos (Regra 355); passado o prazo, ou sem a tosquia reservada, o socorro age como antes. `VC_PEN_WORKING` registra início e fim do prazo. O N05 (`ShepherdGameTest.theShepherdOnlyShearsAfterReachingTheSheep`) caía quando o socorro pegava o pastor recém-pousado no cercado.
 - `ShepherdGameTest` registra cada troca de tarefa e de condução do pastor no histórico da falha.
+- N26 (`PenTetherGameTest.theAnimalWalksFromASideLedgeThroughTheGate`) mede "dentro do curral" pelo bloco da vaca: `ShepherdPens.isInside` também exige folga da porteira, e a vaca encostada por dentro na porteira fechada contava como fora. A falha registra o primeiro tique sem guia fora do curral fechado.
 
 ## [0.4.135] — candidata, 2026-11-24
 

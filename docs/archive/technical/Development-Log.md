@@ -12673,3 +12673,7 @@ O `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder` falhava 1 em 5 iso
 ## 2026-11-25 — 0.4.136, o pastor que tosquia dentro do cercado
 
 O N05 caía 1 em 8 isolado e 3 em 15 no CI. O histórico de trocas acrescentado ao `ShepherdGameTest` mostrou o `PenEscape` assumir o pastor no tique em que ele pousou dentro do cercado e pô-lo para fora, com a tarefa largada. Por escolha do autor (🅲), a Regra 355 dá ao pastor com a tosquia reservada até 600 tiques cercado (`ShepherdPenGrace`, `VC_PEN_WORKING`). `ShepherdPenGraceGameTest` falhou sem a regra e passa com ela; Sentinela `20261125T031151Z` 1.266/1.266.
+
+## 2026-11-25 — N26: "dentro do curral" no teste da porteira
+
+O `PenTetherGameTest.theAnimalWalksFromASideLedgeThroughTheGate` caía 1 em 10 isolado com "a guia soltou antes do fechamento". O registro do primeiro tique sem guia mostrou a vaca dentro, encostada na porteira já fechada, e `ShepherdPens.isInside` falso, porque a pergunta também exige folga da porteira para fechar. Por escolha do autor (🅲), o teste mede dentro pelo bloco da vaca nas duas checagens e mantém o registro. 15 de 15 isolado; mutação com a guia solta na fase `ENTER` cai.

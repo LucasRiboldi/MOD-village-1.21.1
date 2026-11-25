@@ -10,6 +10,7 @@ Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e
 - **Prova:** `ShepherdPenGraceGameTest` falhou com a regra vazia ("o pastor com a tosquia reservada foi tirado do cercado") e passa com ela, cobrindo também o fim do prazo e o pastor sem tosquia. A primeira bateria pegou uma corrida no próprio teste (tosquia reservada depois da espera); a tosquia passou a ser reservada no nascimento. Sentinela `fast` `20261125T031151Z`: 1.886 unitários, propriedades e 1.266/1.266.
 - **Instalado:** `village-colony-0.4.136.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `AC31A265ECB90D47D64C38AAD7224853DF2C384A8B7CE6E9D6EAE83AC03DE74C`; 0.4.135 `.jar.disabled`.
 - **Em jogo:** procurar `VC_PEN_WORKING`; nenhuma das mudanças da 0.4.133 à 0.4.136 foi jogada.
+- **N26 (escolha 🅲 do autor, só teste):** o registro da primeira soltura mostrou, no tique 349, a vaca no bloco (5,3) de dentro, porteira fechada, com `ShepherdPens.isInside` falso: a vaca encostava por dentro na porteira e `isInside` exige folga dela (pergunta de "pode fechar"). O teste usa `pen.reach().contains` nas duas checagens. 1 falha em 10 isolado antes; 15 de 15 depois. Mutação: guia solta na fase `ENTER` faz o teste cair; soltar no mesmo tique do fechamento é equivalente e não aparece.
 
 ## Entrega — 0.4.135 (2026-11-24)
 
