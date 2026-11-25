@@ -1,6 +1,6 @@
 # Plano de alturas — a vila inteira em degraus de 1
 
-**Pesquisa de 2026-11-25** para a escolha G5 🅲 do autor, no jogo da 0.4.136 no deserto. **Decisões do autor tomadas em 25-11; próximo passo é a ADR.** Pesquisa anterior do mesmo tema, sobre por que a vila não crescia: [`terraplanagem-da-vila.md`](terraplanagem-da-vila.md)
+**Pesquisa de 2026-11-25** para a escolha G5 🅲 do autor, no jogo da 0.4.136 no deserto. **Decisões do autor tomadas em 25-11; ADR-063.** Pesquisa anterior do mesmo tema, sobre por que a vila não crescia: [`terraplanagem-da-vila.md`](terraplanagem-da-vila.md)
 (09-11).
 
 ## O pedido

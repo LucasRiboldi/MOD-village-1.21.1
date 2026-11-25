@@ -17,8 +17,8 @@ Escolhas do autor: G1 🅲, G2 🅲, G3 🅱️, G4 🅲, G5 🅲; ordem G2 → 
   (-189,?,148) alcançável, `VC_DOOR_CLEAR` e `VC_MINE_STAIR_CLEAR` no log, fazenda de -202,70,150 sem vão embaixo.
 - [ ] 🟠 G5 🅲 — vila inteira em degraus de 1 (curral grande com faixa de solo do bioma): pesquisa em
   `docs/research/2026-11-25-plano-de-alturas.md`, com as 4 decisões do autor (🅲 em todas: orçamento pelo atraso, rampa e
-  depois escada, peças da vila e paredão, praia com contorno natural). Falta ADR, cálculo no `core/` e execução pelo
-  Zelador. Os degraus maiores que 1 subiram de 518 para 1.909 no jogo.
+  depois escada, peças da vila e paredão, praia com contorno natural) e na ADR-063, em 5 fases: cálculo no `core/`,
+  leitura do mundo, execução pelo Zelador, rampa e escada, praia. Os degraus maiores que 1 subiram de 518 para 1.909 no jogo.
 - [ ] 🟠 G1 🅲 — terra e grama no deserto: `GroundSmoothing.column` e `fillGap` aterram com terra sob areia;
   `MineYard.fillBelow` também; a geração usa grama quando o chunk é todo água (`VillageSoil.GRASS`).
 - [ ] 🟠 G3 🅱️ — obra fechada pela metade: `desert_farm_2` em -318,63,152 com 18 de 66 peças (48 pulos "sand/sandstone is in
