@@ -7,7 +7,7 @@ import net.minecraft.block.FallingBlock;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * O chão do bioma para aterrar — Regra 363 (autor, 2026-11-25, G1 🅲: "tem terra embaixo dos blocos de areia no deserto,

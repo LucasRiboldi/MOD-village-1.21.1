@@ -31,15 +31,17 @@ final class GradeWork {
         private final List<int[]> queue;
         private final long readAt;
         private final int buildings;
+        private final @org.jspecify.annotations.Nullable Object open;
         private final int budget;
         private int next;
         private long day = -1;
         private int doneToday;
 
-        State(List<int[]> queue, long readAt, int buildings, int budget) {
+        State(List<int[]> queue, long readAt, int buildings, @org.jspecify.annotations.Nullable Object open, int budget) {
             this.queue = queue;
             this.readAt = readAt;
             this.buildings = buildings;
+            this.open = open;
             this.budget = budget;
         }
     }
@@ -131,8 +133,11 @@ final class GradeWork {
     private static Optional<State> stateOf(ServerWorld world, Colony colony) {
         State known = STATES.get(colony.id());
         int buildings = VillageColonyMod.BUILDINGS.ofColony(colony.id()).size();
+        // A obra que abre entra no plano já: a volta dela é do Zelador desde a abertura (Regra 364).
+        Object open = VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).map(project -> (Object) project.origin()).orElse(null);
 
-        if (known != null && world.getTime() - known.readAt < WorkClock.DAY && known.buildings == buildings) {
+        if (known != null && world.getTime() - known.readAt < WorkClock.DAY && known.buildings == buildings
+                && java.util.Objects.equals(known.open, open)) {
             return Optional.of(known);
         }
 
@@ -143,7 +148,7 @@ final class GradeWork {
             return Optional.empty();
         }
 
-        State fresh = new State(survey.get().work(), world.getTime(), buildings,
+        State fresh = new State(survey.get().work(), world.getTime(), buildings, open,
                 GradeCrew.perDay(survey.get().pending()));
 
         if (known != null) {

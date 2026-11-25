@@ -233,7 +233,8 @@ public final class GradeSurvey {
 
                 switch (kinds[x][z]) {
                     case ANCHOR -> plan.anchor(x, z, anchors[x][z]);
-                    case PATH -> plan.path(x, z);
+                    // O caminho fica na altura em que está: o Zelador só mexe no chão natural (Regra 364).
+                    case PATH -> plan.anchor(x, z, natural[x][z]);
                     case OUT -> plan.out(x, z);
                     default -> { }
                 }
@@ -334,7 +335,8 @@ public final class GradeSurvey {
                 int dz = z - minZ;
 
                 if (!covers(box, x, z, 0) && dx >= 0 && dz >= 0 && dx < kinds.length && dz < kinds[0].length
-                        && kinds[dx][dz] != GradePlan.Kind.OUT && kinds[dx][dz] != GradePlan.Kind.ANCHOR) {
+                        && kinds[dx][dz] != GradePlan.Kind.OUT && kinds[dx][dz] != GradePlan.Kind.ANCHOR
+                        && kinds[dx][dz] != GradePlan.Kind.PATH) {
                     band.add(new int[] {dx, dz});
                 }
             }
@@ -352,7 +354,8 @@ public final class GradeSurvey {
             int dx = entrance.front().getX() - minX;
             int dz = entrance.front().getZ() - minZ;
 
-            if (dx >= 0 && dz >= 0 && dx < kinds.length && dz < kinds[0].length) {
+            if (dx >= 0 && dz >= 0 && dx < kinds.length && dz < kinds[0].length
+                    && kinds[dx][dz] != GradePlan.Kind.PATH) {
                 kinds[dx][dz] = GradePlan.Kind.ANCHOR;
                 anchors[dx][dz] = entrance.front().getY();
                 fronts[dx][dz] = true;

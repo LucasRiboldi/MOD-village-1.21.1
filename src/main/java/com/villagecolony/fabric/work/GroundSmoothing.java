@@ -298,8 +298,8 @@ final class GroundSmoothing {
     }
 
     /**
-     * Corta ou aterra a coluna de {@code top} até {@code target}, com o bloco de cima e o de baixo que ela já tinha:
-     * o caminho continua caminho, a grama continua grama.
+     * Corta ou aterra a coluna de chão natural de {@code top} até {@code target}, com o bloco de cima que ela já tinha e o
+     * aterro do bioma (Regra 363); a coluna de rua ou caminho fica como está (Regra 364).
      */
     static boolean column(ServerWorld world, int x, int z, int top, int target) {
         if (top == target || !safeColumn(world, x, z, top, target)) {
@@ -308,6 +308,12 @@ final class GroundSmoothing {
 
         BlockPos.Mutable at = new BlockPos.Mutable(x, top, z);
         BlockState surface = world.getBlockState(at);
+
+        // Só o chão natural sobe ou desce: a rua e o caminho ficam no bloco e na altura deles (Regra 364).
+        if (!SiteSurroundings.isNaturalGround(surface)) {
+            return false;
+        }
+
         BlockState below = world.getBlockState(at.setY(top - 1));
         // Sob areia, arenito; terra só fora do deserto (Regra 363).
         BlockState fill = com.villagecolony.fabric.integration.BiomeSoil.fillUnder(world, at.toImmutable(), surface, below);
