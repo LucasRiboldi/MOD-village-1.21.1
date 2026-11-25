@@ -11,7 +11,7 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
 ## Estado de integração — 0.4.134 (2026-11-24)
 
 - [ ] PR #111 (`fix/pulo-grande-todo-tique`) para a `main`, CI verde e pré-release. Saída do curral (0.4.134) e baú na borda do chunk (0.4.135) corrigidos; Sentinela `20261125T010329Z` 1.265/1.265.
-- [ ] Estabilizar `ColonyMergeTriggerGameTest.aVillagerWalksBetweenTheTwoOldRoadNetworks` (4 de 15 no CI de 24-11): em 2 falhas o aldeão saiu da rua e caiu um bloco, a 7 e 12 blocos de lado; a rua de 33 blocos passa pela área dos testes vizinhos (hipótese).
+- [ ] Estabilizar N05 (`ShepherdGameTest.theShepherdOnlyShearsAfterReachingTheSheep`): o pastor entra no cercado em t80 e em t160 está fora, com a tarefa largada. Hipótese não provada: o `PenEscape` o tira do cercado antes da tosquia.
 - [ ] Conferir em jogo que o trabalhador sai do curral pela cerca com um pulo padrão perdido, não dois (Regra 171).
 
 ## Estado de integração — 0.4.133 (2026-11-24)

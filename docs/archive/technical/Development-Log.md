@@ -12665,3 +12665,7 @@ O teste do curral não cabia mais em 39 tiques com o pulo padrão primeiro (saí
 ## 2026-11-24 — 0.4.135, motivo do baú que fica e teste da borda do chunk
 
 O `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder` falhava 1 em 5 isolado. Por escolha do autor, o reparo passou a dizer o motivo (`HomeChestMoves.move`, `VC_HOME_CHEST_STAY`, recusa por lugar em `ChestPlacer.repairSlot`). A falha seguinte mostrou `unsafe(above=minecraft:barrier)` no destino: a casa deslocada para cruzar a borda caía sob a barreira da arena. O teste esvazia o volume da casa antes de montar (15 de 15 isolado; Sentinela `20261125T010329Z` 1.265/1.265). Prova da causa pelo próprio motivo registrado; não há teste que falhe sem o esvaziamento de forma determinística, porque a barreira depende da posição da arena.
+
+## 2026-11-25 — teste da fusão de colônias guiado como no jogo
+
+`ColonyMergeTriggerGameTest.aVillagerWalksBetweenTheTwoOldRoadNetworks` falhava 2 em 5 isolado: em metade das falhas o aldeão caía da rua, na outra travava. O rastro novo mostrou o caminho de 29 passos trocado no tique 40 por um de 14 que voltava, sem o teste pedir: o teste empurrava a navegação, e o Brain do aldeão a sobrescrevia. Por escolha do autor (🅲), o teste usa `WorkTargets.set` no expediente, como o ciclo da colônia, com chão firme em volta da rua e o rastro `VC_TEST_MERGE_WALK`. 10 de 10 isolado; mutação sem `RoadNetwork.merge` cai. Sentinela `20261125T022823Z` 1.264/1.265 (falha só N05).

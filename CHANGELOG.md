@@ -15,6 +15,7 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 ## [0.4.135] — candidata, 2026-11-24
 
 - `VC_HOME_CHEST_STAY`: o baú residencial que perdeu a parede e não mudou de lugar sai no log com o motivo (lugar ocupado, sem chão, sem ar acima, baú ao lado, sem recibo e outros), uma vez por mudança de motivo. O baú segue a mesma regra de antes.
+- `ColonyMergeTriggerGameTest.aVillagerWalksBetweenTheTwoOldRoadNetworks` guia o aldeão pelo destino da colônia (`WorkTargets`), como o jogo, no expediente e sobre chão firme; o teste empurrava a navegação direto e o Brain trocava o caminho no meio. O rastro `VC_TEST_MERGE_WALK` explica a próxima falha.
 - `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder` esvazia o volume da casa antes de montá-la: a casa deslocada para cruzar a borda do chunk caía às vezes sob a barreira da arena, e o destino era recusado por não ter ar acima.
 
 ## [0.4.134] — candidata, 2026-11-24

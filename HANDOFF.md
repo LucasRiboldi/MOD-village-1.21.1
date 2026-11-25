@@ -9,7 +9,8 @@ Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e
 - **Causa da instabilidade do `ChestPlacerGameTest.repairsAProvenChestAcrossAChunkBorder`:** a casa deslocada até 7 blocos para cruzar a borda caía às vezes sob a barreira da arena; o destino era recusado por `unsafe(above=minecraft:barrier)`. **Escolha 1 do autor:** o teste esvazia o volume da casa antes de montar. Antes, 1 falha em 5 isolado; depois, 15 de 15.
 - **Verificação:** Sentinela `fast` `20261125T010329Z` 1.886 unitários, propriedades e 1.265/1.265 GameTests. Na bateria, `VC_HOME_CHEST_STAY` saiu 5 vezes, uma por morador, com `no_placement_receipt`.
 - **Instalado:** `village-colony-0.4.135.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `51167A1024B8E645BA0CCCC5282204FF948611573BA4817F26FF9EFEBCF86FA4`; a 0.4.134 ficou `.jar.disabled`.
-- **Próximo:** `ColonyMergeTriggerGameTest.aVillagerWalksBetweenTheTwoOldRoadNetworks` (ver TODO).
+- **Fusão de colônias (escolha 🅲 do autor):** o rastro mostrou o caminho de 29 passos trocado por outro de 14 no tique 40, sem o teste pedir: o teste empurrava a navegação por fora do Brain. Agora usa `WorkTargets.set` no expediente, chão firme em volta da rua e rastro `VC_TEST_MERGE_WALK` (posição, `WALK_TARGET`, atividade, caminho). Original 2/5 falhas; chão firme 1/10; com `WorkTargets` 10/10. Mutação: sem `RoadNetwork.merge` cai em "a rota deve entrar na rede". Sentinela `20261125T022823Z`: 1.264/1.265, falha só N05.
+- **Próximo:** N05, tosquia (ver TODO).
 
 ## Entrega para outro agente — 0.4.134 (2026-11-24)
 
