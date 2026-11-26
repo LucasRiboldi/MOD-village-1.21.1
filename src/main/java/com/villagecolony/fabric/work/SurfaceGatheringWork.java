@@ -251,6 +251,8 @@ public final class SurfaceGatheringWork {
         java.util.function.Predicate<BlockPos> worthLooking = column ->
                 (clay || !VillageFluidIndex.skip(job.task.colonyId(), bounds, column))
                         && !SurfaceHits.isUnreachable(job.task.colonyId(), column, world.getTime())
+                        // Nada além de 48 blocos da cama de quem busca, a não ser mineiro e lenhador (Regra 372).
+                        && HomeLeash.within(world, workerId, column)
                         && (!outsideVillage || FarthestVillageSector.isInSector(
                                 job.center, column, job.surfaceSector, protectedRadius));
 
