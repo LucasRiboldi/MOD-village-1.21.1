@@ -216,6 +216,7 @@ public class VillageColonyMod implements ModInitializer {
         com.villagecolony.fabric.work.GroundKeeper.register();
         com.villagecolony.fabric.work.HomeLeash.register();
         com.villagecolony.fabric.work.BuilderHome.register();
+        com.villagecolony.fabric.work.TemporarySteps.register();
         com.villagecolony.fabric.work.AnalyticsLog.register();
         com.villagecolony.fabric.work.IdleHelps.register();
         com.villagecolony.fabric.work.VillagerMoves.register();

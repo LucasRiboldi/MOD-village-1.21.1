@@ -353,6 +353,8 @@ public final class DetourWalker {
 
         ColonyEdits.remember(MinecraftTypeAdapter.toColonyPos(at));
         world.setBlockState(at, block);
+        // O degrau de fuga sai depois de um dia (Regra 377).
+        TemporarySteps.placed(at, world.getTime());
         villager.swingHand(Hand.MAIN_HAND);
 
         ticksOnStep = 0;
