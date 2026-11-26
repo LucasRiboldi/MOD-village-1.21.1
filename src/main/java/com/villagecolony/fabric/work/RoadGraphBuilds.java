@@ -43,7 +43,8 @@ final class RoadGraphBuilds {
     /** O que a releitura leu, igual para os três modos. */
     record Input(UUID colonyId, Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> fronts,
                  Set<ColonyPos> farmRings, PathTerrain terrain, int maxLinks, int turn, Set<ColonyPos> fixed,
-                 Set<ColonyPos> retired, Optional<RoadGraph> previous, java.util.List<Integer> limit, long today) {
+                 Set<ColonyPos> retired, Optional<RoadGraph> previous, java.util.List<Integer> limit, long today,
+                 Set<ColonyPos> far) {
     }
 
     /** O grafo pelo modo; a trava de dias (Regras 225 e 306) só vale no modo atual. */
@@ -54,7 +55,7 @@ final class RoadGraphBuilds {
 
         return switch (mode) {
             case ATUAL -> RoadLines.build(in.cells(), in.planned(), in.center(), in.fronts(), in.farmRings(), in.terrain(),
-                    in.maxLinks(), in.turn(), in.fixed(), in.retired());
+                    in.maxLinks(), in.turn(), in.fixed(), in.retired(), in.far());
             case REGIOES -> regions(in);
             case VIZINHANCA -> neighborhood(in);
         };
@@ -68,7 +69,7 @@ final class RoadGraphBuilds {
         Set<Long> dirty = dirty(in);
         Set<ColonyPos> frozen = in.previous().map(graph -> RoadRegions.frozen(graph, dirty)).orElse(Set.of());
         RoadLines.Result built = RoadLines.build(in.cells(), in.planned(), in.center(), in.fronts(), in.farmRings(),
-                in.terrain(), in.maxLinks(), in.turn(), frozen, in.retired());
+                in.terrain(), in.maxLinks(), in.turn(), frozen, in.retired(), in.far());
 
         // O quadrado limpo sai igual ao grafo anterior: a montagem só vale nos refeitos (Regra 319).
         return RoadRegions.settle(built, in.previous().orElse(null), dirty, in.center(), in.fronts(), in.cells());

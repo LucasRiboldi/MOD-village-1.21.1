@@ -362,7 +362,7 @@ public final class RoadGraphRefresh {
         terrain.floorAnywhereAt(fronts);
         Set<ColonyPos> retired = reading.retired();
 
-        planned.addAll(reading.ways());
+        planned.addAll(reading.planned());
         planned.addAll(RoadShape.rings(world, colony, terrain));
         planned.addAll(RoadShape.pendingGrowth(id, cells, refused));
 
@@ -376,7 +376,7 @@ public final class RoadGraphRefresh {
                 com.villagecolony.data.save.GraphModeSavedData.get(world.getServer()).mode();
         RoadLines.Result result = RoadGraphBuilds.build(mode, new RoadGraphBuilds.Input(id, cells, planned, colony.center(),
                 fronts, RoadShape.farmRings(world, colony, terrain), terrain, LINKS_PER_READ, turn, fixed, retired,
-                store.graph(id), growthLimit(colony), today));
+                store.graph(id), growthLimit(colony), today, reading.far()));
         Set<ColonyPos> read = cells;
 
         result.graph().ifPresent(graph -> {

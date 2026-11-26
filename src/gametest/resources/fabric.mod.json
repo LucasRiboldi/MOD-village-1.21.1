@@ -93,6 +93,7 @@
       "com.villagecolony.fabric.work.BiomeSoilGameTest",
       "com.villagecolony.fabric.work.StreetKeptGameTest",
       "com.villagecolony.fabric.work.NurserySkyGameTest",
+      "com.villagecolony.fabric.work.MineHomeWayGameTest",
       "com.villagecolony.fabric.work.OpenSiteRingGameTest",
       "com.villagecolony.fabric.integration.ChestPassageGameTest",
       "com.villagecolony.fabric.work.HomeLeashGameTest",

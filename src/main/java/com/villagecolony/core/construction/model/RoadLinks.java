@@ -27,9 +27,9 @@ final class RoadLinks {
     private RoadLinks() {
     }
 
-    /** Liga a parte à linha principal em reta, até o ponto mais perto; verdadeiro se ligou. */
+    /** Liga a parte à linha principal em reta, até o ponto mais perto a até {@code reach} blocos; verdadeiro se ligou. */
     static boolean straight(Set<Long> part, Set<Long> main, Map<Long, Integer> columns, Map<Long, Integer> mask,
-                            PathTerrain terrain) {
+                            PathTerrain terrain, int reach) {
         if (main.isEmpty() || (long) part.size() * main.size() > MAX_PAIRS) {
             return false;
         }
@@ -40,7 +40,7 @@ final class RoadLinks {
             for (long b : main) {
                 int distance = manhattan(a, b);
 
-                if (distance <= RoadLines.MAX_LINK) {
+                if (distance <= reach) {
                     pairs.add(new long[] {distance, a, b});
                 }
             }
@@ -155,8 +155,8 @@ final class RoadLinks {
         return true;
     }
 
-    /** Liga esta parte à principal pelo trecho mais curto de chão andável. */
-    static boolean link(Set<Long> part, Set<Long> main, Map<Long, Integer> columns, PathTerrain terrain) {
+    /** Liga esta parte à principal pelo trecho mais curto de chão andável, a até {@code reach} blocos. */
+    static boolean link(Set<Long> part, Set<Long> main, Map<Long, Integer> columns, PathTerrain terrain, int reach) {
         long from = part.iterator().next();
         long to = main.iterator().next();
         int best = Integer.MAX_VALUE;
@@ -173,7 +173,7 @@ final class RoadLinks {
             }
         }
 
-        if (best > RoadLines.MAX_LINK) {
+        if (best > reach) {
             return false;
         }
 
