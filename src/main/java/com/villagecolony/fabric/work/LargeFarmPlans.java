@@ -61,6 +61,21 @@ final class LargeFarmPlans {
                 .map(List::of).orElseGet(List::of);
     }
 
+    /** A planta da plantação grande, sem a condição do fazendeiro parado: a que a vila deve (Regra 374). */
+    static List<Blueprint> model(ServerWorld world, Colony colony) {
+        if (PlanRefusals.skip(world, colony.id(), colony.center(), MODEL)) {
+            return List.of();
+        }
+
+        return HousePlans.READ.computeIfAbsent(MODEL, missing -> StructureBlueprintReader.read(world, missing))
+                .map(List::of).orElseGet(List::of);
+    }
+
+    /** Quantas plantações grandes a vila tem, prontas ou em obra. */
+    static int count(List<Building> buildings) {
+        return (int) buildings.stream().filter(building -> MODEL.equals(building.blueprint())).count();
+    }
+
     /** Se o fazendeiro parado, sem nada a fazer há pouco, pede a plantação que a vila ainda não tem. */
     static boolean due(ServerWorld world, Colony colony, List<Building> buildings, Map<WorkTime.State, Integer> farmer) {
         Long nothing = NOTHING.get(colony.id());

@@ -110,7 +110,9 @@ public final class FarmPlans {
             return false;
         }
 
-        if (now - since >= POSTPONE_TICKS) {
+        // E espera a busca da casa terminar: o lote longe que ela acharia de novo apagaria o cursor da casa (Regra 373).
+        if (now - since >= POSTPONE_TICKS
+                && !com.villagecolony.fabric.integration.SweepState.stillLookingForALot(colonyId)) {
             POSTPONED.remove(colonyId);
 
             return false;

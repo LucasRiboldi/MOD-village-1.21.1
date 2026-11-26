@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 271
+- **Cita a regra:** 273
 - **Só usa a classe indicada:** 85
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -383,3 +383,5 @@ classe prova menos ainda.
 | 370 | Baú novo não tira o acesso a uma cama (autor 26-11, H5 do jogo da 0.4.143: "todos baú est… | cita | ChestPassageGameTest |
 | 371 | A entrada da mina e as portas perto dela entram no grafo (autor 26-11, notas do jogo da 0… | cita | MineYardGameTest |
 | 372 | A coleira da cama (autor 26-11, notas do jogo da 0.4.145, escolha J1 🅱️ com o raio contad… | cita | HomeLeashGameTest |
+| 373 | A plantação sem lote perto espera a busca da casa terminar (autor 26-11, notas do jogo da… | cita | FarmPostponeTest |
+| 374 | Curral grande e plantação grande primeiro, e uma plantação a cada 10 obras (autor 26-11,… | cita | FirstBuildsTest |
