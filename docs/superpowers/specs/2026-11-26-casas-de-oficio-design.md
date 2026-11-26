@@ -26,7 +26,7 @@ aldeão.
 
 **Objetivos**
 - Uma casa `majest_<ofício>.nbt` para cada profissão do mod. O mineiro tem a dele refeita, e as outras 8 são novas:
-  lenhador, pedreiro, fundidor, carpinteiro, fazendeiro, pastor, construtor e Zelador.
+  lenhador, pedreiro, fundidor, carpinteiro, fazendeiro, pastor e Zelador. O construtor não tem casa de ofício: ele se muda para a casa livre mais perto da obra (autor 26-11, J7 do jogo da 0.4.145).
 - Cada casa tem arquitetura própria, só com blocos do jogo, e leva pelo menos uma cama, um baú, decoração do ofício e
   uma placa na frente com o nome do ofício.
 - Quando a casa do ofício fica pronta, o titular daquele ofício passa a dormir nela.
@@ -99,7 +99,6 @@ autor ajusta. Proposta de partida:
 | `majest_carpenter` | carpinteiro | casa de enxaimel (tronco + tábua), varanda | bancada (crafting table), pilhas de tábua, escadas e lajes de madeira |
 | `majest_farmer` | fazendeiro | casa baixa com horta de janela e cerca | vasos com flores e plantas, fardos de feno, abóbora |
 | `majest_shepherd` | pastor | casa com telhado de lã sobre tábuas, curral de janela | tapetes e lã coloridos, fardo de feno |
-| `majest_builder` | construtor | casa com andaime de tábua por fora e oficina aberta | pilhas de blocos de obra, escada de mão, laje e degrau soltos |
 | `majest_groundskeeper` | Zelador | casa simples com jardim e caminho | caminho de terra, vasos, lanterna de jardim |
 | `majest_miner` | mineiro | **rústica: pedregulho com musgo, tijolo de pedra, andesito, pedra; troncos nos cantos** | trilho, lanterna, minério decorativo (bloco de carvão) |
 
@@ -203,7 +202,7 @@ Uma versão por etapa; o autor joga entre elas.
 
 1. A casa grande reformada, o baú ao lado da cama só na parede e o teste de passagem. É o que prende o pastor hoje.
 2. O leitor do `majest_`, a mudança para a casa e a placa, com uma casa só (a do carpinteiro) para provar o caminho.
-3. As outras 7 casas novas e a do mineiro rústica.
+3. As outras 6 casas novas e a do mineiro rústica.
 
 ## 11. O que fica para quem constrói
 
