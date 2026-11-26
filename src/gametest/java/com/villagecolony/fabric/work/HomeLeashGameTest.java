@@ -20,7 +20,10 @@ import net.minecraft.util.math.GlobalPos;
  */
 public class HomeLeashGameTest implements FabricGameTest {
 
-    /** O fundidor parado a 76 blocos da cama é trazido de volta; o mineiro, tão longe quanto, fica. */
+    /**
+     * O fundidor a 76 blocos da cama recebe a caminhada de volta, sem ser levado: ninguém é teletransportado (emenda de
+     * 26-11, K1 🅰️). O mineiro, o Zelador e o pastor, que trabalham pela vila toda, ficam onde estão.
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "home_leash", tickLimit = 40)
     public void aWorkerFarFromItsBedIsBroughtBack(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -36,9 +39,14 @@ public class HomeLeashGameTest implements FabricGameTest {
 
             Worker smelter = fixture.emptyHandedWorker(context, ProfessionType.SMELTER, new BlockPos(4, 2, 4));
             Worker miner = fixture.emptyHandedWorker(context, ProfessionType.MINER, new BlockPos(5, 2, 4));
+            Worker keeper = fixture.emptyHandedWorker(context, ProfessionType.GROUNDSKEEPER, new BlockPos(6, 2, 4));
+            Worker shepherd = fixture.emptyHandedWorker(context, ProfessionType.SHEPHERD, new BlockPos(7, 2, 4));
             VillagerEntity lost = homed(world, smelter, home);
             VillagerEntity digger = homed(world, miner, home);
+            VillagerEntity sweeper = homed(world, keeper, home);
+            VillagerEntity herder = homed(world, shepherd, home);
             BlockPos minerAt = digger.getBlockPos();
+            BlockPos lostAt = lost.getBlockPos();
 
             context.assertFalse(HomeLeash.within(world, smelter.villagerId(), home.add(60, 0, 0)),
                     "Regra 372: o fundidor aceitou alvo a 60 blocos da cama");
@@ -51,10 +59,15 @@ public class HomeLeashGameTest implements FabricGameTest {
                 HomeLeash.pass(world, fixture.colony());
             }
 
-            context.assertTrue(lost.getBlockPos().getSquaredDistance(home) <= 9,
-                    "Regra 372: o fundidor ficou em " + lost.getBlockPos().toShortString() + ", longe da cama em "
-                            + home.toShortString());
+            context.assertTrue(lost.getBlockPos().equals(lostAt), "Regra 372: o fundidor foi teletransportado");
+            context.assertTrue(lost.getBrain().getOptionalRegisteredMemory(MemoryModuleType.WALK_TARGET)
+                    .filter(target -> target.getLookTarget().getBlockPos().equals(home)).isPresent(),
+                    "Regra 372: o fundidor longe da cama não recebeu a caminhada de volta");
             context.assertTrue(digger.getBlockPos().equals(minerAt), "o mineiro foi tirado de onde estava");
+            context.assertTrue(sweeper.getBrain().getOptionalRegisteredMemory(MemoryModuleType.WALK_TARGET).isEmpty(),
+                    "Regra 372: o Zelador foi chamado de volta para a cama");
+            context.assertTrue(herder.getBrain().getOptionalRegisteredMemory(MemoryModuleType.WALK_TARGET).isEmpty(),
+                    "Regra 372: o pastor foi chamado de volta para a cama");
         } finally {
             fixture.cleanUp();
             world.setChunkForced(home.getX() >> 4, home.getZ() >> 4, false);

@@ -47,7 +47,7 @@ public class ClayOnRequestGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** Com argila num baú da vila, nada surge; o que não é argila (areia) também não. */
+    /** Com argila num baú da vila, nada surge; o que não surge sob pedido (pedregulho) também não. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "clay_on_request", tickLimit = 5)
     public void nothingAppearsWithClayInAChestOrForSand(TestContext context) {
         context.setBlockState(OWN, Blocks.CHEST);
@@ -60,7 +60,7 @@ public class ClayOnRequestGameTest implements FabricGameTest {
         context.assertFalse(ClayOnRequest.stockIfMissing(context.getWorld(), colony, List.of(own, other), own,
                 List.of(Items.CLAY), true), "a argila surgiu com argila num baú da vila");
         context.assertFalse(ClayOnRequest.stockIfMissing(context.getWorld(), colony, List.of(own, other), own,
-                List.of(Items.SAND), true), "a areia surgiu como se fosse argila");
+                List.of(Items.COBBLESTONE), true), "o pedregulho surgiu como se fosse argila");
         context.complete();
     }
 
@@ -76,6 +76,30 @@ public class ClayOnRequestGameTest implements FabricGameTest {
 
         context.assertFalse(ClayOnRequest.stockIfMissing(context.getWorld(), UUID.randomUUID(), List.of(own, other), own,
                 List.of(Items.CLAY), true), "Regra 308: a argila surgiu com 64 bolas de argila guardadas");
+        context.complete();
+    }
+
+    /**
+     * Regra 381 (autor 26-11, K1 do jogo da 0.4.148: "areia e cacto devem entrar na lista de aparecer automático quando a
+     * profissão precisa"): a areia e o cacto pedidos para a obra aparecem no baú do ofício, como a argila, e o ofício não
+     * sai da vila atrás deles.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "clay_on_request_sand", tickLimit = 5)
+    public void sandAndCactusAppearOnRequest(TestContext context) {
+        context.setBlockState(OWN, Blocks.CHEST);
+        ColonyPos own = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(OWN));
+        UUID colony = UUID.randomUUID();
+        long before = Supplies.sessionCount(colony, SupplyException.SURFACE_ON_REQUEST);
+
+        context.assertTrue(ClayOnRequest.stockIfMissing(context.getWorld(), colony, List.of(own), own,
+                List.of(Items.SAND), true), "Regra 381: a areia não apareceu no pedido");
+        context.assertTrue(ClayOnRequest.stockIfMissing(context.getWorld(), colony, List.of(own), own,
+                List.of(Items.CACTUS), true), "Regra 381: o cacto não apareceu no pedido");
+        context.assertTrue(ColonyChests.countIn(context.getWorld(), List.of(own), Items.SAND) == ClayOnRequest.SURGE
+                && ColonyChests.countIn(context.getWorld(), List.of(own), Items.CACTUS) == ClayOnRequest.SURGE,
+                "Regra 381: a areia e o cacto não estão no baú do ofício");
+        context.assertTrue(Supplies.sessionCount(colony, SupplyException.SURFACE_ON_REQUEST) > before,
+                "Regra 381: a areia surgida não foi declarada no VC_SUPPLY");
         context.complete();
     }
 }

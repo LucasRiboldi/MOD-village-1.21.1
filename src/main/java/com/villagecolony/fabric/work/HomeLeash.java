@@ -2,7 +2,6 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
-import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -13,38 +12,30 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
  * A coleira da cama — Regra 372 (autor 26-11, notas do jogo da 0.4.145, J1 🅱️: "fundidor completamente perdido, muito
  * longe do centro da vila, inaceitável"; "nenhuma outra profissão pode se afastar mais de XX blocos ... para voltar
- * para sua cama a noite e não ficar travado em terrenos desconhecidos", com o raio contado da cama). Fora o mineiro e o
- * lenhador, ninguém busca alvo a mais de {@value #RANGE} blocos da própria cama, e quem fica longe dela larga a tarefa e
- * anda de volta; se não chega mais perto em {@value #TRIES} passadas, é levado até a cama ({@code VC_LEASH}).
+ * para sua cama a noite e não ficar travado em terrenos desconhecidos", com o raio contado da cama). Fora o mineiro, o
+ * lenhador e os que trabalham pela vila toda (o Zelador, o pastor e o construtor, emenda de 26-11, K1 🅰️), ninguém busca
+ * alvo a mais de {@value #RANGE} blocos da própria cama, e quem fica longe dela larga a tarefa e anda de volta. Ninguém
+ * é teletransportado ({@code VC_LEASH}).
  */
 public final class HomeLeash {
 
     /** O raio, em blocos na horizontal, a partir da cama. */
     static final int RANGE = 48;
 
-    /** Quantas passadas sem chegar mais perto antes de levar o aldeão até a cama. */
+    /** Quantas passadas o teste roda: a caminhada de volta é pedida em cada uma. */
     static final int TRIES = 3;
 
     /** Uma passada a cada dez segundos. */
     static final int EVERY = 200;
 
     private static final float SPEED = 0.6F;
-
-    /** Aldeão longe da cama → [passadas sem chegar mais perto, distância ao quadrado da última passada]. */
-    private static final Map<UUID, long[]> AWAY = new HashMap<>();
-
-    static {
-        ServerMemory.register(HomeLeash.class, AWAY::clear);
-    }
 
     private HomeLeash() {
     }
@@ -66,10 +57,11 @@ public final class HomeLeash {
         });
     }
 
-    /** Se o mineiro e o lenhador, os dois que trabalham longe, ficam fora da coleira. */
+    /** Fora da coleira: o mineiro e o lenhador, que trabalham longe, e o Zelador, o pastor e o construtor (K1 🅰️). */
     static boolean isFree(Optional<ProfessionType> profession) {
-        return profession.filter(trade -> trade == ProfessionType.MINER || trade == ProfessionType.LUMBERJACK)
-                .isPresent();
+        return profession.filter(trade -> trade == ProfessionType.MINER || trade == ProfessionType.LUMBERJACK
+                || trade == ProfessionType.GROUNDSKEEPER || trade == ProfessionType.SHEPHERD
+                || trade == ProfessionType.BUILDER).isPresent();
     }
 
     /** Se o alvo fica a até {@value #RANGE} blocos da cama deste aldeão; sem cama, ou mineiro e lenhador, sempre. */
@@ -96,7 +88,6 @@ public final class HomeLeash {
             Optional<BlockPos> bed = home(world, villager);
 
             if (bed.isEmpty() || squared(bed.get(), villager.getBlockPos()) <= (long) RANGE * RANGE) {
-                AWAY.remove(villager.getUuid());
                 continue;
             }
 
@@ -108,25 +99,9 @@ public final class HomeLeash {
 
     private static int bringBack(VillagerEntity villager, BlockPos bed) {
         long distance = squared(bed, villager.getBlockPos());
-        long[] away = AWAY.computeIfAbsent(villager.getUuid(), ignored -> new long[] {0, Long.MAX_VALUE});
-
-        away[0] = distance < away[1] ? 0 : away[0] + 1;
-        away[1] = Math.min(away[1], distance);
 
         List.copyOf(VillageColonyMod.TASKS.assignedTo(villager.getUuid()))
                 .forEach(task -> task.release("more than " + RANGE + " blocks from its bed (Regra 372)"));
-
-        if (away[0] >= TRIES) {
-            villager.getNavigation().stop();
-            villager.getBrain().forget(MemoryModuleType.WALK_TARGET);
-            villager.refreshPositionAndAngles(bed.getX() + 0.5, bed.getY() + 1, bed.getZ() + 0.5,
-                    villager.getYaw(), villager.getPitch());
-            AWAY.remove(villager.getUuid());
-            VillageColonyMod.LOGGER.info("VC_LEASH worker={} carried to its bed at {} after {} passes rule=372",
-                    villager.getUuid().toString().substring(0, 8), bed.toShortString(), TRIES);
-            return 1;
-        }
-
         villager.getBrain().remember(MemoryModuleType.WALK_TARGET, new WalkTarget(bed, SPEED, 1));
         VillageColonyMod.LOGGER.info("VC_LEASH worker={} walks back to its bed at {}, {} blocks away rule=372",
                 villager.getUuid().toString().substring(0, 8), bed.toShortString(), (int) Math.sqrt((double) distance));
