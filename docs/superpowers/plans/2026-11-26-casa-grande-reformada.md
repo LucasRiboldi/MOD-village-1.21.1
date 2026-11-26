@@ -5,7 +5,7 @@
 
 **Objetivo:** a `big_house_mod.nbt` nova é 2 blocos mais funda e tem:
 - piso de pedra no térreo;
-- piso de cima sem buraco, a não ser a escada, que tem corrimão;
+- piso de cima sem buraco, a não ser o vão da escada, sem corrimão (autor 11-26: "não colocar corrimão");
 - tochas por dentro;
 - 7 camas e 7 baús, todo baú encostado em parede e tudo alcançável a pé da porta.
 
@@ -83,7 +83,6 @@ E baú novo posto ao lado de cama nunca fecha passagem.
 - `cama fora do caminho x,y,z`: nenhuma célula vizinha da cabeceira ou do pé é alcançada;
 - `buraco no piso x,y,z`: uma célula de piso de um andar (camadas `0` e `4` da casa grande, dentro das paredes) é
   `air`/`void` e não está acima de um degrau a até 2 blocos abaixo;
-- `queda sem corrimão x,y,z`: uma célula de pé no piso de cima é vizinha de um vão de escada e não há cerca entre elas;
 - `posto de trabalho do jogo <nome>`: o bloco está em `VANILLA_JOB_BLOCKS`;
 - `sem placa`: só com `require_sign`.
 
@@ -142,7 +141,7 @@ brewing_stand, bell`.
   todo `z` de 0 a 10. As empenas `z = 1` e `z = 9` são fechadas entre esses dois `x`. A cumeeira fica em `x = 4`, na
   camada 11.
 - **Escada.** `cobblestone_stairs` com `facing=north`, `half=bottom`, em `(6, 1, 6)`, `(6, 2, 5)` e `(6, 3, 4)`.
-  Corrimão `oak_fence` em `(5, 5, 4)`, `(5, 5, 5)` e `(6, 5, 6)`.
+  Sem corrimão: quem cai no vão cai na escada, que leva ao térreo.
 - **Térreo, camada 1.** O `facing` da cama aponta do pé para a cabeceira; o baú tem `facing` para onde abre.
 
   | Peça | Pé → cabeceira | Baú (facing) |
