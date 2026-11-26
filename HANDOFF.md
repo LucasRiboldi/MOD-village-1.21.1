@@ -2,6 +2,15 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.148 e 0.4.149 (2026-11-26)
+
+- **Branch:** `fix/areia-que-cai`, sem push.
+- **0.4.148:** Regras 377 (`TemporarySteps`), 378 (`TreeLeftovers`), 379 (água do curral em 9,0,9), 380 (`FoundationAnimals`, piso de 6 no `FlockHarvest`). JAR `617D2483…1DAA`.
+- **Jogo da 0.4.148** (planície df5db219): a coleira (372) chamou de volta 805 vezes quem trabalha pela vila toda, e as obras pararam porque a plantação devida (374) ignorava o adiamento (373). Triagem na memória `jogo-0148-triagem`.
+- **0.4.149:** emenda da 372 (sem Zelador, pastor e construtor; sem teletransporte), Regra 381 (areia e cacto sob pedido no `ClayOnRequest`), emenda da 374 (adiamento; plantação grande em qualquer lote, `LotSeeking.needsTheFarmersReach`), Regra 382 (`FarmerHomePlans`, casa perto da plantação grande pela busca do `MineHomeSiteSearch`).
+- **Próximo (0.4.150):** K3 🅲 (profissão travada, Zelador bloco a bloco e ao lado, aviso de troca de profissão, registro de blocos do Zelador e do jogador), K4 🅱️ (mudas espaçadas, longe das construções, fora da vila), K5 🅱️ (caminho do arco da mina à casa do mineiro, ligado ao grafo), casa do lenhador na borda. K6 (chão em retângulos) fica para depois.
+- **Máquina:** o Gradle só baixa com `JAVA_TOOL_OPTIONS=-Djava.net.preferIPv6Addresses=true`.
+
 ## Entrega — 0.4.147 (2026-11-26)
 
 - **Branch:** `fix/areia-que-cai`, sem push. Commits `2d59fe2a` (Regras 373 e 374), `1e3b4a1f` (375), `778931f0` (376).

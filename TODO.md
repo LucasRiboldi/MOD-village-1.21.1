@@ -8,6 +8,18 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   está em `docs/technical/TODO-herdado-2026-11-13.md`.
 - O TODO antigo inteiro, por jogo, está em `docs/archive/technical/TODO-ate-2026-11-13.md` (`grep`).
 
+## Jogo da 0.4.148 na planície (2026-11-26)
+
+Colônia df5db219, 20 notas. Relatório: `docs/testing/relatorios/jogo-20261126-1550.md`.
+
+- [x] K1 🅰️ — coleira chamava Zelador, pastor e construtor e teletransportava: emenda da 372 na 0.4.149; areia e cacto sob pedido, Regra 381.
+- [x] K2 🅱️ — obras paradas pela plantação devida: emenda da 374 na 0.4.149; casa do fazendeiro perto da plantação grande, Regra 382.
+- [ ] 🟠 K3 🅲 — profissão travada; Zelador ao lado do bloco, um por um; aviso de troca de profissão; registro dos blocos do Zelador e do jogador para comparar.
+- [ ] 🟠 K4 🅱️ — mudas a 5 de outra muda e a 8 de construção; viveiro pode ir para fora da vila.
+- [ ] 🟡 K5 🅱️ — caminho do arco da mina até a casa do mineiro, ligado ao grafo.
+- [ ] 🟡 K7 — casa do lenhador na borda da vila.
+- [ ] ⚪ K6 — chão em áreas retangulares com degrau de 1 (etapa 3 do ADR-064), adiado pelo autor.
+
 ## Jogo da 0.4.145 no deserto (2026-11-26)
 
 Colônia 07e212d1, 15 dias, 33 notas. A casa grande nova não teve queixa. Relatório: `docs/testing/relatorios/jogo-20261126-1040.md`.

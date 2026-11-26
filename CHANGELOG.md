@@ -17,6 +17,15 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.149] — candidata, 2026-11-26
+
+Do jogo da 0.4.148 na planície: K1 🅰️ e K2 🅱️, que corrigem as Regras 372 e 374. Regras 381 e 382.
+
+- A coleira da cama solta o Zelador, o pastor e o construtor, que trabalham pela vila toda, e ninguém mais é teletransportado. No jogo ela disparou 805 vezes, levou o Zelador 32 vezes para a cama e tirava o pastor da coleta com o animal na corda e a porteira aberta (emenda da Regra 372, `HomeLeashGameTest`).
+- A areia e o cacto pedidos para a obra aparecem no baú do ofício, como a argila (Regra 381, `ClayOnRequestGameTest`).
+- As obras voltam a sair: a plantação devida da Regra 374 passava pela frente do adiamento da 373; agora espera, e a plantação grande nasce em qualquer lote, sem o alcance do fazendeiro (emenda da Regra 374, `FirstBuildsTest`).
+- A casa do fazendeiro nasce perto da plantação grande (Regra 382, `FarmerHomeTest`).
+
 ## [0.4.148] — candidata, 2026-11-26
 
 Do jogo da 0.4.145 no deserto: J4 🅱️ (a primeira parte), J5 🅱️ e J6 🅲. Regras 377 a 380.
