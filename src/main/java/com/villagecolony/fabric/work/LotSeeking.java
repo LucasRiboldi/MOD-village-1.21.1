@@ -174,7 +174,8 @@ final class LotSeeking {
         // A pergunta desceu para `LotClearance.isClearAbove`, que é
         // onde a varredura ainda pode seguir para o anel seguinte.
 
-        if (farming && !ConstructionDemand.withinTheFarmersReach(colony, site.get())) {
+        if (farming && needsTheFarmersReach(blueprint.id())
+                && !ConstructionDemand.withinTheFarmersReach(colony, site.get())) {
             // Lote livre, mas longe demais: o fazendeiro procura lavoura
             // a FarmerWork.reach() do centro, e roça que ele não vê é
             // roça que ninguém planta — e que não fecha o pedido, então
@@ -197,5 +198,13 @@ final class LotSeeking {
         }
 
         return SiteOpening.open(world, colony, site.get(), plans, blueprint, builders);
+    }
+
+    /**
+     * Se a roça precisa ficar no alcance do fazendeiro: a plantação grande não, porque ela tem dono (Regra 52) e o
+     * fazendeiro vai até ela onde estiver (emenda da Regra 374 de 26-11, K2 🅱️).
+     */
+    static boolean needsTheFarmersReach(com.villagecolony.core.type.ResourceId blueprint) {
+        return !LargeFarmPlans.MODEL.equals(blueprint);
     }
 }
