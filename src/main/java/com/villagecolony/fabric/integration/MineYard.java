@@ -193,17 +193,31 @@ public final class MineYard {
         return false;
     }
 
-    /** Se a coluna é pátio de alguma mina: a folga da boca não vale sobre ele (Regra 293). */
+    /**
+     * Se a coluna é pátio de alguma mina: a folga da boca não vale sobre ele (Regra 293). Vale o pátio da entrada guardada
+     * da mina e o de cada boca da superfície: depois que a mina desce um nível, a entrada guardada fica no fundo, e o
+     * pátio de cima continua pátio (Regra 371).
+     */
     public static boolean isYardColumn(ServerWorld world, int x, int z) {
         for (Mine mine : VillageColonyMod.MINES.all()) {
-            BlockPos disc = new BlockPos(x, mine.shaft().entry().y() - 1, z);
-
-            if (isYardAt(disc, world.getBlockState(disc), MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()),
+            if (isYardColumnOf(world, x, z, MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()),
                     MinecraftTypeAdapter.toDirection(mine.shaft().descent()))) {
                 return true;
+            }
+
+            for (java.util.Map.Entry<BlockPos, Direction> mouth : MineMouths.of(mine.colonyId()).entrySet()) {
+                if (isYardColumnOf(world, x, z, mouth.getKey(), mouth.getValue())) {
+                    return true;
+                }
             }
         }
 
         return false;
+    }
+
+    private static boolean isYardColumnOf(ServerWorld world, int x, int z, BlockPos mouth, Direction descent) {
+        BlockPos disc = new BlockPos(x, mouth.getY() - 1, z);
+
+        return isYardAt(disc, world.getBlockState(disc), mouth, descent);
     }
 }

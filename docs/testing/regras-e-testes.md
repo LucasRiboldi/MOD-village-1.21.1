@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 269
+- **Cita a regra:** 270
 - **Só usa a classe indicada:** 85
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -345,7 +345,7 @@ classe prova menos ainda.
 | 332 | O pasto do curral não é roça (autor 19-11, jogo da 0.4.93 em planície, ADR-060; emenda a… | cita | FarmRoundGameTest |
 | 333 | A ronda da roça (autor 19-11, ADR-060, pacote B; emenda a Regra 267): sem tarefa de comid… | cita | FarmRoundGameTest |
 | 334 | O chão que o jogador mexeu fica como ele deixou (autor 20-11, jogo da 0.4.93 em planície,… | cita | PlayerGroundGameTest |
-| 335 | O grafo nunca busca porta do andar de cima (autor 20-11, jogo da 0.4.93 em planície: a en… | cita | BigHouseEntranceGameTest |
+| 335 | O grafo nunca busca porta do andar de cima (autor 20-11, jogo da 0.4.93 em planície: a en… | cita | BigHouseEntranceGameTest, DoorFrontsGameTest |
 | 336 | A descida cavada (autor 20-11, jogo da 0.4.93 em planície, escolha A3 da pesquisa docs/re… | cita | MineStepDownGameTest |
 | 337 | Nada solto em cima da peça da vila (autor 20-11, jogo da 0.4.93 em montanha: pedra, terra… | cita | ClearAbovePieceGameTest |
 | 338 | A BigHouseMOD nasce na altura das casas (autor 20-11, jogo da 0.4.93 em montanha, escolha… | cita | BigHouseLevelGameTest, FoundationLotSearchTest |
@@ -381,3 +381,4 @@ classe prova menos ainda.
 | 368 | Sem vala em volta da obra, e a cova funda perto das construções é enchida (autor 25-11, n… | cita | OpenSiteRingGameTest |
 | 369 | A casa grande é andável por dentro (autor 26-11, H5 do jogo da 0.4.143, o pastor preso no… | cita | BigHouseModBlueprintGameTest, DoorPathsGameTest, StreetLevelGameTest |
 | 370 | Baú novo não tira o acesso a uma cama (autor 26-11, H5 do jogo da 0.4.143: "todos baú est… | cita | ChestPassageGameTest |
+| 371 | A entrada da mina e as portas perto dela entram no grafo (autor 26-11, notas do jogo da 0… | cita | MineYardGameTest |

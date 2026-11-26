@@ -91,6 +91,7 @@ final class DoorFronts {
     static List<Entrance> entrances(ServerWorld world, BlockPos min, BlockPos max) {
         List<Entrance> fronts = new ArrayList<>();
         List<Entrance> blocked = new ArrayList<>();
+        List<BlockPos> ground = new ArrayList<>();
 
         for (BlockPos at : BlockPos.iterate(min, new BlockPos(max.getX(), Math.min(max.getY(), min.getY() + GROUND_FLOOR), max.getZ()))) {
             if (world.isChunkLoaded(at)) {
@@ -100,24 +101,37 @@ final class DoorFronts {
                         // O grafo nunca busca porta do andar de cima (Regra 335).
                         && (GroundFloorDoors.isGroundFloor(world, at, state.get(DoorBlock.FACING).getOpposite())
                         || GroundFloorDoors.isGroundFloor(world, at, state.get(DoorBlock.FACING)))) {
-                    // O facing da porta aponta para dentro: é para onde olhava quem a pôs, do lado de fora.
-                    Direction inward = state.get(DoorBlock.FACING);
-                    Walk out = walkOut(world, at, inward.getOpposite(), min, max);
-                    // A porta da vila gerada pode olhar para fora: os dois lados andam, e ganha o que sai (Regra 366).
-                    Walk chosen = better(world, out, walkOut(world, at, inward, min, max));
-
-                    if (chosen.out().isPresent()) {
-                        int first = firstGround(world, chosen.way());
-                        List<BlockPos> way = chosen.way().subList(first, chosen.way().size());
-
-                        addOnce(fronts, new Entrance(way.getFirst(), chosen.out().get(), List.copyOf(way)));
-                    } else if (out.yard().isPresent() || isBuried(world, at, inward.getOpposite())) {
-                        // Sem saída reta: a entrada fica na frente da porta, e não onde o quintal abre (Regra 360).
-                        BlockPos front = frontOf(world, at, inward.getOpposite());
-
-                        addOnce(blocked, new Entrance(front, front, List.of()));
-                    }
+                    ground.add(at.toImmutable());
                 }
+            }
+        }
+
+        // Só as portas da altura mais baixa: a de meio-andar não é entrada (Regra 335, emenda de 26-11).
+        int lowest = ground.stream().mapToInt(BlockPos::getY).min().orElse(Integer.MAX_VALUE);
+
+        for (BlockPos at : ground) {
+            if (at.getY() != lowest) {
+                continue;
+            }
+
+            BlockState state = world.getBlockState(at);
+
+            // O facing da porta aponta para dentro: é para onde olhava quem a pôs, do lado de fora.
+            Direction inward = state.get(DoorBlock.FACING);
+            Walk out = walkOut(world, at, inward.getOpposite(), min, max);
+            // A porta da vila gerada pode olhar para fora: os dois lados andam, e ganha o que sai (Regra 366).
+            Walk chosen = better(world, out, walkOut(world, at, inward, min, max));
+
+            if (chosen.out().isPresent()) {
+                int first = firstGround(world, chosen.way());
+                List<BlockPos> way = chosen.way().subList(first, chosen.way().size());
+
+                addOnce(fronts, new Entrance(way.getFirst(), chosen.out().get(), List.copyOf(way)));
+            } else if (out.yard().isPresent() || isBuried(world, at, inward.getOpposite())) {
+                // Sem saída reta: a entrada fica na frente da porta, e não onde o quintal abre (Regra 360).
+                BlockPos front = frontOf(world, at, inward.getOpposite());
+
+                addOnce(blocked, new Entrance(front, front, List.of()));
             }
         }
 

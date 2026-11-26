@@ -70,6 +70,9 @@ public final class WorldPathTerrain implements PathTerrain {
     /** As colunas da frente de porta e de portão: chão em qualquer material sólido (Regra 291). */
     private final java.util.Set<Long> anyFloor = new java.util.HashSet<>();
 
+    /** A frente de cada porta e as quatro colunas em volta: fora da folga da boca da mina (Regra 371). */
+    private final java.util.Set<Long> doorSides = new java.util.HashSet<>();
+
     /**
      * Regra 291: a frente de cada porta e portão tem chão para o grafo na altura do piso, seja qual for o material —
      * pedra, tábua ou outro sólido. A leitura já guardada destas colunas é refeita.
@@ -77,6 +80,16 @@ public final class WorldPathTerrain implements PathTerrain {
     public void floorAnywhereAt(java.util.Collection<com.villagecolony.core.type.ColonyPos> fronts) {
         fronts.forEach(at -> anyFloor.add(com.villagecolony.core.construction.model.ColonyRoads.column(at.x(), at.z())));
         grounds.clear();
+
+        // A frente da porta e as colunas em volta dela não são folga da boca da mina (Regra 371).
+        for (com.villagecolony.core.type.ColonyPos front : fronts) {
+            for (int[] side : new int[][] {{0, 0}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+                doorSides.add(com.villagecolony.core.construction.model.ColonyRoads.column(front.x() + side[0],
+                        front.z() + side[1]));
+            }
+        }
+
+        blockedColumns.clear();
     }
 
     @Override
@@ -229,7 +242,22 @@ public final class WorldPathTerrain implements PathTerrain {
     private boolean isMineClearance(int x, int z) {
         return (mine.filter(entry -> Math.abs(x - entry.x()) <= MINE_CLEARANCE
                 && Math.abs(z - entry.z()) <= MINE_CLEARANCE).isPresent() || MineMouths.isNear(colonyId, x, z))
-                && !MineYard.isYardColumn(world, x, z);
+                && !MineYard.isYardColumn(world, x, z)
+                && !(doorSides.contains(com.villagecolony.core.construction.model.ColonyRoads.column(x, z))
+                        && !isStairColumn(x, z));
+    }
+
+    /** Se a coluna é do caracol do primeiro nível de alguma boca desta colônia: ele fica fechado para o caminho. */
+    private boolean isStairColumn(int x, int z) {
+        for (java.util.Map.Entry<BlockPos, net.minecraft.util.math.Direction> mouth : MineMouths.of(colonyId).entrySet()) {
+            for (BlockPos cell : MineMouths.stairCells(mouth.getKey(), mouth.getValue())) {
+                if (cell.getX() == x && cell.getZ() == z) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private boolean readBlocked(int x, int z) {

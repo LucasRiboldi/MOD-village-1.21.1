@@ -339,4 +339,39 @@ public class DoorFrontsGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * Regra 335, emenda de 26-11 (nota do jogo da 0.4.145, J3 🅲: "esse nó nessa estrutura específica está errado"): a
+     * casa de meio-andar tem uma porta um bloco acima da principal, dando para fora pelo lado alto; só a porta mais baixa
+     * da construção vira entrada.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_split_level", tickLimit = 20)
+    public void onlyTheLowestDoorOfASplitLevelHouseCounts(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 132, 1));
+        BlockPos min = origin.up();
+        BlockPos max = origin.add(4, 4, 4);
+
+        ground(world, origin);
+
+        try {
+            // O lado leste do terreno e da casa um bloco mais alto: o meio-andar.
+            for (int x = 3; x <= 9; x++) {
+                for (int z = -3; z <= 9; z++) {
+                    world.setBlockState(origin.add(x, 1, z), Blocks.GRASS_BLOCK.getDefaultState(), 18);
+                }
+            }
+            door(world, origin.add(0, 1, 2), Direction.EAST);
+            door(world, origin.add(4, 2, 2), Direction.WEST);
+
+            List<BlockPos> fronts = DoorFronts.of(world, min, max);
+
+            context.assertTrue(fronts.equals(List.of(origin.add(-1, 0, 2))),
+                    "Regra 335: a porta do meio-andar virou entrada: " + fronts);
+        } finally {
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
 }
