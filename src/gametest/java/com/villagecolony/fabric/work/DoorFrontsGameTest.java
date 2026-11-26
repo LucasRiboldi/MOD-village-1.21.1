@@ -300,4 +300,43 @@ public class DoorFrontsGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * Regra 366 (nota do jogo da 0.4.143, H2 🅱️: "nó de entrada no lugar errado da casa"): a porta que olha para fora não
+     * leva o nó para trás da casa. A parede do fundo com laje dupla em cima não é degrau, e entre os dois lados da porta
+     * ganha o que sai com menos passos.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_slab_wall", tickLimit = 20)
+    public void aDoorFacingOutDoesNotCrossTheHouse(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 108, 1));
+        BlockPos min = origin.up();
+        BlockPos max = origin.add(4, 4, 4);
+
+        ground(world, origin);
+
+        try {
+            for (int x = 1; x <= 3; x++) {
+                for (int z = 0; z <= 4; z++) {
+                    world.setBlockState(origin.add(x, 0, z), Blocks.SMOOTH_SANDSTONE.getDefaultState(), 18);
+                }
+            }
+            for (int z = 0; z <= 4; z++) {
+                world.setBlockState(origin.add(0, 1, z), Blocks.SMOOTH_SANDSTONE.getDefaultState(), 18);
+                world.setBlockState(origin.add(0, 2, z), Blocks.SMOOTH_SANDSTONE_SLAB.getDefaultState()
+                        .with(net.minecraft.block.SlabBlock.TYPE, net.minecraft.block.enums.SlabType.DOUBLE), 18);
+            }
+            // A porta no lado leste olha para leste, como a casa do deserto do jogo: o facing aponta para fora.
+            door(world, origin.add(4, 1, 2), Direction.EAST);
+
+            List<BlockPos> fronts = DoorFronts.of(world, min, max);
+
+            context.assertTrue(fronts.equals(List.of(origin.add(5, 0, 2))),
+                    "Regra 366: o nó foi para trás da casa: " + fronts);
+        } finally {
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
 }

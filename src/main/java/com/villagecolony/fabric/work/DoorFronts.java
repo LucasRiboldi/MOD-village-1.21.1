@@ -2,6 +2,8 @@ package com.villagecolony.fabric.work;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.DoorBlock;
+import net.minecraft.block.SlabBlock;
+import net.minecraft.block.enums.SlabType;
 import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
@@ -18,7 +20,8 @@ import java.util.Optional;
  * caixa, e a saída da caixa é só o caminho até ele. Porta que não dá para fora, a de dentro da casa,
  * não conta; porta dupla conta uma vez. A caixa da peça pode incluir o quintal: porta cuja saída para em barreira dentro dela
  * só conta se nenhuma outra da casa sair, e então a entrada é o chão logo na frente dela, no quintal ou tapado pelo chão
- * natural, que o Zelador acerta (Regra 360). Assoalho não é quintal — Regra 209.
+ * natural, que o Zelador acerta (Regra 360). Assoalho não é quintal — Regra 209. Os dois lados da porta andam, e ganha o
+ * que sai da caixa com menos passos: a porta da vila gerada pode olhar para fora (Regra 366).
  */
 final class DoorFronts {
 
@@ -29,6 +32,9 @@ final class DoorFronts {
 
     /** Quantas alturas da caixa, a partir do chão, contam como térreo. */
     private static final int GROUND_FLOOR = 3;
+
+    /** Até onde, em volta da saída, a rua conta para desempatar os dois lados da porta. */
+    private static final int ROAD_NEAR = 3;
 
     /** Quantos blocos livres acima do chão fazem uma passagem. */
     private static final int HEADROOM = 2;
@@ -97,7 +103,8 @@ final class DoorFronts {
                     // O facing da porta aponta para dentro: é para onde olhava quem a pôs, do lado de fora.
                     Direction inward = state.get(DoorBlock.FACING);
                     Walk out = walkOut(world, at, inward.getOpposite(), min, max);
-                    Walk chosen = out.out().isPresent() ? out : walkOut(world, at, inward, min, max);
+                    // A porta da vila gerada pode olhar para fora: os dois lados andam, e ganha o que sai (Regra 366).
+                    Walk chosen = better(world, out, walkOut(world, at, inward, min, max));
 
                     if (chosen.out().isPresent()) {
                         int first = firstGround(world, chosen.way());
@@ -147,6 +154,7 @@ final class DoorFronts {
     private static Walk walkOut(ServerWorld world, BlockPos door, Direction out, BlockPos min, BlockPos max) {
         Optional<BlockPos> yard = Optional.empty();
         List<BlockPos> way = new ArrayList<>();
+        int last = door.getY() - 1;
 
         for (int step = 1; step <= MAX_WALK; step++) {
             BlockPos column = door.offset(out, step);
@@ -157,11 +165,14 @@ final class DoorFronts {
 
             Optional<BlockPos> floor = floorAt(world, column.up());
 
-            if (floor.isEmpty() || (floor.get().getY() >= door.getY() && !isStep(world.getBlockState(floor.get())))) {
+            // Mais de um bloco acima do chão de antes não se sobe a pé (Regra 366).
+            if (floor.isEmpty() || floor.get().getY() > last + 1
+                    || (floor.get().getY() >= door.getY() && !isStep(world.getBlockState(floor.get())))) {
                 return new Walk(Optional.empty(), way, yard);
             }
 
             way.add(floor.get());
+            last = floor.get().getY();
 
             BlockState ground = world.getBlockState(floor.get());
 
@@ -220,7 +231,40 @@ final class DoorFronts {
         return Optional.empty();
     }
 
+    /**
+     * Os dois lados da porta: vale o que sai da caixa; saindo os dois, o de menos passos e, empatado, o que tem mais rua
+     * perto da saída (Regra 366).
+     */
+    private static Walk better(ServerWorld world, Walk first, Walk second) {
+        if (first.out().isEmpty()) {
+            return second;
+        }
+
+        if (second.out().isEmpty()) {
+            return first;
+        }
+
+        if (first.way().size() != second.way().size()) {
+            return first.way().size() < second.way().size() ? first : second;
+        }
+
+        return roadNear(world, second.out().get()) > roadNear(world, first.out().get()) ? second : first;
+    }
+
+    /** Quantos blocos de caminho há a até {@value #ROAD_NEAR} da saída, um acima ou abaixo dela. */
+    private static int roadNear(ServerWorld world, BlockPos floor) {
+        int road = 0;
+
+        for (BlockPos at : BlockPos.iterate(floor.add(-ROAD_NEAR, -1, -ROAD_NEAR), floor.add(ROAD_NEAR, 1, ROAD_NEAR))) {
+            road += com.villagecolony.fabric.integration.VillageRoad.isPathBlock(world.getBlockState(at)) ? 1 : 0;
+        }
+
+        return road;
+    }
+
+    /** Degrau é escada e meia laje; a laje dupla é bloco inteiro, parede (Regra 366). */
     private static boolean isStep(BlockState state) {
-        return state.isIn(BlockTags.STAIRS) || state.isIn(BlockTags.SLABS);
+        return state.isIn(BlockTags.STAIRS) || (state.isIn(BlockTags.SLABS) && state.contains(SlabBlock.TYPE)
+                && state.get(SlabBlock.TYPE) != SlabType.DOUBLE);
     }
 }
