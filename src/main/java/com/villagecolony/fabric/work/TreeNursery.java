@@ -103,14 +103,14 @@ public final class TreeNursery {
      *
      * <pre>
      * o chão é do bioma      nada de peça de vila nem obra da colônia
-     * o espaço está livre    ar acima, onde a árvore vai crescer
+     * o espaço está livre    ar acima, a céu aberto (Regra 365)
      * não há rebento já      dois viveiros no mesmo lugar é um só
      * </pre>
      */
     public static boolean isSpotForANursery(ServerWorld world, BlockPos ground) {
         BlockState above = world.getBlockState(ground.up());
 
-        if (!above.isAir()) {
+        if (!above.isAir() || !seesTheSky(world, ground)) {
             return false;
         }
 
@@ -155,6 +155,10 @@ public final class TreeNursery {
 
     /** O mesmo, num lugar que quem chama já conferiu (o viveiro perto do baú, LumberjackNursery). */
     public static boolean plantAt(ServerWorld world, BlockPos ground, Block sapling) {
+        if (!seesTheSky(world, ground)) {
+            return false;
+        }
+
         BlockState seedling = sapling.getDefaultState();
 
         BlockState had = world.getBlockState(ground);
@@ -175,6 +179,25 @@ public final class TreeNursery {
         world.setBlockState(ground.up(), seedling, Block.NOTIFY_ALL);
         // A árvore que nascer daqui é da colônia: a limpeza de lote não a derruba.
         com.villagecolony.fabric.world.ColonyTrees.planted(ground);
+
+        return true;
+    }
+
+    /**
+     * Se a muda em cima deste chão vê o céu: nada que barre o movimento acima dela, folha e barreira à parte — Regra
+     * 365. No túnel da mina, na caverna e debaixo de laje não nasce viveiro. A barreira não é teto: no mundo ela só
+     * existe posta à mão, e é o teto da arena de teste.
+     */
+    static boolean seesTheSky(ServerWorld world, BlockPos ground) {
+        int top = world.getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, ground.getX(), ground.getZ());
+
+        for (int y = ground.getY() + 2; y < top; y++) {
+            BlockState state = world.getBlockState(new BlockPos(ground.getX(), y, ground.getZ()));
+
+            if (state.blocksMovement() && !state.isOf(Blocks.BARRIER) && !state.isIn(BlockTags.LEAVES)) {
+                return false;
+            }
+        }
 
         return true;
     }

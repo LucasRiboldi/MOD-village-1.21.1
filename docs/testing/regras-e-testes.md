@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 263
+- **Cita a regra:** 264
 - **Só usa a classe indicada:** 85
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -375,3 +375,4 @@ classe prova menos ainda.
 | 362 | Bloco de trabalho não é telhado, e a descida não vira laço (autor 25-11, nota do jogo da… | cita | RoofDescentGameTest |
 | 363 | O aterro usa o chão do bioma (autor 25-11, G1 🅲 do jogo da 0.4.136 e notas do jogo da 0.4… | cita | BiomeSoilGameTest |
 | 364 | Só o Zelador muda o terreno, e só o chão natural (autor 25-11, nota do jogo da 0.4.141, e… | cita | StreetKeptGameTest |
+| 365 | O viveiro só nasce a céu aberto (autor 25-11, nota do jogo da 0.4.143, escolha H3 🅰️: "nã… | cita | NurserySkyGameTest |
