@@ -82,6 +82,13 @@ public final class TerrainReport {
                         + "levelled={}", colony.id().toString().substring(0, 8), day, count, isolated, pathSteps, steps,
                 GradeWork.doneToday(colony.id(), day));
         GroundKeeper.report(world, colony, day, steps);
+        // Por que os lotes do dia foram recusados, com a conta e onde (Regra 375).
+        String refusals = com.villagecolony.fabric.integration.LotRefusals.dayLine(colony.id());
+
+        if (!refusals.isEmpty()) {
+            VillageColonyMod.LOGGER.info("VC_LOT_REFUSALS version=1 colony={} day={} {}rule=375",
+                    colony.id().toString().substring(0, 8), day, refusals);
+        }
         // O plano de alturas: o que falta mexer e, com o atraso parado, a segunda vaga de Zelador (Regra 357, ADR-063).
         Optional<GradeSurvey.Survey> plan = GradeSurvey.read(world, colony);
 

@@ -122,6 +122,57 @@ public final class LotRefusals {
      */
     private static final Map<UUID, Integer> ACCEPTED = new HashMap<>();
 
+    /** Quantos lugares de exemplo a linha do dia guarda por motivo (Regra 375). */
+    static final int SAMPLES = 5;
+
+    /** Colônia → motivo → [conta, e até {@value #SAMPLES} lugares x,z de exemplo], desde a última linha do dia. */
+    private static final Map<UUID, Map<Reason, java.util.List<long[]>>> DAY = new HashMap<>();
+
+    /** O mesmo que {@link #refused}, guardando onde: a linha do dia diz o motivo, a conta e onde (Regra 375). */
+    public static void refusedAt(UUID colonyId, Reason reason, int x, int z) {
+        refused(colonyId, reason);
+
+        if (DAY.size() >= MAX_COLONIES && !DAY.containsKey(colonyId)) {
+            DAY.clear();
+        }
+
+        java.util.List<long[]> seen = DAY.computeIfAbsent(colonyId, id -> new EnumMap<>(Reason.class))
+                .computeIfAbsent(reason, ignored -> new java.util.ArrayList<>(java.util.List.of(new long[] {0})));
+
+        seen.getFirst()[0]++;
+
+        if (seen.size() <= SAMPLES) {
+            seen.add(new long[] {x, z});
+        }
+    }
+
+    /**
+     * A linha do dia desta colônia, e recomeça: {@code MOTIVO=conta@x,z;x,z ...}, do motivo mais contado para o menos;
+     * vazia sem recusa nenhuma (Regra 375, {@code VC_LOT_REFUSALS}).
+     */
+    public static String dayLine(UUID colonyId) {
+        Map<Reason, java.util.List<long[]>> day = DAY.remove(colonyId);
+
+        if (day == null || day.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder line = new StringBuilder();
+
+        day.entrySet().stream()
+                .sorted((a, b) -> Long.compare(b.getValue().getFirst()[0], a.getValue().getFirst()[0]))
+                .forEach(entry -> {
+                    line.append(entry.getKey().name()).append('=').append(entry.getValue().getFirst()[0]).append('@');
+                    for (int i = 1; i < entry.getValue().size(); i++) {
+                        long[] at = entry.getValue().get(i);
+                        line.append(i > 1 ? ";" : "").append(at[0]).append(',').append(at[1]);
+                    }
+                    line.append(' ');
+                });
+
+        return line.toString();
+    }
+
     /** Esta coluna não deu lote, e este foi o motivo. */
     public static void refused(UUID colonyId, Reason reason) {
         if (COUNTED.size() >= MAX_COLONIES && !COUNTED.containsKey(colonyId)) {
@@ -239,6 +290,7 @@ public final class LotRefusals {
 
     /** Esquece tudo. Os testes e o fim do servidor. */
     public static void clearAll() {
+        DAY.clear();
         COUNTED.clear();
         ACCEPTED.clear();
     }

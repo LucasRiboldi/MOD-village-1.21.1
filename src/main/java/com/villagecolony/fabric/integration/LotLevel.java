@@ -114,7 +114,7 @@ public final class LotLevel {
             int roadY, ColonyPos size) {
 
         if (LotSpacing.tooClose(colonyId, originX, originZ, size)) {
-            LotRefusals.refused(colonyId, LotRefusals.Reason.TOO_CLOSE);
+            LotRefusals.refusedAt(colonyId, LotRefusals.Reason.TOO_CLOSE, originX, originZ);
 
             return Optional.empty();
         }
@@ -135,7 +135,7 @@ public final class LotLevel {
                 Optional<BlockPos> found = LotGround.groundInColumn(world, x, z, aroundY, LotTerraform.MAX_CUT);
 
                 if (found.isEmpty()) {
-                    LotRefusals.refused(colonyId, LotRefusals.Reason.NO_GROUND);
+                    LotRefusals.refusedAt(colonyId, LotRefusals.Reason.NO_GROUND, originX, originZ);
 
                     return Optional.empty();
                 }
@@ -191,7 +191,7 @@ public final class LotLevel {
                 // aplainada até a base na rua; mais longe, é recusada.
                 int levelOffset = ground.getY() - roadY;
                 if (levelOffset > LotTerraform.MAX_CUT || -levelOffset > LotTerraform.MAX_FILL) {
-                    LotRefusals.refused(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL);
+                    LotRefusals.refusedAt(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL, originX, originZ);
                     VolumeSample.offRoad(levelOffset > 0 ? "+" + levelOffset : String.valueOf(levelOffset));
 
                     return Optional.empty();
@@ -207,7 +207,7 @@ public final class LotLevel {
                 // {@code bedAndRoadRefusalsAreIndependent} separando as
                 // duas telemetrias em vez de uma engolir a outra.
                 if (world.getBlockState(ground).getBlock() instanceof BedBlock) {
-                    LotRefusals.refused(colonyId, LotRefusals.Reason.BED);
+                    LotRefusals.refusedAt(colonyId, LotRefusals.Reason.BED, originX, originZ);
 
                     return Optional.empty();
                 }
@@ -230,7 +230,7 @@ public final class LotLevel {
                 if (BlockProtection.isColonyBuilt(ground)) {
                     VolumeSample.colonyBuilt();
 
-                    LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
+                    LotRefusals.refusedAt(colonyId, LotRefusals.Reason.OCCUPIED, originX, originZ);
 
                     return Optional.empty();
                 }
@@ -246,14 +246,14 @@ public final class LotLevel {
                 // RoadIndex.isReservedAgainstLots — a Regra 3 continua adiante, e
                 // bloco original que não é calçamento segue intocável.
                 if (RoadIndex.isReservedAgainstLots(world, colonyId, ground)) {
-                    LotRefusals.refused(colonyId, LotRefusals.Reason.ROAD);
+                    LotRefusals.refusedAt(colonyId, LotRefusals.Reason.ROAD, originX, originZ);
 
                     return Optional.empty();
                 }
 
                 // Uma leitura do bloco que já está na mão.
                 if (!LotGround.isLotGround(world, ground)) {
-                    LotRefusals.refused(colonyId, LotRefusals.Reason.NOT_NATURAL_GROUND);
+                    LotRefusals.refusedAt(colonyId, LotRefusals.Reason.NOT_NATURAL_GROUND, originX, originZ);
                     VolumeSample.softGround(world, ground);
 
                     return Optional.empty();
@@ -286,7 +286,7 @@ public final class LotLevel {
                 if (BlockProtection.isVillageOriginal(world, ground)
                         && !LotGround.isBiomeGround(world, ground)) {
 
-                    LotRefusals.refused(colonyId, LotRefusals.Reason.PROTECTED);
+                    LotRefusals.refusedAt(colonyId, LotRefusals.Reason.PROTECTED, originX, originZ);
 
                     return Optional.empty();
                 }
@@ -321,7 +321,7 @@ public final class LotLevel {
         }
 
         if (base.isEmpty()) {
-            LotRefusals.refused(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL);
+            LotRefusals.refusedAt(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL, originX, originZ);
             VolumeSample.offRoad("unlevelled");
 
             return Optional.empty();
@@ -347,7 +347,7 @@ public final class LotLevel {
                         originZ + dz,
                         from,
                         Math.max(size.y(), BuildSiteScanner.VERTICAL_CLEARANCE) + baseY + 1 - from)) {
-                    LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
+                    LotRefusals.refusedAt(colonyId, LotRefusals.Reason.OCCUPIED, originX, originZ);
 
                     return Optional.empty();
                 }
@@ -380,7 +380,7 @@ public final class LotLevel {
                 || LotClearance.overlapsFoundationFootprint(floor, ceiling)
                 || LotClearance.overlapsConstructionSite(world, colonyId, floor, ceiling, null)) {
 
-            LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
+            LotRefusals.refusedAt(colonyId, LotRefusals.Reason.OCCUPIED, originX, originZ);
 
             return Optional.empty();
         }
