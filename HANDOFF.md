@@ -2,6 +2,19 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.144 (2026-11-25)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commits `94f9446b` (Regra 365), `000952eb` (366), `ca00ef5e` (367), `e8058bd6` (368).
+- **Jogo da 0.4.143:** triagem no topo do `TODO.md`; escolhas H1 🅲, H2 🅱️, H3 🅰️, H4 🅱️, H5 🅱️.
+- **Regra 365:** `TreeNursery.seesTheSky` (nada que barre o movimento acima da muda, folha e barreira à parte) em `isSpotForANursery` e `plantAt`.
+- **Regra 366:** `DoorFronts.better` anda pelos dois lados da porta; laje dupla não é degrau; não sobe mais de 1 por coluna.
+- **Regra 367:** `RoadLines` faz a busca cara para toda parte com entrada, fora do `LINKS_PER_READ`; `PathTerrain.blockedWhy` (Br/Bu/Bb/Bm/Bo) no `loose=` do `VC_ROAD_GRAPH`. Provado fora do jogo com a foto do terreno: com 1 busca, 5 portas soltas; com a regra, nenhuma. O registro `road_geometry_pin.txt` mudou em `parts/1` e `wander7/1` (o grafo ganhou as ligações).
+- **Regra 368:** `GradeSurvey` põe a faixa da obra aberta na mediana do chão em volta (antes a base da planta, 2 abaixo com a fundação); `GradeHoles` enche a cova de 2 com 3 ou 4 vizinhas acima, a até 12 de uma estrutura.
+- **H5 (sem código):** o pastor fica preso no térreo da casa grande, entre baús e camas; fundidor e carpinteiro sem manutenção durante obra. Opções a apresentar ao autor.
+- **Prova:** `NurserySkyGameTest`, `DoorFrontsGameTest` (+1), `RoadLinesDoorsTest`, `OpenSiteRingGameTest` (2), todos vermelhos antes. Sentinela `fast` `20261126T025138Z`: unitários, propriedades e 1.289/1.289 GameTests.
+- **Instalado:** `village-colony-0.4.144.jar` (build, `downloads/`, TLauncher), SHA-256 `078A88B2EA65D069ED4E2D216502161FFAEA022642EE5B59CA15519E0F270079`; 0.4.143 `.jar.disabled`.
+- **Em jogo:** nenhuma muda em túnel; nó na frente da porta das casas do deserto; portas, plantações e curral ligados; sem vala em volta da obra; covas perto das casas enchidas; custo do grafo no `VC_COST`.
+
 ## Entrega — 0.4.143 (2026-11-25)
 
 - **Branch:** `fix/areia-que-cai`, sem push. Commit `c8f438bb`.

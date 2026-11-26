@@ -17,6 +17,15 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.144] — candidata, 2026-11-25
+
+Do jogo da 0.4.143 no deserto: H1 🅲, H2 🅱️, H3 🅰️ e H4 🅱️. Regras 365 a 368. O H5 (o pastor preso e a manutenção do fundidor e do carpinteiro) ficou diagnosticado e espera a escolha do autor.
+
+- O viveiro do lenhador e o bosque só nascem a céu aberto: no jogo, o lenhador plantou carvalho em terra enraizada dentro do túnel da mina (Regra 365, `NurserySkyGameTest`).
+- A porta que olha para fora não leva o nó de entrada para trás da casa: a busca anda pelos dois lados da porta e fica com o que sai com menos passos; a laje dupla da parede deixou de contar como degrau (Regra 366, `DoorFrontsGameTest`).
+- Toda entrada de construção (porta, plantação, curral, mina) se liga ao grafo em toda releitura, sem esperar a vez da busca cara; com uma busca por releitura, as entradas se revezavam e o grafo trocava de forma. A entrada que fica solta diz o motivo de cada coluna bloqueada em volta (Regra 367, `RoadLinesDoorsTest`).
+- A faixa em volta da obra aberta fica na altura do chão em volta, e não na base da planta: o Zelador cavava uma vala de 2 em volta da obra. A cova natural de 2 ou mais perto das construções entra no plano de alturas para ser enchida (Regra 368, `OpenSiteRingGameTest`).
+
 ## [0.4.143] — candidata, 2026-11-25
 
 - A obra nova volta a cuidar do terreno dela como antes: o alisamento em volta na abertura (Regra 297) voltou, a pedido do autor antes do jogo. A Regra 364 continua para o Zelador: ele só sobe ou desce chão natural, e a rua e o caminho ficam onde estão.

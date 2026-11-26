@@ -8,6 +8,17 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   está em `docs/technical/TODO-herdado-2026-11-13.md`.
 - O TODO antigo inteiro, por jogo, está em `docs/archive/technical/TODO-ate-2026-11-13.md` (`grep`).
 
+## Jogo da 0.4.143 no deserto (2026-11-25)
+
+Colônia 33439c4e, 17 notas. Confirmou a 0.4.143: a obra nova alisou o chão em volta nas 6 aberturas (`VC_SITE_EDGE maxStep=1`). Relatório: `docs/testing/relatorios/jogo-20261125-2210.md`.
+
+- [x] H3 🅰️ — muda dentro da mina: Regra 365 na 0.4.144.
+- [x] H2 🅱️ — nó de entrada atrás da casa: Regra 366 na 0.4.144.
+- [x] H1 🅲 — entradas soltas do grafo: Regra 367 na 0.4.144. Conferir a mina e a casa do mineiro no `VC_ROAD_GRAPH` (motivo Br/Bu/Bb/Bm/Bo).
+- [x] H4 🅱️ — vala em volta da obra e covas de 2: Regra 368 na 0.4.144.
+- [ ] 🟠 H5 — o pastor dorme no andar de cima da casa grande e cai num vão de 2 blocos do térreo, cercado por baús ao lado das camas (-363..-362, 76, -357); fica `BLOCKED HELP` o expediente inteiro. Espera a escolha do autor.
+- [ ] 🟠 H5 — manutenção do fundidor (sem manutenção ativa, 78% parado) e do carpinteiro (a da Regra 221 é proibida com obra aberta, 59% parado). Espera a escolha do autor.
+
 ## Jogo da 0.4.141 no deserto (2026-11-25)
 
 Colônia 1577f7f0, 30 min, 4 notas e 4 fotos do terreno. Confirmou a 0.4.140: o plano nivelou 660 colunas (pendente 353 → 98) e a boca da mina nasceu no chão aberto (`reached=true`).
