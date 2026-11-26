@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 280
+- **Cita a regra:** 281
 - **Só usa a classe indicada:** 85
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -383,7 +383,7 @@ classe prova menos ainda.
 | 370 | Baú novo não tira o acesso a uma cama (autor 26-11, H5 do jogo da 0.4.143: "todos baú est… | cita | ChestPassageGameTest |
 | 371 | A entrada da mina e as portas perto dela entram no grafo (autor 26-11, notas do jogo da 0… | cita | MineYardGameTest |
 | 372 | A coleira da cama (autor 26-11, notas do jogo da 0.4.145, escolha J1 🅱️ com o raio contad… | cita | HomeLeashGameTest |
-| 373 | A plantação sem lote perto espera a busca da casa terminar (autor 26-11, notas do jogo da… | cita | FarmPostponeTest |
+| 373 | A plantação sem lote perto espera a busca da casa terminar (autor 26-11, notas do jogo da… | cita | FarmPostponeTest, FirstBuildsTest |
 | 374 | Curral grande e plantação grande primeiro, e uma plantação a cada 10 obras (autor 26-11,… | cita | FirstBuildsTest |
 | 375 | O log diz por que os lotes foram recusados (autor 26-11, notas do jogo da 0.4.145, escolh… | cita | LotRefusalsDayTest |
 | 376 | O construtor mora perto da obra (autor 26-11, notas do jogo da 0.4.145, J7: "o construtor… | cita | BuilderHomeGameTest |
@@ -392,3 +392,4 @@ classe prova menos ainda.
 | 379 | A água do curral grande fora da reta dos portões (autor 26-11, nota do jogo da 0.4.145, J… | cita | test_large_animal_pen |
 | 380 | A vila nasce com animais e não abate antes de 6 (autor 26-11, notas do jogo da 0.4.145, e… | cita | FlockHarvestTest, FoundationAnimalsGameTest |
 | 381 | Areia e cacto aparecem sob pedido (autor 26-11, K1 do jogo da 0.4.148: "areia e cacto dev… | cita | ClayOnRequestGameTest |
+| 382 | A casa do fazendeiro perto da plantação grande (autor 26-11, K2 do jogo da 0.4.148: "adic… | cita | FarmerHomeTest |

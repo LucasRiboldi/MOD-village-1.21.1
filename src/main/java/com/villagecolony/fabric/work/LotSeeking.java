@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.fabric.integration.MaeRescue;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
@@ -63,6 +64,20 @@ final class LotSeeking {
                 }
             }
             // ADR-043: casa pendente não impede outras obras após esgotar a busca local.
+        }
+
+        // A casa do fazendeiro perto da plantação grande (Regra 382), procurada como a do mineiro.
+        if (FarmerHomePlans.isOwed(VillageColonyMod.BUILDINGS.ofColony(colony.id()))) {
+            Optional<Blueprint> house = HousePlans.houseFor(world, colony);
+
+            if (house.isPresent()) {
+                var search = FarmerHomePlans.findSite(world, colony, List.of(house.get()));
+
+                if (search.site().isPresent()) {
+                    return SiteOpening.open(world, colony, search.site().get(), List.of(house.get()), house.get(),
+                            builders);
+                }
+            }
         }
 
         // A seleção é global, mas a descoberta do lote continua única: a
