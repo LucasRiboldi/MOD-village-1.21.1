@@ -2,6 +2,17 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.146 (2026-11-26)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commits `61c8f94f` (Regra 371 e emenda da 335), `37dab9bd` + `5db02385` (Regra 372).
+- **Jogo da 0.4.145:** triagem no topo do `TODO.md` e na memória `jogo-0145-triagem`; escolhas J1 🅱️ (raio da cama), J2 🅲, J3 🅲, J4 🅱️, J5 🅱️, J6 🅲 (o pastor traz sempre todos os animais em volta), J7 só o construtor se mudando; sem `majest_builder`.
+- **Regra 371:** `MineYard.isYardColumn` olha também as bocas da superfície (`MineMouths.of`); `WorldPathTerrain.floorAnywhereAt` libera da folga da boca a frente de cada porta e as 4 colunas em volta, fora o caracol; `DoorFronts.entrances` só usa as portas da altura mais baixa.
+- **Regra 372:** `HomeLeash` (48 da cama, 3 passadas, `VC_LEASH`), ligado em `SurfaceGatheringWork`.
+- **Não feito no J3:** a porta do açougue dá para o quintal murado dele (Regra 360 põe o nó lá) e continua solta; precisa de escolha.
+- **Prova:** `MineYardGameTest` (+2), `DoorFrontsGameTest` (+1), `HomeLeashGameTest`, vermelhos antes. Sentinela `fast` `20261126T144357Z`: 1.295/1.295.
+- **Instalado:** `village-colony-0.4.146.jar`, SHA-256 `AE94A675DCE873EAC25FF3A3B274D559FFB810EC1364E3CAC1F631BE9F2E3C9C`; 0.4.145 `.jar.disabled`.
+- **Próximo:** 0.4.147 com J2 (obras paradas, curral e fazenda primeiro, fazenda a cada 10) e J7 (construtor se muda); 0.4.148 com J4, J5 e J6.
+
 ## Entrega — 0.4.145 (2026-11-26)
 
 - **Branch:** `fix/areia-que-cai`, sem push. Desenho `docs/superpowers/specs/2026-11-26-casas-de-oficio-design.md`, plano `docs/superpowers/plans/2026-11-26-casa-grande-reformada.md`.

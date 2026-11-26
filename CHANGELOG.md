@@ -17,6 +17,14 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.146] — candidata, 2026-11-26
+
+Do jogo da 0.4.145 no deserto: J1 🅱️ (com o raio contado da cama) e J3 🅲. Regras 371 e 372, emenda da 335. J2, J4 a J7 vêm nas próximas versões.
+
+- A coleira da cama: fora o mineiro e o lenhador, ninguém busca recurso de superfície a mais de 48 blocos da própria cama, e quem fica mais longe larga a tarefa e anda de volta; sem chegar mais perto em 3 passadas, é levado até a cama (`VC_LEASH`). No jogo, o fundidor foi buscar areia a mais de 150 blocos e ficou preso lá o jogo todo (Regra 372, `HomeLeashGameTest`).
+- A entrada da mina volta ao grafo depois que a mina desce um nível: o pátio da boca era procurado na altura do fundo. A frente de cada porta perto da boca (a casa do mineiro) e as colunas em volta não são folga da boca para o grafo; o caracol da escada continua fechado (Regra 371, `MineYardGameTest`).
+- Na casa de meio-andar, só a porta mais baixa vira entrada do grafo: o cartógrafo do deserto tinha um nó da porta de cima (emenda da Regra 335, `DoorFrontsGameTest`).
+
 ## [0.4.145] — candidata, 2026-11-26
 
 Do H5 do jogo da 0.4.143 (o pastor preso no térreo da casa grande), etapa 1 do desenho das casas de ofício (`docs/superpowers/specs/2026-11-26-casas-de-oficio-design.md`). Regras 369 e 370.

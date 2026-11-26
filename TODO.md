@@ -8,6 +8,19 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   está em `docs/technical/TODO-herdado-2026-11-13.md`.
 - O TODO antigo inteiro, por jogo, está em `docs/archive/technical/TODO-ate-2026-11-13.md` (`grep`).
 
+## Jogo da 0.4.145 no deserto (2026-11-26)
+
+Colônia 07e212d1, 15 dias, 33 notas. A casa grande nova não teve queixa. Relatório: `docs/testing/relatorios/jogo-20261126-1040.md`.
+
+- [x] J1 🅱️ — fundidor preso a 150 blocos: coleira de 48 da cama, Regra 372 na 0.4.146.
+- [x] J3 🅲 — mina e casa do mineiro fora do grafo, nó do cartógrafo: Regra 371 e emenda da 335 na 0.4.146.
+- [ ] 🟠 J3 — a porta do açougue dá para o quintal murado e continua solta (Regra 360); espera escolha.
+- [ ] 🔴 J2 🅲 — obras paradas com espaço livre (busca sem tempo, TOO_CLOSE 2,2 mi); curral grande e fazenda grande primeiro; fazenda a cada 10 obras; motivo diário dos lotes recusados.
+- [ ] 🟠 J7 — o construtor se muda para a casa livre mais perto da obra, com cama e baú, quando a obra fica a mais de 30 blocos.
+- [ ] 🟠 J4 🅱️ — blocos de fuga somem depois de 1 dia; o lenhador pede casa na borda quando a árvore fica a mais de 30.
+- [ ] 🟡 J5 🅱️ — o lenhador corta galhos soltos e folhas da árvore.
+- [ ] 🟡 J6 🅲 — água do curral fora do caminho do portão; a vila nasce com um casal de cada; o pastor traz sempre os animais em volta; sem abate antes de 6 de cada.
+
 ## Jogo da 0.4.143 no deserto (2026-11-25)
 
 Colônia 33439c4e, 17 notas. Confirmou a 0.4.143: a obra nova alisou o chão em volta nas 6 aberturas (`VC_SITE_EDGE maxStep=1`). Relatório: `docs/testing/relatorios/jogo-20261125-2210.md`.
