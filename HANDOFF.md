@@ -2,6 +2,18 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.145 (2026-11-26)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Desenho `docs/superpowers/specs/2026-11-26-casas-de-oficio-design.md`, plano `docs/superpowers/plans/2026-11-26-casa-grande-reformada.md`.
+- **Regra 369:** `scripts/houses/house_rules.py` (verificador), `scripts/houses/gen_big_house.py` (planta 9 × 12 × 11), `BigHouseFoundation.floorLayers` põe a planta uma camada abaixo do lote (piso no lugar do chão). Correção da revisão: piso de cima aberto sobre os três degraus.
+- **Regra 370:** `ChestPassage.closesAPassage` no `ChestPlacer.placeBeside`.
+- **Testes ajustados:** `StreetLevelGameTest` (rua da casa grande na camada 0), `DoorPathsGameTest` (planta 1 abaixo), `VillageFoundationGameTest` (o fazendeiro sem cama pode ganhar a cama do morto; ninguém nasce no lugar dele).
+- **Pendentes da revisão (pequenos):** a Regra 370 não age com a cama em andar diferente da porta; o conserto do baú (`repairSlot`) não a usa; o centro da vila desce 1 bloco.
+- **Máquina:** o IPv4 da internet caiu; o Gradle só baixa com `JAVA_TOOL_OPTIONS=-Djava.net.preferIPv6Addresses=true`. O manifesto do Minecraft foi baixado à mão para `~/.gradle/caches/fabric-loom/`.
+- **Prova:** Sentinela `fast` `20261126T050808Z`: unitários, propriedades e 1.291/1.291 GameTests; Python OK.
+- **Instalado:** `village-colony-0.4.145.jar` (build, `downloads/`, TLauncher), SHA-256 `8457CAB5ABF9E7593DB393F08C9201C2790390EE1C54450A60598381A2D264BA`; 0.4.144 `.jar.disabled`.
+- **Em jogo:** a casa grande nova só nasce em vila nova; conferir no criativo com `/place template villagecolony:houses/big_house_mod`.
+
 ## Entrega — 0.4.144 (2026-11-25)
 
 - **Branch:** `fix/areia-que-cai`, sem push. Commits `94f9446b` (Regra 365), `000952eb` (366), `ca00ef5e` (367), `e8058bd6` (368).

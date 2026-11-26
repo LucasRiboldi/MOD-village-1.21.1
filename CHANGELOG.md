@@ -17,6 +17,14 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.145] — candidata, 2026-11-26
+
+Do H5 do jogo da 0.4.143 (o pastor preso no térreo da casa grande), etapa 1 do desenho das casas de ofício (`docs/superpowers/specs/2026-11-26-casas-de-oficio-design.md`). Regras 369 e 370.
+
+- A casa grande da vila nova é refeita: 2 blocos mais funda (9 × 12 × 11), piso de tijolo de pedra no lugar do chão com a porta logo acima, escada com o piso de cima aberto sobre os três degraus e sem corrimão, piso de cima inteiro, 4 tochas por dentro e 7 camas e 7 baús, cada baú encostado em parede e tudo alcançável a pé da porta. A planta sai de `scripts/houses/gen_big_house.py`, que só grava se `scripts/houses/house_rules.py` não achar problema. A casa grande já de pé no mundo não muda; a inacabada de um save antigo retoma pela planta nova (Regra 369, `test_house_rules`, `BigHouseModBlueprintGameTest`).
+- O baú que o mod põe ao lado de uma cama nunca tira de quem entra pela porta o acesso a uma cama ou à frente de outro baú (Regra 370, `ChestPassageGameTest`).
+- Com baú ao lado de cada cama na casa grande, o fazendeiro sem cama passa a ganhar a cama livre de um morador morto; ninguém nasce no lugar do morto (`VillageFoundationGameTest`).
+
 ## [0.4.144] — candidata, 2026-11-25
 
 Do jogo da 0.4.143 no deserto: H1 🅲, H2 🅱️, H3 🅰️ e H4 🅱️. Regras 365 a 368. O H5 (o pastor preso e a manutenção do fundidor e do carpinteiro) ficou diagnosticado e espera a escolha do autor.

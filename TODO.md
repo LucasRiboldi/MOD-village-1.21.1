@@ -16,7 +16,9 @@ Colônia 33439c4e, 17 notas. Confirmou a 0.4.143: a obra nova alisou o chão em 
 - [x] H2 🅱️ — nó de entrada atrás da casa: Regra 366 na 0.4.144.
 - [x] H1 🅲 — entradas soltas do grafo: Regra 367 na 0.4.144. Conferir a mina e a casa do mineiro no `VC_ROAD_GRAPH` (motivo Br/Bu/Bb/Bm/Bo).
 - [x] H4 🅱️ — vala em volta da obra e covas de 2: Regra 368 na 0.4.144.
-- [ ] 🟠 H5 — o pastor dorme no andar de cima da casa grande e cai num vão de 2 blocos do térreo, cercado por baús ao lado das camas (-363..-362, 76, -357); fica `BLOCKED HELP` o expediente inteiro. Espera a escolha do autor.
+- [x] H5 — o pastor preso na casa grande: casa grande refeita (Regra 369) e baú que não tira o acesso à cama (Regra 370) na 0.4.145.
+- [ ] 🟠 H5 etapas 2 e 3 — casas `majest_<ofício>` com cama, baú, decoração e placa, e a mudança do titular (desenho de 2026-11-26).
+- [ ] 🟡 Revisão da 0.4.145: Regra 370 com a cama em outro andar; `ChestPlacer.repairSlot` sem a Regra 370; centro da vila 1 bloco abaixo.
 - [ ] 🟠 H5 — manutenção do fundidor (sem manutenção ativa, 78% parado) e do carpinteiro (a da Regra 221 é proibida com obra aberta, 59% parado). Espera a escolha do autor.
 
 ## Jogo da 0.4.141 no deserto (2026-11-25)
