@@ -15,8 +15,9 @@ Colônia 07e212d1, 15 dias, 33 notas. A casa grande nova não teve queixa. Relat
 - [x] J1 🅱️ — fundidor preso a 150 blocos: coleira de 48 da cama, Regra 372 na 0.4.146.
 - [x] J3 🅲 — mina e casa do mineiro fora do grafo, nó do cartógrafo: Regra 371 e emenda da 335 na 0.4.146.
 - [ ] 🟠 J3 — a porta do açougue dá para o quintal murado e continua solta (Regra 360); espera escolha.
-- [ ] 🔴 J2 🅲 — obras paradas com espaço livre (busca sem tempo, TOO_CLOSE 2,2 mi); curral grande e fazenda grande primeiro; fazenda a cada 10 obras; motivo diário dos lotes recusados.
-- [ ] 🟠 J7 — o construtor se muda para a casa livre mais perto da obra, com cama e baú, quando a obra fica a mais de 30 blocos.
+- [x] J2 🅲 — obras paradas, curral e plantação primeiro, plantação a cada 10, motivo diário: Regras 373 a 375 na 0.4.147.
+- [x] J7 — o construtor se muda para perto da obra (cama livre ou troca com adulto sem profissão): Regra 376 na 0.4.147.
+- [ ] 🟠 J7 — falta pôr cama e baú numa casa sem cama quando não há cama livre nem adulto sem profissão perto da obra.
 - [ ] 🟠 J4 🅱️ — blocos de fuga somem depois de 1 dia; o lenhador pede casa na borda quando a árvore fica a mais de 30.
 - [ ] 🟡 J5 🅱️ — o lenhador corta galhos soltos e folhas da árvore.
 - [ ] 🟡 J6 🅲 — água do curral fora do caminho do portão; a vila nasce com um casal de cada; o pastor traz sempre os animais em volta; sem abate antes de 6 de cada.

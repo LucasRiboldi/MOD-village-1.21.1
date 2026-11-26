@@ -2,6 +2,17 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.147 (2026-11-26)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commits `2d59fe2a` (Regras 373 e 374), `1e3b4a1f` (375), `778931f0` (376).
+- **Regra 373:** `FarmPlans.postponed` só libera a plantação depois de 1 rodada e com `SweepState.stillLookingForALot` falso. Causa do jogo: a plantação achava o lote longe a cada minuto e apagava o cursor da busca da casa.
+- **Regra 374:** `UrgentPlans.firstBuild` (curral grande, plantação grande, uma plantação a cada 10 prontas); `LargeFarmPlans.model` e `count`.
+- **Regra 375:** `LotRefusals.refusedAt` e `dayLine`, nas 11 recusas do `LotLevel`; linha `VC_LOT_REFUSALS` no `TerrainReport`.
+- **Regra 376:** `BuilderHome` (30 blocos; cama livre ou troca com adulto sem profissão), a cada 30 s com obra aberta. **Falta:** pôr cama e baú numa casa sem cama.
+- **Prova:** `FarmPostponeTest`, `FirstBuildsTest`, `LotRefusalsDayTest`, `BuilderHomeGameTest`, vermelhos antes. Sentinela `fast` `20261126T150816Z`: 1.296/1.296.
+- **Instalado:** `village-colony-0.4.147.jar`, SHA-256 `4DA15F1A417B9D9F7FFE5DEC6E103B25FB3DBAE1183D2FA165ED5E9C6748D84A`; 0.4.146 `.jar.disabled`.
+- **Próximo:** 0.4.148 com J4, J5 e J6.
+
 ## Entrega — 0.4.146 (2026-11-26)
 
 - **Branch:** `fix/areia-que-cai`, sem push. Commits `61c8f94f` (Regra 371 e emenda da 335), `37dab9bd` + `5db02385` (Regra 372).

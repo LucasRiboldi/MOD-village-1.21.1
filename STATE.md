@@ -5,6 +5,7 @@
 > **Retomada por outro agente:** comece por `HANDOFF.md`.
 
 ## Onde o projeto está
+- **Candidata 0.4.147 (branch `fix/areia-que-cai`, sem push).** Do jogo da 0.4.145: obras voltam a sair (Regra 373), curral e plantação grandes primeiro e plantação a cada 10 obras (374), `VC_LOT_REFUSALS` (375), construtor perto da obra (376). Sentinela `20261126T150816Z`: 1.296/1.296. JAR SHA-256 `4DA15F1A…D84A` instalado. J4–J6 na fila.
 - **Candidata 0.4.146 (branch `fix/areia-que-cai`, sem push).** Do jogo da 0.4.145: entrada da mina e portas perto dela no grafo e só a porta mais baixa da casa (Regra 371, emenda da 335), coleira de 48 blocos da cama (Regra 372). Sentinela `20261126T144357Z`: 1.295/1.295. JAR SHA-256 `AE94A675…3C9C` instalado. J2, J4–J7 na fila.
 - **Candidata 0.4.145 (branch `fix/areia-que-cai`, sem push).** H5, etapa 1 das casas de ofício: a casa grande refeita, andável por dentro (Regra 369), e baú novo que não tira o acesso à cama (370). Sentinela `20261126T050808Z`: 1.291/1.291. JAR SHA-256 `8457CAB5…64BA` instalado. Etapas 2 e 3 (casas `majest_`) esperam o jogo.
 - **Candidata 0.4.144 (branch `fix/areia-que-cai`, sem push).** Do jogo da 0.4.143: muda só a céu aberto (Regra 365), nó na frente da porta que olha para fora (366), toda entrada liga ao grafo sem esperar a vez (367), sem vala em volta da obra e covas de 2 enchidas (368). Sentinela `20261126T025138Z`: 1.289/1.289. JAR SHA-256 `078A88B2…0079` instalado. H5 espera escolha.

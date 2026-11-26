@@ -17,6 +17,15 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.147] — candidata, 2026-11-26
+
+Do jogo da 0.4.145 no deserto: J2 🅲 e J7. Regras 373 a 376.
+
+- As obras voltam a sair: a plantação que não tinha lote ao alcance do fazendeiro voltava a cada minuto, achava o mesmo lote longe e apagava o cursor da busca da casa, que recomeçava do centro e nunca acabava — no jogo, 15 dias sem obra com espaço livre. Agora ela espera a busca da casa terminar (Regra 373, `FarmPostponeTest`).
+- O curral grande é a primeira obra da vila e a plantação grande a segunda; depois, a cada 10 construções prontas, a vila levanta mais uma plantação grande (Regra 374, `FirstBuildsTest`).
+- No fim do expediente, a linha `VC_LOT_REFUSALS` diz por que os lotes do dia foram recusados, com a conta e até 5 lugares de exemplo por motivo (Regra 375, `LotRefusalsDayTest`).
+- Com a obra aberta a mais de 30 blocos da cama dele, o construtor passa para a cama livre mais perto da obra, ou troca de cama com o adulto sem profissão que dorme mais perto dela (`VC_BUILDER_HOME`). Pôr cama e baú numa casa sem cama ainda não foi feito (Regra 376, `BuilderHomeGameTest`).
+
 ## [0.4.146] — candidata, 2026-11-26
 
 Do jogo da 0.4.145 no deserto: J1 🅱️ (com o raio contado da cama) e J3 🅲. Regras 371 e 372, emenda da 335. J2, J4 a J7 vêm nas próximas versões.
