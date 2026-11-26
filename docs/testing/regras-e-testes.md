@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 267
+- **Cita a regra:** 269
 - **Só usa a classe indicada:** 85
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -379,3 +379,5 @@ classe prova menos ainda.
 | 366 | A porta que olha para fora não leva o nó para trás da casa (autor 25-11, notas do jogo da… | cita | DoorFrontsGameTest |
 | 367 | Toda entrada de construção se liga ao grafo sem esperar a vez (autor 25-11, notas do jogo… | cita | RoadLinesDoorsTest |
 | 368 | Sem vala em volta da obra, e a cova funda perto das construções é enchida (autor 25-11, n… | cita | OpenSiteRingGameTest |
+| 369 | A casa grande é andável por dentro (autor 26-11, H5 do jogo da 0.4.143, o pastor preso no… | cita | BigHouseModBlueprintGameTest, DoorPathsGameTest, StreetLevelGameTest |
+| 370 | Baú novo não tira o acesso a uma cama (autor 26-11, H5 do jogo da 0.4.143: "todos baú est… | cita | ChestPassageGameTest |
