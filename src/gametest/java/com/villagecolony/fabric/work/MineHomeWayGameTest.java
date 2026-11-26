@@ -34,7 +34,8 @@ public class MineHomeWayGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_home_way", tickLimit = 20)
     public void theMinerHomeAndTheMineAreJoined(TestContext context) {
         ServerWorld world = context.getWorld();
-        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 96, 1));
+        // Longe da bateria: a plataforma de 40 e a mina invadiam a arena do pastor ao lado (ShepherdRoundGameTest).
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 96, 1)).add(2_750_000, 0, 2_750_000);
 
         chunks(world, origin, true);
 
