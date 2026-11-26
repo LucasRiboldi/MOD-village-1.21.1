@@ -46,7 +46,7 @@ classe prova menos ainda.
 | 33 | Pedido de commit+push também atualiza o JAR local | nenhum |  |
 | 34 | A lava nunca surge automática | classe | BuilderGameTest, ChainRootsGameTest, ConstructionSupplyAuditGameTest |
 | 35 | Carpinteiro titular na BigHouseMOD, cama e baú à direita da porta, corredor livre até a e… | cita | BigHouseModBlueprintGameTest |
-| 36 | O viveiro (terra enraizada + rebento) é do lenhador | classe | DesertFixesGameTest, LumberjackNurseryTargetTest, TreeNurseryGameTest |
+| 36 | O viveiro (terra enraizada + rebento) é do lenhador | classe | DesertFixesGameTest, LumberjackNurseryTargetTest, NurserySkyGameTest |
 | 37 | Cada aldeão usa a ferramenta de ferro apropriada para a ação | classe | BetterToolGameTest, LumberjackGameTest, ProfessionReviewGameTest |
 | 38 | Contratar primeiro a profissão de que a demanda depende, depois a lista | cita | HiringProperties |
 | 39 | Comida é feita pelo fazendeiro (pão do trigo acima de 32) | classe | ProfessionReviewGameTest, VillageMealsGameTest |
@@ -395,5 +395,5 @@ classe prova menos ainda.
 | 382 | A casa do fazendeiro perto da plantação grande (autor 26-11, K2 do jogo da 0.4.148: "adic… | cita | FarmerHomeTest |
 | 383 | O ofício não troca, e a troca é dita (autor 26-11, K3 🅲 do jogo da 0.4.148: "nenhum aldeã… | cita | ProfessionLockTest, ProfessionShunTest, WorkerTest |
 | 384 | O diário dos blocos (autor 26-11, K3 do jogo da 0.4.148: "uma função para registrar cada… | cita | BlockJournalTest, test_block_report |
-| 385 | Muda com espaço (autor 26-11, K4 🅱️ do jogo da 0.4.148: "rebentos não devem ser plantados… | cita | NurserySkyGameTest |
+| 385 | Muda com espaço (autor 26-11, K4 🅱️ do jogo da 0.4.148: "rebentos não devem ser plantados… | cita | NurserySkyGameTest, TreeNurseryGameTest |
 | 386 | O caminho da mina à casa do mineiro (nota do jogo da 0.4.148, K5 🅱️: "o caminho do arco d… | cita | MineHomeWayGameTest, MineHomeWayTest |

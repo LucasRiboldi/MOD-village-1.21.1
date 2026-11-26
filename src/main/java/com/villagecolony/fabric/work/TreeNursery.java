@@ -126,7 +126,7 @@ public final class TreeNursery {
         // regra do autor, 2026-09-30: no espaço escolhido para uma obra não
         // nasce rebento de outra regra. O playtest daquele dia viu o
         // fazendeiro plantar três vezes em 1762, 71, -5321, duas delas com a
-        // casa do pastor aberta ali; a borda do viveiro (48–56) cai dentro do
+        // casa do pastor aberta ali; a borda do viveiro (48–64) cai dentro do
         // raio de busca de lote (64). isColonyBuilt cobre a obra aberta e a
         // casa pronta.
         // E nem na faixa de construção, nem onde o jogador tirou planta — regras

@@ -100,4 +100,40 @@ public class NurserySkyGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * Regra 385 (a mesma nota: "espalhar bem mais, podendo sair da zona da vila"): o anel do viveiro começa no alcance do
+     * lenhador ({@link LumberjackWork#SEARCH_RADIUS}), e não mais 8 blocos para dentro dele.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "nursery_spread", tickLimit = 20)
+    public void theNurserySpreadsToTheLumberjacksReach(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos centre = context.getAbsolutePos(BlockPos.ORIGIN).add(2_700_000, 20, 2_700_000);
+        BlockPos far = centre.add(LumberjackWork.SEARCH_RADIUS, 0, 0);
+        BlockPos near = centre.add(56, 0, 0);
+
+        world.setChunkForced(far.getX() >> 4, far.getZ() >> 4, true);
+        world.setChunkForced(near.getX() >> 4, near.getZ() >> 4, true);
+
+        try {
+            for (BlockPos at : new BlockPos[] {far, near}) {
+                world.setBlockState(at.down(), Blocks.STONE.getDefaultState());
+                world.setBlockState(at, Blocks.GRASS_BLOCK.getDefaultState());
+            }
+
+            java.util.Optional<BlockPos> spot = LumberjackNursery.spotOnTheEdge(world, centre, 0.0);
+
+            context.assertTrue(spot.filter(far::equals).isPresent(),
+                    "Regra 385: o viveiro não foi até o alcance do lenhador: " + spot);
+        } finally {
+            for (BlockPos at : new BlockPos[] {far, near}) {
+                world.setBlockState(at.down(), Blocks.AIR.getDefaultState());
+                world.setBlockState(at, Blocks.AIR.getDefaultState());
+            }
+            world.setChunkForced(far.getX() >> 4, far.getZ() >> 4, false);
+            world.setChunkForced(near.getX() >> 4, near.getZ() >> 4, false);
+        }
+
+        context.complete();
+    }
 }
