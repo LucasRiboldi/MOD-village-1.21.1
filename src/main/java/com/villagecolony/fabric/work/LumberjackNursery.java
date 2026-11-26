@@ -301,6 +301,7 @@ public final class LumberjackNursery {
 
         return (state.isIn(BlockTags.SAND) || state.isIn(BlockTags.DIRT))
                 && !state.isOf(TreeNursery.BED)
+                && TreeNursery.hasRoom(world, ground) // Regra 385
                 && world.getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING, ground.getX(), ground.getZ())
                         == ground.getY() + 1
                 && !com.villagecolony.fabric.integration.PlayerClearedPlants.isCleared(ground)

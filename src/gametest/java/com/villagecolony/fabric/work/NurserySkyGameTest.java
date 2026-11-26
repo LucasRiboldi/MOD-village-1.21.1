@@ -52,4 +52,52 @@ public class NurserySkyGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * Regra 385 (notas do jogo da 0.4.148, K4 🅱️: "rebentos não devem ser plantados pelo mod um do lado do outro, deve ter
+     * uma área de segurança ... e não pode ser plantada perto das estruturas"): sem muda a até 5 de outra muda ou tronco,
+     * nem a até 8 de uma construção da colônia.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "nursery_room", tickLimit = 20)
+    public void aNurseryKeepsItsDistance(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos base = context.getAbsolutePos(BlockPos.ORIGIN).add(2_650_000, 20, 2_650_000);
+        BlockPos alone = base;
+        BlockPos besideASapling = base.add(20, 0, 0);
+        BlockPos besideAHouse = base.add(40, 0, 0);
+        java.util.UUID colony = java.util.UUID.randomUUID();
+
+        for (int cx = (base.getX() >> 4) - 1; cx <= ((base.getX() + 50) >> 4) + 1; cx++) {
+            world.setChunkForced(cx, base.getZ() >> 4, true);
+        }
+
+        try {
+            for (BlockPos at : BlockPos.iterate(base.add(-10, -1, -10), base.add(52, 6, 10))) {
+                world.setBlockState(at, at.getY() == base.getY() - 1 ? Blocks.STONE.getDefaultState()
+                        : at.getY() == base.getY() ? Blocks.GRASS_BLOCK.getDefaultState()
+                        : Blocks.AIR.getDefaultState());
+            }
+            world.setBlockState(besideASapling.add(3, 1, 0), Blocks.OAK_SAPLING.getDefaultState());
+            com.villagecolony.VillageColonyMod.BUILDINGS.register(new com.villagecolony.core.construction.model.Building(
+                    java.util.UUID.randomUUID(), colony, com.villagecolony.core.type.ResourceId.vanilla("test/house"),
+                    com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(besideAHouse.add(6, 1, -2)),
+                    com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(besideAHouse.add(9, 4, 2))));
+
+            context.assertTrue(TreeNursery.isSpotForANursery(world, alone), "o lugar livre deixou de servir");
+            context.assertFalse(TreeNursery.isSpotForANursery(world, besideASapling),
+                    "Regra 385: a muda nasceu a 3 blocos de outra");
+            context.assertFalse(TreeNursery.isSpotForANursery(world, besideAHouse),
+                    "Regra 385: a muda nasceu a 6 blocos de uma construção");
+        } finally {
+            com.villagecolony.VillageColonyMod.BUILDINGS.removeOfColony(colony);
+            for (BlockPos at : BlockPos.iterate(base.add(-10, -1, -10), base.add(52, 6, 10))) {
+                world.setBlockState(at, Blocks.AIR.getDefaultState());
+            }
+            for (int cx = (base.getX() >> 4) - 1; cx <= ((base.getX() + 50) >> 4) + 1; cx++) {
+                world.setChunkForced(cx, base.getZ() >> 4, false);
+            }
+        }
+
+        context.complete();
+    }
 }

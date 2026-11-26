@@ -110,7 +110,7 @@ public final class TreeNursery {
     public static boolean isSpotForANursery(ServerWorld world, BlockPos ground) {
         BlockState above = world.getBlockState(ground.up());
 
-        if (!above.isAir() || !seesTheSky(world, ground)) {
+        if (!above.isAir() || !seesTheSky(world, ground) || !hasRoom(world, ground)) {
             return false;
         }
 
@@ -200,6 +200,32 @@ public final class TreeNursery {
         }
 
         return true;
+    }
+
+    /** A distância mínima, na horizontal, de outra muda ou tronco (Regra 385). */
+    static final int SPACING = 5;
+
+    /** A distância mínima, na horizontal, de uma construção da colônia (Regra 385). */
+    static final int CLEARANCE = 8;
+
+    /**
+     * Se há espaço para a árvore crescer — Regra 385 (autor 26-11, K4 🅱️ do jogo da 0.4.148: "rebentos não devem ser
+     * plantados pelo mod um do lado do outro, deve ter uma área de segurança para a árvore poder nascer ... e não pode ser
+     * plantada perto das estruturas"): nenhuma muda ou tronco a até {@value #SPACING} blocos e nenhuma construção da
+     * colônia a até {@value #CLEARANCE}.
+     */
+    static boolean hasRoom(ServerWorld world, BlockPos ground) {
+        for (BlockPos at : BlockPos.iterate(ground.add(-SPACING, -2, -SPACING), ground.add(SPACING, 6, SPACING))) {
+            BlockState state = world.getBlockState(at);
+
+            if (state.isIn(BlockTags.SAPLINGS) || state.isIn(BlockTags.LOGS)) {
+                return false;
+            }
+        }
+
+        return !com.villagecolony.VillageColonyMod.BUILDINGS.anythingBuiltInside(
+                MinecraftTypeAdapter.toColonyPos(ground.add(-CLEARANCE, -CLEARANCE, -CLEARANCE)),
+                MinecraftTypeAdapter.toColonyPos(ground.add(CLEARANCE, CLEARANCE, CLEARANCE)));
     }
 
     /** O bloco que o rebento vira, para a bateria e o log. */

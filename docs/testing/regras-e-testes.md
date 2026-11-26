@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 283
+- **Cita a regra:** 284
 - **Só usa a classe indicada:** 85
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -395,3 +395,4 @@ classe prova menos ainda.
 | 382 | A casa do fazendeiro perto da plantação grande (autor 26-11, K2 do jogo da 0.4.148: "adic… | cita | FarmerHomeTest |
 | 383 | O ofício não troca, e a troca é dita (autor 26-11, K3 🅲 do jogo da 0.4.148: "nenhum aldeã… | cita | ProfessionLockTest, ProfessionShunTest, WorkerTest |
 | 384 | O diário dos blocos (autor 26-11, K3 do jogo da 0.4.148: "uma função para registrar cada… | cita | BlockJournalTest, test_block_report |
+| 385 | Muda com espaço (autor 26-11, K4 🅱️ do jogo da 0.4.148: "rebentos não devem ser plantados… | cita | NurserySkyGameTest |
