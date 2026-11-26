@@ -225,6 +225,9 @@ public final class GradeSurvey {
             doors += anchorStructure(world, structure, minX, minZ, kinds, anchors, natural, fronts);
         }
 
+        GradeHoles.fill(kinds, anchors, natural, minX, minZ,
+                structures.stream().map(Structure::box).toList());
+
         GradePlan plan = new GradePlan(width, depth);
 
         for (int x = 0; x < width; x++) {
@@ -246,7 +249,11 @@ public final class GradeSurvey {
     }
 
     /** Uma estrutura do plano: a caixa, se é da colônia e se é o curral grande. */
-    private record Structure(BlockBox box, boolean colonyBuilt, boolean largePen) {
+    private record Structure(BlockBox box, boolean colonyBuilt, boolean largePen, boolean open) {
+
+        Structure(BlockBox box, boolean colonyBuilt, boolean largePen) {
+            this(box, colonyBuilt, largePen, false);
+        }
     }
 
     private static List<Structure> structuresOf(ServerWorld world, Colony colony) {
@@ -261,7 +268,7 @@ public final class GradeSurvey {
         VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).ifPresent(open -> structures.add(new Structure(BlockBox.create(
                 MinecraftTypeAdapter.toBlockPos(open.origin()),
                 MinecraftTypeAdapter.toBlockPos(open.origin()).add(open.blueprint().size().x() - 1,
-                        open.blueprint().size().y() - 1, open.blueprint().size().z() - 1)), true, false)));
+                        open.blueprint().size().y() - 1, open.blueprint().size().z() - 1)), true, false, true)));
 
         for (BlockBox piece : GeneratedVillages.structuresAt(world, hub.getX(), hub.getZ())) {
             structures.add(new Structure(piece, false, false));
@@ -317,7 +324,8 @@ public final class GradeSurvey {
 
     /**
      * A faixa em volta da estrutura, na altura da entrada dela, e a frente de cada porta. A entrada é o piso mais baixo
-     * das portas; sem porta, a base da construção da colônia, ou a mediana do chão da faixa na peça da vila gerada.
+     * das portas; sem porta, a base da construção da colônia pronta, ou a mediana do chão da faixa na peça da vila gerada
+     * e na obra aberta, cuja base fica abaixo do chão com a fundação (Regra 368).
      *
      * @return quantas portas a estrutura tem
      */
@@ -343,7 +351,7 @@ public final class GradeSurvey {
         }
 
         int level = entrances.stream().mapToInt(entrance -> entrance.front().getY()).min()
-                .orElseGet(() -> structure.colonyBuilt() ? box.getMinY() : median(band, natural));
+                .orElseGet(() -> structure.colonyBuilt() && !structure.open() ? box.getMinY() : median(band, natural));
 
         for (int[] cell : band) {
             kinds[cell[0]][cell[1]] = GradePlan.Kind.ANCHOR;
