@@ -219,6 +219,17 @@ public final class TreeFelling {
         }
 
         if (job.plan != null && job.index >= job.plan.logs()) {
+            // O galho solto e a copa que ia apodrecer saem também (Regra 378).
+            List<ItemStack> leftovers = com.villagecolony.fabric.integration.TreeLeftovers.clear(world, job.plan);
+            Optional<WorkerStorage> storage = VillageColonyMod.STORAGES.of(workerId);
+
+            if (storage.isPresent()) {
+                deposit(world, storage.get(), job.plan.base(), leftovers);
+            } else {
+                leftovers.forEach(stack -> PublicChests.store(
+                        world, job.task.colonyId(), job.plan.base(), stack.getItem(), stack.getCount()));
+            }
+
             // A muda da árvore longe vai para o bosque perto da vila — regra do autor, 2026-10-11.
             if (!VillageGrove.takesTheSapling(world, job.task.colonyId(), job.plan.base())) {
                 TreeHarvester.finish(world, job.plan);

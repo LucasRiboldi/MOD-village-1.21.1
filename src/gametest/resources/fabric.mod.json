@@ -98,6 +98,7 @@
       "com.villagecolony.fabric.work.HomeLeashGameTest",
       "com.villagecolony.fabric.work.BuilderHomeGameTest",
       "com.villagecolony.fabric.work.TemporaryStepsGameTest",
+      "com.villagecolony.fabric.integration.TreeLeftoversGameTest",
       "com.villagecolony.fabric.integration.LotEdgeGameTest",
       "com.villagecolony.fabric.work.WindowEquivalentGameTest",
       "com.villagecolony.fabric.work.WoodInPiecesGameTest",

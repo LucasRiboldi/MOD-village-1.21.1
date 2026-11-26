@@ -385,6 +385,8 @@ public final class TreeHarvester {
             drops.addAll(breakOne(world, plan, pos));
         }
 
+        // E o galho solto e a copa que ia apodrecer (Regra 378).
+        drops.addAll(TreeLeftovers.clear(world, plan));
         finish(world, plan);
 
         return new Harvest(plan.logs(), plan.leaves(), merge(drops));
