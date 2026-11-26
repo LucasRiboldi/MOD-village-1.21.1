@@ -55,7 +55,7 @@ E baú novo posto ao lado de cama nunca fecha passagem.
 
 ---
 
-### Tarefa 1: verificador das regras de casa (Python)
+### Task 1: verificador das regras de casa (Python)
 
 **Arquivos:**
 - Criar: `scripts/houses/__init__.py` (vazio) e `scripts/houses/house_rules.py`
@@ -113,7 +113,7 @@ brewing_stand, bell`.
 
 ---
 
-### Tarefa 2: a planta nova da casa grande
+### Task 2: a planta nova da casa grande
 
 **Arquivos:**
 - Criar: `scripts/houses/gen_big_house.py`
@@ -200,7 +200,7 @@ brewing_stand, bell`.
 
 ---
 
-### Tarefa 3: baú ao lado da cama nunca fecha passagem
+### Task 3: baú ao lado da cama nunca fecha passagem
 
 **Arquivos:**
 - Criar: `src/main/java/com/villagecolony/fabric/integration/ChestPassage.java`
@@ -234,7 +234,7 @@ brewing_stand, bell`.
 
 ---
 
-### Tarefa 4: regras, documentos, Sentinela e JAR
+### Task 4: regras, documentos, Sentinela e JAR
 
 **Arquivos:** `docs/RULES.md`, `README.md` e `docs/testing/regras-e-testes.md`, estes dois gerados; `CHANGELOG.md`,
 `STATE.md`, `HANDOFF.md`, `TODO.md`, `gradle.properties` e
