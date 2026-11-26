@@ -203,6 +203,35 @@ public final class WorldPathTerrain implements PathTerrain {
                 ignored -> readBlocked(x, z));
     }
 
+    /**
+     * O motivo do bloqueio, para o log da entrada solta (Regra 367): Br recusada pelo calçador, Bu chunk fora da memória,
+     * Bb construção, Bm folga da boca da mina, Bo obra aberta.
+     */
+    @Override
+    public String blockedWhy(int x, int z) {
+        if (refused.contains(com.villagecolony.core.construction.model.ColonyRoads.column(x, z))) {
+            return "Br";
+        }
+
+        if (!world.isChunkLoaded(x >> 4, z >> 4)) {
+            return "Bu";
+        }
+
+        for (Building building : buildings) {
+            if (inside(x, z, building.min(), building.max())) {
+                return "Bb";
+            }
+        }
+
+        return isMineClearance(x, z) ? "Bm" : "Bo";
+    }
+
+    private boolean isMineClearance(int x, int z) {
+        return (mine.filter(entry -> Math.abs(x - entry.x()) <= MINE_CLEARANCE
+                && Math.abs(z - entry.z()) <= MINE_CLEARANCE).isPresent() || MineMouths.isNear(colonyId, x, z))
+                && !MineYard.isYardColumn(world, x, z);
+    }
+
     private boolean readBlocked(int x, int z) {
         if (!world.isChunkLoaded(x >> 4, z >> 4)) {
             return true;
@@ -217,9 +246,7 @@ public final class WorldPathTerrain implements PathTerrain {
         // A boca da mina é buraco de propósito: o caminho que aterra fecharia a escada (playtest 0.3.97).
         // Sobre o pátio de pedra da boca a folga não vale: ele já é chão, e o buraco da escada não tem chão (Regra 293).
         // A boca da superfície também, depois que a mina desce (Regra 356).
-        if ((mine.filter(entry -> Math.abs(x - entry.x()) <= MINE_CLEARANCE
-                && Math.abs(z - entry.z()) <= MINE_CLEARANCE).isPresent() || MineMouths.isNear(colonyId, x, z))
-                && !MineYard.isYardColumn(world, x, z)) {
+        if (isMineClearance(x, z)) {
             return true;
         }
 

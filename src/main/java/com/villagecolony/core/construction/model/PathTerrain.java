@@ -17,6 +17,14 @@ public interface PathTerrain {
     boolean blocked(int x, int z);
 
     /**
+     * Por que a coluna está bloqueada, para o log da entrada solta: "B" e uma letra do motivo quando quem lê o mundo sabe
+     * (Regra 367).
+     */
+    default String blockedWhy(int x, int z) {
+        return "B";
+    }
+
+    /**
      * O caminho pode passar nesta coluna com o piso em {@code floorY}, tirando o que está acima: só árvore e chão
      * natural, e sem morro por cima — Regra 178.
      */

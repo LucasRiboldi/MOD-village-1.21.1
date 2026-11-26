@@ -180,8 +180,9 @@ public final class RoadLines {
 
         for (Set<Long> part : others) {
             boolean aloneDoor = part.size() == 1 && doors.contains(part.iterator().next());
-            // A busca da maior parte solta não conta no limite: as outras seguem no rodízio (Regra 300).
-            boolean free = biggest;
+            // A busca da maior parte solta não conta no limite: as outras seguem no rodízio (Regra 300). A parte com
+            // entrada de construção também não: ela se liga em toda releitura, sem esperar a vez (Regra 367).
+            boolean free = biggest || part.stream().anyMatch(doors::contains);
 
             biggest = false;
 
@@ -268,7 +269,7 @@ public final class RoadLines {
 
     private static String ground(PathTerrain terrain, int x, int z, int nearY) {
         if (terrain.blocked(x, z)) {
-            return "B";
+            return terrain.blockedWhy(x, z);
         }
 
         java.util.OptionalInt read = terrain.groundY(x, z, nearY);
