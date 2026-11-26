@@ -99,6 +99,7 @@ public final class EditLedger {
         String target = targetOf(world, pos, before);
 
         TerrainEdits.record(pos, TerrainEdits.PLAYER); // ADR-064
+        BlockJournal.record(now, "player", pos, nameOf(before), block); // Regra 384
         Spot spot = SPOTS.computeIfAbsent(pos.asLong(), ignored -> new Spot());
 
         lines.add(log("VC_PLAYER_EDIT version=1 action=" + actionOf(before, after) + " block=" + block + " was="
@@ -135,6 +136,7 @@ public final class EditLedger {
         Spot spot = SPOTS.get(pos.asLong());
 
         TerrainEdits.record(pos, "mundo".equals(system) ? TerrainEdits.WORLD : TerrainEdits.MOD); // ADR-064
+        BlockJournal.record(now, "mod:" + system, pos, "", nameOf(after)); // Regra 384
 
         if (spot == null) {
             spot = new Spot();
