@@ -114,3 +114,4 @@ reports/sentinel-analysis/
 
 # Checkpoints locais de alternância entre agentes; podem conter contexto privado.
 /.handoff/
+scripts/houses/out/
