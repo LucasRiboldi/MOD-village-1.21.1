@@ -171,6 +171,18 @@ public final class VillageFoundation {
             }
         }
 
+        // E um casal de cada animal de criação ao lado da casa, a oeste dela, onde fica a porta (Regra 380).
+        if (houseJustPlaced) {
+            BlockPos min = MinecraftTypeAdapter.toBlockPos(foundationHouse.get().min());
+            int x = min.getX() - 4;
+            int z = (min.getZ() + MinecraftTypeAdapter.toBlockPos(foundationHouse.get().max()).getZ()) / 2;
+
+            if (world.isChunkLoaded(x >> 4, z >> 4)) {
+                FoundationAnimals.spawn(world, new BlockPos(x,
+                        world.getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z), z));
+            }
+        }
+
         // Depois dos nascimentos, e não antes: as camas da casa são dos
         // moradores novos. Um titular Vanilla só entra nela se sobrar cama.
         bedsPlaced += ensureExistingHomes(
