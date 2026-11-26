@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 277
+- **Cita a regra:** 278
 - **Só usa a classe indicada:** 85
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -389,3 +389,4 @@ classe prova menos ainda.
 | 376 | O construtor mora perto da obra (autor 26-11, notas do jogo da 0.4.145, J7: "o construtor… | cita | BuilderHomeGameTest |
 | 377 | O degrau de fuga some em um dia (autor 26-11, notas do jogo da 0.4.145, escolha J4 🅱️: "i… | cita | TemporaryStepsGameTest |
 | 378 | O lenhador leva o galho solto e a copa (autor 26-11, notas do jogo da 0.4.145, escolha J5… | cita | LumberjackGameTest, TreeLeftoversGameTest |
+| 379 | A água do curral grande fora da reta dos portões (autor 26-11, nota do jogo da 0.4.145, J… | cita | test_large_animal_pen |
