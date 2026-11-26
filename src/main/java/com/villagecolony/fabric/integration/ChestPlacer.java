@@ -131,7 +131,8 @@ public final class ChestPlacer {
                 return new Result(Optional.of(spot), Outcome.ALREADY_PRESENT);
             }
 
-            if (!isSafeEmptyChestSpot(world, spot)) {
+            // E nunca fechando a passagem de um canto do cômodo (Regra 370).
+            if (!isSafeEmptyChestSpot(world, spot) || ChestPassage.closesAPassage(world, spot, structure)) {
                 continue;
             }
 
