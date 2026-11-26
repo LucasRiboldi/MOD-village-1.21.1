@@ -17,6 +17,15 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.148] — candidata, 2026-11-26
+
+Do jogo da 0.4.145 no deserto: J4 🅱️ (a primeira parte), J5 🅱️ e J6 🅲. Regras 377 a 380.
+
+- O pedregulho que o aldeão põe no desvio para sair de onde ficou preso some depois de um dia de jogo, se ninguém estiver em cima; o que o jogador trocou fica (Regra 377, `TemporaryStepsGameTest`, `VC_ESCAPE_STEPS`). A casa do lenhador na borda ainda espera decisão.
+- O lenhador leva o galho solto que ficou no ar e a copa que ia apodrecer da árvore que derrubou; a colheita continua contando só o tronco (Regra 378, `TreeLeftoversGameTest`; o `LumberjackGameTest` da copa de pé mudou junto).
+- A água do curral grande fica fora da reta dos quatro portões, em (9, 0, 9), e ainda molha toda a plantação (Regra 379, `test_large_animal_pen`).
+- A vila nasce com um casal de vaca, porco, ovelha e galinha a oeste da casa grande, e nenhuma espécie é abatida com menos de 6 adultos (Regra 380, `FoundationAnimalsGameTest`, `FlockHarvestTest`).
+
 ## [0.4.147] — candidata, 2026-11-26
 
 Do jogo da 0.4.145 no deserto: J2 🅲 e J7. Regras 373 a 376.
