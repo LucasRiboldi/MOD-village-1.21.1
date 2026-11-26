@@ -93,7 +93,9 @@ def reached(house):
                 nxt = (x + dx, y + dy, z + dz)
                 if nxt in seen or not standable(house, *nxt):
                     continue
-                if dy == 1 and not passable(house.block(x, y + 2, z)[0]):
+                # Subir um bloco é pulo, e o pulo pede 3 livres em cima; na escada sobe-se de meio em meio, sem pulo.
+                if dy == 1 and not passable(house.block(x, y + 2, z)[0]) \
+                        and not house.block(nxt[0], nxt[1] - 1, nxt[2])[0].endswith("_stairs"):
                     continue
                 seen.add(nxt)
                 queue.append(nxt)

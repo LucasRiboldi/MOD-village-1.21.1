@@ -57,7 +57,9 @@ public class DoorPathsGameTest implements FabricGameTest {
                 .getTemplate(MinecraftTypeAdapter.toIdentifier(StructureBlueprintReader.BIG_HOUSE_MOD)).orElseThrow();
         BlockPos origin = context.getAbsolutePos(BlockPos.ORIGIN).add(2_500_000, 20, 2_500_000);
         StructurePlacementData placement = new StructurePlacementData().setIgnoreEntities(true);
-        BlockBox box = template.calculateBoundingBox(placement, origin);
+        // Como a fundação: o piso da casa no lugar do chão, a porta na altura de quem anda (Regra 369).
+        BlockPos placed = origin.down(BigHouseFoundation.floorLayers(world));
+        BlockBox box = template.calculateBoundingBox(placement, placed);
         BlockBox around = box.expand(3);
 
         for (BlockPos at : BlockPos.iterate(around.getMinX(), origin.getY() - 2, around.getMinZ(),
@@ -67,7 +69,7 @@ public class DoorPathsGameTest implements FabricGameTest {
                     ? Blocks.GRASS_BLOCK.getDefaultState() : Blocks.STONE.getDefaultState(), Block.NOTIFY_LISTENERS);
         }
 
-        template.place(world, origin, origin, placement, Random.create(0), Block.NOTIFY_LISTENERS);
+        template.place(world, placed, placed, placement, Random.create(0), Block.NOTIFY_LISTENERS);
         DoorPaths.pave(world, box);
         int doors = 0;
         int paved = 0;

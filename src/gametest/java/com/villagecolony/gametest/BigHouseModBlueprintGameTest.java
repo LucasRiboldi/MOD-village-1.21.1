@@ -19,6 +19,9 @@ import java.util.Set;
 /** Contrato do blueprint modificado da casa grande da fundacao. */
 public class BigHouseModBlueprintGameTest implements FabricGameTest {
 
+    /** Quantos blocos a planta tem, o número que {@code scripts/houses/gen_big_house.py} imprime (Regra 369). */
+    private static final int PLACED_BLOCKS = 442;
+
     private static final ResourceId BIG_HOUSE_MOD =
             new ResourceId("villagecolony", "houses/big_house_mod");
 
@@ -36,7 +39,7 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
                 .filter(block -> block.block().equals(ResourceId.vanilla("chest")))
                 .count();
 
-        context.assertTrue(blueprint.size().equals(new ColonyPos(7, 10, 11)),
+        context.assertTrue(blueprint.size().equals(new ColonyPos(9, 12, 11)),
                 "dimensao inesperada: " + blueprint.size());
         context.assertTrue(beds == 7,
                 "BigHouseMOD tem " + beds + " pes de cama, esperado 7");
@@ -75,11 +78,9 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
             }
 
             NbtList pos = block.getList("pos", NbtElement.INT_TYPE);
-            if (name.equals("minecraft:oak_door") && pos.getInt(1) == 0) {
+            // O piso de pedra é a camada 0, no lugar do chão; a porta fica na camada 1, a de quem anda (Regra 369).
+            if (name.equals("minecraft:oak_door") && pos.getInt(1) == 1) {
                 hasRoadLevelDoor = true;
-            }
-            if (isRemovedFurniturePosition(pos)) {
-                throw new AssertionError("mobiliario removido permaneceu em " + pos);
             }
         }
 
@@ -87,10 +88,11 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
                 "NBT deve conter as 14 metades de 7 camas, encontrou " + beds);
         context.assertTrue(chests == 7,
                 "NBT deve conter 7 baus, encontrou " + chests);
-        context.assertTrue(placedBlocks == 299,
-                "a base removida com a tocha da porta deve dar 299 blocos, encontrou " + placedBlocks);
+        context.assertTrue(placedBlocks == PLACED_BLOCKS,
+                "a planta gerada por scripts/houses/gen_big_house.py tem " + PLACED_BLOCKS + " blocos, encontrou "
+                        + placedBlocks);
         context.assertTrue(hasRoadLevelDoor,
-                "a metade inferior da porta precisa ficar no nivel da rua");
+                "a metade inferior da porta precisa ficar na camada 1, logo acima do piso");
         context.complete();
     }
 
@@ -116,27 +118,14 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
         }
 
         context.assertTrue(blueprint.blocks().stream().noneMatch(
-                        block -> block.offset().equals(new ColonyPos(3, 1, 5))),
+                        block -> block.offset().equals(new ColonyPos(2, 1, 5))
+                                || block.offset().equals(new ColonyPos(3, 1, 5))),
                 "o corredor central nao ficou livre");
         context.assertFalse(blueprint.materials().containsKey(
                         ResourceId.vanilla("air")),
                 "ar nao pode virar material da casa");
         context.complete();
     }
-
-    private static boolean isRemovedFurniturePosition(NbtList pos) {
-        if (pos.size() != 3) {
-            return false;
-        }
-
-        int x = pos.getInt(0);
-        int y = pos.getInt(1);
-        int z = pos.getInt(2);
-        return y == 1 && ((x == 2 && (z == 5 || z == 6 || z == 7))
-                || (x == 3 && (z == 6 || z == 7))
-                || (x == 4 && z == 7));
-    }
-
 
     /**
      * Regra 35: o carpinteiro é titular, logo depois do lenhador, com cama e baú à direita da porta e corredor livre.
@@ -169,6 +158,73 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
 
             context.assertTrue(blueprint.blocks().stream().noneMatch(block -> block.offset().equals(corridor)
                     && !block.block().equals(ResourceId.vanilla("air"))), "Regra 35: o corredor da porta não está livre");
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Regra 369: o piso de pedra da casa grande fica no lugar do chão, na altura de quem anda em volta, e a porta logo
+     * acima dele — sem degrau para entrar.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "big_house_floor", tickLimit = 40)
+    public void theBigHouseFloorSitsAtTheRoad(TestContext context) {
+        net.minecraft.server.world.ServerWorld world = context.getWorld();
+        // Longe da arena e acima do mundo plano: o campo é todo do teste.
+        net.minecraft.util.math.BlockPos low = context.getAbsolutePos(net.minecraft.util.math.BlockPos.ORIGIN)
+                .add(3_100_000, 0, 3_100_000).withY(100);
+        int side = 40;
+        java.util.UUID colonyId = java.util.UUID.randomUUID();
+
+        try {
+            for (int cx = (low.getX() >> 4) - 1; cx <= ((low.getX() + side) >> 4) + 1; cx++) {
+                for (int cz = (low.getZ() >> 4) - 1; cz <= ((low.getZ() + side) >> 4) + 1; cz++) {
+                    world.setChunkForced(cx, cz, true);
+                }
+            }
+            for (int x = 0; x < side; x++) {
+                for (int z = 0; z < side; z++) {
+                    world.setBlockState(low.add(x, -1, z), net.minecraft.block.Blocks.STONE.getDefaultState(), 18);
+                    world.setBlockState(low.add(x, 0, z), net.minecraft.block.Blocks.GRASS_BLOCK.getDefaultState(), 18);
+                }
+            }
+
+            com.villagecolony.core.colony.model.Colony colony = com.villagecolony.core.colony.model.Colony.create(
+                    colonyId, com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(
+                            low.add(side / 2, 1, side / 2)));
+            var result = com.villagecolony.fabric.integration.BigHouseFoundation.ensure(world, colony);
+
+            context.assertTrue(result.building().isPresent(), "a casa grande não foi posta");
+
+            var box = result.building().get();
+            net.minecraft.util.math.BlockPos door = null;
+
+            for (net.minecraft.util.math.BlockPos at : net.minecraft.util.math.BlockPos.iterate(
+                    com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(box.min()),
+                    com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(box.max()))) {
+                if (world.getBlockState(at).isOf(net.minecraft.block.Blocks.OAK_DOOR) && (door == null
+                        || at.getY() < door.getY())) {
+                    door = at.toImmutable();
+                }
+            }
+
+            context.assertTrue(door != null, "a casa grande não tem porta");
+            context.assertTrue(door.getY() == low.getY() + 1, "Regra 369: a porta está em y " + door.getY()
+                    + ", e quem anda em volta pisa em y " + (low.getY() + 1));
+            context.assertTrue(world.getBlockState(door.east().down()).isOf(net.minecraft.block.Blocks.STONE_BRICKS),
+                    "Regra 369: o piso de dentro não é de pedra na altura do chão: "
+                            + world.getBlockState(door.east().down()));
+        } finally {
+            com.villagecolony.VillageColonyMod.BUILDINGS.removeOfColony(colonyId);
+            for (net.minecraft.util.math.BlockPos at : net.minecraft.util.math.BlockPos.iterate(low.add(0, -1, 0),
+                    low.add(side - 1, 14, side - 1))) {
+                world.setBlockState(at, net.minecraft.block.Blocks.AIR.getDefaultState(), 18);
+            }
+            for (int cx = (low.getX() >> 4) - 1; cx <= ((low.getX() + side) >> 4) + 1; cx++) {
+                for (int cz = (low.getZ() >> 4) - 1; cz <= ((low.getZ() + side) >> 4) + 1; cz++) {
+                    world.setChunkForced(cx, cz, false);
+                }
+            }
         }
 
         context.complete();

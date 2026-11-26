@@ -76,16 +76,18 @@ public final class BigHouseFoundation {
             return new Result(false, Optional.empty());
         }
 
-        BlockPos placedAt = site.get().origin();
+        // O lote é medido na altura de quem anda; o piso de pedra da casa fica no lugar do chão, uma camada abaixo da
+        // porta (Regra 369).
+        BlockPos placedAt = site.get().origin().down(floorLayers(world));
 
         if (site.get().clearing()) {
             VillageColonyMod.LOGGER.info("Colony {} cleared the BigHouseMOD lot at {} — {} blocks of trees and plants",
-                    colony.id(), placedAt.toShortString(), clear(world, placedAt, template.get().getSize(), true));
+                    colony.id(), placedAt.toShortString(), clear(world, site.get().origin(), template.get().getSize(), true));
         }
 
         if (site.get().levelled()) {
             VillageColonyMod.LOGGER.info("Colony {} levelled the BigHouseMOD lot at {} — {} blocks moved",
-                    colony.id(), placedAt.toShortString(), level(world, placedAt, template.get().getSize()));
+                    colony.id(), placedAt.toShortString(), level(world, site.get().origin(), template.get().getSize()));
         }
         StructurePlacementData placement = new StructurePlacementData()
                 .setPosition(placedAt)
@@ -176,6 +178,16 @@ public final class BigHouseFoundation {
                         StructureBlueprintReader.BIG_HOUSE_MOD))
                 .filter(building -> building.contains(bedAt))
                 .noneMatch(building -> building.id().equals(chestHouse.get().id()));
+    }
+
+    /** Quantas camadas da planta ficam abaixo da porta mais baixa: o piso que entra no chão (Regra 369). */
+    static int floorLayers(ServerWorld world) {
+        return StructureBlueprintReader.read(world, StructureBlueprintReader.BIG_HOUSE_MOD)
+                .flatMap(blueprint -> blueprint.blocks().stream()
+                        .filter(block -> block.block().path().endsWith("_door"))
+                        .map(block -> block.offset().y())
+                        .min(Integer::compare))
+                .orElse(0);
     }
 
     /** Um lugar para a casa: o canto na altura do piso, se o chão precisa ser aplainado e se há mato a tirar. */

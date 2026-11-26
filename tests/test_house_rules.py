@@ -41,11 +41,14 @@ TORCH = {(2, 2, 1): ("wall_torch", {"facing": "south"})}
 
 class HouseRulesTest(unittest.TestCase):
 
-    def test_the_current_big_house_traps_a_villager(self):
-        found = rules.problems(rules.load(str(BIG)))
+    def test_the_big_house_is_walkable(self):
+        house = rules.load(str(BIG))
+        names = [name for name, _ in house.blocks.values()]
 
-        self.assertTrue(any(item.startswith("cama fora do caminho") for item in found), found)
-        self.assertTrue(any(item.startswith("buraco no piso") for item in found), found)
+        self.assertEqual([], rules.problems(house))
+        self.assertEqual((9, 12, 11), house.size)
+        self.assertEqual(14, names.count("white_bed"))
+        self.assertEqual(7, names.count("chest"))
 
     def test_a_chest_in_the_middle_of_the_room_is_loose(self):
         house = small_house()

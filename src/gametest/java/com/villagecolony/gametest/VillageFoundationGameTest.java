@@ -278,15 +278,25 @@ public class VillageFoundationGameTest implements FabricGameTest {
                     .orElseThrow()
                     .pos();
 
+            java.util.Set<UUID> alive = new java.util.HashSet<>();
+
+            allVillagers(world, house).forEach(villager -> alive.add(villager.getUuid()));
             victim.kill();
             VillageDetectionHandler.runFoundationNow(world, colony);
 
-            context.assertTrue(residents(world, house).size() == 6,
-                    "a segunda passagem repos o morto: " + residents(world, house).size()
-                            + " moradores vivos");
+            // Ninguém nasce no lugar do morto. A cama dele fica livre, ou vai para um aldeão que já morava na vila sem
+            // cama (o fazendeiro, na casa grande da Regra 369, que tem baú ao lado de cada cama).
+            List<VillagerEntity> after = allVillagers(world, house);
+
+            context.assertTrue(after.size() == alive.size() - 1
+                            && after.stream().allMatch(villager -> alive.contains(villager.getUuid())),
+                    "a segunda passagem repos o morto: " + after.size() + " vivos, eram " + alive.size());
             context.assertTrue(
-                    world.getPointOfInterestStorage().getFreeTickets(victimBed) == 1,
-                    "a cama do morto nao voltou a ficar livre para a procriacao");
+                    world.getPointOfInterestStorage().getFreeTickets(victimBed) == 1
+                            || after.stream().anyMatch(villager -> villager.getBrain()
+                                    .getOptionalRegisteredMemory(MemoryModuleType.HOME)
+                                    .filter(home -> home.pos().equals(victimBed)).isPresent()),
+                    "a cama do morto nao ficou livre nem com um morador da vila");
         } finally {
             cleanUp(world, colony, anchor);
         }
@@ -322,6 +332,13 @@ public class VillageFoundationGameTest implements FabricGameTest {
         }
 
         return feet;
+    }
+
+    /** Todos os aldeões vivos em volta da casa, com cama ou sem. */
+    private static List<VillagerEntity> allVillagers(ServerWorld world, Building house) {
+        return world.getEntitiesByClass(VillagerEntity.class, new net.minecraft.util.math.Box(
+                MinecraftTypeAdapter.toBlockPos(house.min()).toCenterPos(),
+                MinecraftTypeAdapter.toBlockPos(house.max()).toCenterPos()).expand(40.0), VillagerEntity::isAlive);
     }
 
     /** Aldeões vivos cuja cama fica dentro da casa. */
