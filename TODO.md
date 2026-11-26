@@ -14,10 +14,10 @@ Colônia df5db219, 20 notas. Relatório: `docs/testing/relatorios/jogo-20261126-
 
 - [x] K1 🅰️ — coleira chamava Zelador, pastor e construtor e teletransportava: emenda da 372 na 0.4.149; areia e cacto sob pedido, Regra 381.
 - [x] K2 🅱️ — obras paradas pela plantação devida: emenda da 374 na 0.4.149; casa do fazendeiro perto da plantação grande, Regra 382.
-- [ ] 🟠 K3 🅲 — profissão travada; Zelador ao lado do bloco, um por um; aviso de troca de profissão; registro dos blocos do Zelador e do jogador para comparar.
-- [ ] 🟠 K4 🅱️ — mudas a 5 de outra muda e a 8 de construção; viveiro pode ir para fora da vila.
-- [ ] 🟡 K5 🅱️ — caminho do arco da mina até a casa do mineiro, ligado ao grafo.
-- [ ] 🟡 K7 — casa do lenhador na borda da vila.
+- [ ] 🟠 K3 🅲 — feito na 0.4.150: ofício travado e aviso no log (Regra 383), diário dos blocos do jogador e do mod (Regra 384). Falta: o Zelador andar até o bloco e mexer em um por vez, com o tempo de quebrar (mexe nos 8 sistemas do chão; pede desenho).
+- [x] K4 🅱️ — mudas a 5 de outra muda ou tronco e a 8 de construção; anel da borda até 64, podendo sair da vila: Regra 385 na 0.4.150.
+- [x] K5 🅱️ — caminho da porta da casa do mineiro à entrada da mina, ligado à linha mais perto até 128 blocos: Regra 386 na 0.4.150.
+- [ ] 🟡 K7 — casa do lenhador na borda: feita e testada em foco na branch `wip/k7-casa-do-lenhador` (Regra 387, 701379c2), fora da 0.4.150 a pedido do autor; falta a suíte inteira.
 - [ ] ⚪ K6 — chão em áreas retangulares com degrau de 1 (etapa 3 do ADR-064), adiado pelo autor.
 
 ## Jogo da 0.4.145 no deserto (2026-11-26)

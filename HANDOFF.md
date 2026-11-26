@@ -2,6 +2,14 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.150 (2026-11-26)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commits `2a5b1eda` (383), `c7a580b6` (384), `f723aeeb` e `2279ffd7` (385), `3ccc4429` (386), `94a5b160` e `ef6959cd` (testes).
+- **Regras:** 383 `ProfessionLock`/`ProfessionWatch`; 384 `BlockJournal` + `scripts/block_report.py`; 385 `TreeNursery.hasRoom`, `LumberjackNursery.EDGE = 64`; 386 `MineHomeWay`, `StructureFronts.mineHome`, `RoadLines.MAX_FAR_LINK = 128`.
+- **Testes:** o `BuilderMaterialsGameTest` solta o ofício antes de trocar (Regra 383); o `MineHomeWayGameTest` roda longe da bateria porque invadia a arena do `ShepherdRoundGameTest`.
+- **Sentinela** `20261126T204416Z`: 1.303/1.303. JAR `062B21B44A214540131A311663EB47D1C6802770A72D909580E977095ACBCD4D` em `build/libs`, `downloads/` e TLauncher.
+- **Para depois (pedido do autor):** o Zelador andar até o bloco e mexer em um por vez (precisa de desenho: 8 sistemas do chão mudam blocos de longe); a casa do lenhador na borda (Regra 387) está pronta na branch `wip/k7-casa-do-lenhador` (`701379c2`), testada só em foco.
+
 ## Entrega — 0.4.148 e 0.4.149 (2026-11-26)
 
 - **Branch:** `fix/areia-que-cai`, sem push.

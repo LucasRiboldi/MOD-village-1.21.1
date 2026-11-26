@@ -17,6 +17,15 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.150] — candidata, 2026-11-26
+
+Do jogo da 0.4.148 na planície: parte do K3 🅲, K4 🅱️ e K5 🅱️. Regras 383 a 386. O Zelador andar até o bloco e mexer em um por vez (o resto do K3) e a casa do lenhador na borda (K7) ficam para depois; o K7 está guardado na branch `wip/k7-casa-do-lenhador`, sem a suíte inteira rodada.
+
+- O ofício não troca: quem já tem profissão não recebe outra, e a troca que acontecer mesmo assim sai no log como `VC_PROFESSION_CHANGE` (Regra 383, `ProfessionLockTest`).
+- O diário dos blocos: cada bloco que o jogador e o mod mudam vai para `logs/villagecolony-blocks-<sessão>.jsonl`, e `scripts/block_report.py` conta por quem e lista os blocos que os dois mexeram (Regra 384, `BlockJournalTest`).
+- A muda do viveiro e do bosque nasce a 5 blocos ou mais de outra muda ou tronco e a 8 ou mais de qualquer construção da colônia; o anel da borda vai até o alcance do lenhador, 64 blocos do centro, e pode sair da vila (Regra 385, `NurserySkyGameTest`).
+- A porta da casa do mineiro e a entrada da mina ficam ligadas por um caminho, e esse trecho se liga à linha do grafo mais perto, a até 128 blocos. No jogo da 0.4.148 a linha estava a uns 70 blocos, acima do limite de 64, e o caminho que existia foi feito pelo jogador (Regra 386, `MineHomeWayTest`, `MineHomeWayGameTest`).
+
 ## [0.4.149] — candidata, 2026-11-26
 
 Do jogo da 0.4.148 na planície: K1 🅰️ e K2 🅱️, que corrigem as Regras 372 e 374. Regras 381 e 382.
