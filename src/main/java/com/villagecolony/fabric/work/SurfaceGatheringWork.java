@@ -243,15 +243,13 @@ public final class SurfaceGatheringWork {
                 .flatMap(Colony::bounds)
                 .orElseGet(() -> VillageBounds.block(MinecraftTypeAdapter.toColonyPos(job.center)));
         VillageFluidIndex.refresh(world, job.task.colonyId(), bounds);
-        // Coluna fora do setor (terra e grama) ou sob água sai antes do orçamento,
-        // sem tocar o mundo — 2026-09-16 (24 de 26 ciclos "budget ran out — dirt").
+        // Coluna fora do setor (terra e grama), sob água ou a mais de 48 da cama (Regra 372) sai sem tocar o mundo.
         // A argila não pula água: ela mora no fundo do lago — 2026-10-03.
         boolean clay = job.task.targetResource() == ResourceType.CLAY_BALL
                 || job.task.targetResource() == ResourceType.CLAY;
         java.util.function.Predicate<BlockPos> worthLooking = column ->
                 (clay || !VillageFluidIndex.skip(job.task.colonyId(), bounds, column))
                         && !SurfaceHits.isUnreachable(job.task.colonyId(), column, world.getTime())
-                        // Nada além de 48 blocos da cama de quem busca, a não ser mineiro e lenhador (Regra 372).
                         && HomeLeash.within(world, workerId, column)
                         && (!outsideVillage || FarthestVillageSector.isInSector(
                                 job.center, column, job.surfaceSector, protectedRadius));
