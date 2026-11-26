@@ -20,7 +20,7 @@ import java.util.Set;
 public class BigHouseModBlueprintGameTest implements FabricGameTest {
 
     /** Quantos blocos a planta tem, o número que {@code scripts/houses/gen_big_house.py} imprime (Regra 369). */
-    private static final int PLACED_BLOCKS = 442;
+    private static final int PLACED_BLOCKS = 441;
 
     private static final ResourceId BIG_HOUSE_MOD =
             new ResourceId("villagecolony", "houses/big_house_mod");

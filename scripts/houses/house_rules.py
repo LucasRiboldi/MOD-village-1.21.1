@@ -19,8 +19,8 @@ LIGHTS = frozenset({"torch", "wall_torch", "lantern", "colony_wall_torch", "colo
 
 SIDES = {"north": (0, -1), "south": (0, 1), "west": (-1, 0), "east": (1, 0)}
 
-# Até quantos blocos abaixo de um vão do piso a escada o justifica.
-STAIR_BELOW = 2
+# Até quantos blocos abaixo de um vão do piso a escada o justifica: o vão sobre o primeiro degrau fica 3 acima dele.
+STAIR_BELOW = 3
 
 
 class House:
@@ -93,9 +93,9 @@ def reached(house):
                 nxt = (x + dx, y + dy, z + dz)
                 if nxt in seen or not standable(house, *nxt):
                     continue
-                # Subir um bloco é pulo, e o pulo pede 3 livres em cima; na escada sobe-se de meio em meio, sem pulo.
-                if dy == 1 and not passable(house.block(x, y + 2, z)[0]) \
-                        and not house.block(nxt[0], nxt[1] - 1, nxt[2])[0].endswith("_stairs"):
+                # Subir um bloco pede 3 livres em cima de onde se está, também na escada: o corpo ainda está na
+                # coluna de baixo quando a cabeça sobe.
+                if dy == 1 and not passable(house.block(x, y + 2, z)[0]):
                     continue
                 seen.add(nxt)
                 queue.append(nxt)

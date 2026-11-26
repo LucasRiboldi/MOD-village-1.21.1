@@ -4,9 +4,10 @@ Pedido do autor (2026-11-26, H5 do jogo da 0.4.143): "2 blocos maior de profundi
 todos baú estarem encostados em uma parede e ter acesso de trânsito dentro da casa, adicionar tochas dentro da casa,
 chão de pedra no primeiro andar, tapar os buracos do segundo andar"; e "não colocar corrimão".
 
-Planta 9 × 12 × 11 (x, y, z): paredes em x=1, x=7, z=1 e z=9; miolo x=2..6, z=2..8. Camada 0 é o piso (tijolo de pedra,
-que não vira arenito pela Regra 262), 1 a 3 o térreo, 4 o piso de cima, 5 e 6 o andar de cima, 7 a 11 o telhado.
-Sete camas e sete baús, cada baú encostado em parede; a cama e o baú do carpinteiro à direita da porta (Regra 35).
+Planta 9 × 12 × 11 (x, y, z): paredes em x=1, x=7, z=1 e z=9; miolo x=2..6, z=2..8. Camada 0 é o piso, de tijolo
+de pedra; 1 a 3 o térreo, 4 o piso de cima, 5 e 6 o andar de cima, 7 a 11 o telhado. A casa grande é posta como está,
+sem a troca de blocos da Regra 262. Sete camas e sete baús, cada baú encostado em parede; a cama e o baú do
+carpinteiro à direita da porta (Regra 35). A escada tem o piso de cima aberto sobre os três degraus.
 
 Caminho misto (desenho de 2026-11-26, seção 3): escreve em ``scripts/houses/out/`` e só grava nos recursos com
 ``--overwrite big_house_mod``; o arquivo dos recursos, se o autor o salvar à mão, passa a ser a fonte.
@@ -43,7 +44,8 @@ BEDS = [
 ]
 
 STAIRS = [(6, 1, 6), (6, 2, 5), (6, 3, 4)]
-STAIR_OPENING = {(6, 4, 4), (6, 4, 5)}
+# O vão do piso de cima sobre os três degraus: quem sobe precisa de 3 livres acima de cada um.
+STAIR_OPENING = {(6, 4, 4), (6, 4, 5), (6, 4, 6)}
 TORCHES = [((3, 3, 2), "south"), ((3, 3, 8), "north"), ((3, 6, 2), "south"), ((3, 6, 8), "north"),
            ((0, 3, 5), "west")]
 
