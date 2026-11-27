@@ -2,6 +2,14 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.152 (2026-11-27)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commits `e3de92ae` (emenda da ADR-065), `95c2f125` (Regra 389).
+- **Jogo da 0.4.151:** imagem do modo `vizinhanca` com duas linhas lado a lado. M1 🅲: malha de cidade.
+- **Código:** `CityStreets` (braços, ramais, ligação com estado), `StreetRouter` (A* com corredor e custos ×0,1 rede, +4 encostada, +2 curva), `StreetGrowth` (recusas por lado; `LotRefusals.refusedAt` conta, `LotSeeking.afterTheRoad` fecha a volta, `RoadGraphBuilds` gasta a vez). `NeighborhoodRoads` virou fachada.
+- **Sentinela** `20261127T021821Z`: 1.304/1.304. JAR `71C0434EA7FEAAD5B46C5EADCE249ED2E6D48211DDDD9C1F4BF856029C374368`.
+- **Próximo:** etapa 2 da ADR-065 (L1, L2), depois L3.
+
 ## Entrega — 0.4.151 (2026-11-27)
 
 - **Branch:** `fix/areia-que-cai`, sem push. Commits: pesquisa `a1eb82a5`/`deb3b8e9`, ADR-065 `7f523340`, etapa 1 `9b284961`.

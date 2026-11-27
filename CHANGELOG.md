@@ -17,6 +17,16 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.152] — candidata, 2026-11-27
+
+M1 🅲 do jogo da 0.4.151 (linhas duplas lado a lado no modo `vizinhanca`). Regra 389, emenda da ADR-065 e da Regra 320. Vale só no modo `vizinhanca`.
+
+- A malha de cidade: quatro ruas retas saem do centro nos eixos, até a entrada mais distante de cada lado; a que não passa encurta de 8 em 8 (`CityStreetsTest`).
+- Cada entrada liga em reta à linha mais perto na mesma coluna ou linha; se a reta não passa, desvia até o mesmo ponto; sem reta, liga ao ponto mais perto da rede.
+- Nunca duas linhas lado a lado: no traçado, a coluna da rede custa ×0,1, a encostada de lado +4 e a curva +2 (`StreetRouter`).
+- A rua do lado com mais recusas de lote cresce 16 blocos quando a busca dá a volta sem lote, uma vez por dia (`StreetGrowthTest`).
+- Saem a vizinhança relativa e a ponta que andava 1 bloco por dia.
+
 ## [0.4.151] — candidata, 2026-11-27
 
 ADR-065, etapa 1, do jogo da 0.4.150 (L4). Regra 388. Vale só no modo `vizinhanca` do grafo (`/vc grafo modo vizinhanca`); o modo `atual` segue o padrão até a etapa 4.
