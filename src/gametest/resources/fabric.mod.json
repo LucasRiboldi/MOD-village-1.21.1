@@ -96,6 +96,7 @@
       "com.villagecolony.fabric.work.MineHomeWayGameTest",
       "com.villagecolony.fabric.work.PlannedGraphReopenGameTest",
       "com.villagecolony.fabric.work.PathTrimKeeperGameTest",
+      "com.villagecolony.fabric.integration.TradeHouseSignGameTest",
       "com.villagecolony.fabric.work.OpenSiteRingGameTest",
       "com.villagecolony.fabric.integration.ChestPassageGameTest",
       "com.villagecolony.fabric.work.HomeLeashGameTest",

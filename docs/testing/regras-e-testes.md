@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 289
+- **Cita a regra:** 290
 - **Só usa a classe indicada:** 85
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -59,7 +59,7 @@ classe prova menos ainda.
 | 46 | A fome não influencia o trabalho: a comida decide só a procriação (Vanilla) | classe | VillageMealsGameTest |
 | 47 | O aldeão não envelhece nem morre de velhice | nenhum |  |
 | 48 | Todo aldeão da colônia recolhe qualquer item caído a até 5 blocos ao passar e o guarda em… | cita | GroundPickupGameTest, MinerOverflowGameTest |
-| 49 | A ordem das obras (consolida 55 e 60, 1A de 13-10): faltando cama, casa; senão a oficina… | cita | ConstructionOrderTest, ConstructionPriorityTest |
+| 49 | A ordem das obras (consolida 55 e 60, 1A de 13-10): faltando cama, casa; senão a oficina… | cita | ConstructionOrderTest, ConstructionPriorityTest, TradeHouseModelsTest |
 | 50 | Toda verificação mede o tempo dos aldeões — trabalhando, andando, bloqueado, ocioso, enca… | cita | WorkTimeTest |
 | 51 | Peça que falta aparece na 4ª tentativa sem sucesso, no baú da profissão que tentou (colet… | cita | BuilderMaterialsGameTest, test_state_report, test_time_ledger |
 | 52 | ~~Uma roça por fazendeiro~~ | fora de vigor |  |
@@ -401,3 +401,4 @@ classe prova menos ainda.
 | 389 | A malha de cidade (ADR-065, emenda de 27-11, M1 🅲 do jogo da 0.4.151: "deixar todos em li… | cita | CityStreetsTest, NeighborhoodRoadsTest, PlannedGraphReopenGameTest |
 | 390 | Só se calça o travado, e só sai o que a colônia pôs (ADR-065 etapa 2; jogo da 0.4.150: de… | cita | EntrancesAtTheDoorGameTest, LockedStepsTest, PathTrimKeeperGameTest |
 | 391 | O plano de alturas é a única régua, e o Zelador nivela ao lado da coluna (L3 🅱️ do jogo d… | cita | BuildingGapsGameTest, GradeWorkGameTest, GroundSmoothingGameTest |
+| 392 | A casa de ofício, por enquanto igual à do mineiro (H5, item 6, autor 27-11: "faça todas a… | cita | TradeHouseModelsTest, TradeHouseSignGameTest |

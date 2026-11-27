@@ -453,7 +453,7 @@ public final class ChestMarker {
      * o mouse, e é ele que responde "de quem é este baú?" sem abrir o
      * log.
      */
-    private static ItemStack badgeOf(ProfessionType profession) {
+    static ItemStack badgeOf(ProfessionType profession) {
         ItemStack badge = new ItemStack(itemOf(profession));
 
         badge.set(DataComponentTypes.CUSTOM_NAME, Text.literal(label(profession)));
