@@ -302,6 +302,11 @@ final class GroundSmoothing {
      * aterro do bioma (Regra 363); a coluna de rua ou caminho fica como está (Regra 364).
      */
     static boolean column(ServerWorld world, int x, int z, int top, int target) {
+        return column(world, x, z, top, target, "nivelamento");
+    }
+
+    /** O mesmo, com o nome de quem nivela no diário dos blocos: {@code plano_alturas}, {@code vao_casas} (Regras 345 e 391). */
+    static boolean column(ServerWorld world, int x, int z, int top, int target, String system) {
         if (top == target || !safeColumn(world, x, z, top, target)) {
             return false;
         }
@@ -324,20 +329,20 @@ final class GroundSmoothing {
             // A planta de cima sai junto com o chão que a segura.
             if (world.getBlockState(at).isReplaceable() && !world.getBlockState(at).isAir()) {
                 world.setBlockState(at, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
-                com.villagecolony.fabric.integration.EditLedger.mod(world, at.toImmutable(), Blocks.AIR.getDefaultState(), "nivelamento"); // Regra 345
+                com.villagecolony.fabric.integration.EditLedger.mod(world, at.toImmutable(), Blocks.AIR.getDefaultState(), system); // Regra 345
             }
 
             world.setBlockState(at.setY(y), Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
-            com.villagecolony.fabric.integration.EditLedger.mod(world, at.setY(y).toImmutable(), Blocks.AIR.getDefaultState(), "nivelamento"); // Regra 345
+            com.villagecolony.fabric.integration.EditLedger.mod(world, at.setY(y).toImmutable(), Blocks.AIR.getDefaultState(), system); // Regra 345
         }
 
         for (int y = top; y < target; y++) {
             world.setBlockState(at.setY(y), fill, Block.NOTIFY_ALL);
-            com.villagecolony.fabric.integration.EditLedger.mod(world, at.setY(y).toImmutable(), fill, "nivelamento"); // Regra 345
+            com.villagecolony.fabric.integration.EditLedger.mod(world, at.setY(y).toImmutable(), fill, system); // Regra 345
         }
 
         world.setBlockState(at.setY(target), surface, Block.NOTIFY_ALL);
-        com.villagecolony.fabric.integration.EditLedger.mod(world, at.setY(target).toImmutable(), surface, "nivelamento"); // Regra 345
+        com.villagecolony.fabric.integration.EditLedger.mod(world, at.setY(target).toImmutable(), surface, system); // Regra 345
 
         return true;
     }

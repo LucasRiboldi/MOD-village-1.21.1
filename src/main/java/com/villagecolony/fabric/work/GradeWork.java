@@ -29,6 +29,7 @@ final class GradeWork {
     /** O que a colônia está executando: a fila lida, onde parou, e o que fez hoje. */
     private static final class State {
         private final List<int[]> queue;
+        private final GradeSurvey.Survey survey;
         private final long readAt;
         private final int buildings;
         private final @org.jspecify.annotations.Nullable Object open;
@@ -37,8 +38,10 @@ final class GradeWork {
         private long day = -1;
         private int doneToday;
 
-        State(List<int[]> queue, long readAt, int buildings, @org.jspecify.annotations.Nullable Object open, int budget) {
+        State(List<int[]> queue, GradeSurvey.Survey survey, long readAt, int buildings,
+              @org.jspecify.annotations.Nullable Object open, int budget) {
             this.queue = queue;
+            this.survey = survey;
             this.readAt = readAt;
             this.buildings = buildings;
             this.open = open;
@@ -95,6 +98,14 @@ final class GradeWork {
         return state == null || state.day != day ? 0 : state.doneToday;
     }
 
+    /**
+     * Se o plano de alturas cobre esta coluna — Regra 391 (L3 🅱️ do jogo da 0.4.150): o plano é a única régua, e o vão entre
+     * as casas ({@link BuildingGaps}) não mexe na coluna dele. Sem plano lido, nenhuma.
+     */
+    static boolean covers(ServerWorld world, Colony colony, int x, int z) {
+        return stateOf(world, colony).filter(state -> state.survey.kind(x, z) != com.villagecolony.core.construction.model.GradePlan.Kind.OUT).isPresent();
+    }
+
     static void forget(UUID colonyId) {
         STATES.remove(colonyId);
     }
@@ -117,7 +128,7 @@ final class GradeWork {
 
             int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
 
-            if (top != item[2] && GroundSmoothing.column(world, x, z, top, item[2])) {
+            if (top != item[2] && GroundSmoothing.column(world, x, z, top, item[2], "plano_alturas")) {
                 done++;
             }
         }
@@ -148,7 +159,7 @@ final class GradeWork {
             return Optional.empty();
         }
 
-        State fresh = new State(survey.get().work(), world.getTime(), buildings, open,
+        State fresh = new State(survey.get().work(), survey.get(), world.getTime(), buildings, open,
                 GradeCrew.perDay(survey.get().pending()));
 
         if (known != null) {
