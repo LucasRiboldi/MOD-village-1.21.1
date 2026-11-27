@@ -122,7 +122,7 @@ final class StreetRouter {
     }
 
     /** O custo de pisar nesta coluna. */
-    private static double step(long next, int x, int z, boolean climbs, Map<Long, Integer> physical,
+    static double step(long next, int x, int z, boolean climbs, Map<Long, Integer> physical,
                                Map<Long, Integer> network, long goal, long start) {
         double step = STEP + (climbs ? CLIMB : 0);
 
@@ -142,7 +142,7 @@ final class StreetRouter {
         return step;
     }
 
-    private static boolean besideTheNetwork(int x, int z, Map<Long, Integer> network) {
+    static boolean besideTheNetwork(int x, int z, Map<Long, Integer> network) {
         for (int[] s : STEPS) {
             if (network.containsKey(ColonyRoads.column(x + s[0], z + s[1]))) {
                 return true;
@@ -152,7 +152,7 @@ final class StreetRouter {
         return false;
     }
 
-    private static boolean touches(int x, int z, long column) {
+    static boolean touches(int x, int z, long column) {
         return Math.abs(ColonyRoads.xOf(column) - x) + Math.abs(ColonyRoads.zOf(column) - z) <= 1;
     }
 
@@ -160,7 +160,7 @@ final class StreetRouter {
     private record Open(double estimate, long column) {
     }
 
-    private static OptionalInt groundOf(Map<Long, Integer> physical, Map<Long, Integer> network, PathTerrain terrain, int x,
+    static OptionalInt groundOf(Map<Long, Integer> physical, Map<Long, Integer> network, PathTerrain terrain, int x,
                                         int z, int nearY) {
         long column = ColonyRoads.column(x, z);
         Integer known = network.containsKey(column) ? network.get(column) : physical.get(column);
@@ -172,7 +172,7 @@ final class StreetRouter {
         return terrain.blocked(x, z) ? OptionalInt.empty() : terrain.groundY(x, z, nearY);
     }
 
-    private static double estimate(int x, int z, ColonyPos to) {
+    static double estimate(int x, int z, ColonyPos to) {
         return (Math.abs(to.x() - x) + Math.abs(to.z() - z)) * STEP * ON_NETWORK;
     }
 

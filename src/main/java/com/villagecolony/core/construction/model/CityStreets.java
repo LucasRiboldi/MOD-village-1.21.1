@@ -87,11 +87,7 @@ final class CityStreets {
             city.arm(hub, side, need[side], limit, today, grow[side]);
         }
 
-        List<ColonyPos> ordered = new ArrayList<>(fronts);
-
-        ordered.sort(Comparator.comparingLong((ColonyPos at) -> squared(at, hub))
-                .thenComparingLong(at -> ColonyRoads.column(at.x(), at.z())));
-        ordered.forEach(city::spur);
+        nearestFirst(hub, fronts).forEach(city::spur);
 
         // A falha fica guardada enquanto o par for tentado: só um bloco mudado perto a traça de novo (Regra 388).
         routes.byPair.keySet().retainAll(city.considered);
@@ -278,7 +274,17 @@ final class CityStreets {
         return false;
     }
 
-    private static long squared(ColonyPos a, ColonyPos b) {
+    /** As entradas da mais perto do centro para a mais longe; no empate, pela coluna. */
+    static List<ColonyPos> nearestFirst(ColonyPos hub, Collection<ColonyPos> fronts) {
+        List<ColonyPos> ordered = new ArrayList<>(fronts);
+
+        ordered.sort(Comparator.comparingLong((ColonyPos at) -> squared(at, hub))
+                .thenComparingLong(at -> ColonyRoads.column(at.x(), at.z())));
+
+        return ordered;
+    }
+
+    static long squared(ColonyPos a, ColonyPos b) {
         long dx = (long) a.x() - b.x();
         long dz = (long) a.z() - b.z();
 

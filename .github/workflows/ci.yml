@@ -20,7 +20,9 @@ jobs:
   build:
     name: Build and test
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # 75 minutos (autor, 2026-11-27): com 1.308 GameTests, o PIT do PR #114 foi cancelado aos 45; os verdes de 25-11
+    # levavam cerca de 32.
+    timeout-minutes: 75
 
     steps:
       - name: Check out repository
