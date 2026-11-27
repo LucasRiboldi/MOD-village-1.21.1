@@ -1,0 +1,12 @@
+{
+  "version": "0.4.116",
+  "commit": "7a07b38f520c26cafbb749aa68e529c07209d850",
+  "sha256": "702fda50d734e8a8c77baab8a809c83a489955d37a866829fdf4ac97426ce01a",
+  "copies": [
+    "build/libs/village-colony-0.4.116.jar",
+    "downloads/village-colony-0.4.116.jar",
+    "C:/Users/lucas/AppData/Roaming/.minecraft/mods/village-colony-0.4.116.jar"
+  ],
+  "previous_version_disabled": "0.4.115",
+  "status": "candidate-awaiting-playtest"
+}

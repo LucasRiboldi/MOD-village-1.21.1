@@ -1,0 +1,3819 @@
+
+> Configure project :
+Fabric Loom: 1.17.18
+
+> Task :compileJava UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :jar
+> Task :processIncludeJars
+> Task :sourcesJar
+> Task :compileGametestJava UP-TO-DATE
+> Task :processGametestResources UP-TO-DATE
+> Task :gametestClasses UP-TO-DATE
+> Task :pmdGametest SKIPPED
+> Task :compileTestJava UP-TO-DATE
+> Task :processTestResources UP-TO-DATE
+> Task :testClasses UP-TO-DATE
+> Task :pmdTest SKIPPED
+> Task :propertyTest UP-TO-DATE
+> Task :remapJar
+
+> Task :test
+
+ArchitectureRulesTest > nobodyInTheModLightsTheVillageByItself() PASSED
+
+ArchitectureRulesTest > theCoreHasNoPackageCycle() PASSED
+
+ArchitectureRulesTest > aStaticMutableCollectionIsServerMemory() PASSED
+
+ArchitectureRulesTest > theCoreDoesNotTouchMinecraftOrFabric() PASSED
+
+ArchitectureRulesTest > theFabricLayerGrowsNoNewPackageCycle() PASSED
+
+ArchitectureRulesTest > aMixinOnlyDelegates() PASSED
+
+ConversionBoundaryTest > theAdapterStillHoldsTheConversion() PASSED
+
+ConversionBoundaryTest > theConversionHappensOnlyAtTheBoundary() PASSED
+
+ConversionBoundaryTest > theScanReachesTheSource() PASSED
+
+DependencyRuleTest > coreDomainsDoNotImportTheCoordinationLayer() PASSED
+
+DependencyRuleTest > coreDoesNotImportMinecraft() PASSED
+
+DependencyRuleTest > coreDomainsDoNotImportEachOther() PASSED
+
+DependencyRuleTest > theScanReachesTheSource() PASSED
+
+DependencyRuleTest > coreDoesNotImportOuterLayers() PASSED
+
+FileSizeRuleTest > noFileGrowsPastTheCeiling() PASSED
+
+GameTestBatchRuleTest > aTestThatTouchesTheWholeWorldRunsInItsOwnBatch() PASSED
+
+GameTestRegistryTest > everyGameTestClassIsRegisteredAndEveryEntryExists() PASSED
+
+ModMetadataTest > thePublishedManifestDoesNotUseWildcardDependencies() PASSED
+
+ModMetadataTest > theFabricApiRequirementComesFromTheVersionMatrix() PASSED
+
+OverlaySpritesTest > theSignShowsTheShortBlueprintName() PASSED
+
+OverlaySpritesTest > everyVanillaVillagePieceHasAPortugueseName() PASSED
+
+OverlaySpritesTest > theMissingMaterialSplitsItemAndCount() PASSED
+
+OverlaySpritesTest > everyProfessionHasItsSimpleSymbol() PASSED
+
+OverlaySpritesTest > aMissingPieceShowsTheWaitingIcon() PASSED
+
+OverlaySpritesTest > theSignNameSplitsKindAndBiome() PASSED
+
+OverlaySpritesTest > everyConstructionStateHasItsSymbol() PASSED
+
+PixelPanelLayoutTest > hiddenProfessionNameKeepsOnlyTheIcon() PASSED
+
+PixelPanelLayoutTest > professionNameAndIconStayInsideTheSameBackground() PASSED
+
+PixelPanelLayoutTest > twoLineConstructionPanelKeepsBothLinesAndIconInsideTheSameBackground() PASSED
+
+PixelPanelLayoutTest > professionTextAndIconAreDrawnInFrontOfTheBackground() PASSED
+
+ColonyAttendance > o aviso de parada sai na janela logo depois do intervalo de presença PASSED
+
+ColonyAttendance > as voltas entre dois lados contam no sentido do relógio PASSED
+
+ColonyAttendance > o marco do bosque é múltiplo de dez e nunca volta PASSED
+
+ColonyAttendance > sem nunca ter tido jogador, a vila não parou PASSED
+
+ColonyAttendance > quem não chegou a assentar não avisa parada PASSED
+
+ColonyBoundsTest > comingBackStartsTheMinuteAgain() PASSED
+
+ColonyBoundsTest > aClockThatWentBackDoesNotKeepTheVillageAwakeForever() PASSED
+
+ColonyBoundsTest > theVillageStopsAsSoonAsThePlayerLeaves() PASSED
+
+ColonyBoundsTest > aColonyNotMeasuredYetDoesNotGrowFromAPiece() PASSED
+
+ColonyBoundsTest > growingWidensTheBoxAndLeavesTheCenterWhereItWas() PASSED
+
+ColonyBoundsTest > aMeasuredVillageTakesItsBedsFromTheBoxNotFromTheProbe() PASSED
+
+ColonyBoundsTest > theProbeStillMovesTheCenterOfAColonyNotMeasuredYet() PASSED
+
+ColonyBoundsTest > theProbeNoLongerMovesTheCenterOfAMeasuredVillage() PASSED
+
+ColonyBoundsTest > theVillageWorksOnlyAfterAMinuteWithThePlayerInside() PASSED
+
+ColonyBoundsTest > measuringTheVillageMovesTheCenterToTheMiddleOfTheBox() PASSED
+
+ColonyTest > settersRejectNulls() PASSED
+
+ColonyTest > createKeepsIdAndCenter() PASSED
+
+ColonyTest > isActiveFollowsLifecycle() PASSED
+
+ColonyTest > createStartsStableAndActive() PASSED
+
+ColonyTest > differentIdsAreDifferentColonies() PASSED
+
+ColonyTest > restoreKeepsSavedStates() PASSED
+
+ColonyTest > createRejectsNulls() PASSED
+
+ColonyTest > identityIsTheId() PASSED
+
+ColonyTest > goingDormantPreservesState() PASSED
+
+ColonyWorkTest > aDormantColonyDoesNotWork() PASSED
+
+ColonyWorkTest > anAbandonedColonyDoesNotWorkAndWorksAgainWhenTheVillageComesBack() PASSED
+
+ColonyWorkTest > aLiveColonyInALoadedChunkWorks() PASSED
+
+VillageBoundsTest > aUnionWithItselfIsTheSameObject() PASSED
+
+VillageBoundsTest > twoVillagesTouchOnlyWithinTheMargin() PASSED
+
+VillageBoundsTest > containsAColumnWithAndWithoutMargin() PASSED
+
+VillageBoundsTest > aConstructionNearTheBorderPushesOnlyThatSideFifteenBlocksOut() PASSED
+
+VillageBoundsTest > theCenterIsTheMiddleOfTheBox() PASSED
+
+VillageBoundsTest > twoBuildsPushTheirOwnSidesByTheirOwnAmounts() PASSED
+
+VillageBoundsTest > theTypicalVillageIsOneHundredFortyFourAroundThePoint() PASSED
+
+VillageBoundsTest > itNeverShrinks() PASSED
+
+VillageBoundsTest > onlyTheBorderNearThePlayerIsMarked() PASSED
+
+VillageBoundsTest > aRoadBlockOutsideIsIncludedExactly() PASSED
+
+VillageBoundsTest > theBedWindowGoesEightBelowAndTwentyFourAbove() PASSED
+
+VillageBoundsTest > aConstructionDeepInsideChangesNothing() PASSED
+
+VillageBoundsTest > anInvertedBoxIsRefused() PASSED
+
+VillageBoundsTest > theGeneratedVillageGetsAnExactCenterBlock() PASSED
+
+VillageHappinessTest > threeWheatAreWorthABread() PASSED
+
+VillageHappinessTest > aSupperThatFedEveryoneMakesTheVillageHappier() PASSED
+
+VillageHappinessTest > fedRoomyAndBuiltIsHappy() PASSED
+
+VillageHappinessTest > aVillageWithNoAdultsDoesNotDivideByZero() PASSED
+
+VillageHappinessTest > inBetweenIsContent() PASSED
+
+VillageHappinessTest > hungryAndCrowdedIsUnhappy() PASSED
+
+VillageInventoryTest > countOfMissingProfessionIsZero() PASSED
+
+VillageInventoryTest > fullChestCoverageIsNotPartial() PASSED
+
+VillageInventoryTest > negativeAdultsIsRejected() PASSED
+
+VillageInventoryTest > inventoryKeepsPartialChestCoverageSeparateFromStock() PASSED
+
+VillageInventoryTest > chestCoverageKnowsTotalKnownChests() PASSED
+
+VillageInventoryTest > professionsMapIsUnmodifiable() PASSED
+
+VillageInventoryTest > observedAmountOfUnseenResourceIsZero() PASSED
+
+ClusterRejectionTest > theRejectionSaysWhereTheClusterWas() PASSED
+
+ClusterRejectionTest > tooFewBedsIsRejectedAsACamp() PASSED
+
+ClusterRejectionTest > tooFewBedsWinsOverTooFewVillagers() PASSED
+
+ClusterRejectionTest > noBedsIsNotARejection() PASSED
+
+ClusterRejectionTest > everyClusterIsEitherAcceptedOrRejected() PASSED
+
+ClusterRejectionTest > aRealVillageIsNotRejected() PASSED
+
+ClusterRejectionTest > enoughBedsWithoutPeopleIsAnEmptyVillage() PASSED
+
+ClusterRejectionTest > uncountedVillagersAreNotReportedAsZero() PASSED
+
+ColonyAbandonmentTest > anAbandonedColonyIsNotAnnouncedTwice() PASSED
+
+ColonyAbandonmentTest > theProbeOriginIsWhatCounts() PASSED
+
+ColonyAbandonmentTest > aColonyWhoseProbeFindsNothingIsAbandoned() PASSED
+
+ColonyAbandonmentTest > anAbandonedColonyDoesNotPlanConstruction() PASSED
+
+ColonyAbandonmentTest > aColonyThatStillSeesItsVillageIsNotTouched() PASSED
+
+ColonyAbandonmentTest > aVillageBeyondTheDuplicateDistanceIsSomebodyElses() PASSED
+
+ColonyAbandonmentTest > revivingAnAbandonedColonyNeedsConsecutiveVillageReadings() PASSED
+
+ColonyAbandonmentTest > aColonyWithAVillageStillPlans() PASSED
+
+ColonyAbandonmentTest > aVillageInsideTheColonyBoxIsStillItsVillage() PASSED
+
+ColonyAbandonmentTest > anAbandonedColonyRevivesWhenItsVillageIsInsideTheBox() PASSED
+
+ColonyAbandonmentTest > anAbandonedColonyComesBackWhenTheVillageDoes() PASSED
+
+ColonyAdoptionTest > aScanThatIsNotAProbeKeepsTheCenterWhereItIs() PASSED
+
+ColonyAdoptionTest > detectingTheSameVillageAgainDoesNotDuplicate() PASSED
+
+ColonyAdoptionTest > centerMovesButIdentityHolds() PASSED
+
+ColonyAdoptionTest > adoptUpdatesTheNearestColony() PASSED
+
+ColonyAdoptionTest > candidateRejectsNonPositiveBedCount() PASSED
+
+ColonyAdoptionTest > adoptRejectsNull() PASSED
+
+ColonyAdoptionTest > villageBeyondDuplicateDistanceBecomesANewColony() PASSED
+
+ColonyAdoptionTest > candidateRejectsNullCenter() PASSED
+
+ColonyAdoptionTest > villageJustInsideDuplicateDistanceUpdates() PASSED
+
+ColonyAdoptionTest > firstDetectionCreatesAColony() PASSED
+
+ColonyLifecycleTest > worseObservationStillWakesTheColony() PASSED
+
+ColonyLifecycleTest > observingARestoredColonyWakesIt() PASSED
+
+ColonyLifecycleTest > wakingPreservesTheColonyState() PASSED
+
+ColonyLifecycleTest > newlyDetectedColonyIsActive() PASSED
+
+ColonyOverlapTest > aColonyDoesNotOverlapItself() PASSED
+
+ColonyOverlapTest > aColonyBeyondTheLimitIsJustANeighbour() PASSED
+
+ColonyOverlapTest > theLimitItselfCounts() PASSED
+
+ColonyOverlapTest > aLonelyColonyOverlapsNobody() PASSED
+
+ColonyOverlapTest > heightDoesNotSeparateColonies() PASSED
+
+ColonyOverlapTest > centersCloserThanTheLimitOverlap() PASSED
+
+ColonyServiceTest > findNearestPicksTheClosest() PASSED
+
+ColonyServiceTest > unknownCandidatesAreAllKept() PASSED
+
+ColonyServiceTest > oneScanGivesEachColonyASingleObservation() PASSED
+
+ColonyServiceTest > findNearestIgnoresColoniesOutsideRadius() PASSED
+
+ColonyServiceTest > findNearestIgnoresHeight() PASSED
+
+ColonyServiceTest > removeMissingIdReportsFalse() PASSED
+
+ColonyServiceTest > registerRejectsDuplicateId() PASSED
+
+ColonyServiceTest > startsEmpty() PASSED
+
+ColonyServiceTest > candidatesOfDifferentColoniesAllSurvive() PASSED
+
+ColonyServiceTest > removeThenRegisterIsAllowed() PASSED
+
+ColonyServiceTest > createColonyRegistersIt() PASSED
+
+ColonyServiceTest > allIsUnmodifiable() PASSED
+
+ColonyServiceTest > removeDropsTheColony() PASSED
+
+ColonyServiceTest > findNearestOnEmptyRegistryIsEmpty() PASSED
+
+ColonyServiceTest > createColonyGivesDistinctIds() PASSED
+
+ColonyServiceTest > allKeepsInsertionOrder() PASSED
+
+ColonyServiceTest > findMissingIdIsEmpty() PASSED
+
+ColonyServiceTest > registerAcceptsRestoredColony() PASSED
+
+ColonyServiceTest > clearEmptiesTheRegistry() PASSED
+
+ColonyServiceTest > aSatelliteClusterCannotShrinkTheColony() PASSED
+
+ColonyServiceTest > createColonyRejectsNullCenter() PASSED
+
+ColonyServiceTest > findNearestRejectsNullPosition() PASSED
+
+ColonyServiceTest > findNullIdIsEmpty() PASSED
+
+ColonyServiceTest > theOrderOfTheClustersDoesNotMatter() PASSED
+
+ColonyServiceTest > findNearestIncludesColonyExactlyOnRadius() PASSED
+
+ColonyServiceTest > findNearestWithNegativeRadiusIsEmpty() PASSED
+
+JoinSameVillageTest > aPlayerBedNextToTheVillageJoinsByDistanceAndTheVillageBySameStructure() PASSED
+
+JoinSameVillageTest > bedsOfTheSameGeneratedVillageJoinIntoOneCluster() PASSED
+
+JoinSameVillageTest > twoGeneratedVillagesStayApart() PASSED
+
+JoinSameVillageTest > aClusterWithoutAGeneratedVillageKeepsTheDistanceRule() PASSED
+
+JoinSameVillageTest > theDesertVillageOfTheSimulationFallsApartByDistanceAlone() PASSED
+
+PartialObservationTest > theColonyGrowsAgainAfterShrinking() PASSED
+
+PartialObservationTest > theProbeMovesTheCenter() PASSED
+
+PartialObservationTest > aRepeatedProbeReadingShrinksTheColony() PASSED
+
+PartialObservationTest > driftMustNotCostTheVillageItsIdentity() PASSED
+
+PartialObservationTest > partialViewDoesNotMoveTheCenter() PASSED
+
+PartialObservationTest > aSingleProbeReadingProvesNothing() PASSED
+
+PartialObservationTest > aBetterViewUpdatesTheCountAndNotTheCenter() PASSED
+
+PartialObservationTest > aCompleteSmallViewShrinksTheCountAndLeavesTheCenter() PASSED
+
+PartialObservationTest > anObservationWithoutAnAnchorNeverReportsAMove() PASSED
+
+PartialObservationTest > observeReportsWhetherItMoved() PASSED
+
+PartialObservationTest > anEqualViewNoLongerMovesTheCenter() PASSED
+
+PartialObservationTest > worseViewKeepsTheStoredBedCount() PASSED
+
+PartialObservationTest > growingStillNeedsNoProbe() PASSED
+
+PartialObservationTest > aCompleteViewShrinksWithoutAnyProbe() PASSED
+
+PartialObservationTest > probesFromDifferentAnchorsDoNotConfirmEachOther() PASSED
+
+PartialObservationTest > aNeighbourProbeDoesNotEraseThisColonysReading() PASSED
+
+PartialObservationTest > nearbyPartialViewStaysInTheSameColony() PASSED
+
+PartialObservationTest > aColonyLoadedFromSaveCanStillShrink() PASSED
+
+PartialObservationTest > firstObservationAlwaysCounts() PASSED
+
+PartialObservationTest > repeatingAPlayerViewNeverShrinksTheColony() PASSED
+
+PartialObservationTest > centerStopsOscillating() PASSED
+
+VillageDetectorTest > nearbyBedsFormOneCluster() PASSED
+
+VillageDetectorTest > observationIsIncompleteWhenABedSitsNearTheEdge() PASSED
+
+VillageDetectorTest > tooFewVillagersIsNotAVillage() PASSED
+
+VillageDetectorTest > observationIsCompleteWhenEveryBedIsWellInsideTheRadius() PASSED
+
+VillageDetectorTest > clusteringIsTransitive() PASSED
+
+VillageDetectorTest > noBedsMeansNoClusters() PASSED
+
+VillageDetectorTest > everyBedLandsInExactlyOneCluster() PASSED
+
+VillageDetectorTest > minimumBedsAndVillagersQualify() PASSED
+
+VillageDetectorTest > bedExactlyOnClusterDistanceJoins() PASSED
+
+VillageDetectorTest > bedOneBlockBeyondClusterDistanceSplits() PASSED
+
+VillageDetectorTest > theCenterIsTheBedNearestTheMean() PASSED
+
+VillageDetectorTest > centerIsTheAverageOfBeds() PASSED
+
+VillageDetectorTest > centerSurvivesExtremeCoordinates() PASSED
+
+VillageDetectorTest > meetingPointOverridesTheAverage() PASSED
+
+VillageDetectorTest > theMarginItselfIsComplete() PASSED
+
+VillageDetectorTest > heightDoesNotSplitCluster() PASSED
+
+VillageDetectorTest > emptyClusterIsNotAVillage() PASSED
+
+VillageDetectorTest > theCenterLandsOnABedThatExists() PASSED
+
+VillageDetectorTest > theMeetingPointStillWins() PASSED
+
+VillageDetectorTest > withoutATriggerTheObservationIsNeverComplete() PASSED
+
+VillageDetectorTest > tooFewBedsIsNotAVillage() PASSED
+
+VillageDetectorTest > theCenterTakesItsHeightFromABedToo() PASSED
+
+VillageDetectorTest > constantsMatchTheDecisionRecord() PASSED
+
+VillageDetectorTest > distantBedsFormSeparateClusters() PASSED
+
+BiomeBlockSwapTest > theSamePieceOfAnotherWoodPlaysTheSameRole() PASSED
+
+BiomeBlockSwapTest > theBlueprintKeepsOrderStatesAndStreetLayer() PASSED
+
+BiomeBlockSwapTest > theRestOfTheFileStaysAsItIs() PASSED
+
+BiomeBlockSwapTest > cobblestoneAndSandstoneTradePlacesInTheSameShape() PASSED
+
+BiomeBlockSwapTest > everyWoodBecomesTheVillageWoodInTheSameShape() PASSED
+
+BlueprintDoorSide > os pontos da mesma escada são os mesmos, deslocados com a boca PASSED
+
+BlueprintDoorSide > os pontos da escada só descem, em trechos curtos, até o salão do ramal PASSED
+
+BlueprintDoorSide > a porta fica na parede mais perto dela PASSED
+
+BlueprintDoorSide > sem porta, nenhum lado PASSED
+
+BlueprintDoorSide > no empate, norte, sul, oeste e leste, nessa ordem PASSED
+
+Blueprint.rotated > meia volta leva a parede do norte para o sul PASSED
+
+Blueprint.rotated > quatro quartos de volta devolvem a planta original PASSED
+
+Blueprint.rotated > girar não muda a lista de compras nem a ordem da obra PASSED
+
+Blueprint.rotated > a marca de mobília sobrevive ao giro PASSED
+
+Blueprint.rotated > ahalfTurnKeepsTheSize() PASSED
+
+Blueprint.rotated > um quarto de volta troca os eixos PASSED
+
+Blueprint.rotated > aQuarterTurnSwapsWidthAndDepth() PASSED
+
+Blueprint.rotated > a orientacao gira junto com a planta PASSED
+
+Blueprint.rotated > nada nasce em coordenada negativa PASSED
+
+Blueprint.rotated > a caixa acompanha o giro: 5x3 vira 3x5 PASSED
+
+BlueprintStreetLayerTest > turningThePlanKeepsItsStreetLayer() PASSED
+
+BlueprintStreetLayerTest > aStreetLayerAtTheBottomSinksTheOriginByOne() PASSED
+
+BlueprintStreetLayerTest > theFoundationBelowTheStreetAndTheSoilOnItAreBuried() PASSED
+
+BlueprintStreetLayerTest > aPlantationBuildsItsWholeBase() PASSED
+
+BlueprintStreetLayerTest > onlyGrassIsLeftToTheGround() PASSED
+
+BlueprintStreetLayerTest > theStreetLayerLandsOnTheGround() PASSED
+
+BlueprintStreetLayerTest > theBaseBelowTheStreetIsBuiltUnlessItIsSoil() PASSED
+
+BlueprintStreetLayerTest > aPlanReadWithoutAStreetConnectorHasNoStreetLayer() PASSED
+
+BlueprintTest > theMaterialListCountsEachBlock() PASSED
+
+BlueprintTest > oneBlockIsOneBlockWide() PASSED
+
+BlueprintTest > theSizeIsTheBoxAroundEverything() PASSED
+
+BlueprintTest > anEmptyBlueprintIsRefused() PASSED
+
+BlueprintTest > aBlueprintKeepsItsBlocksInOrder() PASSED
+
+BlueprintTest > theSizeSurvivesNegativeOffsets() PASSED
+
+BlueprintTest > aBlueprintCannotBeChangedFromOutside() PASSED
+
+BuildOrderTest > otherBlocksAreNotDoors() PASSED
+
+BuildOrderTest > theDoorComesAfterTheWallEvenBeingLower() PASSED
+
+BuildOrderTest > withinAGroupItStillGoesBottomUp() PASSED
+
+BuildOrderTest > trapdoorsAndGatesCountAsDoors() PASSED
+
+BuildOrderTest > theDoorComesBeforeTheFurniture() PASSED
+
+BuildOrderTest > theOrderIsStableBetweenReadings() PASSED
+
+BuildingTest > touchingByAFaceMergesOnEveryAxisAndBothSides() PASSED
+
+BuildingTest > theBoxOfAProjectEndsAtItsLastBlockOnEveryAxis() PASSED
+
+BuildingTest > anOverlapTouches() PASSED
+
+BuildingTest > aOneBlockGapKeepsThemApartOnEveryAxisAndBothSides() PASSED
+
+ClimbLimitTest > steppingDownTwoIsStillAPath() PASSED
+
+ClimbLimitTest > theFallOfTheLogIsNotAPath() PASSED
+
+ClimbLimitTest > theNextLandingIsWithinTheLimit() PASSED
+
+ClimbLimitTest > theSameLevelIsReachable() PASSED
+
+ClimbLimitTest > threeBlocksNeedsHelp() PASSED
+
+ClimbLimitTest > oneBlockIsAlwaysClimbable() PASSED
+
+ClimbLimitTest > twoBlocksIsTheLimitTheAuthorAsked() PASSED
+
+ColonyEditsTest > eachPositionAnswersForItself() PASSED
+
+ColonyEditsTest > anAnnouncedChangeIsOurs() PASSED
+
+ColonyEditsTest > theMarkIsSpentWhenRead() PASSED
+
+ColonyEditsTest > anUnannouncedChangeIsThePlayers() PASSED
+
+ColonyEditsTest > theRegisterDoesNotGrowWithoutBound() PASSED
+
+ColonyRoadsTest > whatFellOutsideTheNewRadiusIsDropped() PASSED
+
+ColonyRoadsTest > aColumnSurvivesBeingPackedAndUnpacked() PASSED
+
+ColonyRoadsTest > anEmptyIndexAnswersNothingRatherThanFarAway() PASSED
+
+ColonyRoadsTest > theNearestRoadColumnToALotBecomesTheWorkPathWaypoint() PASSED
+
+ColonyRoadsTest > anIndexWithNothingLeftIsEmptyAndNotHollow() PASSED
+
+ColonyRoadsTest > theNearestRoadWinsAndNotTheFirstOne() PASSED
+
+ColonyRoadsTest > theWorkBesideTheRoadIsOneBlockAway() PASSED
+
+ColonyRoadsTest > heightDoesNotCount() PASSED
+
+ColonyRoadsTest > theRulerIsTheSquareAndNotTheStraightLine() PASSED
+
+ColonyRoadsTest > theIndexSurvivesTheCentreMoving() PASSED
+
+ColonyRoadsTest > rebasingKeepsTheRoadsWithinTheNewSquare() PASSED
+
+ConstructionOutcomeTest > anUnsupportedPieceReleasesTheBuilderWithoutCountingAsPlaced() PASSED
+
+ConstructionPriorityTest > theFallbackHouseRespectsTheBedCeiling() PASSED
+
+ConstructionPriorityTest > aBedShortageStillComesFirst() PASSED
+
+ConstructionPriorityTest > aHouseHandsTheTurnToInfrastructureWhenBedsAreEnough() PASSED
+
+ConstructionPriorityTest > aMissingWorkshopComesBeforeTheRotationAndTheFirstHouse() PASSED
+
+ConstructionPriorityTest > theSixteenthAdultMakesTheFarmDue() PASSED
+
+ConstructionPriorityTest > withEveryWorkshopStandingTheRotationIsBack() PASSED
+
+ConstructionPriorityTest > housingDeficitOverridesTheRotation() PASSED
+
+ConstructionPriorityTest > theFarmDeficitComesAfterBedsAndBeforeTheWorkshop() PASSED
+
+ConstructionPriorityTest > oneFarmPerFifteenAdultsWithAMinimumOfOne() PASSED
+
+ConstructionPriorityTest > firstConstructionIsAHouseWhenBedsAlreadyCoverTheAdults() PASSED
+
+ConstructionPriorityTest > infrastructureHandsTheTurnBackToAHouse() PASSED
+
+ConstructionPriorityTest > aHouseIsBuiltOnlyWhenBedsAreShort() PASSED
+
+ConstructionPriorityTest > theLargerCountOfFarmsWins() PASSED
+
+ConstructionPriorityTest > theRotationBuildsAHouseUntilThereAreFourBedsToSpare() PASSED
+
+ConstructionPriorityTest > aFarmerWithoutAFarmMakesTheFarmDue() PASSED
+
+ConstructionProjectBuiltTest > onlyTheBuriedGroundIsNotBuilding() PASSED
+
+ConstructionProjectBuiltTest > aPlacedPieceIsBuilding() PASSED
+
+ConstructionProjectBuiltTest > aFreshProjectHasBuiltNothing() PASSED
+
+ConstructionProjectMaterialWaitTest > theLastPieceHasNothingToGoOnWith() PASSED
+
+ConstructionProjectMaterialWaitTest > aPieceWaitingForMaterialLetsTheNextOneThrough() PASSED
+
+ConstructionProjectMaterialWaitTest > waitingForMaterialIsNeverAFailureToPlace() PASSED
+
+ConstructionProjectTest > whatIsBuiltLeavesTheShoppingList() PASSED
+
+ConstructionProjectTest > aFinishedProjectIsFinal() PASSED
+
+ConstructionProjectTest > theFirstMaterialIsTheOneTheBuilderNeedsNext() PASSED
+
+ConstructionProjectTest > buildingCannotStartBeforePreparing() PASSED
+
+ConstructionProjectTest > aBlockLandsAtTheOriginPlusItsOffsetOnEveryAxis() PASSED
+
+ConstructionProjectTest > aProjectWithABlockStandingIsNeverSuperseded() PASSED
+
+ConstructionProjectTest > placingTheSameBlockTwiceCountsOnce() PASSED
+
+ConstructionProjectTest > theMaterialListCountsTheWholeHouse() PASSED
+
+ConstructionProjectTest > aProjectNeverGoesBackToPlanned() PASSED
+
+ConstructionProjectTest > aDeferredPieceCanBeRetriedWithoutItsSupportChanging() PASSED
+
+ConstructionProjectTest > theEdgeOfTheRoadsideToleranceIsInclusive() PASSED
+
+ConstructionProjectTest > theWorkBesideTheRoadStaysEvenFarFromTheCentre() PASSED
+
+ConstructionProjectTest > theProjectSitsWhereItsOriginIs() PASSED
+
+ConstructionProjectTest > placingEverythingFinishesTheProject() PASSED
+
+ConstructionProjectTest > theWorkStrandedFarFromAnyRoadIsStillLetGo() PASSED
+
+ConstructionProjectTest > theCornerOfTheSweptSquareIsOutOfReachByTheStraightLine() PASSED
+
+ConstructionProjectTest > aNewProjectIsPlannedAndUntouched() PASSED
+
+ConstructionProjectTest > theEdgeOfTheSweptSquareIsWithinReachByBothRulers() PASSED
+
+ConstructionProjectTest > placingADeferredPieceForgetsTheDeferral() PASSED
+
+ConstructionProjectTest > theShoppingListKeepsTheBlueprintsOrder() PASSED
+
+ConstructionProjectTest > anUnsupportedPieceWaitsForItsSupportWithoutDisappearingFromTheProject() PASSED
+
+ConstructionProjectTest > aProjectWalksThroughItsStates() PASSED
+
+ConstructionProjectTest > aProjectCanWaitForMaterialAndGoOn() PASSED
+
+ConstructionProjectTest > aPieceSetAsideForMaterialStillAsksForIt() PASSED
+
+ConstructionProjectTest > aProjectOfTheCurrentTargetStays() PASSED
+
+ConstructionProjectTest > anUntouchedProjectIsSupersededByADifferentTarget() PASSED
+
+ConstructionProjectTest > aRepairProjectKeepsBlocksAlreadyStanding() PASSED
+
+ConstructionProjectTest > theNextBlockSkipsTheDeferredOne() PASSED
+
+ConstructionProjectTest > withoutARoadIndexTheCentreDecidesAsBefore() PASSED
+
+ConstructionProjectTest > theFifthFailureToPlaceAPieceIsTheLast() PASSED
+
+Grafo estável > acima do teto, ficam os mais perto do centro PASSED
+
+Grafo estável > o trecho fixo fica onde está, mesmo com a faixa pedindo outra linha PASSED
+
+Grafo estável > a coluna fica fixa só depois dos dias da trava, e recomeça ao sair da linha PASSED
+
+Grafo estável > a porta nova liga ao trecho fixo, que ganha um nó no encontro PASSED
+
+Grafo estável > a reta não atravessa parede PASSED
+
+Grafo estável > a porta fora das quatro retas liga em L ao ponto mais perto, sem a busca cara PASSED
+
+Grafo estável > todas as partes soltas ligam na mesma releitura PASSED
+
+Grafo estável > fora da caixa só entra o caminho que encosta no de dentro PASSED
+
+LampPostPlanTest > theFenceComesFromTheVillageWood() PASSED
+
+LampPostPlanTest > thePostIsStoneTwoFencesAndTheColonyTorchFromTheGroundUp() PASSED
+
+LampPostPlanTest > theNameCarriesTheMaterialsAndReadsBack() PASSED
+
+LotScoreTest > aLotUpTheHillLosesToAFartherOneAtTheVillageHeight() PASSED
+
+LotScoreTest > theCloserLotWins() PASSED
+
+LotScoreTest > theStreetColumnsAreVisitedFromTheCenterOutwards() PASSED
+
+LotScoreTest > theLotAgainstTheStreetBeatsOneWithALongPath() PASSED
+
+MaterialRequestTest > theSameSituationKeepsCountingFromTheFirstTick() PASSED
+
+MaterialRequestTest > aNewPieceStateOrSourceRestartsTheClock() PASSED
+
+MaterialRequestTest > onlyADeliveredRequestLetsTheWorkGoOn() PASSED
+
+MaterialRequestTest > everySituationTheBuilderReachesHasItsOwnReason() PASSED
+
+MineBranchTest > whileTheShaftIsSharedOnlyTheFirstBranchIsOpen() PASSED
+
+MineBranchTest > aFinishedBranchIsExhaustedWhoeverHeldIt() PASSED
+
+MineBranchTest > theOtherBranchesOpenWhenTheGalleryStarts() PASSED
+
+MineOneDescentTest > onTheTopLevelTheOtherArmsStayShutAfterTheStairIsOpen() PASSED
+
+MineOneDescentTest > onTheTopLevelTheMineGoesDownWhenArmZeroIsDone() PASSED
+
+MineOneDescentTest > belowTheTopTheFourArmsOpen() PASSED
+
+MineOneDescentTest > theStairIsRetriedTheSameWayWithoutTurning() PASSED
+
+MineRampTest > theFirstStepIsAtTheHallLevel() PASSED
+
+MineRampTest > theRampEndsAfterItsStepsAndNeverDeepens() PASSED
+
+MineRampTest > theRampPointsAwayFromTheVillageCentre() PASSED
+
+MineRampTest > eachRampStepGoesOneForwardAndOneUp() PASSED
+
+MineRampTest > anExhaustedMineTurnsIntoARampWithOneBranch() PASSED
+
+MineSecondLevelTest > aCycleThatStillFitsCanDescendOnce() PASSED
+
+MineSecondLevelTest > theNextCyclePreservesEveryArmDirection() PASSED
+
+MineShaftLayoutTest > eachLevelGoesDownTwoStairs() PASSED
+
+MineShaftLayoutTest > noCellOfTheLevelIsTheFloorOfAStepOrOfAHall() PASSED
+
+MineShaftLayoutTest > theFourArmsAreFourCornersAndFourHalls() PASSED
+
+MineShaftLayoutTest > everyLandingIsLevelWithTheLastStepAndBesideIt() PASSED
+
+MineShaftLayoutTest > theFloorUnderEveryTorchIsNeverDug() PASSED
+
+MineShaftLayoutTest > theWallBehindEveryLandingTorchIsNeverDug() PASSED
+
+MineShaftLayoutTest > theNextLevelDoesNotBreakTheStairsAbove() PASSED
+
+MineShaftLayoutTest > aLevelOpenedBeforeTheRuleKeepsItsShape() PASSED
+
+MineShaftLayoutTest > everyStepIsOneBlockBelowTheLastAndBesideIt() PASSED
+
+MineShaftTest > thePlannedCellsAreTheShaftAndNotTheFloorUnderIt() PASSED
+
+MineShaftTest > theSharedSpiralIsOneTurnOfFourShortFlights() PASSED
+
+MineShaftTest > theSharedRoomAlternatesSidesFromTheCentre() PASSED
+
+MineShaftTest > eachStairStepHasThreeLanesAndThreeLayers() PASSED
+
+MineShaftTest > aWholeLevelDigsAtMostEighteenHundredBlocks() PASSED
+
+MineShaftTest > theSpiralLandsWhereTheGeometrySays() PASSED
+
+MineShaftTest > allArmsShareTheSpiralAndSearchBeforeTheySplit() PASSED
+
+MineShaftTest > theLastSafeCycleDoesNotPlanBelowTheWorldBottom() PASSED
+
+MineShaftTest > aDeeperCycleStartsTwoSpiralsBelowThePreviousOne() PASSED
+
+MineShaftTest > thereIsNoPositionPastTheEndOfTheArm() PASSED
+
+MineShaftTest > theSharedHallIsNineByNineByThree() PASSED
+
+MineShaftTest > eachArmLeavesFromACornerOfTheRoom() PASSED
+
+MineShaftTest > eachArmHasASpiralAndAHallAsLargeAsTheLevels() PASSED
+
+MineShaftWaypointsTest > theFloorTorchesAreEightDistinctFootCellsOfTheHallsAndNeverOnAStair() PASSED
+
+MineShaftWaypointsTest > eachRampStepIsThreeLanesWideToTheLeftAndThreeBlocksTall() PASSED
+
+MineShaftWaypointsTest > theRampHasNoFloorTorch() PASSED
+
+MineShaftWaypointsTest > onlyTheFirstArmOpensTheLevelSpiral() PASSED
+
+MineShaftWaypointsTest > everyStairAndHallWaypointIsTheFloorUnderACarvedCell() PASSED
+
+MineShaftWaypointsTest > eachFlightEndOfTheLevelSpiralIsThreeBlocksBelowThePreviousOne() PASSED
+
+MineShaftWaypointsTest > theWalkHasFourFlightEndsTheHallTheCornerFourArmFlightEndsTheArmHallAndItsMiddle() PASSED
+
+MineShaftWaypointsTest > eachFlightEndOfTheArmSpiralIsThreeBlocksBelowThePreviousOne() PASSED
+
+MineShaftWaypointsTest > aRampNeedsAtLeastOneStep() PASSED
+
+MineShaftWaypointsTest > theHallWaypointIsTheFirstHallCellAndComesRightAfterTheLastFlight() PASSED
+
+MineStairPointsTest > theFirstFourShiftsGoEastWestSouthAndNorth() PASSED
+
+MineStairPointsTest > theNextRoundGoesTwiceAsFar() PASSED
+
+MineTest > closingTheSharedPathAdvancesTheWholeMineTogether() PASSED
+
+MineTest > everyShiftIsANewPointUntilTheMouthIsBlamed() PASSED
+
+MineTest > theLowestCycleIsExhaustedWithoutRestartingAtTheSameMouth() PASSED
+
+MineTest > onlyOneMinerGetsTheSharedSpiralAndSearchArea() PASSED
+
+MineTest > aRampOnlyTurns() PASSED
+
+MineTest > theFourthFinishedArmStartsTheNextCycle() PASSED
+
+MineTest > aFullTurnWithoutTheHallMovesTheStairToAnotherPoint() PASSED
+
+MineTest > aMineSavedBeforeTheFirstBlockRestores() PASSED
+
+MineTest > fourArmsStartAtDifferentStaircasesAfterTheSharedArea() PASSED
+
+MineTest > reroutingRestartsEveryArmOnTheNewHelix() PASSED
+
+MineTest > theThirdTurnWithoutAPickaxeAsksForANewRoute() PASSED
+
+MineTest > theOtherBranchesOpenOnceTheStairIsCutAndSkipTheSharedHall() PASSED
+
+MineTest > aStairClosedBeforeTheHallDoesNotDeepen() PASSED
+
+MineTest > theCutsGoBackToDiskAsTheyCame() PASSED
+
+MineTest > eachArmStopsAfterItsConfiguredFiniteWork() PASSED
+
+MineTest > aSavedMineKeepsEveryArmCursor() PASSED
+
+MineTest > theZeroArmFinishedPastTheSharedPathKeepsTheOtherBranchesOpen() PASSED
+
+MineTest > aFreshMineDoesNotDeepen() PASSED
+
+MineTest > thePlannedCellsCoverEveryArm() PASSED
+
+NeighborhoodRoadsTest > eachSideTakesTheFarthestPathInsideItsCone() PASSED
+
+NeighborhoodRoadsTest > aStoredRouteIsReusedUntilADirtySquareCrossesIt() PASSED
+
+NeighborhoodRoadsTest > theEastTipGrowsOneBlockADay() PASSED
+
+NeighborhoodRoadsTest > theNeighborhoodLinksASquareInARingAndSkipsTheDiagonals() PASSED
+
+NeighborhoodRoadsTest > theConeIsTheDiagonalAndTheFirstOfATieStays() PASSED
+
+NeighborhoodRoadsTest > theTipStopsAtTheLimit() PASSED
+
+NeighborhoodRoadsTest > theRouteGoesAroundWaterAndPrefersTheExistingPath() PASSED
+
+NeighborhoodRoadsTest > everyEntranceGetsLinkedToTheCenter() PASSED
+
+NeighborhoodRoadsTest > anEntranceBeyondTheNeighborhoodReachStillGetsLinked() PASSED
+
+NetworkDetourTest > theShortcutComesOnlyPastTwiceTheDirectDistance() PASSED
+
+NetworkDetourTest > aNetworkThatDoesNotReachTheHubAsksForAShortcut() PASSED
+
+NetworkDetourTest > theStepsAlongTheNetworkAreCounted() PASSED
+
+OrphanedProjectTest > theEdgeOfTheRadiusStillCounts() PASSED
+
+OrphanedProjectTest > theButcherShopOfTheLogIsOutOfReachOfTheCentreThatPrevailed() PASSED
+
+OrphanedProjectTest > theSameWorkWasWithinReachOfTheCentreThatPlannedIt() PASSED
+
+OrphanedProjectTest > heightDoesNotCountTowardsTheRadius() PASSED
+
+PieceRescueTest > eachPositionCountsItsOwnTries() PASSED
+
+PieceRescueTest > thePieceComesBackFourTimesAndThenSurges() PASSED
+
+PlannedPaths > sem ser pedido por tempo demais, sai, e pedir de novo renova PASSED
+
+PlannedPaths > calçado ou recusado, sai PASSED
+
+PlannedPaths > quem lê o plano não mexe nele PASSED
+
+PlannedPaths > o trecho que uma releitura não pediu continua no plano PASSED
+
+RetiredSpurs > caminho que não encosta no ramal fica PASSED
+
+RetiredSpurs > com o desnível do save e sem o poste, restam só os encontros e a porta PASSED
+
+RetiredSpurs > sem o poste, o bloco de nós vira dois encontros de verdade PASSED
+
+RetiredSpurs > o ramal longo sai inteiro, até a linha, e a linha fica PASSED
+
+RetiredSpurs > coluna que deixou de ser entrada mas está na linha não leva nada PASSED
+
+RetiredSpurs > trecho do tamanho de uma rua fica: pode ser do jogador ou da vila gerada PASSED
+
+RetiredSpurs > quadrado que sobrou nas linhas sai, sem separar a rede nem tirar porta PASSED
+
+RetiredSpurs > a quina tem linha perto: a rua que passa ao lado conta, o ramal da própria quina não PASSED
+
+RetiredSpurs > com uma porta encostada no bloco, ele também não volta PASSED
+
+RetiredSpurs > com o desnível do save e uma porta encostada no bloco, ele também não volta PASSED
+
+> Task :remapSourcesJar
+
+> Task :test
+
+RoadGeometry > nenhum traçado mudou sem ser olhado PASSED
+
+RoadGeometry > nó e trecho contam o que a linha tem PASSED
+
+> Task :pmdMain
+Adding current platform C:\Users\lucas\.jdks\jdk-21.0.12+8\lib\jrt-fs.jar to auxClasspath, which could be the wrong java version. Please add the correct jrt-fs.jar explicitly to the auxClasspath. See https://docs.pmd-code.org/latest/pmd_languages_java.html#providing-the-auxiliary-classpath Set env var PMD_JAVA_DISABLE_AUX_CLASSPATH_WARNINGS=true to disable this warning.
+171 PMD rule violations were found. See the report at: file:///C:/Users/lucas/Desktop/MOD-village-1.21.1/build/reports/pmd/main.html
+
+> Task :test
+
+RoadGeometry > a mesma rua dá o mesmo traçado em toda leitura PASSED
+
+RoadGeometry > frente de porta fica na linha do meio PASSED
+
+RoadGeometry > afinar não parte a rua em pedaços PASSED
+
+RoadGeometry > a máscara guarda o que já é caminho, e o miolo sai dela PASSED
+
+RoadGraphModeTest > everyModeHasItsOwnEdgeColorAndTheCurrentOneKeepsYellow() PASSED
+
+RoadGraphModeTest > theCommandNamesFindTheirModeIgnoringCase() PASSED
+
+RoadGraphTest > unknownEntranceAndHubDoNotCreatePhysicalRoads() PASSED
+
+RoadGraphTest > inputOrderDoesNotChangeGraphAndResultsAreImmutable() PASSED
+
+RoadGraphTest > preservesCycleWithoutEndpoints() PASSED
+
+RoadGraphTest > doesNotConnectDiagonalOrTwoBlockCliff() PASSED
+
+RoadGraphTest > splitsAtEntranceInsideRoadAndAtTJunction() PASSED
+
+RoadGraphTest > contractsStraightRoadButPreservesEveryPhysicalColumn() PASSED
+
+RoadGraphTest > preservesBendAndOneBlockSteps() PASSED
+
+RoadLines > Regra 208: o trecho colado na plantação que é a única ligação da rede fica PASSED
+
+RoadLines > Regra 229: o toco que é o único do lado sul vira a ponta sul PASSED
+
+RoadLines > Regra 178: o primeiro bloco fora da porta é mandado calçar PASSED
+
+RoadLines > Regras 177 e 224: vão maior que 2 blocos não fecha a faixa, mas liga em reta e o vão vai para calçar PASSED
+
+RoadLines > Regra 264: sem saída a seco, a ligação não atravessa a água e a parte fica solta PASSED
+
+RoadLines > anUnlinkableBiggestPartDoesNotStarveTheOthers() PASSED
+
+RoadLines > Regra 264: coluna traçada antes sobre a água sai da linha na releitura PASSED
+
+RoadLines > theBiggestLoosePartIsLinkedOnEveryRead() PASSED
+
+RoadLines > Regra 177: vão de até 2 blocos ainda liga, sem nenhuma busca PASSED
+
+RoadLines > Regra 208: o anel antigo da plantação sai do grafo e vira sobra, mesmo longe da linha PASSED
+
+RoadLines > Regra 177: entrada de estrutura tem ramal até a rede PASSED
+
+RoadLines > Regra 206: a entrada no fim de um trecho fica PASSED
+
+RoadLines > Regra 206: linha toda num quadrante não some até o centro PASSED
+
+RoadLines > Regras 206 e 229: no máximo uma ponta por lado da vila, a mais distante PASSED
+
+RoadLines > Regra 186: a sobra ao lado da linha volta ao solo, e a frente de porta fica PASSED
+
+RoadLines > Regra 177: nó só onde linhas se encontram, nunca nó ao lado de nó PASSED
+
+RoadLines > Regras 206 e 229: toco que não é a ponta do lado dele sai do grafo, e o caminho dele vira sobra PASSED
+
+RoadLines > sem caminho não há grafo PASSED
+
+RoadLines > toda entrada é nó do grafo, mesmo longe demais para ligar agora PASSED
+
+RoadLines > aLoneDoorLinksWithAnLShapedStub() PASSED
+
+RoadLines > aLoneDoorJoinsThePathBesideIt() PASSED
+
+RoadLines > Regra 177: o corredor largo vira uma linha só, no bloco central PASSED
+
+RoadLines > Regra 208: a entrada da plantação fica, com o ramal até a rua PASSED
+
+RoadLines > o centro é da rede, mesmo com uma entrada solta mais perto dele PASSED
+
+RoadRegionsTest > aChangeThatGoesBackBeforeTheSecondReadIsNotRebuilt() PASSED
+
+RoadRegionsTest > aSquareThatLostEverythingIsDirty() PASSED
+
+RoadRegionsTest > aMarkedSquareIsDirtyEvenWithTheSameFingerprint() PASSED
+
+RoadRegionsTest > aMarkedSquareIsRebuiltOnTheNextRead() PASSED
+
+RoadRegionsTest > aLoneNodeIsAColumnOfTheGraphAndStaysFrozenInACleanSquare() PASSED
+
+RoadRegionsTest > aMarkedSquareIsRebuiltOnceEvenWhenMarkedTwice() PASSED
+
+RoadRegionsTest > aChangedGroundHeightMakesTheSquareDirty() PASSED
+
+RoadRegionsTest > thePlannedAndTheEntrancesAreInTheFingerprint() PASSED
+
+RoadRegionsTest > theSquareThatWasCleanComesOutExactlyAsTheGraphBefore() PASSED
+
+RoadRegionsTest > aChangeThatWentAwayDoesNotCountTowardsTheNextOne() PASSED
+
+RoadRegionsTest > theCleanSquaresKeepTheirLinesThroughTheBuild() PASSED
+
+RoadRegionsTest > aSquareIsRebuiltOnlyWhenItStaysChangedForTwoReads() PASSED
+
+RoadRegionsTest > theFirstBuildForgetsWhatWasPending() PASSED
+
+RoadRegionsTest > theFingerprintDoesNotDependOnOrderAndOnlyTheChangedSquareIsDirty() PASSED
+
+RoadRegionsTest > theAcceptedSquareStaysAcceptedAfterTheRebuild() PASSED
+
+RoadRegionsTest > withoutAGraphBeforeTheBuildIsKept() PASSED
+
+RoadSettlingTest > oneNewColumnKeepsTheWholeEdgeFree() PASSED
+
+RoadSettlingTest > onlyAWholePinkToPinkEdgeIsFixed() PASSED
+
+RoadStabilityTest > anEdgeIsPavedOnlyAfterThreeEqualReads() PASSED
+
+RoadStabilityTest > aChangedEdgeStartsOver() PASSED
+
+Pontas na extremidade > a ponta na extremidade que aponta para fora fica, e a que corre de lado sai PASSED
+
+Pontas na extremidade > a ponta entre linhas, longe da extremidade do lado dela, sai PASSED
+
+ShapeStatesTest > axisHalfSlabTypeAndStairShapePass() PASSED
+
+ShapeStatesTest > maeConnectionsRotateWithTheirValuesAndKeepInvariantProperties() PASSED
+
+ShapeStatesTest > theStateTextOfAJigsawIsRead() PASSED
+
+ShapeStatesTest > aQuarterTurnSwapsTheHorizontalAxis() PASSED
+
+ShapeStatesTest > maeNumericRotationUsesSixteenSteps() PASSED
+
+ShapeStatesTest > doorHalvesChestTypesAndOtherStatesStayOut() PASSED
+
+SiteLabelTest > anUnknownBlockFallsBackToTheId() PASSED
+
+SiteLabelTest > theLabelUsesTheBlockNameAndNotTheId() PASSED
+
+SiteLabelTest > withEverythingInTheChestsTheLabelOnlyCountsTheBlocks() PASSED
+
+SiteLabelTest > theLabelSaysWhatIsMissingHowManyAreStockedAndHowManyAreLeft() PASSED
+
+SiteLabelTest > aMaterialWithNoStockShowsZero() PASSED
+
+SiteLabelTest > theVanillaNamespaceIsTrimmed() PASSED
+
+SiteLabelTest > aMaterialTheColonyHasIsNeverSaidToBeMissing() PASSED
+
+SiteLabelTest > withNothingMissingTheLabelSaysItIsBuilding() PASSED
+
+SiteLabelTest > theOverloadWithoutNamingStillUsesTheId() PASSED
+
+SiteLabelTest > piecesWaitingForSupportAreCounted() PASSED
+
+SiteLabelTest > theLabelNamesTheBlockTheBuilderIsStuckOn() PASSED
+
+SiteLabelTest > onlyTheFirstMissingMaterialIsShown() PASSED
+
+SiteOutlineTest > theFourCornersAreMarked() PASSED
+
+SiteOutlineTest > theOutlineSitsAtTheFloorHeight() PASSED
+
+SiteOutlineTest > aSingleColumnLotIsItsOwnOutline() PASSED
+
+SiteOutlineTest > invertedCornersDescribeTheSameRectangle() PASSED
+
+SiteOutlineTest > theOutlineIsTheBorderAndNotTheWholeArea() PASSED
+
+StreetRouteTest > aStreetThatGoesTooFarAroundIsNotARoute() PASSED
+
+StreetRouteTest > aShortTripGoesStraight() PASSED
+
+StreetRouteTest > atTheExitItLeavesTheStreetForTheTarget() PASSED
+
+StreetRouteTest > farFromAnyStreetItGoesStraight() PASSED
+
+StreetRouteTest > streetsThatDoNotMeetAreNotARoute() PASSED
+
+StreetRouteTest > offTheStreetTheFirstStopIsTheNearestStreet() PASSED
+
+StreetRouteTest > onTheStreetItWalksALegAlongTheNetworkTowardTheExit() PASSED
+
+StreetRouteTest > aLegStopsAtTheExitWhenTheExitIsCloserThanALeg() PASSED
+
+TerrainDefectsTest > aColumnBesideWaterIsNotIsolated() PASSED
+
+TerrainDefectsTest > aStepOnThePathOutranksAStepElsewhereAndAnIsolatedHoleOutranksBoth() PASSED
+
+TerrainDefectsTest > theScoreWeighsIsolatedThenPathThenTheRest() PASSED
+
+TerrainDefectsTest > aOneBlockHoleIsIsolatedAndFilledToItsNeighbors() PASSED
+
+TerrainDefectsTest > theStepAgainstTheNextSquareCountsOncePerColumn() PASSED
+
+TerrainDefectsTest > aSingleBlockIsIsolatedAndCutToItsNeighbors() PASSED
+
+TerrainDefectsTest > theIsolatedColumnKeepsItsPlaceInsideTheSquare() PASSED
+
+TerrainDefectsTest > theDailyCapStopsAndResetsTheNextDay() PASSED
+
+UnsupportedReleaseTest > theLastTorchesWithoutAWallAreLetGoAndTheHouseFinishes() PASSED
+
+UnsupportedReleaseTest > tooManyPiecesWithoutSupportAreNotLetGo() PASSED
+
+UnsupportedReleaseTest > aHouseWithAnotherPieceToPlaceKeepsItsTorches() PASSED
+
+UnsupportedReleaseTest > aPieceWaitingForMaterialIsNotLetGo() PASSED
+
+VillageBlendTest > aMountainBesideTheVillageBecomesAGentleSlope() PASSED
+
+VillageBlendTest > theDistanceToTheVillageIsStraightToItsCorner() PASSED
+
+VillageBlendTest > theVillageNeedNotStartAtTheCornerOfTheGrid() PASSED
+
+VillageBlendTest > waterIsNeverMovedAndItsBankStaysNatural() PASSED
+
+VillageBlendTest > aSmallStepUsesTheNarrowestBand() PASSED
+
+VillageBlendTest > piecesSettleOnTheSmoothedSlope() PASSED
+
+VillageBlendTest > theRealTopKeepsItsReliefAndMeetsTheVillage() PASSED
+
+VillageBlendTest > theBandIsFourTimesTheStep() PASSED
+
+VillageBlendTest > twoMirroredPeaksComeDownAlike() PASSED
+
+VillageBlendTest > aValleyIsFilledTowardsTheVillage() PASSED
+
+VillageBlendTest > flatGroundIsNotTouched() PASSED
+
+VillageBlendTest > theDistanceToWaterCountsDiagonals() PASSED
+
+VillageBlendTest > groundOutOfReachStaysNaturalAndTheBlendFadesBeforeIt() PASSED
+
+VillageBlendTest > insideTheVillageTheCraterIsFilled() PASSED
+
+VillageBlendTest > aPieceInsideABiggerOneMovesWithIt() PASSED
+
+VillageCoreTest > aLakeBetweenThePiecesIsNotPartOfTheCoreAndStaysALake() PASSED
+
+VillageCoreTest > theCoreIsFlatAroundEachPieceAndTheLevelComesFromTheNearestPiece() PASSED
+
+VillagePaletteTest > theDesertMinesTheStoneItHas() PASSED
+
+VillagePaletteTest > everyVillageSmeltsTheSameGlass() PASSED
+
+VillagePaletteTest > theStyleIsTheCatalogFolder() PASSED
+
+VillagePathPlannerTest > aOneBlockHoleIsCoveredLevelWithTheGroundAround() PASSED
+
+VillagePathPlannerTest > aDeepDitchAcrossTheWholeWayIsNoWay() PASSED
+
+VillagePathPlannerTest > aSteepBumpIsCutAtMostOneBlock() PASSED
+
+VillagePathPlannerTest > onFlatGroundNothingRisesAboveIt() PASSED
+
+VillagePathPlannerTest > aCliffIsClimbedByTheRampBesideItAndNotByCutting() PASSED
+
+VillagePathPlannerTest > aPathNeverRunsAlongsideAnotherOne() PASSED
+
+VillagePathPlannerTest > aNarrowGapNarrowsThePath() PASSED
+
+VillagePathPlannerTest > aNewPathJoinsTheNearestPieceOfTheNetwork() PASSED
+
+VillagePathPlannerTest > onFlatGroundThePathIsStraight() PASSED
+
+VillagePathPlannerTest > waterIsNeverCrossed() PASSED
+
+VillagePathPlannerTest > everyPathOnRoughGroundIsSafe() PASSED
+
+VillagePathPlannerTest > theHoleRuleRefusesARaisedRun() PASSED
+
+VillageSurfaceTest > whatIsNotGroundNeitherChangesNorPullsItsNeighbours() PASSED
+
+VillageSurfaceTest > waterStaysAndItsBankComesDownToIt() PASSED
+
+VillageSurfaceTest > aRoughVillageSizedTerrainComesOutSmoothInAFewHundredMilliseconds() PASSED
+
+VillageSurfaceTest > aHouseKeepsItsFloorAndTheGroundMeetsIt() PASSED
+
+VillageSurfaceTest > theOuterRingKeepsTheNaturalGround() PASSED
+
+VillageSurfaceTest > aBumpComesDownToTheHighestGroundAroundIt() PASSED
+
+VillageSurfaceTest > aDitchOnTheFarBordersDrainsAndStays() PASSED
+
+VillageSurfaceTest > aCraterIsFilled() PASSED
+
+VillageSurfaceTest > housesAndWaterAreNeverCutAsBumps() PASSED
+
+VillageSurfaceTest > aCliffBecomesASlopeOfOneBlockSteps() PASSED
+
+VillageSurfaceTest > aHoleFillsUpToItsLowestRim() PASSED
+
+VillageSurfaceTest > aBumpOfFourIsCutToTheGroundAroundAndOneOfFiveIsNot() PASSED
+
+WhitePiecesTest > theBakedPlanKeepsPlaceFacingAndStates() PASSED
+
+WhitePiecesTest > colouredPiecesTurnWhite() PASSED
+
+WhitePiecesTest > everythingElseStaysAsItIs() PASSED
+
+WorkAreaTest > inclusiveBoundsDetectTouchingAndRejectOutsidePoints() PASSED
+
+WorkAreaTest > invertedCoordinatesAndOverflowNeverCreateValidVolumes() PASSED
+
+BuildingRegistryTest > finishedProjectsArePurged() PASSED
+
+BuildingRegistryTest > aMergedBuildingBecomesTheLastAttempted() PASSED
+
+BuildingRegistryTest > buildingsFarApartDoNotTouch() PASSED
+
+BuildingRegistryTest > noBoxMeansNothingInside() PASSED
+
+BuildingRegistryTest > afterFinishingOneAnotherCanStart() PASSED
+
+BuildingRegistryTest > aBoxSharingOnlyTheEdgePlaneIsOccupied() PASSED
+
+BuildingRegistryTest > aFinishedProjectBecomesABuilding() PASSED
+
+BuildingRegistryTest > aRepairMergesIntoTheExistingBuildingInsteadOfDuplicatingIt() PASSED
+
+BuildingRegistryTest > mergingKeepsTheBestStateAndTheExistingIdentity() PASSED
+
+BuildingRegistryTest > touchingBuildingsOfDifferentColoniesAreNeighbours() PASSED
+
+BuildingRegistryTest > whatIsOutsideTheBoxIsNotColonyInfrastructure() PASSED
+
+BuildingRegistryTest > invertedBoundsAreRefused() PASSED
+
+BuildingRegistryTest > removingForgetsOnlyWhatWasAsked() PASSED
+
+BuildingRegistryTest > aColonyHasOneOpenProjectAtATime() PASSED
+
+BuildingRegistryTest > theRegistryKnowsWhoseBuildingItIs() PASSED
+
+BuildingRegistryTest > aDifferentBoxIsRegisteredAsANewBuilding() PASSED
+
+BuildingRegistryTest > anOngoingProjectIsNotPurged() PASSED
+
+BuildingRegistryTest > twoHousesOfTheSameColonyAreNotForeignNeighbours() PASSED
+
+ConstructionServiceTest > completedProjectPurgeOnlyRemovesAFinishedProject() PASSED
+
+ConstructionServiceTest > patienceAbandonmentRemovesAProjectWaitingForResources() PASSED
+
+ConstructionServiceTest > forgetRejectsActiveOrUnauditedProject() PASSED
+
+ConstructionServiceTest > nullProjectIdIsAlwaysRejected() PASSED
+
+ConstructionServiceTest > completedProjectPurgeRemovesAFinishedProject() PASSED
+
+ConstructionServiceTest > patienceAbandonmentRemovesAProjectStalledWhileBuilding() PASSED
+
+ConstructionServiceTest > patienceAbandonmentDoesNotRemoveAProjectStillPlanned() PASSED
+
+ConstructionServiceTest > playerCancellationRemovesAnyOpenProject() PASSED
+
+ConstructionServiceTest > forgetRejectsUnknownProject() PASSED
+
+MineRecoveryTest > progressResetsThePatienceAndCancelsRecovery() PASSED
+
+MineRecoveryTest > turningLessThanTheThresholdStillWaits() PASSED
+
+MineRecoveryTest > everyHelixFailingBlamesTheMouth() PASSED
+
+MineRecoveryTest > recoveryNeverMutatesTheMine() PASSED
+
+MineRecoveryTest > reachingTheThresholdReroutesTheHelix() PASSED
+
+MineRecoveryTest > everyTurnAtEveryStairPointIsTriedBeforeTheMineMouthIsAbandoned() PASSED
+
+MineRecoveryTest > freshMineNeedsNoRecovery() PASSED
+
+MineRegistryTest > theGalleryCanBackUpToWhereItReallyEnds() PASSED
+
+MineRegistryTest > twoColoniesDigTheirOwnMines() PASSED
+
+MineRegistryTest > theFrontierIsWhereverTheCursorIsToldToGo() PASSED
+
+MineRegistryTest > theGalleryTurnsOnceTheRefusalsAddUp() PASSED
+
+MineRegistryTest > aRestoredMineNeverStartsBehindTheStart() PASSED
+
+MineRegistryTest > theGalleryDescendsAfterAFullCircle() PASSED
+
+MineRegistryTest > theCursorThatRanAheadOutOfTheWorldStillComesBack() PASSED
+
+MineRegistryTest > theVeinIsRememberedUntilItRunsOut() PASSED
+
+MineRegistryTest > theFourBranchesFaceFourDifferentWays() PASSED
+
+MineRegistryTest > backingUpNeverGoesBehindTheStart() PASSED
+
+MineRegistryTest > aColonyThatGoesAwayTakesItsMine() PASSED
+
+MineRegistryTest > diggingClearsTheRefusals() PASSED
+
+MineRegistryTest > aLooseBlockInsideAnOpenGalleryIsNotTheFrontier() PASSED
+
+MineRegistryTest > anOpenGalleryHasNoFrontierToBackUpTo() PASSED
+
+MineRegistryTest > theFrontierStaysInsideTheOrder() PASSED
+
+MineRegistryTest > theFrontierIsWhereTheNextCutBegins() PASSED
+
+MineRegistryTest > aStoneThatCouldNotBeReachedIsOfferedAgain() PASSED
+
+MineRegistryTest > theFrontierIsTheRockThatKeepsGoing() PASSED
+
+MineRegistryTest > theSecondMinerFindsTheSameMine() PASSED
+
+MineRegistryTest > theCursorNeverGoesBehindTheStart() PASSED
+
+MineRegistryTest > aColonyWithoutAMineHasNone() PASSED
+
+MineRegistryTest > theLowestMineIsExhaustedInsteadOfRestartingAtTheSameMouth() PASSED
+
+MineRegistryTest > theTunnelPositionWaitsWhileTheOreIsTaken() PASSED
+
+MineRegistryTest > onlyTheLastHandedOutPositionRollsBack() PASSED
+
+MineRegistryTest > theCursorAdvancesAndIsRemembered() PASSED
+
+OverlapGuardTest > theNeighbourThatOnlyTouchesIsAllowed() PASSED
+
+OverlapGuardTest > theCornerThatCrossesIsCaught() PASSED
+
+OverlapGuardTest > theBoxInsideAnotherIsCaught() PASSED
+
+OverlapGuardTest > theHeightIsPartOfTheQuestion() PASSED
+
+AdvanceStockTest > aPieceTheNextBuildDoesNotUseIsNeverAdvanced() PASSED
+
+AdvanceStockTest > eachTradeHasItsOwnCycle() PASSED
+
+AdvanceStockTest > aPieceThatDoesNotMoveGivesWay() PASSED
+
+AdvanceStockTest > fiveOfOnePieceThenTheNext() PASSED
+
+AdvanceStockTest > theAdvanceStopsAtTheCeilingOfTheNextBuild() PASSED
+
+BedPlanTest > anOwnerWhoWouldWalkMoreKeepsHisBed() PASSED
+
+BedPlanTest > aWorkerWithoutMeasuredWorkStays() PASSED
+
+BedPlanTest > aGainBelowTheMinimumIsNotWorthTheMove() PASSED
+
+BedPlanTest > theySwapWhenTheSumFallsEvenIfTheOwnerWalksALittleMore() PASSED
+
+BedPlanTest > theMinerAndTheBuilderSwapWhenBothWalkLess() PASSED
+
+BedPlanTest > theDistanceCountsTheHeightToo() PASSED
+
+BedPlanTest > aBannedBedIsLeftForTheFreeBedNearestToTheWork() PASSED
+
+BedPlanTest > theOneWhoCannotClimbSwapsWithTheOneWhoWorksBelow() PASSED
+
+BedPlanTest > aBedWithAnOwnerIsNeverOfferedAsFree() PASSED
+
+BedPlanTest > theBedLeftBehindIsFreeForTheNextAndNobodyMovesTwice() PASSED
+
+BedPlanTest > whoeverWalksMoreChoosesFirst() PASSED
+
+BedPlanTest > withNoOtherBedTheSleeperStays() PASSED
+
+BedPlanTest > whoeverSleepsNowStaysAndKeepsHisBed() PASSED
+
+BedPlanTest > aVillagerWithoutAJobGivesUpHisBed() PASSED
+
+BedPlanTest > aWorkerTakesTheFreeBedNearHisWork() PASSED
+
+BedPlanTest > aFarSleeperWithoutMeasuredWorkMovesTowardTheCenter() PASSED
+
+BlockCodeTest > theRealReasonsOfTheDiaryGetTheirCode() PASSED
+
+BlockCodeTest > theMoreSpecificPhraseWins() PASSED
+
+BlockCodeTest > anUnknownReasonIsUnclassifiedAndCaseDoesNotMatter() PASSED
+
+BlockReserveTest > aPieceTheVillagesUseByTheThousandIsAVillagePieceAndKeepsTwelve() PASSED
+
+BlockReserveTest > theResourceTypesFollowTheirProduction() PASSED
+
+BlockReserveTest > theModBenchesAreNeverStocked() PASSED
+
+BlockReserveTest > whatTheVillagerTakesFromTheWorldIsRawUpTo256() PASSED
+
+BlockReserveTest > aCraftedBlockOutsideTheVillagesKeepsFour() PASSED
+
+BlockReserveTest > aWorkbenchTheVillagesHaveUnderTenOfIsSpecialAndKeepsOne() PASSED
+
+ChestCallsForHelpTest > theEmptyChestAsksForNothing() PASSED
+
+ChestCallsForHelpTest > theFullChestCallsForHelp() PASSED
+
+ChestCallsForHelpTest > theHalfFullChestHasNotPassedTheHalf() PASSED
+
+ChestCallsForHelpTest > theChestJustPastHalfCallsForHelp() PASSED
+
+ColonyCycleTest > theOreGoesToTheMiner() PASSED
+
+ColonyCycleTest > theIngotGoesToTheFurnace() PASSED
+
+ColonyCycleTest > aColonyWithoutGoalsAsksForNothing() PASSED
+
+ColonyCycleTest > smeltingWithoutItsRawAsksForNoNewHands() PASSED
+
+ColonyCycleTest > onlyTheHandsTheProjectNeedsArePromoted() PASSED
+
+ColonyCycleTest > theDeficitIsSplitBetweenTheWorkers() PASSED
+
+ColonyCycleTest > aBuildTaskDoesNotCountAsAnOpenRequestForItsNominalResource() PASSED
+
+ColonyCycleTest > nullArgumentsAreRejected() PASSED
+
+ColonyCycleTest > everyCapableWorkerGetsATaskOfItsOwn() PASSED
+
+ColonyCycleTest > aWorkPieceRequestToTheCraftsmanIsNotCancelledByItsNominalStock() PASSED
+
+ColonyCycleTest > theTaskGoesToAWorkerInTheSameCycle() PASSED
+
+ColonyCycleTest > aTaskBeingExecutedSurvivesTheDeficitEnding() PASSED
+
+ColonyCycleTest > aBuildTaskIsNotCancelledWhenItsNominalResourceIsNotMissing() PASSED
+
+ColonyCycleTest > anOpenRequestFollowsTheProjectUpAndDown() PASSED
+
+ColonyCycleTest > aSmallSurfaceDeficitIsRoundedUpAcrossWorkers() PASSED
+
+ColonyCycleTest > oneColonyDoesNotTouchAnother() PASSED
+
+ColonyCycleTest > aSecondCycleDoesNotAddASecondRoundOfTasks() PASSED
+
+ColonyCycleTest > aGrowingDeficitStillKeepsOneTask() PASSED
+
+ColonyCycleTest > theTaskIsCancelledWhenTheDeficitIsGone() PASSED
+
+ColonyCycleTest > constructionMaterialsTakeOneWorkerBeforeSurplusStockpiles() PASSED
+
+ColonyCycleTest > nothingMissingCreatesNoTask() PASSED
+
+ColonyCycleTest > eachMissingResourceGetsItsOwnTask() PASSED
+
+ColonyCycleTest > missingFoodPutsTheFarmerFirstInTheHiring() PASSED
+
+ColonyCycleTest > dirtNeededByConstructionGoesToTheFarmerFirst() PASSED
+
+ColonyCycleTest > aSecondCycleDoesNotDuplicateTheRequest() PASSED
+
+ColonyCycleTest > nobodyCapableMeansNoRequest() PASSED
+
+ColonyCycleTest > aDeficitBecomesATask() PASSED
+
+ColonyCycleTest > stoneAboveTheCeilingMarksTheMinerAsSurplus() PASSED
+
+ColonyCycleTest > aNewWorkerGetsATaskInTheNextCycle() PASSED
+
+ColonyGoalsTest > negativeRoomIsRefused() PASSED
+
+ColonyGoalsTest > theFurnaceFloorNeedsARawMaterialChain() PASSED
+
+ColonyGoalsTest > theSandGoalDiscountsTheGlassAlreadyMade() PASSED
+
+ColonyGoalsTest > theSandIsStillMissingWhileNoOneBroughtIt() PASSED
+
+ColonyGoalsTest > theReserveDoesNotDrainCycleAfterCycle() PASSED
+
+ColonyGoalsTest > mineralTasksStopWhenTheirReservesAreFull() PASSED
+
+ColonyGoalsTest > onlyTwoThirdsOfTheLogsAreAskedToBecomePlanks() PASSED
+
+ColonyGoalsTest > woolIsAGoalOnlyWhenABedIsMissing() PASSED
+
+ColonyGoalsTest > aSmeltedMaterialOutsideTheCatalogueComesFromTheWork() PASSED
+
+ColonyGoalsTest > aColonyWithItsStoneStopsAsking() PASSED
+
+ColonyGoalsTest > theWorkDemandIsNoLongerCappedByTheReserve() PASSED
+
+ColonyGoalsTest > aFullChestAsksForNoMoreWood() PASSED
+
+ColonyGoalsTest > theWorkConvertsPastTheHalfButKeepsItsRawLogs() PASSED
+
+ColonyGoalsTest > roomInTheMinersChestsKeepsTheMinerDigging() PASSED
+
+ColonyGoalsTest > aColonyDrowningInPlanksConvertsNothing() PASSED
+
+ColonyGoalsTest > whatIsAlreadyStoredCountsTowardTheCapacity() PASSED
+
+ColonyGoalsTest > theSandGoalDriesUpWhenTheGlassIsThere() PASSED
+
+ColonyGoalsTest > aNegativeWorkDemandIsRefused() PASSED
+
+ColonyGoalsTest > aSmallAskDoesNotLowerTheFurnaceFloor() PASSED
+
+ColonyGoalsTest > anyWoodCountsTowardsTheGoal() PASSED
+
+ColonyGoalsTest > withoutLogsThereIsNoPlankGoal() PASSED
+
+ColonyGoalsTest > stoneIsAGoalEvenWithNoWorkOpen() PASSED
+
+ColonyGoalsTest > aNegativeDemandIsRefusedByName() PASSED
+
+ColonyGoalsTest > withoutAWorkThePlanksStopAtTheReserve() PASSED
+
+ColonyGoalsTest > theCoalTheTorchesCostBecomesAGoal() PASSED
+
+ColonyGoalsTest > theFurnaceKeepsALittleOfEachWithoutAnyWork() PASSED
+
+ColonyGoalsTest > aSmallWorkDoesNotLowerTheFloor() PASSED
+
+ColonyGoalsTest > withLogsThePlankGoalOpens() PASSED
+
+ColonyGoalsTest > theLanternAsksForTheIngotAndForTheOre() PASSED
+
+ColonyGoalsTest > aWorkWithoutWindowsAsksForNeither() PASSED
+
+ColonyGoalsTest > withNoRoomTheStoneGoalIsTheFloor() PASSED
+
+ColonyGoalsTest > theWorkWinsWhenItAsksForMoreThanTheFloor() PASSED
+
+ColonyGoalsTest > aWorkWithoutTorchesAsksForNoCoal() PASSED
+
+ColonyGoalsTest > logsBecomePlanksOnlyUpToThePlankReserve() PASSED
+
+ColonyGoalsTest > thePlankGoalIsCappedByTheLogReserve() PASSED
+
+ColonyGoalsTest > withoutWorkTheReserveStillRules() PASSED
+
+ColonyGoalsTest > theFloorIsForTheStoneThisVillageBuildsWith() PASSED
+
+ColonyGoalsTest > theOreGoalDriesUpWhenTheIngotsAreThere() PASSED
+
+ColonyGoalsTest > withoutLogsEvenTheWorkWaits() PASSED
+
+ColonyGoalsTest > withoutAWorkOnlyThePlankReserveIsConverted() PASSED
+
+ColonyGoalsTest > theGoalIsWhatIsStoredPlusWhatFits() PASSED
+
+ColonyGoalsTest > whatTheWorkNeedsFromTheFurnaceBecomesAGoal() PASSED
+
+ColonyGoalsTest > atHalfTheColonyStopsAsking() PASSED
+
+ColonyGoalsTest > anyPlankSatisfiesTheGoal() PASSED
+
+ColonyGoalsTest > theGlassTheWorkWantsAsksForSandToo() PASSED
+
+ColonyGoalsTest > coalAndIronAreMaintainedWithoutConstructionDemand() PASSED
+
+ColonyGoalsTest > negativePlankRoomIsRefused() PASSED
+
+ColonyGoalsTest > withoutWorkThePlankGoalIsHalfOfTheRoom() PASSED
+
+ColonyGoalsTest > theWorkDemandUsesAllTheWood() PASSED
+
+ColonyGoalsTest > theGoalNeverAsksForPlanksTheCrafterWouldRefuse() PASSED
+
+ColonyGoalsTest > constructionCalciteCreatesItsOwnMiningGoal() PASSED
+
+ColonyGoalsTest > withoutChestsThereIsNoPlankGoal() PASSED
+
+ColonyGoalsTest > theDeficitIsTheFreeSpace() PASSED
+
+ColonyGoalsTest > surfaceGatheredMaterialComesFromTheWork() PASSED
+
+ColonyGoalsTest > ironIngotsAreAGoalOnlyWhenTheWorkAsksForThem() PASSED
+
+ColonyGoalsTest > keepsTheRawLogsThatTheOpenConstructionStillNeeds() PASSED
+
+ColonyIdentityTest > twoVillagesWhoseBoundsTouchAreTheSame() PASSED
+
+ColonyIdentityTest > aClusterNearTheCenterBelongsToTheColonyAsBefore() PASSED
+
+ColonyIdentityTest > aBuildingOfNoColonyMakesNothingOwned() PASSED
+
+ColonyIdentityTest > aClusterFarFromEverythingIsANewVillage() PASSED
+
+ColonyIdentityTest > theSameGeneratedVillageIsTheSameColonyAtAnyDistance() PASSED
+
+ColonyIdentityTest > aClusterBeyondTheMarginOfTheBoundsIsANewVillage() PASSED
+
+ColonyIdentityTest > aFarClusterBesideOneOfItsBuildingsIsTheSameVillage() PASSED
+
+ColonyIdentityTest > aClusterInsideTheVillageBoundsIsTheSameVillage() PASSED
+
+ColonyIdentityTest > twoColoniesWhoseBuildingsAreFarApartAreNotNeighbours() PASSED
+
+ColonyIdentityTest > twoColoniesWhoseBuildingsAreAFewBlocksApartAreNeighbours() PASSED
+
+ColonyMergeTest > theColonyWithMoreBedsSurvivesWhicheverOrder() PASSED
+
+ColonyMergeTest > theOpenBuildOfTheAbsorbedColonyKeepsGoingUnderTheSurvivor() PASSED
+
+ColonyMergeTest > theSurvivorKeepsItsOwnMineAndTheOtherIsForgotten() PASSED
+
+ColonyMergeTest > theSurvivorKeepsTheBoundsOfBoth() PASSED
+
+ColonyMergeTest > theMergedColonyIsActiveWhenEitherWas() PASSED
+
+ColonyMergeTest > theEstablishedColonySurvivesEvenWhenTheNewcomerSawMoreBeds() PASSED
+
+ColonyMergeTest > aTieIsBrokenByTheSmallerIdNotByTheOrder() PASSED
+
+ColonyMergeTest > theSurvivorWithoutAMineInheritsTheAbsorbedOne() PASSED
+
+ColonyMergeTest > everyWorkerTaskAndBuildingJoinsTheSurvivorAndNobodyIsDismissed() PASSED
+
+CraftFamilyTest > metalGlassIceAndSnowGoToTheSmelter() PASSED
+
+CraftFamilyTest > stoneClayAndFurnacesGoToTheMason() PASSED
+
+CraftFamilyTest > woolBedsAndDyesGoToTheShepherd() PASSED
+
+CraftFamilyTest > everyFamilyHasItsCraftsman() PASSED
+
+CraftFamilyTest > woodPiecesStayWithTheCarpenter() PASSED
+
+CraftFamilyTest > paperBooksBoneMealAndHayGoToTheFarmer() PASSED
+
+CraftingVehicleTest > eachBeamAndBrickKeepsItsOwnShop() PASSED
+
+CraftingVehicleTest > theBeamOpensCarpentryEvenWithPlanksToSpare() PASSED
+
+CraftingVehicleTest > theStrippedBeamIsADeclaredResourceOfTheCarpenter() PASSED
+
+CraftingVehicleTest > satisfiedPlanksStillOpenNothing() PASSED
+
+CraftingVehicleTest > theMasonGetsItsVehicleTheSameWay() PASSED
+
+DemandRetriesTest > savesOnlyTheCurrentWorldDay() PASSED
+
+DemandRetriesTest > countsOnlyFailuresFromTheSameWorldDay() PASSED
+
+FarmerChainTest > foodIsAGoalEvenWithNoWorkOpen() PASSED
+
+FarmerChainTest > theLarderGrowsWithTheVillage() PASSED
+
+FarmerChainTest > anyCropAnswersTheFoodGoal() PASSED
+
+FarmerChainTest > aFedColonyStopsAsking() PASSED
+
+FarmerChainTest > aSmallVillageStillGetsTheFloor() PASSED
+
+FarmerChainTest > farmedResourcesBecomeFoodTasks() PASSED
+
+FarmerChainTest > cropsAreNaturalAndFarmed() PASSED
+
+ForestQuotaTest > theFoundingGetsFiveTreesPerTenVillagers() PASSED
+
+ForestQuotaTest > theBuildAsksOneTreePerFiveVillagersAndAtLeastOne() PASSED
+
+ForestQuotaTest > theMilestoneStartsFromTheTensTheFoundingCovered() PASSED
+
+GatheringReachTest > theReachNeverPassesTheTradesCeiling() PASSED
+
+GatheringReachTest > aCeilingOfZeroIsRefused() PASSED
+
+GatheringReachTest > anUnmeasuredVillageKeepsTheFullReach() PASSED
+
+GatheringReachTest > theReachGrowsWithEveryBed() PASSED
+
+GatheringReachTest > aYoungVillageGathersCloseToHome() PASSED
+
+IdleReason > detalhe nulo é erro de quem chama, não linha torta no log PASSED
+
+IdleReason > o detalhe do momento entra depois da frase PASSED
+
+IdleReason > não achar e não ter terminado de olhar são motivos distintos PASSED
+
+IdleReason > sem detalhe, a frase fica como está PASSED
+
+IdleReason > sem tarefa e sem executor são motivos distintos PASSED
+
+IdleReason > todo motivo tem frase, e nenhuma é vazia PASSED
+
+IdleReason > dois motivos nunca dizem a mesma frase PASSED
+
+MasonAndCarpenterTest > eachMaterialGoesToItsOwnShop() PASSED
+
+MasonAndCarpenterTest > theMasonGetsATaskOfItsOwn() PASSED
+
+MasonAndCarpenterTest > theBrickChainHasThreeOwners() PASSED
+
+MasonAndCarpenterTest > theTwoShopsAreRegisteredApart() PASSED
+
+MasonAndCarpenterTest > theCarpenterDoesNotTakeTheMasonsWork() PASSED
+
+MasonStockTest > everyPieceIsMasonWork() PASSED
+
+MasonStockTest > aPlainsVillageKeepsCobblestoneSlabsAndStoneBricks() PASSED
+
+MasonStockTest > aDesertVillageKeepsSandstoneStairsSlabsAndCutSandstone() PASSED
+
+PatienceClockTest > oneCycleShortIsStillWaiting() PASSED
+
+PatienceClockTest > aFreshWaitHasNotRunOut() PASSED
+
+PatienceClockTest > thePatienceOutlastsAFullLotSweep() PASSED
+
+PatienceClockTest > aClockThatWentBackwardsDoesNotGiveUp() PASSED
+
+PatienceClockTest > theExactMomentCounts() PASSED
+
+PlanningBudgetTest > aCheapCycleGivesOneMoreTurnUpToTheCeiling() PASSED
+
+PlanningBudgetTest > atLeastOneColonyAlwaysPlans() PASSED
+
+PlanningBudgetTest > anExpensiveCycleHalvesTheTurns() PASSED
+
+PlanningBudgetTest > nearTheTargetTheTurnsHold() PASSED
+
+ProductionHandsTest > theOlderCallStillWorksWithoutAReport() PASSED
+
+ProductionHandsTest > everyMissingMaterialGoesThroughTheReport() PASSED
+
+ProductionHandsTest > withTheProfessionTheReportCarriesTheCount() PASSED
+
+ProductionHandsTest > aColonyWithoutTheProfessionSaysWhichMaterialHasNobody() PASSED
+
+ProfessionResponsibilityTest > everyProfessionAnswersForSomeMaterial() PASSED
+
+ProfessionResponsibilityTest > coloredTerracottaAndStoneBricksAreHandledByMasonry() PASSED
+
+ProfessionResponsibilityTest > theMaterialGoesToTheProfessionThatOwnsIt() PASSED
+
+ProfessionResponsibilityTest > grassBlocksStaySurfaceGatheredAndDirtGoesToSoil() PASSED
+
+ProfessionResponsibilityTest > smoothStoneSlabsBelongToMasonryAndSmoothStoneToTheKiln() PASSED
+
+ProfessionResponsibilityTest > everyDeclaredProductionHasAProfession() PASSED
+
+ProfessionResponsibilityTest > everyTaskCapabilityHasSomeoneWhoDeclaresIt() PASSED
+
+ProfessionResponsibilityTest > everyResourceHasAProfessionThatCanProduceIt() PASSED
+
+RawWithoutReserveTest > logsBecomePlanksUpToThePlankReserve() PASSED
+
+RawWithoutReserveTest > theWholeRawMayBeSmelted() PASSED
+
+ReservationGateTest > buildingWaitsForAPlaceToStandAtTheNextBlock() PASSED
+
+ReservationGateTest > everyOtherTaskHasNoGate() PASSED
+
+ReservationGateTest > surfaceAndSoilWaitForAnEmptySweepToCoolDown() PASSED
+
+ReservationGateTest > smeltingWaitsForTheRawInAChest() PASSED
+
+ReservationGateTest > woolWaitsForASheepWithWool() PASSED
+
+ResourceReachTest > oddTurnsStartAtTheEdgesClockwiseFromNorth() PASSED
+
+ResourceReachTest > theWideSearchGoesTwentyPastTheEdge() PASSED
+
+ResourceReachTest > centreAndEdgeAlternate() PASSED
+
+ResourceReachTest > theLimitIsTenBlocksPastTheEdge() PASSED
+
+ResourceReachTest > anEvenTurnStartsAtTheCentreAndCoversTheLimit() PASSED
+
+ResourceReachTest > anEdgeSearchCoversHalfTheLimit() PASSED
+
+StandingWorkTest > noRoomChangesNothing() PASSED
+
+StandingWorkTest > theSmelterKeepsASandReserve() PASSED
+
+StandingWorkTest > aBiggerWorkRequestStillWins() PASSED
+
+StandingWorkTest > theShepherdKeepsShearingWhileItsChestHasRoom() PASSED
+
+StandingWorkTest > theFarmerKeepsHarvestingWhileItsChestHasRoom() PASSED
+
+StockCeilingTest > aCraftedPieceStopsAtTheReserveOfItsClassAndARawBlockAt256() PASSED
+
+StockCeilingTest > theOpenBuildMayAskAboveTheCeiling() PASSED
+
+StockCeilingTest > everyResourceHasACeiling() PASSED
+
+StockCeilingTest > theOrderOfTheGoalsIsKept() PASSED
+
+SupplyExceptionTest > theRuleLeadsBackToItsException() PASSED
+
+SupplyExceptionTest > everyExceptionNamesTheRuleThatAuthorisesItAndWhatItMakes() PASSED
+
+TaskLoopGuard > só a terceira falta seguida segura o pedido PASSED
+
+TaskLoopGuard > cada nova falta dobra a espera, até o teto PASSED
+
+TaskLoopGuard > obra nova solta só a colônia dela, e cada alvo conta sozinho PASSED
+
+TaskLoopGuard > peça feita zera a conta PASSED
+
+TaskLoopGuard > a espera acaba quando os ciclos passam PASSED
+
+TaskLoopGuard > o cru aumentar nos baús solta a espera PASSED
+
+VillageExpansionTest > clearingForgetsTheStripTheSideAndTheEdgeCount() PASSED
+
+VillageExpansionTest > theVillageIsFullAfterACompleteSweepWithoutALot() PASSED
+
+VillageExpansionTest > aLotFoundStartsTheCountAgain() PASSED
+
+VillageExpansionTest > exactlyHalfFlatIsStillUsable() PASSED
+
+VillageExpansionTest > theScoreWeighsFlatGroundAgainstWaterAndBuildings() PASSED
+
+VillageExpansionTest > noSideServesWhenNoneIsHalfFlat() PASSED
+
+VillageExpansionTest > onATieTheFirstMeasuredSideWins() PASSED
+
+VillageExpansionTest > anEdgeTurnWithoutALotGivesWayAndDoesNotCountAsFull() PASSED
+
+VillageExpansionTest > theStripLiesJustBeyondTheChosenSide() PASSED
+
+VillageExpansionTest > anAnnexedStripThatGaveNoLotAnnexesAgainOnTheNextFullSweep() PASSED
+
+VillageExpansionTest > theFlattestDrySideWinsAndAnotherColonyVetoesItsSide() PASSED
+
+VillageExpansionTest > theRankingDropsTheUnusableAndPutsTheBestFirst() PASSED
+
+VillageExpansionTest > clearingForgetsTheEdgeTurn() PASSED
+
+VillageExpansionTest > theAnnexedStripWaitsForItsOwnLot() PASSED
+
+VillageExpansionTest > aFarmByTheBorderPushesTheBorderByItsClaim() PASSED
+
+VillageExpansionTest > oneBuildInFiveLooksForALotOnTheEdge() PASSED
+
+VillageExpansionTest > aWorkshopClaimsMoreGroundThanAHouse() PASSED
+
+VillageGrowthTest > aBuildingByTheBorderGrowsTheVillage() PASSED
+
+VillageGrowthTest > aRoadChainOutsideGrowsTheVillageToItsFarthestBlock() PASSED
+
+VillageGrowthTest > aPieceOfAnUnknownColonyGrowsNothing() PASSED
+
+VillageGrowthTest > theBuildingRegistryAnnouncesEveryRegisteredBuilding() PASSED
+
+VillageZoneTest > theNarrowAxisCountsByItsOwnHalfWidth() PASSED
+
+VillageZoneTest > theThirdsOfTheBoxAreCentreMiddleAndEdge() PASSED
+
+VillageZoneTest > aLittleOutsideIsAllowedAndFurtherIsNot() PASSED
+
+WorkAssignmentBetweenCyclesTest > anIdleWorkerGetsATaskBetweenCycles() PASSED
+
+WorkAssignmentBetweenCyclesTest > passingBetweenCyclesDoesNotShortenARest() PASSED
+
+WorkAssignmentTest > bothStalledLumberjacksLeaveWoodAvailable() PASSED
+
+WorkAssignmentTest > shepherdDoesNotHelpBuildWhenIdle() PASSED
+
+WorkAssignmentTest > theOverloadWithoutStorageKnowledgeAssignsAsBefore() PASSED
+
+WorkAssignmentTest > aBusyWorkerDoesNotTakeASecondTask() PASSED
+
+WorkAssignmentTest > aProducerDoesNotTakeConstructionWithoutChangingProfession() PASSED
+
+WorkAssignmentTest > nullArgumentsAreRejected() PASSED
+
+WorkAssignmentTest > theUrgentTaskGoesFirst() PASSED
+
+WorkAssignmentTest > aWorkerWithoutAChestDoesNotTakeATaskThatNeedsOne() PASSED
+
+WorkAssignmentTest > aSmelterDoesNotTakeTheSoilTask() PASSED
+
+WorkAssignmentTest > nothingToDoIsNotAnError() PASSED
+
+WorkAssignmentTest > aWorkerWithoutAProfessionTakesNothing() PASSED
+
+WorkAssignmentTest > aBuilderWithoutAChestStillTakesTheBuildTask() PASSED
+
+WorkAssignmentTest > idleWorkersAreTheOnesWithoutATask() PASSED
+
+WorkAssignmentTest > aPhysicalPreconditionKeepsAnOtherwiseEligibleBuildAvailable() PASSED
+
+WorkAssignmentTest > theTaskGoesToTheLumberjackWhoHasAChest() PASSED
+
+WorkAssignmentTest > theNearestOfTwoLumberjacksTakesTheOnlyTask() PASSED
+
+WorkAssignmentTest > aFarmerTakesTheSoilTask() PASSED
+
+WorkAssignmentTest > aReleasedTaskFindsAnotherWorker() PASSED
+
+WorkAssignmentTest > aStalledMinerDoesNotTakeAnyTaskWhileStoneIsResting() PASSED
+
+WorkAssignmentTest > twoLumberjacksTakeTwoTasks() PASSED
+
+WorkAssignmentTest > aStalledLumberjackDoesNotTakeAnyTaskWhileWoodIsResting() PASSED
+
+WorkAssignmentTest > aWorkerOfAnotherColonyIsNotConsidered() PASSED
+
+WorkAssignmentTest > aFreedWorkerIsAssignedAgain() PASSED
+
+WorkAssignmentTest > aRestingMinerDoesNotTakeAConstructionTask() PASSED
+
+WorkAssignmentTest > aFarmerDoesNotTakeTheWoodTask() PASSED
+
+WorkAssignmentTest > aStrandedWorkerTakesNoTaskAtAll() PASSED
+
+WorkAssignmentTest > aLumberjackTakesTheWoodTask() PASSED
+
+WorkAssignmentTest > aRestingCapabilityIsNeverReserved() PASSED
+
+WorkAssignmentTest > moreWorkersThanTasksLeavesTheRestIdle() PASSED
+
+WorkClock > a reunião vai do fim do expediente até o anoitecer (Regra 195) PASSED
+
+WorkClock > o expediente acaba antes da reunião do fim do dia PASSED
+
+WorkClock > a hora da cama começa quando o Vanilla manda dormir e vai até o amanhecer PASSED
+
+WorkClock > o relógio acumulado de dias inteiros continua valendo PASSED
+
+WorkClock > o dia claro inteiro é expediente, e não só a fatia do Vanilla PASSED
+
+WorkClock > a noite não é expediente PASSED
+
+WorkDemandTest > theIronOfTheWorkMakesItsOreAConstructionMaterial() PASSED
+
+WorkDemandTest > noIronInTheWorkAsksNoOre() PASSED
+
+WorkDemandTest > everySourceOfTheWorkBecomesAConstructionMaterial() PASSED
+
+WorkDemandTest > nothingAskedMeansNoMaterial() PASSED
+
+WorkDemandTest > theIngotTakesTheLargerOfTheTwoAsks() PASSED
+
+WorkDemandTest > theSameMaterialFromTwoSourcesIsSummed() PASSED
+
+WorkRescueTest > theRescueLimitIsOneMinuteAndTheMinerSharesIt() PASSED
+
+DetourCostsTest > theMinerDigsDownCheapestAndUpDearest() PASSED
+
+DetourPlannerTest > rockTouchingWaterIsNeverDug() PASSED
+
+DetourPlannerTest > rockUnderSandIsNotDug() PASSED
+
+DetourPlannerTest > theMinerCostsGrowFromDownToSidewaysToUp() PASSED
+
+DetourPlannerTest > aRiverUnderALowCeilingCannotBeCrossed() PASSED
+
+DetourPlannerTest > anUnreachableGoalSpendsExactlyTheBudget() PASSED
+
+DetourPlannerTest > aStepUpDigsTheHeadroomAboveTheClimber() PASSED
+
+DetourPlannerTest > inAnOpenFieldItJustWalks() PASSED
+
+DetourPlannerTest > walkingRoundIsCheaperThanDigging() PASSED
+
+DetourPlannerTest > aPitInTheCorridorIsBridged() PASSED
+
+DetourPlannerTest > theEstimateCountsTheDominantAxisInSteps() PASSED
+
+DetourPlannerTest > theSearchStopsAtItsBudget() PASSED
+
+DetourPlannerTest > theRadiusHoldsOnEveryAxisAndBothSides() PASSED
+
+DetourPlannerTest > aPassageIsWalkedButNotBuiltOn() PASSED
+
+DetourPlannerTest > aGoalOutsideTheRadiusIsNotReachedButTheWayIsStarted() PASSED
+
+DetourPlannerTest > aCellToKeepIsNeitherDugNorWalkedThrough() PASSED
+
+DetourPlannerTest > onlyNeighbouringStepsAreMoves() PASSED
+
+DetourPlannerTest > throughSolidRockItDigsTheBodyOfEveryStep() PASSED
+
+DetourPlannerTest > aStepDownClearsTheEdgeAndPlacesTheFloorItLacks() PASSED
+
+DetourPlannerTest > theMinerDigsDownRatherThanSidewaysWhenItMustBuild() PASSED
+
+DetourPlannerTest > waterIsNeverStoodOnNorEntered() PASSED
+
+DetourPlannerTest > theSixSidesAreTheSixFaces() PASSED
+
+ColonyResourcesTest > isReadOnly() PASSED
+
+ColonyResourcesTest > aChestWithoutTheResourceIsNotALocation() PASSED
+
+ColonyResourcesTest > emptyChestsAreDropped() PASSED
+
+ColonyResourcesTest > aColonyWithNoChestsHasNothing() PASSED
+
+ColonyResourcesTest > differentResourcesAddUpSeparately() PASSED
+
+ColonyResourcesTest > sumsTheChests() PASSED
+
+ColonyResourcesTest > saysWhereEachPartIs() PASSED
+
+ColonyResourcesTest > doesNotFollowTheSourceMap() PASSED
+
+ColonyResourcesTest > aggregatesGenericIdsAndReportsTheirChestLocations() PASSED
+
+ColonyResourcesTest > rejectsNull() PASSED
+
+ResourceTallyTest > omitsZeroGenericCountsAndRejectsNegativeOnes() PASSED
+
+ResourceTallyTest > countsAreReadOnly() PASSED
+
+ResourceTallyTest > addingEmptyChangesNothing() PASSED
+
+ResourceTallyTest > whatWasNotCountedIsZero() PASSED
+
+ResourceTallyTest > categoriesMatchTheDesign() PASSED
+
+ResourceTallyTest > mergingTalliesPreservesTypedAndGenericCounts() PASSED
+
+ResourceTallyTest > anEmptyChestCountsNothing() PASSED
+
+ResourceTallyTest > countsIdsOutsideTheClosedResourceCatalog() PASSED
+
+ResourceTallyTest > countsWhatItWasGiven() PASSED
+
+ResourceTallyTest > combinesGenericIdsWithAnEmptyTypedView() PASSED
+
+ResourceTallyTest > zeroIsTheSameAsAbsent() PASSED
+
+ResourceTallyTest > typedCountsAlsoHaveAnIdViewWithoutBeingCountedTwice() PASSED
+
+ResourceTallyTest > addingKeepsWhatOnlyOneSideHad() PASSED
+
+ResourceTallyTest > tallysAddUp() PASSED
+
+ResourceTallyTest > genericCountsAreImmutableSnapshots() PASSED
+
+ResourceTallyTest > rejectsNull() PASSED
+
+ResourceTallyTest > addingDoesNotMutateEitherSide() PASSED
+
+ResourceTallyTest > rejectsNegativeAmounts() PASSED
+
+ResourceTallyTest > genericTalliesCanBeMergedWithEachOther() PASSED
+
+ResourceTallyTest > differentCountsAreNotEqual() PASSED
+
+RecolorRecipesTest > twoWordColoursAreReadWhole() PASSED
+
+RecolorRecipesTest > aColourWithNothingAfterItIsNotAPiece() PASSED
+
+RecolorRecipesTest > dyeingWoolIsProductionNotARecolor() PASSED
+
+RecolorRecipesTest > mixingDyesIsProductionNotARecolor() PASSED
+
+RecolorRecipesTest > anUncolouredResultIsNeverARecolor() PASSED
+
+RecolorRecipesTest > dyeingTheUncolouredBaseIsNotARecolor() PASSED
+
+RecolorRecipesTest > theBaseCarpetRecipeIsNot() PASSED
+
+RecolorRecipesTest > theSameColourIsNotARecolor() PASSED
+
+RecolorRecipesTest > dyeingAFinishedCarpetIsARecolor() PASSED
+
+ResourceDemandTest > anyWoodSatisfiesAWoodGoal() PASSED
+
+ResourceDemandTest > theDocumentedExample() PASSED
+
+ResourceDemandTest > onlyTheMissingOnesAreListed() PASSED
+
+ResourceDemandTest > deficitOfASingleResource() PASSED
+
+ResourceDemandTest > theResultIsReadOnly() PASSED
+
+ResourceDemandTest > resourcesOutsideAGroupDoNotSubstitute() PASSED
+
+ResourceDemandTest > rejectsNegativeGoals() PASSED
+
+ResourceDemandTest > woodOfDifferentSpeciesAddsUp() PASSED
+
+ResourceDemandTest > surplusIsNotANegativeDeficit() PASSED
+
+ResourceDemandTest > whatIsNotMissingIsAbsent() PASSED
+
+ResourceDemandTest > rejectsNull() PASSED
+
+ResourceDemandTest > owningNothingLacksEverything() PASSED
+
+ResourceDemandTest > whatWasNotAskedForIsNotMissing() PASSED
+
+ResourceDemandTest > aColonyThatHasEverythingIsSatisfied() PASSED
+
+ResourceSubstitutionTest > anyPlankMayGoIntoTheWall() PASSED
+
+ResourceSubstitutionTest > everyResourceAnswersForItselfAndNothingElseIsAssumed() PASSED
+
+ResourceSubstitutionTest > anyPlankAnswersForAnyOtherPlank() PASSED
+
+ResourceSubstitutionTest > cobblestoneAnswersForSandstoneAndTheWallAcceptsIt() PASSED
+
+ResourceSubstitutionTest > aLogDoesNotAnswerForAPlank() PASSED
+
+ResourceSubstitutionTest > theWallOnlyEverAcceptsTheBuildingFamilies() PASSED
+
+ResourceSubstitutionTest > theFourLevelsSayHowWellSomethingServes() PASSED
+
+ResourceSubstitutionTest > aChestFullOfCobblestoneNowPaysForSandstone() PASSED
+
+ResourceSubstitutionTest > preferenceOrdersWhatServes() PASSED
+
+ResourceSubstitutionTest > anyLogAnswersForAnyOtherLog() PASSED
+
+ChestSlotCapTest > aChestOverTheCapOpensNothingAndNeverANegative() PASSED
+
+ChestSlotCapTest > fewerEmptySlotsThanTheCapAreAllThereIs() PASSED
+
+ChestSlotCapTest > slotsAlreadyHoldingTheItemCountAgainstTheCap() PASSED
+
+ChestSlotCapTest > anEmptyChestOpensAtMostThreeSlotsForOneItem() PASSED
+
+ChestSlotCapTest > aNamedChestHasNoCap() PASSED
+
+SectorBudgetTest > aFullSweepCostsTenPassesAtTheCurrentBudget() PASSED
+
+SectorBudgetTest > theSectorIsAboutAQuarterOfTheCircle() PASSED
+
+VillageChestRuleTest > anUnnamedChestBelongsToTheVillage() PASSED
+
+VillageChestRuleTest > theVanillaDefaultNameIsNotAName() PASSED
+
+VillageChestRuleTest > anyNameMakesItPrivate() PASSED
+
+VillageChestRuleTest > aNamedChestIsPrivate() PASSED
+
+VillageChestRuleTest > blankIsNotAName() PASSED
+
+WorkerStorageTest > answersWhereItIs() PASSED
+
+WorkerStorageTest > twoStoragesOfTheSameWorkerAreTheSame() PASSED
+
+WorkerStorageTest > rejectsNull() PASSED
+
+WorkerStorageTest > keepsWhatItWasGiven() PASSED
+
+StorageRegistryTest > allIsReadOnly() PASSED
+
+StorageRegistryTest > unknownWorkerHasNoStorage() PASSED
+
+StorageRegistryTest > registeringAgainReplacesAndReturnsThePrevious() PASSED
+
+StorageRegistryTest > registersAndFindsByWorker() PASSED
+
+StorageRegistryTest > removeForgetsTheStorage() PASSED
+
+StorageRegistryTest > registerRejectsNull() PASSED
+
+StorageRegistryTest > clearEmptiesTheRegistry() PASSED
+
+StorageRegistryTest > aClaimedChestIsReportedAsTaken() PASSED
+
+StorageRegistryTest > theOldChestIsFreeAgainAfterAMove() PASSED
+
+TaskPriorityTest > mostUrgentFirstKeepsTheContractedSequence() PASSED
+
+TaskPriorityTest > everyLevelHasItsOwnUrgency() PASSED
+
+TaskPriorityTest > isHigherThanAgreesWithTheComparator() PASSED
+
+TaskTest > aCompletedTaskCannotBeCancelled() PASSED
+
+TaskTest > rejectsNonPositiveAmounts() PASSED
+
+TaskTest > aTaskAlreadyBackInTheQueueIsNotHeldAndCannotBeReleasedAgain() PASSED
+
+TaskTest > twoTasksAreNeverTheSameByContent() PASSED
+
+TaskTest > declaresTheCapabilityItNeeds() PASSED
+
+TaskTest > walksTheHappyPath() PASSED
+
+TaskTest > cancellingClosesItAndDropsTheExecutor() PASSED
+
+TaskTest > anAvailableTaskCanBeCancelled() PASSED
+
+TaskTest > belongsToItsColony() PASSED
+
+TaskTest > releasingReturnsItToTheQueue() PASSED
+
+TaskTest > cannotBeReservedTwice() PASSED
+
+TaskTest > isBornAvailableAndOwnerless() PASSED
+
+TaskTest > rejectsNull() PASSED
+
+TaskTest > cannotSkipSteps() PASSED
+
+TaskTest > onlyAnOwnedTaskCanBeReleased() PASSED
+
+TaskTest > onlyAReservedOrExecutingTaskIsHeld() PASSED
+
+TaskTest > keepsWhatItWasGiven() PASSED
+
+TaskTest > survivalOutranksTheRest() PASSED
+
+TaskTest > aReleaseKeepsItsReasonUntilTheNextOne() PASSED
+
+TaskTransitionsTest > aFailingObserverNeverBreaksTheTask() PASSED
+
+TaskTransitionsTest > aTaskNobodyHeldIsNotAnAction() PASSED
+
+TaskTransitionsTest > everyStepOfATaskIsObservedWithItsWorker() PASSED
+
+TaskServiceTest > allIsReadOnly() PASSED
+
+TaskServiceTest > createsAndFinds() PASSED
+
+TaskServiceTest > reservedTasksAreNoLongerAvailable() PASSED
+
+TaskServiceTest > availableComesSortedByPriority() PASSED
+
+TaskServiceTest > releasingAWorkerWithNothingChangesNothing() PASSED
+
+TaskServiceTest > purgeDropsOnlyClosedTasks() PASSED
+
+TaskServiceTest > tiesKeepCreationOrder() PASSED
+
+TaskServiceTest > theOtherColonyQueueIsSeparate() PASSED
+
+TaskServiceTest > tracksWhatAWorkerIsDoing() PASSED
+
+TaskServiceTest > theNextTaskRespectsPriority() PASSED
+
+TaskServiceTest > unknownTaskIsNotFound() PASSED
+
+TaskServiceTest > findsNothingForACapabilityNobodyAskedFor() PASSED
+
+TaskServiceTest > findsTheNextTaskForACapability() PASSED
+
+TaskServiceTest > rejectsNull() PASSED
+
+TaskServiceTest > aClosedTaskIsNoLongerAssigned() PASSED
+
+TaskServiceTest > removeAndClear() PASSED
+
+TaskServiceTest > releasingAWorkerReturnsTheTasks() PASSED
+
+ActivityTraceTest > overflowKeepsAccumulatingPastTheFirstOne() PASSED
+
+ActivityTraceTest > traceKeepsNewest16384AndCountsOverflow() PASSED
+
+ActivityTraceTest > newestFirstNeverReturnsMoreThanAsked() PASSED
+
+ActivityTraceTest > endsStoppedReadsOnlyTheNewestLineOfThatProfession() PASSED
+
+ActivityTraceTest > emptyTraceHasNothingAndNoOverflow() PASSED
+
+ActivityTraceTest > aFreshTraceNeverOverflows() PASSED
+
+ActivityTraceTest > appendedEventComesBackNewestFirst() PASSED
+
+ColonyPosTest > distanceToItselfIsZero() PASSED
+
+ColonyPosTest > distanceIgnoresHeight() PASSED
+
+ColonyPosTest > equalityIsByValue() PASSED
+
+ColonyPosTest > distanceSurvivesWorldBorderCoordinates() PASSED
+
+ColonyPosTest > distanceIsSymmetric() PASSED
+
+DesertMasonryTest > theProcessedSandstoneJoinsNoGroup() PASSED
+
+DesertMasonryTest > theCutSandstoneIsMasonWork() PASSED
+
+DesertMasonryTest > everySandstoneVariantBelongsToTheMason() PASSED
+
+ProductionTest > eachTradeKeepsWhatIsItsOwn() PASSED
+
+ProductionTest > smoothSandstoneIsProcessedAndNotDug() PASSED
+
+ProductionTest > everyResourceDeclaresHowItIsMade() PASSED
+
+ProductionTest > theFurnaceMakesGlassIngotsSmoothSandstoneAndStone() PASSED
+
+ResourceIdTest > aStructurePathSurvivesParsing() PASSED
+
+ResourceIdTest > twoSeparatorsAreRefused() PASSED
+
+ResourceIdTest > blankPartsAreRefused() PASSED
+
+ResourceIdTest > parsingKeepsTheNamespaceItIsGiven() PASSED
+
+ResourceIdTest > parsingWithoutANamespaceMeansVanilla() PASSED
+
+ResourceIdTest > aVanillaNameNeedsNoNamespace() PASSED
+
+ResourceIdTest > itWritesItselfTheWayTheGameShowsIt() PASSED
+
+ServerMemoryRegistrationTest > everyClassWithServerMemoryRegistersItself() PASSED
+
+ServerMemoryTest > aResetThatLoadsAnotherClassDoesNotBreakTheSweep() PASSED
+
+ServerMemoryTest > resetAllRunsEveryRegisteredReset() PASSED
+
+SubstitutionTest > bestFirstKeepsTheContractedSequence() PASSED
+
+SubstitutionTest > isBetterThanAgreesWithTheComparator() PASSED
+
+SubstitutionTest > everyLevelHasItsOwnPreference() PASSED
+
+ProfessionPolicySetTest > policyRejectsWorkerLimitsOutsideTheSafeRange() PASSED
+
+ProfessionPolicySetTest > maximumWorkerCapMovesTheNextGrowthSlotForward() PASSED
+
+ProfessionPolicySetTest > defaultPolicyDoesNotCapWorkersOrOverrideRadius() PASSED
+
+ProfessionPolicySetTest > defaultOrderProjectsToTheHistoricalOrders() PASSED
+
+ProfessionPolicySetTest > theVillageHiresAtMostOneBuilder() PASSED
+
+ProfessionPolicySetTest > disabledProfessionIsNotAssignedToNewWorker() PASSED
+
+ProfessionPolicySetTest > summaryNamesOnlyWhatDiffersFromTheDefault() PASSED
+
+ProfessionPolicySetTest > disabledProducerReleasesItsGrowthSlotsToTheNextEnabledProfession() PASSED
+
+ProfessionPolicySetTest > policySetRejectsSearchRadiusForAProfessionWithoutWorldSearch() PASSED
+
+ProfessionPolicyTest > anAutomaticRadiusFallsBackToTheProfessionDefault() PASSED
+
+ProfessionPolicyTest > aConfiguredRadiusWinsOverTheProfessionDefault() PASSED
+
+WorkerTest > registeredWorkerKeepsItsIds() PASSED
+
+WorkerTest > registerRejectsNulls() PASSED
+
+WorkerTest > assignGivesTheWorkerAProfession() PASSED
+
+WorkerTest > assignReplacesThePreviousProfession() PASSED
+
+WorkerTest > restoreKeepsTheSavedProfession() PASSED
+
+WorkerTest > restingAgainStartsTheClockOver() PASSED
+
+WorkerTest > theHashFollowsTheVillager() PASSED
+
+WorkerTest > aStrikeIsForgottenExactlyWhenItsWindowEnds() PASSED
+
+WorkerTest > theRestRunsOut() PASSED
+
+WorkerTest > assignRejectsNull() PASSED
+
+WorkerTest > differentVillagersAreDifferentWorkers() PASSED
+
+WorkerTest > registeredWorkerHasNoProfessionYet() PASSED
+
+WorkerTest > unassignRemovesTheProfession() PASSED
+
+WorkerTest > aWorkerWhoNeverStalledRestsNothing() PASSED
+
+WorkerTest > identityIsTheVillager() PASSED
+
+WorkerTest > noFailureMeansNoShun() PASSED
+
+WorkerTest > theTallyOfAbandonedTradesRemembersFor128Cycles() PASSED
+
+WorkerTest > aCapabilityThatJustStalledIsRested() PASSED
+
+WorkerTest > belongsToAnswersAboutTheOwningColony() PASSED
+
+WorkerTest > everyProfessionOfTheProductionChainExists() PASSED
+
+WorkerTest > restoreAcceptsAbsentProfession() PASSED
+
+WorkerTest > restingOneCapabilityLeavesTheOthersAlone() PASSED
+
+HiringLogTest > pastTheFoundationTheFormerLumberjackFillsTheSecondMiner() PASSED
+
+HiringLogTest > theFilledVacancyLeavesTheReport() PASSED
+
+HiringLogTest > theShunnedCandidateIsToldApartFromAFullColony() PASSED
+
+HiringLogTest > noAdultsMeansNoVacancyAndNoError() PASSED
+
+HiringLogTest > aFullColonySaysThereIsNoVacancy() PASSED
+
+HiringLogTest > theCandidateBetweenTradesIsSaidSo() PASSED
+
+HiringLogTest > theProfessionAtTargetSaysSo() PASSED
+
+HiringLogTest > theSixtyFifthColonyStartsTheLogOver() PASSED
+
+HiringLogTest > theSameCaseNeverYieldsBothOutcomes() PASSED
+
+HiringLogTest > theVacancyFilledOnceStillShowsWhenItLaterCloses() PASSED
+
+ProfessionAssignerTest > thePreferredCandidateIsNotAssignedTwice() PASSED
+
+ProfessionAssignerTest > thereIsNoVacancyOnceEveryProfessionIsFilled() PASSED
+
+ProfessionAssignerTest > enforcingChangesNothingWhenTheColonyIsAlreadyRight() PASSED
+
+ProfessionAssignerTest > theVacancyGoesToSomeoneWhoCanWork() PASSED
+
+ProfessionAssignerTest > runningAgainAssignsNobody() PASSED
+
+ProfessionAssignerTest > excessLegacyWorkersAreNotDemotedForQuotaReasons() PASSED
+
+ProfessionAssignerTest > withoutAReplacementTheChestlessWorkerKeepsTheJob() PASSED
+
+ProfessionAssignerTest > aFreedProfessionIsFilledAgain() PASSED
+
+ProfessionAssignerTest > otherColoniesAreNotTouched() PASSED
+
+ProfessionAssignerTest > aChestlessWorkerKeepsTheJobWhenSomeoneElseCanGetAChest() PASSED
+
+ProfessionAssignerTest > anExistingProfessionIsNeverOverwritten() PASSED
+
+ProfessionAssignerTest > atFifteenAdultsThereIsOneOfEachProducer() PASSED
+
+ProfessionAssignerTest > anEmptyColonyAssignsNobody() PASSED
+
+ProfessionAssignerTest > theBabyIsHiredOnceItCanWork() PASSED
+
+ProfessionAssignerTest > anEquippedWorkerIsNeverSwapped() PASSED
+
+ProfessionAssignerTest > theNinthAdultBecomesTheOnlyGroundskeeper() PASSED
+
+ProfessionAssignerTest > aBatchIsNotAllTheSameProfession() PASSED
+
+ProfessionAssignerTest > theVacancyPrefersSomeoneWhoCanGetAChest() PASSED
+
+ProfessionAssignerTest > mostNeededOfNobodyIsTheFirstInTheChain() PASSED
+
+ProfessionAssignerTest > anOldSaveKeepsEveryExistingProfession() PASSED
+
+ProfessionAssignerTest > rejectsNull() PASSED
+
+ProfessionAssignerTest > theFirstWorkersCoverFoundationBeforeGrowth() PASSED
+
+ProfessionAssignerTest > theFirstWorkerIsAMiner() PASSED
+
+ProfessionAssignerTest > workersWithoutAQuotaRemainUnassigned() PASSED
+
+ProfessionAssignerTest > withoutAnyoneEquippedTheVacancyIsStillFilled() PASSED
+
+ProfessionAssignerTest > withoutAnyChestAroundTheVacanciesAreStillFilled() PASSED
+
+ProfessionAssignerTest > whoCannotWorkGetsNoProfession() PASSED
+
+ProfessionAssignerTest > theFirstSpareWorkerDoublesTheFirstOfTheChain() PASSED
+
+ProfessionChurnTest > theWorkerDoesNotBurnThroughEveryTradeBeforeTheFirstPunishmentEnds() PASSED
+
+ProfessionDemandTest > withoutDemandTheFixedOrderDecides() PASSED
+
+ProfessionDemandTest > demandStopsOneAboveTheQuota() PASSED
+
+ProfessionDemandTest > theLargestShortageIsServedFirst() PASSED
+
+ProfessionDemandTest > theFlockCapsTheShepherds() PASSED
+
+ProfessionDemandTest > theSpareAdultStaysWithoutATradeWhenEveryQuotaIsFull() PASSED
+
+ProfessionDemandTest > theProfessionTheWorkDependsOnComesFirst() PASSED
+
+ProfessionDemandTest > aTradeInSurplusGetsNoNewVacancy() PASSED
+
+ProfessionFloorTest > sixAdultsCoverEveryFoundationProfession() PASSED
+
+ProfessionFloorTest > aSingleVillagerIsASingleWorker() PASSED
+
+ProfessionFloorTest > foundationAwareDismissalPreservesEveryActiveProfession() PASSED
+
+ProfessionFloorTest > withoutSubstitutesNobodyIsDismissed() PASSED
+
+ProfessionFloorTest > aDuplicatedFoundationPostKeepsBothWorkers() PASSED
+
+ProfessionFloorTest > fewerVillagersThanProfessionsCoverAsManyAsFit() PASSED
+
+ProfessionFloorTest > withOneSubstitutePerSwapTheFloorHolds() PASSED
+
+ProfessionFloorTest > noJobIsDoubledWhileAnotherIsEmpty() PASSED
+
+ProfessionFloorTest > theSwapsPromisedAreNeverMoreThanWhatExists() PASSED
+
+ProfessionFloorTest > dismissalNeverRemovesAProfession() PASSED
+
+ProfessionGrowthTest > theCarpenterIsFoundationAndTheFarmerRemainsGrowth() PASSED
+
+ProfessionGrowthTest > eightAdultsReceiveFoundationThenTheFirstGrowthRole() PASSED
+
+ProfessionGrowthTest > adultThirtyTwoAddsThirdMason() PASSED
+
+ProfessionGrowthTest > populationFifteenKeepsTheFoundationAndSixteenAddsTheSecondMiner() PASSED
+
+ProfessionGrowthTest > adultTwentyThreeSkipsTheBuilderAndAddsAThirdMiner() PASSED
+
+ProfessionGrowthTest > populationThirtyHasOneBuilderAndAdultThirtyOneAddsThirdLumberjack() PASSED
+
+ProfessionGrowthTest > existingProfessionIsNeverRemovedWhenPopulationFalls() PASSED
+
+ProfessionGrowthTest > aSavedPolicyWithoutLimitStillHiresOneBuilder() PASSED
+
+ProfessionGrowthTest > existingShepherdCountsTowardTheShepherdQuota() PASSED
+
+ProfessionRegistryTest > unknownCapabilityFindsNobody() PASSED
+
+ProfessionRegistryTest > toolsMatchTheDesign() PASSED
+
+ProfessionRegistryTest > needsToolAnswersForBothCases() PASSED
+
+ProfessionRegistryTest > theMinerStartsWithIronLikeEveryoneElse() PASSED
+
+ProfessionRegistryTest > professionsDoNotOverlap() PASSED
+
+ProfessionRegistryTest > everyProfessionStartsAtIron() PASSED
+
+ProfessionRegistryTest > ofRejectsNull() PASSED
+
+ProfessionRegistryTest > findsProfessionByCapability() PASSED
+
+ProfessionRegistryTest > capabilitiesMatchTheDesign() PASSED
+
+ProfessionRegistryTest > everyProfessionTypeIsDefined() PASSED
+
+ProfessionRegistryTest > capabilitySetIsUnmodifiable() PASSED
+
+ProfessionShunTest > giveUpsSpreadOutDoNotAddUp() PASSED
+
+ProfessionShunTest > heIsNotHiredIntoTheNextTradeInTheSameCycle() PASSED
+
+ProfessionShunTest > thePunishmentEndsAndTheProfessionComesBack() PASSED
+
+ProfessionShunTest > theAbandonedProfessionIsShunned() PASSED
+
+ProfessionShunTest > theOthersAreStillOpenToHim() PASSED
+
+ProfessionShunTest > aShunningWorkerDoesNotBlockTheHiringOfTheOthers() PASSED
+
+ProfessionShunTest > givingUpWithNoProfessionIsSilent() PASSED
+
+ProfessionShunTest > heIsHiredIntoSomethingElseInstead() PASSED
+
+ProfessionShunTest > strikesAreCountedPerCapability() PASSED
+
+ProfessionShunTest > theLumberjackWhoGaveUpIsNotHiredBackAsALumberjack() PASSED
+
+ProfessionShunTest > theSecondGiveUpLastsLongerThanTheFirst() PASSED
+
+ProfessionShunTest > theFloorLetsHimBackInEventually() PASSED
+
+ProfessionShunTest > theMinerKeepsHisTradeAfterGivingUp() PASSED
+
+ProfessionShunTest > oneGiveUpIsNotEnoughToLeaveTheTrade() PASSED
+
+ProfessionShunTest > givingUpTheProfessionLeavesTheWorkerWithoutOne() PASSED
+
+ProfessionShunTest > threeGiveUpsInTheWindowKeepTheTrade() PASSED
+
+WorkerServiceTest > restoreRejectsDuplicate() PASSED
+
+WorkerServiceTest > registeringTheSameVillagerTwiceIsIdempotent() PASSED
+
+WorkerServiceTest > registerRejectsNulls() PASSED
+
+WorkerServiceTest > registerAddsTheWorker() PASSED
+
+WorkerServiceTest > ofColonyWithNoWorkersIsEmpty() PASSED
+
+WorkerServiceTest > reregisteringKeepsTheAssignedProfession() PASSED
+
+WorkerServiceTest > registerAfterRestoreKeepsProfession() PASSED
+
+WorkerServiceTest > startsEmpty() PASSED
+
+WorkerServiceTest > allIsUnmodifiable() PASSED
+
+WorkerServiceTest > allKeepsInsertionOrder() PASSED
+
+WorkerServiceTest > removeDropsTheWorker() PASSED
+
+WorkerServiceTest > clearEmptiesTheRegistry() PASSED
+
+WorkerServiceTest > restorePutsBackAWorkerWithItsProfession() PASSED
+
+WorkerServiceTest > restoreRejectsNull() PASSED
+
+WorkerServiceTest > ofColonyReturnsOnlyThatColonysWorkers() PASSED
+
+WorkerServiceTest > findMissingVillagerIsEmpty() PASSED
+
+ActivityTraceSaveTest > theTraceSurvivesTheRoundTrip() PASSED
+
+ActivityTraceSaveTest > everyFieldOfAnEventSurvives() PASSED
+
+ActivityTraceSaveTest > overflowCountSurvivesTheRoundTrip() PASSED
+
+ActivityTraceSaveTest > aTraceOfAnUnknownColonyIsDropped() PASSED
+
+ActivityTraceSaveTest > aColonyWithoutATraceLoadsEmpty() PASSED
+
+ActivityTraceSaveTest > unknownSavedValuesBecomeUnknown() PASSED
+
+ColonySaveFuzzTest > aMalformedEntryNeverEmptiesTheSave() > save válido PASSED
+
+ColonySaveFuzzTest > aMalformedEntryNeverEmptiesTheSave() > versão futura PASSED
+
+ColonySaveFuzzTest > aMalformedEntryNeverEmptiesTheSave() > versão negativa PASSED
+
+ColonySaveFuzzTest > aMalformedEntryNeverEmptiesTheSave() > construção com blueprint de dois ':' PASSED
+
+ColonySaveFuzzTest > aMalformedEntryNeverEmptiesTheSave() > construção sem blueprint PASSED
+
+ColonySaveFuzzTest > aMalformedEntryNeverEmptiesTheSave() > construção com blueprint em branco PASSED
+
+ColonySaveFuzzTest > aMalformedEntryNeverEmptiesTheSave() > obra com blueprint de dois ':' PASSED
+
+ColonySaveFuzzTest > aMalformedEntryNeverEmptiesTheSave() > obra sem blueprint PASSED
+
+ColonySaveFuzzTest > aMalformedEntryNeverEmptiesTheSave() > profissão com tipo trocado PASSED
+
+ColonySaveFuzzTest > aMalformedEntryNeverEmptiesTheSave() > profissão desconhecida PASSED
+
+ColonySaveFuzzTest > aMalformedEntryNeverEmptiesTheSave() > lista de trabalhadores com string PASSED
+
+ColonySaveFuzzTest > aMalformedEntryNeverEmptiesTheSave() > centro com tipo trocado PASSED
+
+ColonySaveFuzzTest > theGoodBuildingNextToTheBadOneSurvives() PASSED
+
+ColonySavedDataTest > emptyRegistryRoundTripsToEmpty() PASSED
+
+ColonySavedDataTest > workerWithoutProfessionSurvives() PASSED
+
+ColonySavedDataTest > theVillageBoundsSurviveRoundTrip() PASSED
+
+ColonySavedDataTest > unknownStateFallsBackToStable() PASSED
+
+ColonySavedDataTest > keepsSeveralColonies() PASSED
+
+ColonySavedDataTest > theFixedCenterSurvivesRoundTripAfterTheBoxGrew() PASSED
+
+ColonySavedDataTest > breederFromOldSaveBecomesShepherdAndWritesShepherd() PASSED
+
+ColonySavedDataTest > workerWithoutVillagerIdIsSkipped() PASSED
+
+ColonySavedDataTest > survivesRoundTrip() PASSED
+
+ColonySavedDataTest > entryWithoutIdIsSkipped() PASSED
+
+ColonySavedDataTest > workerOfUnknownColonyIsDropped() PASSED
+
+ColonySavedDataTest > workerKeepsProfessionAcrossRoundTrip() PASSED
+
+ColonySavedDataTest > saveWithoutForestPopulationMilestoneStartsAtZero() PASSED
+
+ColonySavedDataTest > forestPopulationMilestoneSurvivesRoundTrip() PASSED
+
+ColonySavedDataTest > coloniesListIsUnmodifiable() PASSED
+
+ColonySavedDataTest > saveWithoutWorkerListLoadsEmpty() PASSED
+
+ColonySavedDataTest > aWrittenSaveCarriesTheCurrentSchemaVersion() PASSED
+
+ColonySavedDataTest > boundsOfModelTwoAreMeasuredAgain() PASSED
+
+ColonySavedDataTest > unknownProfessionFallsBackToNone() PASSED
+
+ColonySavedDataTest > everyColonyComesBackDormant() PASSED
+
+ColonySavedDataTest > negativeCoordinatesSurvive() PASSED
+
+ColonySavedDataTest > anOldSaveComesBackWithoutBounds() PASSED
+
+ColonySavedDataTest > boundsOfTheOldModelAreMeasuredAgain() PASSED
+
+ColonySavedDataTest > forestPopulationMilestoneMustBeAWholeDecade() PASSED
+
+ConstructionSaveTest > anOrphanBuildingIsDropped() PASSED
+
+ConstructionSaveTest > anOrphanProjectIsDropped() PASSED
+
+ConstructionSaveTest > anOldSaveWithAFurnishedListStillLoads() PASSED
+
+ConstructionSaveTest > anOpenProjectSurvivesTheRoundTrip() PASSED
+
+ConstructionSaveTest > aDeferredUnsupportedPieceSurvivesTheRoundTrip() PASSED
+
+ConstructionSaveTest > aBuildingSurvivesTheRoundTrip() PASSED
+
+ConstructionSaveTest > negativeCoordinatesSurvive() PASSED
+
+ConstructionSaveTest > anOldSaveLoadsWithoutConstruction() PASSED
+
+MaeWorkStoreTest > anEmptyStoreHasNothingAndWritesNothing() PASSED
+
+MaeWorkStoreTest > anOldRegionIsReadAndThenLeavesTheSave() PASSED
+
+MaeWorkStoreTest > aMalformedRegionListIsNotSupported() PASSED
+
+MaeWorkStoreTest > anUnknownEnvelopeIsNotTouched() PASSED
+
+MaeWorkStoreTest > theQueueKeepsItsOrderThroughTheSave() PASSED
+
+MineSaveTest > aMineThatNeverRaisedAnArchComesBackWithout() PASSED
+
+MineSaveTest > theMineSurvivesTheRoundTrip() PASSED
+
+MineSaveTest > aMineOfAnUnknownColonyIsDropped() PASSED
+
+MineSaveTest > aMineOfThisShapeKeepsItsFrontier() PASSED
+
+MineSaveTest > aMineFromShapeSixRestartsEveryCursorAndKeepsItsRouteAndArch() PASSED
+
+MineSaveTest > theTurnedGalleryComesBackTurned() PASSED
+
+MineSaveTest > aMineFromShapeFiveRestartsItsCursorAndKeepsItsMouthAndArch() PASSED
+
+MineSaveTest > anOlderSaveSimplyHasNoMine() PASSED
+
+MineSaveTest > theMinerPicksUpWhereTheSessionEnded() PASSED
+
+MineSaveTest > theLandingShapeSurvivesTheRoundTrip() PASSED
+
+MineSaveTest > aMineFromShapeEightStartsOver() PASSED
+
+MineSaveTest > aMineFromBeforeTheTallerStairStartsOver() PASSED
+
+MineSaveTest > aCorruptEntryIsRefused() PASSED
+
+MineSaveTest > theRampSurvivesTheRoundTrip() PASSED
+
+MineSaveTest > theRaisedArchSurvivesTheRoundTrip() PASSED
+
+ProfessionPolicySavedDataTest > theRulesAndTheOrderSurviveTheSave() PASSED
+
+ProfessionPolicySavedDataTest > aBrokenHiringOrderKeepsTheRulesOfEachProfession() PASSED
+
+ProfessionPolicySavedDataTest > anUnknownOrOutOfRangeEntryKeepsTheDefaultForThatProfessionOnly() PASSED
+
+ProfessionPolicySavedDataTest > anEmptySaveGivesTheDefaults() PASSED
+
+RoadGraphSaveTest > anUnsplitInteriorNodeCannotReplaceOrDirtyTheStoredGraph() PASSED
+
+RoadGraphSaveTest > multipleHubsAreRejectedBeforePublishingOrDirtyingStore() PASSED
+
+RoadGraphSaveTest > wrongListElementTypesAreCorruptionRatherThanEmptyGraph() PASSED
+
+RoadGraphSaveTest > orphanPayloadIsIgnoredWithoutDroppingKnownGraph() PASSED
+
+RoadGraphSaveTest > currentGraphRoundTripsBesideUnchangedLegacyColumns() PASSED
+
+RoadGraphSaveTest > malformedCurrentGraphFallsBackToLegacyAndCanBeRebuilt() PASSED
+
+RoadGraphSaveTest > unknownOrAbsentVersionsRemainOpaqueAndRefuseReplacement() PASSED
+
+RoadGraphSaveTest > aNodeInsideAnUnsplitEdgeIsRejectedOnDecode() PASSED
+
+RoadGraphSaveTest > nonIntVersionsRemainOpaqueAndRefuseReplacement() PASSED
+
+RoadGraphSaveTest > multipleHubsAreRejectedOnDecode() PASSED
+
+RoadGraphSaveTest > cycleAtPhysicalColumnLimitRetainsRepeatedClosingAnchor() PASSED
+
+RoadGraphSaveTest > futureVersionSurvivesSavingAndRefusesReplacement() PASSED
+
+RoadGraphSaveTest > legacySaveDoesNotInventConfirmedGraphOrChangeItsIndex() PASSED
+
+RoadGraphStoreTest > theSettledDaysSurviveANewGraphAndTheSave() PASSED
+
+RoadGraphStoreTest > aGraphWithoutSettledDaysReadsAsNoLock() PASSED
+
+RoadIndexSaveTest > negativeColumnsComeBackNegative() PASSED
+
+RoadIndexSaveTest > theIndexSurvivesTheRoundTrip() PASSED
+
+RoadIndexSaveTest > anEntryWithoutAnOwnerIsRefused() PASSED
+
+RoadIndexSaveTest > theNextSessionOpensWithTheIndexInHand() PASSED
+
+RoadIndexSaveTest > anIndexOfAnUnknownColonyIsDropped() PASSED
+
+RoadIndexSaveTest > anEmptyIndexIsRefused() PASSED
+
+RoadIndexSaveTest > anOlderSaveSimplyHasNoIndex() PASSED
+
+SaveMigrationTest > migrationIsIdempotent() PASSED
+
+SaveMigrationTest > futureVersionIsLeftUntouched() PASSED
+
+SaveMigrationTest > migrationNeverAddsColoniesOrBuildings() PASSED
+
+SaveMigrationTest > freshNbtGetsCurrentVersionWithoutChangingShape() PASSED
+
+SaveMigrationTest > legacyBreederProfessionBecomesShepherdBeforeAnyReaderRuns() PASSED
+
+SessionResumeTest > aRestoredColonyWithEnoughOpensNothing() PASSED
+
+SessionResumeTest > theRestoredWorkerGetsWorkOnceTheColonyWakes() PASSED
+
+SessionResumeTest > itIsTheSavedProfessionThatEarnsHimTheTask() PASSED
+
+SessionResumeTest > theColonyComesBackAsleep() PASSED
+
+SessionResumeTest > aSleepingColonyIsSkippedByTheCycle() PASSED
+
+SweepCursorSaveTest > whatTheHalfSweepFoundIsNotAnIndexYet() PASSED
+
+SweepCursorSaveTest > aSweepThatFoundNoRoadYetIsStillWorthKeeping() PASSED
+
+SweepCursorSaveTest > theHalfSweepSurvivesTheRoundTrip() PASSED
+
+SweepCursorSaveTest > anOlderSaveSimplyHasNoCursor() PASSED
+
+SweepCursorSaveTest > aCorruptCursorIsRefused() PASSED
+
+SweepCursorSaveTest > aCursorOfAnUnknownColonyIsDropped() PASSED
+
+SweepCursorSaveTest > theNextSessionResumesWhereTheLastOneStopped() PASSED
+
+WorkMarksSavedDataTest > workerChestsRoundTrip() PASSED
+
+WorkMarksSavedDataTest > playerClearedColumnsRoundTrip() PASSED
+
+WorkMarksSavedDataTest > mineRefusalsRoundTrip() PASSED
+
+WorkMarksSavedDataTest > supplyAttemptsRoundTrip() PASSED
+
+WorkMarksSavedDataTest > mineTrailsRoundTrip() PASSED
+
+WorkMarksSavedDataTest > anEmptySaveReadsAsNoMarks() PASSED
+
+MinecraftTypeAdapterBlockTest > aKnownBlockIsFound() PASSED
+
+MinecraftTypeAdapterBlockTest > aNameTheGameRejectsIsEmptyInsteadOfThrowing() PASSED
+
+MinecraftTypeAdapterBlockTest > anUnknownBlockIsEmpty() PASSED
+
+WorkTargetsTest > givingTheVillagerBackForgetsTheSlackToo() PASSED
+
+WorkTargetsTest > aVillagerWithoutADestinationHasTheDefaultSlack() PASSED
+
+WorkTargetsTest > aNewDestinationDoesNotInheritTheOldSlack() PASSED
+
+WorkTargetsTest > thePlainDestinationKeepsTheDefaultSlack() PASSED
+
+WorkTargetsTest > aDestinationCanAskToBeReachedCloser() PASSED
+
+StateLinesTest > anEmptyStateStillPrintsWithoutFailing() PASSED
+
+StateLinesTest > everySubjectHasItsLine() PASSED
+
+StateLinesTest > theClockStartsAtSixInTheMorning() PASSED
+
+VillageLogPresenterTest > theOpenWorkSaysWhatItWaitsForWhyAndForHowLong() PASSED
+
+VillageLogPresenterTest > longWaitsShowTheReasonAndHowLong() PASSED
+
+VillageLogPresenterTest > theHappinessLineSaysTheMoodAndTheThreeMeasures() PASSED
+
+VillageLogPresenterTest > explainsThePhysicalRecoveryAndItsReturnToTheWorkQueue() PASSED
+
+VillageLogPresenterTest > showsTheTimeOfEachTradeAndMarksTheIdleRule() PASSED
+
+VillageLogPresenterTest > anEmptyWindowSaysThereIsNoMeasureYet() PASSED
+
+VillageLogPresenterTest > keepsOnlyTheNewestStatusOfEachWorker() PASSED
+
+VillageLogPresenterTest > theReachLineNamesWhatIsOutOfReach() PASSED
+
+VillageLogPresenterTest > theSameProfessionWaitingForTheSameReasonIsOneLine() PASSED
+
+VillageLogPresenterTest > explainsWhenTheVillageHasNotReportedAnyActivityYet() PASSED
+
+VillageLogPresenterTest > explainsTheHousingDeficitBeforeTheActivityEntries() PASSED
+
+VillageLogPresenterTest > marksAnAbandonedTaskAsAProblemThePlayerCanUnderstand() PASSED
+
+VillageLogPresenterTest > explainsWhenTheRotationCanOpenInfrastructure() PASSED
+
+VillageLogPresenterTest > separatesTheCurrentProfessionStateFromItsLastHistoricalBlocker() PASSED
+
+CycleCostTest > everyPhaseAppearsEvenTheOnesThatCostNothing() PASSED
+
+CycleCostTest > aPhaseChargedTwiceAccumulates() PASSED
+
+CycleCostTest > theMostExpensivePhaseComesFirst() PASSED
+
+CycleCostTest > theBatonHandsTheNowToTheNextPhase() PASSED
+
+CycleCostTest > theSampleComesOutOnceEveryTenCycles() PASSED
+
+CycleCostTest > startingOverForgetsTheLastCycle() PASSED
+
+CycleCostTest > otherNeverGoesNegative() PASSED
+
+CycleCostTest > theSampleLineListsEveryPhaseInMicroseconds() PASSED
+
+CycleCostTest > aHealthyCycleSaysNothingAboutOverlap() PASSED
+
+CycleCostTest > aBatonPassedTwiceSaysTheNumbersAreInflated() PASSED
+
+CycleCostTest > whatNoPhaseClaimedShowsUpAsOther() PASSED
+
+IdleHandoutsTest > theSameTaskStillGoesToAnotherWorkerAtOnce() PASSED
+
+IdleHandoutsTest > theSameTaskDoesNotGoBackToTheSameWorkerBeforeACycle() PASSED
+
+IdleHandoutsTest > oldHandoutsAreForgottenSoTheMemoryHasACeiling() PASSED
+
+IdleHandoutsTest > anotherTaskStillGoesToHimAtOnce() PASSED
+
+IdleHandoutsTest > anythingMayBeHandedTheFirstTime() PASSED
+
+IdleHandoutsTest > aClockThatWentBackDoesNotLockThePairForever() PASSED
+
+IdleHandoutsTest > afterACycleTheSamePairMayMeetAgain() PASSED
+
+PhantomWorkerLogTest > comingBackResetsTheCount() PASSED
+
+PhantomWorkerLogTest > neverSeenThisSessionSaysSoInsteadOfInventingAPlace() PASSED
+
+PhantomWorkerLogTest > theWhereaboutsSayWhereHeWasHowFarThePlayerIsAndWhetherTheChunkIsLoaded() PASSED
+
+PhantomWorkerLogTest > withoutAPlayerTheDistanceSaysNone() PASSED
+
+PhantomWorkerLogTest > oneMissIsNotNews() PASSED
+
+PhantomWorkerLogTest > theNewsComesOutAtTheThirdMissInARow() PASSED
+
+PhantomWorkerLogTest > theNewsDoesNotRepeatEveryCycle() PASSED
+
+PhantomWorkerLogTest > theCountIsPerVillager() PASSED
+
+PlannerPhasesTest > aLaterCycleReportsOnlyAboveTheLimit() PASSED
+
+PlannerPhasesTest > theLineNamesEverySubphaseInMicrosecondsAndTheRestAsOther() PASSED
+
+PlannerPhasesTest > forgettingTheServerMemoryMakesTheNextCycleFirstAgain() PASSED
+
+PlannerPhasesTest > otherNeverGoesNegative() PASSED
+
+PlannerPhasesTest > theFirstWorkCycleOfAColonyAlwaysReportsEvenWhenCheap() PASSED
+
+PlannerTurnsTest > moreWatchedColoniesThanTheQuotaStillRespectTheBudget() PASSED
+
+PlannerTurnsTest > anEmptyWorldChoosesNobody() PASSED
+
+PlannerTurnsTest > theColonyNearThePlayerGoesFirst() PASSED
+
+PlannerTurnsTest > aCrowdedWorldOnlyLetsTheQuotaThrough() PASSED
+
+PlannerTurnsTest > theRotationSurvivesColoniesComingAndGoing() PASSED
+
+PlannerTurnsTest > everyColonyPlansWhenThereAreFewerThanTheQuota() PASSED
+
+PlannerTurnsTest > everyWatchedColonyGoesFirst() PASSED
+
+PlannerTurnsTest > everyColonyGetsItsTurnWithinOneFullRound() PASSED
+
+PlannerTurnsTest > withNobodyWatchingTheRotationIsUnchanged() PASSED
+
+VillageFocusTest > everyVillageWithAPlayerPresentMayPlanNow() PASSED
+
+BiomeConstructionSupplyClockTest > aTreeRequestBecomesEligibleOnlyOnTheTwentiethWaitAndSurvivesSaving() PASSED
+
+ChestSurveyCoverageTest > anIncompleteSweepSpellsTheFractionItActuallyMissed() PASSED
+
+ChestSurveyCoverageTest > anUnreachableChestDoesNotBlockObservedStockDecisions() PASSED
+
+ChestSurveyCoverageTest > anEmptyChestIsStillAChestThatWasRead() PASSED
+
+ChestSurveyCoverageTest > aTimeSlicedSurveyNamesItsPendingChestsSeparately() PASSED
+
+ColonyScanSchedulerTest > schedulerVisitsColoniesRoundRobinWithinBudget() PASSED
+
+CorridorStateTest > aStateIsFoundInTheCostMapWhateverItsPriority() PASSED
+
+FarthestVillageSectorTest > choosesTheSectorWithTheLargestClearanceWhenStructuresAreUneven() PASSED
+
+FarthestVillageSectorTest > usesStableColonyFallbackWhenNoVillagePiecesAreKnown() PASSED
+
+FarthestVillageSectorTest > grassSectorExcludesTheProtectedRadiusAndOtherDirections() PASSED
+
+FarthestVillageSectorTest > choosesTheCardinalSectorFarthestFromVillageStructures() PASSED
+
+FoundationLotSearchTest > whenEveryLotHasTreesTheClosestOneIsChosenToBeCleared() PASSED
+
+FoundationLotSearchTest > withoutALotAtTheHeightOfTheHousesTheFlattestAnywhereStillServes() PASSED
+
+FoundationLotSearchTest > aLotWithoutTreesComesBeforeACloserOneThatNeedsClearing() PASSED
+
+FoundationLotSearchTest > aSlopeSteeperThanTwoBlocksIsNeverACandidate() PASSED
+
+FoundationLotSearchTest > anExactlyFlatLotIsPreferredEvenFartherThanALevelledOneNearTheCenter() PASSED
+
+FoundationLotSearchTest > withoutAFlatLotTheMostLevelOneWinsAndItsFloorIsTheMedian() PASSED
+
+FoundationLotSearchTest > onFlatGroundTheLotInTheMiddleComesFirst() PASSED
+
+FoundationLotSearchTest > aHighFlatPlateauLosesToALevelledLotAtTheHeightOfTheHouses() PASSED
+
+FoundationLotSearchTest > aLotTouchingAnUnloadedColumnIsNotACandidate() PASSED
+
+LotScoreMemoryTest > theWorldUnloadForgetsTheLotScore() PASSED
+
+RingSweepResumeTest > aResumedSweepDoesNotPayForTheColumnsAlreadyAnswered() PASSED
+
+RingSweepResumeTest > separateScanKindsKeepIndependentCursorsForTheSameOwner() PASSED
+
+RingSweepResumeTest > theNextPassFindsWhatTheFirstDidNotReach() PASSED
+
+RingSweepResumeTest > aSweepThatAlwaysStartsOverNeverReachesTheOuterRing() PASSED
+
+RingSweepResumeTest > aCompletedSweepLeavesNoCursorBehind() PASSED
+
+RingSweepResumeTest > anEmptyCompletedSweepWaitsForItsCooldownBeforeStartingOver() PASSED
+
+RingSweepResumeTest > onePassDoesNotReachTheOuterRingAndSaysSo() PASSED
+
+SimulatedObserverTest > theKeyIsOffWithoutTheProperty() PASSED
+
+SimulatedObserverTest > oneChunkPutsTheObserverInItsMiddle() PASSED
+
+SimulatedObserverTest > aSquareOfChunksPutsTheObserverInTheMiddleOfTheSquare() PASSED
+
+SiteMarkerHeightTest > theLabelFloatsFiveBlocksAboveTheTopOfTheBlueprint() PASSED
+
+SiteMarkerHeightTest > theOverlayAnchorMatchesTheVisibleConstructionSign() PASSED
+
+SiteSignJanitorTest > aSecondSignForTheSameProjectIsDiscardedWhileTheFirstStands() PASSED
+
+SiteSignJanitorTest > aSignOfAClosedOrForgottenProjectIsDiscarded() PASSED
+
+SiteSignJanitorTest > aMalformedOrForeignTagHasNoProject() PASSED
+
+SiteSignJanitorTest > aSecondSignTakesOverWhenTheKnownOneIsNotInTheWorld() PASSED
+
+SiteSignJanitorTest > theProjectIsReadBackFromTheTag() PASSED
+
+SiteSignJanitorTest > aSignWithoutProjectTagIsDiscarded() PASSED
+
+SiteSignJanitorTest > theSignOfAnOpenProjectStays() PASSED
+
+StreetLayerTest > aFullBottomLayerStaysOnTopOfTheGround() PASSED
+
+StreetLayerTest > aSoilBottomLayerIsTheStreetLevel() PASSED
+
+StreetLayerTest > halfIsStillAFloor() PASSED
+
+StreetLayerTest > aSingleLayerPlanHasNothingBelowTheStreet() PASSED
+
+StreetLayerTest > aSparseBottomLayerIsBelowTheStreet() PASSED
+
+StreetLayerTest > aMixedBottomLayerIsNotPureSoil() PASSED
+
+StreetLayerTest > aBuiltFloorIsNotSoil() PASSED
+
+SweepLogTest > aDriftRestartCountsAsBothAndKeepsTheFarthest() PASSED
+
+SweepLogTest > completeRoundsAreCounted() PASSED
+
+SweepLogTest > everyPassAddsItsColumns() PASSED
+
+SweepLogTest > aCompleteRoundClearsTheSuspicion() PASSED
+
+SweepLogTest > aRestartWithoutDriftIsNotADrift() PASSED
+
+SweepLogTest > oneCycleIsNotEnoughToAccuseAnyone() PASSED
+
+SweepLogTest > theTallyTellsRestartingApartFromSlowGoing() PASSED
+
+SweepLogTest > aSweepDrivenFromOutsideThePlannerClaimsNothing() PASSED
+
+SweepLogTest > plannerSkipsBeforeLookingForALotAreNotSweepDebt() PASSED
+
+SweepLogTest > aColonyThatNeverSweptHasNoTally() PASSED
+
+SweepLogTest > whatNeverReachedTheSweepIsCounted() PASSED
+
+SweepLogTest > anIndexedAnswerIsNotASweepPass() PASSED
+
+SweepLogTest > theTallyIsForgottenAtShutdown() PASSED
+
+TreeScanCursorTest > aPassResumesAtTheExactNextColumnInsideTheRing() PASSED
+
+TreeScanCursorTest > theOrderRemainsTheSameSquareSpiral() PASSED
+
+VillageFocusTest > aPlayerAroundTheVillageKeepsItWorking() PASSED
+
+VillageStyleTest > theMostCommonSupportedBiomeWins() PASSED
+
+VillageStyleTest > noSupportedBiomeGivesNothingAndTheCallerFallsBackToPlains() PASSED
+
+VillageStyleTest > aTieGoesToTheFirstInTheGivenOrderWhateverTheReadingOrder() PASSED
+
+VillageStyleTest > unsupportedBiomesDoNotVoteEvenWhenTheyAreTheMostCommon() PASSED
+
+WarehouseHealthLogTest > anUnreachableChestEntersAndLeavesDegradedMode() PASSED
+
+ProfessionPolicyPayloadCodecTest > valuesOutsideTheLimitsAreRefused() PASSED
+
+ProfessionPolicyPayloadCodecTest > aPacketWithTooFewProfessionsIsRefused() PASSED
+
+ProfessionPolicyPayloadCodecTest > aRepeatedProfessionIsRefused() PASSED
+
+ProfessionPolicyPayloadCodecTest > anIncompleteOrRepeatedHiringOrderIsRefused() PASSED
+
+ProfessionPolicyPayloadCodecTest > anUnknownProfessionIsRefused() PASSED
+
+ProfessionPolicyPayloadCodecTest > aWrittenPolicyReadsBackTheSame() PASSED
+
+ProfessionPolicyPayloadsTest > theSyncCrossesTheWireWhole() PASSED
+
+ProfessionPolicyPayloadsTest > theUpdateCrossesTheWireWhole() PASSED
+
+ProfessionPolicyPayloadsTest > theRequestIsEmpty() PASSED
+
+RoadMapRunsTest > theEdgeTakesTheColorOfTheModeAndTheFixedStepStaysGreen() PASSED
+
+RoadMapRunsTest > withoutAModeTheEdgeStaysYellow() PASSED
+
+ActivityLogTest > controlledTransitionsUseTheVersionedActivityFormat() PASSED
+
+BenchApproachTest > withoutABenchItCraftsWhereItIsFromTheFirstTick() PASSED
+
+BenchApproachTest > onceTheBudgetRunsOutItKeepsCraftingHereUntilTheTaskEnds() PASSED
+
+BenchApproachTest > itWalksWhileAwayAndCraftsOnceItArrives() PASSED
+
+BlockLedgerTest > aSupplyThatIsNotABlockIsLeftOut() PASSED
+
+BlockLedgerTest > theBuildPlacingWaitingAndTheSupplyAreCountedByBlock() PASSED
+
+BlockLedgerTest > theEntrySaysClassReserveStockAndTheThreeCounts() PASSED
+
+ClimbReshapeTest > otherProfessionsClimbOnlyNaturalSteps() PASSED
+
+ClimbReshapeTest > onlyTheMinerMayReshapeTheTerrain() PASSED
+
+ClimbReshapeTest > anUnknownProfessionDoesNotReshape() PASSED
+
+ConstructionOrderTest > onlyTradesTheCatalogOffersAreMissing() PASSED
+
+ConstructionOrderTest > withEveryTradeServedTheVillageBuildsWhatItDoesNotHaveYet() PASSED
+
+ConstructionOrderTest > theOtherTurnGoesToTheFirstTradeWithoutAWorkshop() PASSED
+
+ConstructionOrderTest > farmsAndHousesAreNotRepeatsAndDoNotSpendTheQuota() PASSED
+
+ConstructionOrderTest > onlyStorageNamedModelBelongsToItsRequestedProfession() PASSED
+
+ConstructionOrderTest > eachWorkshopBelongsToItsTrade() PASSED
+
+ConstructionOrderTest > aWorkshopIsNotAHouse() PASSED
+
+ConstructionOrderTest > theFirstRepeatComesWithTheFifthAdult() PASSED
+
+ConstructionOrderTest > itRepeatsWhatTheVillageHasLeastUntilThePopulationIsServed() PASSED
+
+ConstructionOrderTest > withEveryTypeStandingTheNextTypeHasNothingToSay() PASSED
+
+ConstructionOrderTest > anAbandonedWorkshopStillCountsAsMissing() PASSED
+
+ConstructionOrderTest > anAbandonedWorkDoesNotCountAsARepeat() PASSED
+
+ConstructionOrderTest > aTradeWithAWorkshopStandingGivesTheTurnToTheNext() PASSED
+
+ConstructionPlannerReachTest > theVillageGrowingMakesTheSearchGrow() PASSED
+
+ConstructionPlannerReachTest > theTestsCanStillShortenTheSearch() PASSED
+
+ConstructionPlannerReachTest > theSearchCoversTheCornersAndPassesTheEdge() PASSED
+
+ConstructionPlannerReachTest > aBoxThatGrewToOneSideIsReachedFromTheFixedCenter() PASSED
+
+ConstructionPlannerReachTest > thereIsNoCeilingTheSearchGrowsWithTheVillage() PASSED
+
+ConstructionPlannerReachTest > aSmallVillageNeverSearchesLessThanBefore() PASSED
+
+ConstructionPlannerReachTest > aTypicalVillageSearchesPastTheOld64() PASSED
+
+ConstructionPlannerReachTest > aMeasuredVillageUsesItsBoxAndAnUnmeasuredOneKeeps64() PASSED
+
+CraftBarrierTest > aRequestStoppedForLackOfLogsIsNotChainedEvenWithOnePieceMade() PASSED
+
+CraftBarrierTest > aRequestThatMadeWhatItWasAskedIsStillChained() PASSED
+
+CraftBarrierTest > threeStopsByABarrierHoldTheRequest() PASSED
+
+CraftingWorkFamilyTest > theStoneBeyondTheVillageIsMasonryToo() PASSED
+
+CraftingWorkFamilyTest > theMudAndTheSeaStoneAreOutsideTheListOnPurpose() PASSED
+
+CraftingWorkFamilyTest > redstoneIsNotMasonryEvenThoughTheNameSaysStone() PASSED
+
+CraftingWorkFamilyTest > theStoneOfEveryVillageStyleBelongsToTheMason() PASSED
+
+CraftingWorkFamilyTest > theWoodAndTheTrimBelongToTheCarpenter() PASSED
+
+DesertSandTest > theStyleComesFromThePlanPath() PASSED
+
+DesertSandTest > theSandstoneAlreadyAskedForIsLeftAlone() PASSED
+
+DesertSandTest > theDesertPlanBakesItsSand() PASSED
+
+DesertSandTest > thePlainsPlanKeepsItsSand() PASSED
+
+DesertSandTest > theSwapKeepsThePositionAndTheFurnitureMark() PASSED
+
+DrawnFromTest > noMismatchedPlanCanEscapeTheValidatedLot() PASSED
+
+EmptySweepsTest > anotherEmptySweepWaitsLongerAndFindingItStartsOver() PASSED
+
+EmptySweepsTest > eachEmptySweepTurnsTheSearchToTheNextSide() PASSED
+
+EmptySweepsTest > theWaitGrowsOneMinuteAtATimeUpToFive() PASSED
+
+EmptySweepsTest > anEmptySweepHoldsTheResourceOffForItsWait() PASSED
+
+EnduranceReportTest > enduranceFailureIncludesSeedAndTraceExcerpt() PASSED
+
+EnduranceReportTest > failureTraceIsNewestFirst() PASSED
+
+EnduranceReportTest > defaultSeedIsFixedAndDocumented() PASSED
+
+EnduranceReportTest > reportRetainsDurationCyclesAndTaskCount() PASSED
+
+EnduranceReportTest > latencySummaryOfNoSamplesIsAllZero() PASSED
+
+EnduranceReportTest > latencySummaryReportsMinMeanMax() PASSED
+
+EnduranceReportTest > failureTraceHasAtMost64Events() PASSED
+
+EnduranceReportTest > succeededReportHasNoFailureContext() PASSED
+
+EquivalentPiecesTest > aGraniteStairIsAnyStoneStairStartingWithCobblestone() PASSED
+
+EquivalentPiecesTest > aWallStaysAWallAndASlabStaysASlab() PASSED
+
+EquivalentPiecesTest > plainCobblestoneTakesTheRocksTheMineBringsUp() PASSED
+
+EquivalentPiecesTest > mossyStoneFallsBackToPlainStone() PASSED
+
+EquivalentPiecesTest > aColouredPaneFallsBackToClearGlassLast() PASSED
+
+EquivalentPiecesTest > tallPlantsTradeOnlyWithTallPlants() PASSED
+
+EquivalentPiecesTest > aGlazedTerracottaFallsBackToPlainTerracotta() PASSED
+
+EquivalentPiecesTest > aWorkstationHasNoEquivalentAndStillComesReadyMade() PASSED
+
+FarmOwnersTest > theOwnerSurvivesTheWorkMemoryRoundTrip() PASSED
+
+FarmOwnersTest > moreFarmersThanFarmsLeavesSomeoneWithout() PASSED
+
+FarmOwnersTest > oneFarmPerFifteenAdults() PASSED
+
+FarmOwnersTest > aFarmThatIsGoneFreesItsOwner() PASSED
+
+FarmOwnersTest > anOwnerKeepsHisFarmEvenWhenAnotherIsCloser() PASSED
+
+FarmOwnersTest > eachFarmerIsOwedAFarm() PASSED
+
+FarmOwnersTest > eachFarmerGetsTheFarmNearestHisChest() PASSED
+
+FarmPostponementTest > theFarmComesBackAfterTheDeadline() PASSED
+
+FarmPostponementTest > theFarmStepsAsideOnceTheLotWasOutOfReach() PASSED
+
+FarmPostponementTest > aSecondRefusalPushesTheRetryFurtherOut() PASSED
+
+FarmPostponementTest > eachColonyStandsAsideOnItsOwn() PASSED
+
+FarmPostponementTest > itKeepsStandingAsideWhileTheClockRuns() PASSED
+
+FarmPostponementTest > aColonyThatNeverTriedIsNotPostponed() PASSED
+
+FarmerReachTest > moreThanThreeBlocksAwayDoesNotReach() PASSED
+
+FarmerReachTest > exactlyThreeBlocksAwayStillReachesTheCrop() PASSED
+
+FarmerSetAsideTest > onlyThatBlockAndOnlyForThatFarmer() PASSED
+
+FarmerSetAsideTest > aRefusedTargetStaysAsideUntilTheTimeRunsOut() PASSED
+
+FlockHarvestTest > nothingToHarvestAtOrBelowTheLiveReserve() PASSED
+
+FlockHarvestTest > harvestingNeverDropsBelowTheReserve() PASSED
+
+FlockHarvestTest > oneAboveTheReserveIsSurplus() PASSED
+
+Arrumar o chão > só o caminho sem nenhuma marca do grafo volta ao solo PASSED
+
+Arrumar o chão > o vão entre as bases vai em rampa de degrau 1 de uma base à outra PASSED
+
+Arrumar o chão > só o Zelador calça: os outros ofícios saíram do rodízio PASSED
+
+GroundPickupTest > deferredPiecesAreStillWantedFromTheGround() PASSED
+
+HousePlansTest > anEmptyRegistryMeansNoHouse() PASSED
+
+HousePlansTest > withNothingSkippedTheListIsUntouched() PASSED
+
+HousePlansTest > aMarkForSomethingElseChangesNothing() PASSED
+
+HousePlansTest > asinglePlanIsTheSameEitherWay() PASSED
+
+HousePlansTest > theSiblingThatOnlyFitsRotatedStillCounts() PASSED
+
+HousePlansTest > aFinishedHouseCounts() PASSED
+
+HousePlansTest > anEmptyCatalogStaysEmpty() PASSED
+
+HousePlansTest > constructionTurnsAlternateAndTheSecondOtherTypeDiffers() PASSED
+
+HousePlansTest > anAbandonedProjectDoesNotCountAsAHouse() PASSED
+
+HousePlansTest > theDwellingPassesAndTheRestDoesNot() PASSED
+
+HousePlansTest > differentSeedsLetEverySizeLead() PASSED
+
+HousePlansTest > onlyAPlanWithABedMeetsTheHousingContract() PASSED
+
+HousePlansTest > anAbandonedOtherTypeIsNotOfferedAgain() PASSED
+
+HousePlansTest > theFilterCrossesEveryStyle() PASSED
+
+HousePlansTest > missingBedsMakeTheNextBuildAHouse() PASSED
+
+HousePlansTest > theMixedOrderIsStableForASeedAndIgnoresTheIncomingOrder() PASSED
+
+HousePlansTest > missingBedsGiveTheTurnToTheHouse() PASSED
+
+HousePlansTest > anAbandonedOtherTypeGivesTheTurnBackToAHouse() PASSED
+
+HousePlansTest > theFarmIsNotADwellingButStaysInTheCatalog() PASSED
+
+HousePlansTest > theFirstHouseOfAColonyIsTheSmallest() PASSED
+
+HousePlansTest > theSkippedPlanLeavesAndTheListStepsDown() PASSED
+
+HousePlansTest > theModBigHouseIsNeverAProfessionBuild() PASSED
+
+HousePlansTest > aWorkerWithoutASafeHomeCreatesAHousingDeficitEvenWhenBedsWereObserved() PASSED
+
+HousePlansTest > withEverythingSkippedTheSmallestStillStands() PASSED
+
+HousePlansTest > rightAfterGivingUpATempleItIsNotItsTurn() PASSED
+
+HousePlansTest > onTheOtherTurnTheLastNonHouseTypeWaits() PASSED
+
+HousePlansTest > afterTheFirstHouseTheOrderIsLeftAsItCame() PASSED
+
+IdleLogTest > anOscillatingReasonDoesNotFlood() PASSED
+
+IdleLogTest > differentSubjectsDoNotSilenceEachOther() PASSED
+
+IdleLogTest > theCycleCallerIsNotDamped() PASSED
+
+IdleLogTest > theFirstTimeSpeaks() PASSED
+
+IdleLogTest > differentColoniesDoNotSilenceEachOther() PASSED
+
+IdleLogTest > afterClearTheSameReasonSpeaksAgain() PASSED
+
+IdleLogTest > anOpenBuildIsNotListedAsAWait() PASSED
+
+IdleLogTest > theSameReasonStaysQuiet() PASSED
+
+IdleLogTest > afterTheQuietPeriodItSpeaksAgain() PASSED
+
+IdleLogTest > aDifferentReasonSpeaks() PASSED
+
+IdleLogTest > theQuietPeriodDoesNotResurrectTheSameReason() PASSED
+
+KeepLedgerTest > eachLockCountsChecksBarsAndTheLowestStock() PASSED
+
+KeepLedgerTest > theDailyLineListsEveryLockSeen() PASSED
+
+KnownAbsentTest > theAbsenceExpiresSoTheReachIsCheckedAgain() PASSED
+
+KnownAbsentTest > nothingIsAbsentBeforeItIsRegistered() PASSED
+
+KnownAbsentTest > aRegisteredAbsenceHoldsForItsWholeWindow() PASSED
+
+KnownAbsentTest > findingTheResourceClearsTheAbsence() PASSED
+
+KnownAbsentTest > itIsPerResourceAndPerColony() PASSED
+
+LentHandTest > aWorkerDoingHisOwnJobIsNotMarked() PASSED
+
+LentHandTest > aWorkerDoingSomeoneElsesJobIsMarked() PASSED
+
+LentHandTest > aWorkerWithoutAProfessionIsNotMarked() PASSED
+
+LumberjackNurseryTargetTest > theForestTargetScalesAfterTheBaselineForEachLumberjack() PASSED
+
+MaterialChoiceRegistryTest > aWorkstationStillHasOnlyItself() PASSED
+
+MaterialChoiceRegistryTest > aStrippedWoodTakesAnyStrippedWood() PASSED
+
+MaterialChoiceRegistryTest > aGraniteStairTakesCobblestoneStairsRightAfterItself() PASSED
+
+MineApproachProgressTest > aTinyOscillationIsNotProgress() PASSED
+
+MineApproachProgressTest > theFirstWaypointIsAlwaysProgress() PASSED
+
+MineApproachProgressTest > closerByTheMarginIsProgress() PASSED
+
+MineBottomRetryTest > aMissingOppositeMouthWaitsOneColonyCycleBeforeTryingAgain() PASSED
+
+MineClaimsTest > anUnaskedShaftHasNoDigger() PASSED
+
+MineClaimsTest > theFifthMinerWaits() PASSED
+
+MineClaimsTest > aShaftInAnotherColonyDoesNotHoldThisOne() PASSED
+
+MineClaimsTest > theOwnerIsNotAnotherMiner() PASSED
+
+MineClaimsTest > theFirstMinerToAskGetsTheShaft() PASSED
+
+MineClaimsTest > theSecondMinerGetsAnotherBranch() PASSED
+
+MineClaimsTest > askingWhoHoldsTheShaftDoesNotTakeIt() PASSED
+
+MineClaimsTest > steppingAsideInOneShaftDoesNotTouchTheOther() PASSED
+
+MineClaimsTest > theWorkingHolderSurvivesTheSweep() PASSED
+
+MineClaimsTest > aFinishedBranchIsNotHandedOut() PASSED
+
+MineClaimsTest > releasingHandsTheShaftOver() PASSED
+
+MineClaimsTest > theOwnerLetsGoOfABranchThatFinishedUnderHim() PASSED
+
+MineClaimsTest > aLoneMinerGetsTheShaftBackOnTheNextPass() PASSED
+
+MineClaimsTest > eachColonyHasItsOwnShaft() PASSED
+
+MineClaimsTest > theMinerWhoGaveUpLetsTheOtherIn() PASSED
+
+MineClaimsTest > theHolderKeepsTheShaftOnEveryPass() PASSED
+
+MineClaimsTest > theShaftPassesOnWhenTheHolderHasNoJobLeft() PASSED
+
+MineClaimsTest > noBranchIsHandedOutWhenEveryOneIsDone() PASSED
+
+MineCutsSideTest > sideOfMatchesTheMappingSavedColoniesWereBuiltWith() PASSED
+
+MineDescentTest > theSkipExpiresAndGrowsIfItHappensAgain() PASSED
+
+MineDescentTest > theSecondFreezeAtTheSameSpotSkipsEveryStoneBelowIt() PASSED
+
+MineDescentTest > theDescentIsDeclaredBlockedOnceSoTheMineMovesOnce() PASSED
+
+MineDescentTest > oneFreezeIsNotEnough() PASSED
+
+MineDescentTest > aStoneAtTheMinersOwnLevelIsNotADescent() PASSED
+
+MineDigLimitTest > belowTheTwoTopLevelsTheRockIsFree() PASSED
+
+MineDigLimitTest > onTheFirstLevelOnlyThePlannedCellsAreCut() PASSED
+
+MineHomePlansTest > recognizesOnlyAHouseNearTheMineMouth() PASSED
+
+MineLeaseTest > aproximação menor que a margem não renova nada PASSED
+
+MineLeaseTest > andar para longe é o contrário de progresso PASSED
+
+MineLeaseTest > pedra nova, prazo novo — mesmo se ela estiver mais longe PASSED
+
+MineLeaseTest > o prazo cabe na faixa que o autor pediu: 200 a 400 tiques PASSED
+
+MineLeaseTest > quem se aproxima renova o prazo e não o perde nunca PASSED
+
+MineLeaseTest > quem não se aproxima perde a pedra ao fim do prazo, e não antes PASSED
+
+MineLeaseTest > na descida, quem vai e volta sem chegar perde a pedra no prazo longo PASSED
+
+MineLeaseTest > o tremor do caminhante não é aproximação PASSED
+
+MineLeaseTest > na descida, ir até a boca e depois descer não perde a pedra PASSED
+
+MineMarksTest > theSecondMinerDoesNotGetTheStoneTheFirstOneGaveUp() PASSED
+
+MineMarksTest > aStoneNeverRefusedIsFairGame() PASSED
+
+MineMarksTest > eachRefusalAfterThatCostsMore() PASSED
+
+MineMarksTest > theLadderStopsClimbing() PASSED
+
+MineMarksTest > aStoneRefusedOnceSitsOutTenCycles() PASSED
+
+MineMarksTest > aDeadEndOpensWhenItsRefusalsExpire() PASSED
+
+MineMarksTest > theSecondRefusalCostsMoreThanTheFirst() PASSED
+
+MineMarksTest > diggingInsideTheDeadEndOpensTheWholeNeighbourhood() PASSED
+
+MineMarksTest > theStoneBesideItIsStillFairGame() PASSED
+
+MineMarksTest > twoRefusalsNearbyAreNotYetADeadEnd() PASSED
+
+MineMarksTest > thePunishmentEndsAndTheStoneComesBack() PASSED
+
+MineMarksTest > aStoneRefusedAgainSitsOutLonger() PASSED
+
+MineMarksTest > theTallyItselfIsForgottenEventually() PASSED
+
+MineMarksTest > aStoneInsideADeadEndIsSkippedEvenIfItNeverRefused() PASSED
+
+MineMarksTest > refusalsSpacedByMinutesStillMakeADeadEnd() PASSED
+
+MineMarksTest > aDeadEndDoesNotCloseTheWholeMine() PASSED
+
+MineMarksTest > diggingFarAwayLeavesTheDeadEndClosed() PASSED
+
+MineMarksTest > aRefusalSurvivesSavingAndLoading() PASSED
+
+MineMarksTest > diggingItClearsTheMark() PASSED
+
+MineReturnTest > theTrailStartsAgainAtTheSurfaceAndDropsLoops() PASSED
+
+MineReturnTest > theTrailComesBackFromTheSaveInTheSameOrder() PASSED
+
+MineSupplyTest > removingStoneDoesNotOpenAnotherDailyStack() PASSED
+
+MineSupplyTest > nextDayStartsOneNewStack() PASSED
+
+MineSupplyTest > autonomousMiningStopsAfterOneStackForTheDay() PASSED
+
+MinerDetoursTest > aLocalDetourAimsAtTheCurrentRouteLegInsteadOfTheDistantStone() PASSED
+
+MinerDirectPathTest > endOnTheStandingSpotReaches() PASSED
+
+MinerDirectPathTest > noPathEndDoesNotReach() PASSED
+
+MinerDirectPathTest > endOnTheSurfaceAboveTheStoneDoesNotReach() PASSED
+
+MinerLegTest > aMinerKnockedBesideTheStaircaseTakesANearbyStepBackToTheMouth() PASSED
+
+MinerLegTest > fromInsideTheMineASurfaceTargetGoesThroughTheMouth() PASSED
+
+MinerLegTest > anUntouchedMineStillSendsHimToTheMouth() PASSED
+
+MinerLegTest > oneBlockOfHeightDoesNotFlipTheAnswer() PASSED
+
+MinerLegTest > theLegSkipsWhatTheCursorHandedOutButNobodyDug() PASSED
+
+MinerLegTest > theLegNeverAimsAtABlockHeCannotStandOn() PASSED
+
+MinerLegTest > onTheSurfaceHeWalksStraightToASurfaceTarget() PASSED
+
+MinerLegTest > fromOnTopOfTheMineHeStillGoesInThroughTheMouth() PASSED
+
+MinerLegTest > aTargetInAnotherBranchWalksBackTowardsTheMouth() PASSED
+
+MinerLegTest > theLegNeverSendsHimToWhereHeAlreadyIs() PASSED
+
+MinerLegTest > withoutAMineTheStoneIsTheOnlyLeg() PASSED
+
+MinerLegTest > whenTheStoneIsBehindHimTheLegWalksBackUp() PASSED
+
+MinerLegTest > theLegStopsAtTheWallInsteadOfJumpingToAPocketBehindIt() PASSED
+
+MinerLegTest > fromInsideTheShaftTheLegKeepsGoingDown() PASSED
+
+MinerLegTest > fromTheSurfaceHeAimsForTheMouth() PASSED
+
+MinerLegTest > aTargetOnTheSurfaceSendsHimBackOut() PASSED
+
+MinerLegTest > insideTheGalleryHeKeepsAimingForTheStone() PASSED
+
+MinerLegTest > atTheMouthTheLegIsAStepDownTheShaft() PASSED
+
+MinerPicksTest > noStoneLeftEndsThePass() PASSED
+
+MinerPicksTest > theSameStoneServedTwiceEndsThePass() PASSED
+
+MinerPicksTest > aPassLooksAtMostAFewStonesSoTheTickStaysCheap() PASSED
+
+MinerPicksTest > theRefusedStonesAreSkippedAndTheFirstGoodOneIsChosenInTheSamePass() PASSED
+
+MinerPicksTest > tooHighAndNoPathLeaveBeforeChoosingButNoFootholdStillTriesTheDetour() PASSED
+
+MinerReachTest > fourAndAHalfIsOutOfReachEvenThoughItRoundsToFour() PASSED
+
+MinerReachTest > everyApproachIsWithinTheArmAndNoneIsTheStoneItself() PASSED
+
+MinerReachTest > oneBlockOfSlackWasStillTooMuch() PASSED
+
+MinerReachTest > besideTheStoneIsWithinReach() PASSED
+
+MinerReachTest > theReportedDistanceIsTheOneTheReachUses() PASSED
+
+MinerReachTest > standingAnywhereOnTheChosenSpotReachesTheStone() PASSED
+
+MinerReachTest > theApproachOrderIsTheOldCubeScanInOrder() PASSED
+
+MinerReachTest > theWalkersSlackIsSmallerThanTheArm() PASSED
+
+MinerReachTest > heightCountsTowardTheDistance() PASSED
+
+MinerReachTest > everyApproachReachesFromEveryCornerOfItsBlock() PASSED
+
+MinerReachTest > arrivingAtTheEdgeOfTheWalkStillReachesTheStone() PASSED
+
+MinerReachTest > exactlyFourStillReaches() PASSED
+
+MinerReachTest > theApproachOrderRunsFromTheNearestOutwards() PASSED
+
+MinerReachTest > standingFartherThanEveryWorkSpotStillDoesNotReach() PASSED
+
+MinerRequestedResourceTest > sandTaskCountsSandInsteadOfTheVillageStone() PASSED
+
+MinerRerouteTest > aStoneInsideADeadEndDoesNotReroute() PASSED
+
+MinerRerouteTest > noneIsNotReroutable() PASSED
+
+MinerRerouteTest > noStandingPositionIsWorthARerouteAttempt() PASSED
+
+MinerRerouteTest > anIsolatedRefusalStillReroutes() PASSED
+
+MinerRerouteTest > tooHighAndNoPathAreNotReroutable() PASSED
+
+MinerSearchScheduleTest > startsAtTheFirstCandidateWhenThePreviousWorkerIsNoLongerSearching() PASSED
+
+MinerSearchScheduleTest > rotatesTheSearchStartAfterTheLastWorker() PASSED
+
+MinerWorkLifecycleTest > aClosedJobReleasesItsMineClaimOnTheNextTick() PASSED
+
+PathPavingTest > onlyTheGroundskeeperPaves() PASSED
+
+PenEntryLogTest > theLineSaysWhereItWasGoingAndWhereItCameFrom() PASSED
+
+PenEscapeOutTest > theSameBlockIsInside() PASSED
+
+PenEscapeOutTest > aJumpInPlaceIsStillInside() PASSED
+
+PenEscapeOutTest > anotherColumnIsOutside() PASSED
+
+PenPlansTest > onlyTheLargePenBlocksAnotherLargePen() PASSED
+
+PlanRefusalsTest > theRefusalBelongsToOneColony() PASSED
+
+PlanRefusalsTest > anEmptyBillCondemnsNothing() PASSED
+
+PlanRefusalsTest > twoPlansCanBeSkippedAtOnce() PASSED
+
+PlanRefusalsTest > thePlanThatDiedWaitingIsRemembered() PASSED
+
+PlanRefusalsTest > stoppingTheServerForgets() PASSED
+
+RoadGraphChangesTest > countsChangesWithinADayAndStartsOverTheNextDay() PASSED
+
+RoadGraphChangesTest > eachColonyHasItsOwnCount() PASSED
+
+ShepherdShearingAreaTest > withoutAMeasuredVillageTheRadiusIsTheWholeSearch() PASSED
+
+ShepherdShearingAreaTest > theMeasuredVillageReachesThePenOutsideTheRadius() PASSED
+
+ShepherdShearingAreaTest > aShortTestRadiusStaysShortWithoutAVillage() PASSED
+
+SmelterFallbackTest > startsHelpingTheBuildAfterTwoMisses() PASSED
+
+StopLogTest > theSameReasonIsWrittenOnceAndThenEveryHundred() PASSED
+
+StopLogTest > aNewReasonIsAlwaysWritten() PASSED
+
+StrandedWorkersTest > twoFreezesFarApartAreBadLuckNotATrap() PASSED
+
+StrandedWorkersTest > twoFreezesOnTheSameSpotStrandTheWorker() PASSED
+
+StrandedWorkersTest > oneFreezeIsNotEnough() PASSED
+
+StrandedWorkersTest > anUnknownVillagerIsNeverStranded() PASSED
+
+StrandedWorkersTest > releasingPutsTheWorkerBackInTheQueue() PASSED
+
+StrandedWorkersTest > aStrandedWorkerDropsItsTaskBackToTheQueue() PASSED
+
+StrandedWorkersTest > theEscapeLetsGoOnlyAwayFromWhereItFroze() PASSED
+
+SurfaceHitsTest > theSandThreeBlocksFromARememberedColumnIsFound() PASSED
+
+SurfaceHitsTest > aNeighbourOfARememberedColumnIsTriedFirst() PASSED
+
+SurfaceHitsTest > theRememberedColumnNearestTheVillageIsTriedFirst() PASSED
+
+SurfaceHitsTest > anUnreachableTargetIsForgottenAndLeftOutForADay() PASSED
+
+SurfaceHitsTest > aColumnThatGivesNothingIsForgotten() PASSED
+
+SurfaceReachTest > otherSurfaceGoodsKeepTheUsualMargin() PASSED
+
+SurfaceReachTest > sandAndClayAreSoughtFartherThanTheUsualMargin() PASSED
+
+TaskChainTest > aRequestThatEndedWithNothingMadeIsNotChained() PASSED
+
+TaskChainTest > itNeverPilesUpRequests() PASSED
+
+TaskChainTest > aBuildTaskIsNotARequestAndIsNeverChained() PASSED
+
+TaskChainTest > withoutTheShortageNothingIsChained() PASSED
+
+TaskChainTest > aRequestThatMadeSomethingIsChainedAsBefore() PASSED
+
+TaskChainTest > aDoneRequestWhoseShortageRemainsOpensTheNextOneAtOnce() PASSED
+
+TreeChoiceTest > theLumberjackGivesUpOnlyAfterGettingNoCloserFor30Seconds() PASSED
+
+TreeChoiceTest > anUntouchedTreeIsMarkedOutOfReachWhenTheLumberjackGivesUp() PASSED
+
+TreeChoiceTest > aPartlyCutTreeIsNotMarkedOutOfReach() PASSED
+
+TreeMarksTest > eachRefusalAfterThatCostsMore() PASSED
+
+TreeMarksTest > theFirstRefusalOfAWallStillLastsTenCycles() PASSED
+
+TreeMarksTest > aTreeRefusedAgainSitsOutLonger() PASSED
+
+TreeMarksTest > aTreeRefusedOnceSitsOutTheUsualTenCycles() PASSED
+
+TreeMarksTest > aBuiltWallSitsOutTheLongestWaitAtOnce() PASSED
+
+TreeMarksTest > theSitOutStopsGrowing() PASSED
+
+TreeMarksTest > theTallyBelongsToTheWallAndNotToTheBlockTheSearchFound() PASSED
+
+TreeMarksTest > askingAfterTheDeadlineDoesNotEraseTheTally() PASSED
+
+TreeMarksTest > aTreeThatNeverRefusedIsNotHeldOut() PASSED
+
+TreeMarksTest > evenTheMostRefusedWallComesBackEventually() PASSED
+
+TreeMarksTest > aWallRefusedTwiceSitsOutLongerThanTheFirstTime() PASSED
+
+TreeMarksTest > anUnreachableTreeSitsOutAWholeDay() PASSED
+
+VillageFluidIndexTest > revisitsAColumnThatWasUnavailableWhenItsChunkLaterLoads() PASSED
+
+VillageFluidIndexTest > rebuildsIncrementallyAndAChangedVillageStartsEmpty() PASSED
+
+VillageFluidIndexTest > marksOnlyLoadedFluidColumnsInsideTheExactBounds() PASSED
+
+VillageFluidIndexTest > invalidationForcesAFullRebuildForTheColony() PASSED
+
+VillageSpiralSweepTest > visitsTheVillageBorderInwardThenExpandsOutside() PASSED
+
+VillageSpiralSweepTest > resumesWithoutRepeatingColumnsAndCanFindTheFirstOuterRing() PASSED
+
+VillageSpiralSweepTest > changedBoundsRestartTheCursorAtTheNewBorder() PASSED
+
+VillagerTimelineTest > aChangeThatSettlesIsWrittenWithTheStateBeforeAndHowLongItLasted() PASSED
+
+VillagerTimelineTest > aBlinkShorterThanTheSettleIsNotWritten() PASSED
+
+WaitReasonsTest > theLineKeepsTheThreeLongestReasonsInSeconds() PASSED
+
+WaitReasonsTest > withoutARequestTheWaitIsAHelp() PASSED
+
+WaitReasonsTest > theReasonIsTheRequestTheWorkerHolds() PASSED
+
+WaitingWorkPatienceTest > onlyUnsupportedPiecesKeepTheFullRescueWindow() PASSED
+
+WaitingWorkPatienceTest > aBuildThatStillHasPiecesToPlaceKeepsTheLongClock() PASSED
+
+WalksTest > aBedNobodyWalksToIsInfinitelyFar() PASSED
+
+WalksTest > theWalkCountsTheWayRoundAndNotTheStraightLine() PASSED
+
+WalksTest > withoutTheMapOrAwayFromItTheStraightLineCounts() PASSED
+
+WaterMineAccessTest > aRouteHasThreeStairsThreeClearLayersAndASealedGlassShell() PASSED
+
+WorkMemoryLoadTest > garbageInEverySectionLoadsWithoutThrowing() PASSED
+
+WorkMemoryLoadTest > anEmptyMemoryLoads() PASSED
+
+WorkTimeTest > theLineGivesTheShareOfEachState() PASSED
+
+WorkTimeTest > strandedComesBeforeEverything() PASSED
+
+WorkTimeTest > theNameTurnsRedOnlyAfterThirtySecondsStuck() PASSED
+
+WorkTimeTest > anEmptyWindowHasNoIdleShare() PASSED
+
+WorkTimeTest > theIdleRuleCountsIdleBlockedAndStranded() PASSED
+
+WorkTimeTest > standingWithATargetIsBlockedOnlyAfterThreeSeconds() PASSED
+
+WorkTimeTest > movingIsWalking() PASSED
+
+WorkTimeTest > aWorkerWhoLevelledTheGroundThisMinuteIsWorking() PASSED
+
+WorkTimeTest > theSwingingArmIsWork() PASSED
+
+WorkTimeTest > standingWithATaskAndNoTargetIsWaiting() PASSED
+
+WorkTimeTest > withoutATaskItIsIdleWhateverItDoes() PASSED
+
+WorkerStrikesTest > aWorkerThatNoLongerExistsWritesNoEvent() PASSED
+
+WorkerStrikesTest > givingUpWritesAnAbandonedEventWithTheRealWorker() PASSED
+
+> Task :assemble
+> Task :validateAccessWidener NO-SOURCE
+> Task :check
+> Task :build
+> Task :jacocoTestReport
+
+[Incubating] Problems report is available at: file:///C:/Users/lucas/Desktop/MOD-village-1.21.1/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.6.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 59s
+15 actionable tasks: 8 executed, 7 up-to-date

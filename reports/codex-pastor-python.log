@@ -1,0 +1,66 @@
+  área forçada cresceu com a vila: (-96, -96, 96, 96) -> (-232, -96, 96, 96)
+## plains (semente 7, 2 dias)
+
+sem base comparável (falta, ou outra semente ou outros dias): só informa
+
+| número | base | agora | veredito |
+| --- | --- | --- | --- |
+| trabalho |  | 40.0 | info |
+| travado |  | 15.0 | info |
+| sem_tarefa |  | 20.0 | info |
+| espera |  | 15.0 | info |
+| obras_dia |  | 0.5 | info |
+| grafo_dia |  | 0.5 | info |
+| soltas |  | 2 | info |
+| surgidos_dia |  | 16.0 | info |
+| encalhes_dia |  | 0.5 | info |
+
+base gravada em ..\..\AppData\Local\Temp\tmprl6e3y64\base.json
+## plains (semente 7, 2 dias)
+
+| número | base | agora | veredito |
+| --- | --- | --- | --- |
+| trabalho | 40.0 | 40.0 | igual |
+| travado | 15.0 | 15.0 | igual |
+| sem_tarefa | 20.0 | 20.0 | info |
+| espera | 15.0 | 15.0 | info |
+| obras_dia | 0.5 | 0.5 | igual |
+| grafo_dia | 0.5 | 0.5 | igual |
+| soltas | 2 | 2 | igual |
+| surgidos_dia | 16.0 | 16.0 | igual |
+| encalhes_dia | 0.5 | 0.5 | igual |
+
+## plains (semente 7, 2 dias)
+
+| número | base | agora | veredito |
+| --- | --- | --- | --- |
+| trabalho | 40.0 | 20.0 | pior |
+| travado | 15.0 | 35.0 | pior |
+| sem_tarefa | 20.0 | 20.0 | info |
+| espera | 15.0 | 15.0 | info |
+| obras_dia | 0.5 | 0.5 | igual |
+| grafo_dia | 0.5 | 0.5 | igual |
+| soltas | 2 | 2 | igual |
+| surgidos_dia | 16.0 | 16.0 | igual |
+| encalhes_dia | 0.5 | 0.5 | igual |
+
+## plains (semente 7, 2 dias)
+
+| número | base | agora | veredito |
+| --- | --- | --- | --- |
+| trabalho | 40.0 | 20.0 | pior |
+| travado | 15.0 | 35.0 | pior |
+| sem_tarefa | 20.0 | 20.0 | info |
+| espera | 15.0 | 15.0 | info |
+| obras_dia | 0.5 | 0.5 | igual |
+| grafo_dia | 0.5 | 0.5 | igual |
+| soltas | 2 | 2 | igual |
+| surgidos_dia | 16.0 | 16.0 | igual |
+| encalhes_dia | 0.5 | 0.5 | igual |
+
+PASS: reports\test-runs\interrupted
+....................................................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 196 tests in 2.430s
+
+OK
