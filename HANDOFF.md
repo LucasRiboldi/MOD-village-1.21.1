@@ -2,6 +2,14 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.154 (2026-11-27)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commits `38c35b0e` (régua única e nomes no diário), `7c7f6706` (Zelador ao lado da coluna).
+- **Código:** `GroundSmoothing.column(..., system)`; `GradeWork.covers` (o `State` guarda a leitura do plano), `GradeWork.walk/targetOf/beside` (ao lado = 4 na horizontal e 4 de altura), `BuildingGaps.planned`; `GroundKeeper.day` usa `walk` e espera enquanto ele anda.
+- **Testes mudados:** `TerrainQueueGameTest` e `GroundSmoothingGameTest` usam `levelOnce()`, que põe o Zelador ao lado da coluna.
+- **Sentinela** `20261127T031402Z`: 1.307/1.307. JAR `9571C78445CACD9406F5F876C5280656CD4F928E36925CE01DBD3EEB266F277F`.
+- **Ainda de longe:** porta tapada, escada da mina, solo do bioma, vão entre as casas, peça da vila, curral. **Próximo:** etapa 4 da ADR-065.
+
 ## Entrega — 0.4.153 (2026-11-27)
 
 - **Branch:** `fix/areia-que-cai`, sem push. Commit `4a189001` (Regra 390).

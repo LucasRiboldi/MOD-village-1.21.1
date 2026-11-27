@@ -14,7 +14,7 @@ Colônia 18cd007a, 6 notas. Relatório: `docs/testing/relatorios/jogo-20261126-2
 
 - [x] L1 🅲 (0.4.153, Regra 390; plano de alturas ainda de longe) — caminho vira grama sem registro (266 de 509 do mod, 86 de 174 do jogador): `PathTrim` e `GradeWork` registram no diário; caminho do jogador nunca sai; o Zelador anda e troca um bloco por vez; a limpeza espera dias de linha parada.
 - [x] L2 (0.4.153, Regra 390) — o Zelador só calça caminho travado em definitivo.
-- [ ] 🟠 L3 🅱️ — nivelamento oscila (158 trocas num bloco): o plano de alturas é a única régua; `BuildingGaps` obedece a ele.
+- [x] L3 🅱️ (0.4.154, Regra 391) — nivelamento oscila (158 trocas num bloco): o plano de alturas é a única régua; `BuildingGaps` obedece a ele.
 - [ ] 🟠 L4 — grafo de 3 modos num só: pesquisa em `docs/research/2026-11-26-grafo-de-um-modo.md`; ADR-065 aceita (árvore que cresce, ponta por recusa de lote, aresta com estado); 5 etapas, a 1ª: estado por aresta e traçado no save.
 
 ## Jogo da 0.4.148 na planície (2026-11-26)

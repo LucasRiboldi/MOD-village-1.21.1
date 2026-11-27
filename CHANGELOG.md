@@ -17,6 +17,15 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.154] — candidata, 2026-11-27
+
+L3 🅱️ do jogo da 0.4.150 (o chão que subia e descia). Regra 391, emenda da Regra 357.
+
+- O plano de alturas é a única régua: o vão entre as casas não mexe na coluna que o plano cobre (`BuildingGapsGameTest`).
+- O Zelador anda até a coluna do plano e a nivela, uma por passada de 10 segundos, só quando não está calçando; escolhe a mais perto dentro da mesma prioridade da fila, e desiste depois de 1 minuto sem chegar (`GradeWorkGameTest`).
+- No diário dos blocos, cada nivelador tem seu nome: `plano_alturas`, `vao_casas`, `nivelamento`.
+- O plano anda mais devagar: antes eram até 16 colunas por passada, de longe.
+
 ## [0.4.153] — candidata, 2026-11-27
 
 ADR-065, etapa 2, do jogo da 0.4.150 (L1 🅲 e L2). Regra 390, emendas das Regras 186 e 242.
