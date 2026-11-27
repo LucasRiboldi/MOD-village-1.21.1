@@ -2,6 +2,13 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.155 publicada (2026-11-27)
+
+- **Main:** PR #114 (`fix/areia-que-cai`, Regras 371–392) mergeado com `--admin` em `582baa45`, porque o PIT foi cancelado aos 45 minutos; release `v0.4.155-alpha` com o JAR `9D468C9644D182A62236B980525FD479AA734D301EC83BEBDEC8755F629173BB`.
+- **CI:** PR #115 (`ci/tempo-do-pit`, `443c1b31`): limite de 75 minutos e `PlannedGraphEdgesTest` + `StreetCostsTest`; PIT em 85% (4.072/4.778), no limite.
+- **Código:** casas `majest_<ofício>` (cópia de `miner_house`) e `TradeHouseSign` (Regra 392).
+- **Próximo:** etapa 4 da ADR-065; os trabalhos do Zelador ainda de longe; K7 na branch `wip/k7-casa-do-lenhador`.
+
 ## Entrega — 0.4.154 (2026-11-27)
 
 - **Branch:** `fix/areia-que-cai`, sem push. Commits `38c35b0e` (régua única e nomes no diário), `7c7f6706` (Zelador ao lado da coluna).

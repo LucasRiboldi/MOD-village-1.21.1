@@ -5,7 +5,7 @@
 > **Retomada por outro agente:** comece por `HANDOFF.md`.
 
 ## Onde o projeto está
-- **Candidata 0.4.155 (branch `fix/areia-que-cai`, sem push).** Casas de ofício `majest_` iguais à do mineiro, com quadro do ofício acima da porta (Regra 392). Sentinela `20261127T032921Z`: 1.308/1.308. JAR instalado.
+- **Candidata 0.4.155, na `main` (PR #114, merge `582baa45`) e publicada como `v0.4.155-alpha`.** Casas de ofício `majest_` iguais à do mineiro, com quadro do ofício acima da porta (Regra 392). Sentinela `20261127T032921Z`: 1.308/1.308. JAR SHA-256 `9D468C96…73BB` instalado. O CI ganhou 75 minutos e o PIT voltou a 85% (PR #115, `443c1b31`).
 - **Candidata 0.4.154 (branch `fix/areia-que-cai`, sem push).** L3 (Regra 391): o plano de alturas é a única régua, e o Zelador nivela ao lado da coluna, uma por passada. Sentinela `20261127T031402Z`: 1.307/1.307. JAR SHA-256 `9571C784…277F` instalado. Próximo: etapa 4 da ADR-065 (um modo só) e os outros trabalhos do chão ainda de longe.
 - **Candidata 0.4.153 (branch `fix/areia-que-cai`, sem push).** ADR-065 etapa 2 (Regra 390): Zelador só calça o travado no modo `vizinhanca`; a limpeza só tira o caminho da colônia, depois de 2 dias, com o Zelador ao lado e o diário. Sentinela `20261127T023821Z`: 1.305/1.305. JAR SHA-256 `D8513081…9654` instalado. Próximo: L3 (plano de alturas como única régua) e a etapa 4 da ADR-065 (um modo só).
 - **Candidata 0.4.152 (branch `fix/areia-que-cai`, sem push).** Malha de cidade no modo `vizinhanca` (Regra 389, M1 🅲, emenda da ADR-065): ruas nos eixos, ramais retos, nunca linha ao lado, rua cresce pela volta sem lote. Sentinela `20261127T021821Z`: 1.304/1.304. JAR SHA-256 `71C0434E…4368` instalado. Próximo: etapa 2 da ADR-065 (L1, L2).
