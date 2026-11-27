@@ -15,7 +15,7 @@ Colônia 18cd007a, 6 notas. Relatório: `docs/testing/relatorios/jogo-20261126-2
 - [ ] 🔴 L1 🅲 — caminho vira grama sem registro (266 de 509 do mod, 86 de 174 do jogador): `PathTrim` e `GradeWork` registram no diário; caminho do jogador nunca sai; o Zelador anda e troca um bloco por vez; a limpeza espera dias de linha parada.
 - [ ] 🟠 L2 — o Zelador só calça caminho travado em definitivo.
 - [ ] 🟠 L3 🅱️ — nivelamento oscila (158 trocas num bloco): o plano de alturas é a única régua; `BuildingGaps` obedece a ele.
-- [ ] 🟠 L4 — grafo de 3 modos num só: pesquisa em `docs/research/2026-11-26-grafo-de-um-modo.md`; espera as decisões do §7 (árvore ou voltas, pontas, ADR nova, ordem).
+- [ ] 🟠 L4 — grafo de 3 modos num só: pesquisa em `docs/research/2026-11-26-grafo-de-um-modo.md`; autor escolheu árvore que cresce e ponta por recusa de lote; faltam ADR nova e ordem.
 
 ## Jogo da 0.4.148 na planície (2026-11-26)
 

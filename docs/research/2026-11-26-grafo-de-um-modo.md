@@ -161,6 +161,8 @@ b. **Pontas:** seguem crescendo 1 bloco por dia (Regra 229) ou só crescem quand
 c. **ADR nova** para o grafo planejado, emendando a ADR-057 (os três modos saem) e o "mundo é a fonte da verdade".
 d. **Ordem:** a sugerida no §8.
 
+**Escolhas do autor (26-11):** a. árvore que cresce; b. a ponta só cresce quando a busca de lote recusa aquele lado. c e d sem resposta ainda.
+
 ## 8. Ordem sugerida
 
 | Etapa | O quê | Prova |
