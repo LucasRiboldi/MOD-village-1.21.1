@@ -106,3 +106,26 @@ invariante. O estado físico (calçado ou não, bloqueado ou não) continua lido
 | 5 | Perfil longo nos 3 biomas contra a bancada de 18-11 | `changes=` ≤ 3 por dia numa vila parada |
 
 Cada etapa sai numa versão própria e espera o jogo do autor antes da seguinte.
+
+## Emenda de 2026-11-27 — a malha de cidade (M1 🅲, jogo da 0.4.151)
+
+Pedido do autor, com a imagem do modo `vizinhanca` mostrando duas linhas lado a lado: "simplificar os nós do grafo modo
+vizinhança, e tentar deixar todos em linhas retas, a idea é a menor quantidade de linhas, nunca uma linha próxima da outra
+perpendicular (uma ao lado de outra), a busca é que ele seja como as ruas de uma cidade". Escolha: M1 🅲. Troca os itens 3
+e 5 da decisão e adianta a etapa 3 para antes da etapa 2.
+
+1. **Ruas principais:** quatro braços retos saem do centro, nos eixos leste, oeste, sul e norte.
+   - Cada braço vai até a entrada mais distante que se liga a ele.
+   - O braço cresce quando uma volta da busca de lote fecha sem lote: cresce o do lado com mais recusas, até o limite de
+     crescimento da vila (Regra 229).
+   - Traçado por A* num corredor estreito em volta do eixo. Onde não passa (degrau maior que 1, água, construção), o
+     braço para ali, com o motivo.
+2. **Ramais:** cada entrada, da mais perto do centro para a mais longe, liga em reta à linha da rede mais perto que está
+   na mesma coluna x ou na mesma linha z dela: o ramal perpendicular. Sem reta possível, liga ao ponto mais perto da rede
+   (a árvore do item 3).
+3. **Traçado de tudo:** a coluna que já é da rede nesta montagem fica quase de graça, e as ligações se juntam; a coluna
+   encostada de lado numa linha, sem estar nela, fica cara; a curva fica cara. Nunca duas linhas lado a lado.
+4. **Nós:** o centro, as entradas e os cruzamentos.
+
+**Escolhas do executor, ajustáveis pelo jogo:** corredor de 2 blocos de cada lado do eixo; o braço cresce 16 blocos por
+volta sem lote; custos: coluna da rede ×0,1, coluna encostada +4, curva +2.
