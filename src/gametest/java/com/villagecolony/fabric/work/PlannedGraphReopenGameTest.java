@@ -51,13 +51,15 @@ public class PlannedGraphReopenGameTest implements FabricGameTest {
         try {
             modes.set(RoadGraphMode.VIZINHANCA);
 
-            // Duas pontas de rua, a leste e a oeste do centro: o grafo liga as duas a ele.
+            // Uma boca de mina ao sul do centro: a entrada que a malha liga pelo braço sul (Regra 389).
             Set<ColonyPos> paths = new HashSet<>();
+            BlockPos mouth = origin.add(20, 1, 34);
 
-            for (BlockPos at : new BlockPos[] {origin.add(4, 0, 20), origin.add(36, 0, 20)}) {
-                world.setBlockState(at, Blocks.DIRT_PATH.getDefaultState(), 18);
-                paths.add(MinecraftTypeAdapter.toColonyPos(at));
-            }
+            paths.add(MinecraftTypeAdapter.toColonyPos(origin.add(20, 0, 21)));
+            world.setBlockState(origin.add(20, 0, 21), Blocks.DIRT_PATH.getDefaultState(), 18);
+            com.villagecolony.VillageColonyMod.MINES.open(colony.id(), com.villagecolony.core.construction.model.MineShaft.from(
+                    MinecraftTypeAdapter.toColonyPos(mouth), com.villagecolony.core.type.Side.SOUTH));
+            com.villagecolony.fabric.integration.MineMouth.furnish(world, mouth, net.minecraft.util.math.Direction.SOUTH, false);
 
             for (int read = 0; read < 4; read++) {
                 RoadGraphRefresh.publish(world, colony, paths);
@@ -78,11 +80,12 @@ public class PlannedGraphReopenGameTest implements FabricGameTest {
                     "Regra 388: reabrir o mundo refez as ligações: " + store.routes(colony.id()).links());
             context.assertTrue(graph.equals(store.graph(colony.id())), "Regra 388: reabrir o mundo mudou o grafo");
         } finally {
+            com.villagecolony.VillageColonyMod.MINES.removeOfColony(colony.id());
             modes.set(before);
             RoadGraphBuilds.clearAll();
             fixture.cleanUp();
 
-            for (BlockPos at : BlockPos.iterate(origin, origin.add(SIZE, 2, SIZE))) {
+            for (BlockPos at : BlockPos.iterate(origin.add(0, -12, 0), origin.add(SIZE, 9, SIZE))) {
                 world.setBlockState(at, Blocks.AIR.getDefaultState(), 18);
             }
 

@@ -88,7 +88,8 @@ final class RoadGraphBuilds {
         com.villagecolony.core.construction.model.NeighborhoodRoutes routes = ROUTES.computeIfAbsent(in.colonyId(),
                 ignored -> in.store().routes(in.colonyId()));
         RoadLines.Result result = com.villagecolony.core.construction.model.NeighborhoodRoads.build(in.cells(), in.center(),
-                in.fronts(), in.terrain(), routes, dirty, in.limit().stream().mapToInt(Integer::intValue).toArray(), in.today());
+                in.fronts(), in.terrain(), routes, dirty, in.limit().stream().mapToInt(Integer::intValue).toArray(), in.today(),
+                com.villagecolony.fabric.integration.StreetGrowth.take(in.colonyId()));
 
         in.store().keepRoutes(in.colonyId(), routes);
         LAST_QUEUED.put(in.colonyId(), routes.queued());

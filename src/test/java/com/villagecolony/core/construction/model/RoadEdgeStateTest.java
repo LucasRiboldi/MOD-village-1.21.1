@@ -116,7 +116,7 @@ class RoadEdgeStateTest {
         NeighborhoodRoutes routes = new NeighborhoodRoutes();
         Set<ColonyPos> fronts = new HashSet<>();
 
-        for (int i = 1; i <= 24; i++) {
+        for (int i = 1; i <= 40; i++) {
             fronts.add(at(i * 12, (i % 2) * 12));
         }
 

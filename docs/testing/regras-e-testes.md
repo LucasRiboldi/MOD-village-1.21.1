@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 286
+- **Cita a regra:** 287
 - **Só usa a classe indicada:** 85
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -398,3 +398,4 @@ classe prova menos ainda.
 | 385 | Muda com espaço (autor 26-11, K4 🅱️ do jogo da 0.4.148: "rebentos não devem ser plantados… | cita | NurserySkyGameTest, TreeNurseryGameTest |
 | 386 | O caminho da mina à casa do mineiro (nota do jogo da 0.4.148, K5 🅱️: "o caminho do arco d… | cita | MineHomeWayGameTest, MineHomeWayTest |
 | 388 | A ligação planejada tem estado e fica no save (ADR-065 §6 e §8, etapa 1, no modo vizinhan… | cita | PlannedGraphReopenGameTest, RoadEdgeStateTest, RoadGraphSaveTest |
+| 389 | A malha de cidade (ADR-065, emenda de 27-11, M1 🅲 do jogo da 0.4.151: "deixar todos em li… | cita | CityStreetsTest, NeighborhoodRoadsTest, PlannedGraphReopenGameTest |

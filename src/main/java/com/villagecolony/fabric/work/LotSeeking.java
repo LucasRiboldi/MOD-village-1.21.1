@@ -43,6 +43,11 @@ final class LotSeeking {
     /** Nem a rua abriu lote: a volta sem lote da casa conta para o socorro do MAE — Regras 222 e 226. */
     static void afterTheRoad(ServerWorld world, Colony colony, Blueprint blueprint, List<Blueprint> plans,
                              Optional<ConstructionProject> grown) {
+        if (grown.isEmpty()) {
+            // A volta fechou sem lote: o braço da malha do lado com mais recusas cresce (Regra 389).
+            com.villagecolony.fabric.integration.StreetGrowth.noLot(colony.id());
+        }
+
         if (grown.isEmpty() && callsTheRescue(blueprint)) {
             MaeRescue.sweptWithoutLot(world, colony, plans);
         }

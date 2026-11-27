@@ -131,6 +131,7 @@ public final class LotRefusals {
     /** O mesmo que {@link #refused}, guardando onde: a linha do dia diz o motivo, a conta e onde (Regra 375). */
     public static void refusedAt(UUID colonyId, Reason reason, int x, int z) {
         refused(colonyId, reason);
+        StreetGrowth.refusedAt(colonyId, x, z); // Regra 389: o braço da malha cresce do lado das recusas
 
         if (DAY.size() >= MAX_COLONIES && !DAY.containsKey(colonyId)) {
             DAY.clear();
