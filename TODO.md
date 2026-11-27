@@ -8,6 +8,19 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   está em `docs/technical/TODO-herdado-2026-11-13.md`.
 - O TODO antigo inteiro, por jogo, está em `docs/archive/technical/TODO-ate-2026-11-13.md` (`grep`).
 
+## Jogo da 0.4.155 na planície (2026-11-27)
+
+Colônia 364fc303, 9 notas, grafo no modo `atual`. Relatório: `docs/testing/relatorios/jogo-20261127-1409.md`. As 7 casas de ofício ficaram prontas com o quadro (Regra 392). Escolhas do autor: N1 🅱️, N2 🅲, pedidos só registrados.
+
+- [ ] 🔴 N1 🅱️ — curral grande dado como pronto com 283 de 297 peças: cerca aberta ao lado da porteira norte, 8 horas sem animal guardado, até o jogador pôr 3 cercas em 166..169,68,-267. A obra de curral só fecha com a cerca inteira, e o pastor conserta buraco na cerca de curral pronto.
+- [ ] 🟠 N2 🅲 — 39 aldeões para 37 camas, aldeões na rua à noite: investigar quem são e por que não acham cama, antes de corrigir.
+- [ ] 🟡 P1 — a fazenda grande planta todo tipo de semente.
+- [ ] 🟡 P2 — a placa da casa mostra a profissão de quem mora nela e muda com o morador.
+- [ ] 🟡 P3 — casa do mineiro um pouco maior, com 2 camas e 2 baús.
+- [ ] 🟡 P4 — a mina e o mineiro tratam o bloco que cai (cascalho) como a areia.
+- [ ] 🟡 P5 — composteira e poste com a tocha do mod na borda da fazenda grande, no modelo.
+- [ ] 🟡 P6 — aldeões comuns com nomes brasileiros comuns e sem repetir, nunca "Morador 397c".
+
 ## Jogo da 0.4.150 na planície (2026-11-26)
 
 Colônia 18cd007a, 6 notas. Relatório: `docs/testing/relatorios/jogo-20261126-2045.md`. Ofício travado, mudas espaçadas e K5 confirmados.
