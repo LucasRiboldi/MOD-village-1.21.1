@@ -159,6 +159,22 @@ Nenhum crítico. A VF-004 (jogar a 0.4.68) foi feita.
 
 ## F1 — A vila trabalha (3 a 5 semanas) → portão Beta 0.5.0
 
+### Melhoria de cenário: a vila que encontra a água (pedido do autor, 2026-11-25)
+
+- [ ] 🟠 **Contorno natural da vila junto da água** (G). Hoje a água dentro da vila vira chão na geração (Regra 288) na
+  soma das caixas de cada peça com 4 blocos de folga (Regra 347): a margem sai em retângulos, com parede reta até o
+  fundo (deserto, plataforma de areia quadrada em `850,104,239`). O autor quer terra orgânica em volta da vila, sem
+  cantos retos, abraçando casas e ruas que hoje ficam sobre a água (imagem "como deveria ser"). Imagens locais, fora do
+  git: `reports/imagens-autor/2026-11-25/vila-deserto-plataforma-quadrada.jpg` e `vila-na-agua-como-deveria-ser.webp`.
+  Código: `VillageCore`, `VillageGround`, `PieceGround`, `VillageSoil`. Esboço das opções, a decidir pelo autor:
+  - 🅰️ simples: borda arredondada pela distância à peça mais próxima, com ruído, e margem que desce em degraus até o
+    fundo (praia) no lugar da parede reta;
+  - 🅱️ maior: contorno único em volta de todas as peças **e ruas** da vila (campo de distância), terreno que baixa
+    até a borda e materiais do bioma (areia na beira, solo do bioma no meio); ruas sobre a água passam a ter chão;
+  - 🅲 com melhorias: 🅱️ + borda com ruído suave, praia, vegetação do bioma e um GameTest que mede a fração de borda
+    reta (a vila não pode sair "quadrada").
+  Pedem conferir as Regras 264 (grafo nunca sobre a água), 288, 337 e 347 e só valem em vila gerada depois (mundo novo).
+
 ### Pendências do playtest do deserto 0.4.127
 
 - [ ] **Confirmar o grafo desde a 0.4.128.** Colônia `ea1997ba`. A rua Vanilla usa arenito (12:45:34, `873,75,309`); as entradas soltas foram anotadas em `845,63,319` (13:47:54) e na BigHouseMOD em `885,64,272` (13:48:25). Conferir as ligações na vila existente e a primeira leitura em vila nova.
