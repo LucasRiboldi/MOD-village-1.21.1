@@ -8,6 +8,15 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   está em `docs/technical/TODO-herdado-2026-11-13.md`.
 - O TODO antigo inteiro, por jogo, está em `docs/archive/technical/TODO-ate-2026-11-13.md` (`grep`).
 
+## Jogo da 0.4.150 na planície (2026-11-26)
+
+Colônia 18cd007a, 6 notas. Relatório: `docs/testing/relatorios/jogo-20261126-2045.md`. Ofício travado, mudas espaçadas e K5 confirmados.
+
+- [ ] 🔴 L1 🅲 — caminho vira grama sem registro (266 de 509 do mod, 86 de 174 do jogador): `PathTrim` e `GradeWork` registram no diário; caminho do jogador nunca sai; o Zelador anda e troca um bloco por vez; a limpeza espera dias de linha parada.
+- [ ] 🟠 L2 — o Zelador só calça caminho travado em definitivo.
+- [ ] 🟠 L3 🅱️ — nivelamento oscila (158 trocas num bloco): o plano de alturas é a única régua; `BuildingGaps` obedece a ele.
+- [ ] 🟠 L4 — grafo de 3 modos num só: pesquisa em `docs/research/2026-11-26-grafo-de-um-modo.md`; espera as decisões do §7 (árvore ou voltas, pontas, ADR nova, ordem).
+
 ## Jogo da 0.4.148 na planície (2026-11-26)
 
 Colônia df5db219, 20 notas. Relatório: `docs/testing/relatorios/jogo-20261126-1550.md`.
