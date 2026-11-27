@@ -263,4 +263,18 @@ class RoadGraphSaveTest {
 
         assertTrue(routes.sameAs(data.roadGraphs().routes(id)), "Regra 388: a troca do grafo apagou as ligações guardadas");
     }
+
+    /** Regra 390 (ADR-065 etapa 2): as colunas que a colônia calçou voltam do save; a do jogador nunca entrou. */
+    @Test
+    void theColumnsTheColonyLaidRoundTrip() {
+        UUID id = UUID.randomUUID();
+        var data = data(id);
+
+        data.roadGraphs().markLaid(id, 12, 10);
+
+        var loaded = load(data.writeNbt(new NbtCompound(), null)).roadGraphs();
+
+        assertTrue(loaded.laidByAColony(12, 10), "Regra 390: a coluna calçada pela colônia não voltou do save");
+        assertFalse(loaded.laidByAColony(13, 10), "Regra 390: uma coluna que a colônia não calçou voltou como dela");
+    }
 }

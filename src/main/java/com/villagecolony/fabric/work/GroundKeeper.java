@@ -122,7 +122,12 @@ public final class GroundKeeper {
             return soil;
         }
 
-        int trimmed = PathTrim.pass(world, colony);
+        // O Zelador anda até a coluna e troca um bloco por passada (Regra 390); enquanto anda, o resto espera.
+        int trimmed = PathTrim.work(world, colony, keeper);
+
+        if (trimmed < 0) {
+            return 0;
+        }
 
         if (trimmed > 0) {
             ActionJournal.action(keeper.getUuid(), "LEVELLED", "minecraft:grass_block", trimmed, keeper.getBlockPos(),

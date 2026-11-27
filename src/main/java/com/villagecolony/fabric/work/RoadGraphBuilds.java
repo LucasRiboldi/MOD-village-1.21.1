@@ -132,11 +132,37 @@ final class RoadGraphBuilds {
             return java.util.List.of();
         }
 
+        com.villagecolony.core.construction.model.NeighborhoodRoutes routes = ROUTES.get(colonyId);
+
+        if (routes != null) {
+            return lockedSteps(routes, toPave);
+        }
+
         Set<Long> stable = com.villagecolony.core.construction.model.RoadStability.stableColumns(STABILITY.computeIfAbsent(
                 colonyId, ignored -> new com.villagecolony.core.construction.model.RoadStability.Memory()), graph.get());
 
         return toPave.stream()
                 .filter(step -> stable.contains(com.villagecolony.core.construction.model.ColonyRoads.column(step.x(), step.z())))
+                .toList();
+    }
+
+    /**
+     * No modo 3, só a ligação travada ou já calçada vai para quem calça — Regra 390 (ADR-065 etapa 2, L2 do jogo da 0.4.150:
+     * "só calça caminhos que já estão travados definitivamente").
+     */
+    static java.util.List<com.villagecolony.core.construction.model.PathStep> lockedSteps(
+            com.villagecolony.core.construction.model.NeighborhoodRoutes routes,
+            java.util.List<com.villagecolony.core.construction.model.PathStep> toPave) {
+        Set<Long> locked = new java.util.HashSet<>();
+
+        routes.links().values().stream()
+                .filter(link -> link.state() == com.villagecolony.core.construction.model.RoadEdgeState.LOCKED
+                        || link.state() == com.villagecolony.core.construction.model.RoadEdgeState.PAVED)
+                .forEach(link -> link.columns().forEach(at -> locked.add(
+                        com.villagecolony.core.construction.model.ColonyRoads.column(at.x(), at.z()))));
+
+        return toPave.stream()
+                .filter(step -> locked.contains(com.villagecolony.core.construction.model.ColonyRoads.column(step.x(), step.z())))
                 .toList();
     }
 

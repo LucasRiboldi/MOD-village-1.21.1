@@ -117,7 +117,7 @@ public class RoadRulesGameTest implements FabricGameTest {
             Colony colony = Colony.create(UUID.randomUUID(), cell(origin));
 
             PathTrim.cover(colony.id(), low);
-            PathTrim.pass(world, colony);
+            trim(world, colony);
 
             context.assertTrue(world.getBlockState(low).isOf(Blocks.DIRT), "Regra 180: quem arruma o chão não devolveu o coberto à terra");
             context.assertTrue(PathTrim.coveredOf(colony.id()).isEmpty(), "Regra 242: o coberto ficou na fila depois de feito");
@@ -229,7 +229,7 @@ public class RoadRulesGameTest implements FabricGameTest {
                     && node.position().z() != origin.getZ() + 2), "Regra 206: sobrou ponta azul fora da rua: " + graph.nodes());
 
             for (int pass = 0; pass < 4; pass++) {
-                PathTrim.pass(world, colony);
+                trim(world, colony);
             }
 
             context.assertFalse(VillageRoad.isPathBlock(world.getBlockState(origin.add(15, 0, 15))), "Regra 208: o anel continuou caminho no chão");
@@ -448,8 +448,8 @@ public class RoadRulesGameTest implements FabricGameTest {
 
             PathTrim.offer(colony.id(), surplus);
 
-            context.assertTrue(PathTrim.pass(world, colony) == 16, "Regra 186: a passada do pedreiro não respeitou o orçamento");
-            context.assertTrue(PathTrim.pass(world, colony) == 4, "Regra 186: a segunda passada não terminou o que sobrou");
+            context.assertTrue(trim(world, colony) == 16, "Regra 186: a passada do pedreiro não respeitou o orçamento");
+            context.assertTrue(trim(world, colony) == 4, "Regra 186: a segunda passada não terminou o que sobrou");
 
             for (int x = 0; x < 20; x++) {
                 context.assertFalse(VillageRoad.isPathBlock(world.getBlockState(origin.add(x, 0, 2))), "Regra 186: sobrou caminho em " + x);
@@ -487,7 +487,7 @@ public class RoadRulesGameTest implements FabricGameTest {
             // verdade no chunk, que o arena não tem.
             PathTrim.keep = (w, at) -> at.equals(street);
             PathTrim.offer(colony.id(), List.of(cell(street), cell(other)));
-            PathTrim.pass(world, colony);
+            trim(world, colony);
 
             context.assertTrue(VillageRoad.isPathBlock(world.getBlockState(street)),
                     "Regra 316: a rua da vila gerada foi devolvida ao solo");
@@ -500,5 +500,21 @@ public class RoadRulesGameTest implements FabricGameTest {
         }
 
         context.complete();
+    }
+
+    /** A passada da limpeza como se a colônia tivesse calçado tudo e os dias já tivessem passado (Regra 390). */
+    private static int trim(net.minecraft.server.world.ServerWorld world, com.villagecolony.core.colony.model.Colony colony) {
+        var laid = PathTrim.laidByTheColony;
+        int wait = PathTrim.waitDays;
+
+        PathTrim.laidByTheColony = (w, at) -> true;
+        PathTrim.waitDays = 0;
+
+        try {
+            return PathTrim.pass(world, colony);
+        } finally {
+            PathTrim.laidByTheColony = laid;
+            PathTrim.waitDays = wait;
+        }
     }
 }

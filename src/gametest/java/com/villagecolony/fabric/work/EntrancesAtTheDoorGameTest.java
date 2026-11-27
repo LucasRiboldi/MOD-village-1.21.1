@@ -312,7 +312,7 @@ public class EntrancesAtTheDoorGameTest implements FabricGameTest {
                     && node.roles().contains(RoadGraph.Role.JUNCTION)), "Regra 223: o rosa do ramal ficou: " + graph.nodes());
 
             for (int pass = 0; pass < 2; pass++) {
-                PathTrim.pass(arena.world, arena.colony);
+                trim(arena.world, arena.colony);
             }
 
             for (int z = 3; z <= 13; z++) {
@@ -426,5 +426,21 @@ public class EntrancesAtTheDoorGameTest implements FabricGameTest {
             context.assertTrue(fronts.contains(arena.cell(14, 9)), "Regra 178: o portão do curral continua entrada: " + fronts);
             context.assertTrue(List.copyOf(fronts).size() == 1, "só o portão: " + fronts);
         });
+    }
+
+    /** A passada da limpeza como se a colônia tivesse calçado tudo e os dias já tivessem passado (Regra 390). */
+    private static int trim(net.minecraft.server.world.ServerWorld world, com.villagecolony.core.colony.model.Colony colony) {
+        var laid = PathTrim.laidByTheColony;
+        int wait = PathTrim.waitDays;
+
+        PathTrim.laidByTheColony = (w, at) -> true;
+        PathTrim.waitDays = 0;
+
+        try {
+            return PathTrim.pass(world, colony);
+        } finally {
+            PathTrim.laidByTheColony = laid;
+            PathTrim.waitDays = wait;
+        }
     }
 }
