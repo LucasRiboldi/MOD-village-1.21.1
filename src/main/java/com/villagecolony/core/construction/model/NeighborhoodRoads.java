@@ -20,8 +20,8 @@ import java.util.TreeMap;
  * nenhum terceiro está mais perto dos dois do que eles estão um do outro (grafo de vizinhança relativa, com voltas como numa
  * vila de verdade). Cada ligação é traçada por A* sobre o chão: plano {@value #STEP}, degrau de 1 bloco +{@value #CLIMB},
  * sobre caminho que já existe ×{@value #ON_PATH}, curva +{@value #TURN}; água, construção e degrau de mais de 1 bloco não
- * passam. A ligação traçada fica guardada por par de nós e só é refeita quando um quadrado sujo ({@link RoadRegions}) a
- * cruza. Puro: o chão vem por {@link PathTerrain}.
+ * passam. A ligação traçada fica guardada por par de nós, com estado ({@link RoadLink}, Regra 388, ADR-065), e só é refeita
+ * quando um quadrado sujo ({@link RoadRegions}) a cruza. Puro: o chão vem por {@link PathTerrain}.
  */
 public final class NeighborhoodRoads {
 
@@ -45,22 +45,6 @@ public final class NeighborhoodRoads {
     /** Quantas ligações novas ou sujas se traçam por montagem; as outras esperam a próxima. */
     public static final int ROUTES_PER_BUILD = 16;
 
-    /** As ligações já traçadas, por par de nós (colunas empacotadas, a menor primeiro). */
-    public static final class Routes {
-
-        private final Map<List<Long>, List<ColonyPos>> byPair = new HashMap<>();
-
-        /** Por lado, o caminho mais distante da última vez e o dia em que a ponta andou (Regra 320). */
-        private final Map<Integer, ColonyPos> lastEdge = new HashMap<>();
-
-        private final Map<Integer, Long> lastDay = new HashMap<>();
-
-        /** Quantas ligações estão guardadas. */
-        public int size() {
-            return byPair.size();
-        }
-    }
-
     private NeighborhoodRoads() {
     }
 
@@ -76,8 +60,10 @@ public final class NeighborhoodRoads {
      * dele vira a ponta: ela anda no máximo um bloco por dia e não passa de {@code limit} ({minX, minZ, maxX, maxZ}).
      */
     public static RoadLines.Result build(Set<ColonyPos> cells, ColonyPos center, Set<ColonyPos> fronts, PathTerrain terrain,
-                                         Routes routes, Set<Long> dirty, int[] limit, long today) {
+                                         NeighborhoodRoutes routes, Set<Long> dirty, int[] limit, long today) {
         Map<Long, Integer> physical = new HashMap<>();
+
+        routes.queued = 0;
 
         cells.forEach(at -> physical.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
 
@@ -99,19 +85,23 @@ public final class NeighborhoodRoads {
         Map<Long, Integer> columns = new LinkedHashMap<>();
         Map<Long, Long> parent = new HashMap<>();
         Set<List<Long>> used = new HashSet<>();
+        Set<List<Long>> considered = new HashSet<>();
         int[] routed = {0};
 
         nodes.keySet().forEach(node -> parent.put(node, node));
 
         for (List<Long> pair : neighborhood(nodes)) {
-            if (link(pair, nodes, physical, terrain, routes, dirty, routed, true, columns)) {
+            if (link(pair, nodes, physical, terrain, routes, dirty, routed, true, columns, considered)) {
                 used.add(pair);
                 union(parent, pair.get(0), pair.get(1));
             }
         }
 
-        connect(nodes, hub, parent, physical, terrain, routes, dirty, routed, columns, used);
-        routes.byPair.keySet().retainAll(used);
+        connect(nodes, hub, parent, physical, terrain, routes, dirty, routed, columns, used, considered);
+        // A falha fica guardada enquanto o par for tentado: só um bloco mudado perto a traça de novo (Regra 388).
+        routes.byPair.keySet().retainAll(considered);
+        routes.byPair.replaceAll((pair, link) -> link.paved(
+                link.columns().stream().allMatch(at -> physical.containsKey(ColonyRoads.column(at.x(), at.z())))));
 
         for (int side = 0; side < SIDES.length; side++) {
             tip(side, frontier[side], physical, terrain, routes, limit, today, parent, hub).ifPresent(stub ->
@@ -135,7 +125,7 @@ public final class NeighborhoodRoads {
             long column = ColonyRoads.column(front.x(), front.z());
 
             if (find(parent, column) != main) {
-                loose.add("door@" + front.x() + "," + front.y() + "," + front.z() + ":no-route");
+                loose.add("door@" + front.x() + "," + front.y() + "," + front.z() + ":" + whyLoose(routes, column));
             }
         }
 
@@ -147,39 +137,87 @@ public final class NeighborhoodRoads {
                 RoadLines.toPave(columns, toLay, physical), 0, List.of(), List.copyOf(loose));
     }
 
-    /** Uma ligação: a guardada, se nenhum quadrado sujo a cruza, ou uma nova pelo A*; diz se ligou. */
+    /**
+     * Uma ligação: a guardada, se nenhum quadrado sujo a cruza, ou uma nova pelo A*; diz se ligou. A guardada que se repete
+     * conta mais uma montagem igual e trava na terceira; a que falha fica guardada com o motivo e só volta a ser traçada
+     * com um quadrado sujo dentro da busca; a que não tem vez nem traçado guardado entra na fila (Regra 388).
+     */
     private static boolean link(List<Long> pair, Map<Long, ColonyPos> nodes, Map<Long, Integer> physical,
-                                PathTerrain terrain, Routes routes, Set<Long> dirty, int[] routed, boolean budgeted,
-                                Map<Long, Integer> columns) {
-        List<ColonyPos> route = routes.byPair.get(pair);
-        boolean stale = route == null || route.stream().anyMatch(at -> dirty.contains(RoadRegions.regionOf(at.x(), at.z())));
+                                PathTerrain terrain, NeighborhoodRoutes routes, Set<Long> dirty, int[] routed, boolean budgeted,
+                                Map<Long, Integer> columns, Set<List<Long>> considered) {
+        considered.add(pair);
+
+        RoadLink stored = routes.byPair.get(pair);
         ColonyPos first = nodes.get(pair.get(0));
         ColonyPos second = nodes.get(pair.get(1));
 
-        if (stale && (!budgeted || routed[0] < ROUTES_PER_BUILD) && first != null && second != null) {
-            routed[0] += budgeted ? 1 : 0;
-            route = route(first, second, physical, terrain).orElse(null);
-
-            if (route == null) {
-                routes.byPair.remove(pair);
-            } else {
-                routes.byPair.put(pair, route);
-            }
-        }
-
-        if (route == null) {
+        if (first == null || second == null) {
             return false;
         }
 
-        route.forEach(at -> columns.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
+        boolean stale = stored == null || (stored.state() == RoadEdgeState.FAILED ? nearAny(first, second, dirty)
+                : stored.columns().stream().anyMatch(at -> dirty.contains(RoadRegions.regionOf(at.x(), at.z()))));
+        RoadLink link;
+
+        if (stale && (!budgeted || routed[0] < ROUTES_PER_BUILD)) {
+            routed[0] += budgeted ? 1 : 0;
+
+            String[] why = {""};
+            Optional<List<ColonyPos>> traced = route(first, second, physical, terrain, why);
+
+            link = traced.map(path -> stored != null && path.equals(stored.columns()) ? stored.reused() : RoadLink.planned(path))
+                    .orElseGet(() -> RoadLink.failed(why[0]));
+        } else if (stored == null) {
+            routes.queued++;
+
+            return false;
+        } else {
+            // Sem vez, a guardada fica como está até a próxima montagem; sem sujo, conta mais uma igual.
+            link = stale ? stored : stored.reused();
+        }
+
+        routes.byPair.put(pair, link);
+
+        if (link.state() == RoadEdgeState.FAILED) {
+            return false;
+        }
+
+        link.columns().forEach(at -> columns.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
 
         return true;
     }
 
+    /** Se algum quadrado sujo cai na caixa da busca entre os dois nós. */
+    private static boolean nearAny(ColonyPos first, ColonyPos second, Set<Long> dirty) {
+        if (dirty.isEmpty()) {
+            return false;
+        }
+
+        int maxX = Math.max(first.x(), second.x()) + SEARCH_MARGIN + RoadRegions.SIZE - 1;
+        int maxZ = Math.max(first.z(), second.z()) + SEARCH_MARGIN + RoadRegions.SIZE - 1;
+
+        for (int x = Math.min(first.x(), second.x()) - SEARCH_MARGIN; x <= maxX; x += RoadRegions.SIZE) {
+            for (int z = Math.min(first.z(), second.z()) - SEARCH_MARGIN; z <= maxZ; z += RoadRegions.SIZE) {
+                if (dirty.contains(RoadRegions.regionOf(x, z))) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /** O motivo da porta solta: o da ligação dela que falhou, ou {@code no-route} sem nenhuma tentada. */
+    private static String whyLoose(NeighborhoodRoutes routes, long column) {
+        return routes.byPair.entrySet().stream()
+                .filter(entry -> entry.getKey().contains(column) && entry.getValue().state() == RoadEdgeState.FAILED)
+                .map(entry -> entry.getValue().reason()).findFirst().orElse("no-route");
+    }
+
     /** Toda parte que não chega ao centro tenta os {@value #LINK_TRIES} pares mais próximos com a parte do centro. */
     private static void connect(Map<Long, ColonyPos> nodes, long hub, Map<Long, Long> parent, Map<Long, Integer> physical,
-                                PathTerrain terrain, Routes routes, Set<Long> dirty, int[] routed,
-                                Map<Long, Integer> columns, Set<List<Long>> used) {
+                                PathTerrain terrain, NeighborhoodRoutes routes, Set<Long> dirty, int[] routed,
+                                Map<Long, Integer> columns, Set<List<Long>> used, Set<List<Long>> considered) {
         for (long node : nodes.keySet()) {
             if (find(parent, node) == find(parent, hub)) {
                 continue;
@@ -203,7 +241,7 @@ public final class NeighborhoodRoads {
             candidates.sort(Comparator.comparingLong(pair -> squaredColumns(pair.get(0), pair.get(1))));
 
             for (List<Long> pair : candidates.subList(0, Math.min(LINK_TRIES, candidates.size()))) {
-                if (link(pair, nodes, physical, terrain, routes, dirty, routed, false, columns)) {
+                if (link(pair, nodes, physical, terrain, routes, dirty, routed, false, columns, considered)) {
                     used.add(pair);
                     union(parent, pair.get(0), pair.get(1));
                     break;
@@ -243,7 +281,8 @@ public final class NeighborhoodRoads {
      * no máximo um bloco por dia: com o caminho mais distante novo no mesmo dia em que a ponta andou, espera o dia seguinte.
      */
     private static Optional<ColonyPos> tip(int side, ColonyPos edge, Map<Long, Integer> physical, PathTerrain terrain,
-                                           Routes routes, int[] limit, long today, Map<Long, Long> parent, long hub) {
+                                           NeighborhoodRoutes routes, int[] limit, long today, Map<Long, Long> parent,
+                                           long hub) {
         if (edge == null || find(parent, ColonyRoads.column(edge.x(), edge.z())) != find(parent, hub)) {
             return Optional.empty();
         }
@@ -325,6 +364,12 @@ public final class NeighborhoodRoads {
 
     /** A ligação por A*, de {@code from} a {@code to}, ou vazio sem passagem dentro do teto. */
     static Optional<List<ColonyPos>> route(ColonyPos from, ColonyPos to, Map<Long, Integer> physical, PathTerrain terrain) {
+        return route(from, to, physical, terrain, new String[1]);
+    }
+
+    /** O mesmo, com o motivo da falha em {@code why[0]}: {@code exhausted} no teto de colunas, {@code closed} sem passagem. */
+    static Optional<List<ColonyPos>> route(ColonyPos from, ColonyPos to, Map<Long, Integer> physical, PathTerrain terrain,
+                                           String[] why) {
         int minX = Math.min(from.x(), to.x()) - SEARCH_MARGIN;
         int maxX = Math.max(from.x(), to.x()) + SEARCH_MARGIN;
         int minZ = Math.min(from.z(), to.z()) - SEARCH_MARGIN;
@@ -393,6 +438,8 @@ public final class NeighborhoodRoads {
                 }
             }
         }
+
+        why[0] = expanded >= MAX_EXPANSIONS ? "exhausted" : "closed";
 
         return Optional.empty();
     }

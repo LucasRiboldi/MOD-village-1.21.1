@@ -38,9 +38,10 @@ public final class RoadGraphStore {
         NbtCompound encoded = RoadGraphSave.encode(graph);
         NbtCompound old = payloads.get(colonyId);
 
-        // A trava de trecho sobrevive à troca do grafo (Regra 225).
+        // A trava de trecho e as ligações planejadas sobrevivem à troca do grafo (Regras 225 e 388).
         if (old != null) {
             RoadGraphSave.putSettled(encoded, RoadGraphSave.settled(old));
+            RoadRoutesSave.carry(old, encoded);
         }
 
         payloads.put(colonyId, encoded);
@@ -65,6 +66,29 @@ public final class RoadGraphStore {
         NbtCompound copy = payload.copy();
 
         RoadGraphSave.putSettled(copy, since);
+        payloads.put(colonyId, copy);
+        changed.run();
+    }
+
+    /** As ligações do grafo planejado — Regra 388, ADR-065 §8. Sem grafo guardado, nenhuma. */
+    public com.villagecolony.core.construction.model.NeighborhoodRoutes routes(UUID colonyId) {
+        NbtCompound payload = payloads.get(colonyId);
+
+        return payload == null ? new com.villagecolony.core.construction.model.NeighborhoodRoutes()
+                : RoadRoutesSave.read(payload);
+    }
+
+    /** Grava as ligações, só onde já há grafo da versão conhecida e só quando mudaram. */
+    public void keepRoutes(UUID colonyId, com.villagecolony.core.construction.model.NeighborhoodRoutes routes) {
+        NbtCompound payload = payloads.get(colonyId);
+
+        if (payload == null || !RoadGraphSave.supported(payload) || routes.sameAs(RoadRoutesSave.read(payload))) {
+            return;
+        }
+
+        NbtCompound copy = payload.copy();
+
+        RoadRoutesSave.put(copy, routes);
         payloads.put(colonyId, copy);
         changed.run();
     }

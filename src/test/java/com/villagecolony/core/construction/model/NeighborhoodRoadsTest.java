@@ -62,7 +62,7 @@ class NeighborhoodRoadsTest {
     @Test
     void everyEntranceGetsLinkedToTheCenter() {
         RoadLines.Result result = NeighborhoodRoads.build(Set.of(), at(0, 0), Set.of(at(12, 0), at(0, 15), at(-10, -6)), FLAT,
-                new NeighborhoodRoads.Routes(), Set.of(), NO_GROWTH, 0);
+                new NeighborhoodRoutes(), Set.of(), NO_GROWTH, 0);
         Set<ColonyPos> columns = columnsOf(result);
 
         assertTrue(result.loose().isEmpty(), "entrada sem ligação: " + result.loose());
@@ -97,7 +97,7 @@ class NeighborhoodRoadsTest {
 
     @Test
     void aStoredRouteIsReusedUntilADirtySquareCrossesIt() {
-        NeighborhoodRoads.Routes routes = new NeighborhoodRoads.Routes();
+        NeighborhoodRoutes routes = new NeighborhoodRoutes();
         Set<ColonyPos> fronts = Set.of(at(30, 0));
 
         NeighborhoodRoads.build(Set.of(), at(0, 0), fronts, FLAT, routes, Set.of(), NO_GROWTH, 0);
@@ -118,7 +118,7 @@ class NeighborhoodRoadsTest {
     @Test
     void anEntranceBeyondTheNeighborhoodReachStillGetsLinked() {
         RoadLines.Result result = NeighborhoodRoads.build(Set.of(), at(0, 0), Set.of(at(10, 0), at(150, 0)), FLAT,
-                new NeighborhoodRoads.Routes(), Set.of(), NO_GROWTH, 0);
+                new NeighborhoodRoutes(), Set.of(), NO_GROWTH, 0);
 
         assertTrue(result.loose().isEmpty(), "Regra 320: entrada a 150 blocos ficou solta: " + result.loose());
         assertTrue(columnsOf(result).contains(at(150, 0)), "Regra 320: a entrada distante não entrou no grafo");
@@ -126,7 +126,7 @@ class NeighborhoodRoadsTest {
 
     @Test
     void theEastTipGrowsOneBlockADay() {
-        NeighborhoodRoads.Routes routes = new NeighborhoodRoads.Routes();
+        NeighborhoodRoutes routes = new NeighborhoodRoutes();
         int[] limit = {-200, -200, 200, 200};
         Set<ColonyPos> street = new HashSet<>();
 
@@ -153,7 +153,7 @@ class NeighborhoodRoadsTest {
             street.add(at(x, 0));
         }
 
-        assertFalse(columnsOf(NeighborhoodRoads.build(street, at(0, 0), Set.of(), FLAT, new NeighborhoodRoads.Routes(),
+        assertFalse(columnsOf(NeighborhoodRoads.build(street, at(0, 0), Set.of(), FLAT, new NeighborhoodRoutes(),
                 Set.of(), new int[] {-200, -200, 20, 200}, 0)).contains(at(21, 0)), "Regra 320: a ponta passou do limite");
     }
 

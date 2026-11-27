@@ -29,10 +29,13 @@ final class RoadGraphBuilds {
     private static final Map<UUID, RoadRegions.Memory> PRINTS = new HashMap<>();
 
     /** Modo 3: as ligações traçadas, por colônia. */
-    private static final Map<UUID, com.villagecolony.core.construction.model.NeighborhoodRoads.Routes> ROUTES = new HashMap<>();
+    private static final Map<UUID, com.villagecolony.core.construction.model.NeighborhoodRoutes> ROUTES = new HashMap<>();
 
     /** A conta de releituras iguais de cada aresta, por colônia (Regra 322). */
     private static final Map<UUID, com.villagecolony.core.construction.model.RoadStability.Memory> STABILITY = new HashMap<>();
+
+    /** Quantas ligações esperaram a vez na última montagem do modo 3, por colônia. */
+    private static final Map<UUID, Integer> LAST_QUEUED = new HashMap<>();
 
     /** Quantos quadrados a última montagem refez, por colônia; -1 no modo 1. */
     private static final Map<UUID, Integer> LAST_DIRTY = new HashMap<>();
@@ -44,7 +47,7 @@ final class RoadGraphBuilds {
     record Input(UUID colonyId, Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> fronts,
                  Set<ColonyPos> farmRings, PathTerrain terrain, int maxLinks, int turn, Set<ColonyPos> fixed,
                  Set<ColonyPos> retired, Optional<RoadGraph> previous, java.util.List<Integer> limit, long today,
-                 Set<ColonyPos> far) {
+                 Set<ColonyPos> far, com.villagecolony.data.save.RoadGraphStore store) {
     }
 
     /** O grafo pelo modo; a trava de dias (Regras 225 e 306) só vale no modo atual. */
@@ -81,10 +84,21 @@ final class RoadGraphBuilds {
      */
     private static RoadLines.Result neighborhood(Input in) {
         Set<Long> dirty = dirty(in);
+        // As ligações vêm do save na primeira montagem depois de abrir o mundo, e voltam para ele (Regra 388, ADR-065 §8).
+        com.villagecolony.core.construction.model.NeighborhoodRoutes routes = ROUTES.computeIfAbsent(in.colonyId(),
+                ignored -> in.store().routes(in.colonyId()));
+        RoadLines.Result result = com.villagecolony.core.construction.model.NeighborhoodRoads.build(in.cells(), in.center(),
+                in.fronts(), in.terrain(), routes, dirty, in.limit().stream().mapToInt(Integer::intValue).toArray(), in.today());
 
-        return com.villagecolony.core.construction.model.NeighborhoodRoads.build(in.cells(), in.center(), in.fronts(),
-                in.terrain(), ROUTES.computeIfAbsent(in.colonyId(),
-                        ignored -> new com.villagecolony.core.construction.model.NeighborhoodRoads.Routes()), dirty, in.limit().stream().mapToInt(Integer::intValue).toArray(), in.today());
+        in.store().keepRoutes(in.colonyId(), routes);
+        LAST_QUEUED.put(in.colonyId(), routes.queued());
+
+        return result;
+    }
+
+    /** Quantas ligações esperaram a vez na última montagem do modo 3; a fila não é porta solta (Regra 388). */
+    static int lastQueued(UUID colonyId) {
+        return LAST_QUEUED.getOrDefault(colonyId, 0);
     }
 
     /**
@@ -129,6 +143,7 @@ final class RoadGraphBuilds {
         STABILITY.clear();
         PRINTS.clear();
         LAST_DIRTY.clear();
+        LAST_QUEUED.clear();
         ROUTES.clear();
     }
 }

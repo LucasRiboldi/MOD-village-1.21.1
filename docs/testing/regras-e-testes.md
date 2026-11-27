@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 285
+- **Cita a regra:** 286
 - **Só usa a classe indicada:** 85
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -393,7 +393,8 @@ classe prova menos ainda.
 | 380 | A vila nasce com animais e não abate antes de 6 (autor 26-11, notas do jogo da 0.4.145, e… | cita | FlockHarvestTest, FoundationAnimalsGameTest |
 | 381 | Areia e cacto aparecem sob pedido (autor 26-11, K1 do jogo da 0.4.148: "areia e cacto dev… | cita | ClayOnRequestGameTest |
 | 382 | A casa do fazendeiro perto da plantação grande (autor 26-11, K2 do jogo da 0.4.148: "adic… | cita | FarmerHomeTest |
-| 383 | O ofício não troca, e a troca é dita (autor 26-11, K3 🅲 do jogo da 0.4.148: "nenhum aldeã… | cita | ProfessionLockTest, ProfessionShunTest, WorkerTest |
+| 383 | O ofício não troca, e a troca é dita (autor 26-11, K3 🅲 do jogo da 0.4.148: "nenhum aldeã… | cita | BuilderMaterialsGameTest, ProfessionLockTest, ProfessionShunTest |
 | 384 | O diário dos blocos (autor 26-11, K3 do jogo da 0.4.148: "uma função para registrar cada… | cita | BlockJournalTest, test_block_report |
 | 385 | Muda com espaço (autor 26-11, K4 🅱️ do jogo da 0.4.148: "rebentos não devem ser plantados… | cita | NurserySkyGameTest, TreeNurseryGameTest |
 | 386 | O caminho da mina à casa do mineiro (nota do jogo da 0.4.148, K5 🅱️: "o caminho do arco d… | cita | MineHomeWayGameTest, MineHomeWayTest |
+| 388 | A ligação planejada tem estado e fica no save (ADR-065 §6 e §8, etapa 1, no modo vizinhan… | cita | PlannedGraphReopenGameTest, RoadEdgeStateTest, RoadGraphSaveTest |
