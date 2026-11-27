@@ -74,6 +74,8 @@ final class MineFurnishing {
         // sessões de diagnóstico, "resolvido" é o que aconteceu.
         if (furnished.archRaisedNow()) {
             mine.archIsUp();
+            com.villagecolony.fabric.integration.MineMouths.remember(mine.colonyId(), mouth,
+                    MinecraftTypeAdapter.toDirection(mine.shaft().descent())); // Regra 356
 
             VillageColonyMod.LOGGER.info(
                     "Mine mouth at {} has its stone arch settled — it will not be raised"

@@ -8,6 +8,111 @@ sai daqui e vai para o commit e o `CHANGELOG.md`. Tamanho: P até 1 dia, M 2 a 4
   está em `docs/technical/TODO-herdado-2026-11-13.md`.
 - O TODO antigo inteiro, por jogo, está em `docs/archive/technical/TODO-ate-2026-11-13.md` (`grep`).
 
+## Jogo da 0.4.150 na planície (2026-11-26)
+
+Colônia 18cd007a, 6 notas. Relatório: `docs/testing/relatorios/jogo-20261126-2045.md`. Ofício travado, mudas espaçadas e K5 confirmados.
+
+- [x] L1 🅲 (0.4.153, Regra 390; plano de alturas ainda de longe) — caminho vira grama sem registro (266 de 509 do mod, 86 de 174 do jogador): `PathTrim` e `GradeWork` registram no diário; caminho do jogador nunca sai; o Zelador anda e troca um bloco por vez; a limpeza espera dias de linha parada.
+- [x] L2 (0.4.153, Regra 390) — o Zelador só calça caminho travado em definitivo.
+- [x] L3 🅱️ (0.4.154, Regra 391) — nivelamento oscila (158 trocas num bloco): o plano de alturas é a única régua; `BuildingGaps` obedece a ele.
+- [ ] 🟠 L4 — grafo de 3 modos num só: pesquisa em `docs/research/2026-11-26-grafo-de-um-modo.md`; ADR-065 aceita (árvore que cresce, ponta por recusa de lote, aresta com estado); 5 etapas, a 1ª: estado por aresta e traçado no save.
+
+## Jogo da 0.4.148 na planície (2026-11-26)
+
+Colônia df5db219, 20 notas. Relatório: `docs/testing/relatorios/jogo-20261126-1550.md`.
+
+- [x] K1 🅰️ — coleira chamava Zelador, pastor e construtor e teletransportava: emenda da 372 na 0.4.149; areia e cacto sob pedido, Regra 381.
+- [x] K2 🅱️ — obras paradas pela plantação devida: emenda da 374 na 0.4.149; casa do fazendeiro perto da plantação grande, Regra 382.
+- [ ] 🟠 K3 🅲 — feito na 0.4.150: ofício travado e aviso no log (Regra 383), diário dos blocos do jogador e do mod (Regra 384). Falta: o Zelador andar até o bloco e mexer em um por vez, com o tempo de quebrar (mexe nos 8 sistemas do chão; pede desenho).
+- [x] K4 🅱️ — mudas a 5 de outra muda ou tronco e a 8 de construção; anel da borda até 64, podendo sair da vila: Regra 385 na 0.4.150.
+- [x] K5 🅱️ — caminho da porta da casa do mineiro à entrada da mina, ligado à linha mais perto até 128 blocos: Regra 386 na 0.4.150.
+- [ ] 🟡 K7 — casa do lenhador na borda: feita e testada em foco na branch `wip/k7-casa-do-lenhador` (Regra 387, 701379c2), fora da 0.4.150 a pedido do autor; falta a suíte inteira.
+- [ ] ⚪ K6 — chão em áreas retangulares com degrau de 1 (etapa 3 do ADR-064), adiado pelo autor.
+
+## Jogo da 0.4.145 no deserto (2026-11-26)
+
+Colônia 07e212d1, 15 dias, 33 notas. A casa grande nova não teve queixa. Relatório: `docs/testing/relatorios/jogo-20261126-1040.md`.
+
+- [x] J1 🅱️ — fundidor preso a 150 blocos: coleira de 48 da cama, Regra 372 na 0.4.146.
+- [x] J3 🅲 — mina e casa do mineiro fora do grafo, nó do cartógrafo: Regra 371 e emenda da 335 na 0.4.146.
+- [ ] 🟠 J3 — a porta do açougue dá para o quintal murado e continua solta (Regra 360); espera escolha.
+- [x] J2 🅲 — obras paradas, curral e plantação primeiro, plantação a cada 10, motivo diário: Regras 373 a 375 na 0.4.147.
+- [x] J7 — o construtor se muda para perto da obra (cama livre ou troca com adulto sem profissão): Regra 376 na 0.4.147.
+- [ ] 🟠 J7 — falta pôr cama e baú numa casa sem cama quando não há cama livre nem adulto sem profissão perto da obra.
+- [ ] 🟠 J4 🅱️ — blocos de fuga somem depois de 1 dia; o lenhador pede casa na borda quando a árvore fica a mais de 30.
+- [ ] 🟡 J5 🅱️ — o lenhador corta galhos soltos e folhas da árvore.
+- [ ] 🟡 J6 🅲 — água do curral fora do caminho do portão; a vila nasce com um casal de cada; o pastor traz sempre os animais em volta; sem abate antes de 6 de cada.
+
+## Jogo da 0.4.143 no deserto (2026-11-25)
+
+Colônia 33439c4e, 17 notas. Confirmou a 0.4.143: a obra nova alisou o chão em volta nas 6 aberturas (`VC_SITE_EDGE maxStep=1`). Relatório: `docs/testing/relatorios/jogo-20261125-2210.md`.
+
+- [x] H3 🅰️ — muda dentro da mina: Regra 365 na 0.4.144.
+- [x] H2 🅱️ — nó de entrada atrás da casa: Regra 366 na 0.4.144.
+- [x] H1 🅲 — entradas soltas do grafo: Regra 367 na 0.4.144. Conferir a mina e a casa do mineiro no `VC_ROAD_GRAPH` (motivo Br/Bu/Bb/Bm/Bo).
+- [x] H4 🅱️ — vala em volta da obra e covas de 2: Regra 368 na 0.4.144.
+- [x] H5 — o pastor preso na casa grande: casa grande refeita (Regra 369) e baú que não tira o acesso à cama (Regra 370) na 0.4.145.
+- [ ] 🟠 H5 etapas 2 e 3 (0.4.155: cópias da casa do mineiro e quadro, Regra 392; falta modelo próprio por ofício e mudança garantida) — casas `majest_<ofício>` com cama, baú, decoração e placa, e a mudança do titular (desenho de 2026-11-26).
+- [ ] 🟡 Revisão da 0.4.145: Regra 370 com a cama em outro andar; `ChestPlacer.repairSlot` sem a Regra 370; centro da vila 1 bloco abaixo.
+- [ ] 🟠 H5 — manutenção do fundidor (sem manutenção ativa, 78% parado) e do carpinteiro (a da Regra 221 é proibida com obra aberta, 59% parado). Espera a escolha do autor.
+
+## Jogo da 0.4.141 no deserto (2026-11-25)
+
+Colônia 1577f7f0, 30 min, 4 notas e 4 fotos do terreno. Confirmou a 0.4.140: o plano nivelou 660 colunas (pendente 353 → 98) e a boca da mina nasceu no chão aberto (`reached=true`).
+
+- [x] N1 e N3 — terra no deserto: G1 🅲, Regra 363 na 0.4.142.
+- [x] N2 🅲 — arenito liso copiado para o alto pelo Zelador; só o Zelador muda o terreno, e só chão natural: Regra 364 na 0.4.142.
+- [x] N4 🅲 — fazendeiro preso no composter (32 pulos): Regra 362 na 0.4.142.
+- [ ] 🟡 Construtor 51% sem trabalhar (38% travado) e carpinteiro 51%: olhar no próximo jogo.
+
+## Jogo da 0.4.139 no deserto (2026-11-25)
+
+Dois mundos no mesmo `latest.log`: mundo 1 (16:10–16:25, colônia f6350e62, deserto na montanha) e mundo 2 (16:25–17:12,
+colônia 5bbe35c7). Spark F6a96gp9tG e tvlhbPHSc9. Escolhas do autor: E1 🅰️, E2 🅲, E3 pesquisar, E4 🅱️.
+
+- [x] E1 🅰️ — o Zelador calçou o jogo inteiro e o plano de alturas rodou 3 vezes (pendente 1.972 → 2.137): Regra 358 na
+  0.4.140. Conferir `VC_GRADE` caindo e linhas `VC_DOOR_CLEAR` no próximo jogo.
+- [x] E2 🅲 — boca da mina no oco da caverna (406,127,326, topo em ~149): Regra 359 na 0.4.140. Conferir `VC_MINE_MOUTH`
+  com `reached=true` e o arco visível.
+- [x] E4 🅱️ — notas "nó na frente da porta" (563,67,56) e "fazenda no meio do lado" (595,70,69): Regra 360 na 0.4.140.
+- [ ] 🟠 E3 — mundo 1: nenhum lote coube no morro (544 portas, 0 lotes, sem caminho de até 32); construtor 100% parado e
+  a casa do mineiro sem lote. Pesquisa em `docs/research/2026-11-25-lote-no-morro.md`; espera a escolha do autor.
+- [ ] 🟠 Programa 🅲 do chão (ADR-064): etapa 1 feita na 0.4.141 (foto do terreno e `terrain_report.py`, Regra 361);
+  falta conferir as fotos no próximo jogo. Depois: etapa 2 (banco de terrenos no `core`), etapa 3 (lote pelo plano, ADR
+  própria, com 2 lados acessíveis e a volta inteira), etapa 4 (fases 4 e 5 da ADR-063). Um jogo do autor entre elas.
+- [ ] 🟡 E5 — pico de 8,3 s no começo do mundo 2 em `BigHouseFoundation.findSafeOrigin` (TPS mínimo 8,25).
+- [ ] 🟡 E6 — fundidor d852b6e9 sufocado em parede em 396,136,375 um minuto depois do início, sem casa. Evidência
+  insuficiente.
+- [ ] 🟡 E7 — ócio no mundo 2: fundidor 53% à toa (sem pedra nem minério; a trava `smelter_raw` barrou 1.427 de 1.429),
+  pastor sem alcançar ovelha 5×, 3 sem ofício sem cama por 1.659 s, construtor 223 s sem tábua com o carpinteiro sem tora.
+- [ ] 🟡 Blocos que surgiram sozinhos no mundo 2 (buscar fluxo de fabricação): bone_meal 928, grass_block 212,
+  farmland 12, wheat 12, oak_sapling 9, granite 7, clay 1, acacia_sapling 1, os corantes (gray, light_blue, lime, magenta,
+  orange, pink, white, yellow) 1 cada; mundo 1: jungle_sapling, oak_sapling e os corantes light_blue, magenta, orange, white.
+
+## Jogo da 0.4.136 no deserto (2026-11-25)
+
+Triagem: `docs/testing/relatorios/jogo-20261125-1320.md`; imagens locais em `reports/imagens-autor/2026-11-25/jogo-0136/`.
+Escolhas do autor: G1 🅲, G2 🅲, G3 🅱️, G4 🅲, G5 🅲; ordem G2 → G5 → G1 → G3 → G4, depois a pesquisa dos pontos sem escolha.
+
+- [x] G2 🅲 — areia que cai: Regra 356 na 0.4.137 (candidata). Conferir em jogo: porta do mineiro (-185,64,148) livre, mina
+  (-189,?,148) alcançável, `VC_DOOR_CLEAR` e `VC_MINE_STAIR_CLEAR` no log, fazenda de -202,70,150 sem vão embaixo.
+- [ ] 🟠 G5 🅲 — vila inteira em degraus de 1 (curral grande com faixa de solo do bioma): pesquisa em
+  `docs/research/2026-11-25-plano-de-alturas.md`, com as 4 decisões do autor (🅲 em todas: orçamento pelo atraso, rampa e
+  depois escada, peças da vila e paredão, praia com contorno natural) e na ADR-063, em 5 fases. Fases 1 a 3 feitas (0.4.138 e 0.4.139, Regra 357: o Zelador
+  executa o plano); faltam a rampa e a escada (fase 4) e a praia (fase 5). Conferir no jogo a curva de `VC_GRADE`
+  (colunas a mexer caindo, degraus, conflitos, `keepers=`, ms) e se a porta do curral grande ficou acessível. Os degraus maiores que 1 subiram de 518 para 1.909 no jogo.
+- [x] G1 🅲 — feito na 0.4.142 (Regra 363). Era: terra e grama no deserto: `GroundSmoothing.column` e `fillGap` aterram com terra sob areia;
+  `MineYard.fillBelow` também; a geração usa grama quando o chunk é todo água (`VillageSoil.GRASS`).
+- [ ] 🟠 G3 🅱️ — obra fechada pela metade: `desert_farm_2` em -318,63,152 com 18 de 66 peças (48 pulos "sand/sandstone is in
+  the way"); a obra só fecha com 95% das peças e o construtor tira o chão natural da peça.
+- [ ] 🟠 G4 🅲 — obras longe: o socorro em bairro (`MaeRescue`, Regras 222/226) ancora na obra anterior e subiu de z 118 a 15.
+- [ ] 🟡 G6 — casas e fazenda sem nó no grafo (notas em -221,63,191 e -229,63,167): investigar depois da G2.
+- [ ] 🟡 Dois carpinteiros afogados no mesmo ponto (-217,61,160); mineiro morto por queda em -216,63,171.
+- [ ] 🟡 Árvore cortada sem o lenhador encostar (nota em -300,63,176); golem deve boiar e pular (pedido novo).
+- [ ] 🟡 Ócio acima de 60% em construtor, carpinteiro, lenhador, pedreiro, pastor e fundidor (92%, sem minério).
+- [ ] 🟡 Blocos surgidos sozinhos a buscar fluxo de fabricação: farinha de osso 40.144, arenito liso 592, trigo 506,
+  ferro cru 469, arenito 392, grama 198, carvão 161.
+
 ## Estado de integração — 0.4.134 (2026-11-24)
 
 - [ ] Conferir em jogo a Regra 355 (0.4.136): `VC_PEN_WORKING state=started` seguido da tosquia, e quantas vezes sai `state=expired`. Se fazendeiro ou lenhador aparecerem em `fenced in` com trabalho dentro do cercado, avaliar a regra geral (opção B do N05).

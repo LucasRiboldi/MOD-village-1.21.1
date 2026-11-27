@@ -2,6 +2,9 @@
 
 Uso: python scripts/gen_large_animal_pen.py
 Requer nbtlib. Atualiza somente colony/large_animal_pen.nbt.
+
+Atenção: o arquivo do mod tem um portão em cada lado e foi editado fora deste script; rodá-lo apaga três portões. A
+água fica dois blocos fora da reta dos portões, em (9, 0, 9) (Regra 379; `tests/test_large_animal_pen.py`).
 """
 
 from pathlib import Path
@@ -32,9 +35,10 @@ def structure():
                 else:
                     add(blocks, x, 1, z, "oak_fence")
 
-    blocks = [entry for entry in blocks if entry[:4] not in {(center, 0, center, "grass_block")}
+    water = (center + 2, center + 2)
+    blocks = [entry for entry in blocks if entry[:4] not in {(water[0], 0, water[1], "grass_block")}
               and entry[:4] not in {(x, 0, z, "grass_block") for x, z in crops}]
-    add(blocks, center, 0, center, "water", {"level": "0"})
+    add(blocks, water[0], 0, water[1], "water", {"level": "0"})
     for x, z in crops:
         add(blocks, x, 0, z, "farmland", {"moisture": "7"})
         add(blocks, x, 1, z, "wheat", {"age": "7"})

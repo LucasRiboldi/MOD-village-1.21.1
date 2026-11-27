@@ -117,7 +117,7 @@ class ProfessionAssignerTest {
         assertTrue(ProfessionAssigner.vacancy(workers.ofColony(COLONY), 15).isEmpty());
     }
 
-    /** Regra 330: oito adultos não têm Zelador; o nono vira o Zelador, e a vila nunca tem dois. */
+    /** Regra 330: oito adultos não têm Zelador; o nono vira o Zelador, e sem atraso a vila não tem dois. */
     @Test
     void theNinthAdultBecomesTheOnlyGroundskeeper() {
         addWorkers(COLONY, 8);
@@ -133,6 +133,24 @@ class ProfessionAssignerTest {
         assertEquals(1, workers.ofColony(COLONY).stream()
                 .filter(worker -> worker.profession().filter(ProfessionType.GROUNDSKEEPER::equals).isPresent()).count(),
                 "Regra 330: a vila de quinze adultos não tem um Zelador só");
+    }
+
+    /** Regra 357 (ADR-063): com o chão da vila parado por três dias, a vila contrata o segundo Zelador, e não um terceiro. */
+    @Test
+    void aStalledGroundOpensTheSecondGroundskeeper() {
+        try {
+            for (int pending : new int[] {900, 950, 940, 960}) {
+                GradeCrew.endOfDay(COLONY, pending);
+            }
+            addWorkers(COLONY, 16);
+            ProfessionAssigner.assignMissing(workers, COLONY, everyone(), 16);
+
+            assertEquals(2, workers.ofColony(COLONY).stream()
+                    .filter(worker -> worker.profession().filter(ProfessionType.GROUNDSKEEPER::equals).isPresent()).count(),
+                    "Regra 357: o atraso parado não abriu a segunda vaga de Zelador");
+        } finally {
+            GradeCrew.clearAll();
+        }
     }
 
     /** Uma vila grande emprega oito, e só. */

@@ -55,6 +55,9 @@ public final class ColonyModels {
 
     private static final String TRADE = "trade_";
 
+    /** O nome da casa de ofício pedido pelo autor (Regra 392): {@code majest_<oficio>}, aceito ao lado de {@code trade_}. */
+    private static final String MAJEST = "majest_";
+
     /**
      * Modelos nomeados que entram no rodízio de uma profissão específica, nesta ordem: o armazém
      * pequeno antes do grande (Regra 165).
@@ -120,11 +123,13 @@ public final class ColonyModels {
                     .or(() -> find(FOLDER + "/" + model))
                     .ifPresent(found::add));
 
-            String name = TRADE + profession.name().toLowerCase(Locale.ROOT);
+            for (String prefix : List.of(TRADE, MAJEST)) {
+                String name = prefix + profession.name().toLowerCase(Locale.ROOT);
 
-            find(FOLDER + "/" + style + "/" + name)
-                    .or(() -> find(FOLDER + "/" + name))
-                    .ifPresent(found::add);
+                find(FOLDER + "/" + style + "/" + name)
+                        .or(() -> find(FOLDER + "/" + name))
+                        .ifPresent(found::add);
+            }
         }
 
         return List.copyOf(found);
@@ -151,14 +156,15 @@ public final class ColonyModels {
             return Optional.of(profession);
         }
 
-        int at = path.lastIndexOf(TRADE);
+        String prefix = named.startsWith(MAJEST) ? MAJEST : TRADE;
+        int at = path.lastIndexOf(prefix);
 
         if (at < 0) {
             return Optional.empty();
         }
 
         try {
-            return Optional.of(ProfessionType.valueOf(path.substring(at + TRADE.length()).toUpperCase(Locale.ROOT)));
+            return Optional.of(ProfessionType.valueOf(path.substring(at + prefix.length()).toUpperCase(Locale.ROOT)));
         } catch (IllegalArgumentException unknown) {
             return Optional.empty();
         }

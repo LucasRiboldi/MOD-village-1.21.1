@@ -143,8 +143,11 @@ public final class BuilderMaterialsGameTest implements FabricGameTest {
     public void theGlassForAPaneAppearsInTheSmelterChestWithoutABeach(TestContext context) {
         BlockPos far = context.getAbsolutePos(new BlockPos(2, 2, 2)).add(-3_000, 0, 3_000);
         Setup setup = setUp(context, far, Items.GLASS_PANE);
-        // A vidraça é do fundidor desde a divisão por material (CraftFamily, 2026-10-11).
-        VillageColonyMod.WORKERS.find(setup.carpenter()).orElseThrow().assign(ProfessionType.SMELTER);
+        // A vidraça é do fundidor desde a divisão por material (CraftFamily, 2026-10-11). O ofício não troca por
+        // assign (Regra 383): o teste solta o de carpinteiro antes.
+        var worker = VillageColonyMod.WORKERS.find(setup.carpenter()).orElseThrow();
+        worker.unassign();
+        worker.assign(ProfessionType.SMELTER);
 
         try {
             for (int attempt = 1; attempt <= 4; attempt++) {

@@ -224,13 +224,15 @@ public final class Worker {
     }
 
     /**
-     * Dá uma função ao trabalhador.
-     *
-     * <p>Substitui a anterior sem cerimônia: a colônia realoca conforme a
-     * necessidade muda, e isso não é erro.
+     * Dá uma função ao trabalhador sem ofício. Quem já tem ofício fica com ele: nenhum aldeão de profissão a troca —
+     * Regra 383 (autor 26-11, K3 do jogo da 0.4.148: "nenhum aldeão de profissão pode deixar de ser ela ou trocar").
      */
     public void assign(ProfessionType profession) {
-        this.profession = Objects.requireNonNull(profession, "profession");
+        Objects.requireNonNull(profession, "profession");
+
+        if (this.profession == null) {
+            this.profession = profession;
+        }
     }
 
     /** Devolve o trabalhador ao estado sem função. */

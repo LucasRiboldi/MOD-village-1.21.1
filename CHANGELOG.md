@@ -17,6 +17,168 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.155] — candidata, 2026-11-27
+
+H5, item 6 (casas de ofício, mínimo de esforço). Regra 392.
+
+- Lenhador, pedreiro, fundidor, carpinteiro, fazendeiro, pastor e Zelador têm a casa `majest_<ofício>`, cópia da casa do mineiro em todo estilo; entra na vaga da casa de ofício, que aceita `majest_` ao lado de `trade_` (`TradeHouseModelsTest`).
+- A casa pronta ganha o quadro com o ícone do ofício na parede de fora, acima da porta (`TradeHouseSignGameTest`, `VC_TRADE_HOUSE_SIGN`).
+- O titular dorme nela só pela troca de cama da Regra 74; cada casa terá modelo próprio depois.
+
+## [0.4.154] — candidata, 2026-11-27
+
+L3 🅱️ do jogo da 0.4.150 (o chão que subia e descia). Regra 391, emenda da Regra 357.
+
+- O plano de alturas é a única régua: o vão entre as casas não mexe na coluna que o plano cobre (`BuildingGapsGameTest`).
+- O Zelador anda até a coluna do plano e a nivela, uma por passada de 10 segundos, só quando não está calçando; escolhe a mais perto dentro da mesma prioridade da fila, e desiste depois de 1 minuto sem chegar (`GradeWorkGameTest`).
+- No diário dos blocos, cada nivelador tem seu nome: `plano_alturas`, `vao_casas`, `nivelamento`.
+- O plano anda mais devagar: antes eram até 16 colunas por passada, de longe.
+
+## [0.4.153] — candidata, 2026-11-27
+
+ADR-065, etapa 2, do jogo da 0.4.150 (L1 🅲 e L2). Regra 390, emendas das Regras 186 e 242.
+
+- No modo `vizinhanca`, o Zelador só calça ligação travada ou já calçada (`LockedStepsTest`).
+- A limpeza só devolve ao solo o caminho que a colônia calçou (as colunas vão para o save, `roadLaid`), e só depois de 2 dias de jogo fora de toda linha; o do jogador e o da vila gerada ficam (`RoadGraphSaveTest`, `PathTrimKeeperGameTest`).
+- Quem limpa é o Zelador: ele anda até a coluna e troca um bloco por passada de 10 segundos, só quando não está calçando; cada troca vai para o diário dos blocos como `limpeza`.
+- O caminho calçado antes desta versão não está na lista e não é limpo. O plano de alturas ainda troca blocos de longe.
+
+## [0.4.152] — candidata, 2026-11-27
+
+M1 🅲 do jogo da 0.4.151 (linhas duplas lado a lado no modo `vizinhanca`). Regra 389, emenda da ADR-065 e da Regra 320. Vale só no modo `vizinhanca`.
+
+- A malha de cidade: quatro ruas retas saem do centro nos eixos, até a entrada mais distante de cada lado; a que não passa encurta de 8 em 8 (`CityStreetsTest`).
+- Cada entrada liga em reta à linha mais perto na mesma coluna ou linha; se a reta não passa, desvia até o mesmo ponto; sem reta, liga ao ponto mais perto da rede.
+- Nunca duas linhas lado a lado: no traçado, a coluna da rede custa ×0,1, a encostada de lado +4 e a curva +2 (`StreetRouter`).
+- A rua do lado com mais recusas de lote cresce 16 blocos quando a busca dá a volta sem lote, uma vez por dia (`StreetGrowthTest`).
+- Saem a vizinhança relativa e a ponta que andava 1 bloco por dia.
+
+## [0.4.151] — candidata, 2026-11-27
+
+ADR-065, etapa 1, do jogo da 0.4.150 (L4). Regra 388. Vale só no modo `vizinhanca` do grafo (`/vc grafo modo vizinhanca`); o modo `atual` segue o padrão até a etapa 4.
+
+- Cada ligação do grafo guarda o traçado e o estado: planejada, travada depois de 3 montagens iguais, calçada quando o mundo tem caminho em toda coluna, ou falhou com o motivo (`closed`, `exhausted`) (`RoadEdgeStateTest`).
+- A ligação que falha não é tentada de novo em toda leitura; só quando um bloco muda dentro da caixa da busca. Antes, cada porta sem passagem custava 3 buscas de até 8.000 colunas por leitura.
+- A ligação que esperou a vez sai no log como `queued=`, e não como porta solta.
+- As ligações vão para o save ao lado do grafo, e reabrir o mundo não as refaz (`RoadGraphSaveTest`, `PlannedGraphReopenGameTest`).
+- Pesquisa do grafo (`docs/research/2026-11-26-grafo-de-um-modo.md`) e ADR-065: um modo só, árvore que cresce, ponta por recusa de lote.
+
+## [0.4.150] — candidata, 2026-11-26
+
+Do jogo da 0.4.148 na planície: parte do K3 🅲, K4 🅱️ e K5 🅱️. Regras 383 a 386. O Zelador andar até o bloco e mexer em um por vez (o resto do K3) e a casa do lenhador na borda (K7) ficam para depois; o K7 está guardado na branch `wip/k7-casa-do-lenhador`, sem a suíte inteira rodada.
+
+- O ofício não troca: quem já tem profissão não recebe outra, e a troca que acontecer mesmo assim sai no log como `VC_PROFESSION_CHANGE` (Regra 383, `ProfessionLockTest`).
+- O diário dos blocos: cada bloco que o jogador e o mod mudam vai para `logs/villagecolony-blocks-<sessão>.jsonl`, e `scripts/block_report.py` conta por quem e lista os blocos que os dois mexeram (Regra 384, `BlockJournalTest`).
+- A muda do viveiro e do bosque nasce a 5 blocos ou mais de outra muda ou tronco e a 8 ou mais de qualquer construção da colônia; o anel da borda vai até o alcance do lenhador, 64 blocos do centro, e pode sair da vila (Regra 385, `NurserySkyGameTest`).
+- A porta da casa do mineiro e a entrada da mina ficam ligadas por um caminho, e esse trecho se liga à linha do grafo mais perto, a até 128 blocos. No jogo da 0.4.148 a linha estava a uns 70 blocos, acima do limite de 64, e o caminho que existia foi feito pelo jogador (Regra 386, `MineHomeWayTest`, `MineHomeWayGameTest`).
+
+## [0.4.149] — candidata, 2026-11-26
+
+Do jogo da 0.4.148 na planície: K1 🅰️ e K2 🅱️, que corrigem as Regras 372 e 374. Regras 381 e 382.
+
+- A coleira da cama solta o Zelador, o pastor e o construtor, que trabalham pela vila toda, e ninguém mais é teletransportado. No jogo ela disparou 805 vezes, levou o Zelador 32 vezes para a cama e tirava o pastor da coleta com o animal na corda e a porteira aberta (emenda da Regra 372, `HomeLeashGameTest`).
+- A areia e o cacto pedidos para a obra aparecem no baú do ofício, como a argila (Regra 381, `ClayOnRequestGameTest`).
+- As obras voltam a sair: a plantação devida da Regra 374 passava pela frente do adiamento da 373; agora espera, e a plantação grande nasce em qualquer lote, sem o alcance do fazendeiro (emenda da Regra 374, `FirstBuildsTest`).
+- A casa do fazendeiro nasce perto da plantação grande (Regra 382, `FarmerHomeTest`).
+
+## [0.4.148] — candidata, 2026-11-26
+
+Do jogo da 0.4.145 no deserto: J4 🅱️ (a primeira parte), J5 🅱️ e J6 🅲. Regras 377 a 380.
+
+- O pedregulho que o aldeão põe no desvio para sair de onde ficou preso some depois de um dia de jogo, se ninguém estiver em cima; o que o jogador trocou fica (Regra 377, `TemporaryStepsGameTest`, `VC_ESCAPE_STEPS`). A casa do lenhador na borda ainda espera decisão.
+- O lenhador leva o galho solto que ficou no ar e a copa que ia apodrecer da árvore que derrubou; a colheita continua contando só o tronco (Regra 378, `TreeLeftoversGameTest`; o `LumberjackGameTest` da copa de pé mudou junto).
+- A água do curral grande fica fora da reta dos quatro portões, em (9, 0, 9), e ainda molha toda a plantação (Regra 379, `test_large_animal_pen`).
+- A vila nasce com um casal de vaca, porco, ovelha e galinha a oeste da casa grande, e nenhuma espécie é abatida com menos de 6 adultos (Regra 380, `FoundationAnimalsGameTest`, `FlockHarvestTest`).
+
+## [0.4.147] — candidata, 2026-11-26
+
+Do jogo da 0.4.145 no deserto: J2 🅲 e J7. Regras 373 a 376.
+
+- As obras voltam a sair: a plantação que não tinha lote ao alcance do fazendeiro voltava a cada minuto, achava o mesmo lote longe e apagava o cursor da busca da casa, que recomeçava do centro e nunca acabava — no jogo, 15 dias sem obra com espaço livre. Agora ela espera a busca da casa terminar (Regra 373, `FarmPostponeTest`).
+- O curral grande é a primeira obra da vila e a plantação grande a segunda; depois, a cada 10 construções prontas, a vila levanta mais uma plantação grande (Regra 374, `FirstBuildsTest`).
+- No fim do expediente, a linha `VC_LOT_REFUSALS` diz por que os lotes do dia foram recusados, com a conta e até 5 lugares de exemplo por motivo (Regra 375, `LotRefusalsDayTest`).
+- Com a obra aberta a mais de 30 blocos da cama dele, o construtor passa para a cama livre mais perto da obra, ou troca de cama com o adulto sem profissão que dorme mais perto dela (`VC_BUILDER_HOME`). Pôr cama e baú numa casa sem cama ainda não foi feito (Regra 376, `BuilderHomeGameTest`).
+
+## [0.4.146] — candidata, 2026-11-26
+
+Do jogo da 0.4.145 no deserto: J1 🅱️ (com o raio contado da cama) e J3 🅲. Regras 371 e 372, emenda da 335. J2, J4 a J7 vêm nas próximas versões.
+
+- A coleira da cama: fora o mineiro e o lenhador, ninguém busca recurso de superfície a mais de 48 blocos da própria cama, e quem fica mais longe larga a tarefa e anda de volta; sem chegar mais perto em 3 passadas, é levado até a cama (`VC_LEASH`). No jogo, o fundidor foi buscar areia a mais de 150 blocos e ficou preso lá o jogo todo (Regra 372, `HomeLeashGameTest`).
+- A entrada da mina volta ao grafo depois que a mina desce um nível: o pátio da boca era procurado na altura do fundo. A frente de cada porta perto da boca (a casa do mineiro) e as colunas em volta não são folga da boca para o grafo; o caracol da escada continua fechado (Regra 371, `MineYardGameTest`).
+- Na casa de meio-andar, só a porta mais baixa vira entrada do grafo: o cartógrafo do deserto tinha um nó da porta de cima (emenda da Regra 335, `DoorFrontsGameTest`).
+
+## [0.4.145] — candidata, 2026-11-26
+
+Do H5 do jogo da 0.4.143 (o pastor preso no térreo da casa grande), etapa 1 do desenho das casas de ofício (`docs/superpowers/specs/2026-11-26-casas-de-oficio-design.md`). Regras 369 e 370.
+
+- A casa grande da vila nova é refeita: 2 blocos mais funda (9 × 12 × 11), piso de tijolo de pedra no lugar do chão com a porta logo acima, escada com o piso de cima aberto sobre os três degraus e sem corrimão, piso de cima inteiro, 4 tochas por dentro e 7 camas e 7 baús, cada baú encostado em parede e tudo alcançável a pé da porta. A planta sai de `scripts/houses/gen_big_house.py`, que só grava se `scripts/houses/house_rules.py` não achar problema. A casa grande já de pé no mundo não muda; a inacabada de um save antigo retoma pela planta nova (Regra 369, `test_house_rules`, `BigHouseModBlueprintGameTest`).
+- O baú que o mod põe ao lado de uma cama nunca tira de quem entra pela porta o acesso a uma cama ou à frente de outro baú (Regra 370, `ChestPassageGameTest`).
+- Com baú ao lado de cada cama na casa grande, o fazendeiro sem cama passa a ganhar a cama livre de um morador morto; ninguém nasce no lugar do morto (`VillageFoundationGameTest`).
+
+## [0.4.144] — candidata, 2026-11-25
+
+Do jogo da 0.4.143 no deserto: H1 🅲, H2 🅱️, H3 🅰️ e H4 🅱️. Regras 365 a 368. O H5 (o pastor preso e a manutenção do fundidor e do carpinteiro) ficou diagnosticado e espera a escolha do autor.
+
+- O viveiro do lenhador e o bosque só nascem a céu aberto: no jogo, o lenhador plantou carvalho em terra enraizada dentro do túnel da mina (Regra 365, `NurserySkyGameTest`).
+- A porta que olha para fora não leva o nó de entrada para trás da casa: a busca anda pelos dois lados da porta e fica com o que sai com menos passos; a laje dupla da parede deixou de contar como degrau (Regra 366, `DoorFrontsGameTest`).
+- Toda entrada de construção (porta, plantação, curral, mina) se liga ao grafo em toda releitura, sem esperar a vez da busca cara; com uma busca por releitura, as entradas se revezavam e o grafo trocava de forma. A entrada que fica solta diz o motivo de cada coluna bloqueada em volta (Regra 367, `RoadLinesDoorsTest`).
+- A faixa em volta da obra aberta fica na altura do chão em volta, e não na base da planta: o Zelador cavava uma vala de 2 em volta da obra. A cova natural de 2 ou mais perto das construções entra no plano de alturas para ser enchida (Regra 368, `OpenSiteRingGameTest`).
+
+## [0.4.143] — candidata, 2026-11-25
+
+- A obra nova volta a cuidar do terreno dela como antes: o alisamento em volta na abertura (Regra 297) voltou, a pedido do autor antes do jogo. A Regra 364 continua para o Zelador: ele só sobe ou desce chão natural, e a rua e o caminho ficam onde estão.
+
+## [0.4.142] — candidata, 2026-11-25
+
+Do jogo da 0.4.141 no deserto: G1 🅲, N2 🅲 (com a calçada e o lote) e N4 🅲. Regras 362, 363 e 364.
+
+- O composter e os outros blocos de trabalho não contam como telhado, e o fazendeiro não escolhe ficar em cima deles; a terceira descida seguida do mesmo telhado põe o aldeão no chão e solta a tarefa (`VC_ROOF_LOOP`). No jogo, o fazendeiro pulou 32 vezes do composter (Regra 362, `RoofDescentGameTest`).
+- Todo aterro usa o chão do bioma: arenito debaixo de areia, terra debaixo de grama; a geração aterra o chunk todo de água com o chão do bioma, e não com grama. O Zelador devolve a areia à terra que ficou no deserto (`VC_SOIL_RESTORE`) (Regra 363, `BiomeSoilGameTest`).
+- Só o Zelador muda o terreno depois da geração, além do lote e do corredor da obra; ele só sobe ou desce chão natural, e a rua e o caminho ficam onde estão — antes, o arenito liso da rua era copiado para o alto. A abertura da obra não alisa mais o chão em volta (Regra 364, `StreetKeptGameTest`).
+
+## [0.4.141] — candidata, 2026-11-25
+
+Medição do terreno da vila (ADR-064, etapa 1 do programa 🅲). Regra 361. Não muda nada no jogo.
+
+- A colônia grava uma foto do terreno em `logs/villagecolony-terrain-<colônia>-<rótulo>.json.gz`: ao medir a vila (`start`), no fim do expediente (`day<N>`), em `/vc salvar` e ao fechar o servidor (`last`). Cada coluna da caixa da vila mais 16 leva a altura, o bloco, o tipo, quem mexeu desde que o servidor abriu e a altura-alvo do plano; mais as estruturas, as portas e as bocas da mina (`TerrainSnapshotGameTest`).
+- `scripts/terrain_report.py` compara a primeira foto com a última: acesso a pé do centro com degrau de até 1, degraus maiores que 1, lados alcançados de cada estrutura, terra mexida por quem, o que o jogador quis (passagem aberta ou fechada, desnível, mod desfeito, aplainado) e o mapa em PNG. O `game_report.py` ganhou a seção "Terreno (ADR-064)".
+- `scripts/research/save_to_terrain.py` faz a foto a partir do save, para os jogos de antes.
+
+## [0.4.140] — candidata, 2026-11-25
+
+Do jogo da 0.4.139 (dois mundos no deserto), escolhas E1 🅰️, E2 🅲 e E4 🅱️. Regras 358, 359 e 360.
+
+- O Zelador que está calçando também limpa a porta tapada e a escada da mina e leva o plano de alturas adiante, no mesmo orçamento do dia. No jogo, o plano rodou 3 vezes em 45 minutos porque a calçada tirava a vez (Regra 358, `GroundKeeperPavingGameTest`).
+- A boca da mina nasce no chão aberto para o céu e alcançado a pé da vila: a busca na faixa da borda ficou mais densa (1, 3 e 5 blocos para dentro, a cada 3), olha até 32 acima do centro e pula o oco de caverna com morro por cima. O Zelador tira o chão natural por cima da boca, até 6 acima, sem tocar no arco. `VC_MINE_MOUTH` mostra a altura, os blocos por cima e se foi alcançada a pé (Regra 359, `MineMouthSurfaceGameTest`).
+- O nó de entrada da porta sem saída reta (quintal murado ou frente tapada por areia) fica na frente dela, e não no vão do quintal nem ao lado; o da plantação fica no meio do lado mais perto da rua, e não na quina (Regra 360, emenda as Regras 184 e 223; `DoorFrontsGameTest`, `RoadRulesGameTest`).
+
+## [0.4.139] — candidata, 2026-11-25
+
+Plano de alturas da vila (ADR-063), fase 3: o Zelador mexe no chão. Regra 357.
+
+- O Zelador leva cada coluna da caixa da vila à altura do plano, nesta ordem: frente de porta, caminho, faixa em volta das estruturas, calombo e buraco pequenos, o resto. Substitui a fila de quadrados (Regra 323) e o alisamento em volta da casa pronta (Regra 297).
+- O plano corta calombos e tapa buracos de até 4 colunas e anda até o chão sem abrir degrau maior que 1 (corte mínimo); fora da caixa da vila nada muda.
+- O trabalho do dia cresce com o atraso: 256 colunas mais 1 a cada 4 pendentes, até 1.024. Com o atraso parado 3 dias, a vila abre a segunda vaga de Zelador (`GradeCrew`); a linha `VC_GRADE` mostra `keepers=`.
+- `GradeWorkGameTest`: do alto de um paredão de 3 até a porta da casa embaixo, a pé, com degrau de no máximo 1.
+
+## [0.4.138] — candidata, 2026-11-25
+
+Plano de alturas da vila (ADR-063, G5 do jogo da 0.4.136), fases 1 e 2: só lê, nenhum bloco muda.
+
+- `GradePlan` calcula a altura-alvo de cada coluna: envelope das âncoras contornando o que fica fora, degrau de no máximo 1, caminho plano onde cabe e os conflitos entre âncoras (`GradePlanTest`, `GradePlanProperties` com jqwik).
+- `GradeSurvey` lê o mundo para o plano: fora a pegada das construções e das peças da vila, a boca da mina, o chão do jogador, a água e o que não é chão; âncora a frente de cada porta, a faixa em volta de cada estrutura (2 blocos no curral grande) e a borda; caminho o bloco de caminho e de rua.
+- No fim do expediente sai a linha `VC_GRADE` (colunas, âncoras, portas, fora, caminho, degraus maiores que 1, colunas a mexer, conflitos, ms), e o `game_report.py` ganhou a seção "Plano de alturas".
+
+## [0.4.137] — candidata, 2026-11-25
+
+Do jogo da 0.4.136 no deserto (G2 🅲: fazenda voando, porta do mineiro tapada por areia, boca da mina fechada). Regra 356.
+
+- O nivelamento não corta nem aterra a coluna com construção da colônia acima dela, até 16 blocos (`under_building` no `VC_SMOOTH`). Antes, a conferência só olhava a faixa entre o topo e o alvo da coluna.
+- A folga da boca da mina (`mine_mouth`) vale também em volta da boca da superfície, guardada pelo arco e pela escada enquanto a colônia tem mina; o caminho olha só as bocas da própria colônia. As guardas do nivelamento, do terreno e do caminho usavam só a entrada do nível atual, que se afasta da boca quando a mina desce.
+- O pátio da boca refeito nunca põe pedra no caracol do primeiro nível. Com areia dentro, a escada não parecia aberta e era selada.
+- O Zelador começa o dia limpando a porta térrea tapada por chão natural (altura da porta e da cabeça, 2 colunas de fora, com a areia de cima) e, com a mina abaixo do primeiro nível, o caracol da boca (`VC_DOOR_CLEAR`, `VC_MINE_STAIR_CLEAR`).
+- O vão sob a construção pronta da colônia é aterrado como o da peça da vila (Regra 304), de baixo para cima, para a areia não cair.
+
 ## [0.4.136] — candidata, 2026-11-25
 
 - O pastor que entrou no cercado para tosquiar não é tirado pelo socorro do curral por até 30 segundos (Regra 355); passado o prazo, ou sem a tosquia reservada, o socorro age como antes. `VC_PEN_WORKING` registra início e fim do prazo. O N05 (`ShepherdGameTest.theShepherdOnlyShearsAfterReachingTheSheep`) caía quando o socorro pegava o pastor recém-pousado no cercado.

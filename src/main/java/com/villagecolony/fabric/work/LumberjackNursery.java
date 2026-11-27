@@ -61,11 +61,12 @@ public final class LumberjackNursery {
     /**
      * A que distância do centro o viveiro fica.
      *
-     * <p>Dentro do alcance do lenhador — ele procura árvore em volta do
-     * centro —, e fora do miolo onde as obras nascem. Plantar além do
-     * alcance dele seria plantar para ninguém colher.
+     * <p>No alcance do lenhador — ele procura árvore em volta do centro —, e
+     * fora do miolo onde as obras nascem. Plantar além do alcance dele seria
+     * plantar para ninguém colher. O anel começa nele, e não para dentro dele:
+     * a muda se espalha e pode sair da vila (Regra 385).
      */
-    static final int EDGE = 56;
+    static final int EDGE = LumberjackWork.SEARCH_RADIUS;
 
     /** Limite interno para não plantar dentro do miolo da vila. */
     private static final int INNER_EDGE = 48;
@@ -227,7 +228,7 @@ public final class LumberjackNursery {
      * longe possível do centro sem sair do alcance do lenhador; só usa uma
      * distância menor quando a borda está ocupada ou inacessível.
      */
-    private static Optional<BlockPos> spotOnTheEdge(ServerWorld world, BlockPos centre, double towards) {
+    static Optional<BlockPos> spotOnTheEdge(ServerWorld world, BlockPos centre, double towards) {
         for (int radius = EDGE; radius >= INNER_EDGE; radius--) {
             for (int turn = 0; turn < DIRECTIONS; turn++) {
                 // Do lado da borda mais perto do baú do lenhador para fora — A-7,
@@ -301,6 +302,7 @@ public final class LumberjackNursery {
 
         return (state.isIn(BlockTags.SAND) || state.isIn(BlockTags.DIRT))
                 && !state.isOf(TreeNursery.BED)
+                && TreeNursery.hasRoom(world, ground) // Regra 385
                 && world.getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING, ground.getX(), ground.getZ())
                         == ground.getY() + 1
                 && !com.villagecolony.fabric.integration.PlayerClearedPlants.isCleared(ground)

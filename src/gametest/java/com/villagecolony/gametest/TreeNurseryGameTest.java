@@ -104,7 +104,7 @@ public class TreeNurseryGameTest {
      *
      * <p>No playtest de 30-09 o fazendeiro plantou carvalho sobre terra
      * enraizada em {@code 1762, 71, -5321} três vezes, duas delas com a casa
-     * do pastor aberta ali: a borda do viveiro (48–56 do centro) cai dentro
+     * do pastor aberta ali: a borda do viveiro (48–64 do centro) cai dentro
      * do raio de busca de lote (64). O viveiro não perguntava pela obra.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_nursery",
@@ -229,10 +229,13 @@ public class TreeNurseryGameTest {
         context.complete();
     }
 
+    /** A borda de fora do anel do viveiro, com a folga do arredondamento (Regra 385). */
+    private static final int OUTER = com.villagecolony.fabric.work.LumberjackWork.SEARCH_RADIUS + 1;
+
     /** A vila mantém dez viveiros, e não uma quantidade sem teto. */
     //
-    // <b>Lote próprio e longe da arena</b> — 2026-09-24. O anel vai de 48 a
-    // 57 blocos, e os outros testes do lote tree_nursery plantam terra
+    // <b>Lote próprio e longe da arena</b> — 2026-09-24. O anel vai de 48 ao
+    // alcance do lenhador (Regra 385), e os outros testes do lote tree_nursery plantam terra
     // enraizada e muda nas arenas vizinhas, dentro desse raio: o teto de dez
     // contava a base de outro teste e parava em 9 (1 falha em 8 rodadas).
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_nursery_cap",
@@ -240,17 +243,17 @@ public class TreeNurseryGameTest {
     public void theNurseryStopsAtTenTrees(TestContext context) {
         ServerWorld world = context.getWorld();
         UUID colony = UUID.randomUUID();
-        // Bem longe da arena (21-10): a +3000 o anel de 48 a 57 caía em cenários vizinhos e um viveiro
+        // Bem longe da arena (21-10): a +3000 o anel de 48 ao alcance caía em cenários vizinhos e um viveiro
         // sumia na bateria inteira.
         BlockPos centre = context.getAbsolutePos(new BlockPos(8, 1, 8)).add(1_000_000, 0, 2_600_000);
 
         LumberjackNursery.clearAll();
 
-        for (int dx = -57; dx <= 57; dx++) {
-            for (int dz = -57; dz <= 57; dz++) {
+        for (int dx = -OUTER; dx <= OUTER; dx++) {
+            for (int dz = -OUTER; dz <= OUTER; dz++) {
                 int distance = dx * dx + dz * dz;
 
-                if (distance >= 48 * 48 && distance <= 57 * 57) {
+                if (distance >= 48 * 48 && distance <= OUTER * OUTER) {
                     world.setBlockState(
                             centre.add(dx, 0, dz), Blocks.SAND.getDefaultState());
                 }
@@ -281,8 +284,8 @@ public class TreeNurseryGameTest {
         }
 
         int rootedDirt = 0;
-        for (int dx = -57; dx <= 57; dx++) {
-            for (int dz = -57; dz <= 57; dz++) {
+        for (int dx = -OUTER; dx <= OUTER; dx++) {
+            for (int dz = -OUTER; dz <= OUTER; dz++) {
                 if (world.getBlockState(centre.add(dx, 0, dz))
                         .isOf(Blocks.ROOTED_DIRT)) {
                     rootedDirt++;
@@ -315,11 +318,11 @@ public class TreeNurseryGameTest {
 
         LumberjackNursery.clearAll();
 
-        for (int dx = -57; dx <= 57; dx++) {
-            for (int dz = -57; dz <= 57; dz++) {
+        for (int dx = -OUTER; dx <= OUTER; dx++) {
+            for (int dz = -OUTER; dz <= OUTER; dz++) {
                 int distance = dx * dx + dz * dz;
 
-                if (distance >= 48 * 48 && distance <= 57 * 57) {
+                if (distance >= 48 * 48 && distance <= OUTER * OUTER) {
                     world.setBlockState(centre.add(dx, 0, dz), Blocks.SAND.getDefaultState());
                 }
             }
@@ -328,8 +331,8 @@ public class TreeNurseryGameTest {
         int planted = LumberjackNursery.plantBatchIfItIsTime(world, colony, centre);
 
         int rootedDirt = 0;
-        for (int dx = -57; dx <= 57; dx++) {
-            for (int dz = -57; dz <= 57; dz++) {
+        for (int dx = -OUTER; dx <= OUTER; dx++) {
+            for (int dz = -OUTER; dz <= OUTER; dz++) {
                 if (world.getBlockState(centre.add(dx, 0, dz)).isOf(Blocks.ROOTED_DIRT)) {
                     rootedDirt++;
                 }
@@ -356,7 +359,7 @@ public class TreeNurseryGameTest {
 
         LumberjackNursery.clearAll();
 
-        for (int radius = 48; radius <= 56; radius++) {
+        for (int radius = 48; radius <= com.villagecolony.fabric.work.LumberjackWork.SEARCH_RADIUS; radius++) {
             for (int step = 0; step < 48; step++) {
                 double angle = 2 * Math.PI * step / 48;
                 BlockPos column = centre.add(

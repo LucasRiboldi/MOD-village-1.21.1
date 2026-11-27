@@ -11,7 +11,7 @@ import java.util.Map;
 
 /**
  * O chão em que a água da vila vira na geração — Regra 288: o topo e o subsolo secos mais comuns do próprio chunk,
- * para o lago aterrado ficar igual ao chão em volta. Sem coluna seca no chunk, grama sobre terra.
+ * para o lago aterrado ficar igual ao chão em volta. Sem coluna seca no chunk, o chão do bioma (Regra 363).
  */
 record VillageSoil(BlockState top, BlockState under) {
 
@@ -39,7 +39,7 @@ record VillageSoil(BlockState top, BlockState under) {
             }
         }
 
-        VillageSoil most = GRASS;
+        VillageSoil most = fallback(chunk);
         int best = 0;
 
         for (Map.Entry<VillageSoil, Integer> entry : counts.entrySet()) {
@@ -50,6 +50,24 @@ record VillageSoil(BlockState top, BlockState under) {
         }
 
         return most;
+    }
+
+    /** Sem coluna seca no chunk: o chão do bioma — areia sobre arenito no deserto, areia vermelha na terra vermelha (Regra 363). */
+    static VillageSoil fallback(Chunk chunk) {
+        net.minecraft.registry.entry.RegistryEntry<net.minecraft.world.biome.Biome> biome = chunk.getBiomeForNoiseGen(
+                net.minecraft.world.biome.source.BiomeCoords.fromBlock(chunk.getPos().getCenterX()),
+                net.minecraft.world.biome.source.BiomeCoords.fromBlock(63),
+                net.minecraft.world.biome.source.BiomeCoords.fromBlock(chunk.getPos().getCenterZ()));
+
+        if (biome.isIn(net.fabricmc.fabric.api.tag.convention.v2.ConventionalBiomeTags.IS_DESERT)) {
+            return new VillageSoil(Blocks.SAND.getDefaultState(), Blocks.SANDSTONE.getDefaultState());
+        }
+
+        if (biome.isIn(net.fabricmc.fabric.api.tag.convention.v2.ConventionalBiomeTags.IS_BADLANDS)) {
+            return new VillageSoil(Blocks.RED_SAND.getDefaultState(), Blocks.RED_SANDSTONE.getDefaultState());
+        }
+
+        return GRASS;
     }
 
     /** Se a coluna tem água no bloco {@code y} do topo ou logo acima dele. */

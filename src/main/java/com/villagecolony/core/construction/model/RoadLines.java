@@ -28,6 +28,9 @@ public final class RoadLines {
     /** Quantos blocos, no máximo, um trecho de ligação entre componentes atravessa. */
     static final int MAX_LINK = 64;
 
+    /** Até onde a parte com a entrada da mina e a casa do mineiro vai buscar a linha (Regra 386). */
+    static final int MAX_FAR_LINK = 128;
+
     /** O maior ramal reto de uma porta até a linha. */
     static final int MAX_STUB = 16;
 
@@ -90,6 +93,16 @@ public final class RoadLines {
     public static Result build(Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> entrances,
                                Set<ColonyPos> farmRings, PathTerrain terrain, int maxLinks, int turn, Set<ColonyPos> fixed,
                                Set<ColonyPos> retired) {
+        return build(cells, planned, center, entrances, farmRings, terrain, maxLinks, turn, fixed, retired, Set.of());
+    }
+
+    /**
+     * O mesmo, com as entradas que buscam a linha de mais longe: a parte que tem uma delas se liga a até
+     * {@value #MAX_FAR_LINK} blocos, e não {@value #MAX_LINK} — Regra 386, a entrada da mina e a casa do mineiro.
+     */
+    public static Result build(Set<ColonyPos> cells, Set<ColonyPos> planned, ColonyPos center, Set<ColonyPos> entrances,
+                               Set<ColonyPos> farmRings, PathTerrain terrain, int maxLinks, int turn, Set<ColonyPos> fixed,
+                               Set<ColonyPos> retired, Set<ColonyPos> far) {
         Map<Long, Integer> physical = new HashMap<>();
 
         cells.forEach(at -> physical.putIfAbsent(ColonyRoads.column(at.x(), at.z()), at.y()));
@@ -180,13 +193,15 @@ public final class RoadLines {
 
         for (Set<Long> part : others) {
             boolean aloneDoor = part.size() == 1 && doors.contains(part.iterator().next());
-            // A busca da maior parte solta não conta no limite: as outras seguem no rodízio (Regra 300).
-            boolean free = biggest;
+            // A busca da maior parte solta não conta no limite: as outras seguem no rodízio (Regra 300). A parte com
+            // entrada de construção também não: ela se liga em toda releitura, sem esperar a vez (Regra 367).
+            boolean free = biggest || part.stream().anyMatch(doors::contains);
+            int reach = far.stream().anyMatch(at -> part.contains(ColonyRoads.column(at.x(), at.z()))) ? MAX_FAR_LINK : MAX_LINK;
 
             biggest = false;
 
             // Toda parte solta tenta a reta até o ponto mais perto da linha, sem gastar a busca cara (Regra 224).
-            if (RoadLinks.straight(part, main, columns, mask, terrain)) {
+            if (RoadLinks.straight(part, main, columns, mask, terrain, reach)) {
                 main.addAll(part);
                 continue;
             }
@@ -199,7 +214,7 @@ public final class RoadLines {
             if (free || links < maxLinks) {
                 links += free ? 0 : 1;
 
-                if (RoadLinks.link(part, main, columns, terrain)) {
+                if (RoadLinks.link(part, main, columns, terrain, reach)) {
                     main.addAll(part);
                     continue;
                 }
@@ -268,7 +283,7 @@ public final class RoadLines {
 
     private static String ground(PathTerrain terrain, int x, int z, int nearY) {
         if (terrain.blocked(x, z)) {
-            return "B";
+            return terrain.blockedWhy(x, z);
         }
 
         java.util.OptionalInt read = terrain.groundY(x, z, nearY);

@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.fabric.integration.MaeRescue;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
@@ -42,6 +43,11 @@ final class LotSeeking {
     /** Nem a rua abriu lote: a volta sem lote da casa conta para o socorro do MAE — Regras 222 e 226. */
     static void afterTheRoad(ServerWorld world, Colony colony, Blueprint blueprint, List<Blueprint> plans,
                              Optional<ConstructionProject> grown) {
+        if (grown.isEmpty()) {
+            // A volta fechou sem lote: o braço da malha do lado com mais recusas cresce (Regra 389).
+            com.villagecolony.fabric.integration.StreetGrowth.noLot(colony.id());
+        }
+
         if (grown.isEmpty() && callsTheRescue(blueprint)) {
             MaeRescue.sweptWithoutLot(world, colony, plans);
         }
@@ -63,6 +69,20 @@ final class LotSeeking {
                 }
             }
             // ADR-043: casa pendente não impede outras obras após esgotar a busca local.
+        }
+
+        // A casa do fazendeiro perto da plantação grande (Regra 382), procurada como a do mineiro.
+        if (FarmerHomePlans.isOwed(VillageColonyMod.BUILDINGS.ofColony(colony.id()))) {
+            Optional<Blueprint> house = HousePlans.houseFor(world, colony);
+
+            if (house.isPresent()) {
+                var search = FarmerHomePlans.findSite(world, colony, List.of(house.get()));
+
+                if (search.site().isPresent()) {
+                    return SiteOpening.open(world, colony, search.site().get(), List.of(house.get()), house.get(),
+                            builders);
+                }
+            }
         }
 
         // A seleção é global, mas a descoberta do lote continua única: a
@@ -174,7 +194,8 @@ final class LotSeeking {
         // A pergunta desceu para `LotClearance.isClearAbove`, que é
         // onde a varredura ainda pode seguir para o anel seguinte.
 
-        if (farming && !ConstructionDemand.withinTheFarmersReach(colony, site.get())) {
+        if (farming && needsTheFarmersReach(blueprint.id())
+                && !ConstructionDemand.withinTheFarmersReach(colony, site.get())) {
             // Lote livre, mas longe demais: o fazendeiro procura lavoura
             // a FarmerWork.reach() do centro, e roça que ele não vê é
             // roça que ninguém planta — e que não fecha o pedido, então
@@ -197,5 +218,13 @@ final class LotSeeking {
         }
 
         return SiteOpening.open(world, colony, site.get(), plans, blueprint, builders);
+    }
+
+    /**
+     * Se a roça precisa ficar no alcance do fazendeiro: a plantação grande não, porque ela tem dono (Regra 52) e o
+     * fazendeiro vai até ela onde estiver (emenda da Regra 374 de 26-11, K2 🅱️).
+     */
+    static boolean needsTheFarmersReach(com.villagecolony.core.type.ResourceId blueprint) {
+        return !LargeFarmPlans.MODEL.equals(blueprint);
     }
 }

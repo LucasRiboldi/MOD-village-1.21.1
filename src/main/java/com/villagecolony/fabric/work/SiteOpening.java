@@ -311,7 +311,8 @@ final class SiteOpening {
 
         SitePreparation.clear(world, project);
 
-        // E o chão em volta, suavizado a partir da altura da rua até o terreno (Regras 131 e 297).
+        // E o chão em volta, suavizado a partir da altura da rua até o terreno (Regras 131 e 297): a obra nova cuida do
+        // terreno dela, como sempre (Regra 364).
         com.villagecolony.fabric.integration.SiteSurroundings.level(world, project);
 
         project.moveTo(ConstructionState.BUILDING);

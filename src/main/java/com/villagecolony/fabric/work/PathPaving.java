@@ -315,6 +315,8 @@ public final class PathPaving {
             return false;
         }
         RoadIndex.remember(colonyId, floor);
+        // Só o caminho que a colônia calçou pode voltar ao solo pela limpeza (Regra 390).
+        com.villagecolony.data.save.ColonySavedData.get(world.getServer()).roadGraphs().markLaid(colonyId, x, z);
         com.villagecolony.fabric.integration.EditLedger.mod(world, floor, paving, "calcada"); // Regra 345
         return true;
     }
@@ -352,6 +354,16 @@ public final class PathPaving {
         if (turn != null) {
             WorkTargets.clear(turn.worker);
         }
+    }
+
+    /** Dá a vez de calçar desta colônia a este aldeão, como o rodízio faria. */
+    static void giveTurn(UUID colonyId, UUID workerId) {
+        TURNS.put(colonyId, new Turn(workerId));
+    }
+
+    /** Encerra a vez de calçar desta colônia. */
+    static void takeTurn(UUID colonyId) {
+        endTurn(colonyId);
     }
 
     static void clearAll() {

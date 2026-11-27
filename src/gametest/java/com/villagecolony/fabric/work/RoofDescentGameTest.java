@@ -132,6 +132,61 @@ public class RoofDescentGameTest implements FabricGameTest {
         });
     }
 
+    /** Regra 362: o composter da roça não é telhado; o fazendeiro em cima dele não pula (jogo da 0.4.141). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "roof_work_block", tickLimit = 40)
+    public void aComposterIsNotARoof(TestContext context) {
+        scene(context, Blocks.COMPOSTER);
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(5, ROOF + 1, 5));
+        villager.setAiDisabled(true);
+
+        context.waitAndRun(5, () -> {
+            try {
+                context.assertFalse(RoofDescent.onARoof(context.getWorld(), villager.getBlockPos()),
+                        "Regra 362: o composter contou como telhado");
+            } finally {
+                villager.discard();
+                clear(context);
+                RoofDescent.clearAll();
+            }
+            context.complete();
+        });
+    }
+
+    /** Regra 362: três descidas seguidas do mesmo telhado põem o aldeão no chão de vez. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "roof_loop", tickLimit = 40)
+    public void theThirdLeapFromTheSameRoofLetsHimDown(TestContext context) {
+        scene(context, Blocks.OAK_PLANKS);
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(5, ROOF + 1, 5));
+        villager.setAiDisabled(true);
+        BlockPos roof = context.getAbsolutePos(new BlockPos(5, ROOF + 1, 5));
+        BlockPos grass = context.getAbsolutePos(new BlockPos(1, GROUND + 1, 1));
+        int ground = grass.getY();
+
+        context.waitAndRun(5, () -> {
+            try {
+                for (int round = 1; round <= RoofDescent.LOOPS; round++) {
+                    villager.refreshPositionAndAngles(roof.getX() + 0.5, roof.getY(), roof.getZ() + 0.5, 0, 0);
+                    context.assertTrue(RoofDescent.check(context.getWorld(), villager), "não resgatou do telhado");
+
+                    if (round < RoofDescent.LOOPS) {
+                        context.assertTrue(villager.getBlockPos().getY() > ground, "desceu antes da hora");
+                        // Pousou e voltou a subir: no chão, a conta do pulo zera.
+                        villager.refreshPositionAndAngles(grass.getX() + 0.5, grass.getY(), grass.getZ() + 0.5, 0, 0);
+                        RoofDescent.check(context.getWorld(), villager);
+                    }
+                }
+
+                context.assertTrue(villager.getBlockPos().getY() == ground,
+                        "Regra 362: na terceira descida do mesmo telhado ele ainda pula, em " + villager.getBlockPos().toShortString());
+            } finally {
+                villager.discard();
+                clear(context);
+                RoofDescent.clearAll();
+            }
+            context.complete();
+        });
+    }
+
     /** No alto de um morro de terra ele está no chão: não desce por esta regra. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "roof_descent", tickLimit = 40)
     public void aHilltopIsNotARoof(TestContext context) {

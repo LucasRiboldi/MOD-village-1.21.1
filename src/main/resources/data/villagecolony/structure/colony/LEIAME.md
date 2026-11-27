@@ -51,3 +51,11 @@ Lista de controle do que existe e do que falta: `CATALOGO.md`, gerado por
   que falta, e uma peça que ninguém fabrica trava a obra.
 - **Ofício:** o bloco de trabalho dele, como cortador de pedra, fornalha ou
   bancada.
+
+## Casas geradas por script
+
+A casa grande (`houses/big_house_mod.nbt`) sai de `scripts/houses/gen_big_house.py`, que só grava se
+`scripts/houses/house_rules.py` não achar problema: cama, baú encostado em parede, passagem livre da porta, luz,
+piso sem buraco e nenhum posto de trabalho do Minecraft (Regra 369). O script escreve em `scripts/houses/out/` e só
+troca o arquivo do mod com `--overwrite big_house_mod`: a casa ajustada à mão no criativo e salva por cima passa a
+ser a fonte, e o teste `tests/test_house_rules.py` confere as mesmas regras nela.

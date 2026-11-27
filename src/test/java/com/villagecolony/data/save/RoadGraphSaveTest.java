@@ -236,4 +236,45 @@ class RoadGraphSaveTest {
         assertEquals(6001, cycle.edges().getFirst().columns().size());
         assertEquals(cycle, RoadGraphSave.decode(RoadGraphSave.encode(cycle)).orElseThrow());
     }
+
+    /** Regra 388 (ADR-065 §8): as ligações do grafo planejado, com traçado e estado, voltam iguais do save. */
+    @Test
+    void plannedLinksRoundTripWithTheirStates() {
+        UUID id = UUID.randomUUID();
+        var data = data(id);
+        var links = new java.util.HashMap<List<Long>, com.villagecolony.core.construction.model.RoadLink>();
+
+        links.put(List.of(1L, 2L), new com.villagecolony.core.construction.model.RoadLink(List.of(HUB, new ColonyPos(11, 64, 10)),
+                com.villagecolony.core.construction.model.RoadEdgeState.LOCKED, 3, ""));
+        links.put(List.of(3L, 4L), new com.villagecolony.core.construction.model.RoadLink(List.of(),
+                com.villagecolony.core.construction.model.RoadEdgeState.FAILED, 0, "closed"));
+
+        var routes = com.villagecolony.core.construction.model.NeighborhoodRoutes.restore(links,
+                java.util.Map.of(0, new ColonyPos(30, 64, 10)), java.util.Map.of(0, 5L));
+
+        data.roadGraphs().update(id, graph());
+        data.roadGraphs().keepRoutes(id, routes);
+
+        var loaded = load(data.writeNbt(new NbtCompound(), null)).roadGraphs().routes(id);
+
+        assertTrue(routes.sameAs(loaded), "Regra 388: as ligações não voltaram iguais do save: " + loaded.links());
+
+        data.roadGraphs().update(id, RoadGraph.from(Set.of(HUB), HUB, Set.of()));
+
+        assertTrue(routes.sameAs(data.roadGraphs().routes(id)), "Regra 388: a troca do grafo apagou as ligações guardadas");
+    }
+
+    /** Regra 390 (ADR-065 etapa 2): as colunas que a colônia calçou voltam do save; a do jogador nunca entrou. */
+    @Test
+    void theColumnsTheColonyLaidRoundTrip() {
+        UUID id = UUID.randomUUID();
+        var data = data(id);
+
+        data.roadGraphs().markLaid(id, 12, 10);
+
+        var loaded = load(data.writeNbt(new NbtCompound(), null)).roadGraphs();
+
+        assertTrue(loaded.laidByAColony(12, 10), "Regra 390: a coluna calçada pela colônia não voltou do save");
+        assertFalse(loaded.laidByAColony(13, 10), "Regra 390: uma coluna que a colônia não calçou voltou como dela");
+    }
 }

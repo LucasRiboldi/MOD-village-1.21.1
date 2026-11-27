@@ -55,10 +55,13 @@ se corrige. ADR nova pega o próximo número livre (o maior hoje é 055) e entra
 | [047](ADR-047-mae-fila-do-construtor.md) | A obra MAE entra na fila do construtor | Aceita, emendada | ADR-051 |
 | [048](ADR-048-tudo-pelo-grafo.md) | Todo caminho e toda rede pelo grafo | Aceita, emendada | ADR-050 |
 | [049](ADR-049-socorro-do-mae.md) | O socorro do MAE: a vila sem lote pede a própria obra | Aceita, emendada | ADR-051 |
-| [050](ADR-050-grafo-estavel.md) | Grafo estável: todo caminho conta, toda parte liga em reta e o trecho que ficou trava | Aceita |  |
+| [050](ADR-050-grafo-estavel.md) | Grafo estável: todo caminho conta, toda parte liga em reta e o trecho que ficou trava | Aceita, emendada | ADR-065 |
 | [051](ADR-051-mae-fechamento.md) | Fechamento do MAE: socorro da vila inteira, bairro, água interna e ruínas antigas | Aceita |  |
-| [052](ADR-052-pontas-levam-a-vila.md) | As pontas azuis levam a vila para fora | Aceita |  |
+| [052](ADR-052-pontas-levam-a-vila.md) | As pontas azuis levam a vila para fora | Aceita, emendada | ADR-065 |
 | [053](ADR-053-patamar-da-mina.md) | O patamar nas dobras da escada da mina | Aceita |  |
 | [054](ADR-054-client-side-pixel-art-overlays.md) | Overlays pixel art no cliente | Aceita |  |
 | [055](ADR-055-decisoes-do-autor-2026-11-13.md) | Decisões do autor de 13-11 (pendências da avaliação de qualidade) | Aceita |  |
 | [056](ADR-056-decisoes-do-autor-2026-11-15.md) | Decisões do autor de 15-11 (notas dos jogos da 0.4.79 à 0.4.86) | Aceita |  |
+| [063](ADR-063-plano-de-alturas.md) | O plano de alturas da vila: degrau de 1 em toda a vila, executado pelo Zelador | Aceita, em fases | |
+| [064](ADR-064-medicao-do-terreno.md) | A medição do terreno da vila e o chão decidido pelo plano | Aceita, em etapas | |
+| [065](ADR-065-grafo-planejado.md) | O grafo planejado: um modo só, árvore que cresce, aresta com estado (substitui a ADR-057) | Aceita, em etapas | |

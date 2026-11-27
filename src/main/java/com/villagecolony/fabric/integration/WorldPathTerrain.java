@@ -33,6 +33,7 @@ public final class WorldPathTerrain implements PathTerrain {
     static final int CLEARANCE = 2;
 
     private final ServerWorld world;
+    private final UUID colonyId;
     private final List<Building> buildings;
     private final Optional<ConstructionProject> open;
     private final Optional<ColonyPos> mine;
@@ -44,6 +45,7 @@ public final class WorldPathTerrain implements PathTerrain {
     /** O terreno do traçado: a água nunca é chão (Regra 264). */
     public WorldPathTerrain(ServerWorld world, UUID colonyId) {
         this.world = world;
+        this.colonyId = colonyId;
         this.buildings = List.copyOf(VillageColonyMod.BUILDINGS.ofColony(colonyId));
         this.open = VillageColonyMod.CONSTRUCTIONS.openOf(colonyId);
         this.mine = VillageColonyMod.MINES.of(colonyId).map(found -> found.shaft().entry());
@@ -68,6 +70,9 @@ public final class WorldPathTerrain implements PathTerrain {
     /** As colunas da frente de porta e de portão: chão em qualquer material sólido (Regra 291). */
     private final java.util.Set<Long> anyFloor = new java.util.HashSet<>();
 
+    /** A frente de cada porta e as quatro colunas em volta: fora da folga da boca da mina (Regra 371). */
+    private final java.util.Set<Long> doorSides = new java.util.HashSet<>();
+
     /**
      * Regra 291: a frente de cada porta e portão tem chão para o grafo na altura do piso, seja qual for o material —
      * pedra, tábua ou outro sólido. A leitura já guardada destas colunas é refeita.
@@ -75,6 +80,16 @@ public final class WorldPathTerrain implements PathTerrain {
     public void floorAnywhereAt(java.util.Collection<com.villagecolony.core.type.ColonyPos> fronts) {
         fronts.forEach(at -> anyFloor.add(com.villagecolony.core.construction.model.ColonyRoads.column(at.x(), at.z())));
         grounds.clear();
+
+        // A frente da porta e as colunas em volta dela não são folga da boca da mina (Regra 371).
+        for (com.villagecolony.core.type.ColonyPos front : fronts) {
+            for (int[] side : new int[][] {{0, 0}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+                doorSides.add(com.villagecolony.core.construction.model.ColonyRoads.column(front.x() + side[0],
+                        front.z() + side[1]));
+            }
+        }
+
+        blockedColumns.clear();
     }
 
     @Override
@@ -201,6 +216,50 @@ public final class WorldPathTerrain implements PathTerrain {
                 ignored -> readBlocked(x, z));
     }
 
+    /**
+     * O motivo do bloqueio, para o log da entrada solta (Regra 367): Br recusada pelo calçador, Bu chunk fora da memória,
+     * Bb construção, Bm folga da boca da mina, Bo obra aberta.
+     */
+    @Override
+    public String blockedWhy(int x, int z) {
+        if (refused.contains(com.villagecolony.core.construction.model.ColonyRoads.column(x, z))) {
+            return "Br";
+        }
+
+        if (!world.isChunkLoaded(x >> 4, z >> 4)) {
+            return "Bu";
+        }
+
+        for (Building building : buildings) {
+            if (inside(x, z, building.min(), building.max())) {
+                return "Bb";
+            }
+        }
+
+        return isMineClearance(x, z) ? "Bm" : "Bo";
+    }
+
+    private boolean isMineClearance(int x, int z) {
+        return (mine.filter(entry -> Math.abs(x - entry.x()) <= MINE_CLEARANCE
+                && Math.abs(z - entry.z()) <= MINE_CLEARANCE).isPresent() || MineMouths.isNear(colonyId, x, z))
+                && !MineYard.isYardColumn(world, x, z)
+                && !(doorSides.contains(com.villagecolony.core.construction.model.ColonyRoads.column(x, z))
+                        && !isStairColumn(x, z));
+    }
+
+    /** Se a coluna é do caracol do primeiro nível de alguma boca desta colônia: ele fica fechado para o caminho. */
+    private boolean isStairColumn(int x, int z) {
+        for (java.util.Map.Entry<BlockPos, net.minecraft.util.math.Direction> mouth : MineMouths.of(colonyId).entrySet()) {
+            for (BlockPos cell : MineMouths.stairCells(mouth.getKey(), mouth.getValue())) {
+                if (cell.getX() == x && cell.getZ() == z) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private boolean readBlocked(int x, int z) {
         if (!world.isChunkLoaded(x >> 4, z >> 4)) {
             return true;
@@ -214,8 +273,8 @@ public final class WorldPathTerrain implements PathTerrain {
 
         // A boca da mina é buraco de propósito: o caminho que aterra fecharia a escada (playtest 0.3.97).
         // Sobre o pátio de pedra da boca a folga não vale: ele já é chão, e o buraco da escada não tem chão (Regra 293).
-        if (mine.filter(entry -> Math.abs(x - entry.x()) <= MINE_CLEARANCE
-                && Math.abs(z - entry.z()) <= MINE_CLEARANCE).isPresent() && !MineYard.isYardColumn(world, x, z)) {
+        // A boca da superfície também, depois que a mina desce (Regra 356).
+        if (isMineClearance(x, z)) {
             return true;
         }
 

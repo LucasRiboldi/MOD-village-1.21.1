@@ -338,9 +338,8 @@ public final class VillageGround {
 
         BlockState surface = chunk.getBlockState(at.setY(top));
         BlockState below = chunk.getBlockState(at.setY(top - 1));
-        BlockState fill = SiteSurroundings.isNaturalGround(below)
-                && !(below.getBlock() instanceof net.minecraft.block.FallingBlock)
-                ? below : Blocks.DIRT.getDefaultState();
+        // Sob areia, arenito; terra só fora do deserto (Regra 363). Na geração não há mundo para ler o bioma.
+        BlockState fill = BiomeSoil.fillUnder(null, at.toImmutable(), surface, below);
 
         if (surface.isAir() || !surface.getFluidState().isEmpty()
                 || !safeColumn(chunk, x, z, top, target, drainWater)) {

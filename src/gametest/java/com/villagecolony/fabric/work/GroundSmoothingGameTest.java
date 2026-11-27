@@ -231,7 +231,7 @@ public class GroundSmoothingGameTest implements FabricGameTest {
         var builder = context.spawnEntity(net.minecraft.entity.EntityType.VILLAGER, new BlockPos(8, FLOOR + 1, 8));
 
         try {
-            int done = GroundKeeper.day(context.getWorld(), colony, builder);
+            int done = levelOnce(context.getWorld(), colony, builder);
             context.assertTrue(done > 0, "sem obra aberta, o Zelador ignorou o terreno danificado; chunk final carregado="
                     + context.getWorld().isChunkLoaded((origin.getX() + 23) >> 4, (origin.getZ() + 23) >> 4));
             context.assertTrue(top(context, 4, 4) == origin.getY(), "o Zelador deixou o calombo");
@@ -275,5 +275,26 @@ public class GroundSmoothingGameTest implements FabricGameTest {
             GroundSmoothing.clearAll();
         }
         context.complete();
+    }
+
+    /**
+     * Uma passada do Zelador como no jogo, mas sem esperar ele andar: se ele saiu andando até a coluna do plano (Regra 391),
+     * o teste o põe ao lado dela e repete a passada.
+     */
+    private static int levelOnce(net.minecraft.server.world.ServerWorld world, com.villagecolony.core.colony.model.Colony colony,
+                                 net.minecraft.entity.passive.VillagerEntity keeper) {
+        int done = GroundKeeper.day(world, colony, keeper);
+        java.util.Optional<int[]> target = GradeWork.targetOf(colony.id());
+
+        if (done == 0 && target.isPresent()) {
+            int x = target.get()[0];
+            int z = target.get()[1];
+
+            keeper.refreshPositionAndAngles(x + 1.5, world.getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING_NO_LEAVES,
+                    x + 1, z), z + 0.5, 0, 0);
+            done = GroundKeeper.day(world, colony, keeper);
+        }
+
+        return done;
     }
 }

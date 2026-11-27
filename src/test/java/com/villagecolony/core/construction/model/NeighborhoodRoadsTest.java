@@ -8,14 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Set;
-import java.util.TreeMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Regra 320 (ADR-057, modo 3): vizinhança relativa entre as entradas e A* com custo de terreno. */
+/** Regras 320 e 389 (ADR-057, ADR-065, modo 3): toda entrada ligada, A* com custo de terreno e ligação guardada. */
 class NeighborhoodRoadsTest {
 
     private static final int Y = 64;
@@ -49,20 +48,9 @@ class NeighborhoodRoadsTest {
     }
 
     @Test
-    void theNeighborhoodLinksASquareInARingAndSkipsTheDiagonals() {
-        Map<Long, ColonyPos> nodes = new TreeMap<>();
-
-        for (ColonyPos node : List.of(at(0, 0), at(20, 0), at(0, 20), at(20, 20))) {
-            nodes.put(ColonyRoads.column(node.x(), node.z()), node);
-        }
-
-        assertEquals(4, NeighborhoodRoads.neighborhood(nodes).size(), "o quadrado devia ter 4 lados e nenhuma diagonal");
-    }
-
-    @Test
     void everyEntranceGetsLinkedToTheCenter() {
         RoadLines.Result result = NeighborhoodRoads.build(Set.of(), at(0, 0), Set.of(at(12, 0), at(0, 15), at(-10, -6)), FLAT,
-                new NeighborhoodRoads.Routes(), Set.of(), NO_GROWTH, 0);
+                new NeighborhoodRoutes(), Set.of(), NO_GROWTH, 0);
         Set<ColonyPos> columns = columnsOf(result);
 
         assertTrue(result.loose().isEmpty(), "entrada sem ligação: " + result.loose());
@@ -97,7 +85,7 @@ class NeighborhoodRoadsTest {
 
     @Test
     void aStoredRouteIsReusedUntilADirtySquareCrossesIt() {
-        NeighborhoodRoads.Routes routes = new NeighborhoodRoads.Routes();
+        NeighborhoodRoutes routes = new NeighborhoodRoutes();
         Set<ColonyPos> fronts = Set.of(at(30, 0));
 
         NeighborhoodRoads.build(Set.of(), at(0, 0), fronts, FLAT, routes, Set.of(), NO_GROWTH, 0);
@@ -118,74 +106,9 @@ class NeighborhoodRoadsTest {
     @Test
     void anEntranceBeyondTheNeighborhoodReachStillGetsLinked() {
         RoadLines.Result result = NeighborhoodRoads.build(Set.of(), at(0, 0), Set.of(at(10, 0), at(150, 0)), FLAT,
-                new NeighborhoodRoads.Routes(), Set.of(), NO_GROWTH, 0);
+                new NeighborhoodRoutes(), Set.of(), NO_GROWTH, 0);
 
         assertTrue(result.loose().isEmpty(), "Regra 320: entrada a 150 blocos ficou solta: " + result.loose());
         assertTrue(columnsOf(result).contains(at(150, 0)), "Regra 320: a entrada distante não entrou no grafo");
-    }
-
-    @Test
-    void theEastTipGrowsOneBlockADay() {
-        NeighborhoodRoads.Routes routes = new NeighborhoodRoads.Routes();
-        int[] limit = {-200, -200, 200, 200};
-        Set<ColonyPos> street = new HashSet<>();
-
-        for (int x = 0; x <= 20; x++) {
-            street.add(at(x, 0));
-        }
-
-        assertTrue(columnsOf(NeighborhoodRoads.build(street, at(0, 0), Set.of(), FLAT, routes, Set.of(), limit, 0))
-                .contains(at(21, 0)), "Regra 320: a ponta leste não ganhou o bloco de fora");
-
-        street.add(at(21, 0));
-
-        assertFalse(columnsOf(NeighborhoodRoads.build(street, at(0, 0), Set.of(), FLAT, routes, Set.of(), limit, 0))
-                .contains(at(22, 0)), "Regra 320: a ponta andou dois blocos no mesmo dia");
-        assertTrue(columnsOf(NeighborhoodRoads.build(street, at(0, 0), Set.of(), FLAT, routes, Set.of(), limit, 1))
-                .contains(at(22, 0)), "Regra 320: a ponta não andou no dia seguinte");
-    }
-
-    @Test
-    void theTipStopsAtTheLimit() {
-        Set<ColonyPos> street = new HashSet<>();
-
-        for (int x = 0; x <= 20; x++) {
-            street.add(at(x, 0));
-        }
-
-        assertFalse(columnsOf(NeighborhoodRoads.build(street, at(0, 0), Set.of(), FLAT, new NeighborhoodRoads.Routes(),
-                Set.of(), new int[] {-200, -200, 20, 200}, 0)).contains(at(21, 0)), "Regra 320: a ponta passou do limite");
-    }
-
-    /** Leste, oeste, sul, norte: a ordem dos lados de {@code frontiers}. */
-    private static ColonyPos[] sides(ColonyPos east, ColonyPos west, ColonyPos south, ColonyPos north) {
-        return new ColonyPos[] {east, west, south, north};
-    }
-
-    private static ColonyPos near(int dx, int dz) {
-        return new ColonyPos(100 + dx, Y, 100 + dz);
-    }
-
-    @Test
-    void eachSideTakesTheFarthestPathInsideItsCone() {
-        Set<ColonyPos> cells = new java.util.LinkedHashSet<>(List.of(near(3, 0), near(6, 4), near(-5, 1), near(2, 7),
-                near(0, -4)));
-
-        assertEquals(java.util.Arrays.asList(sides(near(6, 4), near(-5, 1), near(2, 7), near(0, -4))),
-                java.util.Arrays.asList(NeighborhoodRoads.frontiers(cells, near(0, 0))), "Regra 320: o caminho mais distante de cada lado");
-    }
-
-    @Test
-    void theConeIsTheDiagonalAndTheFirstOfATieStays() {
-        ColonyPos center = near(0, 0);
-
-        assertEquals(java.util.Arrays.asList(sides(null, null, near(3, 5), null)),
-                java.util.Arrays.asList(NeighborhoodRoads.frontiers(Set.of(near(3, 5)), center)), "fora do cone de leste");
-        assertEquals(java.util.Arrays.asList(sides(near(4, 4), null, near(4, 4), null)),
-                java.util.Arrays.asList(NeighborhoodRoads.frontiers(Set.of(near(4, 4)), center)), "a diagonal é dos dois lados");
-        assertEquals(java.util.Arrays.asList(sides(null, null, null, null)),
-                java.util.Arrays.asList(NeighborhoodRoads.frontiers(Set.of(center), center)), "o centro não é ponta de lado nenhum");
-        assertEquals(near(5, 0), NeighborhoodRoads.frontiers(new java.util.LinkedHashSet<>(List.of(near(5, 0), near(5, 1))),
-                center)[0], "no empate, o primeiro fica");
     }
 }

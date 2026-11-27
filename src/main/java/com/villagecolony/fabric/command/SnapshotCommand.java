@@ -158,6 +158,9 @@ public final class SnapshotCommand {
         appendWorks(world, colony.get(), text);
         SnapshotHistory.append(colony.get().id(), WorkTime.currentLine(colony.get().id(), world.getTime()), text);
         ActionJournal.flush();
+        // A foto do terreno ao salvar (ADR-064).
+        com.villagecolony.fabric.work.TerrainSnapshot.save(world, colony.get(), "last", Optional.empty())
+                .ifPresent(file -> text.append("foto do terreno: ").append(file.getFileName()).append('\n'));
 
         try {
             Path folder = server.getSavePath(WorldSavePath.ROOT).resolve("villagecolony").resolve("analytics");

@@ -436,6 +436,7 @@ public final class BuilderWork {
 
         VillageColonyMod.BUILDINGS.registerOrMerge(building);
         LargeFarmSeeds.sowAtCompletion(world, project);
+        com.villagecolony.fabric.integration.TradeHouseSign.mark(world, building); // Regra 392
 
         // As peças contadas no mundo, não as do último construtor (Regra 147).
         VillageDiary.buildFinished(project, job.placed, workerId);

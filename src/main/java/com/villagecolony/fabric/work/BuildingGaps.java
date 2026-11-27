@@ -61,6 +61,14 @@ final class BuildingGaps {
         ServerMemory.register(BuildingGaps.class, READS::clear);
     }
 
+    /** Se o plano de alturas cobre esta coluna (Regra 391): o teste troca a pergunta. */
+    @FunctionalInterface
+    interface PlanCover {
+        boolean covers(ServerWorld world, Colony colony, int x, int z);
+    }
+
+    static PlanCover planned = GradeWork::covers;
+
     private BuildingGaps() {
     }
 
@@ -195,7 +203,8 @@ final class BuildingGaps {
      */
     private static void level(ServerWorld world, Colony colony, int x, int z, int floor, List<Box> boxes,
                               Optional<BlockPos> mine, int[] left) {
-        if (!world.isChunkLoaded(x >> 4, z >> 4) || boxes.stream().anyMatch(box -> inRing(box, x, z))
+        // O plano de alturas é a única régua: a coluna dele fica com ele (Regra 391).
+        if (!world.isChunkLoaded(x >> 4, z >> 4) || planned.covers(world, colony, x, z) || boxes.stream().anyMatch(box -> inRing(box, x, z))
                 || mine.filter(at -> Math.abs(at.getX() - x) <= GroundSmoothing.MINE_GUARD
                         && Math.abs(at.getZ() - z) <= GroundSmoothing.MINE_GUARD).isPresent()) {
             return;
@@ -212,7 +221,7 @@ final class BuildingGaps {
         BlockPos surface = new BlockPos(x, top, z);
 
         if (top < floor && floor - top <= LEVEL && GroundSmoothing.isGround(world, surface, world.getBlockState(surface))
-                && GroundSmoothing.column(world, x, z, top, floor)) {
+                && GroundSmoothing.column(world, x, z, top, floor, "vao_casas")) {
             left[0]--;
         }
     }
@@ -220,7 +229,7 @@ final class BuildingGaps {
     /** Tira a árvore e corta o calombo desta coluna até o piso, se ele não passa de {@code most} blocos. */
     private static void cut(ServerWorld world, Colony colony, int x, int z, int floor, int most, List<Box> boxes,
                             Optional<BlockPos> mine, int[] left) {
-        if (!world.isChunkLoaded(x >> 4, z >> 4) || boxes.stream().anyMatch(box -> box.contains(x, z))
+        if (!world.isChunkLoaded(x >> 4, z >> 4) || planned.covers(world, colony, x, z) || boxes.stream().anyMatch(box -> box.contains(x, z))
                 || mine.filter(at -> Math.abs(at.getX() - x) <= GroundSmoothing.MINE_GUARD
                         && Math.abs(at.getZ() - z) <= GroundSmoothing.MINE_GUARD).isPresent()) {
             return;
@@ -243,7 +252,7 @@ final class BuildingGaps {
         BlockPos surface = new BlockPos(x, top, z);
         BlockState state = world.getBlockState(surface);
         boolean bump = top > floor && top - floor <= most && GroundSmoothing.isGround(world, surface, state)
-                && GroundSmoothing.column(world, x, z, top, floor);
+                && GroundSmoothing.column(world, x, z, top, floor, "vao_casas");
 
         if (cleared > 0 || bump) {
             left[0]--;

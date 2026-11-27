@@ -312,7 +312,7 @@ public class EntrancesAtTheDoorGameTest implements FabricGameTest {
                     && node.roles().contains(RoadGraph.Role.JUNCTION)), "Regra 223: o rosa do ramal ficou: " + graph.nodes());
 
             for (int pass = 0; pass < 2; pass++) {
-                PathTrim.pass(arena.world, arena.colony);
+                trim(arena.world, arena.colony);
             }
 
             for (int z = 3; z <= 13; z++) {
@@ -378,9 +378,9 @@ public class EntrancesAtTheDoorGameTest implements FabricGameTest {
         });
     }
 
-    /** Sem rua perto, a quina continua sendo a entrada da plantação (Regra 184), e o ramal dela não a desfaz. */
+    /** Sem rua perto, o meio do lado continua sendo a entrada da plantação (Regra 360), e o ramal dela não a desfaz. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_entrance_farm_far", tickLimit = 20)
-    public void aFarmFarFromTheRoadKeepsItsCornerEntrance(TestContext context) {
+    public void aFarmFarFromTheRoadKeepsItsEntrance(TestContext context) {
         run(context, 100, arena -> {
             arena.path(2, 38, 2, 2);
             arena.building("village/plains/test_farm", arena.origin.add(18, 1, 20), arena.origin.add(24, 2, 26));
@@ -391,8 +391,8 @@ public class EntrancesAtTheDoorGameTest implements FabricGameTest {
                 graph = arena.publish();
             }
 
-            context.assertTrue(isEntrance(graph, arena.cell(20 - 3, 19)) || isEntrance(graph, arena.cell(25, 19)),
-                    "Regra 184: a plantação longe da rua perdeu a quina: " + graph.nodes());
+            context.assertTrue(isEntrance(graph, arena.cell(21, 19)),
+                    "Regra 360: a plantação longe da rua perdeu a entrada no meio do lado: " + graph.nodes());
         });
     }
 
@@ -426,5 +426,21 @@ public class EntrancesAtTheDoorGameTest implements FabricGameTest {
             context.assertTrue(fronts.contains(arena.cell(14, 9)), "Regra 178: o portão do curral continua entrada: " + fronts);
             context.assertTrue(List.copyOf(fronts).size() == 1, "só o portão: " + fronts);
         });
+    }
+
+    /** A passada da limpeza como se a colônia tivesse calçado tudo e os dias já tivessem passado (Regra 390). */
+    private static int trim(net.minecraft.server.world.ServerWorld world, com.villagecolony.core.colony.model.Colony colony) {
+        var laid = PathTrim.laidByTheColony;
+        int wait = PathTrim.waitDays;
+
+        PathTrim.laidByTheColony = (w, at) -> true;
+        PathTrim.waitDays = 0;
+
+        try {
+            return PathTrim.pass(world, colony);
+        } finally {
+            PathTrim.laidByTheColony = laid;
+            PathTrim.waitDays = wait;
+        }
     }
 }

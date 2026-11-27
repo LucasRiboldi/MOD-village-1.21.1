@@ -187,7 +187,36 @@ public class DoorFrontsGameTest implements FabricGameTest {
         }
     }
 
-    /** A oficina do armeiro: a porta dá num quintal murado com um vão; a entrada é onde o quintal encontra a rua. */
+    /** A areia tapou a porta dos dois lados: a entrada continua na frente dela, e o Zelador acerta o chão (Regra 360). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_buried", tickLimit = 20)
+    public void aBuriedDoorKeepsItsEntranceInFront(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 124, 1));
+        BlockPos min = origin.up();
+        BlockPos max = origin.add(4, 4, 4);
+
+        ground(world, origin);
+
+        try {
+            door(world, origin.add(4, 1, 2), Direction.WEST);
+            world.setBlockState(origin.add(5, 1, 2), Blocks.SANDSTONE.getDefaultState(), 18);
+            world.setBlockState(origin.add(3, 1, 2), Blocks.SANDSTONE.getDefaultState(), 18);
+
+            List<BlockPos> fronts = DoorFronts.of(world, min, max);
+
+            context.assertTrue(fronts.equals(List.of(origin.add(5, 0, 2))),
+                    "Regra 360: com a porta tapada, a entrada saiu da frente dela: " + fronts);
+        } finally {
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
+
+    /**
+     * A oficina do armeiro: a porta dá num quintal murado com um vão; a entrada fica na frente da porta, e o caminho chega
+     * nela pelo vão (Regra 360).
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_yard_gap", tickLimit = 20)
     public void aYardWithAGapHasItsEntranceWhereItOpens(TestContext context) {
         ServerWorld world = context.getWorld();
@@ -207,7 +236,7 @@ public class DoorFrontsGameTest implements FabricGameTest {
             BlockPos box = origin.add(0, 1, 1);
             List<BlockPos> fronts = DoorFronts.of(world, box, max);
 
-            context.assertTrue(fronts.equals(List.of(origin.add(4, 0, 0))), "Regra 223: a entrada não ficou no vão do quintal: " + fronts);
+            context.assertTrue(fronts.equals(List.of(origin.add(3, 0, 2))), "Regra 360: a entrada não ficou na frente da porta: " + fronts);
            
         } finally {
             clean(world, origin);
@@ -265,6 +294,80 @@ public class DoorFrontsGameTest implements FabricGameTest {
             List<BlockPos> fronts = DoorFronts.of(world, min, max);
 
             context.assertTrue(fronts.isEmpty(), "Regra 209: o assoalho virou entrada: " + fronts);
+        } finally {
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Regra 366 (nota do jogo da 0.4.143, H2 🅱️: "nó de entrada no lugar errado da casa"): a porta que olha para fora não
+     * leva o nó para trás da casa. A parede do fundo com laje dupla em cima não é degrau, e entre os dois lados da porta
+     * ganha o que sai com menos passos.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_slab_wall", tickLimit = 20)
+    public void aDoorFacingOutDoesNotCrossTheHouse(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 108, 1));
+        BlockPos min = origin.up();
+        BlockPos max = origin.add(4, 4, 4);
+
+        ground(world, origin);
+
+        try {
+            for (int x = 1; x <= 3; x++) {
+                for (int z = 0; z <= 4; z++) {
+                    world.setBlockState(origin.add(x, 0, z), Blocks.SMOOTH_SANDSTONE.getDefaultState(), 18);
+                }
+            }
+            for (int z = 0; z <= 4; z++) {
+                world.setBlockState(origin.add(0, 1, z), Blocks.SMOOTH_SANDSTONE.getDefaultState(), 18);
+                world.setBlockState(origin.add(0, 2, z), Blocks.SMOOTH_SANDSTONE_SLAB.getDefaultState()
+                        .with(net.minecraft.block.SlabBlock.TYPE, net.minecraft.block.enums.SlabType.DOUBLE), 18);
+            }
+            // A porta no lado leste olha para leste, como a casa do deserto do jogo: o facing aponta para fora.
+            door(world, origin.add(4, 1, 2), Direction.EAST);
+
+            List<BlockPos> fronts = DoorFronts.of(world, min, max);
+
+            context.assertTrue(fronts.equals(List.of(origin.add(5, 0, 2))),
+                    "Regra 366: o nó foi para trás da casa: " + fronts);
+        } finally {
+            clean(world, origin);
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Regra 335, emenda de 26-11 (nota do jogo da 0.4.145, J3 🅲: "esse nó nessa estrutura específica está errado"): a
+     * casa de meio-andar tem uma porta um bloco acima da principal, dando para fora pelo lado alto; só a porta mais baixa
+     * da construção vira entrada.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "door_fronts_split_level", tickLimit = 20)
+    public void onlyTheLowestDoorOfASplitLevelHouseCounts(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 132, 1));
+        BlockPos min = origin.up();
+        BlockPos max = origin.add(4, 4, 4);
+
+        ground(world, origin);
+
+        try {
+            // O lado leste do terreno e da casa um bloco mais alto: o meio-andar.
+            for (int x = 3; x <= 9; x++) {
+                for (int z = -3; z <= 9; z++) {
+                    world.setBlockState(origin.add(x, 1, z), Blocks.GRASS_BLOCK.getDefaultState(), 18);
+                }
+            }
+            door(world, origin.add(0, 1, 2), Direction.EAST);
+            door(world, origin.add(4, 2, 2), Direction.WEST);
+
+            List<BlockPos> fronts = DoorFronts.of(world, min, max);
+
+            context.assertTrue(fronts.equals(List.of(origin.add(-1, 0, 2))),
+                    "Regra 335: a porta do meio-andar virou entrada: " + fronts);
         } finally {
             clean(world, origin);
         }

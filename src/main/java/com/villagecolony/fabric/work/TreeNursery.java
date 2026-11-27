@@ -103,14 +103,14 @@ public final class TreeNursery {
      *
      * <pre>
      * o chão é do bioma      nada de peça de vila nem obra da colônia
-     * o espaço está livre    ar acima, onde a árvore vai crescer
+     * o espaço está livre    ar acima, a céu aberto (Regra 365)
      * não há rebento já      dois viveiros no mesmo lugar é um só
      * </pre>
      */
     public static boolean isSpotForANursery(ServerWorld world, BlockPos ground) {
         BlockState above = world.getBlockState(ground.up());
 
-        if (!above.isAir()) {
+        if (!above.isAir() || !seesTheSky(world, ground) || !hasRoom(world, ground)) {
             return false;
         }
 
@@ -126,7 +126,7 @@ public final class TreeNursery {
         // regra do autor, 2026-09-30: no espaço escolhido para uma obra não
         // nasce rebento de outra regra. O playtest daquele dia viu o
         // fazendeiro plantar três vezes em 1762, 71, -5321, duas delas com a
-        // casa do pastor aberta ali; a borda do viveiro (48–56) cai dentro do
+        // casa do pastor aberta ali; a borda do viveiro (48–64) cai dentro do
         // raio de busca de lote (64). isColonyBuilt cobre a obra aberta e a
         // casa pronta.
         // E nem na faixa de construção, nem onde o jogador tirou planta — regras
@@ -155,6 +155,10 @@ public final class TreeNursery {
 
     /** O mesmo, num lugar que quem chama já conferiu (o viveiro perto do baú, LumberjackNursery). */
     public static boolean plantAt(ServerWorld world, BlockPos ground, Block sapling) {
+        if (!seesTheSky(world, ground)) {
+            return false;
+        }
+
         BlockState seedling = sapling.getDefaultState();
 
         BlockState had = world.getBlockState(ground);
@@ -177,6 +181,51 @@ public final class TreeNursery {
         com.villagecolony.fabric.world.ColonyTrees.planted(ground);
 
         return true;
+    }
+
+    /**
+     * Se a muda em cima deste chão vê o céu: nada que barre o movimento acima dela, folha e barreira à parte — Regra
+     * 365. No túnel da mina, na caverna e debaixo de laje não nasce viveiro. A barreira não é teto: no mundo ela só
+     * existe posta à mão, e é o teto da arena de teste.
+     */
+    static boolean seesTheSky(ServerWorld world, BlockPos ground) {
+        int top = world.getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, ground.getX(), ground.getZ());
+
+        for (int y = ground.getY() + 2; y < top; y++) {
+            BlockState state = world.getBlockState(new BlockPos(ground.getX(), y, ground.getZ()));
+
+            if (state.blocksMovement() && !state.isOf(Blocks.BARRIER) && !state.isIn(BlockTags.LEAVES)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /** A distância mínima, na horizontal, de outra muda ou tronco (Regra 385). */
+    static final int SPACING = 5;
+
+    /** A distância mínima, na horizontal, de uma construção da colônia (Regra 385). */
+    static final int CLEARANCE = 8;
+
+    /**
+     * Se há espaço para a árvore crescer — Regra 385 (autor 26-11, K4 🅱️ do jogo da 0.4.148: "rebentos não devem ser
+     * plantados pelo mod um do lado do outro, deve ter uma área de segurança para a árvore poder nascer ... e não pode ser
+     * plantada perto das estruturas"): nenhuma muda ou tronco a até {@value #SPACING} blocos e nenhuma construção da
+     * colônia a até {@value #CLEARANCE}.
+     */
+    static boolean hasRoom(ServerWorld world, BlockPos ground) {
+        for (BlockPos at : BlockPos.iterate(ground.add(-SPACING, -2, -SPACING), ground.add(SPACING, 6, SPACING))) {
+            BlockState state = world.getBlockState(at);
+
+            if (state.isIn(BlockTags.SAPLINGS) || state.isIn(BlockTags.LOGS)) {
+                return false;
+            }
+        }
+
+        return !com.villagecolony.VillageColonyMod.BUILDINGS.anythingBuiltInside(
+                MinecraftTypeAdapter.toColonyPos(ground.add(-CLEARANCE, -CLEARANCE, -CLEARANCE)),
+                MinecraftTypeAdapter.toColonyPos(ground.add(CLEARANCE, CLEARANCE, CLEARANCE)));
     }
 
     /** O bloco que o rebento vira, para a bateria e o log. */

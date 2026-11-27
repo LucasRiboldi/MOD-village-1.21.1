@@ -163,7 +163,7 @@ public final class MineSite {
      * versão desta busca abriu uma mina seis blocos acima do centro, em
      * cima do piso da arena vizinha.
      */
-    private static final int LOOK_UP = 3;
+    static final int LOOK_UP = 3;
 
     /** E quanto abaixo, para a boca numa depressão. */
     private static final int LOOK_DOWN = 12;
@@ -330,7 +330,16 @@ public final class MineSite {
 
     /** A boca neste ponto da borda, pelas regras de sempre — A-4 (ver MineEdge). */
     static Optional<BlockPos> edgeMouth(ServerWorld world, BlockPos center, int dx, int dz, Side side) {
-        return surfaceAt(world, center, dx, dz, LOOK_UP, LOOK_DOWN, side);
+        return surfaceAt(world, center, dx, dz, LOOK_UP, LOOK_DOWN, side, at -> true);
+    }
+
+    /**
+     * A boca da borda no chão aberto para o céu — Regra 359: busca até {@link MineSky#LOOK_UP} acima do centro e pula o
+     * oco com morro por cima ({@link MineSky#overhang}). Quem alcança a pé decide o {@link MineEdge}.
+     */
+    static Optional<BlockPos> openEdgeMouth(ServerWorld world, BlockPos center, int dx, int dz, Side side) {
+        return surfaceAt(world, center, dx, dz, MineSky.LOOK_UP, LOOK_DOWN, side,
+                at -> MineSky.overhang(world, at) <= MineSky.OVERHANG);
     }
 
     /**
@@ -350,6 +359,11 @@ public final class MineSite {
      */
     private static Optional<BlockPos> surfaceAt(
             ServerWorld world, BlockPos center, int dx, int dz, int up, int down, Side descent) {
+        return surfaceAt(world, center, dx, dz, up, down, descent, at -> true);
+    }
+
+    private static Optional<BlockPos> surfaceAt(ServerWorld world, BlockPos center, int dx, int dz, int up, int down,
+            Side descent, java.util.function.Predicate<BlockPos> accept) {
 
         int x = center.getX() + dx;
         int z = center.getZ() + dz;
@@ -377,7 +391,7 @@ public final class MineSite {
 
                 int y = center.getY() + offset;
 
-                Optional<BlockPos> found = surfaceOn(world, new BlockPos(x, y, z), descent);
+                Optional<BlockPos> found = surfaceOn(world, new BlockPos(x, y, z), descent).filter(accept);
 
                 if (found.isPresent()) {
                     return found;

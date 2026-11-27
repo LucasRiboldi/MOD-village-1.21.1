@@ -214,7 +214,7 @@ public final class GeneratedVillages {
 
     /**
      * Se a peça é uma estrutura que recebe entrada: casa e o que mais a vila erguer para alguém entrar. Rua, ponta de rua,
-     * árvore, enfeite e peça que só põe um bicho não são. Plantação tem a entrada da Regra 184.
+     * árvore, enfeite e peça que só põe um bicho não são. Plantação tem a entrada da Regra 360.
      */
     public static boolean isStructure(String element) {
         return element.contains("village/") && !element.contains("farm") && !element.contains("/streets/")

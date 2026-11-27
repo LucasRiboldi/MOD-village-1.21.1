@@ -85,9 +85,6 @@ public final class ProfessionAssigner {
 
     static final int ADULTS_PER_BATCH = 15;
 
-    /** Quantos Zeladores a vila contrata: um (Regra 330). */
-    static final int GROUNDSKEEPERS = 1;
-
     private ProfessionAssigner() {
     }
 
@@ -281,10 +278,11 @@ public final class ProfessionAssigner {
             return demanded;
         }
 
-        // Uma vaga de Zelador por vila, para o adulto que passa das oito funções da primeira leva, antes da segunda
-        // leva e depois da falta de comida (Regra 330).
+        // A vaga de Zelador, para o adulto que passa das oito funções da primeira leva, antes da segunda leva e depois
+        // da falta de comida (Regra 330); a segunda abre quando o chão da vila não anda (ADR-063, Regra 357).
         if (adultPopulation > GROWTH_ORDER.size() && policies.policyOf(ProfessionType.GROUNDSKEEPER).enabled()
-                && counts.getOrDefault(ProfessionType.GROUNDSKEEPER, 0) < GROUNDSKEEPERS
+                && counts.getOrDefault(ProfessionType.GROUNDSKEEPER, 0)
+                        < GradeCrew.keepers(colonyId)
                 && (candidate == null || !candidate.isShunning(ProfessionType.GROUNDSKEEPER))) {
             if (colonyId != null) {
                 HiringLog.record(colonyId, ProfessionType.GROUNDSKEEPER, HiringLog.Outcome.FILLED);

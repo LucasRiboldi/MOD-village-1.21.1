@@ -113,8 +113,11 @@ final class BuildClosing {
         }
 
         project.moveTo(ConstructionState.COMPLETED);
-        VillageColonyMod.BUILDINGS.registerOrMerge(Building.of(project, true));
+        Building building = Building.of(project, true);
+
+        VillageColonyMod.BUILDINGS.registerOrMerge(building);
         LargeFarmSeeds.sowAtCompletion(world, project);
+        com.villagecolony.fabric.integration.TradeHouseSign.mark(world, building); // Regra 392
         WaitingWork.cancelBuildTasks(colony);
 
         VillageColonyMod.LOGGER.info("Colony {} closes {} at {} — {}",

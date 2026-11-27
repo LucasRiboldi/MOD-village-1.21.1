@@ -85,6 +85,59 @@ public class BuildingGapsGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * Regra 391 (L3 🅱️ do jogo da 0.4.150: o bloco em 29,-44 foi da altura 79 para a 78 e voltou 158 vezes): o plano de
+     * alturas é a única régua. A coluna que o plano cobre fica com ele, e o vão entre as casas não mexe nela.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "building_gaps_plan", tickLimit = 20)
+    public void theHeightPlanRulesTheGap(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(1, 86, 1)).add(2_900_000, 0, 2_900_000);
+        ColonyFixture fixture = ColonyFixture.colonyAtWorld(origin.add(2, 1, 9));
+        List<Building> houses = new ArrayList<>();
+        var planned = BuildingGaps.planned;
+
+        forceChunks(world, origin, true);
+
+        try {
+            for (BlockPos at : BlockPos.iterate(origin.add(-3, -2, -3), origin.add(SIZE, -1, SIZE))) {
+                world.setBlockState(at, Blocks.DIRT.getDefaultState(), 18);
+            }
+
+            for (BlockPos at : BlockPos.iterate(origin.add(-3, 0, -3), origin.add(SIZE, 0, SIZE))) {
+                world.setBlockState(at, Blocks.GRASS_BLOCK.getDefaultState(), 18);
+            }
+
+            houses.add(house(fixture, origin.add(0, 1, 0), origin.add(4, 4, 4)));
+            houses.add(house(fixture, origin.add(0, 5, 13), origin.add(4, 8, 17)));
+            houses.forEach(VillageColonyMod.BUILDINGS::register);
+            BuildingGaps.planned = (w, colony, x, z) -> true;
+
+            int changed = 0;
+
+            for (int pass = 0; pass < PASSES; pass++) {
+                changed += BuildingGaps.pass(world, fixture.colony());
+            }
+
+            int middle = world.getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, origin.getX() + 2, origin.getZ() + 8) - 1;
+
+            context.assertTrue(changed == 0, "Regra 391: o vão entre as casas mexeu em coluna do plano: " + changed);
+            context.assertTrue(middle == origin.getY(), "Regra 391: o meio do vão saiu da altura do plano: " + (middle - origin.getY()));
+        } finally {
+            BuildingGaps.planned = planned;
+            houses.forEach(house -> VillageColonyMod.BUILDINGS.remove(house.id()));
+            fixture.cleanUp();
+
+            for (BlockPos at : BlockPos.iterate(origin.add(-3, -2, -3), origin.add(SIZE, 8, SIZE))) {
+                world.setBlockState(at, Blocks.AIR.getDefaultState(), 18);
+            }
+
+            forceChunks(world, origin, false);
+        }
+
+        context.complete();
+    }
+
     private static Building house(ColonyFixture fixture, BlockPos min, BlockPos max) {
         return new Building(UUID.randomUUID(), fixture.colony().id(), ResourceId.vanilla("village/desert/houses/desert_small_house_1"),
                 MinecraftTypeAdapter.toColonyPos(min), MinecraftTypeAdapter.toColonyPos(max), true);

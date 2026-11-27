@@ -561,28 +561,12 @@ public class LumberjackGameTest implements FabricGameTest {
     }
 
     /**
-     * <b>A copa fica de pé — o lenhador só recolhe tronco</b>, decisão do
-     * autor de 2026-09-15: <i>"os lenhadores devem se focar apenas em
-     * recolher todos troncos, nao devem recolher as folhas"</i>.
-     *
-     * <p>Era o contrário desde 2026-08-08: <i>"o lenhador recolhe tudo o
-     * que a árvore dropa, e muda, maçã e graveto vêm da folha"</i>. O
-     * autor mudou de ideia vendo em jogo, e o motivo é o tempo: uma copa
-     * de carvalho tem cerca de oitenta folhas contra seis troncos, e o
-     * lenhador passava a maior parte do expediente quebrando folha —
-     * quebra que rende muda e graveto, e nenhuma tora para a obra.
-     *
-     * <p><b>A copa continua sendo PROCURADA</b>, e isso não é sobra: ela é
-     * a única coisa que separa árvore de construção — ver
-     * {@code TreeHarvester.plan} e {@code isNaturalLeaf}. O que muda é que
-     * ela deixa de entrar na colheita depois de encontrada.
-     *
-     * <p>A folha deixada decai sozinha pelo Vanilla quando o tronco que a
-     * sustentava sai, e o {@code clearAbove} continua abrindo a coluna da
-     * muda — de modo que a muda replantada não fica debaixo do que sobrou.
+     * A colheita conta só tronco (decisão do autor de 2026-09-15: o lenhador não gasta o expediente quebrando folha a
+     * folha), e a copa que ia apodrecer sai de uma vez quando o último tronco cai — Regra 378 (autor 26-11: "o lenhador
+     * deve quebrar todas folhas da árvore que ele cortou").
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_canopy")
-    public void theCanopyIsLeftStandingWhenTheTrunkComesDown(TestContext context) {
+    public void theCanopyComesDownWithTheTrunk(TestContext context) {
         BlockPos base = new BlockPos(2, 2, 2);
         BlockPos canopy = base.up(3).east();
 
@@ -600,9 +584,9 @@ public class LumberjackGameTest implements FabricGameTest {
                 harvest.logs() > 0,
                 "não colheu tronco nenhum, e é justamente o que ele deve recolher");
 
-        // A folha de lado fica onde está: ela não é da coluna da muda, e
-        // quem a derruba é o decaimento do Vanilla.
-        context.expectBlock(Blocks.OAK_LEAVES, canopy);
+        // A folha da copa sai junto com o tronco: o lenhador quebra a copa que ia apodrecer, sem ela contar como
+        // colheita (Regra 378, que emenda a decisão de 2026-09-15).
+        context.expectBlock(Blocks.AIR, canopy);
 
         context.complete();
     }
@@ -985,7 +969,7 @@ public class LumberjackGameTest implements FabricGameTest {
      *
      * <p>O piso era {@code >= 5} e caiu para o número de troncos em
      * 2026-09-15: a colheita deixou de levar a copa, por decisão do autor
-     * — ver {@link #theCanopyIsLeftStandingWhenTheTrunkComesDown} —, e o
+     * — ver {@link #theCanopyComesDownWithTheTrunk} —, e o
      * cinco contava tronco mais folha. O que este caso afirma é o
      * <b>custo por bloco</b>, e não o tamanho do plano; amarrá-lo a um
      * número que a política mudou faria ele reprovar a decisão em vez do

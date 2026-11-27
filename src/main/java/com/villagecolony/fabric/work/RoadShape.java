@@ -30,14 +30,14 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * O desenho que a vila pede ao grafo — Regras 183 a 185 e 208 (autor): anel de caminho em volta do chafariz, a quina da
- * plantação como entrada, sem anel em volta dela, e as pontas mais distantes crescendo com os dias.
+ * O desenho que a vila pede ao grafo — Regras 183 a 185, 208 e 360 (autor): anel de caminho em volta do chafariz, o meio
+ * do lado da plantação como entrada, sem anel em volta dela, e as pontas mais distantes crescendo com os dias.
  *
  * <p>Tudo aqui só propõe colunas ao grafo ({@link RoadGraphRefresh}): quem calça é o construtor, andando até lá.
  */
 final class RoadShape {
 
-    /** Quantas releituras até a quina da plantação virar entrada. */
+    /** Quantas releituras até a entrada da plantação (o meio do lado, Regra 360) valer. */
     static final int CORNER_AFTER_READS = 3;
 
     /** Até onde, além da vila gerada, as pontas levam a vila (Regra 229). */
@@ -121,14 +121,19 @@ final class RoadShape {
         return ring;
     }
 
-    /** A quina de cada plantação mais perto do centro: a entrada dela (Regra 184). */
-    static Set<ColonyPos> farmEntrances(ServerWorld world, Colony colony, WorldPathTerrain terrain) {
+    /**
+     * A entrada de cada plantação: o meio do lado mais perto da rua, na aresta e não na quina; sem rua, o mais perto do
+     * centro (Regra 360).
+     */
+    static Set<ColonyPos> farmEntrances(ServerWorld world, Colony colony, WorldPathTerrain terrain, Set<ColonyPos> roads) {
         Set<ColonyPos> entrances = new HashSet<>();
         ColonyPos center = colony.center();
 
         for (BlockBox farm : farms(world, colony)) {
-            cornersOf(world, terrain, farm).stream()
-                    .min(Comparator.comparingInt((ColonyPos at) -> Math.abs(at.x() - center.x()) + Math.abs(at.z() - center.z()))
+            sidesOf(world, terrain, farm).stream()
+                    .min(Comparator.comparingInt((ColonyPos at) -> roads.isEmpty()
+                                    ? Math.abs(at.x() - center.x()) + Math.abs(at.z() - center.z())
+                                    : nearest(at, roads, farm))
                             .thenComparingInt(ColonyPos::x).thenComparingInt(ColonyPos::z))
                     .ifPresent(entrances::add);
         }
@@ -136,20 +141,38 @@ final class RoadShape {
         return entrances;
     }
 
-    private static Set<ColonyPos> cornersOf(ServerWorld world, WorldPathTerrain terrain, BlockBox box) {
-        Set<ColonyPos> corners = new HashSet<>();
+    /** A distância, em passos, da rua mais perto; o anel colado na plantação não conta como rua. */
+    private static int nearest(ColonyPos at, Set<ColonyPos> roads, BlockBox farm) {
+        int best = Integer.MAX_VALUE;
 
-        for (int x : new int[] {box.getMinX() - 1, box.getMaxX() + 1}) {
-            for (int z : new int[] {box.getMinZ() - 1, box.getMaxZ() + 1}) {
-                cornerGround(world, terrain, x, z, box.getMinY()).ifPresent(corners::add);
+        for (ColonyPos road : roads) {
+            if (road.x() >= farm.getMinX() - 1 && road.x() <= farm.getMaxX() + 1 && road.z() >= farm.getMinZ() - 1
+                    && road.z() <= farm.getMaxZ() + 1) {
+                continue;
             }
+
+            best = Math.min(best, Math.abs(at.x() - road.x()) + Math.abs(at.z() - road.z()));
         }
 
-        return corners;
+        return best;
+    }
+
+    /** O meio de cada lado da plantação, um bloco para fora dela. */
+    private static Set<ColonyPos> sidesOf(ServerWorld world, WorldPathTerrain terrain, BlockBox box) {
+        Set<ColonyPos> sides = new HashSet<>();
+        int midX = Math.floorDiv(box.getMinX() + box.getMaxX(), 2);
+        int midZ = Math.floorDiv(box.getMinZ() + box.getMaxZ(), 2);
+
+        for (int[] side : new int[][] {{midX, box.getMinZ() - 1}, {midX, box.getMaxZ() + 1}, {box.getMinX() - 1, midZ},
+                {box.getMaxX() + 1, midZ}}) {
+            cornerGround(world, terrain, side[0], side[1], box.getMinY()).ifPresent(sides::add);
+        }
+
+        return sides;
     }
 
     /**
-     * O chão da quina da plantação, procurado em volta da altura do canteiro {@code farmY}, e não do topo da coluna —
+     * O chão da entrada da plantação, procurado em volta da altura do canteiro {@code farmY}, e não do topo da coluna —
      * Regra 291: a entrada fica no nível da plantação, e um beiral, telhado ou copa em cima não a leva para o alto.
      */
     static java.util.Optional<ColonyPos> cornerGround(ServerWorld world, WorldPathTerrain terrain, int x, int z, int farmY) {

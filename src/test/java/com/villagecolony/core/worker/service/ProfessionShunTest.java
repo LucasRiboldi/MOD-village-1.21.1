@@ -369,6 +369,8 @@ class ProfessionShunTest {
         for (ProfessionType type : ProfessionType.values()) {
             shunning.assign(type);
             shunning.giveUpProfession();
+            // O mineiro não larga o ofício; o castigo dele vem à mão, para a linha cobrir todos (Regra 383).
+            shunning.unassign();
         }
 
         Worker fresh = aWorker();

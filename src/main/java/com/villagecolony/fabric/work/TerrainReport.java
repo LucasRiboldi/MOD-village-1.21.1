@@ -19,7 +19,8 @@ import java.util.UUID;
 /**
  * A medida diária do terreno da vila — Regra 323: no fim do expediente, uma linha {@code VC_TERRAIN} por colônia com os
  * defeitos que a fila de quadrados ({@link TerrainQueue}) ainda tem na caixa inteira e as colunas que os aldeões mudaram
- * no dia. Só lê; quem arruma é a fila.
+ * no dia, e a linha {@code VC_GRADE} do plano de alturas ({@link GradeSurvey}, ADR-063), com as vagas de Zelador do dia
+ * seguinte. Só lê; quem arruma é o Zelador ({@link GradeWork}).
  */
 public final class TerrainReport {
 
@@ -79,7 +80,23 @@ public final class TerrainReport {
 
         VillageColonyMod.LOGGER.info("VC_TERRAIN version=1 colony={} day={} squares={} isolated={} pathSteps={} steps={} "
                         + "levelled={}", colony.id().toString().substring(0, 8), day, count, isolated, pathSteps, steps,
-                TerrainQueue.levelledToday(colony.id(), day));
+                GradeWork.doneToday(colony.id(), day));
         GroundKeeper.report(world, colony, day, steps);
+        // Por que os lotes do dia foram recusados, com a conta e onde (Regra 375).
+        String refusals = com.villagecolony.fabric.integration.LotRefusals.dayLine(colony.id());
+
+        if (!refusals.isEmpty()) {
+            VillageColonyMod.LOGGER.info("VC_LOT_REFUSALS version=1 colony={} day={} {}rule=375",
+                    colony.id().toString().substring(0, 8), day, refusals);
+        }
+        // O plano de alturas: o que falta mexer e, com o atraso parado, a segunda vaga de Zelador (Regra 357, ADR-063).
+        Optional<GradeSurvey.Survey> plan = GradeSurvey.read(world, colony);
+
+        plan.ifPresent(survey -> VillageColonyMod.LOGGER.info("{} keepers={}",
+                survey.line(colony.id(), day),
+                com.villagecolony.core.worker.service.GradeCrew.endOfDay(colony.id(), survey.pending())));
+        // A foto do terreno do dia, com o plano já lido (ADR-064).
+        TerrainSnapshot.start(world, colony);
+        TerrainSnapshot.save(world, colony, "day" + day, plan);
     }
 }

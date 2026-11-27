@@ -50,15 +50,15 @@ class WorkerTest {
         assertTrue(worker.hasProfession());
     }
 
-    /** A colônia realoca conforme a necessidade muda. */
+    /** Quem tem ofício fica com ele: o segundo {@code assign} não troca (Regra 383). */
     @Test
-    void assignReplacesThePreviousProfession() {
+    void assignKeepsThePreviousProfession() {
         Worker worker = Worker.register(VILLAGER, COLONY);
 
         worker.assign(ProfessionType.FARMER);
         worker.assign(ProfessionType.BUILDER);
 
-        assertEquals(Optional.of(ProfessionType.BUILDER), worker.profession());
+        assertEquals(Optional.of(ProfessionType.FARMER), worker.profession());
     }
 
     @Test

@@ -85,9 +85,10 @@ public class StreetLevelGameTest implements FabricGameTest {
                 "a casa 5 devia ter a rua na camada 1 (a 0 é terra enterrada)");
         context.assertTrue(read(context, "plains_small_house_1").streetLayer() == 0,
                 "a casa 1 devia ter a rua na camada 0 (ela é o piso)");
-        context.assertFalse(StructureBlueprintReader.read(context.getWorld(),
-                        StructureBlueprintReader.BIG_HOUSE_MOD).orElseThrow().hasStreetLayer(),
-                "a BigHouseMOD não tem encaixe de rua e não pode mudar de altura");
+        // A casa grande tem o piso de pedra na camada 0 e a porta na 1: a rua é a camada 0 (Regra 369).
+        context.assertTrue(StructureBlueprintReader.read(context.getWorld(),
+                        StructureBlueprintReader.BIG_HOUSE_MOD).orElseThrow().streetLayer() == 0,
+                "a BigHouseMOD devia ter a rua na camada 0, a do piso");
         context.complete();
     }
 

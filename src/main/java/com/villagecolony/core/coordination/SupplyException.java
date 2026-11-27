@@ -32,7 +32,9 @@ public enum SupplyException {
             + " quando nenhum baú da vila tem"),
     BONE_MEAL_FOR_THE_FARM(310, "o pó de osso que o fazendeiro põe na plantação, quando a composteira dele não está cheia"
             + " e os baús da vila não têm mais que 16"),
-    BONE_MEAL_FOR_THE_GROVE(354, "o pó de osso que o lenhador usa no bosque, sem excedente nos baús da vila");
+    BONE_MEAL_FOR_THE_GROVE(354, "o pó de osso que o lenhador usa no bosque, sem excedente nos baús da vila"),
+    SURFACE_ON_REQUEST(381, "a areia e o cacto que o ofício pede para a obra, no baú dele, na hora do pedido,"
+            + " quando nenhum baú da vila tem");
 
     private final int rule;
 

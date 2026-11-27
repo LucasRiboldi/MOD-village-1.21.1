@@ -2,6 +2,158 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.154 (2026-11-27)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commits `38c35b0e` (régua única e nomes no diário), `7c7f6706` (Zelador ao lado da coluna).
+- **Código:** `GroundSmoothing.column(..., system)`; `GradeWork.covers` (o `State` guarda a leitura do plano), `GradeWork.walk/targetOf/beside` (ao lado = 4 na horizontal e 4 de altura), `BuildingGaps.planned`; `GroundKeeper.day` usa `walk` e espera enquanto ele anda.
+- **Testes mudados:** `TerrainQueueGameTest` e `GroundSmoothingGameTest` usam `levelOnce()`, que põe o Zelador ao lado da coluna.
+- **Sentinela** `20261127T031402Z`: 1.307/1.307. JAR `9571C78445CACD9406F5F876C5280656CD4F928E36925CE01DBD3EEB266F277F`.
+- **Ainda de longe:** porta tapada, escada da mina, solo do bioma, vão entre as casas, peça da vila, curral. **Próximo:** etapa 4 da ADR-065.
+
+## Entrega — 0.4.153 (2026-11-27)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commit `4a189001` (Regra 390).
+- **Código:** `RoadGraphBuilds.lockedSteps` (L2); `RoadGraphStore.markLaid/laidByAColony` (raiz `roadLaid` do save), marcado por `PathPaving.pave`; `PathTrim.work` (Zelador anda, um bloco por passada, `limpeza` no diário), `PathTrim.pass` fica como a passada sem andar dos testes; `GroundKeeper.day` espera enquanto ele anda.
+- **Testes mudados:** `RoadRulesGameTest` e `EntrancesAtTheDoorGameTest` usam `trim()`, que trata todo caminho como da colônia e zera a espera.
+- **Sentinela** `20261127T023821Z`: 1.305/1.305. JAR `D85130816D55C3261BD5F5936349D22EFF731B1D357043F01B483257EA099654`.
+- **Próximo:** L3 🅱️ (plano de alturas como única régua; o bloco em 29,-44 oscilou 158 vezes), o Zelador andando no plano de alturas, e a etapa 4 da ADR-065.
+
+## Entrega — 0.4.152 (2026-11-27)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commits `e3de92ae` (emenda da ADR-065), `95c2f125` (Regra 389).
+- **Jogo da 0.4.151:** imagem do modo `vizinhanca` com duas linhas lado a lado. M1 🅲: malha de cidade.
+- **Código:** `CityStreets` (braços, ramais, ligação com estado), `StreetRouter` (A* com corredor e custos ×0,1 rede, +4 encostada, +2 curva), `StreetGrowth` (recusas por lado; `LotRefusals.refusedAt` conta, `LotSeeking.afterTheRoad` fecha a volta, `RoadGraphBuilds` gasta a vez). `NeighborhoodRoads` virou fachada.
+- **Sentinela** `20261127T021821Z`: 1.304/1.304. JAR `71C0434EA7FEAAD5B46C5EADCE249ED2E6D48211DDDD9C1F4BF856029C374368`.
+- **Próximo:** etapa 2 da ADR-065 (L1, L2), depois L3.
+
+## Entrega — 0.4.151 (2026-11-27)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commits: pesquisa `a1eb82a5`/`deb3b8e9`, ADR-065 `7f523340`, etapa 1 `9b284961`.
+- **Jogo da 0.4.150** (planície 18cd007a): caminho vira grama sem registro (`PathTrim`), nivelamento oscila, grafo de 3 modos. Escolhas: L1 🅲, L2 só calça travada, L3 🅱️, L4 grafo planejado (ADR-065). Memória `jogo-0150-triagem`.
+- **Etapa 1 (Regra 388):** `RoadEdgeState`, `RoadLink`, `NeighborhoodRoutes` (saiu de dentro do `NeighborhoodRoads`), `RoadRoutesSave` (chave `routes` no payload do grafo), `RoadGraphStore.routes/keepRoutes`, `RoadGraphBuilds.Input.store`, `queued=` no `VC_ROAD_GRAPH`. Só no modo `vizinhanca`.
+- **Sentinela** `20261127T010956Z`: 1.304/1.304. JAR `D558BE058BC116500BD6BC025C3422E53D1C9A4F4CE0F5B5783F0706EDBF9325`.
+- **Próximo:** etapa 2 da ADR-065 (L1 e L2); depois L3 (plano de alturas como única régua). A Regra 387 é da branch `wip/k7-casa-do-lenhador`.
+
+## Entrega — 0.4.150 (2026-11-26)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commits `2a5b1eda` (383), `c7a580b6` (384), `f723aeeb` e `2279ffd7` (385), `3ccc4429` (386), `94a5b160` e `ef6959cd` (testes).
+- **Regras:** 383 `ProfessionLock`/`ProfessionWatch`; 384 `BlockJournal` + `scripts/block_report.py`; 385 `TreeNursery.hasRoom`, `LumberjackNursery.EDGE = 64`; 386 `MineHomeWay`, `StructureFronts.mineHome`, `RoadLines.MAX_FAR_LINK = 128`.
+- **Testes:** o `BuilderMaterialsGameTest` solta o ofício antes de trocar (Regra 383); o `MineHomeWayGameTest` roda longe da bateria porque invadia a arena do `ShepherdRoundGameTest`.
+- **Sentinela** `20261126T204416Z`: 1.303/1.303. JAR `062B21B44A214540131A311663EB47D1C6802770A72D909580E977095ACBCD4D` em `build/libs`, `downloads/` e TLauncher.
+- **Para depois (pedido do autor):** o Zelador andar até o bloco e mexer em um por vez (precisa de desenho: 8 sistemas do chão mudam blocos de longe); a casa do lenhador na borda (Regra 387) está pronta na branch `wip/k7-casa-do-lenhador` (`701379c2`), testada só em foco.
+
+## Entrega — 0.4.148 e 0.4.149 (2026-11-26)
+
+- **Branch:** `fix/areia-que-cai`, sem push.
+- **0.4.148:** Regras 377 (`TemporarySteps`), 378 (`TreeLeftovers`), 379 (água do curral em 9,0,9), 380 (`FoundationAnimals`, piso de 6 no `FlockHarvest`). JAR `617D2483…1DAA`.
+- **Jogo da 0.4.148** (planície df5db219): a coleira (372) chamou de volta 805 vezes quem trabalha pela vila toda, e as obras pararam porque a plantação devida (374) ignorava o adiamento (373). Triagem na memória `jogo-0148-triagem`.
+- **0.4.149:** emenda da 372 (sem Zelador, pastor e construtor; sem teletransporte), Regra 381 (areia e cacto sob pedido no `ClayOnRequest`), emenda da 374 (adiamento; plantação grande em qualquer lote, `LotSeeking.needsTheFarmersReach`), Regra 382 (`FarmerHomePlans`, casa perto da plantação grande pela busca do `MineHomeSiteSearch`).
+- **Próximo (0.4.150):** K3 🅲 (profissão travada, Zelador bloco a bloco e ao lado, aviso de troca de profissão, registro de blocos do Zelador e do jogador), K4 🅱️ (mudas espaçadas, longe das construções, fora da vila), K5 🅱️ (caminho do arco da mina à casa do mineiro, ligado ao grafo), casa do lenhador na borda. K6 (chão em retângulos) fica para depois.
+- **Máquina:** o Gradle só baixa com `JAVA_TOOL_OPTIONS=-Djava.net.preferIPv6Addresses=true`.
+
+## Entrega — 0.4.147 (2026-11-26)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commits `2d59fe2a` (Regras 373 e 374), `1e3b4a1f` (375), `778931f0` (376).
+- **Regra 373:** `FarmPlans.postponed` só libera a plantação depois de 1 rodada e com `SweepState.stillLookingForALot` falso. Causa do jogo: a plantação achava o lote longe a cada minuto e apagava o cursor da busca da casa.
+- **Regra 374:** `UrgentPlans.firstBuild` (curral grande, plantação grande, uma plantação a cada 10 prontas); `LargeFarmPlans.model` e `count`.
+- **Regra 375:** `LotRefusals.refusedAt` e `dayLine`, nas 11 recusas do `LotLevel`; linha `VC_LOT_REFUSALS` no `TerrainReport`.
+- **Regra 376:** `BuilderHome` (30 blocos; cama livre ou troca com adulto sem profissão), a cada 30 s com obra aberta. **Falta:** pôr cama e baú numa casa sem cama.
+- **Prova:** `FarmPostponeTest`, `FirstBuildsTest`, `LotRefusalsDayTest`, `BuilderHomeGameTest`, vermelhos antes. Sentinela `fast` `20261126T150816Z`: 1.296/1.296.
+- **Instalado:** `village-colony-0.4.147.jar`, SHA-256 `4DA15F1A417B9D9F7FFE5DEC6E103B25FB3DBAE1183D2FA165ED5E9C6748D84A`; 0.4.146 `.jar.disabled`.
+- **Próximo:** 0.4.148 com J4, J5 e J6.
+
+## Entrega — 0.4.146 (2026-11-26)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commits `61c8f94f` (Regra 371 e emenda da 335), `37dab9bd` + `5db02385` (Regra 372).
+- **Jogo da 0.4.145:** triagem no topo do `TODO.md` e na memória `jogo-0145-triagem`; escolhas J1 🅱️ (raio da cama), J2 🅲, J3 🅲, J4 🅱️, J5 🅱️, J6 🅲 (o pastor traz sempre todos os animais em volta), J7 só o construtor se mudando; sem `majest_builder`.
+- **Regra 371:** `MineYard.isYardColumn` olha também as bocas da superfície (`MineMouths.of`); `WorldPathTerrain.floorAnywhereAt` libera da folga da boca a frente de cada porta e as 4 colunas em volta, fora o caracol; `DoorFronts.entrances` só usa as portas da altura mais baixa.
+- **Regra 372:** `HomeLeash` (48 da cama, 3 passadas, `VC_LEASH`), ligado em `SurfaceGatheringWork`.
+- **Não feito no J3:** a porta do açougue dá para o quintal murado dele (Regra 360 põe o nó lá) e continua solta; precisa de escolha.
+- **Prova:** `MineYardGameTest` (+2), `DoorFrontsGameTest` (+1), `HomeLeashGameTest`, vermelhos antes. Sentinela `fast` `20261126T144357Z`: 1.295/1.295.
+- **Instalado:** `village-colony-0.4.146.jar`, SHA-256 `AE94A675DCE873EAC25FF3A3B274D559FFB810EC1364E3CAC1F631BE9F2E3C9C`; 0.4.145 `.jar.disabled`.
+- **Próximo:** 0.4.147 com J2 (obras paradas, curral e fazenda primeiro, fazenda a cada 10) e J7 (construtor se muda); 0.4.148 com J4, J5 e J6.
+
+## Entrega — 0.4.145 (2026-11-26)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Desenho `docs/superpowers/specs/2026-11-26-casas-de-oficio-design.md`, plano `docs/superpowers/plans/2026-11-26-casa-grande-reformada.md`.
+- **Regra 369:** `scripts/houses/house_rules.py` (verificador), `scripts/houses/gen_big_house.py` (planta 9 × 12 × 11), `BigHouseFoundation.floorLayers` põe a planta uma camada abaixo do lote (piso no lugar do chão). Correção da revisão: piso de cima aberto sobre os três degraus.
+- **Regra 370:** `ChestPassage.closesAPassage` no `ChestPlacer.placeBeside`.
+- **Testes ajustados:** `StreetLevelGameTest` (rua da casa grande na camada 0), `DoorPathsGameTest` (planta 1 abaixo), `VillageFoundationGameTest` (o fazendeiro sem cama pode ganhar a cama do morto; ninguém nasce no lugar dele).
+- **Pendentes da revisão (pequenos):** a Regra 370 não age com a cama em andar diferente da porta; o conserto do baú (`repairSlot`) não a usa; o centro da vila desce 1 bloco.
+- **Máquina:** o IPv4 da internet caiu; o Gradle só baixa com `JAVA_TOOL_OPTIONS=-Djava.net.preferIPv6Addresses=true`. O manifesto do Minecraft foi baixado à mão para `~/.gradle/caches/fabric-loom/`.
+- **Prova:** Sentinela `fast` `20261126T050808Z`: unitários, propriedades e 1.291/1.291 GameTests; Python OK.
+- **Instalado:** `village-colony-0.4.145.jar` (build, `downloads/`, TLauncher), SHA-256 `8457CAB5ABF9E7593DB393F08C9201C2790390EE1C54450A60598381A2D264BA`; 0.4.144 `.jar.disabled`.
+- **Em jogo:** a casa grande nova só nasce em vila nova; conferir no criativo com `/place template villagecolony:houses/big_house_mod`.
+
+## Entrega — 0.4.144 (2026-11-25)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commits `94f9446b` (Regra 365), `000952eb` (366), `ca00ef5e` (367), `e8058bd6` (368).
+- **Jogo da 0.4.143:** triagem no topo do `TODO.md`; escolhas H1 🅲, H2 🅱️, H3 🅰️, H4 🅱️, H5 🅱️.
+- **Regra 365:** `TreeNursery.seesTheSky` (nada que barre o movimento acima da muda, folha e barreira à parte) em `isSpotForANursery` e `plantAt`.
+- **Regra 366:** `DoorFronts.better` anda pelos dois lados da porta; laje dupla não é degrau; não sobe mais de 1 por coluna.
+- **Regra 367:** `RoadLines` faz a busca cara para toda parte com entrada, fora do `LINKS_PER_READ`; `PathTerrain.blockedWhy` (Br/Bu/Bb/Bm/Bo) no `loose=` do `VC_ROAD_GRAPH`. Provado fora do jogo com a foto do terreno: com 1 busca, 5 portas soltas; com a regra, nenhuma. O registro `road_geometry_pin.txt` mudou em `parts/1` e `wander7/1` (o grafo ganhou as ligações).
+- **Regra 368:** `GradeSurvey` põe a faixa da obra aberta na mediana do chão em volta (antes a base da planta, 2 abaixo com a fundação); `GradeHoles` enche a cova de 2 com 3 ou 4 vizinhas acima, a até 12 de uma estrutura.
+- **H5 (sem código):** o pastor fica preso no térreo da casa grande, entre baús e camas; fundidor e carpinteiro sem manutenção durante obra. Opções a apresentar ao autor.
+- **Prova:** `NurserySkyGameTest`, `DoorFrontsGameTest` (+1), `RoadLinesDoorsTest`, `OpenSiteRingGameTest` (2), todos vermelhos antes. Sentinela `fast` `20261126T025138Z`: unitários, propriedades e 1.289/1.289 GameTests.
+- **Instalado:** `village-colony-0.4.144.jar` (build, `downloads/`, TLauncher), SHA-256 `078A88B2EA65D069ED4E2D216502161FFAEA022642EE5B59CA15519E0F270079`; 0.4.143 `.jar.disabled`.
+- **Em jogo:** nenhuma muda em túnel; nó na frente da porta das casas do deserto; portas, plantações e curral ligados; sem vala em volta da obra; covas perto das casas enchidas; custo do grafo no `VC_COST`.
+
+## Entrega — 0.4.143 (2026-11-25)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commit `c8f438bb`.
+- A obra nova volta a alisar o chão em volta na abertura (`SiteOpening` chama `SiteSurroundings.level` de novo, Regra 297), a pedido do autor antes do jogo. O resto da Regra 364 fica: o Zelador só mexe em chão natural.
+- Sentinela `fast` `20261125T233800Z`: 1.285/1.285. Instalado: `village-colony-0.4.143.jar` (build, `downloads/`, TLauncher), SHA-256 `BB2877859A77ED23BD0E7115E4767D035812884D9C0D959708A055FED4679226`; 0.4.142 `.jar.disabled`.
+
+## Entrega — 0.4.142 (2026-11-25)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commits `a2f840bb` (Regra 362), `ea498555` (Regra 363), `25e40239` (Regra 364), `c47f6537` (relatório do terreno).
+- **Jogo da 0.4.141:** triagem no topo do `TODO.md`; confirmou a 0.4.140 (plano 353 → 98 pendentes, boca `reached=true`).
+- **Regra 362:** `RoofDescent.isWorkBlock` (ponto de interesse do Vanilla não é telhado), `FarmerStand` evita pisar nele, `LOOPS` = 3 descidas do mesmo lugar põem no chão e soltam a tarefa (`VC_ROOF_LOOP`).
+- **Regra 363:** `BiomeSoil.fillUnder` em `GroundSmoothing.column`, vão raso, `MineYard`, `PathSupport` e `VillageGround`; `VillageSoil.fallback` pelo bioma; `SoilRestore` no dia do Zelador (`VC_SOIL_RESTORE`).
+- **Regra 364:** `GroundSmoothing.column` recusa topo que não é chão natural; `GradeSurvey` ancora o caminho na altura de hoje; `SiteOpening` não chama mais `SiteSurroundings.level`; `GradeWork` relê o plano quando a obra abre.
+- **Prova:** `RoofDescentGameTest` (2 novos), `BiomeSoilGameTest` (2), `StreetKeptGameTest` (2), vermelhos antes. Sentinela `fast` `20261125T232035Z`: 1.285/1.285; Python 208 OK.
+- **Instalado:** `village-colony-0.4.142.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `709A9613C43DDA2E3B13AB3B85AC8BB9663CBB9892F0738CAB17F84F7C60B926`; 0.4.141 `.jar.disabled`.
+- **Em jogo:** nada de arenito liso subindo nem terra no deserto; `VC_SOIL_RESTORE`; fazendeiro sem pular do composter; ruas na mesma altura; `terrain_report.py` com a comparação.
+
+## Entrega — 0.4.141 (2026-11-25)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commit `6337ef02`.
+- **Programa 🅲 do chão (ADR-064), etapa 1 — Regra 361:** `TerrainSnapshot` grava a foto do terreno em `logs/villagecolony-terrain-<colônia>-<rótulo>.json.gz` (`start` ao medir a vila, `day<N>` no fim do expediente, `last` em `/vc salvar` e ao fechar); `TerrainEdits` soma quem mexeu por coluna pelo `EditLedger`; `GradeSurvey.targets()` dá o alvo do plano. `scripts/terrain_report.py` (acesso a pé, degraus, lados, terra mexida, o que o jogador quis, mapa PNG); seção "Terreno (ADR-064)" no `game_report.py`; `scripts/research/save_to_terrain.py` converte save antigo.
+- **Prova:** `TerrainSnapshotGameTest` (mutação sem "quem mexeu" cai), `tests/test_terrain_report.py` (4). Sentinela `fast` `20261125T221026Z`: 1.279/1.279; Python 206 OK.
+- **Instalado:** `village-colony-0.4.141.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `8FA52E0D0E9B349116325F8A7095BEF23A4226D647920576FF9A06F1C31DFCED`; 0.4.140 `.jar.disabled`.
+- **Em jogo:** arquivos `villagecolony-terrain-*` na pasta logs, linhas `VC_TERRAIN_SNAPSHOT` (colunas e ms); depois `python scripts/terrain_report.py`.
+- **Próximo:** etapa 2 (banco de terrenos), depois do jogo.
+
+## Entrega — 0.4.140 (2026-11-25)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commit `0dd1449d`.
+- **Jogo da 0.4.139 (dois mundos no deserto):** triagem no topo do `TODO.md`. Escolhas do autor: E1 🅰️, E2 🅲, E3 pesquisar, E4 🅱️.
+- **Regra 358:** `GroundKeeper.mayWork` usa `IdleWorkers.isFree(..., Help.PATH)`: o Zelador que calça também faz a porta, a escada da mina e o plano de alturas.
+- **Regra 359:** `MineSite.openEdgeMouth` (busca até 32 acima, sem morro por cima, `MineSky.overhang`), `MineEdge` mais denso (insets 1, 3, 5; passo 3) e preferindo a boca alcançada a pé (`MineSky.reach`); `MineStairClearing.clearSky` tira o chão natural até 6 acima da boca, sem tocar no arco; `VC_MINE_MOUTH`.
+- **Regra 360:** `DoorFronts` põe a entrada da porta sem saída reta na frente dela (quintal ou areia); `RoadShape.farmEntrances` usa o meio do lado mais perto da rua calçada (sem contar o anel). Emenda as Regras 184 e 223.
+- **Prova:** `GroundKeeperPavingGameTest`, `MineMouthSurfaceGameTest` (2) e `DoorFrontsGameTest.aBuriedDoorKeepsItsEntranceInFront` falharam antes; mutação do `overSky` cai. Testes antigos atualizados para as regras novas: `MineMouthInsideGameTest`, `DoorFrontsGameTest` (vão do quintal), `RoadRulesGameTest`, `EntrancesAtTheDoorGameTest`, `FallingSandGuardGameTest`. Sentinela `fast` `20261125T211453Z`: unitários, propriedades e 1.278/1.278.
+- **Instalado:** `village-colony-0.4.140.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `AE735405E5EC097A3C0B79A320BE904C4DDB769F4D35CB07E4B7BAD9806D22EB`; 0.4.139 `.jar.disabled`.
+- **Em jogo:** `VC_GRADE` com `pending` caindo; `VC_DOOR_CLEAR`; `VC_MINE_MOUTH reached=true` e o arco à vista no morro; nós na frente das portas e no meio do lado das plantações.
+- **Próximo:** pesquisa do E3 (lote no morro), depois a fila G1 → G3 → G4 e a fase 4 da ADR-063.
+
+## Entrega — 0.4.139 (2026-11-25)
+
+- **Branch:** `fix/areia-que-cai` (continua da 0.4.137), sem push.
+- **Fase 3 da ADR-063 (Regra 357):** `GradeWork` executa o plano de alturas no dia do Zelador, no lugar da fila de quadrados (`TerrainQueue` ficou só como medida da `VC_TERRAIN`); sai o alisamento em volta da casa pronta. Orçamento `GradeCrew.perDay` (256 + pendentes/4, até 1.024) e segunda vaga de Zelador com o atraso parado 3 dias (`GradeCrew.keepers`, em `core.worker.service`; `ProfessionAssigner` usa no lugar da constante). O plano corta calombo e tapa buraco de até 4 colunas, termina por corte mínimo e vale só dentro da caixa da vila.
+- **Prova:** `GradeWorkGameTest` (porta alcançada a pé do alto de um paredão de 3; falhou com o esboço), `GradeCrewTest`, `ProfessionAssignerTest.aStalledGroundOpensTheSecondGroundskeeper` (mutação cai), `GradePlanTest` (8) e `GradePlanProperties` (3). `TerrainQueueGameTest` e `GroundSmoothingGameTest` (buraco e calombo isolados) passam pelo plano. Sentinela `fast` `20261125T184036Z`: unitários, propriedades e 1.274/1.274.
+- **Instalado:** `village-colony-0.4.139.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `B6C2970EB0A5D37351A2CADACEE1C5121CD3441D2891C3FE654444DACB6B7420`; 0.4.138 `.jar.disabled`.
+- **Em jogo:** `VC_GRADE` com `pending` caindo dia a dia e `keepers=`; porta do curral grande e das casas alcançáveis; nada mexido fora da caixa da vila.
+
+## Entrega — 0.4.137 (2026-11-25)
+
+- **Branch:** `fix/areia-que-cai`, da `main` em `86d39c3d` (PR #112 integrado). Sem push.
+- **Jogo da 0.4.136 no deserto:** triagem em `docs/testing/relatorios/jogo-20261125-1320.md` e no topo do `TODO.md`. Escolhas do autor: G1 🅲, G2 🅲, G3 🅱️, G4 🅲, G5 🅲; ordem G2 → G5 → G1 → G3 → G4, depois a pesquisa dos pontos sem escolha.
+- **G2 🅲 feita (Regra 356):** recusas `under_building` e `mine_mouth` no `GroundSmoothing.refusal`; `MineMouths` guarda as bocas da superfície (arco, escada, arco erguido); `MineYard.lay` pula o caracol; o Zelador abre o dia com `DoorClearing` e `MineStairClearing` (`VC_DOOR_CLEAR`, `VC_MINE_STAIR_CLEAR`); `UnderPieceFill.fillBuilding` aterra sob a construção da colônia, de baixo para cima.
+- **Prova:** `FallingSandGuardGameTest` (6 testes; 4 falharam antes, 2 conferidos por mutação). Sentinela `fast` `20261125T170427Z`: unitários, propriedades e 1.272/1.272; também `20261125T170005Z` 1.272/1.272.
+- **G5 🅲:** pesquisa em `docs/research/2026-11-25-plano-de-alturas.md`, decisões do autor (todas 🅲) e ADR-063 em 5 fases. **Fase 1 feita:** `core/construction/model/GradePlan` (envelope `L`/`U` por Dijkstra contornando o `OUT`, partida `limitar(natural, L, U)`, média do corte e do aterro de degrau 1, caminho plano por troca local que confere os vizinhos). `GradePlanTest` (6; 4 falharam antes) e `GradePlanProperties` (3, jqwik; 282 de 400 grades sem conflito checadas). Mutação: sem a projeção de degrau 1 caem o teste do paredão e a propriedade. Sentinela `quick` `20261125T173352Z`: 1.892 unitários e propriedades. **Fase 2 na 0.4.138:** `GradeSurvey` (leitura do mundo, só lê) e a linha diária `VC_GRADE` no fim do expediente; `GradeSurveyGameTest` (falhou antes; mutação sem a faixa cai) e seção "Plano de alturas" no `game_report.py`. Sentinela `fast` `20261125T180500Z`: unitários, propriedades e 1.273/1.273. Instalado: `village-colony-0.4.138.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `1AB007A295B569257DC888592D324F59D48E814A242120A835593372E1AD801B`; 0.4.137 `.jar.disabled`. Próxima: fase 3 (o Zelador executa), depois de ver a `VC_GRADE` no jogo.
+- **Instalado:** `village-colony-0.4.137.jar` em `build/libs/`, `downloads/` e TLauncher, SHA-256 `D00803A865216FDA65058BF5AB51C1C2682AE40929E29A956DD5EB08C92A7675`; 0.4.136 `.jar.disabled`.
+- **Em jogo:** porta do mineiro (-185,64,148) livre, mina alcançável, fazenda de -202,70,150 sem vão.
+
 ## Relógio global nos GameTests (2026-11-25)
 
 - **Branch:** `fix/relogio-global-gametests`, da `main` em `c761df9d` (PR #111 integrado).

@@ -49,9 +49,12 @@ public final class FlockHarvest {
     private FlockHarvest() {
     }
 
-    /** Quantos adultos excedem a meta de criação da espécie. */
+    /** Nenhum abate da espécie com menos adultos que isto, seja qual for a meta (Regra 380). */
+    static final int MIN_BEFORE_HARVEST = 6;
+
+    /** Quantos adultos excedem a meta de criação da espécie, com o piso de {@value #MIN_BEFORE_HARVEST} (Regra 380). */
     static int surplus(int adults, int target) {
-        return Math.max(0, adults - target);
+        return Math.max(0, adults - Math.max(target, MIN_BEFORE_HARVEST));
     }
 
     /** Abate um adulto excedente e guarda os produtos no baú. */

@@ -31,9 +31,10 @@ import java.util.UUID;
  * com degrau de no máximo 1, pondo e tirando solo; qualquer tamanho e qualquer altura. Nunca mexe em construção, peça da
  * vila, obra ou bloco do jogador, em roça e água, nem na boca e na escada da mina.
  *
- * <p>Uma janela de {@link #WINDOW}×{@link #WINDOW} por passada, escolhida pela fila de quadrados da Regra 323
- * ({@link TerrainQueue}); nela, a mesma superfície do solo da geração ({@link VillageSurface}) com o anel da janela fixo, e
- * só {@link #EDITS} colunas por passada, as de maior diferença primeiro.
+ * <p>A janela de {@link #WINDOW}×{@link #WINDOW} (o lote da obra aberta, Regra 297) usa a mesma superfície do solo da
+ * geração ({@link VillageSurface}) com o anel da janela fixo, e só {@link #EDITS} colunas por passada, as de maior diferença
+ * primeiro. O chão da vila inteira é do plano de alturas ({@link GradeWork}, Regra 357), que leva cada coluna pela
+ * {@link #column} daqui.
  */
 final class GroundSmoothing {
 
@@ -49,6 +50,9 @@ final class GroundSmoothing {
 
     /** Em volta da boca da mina nada é mexido: o buraco e a escada ficam. */
     static final int MINE_GUARD = 8;
+
+    /** Até quantos blocos acima do chão da coluna uma construção a protege do corte (Regra 356). */
+    static final int UNDER_BUILDING_REACH = 16;
 
     private GroundSmoothing() {
     }
@@ -108,8 +112,9 @@ final class GroundSmoothing {
                 BlockPos at = new BlockPos(x, top, z);
                 BlockState state = world.getBlockState(at);
                 boolean ring = dx == 0 || dz == 0 || dx == size - 1 || dz == size - 1;
-                boolean nearMine = mine.isPresent() && Math.abs(mine.get().getX() - x) <= MINE_GUARD
-                        && Math.abs(mine.get().getZ() - z) <= MINE_GUARD;
+                boolean nearMine = (mine.isPresent() && Math.abs(mine.get().getX() - x) <= MINE_GUARD
+                        && Math.abs(mine.get().getZ() - z) <= MINE_GUARD)
+                        || com.villagecolony.fabric.integration.MineMouths.isNear(x, z);
 
                 natural[dx][dz] = top;
 
@@ -198,9 +203,13 @@ final class GroundSmoothing {
                 return false;
             }
         }
+        // Sob areia, arenito; terra só fora do deserto (Regra 363).
+        BlockState fill = com.villagecolony.fabric.integration.BiomeSoil.fillUnder(world, surface,
+                world.getBlockState(surface), world.getBlockState(below));
+
         for (int depth = 1; depth <= gap; depth++) {
-            world.setBlockState(surface.down(depth), Blocks.DIRT.getDefaultState(), Block.NOTIFY_ALL);
-            com.villagecolony.fabric.integration.EditLedger.mod(world, surface.down(depth).toImmutable(), Blocks.DIRT.getDefaultState(), "nivelamento"); // Regra 345
+            world.setBlockState(surface.down(depth), fill, Block.NOTIFY_ALL);
+            com.villagecolony.fabric.integration.EditLedger.mod(world, surface.down(depth).toImmutable(), fill, "nivelamento"); // Regra 345
         }
         return true;
     }
@@ -289,20 +298,30 @@ final class GroundSmoothing {
     }
 
     /**
-     * Corta ou aterra a coluna de {@code top} até {@code target}, com o bloco de cima e o de baixo que ela já tinha:
-     * o caminho continua caminho, a grama continua grama.
+     * Corta ou aterra a coluna de chão natural de {@code top} até {@code target}, com o bloco de cima que ela já tinha e o
+     * aterro do bioma (Regra 363); a coluna de rua ou caminho fica como está (Regra 364).
      */
     static boolean column(ServerWorld world, int x, int z, int top, int target) {
+        return column(world, x, z, top, target, "nivelamento");
+    }
+
+    /** O mesmo, com o nome de quem nivela no diário dos blocos: {@code plano_alturas}, {@code vao_casas} (Regras 345 e 391). */
+    static boolean column(ServerWorld world, int x, int z, int top, int target, String system) {
         if (top == target || !safeColumn(world, x, z, top, target)) {
             return false;
         }
 
         BlockPos.Mutable at = new BlockPos.Mutable(x, top, z);
         BlockState surface = world.getBlockState(at);
+
+        // Só o chão natural sobe ou desce: a rua e o caminho ficam no bloco e na altura deles (Regra 364).
+        if (!SiteSurroundings.isNaturalGround(surface)) {
+            return false;
+        }
+
         BlockState below = world.getBlockState(at.setY(top - 1));
-        BlockState fill = SiteSurroundings.isNaturalGround(below) && !below.isOf(Blocks.FARMLAND)
-                && !(below.getBlock() instanceof net.minecraft.block.FallingBlock)
-                ? below : Blocks.DIRT.getDefaultState();
+        // Sob areia, arenito; terra só fora do deserto (Regra 363).
+        BlockState fill = com.villagecolony.fabric.integration.BiomeSoil.fillUnder(world, at.toImmutable(), surface, below);
 
         for (int y = top; y > target; y--) {
             at.setY(y + 1);
@@ -310,20 +329,20 @@ final class GroundSmoothing {
             // A planta de cima sai junto com o chão que a segura.
             if (world.getBlockState(at).isReplaceable() && !world.getBlockState(at).isAir()) {
                 world.setBlockState(at, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
-                com.villagecolony.fabric.integration.EditLedger.mod(world, at.toImmutable(), Blocks.AIR.getDefaultState(), "nivelamento"); // Regra 345
+                com.villagecolony.fabric.integration.EditLedger.mod(world, at.toImmutable(), Blocks.AIR.getDefaultState(), system); // Regra 345
             }
 
             world.setBlockState(at.setY(y), Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
-            com.villagecolony.fabric.integration.EditLedger.mod(world, at.setY(y).toImmutable(), Blocks.AIR.getDefaultState(), "nivelamento"); // Regra 345
+            com.villagecolony.fabric.integration.EditLedger.mod(world, at.setY(y).toImmutable(), Blocks.AIR.getDefaultState(), system); // Regra 345
         }
 
         for (int y = top; y < target; y++) {
             world.setBlockState(at.setY(y), fill, Block.NOTIFY_ALL);
-            com.villagecolony.fabric.integration.EditLedger.mod(world, at.setY(y).toImmutable(), fill, "nivelamento"); // Regra 345
+            com.villagecolony.fabric.integration.EditLedger.mod(world, at.setY(y).toImmutable(), fill, system); // Regra 345
         }
 
         world.setBlockState(at.setY(target), surface, Block.NOTIFY_ALL);
-        com.villagecolony.fabric.integration.EditLedger.mod(world, at.setY(target).toImmutable(), surface, "nivelamento"); // Regra 345
+        com.villagecolony.fabric.integration.EditLedger.mod(world, at.setY(target).toImmutable(), surface, system); // Regra 345
 
         return true;
     }
@@ -344,7 +363,21 @@ final class GroundSmoothing {
             return "player:ground";
         }
 
-        BlockPos.Mutable at = new BlockPos.Mutable(x, Math.min(top, target) - 1, z);
+        // A boca da mina fica aberta: o buraco da escada é a coluna mais baixa da volta (Regra 356).
+        if (com.villagecolony.fabric.integration.MineMouths.isNear(x, z)) {
+            return "mine_mouth";
+        }
+
+        // Nada se corta nem aterra debaixo de construção da colônia, nem acima da faixa da coluna: a peça que fica
+        // mais alta que o corte ficaria voando (Regra 356).
+        int low = Math.min(top, target);
+
+        if (VillageColonyMod.BUILDINGS.anythingBuiltInside(new com.villagecolony.core.type.ColonyPos(x, low, z),
+                new com.villagecolony.core.type.ColonyPos(x, low + UNDER_BUILDING_REACH, z))) {
+            return "under_building";
+        }
+
+        BlockPos.Mutable at = new BlockPos.Mutable(x, low - 1, z);
 
         if (!world.getBlockState(at).isSideSolidFullSquare(world, at, net.minecraft.util.math.Direction.UP)) {
             return "no_support:" + name(world.getBlockState(at));
@@ -390,6 +423,6 @@ final class GroundSmoothing {
     }
 
     static void clearAll() {
-        TerrainQueue.clearAll();
+        GradeWork.clearAll();
     }
 }

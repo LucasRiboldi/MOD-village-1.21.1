@@ -79,6 +79,8 @@ public final class MineYard {
         BlockPos center = centerOf(mouth, descent);
         int discY = mouth.getY() - 1;
         int changed = 0;
+        // O caracol da boca nunca vira pátio: tapado por areia, ele não está aberto, e a pedra o selava (Regra 356).
+        java.util.Set<BlockPos> stair = new java.util.HashSet<>(MineMouths.stairCells(mouth, descent));
 
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
@@ -91,8 +93,8 @@ public final class MineYard {
 
                 BlockPos disc = new BlockPos(x, discY, z);
 
-                // O buraco da escada: ar no disco e logo abaixo dele — fica aberto.
-                if (isOpen(world, disc) && isOpen(world, disc.down())) {
+                // O buraco da escada: ar no disco e logo abaixo dele, ou célula do caracol — fica aberto.
+                if ((isOpen(world, disc) && isOpen(world, disc.down())) || stair.contains(disc) || stair.contains(disc.down())) {
                     continue;
                 }
 
@@ -147,7 +149,9 @@ public final class MineYard {
                 break;
             }
 
-            world.setBlockState(disc.down(depth), Blocks.DIRT.getDefaultState(), Block.NOTIFY_LISTENERS);
+            // Sob areia, arenito; terra só fora do deserto (Regra 363).
+            world.setBlockState(disc.down(depth), BiomeSoil.fillUnder(world, disc, world.getBlockState(disc),
+                    world.getBlockState(disc.down(depth + 1))), Block.NOTIFY_LISTENERS);
             changed++;
         }
 
@@ -189,17 +193,31 @@ public final class MineYard {
         return false;
     }
 
-    /** Se a coluna é pátio de alguma mina: a folga da boca não vale sobre ele (Regra 293). */
+    /**
+     * Se a coluna é pátio de alguma mina: a folga da boca não vale sobre ele (Regra 293). Vale o pátio da entrada guardada
+     * da mina e o de cada boca da superfície: depois que a mina desce um nível, a entrada guardada fica no fundo, e o
+     * pátio de cima continua pátio (Regra 371).
+     */
     public static boolean isYardColumn(ServerWorld world, int x, int z) {
         for (Mine mine : VillageColonyMod.MINES.all()) {
-            BlockPos disc = new BlockPos(x, mine.shaft().entry().y() - 1, z);
-
-            if (isYardAt(disc, world.getBlockState(disc), MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()),
+            if (isYardColumnOf(world, x, z, MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()),
                     MinecraftTypeAdapter.toDirection(mine.shaft().descent()))) {
                 return true;
+            }
+
+            for (java.util.Map.Entry<BlockPos, Direction> mouth : MineMouths.of(mine.colonyId()).entrySet()) {
+                if (isYardColumnOf(world, x, z, mouth.getKey(), mouth.getValue())) {
+                    return true;
+                }
             }
         }
 
         return false;
+    }
+
+    private static boolean isYardColumnOf(ServerWorld world, int x, int z, BlockPos mouth, Direction descent) {
+        BlockPos disc = new BlockPos(x, mouth.getY() - 1, z);
+
+        return isYardAt(disc, world.getBlockState(disc), mouth, descent);
     }
 }

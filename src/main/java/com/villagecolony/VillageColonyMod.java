@@ -214,11 +214,17 @@ public class VillageColonyMod implements ModInitializer {
         com.villagecolony.fabric.work.PenLog.register();
         com.villagecolony.fabric.work.VillageHelpers.register();
         com.villagecolony.fabric.work.GroundKeeper.register();
+        com.villagecolony.fabric.work.HomeLeash.register();
+        com.villagecolony.fabric.work.BuilderHome.register();
+        com.villagecolony.fabric.work.TemporarySteps.register();
+        com.villagecolony.fabric.work.ProfessionWatch.register();
+        com.villagecolony.fabric.integration.BlockJournal.register();
         com.villagecolony.fabric.work.AnalyticsLog.register();
         com.villagecolony.fabric.work.IdleHelps.register();
         com.villagecolony.fabric.work.VillagerMoves.register();
         com.villagecolony.fabric.work.EveningGathering.register();
         com.villagecolony.fabric.work.TerrainReport.register();
+        com.villagecolony.fabric.work.TerrainSnapshot.register();
         com.villagecolony.fabric.work.BlockLedger.register();
         com.villagecolony.fabric.work.KeepLedger.register();
         com.villagecolony.fabric.integration.ItemFlow.register();

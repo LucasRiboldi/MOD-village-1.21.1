@@ -26,11 +26,12 @@ import java.util.Set;
 /**
  * As entradas das estruturas da vila, lidas do mundo — Regras 207, 210 e 223 (autor, 2026-11-07): branco só onde se entra.
  * Porta, portão e o portão da mina; sem eles, o lado aberto de quem precisa ser alcançado. Poste, poço e chafariz não têm
- * entrada, nem curral fechado por dentro, e a quina da plantação só vale sem rua a até {@value #FARM_ROAD_REACH} blocos.
+ * entrada, nem curral fechado por dentro, e a entrada da plantação (o meio do lado, Regra 360) só vale sem rua a até
+ * {@value #FARM_ROAD_REACH} blocos.
  */
 final class StructureFronts {
 
-    /** Com linha a até esta distância da quina, a plantação já está na rua. */
+    /** Com linha a até esta distância da entrada, a plantação já está na rua. */
     static final int FARM_ROAD_REACH = 2;
 
     /**
@@ -39,8 +40,20 @@ final class StructureFronts {
      * @param fronts as entradas
      * @param ways as colunas até a porta que precisam ser calçadas por dentro da caixa, porque nenhum caminho sai dela
      * @param retired as colunas que deixaram de ser entrada: o ramal delas sai (Regra 223)
+     * @param mineWay o caminho entre a porta da casa do mineiro e a entrada da mina (Regra 386)
+     * @param far as entradas que buscam a linha de mais longe: as da mina e a da casa do mineiro (Regra 386)
      */
-    record Reading(Set<ColonyPos> fronts, Set<ColonyPos> ways, Set<ColonyPos> retired) {
+    record Reading(Set<ColonyPos> fronts, Set<ColonyPos> ways, Set<ColonyPos> retired, Set<ColonyPos> mineWay,
+                   Set<ColonyPos> far) {
+
+        /** O que entra no grafo como caminho planejado: o de dentro da caixa e o da mina (Regra 386). */
+        Set<ColonyPos> planned() {
+            Set<ColonyPos> planned = new HashSet<>(ways);
+
+            planned.addAll(mineWay);
+
+            return planned;
+        }
     }
 
     private StructureFronts() {
@@ -93,7 +106,12 @@ final class StructureFronts {
         }
 
         fronts.addAll(PlayerDoors.fronts(world, colony, terrain, known));
-        fronts.addAll(MineGates.fronts(world, colony, terrain));
+        Set<ColonyPos> mine = MineGates.fronts(world, colony, terrain);
+        Set<ColonyPos> far = new HashSet<>(mine);
+        Set<ColonyPos> mineWay = new HashSet<>();
+
+        fronts.addAll(mine);
+        mineHome(world, colony, terrain, mine, far, mineWay);
 
         List<ShepherdPens.Pen> pens = ShepherdPens.pensOf(world, colony);
 
@@ -108,10 +126,47 @@ final class StructureFronts {
 
         retired.removeAll(fronts);
 
-        return new Reading(fronts, ways, retired);
+        return new Reading(fronts, ways, retired, mineWay, far);
     }
 
-    /** A quina da plantação que ainda não tem rua ao lado (Regras 184 e 223); a outra entra em {@code retired}. */
+    /**
+     * A porta da casa do mineiro mais perto de uma entrada da mina, e o caminho entre as duas — Regra 386 (nota do jogo da
+     * 0.4.148, K5 🅱️). As duas pontas buscam a linha de mais longe.
+     */
+    private static void mineHome(ServerWorld world, Colony colony, WorldPathTerrain terrain, Set<ColonyPos> mine,
+                                 Set<ColonyPos> far, Set<ColonyPos> mineWay) {
+        ColonyPos bestHouse = null;
+        ColonyPos bestMine = null;
+        int best = Integer.MAX_VALUE;
+
+        for (Building building : VillageColonyMod.BUILDINGS.ofColony(colony.id())) {
+            if (!building.finished() || !MineHomePlans.isMinerHouse(building.blueprint())) {
+                continue;
+            }
+
+            for (DoorFronts.Entrance entrance : DoorFronts.entrances(world, MinecraftTypeAdapter.toBlockPos(building.min()),
+                    MinecraftTypeAdapter.toBlockPos(building.max()))) {
+                ColonyPos house = MinecraftTypeAdapter.toColonyPos(entrance.front());
+
+                for (ColonyPos gate : mine) {
+                    int distance = Math.abs(house.x() - gate.x()) + Math.abs(house.z() - gate.z());
+
+                    if (distance < best) {
+                        best = distance;
+                        bestHouse = house;
+                        bestMine = gate;
+                    }
+                }
+            }
+        }
+
+        if (bestHouse != null && best <= MineHomePlans.RADIUS * 2) {
+            far.add(bestHouse);
+            mineWay.addAll(com.villagecolony.core.construction.model.MineHomeWay.between(bestHouse, bestMine, terrain));
+        }
+    }
+
+    /** A entrada da plantação que ainda não tem rua ao lado (Regras 223 e 360); a outra entra em {@code retired}. */
     static void farmCorners(Set<ColonyPos> corners, Optional<RoadGraph> graph, Set<ColonyPos> fronts, Set<ColonyPos> retired) {
         for (ColonyPos corner : corners) {
             if (graph.filter(lines -> lines.hasLineNear(corner, FARM_ROAD_REACH)).isPresent()) {
