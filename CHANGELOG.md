@@ -17,6 +17,15 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.153] — candidata, 2026-11-27
+
+ADR-065, etapa 2, do jogo da 0.4.150 (L1 🅲 e L2). Regra 390, emendas das Regras 186 e 242.
+
+- No modo `vizinhanca`, o Zelador só calça ligação travada ou já calçada (`LockedStepsTest`).
+- A limpeza só devolve ao solo o caminho que a colônia calçou (as colunas vão para o save, `roadLaid`), e só depois de 2 dias de jogo fora de toda linha; o do jogador e o da vila gerada ficam (`RoadGraphSaveTest`, `PathTrimKeeperGameTest`).
+- Quem limpa é o Zelador: ele anda até a coluna e troca um bloco por passada de 10 segundos, só quando não está calçando; cada troca vai para o diário dos blocos como `limpeza`.
+- O caminho calçado antes desta versão não está na lista e não é limpo. O plano de alturas ainda troca blocos de longe.
+
 ## [0.4.152] — candidata, 2026-11-27
 
 M1 🅲 do jogo da 0.4.151 (linhas duplas lado a lado no modo `vizinhanca`). Regra 389, emenda da ADR-065 e da Regra 320. Vale só no modo `vizinhanca`.

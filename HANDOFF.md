@@ -2,6 +2,14 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.153 (2026-11-27)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commit `4a189001` (Regra 390).
+- **Código:** `RoadGraphBuilds.lockedSteps` (L2); `RoadGraphStore.markLaid/laidByAColony` (raiz `roadLaid` do save), marcado por `PathPaving.pave`; `PathTrim.work` (Zelador anda, um bloco por passada, `limpeza` no diário), `PathTrim.pass` fica como a passada sem andar dos testes; `GroundKeeper.day` espera enquanto ele anda.
+- **Testes mudados:** `RoadRulesGameTest` e `EntrancesAtTheDoorGameTest` usam `trim()`, que trata todo caminho como da colônia e zera a espera.
+- **Sentinela** `20261127T023821Z`: 1.305/1.305. JAR `D85130816D55C3261BD5F5936349D22EFF731B1D357043F01B483257EA099654`.
+- **Próximo:** L3 🅱️ (plano de alturas como única régua; o bloco em 29,-44 oscilou 158 vezes), o Zelador andando no plano de alturas, e a etapa 4 da ADR-065.
+
 ## Entrega — 0.4.152 (2026-11-27)
 
 - **Branch:** `fix/areia-que-cai`, sem push. Commits `e3de92ae` (emenda da ADR-065), `95c2f125` (Regra 389).
