@@ -17,6 +17,14 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.155] — candidata, 2026-11-27
+
+H5, item 6 (casas de ofício, mínimo de esforço). Regra 392.
+
+- Lenhador, pedreiro, fundidor, carpinteiro, fazendeiro, pastor e Zelador têm a casa `majest_<ofício>`, cópia da casa do mineiro em todo estilo; entra na vaga da casa de ofício, que aceita `majest_` ao lado de `trade_` (`TradeHouseModelsTest`).
+- A casa pronta ganha o quadro com o ícone do ofício na parede de fora, acima da porta (`TradeHouseSignGameTest`, `VC_TRADE_HOUSE_SIGN`).
+- O titular dorme nela só pela troca de cama da Regra 74; cada casa terá modelo próprio depois.
+
 ## [0.4.154] — candidata, 2026-11-27
 
 L3 🅱️ do jogo da 0.4.150 (o chão que subia e descia). Regra 391, emenda da Regra 357.
