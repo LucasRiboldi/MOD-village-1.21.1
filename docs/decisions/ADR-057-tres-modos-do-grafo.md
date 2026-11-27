@@ -1,6 +1,6 @@
 # ADR-057 — Três modos de montar o grafo, um ligado por vez
 
-**Estado:** aceita pelo autor em 2026-11-18, sobre o estudo `docs/research/2026-11-18-estudo-do-grafo.md` e a pesquisa de
+**Estado:** substituída pela ADR-065 (2026-11-26), que fica com um modo só, a partir do `vizinhanca`. Foi aceita pelo autor em 2026-11-18, sobre o estudo `docs/research/2026-11-18-estudo-do-grafo.md` e a pesquisa de
 três formas de grafo feita na mesma conversa. Emenda a ADR-043 (como o grafo é montado) e a ADR-050 (a trava de dias vale só
 no modo 1).
 
