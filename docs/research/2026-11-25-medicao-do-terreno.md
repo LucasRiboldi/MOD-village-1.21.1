@@ -102,4 +102,3 @@ estruturas, os telhados contam como chão). Saída em `reports/terrain/jogo-0139
 | … em caminho | 22 | 54 |
 | colunas que o jogador mexeu | 139 | 398 |
 | … desfazendo o mod | 0 | 59 (nivelamento 23, volta da obra 21, calçada 14, outro 1) |
-
