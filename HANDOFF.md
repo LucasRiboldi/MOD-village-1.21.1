@@ -2,6 +2,14 @@
 
 Ponto de retomada para Codex ou Claude Code. Confira a branch, o estado do Git e os PRs abertos antes de trabalhar. O handoff da Fase 3 do MAE está no histórico do Git.
 
+## Entrega — 0.4.151 (2026-11-27)
+
+- **Branch:** `fix/areia-que-cai`, sem push. Commits: pesquisa `a1eb82a5`/`deb3b8e9`, ADR-065 `7f523340`, etapa 1 `9b284961`.
+- **Jogo da 0.4.150** (planície 18cd007a): caminho vira grama sem registro (`PathTrim`), nivelamento oscila, grafo de 3 modos. Escolhas: L1 🅲, L2 só calça travada, L3 🅱️, L4 grafo planejado (ADR-065). Memória `jogo-0150-triagem`.
+- **Etapa 1 (Regra 388):** `RoadEdgeState`, `RoadLink`, `NeighborhoodRoutes` (saiu de dentro do `NeighborhoodRoads`), `RoadRoutesSave` (chave `routes` no payload do grafo), `RoadGraphStore.routes/keepRoutes`, `RoadGraphBuilds.Input.store`, `queued=` no `VC_ROAD_GRAPH`. Só no modo `vizinhanca`.
+- **Sentinela** `20261127T010956Z`: 1.304/1.304. JAR `D558BE058BC116500BD6BC025C3422E53D1C9A4F4CE0F5B5783F0706EDBF9325`.
+- **Próximo:** etapa 2 da ADR-065 (L1 e L2); depois L3 (plano de alturas como única régua). A Regra 387 é da branch `wip/k7-casa-do-lenhador`.
+
 ## Entrega — 0.4.150 (2026-11-26)
 
 - **Branch:** `fix/areia-que-cai`, sem push. Commits `2a5b1eda` (383), `c7a580b6` (384), `f723aeeb` e `2279ffd7` (385), `3ccc4429` (386), `94a5b160` e `ef6959cd` (testes).

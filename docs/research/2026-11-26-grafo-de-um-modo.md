@@ -42,8 +42,10 @@ código do mod RoadArchitect. Nada aqui foi implementado; as decisões do §7 s�
 
 - `atual`, 18:15 a 20:37: 107 mudanças em cerca de 8 dias de jogo (13 por dia), 11 partes soltas em média.
 - `regioes`, 20:37 a 20:39: 4 mudanças. `vizinhanca`, 20:39 a 20:44: 8 mudanças, as arestas subiram de 18 para 64.
-- As **30 portas `no-route`** do fim do jogo (nota 6) não eram portas sem caminho: o modo traça só 16 ligações por
-  leitura (`ROUTES_PER_BUILD`), e a porta que espera a vez sai com o mesmo rótulo da que falhou.
+- As **30 portas `no-route`** do fim do jogo (nota 6) falharam de verdade. A ligação das partes soltas (`connect`) não
+  tem teto de vez, então nenhuma estava na fila: o A* não achou passagem com degrau de no máximo 1 nessa vila de morro,
+  dentro do teto de 8.000 colunas. E cada falha era tentada de novo em toda leitura, 3 vezes por porta. Correção de
+  2026-11-26: a primeira versão desta pesquisa dizia que era fila.
 - **Efeito no chão** (diário dos blocos, Regra 384): de 509 colunas que o mod calçou, 266 estão grama no save; de 174 do
   jogador, 86. Nenhuma dessas trocas está no diário: a limpeza (`PathTrim`) não registra. O nivelamento cortou 29 colunas
   recém-calçadas.
@@ -72,7 +74,7 @@ relativa, até 96 blocos); traça cada ligação por A* com custo (plano 1, degr
 
 1. As ligações ficam **só na memória** (`RoadGraphBuilds.ROUTES`): ao reabrir o mundo, tudo é traçado de novo.
 2. A vizinhança relativa dá voltas: na planície, 86 arestas contra 53, e 199 colunas a calçar contra 26.
-3. O rótulo `no-route` confunde fila com falha.
+3. A falha não fica guardada: a porta sem passagem é tentada de novo em toda leitura, sem motivo no log.
 4. Não há estado por aresta: o Zelador calça o que ficou igual por 3 leituras (Regra 322), contagem também em memória.
 
 ## 4. O mod RoadArchitect

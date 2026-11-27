@@ -17,6 +17,16 @@ e [`docs/archive/technical/Historico-2026-09.md`](docs/archive/technical/Histori
 - O appender de captura do `LumberjackGameTest` (guarda de travamento) criava uma configuração do logger do mod sem repasse ao logger raiz, e todo o log do mod sumia no resto da bateria. Agora repassa e é desfeita no fim. A análise do Sentinela acusa `LOG_SILENCED` quando o log do mod emudece mais de 30 s antes do fim dos GameTests.
 - `Arena.holdWorkTime` segura o expediente até o fim do teste e registra cada reposição em `VC_TEST_CLOCK_RESET` (teste e hora achada). Usada em 33 GameTests longos que acertavam a hora só no início e nos 3 que a repunham à mão.
 
+## [0.4.151] — candidata, 2026-11-27
+
+ADR-065, etapa 1, do jogo da 0.4.150 (L4). Regra 388. Vale só no modo `vizinhanca` do grafo (`/vc grafo modo vizinhanca`); o modo `atual` segue o padrão até a etapa 4.
+
+- Cada ligação do grafo guarda o traçado e o estado: planejada, travada depois de 3 montagens iguais, calçada quando o mundo tem caminho em toda coluna, ou falhou com o motivo (`closed`, `exhausted`) (`RoadEdgeStateTest`).
+- A ligação que falha não é tentada de novo em toda leitura; só quando um bloco muda dentro da caixa da busca. Antes, cada porta sem passagem custava 3 buscas de até 8.000 colunas por leitura.
+- A ligação que esperou a vez sai no log como `queued=`, e não como porta solta.
+- As ligações vão para o save ao lado do grafo, e reabrir o mundo não as refaz (`RoadGraphSaveTest`, `PlannedGraphReopenGameTest`).
+- Pesquisa do grafo (`docs/research/2026-11-26-grafo-de-um-modo.md`) e ADR-065: um modo só, árvore que cresce, ponta por recusa de lote.
+
 ## [0.4.150] — candidata, 2026-11-26
 
 Do jogo da 0.4.148 na planície: parte do K3 🅲, K4 🅱️ e K5 🅱️. Regras 383 a 386. O Zelador andar até o bloco e mexer em um por vez (o resto do K3) e a casa do lenhador na borda (K7) ficam para depois; o K7 está guardado na branch `wip/k7-casa-do-lenhador`, sem a suíte inteira rodada.
