@@ -144,7 +144,12 @@ public final class GroundKeeper {
         }
 
         // O plano de alturas da vila inteira (Regra 357, ADR-063): substitui a fila de quadrados da Regra 323.
-        int levelled = GradeWork.pass(world, colony);
+        // O Zelador anda até a coluna e a leva ao alvo, uma por passada (Regra 391); enquanto anda, nada mais.
+        int levelled = GradeWork.walk(world, colony, keeper);
+
+        if (levelled < 0) {
+            return 0;
+        }
 
         if (levelled > 0) {
             ActionJournal.action(keeper.getUuid(), "LEVELLED", "minecraft:dirt", levelled, keeper.getBlockPos(),

@@ -100,6 +100,93 @@ public class GradeWorkGameTest implements FabricGameTest {
         });
     }
 
+    /**
+     * Regra 391 (L3 do jogo da 0.4.150, com o pedido do K3: "o Zelador fica ao lado do bloco e põe ou tira um por um"): longe
+     * da coluna, o Zelador anda até ela e nada muda; ao lado dela, ele a leva ao alvo, uma por passada.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "grade_work_walk", tickLimit = 60)
+    public void theKeeperWalksToTheColumnAndLevelsOne(TestContext context) {
+        ServerWorld world = context.getWorld();
+        UUID colonyId = UUID.randomUUID();
+        BlockPos base = context.getAbsolutePos(BlockPos.ORIGIN).add(2_950_000, 20, 2_950_000);
+
+        force(world, base, true);
+
+        for (int x = 0; x < SIDE; x++) {
+            for (int z = 0; z < SIDE; z++) {
+                world.setBlockState(base.add(x, 0, z), Blocks.STONE.getDefaultState());
+                world.setBlockState(base.add(x, 1, z), Blocks.GRASS_BLOCK.getDefaultState());
+                for (int y = 2; y <= 4 && x >= 14; y++) {
+                    world.setBlockState(base.add(x, y, z), y == 4 ? Blocks.GRASS_BLOCK.getDefaultState()
+                            : Blocks.DIRT.getDefaultState());
+                }
+            }
+        }
+
+        BlockPos min = base.add(2, 0, 2);
+        BlockPos max = base.add(21, 4, 21);
+        Colony colony = Colony.create(colonyId, MinecraftTypeAdapter.toColonyPos(base.add(12, 1, 12)));
+        colony.restoreBounds(new VillageBounds(min.getX(), min.getY(), min.getZ(), max.getX(), max.getY(), max.getZ()));
+        net.minecraft.entity.passive.VillagerEntity keeper = net.minecraft.entity.EntityType.VILLAGER.create(world);
+
+        if (keeper == null) {
+            throw new AssertionError("o Zelador do teste não nasceu");
+        }
+
+        keeper.setAiDisabled(true);
+        keeper.setNoGravity(true);
+        keeper.refreshPositionAndAngles(base.add(-12, 30, -12), 0, 0);
+        world.spawnEntity(keeper);
+
+        context.waitAndRun(2, () -> {
+            try {
+                int[] before = tops(world, base);
+
+                context.assertTrue(GradeWork.walk(world, colony, keeper) == -1, "Regra 391: o Zelador longe não foi andar até a coluna");
+                context.assertTrue(java.util.Arrays.equals(before, tops(world, base)), "Regra 391: o chão mudou com o Zelador longe");
+
+                int[] target = GradeWork.targetOf(colonyId).orElseThrow();
+
+                keeper.refreshPositionAndAngles(target[0] + 1, world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, target[0] + 1,
+                        target[1]), target[1], 0, 0);
+
+                int result = GradeWork.walk(world, colony, keeper);
+
+                context.assertTrue(result == 1, "Regra 391: o Zelador ao lado não levou a coluna ao alvo: " + result + " em "
+                        + java.util.Arrays.toString(target) + ", ele em " + keeper.getBlockPos() + ", topo "
+                        + world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, target[0], target[1]));
+
+                int[] after = tops(world, base);
+                int changed = 0;
+
+                for (int i = 0; i < before.length; i++) {
+                    changed += before[i] != after[i] ? 1 : 0;
+                }
+
+                context.assertTrue(changed == 1, "Regra 391: o Zelador mexeu em " + changed + " colunas de uma vez");
+            } finally {
+                keeper.discard();
+                GradeWork.forget(colonyId);
+                force(world, base, false);
+            }
+
+            context.complete();
+        });
+    }
+
+    /** A altura do topo de cada coluna do chão do teste. */
+    private static int[] tops(ServerWorld world, BlockPos base) {
+        int[] tops = new int[SIDE * SIDE];
+
+        for (int x = 0; x < SIDE; x++) {
+            for (int z = 0; z < SIDE; z++) {
+                tops[x * SIDE + z] = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, base.getX() + x, base.getZ() + z);
+            }
+        }
+
+        return tops;
+    }
+
     /** Se dá para ir a pé de uma coluna à outra, com degrau de no máximo 1 e fora da pegada da casa. */
     private static boolean walks(ServerWorld world, BlockPos base, BlockPos from, BlockPos to) {
         Set<Long> seen = new HashSet<>();

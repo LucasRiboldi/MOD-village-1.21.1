@@ -4,7 +4,7 @@ Gerado por `python scripts/rule_coverage.py`; não editar à mão. Toda suite do
 abaixo: a pergunta aqui é se existe teste para a regra, não se ele rodou. Citar não prova que o teste mede a regra, e usar a
 classe prova menos ainda.
 
-- **Cita a regra:** 288
+- **Cita a regra:** 289
 - **Só usa a classe indicada:** 85
 - **Sem nenhum teste:** 2
 - **Fora de vigor:** 14
@@ -400,3 +400,4 @@ classe prova menos ainda.
 | 388 | A ligação planejada tem estado e fica no save (ADR-065 §6 e §8, etapa 1, no modo vizinhan… | cita | PlannedGraphReopenGameTest, RoadEdgeStateTest, RoadGraphSaveTest |
 | 389 | A malha de cidade (ADR-065, emenda de 27-11, M1 🅲 do jogo da 0.4.151: "deixar todos em li… | cita | CityStreetsTest, NeighborhoodRoadsTest, PlannedGraphReopenGameTest |
 | 390 | Só se calça o travado, e só sai o que a colônia pôs (ADR-065 etapa 2; jogo da 0.4.150: de… | cita | EntrancesAtTheDoorGameTest, LockedStepsTest, PathTrimKeeperGameTest |
+| 391 | O plano de alturas é a única régua, e o Zelador nivela ao lado da coluna (L3 🅱️ do jogo d… | cita | BuildingGapsGameTest, GradeWorkGameTest, GroundSmoothingGameTest |

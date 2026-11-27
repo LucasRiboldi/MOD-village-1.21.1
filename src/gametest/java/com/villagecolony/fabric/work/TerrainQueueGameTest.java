@@ -47,7 +47,7 @@ public class TerrainQueueGameTest implements FabricGameTest {
         try {
             context.assertTrue(VillageHelpers.helps(context.getWorld(), colony, Optional.of(ProfessionType.MASON), mason) == 0,
                     "Regra 330: o pedreiro ainda nivela");
-            GroundKeeper.day(context.getWorld(), colony, mason);
+            levelOnce(context.getWorld(), colony, mason);
 
             context.assertTrue(top(context, 20, 20) == context.getAbsolutePos(hole).getY(),
                     "o buraco isolado ficou atrás dos degraus do planalto: topo em " + top(context, 20, 20));
@@ -71,7 +71,7 @@ public class TerrainQueueGameTest implements FabricGameTest {
         try {
             context.assertTrue(VillageHelpers.helps(context.getWorld(), colony, Optional.empty(), idle) == 0,
                     "Regra 330: quem não tem ofício ainda nivela");
-            int done = GroundKeeper.day(context.getWorld(), colony, idle);
+            int done = levelOnce(context.getWorld(), colony, idle);
 
             context.assertTrue(done > 0 && top(context, 6, 18) == context.getAbsolutePos(bump).getY() - 1,
                     "o Zelador deixou o bloco isolado: fez " + done + ", topo em " + top(context, 6, 18));
@@ -111,5 +111,26 @@ public class TerrainQueueGameTest implements FabricGameTest {
         BlockPos at = context.getAbsolutePos(new BlockPos(x, 0, z));
 
         return context.getWorld().getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, at.getX(), at.getZ()) - 1;
+    }
+
+    /**
+     * Uma passada do Zelador como no jogo, mas sem esperar ele andar: se ele saiu andando até a coluna do plano (Regra 391),
+     * o teste o põe ao lado dela e repete a passada.
+     */
+    private static int levelOnce(net.minecraft.server.world.ServerWorld world, com.villagecolony.core.colony.model.Colony colony,
+                                 net.minecraft.entity.passive.VillagerEntity keeper) {
+        int done = GroundKeeper.day(world, colony, keeper);
+        java.util.Optional<int[]> target = GradeWork.targetOf(colony.id());
+
+        if (done == 0 && target.isPresent()) {
+            int x = target.get()[0];
+            int z = target.get()[1];
+
+            keeper.refreshPositionAndAngles(x + 1.5, world.getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING_NO_LEAVES,
+                    x + 1, z), z + 0.5, 0, 0);
+            done = GroundKeeper.day(world, colony, keeper);
+        }
+
+        return done;
     }
 }
